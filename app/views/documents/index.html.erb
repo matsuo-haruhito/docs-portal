@@ -1,0 +1,25 @@
+<% page_title @project.name, "文書一覧" %>
+<h1><%= @project.name %> / 文書一覧</h1>
+
+<%= table_tag do %>
+  <thead>
+    <tr>
+      <th>タイトル</th>
+      <th>カテゴリ</th>
+      <th>種別</th>
+      <th>公開範囲</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @documents.each do |document| %>
+      <tr>
+        <td><%= link_to document.title, project_document_path(@project, document) %></td>
+        <td><span class="badge"><%= document.category %></span></td>
+        <td><%= document.document_kind %></td>
+        <td><%= document.visibility_policy %></td>
+      </tr>
+    <% end %>
+  </tbody>
+<% end %>
+
+<p><%= link_to "案件一覧へ戻る", projects_path %></p>

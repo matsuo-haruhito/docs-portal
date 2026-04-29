@@ -1,0 +1,32 @@
+<% page_title "会社マスタ" %>
+<h1>会社マスタ</h1>
+<%= render "admin/nav" %>
+
+<div class="card">
+  <h2>新規登録</h2>
+  <%= render "form", company: @company %>
+</div>
+
+<%= table_tag do %>
+  <thead>
+    <tr>
+      <th>コード</th>
+      <th>会社名</th>
+      <th>状態</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @companies.each do |company| %>
+      <tr>
+        <td><%= company.code %></td>
+        <td><%= company.name %></td>
+        <td><%= company.active? ? "有効" : "無効" %></td>
+        <td class="actions">
+          <%= edit_link_to "編集", edit_admin_company_path(company) %>
+          <%= delete_link_to "削除", admin_company_path(company) %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+<% end %>

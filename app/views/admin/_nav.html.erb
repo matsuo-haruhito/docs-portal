@@ -1,0 +1,11 @@
+<ul class="nav-list">
+  <li><%= link_to "ダッシュボード", admin_root_path %></li>
+  <% if company_master_admin? %>
+    <li><%= link_to "会社", admin_companies_path %></li>
+  <% end %>
+  <li><%= link_to "ユーザー", admin_users_path %></li>
+  <li><%= link_to "案件", admin_projects_path %></li>
+  <li><%= link_to "案件所属", admin_project_memberships_path %></li>
+  <li><%= link_to "文書", admin_documents_path %></li>
+  <li><%= link_to "文書権限", admin_document_permissions_path %></li>
+</ul>

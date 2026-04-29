@@ -1,0 +1,5 @@
+document_slug,version_label,file_name,content_type,storage_key,file_size,sort_order
+dispatch-operation-manual,v1.1.0,manual.pdf,application/pdf,pj001/dispatch-operation-manual/v1.1.0/manual.pdf,234567,0
+dispatch-api-spec,v1.0.0,api-spec.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,pj001/dispatch-api-spec/v1.0.0/api-spec.xlsx,98765,0
+dispatch-api-spec,v1.0.0,api-spec.pdf,application/pdf,pj001/dispatch-api-spec/v1.0.0/api-spec.pdf,123456,1
+wms-basic-spec,v1.0.0,basic-spec.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,pj002/wms-basic-spec/v1.0.0/basic-spec.docx,87654,0

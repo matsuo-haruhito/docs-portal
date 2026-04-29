@@ -1,0 +1,3 @@
+code,name,description,active
+PJ001,配車管理システム,顧客向け配車・進捗管理ポータル,true
+PJ002,倉庫管理システム,入出荷・在庫・ラベル管理,true

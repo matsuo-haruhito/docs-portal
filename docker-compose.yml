@@ -1,0 +1,42 @@
+services:
+  app:
+    build:
+      context: ./docker/dev
+      args:
+        uid: ${APP_UID}
+        gid: ${APP_GID}
+    env_file: .env
+    environment:
+      PS1: '\u@\h:\w\$$ '
+      TZ: Asia/Tokyo
+      HISTFILE: tmp/.bash_history
+      RAILS_ENV: development
+    working_dir: /app
+    tty: true
+    stdin_open: true
+    volumes:
+      - .:/app
+      - ./vendor/bundle:/usr/local/bundle
+    command: bash -c 'rm -f tmp/pids/server.pid; rails s -b 0.0.0.0'
+    ports:
+      - '${PUBLISH_WEB_SERVER_PORT}:3000'
+    depends_on:
+      - db
+
+  db:
+    image: postgres:18.3
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_INITDB_ARGS: '--encoding=UTF-8 --locale=C'
+    volumes:
+      - db:/var/lib/postgresql
+    ports:
+      - '${PUBLISH_DATABASE_PORT}:5432'
+    logging:
+      options:
+        max-size: 10m
+        max-file: '10'
+
+volumes:
+  db:

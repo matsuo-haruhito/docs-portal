@@ -1,0 +1,24 @@
+<% hidden_count = local_assigns[:hidden_count] %>
+<% children ||= tree.children_for(item) %>
+<% branch_info = tree_branch_info(item, tree) %>
+<% ancestor_last_states = branch_info[:ancestor_last_states] %>
+<% is_last = branch_info[:is_last] %>
+
+<div class="tree-toggle">
+  <div class="tree-toggle__branches" aria-hidden="true">
+    <% ancestor_last_states.each do |ancestor_is_last| %>
+      <span class="tree-toggle__branch-slot <%= "is-empty" if ancestor_is_last %> <%= "has-line" unless ancestor_is_last %>"></span>
+    <% end %>
+    <% if depth.positive? %>
+      <span class="tree-toggle__branch-slot is-current <%= is_last ? "is-last" : "is-middle" %>"></span>
+    <% end %>
+  </div>
+  <div class="tree-toggle__control">
+    <span class="tree-toggle__level"><%= tree_toggle_label(depth) %></span>
+    <% if children.any? %>
+      <span class="tree-toggle__hidden-count"><%= tree.descendant_counts[tree.node_key_for(item)].to_i %></span>
+    <% elsif hidden_count.present? %>
+      <span class="tree-toggle__hidden-count"><%= hidden_count %></span>
+    <% end %>
+  </div>
+</div>

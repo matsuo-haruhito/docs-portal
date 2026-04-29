@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+COPY_ROOT="${1:-storage/document_files/external_samples}"
+
+mkdir -p "${COPY_ROOT}"
+
+printf 'prepared %s\n' "${COPY_ROOT}"
+printf 'create <sample-set>/<document-dir>/ under this path before running db:seed\n'

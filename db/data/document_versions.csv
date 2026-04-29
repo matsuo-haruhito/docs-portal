@@ -1,0 +1,6 @@
+document_slug,version_label,status,source_commit_hash,changelog_summary,published_at,published_by_email,markdown_entry_path,site_build_path,pdf_snapshot_path
+dispatch-operation-manual,v1.0.0,published,seed-pj1-manual-v100,初版公開,2026-04-16 10:00:00,admin@example.com,pj001/dispatch-operation-manual/v1.0.0,pj001/dispatch-operation-manual/v1.0.0,pj001/dispatch-operation-manual/v1.0.0/manual.pdf
+dispatch-operation-manual,v1.1.0,published,seed-pj1-manual-v110,画面説明を追加,2026-04-22 10:00:00,admin@example.com,pj001/dispatch-operation-manual/v1.1.0,pj001/dispatch-operation-manual/v1.1.0,pj001/dispatch-operation-manual/v1.1.0/manual.pdf
+dispatch-api-spec,v1.0.0,published,seed-pj1-api-v100,API初版,2026-04-20 10:00:00,admin@example.com,pj001/dispatch-api-spec/v1.0.0,pj001/dispatch-api-spec/v1.0.0,pj001/dispatch-api-spec/v1.0.0/api.pdf
+wms-basic-spec,v1.0.0,published,seed-pj2-spec-v100,基本仕様 初版,2026-04-21 10:00:00,admin@example.com,pj002/wms-basic-spec/v1.0.0,pj002/wms-basic-spec/v1.0.0,pj002/wms-basic-spec/v1.0.0/spec.pdf
+internal-note,v0.1.0,draft,seed-internal-note-v010,社内ドラフト,,admin@example.com,,,

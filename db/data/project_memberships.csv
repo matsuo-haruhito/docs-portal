@@ -1,0 +1,7 @@
+project_code,user_email,role
+PJ001,admin@example.com,owner
+PJ001,staff@example.com,viewer
+PJ001,client-a@example.com,viewer
+PJ002,admin@example.com,owner
+PJ002,staff@example.com,viewer
+PJ002,client-b@example.com,viewer

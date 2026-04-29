@@ -1,0 +1,34 @@
+<% page_title "案件マスタ" %>
+<h1>案件マスタ</h1>
+<%= render "admin/nav" %>
+
+<div class="card">
+  <h2>新規登録</h2>
+  <%= render "form", project: @project %>
+</div>
+
+<%= table_tag do %>
+  <thead>
+    <tr>
+      <th>コード</th>
+      <th>案件名</th>
+      <th>説明</th>
+      <th>状態</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @projects.each do |project| %>
+      <tr>
+        <td><%= project.code %></td>
+        <td><%= project.name %></td>
+        <td><%= project.description %></td>
+        <td><%= project.active? ? "有効" : "無効" %></td>
+        <td class="actions">
+          <%= edit_link_to "編集", edit_admin_project_path(project) %>
+          <%= delete_link_to "削除", admin_project_path(project) %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+<% end %>

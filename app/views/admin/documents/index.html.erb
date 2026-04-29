@@ -1,0 +1,38 @@
+<% page_title "文書マスタ" %>
+<h1>文書マスタ</h1>
+<%= render "admin/nav" %>
+
+<div class="card">
+  <h2>新規登録</h2>
+  <%= render "form", document: @document %>
+</div>
+
+<%= table_tag do %>
+  <thead>
+    <tr>
+      <th>案件</th>
+      <th>タイトル</th>
+      <th>スラッグ</th>
+      <th>カテゴリ</th>
+      <th>種別</th>
+      <th>公開範囲</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @documents.each do |document| %>
+      <tr>
+        <td><%= document.project.name %></td>
+        <td><%= document.title %></td>
+        <td><%= document.slug %></td>
+        <td><span class="badge"><%= document.category %></span></td>
+        <td><%= document.document_kind %></td>
+        <td><%= document.visibility_policy %></td>
+        <td class="actions">
+          <%= edit_link_to "編集", edit_admin_document_path(document) %>
+          <%= delete_link_to "削除", admin_document_path(document) %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+<% end %>

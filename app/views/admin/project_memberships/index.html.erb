@@ -1,0 +1,32 @@
+<% page_title "案件所属" %>
+<h1>案件所属</h1>
+<%= render "admin/nav" %>
+
+<div class="card">
+  <h2>新規登録</h2>
+  <%= render "form", project_membership: @project_membership %>
+</div>
+
+<%= table_tag do %>
+  <thead>
+    <tr>
+      <th>案件</th>
+      <th>ユーザー</th>
+      <th>権限</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @project_memberships.each do |membership| %>
+      <tr>
+        <td><%= membership.project.name %></td>
+        <td><%= membership.user.email_address %></td>
+        <td><span class="badge"><%= membership.role %></span></td>
+        <td class="actions">
+          <%= edit_link_to "編集", edit_admin_project_membership_path(membership) %>
+          <%= delete_link_to "削除", admin_project_membership_path(membership) %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+<% end %>

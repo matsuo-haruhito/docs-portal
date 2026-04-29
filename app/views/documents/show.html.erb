@@ -1,0 +1,34 @@
+<% page_title @document.title %>
+<% content_for :left_content do %>
+  <%= render "tree", projects: @tree_projects, current_project: @project, current_document: @document %>
+<% end %>
+
+<h1><%= @document.title %></h1>
+<p class="muted">
+  案件: <%= @project.name %> /
+  カテゴリ: <%= @document.category %> /
+  種別: <%= @document.document_kind %>
+</p>
+
+<h2>バージョン</h2>
+<ul>
+  <% @versions.each do |version| %>
+    <li>
+      <strong><%= version.version_label %></strong>
+      (<%= version.status %>)
+      <% if version.markdown_entry_path.present? %>
+        - <%= link_to "表示", view_document_version_path(version) %>
+      <% end %>
+
+      <% if version.document_files.any? %>
+        <ul>
+          <% version.document_files.order(:sort_order).each do |file| %>
+            <li><%= link_to file.file_name, document_file_path(file) %> (<%= file.content_type %>)</li>
+          <% end %>
+        </ul>
+      <% end %>
+    </li>
+  <% end %>
+</ul>
+
+<p><%= link_to "文書一覧へ戻る", project_documents_path(@project) %></p>

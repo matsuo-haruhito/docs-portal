@@ -1,0 +1,115 @@
+.tree-toggle-cell{
+  white-space: nowrap;
+}
+
+.tree-toggle{
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.25rem;
+  min-height: 2rem;
+  min-width: 0;
+}
+
+.tree-toggle__branches{
+  display: inline-flex;
+  align-items: stretch;
+  flex: 0 0 auto;
+  min-height: 1.8rem;
+}
+
+.tree-toggle__branch-slot{
+  position: relative;
+  width: 1.35rem;
+  min-width: 1.35rem;
+}
+
+.tree-toggle__branch-slot.has-line::before{
+  content: "";
+  position: absolute;
+  top: -0.35rem;
+  bottom: -0.35rem;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background-color: rgba(108, 117, 125, 0.4);
+}
+
+.tree-toggle__branch-slot.is-current::before{
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background-color: rgba(108, 117, 125, 0.5);
+}
+
+.tree-toggle__branch-slot.is-current.is-middle::before{
+  top: -0.35rem;
+  bottom: -0.35rem;
+}
+
+.tree-toggle__branch-slot.is-current.is-last::before{
+  top: -0.35rem;
+  bottom: 50%;
+}
+
+.tree-toggle__branch-slot.is-current::after{
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  right: 0;
+  height: 1px;
+  transform: translateY(-50%);
+  background-color: rgba(108, 117, 125, 0.5);
+}
+
+.tree-toggle__control{
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 0.15rem;
+}
+
+.tree-toggle__action{
+  min-width: 2.9rem;
+  padding: 0.05rem 0.25rem;
+  text-decoration: none;
+}
+
+.tree-toggle__action:hover,
+.tree-toggle__action:focus{
+  text-decoration: none;
+}
+
+.tree-toggle__level{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.9rem;
+  padding: 0.05rem 0.25rem;
+  border-radius: 999px;
+  background-color: #f1f3f5;
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+
+.tree-toggle__hidden-count{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.3rem;
+  padding: 0.02rem 0.18rem;
+  border-radius: 999px;
+  background-color: #e9ecef;
+  color: #495057;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.tree-view-table{
+  min-width: 100%;
+}

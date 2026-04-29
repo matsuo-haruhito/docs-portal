@@ -1,0 +1,5 @@
+project_code,title,slug,category,document_kind,visibility_policy,latest_version_label
+PJ001,配車管理システム 操作マニュアル,dispatch-operation-manual,manual,markdown,restricted_external,v1.1.0
+PJ001,配車管理API仕様書,dispatch-api-spec,spec,mixed,restricted_external,v1.0.0
+PJ002,WMS 基本仕様書,wms-basic-spec,spec,markdown,restricted_external,v1.0.0
+PJ002,社内検討メモ,internal-note,meeting_note,word,internal_only,v0.1.0

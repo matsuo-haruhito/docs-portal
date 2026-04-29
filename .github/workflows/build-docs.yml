@@ -1,0 +1,50 @@
+name: build-docs
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Docusaurus dependencies
+        working-directory: ./docusaurus
+        run: npm install
+
+      - name: Build Docusaurus site
+        working-directory: ./docusaurus
+        run: npm run build
+
+      - name: Create manifest
+        run: |
+          node ./scripts/generate_publish_manifest.mjs \
+            --config ./publish/documents.json \
+            --output ./publish/manifest/publish.json \
+            --repository "${{ github.repository }}" \
+            --branch "${{ github.ref_name }}" \
+            --sha "${{ github.sha }}"
+
+      - name: Archive build output
+        run: |
+          tar -czf docs-site.tar.gz docusaurus/build attachments publish/manifest
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docs-site
+          path: docs-site.tar.gz
+
+      - name: Call Rails import API
+        if: ${{ secrets.RAILS_PORTAL_IMPORT_URL != '' && secrets.RAILS_PORTAL_IMPORT_TOKEN != '' }}
+        run: |
+          curl -X POST "${{ secrets.RAILS_PORTAL_IMPORT_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.RAILS_PORTAL_IMPORT_TOKEN }}" \
+            -F "artifact_root=$(pwd)" \
+            -F "manifest_path=$(pwd)/publish/manifest/publish.json"

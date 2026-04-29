@@ -1,0 +1,24 @@
+<%= render "shared/error_messages", record: project_membership %>
+
+<%= form_with model: [:admin, project_membership] do |form| %>
+  <div class="form-grid">
+    <label>
+      案件
+      <%= form.collection_select :project_id, @projects, :id, :name %>
+    </label>
+    <label>
+      ユーザー
+      <%= form.collection_select :user_id, @users, :id, :email_address %>
+    </label>
+    <label>
+      権限
+      <%= form.select :role, ProjectMembership.roles.keys.map { |key| [key, key] } %>
+    </label>
+  </div>
+  <p class="actions" style="margin-top:16px;">
+    <%= form.submit "保存", class: "button" %>
+    <% if project_membership.persisted? %>
+      <%= link_to "一覧へ戻る", admin_project_memberships_path, class: "button secondary" %>
+    <% end %>
+  </p>
+<% end %>

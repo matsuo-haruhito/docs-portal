@@ -1,0 +1,29 @@
+<%= render "shared/error_messages", record: document_permission %>
+
+<%= form_with model: [:admin, document_permission] do |form| %>
+  <div class="form-grid">
+    <label style="grid-column: 1 / -1;">
+      文書
+      <%= form.collection_select :document_id, @documents, :id, :title %>
+    </label>
+    <label>
+      会社
+      <%= form.collection_select :company_id, @companies, :id, :name, include_blank: "未指定" %>
+    </label>
+    <label>
+      ユーザー
+      <%= form.collection_select :user_id, @users, :id, :email_address, include_blank: "未指定" %>
+    </label>
+    <label>
+      権限
+      <%= form.select :access_level, DocumentPermission.access_levels.keys.map { |key| [key, key] } %>
+    </label>
+  </div>
+  <p class="muted">会社単位かユーザー単位のどちらかを指定してください。</p>
+  <p class="actions">
+    <%= form.submit "保存", class: "button" %>
+    <% if document_permission.persisted? %>
+      <%= link_to "一覧へ戻る", admin_document_permissions_path, class: "button secondary" %>
+    <% end %>
+  </p>
+<% end %>

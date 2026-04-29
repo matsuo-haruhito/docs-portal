@@ -1,0 +1,17 @@
+{
+  "id": "intro",
+  "title": "Docs Portal Sample",
+  "description": "このディレクトリは、Docusaurus build を成立させるための最小サンプルです。",
+  "source": "@site/../docs-src/intro.md",
+  "sourceDirName": ".",
+  "slug": "/",
+  "permalink": "/",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "slug": "/"
+  },
+  "sidebar": "tutorialSidebar"
+}

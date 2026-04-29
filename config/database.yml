@@ -1,0 +1,36 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  template: template0
+  collation: C
+  ctype: C
+  host: <%= ENV["DATABASE_HOST"] %>
+  port: <%= ENV["DATABASE_PORT"] %>
+  database: <%= ENV["DATABASE_NAME"] %>
+  username: <%= ENV["DATABASE_USER"] %>
+  password: <%= ENV["DATABASE_PASSWORD"] %>
+
+development:
+  <<: *default
+  database: <%= ENV["DATABASE_NAME"] %>_development
+
+test:
+  <<: *default
+  database: <%= ENV["DATABASE_NAME"] %>_test
+
+production:
+  primary: &primary_production
+    <<: *default
+  cache:
+    <<: *primary_production
+    database: docs_portal_production_cache
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *primary_production
+    database: docs_portal_production_queue
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *primary_production
+    database: docs_portal_production_cable
+    migrations_paths: db/cable_migrate

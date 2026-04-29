@@ -1,0 +1,10 @@
+<% if record.errors.any? %>
+  <div class="error-messages">
+    <strong>入力内容を確認してください。</strong>
+    <ul>
+      <% record.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
