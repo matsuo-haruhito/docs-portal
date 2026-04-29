@@ -1,4 +1,8 @@
 class DocumentPermission < ApplicationRecord
+  include PublicIdentifiable
+
+  public_id_prefix "perm"
+
   belongs_to :document
   belongs_to :company, optional: true
   belongs_to :user, optional: true

@@ -1,4 +1,8 @@
 class DocumentFile < ApplicationRecord
+  include PublicIdentifiable
+
+  public_id_prefix "file"
+
   EXTENSION_CONTENT_TYPES = {
     ".md" => "text/markdown",
     ".markdown" => "text/markdown",

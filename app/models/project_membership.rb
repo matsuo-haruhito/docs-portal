@@ -1,4 +1,8 @@
 class ProjectMembership < ApplicationRecord
+  include PublicIdentifiable
+
+  public_id_prefix "pmem"
+
   belongs_to :project
   belongs_to :user
 

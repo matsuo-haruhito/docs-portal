@@ -1,4 +1,8 @@
 class User < ApplicationRecord
+  include PublicIdentifiable
+
+  public_id_prefix "usr"
+
   has_secure_password
 
   belongs_to :company, optional: true

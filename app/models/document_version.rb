@@ -1,4 +1,8 @@
 class DocumentVersion < ApplicationRecord
+  include PublicIdentifiable
+
+  public_id_prefix "ver"
+
   belongs_to :document
   belongs_to :published_by_user, class_name: "User", optional: true
 

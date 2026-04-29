@@ -1,5 +1,8 @@
 class Document < ApplicationRecord
+  include PublicIdentifiable
   include DocumentAccess
+
+  public_id_prefix "doc"
 
   belongs_to :project
   belongs_to :latest_version, class_name: "DocumentVersion", optional: true
