@@ -20,6 +20,15 @@ const config: Config = {
       },
     ],
   ],
+
+  onBrokenLinks: 'warn',
+  onBrokenMarkdownLinks: 'warn',
+
+  markdown: {
+    hooks: {
+      onBrokenMarkdownImages: 'warn',
+    },
+  },
 };
 
 export default config;

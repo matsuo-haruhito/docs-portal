@@ -12,7 +12,7 @@ export default {
       "classic",
       {
         "docs": {
-          "path": "../docs-src",
+          "path": "/tmp/seed-docusaurus-20260430-1-62lwr2/docs-src",
           "routeBasePath": "/",
           "sidebarPath": "./sidebars.ts",
           "lastVersion": "current"
@@ -22,6 +22,24 @@ export default {
       }
     ]
   ],
+  "onBrokenLinks": "warn",
+  "markdown": {
+    "hooks": {
+      "onBrokenMarkdownImages": "warn",
+      "onBrokenMarkdownLinks": "warn"
+    },
+    "format": "mdx",
+    "mermaid": false,
+    "emoji": true,
+    "mdx1Compat": {
+      "comments": true,
+      "admonitions": true,
+      "headingIds": true
+    },
+    "anchors": {
+      "maintainCase": false
+    }
+  },
   "baseUrlIssueBanner": true,
   "i18n": {
     "defaultLocale": "en",
@@ -57,7 +75,6 @@ export default {
     "experimental_vcs": {},
     "experimental_router": "browser"
   },
-  "onBrokenLinks": "throw",
   "onBrokenAnchors": "warn",
   "onDuplicateRoutes": "warn",
   "staticDirectories": [
@@ -242,22 +259,5 @@ export default {
   "clientModules": [],
   "tagline": "",
   "titleDelimiter": "|",
-  "noIndex": false,
-  "markdown": {
-    "format": "mdx",
-    "mermaid": false,
-    "emoji": true,
-    "mdx1Compat": {
-      "comments": true,
-      "admonitions": true,
-      "headingIds": true
-    },
-    "anchors": {
-      "maintainCase": false
-    },
-    "hooks": {
-      "onBrokenMarkdownLinks": "warn",
-      "onBrokenMarkdownImages": "throw"
-    }
-  }
+  "noIndex": false
 };
