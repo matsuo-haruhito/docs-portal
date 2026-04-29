@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   end
 
   resources :projects, only: [:index, :show] do
+    get "site(/*site_path)", to: "project_sites#show", as: :site, format: false
     resources :documents, only: [:index, :show]
   end
 

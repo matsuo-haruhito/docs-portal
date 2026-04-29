@@ -46,7 +46,7 @@ node_modules
 /backup/*
 !/backup/README.md
 
-docusaurus/.docusaurus/docusaurus-plugin-content-docs/default/*
+docusaurus/.docusaurus/
 
 .codex
 .tmp.*

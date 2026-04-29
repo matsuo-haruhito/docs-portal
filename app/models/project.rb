@@ -10,4 +10,12 @@ class Project < ApplicationRecord
 
   validates :code, :name, presence: true
   validates :code, uniqueness: true
+
+  def default_site_version_for(user)
+    documents.includes(:latest_version)
+      .map(&:latest_version)
+      .compact
+      .select { _1.rendered_site_available? && _1.viewable_by?(user) }
+      .max_by(&:published_at)
+  end
 end

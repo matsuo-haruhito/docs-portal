@@ -37,4 +37,26 @@ RSpec.describe "Document views", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).not_to include(view_document_version_path(version))
   end
+
+  it "redirects rendered html views to the project site route" do
+    version = create(
+      :document_version,
+      document:,
+      version_label: "v2.0.0",
+      markdown_entry_path: "external_samples/sample-site/operation-manual",
+      site_build_path: "external_samples/sample-site"
+    )
+
+    FileUtils.mkdir_p(version.site_root_absolute_path.join("external_samples/sample-site"))
+    File.write(version.site_root_absolute_path.join("external_samples/sample-site", "operation-manual.html"), "<html></html>")
+
+    sign_in_as(user)
+    get view_document_version_path(version)
+
+    expect(response).to redirect_to(
+      project_site_path(project, site_path: version.html_view_site_path, version_id: version.public_id)
+    )
+  ensure
+    FileUtils.rm_rf(version.site_root_absolute_path) if version&.id
+  end
 end

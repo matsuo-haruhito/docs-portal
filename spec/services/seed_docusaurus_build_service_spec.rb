@@ -39,7 +39,7 @@ RSpec.describe SeedSupport::DocusaurusBuilder do
       source_dir:,
       version:,
       site_build_path: version.site_build_path
-    ).call
+    ).build
 
     expect(version.site_entry_absolute_path).to exist
     expect(version.site_entry_absolute_path.read).to include("Hello")

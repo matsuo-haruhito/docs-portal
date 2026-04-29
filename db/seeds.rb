@@ -8,6 +8,13 @@ puts "Seeding from CSV..."
 
 SEED_DATA_DIR = Rails.root.join("db", "seeds", "data")
 EXTERNAL_SAMPLE_ROOT = Rails.root.join("storage", "document_files", "external_samples")
+VERSION_SNAPSHOT_DIRECTORY_NAMES = %w[
+  編集正本
+  編集正本PDF化済
+  編集正本PDF化
+  提出済
+  提出済み
+].freeze
 
 def csv_rows(name)
   CSV.read(SEED_DATA_DIR.join(name), headers: true, encoding: "UTF-8")
@@ -72,43 +79,122 @@ def slug_for_name(name)
 end
 
 def version_label_for_name(name)
-  slug_for_name(name)
+  name.to_s.presence || "current"
 end
 
-def site_build_path_for_document(document_spec)
-  File.join(
-    "external_samples",
-    slug_for_name(document_spec[:project_name]),
-    document_spec[:slug],
-    document_spec[:version_label]
-  )
+def site_build_segment_for_name(name)
+  slug_for_name(name.to_s.presence || "current")
 end
 
 def child_directories(path)
   path.children.select(&:directory?).sort_by(&:to_s)
 end
 
+def version_snapshot_directory?(path)
+  VERSION_SNAPSHOT_DIRECTORY_NAMES.include?(path.basename.to_s)
+end
+
+def site_page_path_for_markdown(logical_relative_path, site_build_path)
+  path = Pathname(logical_relative_path.to_s)
+  page_relative =
+    if path.basename.to_s.match?(/\AREADME\.(md|markdown)\z/i)
+      path.dirname.to_s == "." ? "" : path.dirname.to_s
+    else
+      path.sub_ext("").to_s
+    end
+
+  [site_build_path, page_relative.presence].compact.join("/")
+end
+
+def logical_document_key_for_markdown(logical_relative_path)
+  path = Pathname(logical_relative_path.to_s)
+
+  if path.basename.to_s.match?(/\AREADME\.(md|markdown)\z/i)
+    path.dirname.to_s == "." ? "__root__" : path.dirname.to_s
+  else
+    path.sub_ext("").to_s
+  end
+end
+
+def document_title_for_markdown(logical_relative_path, site_dir)
+  path = Pathname(logical_relative_path.to_s)
+
+  if path.basename.to_s.match?(/\AREADME\.(md|markdown)\z/i)
+    path.dirname.to_s == "." ? site_dir.basename.to_s : path.dirname.basename.to_s
+  else
+    path.basename.sub_ext("").to_s
+  end
+end
+
+def markdown_files_for_scope(source_root, excluded_roots: [])
+  Dir.glob(source_root.join("**/*").to_s).select do |path|
+    next false unless File.file?(path)
+    next false unless %w[.md .markdown].include?(File.extname(path).downcase)
+
+    excluded_roots.none? { Pathname(path).to_s.start_with?(_1.to_s + File::SEPARATOR) }
+  end.sort
+end
+
+def related_attachment_files(markdown_file, logical_relative_path, source_root)
+  path = Pathname(logical_relative_path.to_s)
+  source_path = Pathname(markdown_file)
+
+  Dir.glob(source_path.dirname.join("#{path.basename.sub_ext('').to_s}.*").to_s)
+    .select { File.file?(_1) }
+    .sort
+end
+
+def latest_external_document_specs(sample_documents)
+  sample_documents
+    .group_by { [ _1[:project_code], _1[:slug] ] }
+    .values
+    .map do |document_specs|
+      document_specs.find { _1[:version_label] == "current" } ||
+        document_specs.max_by { [ _1[:version_priority], _1[:version_label].to_s ] }
+    end
+end
+
 def external_sample_documents(root)
   return [] unless root&.directory?
 
   child_directories(root).flat_map do |sample_set_dir|
-    document_dirs = child_directories(sample_set_dir)
-    document_dirs = [sample_set_dir] if document_dirs.empty?
+    site_dirs = child_directories(sample_set_dir)
+    site_dirs = [sample_set_dir] if site_dirs.empty?
 
-    document_dirs.map do |source_dir|
+    site_dirs.flat_map do |site_dir|
       sample_set_key = sample_set_dir.basename.to_s
-      document_key = source_dir.basename.to_s
+      project_name = site_dirs == [sample_set_dir] ? sample_set_key : "#{sample_set_key} / #{site_dir.basename}"
+      project_code = project_code_for_sample_set(project_name)
+      snapshot_dirs = child_directories(site_dir).select { version_snapshot_directory?(_1) }
+      scopes = snapshot_dirs.map { |dir| [dir.basename.to_s, dir, snapshot_dirs] }
+      scopes << ["current", site_dir, snapshot_dirs]
 
-      {
-        project_code: project_code_for_sample_set(sample_set_key),
-        project_name: sample_set_key,
-        project_description: "external_samples/#{sample_set_key} 配下のサンプル文書",
-        title: document_key,
-        slug: slug_for_name(document_key),
-        version_label: version_label_for_name(document_key),
-        source_commit_hash: "external-#{slug_for_name("#{sample_set_key}-#{document_key}")}",
-        source_dir:
-      }
+      scopes.flat_map do |version_name, source_root, excluded_roots|
+        markdown_files_for_scope(source_root, excluded_roots: source_root == site_dir ? excluded_roots : []).map do |markdown_file|
+          logical_relative_path = relative_path(markdown_file, source_root)
+          document_key = logical_document_key_for_markdown(logical_relative_path)
+          slug = slug_for_name("#{site_dir.basename}-#{document_key}")
+          version_label = version_label_for_name(version_name)
+          site_build_path = File.join("external_samples", slug_for_name(project_name), site_build_segment_for_name(version_name))
+
+          {
+            project_code:,
+            project_name:,
+            project_description: "external_samples/#{sample_set_key} 配下のサンプル文書サイト",
+            title: document_title_for_markdown(logical_relative_path, site_dir),
+            slug:,
+            version_label:,
+            source_commit_hash: "external-#{slug_for_name("#{project_name}-#{document_key}-#{version_label}")}",
+            source_dir: source_root,
+            markdown_source_file: Pathname(markdown_file),
+            markdown_logical_relative_path: logical_relative_path,
+            markdown_entry_path: site_page_path_for_markdown(logical_relative_path, site_build_path),
+            site_build_path:,
+            version_priority: source_root == site_dir ? 1 : 0,
+            attachment_files: related_attachment_files(markdown_file, logical_relative_path, source_root).map { Pathname(_1) }
+          }
+        end
+      end
     end
   end
 end
@@ -437,6 +523,8 @@ ActiveRecord::Base.transaction do
   sample_documents = external_sample_documents(sample_source_root)
 
   if sample_documents.any?
+    latest_sample_documents = latest_external_document_specs(sample_documents)
+
     upsert_rows!(
       Project,
       sample_documents.uniq { _1[:project_code] }.map do |document_spec|
@@ -456,7 +544,7 @@ ActiveRecord::Base.transaction do
 
     existing_documents = build_existing_map(Document.all) { composite_key(_1.project_id, _1.slug) }
 
-    external_document_rows = sample_documents.map do |document_spec|
+    external_document_rows = latest_sample_documents.map do |document_spec|
       project = projects.fetch(document_spec[:project_code])
       existing = existing_documents[composite_key(project.id, document_spec[:slug])]
 
@@ -478,10 +566,6 @@ ActiveRecord::Base.transaction do
     external_version_rows = sample_documents.map do |document_spec|
       document = documents.fetch(composite_key(document_spec[:project_code], document_spec[:slug]))
       existing = existing_versions[composite_key(document.id, document_spec[:version_label])]
-      site_build_path = site_build_path_for_document(document_spec)
-      markdown_entry_path = Dir.glob(document_spec[:source_dir].join("**/*").to_s).find do |path|
-        File.file?(path) && %w[.md .markdown].include?(File.extname(path).downcase)
-      end
 
       {
         public_id: public_id_for_seed(existing, "ver", document_spec[:project_code], document_spec[:slug], document_spec[:version_label]),
@@ -493,8 +577,8 @@ ActiveRecord::Base.transaction do
         published_at: now,
         published_by_user_id: users.fetch("admin@example.com").id,
         notes: "source_dir=#{document_spec[:source_dir]}",
-        markdown_entry_path: markdown_entry_path ? site_build_path : nil,
-        site_build_path: markdown_entry_path ? site_build_path : nil,
+        markdown_entry_path: document_spec[:markdown_entry_path],
+        site_build_path: document_spec[:site_build_path],
         pdf_snapshot_path: nil
       }.merge(timestamp_attrs(now, existing&.created_at))
     end
@@ -503,7 +587,7 @@ ActiveRecord::Base.transaction do
 
     upsert_rows!(
       Document,
-      sample_documents.map do |document_spec|
+      latest_sample_documents.map do |document_spec|
         document = documents.fetch(composite_key(document_spec[:project_code], document_spec[:slug]))
         version = versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
 
@@ -524,22 +608,43 @@ ActiveRecord::Base.transaction do
 
     versions = DocumentVersion.includes(document: :project).index_by { composite_key(_1.document.project.code, _1.document.slug, _1.version_label) }
 
-    sample_documents.each do |document_spec|
-      version = versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
-      next if version.site_build_path.blank?
+    sample_documents
+      .group_by { [ _1[:project_code], _1[:version_label], _1[:source_dir].to_s, _1[:site_build_path] ] }
+      .each_value do |document_specs|
+        representative_spec = document_specs.first
+        representative_version = versions.fetch(
+          composite_key(
+            representative_spec[:project_code],
+            representative_spec[:slug],
+            representative_spec[:version_label]
+          )
+        )
+        next if representative_version.site_build_path.blank?
 
-      SeedSupport::DocusaurusBuilder.new(
-        source_dir: document_spec[:source_dir],
-        version: version,
-        site_build_path: version.site_build_path
-      ).build
+        SeedSupport::DocusaurusBuilder.new(
+          source_dir: representative_spec[:source_dir],
+          version: representative_version,
+          site_build_path: representative_version.site_build_path
+        ).build
+
+        sibling_versions = document_specs.filter_map do |document_spec|
+          versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
+        end.uniq
+
+        sibling_versions.each do |version|
+          next if version == representative_version
+
+          FileUtils.mkdir_p(version.site_root_absolute_path)
+          FileUtils.rm_rf(version.site_root_absolute_path.children)
+          FileUtils.cp_r(representative_version.site_root_absolute_path.children, version.site_root_absolute_path)
+        end
     end
 
     existing_files = build_existing_map(DocumentFile.all) { [_1.storage_key] }
 
     external_file_specs = sample_documents.flat_map do |document_spec|
       version = versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
-      source_files = Dir.glob(document_spec[:source_dir].join("**/*").to_s).select { File.file?(_1) }.sort
+      source_files = document_spec[:attachment_files]
 
       source_files.each_with_index.map do |source_file, index|
         storage_key = external_storage_key(source_file)
@@ -570,7 +675,9 @@ ActiveRecord::Base.transaction do
       composite_key(_1.document_id, _1.company_id, _1.user_id)
     end
 
-    external_permission_keys = sample_documents.flat_map do |document_spec|
+    external_permission_documents = latest_sample_documents
+
+    external_permission_keys = external_permission_documents.flat_map do |document_spec|
       document = documents.fetch(composite_key(document_spec[:project_code], document_spec[:slug]))
 
       external_company_codes.map do |company_code|
@@ -581,7 +688,7 @@ ActiveRecord::Base.transaction do
 
     external_permission_ids = next_seed_ids(existing_permissions, external_permission_keys)
 
-    external_permission_rows = sample_documents.flat_map do |document_spec|
+    external_permission_rows = external_permission_documents.flat_map do |document_spec|
       document = documents.fetch(composite_key(document_spec[:project_code], document_spec[:slug]))
 
       external_company_codes.map do |company_code|

@@ -10,29 +10,50 @@
   種別: <%= @document.document_kind %>
 </p>
 
-<h2>バージョン</h2>
+<% if (latest_version = @document.latest_version) && @versions.include?(latest_version) %>
+  <h2>最新版</h2>
+  <p>
+    <strong><%= latest_version.version_label %></strong>
+    (<%= latest_version.status %>)
+    <% if latest_version.rendered_site_available? %>
+      - <%= link_to "HTMLで表示", project_site_path(@project, site_path: latest_version.html_view_site_path, version_id: latest_version.public_id) %>
+    <% end %>
+  </p>
+<% end %>
+
+<h2>版一覧</h2>
 <ul>
   <% @versions.each do |version| %>
     <li>
       <strong><%= version.version_label %></strong>
       (<%= version.status %>)
+
       <% if version.rendered_site_available? %>
-        - <%= link_to "表示", view_document_version_path(version) %>
+        - <%= link_to "HTMLで表示", project_site_path(@project, site_path: version.html_view_site_path, version_id: version.public_id) %>
+      <% else %>
+        - <span class="muted">HTML未生成</span>
       <% end %>
 
-      <% if version.document_files.any? %>
-        <ul>
-          <% version.document_files.order(:sort_order).each do |file| %>
-            <li>
-              <% if file.downloadable_by?(current_user) %>
-                <%= link_to file.file_name, document_file_path(file) %>
-              <% else %>
-                <%= file.file_name %>
-              <% end %>
-              (<%= file.content_type %><%= file.effective_content_type.start_with?("text/markdown") ? " / 生ファイル表示" : "" %>)
-            </li>
-          <% end %>
-        </ul>
+      <% files = version.document_files.order(:sort_order) %>
+      <% if files.any? %>
+        <details>
+          <summary>添付・元ファイル <%= files.size %>件</summary>
+          <ul>
+            <% files.each do |file| %>
+              <li>
+                <% if file.downloadable_by?(current_user) %>
+                  <%= link_to file.file_name, document_file_path(file) %>
+                <% else %>
+                  <%= file.file_name %>
+                <% end %>
+
+                <span class="muted">
+                  (<%= file.effective_content_type %><%= file.effective_content_type.start_with?("text/markdown") ? " / 元Markdown・生ファイル" : " / 添付" %>)
+                </span>
+              </li>
+            <% end %>
+          </ul>
+        </details>
       <% end %>
     </li>
   <% end %>

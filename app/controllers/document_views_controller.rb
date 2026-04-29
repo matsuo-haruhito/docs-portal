@@ -8,6 +8,6 @@ class DocumentViewsController < BaseController
       return
     end
 
-    redirect_to site_document_version_path(version, site_path: version.site_build_path)
+    redirect_to project_site_path(version.document.project, site_path: version.html_view_site_path, version_id: version.public_id)
   end
 end

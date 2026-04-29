@@ -39,6 +39,14 @@ class DocumentVersion < ApplicationRecord
     site_build_path.present? && site_entry_absolute_path&.exist?
   end
 
+  def html_view_site_path
+    markdown_entry_path.presence || site_build_path
+  end
+
+  def normalized_html_view_site_path
+    self.class.normalize_site_page_path(html_view_site_path)
+  end
+
   def viewable_by?(user)
     return false unless user&.active?
     return true if user.internal?
@@ -48,5 +56,12 @@ class DocumentVersion < ApplicationRecord
 
   def legacy_html_absolute_path
     Rails.root.join("storage", "docs_sites", site_build_path.to_s, "index.html")
+  end
+
+  def self.normalize_site_page_path(path)
+    value = path.to_s.delete_prefix("/").sub(%r{\A/+}, "")
+    value = value.delete_suffix("/index.html")
+    value = value.delete_suffix(".html")
+    value.presence || "index"
   end
 end

@@ -1,9 +1,13 @@
 require "nokogiri"
 
 class DocusaurusSiteRenderer
-  def initialize(version:, view_context:)
+  def initialize(version:, view_context:, current_document_version: nil, site_url_builder: nil)
     @version = version
     @view_context = view_context
+    @current_document_version = current_document_version
+    @site_url_builder = site_url_builder || lambda { |site_path, version_for_url|
+      @view_context.site_document_version_path(version_for_url, site_path: site_path)
+    }
   end
 
   def render_entry_html
@@ -75,6 +79,7 @@ class DocusaurusSiteRenderer
     rewrite_url_attributes(document, "link", "href", absolute_path:)
     rewrite_url_attributes(document, "script", "src", absolute_path:)
     rewrite_url_attributes(document, "img", "src", absolute_path:)
+    inject_version_switcher!(document)
 
     document.to_html.html_safe
   end
@@ -99,7 +104,7 @@ class DocusaurusSiteRenderer
         resolve_relative_url(value, absolute_path)
       end
 
-    @view_context.site_document_version_path(@version, site_path: relative_path)
+    build_site_url(relative_path, @current_document_version || @version)
   end
 
   def resolve_relative_url(value, absolute_path)
@@ -122,5 +127,47 @@ class DocusaurusSiteRenderer
 
   def relative_path(path, root)
     Pathname(path).relative_path_from(Pathname(root))
+  end
+
+  def build_site_url(site_path, version_for_url)
+    @site_url_builder.call(site_path, version_for_url)
+  end
+
+  def inject_version_switcher!(document)
+    return unless @current_document_version
+
+    versions = @current_document_version.document.document_versions
+      .select { _1.viewable_by?(Current.user) }
+      .sort_by(&:created_at)
+      .reverse
+    return if versions.size <= 1
+
+    switcher = Nokogiri::XML::Node.new("details", document)
+    switcher["class"] = "document-version-switcher"
+
+    summary = Nokogiri::XML::Node.new("summary", document)
+    summary.content = @current_document_version.version_label
+    switcher.add_child(summary)
+
+    list = Nokogiri::XML::Node.new("ul", document)
+    versions.each do |version|
+      item = Nokogiri::XML::Node.new("li", document)
+
+      if version == @current_document_version
+        item.content = version.version_label
+      else
+        link = Nokogiri::XML::Node.new("a", document)
+        link["href"] = build_site_url(version.html_view_site_path, version)
+        link.content = version.version_label
+        item.add_child(link)
+      end
+
+      list.add_child(item)
+    end
+
+    switcher.add_child(list)
+
+    body = document.at_css("body")
+    body&.children&.first ? body.children.first.add_previous_sibling(switcher) : body&.add_child(switcher)
   end
 end
