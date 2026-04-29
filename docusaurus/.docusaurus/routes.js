@@ -8,573 +8,957 @@ export default [
     routes: [
       {
         path: '/',
-        component: ComponentCreator('/', '978'),
+        component: ComponentCreator('/', '361'),
         routes: [
           {
             path: '/',
-            component: ComponentCreator('/', 'b97'),
+            component: ComponentCreator('/', '814'),
             routes: [
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/', '33c'),
+                path: '/external_samples/kyodo-butsuryu-service/current/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/', 'e93'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/', 'a74'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/', 'fe3'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/seed-9ad71c72e7f6',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/seed-9ad71c72e7f6', '262'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/seed-e6ec18405b10',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/seed-e6ec18405b10', '6f8'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/seed-9b7a0814de91',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/seed-9b7a0814de91', '4ae'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/ベルジョイス_BMS発注データ/seed-4532a143326f',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/ベルジョイス_BMS発注データ/seed-4532a143326f', 'e8f'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/seed-9f2a50f70764',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/seed-9f2a50f70764', 'af9'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/ベルジョイス_BMS発注データ/seed-b39396013358',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/ベルジョイス_BMS発注データ/seed-b39396013358', '3b0'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/', '5f1'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/ベルジョイス_BMS発注データ/seed-b98464c730b0',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/ベルジョイス_BMS発注データ/seed-b98464c730b0', 'fab'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-548d9295b2c6',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-548d9295b2c6', '16b'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/ベルジョイス_BMS発注データ/seed-d428dc9dbd82',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/ベルジョイス_BMS発注データ/seed-d428dc9dbd82', 'd16'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-8e895abd221f',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-8e895abd221f', '021'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/マテハン送信データ/seed-2c065a8cbaba',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/マテハン送信データ/seed-2c065a8cbaba', 'a71'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-aaf199fcb52e',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-aaf199fcb52e', 'e32'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/マテハン送信データ/seed-bb54bba4cb23',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/マテハン送信データ/seed-bb54bba4cb23', '5eb'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-d8e956663fc1',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-d8e956663fc1', 'a58'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/対アークス_IFレイアウト/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/対アークス_IFレイアウト/', '4a6'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-f9a5b920e255',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-f9a5b920e255', '8d5'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/対アークス_IFレイアウト/seed-7f2c1c938e32',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/対アークス_IFレイアウト/seed-7f2c1c938e32', '407'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/', '883'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/議事録/seed-0c8c70635256',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/議事録/seed-0c8c70635256', '020'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-0c04153b05f0',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-0c04153b05f0', 'a94'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/議事録/seed-7ed6e8ba108a',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/議事録/seed-7ed6e8ba108a', 'c75'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-246b8878e53a',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-246b8878e53a', '184'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/追加資料20260415/seed-2e7fadf06b42',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/追加資料20260415/seed-2e7fadf06b42', 'b96'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-752a70294258',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-752a70294258', '5b4'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/追加資料20260415/seed-9f4098d46c7d',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/追加資料20260415/seed-9f4098d46c7d', '941'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-857b832b4090',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-857b832b4090', '01a'),
+                path: '/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/追加資料20260415/seed-ec555ea869d1',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/受領資料Markdown/追加資料20260415/seed-ec555ea869d1', '713'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-aefe34f04af0',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-aefe34f04af0', 'c73'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/', '5f3'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-c737b721a214',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-c737b721a214', 'd16'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-27ef53609db5',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-27ef53609db5', '2bc'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-c902b15a3194',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-c902b15a3194', '9d4'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-303f124aade6',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-303f124aade6', 'c40'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/', '869'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-432081874057',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-432081874057', '32e'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/スケジュール/seed-a2f1dabceb66',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/スケジュール/seed-a2f1dabceb66', '5c0'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-5327df53e89a',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-5327df53e89a', '3c1'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/プロジェクト進行ルール/seed-e2d438819d68',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/プロジェクト進行ルール/seed-e2d438819d68', '8a9'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-65a31f20b6aa',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-65a31f20b6aa', '483'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/課題管理/seed-2574703a4d28',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/課題管理/seed-2574703a4d28', 'a4e'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-90939020b1d1',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-90939020b1d1', 'a4e'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/議事録/seed-7e71b0fc8a84',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/議事録/seed-7e71b0fc8a84', '930'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-981a1578fad1',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-981a1578fad1', '68a'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/議事録/seed-d671833b9c84',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/議事録/seed-d671833b9c84', '1d0'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-a94fd24b87de',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-a94fd24b87de', '75c'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/議事録/seed-ed384307bb8b',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/議事録/seed-ed384307bb8b', '30b'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-ad3ba18ed3e8',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-ad3ba18ed3e8', '62b'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/', '519'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-b41be8eb28e0',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-b41be8eb28e0', '280'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-0942ee839bb4',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-0942ee839bb4', '0e4'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-f3d4a1489a42',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/seed-f3d4a1489a42', '4e9'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-1441f5c92f4d',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-1441f5c92f4d', '58e'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/', '71a'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-5bd118d81f18',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-5bd118d81f18', 'c4d'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-0c2a9a449ae9',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-0c2a9a449ae9', 'd7d'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-5cc631be0888',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-5cc631be0888', '3d0'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-1e2203e38000',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-1e2203e38000', 'c12'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-9952776d8e9b',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-9952776d8e9b', '24e'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-2ead689597e6',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-2ead689597e6', 'f58'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-a26bee36b38e',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-a26bee36b38e', '881'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-3db37a690d65',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-3db37a690d65', '3df'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-d0fd8f4bbe43',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-d0fd8f4bbe43', 'bfa'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-4583aba1db72',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-4583aba1db72', '173'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-eba3af446f0b',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-eba3af446f0b', '59d'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-46e102c0e3fa',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-46e102c0e3fa', '361'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/', 'fed'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-7b65f45205fb',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-7b65f45205fb', 'a59'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-39c326e4e737',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-39c326e4e737', 'acc'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-8691d3f9552f',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-8691d3f9552f', 'df5'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-4c1a17ea7847',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-4c1a17ea7847', '101'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-8ac0ae9e7227',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-8ac0ae9e7227', 'bc0'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-850d07f1e6b8',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-850d07f1e6b8', 'a31'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-a3fa0d47a639',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20240426/ユースケース記述/seed-a3fa0d47a639', 'fe1'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-961a03309547',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-961a03309547', '17a'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-00f3edb533da',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-00f3edb533da', '559'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-99d800ecd9b1',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-99d800ecd9b1', '04c'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-0ad9792f4b77',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-0ad9792f4b77', '96b'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/', 'df9'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-2a45d7955177',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-2a45d7955177', '9cb'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-03bec9903f84',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-03bec9903f84', '06d'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-2c07a5e2f51e',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-2c07a5e2f51e', '757'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-0696ef46f947',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-0696ef46f947', '1b5'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-37795fda2b43',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-37795fda2b43', 'ce2'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-6cfefed75454',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-6cfefed75454', '56b'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-42e2f9559d13',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-42e2f9559d13', 'b4c'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-9e743e3a4337',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-9e743e3a4337', '64f'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-5fc9cf5d5486',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-5fc9cf5d5486', '1c8'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-9fda99bfc540',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-9fda99bfc540', '812'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-7373b35f8a9e',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-7373b35f8a9e', '498'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-a1c1bc54b2fc',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-a1c1bc54b2fc', '05b'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-93af5abc6133',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-93af5abc6133', '18b'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-aa91d7c24420',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-aa91d7c24420', '54e'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-a869f974e72e',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-a869f974e72e', 'f4a'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-e4d75d6aa099',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-e4d75d6aa099', 'cab'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-ada3f90213db',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-ada3f90213db', '076'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-ee9c9313580c',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-ee9c9313580c', '085'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-bb27414cc403',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-bb27414cc403', '972'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-f6c2bf5ea0b3',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-f6c2bf5ea0b3', '784'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-c994055b991a',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-c994055b991a', '57f'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/', '009'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-cbf0f67c1ecb',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-cbf0f67c1ecb', 'e37'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-8a3fa1e2ea32',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-8a3fa1e2ea32', '972'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-d17bd986ddda',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-d17bd986ddda', '9f7'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-91ffe67fdfee',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-91ffe67fdfee', '9f0'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-d7cc591105ba',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-d7cc591105ba', '5dc'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-cd0bde7cfd71',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-cd0bde7cfd71', 'de9'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-eb36fc8b9a35',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-eb36fc8b9a35', 'f8c'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-d98e72b58cd4',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-d98e72b58cd4', 'ff2'),
+                path: '/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-ee1e223f26be',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/提出済/20260424まで/seed-ee1e223f26be', 'f1d'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-e2271eafa750',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-e2271eafa750', 'b9a'),
+                path: '/external_samples/kyodo-butsuryu-service/current/社内メモ/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/社内メモ/', '419'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/', '2b1'),
+                path: '/external_samples/kyodo-butsuryu-service/current/社内メモ/seed-4b632055c234',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/社内メモ/seed-4b632055c234', 'c92'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-050463e99ecd',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-050463e99ecd', '4ca'),
+                path: '/external_samples/kyodo-butsuryu-service/current/社内メモ/seed-814836858deb',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/社内メモ/seed-814836858deb', '62b'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-291d5b8ac8c6',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-291d5b8ac8c6', '8ef'),
+                path: '/external_samples/kyodo-butsuryu-service/current/社内メモ/seed-cba204099f0b',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/社内メモ/seed-cba204099f0b', '013'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-4f98864d5882',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-4f98864d5882', 'e82'),
+                path: '/external_samples/kyodo-butsuryu-service/current/社内メモ/seed-e59c580e7e44',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/社内メモ/seed-e59c580e7e44', 'ca7'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-5ee56c3a0f11',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-5ee56c3a0f11', '4e8'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/', '15a'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-a807289016cd',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-a807289016cd', '4a2'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/', '544'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-c214fe21ecf2',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-c214fe21ecf2', 'a3a'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/seed-56cd84aad57d',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/seed-56cd84aad57d', 'dc6'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-d13d7509c0a6',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-d13d7509c0a6', '45d'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/seed-6c4d917afa17',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/seed-6c4d917afa17', 'b0a'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-fd2149965d94',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-fd2149965d94', 'b3d'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/seed-b773c4aac6c2',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/seed-b773c4aac6c2', 'bb3'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/', '2d1'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/テスト補助ツール/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/テスト補助ツール/', '2df'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/', 'dcb'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/テスト補助ツール/seed-538c7f48913c',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/テスト補助ツール/seed-538c7f48913c', '9a4'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-046f98b2c6ed',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-046f98b2c6ed', '3d6'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/テスト補助ツール/seed-620c7b1795e3',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/テスト補助ツール/seed-620c7b1795e3', '57a'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-500a2f584e8d',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-500a2f584e8d', 'bb0'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/テスト補助ツール/seed-7be103e2980c',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/テスト補助ツール/seed-7be103e2980c', '46e'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-61535a050840',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-61535a050840', '82a'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/テスト補助ツール/seed-84f1d5c4c5ef',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/テスト補助ツール/seed-84f1d5c4c5ef', 'bb7'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-b187f471834d',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-b187f471834d', 'f34'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/テスト補助ツール/seed-c71e63463609',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/テスト補助ツール/seed-c71e63463609', 'bc5'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-be6f24f6fa98',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-be6f24f6fa98', '0ec'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/', '2a0'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-cbe43ef17574',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-cbe43ef17574', '44b'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-074f21e697db',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-074f21e697db', '912'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-d44ec4e59b0e',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-d44ec4e59b0e', 'bb5'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-63669bb6cfd8',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-63669bb6cfd8', 'f79'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/seed-2ac7b4f32b98',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/seed-2ac7b4f32b98', 'c58'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-746fd6bf0aca',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-746fd6bf0aca', '928'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/seed-bafa488d7bcc',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/seed-bafa488d7bcc', 'd98'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-c9154186d5b4',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-c9154186d5b4', '5b8'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/', 'e22'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-cc74a10f3ea7',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-cc74a10f3ea7', 'a16'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-1a69a5a56be4',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-1a69a5a56be4', '3d8'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-d3e045369016',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-d3e045369016', 'f64'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-516669100a9f',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-516669100a9f', 'e6e'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-ecfd49efc5f7',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/テスト/結合テストシナリオ/seed-ecfd49efc5f7', '2e4'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-76fe463afddb',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-76fe463afddb', 'ed3'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/', '56e'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-91e858c9ec1e',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-91e858c9ec1e', '041'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/スケジュール/seed-e34d5a03a16e',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/スケジュール/seed-e34d5a03a16e', 'f92'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-af37d6f39a2f',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-af37d6f39a2f', '5f9'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/プロジェクト進行ルール/seed-efa557376680',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/プロジェクト進行ルール/seed-efa557376680', 'e2c'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-b808171a5556',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-b808171a5556', '7bd'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/課題管理/seed-2aca79aec66c',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/課題管理/seed-2aca79aec66c', 'cde'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-f3baf251efd6',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-f3baf251efd6', '519'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/議事録/seed-3e0892f95a35',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/議事録/seed-3e0892f95a35', '53c'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-f77bc936c8de',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-f77bc936c8de', 'a5e'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/議事録/seed-a60be22f6515',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/議事録/seed-a60be22f6515', '1b8'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/', '3ff'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/議事録/seed-dcc47db48985',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/プロジェクト管理/議事録/seed-dcc47db48985', '2a0'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-31d02c4bcdcf',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-31d02c4bcdcf', 'b1c'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/', '486'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-8f9964812ec0',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-8f9964812ec0', '41c'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-0fe652f64309',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-0fe652f64309', 'acf'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-baecf1497ef3',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-baecf1497ef3', 'a95'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-46ba5d30e107',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-46ba5d30e107', 'db5'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-c470bedab3d8',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-c470bedab3d8', '688'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-a4fd3016fea9',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-a4fd3016fea9', 'd7d'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-ca44880b3421',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-ca44880b3421', '145'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-af55f4898c2b',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-af55f4898c2b', '738'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               },
               {
-                path: '/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-e126cebaafb8',
-                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-e126cebaafb8', 'cf9'),
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-b76aead6cf53',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-b76aead6cf53', '6b4'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-c11b16f3e909',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-c11b16f3e909', '83c'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-e900ee63a511',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-e900ee63a511', '323'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-f98888e7b218',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/seed-f98888e7b218', '3bb'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/フロー図/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/フロー図/', '523'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/フロー図/seed-18aa12980ffd',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/フロー図/seed-18aa12980ffd', 'c31'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/フロー図/seed-3c22f1213405',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/フロー図/seed-3c22f1213405', '859'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/フロー図/seed-9dbfd1b89c73',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/フロー図/seed-9dbfd1b89c73', '807'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/フロー図/seed-cd5ffb285667',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/フロー図/seed-cd5ffb285667', '477'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/フロー図/seed-d5d0fe1b5bf8',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/フロー図/seed-d5d0fe1b5bf8', 'd06'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/', '3ec'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-03407eacd248',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-03407eacd248', '303'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-219210f95a91',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-219210f95a91', 'd6d'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-4bcdd1b3e620',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-4bcdd1b3e620', '49b'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-57fffef8475c',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-57fffef8475c', 'b88'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-7b2ca10e5e41',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-7b2ca10e5e41', 'ea4'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-80387c03cc8f',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-80387c03cc8f', '2d5'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-8872de5505c0',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-8872de5505c0', 'f01'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-b0615863f368',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-b0615863f368', '2cb'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-e45daac593ff',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-e45daac593ff', '0b6'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-e4e7e7d7b20d',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/ユースケース記述/seed-e4e7e7d7b20d', '456'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/構造図/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/構造図/', 'c04'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/構造図/seed-0f14a7338000',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/構造図/seed-0f14a7338000', '882'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/構造図/seed-3f24f7275e53',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/構造図/seed-3f24f7275e53', 'e82'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/構造図/seed-c32a64bc0938',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/構造図/seed-c32a64bc0938', '6c6'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/構造図/seed-f9e87cdb9166',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/構造図/seed-f9e87cdb9166', '38f'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/構造図/seed-fe509bc13954',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/基本設計/構造図/seed-fe509bc13954', 'acf'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/', 'dda'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-6fc1a99d483e',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-6fc1a99d483e', 'ec9'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-726eba4b65ba',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-726eba4b65ba', '033'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-94ed0ab8e16b',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-94ed0ab8e16b', '19a'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-9d548e341ab6',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-9d548e341ab6', '57d'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-9eafd91b6e53',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-9eafd91b6e53', '476'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-b52831b3ec10',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-b52831b3ec10', '952'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-dc2020d104ed',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-dc2020d104ed', '862'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-f3ec109bcd9b',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/要件定義/seed-f3ec109bcd9b', '029'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/', 'cf3'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/', '4c1'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-7c568742c6cd',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-7c568742c6cd', '92c'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-8bab4a4c7862',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-8bab4a4c7862', 'a74'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-a4087234e4df',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-a4087234e4df', '173'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-ada749cfd57f',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-ada749cfd57f', '4bb'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-cea965ffea58',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-cea965ffea58', '95c'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-d5018b956cac',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-d5018b956cac', 'd2e'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-fe06f1717b7b',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/IFデータ仕様/seed-fe06f1717b7b', '76a'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/seed-2285b1a2adea',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/seed-2285b1a2adea', '24f'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/seed-a0d5ec19ee5f',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/seed-a0d5ec19ee5f', '00c'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/', '775'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-22fda0940635',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-22fda0940635', '8ac'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-28d5b53d8a65',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-28d5b53d8a65', 'd7e'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-33717b08237c',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-33717b08237c', '33a'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-4dc53fe72f6c',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-4dc53fe72f6c', '186'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-59644148f622',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-59644148f622', '1b1'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-64ea0d4a08b0',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-64ea0d4a08b0', '62c'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-f76359b85eb5',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-f76359b85eb5', '4ec'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-fa3ac001e722',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/区分・コード定義/seed-fa3ac001e722', '6be'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/', '864'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/seed-27e266204c95',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/seed-27e266204c95', '9aa'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/seed-6a4ca0dcd74c',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/seed-6a4ca0dcd74c', '7a8'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/seed-c7fc75cc6322',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/seed-c7fc75cc6322', 'fb9'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/seed-cfe417ef8e73',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/seed-cfe417ef8e73', '9b4'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/seed-d45f6b5a7880',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/seed-d45f6b5a7880', '22a'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/seed-d76c99a2f976',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本/詳細設計/変換ルール整理/seed-d76c99a2f976', '401'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/編集正本PDF化済/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/編集正本PDF化済/', '8e8'),
+                exact: true,
+                sidebar: "tutorialSidebar"
+              },
+              {
+                path: '/external_samples/kyodo-butsuryu-service/current/補助スクリプト/',
+                component: ComponentCreator('/external_samples/kyodo-butsuryu-service/current/補助スクリプト/', 'bad'),
                 exact: true,
                 sidebar: "tutorialSidebar"
               }

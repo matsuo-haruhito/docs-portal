@@ -12,7 +12,7 @@ export default {
       "classic",
       {
         "docs": {
-          "path": "/tmp/seed-docusaurus-20260430-1-kbh9xi/docs-src",
+          "path": "/tmp/seed-docusaurus-20260430-1-lzyhk9/docs-src",
           "routeBasePath": "/",
           "sidebarPath": "./sidebars.ts",
           "lastVersion": "current"
