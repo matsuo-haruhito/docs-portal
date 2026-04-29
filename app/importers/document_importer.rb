@@ -152,7 +152,8 @@ class DocumentImporter
     raise ApplicationError::BadRequest, "storage_key must be a relative path" if value.start_with?("/")
 
     normalized = Pathname.new(value).cleanpath.to_s
-    raise ApplicationError::BadRequest, "storage_key must be a relative path" if normalized.start_with?("../")
+    invalid_relative_path = normalized.start_with?("../") || normalized == "." || normalized == ".."
+    raise ApplicationError::BadRequest, "storage_key must be a relative path" if invalid_relative_path
 
     normalized
   end

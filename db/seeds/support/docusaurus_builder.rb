@@ -1,3 +1,4 @@
+require "digest"
 require "fileutils"
 require "open3"
 require "tmpdir"
@@ -6,13 +7,18 @@ module SeedSupport
   class DocusaurusBuilder
     BUILD_ROOT = Rails.root.join("docusaurus")
 
+    MARKDOWN_EXTENSIONS = %w[.md .markdown].freeze
+    LOCAL_ASSET_EXTENSIONS = %w[
+      .png .jpg .jpeg .gif .webp .svg .bmp .ico .avif
+    ].freeze
+
     def initialize(source_dir:, version:, site_build_path:)
       @source_dir = Pathname(source_dir)
       @version = version
       @site_build_path = site_build_path
     end
 
-    def call
+    def build
       return unless markdown_files?
 
       with_temp_workspace do |workspace|
@@ -28,10 +34,17 @@ module SeedSupport
 
     def markdown_files?
       Dir.glob(@source_dir.join("**/*").to_s).any? do |path|
-        next false unless File.file?(path)
-
-        %w[.md .markdown].include?(File.extname(path).downcase)
+        source = Pathname(path)
+        source.file? && markdown_file?(source)
       end
+    end
+
+    def markdown_file?(path)
+      MARKDOWN_EXTENSIONS.include?(path.extname.downcase)
+    end
+
+    def local_asset_file?(path)
+      LOCAL_ASSET_EXTENSIONS.include?(path.extname.downcase)
     end
 
     def with_temp_workspace
@@ -47,13 +60,138 @@ module SeedSupport
       Dir.glob(@source_dir.join("**/*").to_s).sort.each do |path|
         source = Pathname(path)
         next unless source.file?
-        next unless %w[.md .markdown].include?(source.extname.downcase)
 
         relative = source.relative_path_from(@source_dir)
-        destination = root.join(normalized_doc_relative_path(relative))
-        FileUtils.mkdir_p(destination.dirname)
-        FileUtils.cp(source, destination)
+
+        if markdown_file?(source)
+          destination = root.join(normalized_doc_relative_path(relative))
+          FileUtils.mkdir_p(destination.dirname)
+          write_markdown_with_seed_front_matter!(source, destination, relative)
+        elsif local_asset_file?(source)
+          destination = root.join(relative)
+          FileUtils.mkdir_p(destination.dirname)
+          FileUtils.cp(source, destination)
+        end
       end
+    end
+
+    def write_markdown_with_seed_front_matter!(source, destination, relative)
+      original = File.read(source)
+      front_matter, body = split_front_matter(original)
+
+      body = rewrite_local_markdown_links_for_seed(body)
+      body = sanitize_markdown_for_mdx(body)
+
+      generated_id = seed_doc_id(relative)
+
+      destination.write(
+        if front_matter
+          build_markdown_with_front_matter(front_matter, body, generated_id)
+        else
+          <<~MARKDOWN
+            ---
+            id: #{generated_id}
+            ---
+
+            #{body}
+          MARKDOWN
+        end
+      )
+    end
+
+    def split_front_matter(markdown)
+      return [nil, markdown] unless markdown.start_with?("---\n")
+
+      lines = markdown.lines
+      closing_index = lines[1..].find_index { _1.strip == "---" }
+      return [nil, markdown] unless closing_index
+
+      closing_index += 1
+      front_matter = lines[0..closing_index].join
+      body = (lines[(closing_index + 1)..] || []).join
+
+      [front_matter, body]
+    end
+
+    def build_markdown_with_front_matter(front_matter, body, generated_id)
+      lines = front_matter.lines
+
+      # 既存 id がある場合は seed 用 id で上書きする
+      lines = lines.reject { _1.match?(/\A\s*id:\s*/) }
+      lines.insert(1, "id: #{generated_id}\n")
+
+      "#{lines.join}#{body}"
+    end
+
+    def seed_doc_id(relative)
+      digest = Digest::SHA1.hexdigest(relative.to_s)[0, 12]
+      "seed-#{digest}"
+    end
+
+    def rewrite_local_markdown_links_for_seed(body)
+      body.gsub(/\]\(([^)]+)\)/) do |match|
+        url = Regexp.last_match(1)
+        rewritten_url = rewrite_local_markdown_url_for_seed(url)
+
+        "](#{rewritten_url})"
+      end
+    end
+
+    def rewrite_local_markdown_url_for_seed(url)
+      return url if external_url?(url)
+      return url if url.start_with?("#")
+      return url unless markdown_url?(url)
+
+      path, anchor = url.split("#", 2)
+      rewritten_path =
+        if path.match?(/(^|\/)README\.(md|markdown)\z/i)
+          path.sub(/README\.(md|markdown)\z/i, "index.md")
+        else
+          path
+        end
+
+      [rewritten_path, anchor].compact.join("#")
+    end
+
+    def external_url?(url)
+      url.start_with?(
+        "http://",
+        "https://",
+        "//",
+        "mailto:",
+        "tel:",
+        "file:",
+        "data:"
+      )
+    end
+
+    def markdown_url?(url)
+      path = url.split("#", 2).first.to_s
+      MARKDOWN_EXTENSIONS.include?(File.extname(path).downcase)
+    end
+
+    def sanitize_markdown_for_mdx(body)
+      in_fenced_code_block = false
+
+      body.lines.map do |line|
+        stripped = line.lstrip
+
+        if stripped.start_with?("```", "~~~")
+          in_fenced_code_block = !in_fenced_code_block
+          next line
+        end
+
+        next line if in_fenced_code_block
+        next line if line.match?(/\A\s{4}/)
+
+        escape_mdx_angle_brackets(line)
+      end.join
+    end
+
+    def escape_mdx_angle_brackets(line)
+      line
+        .gsub("<", "&lt;")
+        .gsub(">", "&gt;")
     end
 
     def normalized_doc_relative_path(relative)

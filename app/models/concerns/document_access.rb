@@ -6,7 +6,16 @@ module DocumentAccess
       return none unless user&.active?
       return all if user.internal?
 
-      includes(:document_permissions, :project).select { _1.viewable_by?(user) }
+      joins(:project, :document_permissions)
+        .merge(Project.accessible_to(user))
+        .where.not(visibility_policy: Document.visibility_policies[:internal_only])
+        .where(
+          "document_permissions.user_id = :user_id OR " \
+          "(document_permissions.company_id = :company_id AND document_permissions.user_id IS NULL)",
+          user_id: user.id,
+          company_id: user.company_id
+        )
+        .distinct
     }
   end
 

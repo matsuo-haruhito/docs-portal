@@ -2,6 +2,7 @@ require "bcrypt"
 require "csv"
 require "digest"
 require "rack/mime"
+require_relative "seeds/support/docusaurus_builder"
 
 puts "Seeding from CSV..."
 
@@ -127,6 +128,15 @@ def content_type_for(path)
   Rack::Mime.mime_type(extension, "application/octet-stream")
 end
 
+def seed_public_id(prefix, *parts)
+  raw_key = parts.flatten.map { _1.to_s.presence || "-" }.join(":")
+  "#{prefix}_#{Digest::SHA256.hexdigest(raw_key)[0, 20]}"
+end
+
+def public_id_for_seed(existing, prefix, *parts)
+  existing&.public_id || seed_public_id(prefix, *parts)
+end
+
 now = Time.current
 
 company_rows = csv_rows("companies.csv")
@@ -138,6 +148,7 @@ version_rows = csv_rows("document_versions.csv")
 file_rows = csv_rows("document_files.csv")
 permission_rows = csv_rows("document_permissions.csv")
 access_log_rows = csv_rows("access_logs.csv")
+
 project_code_by_document_slug = document_rows.each_with_object({}) do |row, result|
   result[row["slug"]] = row["project_code"]
 end
@@ -148,7 +159,9 @@ ActiveRecord::Base.transaction do
     Company,
     company_rows.map do |row|
       existing = existing_companies[[row["code"]]]
+
       {
+        public_id: public_id_for_seed(existing, "com", row["code"]),
         code: row["code"],
         name: row["name"],
         active: bool_value(row["active"])
@@ -163,7 +176,9 @@ ActiveRecord::Base.transaction do
     User,
     user_rows.map do |row|
       existing = existing_users[[row["email_address"]]]
+
       {
+        public_id: public_id_for_seed(existing, "usr", row["email_address"]),
         email_address: row["email_address"],
         name: row["name"],
         user_type: User.user_types.fetch(row["user_type"]),
@@ -181,7 +196,9 @@ ActiveRecord::Base.transaction do
     Project,
     project_rows.map do |row|
       existing = existing_projects[[row["code"]]]
+
       {
+        public_id: public_id_for_seed(existing, "prj", row["code"]),
         code: row["code"],
         name: row["name"],
         description: row["description"],
@@ -201,6 +218,7 @@ ActiveRecord::Base.transaction do
       existing = existing_memberships[composite_key(project_id, user_id)]
 
       {
+        public_id: public_id_for_seed(existing, "pmem", row["project_code"], row["user_email"]),
         project_id:,
         user_id:,
         role: ProjectMembership.roles.fetch(row["role"])
@@ -217,6 +235,7 @@ ActiveRecord::Base.transaction do
       existing = existing_documents[composite_key(project_id, row["slug"])]
 
       {
+        public_id: public_id_for_seed(existing, "doc", row["project_code"], row["slug"]),
         project_id:,
         title: row["title"],
         slug: row["slug"],
@@ -238,6 +257,7 @@ ActiveRecord::Base.transaction do
       existing = existing_versions[composite_key(document_id, row["version_label"])]
 
       {
+        public_id: public_id_for_seed(existing, "ver", project_code, row["document_slug"], row["version_label"]),
         document_id:,
         version_label: row["version_label"],
         status: DocumentVersion.statuses.fetch(row["status"]),
@@ -264,6 +284,7 @@ ActiveRecord::Base.transaction do
 
       {
         id: document.id,
+        public_id: document.public_id,
         project_id: document.project_id,
         title: document.title,
         slug: document.slug,
@@ -285,6 +306,7 @@ ActiveRecord::Base.transaction do
       existing = existing_files[[row["storage_key"]]]
 
       {
+        public_id: public_id_for_seed(existing, "file", row["storage_key"]),
         document_version_id: version.id,
         file_name: row["file_name"],
         content_type: row["content_type"],
@@ -299,16 +321,18 @@ ActiveRecord::Base.transaction do
   existing_permissions = build_existing_map(DocumentPermission.all) do
     composite_key(_1.document_id, _1.company_id, _1.user_id)
   end
-  permission_ids = next_seed_ids(
-    existing_permissions,
-    permission_rows.map do |row|
-      project_code = project_code_by_document_slug.fetch(row["document_slug"])
-      document_id = documents.fetch(composite_key(project_code, row["document_slug"])).id
-      company_id = row["company_code"].present? ? companies.fetch(row["company_code"]).id : nil
-      user_id = row["user_email"].present? ? users.fetch(row["user_email"]).id : nil
-      composite_key(document_id, company_id, user_id)
-    end
-  )
+
+  permission_keys = permission_rows.map do |row|
+    project_code = project_code_by_document_slug.fetch(row["document_slug"])
+    document_id = documents.fetch(composite_key(project_code, row["document_slug"])).id
+    company_id = row["company_code"].present? ? companies.fetch(row["company_code"]).id : nil
+    user_id = row["user_email"].present? ? users.fetch(row["user_email"]).id : nil
+
+    composite_key(document_id, company_id, user_id)
+  end
+
+  permission_ids = next_seed_ids(existing_permissions, permission_keys)
+
   upsert_rows!(
     DocumentPermission,
     permission_rows.each_with_index.map do |row, index|
@@ -320,6 +344,14 @@ ActiveRecord::Base.transaction do
 
       {
         id: permission_ids[index],
+        public_id: public_id_for_seed(
+          existing,
+          "perm",
+          project_code,
+          row["document_slug"],
+          row["company_code"],
+          row["user_email"]
+        ),
         document_id:,
         company_id:,
         user_id:,
@@ -335,6 +367,7 @@ ActiveRecord::Base.transaction do
       _1.action_type_before_type_cast, _1.target_type, _1.target_name, _1.ip_address, _1.user_agent, _1.accessed_at
     )
   end
+
   access_log_keys = access_log_rows.map do |row|
     project_code = row["project_code"]
     document = documents.fetch(composite_key(project_code, row["document_slug"]))
@@ -349,7 +382,9 @@ ActiveRecord::Base.transaction do
       row["ip_address"], row["user_agent"], accessed_at
     )
   end
+
   access_log_ids = next_seed_ids(existing_access_logs, access_log_keys)
+
   upsert_rows!(
     AccessLog,
     access_log_rows.each_with_index.map do |row, index|
@@ -360,6 +395,7 @@ ActiveRecord::Base.transaction do
       company_id = row["company_code"].present? ? companies.fetch(row["company_code"]).id : nil
       accessed_at = parse_time(row["accessed_at"])
       action_type = AccessLog.action_types.fetch(row["action_type"])
+
       existing = existing_access_logs[composite_key(
         projects.fetch(project_code).id, document.id, version.id, user_id, company_id,
         action_type, row["target_type"], row["target_name"], row["ip_address"], row["user_agent"], accessed_at
@@ -367,6 +403,21 @@ ActiveRecord::Base.transaction do
 
       {
         id: access_log_ids[index],
+        public_id: public_id_for_seed(
+          existing,
+          "alog",
+          row["project_code"],
+          row["document_slug"],
+          row["version_label"],
+          row["user_email"],
+          row["company_code"],
+          row["action_type"],
+          row["target_type"],
+          row["target_name"],
+          row["ip_address"],
+          row["user_agent"],
+          row["accessed_at"]
+        ),
         project_id: projects.fetch(project_code).id,
         document_id: document.id,
         document_version_id: version.id,
@@ -384,6 +435,7 @@ ActiveRecord::Base.transaction do
   )
 
   sample_documents = external_sample_documents(sample_source_root)
+
   if sample_documents.any?
     upsert_rows!(
       Project,
@@ -391,6 +443,7 @@ ActiveRecord::Base.transaction do
         existing_project = existing_projects[[document_spec[:project_code]]]
 
         {
+          public_id: public_id_for_seed(existing_project, "prj", document_spec[:project_code]),
           code: document_spec[:project_code],
           name: document_spec[:project_name],
           description: document_spec[:project_description],
@@ -401,11 +454,15 @@ ActiveRecord::Base.transaction do
     )
     projects = Project.all.index_by(&:code)
 
+    existing_documents = build_existing_map(Document.all) { composite_key(_1.project_id, _1.slug) }
+
     external_document_rows = sample_documents.map do |document_spec|
-      existing = existing_documents[composite_key(projects.fetch(document_spec[:project_code]).id, document_spec[:slug])]
+      project = projects.fetch(document_spec[:project_code])
+      existing = existing_documents[composite_key(project.id, document_spec[:slug])]
 
       {
-        project_id: projects.fetch(document_spec[:project_code]).id,
+        public_id: public_id_for_seed(existing, "doc", document_spec[:project_code], document_spec[:slug]),
+        project_id: project.id,
         title: document_spec[:title],
         slug: document_spec[:slug],
         category: Document.categories.fetch("spec"),
@@ -416,6 +473,8 @@ ActiveRecord::Base.transaction do
     upsert_rows!(Document, external_document_rows, unique_by: :index_documents_on_project_id_and_slug)
     documents = Document.includes(:project).index_by { composite_key(_1.project.code, _1.slug) }
 
+    existing_versions = build_existing_map(DocumentVersion.all) { composite_key(_1.document_id, _1.version_label) }
+
     external_version_rows = sample_documents.map do |document_spec|
       document = documents.fetch(composite_key(document_spec[:project_code], document_spec[:slug]))
       existing = existing_versions[composite_key(document.id, document_spec[:version_label])]
@@ -425,6 +484,7 @@ ActiveRecord::Base.transaction do
       end
 
       {
+        public_id: public_id_for_seed(existing, "ver", document_spec[:project_code], document_spec[:slug], document_spec[:version_label]),
         document_id: document.id,
         version_label: document_spec[:version_label],
         status: DocumentVersion.statuses.fetch("published"),
@@ -449,6 +509,7 @@ ActiveRecord::Base.transaction do
 
         {
           id: document.id,
+          public_id: document.public_id,
           project_id: document.project_id,
           title: document.title,
           slug: document.slug,
@@ -462,6 +523,7 @@ ActiveRecord::Base.transaction do
     )
 
     versions = DocumentVersion.includes(document: :project).index_by { composite_key(_1.document.project.code, _1.document.slug, _1.version_label) }
+
     sample_documents.each do |document_spec|
       version = versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
       next if version.site_build_path.blank?
@@ -470,8 +532,10 @@ ActiveRecord::Base.transaction do
         source_dir: document_spec[:source_dir],
         version: version,
         site_build_path: version.site_build_path
-      ).call
+      ).build
     end
+
+    existing_files = build_existing_map(DocumentFile.all) { [_1.storage_key] }
 
     external_file_specs = sample_documents.flat_map do |document_spec|
       version = versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
@@ -483,6 +547,7 @@ ActiveRecord::Base.transaction do
 
         {
           row: {
+            public_id: public_id_for_seed(existing, "file", storage_key),
             document_version_id: version.id,
             file_name: relative_path(source_file, document_spec[:source_dir]),
             content_type: content_type_for(source_file),
@@ -493,6 +558,7 @@ ActiveRecord::Base.transaction do
         }
       end
     end
+
     upsert_rows!(
       DocumentFile,
       external_file_specs.map { _1[:row] },
@@ -503,6 +569,7 @@ ActiveRecord::Base.transaction do
     existing_permissions = build_existing_map(DocumentPermission.all) do
       composite_key(_1.document_id, _1.company_id, _1.user_id)
     end
+
     external_permission_keys = sample_documents.flat_map do |document_spec|
       document = documents.fetch(composite_key(document_spec[:project_code], document_spec[:slug]))
 
@@ -511,7 +578,9 @@ ActiveRecord::Base.transaction do
         composite_key(document.id, company_id, nil)
       end
     end
+
     external_permission_ids = next_seed_ids(existing_permissions, external_permission_keys)
+
     external_permission_rows = sample_documents.flat_map do |document_spec|
       document = documents.fetch(composite_key(document_spec[:project_code], document_spec[:slug]))
 
@@ -521,6 +590,14 @@ ActiveRecord::Base.transaction do
 
         {
           id: nil,
+          public_id: public_id_for_seed(
+            existing,
+            "perm",
+            document_spec[:project_code],
+            document_spec[:slug],
+            company_code,
+            nil
+          ),
           document_id: document.id,
           company_id: company_id,
           user_id: nil,
@@ -528,9 +605,11 @@ ActiveRecord::Base.transaction do
         }.merge(timestamp_attrs(now, existing&.created_at))
       end
     end
+
     external_permission_rows.each_with_index do |row, index|
       row[:id] = external_permission_ids[index]
     end
+
     upsert_rows!(
       DocumentPermission,
       external_permission_rows,
