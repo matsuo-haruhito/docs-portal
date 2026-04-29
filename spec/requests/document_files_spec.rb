@@ -74,6 +74,62 @@ RSpec.describe "Document files", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("text/markdown")
+    expect(response.headers["content-type"]).to include("charset=utf-8")
     expect(response.headers["content-disposition"]).to include("inline")
+  end
+
+  it "forbids external users who only have view permission from downloading attachments" do
+    external_user = create(:user, :external)
+    create(:document_permission, document:, company: external_user.company, access_level: :view)
+
+    sign_in_as(external_user)
+
+    get document_file_path(file)
+
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it "allows external users with download permission to download attachments" do
+    external_user = create(:user, :external)
+    create(:document_permission, document:, company: external_user.company, access_level: :download)
+
+    sign_in_as(external_user)
+
+    get document_file_path(file)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("application/pdf")
+  end
+
+  it "hides attachment links from external users who only have view permission" do
+    external_user = create(:user, :external)
+    create(:document_permission, document:, company: external_user.company, access_level: :view)
+
+    sign_in_as(external_user)
+    get project_document_path(project, document)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(file.file_name)
+    expect(response.body).not_to include(document_file_path(file))
+  end
+
+  it "shows attachment links to external users who have download permission" do
+    external_user = create(:user, :external)
+    create(:document_permission, document:, company: external_user.company, access_level: :download)
+
+    sign_in_as(external_user)
+    get project_document_path(project, document)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(document_file_path(file))
+  end
+
+  it "labels markdown attachments as raw file display in the document detail page" do
+    sign_in_as(user)
+
+    get project_document_path(project, document)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("生ファイル表示")
   end
 end

@@ -1,6 +1,8 @@
 class Api::BaseController < ActionController::API
   rescue_from ActionController::ParameterMissing, with: :render_bad_request
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
+  rescue_from ApplicationError::BadRequest, with: :render_bad_request
+  rescue_from ApplicationError::Forbidden, with: :render_forbidden
   rescue_from ApplicationError::Unauthorized, with: :render_unauthorized
 
   private
@@ -24,6 +26,10 @@ class Api::BaseController < ActionController::API
 
   def render_not_found(error)
     render json: { error: error.message }, status: :not_found
+  end
+
+  def render_forbidden(error)
+    render json: { error: error.message.presence || "Forbidden" }, status: :forbidden
   end
 
   def render_unauthorized

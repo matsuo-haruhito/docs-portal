@@ -26,9 +26,10 @@ class DocumentFile < ApplicationRecord
   end
 
   def effective_content_type
-    return detected_content_type unless content_type == "application/octet-stream"
+    type = detected_content_type
+    return "#{type}; charset=utf-8" if type.start_with?("text/")
 
-    detected_content_type
+    type
   end
 
   def inline_disposition?

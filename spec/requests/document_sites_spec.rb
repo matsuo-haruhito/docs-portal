@@ -32,9 +32,10 @@ RSpec.describe "Document sites", type: :request do
         <html>
           <head>
             <link rel="stylesheet" href="/assets/css/styles.css">
+            <script src="../../assets/js/app.js"></script>
           </head>
           <body>
-            <a href="/">Home</a>
+            <a href="../guide/getting-started">Guide</a>
             <h1>API Spec</h1>
           </body>
         </html>
@@ -43,6 +44,8 @@ RSpec.describe "Document sites", type: :request do
 
     FileUtils.mkdir_p(Rails.root.join("docusaurus/build/assets/css"))
     File.write(Rails.root.join("docusaurus/build/assets/css/styles.css"), "body{background:#fff;}")
+    FileUtils.mkdir_p(Rails.root.join("docusaurus/build/assets/js"))
+    File.write(Rails.root.join("docusaurus/build/assets/js/app.js"), "console.log('ok')")
   end
 
   after do
@@ -57,6 +60,8 @@ RSpec.describe "Document sites", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("API Spec")
     expect(response.body).to include("/document_versions/#{version.id}/site/assets/css/styles.css")
+    expect(response.body).to include("/document_versions/#{version.id}/site/assets/js/app.js")
+    expect(response.body).to include("/document_versions/#{version.id}/site/docs-")
   end
 
   it "serves shared docusaurus css asset when version storage does not include it" do

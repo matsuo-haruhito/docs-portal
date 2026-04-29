@@ -34,7 +34,22 @@ class Document < ApplicationRecord
     return false unless user&.external?
     return false if internal_only?
 
-    document_permissions.where(user_id: user.id).exists? ||
-      document_permissions.where(company_id: user.company_id, user_id: nil).exists?
+    external_permission_scope_for(user).exists?
+  end
+
+  def external_downloadable_by?(user)
+    return false unless user&.external?
+    return false if internal_only?
+
+    external_permission_scope_for(user)
+      .where(access_level: DocumentPermission.access_levels[:download])
+      .exists?
+  end
+
+  private
+
+  def external_permission_scope_for(user)
+    document_permissions.where(user_id: user.id)
+      .or(document_permissions.where(company_id: user.company_id, user_id: nil))
   end
 end

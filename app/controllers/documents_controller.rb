@@ -1,11 +1,13 @@
 class DocumentsController < BaseController
   def index
     @project = Project.find(params[:project_id])
+    authorize @project, :show?
     @documents = policy_scope(@project.documents).sort_by(&:title)
   end
 
   def show
     @project = Project.find(params[:project_id])
+    authorize @project, :show?
     @document = @project.documents.find(params[:id])
     authorize @document
 

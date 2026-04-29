@@ -12,7 +12,7 @@ class DocusaurusSiteRenderer
 
   def render_html(site_path)
     absolute_path = resolve_absolute_path(site_path)
-    rewrite_html(File.read(absolute_path))
+    rewrite_html(File.read(absolute_path), absolute_path:)
   end
 
   def resolve_absolute_path(site_path)
@@ -68,31 +68,58 @@ class DocusaurusSiteRenderer
     nil
   end
 
-  def rewrite_html(html)
+  def rewrite_html(html, absolute_path:)
     document = Nokogiri::HTML5.parse(html)
 
-    rewrite_url_attributes(document, "a", "href")
-    rewrite_url_attributes(document, "link", "href")
-    rewrite_url_attributes(document, "script", "src")
-    rewrite_url_attributes(document, "img", "src")
+    rewrite_url_attributes(document, "a", "href", absolute_path:)
+    rewrite_url_attributes(document, "link", "href", absolute_path:)
+    rewrite_url_attributes(document, "script", "src", absolute_path:)
+    rewrite_url_attributes(document, "img", "src", absolute_path:)
 
     document.to_html.html_safe
   end
 
-  def rewrite_url_attributes(document, selector, attribute)
+  def rewrite_url_attributes(document, selector, attribute, absolute_path:)
     document.css(selector).each do |node|
       value = node[attribute]
       next if value.blank?
 
-      rewritten = rewrite_url(value)
+      rewritten = rewrite_url(value, absolute_path:)
       node[attribute] = rewritten if rewritten
     end
   end
 
-  def rewrite_url(value)
+  def rewrite_url(value, absolute_path:)
     return if value.start_with?("http://", "https://", "//", "mailto:", "tel:", "#")
-    return value unless value.start_with?("/")
+    relative_path =
+      if value.start_with?("/")
+        value.delete_prefix("/")
+      else
+        resolve_relative_url(value, absolute_path)
+      end
 
-    @view_context.site_document_version_path(@version, site_path: value.delete_prefix("/"))
+    @view_context.site_document_version_path(@version, site_path: relative_path)
+  end
+
+  def resolve_relative_url(value, absolute_path)
+    page_dir = relative_directory_for(absolute_path)
+    cleaned = Pathname.new(page_dir.join(value)).cleanpath.to_s
+    raise ActiveRecord::RecordNotFound, "Invalid site path" if cleaned.start_with?("../")
+
+    cleaned
+  end
+
+  def relative_directory_for(absolute_path)
+    root = if absolute_path.to_s.start_with?(@version.site_root_absolute_path.to_s + File::SEPARATOR)
+      @version.site_root_absolute_path
+    else
+      Rails.root.join("docusaurus", "build")
+    end
+
+    Pathname.new(relative_path(absolute_path.dirname, root))
+  end
+
+  def relative_path(path, root)
+    Pathname(path).relative_path_from(Pathname(root))
   end
 end

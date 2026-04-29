@@ -6,6 +6,13 @@ class DocumentVersionPolicy < ApplicationPolicy
     record.published? && record.document.external_viewable_by?(user)
   end
 
+  def download?
+    return false unless user&.active?
+    return true if user.internal?
+
+    record.published? && record.document.external_downloadable_by?(user)
+  end
+
   def manage?
     user.present? && user.internal?
   end

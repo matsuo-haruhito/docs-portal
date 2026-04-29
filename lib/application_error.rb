@@ -1,4 +1,7 @@
 module ApplicationError
+  class BadRequest < StandardError
+  end
+
   class Unauthorized < StandardError
   end
 

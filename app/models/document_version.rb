@@ -31,6 +31,10 @@ class DocumentVersion < ApplicationRecord
     site_entry_absolute_path
   end
 
+  def rendered_site_available?
+    site_build_path.present? && site_entry_absolute_path&.exist?
+  end
+
   def legacy_html_absolute_path
     Rails.root.join("storage", "docs_sites", site_build_path.to_s, "index.html")
   end

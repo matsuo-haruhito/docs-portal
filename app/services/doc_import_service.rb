@@ -1,9 +1,13 @@
 require "fileutils"
 
 class DocImportService
+  IMPORT_ROOT = Rails.root.join("storage", "imports")
+
   def initialize(artifact_root:, manifest_path:, actor:)
-    @artifact_root = Pathname.new(artifact_root)
-    @manifest = JSON.parse(File.read(manifest_path))
+    @import_root = import_root_path
+    @artifact_root = resolve_allowed_path!(artifact_root, type: :directory)
+    @manifest_path = resolve_allowed_path!(manifest_path, type: :file)
+    @manifest = JSON.parse(File.read(@manifest_path))
     @actor = actor
   end
 
@@ -62,12 +66,12 @@ class DocImportService
       copy_site_build!(version)
 
       Array(payload["files"]).each_with_index do |f, idx|
-        copy_attachment!(f.fetch("storage_key"))
+        normalized_storage_key = copy_attachment!(f.fetch("storage_key"))
 
         version.document_files.create!(
           file_name: f.fetch("file_name"),
           content_type: f.fetch("content_type"),
-          storage_key: f.fetch("storage_key"),
+          storage_key: normalized_storage_key,
           file_size: f.fetch("file_size"),
           sort_order: idx
         )
@@ -101,11 +105,55 @@ class DocImportService
   end
 
   def copy_attachment!(storage_key)
-    source = @artifact_root.join("attachments", storage_key)
+    normalized_storage_key = normalize_storage_key!(storage_key)
+    source = @artifact_root.join("attachments", normalized_storage_key)
     raise ArgumentError, "Attachment not found: #{storage_key}" unless source.exist?
 
-    destination = Rails.root.join("storage", "document_files", storage_key)
+    destination = Rails.root.join("storage", "document_files", normalized_storage_key)
     FileUtils.mkdir_p(destination.parent)
     FileUtils.cp(source, destination)
+    normalized_storage_key
+  end
+
+  def import_root_path
+    IMPORT_ROOT.realpath
+  rescue Errno::ENOENT
+    raise ApplicationError::Forbidden, "Import root is not available"
+  end
+
+  def resolve_allowed_path!(path, type:)
+    resolved = Pathname.new(path).realpath
+    ensure_under_import_root!(resolved)
+
+    case type
+    when :directory
+      raise ActiveRecord::RecordNotFound, "Directory not found: #{path}" unless resolved.directory?
+    when :file
+      raise ActiveRecord::RecordNotFound, "File not found: #{path}" unless resolved.file?
+    end
+
+    resolved
+  rescue Errno::ENOENT
+    raise ActiveRecord::RecordNotFound, "#{type == :directory ? 'Directory' : 'File'} not found: #{path}"
+  end
+
+  def ensure_under_import_root!(resolved_path)
+    import_root_with_separator = "#{@import_root}#{File::SEPARATOR}"
+    return if resolved_path.to_s == @import_root.to_s
+    return if resolved_path.to_s.start_with?(import_root_with_separator)
+
+    raise ApplicationError::Forbidden, "Path is outside the allowed import root"
+  end
+
+  def normalize_storage_key!(storage_key)
+    value = storage_key.to_s
+    raise ApplicationError::BadRequest, "storage_key is required" if value.blank?
+    raise ApplicationError::BadRequest, "storage_key contains invalid characters" if value.include?("\0")
+    raise ApplicationError::BadRequest, "storage_key must be a relative path" if value.start_with?("/")
+
+    normalized = Pathname.new(value).cleanpath.to_s
+    raise ApplicationError::BadRequest, "storage_key must be a relative path" if normalized.start_with?("../")
+
+    normalized
   end
 end

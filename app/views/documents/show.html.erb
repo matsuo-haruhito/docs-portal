@@ -16,14 +16,21 @@
     <li>
       <strong><%= version.version_label %></strong>
       (<%= version.status %>)
-      <% if version.markdown_entry_path.present? %>
+      <% if version.rendered_site_available? %>
         - <%= link_to "表示", view_document_version_path(version) %>
       <% end %>
 
       <% if version.document_files.any? %>
         <ul>
           <% version.document_files.order(:sort_order).each do |file| %>
-            <li><%= link_to file.file_name, document_file_path(file) %> (<%= file.content_type %>)</li>
+            <li>
+              <% if policy(file).show? %>
+                <%= link_to file.file_name, document_file_path(file) %>
+              <% else %>
+                <%= file.file_name %>
+              <% end %>
+              (<%= file.content_type %><%= file.effective_content_type.start_with?("text/markdown") ? " / 生ファイル表示" : "" %>)
+            </li>
           <% end %>
         </ul>
       <% end %>

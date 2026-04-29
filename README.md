@@ -46,6 +46,12 @@ storage/document_files/external_samples/
 - 既存の `/mnt/c/work/TKK/WMS/kyodo-butsuryu-service/作成資料` から持ち込む場合は、必要なディレクトリをこの配下へ `cp -r` してください。
 - `bin/setup_external_sample_data_links` は `storage/document_files/external_samples/` のベースディレクトリを作るだけです。
 
+## 運用メモ
+- `storage/imports/` は internal import API が読み取ってよい唯一の import ルートです。`artifact_root` と `manifest_path` はこの配下に置いてください。
+- 社外ユーザーの Project 参照は `project_memberships` がある案件に限定されます。
+- 社外ユーザーの添付ファイル配信は `DocumentPermission.access_level = download` がある場合だけ許可されます。
+- 文書詳細の「表示」リンクは、対応する Docusaurus 生成 HTML が実在する版にだけ出ます。
+
 ## サンプルログイン情報
 - admin@example.com / password123!
 - staff@example.com / password123!
