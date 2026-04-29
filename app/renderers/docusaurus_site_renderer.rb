@@ -91,6 +91,7 @@ class DocusaurusSiteRenderer
 
   def rewrite_url(value, absolute_path:)
     return if value.start_with?("http://", "https://", "//", "mailto:", "tel:", "#")
+
     relative_path =
       if value.start_with?("/")
         value.delete_prefix("/")

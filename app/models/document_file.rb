@@ -36,6 +36,13 @@ class DocumentFile < ApplicationRecord
     INLINE_CONTENT_TYPE_PREFIXES.any? { effective_content_type.start_with?(_1) }
   end
 
+  def downloadable_by?(user)
+    return false unless user&.active?
+    return true if user.internal?
+
+    document_version.published? && document_version.document.downloadable_by?(user)
+  end
+
   private
 
   def detected_content_type

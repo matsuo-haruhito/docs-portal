@@ -7,7 +7,7 @@ class Api::Internal::DocImportsController < Api::BaseController
 
     actor = User.find_by!(email_address: "admin@example.com")
 
-    result = DocImportService.new(
+    result = DocumentImporter.new(
       artifact_root: artifact_root,
       manifest_path: manifest_path,
       actor: actor

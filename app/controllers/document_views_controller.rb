@@ -1,7 +1,7 @@
 class DocumentViewsController < BaseController
   def show
     version = DocumentVersion.find(params[:id])
-    authorize version, :show?
+    require_document_version_view_access!(version)
 
     unless version.rendered_site_available?
       render plain: "Rendered HTML is not available for this version. Run import/build first.", status: :not_found

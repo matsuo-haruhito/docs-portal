@@ -2,7 +2,7 @@ class DocumentFilesController < BaseController
   def show
     file = DocumentFile.find(params[:id])
     version = file.document_version
-    authorize file
+    require_document_file_download_access!(file)
 
     AccessLog.create!(
       user: current_user,

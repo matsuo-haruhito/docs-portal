@@ -57,7 +57,7 @@ GitHub Actions では、次の項目を付与して `publish/manifest/publish.js
 - `source_commit_hash`
 - `documents`
 
-`documents` の各要素は、Rails の `DocImportService` がそのまま読める形式に揃えます。
+`documents` の各要素は、Rails の `DocumentImporter` がそのまま読める形式に揃えます。
 
 ## 4. ファイル配置の前提
 

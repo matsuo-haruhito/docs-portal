@@ -1,9 +1,6 @@
 class ApplicationController < ActionController::Base
-  include Pundit::Authorization
-
   helper_method :current_user, :logged_in?, :admin_user?, :company_master_admin?
 
-  rescue_from Pundit::NotAuthorizedError, with: :raise_forbidden
   rescue_from ApplicationError::Forbidden, with: :render_forbidden
   before_action :authenticate_user!
   before_action { Current.user = current_user }
@@ -32,10 +29,6 @@ class ApplicationController < ActionController::Base
 
   def company_master_admin?
     current_user&.can_manage_company_master?
-  end
-
-  def raise_forbidden
-    raise ApplicationError::Forbidden
   end
 
   def render_forbidden

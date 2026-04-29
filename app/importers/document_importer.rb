@@ -1,6 +1,6 @@
 require "fileutils"
 
-class DocImportService
+class DocumentImporter
   IMPORT_ROOT = Rails.root.join("storage", "imports")
 
   def initialize(artifact_root:, manifest_path:, actor:)

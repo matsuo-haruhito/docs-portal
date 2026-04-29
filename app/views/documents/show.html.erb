@@ -24,7 +24,7 @@
         <ul>
           <% version.document_files.order(:sort_order).each do |file| %>
             <li>
-              <% if policy(file).show? %>
+              <% if file.downloadable_by?(current_user) %>
                 <%= link_to file.file_name, document_file_path(file) %>
               <% else %>
                 <%= file.file_name %>

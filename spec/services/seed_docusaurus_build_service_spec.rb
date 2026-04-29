@@ -2,7 +2,7 @@ require "rails_helper"
 require "fileutils"
 require "securerandom"
 
-RSpec.describe SeedDocusaurusBuildService do
+RSpec.describe SeedSupport::DocusaurusBuilder do
   let(:project) { create(:project, code: "PJ#{SecureRandom.hex(4)}", name: "Project #{SecureRandom.hex(2)}") }
   let(:document) { create(:document, project:, title: "Seed Doc", slug: "seed-doc") }
   let(:version) do

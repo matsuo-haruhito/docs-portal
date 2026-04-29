@@ -1,16 +1,13 @@
 class DocumentVersionPolicy < ApplicationPolicy
   def show?
-    return false unless user&.active?
-    return true if user.internal?
-
-    record.published? && record.document.external_viewable_by?(user)
+    record.viewable_by?(user)
   end
 
   def download?
     return false unless user&.active?
     return true if user.internal?
 
-    record.published? && record.document.external_downloadable_by?(user)
+    record.document.downloadable_by?(user)
   end
 
   def manage?
@@ -19,8 +16,7 @@ class DocumentVersionPolicy < ApplicationPolicy
 
   class Scope < Scope
     def resolve
-      base = user.internal? ? scope.all : scope.where(status: :published)
-      base.select { |version| user.internal? || version.document.external_viewable_by?(user) }
+      scope.select { _1.viewable_by?(user) }
     end
   end
 end

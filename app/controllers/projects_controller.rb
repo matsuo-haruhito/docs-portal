@@ -1,15 +1,10 @@
 class ProjectsController < BaseController
   def index
-    @projects =
-      if current_user.internal?
-        Project.order(:code)
-      else
-        current_user.projects.distinct.order(:code)
-      end
+    @projects = Project.accessible_to(current_user).order(:code)
   end
 
   def show
     @project = Project.find(params[:id])
-    authorize @project
+    require_project_access!(@project)
   end
 end

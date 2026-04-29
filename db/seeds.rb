@@ -466,7 +466,7 @@ ActiveRecord::Base.transaction do
       version = versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
       next if version.site_build_path.blank?
 
-      SeedDocusaurusBuildService.new(
+      SeedSupport::DocusaurusBuilder.new(
         source_dir: document_spec[:source_dir],
         version: version,
         site_build_path: version.site_build_path

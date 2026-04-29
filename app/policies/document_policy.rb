@@ -4,10 +4,7 @@ class DocumentPolicy < ApplicationPolicy
   end
 
   def show?
-    return false unless user&.active?
-    return true if user.internal?
-
-    record.external_viewable_by?(user)
+    record.viewable_by?(user)
   end
 
   def manage?
@@ -20,9 +17,7 @@ class DocumentPolicy < ApplicationPolicy
 
   class Scope < Scope
     def resolve
-      return scope.all if user.internal?
-
-      scope.select { |doc| doc.external_viewable_by?(user) }
+      scope.accessible_to(user)
     end
   end
 end

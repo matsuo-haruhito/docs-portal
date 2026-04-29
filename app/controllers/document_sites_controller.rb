@@ -18,7 +18,7 @@ class DocumentSitesController < BaseController
 
   def set_version
     @version = DocumentVersion.find(params[:id])
-    authorize @version, :show?
+    require_document_version_view_access!(@version)
   end
 
   def html_file?(file_path)

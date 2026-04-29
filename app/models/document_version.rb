@@ -35,6 +35,13 @@ class DocumentVersion < ApplicationRecord
     site_build_path.present? && site_entry_absolute_path&.exist?
   end
 
+  def viewable_by?(user)
+    return false unless user&.active?
+    return true if user.internal?
+
+    published? && document.viewable_by?(user)
+  end
+
   def legacy_html_absolute_path
     Rails.root.join("storage", "docs_sites", site_build_path.to_s, "index.html")
   end
