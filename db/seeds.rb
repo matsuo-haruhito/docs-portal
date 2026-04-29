@@ -516,6 +516,13 @@ ActiveRecord::Base.transaction do
   end
 end
 
+%w[
+  access_logs
+  document_permissions
+].each do |table_name|
+  ActiveRecord::Base.connection.reset_pk_sequence!(table_name)
+end
+
 puts "Seed complete."
 puts "admin@example.com / password123!"
 puts "staff@example.com / password123!"
