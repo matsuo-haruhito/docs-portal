@@ -5,7 +5,7 @@ require "rack/mime"
 
 puts "Seeding from CSV..."
 
-SEED_DATA_DIR = Rails.root.join("db", "data")
+SEED_DATA_DIR = Rails.root.join("db", "seeds", "data")
 EXTERNAL_SAMPLE_ROOT = Rails.root.join("storage", "document_files", "external_samples")
 
 def csv_rows(name)
