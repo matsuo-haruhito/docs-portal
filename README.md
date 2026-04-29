@@ -2,35 +2,6 @@
 
 Rails + Docusaurus を前提にした「社外秘ドキュメント配布ポータル」の雛形です。
 
-## 関連メモ
-- [ローカル編集からポータル更新までの最小運用案](./ローカル編集からポータル更新までの最小運用案.md)
-- [publish.json 仕様と生成ルール](./publish.json仕様と生成ルール.md)
-
-この ZIP は **既存 Rails プロジェクトへ載せやすい骨組み** を意図しています。
-`rails new` 直後の全ファイルは含めず、以下を中心に入れています。
-
-- CSV seed (`db/seeds.rb` + `db/data/*.csv`)
-- `storage/document_files/external_samples/` 配下のサンプル文書参照
-- モデル雛形
-- 権限制御の model / controller 雛形
-- controller / view の最小画面
-- migration 雛形
-- Dockerfile / docker-compose
-- import service 雛形
-- GitHub Actions 雛形
-- Docusaurus 設定サンプル
-- storage のサンプル HTML / 添付ファイル
-
-## 想定手順
-1. Rails プロジェクトを作成
-2. この ZIP の内容を上書き配置
-3. `bundle add pundit`
-4. 認証基盤を入れる
-5. `docker compose up --build`
-6. `docker compose exec app bin/rails db:prepare`
-7. 必要なら `bin/setup_external_sample_data_links`
-8. `docker compose exec app bin/rails db:seed`
-
 ## 外部サンプル文書
 - seed は `db/data/*.csv` に加えて、`storage/document_files/external_samples/` 配下に置かれたサンプル文書も拾います。
 - 配置規約は `storage/document_files/external_samples/<sample-set>/<site-dir>/...` です。
@@ -48,7 +19,7 @@ storage/document_files/external_samples/
         ├── README.md
         ├── 受領資料Markdown/
         │   ├── README.md
-        │   └── 共同物流サービス様WCS概要仕様書20250228.md
+        │   └── 概要仕様書20250228.md
         ├── 社内メモ/
         │   ├── README.md
         │   └── ドメイン設計メモ.md

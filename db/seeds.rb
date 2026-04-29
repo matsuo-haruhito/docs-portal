@@ -60,6 +60,13 @@ def upsert_rows!(model, rows, unique_by:)
   return if rows.empty?
 
   model.upsert_all(rows, unique_by:)
+rescue ActiveRecord::StatementInvalid => e
+  warn "upsert_rows! failed"
+  warn "model=#{model.name}"
+  warn "unique_by=#{unique_by}"
+  warn "rows=#{rows.size}"
+  warn e.message
+  raise
 end
 
 def sample_source_root
@@ -76,6 +83,15 @@ end
 
 def slug_for_name(name)
   name.to_s.parameterize.presence || "sample-#{Digest::SHA1.hexdigest(name.to_s)[0, 8]}"
+end
+
+def document_slug_for_markdown(site_dir, logical_relative_path)
+  path = Pathname(logical_relative_path.to_s)
+  basename_without_ext = path.basename.sub_ext("").to_s
+  readable = slug_for_name("#{site_dir.basename}-#{basename_without_ext}")
+  digest = Digest::SHA1.hexdigest("#{site_dir.basename}/#{logical_relative_path}")[0, 10]
+
+  "#{readable}-#{digest}"
 end
 
 def version_label_for_name(name)
@@ -141,16 +157,17 @@ def related_attachment_files(markdown_file, logical_relative_path, source_root)
 
   Dir.glob(source_path.dirname.join("#{path.basename.sub_ext('').to_s}.*").to_s)
     .select { File.file?(_1) }
+    .reject { Pathname(_1) == source_path }
     .sort
 end
 
 def latest_external_document_specs(sample_documents)
   sample_documents
-    .group_by { [ _1[:project_code], _1[:slug] ] }
+    .group_by { [_1[:project_code], _1[:slug]] }
     .values
     .map do |document_specs|
       document_specs.find { _1[:version_label] == "current" } ||
-        document_specs.max_by { [ _1[:version_priority], _1[:version_label].to_s ] }
+        document_specs.max_by { [_1[:version_priority], _1[:version_label].to_s] }
     end
 end
 
@@ -173,9 +190,13 @@ def external_sample_documents(root)
         markdown_files_for_scope(source_root, excluded_roots: source_root == site_dir ? excluded_roots : []).map do |markdown_file|
           logical_relative_path = relative_path(markdown_file, source_root)
           document_key = logical_document_key_for_markdown(logical_relative_path)
-          slug = slug_for_name("#{site_dir.basename}-#{document_key}")
+          slug = document_slug_for_markdown(site_dir, logical_relative_path)
           version_label = version_label_for_name(version_name)
-          site_build_path = File.join("external_samples", slug_for_name(project_name), site_build_segment_for_name(version_name))
+          site_build_path = File.join(
+            "external_samples",
+            slug_for_name(project_name),
+            site_build_segment_for_name(version_name)
+          )
 
           {
             project_code:,
@@ -184,7 +205,7 @@ def external_sample_documents(root)
             title: document_title_for_markdown(logical_relative_path, site_dir),
             slug:,
             version_label:,
-            source_commit_hash: "external-#{slug_for_name("#{project_name}-#{document_key}-#{version_label}")}",
+            source_commit_hash: "external-#{Digest::SHA1.hexdigest("#{project_name}/#{logical_relative_path}/#{version_label}")[0, 12]}",
             source_dir: source_root,
             markdown_source_file: Pathname(markdown_file),
             markdown_logical_relative_path: logical_relative_path,
@@ -582,7 +603,12 @@ ActiveRecord::Base.transaction do
         pdf_snapshot_path: nil
       }.merge(timestamp_attrs(now, existing&.created_at))
     end
-    upsert_rows!(DocumentVersion, external_version_rows, unique_by: :index_document_versions_on_document_id_and_version_label)
+
+    upsert_rows!(
+      DocumentVersion,
+      external_version_rows,
+      unique_by: :index_document_versions_on_document_id_and_version_label
+    )
     versions = DocumentVersion.includes(document: :project).index_by { composite_key(_1.document.project.code, _1.document.slug, _1.version_label) }
 
     upsert_rows!(
@@ -609,7 +635,7 @@ ActiveRecord::Base.transaction do
     versions = DocumentVersion.includes(document: :project).index_by { composite_key(_1.document.project.code, _1.document.slug, _1.version_label) }
 
     sample_documents
-      .group_by { [ _1[:project_code], _1[:version_label], _1[:source_dir].to_s, _1[:site_build_path] ] }
+      .group_by { [_1[:project_code], _1[:version_label], _1[:source_dir].to_s, _1[:site_build_path]] }
       .each_value do |document_specs|
         representative_spec = document_specs.first
         representative_version = versions.fetch(
@@ -638,7 +664,7 @@ ActiveRecord::Base.transaction do
           FileUtils.rm_rf(version.site_root_absolute_path.children)
           FileUtils.cp_r(representative_version.site_root_absolute_path.children, version.site_root_absolute_path)
         end
-    end
+      end
 
     existing_files = build_existing_map(DocumentFile.all) { [_1.storage_key] }
 

@@ -1,647 +1,391 @@
 {
-  "/-613": {
+  "/-fbf": {
     "__comp": "5e95c892",
     "__context": {
       "plugin": "aba21aa0"
     }
   },
-  "/-78f": {
+  "/-978": {
     "__comp": "a7bd4aaa",
     "__props": "22dd74f7"
   },
-  "/-dd4": {
+  "/-b97": {
     "__comp": "a94703ab"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/-60f": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/-33c": {
     "__comp": "17896441",
-    "content": "ecba60e3"
+    "content": "634b562d"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/-30d": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/-a74": {
     "__comp": "17896441",
-    "content": "b94818bd"
+    "content": "3934b7d2"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/seed-e6ec18405b10-25b": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/seed-9ad71c72e7f6-262": {
     "__comp": "17896441",
-    "content": "aa2e8f35"
+    "content": "76333fba"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/ベルジョイス_BMS発注データ/seed-4532a143326f-b3a": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/seed-9b7a0814de91-4ae": {
     "__comp": "17896441",
-    "content": "cf4a02c7"
+    "content": "8143ba5e"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/ベルジョイス_BMS発注データ/seed-b39396013358-783": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/seed-9f2a50f70764-af9": {
     "__comp": "17896441",
-    "content": "3cc593ef"
+    "content": "9a3cee91"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/ベルジョイス_BMS発注データ/seed-b98464c730b0-909": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/-5f1": {
     "__comp": "17896441",
-    "content": "8907be50"
+    "content": "c0792d57"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/ベルジョイス_BMS発注データ/seed-d428dc9dbd82-08f": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-548d9295b2c6-16b": {
     "__comp": "17896441",
-    "content": "ddae6cd2"
+    "content": "35333b02"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/マテハン送信データ/seed-2c065a8cbaba-4c2": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-8e895abd221f-021": {
     "__comp": "17896441",
-    "content": "6f1a5f86"
+    "content": "ae6f7736"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/マテハン送信データ/seed-bb54bba4cb23-71e": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-aaf199fcb52e-e32": {
     "__comp": "17896441",
-    "content": "f6cb9db1"
+    "content": "6853b5c5"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/対アークス_IFレイアウト/-28f": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-d8e956663fc1-a58": {
     "__comp": "17896441",
-    "content": "0d589236"
+    "content": "8382f741"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/対アークス_IFレイアウト/seed-7f2c1c938e32-fe0": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/テスト補助ツール/seed-f9a5b920e255-8d5": {
     "__comp": "17896441",
-    "content": "76185ad2"
+    "content": "330997ef"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/議事録/seed-0c8c70635256-fe6": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/-883": {
     "__comp": "17896441",
-    "content": "c7e77d57"
+    "content": "b4a6624d"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/議事録/seed-7ed6e8ba108a-804": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-0c04153b05f0-a94": {
     "__comp": "17896441",
-    "content": "ac542322"
+    "content": "3c6e26a9"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/追加資料20260415/seed-2e7fadf06b42-dfb": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-246b8878e53a-184": {
     "__comp": "17896441",
-    "content": "e2ee07f4"
+    "content": "d6d3be49"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/追加資料20260415/seed-9f4098d46c7d-aca": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-752a70294258-5b4": {
     "__comp": "17896441",
-    "content": "4dafbd92"
+    "content": "eb0b38fa"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/受領資料Markdown/追加資料20260415/seed-ec555ea869d1-3a1": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-857b832b4090-01a": {
     "__comp": "17896441",
-    "content": "d4fd43d7"
+    "content": "cf14b522"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/-714": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-aefe34f04af0-c73": {
     "__comp": "17896441",
-    "content": "d125c66a"
+    "content": "5ce51655"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/seed-27ef53609db5-d2f": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-c737b721a214-d16": {
     "__comp": "17896441",
-    "content": "912e4d24"
+    "content": "f0f9ae97"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/seed-303f124aade6-ed4": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/テスト/結合テストシナリオ/seed-c902b15a3194-9d4": {
     "__comp": "17896441",
-    "content": "93c06893"
+    "content": "6206bfa9"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/seed-432081874057-905": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/-869": {
     "__comp": "17896441",
-    "content": "007185f9"
+    "content": "cce104d5"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/seed-5327df53e89a-b60": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/スケジュール/seed-a2f1dabceb66-5c0": {
     "__comp": "17896441",
-    "content": "e4a969f6"
+    "content": "1eeffb49"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/seed-65a31f20b6aa-50c": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/プロジェクト進行ルール/seed-e2d438819d68-8a9": {
     "__comp": "17896441",
-    "content": "6be5144e"
+    "content": "b6aab646"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/seed-90939020b1d1-c7f": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/課題管理/seed-2574703a4d28-a4e": {
     "__comp": "17896441",
-    "content": "5d42fa10"
+    "content": "eddf6cb1"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/seed-981a1578fad1-a95": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/議事録/seed-7e71b0fc8a84-930": {
     "__comp": "17896441",
-    "content": "d5f81321"
+    "content": "157e30b6"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/seed-a94fd24b87de-2c8": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/議事録/seed-d671833b9c84-1d0": {
     "__comp": "17896441",
-    "content": "b578d3cf"
+    "content": "b9fa6de5"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/seed-ad3ba18ed3e8-805": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/プロジェクト管理/議事録/seed-ed384307bb8b-30b": {
     "__comp": "17896441",
-    "content": "c6306adb"
+    "content": "793a82ea"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/seed-b41be8eb28e0-209": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/-519": {
     "__comp": "17896441",
-    "content": "6349a0ea"
+    "content": "19667739"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/seed-f3d4a1489a42-e94": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-0942ee839bb4-0e4": {
     "__comp": "17896441",
-    "content": "72e3ef24"
+    "content": "65df2c41"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/ユースケース記述/-40b": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-1441f5c92f4d-58e": {
     "__comp": "17896441",
-    "content": "66c8b4c2"
+    "content": "3aa53f7a"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/ユースケース記述/seed-0c2a9a449ae9-15e": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-5bd118d81f18-c4d": {
     "__comp": "17896441",
-    "content": "047ef968"
+    "content": "5e03cad1"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/ユースケース記述/seed-1e2203e38000-763": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-5cc631be0888-3d0": {
     "__comp": "17896441",
-    "content": "3d183969"
+    "content": "c57c2684"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/ユースケース記述/seed-2ead689597e6-16a": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-9952776d8e9b-24e": {
     "__comp": "17896441",
-    "content": "381c1aef"
+    "content": "694ce8bd"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/ユースケース記述/seed-3db37a690d65-5c6": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-a26bee36b38e-881": {
     "__comp": "17896441",
-    "content": "2f8b7974"
+    "content": "a2ccbba6"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/ユースケース記述/seed-4583aba1db72-ca8": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-d0fd8f4bbe43-bfa": {
     "__comp": "17896441",
-    "content": "be5225f1"
+    "content": "3d11707b"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/ユースケース記述/seed-46e102c0e3fa-7ac": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/seed-eba3af446f0b-59d": {
     "__comp": "17896441",
-    "content": "593c65c6"
+    "content": "237ccd74"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/ユースケース記述/seed-7b65f45205fb-851": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/-fed": {
     "__comp": "17896441",
-    "content": "f7adb8ff"
+    "content": "217597fe"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/ユースケース記述/seed-8691d3f9552f-9c1": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-39c326e4e737-acc": {
     "__comp": "17896441",
-    "content": "a77d8279"
+    "content": "da39ec31"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/ユースケース記述/seed-8ac0ae9e7227-2f8": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-4c1a17ea7847-101": {
     "__comp": "17896441",
-    "content": "316c3f0e"
+    "content": "cf79bc4e"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20240426/ユースケース記述/seed-a3fa0d47a639-8fb": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-850d07f1e6b8-a31": {
     "__comp": "17896441",
-    "content": "49e3a6b3"
+    "content": "101ee6ef"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-00f3edb533da-253": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-961a03309547-17a": {
     "__comp": "17896441",
-    "content": "647bb47a"
+    "content": "61d3ac5f"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-0ad9792f4b77-348": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/フロー図/seed-99d800ecd9b1-04c": {
     "__comp": "17896441",
-    "content": "32fe0c3f"
+    "content": "936efdc8"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-2a45d7955177-ad7": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/-df9": {
     "__comp": "17896441",
-    "content": "76b2d2eb"
+    "content": "cd58471c"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-2c07a5e2f51e-462": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-03bec9903f84-06d": {
     "__comp": "17896441",
-    "content": "e7d1c098"
+    "content": "8dfc021a"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-37795fda2b43-25c": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-0696ef46f947-1b5": {
     "__comp": "17896441",
-    "content": "eef5a900"
+    "content": "24ce95c2"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-42e2f9559d13-532": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-6cfefed75454-56b": {
     "__comp": "17896441",
-    "content": "844e5a6f"
+    "content": "306db3a1"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-5fc9cf5d5486-c01": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-9e743e3a4337-64f": {
     "__comp": "17896441",
-    "content": "e81b8b4b"
+    "content": "bbd37cee"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-7373b35f8a9e-a5b": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-9fda99bfc540-812": {
     "__comp": "17896441",
-    "content": "50f9c56a"
+    "content": "b0f2eb9d"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-93af5abc6133-28f": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-a1c1bc54b2fc-05b": {
     "__comp": "17896441",
-    "content": "3d02e37a"
+    "content": "987f0f22"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-a869f974e72e-a21": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-aa91d7c24420-54e": {
     "__comp": "17896441",
-    "content": "72727168"
+    "content": "dabdf4b9"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-ada3f90213db-42b": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-e4d75d6aa099-cab": {
     "__comp": "17896441",
-    "content": "502d841c"
+    "content": "20d8793d"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-bb27414cc403-584": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-ee9c9313580c-085": {
     "__comp": "17896441",
-    "content": "3c2952c7"
+    "content": "e44c14d9"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-c994055b991a-bd2": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/ユースケース記述/seed-f6c2bf5ea0b3-784": {
     "__comp": "17896441",
-    "content": "b478d24d"
+    "content": "44808257"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-cbf0f67c1ecb-324": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/-009": {
     "__comp": "17896441",
-    "content": "4a2002b9"
+    "content": "283c6ff9"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-d17bd986ddda-b60": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-8a3fa1e2ea32-972": {
     "__comp": "17896441",
-    "content": "8abf224a"
+    "content": "7cdae6bd"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-d7cc591105ba-414": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-91ffe67fdfee-9f0": {
     "__comp": "17896441",
-    "content": "9d28ae03"
+    "content": "8a97d762"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-eb36fc8b9a35-d29": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-cd0bde7cfd71-de9": {
     "__comp": "17896441",
-    "content": "50705da8"
+    "content": "ab64a63c"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/提出済/20260424まで/seed-ee1e223f26be-862": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-d98e72b58cd4-ff2": {
     "__comp": "17896441",
-    "content": "676a29f6"
+    "content": "5a730191"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/社内メモ/-90d": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/基本設計/構造図/seed-e2271eafa750-b9a": {
     "__comp": "17896441",
-    "content": "e43ce5be"
+    "content": "186479b9"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/社内メモ/seed-4b632055c234-d8f": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/-2b1": {
     "__comp": "17896441",
-    "content": "459977d3"
+    "content": "87627de5"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/社内メモ/seed-814836858deb-25e": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-050463e99ecd-4ca": {
     "__comp": "17896441",
-    "content": "028e7645"
+    "content": "1032354e"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/社内メモ/seed-cba204099f0b-f36": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-291d5b8ac8c6-8ef": {
     "__comp": "17896441",
-    "content": "05009c64"
+    "content": "6b70475f"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/社内メモ/seed-e59c580e7e44-316": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-4f98864d5882-e82": {
     "__comp": "17896441",
-    "content": "43ed7857"
+    "content": "c5e32a18"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/-a5e": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-5ee56c3a0f11-4e8": {
     "__comp": "17896441",
-    "content": "49892eb3"
+    "content": "b2235ed8"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/-8a2": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-a807289016cd-4a2": {
     "__comp": "17896441",
-    "content": "1226f509"
+    "content": "8f33a16a"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/seed-56cd84aad57d-14c": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-c214fe21ecf2-a3a": {
     "__comp": "17896441",
-    "content": "b86884a0"
+    "content": "f334968d"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/seed-6c4d917afa17-01a": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-d13d7509c0a6-45d": {
     "__comp": "17896441",
-    "content": "14838128"
+    "content": "85d173f5"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/seed-b773c4aac6c2-930": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/要件定義/seed-fd2149965d94-b3d": {
     "__comp": "17896441",
-    "content": "ba945046"
+    "content": "43879b56"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/テスト補助ツール/-4c8": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/-2d1": {
     "__comp": "17896441",
-    "content": "7a252021"
+    "content": "caeeed1d"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/テスト補助ツール/seed-538c7f48913c-be6": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/-dcb": {
     "__comp": "17896441",
-    "content": "9d69c1e6"
+    "content": "bc5ed4ba"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/テスト補助ツール/seed-620c7b1795e3-f51": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-046f98b2c6ed-3d6": {
     "__comp": "17896441",
-    "content": "d0bb2e6e"
+    "content": "0dec5b7d"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/テスト補助ツール/seed-7be103e2980c-13e": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-500a2f584e8d-bb0": {
     "__comp": "17896441",
-    "content": "32559f9e"
+    "content": "9172abb2"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/テスト補助ツール/seed-84f1d5c4c5ef-a1d": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-61535a050840-82a": {
     "__comp": "17896441",
-    "content": "ac282534"
+    "content": "709a468c"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/テスト補助ツール/seed-c71e63463609-969": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-b187f471834d-f34": {
     "__comp": "17896441",
-    "content": "97b52037"
+    "content": "3b8a6128"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/結合テストシナリオ/-e65": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-be6f24f6fa98-0ec": {
     "__comp": "17896441",
-    "content": "c12366c0"
+    "content": "57f2390f"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/結合テストシナリオ/seed-074f21e697db-afe": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-cbe43ef17574-44b": {
     "__comp": "17896441",
-    "content": "7d73deb7"
+    "content": "68d2e97b"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/結合テストシナリオ/seed-63669bb6cfd8-e07": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/IFデータ仕様/seed-d44ec4e59b0e-bb5": {
     "__comp": "17896441",
-    "content": "79c5deaa"
+    "content": "fc3c51dd"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/結合テストシナリオ/seed-746fd6bf0aca-9e4": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/seed-2ac7b4f32b98-c58": {
     "__comp": "17896441",
-    "content": "d4e5a819"
+    "content": "1ba33b77"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/結合テストシナリオ/seed-c9154186d5b4-fec": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/seed-bafa488d7bcc-d98": {
     "__comp": "17896441",
-    "content": "9c17c4db"
+    "content": "afed3daa"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/結合テストシナリオ/seed-cc74a10f3ea7-b11": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/-e22": {
     "__comp": "17896441",
-    "content": "b64dbf33"
+    "content": "259a0a67"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/結合テストシナリオ/seed-d3e045369016-a53": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-1a69a5a56be4-3d8": {
     "__comp": "17896441",
-    "content": "1cdbc5ee"
+    "content": "28a90dca"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/テスト/結合テストシナリオ/seed-ecfd49efc5f7-29a": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-516669100a9f-e6e": {
     "__comp": "17896441",
-    "content": "a3e75809"
+    "content": "f2cf7e75"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/プロジェクト管理/-418": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-76fe463afddb-ed3": {
     "__comp": "17896441",
-    "content": "29469863"
+    "content": "47457764"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/プロジェクト管理/スケジュール/seed-e34d5a03a16e-4f5": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-91e858c9ec1e-041": {
     "__comp": "17896441",
-    "content": "034ea1ec"
+    "content": "860fe242"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/プロジェクト管理/プロジェクト進行ルール/seed-efa557376680-208": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-af37d6f39a2f-5f9": {
     "__comp": "17896441",
-    "content": "9d3cae79"
+    "content": "f2a423da"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/プロジェクト管理/課題管理/seed-2aca79aec66c-8ac": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-b808171a5556-7bd": {
     "__comp": "17896441",
-    "content": "4c97b12f"
+    "content": "b41ec9c1"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/プロジェクト管理/議事録/seed-3e0892f95a35-b2f": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-f3baf251efd6-519": {
     "__comp": "17896441",
-    "content": "23deeb93"
+    "content": "a9c2d914"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/プロジェクト管理/議事録/seed-a60be22f6515-823": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/区分・コード定義/seed-f77bc936c8de-a5e": {
     "__comp": "17896441",
-    "content": "4437b432"
+    "content": "6bde9d1a"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/プロジェクト管理/議事録/seed-dcc47db48985-67d": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/-3ff": {
     "__comp": "17896441",
-    "content": "a9581259"
+    "content": "b21b1115"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/-0bb": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-31d02c4bcdcf-b1c": {
     "__comp": "17896441",
-    "content": "3bd750ea"
+    "content": "238db3a4"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/seed-0fe652f64309-62d": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-8f9964812ec0-41c": {
     "__comp": "17896441",
-    "content": "662efeb3"
+    "content": "80284be5"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/seed-46ba5d30e107-fea": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-baecf1497ef3-a95": {
     "__comp": "17896441",
-    "content": "0141264b"
+    "content": "48aaafdf"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/seed-a4fd3016fea9-af1": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-c470bedab3d8-688": {
     "__comp": "17896441",
-    "content": "13c97622"
+    "content": "b11e04e8"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/seed-af55f4898c2b-e36": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-ca44880b3421-145": {
     "__comp": "17896441",
-    "content": "2ddb6dc0"
+    "content": "1e30a0b8"
   },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/seed-b76aead6cf53-0eb": {
+  "/external_samples/kyodo-butsuryu-service/sample-dcf15538/詳細設計/変換ルール整理/seed-e126cebaafb8-cf9": {
     "__comp": "17896441",
-    "content": "b3123197"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/seed-c11b16f3e909-6ab": {
-    "__comp": "17896441",
-    "content": "954a3fed"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/seed-e900ee63a511-24c": {
-    "__comp": "17896441",
-    "content": "bbc2f211"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/seed-f98888e7b218-4fc": {
-    "__comp": "17896441",
-    "content": "e0488a8d"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/フロー図/-9ba": {
-    "__comp": "17896441",
-    "content": "4deba8b2"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/フロー図/seed-18aa12980ffd-32c": {
-    "__comp": "17896441",
-    "content": "789f8a3d"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/フロー図/seed-3c22f1213405-a64": {
-    "__comp": "17896441",
-    "content": "ca1bde17"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/フロー図/seed-9dbfd1b89c73-e6d": {
-    "__comp": "17896441",
-    "content": "53f56b11"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/フロー図/seed-cd5ffb285667-37d": {
-    "__comp": "17896441",
-    "content": "a16a4f46"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/フロー図/seed-d5d0fe1b5bf8-09c": {
-    "__comp": "17896441",
-    "content": "24891a89"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/ユースケース記述/-a6d": {
-    "__comp": "17896441",
-    "content": "908f2985"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/ユースケース記述/seed-03407eacd248-101": {
-    "__comp": "17896441",
-    "content": "0d5e19ba"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/ユースケース記述/seed-219210f95a91-c77": {
-    "__comp": "17896441",
-    "content": "523e08cd"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/ユースケース記述/seed-4bcdd1b3e620-ba5": {
-    "__comp": "17896441",
-    "content": "21a2b263"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/ユースケース記述/seed-57fffef8475c-eab": {
-    "__comp": "17896441",
-    "content": "a0488924"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/ユースケース記述/seed-7b2ca10e5e41-df9": {
-    "__comp": "17896441",
-    "content": "23e6a890"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/ユースケース記述/seed-80387c03cc8f-49a": {
-    "__comp": "17896441",
-    "content": "5cccb82e"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/ユースケース記述/seed-8872de5505c0-189": {
-    "__comp": "17896441",
-    "content": "c9f35643"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/ユースケース記述/seed-b0615863f368-c0b": {
-    "__comp": "17896441",
-    "content": "108ea970"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/ユースケース記述/seed-e45daac593ff-9df": {
-    "__comp": "17896441",
-    "content": "5c8d5552"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/ユースケース記述/seed-e4e7e7d7b20d-709": {
-    "__comp": "17896441",
-    "content": "28c370ee"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/構造図/-cd9": {
-    "__comp": "17896441",
-    "content": "5404fdc3"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/構造図/seed-0f14a7338000-9d2": {
-    "__comp": "17896441",
-    "content": "8435d0ed"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/構造図/seed-3f24f7275e53-618": {
-    "__comp": "17896441",
-    "content": "bb1c79e3"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/構造図/seed-c32a64bc0938-4f8": {
-    "__comp": "17896441",
-    "content": "344627f9"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/構造図/seed-f9e87cdb9166-ebe": {
-    "__comp": "17896441",
-    "content": "127f2e5f"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/基本設計/構造図/seed-fe509bc13954-820": {
-    "__comp": "17896441",
-    "content": "77bbbdb7"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/要件定義/-64c": {
-    "__comp": "17896441",
-    "content": "7b9f33f9"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/要件定義/seed-6fc1a99d483e-eba": {
-    "__comp": "17896441",
-    "content": "8e30d7e1"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/要件定義/seed-726eba4b65ba-045": {
-    "__comp": "17896441",
-    "content": "2ce5f834"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/要件定義/seed-94ed0ab8e16b-567": {
-    "__comp": "17896441",
-    "content": "acc91535"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/要件定義/seed-9d548e341ab6-c8f": {
-    "__comp": "17896441",
-    "content": "aab1d299"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/要件定義/seed-9eafd91b6e53-91d": {
-    "__comp": "17896441",
-    "content": "dfddfc9a"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/要件定義/seed-b52831b3ec10-9e5": {
-    "__comp": "17896441",
-    "content": "6dc0a189"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/要件定義/seed-dc2020d104ed-8fd": {
-    "__comp": "17896441",
-    "content": "346f90b9"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/要件定義/seed-f3ec109bcd9b-395": {
-    "__comp": "17896441",
-    "content": "a9430ef1"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/-171": {
-    "__comp": "17896441",
-    "content": "f5bdb48a"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/IFデータ仕様/-70a": {
-    "__comp": "17896441",
-    "content": "20989a7c"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/IFデータ仕様/seed-7c568742c6cd-33d": {
-    "__comp": "17896441",
-    "content": "d75e494a"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/IFデータ仕様/seed-8bab4a4c7862-388": {
-    "__comp": "17896441",
-    "content": "6bdb9c2e"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/IFデータ仕様/seed-a4087234e4df-2ae": {
-    "__comp": "17896441",
-    "content": "712bb3df"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/IFデータ仕様/seed-ada749cfd57f-691": {
-    "__comp": "17896441",
-    "content": "c99ab909"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/IFデータ仕様/seed-cea965ffea58-fee": {
-    "__comp": "17896441",
-    "content": "bec1bc28"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/IFデータ仕様/seed-d5018b956cac-f50": {
-    "__comp": "17896441",
-    "content": "1baa0707"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/IFデータ仕様/seed-fe06f1717b7b-41b": {
-    "__comp": "17896441",
-    "content": "ed9c4c8e"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/seed-2285b1a2adea-a9f": {
-    "__comp": "17896441",
-    "content": "35ff5907"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/seed-a0d5ec19ee5f-e88": {
-    "__comp": "17896441",
-    "content": "a4f1aa68"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/区分・コード定義/-469": {
-    "__comp": "17896441",
-    "content": "abe9d321"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/区分・コード定義/seed-22fda0940635-d43": {
-    "__comp": "17896441",
-    "content": "e9777997"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/区分・コード定義/seed-28d5b53d8a65-04a": {
-    "__comp": "17896441",
-    "content": "3db73864"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/区分・コード定義/seed-33717b08237c-7ee": {
-    "__comp": "17896441",
-    "content": "9b792871"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/区分・コード定義/seed-4dc53fe72f6c-d98": {
-    "__comp": "17896441",
-    "content": "d7a95a93"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/区分・コード定義/seed-59644148f622-68e": {
-    "__comp": "17896441",
-    "content": "6cf60204"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/区分・コード定義/seed-64ea0d4a08b0-2ae": {
-    "__comp": "17896441",
-    "content": "7ee5aae2"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/区分・コード定義/seed-f76359b85eb5-36a": {
-    "__comp": "17896441",
-    "content": "5f85ac63"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/区分・コード定義/seed-fa3ac001e722-0d9": {
-    "__comp": "17896441",
-    "content": "8cef6dad"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/変換ルール整理/-0f8": {
-    "__comp": "17896441",
-    "content": "4eea8286"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/変換ルール整理/seed-27e266204c95-051": {
-    "__comp": "17896441",
-    "content": "49cfcbad"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/変換ルール整理/seed-6a4ca0dcd74c-e41": {
-    "__comp": "17896441",
-    "content": "46b36e32"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/変換ルール整理/seed-c7fc75cc6322-fcf": {
-    "__comp": "17896441",
-    "content": "aca5226e"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/変換ルール整理/seed-cfe417ef8e73-d43": {
-    "__comp": "17896441",
-    "content": "9462bca6"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/変換ルール整理/seed-d45f6b5a7880-a59": {
-    "__comp": "17896441",
-    "content": "d205425a"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本/詳細設計/変換ルール整理/seed-d76c99a2f976-f83": {
-    "__comp": "17896441",
-    "content": "e7cb1fe3"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/編集正本PDF化済/-9c9": {
-    "__comp": "17896441",
-    "content": "4c9d5ffa"
-  },
-  "/external_samples/kyodo-butsuryu-service/sample-09b70962/sample-09b70962/補助スクリプト/-8b0": {
-    "__comp": "17896441",
-    "content": "cd642982"
+    "content": "46f5aae3"
   }
 }
