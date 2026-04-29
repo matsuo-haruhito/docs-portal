@@ -9,7 +9,7 @@ const config: Config = {
       'classic',
       {
         docs: {
-          path: '../docs-src',
+          path: process.env.DOCUSAURUS_DOCS_PATH ?? '../docs-src',
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           lastVersion: 'current',

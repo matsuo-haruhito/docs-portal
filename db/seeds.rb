@@ -74,6 +74,15 @@ def version_label_for_name(name)
   slug_for_name(name)
 end
 
+def site_build_path_for_document(document_spec)
+  File.join(
+    "external_samples",
+    slug_for_name(document_spec[:project_name]),
+    document_spec[:slug],
+    document_spec[:version_label]
+  )
+end
+
 def child_directories(path)
   path.children.select(&:directory?).sort_by(&:to_s)
 end
@@ -410,6 +419,10 @@ ActiveRecord::Base.transaction do
     external_version_rows = sample_documents.map do |document_spec|
       document = documents.fetch(composite_key(document_spec[:project_code], document_spec[:slug]))
       existing = existing_versions[composite_key(document.id, document_spec[:version_label])]
+      site_build_path = site_build_path_for_document(document_spec)
+      markdown_entry_path = Dir.glob(document_spec[:source_dir].join("**/*").to_s).find do |path|
+        File.file?(path) && %w[.md .markdown].include?(File.extname(path).downcase)
+      end
 
       {
         document_id: document.id,
@@ -420,8 +433,8 @@ ActiveRecord::Base.transaction do
         published_at: now,
         published_by_user_id: users.fetch("admin@example.com").id,
         notes: "source_dir=#{document_spec[:source_dir]}",
-        markdown_entry_path: nil,
-        site_build_path: nil,
+        markdown_entry_path: markdown_entry_path ? site_build_path : nil,
+        site_build_path: markdown_entry_path ? site_build_path : nil,
         pdf_snapshot_path: nil
       }.merge(timestamp_attrs(now, existing&.created_at))
     end
@@ -447,6 +460,18 @@ ActiveRecord::Base.transaction do
       end,
       unique_by: :id
     )
+
+    versions = DocumentVersion.includes(document: :project).index_by { composite_key(_1.document.project.code, _1.document.slug, _1.version_label) }
+    sample_documents.each do |document_spec|
+      version = versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
+      next if version.site_build_path.blank?
+
+      SeedDocusaurusBuildService.new(
+        source_dir: document_spec[:source_dir],
+        version: version,
+        site_build_path: version.site_build_path
+      ).call
+    end
 
     external_file_specs = sample_documents.flat_map do |document_spec|
       version = versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
