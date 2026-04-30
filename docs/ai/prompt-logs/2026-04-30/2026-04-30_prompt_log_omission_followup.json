@@ -1,0 +1,104 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-04-30",
+  "task": {
+    "name": "prompt_log_omission_followup",
+    "type": "docs",
+    "ticket": null
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work/self/docs-portal",
+    "customer": null,
+    "repo": "matsuo-haruhito/docs-portal",
+    "editable_paths": [
+      "docs/ai/prompt-logs/2026-04-30/2026-04-30_unprioritized_open_issues_sweep.json",
+      "docs/ai/prompt-logs/2026-04-30/2026-04-30_prompt_log_omission_followup.json"
+    ],
+    "read_only_paths": [
+      "../../AGENTS.md",
+      "../../gpt/policies/prompt-log-policy.md",
+      "../../gpt/schemas/prompt-log.schema.json",
+      ".git/"
+    ]
+  },
+  "instruction_summary": "After the user pointed out the missing Prompt Log requirement, verify the AGENTS chain and add the missing repo-local log for the already-in-progress issue sweep task.",
+  "actual_work": "Re-read the root AGENTS and the canonical prompt-log policy, confirmed that repo-local tasks must write logs under docs/ai/prompt-logs, and backfilled the missing log for the unprioritized open issue sweep that had already started without one.",
+  "changed_files": [
+    "docs/ai/prompt-logs/2026-04-30/2026-04-30_unprioritized_open_issues_sweep.json",
+    "docs/ai/prompt-logs/2026-04-30/2026-04-30_prompt_log_omission_followup.json"
+  ],
+  "commands": [
+    {
+      "command": "sed -n '1,260p' ../../AGENTS.md",
+      "result": "pass",
+      "notes": "Confirmed the root Prompt Log requirement and repo-local path rule."
+    },
+    {
+      "command": "sed -n '1,260p' ../../gpt/policies/prompt-log-policy.md",
+      "result": "pass",
+      "notes": "Confirmed the canonical Prompt Log storage and timing policy."
+    },
+    {
+      "command": "sed -n '1,260p' ../../gpt/schemas/prompt-log.schema.json",
+      "result": "pass",
+      "notes": "Checked required fields before writing the retrospective repo-local log."
+    }
+  ],
+  "tests": [
+    {
+      "command": "sed -n '1,220p' docs/ai/prompt-logs/2026-04-30/2026-04-30_unprioritized_open_issues_sweep.json",
+      "result": "pass",
+      "notes": "Read back the backfilled log after writing it."
+    }
+  ],
+  "usage": {
+    "estimated_input_tokens": null,
+    "estimated_output_tokens": null,
+    "estimated_total_tokens": null,
+    "measurement_source": "unavailable",
+    "loaded_roles": [],
+    "token_waste_notes": [
+      "This follow-up existed only because the required Prompt Log was not created at task start."
+    ]
+  },
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "../../gpt/policies/prompt-log-policy.md",
+      "../../gpt/schemas/prompt-log.schema.json"
+    ],
+    "token_notes": "Exact token counts were unavailable.",
+    "token_waste_notes": [
+      "Prompt Log backfilling required an avoidable policy/schema reread."
+    ],
+    "wasted_context": [
+      "The issue sweep work had to be reconstructed after the fact instead of being logged incrementally."
+    ],
+    "unnecessary_exploration": []
+  },
+  "quality_notes": [
+    "The repo-local issue sweep now has an explicit Prompt Log trail.",
+    "The AGENTS-to-policy chain was revalidated instead of assuming the remembered rule."
+  ],
+  "risks": [
+    "Backfilled logs are approximate compared with logs started before work begins."
+  ],
+  "remaining_concerns": [
+    "Future repo-local tasks in this workspace should create the log stub before any meaningful exploration."
+  ],
+  "signals": [
+    {
+      "axis": "risk_reduction",
+      "rule_id": "prompt-log.verify-chain-when-missed",
+      "polarity": "positive",
+      "note": "The omission was corrected by explicitly checking the AGENTS-to-policy chain and writing the missing log."
+    },
+    {
+      "axis": "token_saving",
+      "rule_id": "prompt-log-create-at-start",
+      "polarity": "negative",
+      "note": "This follow-up and the reconstructed issue sweep log would not have been necessary if the stub had been created at task start."
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-04-30",
+  "task": {
+    "name": "issue_10_11_project_site_refactor",
+    "type": "feature",
+    "ticket": "issues #10 #11"
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work/self/docs-portal",
+    "customer": null,
+    "repo": "matsuo-haruhito/docs-portal",
+    "editable_paths": [
+      "README.md",
+      "app/controllers/document_views_controller.rb",
+      "app/controllers/project_sites_controller.rb",
+      "app/controllers/projects_controller.rb",
+      "app/models/document_version.rb",
+      "app/models/project.rb",
+      "app/renderers/docusaurus_site_renderer.rb",
+      "app/views/documents/show.html.erb",
+      "app/views/projects/index.html.erb",
+      "app/views/projects/show.html.erb",
+      "config/routes.rb",
+      "db/seeds.rb",
+      "docs/アプリケーション仕様.md",
+      "spec/requests/document_views_spec.rb",
+      "spec/requests/project_sites_spec.rb",
+      "spec/services/seed_docusaurus_build_service_spec.rb"
+    ],
+    "read_only_paths": [
+      "docs/README.md",
+      "storage/document_files/external_samples/",
+      "storage/docs_sites/",
+      ".git/"
+    ]
+  },
+  "instruction_summary": "Handle issues #10 and #11 in the easier order, reshaping Document/DocumentVersion granularity around individual documents and shifting Docusaurus site display toward project-based routes.",
+  "actual_work": "Refactored the external sample seed flow so a site directory becomes one Project, individual markdown pages become Documents, and snapshot directories become DocumentVersions of those documents. Added project-level site routing through ProjectSitesController and changed document HTML links to redirect into project site URLs. Introduced helper methods on DocumentVersion for normalized page paths, added project default-site resolution, injected document-version switching into rendered Docusaurus HTML, and updated README/spec docs to explain the new granularity and routing model.",
+  "changed_files": [
+    "README.md",
+    "app/controllers/document_views_controller.rb",
+    "app/controllers/project_sites_controller.rb",
+    "app/controllers/projects_controller.rb",
+    "app/models/document_version.rb",
+    "app/models/project.rb",
+    "app/renderers/docusaurus_site_renderer.rb",
+    "app/views/documents/show.html.erb",
+    "app/views/projects/index.html.erb",
+    "app/views/projects/show.html.erb",
+    "config/routes.rb",
+    "db/seeds.rb",
+    "docs/アプリケーション仕様.md",
+    "spec/requests/document_views_spec.rb",
+    "spec/requests/project_sites_spec.rb",
+    "spec/services/seed_docusaurus_build_service_spec.rb"
+  ],
+  "commands": [
+    {
+      "command": "sed -n '1,220p' docs/README.md",
+      "result": "pass",
+      "notes": "Repo-local documentation entry point was read before reshaping the design."
+    },
+    {
+      "command": "sed -n '1,260p' db/seeds.rb",
+      "result": "pass",
+      "notes": "Seed flow was reviewed and then reworked around per-page documents and snapshot-based versions."
+    },
+    {
+      "command": "sed -n '1,260p' app/renderers/docusaurus_site_renderer.rb",
+      "result": "pass",
+      "notes": "Renderer behavior was reviewed before adding project-route URL generation and a version switcher."
+    },
+    {
+      "command": "find storage/document_files/external_samples -maxdepth 4 -type f | sed -n '1,240p'",
+      "result": "pass",
+      "notes": "Sample source layout was inspected to validate the new seed granularity assumptions."
+    }
+  ],
+  "tests": [
+    {
+      "command": "docker compose run --rm app bundle exec ruby -c db/seeds.rb",
+      "result": "pass",
+      "notes": "Seed syntax was checked after the refactor."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec ruby -c app/controllers/project_sites_controller.rb",
+      "result": "pass",
+      "notes": "Project site controller syntax was checked."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec ruby -c app/renderers/docusaurus_site_renderer.rb",
+      "result": "pass",
+      "notes": "Renderer syntax was checked."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/project_sites_spec.rb spec/requests/document_views_spec.rb spec/services/seed_docusaurus_build_service_spec.rb",
+      "result": "attempted",
+      "notes": "The command was started but did not produce a result in this session."
+    }
+  ],
+  "usage": {
+    "estimated_input_tokens": null,
+    "estimated_output_tokens": null,
+    "estimated_total_tokens": null,
+    "measurement_source": "unavailable",
+    "loaded_roles": [],
+    "token_waste_notes": [
+      "This log is retrospective because the Prompt Log requirement was missed during the original work."
+    ]
+  },
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "docs/README.md",
+      "db/seeds.rb",
+      "app/renderers/docusaurus_site_renderer.rb",
+      "config/routes.rb",
+      "storage/document_files/external_samples/"
+    ],
+    "token_notes": "Exact token counts were unavailable and this entry was reconstructed from the session trail and current file state.",
+    "token_waste_notes": [
+      "Prompt log reconstruction required re-reading design decisions that should have been captured at task start."
+    ],
+    "wasted_context": [
+      "Some later debugging on seeded route mismatches was a consequence of path assumptions made during the earlier refactor."
+    ],
+    "unnecessary_exploration": []
+  },
+  "quality_notes": [
+    "Project-level site routing and per-document version modeling are now documented and implemented together.",
+    "The document detail UI now distinguishes HTML display from raw markdown and attachment access."
+  ],
+  "risks": [
+    "The initial implementation still relied on guessed markdown_entry_path values for seeded builds, which later required follow-up correction.",
+    "Runtime verification of db:seed and request specs remained incomplete in this session."
+  ],
+  "remaining_concerns": [
+    "Seeded build route resolution needed follow-up work, which was later handled under the reopened issue #2 path mismatch investigation.",
+    "Browser-level confirmation of Docusaurus JS behavior was still pending when the original refactor was finished."
+  ],
+  "signals": [
+    {
+      "axis": "quality",
+      "rule_id": "project-site-route-mainline",
+      "polarity": "positive",
+      "note": "The main HTML display flow was moved from document-version routes to project-based site routes."
+    },
+    {
+      "axis": "reproducibility",
+      "rule_id": "seed-granularity-doc-per-page",
+      "polarity": "positive",
+      "note": "External sample seed behavior was made explicit in code and docs around page-level documents and snapshot-based versions."
+    },
+    {
+      "axis": "token_saving",
+      "rule_id": "prompt-log-create-at-start",
+      "polarity": "negative",
+      "note": "This log had to be reconstructed after the fact because the required Prompt Log was not created at task start."
+    }
+  ]
+}

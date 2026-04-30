@@ -40,6 +40,10 @@ RSpec.describe "Project sites", type: :request do
       <<~HTML
         <!DOCTYPE html>
         <html>
+          <head>
+            <link rel="stylesheet" href="/assets/css/app.css">
+            <script src="/assets/js/app.js"></script>
+          </head>
           <body>
             <h1>見積対象・費用感整理</h1>
             <a href="../other-doc">Other</a>
@@ -47,8 +51,10 @@ RSpec.describe "Project sites", type: :request do
         </html>
       HTML
     )
-    FileUtils.mkdir_p(version_v1.site_root_absolute_path.join(site_build_path, "assets"))
-    File.write(version_v1.site_root_absolute_path.join(site_build_path, "assets", "app.css"), "body{color:#333;}")
+    FileUtils.mkdir_p(version_v1.site_root_absolute_path.join("assets", "css"))
+    File.write(version_v1.site_root_absolute_path.join("assets", "css", "app.css"), "body{color:#333;}")
+    FileUtils.mkdir_p(version_v1.site_root_absolute_path.join("assets", "js"))
+    File.write(version_v1.site_root_absolute_path.join("assets", "js", "app.js"), "console.log('ok');")
 
     FileUtils.mkdir_p(version_v2.site_root_absolute_path.join("#{site_build_path}-v2"))
     File.write(
@@ -72,15 +78,26 @@ RSpec.describe "Project sites", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("見積対象・費用感整理")
     expect(response.body).to include(project_site_path(project, site_path: "external_samples/sample-site/edit-original/other-doc", version_id: version_v1.public_id))
+    expect(response.body).to include(project_site_path(project, site_path: "assets/css/app.css", version_id: version_v1.public_id))
+    expect(response.body).to include(project_site_path(project, site_path: "assets/js/app.js", version_id: version_v1.public_id))
   end
 
   it "serves assets from the project site route" do
     sign_in_as(user)
 
-    get project_site_path(project, site_path: "#{site_build_path}/assets/app.css", version_id: version_v1.public_id)
+    get project_site_path(project, site_path: "assets/css/app.css", version_id: version_v1.public_id)
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("text/css")
+  end
+
+  it "serves javascript assets from the project site route" do
+    sign_in_as(user)
+
+    get project_site_path(project, site_path: "assets/js/app.js", version_id: version_v1.public_id)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to end_with("javascript")
   end
 
   it "shows a project site link on the project detail page" do

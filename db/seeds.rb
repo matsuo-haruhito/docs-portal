@@ -651,7 +651,14 @@ ActiveRecord::Base.transaction do
           source_dir: representative_spec[:source_dir],
           version: representative_version,
           site_build_path: representative_version.site_build_path
-        ).build
+        ).build.then do |route_map|
+          document_specs.each do |document_spec|
+            version = versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
+            route_key = SeedSupport::DocusaurusBuilder.seed_doc_id_for(document_spec[:markdown_logical_relative_path])
+            route_path = route_map[route_key] || document_spec[:markdown_entry_path]
+            version.update_columns(markdown_entry_path: route_path, updated_at: now)
+          end
+        end
 
         sibling_versions = document_specs.filter_map do |document_spec|
           versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))

@@ -1,5 +1,6 @@
 require "digest"
 require "fileutils"
+require "cgi"
 require "open3"
 require "tmpdir"
 
@@ -27,7 +28,13 @@ module SeedSupport
         populate_docs_src!(docs_src)
         run_build!(docs_src, build_output_dir)
         copy_build!(build_output_dir)
+        build_route_map
       end
+    end
+
+    def self.seed_doc_id_for(relative)
+      digest = Digest::SHA1.hexdigest(relative.to_s)[0, 12]
+      "seed-#{digest}"
     end
 
     private
@@ -124,8 +131,7 @@ module SeedSupport
     end
 
     def seed_doc_id(relative)
-      digest = Digest::SHA1.hexdigest(relative.to_s)[0, 12]
-      "seed-#{digest}"
+      self.class.seed_doc_id_for(relative)
     end
 
     def rewrite_local_markdown_links_for_seed(body)
@@ -231,6 +237,25 @@ module SeedSupport
       return if @version.site_entry_absolute_path&.exist?
 
       raise "Seed Docusaurus build output missing entry path: #{@site_build_path}"
+    end
+
+    def build_route_map
+      Dir.glob(@version.site_root_absolute_path.join("**/index.html").to_s).each_with_object({}) do |html_path, result|
+        relative_path = Pathname(html_path).relative_path_from(@version.site_root_absolute_path).to_s
+        route_path = relative_path.delete_suffix("/index.html")
+        route_path = @site_build_path if route_path.blank?
+
+        html = File.read(html_path)
+        doc_ids = html.scan(/docs-doc-id-([^"\s]+)/).flatten
+        next if doc_ids.empty?
+
+        doc_ids.each do |doc_id|
+          decoded_doc_id = CGI.unescapeHTML(doc_id)
+          result[decoded_doc_id] ||= route_path
+          generated_id = decoded_doc_id.split("/").last
+          result[generated_id] ||= route_path
+        end
+      end
     end
   end
 end

@@ -25,7 +25,23 @@ RSpec.describe SeedSupport::DocusaurusBuilder do
       expect(docs_src.join(version.site_build_path, "guide", "index.md")).to exist
 
       FileUtils.mkdir_p(build_output_dir.join(version.site_build_path))
-      File.write(build_output_dir.join(version.site_build_path, "index.html"), "<h1>Hello</h1>")
+      File.write(
+        build_output_dir.join(version.site_build_path, "index.html"),
+        <<~HTML
+          <html class="docs-doc-id-#{version.site_build_path}/#{described_class.seed_doc_id_for("README.md")}">
+            <body><h1>Hello</h1></body>
+          </html>
+        HTML
+      )
+      FileUtils.mkdir_p(build_output_dir.join(version.site_build_path, "guide"))
+      File.write(
+        build_output_dir.join(version.site_build_path, "guide", "index.html"),
+        <<~HTML
+          <html class="docs-doc-id-#{version.site_build_path}/guide/#{described_class.seed_doc_id_for("guide/README.md")}">
+            <body><h1>Guide</h1></body>
+          </html>
+        HTML
+      )
     end
   end
 
@@ -34,8 +50,8 @@ RSpec.describe SeedSupport::DocusaurusBuilder do
     FileUtils.rm_rf(version.site_root_absolute_path)
   end
 
-  it "normalizes README markdown files and copies the built site to the version storage" do
-    described_class.new(
+  it "normalizes README markdown files, copies the built site, and returns resolved routes" do
+    route_map = described_class.new(
       source_dir:,
       version:,
       site_build_path: version.site_build_path
@@ -43,5 +59,7 @@ RSpec.describe SeedSupport::DocusaurusBuilder do
 
     expect(version.site_entry_absolute_path).to exist
     expect(version.site_entry_absolute_path.read).to include("Hello")
+    expect(route_map[described_class.seed_doc_id_for("README.md")]).to eq(version.site_build_path)
+    expect(route_map[described_class.seed_doc_id_for("guide/README.md")]).to eq("#{version.site_build_path}/guide")
   end
 end

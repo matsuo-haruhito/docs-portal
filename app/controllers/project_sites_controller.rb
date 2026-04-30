@@ -27,10 +27,10 @@ class ProjectSitesController < BaseController
   def set_build_version
     @build_version =
       if params[:version_id].present?
-        @project.documents.joins(:document_versions)
-          .merge(DocumentVersion.where(public_id: params[:version_id]))
-          .select("document_versions.*")
-          .first
+        DocumentVersion
+          .joins(:document)
+          .where(documents: { project_id: @project.id })
+          .find_by(public_id: params[:version_id])
       else
         @project.default_site_version_for(current_user)
       end

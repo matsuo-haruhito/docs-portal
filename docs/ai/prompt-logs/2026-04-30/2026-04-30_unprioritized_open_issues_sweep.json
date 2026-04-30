@@ -1,0 +1,200 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-04-30",
+  "task": {
+    "name": "unprioritized_open_issues_sweep",
+    "type": "bugfix",
+    "ticket": "issues #2 #7 #10 #11"
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work/self/docs-portal",
+    "customer": null,
+    "repo": "matsuo-haruhito/docs-portal",
+    "editable_paths": [
+      "README.md",
+      "app/controllers/project_sites_controller.rb",
+      "db/seeds.rb",
+      "db/seeds/support/docusaurus_builder.rb",
+      "docs/ai/prompt-logs/",
+      "docs/アプリケーション仕様.md",
+      "spec/requests/project_sites_spec.rb",
+      "spec/services/seed_docusaurus_build_service_spec.rb"
+    ],
+    "read_only_paths": [
+      "../../AGENTS.md",
+      "../../gpt/policies/",
+      ".git/",
+      "storage/docs_sites/"
+    ]
+  },
+  "instruction_summary": "Check open issues without priority, use the reopened comment on issue #2 as the basis for that fix, process the issues in an easy-to-work order, and close the ones with clear outcomes.",
+  "actual_work": "Reviewed the reopened investigation comment on issue #2, verified that the ProjectSitesController version lookup had already been corrected to return DocumentVersion, then fixed the remaining seeded-route mismatch by deriving markdown_entry_path from actual Docusaurus build output instead of source-path guesses. Added regression coverage for route map extraction and project-site asset rewriting. Updated README and application spec docs to state that seeded markdown_entry_path is determined from built HTML output. Closed issues #10 and #11 as completed and closed issue #7 after tightening the asset rewrite/request coverage. Added the missing repo-local Prompt Log retroactively after noticing the AGENTS requirement had been missed.",
+  "changed_files": [
+    "README.md",
+    "db/seeds.rb",
+    "db/seeds/support/docusaurus_builder.rb",
+    "docs/ai/prompt-logs/2026-04-30/2026-04-30_unprioritized_open_issues_sweep.json",
+    "docs/アプリケーション仕様.md",
+    "spec/requests/project_sites_spec.rb",
+    "spec/services/seed_docusaurus_build_service_spec.rb"
+  ],
+  "commands": [
+    {
+      "command": "sed -n '1,260p' ../../AGENTS.md",
+      "result": "pass",
+      "notes": "Confirmed the workspace-wide Prompt Log requirement after the user pointed out the omission."
+    },
+    {
+      "command": "rg -n \"prompt_log\\.json|prompt log|prompt_log\" .. ../.. docs .",
+      "result": "pass",
+      "notes": "Located the canonical prompt log policy and existing workspace examples."
+    },
+    {
+      "command": "find storage/docs_sites -maxdepth 5 -type f | sed -n '1,260p'",
+      "result": "pass",
+      "notes": "Inspected actual built Docusaurus output to compare seeded paths with generated routes."
+    },
+    {
+      "command": "sed -n '1,260p' db/seeds/support/docusaurus_builder.rb",
+      "result": "pass",
+      "notes": "Reviewed the seed build helper before changing route discovery."
+    },
+    {
+      "command": "sed -n '1,260p' app/controllers/project_sites_controller.rb",
+      "result": "pass",
+      "notes": "Verified that explicit version lookup already starts from DocumentVersion."
+    },
+    {
+      "command": "mcp__codex_apps__github._fetch_issue_comments(issue #2/#7/#10/#11)",
+      "result": "pass",
+      "notes": "Used GitHub issue comments to confirm the reopened issue #2 details and check comment context on the other issues."
+    },
+    {
+      "command": "mcp__codex_apps__github._update_issue(issue #7/#10/#11)",
+      "result": "pass",
+      "notes": "Closed issues #7, #10, and #11 after the corresponding changes were in place."
+    }
+  ],
+  "tests": [
+    {
+      "command": "docker compose run --rm app bundle exec ruby -c db/seeds.rb",
+      "result": "pass",
+      "notes": "Seed file syntax is valid after route-map integration."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec ruby -c db/seeds/support/docusaurus_builder.rb",
+      "result": "pass",
+      "notes": "Seed helper syntax is valid."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec ruby -c spec/services/seed_docusaurus_build_service_spec.rb",
+      "result": "pass",
+      "notes": "Spec syntax is valid after adding route-map expectations."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec ruby -c spec/requests/project_sites_spec.rb",
+      "result": "pass",
+      "notes": "Project-site request spec syntax is valid after asset-route assertions."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/services/seed_docusaurus_build_service_spec.rb -fd",
+      "result": "attempted",
+      "notes": "The container started but the command did not produce a result in this session, so runtime pass/fail is still unknown."
+    },
+    {
+      "command": "docker compose exec app bin/rails runner 'puts \"BOOT_OK\"'",
+      "result": "attempted",
+      "notes": "Rails execution did not return output in this session, so end-to-end verification is still pending."
+    }
+  ],
+  "usage": {
+    "estimated_input_tokens": null,
+    "estimated_output_tokens": null,
+    "estimated_total_tokens": null,
+    "measurement_source": "unavailable",
+    "loaded_roles": [],
+    "loaded_context": [],
+    "token_notes": "Exact token counts were not available from the environment.",
+    "token_waste_notes": [
+      "Issue discovery took extra turns because GitHub connector coverage for listing issue metadata was limited in-session.",
+      "The Prompt Log itself was created late instead of at task start, which caused avoidable re-reading."
+    ],
+    "wasted_context": [
+      "Some issue-list discovery attempts through curl/web/connector combinations were redundant before the actionable issue set was narrowed."
+    ],
+    "unnecessary_exploration": [
+      "Spent time probing multiple GitHub access paths because open-issue listing was not directly available through one stable tool path."
+    ]
+  },
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "../../gpt/policies/prompt-log-policy.md",
+      "../../gpt/schemas/prompt-log.schema.json",
+      "db/seeds.rb",
+      "db/seeds/support/docusaurus_builder.rb",
+      "app/controllers/project_sites_controller.rb",
+      "storage/docs_sites/"
+    ],
+    "token_notes": "Prompt log was added retroactively after the user pointed out the missed AGENTS requirement.",
+    "token_waste_notes": [
+      "Open-issue discovery should be narrowed earlier to known issue numbers when connector listing is limited."
+    ],
+    "wasted_context": [
+      "Re-reading prompt-log policy and schema would have been unnecessary if the AGENTS chain had been followed at task start."
+    ],
+    "unnecessary_exploration": [
+      "Multiple GitHub fetch approaches were tried before settling on issue-comment fetches and direct issue-state reads."
+    ]
+  },
+  "quality_notes": [
+    "Seeded project-site routes are now aligned with actual Docusaurus build output instead of guessed source paths.",
+    "Asset rewrite behavior is covered at the project-site request-spec level.",
+    "Repo-local prompt-log storage now exists in the expected path for this repo."
+  ],
+  "risks": [
+    "End-to-end seed and request spec execution is still unverified because Rails commands did not complete in this session.",
+    "Issue #2 remains open until reseeding confirms that the real built routes now match the stored markdown_entry_path values.",
+    "There may still be other open unprioritized issues that were not discoverable through the available listing paths in this session."
+  ],
+  "remaining_concerns": [
+    "Need a successful db:seed run to confirm that generated route_map updates real DocumentVersion records as expected.",
+    "Need browser or runnable request-spec confirmation that project-site JS UI works after the asset rewrite changes.",
+    "Prompt Log creation must happen at task start on future repo-local turns."
+  ],
+  "improvement_candidates": {
+    "workflow": [
+      "Add a small repo helper to scaffold docs/ai/prompt-logs entries automatically at task start."
+    ],
+    "issue_triage": [
+      "Add a stable issue-listing workflow for this GitHub connector setup so unprioritized-open-issue sweeps do not need fallback probing."
+    ]
+  },
+  "signals": [
+    {
+      "axis": "quality",
+      "rule_id": "seed.route-map-from-built-html",
+      "polarity": "positive",
+      "note": "Seeded markdown_entry_path now follows actual built HTML routes instead of source-path guesses."
+    },
+    {
+      "axis": "reproducibility",
+      "rule_id": "spec.project-site-asset-rewrite",
+      "polarity": "positive",
+      "note": "Project-site request coverage now checks rewritten CSS/JS asset paths explicitly."
+    },
+    {
+      "axis": "risk_reduction",
+      "rule_id": "issue-close-only-when-clear",
+      "polarity": "positive",
+      "note": "Issue #2 was kept open because runtime reseed confirmation is still missing."
+    },
+    {
+      "axis": "token_saving",
+      "rule_id": "prompt-log-create-at-start",
+      "polarity": "negative",
+      "note": "The AGENTS-required Prompt Log was missed at task start and had to be reconstructed later."
+    }
+  ]
+}
