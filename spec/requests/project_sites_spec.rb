@@ -109,4 +109,18 @@ RSpec.describe "Project sites", type: :request do
     expect(response.body).to include("ドキュメントサイトを表示")
     expect(response.body).to include(project_site_path(project, site_path: version_v2.html_view_site_path, version_id: version_v2.public_id))
   end
+
+  it "forbids external users from requesting archived versions by version_id" do
+    external_user = create(:user, :external)
+    create(:project_membership, project:, user: external_user)
+    version_v1.update!(status: :archived)
+
+    sign_in_as(external_user)
+
+    get project_site_path(project, site_path: version_v1.html_view_site_path, version_id: version_v1.public_id)
+    expect(response).to have_http_status(:forbidden)
+
+    get project_site_path(project, site_path: "assets/css/app.css", version_id: version_v1.public_id)
+    expect(response).to have_http_status(:forbidden)
+  end
 end

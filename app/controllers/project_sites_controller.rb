@@ -36,6 +36,8 @@ class ProjectSitesController < BaseController
       end
 
     raise ActiveRecord::RecordNotFound, "Project site build not found" unless @build_version
+
+    require_document_version_view_access!(@build_version)
   end
 
   def project_site_renderer(site_path)
