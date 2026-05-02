@@ -59,4 +59,19 @@ RSpec.describe "Document views", type: :request do
   ensure
     FileUtils.rm_rf(version.site_root_absolute_path) if version&.id
   end
+
+  it "does not show archived versions to external users" do
+    external_user = create(:user, :external)
+    create(:project_membership, project:, user: external_user)
+
+    create(:document_version, document:, version_label: "v1.0.0", status: :published)
+    create(:document_version, document:, version_label: "v0.9.0", status: :archived)
+
+    sign_in_as(external_user)
+    get project_document_path(project, document)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("v1.0.0")
+    expect(response.body).not_to include("v0.9.0")
+  end
 end
