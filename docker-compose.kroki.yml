@@ -1,4 +1,11 @@
 services:
+  app:
+    environment:
+      KROKI_ENDPOINT: ${KROKI_ENDPOINT:-http://kroki:8000}
+    depends_on:
+      - db
+      - kroki
+
   kroki:
     image: yuzutech/kroki
     ports:
