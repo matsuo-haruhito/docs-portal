@@ -44,4 +44,46 @@ RSpec.describe DocumentsHelper, type: :helper do
       expect(helper.tree_item_detail_path(project)).to eq(helper.project_path(project))
     end
   end
+
+  describe "#document_search_match_labels" do
+    let(:project) { create(:project, code: "MATCH") }
+    let(:document) { create(:document, project:, title: "出荷API仕様", slug: "shipping-api") }
+
+    it "returns empty labels when keyword is blank" do
+      expect(helper.document_search_match_labels(document, "")).to eq([])
+    end
+
+    it "returns labels for matched title, keyword, body text, and attached file name" do
+      version = create(
+        :document_version,
+        document:,
+        version_label: "v1.0.0",
+        search_body_text: "出荷APIの本文説明"
+      )
+      DocumentKeyword.create!(document:, keyword: "外部連携API")
+      DocumentFile.create!(
+        document_version: version,
+        file_name: "shipping-api.pdf",
+        content_type: "application/pdf",
+        storage_key: "spec/shipping-api.pdf",
+        file_size: 10,
+        search_text: "添付内のAPI説明"
+      )
+
+      expect(helper.document_search_match_labels(document.reload, "API")).to contain_exactly(
+        "タイトル",
+        "slug",
+        "キーワード",
+        "本文",
+        "添付ファイル名",
+        "添付テキスト"
+      )
+    end
+
+    it "normalizes full-width keyword values" do
+      DocumentKeyword.create!(document:, keyword: "ＷＭＳ ＡＰＩ")
+
+      expect(helper.document_search_match_labels(document.reload, "wms api")).to contain_exactly("キーワード")
+    end
+  end
 end

@@ -11,7 +11,7 @@
   <%= form_with url: project_documents_path(@project), method: :get, local: true do |form| %>
     <div>
       <%= form.label :q, "キーワード" %><br>
-      <%= form.search_field :q, value: @filters[:q], placeholder: "タイトル・slug・版・添付ファイル名" %>
+      <%= form.search_field :q, value: @filters[:q], placeholder: "タイトル・slug・版・本文・キーワード・添付ファイル名" %>
     </div>
 
     <div>
@@ -63,6 +63,7 @@
   <thead>
     <tr>
       <th>タイトル</th>
+      <th>ヒット理由</th>
       <th>タグ</th>
       <th>カテゴリ</th>
       <th>種別</th>
@@ -77,8 +78,18 @@
     <% @documents.each do |document| %>
       <% latest_version = document.latest_version %>
       <% files = document.document_versions.flat_map(&:document_files) %>
+      <% match_labels = document_search_match_labels(document, @filters[:q]) %>
       <tr>
         <td><%= link_to document.title, project_document_path(@project, document.slug) %></td>
+        <td>
+          <% if match_labels.any? %>
+            <% match_labels.each do |label| %>
+              <span class="badge"><%= label %></span>
+            <% end %>
+          <% else %>
+            <span class="muted">-</span>
+          <% end %>
+        </td>
         <td>
           <% if document.document_tags.any? %>
             <% document.document_tags.sort_by(&:normalized_name).each do |tag| %>
