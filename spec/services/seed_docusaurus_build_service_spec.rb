@@ -18,12 +18,20 @@ RSpec.describe SeedSupport::DocusaurusBuilder do
 
   before do
     FileUtils.mkdir_p(source_dir.join("guide"))
+    FileUtils.mkdir_p(source_dir.join("flows"))
     File.write(source_dir.join("README.md"), "# Hello\n")
     File.write(source_dir.join("guide", "README.md"), "# Guide\n")
+    File.write(source_dir.join("flows", "shipping.mmd"), "flowchart TD\n  A --> B\n")
 
     allow_any_instance_of(described_class).to receive(:run_build!) do |service, docs_src, build_output_dir|
       expect(docs_src.join(version.site_build_path, "index.md")).to exist
       expect(docs_src.join(version.site_build_path, "guide", "index.md")).to exist
+
+      diagram_wrapper = docs_src.join(version.site_build_path, "flows", "shipping.md")
+      expect(diagram_wrapper).to exist
+      expect(diagram_wrapper.read).to include("id: #{described_class.seed_doc_id_for("flows/shipping.mmd")}")
+      expect(diagram_wrapper.read).to include("```mermaid")
+      expect(diagram_wrapper.read).to include("flowchart TD")
 
       FileUtils.mkdir_p(build_output_dir.join(version.site_build_path))
       File.write(
@@ -43,6 +51,15 @@ RSpec.describe SeedSupport::DocusaurusBuilder do
           </html>
         HTML
       )
+      FileUtils.mkdir_p(build_output_dir.join(version.site_build_path, "flows", "shipping"))
+      File.write(
+        build_output_dir.join(version.site_build_path, "flows", "shipping", "index.html"),
+        <<~HTML
+          <html class="docs-doc-id-#{version.site_build_path}/flows/#{described_class.seed_doc_id_for("flows/shipping.mmd")}">
+            <body><h1>shipping</h1></body>
+          </html>
+        HTML
+      )
     end
   end
 
@@ -51,7 +68,16 @@ RSpec.describe SeedSupport::DocusaurusBuilder do
     FileUtils.rm_rf(version.site_root_absolute_path)
   end
 
-  it "normalizes README markdown files, copies the built site, and returns resolved routes" do
+  it "detects standalone diagram files as renderable document files" do
+    expect(described_class.renderable_document_file?("flow.puml")).to be(true)
+    expect(described_class.renderable_document_file?("flow.plantuml")).to be(true)
+    expect(described_class.renderable_document_file?("flow.d2")).to be(true)
+    expect(described_class.renderable_document_file?("flow.mmd")).to be(true)
+    expect(described_class.renderable_document_file?("flow.mermaid")).to be(true)
+    expect(described_class.renderable_document_file?("image.png")).to be(false)
+  end
+
+  it "normalizes README markdown files and standalone diagram files, copies the built site, and returns resolved routes" do
     route_map = described_class.new(
       source_dir:,
       version:,
@@ -62,5 +88,6 @@ RSpec.describe SeedSupport::DocusaurusBuilder do
     expect(version.site_entry_absolute_path.read).to include("Hello")
     expect(route_map[described_class.seed_doc_id_for("README.md")]).to eq(version.site_build_path)
     expect(route_map[described_class.seed_doc_id_for("guide/README.md")]).to eq("#{version.site_build_path}/guide")
+    expect(route_map[described_class.seed_doc_id_for("flows/shipping.mmd")]).to eq("#{version.site_build_path}/flows/shipping")
   end
 end
