@@ -48,6 +48,7 @@ ul
   - else
     li
       span.muted HTML未生成
+  li = link_to "添付・元ファイルをZIPでダウンロード", document_version_archive_path(@version)
 
 h2 添付・元ファイル
 - files = @version.document_files.order(:sort_order, :file_name)

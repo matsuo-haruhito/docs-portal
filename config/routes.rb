@@ -20,6 +20,8 @@ Rails.application.routes.draw do
   end
 
   resources :document_versions, only: [:show], param: :public_id do
+    resource :archive, only: [:show], controller: "document_version_archives"
+
     member do
       get :view, to: "document_views#show"
       get "site(/*site_path)", to: "document_sites#show", as: :site, format: false
