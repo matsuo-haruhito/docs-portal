@@ -12,6 +12,7 @@ Rails.application.routes.draw do
     resources :project_memberships, except: %i[show new]
     resources :documents, except: %i[show new]
     resources :document_permissions, except: %i[show new]
+    resources :access_logs, only: [:index]
   end
 
   resources :projects, only: [:index, :show], param: :code do

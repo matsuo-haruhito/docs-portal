@@ -1,0 +1,70 @@
+- page_title "監査ログ"
+
+h1 監査ログ
+= render "admin/nav"
+
+section.card
+  h2 絞り込み
+  = form_with url: admin_access_logs_path, method: :get, local: true do |form|
+    .form-grid
+      div
+        = form.label :action_type, "操作"
+        = form.select :action_type, options_for_select([["すべて", ""]] + AccessLog.action_types.keys.map { [_1, _1] }, @filters[:action_type])
+      div
+        = form.label :target_type, "対象種別"
+        = form.select :target_type, options_for_select([["すべて", ""], ["page", "page"], ["file", "file"], ["zip", "zip"]], @filters[:target_type])
+      div
+        = form.label :project_id, "案件"
+        = form.select :project_id, options_for_select([["すべて", ""]] + @projects.map { [_1.name, _1.id] }, @filters[:project_id])
+      div
+        = form.label :company_id, "会社"
+        = form.select :company_id, options_for_select([["すべて", ""]] + @companies.map { [_1.name, _1.id] }, @filters[:company_id])
+      div
+        = form.label :user_id, "ユーザー"
+        = form.select :user_id, options_for_select([["すべて", ""]] + @users.map { ["#{_1.name} / #{_1.email_address}", _1.id] }, @filters[:user_id])
+      div
+        = form.label :document_q, "文書名・slug"
+        = form.search_field :document_q, value: @filters[:document_q]
+
+    p.actions
+      = form.submit "検索"
+      = link_to "条件をクリア", admin_access_logs_path
+
+p.muted 最新200件を表示します。
+
+table
+  thead
+    tr
+      th 日時
+      th 操作
+      th 対象
+      th ユーザー
+      th 会社
+      th 案件
+      th 文書
+      th 版
+      th IP
+  tbody
+    - @access_logs.each do |log|
+      tr
+        td = log.accessed_at.strftime("%Y-%m-%d %H:%M:%S")
+        td = log.action_type
+        td
+          = log.target_type
+          - if log.target_name.present?
+            br
+            code = log.target_name
+        td = log.user ? "#{log.user.name} / #{log.user.email_address}" : "-"
+        td = log.company&.name || "-"
+        td = log.project&.name || "-"
+        td
+          - if log.document && log.project
+            = link_to log.document.title, project_document_path(log.project, log.document.slug)
+          - else
+            | -
+        td
+          - if log.document_version
+            = link_to log.document_version.version_label, document_version_path(log.document_version)
+          - else
+            | -
+        td = log.ip_address.presence || "-"
