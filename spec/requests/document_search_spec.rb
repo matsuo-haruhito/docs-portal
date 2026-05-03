@@ -20,6 +20,11 @@ RSpec.describe "Document search", type: :request do
     html.css("main table tbody tr td:first-child").map { _1.text.strip }
   end
 
+  def tree_labels
+    html = Nokogiri::HTML(response.body)
+    html.css(".tree-view-table").map(&:text).join(" ")
+  end
+
   it "filters documents by keyword across title, slug, version label, and file name" do
     title_match = create(:document, project:, title: "運用手順", slug: "operation-manual")
     slug_match = create(:document, project:, title: "別資料", slug: "release-note")
@@ -98,6 +103,8 @@ RSpec.describe "Document search", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(result_titles).to contain_exactly("公開資料")
+    expect(tree_labels).to include("公開資料")
+    expect(tree_labels).not_to include("社内資料")
     expect(response.body).to include('value="資料"')
     expect(response.body).to match(/<option[^>]*selected="selected"[^>]*value="manual"|<option[^>]*value="manual"[^>]*selected="selected"/)
   end
