@@ -23,9 +23,10 @@ RSpec.describe SeedSupport::DocusaurusBuilder do
     File.write(source_dir.join("guide", "README.md"), "# Guide\n")
     File.write(source_dir.join("flows", "shipping.mmd"), "flowchart TD\n  A --> B\n")
 
-    allow_any_instance_of(described_class).to receive(:run_build!) do |service, docs_src, build_output_dir|
+    allow(SeedSupport::DocusaurusBuildRunner).to receive(:new) do |source_dir:, version:, docs_src:, build_output_dir:, static_dir:|
       expect(docs_src.join(version.site_build_path, "index.md")).to exist
       expect(docs_src.join(version.site_build_path, "guide", "index.md")).to exist
+      expect(static_dir.basename.to_s).to eq("static")
 
       diagram_wrapper = docs_src.join(version.site_build_path, "flows", "shipping.md")
       expect(diagram_wrapper).to exist
@@ -59,6 +60,15 @@ RSpec.describe SeedSupport::DocusaurusBuilder do
             <body><h1>shipping</h1></body>
           </html>
         HTML
+      )
+
+      instance_double(
+        SeedSupport::DocusaurusBuildRunner,
+        run!: begin
+          FileUtils.mkdir_p(version.site_root_absolute_path)
+          FileUtils.rm_rf(version.site_root_absolute_path.children)
+          FileUtils.cp_r(build_output_dir.children, version.site_root_absolute_path)
+        end
       )
     end
   end
