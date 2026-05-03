@@ -41,6 +41,15 @@ class BaseController < ApplicationController
     )
   end
 
+  def record_zip_download_access_log(version, target_name)
+    record_access_log!(
+      action_type: :download,
+      target_type: "zip",
+      target_name:,
+      version:
+    )
+  end
+
   def record_access_log_safely(action_type:, target_type:, target_name:, version:)
     record_access_log!(
       action_type:,
