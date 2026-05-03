@@ -46,7 +46,17 @@ node_modules
 /backup/*
 !/backup/README.md
 
-docusaurus/.docusaurus/
+# Docusaurus generated artifacts and dependencies
+/docusaurus/.docusaurus/
+/docusaurus/build/
+/docusaurus/node_modules/
+/docusaurus/static/generated/
+/docusaurus/.cache/
+/docusaurus/.turbo/
+/docusaurus/npm-debug.log*
+/docusaurus/yarn-debug.log*
+/docusaurus/yarn-error.log*
+/docusaurus/pnpm-debug.log*
 
 .codex
 .tmp.*
