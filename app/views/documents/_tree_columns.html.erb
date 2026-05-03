@@ -1,3 +1,17 @@
 <td class="<%= tree_item_css_class(item) %>">
   <%= link_to tree_item_label(item), tree_item_path(item) %>
+
+  <% if item.is_a?(Document) %>
+    <% if (updated_label = tree_item_updated_label(item)) %>
+      <span class="muted tree-item-meta">更新: <%= updated_label %></span>
+    <% end %>
+
+    <% unless tree_item_html_available?(item) %>
+      <span class="muted tree-item-meta">HTML未生成</span>
+    <% end %>
+
+    <%= link_to "詳細", tree_item_detail_path(item), class: "tree-item-detail-link" %>
+  <% elsif item.is_a?(Project) %>
+    <%= link_to "案件トップ", tree_item_detail_path(item), class: "tree-item-detail-link" %>
+  <% end %>
 </td>
