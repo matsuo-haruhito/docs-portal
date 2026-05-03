@@ -17,6 +17,7 @@ Rails.application.routes.draw do
 
   resources :projects, only: [:index, :show], param: :code do
     get "site(/*site_path)", to: "project_sites#show", as: :site, format: false
+    resource :document_zip, only: [:create], controller: "project_document_zips"
     resources :documents, only: [:index, :show], param: :slug
   end
 
