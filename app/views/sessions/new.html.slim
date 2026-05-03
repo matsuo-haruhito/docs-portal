@@ -1,0 +1,19 @@
+- page_title "ログイン"
+
+.card style="max-width: 420px; margin: 0 auto;"
+  h1 ログイン
+  p.muted 文書ポータルを利用するにはログインが必要です。
+
+  = form_with url: session_path, scope: :session do |form|
+    .form-grid style="grid-template-columns: 1fr;"
+      label
+        | メールアドレス
+        = form.email_field :email_address, autofocus: true, autocomplete: "username"
+      label
+        | パスワード
+        = form.password_field :password, autocomplete: "current-password"
+    p.actions style="margin-top: 16px;"
+      = form.submit "ログイン", class: "button"
+
+  p.muted style="margin-top: 16px;"
+    | サンプル: `admin@example.com / password123!`
