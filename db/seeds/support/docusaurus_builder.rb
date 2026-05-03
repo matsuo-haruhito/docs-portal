@@ -5,6 +5,16 @@ require "open3"
 require "tmpdir"
 
 module SeedSupport
+  module SeedDiagramFileExtnamePatch
+    def extname(path)
+      if SeedSupport::DocusaurusBuilder.seed_diagram_file_candidate?(path)
+        ".md"
+      else
+        super
+      end
+    end
+  end
+
   class DocusaurusBuilder
     BUILD_ROOT = Rails.root.join("docusaurus")
 
@@ -62,6 +72,20 @@ module SeedSupport
 
     def self.renderable_document_file?(path)
       markdown_file?(path) || diagram_file?(path)
+    end
+
+    def self.install_seed_diagram_extname_patch!
+      return if @seed_diagram_extname_patch_installed
+
+      File.singleton_class.prepend(SeedDiagramFileExtnamePatch)
+      @seed_diagram_extname_patch_installed = true
+    end
+
+    def self.seed_diagram_file_candidate?(path)
+      value = path.to_s.tr("\\", "/")
+      return false unless value.include?("/storage/document_files/external_samples/")
+
+      diagram_file?(value)
     end
 
     private
@@ -356,4 +380,8 @@ module SeedSupport
       end
     end
   end
+end
+
+if caller_locations.any? { _1.path.end_with?("/db/seeds.rb") }
+  SeedSupport::DocusaurusBuilder.install_seed_diagram_extname_patch!
 end
