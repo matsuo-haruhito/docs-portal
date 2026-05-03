@@ -4,7 +4,7 @@ module DocumentsHelper
       roots: projects,
       children_resolver: lambda do |node|
         if node.is_a?(Project)
-          node.documents.accessible_to(current_user).order(:title)
+          node.documents.accessible_to(current_user).includes(:latest_version).order(:title)
         else
           []
         end
@@ -33,7 +33,16 @@ module DocumentsHelper
   def tree_item_path(item)
     case item
     when Project
-      project_documents_path(item)
+      project_default_site_path(item) || project_path(item)
+    when Document
+      document_html_path(item) || project_document_path(item.project, item.slug)
+    end
+  end
+
+  def tree_item_detail_path(item)
+    case item
+    when Project
+      project_path(item)
     when Document
       project_document_path(item.project, item.slug)
     end
@@ -50,13 +59,46 @@ module DocumentsHelper
     end
   end
 
+  def tree_item_updated_label(item)
+    return unless item.is_a?(Document)
+
+    item.updated_at&.strftime("%Y-%m-%d")
+  end
+
+  def tree_item_html_available?(item)
+    item.is_a?(Document) && document_html_version(item).present?
+  end
+
   def tree_item_css_class(item)
     classes = []
     classes << "current-node" if item == @project || item == @document
+    classes << "html-unavailable" if item.is_a?(Document) && !tree_item_html_available?(item)
     classes.join(" ")
   end
 
   private
+
+  def project_default_site_path(project)
+    version = project.default_site_version_for(current_user)
+    return unless version
+
+    project_site_path(project, site_path: version.html_view_site_path, version_id: version.public_id)
+  end
+
+  def document_html_path(document)
+    version = document_html_version(document)
+    return unless version
+
+    project_site_path(document.project, site_path: version.html_view_site_path, version_id: version.public_id)
+  end
+
+  def document_html_version(document)
+    version = document.latest_version
+    return unless version&.rendered_site_available?
+    return unless version.viewable_by?(current_user)
+
+    version
+  end
 
   def node_key(item_or_id)
     if item_or_id.respond_to?(:id)
