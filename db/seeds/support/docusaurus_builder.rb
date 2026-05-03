@@ -165,3 +165,8 @@ module SeedSupport
     end
   end
 end
+
+if caller_locations.any? { _1.path.end_with?("/db/seeds.rb") }
+  require_relative "external_sample_importer"
+  Object.prepend(SeedSupport::ExternalSampleSeedMethods)
+end
