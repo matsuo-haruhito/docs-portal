@@ -9,7 +9,7 @@ class DocumentsController < BaseController
       .ordered
       .distinct
     @documents = filtered_documents
-      .includes(:latest_version, :document_tags, document_versions: :document_files)
+      .includes(:latest_version, :document_tags, :document_keywords, document_versions: :document_files)
       .order(:title)
     @tree_projects = Project.accessible_to(current_user).includes(documents: :latest_version).order(:code)
   end
@@ -17,7 +17,7 @@ class DocumentsController < BaseController
   def show
     @project = Project.find_by!(code: params[:project_code])
     require_project_access!(@project)
-    @document = @project.documents.includes(:document_tags).find_by!(slug: params[:slug])
+    @document = @project.documents.includes(:document_tags, :document_keywords).find_by!(slug: params[:slug])
     require_document_access!(@document)
 
     @versions = @document.document_versions.select { _1.viewable_by?(current_user) }.sort_by(&:created_at).reverse
@@ -47,15 +47,19 @@ class DocumentsController < BaseController
     return scope if keyword.blank?
 
     pattern = "%#{ActiveRecord::Base.sanitize_sql_like(keyword)}%"
+    normalized_pattern = "%#{ActiveRecord::Base.sanitize_sql_like(DocumentKeyword.normalize(keyword))}%"
 
     scope
-      .left_joins(document_versions: :document_files)
+      .left_joins(:document_keywords, document_versions: :document_files)
       .where(
         "documents.title ILIKE :pattern OR " \
         "documents.slug ILIKE :pattern OR " \
         "document_versions.version_label ILIKE :pattern OR " \
-        "document_files.file_name ILIKE :pattern",
-        pattern:
+        "document_files.file_name ILIKE :pattern OR " \
+        "document_keywords.keyword ILIKE :pattern OR " \
+        "document_keywords.normalized_keyword LIKE :normalized_pattern",
+        pattern:,
+        normalized_pattern:
       )
   end
 
