@@ -15,6 +15,15 @@ RSpec.describe "Document search", type: :request do
     )
   end
 
+  def tag_document(document, name)
+    tag = DocumentTag.find_or_create_by!(normalized_name: DocumentTag.normalize(name)) do |record|
+      record.name = name
+    end
+
+    DocumentTagging.create!(document:, document_tag: tag)
+    tag
+  end
+
   def result_titles
     html = Nokogiri::HTML(response.body)
     html.css("main table tbody tr td:first-child").map { _1.text.strip }
@@ -45,6 +54,23 @@ RSpec.describe "Document search", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(result_titles).to contain_exactly("版で探す資料", "添付で探す資料")
+  end
+
+  it "filters documents by tag" do
+    api_doc = create(:document, project:, title: "API仕様", slug: "api-spec")
+    manual_doc = create(:document, project:, title: "操作手順", slug: "manual-doc")
+    create(:document_version, document: api_doc)
+    create(:document_version, document: manual_doc)
+    tag = tag_document(api_doc, "API")
+    tag_document(manual_doc, "Manual")
+
+    sign_in_as(user)
+
+    get project_documents_path(project, tag: tag.normalized_name)
+
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to contain_exactly("API仕様")
+    expect(response.body).to include("API")
   end
 
   it "filters documents by enum fields" do
@@ -107,5 +133,26 @@ RSpec.describe "Document search", type: :request do
     expect(tree_labels).not_to include("社内資料")
     expect(response.body).to include('value="資料"')
     expect(response.body).to match(/<option[^>]*selected="selected"[^>]*value="manual"|<option[^>]*value="manual"[^>]*selected="selected"/)
+  end
+
+  it "does not expose inaccessible documents through tag filtering" do
+    external_user = create(:user, :external)
+    create(:project_membership, project:, user: external_user)
+
+    visible_doc = create(:document, project:, title: "公開API", slug: "visible-api")
+    hidden_doc = create(:document, project:, title: "社内API", slug: "internal-api", visibility_policy: :internal_only)
+    create(:document_version, document: visible_doc)
+    create(:document_version, document: hidden_doc)
+    create(:document_permission, document: visible_doc, company: external_user.company, access_level: :view)
+    tag = tag_document(visible_doc, "API")
+    DocumentTagging.create!(document: hidden_doc, document_tag: tag)
+
+    sign_in_as(external_user)
+
+    get project_documents_path(project, tag: tag.normalized_name)
+
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to contain_exactly("公開API")
+    expect(response.body).not_to include("社内API")
   end
 end
