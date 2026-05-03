@@ -1,4 +1,6 @@
 class DocumentsController < BaseController
+  before_action :apply_rparam, only: :index
+
   DOCUMENTS_PER_PAGE = 20
   DIAGRAM_EXTENSIONS = %w[puml plantuml d2 mmd mermaid].freeze
 
@@ -57,11 +59,11 @@ class DocumentsController < BaseController
   end
 
   def document_filter_params
-    params.permit(:q, :tag, :category, :document_kind, :visibility_policy, :has_html, :has_files, :has_pdf, :has_diagram, :page)
+    params.to_unsafe_h.symbolize_keys.slice(*DocumentsParameter::INDEX_FILTERS)
   end
 
   def normalized_page
-    [@filters[:page].to_i, 1].max
+    @filters[:page]
   end
 
   def apply_keyword_filter(scope)
@@ -124,6 +126,6 @@ class DocumentsController < BaseController
   end
 
   def enabled_filter?(key)
-    ActiveModel::Type::Boolean.new.cast(@filters[key])
+    @filters[key] == true
   end
 end
