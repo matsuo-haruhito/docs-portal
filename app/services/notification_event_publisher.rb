@@ -25,9 +25,12 @@ class NotificationEventPublisher
   attr_reader :actor_user
 
   def recipients_for(document)
-    users = User.active_only.where(user_type: User.user_types[:internal])
-    users = users.or(User.active_only.joins(:project_memberships).where(project_memberships: { project_id: document.project_id }))
-    users.distinct.select { document.viewable_by?(_1) }
+    internal_ids = User.active_only.where(user_type: User.user_types[:internal]).pluck(:id)
+    project_member_ids = ProjectMembership.where(project_id: document.project_id).pluck(:user_id)
+
+    User.active_only
+      .where(id: (internal_ids + project_member_ids).uniq)
+      .select { document.viewable_by?(_1) }
   end
 
   def create_receipts!(event, users)
