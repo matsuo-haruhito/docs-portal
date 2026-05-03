@@ -2,6 +2,7 @@ require "digest"
 require "fileutils"
 require "tmpdir"
 require_relative "docusaurus_build_runner"
+require_relative "docusaurus_markdown_normalizer"
 require_relative "docusaurus_route_map"
 
 module SeedSupport
@@ -186,26 +187,11 @@ module SeedSupport
     end
 
     def write_markdown_with_seed_front_matter!(source, destination, relative)
-      original = File.read(source)
-      front_matter, body = split_front_matter(original)
-
-      body = rewrite_local_markdown_links_for_seed(body)
-      body = sanitize_markdown_for_mdx(body)
-
-      generated_id = seed_doc_id(relative)
-
       destination.write(
-        if front_matter
-          build_markdown_with_front_matter(front_matter, body, generated_id)
-        else
-          <<~MARKDOWN
-            ---
-            id: #{generated_id}
-            ---
-
-            #{body}
-          MARKDOWN
-        end
+        DocusaurusMarkdownNormalizer.new(
+          markdown: File.read(source),
+          generated_id: seed_doc_id(relative)
+        ).normalize
       )
     end
 
@@ -227,96 +213,8 @@ module SeedSupport
       MARKDOWN
     end
 
-    def split_front_matter(markdown)
-      return [nil, markdown] unless markdown.start_with?("---\n")
-
-      lines = markdown.lines
-      closing_index = lines[1..].find_index { _1.strip == "---" }
-      return [nil, markdown] unless closing_index
-
-      closing_index += 1
-      front_matter = lines[0..closing_index].join
-      body = (lines[(closing_index + 1)..] || []).join
-
-      [front_matter, body]
-    end
-
-    def build_markdown_with_front_matter(front_matter, body, generated_id)
-      lines = front_matter.lines
-      lines = lines.reject { _1.match?(/\A\s*id:\s*/) }
-      lines.insert(1, "id: #{generated_id}\n")
-
-      "#{lines.join}#{body}"
-    end
-
     def seed_doc_id(relative)
       self.class.seed_doc_id_for(relative)
-    end
-
-    def rewrite_local_markdown_links_for_seed(body)
-      body.gsub(/\]\(([^)]+)\)/) do
-        url = Regexp.last_match(1)
-        rewritten_url = rewrite_local_markdown_url_for_seed(url)
-
-        "](#{rewritten_url})"
-      end
-    end
-
-    def rewrite_local_markdown_url_for_seed(url)
-      return url if external_url?(url)
-      return url if url.start_with?("#")
-      return url unless markdown_url?(url)
-
-      path, anchor = url.split("#", 2)
-      rewritten_path =
-        if path.match?(/(^|\/)README\.(md|markdown)\z/i)
-          path.sub(/README\.(md|markdown)\z/i, "index.md")
-        else
-          path
-        end
-
-      [rewritten_path, anchor].compact.join("#")
-    end
-
-    def external_url?(url)
-      url.start_with?(
-        "http://",
-        "https://",
-        "//",
-        "mailto:",
-        "tel:",
-        "file:",
-        "data:"
-      )
-    end
-
-    def markdown_url?(url)
-      path = url.split("#", 2).first.to_s
-      MARKDOWN_EXTENSIONS.include?(File.extname(path).downcase)
-    end
-
-    def sanitize_markdown_for_mdx(body)
-      in_fenced_code_block = false
-
-      body.lines.map do |line|
-        stripped = line.lstrip
-
-        if stripped.start_with?("```", "~~~")
-          in_fenced_code_block = !in_fenced_code_block
-          next line
-        end
-
-        next line if in_fenced_code_block
-        next line if line.match?(/\A\s{4}/)
-
-        escape_mdx_angle_brackets(line)
-      end.join
-    end
-
-    def escape_mdx_angle_brackets(line)
-      line
-        .gsub("<", "&lt;")
-        .gsub(">", "&gt;")
     end
 
     def normalized_doc_relative_path(relative)
