@@ -1,0 +1,105 @@
+<% page_title "#{@document.title} #{@version.version_label}" %>
+<% content_for :left_content do %>
+  <%= render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document %>
+<% end %>
+
+<p class="muted">
+  <%= link_to @project.name, project_path(@project) %> /
+  <%= link_to @document.title, project_document_path(@project, @document.slug) %>
+</p>
+
+<h1><%= @document.title %> <%= @version.version_label %></h1>
+
+<table>
+  <tbody>
+    <tr>
+      <th>状態</th>
+      <td><%= @version.status %></td>
+    </tr>
+    <tr>
+      <th>日時</th>
+      <td><%= @version.published_at ? l(@version.published_at) : "-" %></td>
+    </tr>
+    <tr>
+      <th>担当者</th>
+      <td><%= @version.published_by_user&.name || "-" %></td>
+    </tr>
+    <tr>
+      <th>ソースコミット</th>
+      <td><code><%= @version.source_commit_hash %></code></td>
+    </tr>
+    <tr>
+      <th>Markdown entry path</th>
+      <td><%= @version.markdown_entry_path.presence || "-" %></td>
+    </tr>
+    <tr>
+      <th>Site build path</th>
+      <td><%= @version.site_build_path.presence || "-" %></td>
+    </tr>
+    <tr>
+      <th>PDF snapshot path</th>
+      <td><%= @version.pdf_snapshot_path.presence || "-" %></td>
+    </tr>
+  </tbody>
+</table>
+
+<% if @version.changelog_summary.present? %>
+  <h2>更新内容</h2>
+  <p><%= simple_format(@version.changelog_summary) %></p>
+<% end %>
+
+<h2>表示</h2>
+<ul>
+  <% if @version.rendered_site_available? %>
+    <li><%= link_to "このバージョンをHTMLで表示", project_site_path(@project, site_path: @version.html_view_site_path, version_id: @version.public_id) %></li>
+  <% else %>
+    <li><span class="muted">HTML未生成</span></li>
+  <% end %>
+</ul>
+
+<h2>添付・元ファイル</h2>
+<% files = @version.document_files.order(:sort_order, :file_name) %>
+<% if files.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>ファイル名</th>
+        <th>種別</th>
+        <th>サイズ</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% files.each do |file| %>
+        <tr>
+          <td>
+            <% if file.downloadable_by?(current_user) %>
+              <%= link_to file.file_name, document_file_path(file) %>
+            <% else %>
+              <%= file.file_name %>
+            <% end %>
+          </td>
+          <td><%= file.effective_content_type %></td>
+          <td><%= number_to_human_size(file.file_size) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="muted">添付・元ファイルはありません。</p>
+<% end %>
+
+<h2>他のバージョン</h2>
+<ul>
+  <% @versions.each do |version| %>
+    <li>
+      <% if version == @version %>
+        <strong><%= version.version_label %></strong>
+      <% else %>
+        <%= link_to version.version_label, document_version_path(version) %>
+      <% end %>
+      <span class="muted">(<%= version.status %>)</span>
+    </li>
+  <% end %>
+</ul>
+
+<p><%= link_to "文書詳細へ戻る", project_document_path(@project, @document.slug) %></p>
