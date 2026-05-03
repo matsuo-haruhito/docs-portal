@@ -44,6 +44,8 @@ COMPOSE_FILE=docker-compose.yml:docker-compose.kroki.yml
 KROKI_ENDPOINT=http://kroki:8000
 ```
 
+`docker-compose.kroki.yml` を有効化している場合、`docker compose run --rm app ...` 実行時も `kroki` が依存サービスとして起動対象になります。
+
 ローカルPCからKrokiにアクセスしたい場合は、必要に応じて公開ポートを変更できます。
 
 ```env
