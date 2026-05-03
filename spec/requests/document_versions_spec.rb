@@ -1,5 +1,6 @@
 require "rails_helper"
 require "fileutils"
+require "securerandom"
 
 RSpec.describe "Document versions", type: :request do
   let(:internal_user) { create(:user, :internal) }
