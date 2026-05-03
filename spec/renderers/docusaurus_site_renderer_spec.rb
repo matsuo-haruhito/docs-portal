@@ -93,7 +93,9 @@ RSpec.describe DocusaurusSiteRenderer do
     html = renderer.render_html("#{site_build_path}/index")
 
     expect(html).to include("portal-site-nav")
-    expect(html).to include("ポータルへ戻る")
+    expect(html).to include("操作説明 / v1.0.0")
+    expect(html).to include("案件トップへ戻る")
+    expect(html).to include("文書詳細へ戻る")
     expect(html).to include("/projects/#{project.code}")
     expect(html).to include("/projects/#{project.code}/documents/#{document.slug}")
   end

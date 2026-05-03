@@ -123,6 +123,10 @@ RSpec.describe "Project sites", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("見積対象・費用感整理")
+    expect(response.body).to include("portal-site-nav")
+    expect(response.body).to include("見積対象・費用感整理 / v1")
+    expect(response.body).to include("案件トップへ戻る")
+    expect(response.body).to include("文書詳細へ戻る")
     expect(response.body).to include(project_path(project))
     expect(response.body).to include(project_document_path(project, document.slug))
     expect(response.body).to include(project_site_path(project, site_path: "external_samples/sample-site/edit-original/other-doc", version_id: version_v1.public_id))
@@ -192,6 +196,8 @@ RSpec.describe "Project sites", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Allowed page")
+    expect(response.body).to include("案件トップへ戻る")
+    expect(response.body).to include("文書詳細へ戻る")
     expect(response.body).not_to include("Restricted page")
 
     get project_site_path(project, site_path: restricted_version.html_view_site_path, version_id: version_v1.public_id)

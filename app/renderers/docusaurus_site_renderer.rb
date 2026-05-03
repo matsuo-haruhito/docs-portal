@@ -202,25 +202,36 @@ class DocusaurusSiteRenderer
   def inject_portal_navigation!(document)
     return unless @project
 
+    current_version = @current_document_version || @version
+    current_document = current_version.document
+
     container = Nokogiri::XML::Node.new("div", document)
     container["class"] = "portal-site-nav"
 
+    meta = Nokogiri::XML::Node.new("span", document)
+    meta["class"] = "portal-site-nav-meta"
+    meta.content = "#{current_document.title} / #{current_version.version_label}"
+    container.add_child(meta)
+
+    separator = Nokogiri::XML::Node.new("span", document)
+    separator["class"] = "portal-site-nav-separator"
+    separator.content = " | "
+    container.add_child(separator)
+
     project_link = Nokogiri::XML::Node.new("a", document)
     project_link["href"] = @view_context.project_path(@project)
-    project_link.content = "ポータルへ戻る"
+    project_link.content = "案件トップへ戻る"
     container.add_child(project_link)
 
-    if @current_document_version
-      separator = Nokogiri::XML::Node.new("span", document)
-      separator["class"] = "portal-site-nav-separator"
-      separator.content = " / "
-      container.add_child(separator)
+    separator = Nokogiri::XML::Node.new("span", document)
+    separator["class"] = "portal-site-nav-separator"
+    separator.content = " | "
+    container.add_child(separator)
 
-      document_link = Nokogiri::XML::Node.new("a", document)
-      document_link["href"] = @view_context.project_document_path(@project, @current_document_version.document.slug)
-      document_link.content = @current_document_version.document.title
-      container.add_child(document_link)
-    end
+    document_link = Nokogiri::XML::Node.new("a", document)
+    document_link["href"] = @view_context.project_document_path(@project, current_document.slug)
+    document_link.content = "文書詳細へ戻る"
+    container.add_child(document_link)
 
     body = document.at_css("body")
     body&.children&.first ? body.children.first.add_previous_sibling(container) : body&.add_child(container)
