@@ -47,7 +47,7 @@ table
   tbody
     - @access_logs.each do |log|
       tr
-        td = l(log.accessed_at)
+        td = log.accessed_at.strftime("%Y-%m-%d %H:%M:%S")
         td = log.action_type
         td
           = log.target_type
