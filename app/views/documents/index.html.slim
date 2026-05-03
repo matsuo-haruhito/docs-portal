@@ -1,0 +1,140 @@
+- content_for :left_content do
+  = render "tree", projects: @tree_projects, current_project: @project, current_document: nil
+
+- page_title @project.name, "文書一覧"
+h1
+  = @project.name
+  |  / 文書一覧
+
+section.card
+  h2 検索・絞り込み
+
+  = form_with url: project_documents_path(@project), method: :get, local: true do |form|
+    div
+      = form.label :q, "キーワード"
+      br
+      = form.search_field :q, value: @filters[:q], placeholder: "タイトル・slug・版・本文・キーワード・添付ファイル名"
+
+    div
+      = form.label :tag, "タグ"
+      br
+      = form.select :tag, options_for_select([["すべて", ""]] + @available_tags.map { [_1.name, _1.normalized_name] }, @filters[:tag])
+
+    div
+      = form.label :category, "カテゴリ"
+      br
+      = form.select :category, options_for_select([["すべて", ""]] + Document.categories.keys.map { [_1, _1] }, @filters[:category])
+
+    div
+      = form.label :document_kind, "種別"
+      br
+      = form.select :document_kind, options_for_select([["すべて", ""]] + Document.document_kinds.keys.map { [_1, _1] }, @filters[:document_kind])
+
+    div
+      = form.label :visibility_policy, "公開範囲"
+      br
+      = form.select :visibility_policy, options_for_select([["すべて", ""]] + Document.visibility_policies.keys.map { [_1, _1] }, @filters[:visibility_policy])
+
+    fieldset
+      legend 実用フィルタ
+      label
+        = check_box_tag :has_html, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_html])
+        |  HTML生成済み
+      label
+        = check_box_tag :has_files, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_files])
+        |  添付あり
+      label
+        = check_box_tag :has_pdf, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_pdf])
+        |  PDFあり
+      label
+        = check_box_tag :has_diagram, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_diagram])
+        |  Diagramあり
+
+    p
+      = form.submit "検索"
+      =< link_to "条件をクリア", project_documents_path(@project)
+
+- page_start = @documents_count.zero? ? 0 : ((@current_page - 1) * @per_page) + 1
+- page_end = [@current_page * @per_page, @documents_count].min
+p.muted
+  | 検索結果: 
+  = @documents_count
+  | 件
+  - if @documents_count.positive?
+    |  （
+    = page_start
+    | -
+    = page_end
+    | 件目 / 
+    = @current_page
+    | /
+    = @total_pages
+    | ページ）
+
+- pagination_params = @filters.to_h.symbolize_keys.except(:page).compact_blank
+- if @total_pages > 1
+  nav.pagination aria-label="文書一覧ページネーション"
+    - if @current_page > 1
+      = link_to "前へ", project_documents_path(@project, pagination_params.merge(page: @current_page - 1)), class: "button secondary"
+    - else
+      span.button.secondary.disabled 前へ
+
+    span.muted
+      | Page 
+      = @current_page
+      |  / 
+      = @total_pages
+
+    - if @current_page < @total_pages
+      = link_to "次へ", project_documents_path(@project, pagination_params.merge(page: @current_page + 1)), class: "button secondary"
+    - else
+      span.button.secondary.disabled 次へ
+
+= form_with url: project_document_zip_path(@project), method: :post, local: true do
+  p.actions
+    = submit_tag "選択した文書の最新版をZIPでダウンロード", class: "button"
+
+  table
+    thead
+      tr
+        th 選択
+        th タイトル
+        th ヒット理由
+        th タグ
+        th カテゴリ
+        th 種別
+        th 公開範囲
+        th 最新版
+        th HTML
+        th 添付
+        th 最終更新
+    tbody
+      - @documents.each do |document|
+        - latest_version = document.latest_version
+        - files = document.document_versions.flat_map(&:document_files)
+        - match_labels = document_search_match_labels(document, @filters[:q])
+        tr
+          td = check_box_tag "document_ids[]", document.id, false, id: "document_ids_#{document.id}", disabled: latest_version.blank?
+          td = link_to document.title, project_document_path(@project, document.slug)
+          td
+            - if match_labels.any?
+              - match_labels.each do |label|
+                span.badge = label
+            - else
+              span.muted -
+          td
+            - if document.document_tags.any?
+              - document.document_tags.sort_by(&:normalized_name).each do |tag|
+                = link_to tag.name, project_documents_path(@project, tag: tag.normalized_name), class: "badge"
+            - else
+              span.muted なし
+          td
+            span.badge = document.category
+          td = document.document_kind
+          td = document.visibility_policy
+          td = latest_version&.version_label || "-"
+          td = latest_version&.site_build_path.present? ? "あり" : "なし"
+          td = files.any? ? "#{files.size}件" : "なし"
+          td = document.updated_at.strftime("%Y-%m-%d %H:%M")
+
+p = link_to "案件一覧へ戻る", projects_path
