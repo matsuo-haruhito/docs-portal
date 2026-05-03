@@ -24,6 +24,10 @@ RSpec.describe "Document search", type: :request do
     tag
   end
 
+  def keyword_document(document, keyword)
+    DocumentKeyword.create!(document:, keyword:)
+  end
+
   def result_titles
     html = Nokogiri::HTML(response.body)
     html.css("main table tbody tr td:first-child").map { _1.text.strip }
@@ -34,26 +38,44 @@ RSpec.describe "Document search", type: :request do
     html.css(".tree-view-table").map(&:text).join(" ")
   end
 
-  it "filters documents by keyword across title, slug, version label, and file name" do
+  it "filters documents by keyword across title, slug, version label, file name, and document keyword" do
     title_match = create(:document, project:, title: "運用手順", slug: "operation-manual")
     slug_match = create(:document, project:, title: "別資料", slug: "release-note")
     version_match = create(:document, project:, title: "版で探す資料", slug: "versioned-doc")
     file_match = create(:document, project:, title: "添付で探す資料", slug: "attached-doc")
+    keyword_match = create(:document, project:, title: "業務語で探す資料", slug: "keyword-doc")
     hidden = create(:document, project:, title: "対象外", slug: "other-doc")
 
     create(:document_version, document: title_match, version_label: "v1.0.0")
     create(:document_version, document: slug_match, version_label: "v1.0.0")
     create(:document_version, document: version_match, version_label: "needle-version")
     file_version = create(:document_version, document: file_match, version_label: "v1.0.0")
+    create(:document_version, document: keyword_match, version_label: "v1.0.0")
     create(:document_version, document: hidden, version_label: "v1.0.0")
     attach_file_to(file_version, file_name: "needle-file.pdf", content_type: "application/pdf")
+    keyword_document(keyword_match, "needle-business-word")
 
     sign_in_as(user)
 
     get project_documents_path(project, q: "needle")
 
     expect(response).to have_http_status(:ok)
-    expect(result_titles).to contain_exactly("版で探す資料", "添付で探す資料")
+    expect(result_titles).to contain_exactly("版で探す資料", "添付で探す資料", "業務語で探す資料")
+  end
+
+  it "filters documents by normalized document keyword" do
+    api_doc = create(:document, project:, title: "外部連携仕様", slug: "external-api")
+    other_doc = create(:document, project:, title: "操作手順", slug: "manual-doc")
+    create(:document_version, document: api_doc)
+    create(:document_version, document: other_doc)
+    keyword_document(api_doc, "ＷＭＳ ＡＰＩ")
+
+    sign_in_as(user)
+
+    get project_documents_path(project, q: "wms api")
+
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to contain_exactly("外部連携仕様")
   end
 
   it "filters documents by tag" do
@@ -154,5 +176,26 @@ RSpec.describe "Document search", type: :request do
     expect(response).to have_http_status(:ok)
     expect(result_titles).to contain_exactly("公開API")
     expect(response.body).not_to include("社内API")
+  end
+
+  it "does not expose inaccessible documents through keyword search" do
+    external_user = create(:user, :external)
+    create(:project_membership, project:, user: external_user)
+
+    visible_doc = create(:document, project:, title: "公開仕様", slug: "visible-spec")
+    hidden_doc = create(:document, project:, title: "社内仕様", slug: "internal-spec", visibility_policy: :internal_only)
+    create(:document_version, document: visible_doc)
+    create(:document_version, document: hidden_doc)
+    create(:document_permission, document: visible_doc, company: external_user.company, access_level: :view)
+    keyword_document(visible_doc, "Salesforce連携")
+    keyword_document(hidden_doc, "Salesforce連携")
+
+    sign_in_as(external_user)
+
+    get project_documents_path(project, q: "Salesforce")
+
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to contain_exactly("公開仕様")
+    expect(response.body).not_to include("社内仕様")
   end
 end

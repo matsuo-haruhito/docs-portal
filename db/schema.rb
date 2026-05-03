@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_03_142000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_03_143500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -61,6 +61,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_142000) do
     t.index ["document_version_id"], name: "index_document_files_on_document_version_id"
     t.index ["public_id"], name: "index_document_files_on_public_id", unique: true
     t.index ["storage_key"], name: "index_document_files_on_storage_key", unique: true
+  end
+
+  create_table "document_keywords", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "document_id", null: false
+    t.string "keyword", null: false
+    t.string "normalized_keyword", null: false
+    t.string "public_id", null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_id", "normalized_keyword"], name: "index_document_keywords_on_document_id_and_normalized_keyword", unique: true
+    t.index ["document_id"], name: "index_document_keywords_on_document_id"
+    t.index ["normalized_keyword"], name: "index_document_keywords_on_normalized_keyword"
+    t.index ["public_id"], name: "index_document_keywords_on_public_id", unique: true
   end
 
   create_table "document_permissions", force: :cascade do |t|
@@ -221,6 +235,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_142000) do
   add_foreign_key "access_logs", "projects"
   add_foreign_key "access_logs", "users"
   add_foreign_key "document_files", "document_versions"
+  add_foreign_key "document_keywords", "documents"
   add_foreign_key "document_permissions", "companies"
   add_foreign_key "document_permissions", "documents"
   add_foreign_key "document_permissions", "users"
