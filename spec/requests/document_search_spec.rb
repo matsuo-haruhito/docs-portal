@@ -15,6 +15,11 @@ RSpec.describe "Document search", type: :request do
     )
   end
 
+  def result_titles
+    html = Nokogiri::HTML(response.body)
+    html.css("main table tbody tr td:first-child").map { _1.text.strip }
+  end
+
   it "filters documents by keyword across title, slug, version label, and file name" do
     title_match = create(:document, project:, title: "運用手順", slug: "operation-manual")
     slug_match = create(:document, project:, title: "別資料", slug: "release-note")
@@ -34,11 +39,7 @@ RSpec.describe "Document search", type: :request do
     get project_documents_path(project, q: "needle")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("版で探す資料")
-    expect(response.body).to include("添付で探す資料")
-    expect(response.body).not_to include("運用手順")
-    expect(response.body).not_to include("別資料")
-    expect(response.body).not_to include("対象外")
+    expect(result_titles).to contain_exactly("版で探す資料", "添付で探す資料")
   end
 
   it "filters documents by enum fields" do
@@ -53,8 +54,7 @@ RSpec.describe "Document search", type: :request do
     get project_documents_path(project, category: "manual", document_kind: "pdf", visibility_policy: "public_with_login")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("操作説明")
-    expect(response.body).not_to include("仕様書")
+    expect(result_titles).to contain_exactly("操作説明")
   end
 
   it "filters documents by html, attachment, and pdf availability" do
@@ -73,19 +73,13 @@ RSpec.describe "Document search", type: :request do
     sign_in_as(user)
 
     get project_documents_path(project, has_html: "1")
-    expect(response.body).to include("HTMLあり")
-    expect(response.body).not_to include("添付あり")
-    expect(response.body).not_to include("PDFあり")
+    expect(result_titles).to contain_exactly("HTMLあり")
 
     get project_documents_path(project, has_files: "1")
-    expect(response.body).to include("添付あり")
-    expect(response.body).to include("PDFあり")
-    expect(response.body).not_to include("HTMLあり")
+    expect(result_titles).to contain_exactly("PDFあり", "添付あり")
 
     get project_documents_path(project, has_pdf: "1")
-    expect(response.body).to include("PDFあり")
-    expect(response.body).not_to include("HTMLあり")
-    expect(response.body).not_to include("添付あり")
+    expect(result_titles).to contain_exactly("PDFあり")
   end
 
   it "keeps search conditions in the form and does not expose inaccessible documents to external users" do
@@ -103,8 +97,7 @@ RSpec.describe "Document search", type: :request do
     get project_documents_path(project, q: "資料", category: "manual")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("公開資料")
-    expect(response.body).not_to include("社内資料")
+    expect(result_titles).to contain_exactly("公開資料")
     expect(response.body).to include('value="資料"')
     expect(response.body).to match(/<option[^>]*selected="selected"[^>]*value="manual"|<option[^>]*value="manual"[^>]*selected="selected"/)
   end
