@@ -1,0 +1,5 @@
+services:
+  kroki:
+    image: yuzutech/kroki
+    ports:
+      - '${PUBLISH_KROKI_PORT:-8000}:8000'
