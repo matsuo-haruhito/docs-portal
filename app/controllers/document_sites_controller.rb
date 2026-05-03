@@ -1,5 +1,6 @@
 class DocumentSitesController < BaseController
   before_action :set_version
+  skip_after_action :verify_same_origin_request, only: :show
 
   def show
     site_path = params[:site_path].presence || @version.site_build_path
@@ -7,17 +8,17 @@ class DocumentSitesController < BaseController
     file_path = renderer.file_response_path(site_path)
 
     if html_file?(file_path)
-      log_page_view!(site_path)
+      record_view_access_log(site_path, @version)
       render html: renderer.render_html(site_path)
     else
-      send_file file_path, disposition: "inline", type: Rack::Mime.mime_type(file_path.extname)
+      send_file file_path, disposition: "inline", type: Rack::Mime.mime_type(file_path.extname, "application/octet-stream")
     end
   end
 
   private
 
   def set_version
-    @version = DocumentVersion.find(params[:id])
+    @version = DocumentVersion.find_by!(public_id: params[:public_id])
     require_document_version_view_access!(@version)
   end
 
@@ -25,19 +26,4 @@ class DocumentSitesController < BaseController
     file_path.extname == ".html"
   end
 
-  def log_page_view!(site_path)
-    AccessLog.create!(
-      user: current_user,
-      company: current_user.company,
-      project: @version.document.project,
-      document: @version.document,
-      document_version: @version,
-      action_type: :view,
-      target_type: "page",
-      target_name: site_path.to_s,
-      ip_address: request.remote_ip,
-      user_agent: request.user_agent,
-      accessed_at: Time.current
-    )
-  end
 end

@@ -5,7 +5,11 @@ class Api::Internal::DocImportsController < Api::BaseController
     artifact_root = params.require(:artifact_root)
     manifest_path = params.require(:manifest_path)
 
-    actor = User.find_by!(email_address: "admin@example.com")
+    actor_email = ENV["DOC_IMPORT_ACTOR_EMAIL"].to_s
+    raise ApplicationError::BadRequest, "DOC_IMPORT_ACTOR_EMAIL is not configured" if actor_email.blank?
+
+    actor = User.find_by(email_address: actor_email)
+    raise ApplicationError::BadRequest, "Import actor not found: #{actor_email}" unless actor
 
     result = DocumentImporter.new(
       artifact_root: artifact_root,

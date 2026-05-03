@@ -11,6 +11,10 @@ class Project < ApplicationRecord
   validates :code, :name, presence: true
   validates :code, uniqueness: true
 
+  def to_param
+    code
+  end
+
   def default_site_version_for(user)
     documents.includes(:latest_version)
       .map(&:latest_version)

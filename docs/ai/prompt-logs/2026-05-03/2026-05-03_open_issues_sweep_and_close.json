@@ -1,0 +1,129 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-05-03",
+  "task": {
+    "name": "open_issues_sweep_and_close",
+    "type": "bugfix",
+    "ticket": "remote open issues"
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work/self/docs-portal",
+    "customer": null,
+    "repo": "matsuo-haruhito/docs-portal",
+    "editable_paths": [
+      "docs/ai/prompt-logs/2026-05-03/2026-05-03_open_issues_sweep_and_close.json",
+      "docs/"
+    ],
+    "read_only_paths": [
+      "../../AGENTS.md",
+      ".git/"
+    ]
+  },
+  "instruction_summary": "Fetch all currently open remote issues, implement corresponding fixes where appropriate, and close the issues after verification.",
+  "actual_work": "Swept remote issues in multiple ranges, fixed and closed issues #2-#25, and discovered additional still-open issues #26-#28 during a later follow-up sweep. Implemented renderer-side Docusaurus navigation filtering and portal backlinks, defensive markdown-path normalization for generated site resolution, Mermaid and Kroki diagram support in Docusaurus builds, public URL migration to code/slug/public_id-based routes, import actor selection through DOC_IMPORT_ACTOR_EMAIL, safe path realpath checks for site file serving, centralized AccessLog recording with fail-open behavior for HTML views, and company_master_admin-scoped admin access for own company and users. Updated repo docs to reflect the current route/id rules, site permission filtering rules, document granularity guidance, and diagram build behavior.",
+  "changed_files": [
+    "app/controllers/admin/base_controller.rb",
+    "app/controllers/admin/companies_controller.rb",
+    "app/controllers/admin/dashboard_controller.rb",
+    "app/controllers/admin/document_permissions_controller.rb",
+    "app/controllers/admin/documents_controller.rb",
+    "app/controllers/admin/project_memberships_controller.rb",
+    "app/controllers/admin/projects_controller.rb",
+    "app/controllers/admin/users_controller.rb",
+    "app/controllers/api/internal/doc_imports_controller.rb",
+    "app/controllers/base_controller.rb",
+    "app/controllers/document_files_controller.rb",
+    "app/controllers/document_sites_controller.rb",
+    "app/controllers/document_views_controller.rb",
+    "app/controllers/documents_controller.rb",
+    "app/controllers/project_sites_controller.rb",
+    "app/controllers/projects_controller.rb",
+    "app/helpers/documents_helper.rb",
+    "app/models/document.rb",
+    "app/models/document_file.rb",
+    "app/models/document_version.rb",
+    "app/models/project.rb",
+    "app/models/user.rb",
+    "app/renderers/docusaurus_site_renderer.rb",
+    "app/views/documents/index.html.erb",
+    "app/views/projects/show.html.erb",
+    "config/application.rb",
+    "config/routes.rb",
+    "docs/ToDo.md",
+    "docs/ai/prompt-logs/2026-05-03/2026-05-03_open_issues_sweep_and_close.json",
+    "docs/アプリケーション仕様.md",
+    "docusaurus/docusaurus.config.ts",
+    "docusaurus/package-lock.json",
+    "docusaurus/package.json",
+    "docusaurus/plugins/remark-kroki-diagrams.mjs",
+    "docusaurus/plugins/remark-kroki-diagrams.test.mjs",
+    "spec/factories/project_memberships.rb",
+    "spec/requests/admin_management_spec.rb",
+    "spec/requests/api/internal/doc_imports_spec.rb",
+    "spec/requests/document_files_spec.rb",
+    "spec/requests/document_sites_spec.rb",
+    "spec/requests/document_tree_view_spec.rb",
+    "spec/requests/document_views_spec.rb",
+    "spec/requests/project_sites_spec.rb",
+    "spec/requests/public_identifier_routes_spec.rb"
+  ],
+  "commands": [
+    {
+      "command": "node --test docusaurus/plugins/remark-kroki-diagrams.test.mjs",
+      "result": "pass",
+      "notes": "Verified Kroki remark-plugin behavior, asset emission, and missing-endpoint failure."
+    },
+    {
+      "command": "npm run build",
+      "result": "pass",
+      "notes": "Confirmed the Docusaurus build succeeds after Mermaid/Kroki support and dependency alignment."
+    },
+    {
+      "command": "/usr/bin/time -f 'elapsed=%E' docker compose run --rm app bundle exec rails runner 'puts :ok'",
+      "result": "pass",
+      "notes": "Measured Rails boot at about 1:04 after narrowing loaded railties."
+    },
+    {
+      "command": "mcp__codex_apps__github._update_issue(issue #2-#25)",
+      "result": "pass",
+      "notes": "Closed issues completed in this pass."
+    }
+  ],
+  "tests": [
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/api/internal/doc_imports_spec.rb spec/requests/public_identifier_routes_spec.rb spec/requests/admin_management_spec.rb spec/requests/projects_access_spec.rb spec/requests/project_sites_spec.rb spec/requests/document_sites_spec.rb spec/requests/document_views_spec.rb spec/requests/document_files_spec.rb spec/requests/document_tree_view_spec.rb",
+      "result": "pass",
+      "notes": "43 examples, 0 failures."
+    }
+  ],
+  "usage": {
+    "estimated_input_tokens": null,
+    "estimated_output_tokens": null,
+    "estimated_total_tokens": null,
+    "measurement_source": "unavailable",
+    "loaded_roles": [],
+    "loaded_context": [],
+    "token_notes": "Task started with a minimal stub prompt log before substantial exploration."
+  },
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md"
+    ],
+    "token_notes": "Exact token counts were unavailable from the environment.",
+    "token_waste_notes": [],
+    "wasted_context": [],
+    "unnecessary_exploration": []
+  },
+  "quality_notes": [],
+  "risks": [],
+  "remaining_concerns": [
+    "A later sweep found additional still-open issues #26-#28 that were not implemented in this turn."
+  ],
+  "improvement_candidates": {
+    "workflow": [],
+    "issue_triage": []
+  },
+  "signals": []
+}

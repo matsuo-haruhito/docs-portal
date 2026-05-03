@@ -80,6 +80,7 @@ RSpec.describe "Document files", type: :request do
 
   it "forbids external users who only have view permission from downloading attachments" do
     external_user = create(:user, :external)
+    create(:project_membership, project:, user: external_user)
     create(:document_permission, document:, company: external_user.company, access_level: :view)
 
     sign_in_as(external_user)
@@ -91,6 +92,7 @@ RSpec.describe "Document files", type: :request do
 
   it "allows external users with download permission to download attachments" do
     external_user = create(:user, :external)
+    create(:project_membership, project:, user: external_user)
     create(:document_permission, document:, company: external_user.company, access_level: :download)
 
     sign_in_as(external_user)
@@ -103,10 +105,11 @@ RSpec.describe "Document files", type: :request do
 
   it "hides attachment links from external users who only have view permission" do
     external_user = create(:user, :external)
+    create(:project_membership, project:, user: external_user)
     create(:document_permission, document:, company: external_user.company, access_level: :view)
 
     sign_in_as(external_user)
-    get project_document_path(project, document)
+    get project_document_path(project, document.slug)
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(file.file_name)
@@ -115,10 +118,11 @@ RSpec.describe "Document files", type: :request do
 
   it "shows attachment links to external users who have download permission" do
     external_user = create(:user, :external)
+    create(:project_membership, project:, user: external_user)
     create(:document_permission, document:, company: external_user.company, access_level: :download)
 
     sign_in_as(external_user)
-    get project_document_path(project, document)
+    get project_document_path(project, document.slug)
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(document_file_path(file))
@@ -127,9 +131,9 @@ RSpec.describe "Document files", type: :request do
   it "labels markdown attachments as raw file display in the document detail page" do
     sign_in_as(user)
 
-    get project_document_path(project, document)
+    get project_document_path(project, document.slug)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("生ファイル表示")
+    expect(response.body).to include("元Markdown・生ファイル")
   end
 end

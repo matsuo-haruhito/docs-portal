@@ -29,6 +29,7 @@ RSpec.describe "Admin management", type: :request do
   describe "company master" do
     let(:internal_user) { create(:user, :internal) }
     let!(:company) { create(:company, code: "C001", name: "Alpha") }
+    let!(:other_company) { create(:company, code: "C099", name: "Omega") }
 
     it "allows internal users to create, update, and destroy companies" do
       sign_in_as(internal_user)
@@ -65,6 +66,35 @@ RSpec.describe "Admin management", type: :request do
 
       expect(response).to have_http_status(:forbidden)
     end
+
+    it "allows company_master_admin users to update only their own company" do
+      manager = create(:user, :external, user_type: :company_master_admin, company:)
+      sign_in_as(manager)
+
+      get admin_companies_path
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Alpha")
+      expect(response.body).not_to include("Omega")
+
+      patch admin_company_path(company), params: {
+        company: { code: company.code, name: "Alpha Updated", active: false }
+      }
+
+      expect(response).to redirect_to(admin_companies_path)
+      expect(company.reload.name).to eq("Alpha Updated")
+
+      patch admin_company_path(other_company), params: {
+        company: { code: other_company.code, name: "Omega Updated", active: false }
+      }
+
+      expect(response).to have_http_status(:not_found)
+
+      post admin_companies_path, params: {
+        company: { code: "C777", name: "Forbidden", active: true }
+      }
+
+      expect(response).to have_http_status(:forbidden)
+    end
   end
 
   describe "project master" do
@@ -96,6 +126,55 @@ RSpec.describe "Admin management", type: :request do
 
       get admin_projects_path
 
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
+
+  describe "company master user management" do
+    let!(:company) { create(:company, code: "C010", name: "Tenant") }
+    let!(:other_company) { create(:company, code: "C011", name: "Other") }
+    let!(:manager) { create(:user, :external, user_type: :company_master_admin, company:, email_address: "manager@example.com") }
+    let!(:managed_user) { create(:user, :external, company:, email_address: "member@example.com") }
+    let!(:other_user) { create(:user, :external, company: other_company, email_address: "other@example.com") }
+
+    it "limits company_master_admin to users in the same company" do
+      sign_in_as(manager)
+
+      get admin_users_path
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("member@example.com")
+      expect(response.body).not_to include("other@example.com")
+
+      patch admin_user_path(managed_user), params: {
+        user: { name: "Member Updated", email_address: managed_user.email_address, user_type: :internal, company_id: other_company.id, active: true }
+      }
+
+      expect(response).to redirect_to(admin_users_path)
+      expect(managed_user.reload.name).to eq("Member Updated")
+      expect(managed_user.user_type).to eq("external")
+      expect(managed_user.company_id).to eq(company.id)
+
+      get edit_admin_user_path(other_user)
+      expect(response).to have_http_status(:not_found)
+
+      post admin_users_path, params: {
+        user: {
+          name: "New Member",
+          email_address: "new-member@example.com",
+          user_type: :internal,
+          company_id: other_company.id,
+          active: true,
+          password: "password123!",
+          password_confirmation: "password123!"
+        }
+      }
+
+      created = User.find_by!(email_address: "new-member@example.com")
+      expect(response).to redirect_to(admin_users_path)
+      expect(created.company_id).to eq(company.id)
+      expect(created.user_type).to eq("external")
+
+      get admin_projects_path
       expect(response).to have_http_status(:forbidden)
     end
   end

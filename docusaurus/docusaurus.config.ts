@@ -1,4 +1,5 @@
 import type {Config} from '@docusaurus/types';
+import remarkKrokiDiagrams from './plugins/remark-kroki-diagrams.mjs';
 
 const config: Config = {
   title: 'External Document Site',
@@ -14,6 +15,7 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           lastVersion: 'current',
           editUrl: process.env.DOCUSAURUS_EDIT_URL,
+          remarkPlugins: [[remarkKrokiDiagrams, {}]],
         },
         blog: false,
         pages: false,
@@ -22,10 +24,13 @@ const config: Config = {
   ],
 
   onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
+
+  themes: ['@docusaurus/theme-mermaid'],
 
   markdown: {
+    mermaid: true,
     hooks: {
+      onBrokenMarkdownLinks: 'warn',
       onBrokenMarkdownImages: 'warn',
     },
   },

@@ -12,10 +12,16 @@ export default {
       "classic",
       {
         "docs": {
-          "path": "/tmp/seed-docusaurus-20260430-1-7e5fg/docs-src",
+          "path": "../docs-src",
           "routeBasePath": "/",
           "sidebarPath": "./sidebars.ts",
-          "lastVersion": "current"
+          "lastVersion": "current",
+          "remarkPlugins": [
+            [
+              null,
+              {}
+            ]
+          ]
         },
         "blog": false,
         "pages": false
@@ -23,13 +29,16 @@ export default {
     ]
   ],
   "onBrokenLinks": "warn",
+  "themes": [
+    "@docusaurus/theme-mermaid"
+  ],
   "markdown": {
+    "mermaid": true,
     "hooks": {
-      "onBrokenMarkdownImages": "warn",
-      "onBrokenMarkdownLinks": "warn"
+      "onBrokenMarkdownLinks": "warn",
+      "onBrokenMarkdownImages": "warn"
     },
     "format": "mdx",
-    "mermaid": false,
     "emoji": true,
     "mdx1Compat": {
       "comments": true,
@@ -82,7 +91,6 @@ export default {
   ],
   "customFields": {},
   "plugins": [],
-  "themes": [],
   "themeConfig": {
     "colorMode": {
       "defaultMode": "light",
@@ -251,6 +259,13 @@ export default {
     "tableOfContents": {
       "minHeadingLevel": 2,
       "maxHeadingLevel": 3
+    },
+    "mermaid": {
+      "theme": {
+        "dark": "dark",
+        "light": "default"
+      },
+      "options": {}
     }
   },
   "scripts": [],

@@ -21,8 +21,6 @@
   - DocumentVersion: public_id
   - DocumentFile: public_id
 - numeric id 直指定 route を段階的に廃止する
-- public_id 生成 concern を作成する
-- public_id の prefix ルールを全 model で統一する
 
 ## latest_version / バージョン管理
 

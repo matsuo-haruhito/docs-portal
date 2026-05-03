@@ -1,3 +1,7 @@
+<% content_for :left_content do %>
+  <%= render "documents/tree", projects: @tree_projects, current_project: @project, current_document: nil %>
+<% end %>
+
 <% page_title @project.name %>
 <h1><%= @project.name %></h1>
 
@@ -13,7 +17,7 @@
 <h2>資料一覧</h2>
 <ul>
   <% @documents.each do |document| %>
-    <li><%= link_to document.title, project_document_path(@project, document) %></li>
+    <li><%= link_to document.title, project_document_path(@project, document.slug) %></li>
   <% end %>
 </ul>
 

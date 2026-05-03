@@ -35,7 +35,7 @@ module DocumentsHelper
     when Project
       project_documents_path(item)
     when Document
-      project_document_path(item.project, item)
+      project_document_path(item.project, item.slug)
     end
   end
 

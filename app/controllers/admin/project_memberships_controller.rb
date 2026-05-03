@@ -1,4 +1,5 @@
 class Admin::ProjectMembershipsController < Admin::BaseController
+  before_action :require_admin_only!
   before_action :set_project_membership, only: %i[edit update destroy]
   before_action :load_master_options, only: %i[index create edit update]
 

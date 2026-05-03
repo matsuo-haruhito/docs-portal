@@ -14,19 +14,19 @@ Rails.application.routes.draw do
     resources :document_permissions, except: %i[show new]
   end
 
-  resources :projects, only: [:index, :show] do
+  resources :projects, only: [:index, :show], param: :code do
     get "site(/*site_path)", to: "project_sites#show", as: :site, format: false
-    resources :documents, only: [:index, :show]
+    resources :documents, only: [:index, :show], param: :slug
   end
 
-  resources :document_versions, only: [] do
+  resources :document_versions, only: [], param: :public_id do
     member do
       get :view, to: "document_views#show"
       get "site(/*site_path)", to: "document_sites#show", as: :site, format: false
     end
   end
 
-  resources :document_files, only: [:show]
+  resources :document_files, only: [:show], param: :public_id
 
   namespace :api do
     namespace :internal do

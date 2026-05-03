@@ -1,10 +1,11 @@
 class Admin::CompaniesController < Admin::BaseController
   before_action :set_company, only: %i[edit update destroy]
-  before_action :require_company_master_admin!
+  before_action :require_company_master_admin_access!
+  before_action :require_admin_only!, only: %i[create destroy]
 
   def index
-    @companies = Company.order(:code)
-    @company = Company.new(active: true)
+    @companies = company_scope.order(:code)
+    @company = company_master_admin? ? current_user.company : Company.new(active: true)
   end
 
   def create
@@ -13,7 +14,7 @@ class Admin::CompaniesController < Admin::BaseController
     if @company.save
       redirect_to admin_companies_path, notice: "会社を登録しました。"
     else
-      @companies = Company.order(:code)
+      @companies = company_scope.order(:code)
       render :index, status: :unprocessable_entity
     end
   end
@@ -41,14 +42,20 @@ class Admin::CompaniesController < Admin::BaseController
   private
 
   def set_company
-    @company = Company.find(params[:id])
+    @company = company_scope.find(params[:id])
   end
 
   def company_params
     params.require(:company).permit(:code, :name, :active)
   end
 
-  def require_company_master_admin!
+  def require_company_master_admin_access!
     raise ApplicationError::Forbidden unless company_master_admin?
+  end
+
+  def company_scope
+    return Company.all if admin_user?
+
+    Company.where(id: current_user.company_id)
   end
 end

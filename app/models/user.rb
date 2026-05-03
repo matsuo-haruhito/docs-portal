@@ -10,12 +10,12 @@ class User < ApplicationRecord
   has_many :project_memberships, dependent: :destroy
   has_many :projects, through: :project_memberships
 
-  enum :user_type, { internal: 0, external: 1 }
+  enum :user_type, { internal: 0, external: 1, company_master_admin: 2 }
 
   validates :name, presence: true
   validates :email_address, presence: true
   validates :email_address, uniqueness: true
-  validates :company, presence: true, if: :external?
+  validates :company, presence: true, if: -> { external? || company_master_admin? }
   validates :password, presence: true, on: :create
 
   scope :active_only, -> { where(active: true) }
@@ -25,7 +25,7 @@ class User < ApplicationRecord
   end
 
   def can_manage_company_master?
-    internal?
+    admin? || company_master_admin?
   end
 
   def can_view_all_documents?

@@ -1,4 +1,5 @@
 class Admin::DocumentPermissionsController < Admin::BaseController
+  before_action :require_admin_only!
   before_action :set_document_permission, only: %i[edit update destroy]
   before_action :load_master_options, only: %i[index create edit update]
 

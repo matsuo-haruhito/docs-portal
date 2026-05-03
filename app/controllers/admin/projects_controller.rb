@@ -1,4 +1,5 @@
 class Admin::ProjectsController < Admin::BaseController
+  before_action :require_admin_only!
   before_action :set_project, only: %i[edit update destroy]
 
   def index
@@ -40,7 +41,7 @@ class Admin::ProjectsController < Admin::BaseController
   private
 
   def set_project
-    @project = Project.find(params[:id])
+    @project = Project.find_by!(code: params[:id])
   end
 
   def project_params

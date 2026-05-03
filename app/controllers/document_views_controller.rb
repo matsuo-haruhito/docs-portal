@@ -1,6 +1,6 @@
 class DocumentViewsController < BaseController
   def show
-    version = DocumentVersion.find(params[:id])
+    version = DocumentVersion.find_by!(public_id: params[:public_id])
     require_document_version_view_access!(version)
 
     unless version.rendered_site_available?

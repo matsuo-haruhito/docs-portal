@@ -34,4 +34,5 @@ class Document < ApplicationRecord
 
   validates :title, :slug, presence: true
   validates :slug, uniqueness: { scope: :project_id }
+
 end

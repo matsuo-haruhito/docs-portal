@@ -1,4 +1,5 @@
 class Admin::DocumentsController < Admin::BaseController
+  before_action :require_admin_only!
   before_action :set_document, only: %i[edit update destroy]
   before_action :load_projects, only: %i[index create edit update]
 

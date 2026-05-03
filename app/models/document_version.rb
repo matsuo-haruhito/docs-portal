@@ -12,6 +12,10 @@ class DocumentVersion < ApplicationRecord
 
   validates :version_label, :source_commit_hash, presence: true
 
+  def to_param
+    public_id
+  end
+
   def site_root_absolute_path
     Rails.root.join("storage", "docs_sites", id.to_s)
   end
@@ -60,6 +64,8 @@ class DocumentVersion < ApplicationRecord
 
   def self.normalize_site_page_path(path)
     value = path.to_s.delete_prefix("/").sub(%r{\A/+}, "")
+    value = value.sub(%r{/(?:index|README)\.(?:md|markdown)\z}i, "")
+    value = value.sub(/\.(md|markdown)\z/i, "")
     value = value.delete_suffix("/index.html")
     value = value.delete_suffix(".html")
     value.presence || "index"

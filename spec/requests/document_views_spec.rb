@@ -32,7 +32,7 @@ RSpec.describe "Document views", type: :request do
     )
 
     sign_in_as(user)
-    get project_document_path(project, document)
+    get project_document_path(project, document.slug)
 
     expect(response).to have_http_status(:ok)
     expect(response.body).not_to include(view_document_version_path(version))
@@ -49,6 +49,7 @@ RSpec.describe "Document views", type: :request do
 
     FileUtils.mkdir_p(version.site_root_absolute_path.join("external_samples/sample-site"))
     File.write(version.site_root_absolute_path.join("external_samples/sample-site", "operation-manual.html"), "<html></html>")
+    File.write(version.site_root_absolute_path.join("external_samples/sample-site", "index.html"), "<html></html>")
 
     sign_in_as(user)
     get view_document_version_path(version)
@@ -63,12 +64,13 @@ RSpec.describe "Document views", type: :request do
   it "does not show archived versions to external users" do
     external_user = create(:user, :external)
     create(:project_membership, project:, user: external_user)
+    create(:document_permission, document:, company: external_user.company, access_level: :view)
 
     create(:document_version, document:, version_label: "v1.0.0", status: :published)
     create(:document_version, document:, version_label: "v0.9.0", status: :archived)
 
     sign_in_as(external_user)
-    get project_document_path(project, document)
+    get project_document_path(project, document.slug)
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("v1.0.0")

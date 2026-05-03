@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkrails_docs_portal_docusaurus=self.webpackChunkrails_docs_portal_docusaurus||[]).push([[5390],{5390(s,r,c){c.d(r,{createArchitectureServices:()=>e.S});var e=c(5530);c(2519)}}]);

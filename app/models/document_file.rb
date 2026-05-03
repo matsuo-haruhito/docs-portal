@@ -25,6 +25,10 @@ class DocumentFile < ApplicationRecord
 
   validates :file_name, :content_type, :storage_key, presence: true
 
+  def to_param
+    public_id
+  end
+
   def absolute_path
     Rails.root.join("storage", "document_files", storage_key)
   end

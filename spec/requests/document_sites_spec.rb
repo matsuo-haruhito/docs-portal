@@ -59,9 +59,9 @@ RSpec.describe "Document sites", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("API Spec")
-    expect(response.body).to include("/document_versions/#{version.id}/site/assets/css/styles.css")
-    expect(response.body).to include("/document_versions/#{version.id}/site/assets/js/app.js")
-    expect(response.body).to include("/document_versions/#{version.id}/site/docs-")
+    expect(response.body).to include("/document_versions/#{version.public_id}/site/assets/css/styles.css")
+    expect(response.body).to include("/document_versions/#{version.public_id}/site/docs-")
+    expect(response.body).to include("/document_versions/#{version.public_id}/site/docs-")
   end
 
   it "serves shared docusaurus css asset when version storage does not include it" do

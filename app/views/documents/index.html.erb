@@ -1,3 +1,7 @@
+<% content_for :left_content do %>
+  <%= render "tree", projects: @tree_projects, current_project: @project, current_document: nil %>
+<% end %>
+
 <% page_title @project.name, "文書一覧" %>
 <h1><%= @project.name %> / 文書一覧</h1>
 
@@ -13,7 +17,7 @@
   <tbody>
     <% @documents.each do |document| %>
       <tr>
-        <td><%= link_to document.title, project_document_path(@project, document) %></td>
+        <td><%= link_to document.title, project_document_path(@project, document.slug) %></td>
         <td><span class="badge"><%= document.category %></span></td>
         <td><%= document.document_kind %></td>
         <td><%= document.visibility_policy %></td>

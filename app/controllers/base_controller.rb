@@ -20,4 +20,51 @@ class BaseController < ApplicationController
   def require_document_file_download_access!(document_file)
     raise ApplicationError::Forbidden unless document_file.downloadable_by?(current_user)
   end
+
+  def record_view_access_log(site_path, version)
+    record_access_log_safely(
+      action_type: :view,
+      target_type: "page",
+      target_name: site_path.to_s,
+      version:
+    )
+  end
+
+  def record_download_access_log(document_file)
+    version = document_file.document_version
+
+    record_access_log!(
+      action_type: :download,
+      target_type: "file",
+      target_name: document_file.file_name,
+      version:
+    )
+  end
+
+  def record_access_log_safely(action_type:, target_type:, target_name:, version:)
+    record_access_log!(
+      action_type:,
+      target_type:,
+      target_name:,
+      version:
+    )
+  rescue StandardError => e
+    Rails.logger.error("AccessLog skipped: #{e.class}: #{e.message}")
+  end
+
+  def record_access_log!(action_type:, target_type:, target_name:, version:)
+    AccessLog.create!(
+      user: current_user,
+      company: current_user.company,
+      project: version.document.project,
+      document: version.document,
+      document_version: version,
+      action_type:,
+      target_type:,
+      target_name:,
+      ip_address: request.remote_ip,
+      user_agent: request.user_agent,
+      accessed_at: Time.current
+    )
+  end
 end
