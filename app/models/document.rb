@@ -11,6 +11,7 @@ class Document < ApplicationRecord
   has_many :document_permissions, dependent: :destroy
   has_many :document_taggings, dependent: :destroy
   has_many :document_tags, through: :document_taggings
+  has_many :document_keywords, dependent: :destroy
   has_many :source_document_relations,
     class_name: "DocumentRelation",
     foreign_key: :source_document_id,
