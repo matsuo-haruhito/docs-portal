@@ -1,0 +1,87 @@
+- page_title "#{@document.title} #{@version.version_label}"
+- content_for :left_content do
+  = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
+
+p.muted
+  = link_to @project.name, project_path(@project)
+  |  /
+  = link_to @document.title, project_document_path(@project, @document.slug)
+
+h1
+  = @document.title
+  |  
+  = @version.version_label
+
+table
+  tbody
+    tr
+      th 状態
+      td = @version.status
+    tr
+      th 日時
+      td = @version.published_at ? l(@version.published_at) : "-"
+    tr
+      th 担当者
+      td = @version.published_by_user&.name || "-"
+    tr
+      th ソースコミット
+      td
+        code = @version.source_commit_hash
+    tr
+      th Markdown entry path
+      td = @version.markdown_entry_path.presence || "-"
+    tr
+      th Site build path
+      td = @version.site_build_path.presence || "-"
+    tr
+      th PDF snapshot path
+      td = @version.pdf_snapshot_path.presence || "-"
+
+- if @version.changelog_summary.present?
+  h2 更新内容
+  p = simple_format(@version.changelog_summary)
+
+h2 表示
+ul
+  - if @version.rendered_site_available?
+    li = link_to "このバージョンをHTMLで表示", project_site_path(@project, site_path: @version.html_view_site_path, version_id: @version.public_id)
+  - else
+    li
+      span.muted HTML未生成
+
+h2 添付・元ファイル
+- files = @version.document_files.order(:sort_order, :file_name)
+- if files.any?
+  table
+    thead
+      tr
+        th ファイル名
+        th 種別
+        th サイズ
+    tbody
+      - files.each do |file|
+        tr
+          td
+            - if file.downloadable_by?(current_user)
+              = link_to file.file_name, document_file_path(file)
+            - else
+              = file.file_name
+          td = file.effective_content_type
+          td = number_to_human_size(file.file_size)
+- else
+  p.muted 添付・元ファイルはありません。
+
+h2 他のバージョン
+ul
+  - @versions.each do |version|
+    li
+      - if version == @version
+        strong = version.version_label
+      - else
+        = link_to version.version_label, document_version_path(version)
+      span.muted
+        |  (
+        = version.status
+        | )
+
+p = link_to "文書詳細へ戻る", project_document_path(@project, @document.slug)
