@@ -22,7 +22,7 @@
 <% if (latest_version = @document.latest_version) && @versions.include?(latest_version) %>
   <h2>最新版</h2>
   <p>
-    <strong><%= latest_version.version_label %></strong>
+    <strong><%= link_to latest_version.version_label, document_version_path(latest_version) %></strong>
     (<%= latest_version.status %>)
     <% if latest_version.rendered_site_available? %>
       - <%= link_to "HTMLで表示", project_site_path(@project, site_path: latest_version.html_view_site_path, version_id: latest_version.public_id) %>
@@ -64,7 +64,7 @@
 <ul>
   <% @versions.each do |version| %>
     <li>
-      <strong><%= version.version_label %></strong>
+      <strong><%= link_to version.version_label, document_version_path(version) %></strong>
       (<%= version.status %>)
 
       <% if version.rendered_site_available? %>
