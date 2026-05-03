@@ -1,3 +1,5 @@
+require "zlib"
+
 class StoredZipArchive
   LocalFileEntry = Data.define(:archive_path, :absolute_path)
   StringEntry = Data.define(:archive_path, :content)
