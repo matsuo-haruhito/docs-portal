@@ -77,50 +77,10 @@ module DocumentsHelper
   end
 
   def document_search_match_labels(document, keyword)
-    normalized_keyword = normalized_search_value(keyword)
-    return [] if normalized_keyword.blank?
-
-    labels = []
-    labels << "タイトル" if search_value_matches?(document.title, normalized_keyword)
-    labels << "slug" if search_value_matches?(document.slug, normalized_keyword)
-
-    document.document_keywords.each do |document_keyword|
-      next unless search_value_matches?(document_keyword.keyword, normalized_keyword) ||
-        search_value_matches?(document_keyword.normalized_keyword, normalized_keyword)
-
-      labels << "キーワード"
-      break
-    end
-
-    document.document_versions.each do |version|
-      labels << "バージョン" if search_value_matches?(version.version_label, normalized_keyword)
-      labels << "source path" if [
-        version.source_relative_path,
-        version.source_directory,
-        version.source_file_name
-      ].any? { search_value_matches?(_1, normalized_keyword) }
-      labels << "本文" if search_value_matches?(version.search_body_text, normalized_keyword)
-
-      version.document_files.each do |file|
-        labels << "添付ファイル名" if search_value_matches?(file.file_name, normalized_keyword)
-        labels << "添付テキスト" if search_value_matches?(file.search_text, normalized_keyword)
-      end
-    end
-
-    labels.uniq
+    DocumentSearch.new(keyword).match_labels_for(document)
   end
 
   private
-
-  def normalized_search_value(value)
-    value.to_s.unicode_normalize(:nfkc).downcase.squish
-  end
-
-  def search_value_matches?(value, normalized_keyword)
-    return false if value.blank? || normalized_keyword.blank?
-
-    normalized_search_value(value).include?(normalized_keyword)
-  end
 
   def project_default_site_path(project)
     version = project.default_site_version_for(current_user)
