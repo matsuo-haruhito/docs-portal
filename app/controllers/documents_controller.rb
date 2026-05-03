@@ -107,14 +107,13 @@ class DocumentsController < BaseController
   end
 
   def filter_diagram_available(scope)
-    diagram_patterns = DIAGRAM_EXTENSIONS.map { "%.#{_1}" }
+    file_name_sql = DIAGRAM_EXTENSIONS.map { "LOWER(document_files.file_name) LIKE ?" }.join(" OR ")
+    file_name_patterns = DIAGRAM_EXTENSIONS.map { "%.#{_1}" }
 
     scope
       .left_joins(document_versions: :document_files)
       .where(
-        "document_versions.source_extension IN (:extensions) OR LOWER(document_files.file_name) LIKE ANY (ARRAY[:patterns])",
-        extensions: DIAGRAM_EXTENSIONS,
-        patterns: diagram_patterns
+        ["document_versions.source_extension IN (?) OR #{file_name_sql}", DIAGRAM_EXTENSIONS, *file_name_patterns]
       )
   end
 
