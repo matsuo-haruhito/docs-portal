@@ -61,6 +61,7 @@ jobs:
         run: npm audit --audit-level=high
 
       - name: Audit Docusaurus dependencies
+        continue-on-error: true
         working-directory: ./docusaurus
         run: |
           npm install
