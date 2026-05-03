@@ -1,3 +1,5 @@
+require "set"
+
 class DocumentVersionsZipBuilder
   README_ENTRY_NAME = "README.txt"
 
