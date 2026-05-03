@@ -59,16 +59,20 @@ h2 添付・元ファイル
         th ファイル名
         th 種別
         th サイズ
+        th 操作
     tbody
       - files.each do |file|
         tr
-          td
-            - if file.downloadable_by?(current_user)
-              = link_to file.file_name, document_file_path(file)
-            - else
-              = file.file_name
+          td = file.file_name
           td = file.effective_content_type
           td = number_to_human_size(file.file_size)
+          td.actions
+            - if file.downloadable_by?(current_user)
+              - if file.inline_disposition?
+                = link_to "プレビュー", document_file_path(file, disposition: "inline")
+              = link_to "ダウンロード", document_file_path(file, disposition: "download")
+            - else
+              span.muted 権限なし
 - else
   p.muted 添付・元ファイルはありません。
 

@@ -26,16 +26,28 @@ RSpec.describe "Document files", type: :request do
       sort_order: 1
     )
   end
+  let(:binary_file) do
+    DocumentFile.create!(
+      document_version: version,
+      file_name: "archive.bin",
+      content_type: "application/octet-stream",
+      storage_key: "spec/archive.bin",
+      file_size: 6,
+      sort_order: 2
+    )
+  end
 
   before do
     FileUtils.mkdir_p(file.absolute_path.dirname)
     File.write(file.absolute_path, "%PDF-1.4")
     File.write(markdown_file.absolute_path, "# hello\n")
+    File.binwrite(binary_file.absolute_path, "binary")
   end
 
   after do
     FileUtils.rm_f(file.absolute_path)
     FileUtils.rm_f(markdown_file.absolute_path)
+    FileUtils.rm_f(binary_file.absolute_path)
   end
 
   it "downloads the file and records an access log" do
@@ -76,6 +88,33 @@ RSpec.describe "Document files", type: :request do
     expect(response.media_type).to eq("text/markdown")
     expect(response.headers["content-type"]).to include("charset=utf-8")
     expect(response.headers["content-disposition"]).to include("inline")
+  end
+
+  it "serves inline-capable files inline when inline disposition is requested" do
+    sign_in_as(user)
+
+    get document_file_path(markdown_file, disposition: "inline")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.headers["content-disposition"]).to include("inline")
+  end
+
+  it "serves files as attachments when download disposition is requested" do
+    sign_in_as(user)
+
+    get document_file_path(markdown_file, disposition: "download")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.headers["content-disposition"]).to include("attachment")
+  end
+
+  it "falls back to attachment for non-inline files even when inline is requested" do
+    sign_in_as(user)
+
+    get document_file_path(binary_file, disposition: "inline")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.headers["content-disposition"]).to include("attachment")
   end
 
   it "forbids external users who only have view permission from downloading attachments" do
@@ -135,5 +174,15 @@ RSpec.describe "Document files", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("元Markdown・生ファイル")
+  end
+
+  it "shows separate preview and download links on the version detail page" do
+    sign_in_as(user)
+
+    get document_version_path(version)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(document_file_path(markdown_file, disposition: "inline"))
+    expect(response.body).to include(document_file_path(markdown_file, disposition: "download"))
   end
 end
