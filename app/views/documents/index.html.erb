@@ -57,7 +57,33 @@
   <% end %>
 </section>
 
-<p class="muted">検索結果: <%= @documents.size %>件</p>
+<% page_start = @documents_count.zero? ? 0 : ((@current_page - 1) * @per_page) + 1 %>
+<% page_end = [@current_page * @per_page, @documents_count].min %>
+<p class="muted">
+  検索結果: <%= @documents_count %>件
+  <% if @documents_count.positive? %>
+    （<%= page_start %>-<%= page_end %>件目 / <%= @current_page %>/<%= @total_pages %>ページ）
+  <% end %>
+</p>
+
+<% pagination_params = @filters.to_h.symbolize_keys.except(:page).compact_blank %>
+<% if @total_pages > 1 %>
+  <nav class="pagination" aria-label="文書一覧ページネーション">
+    <% if @current_page > 1 %>
+      <%= link_to "前へ", project_documents_path(@project, pagination_params.merge(page: @current_page - 1)), class: "button secondary" %>
+    <% else %>
+      <span class="button secondary disabled">前へ</span>
+    <% end %>
+
+    <span class="muted">Page <%= @current_page %> / <%= @total_pages %></span>
+
+    <% if @current_page < @total_pages %>
+      <%= link_to "次へ", project_documents_path(@project, pagination_params.merge(page: @current_page + 1)), class: "button secondary" %>
+    <% else %>
+      <span class="button secondary disabled">次へ</span>
+    <% end %>
+  </nav>
+<% end %>
 
 <%= table_tag do %>
   <thead>
