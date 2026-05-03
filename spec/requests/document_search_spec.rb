@@ -193,6 +193,34 @@ RSpec.describe "Document search", type: :request do
     expect(response.body).to match(/<option[^>]*selected="selected"[^>]*value="manual"|<option[^>]*value="manual"[^>]*selected="selected"/)
   end
 
+  it "applies expected listing scope for internal and external users" do
+    other_project = create(:project, code: "OTHER#{SecureRandom.hex(3)}", name: "Other Project")
+    external_user = create(:user, :external)
+    create(:project_membership, project:, user: external_user)
+
+    visible_doc = create(:document, project:, title: "公開範囲の資料", slug: "visible-scope-doc")
+    internal_doc = create(:document, project:, title: "社内限定の資料", slug: "internal-scope-doc", visibility_policy: :internal_only)
+    other_project_doc = create(:document, project: other_project, title: "別案件の資料", slug: "other-project-doc")
+    create(:document_version, document: visible_doc)
+    create(:document_version, document: internal_doc)
+    create(:document_version, document: other_project_doc)
+    create(:document_permission, document: visible_doc, company: external_user.company, access_level: :view)
+
+    sign_in_as(user)
+    get project_documents_path(project)
+
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to contain_exactly("公開範囲の資料", "社内限定の資料")
+
+    sign_in_as(external_user)
+    get project_documents_path(project)
+
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to contain_exactly("公開範囲の資料")
+    expect(response.body).not_to include("社内限定の資料")
+    expect(response.body).not_to include("別案件の資料")
+  end
+
   it "does not expose inaccessible documents through tag filtering" do
     external_user = create(:user, :external)
     create(:project_membership, project:, user: external_user)
