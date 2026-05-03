@@ -1,7 +1,7 @@
 require "digest"
 require "fileutils"
-require "open3"
 require "tmpdir"
+require_relative "docusaurus_build_runner"
 require_relative "docusaurus_route_map"
 
 module SeedSupport
@@ -16,8 +16,6 @@ module SeedSupport
   end
 
   class DocusaurusBuilder
-    BUILD_ROOT = Rails.root.join("docusaurus")
-
     MARKDOWN_EXTENSIONS = %w[.md .markdown].freeze
     DIAGRAM_FILE_LANGUAGES = {
       ".puml" => "plantuml",
@@ -45,10 +43,11 @@ module SeedSupport
 
       with_temp_workspace do |workspace|
         docs_src = workspace.join("docs-src")
+        static_dir = workspace.join("static")
         build_output_dir = workspace.join("build")
+        FileUtils.mkdir_p(static_dir)
         populate_docs_src!(docs_src)
-        run_build!(docs_src, build_output_dir)
-        copy_build!(build_output_dir)
+        run_build!(docs_src, build_output_dir, static_dir)
         build_route_map
       end
     end
@@ -334,31 +333,14 @@ module SeedSupport
       relative.dirname.join(normalized_basename)
     end
 
-    def run_build!(docs_src, build_output_dir)
-      env = {
-        "DOCUSAURUS_DOCS_PATH" => docs_src.to_s
-      }
-
-      stdout, stderr, status = Open3.capture3(
-        env,
-        "npm", "run", "build", "--", "--out-dir", build_output_dir.to_s,
-        chdir: BUILD_ROOT.to_s
-      )
-
-      return if status.success?
-
-      raise "Docusaurus build failed for #{@source_dir}: #{stderr.presence || stdout}"
-    end
-
-    def copy_build!(build_output_dir)
-      destination = @version.site_root_absolute_path
-      FileUtils.mkdir_p(destination)
-      FileUtils.rm_rf(destination.children)
-      FileUtils.cp_r(build_output_dir.children, destination)
-
-      return if @version.site_entry_absolute_path&.exist?
-
-      raise "Seed Docusaurus build output missing entry path: #{@site_build_path}"
+    def run_build!(docs_src, build_output_dir, static_dir)
+      DocusaurusBuildRunner.new(
+        source_dir: @source_dir,
+        version: @version,
+        docs_src:,
+        build_output_dir:,
+        static_dir:
+      ).run!
     end
 
     def build_route_map
