@@ -10,22 +10,28 @@ class DocumentFileHealthCheck
   end
 
   def call(limit: 20)
-    files = scope.includes(document_version: { document: :project }).order(:id)
     missing = []
     total = 0
+    missing_count = 0
 
     files.find_each do |file|
       total += 1
-      missing << file if missing.length < limit && missing_file?(file)
+      next unless missing_file?(file)
+
+      missing_count += 1
+      missing << file if missing.length < limit
     end
 
-    missing_count = files.count { missing_file?(_1) }
     Result.new(total_count: total, missing_files: missing, missing_count:)
   end
 
   private
 
   attr_reader :scope
+
+  def files
+    scope.includes(document_version: { document: :project }).order(:id)
+  end
 
   def missing_file?(file)
     !File.file?(file.absolute_path)
