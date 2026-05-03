@@ -33,6 +33,12 @@ class DocumentsController < BaseController
     require_document_access!(@document)
 
     @versions = @document.document_versions.select { _1.viewable_by?(current_user) }.sort_by(&:created_at).reverse
+    @latest_viewable_version = @document.latest_version if @document.latest_version && @versions.include?(@document.latest_version)
+    @source_breadcrumbs = SourcePathBreadcrumb.new(
+      document: @document,
+      version: @latest_viewable_version || @versions.first,
+      project: @project
+    ).crumbs
     @related_document_groups = RelatedDocumentFinder.new(document: @document, user: current_user).grouped_results
     @tree_projects = Project.accessible_to(current_user).includes(documents: :latest_version).order(:code)
   end
