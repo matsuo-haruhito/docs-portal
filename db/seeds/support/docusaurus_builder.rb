@@ -12,6 +12,7 @@ module SeedSupport
     LOCAL_ASSET_EXTENSIONS = %w[
       .png .jpg .jpeg .gif .webp .svg .bmp .ico .avif
     ].freeze
+    DIAGRAM_FENCE_PATTERN = /\A\s{0,3}(```|~~~)\s*(plantuml|puml|d2)(?:\s|\z)/i
 
     def initialize(source_dir:, version:, site_build_path:)
       @source_dir = Pathname(source_dir)
@@ -21,6 +22,8 @@ module SeedSupport
 
     def build
       return unless markdown_files?
+
+      validate_kroki_endpoint!
 
       with_temp_workspace do |workspace|
         docs_src = workspace.join("docs-src")
@@ -52,6 +55,40 @@ module SeedSupport
 
     def local_asset_file?(path)
       LOCAL_ASSET_EXTENSIONS.include?(path.extname.downcase)
+    end
+
+    def validate_kroki_endpoint!
+      return if ENV["KROKI_ENDPOINT"].to_s.strip.present?
+
+      diagram_files = markdown_files_with_diagrams
+      return if diagram_files.empty?
+
+      message = [
+        "KROKI_ENDPOINT is required because seed documents contain PlantUML/D2 diagrams.",
+        "",
+        "Set these values in .env when using the optional Kroki compose file:",
+        "  COMPOSE_FILE=docker-compose.yml:docker-compose.kroki.yml",
+        "  KROKI_ENDPOINT=http://kroki:8000",
+        "",
+        "Diagram files:",
+        *diagram_files.first(10).map { |path| "  - #{path}" }
+      ].join("\n")
+
+      raise message
+    end
+
+    def markdown_files_with_diagrams
+      Dir.glob(@source_dir.join("**/*").to_s).sort.filter_map do |path|
+        source = Pathname(path)
+        next unless source.file? && markdown_file?(source)
+        next unless markdown_contains_diagram?(source)
+
+        source.relative_path_from(@source_dir).to_s
+      end
+    end
+
+    def markdown_contains_diagram?(source)
+      File.foreach(source).any? { |line| line.match?(DIAGRAM_FENCE_PATTERN) }
     end
 
     def with_temp_workspace
@@ -122,8 +159,6 @@ module SeedSupport
 
     def build_markdown_with_front_matter(front_matter, body, generated_id)
       lines = front_matter.lines
-
-      # 既存 id がある場合は seed 用 id で上書きする
       lines = lines.reject { _1.match?(/\A\s*id:\s*/) }
       lines.insert(1, "id: #{generated_id}\n")
 
@@ -135,7 +170,7 @@ module SeedSupport
     end
 
     def rewrite_local_markdown_links_for_seed(body)
-      body.gsub(/\]\(([^)]+)\)/) do |match|
+      body.gsub(/\]\(([^)]+)\)/) do
         url = Regexp.last_match(1)
         rewritten_url = rewrite_local_markdown_url_for_seed(url)
 
