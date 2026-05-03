@@ -1,0 +1,11 @@
+nav
+  .header-links
+    = link_to "Document Portal Sample", root_path, class: "brand-link"
+    - if logged_in?
+      - if admin_user?
+        = link_to "管理画面", admin_root_path
+      = link_to "案件一覧", projects_path
+  .user-menu
+    - if logged_in?
+      span = [current_user.name, current_user.email_address].compact.join(" / ")
+      = button_to "ログアウト", session_path, method: :delete, class: "button secondary"
