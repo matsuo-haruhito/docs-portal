@@ -3,16 +3,17 @@
 # incrementally modify your database, and then regenerate this schema definition.
 #
 # This file is the source Rails uses to define your schema when running `bin/rails
-# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends
-# to be faster and is potentially less error prone than running all of your
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
+# be faster and is potentially less error prone than running all of your
 # migrations from scratch. Old migrations may fail to apply correctly if those
 # migrations use external dependencies or application code.
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_03_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_03_161000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_trgm"
 
   create_table "access_logs", force: :cascade do |t|
     t.datetime "accessed_at", null: false
@@ -60,7 +61,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_150000) do
     t.string "storage_key", null: false
     t.datetime "updated_at", null: false
     t.index ["document_version_id"], name: "index_document_files_on_document_version_id"
+    t.index ["file_name"], name: "index_document_files_on_file_name_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["public_id"], name: "index_document_files_on_public_id", unique: true
+    t.index ["search_text"], name: "index_document_files_on_search_text_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["storage_key"], name: "index_document_files_on_storage_key", unique: true
   end
 
@@ -74,7 +77,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_150000) do
     t.datetime "updated_at", null: false
     t.index ["document_id", "normalized_keyword"], name: "index_document_keywords_on_document_id_and_normalized_keyword", unique: true
     t.index ["document_id"], name: "index_document_keywords_on_document_id"
+    t.index ["keyword"], name: "index_document_keywords_on_keyword_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["normalized_keyword"], name: "index_document_keywords_on_normalized_keyword"
+    t.index ["normalized_keyword"], name: "index_document_keywords_on_normalized_keyword_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["public_id"], name: "index_document_keywords_on_public_id", unique: true
   end
 
@@ -154,9 +159,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_150000) do
     t.index ["document_id"], name: "index_document_versions_on_document_id"
     t.index ["public_id"], name: "index_document_versions_on_public_id", unique: true
     t.index ["published_by_user_id"], name: "index_document_versions_on_published_by_user_id"
+    t.index ["search_body_text"], name: "index_document_versions_on_search_body_text_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["snapshot_kind"], name: "index_document_versions_on_snapshot_kind"
     t.index ["source_directory"], name: "index_document_versions_on_source_directory"
+    t.index ["source_directory"], name: "index_document_versions_on_source_directory_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.index ["source_file_name"], name: "index_document_versions_on_source_file_name_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["source_relative_path"], name: "index_document_versions_on_source_relative_path"
+    t.index ["source_relative_path"], name: "index_document_versions_on_source_relative_path_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.index ["version_label"], name: "index_document_versions_on_version_label_trigram", opclass: :gin_trgm_ops, using: :gin
   end
 
   create_table "documents", force: :cascade do |t|
@@ -174,6 +184,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_150000) do
     t.index ["project_id", "slug"], name: "index_documents_on_project_id_and_slug", unique: true
     t.index ["project_id"], name: "index_documents_on_project_id"
     t.index ["public_id"], name: "index_documents_on_public_id", unique: true
+    t.index ["slug"], name: "index_documents_on_slug_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.index ["title"], name: "index_documents_on_title_trigram", opclass: :gin_trgm_ops, using: :gin
   end
 
   create_table "project_memberships", force: :cascade do |t|
