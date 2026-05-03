@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_03_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_03_000200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -75,6 +75,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_000100) do
     t.index ["document_id"], name: "index_document_permissions_on_document_id"
     t.index ["public_id"], name: "index_document_permissions_on_public_id", unique: true
     t.index ["user_id"], name: "index_document_permissions_on_user_id"
+  end
+
+  create_table "document_relations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "note"
+    t.string "public_id", null: false
+    t.integer "relation_type", default: 0, null: false
+    t.integer "sort_order", default: 0, null: false
+    t.bigint "source_document_id", null: false
+    t.bigint "target_document_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["public_id"], name: "index_document_relations_on_public_id", unique: true
+    t.index ["source_document_id", "target_document_id", "relation_type"], name: "index_document_relations_unique_relation", unique: true
+    t.index ["source_document_id"], name: "index_document_relations_on_source_document_id"
+    t.index ["target_document_id"], name: "index_document_relations_on_target_document_id"
   end
 
   create_table "document_versions", force: :cascade do |t|
@@ -188,6 +203,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_000100) do
   add_foreign_key "document_permissions", "companies"
   add_foreign_key "document_permissions", "documents"
   add_foreign_key "document_permissions", "users"
+  add_foreign_key "document_relations", "documents", column: "source_document_id"
+  add_foreign_key "document_relations", "documents", column: "target_document_id"
   add_foreign_key "document_versions", "documents"
   add_foreign_key "document_versions", "users", column: "published_by_user_id"
   add_foreign_key "documents", "projects"
