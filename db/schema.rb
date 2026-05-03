@@ -3,14 +3,14 @@
 # incrementally modify your database, and then regenerate this schema definition.
 #
 # This file is the source Rails uses to define your schema when running `bin/rails
-# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
-# be faster and is potentially less error prone than running all of your
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends
+# to be faster and is potentially less error prone than running all of your
 # migrations from scratch. Old migrations may fail to apply correctly if those
 # migrations use external dependencies or application code.
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_03_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_03_142000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -90,6 +90,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_000200) do
     t.index ["source_document_id", "target_document_id", "relation_type"], name: "index_document_relations_unique_relation", unique: true
     t.index ["source_document_id"], name: "index_document_relations_on_source_document_id"
     t.index ["target_document_id"], name: "index_document_relations_on_target_document_id"
+  end
+
+  create_table "document_taggings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "document_id", null: false
+    t.bigint "document_tag_id", null: false
+    t.integer "sort_order", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_id", "document_tag_id"], name: "index_document_taggings_on_document_id_and_document_tag_id", unique: true
+    t.index ["document_id"], name: "index_document_taggings_on_document_id"
+    t.index ["document_tag_id"], name: "index_document_taggings_on_document_tag_id"
+  end
+
+  create_table "document_tags", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.string "normalized_name", null: false
+    t.string "public_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["normalized_name"], name: "index_document_tags_on_normalized_name", unique: true
+    t.index ["public_id"], name: "index_document_tags_on_public_id", unique: true
   end
 
   create_table "document_versions", force: :cascade do |t|
@@ -205,6 +226,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_000200) do
   add_foreign_key "document_permissions", "users"
   add_foreign_key "document_relations", "documents", column: "source_document_id"
   add_foreign_key "document_relations", "documents", column: "target_document_id"
+  add_foreign_key "document_taggings", "document_tags"
+  add_foreign_key "document_taggings", "documents"
   add_foreign_key "document_versions", "documents"
   add_foreign_key "document_versions", "users", column: "published_by_user_id"
   add_foreign_key "documents", "projects"
