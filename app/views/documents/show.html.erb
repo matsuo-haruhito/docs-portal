@@ -10,6 +10,15 @@
   種別: <%= @document.document_kind %>
 </p>
 
+<% if @document.document_tags.any? %>
+  <p>
+    タグ:
+    <% @document.document_tags.sort_by(&:normalized_name).each do |tag| %>
+      <%= link_to tag.name, project_documents_path(@project, tag: tag.normalized_name), class: "badge" %>
+    <% end %>
+  </p>
+<% end %>
+
 <% if (latest_version = @document.latest_version) && @versions.include?(latest_version) %>
   <h2>最新版</h2>
   <p>
