@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_03_143500) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_03_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -55,6 +55,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_143500) do
     t.string "file_name", null: false
     t.bigint "file_size", default: 0, null: false
     t.string "public_id", null: false
+    t.text "search_text"
     t.integer "sort_order", default: 0, null: false
     t.string "storage_key", null: false
     t.datetime "updated_at", null: false
@@ -137,6 +138,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_143500) do
     t.string "public_id", null: false
     t.datetime "published_at"
     t.bigint "published_by_user_id"
+    t.text "search_body_text"
     t.string "site_build_path"
     t.string "snapshot_kind"
     t.string "source_basename"

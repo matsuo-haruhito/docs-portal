@@ -5,13 +5,14 @@ RSpec.describe "Document search", type: :request do
   let(:user) { create(:user, :internal) }
   let(:project) { create(:project, code: "PJ#{SecureRandom.hex(4)}", name: "Search Project") }
 
-  def attach_file_to(version, file_name:, content_type: "application/octet-stream")
+  def attach_file_to(version, file_name:, content_type: "application/octet-stream", search_text: nil)
     DocumentFile.create!(
       document_version: version,
       file_name:,
       content_type:,
       storage_key: "spec/#{SecureRandom.hex(8)}-#{file_name}",
-      file_size: 10
+      file_size: 10,
+      search_text:
     )
   end
 
@@ -61,6 +62,41 @@ RSpec.describe "Document search", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(result_titles).to contain_exactly("版で探す資料", "添付で探す資料", "業務語で探す資料")
+  end
+
+  it "filters documents by body text and source path metadata" do
+    body_match = create(:document, project:, title: "本文で探す資料", slug: "body-doc")
+    source_path_match = create(:document, project:, title: "パスで探す資料", slug: "path-doc")
+    source_file_match = create(:document, project:, title: "ファイル名で探す資料", slug: "source-file-doc")
+    hidden = create(:document, project:, title: "対象外", slug: "body-hidden")
+
+    create(:document_version, document: body_match, search_body_text: "markdown body includes body-needle")
+    create(:document_version, document: source_path_match, source_directory: "作成資料/body-needle")
+    create(:document_version, document: source_file_match, source_file_name: "body-needle.md")
+    create(:document_version, document: hidden, search_body_text: "other text")
+
+    sign_in_as(user)
+
+    get project_documents_path(project, q: "body-needle")
+
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to contain_exactly("本文で探す資料", "パスで探す資料", "ファイル名で探す資料")
+  end
+
+  it "filters documents by extracted document file search text" do
+    file_text_match = create(:document, project:, title: "添付本文で探す資料", slug: "file-text-doc")
+    hidden = create(:document, project:, title: "対象外", slug: "file-text-hidden")
+    file_text_version = create(:document_version, document: file_text_match)
+    hidden_version = create(:document_version, document: hidden)
+    attach_file_to(file_text_version, file_name: "manual.pdf", content_type: "application/pdf", search_text: "attachment includes file-body-needle")
+    attach_file_to(hidden_version, file_name: "manual.pdf", content_type: "application/pdf", search_text: "attachment has other text")
+
+    sign_in_as(user)
+
+    get project_documents_path(project, q: "file-body-needle")
+
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to contain_exactly("添付本文で探す資料")
   end
 
   it "filters documents by normalized document keyword" do
@@ -197,5 +233,24 @@ RSpec.describe "Document search", type: :request do
     expect(response).to have_http_status(:ok)
     expect(result_titles).to contain_exactly("公開仕様")
     expect(response.body).not_to include("社内仕様")
+  end
+
+  it "does not expose inaccessible documents through body text search" do
+    external_user = create(:user, :external)
+    create(:project_membership, project:, user: external_user)
+
+    visible_doc = create(:document, project:, title: "公開本文", slug: "visible-body")
+    hidden_doc = create(:document, project:, title: "社内本文", slug: "internal-body", visibility_policy: :internal_only)
+    create(:document_version, document: visible_doc, search_body_text: "confidential-body-keyword")
+    create(:document_version, document: hidden_doc, search_body_text: "confidential-body-keyword")
+    create(:document_permission, document: visible_doc, company: external_user.company, access_level: :view)
+
+    sign_in_as(external_user)
+
+    get project_documents_path(project, q: "confidential-body-keyword")
+
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to contain_exactly("公開本文")
+    expect(response.body).not_to include("社内本文")
   end
 end

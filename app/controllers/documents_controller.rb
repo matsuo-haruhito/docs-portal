@@ -55,7 +55,12 @@ class DocumentsController < BaseController
         "documents.title ILIKE :pattern OR " \
         "documents.slug ILIKE :pattern OR " \
         "document_versions.version_label ILIKE :pattern OR " \
+        "document_versions.source_relative_path ILIKE :pattern OR " \
+        "document_versions.source_directory ILIKE :pattern OR " \
+        "document_versions.source_file_name ILIKE :pattern OR " \
+        "document_versions.search_body_text ILIKE :pattern OR " \
         "document_files.file_name ILIKE :pattern OR " \
+        "document_files.search_text ILIKE :pattern OR " \
         "document_keywords.keyword ILIKE :pattern OR " \
         "document_keywords.normalized_keyword LIKE :normalized_pattern",
         pattern:,
