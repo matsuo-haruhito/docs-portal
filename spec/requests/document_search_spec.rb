@@ -171,6 +171,25 @@ RSpec.describe "Document search", type: :request do
     expect(result_titles).to contain_exactly("PDFあり")
   end
 
+  it "filters documents that include standalone diagram files" do
+    source_diagram_doc = create(:document, project:, title: "PlantUML資料", slug: "plantuml-doc")
+    attachment_diagram_doc = create(:document, project:, title: "Mermaid添付資料", slug: "mermaid-doc")
+    other_doc = create(:document, project:, title: "通常資料", slug: "normal-doc")
+
+    create(:document_version, document: source_diagram_doc, source_file_name: "flow.puml", source_extension: "puml")
+    attachment_version = create(:document_version, document: attachment_diagram_doc)
+    create(:document_version, document: other_doc, source_file_name: "README.md", source_extension: "md")
+    attach_file_to(attachment_version, file_name: "diagram.mmd", content_type: "text/plain")
+
+    sign_in_as(user)
+
+    get project_documents_path(project, has_diagram: "1")
+
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to contain_exactly("Mermaid添付資料", "PlantUML資料")
+    expect(response.body).to include("Diagramあり")
+  end
+
   it "keeps search conditions in the form and does not expose inaccessible documents to external users" do
     external_user = create(:user, :external)
     create(:project_membership, project:, user: external_user)

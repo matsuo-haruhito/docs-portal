@@ -48,6 +48,10 @@
         <%= check_box_tag :has_pdf, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_pdf]) %>
         PDFあり
       </label>
+      <label>
+        <%= check_box_tag :has_diagram, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_diagram]) %>
+        Diagramあり
+      </label>
     </fieldset>
 
     <p>

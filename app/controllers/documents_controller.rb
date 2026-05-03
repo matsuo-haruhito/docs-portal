@@ -1,5 +1,6 @@
 class DocumentsController < BaseController
   DOCUMENTS_PER_PAGE = 20
+  DIAGRAM_EXTENSIONS = %w[puml plantuml d2 mmd mermaid].freeze
 
   def index
     @project = Project.find_by!(code: params[:project_code])
@@ -50,7 +51,7 @@ class DocumentsController < BaseController
   end
 
   def document_filter_params
-    params.permit(:q, :tag, :category, :document_kind, :visibility_policy, :has_html, :has_files, :has_pdf, :page)
+    params.permit(:q, :tag, :category, :document_kind, :visibility_policy, :has_html, :has_files, :has_pdf, :has_diagram, :page)
   end
 
   def normalized_page
@@ -81,6 +82,7 @@ class DocumentsController < BaseController
     scope = filter_html_available(scope) if enabled_filter?(:has_html)
     scope = filter_file_attached(scope) if enabled_filter?(:has_files)
     scope = filter_pdf_available(scope) if enabled_filter?(:has_pdf)
+    scope = filter_diagram_available(scope) if enabled_filter?(:has_diagram)
     scope
   end
 
@@ -101,6 +103,17 @@ class DocumentsController < BaseController
         "documents.document_kind = :pdf_kind OR LOWER(document_files.file_name) LIKE :pdf_file_name",
         pdf_kind: Document.document_kinds[:pdf],
         pdf_file_name: "%.pdf"
+      )
+  end
+
+  def filter_diagram_available(scope)
+    file_name_sql = DIAGRAM_EXTENSIONS.map { "LOWER(document_files.file_name) LIKE ?" }.join(" OR ")
+    file_name_patterns = DIAGRAM_EXTENSIONS.map { "%.#{_1}" }
+
+    scope
+      .left_joins(document_versions: :document_files)
+      .where(
+        ["document_versions.source_extension IN (?) OR #{file_name_sql}", DIAGRAM_EXTENSIONS, *file_name_patterns]
       )
   end
 
