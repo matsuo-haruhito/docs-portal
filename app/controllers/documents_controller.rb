@@ -6,7 +6,7 @@ class DocumentsController < BaseController
     @documents = filtered_documents
       .includes(:latest_version, document_versions: :document_files)
       .order(:title)
-    @tree_projects = Project.accessible_to(current_user).includes(:documents).order(:code)
+    @tree_projects = Project.accessible_to(current_user).includes(documents: :latest_version).order(:code)
   end
 
   def show
@@ -16,7 +16,8 @@ class DocumentsController < BaseController
     require_document_access!(@document)
 
     @versions = @document.document_versions.select { _1.viewable_by?(current_user) }.sort_by(&:created_at).reverse
-    @tree_projects = Project.accessible_to(current_user).includes(:documents).order(:code)
+    @related_document_groups = RelatedDocumentFinder.new(document: @document, user: current_user).grouped_results
+    @tree_projects = Project.accessible_to(current_user).includes(documents: :latest_version).order(:code)
   end
 
   private

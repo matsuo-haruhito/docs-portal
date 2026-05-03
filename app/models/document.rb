@@ -9,6 +9,19 @@ class Document < ApplicationRecord
 
   has_many :document_versions, dependent: :destroy
   has_many :document_permissions, dependent: :destroy
+  has_many :source_document_relations,
+    class_name: "DocumentRelation",
+    foreign_key: :source_document_id,
+    dependent: :destroy,
+    inverse_of: :source_document
+  has_many :target_document_relations,
+    class_name: "DocumentRelation",
+    foreign_key: :target_document_id,
+    dependent: :destroy,
+    inverse_of: :target_document
+  has_many :related_documents,
+    through: :source_document_relations,
+    source: :target_document
 
   enum :category, {
     spec: 0,
@@ -34,5 +47,4 @@ class Document < ApplicationRecord
 
   validates :title, :slug, presence: true
   validates :slug, uniqueness: { scope: :project_id }
-
 end
