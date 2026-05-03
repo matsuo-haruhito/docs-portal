@@ -9,6 +9,14 @@ module SeedSupport
     BUILD_ROOT = Rails.root.join("docusaurus")
 
     MARKDOWN_EXTENSIONS = %w[.md .markdown].freeze
+    DIAGRAM_FILE_LANGUAGES = {
+      ".puml" => "plantuml",
+      ".plantuml" => "plantuml",
+      ".d2" => "d2",
+      ".mmd" => "mermaid",
+      ".mermaid" => "mermaid"
+    }.freeze
+    KROKI_DIAGRAM_LANGUAGES = %w[plantuml d2].freeze
     LOCAL_ASSET_EXTENSIONS = %w[
       .png .jpg .jpeg .gif .webp .svg .bmp .ico .avif
     ].freeze
@@ -21,7 +29,7 @@ module SeedSupport
     end
 
     def build
-      return unless markdown_files?
+      return unless renderable_document_files?
 
       validate_kroki_endpoint!
 
@@ -40,17 +48,41 @@ module SeedSupport
       "seed-#{digest}"
     end
 
+    def self.markdown_file?(path)
+      MARKDOWN_EXTENSIONS.include?(Pathname(path).extname.downcase)
+    end
+
+    def self.diagram_file?(path)
+      DIAGRAM_FILE_LANGUAGES.key?(Pathname(path).extname.downcase)
+    end
+
+    def self.diagram_language_for(path)
+      DIAGRAM_FILE_LANGUAGES.fetch(Pathname(path).extname.downcase)
+    end
+
+    def self.renderable_document_file?(path)
+      markdown_file?(path) || diagram_file?(path)
+    end
+
     private
 
-    def markdown_files?
+    def renderable_document_files?
       Dir.glob(@source_dir.join("**/*").to_s).any? do |path|
         source = Pathname(path)
-        source.file? && markdown_file?(source)
+        source.file? && self.class.renderable_document_file?(source)
       end
     end
 
     def markdown_file?(path)
-      MARKDOWN_EXTENSIONS.include?(path.extname.downcase)
+      self.class.markdown_file?(path)
+    end
+
+    def diagram_file?(path)
+      self.class.diagram_file?(path)
+    end
+
+    def diagram_language_for(path)
+      self.class.diagram_language_for(path)
     end
 
     def local_asset_file?(path)
@@ -60,7 +92,7 @@ module SeedSupport
     def validate_kroki_endpoint!
       return if ENV["KROKI_ENDPOINT"].to_s.strip.present?
 
-      diagram_files = markdown_files_with_diagrams
+      diagram_files = files_requiring_kroki
       return if diagram_files.empty?
 
       message = [
@@ -77,11 +109,18 @@ module SeedSupport
       raise message
     end
 
-    def markdown_files_with_diagrams
+    def files_requiring_kroki
       Dir.glob(@source_dir.join("**/*").to_s).sort.filter_map do |path|
         source = Pathname(path)
-        next unless source.file? && markdown_file?(source)
-        next unless markdown_contains_diagram?(source)
+        next unless source.file?
+
+        if markdown_file?(source)
+          next unless markdown_contains_diagram?(source)
+        elsif diagram_file?(source)
+          next unless KROKI_DIAGRAM_LANGUAGES.include?(diagram_language_for(source))
+        else
+          next
+        end
 
         source.relative_path_from(@source_dir).to_s
       end
@@ -111,6 +150,10 @@ module SeedSupport
           destination = root.join(normalized_doc_relative_path(relative))
           FileUtils.mkdir_p(destination.dirname)
           write_markdown_with_seed_front_matter!(source, destination, relative)
+        elsif diagram_file?(source)
+          destination = root.join(normalized_doc_relative_path(relative))
+          FileUtils.mkdir_p(destination.dirname)
+          write_diagram_wrapper_markdown!(source, destination, relative)
         elsif local_asset_file?(source)
           destination = root.join(relative)
           FileUtils.mkdir_p(destination.dirname)
@@ -141,6 +184,24 @@ module SeedSupport
           MARKDOWN
         end
       )
+    end
+
+    def write_diagram_wrapper_markdown!(source, destination, relative)
+      language = diagram_language_for(source)
+      title = relative.basename.sub_ext("").to_s
+      body = File.read(source)
+
+      destination.write(<<~MARKDOWN)
+        ---
+        id: #{seed_doc_id(relative)}
+        ---
+
+        # #{title}
+
+        ```#{language}
+        #{body}
+        ```
+      MARKDOWN
     end
 
     def split_front_matter(markdown)
@@ -240,6 +301,8 @@ module SeedSupport
       normalized_basename =
         if basename.match?(/\AREADME\.(md|markdown)\z/i)
           "index.md"
+        elsif diagram_file?(relative)
+          "#{relative.basename.sub_ext("")}.md"
         else
           basename
         end
