@@ -6,6 +6,7 @@ class Admin::DocumentPermissionsController < Admin::BaseController
   def index
     @document_permissions = DocumentPermission.joins(:document).includes(:document, :company, :user).order("documents.title")
     @document_permission = DocumentPermission.new(access_level: :view)
+    @permission_overview_rows = DocumentPermissionOverview.new.rows
   end
 
   def create
@@ -15,6 +16,7 @@ class Admin::DocumentPermissionsController < Admin::BaseController
       redirect_to admin_document_permissions_path, notice: "文書権限を登録しました。"
     else
       @document_permissions = DocumentPermission.joins(:document).includes(:document, :company, :user).order("documents.title")
+      @permission_overview_rows = DocumentPermissionOverview.new.rows
       render :index, status: :unprocessable_entity
     end
   end
