@@ -15,7 +15,9 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           lastVersion: 'current',
           editUrl: process.env.DOCUSAURUS_EDIT_URL,
-          remarkPlugins: [[remarkKrokiDiagrams, {}]],
+          remarkPlugins: [[remarkKrokiDiagrams, {
+            staticDir: process.env.DOCUSAURUS_STATIC_DIR,
+          }]],
         },
         blog: false,
         pages: false,
