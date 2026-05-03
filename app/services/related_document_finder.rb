@@ -22,14 +22,11 @@ class RelatedDocumentFinder
   def inferred_relations
     return [] unless current_version&.source_relative_path.present?
 
-    candidates = candidate_documents
-      .reject { _1.id == @document.id }
-      .select { _1.viewable_by?(@user) }
+    candidate_documents
       .map { |candidate| inferred_result_for(candidate) }
       .compact
       .uniq { _1.document.id }
-
-    candidates.first(@limit)
+      .first(@limit)
   end
 
   def grouped_results
@@ -46,10 +43,31 @@ class RelatedDocumentFinder
   end
 
   def candidate_documents
-    @document.project.documents
+    scope = @document.project.documents
+      .accessible_to(@user)
+      .joins(:latest_version)
       .includes(:latest_version)
+      .where.not(id: @document.id)
       .where.not(latest_version_id: nil)
+      .where(source_metadata_match_condition, source_metadata_match_values)
       .order(:title)
+
+    scope.limit(@limit * 3)
+  end
+
+  def source_metadata_match_condition
+    conditions = []
+    conditions << "document_versions.source_basename = :source_basename" if current_version.source_basename.present?
+    conditions << "document_versions.source_directory = :source_directory" if current_version.source_directory.present?
+
+    conditions.join(" OR ").presence || "1 = 0"
+  end
+
+  def source_metadata_match_values
+    {
+      source_basename: current_version.source_basename,
+      source_directory: current_version.source_directory
+    }
   end
 
   def inferred_result_for(candidate)
