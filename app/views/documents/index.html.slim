@@ -97,7 +97,6 @@ p.muted
   table
     thead
       tr
-        th 選択
         th タイトル
         th ヒット理由
         th タグ
@@ -114,8 +113,9 @@ p.muted
         - files = document.document_versions.flat_map(&:document_files)
         - match_labels = document_search_match_labels(document, @filters[:q])
         tr
-          td = check_box_tag "document_ids[]", document.id, false, id: "document_ids_#{document.id}", disabled: latest_version.blank?
-          td = link_to document.title, project_document_path(@project, document.slug)
+          td
+            = check_box_tag "document_ids[]", document.id, false, id: "document_ids_#{document.id}", disabled: latest_version.blank?
+            =< link_to document.title, project_document_path(@project, document.slug)
           td
             - if match_labels.any?
               - match_labels.each do |label|
