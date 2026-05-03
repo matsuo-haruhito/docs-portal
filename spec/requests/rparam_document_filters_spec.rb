@@ -28,7 +28,7 @@ RSpec.describe "Rparam document filters", type: :request do
     get project_documents_path(project, page: "-10")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Page 1 / 1")
+    expect(response.body).to include("1/1ページ")
     expect(response.body).to include("Rparam Document")
   end
 
