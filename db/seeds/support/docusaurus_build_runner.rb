@@ -1,5 +1,6 @@
 require "fileutils"
 require "open3"
+require_relative "docusaurus_runtime_checker"
 
 module SeedSupport
   class DocusaurusBuildRunner
@@ -13,6 +14,7 @@ module SeedSupport
     end
 
     def run!
+      DocusaurusRuntimeChecker.ensure_npm!
       run_build!
       copy_build!
     end
