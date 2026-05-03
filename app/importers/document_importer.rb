@@ -51,7 +51,7 @@ class DocumentImporter
         raise ArgumentError, "Document version already exists: #{document.slug} #{version_label}"
       end
 
-      version = document.document_versions.create!(
+      version = document.document_versions.build(
         version_label: version_label,
         status: payload.fetch("status"),
         source_commit_hash: @manifest.fetch("source_commit_hash"),
@@ -62,6 +62,8 @@ class DocumentImporter
         site_build_path: payload["site_build_path"],
         pdf_snapshot_path: payload["pdf_snapshot_path"]
       )
+      assign_source_path_metadata!(version, payload)
+      version.save!
 
       copy_site_build!(version)
 
@@ -79,6 +81,24 @@ class DocumentImporter
 
       document.update!(latest_version: version) if version.published?
     end
+  end
+
+  def assign_source_path_metadata!(version, payload)
+    source_path = source_path_for(payload)
+    return if source_path.blank?
+
+    version.assign_source_path_metadata!(
+      source_path: source_path,
+      snapshot_kind: payload["snapshot_kind"]
+    )
+  end
+
+  def source_path_for(payload)
+    payload["source_relative_path"].presence ||
+      payload["source_path"].presence ||
+      payload["markdown_entry_path"].presence ||
+      payload["pdf_snapshot_path"].presence ||
+      payload["site_build_path"].presence
   end
 
   def published_at_for(payload)

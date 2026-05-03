@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_29_000200) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_03_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -88,7 +88,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_29_000200) do
     t.datetime "published_at"
     t.bigint "published_by_user_id"
     t.string "site_build_path"
+    t.string "snapshot_kind"
+    t.string "source_basename"
     t.string "source_commit_hash", null: false
+    t.string "source_directory"
+    t.string "source_extension"
+    t.string "source_file_name"
+    t.string "source_relative_path"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.string "version_label", null: false
@@ -96,6 +102,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_29_000200) do
     t.index ["document_id"], name: "index_document_versions_on_document_id"
     t.index ["public_id"], name: "index_document_versions_on_public_id", unique: true
     t.index ["published_by_user_id"], name: "index_document_versions_on_published_by_user_id"
+    t.index ["snapshot_kind"], name: "index_document_versions_on_snapshot_kind"
+    t.index ["source_directory"], name: "index_document_versions_on_source_directory"
+    t.index ["source_relative_path"], name: "index_document_versions_on_source_relative_path"
   end
 
   create_table "documents", force: :cascade do |t|
