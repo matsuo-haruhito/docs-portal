@@ -1,4 +1,6 @@
 class DocumentsController < BaseController
+  before_action :apply_rparam, only: :index
+
   DOCUMENTS_PER_PAGE = 20
   DIAGRAM_EXTENSIONS = %w[puml plantuml d2 mmd mermaid].freeze
 
@@ -61,7 +63,7 @@ class DocumentsController < BaseController
   end
 
   def normalized_page
-    [@filters[:page].to_i, 1].max
+    params[:page].to_i
   end
 
   def apply_keyword_filter(scope)
