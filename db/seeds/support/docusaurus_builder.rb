@@ -2,6 +2,7 @@ require "digest"
 require "fileutils"
 require "tmpdir"
 require_relative "docusaurus_build_runner"
+require_relative "docusaurus_diagram_page"
 require_relative "docusaurus_markdown_normalizer"
 require_relative "docusaurus_route_map"
 
@@ -196,21 +197,14 @@ module SeedSupport
     end
 
     def write_diagram_wrapper_markdown!(source, destination, relative)
-      language = diagram_language_for(source)
-      title = relative.basename.sub_ext("").to_s
-      body = File.read(source)
-
-      destination.write(<<~MARKDOWN)
-        ---
-        id: #{seed_doc_id(relative)}
-        ---
-
-        # #{title}
-
-        ```#{language}
-        #{body}
-        ```
-      MARKDOWN
+      destination.write(
+        DocusaurusDiagramPage.new(
+          source:,
+          relative:,
+          language: diagram_language_for(source),
+          generated_id: seed_doc_id(relative)
+        ).markdown
+      )
     end
 
     def seed_doc_id(relative)
