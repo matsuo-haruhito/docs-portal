@@ -7,7 +7,8 @@ RSpec.describe DocumentsHelper, type: :helper do
     let(:document) { create(:document, project:, title: "操作説明", slug: "manual") }
 
     before do
-      helper.define_singleton_method(:current_user) { user }
+      current_user = user
+      helper.define_singleton_method(:current_user) { current_user }
     end
 
     it "links a document node directly to its rendered HTML page when available" do
