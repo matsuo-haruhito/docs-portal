@@ -25,6 +25,8 @@ class DocumentFile < ApplicationRecord
 
   validates :file_name, :content_type, :storage_key, presence: true
 
+  before_validation :normalize_search_text
+
   def to_param
     public_id
   end
@@ -51,7 +53,15 @@ class DocumentFile < ApplicationRecord
     document_version.published? && document_version.document.downloadable_by?(user)
   end
 
+  def assign_search_text_from_path!(path)
+    self.search_text = DocumentVersion.search_text_for(file_name, storage_key, path)
+  end
+
   private
+
+  def normalize_search_text
+    self.search_text = DocumentVersion.search_text_for(search_text)
+  end
 
   def detected_content_type
     EXTENSION_CONTENT_TYPES.fetch(File.extname(file_name).downcase, content_type)
