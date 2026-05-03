@@ -1,5 +1,7 @@
 module AuthHelpers
   def sign_in_as(user, password: "password123!")
+    delete session_path
+
     post session_path, params: {
       session: {
         email_address: user.email_address,
