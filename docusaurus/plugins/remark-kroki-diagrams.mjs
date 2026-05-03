@@ -90,19 +90,35 @@ async function replaceCodeBlockWithDiagram({
   const basename = krokiAssetBasename(diagramType, source);
   const relativeAssetPath = path.posix.join(outputDir, basename);
   const absoluteAssetPath = path.join(staticDir, ...relativeAssetPath.split('/'));
+  const renderUrl = `${endpoint.replace(/\/+$/, '')}/${diagramType}/svg`;
 
   await fs.mkdir(path.dirname(absoluteAssetPath), {recursive: true});
 
   try {
     await fs.access(absoluteAssetPath);
   } catch {
-    const response = await fetchImpl(`${endpoint.replace(/\/+$/, '')}/${diagramType}/svg`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-      },
-      body: source,
-    });
+    let response;
+
+    try {
+      response = await fetchImpl(renderUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+        },
+        body: source,
+      });
+    } catch (error) {
+      throw new Error(
+        [
+          `Kroki fetch failed for ${diagramType} in ${file?.path ?? 'unknown file'}.`,
+          `Endpoint: ${renderUrl}`,
+          'If you use the optional local Kroki compose file, make sure .env includes:',
+          '  COMPOSE_FILE=docker-compose.yml:docker-compose.kroki.yml',
+          '  KROKI_ENDPOINT=http://kroki:8000',
+          `Cause: ${error?.message ?? error}`,
+        ].join('\n')
+      );
+    }
 
     if (!response.ok) {
       const body = await response.text();
