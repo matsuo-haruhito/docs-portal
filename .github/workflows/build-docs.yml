@@ -54,6 +54,18 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm install
 
+      - name: Audit Ruby dependencies
+        run: bundle exec bundler-audit check --update
+
+      - name: Audit JavaScript dependencies
+        run: npm audit --audit-level=high
+
+      - name: Audit Docusaurus dependencies
+        working-directory: ./docusaurus
+        run: |
+          npm install
+          npm audit --audit-level=high
+
       - name: Prepare database
         run: bundle exec rails db:prepare
 
