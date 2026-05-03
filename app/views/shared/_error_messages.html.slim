@@ -1,0 +1,6 @@
+- if record.errors.any?
+  .error-messages
+    strong 入力内容を確認してください。
+    ul
+      - record.errors.full_messages.each do |message|
+        li = message
