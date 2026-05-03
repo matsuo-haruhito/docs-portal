@@ -1,8 +1,8 @@
 require "digest"
 require "fileutils"
-require "cgi"
 require "open3"
 require "tmpdir"
+require_relative "docusaurus_route_map"
 
 module SeedSupport
   module SeedDiagramFileExtnamePatch
@@ -362,22 +362,10 @@ module SeedSupport
     end
 
     def build_route_map
-      Dir.glob(@version.site_root_absolute_path.join("**/index.html").to_s).each_with_object({}) do |html_path, result|
-        relative_path = Pathname(html_path).relative_path_from(@version.site_root_absolute_path).to_s
-        route_path = relative_path.delete_suffix("/index.html")
-        route_path = @site_build_path if route_path.blank?
-
-        html = File.read(html_path)
-        doc_ids = html.scan(/docs-doc-id-([^"\s]+)/).flatten
-        next if doc_ids.empty?
-
-        doc_ids.each do |doc_id|
-          decoded_doc_id = CGI.unescapeHTML(doc_id)
-          result[decoded_doc_id] ||= route_path
-          generated_id = decoded_doc_id.split("/").last
-          result[generated_id] ||= route_path
-        end
-      end
+      DocusaurusRouteMap.new(
+        site_root_absolute_path: @version.site_root_absolute_path,
+        site_build_path: @site_build_path
+      ).build
     end
   end
 end
