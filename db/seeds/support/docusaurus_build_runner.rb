@@ -1,18 +1,21 @@
 require "fileutils"
 require "open3"
+require_relative "docusaurus_runtime_checker"
 
 module SeedSupport
   class DocusaurusBuildRunner
     BUILD_ROOT = Rails.root.join("docusaurus")
 
-    def initialize(source_dir:, version:, docs_src:, build_output_dir:)
+    def initialize(source_dir:, version:, docs_src:, build_output_dir:, static_dir: nil)
       @source_dir = source_dir
       @version = version
       @docs_src = docs_src
       @build_output_dir = build_output_dir
+      @static_dir = static_dir
     end
 
     def run!
+      DocusaurusRuntimeChecker.ensure_npm!
       run_build!
       copy_build!
     end
@@ -23,6 +26,7 @@ module SeedSupport
       env = {
         "DOCUSAURUS_DOCS_PATH" => @docs_src.to_s
       }
+      env["DOCUSAURUS_STATIC_DIR"] = @static_dir.to_s if @static_dir
 
       stdout, stderr, status = Open3.capture3(
         env,
