@@ -1,6 +1,8 @@
 - page_title "管理ダッシュボード"
 
-h1 管理ダッシュボード
+h1 管理画面
+p.muted 内部ユーザーのみが各種マスタを管理できます。
+
 = render "admin/nav"
 
 section.card
@@ -37,5 +39,21 @@ section.card
             td = file.file_name
             td
               code = file.storage_key
+
+.form-grid
+  .card
+    h2 基本マスタ
+    ul
+      - if company_master_admin?
+        li = link_to "会社マスタ", admin_companies_path
+      li = link_to "ユーザーマスタ", admin_users_path
+      li = link_to "案件マスタ", admin_projects_path
+
+  .card
+    h2 関連設定
+    ul
+      li = link_to "案件所属", admin_project_memberships_path
+      li = link_to "文書マスタ", admin_documents_path
+      li = link_to "文書公開権限", admin_document_permissions_path
 
 p = link_to "案件一覧へ戻る", projects_path
