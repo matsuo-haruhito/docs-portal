@@ -1,4 +1,6 @@
 class DocumentsController < BaseController
+  DOCUMENTS_PER_PAGE = 20
+
   def index
     @project = Project.find_by!(code: params[:project_code])
     require_project_access!(@project)
@@ -8,9 +10,18 @@ class DocumentsController < BaseController
       .merge(@project.documents.accessible_to(current_user))
       .ordered
       .distinct
-    @documents = filtered_documents
+
+    documents_scope = filtered_documents.order(:title)
+    @documents_count = documents_scope.except(:order).count(:id)
+    @current_page = normalized_page
+    @per_page = DOCUMENTS_PER_PAGE
+    @total_pages = [(@documents_count.to_f / @per_page).ceil, 1].max
+    @current_page = @total_pages if @current_page > @total_pages
+
+    @documents = documents_scope
       .includes(:latest_version, :document_tags, :document_keywords, document_versions: :document_files)
-      .order(:title)
+      .limit(@per_page)
+      .offset((@current_page - 1) * @per_page)
     @tree_projects = Project.accessible_to(current_user).includes(documents: :latest_version).order(:code)
   end
 
@@ -39,7 +50,11 @@ class DocumentsController < BaseController
   end
 
   def document_filter_params
-    params.permit(:q, :tag, :category, :document_kind, :visibility_policy, :has_html, :has_files, :has_pdf)
+    params.permit(:q, :tag, :category, :document_kind, :visibility_policy, :has_html, :has_files, :has_pdf, :page)
+  end
+
+  def normalized_page
+    [@filters[:page].to_i, 1].max
   end
 
   def apply_keyword_filter(scope)
