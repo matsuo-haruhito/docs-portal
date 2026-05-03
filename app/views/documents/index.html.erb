@@ -79,7 +79,7 @@
         <td><%= latest_version&.version_label || "-" %></td>
         <td><%= latest_version&.site_build_path.present? ? "あり" : "なし" %></td>
         <td><%= files.any? ? "#{files.size}件" : "なし" %></td>
-        <td><%= l(document.updated_at, format: :short) %></td>
+        <td><%= document.updated_at.strftime("%Y-%m-%d %H:%M") %></td>
       </tr>
     <% end %>
   </tbody>
