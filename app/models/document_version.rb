@@ -12,6 +12,8 @@ class DocumentVersion < ApplicationRecord
 
   validates :version_label, :source_commit_hash, presence: true
 
+  before_validation :normalize_search_body_text
+
   SOURCE_PATH_FIELDS = %i[
     source_relative_path
     source_directory
@@ -85,6 +87,10 @@ class DocumentVersion < ApplicationRecord
     assign_attributes(metadata.merge(snapshot_kind: normalize_snapshot_kind!(snapshot_kind)))
   end
 
+  def assign_search_body_text_from_markdown!(markdown:, source_path: nil)
+    self.search_body_text = self.class.search_text_for(markdown, source_path)
+  end
+
   def self.source_path_metadata_for!(source_path)
     normalized = normalize_source_relative_path!(source_path)
     path = Pathname.new(normalized)
@@ -124,7 +130,15 @@ class DocumentVersion < ApplicationRecord
     value.presence || "index"
   end
 
+  def self.search_text_for(*values)
+    values.flatten.compact.join("\n").unicode_normalize(:nfkc).squish.presence
+  end
+
   private
+
+  def normalize_search_body_text
+    self.search_body_text = self.class.search_text_for(search_body_text)
+  end
 
   def normalize_snapshot_kind!(value)
     return if value.blank?
