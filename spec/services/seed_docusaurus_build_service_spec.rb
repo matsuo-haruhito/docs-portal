@@ -1,6 +1,7 @@
 require "rails_helper"
 require "fileutils"
 require "securerandom"
+require Rails.root.join("db/seeds/support/docusaurus_builder")
 
 RSpec.describe SeedSupport::DocusaurusBuilder do
   let(:project) { create(:project, code: "PJ#{SecureRandom.hex(4)}", name: "Project #{SecureRandom.hex(2)}") }
