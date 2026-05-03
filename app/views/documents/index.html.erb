@@ -15,6 +15,11 @@
     </div>
 
     <div>
+      <%= form.label :tag, "タグ" %><br>
+      <%= form.select :tag, options_for_select([["すべて", ""]] + @available_tags.map { [_1.name, _1.normalized_name] }, @filters[:tag]) %>
+    </div>
+
+    <div>
       <%= form.label :category, "カテゴリ" %><br>
       <%= form.select :category, options_for_select([["すべて", ""]] + Document.categories.keys.map { [_1, _1] }, @filters[:category]) %>
     </div>
@@ -58,6 +63,7 @@
   <thead>
     <tr>
       <th>タイトル</th>
+      <th>タグ</th>
       <th>カテゴリ</th>
       <th>種別</th>
       <th>公開範囲</th>
@@ -73,6 +79,15 @@
       <% files = document.document_versions.flat_map(&:document_files) %>
       <tr>
         <td><%= link_to document.title, project_document_path(@project, document.slug) %></td>
+        <td>
+          <% if document.document_tags.any? %>
+            <% document.document_tags.sort_by(&:normalized_name).each do |tag| %>
+              <%= link_to tag.name, project_documents_path(@project, tag: tag.normalized_name), class: "badge" %>
+            <% end %>
+          <% else %>
+            <span class="muted">なし</span>
+          <% end %>
+        </td>
         <td><span class="badge"><%= document.category %></span></td>
         <td><%= document.document_kind %></td>
         <td><%= document.visibility_policy %></td>
