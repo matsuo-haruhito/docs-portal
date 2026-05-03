@@ -4,7 +4,13 @@ class DocumentSitesController < BaseController
 
   def show
     site_path = params[:site_path].presence || @version.site_build_path
-    renderer = DocusaurusSiteRenderer.new(version: @version, view_context: view_context)
+    renderer = DocusaurusSiteRenderer.new(
+      version: @version,
+      view_context: view_context,
+      current_document_version: @version,
+      project: @version.document.project,
+      user: current_user
+    )
     file_path = renderer.file_response_path(site_path)
 
     if html_file?(file_path)
@@ -25,5 +31,4 @@ class DocumentSitesController < BaseController
   def html_file?(file_path)
     file_path.extname == ".html"
   end
-
 end
