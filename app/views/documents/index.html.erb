@@ -5,6 +5,55 @@
 <% page_title @project.name, "文書一覧" %>
 <h1><%= @project.name %> / 文書一覧</h1>
 
+<section class="card">
+  <h2>検索・絞り込み</h2>
+
+  <%= form_with url: project_documents_path(@project), method: :get, local: true do |form| %>
+    <div>
+      <%= form.label :q, "キーワード" %><br>
+      <%= form.search_field :q, value: @filters[:q], placeholder: "タイトル・slug・版・添付ファイル名" %>
+    </div>
+
+    <div>
+      <%= form.label :category, "カテゴリ" %><br>
+      <%= form.select :category, options_for_select([["すべて", ""]] + Document.categories.keys.map { [_1, _1] }, @filters[:category]) %>
+    </div>
+
+    <div>
+      <%= form.label :document_kind, "種別" %><br>
+      <%= form.select :document_kind, options_for_select([["すべて", ""]] + Document.document_kinds.keys.map { [_1, _1] }, @filters[:document_kind]) %>
+    </div>
+
+    <div>
+      <%= form.label :visibility_policy, "公開範囲" %><br>
+      <%= form.select :visibility_policy, options_for_select([["すべて", ""]] + Document.visibility_policies.keys.map { [_1, _1] }, @filters[:visibility_policy]) %>
+    </div>
+
+    <fieldset>
+      <legend>実用フィルタ</legend>
+      <label>
+        <%= check_box_tag :has_html, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_html]) %>
+        HTML生成済み
+      </label>
+      <label>
+        <%= check_box_tag :has_files, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_files]) %>
+        添付あり
+      </label>
+      <label>
+        <%= check_box_tag :has_pdf, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_pdf]) %>
+        PDFあり
+      </label>
+    </fieldset>
+
+    <p>
+      <%= form.submit "検索" %>
+      <%= link_to "条件をクリア", project_documents_path(@project) %>
+    </p>
+  <% end %>
+</section>
+
+<p class="muted">検索結果: <%= @documents.size %>件</p>
+
 <%= table_tag do %>
   <thead>
     <tr>
@@ -12,15 +61,25 @@
       <th>カテゴリ</th>
       <th>種別</th>
       <th>公開範囲</th>
+      <th>最新版</th>
+      <th>HTML</th>
+      <th>添付</th>
+      <th>最終更新</th>
     </tr>
   </thead>
   <tbody>
     <% @documents.each do |document| %>
+      <% latest_version = document.latest_version %>
+      <% files = document.document_versions.flat_map(&:document_files) %>
       <tr>
         <td><%= link_to document.title, project_document_path(@project, document.slug) %></td>
         <td><span class="badge"><%= document.category %></span></td>
         <td><%= document.document_kind %></td>
         <td><%= document.visibility_policy %></td>
+        <td><%= latest_version&.version_label || "-" %></td>
+        <td><%= latest_version&.site_build_path.present? ? "あり" : "なし" %></td>
+        <td><%= files.any? ? "#{files.size}件" : "なし" %></td>
+        <td><%= document.updated_at.strftime("%Y-%m-%d %H:%M") %></td>
       </tr>
     <% end %>
   </tbody>

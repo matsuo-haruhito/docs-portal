@@ -29,7 +29,9 @@ RSpec.describe "Project access", type: :request do
     expect(response).to have_http_status(:forbidden)
   end
 
-  it "allows external users to access documents index for member projects" do
+  it "allows external users to access permitted documents index for member projects" do
+    create(:document_permission, document: member_document, company: external_user.company, access_level: :view)
+
     sign_in_as(external_user)
 
     get project_documents_path(member_project)

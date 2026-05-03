@@ -4,7 +4,7 @@ module DocumentsHelper
       roots: projects,
       children_resolver: lambda do |node|
         if node.is_a?(Project)
-          Array(node.documents).sort_by(&:title)
+          node.documents.accessible_to(current_user).order(:title)
         else
           []
         end
