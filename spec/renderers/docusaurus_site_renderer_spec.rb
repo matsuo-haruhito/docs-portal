@@ -16,12 +16,19 @@ RSpec.describe DocusaurusSiteRenderer do
     )
   end
   let(:view_context) do
-    double(
-      "view_context",
-      site_document_version_path: ->(version_for_url, site_path:) { "/document_versions/#{version_for_url.public_id}/site/#{site_path}" },
-      project_path: "/projects/#{project.code}",
-      project_document_path: "/projects/#{project.code}/documents/#{document.slug}"
-    )
+    Class.new do
+      def site_document_version_path(version_for_url, site_path:)
+        "/document_versions/#{version_for_url.public_id}/site/#{site_path}"
+      end
+
+      def project_path(project)
+        "/projects/#{project.code}"
+      end
+
+      def project_document_path(project, slug)
+        "/projects/#{project.code}/documents/#{slug}"
+      end
+    end.new
   end
 
   def write_site_file(relative_path, content)
