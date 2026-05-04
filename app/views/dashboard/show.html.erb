@@ -1,0 +1,72 @@
+<% page_title "ダッシュボード" %>
+
+<h1>ダッシュボード</h1>
+<p class="muted">自分が利用できる文書とショートカットをまとめて確認できます。</p>
+
+<section class="card">
+  <h2>案件</h2>
+  <% if @projects.any? %>
+    <ul>
+      <% @projects.each do |project| %>
+        <li><%= link_to project.name, project_path(project) %></li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="muted">閲覧可能な案件はありません。</p>
+  <% end %>
+</section>
+
+<section class="card">
+  <h2>お気に入り</h2>
+  <% if @favorite_bookmarks.any? %>
+    <ul>
+      <% @favorite_bookmarks.each do |bookmark| %>
+        <li><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %></li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="muted">お気に入りはありません。</p>
+  <% end %>
+</section>
+
+<section class="card">
+  <h2>後で読む</h2>
+  <% if @read_later_bookmarks.any? %>
+    <ul>
+      <% @read_later_bookmarks.each do |bookmark| %>
+        <li><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %></li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="muted">後で読む文書はありません。</p>
+  <% end %>
+</section>
+
+<section class="card">
+  <h2>最近見た文書</h2>
+  <% if @recent_documents.any? %>
+    <ul>
+      <% @recent_documents.each do |document| %>
+        <li><%= link_to document.title, project_document_path(document.project, document.slug) %></li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="muted">最近見た文書はありません。</p>
+  <% end %>
+</section>
+
+<section class="card">
+  <h2>最近更新された文書</h2>
+  <% if @recently_updated_documents.any? %>
+    <ul>
+      <% @recently_updated_documents.each do |document| %>
+        <li><%= link_to document.title, project_document_path(document.project, document.slug) %></li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="muted">最近更新された文書はありません。</p>
+  <% end %>
+</section>
+
+<p><%= link_to "文書ショートカット一覧", document_bookmarks_path %></p>
+<p><%= link_to "案件一覧へ", projects_path %></p>
