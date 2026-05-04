@@ -69,6 +69,16 @@ RSpec.describe "Document files", type: :request do
     expect(log.target_name).to eq("manual.pdf")
   end
 
+  it "does not fail the download when access log creation fails" do
+    sign_in_as(user)
+    allow(AccessLog).to receive(:create!).and_raise(ActiveRecord::RecordInvalid)
+
+    get document_file_path(file)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("application/pdf")
+  end
+
   it "returns not found when the stored file is missing" do
     sign_in_as(user)
     FileUtils.rm_f(file.absolute_path)
