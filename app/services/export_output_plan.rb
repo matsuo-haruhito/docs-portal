@@ -58,7 +58,7 @@ class ExportOutputPlan
   end
 
   def safe_file_name(file_name)
-    file_name.to_s.tr("\\/", "_").presence || "document-file"
+    file_name.to_s.gsub(/[\\\/]/, "_").presence || "document-file"
   end
 
   def watermark_text_for(document)
