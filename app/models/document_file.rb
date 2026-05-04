@@ -24,6 +24,8 @@ class DocumentFile < ApplicationRecord
   belongs_to :document_version
 
   validates :file_name, :content_type, :storage_key, presence: true
+  validates :file_size, numericality: { greater_than_or_equal_to: 0, only_integer: true }
+  validates :sort_order, numericality: { greater_than_or_equal_to: 0, only_integer: true }
 
   before_validation :normalize_search_text
 
