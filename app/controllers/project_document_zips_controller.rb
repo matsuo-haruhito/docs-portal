@@ -34,6 +34,7 @@ class ProjectDocumentZipsController < BaseController
       .accessible_to(current_user)
       .where(id: ids)
       .includes(:latest_version)
+      .select { _1.downloadable_by?(current_user) }
       .filter_map(&:latest_version)
       .select { _1.viewable_by?(current_user) }
   end
