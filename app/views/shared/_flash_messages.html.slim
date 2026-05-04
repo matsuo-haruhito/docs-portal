@@ -1,0 +1,3 @@
+- flash.each do |type, message|
+  .notice class=(type == "alert" ? "alert" : "ok")
+    = message
