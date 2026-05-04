@@ -23,6 +23,13 @@ class DocumentFile < ApplicationRecord
 
   belongs_to :document_version
 
+  enum :scan_status, {
+    scan_pending: 0,
+    scan_clean: 1,
+    scan_infected: 2,
+    scan_failed: 3
+  }
+
   validates :file_name, :content_type, :storage_key, presence: true
   validates :file_size, numericality: { greater_than_or_equal_to: 0, only_integer: true }
   validates :sort_order, numericality: { greater_than_or_equal_to: 0, only_integer: true }
@@ -65,11 +72,21 @@ class DocumentFile < ApplicationRecord
     INLINE_CONTENT_TYPE_PREFIXES.any? { effective_content_type.start_with?(_1) }
   end
 
+  def deliverable_after_scan?(user)
+    return true if user&.internal?
+
+    scan_clean?
+  end
+
+  def blocked_by_scan?
+    scan_pending? || scan_infected? || scan_failed?
+  end
+
   def downloadable_by?(user)
     return false unless user&.active?
     return true if user.internal?
 
-    document_version.published? && document_version.document.downloadable_by?(user)
+    scan_clean? && document_version.published? && document_version.document.downloadable_by?(user)
   end
 
   def assign_search_text_from_path!(path)
