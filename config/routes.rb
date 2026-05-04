@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   root "projects#index"
 
+  get "dashboard", to: "dashboard#show", as: :dashboard
   resource :session, only: %i[new create destroy]
   resources :document_bookmarks, only: %i[index create destroy], param: :public_id
 
