@@ -7,6 +7,7 @@ class DocumentVersion < ApplicationRecord
   belongs_to :published_by_user, class_name: "User", optional: true
 
   has_many :document_files, dependent: :destroy
+  has_many :document_review_comments, dependent: :nullify
 
   enum :status, { draft: 0, published: 1, archived: 2 }
 
