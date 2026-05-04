@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_03_161000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_04_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -56,6 +56,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_161000) do
     t.string "file_name", null: false
     t.bigint "file_size", default: 0, null: false
     t.string "public_id", null: false
+    t.text "scan_error_message"
+    t.integer "scan_status", default: 0, null: false
+    t.datetime "scanned_at"
     t.text "search_text"
     t.integer "sort_order", default: 0, null: false
     t.string "storage_key", null: false
@@ -63,6 +66,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_161000) do
     t.index ["document_version_id"], name: "index_document_files_on_document_version_id"
     t.index ["file_name"], name: "index_document_files_on_file_name_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["public_id"], name: "index_document_files_on_public_id", unique: true
+    t.index ["scan_status"], name: "index_document_files_on_scan_status"
     t.index ["search_text"], name: "index_document_files_on_search_text_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["storage_key"], name: "index_document_files_on_storage_key", unique: true
   end
