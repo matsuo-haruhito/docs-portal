@@ -9,6 +9,8 @@ class User < ApplicationRecord
 
   has_many :project_memberships, dependent: :destroy
   has_many :projects, through: :project_memberships
+  has_many :document_bookmarks, dependent: :destroy
+  has_many :bookmarked_documents, through: :document_bookmarks, source: :document
 
   enum :user_type, { internal: 0, external: 1, company_master_admin: 2 }
 
