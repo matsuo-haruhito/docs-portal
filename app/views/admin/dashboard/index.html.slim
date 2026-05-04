@@ -6,6 +6,44 @@ p.muted 内部ユーザーのみが各種マスタを管理できます。
 = render "admin/nav"
 
 section.card
+  h2 アプリ設定診断
+
+  p
+    | OK: 
+    strong = @configuration_diagnostic.ok_count
+    |  / 警告: 
+    strong = @configuration_diagnostic.warning_count
+    |  / エラー: 
+    strong = @configuration_diagnostic.error_count
+
+  - if @configuration_diagnostic.healthy?
+    p.muted 必須設定の致命的な不足は検出されていません。
+  - else
+    p.muted 必須設定に不足または不正な値があります。.env.example と本番設定を確認してください。
+
+  table
+    thead
+      tr
+        th 状態
+        th 項目
+        th 内容
+        th 補足
+    tbody
+      - @configuration_diagnostic.checks.each do |check|
+        tr
+          td = check.status.to_s.upcase
+          td = check.key
+          td
+            strong = check.label
+            br
+            span.muted = check.message
+          td
+            - if check.detail.present?
+              code = check.detail
+            - else
+              span.muted -
+
+section.card
   h2 ドキュメントファイル健全性
 
   p
