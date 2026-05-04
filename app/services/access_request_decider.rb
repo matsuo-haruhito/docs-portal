@@ -1,4 +1,16 @@
 class AccessRequestDecider
+  PROJECT_ROLE_BY_ACCESS_LEVEL = {
+    "view" => "viewer",
+    "download" => "viewer",
+    "manage" => "editor"
+  }.freeze
+
+  DOCUMENT_ACCESS_LEVEL_BY_REQUEST = {
+    "view" => "view",
+    "download" => "download",
+    "manage" => "download"
+  }.freeze
+
   def initialize(access_request:, approver:)
     @access_request = access_request
     @approver = approver
@@ -47,10 +59,12 @@ class AccessRequestDecider
   end
 
   def grant_project_access!
-    ProjectMembership.find_or_create_by!(
+    membership = ProjectMembership.find_or_initialize_by(
       project: access_request.project,
       user: access_request.requester
     )
+    membership.role = max_project_role(membership.role, PROJECT_ROLE_BY_ACCESS_LEVEL.fetch(access_request.requested_access_level))
+    membership.save!
   end
 
   def grant_document_access!
@@ -62,11 +76,19 @@ class AccessRequestDecider
     ProjectMembership.find_or_create_by!(project: document.project, user: access_request.requester)
 
     permission = DocumentPermission.find_or_initialize_by(document:, company:)
-    permission.access_level = max_access_level(permission.access_level, access_request.requested_access_level)
+    permission.access_level = max_document_access_level(
+      permission.access_level,
+      DOCUMENT_ACCESS_LEVEL_BY_REQUEST.fetch(access_request.requested_access_level)
+    )
     permission.save!
   end
 
-  def max_access_level(current, requested)
+  def max_project_role(current, requested)
+    values = ProjectMembership.roles
+    values.key([values.fetch(current), values.fetch(requested)].max)
+  end
+
+  def max_document_access_level(current, requested)
     values = DocumentPermission.access_levels
     values.key([values.fetch(current), values.fetch(requested)].max)
   end
