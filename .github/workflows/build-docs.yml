@@ -27,6 +27,26 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Detect root JavaScript dependency changes
+        id: root-js-changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+            changed_files=$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD)
+          else
+            changed_files=$(git diff --name-only HEAD^ HEAD)
+          fi
+
+          if echo "$changed_files" | grep -Eq '^(package.json|package-lock.json|app/javascript/|config/vite|vite.config\.|postcss.config\.|tailwind.config\.)'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Create .env from .env.example
         run: |
@@ -42,18 +62,29 @@ jobs:
         with:
           bundler-cache: false
 
+      - name: Cache Ruby dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor/bundle
+          key: ${{ runner.os }}-ruby-${{ hashFiles('Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-ruby-
+
       - name: Install Ruby dependencies
         run: |
+          bundle config set path vendor/bundle
           bundle lock --add-platform x86_64-linux
           bundle install --jobs 4 --retry 3
 
       - uses: actions/setup-node@v6
+        if: steps.root-js-changes.outputs.changed == 'true'
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: package-lock.json
 
       - name: Install JavaScript dependencies
+        if: steps.root-js-changes.outputs.changed == 'true'
         run: npm ci
 
       - name: Prepare database
@@ -95,6 +126,7 @@ jobs:
         run: bundle exec bundler-audit check --update
 
       - name: Audit JavaScript dependencies
+        if: steps.root-js-changes.outputs.changed == 'true'
         run: npm audit --audit-level=high
 
       - name: Install Docusaurus dependencies
