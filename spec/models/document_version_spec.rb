@@ -111,13 +111,11 @@ RSpec.describe DocumentVersion, type: :model do
       expect(version.publication_window_state(at: now)).to eq(:expired)
     end
 
-    it "blocks external users outside the publication window" do
-      version.update!(published_from: now + 1.hour)
+    it "blocks external users outside the current publication window" do
+      version.update!(published_from: Time.current + 1.day)
 
-      travel_to(now) do
-        expect(version.viewable_by?(external_user)).to be(false)
-        expect(version.viewable_by?(internal_user)).to be(true)
-      end
+      expect(version.viewable_by?(external_user)).to be(false)
+      expect(version.viewable_by?(internal_user)).to be(true)
     end
 
     it "validates publication window order" do
