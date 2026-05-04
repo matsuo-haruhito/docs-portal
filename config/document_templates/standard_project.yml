@@ -1,0 +1,75 @@
+name: standard_project
+description: Standard project documentation structure for requirements, design, testing, operation, and delivery.
+documents:
+  - source_path: "01_要件定義/README.md"
+    title: "要件定義 README"
+    category: spec
+    document_kind: markdown
+    visibility_policy: internal_only
+    body: |
+      # 要件定義
+
+      このフォルダには要件定義に関する文書を配置します。
+  - source_path: "01_要件定義/業務フロー.md"
+    title: "業務フロー"
+    category: spec
+    document_kind: markdown
+    visibility_policy: internal_only
+    body: |
+      # 業務フロー
+
+      業務の流れを整理します。
+  - source_path: "02_基本設計/README.md"
+    title: "基本設計 README"
+    category: spec
+    document_kind: markdown
+    visibility_policy: internal_only
+    body: |
+      # 基本設計
+
+      このフォルダには基本設計に関する文書を配置します。
+  - source_path: "02_基本設計/機能一覧.md"
+    title: "機能一覧"
+    category: spec
+    document_kind: markdown
+    visibility_policy: internal_only
+    body: |
+      # 機能一覧
+
+      機能の一覧と概要を整理します。
+  - source_path: "03_詳細設計/README.md"
+    title: "詳細設計 README"
+    category: spec
+    document_kind: markdown
+    visibility_policy: internal_only
+    body: |
+      # 詳細設計
+
+      このフォルダには詳細設計に関する文書を配置します。
+  - source_path: "04_テスト/README.md"
+    title: "テスト README"
+    category: other
+    document_kind: markdown
+    visibility_policy: internal_only
+    body: |
+      # テスト
+
+      このフォルダにはテスト計画・観点・結果を配置します。
+  - source_path: "05_運用/README.md"
+    title: "運用 README"
+    category: manual
+    document_kind: markdown
+    visibility_policy: internal_only
+    body: |
+      # 運用
+
+      このフォルダには運用手順や保守メモを配置します。
+  - source_path: "99_提出済/README.md"
+    title: "提出済 README"
+    category: other
+    document_kind: markdown
+    visibility_policy: restricted_external
+    body: |
+      # 提出済
+
+      このフォルダには顧客へ提出済みの文書を配置します。
