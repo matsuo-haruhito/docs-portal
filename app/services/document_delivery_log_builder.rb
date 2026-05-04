@@ -22,7 +22,7 @@ class DocumentDeliveryLogBuilder
   attr_reader :sender, :project, :document, :attributes
 
   def validate_sender!
-    raise ActiveRecord::RecordNotFound, "Project not found" unless project.accessible_to?(sender)
+    raise ActiveRecord::RecordNotFound, "Project not found" unless project.viewable_by?(sender)
   end
 
   def validate_document!
