@@ -28,4 +28,14 @@ RSpec.describe DocumentRelation, type: :model do
 
     expect(duplicate).not_to be_valid
   end
+
+  it "allows the same pair with a different relation type" do
+    source = create(:document)
+    target = create(:document, project: source.project)
+    create(:document_relation, source_document: source, target_document: target, relation_type: :related)
+
+    relation = build(:document_relation, source_document: source, target_document: target, relation_type: :appendix)
+
+    expect(relation).to be_valid
+  end
 end
