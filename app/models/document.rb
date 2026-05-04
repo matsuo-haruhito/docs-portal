@@ -19,6 +19,8 @@ class Document < ApplicationRecord
   has_many :document_review_comments, dependent: :destroy
   has_many :document_set_items, dependent: :destroy
   has_many :document_sets, through: :document_set_items
+  has_many :document_catalog_items, dependent: :destroy
+  has_many :document_catalogs, through: :document_catalog_items
   has_many :source_document_relations,
     class_name: "DocumentRelation",
     foreign_key: :source_document_id,
