@@ -12,6 +12,8 @@ class ContentDispositionFilename
     normalized = sanitized_file_name
       .unicode_normalize(:nfkd)
       .encode("US-ASCII", invalid: :replace, undef: :replace, replace: "")
+      .to_s
+      .force_encoding(Encoding::UTF_8)
       .presence
 
     safe_ascii_name(normalized || fallback_name)
@@ -31,13 +33,13 @@ class ContentDispositionFilename
 
   def sanitized_file_name
     @sanitized_file_name ||= begin
-      value = file_name.tr("\\/", "_").delete("\0").strip
+      value = file_name.gsub(/[\\\/]/, "_").delete("\0").strip
       value.presence || fallback_name
     end
   end
 
   def safe_ascii_name(value)
-    value.tr("\\/", "_").delete("\0").strip.presence || fallback_name
+    value.to_s.gsub(/[\\\/]/, "_").delete("\0").strip.presence || fallback_name
   end
 
   def fallback_name
