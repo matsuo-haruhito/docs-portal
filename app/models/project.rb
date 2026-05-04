@@ -13,6 +13,8 @@ class Project < ApplicationRecord
   validates :code, :name, presence: true
   validates :code, uniqueness: true
 
+  after_commit :broadcast_document_tree_refresh_later
+
   def to_param
     code
   end
