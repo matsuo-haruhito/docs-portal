@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-05-05",
+  "task": {
+    "name": "open_issues_ops_and_storage_runbooks",
+    "type": "feature",
+    "ticket": "remote open issues second pass"
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work/self/docs-portal-ops2",
+    "customer": null,
+    "repo": "matsuo-haruhito/docs-portal",
+    "editable_paths": [
+      "docs/ai/prompt-logs/2026-05-05/2026-05-05_open_issues_ops_and_storage_runbooks.json",
+      "docs/"
+    ],
+    "read_only_paths": [
+      "../../AGENTS.md",
+      ".git/"
+    ]
+  },
+  "instruction_summary": "Handle another pass of remote open issues that can be completed without additional design discussion, focusing on operational and storage runbooks, using CI only for validation and closing issues only after CI success.",
+  "actual_work": "Added docs for production/infrastructure assumptions, monitoring and alerting design, and file delivery/storage operations policy; updated docs/README.md to link them; prepared this branch for PR-based CI validation before closing issues #148, #159, and #142.",
+  "changed_files": [
+    "docs/README.md",
+    "docs/ai/prompt-logs/2026-05-05/2026-05-05_open_issues_ops_and_storage_runbooks.json",
+    "docs/ファイル配信・storage運用方針.md",
+    "docs/本番運用・インフラ前提.md",
+    "docs/監視・アラート設計.md"
+  ],
+  "commands": [
+    "git worktree add /mnt/c/work/self/docs-portal-ops2 main",
+    "git -C /mnt/c/work/self/docs-portal-ops2 switch -c codex/ops-storage-observability-runbooks"
+  ],
+  "tests": [
+    {
+      "command": "CI only",
+      "result": "pending",
+      "notes": "Per instruction, local tests were not run. Validation will rely on GitHub Actions for the PR."
+    }
+  ],
+  "usage": {
+    "estimated_input_tokens": null,
+    "estimated_output_tokens": null,
+    "estimated_total_tokens": null,
+    "measurement_source": "unavailable",
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md"
+    ]
+  },
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md"
+    ],
+    "token_notes": "Exact token counts were unavailable from the environment.",
+    "token_waste_notes": [],
+    "wasted_context": [],
+    "unnecessary_exploration": []
+  },
+  "quality_notes": [],
+  "risks": [],
+  "remaining_concerns": [],
+  "improvement_candidates": {
+    "workflow": [],
+    "issue_triage": []
+  },
+  "signals": []
+}
