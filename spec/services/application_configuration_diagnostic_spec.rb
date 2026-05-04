@@ -85,7 +85,8 @@ RSpec.describe ApplicationConfigurationDiagnostic do
 
     result = described_class.new(env:, root:, rails_env: FakeEnv.new("development")).call
 
-    expect(result.checks.find { _1.key == "ACTIVE_STORAGE_SERVICE" }).to be_error
+    check = result.checks.find { _1.key == "ACTIVE_STORAGE_SERVICE" && _1.label.include?("not defined") }
+    expect(check).to be_error
   end
 
   it "requires a Kroki endpoint when the optional Kroki compose file is enabled" do
