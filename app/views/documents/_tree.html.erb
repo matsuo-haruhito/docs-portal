@@ -2,17 +2,9 @@
 <p class="muted">案件と文書の階層を表示します。</p>
 
 <% render_state = document_tree_render_state(projects: projects) %>
-<% @tree = render_state.tree %>
-<% @tree_ui = render_state.ui_config %>
 
 <table class="tree-view-table">
   <tbody>
-    <% render_state.root_items.each do |item| %>
-      <%= render "tree_view/tree_row",
-        item: item,
-        tree: render_state.tree,
-        row_partial: render_state.row_partial,
-        collapsed: false %>
-    <% end %>
+    <%= tree_view_rows(render_state) %>
   </tbody>
 </table>
