@@ -62,13 +62,6 @@ jobs:
       - name: Audit JavaScript dependencies
         run: npm audit --audit-level=high
 
-      - name: Audit Docusaurus dependencies
-        continue-on-error: true
-        working-directory: ./docusaurus
-        run: |
-          npm ci --legacy-peer-deps
-          npm audit --audit-level=high
-
       - name: Prepare database
         run: bundle exec rails db:prepare
 
@@ -95,7 +88,7 @@ jobs:
 
       - name: Install Docusaurus dependencies
         working-directory: ./docusaurus
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
       - name: Build Docusaurus site
         working-directory: ./docusaurus
