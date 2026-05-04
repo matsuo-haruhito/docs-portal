@@ -11,7 +11,9 @@ Rails.application.routes.draw do
 
     resources :companies, except: %i[show new]
     resources :users, except: %i[show new]
-    resources :projects, except: %i[show new]
+    resources :projects, except: %i[show new] do
+      get "permission_preview", to: "project_permission_previews#show", on: :member
+    end
     resources :project_memberships, except: %i[show new]
     resources :documents, except: %i[show new]
     resources :document_permissions, except: %i[show new]
