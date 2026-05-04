@@ -1,0 +1,51 @@
+<% page_title "文書ショートカット" %>
+
+<h1>文書ショートカット</h1>
+<p class="muted">お気に入り、後で読む、最近見た文書を最低限の一覧で表示します。</p>
+
+<section class="card">
+  <h2>お気に入り</h2>
+  <% if @favorite_bookmarks.any? %>
+    <ul>
+      <% @favorite_bookmarks.each do |bookmark| %>
+        <li>
+          <%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %>
+          <%= button_to "解除", document_bookmark_path(bookmark), method: :delete %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="muted">お気に入りはまだありません。</p>
+  <% end %>
+</section>
+
+<section class="card">
+  <h2>後で読む</h2>
+  <% if @read_later_bookmarks.any? %>
+    <ul>
+      <% @read_later_bookmarks.each do |bookmark| %>
+        <li>
+          <%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %>
+          <%= button_to "解除", document_bookmark_path(bookmark), method: :delete %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="muted">後で読む文書はまだありません。</p>
+  <% end %>
+</section>
+
+<section class="card">
+  <h2>最近見た文書</h2>
+  <% if @recent_documents.any? %>
+    <ul>
+      <% @recent_documents.each do |document| %>
+        <li><%= link_to document.title, project_document_path(document.project, document.slug) %></li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="muted">最近見た文書はまだありません。</p>
+  <% end %>
+</section>
+
+<p><%= link_to "案件一覧へ戻る", projects_path %></p>
