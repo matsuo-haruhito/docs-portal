@@ -69,6 +69,22 @@ RSpec.describe "Project site security", type: :request do
     expect(response).to have_http_status(:forbidden)
   end
 
+  it "does not allow path traversal outside the project site root" do
+    sign_in_as(user)
+
+    get project_site_path(project, site_path: "../secrets.yml", version_id: version.public_id)
+
+    expect(response).to have_http_status(:not_found)
+  end
+
+  it "does not allow path traversal after path normalization" do
+    sign_in_as(user)
+
+    get project_site_path(project, site_path: "assets/../../secrets.yml", version_id: version.public_id)
+
+    expect(response).to have_http_status(:not_found)
+  end
+
   it "does not allow a version id from another project to be used on the current project site route" do
     other_project = create(:project, code: "PJ#{SecureRandom.hex(4)}", name: "Other Project")
     other_document = create(:document, project: other_project, title: "別案件資料", slug: "other-doc")
