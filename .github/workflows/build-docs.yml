@@ -49,10 +49,12 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install JavaScript dependencies
-        run: npm install
+        run: npm ci
 
       - name: Audit Ruby dependencies
         run: bundle exec bundler-audit check --update
@@ -64,7 +66,7 @@ jobs:
         continue-on-error: true
         working-directory: ./docusaurus
         run: |
-          npm install
+          npm ci
           npm audit --audit-level=high
 
       - name: Prepare database
@@ -87,11 +89,13 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
+          cache: npm
+          cache-dependency-path: docusaurus/package-lock.json
 
       - name: Install Docusaurus dependencies
         working-directory: ./docusaurus
-        run: npm install
+        run: npm ci
 
       - name: Build Docusaurus site
         working-directory: ./docusaurus

@@ -1,0 +1,27 @@
+- page_title "案件マスタ"
+
+h1 案件マスタ
+= render "admin/nav"
+
+.card
+  h2 新規登録
+  = render "form", project: @project
+
+= table_tag do
+  thead
+    tr
+      th コード
+      th 案件名
+      th 説明
+      th 状態
+      th
+  tbody
+    - @projects.each do |project|
+      tr
+        td = project.code
+        td = project.name
+        td = project.description
+        td = project.active? ? "有効" : "無効"
+        td.actions
+          = edit_link_to "編集", edit_admin_project_path(project)
+          = delete_link_to "削除", admin_project_path(project)
