@@ -3,15 +3,17 @@ class DocumentFilesController < BaseController
     file = DocumentFile.find_by!(public_id: params[:public_id])
     require_document_file_download_access!(file)
 
-    record_download_access_log(file)
+    file_path = file.absolute_path
 
-    unless File.exist?(file.absolute_path)
+    unless File.exist?(file_path)
       render plain: "File not found", status: :not_found
       return
     end
 
+    record_download_access_log(file)
+
     send_file(
-      file.absolute_path,
+      file_path,
       filename: file.file_name,
       disposition: disposition_for(file),
       type: file.effective_content_type

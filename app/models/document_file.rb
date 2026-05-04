@@ -27,12 +27,29 @@ class DocumentFile < ApplicationRecord
 
   before_validation :normalize_search_text
 
+  def self.storage_root
+    Rails.root.join("storage", "document_files")
+  end
+
   def to_param
     public_id
   end
 
   def absolute_path
-    Rails.root.join("storage", "document_files", storage_key)
+    self.class.verified_storage_path(storage_key)
+  end
+
+  def self.verified_storage_path(storage_key)
+    root = storage_root
+    candidate = root.join(storage_key.to_s).cleanpath
+    root_path = root.expand_path.to_s
+    candidate_path = candidate.expand_path.to_s
+
+    unless candidate_path == root_path || candidate_path.start_with?(root_path + File::SEPARATOR)
+      raise ActiveRecord::RecordNotFound, "Document file not found"
+    end
+
+    candidate
   end
 
   def effective_content_type
