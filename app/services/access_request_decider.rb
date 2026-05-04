@@ -51,24 +51,26 @@ class AccessRequestDecider
   end
 
   def grant_access!
-    if access_request.project.present?
-      grant_project_access!
-    elsif access_request.document.present?
-      grant_document_access!
+    case access_request.requestable
+    when Project
+      grant_project_access!(access_request.requestable)
+    when Document
+      grant_document_access!(access_request.requestable)
+    when DocumentFile
+      grant_document_access!(access_request.requestable.document_version.document)
     end
   end
 
-  def grant_project_access!
+  def grant_project_access!(project)
     membership = ProjectMembership.find_or_initialize_by(
-      project: access_request.project,
+      project:,
       user: access_request.requester
     )
     membership.role = max_project_role(membership.role, PROJECT_ROLE_BY_ACCESS_LEVEL.fetch(access_request.requested_access_level))
     membership.save!
   end
 
-  def grant_document_access!
-    document = access_request.document
+  def grant_document_access!(document)
     company = access_request.requester.company
 
     raise ActiveRecord::RecordInvalid, access_request if company.blank?
