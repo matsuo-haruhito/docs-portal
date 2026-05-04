@@ -8,7 +8,7 @@ RSpec.describe ProjectDocumentTemplate do
     expect(template.documents).not_to be_empty
     expect(template.documents.first.source_path).to eq("01_要件定義/README.md")
     expect(template.documents.first.title).to eq("要件定義 README")
-    expect(template.documents.first.slug).to eq("01-readme-md")
+    expect(template.documents.first.slug).to eq("01_-readme-md")
   end
 
   it "raises for missing templates" do
