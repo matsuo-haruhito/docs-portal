@@ -12,9 +12,15 @@ p.muted
   |  / 種別: 
   = @document.document_kind
 
+- read_confirmation = current_user.read_confirmations.find_by(document: @document)
 p
   = button_to "お気に入りに追加", document_bookmarks_path, params: { document_bookmark: { document_id: @document.public_id, bookmark_type: "favorite" } }
   = button_to "後で読むに追加", document_bookmarks_path, params: { document_bookmark: { document_id: @document.public_id, bookmark_type: "read_later" } }
+  - if read_confirmation
+    span.muted 既読確認済み
+    = button_to "既読を解除", read_confirmation_path(read_confirmation), method: :delete
+  - else
+    = button_to "既読にする", read_confirmations_path, params: { read_confirmation: { document_id: @document.public_id } }
   = link_to "文書ショートカット一覧", document_bookmarks_path
 
 - if @source_breadcrumbs.any?
