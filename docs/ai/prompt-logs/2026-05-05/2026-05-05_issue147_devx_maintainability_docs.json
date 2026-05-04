@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-05-05",
+  "task": {
+    "name": "issue147_devx_maintainability_docs",
+    "type": "docs",
+    "ticket": "#147"
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work/self/docs-portal-ops4",
+    "customer": null,
+    "repo": "matsuo-haruhito/docs-portal",
+    "editable_paths": [
+      "AGENTS.md",
+      "README.md",
+      "docs/"
+    ],
+    "read_only_paths": [
+      "../../AGENTS.md",
+      ".git/"
+    ]
+  },
+  "instruction_summary": "Advance another open issue that can be closed without design consultation; for issue #147, update AGENTS and docs/README, add a maintainability guide, and rely on PR CI only before closing.",
+  "actual_work": "Added a development and maintainability guide covering reading order, directory responsibilities, service boundaries, and dependency rationale; added a repo AGENTS.md and updated README and docs/README to point developers and AI to the right sources.",
+  "changed_files": [
+    "AGENTS.md",
+    "README.md",
+    "docs/README.md",
+    "docs/ai/prompt-logs/2026-05-05/2026-05-05_issue147_devx_maintainability_docs.json",
+    "docs/開発・保守ガイド.md"
+  ],
+  "commands": [
+    "gh issue view 147 --repo matsuo-haruhito/docs-portal",
+    "git worktree add /mnt/c/work/self/docs-portal-ops4 <main-sha>",
+    "git -C /mnt/c/work/self/docs-portal-ops4 switch -c codex/devx-maintainability-docs"
+  ],
+  "tests": [
+    {
+      "command": "GitHub Actions ci/test",
+      "result": "pending",
+      "notes": "No local tests were run. Validation is deferred to PR CI per instruction."
+    }
+  ],
+  "usage": {
+    "estimated_input_tokens": null,
+    "estimated_output_tokens": null,
+    "estimated_total_tokens": null,
+    "measurement_source": "unavailable",
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md",
+      "docs/アプリケーション仕様.md",
+      "README.md"
+    ]
+  },
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md",
+      "docs/アプリケーション仕様.md",
+      "README.md"
+    ],
+    "token_notes": "Exact token counts were unavailable from the environment.",
+    "token_waste_notes": [],
+    "wasted_context": [],
+    "unnecessary_exploration": []
+  },
+  "quality_notes": [],
+  "risks": [],
+  "remaining_concerns": [],
+  "improvement_candidates": {
+    "workflow": [],
+    "issue_triage": []
+  },
+  "signals": []
+}
