@@ -1,0 +1,17 @@
+= render "shared/error_messages", record: company
+
+= form_with model: [:admin, company] do |form|
+  .form-grid
+    label
+      | コード
+      = form.text_field :code
+    label
+      | 会社名
+      = form.text_field :name
+    label
+      | 有効
+      = form.select :active, [["有効", true], ["無効", false]]
+  p.actions style="margin-top:16px;"
+    = form.submit "保存", class: "button"
+    - if company.persisted?
+      = link_to "一覧へ戻る", admin_companies_path, class: "button secondary"
