@@ -11,6 +11,7 @@ class DocumentVersion < ApplicationRecord
   enum :status, { draft: 0, published: 1, archived: 2 }
 
   validates :version_label, :source_commit_hash, presence: true
+  validate :published_until_after_published_from
 
   before_validation :normalize_search_body_text
 
@@ -75,7 +76,21 @@ class DocumentVersion < ApplicationRecord
     return false unless user&.active?
     return true if user.internal?
 
-    published? && document.viewable_by?(user)
+    published? && within_publication_window? && document.viewable_by?(user)
+  end
+
+  def within_publication_window?(at: Time.current)
+    return false if published_from.present? && at < published_from
+    return false if published_until.present? && at > published_until
+
+    true
+  end
+
+  def publication_window_state(at: Time.current)
+    return :not_started if published_from.present? && at < published_from
+    return :expired if published_until.present? && at > published_until
+
+    :active
   end
 
   def legacy_html_absolute_path
@@ -149,5 +164,12 @@ class DocumentVersion < ApplicationRecord
     end
 
     normalized
+  end
+
+  def published_until_after_published_from
+    return if published_from.blank? || published_until.blank?
+    return if published_until >= published_from
+
+    errors.add(:published_until, "must be after published_from")
   end
 end
