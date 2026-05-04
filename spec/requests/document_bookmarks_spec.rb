@@ -34,7 +34,7 @@ RSpec.describe "Document bookmarks", type: :request do
       }
     end.to change(DocumentBookmark.favorite, :count).by(1)
 
-    expect(response).to redirect_to(projects_path)
+    expect(response).to redirect_to(root_path)
   end
 
   it "creates a read-later bookmark" do
