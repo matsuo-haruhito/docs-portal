@@ -13,6 +13,8 @@ class User < ApplicationRecord
   has_many :bookmarked_documents, through: :document_bookmarks, source: :document
   has_many :read_confirmations, dependent: :destroy
   has_many :confirmed_read_documents, through: :read_confirmations, source: :document
+  has_many :user_consents, dependent: :destroy
+  has_many :consent_terms, through: :user_consents
 
   enum :user_type, { internal: 0, external: 1, company_master_admin: 2 }
 
