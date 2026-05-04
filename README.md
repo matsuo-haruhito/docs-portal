@@ -2,6 +2,18 @@
 
 Rails + Docusaurus を前提にした「社外秘ドキュメント配布ポータル」の雛形です。
 
+## 利用者向け概要
+
+- 案件ごとの文書公開、版管理、閲覧制御、添付配布を行う Rails ポータルです。
+- Markdown 文書は Docusaurus build を公開物として扱います。
+- 社外ユーザーの閲覧は `ProjectMembership` と `DocumentPermission` に基づきます。
+
+## 開発者向け入口
+
+- repo 固有ルールは [AGENTS.md](./AGENTS.md) と [docs/README.md](./docs/README.md) を正本とします。
+- 構造や責務分離は [docs/開発・保守ガイド.md](./docs/開発・保守ガイド.md) を参照してください。
+- 権限や公開モデルは [docs/アプリケーション仕様.md](./docs/アプリケーション仕様.md)、検証方針は [docs/テスト方針.md](./docs/テスト方針.md) を参照してください。
+
 ## 外部サンプル文書
 - seed は `db/data/*.csv` に加えて、`storage/document_files/external_samples/` 配下に置かれたサンプル文書も拾います。
 - 配置規約は `storage/document_files/external_samples/<sample-set>/<site-dir>/...` です。
