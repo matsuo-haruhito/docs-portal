@@ -15,7 +15,7 @@ RSpec.describe AccessRequestHash do
     expect(hash[:requester]).to include(name: "Client", email_address: "client@example.com", company_id: company.public_id)
     expect(hash[:approver]).to include(name: "Admin", email_address: "approver@example.com")
     expect(hash[:requestable]).to include(type: "Project", public_id: project.public_id, code: "REQ", name: "Request Project")
-    expect(hash[:approved_at]).to eq("2026-05-01T12:00:00Z")
+    expect(hash[:approved_at]).to eq(request.approved_at.iso8601)
   end
 
   it "renders a document file access request target" do
