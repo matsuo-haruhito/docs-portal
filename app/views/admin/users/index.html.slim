@@ -1,0 +1,30 @@
+- page_title "ユーザーマスタ"
+
+h1 ユーザーマスタ
+= render "admin/nav"
+
+.card
+  h2 新規登録
+  = render "form", user: @user
+
+= table_tag do
+  thead
+    tr
+      th 氏名
+      th メールアドレス
+      th 種別
+      th 会社
+      th 状態
+      th
+  tbody
+    - @users.each do |user|
+      tr
+        td = user.name
+        td = user.email_address
+        td
+          span.badge = user.user_type
+        td = user.company&.name || "-"
+        td = user.active? ? "有効" : "無効"
+        td.actions
+          = edit_link_to "編集", edit_admin_user_path(user)
+          = delete_link_to "削除", admin_user_path(user)
