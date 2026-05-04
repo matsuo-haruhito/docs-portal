@@ -5,9 +5,12 @@ RSpec.describe RecentDocumentsQuery do
   let(:project) { create(:project) }
   let(:user) { create(:user, :external, company:) }
 
+  before do
+    create(:project_membership, project:, user:)
+  end
+
   def create_viewable_document(title:, slug:)
     document = create(:document, project:, title:, slug:, visibility_policy: :restricted_external)
-    create(:project_membership, project:, user:)
     create(:document_permission, document:, company:, access_level: :view)
     document
   end
