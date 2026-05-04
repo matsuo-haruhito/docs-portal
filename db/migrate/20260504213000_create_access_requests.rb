@@ -1,34 +1,60 @@
-class CreateAccessRequests < ActiveRecord::Migration[8.1]
-  def change
-    create_table :access_requests do |t|
-      t.string :public_id, null: false
-      t.references :requester, null: false, foreign_key: { to_table: :users }
-      t.references :approver, foreign_key: { to_table: :users }
-      t.string :requestable_type, null: false
-      t.bigint :requestable_id, null: false
-      t.integer :requested_access_level, null: false, default: 0
-      t.text :reason
-      t.integer :status, null: false, default: 0
-      t.datetime :approved_at
-      t.datetime :rejected_at
-      t.datetime :cancelled_at
-      t.text :rejection_reason
-      t.datetime :expires_at
+class ConvertAccessRequestsToPolymorphicRequestable < ActiveRecord::Migration[8.1]
+  def up
+    add_column :access_requests, :requestable_type, :string
+    add_column :access_requests, :requestable_id, :bigint
+    add_column :access_requests, :cancelled_at, :datetime
 
-      t.timestamps
-    end
+    execute <<~SQL.squish
+      UPDATE access_requests
+      SET requestable_type = 'Document', requestable_id = document_id
+      WHERE document_id IS NOT NULL
+    SQL
 
-    add_index :access_requests, :public_id, unique: true
+    execute <<~SQL.squish
+      UPDATE access_requests
+      SET requestable_type = 'Project', requestable_id = project_id
+      WHERE requestable_type IS NULL AND project_id IS NOT NULL
+    SQL
+
+    change_column_null :access_requests, :requestable_type, false
+    change_column_null :access_requests, :requestable_id, false
+
+    remove_reference :access_requests, :project, foreign_key: true
+    remove_reference :access_requests, :document, foreign_key: true
+
     add_index :access_requests, [:requestable_type, :requestable_id]
-    add_index :access_requests, :requested_access_level
-    add_index :access_requests, :status
     add_index :access_requests, :approved_at
     add_index :access_requests, :rejected_at
-    add_index :access_requests, :expires_at
     add_index :access_requests,
       [:requester_id, :requestable_type, :requestable_id, :requested_access_level, :status],
       name: "index_access_requests_unique_pending",
       unique: true,
       where: "status = 0"
+  end
+
+  def down
+    add_reference :access_requests, :project, foreign_key: true
+    add_reference :access_requests, :document, foreign_key: true
+
+    execute <<~SQL.squish
+      UPDATE access_requests
+      SET project_id = requestable_id
+      WHERE requestable_type = 'Project'
+    SQL
+
+    execute <<~SQL.squish
+      UPDATE access_requests
+      SET document_id = requestable_id
+      WHERE requestable_type = 'Document'
+    SQL
+
+    remove_index :access_requests, name: "index_access_requests_unique_pending"
+    remove_index :access_requests, [:requestable_type, :requestable_id]
+    remove_index :access_requests, :approved_at
+    remove_index :access_requests, :rejected_at
+
+    remove_column :access_requests, :cancelled_at
+    remove_column :access_requests, :requestable_id
+    remove_column :access_requests, :requestable_type
   end
 end
