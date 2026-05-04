@@ -21,7 +21,8 @@ RSpec.describe "Project document zips", type: :request do
       file_name:,
       content_type: "text/plain",
       storage_key:,
-      file_size: content.bytesize
+      file_size: content.bytesize,
+      scan_status: :scan_clean
     )
 
     document

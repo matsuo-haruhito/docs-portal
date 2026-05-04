@@ -13,7 +13,8 @@ RSpec.describe "Document files", type: :request do
       file_name: "manual.pdf",
       content_type: "application/pdf",
       storage_key: "spec/manual.pdf",
-      file_size: 12
+      file_size: 12,
+      scan_status: :scan_clean
     )
   end
   let(:markdown_file) do
@@ -23,7 +24,8 @@ RSpec.describe "Document files", type: :request do
       content_type: "application/octet-stream",
       storage_key: "spec/README.md",
       file_size: 20,
-      sort_order: 1
+      sort_order: 1,
+      scan_status: :scan_clean
     )
   end
   let(:binary_file) do
@@ -33,7 +35,8 @@ RSpec.describe "Document files", type: :request do
       content_type: "application/octet-stream",
       storage_key: "spec/archive.bin",
       file_size: 6,
-      sort_order: 2
+      sort_order: 2,
+      scan_status: :scan_clean
     )
   end
 
@@ -92,10 +95,11 @@ RSpec.describe "Document files", type: :request do
   it "does not serve files outside the document file storage root" do
     unsafe_file = DocumentFile.create!(
       document_version: version,
-      file_name: "secrets.yml",
+      file_name: "outside.yml",
       content_type: "text/yaml",
-      storage_key: "../secrets.yml",
-      file_size: 1
+      storage_key: "../outside.yml",
+      file_size: 1,
+      scan_status: :scan_clean
     )
 
     sign_in_as(user)
@@ -110,10 +114,11 @@ RSpec.describe "Document files", type: :request do
   it "does not serve files outside the storage root after path normalization" do
     unsafe_file = DocumentFile.create!(
       document_version: version,
-      file_name: "secrets.yml",
+      file_name: "outside.yml",
       content_type: "text/yaml",
-      storage_key: "spec/../../secrets.yml",
-      file_size: 1
+      storage_key: "spec/../../outside.yml",
+      file_size: 1,
+      scan_status: :scan_clean
     )
 
     sign_in_as(user)

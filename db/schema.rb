@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_03_161000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_04_153000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -56,6 +56,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_161000) do
     t.string "file_name", null: false
     t.bigint "file_size", default: 0, null: false
     t.string "public_id", null: false
+    t.text "scan_error_message"
+    t.integer "scan_status", default: 0, null: false
+    t.datetime "scanned_at"
     t.text "search_text"
     t.integer "sort_order", default: 0, null: false
     t.string "storage_key", null: false
@@ -63,6 +66,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_161000) do
     t.index ["document_version_id"], name: "index_document_files_on_document_version_id"
     t.index ["file_name"], name: "index_document_files_on_file_name_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["public_id"], name: "index_document_files_on_public_id", unique: true
+    t.index ["scan_status"], name: "index_document_files_on_scan_status"
     t.index ["search_text"], name: "index_document_files_on_search_text_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["storage_key"], name: "index_document_files_on_storage_key", unique: true
   end
@@ -188,6 +192,41 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_161000) do
     t.index ["title"], name: "index_documents_on_title_trigram", opclass: :gin_trgm_ops, using: :gin
   end
 
+  create_table "notification_events", force: :cascade do |t|
+    t.bigint "actor_user_id"
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.bigint "document_id"
+    t.bigint "document_version_id"
+    t.integer "event_type", null: false
+    t.datetime "occurred_at", null: false
+    t.bigint "project_id"
+    t.string "public_id", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_user_id"], name: "index_notification_events_on_actor_user_id"
+    t.index ["document_id"], name: "index_notification_events_on_document_id"
+    t.index ["document_version_id"], name: "index_notification_events_on_document_version_id"
+    t.index ["event_type"], name: "index_notification_events_on_event_type"
+    t.index ["occurred_at"], name: "index_notification_events_on_occurred_at"
+    t.index ["project_id"], name: "index_notification_events_on_project_id"
+    t.index ["public_id"], name: "index_notification_events_on_public_id", unique: true
+  end
+
+  create_table "notification_receipts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "notification_event_id", null: false
+    t.string "public_id", null: false
+    t.datetime "read_at"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["notification_event_id", "user_id"], name: "index_notification_receipts_unique_event_user", unique: true
+    t.index ["notification_event_id"], name: "index_notification_receipts_on_notification_event_id"
+    t.index ["public_id"], name: "index_notification_receipts_on_public_id", unique: true
+    t.index ["read_at"], name: "index_notification_receipts_on_read_at"
+    t.index ["user_id"], name: "index_notification_receipts_on_user_id"
+  end
+
   create_table "project_memberships", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "project_id", null: false
@@ -260,6 +299,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_161000) do
   add_foreign_key "document_versions", "documents"
   add_foreign_key "document_versions", "users", column: "published_by_user_id"
   add_foreign_key "documents", "projects"
+  add_foreign_key "notification_events", "documents"
+  add_foreign_key "notification_events", "document_versions"
+  add_foreign_key "notification_events", "projects"
+  add_foreign_key "notification_events", "users", column: "actor_user_id"
+  add_foreign_key "notification_receipts", "notification_events"
+  add_foreign_key "notification_receipts", "users"
   add_foreign_key "project_memberships", "projects"
   add_foreign_key "project_memberships", "users"
   add_foreign_key "users", "companies"
