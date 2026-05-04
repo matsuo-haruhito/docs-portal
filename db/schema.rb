@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_04_153000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_04_161000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -47,6 +47,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_04_153000) do
     t.datetime "updated_at", null: false
     t.index ["code"], name: "index_companies_on_code", unique: true
     t.index ["public_id"], name: "index_companies_on_public_id", unique: true
+  end
+
+  create_table "document_bookmarks", force: :cascade do |t|
+    t.integer "bookmark_type", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.bigint "document_id", null: false
+    t.string "public_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["document_id"], name: "index_document_bookmarks_on_document_id"
+    t.index ["public_id"], name: "index_document_bookmarks_on_public_id", unique: true
+    t.index ["user_id", "document_id", "bookmark_type"], name: "index_document_bookmarks_unique_user_document_type", unique: true
+    t.index ["user_id"], name: "index_document_bookmarks_on_user_id"
   end
 
   create_table "document_files", force: :cascade do |t|
@@ -287,6 +300,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_04_153000) do
   add_foreign_key "access_logs", "documents"
   add_foreign_key "access_logs", "projects"
   add_foreign_key "access_logs", "users"
+  add_foreign_key "document_bookmarks", "documents"
+  add_foreign_key "document_bookmarks", "users"
   add_foreign_key "document_files", "document_versions"
   add_foreign_key "document_keywords", "documents"
   add_foreign_key "document_permissions", "companies"

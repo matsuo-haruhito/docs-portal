@@ -12,6 +12,11 @@ p.muted
   |  / 種別: 
   = @document.document_kind
 
+p
+  = button_to "お気に入りに追加", document_bookmarks_path, params: { document_bookmark: { document_id: @document.public_id, bookmark_type: "favorite" } }
+  = button_to "後で読むに追加", document_bookmarks_path, params: { document_bookmark: { document_id: @document.public_id, bookmark_type: "read_later" } }
+  = link_to "文書ショートカット一覧", document_bookmarks_path
+
 - if @source_breadcrumbs.any?
   nav.breadcrumbs aria-label="source path breadcrumb"
     - @source_breadcrumbs.each_with_index do |crumb, index|
