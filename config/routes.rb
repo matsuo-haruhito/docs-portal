@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   root "projects#index"
 
   resource :session, only: %i[new create destroy]
+  resources :document_bookmarks, only: %i[index create destroy], param: :public_id
 
   namespace :admin do
     root "dashboard#index"
