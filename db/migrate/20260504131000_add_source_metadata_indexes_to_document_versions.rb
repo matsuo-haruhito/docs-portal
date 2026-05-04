@@ -3,9 +3,5 @@ class AddSourceMetadataIndexesToDocumentVersions < ActiveRecord::Migration[8.1]
     add_index :document_versions,
               :source_basename,
               name: "index_document_versions_on_source_basename"
-
-    add_index :document_versions,
-              :source_directory,
-              name: "index_document_versions_on_source_directory"
   end
 end
