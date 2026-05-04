@@ -12,21 +12,20 @@ module DocumentsHelper
     )
 
     tree = TreeView::Tree.new(adapter:)
-    ui_config = TreeView::UiConfig.new(
-      node_dom_id_builder: ->(item_or_id) { "document_tree_#{node_key(item_or_id)}" },
-      button_dom_id_builder: ->(item_or_id) { "document_tree_button_#{node_key(item_or_id)}" },
-      show_button_dom_id_builder: ->(item_or_id) { "document_tree_show_button_#{node_key(item_or_id)}" },
-      hide_descendants_path_builder: ->(_item, _depth, _scope) { "#" },
-      show_descendants_path_builder: ->(_item, _depth, _scope) { "#" },
-      toggle_all_path_builder: ->(_state) { "#" }
-    )
+    ui_config = TreeView::UiConfigBuilder.new(
+      context: self,
+      node_prefix: "document_tree",
+      key_resolver: ->(item_or_id) { node_key(item_or_id) }
+    ).build_static
 
     TreeView::RenderState.new(
       tree:,
       root_items: tree.root_items,
       row_partial: "documents/tree_columns",
       ui_config:,
-      initial_state: :expanded
+      initial_expansion: { default: :expanded },
+      row_class_builder: ->(item) { tree_item_css_class(item) },
+      row_data_builder: ->(item) { tree_item_data_attributes(item) }
     )
   end
 
@@ -73,7 +72,26 @@ module DocumentsHelper
     classes = []
     classes << "current-node" if item == @project || item == @document
     classes << "html-unavailable" if item.is_a?(Document) && !tree_item_html_available?(item)
-    classes.join(" ")
+    classes
+  end
+
+  def tree_item_data_attributes(item)
+    base_data = {
+      tree_item_type: item.class.name.underscore,
+      tree_item_id: item.id
+    }
+
+    case item
+    when Project
+      base_data.merge(project_id: item.id)
+    when Document
+      base_data.merge(
+        project_id: item.project_id,
+        html_available: tree_item_html_available?(item)
+      )
+    else
+      base_data
+    end
   end
 
   def document_search_match_labels(document, keyword)
