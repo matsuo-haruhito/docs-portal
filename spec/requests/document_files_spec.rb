@@ -79,6 +79,40 @@ RSpec.describe "Document files", type: :request do
     expect(response.body).to eq("File not found")
   end
 
+  it "does not serve files outside the document file storage root" do
+    unsafe_file = DocumentFile.create!(
+      document_version: version,
+      file_name: "secrets.yml",
+      content_type: "text/yaml",
+      storage_key: "../secrets.yml",
+      file_size: 1
+    )
+
+    sign_in_as(user)
+
+    expect do
+      get document_file_path(unsafe_file)
+    end.not_to change(AccessLog, :count)
+
+    expect(response).to have_http_status(:not_found)
+  end
+
+  it "does not serve files outside the storage root after path normalization" do
+    unsafe_file = DocumentFile.create!(
+      document_version: version,
+      file_name: "secrets.yml",
+      content_type: "text/yaml",
+      storage_key: "spec/../../secrets.yml",
+      file_size: 1
+    )
+
+    sign_in_as(user)
+
+    get document_file_path(unsafe_file)
+
+    expect(response).to have_http_status(:not_found)
+  end
+
   it "serves markdown files inline" do
     sign_in_as(user)
 
