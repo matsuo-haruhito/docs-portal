@@ -48,8 +48,8 @@ RSpec.describe ConsentRequirementChecker do
   end
 
   it "filters terms by requirement timing" do
-    first_view = create(:consent_term, consent_scope: :global, requirement_timing: :first_view)
-    every_download = create(:consent_term, consent_scope: :global, requirement_timing: :every_download)
+    first_view = create(:consent_term, title: "First view terms", consent_scope: :global, requirement_timing: :first_view)
+    every_download = create(:consent_term, title: "Download terms", consent_scope: :global, requirement_timing: :every_download)
 
     result = described_class.new(user:, target: file, timing: :every_download).call
 
