@@ -65,6 +65,25 @@ RSpec.describe "Project document zips", type: :request do
     expect(response.body).not_to include("hidden/v1.0.0/hidden.txt")
   end
 
+  it "ignores selected documents when the external user only has view permission" do
+    external_user = create(:user, :external)
+    downloadable = create_document_with_file(title: "Downloadable", slug: "downloadable", file_name: "downloadable.txt", content: "downloadable")
+    view_only = create_document_with_file(title: "View Only", slug: "view-only", file_name: "view-only.txt", content: "view-only")
+    create(:project_membership, project:, user: external_user)
+    create(:document_permission, document: downloadable, company: external_user.company, access_level: :download)
+    create(:document_permission, document: view_only, company: external_user.company, access_level: :view)
+
+    sign_in_as(external_user)
+
+    expect do
+      post project_document_zip_path(project), params: { document_ids: [downloadable.id, view_only.id] }
+    end.to change(AccessLog.where(action_type: :download, target_type: "zip"), :count).by(1)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("downloadable/v1.0.0/downloadable.txt")
+    expect(response.body).not_to include("view-only/v1.0.0/view-only.txt")
+  end
+
   it "shows checkbox bulk zip form on the document index" do
     document = create_document_with_file(title: "First", slug: "first", file_name: "README.md", content: "first")
 
