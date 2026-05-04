@@ -40,9 +40,9 @@ class DocumentBookmarksController < BaseController
 
   def bookmark_type
     value = bookmark_params[:bookmark_type].presence || "favorite"
-    raise ApplicationError::BadRequest, "bookmark type is invalid" unless DocumentBookmark.bookmark_types.key?(value)
+    return value if DocumentBookmark.bookmark_types.key?(value)
 
-    value
+    "favorite"
   end
 
   def bookmark_created_message
