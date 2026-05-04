@@ -5,7 +5,7 @@
     "build": "docusaurus build"
   },
   "dependencies": {
-    "@docusaurus/core": "3.10.0",
+    "@docusaurus/core": "3.10.1",
     "@docusaurus/preset-classic": "3.10.0",
     "@docusaurus/theme-mermaid": "3.10.0",
     "@docusaurus/types": "3.10.1",
