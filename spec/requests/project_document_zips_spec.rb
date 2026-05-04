@@ -27,6 +27,10 @@ RSpec.describe "Project document zips", type: :request do
     document
   end
 
+  def binary_string(value)
+    value.b
+  end
+
   after do
     FileUtils.rm_rf(Rails.root.join("storage", "document_files", "spec", "project-document-zips"))
   end
@@ -58,7 +62,7 @@ RSpec.describe "Project document zips", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("application/zip")
-    expect(response.body).to include("nihongo-doc/v1.0.0/操作説明書.txt")
+    expect(response.body).to include(binary_string("nihongo-doc/v1.0.0/操作説明書.txt"))
   end
 
   it "ignores selected documents outside the current user access scope" do
