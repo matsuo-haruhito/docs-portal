@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboard#show", as: :dashboard
   resource :session, only: %i[new create destroy]
   resources :document_bookmarks, only: %i[index create destroy], param: :public_id
+  resources :read_confirmations, only: %i[create destroy], param: :public_id
 
   namespace :admin do
     root "dashboard#index"
