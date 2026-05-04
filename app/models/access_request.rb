@@ -1,50 +1,45 @@
 class AccessRequest < ApplicationRecord
   include PublicIdentifiable
 
-  public_id_prefix "arq"
+  public_id_prefix "areq"
+
+  SUPPORTED_REQUESTABLE_TYPES = %w[Project Document DocumentFile].freeze
 
   belongs_to :requester, class_name: "User"
   belongs_to :approver, class_name: "User", optional: true
-  belongs_to :project, optional: true
-  belongs_to :document, optional: true
+  belongs_to :requestable, polymorphic: true
 
-  enum :requested_access_level, {
-    view: 0,
-    download: 1,
-    manage: 2
-  }
-
-  enum :status, {
-    pending: 0,
-    approved: 1,
-    rejected: 2,
-    cancelled: 3
-  }
+  enum :requested_access_level, { view: 0, download: 1, manage: 2 }
+  enum :status, { pending: 0, approved: 1, rejected: 2, cancelled: 3 }
 
   validates :reason, presence: true
-  validate :request_target_is_project_or_document
-  validate :document_belongs_to_project_when_both_are_set
+  validates :rejection_reason, presence: true, if: :rejected?
+  validate :requester_must_be_active
+  validate :requestable_type_must_be_supported
   validate :approver_must_be_internal
   validate :status_metadata_consistency
 
-  scope :active, -> { where(status: :pending) }
+  scope :open, -> { pending }
+  scope :recent_first, -> { order(created_at: :desc, id: :desc) }
 
   def to_param
     public_id
   end
 
-  private
-
-  def request_target_is_project_or_document
-    return if project.present? ^ document.present?
-
-    errors.add(:base, "request target must be either project or document")
+  def terminal?
+    approved? || rejected? || cancelled?
   end
 
-  def document_belongs_to_project_when_both_are_set
-    return if project.blank? || document.blank? || document.project_id == project_id
+  private
 
-    errors.add(:document, "must belong to project")
+  def requester_must_be_active
+    errors.add(:requester, "must be active") unless requester&.active?
+  end
+
+  def requestable_type_must_be_supported
+    return if SUPPORTED_REQUESTABLE_TYPES.include?(requestable_type)
+
+    errors.add(:requestable_type, "is not supported")
   end
 
   def approver_must_be_internal
@@ -63,11 +58,15 @@ class AccessRequest < ApplicationRecord
     when "rejected"
       errors.add(:approver, "must be present") if approver.blank?
       errors.add(:rejected_at, "must be present") if rejected_at.blank?
-      errors.add(:rejection_reason, "must be present") if rejection_reason.blank?
       errors.add(:approved_at, "must be blank") if approved_at.present?
+    when "cancelled"
+      errors.add(:cancelled_at, "must be present") if cancelled_at.blank?
+      errors.add(:approved_at, "must be blank") if approved_at.present?
+      errors.add(:rejected_at, "must be blank") if rejected_at.present?
     else
       errors.add(:approved_at, "must be blank") if approved_at.present?
       errors.add(:rejected_at, "must be blank") if rejected_at.present?
+      errors.add(:cancelled_at, "must be blank") if cancelled_at.present?
       errors.add(:rejection_reason, "must be blank") if rejection_reason.present?
     end
   end

@@ -8,7 +8,7 @@ RSpec.describe AccessRequestDecider do
   let(:document) { create(:document, project:, visibility_policy: :restricted_external) }
 
   it "approves project access requests by granting project membership" do
-    access_request = create(:access_request, requester:, project:, document: nil, requested_access_level: :manage)
+    access_request = create(:access_request, requester:, requestable: project, requested_access_level: :manage)
 
     expect do
       described_class.new(access_request:, approver:).approve!
@@ -22,7 +22,7 @@ RSpec.describe AccessRequestDecider do
   end
 
   it "approves document access requests by granting project membership and document permission" do
-    access_request = create(:access_request, requester:, project: nil, document:, requested_access_level: :download)
+    access_request = create(:access_request, requester:, requestable: document, requested_access_level: :download)
 
     expect do
       described_class.new(access_request:, approver:).approve!
@@ -37,7 +37,7 @@ RSpec.describe AccessRequestDecider do
   it "does not downgrade existing document permissions" do
     create(:project_membership, project:, user: requester)
     create(:document_permission, document:, company:, access_level: :download)
-    access_request = create(:access_request, requester:, project: nil, document:, requested_access_level: :view)
+    access_request = create(:access_request, requester:, requestable: document, requested_access_level: :view)
 
     described_class.new(access_request:, approver:).approve!
 
@@ -45,7 +45,7 @@ RSpec.describe AccessRequestDecider do
   end
 
   it "rejects pending requests" do
-    access_request = create(:access_request, requester:, project:, document: nil)
+    access_request = create(:access_request, requester:, requestable: project)
 
     described_class.new(access_request:, approver:).reject!(reason: "Not required")
 
@@ -57,7 +57,7 @@ RSpec.describe AccessRequestDecider do
 
   it "rejects non-internal approvers" do
     external_approver = create(:user, :external, company:)
-    access_request = create(:access_request, requester:, project:, document: nil)
+    access_request = create(:access_request, requester:, requestable: project)
 
     expect do
       described_class.new(access_request:, approver: external_approver).approve!
@@ -65,7 +65,7 @@ RSpec.describe AccessRequestDecider do
   end
 
   it "rejects decisions for non-pending requests" do
-    access_request = create(:access_request, requester:, project:, document: nil)
+    access_request = create(:access_request, requester:, requestable: project)
     described_class.new(access_request:, approver:).reject!(reason: "No")
 
     expect do
