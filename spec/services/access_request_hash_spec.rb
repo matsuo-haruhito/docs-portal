@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe AccessRequestHash do
   let(:company) { create(:company) }
   let(:requester) { create(:user, :external, company:, name: "Client", email_address: "client@example.com") }
-  let(:approver) { create(:user, :internal, name: "Admin", email_address: "admin@example.com") }
+  let(:approver) { create(:user, :internal, name: "Admin", email_address: "approver@example.com") }
   let(:project) { create(:project, code: "REQ", name: "Request Project") }
 
   it "renders a project access request" do
@@ -13,7 +13,7 @@ RSpec.describe AccessRequestHash do
 
     expect(hash).to include(status: "approved", requested_access_level: "view", reason: "Need access for project work.")
     expect(hash[:requester]).to include(name: "Client", email_address: "client@example.com", company_id: company.public_id)
-    expect(hash[:approver]).to include(name: "Admin", email_address: "admin@example.com")
+    expect(hash[:approver]).to include(name: "Admin", email_address: "approver@example.com")
     expect(hash[:requestable]).to include(type: "Project", public_id: project.public_id, code: "REQ", name: "Request Project")
     expect(hash[:approved_at]).to eq("2026-05-01T12:00:00Z")
   end
