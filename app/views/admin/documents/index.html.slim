@@ -1,0 +1,32 @@
+- page_title "文書マスタ"
+
+h1 文書マスタ
+= render "admin/nav"
+
+.card
+  h2 新規登録
+  = render "form", document: @document
+
+= table_tag do
+  thead
+    tr
+      th 案件
+      th タイトル
+      th スラッグ
+      th カテゴリ
+      th 種別
+      th 公開範囲
+      th
+  tbody
+    - @documents.each do |document|
+      tr
+        td = document.project.name
+        td = document.title
+        td = document.slug
+        td
+          span.badge = document.category
+        td = document.document_kind
+        td = document.visibility_policy
+        td.actions
+          = edit_link_to "編集", edit_admin_document_path(document)
+          = delete_link_to "削除", admin_document_path(document)
