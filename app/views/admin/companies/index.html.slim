@@ -1,0 +1,25 @@
+- page_title "会社マスタ"
+
+h1 会社マスタ
+= render "admin/nav"
+
+.card
+  h2 新規登録
+  = render "form", company: @company
+
+= table_tag do
+  thead
+    tr
+      th コード
+      th 会社名
+      th 状態
+      th
+  tbody
+    - @companies.each do |company|
+      tr
+        td = company.code
+        td = company.name
+        td = company.active? ? "有効" : "無効"
+        td.actions
+          = edit_link_to "編集", edit_admin_company_path(company)
+          = delete_link_to "削除", admin_company_path(company)
