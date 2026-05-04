@@ -78,6 +78,7 @@ RSpec.describe DocumentFile, type: :model do
     end
 
     it "blocks external users until the file is clean" do
+      create(:project_membership, project:, user: external_user)
       create(:document_permission, document:, company:, access_level: :download)
       file = create(:document_file, document_version: version, scan_status: :scan_pending)
 
