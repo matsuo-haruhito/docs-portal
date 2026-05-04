@@ -10,7 +10,7 @@ RSpec.describe ProjectTemplateApplier do
     expect(result.skipped_count).to eq(0)
     document = project.documents.find_by!(title: "業務フロー")
     version = document.latest_version
-    expect(document.slug).to eq("01-md")
+    expect(document.slug).to eq("01_-md")
     expect(document.category).to eq("spec")
     expect(document.document_kind).to eq("markdown")
     expect(document.visibility_policy).to eq("internal_only")
@@ -22,7 +22,7 @@ RSpec.describe ProjectTemplateApplier do
   end
 
   it "skips existing template documents" do
-    existing = create(:document, project:, title: "要件定義 README", slug: "01-readme-md")
+    existing = create(:document, project:, title: "要件定義 README", slug: "01_-readme-md")
     version = create(:document_version, document: existing, source_relative_path: "01_要件定義/README.md")
     existing.update!(latest_version: version)
 
