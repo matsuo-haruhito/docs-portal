@@ -2,7 +2,7 @@ class DocumentVersionArchivesController < BaseController
   def show
     version = DocumentVersion.find_by!(public_id: params[:document_version_public_id])
     require_document_version_view_access!(version)
-    require_document_file_download_access!(version.document_files.build)
+    require_document_download_access!(version.document)
 
     archive = DocumentVersionZipBuilder.new(version:, user: current_user)
     filename = archive.filename
