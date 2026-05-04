@@ -17,6 +17,8 @@ class Document < ApplicationRecord
   has_many :read_confirmations, dependent: :destroy
   has_many :confirmed_read_users, through: :read_confirmations, source: :user
   has_many :document_review_comments, dependent: :destroy
+  has_many :document_set_items, dependent: :destroy
+  has_many :document_sets, through: :document_set_items
   has_many :source_document_relations,
     class_name: "DocumentRelation",
     foreign_key: :source_document_id,
