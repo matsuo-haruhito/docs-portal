@@ -12,7 +12,7 @@ class RecentDocumentsQuery
 
     latest_log_by_document_id
       .values
-      .sort_by { [_1.accessed_at || Time.zone.at(0), _1.id] }
+      .sort_by { [_1.accessed_at || Time.zone.at(0), _1.id || 0] }
       .reverse
       .filter_map(&:document)
       .select { _1.viewable_by?(user) }
@@ -42,7 +42,13 @@ class RecentDocumentsQuery
   end
 
   def newer?(candidate, current)
-    [candidate.accessed_at, candidate.id] > [current.accessed_at, current.id]
+    candidate_accessed_at = candidate.accessed_at || Time.zone.at(0)
+    current_accessed_at = current.accessed_at || Time.zone.at(0)
+
+    return true if candidate_accessed_at > current_accessed_at
+    return false if candidate_accessed_at < current_accessed_at
+
+    candidate.id.to_i > current.id.to_i
   end
 
   def normalized_limit
