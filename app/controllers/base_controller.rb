@@ -13,6 +13,10 @@ class BaseController < ApplicationController
     raise ApplicationError::Forbidden unless document.viewable_by?(current_user)
   end
 
+  def require_document_download_access!(document)
+    raise ApplicationError::Forbidden unless document.downloadable_by?(current_user)
+  end
+
   def require_document_version_view_access!(version)
     raise ApplicationError::Forbidden unless version.viewable_by?(current_user)
   end
