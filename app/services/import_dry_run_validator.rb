@@ -17,6 +17,16 @@ class ImportDryRunValidator
     def update?
       action == :update
     end
+
+    def source_path
+      attributes[:source_relative_path].presence || entry.source_path
+    end
+  end
+
+  Summary = Data.define(:total, :create_count, :update_count, :valid_count, :invalid_count, :warning_count, :error_count, :source_paths) do
+    def valid?
+      invalid_count.zero?
+    end
   end
 
   Result = Data.define(:items) do
@@ -38,6 +48,23 @@ class ImportDryRunValidator
 
     def updates
       items.select(&:update?)
+    end
+
+    def invalid_items
+      items.reject(&:valid?)
+    end
+
+    def summary
+      Summary.new(
+        total: items.size,
+        create_count: creates.size,
+        update_count: updates.size,
+        valid_count: items.count(&:valid?),
+        invalid_count: invalid_items.size,
+        warning_count: warnings.size,
+        error_count: errors.size,
+        source_paths: items.map(&:source_path)
+      )
     end
   end
 

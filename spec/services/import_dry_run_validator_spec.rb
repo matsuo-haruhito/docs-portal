@@ -72,4 +72,43 @@ RSpec.describe ImportDryRunValidator do
     expect(item.matched_rules).to include("submitted_materials")
     expect(item.attributes[:snapshot_kind]).to eq("submitted")
   end
+
+  it "summarizes create, update, warning, and error counts" do
+    document = create(:document, project:, title: "Existing", slug: "existing")
+    version = create(:document_version, document:, source_relative_path: "docs/existing.md")
+    document.update!(latest_version: version)
+
+    result = described_class.new(
+      project:,
+      entries: [
+        { source_path: "docs/new.md" },
+        { source_path: "docs/existing.md", title: "Existing" },
+        { source_path: "../secret.md", title: "Secret" }
+      ]
+    ).call
+
+    summary = result.summary
+    expect(summary.total).to eq(3)
+    expect(summary.create_count).to eq(2)
+    expect(summary.update_count).to eq(1)
+    expect(summary.valid_count).to eq(2)
+    expect(summary.invalid_count).to eq(1)
+    expect(summary.warning_count).to eq(2)
+    expect(summary.error_count).to eq(2)
+    expect(summary.source_paths).to eq(["docs/new.md", "docs/existing.md", "../secret.md"])
+    expect(summary).not_to be_valid
+  end
+
+  it "exposes invalid items" do
+    result = described_class.new(
+      project:,
+      entries: [
+        { source_path: "docs/ok.md" },
+        { source_path: "/absolute.md" }
+      ]
+    ).call
+
+    expect(result.invalid_items.size).to eq(1)
+    expect(result.invalid_items.first.source_path).to eq("/absolute.md")
+  end
 end
