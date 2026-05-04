@@ -69,6 +69,8 @@ class Document < ApplicationRecord
   validates :slug, uniqueness: { scope: :project_id }
   validates :recommended_sort_order, numericality: { greater_than_or_equal_to: 0, only_integer: true }
 
+  after_commit :broadcast_document_tree_refresh_later
+
   scope :recommended_first, -> { order(:importance_level, :recommended_sort_order, :title, :id) }
   scope :important_first, -> { where(importance_level: importance_levels.values_at(:critical, :important)).recommended_first }
 end
