@@ -9,12 +9,17 @@ class DocumentPermission < ApplicationRecord
 
   enum :access_level, { view: 0, download: 1 }
 
-  validate :company_or_user_presence
-  validates :document_id, uniqueness: { scope: %i[company_id user_id] }
+  validate :exactly_one_owner_scope
+  validates :document_id, uniqueness: { scope: :company_id, if: -> { company_id.present? && user_id.blank? } }
+  validates :document_id, uniqueness: { scope: :user_id, if: -> { user_id.present? && company_id.blank? } }
 
   private
 
-  def company_or_user_presence
-    errors.add(:base, "company_id or user_id is required") if company_id.blank? && user_id.blank?
+  def exactly_one_owner_scope
+    if company_id.blank? && user_id.blank?
+      errors.add(:base, "company_id or user_id is required")
+    elsif company_id.present? && user_id.present?
+      errors.add(:base, "company_id and user_id cannot both be set")
+    end
   end
 end
