@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-05-05",
+  "task": {
+    "name": "open_issues_impl_pr_ci_only",
+    "type": "feature",
+    "ticket": "remote open issues"
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work/self/docs-portal-ops",
+    "customer": null,
+    "repo": "matsuo-haruhito/docs-portal",
+    "editable_paths": [
+      "docs/ai/prompt-logs/2026-05-05/2026-05-05_open_issues_impl_pr_ci_only.json",
+      "docs/"
+    ],
+    "read_only_paths": [
+      "../../AGENTS.md",
+      ".git/"
+    ]
+  },
+  "instruction_summary": "Implement remote open issues that can be completed without additional requirement or design discussion, open PRs for them, rely on CI instead of local test execution, and close only the issues whose PR changes pass CI.",
+  "actual_work": "",
+  "changed_files": [
+    "docs/ai/prompt-logs/2026-05-05/2026-05-05_open_issues_impl_pr_ci_only.json"
+  ],
+  "commands": [],
+  "tests": [],
+  "usage": {
+    "estimated_input_tokens": null,
+    "estimated_output_tokens": null,
+    "estimated_total_tokens": null,
+    "measurement_source": "unavailable",
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md"
+    ]
+  },
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md"
+    ],
+    "token_notes": "Exact token counts were unavailable from the environment.",
+    "token_waste_notes": [],
+    "wasted_context": [],
+    "unnecessary_exploration": []
+  },
+  "quality_notes": [],
+  "risks": [],
+  "remaining_concerns": [],
+  "improvement_candidates": {
+    "workflow": [],
+    "issue_triage": []
+  },
+  "signals": []
+}
