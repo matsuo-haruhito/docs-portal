@@ -13,6 +13,8 @@ class DocumentPermission < ApplicationRecord
   validates :document_id, uniqueness: { scope: :company_id, if: -> { company_id.present? && user_id.blank? } }
   validates :document_id, uniqueness: { scope: :user_id, if: -> { user_id.present? && company_id.blank? } }
 
+  after_commit :broadcast_document_tree_refresh_later
+
   private
 
   def exactly_one_owner_scope

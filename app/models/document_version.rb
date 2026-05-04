@@ -15,6 +15,7 @@ class DocumentVersion < ApplicationRecord
   validate :published_until_after_published_from
 
   before_validation :normalize_search_body_text
+  after_commit :broadcast_document_tree_refresh_later
 
   SOURCE_PATH_FIELDS = %i[
     source_relative_path
