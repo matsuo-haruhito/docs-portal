@@ -1,0 +1,49 @@
+rules:
+  - name: submitted_materials
+    pattern: "提出済"
+    category: spec
+    snapshot_kind: submitted
+    visibility_policy: restricted_external
+
+  - name: received_markdown
+    pattern: "受領資料Markdown"
+    category: other
+    document_kind: markdown
+    snapshot_kind: received_markdown
+    visibility_policy: internal_only
+
+  - name: internal_note
+    pattern: "社内メモ"
+    category: other
+    snapshot_kind: internal_note
+    visibility_policy: internal_only
+
+  - name: meeting_note
+    pattern: "議事録"
+    category: meeting_note
+    document_kind: markdown
+
+  - name: operation_manual
+    pattern: "操作説明"
+    category: manual
+    document_kind: markdown
+
+  - name: contract
+    pattern: "契約"
+    category: contract
+
+extension_rules:
+  md:
+    document_kind: markdown
+  markdown:
+    document_kind: markdown
+  pdf:
+    document_kind: pdf
+  xlsx:
+    document_kind: excel
+  xls:
+    document_kind: excel
+  docx:
+    document_kind: word
+  doc:
+    document_kind: word
