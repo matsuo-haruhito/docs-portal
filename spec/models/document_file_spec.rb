@@ -66,7 +66,7 @@ RSpec.describe DocumentFile, type: :model do
   describe "downloadable_by?" do
     let(:company) { create(:company) }
     let(:project) { create(:project) }
-    let(:document) { create(:document, project:, visibility_policy: :restricted) }
+    let(:document) { create(:document, project:, visibility_policy: :restricted_external) }
     let(:version) { create(:document_version, document:, status: :published) }
     let(:external_user) { create(:user, :external, company:) }
     let(:internal_user) { create(:user, :internal) }
