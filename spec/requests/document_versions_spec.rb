@@ -107,7 +107,7 @@ RSpec.describe "Document versions", type: :request do
     expect(response).to have_http_status(:ok)
 
     get document_version_archive_path(published_version)
-    expect(response).to have_http_status(:ok)
+    expect(response).to have_http_status(:forbidden)
 
     get document_version_path(draft_version)
     expect(response).to have_http_status(:forbidden)

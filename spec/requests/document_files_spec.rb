@@ -186,6 +186,35 @@ RSpec.describe "Document files", type: :request do
     expect(response.media_type).to eq("application/pdf")
   end
 
+  it "forbids version archive downloads for external users who only have view permission" do
+    external_user = create(:user, :external)
+    create(:project_membership, project:, user: external_user)
+    create(:document_permission, document:, company: external_user.company, access_level: :view)
+
+    sign_in_as(external_user)
+
+    expect do
+      get document_version_archive_path(version)
+    end.not_to change(AccessLog.where(action_type: :download, target_type: "zip"), :count)
+
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it "allows version archive downloads for external users with download permission" do
+    external_user = create(:user, :external)
+    create(:project_membership, project:, user: external_user)
+    create(:document_permission, document:, company: external_user.company, access_level: :download)
+
+    sign_in_as(external_user)
+
+    expect do
+      get document_version_archive_path(version)
+    end.to change(AccessLog.where(action_type: :download, target_type: "zip"), :count).by(1)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("application/zip")
+  end
+
   it "hides attachment links from external users who only have view permission" do
     external_user = create(:user, :external)
     create(:project_membership, project:, user: external_user)
