@@ -17,6 +17,7 @@ class DocumentRelation < ApplicationRecord
 
   validates :source_document, :target_document, :relation_type, presence: true
   validates :target_document_id, uniqueness: { scope: %i[source_document_id relation_type] }
+  validates :sort_order, numericality: { greater_than_or_equal_to: 0, only_integer: true }
   validate :different_documents
 
   private
