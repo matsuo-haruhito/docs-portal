@@ -9,6 +9,7 @@ class DocumentKeyword < ApplicationRecord
 
   validates :keyword, presence: true
   validates :normalized_keyword, presence: true, uniqueness: { scope: :document_id }
+  validates :sort_order, numericality: { greater_than_or_equal_to: 0, only_integer: true }
 
   scope :ordered, -> { order(:sort_order, :normalized_keyword) }
 
