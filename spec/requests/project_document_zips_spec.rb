@@ -56,6 +56,7 @@ RSpec.describe "Project document zips", type: :request do
 
   it "keeps Japanese document and file names in the zip archive" do
     document = create_document_with_file(title: "日本語資料", slug: "nihongo-doc", file_name: "操作説明書.txt", content: "日本語本文")
+    project.update!(code: "案件A")
 
     sign_in_as(user)
 
@@ -63,6 +64,8 @@ RSpec.describe "Project document zips", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("application/zip")
+    expect(response.headers["content-disposition"]).to include("attachment")
+    expect(response.headers["content-disposition"]).to include("filename*=UTF-8''%E6%A1%88%E4%BB%B6A-documents.zip")
     expect(response.body).to include(binary_string("nihongo-doc/v1.0.0/操作説明書.txt"))
   end
 

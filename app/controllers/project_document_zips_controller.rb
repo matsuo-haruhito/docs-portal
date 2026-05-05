@@ -11,6 +11,7 @@ class ProjectDocumentZipsController < BaseController
       user: current_user,
       filename: "#{project.code}-documents.zip"
     )
+    disposition = "attachment"
 
     versions.each do |version|
       record_zip_download_access_log(version, archive.filename)
@@ -18,10 +19,10 @@ class ProjectDocumentZipsController < BaseController
 
     send_data(
       archive.to_binary,
-      filename: archive.filename,
       type: "application/zip",
-      disposition: "attachment"
+      disposition:
     )
+    response.headers["Content-Disposition"] = ContentDispositionFilename.new(archive.filename, disposition:).header
   end
 
   private

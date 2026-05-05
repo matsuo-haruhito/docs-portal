@@ -6,13 +6,14 @@ class DocumentVersionArchivesController < BaseController
 
     archive = DocumentVersionZipBuilder.new(version:, user: current_user)
     filename = archive.filename
+    disposition = "attachment"
     record_zip_download_access_log(version, filename)
 
     send_data(
       archive.to_binary,
-      filename:,
       type: "application/zip",
-      disposition: "attachment"
+      disposition:
     )
+    response.headers["Content-Disposition"] = ContentDispositionFilename.new(filename, disposition:).header
   end
 end

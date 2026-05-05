@@ -1,0 +1,29 @@
+- content_for :left_content do
+  = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: nil
+
+- page_title @project.name, "文書カタログ"
+h1
+  = @project.name
+  |  / 文書カタログ
+
+- if @catalogs.any?
+  = table_tag do
+    thead
+      tr
+        th 名称
+        th 対象
+        th 公開範囲
+        th 件数
+        th
+    tbody
+      - @catalogs.each do |catalog|
+        tr
+          td = catalog.name
+          td = catalog.audience_type
+          td = catalog.visibility_policy
+          td = catalog.visible_items_for(current_user).size
+          td = link_to "詳細", project_document_catalog_path(@project, catalog)
+- else
+  p.muted 利用可能な文書カタログはありません。
+
+p = link_to "案件トップへ戻る", project_path(@project)

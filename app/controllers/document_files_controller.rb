@@ -4,6 +4,7 @@ class DocumentFilesController < BaseController
     require_document_file_download_access!(file)
 
     file_path = file.absolute_path
+    disposition = disposition_for(file)
 
     unless File.exist?(file_path)
       render plain: "File not found", status: :not_found
@@ -14,10 +15,10 @@ class DocumentFilesController < BaseController
 
     send_file(
       file_path,
-      filename: file.file_name,
-      disposition: disposition_for(file),
+      disposition:,
       type: file.effective_content_type
     )
+    response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
   end
 
   private

@@ -1,0 +1,46 @@
+- content_for :left_content do
+  = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: nil
+
+- page_title @catalog_hash.dig(:catalog, :name)
+h1 = @catalog_hash.dig(:catalog, :name)
+
+p.muted
+  | 案件:
+  = @project.name
+  |  / 対象:
+  = @catalog_hash.dig(:catalog, :audience_type)
+  |  / 公開範囲:
+  = @catalog_hash.dig(:catalog, :visibility_policy)
+
+- if @catalog_hash.dig(:catalog, :description).present?
+  p = @catalog_hash.dig(:catalog, :description)
+
+p.muted
+  | 表示中:
+  = @catalog_hash.dig(:summary, :visible_items)
+  | 件 / 総数:
+  = @catalog_hash.dig(:summary, :total_items)
+  | 件
+
+- if @catalog_hash[:items].any?
+  = table_tag do
+    thead
+      tr
+        th 順序
+        th 文書
+        th メモ
+        th 種別
+        th 公開範囲
+      tbody
+        - @catalog_hash[:items].each do |item|
+          - document = item[:document]
+          tr
+            td = item[:sort_order]
+            td = link_to document[:title], project_document_path(@project, document[:slug])
+            td = item[:note].presence || "-"
+            td = document[:document_kind]
+            td = document[:visibility_policy]
+- else
+  p.muted このカタログで表示できる文書はありません。
+
+p = link_to "文書カタログ一覧へ", project_document_catalogs_path(@project)

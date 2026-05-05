@@ -19,6 +19,7 @@ class Admin::ProjectsController < Admin::BaseController
   end
 
   def edit
+    @template_plan_hash = ProjectTemplatePlanHash.new(ProjectTemplatePlan.new(project: @project).call).call
   end
 
   def update

@@ -5,6 +5,9 @@ Rails.application.routes.draw do
   resource :session, only: %i[new create destroy]
   resources :document_bookmarks, only: %i[index create destroy], param: :public_id
   resources :read_confirmations, only: %i[create destroy], param: :public_id
+  resources :access_requests, only: %i[index create], param: :public_id do
+    post :cancel, on: :member
+  end
 
   namespace :admin do
     root "dashboard#index"
@@ -13,16 +16,20 @@ Rails.application.routes.draw do
     resources :users, except: %i[show new]
     resources :projects, except: %i[show new] do
       get "permission_preview", to: "project_permission_previews#show", on: :member
+      post "apply_template", to: "project_templates#create", on: :member
     end
     resources :project_memberships, except: %i[show new]
     resources :documents, except: %i[show new]
     resources :document_permissions, except: %i[show new]
     resources :access_logs, only: [:index]
+    resources :access_requests, only: %i[index update], param: :public_id
+    resources :document_usage_reports, only: [:index]
   end
 
   resources :projects, only: [:index, :show], param: :code do
     get "site(/*site_path)", to: "project_sites#show", as: :site, format: false
     resource :document_zip, only: [:create], controller: "project_document_zips"
+    resources :document_catalogs, only: %i[index show], param: :public_id
     resources :documents, only: [:index, :show], param: :slug
   end
 

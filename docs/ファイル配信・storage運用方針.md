@@ -74,6 +74,8 @@
 
 それ以外は attachment を基本にします。
 
+`Content-Disposition` header は、ASCII fallback に加えて UTF-8 の `filename*` も付け、日本語ファイル名の download 互換性を確保します。
+
 ## 6. missing file 時の挙動
 
 ### 添付ファイル

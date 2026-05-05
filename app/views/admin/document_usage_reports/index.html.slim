@@ -1,0 +1,66 @@
+- page_title "文書利用状況"
+
+h1 文書利用状況
+= render "admin/nav"
+
+section.card
+  h2 集計条件
+  = form_with url: admin_document_usage_reports_path, method: :get, local: true do |form|
+    .form-grid
+      div
+        = form.label :project_id, "案件"
+        = form.select :project_id, options_for_select([["選択してください", ""]] + @projects.map { [_1.name, _1.id] }, @selected_project&.id)
+    p.actions
+      = form.submit "集計"
+      = link_to "条件をクリア", admin_document_usage_reports_path
+
+- if @report_hash
+  section.card
+    h2 集計サマリ
+    p
+      | 案件:
+      strong = " #{@report_hash.dig(:project, :name)}"
+      |  (
+      = @report_hash.dig(:project, :code)
+      | )
+    p
+      | 文書数:
+      strong = " #{@report_hash.dig(:summary, :document_count)}"
+      |  / 利用あり:
+      strong = " #{@report_hash.dig(:summary, :used_document_count)}"
+      |  / 未利用:
+      strong = " #{@report_hash.dig(:summary, :unused_document_count)}"
+    p
+      | view:
+      strong = " #{@report_hash.dig(:summary, :total_views)}"
+      |  / download:
+      strong = " #{@report_hash.dig(:summary, :total_downloads)}"
+      |  / read confirmation:
+      strong = " #{@report_hash.dig(:summary, :total_read_confirmations)}"
+
+  table
+    thead
+      tr
+        th 文書
+        th カテゴリ
+        th 種別
+        th 公開範囲
+        th 利用
+        th view
+        th download
+        th read confirmation
+        th 最終アクセス
+    tbody
+      - @report_hash[:documents].each do |row|
+        tr
+          td = link_to row[:title], project_document_path(@selected_project, row[:slug])
+          td = row[:category]
+          td = row[:document_kind]
+          td = row[:visibility_policy]
+          td = row[:used] ? "あり" : "なし"
+          td = row[:view_count]
+          td = row[:download_count]
+          td = row[:read_confirmation_count]
+          td = row[:last_accessed_at].presence || "-"
+- else
+  p.muted 案件を選択すると集計結果を表示します。

@@ -1,0 +1,47 @@
+- page_title "アクセス申請"
+
+h1 アクセス申請
+= render "admin/nav"
+
+- if @access_requests.any?
+  table
+    thead
+      tr
+        th 日時
+        th 申請者
+        th 対象
+        th 要求権限
+        th 状態
+        th 理由
+        th 承認者
+        th
+    tbody
+      - @access_requests.each do |access_request|
+        - request_hash = AccessRequestHash.new(access_request).call
+        - requestable = request_hash[:requestable]
+        tr
+          td = access_request.created_at.strftime("%Y-%m-%d %H:%M")
+          td = "#{access_request.requester.name} / #{access_request.requester.email_address}"
+          td
+            = requestable[:type]
+            br
+            - if requestable[:name].present?
+              = requestable[:name]
+            - elsif requestable[:title].present?
+              = requestable[:title]
+            - elsif requestable[:file_name].present?
+              = requestable[:file_name]
+            - else
+              = requestable[:public_id]
+          td = access_request.requested_access_level
+          td = access_request.status
+          td = access_request.reason
+          td = access_request.approver&.email_address || "-"
+          td.actions
+            - if access_request.pending?
+              = button_to "承認", admin_access_request_path(access_request), method: :patch, params: { decision: "approve" }, class: "button"
+              = button_to "却下", admin_access_request_path(access_request), method: :patch, params: { decision: "reject", rejection_reason: "Not approved" }, class: "button secondary"
+            - else
+              span.muted -
+- else
+  p.muted 申請はありません。
