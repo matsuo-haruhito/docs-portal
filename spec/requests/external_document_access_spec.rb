@@ -70,6 +70,84 @@ RSpec.describe "External document access boundaries", type: :request do
     expect(response).to have_http_status(:forbidden)
   end
 
+  it "allows public_with_login documents without document permissions but still protects downloads" do
+    document = create(:document, project: member_project, title: "ログイン公開資料", slug: "login-visible-doc", visibility_policy: :public_with_login)
+    version = create(
+      :document_version,
+      document:,
+      version_label: "v1.0.0",
+      status: :published,
+      site_build_path: "docs/login-visible-doc"
+    )
+    document.update!(latest_version: version)
+    file = DocumentFile.create!(
+      document_version: version,
+      file_name: "login-visible.pdf",
+      content_type: "application/pdf",
+      storage_key: "spec/#{SecureRandom.hex(8)}-login-visible.pdf",
+      file_size: 10,
+      scan_status: :scan_clean
+    )
+    write_site_file(version, "docs/login-visible-doc/index.html", "<html><body><h1>Login Visible Doc</h1></body></html>")
+    FileUtils.mkdir_p(file.absolute_path.dirname)
+    File.write(file.absolute_path, "%PDF-1.4")
+
+    sign_in_as(external_user)
+
+    get project_path(member_project)
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("ログイン公開資料")
+
+    get project_documents_path(member_project)
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to include("ログイン公開資料")
+
+    get project_document_path(member_project, document.slug)
+    expect(response).to have_http_status(:ok)
+
+    get site_document_version_path(version)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Login Visible Doc")
+
+    get document_file_path(file)
+    expect(response).to have_http_status(:forbidden)
+
+    create(:document_permission, document:, company: external_user.company, access_level: :download)
+
+    get document_file_path(file)
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("application/pdf")
+  ensure
+    FileUtils.rm_f(file.absolute_path) if file&.id
+    FileUtils.rm_rf(version.site_root_absolute_path) if version&.id
+  end
+
+  it "treats company_master_admin users like external users for document visibility boundaries" do
+    manager = create(:user, :external, user_type: :company_master_admin, company: external_user.company)
+    create(:project_membership, project: member_project, user: manager)
+
+    public_document = create(:document, project: member_project, title: "ログイン公開管理資料", slug: "manager-public-doc", visibility_policy: :public_with_login)
+    restricted_document = create(:document, project: member_project, title: "権限付き資料", slug: "manager-restricted-doc")
+    internal_document = create(:document, project: member_project, title: "社内専用資料", slug: "manager-internal-doc", visibility_policy: :internal_only)
+    create(:document_permission, document: restricted_document, company: manager.company, access_level: :view)
+
+    sign_in_as(manager)
+
+    get project_documents_path(member_project)
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to include("ログイン公開管理資料", "権限付き資料")
+    expect(result_titles).not_to include("社内専用資料")
+
+    get project_document_path(member_project, public_document.slug)
+    expect(response).to have_http_status(:ok)
+
+    get project_document_path(member_project, restricted_document.slug)
+    expect(response).to have_http_status(:ok)
+
+    get project_document_path(member_project, internal_document.slug)
+    expect(response).to have_http_status(:forbidden)
+  end
+
   it "forbids direct access to non-member project documents and files" do
     other_document = create(:document, project: other_project, title: "他案件資料", slug: "other-project-doc")
     other_version = create(:document_version, document: other_document, version_label: "v1.0.0")
