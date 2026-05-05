@@ -48,7 +48,12 @@ ul
   - else
     li
       span.muted HTML未生成
-  li = link_to "添付・元ファイルをZIPでダウンロード", document_version_archive_path(@version)
+  li
+    - if @document.downloadable_by?(current_user)
+      = link_to "添付・元ファイルをZIPでダウンロード", document_version_archive_path(@version)
+    - else
+      span.muted ZIPダウンロード権限なし
+      =< button_to "ダウンロード権限を申請", access_requests_path, params: { requestable_type: "Document", requestable_public_id: @document.public_id, requested_access_level: "download" }, class: "button secondary"
 
 h2 添付・元ファイル
 - files = @version.document_files.order(:sort_order, :file_name)
@@ -73,6 +78,7 @@ h2 添付・元ファイル
               = link_to "ダウンロード", document_file_path(file, disposition: "download")
             - else
               span.muted 権限なし
+              =< button_to "申請", access_requests_path, params: { requestable_type: "DocumentFile", requestable_public_id: file.public_id, requested_access_level: "download" }, class: "button secondary"
 - else
   p.muted 添付・元ファイルはありません。
 

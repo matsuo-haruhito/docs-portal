@@ -14,6 +14,8 @@
   <p><%= link_to "ドキュメントサイトを表示", project_site_path(@project, site_path: site_version.html_view_site_path, version_id: site_version.public_id) %></p>
 <% end %>
 
+<p><%= link_to "文書カタログを見る", project_document_catalogs_path(@project) %></p>
+
 <h2>資料一覧</h2>
 <ul>
   <% @documents.each do |document| %>

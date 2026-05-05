@@ -1,0 +1,180 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-05-06",
+  "task": {
+    "name": "open_issues_continue",
+    "type": "feature",
+    "ticket": "remote open issues"
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work/self/docs-portal",
+    "customer": null,
+    "repo": "matsuo-haruhito/docs-portal",
+    "editable_paths": [
+      "docs/ai/prompt-logs/2026-05-06/2026-05-06_open_issues_continue.json",
+      ".tmp.requirements-checklist.md",
+      "docs/",
+      "app/",
+      "spec/"
+    ],
+    "read_only_paths": [
+      "../../AGENTS.md",
+      "../../gpt/policies/prompt-log-policy.md",
+      "../../gpt/prompts/prompt-log.json",
+      ".git/"
+    ]
+  },
+  "instruction_summary": "Continue handling open issues that do not require additional requirement decisions, using .tmp.requirements-checklist.md as the hold list for issues that need design clarification.",
+  "actual_work": "Used .tmp.requirements-checklist.md as the hold list, confirmed GitHub CLI was unavailable in this environment, inferred concrete next slices from recent merged PRs, completed the remaining issue #152 wiring for UTF-8 download filenames by applying existing Content-Disposition helpers to direct document-file downloads and ZIP download responses, advanced issue #118 by adding an admin project-template preview/apply workflow on the project edit screen, advanced issue #127 by adding project-scoped document catalog index/show routes with viewer-aware item filtering, advanced issue #119 by adding an admin document usage report screen backed by the existing usage-report services, and advanced issue #117 by adding user/admin access-request screens plus approval/cancellation flows around visible document/file download requests. Added request coverage for UTF-8 filename headers on version archives and project ZIP downloads, added admin request coverage for template preview/apply behavior, added request coverage for catalog visibility boundaries, added admin request coverage for usage report visibility and rendering, added request coverage for access-request creation/list/cancel/approve/reject flows, and updated repo docs to state the new contracts.",
+  "changed_files": [
+    "app/controllers/access_requests_controller.rb",
+    "app/controllers/admin/access_requests_controller.rb",
+    "app/controllers/admin/project_templates_controller.rb",
+    "app/controllers/admin/document_usage_reports_controller.rb",
+    "app/controllers/admin/projects_controller.rb",
+    "app/controllers/document_catalogs_controller.rb",
+    "app/controllers/document_files_controller.rb",
+    "app/controllers/document_version_archives_controller.rb",
+    "app/controllers/project_document_zips_controller.rb",
+    "app/views/access_requests/index.html.slim",
+    "app/views/admin/access_requests/index.html.slim",
+    "app/views/admin/projects/edit.html.slim",
+    "app/views/admin/_nav.html.slim",
+    "app/views/admin/document_usage_reports/index.html.slim",
+    "app/views/document_catalogs/index.html.slim",
+    "app/views/document_catalogs/show.html.slim",
+    "app/views/projects/show.html.erb",
+    "app/views/shared/_navbar.html.slim",
+    "app/views/document_versions/show.html.slim",
+    "config/routes.rb",
+    "docs/ai/prompt-logs/2026-05-06/2026-05-06_open_issues_continue.json",
+    "docs/アプリケーション仕様.md",
+    "docs/ファイル配信・storage運用方針.md",
+    "spec/requests/access_requests_spec.rb",
+    "spec/requests/admin_access_requests_spec.rb",
+    "spec/requests/admin_project_templates_spec.rb",
+    "spec/requests/admin_document_usage_reports_spec.rb",
+    "spec/requests/document_catalogs_spec.rb",
+    "spec/requests/document_version_archive_japanese_filename_spec.rb",
+    "spec/requests/project_document_zips_spec.rb"
+  ],
+  "commands": [
+    {
+      "command": "gh auth status",
+      "notes": "Failed because the configured GitHub token was invalid in this environment."
+    },
+    {
+      "command": "gh issue list --repo matsuo-haruhito/docs-portal --state open --limit 100",
+      "notes": "Failed because GitHub API connectivity was unavailable in this environment."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/document_file_japanese_filename_spec.rb spec/requests/document_version_archive_japanese_filename_spec.rb spec/requests/project_document_zips_spec.rb",
+      "notes": "Passed with 7 examples and 0 failures."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/admin_project_templates_spec.rb spec/services/project_document_template_spec.rb spec/services/project_template_plan_spec.rb spec/services/project_template_plan_hash_spec.rb spec/services/project_template_applier_spec.rb",
+      "notes": "Passed with 12 examples and 0 failures."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/document_catalogs_spec.rb spec/models/document_catalog_spec.rb spec/services/document_catalog_hash_spec.rb",
+      "notes": "Passed with 12 examples and 0 failures."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/admin_document_usage_reports_spec.rb spec/services/document_usage_report_spec.rb spec/services/document_usage_report_hash_spec.rb",
+      "notes": "Passed with 7 examples and 0 failures."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/access_requests_spec.rb spec/requests/admin_access_requests_spec.rb spec/models/access_request_spec.rb spec/services/access_request_hash_spec.rb spec/services/access_request_resolver_spec.rb",
+      "notes": "Passed with 23 examples and 0 failures."
+    }
+  ],
+  "tests": [
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/document_file_japanese_filename_spec.rb spec/requests/document_version_archive_japanese_filename_spec.rb spec/requests/project_document_zips_spec.rb",
+      "result": "passed",
+      "notes": "7 examples, 0 failures"
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/admin_project_templates_spec.rb spec/services/project_document_template_spec.rb spec/services/project_template_plan_spec.rb spec/services/project_template_plan_hash_spec.rb spec/services/project_template_applier_spec.rb",
+      "result": "passed",
+      "notes": "12 examples, 0 failures"
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/document_catalogs_spec.rb spec/models/document_catalog_spec.rb spec/services/document_catalog_hash_spec.rb",
+      "result": "passed",
+      "notes": "12 examples, 0 failures"
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/admin_document_usage_reports_spec.rb spec/services/document_usage_report_spec.rb spec/services/document_usage_report_hash_spec.rb",
+      "result": "passed",
+      "notes": "7 examples, 0 failures"
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/access_requests_spec.rb spec/requests/admin_access_requests_spec.rb spec/models/access_request_spec.rb spec/services/access_request_hash_spec.rb spec/services/access_request_resolver_spec.rb",
+      "result": "passed",
+      "notes": "23 examples, 0 failures"
+    }
+  ],
+  "usage": {
+    "estimated_input_tokens": null,
+    "estimated_output_tokens": null,
+    "estimated_total_tokens": null,
+    "measurement_source": "unavailable",
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md",
+      ".tmp.requirements-checklist.md",
+      "/home/matsu/.codex/skills/github-cli/SKILL.md",
+      "../../gpt/prompts/prompt-log.json",
+      "../../gpt/policies/prompt-log-policy.md"
+    ],
+    "token_notes": "Token counts are unavailable unless provided by the CLI/API.",
+    "token_waste_notes": [],
+    "wasted_context": [],
+    "unnecessary_exploration": []
+  },
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md",
+      ".tmp.requirements-checklist.md",
+      "/home/matsu/.codex/skills/github-cli/SKILL.md",
+      "../../gpt/prompts/prompt-log.json",
+      "../../gpt/policies/prompt-log-policy.md"
+    ],
+    "token_notes": "Token counts are unavailable unless provided by the CLI/API.",
+    "token_waste_notes": [],
+    "wasted_context": [],
+    "unnecessary_exploration": []
+  },
+  "quality_notes": [],
+  "risks": [
+    "Current issue discovery is partially inferred because direct GitHub issue listing was unavailable from this environment."
+  ],
+  "remaining_concerns": [
+    "Open issue list still needs to be refreshed from GitHub or a re-authenticated gh session before choosing the next non-hold issue after the inferred #117/#118/#119/#127/#152 slices."
+  ],
+  "improvement_candidates": {
+    "agents_md": [],
+    "shared_docs": [],
+    "shared_prompts": [],
+    "bin_or_scripts": [],
+    "skills": []
+  },
+  "signals": [
+    {
+      "rule_id": "prompt-log-first",
+      "axis": "reproducibility",
+      "direction": "positive",
+      "note": "Created the repo-local prompt log before deeper issue triage."
+    },
+    {
+      "rule_id": "gh-cli-start-check",
+      "axis": "risk_reduction",
+      "direction": "positive",
+      "note": "Checked GitHub CLI availability early and fell back once auth/connectivity issues were confirmed."
+    }
+  ]
+}

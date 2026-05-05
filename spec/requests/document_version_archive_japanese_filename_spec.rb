@@ -35,6 +35,8 @@ RSpec.describe "Document version archive Japanese filenames", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("application/zip")
+    expect(response.headers["content-disposition"]).to include("attachment")
+    expect(response.headers["content-disposition"]).to include("filename*=UTF-8''japanese-doc-v1.0.0.zip")
     expect(response.body).to include("操作説明書.txt".b)
   end
 end
