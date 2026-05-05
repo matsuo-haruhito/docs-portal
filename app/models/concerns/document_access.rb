@@ -6,12 +6,15 @@ module DocumentAccess
       return none unless user&.active?
       return all if user.internal?
 
-      joins(:project, :document_permissions)
+      left_outer_joins(:document_permissions)
+        .joins(:project)
         .merge(Project.accessible_to(user))
         .where.not(visibility_policy: Document.visibility_policies[:internal_only])
         .where(
+          "documents.visibility_policy = :public_with_login OR " \
           "document_permissions.user_id = :user_id OR " \
           "(document_permissions.company_id = :company_id AND document_permissions.user_id IS NULL)",
+          public_with_login: Document.visibility_policies[:public_with_login],
           user_id: user.id,
           company_id: user.company_id
         )
@@ -24,6 +27,7 @@ module DocumentAccess
     return true if user.internal?
     return false unless project.viewable_by?(user)
     return false if internal_only?
+    return true if public_with_login?
 
     external_permission_scope_for(user).exists?
   end
