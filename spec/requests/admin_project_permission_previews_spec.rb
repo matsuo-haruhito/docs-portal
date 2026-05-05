@@ -43,7 +43,7 @@ RSpec.describe "Admin project permission previews", type: :request do
     expect(viewer_hash).to include(
       "email_address" => "viewer@example.com",
       "before_visible_count" => 2,
-      "after_visible_count" => 2,
+      "after_visible_count" => 1,
       "before_downloadable_count" => 0,
       "after_downloadable_count" => 1
     )
