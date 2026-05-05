@@ -44,7 +44,7 @@ RSpec.describe PermissionChangeDryRun do
   end
 
   it "reports project membership grants without exposing internal-only documents" do
-    visible = create_document(title: "Visible", slug: "visible")
+    visible = create_document(title: "Visible", slug: "visible", visibility_policy: :public_with_login)
     internal = create_document(title: "Internal", slug: "internal", visibility_policy: :internal_only)
 
     result = described_class.new(
@@ -91,5 +91,22 @@ RSpec.describe PermissionChangeDryRun do
 
     expect(result.changes.map(&:viewer)).to eq([viewer, other_viewer])
     expect(result.gained_documents).to eq([document])
+  end
+
+  it "reports documents gained for download separately from visible documents" do
+    document = create_document(title: "Manual", slug: "manual")
+    create(:project_membership, project:, user: viewer)
+    create(:document_permission, document:, company:, access_level: :view)
+
+    result = described_class.new(
+      project:,
+      viewers: [viewer],
+      grant: { download_document_ids: [document.id] }
+    ).call
+
+    change = result.changes.first
+    expect(change.gained_documents).to be_empty
+    expect(change.gained_downloadable_documents).to eq([document])
+    expect(result.gained_downloadable_documents).to eq([document])
   end
 end

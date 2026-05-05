@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-05-05",
+  "task": {
+    "name": "issue154_permission_change_preview",
+    "type": "feature",
+    "ticket": "#154"
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work/self/docs-portal-ops3",
+    "customer": null,
+    "repo": "matsuo-haruhito/docs-portal",
+    "editable_paths": [
+      "app/",
+      "config/routes.rb",
+      "docs/",
+      "spec/"
+    ],
+    "read_only_paths": [
+      "../../AGENTS.md",
+      ".git/"
+    ]
+  },
+  "instruction_summary": "Implement an issue-closable permission change dry-run preview for issue #154, validate by CI only, and close the issue after the PR passes.",
+  "actual_work": "Added an admin project permission preview endpoint, extended permission dry-run logic to cover downloadable-document diffs, added request/service specs, and documented the preview behavior in docs/アプリケーション仕様.md.",
+  "changed_files": [
+    "app/controllers/admin/project_permission_previews_controller.rb",
+    "app/services/permission_change_dry_run.rb",
+    "app/services/permission_change_preview_hash.rb",
+    "config/routes.rb",
+    "docs/ai/prompt-logs/2026-05-05/2026-05-05_issue154_permission_change_preview.json",
+    "docs/アプリケーション仕様.md",
+    "spec/requests/admin_project_permission_previews_spec.rb",
+    "spec/services/permission_change_dry_run_spec.rb"
+  ],
+  "commands": [
+    "gh issue view 154 --repo matsuo-haruhito/docs-portal",
+    "git worktree add /mnt/c/work/self/docs-portal-ops3 <main-sha>",
+    "git -C /mnt/c/work/self/docs-portal-ops3 switch -c codex/permission-change-preview"
+  ],
+  "tests": [
+    {
+      "command": "GitHub Actions ci/test",
+      "result": "pending",
+      "notes": "Per instruction, local tests are not run. Validation is deferred to PR CI."
+    }
+  ],
+  "usage": {
+    "estimated_input_tokens": null,
+    "estimated_output_tokens": null,
+    "estimated_total_tokens": null,
+    "measurement_source": "unavailable",
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md",
+      "docs/アプリケーション仕様.md"
+    ]
+  },
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md",
+      "docs/アプリケーション仕様.md"
+    ],
+    "token_notes": "Exact token counts were unavailable from the environment.",
+    "token_waste_notes": [],
+    "wasted_context": [],
+    "unnecessary_exploration": []
+  },
+  "quality_notes": [],
+  "risks": [],
+  "remaining_concerns": [],
+  "improvement_candidates": {
+    "workflow": [],
+    "issue_triage": []
+  },
+  "signals": []
+}

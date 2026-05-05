@@ -56,7 +56,7 @@ RSpec.describe PermissionChangePreviewHash do
   end
 
   it "renders project membership grant without exposing internal-only documents" do
-    visible = create_document(title: "Visible", slug: "visible")
+    visible = create_document(title: "Visible", slug: "visible", visibility_policy: :public_with_login)
     internal = create_document(title: "Internal", slug: "internal", visibility_policy: :internal_only)
 
     hash = described_class.new(
