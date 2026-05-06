@@ -27,6 +27,10 @@ Rails.application.routes.draw do
     resources :project_memberships, except: %i[show new]
     resources :consent_terms, except: %i[show new]
     resources :project_consent_settings, except: %i[show new]
+    resources :git_import_sources, except: %i[show new] do
+      post :sync, on: :member
+    end
+    resources :git_import_runs, only: [:index]
     resources :documents, except: %i[show new] do
       patch :archive, on: :member
       patch :restore, on: :member
