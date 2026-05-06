@@ -92,7 +92,9 @@ class ZipImportStager
 
         destination = extracted_root.join(safe_path)
         FileUtils.mkdir_p(destination.dirname)
-        entry.extract(destination.to_s) { true }
+        File.open(destination, "wb") do |file|
+          IO.copy_stream(entry.get_input_stream, file)
+        end
         extracted_paths << destination
       end
     end
