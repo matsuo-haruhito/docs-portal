@@ -1,0 +1,29 @@
+= render "shared/error_messages", record: webhook_endpoint
+
+= form_with model: [:admin, webhook_endpoint] do |form|
+  .form-grid
+    label
+      | 名称
+      = form.text_field :name, required: true
+    label
+      | 送信先URL
+      = form.url_field :target_url, required: true, placeholder: "https://example.com/webhooks/docs-portal"
+    label
+      | 署名シークレット
+      = form.password_field :secret_token, value: webhook_endpoint.secret_token, autocomplete: "new-password"
+    label
+      | 有効
+      = form.check_box :active
+
+  fieldset
+    legend 通知対象イベント
+    - WebhookEndpoint::EVENT_TYPES.each do |event_type|
+      label.checkbox-label
+        = check_box_tag "webhook_endpoint[event_types][]", event_type, webhook_endpoint.normalized_event_types.include?(event_type), id: "webhook_endpoint_event_types_#{event_type}"
+        = event_type
+
+  p.muted 署名シークレットを設定すると、送信時に X-Docs-Portal-Signature-256 ヘッダーへ HMAC-SHA256 署名を付与します。
+  p.actions
+    = form.submit "保存", class: "button"
+    - if webhook_endpoint.persisted?
+      = link_to "一覧へ戻る", admin_webhook_endpoints_path, class: "button secondary"
