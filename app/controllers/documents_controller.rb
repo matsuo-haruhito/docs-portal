@@ -23,7 +23,7 @@ class DocumentsController < BaseController
     @current_page = @total_pages if @current_page > @total_pages
 
     @documents = visible_documents.slice((@current_page - 1) * @per_page, @per_page) || []
-    @tree_projects = Project.accessible_to(current_user).includes(documents: :latest_version).order(:code)
+    @tree_projects = portal_tree_projects
   end
 
   def show
@@ -56,7 +56,7 @@ class DocumentsController < BaseController
         DocumentApprovalRequest.none
       end
     @approval_approvers = User.where(user_type: :internal, active: true).order(:name, :email_address)
-    @tree_projects = Project.accessible_to(current_user).includes(documents: :latest_version).order(:code)
+    @tree_projects = portal_tree_projects
   end
 
   private
@@ -76,6 +76,21 @@ class DocumentsController < BaseController
     scope = apply_enum_filter(scope, :visibility_policy, Document.visibility_policies)
     scope = apply_availability_filters(scope)
     scope.distinct
+  end
+
+  def portal_tree_projects
+    projects = Project.accessible_to(current_user)
+      .includes(documents: :latest_version)
+      .order(:code)
+    return projects if current_user.internal?
+
+    projects.select { visible_project_for_portal?(_1) }
+  end
+
+  def visible_project_for_portal?(project)
+    return true if project.documents.empty?
+
+    project.documents.any? { _1.visible_in_portal_for?(current_user) }
   end
 
   def document_filter_params
