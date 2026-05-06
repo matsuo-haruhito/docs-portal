@@ -5,7 +5,7 @@ RSpec.describe WebhookDeliveryDispatcher do
   class StubWebhookHttp
     Request = Struct.new(:uri, :request)
 
-    attr_reader :requests
+    attr_reader :requests, :response, :error
 
     def initialize(response: Net::HTTPOK.new("1.1", "200", "OK"), error: nil)
       @response = response
@@ -25,10 +25,6 @@ RSpec.describe WebhookDeliveryDispatcher do
 
       yield http
     end
-
-    protected
-
-    attr_reader :response, :error
   end
 
   let(:project) { create(:project, code: "WEBHOOK", name: "Webhook Project") }
