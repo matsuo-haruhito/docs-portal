@@ -7,7 +7,8 @@ module DocumentsHelper
       roots: projects,
       children_resolver: lambda do |node|
         node.is_a?(Project) ? document_tree_documents_for(node) : []
-      end
+      end,
+      node_key_resolver: ->(node) { node_key(node) }
     )
 
     tree = TreeView::Tree.new(adapter:)
@@ -30,8 +31,23 @@ module DocumentsHelper
       ui_config:,
       initial_expansion: { default: :collapsed, expanded_keys: },
       row_class_builder: ->(item) { tree_item_css_class(item) },
-      row_data_builder: ->(item) { tree_item_data_attributes(item) }
+      row_data_builder: ->(item) { tree_item_data_attributes(item) },
+      toggle_icon_builder: ->(item, state, context) { tree_toggle_button_label(item, state, context) }
     )
+  end
+
+  def tree_toggle_button_label(item, state, context)
+    children = Array(context[:children])
+    return { text: "・", class: "tree-toggle__icon--leaf", title: "子項目はありません" } if children.empty?
+
+    case state.to_sym
+    when :collapsed
+      { text: "開く", class: "tree-toggle__icon--open", title: "展開" }
+    when :expanded
+      { text: "閉じる", class: "tree-toggle__icon--close", title: "折りたたむ" }
+    else
+      { text: "・", class: "tree-toggle__icon--leaf", title: "子項目はありません" }
+    end
   end
 
   def tree_item_path(item)
