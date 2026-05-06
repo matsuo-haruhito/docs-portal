@@ -11,7 +11,7 @@ class CreateGitImportSourcesAndRuns < ActiveRecord::Migration[8.1]
       t.integer :auth_type, null: false, default: 0
       t.string :installation_id
       t.string :credential_ref
-      t.text :credential_secret_ciphertext
+      t.text :credential_secret
       t.string :last_synced_commit_sha
       t.datetime :last_synced_at
       t.boolean :enabled, null: false, default: true
