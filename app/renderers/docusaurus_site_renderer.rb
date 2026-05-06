@@ -348,7 +348,7 @@ class DocusaurusSiteRenderer
       article,
       main .theme-doc-markdown,
       main .markdown {
-        max-width: 860px;
+        max-width: 1120px;
         margin: 0 auto;
         padding: #{ @embedded ? "24px 24px 56px" : "0 24px 56px" };
       }
@@ -413,7 +413,7 @@ class DocusaurusSiteRenderer
       .portal-site-nav,
       .document-version-switcher {
         box-sizing: border-box;
-        max-width: 1120px;
+        max-width: 1280px;
         margin: 0 auto;
         padding-left: 24px;
         padding-right: 24px;
