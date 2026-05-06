@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   root "projects#index"
 
   get "dashboard", to: "dashboard#show", as: :dashboard
+  resources :consents, only: %i[index new create], param: :public_id
   resources :document_approval_requests, only: %i[index show update], param: :public_id do
     post :cancel, on: :member
   end
@@ -24,6 +25,8 @@ Rails.application.routes.draw do
       post "apply_template", to: "project_templates#create", on: :member
     end
     resources :project_memberships, except: %i[show new]
+    resources :consent_terms, except: %i[show new]
+    resources :project_consent_settings, except: %i[show new]
     resources :documents, except: %i[show new] do
       patch :archive, on: :member
       patch :restore, on: :member
