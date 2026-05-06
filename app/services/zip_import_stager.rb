@@ -106,14 +106,14 @@ class ZipImportStager
 
   def build_manifest(scan_result)
     {
-      source_repo:,
-      source_branch:,
-      source_commit_hash: provided_source_commit_hash || Digest::SHA256.file(zip_path).hexdigest,
-      documents: scan_result.documents.map { manifest_document_for(_1) },
-      zip_import_preview: {
-        orphan_files: scan_result.orphan_files,
-        skipped_files: scan_result.skipped_files,
-        warnings: scan_result.warnings
+      "source_repo" => source_repo,
+      "source_branch" => source_branch,
+      "source_commit_hash" => provided_source_commit_hash || Digest::SHA256.file(zip_path).hexdigest,
+      "documents" => scan_result.documents.map { manifest_document_for(_1) },
+      "zip_import_preview" => {
+        "orphan_files" => scan_result.orphan_files,
+        "skipped_files" => scan_result.skipped_files,
+        "warnings" => scan_result.warnings
       }
     }
   end
@@ -126,17 +126,17 @@ class ZipImportStager
     )
 
     {
-      project_code: project.code,
-      slug: candidate.slug,
-      title: candidate.title,
-      category: classification.attributes[:category] || "spec",
-      document_kind: classification.attributes[:document_kind] || candidate.document_kind,
-      visibility_policy: classification.attributes[:visibility_policy] || "restricted_external",
-      version_label:,
-      status:,
-      source_relative_path: candidate.logical_path,
-      snapshot_kind: classification.attributes[:snapshot_kind],
-      files: candidate.attachment_paths.each_with_index.map { |path, index| manifest_file_for(candidate, path, index) }
+      "project_code" => project.code,
+      "slug" => candidate.slug,
+      "title" => candidate.title,
+      "category" => classification.attributes[:category] || "spec",
+      "document_kind" => classification.attributes[:document_kind] || candidate.document_kind,
+      "visibility_policy" => classification.attributes[:visibility_policy] || "restricted_external",
+      "version_label" => version_label,
+      "status" => status,
+      "source_relative_path" => candidate.logical_path,
+      "snapshot_kind" => classification.attributes[:snapshot_kind],
+      "files" => candidate.attachment_paths.each_with_index.map { |path, index| manifest_file_for(candidate, path, index) }
     }.compact
   end
 
@@ -154,11 +154,11 @@ class ZipImportStager
     FileUtils.cp(path, destination)
 
     {
-      file_name: path.basename.to_s,
-      content_type: ZipImportDocumentScanner.new(root: extracted_root).content_type_for(path),
-      storage_key:,
-      file_size: path.size,
-      sort_order: index
+      "file_name" => path.basename.to_s,
+      "content_type" => ZipImportDocumentScanner.new(root: extracted_root).content_type_for(path),
+      "storage_key" => storage_key,
+      "file_size" => path.size,
+      "sort_order" => index
     }
   end
 
