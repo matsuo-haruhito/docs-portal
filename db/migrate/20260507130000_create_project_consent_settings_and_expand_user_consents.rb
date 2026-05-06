@@ -17,5 +17,24 @@ class CreateProjectConsentSettingsAndExpandUserConsents < ActiveRecord::Migratio
 
     add_column :user_consents, :consent_term_version_label, :string
     add_index :user_consents, :consent_term_version_label
+
+    reversible do |dir|
+      dir.up do
+        execute <<~SQL.squish
+          UPDATE user_consents
+          SET consent_term_version_label = consent_terms.version_label
+          FROM consent_terms
+          WHERE user_consents.consent_term_id = consent_terms.id
+            AND user_consents.consent_term_version_label IS NULL
+        SQL
+      end
+    end
+
+    change_column_null :user_consents, :consent_term_version_label, false
+    remove_index :user_consents, name: "index_user_consents_unique_user_term_target"
+    add_index :user_consents,
+      [:user_id, :consent_term_id, :target_type, :target_id, :consent_term_version_label],
+      unique: true,
+      name: "index_user_consents_unique_versioned_target"
   end
 end
