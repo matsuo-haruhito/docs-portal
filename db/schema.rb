@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_06_133000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -36,6 +36,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_06_133000) do
     t.index ["project_id"], name: "index_access_logs_on_project_id"
     t.index ["public_id"], name: "index_access_logs_on_public_id", unique: true
     t.index ["user_id"], name: "index_access_logs_on_user_id"
+  end
+
+  create_table "bulk_edit_dry_runs", force: :cascade do |t|
+    t.bigint "confirmed_by_id"
+    t.datetime "confirmed_at"
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id", null: false
+    t.json "errors_json", default: [], null: false
+    t.datetime "expires_at"
+    t.integer "operation_type", default: 0, null: false
+    t.json "params_json", default: {}, null: false
+    t.bigint "project_id"
+    t.string "public_id", null: false
+    t.json "result_json", default: {}, null: false
+    t.json "summary_json", default: {}, null: false
+    t.integer "status", default: 0, null: false
+    t.json "target_document_ids", default: [], null: false
+    t.datetime "updated_at", null: false
+    t.json "warnings_json", default: [], null: false
+    t.index ["confirmed_by_id"], name: "index_bulk_edit_dry_runs_on_confirmed_by_id"
+    t.index ["created_by_id"], name: "index_bulk_edit_dry_runs_on_created_by_id"
+    t.index ["operation_type"], name: "index_bulk_edit_dry_runs_on_operation_type"
+    t.index ["project_id"], name: "index_bulk_edit_dry_runs_on_project_id"
+    t.index ["public_id"], name: "index_bulk_edit_dry_runs_on_public_id", unique: true
+    t.index ["status"], name: "index_bulk_edit_dry_runs_on_status"
   end
 
   create_table "access_requests", force: :cascade do |t|
@@ -568,6 +593,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_06_133000) do
   add_foreign_key "access_logs", "documents"
   add_foreign_key "access_logs", "projects"
   add_foreign_key "access_logs", "users"
+  add_foreign_key "bulk_edit_dry_runs", "projects"
+  add_foreign_key "bulk_edit_dry_runs", "users", column: "confirmed_by_id"
+  add_foreign_key "bulk_edit_dry_runs", "users", column: "created_by_id"
   add_foreign_key "access_requests", "users", column: "approver_id"
   add_foreign_key "access_requests", "users", column: "requester_id"
   add_foreign_key "document_approval_requests", "documents"
