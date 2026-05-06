@@ -89,19 +89,23 @@ class ProjectSitesController < BaseController
   def send_rewritten_webpack_runtime(file_path)
     body = rewrite_webpack_runtime_public_path(File.read(file_path))
 
+    expires_now
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers.delete("ETag")
+    response.headers.delete("Last-Modified")
+
     send_data body,
       disposition: "inline",
       type: Rack::Mime.mime_type(file_path.extname, "application/javascript")
   end
 
   def rewrite_webpack_runtime_public_path(body)
-    body = body.gsub('f.p="/"', "f.p=#{site_asset_public_path.dump}")
+    body = body.gsub(/([A-Za-z_$][\w$]*\.p)\s*=\s*["']\/["']/, "\\1=#{site_asset_public_path.dump}")
     asset_query = site_asset_query_suffix
     return body if asset_query.blank?
 
-    body
-      .gsub("f.p+f.u(r)", "f.p+f.u(r)+#{asset_query.dump}")
-      .gsub("f.p+f.u(e)", "f.p+f.u(e)+#{asset_query.dump}")
+    body.gsub(/([A-Za-z_$][\w$]*\.p\s*\+\s*[A-Za-z_$][\w$]*\.u\([^)]*\))/, "\\1+#{asset_query.dump}")
   end
 
   def site_asset_public_path
