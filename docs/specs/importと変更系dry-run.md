@@ -22,6 +22,29 @@
 - 初期実装では Markdown / MDX / markdown 拡張子の文書、および standalone diagram を import 対象にする
 - 本実行は保存済み `ImportDryRun(import_mode=zip)` の `dry_run_id` を指定して行う
 
+### #88 初期完了範囲
+
+#88 は、専用 UI より先に internal API と importer pipeline で ZIP import の初期スライスを提供できた時点で完了扱いにする。
+
+完了範囲は次のとおり。
+
+- ZIP upload を staging 領域へ安全に展開し、path traversal やファイル数 / 展開サイズの上限を検証する
+- ZIP 内のフォルダ構造を `source_path` として保持した manifest を生成する
+- Markdown / MDX / markdown 拡張子の文書候補と standalone diagram 候補を判定する
+- README.md / index.md をフォルダ index 候補として扱う
+- Markdown から参照される画像、PDF、Office などを添付候補として preview に含める
+- `validate_only=true` で保存付き dry-run を作成し、登録予定の Document / Version / File と warning を確認できるようにする
+- 保存済み dry-run を confirmed execution の入力として再利用し、manifest importer 経由で本実行できるようにする
+- ZIP import の代表ケースを request / service spec で確認する
+
+次の項目は #88 の完了条件からは外し、後続 issue で扱う。
+
+- 専用の管理 UI
+- 巨大 ZIP を前提にした非同期 Job 化、実行履歴、再実行、rollback / cleanup の強化
+- 添付ファイルのウイルススキャン連携
+- standalone diagram や未参照ファイルのより細かい自動分類
+- 類似 Document 候補や重複検出の高度化
+
 ## Git連携 import
 
 - Git リポジトリから指定 branch / path 配下の Markdown と添付を取り込めるようにする
