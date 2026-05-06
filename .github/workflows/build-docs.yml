@@ -82,10 +82,13 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: package-lock.json
+          registry-url: https://registry.npmjs.org/
 
       - name: Install JavaScript dependencies
         if: steps.root-js-changes.outputs.changed == 'true'
-        run: npm ci
+        run: |
+          npm config set registry https://registry.npmjs.org/
+          npm ci
 
       - name: Prepare database
         run: bundle exec rails db:prepare
@@ -121,17 +124,19 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             docusaurus/package-lock.json
+          registry-url: https://registry.npmjs.org/
 
       - name: Audit Ruby dependencies
         run: bundle exec bundler-audit check --update
 
       - name: Audit JavaScript dependencies
-        if: steps.root-js-changes.outputs.changed == 'true'
         run: npm audit --audit-level=high
 
       - name: Install Docusaurus dependencies
         working-directory: ./docusaurus
-        run: npm ci
+        run: |
+          npm config set registry https://registry.npmjs.org/
+          npm ci
 
       - name: Audit Docusaurus dependencies
         working-directory: ./docusaurus
@@ -158,10 +163,13 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: docusaurus/package-lock.json
+          registry-url: https://registry.npmjs.org/
 
       - name: Install Docusaurus dependencies
         working-directory: ./docusaurus
-        run: npm ci
+        run: |
+          npm config set registry https://registry.npmjs.org/
+          npm ci
 
       - name: Build Docusaurus site
         working-directory: ./docusaurus
