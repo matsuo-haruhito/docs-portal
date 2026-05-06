@@ -62,7 +62,7 @@ class ApplicationController < ActionController::Base
     @error_title = title
     @error_message = message
     @error_status = Rack::Utils.status_code(status)
-    render "shared/error_page", status:
+    render "shared/error_page", formats: :html, status:
   end
 
   def reset_session_if_stale!
