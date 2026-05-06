@@ -19,7 +19,7 @@ class DocumentSitesController < BaseController
     file_path = renderer.file_response_path(site_path)
 
     if html_file?(file_path)
-      if embedded_request?
+      if embedded_request? || params[:site_path].blank?
         record_view_access_log(site_path, resolved_version)
         render html: renderer.render_html(site_path)
       else
