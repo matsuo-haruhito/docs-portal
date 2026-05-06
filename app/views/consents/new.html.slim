@@ -1,0 +1,29 @@
+- page_title "利用上の注意事項への同意"
+
+h1 利用上の注意事項への同意
+
+p.muted このポータルで閲覧・ダウンロードする情報の取り扱いを確認してください。同意は会社間契約の代替ではなく、個人ユーザー単位の確認履歴として記録されます。
+
+- if @result.missing_terms.any?
+  = form_with url: consents_path, method: :post, local: true do |form|
+    = hidden_field_tag :target_type, @result.target.class.name
+    = hidden_field_tag :target_public_id, @result.target.public_id
+    = hidden_field_tag :timing, @timing
+    = hidden_field_tag :return_to, params[:return_to]
+
+    - @result.missing_terms.each do |term|
+      section.card
+        h2 = term.title
+        p.muted
+          | 版: 
+          strong = term.version_label
+          |  / 種別: 
+          strong = term.consent_scope
+        = simple_format(term.body)
+
+    p.actions
+      = form.submit "確認して同意する", class: "button"
+      = link_to "同意せず戻る", projects_path, class: "button secondary"
+- else
+  p 必要な同意は完了しています。
+  p = link_to "戻る", params[:return_to].presence || projects_path, class: "button"
