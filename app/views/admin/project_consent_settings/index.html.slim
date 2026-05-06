@@ -1,0 +1,33 @@
+- page_title "案件同意設定"
+
+h1 案件同意設定
+= render "admin/nav"
+
+.card
+  h2 新規登録
+  = render "form", project_consent_setting: @project_consent_setting
+
+= table_tag do
+  thead
+    tr
+      th 案件
+      th 同意文面
+      th 必須タイミング
+      th 状態
+      th
+  tbody
+    - @project_consent_settings.each do |setting|
+      tr
+        td
+          = setting.project.name
+          br
+          code = setting.project.code
+        td
+          = setting.consent_term.title
+          br
+          span.muted = setting.consent_term.version_label
+        td = setting.required_on
+        td = setting.enabled? ? "有効" : "無効"
+        td.actions
+          = edit_link_to "編集", edit_admin_project_consent_setting_path(setting)
+          = delete_link_to "削除", admin_project_consent_setting_path(setting), confirm: "案件同意設定を削除しますか？"
