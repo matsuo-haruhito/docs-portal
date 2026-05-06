@@ -310,7 +310,39 @@ class DocusaurusSiteRenderer
     body["class"] = [body["class"], "portal-doc-body"].compact.join(" ")
 
     style = Nokogiri::XML::Node.new("style", document)
-    style.content = <<~CSS
+    style.content = viewer_theme_css
+    head.add_child(style)
+  end
+
+  def viewer_theme_css
+    portal_navigation_css = unless @embedded
+      <<~CSS
+        .portal-site-nav,
+        .document-version-switcher {
+          box-sizing: border-box;
+          max-width: 1120px;
+          margin: 0 auto;
+          padding-left: 24px;
+          padding-right: 24px;
+        }
+        .portal-site-nav {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+          align-items: center;
+          padding-top: 16px;
+          padding-bottom: 12px;
+          color: #4b5563;
+          font-size: 0.95rem;
+        }
+        .portal-site-nav a {
+          color: #0f62fe;
+          text-decoration: none;
+        }
+      CSS
+    end
+
+    <<~CSS
       body.portal-doc-body {
         margin: 0;
         background: #{ @embedded ? "transparent" : "linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)" };
@@ -318,28 +350,7 @@ class DocusaurusSiteRenderer
         font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
         line-height: 1.8;
       }
-      .portal-site-nav,
-      .document-version-switcher {
-        box-sizing: border-box;
-        max-width: 1120px;
-        margin: 0 auto;
-        padding-left: 24px;
-        padding-right: 24px;
-      }
-      .portal-site-nav {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        align-items: center;
-        padding-top: 16px;
-        padding-bottom: 12px;
-        color: #4b5563;
-        font-size: 0.95rem;
-      }
-      .portal-site-nav a {
-        color: #0f62fe;
-        text-decoration: none;
-      }
+      #{portal_navigation_css}
       .document-version-switcher {
         margin-bottom: 16px;
       }
@@ -429,7 +440,6 @@ class DocusaurusSiteRenderer
         height: auto;
       }
       @media (max-width: 960px) {
-        .portal-site-nav,
         .document-version-switcher,
         article,
         main .theme-doc-markdown,
@@ -439,7 +449,5 @@ class DocusaurusSiteRenderer
         }
       }
     CSS
-
-    head.add_child(style)
   end
 end
