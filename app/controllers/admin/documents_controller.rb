@@ -56,7 +56,7 @@ class Admin::DocumentsController < Admin::BaseController
   private
 
   def set_document
-    @document = Document.find_by!(id: params[:id])
+    @document = Document.find_by(id: params[:id]) || Document.find_by!(slug: params[:id])
   end
 
   def load_projects
