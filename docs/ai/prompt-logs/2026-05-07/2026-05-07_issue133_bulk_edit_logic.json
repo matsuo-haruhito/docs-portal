@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-05-07",
+  "task": {
+    "name": "issue133_bulk_edit_logic",
+    "type": "feature",
+    "ticket": "#133"
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work/self/docs-portal",
+    "customer": null,
+    "repo": "matsuo-haruhito/docs-portal",
+    "editable_paths": [
+      "app/",
+      "db/",
+      "docs/",
+      "spec/"
+    ],
+    "read_only_paths": [
+      "../../AGENTS.md",
+      "docs/README.md",
+      "docs/アプリケーション仕様.md",
+      "docs/テスト方針.md",
+      ".git/"
+    ]
+  },
+  "instruction_summary": "Advance issue #133 by implementing bulk document metadata edit logic without adding a dedicated UI yet, relying on service/model/spec changes and documenting the initial contract.",
+  "actual_work": "Inspected the current document, document version, tag, archive, and import dry-run implementations, then added a logic-only bulk metadata edit slice for issue #133: a persisted `BulkEditDryRun` model and migration, `DocumentBulkEditPlan` for dry-run planning, `DocumentBulkEditPreview` for saved preview creation, `DocumentBulkEditExecutor` for apply/confirm flow, focused factories/specs, and an app-spec update that documents the initial contract and current omission of UI wiring and data-classification-tag support.",
+  "changed_files": [
+    "app/models/bulk_edit_dry_run.rb",
+    "app/services/document_bulk_edit_executor.rb",
+    "app/services/document_bulk_edit_plan.rb",
+    "app/services/document_bulk_edit_preview.rb",
+    "db/migrate/20260507093000_create_bulk_edit_dry_runs.rb",
+    "db/schema.rb",
+    "docs/ai/prompt-logs/2026-05-07/2026-05-07_issue133_bulk_edit_logic.json",
+    "docs/アプリケーション仕様.md",
+    "spec/factories/bulk_edit_dry_runs.rb",
+    "spec/models/bulk_edit_dry_run_spec.rb",
+    "spec/services/document_bulk_edit_executor_spec.rb",
+    "spec/services/document_bulk_edit_plan_spec.rb",
+    "spec/services/document_bulk_edit_preview_spec.rb"
+  ],
+  "commands": [
+    {
+      "command": "git status -sb",
+      "result": "passed",
+      "notes": "Confirmed local main before starting the issue #133 logic-only slice."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/models/bulk_edit_dry_run_spec.rb spec/services/document_bulk_edit_plan_spec.rb spec/services/document_bulk_edit_preview_spec.rb spec/services/document_bulk_edit_executor_spec.rb",
+      "result": "blocked",
+      "notes": "RSpec boot aborted because the local database has five pending migrations, including the new bulk edit dry-run migration."
+    }
+  ],
+  "tests": [
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/models/bulk_edit_dry_run_spec.rb spec/services/document_bulk_edit_plan_spec.rb spec/services/document_bulk_edit_preview_spec.rb spec/services/document_bulk_edit_executor_spec.rb",
+      "result": "blocked",
+      "notes": "Pending migrations prevented the focused bulk edit specs from running locally."
+    }
+  ],
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md",
+      "docs/アプリケーション仕様.md",
+      "docs/テスト方針.md",
+      "../codex-workspace-template/_shared/schemas/prompt-log.schema.json",
+      "app/models/document.rb",
+      "app/models/document_version.rb",
+      "app/models/import_dry_run.rb",
+      "app/services/import_dry_run_validator.rb",
+      "app/controllers/admin/documents_controller.rb"
+    ],
+    "token_notes": "Exact token counts were unavailable from the environment.",
+    "token_waste_notes": [],
+    "wasted_context": [],
+    "unnecessary_exploration": []
+  },
+  "quality_notes": [],
+  "risks": [
+    "The initial logic-only slice intentionally excludes dedicated `data_classification_tags` handling because the current schema only has `document_tags`."
+  ],
+  "remaining_concerns": [
+    "No controller or admin UI wiring was added in this turn; future work still needs to connect the preview/execution services to a selection screen.",
+    "Local RSpec validation is still pending until the test database is migrated."
+  ],
+  "improvement_candidates": {},
+  "signals": [
+    {
+      "rule_id": "prompt-log-create-at-start",
+      "polarity": "positive",
+      "note": "Created the repo-local prompt log during initial issue #133 scoping before implementation."
+    }
+  ]
+}
