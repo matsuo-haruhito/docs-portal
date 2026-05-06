@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-05-07",
+  "task": {
+    "name": "docs_reorganization",
+    "type": "documentation",
+    "ticket": null
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work/self/docs-portal",
+    "customer": null,
+    "repo": "matsuo-haruhito/docs-portal",
+    "editable_paths": [
+      "docs/",
+      "README.md"
+    ],
+    "read_only_paths": [
+      "../../AGENTS.md",
+      ".git/"
+    ]
+  },
+  "instruction_summary": "Reorganize the documentation set by removing now-obsolete files, splitting the oversized application specification into smaller topic-focused files, and updating stale entrypoints and references.",
+  "actual_work": "Reorganized the docs set by turning the oversized application specification into a smaller index plus topic-focused split specs, updating README/read-order entrypoints, removing merged obsolete docs, and correcting stale latest_version-related wording in supporting documents.",
+  "changed_files": [
+    "README.md",
+    "docs/README.md",
+    "docs/ToDo.md",
+    "docs/publish.json 仕様と生成ルール.md",
+    "docs/specs/importと変更系dry-run.md",
+    "docs/specs/基本モデルと権限.md",
+    "docs/specs/文書ライフサイクルと公開.md",
+    "docs/specs/閲覧画面とUI.md",
+    "docs/アプリケーション仕様.md",
+    "docs/テスト方針.md",
+    "docs/リリース・デプロイ・rollback手順.md",
+    "docs/ローカル編集からポータル更新までの最小運用案.md",
+    "docs/開発・保守ガイド.md",
+    "docs/ai/prompt-logs/2026-05-07/2026-05-07_docs_reorganization.json"
+  ],
+  "commands": [
+    "find docs -maxdepth 2 -type f | sort",
+    "wc -l docs/*.md | sort -nr",
+    "rg -n \"アプリケーション仕様|Webhook・外部API連携方針|Git連携インポート|テキスト系viewer候補メモ|ローカル編集からポータル更新までの最小運用案|publish.json\" docs app spec README.md -S",
+    "rg -n '^## ' docs/アプリケーション仕様.md",
+    "rg -n \"semantic version|運用方針補足|テキスト系viewer候補メモ|viewer shell|embedded=1|latest_version\" docs README.md -S"
+  ],
+  "tests": [
+    {
+      "command": "rg -n \"運用方針補足|テキスト系viewer候補メモ\" docs README.md app spec -S",
+      "result": "passed",
+      "details": "Remaining matches are only historical references inside prompt logs."
+    }
+  ],
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "docs/README.md",
+      "docs/アプリケーション仕様.md",
+      "docs/ToDo.md",
+      "docs/運用方針補足.md",
+      "docs/テキスト系viewer候補メモ.md",
+      "docs/ローカル編集からポータル更新までの最小運用案.md",
+      "docs/Git連携インポート.md",
+      "docs/Webhook・外部API連携方針.md",
+      "docs/利用規約・秘密保持の同意管理.md",
+      "README.md",
+      "docs/開発・保守ガイド.md"
+    ],
+    "token_notes": "Exact token counts were unavailable from the environment.",
+    "token_waste_notes": [],
+    "wasted_context": [],
+    "unnecessary_exploration": []
+  },
+  "quality_notes": [
+    "Reduced the main application specification from a single large file to a short index plus four focused split-spec files.",
+    "Removed obsolete docs that had been superseded by the current viewer and latest_version decisions."
+  ],
+  "risks": [
+    "Historical prompt logs still mention deleted docs because they describe past work; those references are intentional."
+  ],
+  "remaining_concerns": [
+    "Some long runbooks remain intentionally verbose because they are operational procedures rather than product specs."
+  ],
+  "improvement_candidates": {},
+  "signals": [
+    {
+      "rule_id": "prompt-log-create-at-start",
+      "polarity": "positive",
+      "note": "Created the repo-local prompt log before substantial docs restructuring work."
+    }
+  ]
+}

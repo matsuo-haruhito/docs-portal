@@ -17,7 +17,8 @@
 
 ## UI / UX
 
-- 主要機能の実装がさらに揃った後に、社内 / 社外 / 管理者ごとの主要導線を横断で見直す
+- dashboard / navbar / viewer shell / admin model browser の基礎導線は実装済み
+- 社内 / 社外 / 管理者ごとの導線差分は、必要になったタイミングで画面群ごとに個別 issue へ分けて扱う
 - 総合 UI/UX 見直しは包括 issue として残さず、必要になった時点で viewer / dashboard / navigation / admin UX など具体 issue に分けて扱う
 - 本文表示の改善は viewer 単位の issue を優先し、全画面の大規模 redesign は後回しにする
 
@@ -49,13 +50,13 @@
 - GitHub Actions を 1 本化し、build -> manifest 生成 -> import API まで通す
 - artifact の永続保存方式を検討する
 - バージョン管理しない Document の上書き import を実装する
-- semantic version 比較で latest_version を更新する処理を実装する
+- `latest_version` の明示切り替えや別ルール更新を入れる場合は、現行の created_at 基準との差分を整理してから扱う
 
 ## Docusaurus / seed
 
 - seed 用 Docusaurus build で id front matter を自動付与する処理を安定化する
 - seed 用 Markdown build 失敗時のログを見やすくする
-- Docusaurus asset の MIME type を実機確認し、必要なら `.js` / `.css` の明示マップを追加する
+- embedded viewer 前提での iframe 高さ追従や document-site 内検索など、本文 UX を追加検討する
 
 ## 多言語 / localization
 
@@ -107,6 +108,6 @@
 
 - company_master_admin の権限制御 request spec を追加する
 - public_id route の request spec を追加する
-- latest_version の semantic version 比較 spec を追加する
+- latest_version の created_at 基準と override 方針が変わる場合は、そのルールを request / service spec に追加する
 - archived の非表示・復元 spec を追加する
 - AccessLog の記録対象 spec を追加する

@@ -103,7 +103,7 @@ node ./scripts/generate_publish_manifest.mjs \
 - 添付の `file_size` を取得できる
 - `storage_key` は `attachments/` 配下の相対パスとして解決できる
 - `site_build_path` は `docusaurus/build/` 配下の相対パスとして解決できる
-- `version_label` は semantic version として比較可能な形式を基本とする
+- `version_label` は表示・識別用として妥当な文字列である
 
 不足があれば Actions を失敗させます
 
