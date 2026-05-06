@@ -114,7 +114,8 @@ RSpec.describe DocusaurusSiteRenderer do
     expect(html).to include("portal-doc-body")
     expect(html).to include(".portal-site-nav")
     expect(html).to include(".theme-doc-breadcrumbs")
-    expect(html).to include("max-width: 860px")
+    expect(html).to include("max-width: 1120px")
+    expect(html).to include("max-width: 1280px")
   end
 
   it "omits injected portal navigation in embedded mode" do
