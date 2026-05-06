@@ -45,7 +45,7 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
   private
 
   def set_bulk_edit_dry_run
-    @bulk_edit_dry_run = BulkEditDryRun.find_by!(public_id: params[:id])
+    @bulk_edit_dry_run = BulkEditDryRun.find_by!(public_id: params[:public_id] || params[:id])
   end
 
   def load_documents
