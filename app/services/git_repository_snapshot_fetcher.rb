@@ -1,6 +1,6 @@
+require "cgi"
 require "fileutils"
 require "open3"
-require "shellwords"
 require "tmpdir"
 
 class GitRepositorySnapshotFetcher
@@ -33,7 +33,7 @@ class GitRepositorySnapshotFetcher
       token = @source.credential_secret.to_s
       raise ApplicationError::BadRequest, "Git credential is not configured" if token.blank?
 
-      "https://x-access-token:#{Shellwords.escape(token)}@github.com/#{@source.repository_full_name}.git"
+      "https://x-access-token:#{CGI.escape(token)}@github.com/#{@source.repository_full_name}.git"
     when :none
       "https://github.com/#{@source.repository_full_name}.git"
     else
