@@ -12,7 +12,7 @@ class ImportDryRun < ApplicationRecord
     git_pull: 1,
     git_push: 2,
     manual_upload: 3
-  }, prefix: true
+  }, scopes: false
 
   enum :status, {
     analyzed: 0,
