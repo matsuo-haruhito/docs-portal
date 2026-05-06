@@ -66,7 +66,7 @@ class ZipImportDocumentScanner
   attr_reader :root
 
   def all_files
-    @all_files ||= Dir.glob(root.join("**", "*").to_s)
+    @all_files ||= Dir.glob(root.join("**", "*").to_s, File::FNM_DOTMATCH)
       .map { Pathname(_1) }
       .select(&:file?)
       .sort_by(&:to_s)
