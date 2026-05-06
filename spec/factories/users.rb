@@ -12,8 +12,16 @@ FactoryBot.define do
       user_type { :internal }
     end
 
+    trait :admin do
+      user_type { :internal }
+    end
+
     trait :external do
       user_type { :external }
+    end
+
+    trait :company_master_admin do
+      user_type { :company_master_admin }
     end
   end
 end
