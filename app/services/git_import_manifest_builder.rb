@@ -132,8 +132,11 @@ class GitImportManifestBuilder
   end
 
   def deleted_candidates_for(documents)
+    project = @source.project
+    return [] unless project && project.persisted?
+
     imported_paths = documents.map { _1.fetch(:source_relative_path) }
-    existing_paths = @source.project.documents.includes(:latest_version).filter_map { _1.latest_version&.source_relative_path }
+    existing_paths = project.documents.includes(:latest_version).filter_map { _1.latest_version&.source_relative_path }
     existing_paths.grep(%r{\A#{Regexp.escape(@source.normalized_source_path)}/}).sort - imported_paths.sort
   end
 end
