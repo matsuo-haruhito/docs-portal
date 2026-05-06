@@ -9,7 +9,7 @@ class UserConsent < ApplicationRecord
 
   validates :consented_at, presence: true
   validates :consent_term_version_label, presence: true
-  validates :consent_term_id, uniqueness: { scope: %i[user_id target_type target_id] }
+  validates :consent_term_id, uniqueness: { scope: %i[user_id target_type target_id consent_term_version_label] }
 
   before_validation :set_consented_at, on: :create
   before_validation :set_consent_term_version_label
