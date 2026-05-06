@@ -1,6 +1,8 @@
 class ProjectsController < BaseController
   def index
-    @projects = portal_tree_projects
+    @projects = Project.accessible_to(current_user)
+      .includes(documents: :latest_version)
+      .order(:code)
   end
 
   def show
@@ -19,7 +21,7 @@ class ProjectsController < BaseController
       .order(:code)
     return projects if current_user.internal?
 
-    visible_projects = projects.select { portal_documents_for(_1).any? || _1.documents.empty? }
+    visible_projects = projects.select { portal_documents_for(_1).any? }
     visible_projects << include_project if include_project.present? && visible_projects.exclude?(include_project)
     visible_projects
   end
@@ -35,7 +37,6 @@ class ProjectsController < BaseController
     return false unless document.visible_in_portal_for?(current_user)
     return true unless document.document_versions.exists?
 
-    latest_version = document.latest_version
-    latest_version.present? && latest_version.viewable_by?(current_user)
+    document.document_versions.published.any? { _1.within_publication_window? }
   end
 end
