@@ -1,0 +1,21 @@
+class CreateProjectConsentSettingsAndExpandUserConsents < ActiveRecord::Migration[8.1]
+  def change
+    create_table :project_consent_settings do |t|
+      t.string :public_id, null: false
+      t.references :project, null: false, foreign_key: true
+      t.references :consent_term, null: false, foreign_key: true
+      t.integer :required_on, null: false, default: 0
+      t.boolean :enabled, null: false, default: true
+
+      t.timestamps
+    end
+
+    add_index :project_consent_settings, :public_id, unique: true
+    add_index :project_consent_settings, [:project_id, :consent_term_id, :required_on], unique: true, name: "index_project_consent_settings_unique_requirement"
+    add_index :project_consent_settings, :required_on
+    add_index :project_consent_settings, :enabled
+
+    add_column :user_consents, :consent_term_version_label, :string
+    add_index :user_consents, :consent_term_version_label
+  end
+end
