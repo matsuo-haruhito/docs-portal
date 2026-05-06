@@ -51,6 +51,7 @@ class DocumentBulkEditExecutor
     items = build_missing_document_items(documents) + plan.items.map { execute_item(_1, plan.changes) }
 
     update_dry_run!(plan:, items:)
+    create_audit_log!(items:)
     Result.new(bulk_edit_dry_run: dry_run, plan:, items:)
   end
 
@@ -173,6 +174,21 @@ class DocumentBulkEditExecutor
       confirmed_by: actor,
       confirmed_at: Time.current,
       status: items.any?(&:success?) ? :confirmed : :failed
+    )
+  end
+
+  def create_audit_log!(items:)
+    summary = Result.new(bulk_edit_dry_run: dry_run, plan: nil, items:).summary
+    AccessLog.create!(
+      action_type: :bulk_edit,
+      user: actor,
+      company: actor.company,
+      project: dry_run.project,
+      target_type: "BulkEditDryRun",
+      target_name: "#{dry_run.public_id} total=#{summary[:total_count]} success=#{summary[:success_count]} failed=#{summary[:failure_count]}",
+      accessed_at: Time.current,
+      ip_address: nil,
+      user_agent: "system:document_bulk_edit_executor"
     )
   end
 end

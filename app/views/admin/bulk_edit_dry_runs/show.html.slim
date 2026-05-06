@@ -1,0 +1,115 @@
+- page_title "文書一括編集dry-run"
+
+h1 文書一括編集dry-run
+= render "admin/nav"
+
+.card
+  h2 概要
+  dl
+    dt dry-run ID
+    dd = @bulk_edit_dry_run.public_id
+    dt 状態
+    dd
+      span.badge = @bulk_edit_dry_run.status
+    dt 作成者
+    dd = @bulk_edit_dry_run.created_by.name || @bulk_edit_dry_run.created_by.email_address
+    dt 対象件数
+    dd = @preview_summary["total_count"] || @preview_summary[:total_count] || 0
+    dt 変更予定件数
+    dd = @preview_summary["changed_count"] || @preview_summary[:changed_count] || 0
+    dt warning / error
+    dd = "#{@bulk_edit_dry_run.warnings_json.size} / #{@bulk_edit_dry_run.errors_json.size}"
+    - if @bulk_edit_dry_run.expires_at.present?
+      dt 有効期限
+      dd = @bulk_edit_dry_run.expires_at.to_fs(:db)
+
+  - if @bulk_edit_dry_run.analyzed?
+    p.actions
+      = button_to "確認して実行", admin_bulk_edit_dry_run_path(@bulk_edit_dry_run), method: :patch, class: "button", form: { data: { turbo_confirm: "dry-run結果を確認済みとして一括編集を実行しますか？" } }
+      = link_to "別のdry-runを作成", new_admin_bulk_edit_dry_run_path, class: "button secondary"
+  - else
+    p.actions
+      = link_to "別のdry-runを作成", new_admin_bulk_edit_dry_run_path, class: "button secondary"
+
+- if @bulk_edit_dry_run.warnings_json.any?
+  section.card
+    h2 warnings
+    ul
+      - @bulk_edit_dry_run.warnings_json.each do |warning|
+        li = warning
+
+- if @bulk_edit_dry_run.errors_json.any?
+  section.card
+    h2 errors
+    ul
+      - @bulk_edit_dry_run.errors_json.each do |error|
+        li = error
+
+section.card
+  h2 dry-run明細
+  table
+    thead
+      tr
+        th 文書
+        th 変更フィールド
+        th 変更前
+        th 変更後
+        th warning
+        th error
+    tbody
+      - @preview_items.each do |item|
+        - before_doc = item.dig("before", "document") || item.dig(:before, :document) || {}
+        - after_doc = item.dig("after", "document") || item.dig(:after, :document) || {}
+        - before_version = item.dig("before", "latest_version") || item.dig(:before, :latest_version) || {}
+        - after_version = item.dig("after", "latest_version") || item.dig(:after, :latest_version) || {}
+        - before_tags = item.dig("before", "tag_names") || item.dig(:before, :tag_names) || []
+        - after_tags = item.dig("after", "tag_names") || item.dig(:after, :tag_names) || []
+        tr
+          td = before_doc["title"] || before_doc[:title] || item["document_public_id"] || item[:document_public_id]
+          td = Array(item["changed_fields"] || item[:changed_fields]).join(", ").presence || "-"
+          td
+            ul
+              li = "category: #{before_doc["category"] || before_doc[:category]}"
+              li = "document_kind: #{before_doc["document_kind"] || before_doc[:document_kind]}"
+              li = "visibility_policy: #{before_doc["visibility_policy"] || before_doc[:visibility_policy]}"
+              li = "importance: #{before_doc["importance_level"] || before_doc[:importance_level]}"
+              li = "archived: #{before_doc["archived"] || before_doc[:archived]}"
+              li = "snapshot_kind: #{before_version && (before_version["snapshot_kind"] || before_version[:snapshot_kind])}"
+              li = "published_from: #{before_version && (before_version["published_from"] || before_version[:published_from])}"
+              li = "published_until: #{before_version && (before_version["published_until"] || before_version[:published_until])}"
+              li = "tags: #{Array(before_tags).join(', ')}"
+          td
+            ul
+              li = "category: #{after_doc["category"] || after_doc[:category]}"
+              li = "document_kind: #{after_doc["document_kind"] || after_doc[:document_kind]}"
+              li = "visibility_policy: #{after_doc["visibility_policy"] || after_doc[:visibility_policy]}"
+              li = "importance: #{after_doc["importance_level"] || after_doc[:importance_level]}"
+              li = "archived: #{after_doc["archived"] || after_doc[:archived]}"
+              li = "snapshot_kind: #{after_version && (after_version["snapshot_kind"] || after_version[:snapshot_kind])}"
+              li = "published_from: #{after_version && (after_version["published_from"] || after_version[:published_from])}"
+              li = "published_until: #{after_version && (after_version["published_until"] || after_version[:published_until])}"
+              li = "tags: #{Array(after_tags).join(', ')}"
+          td = Array(item["warnings"] || item[:warnings]).join(" / ").presence || "-"
+          td = Array(item["errors"] || item[:errors]).join(" / ").presence || "-"
+
+- if @execution_items.any?
+  section.card
+    h2 実行結果
+    p.muted 個別Documentごとの成功/失敗を表示します。
+    table
+      thead
+        tr
+          th 文書
+          th status
+          th 変更フィールド
+          th warning
+          th error
+      tbody
+        - @execution_items.each do |item|
+          tr
+            td = item["title"] || item[:title] || item["document_public_id"] || item[:document_public_id] || item["document_id"] || item[:document_id]
+            td
+              span.badge = item["status"] || item[:status]
+            td = Array(item["changed_fields"] || item[:changed_fields]).join(", ").presence || "-"
+            td = Array(item["warnings"] || item[:warnings]).join(" / ").presence || "-"
+            td = Array(item["errors"] || item[:errors]).join(" / ").presence || "-"

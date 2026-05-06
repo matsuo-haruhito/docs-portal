@@ -21,6 +21,10 @@ class BulkEditDryRun < ApplicationRecord
   validates :target_document_ids, :params_json, :summary_json, :result_json, presence: true
   validate :json_collections_must_be_present
 
+  def to_param
+    public_id
+  end
+
   def document_ids
     Array(target_document_ids).map(&:to_i).uniq
   end
