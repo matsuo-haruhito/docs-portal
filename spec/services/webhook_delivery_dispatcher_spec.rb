@@ -9,6 +9,7 @@ RSpec.describe WebhookDeliveryDispatcher do
 
     def initialize(response: Net::HTTPOK.new("1.1", "200", "OK"), error: nil)
       @response = response
+      @response.instance_variable_set(:@body, "accepted")
       @error = error
       @requests = []
     end
@@ -19,7 +20,7 @@ RSpec.describe WebhookDeliveryDispatcher do
           client.requests << Request.new([request.uri.hostname, request.uri.port, request.uri.scheme], request)
           raise client.error if client.error
 
-          client.response.tap { |response| response.body = "accepted" }
+          client.response
         end
       end.new(self)
 
@@ -40,7 +41,7 @@ RSpec.describe WebhookDeliveryDispatcher do
   end
 
   it "delivers subscribed events with a signed JSON payload" do
-    endpoint = create(:webhook_endpoint, event_types: %w[document_updated], secret_token: "top-secret")
+    endpoint = create(:webhook_endpoint, event_types: %w[document_updated], secret_token: "shared-signing-key")
     create(:webhook_endpoint, event_types: %w[document_published])
     http_client = StubWebhookHttp.new
 
@@ -58,14 +59,14 @@ RSpec.describe WebhookDeliveryDispatcher do
     )
 
     request = http_client.requests.first.request
-    expected_signature = "sha256=#{OpenSSL::HMAC.hexdigest('SHA256', 'top-secret', delivery.request_body)}"
+    expected_signature = "sha256=#{OpenSSL::HMAC.hexdigest('SHA256', 'shared-signing-key', delivery.request_body)}"
     expect(request["X-Docs-Portal-Event"]).to eq("document_updated")
     expect(request["X-Docs-Portal-Signature-256"]).to eq(expected_signature)
   end
 
   it "records failed delivery history when the request fails" do
     create(:webhook_endpoint, event_types: %w[document_updated])
-    http_client = StubWebhookHttp.new(error: Errno::ECONNREFUSED.new)
+    http_client = StubWebhookHttp.new(error: StandardError.new("connection refused"))
 
     deliveries = described_class.new(http_client:).dispatch!(event)
 
