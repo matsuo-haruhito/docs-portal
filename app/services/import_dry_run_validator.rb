@@ -137,19 +137,7 @@ class ImportDryRunValidator
   end
 
   def existing_document_for(source_path, title)
-    return if source_path.blank?
-
-    exact_match = project_documents.find do |document|
-      normalize_path(document.latest_version&.source_relative_path) == normalize_path(source_path)
-    end
-    return exact_match if exact_match.present?
-
-    file_name = File.basename(source_path)
-    same_file_name_documents = project_documents.select do |document|
-      document.latest_version&.source_file_name == file_name
-    end
-
-    same_file_name_documents.one? ? same_file_name_documents.first : nil
+    DocumentImportTargetResolver.new(project:, scope: project_documents).call(source_path:, slug: nil)
   end
 
   def inferred_title(entry)

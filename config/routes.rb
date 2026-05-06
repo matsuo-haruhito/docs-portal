@@ -72,6 +72,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :internal do
       resources :doc_imports, only: [:create]
+      resources :zip_imports, only: [:create]
     end
   end
 end
