@@ -5,12 +5,15 @@ class ConsentTerm < ApplicationRecord
 
   has_many :user_consents, dependent: :destroy
   has_many :users, through: :user_consents
+  has_many :project_consent_settings, dependent: :destroy
+  has_many :projects, through: :project_consent_settings
 
   enum :consent_scope, {
     global: 0,
     project: 1,
     document: 2,
-    download: 3
+    download: 3,
+    shared_link: 4
   }
 
   enum :requirement_timing, {
