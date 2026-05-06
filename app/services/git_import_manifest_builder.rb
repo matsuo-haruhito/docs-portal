@@ -48,7 +48,7 @@ class GitImportManifestBuilder
   private
 
   def markdown_paths
-    Dir.glob(@worktree_path.join("**", "*")).map { Pathname.new(_1) }.select do |path|
+    Dir.glob(@worktree_path.join("**", "*").to_s).map { Pathname.new(_1) }.select do |path|
       path.file? && MARKDOWN_EXTENSIONS.include?(path.extname.downcase)
     end.sort
   end
