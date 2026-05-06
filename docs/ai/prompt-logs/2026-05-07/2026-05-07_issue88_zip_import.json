@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-05-07",
+  "task": {
+    "name": "issue88_zip_import",
+    "type": "feature",
+    "ticket": "#88"
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work/self/docs-portal",
+    "customer": null,
+    "repo": "matsuo-haruhito/docs-portal",
+    "editable_paths": [
+      "app/",
+      "config/",
+      "db/",
+      "docs/",
+      "spec/"
+    ],
+    "read_only_paths": [
+      "../../AGENTS.md",
+      "docs/README.md",
+      "docs/アプリケーション仕様.md",
+      "docs/テスト方針.md",
+      ".git/"
+    ]
+  },
+  "instruction_summary": "Advance issue #88 by implementing a first ZIP import slice on top of the existing import dry-run/importer pipeline: receive a ZIP through internal API, expand it into staging safely, derive a manifest/preview, persist a ZIP-mode dry-run, and allow confirmed execution from the saved artifact without adding a user-facing UI yet.",
+  "actual_work": "Implemented the first ZIP import slice on top of the existing manifest-based importer pipeline. Added ZIP staging/extraction, document scanning, manifest generation, an internal ZIP import API with saved dry-run and confirmed execution flow, importer/dry-run target resolution alignment, focused service/request specs, and application-spec documentation updates.",
+  "changed_files": [
+    "app/controllers/api/internal/zip_imports_controller.rb",
+    "app/importers/document_importer.rb",
+    "app/services/document_import_target_resolver.rb",
+    "app/services/import_dry_run_validator.rb",
+    "app/services/zip_import_document_scanner.rb",
+    "app/services/zip_import_stager.rb",
+    "config/routes.rb",
+    "docs/ai/prompt-logs/2026-05-07/2026-05-07_issue88_zip_import.json",
+    "docs/アプリケーション仕様.md",
+    "spec/requests/api/internal/zip_imports_spec.rb",
+    "spec/services/zip_import_document_scanner_spec.rb",
+    "spec/services/zip_import_stager_spec.rb"
+  ],
+  "commands": [
+    "git status -sb",
+    "sed -n '1,260p' app/controllers/api/internal/doc_imports_controller.rb",
+    "sed -n '1,320p' app/importers/document_importer.rb",
+    "sed -n '1,320p' app/services/import_dry_run_validator.rb",
+    "sed -n '1,320p' app/services/zip_import_document_scanner.rb",
+    "sed -n '1,320p' app/services/zip_import_stager.rb",
+    "sed -n '1,280p' docs/アプリケーション仕様.md",
+    "bundle exec rspec spec/services/zip_import_document_scanner_spec.rb spec/services/zip_import_stager_spec.rb spec/requests/api/internal/zip_imports_spec.rb",
+    "docker compose run --rm app bundle exec rspec spec/services/zip_import_document_scanner_spec.rb spec/services/zip_import_stager_spec.rb spec/requests/api/internal/zip_imports_spec.rb"
+  ],
+  "tests": [
+    {
+      "command": "bundle exec rspec spec/services/zip_import_document_scanner_spec.rb spec/services/zip_import_stager_spec.rb spec/requests/api/internal/zip_imports_spec.rb",
+      "result": "failed",
+      "details": "Local Ruby environment in this workspace does not provide `bundle`."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/services/zip_import_document_scanner_spec.rb spec/services/zip_import_stager_spec.rb spec/requests/api/internal/zip_imports_spec.rb",
+      "result": "inconclusive",
+      "details": "Container startup began, but the command did not produce RSpec output in a reasonable time in this environment."
+    }
+  ],
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md",
+      "docs/アプリケーション仕様.md",
+      "docs/テスト方針.md",
+      "app/controllers/api/internal/doc_imports_controller.rb",
+      "app/importers/document_importer.rb",
+      "app/services/import_dry_run_validator.rb",
+      "app/services/import_manifest_dry_run.rb",
+      "app/services/stored_zip_archive.rb",
+      "db/seeds/support/external_sample_document_scanner.rb",
+      "db/seeds/support/external_sample_importer.rb",
+      "spec/requests/api/internal/doc_imports_spec.rb"
+    ],
+    "token_notes": "Exact token counts were unavailable from the environment.",
+    "token_waste_notes": [],
+    "wasted_context": [],
+    "unnecessary_exploration": []
+  },
+  "quality_notes": [
+    "Added focused service specs for ZIP scanning and staging and a request spec for validate-only and confirmed ZIP import flows.",
+    "Separated ZIP preview leftovers into `orphan_files` and `skipped_files` so noisy ZIP metadata entries do not appear as importable leftovers."
+  ],
+  "risks": [
+    "Focused RSpec verification could not be completed end-to-end in this environment because the local Ruby toolchain is absent and the Docker-based run did not return test output promptly.",
+    "The initial ZIP scanner intentionally supports Markdown/MDX and standalone diagram sources only; richer bundle conventions and more aggressive frontmatter parsing remain future work."
+  ],
+  "remaining_concerns": [
+    "A follow-up validation pass in CI or a healthier local container environment is still needed before merging."
+  ],
+  "improvement_candidates": {},
+  "signals": [
+    {
+      "rule_id": "prompt-log-create-at-start",
+      "polarity": "positive",
+      "note": "Created the repo-local prompt log during the initial scoping phase for issue #88 before implementation."
+    }
+  ]
+}

@@ -39,7 +39,7 @@ class DocumentImporter
     project = Project.find_by!(code: payload.fetch("project_code"))
 
     Document.transaction do
-      document = project.documents.find_or_initialize_by(slug: payload.fetch("slug"))
+      document = resolve_document(project, payload)
       document.assign_attributes(
         title: payload.fetch("title"),
         category: payload.fetch("category"),
@@ -85,6 +85,13 @@ class DocumentImporter
     end
   end
 
+  def resolve_document(project, payload)
+    resolver = DocumentImportTargetResolver.new(project:)
+    source_path = source_path_for(payload)
+    slug = payload["slug"]
+    resolver.call(source_path:, slug:) || project.documents.build(slug: slug.presence || fallback_slug_for(source_path))
+  end
+
   def assign_source_path_metadata!(version, payload)
     source_path = source_path_for(payload)
     return if source_path.blank?
@@ -101,6 +108,13 @@ class DocumentImporter
       payload["markdown_entry_path"].presence ||
       payload["pdf_snapshot_path"].presence ||
       payload["site_build_path"].presence
+  end
+
+  def fallback_slug_for(source_path)
+    base = source_path.to_s.presence || "document"
+    base = Pathname(base).sub_ext("").to_s
+    normalized = base.split("/").map { |segment| segment.parameterize.presence || "part" }.join("-")
+    normalized.presence || "document"
   end
 
   def published_at_for(payload)
