@@ -18,7 +18,7 @@ class ConsentsController < BaseController
       UserConsent.find_or_create_by!(
         user: current_user,
         consent_term: term,
-        target: result.target,
+        target: target_for(term, result),
         consent_term_version_label: term.version_label
       ) do |consent|
         consent.ip_address = request.remote_ip
@@ -37,6 +37,10 @@ class ConsentsController < BaseController
 
   def set_timing
     @timing = params[:timing].presence || "first_view"
+  end
+
+  def target_for(term, result)
+    term.global? ? nil : result.target
   end
 
   def find_target(target_type, target_public_id)
