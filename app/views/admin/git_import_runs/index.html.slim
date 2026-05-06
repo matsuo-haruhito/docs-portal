@@ -1,0 +1,40 @@
+- page_title "Git同期履歴"
+
+h1 Git同期履歴
+= render "admin/nav"
+
+= table_tag do
+  thead
+    tr
+      th 実行日時
+      th repository
+      th branch/path
+      th commit
+      th status
+      th summary
+      th error
+  tbody
+    - @git_import_runs.each do |run|
+      tr
+        td = l(run.created_at)
+        td = run.repository_full_name
+        td
+          code = run.branch
+          br
+          code = run.source_path
+        td
+          - if run.commit_sha.present?
+            code = run.commit_sha.first(12)
+          - else
+            span.muted 未取得
+        td = run.status
+        td
+          - if run.summary_json.present?
+            pre = JSON.pretty_generate(run.summary_json)
+          - else
+            span.muted なし
+        td
+          - if run.error_message.present?
+            pre = run.error_message
+          - else
+            span.muted なし
