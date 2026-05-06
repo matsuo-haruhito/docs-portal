@@ -1,0 +1,29 @@
+- page_title "同意文面管理"
+
+h1 同意文面管理
+= render "admin/nav"
+
+.card
+  h2 新規登録
+  = render "form", consent_term: @consent_term
+
+= table_tag do
+  thead
+    tr
+      th タイトル
+      th 版
+      th 種別
+      th 再同意方針
+      th 状態
+      th
+  tbody
+    - @consent_terms.each do |term|
+      tr
+        td = term.title
+        td = term.version_label
+        td = term.consent_scope
+        td = term.requirement_timing
+        td = term.active? ? "有効" : "無効"
+        td.actions
+          = edit_link_to "編集", edit_admin_consent_term_path(term)
+          = delete_link_to "削除", admin_consent_term_path(term), confirm: "同意文面「#{term.title} #{term.version_label}」を削除しますか？履歴がある場合は削除できません。"

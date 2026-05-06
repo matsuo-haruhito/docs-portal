@@ -2,6 +2,7 @@ class DocumentFilesController < BaseController
   def show
     file = DocumentFile.find_by!(public_id: params[:public_id])
     require_document_file_download_access!(file)
+    return if require_consent!(target: file, timing: :download)
 
     file_path = file.absolute_path
     disposition = disposition_for(file)

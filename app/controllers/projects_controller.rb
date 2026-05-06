@@ -9,6 +9,8 @@ class ProjectsController < BaseController
   def show
     @project = Project.find_by!(code: params[:code])
     require_project_access!(@project)
+    return if require_consent!(target: @project, timing: :first_view)
+
     @documents = portal_documents_for(@project)
     @important_documents = @documents.select { %w[critical important].include?(_1.importance_level) }
     @tree_projects = portal_tree_projects(include_project: @project)

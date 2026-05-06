@@ -7,6 +7,8 @@ class DocumentVersionsController < BaseController
 
     @document = @version.document
     @project = @document.project
+    return if require_consent!(target: @project, timing: :first_view)
+
     @versions = @document.document_versions.select { _1.viewable_by?(current_user) }.sort_by(&:created_at).reverse
     visible_comments = @version.document_review_comments.visible_to(current_user)
     @question_threads = visible_comments.where(internal_only: false, comment_type: :question).roots.includes(:author, :resolved_by, replies: [:author, :resolved_by]).order(:created_at, :id)

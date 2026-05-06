@@ -10,6 +10,8 @@ class Project < ApplicationRecord
   has_many :document_delivery_logs, dependent: :destroy
   has_many :project_memberships, dependent: :destroy
   has_many :users, through: :project_memberships
+  has_many :project_consent_settings, dependent: :destroy
+  has_many :consent_terms, through: :project_consent_settings
 
   validates :code, :name, presence: true
   validates :code, uniqueness: true

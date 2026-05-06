@@ -23,6 +23,7 @@ class ProjectSitesController < BaseController
   def set_project
     @project = Project.find_by!(code: params[:project_code] || params[:code])
     require_project_access!(@project)
+    return if require_consent!(target: @project, timing: :first_view)
   end
 
   def set_build_version

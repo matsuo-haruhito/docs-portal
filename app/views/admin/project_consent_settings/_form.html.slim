@@ -1,0 +1,21 @@
+= render "shared/error_messages", record: project_consent_setting
+
+= form_with model: [:admin, project_consent_setting] do |form|
+  .form-grid
+    label
+      | 案件
+      = form.collection_select :project_id, @projects, :id, :name
+    label
+      | 同意文面
+      = form.select :consent_term_id, @consent_terms.map { |term| ["#{term.title} / #{term.version_label}", term.id] }
+    label
+      | 必須タイミング
+      = form.select :required_on, ProjectConsentSetting.required_ons.keys.map { [_1, _1] }
+    label
+      | 状態
+      = form.select :enabled, [["有効", true], ["無効", false]]
+  p.muted first_access は閲覧前、download は ZIP・添付ファイルのダウンロード前に確認します。shared_link 系は共有リンク実装時の拡張用です。
+  p.actions
+    = form.submit "保存", class: "button"
+    - if project_consent_setting.persisted?
+      = link_to "一覧へ戻る", admin_project_consent_settings_path, class: "button secondary"

@@ -1,5 +1,5 @@
 class ConsentRequirementChecker
-  Result = Data.define(:required_terms, :missing_terms) do
+  Result = Data.define(:required_terms, :missing_terms, :target) do
     def required?
       required_terms.any?
     end
@@ -19,7 +19,8 @@ class ConsentRequirementChecker
     terms = required_terms
     Result.new(
       required_terms: terms,
-      missing_terms: terms.reject { consented_to?(_1) }
+      missing_terms: terms.reject { consented_to?(_1) },
+      target: consent_target
     )
   end
 
@@ -28,50 +29,64 @@ class ConsentRequirementChecker
   attr_reader :user, :target, :timing
 
   def required_terms
-    scope = ConsentTerm.active_only
-    scope = scope.where(requirement_timing: timing) if timing.present?
-    scope.select { applicable_to_target?(_1) }
+    (global_required_terms + project_required_terms).uniq
   end
 
-  def applicable_to_target?(term)
-    return true if term.global?
-    return false if target.blank?
+  def project_required_terms
+    return [] if project_target.blank?
 
-    case target
-    when Project
-      term.project?
-    when Document
-      term.document? || term.project?
-    when DocumentFile
-      term.download? || term.document? || term.project?
+    settings = project_target.project_consent_settings.enabled_only.includes(:consent_term)
+    settings = settings.where(required_on: required_on_for_timing) if required_on_for_timing.present?
+    settings.map(&:consent_term).select(&:active?).uniq
+  end
+
+  def global_required_terms
+    scope = ConsentTerm.active_only.global
+    scope = scope.where(requirement_timing: requirement_timing_for_global) if requirement_timing_for_global.present?
+    scope.to_a
+  end
+
+  def required_on_for_timing
+    case timing&.to_s
+    when "first_view", "first_access"
+      :first_access
+    when "every_download", "download"
+      :download
+    end
+  end
+
+  def requirement_timing_for_global
+    case timing&.to_s
+    when "first_access"
+      :first_view
+    when "download"
+      :every_download
     else
-      false
+      timing
     end
   end
 
   def consented_to?(term)
-    consent_scope = UserConsent.where(user:, consent_term: term)
+    consent_scope = UserConsent.where(user:, consent_term: term, consent_term_version_label: term.version_label)
     return consent_scope.exists?(target: nil) if term.global?
 
-    target_candidates_for(term).any? { consent_scope.exists?(target: _1) }
+    consent_scope.exists?(target: consent_target)
   end
 
-  def target_candidates_for(term)
-    return [] if target.blank?
-
+  def project_target
     case target
     when Project
-      [target]
+      target
     when Document
-      term.project? ? [target.project] : [target]
+      target.project
     when DocumentFile
-      document = target.document_version.document
-      return [document.project] if term.project?
-      return [document] if term.document?
-
-      [target]
-    else
-      []
+      target.document_version.document.project
+    when DocumentVersion
+      target.document.project
     end
+  end
+
+  def consent_target
+    project_target || target
   end
 end
