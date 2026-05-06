@@ -315,33 +315,6 @@ class DocusaurusSiteRenderer
   end
 
   def viewer_theme_css
-    portal_navigation_css = unless @embedded
-      <<~CSS
-        .portal-site-nav,
-        .document-version-switcher {
-          box-sizing: border-box;
-          max-width: 1120px;
-          margin: 0 auto;
-          padding-left: 24px;
-          padding-right: 24px;
-        }
-        .portal-site-nav {
-          display: flex;
-          gap: 0.5rem;
-          flex-wrap: wrap;
-          align-items: center;
-          padding-top: 16px;
-          padding-bottom: 12px;
-          color: #4b5563;
-          font-size: 0.95rem;
-        }
-        .portal-site-nav a {
-          color: #0f62fe;
-          text-decoration: none;
-        }
-      CSS
-    end
-
     <<~CSS
       body.portal-doc-body {
         margin: 0;
@@ -350,24 +323,7 @@ class DocusaurusSiteRenderer
         font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
         line-height: 1.8;
       }
-      #{portal_navigation_css}
-      .document-version-switcher {
-        margin-bottom: 16px;
-      }
-      .document-version-switcher summary {
-        display: inline-flex;
-        align-items: center;
-        cursor: pointer;
-        padding: 0.4rem 0.75rem;
-        border: 1px solid #dbe4f0;
-        border-radius: 999px;
-        background: #fff;
-        font-weight: 600;
-      }
-      .document-version-switcher ul {
-        margin: 0.75rem 0 0;
-        padding-left: 1.25rem;
-      }
+      #{portal_chrome_css}
       .theme-doc-breadcrumbs,
       nav.navbar,
       .navbar,
@@ -440,10 +396,62 @@ class DocusaurusSiteRenderer
         height: auto;
       }
       @media (max-width: 960px) {
-        .document-version-switcher,
         article,
         main .theme-doc-markdown,
         main .markdown {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+      }
+    CSS
+  end
+
+  def portal_chrome_css
+    return "" if @embedded
+
+    <<~CSS
+      .portal-site-nav,
+      .document-version-switcher {
+        box-sizing: border-box;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+      .portal-site-nav {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+        padding-top: 16px;
+        padding-bottom: 12px;
+        color: #4b5563;
+        font-size: 0.95rem;
+      }
+      .portal-site-nav a {
+        color: #0f62fe;
+        text-decoration: none;
+      }
+      .document-version-switcher {
+        margin-bottom: 16px;
+      }
+      .document-version-switcher summary {
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 0.4rem 0.75rem;
+        border: 1px solid #dbe4f0;
+        border-radius: 999px;
+        background: #fff;
+        font-weight: 600;
+      }
+      .document-version-switcher ul {
+        margin: 0.75rem 0 0;
+        padding-left: 1.25rem;
+      }
+      @media (max-width: 960px) {
+        .portal-site-nav,
+        .document-version-switcher {
           padding-left: 16px;
           padding-right: 16px;
         }
