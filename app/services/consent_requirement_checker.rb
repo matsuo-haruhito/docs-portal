@@ -42,7 +42,7 @@ class ConsentRequirementChecker
 
   def global_required_terms
     scope = ConsentTerm.active_only.global
-    scope = scope.where(requirement_timing: timing) if timing.present?
+    scope = scope.where(requirement_timing: requirement_timing_for_global) if requirement_timing_for_global.present?
     scope.to_a
   end
 
@@ -52,6 +52,17 @@ class ConsentRequirementChecker
       :first_access
     when "every_download", "download"
       :download
+    end
+  end
+
+  def requirement_timing_for_global
+    case timing&.to_s
+    when "first_access"
+      :first_view
+    when "download"
+      :every_download
+    else
+      timing
     end
   end
 
