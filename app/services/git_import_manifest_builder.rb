@@ -120,7 +120,7 @@ class GitImportManifestBuilder
   end
 
   def title_for(markdown_path)
-    first_heading = File.foreach(markdown_path).lazy.map(&:strip).find { _1.start_with?("# ") }
+    first_heading = File.foreach(markdown_path.to_s).lazy.map(&:strip).find { _1.start_with?("# ") }
     first_heading&.delete_prefix("# ")&.presence || markdown_path.basename(markdown_path.extname).to_s
   end
 
