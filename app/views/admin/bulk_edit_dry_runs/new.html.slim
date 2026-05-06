@@ -1,0 +1,83 @@
+- page_title "文書一括編集"
+
+h1 文書一括編集
+= render "admin/nav"
+
+.card
+  h2 dry-run作成
+  p.muted 対象文書と変更内容を指定して、まずdry-runを作成します。実行は確認画面から行います。
+
+  = form_with url: admin_bulk_edit_dry_runs_path, scope: :bulk_edit do |form|
+    h3 対象文書
+    p.muted 複数Documentを選択できます。権限外・変更不能な対象はdry-runで確認します。
+    table
+      thead
+        tr
+          th 選択
+          th 案件
+          th タイトル
+          th カテゴリ
+          th 種別
+          th 公開範囲
+          th 状態
+      tbody
+        - @documents.each do |document|
+          tr
+            td = check_box_tag "bulk_edit[document_ids][]", document.id, false, id: "bulk_edit_document_#{document.id}"
+            td = document.project.name
+            td
+              label for="bulk_edit_document_#{document.id}" = document.title
+            td = document.category
+            td = document.document_kind
+            td = document.visibility_policy
+            td = document.archived? ? "archived" : "active"
+
+    h3 変更内容
+    p.muted 空欄の項目は変更しません。タグはカンマ・読点・改行区切りで入力できます。
+
+    .form-grid
+      label
+        | category
+        = select_tag "bulk_edit[document_attributes][category]", options_for_select([["変更しない", ""]] + Document.categories.keys.map { |key| [key, key] }), id: "bulk_edit_category"
+      label
+        | document_kind
+        = select_tag "bulk_edit[document_attributes][document_kind]", options_for_select([["変更しない", ""]] + Document.document_kinds.keys.map { |key| [key, key] }), id: "bulk_edit_document_kind"
+      label
+        | visibility_policy
+        = select_tag "bulk_edit[document_attributes][visibility_policy]", options_for_select([["変更しない", ""]] + Document.visibility_policies.keys.map { |key| [key, key] }), id: "bulk_edit_visibility_policy"
+      label
+        | importance / priority
+        = select_tag "bulk_edit[document_attributes][importance_level]", options_for_select([["変更しない", ""]] + Document.importance_levels.keys.map { |key| [key, key] }), id: "bulk_edit_importance_level"
+      label
+        | recommended_sort_order
+        = number_field_tag "bulk_edit[document_attributes][recommended_sort_order]", nil, min: 0
+      label
+        | retention_until
+        = datetime_field_tag "bulk_edit[document_attributes][retention_until]"
+      label
+        | discard_candidate_at
+        = datetime_field_tag "bulk_edit[document_attributes][discard_candidate_at]"
+      label
+        | snapshot_kind
+        = select_tag "bulk_edit[latest_version_attributes][snapshot_kind]", options_for_select([["変更しない", ""]] + DocumentVersion::SNAPSHOT_KINDS.map { |key| [key, key] }), id: "bulk_edit_snapshot_kind"
+      label
+        | published_from
+        = datetime_field_tag "bulk_edit[latest_version_attributes][published_from]"
+      label
+        | published_until
+        = datetime_field_tag "bulk_edit[latest_version_attributes][published_until]"
+
+    .form-grid
+      label
+        | user_tags 追加
+        = text_area_tag "bulk_edit[tag_changes][add_tag_names]", nil, rows: 3
+      label
+        | user_tags 削除
+        = text_area_tag "bulk_edit[tag_changes][remove_tag_names]", nil, rows: 3
+      label
+        | archive / restore
+        = select_tag "bulk_edit[archive_action]", options_for_select([["変更しない", ""], ["archive", "archive"], ["restore", "restore"]])
+
+    p.actions style="margin-top:16px;"
+      = form.submit "dry-runを作成", class: "button"
+      = link_to "文書一覧へ戻る", admin_documents_path, class: "button secondary"
