@@ -66,9 +66,9 @@ class ProjectSitesController < BaseController
   def render_html_or_shell(renderer, site_path)
     version_for_page = @current_document_version || @build_version
     require_document_version_view_access!(version_for_page)
+    record_view_access_log(site_path, version_for_page)
 
     if embedded_request?
-      record_view_access_log(site_path, version_for_page)
       render html: renderer.render_html(site_path)
     else
       @site_viewer_project = @project
