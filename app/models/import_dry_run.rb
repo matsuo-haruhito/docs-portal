@@ -21,5 +21,13 @@ class ImportDryRun < ApplicationRecord
     failed: 3
   }
 
-  validates :summary_json, :result_json, :warnings_json, :errors_json, presence: true
+  validates :summary_json, :result_json, presence: true
+  validate :json_arrays_must_be_present
+
+  private
+
+  def json_arrays_must_be_present
+    errors.add(:warnings_json, "can't be nil") if warnings_json.nil?
+    errors.add(:errors_json, "can't be nil") if errors_json.nil?
+  end
 end
