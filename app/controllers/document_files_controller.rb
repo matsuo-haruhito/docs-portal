@@ -14,6 +14,7 @@ class DocumentFilesController < BaseController
     record_download_access_log(file)
 
     if disposition == "inline" && file.text_previewable?
+      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
       @document_file = file
       @document_version = file.document_version
       @document = @document_version.document
