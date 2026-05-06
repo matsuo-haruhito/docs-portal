@@ -1,0 +1,48 @@
+- page_title "Git連携"
+
+h1 Git連携
+= render "admin/nav"
+
+.card
+  h2 新規登録
+  = render "form", git_import_source: @git_import_source
+
+= table_tag do
+  thead
+    tr
+      th 案件
+      th repository
+      th branch/path
+      th auth
+      th last synced
+      th 状態
+      th
+  tbody
+    - @git_import_sources.each do |source|
+      tr
+        td
+          = source.project.name
+          br
+          code = source.project.code
+        td = source.repository_full_name
+        td
+          code = source.branch
+          br
+          code = source.source_path
+        td
+          = source.auth_type
+          - if source.installation_id.present?
+            br
+            span.muted = "installation_id=#{source.installation_id}"
+        td
+          - if source.last_synced_commit_sha.present?
+            code = source.last_synced_commit_sha.first(12)
+            br
+            span.muted = l(source.last_synced_at) if source.last_synced_at
+          - else
+            span.muted 未同期
+        td = source.enabled? ? "有効" : "無効"
+        td.actions
+          = button_to "手動同期", sync_admin_git_import_source_path(source), method: :post, class: "button", form: { data: { turbo_confirm: "#{source.repository_full_name} を同期しますか？" } }
+          = edit_link_to "編集", edit_admin_git_import_source_path(source)
+          = delete_link_to "削除", admin_git_import_source_path(source), confirm: "Git連携設定を削除しますか？"
