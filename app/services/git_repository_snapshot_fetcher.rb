@@ -34,7 +34,7 @@ class GitRepositorySnapshotFetcher
       raise ApplicationError::BadRequest, "Git credential is not configured" if token.blank?
 
       "https://x-access-token:#{CGI.escape(token)}@github.com/#{@source.repository_full_name}.git"
-    when :none
+    when :no_auth
       "https://github.com/#{@source.repository_full_name}.git"
     else
       raise ApplicationError::BadRequest, "#{@source.auth_type} pull sync is not implemented yet"
