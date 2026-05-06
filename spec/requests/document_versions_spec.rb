@@ -62,6 +62,24 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include(document_version_archive_path(version))
   end
 
+  it "shows export handling notes on version detail" do
+    version = create(:document_version, document:, version_label: "v1.0.0", status: :published)
+    document.update!(latest_version: version)
+    pdf_key = "spec/versioned-document/#{SecureRandom.hex(8)}/manual.pdf"
+    pdf_path = Rails.root.join("storage", "document_files", pdf_key)
+    FileUtils.mkdir_p(pdf_path.dirname)
+    File.binwrite(pdf_path, "%PDF-1.4")
+    create(:document_file, document_version: version, file_name: "manual.pdf", content_type: "application/pdf", storage_key: pdf_key, file_size: 8, sort_order: 0, scan_status: :scan_clean)
+
+    sign_in_as(internal_user)
+    get document_version_path(version)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("出力時の扱い")
+    expect(response.body).to include("HTML 表示には透かしを入れません")
+    expect(response.body).to include("Confidential")
+  end
+
   it "links from document detail to each visible version detail" do
     version = create(:document_version, document:, version_label: "v1.0.0", status: :published)
     document.update!(latest_version: version)

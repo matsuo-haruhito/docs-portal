@@ -45,6 +45,24 @@ RSpec.describe ImportDryRunHashPresenter do
     expect(invalid_item[:errors]).to include("source path must be a safe relative path")
   end
 
+  it "includes duplicate candidate details in the JSON-friendly hash" do
+    duplicate = create(:document, project:, title: "Operation Manual", slug: "operation-manual")
+    version = create(:document_version, document: duplicate, source_relative_path: "docs/reference.pdf", source_basename: "reference")
+    duplicate.update!(latest_version: version)
+
+    result = ImportDryRunValidator.new(
+      project:,
+      entries: [{ source_path: "docs/reference.docx", title: "Operation Manual" }]
+    ).call
+
+    hash = described_class.new(result).call
+
+    candidate_reasons = hash[:items].first[:duplicate_candidates].map { _1[:reason] }
+    expect(candidate_reasons).to contain_exactly(:same_source_basename, :same_title)
+    same_title = hash[:items].first[:duplicate_candidates].find { _1[:reason] == :same_title }
+    expect(same_title[:documents].first).to include(public_id: duplicate.public_id, title: "Operation Manual")
+  end
+
   it "renders an empty result" do
     result = ImportDryRunValidator::Result.new(items: [])
 

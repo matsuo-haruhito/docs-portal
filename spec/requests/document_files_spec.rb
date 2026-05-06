@@ -134,9 +134,10 @@ RSpec.describe "Document files", type: :request do
     get document_file_path(markdown_file)
 
     expect(response).to have_http_status(:ok)
-    expect(response.media_type).to eq("text/markdown")
-    expect(response.headers["content-type"]).to include("charset=utf-8")
-    expect(response.headers["content-disposition"]).to include("inline")
+    expect(response.media_type).to eq("text/html")
+    expect(response.body).to include("line-preview")
+    expect(response.body).to include("README.md")
+    expect(response.body).to include("# hello")
   end
 
   it "serves inline-capable files inline when inline disposition is requested" do

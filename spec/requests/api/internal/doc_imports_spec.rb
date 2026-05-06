@@ -101,6 +101,150 @@ RSpec.describe "API internal doc imports", type: :request do
     expect(response.parsed_body["status"]).to eq("imported")
   end
 
+  it "returns and saves a dry-run result in validate_only mode" do
+    project = create(:project, code: "PJDRYRUN", name: "Dry Run Project")
+    File.write(
+      manifest_path,
+      {
+        source_repo: "repo",
+        source_branch: "main",
+        source_commit_hash: "abc123",
+        documents: [
+          {
+            project_code: project.code,
+            slug: "new-doc",
+            title: "New Doc",
+            category: "spec",
+            document_kind: "mixed",
+            visibility_policy: "restricted_external",
+            version_label: "v1.0.0",
+            status: "published",
+            source_relative_path: "docs/new-doc.md"
+          }
+        ]
+      }.to_json
+    )
+
+    expect do
+      post api_internal_doc_imports_path, params: {
+        artifact_root: artifact_root.to_s,
+        manifest_path: manifest_path.to_s,
+        validate_only: true
+      }, headers: headers
+    end.to change(ImportDryRun, :count).by(1)
+
+    expect(response).to have_http_status(:created)
+    expect(response.parsed_body["valid"]).to eq(true)
+    expect(response.parsed_body["status"]).to eq("analyzed")
+    expect(response.parsed_body["summary"]["create_count"]).to eq(1)
+    expect(response.parsed_body["dry_run_id"]).to be_present
+
+    dry_run = ImportDryRun.find_by!(public_id: response.parsed_body["dry_run_id"])
+    expect(dry_run.git_push?).to eq(true)
+    expect(dry_run.project).to eq(project)
+    expect(dry_run.source_commit_hash).to eq("abc123")
+    expect(dry_run.result_json["projects"].size).to eq(1)
+  end
+
+  it "imports using a confirmed dry-run id when the source commit matches" do
+    project = create(:project, code: "PJCONFIRM", name: "Confirmed Dry Run Project")
+    File.write(
+      manifest_path,
+      {
+        source_repo: "repo",
+        source_branch: "main",
+        source_commit_hash: "commit-1",
+        documents: [
+          {
+            project_code: project.code,
+            slug: "confirmed-doc",
+            title: "Confirmed Doc",
+            category: "spec",
+            document_kind: "mixed",
+            visibility_policy: "restricted_external",
+            version_label: "v1.0.0",
+            status: "published",
+            source_relative_path: "docs/confirmed-doc.md"
+          }
+        ]
+      }.to_json
+    )
+
+    post api_internal_doc_imports_path, params: {
+      artifact_root: artifact_root.to_s,
+      manifest_path: manifest_path.to_s,
+      validate_only: true
+    }, headers: headers
+    dry_run_id = response.parsed_body.fetch("dry_run_id")
+
+    post api_internal_doc_imports_path, params: {
+      artifact_root: artifact_root.to_s,
+      manifest_path: manifest_path.to_s,
+      import_dry_run_id: dry_run_id
+    }, headers: headers
+
+    expect(response).to have_http_status(:created)
+    expect(response.parsed_body["status"]).to eq("imported")
+    expect(response.parsed_body["import_dry_run_id"]).to eq(dry_run_id)
+
+    dry_run = ImportDryRun.find_by!(public_id: dry_run_id)
+    expect(dry_run.confirmed?).to eq(true)
+    expect(dry_run.confirmed_by.email_address).to eq("importer@example.com")
+    expect(dry_run.confirmed_at).to be_present
+  end
+
+  it "rejects a confirmed dry-run when the manifest commit changed" do
+    project = create(:project, code: "PJMISMATCH", name: "Mismatched Dry Run Project")
+    File.write(
+      manifest_path,
+      {
+        source_repo: "repo",
+        source_branch: "main",
+        source_commit_hash: "commit-1",
+        documents: [
+          {
+            project_code: project.code,
+            slug: "mismatch-doc",
+            title: "Mismatch Doc",
+            category: "spec",
+            document_kind: "mixed",
+            visibility_policy: "restricted_external",
+            version_label: "v1.0.0",
+            status: "published",
+            source_relative_path: "docs/mismatch-doc.md"
+          }
+        ]
+      }.to_json
+    )
+
+    post api_internal_doc_imports_path, params: {
+      artifact_root: artifact_root.to_s,
+      manifest_path: manifest_path.to_s,
+      validate_only: true
+    }, headers: headers
+    dry_run_id = response.parsed_body.fetch("dry_run_id")
+
+    File.write(
+      manifest_path,
+      {
+        source_repo: "repo",
+        source_branch: "main",
+        source_commit_hash: "commit-2",
+        documents: []
+      }.to_json
+    )
+
+    post api_internal_doc_imports_path, params: {
+      artifact_root: artifact_root.to_s,
+      manifest_path: manifest_path.to_s,
+      import_dry_run_id: dry_run_id
+    }, headers: headers
+
+    expect(response).to have_http_status(:bad_request)
+    expect(response.parsed_body["error"]).to include("source_commit_hash")
+    expect(ImportDryRun.find_by!(public_id: dry_run_id).analyzed?).to eq(true)
+  end
+
   it "rejects imports when DOC_IMPORT_ACTOR_EMAIL is not configured" do
     allow(ENV).to receive(:[]).with("DOC_IMPORT_ACTOR_EMAIL").and_return(nil)
     File.write(

@@ -73,6 +73,28 @@ RSpec.describe ImportDryRunValidator do
     expect(item.attributes[:snapshot_kind]).to eq("submitted")
   end
 
+  it "returns duplicate candidates for title and basename matches without auto-merging them" do
+    title_duplicate = create(:document, project:, title: "Operation Manual", slug: "manual-a")
+    title_version = create(:document_version, document: title_duplicate, source_relative_path: "docs/manual-a.md", source_basename: "manual-a")
+    title_duplicate.update!(latest_version: title_version)
+
+    basename_duplicate = create(:document, project:, title: "Guide", slug: "guide")
+    basename_version = create(:document_version, document: basename_duplicate, source_relative_path: "docs/reference.pdf", source_basename: "reference")
+    basename_duplicate.update!(latest_version: basename_version)
+
+    result = described_class.new(
+      project:,
+      entries: [{ source_path: "docs/reference.docx", title: "Operation Manual" }]
+    ).call
+
+    item = result.items.first
+    expect(item).to be_create
+    expect(item.warnings).to include("similar documents found")
+    expect(item.duplicate_candidates.map(&:reason)).to contain_exactly(:same_source_basename, :same_title)
+    expect(item.duplicate_candidates.find { _1.reason == :same_title }.documents).to eq([title_duplicate])
+    expect(item.duplicate_candidates.find { _1.reason == :same_source_basename }.documents).to eq([basename_duplicate])
+  end
+
   it "summarizes create, update, warning, and error counts" do
     document = create(:document, project:, title: "Existing", slug: "existing")
     version = create(:document_version, document:, source_relative_path: "docs/existing.md")

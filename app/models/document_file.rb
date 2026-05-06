@@ -72,6 +72,13 @@ class DocumentFile < ApplicationRecord
     INLINE_CONTENT_TYPE_PREFIXES.any? { effective_content_type.start_with?(_1) }
   end
 
+  def text_previewable?
+    preview_content_type = effective_content_type.delete_suffix("; charset=utf-8")
+
+    preview_content_type.start_with?("text/") ||
+      preview_content_type.in?(%w[application/json application/x-yaml text/yaml])
+  end
+
   def deliverable_after_scan?(user)
     return true if user&.internal?
 
@@ -86,7 +93,10 @@ class DocumentFile < ApplicationRecord
     return false unless user&.active?
     return true if user.internal?
 
-    scan_clean? && document_version.published? && document_version.document.downloadable_by?(user)
+    scan_clean? &&
+      document_version.published? &&
+      document_version.within_publication_window? &&
+      document_version.document.downloadable_by?(user)
   end
 
   def assign_search_text_from_path!(path)

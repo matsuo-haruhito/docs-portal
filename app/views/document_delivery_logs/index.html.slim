@@ -1,0 +1,31 @@
+- page_title "送付履歴"
+
+h1 送付履歴
+
+- if @delivery_logs.any?
+  table
+    thead
+      tr
+        th 作成日時
+        th 案件
+        th 対象
+        th 宛先
+        th 方式
+        th 状態
+    tbody
+      - @delivery_logs.each do |log|
+        tr
+          td = l(log.created_at)
+          td = log.project.name
+          td
+            - if log.document.present?
+              = log.document.title
+            - elsif log.document_set.present?
+              = log.document_set.name
+            - else
+              span.muted "-"
+          td = log.to_addresses
+          td = log.delivery_type
+          td = link_to log.status, document_delivery_log_path(log)
+- else
+  p.muted 送付履歴はありません。

@@ -1,0 +1,31 @@
+- page_title "確認依頼"
+
+h1 確認依頼
+
+- if @document.present?
+  p.muted
+    = link_to @project.name, project_path(@project)
+    |  /
+    = link_to @document.title, project_document_path(@project, @document.slug)
+
+- if @document_approval_requests.any?
+  table
+    thead
+      tr
+        th 日時
+        th 文書
+        th タイトル
+        th 依頼者
+        th 確認相手
+        th 状態
+    tbody
+      - @document_approval_requests.each do |request|
+        tr
+          td = request.created_at.strftime("%Y-%m-%d %H:%M")
+          td = request.document.title
+          td = link_to request.title, document_approval_request_path(request)
+          td = request.requester.name
+          td = request.approver&.name || "-"
+          td = request.status
+- else
+  p.muted 確認依頼はありません。

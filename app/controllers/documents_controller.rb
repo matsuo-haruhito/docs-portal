@@ -14,18 +14,16 @@ class DocumentsController < BaseController
       .ordered
       .distinct
 
-    documents_scope = filtered_documents.order(:title)
-    @documents_count = documents_scope.except(:order).count(:id)
+    documents_scope = filtered_documents.recommended_first.includes(:latest_version, :document_tags, :document_keywords, document_versions: :document_files)
+    visible_documents = current_user.internal? ? documents_scope.to_a : documents_scope.to_a.select { _1.visible_in_portal_for?(current_user) }
+    @documents_count = visible_documents.size
     @current_page = normalized_page
     @per_page = DOCUMENTS_PER_PAGE
     @total_pages = [(@documents_count.to_f / @per_page).ceil, 1].max
     @current_page = @total_pages if @current_page > @total_pages
 
-    @documents = documents_scope
-      .includes(:latest_version, :document_tags, :document_keywords, document_versions: :document_files)
-      .limit(@per_page)
-      .offset((@current_page - 1) * @per_page)
-    @tree_projects = Project.accessible_to(current_user).includes(documents: :latest_version).order(:code)
+    @documents = visible_documents.slice((@current_page - 1) * @per_page, @per_page) || []
+    @tree_projects = portal_tree_projects(include_project: @project)
   end
 
   def show
@@ -33,6 +31,7 @@ class DocumentsController < BaseController
     require_project_access!(@project)
     @document = @project.documents.includes(:document_tags, :document_keywords).find_by!(slug: params[:slug])
     require_document_access!(@document)
+    raise ApplicationError::Forbidden unless current_user.internal? || @document.visible_in_portal_for?(current_user)
 
     @versions = @document.document_versions.select { _1.viewable_by?(current_user) }.sort_by(&:created_at).reverse
     @latest_viewable_version = @document.latest_version if @document.latest_version && @versions.include?(@document.latest_version)
@@ -42,10 +41,31 @@ class DocumentsController < BaseController
       project: @project
     ).crumbs
     @related_document_groups = RelatedDocumentFinder.new(document: @document, user: current_user).grouped_results
-    @tree_projects = Project.accessible_to(current_user).includes(documents: :latest_version).order(:code)
+    visible_comments = @document.document_review_comments.visible_to(current_user)
+    @question_threads = visible_comments.where(internal_only: false, comment_type: :question).roots.includes(:author, :resolved_by, :document_version, replies: [:author, :resolved_by]).order(:created_at, :id)
+    @review_comments = visible_comments.where(internal_only: true).includes(:author, :resolved_by, :document_version).roots.order(:created_at, :id)
+    @export_preview_file = export_preview_files.first
+    @export_watermark_text =
+      if @export_preview_file.present?
+        ExportOutputPlan.new(project: @project, viewer: current_user, files: [@export_preview_file], include_source_path: false).call.items.first.watermark_text
+      end
+    @document_approval_requests =
+      if current_user.internal?
+        @document.document_approval_requests.recent_first.limit(5).includes(:requester, :approver)
+      else
+        DocumentApprovalRequest.none
+      end
+    @approval_approvers = User.where(user_type: :internal, active: true).order(:name, :email_address)
+    @tree_projects = portal_tree_projects(include_project: @project)
   end
 
   private
+
+  def export_preview_files
+    @export_preview_files ||= @versions.flat_map(&:document_files).select { _1.downloadable_by?(current_user) }.select do |file|
+      file.effective_content_type.start_with?("application/pdf") || file.file_name.to_s.downcase.end_with?(".pdf")
+    end
+  end
 
   def filtered_documents
     scope = @project.documents.accessible_to(current_user)
@@ -56,6 +76,21 @@ class DocumentsController < BaseController
     scope = apply_enum_filter(scope, :visibility_policy, Document.visibility_policies)
     scope = apply_availability_filters(scope)
     scope.distinct
+  end
+
+  def portal_tree_projects(include_project: nil)
+    projects = Project.accessible_to(current_user)
+      .includes(documents: :latest_version)
+      .order(:code)
+    return projects if current_user.internal?
+
+    visible_projects = projects.select { visible_project_for_portal?(_1) }
+    visible_projects << include_project if include_project.present? && visible_projects.exclude?(include_project)
+    visible_projects
+  end
+
+  def visible_project_for_portal?(project)
+    project.documents.any? { _1.visible_in_portal_for?(current_user) }
   end
 
   def document_filter_params

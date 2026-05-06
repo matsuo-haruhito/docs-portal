@@ -1,0 +1,61 @@
+- page_title "#{@project.name} AI context"
+- content_for :left_content do
+  = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: nil
+
+p.muted
+  = link_to @project.name, project_path(@project)
+
+h1 AI向けコンテキスト
+
+p
+  | mode:
+  = @mode
+  |  / exported:
+  = @hash.dig(:summary, :document_count)
+  |  件
+
+p.actions
+  = link_to "compact", project_ai_context_path(@project, mode: :compact), class: "button secondary"
+  = link_to "full", project_ai_context_path(@project, mode: :full), class: "button secondary"
+  = link_to "JSON", project_ai_context_path(@project, mode: @mode, format: :json), class: "button secondary"
+  = link_to "Markdown", project_ai_context_path(@project, mode: @mode, format: :md), class: "button secondary"
+
+.card
+  h2 含まれる文書
+  - if @plan.included_items.any?
+    = table_tag do
+      thead
+        tr
+          th タイトル
+          th slug
+          th version
+          th reason
+      tbody
+        - @plan.included_items.each do |item|
+          tr
+            td = item.document.title
+            td = item.document.slug
+            td = item.document_version&.version_label || "-"
+            td = item.reason
+  - else
+    p.muted 出力対象の文書はありません。
+
+.card
+  h2 除外された文書
+  - if @plan.excluded_items.any?
+    = table_tag do
+      thead
+        tr
+          th タイトル
+          th slug
+          th reason
+      tbody
+        - @plan.excluded_items.each do |item|
+          tr
+            td = item.document.title
+            td = item.document.slug
+            td = item.reason
+  - else
+    p.muted 除外文書はありません。
+
+p = link_to "案件詳細へ戻る", project_path(@project)

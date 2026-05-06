@@ -11,13 +11,13 @@ RSpec.describe DocumentVersionQualityChecker do
     FileUtils.rm_rf(Rails.root.join("storage", "docs_sites", version.id.to_s)) if version&.id
   end
 
-  def create_file_record(scan_status: :scan_clean, write_file: true, file_name: "manual.pdf")
+  def create_file_record(scan_status: :scan_clean, write_file: true, file_name: "manual.pdf", content_type: "application/pdf", body: "%PDF-1.4")
     storage_key = "spec/quality-checker/#{SecureRandom.hex(8)}/#{file_name}"
     file = create(
       :document_file,
       document_version: version,
       file_name:,
-      content_type: "application/pdf",
+      content_type:,
       storage_key:,
       file_size: 12,
       scan_status:
@@ -25,9 +25,26 @@ RSpec.describe DocumentVersionQualityChecker do
 
     if write_file
       FileUtils.mkdir_p(file.absolute_path.dirname)
-      File.binwrite(file.absolute_path, "%PDF-1.4")
+      File.binwrite(file.absolute_path, body)
     end
 
+    file
+  end
+
+  def create_markdown_source(body:, file_name: "manual.md")
+    storage_key = "spec/quality-checker/#{SecureRandom.hex(8)}/#{file_name}"
+    file = create(
+      :document_file,
+      document_version: version,
+      file_name:,
+      content_type: "text/markdown",
+      storage_key:,
+      file_size: body.bytesize,
+      scan_status: :scan_clean
+    )
+
+    FileUtils.mkdir_p(file.absolute_path.dirname)
+    File.write(file.absolute_path, body)
     file
   end
 
@@ -81,5 +98,44 @@ RSpec.describe DocumentVersionQualityChecker do
     result = described_class.new(version).call
 
     expect(result.warnings.map(&:key)).to include(:internal_only_text)
+  end
+
+  it "reports missing markdown link, image, and attachment targets as errors" do
+    create_markdown_source(
+      body: <<~MD
+        [Guide](missing-guide.md)
+        ![Architecture](missing-diagram.png)
+        [Handout](missing-handout.pdf)
+      MD
+    )
+
+    result = described_class.new(version).call
+
+    expect(result.errors.map(&:key)).to include(
+      :markdown_link_missing,
+      :markdown_image_missing,
+      :markdown_attachment_missing
+    )
+  end
+
+  it "accepts markdown references that point at existing project docs and attached files" do
+    create(:document_version, document: create(:document, project:, title: "Guide"), source_relative_path: "docs/guide.md")
+    create_markdown_source(
+      body: <<~MD
+        [Guide](guide.md)
+        ![Architecture](diagram.png)
+        [Handout](handout.pdf)
+      MD
+    )
+    create_file_record(file_name: "diagram.png", content_type: "image/png", body: "PNG")
+    create_file_record(file_name: "handout.pdf")
+
+    result = described_class.new(version).call
+
+    expect(result.errors.map(&:key)).not_to include(
+      :markdown_link_missing,
+      :markdown_image_missing,
+      :markdown_attachment_missing
+    )
   end
 end

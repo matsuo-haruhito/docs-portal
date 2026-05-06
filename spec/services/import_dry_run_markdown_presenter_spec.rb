@@ -27,6 +27,23 @@ RSpec.describe ImportDryRunMarkdownPresenter do
     expect(markdown).to include("source path must be a safe relative path")
   end
 
+  it "lists duplicate candidates in markdown output" do
+    duplicate = create(:document, project:, title: "Operation Manual", slug: "operation-manual")
+    version = create(:document_version, document: duplicate, source_relative_path: "docs/reference.pdf", source_basename: "reference")
+    duplicate.update!(latest_version: version)
+
+    result = ImportDryRunValidator.new(
+      project:,
+      entries: [{ source_path: "docs/reference.docx", title: "Operation Manual" }]
+    ).call
+
+    markdown = described_class.new(result).call
+
+    expect(markdown).to include("- duplicate_candidates:")
+    expect(markdown).to include("same_title: Operation Manual")
+    expect(markdown).to include("same_source_basename: Operation Manual")
+  end
+
   it "renders an empty state" do
     result = ImportDryRunValidator::Result.new(items: [])
 

@@ -91,6 +91,21 @@ p.muted
       span.button.secondary.disabled 次へ
 
 = form_with url: project_document_zip_path(@project), method: :post, local: true do
+  .card
+    h2 ZIP出力オプション
+    .form-grid
+      label
+        | ZIP内パス
+        = select_tag :zip_path_mode, options_for_select([["文書名準拠", "document_title"], ["source path準拠", "source_path"]], "document_title")
+      label
+        = check_box_tag :include_markdown_sources, "1", true
+        |  Markdown原本を含める
+      label
+        = check_box_tag :include_attachments, "1", true
+        |  添付ファイルを含める
+      label
+        = check_box_tag :pdf_only, "1", false
+        |  PDFだけ出力
   p.actions
     = submit_tag "選択した文書の最新版をZIPでダウンロード", class: "button"
 
@@ -102,6 +117,7 @@ p.muted
         th タグ
         th カテゴリ
         th 種別
+        th 重要度
         th 公開範囲
         th 最新版
         th HTML
@@ -131,6 +147,8 @@ p.muted
           td
             span.badge = document.category
           td = document.document_kind
+          td
+            span.badge = document.importance_level
           td = document.visibility_policy
           td = latest_version&.version_label || "-"
           td = latest_version&.site_build_path.present? ? "あり" : "なし"

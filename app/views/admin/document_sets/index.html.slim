@@ -1,0 +1,29 @@
+- page_title "文書セット"
+
+h1 文書セット
+= render "admin/nav"
+
+.card
+  h2 新規登録
+  = render "form", document_set: @document_set
+
+= table_tag do
+  thead
+    tr
+      th 案件
+      th 名称
+      th 種別
+      th 公開範囲
+      th 文書数
+      th
+  tbody
+    - @document_sets.each do |document_set|
+      tr
+        td = document_set.project.name
+        td = document_set.name
+        td = document_set.set_type
+        td = document_set.visibility_policy
+        td = document_set.document_set_items.size
+        td.actions
+          = edit_link_to "編集", edit_admin_document_set_path(document_set)
+          = delete_link_to "削除", admin_document_set_path(document_set), confirm: "文書セット「#{document_set.name}」を削除しますか？登録済み文書 #{document_set.document_set_items.size} 件との対応も失われます。"

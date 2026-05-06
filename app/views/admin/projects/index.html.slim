@@ -24,4 +24,4 @@ h1 案件マスタ
         td = project.active? ? "有効" : "無効"
         td.actions
           = edit_link_to "編集", edit_admin_project_path(project)
-          = delete_link_to "削除", admin_project_path(project)
+          = delete_link_to "削除", admin_project_path(project), confirm: "案件「#{project.name}」を削除しますか？関連文書や所属設定に影響します。"

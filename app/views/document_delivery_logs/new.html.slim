@@ -1,0 +1,38 @@
+- page_title "送付下書き"
+
+h1 送付下書き
+
+p.muted
+  = @project.name
+  - if @document.present?
+    |  / 
+    = @document.title
+  - elsif @document_set.present?
+    |  / 
+    = @document_set.name
+
+= form_with model: @delivery_log, url: request.path, local: true do |form|
+  - if @delivery_log.errors.any?
+    ul
+      - @delivery_log.errors.full_messages.each do |message|
+        li = message
+
+  .form-grid
+    div
+      = form.label :to_addresses, "宛先"
+      = form.text_area :to_addresses
+    div
+      = form.label :cc_addresses, "CC"
+      = form.text_area :cc_addresses
+    div
+      = form.label :bcc_addresses, "BCC"
+      = form.text_area :bcc_addresses
+    div style="grid-column: 1 / -1;"
+      = form.label :subject, "件名"
+      = form.text_field :subject
+    div style="grid-column: 1 / -1;"
+      = form.label :body, "本文"
+      = form.text_area :body, rows: 10
+
+  p.actions
+    = form.submit "下書きを保存", class: "button"

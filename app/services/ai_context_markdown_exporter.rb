@@ -69,7 +69,7 @@ class AiContextMarkdownExporter
   def documents
     @documents ||= (scope || project.documents)
       .includes(:project, :latest_version)
-      .select { _1.viewable_by?(viewer) }
+      .select { _1.visible_in_portal_for?(viewer) }
       .sort_by { [_1.title.to_s, _1.id] }
   end
 

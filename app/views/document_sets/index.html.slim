@@ -1,0 +1,26 @@
+- page_title "#{@project.name} 文書セット"
+
+h1 文書セット
+p.muted
+  = link_to @project.name, project_path(@project)
+  |  / 利用目的ごとにまとめた資料一覧です。
+
+- if @document_sets.any?
+  = table_tag do
+    thead
+      tr
+        th 名称
+        th 種別
+        th 公開範囲
+        th 文書数
+    tbody
+      - @document_sets.each do |document_set|
+        tr
+          td = link_to document_set.name, project_document_set_path(@project, document_set)
+          td = document_set.set_type
+          td = document_set.visibility_policy
+          td = document_set.visible_items_for(current_user).size
+- else
+  p.muted 表示できる文書セットはありません。
+
+p = link_to "案件詳細へ戻る", project_path(@project)

@@ -8,6 +8,7 @@ class DocumentSet < ApplicationRecord
 
   has_many :document_set_items, dependent: :destroy
   has_many :documents, through: :document_set_items
+  has_many :document_delivery_logs, dependent: :destroy
 
   enum :set_type, {
     delivery: 0,

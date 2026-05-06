@@ -33,11 +33,14 @@ module LinkToHelper
   end
 
   def delete_link_to(name, url, **options)
+    confirm_message = options.delete(:confirm) || "削除しますか？この操作は元に戻せません。"
+    form_options = options.delete(:form) || {}
+    form_data = (form_options[:data] || {}).merge(turbo_confirm: confirm_message)
+
     options = options.reverse_merge(
-      class: "button danger",
-      form: { data: { turbo_confirm: "削除しますか？" } }
+      class: "button danger"
     )
 
-    button_to(name, url, options.merge(method: :delete))
+    button_to(name, url, options.merge(method: :delete, form: form_options.merge(data: form_data)))
   end
 end

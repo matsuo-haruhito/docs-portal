@@ -29,4 +29,10 @@ h1 案件マスタ編集
             td = item[:slug]
             td = item[:source_path]
   p.actions
-    = button_to "標準テンプレートを適用", apply_template_admin_project_path(@project), method: :post, class: "button"
+    = button_to "標準テンプレートを適用", apply_template_admin_project_path(@project), method: :post, class: "button", form: { data: { turbo_confirm: "標準テンプレートを適用しますか？作成予定 #{@template_plan_hash.dig(:summary, :create_count)} 件 / スキップ予定 #{@template_plan_hash.dig(:summary, :skip_count)} 件を確認済みである必要があります。" } }
+
+.card
+  h2 外部表示プレビュー
+  p 社外ユーザー視点で、文書と添付ファイルの表示可否を確認します。
+  p.actions
+    = link_to "プレビューを開く", external_preview_admin_project_path(@project), class: "button secondary"

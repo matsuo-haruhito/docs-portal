@@ -14,12 +14,29 @@
   <p><%= link_to "ドキュメントサイトを表示", project_site_path(@project, site_path: site_version.html_view_site_path, version_id: site_version.public_id) %></p>
 <% end %>
 
+<p><%= link_to "AI向けコンテキストを表示", project_ai_context_path(@project) %></p>
+<p><%= link_to "文書セットを見る", project_document_sets_path(@project) %></p>
 <p><%= link_to "文書カタログを見る", project_document_catalogs_path(@project) %></p>
+
+<% if @important_documents.any? %>
+  <h2>優先して確認したい資料</h2>
+  <ul>
+    <% @important_documents.each do |document| %>
+      <li>
+        <strong><%= link_to document.title, project_document_path(@project, document.slug) %></strong>
+        <span class="badge"><%= document.importance_level %></span>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
 
 <h2>資料一覧</h2>
 <ul>
   <% @documents.each do |document| %>
-    <li><%= link_to document.title, project_document_path(@project, document.slug) %></li>
+    <li>
+      <%= link_to document.title, project_document_path(@project, document.slug) %>
+      <span class="badge"><%= document.importance_level %></span>
+    </li>
   <% end %>
 </ul>
 

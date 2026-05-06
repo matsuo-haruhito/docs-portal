@@ -3,12 +3,45 @@ class ProjectsController < BaseController
     @projects = Project.accessible_to(current_user)
       .includes(documents: :latest_version)
       .order(:code)
+    @projects = @projects.select { project_list_visible_for_portal?(_1) } unless current_user.internal?
   end
 
   def show
     @project = Project.find_by!(code: params[:code])
     require_project_access!(@project)
-    @documents = @project.documents.accessible_to(current_user).includes(:latest_version).order(:title)
-    @tree_projects = Project.accessible_to(current_user).includes(documents: :latest_version).order(:code)
+    @documents = portal_documents_for(@project)
+    @important_documents = @documents.select { %w[critical important].include?(_1.importance_level) }
+    @tree_projects = portal_tree_projects(include_project: @project)
+  end
+
+  private
+
+  def portal_tree_projects(include_project: nil)
+    projects = Project.accessible_to(current_user)
+      .includes(documents: :latest_version)
+      .order(:code)
+    return projects if current_user.internal?
+
+    visible_projects = projects.select { portal_documents_for(_1).any? }
+    visible_projects << include_project if include_project.present? && visible_projects.exclude?(include_project)
+    visible_projects
+  end
+
+  def project_list_visible_for_portal?(project)
+    project.documents.empty? || portal_documents_for(project).any?
+  end
+
+  def portal_documents_for(project)
+    documents = project.documents.accessible_to(current_user).includes(:latest_version).recommended_first
+    return documents if current_user.internal?
+
+    documents.select { externally_portal_visible_document?(_1) }
+  end
+
+  def externally_portal_visible_document?(document)
+    return false unless document.visible_in_portal_for?(current_user)
+    return true unless document.document_versions.exists?
+
+    document.document_versions.published.any? { _1.within_publication_window? }
   end
 end

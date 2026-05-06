@@ -5,6 +5,7 @@ class DocumentDeliveryLog < ApplicationRecord
 
   belongs_to :project
   belongs_to :document, optional: true
+  belongs_to :document_set, optional: true
   belongs_to :sender, class_name: "User"
 
   enum :delivery_type, {
@@ -22,8 +23,10 @@ class DocumentDeliveryLog < ApplicationRecord
 
   validates :to_addresses, :subject, :body, presence: true
   validates :delivery_type, :status, presence: true
+  validate :document_or_set_presence
 
   before_validation :normalize_address_fields
+  scope :recent_first, -> { order(created_at: :desc, id: :desc) }
 
   def to_param
     public_id
@@ -42,6 +45,12 @@ class DocumentDeliveryLog < ApplicationRecord
   end
 
   private
+
+  def document_or_set_presence
+    return if document.present? || document_set.present?
+
+    errors.add(:base, "document or document_set must be present")
+  end
 
   def normalize_address_fields
     self.to_addresses = normalize_addresses(to_addresses)

@@ -1,0 +1,61 @@
+= render "shared/error_messages", record: document_set
+
+- selected_items = document_set.document_set_items.index_by(&:document_id)
+
+= form_with model: [:admin, document_set] do |form|
+  .form-grid
+    label
+      | 案件
+      = form.collection_select :project_id, @projects, :id, :name
+    label
+      | 名称
+      = form.text_field :name
+    label
+      | 種別
+      = form.select :set_type, DocumentSet.set_types.keys.map { [_1, _1] }
+    label
+      | 公開範囲
+      = form.select :visibility_policy, DocumentSet.visibility_policies.keys.map { [_1, _1] }
+    label
+      | 表示順
+      = form.number_field :sort_order, min: 0
+    label style="grid-column: 1 / -1;"
+      | 説明
+      = form.text_area :description
+
+  - if @project_documents.any?
+    h2 対象文書
+    p.muted チェックした文書だけセットに含めます。版固定しない場合は最新版を使います。
+    table
+      thead
+        tr
+          th 対象
+          th 文書
+          th 固定版
+          th 並び順
+          th メモ
+      tbody
+        - @project_documents.each_with_index do |document, index|
+          - item = selected_items[document.id]
+          tr
+            td
+              = hidden_field_tag "document_set_items[#{index}][document_id]", document.id
+              = check_box_tag "document_set_items[#{index}][selected]", "1", item.present?
+            td
+              strong = document.title
+              br
+              span.muted = document.slug
+            td
+              - version_options = [["最新版を使う", ""]] + document.document_versions.sort_by(&:created_at).reverse.map { |version| ["#{version.version_label} (#{version.status})", version.id] }
+              = select_tag "document_set_items[#{index}][document_version_id]", options_for_select(version_options, item&.document_version_id)
+            td
+              = number_field_tag "document_set_items[#{index}][sort_order]", item&.sort_order || index, min: 0
+            td
+              = text_field_tag "document_set_items[#{index}][note]", item&.note
+  - else
+    p.muted 案件を選ぶと対象文書を設定できます。
+
+  p.actions style="margin-top:16px;"
+    = form.submit "保存", class: "button"
+    - if document_set.persisted?
+      = link_to "一覧へ戻る", admin_document_sets_path, class: "button secondary"

@@ -3,6 +3,8 @@ require "fileutils"
 class DocumentImporter
   IMPORT_ROOT = Rails.root.join("storage", "imports")
 
+  attr_reader :artifact_root, :manifest_path, :manifest
+
   def initialize(artifact_root:, manifest_path:, actor:)
     @import_root = import_root_path
     @artifact_root = resolve_allowed_path!(artifact_root, type: :directory)
@@ -13,14 +15,14 @@ class DocumentImporter
 
   def call
     publish_job = PublishJob.create!(
-      source_repo: @manifest.fetch("source_repo"),
-      source_branch: @manifest.fetch("source_branch"),
-      source_commit_hash: @manifest.fetch("source_commit_hash"),
-      artifact_path: @artifact_root.to_s,
+      source_repo: manifest.fetch("source_repo"),
+      source_branch: manifest.fetch("source_branch"),
+      source_commit_hash: manifest.fetch("source_commit_hash"),
+      artifact_path: artifact_root.to_s,
       status: :pending
     )
 
-    @manifest.fetch("documents", []).each do |doc_payload|
+    manifest.fetch("documents", []).each do |doc_payload|
       import_document!(doc_payload)
     end
 
@@ -54,7 +56,7 @@ class DocumentImporter
       version = document.document_versions.build(
         version_label: version_label,
         status: payload.fetch("status"),
-        source_commit_hash: @manifest.fetch("source_commit_hash"),
+        source_commit_hash: manifest.fetch("source_commit_hash"),
         changelog_summary: payload["changelog_summary"],
         published_at: published_at_for(payload),
         published_by_user: @actor,

@@ -15,6 +15,7 @@ class DocumentVersion < ApplicationRecord
   validate :published_until_after_published_from
 
   before_validation :normalize_search_body_text
+  after_commit :promote_as_latest_version, on: %i[create update]
   after_commit :broadcast_document_tree_refresh_later
 
   SOURCE_PATH_FIELDS = %i[
@@ -173,5 +174,15 @@ class DocumentVersion < ApplicationRecord
     return if published_until >= published_from
 
     errors.add(:published_until, "must be after published_from")
+  end
+
+  def promote_as_latest_version
+    return unless published?
+    return if document.blank?
+
+    latest = document.latest_version
+    return if latest.present? && latest != self && latest.created_at.to_i > created_at.to_i
+
+    document.update_column(:latest_version_id, id) if document.latest_version_id != id
   end
 end
