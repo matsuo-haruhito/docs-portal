@@ -7,11 +7,11 @@ RSpec.describe GitImportManifestBuilder do
       worktree_path = import_root.join("worktree")
       source_path = worktree_path.join("docs")
       project = create(:project, code: "GIT")
-      source = build_stubbed(
+      source = create(
         :git_import_source,
         project: project,
         public_id: "gis_test",
-        repository_full_name: "example/private-docs",
+        repository_full_name: "example/docs",
         branch: "main",
         source_path: "docs"
       )
@@ -30,7 +30,7 @@ RSpec.describe GitImportManifestBuilder do
         commit_sha: "abc123def4567890"
       ).call
 
-      expect(result.manifest[:source_repo]).to eq("example/private-docs")
+      expect(result.manifest[:source_repo]).to eq("example/docs")
       expect(result.manifest[:source_branch]).to eq("main")
       expect(result.manifest[:source_commit_hash]).to eq("abc123def4567890")
       expect(result.manifest[:documents].size).to eq(1)
