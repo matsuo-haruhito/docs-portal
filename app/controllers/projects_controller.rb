@@ -9,18 +9,20 @@ class ProjectsController < BaseController
     @documents = @project.documents.accessible_to(current_user).includes(:latest_version).recommended_first
     @documents = @documents.select { _1.visible_in_portal_for?(current_user) } unless current_user.internal?
     @important_documents = @documents.select { %w[critical important].include?(_1.importance_level) }
-    @tree_projects = portal_tree_projects
+    @tree_projects = portal_tree_projects(include_project: @project)
   end
 
   private
 
-  def portal_tree_projects
+  def portal_tree_projects(include_project: nil)
     projects = Project.accessible_to(current_user)
       .includes(documents: :latest_version)
       .order(:code)
     return projects if current_user.internal?
 
-    projects.select { visible_project_for_portal?(_1) }
+    visible_projects = projects.select { visible_project_for_portal?(_1) }
+    visible_projects << include_project if include_project.present? && visible_projects.exclude?(include_project)
+    visible_projects
   end
 
   def visible_project_for_portal?(project)
