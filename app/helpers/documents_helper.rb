@@ -1,14 +1,12 @@
 module DocumentsHelper
   def document_tree_render_state(projects:, current_project: nil)
+    projects = projects.to_a
+    prepare_document_tree_cache!(projects)
+
     adapter = TreeView::GraphAdapter.new(
       roots: projects,
       children_resolver: lambda do |node|
-        if node.is_a?(Project)
-          documents = node.documents.accessible_to(current_user).includes(:latest_version).order(:title)
-          current_user.internal? ? documents : documents.select { _1.visible_in_portal_for?(current_user) }
-        else
-          []
-        end
+        node.is_a?(Project) ? document_tree_documents_for(node) : []
       end
     )
 
@@ -17,7 +15,11 @@ module DocumentsHelper
       context: self,
       node_prefix: "document_tree",
       key_resolver: ->(item_or_id) { node_key(item_or_id) }
-    ).build_static
+    ).build(
+      hide_descendants_path_builder: ->(item, _depth, scope) { document_tree_toggle_path(item, :hide, scope:) },
+      show_descendants_path_builder: ->(item, _depth, scope) { document_tree_toggle_path(item, :show, scope:) },
+      toggle_all_path_builder: ->(_state) { nil }
+    )
 
     expanded_keys = current_project ? [node_key(current_project)] : []
 
@@ -103,8 +105,50 @@ module DocumentsHelper
 
   private
 
+  def prepare_document_tree_cache!(projects)
+    @document_tree_documents_by_project_id = projects.index_with do |project|
+      documents = if project.association(:documents).loaded?
+        project.documents.to_a
+      else
+        project.documents.includes(:latest_version).to_a
+      end
+
+      documents = documents.reject { |document| document.archived_at.present? }
+      documents = documents.select { |document| document.visible_in_portal_for?(current_user) } unless current_user.internal?
+      documents.sort_by { |document| document.title.to_s }
+    end.transform_keys(&:id)
+    @document_tree_html_version_by_document_id = {}
+    @document_tree_default_site_version_by_project_id = {}
+  end
+
+  def document_tree_documents_for(project)
+    @document_tree_documents_by_project_id&.fetch(project.id, nil) || begin
+      documents = project.documents.accessible_to(current_user).includes(:latest_version).order(:title).to_a
+      current_user.internal? ? documents : documents.select { _1.visible_in_portal_for?(current_user) }
+    end
+  end
+
+  def document_tree_toggle_path(item, action, scope: nil)
+    return unless item.is_a?(Project)
+
+    project_document_tree_path(
+      item,
+      node_id: item.id,
+      tree_action: action == :hide ? "hide" : "show",
+      scope:,
+      format: :turbo_stream
+    )
+  end
+
   def project_default_site_path(project)
-    version = project.default_site_version_for(current_user)
+    version = @document_tree_default_site_version_by_project_id&.fetch(project.id, nil)
+    unless @document_tree_default_site_version_by_project_id&.key?(project.id)
+      version = document_tree_documents_for(project)
+        .filter_map(&:latest_version)
+        .select { _1.rendered_site_available? && _1.viewable_by?(current_user) }
+        .max_by(&:published_at)
+      @document_tree_default_site_version_by_project_id[project.id] = version if @document_tree_default_site_version_by_project_id
+    end
     return unless version
 
     project_site_path(project, site_path: version.html_view_site_path, version_id: version.public_id)
@@ -118,10 +162,13 @@ module DocumentsHelper
   end
 
   def document_html_version(document)
-    version = document.latest_version
-    return unless version&.rendered_site_available?
-    return unless version.viewable_by?(current_user)
+    cached = @document_tree_html_version_by_document_id&.fetch(document.id, nil)
+    return cached if @document_tree_html_version_by_document_id&.key?(document.id)
 
+    version = document.latest_version
+    version = nil unless version&.rendered_site_available?
+    version = nil unless version&.viewable_by?(current_user)
+    @document_tree_html_version_by_document_id[document.id] = version if @document_tree_html_version_by_document_id
     version
   end
 
