@@ -2,7 +2,7 @@ class ProjectDocumentZipsController < BaseController
   def create
     project = Project.find_by!(code: params[:project_code])
     require_project_access!(project)
-    return if require_consent!(target: project, timing: :download)
+    return if require_consent!(target: project, timing: :download, return_to: project_documents_path(project))
 
     versions = selected_versions(project)
     raise ApplicationError::BadRequest, "No documents selected" if versions.empty?
