@@ -10,12 +10,12 @@ html
       | :root { --ink: #1f2933; --muted: #52606d; --line: #d9e2ec; --panel: #ffffff; --panel-soft: #f8fbff; --accent: #0f766e; --accent-2: #0f62fe; --accent-warm: #f59e0b; --bg: linear-gradient(180deg, #f4f7fb 0%, #eef4f8 55%, #f8fafc 100%); }
       | body { font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif; margin: 0; background: var(--bg); color: var(--ink); }
       | header { background: linear-gradient(135deg, #102a43 0%, #0f172a 70%, #113b55 100%); color: white; padding: 14px 20px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2); }
-      | header nav { max-width: 1280px; margin: 0 auto; display: flex; gap: 16px; align-items: center; justify-content: space-between; }
+      | header nav { max-width: 1600px; margin: 0 auto; display: flex; gap: 16px; align-items: center; justify-content: space-between; }
       | .brand-link { color: white; font-weight: 800; font-size: 18px; letter-spacing: -0.02em; }
       | .header-links { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
       | .user-menu { display: flex; align-items: center; gap: 10px; }
-      | main { max-width: 1080px; margin: 28px auto; background: var(--panel); padding: 28px; border-radius: 22px; box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08); border: 1px solid rgba(148, 163, 184, 0.18); }
-      | .layout-with-sidebar { max-width: 1320px; margin: 28px auto; display: grid; gap: 24px; grid-template-columns: 320px minmax(0, 1fr); align-items: start; }
+      | main { width: calc(100% - 40px); max-width: 1440px; box-sizing: border-box; margin: 28px auto; background: var(--panel); padding: 28px; border-radius: 22px; box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08); border: 1px solid rgba(148, 163, 184, 0.18); }
+      | .layout-with-sidebar { width: calc(100% - 40px); max-width: 1680px; box-sizing: border-box; margin: 28px auto; display: grid; gap: 24px; grid-template-columns: 360px minmax(0, 1fr); align-items: start; }
       | .sidebar-panel { background: var(--panel); padding: 20px; border-radius: 22px; box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08); border: 1px solid rgba(148, 163, 184, 0.18); position: sticky; top: 24px; }
       | .main-panel { background: var(--panel); padding: 28px; border-radius: 22px; box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08); border: 1px solid rgba(148, 163, 184, 0.18); min-width: 0; }
       | a { color: #0f62fe; text-decoration: none; }
@@ -80,6 +80,7 @@ html
       | .site-viewer-shell { border: 1px solid var(--line); border-radius: 22px; overflow: hidden; background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.9); }
       | .site-viewer-frame { display: block; width: 100%; min-height: 78vh; border: 0; background: transparent; }
       | @media (max-width: 960px) {
+      |   main, .layout-with-sidebar { width: calc(100% - 32px); }
       |   .layout-with-sidebar { grid-template-columns: 1fr; }
       |   .sidebar-panel { position: static; }
       |   main { margin: 24px auto; }
