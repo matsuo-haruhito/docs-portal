@@ -7,6 +7,8 @@ class DocumentsController < BaseController
   def index
     @project = Project.find_by!(code: params[:project_code])
     require_project_access!(@project)
+    return if require_consent!(target: @project, timing: :first_view)
+
     @filters = document_filter_params
     @available_tags = DocumentTag
       .joins(:documents)
@@ -29,6 +31,8 @@ class DocumentsController < BaseController
   def show
     @project = Project.find_by!(code: params[:project_code])
     require_project_access!(@project)
+    return if require_consent!(target: @project, timing: :first_view)
+
     @document = @project.documents.includes(:document_tags, :document_keywords).find_by!(slug: params[:slug])
     require_document_access!(@document)
     raise ApplicationError::Forbidden unless current_user.internal? || @document.visible_in_portal_for?(current_user)
