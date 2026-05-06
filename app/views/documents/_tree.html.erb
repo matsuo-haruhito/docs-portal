@@ -1,12 +1,14 @@
-<%= turbo_stream_from "document_tree" %>
+<div id="document_tree_panel">
+  <%= turbo_stream_from "document_tree" %>
 
-<h2 style="margin-top: 0;">文書ツリー</h2>
-<p class="muted">案件と文書の階層を表示します。</p>
+  <h2 style="margin-top: 0;">文書ツリー</h2>
+  <p class="muted">案件と文書の階層を表示します。</p>
 
-<% render_state = document_tree_render_state(projects: projects, current_project: local_assigns[:current_project]) %>
+  <% render_state = document_tree_render_state(projects: projects, current_project: local_assigns[:current_project]) %>
 
-<table class="tree-view-table">
-  <tbody>
-    <%= tree_view_rows(render_state) %>
-  </tbody>
-</table>
+  <table class="tree-view-table">
+    <tbody>
+      <%= tree_view_rows(render_state) %>
+    </tbody>
+  </table>
+</div>
