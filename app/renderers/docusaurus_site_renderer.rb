@@ -29,7 +29,7 @@ class DocusaurusSiteRenderer
 
   def render_html(site_path)
     absolute_path = resolve_absolute_path(site_path)
-    rewrite_html(File.read(absolute_path), absolute_path:)
+    rewrite_html(File.read(absolute_path), absolute_path:, site_path:)
   end
 
   def resolve_absolute_path(site_path)
@@ -108,7 +108,7 @@ class DocusaurusSiteRenderer
     nil
   end
 
-  def rewrite_html(html, absolute_path:)
+  def rewrite_html(html, absolute_path:, site_path:)
     document = Nokogiri::HTML5.parse(html)
 
     filter_restricted_navigation_links!(document, absolute_path:)
@@ -116,11 +116,34 @@ class DocusaurusSiteRenderer
     rewrite_url_attributes(document, "link", "href", absolute_path:)
     rewrite_url_attributes(document, "script", "src", absolute_path:)
     rewrite_url_attributes(document, "img", "src", absolute_path:)
+    inject_embedded_route_path!(document, site_path) if @embedded
     inject_portal_navigation!(document) unless @embedded
     inject_version_switcher!(document) unless @embedded
     inject_viewer_theme!(document)
 
     document.to_html.html_safe
+  end
+
+  def inject_embedded_route_path!(document, site_path)
+    head = document.at_css("head")
+    return unless head
+
+    script = Nokogiri::XML::Node.new("script", document)
+    script.content = <<~JS
+      (function() {
+        var routePath = #{docusaurus_route_path(site_path).to_json};
+        var suffix = window.location.search + window.location.hash;
+        if (window.location.pathname !== routePath) {
+          window.history.replaceState(window.history.state, "", routePath + suffix);
+        }
+      }());
+    JS
+
+    head.children.first ? head.children.first.add_previous_sibling(script) : head.add_child(script)
+  end
+
+  def docusaurus_route_path(site_path)
+    "/#{DocumentVersion.normalize_site_page_path(site_path.presence || @version.html_view_site_path)}"
   end
 
   def rewrite_url_attributes(document, selector, attribute, absolute_path:)
