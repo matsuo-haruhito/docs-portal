@@ -11,7 +11,7 @@ class ProjectSitesController < BaseController
     if html_file?(file_path)
       render_html_or_shell(renderer, site_path)
     else
-      send_file file_path, disposition: "inline", type: Rack::Mime.mime_type(file_path.extname, "application/octet-stream")
+      send_site_file(file_path)
     end
   end
 
@@ -72,6 +72,51 @@ class ProjectSitesController < BaseController
       @site_viewer_back_path = project_document_path(@project, @site_viewer_document.slug)
       render "shared/site_viewer"
     end
+  end
+
+  def send_site_file(file_path)
+    if webpack_runtime_file?(file_path)
+      send_rewritten_webpack_runtime(file_path)
+    else
+      send_file file_path, disposition: "inline", type: Rack::Mime.mime_type(file_path.extname, "application/octet-stream")
+    end
+  end
+
+  def webpack_runtime_file?(file_path)
+    file_path.basename.to_s.start_with?("runtime~main.") && file_path.extname == ".js"
+  end
+
+  def send_rewritten_webpack_runtime(file_path)
+    body = rewrite_webpack_runtime_public_path(File.read(file_path))
+
+    send_data body,
+      disposition: "inline",
+      type: Rack::Mime.mime_type(file_path.extname, "application/javascript")
+  end
+
+  def rewrite_webpack_runtime_public_path(body)
+    body = body.gsub('f.p="/"', "f.p=#{site_asset_public_path.dump}")
+    asset_query = site_asset_query_suffix
+    return body if asset_query.blank?
+
+    body
+      .gsub("f.p+f.u(r)", "f.p+f.u(r)+#{asset_query.dump}")
+      .gsub("f.p+f.u(e)", "f.p+f.u(e)+#{asset_query.dump}")
+  end
+
+  def site_asset_public_path
+    placeholder = "__docs_portal_asset__"
+    project_site_path(@project, site_path: placeholder).delete_suffix(placeholder)
+  end
+
+  def site_asset_query_suffix
+    query = Rack::Utils.build_query(
+      {
+        embedded: embedded_request? ? "1" : nil,
+        version_id: @build_version.public_id
+      }.compact
+    )
+    query.present? ? "?#{query}" : ""
   end
 
   def embedded_request?
