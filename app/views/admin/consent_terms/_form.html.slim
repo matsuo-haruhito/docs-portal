@@ -1,0 +1,26 @@
+= render "shared/error_messages", record: consent_term
+
+= form_with model: [:admin, consent_term] do |form|
+  .form-grid
+    label
+      | タイトル
+      = form.text_field :title
+    label
+      | 版ラベル
+      = form.text_field :version_label
+    label
+      | 種別
+      = form.select :consent_scope, ConsentTerm.consent_scopes.keys.map { [_1, _1] }
+    label
+      | 再同意方針
+      = form.select :requirement_timing, ConsentTerm.requirement_timings.keys.map { [_1, _1] }
+    label
+      | 状態
+      = form.select :active, [["有効", true], ["無効", false]]
+    label style="grid-column: 1 / -1;"
+      | 本文
+      = form.text_area :body
+  p.actions style="margin-top:16px;"
+    = form.submit "保存", class: "button"
+    - if consent_term.persisted?
+      = link_to "一覧へ戻る", admin_consent_terms_path, class: "button secondary"
