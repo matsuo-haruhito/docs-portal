@@ -3,6 +3,7 @@ class ProjectsController < BaseController
     @projects = Project.accessible_to(current_user)
       .includes(documents: :latest_version)
       .order(:code)
+    @projects = @projects.select { project_list_visible_for_portal?(_1) } unless current_user.internal?
   end
 
   def show
@@ -24,6 +25,10 @@ class ProjectsController < BaseController
     visible_projects = projects.select { portal_documents_for(_1).any? }
     visible_projects << include_project if include_project.present? && visible_projects.exclude?(include_project)
     visible_projects
+  end
+
+  def project_list_visible_for_portal?(project)
+    project.documents.empty? || portal_documents_for(project).any?
   end
 
   def portal_documents_for(project)
