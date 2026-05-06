@@ -212,6 +212,7 @@ class DocusaurusSiteRenderer
 
   def filter_restricted_navigation_links!(document, absolute_path:)
     return unless @document_version_resolver && @user
+    return if @user.internal?
 
     document.css("nav a[href], aside a[href], .theme-doc-sidebar-menu a[href]").each do |node|
       site_path = site_path_from_url(node["href"], absolute_path:)
