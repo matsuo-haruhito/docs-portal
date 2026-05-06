@@ -1,5 +1,5 @@
 module DocumentsHelper
-  def document_tree_render_state(projects:)
+  def document_tree_render_state(projects:, current_project: nil)
     adapter = TreeView::GraphAdapter.new(
       roots: projects,
       children_resolver: lambda do |node|
@@ -19,12 +19,14 @@ module DocumentsHelper
       key_resolver: ->(item_or_id) { node_key(item_or_id) }
     ).build_static
 
+    expanded_keys = current_project ? [node_key(current_project)] : []
+
     TreeView::RenderState.new(
       tree:,
       root_items: tree.root_items,
       row_partial: "documents/tree_columns",
       ui_config:,
-      initial_expansion: { default: :expanded },
+      initial_expansion: { default: :collapsed, expanded_keys: },
       row_class_builder: ->(item) { tree_item_css_class(item) },
       row_data_builder: ->(item) { tree_item_data_attributes(item) }
     )
