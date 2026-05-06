@@ -29,23 +29,21 @@ class ConsentRequirementChecker
   attr_reader :user, :target, :timing
 
   def required_terms
-    if project_target.present?
-      project_required_terms
-    else
-      global_required_terms
-    end
+    (global_required_terms + project_required_terms).uniq
   end
 
   def project_required_terms
+    return [] if project_target.blank?
+
     settings = project_target.project_consent_settings.enabled_only.includes(:consent_term)
     settings = settings.where(required_on: required_on_for_timing) if required_on_for_timing.present?
     settings.map(&:consent_term).select(&:active?).uniq
   end
 
   def global_required_terms
-    scope = ConsentTerm.active_only
+    scope = ConsentTerm.active_only.global
     scope = scope.where(requirement_timing: timing) if timing.present?
-    scope.select { applicable_to_target?(_1) }
+    scope.to_a
   end
 
   def required_on_for_timing
@@ -57,25 +55,9 @@ class ConsentRequirementChecker
     end
   end
 
-  def applicable_to_target?(term)
-    return true if term.global?
-    return false if target.blank?
-
-    case target
-    when Project
-      term.project?
-    when Document
-      term.document? || term.project?
-    when DocumentFile
-      term.download? || term.document? || term.project?
-    else
-      false
-    end
-  end
-
   def consented_to?(term)
     consent_scope = UserConsent.where(user:, consent_term: term, consent_term_version_label: term.version_label)
-    return consent_scope.exists?(target: nil) if term.global? && consent_target.blank?
+    return consent_scope.exists?(target: nil) if term.global?
 
     consent_scope.exists?(target: consent_target)
   end
