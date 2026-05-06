@@ -79,12 +79,17 @@ class Document < ApplicationRecord
   scope :recommended_first, -> { order(:importance_level, :recommended_sort_order, :title, :id) }
   scope :important_first, -> { where(importance_level: importance_levels.values_at(:critical, :important)).recommended_first }
 
+  def to_param
+    slug
+  end
+
   def visible_in_portal_for?(user)
     return false if archived?
     return false unless viewable_by?(user)
     return true if user&.internal?
+    return true if latest_version.blank?
 
-    latest_version&.viewable_by?(user) || false
+    latest_version.viewable_by?(user)
   end
 
   def archived?
