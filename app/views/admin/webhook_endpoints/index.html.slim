@@ -1,0 +1,52 @@
+- page_title "Webhook"
+
+h1 Webhook
+= render "admin/nav"
+
+.card
+  h2 新規登録
+  = render "form", webhook_endpoint: @webhook_endpoint
+
+section.card
+  h2 Webhook設定
+  table
+    thead
+      tr
+        th 名称
+        th 送信先URL
+        th イベント
+        th 有効
+        th
+    tbody
+      - @webhook_endpoints.each do |endpoint|
+        tr
+          td = endpoint.name
+          td = endpoint.target_url
+          td = endpoint.normalized_event_types.join(", ")
+          td = endpoint.active? ? "有効" : "停止"
+          td.actions
+            = edit_link_to "編集", edit_admin_webhook_endpoint_path(endpoint)
+            = delete_link_to "削除", admin_webhook_endpoint_path(endpoint), confirm: "このWebhook設定を削除しますか？"
+
+section.card
+  h2 最近の送信履歴
+  p.muted 送信成功/失敗、HTTPステータス、エラー内容を確認できます。失敗時の再送は送信履歴をもとに個別運用で判断します。
+  table
+    thead
+      tr
+        th 作成日時
+        th 設定
+        th イベント
+        th ステータス
+        th HTTP
+        th エラー
+    tbody
+      - @recent_deliveries.each do |delivery|
+        tr
+          td = l(delivery.created_at, format: :short)
+          td = delivery.webhook_endpoint.name
+          td = delivery.event_type
+          td
+            span.badge = delivery.status
+          td = delivery.response_status || "-"
+          td = delivery.error_message.presence || "-"
