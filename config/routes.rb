@@ -16,6 +16,8 @@ Rails.application.routes.draw do
 
   namespace :admin do
     root "dashboard#index"
+    get "model_browser", to: "model_browsers#index", as: :model_browser
+    get "model_browser/:model_key", to: "model_browsers#show", as: :model_browser_model
 
     resources :companies, except: %i[show new]
     resources :users, except: %i[show new]

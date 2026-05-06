@@ -1,0 +1,35 @@
+- page_title "モデルブラウザ", @entry.label
+
+p.muted
+  = link_to "モデルブラウザ", admin_model_browser_path
+  |  /
+  span = @entry.label
+
+h1 = @entry.label
+p.muted = @entry.description
+
+p.actions
+  = link_to "モデル一覧へ戻る", admin_model_browser_path, class: "button secondary"
+  - if (index_path = entry_index_path(@entry))
+    = link_to "既存画面へ", index_path, class: "button"
+
+.stats-grid
+  .card.metric-card
+    p.eyebrow レコード数
+    p.metric-number = @summary[:total_count]
+  .card.metric-card
+    p.eyebrow 最終更新
+    p.metric-number.metric-number--small = @summary[:latest_updated_at] ? l(@summary[:latest_updated_at], format: :short) : "-"
+
+section.card
+  h2 最近の record
+  table
+    thead
+      tr
+        - @entry.summary_fields.each do |field|
+          th = field.to_s.humanize
+    tbody
+      - @records.each do |record|
+        tr
+          - @entry.summary_fields.each do |field|
+            td = record_summary_value(record, field)

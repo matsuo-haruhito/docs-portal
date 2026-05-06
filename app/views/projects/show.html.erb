@@ -3,42 +3,48 @@
 <% end %>
 
 <% page_title @project.name %>
-<h1><%= @project.name %></h1>
-
-<p class="muted">
-  コード: <%= @project.code %><br>
-  <%= @project.description %>
-</p>
-
-<% if (site_version = @project.default_site_version_for(current_user)) %>
-  <p><%= link_to "ドキュメントサイトを表示", project_site_path(@project, site_path: site_version.html_view_site_path, version_id: site_version.public_id) %></p>
-<% end %>
-
-<p><%= link_to "AI向けコンテキストを表示", project_ai_context_path(@project) %></p>
-<p><%= link_to "文書セットを見る", project_document_sets_path(@project) %></p>
-<p><%= link_to "文書カタログを見る", project_document_catalogs_path(@project) %></p>
-
-<% if @important_documents.any? %>
-  <h2>優先して確認したい資料</h2>
-  <ul>
-    <% @important_documents.each do |document| %>
-      <li>
-        <strong><%= link_to document.title, project_document_path(@project, document.slug) %></strong>
-        <span class="badge"><%= document.importance_level %></span>
-      </li>
+<section class="page-hero">
+  <p class="eyebrow">Project Workspace</p>
+  <h1><%= @project.name %></h1>
+  <p class="muted">コード: <%= @project.code %></p>
+  <p class="muted"><%= @project.description %></p>
+  <p class="actions">
+    <% if (site_version = @project.default_site_version_for(current_user)) %>
+      <%= link_to "ドキュメントサイトを表示", project_site_path(@project, site_path: site_version.html_view_site_path, version_id: site_version.public_id), class: "button" %>
     <% end %>
-  </ul>
-<% end %>
+    <%= link_to "文書一覧", project_documents_path(@project), class: "button secondary" %>
+    <%= link_to "AI向けコンテキスト", project_ai_context_path(@project), class: "button secondary" %>
+    <%= link_to "文書セット", project_document_sets_path(@project), class: "button secondary" %>
+    <%= link_to "文書カタログ", project_document_catalogs_path(@project), class: "button secondary" %>
+  </p>
+</section>
 
-<h2>資料一覧</h2>
-<ul>
-  <% @documents.each do |document| %>
-    <li>
-      <%= link_to document.title, project_document_path(@project, document.slug) %>
-      <span class="badge"><%= document.importance_level %></span>
-    </li>
+<section class="dashboard-grid">
+  <% if @important_documents.any? %>
+    <article class="card">
+      <h2>優先して確認したい資料</h2>
+      <ul class="resource-list">
+        <% @important_documents.each do |document| %>
+          <li>
+            <strong><%= link_to document.title, project_document_path(@project, document.slug) %></strong>
+            <span class="badge"><%= document.importance_level %></span>
+          </li>
+        <% end %>
+      </ul>
+    </article>
   <% end %>
-</ul>
 
-<p><%= link_to "文書一覧へ", project_documents_path(@project) %></p>
-<p><%= link_to "案件一覧へ戻る", projects_path %></p>
+  <article class="card">
+    <h2>資料一覧</h2>
+    <ul class="resource-list">
+      <% @documents.each do |document| %>
+        <li>
+          <strong><%= link_to document.title, project_document_path(@project, document.slug) %></strong>
+          <span class="badge"><%= document.importance_level %></span>
+        </li>
+      <% end %>
+    </ul>
+  </article>
+</section>
+
+<p><%= link_to "案件一覧へ戻る", projects_path, class: "button secondary" %></p>

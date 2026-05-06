@@ -52,22 +52,27 @@ RSpec.describe "Document sites", type: :request do
     FileUtils.rm_rf(version.site_root_absolute_path) if version.id
   end
 
-  it "serves docusaurus page for version path containing dots" do
+  it "serves a site viewer shell for version path containing dots" do
     sign_in_as(user)
 
     get site_document_version_path(version, site_path: site_build_path)
 
     expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Document Viewer")
+    expect(response.body).to include("site-viewer-frame")
+    expect(response.body).to include(site_document_version_path(version, site_path: site_build_path, embedded: "1").gsub("&", "&amp;"))
+  end
+
+  it "serves embedded docusaurus html for the iframe body" do
+    sign_in_as(user)
+
+    get site_document_version_path(version, site_path: site_build_path, embedded: "1")
+
+    expect(response).to have_http_status(:ok)
     expect(response.body).to include("API Spec")
-    expect(response.body).to include("portal-site-nav")
-    expect(response.body).to include("配車管理API仕様書 / v1.0.0")
-    expect(response.body).to include("案件トップへ戻る")
-    expect(response.body).to include("文書詳細へ戻る")
-    expect(response.body).to include(project_path(project))
-    expect(response.body).to include(project_document_path(project, document.slug))
-    expect(response.body).to include("/document_versions/#{version.public_id}/site/assets/css/styles.css")
-    expect(response.body).to include("/document_versions/#{version.public_id}/site/docs-")
-    expect(response.body).to include("/document_versions/#{version.public_id}/site/docs-")
+    expect(response.body).to include("portal-doc-body")
+    expect(response.body).not_to include("portal-site-nav")
+    expect(response.body).to include(site_document_version_path(version, site_path: "assets/css/styles.css", embedded: "1").gsub("&", "&amp;"))
   end
 
   it "serves shared docusaurus css asset when version storage does not include it" do

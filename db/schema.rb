@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_07_193300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -36,31 +36,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
     t.index ["project_id"], name: "index_access_logs_on_project_id"
     t.index ["public_id"], name: "index_access_logs_on_public_id", unique: true
     t.index ["user_id"], name: "index_access_logs_on_user_id"
-  end
-
-  create_table "bulk_edit_dry_runs", force: :cascade do |t|
-    t.bigint "confirmed_by_id"
-    t.datetime "confirmed_at"
-    t.datetime "created_at", null: false
-    t.bigint "created_by_id", null: false
-    t.json "errors_json", default: [], null: false
-    t.datetime "expires_at"
-    t.integer "operation_type", default: 0, null: false
-    t.json "params_json", default: {}, null: false
-    t.bigint "project_id"
-    t.string "public_id", null: false
-    t.json "result_json", default: {}, null: false
-    t.json "summary_json", default: {}, null: false
-    t.integer "status", default: 0, null: false
-    t.json "target_document_ids", default: [], null: false
-    t.datetime "updated_at", null: false
-    t.json "warnings_json", default: [], null: false
-    t.index ["confirmed_by_id"], name: "index_bulk_edit_dry_runs_on_confirmed_by_id"
-    t.index ["created_by_id"], name: "index_bulk_edit_dry_runs_on_created_by_id"
-    t.index ["operation_type"], name: "index_bulk_edit_dry_runs_on_operation_type"
-    t.index ["project_id"], name: "index_bulk_edit_dry_runs_on_project_id"
-    t.index ["public_id"], name: "index_bulk_edit_dry_runs_on_public_id", unique: true
-    t.index ["status"], name: "index_bulk_edit_dry_runs_on_status"
   end
 
   create_table "access_requests", force: :cascade do |t|
@@ -91,6 +66,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
     t.index ["status"], name: "index_access_requests_on_status"
   end
 
+  create_table "bulk_edit_dry_runs", force: :cascade do |t|
+    t.datetime "confirmed_at"
+    t.bigint "confirmed_by_id"
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id", null: false
+    t.json "errors_json", default: [], null: false
+    t.datetime "expires_at"
+    t.integer "operation_type", default: 0, null: false
+    t.json "params_json", default: {}, null: false
+    t.bigint "project_id"
+    t.string "public_id", null: false
+    t.json "result_json", default: {}, null: false
+    t.integer "status", default: 0, null: false
+    t.json "summary_json", default: {}, null: false
+    t.json "target_document_ids", default: [], null: false
+    t.datetime "updated_at", null: false
+    t.json "warnings_json", default: [], null: false
+    t.index ["confirmed_by_id"], name: "index_bulk_edit_dry_runs_on_confirmed_by_id"
+    t.index ["created_by_id"], name: "index_bulk_edit_dry_runs_on_created_by_id"
+    t.index ["operation_type"], name: "index_bulk_edit_dry_runs_on_operation_type"
+    t.index ["project_id"], name: "index_bulk_edit_dry_runs_on_project_id"
+    t.index ["public_id"], name: "index_bulk_edit_dry_runs_on_public_id", unique: true
+    t.index ["status"], name: "index_bulk_edit_dry_runs_on_status"
+  end
+
   create_table "companies", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.string "code", null: false
@@ -119,19 +119,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
     t.index ["title", "version_label"], name: "index_consent_terms_on_title_and_version_label", unique: true
   end
 
-  create_table "document_bookmarks", force: :cascade do |t|
-    t.integer "bookmark_type", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.bigint "document_id", null: false
-    t.string "public_id", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["document_id"], name: "index_document_bookmarks_on_document_id"
-    t.index ["public_id"], name: "index_document_bookmarks_on_public_id", unique: true
-    t.index ["user_id", "document_id", "bookmark_type"], name: "index_document_bookmarks_unique_user_document_type", unique: true
-    t.index ["user_id"], name: "index_document_bookmarks_on_user_id"
-  end
-
   create_table "document_approval_requests", force: :cascade do |t|
     t.bigint "acted_by_id"
     t.datetime "approved_at"
@@ -153,6 +140,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
     t.index ["public_id"], name: "index_document_approval_requests_on_public_id", unique: true
     t.index ["requester_id"], name: "index_document_approval_requests_on_requester_id"
     t.index ["status"], name: "index_document_approval_requests_on_status"
+  end
+
+  create_table "document_bookmarks", force: :cascade do |t|
+    t.integer "bookmark_type", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.bigint "document_id", null: false
+    t.string "public_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["document_id"], name: "index_document_bookmarks_on_document_id"
+    t.index ["public_id"], name: "index_document_bookmarks_on_public_id", unique: true
+    t.index ["user_id", "document_id", "bookmark_type"], name: "index_document_bookmarks_unique_user_document_type", unique: true
+    t.index ["user_id"], name: "index_document_bookmarks_on_user_id"
   end
 
   create_table "document_catalog_items", force: :cascade do |t|
@@ -439,9 +439,57 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
     t.index ["title"], name: "index_documents_on_title_trigram", opclass: :gin_trgm_ops, using: :gin
   end
 
+  create_table "git_import_runs", force: :cascade do |t|
+    t.string "branch", null: false
+    t.string "commit_sha"
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.datetime "finished_at"
+    t.bigint "git_import_source_id"
+    t.integer "import_mode", default: 0, null: false
+    t.integer "provider", default: 0, null: false
+    t.string "public_id", null: false
+    t.string "repository_full_name", null: false
+    t.string "source_path", null: false
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.json "summary_json", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["commit_sha"], name: "index_git_import_runs_on_commit_sha"
+    t.index ["git_import_source_id"], name: "index_git_import_runs_on_git_import_source_id"
+    t.index ["public_id"], name: "index_git_import_runs_on_public_id", unique: true
+    t.index ["status"], name: "index_git_import_runs_on_status"
+  end
+
+  create_table "git_import_sources", force: :cascade do |t|
+    t.integer "auth_type", default: 0, null: false
+    t.string "branch", default: "main", null: false
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id", null: false
+    t.string "credential_ref"
+    t.text "credential_secret"
+    t.boolean "enabled", default: true, null: false
+    t.string "installation_id"
+    t.datetime "last_synced_at"
+    t.string "last_synced_commit_sha"
+    t.string "organization_name"
+    t.bigint "project_id", null: false
+    t.integer "provider", default: 0, null: false
+    t.string "public_id", null: false
+    t.string "repository_full_name", null: false
+    t.string "source_path", default: "docs", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_git_import_sources_on_created_by_id"
+    t.index ["enabled"], name: "index_git_import_sources_on_enabled"
+    t.index ["project_id", "repository_full_name", "branch", "source_path"], name: "index_git_import_sources_unique_target", unique: true
+    t.index ["project_id"], name: "index_git_import_sources_on_project_id"
+    t.index ["public_id"], name: "index_git_import_sources_on_public_id", unique: true
+    t.index ["repository_full_name"], name: "index_git_import_sources_on_repository_full_name"
+  end
+
   create_table "import_dry_runs", force: :cascade do |t|
-    t.bigint "confirmed_by_id"
     t.datetime "confirmed_at"
+    t.bigint "confirmed_by_id"
     t.datetime "created_at", null: false
     t.bigint "created_by_id", null: false
     t.json "errors_json", default: [], null: false
@@ -450,9 +498,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
     t.bigint "project_id"
     t.string "public_id", null: false
     t.json "result_json", default: {}, null: false
-    t.json "summary_json", default: {}, null: false
-    t.integer "status", default: 0, null: false
     t.string "source_commit_hash"
+    t.integer "status", default: 0, null: false
+    t.json "summary_json", default: {}, null: false
     t.datetime "updated_at", null: false
     t.json "warnings_json", default: [], null: false
     t.index ["confirmed_by_id"], name: "index_import_dry_runs_on_confirmed_by_id"
@@ -496,6 +544,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
     t.index ["public_id"], name: "index_notification_receipts_on_public_id", unique: true
     t.index ["read_at"], name: "index_notification_receipts_on_read_at"
     t.index ["user_id"], name: "index_notification_receipts_on_user_id"
+  end
+
+  create_table "project_consent_settings", force: :cascade do |t|
+    t.bigint "consent_term_id", null: false
+    t.datetime "created_at", null: false
+    t.boolean "enabled", default: true, null: false
+    t.bigint "project_id", null: false
+    t.string "public_id", null: false
+    t.integer "required_on", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["consent_term_id"], name: "index_project_consent_settings_on_consent_term_id"
+    t.index ["enabled"], name: "index_project_consent_settings_on_enabled"
+    t.index ["project_id", "consent_term_id", "required_on"], name: "index_project_consent_settings_unique_requirement", unique: true
+    t.index ["project_id"], name: "index_project_consent_settings_on_project_id"
+    t.index ["public_id"], name: "index_project_consent_settings_on_public_id", unique: true
+    t.index ["required_on"], name: "index_project_consent_settings_on_required_on"
   end
 
   create_table "project_memberships", force: :cascade do |t|
@@ -554,6 +618,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
 
   create_table "user_consents", force: :cascade do |t|
     t.bigint "consent_term_id", null: false
+    t.string "consent_term_version_label", null: false
     t.datetime "consented_at", null: false
     t.datetime "created_at", null: false
     t.string "ip_address"
@@ -564,10 +629,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
     t.text "user_agent"
     t.bigint "user_id", null: false
     t.index ["consent_term_id"], name: "index_user_consents_on_consent_term_id"
+    t.index ["consent_term_version_label"], name: "index_user_consents_on_consent_term_version_label"
     t.index ["consented_at"], name: "index_user_consents_on_consented_at"
     t.index ["public_id"], name: "index_user_consents_on_public_id", unique: true
     t.index ["target_type", "target_id"], name: "index_user_consents_on_target_type_and_target_id"
-    t.index ["user_id", "consent_term_id", "target_type", "target_id"], name: "index_user_consents_unique_user_term_target", unique: true
+    t.index ["user_id", "consent_term_id", "target_type", "target_id", "consent_term_version_label"], name: "index_user_consents_unique_versioned_target", unique: true
     t.index ["user_id"], name: "index_user_consents_on_user_id"
   end
 
@@ -588,16 +654,53 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
     t.index ["user_type"], name: "index_users_on_user_type"
   end
 
+  create_table "webhook_deliveries", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.string "event_type", null: false
+    t.bigint "notification_event_id", null: false
+    t.string "public_id", null: false
+    t.text "request_body", null: false
+    t.text "response_body"
+    t.integer "response_status"
+    t.datetime "sent_at"
+    t.integer "status", default: 0, null: false
+    t.string "target_url", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "webhook_endpoint_id", null: false
+    t.index ["event_type"], name: "index_webhook_deliveries_on_event_type"
+    t.index ["notification_event_id"], name: "index_webhook_deliveries_on_notification_event_id"
+    t.index ["public_id"], name: "index_webhook_deliveries_on_public_id", unique: true
+    t.index ["sent_at"], name: "index_webhook_deliveries_on_sent_at"
+    t.index ["status"], name: "index_webhook_deliveries_on_status"
+    t.index ["webhook_endpoint_id"], name: "index_webhook_deliveries_on_webhook_endpoint_id"
+  end
+
+  create_table "webhook_endpoints", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.json "event_types", default: [], null: false
+    t.json "headers_json", default: {}, null: false
+    t.string "name", null: false
+    t.string "public_id", null: false
+    t.string "secret_token"
+    t.string "target_url", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_webhook_endpoints_on_active"
+    t.index ["name"], name: "index_webhook_endpoints_on_name"
+    t.index ["public_id"], name: "index_webhook_endpoints_on_public_id", unique: true
+  end
+
   add_foreign_key "access_logs", "companies"
   add_foreign_key "access_logs", "document_versions"
   add_foreign_key "access_logs", "documents"
   add_foreign_key "access_logs", "projects"
   add_foreign_key "access_logs", "users"
+  add_foreign_key "access_requests", "users", column: "approver_id"
+  add_foreign_key "access_requests", "users", column: "requester_id"
   add_foreign_key "bulk_edit_dry_runs", "projects"
   add_foreign_key "bulk_edit_dry_runs", "users", column: "confirmed_by_id"
   add_foreign_key "bulk_edit_dry_runs", "users", column: "created_by_id"
-  add_foreign_key "access_requests", "users", column: "approver_id"
-  add_foreign_key "access_requests", "users", column: "requester_id"
   add_foreign_key "document_approval_requests", "documents"
   add_foreign_key "document_approval_requests", "users", column: "acted_by_id"
   add_foreign_key "document_approval_requests", "users", column: "approver_id"
@@ -607,8 +710,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
   add_foreign_key "document_catalog_items", "document_catalogs"
   add_foreign_key "document_catalog_items", "documents"
   add_foreign_key "document_catalogs", "projects"
-  add_foreign_key "document_delivery_logs", "documents"
   add_foreign_key "document_delivery_logs", "document_sets"
+  add_foreign_key "document_delivery_logs", "documents"
   add_foreign_key "document_delivery_logs", "projects"
   add_foreign_key "document_delivery_logs", "users", column: "sender_id"
   add_foreign_key "document_files", "document_versions"
@@ -618,9 +721,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
   add_foreign_key "document_permissions", "users"
   add_foreign_key "document_relations", "documents", column: "source_document_id"
   add_foreign_key "document_relations", "documents", column: "target_document_id"
+  add_foreign_key "document_review_comments", "document_review_comments", column: "parent_id"
   add_foreign_key "document_review_comments", "document_versions"
   add_foreign_key "document_review_comments", "documents"
-  add_foreign_key "document_review_comments", "document_review_comments", column: "parent_id"
   add_foreign_key "document_review_comments", "users", column: "author_id"
   add_foreign_key "document_review_comments", "users", column: "resolved_by_id"
   add_foreign_key "document_set_items", "document_sets"
@@ -634,6 +737,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
   add_foreign_key "document_versions", "users", column: "published_by_user_id"
   add_foreign_key "documents", "projects"
   add_foreign_key "documents", "users", column: "archived_by_user_id"
+  add_foreign_key "git_import_runs", "git_import_sources"
+  add_foreign_key "git_import_sources", "projects"
+  add_foreign_key "git_import_sources", "users", column: "created_by_id"
   add_foreign_key "import_dry_runs", "projects"
   add_foreign_key "import_dry_runs", "users", column: "confirmed_by_id"
   add_foreign_key "import_dry_runs", "users", column: "created_by_id"
@@ -643,6 +749,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
   add_foreign_key "notification_events", "users", column: "actor_user_id"
   add_foreign_key "notification_receipts", "notification_events"
   add_foreign_key "notification_receipts", "users"
+  add_foreign_key "project_consent_settings", "consent_terms"
+  add_foreign_key "project_consent_settings", "projects"
   add_foreign_key "project_memberships", "projects"
   add_foreign_key "project_memberships", "users"
   add_foreign_key "read_confirmations", "document_versions"
@@ -651,4 +759,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_07_093000) do
   add_foreign_key "user_consents", "consent_terms"
   add_foreign_key "user_consents", "users"
   add_foreign_key "users", "companies"
+  add_foreign_key "webhook_deliveries", "notification_events"
+  add_foreign_key "webhook_deliveries", "webhook_endpoints"
 end

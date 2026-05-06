@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-05-07",
+  "task": {
+    "name": "ui_ux_foundation_and_iframe_viewer",
+    "type": "feature",
+    "ticket": null
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work/self/docs-portal",
+    "customer": null,
+    "repo": "matsuo-haruhito/docs-portal",
+    "editable_paths": [
+      "app/",
+      "config/",
+      "docs/",
+      "spec/"
+    ],
+    "read_only_paths": [
+      "../../AGENTS.md",
+      "docs/README.md",
+      "docs/アプリケーション仕様.md",
+      "docs/テスト方針.md",
+      ".git/"
+    ]
+  },
+  "instruction_summary": "Improve the app from local main by strengthening MVC and UX: provide better dashboards and navigation, add views that make key models observable from the admin UI, and change Docusaurus viewing to use an iframe shell that embeds only the document body.",
+  "actual_work": "Implemented a UI/UX foundation slice from local main: refreshed the user workspace/dashboard and project landing pages, added an admin model browser that exposes core models through read-only views, and switched Docusaurus HTML viewing to a Rails shell plus embedded same-origin iframe body approach.",
+  "changed_files": [
+    "app/controllers/admin/dashboard_controller.rb",
+    "app/controllers/admin/model_browsers_controller.rb",
+    "app/controllers/dashboard_controller.rb",
+    "app/controllers/document_sites_controller.rb",
+    "app/controllers/project_sites_controller.rb",
+    "app/helpers/site_viewers_helper.rb",
+    "app/models/user.rb",
+    "app/renderers/docusaurus_site_renderer.rb",
+    "app/services/admin/model_browser_catalog.rb",
+    "app/views/admin/_nav.html.slim",
+    "app/views/admin/dashboard/index.html.slim",
+    "app/views/admin/model_browsers/index.html.slim",
+    "app/views/admin/model_browsers/show.html.slim",
+    "app/views/dashboard/show.html.erb",
+    "app/views/layouts/application.html.slim",
+    "app/views/projects/index.html.erb",
+    "app/views/projects/show.html.erb",
+    "app/views/shared/_navbar.html.slim",
+    "app/views/shared/site_viewer.html.slim",
+    "config/routes.rb",
+    "docs/ai/prompt-logs/2026-05-07/2026-05-07_ui_ux_foundation_and_iframe_viewer.json",
+    "docs/アプリケーション仕様.md",
+    "spec/renderers/docusaurus_site_renderer_spec.rb",
+    "spec/requests/admin_dashboard_spec.rb",
+    "spec/requests/admin_model_browsers_spec.rb",
+    "spec/requests/dashboard_spec.rb",
+    "spec/requests/document_sites_spec.rb",
+    "spec/requests/project_sites_spec.rb"
+  ],
+  "commands": [
+    "git checkout main",
+    "sed -n '1,260p' config/routes.rb",
+    "find app/controllers -maxdepth 2 -type f | sort",
+    "find app/views -maxdepth 3 -type f | sort",
+    "rg -n \"iframe|docusaurus|site_build|rendered_site|viewer|dashboard\" app/controllers app/views app/helpers app/models app/services -S",
+    "sed -n '1,340p' app/renderers/docusaurus_site_renderer.rb",
+    "docker compose run --rm app bundle exec rspec spec/requests/admin_model_browsers_spec.rb spec/requests/dashboard_spec.rb spec/requests/admin_dashboard_spec.rb spec/requests/project_sites_spec.rb spec/requests/document_sites_spec.rb spec/renderers/docusaurus_site_renderer_spec.rb"
+  ],
+  "tests": [
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/admin_model_browsers_spec.rb spec/requests/dashboard_spec.rb spec/requests/admin_dashboard_spec.rb spec/requests/project_sites_spec.rb spec/requests/document_sites_spec.rb spec/renderers/docusaurus_site_renderer_spec.rb",
+      "result": "interrupted",
+      "details": "Container startup succeeded, but no RSpec output returned in a reasonable time in this environment and the run was interrupted."
+    }
+  ],
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "../../AGENTS.md",
+      "docs/README.md",
+      "docs/アプリケーション仕様.md",
+      "docs/テスト方針.md",
+      "config/routes.rb",
+      "app/controllers/dashboard_controller.rb",
+      "app/controllers/projects_controller.rb",
+      "app/controllers/documents_controller.rb",
+      "app/controllers/project_sites_controller.rb",
+      "app/controllers/document_sites_controller.rb",
+      "app/renderers/docusaurus_site_renderer.rb",
+      "app/views/layouts/application.html.slim",
+      "app/views/shared/_navbar.html.slim",
+      "app/views/dashboard/show.html.erb",
+      "app/views/projects/show.html.erb",
+      "app/views/documents/show.html.slim",
+      "app/views/admin/dashboard/index.html.slim"
+    ],
+    "token_notes": "Exact token counts were unavailable from the environment.",
+    "token_waste_notes": [],
+    "wasted_context": [],
+    "unnecessary_exploration": []
+  },
+  "quality_notes": [
+    "Added request specs for the new admin model browser and for the viewer-shell vs embedded-iframe split on project/document site routes.",
+    "Extended the renderer spec to lock the embedded-mode behavior that omits injected portal navigation."
+  ],
+  "risks": [
+    "End-to-end spec confirmation is still pending because the Docker-based RSpec run did not yield results quickly in this environment.",
+    "The admin model browser is intentionally read-only and summary-oriented; it does not replace per-resource CRUD or full detail pages."
+  ],
+  "remaining_concerns": [
+    "Before merge, the focused request and renderer specs should be completed in CI or in a healthier local container environment."
+  ],
+  "improvement_candidates": {},
+  "signals": [
+    {
+      "rule_id": "prompt-log-create-at-start",
+      "polarity": "positive",
+      "note": "Created the repo-local prompt log before substantial implementation for the UI/UX and iframe-viewer task."
+    }
+  ]
+}

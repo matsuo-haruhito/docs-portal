@@ -117,6 +117,24 @@ RSpec.describe DocusaurusSiteRenderer do
     expect(html).to include("max-width: 860px")
   end
 
+  it "omits injected portal navigation in embedded mode" do
+    write_site_file("#{site_build_path}/index.html", "<html><head></head><body><main><article><h1>操作説明</h1></article></main></body></html>")
+
+    renderer = described_class.new(
+      version:,
+      view_context:,
+      current_document_version: version,
+      project:,
+      embedded: true
+    )
+    html = renderer.render_html("#{site_build_path}/index")
+
+    expect(html).to include("portal-doc-body")
+    expect(html).not_to include("portal-site-nav")
+    expect(html).not_to include("document-version-switcher")
+    expect(html).to include("padding: 24px 24px 56px")
+  end
+
   it "removes navigation links to versions the current user cannot view" do
     external_user = create(:user, :external)
     create(:project_membership, project:, user: external_user)

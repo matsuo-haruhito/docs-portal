@@ -2,9 +2,11 @@ nav
   .header-links
     = link_to "Document Portal Sample", root_path, class: "brand-link"
     - if logged_in?
+      = link_to "ダッシュボード", dashboard_path
       - if admin_user?
         = link_to "管理画面", admin_root_path
       = link_to "案件一覧", projects_path
+      = link_to "ショートカット", document_bookmarks_path
       = link_to "アクセス申請", access_requests_path
       = link_to "送付履歴", document_delivery_logs_path
       = link_to "注意事項・同意履歴", consents_path

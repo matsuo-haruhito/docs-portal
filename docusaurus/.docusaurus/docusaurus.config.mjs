@@ -12,7 +12,7 @@ export default {
       "classic",
       {
         "docs": {
-          "path": "/tmp/seed-docusaurus-20260506-1-1d6vz7/docs-src",
+          "path": "/tmp/seed-docusaurus-20260507-1-8hgnzc/docs-src",
           "routeBasePath": "/",
           "sidebarPath": "./sidebars.ts",
           "lastVersion": "current",
@@ -20,7 +20,7 @@ export default {
             [
               null,
               {
-                "staticDir": "/tmp/seed-docusaurus-20260506-1-1d6vz7/static"
+                "staticDir": "/tmp/seed-docusaurus-20260507-1-8hgnzc/static"
               }
             ]
           ]

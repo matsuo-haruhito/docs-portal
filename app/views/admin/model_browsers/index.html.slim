@@ -1,0 +1,23 @@
+- page_title "モデルブラウザ"
+
+h1 モデルブラウザ
+p.muted 主要 model の件数と最近の record を横断確認できます。既存 CRUD の入口と、実データ確認用の read-only view をまとめています。
+
+= render "admin/nav"
+
+.dashboard-grid
+  - @entries.each do |entry|
+    - summary = @entry_summaries.fetch(entry)
+    section.card.metric-card
+      p.eyebrow = entry.label
+      h2 = link_to entry.label, admin_model_browser_model_path(entry.key)
+      p.muted = entry.description
+      dl.definition-list
+        dt 件数
+        dd = summary[:total_count]
+        dt 最終更新
+        dd = summary[:latest_updated_at] ? l(summary[:latest_updated_at], format: :short) : "-"
+      p.actions
+        = link_to "詳細を見る", admin_model_browser_model_path(entry.key), class: "button"
+        - if (index_path = entry_index_path(entry))
+          = link_to "既存画面へ", index_path, class: "button secondary"

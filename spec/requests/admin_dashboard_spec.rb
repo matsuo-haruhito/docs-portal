@@ -19,6 +19,7 @@ RSpec.describe "Admin dashboard", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("ドキュメントファイル健全性")
+    expect(response.body).to include("モデルブラウザ")
     expect(response.body).to include("missing.txt")
     expect(response.body).to include("spec/admin-dashboard/missing.txt")
   end

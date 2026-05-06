@@ -7,6 +7,7 @@ class DocusaurusSiteRenderer
     current_document_version: nil,
     project: nil,
     user: nil,
+    embedded: false,
     document_version_resolver: nil,
     site_url_builder: nil
   )
@@ -15,6 +16,7 @@ class DocusaurusSiteRenderer
     @current_document_version = current_document_version
     @project = project
     @user = user
+    @embedded = embedded
     @document_version_resolver = document_version_resolver
     @site_url_builder = site_url_builder || lambda { |site_path, version_for_url|
       @view_context.site_document_version_path(version_for_url, site_path: site_path)
@@ -114,8 +116,8 @@ class DocusaurusSiteRenderer
     rewrite_url_attributes(document, "link", "href", absolute_path:)
     rewrite_url_attributes(document, "script", "src", absolute_path:)
     rewrite_url_attributes(document, "img", "src", absolute_path:)
-    inject_portal_navigation!(document)
-    inject_version_switcher!(document)
+    inject_portal_navigation!(document) unless @embedded
+    inject_version_switcher!(document) unless @embedded
     inject_viewer_theme!(document)
 
     document.to_html.html_safe
@@ -287,7 +289,7 @@ class DocusaurusSiteRenderer
     style.content = <<~CSS
       body.portal-doc-body {
         margin: 0;
-        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        background: #{ @embedded ? "transparent" : "linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)" };
         color: #172033;
         font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
         line-height: 1.8;
@@ -346,12 +348,18 @@ class DocusaurusSiteRenderer
       main, .main-wrapper, .container, .row {
         width: 100%;
       }
+      .main-wrapper {
+        padding-top: 0 !important;
+      }
+      .container {
+        max-width: 100% !important;
+      }
       article,
       main .theme-doc-markdown,
       main .markdown {
         max-width: 860px;
         margin: 0 auto;
-        padding: 0 24px 56px;
+        padding: #{ @embedded ? "24px 24px 56px" : "0 24px 56px" };
       }
       .markdown h1, .markdown h2, .markdown h3, .markdown h4,
       .theme-doc-markdown h1, .theme-doc-markdown h2, .theme-doc-markdown h3, .theme-doc-markdown h4 {

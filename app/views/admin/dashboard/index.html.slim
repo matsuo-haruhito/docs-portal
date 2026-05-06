@@ -6,6 +6,18 @@ p.muted 内部ユーザーのみが各種マスタを管理できます。
 = render "admin/nav"
 
 section.card
+  h2 モデル観測
+  p.muted 主要 model の件数と最近の record を横断確認できます。仕様整理や運用確認の入口として使います。
+  .dashboard-grid
+    - @model_browser_entries.each do |entry|
+      article.card.metric-card
+        p.eyebrow = entry.label
+        h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
+        p.muted = entry.description
+  p.actions
+    = link_to "モデルブラウザを開く", admin_model_browser_path, class: "button"
+
+section.card
   h2 アプリ設定診断
 
   p

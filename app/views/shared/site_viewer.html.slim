@@ -1,0 +1,13 @@
+- page_title @site_viewer_document.title, @site_viewer_version.version_label
+
+.page-hero
+  p.eyebrow Document Viewer
+  h1 = @site_viewer_document.title
+  p.muted = site_viewer_meta_lines(project: @site_viewer_project, document: @site_viewer_document, version: @site_viewer_version).join(" / ")
+  p.actions
+    = link_to "文書詳細へ戻る", @site_viewer_back_path, class: "button secondary"
+    = link_to "案件トップ", project_path(@site_viewer_project), class: "button secondary"
+    = link_to "版詳細", document_version_path(@site_viewer_version), class: "button secondary"
+
+.site-viewer-shell
+  iframe.site-viewer-frame src=@site_viewer_iframe_src title="#{@site_viewer_document.title} #{@site_viewer_version.version_label}" loading="lazy"

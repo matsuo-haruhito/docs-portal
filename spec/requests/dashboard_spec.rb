@@ -26,6 +26,7 @@ RSpec.describe "Dashboard", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("ダッシュボード")
+    expect(response.body).to include("Workspace")
     expect(response.body).to include("Visible Project")
     expect(response.body).to include("お気に入り")
     expect(response.body).to include("後で読む")
