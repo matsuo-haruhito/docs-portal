@@ -52,4 +52,4 @@ table
           span.badge = permission.access_level
         td.actions
           = edit_link_to "編集", edit_admin_document_permission_path(permission)
-          = delete_link_to "削除", admin_document_permission_path(permission)
+          = delete_link_to "削除", admin_document_permission_path(permission), confirm: "この文書権限を削除しますか？対象ユーザー/会社の閲覧範囲が変わります。"

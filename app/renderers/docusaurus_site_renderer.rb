@@ -116,6 +116,7 @@ class DocusaurusSiteRenderer
     rewrite_url_attributes(document, "img", "src", absolute_path:)
     inject_portal_navigation!(document)
     inject_version_switcher!(document)
+    inject_viewer_theme!(document)
 
     document.to_html.html_safe
   end
@@ -273,5 +274,140 @@ class DocusaurusSiteRenderer
 
     body = document.at_css("body")
     body&.children&.first ? body.children.first.add_previous_sibling(switcher) : body&.add_child(switcher)
+  end
+
+  def inject_viewer_theme!(document)
+    head = document.at_css("head")
+    body = document.at_css("body")
+    return unless head && body
+
+    body["class"] = [body["class"], "portal-doc-body"].compact.join(" ")
+
+    style = Nokogiri::XML::Node.new("style", document)
+    style.content = <<~CSS
+      body.portal-doc-body {
+        margin: 0;
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        color: #172033;
+        font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+        line-height: 1.8;
+      }
+      .portal-site-nav,
+      .document-version-switcher {
+        box-sizing: border-box;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+      .portal-site-nav {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+        padding-top: 16px;
+        padding-bottom: 12px;
+        color: #4b5563;
+        font-size: 0.95rem;
+      }
+      .portal-site-nav a {
+        color: #0f62fe;
+        text-decoration: none;
+      }
+      .document-version-switcher {
+        margin-bottom: 16px;
+      }
+      .document-version-switcher summary {
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 0.4rem 0.75rem;
+        border: 1px solid #dbe4f0;
+        border-radius: 999px;
+        background: #fff;
+        font-weight: 600;
+      }
+      .document-version-switcher ul {
+        margin: 0.75rem 0 0;
+        padding-left: 1.25rem;
+      }
+      .theme-doc-breadcrumbs,
+      nav.navbar,
+      .navbar,
+      .footer,
+      .theme-doc-footer,
+      .pagination-nav,
+      .theme-edit-this-page,
+      .theme-doc-toc-desktop,
+      .theme-doc-toc-mobile,
+      aside.theme-doc-sidebar-container {
+        display: none !important;
+      }
+      main, .main-wrapper, .container, .row {
+        width: 100%;
+      }
+      article,
+      main .theme-doc-markdown,
+      main .markdown {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 0 24px 56px;
+      }
+      .markdown h1, .markdown h2, .markdown h3, .markdown h4,
+      .theme-doc-markdown h1, .theme-doc-markdown h2, .theme-doc-markdown h3, .theme-doc-markdown h4 {
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+        color: #111827;
+      }
+      .markdown h2, .theme-doc-markdown h2 {
+        margin-top: 2.4rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .markdown p, .markdown ul, .markdown ol, .markdown blockquote, .markdown table, .markdown pre,
+      .theme-doc-markdown p, .theme-doc-markdown ul, .theme-doc-markdown ol, .theme-doc-markdown blockquote, .theme-doc-markdown table, .theme-doc-markdown pre {
+        margin-bottom: 1rem;
+      }
+      .markdown a, .theme-doc-markdown a {
+        text-decoration: underline;
+        text-underline-offset: 0.15em;
+      }
+      .markdown blockquote, .theme-doc-markdown blockquote {
+        margin-left: 0;
+        padding: 0.9rem 1rem;
+        border-left: 4px solid #f59e0b;
+        background: #fffbeb;
+        border-radius: 0 12px 12px 0;
+      }
+      .markdown pre, .theme-doc-markdown pre {
+        border-radius: 14px;
+        overflow-x: auto;
+      }
+      .markdown table, .theme-doc-markdown table {
+        display: block;
+        overflow-x: auto;
+        border-collapse: collapse;
+      }
+      .markdown th, .markdown td, .theme-doc-markdown th, .theme-doc-markdown td {
+        border: 1px solid #e5e7eb;
+        padding: 0.65rem 0.85rem;
+      }
+      .markdown img, .theme-doc-markdown img {
+        max-width: 100%;
+        height: auto;
+      }
+      @media (max-width: 960px) {
+        .portal-site-nav,
+        .document-version-switcher,
+        article,
+        main .theme-doc-markdown,
+        main .markdown {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+      }
+    CSS
+
+    head.add_child(style)
   end
 end

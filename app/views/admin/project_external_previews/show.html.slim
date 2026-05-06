@@ -1,0 +1,78 @@
+- page_title "外部表示プレビュー"
+h1 外部表示プレビュー
+= render "admin/nav"
+
+.card
+  p
+    strong 外部表示プレビュー中
+    | です。実際のログイン切り替えは行わず、既存の権限判定で見え方だけを確認します。
+  p
+    | 案件:
+    = @project.code
+    |  /
+    = @project.name
+  p.actions
+    = link_to "案件編集へ戻る", edit_admin_project_path(@project), class: "button secondary"
+
+.card
+  h2 ユーザー指定プレビュー
+  = form_with url: external_preview_admin_project_path(@project), method: :get, local: true do |form|
+    .form-grid
+      label
+        | 外部ユーザー
+        = form.select :user_id, options_from_collection_for_select(@preview_users, :id, :email_address, @selected_user&.id), include_blank: "選択してください"
+    p.actions
+      = form.submit "このユーザーでプレビュー", class: "button"
+
+.card
+  h2 会社指定プレビュー
+  = form_with url: external_preview_admin_project_path(@project), method: :get, local: true do |form|
+    .form-grid
+      label
+        | 会社
+        = form.select :company_id, options_from_collection_for_select(@preview_companies, :id, :name, @selected_company&.id), include_blank: "選択してください"
+    p.actions
+      = form.submit "この会社でプレビュー", class: "button"
+
+- if @selected_user.present?
+  .card
+    h2 対象ユーザー
+    p = @selected_user.email_address
+- elsif @selected_company.present?
+  .card
+    h2 対象会社
+    p
+      = @selected_company.name
+      |  /
+      = @resolved_preview_users.size
+      | 名の有効ユーザー
+
+- if @preview_requested && @preview_hashes.empty?
+  .card
+    p 対象条件に一致する有効な外部ユーザーがいません。
+
+- @preview_hashes.each do |preview|
+  .card
+    h2 = preview.dig(:viewer, :email_address)
+    p
+      | 表示文書:
+      = preview.dig(:summary, :visible_documents)
+      |  件 / 非表示文書:
+      = preview.dig(:summary, :hidden_documents)
+      |  件 / ダウンロード可ファイル:
+      = preview.dig(:summary, :downloadable_files)
+      |  件
+    = table_tag do
+      thead
+        tr
+          th 文書
+          th 表示可否
+          th ダウンロード可
+          th ダウンロード不可
+      tbody
+        - preview.fetch(:documents).each do |document|
+          tr
+            td = document[:title]
+            td = document[:visible] ? "表示" : "非表示"
+            td = document[:downloadable_files].map { _1[:file_name] }.join(", ")
+            td = document[:blocked_files].map { _1[:file_name] }.join(", ")

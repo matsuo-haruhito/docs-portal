@@ -4,9 +4,10 @@ module DocumentAccess
   included do
     scope :accessible_to, lambda { |user|
       return none unless user&.active?
-      return all if user.internal?
+      return active_only if user.internal?
 
-      left_outer_joins(:document_permissions)
+      active_only
+        .left_outer_joins(:document_permissions)
         .joins(:project)
         .merge(Project.accessible_to(user))
         .where.not(visibility_policy: Document.visibility_policies[:internal_only])
@@ -24,6 +25,7 @@ module DocumentAccess
 
   def viewable_by?(user)
     return false unless user&.active?
+    return false if archived?
     return true if user.internal?
     return false unless project.viewable_by?(user)
     return false if internal_only?
@@ -34,6 +36,7 @@ module DocumentAccess
 
   def downloadable_by?(user)
     return false unless user&.active?
+    return false if archived?
     return true if user.internal?
     return false unless project.viewable_by?(user)
     return false if internal_only?

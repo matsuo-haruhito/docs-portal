@@ -1,0 +1,47 @@
+- page_title "#{@project.name} / #{@document_set.name}"
+- content_for :left_content do
+  = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: nil
+
+h1 = @document_set.name
+
+p.muted
+  = link_to @project.name, project_path(@project)
+  |  / 
+  = @document_set.set_type
+  |  / 
+  = @document_set.visibility_policy
+
+p.actions
+  = link_to "外部送付を準備", new_project_document_set_document_delivery_log_path(@project, @document_set), class: "button secondary"
+
+- if @document_set.description.present?
+  p = simple_format(@document_set.description)
+
+- if @items.any?
+  table
+    thead
+      tr
+        th 順番
+        th 文書
+        th 使用版
+        th メモ
+    tbody
+      - @items.each do |item|
+        - effective_version = item.effective_document_version
+        tr
+          td = item.sort_order
+          td = link_to item.document.title, project_document_path(@project, item.document.slug)
+          td
+            - if effective_version.present?
+              = link_to effective_version.version_label, document_version_path(effective_version)
+              - if item.document_version_id.present?
+                span.badge 固定版
+              - else
+                span.badge 最新版
+            - else
+              span.muted 利用可能な版なし
+          td = item.note.presence || "-"
+- else
+  p.muted 表示できる文書はありません。
+
+p = link_to "文書セット一覧へ戻る", project_document_sets_path(@project)

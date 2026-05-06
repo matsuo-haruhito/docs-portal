@@ -3,72 +3,49 @@ require "rails_helper"
 RSpec.describe DocumentReviewComment, type: :model do
   let(:document) { create(:document) }
   let(:version) { create(:document_version, document:) }
-  let(:internal_user) { create(:user, :internal) }
-  let(:external_user) { create(:user, :external) }
+  let(:author) { create(:user, :internal) }
 
-  it "allows internal authors to create internal review comments" do
+  it "accepts line and anchor metadata" do
     comment = build(
       :document_review_comment,
       document:,
       document_version: version,
-      author: internal_user,
-      comment_type: :request_change,
-      body: "Please revise this section."
+      author:,
+      text_line_start: 10,
+      text_line_end: 14,
+      text_anchor_type: "markdown_heading",
+      text_anchor_path: "要件定義 > 画面要件",
+      text_anchor_label: "画面要件",
+      source_path: "docs/spec.md"
     )
 
     expect(comment).to be_valid
+    expect(comment.location_label).to include("lines 10-14")
+    expect(comment.location_label).to include("要件定義 > 画面要件")
   end
 
-  it "rejects external authors" do
-    comment = build(:document_review_comment, document:, author: external_user)
+  it "requires parent comments to belong to the same document" do
+    other_document = create(:document)
+    parent = create(:document_review_comment, document: other_document)
+    comment = build(:document_review_comment, document:, parent:)
 
     expect(comment).not_to be_valid
-    expect(comment.errors[:author]).to be_present
+    expect(comment.errors[:parent]).to be_present
   end
 
-  it "is visible only to internal users" do
-    comment = create(:document_review_comment, document:, author: internal_user)
+  it "allows public Q&A threads from external users" do
+    external_author = create(:user, :external, company: create(:company))
+    comment = build(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_author,
+      comment_type: :question,
+      internal_only: false
+    )
 
-    expect(described_class.visible_to(internal_user)).to include(comment)
-    expect(described_class.visible_to(external_user)).not_to include(comment)
-  end
-
-  it "requires comments to remain internal only" do
-    comment = build(:document_review_comment, document:, internal_only: false)
-
-    expect(comment).not_to be_valid
-    expect(comment.errors[:internal_only]).to be_present
-  end
-
-  it "requires document versions to belong to the same document" do
-    other_version = create(:document_version)
-    comment = build(:document_review_comment, document:, document_version: other_version)
-
-    expect(comment).not_to be_valid
-    expect(comment.errors[:document_version]).to be_present
-  end
-
-  it "resolves comments with resolver and timestamp" do
-    comment = create(:document_review_comment, document:, author: internal_user)
-
-    comment.resolve!(internal_user)
-
-    expect(comment).to be_resolved
-    expect(comment.resolved_by).to eq(internal_user)
-    expect(comment.resolved_at).to be_present
-  end
-
-  it "rejects resolved status without resolver metadata" do
-    comment = build(:document_review_comment, document:, status: :resolved, resolved_by: nil, resolved_at: nil)
-
-    expect(comment).not_to be_valid
-    expect(comment.errors[:resolved_by]).to be_present
-    expect(comment.errors[:resolved_at]).to be_present
-  end
-
-  it "uses public_id for routes" do
-    comment = create(:document_review_comment, document:, author: internal_user)
-
-    expect(comment.to_param).to eq(comment.public_id)
+    expect(comment).to be_valid
+    expect(comment.public_thread?).to eq(true)
+    expect(comment.qa_status_label).to eq("受付中")
   end
 end

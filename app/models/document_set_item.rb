@@ -15,7 +15,10 @@ class DocumentSetItem < ApplicationRecord
   end
 
   def viewable_by?(user)
-    document_set.viewable_by?(user) && document.viewable_by?(user)
+    return false unless document_set.viewable_by?(user) && document.viewable_by?(user)
+
+    version = effective_document_version
+    version.present? && version.viewable_by?(user)
   end
 
   private

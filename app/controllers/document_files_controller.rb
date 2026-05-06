@@ -13,6 +13,16 @@ class DocumentFilesController < BaseController
 
     record_download_access_log(file)
 
+    if disposition == "inline" && file.text_previewable?
+      @document_file = file
+      @document_version = file.document_version
+      @document = @document_version.document
+      @project = @document.project
+      @preview_lines = File.read(file_path, encoding: "UTF-8").lines(chomp: true)
+      render :show_text_preview
+      return
+    end
+
     send_file(
       file_path,
       disposition:,

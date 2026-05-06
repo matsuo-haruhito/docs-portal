@@ -1,0 +1,39 @@
+- page_title @document_approval_request.title
+
+h1 = @document_approval_request.title
+p.muted
+  = link_to @project.name, project_path(@project)
+  |  /
+  = link_to @document.title, project_document_path(@project, @document.slug)
+
+table
+  tbody
+    tr
+      th 状態
+      td = @document_approval_request.status
+    tr
+      th 依頼者
+      td = @document_approval_request.requester.name
+    tr
+      th 確認相手
+      td = @document_approval_request.approver&.name || "-"
+    tr
+      th 対応者
+      td = @document_approval_request.acted_by&.name || "-"
+    tr
+      th OK日時
+      td = @document_approval_request.approved_at ? l(@document_approval_request.approved_at) : "-"
+    tr
+      th Cancel日時
+      td = @document_approval_request.cancelled_at ? l(@document_approval_request.cancelled_at) : "-"
+
+- if @document_approval_request.body.present?
+  h2 内容
+  p = simple_format(@document_approval_request.body)
+
+p.actions
+  - if current_user.internal? && @document_approval_request.pending?
+    = button_to "OK", document_approval_request_path(@document_approval_request), method: :patch, class: "button"
+  - if @document_approval_request.pending? && (current_user.internal? || current_user == @document_approval_request.requester)
+    = button_to "Cancel", cancel_document_approval_request_path(@document_approval_request), method: :post, class: "button secondary"
+  = link_to "一覧へ戻る", document_approval_requests_path, class: "button secondary"

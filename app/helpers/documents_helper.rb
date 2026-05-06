@@ -4,7 +4,8 @@ module DocumentsHelper
       roots: projects,
       children_resolver: lambda do |node|
         if node.is_a?(Project)
-          node.documents.accessible_to(current_user).includes(:latest_version).order(:title)
+          documents = node.documents.accessible_to(current_user).includes(:latest_version).order(:title)
+          current_user.internal? ? documents : documents.select { _1.visible_in_portal_for?(current_user) }
         else
           []
         end

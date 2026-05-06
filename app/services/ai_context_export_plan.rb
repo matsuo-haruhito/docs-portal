@@ -44,7 +44,7 @@ class AiContextExportPlan
   end
 
   def item_for(document)
-    if document.viewable_by?(viewer)
+    if document.visible_in_portal_for?(viewer)
       Item.new(document:, document_version: document.latest_version, included: true, reason: "viewable")
     else
       Item.new(document:, document_version: document.latest_version, included: false, reason: "not_viewable")

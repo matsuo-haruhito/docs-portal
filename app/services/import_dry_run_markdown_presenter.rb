@@ -54,6 +54,12 @@ class ImportDryRunMarkdownPresenter
     ]
 
     lines << "- matched_rules: #{item.matched_rules.join(', ')}" if item.matched_rules.any?
+    if item.duplicate_candidates.any?
+      lines << "- duplicate_candidates:"
+      item.duplicate_candidates.each do |candidate|
+        lines << "  - #{candidate.reason}: #{candidate.documents.map(&:title).join(', ')}"
+      end
+    end
     lines.concat(message_lines("warnings", item.warnings)) if item.warnings.any?
     lines.concat(message_lines("errors", item.errors)) if item.errors.any?
     lines << ""

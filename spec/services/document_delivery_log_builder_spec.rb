@@ -12,6 +12,7 @@ RSpec.describe DocumentDeliveryLogBuilder do
       body: "Please review the portal document."
     }
   end
+  let(:document_set) { create(:document_set, project:, visibility_policy: :restricted_external) }
 
   before do
     create(:project_membership, project:, user: sender)
@@ -33,6 +34,14 @@ RSpec.describe DocumentDeliveryLogBuilder do
     expect do
       described_class.new(sender:, project:, document:, attributes:).create!
     end.to change(DocumentDeliveryLog, :count).by(1)
+  end
+
+  it "builds a draft portal-link delivery log for readable document sets" do
+    log = described_class.new(sender:, project:, document_set:, attributes:).build
+
+    expect(log).to be_valid
+    expect(log.document_set).to eq(document_set)
+    expect(log.document).to be_nil
   end
 
   it "rejects projects that the sender cannot view" do

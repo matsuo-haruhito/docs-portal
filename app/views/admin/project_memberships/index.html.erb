@@ -24,7 +24,7 @@
         <td><span class="badge"><%= membership.role %></span></td>
         <td class="actions">
           <%= edit_link_to "編集", edit_admin_project_membership_path(membership) %>
-          <%= delete_link_to "削除", admin_project_membership_path(membership) %>
+          <%= delete_link_to "削除", admin_project_membership_path(membership), confirm: "案件所属を削除しますか？このユーザーは案件へアクセスできなくなります。" %>
         </td>
       </tr>
     <% end %>

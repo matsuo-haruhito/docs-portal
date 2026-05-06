@@ -20,6 +20,12 @@
     label
       | 公開範囲
       = form.select :visibility_policy, Document.visibility_policies.keys.map { |key| [key, key] }
+    label
+      | 保管期限
+      = form.datetime_field :retention_until
+    label
+      | 廃棄候補日時
+      = form.datetime_field :discard_candidate_at
   p.actions style="margin-top:16px;"
     = form.submit "保存", class: "button"
     - if document.persisted?

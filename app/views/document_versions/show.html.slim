@@ -21,6 +21,16 @@ table
       th 日時
       td = @version.published_at ? l(@version.published_at) : "-"
     tr
+      th 公開開始
+      td = @version.published_from ? l(@version.published_from) : "-"
+    tr
+      th 公開終了
+      td = @version.published_until ? l(@version.published_until) : "-"
+    - if current_user.internal?
+      tr
+        th 社外公開状態
+        td = @version.publication_window_state
+    tr
       th 担当者
       td = @version.published_by_user&.name || "-"
     tr
@@ -41,6 +51,18 @@ table
   h2 更新内容
   p = simple_format(@version.changelog_summary)
 
+h2 出力時の扱い
+ul
+  li HTML 表示には透かしを入れません。
+  li ZIP 出力では source path 準拠、Markdown 原本の有無、添付有無、PDF のみ出力を選べます。
+  - if @export_watermark_text.present?
+    li PDF を含む持ち出し用出力では、利用者・案件・文書・出力時刻ベースの watermark metadata を使う設計です。
+    li
+      | 例:
+      code = @export_watermark_text
+  - elsif @document.downloadable_by?(current_user)
+    li PDF 添付がある場合は、利用者・案件・文書・出力時刻ベースの watermark metadata を使う設計です。
+
 h2 表示
 ul
   - if @version.rendered_site_available?
@@ -54,6 +76,8 @@ ul
     - else
       span.muted ZIPダウンロード権限なし
       =< button_to "ダウンロード権限を申請", access_requests_path, params: { requestable_type: "Document", requestable_public_id: @document.public_id, requested_access_level: "download" }, class: "button secondary"
+  - if current_user.internal?
+    li = link_to "品質チェックを表示", document_version_quality_check_path(@version)
 
 h2 添付・元ファイル
 - files = @version.document_files.order(:sort_order, :file_name)
@@ -81,6 +105,134 @@ h2 添付・元ファイル
               =< button_to "申請", access_requests_path, params: { requestable_type: "DocumentFile", requestable_public_id: file.public_id, requested_access_level: "download" }, class: "button secondary"
 - else
   p.muted 添付・元ファイルはありません。
+
+h2 Q&A
+.card
+  h3 この版について質問する
+  = form_with model: [@version, DocumentReviewComment.new], local: true do |form|
+    = form.hidden_field :comment_type, value: "question"
+    div
+      = form.label :body, "質問内容"
+      = form.text_area :body
+    p.actions
+      = form.submit "質問を投稿", class: "button"
+
+- if @question_threads.any?
+  - @question_threads.each do |thread|
+    .card
+      p
+        strong = thread.author.name
+        span.muted = " / #{thread.qa_status_label}"
+      = simple_format(thread.body)
+      - if thread.replies.visible_to(current_user).any?
+        h4 返信
+        - thread.replies.visible_to(current_user).order(:created_at, :id).each do |reply|
+          .card
+            p
+              strong = reply.author.name
+              - if reply.resolved?
+                span.muted = " / 回答"
+            = simple_format(reply.body)
+      .card
+        h4 返信を追加
+        = form_with model: [@version, DocumentReviewComment.new], local: true do |form|
+          = form.hidden_field :comment_type, value: "question"
+          = form.hidden_field :parent_id, value: thread.id
+          div
+            = form.label :body, "返信内容"
+            = form.text_area :body
+          p.actions
+            = form.submit "返信する", class: "button secondary"
+- else
+  p.muted まだ質問はありません。
+
+- if current_user.internal?
+  h2 社内レビューコメント
+
+  - unresolved_comments = @review_comments.select { _1.open? || _1.rejected? }
+  - resolved_comments = @review_comments.select(&:resolved?)
+
+  .card
+    h3 コメント追加
+    = form_with model: [@version, DocumentReviewComment.new], local: true do |form|
+      .form-grid
+        div
+          = form.label :comment_type, "種別"
+          = form.select :comment_type, DocumentReviewComment.comment_types.keys.map { [_1, _1] }
+        div
+          = form.label :text_line_start, "開始行"
+          = form.number_field :text_line_start, min: 1
+        div
+          = form.label :text_line_end, "終了行"
+          = form.number_field :text_line_end, min: 1
+        div
+          = form.label :text_anchor_type, "anchor type"
+          = form.select :text_anchor_type, [["未指定", ""], ["markdown_heading", "markdown_heading"], ["json_path", "json_path"], ["yaml_path", "yaml_path"], ["plain_line", "plain_line"]]
+        div
+          = form.label :text_anchor_path, "anchor path"
+          = form.text_field :text_anchor_path
+        div
+          = form.label :text_anchor_label, "anchor label"
+          = form.text_field :text_anchor_label
+        div
+          = form.label :source_path, "source path"
+          = form.text_field :source_path
+        div style="grid-column: 1 / -1;"
+          = form.label :body, "内容"
+          = form.text_area :body
+      p.actions
+        = form.submit "コメント追加", class: "button"
+
+  - if unresolved_comments.any?
+    h3 未解決・差し戻し
+    table
+      thead
+        tr
+          th 種別
+          th 内容
+          th 作成者
+          th 状態
+          th
+      tbody
+        - unresolved_comments.each do |comment|
+          tr
+            td = comment.comment_type
+            td
+              = simple_format(comment.body)
+              - if comment.location_label.present?
+                p.muted = comment.location_label
+            td = comment.author.name
+            td = comment.status
+            td.actions
+              - if current_user.admin?
+                = button_to "解決", document_version_document_review_comment_path(@version, comment), method: :patch, params: { decision: "resolve" }, class: "button secondary"
+                = button_to "却下", document_version_document_review_comment_path(@version, comment), method: :patch, params: { decision: "reject" }, class: "button secondary"
+              - else
+                span.muted -
+  - else
+    p.muted 未解決コメントはありません。
+
+  - if resolved_comments.any?
+    h3 解決済み
+    table
+      thead
+        tr
+          th 種別
+          th 内容
+          th 作成者
+          th 解決者
+          th 解決日時
+      tbody
+        - resolved_comments.each do |comment|
+          tr
+            td = comment.comment_type
+            td
+              = simple_format(comment.body)
+              - if comment.location_label.present?
+                p.muted = comment.location_label
+            td = comment.author.name
+            td = comment.resolved_by&.name || "-"
+            td = comment.resolved_at ? comment.resolved_at.strftime("%Y-%m-%d %H:%M") : "-"
 
 h2 他のバージョン
 ul

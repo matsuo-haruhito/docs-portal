@@ -40,7 +40,20 @@ class ImportDryRunHashPresenter
       warnings: item.warnings,
       errors: item.errors,
       matched_rules: item.matched_rules,
-      existing_document_id: item.existing_document&.public_id
+      existing_document_id: item.existing_document&.public_id,
+      duplicate_candidates: item.duplicate_candidates.map do |candidate|
+        {
+          reason: candidate.reason,
+          value: candidate.value,
+          documents: candidate.documents.map do |document|
+            {
+              public_id: document.public_id,
+              title: document.title,
+              slug: document.slug
+            }
+          end
+        }
+      end
     }
   end
 end

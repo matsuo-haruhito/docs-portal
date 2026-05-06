@@ -1,0 +1,47 @@
+- page_title "送付履歴"
+
+h1 送付履歴
+
+p.muted
+  = @delivery_log.project.name
+  - if @delivery_log.document.present?
+    |  / 
+    = @delivery_log.document.title
+  - elsif @delivery_log.document_set.present?
+    |  / 
+    = @delivery_log.document_set.name
+
+table
+  tbody
+    tr
+      th 宛先
+      td = @delivery_log.to_addresses
+    tr
+      th CC
+      td = @delivery_log.cc_addresses.presence || "-"
+    tr
+      th BCC
+      td = @delivery_log.bcc_addresses.presence || "-"
+    tr
+      th 方式
+      td = @delivery_log.delivery_type
+    tr
+      th 状態
+      td = @delivery_log.status
+    tr
+      th 送信日時
+      td = @delivery_log.sent_at ? l(@delivery_log.sent_at) : "-"
+
+h2 件名
+p = @delivery_log.subject
+
+h2 本文
+pre = @delivery_log.body
+
+p.actions
+  = link_to "メーラーを開く", @mailto_url, class: "button"
+  - if @delivery_log.draft?
+    = button_to "送付済みにする", document_delivery_log_path(@delivery_log), method: :patch, params: { decision: "mark_sent" }, class: "button secondary"
+    = button_to "送付失敗として記録", document_delivery_log_path(@delivery_log), method: :patch, params: { decision: "mark_failed" }, class: "button secondary"
+
+p = link_to "送付履歴一覧へ戻る", document_delivery_logs_path

@@ -13,6 +13,9 @@ class User < ApplicationRecord
   has_many :bookmarked_documents, through: :document_bookmarks, source: :document
   has_many :read_confirmations, dependent: :destroy
   has_many :confirmed_read_documents, through: :read_confirmations, source: :document
+  has_many :requested_document_approval_requests, class_name: "DocumentApprovalRequest", foreign_key: :requester_id, dependent: :destroy
+  has_many :approved_document_approval_requests, class_name: "DocumentApprovalRequest", foreign_key: :approver_id, dependent: :nullify
+  has_many :acted_document_approval_requests, class_name: "DocumentApprovalRequest", foreign_key: :acted_by_id, dependent: :nullify
   has_many :user_consents, dependent: :destroy
   has_many :consent_terms, through: :user_consents
 

@@ -24,39 +24,103 @@
       ".git/"
     ]
   },
-  "instruction_summary": "Continue handling open issues that do not require additional requirement decisions, using .tmp.requirements-checklist.md as the hold list for issues that need design clarification.",
-  "actual_work": "Used .tmp.requirements-checklist.md as the hold list, confirmed GitHub CLI was unavailable in this environment, inferred concrete next slices from recent merged PRs, completed the remaining issue #152 wiring for UTF-8 download filenames by applying existing Content-Disposition helpers to direct document-file downloads and ZIP download responses, advanced issue #118 by adding an admin project-template preview/apply workflow on the project edit screen, advanced issue #127 by adding project-scoped document catalog index/show routes with viewer-aware item filtering, advanced issue #119 by adding an admin document usage report screen backed by the existing usage-report services, and advanced issue #117 by adding user/admin access-request screens plus approval/cancellation flows around visible document/file download requests. Added request coverage for UTF-8 filename headers on version archives and project ZIP downloads, added admin request coverage for template preview/apply behavior, added request coverage for catalog visibility boundaries, added admin request coverage for usage report visibility and rendering, added request coverage for access-request creation/list/cancel/approve/reject flows, and updated repo docs to state the new contracts.",
+  "instruction_summary": "Continue handling open issues that do not require additional requirement decisions, keep .tmp.requirements-checklist.md in sync with the current open-issue state, and move forward on open issues whose initial scope is now concrete enough to implement.",
+  "actual_work": "Used .tmp.requirements-checklist.md as the hold list, confirmed GitHub CLI was unavailable in this environment, and initially inferred concrete next slices from recent merged PRs. Completed the remaining issue #152 wiring for UTF-8 download filenames by applying existing Content-Disposition helpers to direct document-file downloads and ZIP download responses, advanced issue #118 by adding an admin project-template preview/apply workflow on the project edit screen, advanced issue #127 by adding project-scoped document catalog index/show routes with viewer-aware item filtering, advanced issue #119 by adding an admin document usage report screen backed by the existing usage-report services, and advanced issue #117 by adding user/admin access-request screens plus approval/cancellation flows around visible document/file download requests. Then advanced issue #109 by exposing internal review comments on DocumentVersion detail for internal users, allowing comment creation, and allowing admin resolve/reject actions while keeping external users blocked. After the user pointed out stale checklist state, re-fetched open issues from GitHub via the connector, confirmed issue #154 was already closed, and updated .tmp.requirements-checklist.md to remove stale blocked entries whose issue bodies now define an initial implementation scope. Continued with issue #112 by wiring an admin external-preview screen for projects, reusing the existing ExternalVisibilityPreview services to preview document/file visibility for a selected external user or all active external viewers in a selected company, adding an edit-screen entry point, recording preview runs in AccessLog with target_type external_preview, and then closing issue #112 once the MVP acceptance criteria were covered. Then advanced issue #113 by exposing the already-implemented DocumentVersion quality-check services through a new version-level screen plus JSON/Markdown endpoints for internal viewers only, linked that screen from DocumentVersion detail, and later extended the checker itself to inspect attached Markdown sources for broken relative document links, image references, and attachment references while treating missing rendered-site entry files as build-failure-equivalent errors before closing issue #113. Then advanced issue #115 by wiring the existing AI context export services into a project-level HTML/JSON/Markdown export flow, linking it from project detail, keeping export contents scoped to the current viewer's visible documents, logging AI context preview/export accesses in AccessLog with target_type ai_context, and closing issue #115 after the project-level export flow and representative request coverage were in place. Then advanced a concrete slice of issue #111 by enforcing existing publication-window fields consistently for external viewers across project/detail/document listing, direct document detail, attachment download, AI context export, and the shared document tree helper. Then advanced a concrete slice of issue #123 by wiring ZIP export options for path mode, markdown-source inclusion, attachment inclusion, and PDF-only output into the project/version ZIP builders and the document index bulk ZIP form. Then documented the viewer-adapter direction and service-boundary guidance in repo docs, split the minimal document approval-request flow into new issue #264, and closed planning/design issues #137, #260, and #261. Then documented the data-classification direction in app spec, added a dedicated OSS text-viewer comparison memo under docs/, linked it from docs/README.md, and closed design/research issues #160 and #263. Then moved three remaining umbrella/defer decisions into docs/ToDo.md and closed placeholder issues #259 (automatic retries defer), #138 (broad UI/UX umbrella), and #136 (multilingual management defer). Then documented that broad quality/ops stabilization work should no longer stay open as umbrella issues, added that guidance to docs/ToDo.md, and closed broad placeholder issues #139, #140, #143, #144, #145, and #146 in favor of reopening only concrete failing tests, dependency fixes, migration/constraint changes, performance regressions, or observability tasks. Then documented that long-running job umbrellas and regeneration placeholders should only be reopened when concrete synchronous bottlenecks or operational demand exist, and closed umbrella/placeholder issues #153, #157, and #258. Then documented that vendor-specific gem survey issues should not stay open and that import/build jobization should only be revisited when operator-facing synchronous execution becomes a real bottleneck, then closed placeholder issues #98 and #257. Then closed issue #124 based on the existing rule-based classification implementation (`DocumentClassificationSuggester`, YAML rule config, frontmatter precedence, matched_rules in import dry-run output) and advanced issue #131 by surfacing document importance metadata in project/detail/list views, prioritizing project and document index ordering with `recommended_first`, adding a project-level important-documents section, and adding request coverage before closing the issue. Then advanced issue #125 by integrating duplicate candidates into import dry-run validation and both hash/markdown presenters, narrowing update-candidate detection to exact source-path or unique same-file-name matches within a project and surfacing similar-document reasons without auto-merging before closing the issue. Then re-fetched the current open-issue list with `gh`, compared it against existing models/controllers/specs, determined that issue #132 already had an implemented MVP dashboard (`/dashboard`) covering accessible projects, favorites, read-later items, recent documents, and recently updated readable documents, updated the app spec to document that contract, and closed the issue. Then advanced issue #262 by adding viewer-scoped typography improvements to the application layout, switching inline text attachments to a Rails-side line-numbered preview page, injecting portal reading CSS into rendered Docusaurus HTML while hiding extra site chrome, documenting the new viewer contract in the app spec, and closing the issue. Then advanced issue #114 by wiring admin CRUD for `DocumentSet`, adding project-scoped list/detail screens, allowing ordered item selection with optional fixed `DocumentVersion`, filtering visible items for external viewers, and documenting the initial `DocumentSet` contract in the app spec. Then closed issue #111 by adopting the simplified initial publication-window approach explicitly: `DocumentVersion.published_from/published_until` are the source of truth, external viewers are filtered dynamically in project list/detail and related export/download flows, projects with no currently visible documents are hidden from external listings, and internal/admin users can inspect the current publication-window state on version detail. Then expanded issue #109 from version-only internal comments to a fuller internal review MVP: `DocumentReviewComment` now supports document-level comments, optional text line/anchor/source metadata for text-based documents, and parent comment references for future thread/Q&A expansion; document detail and version detail both expose the internal review form; and the updated contract is documented in the app spec. Then implemented and closed issue #264 by adding `DocumentApprovalRequest`, Document detail creation flow, internal-only list/detail screens, and OK / Cancel actions with `acted_by` and timestamp recording, while keeping requester access to their own detail page. Finally, closed issue #155 by strengthening safeguards around the currently implemented dangerous operations: admin delete buttons now carry resource-specific confirmation text with impact hints, and standard template application now requires a confirmation step that includes create/skip counts from the existing preview. Added or extended request/spec coverage for code slices and updated repo docs to state the new contracts.",
   "changed_files": [
+    ".tmp.requirements-checklist.md",
     "app/controllers/access_requests_controller.rb",
     "app/controllers/admin/access_requests_controller.rb",
+    "app/controllers/admin/project_external_previews_controller.rb",
     "app/controllers/admin/project_templates_controller.rb",
     "app/controllers/admin/document_usage_reports_controller.rb",
+    "app/controllers/admin/document_sets_controller.rb",
     "app/controllers/admin/projects_controller.rb",
     "app/controllers/document_catalogs_controller.rb",
+    "app/controllers/document_approval_requests_controller.rb",
     "app/controllers/document_files_controller.rb",
+    "app/controllers/document_review_comments_controller.rb",
+    "app/controllers/document_version_quality_checks_controller.rb",
+    "app/controllers/document_versions_controller.rb",
+    "app/controllers/project_ai_contexts_controller.rb",
+    "app/controllers/projects_controller.rb",
+    "app/controllers/document_sets_controller.rb",
     "app/controllers/document_version_archives_controller.rb",
     "app/controllers/project_document_zips_controller.rb",
+    "app/helpers/documents_helper.rb",
+    "app/models/document.rb",
+    "app/models/document_approval_request.rb",
+    "app/models/document_file.rb",
+    "app/models/document_review_comment.rb",
+    "app/services/import_dry_run_hash_presenter.rb",
+    "app/services/import_dry_run_markdown_presenter.rb",
+    "app/services/import_dry_run_validator.rb",
+    "app/services/document_version_quality_checker.rb",
+    "app/services/document_version_zip_builder.rb",
+    "app/services/document_versions_zip_builder.rb",
     "app/views/access_requests/index.html.slim",
     "app/views/admin/access_requests/index.html.slim",
+    "app/views/admin/project_external_previews/show.html.slim",
     "app/views/admin/projects/edit.html.slim",
     "app/views/admin/_nav.html.slim",
     "app/views/admin/document_usage_reports/index.html.slim",
+    "app/views/admin/document_sets/_form.html.slim",
+    "app/views/admin/document_sets/edit.html.slim",
+    "app/views/admin/document_sets/index.html.slim",
+    "app/views/admin/companies/index.html.slim",
+    "app/views/admin/documents/index.html.slim",
+    "app/views/admin/document_permissions/index.html.slim",
     "app/views/document_catalogs/index.html.slim",
     "app/views/document_catalogs/show.html.slim",
+    "app/views/document_approval_requests/index.html.slim",
+    "app/views/document_approval_requests/show.html.slim",
+    "app/views/document_files/show_text_preview.html.slim",
+    "app/views/document_sets/index.html.slim",
+    "app/views/document_sets/show.html.slim",
+    "app/views/documents/show.html.slim",
+    "app/views/document_version_quality_checks/show.html.slim",
+    "app/views/project_ai_contexts/show.html.slim",
+    "app/views/documents/index.html.slim",
     "app/views/projects/show.html.erb",
     "app/views/shared/_navbar.html.slim",
     "app/views/document_versions/show.html.slim",
+    "app/views/admin/project_memberships/index.html.erb",
     "config/routes.rb",
+    "db/schema.rb",
+    "db/migrate/20260506102000_expand_document_review_comments.rb",
+    "db/migrate/20260506111000_create_document_approval_requests.rb",
+    "docs/README.md",
+    "docs/ToDo.md",
+    "docs/テキスト系viewer候補メモ.md",
     "docs/ai/prompt-logs/2026-05-06/2026-05-06_open_issues_continue.json",
     "docs/アプリケーション仕様.md",
+    "docs/開発・保守ガイド.md",
     "docs/ファイル配信・storage運用方針.md",
     "spec/requests/access_requests_spec.rb",
     "spec/requests/admin_access_requests_spec.rb",
+    "spec/requests/admin_project_external_previews_spec.rb",
     "spec/requests/admin_project_templates_spec.rb",
     "spec/requests/admin_document_usage_reports_spec.rb",
     "spec/requests/document_catalogs_spec.rb",
+    "spec/requests/document_publication_windows_spec.rb",
+    "spec/requests/project_ai_contexts_spec.rb",
+    "spec/requests/document_version_quality_checks_spec.rb",
+    "spec/requests/document_review_comments_spec.rb",
+    "spec/requests/admin_document_sets_spec.rb",
+    "spec/requests/danger_operation_confirms_spec.rb",
+    "spec/requests/document_importance_display_spec.rb",
+    "spec/requests/document_publication_windows_spec.rb",
+    "spec/requests/document_sets_spec.rb",
+    "spec/requests/document_approval_requests_spec.rb",
+    "spec/models/document_approval_request_spec.rb",
+    "spec/models/document_review_comment_spec.rb",
+    "spec/renderers/docusaurus_site_renderer_spec.rb",
+    "spec/services/import_dry_run_hash_presenter_spec.rb",
+    "spec/services/import_dry_run_markdown_presenter_spec.rb",
+    "spec/services/import_dry_run_validator_spec.rb",
+    "spec/services/document_version_quality_checker_spec.rb",
     "spec/requests/document_version_archive_japanese_filename_spec.rb",
-    "spec/requests/project_document_zips_spec.rb"
+    "spec/requests/project_document_zips_spec.rb",
+    "spec/requests/dashboard_spec.rb"
   ],
   "commands": [
     {
@@ -86,6 +150,154 @@
     {
       "command": "docker compose run --rm app bundle exec rspec spec/requests/access_requests_spec.rb spec/requests/admin_access_requests_spec.rb spec/models/access_request_spec.rb spec/services/access_request_hash_spec.rb spec/services/access_request_resolver_spec.rb",
       "notes": "Passed with 23 examples and 0 failures."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/document_review_comments_spec.rb spec/models/document_review_comment_spec.rb",
+      "notes": "Passed with 11 examples and 0 failures."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/admin_project_external_previews_spec.rb --format documentation",
+      "notes": "Passed with 4 examples and 0 failures."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/admin_project_templates_spec.rb:7 --format documentation",
+      "notes": "Passed with 4 examples and 0 failures."
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/document_version_quality_checks_spec.rb",
+      "notes": "Passed with 2 examples and 0 failures."
+    },
+    {
+      "command": "docker compose exec app bundle exec rspec spec/requests/project_ai_contexts_spec.rb",
+      "notes": "Passed with 2 examples and 0 failures."
+    },
+    {
+      "command": "docker compose exec app bundle exec rspec spec/requests/document_publication_windows_spec.rb",
+      "notes": "Passed with 2 examples and 0 failures."
+    },
+    {
+      "command": "docker compose exec app bundle exec rspec spec/requests/project_document_zips_spec.rb",
+      "notes": "Passed with 6 examples and 0 failures."
+    },
+    {
+      "command": "docker compose exec app bundle exec rspec spec/services/document_version_quality_checker_spec.rb --format documentation",
+      "notes": "Passed with 8 examples and 0 failures after adding Markdown link/image/attachment reference checks."
+    },
+    {
+      "command": "gh issue close 113 --comment \"Implemented the version-level quality-check MVP: internal/admin-only HTML/JSON/Markdown output, metadata/file/scan/internal-only wording checks, rendered-site missing as build-failure-equivalent, and Markdown link/image/attachment reference checks with representative specs.\"",
+      "notes": "Closed issue #113 after the Markdown reference checks were implemented."
+    },
+    {
+      "command": "gh issue create --title \"文書確認依頼 / OK・Cancel の最小フローを追加する\" --body-file - <<'EOF' ... EOF",
+      "notes": "Created issue #264 for the minimal document approval-request flow split out of #137."
+    },
+    {
+      "command": "gh issue close 137 --comment \"Documented the current decision in docs: formal review/approval workflow stays deferred for now, and the minimal document approval request flow is split into #264. This closes the planning issue and leaves implementation to the concrete child issue.\"",
+      "notes": "Closed planning issue #137 after documenting the decision and creating child issue #264."
+    },
+    {
+      "command": "gh issue close 260 --comment \"Reflected the service-boundary guidance in docs/開発・保守ガイド.md, including the intended roles of services, queries, builders, previews, exports, integrations, and presenters, plus the rule to avoid large catch-all services and migrate incrementally.\"",
+      "notes": "Closed design issue #260 after updating the maintenance guide."
+    },
+    {
+      "command": "gh issue close 261 --comment \"Documented the viewer-adapter direction in docs/アプリケーション仕様.md: Rails remains the source of truth for document management and permissions, Docusaurus is the Markdown/MDX viewer adapter, text formats use Rails preview, and PDF/image/Office formats use Rails or external viewers as appropriate.\"",
+      "notes": "Closed design issue #261 after documenting the display-adapter direction."
+    },
+    {
+      "command": "gh issue close 160 --comment \"Documented the data-classification direction in docs/アプリケーション仕様.md: visibility_policy remains the source of access control, data_classification_tags are separate handling tags, initial scope is Document-level only, and import dry-run can already suggest classification-related attributes from rules/frontmatter via DocumentClassificationSuggester.\"",
+      "notes": "Closed design issue #160 after documenting the classification-tag direction."
+    },
+    {
+      "command": "gh issue close 263 --comment \"Added docs/テキスト系viewer候補メモ.md and linked it from docs/README.md. The note compares CodeMirror 6, Monaco Editor, Shiki, highlight.js, and jsoneditor, and records the recommended direction for JSON/YAML/plain-text preview in the current Rails + Hotwire setup.\"",
+      "notes": "Closed research issue #263 after adding the OSS viewer comparison memo."
+    },
+    {
+      "command": "gh issue close 259 --comment \"Moved the decision into docs/ToDo.md: automatic retries remain out of initial scope, and we will only reopen the topic if production evidence shows manual rerun is insufficient after checking idempotency and duplicate-execution risk per job type. Closing this placeholder issue for now.\"",
+      "notes": "Closed defer/placeholder issue #259 after moving the decision to docs/ToDo.md."
+    },
+    {
+      "command": "gh issue close 138 --comment \"Captured the direction in docs/ToDo.md: broad UI/UX cleanup should not stay as a standing umbrella issue, and future work should be split into concrete viewer/dashboard/navigation/admin UX issues when the remaining core features settle. Closing the meta issue for now.\"",
+      "notes": "Closed umbrella issue #138 after moving the guidance to docs/ToDo.md."
+    },
+    {
+      "command": "gh issue close 136 --comment \"Documented the defer decision in docs/ToDo.md: multilingual document management will only be revisited when there is real demand, and any future implementation should start from language metadata and document linkage rather than keeping this abstract planning issue open. Closing for now.\"",
+      "notes": "Closed defer/placeholder issue #136 after moving the guidance to docs/ToDo.md."
+    },
+    {
+      "command": "gh issue close 139 --comment \"Moved the direction into docs/ToDo.md: test/CI work should continue, but not as a standing umbrella issue. Future work should be tracked as concrete failing/flaky spec, CI cache/runtime, or missing coverage issues. Closing the broad placeholder.\"",
+      "notes": "Closed broad umbrella issue #139 after moving the guidance to docs/ToDo.md."
+    },
+    {
+      "command": "gh issue close 140 --comment \"Moved the direction into docs/ToDo.md: seed/import/build robustness remains important, but future follow-up should be tracked as concrete issues (transaction boundary, cleanup, job history, rerun safety) rather than this broad umbrella. Closing the placeholder issue.\"",
+      "notes": "Closed broad umbrella issue #140 after moving the guidance to docs/ToDo.md."
+    },
+    {
+      "command": "gh issue close 143 --comment \"Moved the direction into docs/ToDo.md: Docusaurus/Kroki/Node stability work should continue as concrete version-pin, build, asset-path, or dependency issues instead of a standing umbrella. Closing the broad planning issue.\"",
+      "notes": "Closed broad umbrella issue #143 after moving the guidance to docs/ToDo.md."
+    },
+    {
+      "command": "gh issue close 144 --comment \"Moved the direction into docs/ToDo.md: performance work should be reopened only as concrete slow-query, N+1, paging, indexing, or heavy-job issues. Closing the broad umbrella issue.\"",
+      "notes": "Closed broad umbrella issue #144 after moving the guidance to docs/ToDo.md."
+    },
+    {
+      "command": "gh issue close 145 --comment \"Moved the direction into docs/ToDo.md: DB integrity work should continue through concrete migration/constraint/index issues rather than this abstract umbrella. Closing the placeholder issue.\"",
+      "notes": "Closed broad umbrella issue #145 after moving the guidance to docs/ToDo.md."
+    },
+    {
+      "command": "gh issue close 146 --comment \"Part of this was already implemented via user-facing error pages, and the remaining observability/logging work should be tracked as concrete import/build/mail/webhook/admin-inspection issues rather than a standing umbrella. Documented that direction in docs/ToDo.md and closing the broad issue.\"",
+      "notes": "Closed broad umbrella issue #146 after moving the guidance to docs/ToDo.md."
+    },
+    {
+      "command": "gh issue list --state open --limit 100",
+      "notes": "Re-fetched the current open issue list to choose the next close candidate from the remaining implementation-heavy issues."
+    },
+    {
+      "command": "gh issue view 262 && gh issue view 132 && gh issue view 114 && gh issue view 130 && gh issue view 109",
+      "notes": "Compared current issue bodies with existing implementation to identify issues that were already at or near MVP completion."
+    },
+    {
+      "command": "gh issue close 132 --comment \"Documented the implemented dashboard MVP in docs/アプリケーション仕様.md and confirmed the dedicated request spec. The current dashboard covers accessible projects, favorites, read-later items, recent documents from access logs, and recently updated readable documents while excluding unreadable documents from bookmark/history sections.\"",
+      "notes": "Closed issue #132 after documenting the already-implemented dashboard behavior."
+    },
+    {
+      "command": "gh issue close 153 --comment \"Documented the direction in docs/ToDo.md: long-running job work should no longer stay open as a parent umbrella issue. Reopen concrete jobization tasks only when a real synchronous bottleneck or operational pain is identified per feature. Closing the umbrella parent.\"",
+      "notes": "Closed umbrella issue #153 after moving the guidance to docs/ToDo.md."
+    },
+    {
+      "command": "gh issue close 157 --comment \"Documented the defer condition in docs/ToDo.md: regeneration rails task/job work should be reopened only when there is concrete operational demand for search/build regeneration, not as a standing placeholder. Closing this forward-looking issue for now.\"",
+      "notes": "Closed placeholder issue #157 after moving the guidance to docs/ToDo.md."
+    },
+    {
+      "command": "gh issue close 258 --comment \"Documented the defer condition in docs/ToDo.md: mail/webhook jobization should be revisited only after the actual sending flows are in place and the operational need is clear. Closing this premature placeholder for now.\"",
+      "notes": "Closed placeholder issue #258 after moving the guidance to docs/ToDo.md."
+    },
+    {
+      "command": "gh issue close 98 --comment \"Moved the direction into docs/ToDo.md: we will no longer keep vendor-specific gem survey issues open. Future gem adoption should be decided per concrete use-case with explicit justification, and only the already-adopted rparam/rtypes remain current. Closing this survey issue.\"",
+      "notes": "Closed vendor-specific survey issue #98 after moving the gem-adoption guidance to docs/ToDo.md."
+    },
+    {
+      "command": "gh issue close 257 --comment \"Documented the current direction in docs/ToDo.md: import/build jobization should be revisited only when the actual operator-facing import/build flows need to move off synchronous execution, not as a standing placeholder. Closing this forward-looking issue for now.\"",
+      "notes": "Closed placeholder issue #257 after moving the guidance to docs/ToDo.md."
+    },
+    {
+      "command": "docker compose exec app bundle exec rspec spec/requests/document_importance_display_spec.rb",
+      "notes": "Passed with 2 examples and 0 failures."
+    },
+    {
+      "command": "gh issue close 124 --comment \"The initial rule-based classification implementation is now in place: DocumentClassificationSuggester infers category/document_kind/visibility_policy/snapshot_kind from source path, extension, and frontmatter; rules are managed in config/document_classification_rules.yml; import dry-run surfaces matched_rules so the operator can see why a rule matched. Closing the issue at that initial-scope level.\"",
+      "notes": "Closed issue #124 based on the existing classification implementation."
+    },
+    {
+      "command": "gh issue close 131 --comment \"Implemented the initial document-importance slice: Document already has importance_level/recommended_sort_order, and project/detail/list views now prioritize and display importance metadata, while catalog/set ordering remains controlled by item sort_order. Added request coverage for the ordering and detail display. Closing the issue at that initial-scope level.\"",
+      "notes": "Closed issue #131 after wiring the importance display/order slice."
+    },
+    {
+      "command": "docker compose exec app bundle exec rspec spec/services/import_dry_run_validator_spec.rb spec/services/import_dry_run_hash_presenter_spec.rb spec/services/import_dry_run_markdown_presenter_spec.rb",
+      "notes": "Passed with 14 examples and 0 failures after integrating duplicate candidates into import dry-run output."
+    },
+    {
+      "command": "gh issue close 125 --comment 'Integrated duplicate detection into import dry-run results. The validator now distinguishes exact update candidates from similar-document candidates, and dry-run hash/markdown outputs include duplicate candidate reasons (same_title, same_source_relative_path, same_source_basename) plus the matched existing documents without auto-merging them. Added representative service coverage and narrowed update-candidate detection to exact source-path or unique same-file-name matches within the project.'",
+      "notes": "Closed issue #125 after integrating duplicate candidates into dry-run output."
     }
   ],
   "tests": [
@@ -113,6 +325,56 @@
       "command": "docker compose run --rm app bundle exec rspec spec/requests/access_requests_spec.rb spec/requests/admin_access_requests_spec.rb spec/models/access_request_spec.rb spec/services/access_request_hash_spec.rb spec/services/access_request_resolver_spec.rb",
       "result": "passed",
       "notes": "23 examples, 0 failures"
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/document_review_comments_spec.rb spec/models/document_review_comment_spec.rb",
+      "result": "passed",
+      "notes": "11 examples, 0 failures"
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/admin_project_external_previews_spec.rb --format documentation",
+      "result": "passed",
+      "notes": "4 examples, 0 failures"
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/admin_project_templates_spec.rb:7 --format documentation",
+      "result": "passed",
+      "notes": "4 examples, 0 failures"
+    },
+    {
+      "command": "docker compose run --rm app bundle exec rspec spec/requests/document_version_quality_checks_spec.rb",
+      "result": "passed",
+      "notes": "2 examples, 0 failures"
+    },
+    {
+      "command": "docker compose exec app bundle exec rspec spec/requests/project_ai_contexts_spec.rb",
+      "result": "passed",
+      "notes": "2 examples, 0 failures"
+    },
+    {
+      "command": "docker compose exec app bundle exec rspec spec/requests/document_publication_windows_spec.rb",
+      "result": "passed",
+      "notes": "2 examples, 0 failures"
+    },
+    {
+      "command": "docker compose exec app bundle exec rspec spec/requests/project_document_zips_spec.rb",
+      "result": "passed",
+      "notes": "6 examples, 0 failures"
+    },
+    {
+      "command": "docker compose exec app bundle exec rspec spec/services/document_version_quality_checker_spec.rb --format documentation",
+      "result": "passed",
+      "notes": "8 examples, 0 failures"
+    },
+    {
+      "command": "docker compose exec app bundle exec rspec spec/requests/document_importance_display_spec.rb",
+      "result": "passed",
+      "notes": "2 examples, 0 failures"
+    },
+    {
+      "command": "docker compose exec app bundle exec rspec spec/services/import_dry_run_validator_spec.rb spec/services/import_dry_run_hash_presenter_spec.rb spec/services/import_dry_run_markdown_presenter_spec.rb",
+      "result": "passed",
+      "notes": "14 examples, 0 failures"
     }
   ],
   "usage": {
@@ -124,6 +386,8 @@
     "loaded_context": [
       "../../AGENTS.md",
       "docs/README.md",
+      "docs/アプリケーション仕様.md",
+      "docs/テスト方針.md",
       ".tmp.requirements-checklist.md",
       "/home/matsu/.codex/skills/github-cli/SKILL.md",
       "../../gpt/prompts/prompt-log.json",
@@ -139,6 +403,8 @@
     "loaded_context": [
       "../../AGENTS.md",
       "docs/README.md",
+      "docs/アプリケーション仕様.md",
+      "docs/テスト方針.md",
       ".tmp.requirements-checklist.md",
       "/home/matsu/.codex/skills/github-cli/SKILL.md",
       "../../gpt/prompts/prompt-log.json",
@@ -150,11 +416,11 @@
     "unnecessary_exploration": []
   },
   "quality_notes": [],
-  "risks": [
-    "Current issue discovery is partially inferred because direct GitHub issue listing was unavailable from this environment."
-  ],
+  "risks": [],
   "remaining_concerns": [
-    "Open issue list still needs to be refreshed from GitHub or a re-authenticated gh session before choosing the next non-hold issue after the inferred #117/#118/#119/#127/#152 slices."
+    "Issue #109 is only partially advanced here; the broader DocumentComment/common-thread design described in the issue body is not yet implemented.",
+    "Issue #111 is only partially advanced here; the initial visibility boundary now respects existing publication-window fields for external viewers, but the issue body's separate DocumentPublication model, admin editing flow, and project-level publication management are not implemented yet.",
+    "Issue #123 is only partially advanced here; ZIP path/file-type controls are wired, but actual PDF watermark rendering and classification-tag-driven output behavior are not implemented yet."
   ],
   "improvement_candidates": {
     "agents_md": [],

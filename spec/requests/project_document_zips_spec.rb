@@ -115,5 +115,41 @@ RSpec.describe "Project document zips", type: :request do
     expect(response.body).to include(project_document_zip_path(project))
     expect(response.body).to include("document_ids_#{document.id}")
     expect(response.body).to include("選択した文書の最新版をZIPでダウンロード")
+    expect(response.body).to include("ZIP出力オプション")
+  end
+
+  it "supports zip path and file type options" do
+    document = create(:document, project:, title: "仕様書", slug: "spec-doc")
+    version = create(:document_version, document:, version_label: "v1.0.0", source_relative_path: "deliverables/spec-doc/README.md")
+    document.update!(latest_version: version)
+
+    markdown_key = "spec/project-document-zips/#{SecureRandom.hex(8)}/README.md"
+    pdf_key = "spec/project-document-zips/#{SecureRandom.hex(8)}/manual.pdf"
+    markdown_path = Rails.root.join("storage", "document_files", markdown_key)
+    pdf_path = Rails.root.join("storage", "document_files", pdf_key)
+    FileUtils.mkdir_p(markdown_path.dirname)
+    FileUtils.mkdir_p(pdf_path.dirname)
+    File.write(markdown_path, "# body\n")
+    File.binwrite(pdf_path, "%PDF-1.4")
+
+    create(:document_file, document_version: version, file_name: "README.md", content_type: "text/markdown", storage_key: markdown_key, file_size: 7, scan_status: :scan_clean)
+    create(:document_file, document_version: version, file_name: "manual.pdf", content_type: "application/pdf", storage_key: pdf_key, file_size: 8, scan_status: :scan_clean)
+
+    sign_in_as(user)
+
+    post project_document_zip_path(project), params: {
+      document_ids: [document.id],
+      zip_path_mode: "source_path",
+      include_markdown_sources: "0",
+      include_attachments: "1",
+      pdf_only: "1"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("deliverables/spec-doc/manual.pdf")
+    expect(response.body).not_to include("README.md")
+    expect(response.body).to include("README.txt")
+    expect(response.body).to include("PDF watermark metadata")
+    expect(response.body).to include("Confidential")
   end
 end

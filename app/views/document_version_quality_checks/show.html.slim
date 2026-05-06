@@ -1,0 +1,49 @@
+- page_title "#{@document.title} #{@version.version_label} 品質チェック"
+- content_for :left_content do
+  = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
+
+p.muted
+  = link_to @project.name, project_path(@project)
+  |  /
+  = link_to @document.title, project_document_path(@project, @document.slug)
+  |  /
+  = link_to @version.version_label, document_version_path(@version)
+
+h1 品質チェック
+
+p
+  = @document.title
+  |  
+  = @version.version_label
+
+.card
+  p
+    strong 判定:
+    = @quality_check_hash[:valid] ? " pass" : " fail"
+  p
+    | error:
+    = @quality_check_hash.dig(:summary, :error_count)
+    |  / warning:
+    = @quality_check_hash.dig(:summary, :warning_count)
+    |  / info:
+    = @quality_check_hash.dig(:summary, :info_count)
+  p.actions
+    = link_to "JSON", document_version_quality_check_path(@version, format: :json), class: "button secondary"
+    = link_to "Markdown", document_version_quality_check_path(@version, format: :md), class: "button secondary"
+
+= table_tag do
+  thead
+    tr
+      th severity
+      th key
+      th message
+      th detail
+  tbody
+    - @quality_check_hash[:checks].each do |check|
+      tr
+        td = check[:severity]
+        td = check[:key]
+        td = check[:message]
+        td = check[:detail].presence || "-"
+
+p = link_to "バージョン詳細へ戻る", document_version_path(@version)

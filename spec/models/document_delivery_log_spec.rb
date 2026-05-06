@@ -31,4 +31,11 @@ RSpec.describe DocumentDeliveryLog, type: :model do
     expect(log.errors[:subject]).to be_present
     expect(log.errors[:body]).to be_present
   end
+
+  it "requires a document or document set target" do
+    log = build(:document_delivery_log, document: nil, document_set: nil)
+
+    expect(log).not_to be_valid
+    expect(log.errors[:base]).to be_present
+  end
 end
