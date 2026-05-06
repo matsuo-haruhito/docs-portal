@@ -11,6 +11,7 @@
 - [コーディング規約](./コーディング規約.md)
 - [テスト方針](./テスト方針.md)
 - [publish.json 仕様と生成ルール](./publish.json%20仕様と生成ルール.md)
+- [Git連携インポート](./Git連携インポート.md)
 - [ローカル編集からポータル更新までの最小運用案](./ローカル編集からポータル更新までの最小運用案.md)
 - [リリース・デプロイ・rollback手順](./リリース・デプロイ・rollback手順.md)
 - [バックアップ・リストア手順](./バックアップ・リストア手順.md)
@@ -60,6 +61,7 @@
    - version immutability
    - storage_key
    - build artifact
+   - Git連携 import source / run
 
 7. AccessLog
    - 記録対象
