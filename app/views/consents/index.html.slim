@@ -32,7 +32,7 @@ section.card
       tbody
         - @user_consents.each do |consent|
           tr
-            td = l(consent.consented_at)
+            td = consent.consented_at.strftime("%Y-%m-%d %H:%M")
             td = consent.consent_term.title
             td = consent.consent_term_version_label
             td
