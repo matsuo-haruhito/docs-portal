@@ -16,6 +16,30 @@ class ProjectsController < BaseController
     @tree_projects = portal_tree_projects(include_project: @project)
   end
 
+  def document_tree
+    @project = Project.find_by!(code: params[:project_code] || params[:code])
+    require_project_access!(@project)
+    return if require_consent!(target: @project, timing: :first_view)
+
+    @tree_projects = portal_tree_projects(include_project: @project)
+    @current_project = params[:tree_action] == "hide" ? nil : @project
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(
+          "document_tree_panel",
+          partial: "documents/tree",
+          locals: {
+            projects: @tree_projects,
+            current_project: @current_project,
+            current_document: nil
+          }
+        )
+      end
+      format.html { redirect_to project_path(@project) }
+    end
+  end
+
   private
 
   def portal_tree_projects(include_project: nil)
