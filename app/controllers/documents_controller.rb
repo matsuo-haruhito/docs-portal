@@ -90,8 +90,6 @@ class DocumentsController < BaseController
   end
 
   def visible_project_for_portal?(project)
-    return true if project.documents.empty?
-
     project.documents.any? { _1.visible_in_portal_for?(current_user) }
   end
 
