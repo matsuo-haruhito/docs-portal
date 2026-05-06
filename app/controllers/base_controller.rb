@@ -27,7 +27,7 @@ class BaseController < ApplicationController
 
   def require_consent!(target:, timing: :first_view)
     result = ConsentRequirementChecker.new(user: current_user, target:, timing:).call
-    return if result.satisfied?
+    return false if result.satisfied?
 
     redirect_to new_consent_path(
       target_type: result.target.class.name,
@@ -35,6 +35,7 @@ class BaseController < ApplicationController
       timing:,
       return_to: request.fullpath
     ), alert: "利用前に注意事項への同意が必要です。"
+    true
   end
 
   def consent_target_public_id(target)
