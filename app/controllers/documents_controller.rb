@@ -31,10 +31,9 @@ class DocumentsController < BaseController
     require_project_access!(@project)
     @document = @project.documents.includes(:document_tags, :document_keywords).find_by!(slug: params[:slug])
     require_document_access!(@document)
+    raise ApplicationError::Forbidden unless current_user.internal? || @document.visible_in_portal_for?(current_user)
 
     @versions = @document.document_versions.select { _1.viewable_by?(current_user) }.sort_by(&:created_at).reverse
-    raise ApplicationError::Forbidden if !current_user.internal? && @versions.empty?
-
     @latest_viewable_version = @document.latest_version if @document.latest_version && @versions.include?(@document.latest_version)
     @source_breadcrumbs = SourcePathBreadcrumb.new(
       document: @document,
