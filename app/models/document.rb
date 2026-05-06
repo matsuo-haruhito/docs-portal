@@ -87,9 +87,10 @@ class Document < ApplicationRecord
     return false if archived?
     return false unless viewable_by?(user)
     return true if user&.internal?
-    return true if latest_version.blank?
+    return true unless document_versions.exists?
 
-    latest_version.viewable_by?(user)
+    portal_version = latest_version || document_versions.published.order(created_at: :desc, id: :desc).first
+    portal_version.present? && portal_version.viewable_by?(user)
   end
 
   def archived?
