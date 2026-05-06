@@ -15,8 +15,12 @@ class ConsentsController < BaseController
   def create
     result = ConsentRequirementChecker.new(user: current_user, target: @target, timing: @timing).call
     result.missing_terms.each do |term|
-      UserConsent.find_or_create_by!(user: current_user, consent_term: term, target: result.target) do |consent|
-        consent.consent_term_version_label = term.version_label
+      UserConsent.find_or_create_by!(
+        user: current_user,
+        consent_term: term,
+        target: result.target,
+        consent_term_version_label: term.version_label
+      ) do |consent|
         consent.ip_address = request.remote_ip
         consent.user_agent = request.user_agent
       end
