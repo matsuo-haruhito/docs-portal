@@ -3,7 +3,7 @@ class DocumentReviewCommentsController < BaseController
 
   def create
     comment = @document.document_review_comments.build(comment_params)
-    comment.document_version ||= @version
+    comment.document_version ||= @version if params[:document_version_public_id].present?
     comment.document = @document
     comment.author = current_user
     apply_visibility_rules!(comment)
@@ -56,20 +56,21 @@ class DocumentReviewCommentsController < BaseController
   end
 
   def apply_visibility_rules!(comment)
+    if comment.parent.present? && !comment.parent.internal_only?
+      comment.internal_only = false
+      comment.comment_type = "question"
+      return
+    end
+
     if current_user&.internal?
       comment.internal_only = true if comment.internal_only.nil?
       return
     end
 
-    raise ApplicationError::Forbidden unless comment.comment_type == "question" || comment.parent_id.present?
+    raise ApplicationError::Forbidden unless comment.comment_type == "question"
 
     comment.internal_only = false
-    comment.comment_type = "question" if comment.parent_id.blank?
-
-    if comment.parent.present?
-      raise ApplicationError::Forbidden if comment.parent.internal_only?
-      raise ApplicationError::Forbidden unless comment.parent.comment_type == "question" || comment.parent.parent_id.present?
-    end
+    comment.comment_type = "question"
   end
 
   def success_message_for(comment)
