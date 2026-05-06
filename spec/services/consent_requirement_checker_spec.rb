@@ -7,53 +7,66 @@ RSpec.describe ConsentRequirementChecker do
   let(:version) { create(:document_version, document:) }
   let(:file) { create(:document_file, document_version: version) }
 
-  it "reports missing global consent" do
-    term = create(:consent_term, consent_scope: :global)
+  it "reports missing global consent and is satisfied after global consent" do
+    term = create(:consent_term, title: "Global Terms", consent_scope: :global, requirement_timing: :first_view)
 
-    result = described_class.new(user:, target: document).call
+    result = described_class.new(user:, target: document, timing: :first_view).call
 
     expect(result).to be_required
     expect(result).not_to be_satisfied
     expect(result.missing_terms).to eq([term])
-  end
 
-  it "is satisfied when the user has global consent" do
-    term = create(:consent_term, consent_scope: :global)
-    create(:user_consent, user:, consent_term: term)
+    create(:user_consent, user:, consent_term: term, target: nil, consent_term_version_label: term.version_label)
 
-    result = described_class.new(user:, target: document).call
-
-    expect(result).to be_satisfied
-    expect(result.missing_terms).to be_empty
-  end
-
-  it "applies project terms to documents in the project" do
-    term = create(:consent_term, consent_scope: :project)
-    create(:user_consent, user:, consent_term: term, target: project)
-
-    result = described_class.new(user:, target: document).call
-
-    expect(result.required_terms).to include(term)
+    result = described_class.new(user:, target: document, timing: :first_view).call
     expect(result).to be_satisfied
   end
 
-  it "applies document terms to document files through their document" do
-    term = create(:consent_term, consent_scope: :document)
-    create(:user_consent, user:, consent_term: term, target: document)
+  it "requires enabled project first access terms until the user consents" do
+    term = create(:consent_term, title: "Project NDA", consent_scope: :project, version_label: "v1")
+    create(:project_consent_setting, project:, consent_term: term, required_on: :first_access)
 
-    result = described_class.new(user:, target: file).call
+    result = described_class.new(user:, target: document, timing: :first_view).call
 
-    expect(result.required_terms).to include(term)
+    expect(result.target).to eq(project)
+    expect(result.missing_terms).to eq([term])
+
+    create(:user_consent, user:, consent_term: term, target: project, consent_term_version_label: "v1")
+
+    result = described_class.new(user:, target: document, timing: :first_view).call
     expect(result).to be_satisfied
   end
 
-  it "filters terms by requirement timing" do
-    first_view = create(:consent_term, title: "First view terms", consent_scope: :global, requirement_timing: :first_view)
-    every_download = create(:consent_term, title: "Download terms", consent_scope: :global, requirement_timing: :every_download)
+  it "requires re-consent when the active project term version changes" do
+    old_term = create(:consent_term, title: "Project NDA", consent_scope: :project, version_label: "v1", active: false)
+    new_term = create(:consent_term, title: "Project NDA", consent_scope: :project, version_label: "v2")
+    create(:project_consent_setting, project:, consent_term: new_term, required_on: :first_access)
+    create(:user_consent, user:, consent_term: old_term, target: project, consent_term_version_label: "v1")
 
-    result = described_class.new(user:, target: file, timing: :every_download).call
+    result = described_class.new(user:, target: project, timing: :first_view).call
 
-    expect(result.required_terms).to eq([every_download])
-    expect(result.required_terms).not_to include(first_view)
+    expect(result.missing_terms).to eq([new_term])
+  end
+
+  it "checks download-only project requirements separately" do
+    access_term = create(:consent_term, title: "Access Terms", consent_scope: :project)
+    download_term = create(:consent_term, title: "Download Terms", consent_scope: :download)
+    create(:project_consent_setting, project:, consent_term: access_term, required_on: :first_access)
+    create(:project_consent_setting, project:, consent_term: download_term, required_on: :download)
+
+    access_result = described_class.new(user:, target: file, timing: :first_view).call
+    download_result = described_class.new(user:, target: file, timing: :download).call
+
+    expect(access_result.missing_terms).to eq([access_term])
+    expect(download_result.missing_terms).to eq([download_term])
+  end
+
+  it "ignores disabled project consent settings" do
+    term = create(:consent_term, title: "Disabled Terms", consent_scope: :project)
+    create(:project_consent_setting, project:, consent_term: term, enabled: false)
+
+    result = described_class.new(user:, target: project, timing: :first_view).call
+
+    expect(result).to be_satisfied
   end
 end
