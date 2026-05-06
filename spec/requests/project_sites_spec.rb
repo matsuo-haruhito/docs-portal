@@ -86,6 +86,10 @@ RSpec.describe "Project sites", type: :request do
     File.write(version_v1.site_root_absolute_path.join("assets", "css", "app.css"), "body{color:#333;}")
     FileUtils.mkdir_p(version_v1.site_root_absolute_path.join("assets", "js"))
     File.write(version_v1.site_root_absolute_path.join("assets", "js", "app.js"), "console.log('ok');")
+    File.write(
+      version_v1.site_root_absolute_path.join("assets", "js", "runtime~main.app.js"),
+      '(()=>{f.p="/";var d=f.p+f.u(r);return f.p+f.u(e)})();'
+    )
 
     FileUtils.mkdir_p(version_v2.site_root_absolute_path.join("#{site_build_path}-v2"))
     File.write(
@@ -158,6 +162,20 @@ RSpec.describe "Project sites", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to end_with("javascript")
+  end
+
+  it "rewrites Docusaurus runtime chunk paths to the project site route" do
+    sign_in_as(user)
+
+    get project_site_path(project, site_path: "assets/js/runtime~main.app.js", version_id: version_v1.public_id, embedded: "1")
+
+    proxied_site_root = project_site_path(project, site_path: "__docs_portal_asset__").delete_suffix("__docs_portal_asset__")
+    asset_query = "?embedded=1&version_id=#{version_v1.public_id}"
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("f.p=#{proxied_site_root.dump}")
+    expect(response.body).to include("f.p+f.u(r)+#{asset_query.dump}")
+    expect(response.body).to include("f.p+f.u(e)+#{asset_query.dump}")
   end
 
   it "resolves markdown-style index paths to generated html" do
