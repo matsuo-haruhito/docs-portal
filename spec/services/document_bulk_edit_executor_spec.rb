@@ -11,7 +11,7 @@ RSpec.describe DocumentBulkEditExecutor do
     DocumentTagging.create!(document:, document_tag: tag, sort_order: document.document_taggings.count)
   end
 
-  it "applies previewed changes and marks the dry-run confirmed" do
+  it "applies previewed changes, marks the dry-run confirmed, and records an audit log" do
     document = create(:document, project:, category: :spec, visibility_policy: :restricted_external, importance_level: :normal, recommended_sort_order: 0)
     version = create(:document_version, document:, snapshot_kind: "current")
     document.update!(latest_version: version)
@@ -38,8 +38,11 @@ RSpec.describe DocumentBulkEditExecutor do
       }
     ).call.bulk_edit_dry_run
 
-    result = described_class.new(dry_run:, actor:).call
+    expect do
+      @result = described_class.new(dry_run:, actor:).call
+    end.to change(AccessLog.bulk_edit, :count).by(1)
 
+    result = @result
     expect(result.success_count).to eq(1)
     expect(result.failure_count).to eq(0)
     expect(document.reload.category).to eq("manual")
@@ -52,6 +55,12 @@ RSpec.describe DocumentBulkEditExecutor do
     expect(document.document_tags.order(:normalized_name).pluck(:name)).to eq(["Current"])
     expect(dry_run.reload).to be_confirmed
     expect(dry_run.summary_json.dig("execution", "success_count") || dry_run.summary_json.dig(:execution, :success_count)).to eq(1)
+
+    audit_log = AccessLog.bulk_edit.last
+    expect(audit_log.user).to eq(actor)
+    expect(audit_log.project).to eq(project)
+    expect(audit_log.target_type).to eq("BulkEditDryRun")
+    expect(audit_log.target_name).to include(dry_run.public_id)
   end
 
   it "records a failure when a targeted document no longer exists" do
