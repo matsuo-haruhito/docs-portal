@@ -1,5 +1,6 @@
 require "fileutils"
 require "open3"
+require "shellwords"
 require "tmpdir"
 
 class GitRepositorySnapshotFetcher
