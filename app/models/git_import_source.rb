@@ -17,7 +17,7 @@ class GitImportSource < ApplicationRecord
     github_app: 0,
     fine_grained_pat: 1,
     deploy_key: 2,
-    none: 9
+    no_auth: 9
   }
 
   validates :repository_full_name, :branch, :source_path, :auth_type, presence: true
