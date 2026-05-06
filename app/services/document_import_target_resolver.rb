@@ -15,7 +15,14 @@ class DocumentImportTargetResolver
   attr_reader :project, :scope
 
   def documents
-    @documents ||= (scope || project.documents).includes(:latest_version).to_a
+    @documents ||= begin
+      document_scope = scope || project.documents
+      if document_scope.respond_to?(:includes)
+        document_scope.includes(:latest_version).to_a
+      else
+        Array(document_scope)
+      end
+    end
   end
 
   def by_source_path(source_path)
