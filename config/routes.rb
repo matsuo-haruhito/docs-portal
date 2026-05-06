@@ -47,7 +47,7 @@ Rails.application.routes.draw do
   end
 
   resources :projects, only: [:index, :show], param: :code do
-    resource :document_tree, only: [:show], controller: "project_document_trees"
+    get "document_tree", to: "projects#document_tree", as: :document_tree
     resource :ai_context, only: [:show], controller: "project_ai_contexts"
     get "site(/*site_path)", to: "project_sites#show", as: :site, format: false
     resource :document_zip, only: [:create], controller: "project_document_zips"
