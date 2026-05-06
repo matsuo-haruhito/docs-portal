@@ -21,7 +21,7 @@ h1 文書一括編集dry-run
     dd = "#{@bulk_edit_dry_run.warnings_json.size} / #{@bulk_edit_dry_run.errors_json.size}"
     - if @bulk_edit_dry_run.expires_at.present?
       dt 有効期限
-      dd = l(@bulk_edit_dry_run.expires_at)
+      dd = @bulk_edit_dry_run.expires_at.to_fs(:db)
 
   - if @bulk_edit_dry_run.analyzed?
     p.actions
