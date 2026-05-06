@@ -31,7 +31,8 @@ module DocumentsHelper
       ui_config:,
       initial_expansion: { default: :collapsed, expanded_keys: },
       row_class_builder: ->(item) { tree_item_css_class(item) },
-      row_data_builder: ->(item) { tree_item_data_attributes(item) }
+      row_data_builder: ->(item) { tree_item_data_attributes(item) },
+      toggle_icon_builder: ->(item, state, context) { tree_toggle_button_label(item, state, context) }
     )
   end
 
