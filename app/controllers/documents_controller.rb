@@ -23,7 +23,7 @@ class DocumentsController < BaseController
     @current_page = @total_pages if @current_page > @total_pages
 
     @documents = visible_documents.slice((@current_page - 1) * @per_page, @per_page) || []
-    @tree_projects = portal_tree_projects
+    @tree_projects = portal_tree_projects(include_project: @project)
   end
 
   def show
@@ -56,7 +56,7 @@ class DocumentsController < BaseController
         DocumentApprovalRequest.none
       end
     @approval_approvers = User.where(user_type: :internal, active: true).order(:name, :email_address)
-    @tree_projects = portal_tree_projects
+    @tree_projects = portal_tree_projects(include_project: @project)
   end
 
   private
@@ -78,13 +78,15 @@ class DocumentsController < BaseController
     scope.distinct
   end
 
-  def portal_tree_projects
+  def portal_tree_projects(include_project: nil)
     projects = Project.accessible_to(current_user)
       .includes(documents: :latest_version)
       .order(:code)
     return projects if current_user.internal?
 
-    projects.select { visible_project_for_portal?(_1) }
+    visible_projects = projects.select { visible_project_for_portal?(_1) }
+    visible_projects << include_project if include_project.present? && visible_projects.exclude?(include_project)
+    visible_projects
   end
 
   def visible_project_for_portal?(project)
