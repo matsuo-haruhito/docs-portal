@@ -5,6 +5,12 @@ class ProjectSitesController < BaseController
 
   def show
     site_path = params[:site_path].presence || @build_version&.html_view_site_path
+
+    if asset_path?(site_path)
+      file_path = asset_file_response_path(site_path)
+      return send_site_file(file_path)
+    end
+
     renderer = project_site_renderer(site_path, embedded: embedded_request?)
     file_path = renderer.file_response_path(site_path)
 
@@ -72,6 +78,17 @@ class ProjectSitesController < BaseController
       @site_viewer_back_path = project_document_path(@project, @site_viewer_document.slug)
       render "shared/site_viewer"
     end
+  end
+
+  def asset_path?(site_path)
+    site_path.to_s.start_with?("assets/")
+  end
+
+  def asset_file_response_path(site_path)
+    DocusaurusSiteRenderer.new(
+      version: @build_version,
+      view_context: view_context
+    ).file_response_path(site_path)
   end
 
   def send_site_file(file_path)
