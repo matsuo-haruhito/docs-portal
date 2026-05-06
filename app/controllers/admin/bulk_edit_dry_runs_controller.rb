@@ -16,6 +16,11 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
     ).call
 
     redirect_to admin_bulk_edit_dry_run_path(result.bulk_edit_dry_run), notice: "一括編集dry-runを作成しました。"
+  rescue ApplicationError::BadRequest => e
+    @bulk_edit_dry_run = BulkEditDryRun.new(operation_type: :document_metadata)
+    load_documents
+    flash.now[:alert] = e.message
+    render :new, status: :unprocessable_entity
   rescue ActiveRecord::RecordInvalid => e
     @bulk_edit_dry_run = e.record
     load_documents
@@ -56,11 +61,11 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
 
   def bulk_edit_params
     params.fetch(:bulk_edit, ActionController::Parameters.new).permit(
+      :archive_action,
       document_ids: [],
       document_attributes: %i[category document_kind visibility_policy importance_level recommended_sort_order retention_until discard_candidate_at],
       latest_version_attributes: %i[snapshot_kind published_from published_until],
-      tag_changes: %i[add_tag_names remove_tag_names],
-      archive_action: []
+      tag_changes: %i[add_tag_names remove_tag_names]
     )
   end
 
