@@ -25,7 +25,7 @@ class BaseController < ApplicationController
     raise ApplicationError::Forbidden unless document_file.downloadable_by?(current_user)
   end
 
-  def require_consent!(target:, timing: :first_view)
+  def require_consent!(target:, timing: :first_view, return_to: request.fullpath)
     result = ConsentRequirementChecker.new(user: current_user, target:, timing:).call
     return false if result.satisfied?
 
@@ -33,7 +33,7 @@ class BaseController < ApplicationController
       target_type: result.target.class.name,
       target_public_id: consent_target_public_id(result.target),
       timing:,
-      return_to: request.fullpath
+      return_to:
     ), alert: "利用前に注意事項への同意が必要です。"
     true
   end
