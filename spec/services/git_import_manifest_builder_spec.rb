@@ -45,7 +45,7 @@ RSpec.describe GitImportManifestBuilder do
       expect(document[:files].map { _1[:file_name] }).to contain_exactly("README.md", "flow.mmd", "image.png")
       expect(result.summary[:documents]).to eq(1)
       expect(result.summary[:attachments]).to eq(3)
-      expect(result.manifest_path).to exist
+      expect(result.manifest_path.exist?).to be(true)
     ensure
       FileUtils.rm_rf(import_root) if import_root
     end
