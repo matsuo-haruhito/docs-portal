@@ -8,7 +8,7 @@ class ProjectSitesController < BaseController
 
     if asset_path?(site_path)
       file_path = asset_file_response_path(site_path)
-      return send_site_file(file_path)
+      return send_site_file(file_path, cacheable: true)
     end
 
     renderer = project_site_renderer(site_path, embedded: embedded_request?)
@@ -91,10 +91,11 @@ class ProjectSitesController < BaseController
     ).file_response_path(site_path)
   end
 
-  def send_site_file(file_path)
+  def send_site_file(file_path, cacheable: false)
     if webpack_runtime_file?(file_path)
-      send_rewritten_webpack_runtime(file_path)
+      send_rewritten_webpack_runtime(file_path, cacheable:)
     else
+      set_private_immutable_asset_cache! if cacheable
       send_file file_path, disposition: "inline", type: Rack::Mime.mime_type(file_path.extname, "application/octet-stream")
     end
   end
@@ -103,18 +104,27 @@ class ProjectSitesController < BaseController
     file_path.basename.to_s.start_with?("runtime~main.") && file_path.extname == ".js"
   end
 
-  def send_rewritten_webpack_runtime(file_path)
+  def send_rewritten_webpack_runtime(file_path, cacheable: false)
     body = rewrite_webpack_runtime_public_path(File.read(file_path))
 
-    expires_now
-    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers.delete("ETag")
-    response.headers.delete("Last-Modified")
+    if cacheable
+      set_private_immutable_asset_cache!
+    else
+      expires_now
+      response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+      response.headers["Pragma"] = "no-cache"
+      response.headers.delete("ETag")
+      response.headers.delete("Last-Modified")
+    end
 
     send_data body,
       disposition: "inline",
       type: Rack::Mime.mime_type(file_path.extname, "application/javascript")
+  end
+
+  def set_private_immutable_asset_cache!
+    response.headers["Cache-Control"] = "private, max-age=31536000, immutable"
+    response.headers.delete("Pragma")
   end
 
   def rewrite_webpack_runtime_public_path(body)
