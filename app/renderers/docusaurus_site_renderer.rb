@@ -348,8 +348,8 @@ class DocusaurusSiteRenderer
       article,
       main .theme-doc-markdown,
       main .markdown {
-        max-width: none;
-        margin: 0;
+        max-width: #{ @embedded ? "none" : "1120px" };
+        margin: #{ @embedded ? "0" : "0 auto" };
         padding: #{ @embedded ? "20px 20px 48px" : "0 24px 56px" };
       }
       .markdown h1, .markdown h2, .markdown h3, .markdown h4,
