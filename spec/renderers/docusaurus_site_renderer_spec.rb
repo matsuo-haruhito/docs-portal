@@ -133,7 +133,9 @@ RSpec.describe DocusaurusSiteRenderer do
     expect(html).to include("portal-doc-body")
     expect(html).not_to include("portal-site-nav")
     expect(html).not_to include("document-version-switcher")
-    expect(html).to include("padding: 24px 24px 56px")
+    expect(html).to include("max-width: none")
+    expect(html).to include("margin: 0")
+    expect(html).to include("padding: 20px 20px 48px")
   end
 
   it "removes navigation links to versions the current user cannot view" do
