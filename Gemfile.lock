@@ -17,7 +17,7 @@ GIT
 
 GIT
   remote: https://github.com/matsuo-haruhito/tree_view-rails.git
-  revision: 78b11a091bfcedbb1cdfe626900819ed9472755c
+  revision: 156bf4b3d45a8ba32c70336d82974ad80882f7f7
   specs:
     tree_view (0.1.0)
       railties (>= 7.0)

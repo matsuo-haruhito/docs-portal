@@ -1,8 +1,11 @@
 <% hidden_count = local_assigns[:hidden_count] %>
+<% toggle_icon_builder = local_assigns[:toggle_icon_builder] %>
+<% toggle_state = local_assigns[:toggle_state] || :leaf %>
 <% children ||= tree.children_for(item) %>
 <% branch_info = tree_branch_info(item, tree) %>
 <% ancestor_last_states = branch_info[:ancestor_last_states] %>
 <% is_last = branch_info[:is_last] %>
+<% toggle_icon = tree_toggle_icon(item, toggle_state, toggle_icon_builder, depth: depth, tree: tree, children: children, hidden_count: hidden_count) %>
 
 <div class="tree-toggle">
   <div class="tree-toggle__branches" aria-hidden="true">
@@ -14,7 +17,12 @@
     <% end %>
   </div>
   <div class="tree-toggle__control">
-    <span class="tree-toggle__level"><%= tree_toggle_label(depth) %></span>
+    <% if toggle_icon %>
+      <span class="tree-toggle__level"><%= toggle_icon %></span>
+    <% else %>
+      <span class="tree-toggle__level tree-toggle__level--leaf">・</span>
+    <% end %>
+
     <% if children.any? %>
       <span class="tree-toggle__hidden-count"><%= tree.descendant_counts[tree.node_key_for(item)].to_i %></span>
     <% elsif hidden_count.present? %>
