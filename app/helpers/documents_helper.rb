@@ -239,7 +239,7 @@ module DocumentsHelper
     collapsed_keys = []
     expanded_keys << node_key(current_project) if current_project
 
-    opened_source_path = expanded_source_path.presence || current_document&.latest_version&.source_directory
+    opened_source_path = expanded_source_path.presence || collapsed_source_path.presence || current_document&.latest_version&.source_directory
     document_tree_folder_ancestor_paths(opened_source_path).each do |path|
       next if collapsed_source_path.present? && path == collapsed_source_path
 
