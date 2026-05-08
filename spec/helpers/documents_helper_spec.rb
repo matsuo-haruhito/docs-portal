@@ -43,6 +43,38 @@ RSpec.describe DocumentsHelper, type: :helper do
       )
       expect(helper.tree_item_detail_path(project)).to eq(helper.project_path(project))
     end
+
+    it "builds explorer-like folder nodes from document source paths" do
+      nested_document = create(:document, project:, title: "Nested fallback title", slug: "nested-manual")
+      create(
+        :document_version,
+        document: nested_document,
+        source_relative_path: "作成資料/編集正本/操作説明書.md",
+        source_directory: "作成資料/編集正本",
+        source_file_name: "操作説明書.md"
+      )
+      nested_document.reload
+
+      render_state = helper.document_tree_render_state(
+        projects: [project],
+        current_project: project,
+        current_document: nested_document
+      )
+      root_nodes = render_state.tree.children_for(project)
+      first_folder = root_nodes.detect { _1.is_a?(DocumentsHelper::DocumentTreeFolderNode) && _1.label == "作成資料" }
+      second_folder = first_folder.children.detect { _1.is_a?(DocumentsHelper::DocumentTreeFolderNode) && _1.label == "編集正本" }
+
+      expect(first_folder.path).to eq("作成資料")
+      expect(helper.tree_item_path(first_folder)).to eq(helper.project_documents_path(project, q: "作成資料"))
+      expect(second_folder.path).to eq("作成資料/編集正本")
+      expect(second_folder.children).to include(nested_document)
+      expect(helper.tree_item_label(nested_document)).to eq("操作説明書.md")
+      expect(render_state.expanded_keys).to include(
+        "project_#{project.id}",
+        helper.send(:node_key, first_folder),
+        helper.send(:node_key, second_folder)
+      )
+    end
   end
 
   describe "#document_search_match_labels" do
