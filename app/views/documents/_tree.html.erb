@@ -7,7 +7,9 @@
   <% render_state = document_tree_render_state(
     projects: projects,
     current_project: local_assigns[:current_project],
-    current_document: local_assigns[:current_document]
+    current_document: local_assigns[:current_document],
+    expanded_source_path: local_assigns[:expanded_source_path],
+    collapsed_source_path: local_assigns[:collapsed_source_path]
   ) %>
 
   <table class="tree-view-table">
