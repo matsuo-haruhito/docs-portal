@@ -11,6 +11,8 @@
     <% end %>
 
     <%= link_to "詳細", tree_item_detail_path(item), class: "tree-item-detail-link" %>
+  <% elsif item.is_a?(DocumentsHelper::DocumentTreeFolderNode) %>
+    <span class="muted tree-item-meta">フォルダ</span>
   <% elsif item.is_a?(Project) %>
     <%= link_to "案件トップ", tree_item_detail_path(item), class: "tree-item-detail-link" %>
   <% end %>
