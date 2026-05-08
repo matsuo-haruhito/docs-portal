@@ -8,7 +8,7 @@ RSpec.describe "Document tree view", type: :request do
     create(
       :document,
       project:,
-      title: "配車管理API仕様書",
+      title: "Dispatch API spec",
       slug: "dispatch-api-spec"
     )
   end
@@ -22,10 +22,11 @@ RSpec.describe "Document tree view", type: :request do
     get project_document_path(project, document.slug)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("文書ツリー")
-    expect(response.body).to include("#{project.code} #{project.name}")
-    expect(response.body).to include("配車管理API仕様書")
     expect(response.body).to include("tree-view-table")
+    expect(response.body).to include("#{project.code} #{project.name}")
+    expect(response.body).to include("Dispatch API spec")
+    expect(response.body).to include("tree-toggle__icon--close")
+    expect(response.body).to include("tree-toggle__icon--leaf")
   end
 
   it "renders tree navigation on project detail and documents index" do
@@ -33,12 +34,12 @@ RSpec.describe "Document tree view", type: :request do
 
     get project_path(project)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("文書ツリー")
     expect(response.body).to include("tree-view-table")
+    expect(response.body).to include("tree-toggle__icon--close")
 
     get project_documents_path(project)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("文書ツリー")
     expect(response.body).to include("tree-view-table")
+    expect(response.body).to include("tree-toggle__icon--close")
   end
 end
