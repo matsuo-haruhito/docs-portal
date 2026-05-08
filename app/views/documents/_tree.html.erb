@@ -4,7 +4,11 @@
   <h2 style="margin-top: 0;">文書ツリー</h2>
   <p class="muted">案件と文書の階層を表示します。</p>
 
-  <% render_state = document_tree_render_state(projects: projects, current_project: local_assigns[:current_project]) %>
+  <% render_state = document_tree_render_state(
+    projects: projects,
+    current_project: local_assigns[:current_project],
+    current_document: local_assigns[:current_document]
+  ) %>
 
   <table class="tree-view-table">
     <tbody>
