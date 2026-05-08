@@ -3,7 +3,7 @@ require "digest"
 module DocumentsHelper
   DocumentTreeFolderNode = Data.define(:project, :path, :label, :children)
 
-  def document_tree_render_state(projects:, current_project: nil, current_document: nil)
+  def document_tree_render_state(projects:, current_project: nil, current_document: nil, expanded_source_path: nil, collapsed_source_path: nil)
     projects = projects.to_a
     prepare_document_tree_cache!(projects)
 
@@ -27,11 +27,17 @@ module DocumentsHelper
       context: self,
       node_prefix: "document_tree",
       key_resolver: ->(item_or_id) { node_key(item_or_id) }
-    ).build_client_side
+    ).build(
+      hide_descendants_path_builder: ->(item, _depth, scope) { document_tree_toggle_path(item, :hide, scope:) },
+      show_descendants_path_builder: ->(item, _depth, scope) { document_tree_toggle_path(item, :show, scope:) },
+      toggle_all_path_builder: ->(_state) { nil }
+    )
 
-    expanded_keys = document_tree_initial_expanded_keys(
+    expansion_state = document_tree_initial_expansion_state(
       current_project:,
-      current_document:
+      current_document:,
+      expanded_source_path:,
+      collapsed_source_path:
     )
 
     TreeView::RenderState.new(
@@ -39,7 +45,7 @@ module DocumentsHelper
       root_items: tree.root_items,
       row_partial: "documents/tree_columns",
       ui_config:,
-      initial_expansion: { default: :collapsed, expanded_keys: },
+      initial_expansion: { default: :collapsed }.merge(expansion_state),
       toggle_icon_builder: ->(item, state, context) { tree_toggle_button_label(item, state, context) },
       row_class_builder: ->(item) { tree_item_css_class(item) },
       row_data_builder: ->(item) { tree_item_data_attributes(item) }
@@ -228,20 +234,29 @@ module DocumentsHelper
     end
   end
 
-  def document_tree_initial_expanded_keys(current_project:, current_document:)
-    keys = []
-    keys << node_key(current_project) if current_project
+  def document_tree_initial_expansion_state(current_project:, current_document:, expanded_source_path:, collapsed_source_path:)
+    expanded_keys = []
+    collapsed_keys = []
+    expanded_keys << node_key(current_project) if current_project
 
-    document_tree_folder_ancestor_paths(current_document).each do |path|
-      folder_node = document_tree_folder_node_for(current_document.project, path)
-      keys << node_key(folder_node) if folder_node
+    opened_source_path = expanded_source_path.presence || current_document&.latest_version&.source_directory
+    document_tree_folder_ancestor_paths(opened_source_path).each do |path|
+      next if collapsed_source_path.present? && path == collapsed_source_path
+
+      folder_node = document_tree_folder_node_for(current_project || current_document&.project, path)
+      expanded_keys << node_key(folder_node) if folder_node
     end
 
-    keys
+    if collapsed_source_path.present?
+      folder_node = document_tree_folder_node_for(current_project || current_document&.project, collapsed_source_path)
+      collapsed_keys << node_key(folder_node) if folder_node
+    end
+
+    { expanded_keys:, collapsed_keys: }
   end
 
-  def document_tree_folder_ancestor_paths(document)
-    directory = document&.latest_version&.source_directory.to_s
+  def document_tree_folder_ancestor_paths(source_path)
+    directory = source_path.to_s
     return [] if directory.blank?
 
     paths = []
@@ -254,8 +269,31 @@ module DocumentsHelper
   end
 
   def document_tree_folder_node_for(project, path)
+    return unless project && path.present?
+
     document_tree_nodes_for(project)
     @document_tree_folder_nodes_by_project_and_path&.dig(project.id, path)
+  end
+
+  def document_tree_toggle_path(item, action, scope: nil)
+    case item
+    when Project
+      project_document_tree_path(
+        item,
+        node_id: item.id,
+        tree_action: action == :hide ? "hide" : "show",
+        scope:,
+        format: :turbo_stream
+      )
+    when DocumentTreeFolderNode
+      project_document_tree_path(
+        item.project,
+        tree_action: action == :hide ? "hide" : "show",
+        source_path: item.path,
+        scope:,
+        format: :turbo_stream
+      )
+    end
   end
 
   def document_tree_document_label(document)
