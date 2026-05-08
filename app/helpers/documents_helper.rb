@@ -1,12 +1,21 @@
 module DocumentsHelper
-  def document_tree_render_state(projects:, current_project: nil)
+  DocumentTreeFolderNode = Data.define(:project, :path, :label, :children)
+
+  def document_tree_render_state(projects:, current_project: nil, current_document: nil)
     projects = projects.to_a
     prepare_document_tree_cache!(projects)
 
     adapter = TreeView::GraphAdapter.new(
       roots: projects,
       children_resolver: lambda do |node|
-        node.is_a?(Project) ? document_tree_documents_for(node) : []
+        case node
+        when Project
+          document_tree_nodes_for(node)
+        when DocumentTreeFolderNode
+          node.children
+        else
+          []
+        end
       end,
       node_key_resolver: ->(node) { node_key(node) }
     )
@@ -16,13 +25,12 @@ module DocumentsHelper
       context: self,
       node_prefix: "document_tree",
       key_resolver: ->(item_or_id) { node_key(item_or_id) }
-    ).build(
-      hide_descendants_path_builder: ->(item, _depth, scope) { document_tree_toggle_path(item, :hide, scope:) },
-      show_descendants_path_builder: ->(item, _depth, scope) { document_tree_toggle_path(item, :show, scope:) },
-      toggle_all_path_builder: ->(_state) { nil }
-    )
+    ).build_client_side
 
-    expanded_keys = current_project ? [node_key(current_project)] : []
+    expanded_keys = document_tree_initial_expanded_keys(
+      current_project:,
+      current_document:
+    )
 
     TreeView::RenderState.new(
       tree:,
@@ -54,6 +62,8 @@ module DocumentsHelper
     case item
     when Project
       project_default_site_path(item) || project_path(item)
+    when DocumentTreeFolderNode
+      project_documents_path(item.project, q: item.path)
     when Document
       document_html_path(item) || project_document_path(item.project, item.slug)
     end
@@ -72,8 +82,10 @@ module DocumentsHelper
     case item
     when Project
       "#{item.code} #{item.name}"
+    when DocumentTreeFolderNode
+      item.label
     when Document
-      item.title
+      document_tree_document_label(item)
     else
       item.to_s
     end
@@ -92,26 +104,35 @@ module DocumentsHelper
   def tree_item_css_class(item)
     classes = []
     classes << "current-node" if item == @project || item == @document
+    classes << "tree-folder-node" if item.is_a?(DocumentTreeFolderNode)
     classes << "html-unavailable" if item.is_a?(Document) && !tree_item_html_available?(item)
     classes
   end
 
   def tree_item_data_attributes(item)
-    base_data = {
-      tree_item_type: item.class.name.underscore,
-      tree_item_id: item.id
-    }
-
     case item
     when Project
-      base_data.merge(project_id: item.id)
+      {
+        tree_item_type: item.class.name.underscore,
+        tree_item_id: item.id,
+        project_id: item.id
+      }
+    when DocumentTreeFolderNode
+      {
+        tree_item_type: "document_tree_folder",
+        tree_item_id: node_key(item),
+        project_id: item.project.id,
+        source_path: item.path
+      }
     when Document
-      base_data.merge(
+      {
+        tree_item_type: item.class.name.underscore,
+        tree_item_id: item.id,
         project_id: item.project_id,
         html_available: tree_item_html_available?(item)
-      )
+      }
     else
-      base_data
+      {}
     end
   end
 
@@ -131,8 +152,10 @@ module DocumentsHelper
 
       documents = documents.reject { |document| document.archived_at.present? }
       documents = documents.select { |document| document.visible_in_portal_for?(current_user) } unless current_user.internal?
-      documents.sort_by { |document| document.title.to_s }
+      documents.sort_by { |document| document_tree_document_label(document) }
     end.transform_keys(&:id)
+    @document_tree_nodes_by_project_id = {}
+    @document_tree_folder_nodes_by_project_and_path = {}
     @document_tree_html_version_by_document_id = {}
     @document_tree_default_site_version_by_project_id = {}
   end
@@ -144,16 +167,93 @@ module DocumentsHelper
     end
   end
 
-  def document_tree_toggle_path(item, action, scope: nil)
-    return unless item.is_a?(Project)
+  def document_tree_nodes_for(project)
+    @document_tree_nodes_by_project_id&.fetch(project.id, nil) || build_document_tree_nodes_for(project)
+  end
 
-    project_document_tree_path(
-      item,
-      node_id: item.id,
-      tree_action: action == :hide ? "hide" : "show",
-      scope:,
-      format: :turbo_stream
-    )
+  def build_document_tree_nodes_for(project)
+    root_nodes = []
+    folder_nodes_by_path = {}
+
+    document_tree_documents_for(project).each do |document|
+      directory = document.latest_version&.source_directory.to_s
+      if directory.blank?
+        root_nodes << document
+        next
+      end
+
+      parent_nodes = root_nodes
+      directory.split("/").reject(&:blank?).each_with_object([]) do |segment, segments|
+        segments << segment
+        path = segments.join("/")
+        folder_node = folder_nodes_by_path[path]
+        unless folder_node
+          folder_node = DocumentTreeFolderNode.new(
+            project:,
+            path:,
+            label: segment,
+            children: []
+          )
+          folder_nodes_by_path[path] = folder_node
+          parent_nodes << folder_node
+        end
+        parent_nodes = folder_node.children
+      end
+      parent_nodes << document
+    end
+
+    sort_document_tree_nodes!(root_nodes)
+    @document_tree_folder_nodes_by_project_and_path[project.id] = folder_nodes_by_path if @document_tree_folder_nodes_by_project_and_path
+    @document_tree_nodes_by_project_id[project.id] = root_nodes if @document_tree_nodes_by_project_id
+    root_nodes
+  end
+
+  def sort_document_tree_nodes!(nodes)
+    nodes.sort_by! do |node|
+      case node
+      when DocumentTreeFolderNode
+        [0, node.label.to_s]
+      when Document
+        [1, document_tree_document_label(node)]
+      else
+        [2, node.to_s]
+      end
+    end
+
+    nodes.each do |node|
+      sort_document_tree_nodes!(node.children) if node.is_a?(DocumentTreeFolderNode)
+    end
+  end
+
+  def document_tree_initial_expanded_keys(current_project:, current_document:)
+    keys = []
+    keys << node_key(current_project) if current_project
+
+    document_tree_folder_ancestor_paths(current_document).each do |path|
+      folder_node = document_tree_folder_node_for(current_document.project, path)
+      keys << node_key(folder_node) if folder_node
+    end
+
+    keys
+  end
+
+  def document_tree_folder_ancestor_paths(document)
+    directory = document&.latest_version&.source_directory.to_s
+    return [] if directory.blank?
+
+    directory.split("/").reject(&:blank?).each_with_object([]).with_object([]) do |(segment, segments), paths|
+      segments << segment
+      paths << segments.join("/")
+    end
+  end
+
+  def document_tree_folder_node_for(project, path)
+    document_tree_nodes_for(project)
+    @document_tree_folder_nodes_by_project_and_path&.dig(project.id, path)
+  end
+
+  def document_tree_document_label(document)
+    document.latest_version&.source_file_name.presence || document.title
   end
 
   def project_default_site_path(project)
@@ -189,10 +289,15 @@ module DocumentsHelper
   end
 
   def node_key(item_or_id)
-    if item_or_id.respond_to?(:id)
-      "#{item_or_id.class.name.underscore}_#{item_or_id.id}"
+    case item_or_id
+    when DocumentTreeFolderNode
+      "folder_#{item_or_id.project.id}_#{Digest::SHA256.hexdigest(item_or_id.path).first(16)}"
     else
-      item_or_id.to_s
+      if item_or_id.respond_to?(:id)
+        "#{item_or_id.class.name.underscore}_#{item_or_id.id}"
+      else
+        item_or_id.to_s
+      end
     end
   end
 end
