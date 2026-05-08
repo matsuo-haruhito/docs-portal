@@ -1,0 +1,26 @@
+<td>
+  <% if item.directory? %>
+    <strong><%= item.label %></strong>
+  <% else %>
+    <% file = item.document_file %>
+    <% if file.downloadable_by?(current_user) %>
+      <%= link_to item.label, document_file_path(file) %>
+    <% else %>
+      <%= item.label %>
+    <% end %>
+  <% end %>
+</td>
+<td>
+  <% if item.file? %>
+    <%= item.document_file.effective_content_type %>
+  <% else %>
+    <span class="muted">-</span>
+  <% end %>
+</td>
+<td>
+  <% if item.file? %>
+    <%= item.document_file.effective_content_type.start_with?("text/markdown") ? "元Markdown・生ファイル" : "添付" %>
+  <% else %>
+    <span class="muted">-</span>
+  <% end %>
+</td>

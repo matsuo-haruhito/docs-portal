@@ -82,7 +82,8 @@ ul
 h2 添付・元ファイル
 - files = @version.document_files.order(:sort_order, :file_name)
 - if files.any?
-  table
+  - render_state = document_file_tree_render_state(files:, row_partial: "document_versions/file_tree_columns", node_prefix: "document_version_files_#{@version.id}")
+  table.tree-view-table
     thead
       tr
         th ファイル名
@@ -90,19 +91,7 @@ h2 添付・元ファイル
         th サイズ
         th 操作
     tbody
-      - files.each do |file|
-        tr
-          td = file.file_name
-          td = file.effective_content_type
-          td = number_to_human_size(file.file_size)
-          td.actions
-            - if file.downloadable_by?(current_user)
-              - if file.inline_disposition?
-                = link_to "プレビュー", document_file_path(file, disposition: "inline")
-              = link_to "ダウンロード", document_file_path(file, disposition: "download")
-            - else
-              span.muted 権限なし
-              =< button_to "申請", access_requests_path, params: { requestable_type: "DocumentFile", requestable_public_id: file.public_id, requested_access_level: "download" }, class: "button secondary"
+      = tree_view_rows(render_state)
 - else
   p.muted 添付・元ファイルはありません。
 

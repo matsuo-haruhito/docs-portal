@@ -307,103 +307,25 @@ class DocusaurusSiteRenderer
     body = document.at_css("body")
     return unless head && body
 
-    body["class"] = [body["class"], "portal-doc-body"].compact.join(" ")
+    body_classes = [
+      body["class"],
+      "portal-doc-body",
+      (@embedded ? "portal-doc-embedded" : "portal-doc-standalone")
+    ].compact.join(" ")
+
+    body["class"] = body_classes
 
     style = Nokogiri::XML::Node.new("style", document)
+    style["data-docs-portal-theme"] = "iframe-doc-theme"
     style.content = viewer_theme_css
     head.add_child(style)
   end
 
   def viewer_theme_css
-    <<~CSS
-      body.portal-doc-body {
-        margin: 0;
-        background: #{ @embedded ? "transparent" : "linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)" };
-        color: #172033;
-        font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
-        line-height: 1.8;
-      }
-      #{portal_chrome_css}
-      .theme-doc-breadcrumbs,
-      nav.navbar,
-      .navbar,
-      .footer,
-      .theme-doc-footer,
-      .pagination-nav,
-      .theme-edit-this-page,
-      .theme-doc-toc-desktop,
-      .theme-doc-toc-mobile,
-      aside.theme-doc-sidebar-container {
-        display: none !important;
-      }
-      main, .main-wrapper, .container, .row {
-        width: 100%;
-      }
-      .main-wrapper {
-        padding-top: 0 !important;
-      }
-      .container {
-        max-width: 100% !important;
-      }
-      article,
-      main .theme-doc-markdown,
-      main .markdown {
-        max-width: #{ @embedded ? "none" : "1120px" };
-        margin: #{ @embedded ? "0" : "0 auto" };
-        padding: #{ @embedded ? "20px 20px 48px" : "0 24px 56px" };
-      }
-      .markdown h1, .markdown h2, .markdown h3, .markdown h4,
-      .theme-doc-markdown h1, .theme-doc-markdown h2, .theme-doc-markdown h3, .theme-doc-markdown h4 {
-        letter-spacing: -0.02em;
-        line-height: 1.2;
-        color: #111827;
-      }
-      .markdown h2, .theme-doc-markdown h2 {
-        margin-top: 2.4rem;
-        padding-bottom: 0.4rem;
-        border-bottom: 1px solid #e5e7eb;
-      }
-      .markdown p, .markdown ul, .markdown ol, .markdown blockquote, .markdown table, .markdown pre,
-      .theme-doc-markdown p, .theme-doc-markdown ul, .theme-doc-markdown ol, .theme-doc-markdown blockquote, .theme-doc-markdown table, .theme-doc-markdown pre {
-        margin-bottom: 1rem;
-      }
-      .markdown a, .theme-doc-markdown a {
-        text-decoration: underline;
-        text-underline-offset: 0.15em;
-      }
-      .markdown blockquote, .theme-doc-markdown blockquote {
-        margin-left: 0;
-        padding: 0.9rem 1rem;
-        border-left: 4px solid #f59e0b;
-        background: #fffbeb;
-        border-radius: 0 12px 12px 0;
-      }
-      .markdown pre, .theme-doc-markdown pre {
-        border-radius: 14px;
-        overflow-x: auto;
-      }
-      .markdown table, .theme-doc-markdown table {
-        display: block;
-        overflow-x: auto;
-        border-collapse: collapse;
-      }
-      .markdown th, .markdown td, .theme-doc-markdown th, .theme-doc-markdown td {
-        border: 1px solid #e5e7eb;
-        padding: 0.65rem 0.85rem;
-      }
-      .markdown img, .theme-doc-markdown img {
-        max-width: 100%;
-        height: auto;
-      }
-      @media (max-width: 960px) {
-        article,
-        main .theme-doc-markdown,
-        main .markdown {
-          padding-left: 16px;
-          padding-right: 16px;
-        }
-      }
-    CSS
+    [
+      Rails.root.join("app/assets/stylesheets/iframe_doc_theme.css").read,
+      portal_chrome_css
+    ].join("\n")
   end
 
   def portal_chrome_css

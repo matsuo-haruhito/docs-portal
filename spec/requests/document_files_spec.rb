@@ -264,4 +264,34 @@ RSpec.describe "Document files", type: :request do
     expect(response.body).to include(document_file_path(markdown_file, disposition: "inline"))
     expect(response.body).to include(document_file_path(markdown_file, disposition: "download"))
   end
+
+  it "renders attachment folders as a tree in document and version detail pages" do
+    nested_file = DocumentFile.create!(
+      document_version: version,
+      file_name: "docs/images/flow.png",
+      content_type: "image/png",
+      storage_key: "spec/docs/images/flow.png",
+      file_size: 6,
+      sort_order: 3,
+      scan_status: :scan_clean
+    )
+
+    FileUtils.mkdir_p(nested_file.absolute_path.dirname)
+    File.binwrite(nested_file.absolute_path, "image")
+    sign_in_as(user)
+
+    get document_version_path(version)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("docs")
+    expect(response.body).to include("images")
+    expect(response.body).to include("flow.png")
+
+    get project_document_path(project, document.slug)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("docs")
+    expect(response.body).to include("images")
+    expect(response.body).to include("flow.png")
+  end
 end

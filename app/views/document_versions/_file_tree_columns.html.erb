@@ -1,0 +1,37 @@
+<td>
+  <% if item.directory? %>
+    <strong><%= item.label %></strong>
+  <% else %>
+    <%= item.label %>
+  <% end %>
+</td>
+<td>
+  <% if item.file? %>
+    <%= item.document_file.effective_content_type %>
+  <% else %>
+    <span class="muted">-</span>
+  <% end %>
+</td>
+<td>
+  <% if item.file? %>
+    <%= number_to_human_size(item.document_file.file_size) %>
+  <% else %>
+    <span class="muted">-</span>
+  <% end %>
+</td>
+<td class="actions">
+  <% if item.file? %>
+    <% file = item.document_file %>
+    <% if file.downloadable_by?(current_user) %>
+      <% if file.inline_disposition? %>
+        <%= link_to "プレビュー", document_file_path(file, disposition: "inline") %>
+      <% end %>
+      <%= link_to "ダウンロード", document_file_path(file, disposition: "download") %>
+    <% else %>
+      <span class="muted">権限なし</span>
+      <%= button_to "申請", access_requests_path, params: { requestable_type: "DocumentFile", requestable_public_id: file.public_id, requested_access_level: "download" }, class: "button secondary" %>
+    <% end %>
+  <% else %>
+    <span class="muted">-</span>
+  <% end %>
+</td>

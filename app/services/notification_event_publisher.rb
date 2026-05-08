@@ -102,17 +102,10 @@ class NotificationEventPublisher
   end
 
   def recipients_for(document)
-    internal_ids = User.active_only.where(user_type: User.user_types[:internal]).pluck(:id)
-    project_member_ids = ProjectMembership.where(project_id: document.project_id).pluck(:user_id)
-
-    User.active_only
-      .where(id: (internal_ids + project_member_ids).uniq)
-      .select { document.viewable_by?(_1) }
+    NotificationPublishing::RecipientResolver.new(document:).call
   end
 
   def create_receipts!(event, users)
-    users.each do |user|
-      event.notification_receipts.find_or_create_by!(user:)
-    end
+    NotificationPublishing::ReceiptBuilder.new(event:).call(users:)
   end
 end

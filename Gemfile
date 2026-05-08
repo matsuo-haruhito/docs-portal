@@ -17,6 +17,7 @@ gem "kamal", require: false
 gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 gem "csv"
+gem "vite_rails"
 
 gem "pundit"
 gem "slim", "~> 5.2", ">= 5.2.1"
