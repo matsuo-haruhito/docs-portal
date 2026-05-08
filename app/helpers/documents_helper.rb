@@ -1,3 +1,5 @@
+require "digest"
+
 module DocumentsHelper
   DocumentTreeFolderNode = Data.define(:project, :path, :label, :children)
 
@@ -183,9 +185,10 @@ module DocumentsHelper
       end
 
       parent_nodes = root_nodes
-      directory.split("/").reject(&:blank?).each_with_object([]) do |segment, segments|
-        segments << segment
-        path = segments.join("/")
+      path_segments = []
+      directory.split("/").reject(&:blank?).each do |segment|
+        path_segments << segment
+        path = path_segments.join("/")
         folder_node = folder_nodes_by_path[path]
         unless folder_node
           folder_node = DocumentTreeFolderNode.new(
@@ -241,10 +244,13 @@ module DocumentsHelper
     directory = document&.latest_version&.source_directory.to_s
     return [] if directory.blank?
 
-    directory.split("/").reject(&:blank?).each_with_object([]).with_object([]) do |(segment, segments), paths|
+    paths = []
+    segments = []
+    directory.split("/").reject(&:blank?).each do |segment|
       segments << segment
       paths << segments.join("/")
     end
+    paths
   end
 
   def document_tree_folder_node_for(project, path)
