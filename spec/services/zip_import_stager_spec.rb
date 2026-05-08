@@ -39,14 +39,14 @@ RSpec.describe ZipImportStager do
     expect(document["slug"]).to eq("docs")
     expect(document["source_relative_path"]).to eq("docs/README.md")
     expect(document["version_label"]).to eq("zip-v1")
-    expect(document["files"].map { _1["file_name"] }).to contain_exactly("README.md", "flow.png")
+    expect(document["files"].map { _1["file_name"] }).to contain_exactly("docs/README.md", "docs/images/flow.png")
     expect(document["files"].map { _1["storage_key"] }).to all(include("zip_uploads/"))
 
     preview = result.manifest.fetch("zip_import_preview")
     expect(preview["orphan_files"]).to contain_exactly("docs/orphan.txt")
     expect(preview["skipped_files"]).to contain_exactly("__MACOSX/._README.md")
 
-    staged_attachment = result.artifact_root.join("attachments", document["files"].find { _1["file_name"] == "flow.png" }.fetch("storage_key"))
+    staged_attachment = result.artifact_root.join("attachments", document["files"].find { _1["file_name"] == "docs/images/flow.png" }.fetch("storage_key"))
     expect(staged_attachment).to exist
   ensure
     uploaded_file&.tempfile&.close!

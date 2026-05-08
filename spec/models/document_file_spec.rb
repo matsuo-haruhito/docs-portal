@@ -89,4 +89,24 @@ RSpec.describe DocumentFile, type: :model do
       expect(file.downloadable_by?(external_user)).to be(true)
     end
   end
+
+  describe "#tree_path" do
+    it "uses a stored relative file path when present" do
+      file = build_file(file_name: "docs/guides/manual.pdf")
+
+      expect(file.tree_path).to eq("docs/guides/manual.pdf")
+    end
+
+    it "infers a relative path from legacy zip import storage keys" do
+      file = build_file(file_name: "manual.pdf", storage_key: "zip_uploads/staging-1/doc/v1/docs/guides/manual.pdf")
+
+      expect(file.tree_path).to eq("docs/guides/manual.pdf")
+    end
+
+    it "keeps a flat file name for non-import attachments" do
+      file = build_file(file_name: "manual.pdf", storage_key: "spec/manual.pdf")
+
+      expect(file.tree_path).to eq("manual.pdf")
+    end
+  end
 end

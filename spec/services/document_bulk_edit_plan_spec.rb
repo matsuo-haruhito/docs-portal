@@ -76,4 +76,22 @@ RSpec.describe DocumentBulkEditPlan do
     expect(result).not_to be_valid
     expect(result.errors).to include("bulk edit requires an admin actor")
   end
+
+  it "deduplicates normalized tag changes and rejects conflicting operations" do
+    document = create(:document, project:)
+
+    result = described_class.new(
+      actor:,
+      documents: [document],
+      changes: {
+        add_tag_names: ["Policy", " policy "],
+        remove_tag_names: ["POLICY"]
+      }
+    ).call
+
+    expect(result).not_to be_valid
+    expect(result.changes[:add_tag_names]).to eq(["Policy"])
+    expect(result.changes[:remove_tag_names]).to eq(["POLICY"])
+    expect(result.errors).to include("the same tag cannot be added and removed in one operation: policy")
+  end
 end

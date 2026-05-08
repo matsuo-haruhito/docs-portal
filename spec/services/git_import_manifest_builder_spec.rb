@@ -42,7 +42,7 @@ RSpec.describe GitImportManifestBuilder do
       expect(document[:source_relative_path]).to eq("docs/guide/README.md")
       expect(document[:snapshot_kind]).to eq("git_import")
       expect(document[:version_label]).to eq("git-abc123def456")
-      expect(document[:files].map { _1[:file_name] }).to contain_exactly("README.md", "flow.mmd", "image.png")
+      expect(document[:files].map { _1[:file_name] }).to contain_exactly("guide/README.md", "guide/flow.mmd", "guide/image.png")
       expect(result.summary[:documents]).to eq(1)
       expect(result.summary[:attachments]).to eq(3)
       expect(result.manifest_path.exist?).to be(true)

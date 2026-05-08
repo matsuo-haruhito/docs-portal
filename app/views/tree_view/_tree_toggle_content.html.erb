@@ -5,28 +5,75 @@
 <% branch_info = tree_branch_info(item, tree) %>
 <% ancestor_last_states = branch_info[:ancestor_last_states] %>
 <% is_last = branch_info[:is_last] %>
-<% toggle_icon = tree_toggle_icon(item, toggle_state, toggle_icon_builder, depth: depth, tree: tree, children: children, hidden_count: hidden_count) %>
+<% max_toggle_depth_from_root = local_assigns[:max_toggle_depth_from_root] %>
+<% max_toggle_leaf_distance = local_assigns[:max_toggle_leaf_distance] %>
+<% leaf_distance = local_assigns[:leaf_distance] %>
+<% hidden_message_builder = local_assigns[:hidden_message_builder] %>
+<% mode = tree_toggle_mode(local_assigns[:mode]) %>
+
+<% toggle_scope = tree_toggle_scope(
+  depth: depth,
+  max_toggle_depth_from_root: max_toggle_depth_from_root,
+  max_toggle_leaf_distance: max_toggle_leaf_distance,
+  leaf_distance: leaf_distance
+) %>
+
+<% show_path = tree_show_descendants_path(item, depth + 1, scope: toggle_scope) %>
+<% hide_path = tree_hide_descendants_path(item, depth, scope: toggle_scope) %>
+
+<% toggle_icon = tree_toggle_icon(
+  item,
+  toggle_state,
+  toggle_icon_builder,
+  depth: depth,
+  tree: tree,
+  children: children,
+  hidden_count: hidden_count,
+  mode: mode,
+  leaf_distance: leaf_distance
+) %>
 
 <div class="tree-toggle">
   <div class="tree-toggle__branches" aria-hidden="true">
     <% ancestor_last_states.each do |ancestor_is_last| %>
       <span class="tree-toggle__branch-slot <%= "is-empty" if ancestor_is_last %> <%= "has-line" unless ancestor_is_last %>"></span>
     <% end %>
+
     <% if depth.positive? %>
       <span class="tree-toggle__branch-slot is-current <%= is_last ? "is-last" : "is-middle" %>"></span>
     <% end %>
   </div>
+
   <div class="tree-toggle__control">
-    <% if toggle_icon %>
-      <span class="tree-toggle__level"><%= toggle_icon %></span>
+    <% if hidden_count && show_path %>
+      <%= link_to show_path,
+        data: { turbo_stream: true },
+        class: "button secondary tree-toggle__action",
+        id: tree_show_button_dom_id(item),
+        aria: { expanded: false } do %>
+        <%= toggle_icon || tree_toggle_label(depth) %>
+      <% end %>
+    <% elsif children.any? && hide_path %>
+      <%= link_to hide_path,
+        data: { turbo_stream: true },
+        class: "button secondary tree-toggle__action",
+        aria: { expanded: true } do %>
+        <%= toggle_icon || tree_toggle_label(depth) %>
+      <% end %>
     <% else %>
-      <span class="tree-toggle__level tree-toggle__level--leaf">・</span>
+      <span class="tree-toggle__level tree-toggle__level--leaf">
+        <%= toggle_icon || "・" %>
+      </span>
     <% end %>
 
     <% if children.any? %>
-      <span class="tree-toggle__hidden-count"><%= tree.descendant_counts[tree.node_key_for(item)].to_i %></span>
+      <span class="tree-toggle__hidden-count">
+        <%= tree.descendant_counts[tree.node_key_for(item)].to_i %>
+      </span>
     <% elsif hidden_count.present? %>
-      <span class="tree-toggle__hidden-count"><%= hidden_count %></span>
+      <span class="tree-toggle__hidden-count">
+        <%= hidden_count %>
+      </span>
     <% end %>
   </div>
 </div>

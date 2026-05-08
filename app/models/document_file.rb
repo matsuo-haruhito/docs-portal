@@ -103,6 +103,19 @@ class DocumentFile < ApplicationRecord
     self.search_text = DocumentVersion.search_text_for(file_name, storage_key, path)
   end
 
+  def tree_path
+    @tree_path ||= begin
+      normalized_name = normalize_relative_path(file_name)
+      inferred_path = infer_tree_path_from_storage_key
+
+      if normalized_name.include?("/")
+        normalized_name
+      else
+        inferred_path.presence || normalized_name
+      end
+    end
+  end
+
   private
 
   def normalize_search_text
@@ -111,5 +124,24 @@ class DocumentFile < ApplicationRecord
 
   def detected_content_type
     EXTENSION_CONTENT_TYPES.fetch(File.extname(file_name).downcase, content_type)
+  end
+
+  def normalize_relative_path(value)
+    path = value.to_s.strip.tr("\\", "/").delete_prefix("/")
+    normalized = Pathname.new(path.presence || "document-file").cleanpath.to_s
+    return "document-file" if normalized.blank? || normalized == "." || normalized == ".." || normalized.start_with?("../")
+
+    normalized
+  end
+
+  def infer_tree_path_from_storage_key
+    segments = storage_key.to_s.tr("\\", "/").split("/")
+
+    case segments.first
+    when "zip_uploads"
+      segments.drop(4).join("/").presence
+    when "git_imports"
+      segments.drop(3).join("/").presence
+    end
   end
 end

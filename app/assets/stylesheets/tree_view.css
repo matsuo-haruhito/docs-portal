@@ -76,10 +76,20 @@
   gap: 0.2rem;
 }
 
-.tree-toggle__action{
+.tree-toggle__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 2.9rem;
-  padding: 0.05rem 0.25rem;
+  min-height: 1.5rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
   text-decoration: none;
+  line-height: 1.2;
+}
+
+.tree-toggle__action .tree-toggle__icon {
+  pointer-events: none;
 }
 
 .tree-toggle__action:hover,

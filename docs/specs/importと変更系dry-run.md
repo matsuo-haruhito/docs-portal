@@ -30,6 +30,7 @@
 
 - ZIP upload を staging 領域へ安全に展開し、path traversal やファイル数 / 展開サイズの上限を検証する
 - ZIP 内のフォルダ構造を `source_path` として保持した manifest を生成する
+- ZIP import / Git import の `DocumentFile` は、添付の相対 path も保持して viewer 上の TreeView と ZIP 出力で再利用できるようにする
 - Markdown / MDX / markdown 拡張子の文書候補と standalone diagram 候補を判定する
 - README.md / index.md をフォルダ index 候補として扱う
 - Markdown から参照される画像、PDF、Office などを添付候補として preview に含める
