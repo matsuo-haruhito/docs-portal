@@ -1,5 +1,6 @@
 <% expansion_mode ||= nil %>
-<% render_state = project_document_detail_tree_render_state(project: @project, documents:, expansion_mode:) %>
+<% expanded_keys ||= nil %>
+<% render_state = project_document_detail_tree_render_state(project: @project, documents:, expansion_mode:, expanded_keys:) %>
 
 <style>
   .project-document-detail-tree-card { background: #fff !important; }
@@ -12,7 +13,7 @@
   .project-document-detail-tree th { color: var(--muted); font-size: 0.86rem; font-weight: 700; background: #fff; }
   .project-document-detail-tree td { vertical-align: middle; background: #fff; }
   .project-document-detail-tree .tree-toggle-cell { width: 2.2rem; }
-  .project-document-detail-tree__folder-row td { background: #fff7f2; }
+  .project-document-detail-tree__folder-row td { background: #f6f8fb; }
   .project-document-detail-tree__folder-row .project-document-detail-tree__name-cell { font-weight: 700; }
   .project-document-detail-tree__document-row td { background: #fff; }
   .project-document-detail-tree__document-title { font-weight: 700; overflow-wrap: anywhere; }
