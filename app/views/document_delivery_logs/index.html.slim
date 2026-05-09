@@ -8,7 +8,7 @@ h1 送付履歴
       tr
         th 作成日時
         th 案件
-        th 対象
+        th 文書名/文書セット名
         th 宛先
         th 方式
         th 状態
@@ -19,9 +19,9 @@ h1 送付履歴
           td = log.project.name
           td
             - if log.document.present?
-              = log.document.title
+              = link_to log.document.title, project_document_path(log.project, log.document.slug)
             - elsif log.document_set.present?
-              = log.document_set.name
+              = link_to log.document_set.name, project_document_set_path(log.project, log.document_set)
             - else
               span.muted "-"
           td = log.to_addresses
