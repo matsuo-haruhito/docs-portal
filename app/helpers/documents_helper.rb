@@ -6,6 +6,9 @@ module DocumentsHelper
   DOCUMENT_TREE_ICON_NAMES = %w[
     7z ai company_lit company_unlit css csv doc document docx fig folder_closed folder_open gz htm html ini jpeg jpg json key log md mdx odp ods odt pages parquet pdf png ppt pptx psd rst rtf svg tar tex tif tiff toml tsv txt webp xls xlsm xlsx xml yaml yml zip
   ].freeze
+  DOCUMENT_TREE_EXTRA_ICON_NAMES = %w[
+    odp ods odt pages parquet psd rst rtf tar tex tif tiff toml tsv txt webp
+  ].freeze
 
   def document_tree_render_state(projects:, current_project: nil, current_document: nil, expanded_source_path: nil, collapsed_source_path: nil)
     projects = projects.to_a
@@ -210,7 +213,7 @@ module DocumentsHelper
   def tree_icon(icon_name, title: nil)
     safe_icon_name = icon_name.to_s.tr("_", "-")
     tag.svg(
-      tag.use(href: "#{asset_path("tree_icons.svg")}#tree-icon-#{safe_icon_name}"),
+      tag.use(href: "#{asset_path(tree_icon_sprite_asset(icon_name))}#tree-icon-#{safe_icon_name}"),
       class: "tree-icon tree-icon--#{safe_icon_name}",
       viewBox: "0 0 24 24",
       width: 18,
@@ -219,6 +222,10 @@ module DocumentsHelper
       aria: { hidden: true },
       focusable: false
     )
+  end
+
+  def tree_icon_sprite_asset(icon_name)
+    DOCUMENT_TREE_EXTRA_ICON_NAMES.include?(icon_name.to_s) ? "tree_icons_extra.svg" : "tree_icons.svg"
   end
 
   def document_tree_icon_name(document)
