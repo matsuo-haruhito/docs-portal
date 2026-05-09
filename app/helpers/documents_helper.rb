@@ -235,7 +235,7 @@ module DocumentsHelper
     return "子項目はありません" unless item.is_a?(Document)
 
     icon_name = document_tree_icon_name(item)
-    icon_name == "document" ? "ドキュメント" : "#{icon_name} ファイル"
+    icon_name == "document" ? "文書" : "#{icon_name} ファイル"
   end
 
   def tree_icon(icon_name, title: nil)
