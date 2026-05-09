@@ -4,7 +4,7 @@ class Admin::CompaniesController < Admin::BaseController
   before_action :require_admin_only!, only: %i[create destroy]
 
   def index
-    @companies = company_scope.order(:code)
+    @companies = company_scope.order(:domain)
     @company = company_master_admin? ? current_user.company : Company.new(active: true)
   end
 
@@ -14,7 +14,7 @@ class Admin::CompaniesController < Admin::BaseController
     if @company.save
       redirect_to admin_companies_path, notice: "会社を登録しました。"
     else
-      @companies = company_scope.order(:code)
+      @companies = company_scope.order(:domain)
       render :index, status: :unprocessable_entity
     end
   end
@@ -46,7 +46,7 @@ class Admin::CompaniesController < Admin::BaseController
   end
 
   def company_params
-    params.require(:company).permit(:code, :name, :active)
+    params.require(:company).permit(:domain, :name, :active)
   end
 
   def require_company_master_admin_access!
