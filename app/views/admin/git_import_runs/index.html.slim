@@ -7,12 +7,12 @@ h1 Git同期履歴
   thead
     tr
       th 実行日時
-      th repository
-      th branch/path
-      th commit
-      th status
-      th summary
-      th error
+      th リポジトリ
+      th ブランチ/パス
+      th コミット
+      th 状態
+      th 実行結果
+      th エラー
   tbody
     - @git_import_runs.each do |run|
       tr
@@ -27,7 +27,7 @@ h1 Git同期履歴
             code = run.commit_sha.first(12)
           - else
             span.muted 未取得
-        td = run.status
+        td = git_import_run_status_label(run)
         td
           - if run.summary_json.present?
             pre = JSON.pretty_generate(run.summary_json)
