@@ -114,6 +114,18 @@ module DocumentsHelper
     end
   end
 
+  def tree_item_label_size_class(item)
+    length = tree_item_label_full_width_length(tree_item_label(item))
+
+    if length > 25
+      "tree-label--length-gt-25"
+    elsif length > 20
+      "tree-label--length-gt-20"
+    elsif length > 15
+      "tree-label--length-gt-15"
+    end
+  end
+
   def tree_item_tooltip(item)
     case item
     when Project
@@ -175,6 +187,10 @@ module DocumentsHelper
   end
 
   private
+
+  def tree_item_label_full_width_length(label)
+    label.to_s.each_char.sum { |char| char.ascii_only? ? 0.5 : 1.0 }
+  end
 
   def document_tree_persisted_state
     return unless current_user.respond_to?(:tree_view_state_for)
