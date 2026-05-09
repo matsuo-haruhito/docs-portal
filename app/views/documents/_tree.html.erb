@@ -21,18 +21,8 @@
     .tree-item-label.tree-label--length-gt-25 { font-size: calc(1em - 2.5pt); }
   </style>
 
-  <% current_project = local_assigns[:current_project] || local_assigns[:current_document]&.project %>
-
   <% content_for :sidebar_toolbar do %>
-    <div class="document-tree-toolbar">
-      <h2>文書ツリー</h2>
-      <% if current_project.present? %>
-        <div class="document-tree-actions" aria-label="文書ツリー操作">
-          <%= button_to "案件の文書ツリーを開く", document_tree_all_project_path(current_project, tree_action: "show", format: :turbo_stream), method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て展開します" }, class: "document-tree-action-link" %>
-          <%= button_to "案件の文書ツリーを閉じる", document_tree_all_project_path(current_project, tree_action: "hide", format: :turbo_stream), method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て閉じます" }, class: "document-tree-action-link" %>
-        </div>
-      <% end %>
-    </div>
+    <%= render "documents/tree_toolbar", current_project: local_assigns[:current_project], current_document: local_assigns[:current_document] %>
   <% end %>
 
   <p class="muted">案件と文書の階層を表示します。</p>
