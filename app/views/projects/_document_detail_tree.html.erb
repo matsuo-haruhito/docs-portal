@@ -9,16 +9,18 @@
   .project-document-detail-tree__action { border: 1px solid rgba(15, 98, 254, 0.32); border-radius: 999px; padding: 3px 10px; font-size: 12px; line-height: 1.5; background: #fff; color: #0f62fe; cursor: pointer; }
   .project-document-detail-tree__action:hover, .project-document-detail-tree__action:focus { background: #eff6ff; }
   .project-document-detail-tree { width: 100%; margin-top: 0; background: #fff; border: 1px solid var(--line); border-radius: 12px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
-  .project-document-detail-tree th { color: var(--muted); font-size: 0.86rem; font-weight: 700; background: #fff; border-bottom: 2px solid #cbd5e1; }
+  .project-document-detail-tree th { color: var(--muted); font-size: 0.86rem; font-weight: 700; background: #fff; border-bottom: 3px double #94a3b8; }
   .project-document-detail-tree td { vertical-align: middle; background: #fff; border-bottom: 1px solid #e5e7eb; }
   .project-document-detail-tree th:not(:last-child), .project-document-detail-tree td:not(:last-child) { border-right: 1px solid #eef2f7; }
   .project-document-detail-tree tbody tr:last-child td { border-bottom: 0; }
-  .project-document-detail-tree tbody tr:nth-child(even) td { border-bottom-color: #d7dee8; }
+  .project-document-detail-tree tbody tr:nth-child(even) td { border-bottom-color: #94a3b8; border-bottom-width: 2px; }
   .project-document-detail-tree .tree-toggle-cell { width: 2.2rem; }
-  .project-document-detail-tree__folder-row td { background: #f6f8fb; border-bottom-color: #cbd5e1; }
+  .project-document-detail-tree__folder-row td { background: var(--accent-soft); border-bottom-color: rgba(255, 80, 0, 0.38); border-bottom-width: 2px; }
   .project-document-detail-tree__folder-row .project-document-detail-tree__name-cell { font-weight: 700; }
   .project-document-detail-tree__document-row td { background: #fff; }
-  .project-document-detail-tree__document-title { font-weight: 700; overflow-wrap: anywhere; }
+  .project-document-detail-tree__document-title { font-weight: 700; overflow-wrap: anywhere; color: #0f62fe; }
+  .project-document-detail-tree__document-title:visited { color: #0f62fe; }
+  .project-document-detail-tree__document-title:hover, .project-document-detail-tree__document-title:focus { color: #0043ce; }
   .project-document-detail-tree__status { display: inline-flex; align-items: center; justify-content: center; margin-left: 4px; font-size: 0.9em; line-height: 1; vertical-align: middle; }
 </style>
 
