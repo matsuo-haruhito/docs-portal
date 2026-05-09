@@ -1,0 +1,16 @@
+<% if item.is_a?(ProjectsHelper::ProjectDocumentDetailTreeFolderNode) %>
+  <td class="project-document-detail-tree__name-cell" colspan="4">
+    <strong><%= item.label %></strong>
+  </td>
+<% else %>
+  <% version = document_tree_version_for(item) %>
+  <td class="project-document-detail-tree__name-cell">
+    <%= link_to tree_item_label(item), tree_item_path(item), class: "project-document-detail-tree__document-title" %>
+    <% tree_item_status_icons(item).each do |status_icon| %>
+      <span id="<%= status_icon[:id] %>" class="project-document-detail-tree__status <%= status_icon[:class] %>" title="<%= status_icon[:title] %>" aria-label="<%= status_icon[:title] %>"><%= status_icon[:text] %></span>
+    <% end %>
+  </td>
+  <td><%= item.updated_at&.strftime("%Y-%m-%d") || "-" %></td>
+  <td><%= version&.published_by_user&.name.presence || version&.published_by_user&.email_address.presence || "-" %></td>
+  <td><%= version&.version_label.presence || "-" %></td>
+<% end %>
