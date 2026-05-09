@@ -122,6 +122,8 @@ html
     header
       = render "shared/navbar"
     - if content_for?(:left_content)
+      - sidebar_content = capture do
+        = yield :left_content
       .layout-with-sidebar data-sidebar-layout="true"
         aside.sidebar-panel data-docs-sidebar="true"
           .sidebar-shell
@@ -131,7 +133,7 @@ html
               button.sidebar-toggle type="button" data-sidebar-toggle="true" aria-label="文書ツリーを折りたたむ" aria-expanded="true" title="文書ツリーを折りたたむ"
                 | ◀
             .sidebar-content data-sidebar-content="true"
-              = yield :left_content
+              = sidebar_content
             .sidebar-resizer data-sidebar-resizer="true" role="separator" aria-orientation="vertical" aria-label="文書ツリーの幅を調整" tabindex="0"
         main.main-panel
           = render "shared/flash_messages"
