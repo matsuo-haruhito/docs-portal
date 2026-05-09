@@ -105,5 +105,38 @@ function setupSidebars() {
   document.querySelectorAll("[data-sidebar-layout]").forEach(setupSidebar)
 }
 
+function navigateMainPanel(url) {
+  const frame = document.getElementById("main_panel")
+  if (!frame) return false
+
+  frame.src = url
+  return true
+}
+
+function clickTreeToggleIfClosed(link) {
+  if (!["project", "document_tree_folder"].includes(link.dataset.treeItemType)) return
+
+  const row = link.closest("tr")
+  const toggle = row?.querySelector(".tree-toggle-cell .tree-toggle__action[aria-expanded='false']")
+  toggle?.click()
+}
+
+function setupDocumentTreeNavigation() {
+  document.addEventListener("click", (event) => {
+    if (event.target.closest(".tree-toggle")) return
+
+    const link = event.target.closest("a[data-tree-nav-link='true']")
+    if (!link) return
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+
+    event.preventDefault()
+    if (!navigateMainPanel(link.href)) return
+
+    clickTreeToggleIfClosed(link)
+  }, true)
+}
+
+setupDocumentTreeNavigation()
+
 document.addEventListener("turbo:load", setupSidebars)
 document.addEventListener("turbo:render", setupSidebars)

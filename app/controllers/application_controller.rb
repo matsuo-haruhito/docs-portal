@@ -1,4 +1,6 @@
 class ApplicationController < ActionController::Base
+  layout "application"
+
   helper_method :current_user, :logged_in?, :admin_user?, :company_master_admin?
 
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
