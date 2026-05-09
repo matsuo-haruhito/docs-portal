@@ -1,6 +1,7 @@
 /* iframe_doc_theme.css
    docs-portal iframe document theme
-   Inspired by modern docs UIs, reimplemented for this project.
+   Inspired by Docusaurus / VitePress style docs UIs,
+   reimplemented for this project without changing the iframe content width.
 */
 
 :root {
@@ -9,23 +10,33 @@
   --doc-bg: #ffffff;
   --doc-bg-soft: #f8fafc;
   --doc-bg-muted: #f1f5f9;
+  --doc-surface: #ffffff;
+  --doc-surface-raised: #ffffff;
 
-  --doc-text: #172033;
-  --doc-text-heading: #111827;
+  --doc-text: #1f2937;
+  --doc-text-heading: #0f172a;
   --doc-text-muted: #64748b;
-  --doc-text-soft: #475569;
+  --doc-text-soft: #334155;
 
   --doc-border: #e5e7eb;
+  --doc-border-soft: #eef2f7;
   --doc-border-strong: #cbd5e1;
 
   --doc-primary: #2563eb;
+  --doc-primary-hover: #1d4ed8;
   --doc-primary-soft: #eff6ff;
   --doc-primary-border: #bfdbfe;
 
+  --doc-accent: #ff5000;
+  --doc-accent-soft: #fff4ed;
+  --doc-accent-border: #ffd7c2;
+  --doc-accent-text: #c2410c;
+
   --doc-code-bg: #0f172a;
   --doc-code-text: #e5e7eb;
-  --doc-inline-code-bg: #f1f5f9;
-  --doc-inline-code-text: #be123c;
+  --doc-inline-code-bg: var(--doc-accent-soft);
+  --doc-inline-code-text: var(--doc-accent-text);
+  --doc-inline-code-border: var(--doc-accent-border);
 
   --doc-note-bg: #eff6ff;
   --doc-note-border: #60a5fa;
@@ -40,8 +51,8 @@
   --doc-radius-md: 10px;
   --doc-radius-lg: 14px;
 
-  --doc-shadow-sm: 0 1px 2px rgb(15 23 42 / 6%);
-  --doc-shadow-md: 0 8px 24px rgb(15 23 42 / 8%);
+  --doc-shadow-sm: 0 1px 2px rgb(15 23 42 / 5%);
+  --doc-shadow-md: 0 10px 26px rgb(15 23 42 / 8%);
 }
 
 html {
@@ -57,7 +68,7 @@ html {
     BlinkMacSystemFont,
     sans-serif;
   font-size: 16px;
-  line-height: 1.8;
+  line-height: 1.58;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -74,7 +85,7 @@ body.portal-doc-body {
     -apple-system,
     BlinkMacSystemFont,
     sans-serif;
-  line-height: 1.8;
+  line-height: 1.58;
 }
 
 body.portal-doc-embedded {
@@ -181,77 +192,102 @@ article h4,
 article h5,
 article h6 {
   color: var(--doc-text-heading);
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-weight: 750;
+  line-height: 1.22;
+  letter-spacing: -0.025em;
   scroll-margin-top: 96px;
 }
 
 .markdown h1,
 .theme-doc-markdown h1,
 article h1 {
-  margin: 0 0 24px;
-  font-size: clamp(2rem, 5vw, 3rem);
-  line-height: 1.1;
+  margin: 0 0 20px;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  line-height: 1.08;
+}
+
+.markdown header + h2,
+.theme-doc-markdown header + h2,
+article header + h2 {
+  margin-top: 1.55rem;
+}
+
+.markdown h1 + p,
+.theme-doc-markdown h1 + p,
+article h1 + p {
+  margin-top: -0.15rem;
+  margin-bottom: 0.95rem;
+  color: var(--doc-text-muted);
+  font-size: 1.03rem;
+  line-height: 1.55;
 }
 
 .markdown h2,
 .theme-doc-markdown h2,
 article h2 {
-  margin-top: 2.4rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 1px solid var(--doc-border);
-  font-size: clamp(1.45rem, 3vw, 2rem);
+  position: relative;
+  margin-top: 2.15rem;
+  margin-bottom: 0.7rem;
+  padding-bottom: 0.42rem;
+  border-bottom: 1px solid var(--doc-border-soft);
+  font-size: clamp(1.35rem, 3vw, 1.72rem);
+}
+
+.markdown h2::after,
+.theme-doc-markdown h2::after,
+article h2::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 3.25rem;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--doc-accent), rgb(255 80 0 / 0%));
 }
 
 .markdown h3,
 .theme-doc-markdown h3,
 article h3 {
-  margin-top: 2rem;
-  margin-bottom: 0.75rem;
-  font-size: 1.35rem;
+  margin-top: 1.45rem;
+  margin-bottom: 0.48rem;
+  font-size: 1.2rem;
 }
 
 .markdown h4,
 .theme-doc-markdown h4,
 article h4 {
-  margin-top: 1.6rem;
-  margin-bottom: 0.5rem;
-  font-size: 1.1rem;
+  margin-top: 1.15rem;
+  margin-bottom: 0.35rem;
+  font-size: 1.04rem;
 }
 
 .markdown p,
-.markdown ul,
-.markdown ol,
 .markdown blockquote,
 .markdown table,
 .markdown pre,
 .theme-doc-markdown p,
-.theme-doc-markdown ul,
-.theme-doc-markdown ol,
 .theme-doc-markdown blockquote,
 .theme-doc-markdown table,
 .theme-doc-markdown pre,
 article p,
-article ul,
-article ol,
 article blockquote,
 article table,
 article pre {
-  margin-bottom: 1rem;
+  margin-bottom: 0.68rem;
 }
 
 .markdown p,
 .theme-doc-markdown p,
 article p {
   color: var(--doc-text-soft);
+  line-height: 1.58;
 }
 
 .markdown strong,
 .theme-doc-markdown strong,
 article strong {
-  color: var(--doc-text);
+  color: var(--doc-text-heading);
   font-weight: 700;
 }
 
@@ -263,9 +299,9 @@ article small {
 
 hr {
   height: 1px;
-  margin: 48px 0;
+  margin: 38px 0;
   border: 0;
-  background: var(--doc-border);
+  background: linear-gradient(90deg, transparent, var(--doc-border), transparent);
 }
 
 .markdown a,
@@ -274,13 +310,28 @@ article a {
   color: var(--doc-primary);
   font-weight: 500;
   text-decoration: underline;
-  text-underline-offset: 0.15em;
+  text-decoration-color: rgb(37 99 235 / 35%);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  transition:
+    color 140ms ease,
+    text-decoration-color 140ms ease,
+    background-color 140ms ease;
 }
 
 .markdown a:hover,
 .theme-doc-markdown a:hover,
 article a:hover {
-  text-decoration-thickness: 2px;
+  color: var(--doc-primary-hover);
+  text-decoration-color: currentcolor;
+}
+
+.markdown a:focus-visible,
+.theme-doc-markdown a:focus-visible,
+article a:focus-visible {
+  outline: 3px solid var(--doc-primary-border);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .markdown ul,
@@ -289,34 +340,46 @@ article a:hover {
 .theme-doc-markdown ol,
 article ul,
 article ol {
-  padding-left: 1.5rem;
+  margin-top: 0.28rem;
+  margin-bottom: 0.62rem;
+  padding-left: 1.25rem;
   color: var(--doc-text-soft);
+  line-height: 1.5;
 }
 
 .markdown li,
 .theme-doc-markdown li,
 article li {
-  margin: 0.35rem 0;
+  margin: 0.08rem 0;
+  padding-left: 0.08rem;
+  line-height: 1.5;
+}
+
+.markdown li + li,
+.theme-doc-markdown li + li,
+article li + li {
+  margin-top: 0.16rem;
 }
 
 .markdown li::marker,
 .theme-doc-markdown li::marker,
 article li::marker {
-  color: var(--doc-text-muted);
+  color: #718096;
 }
 
 .markdown li > p,
 .theme-doc-markdown li > p,
 article li > p {
-  margin: 0.45rem 0;
+  margin: 0.18rem 0;
+  line-height: 1.5;
 }
 
 .markdown :not(pre) > code,
 .theme-doc-markdown :not(pre) > code,
 article :not(pre) > code {
-  padding: 0.16em 0.38em;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--doc-radius-sm);
+  padding: 0.08em 0.28em;
+  border: 1px solid var(--doc-inline-code-border);
+  border-radius: 4px;
   background: var(--doc-inline-code-bg);
   color: var(--doc-inline-code-text);
   font-family:
@@ -325,7 +388,8 @@ article :not(pre) > code {
     "Liberation Mono",
     Menlo,
     monospace;
-  font-size: 0.88em;
+  font-size: 0.86em;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -333,13 +397,14 @@ article :not(pre) > code {
 .theme-doc-markdown pre,
 article pre {
   position: relative;
-  margin: 22px 0 1rem;
+  margin: 20px 0 1rem;
   padding: 18px 20px;
   overflow-x: auto;
   border: 1px solid #1e293b;
   border-radius: 14px;
   background:
-    linear-gradient(180deg, rgb(255 255 255 / 3%), rgb(255 255 255 / 0%)),
+    radial-gradient(circle at 100% 0%, rgb(96 165 250 / 12%), transparent 32%),
+    linear-gradient(180deg, rgb(255 255 255 / 4%), rgb(255 255 255 / 0%)),
     var(--doc-code-bg);
   box-shadow: var(--doc-shadow-md);
 }
@@ -359,7 +424,8 @@ article pre code {
     Menlo,
     monospace;
   font-size: 0.9rem;
-  line-height: 1.75;
+  font-weight: 400;
+  line-height: 1.6;
   tab-size: 2;
   white-space: pre;
 }
@@ -397,10 +463,11 @@ article pre[data-title]::before {
 .theme-doc-markdown blockquote,
 article blockquote {
   margin-left: 0;
-  padding: 0.9rem 1rem;
-  border-left: 4px solid var(--doc-warning-border);
-  border-radius: 0 12px 12px 0;
-  background: var(--doc-warning-bg);
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--doc-border-soft);
+  border-left: 4px solid var(--doc-primary-border);
+  border-radius: 0 var(--doc-radius-md) var(--doc-radius-md) 0;
+  background: linear-gradient(90deg, var(--doc-primary-soft), #ffffff 75%);
   color: var(--doc-text-soft);
 }
 
@@ -419,8 +486,8 @@ article blockquote > :last-child {
 .admonition,
 .alert,
 .callout {
-  margin: 24px 0;
-  padding: 16px 18px;
+  margin: 20px 0;
+  padding: 14px 16px;
   border: 1px solid var(--doc-primary-border);
   border-left-width: 5px;
   border-radius: var(--doc-radius-lg);
@@ -445,7 +512,7 @@ article blockquote > :last-child {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: var(--doc-text-heading);
   font-weight: 700;
 }
@@ -501,7 +568,7 @@ article thead {
 .theme-doc-markdown td,
 article th,
 article td {
-  padding: 0.65rem 0.85rem;
+  padding: 0.6rem 0.78rem;
   border: 1px solid var(--doc-border);
   text-align: left;
   vertical-align: top;
@@ -564,16 +631,18 @@ article kbd {
   font-size: 0.85em;
   line-height: 1.4;
   text-align: center;
+  box-shadow: var(--doc-shadow-sm);
 }
 
 .markdown details,
 .theme-doc-markdown details,
 article details {
-  margin: 20px 0;
-  padding: 14px 16px;
+  margin: 16px 0;
+  padding: 12px 14px;
   border: 1px solid var(--doc-border);
   border-radius: var(--doc-radius-lg);
-  background: var(--doc-bg-soft);
+  background: linear-gradient(180deg, #ffffff, var(--doc-bg-soft));
+  box-shadow: var(--doc-shadow-sm);
 }
 
 .markdown summary,
@@ -587,11 +656,12 @@ article summary {
 .markdown details[open] summary,
 .theme-doc-markdown details[open] summary,
 article details[open] summary {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
-.header-anchor,
-.anchor {
+a.header-anchor,
+a.anchor,
+.hash-link {
   margin-left: 6px;
   color: var(--doc-text-muted);
   font-weight: 500;
@@ -599,14 +669,18 @@ article details[open] summary {
   opacity: 0;
 }
 
-h1:hover .header-anchor,
-h2:hover .header-anchor,
-h3:hover .header-anchor,
-h4:hover .header-anchor,
-h1:hover .anchor,
-h2:hover .anchor,
-h3:hover .anchor,
-h4:hover .anchor {
+h1:hover a.header-anchor,
+h2:hover a.header-anchor,
+h3:hover a.header-anchor,
+h4:hover a.header-anchor,
+h1:hover a.anchor,
+h2:hover a.anchor,
+h3:hover a.anchor,
+h4:hover a.anchor,
+h1:hover .hash-link,
+h2:hover .hash-link,
+h3:hover .hash-link,
+h4:hover .hash-link {
   opacity: 1;
 }
 
@@ -632,7 +706,7 @@ h4:hover .anchor {
   .markdown h2,
   .theme-doc-markdown h2,
   article h2 {
-    margin-top: 2rem;
+    margin-top: 1.8rem;
   }
 
   .markdown pre,
@@ -657,6 +731,8 @@ h4:hover .anchor {
     --doc-bg: #0b1120;
     --doc-bg-soft: #111827;
     --doc-bg-muted: #1e293b;
+    --doc-surface: #0f172a;
+    --doc-surface-raised: #111827;
 
     --doc-text: #e5e7eb;
     --doc-text-heading: #f8fafc;
@@ -664,14 +740,22 @@ h4:hover .anchor {
     --doc-text-soft: #cbd5e1;
 
     --doc-border: #243244;
+    --doc-border-soft: #1f2a3a;
     --doc-border-strong: #334155;
 
     --doc-primary: #60a5fa;
+    --doc-primary-hover: #93c5fd;
     --doc-primary-soft: #0f1f3d;
     --doc-primary-border: #1d4ed8;
 
-    --doc-inline-code-bg: #111827;
-    --doc-inline-code-text: #fda4af;
+    --doc-accent: #ff5000;
+    --doc-accent-soft: #2b160d;
+    --doc-accent-border: #7c3216;
+    --doc-accent-text: #ffb08a;
+
+    --doc-inline-code-bg: var(--doc-accent-soft);
+    --doc-inline-code-text: var(--doc-accent-text);
+    --doc-inline-code-border: var(--doc-accent-border);
 
     --doc-note-bg: #0f1f3d;
     --doc-tip-bg: #06281f;
@@ -681,6 +765,15 @@ h4:hover .anchor {
 
   body.portal-doc-standalone {
     background: linear-gradient(180deg, #0b1120 0%, #111827 100%);
+  }
+
+  .markdown blockquote,
+  .theme-doc-markdown blockquote,
+  article blockquote,
+  .markdown details,
+  .theme-doc-markdown details,
+  article details {
+    background: var(--doc-surface-raised);
   }
 
   .markdown tbody tr:nth-child(even),
