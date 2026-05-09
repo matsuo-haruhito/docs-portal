@@ -1,7 +1,9 @@
+require "digest"
+
 class ProjectsController < BaseController
   def index
     @projects = Project.accessible_to(current_user)
-      .includes(documents: :latest_version)
+      .includes(:company, documents: :latest_version)
       .order(:code)
     @projects = @projects.select { project_list_visible_for_portal?(_1) } unless current_user.internal?
   end
@@ -79,7 +81,7 @@ class ProjectsController < BaseController
 
   def portal_tree_projects(include_project: nil)
     projects = Project.accessible_to(current_user)
-      .includes(documents: :latest_version)
+      .includes(:company, documents: :latest_version)
       .order(:code)
     return projects if current_user.internal?
 
