@@ -9,24 +9,24 @@ h1 文書権限
 
 section.card
   h2 文書別の権限概要
-  p.muted 文書ごとの会社単位・ユーザー単位の権限数と、view/downloadの内訳を確認できます。
+  p.muted 文書ごとの会社単位・ユーザー単位の権限数と、閲覧/ダウンロードの内訳を確認できます。
 
   table
     thead
       tr
-        th 文書
+        th 文書名
         th 案件
         th 公開範囲
         th 会社権限
         th ユーザー権限
-        th view
-        th download
+        th 閲覧
+        th ダウンロード
     tbody
       - @permission_overview_rows.each do |row|
         tr
-          td = row.document.title
+          td = link_to row.document.title, project_document_path(row.document.project, row.document.slug)
           td = row.document.project.name
-          td = row.document.visibility_policy
+          td = document_visibility_policy_label(row.document)
           td = row.company_permissions.size
           td = row.user_permissions.size
           td = row.view_allowed_count
@@ -37,7 +37,7 @@ h2 権限一覧
 table
   thead
     tr
-      th 文書
+      th 文書名
       th 会社
       th ユーザー
       th 権限
@@ -45,7 +45,7 @@ table
   tbody
     - @document_permissions.each do |permission|
       tr
-        td = permission.document.title
+        td = link_to permission.document.title, project_document_path(permission.document.project, permission.document.slug)
         td = permission.company&.display_name || "-"
         td = permission.user&.display_name || "-"
         td
