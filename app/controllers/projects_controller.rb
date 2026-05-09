@@ -23,8 +23,9 @@ class ProjectsController < BaseController
     require_project_access!(@project)
     return if require_consent!(target: @project, timing: :first_view)
 
+    @current_document = current_document_for_tree_refresh
     @tree_projects = portal_tree_projects(include_project: @project)
-    @current_project = params[:tree_action] == "hide" && params[:source_path].blank? ? nil : @project
+    @current_project = params[:tree_action] == "hide" && params[:source_path].blank? && @current_document.blank? ? nil : @project
     expanded_source_path = params[:tree_action] == "show" ? params[:source_path] : nil
     collapsed_source_path = params[:tree_action] == "hide" ? params[:source_path] : nil
     persist_document_tree_state!(expanded_source_path:, collapsed_source_path:)
@@ -32,6 +33,7 @@ class ProjectsController < BaseController
     respond_to_document_tree(
       projects: @tree_projects,
       current_project: @current_project,
+      current_document: @current_document,
       expanded_source_path:,
       collapsed_source_path:
     )
@@ -50,7 +52,7 @@ class ProjectsController < BaseController
 
   private
 
-  def respond_to_document_tree(projects:, current_project: nil, expanded_source_path: nil, collapsed_source_path: nil)
+  def respond_to_document_tree(projects:, current_project: nil, current_document: nil, expanded_source_path: nil, collapsed_source_path: nil)
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: turbo_stream.replace(
@@ -59,7 +61,7 @@ class ProjectsController < BaseController
           locals: {
             projects:,
             current_project:,
-            current_document: nil,
+            current_document:,
             expanded_source_path:,
             collapsed_source_path:
           }
@@ -67,6 +69,16 @@ class ProjectsController < BaseController
       end
       format.html { redirect_back fallback_location: projects_path }
     end
+  end
+
+  def current_document_for_tree_refresh
+    return if params[:document_slug].blank?
+
+    document = @project.documents.find_by!(slug: params[:document_slug])
+    require_document_access!(document)
+    return document if current_user.internal? || document.visible_in_portal_for?(current_user)
+
+    raise ApplicationError::Forbidden
   end
 
   def persist_document_tree_state!(expanded_source_path:, collapsed_source_path:)
