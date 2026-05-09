@@ -18,7 +18,7 @@
       tree_open_url: tree_open_path
     } %>
 
-  <% if item.is_a?(Document) && !tree_item_html_available?(item) %>
-    <span class="muted tree-item-meta">HTML未生成</span>
+  <% tree_item_status_icons(item).each do |status_icon| %>
+    <span class="tree-item-status-icon <%= status_icon[:class] %>" title="<%= status_icon[:title] %>" aria-label="<%= status_icon[:title] %>"><%= status_icon[:text] %></span>
   <% end %>
 </td>
