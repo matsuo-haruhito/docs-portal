@@ -40,7 +40,7 @@ module DocumentsHelper
       collapsed_source_path:
     )
 
-    TreeView::RenderState.new(
+    render_state = TreeView::RenderState.new(
       tree:,
       root_items: tree.root_items,
       row_partial: "documents/tree_columns",
@@ -50,6 +50,8 @@ module DocumentsHelper
       row_class_builder: ->(item) { tree_item_css_class(item) },
       row_data_builder: ->(item) { tree_item_data_attributes(item) }
     )
+    render_state.define_singleton_method(:expanded_keys) { expansion_state.fetch(:expanded_keys, []) } unless render_state.respond_to?(:expanded_keys)
+    render_state
   end
 
   def tree_toggle_button_label(item, state, context)
@@ -155,7 +157,7 @@ module DocumentsHelper
       documents = if project.association(:documents).loaded?
         project.documents.to_a
       else
-        project.documents.includes(:latest_version).to_a
+        project.documents.includes(:latest_version, :document_versions).to_a
       end
 
       documents = documents.reject { |document| document.archived_at.present? }
@@ -170,7 +172,7 @@ module DocumentsHelper
 
   def document_tree_documents_for(project)
     @document_tree_documents_by_project_id&.fetch(project.id, nil) || begin
-      documents = project.documents.accessible_to(current_user).includes(:latest_version).order(:title).to_a
+      documents = project.documents.accessible_to(current_user).includes(:latest_version, :document_versions).order(:title).to_a
       current_user.internal? ? documents : documents.select { _1.visible_in_portal_for?(current_user) }
     end
   end
@@ -184,7 +186,7 @@ module DocumentsHelper
     folder_nodes_by_path = {}
 
     document_tree_documents_for(project).each do |document|
-      directory = document_tree_version_for(document)&.source_directory.to_s
+      directory = document_tree_source_directory(document).to_s
       if directory.blank?
         root_nodes << document
         next
@@ -239,7 +241,7 @@ module DocumentsHelper
     collapsed_keys = []
     expanded_keys << node_key(current_project) if current_project
 
-    opened_source_path = expanded_source_path.presence || collapsed_source_path.presence || document_tree_version_for(current_document)&.source_directory
+    opened_source_path = expanded_source_path.presence || collapsed_source_path.presence || document_tree_source_directory(current_document)
     document_tree_folder_ancestor_paths(opened_source_path).each do |path|
       next if collapsed_source_path.present? && path == collapsed_source_path
 
@@ -256,7 +258,7 @@ module DocumentsHelper
   end
 
   def document_tree_folder_ancestor_paths(source_path)
-    directory = source_path.to_s
+    directory = normalize_document_tree_path(source_path)
     return [] if directory.blank?
 
     paths = []
@@ -297,13 +299,56 @@ module DocumentsHelper
   end
 
   def document_tree_document_label(document)
-    document_tree_version_for(document)&.source_file_name.presence || document.title
+    document_tree_source_file_name(document).presence || document.title
+  end
+
+  def document_tree_source_directory(document)
+    version = document_tree_version_for(document)
+    directory = normalize_document_tree_path(version&.source_directory)
+    return directory if directory.present?
+
+    relative_path = normalize_document_tree_path(version&.source_relative_path)
+    return if relative_path.blank?
+
+    segments = relative_path.split("/")
+    segments.pop
+    segments.join("/")
+  end
+
+  def document_tree_source_file_name(document)
+    version = document_tree_version_for(document)
+    file_name = version&.source_file_name.to_s.presence
+    return file_name if file_name.present?
+
+    relative_path = normalize_document_tree_path(version&.source_relative_path)
+    return if relative_path.blank?
+
+    relative_path.split("/").last
   end
 
   def document_tree_version_for(document)
     return unless document
 
-    document.latest_version || document.document_versions.order(created_at: :desc, id: :desc).first
+    latest = document.latest_version
+    return latest if document_tree_version_has_source_path?(latest)
+
+    document.document_versions.to_a
+      .select { |version| document_tree_version_has_source_path?(version) }
+      .max_by { |version| [version.created_at || Time.zone.at(0), version.id || 0] } ||
+      latest ||
+      document.document_versions.order(created_at: :desc, id: :desc).first
+  end
+
+  def document_tree_version_has_source_path?(version)
+    version.present? && (
+      version.source_directory.present? ||
+      version.source_relative_path.present? ||
+      version.source_file_name.present?
+    )
+  end
+
+  def normalize_document_tree_path(path)
+    path.to_s.tr("\\", "/").split("/").reject(&:blank?).join("/")
   end
 
   def project_default_site_path(project)
