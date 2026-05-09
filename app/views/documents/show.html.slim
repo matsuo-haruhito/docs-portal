@@ -1,9 +1,8 @@
 - page_title @document.title
 - rendered_view_available = @viewer_iframe_src.present?
 
-- unless rendered_view_available
-  - content_for :left_content do
-    = render "tree", projects: @tree_projects, current_project: @project, current_document: @document
+- content_for :left_content do
+  = render "tree", projects: @tree_projects, current_project: @project, current_document: @document
 
 - if rendered_view_available
   section.document-reader
@@ -21,10 +20,6 @@
         strong 文書情報・Q&A・版一覧を開く
         span.muted 補助情報は必要なときだけ展開できます
       .document-context-drawer__body
-        .card.document-context-drawer__tree
-          h2 案件内のコンテンツ
-          p.muted 別の文書へはここから直接移動できます。
-          = render "tree", projects: @tree_projects, current_project: @project, current_document: @document
         .document-context-drawer__sections
           = render "detail_sections"
 
