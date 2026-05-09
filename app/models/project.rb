@@ -4,6 +4,8 @@ class Project < ApplicationRecord
 
   public_id_prefix "prj"
 
+  belongs_to :company, optional: true
+
   has_many :documents, dependent: :destroy
   has_many :document_sets, dependent: :destroy
   has_many :document_catalogs, dependent: :destroy
