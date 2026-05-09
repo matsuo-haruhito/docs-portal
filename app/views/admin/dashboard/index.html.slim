@@ -11,7 +11,6 @@ section.card
   .dashboard-grid
     - @model_browser_entries.each do |entry|
       article.card.metric-card
-        p.eyebrow = entry.label
         h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
         p.muted = entry.description
   p.actions
