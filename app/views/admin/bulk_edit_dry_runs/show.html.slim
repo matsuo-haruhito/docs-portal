@@ -1,6 +1,6 @@
-- page_title "文書一括編集dry-run"
+- page_title "文書一括編集 dry-run"
 
-h1 文書一括編集dry-run
+h1 文書一括編集 dry-run
 = render "admin/nav"
 
 .card
@@ -10,14 +10,14 @@ h1 文書一括編集dry-run
     dd = @bulk_edit_dry_run.public_id
     dt 状態
     dd
-      span.badge = @bulk_edit_dry_run.status
+      span.badge = bulk_edit_dry_run_status_label(@bulk_edit_dry_run)
     dt 作成者
     dd = @bulk_edit_dry_run.created_by.name || @bulk_edit_dry_run.created_by.email_address
     dt 対象件数
     dd = @preview_summary["total_count"] || @preview_summary[:total_count] || 0
     dt 変更予定件数
     dd = @preview_summary["changed_count"] || @preview_summary[:changed_count] || 0
-    dt warning / error
+    dt 警告 / エラー
     dd = "#{@bulk_edit_dry_run.warnings_json.size} / #{@bulk_edit_dry_run.errors_json.size}"
     - if @bulk_edit_dry_run.expires_at.present?
       dt 有効期限
@@ -33,14 +33,14 @@ h1 文書一括編集dry-run
 
 - if @bulk_edit_dry_run.warnings_json.any?
   section.card
-    h2 warnings
+    h2 警告
     ul
       - @bulk_edit_dry_run.warnings_json.each do |warning|
         li = warning
 
 - if @bulk_edit_dry_run.errors_json.any?
   section.card
-    h2 errors
+    h2 エラー
     ul
       - @bulk_edit_dry_run.errors_json.each do |error|
         li = error
@@ -54,8 +54,8 @@ section.card
         th 変更フィールド
         th 変更前
         th 変更後
-        th warning
-        th error
+        th 警告
+        th エラー
     tbody
       - @preview_items.each do |item|
         - before_doc = item.dig("before", "document") || item.dig(:before, :document) || {}
@@ -64,31 +64,43 @@ section.card
         - after_version = item.dig("after", "latest_version") || item.dig(:after, :latest_version) || {}
         - before_tags = item.dig("before", "tag_names") || item.dig(:before, :tag_names) || []
         - after_tags = item.dig("after", "tag_names") || item.dig(:after, :tag_names) || []
+        - before_category = before_doc["category"] || before_doc[:category]
+        - after_category = after_doc["category"] || after_doc[:category]
+        - before_document_kind = before_doc["document_kind"] || before_doc[:document_kind]
+        - after_document_kind = after_doc["document_kind"] || after_doc[:document_kind]
+        - before_visibility_policy = before_doc["visibility_policy"] || before_doc[:visibility_policy]
+        - after_visibility_policy = after_doc["visibility_policy"] || after_doc[:visibility_policy]
+        - before_importance_level = before_doc["importance_level"] || before_doc[:importance_level]
+        - after_importance_level = after_doc["importance_level"] || after_doc[:importance_level]
+        - before_archived = before_doc["archived"] || before_doc[:archived]
+        - after_archived = after_doc["archived"] || after_doc[:archived]
+        - before_snapshot_kind = before_version && (before_version["snapshot_kind"] || before_version[:snapshot_kind])
+        - after_snapshot_kind = after_version && (after_version["snapshot_kind"] || after_version[:snapshot_kind])
         tr
           td = before_doc["title"] || before_doc[:title] || item["document_public_id"] || item[:document_public_id]
-          td = Array(item["changed_fields"] || item[:changed_fields]).join(", ").presence || "-"
+          td = Array(item["changed_fields"] || item[:changed_fields]).map { |field| bulk_edit_field_label(field) }.join(", ").presence || "-"
           td
             ul
-              li = "category: #{before_doc["category"] || before_doc[:category]}"
-              li = "document_kind: #{before_doc["document_kind"] || before_doc[:document_kind]}"
-              li = "visibility_policy: #{before_doc["visibility_policy"] || before_doc[:visibility_policy]}"
-              li = "importance: #{before_doc["importance_level"] || before_doc[:importance_level]}"
-              li = "archived: #{before_doc["archived"] || before_doc[:archived]}"
-              li = "snapshot_kind: #{before_version && (before_version["snapshot_kind"] || before_version[:snapshot_kind])}"
-              li = "published_from: #{before_version && (before_version["published_from"] || before_version[:published_from])}"
-              li = "published_until: #{before_version && (before_version["published_until"] || before_version[:published_until])}"
-              li = "tags: #{Array(before_tags).join(', ')}"
+              li = "#{bulk_edit_field_label("category")}: #{before_category.present? ? document_category_label(before_category) : '-'}"
+              li = "#{bulk_edit_field_label("document_kind")}: #{before_document_kind.present? ? document_kind_label(before_document_kind) : '-'}"
+              li = "#{bulk_edit_field_label("visibility_policy")}: #{before_visibility_policy.present? ? document_visibility_policy_label(before_visibility_policy) : '-'}"
+              li = "#{bulk_edit_field_label("importance_level")}: #{before_importance_level.present? ? document_importance_level_label(before_importance_level) : '-'}"
+              li = "#{bulk_edit_field_label("archived")}: #{before_archived.nil? ? '-' : boolean_label(before_archived)}"
+              li = "#{bulk_edit_field_label("snapshot_kind")}: #{before_snapshot_kind.present? ? document_version_snapshot_kind_label(before_snapshot_kind) : '-'}"
+              li = "#{bulk_edit_field_label("published_from")}: #{before_version && (before_version["published_from"] || before_version[:published_from])}"
+              li = "#{bulk_edit_field_label("published_until")}: #{before_version && (before_version["published_until"] || before_version[:published_until])}"
+              li = "#{bulk_edit_field_label("tags")}: #{Array(before_tags).join(', ')}"
           td
             ul
-              li = "category: #{after_doc["category"] || after_doc[:category]}"
-              li = "document_kind: #{after_doc["document_kind"] || after_doc[:document_kind]}"
-              li = "visibility_policy: #{after_doc["visibility_policy"] || after_doc[:visibility_policy]}"
-              li = "importance: #{after_doc["importance_level"] || after_doc[:importance_level]}"
-              li = "archived: #{after_doc["archived"] || after_doc[:archived]}"
-              li = "snapshot_kind: #{after_version && (after_version["snapshot_kind"] || after_version[:snapshot_kind])}"
-              li = "published_from: #{after_version && (after_version["published_from"] || after_version[:published_from])}"
-              li = "published_until: #{after_version && (after_version["published_until"] || after_version[:published_until])}"
-              li = "tags: #{Array(after_tags).join(', ')}"
+              li = "#{bulk_edit_field_label("category")}: #{after_category.present? ? document_category_label(after_category) : '-'}"
+              li = "#{bulk_edit_field_label("document_kind")}: #{after_document_kind.present? ? document_kind_label(after_document_kind) : '-'}"
+              li = "#{bulk_edit_field_label("visibility_policy")}: #{after_visibility_policy.present? ? document_visibility_policy_label(after_visibility_policy) : '-'}"
+              li = "#{bulk_edit_field_label("importance_level")}: #{after_importance_level.present? ? document_importance_level_label(after_importance_level) : '-'}"
+              li = "#{bulk_edit_field_label("archived")}: #{after_archived.nil? ? '-' : boolean_label(after_archived)}"
+              li = "#{bulk_edit_field_label("snapshot_kind")}: #{after_snapshot_kind.present? ? document_version_snapshot_kind_label(after_snapshot_kind) : '-'}"
+              li = "#{bulk_edit_field_label("published_from")}: #{after_version && (after_version["published_from"] || after_version[:published_from])}"
+              li = "#{bulk_edit_field_label("published_until")}: #{after_version && (after_version["published_until"] || after_version[:published_until])}"
+              li = "#{bulk_edit_field_label("tags")}: #{Array(after_tags).join(', ')}"
           td = Array(item["warnings"] || item[:warnings]).join(" / ").presence || "-"
           td = Array(item["errors"] || item[:errors]).join(" / ").presence || "-"
 
@@ -100,16 +112,16 @@ section.card
       thead
         tr
           th 文書
-          th status
+          th 状態
           th 変更フィールド
-          th warning
-          th error
+          th 警告
+          th エラー
       tbody
         - @execution_items.each do |item|
           tr
             td = item["title"] || item[:title] || item["document_public_id"] || item[:document_public_id] || item["document_id"] || item[:document_id]
             td
-              span.badge = item["status"] || item[:status]
-            td = Array(item["changed_fields"] || item[:changed_fields]).join(", ").presence || "-"
+              span.badge = localized_label("bulk_edit_dry_runs.status", item["status"] || item[:status])
+            td = Array(item["changed_fields"] || item[:changed_fields]).map { |field| bulk_edit_field_label(field) }.join(", ").presence || "-"
             td = Array(item["warnings"] || item[:warnings]).join(" / ").presence || "-"
             td = Array(item["errors"] || item[:errors]).join(" / ").presence || "-"
