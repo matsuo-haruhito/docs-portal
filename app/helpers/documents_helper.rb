@@ -9,6 +9,7 @@ module DocumentsHelper
   DOCUMENT_TREE_EXTRA_ICON_NAMES = %w[
     odp ods odt pages parquet psd rst rtf tar tex tif tiff toml tsv txt webp
   ].freeze
+  DOCUMENT_TREE_DOCUMENT_ICON_NAMES = %w[doc document].freeze
 
   def document_tree_render_state(projects:, current_project: nil, current_document: nil, expanded_source_path: nil, collapsed_source_path: nil)
     projects = projects.to_a
@@ -225,6 +226,8 @@ module DocumentsHelper
   end
 
   def tree_icon_sprite_asset(icon_name)
+    return "tree_icons_document.svg" if DOCUMENT_TREE_DOCUMENT_ICON_NAMES.include?(icon_name.to_s)
+
     DOCUMENT_TREE_EXTRA_ICON_NAMES.include?(icon_name.to_s) ? "tree_icons_extra.svg" : "tree_icons.svg"
   end
 
