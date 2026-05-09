@@ -1,10 +1,18 @@
+<% tree_open_path = case item
+  when Project
+    project_document_tree_path(item, node_id: item.id, tree_action: "show", format: :turbo_stream)
+  when DocumentsHelper::DocumentTreeFolderNode
+    project_document_tree_path(item.project, tree_action: "show", source_path: item.path, format: :turbo_stream)
+  end %>
+
 <td class="<%= tree_item_css_class(item) %>">
   <%= link_to tree_item_label(item),
     tree_item_path(item),
     data: {
       turbo_frame: "main_panel",
       tree_nav_link: true,
-      tree_item_type: item.is_a?(DocumentsHelper::DocumentTreeFolderNode) ? "document_tree_folder" : item.class.name.underscore
+      tree_item_type: item.is_a?(DocumentsHelper::DocumentTreeFolderNode) ? "document_tree_folder" : item.class.name.underscore,
+      tree_open_url: tree_open_path
     } %>
 
   <% if item.is_a?(Document) %>
