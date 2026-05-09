@@ -181,21 +181,21 @@ module DocumentsHelper
   end
 
   def tree_toggle_collapsed_icon(item, children)
-    return tree_icon_image("document", title: "子項目はありません") if children.empty?
-    return tree_icon_image("folder_closed", title: "フォルダを開く") if item.is_a?(DocumentTreeFolderNode)
+    return tree_icon("document", title: "子項目はありません") if children.empty?
+    return tree_icon("folder_closed", title: "フォルダを開く") if item.is_a?(DocumentTreeFolderNode)
 
     "+"
   end
 
   def tree_toggle_expanded_icon(item, children)
-    return tree_icon_image("document", title: "子項目はありません") if children.empty?
-    return tree_icon_image("folder_open", title: "フォルダを閉じる") if item.is_a?(DocumentTreeFolderNode)
+    return tree_icon("document", title: "子項目はありません") if children.empty?
+    return tree_icon("folder_open", title: "フォルダを閉じる") if item.is_a?(DocumentTreeFolderNode)
 
     "-"
   end
 
   def tree_toggle_leaf_icon(item)
-    return tree_icon_image(document_tree_icon_name(item), title: tree_toggle_leaf_icon_title(item)) if item.is_a?(Document)
+    return tree_icon(document_tree_icon_name(item), title: tree_toggle_leaf_icon_title(item)) if item.is_a?(Document)
 
     "・"
   end
@@ -207,16 +207,17 @@ module DocumentsHelper
     icon_name == "document" ? "ドキュメント" : "#{icon_name} ファイル"
   end
 
-  def tree_icon_image(icon_name, title: nil)
-    image_tag(
-      "tree_icons/#{icon_name}.svg",
-      alt: "",
-      class: "tree-icon tree-icon--#{icon_name.tr("_", "-")}",
-      title:,
+  def tree_icon(icon_name, title: nil)
+    safe_icon_name = icon_name.to_s.tr("_", "-")
+    tag.svg(
+      tag.use(href: "#{asset_path("tree_icons.svg")}#tree-icon-#{safe_icon_name}"),
+      class: "tree-icon tree-icon--#{safe_icon_name}",
+      viewBox: "0 0 24 24",
       width: 18,
       height: 18,
-      loading: "lazy",
-      aria: { hidden: true }
+      title:,
+      aria: { hidden: true },
+      focusable: false
     )
   end
 
