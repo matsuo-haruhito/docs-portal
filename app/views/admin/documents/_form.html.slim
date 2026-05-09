@@ -13,13 +13,13 @@
       = form.text_field :slug
     label
       | カテゴリ
-      = form.select :category, Document.categories.keys.map { |key| [key, key] }
+      = form.select :category, enum_options_for("documents.category", Document.categories.keys)
     label
       | 文書種別
-      = form.select :document_kind, Document.document_kinds.keys.map { |key| [key, key] }
+      = form.select :document_kind, enum_options_for("documents.document_kind", Document.document_kinds.keys)
     label
       | 公開範囲
-      = form.select :visibility_policy, Document.visibility_policies.keys.map { |key| [key, key] }
+      = form.select :visibility_policy, enum_options_for("documents.visibility_policy", Document.visibility_policies.keys)
     label
       | 保管期限
       = form.datetime_field :retention_until
