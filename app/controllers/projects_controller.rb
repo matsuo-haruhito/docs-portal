@@ -53,19 +53,24 @@ class ProjectsController < BaseController
   private
 
   def respond_to_document_tree(projects:, current_project: nil, current_document: nil, expanded_source_path: nil, collapsed_source_path: nil)
+    tree_locals = {
+      projects:,
+      current_project:,
+      current_document:,
+      expanded_source_path:,
+      collapsed_source_path:
+    }
+    toolbar_locals = {
+      current_project:,
+      current_document:
+    }
+
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.replace(
-          "document_tree_panel",
-          partial: "documents/tree",
-          locals: {
-            projects:,
-            current_project:,
-            current_document:,
-            expanded_source_path:,
-            collapsed_source_path:
-          }
-        )
+        render turbo_stream: [
+          turbo_stream.replace("document_tree_panel", partial: "documents/tree", locals: tree_locals),
+          turbo_stream.replace("document_tree_toolbar", partial: "documents/tree_toolbar", locals: toolbar_locals)
+        ]
       end
       format.html { redirect_back fallback_location: projects_path }
     end
