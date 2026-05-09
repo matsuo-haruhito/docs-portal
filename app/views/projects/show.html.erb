@@ -4,7 +4,7 @@
 
 <% page_title @project.name %>
 <section class="page-hero">
-  <p class="eyebrow">Project Workspace</p>
+  <p class="eyebrow">案件ワークスペース</p>
   <h1><%= @project.name %></h1>
   <p class="muted">コード: <%= @project.code %></p>
   <p class="muted"><%= @project.description %></p>
@@ -27,7 +27,7 @@
         <% @important_documents.each do |document| %>
           <li>
             <strong><%= link_to document.title, project_document_path(@project, document.slug) %></strong>
-            <span class="badge"><%= document.importance_level %></span>
+            <span class="badge"><%= document_importance_level_label(document) %></span>
           </li>
         <% end %>
       </ul>
@@ -40,7 +40,7 @@
       <% @documents.each do |document| %>
         <li>
           <strong><%= link_to document.title, project_document_path(@project, document.slug) %></strong>
-          <span class="badge"><%= document.importance_level %></span>
+          <span class="badge"><%= document_importance_level_label(document) %></span>
         </li>
       <% end %>
     </ul>
