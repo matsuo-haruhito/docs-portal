@@ -9,3 +9,62 @@ ja:
       default: "%Y/%m/%d %H:%M"
       short: "%Y/%m/%d %H:%M"
       long: "%Y年%m月%d日 %H時%M分"
+  labels:
+    documents:
+      category:
+        spec: "仕様"
+        manual: "手順・マニュアル"
+        meeting_note: "議事録"
+        contract: "契約"
+        other: "その他"
+      document_kind:
+        markdown: "Markdown"
+        pdf: "PDF"
+        excel: "Excel"
+        word: "Word"
+        mixed: "混合"
+      visibility_policy:
+        internal_only: "社内のみ"
+        restricted_external: "限定公開"
+        public_with_login: "ログインユーザー公開"
+      importance_level:
+        critical: "最重要"
+        important: "重要"
+        normal: "通常"
+        reference: "参考"
+        deprecated: "非推奨"
+    document_versions:
+      status:
+        draft: "下書き"
+        published: "公開中"
+        archived: "アーカイブ済み"
+      version_label:
+        current: "最新"
+      snapshot_kind:
+        current: "最新"
+        received_markdown: "受領Markdown"
+        internal_note: "社内メモ"
+        editable_original: "編集正本"
+        pdf_generated: "PDF化済み"
+        submitted: "提出済み"
+        attachment: "添付"
+    document_review_comments:
+      comment_type:
+        question: "質問"
+        note: "メモ"
+        issue: "指摘"
+      status:
+        open: "未対応"
+        resolved: "解決済み"
+        rejected: "却下"
+    document_approval_requests:
+      status:
+        open: "未対応"
+        approved: "承認済み"
+        rejected: "差し戻し"
+        canceled: "取り消し"
+    document_relations:
+      relation_type:
+        references: "参照"
+        supersedes: "置き換え"
+        related: "関連"
