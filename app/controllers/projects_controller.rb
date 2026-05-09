@@ -29,25 +29,47 @@ class ProjectsController < BaseController
     collapsed_source_path = params[:tree_action] == "hide" ? params[:source_path] : nil
     persist_document_tree_state!(expanded_source_path:, collapsed_source_path:)
 
+    respond_to_document_tree(
+      projects: @tree_projects,
+      current_project: @current_project,
+      expanded_source_path:,
+      collapsed_source_path:
+    )
+  end
+
+  def document_tree_all
+    @tree_projects = portal_tree_projects
+
+    case params[:tree_action].to_s
+    when "show"
+      persist_document_tree_expanded_keys!(document_tree_all_expanded_keys(@tree_projects))
+    when "hide"
+      persist_document_tree_expanded_keys!([])
+    end
+
+    respond_to_document_tree(projects: @tree_projects)
+  end
+
+  private
+
+  def respond_to_document_tree(projects:, current_project: nil, expanded_source_path: nil, collapsed_source_path: nil)
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: turbo_stream.replace(
           "document_tree_panel",
           partial: "documents/tree",
           locals: {
-            projects: @tree_projects,
-            current_project: @current_project,
+            projects:,
+            current_project:,
             current_document: nil,
             expanded_source_path:,
             collapsed_source_path:
           }
         )
       end
-      format.html { redirect_to project_path(@project) }
+      format.html { redirect_back fallback_location: projects_path }
     end
   end
-
-  private
 
   def persist_document_tree_state!(expanded_source_path:, collapsed_source_path:)
     return unless current_user.respond_to?(:tree_view_state_for)
@@ -63,10 +85,45 @@ class ProjectsController < BaseController
       expanded_keys -= [toggled_key]
     end
 
+    persist_document_tree_expanded_keys!(expanded_keys)
+  end
+
+  def persist_document_tree_expanded_keys!(expanded_keys)
+    return unless current_user.respond_to?(:save_tree_view_state!)
+
     current_user.save_tree_view_state!(
       DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY,
       expanded_keys:
     )
+  end
+
+  def document_tree_all_expanded_keys(projects)
+    projects.flat_map do |project|
+      ["project_#{project.id}", *document_tree_folder_keys_for(project)]
+    end.uniq
+  end
+
+  def document_tree_folder_keys_for(project)
+    portal_documents_for(project).flat_map do |document|
+      document_tree_folder_ancestor_paths(document_tree_document_source_directory(document)).map do |path|
+        "folder_#{project.id}_#{Digest::SHA256.hexdigest(path).first(16)}"
+      end
+    end.compact_blank.uniq
+  end
+
+  def document_tree_document_source_directory(document)
+    version = document.latest_version
+    source_directory = version&.source_directory.to_s.tr("\\", "/").split("/").reject(&:blank?).join("/")
+    return source_directory if source_directory.present?
+
+    relative_path = version&.source_relative_path.to_s.tr("\\", "/").split("/").reject(&:blank?)
+    relative_path.pop
+    relative_path.join("/")
+  end
+
+  def document_tree_folder_ancestor_paths(source_path)
+    segments = source_path.to_s.tr("\\", "/").split("/").reject(&:blank?)
+    segments.each_index.map { |index| segments[0..index].join("/") }
   end
 
   def document_tree_toggled_node_key(expanded_source_path:, collapsed_source_path:)
