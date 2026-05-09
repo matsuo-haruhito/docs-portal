@@ -105,14 +105,19 @@ function setupSidebars() {
   document.querySelectorAll("[data-sidebar-layout]").forEach(setupSidebar)
 }
 
-function openTreeNodeForNavigation(link) {
-  if (!["project", "document_tree_folder"].includes(link.dataset.treeItemType)) return
+async function openTreeNodeForNavigation(link) {
+  const openUrl = link.dataset.treeOpenUrl
+  if (!openUrl) return
 
-  const row = link.closest("tr")
-  const toggle = row?.querySelector(".tree-toggle__action[aria-expanded='false']")
-  if (!toggle) return
+  const response = await fetch(openUrl, {
+    headers: {
+      Accept: "text/vnd.turbo-stream.html, text/html, application/xhtml+xml"
+    },
+    credentials: "same-origin"
+  })
+  if (!response.ok) return
 
-  toggle.click()
+  Turbo.renderStreamMessage(await response.text())
 }
 
 function setupDocumentTreeNavigation() {
@@ -125,7 +130,7 @@ function setupDocumentTreeNavigation() {
 
     event.preventDefault()
     openTreeNodeForNavigation(link)
-    window.setTimeout(() => Turbo.visit(link.href, { frame: "main_panel" }), 0)
+    Turbo.visit(link.href, { frame: "main_panel" })
   })
 }
 
