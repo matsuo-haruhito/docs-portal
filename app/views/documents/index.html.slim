@@ -13,7 +13,7 @@ section.card
     div
       = form.label :q, "キーワード"
       br
-      = form.search_field :q, value: @filters[:q], placeholder: "タイトル・slug・版・本文・キーワード・添付ファイル名"
+      = form.search_field :q, value: @filters[:q], placeholder: "文書名・URL識別子・版・本文・キーワード・添付ファイル名"
 
     div
       = form.label :tag, "タグ"
@@ -112,7 +112,7 @@ p.muted
   table
     thead
       tr
-        th タイトル
+        th 文書名
         th ヒット理由
         th タグ
         th カテゴリ
