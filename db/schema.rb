@@ -10,12 +10,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
 
-  create_table "access_logs", force: :cascade do |t|
+  create_table "access_logs", comment: "文書・ページ・添付ファイルへの閲覧やダウンロードなどのアクセス履歴", force: :cascade do |t|
     t.datetime "accessed_at", null: false
     t.integer "action_type", null: false
     t.bigint "company_id"
@@ -38,7 +38,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["user_id"], name: "index_access_logs_on_user_id"
   end
 
-  create_table "access_requests", force: :cascade do |t|
+  create_table "access_requests", comment: "文書などに対する追加アクセス権限の申請", force: :cascade do |t|
     t.datetime "approved_at"
     t.bigint "approver_id"
     t.datetime "cancelled_at"
@@ -66,7 +66,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["status"], name: "index_access_requests_on_status"
   end
 
-  create_table "bulk_edit_dry_runs", force: :cascade do |t|
+  create_table "bulk_edit_dry_runs", comment: "文書一括編集の事前確認結果と実行待ち状態", force: :cascade do |t|
     t.datetime "confirmed_at"
     t.bigint "confirmed_by_id"
     t.datetime "created_at", null: false
@@ -91,7 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["status"], name: "index_bulk_edit_dry_runs_on_status"
   end
 
-  create_table "companies", force: :cascade do |t|
+  create_table "companies", comment: "社外利用者の所属会社・ドメイン", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.string "domain", null: false
@@ -102,7 +102,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["public_id"], name: "index_companies_on_public_id", unique: true
   end
 
-  create_table "consent_terms", force: :cascade do |t|
+  create_table "consent_terms", comment: "初回表示やダウンロード前に同意を求める規約本文", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.text "body", null: false
     t.integer "consent_scope", default: 0, null: false
@@ -119,7 +119,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["title", "version_label"], name: "index_consent_terms_on_title_and_version_label", unique: true
   end
 
-  create_table "document_approval_requests", force: :cascade do |t|
+  create_table "document_approval_requests", comment: "文書に対する確認依頼と承認・差し戻し状態", force: :cascade do |t|
     t.bigint "acted_by_id"
     t.datetime "approved_at"
     t.bigint "approver_id"
@@ -142,7 +142,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["status"], name: "index_document_approval_requests_on_status"
   end
 
-  create_table "document_bookmarks", force: :cascade do |t|
+  create_table "document_bookmarks", comment: "利用者ごとのお気に入り・後で読む文書", force: :cascade do |t|
     t.integer "bookmark_type", default: 0, null: false
     t.datetime "created_at", null: false
     t.bigint "document_id", null: false
@@ -155,7 +155,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["user_id"], name: "index_document_bookmarks_on_user_id"
   end
 
-  create_table "document_catalog_items", force: :cascade do |t|
+  create_table "document_catalog_items", comment: "文書カタログに含める文書の並びと補足", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "document_catalog_id", null: false
     t.bigint "document_id", null: false
@@ -168,7 +168,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["sort_order"], name: "index_document_catalog_items_on_sort_order"
   end
 
-  create_table "document_catalogs", force: :cascade do |t|
+  create_table "document_catalogs", comment: "案件ごとの文書カタログ", force: :cascade do |t|
     t.integer "audience_type", default: 0, null: false
     t.datetime "created_at", null: false
     t.text "description"
@@ -186,7 +186,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["visibility_policy"], name: "index_document_catalogs_on_visibility_policy"
   end
 
-  create_table "document_delivery_logs", force: :cascade do |t|
+  create_table "document_delivery_logs", comment: "文書・文書セットの外部送付履歴", force: :cascade do |t|
     t.text "bcc_addresses"
     t.text "body", null: false
     t.text "cc_addresses"
@@ -213,7 +213,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["status"], name: "index_document_delivery_logs_on_status"
   end
 
-  create_table "document_files", force: :cascade do |t|
+  create_table "document_files", comment: "文書バージョンに紐づく添付ファイル・元ファイル", force: :cascade do |t|
     t.string "content_type", null: false
     t.datetime "created_at", null: false
     t.bigint "document_version_id", null: false
@@ -235,7 +235,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["storage_key"], name: "index_document_files_on_storage_key", unique: true
   end
 
-  create_table "document_keywords", force: :cascade do |t|
+  create_table "document_keywords", comment: "文書検索用のキーワード", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "document_id", null: false
     t.string "keyword", null: false
@@ -251,7 +251,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["public_id"], name: "index_document_keywords_on_public_id", unique: true
   end
 
-  create_table "document_permissions", force: :cascade do |t|
+  create_table "document_permissions", comment: "会社または利用者単位の文書アクセス権限", force: :cascade do |t|
     t.integer "access_level", default: 0, null: false
     t.bigint "company_id"
     t.datetime "created_at", null: false
@@ -265,7 +265,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["user_id"], name: "index_document_permissions_on_user_id"
   end
 
-  create_table "document_relations", force: :cascade do |t|
+  create_table "document_relations", comment: "文書間の参照・置き換え・関連関係", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "note"
     t.string "public_id", null: false
@@ -280,7 +280,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["target_document_id"], name: "index_document_relations_on_target_document_id"
   end
 
-  create_table "document_review_comments", force: :cascade do |t|
+  create_table "document_review_comments", comment: "文書レビューコメント・Q&A・指摘事項", force: :cascade do |t|
     t.bigint "author_id", null: false
     t.text "body", null: false
     t.integer "comment_type", default: 0, null: false
@@ -311,7 +311,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["status"], name: "index_document_review_comments_on_status"
   end
 
-  create_table "document_set_items", force: :cascade do |t|
+  create_table "document_set_items", comment: "文書セットに含める文書・版の並びと補足", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "document_id", null: false
     t.bigint "document_set_id", null: false
@@ -326,7 +326,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["sort_order"], name: "index_document_set_items_on_sort_order"
   end
 
-  create_table "document_sets", force: :cascade do |t|
+  create_table "document_sets", comment: "用途別にまとめた文書セット", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "created_by_id"
     t.text "description"
@@ -346,7 +346,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["visibility_policy"], name: "index_document_sets_on_visibility_policy"
   end
 
-  create_table "document_taggings", force: :cascade do |t|
+  create_table "document_taggings", comment: "文書とタグの紐づけ", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "document_id", null: false
     t.bigint "document_tag_id", null: false
@@ -357,7 +357,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["document_tag_id"], name: "index_document_taggings_on_document_tag_id"
   end
 
-  create_table "document_tags", force: :cascade do |t|
+  create_table "document_tags", comment: "文書分類用タグ", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.string "normalized_name", null: false
@@ -367,7 +367,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["public_id"], name: "index_document_tags_on_public_id", unique: true
   end
 
-  create_table "document_versions", force: :cascade do |t|
+  create_table "document_versions", comment: "文書の版情報・生成済みHTML・公開期間", force: :cascade do |t|
     t.text "changelog_summary"
     t.datetime "created_at", null: false
     t.bigint "document_id", null: false
@@ -407,7 +407,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["version_label"], name: "index_document_versions_on_version_label_trigram", opclass: :gin_trgm_ops, using: :gin
   end
 
-  create_table "documents", force: :cascade do |t|
+  create_table "documents", comment: "案件に属する文書の基本情報と公開方針", force: :cascade do |t|
     t.datetime "archived_at"
     t.bigint "archived_by_user_id"
     t.integer "category", default: 0, null: false
@@ -439,7 +439,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["title"], name: "index_documents_on_title_trigram", opclass: :gin_trgm_ops, using: :gin
   end
 
-  create_table "git_import_runs", force: :cascade do |t|
+  create_table "git_import_runs", comment: "Gitリポジトリ取り込み処理の実行履歴", force: :cascade do |t|
     t.string "branch", null: false
     t.string "commit_sha"
     t.datetime "created_at", null: false
@@ -461,7 +461,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["status"], name: "index_git_import_runs_on_status"
   end
 
-  create_table "git_import_sources", force: :cascade do |t|
+  create_table "git_import_sources", comment: "案件に紐づくGit取り込み元設定", force: :cascade do |t|
     t.integer "auth_type", default: 0, null: false
     t.string "branch", default: "main", null: false
     t.datetime "created_at", null: false
@@ -487,7 +487,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["repository_full_name"], name: "index_git_import_sources_on_repository_full_name"
   end
 
-  create_table "import_dry_runs", force: :cascade do |t|
+  create_table "import_dry_runs", comment: "Git取り込みの事前確認結果と実行待ち状態", force: :cascade do |t|
     t.datetime "confirmed_at"
     t.bigint "confirmed_by_id"
     t.datetime "created_at", null: false
@@ -511,7 +511,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["status"], name: "index_import_dry_runs_on_status"
   end
 
-  create_table "notification_events", force: :cascade do |t|
+  create_table "notification_events", comment: "利用者へ通知するイベント本体", force: :cascade do |t|
     t.bigint "actor_user_id"
     t.text "body"
     t.datetime "created_at", null: false
@@ -532,7 +532,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["public_id"], name: "index_notification_events_on_public_id", unique: true
   end
 
-  create_table "notification_receipts", force: :cascade do |t|
+  create_table "notification_receipts", comment: "通知イベントに対する利用者ごとの既読状態", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "notification_event_id", null: false
     t.string "public_id", null: false
@@ -546,7 +546,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["user_id"], name: "index_notification_receipts_on_user_id"
   end
 
-  create_table "project_consent_settings", force: :cascade do |t|
+  create_table "project_consent_settings", comment: "案件ごとの同意規約適用設定", force: :cascade do |t|
     t.bigint "consent_term_id", null: false
     t.datetime "created_at", null: false
     t.boolean "enabled", default: true, null: false
@@ -562,7 +562,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["required_on"], name: "index_project_consent_settings_on_required_on"
   end
 
-  create_table "project_memberships", force: :cascade do |t|
+  create_table "project_memberships", comment: "利用者と案件の参加関係・役割", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "project_id", null: false
     t.string "public_id", null: false
@@ -575,15 +575,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["user_id"], name: "index_project_memberships_on_user_id"
   end
 
-  create_table "projects", force: :cascade do |t|
+  create_table "projects", comment: "案件の基本情報", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.string "code", null: false
+    t.bigint "company_id"
     t.datetime "created_at", null: false
     t.text "description"
     t.string "name", null: false
     t.string "public_id", null: false
     t.datetime "updated_at", null: false
     t.index ["code"], name: "index_projects_on_code", unique: true
+    t.index ["company_id"], name: "index_projects_on_company_id"
     t.index ["public_id"], name: "index_projects_on_public_id", unique: true
   end
 
@@ -600,7 +602,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["public_id"], name: "index_publish_jobs_on_public_id", unique: true
   end
 
-  create_table "read_confirmations", force: :cascade do |t|
+  create_table "read_confirmations", comment: "利用者ごとの文書既読確認", force: :cascade do |t|
     t.datetime "confirmed_at", null: false
     t.datetime "created_at", null: false
     t.bigint "document_id", null: false
@@ -616,7 +618,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["user_id"], name: "index_read_confirmations_on_user_id"
   end
 
-  create_table "user_consents", force: :cascade do |t|
+  create_table "tree_view_states", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.json "expanded_keys", default: [], null: false
+    t.bigint "owner_id", null: false
+    t.string "owner_type", null: false
+    t.string "tree_instance_key", null: false
+    t.datetime "updated_at", null: false
+    t.index ["owner_type", "owner_id", "tree_instance_key"], name: "idx_on_owner_type_owner_id_tree_instance_key_ebc312eed7", unique: true
+    t.index ["owner_type", "owner_id"], name: "index_tree_view_states_on_owner"
+  end
+
+  create_table "user_consents", comment: "利用者が同意した規約の記録", force: :cascade do |t|
     t.bigint "consent_term_id", null: false
     t.string "consent_term_version_label", null: false
     t.datetime "consented_at", null: false
@@ -637,7 +650,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
     t.index ["user_id"], name: "index_user_consents_on_user_id"
   end
 
-  create_table "users", force: :cascade do |t|
+  create_table "users", comment: "ログイン利用者と権限種別", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.bigint "company_id"
     t.datetime "created_at", null: false
@@ -753,6 +766,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_09_090000) do
   add_foreign_key "project_consent_settings", "projects"
   add_foreign_key "project_memberships", "projects"
   add_foreign_key "project_memberships", "users"
+  add_foreign_key "projects", "companies"
   add_foreign_key "read_confirmations", "document_versions"
   add_foreign_key "read_confirmations", "documents"
   add_foreign_key "read_confirmations", "users"
