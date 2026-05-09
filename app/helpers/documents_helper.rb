@@ -184,7 +184,7 @@ module DocumentsHelper
     folder_nodes_by_path = {}
 
     document_tree_documents_for(project).each do |document|
-      directory = document.latest_version&.source_directory.to_s
+      directory = document_tree_version_for(document)&.source_directory.to_s
       if directory.blank?
         root_nodes << document
         next
@@ -239,7 +239,7 @@ module DocumentsHelper
     collapsed_keys = []
     expanded_keys << node_key(current_project) if current_project
 
-    opened_source_path = expanded_source_path.presence || collapsed_source_path.presence || current_document&.latest_version&.source_directory
+    opened_source_path = expanded_source_path.presence || collapsed_source_path.presence || document_tree_version_for(current_document)&.source_directory
     document_tree_folder_ancestor_paths(opened_source_path).each do |path|
       next if collapsed_source_path.present? && path == collapsed_source_path
 
@@ -297,7 +297,13 @@ module DocumentsHelper
   end
 
   def document_tree_document_label(document)
-    document.latest_version&.source_file_name.presence || document.title
+    document_tree_version_for(document)&.source_file_name.presence || document.title
+  end
+
+  def document_tree_version_for(document)
+    return unless document
+
+    document.latest_version || document.document_versions.order(created_at: :desc, id: :desc).first
   end
 
   def project_default_site_path(project)
