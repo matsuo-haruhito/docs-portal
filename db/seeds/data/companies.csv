@@ -1,4 +1,4 @@
-code,name,active
-INTERNAL,Barnet Internal,true
-CLIENT_A,株式会社A商事,true
-CLIENT_B,株式会社B物流,true
+domain,name,active
+example.com,Barnet Internal,true
+client-a.example.com,株式会社A商事,true
+client-b.example.com,株式会社B物流,true

@@ -20,6 +20,7 @@ RSpec.describe PermissionChangePreviewHash do
     ).call
 
     expect(hash[:project]).to include(code: "PERM", name: "Permission Project")
+    expect(hash[:companies].first).to include(domain: company.domain, name: company.display_name)
     expect(hash[:summary]).to include(
       total_viewers: 1,
       changed_viewers: 1,
