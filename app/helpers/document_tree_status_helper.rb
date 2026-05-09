@@ -13,6 +13,7 @@ module DocumentTreeStatusHelper
 
     if tree_item_unread?(item)
       icons << {
+        id: document_tree_unread_icon_id(item),
         text: "🆕",
         class: "tree-item-status-icon--unread",
         title: "未読の文書です"
@@ -20,6 +21,10 @@ module DocumentTreeStatusHelper
     end
 
     icons
+  end
+
+  def document_tree_unread_icon_id(document)
+    "document_tree_unread_#{document.id}"
   end
 
   private
