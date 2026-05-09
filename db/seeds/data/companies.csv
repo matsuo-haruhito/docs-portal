@@ -1,4 +1,4 @@
-code,name,active
+domain,name,active
 example.com,Barnet Internal,true
 client-a.example.com,株式会社A商事,true
 client-b.example.com,株式会社B物流,true
