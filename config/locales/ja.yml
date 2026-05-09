@@ -38,6 +38,10 @@ ja:
         draft: "下書き"
         published: "公開中"
         archived: "アーカイブ済み"
+      publication_window_state:
+        active: "公開期間内"
+        not_started: "公開前"
+        expired: "公開終了"
       version_label:
         current: "最新"
       snapshot_kind:
