@@ -105,6 +105,16 @@ function setupSidebars() {
   document.querySelectorAll("[data-sidebar-layout]").forEach(setupSidebar)
 }
 
+function openTreeNodeForNavigation(link) {
+  if (!["project", "document_tree_folder"].includes(link.dataset.treeItemType)) return
+
+  const row = link.closest("tr")
+  const toggle = row?.querySelector(".tree-toggle__action[aria-expanded='false']")
+  if (!toggle) return
+
+  toggle.click()
+}
+
 function setupDocumentTreeNavigation() {
   document.addEventListener("click", (event) => {
     if (event.target.closest(".tree-toggle")) return
@@ -115,6 +125,7 @@ function setupDocumentTreeNavigation() {
 
     event.preventDefault()
     Turbo.visit(link.href, { frame: "main_panel" })
+    openTreeNodeForNavigation(link)
   })
 }
 
