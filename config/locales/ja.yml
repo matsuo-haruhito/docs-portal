@@ -72,6 +72,26 @@ ja:
         references: "参照"
         supersedes: "置き換え"
         related: "関連"
+    access_logs:
+      action_type:
+        view: "閲覧"
+        download: "ダウンロード"
+        bulk_edit: "一括編集"
+      target_type:
+        page: "ページ"
+        file: "ファイル"
+        zip: "ZIP"
+    consent_terms:
+      consent_scope:
+        global: "全体"
+        project: "案件"
+        document: "文書"
+        download: "ダウンロード"
+        shared_link: "共有リンク"
+      requirement_timing:
+        first_view: "初回表示時"
+        every_version_change: "版変更ごと"
+        every_download: "ダウンロードごと"
     git_import_sources:
       provider:
         github: "GitHub"
