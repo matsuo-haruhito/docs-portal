@@ -8,28 +8,42 @@ module ApplicationHelper
     I18n.t("labels.#{scope}.#{value}", default: value)
   end
 
-  def document_category_label(document)
-    localized_label("documents.category", document.category)
+  def enum_options_for(scope, values)
+    values.map { |value| [localized_label(scope, value), value] }
   end
 
-  def document_kind_label(document)
-    localized_label("documents.document_kind", document.document_kind)
+  def document_category_label(document_or_value)
+    value = document_or_value.respond_to?(:category) ? document_or_value.category : document_or_value
+    localized_label("documents.category", value)
   end
 
-  def document_visibility_policy_label(document)
-    localized_label("documents.visibility_policy", document.visibility_policy)
+  def document_kind_label(document_or_value)
+    value = document_or_value.respond_to?(:document_kind) ? document_or_value.document_kind : document_or_value
+    localized_label("documents.document_kind", value)
   end
 
-  def document_importance_level_label(document)
-    localized_label("documents.importance_level", document.importance_level)
+  def document_visibility_policy_label(document_or_value)
+    value = document_or_value.respond_to?(:visibility_policy) ? document_or_value.visibility_policy : document_or_value
+    localized_label("documents.visibility_policy", value)
   end
 
-  def document_version_status_label(version)
-    localized_label("document_versions.status", version.status)
+  def document_importance_level_label(document_or_value)
+    value = document_or_value.respond_to?(:importance_level) ? document_or_value.importance_level : document_or_value
+    localized_label("documents.importance_level", value)
+  end
+
+  def document_version_status_label(version_or_value)
+    value = version_or_value.respond_to?(:status) ? version_or_value.status : version_or_value
+    localized_label("document_versions.status", value)
   end
 
   def document_version_label(version)
     localized_label("document_versions.version_label", version.version_label)
+  end
+
+  def document_version_snapshot_kind_label(version_or_value)
+    value = version_or_value.respond_to?(:snapshot_kind) ? version_or_value.snapshot_kind : version_or_value
+    localized_label("document_versions.snapshot_kind", value)
   end
 
   def document_review_comment_type_label(comment_or_value)
@@ -37,16 +51,52 @@ module ApplicationHelper
     localized_label("document_review_comments.comment_type", value)
   end
 
-  def document_review_comment_status_label(comment)
-    localized_label("document_review_comments.status", comment.status)
+  def document_review_comment_status_label(comment_or_value)
+    value = comment_or_value.respond_to?(:status) ? comment_or_value.status : comment_or_value
+    localized_label("document_review_comments.status", value)
   end
 
-  def document_approval_request_status_label(request)
-    localized_label("document_approval_requests.status", request.status)
+  def document_approval_request_status_label(request_or_value)
+    value = request_or_value.respond_to?(:status) ? request_or_value.status : request_or_value
+    localized_label("document_approval_requests.status", value)
   end
 
-  def document_relation_type_label(result)
-    localized_label("document_relations.relation_type", result.relation_type)
+  def document_relation_type_label(result_or_value)
+    value = result_or_value.respond_to?(:relation_type) ? result_or_value.relation_type : result_or_value
+    localized_label("document_relations.relation_type", value)
+  end
+
+  def git_import_source_provider_label(source_or_value)
+    value = source_or_value.respond_to?(:provider) ? source_or_value.provider : source_or_value
+    localized_label("git_import_sources.provider", value)
+  end
+
+  def git_import_source_auth_type_label(source_or_value)
+    value = source_or_value.respond_to?(:auth_type) ? source_or_value.auth_type : source_or_value
+    localized_label("git_import_sources.auth_type", value)
+  end
+
+  def git_import_run_import_mode_label(run_or_value)
+    value = run_or_value.respond_to?(:import_mode) ? run_or_value.import_mode : run_or_value
+    localized_label("git_import_runs.import_mode", value)
+  end
+
+  def git_import_run_status_label(run_or_value)
+    value = run_or_value.respond_to?(:status) ? run_or_value.status : run_or_value
+    localized_label("git_import_runs.status", value)
+  end
+
+  def bulk_edit_dry_run_status_label(run_or_value)
+    value = run_or_value.respond_to?(:status) ? run_or_value.status : run_or_value
+    localized_label("bulk_edit_dry_runs.status", value)
+  end
+
+  def boolean_label(value)
+    value ? "はい" : "いいえ"
+  end
+
+  def bulk_edit_field_label(field)
+    localized_label("bulk_edit_fields", field)
   end
 
   # テーブルが空でも、画面上で空状態と分かる行を補います。
@@ -55,15 +105,23 @@ module ApplicationHelper
 
     tag.table(**options) do
       content = capture { yield }
-      empty_tbody = "<tbody></tbody>"
+      content_string = content.to_s
 
-      if content.start_with?("<thead") && content.end_with?(empty_tbody)
-        content = content.delete_suffix(empty_tbody)
-        colspan = [content.scan("<th").size - 1, 1].max
-        content += tag.tr { tag.td("(なし)", colspan:, class: "muted") }
+      if content_string.match?(/\A<thead.*<tbody>\s*<\/tbody>\z/m)
+        thead = content_string.sub(/<tbody>\s*<\/tbody>\z/m, "")
+        colspan = [thead.scan(/<th(?:\s|>)/).size, 1].max
+
+        safe_join([
+          thead.html_safe,
+          tag.tbody do
+            tag.tr do
+              tag.td("（なし）", colspan:, class: "muted")
+            end
+          end
+        ])
+      else
+        content
       end
-
-      content
     end
   end
 end
