@@ -77,7 +77,6 @@ jobs:
           bundle install --jobs 4 --retry 3
 
       - uses: actions/setup-node@v6
-        if: steps.root-js-changes.outputs.changed == 'true'
         with:
           node-version: 24
           cache: npm
@@ -85,7 +84,6 @@ jobs:
           registry-url: https://registry.npmjs.org/
 
       - name: Install JavaScript dependencies
-        if: steps.root-js-changes.outputs.changed == 'true'
         run: |
           npm config set registry https://registry.npmjs.org/
           npm ci
