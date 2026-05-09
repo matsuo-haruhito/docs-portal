@@ -46,8 +46,8 @@ table
     - @document_permissions.each do |permission|
       tr
         td = permission.document.title
-        td = permission.company&.name || "-"
-        td = permission.user&.email_address || "-"
+        td = permission.company&.display_name || "-"
+        td = permission.user&.display_name || "-"
         td
           span.badge = permission.access_level
         td.actions

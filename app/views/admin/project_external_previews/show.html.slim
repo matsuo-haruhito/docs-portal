@@ -20,7 +20,7 @@ h1 外部表示プレビュー
     .form-grid
       label
         | 外部ユーザー
-        = form.select :user_id, options_from_collection_for_select(@preview_users, :id, :email_address, @selected_user&.id), include_blank: "選択してください"
+        = form.select :user_id, options_from_collection_for_select(@preview_users, :id, :display_name, @selected_user&.id), include_blank: "選択してください"
     p.actions
       = form.submit "このユーザーでプレビュー", class: "button"
 
@@ -30,19 +30,19 @@ h1 外部表示プレビュー
     .form-grid
       label
         | 会社
-        = form.select :company_id, options_from_collection_for_select(@preview_companies, :id, :name, @selected_company&.id), include_blank: "選択してください"
+        = form.select :company_id, options_from_collection_for_select(@preview_companies, :id, :display_name, @selected_company&.id), include_blank: "選択してください"
     p.actions
       = form.submit "この会社でプレビュー", class: "button"
 
 - if @selected_user.present?
   .card
     h2 対象ユーザー
-    p = @selected_user.email_address
+    p = @selected_user.display_name
 - elsif @selected_company.present?
   .card
     h2 対象会社
     p
-      = @selected_company.name
+      = @selected_company.display_name
       |  /
       = @resolved_preview_users.size
       | 名の有効ユーザー
