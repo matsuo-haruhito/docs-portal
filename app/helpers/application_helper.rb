@@ -107,8 +107,8 @@ module ApplicationHelper
       content = capture { yield }
       content_string = content.to_s
 
-      if content_string.match?(/\A<thead.*<tbody>\s*<\/tbody>\z/m)
-        thead = content_string.sub(/<tbody>\s*<\/tbody>\z/m, "")
+      if content_string.match?(/\A\s*<thead.*<tbody>\s*<\/tbody>\s*\z/m)
+        thead = content_string.sub(/<tbody>\s*<\/tbody>\s*\z/m, "")
         colspan = [thead.scan(/<th(?:\s|>)/).size, 1].max
 
         safe_join([
