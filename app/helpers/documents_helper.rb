@@ -71,7 +71,7 @@ module DocumentsHelper
   def tree_item_path(item)
     case item
     when Project
-      project_path(item)
+      project_default_site_path(item) || project_path(item)
     when DocumentTreeFolderNode
       project_documents_path(item.project, q: item.path)
     when Document
