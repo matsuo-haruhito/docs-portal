@@ -1,6 +1,5 @@
 <% expansion_mode ||= nil %>
 <% expanded_keys ||= nil %>
-<% render_state = project_document_detail_tree_render_state(project: @project, documents:, expansion_mode:, expanded_keys:) %>
 
 <style>
   .project-document-detail-tree-card { background: #fff !important; }
@@ -27,6 +26,7 @@
   <% if documents.empty? %>
     <p class="muted">表示できる資料はありません。</p>
   <% else %>
+    <% render_state = project_document_detail_tree_render_state(project: @project, documents:, expansion_mode:, expanded_keys:) %>
     <div class="project-document-detail-tree__header" aria-label="資料一覧ツリー操作">
       <%= button_to "全て開く", document_detail_tree_project_path(@project, tree_action: "expand", format: :turbo_stream), method: :post, form: { data: { turbo_stream: true } }, class: "project-document-detail-tree__action" %>
       <%= button_to "全て閉じる", document_detail_tree_project_path(@project, tree_action: "collapse", format: :turbo_stream), method: :post, form: { data: { turbo_stream: true } }, class: "project-document-detail-tree__action" %>
