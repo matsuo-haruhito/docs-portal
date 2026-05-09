@@ -107,6 +107,8 @@ function setupSidebars() {
 
 function setupDocumentTreeNavigation() {
   document.addEventListener("click", (event) => {
+    if (event.target.closest(".tree-toggle")) return
+
     const link = event.target.closest("a[data-tree-nav-link='true']")
     if (!link) return
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
