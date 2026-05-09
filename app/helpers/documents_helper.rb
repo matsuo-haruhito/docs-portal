@@ -4,7 +4,7 @@ module DocumentsHelper
     prepare_document_tree_cache!(projects)
 
     adapter = TreeView::GraphAdapter.new(
-      roots: projects,
+      roots: [*projects],
       children_resolver: lambda do |node|
         node.is_a?(Project) ? document_tree_documents_for(node) : []
       end,
