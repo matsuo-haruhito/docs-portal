@@ -9,7 +9,7 @@
   <p class="muted"><%= @project.description %></p>
   <p class="actions">
     <% if (site_version = @project.default_site_version_for(current_user)) %>
-      <%= link_to "ドキュメントを読む", project_document_path(@project, site_version.document.slug, version_id: site_version.public_id, site_path: site_version.html_view_site_path), class: "button" %>
+      <%= link_to "文書を読む", project_document_path(@project, site_version.document.slug, version_id: site_version.public_id, site_path: site_version.html_view_site_path), class: "button" %>
     <% end %>
     <%= link_to "文書一覧", project_documents_path(@project), class: "button secondary" %>
     <%= link_to "AI向けコンテキスト", project_ai_context_path(@project), class: "button secondary" %>
@@ -21,7 +21,7 @@
 <section class="dashboard-grid">
   <% if @important_documents.any? %>
     <article class="card">
-      <h2>優先して確認したい資料</h2>
+      <h2>優先して確認したい文書</h2>
       <ul class="resource-list">
         <% @important_documents.each do |document| %>
           <li>
@@ -34,8 +34,8 @@
   <% end %>
 
   <article class="card project-document-detail-tree-card">
-    <h2>資料一覧</h2>
-    <p class="muted">文書ツリーより詳しい情報を含む、案件内資料の階層一覧です。</p>
+    <h2>文書一覧</h2>
+    <p class="muted">文書ツリーより詳しい情報を含む、案件内文書の階層一覧です。</p>
     <%= render "projects/document_detail_tree", documents: @documents %>
   </article>
 </section>
