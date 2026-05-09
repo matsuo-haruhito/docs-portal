@@ -152,13 +152,6 @@ function clickTreeToggleIfClosed(link) {
   toggle?.click()
 }
 
-function hideUnreadStatusIcon(link) {
-  if (link.dataset.treeItemType !== "document") return
-
-  const row = link.closest("tr")
-  row?.querySelectorAll(".tree-item-status-icon--unread").forEach((icon) => icon.remove())
-}
-
 function setupDocumentTreeNavigation() {
   document.addEventListener("click", (event) => {
     if (event.target.closest(".tree-toggle")) return
@@ -170,7 +163,6 @@ function setupDocumentTreeNavigation() {
     event.preventDefault()
     if (!navigateMainPanel(link.href)) return
 
-    hideUnreadStatusIcon(link)
     clickTreeToggleIfClosed(link)
   }, true)
 }
