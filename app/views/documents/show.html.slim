@@ -9,7 +9,6 @@
 - if rendered_view_available
   section.document-reader
     .page-hero.site-viewer-hero.document-reader-hero
-      p.eyebrow Document Reader
       h1 = @document.title
       p.muted = site_viewer_meta_lines(project: @project, document: @document, version: @viewer_version).join(" / ")
       p.actions
