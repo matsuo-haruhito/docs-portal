@@ -3,14 +3,15 @@
 = form_with model: [:admin, company] do |form|
   .form-grid
     label
-      | コード
-      = form.text_field :code
+      | ドメイン
+      = form.text_field :domain
     label
-      | 会社名
+      | 会社名（表示用）
       = form.text_field :name
     label
       | 有効
       = form.select :active, [["有効", true], ["無効", false]]
+  p.muted 会社名が空の場合はドメインを表示名として使用します。
   p.actions style="margin-top:16px;"
     = form.submit "保存", class: "button"
     - if company.persisted?
