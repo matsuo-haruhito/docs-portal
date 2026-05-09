@@ -25,6 +25,7 @@ class ProjectsController < BaseController
     @current_project = params[:tree_action] == "hide" && params[:source_path].blank? ? nil : @project
     expanded_source_path = params[:tree_action] == "show" ? params[:source_path] : nil
     collapsed_source_path = params[:tree_action] == "hide" ? params[:source_path] : nil
+    persist_document_tree_state!(expanded_source_path:, collapsed_source_path:)
 
     respond_to do |format|
       format.turbo_stream do
@@ -45,6 +46,36 @@ class ProjectsController < BaseController
   end
 
   private
+
+  def persist_document_tree_state!(expanded_source_path:, collapsed_source_path:)
+    return unless current_user.respond_to?(:tree_view_state_for)
+
+    persisted_state = current_user.tree_view_state_for(DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY)
+    expanded_keys = Array(persisted_state.expanded_keys)
+    toggled_key = document_tree_toggled_node_key(expanded_source_path:, collapsed_source_path:)
+    return if toggled_key.blank?
+
+    if params[:tree_action] == "show"
+      expanded_keys |= [toggled_key]
+    elsif params[:tree_action] == "hide"
+      expanded_keys -= [toggled_key]
+    end
+
+    current_user.save_tree_view_state!(
+      DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY,
+      expanded_keys:
+    )
+  end
+
+  def document_tree_toggled_node_key(expanded_source_path:, collapsed_source_path:)
+    if expanded_source_path.present?
+      "folder_#{@project.id}_#{Digest::SHA256.hexdigest(expanded_source_path).first(16)}"
+    elsif collapsed_source_path.present?
+      "folder_#{@project.id}_#{Digest::SHA256.hexdigest(collapsed_source_path).first(16)}"
+    elsif params[:node_id].present?
+      "project_#{params[:node_id]}"
+    end
+  end
 
   def portal_tree_projects(include_project: nil)
     projects = Project.accessible_to(current_user)
