@@ -2,7 +2,6 @@ Rails.application.routes.draw do
   root "projects#index"
 
   get "dashboard", to: "dashboard#show", as: :dashboard
-  resource :tree_view_state, only: [:update]
   resources :consents, only: %i[index new create], param: :public_id
   resources :document_approval_requests, only: %i[index show update], param: :public_id do
     post :cancel, on: :member
