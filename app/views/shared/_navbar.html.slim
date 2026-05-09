@@ -4,18 +4,25 @@ nav
     - if logged_in?
       details.nav-dropdown
         summary.nav-dropdown__summary
-          | 機能
+          | 作業
         .nav-dropdown__menu
           = link_to "ダッシュボード", dashboard_path
           = link_to "案件一覧", projects_path
           = link_to "ショートカット", document_bookmarks_path
           = link_to "アクセス申請", access_requests_path
-          = link_to "送付履歴", document_delivery_logs_path
-          = link_to "注意事項・同意履歴", consents_path
           - if current_user.internal?
             = link_to "確認依頼", document_approval_requests_path
-          - if admin_user?
-            .nav-dropdown__divider aria-hidden="true"
+      details.nav-dropdown
+        summary.nav-dropdown__summary
+          | 履歴照会
+        .nav-dropdown__menu
+          = link_to "送付履歴", document_delivery_logs_path
+          = link_to "注意事項・同意履歴", consents_path
+      - if admin_user?
+        details.nav-dropdown
+          summary.nav-dropdown__summary
+            | 管理メニュー
+          .nav-dropdown__menu
             = link_to "管理画面", admin_root_path
   .user-menu
     - if logged_in?
