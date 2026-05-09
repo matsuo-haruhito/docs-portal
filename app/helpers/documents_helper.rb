@@ -332,11 +332,13 @@ module DocumentsHelper
     latest = document.latest_version
     return latest if document_tree_version_has_source_path?(latest)
 
-    document.document_versions.to_a
+    versions = document.document_versions.to_a
+
+    versions
       .select { |version| document_tree_version_has_source_path?(version) }
       .max_by { |version| [version.created_at || Time.zone.at(0), version.id || 0] } ||
       latest ||
-      document.document_versions.order(created_at: :desc, id: :desc).first
+      versions.max_by { |version| [version.created_at || Time.zone.at(0), version.id || 0] }
   end
 
   def document_tree_version_has_source_path?(version)
