@@ -26,17 +26,17 @@
 
 <div id="project_document_detail_tree">
   <% if documents.empty? %>
-    <p class="muted">表示できる資料はありません。</p>
+    <p class="muted">表示できる文書はありません。</p>
   <% else %>
     <% render_state = project_document_detail_tree_render_state(project: @project, documents:, expansion_mode:, expanded_keys:) %>
-    <div class="project-document-detail-tree__header" aria-label="資料一覧ツリー操作">
+    <div class="project-document-detail-tree__header" aria-label="文書一覧ツリー操作">
       <%= button_to "全て開く", document_detail_tree_project_path(@project, tree_action: "expand", format: :turbo_stream), method: :post, form: { data: { turbo_stream: true } }, class: "project-document-detail-tree__action" %>
       <%= button_to "全て閉じる", document_detail_tree_project_path(@project, tree_action: "collapse", format: :turbo_stream), method: :post, form: { data: { turbo_stream: true } }, class: "project-document-detail-tree__action" %>
     </div>
     <table class="project-document-detail-tree tree-view-table" data-project-detail-tree>
       <thead>
         <tr>
-          <th colspan="2">資料</th>
+          <th colspan="2">文書</th>
           <th>最終更新日時</th>
           <th>最終更新者</th>
           <th>版</th>
