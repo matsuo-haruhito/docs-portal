@@ -6,36 +6,36 @@
       | 案件
       = form.collection_select :project_id, @projects, :id, :name
     label
-      | provider
-      = form.select :provider, GitImportSource.providers.keys.map { [_1, _1] }
+      | 連携先
+      = form.select :provider, enum_options_for("git_import_sources.provider", GitImportSource.providers.keys)
     label
-      | organization
+      | Organization
       = form.text_field :organization_name, placeholder: "example-org"
     label
-      | repository
+      | リポジトリ
       = form.text_field :repository_full_name, placeholder: "owner/repo"
     label
-      | branch
+      | ブランチ
       = form.text_field :branch
     label
-      | source_path
+      | 取込元パス
       = form.text_field :source_path, placeholder: "docs"
     label
-      | auth_type
-      = form.select :auth_type, GitImportSource.auth_types.keys.map { [_1, _1] }
+      | 認証方式
+      = form.select :auth_type, enum_options_for("git_import_sources.auth_type", GitImportSource.auth_types.keys)
     label
-      | GitHub App installation_id
+      | GitHub App installation ID
       = form.text_field :installation_id
     label
-      | credential_ref
+      | 認証情報の参照名
       = form.text_field :credential_ref, placeholder: "secret store key etc."
     label
-      | credential_secret
+      | 認証シークレット
       = form.password_field :credential_secret, value: nil, autocomplete: "new-password", placeholder: git_import_source.persisted? ? "変更時のみ入力" : "fine-grained PAT"
     label
       | 状態
       = form.select :enabled, [["有効", true], ["無効", false]]
-  p.muted GitHub App を本命の認証方式として扱います。fine_grained_pat は開発・検証用で、secret は暗号化カラムに保存されます。
+  p.muted GitHub App を本命の認証方式として扱います。Fine-grained PAT は開発・検証用で、シークレットは暗号化カラムに保存されます。
   p.actions
     = form.submit "保存", class: "button"
     - if git_import_source.persisted?
