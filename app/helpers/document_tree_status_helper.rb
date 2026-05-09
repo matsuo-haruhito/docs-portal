@@ -31,6 +31,6 @@ module DocumentTreeStatusHelper
   end
 
   def tree_read_document_ids
-    @tree_read_document_ids ||= ReadConfirmation.for_user(current_user).pluck(:document_id).to_set
+    @tree_read_document_ids ||= ReadConfirmation.for_user(current_user).pluck(:document_id)
   end
 end
