@@ -15,7 +15,7 @@ h1 文書一括編集
         tr
           th 選択
           th 案件
-          th タイトル
+          th 文書名
           th カテゴリ
           th 種別
           th 公開範囲
@@ -26,7 +26,8 @@ h1 文書一括編集
             td = check_box_tag "bulk_edit[document_ids][]", document.id, false, id: "bulk_edit_document_#{document.id}"
             td = document.project.name
             td
-              label for="bulk_edit_document_#{document.id}" = document.title
+              label for="bulk_edit_document_#{document.id}"
+                = link_to document.title, project_document_path(document.project, document.slug)
             td = document_category_label(document)
             td = document_kind_label(document)
             td = document_visibility_policy_label(document)
