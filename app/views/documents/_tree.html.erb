@@ -1,6 +1,12 @@
 <div id="document_tree_panel">
   <%= turbo_stream_from "document_tree" %>
 
+  <style>
+    .tree-item-label.tree-label--length-gt-15 { font-size: calc(1em - 1.5pt); }
+    .tree-item-label.tree-label--length-gt-20 { font-size: calc(1em - 2pt); }
+    .tree-item-label.tree-label--length-gt-25 { font-size: calc(1em - 2.5pt); }
+  </style>
+
   <h2 style="margin-top: 0;">文書ツリー</h2>
   <p class="muted">案件と文書の階層を表示します。</p>
 
