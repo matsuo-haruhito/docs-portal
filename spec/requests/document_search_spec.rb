@@ -187,7 +187,7 @@ RSpec.describe "Document search", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(result_titles).to contain_exactly("Mermaid添付資料", "PlantUML資料")
-    expect(response.body).to include("Diagramあり")
+    expect(response.body).to include("図あり")
   end
 
   it "keeps search conditions in the form and does not expose inaccessible documents to external users" do
