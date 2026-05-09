@@ -10,7 +10,7 @@
       <span id="<%= status_icon[:id] %>" class="project-document-detail-tree__status <%= status_icon[:class] %>" title="<%= status_icon[:title] %>" aria-label="<%= status_icon[:title] %>"><%= status_icon[:text] %></span>
     <% end %>
   </td>
-  <td><%= item.updated_at&.strftime("%Y-%m-%d") || "-" %></td>
+  <td><%= item.updated_at&.strftime("%Y-%m-%d %H:%M") || "-" %></td>
   <td><%= version&.published_by_user&.name.presence || version&.published_by_user&.email_address.presence || "-" %></td>
   <td><%= version&.version_label.presence || "-" %></td>
 <% end %>
