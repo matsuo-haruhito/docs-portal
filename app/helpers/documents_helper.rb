@@ -60,9 +60,9 @@ module DocumentsHelper
 
     case state.to_sym
     when :collapsed
-      { text: "開く", class: "tree-toggle__icon--open", title: "展開" }
+      { text: "+", class: "tree-toggle__icon--open", title: "開く" }
     when :expanded
-      { text: "閉じる", class: "tree-toggle__icon--close", title: "折りたたむ" }
+      { text: "-", class: "tree-toggle__icon--close", title: "閉じる" }
     else
       { text: "・", class: "tree-toggle__icon--leaf", title: "子項目はありません" }
     end
