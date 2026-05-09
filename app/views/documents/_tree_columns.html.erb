@@ -1,5 +1,11 @@
 <td class="<%= tree_item_css_class(item) %>">
-  <%= link_to tree_item_label(item), tree_item_path(item) %>
+  <%= link_to tree_item_label(item),
+    tree_item_path(item),
+    data: {
+      turbo_frame: "main_panel",
+      tree_nav_link: true,
+      tree_item_type: item.is_a?(DocumentsHelper::DocumentTreeFolderNode) ? "document_tree_folder" : item.class.name.underscore
+    } %>
 
   <% if item.is_a?(Document) %>
     <% if (updated_label = tree_item_updated_label(item)) %>
@@ -10,10 +16,10 @@
       <span class="muted tree-item-meta">HTML未生成</span>
     <% end %>
 
-    <%= link_to "詳細", tree_item_detail_path(item), class: "tree-item-detail-link" %>
+    <%= link_to "詳細", tree_item_detail_path(item), class: "tree-item-detail-link", data: { turbo_frame: "main_panel" } %>
   <% elsif item.is_a?(DocumentsHelper::DocumentTreeFolderNode) %>
     <span class="muted tree-item-meta">フォルダ</span>
   <% elsif item.is_a?(Project) %>
-    <%= link_to "案件トップ", tree_item_detail_path(item), class: "tree-item-detail-link" %>
+    <%= link_to "案件トップ", tree_item_detail_path(item), class: "tree-item-detail-link", data: { turbo_frame: "main_panel" } %>
   <% end %>
 </td>
