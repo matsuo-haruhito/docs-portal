@@ -1,36 +1,44 @@
-<% render_state = project_document_detail_tree_render_state(project: @project, documents:) %>
+<% expansion_mode ||= nil %>
+<% render_state = project_document_detail_tree_render_state(project: @project, documents:, expansion_mode:) %>
 
 <style>
+  .project-document-detail-tree-card { background: #fff !important; }
+  .project-document-detail-tree-card.card { background: #fff !important; }
   .project-document-detail-tree__header { display: flex; justify-content: flex-end; gap: 6px; margin: 0 0 10px; }
+  .project-document-detail-tree__header form { margin: 0; }
   .project-document-detail-tree__action { border: 1px solid rgba(15, 98, 254, 0.32); border-radius: 999px; padding: 3px 10px; font-size: 12px; line-height: 1.5; background: #fff; color: #0f62fe; cursor: pointer; }
   .project-document-detail-tree__action:hover, .project-document-detail-tree__action:focus { background: #eff6ff; }
-  .project-document-detail-tree { width: 100%; margin-top: 0; }
-  .project-document-detail-tree th { color: var(--muted); font-size: 0.86rem; font-weight: 700; }
-  .project-document-detail-tree td { vertical-align: middle; }
+  .project-document-detail-tree { width: 100%; margin-top: 0; background: #fff; }
+  .project-document-detail-tree th { color: var(--muted); font-size: 0.86rem; font-weight: 700; background: #fff; }
+  .project-document-detail-tree td { vertical-align: middle; background: #fff; }
   .project-document-detail-tree .tree-toggle-cell { width: 2.2rem; }
-  .project-document-detail-tree__folder-row .project-document-detail-tree__name-cell { font-weight: 700; background: #fff7f2; border-radius: 10px; }
+  .project-document-detail-tree__folder-row td { background: #fff7f2; }
+  .project-document-detail-tree__folder-row .project-document-detail-tree__name-cell { font-weight: 700; }
+  .project-document-detail-tree__document-row td { background: #fff; }
   .project-document-detail-tree__document-title { font-weight: 700; overflow-wrap: anywhere; }
   .project-document-detail-tree__status { display: inline-flex; align-items: center; justify-content: center; margin-left: 4px; font-size: 0.9em; line-height: 1; vertical-align: middle; }
 </style>
 
-<% if documents.empty? %>
-  <p class="muted">表示できる資料はありません。</p>
-<% else %>
-  <div class="project-document-detail-tree__header" aria-label="資料一覧ツリー操作">
-    <button type="button" class="project-document-detail-tree__action" data-project-detail-tree-action="expand">全て開く</button>
-    <button type="button" class="project-document-detail-tree__action" data-project-detail-tree-action="collapse">全て閉じる</button>
-  </div>
-  <table class="project-document-detail-tree tree-view-table" data-project-detail-tree>
-    <thead>
-      <tr>
-        <th colspan="2">資料</th>
-        <th>最終更新日</th>
-        <th>最終更新者</th>
-        <th>版</th>
-      </tr>
-    </thead>
-    <tbody>
-      <%= tree_view_rows(render_state) %>
-    </tbody>
-  </table>
-<% end %>
+<div id="project_document_detail_tree">
+  <% if documents.empty? %>
+    <p class="muted">表示できる資料はありません。</p>
+  <% else %>
+    <div class="project-document-detail-tree__header" aria-label="資料一覧ツリー操作">
+      <%= button_to "全て開く", document_detail_tree_project_path(@project, tree_action: "expand", format: :turbo_stream), method: :post, form: { data: { turbo_stream: true } }, class: "project-document-detail-tree__action" %>
+      <%= button_to "全て閉じる", document_detail_tree_project_path(@project, tree_action: "collapse", format: :turbo_stream), method: :post, form: { data: { turbo_stream: true } }, class: "project-document-detail-tree__action" %>
+    </div>
+    <table class="project-document-detail-tree tree-view-table" data-project-detail-tree>
+      <thead>
+        <tr>
+          <th colspan="2">資料</th>
+          <th>最終更新日</th>
+          <th>最終更新者</th>
+          <th>版</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= tree_view_rows(render_state) %>
+      </tbody>
+    </table>
+  <% end %>
+</div>
