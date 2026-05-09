@@ -6,7 +6,7 @@ RSpec.describe "Admin document permissions", type: :request do
   it "shows document permission overview" do
     document = create(:document, title: "Permission Target", visibility_policy: :restricted_external)
     company = create(:company, name: "Customer Company")
-    external_user = create(:user, :external, email_address: "external@example.com")
+    external_user = create(:user, :external, name: nil, email_address: "external@example.com")
     create(:document_permission, document:, company:, access_level: :view)
     create(:document_permission, document:, user: external_user, access_level: :download)
 
