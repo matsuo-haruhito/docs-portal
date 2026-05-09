@@ -3,8 +3,6 @@ const DEFAULT_WIDTH = 360
 const MIN_WIDTH = 260
 const MAX_WIDTH = 720
 
-let pendingSidebarScrollTop = null
-
 function clampWidth(value) {
   return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, value))
 }
@@ -105,23 +103,6 @@ function setupSidebars() {
   document.querySelectorAll("[data-sidebar-layout]").forEach(setupSidebar)
 }
 
-function restoreSidebarScroll() {
-  if (pendingSidebarScrollTop == null) return
-
-  const scrollTop = pendingSidebarScrollTop
-  pendingSidebarScrollTop = null
-
-  requestAnimationFrame(() => {
-    const sidebar = document.querySelector("[data-docs-sidebar]")
-    if (!sidebar) return
-
-    sidebar.scrollTop = scrollTop
-    requestAnimationFrame(() => {
-      sidebar.scrollTop = scrollTop
-    })
-  })
-}
-
 function navigateMainPanel(url) {
   const frame = document.getElementById("main_panel")
   if (!frame) return false
@@ -130,22 +111,12 @@ function navigateMainPanel(url) {
   return true
 }
 
-function clickNativeTreeToggle(link) {
+function clickTreeToggleIfClosed(link) {
   if (!["project", "document_tree_folder"].includes(link.dataset.treeItemType)) return
 
   const row = link.closest("tr")
   const toggle = row?.querySelector(".tree-toggle-cell .tree-toggle__action[aria-expanded='false']")
-  if (!toggle) return
-
-  pendingSidebarScrollTop = link.closest("[data-docs-sidebar]")?.scrollTop || 0
-
-  window.setTimeout(() => {
-    toggle.dispatchEvent(new MouseEvent("click", {
-      bubbles: true,
-      cancelable: true,
-      view: window
-    }))
-  }, 0)
+  toggle?.click()
 }
 
 function setupDocumentTreeNavigation() {
@@ -159,12 +130,11 @@ function setupDocumentTreeNavigation() {
     event.preventDefault()
     if (!navigateMainPanel(link.href)) return
 
-    clickNativeTreeToggle(link)
+    clickTreeToggleIfClosed(link)
   }, true)
 }
 
 setupDocumentTreeNavigation()
 
-document.addEventListener("turbo:before-stream-render", restoreSidebarScroll)
 document.addEventListener("turbo:load", setupSidebars)
 document.addEventListener("turbo:render", setupSidebars)
