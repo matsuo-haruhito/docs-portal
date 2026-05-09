@@ -28,24 +28,24 @@ RSpec.describe "Admin management", type: :request do
 
   describe "company master" do
     let(:internal_user) { create(:user, :internal) }
-    let!(:company) { create(:company, code: "C001", name: "Alpha") }
-    let!(:other_company) { create(:company, code: "C099", name: "Omega") }
+    let!(:company) { create(:company, domain: "alpha.example.com", name: "Alpha") }
+    let!(:other_company) { create(:company, domain: "omega.example.com", name: "Omega") }
 
     it "allows internal users to create, update, and destroy companies" do
       sign_in_as(internal_user)
 
       expect do
         post admin_companies_path, params: {
-          company: { code: "C002", name: "Beta", active: true }
+          company: { domain: "beta.example.com", name: "Beta", active: true }
         }
       end.to change(Company, :count).by(1)
 
-      created = Company.find_by!(code: "C002")
+      created = Company.find_by!(domain: "beta.example.com")
       expect(response).to redirect_to(admin_companies_path)
       expect(flash[:notice]).to eq("会社を登録しました。")
 
       patch admin_company_path(created), params: {
-        company: { code: "C002", name: "Beta Updated", active: false }
+        company: { domain: "beta.example.com", name: "Beta Updated", active: false }
       }
 
       expect(response).to redirect_to(admin_companies_path)
@@ -77,20 +77,20 @@ RSpec.describe "Admin management", type: :request do
       expect(response.body).not_to include("Omega")
 
       patch admin_company_path(company), params: {
-        company: { code: company.code, name: "Alpha Updated", active: false }
+        company: { domain: company.domain, name: "Alpha Updated", active: false }
       }
 
       expect(response).to redirect_to(admin_companies_path)
       expect(company.reload.name).to eq("Alpha Updated")
 
       patch admin_company_path(other_company), params: {
-        company: { code: other_company.code, name: "Omega Updated", active: false }
+        company: { domain: other_company.domain, name: "Omega Updated", active: false }
       }
 
       expect(response).to have_http_status(:not_found)
 
       post admin_companies_path, params: {
-        company: { code: "C777", name: "Forbidden", active: true }
+        company: { domain: "forbidden.example.com", name: "Forbidden", active: true }
       }
 
       expect(response).to have_http_status(:forbidden)
@@ -131,8 +131,8 @@ RSpec.describe "Admin management", type: :request do
   end
 
   describe "company master user management" do
-    let!(:company) { create(:company, code: "C010", name: "Tenant") }
-    let!(:other_company) { create(:company, code: "C011", name: "Other") }
+    let!(:company) { create(:company, domain: "tenant.example.com", name: "Tenant") }
+    let!(:other_company) { create(:company, domain: "other.example.com", name: "Other") }
     let!(:manager) { create(:user, :external, user_type: :company_master_admin, company:, email_address: "manager@example.com") }
     let!(:managed_user) { create(:user, :external, company:, email_address: "member@example.com") }
     let!(:other_user) { create(:user, :external, company: other_company, email_address: "other@example.com") }
