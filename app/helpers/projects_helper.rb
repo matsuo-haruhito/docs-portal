@@ -3,10 +3,10 @@ require "digest"
 module ProjectsHelper
   ProjectDocumentDetailTreeFolderNode = Data.define(:project, :path, :label, :children)
 
-  def project_document_detail_tree_render_state(project:, documents:, expansion_mode: nil)
+  def project_document_detail_tree_render_state(project:, documents:, expansion_mode: nil, expanded_keys: nil)
     nodes = project_document_detail_tree_nodes(project:, documents:)
     tree_instance_key = project_document_detail_tree_instance_key(project)
-    expanded_keys = expansion_mode == "collapse" ? [] : project_document_detail_tree_expanded_keys(nodes)
+    expanded_keys ||= expansion_mode == "collapse" ? [] : project_document_detail_tree_expanded_keys(nodes)
 
     adapter = TreeView::GraphAdapter.new(
       roots: nodes,
@@ -22,8 +22,8 @@ module ProjectsHelper
       node_prefix: "project_document_detail_tree",
       key_resolver: ->(item_or_id) { project_document_detail_tree_node_key(item_or_id) }
     ).build_turbo(
-      hide_descendants_path_builder: ->(_item, _depth, _scope) { nil },
-      show_descendants_path_builder: ->(_item, _depth, _scope) { nil },
+      hide_descendants_path_builder: ->(item, _depth, _scope) { project_document_detail_tree_toggle_path(item, "hide") },
+      show_descendants_path_builder: ->(item, _depth, _scope) { project_document_detail_tree_toggle_path(item, "show") },
       toggle_all_path_builder: ->(state) { document_detail_tree_project_path(project, tree_action: state, format: :turbo_stream) }
     )
 
@@ -34,7 +34,7 @@ module ProjectsHelper
       ui_config:,
       tree_instance_key:,
       initial_expansion: {
-        default: expansion_mode == "collapse" ? :collapsed : :expanded,
+        default: :collapsed,
         expanded_keys:,
         collapsed_keys: []
       },
@@ -122,6 +122,17 @@ module ProjectsHelper
   end
 
   private
+
+  def project_document_detail_tree_toggle_path(item, action)
+    return unless item.is_a?(ProjectDocumentDetailTreeFolderNode)
+
+    document_detail_tree_project_path(
+      item.project,
+      tree_action: action,
+      source_path: item.path,
+      format: :turbo_stream
+    )
+  end
 
   def sort_project_document_detail_tree_nodes!(nodes)
     nodes.sort_by! do |node|
