@@ -53,8 +53,8 @@ class PermissionChangePreviewHash
 
       {
         public_id: company.public_id,
-        code: company.code,
-        name: company.name,
+        domain: company.domain,
+        name: company.display_name,
         total_viewers: hashes.size,
         changed_viewers: hashes.count { _1[:changed] },
         gained_documents: hashes.flat_map { _1[:gained_documents] }.uniq { _1[:public_id] }.size,
@@ -62,7 +62,7 @@ class PermissionChangePreviewHash
         gained_download_documents: hashes.flat_map { _1[:gained_download_documents] }.uniq { _1[:public_id] }.size,
         lost_download_documents: hashes.flat_map { _1[:lost_download_documents] }.uniq { _1[:public_id] }.size
       }
-    end.sort_by { [_1[:code].to_s, _1[:public_id].to_s] }
+    end.sort_by { [_1[:domain].to_s, _1[:public_id].to_s] }
   end
 
   def viewer_hashes

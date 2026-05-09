@@ -23,7 +23,8 @@ class User < ApplicationRecord
 
   enum :user_type, { internal: 0, external: 1, company_master_admin: 2 }
 
-  validates :name, presence: true
+  before_validation :normalize_email_address
+
   validates :email_address, presence: true
   validates :email_address, uniqueness: true
   validates :company, presence: true, if: -> { external? || company_master_admin? }
@@ -41,5 +42,19 @@ class User < ApplicationRecord
 
   def can_view_all_documents?
     internal?
+  end
+
+  def display_name
+    name.presence || email_address
+  end
+
+  def email_domain
+    email_address.to_s.split("@", 2).last.presence
+  end
+
+  private
+
+  def normalize_email_address
+    self.email_address = email_address.to_s.strip.downcase.presence
   end
 end

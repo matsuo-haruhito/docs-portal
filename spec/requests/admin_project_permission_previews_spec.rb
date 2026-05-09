@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "Admin project permission previews", type: :request do
   let(:admin_user) { create(:user, :internal) }
   let(:project) { create(:project, code: "PREVIEW", name: "Preview Project") }
-  let(:company) { create(:company, code: "ACME", name: "Acme") }
+  let(:company) { create(:company, domain: "acme.example.com", name: "Acme") }
   let(:viewer) { create(:user, :external, company:, email_address: "viewer@example.com") }
 
   it "returns viewer and company level visible and downloadable diffs" do
@@ -33,7 +33,7 @@ RSpec.describe "Admin project permission previews", type: :request do
 
     company_summary = body.fetch("companies").first
     expect(company_summary).to include(
-      "code" => "ACME",
+      "domain" => "acme.example.com",
       "changed_viewers" => 1,
       "gained_download_documents" => 1,
       "lost_documents" => 1

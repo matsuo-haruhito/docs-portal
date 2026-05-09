@@ -4,7 +4,7 @@ class Admin::AccessLogsController < Admin::BaseController
   def index
     @filters = filter_params
     @projects = Project.order(:code)
-    @companies = Company.order(:name)
+    @companies = Company.order(:domain)
     @users = User.order(:email_address)
     @access_logs = filtered_access_logs
       .includes(:user, :company, :project, :document, :document_version)

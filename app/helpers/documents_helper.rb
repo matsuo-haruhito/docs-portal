@@ -8,7 +8,7 @@ module DocumentsHelper
     prepare_document_tree_cache!(projects)
 
     adapter = TreeView::GraphAdapter.new(
-      roots: projects,
+      roots: [*projects],
       children_resolver: lambda do |node|
         case node
         when Project
