@@ -1,0 +1,27 @@
+<% tree_nodes = project_document_detail_tree_nodes(@documents) %>
+
+<style>
+  .project-document-tree { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .project-document-tree ul { list-style: none; margin: 6px 0 0 1.4rem; padding: 0; display: grid; gap: 6px; }
+  .project-document-tree__folder,
+  .project-document-tree__document { border: 1px solid rgba(255, 80, 0, 0.12); border-radius: 12px; background: #fff; }
+  .project-document-tree__folder-summary { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; font-weight: 700; }
+  .project-document-tree__folder-summary::-webkit-details-marker { display: none; }
+  .project-document-tree__folder-icon::before { content: "📂"; }
+  .project-document-tree__folder:not([open]) .project-document-tree__folder-icon::before { content: "📁"; }
+  .project-document-tree__document { display: grid; gap: 6px; padding: 10px 12px; }
+  .project-document-tree__document-main { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .project-document-tree__document-icon { flex: 0 0 auto; }
+  .project-document-tree__document-title { font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+  .project-document-tree__status { display: inline-flex; align-items: center; justify-content: center; margin-left: 2px; font-size: 0.9em; line-height: 1; }
+  .project-document-tree__meta { display: grid; gap: 4px 14px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); color: var(--muted); font-size: 0.88rem; }
+  .project-document-tree__meta strong { color: var(--ink); font-weight: 600; }
+</style>
+
+<% if tree_nodes.empty? %>
+  <p class="muted">表示できる資料はありません。</p>
+<% else %>
+  <ul class="project-document-tree">
+    <%= render "projects/document_detail_tree_nodes", nodes: tree_nodes %>
+  </ul>
+<% end %>
