@@ -1,12 +1,12 @@
-- page_title "文書一括編集 dry-run"
+- page_title "文書一括編集 事前確認"
 
-h1 文書一括編集 dry-run
+h1 文書一括編集 事前確認
 = render "admin/nav"
 
 .card
   h2 概要
   dl
-    dt dry-run ID
+    dt 事前確認ID
     dd = @bulk_edit_dry_run.public_id
     dt 状態
     dd
@@ -25,11 +25,11 @@ h1 文書一括編集 dry-run
 
   - if @bulk_edit_dry_run.analyzed?
     p.actions
-      = button_to "確認して実行", admin_bulk_edit_dry_run_path(@bulk_edit_dry_run), method: :patch, class: "button", form: { data: { turbo_confirm: "dry-run結果を確認済みとして一括編集を実行しますか？" } }
-      = link_to "別のdry-runを作成", new_admin_bulk_edit_dry_run_path, class: "button secondary"
+      = button_to "確認して実行", admin_bulk_edit_dry_run_path(@bulk_edit_dry_run), method: :patch, class: "button", form: { data: { turbo_confirm: "事前確認結果を確認済みとして一括編集を実行しますか？" } }
+      = link_to "別の事前確認を作成", new_admin_bulk_edit_dry_run_path, class: "button secondary"
   - else
     p.actions
-      = link_to "別のdry-runを作成", new_admin_bulk_edit_dry_run_path, class: "button secondary"
+      = link_to "別の事前確認を作成", new_admin_bulk_edit_dry_run_path, class: "button secondary"
 
 - if @bulk_edit_dry_run.warnings_json.any?
   section.card
@@ -46,11 +46,11 @@ h1 文書一括編集 dry-run
         li = error
 
 section.card
-  h2 dry-run明細
+  h2 事前確認明細
   table
     thead
       tr
-        th 文書
+        th 文書名
         th 変更フィールド
         th 変更前
         th 変更後
@@ -107,11 +107,11 @@ section.card
 - if @execution_items.any?
   section.card
     h2 実行結果
-    p.muted 個別Documentごとの成功/失敗を表示します。
+    p.muted 個別文書ごとの成功/失敗を表示します。
     table
       thead
         tr
-          th 文書
+          th 文書名
           th 状態
           th 変更フィールド
           th 警告
