@@ -11,12 +11,12 @@ h1 Git連携
   thead
     tr
       th 案件
-      th repository
-      th branch/path
-      th auth
-      th last synced
+      th リポジトリ
+      th ブランチ/パス
+      th 認証方式
+      th 最終同期
       th 状態
-      th
+      th 操作
   tbody
     - @git_import_sources.each do |source|
       tr
@@ -30,10 +30,10 @@ h1 Git連携
           br
           code = source.source_path
         td
-          = source.auth_type
+          = git_import_source_auth_type_label(source)
           - if source.installation_id.present?
             br
-            span.muted = "installation_id=#{source.installation_id}"
+            span.muted = "installation ID: #{source.installation_id}"
         td
           - if source.last_synced_commit_sha.present?
             code = source.last_synced_commit_sha.first(12)
