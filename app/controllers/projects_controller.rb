@@ -56,12 +56,14 @@ class ProjectsController < BaseController
     return if require_consent!(target: @project, timing: :first_view)
 
     @documents = portal_documents_for(@project)
+    expanded_keys = update_project_detail_tree_expansion!(@project, action: params[:tree_action].to_s, source_path: params[:source_path])
+
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: turbo_stream.replace(
           "project_document_detail_tree",
           partial: "projects/document_detail_tree",
-          locals: { documents: @documents, expansion_mode: params[:tree_action].to_s }
+          locals: { documents: @documents, expanded_keys: }
         )
       end
       format.html { redirect_to project_path(@project) }
@@ -145,6 +147,43 @@ class ProjectsController < BaseController
       DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY,
       expanded_keys:
     )
+  end
+
+  def update_project_detail_tree_expansion!(project, action:, source_path: nil)
+    tree_instance_key = "documents:project_detail:#{project.id}"
+    all_keys = project_detail_tree_folder_keys_for(project)
+    persisted_state = current_user.respond_to?(:tree_view_state_for) ? current_user.tree_view_state_for(tree_instance_key) : nil
+    expanded_keys = persisted_state ? Array(persisted_state.expanded_keys) : all_keys
+
+    case action
+    when "expand", "show"
+      if source_path.present?
+        expanded_keys |= [project_detail_tree_folder_key(project, source_path)]
+      else
+        expanded_keys = all_keys
+      end
+    when "collapse", "hide"
+      if source_path.present?
+        expanded_keys -= [project_detail_tree_folder_key(project, source_path)]
+      else
+        expanded_keys = []
+      end
+    end
+
+    current_user.save_tree_view_state!(tree_instance_key, expanded_keys:) if current_user.respond_to?(:save_tree_view_state!)
+    expanded_keys
+  end
+
+  def project_detail_tree_folder_keys_for(project)
+    portal_documents_for(project).flat_map do |document|
+      document_tree_folder_ancestor_paths(document_tree_document_source_directory(document)).map do |path|
+        project_detail_tree_folder_key(project, path)
+      end
+    end.compact_blank.uniq
+  end
+
+  def project_detail_tree_folder_key(project, source_path)
+    "project_detail_folder_#{project.id}_#{Digest::SHA256.hexdigest(source_path.to_s).first(16)}"
   end
 
   def document_tree_project_expanded_keys(project)
