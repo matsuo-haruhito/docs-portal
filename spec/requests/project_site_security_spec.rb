@@ -41,7 +41,7 @@ RSpec.describe "Project site security", type: :request do
       get project_site_path(project, site_path: version.html_view_site_path, version_id: version.public_id)
     end.to change(AccessLog, :count).by(1)
 
-    expect(response).to have_http_status(:ok)
+    expect(response).to redirect_to(project_document_path(project, document.slug, version_id: version.public_id, site_path: version.html_view_site_path))
 
     log = AccessLog.order(:id).last
     expect(log.action_type).to eq("view")
