@@ -2,9 +2,9 @@ nav
   .header-links
     = link_to "Docs Portal", root_path, class: "brand-link"
     - if logged_in?
-      details.nav-dropdown
+      details.nav-dropdown data-nav-dropdown="true"
         summary.nav-dropdown__summary
-          | 作業
+          | ドキュメント
         .nav-dropdown__menu
           = link_to "ダッシュボード", dashboard_path
           = link_to "案件一覧", projects_path
@@ -12,18 +12,40 @@ nav
           = link_to "アクセス申請", access_requests_path
           - if current_user.internal?
             = link_to "確認依頼", document_approval_requests_path
-      details.nav-dropdown
+      details.nav-dropdown data-nav-dropdown="true"
         summary.nav-dropdown__summary
           | 履歴照会
         .nav-dropdown__menu
           = link_to "送付履歴", document_delivery_logs_path
           = link_to "注意事項・同意履歴", consents_path
+          - if admin_user?
+            .nav-dropdown__divider aria-hidden="true"
+            = link_to "Git取込履歴", admin_git_import_runs_path
+            = link_to "アクセスログ", admin_access_logs_path
+            = link_to "文書利用レポート", admin_document_usage_reports_path
       - if admin_user?
-        details.nav-dropdown
+        details.nav-dropdown data-nav-dropdown="true"
           summary.nav-dropdown__summary
             | 管理メニュー
           .nav-dropdown__menu
             = link_to "管理画面", admin_root_path
+            .nav-dropdown__divider aria-hidden="true"
+            = link_to "モデルブラウザ", admin_model_browser_path
+            = link_to "会社", admin_companies_path
+            = link_to "ユーザー", admin_users_path
+            = link_to "案件", admin_projects_path
+            = link_to "案件メンバー", admin_project_memberships_path
+            = link_to "同意文言", admin_consent_terms_path
+            = link_to "案件同意設定", admin_project_consent_settings_path
+            = link_to "Git取込元", admin_git_import_sources_path
+            = link_to "Git取込履歴", admin_git_import_runs_path
+            = link_to "文書", admin_documents_path
+            = link_to "文書セット", admin_document_sets_path
+            = link_to "文書権限", admin_document_permissions_path
+            = link_to "Webhook", admin_webhook_endpoints_path
+            = link_to "アクセスログ", admin_access_logs_path
+            = link_to "アクセス申請", admin_access_requests_path
+            = link_to "文書利用レポート", admin_document_usage_reports_path
   .user-menu
     - if logged_in?
       span = [current_user.name, current_user.email_address].compact.join(" / ")
