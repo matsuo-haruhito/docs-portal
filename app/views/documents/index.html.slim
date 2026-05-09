@@ -23,17 +23,17 @@ section.card
     div
       = form.label :category, "カテゴリ"
       br
-      = form.select :category, options_for_select([["すべて", ""]] + Document.categories.keys.map { [_1, _1] }, @filters[:category])
+      = form.select :category, options_for_select([["すべて", ""]] + Document.categories.keys.map { [localized_label("documents.category", _1), _1] }, @filters[:category])
 
     div
-      = form.label :document_kind, "種別"
+      = form.label :document_kind, "ファイル種"
       br
-      = form.select :document_kind, options_for_select([["すべて", ""]] + Document.document_kinds.keys.map { [_1, _1] }, @filters[:document_kind])
+      = form.select :document_kind, options_for_select([["すべて", ""]] + Document.document_kinds.keys.map { [localized_label("documents.document_kind", _1), _1] }, @filters[:document_kind])
 
     div
       = form.label :visibility_policy, "公開範囲"
       br
-      = form.select :visibility_policy, options_for_select([["すべて", ""]] + Document.visibility_policies.keys.map { [_1, _1] }, @filters[:visibility_policy])
+      = form.select :visibility_policy, options_for_select([["すべて", ""]] + Document.visibility_policies.keys.map { [localized_label("documents.visibility_policy", _1), _1] }, @filters[:visibility_policy])
 
     fieldset
       legend 実用フィルタ
@@ -48,7 +48,7 @@ section.card
         |  PDFあり
       label
         = check_box_tag :has_diagram, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_diagram])
-        |  Diagramあり
+        |  図あり
 
     p
       = form.submit "検索"
@@ -80,7 +80,7 @@ p.muted
       span.button.secondary.disabled 前へ
 
     span.muted
-      | Page 
+      | ページ 
       = @current_page
       |  / 
       = @total_pages
@@ -96,7 +96,7 @@ p.muted
     .form-grid
       label
         | ZIP内パス
-        = select_tag :zip_path_mode, options_for_select([["文書名準拠", "document_title"], ["source path準拠", "source_path"]], "document_title")
+        = select_tag :zip_path_mode, options_for_select([["文書名準拠", "document_title"], ["元パス準拠", "source_path"]], "document_title")
       label
         = check_box_tag :include_markdown_sources, "1", true
         |  Markdown原本を含める
@@ -116,7 +116,7 @@ p.muted
         th ヒット理由
         th タグ
         th カテゴリ
-        th 種別
+        th ファイル種
         th 重要度
         th 公開範囲
         th 最新版
@@ -145,12 +145,12 @@ p.muted
             - else
               span.muted なし
           td
-            span.badge = document.category
-          td = document.document_kind
+            span.badge = document_category_label(document)
+          td = document_kind_label(document)
           td
-            span.badge = document.importance_level
-          td = document.visibility_policy
-          td = latest_version&.version_label || "-"
+            span.badge = document_importance_level_label(document)
+          td = document_visibility_policy_label(document)
+          td = latest_version ? document_version_label(latest_version) : "-"
           td = latest_version&.site_build_path.present? ? "あり" : "なし"
           td = files.any? ? "#{files.size}件" : "なし"
           td = document.updated_at.strftime("%Y-%m-%d %H:%M")

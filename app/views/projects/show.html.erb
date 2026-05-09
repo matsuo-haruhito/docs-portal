@@ -4,13 +4,13 @@
 
 <% page_title @project.name %>
 <section class="page-hero">
-  <p class="eyebrow">Project Workspace</p>
+  <p class="eyebrow">案件ワークスペース</p>
   <h1><%= @project.name %></h1>
   <p class="muted">コード: <%= @project.code %></p>
   <p class="muted"><%= @project.description %></p>
   <p class="actions">
     <% if (site_version = @project.default_site_version_for(current_user)) %>
-      <%= link_to "ドキュメントサイトを表示", project_site_path(@project, site_path: site_version.html_view_site_path, version_id: site_version.public_id), class: "button" %>
+      <%= link_to "ドキュメントを読む", project_document_path(@project, site_version.document.slug, version_id: site_version.public_id, site_path: site_version.html_view_site_path), class: "button" %>
     <% end %>
     <%= link_to "文書一覧", project_documents_path(@project), class: "button secondary" %>
     <%= link_to "AI向けコンテキスト", project_ai_context_path(@project), class: "button secondary" %>
@@ -27,7 +27,7 @@
         <% @important_documents.each do |document| %>
           <li>
             <strong><%= link_to document.title, project_document_path(@project, document.slug) %></strong>
-            <span class="badge"><%= document.importance_level %></span>
+            <span class="badge"><%= document_importance_level_label(document) %></span>
           </li>
         <% end %>
       </ul>
@@ -40,7 +40,7 @@
       <% @documents.each do |document| %>
         <li>
           <strong><%= link_to document.title, project_document_path(@project, document.slug) %></strong>
-          <span class="badge"><%= document.importance_level %></span>
+          <span class="badge"><%= document_importance_level_label(document) %></span>
         </li>
       <% end %>
     </ul>

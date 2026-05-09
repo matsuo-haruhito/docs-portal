@@ -70,6 +70,10 @@ class ProjectSitesController < BaseController
 
     if embedded_request?
       render html: renderer.render_html(site_path)
+    elsif version_for_page.document.present?
+      reader_params = { version_id: version_for_page.public_id }
+      reader_params[:site_path] = site_path if site_path.present?
+      redirect_to project_document_path(@project, version_for_page.document.slug, reader_params)
     else
       @site_viewer_project = @project
       @site_viewer_document = version_for_page.document

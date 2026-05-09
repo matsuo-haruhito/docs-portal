@@ -39,6 +39,12 @@ class DocumentsController < BaseController
 
     @versions = @document.document_versions.select { _1.viewable_by?(current_user) }.sort_by(&:created_at).reverse
     @latest_viewable_version = @document.latest_version if @document.latest_version && @versions.include?(@document.latest_version)
+    @viewer_version = resolved_viewer_version
+    @viewer_site_path = params[:site_path].presence || @viewer_version&.html_view_site_path
+    @viewer_iframe_src =
+      if @viewer_version&.rendered_site_available?
+        project_site_path(@project, site_path: @viewer_site_path, version_id: @viewer_version.public_id, embedded: "1")
+      end
     @source_breadcrumbs = SourcePathBreadcrumb.new(
       document: @document,
       version: @latest_viewable_version || @versions.first,
@@ -64,6 +70,16 @@ class DocumentsController < BaseController
   end
 
   private
+
+  def resolved_viewer_version
+    requested_public_id = params[:version_id].presence
+    return @latest_viewable_version || @versions.first if requested_public_id.blank?
+
+    version = @versions.find { _1.public_id == requested_public_id }
+    raise ActiveRecord::RecordNotFound, "Document version not found" unless version
+
+    version
+  end
 
   def export_preview_files
     @export_preview_files ||= @versions.flat_map(&:document_files).select { _1.downloadable_by?(current_user) }.select do |file|

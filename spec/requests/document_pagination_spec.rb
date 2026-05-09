@@ -28,7 +28,7 @@ RSpec.describe "Document pagination", type: :request do
     expect(response).to have_http_status(:ok)
     expect(result_titles.size).to eq(20)
     expect(response.body).to include("25")
-    expect(response.body).to include("Page 1 / 2")
+    expect(response.body).to include("ページ 1 / 2")
     expect(response.body).to include("q=paging-keyword")
     expect(response.body).to include("page=2")
 
@@ -36,6 +36,6 @@ RSpec.describe "Document pagination", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(result_titles.size).to eq(5)
-    expect(response.body).to include("Page 2 / 2")
+    expect(response.body).to include("ページ 2 / 2")
   end
 end

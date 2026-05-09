@@ -44,8 +44,6 @@
   --doc-shadow-md: 0 8px 24px rgb(15 23 42 / 8%);
 }
 
-/* ===== Portal / iframe base ===== */
-
 html {
   background: var(--doc-bg);
   color: var(--doc-text);
@@ -97,8 +95,6 @@ body.portal-doc-standalone {
   background: #dbeafe;
 }
 
-/* ===== Hide Docusaurus chrome inside portal viewer ===== */
-
 .theme-doc-breadcrumbs,
 nav.navbar,
 .navbar,
@@ -112,13 +108,12 @@ aside.theme-doc-sidebar-container {
   display: none !important;
 }
 
-/* ===== Docusaurus layout normalization ===== */
-
 main,
 .main-wrapper,
 .container,
 .row {
   width: 100%;
+  max-width: none !important;
 }
 
 .main-wrapper {
@@ -126,32 +121,46 @@ main,
 }
 
 .container {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.row > .col,
+.row > [class*="col--"],
+.col,
+[class*="col--"] {
+  flex: 0 0 100% !important;
   max-width: 100% !important;
+  width: 100% !important;
 }
 
 article,
 main .theme-doc-markdown,
 main .markdown {
   width: 100%;
+  max-width: none !important;
 }
 
 body.portal-doc-embedded article,
 body.portal-doc-embedded main .theme-doc-markdown,
 body.portal-doc-embedded main .markdown {
-  max-width: none;
+  max-width: none !important;
   margin: 0;
-  padding: 20px 20px 48px;
+  padding: 20px 24px 48px;
 }
 
 body.portal-doc-standalone article,
 body.portal-doc-standalone main .theme-doc-markdown,
 body.portal-doc-standalone main .markdown {
-  max-width: 1120px;
-  margin: 0 auto;
+  max-width: none !important;
+  margin: 0;
   padding: 0 24px 56px;
 }
-
-/* ===== Typography ===== */
 
 .markdown h1,
 .markdown h2,
@@ -259,8 +268,6 @@ hr {
   background: var(--doc-border);
 }
 
-/* ===== Links ===== */
-
 .markdown a,
 .theme-doc-markdown a,
 article a {
@@ -275,8 +282,6 @@ article a {
 article a:hover {
   text-decoration-thickness: 2px;
 }
-
-/* ===== Lists ===== */
 
 .markdown ul,
 .markdown ol,
@@ -306,8 +311,6 @@ article li > p {
   margin: 0.45rem 0;
 }
 
-/* ===== Inline code ===== */
-
 .markdown :not(pre) > code,
 .theme-doc-markdown :not(pre) > code,
 article :not(pre) > code {
@@ -325,8 +328,6 @@ article :not(pre) > code {
   font-size: 0.88em;
   white-space: nowrap;
 }
-
-/* ===== Code blocks ===== */
 
 .markdown pre,
 .theme-doc-markdown pre,
@@ -363,7 +364,6 @@ article pre code {
   white-space: pre;
 }
 
-/* Optional: generated HTML can add data-title to pre */
 .markdown pre[data-title],
 .theme-doc-markdown pre[data-title],
 article pre[data-title] {
@@ -393,8 +393,6 @@ article pre[data-title]::before {
   font-size: 0.78rem;
 }
 
-/* ===== Blockquote ===== */
-
 .markdown blockquote,
 .theme-doc-markdown blockquote,
 article blockquote {
@@ -417,8 +415,6 @@ article blockquote > :first-child {
 article blockquote > :last-child {
   margin-bottom: 0;
 }
-
-/* ===== Admonitions / Docusaurus alerts ===== */
 
 .admonition,
 .alert,
@@ -482,8 +478,6 @@ article blockquote > :last-child {
   background: var(--doc-danger-bg);
 }
 
-/* ===== Tables ===== */
-
 .markdown table,
 .theme-doc-markdown table,
 article table {
@@ -532,8 +526,6 @@ article tbody tr:nth-child(even) {
   background: #fbfdff;
 }
 
-/* ===== Images / media ===== */
-
 .markdown img,
 .theme-doc-markdown img,
 article img,
@@ -557,8 +549,6 @@ article img {
   box-shadow: var(--doc-shadow-sm);
 }
 
-/* ===== Keyboard tags ===== */
-
 .markdown kbd,
 .theme-doc-markdown kbd,
 article kbd {
@@ -575,8 +565,6 @@ article kbd {
   line-height: 1.4;
   text-align: center;
 }
-
-/* ===== Details / summary ===== */
 
 .markdown details,
 .theme-doc-markdown details,
@@ -602,8 +590,6 @@ article details[open] summary {
   margin-bottom: 12px;
 }
 
-/* ===== Anchor headings ===== */
-
 .header-anchor,
 .anchor {
   margin-left: 6px;
@@ -623,8 +609,6 @@ h3:hover .anchor,
 h4:hover .anchor {
   opacity: 1;
 }
-
-/* ===== Responsive ===== */
 
 @media (max-width: 960px) {
   body.portal-doc-embedded article,
@@ -665,8 +649,6 @@ h4:hover .anchor {
     font-size: 0.88rem;
   }
 }
-
-/* ===== Optional dark mode ===== */
 
 @media (prefers-color-scheme: dark) {
   :root {

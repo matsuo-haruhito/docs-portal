@@ -120,15 +120,12 @@ RSpec.describe "Project sites", type: :request do
     FileUtils.rm_rf(restricted_version.site_root_absolute_path)
   end
 
-  it "renders a viewer shell from a project-based route" do
+  it "redirects a non-embedded project site html page to the unified document reader" do
     sign_in_as(user)
 
     get project_site_path(project, site_path: version_v1.html_view_site_path, version_id: version_v1.public_id)
 
-    expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Document Viewer")
-    expect(response.body).to include("site-viewer-frame")
-    expect(response.body).to include(project_site_path(project, site_path: version_v1.html_view_site_path, version_id: version_v1.public_id, embedded: "1").gsub("&", "&amp;"))
+    expect(response).to redirect_to(project_document_path(project, document.slug, version_id: version_v1.public_id, site_path: version_v1.html_view_site_path))
   end
 
   it "renders embedded project site html for the iframe body" do
@@ -187,14 +184,14 @@ RSpec.describe "Project sites", type: :request do
     expect(response.body).to include("Guide Index")
   end
 
-  it "shows a project site link on the project detail page" do
+  it "shows a document reader link on the project detail page" do
     sign_in_as(user)
 
     get project_path(project)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("ドキュメントサイトを表示")
-    expect(response.body).to include(project_site_path(project, site_path: version_v2.html_view_site_path, version_id: version_v2.public_id))
+    expect(response.body).to include("ドキュメントを読む")
+    expect(response.body).to include(project_document_path(project, document.slug, version_id: version_v2.public_id, site_path: version_v2.html_view_site_path).gsub("&", "&amp;"))
   end
 
   it "forbids external users from requesting archived versions by version_id" do

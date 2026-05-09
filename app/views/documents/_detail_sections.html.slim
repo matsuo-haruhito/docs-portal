@@ -1,0 +1,273 @@
+p.muted
+  | 案件: 
+  = @project.name
+  |  / カテゴリ: 
+  = document_category_label(@document)
+  |  / ファイル種: 
+  = document_kind_label(@document)
+  |  / 重要度: 
+  = document_importance_level_label(@document)
+
+p.actions
+  = link_to "外部送付を準備", new_project_document_document_delivery_log_path(@project, @document), class: "button secondary"
+
+- read_confirmation = current_user.read_confirmations.find_by(document: @document)
+p
+  = button_to "お気に入りに追加", document_bookmarks_path, params: { document_bookmark: { document_id: @document.public_id, bookmark_type: "favorite" } }
+  = button_to "後で読むに追加", document_bookmarks_path, params: { document_bookmark: { document_id: @document.public_id, bookmark_type: "read_later" } }
+  - if read_confirmation
+    span.muted 既読確認済み
+    = button_to "既読を解除", read_confirmation_path(read_confirmation), method: :delete
+  - else
+    = button_to "既読にする", read_confirmations_path, params: { read_confirmation: { document_id: @document.public_id } }
+  = link_to "文書ショートカット一覧", document_bookmarks_path
+
+- if @source_breadcrumbs.any?
+  nav.breadcrumbs aria-label="source path breadcrumb"
+    - @source_breadcrumbs.each_with_index do |crumb, index|
+      - if index.positive?
+        span.muted = " / "
+      - if crumb.url.present? && index < @source_breadcrumbs.size - 1
+        = link_to crumb.label, crumb.url
+      - else
+        span = crumb.label
+
+- if @document.document_tags.any?
+  p
+    | タグ:
+    - @document.document_tags.sort_by(&:normalized_name).each do |tag|
+      =< link_to tag.name, project_documents_path(@project, tag: tag.normalized_name), class: "badge"
+
+h2 出力時の扱い
+ul
+  li HTML 表示には透かしを入れません。
+  li ZIP 出力では元パス準拠、Markdown 原本の有無、添付有無、PDF のみ出力を選べます。
+  - if @export_watermark_text.present?
+    li PDF を含む持ち出し用出力では、利用者・案件・文書・出力時刻ベースの透かし情報を使う設計です。
+    li
+      | 例:
+      code = @export_watermark_text
+  - elsif @document.downloadable_by?(current_user)
+    li PDF 添付がある場合は、利用者・案件・文書・出力時刻ベースの透かし情報を使う設計です。
+
+- if @latest_viewable_version
+  h2 最新版
+  p
+    strong = link_to document_version_label(@latest_viewable_version), document_version_path(@latest_viewable_version)
+    |  (
+    = document_version_status_label(@latest_viewable_version)
+    | )
+    - if @latest_viewable_version.rendered_site_available?
+      |  - 
+      - latest_reader_path = project_document_path(@project, @document.slug, version_id: @latest_viewable_version.public_id, site_path: @latest_viewable_version.html_view_site_path)
+      - if @viewer_version == @latest_viewable_version
+        span.badge 表示中
+      - else
+        = link_to "本文で開く", latest_reader_path
+
+h2 Q&A
+.card
+  h3 質問を投稿
+  = form_with model: [@project, @document, DocumentReviewComment.new], local: true do |form|
+    = form.hidden_field :comment_type, value: "question"
+    - if @latest_viewable_version
+      = form.hidden_field :document_version_id, value: @latest_viewable_version.id
+    div
+      = form.label :body, "質問内容"
+      = form.text_area :body
+    p.actions
+      = form.submit "質問を投稿", class: "button"
+
+- if @question_threads.any?
+  - @question_threads.each do |thread|
+    .card
+      p
+        strong = thread.author.name
+        span.muted = " / #{thread.qa_status_label}"
+        - if thread.document_version.present?
+          span.muted = " / #{document_version_label(thread.document_version)}"
+      = simple_format(thread.body)
+      - if thread.replies.visible_to(current_user).any?
+        h4 返信
+        - thread.replies.visible_to(current_user).order(:created_at, :id).each do |reply|
+          .card
+            p
+              strong = reply.author.name
+              - if reply.resolved?
+                span.muted = " / 回答"
+            = simple_format(reply.body)
+      .card
+        h4 返信を追加
+        = form_with model: [@project, @document, DocumentReviewComment.new], local: true do |form|
+          = form.hidden_field :comment_type, value: "question"
+          = form.hidden_field :parent_id, value: thread.id
+          - if thread.document_version.present?
+            = form.hidden_field :document_version_id, value: thread.document_version_id
+          div
+            = form.label :body, "返信内容"
+            = form.text_area :body
+          p.actions
+            = form.submit "返信する", class: "button secondary"
+- else
+  p.muted まだ質問はありません。
+
+h2 確認依頼
+- if current_user.internal?
+  p.actions
+    = link_to "確認依頼一覧", project_document_document_approval_requests_path(@project, @document), class: "button secondary"
+
+.card
+  h3 確認依頼を作成
+  = form_with model: [@project, @document, DocumentApprovalRequest.new], local: true do |form|
+    .form-grid
+      div
+        = form.label :title, "タイトル"
+        = form.text_field :title
+      div
+        = form.label :approver_id, "確認相手"
+        = form.collection_select :approver_id, @approval_approvers, :id, :name, include_blank: "未指定"
+      div style="grid-column: 1 / -1;"
+        = form.label :body, "内容"
+        = form.text_area :body
+    p.actions
+      = form.submit "確認依頼を作成", class: "button"
+
+- if current_user.internal? && @document_approval_requests.any?
+  table
+    thead
+      tr
+        th タイトル
+        th 依頼者
+        th 確認相手
+        th 状態
+    tbody
+      - @document_approval_requests.each do |request|
+        tr
+          td = link_to request.title, document_approval_request_path(request)
+          td = request.requester.name
+          td = request.approver&.name || "-"
+          td = document_approval_request_status_label(request)
+- elsif current_user.internal?
+  p.muted 確認依頼はありません。
+
+- explicit_related = @related_document_groups.fetch(:explicit, [])
+- inferred_related = @related_document_groups.fetch(:inferred, [])
+- if explicit_related.any? || inferred_related.any?
+  h2 関連ドキュメント
+
+  - if explicit_related.any?
+    h3 明示的な関連
+    ul
+      - explicit_related.each do |result|
+        li
+          = link_to result.document.title, project_document_path(@project, result.document.slug)
+          span.muted
+            |  (
+            = document_relation_type_label(result)
+            | )
+
+  - if inferred_related.any?
+    h3 フォルダ階層から見つかった関連候補
+    ul
+      - inferred_related.each do |result|
+        li
+          = link_to result.document.title, project_document_path(@project, result.document.slug)
+          span.muted
+            |  (
+            = document_relation_type_label(result)
+            | )
+
+h2 版一覧
+ul
+  - @versions.each do |version|
+    li
+      strong = link_to document_version_label(version), document_version_path(version)
+      |  (
+      = document_version_status_label(version)
+      | )
+
+      - if version.rendered_site_available?
+        |  - 
+        - reader_path = project_document_path(@project, @document.slug, version_id: version.public_id, site_path: version.html_view_site_path)
+        - if @viewer_version == version
+          span.badge 表示中
+        - else
+          = link_to "本文で開く", reader_path
+      - else
+        |  - 
+        span.muted HTML未生成
+
+      - files = version.document_files.order(:sort_order)
+      - if files.any?
+        details
+          summary 添付・元ファイル #{files.size}件
+          - render_state = document_file_tree_render_state(files:, row_partial: "documents/file_tree_columns", node_prefix: "document_files_#{version.id}")
+          table.tree-view-table
+            thead
+              tr
+                th ファイル名
+                th ファイル種
+                th 区分
+            tbody
+              = tree_view_rows(render_state)
+
+- if current_user.internal?
+  h2 社内レビューコメント
+
+  .card
+    h3 コメント追加
+    = form_with model: [@project, @document, DocumentReviewComment.new], local: true do |form|
+      .form-grid
+        div
+          = form.label :comment_type, "種別"
+          = form.select :comment_type, DocumentReviewComment.comment_types.keys.map { [localized_label("document_review_comments.comment_type", _1), _1] }
+        div
+          = form.label :document_version_id, "対象版"
+          = form.collection_select :document_version_id, @versions, :id, ->(version) { document_version_label(version) }, include_blank: "文書全体"
+        div
+          = form.label :text_line_start, "開始行"
+          = form.number_field :text_line_start, min: 1
+        div
+          = form.label :text_line_end, "終了行"
+          = form.number_field :text_line_end, min: 1
+        div
+          = form.label :text_anchor_type, "位置の種類"
+          = form.select :text_anchor_type, [["未指定", ""], ["Markdown見出し", "markdown_heading"], ["JSONパス", "json_path"], ["YAMLパス", "yaml_path"], ["行番号", "plain_line"]]
+        div
+          = form.label :text_anchor_path, "位置パス"
+          = form.text_field :text_anchor_path
+        div
+          = form.label :text_anchor_label, "位置ラベル"
+          = form.text_field :text_anchor_label
+        div
+          = form.label :source_path, "元パス"
+          = form.text_field :source_path
+        div style="grid-column: 1 / -1;"
+          = form.label :body, "内容"
+          = form.text_area :body
+      p.actions
+        = form.submit "コメント追加", class: "button"
+
+  - if @review_comments.any?
+    table
+      thead
+        tr
+          th 種別
+          th 対象
+          th 位置
+          th 内容
+          th 作成者
+          th 状態
+      tbody
+        - @review_comments.each do |comment|
+          tr
+            td = document_review_comment_type_label(comment)
+            td = comment.document_version ? document_version_label(comment.document_version) : "文書全体"
+            td = comment.location_label || "-"
+            td = simple_format(comment.body)
+            td = comment.author.name
+            td = document_review_comment_status_label(comment)
+  - else
+    p.muted コメントはありません。
+
+p = link_to "文書一覧へ戻る", project_documents_path(@project)
