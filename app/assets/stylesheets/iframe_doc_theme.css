@@ -27,10 +27,16 @@
   --doc-primary-soft: #eff6ff;
   --doc-primary-border: #bfdbfe;
 
+  --doc-accent: #ff5000;
+  --doc-accent-soft: #fff4ed;
+  --doc-accent-border: #ffd7c2;
+  --doc-accent-text: #c2410c;
+
   --doc-code-bg: #0f172a;
   --doc-code-text: #e5e7eb;
-  --doc-inline-code-bg: #f6f8fb;
-  --doc-inline-code-text: #be123c;
+  --doc-inline-code-bg: var(--doc-accent-soft);
+  --doc-inline-code-text: var(--doc-accent-text);
+  --doc-inline-code-border: var(--doc-accent-border);
 
   --doc-note-bg: #eff6ff;
   --doc-note-border: #60a5fa;
@@ -237,7 +243,7 @@ article h2::after {
   width: 3.25rem;
   height: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--doc-primary), rgb(37 99 235 / 0%));
+  background: linear-gradient(90deg, var(--doc-accent), rgb(255 80 0 / 0%));
 }
 
 .markdown h3,
@@ -371,10 +377,10 @@ article li > p {
 .markdown :not(pre) > code,
 .theme-doc-markdown :not(pre) > code,
 article :not(pre) > code {
-  padding: 0.12em 0.38em;
-  border: 1px solid #e2e8f0;
-  border-radius: var(--doc-radius-sm);
-  background: linear-gradient(180deg, #ffffff, var(--doc-inline-code-bg));
+  padding: 0.08em 0.28em;
+  border: 1px solid var(--doc-inline-code-border);
+  border-radius: 4px;
+  background: var(--doc-inline-code-bg);
   color: var(--doc-inline-code-text);
   font-family:
     "SFMono-Regular",
@@ -383,9 +389,8 @@ article :not(pre) > code {
     Menlo,
     monospace;
   font-size: 0.86em;
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
-  box-shadow: inset 0 -1px 0 rgb(15 23 42 / 4%);
 }
 
 .markdown pre,
@@ -743,8 +748,14 @@ h4:hover .hash-link {
     --doc-primary-soft: #0f1f3d;
     --doc-primary-border: #1d4ed8;
 
-    --doc-inline-code-bg: #111827;
-    --doc-inline-code-text: #fda4af;
+    --doc-accent: #ff5000;
+    --doc-accent-soft: #2b160d;
+    --doc-accent-border: #7c3216;
+    --doc-accent-text: #ffb08a;
+
+    --doc-inline-code-bg: var(--doc-accent-soft);
+    --doc-inline-code-text: var(--doc-accent-text);
+    --doc-inline-code-border: var(--doc-accent-border);
 
     --doc-note-bg: #0f1f3d;
     --doc-tip-bg: #06281f;
@@ -754,13 +765,6 @@ h4:hover .hash-link {
 
   body.portal-doc-standalone {
     background: linear-gradient(180deg, #0b1120 0%, #111827 100%);
-  }
-
-  .markdown :not(pre) > code,
-  .theme-doc-markdown :not(pre) > code,
-  article :not(pre) > code {
-    border-color: #243244;
-    background: #111827;
   }
 
   .markdown blockquote,
