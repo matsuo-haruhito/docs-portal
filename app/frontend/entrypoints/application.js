@@ -105,34 +105,20 @@ function setupSidebars() {
   document.querySelectorAll("[data-sidebar-layout]").forEach(setupSidebar)
 }
 
-function restoreSidebarScroll(sidebar, scrollTop) {
-  if (!sidebar) return
+function clickNativeTreeToggle(link) {
+  if (!["project", "document_tree_folder"].includes(link.dataset.treeItemType)) return
 
-  requestAnimationFrame(() => {
-    sidebar.scrollTop = scrollTop
-    requestAnimationFrame(() => {
-      sidebar.scrollTop = scrollTop
-    })
-  })
-}
+  const row = link.closest("tr")
+  const toggle = row?.querySelector(".tree-toggle-cell .tree-toggle__action[aria-expanded='false']")
+  if (!toggle) return
 
-async function openTreeNodeForNavigation(link) {
-  const openUrl = link.dataset.treeOpenUrl
-  if (!openUrl) return
-
-  const sidebar = link.closest("[data-docs-sidebar]")
-  const scrollTop = sidebar?.scrollTop || 0
-
-  const response = await fetch(openUrl, {
-    headers: {
-      Accept: "text/vnd.turbo-stream.html"
-    },
-    credentials: "same-origin"
-  })
-  if (!response.ok) return
-
-  Turbo.renderStreamMessage(await response.text())
-  restoreSidebarScroll(document.querySelector("[data-docs-sidebar]"), scrollTop)
+  window.setTimeout(() => {
+    toggle.dispatchEvent(new MouseEvent("click", {
+      bubbles: true,
+      cancelable: true,
+      view: window
+    }))
+  }, 0)
 }
 
 function setupDocumentTreeNavigation() {
@@ -145,7 +131,7 @@ function setupDocumentTreeNavigation() {
 
     event.preventDefault()
     Turbo.visit(link.href, { frame: "main_panel" })
-    openTreeNodeForNavigation(link)
+    clickNativeTreeToggle(link)
   }, true)
 }
 
