@@ -8,17 +8,19 @@
 
   --doc-bg: #ffffff;
   --doc-bg-soft: #f8fafc;
+  --doc-surface: #ffffff;
   --doc-bg-muted: #f1f5f9;
 
-  --doc-text: #172033;
-  --doc-text-heading: #111827;
+  --doc-text: #1f2937;
+  --doc-text-heading: #0f172a;
   --doc-text-muted: #64748b;
-  --doc-text-soft: #475569;
+  --doc-text-soft: #334155;
 
   --doc-border: #e5e7eb;
   --doc-border-strong: #cbd5e1;
 
   --doc-primary: #2563eb;
+  --doc-primary-hover: #1d4ed8;
   --doc-primary-soft: #eff6ff;
   --doc-primary-border: #bfdbfe;
 
@@ -57,7 +59,7 @@ html {
     BlinkMacSystemFont,
     sans-serif;
   font-size: 16px;
-  line-height: 1.8;
+  line-height: 1.78;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -74,7 +76,7 @@ body.portal-doc-body {
     -apple-system,
     BlinkMacSystemFont,
     sans-serif;
-  line-height: 1.8;
+  line-height: 1.78;
 }
 
 body.portal-doc-embedded {
@@ -181,44 +183,54 @@ article h4,
 article h5,
 article h6 {
   color: var(--doc-text-heading);
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-weight: 760;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
   scroll-margin-top: 96px;
 }
 
 .markdown h1,
 .theme-doc-markdown h1,
 article h1 {
-  margin: 0 0 24px;
-  font-size: clamp(2rem, 5vw, 3rem);
-  line-height: 1.1;
+  margin: 0 0 28px;
+  font-size: clamp(2.05rem, 5vw, 3rem);
+  line-height: 1.08;
+}
+
+.markdown h1 + p,
+.theme-doc-markdown h1 + p,
+article h1 + p {
+  margin-top: -0.35rem;
+  margin-bottom: 1.6rem;
+  color: var(--doc-text-muted);
+  font-size: 1.08rem;
+  line-height: 1.75;
 }
 
 .markdown h2,
 .theme-doc-markdown h2,
 article h2 {
-  margin-top: 2.4rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.4rem;
+  margin-top: 3rem;
+  margin-bottom: 1.1rem;
+  padding-bottom: 0.55rem;
   border-bottom: 1px solid var(--doc-border);
-  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-size: clamp(1.42rem, 3vw, 1.85rem);
 }
 
 .markdown h3,
 .theme-doc-markdown h3,
 article h3 {
-  margin-top: 2rem;
-  margin-bottom: 0.75rem;
-  font-size: 1.35rem;
+  margin-top: 2.2rem;
+  margin-bottom: 0.7rem;
+  font-size: 1.28rem;
 }
 
 .markdown h4,
 .theme-doc-markdown h4,
 article h4 {
-  margin-top: 1.6rem;
-  margin-bottom: 0.5rem;
-  font-size: 1.1rem;
+  margin-top: 1.8rem;
+  margin-bottom: 0.55rem;
+  font-size: 1.08rem;
 }
 
 .markdown p,
@@ -239,7 +251,7 @@ article ol,
 article blockquote,
 article table,
 article pre {
-  margin-bottom: 1rem;
+  margin-bottom: 1.05rem;
 }
 
 .markdown p,
@@ -274,13 +286,23 @@ article a {
   color: var(--doc-primary);
   font-weight: 500;
   text-decoration: underline;
-  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
 }
 
 .markdown a:hover,
 .theme-doc-markdown a:hover,
 article a:hover {
+  color: var(--doc-primary-hover);
   text-decoration-thickness: 2px;
+}
+
+.markdown a:focus-visible,
+.theme-doc-markdown a:focus-visible,
+article a:focus-visible {
+  outline: 3px solid var(--doc-primary-border);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .markdown ul,
@@ -289,14 +311,14 @@ article a:hover {
 .theme-doc-markdown ol,
 article ul,
 article ol {
-  padding-left: 1.5rem;
+  padding-left: 1.35rem;
   color: var(--doc-text-soft);
 }
 
 .markdown li,
 .theme-doc-markdown li,
 article li {
-  margin: 0.35rem 0;
+  margin: 0.42rem 0;
 }
 
 .markdown li::marker,
@@ -314,7 +336,7 @@ article li > p {
 .markdown :not(pre) > code,
 .theme-doc-markdown :not(pre) > code,
 article :not(pre) > code {
-  padding: 0.16em 0.38em;
+  padding: 0.16em 0.42em;
   border: 1px solid #e2e8f0;
   border-radius: var(--doc-radius-sm);
   background: var(--doc-inline-code-bg);
@@ -325,7 +347,7 @@ article :not(pre) > code {
     "Liberation Mono",
     Menlo,
     monospace;
-  font-size: 0.88em;
+  font-size: 0.86em;
   white-space: nowrap;
 }
 
@@ -333,8 +355,8 @@ article :not(pre) > code {
 .theme-doc-markdown pre,
 article pre {
   position: relative;
-  margin: 22px 0 1rem;
-  padding: 18px 20px;
+  margin: 24px 0 1.25rem;
+  padding: 20px 22px;
   overflow-x: auto;
   border: 1px solid #1e293b;
   border-radius: 14px;
@@ -359,7 +381,7 @@ article pre code {
     Menlo,
     monospace;
   font-size: 0.9rem;
-  line-height: 1.75;
+  line-height: 1.7;
   tab-size: 2;
   white-space: pre;
 }
@@ -397,7 +419,7 @@ article pre[data-title]::before {
 .theme-doc-markdown blockquote,
 article blockquote {
   margin-left: 0;
-  padding: 0.9rem 1rem;
+  padding: 1rem 1.1rem;
   border-left: 4px solid var(--doc-warning-border);
   border-radius: 0 12px 12px 0;
   background: var(--doc-warning-bg);
@@ -419,8 +441,8 @@ article blockquote > :last-child {
 .admonition,
 .alert,
 .callout {
-  margin: 24px 0;
-  padding: 16px 18px;
+  margin: 26px 0;
+  padding: 17px 19px;
   border: 1px solid var(--doc-primary-border);
   border-left-width: 5px;
   border-radius: var(--doc-radius-lg);
@@ -501,7 +523,7 @@ article thead {
 .theme-doc-markdown td,
 article th,
 article td {
-  padding: 0.65rem 0.85rem;
+  padding: 0.72rem 0.9rem;
   border: 1px solid var(--doc-border);
   text-align: left;
   vertical-align: top;
@@ -656,6 +678,7 @@ h4:hover .anchor {
 
     --doc-bg: #0b1120;
     --doc-bg-soft: #111827;
+    --doc-surface: #0f172a;
     --doc-bg-muted: #1e293b;
 
     --doc-text: #e5e7eb;
@@ -667,6 +690,7 @@ h4:hover .anchor {
     --doc-border-strong: #334155;
 
     --doc-primary: #60a5fa;
+    --doc-primary-hover: #93c5fd;
     --doc-primary-soft: #0f1f3d;
     --doc-primary-border: #1d4ed8;
 
