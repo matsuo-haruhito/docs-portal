@@ -105,6 +105,37 @@ function setupSidebars() {
   document.querySelectorAll("[data-sidebar-layout]").forEach(setupSidebar)
 }
 
+function closeOtherNavDropdowns(currentDropdown) {
+  document.querySelectorAll("[data-nav-dropdown][open]").forEach((dropdown) => {
+    if (dropdown !== currentDropdown) dropdown.open = false
+  })
+}
+
+function setupNavDropdowns() {
+  if (document.documentElement.dataset.navDropdownsReady === "true") return
+  document.documentElement.dataset.navDropdownsReady = "true"
+
+  document.addEventListener("toggle", (event) => {
+    const dropdown = event.target.closest?.("[data-nav-dropdown]")
+    if (!dropdown || !dropdown.open) return
+    closeOtherNavDropdowns(dropdown)
+  }, true)
+
+  document.addEventListener("click", (event) => {
+    const clickedDropdown = event.target.closest("[data-nav-dropdown]")
+    document.querySelectorAll("[data-nav-dropdown][open]").forEach((dropdown) => {
+      if (dropdown !== clickedDropdown) dropdown.open = false
+    })
+  })
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return
+    document.querySelectorAll("[data-nav-dropdown][open]").forEach((dropdown) => {
+      dropdown.open = false
+    })
+  })
+}
+
 function navigateMainPanel(url) {
   const frame = document.getElementById("main_panel")
   if (!frame) return false
@@ -136,6 +167,7 @@ function setupDocumentTreeNavigation() {
   }, true)
 }
 
+setupNavDropdowns()
 setupDocumentTreeNavigation()
 
 document.addEventListener("turbo:load", setupSidebars)
