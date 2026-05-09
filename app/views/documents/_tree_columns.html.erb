@@ -9,6 +9,7 @@
 <td class="<%= tree_item_css_class(item) %>">
   <%= link_to tree_item_label(item),
     tree_item_path(item),
+    class: ["tree-item-label", tree_item_label_size_class(item)].compact,
     title: tooltip,
     data: {
       turbo_frame: "main_panel",
