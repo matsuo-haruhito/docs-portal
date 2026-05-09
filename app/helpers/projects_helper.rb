@@ -21,10 +21,10 @@ module ProjectsHelper
       context: self,
       node_prefix: "project_document_detail_tree",
       key_resolver: ->(item_or_id) { project_document_detail_tree_node_key(item_or_id) }
-    ).build(
+    ).build_turbo(
       hide_descendants_path_builder: ->(_item, _depth, _scope) { nil },
       show_descendants_path_builder: ->(_item, _depth, _scope) { nil },
-      toggle_all_path_builder: ->(_state) { nil }
+      toggle_all_path_builder: ->(state) { document_detail_tree_project_path(project, tree_action: state, format: :turbo_stream) }
     )
 
     TreeView::RenderState.new(
