@@ -36,14 +36,8 @@
 
   <article class="card">
     <h2>資料一覧</h2>
-    <ul class="resource-list">
-      <% @documents.each do |document| %>
-        <li>
-          <strong><%= link_to document.title, project_document_path(@project, document.slug) %></strong>
-          <span class="badge"><%= document_importance_level_label(document) %></span>
-        </li>
-      <% end %>
-    </ul>
+    <p class="muted">文書ツリーより詳しい情報を含む、案件内資料の階層一覧です。</p>
+    <%= render "projects/document_detail_tree", documents: @documents %>
   </article>
 </section>
 
