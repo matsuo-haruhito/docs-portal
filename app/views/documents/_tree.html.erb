@@ -15,11 +15,20 @@
       expanded_source_path: local_assigns[:expanded_source_path],
       collapsed_source_path: local_assigns[:collapsed_source_path]
     ) %>
+    <% tree_data = tree_view_state_data(render_state).merge(
+      document_tree_state_url: tree_view_state_path,
+      action: [
+        tree_view_state_data(render_state)[:action],
+        "tree-view-state:state-changed->document-tree-state#save"
+      ].compact_blank.join(" ")
+    ) %>
 
-    <table class="tree-view-table">
-      <tbody>
-        <%= tree_view_rows(render_state) %>
-      </tbody>
-    </table>
+    <div class="document-tree-scroll-spacer" data-controller="document-tree-state" data-document-tree-state-url-value="<%= tree_view_state_path %>">
+      <table class="tree-view-table" data="<%= tree_data.to_json %>">
+        <tbody>
+          <%= tree_view_rows(render_state) %>
+        </tbody>
+      </table>
+    </div>
   <% end %>
 </div>
