@@ -4,7 +4,7 @@ class Admin::ModelBrowserCatalog
   ENTRIES = [
     Entry.new("companies", "会社", "会社マスタと所属の起点です。", Company, %i[public_id name updated_at], :admin_companies_path),
     Entry.new("users", "ユーザー", "利用者種別と会社所属を確認します。", User, %i[public_id name email_address user_type active updated_at], :admin_users_path),
-    Entry.new("projects", "案件", "公開単位となる案件の一覧です。", Project, %i[code name active updated_at], :admin_projects_path),
+    Entry.new("projects", "案件", "公開単位となる案件の一覧です。", Project, %i[code name company_id active updated_at], :admin_projects_path),
     Entry.new("project_memberships", "案件所属", "社外ユーザーの案件到達条件です。", ProjectMembership, %i[public_id project_id user_id role updated_at], :admin_project_memberships_path),
     Entry.new("documents", "文書", "公開制御と最新版参照の中核です。", Document, %i[public_id title slug category visibility_policy importance_level updated_at], :admin_documents_path),
     Entry.new("document_versions", "文書版", "各版の公開状態と build 情報です。", DocumentVersion, %i[public_id version_label status source_commit_hash published_at updated_at], nil),

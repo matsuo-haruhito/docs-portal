@@ -99,25 +99,31 @@ RSpec.describe "Admin management", type: :request do
 
   describe "project master" do
     let(:internal_user) { create(:user, :internal) }
+    let!(:company) { create(:company, domain: "client.example.com", name: "Client Co") }
 
-    it "allows internal users to manage projects" do
+    it "allows internal users to manage projects with optional companies" do
       sign_in_as(internal_user)
 
       expect do
         post admin_projects_path, params: {
-          project: { code: "PJ999", name: "Portal Refresh", description: "desc", active: true }
+          project: { code: "PJ999", name: "Portal Refresh", description: "desc", company_id: company.id, active: true }
         }
       end.to change(Project, :count).by(1)
 
       project = Project.find_by!(code: "PJ999")
       expect(response).to redirect_to(admin_projects_path)
+      expect(project.company).to eq(company)
+
+      get admin_projects_path
+      expect(response.body).to include("Client Co")
 
       patch admin_project_path(project), params: {
-        project: { code: "PJ999", name: "Portal Refresh Updated", description: "changed", active: false }
+        project: { code: "PJ999", name: "Portal Refresh Updated", description: "changed", company_id: "", active: false }
       }
 
       expect(response).to redirect_to(admin_projects_path)
       expect(project.reload.name).to eq("Portal Refresh Updated")
+      expect(project.company).to be_nil
       expect(project.active).to be(false)
     end
 

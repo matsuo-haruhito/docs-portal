@@ -4,6 +4,7 @@ class Company < ApplicationRecord
   public_id_prefix "com"
 
   has_many :users, dependent: :restrict_with_exception
+  has_many :projects, dependent: :nullify
   has_many :document_permissions, dependent: :destroy
 
   before_validation :normalize_domain

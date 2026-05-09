@@ -1,9 +1,10 @@
 class Admin::ProjectsController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_project, only: %i[edit update destroy]
+  before_action :set_companies, only: %i[index create edit update]
 
   def index
-    @projects = Project.order(:code)
+    @projects = Project.includes(:company).order(:code)
     @project = Project.new(active: true)
   end
 
@@ -13,7 +14,7 @@ class Admin::ProjectsController < Admin::BaseController
     if @project.save
       redirect_to admin_projects_path, notice: "案件を登録しました。"
     else
-      @projects = Project.order(:code)
+      @projects = Project.includes(:company).order(:code)
       render :index, status: :unprocessable_entity
     end
   end
@@ -45,7 +46,11 @@ class Admin::ProjectsController < Admin::BaseController
     @project = Project.find_by!(code: params[:id])
   end
 
+  def set_companies
+    @companies = Company.order(:domain)
+  end
+
   def project_params
-    params.require(:project).permit(:code, :name, :description, :active)
+    params.require(:project).permit(:code, :name, :description, :active, :company_id)
   end
 end

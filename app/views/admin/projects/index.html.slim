@@ -12,6 +12,7 @@ h1 案件マスタ
     tr
       th コード
       th 案件名
+      th 企業
       th 説明
       th 状態
       th
@@ -20,6 +21,7 @@ h1 案件マスタ
       tr
         td = project.code
         td = project.name
+        td = project.company&.display_name || "未設定"
         td = project.description
         td = project.active? ? "有効" : "無効"
         td.actions
