@@ -50,6 +50,24 @@ class ProjectsController < BaseController
     respond_to_document_tree(projects: @tree_projects, current_project: @project)
   end
 
+  def document_detail_tree
+    @project = Project.find_by!(code: params[:project_code] || params[:code])
+    require_project_access!(@project)
+    return if require_consent!(target: @project, timing: :first_view)
+
+    @documents = portal_documents_for(@project)
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(
+          "project_document_detail_tree",
+          partial: "projects/document_detail_tree",
+          locals: { documents: @documents, expansion_mode: params[:tree_action].to_s }
+        )
+      end
+      format.html { redirect_to project_path(@project) }
+    end
+  end
+
   private
 
   def respond_to_document_tree(projects:, current_project: nil, current_document: nil, expanded_source_path: nil, collapsed_source_path: nil)
