@@ -10,10 +10,10 @@
       = form.text_field :version_label
     label
       | 種別
-      = form.select :consent_scope, ConsentTerm.consent_scopes.keys.map { [_1, _1] }
+      = form.select :consent_scope, enum_options_for("consent_terms.consent_scope", ConsentTerm.consent_scopes.keys)
     label
       | 再同意方針
-      = form.select :requirement_timing, ConsentTerm.requirement_timings.keys.map { [_1, _1] }
+      = form.select :requirement_timing, enum_options_for("consent_terms.requirement_timing", ConsentTerm.requirement_timings.keys)
     label
       | 状態
       = form.select :active, [["有効", true], ["無効", false]]
