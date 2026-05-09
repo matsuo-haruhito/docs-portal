@@ -1,4 +1,4 @@
-import "@hotwired/turbo-rails"
+import { Turbo } from "@hotwired/turbo-rails"
 
 const STORAGE_KEY = "docsPortal.sidebar"
 const DEFAULT_WIDTH = 360
@@ -104,6 +104,19 @@ function setupSidebar(layout) {
 function setupSidebars() {
   document.querySelectorAll("[data-sidebar-layout]").forEach(setupSidebar)
 }
+
+function setupDocumentTreeNavigation() {
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest("a[data-tree-nav-link='true']")
+    if (!link) return
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+
+    event.preventDefault()
+    Turbo.visit(link.href, { frame: "main_panel" })
+  })
+}
+
+setupDocumentTreeNavigation()
 
 document.addEventListener("turbo:load", setupSidebars)
 document.addEventListener("turbo:render", setupSidebars)
