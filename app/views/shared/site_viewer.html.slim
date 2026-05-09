@@ -1,7 +1,6 @@
 - page_title @site_viewer_document.title, @site_viewer_version.version_label
 
 .page-hero.site-viewer-hero
-  p.eyebrow Document Viewer
   h1 = @site_viewer_document.title
   p.muted = site_viewer_meta_lines(project: @site_viewer_project, document: @site_viewer_document, version: @site_viewer_version).join(" / ")
   p.actions
