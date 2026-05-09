@@ -9,7 +9,6 @@ p.muted 主要 model の件数と最近の record を横断確認できます。
   - @entries.each do |entry|
     - summary = @entry_summaries.fetch(entry)
     section.card.metric-card
-      p.eyebrow = entry.label
       h2 = link_to entry.label, admin_model_browser_model_path(entry.key)
       p.muted = entry.description
       dl.definition-list
