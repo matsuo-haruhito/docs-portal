@@ -72,3 +72,38 @@ ja:
         references: "参照"
         supersedes: "置き換え"
         related: "関連"
+    git_import_sources:
+      provider:
+        github: "GitHub"
+      auth_type:
+        github_app: "GitHub App"
+        fine_grained_pat: "Fine-grained PAT"
+        deploy_key: "Deploy key"
+        no_auth: "認証なし"
+    git_import_runs:
+      import_mode:
+        pull: "取得"
+        push: "受信"
+      status:
+        pending: "待機中"
+        running: "実行中"
+        imported: "取込済み"
+        skipped: "スキップ"
+        failed: "失敗"
+    bulk_edit_dry_runs:
+      status:
+        analyzed: "解析済み"
+        confirmed: "実行済み"
+        expired: "期限切れ"
+        failed: "失敗"
+    bulk_edit_fields:
+      category: "分類"
+      document_kind: "文書種別"
+      visibility_policy: "公開範囲"
+      importance: "重要度"
+      importance_level: "重要度"
+      archived: "アーカイブ"
+      snapshot_kind: "スナップショット種別"
+      published_from: "公開開始"
+      published_until: "公開終了"
+      tags: "タグ"
