@@ -31,11 +31,11 @@ section.card
       |  / 未利用:
       strong = " #{@report_hash.dig(:summary, :unused_document_count)}"
     p
-      | view:
+      | 閲覧:
       strong = " #{@report_hash.dig(:summary, :total_views)}"
-      |  / download:
+      |  / ダウンロード:
       strong = " #{@report_hash.dig(:summary, :total_downloads)}"
-      |  / read confirmation:
+      |  / 既読確認:
       strong = " #{@report_hash.dig(:summary, :total_read_confirmations)}"
 
   table
@@ -46,17 +46,17 @@ section.card
         th 種別
         th 公開範囲
         th 利用
-        th view
-        th download
-        th read confirmation
+        th 閲覧
+        th ダウンロード
+        th 既読確認
         th 最終アクセス
     tbody
       - @report_hash[:documents].each do |row|
         tr
           td = link_to row[:title], project_document_path(@selected_project, row[:slug])
-          td = row[:category]
-          td = row[:document_kind]
-          td = row[:visibility_policy]
+          td = document_category_label(row[:category])
+          td = document_kind_label(row[:document_kind])
+          td = document_visibility_policy_label(row[:visibility_policy])
           td = row[:used] ? "あり" : "なし"
           td = row[:view_count]
           td = row[:download_count]
