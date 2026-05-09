@@ -15,10 +15,8 @@ p.actions
 
 .stats-grid
   .card.metric-card
-    p.eyebrow レコード数
     p.metric-number = @summary[:total_count]
   .card.metric-card
-    p.eyebrow 最終更新
     p.metric-number.metric-number--small = @summary[:latest_updated_at] ? l(@summary[:latest_updated_at], format: :short) : "-"
 
 section.card
