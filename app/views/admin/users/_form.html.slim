@@ -3,7 +3,7 @@
 = form_with model: [:admin, user] do |form|
   .form-grid
     label
-      | 氏名
+      | ユーザー名（表示用）
       = form.text_field :name
     label
       | メールアドレス
@@ -13,7 +13,7 @@
       = form.select :user_type, User.user_types.keys.map { |key| [key, key] }
     label
       | 会社
-      = form.collection_select :company_id, @companies, :id, :name, include_blank: "未所属"
+      = form.collection_select :company_id, @companies, :id, :display_name, include_blank: "未所属"
     label
       | 有効
       = form.select :active, [["有効", true], ["無効", false]]
@@ -23,7 +23,7 @@
     label
       | パスワード確認
       = form.password_field :password_confirmation
-  p.muted 編集時にパスワードを変えない場合は空欄のまま保存できます。
+  p.muted ユーザー名が空の場合はメールアドレスを表示名として使用します。編集時にパスワードを変えない場合は空欄のまま保存できます。
   p.actions
     = form.submit "保存", class: "button"
     - if user.persisted?
