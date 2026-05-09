@@ -45,7 +45,7 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def load_companies
-    @companies = company_master_admin? ? Company.where(id: current_user.company_id) : Company.order(:code)
+    @companies = company_master_admin? ? Company.where(id: current_user.company_id) : Company.order(:domain)
   end
 
   def user_params
