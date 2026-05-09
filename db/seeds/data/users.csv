@@ -1,5 +1,5 @@
 email_address,name,user_type,company_code,password,active
-admin@example.com,社内管理者,internal,INTERNAL,password123!,true
-staff@example.com,社内閲覧者,internal,INTERNAL,password123!,true
-client-a@example.com,A商事 担当者,external,CLIENT_A,password123!,true
-client-b@example.com,B物流 担当者,external,CLIENT_B,password123!,true
+admin@example.com,社内管理者,internal,example.com,password123!,true
+staff@example.com,社内閲覧者,internal,example.com,password123!,true
+client-a@client-a.example.com,A商事 担当者,external,client-a.example.com,password123!,true
+client-b@client-b.example.com,B物流 担当者,external,client-b.example.com,password123!,true
