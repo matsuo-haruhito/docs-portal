@@ -121,7 +121,7 @@ async function openTreeNodeForNavigation(link) {
 }
 
 function setupDocumentTreeNavigation() {
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", async (event) => {
     if (event.target.closest(".tree-toggle")) return
 
     const link = event.target.closest("a[data-tree-nav-link='true']")
@@ -129,7 +129,7 @@ function setupDocumentTreeNavigation() {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
 
     event.preventDefault()
-    openTreeNodeForNavigation(link)
+    await openTreeNodeForNavigation(link)
     Turbo.visit(link.href, { frame: "main_panel" })
   })
 }
