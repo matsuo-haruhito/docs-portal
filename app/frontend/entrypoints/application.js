@@ -144,12 +144,21 @@ function navigateMainPanel(url) {
   return true
 }
 
-function clickTreeToggleIfClosed(link) {
-  if (!["project", "document_tree_folder"].includes(link.dataset.treeItemType)) return
+function refreshDocumentTree(link) {
+  const url = link.dataset.treeRefreshUrl
+  if (!url) return
 
-  const row = link.closest("tr")
-  const toggle = row?.querySelector(".tree-toggle-cell .tree-toggle__action[aria-expanded='false']")
-  toggle?.click()
+  fetch(url, {
+    headers: {
+      Accept: "text/vnd.turbo-stream.html"
+    },
+    credentials: "same-origin"
+  })
+    .then((response) => response.ok ? response.text() : "")
+    .then((html) => {
+      if (!html) return
+      window.Turbo?.renderStreamMessage(html)
+    })
 }
 
 function setupDocumentTreeNavigation() {
@@ -163,7 +172,7 @@ function setupDocumentTreeNavigation() {
     event.preventDefault()
     if (!navigateMainPanel(link.href)) return
 
-    clickTreeToggleIfClosed(link)
+    refreshDocumentTree(link)
   }, true)
 }
 
