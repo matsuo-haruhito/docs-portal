@@ -111,7 +111,7 @@ async function openTreeNodeForNavigation(link) {
 
   const response = await fetch(openUrl, {
     headers: {
-      Accept: "text/vnd.turbo-stream.html, text/html, application/xhtml+xml"
+      Accept: "text/vnd.turbo-stream.html"
     },
     credentials: "same-origin"
   })
@@ -121,7 +121,7 @@ async function openTreeNodeForNavigation(link) {
 }
 
 function setupDocumentTreeNavigation() {
-  document.addEventListener("click", async (event) => {
+  document.addEventListener("click", (event) => {
     if (event.target.closest(".tree-toggle")) return
 
     const link = event.target.closest("a[data-tree-nav-link='true']")
@@ -129,9 +129,9 @@ function setupDocumentTreeNavigation() {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
 
     event.preventDefault()
-    await openTreeNodeForNavigation(link)
     Turbo.visit(link.href, { frame: "main_panel" })
-  })
+    openTreeNodeForNavigation(link)
+  }, true)
 }
 
 setupDocumentTreeNavigation()
