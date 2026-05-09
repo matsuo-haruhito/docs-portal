@@ -1,3 +1,5 @@
+import "@hotwired/turbo-rails"
+
 const STORAGE_KEY = "docsPortal.sidebar"
 const DEFAULT_WIDTH = 360
 const MIN_WIDTH = 260
