@@ -1,4 +1,6 @@
 import "@hotwired/turbo-rails"
+import "tom-select/dist/css/tom-select.css"
+import { setupTomSelectFields } from "../lib/tom_select_fields"
 
 const STORAGE_KEY = "docsPortal.sidebar"
 const DEFAULT_WIDTH = 360
@@ -179,5 +181,11 @@ function setupDocumentTreeNavigation() {
 setupNavDropdowns()
 setupDocumentTreeNavigation()
 
-document.addEventListener("turbo:load", setupSidebars)
-document.addEventListener("turbo:render", setupSidebars)
+document.addEventListener("turbo:load", () => {
+  setupSidebars()
+  setupTomSelectFields()
+})
+document.addEventListener("turbo:render", () => {
+  setupSidebars()
+  setupTomSelectFields()
+})
