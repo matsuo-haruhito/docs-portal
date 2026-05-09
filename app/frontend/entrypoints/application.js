@@ -161,24 +161,6 @@ function refreshDocumentTree(link) {
     })
 }
 
-function setProjectDetailTreeExpanded(tree, expanded) {
-  const selector = `.tree-toggle-cell .tree-toggle__action[aria-expanded='${expanded ? "false" : "true"}']`
-  tree.querySelectorAll(selector).forEach((toggle) => toggle.click())
-}
-
-function setupProjectDetailTreeControls() {
-  document.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-project-detail-tree-action]")
-    if (!button) return
-
-    const tree = button.closest(".card")?.querySelector("[data-project-detail-tree]")
-    if (!tree) return
-
-    event.preventDefault()
-    setProjectDetailTreeExpanded(tree, button.dataset.projectDetailTreeAction === "expand")
-  })
-}
-
 function setupDocumentTreeNavigation() {
   document.addEventListener("click", (event) => {
     if (event.target.closest(".tree-toggle")) return
@@ -196,7 +178,6 @@ function setupDocumentTreeNavigation() {
 
 setupNavDropdowns()
 setupDocumentTreeNavigation()
-setupProjectDetailTreeControls()
 
 document.addEventListener("turbo:load", setupSidebars)
 document.addEventListener("turbo:render", setupSidebars)
