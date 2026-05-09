@@ -27,16 +27,16 @@ h1 文書マスタ
         td = document.title
         td = document.slug
         td
-          span.badge = document.category
-        td = document.document_kind
-        td = document.visibility_policy
+          span.badge = document_category_label(document)
+        td = document_kind_label(document)
+        td = document_visibility_policy_label(document)
         td
           - if document.archived?
-            span.badge archived
+            span.badge アーカイブ済み
             br
-            span.muted = "by #{document.archived_by_user&.name || '-'}"
+            span.muted = "実行者: #{document.archived_by_user&.name || '-'}"
           - else
-            span.badge active
+            span.badge 有効
         td = document.retention_until ? l(document.retention_until) : "-"
         td = document.discard_candidate_at ? l(document.discard_candidate_at) : "-"
         td.actions
