@@ -1,10 +1,23 @@
 require "bcrypt"
 require "csv"
 require "digest"
+require "fileutils"
+require "pathname"
+require "rack/mime"
+require_relative "docusaurus_builder"
+require_relative "external_sample_importer"
 
 module SeedSupport
   class MasterDataImporter
     DATA_DIR = Rails.root.join("db", "seeds", "data")
+    EXTERNAL_SAMPLE_ROOT = Rails.root.join("storage", "document_files", "external_samples")
+    VERSION_SNAPSHOT_DIRECTORY_NAMES = %w[
+      編集正本
+      編集正本PDF化済
+      編集正本PDF化
+      提出済
+      提出済み
+    ].freeze
 
     def run
       ActiveRecord::Base.transaction do
@@ -18,6 +31,7 @@ module SeedSupport
         seed_document_files
         seed_document_permissions
         seed_access_logs
+        seed_external_samples
       end
 
       reset_sequences
@@ -284,6 +298,205 @@ module SeedSupport
       )
     end
 
+    def seed_external_samples
+      root = sample_source_root
+      sample_documents = external_sample_documents(root)
+
+      if sample_documents.empty?
+        puts "External sample directories not found under storage/document_files/external_samples. Skipped external sample files."
+        return
+      end
+
+      now = Time.current
+      users = User.all.index_by(&:email_address)
+      existing_projects = Project.all.index_by(&:code)
+      latest_sample_documents = latest_external_document_specs(sample_documents)
+
+      upsert_rows!(
+        Project,
+        sample_documents.uniq { _1[:project_code] }.map do |document_spec|
+          project = existing_projects[document_spec[:project_code]]
+          {
+            public_id: public_id_for(project, "prj", document_spec[:project_code]),
+            code: document_spec[:project_code],
+            name: document_spec[:project_name],
+            description: document_spec[:project_description],
+            active: true
+          }.merge(timestamps(project, now:))
+        end,
+        unique_by: :index_projects_on_code
+      )
+
+      projects = Project.all.index_by(&:code)
+      existing_documents = Document.all.index_by { composite_key(_1.project_id, _1.slug) }
+      upsert_rows!(
+        Document,
+        latest_sample_documents.map do |document_spec|
+          project = projects.fetch(document_spec[:project_code])
+          document = existing_documents[composite_key(project.id, document_spec[:slug])]
+          {
+            public_id: public_id_for(document, "doc", document_spec[:project_code], document_spec[:slug]),
+            project_id: project.id,
+            title: document_spec[:title],
+            slug: document_spec[:slug],
+            category: Document.categories.fetch("spec"),
+            document_kind: Document.document_kinds.fetch("mixed"),
+            visibility_policy: Document.visibility_policies.fetch("restricted_external")
+          }.merge(timestamps(document, now:))
+        end,
+        unique_by: :index_documents_on_project_id_and_slug
+      )
+
+      documents = documents_by_project_and_slug
+      existing_versions = DocumentVersion.all.index_by { composite_key(_1.document_id, _1.version_label) }
+      upsert_rows!(
+        DocumentVersion,
+        sample_documents.map do |document_spec|
+          document = documents.fetch(composite_key(document_spec[:project_code], document_spec[:slug]))
+          version = existing_versions[composite_key(document.id, document_spec[:version_label])]
+          source_path_attrs = source_path_attrs_for(document_spec[:markdown_logical_relative_path])
+          {
+            public_id: public_id_for(version, "ver", document_spec[:project_code], document_spec[:slug], document_spec[:version_label]),
+            document_id: document.id,
+            version_label: document_spec[:version_label],
+            status: DocumentVersion.statuses.fetch("published"),
+            source_commit_hash: document_spec[:source_commit_hash],
+            changelog_summary: "#{document_spec[:title]} を external_samples から取り込み",
+            published_at: now,
+            published_by_user_id: users.fetch("admin@example.com").id,
+            notes: "source_dir=#{document_spec[:source_dir]}",
+            markdown_entry_path: document_spec[:markdown_entry_path],
+            site_build_path: document_spec[:site_build_path],
+            pdf_snapshot_path: nil
+          }.merge(source_path_attrs).merge(timestamps(version, now:))
+        end,
+        unique_by: :index_document_versions_on_document_id_and_version_label
+      )
+
+      versions = versions_by_project_slug_and_label
+      upsert_rows!(
+        Document,
+        latest_sample_documents.map do |document_spec|
+          document = documents.fetch(composite_key(document_spec[:project_code], document_spec[:slug]))
+          version = versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
+          {
+            id: document.id,
+            public_id: document.public_id,
+            project_id: document.project_id,
+            title: document.title,
+            slug: document.slug,
+            category: document.category_before_type_cast,
+            document_kind: document.document_kind_before_type_cast,
+            visibility_policy: document.visibility_policy_before_type_cast,
+            latest_version_id: version.id
+          }.merge(timestamps(document, now:))
+        end,
+        unique_by: :id
+      )
+
+      build_external_sample_sites(sample_documents, now:)
+      seed_external_sample_files(sample_documents, now:)
+      seed_external_sample_permissions(latest_sample_documents, now:)
+    end
+
+    def build_external_sample_sites(sample_documents, now:)
+      versions = versions_by_project_slug_and_label
+      sample_documents
+        .group_by { [_1[:project_code], _1[:version_label], _1[:source_dir].to_s, _1[:site_build_path]] }
+        .each_value do |document_specs|
+          representative_spec = document_specs.first
+          representative_version = versions.fetch(
+            composite_key(
+              representative_spec[:project_code],
+              representative_spec[:slug],
+              representative_spec[:version_label]
+            )
+          )
+          next if representative_version.site_build_path.blank?
+
+          route_map = SeedSupport::DocusaurusBuilder.new(
+            source_dir: representative_spec[:source_dir],
+            version: representative_version,
+            site_build_path: representative_version.site_build_path
+          ).build || {}
+
+          document_specs.each do |document_spec|
+            version = versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
+            route_key = SeedSupport::DocusaurusBuilder.seed_doc_id_for(document_spec[:markdown_logical_relative_path])
+            route_path = route_map[route_key] || document_spec[:markdown_entry_path]
+            version.update_columns(markdown_entry_path: route_path, updated_at: now)
+          end
+
+          sibling_versions = document_specs.filter_map do |document_spec|
+            versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
+          end.uniq
+
+          sibling_versions.each do |version|
+            next if version == representative_version
+            next unless representative_version.site_root_absolute_path.directory?
+
+            FileUtils.mkdir_p(version.site_root_absolute_path)
+            FileUtils.rm_rf(version.site_root_absolute_path.children)
+            FileUtils.cp_r(representative_version.site_root_absolute_path.children, version.site_root_absolute_path)
+          end
+        end
+    end
+
+    def seed_external_sample_files(sample_documents, now:)
+      versions = versions_by_project_slug_and_label
+      existing_files = DocumentFile.all.index_by(&:storage_key)
+      file_rows = sample_documents.flat_map do |document_spec|
+        version = versions.fetch(composite_key(document_spec[:project_code], document_spec[:slug], document_spec[:version_label]))
+        document_spec[:attachment_files].each_with_index.map do |source_file, index|
+          storage_key = external_storage_key(source_file)
+          file = existing_files[storage_key]
+          {
+            public_id: public_id_for(file, "file", storage_key),
+            document_version_id: version.id,
+            file_name: relative_path(source_file, document_spec[:source_dir]),
+            content_type: content_type_for(source_file),
+            storage_key:,
+            file_size: File.size(source_file),
+            sort_order: index
+          }.merge(timestamps(file, now:))
+        end
+      end
+
+      upsert_rows!(DocumentFile, file_rows, unique_by: :index_document_files_on_storage_key)
+    end
+
+    def seed_external_sample_permissions(latest_sample_documents, now:)
+      companies = Company.all.index_by(&:domain)
+      documents = documents_by_project_and_slug
+      existing = DocumentPermission.all.index_by { composite_key(_1.document_id, _1.company_id, _1.user_id) }
+      external_company_domains = rows("users.csv").select { _1["user_type"] == "external" }.map { _1["company_domain"] }.compact_blank.uniq
+      keys = latest_sample_documents.flat_map do |document_spec|
+        document = documents.fetch(composite_key(document_spec[:project_code], document_spec[:slug]))
+        external_company_domains.map do |company_domain|
+          composite_key(document.id, companies.fetch(company_domain).id, nil)
+        end
+      end
+      ids = next_seed_ids(existing, keys)
+
+      permission_rows = latest_sample_documents.flat_map do |document_spec|
+        document = documents.fetch(composite_key(document_spec[:project_code], document_spec[:slug]))
+        external_company_domains.map do |company_domain|
+          company_id = companies.fetch(company_domain).id
+          permission = existing[composite_key(document.id, company_id, nil)]
+          {
+            public_id: public_id_for(permission, "perm", document_spec[:project_code], document_spec[:slug], company_domain, nil),
+            document_id: document.id,
+            company_id:,
+            user_id: nil,
+            access_level: DocumentPermission.access_levels.fetch("download")
+          }.merge(timestamps(permission, now:))
+        end
+      end
+
+      permission_rows.each_with_index { |row, index| row[:id] = ids[index] }
+      upsert_rows!(DocumentPermission, permission_rows, unique_by: :id)
+    end
+
     def access_log_key(row, companies:, users:, projects:, documents:, versions:)
       project_code = row.fetch("project_code")
       document = documents.fetch(composite_key(project_code, row.fetch("document_slug")))
@@ -313,6 +526,117 @@ module SeedSupport
       CSV.read(DATA_DIR.join(name), headers: true, encoding: "UTF-8")
     end
 
+    def sample_source_root
+      @sample_source_root ||= EXTERNAL_SAMPLE_ROOT if EXTERNAL_SAMPLE_ROOT.directory?
+    end
+
+    def external_sample_documents(root)
+      SeedSupport::ExternalSampleImporter.new(self).documents(root)
+    end
+
+    def latest_external_document_specs(sample_documents)
+      sample_documents
+        .group_by { [_1[:project_code], _1[:slug]] }
+        .values
+        .map do |document_specs|
+          document_specs.find { _1[:version_label] == "current" } ||
+            document_specs.max_by { [_1[:version_priority], _1[:version_label].to_s] }
+        end
+    end
+
+    def project_code_for_sample_set(sample_set_key)
+      normalized = sample_set_key.to_s.parameterize(separator: "_").upcase
+      base = normalized.presence || "SAMPLE"
+      suffix = Digest::SHA1.hexdigest(sample_set_key.to_s)[0, 6].upcase
+      "EXT_#{base.first(12)}_#{suffix}"
+    end
+
+    def slug_for_name(name)
+      name.to_s.parameterize.presence || "sample-#{Digest::SHA1.hexdigest(name.to_s)[0, 8]}"
+    end
+
+    def document_slug_for_markdown(site_dir, logical_relative_path)
+      path = Pathname(logical_relative_path.to_s)
+      basename_without_ext = path.basename.sub_ext("").to_s
+      readable = slug_for_name("#{site_dir.basename}-#{basename_without_ext}")
+      digest = Digest::SHA1.hexdigest("#{site_dir.basename}/#{logical_relative_path}")[0, 10]
+      "#{readable}-#{digest}"
+    end
+
+    def version_label_for_name(name)
+      name.to_s.presence || "current"
+    end
+
+    def site_build_segment_for_name(name)
+      slug_for_name(name.to_s.presence || "current")
+    end
+
+    def child_directories(path)
+      path.children.select(&:directory?).sort_by(&:to_s)
+    end
+
+    def version_snapshot_directory?(path)
+      VERSION_SNAPSHOT_DIRECTORY_NAMES.include?(path.basename.to_s)
+    end
+
+    def site_page_path_for_markdown(logical_relative_path, site_build_path)
+      path = Pathname(logical_relative_path.to_s)
+      page_relative = if path.basename.to_s.match?(/\AREADME\.(md|markdown)\z/i)
+        path.dirname.to_s == "." ? "" : path.dirname.to_s
+      else
+        path.sub_ext("").to_s
+      end
+
+      [site_build_path, page_relative.presence].compact.join("/")
+    end
+
+    def document_title_for_markdown(logical_relative_path, site_dir)
+      path = Pathname(logical_relative_path.to_s)
+      if path.basename.to_s.match?(/\AREADME\.(md|markdown)\z/i)
+        path.dirname.to_s == "." ? site_dir.basename.to_s : path.dirname.basename.to_s
+      else
+        path.basename.sub_ext("").to_s
+      end
+    end
+
+    def related_attachment_files(source_file, logical_relative_path, source_root)
+      path = Pathname(logical_relative_path.to_s)
+      source_path = Pathname(source_file)
+      Dir.glob(source_path.dirname.join("#{path.basename.sub_ext('').to_s}.*").to_s)
+        .select { File.file?(_1) }
+        .reject { Pathname(_1) == source_path }
+        .sort
+    end
+
+    def source_path_attrs_for(logical_relative_path)
+      path = Pathname(logical_relative_path.to_s)
+      directory = path.dirname.to_s
+      file_name = path.basename.to_s
+      extension = path.extname.delete_prefix(".").presence
+      {
+        source_relative_path: path.to_s,
+        source_directory: directory == "." ? nil : directory,
+        source_file_name: file_name,
+        source_basename: path.basename(path.extname).to_s,
+        source_extension: extension
+      }
+    end
+
+    def relative_path(path, root)
+      Pathname(path).relative_path_from(Pathname(root)).to_s
+    end
+
+    def external_storage_key(source_file)
+      relative_path(source_file, Rails.root.join("storage", "document_files"))
+    end
+
+    def content_type_for(path)
+      extension = File.extname(path).downcase
+      return "text/markdown" if %w[.md .markdown].include?(extension)
+
+      Rack::Mime.mime_type(extension, "application/octet-stream")
+    end
+
     def bool_value(value)
       value.to_s != "false"
     end
@@ -321,8 +645,7 @@ module SeedSupport
       value.present? ? Time.zone.parse(value) : nil
     end
 
-    def timestamps(record)
-      now = Time.current
+    def timestamps(record, now: Time.current)
       { created_at: record&.created_at || now, updated_at: now }
     end
 
