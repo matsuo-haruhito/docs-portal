@@ -59,7 +59,7 @@ html {
     BlinkMacSystemFont,
     sans-serif;
   font-size: 16px;
-  line-height: 1.68;
+  line-height: 1.56;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -76,7 +76,7 @@ body.portal-doc-body {
     -apple-system,
     BlinkMacSystemFont,
     sans-serif;
-  line-height: 1.68;
+  line-height: 1.56;
 }
 
 body.portal-doc-embedded {
@@ -184,7 +184,7 @@ article h5,
 article h6 {
   color: var(--doc-text-heading);
   font-weight: 760;
-  line-height: 1.22;
+  line-height: 1.2;
   letter-spacing: -0.025em;
   scroll-margin-top: 96px;
 }
@@ -192,7 +192,7 @@ article h6 {
 .markdown h1,
 .theme-doc-markdown h1,
 article h1 {
-  margin: 0 0 20px;
+  margin: 0 0 16px;
   font-size: clamp(2rem, 5vw, 2.8rem);
   line-height: 1.08;
 }
@@ -200,19 +200,19 @@ article h1 {
 .markdown h1 + p,
 .theme-doc-markdown h1 + p,
 article h1 + p {
-  margin-top: -0.2rem;
-  margin-bottom: 1.2rem;
+  margin-top: -0.15rem;
+  margin-bottom: 0.9rem;
   color: var(--doc-text-muted);
   font-size: 1.04rem;
-  line-height: 1.65;
+  line-height: 1.5;
 }
 
 .markdown h2,
 .theme-doc-markdown h2,
 article h2 {
-  margin-top: 2.35rem;
-  margin-bottom: 0.85rem;
-  padding-bottom: 0.45rem;
+  margin-top: 2rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--doc-border);
   font-size: clamp(1.38rem, 3vw, 1.75rem);
 }
@@ -220,44 +220,39 @@ article h2 {
 .markdown h3,
 .theme-doc-markdown h3,
 article h3 {
-  margin-top: 1.75rem;
-  margin-bottom: 0.55rem;
+  margin-top: 1.35rem;
+  margin-bottom: 0.45rem;
   font-size: 1.24rem;
 }
 
 .markdown h4,
 .theme-doc-markdown h4,
 article h4 {
-  margin-top: 1.45rem;
-  margin-bottom: 0.45rem;
+  margin-top: 1.15rem;
+  margin-bottom: 0.35rem;
   font-size: 1.06rem;
 }
 
 .markdown p,
-.markdown ul,
-.markdown ol,
 .markdown blockquote,
 .markdown table,
 .markdown pre,
 .theme-doc-markdown p,
-.theme-doc-markdown ul,
-.theme-doc-markdown ol,
 .theme-doc-markdown blockquote,
 .theme-doc-markdown table,
 .theme-doc-markdown pre,
 article p,
-article ul,
-article ol,
 article blockquote,
 article table,
 article pre {
-  margin-bottom: 0.82rem;
+  margin-bottom: 0.6rem;
 }
 
 .markdown p,
 .theme-doc-markdown p,
 article p {
   color: var(--doc-text-soft);
+  line-height: 1.56;
 }
 
 .markdown strong,
@@ -275,7 +270,7 @@ article small {
 
 hr {
   height: 1px;
-  margin: 40px 0;
+  margin: 36px 0;
   border: 0;
   background: var(--doc-border);
 }
@@ -311,14 +306,24 @@ article a:focus-visible {
 .theme-doc-markdown ol,
 article ul,
 article ol {
-  padding-left: 1.3rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.55rem;
+  padding-left: 1.28rem;
   color: var(--doc-text-soft);
+  line-height: 1.5;
 }
 
 .markdown li,
 .theme-doc-markdown li,
 article li {
-  margin: 0.22rem 0;
+  margin: 0.06rem 0;
+  line-height: 1.5;
+}
+
+.markdown li + li,
+.theme-doc-markdown li + li,
+article li + li {
+  margin-top: 0.14rem;
 }
 
 .markdown li::marker,
@@ -330,13 +335,14 @@ article li::marker {
 .markdown li > p,
 .theme-doc-markdown li > p,
 article li > p {
-  margin: 0.25rem 0;
+  margin: 0.16rem 0;
+  line-height: 1.5;
 }
 
 .markdown :not(pre) > code,
 .theme-doc-markdown :not(pre) > code,
 article :not(pre) > code {
-  padding: 0.14em 0.38em;
+  padding: 0.12em 0.36em;
   border: 1px solid #e2e8f0;
   border-radius: var(--doc-radius-sm);
   background: var(--doc-inline-code-bg);
@@ -355,7 +361,7 @@ article :not(pre) > code {
 .theme-doc-markdown pre,
 article pre {
   position: relative;
-  margin: 20px 0 1rem;
+  margin: 18px 0 0.9rem;
   padding: 18px 20px;
   overflow-x: auto;
   border: 1px solid #1e293b;
@@ -381,7 +387,7 @@ article pre code {
     Menlo,
     monospace;
   font-size: 0.9rem;
-  line-height: 1.62;
+  line-height: 1.58;
   tab-size: 2;
   white-space: pre;
 }
@@ -419,7 +425,7 @@ article pre[data-title]::before {
 .theme-doc-markdown blockquote,
 article blockquote {
   margin-left: 0;
-  padding: 0.85rem 1rem;
+  padding: 0.75rem 0.95rem;
   border-left: 4px solid var(--doc-warning-border);
   border-radius: 0 12px 12px 0;
   background: var(--doc-warning-bg);
@@ -441,8 +447,8 @@ article blockquote > :last-child {
 .admonition,
 .alert,
 .callout {
-  margin: 22px 0;
-  padding: 15px 17px;
+  margin: 20px 0;
+  padding: 14px 16px;
   border: 1px solid var(--doc-primary-border);
   border-left-width: 5px;
   border-radius: var(--doc-radius-lg);
@@ -523,7 +529,7 @@ article thead {
 .theme-doc-markdown td,
 article th,
 article td {
-  padding: 0.62rem 0.8rem;
+  padding: 0.56rem 0.76rem;
   border: 1px solid var(--doc-border);
   text-align: left;
   vertical-align: top;
@@ -591,8 +597,8 @@ article kbd {
 .markdown details,
 .theme-doc-markdown details,
 article details {
-  margin: 18px 0;
-  padding: 13px 15px;
+  margin: 16px 0;
+  padding: 12px 14px;
   border: 1px solid var(--doc-border);
   border-radius: var(--doc-radius-lg);
   background: var(--doc-bg-soft);
@@ -609,7 +615,7 @@ article summary {
 .markdown details[open] summary,
 .theme-doc-markdown details[open] summary,
 article details[open] summary {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .header-anchor,
