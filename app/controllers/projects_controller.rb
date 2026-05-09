@@ -38,16 +38,14 @@ class ProjectsController < BaseController
   end
 
   def document_tree_all
-    @tree_projects = portal_tree_projects
+    @project = Project.find_by!(code: params[:project_code] || params[:code])
+    require_project_access!(@project)
+    return if require_consent!(target: @project, timing: :first_view)
 
-    case params[:tree_action].to_s
-    when "show"
-      persist_document_tree_expanded_keys!(document_tree_all_expanded_keys(@tree_projects))
-    when "hide"
-      persist_document_tree_expanded_keys!([])
-    end
+    @tree_projects = portal_tree_projects(include_project: @project)
+    update_current_project_tree_expansion!(@project, action: params[:tree_action].to_s)
 
-    respond_to_document_tree(projects: @tree_projects)
+    respond_to_document_tree(projects: @tree_projects, current_project: @project)
   end
 
   private
@@ -88,6 +86,23 @@ class ProjectsController < BaseController
     persist_document_tree_expanded_keys!(expanded_keys)
   end
 
+  def update_current_project_tree_expansion!(project, action:)
+    return unless current_user.respond_to?(:tree_view_state_for)
+
+    persisted_state = current_user.tree_view_state_for(DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY)
+    expanded_keys = Array(persisted_state.expanded_keys)
+    project_keys = document_tree_project_expanded_keys(project)
+
+    case action
+    when "show"
+      expanded_keys |= project_keys
+    when "hide"
+      expanded_keys -= project_keys
+    end
+
+    persist_document_tree_expanded_keys!(expanded_keys)
+  end
+
   def persist_document_tree_expanded_keys!(expanded_keys)
     return unless current_user.respond_to?(:save_tree_view_state!)
 
@@ -97,10 +112,8 @@ class ProjectsController < BaseController
     )
   end
 
-  def document_tree_all_expanded_keys(projects)
-    projects.flat_map do |project|
-      ["project_#{project.id}", *document_tree_folder_keys_for(project)]
-    end.uniq
+  def document_tree_project_expanded_keys(project)
+    ["project_#{project.id}", *document_tree_folder_keys_for(project)]
   end
 
   def document_tree_folder_keys_for(project)
