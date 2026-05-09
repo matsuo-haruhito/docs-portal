@@ -4,11 +4,22 @@
   <h2 style="margin-top: 0;">文書ツリー</h2>
   <p class="muted">案件と文書の階層を表示します。</p>
 
-  <% render_state = document_tree_render_state(projects: projects, current_project: local_assigns[:current_project]) %>
+  <% tree_projects = Array(projects) %>
+  <% if tree_projects.empty? %>
+    <p class="muted">表示できる案件はありません。</p>
+  <% else %>
+    <% render_state = document_tree_render_state(
+      projects: tree_projects,
+      current_project: local_assigns[:current_project],
+      current_document: local_assigns[:current_document],
+      expanded_source_path: local_assigns[:expanded_source_path],
+      collapsed_source_path: local_assigns[:collapsed_source_path]
+    ) %>
 
-  <table class="tree-view-table">
-    <tbody>
-      <%= tree_view_rows(render_state) %>
-    </tbody>
-  </table>
+    <table class="tree-view-table">
+      <tbody>
+        <%= tree_view_rows(render_state) %>
+      </tbody>
+    </table>
+  <% end %>
 </div>

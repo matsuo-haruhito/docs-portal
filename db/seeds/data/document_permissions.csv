@@ -1,4 +1,4 @@
-document_slug,company_code,user_email,access_level
-dispatch-operation-manual,CLIENT_A,,download
-dispatch-api-spec,CLIENT_A,,download
-wms-basic-spec,CLIENT_B,,download
+document_slug,company_domain,user_email,access_level
+dispatch-operation-manual,client-a.example.com,,download
+dispatch-api-spec,client-a.example.com,,download
+wms-basic-spec,client-b.example.com,,download

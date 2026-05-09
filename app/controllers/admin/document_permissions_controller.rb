@@ -45,7 +45,7 @@ class Admin::DocumentPermissionsController < Admin::BaseController
 
   def load_master_options
     @documents = Document.includes(:project).order(:title)
-    @companies = Company.order(:code)
+    @companies = Company.order(:domain)
     @users = User.order(:email_address)
   end
 

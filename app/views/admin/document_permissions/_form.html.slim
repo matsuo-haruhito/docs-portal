@@ -7,10 +7,10 @@
       = form.collection_select :document_id, @documents, :id, :title
     label
       | 会社
-      = form.collection_select :company_id, @companies, :id, :name, include_blank: "未指定"
+      = form.collection_select :company_id, @companies, :id, :display_name, include_blank: "未指定"
     label
       | ユーザー
-      = form.collection_select :user_id, @users, :id, :email_address, include_blank: "未指定"
+      = form.collection_select :user_id, @users, :id, :display_name, include_blank: "未指定"
     label
       | 権限
       = form.select :access_level, DocumentPermission.access_levels.keys.map { |key| [key, key] }

@@ -169,6 +169,11 @@
   min-height: calc(100vh - 250px);
 }
 
+main:has(.site-viewer-shell){
+  margin-left: 0;
+  margin-right: auto;
+}
+
 @media (min-width: 1200px){
   main:has(.site-viewer-shell){
     max-width: none;

@@ -22,7 +22,9 @@ class ProjectsController < BaseController
     return if require_consent!(target: @project, timing: :first_view)
 
     @tree_projects = portal_tree_projects(include_project: @project)
-    @current_project = params[:tree_action] == "hide" ? nil : @project
+    @current_project = params[:tree_action] == "hide" && params[:source_path].blank? ? nil : @project
+    expanded_source_path = params[:tree_action] == "show" ? params[:source_path] : nil
+    collapsed_source_path = params[:tree_action] == "hide" ? params[:source_path] : nil
 
     respond_to do |format|
       format.turbo_stream do
@@ -32,7 +34,9 @@ class ProjectsController < BaseController
           locals: {
             projects: @tree_projects,
             current_project: @current_project,
-            current_document: nil
+            current_document: nil,
+            expanded_source_path:,
+            collapsed_source_path:
           }
         )
       end

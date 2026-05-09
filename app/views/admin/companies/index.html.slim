@@ -10,16 +10,18 @@ h1 会社マスタ
 = table_tag do
   thead
     tr
-      th コード
-      th 会社名
+      th ドメイン
+      th 会社名（表示用）
+      th 表示名
       th 状態
       th
   tbody
     - @companies.each do |company|
       tr
-        td = company.code
-        td = company.name
+        td = company.domain
+        td = company.name.presence || "-"
+        td = company.display_name
         td = company.active? ? "有効" : "無効"
         td.actions
           = edit_link_to "編集", edit_admin_company_path(company)
-          = delete_link_to "削除", admin_company_path(company), confirm: "会社「#{company.name}」を削除しますか？所属ユーザーや文書権限への影響を確認してください。"
+          = delete_link_to "削除", admin_company_path(company), confirm: "会社「#{company.display_name}」を削除しますか？所属ユーザーや文書権限への影響を確認してください。"

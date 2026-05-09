@@ -10,8 +10,9 @@ h1 ユーザーマスタ
 = table_tag do
   thead
     tr
-      th 氏名
+      th ユーザー名（表示用）
       th メールアドレス
+      th 表示名
       th 種別
       th 会社
       th 状態
@@ -19,12 +20,13 @@ h1 ユーザーマスタ
   tbody
     - @users.each do |user|
       tr
-        td = user.name
+        td = user.name.presence || "-"
         td = user.email_address
+        td = user.display_name
         td
           span.badge = user.user_type
-        td = user.company&.name || "-"
+        td = user.company&.display_name || "-"
         td = user.active? ? "有効" : "無効"
         td.actions
           = edit_link_to "編集", edit_admin_user_path(user)
-          = delete_link_to "削除", admin_user_path(user), confirm: "ユーザー「#{user.name}」を削除しますか？アクセス履歴や所属情報との関係を確認してください。"
+          = delete_link_to "削除", admin_user_path(user), confirm: "ユーザー「#{user.display_name}」を削除しますか？アクセス履歴や所属情報との関係を確認してください。"
