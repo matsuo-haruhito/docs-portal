@@ -4,30 +4,30 @@
   when DocumentsHelper::DocumentTreeFolderNode
     project_document_tree_path(item.project, tree_action: "show", source_path: item.path, format: :turbo_stream)
   end %>
+<% tree_refresh_path = case item
+  when Project
+    project_document_tree_path(item, node_id: item.id, tree_action: "show", format: :turbo_stream)
+  when DocumentsHelper::DocumentTreeFolderNode
+    project_document_tree_path(item.project, tree_action: "show", source_path: item.path, format: :turbo_stream)
+  when Document
+    project_document_tree_path(item.project, document_slug: item.slug, format: :turbo_stream)
+  end %>
+<% tooltip = tree_item_tooltip(item) %>
 
 <td class="<%= tree_item_css_class(item) %>">
   <%= link_to tree_item_label(item),
     tree_item_path(item),
+    class: ["tree-item-label", tree_item_label_size_class(item)].compact,
+    title: tooltip,
     data: {
       turbo_frame: "main_panel",
       tree_nav_link: true,
       tree_item_type: item.is_a?(DocumentsHelper::DocumentTreeFolderNode) ? "document_tree_folder" : item.class.name.underscore,
-      tree_open_url: tree_open_path
+      tree_open_url: tree_open_path,
+      tree_refresh_url: tree_refresh_path
     } %>
 
-  <% if item.is_a?(Document) %>
-    <% if (updated_label = tree_item_updated_label(item)) %>
-      <span class="muted tree-item-meta">更新: <%= updated_label %></span>
-    <% end %>
-
-    <% unless tree_item_html_available?(item) %>
-      <span class="muted tree-item-meta">HTML未生成</span>
-    <% end %>
-
-    <%= link_to "詳細", tree_item_detail_path(item), class: "tree-item-detail-link", data: { turbo_frame: "main_panel" } %>
-  <% elsif item.is_a?(DocumentsHelper::DocumentTreeFolderNode) %>
-    <span class="muted tree-item-meta">フォルダ</span>
-  <% elsif item.is_a?(Project) %>
-    <%= link_to "案件トップ", tree_item_detail_path(item), class: "tree-item-detail-link", data: { turbo_frame: "main_panel" } %>
+  <% tree_item_status_icons(item).each do |status_icon| %>
+    <span id="<%= status_icon[:id] %>" class="tree-item-status-icon <%= status_icon[:class] %>" title="<%= status_icon[:title] %>" aria-label="<%= status_icon[:title] %>"><%= status_icon[:text] %></span>
   <% end %>
 </td>

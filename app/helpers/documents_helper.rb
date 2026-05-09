@@ -2,6 +2,14 @@ require "digest"
 
 module DocumentsHelper
   DocumentTreeFolderNode = Data.define(:project, :path, :label, :children)
+  DOCUMENT_TREE_INSTANCE_KEY = "documents:sidebar"
+  DOCUMENT_TREE_ICON_NAMES = %w[
+    7z ai company_lit company_unlit css csv doc document docx fig folder_closed folder_open gz htm html ini jpeg jpg json key log md mdx odp ods odt pages parquet pdf png ppt pptx psd rst rtf svg tar tex tif tiff toml tsv txt webp xls xlsm xlsx xml yaml yml zip
+  ].freeze
+  DOCUMENT_TREE_EXTRA_ICON_NAMES = %w[
+    odp ods odt pages parquet psd rst rtf tar tex tif tiff toml tsv txt webp
+  ].freeze
+  DOCUMENT_TREE_DOCUMENT_ICON_NAMES = %w[doc document].freeze
 
   def document_tree_render_state(projects:, current_project: nil, current_document: nil, expanded_source_path: nil, collapsed_source_path: nil)
     projects = projects.to_a
@@ -40,38 +48,43 @@ module DocumentsHelper
       collapsed_source_path:
     )
 
+    persisted_state = document_tree_persisted_state
+    expanded_keys = (Array(persisted_state&.expanded_keys) + expansion_state.fetch(:expanded_keys, [])).uniq
+    collapsed_keys = expansion_state.fetch(:collapsed_keys, [])
+    expanded_keys -= collapsed_keys
+
     render_state = TreeView::RenderState.new(
       tree:,
       root_items: tree.root_items,
       row_partial: "documents/tree_columns",
       ui_config:,
-      initial_expansion: { default: :collapsed }.merge(expansion_state),
+      tree_instance_key: DOCUMENT_TREE_INSTANCE_KEY,
+      initial_expansion: { default: :collapsed, expanded_keys:, collapsed_keys: },
       toggle_icon_builder: ->(item, state, context) { tree_toggle_button_label(item, state, context) },
-      row_class_builder: ->(item) { tree_item_css_class(item) },
+      row_class_builder: ->(item) { tree_item_css_class(item, current_project:, current_document:) },
       row_data_builder: ->(item) { tree_item_data_attributes(item) }
     )
-    render_state.define_singleton_method(:expanded_keys) { expansion_state.fetch(:expanded_keys, []) } unless render_state.respond_to?(:expanded_keys)
+    render_state.define_singleton_method(:expanded_keys) { expanded_keys } unless render_state.respond_to?(:expanded_keys)
     render_state
   end
 
   def tree_toggle_button_label(item, state, context)
     children = Array(context[:children])
-    return { text: "・", class: "tree-toggle__icon--leaf", title: "子項目はありません" } if children.empty?
 
     case state.to_sym
     when :collapsed
-      { text: "+", class: "tree-toggle__icon--open", title: "開く" }
+      { html: tree_toggle_collapsed_icon(item, children), class: "tree-toggle__icon--open", title: "開く" }
     when :expanded
-      { text: "-", class: "tree-toggle__icon--close", title: "閉じる" }
+      { html: tree_toggle_expanded_icon(item, children), class: "tree-toggle__icon--close", title: "閉じる" }
     else
-      { text: "・", class: "tree-toggle__icon--leaf", title: "子項目はありません" }
+      { html: tree_toggle_leaf_icon(item), class: "tree-toggle__icon--leaf", title: tree_toggle_leaf_icon_title(item) }
     end
   end
 
   def tree_item_path(item)
     case item
     when Project
-      project_default_site_path(item) || project_path(item)
+      project_path(item)
     when DocumentTreeFolderNode
       project_documents_path(item.project, q: item.path)
     when Document
@@ -91,13 +104,36 @@ module DocumentsHelper
   def tree_item_label(item)
     case item
     when Project
-      "#{item.code} #{item.name}"
+      item.name
     when DocumentTreeFolderNode
       item.label
     when Document
       document_tree_document_label(item)
     else
       item.to_s
+    end
+  end
+
+  def tree_item_label_size_class(item)
+    length = tree_item_label_full_width_length(tree_item_label(item))
+
+    if length > 25
+      "tree-label--length-gt-25"
+    elsif length > 20
+      "tree-label--length-gt-20"
+    elsif length > 15
+      "tree-label--length-gt-15"
+    end
+  end
+
+  def tree_item_tooltip(item)
+    case item
+    when Project
+      item.company&.name
+    when DocumentTreeFolderNode
+      [item.project.company&.name, item.project.name].compact_blank.join(" / ").presence
+    when Document
+      document_tree_document_tooltip(item)
     end
   end
 
@@ -111,9 +147,9 @@ module DocumentsHelper
     item.is_a?(Document) && document_html_version(item).present?
   end
 
-  def tree_item_css_class(item)
+  def tree_item_css_class(item, current_project: nil, current_document: nil)
     classes = []
-    classes << "current-node" if item == @project || item == @document
+    classes << "current-node" if current_tree_item?(item, current_project:, current_document:)
     classes << "tree-folder-node" if item.is_a?(DocumentTreeFolderNode)
     classes << "html-unavailable" if item.is_a?(Document) && !tree_item_html_available?(item)
     classes
@@ -151,6 +187,107 @@ module DocumentsHelper
   end
 
   private
+
+  def current_tree_item?(item, current_project:, current_document:)
+    case item
+    when Project
+      item.id == current_project&.id || item.id == current_document&.project_id || item == @project
+    when Document
+      item.id == current_document&.id || item == @document
+    else
+      false
+    end
+  end
+
+  def tree_item_label_full_width_length(label)
+    label.to_s.each_char.sum { |char| char.ascii_only? ? 0.5 : 1.0 }
+  end
+
+  def document_tree_persisted_state
+    return unless current_user.respond_to?(:tree_view_state_for)
+
+    current_user.tree_view_state_for(DOCUMENT_TREE_INSTANCE_KEY)
+  rescue NameError
+    nil
+  end
+
+  def tree_toggle_collapsed_icon(item, children)
+    return tree_icon("document", title: "子項目はありません") if children.empty?
+    return tree_icon("folder_closed", title: "フォルダを開く") if item.is_a?(DocumentTreeFolderNode)
+
+    "+"
+  end
+
+  def tree_toggle_expanded_icon(item, children)
+    return tree_icon("document", title: "子項目はありません") if children.empty?
+    return tree_icon("folder_open", title: "フォルダを閉じる") if item.is_a?(DocumentTreeFolderNode)
+
+    "-"
+  end
+
+  def tree_toggle_leaf_icon(item)
+    return tree_icon(document_tree_icon_name(item), title: tree_toggle_leaf_icon_title(item)) if item.is_a?(Document)
+
+    "・"
+  end
+
+  def tree_toggle_leaf_icon_title(item)
+    return "子項目はありません" unless item.is_a?(Document)
+
+    icon_name = document_tree_icon_name(item)
+    icon_name == "document" ? "ドキュメント" : "#{icon_name} ファイル"
+  end
+
+  def tree_icon(icon_name, title: nil)
+    safe_icon_name = icon_name.to_s.tr("_", "-")
+    tag.svg(
+      tag.use(href: "#{asset_path(tree_icon_sprite_asset(icon_name))}#tree-icon-#{safe_icon_name}"),
+      class: "tree-icon tree-icon--#{safe_icon_name}",
+      viewBox: "0 0 24 24",
+      width: 18,
+      height: 18,
+      title:,
+      aria: { hidden: true },
+      focusable: false
+    )
+  end
+
+  def tree_icon_sprite_asset(icon_name)
+    return "tree_icons_document.svg" if DOCUMENT_TREE_DOCUMENT_ICON_NAMES.include?(icon_name.to_s)
+
+    DOCUMENT_TREE_EXTRA_ICON_NAMES.include?(icon_name.to_s) ? "tree_icons_extra.svg" : "tree_icons.svg"
+  end
+
+  def document_tree_icon_name(document)
+    return "document" if document.document_kind == "markdown"
+
+    extension = document_tree_source_extension(document)
+    return "document" if extension.blank?
+
+    normalized_extension = extension.tr(".", "").downcase
+    DOCUMENT_TREE_ICON_NAMES.include?(normalized_extension) ? normalized_extension : "document"
+  end
+
+  def document_tree_source_extension(document)
+    version = document_tree_version_for(document)
+    extension = version&.source_extension.to_s.delete_prefix(".").presence
+    extension ||= File.extname(document_tree_source_file_name(document).to_s).delete_prefix(".").presence
+    extension&.downcase
+  end
+
+  def document_tree_document_tooltip(document)
+    project = document.project
+    folder_name = document_tree_source_directory(document).to_s.split("/").last.presence
+    version = document_tree_version_for(document)
+
+    [
+      project.company&.name,
+      project.name,
+      folder_name,
+      tree_item_updated_label(document)&.then { |label| "最終更新日: #{label}" },
+      version&.version_label.presence&.then { |label| "版: #{label}" }
+    ].compact_blank.join(" / ").presence
+  end
 
   def prepare_document_tree_cache!(projects)
     @document_tree_documents_by_project_id = projects.index_with do |project|

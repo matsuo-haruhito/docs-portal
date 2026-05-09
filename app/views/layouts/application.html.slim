@@ -32,16 +32,17 @@ html
       | .sidebar-panel { background: var(--panel); padding: 16px; border-radius: 0 22px 22px 0; box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08); border: 1px solid rgba(255, 80, 0, 0.18); border-left: 0; position: sticky; top: 24px; min-width: 0; max-height: calc(100vh - 48px); overflow: auto; resize: none; }
       | .sidebar-panel.is-resizing, body.is-sidebar-resizing { cursor: col-resize; user-select: none; }
       | .sidebar-shell { position: relative; min-width: 0; }
-      | .sidebar-toolbar { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 12px; }
-      | .sidebar-toggle { border-color: rgba(255, 80, 0, 0.45); background: var(--accent-soft); color: var(--accent-strong); box-shadow: 0 8px 20px rgba(255, 80, 0, 0.16); padding: 4px 10px; line-height: 1.2; }
+      | .sidebar-toolbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+      | .sidebar-toolbar-content { min-width: 0; flex: 1 1 auto; }
+      | .sidebar-toggle { border-color: rgba(255, 80, 0, 0.45); background: var(--accent-soft); color: var(--accent-strong); box-shadow: 0 8px 20px rgba(255, 80, 0, 0.16); padding: 4px 10px; line-height: 1.2; flex: 0 0 auto; }
       | .sidebar-toggle:hover, .sidebar-toggle:focus { background: var(--accent); border-color: var(--accent); color: white; }
       | .sidebar-content { min-width: 0; }
       | .sidebar-resizer { position: absolute; top: 12px; right: -14px; bottom: 12px; width: 10px; cursor: col-resize; border-radius: 999px; background: transparent; z-index: 3; }
       | .sidebar-resizer::after { content: ""; position: absolute; top: 0; bottom: 0; left: 4px; width: 2px; border-radius: 999px; background: transparent; }
       | .sidebar-resizer:hover::after, .sidebar-resizer:focus::after, body.is-sidebar-resizing .sidebar-resizer::after { background: var(--accent); box-shadow: 0 0 0 4px rgba(255, 80, 0, 0.14); }
       | .layout-with-sidebar.is-sidebar-collapsed .sidebar-panel { padding: 12px 8px; overflow: visible; }
-      | .layout-with-sidebar.is-sidebar-collapsed .sidebar-toolbar { justify-content: center; margin-bottom: 0; }
-      | .layout-with-sidebar.is-sidebar-collapsed .sidebar-content, .layout-with-sidebar.is-sidebar-collapsed .sidebar-resizer { display: none; }
+      | .layout-with-sidebar.is-sidebar-collapsed .sidebar-toolbar { justify-content: center; align-items: center; margin-bottom: 0; }
+      | .layout-with-sidebar.is-sidebar-collapsed .sidebar-toolbar-content, .layout-with-sidebar.is-sidebar-collapsed .sidebar-content, .layout-with-sidebar.is-sidebar-collapsed .sidebar-resizer { display: none; }
       | .layout-with-sidebar.is-sidebar-collapsed .sidebar-toggle { width: 36px; height: 36px; padding: 0; }
       | .main-panel { background: var(--panel); padding: 28px; border-radius: 22px; box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08); border: 1px solid rgba(255, 80, 0, 0.12); min-width: 0; }
       | a { color: #0f62fe; text-decoration: none; }
@@ -121,14 +122,18 @@ html
     header
       = render "shared/navbar"
     - if content_for?(:left_content)
+      - sidebar_content = capture do
+        = yield :left_content
       .layout-with-sidebar data-sidebar-layout="true"
         aside.sidebar-panel data-docs-sidebar="true"
           .sidebar-shell
             .sidebar-toolbar
+              .sidebar-toolbar-content
+                = yield :sidebar_toolbar
               button.sidebar-toggle type="button" data-sidebar-toggle="true" aria-label="文書ツリーを折りたたむ" aria-expanded="true" title="文書ツリーを折りたたむ"
                 | ◀
             .sidebar-content data-sidebar-content="true"
-              = yield :left_content
+              = sidebar_content
             .sidebar-resizer data-sidebar-resizer="true" role="separator" aria-orientation="vertical" aria-label="文書ツリーの幅を調整" tabindex="0"
         main.main-panel
           = render "shared/flash_messages"

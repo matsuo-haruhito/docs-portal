@@ -1,5 +1,6 @@
 class User < ApplicationRecord
   include PublicIdentifiable
+  include TreeViewStateOwner
 
   public_id_prefix "usr"
 

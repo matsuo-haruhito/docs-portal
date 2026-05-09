@@ -1,6 +1,8 @@
 - page_title @document.title
 - rendered_view_available = @viewer_iframe_src.present?
 
+= turbo_stream.remove document_tree_unread_icon_id(@document)
+
 - content_for :left_content do
   = render "tree", projects: @tree_projects, current_project: @project, current_document: @document
 

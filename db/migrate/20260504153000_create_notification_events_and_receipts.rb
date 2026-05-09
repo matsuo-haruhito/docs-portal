@@ -1,6 +1,8 @@
 class CreateNotificationEventsAndReceipts < ActiveRecord::Migration[8.1]
   def change
-    create_table :notification_events do |t|
+    return if table_exists?(:notification_events) && table_exists?(:notification_receipts)
+
+    create_table :notification_events, if_not_exists: true do |t|
       t.string :public_id, null: false
       t.integer :event_type, null: false
       t.references :project, foreign_key: true
@@ -14,11 +16,11 @@ class CreateNotificationEventsAndReceipts < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :notification_events, :public_id, unique: true
-    add_index :notification_events, :event_type
-    add_index :notification_events, :occurred_at
+    add_index :notification_events, :public_id, unique: true, if_not_exists: true
+    add_index :notification_events, :event_type, if_not_exists: true
+    add_index :notification_events, :occurred_at, if_not_exists: true
 
-    create_table :notification_receipts do |t|
+    create_table :notification_receipts, if_not_exists: true do |t|
       t.string :public_id, null: false
       t.references :notification_event, null: false, foreign_key: true
       t.references :user, null: false, foreign_key: true
@@ -27,8 +29,8 @@ class CreateNotificationEventsAndReceipts < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :notification_receipts, :public_id, unique: true
-    add_index :notification_receipts, [:notification_event_id, :user_id], unique: true, name: "index_notification_receipts_unique_event_user"
-    add_index :notification_receipts, :read_at
+    add_index :notification_receipts, :public_id, unique: true, if_not_exists: true
+    add_index :notification_receipts, [:notification_event_id, :user_id], unique: true, name: "index_notification_receipts_unique_event_user", if_not_exists: true
+    add_index :notification_receipts, :read_at, if_not_exists: true
   end
 end

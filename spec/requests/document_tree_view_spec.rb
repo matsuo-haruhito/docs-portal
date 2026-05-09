@@ -23,7 +23,8 @@ RSpec.describe "Document tree view", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("tree-view-table")
-    expect(response.body).to include("#{project.code} #{project.name}")
+    expect(response.body).to include(project.name)
+    expect(response.body).not_to include("#{project.code} #{project.name}")
     expect(response.body).to include("Dispatch API spec")
     expect(response.body).to include("tree-toggle__icon--close")
     expect(response.body).to include("tree-toggle__icon--leaf")

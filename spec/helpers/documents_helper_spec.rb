@@ -32,15 +32,13 @@ RSpec.describe DocumentsHelper, type: :helper do
       expect(helper.tree_item_html_available?(document)).to be(false)
     end
 
-    it "links a project node to its default rendered site and keeps a project top link" do
+    it "links a project node to the project top page" do
       version = create(:document_version, document:, site_build_path: "docs/manual", published_at: Time.zone.local(2026, 5, 1, 9, 0, 0))
       document.update!(latest_version: version)
       FileUtils.mkdir_p(version.site_root_absolute_path.join("docs/manual"))
       File.write(version.site_root_absolute_path.join("docs/manual/index.html"), "<html></html>")
 
-      expect(helper.tree_item_path(project)).to eq(
-        helper.project_site_path(project, site_path: "docs/manual", version_id: version.public_id)
-      )
+      expect(helper.tree_item_path(project)).to eq(helper.project_path(project))
       expect(helper.tree_item_detail_path(project)).to eq(helper.project_path(project))
     end
 

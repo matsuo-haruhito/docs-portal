@@ -63,12 +63,15 @@ RSpec.describe "Read confirmations", type: :request do
     end.to change(ReadConfirmation, :count).by(-1)
   end
 
-  it "shows read confirmation actions on document detail" do
+  it "marks the document as read when showing document detail" do
     sign_in_as(user)
 
-    get project_document_path(project, document.slug)
+    expect do
+      get project_document_path(project, document.slug)
+    end.to change(ReadConfirmation, :count).by(1)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("既読にする")
+    expect(response.body).to include("既読確認済み")
+    expect(response.body).to include("既読を解除")
   end
 end

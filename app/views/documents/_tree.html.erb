@@ -1,7 +1,32 @@
 <div id="document_tree_panel">
   <%= turbo_stream_from "document_tree" %>
 
-  <h2 style="margin-top: 0;">文書ツリー</h2>
+  <style>
+    .document-tree-toolbar { display: grid; gap: 8px; min-width: 0; width: 100%; }
+    .document-tree-toolbar__title-row { display: flex; align-items: center; min-width: 0; }
+    .document-tree-toolbar h2 { margin: 0; line-height: 1.2; white-space: nowrap; }
+    .document-tree-toolbar__action-row { display: flex; justify-content: flex-end; min-width: 0; }
+    .document-tree-actions { display: inline-flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
+    .document-tree-actions form { margin: 0; }
+    .document-tree-action-link { display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(15, 98, 254, 0.32); border-radius: 999px; padding: 2px 8px; font-size: 12px; line-height: 1.5; background: #fff; color: #0f62fe; cursor: pointer; font: inherit; white-space: nowrap; }
+    .document-tree-action-link:hover, .document-tree-action-link:focus { background: #eff6ff; }
+    @media (max-width: 520px) {
+      .document-tree-toolbar__action-row { justify-content: stretch; }
+      .document-tree-actions { flex-direction: column; align-items: stretch; gap: 4px; width: 100%; }
+      .document-tree-action-link { width: 100%; }
+    }
+    .tree-item-status-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 4px; font-size: 0.85em; line-height: 1; vertical-align: middle; }
+    .tree-item-status-icon--warning { opacity: 0.9; }
+    .tree-item-status-icon--unread { font-size: 0.78em; }
+    .tree-item-label.tree-label--length-gt-15 { font-size: calc(1em - 1.5pt); }
+    .tree-item-label.tree-label--length-gt-20 { font-size: calc(1em - 2pt); }
+    .tree-item-label.tree-label--length-gt-25 { font-size: calc(1em - 2.5pt); }
+  </style>
+
+  <% content_for :sidebar_toolbar do %>
+    <%= render "documents/tree_toolbar", current_project: local_assigns[:current_project], current_document: local_assigns[:current_document] %>
+  <% end %>
+
   <p class="muted">案件と文書の階層を表示します。</p>
 
   <% tree_projects = Array(projects) %>
@@ -16,10 +41,12 @@
       collapsed_source_path: local_assigns[:collapsed_source_path]
     ) %>
 
-    <table class="tree-view-table">
-      <tbody>
-        <%= tree_view_rows(render_state) %>
-      </tbody>
-    </table>
+    <div class="document-tree-scroll-spacer" style="padding-bottom: 3.5rem;">
+      <table class="tree-view-table">
+        <tbody>
+          <%= tree_view_rows(render_state) %>
+        </tbody>
+      </table>
+    </div>
   <% end %>
 </div>

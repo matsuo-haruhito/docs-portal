@@ -1,0 +1,32 @@
+<% nodes.each do |node| %>
+  <% if node[:type] == :folder %>
+    <li>
+      <details class="project-document-tree__folder" open>
+        <summary class="project-document-tree__folder-summary">
+          <span class="project-document-tree__folder-icon" aria-hidden="true"></span>
+          <span><%= node[:label] %></span>
+        </summary>
+        <ul>
+          <%= render "projects/document_detail_tree_nodes", nodes: node[:children] %>
+        </ul>
+      </details>
+    </li>
+  <% else %>
+    <% document = node[:document] %>
+    <% version = document_tree_version_for(document) %>
+    <li class="project-document-tree__document">
+      <div class="project-document-tree__document-main">
+        <span class="project-document-tree__document-icon"><%= tree_toggle_leaf_icon(document) %></span>
+        <%= link_to tree_item_label(document), tree_item_path(document), class: "project-document-tree__document-title" %>
+        <% tree_item_status_icons(document).each do |status_icon| %>
+          <span id="<%= status_icon[:id] %>" class="project-document-tree__status <%= status_icon[:class] %>" title="<%= status_icon[:title] %>" aria-label="<%= status_icon[:title] %>"><%= status_icon[:text] %></span>
+        <% end %>
+      </div>
+      <div class="project-document-tree__meta">
+        <span><strong>最終更新日:</strong> <%= document.updated_at&.strftime("%Y-%m-%d") || "-" %></span>
+        <span><strong>最終更新者:</strong> <%= version&.published_by_user&.name.presence || version&.published_by_user&.email_address.presence || "-" %></span>
+        <span><strong>版:</strong> <%= version&.version_label.presence || "-" %></span>
+      </div>
+    </li>
+  <% end %>
+<% end %>
