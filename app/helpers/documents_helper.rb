@@ -61,7 +61,7 @@ module DocumentsHelper
       tree_instance_key: DOCUMENT_TREE_INSTANCE_KEY,
       initial_expansion: { default: :collapsed, expanded_keys:, collapsed_keys: },
       toggle_icon_builder: ->(item, state, context) { tree_toggle_button_label(item, state, context) },
-      row_class_builder: ->(item) { tree_item_css_class(item) },
+      row_class_builder: ->(item) { tree_item_css_class(item, current_project:, current_document:) },
       row_data_builder: ->(item) { tree_item_data_attributes(item) }
     )
     render_state.define_singleton_method(:expanded_keys) { expanded_keys } unless render_state.respond_to?(:expanded_keys)
@@ -147,9 +147,9 @@ module DocumentsHelper
     item.is_a?(Document) && document_html_version(item).present?
   end
 
-  def tree_item_css_class(item)
+  def tree_item_css_class(item, current_project: nil, current_document: nil)
     classes = []
-    classes << "current-node" if item == @project || item == @document
+    classes << "current-node" if current_tree_item?(item, current_project:, current_document:)
     classes << "tree-folder-node" if item.is_a?(DocumentTreeFolderNode)
     classes << "html-unavailable" if item.is_a?(Document) && !tree_item_html_available?(item)
     classes
@@ -187,6 +187,17 @@ module DocumentsHelper
   end
 
   private
+
+  def current_tree_item?(item, current_project:, current_document:)
+    case item
+    when Project
+      item.id == current_project&.id || item.id == current_document&.project_id || item == @project
+    when Document
+      item.id == current_document&.id || item == @document
+    else
+      false
+    end
+  end
 
   def tree_item_label_full_width_length(label)
     label.to_s.each_char.sum { |char| char.ascii_only? ? 0.5 : 1.0 }
