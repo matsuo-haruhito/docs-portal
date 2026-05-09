@@ -2,11 +2,11 @@ p.muted
   | 案件: 
   = @project.name
   |  / カテゴリ: 
-  = @document.category
-  |  / 種別: 
-  = @document.document_kind
+  = document_category_label(@document)
+  |  / ファイル種: 
+  = document_kind_label(@document)
   |  / 重要度: 
-  = @document.importance_level
+  = document_importance_level_label(@document)
 
 p.actions
   = link_to "外部送付を準備", new_project_document_document_delivery_log_path(@project, @document), class: "button secondary"
@@ -41,21 +41,21 @@ p
 h2 出力時の扱い
 ul
   li HTML 表示には透かしを入れません。
-  li ZIP 出力では source path 準拠、Markdown 原本の有無、添付有無、PDF のみ出力を選べます。
+  li ZIP 出力では元パス準拠、Markdown 原本の有無、添付有無、PDF のみ出力を選べます。
   - if @export_watermark_text.present?
-    li PDF を含む持ち出し用出力では、利用者・案件・文書・出力時刻ベースの watermark metadata を使う設計です。
+    li PDF を含む持ち出し用出力では、利用者・案件・文書・出力時刻ベースの透かし情報を使う設計です。
     li
       | 例:
       code = @export_watermark_text
   - elsif @document.downloadable_by?(current_user)
-    li PDF 添付がある場合は、利用者・案件・文書・出力時刻ベースの watermark metadata を使う設計です。
+    li PDF 添付がある場合は、利用者・案件・文書・出力時刻ベースの透かし情報を使う設計です。
 
 - if @latest_viewable_version
   h2 最新版
   p
-    strong = link_to @latest_viewable_version.version_label, document_version_path(@latest_viewable_version)
+    strong = link_to document_version_label(@latest_viewable_version), document_version_path(@latest_viewable_version)
     |  (
-    = @latest_viewable_version.status
+    = document_version_status_label(@latest_viewable_version)
     | )
     - if @latest_viewable_version.rendered_site_available?
       |  - 
@@ -85,7 +85,7 @@ h2 Q&A
         strong = thread.author.name
         span.muted = " / #{thread.qa_status_label}"
         - if thread.document_version.present?
-          span.muted = " / #{thread.document_version.version_label}"
+          span.muted = " / #{document_version_label(thread.document_version)}"
       = simple_format(thread.body)
       - if thread.replies.visible_to(current_user).any?
         h4 返信
@@ -146,7 +146,7 @@ h2 確認依頼
           td = link_to request.title, document_approval_request_path(request)
           td = request.requester.name
           td = request.approver&.name || "-"
-          td = request.status
+          td = document_approval_request_status_label(request)
 - elsif current_user.internal?
   p.muted 確認依頼はありません。
 
@@ -163,7 +163,7 @@ h2 確認依頼
           = link_to result.document.title, project_document_path(@project, result.document.slug)
           span.muted
             |  (
-            = result.relation_type
+            = document_relation_type_label(result)
             | )
 
   - if inferred_related.any?
@@ -174,16 +174,16 @@ h2 確認依頼
           = link_to result.document.title, project_document_path(@project, result.document.slug)
           span.muted
             |  (
-            = result.relation_type
+            = document_relation_type_label(result)
             | )
 
 h2 版一覧
 ul
   - @versions.each do |version|
     li
-      strong = link_to version.version_label, document_version_path(version)
+      strong = link_to document_version_label(version), document_version_path(version)
       |  (
-      = version.status
+      = document_version_status_label(version)
       | )
 
       - if version.rendered_site_available?
@@ -206,7 +206,7 @@ ul
             thead
               tr
                 th ファイル名
-                th 種別
+                th ファイル種
                 th 区分
             tbody
               = tree_view_rows(render_state)
@@ -220,10 +220,10 @@ ul
       .form-grid
         div
           = form.label :comment_type, "種別"
-          = form.select :comment_type, DocumentReviewComment.comment_types.keys.map { [_1, _1] }
+          = form.select :comment_type, DocumentReviewComment.comment_types.keys.map { [localized_label("document_review_comments.comment_type", _1), _1] }
         div
           = form.label :document_version_id, "対象版"
-          = form.collection_select :document_version_id, @versions, :id, :version_label, include_blank: "文書全体"
+          = form.collection_select :document_version_id, @versions, :id, ->(version) { document_version_label(version) }, include_blank: "文書全体"
         div
           = form.label :text_line_start, "開始行"
           = form.number_field :text_line_start, min: 1
@@ -231,16 +231,16 @@ ul
           = form.label :text_line_end, "終了行"
           = form.number_field :text_line_end, min: 1
         div
-          = form.label :text_anchor_type, "anchor type"
-          = form.select :text_anchor_type, [["未指定", ""], ["markdown_heading", "markdown_heading"], ["json_path", "json_path"], ["yaml_path", "yaml_path"], ["plain_line", "plain_line"]]
+          = form.label :text_anchor_type, "位置の種類"
+          = form.select :text_anchor_type, [["未指定", ""], ["Markdown見出し", "markdown_heading"], ["JSONパス", "json_path"], ["YAMLパス", "yaml_path"], ["行番号", "plain_line"]]
         div
-          = form.label :text_anchor_path, "anchor path"
+          = form.label :text_anchor_path, "位置パス"
           = form.text_field :text_anchor_path
         div
-          = form.label :text_anchor_label, "anchor label"
+          = form.label :text_anchor_label, "位置ラベル"
           = form.text_field :text_anchor_label
         div
-          = form.label :source_path, "source path"
+          = form.label :source_path, "元パス"
           = form.text_field :source_path
         div style="grid-column: 1 / -1;"
           = form.label :body, "内容"
@@ -261,12 +261,12 @@ ul
       tbody
         - @review_comments.each do |comment|
           tr
-            td = comment.comment_type
-            td = comment.document_version&.version_label || "文書全体"
+            td = document_review_comment_type_label(comment)
+            td = comment.document_version ? document_version_label(comment.document_version) : "文書全体"
             td = comment.location_label || "-"
             td = simple_format(comment.body)
             td = comment.author.name
-            td = comment.status
+            td = document_review_comment_status_label(comment)
   - else
     p.muted コメントはありません。
 
