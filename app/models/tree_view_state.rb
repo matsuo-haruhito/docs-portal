@@ -3,5 +3,5 @@ class TreeViewState < ApplicationRecord
 
   validates :tree_instance_key, presence: true
   validates :tree_instance_key, uniqueness: { scope: %i[owner_type owner_id] }
-  validates :expanded_keys, presence: true
+  validates :expanded_keys, presence: true, allow_blank: true
 end
