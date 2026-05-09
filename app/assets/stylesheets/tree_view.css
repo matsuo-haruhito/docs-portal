@@ -76,16 +76,26 @@
   gap: 0.15rem;
 }
 
-.tree-toggle__action {
-  display: inline-flex;
+.tree-toggle__action,
+button.tree-toggle__action,
+a.tree-toggle__action{
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  min-width: 1.75rem;
-  min-height: 1.35rem;
-  padding: 0 0.25rem;
-  border-radius: 6px;
+  width: 1.55rem !important;
+  min-width: 1.55rem !important;
+  max-width: 1.55rem !important;
+  height: 1.35rem !important;
+  min-height: 1.35rem !important;
+  padding: 0 !important;
+  border-radius: 4px !important;
+  border: 1px solid #bfdbfe !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  box-shadow: none !important;
   text-decoration: none;
-  line-height: 1;
+  line-height: 1 !important;
+  cursor: pointer;
 }
 
 .tree-toggle__action .tree-toggle__icon {
@@ -95,16 +105,17 @@
 .tree-toggle__action:hover,
 .tree-toggle__action:focus{
   text-decoration: none;
+  background: #dbeafe !important;
 }
 
 .tree-toggle__level{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.75rem;
+  min-width: 1.55rem;
   min-height: 1.35rem;
-  padding: 0 0.25rem;
-  border-radius: 6px;
+  padding: 0 0.2rem;
+  border-radius: 4px;
   background-color: #eff6ff;
   color: #1d4ed8;
   border: 1px solid #bfdbfe;
@@ -115,8 +126,8 @@
 
 .tree-toggle__level--leaf,
 .tree-toggle__icon--leaf{
-  min-width: 1.25rem;
-  padding-inline: 0.1rem;
+  min-width: 1.1rem;
+  padding-inline: 0.05rem;
   color: #94a3b8;
   background-color: transparent;
   border-color: transparent;
@@ -128,9 +139,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.25rem;
+  min-width: 1rem;
   white-space: nowrap;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 700;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
@@ -154,8 +165,8 @@
 }
 
 .site-viewer-hero{
-  margin-bottom: 16px;
-  padding: 18px 24px;
+  margin-bottom: 12px;
+  padding: 14px 18px;
 }
 
 .site-viewer-hero h1{
@@ -163,18 +174,18 @@
 }
 
 .site-viewer-shell{
-  min-height: calc(100vh - 250px);
+  min-height: calc(100vh - 220px);
 }
 
 .site-viewer-frame{
-  min-height: calc(100vh - 250px);
+  min-height: calc(100vh - 220px);
 }
 
 .document-reader .document-reader-hero,
 .document-reader .document-context-drawer{
-  max-width: 1440px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .document-reader-shell{
@@ -185,32 +196,46 @@
 .document-reader-shell .site-viewer-frame{
   display: block;
   width: 100%;
-  min-height: calc(100vh - 190px);
+  min-height: calc(100vh - 170px);
 }
 
-main:has(.site-viewer-shell){
-  margin-left: 0;
-  margin-right: auto;
+.layout-with-sidebar:has(.document-reader){
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
-.layout-with-sidebar:has(.document-reader) {
-  --sidebar-width: 320px;
-  gap: 12px;
-  padding-right: 8px;
+.layout-with-sidebar:has(.document-reader) .sidebar-panel{
+  position: fixed;
+  top: 72px;
+  left: 0;
+  z-index: 20;
+  width: var(--sidebar-width, 320px);
+  max-width: min(420px, calc(100vw - 48px));
+  max-height: calc(100vh - 84px);
+}
+
+.layout-with-sidebar:has(.document-reader).is-sidebar-collapsed .sidebar-panel{
+  width: 56px;
 }
 
 .layout-with-sidebar:has(.document-reader) .main-panel{
-  padding: 12px;
+  width: calc(100% - 16px);
+  max-width: none;
+  margin: 8px auto;
+  padding: 8px;
+}
+
+.layout-with-sidebar:has(.document-reader) .sidebar-resizer{
+  display: none;
 }
 
 @media (min-width: 1200px){
   main:has(.site-viewer-shell){
     max-width: none;
-    width: calc(100% - 16px);
-    padding: 12px;
-  }
-
-  .layout-with-sidebar:has(.document-reader){
-    grid-template-columns: minmax(240px, var(--sidebar-width)) minmax(0, 1fr);
+    width: 100%;
+    padding: 8px;
   }
 }
