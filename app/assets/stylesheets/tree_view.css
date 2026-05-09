@@ -200,36 +200,40 @@ a.tree-toggle__action{
 }
 
 .layout-with-sidebar:has(.document-reader){
-  display: block;
+  --sidebar-width: 320px;
   width: 100%;
   max-width: none;
-  margin: 0;
-  padding: 0;
+  box-sizing: border-box;
+  margin: 12px 0;
+  padding-right: 8px;
+  display: grid;
+  grid-template-columns: minmax(240px, var(--sidebar-width)) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.layout-with-sidebar:has(.document-reader).is-sidebar-collapsed{
+  grid-template-columns: 56px minmax(0, 1fr);
 }
 
 .layout-with-sidebar:has(.document-reader) .sidebar-panel{
-  position: fixed;
-  top: 72px;
-  left: 0;
-  z-index: 20;
-  width: var(--sidebar-width, 320px);
-  max-width: min(420px, calc(100vw - 48px));
-  max-height: calc(100vh - 84px);
-}
-
-.layout-with-sidebar:has(.document-reader).is-sidebar-collapsed .sidebar-panel{
-  width: 56px;
+  position: sticky;
+  top: 24px;
+  width: auto;
+  max-width: none;
+  max-height: calc(100vh - 48px);
 }
 
 .layout-with-sidebar:has(.document-reader) .main-panel{
-  width: calc(100% - 16px);
+  width: 100%;
   max-width: none;
-  margin: 8px auto;
+  min-width: 0;
+  margin: 0;
   padding: 8px;
 }
 
 .layout-with-sidebar:has(.document-reader) .sidebar-resizer{
-  display: none;
+  display: block;
 }
 
 @media (min-width: 1200px){
