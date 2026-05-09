@@ -13,8 +13,8 @@ h1 確認依頼
     thead
       tr
         th 日時
-        th 文書
-        th タイトル
+        th 文書名
+        th 依頼名
         th 依頼者
         th 確認相手
         th 状態
@@ -22,10 +22,10 @@ h1 確認依頼
       - @document_approval_requests.each do |request|
         tr
           td = request.created_at.strftime("%Y-%m-%d %H:%M")
-          td = request.document.title
+          td = link_to request.document.title, project_document_path(request.document.project, request.document.slug)
           td = link_to request.title, document_approval_request_path(request)
           td = request.requester.name
           td = request.approver&.name || "-"
-          td = request.status
+          td = document_approval_request_status_label(request)
 - else
   p.muted 確認依頼はありません。
