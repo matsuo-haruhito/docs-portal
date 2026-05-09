@@ -173,6 +173,8 @@
   main:has(.site-viewer-shell){
     max-width: none;
     width: calc(100% - 40px);
+    margin-left: 0;
+    margin-right: auto;
     padding: 18px;
   }
 }
