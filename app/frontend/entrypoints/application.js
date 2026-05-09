@@ -105,9 +105,23 @@ function setupSidebars() {
   document.querySelectorAll("[data-sidebar-layout]").forEach(setupSidebar)
 }
 
+function restoreSidebarScroll(sidebar, scrollTop) {
+  if (!sidebar) return
+
+  requestAnimationFrame(() => {
+    sidebar.scrollTop = scrollTop
+    requestAnimationFrame(() => {
+      sidebar.scrollTop = scrollTop
+    })
+  })
+}
+
 async function openTreeNodeForNavigation(link) {
   const openUrl = link.dataset.treeOpenUrl
   if (!openUrl) return
+
+  const sidebar = link.closest("[data-docs-sidebar]")
+  const scrollTop = sidebar?.scrollTop || 0
 
   const response = await fetch(openUrl, {
     headers: {
@@ -118,6 +132,7 @@ async function openTreeNodeForNavigation(link) {
   if (!response.ok) return
 
   Turbo.renderStreamMessage(await response.text())
+  restoreSidebarScroll(document.querySelector("[data-docs-sidebar]"), scrollTop)
 }
 
 function setupDocumentTreeNavigation() {
