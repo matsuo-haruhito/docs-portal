@@ -124,8 +124,8 @@ function setupDocumentTreeNavigation() {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
 
     event.preventDefault()
-    Turbo.visit(link.href, { frame: "main_panel" })
     openTreeNodeForNavigation(link)
+    window.setTimeout(() => Turbo.visit(link.href, { frame: "main_panel" }), 0)
   })
 }
 
