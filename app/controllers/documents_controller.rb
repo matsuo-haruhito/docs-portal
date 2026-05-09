@@ -40,6 +40,7 @@ class DocumentsController < BaseController
     @versions = @document.document_versions.select { _1.viewable_by?(current_user) }.sort_by(&:created_at).reverse
     @latest_viewable_version = @document.latest_version if @document.latest_version && @versions.include?(@document.latest_version)
     @viewer_version = resolved_viewer_version
+    mark_document_as_read!(@document, @viewer_version)
     @viewer_site_path = params[:site_path].presence || @viewer_version&.html_view_site_path
     @viewer_iframe_src =
       if @viewer_version&.rendered_site_available?
@@ -70,6 +71,14 @@ class DocumentsController < BaseController
   end
 
   private
+
+  def mark_document_as_read!(document, document_version)
+    current_user.read_confirmations.find_or_initialize_by(document:).tap do |confirmation|
+      confirmation.document_version = document_version || document.latest_version
+      confirmation.confirmed_at = Time.current
+      confirmation.save!
+    end
+  end
 
   def resolved_viewer_version
     requested_public_id = params[:version_id].presence
