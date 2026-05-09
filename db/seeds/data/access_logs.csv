@@ -1,3 +1,3 @@
 project_code,document_slug,version_label,user_email,company_code,action_type,target_type,target_name,ip_address,user_agent,accessed_at
-PJ001,dispatch-operation-manual,v1.1.0,client-a@example.com,CLIENT_A,view,page,v1.1.0,192.168.1.10,SeedBrowser/1.0,2026-04-22 12:00:00
-PJ002,wms-basic-spec,v1.0.0,client-b@example.com,CLIENT_B,download,file,basic-spec.docx,192.168.1.20,SeedBrowser/1.0,2026-04-22 18:00:00
+PJ001,dispatch-operation-manual,v1.1.0,client-a@client-a.example.com,client-a.example.com,view,page,v1.1.0,192.168.1.10,SeedBrowser/1.0,2026-04-22 12:00:00
+PJ002,wms-basic-spec,v1.0.0,client-b@client-b.example.com,client-b.example.com,download,file,basic-spec.docx,192.168.1.20,SeedBrowser/1.0,2026-04-22 18:00:00
