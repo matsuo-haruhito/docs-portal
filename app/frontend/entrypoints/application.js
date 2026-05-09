@@ -105,26 +105,5 @@ function setupSidebars() {
   document.querySelectorAll("[data-sidebar-layout]").forEach(setupSidebar)
 }
 
-function expandTreeFolderForNavigation(link) {
-  if (link.dataset.treeItemType !== "document_tree_folder") return
-
-  const row = link.closest("tr")
-  const toggle = row?.querySelector(".tree-toggle__action[aria-expanded='false']")
-  if (!toggle) return
-
-  toggle.click()
-}
-
-function setupTreeNavigation() {
-  document.addEventListener("click", (event) => {
-    const link = event.target.closest("a[data-tree-nav-link='true']")
-    if (!link) return
-
-    expandTreeFolderForNavigation(link)
-  })
-}
-
-setupTreeNavigation()
-
 document.addEventListener("turbo:load", setupSidebars)
 document.addEventListener("turbo:render", setupSidebars)
