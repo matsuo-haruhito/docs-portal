@@ -38,7 +38,7 @@ RSpec.describe "Document views", type: :request do
     expect(response.body).not_to include(view_document_version_path(version))
   end
 
-  it "redirects rendered html views to the project site route" do
+  it "redirects rendered html views to the unified document reader" do
     version = create(
       :document_version,
       document:,
@@ -55,7 +55,7 @@ RSpec.describe "Document views", type: :request do
     get view_document_version_path(version)
 
     expect(response).to redirect_to(
-      project_site_path(project, site_path: version.html_view_site_path, version_id: version.public_id)
+      project_document_path(project, document.slug, version_id: version.public_id, site_path: version.html_view_site_path)
     )
   ensure
     FileUtils.rm_rf(version.site_root_absolute_path) if version&.id
