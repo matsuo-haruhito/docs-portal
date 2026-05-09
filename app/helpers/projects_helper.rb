@@ -3,9 +3,10 @@ require "digest"
 module ProjectsHelper
   ProjectDocumentDetailTreeFolderNode = Data.define(:project, :path, :label, :children)
 
-  def project_document_detail_tree_render_state(project:, documents:)
+  def project_document_detail_tree_render_state(project:, documents:, expansion_mode: nil)
     nodes = project_document_detail_tree_nodes(project:, documents:)
     tree_instance_key = project_document_detail_tree_instance_key(project)
+    expanded_keys = expansion_mode == "collapse" ? [] : project_document_detail_tree_expanded_keys(nodes)
 
     adapter = TreeView::GraphAdapter.new(
       roots: nodes,
@@ -33,8 +34,8 @@ module ProjectsHelper
       ui_config:,
       tree_instance_key:,
       initial_expansion: {
-        default: :expanded,
-        expanded_keys: project_document_detail_tree_expanded_keys(nodes),
+        default: expansion_mode == "collapse" ? :collapsed : :expanded,
+        expanded_keys:,
         collapsed_keys: []
       },
       toggle_icon_builder: ->(item, state, context) { project_document_detail_tree_toggle_label(item, state, context) },
