@@ -3,6 +3,9 @@ require "digest"
 module DocumentsHelper
   DocumentTreeFolderNode = Data.define(:project, :path, :label, :children)
   DOCUMENT_TREE_INSTANCE_KEY = "documents:sidebar"
+  DOCUMENT_TREE_ICON_NAMES = %w[
+    7z ai company_lit company_unlit css csv doc document docx fig folder_closed folder_open gz htm html ini jpeg jpg json key log md mdx odp ods odt pages parquet pdf png ppt pptx psd rst rtf svg tar tex tif tiff toml tsv txt webp xls xlsm xlsx xml yaml yml zip
+  ].freeze
 
   def document_tree_render_state(projects:, current_project: nil, current_document: nil, expanded_source_path: nil, collapsed_source_path: nil)
     projects = projects.to_a
@@ -53,7 +56,6 @@ module DocumentsHelper
       ui_config:,
       tree_instance_key: DOCUMENT_TREE_INSTANCE_KEY,
       initial_expansion: { default: :collapsed, expanded_keys:, collapsed_keys: },
-      badge_builder: ->(item) { tree_item_badge(item) },
       toggle_icon_builder: ->(item, state, context) { tree_toggle_button_label(item, state, context) },
       row_class_builder: ->(item) { tree_item_css_class(item) },
       row_data_builder: ->(item) { tree_item_data_attributes(item) }
@@ -67,20 +69,11 @@ module DocumentsHelper
 
     case state.to_sym
     when :collapsed
-      { text: tree_toggle_collapsed_icon(item, children), class: "tree-toggle__icon--open", title: "開く" }
+      { html: tree_toggle_collapsed_icon(item, children), class: "tree-toggle__icon--open", title: "開く" }
     when :expanded
-      { text: tree_toggle_expanded_icon(item, children), class: "tree-toggle__icon--close", title: "閉じる" }
+      { html: tree_toggle_expanded_icon(item, children), class: "tree-toggle__icon--close", title: "閉じる" }
     else
-      { text: "・", class: "tree-toggle__icon--leaf", title: "子項目はありません" }
-    end
-  end
-
-  def tree_item_badge(item)
-    case item
-    when Project
-      nil
-    when Document
-      { text: document_tree_file_icon(item), class: "tree-node-badge--file", title: document_tree_file_icon_title(item) }
+      { html: tree_toggle_leaf_icon(item), class: "tree-toggle__icon--leaf", title: tree_toggle_leaf_icon_title(item) }
     end
   end
 
@@ -188,29 +181,53 @@ module DocumentsHelper
   end
 
   def tree_toggle_collapsed_icon(item, children)
-    return "・" if children.empty?
-    return "📁" if item.is_a?(DocumentTreeFolderNode)
+    return tree_icon_image("document", title: "子項目はありません") if children.empty?
+    return tree_icon_image("folder_closed", title: "フォルダを開く") if item.is_a?(DocumentTreeFolderNode)
 
     "+"
   end
 
   def tree_toggle_expanded_icon(item, children)
-    return "・" if children.empty?
-    return "📂" if item.is_a?(DocumentTreeFolderNode)
+    return tree_icon_image("document", title: "子項目はありません") if children.empty?
+    return tree_icon_image("folder_open", title: "フォルダを閉じる") if item.is_a?(DocumentTreeFolderNode)
 
     "-"
   end
 
-  def document_tree_file_icon(document)
-    return "📃" if document.document_kind == "markdown"
+  def tree_toggle_leaf_icon(item)
+    return tree_icon_image(document_tree_icon_name(item), title: tree_toggle_leaf_icon_title(item)) if item.is_a?(Document)
 
-    extension = document_tree_source_extension(document)
-    extension.present? ? extension : "📃"
+    "・"
   end
 
-  def document_tree_file_icon_title(document)
+  def tree_toggle_leaf_icon_title(item)
+    return "子項目はありません" unless item.is_a?(Document)
+
+    icon_name = document_tree_icon_name(item)
+    icon_name == "document" ? "ドキュメント" : "#{icon_name} ファイル"
+  end
+
+  def tree_icon_image(icon_name, title: nil)
+    image_tag(
+      "tree_icons/#{icon_name}.svg",
+      alt: "",
+      class: "tree-icon tree-icon--#{icon_name.tr("_", "-")}",
+      title:,
+      width: 18,
+      height: 18,
+      loading: "lazy",
+      aria: { hidden: true }
+    )
+  end
+
+  def document_tree_icon_name(document)
+    return "document" if document.document_kind == "markdown"
+
     extension = document_tree_source_extension(document)
-    extension.present? ? "#{extension} ファイル" : "ドキュメント"
+    return "document" if extension.blank?
+
+    normalized_extension = extension.tr(".", "").downcase
+    DOCUMENT_TREE_ICON_NAMES.include?(normalized_extension) ? normalized_extension : "document"
   end
 
   def document_tree_source_extension(document)
