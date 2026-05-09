@@ -21,8 +21,8 @@ h1 同意文面管理
       tr
         td = term.title
         td = term.version_label
-        td = term.consent_scope
-        td = term.requirement_timing
+        td = consent_scope_label(term)
+        td = consent_requirement_timing_label(term)
         td = term.active? ? "有効" : "無効"
         td.actions
           = edit_link_to "編集", edit_admin_consent_term_path(term)
