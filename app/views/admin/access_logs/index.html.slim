@@ -9,10 +9,10 @@ section.card
     .form-grid
       div
         = form.label :action_type, "操作"
-        = form.select :action_type, options_for_select([["すべて", ""]] + AccessLog.action_types.keys.map { [_1, _1] }, @filters[:action_type])
+        = form.select :action_type, options_for_select([["すべて", ""]] + enum_options_for("access_logs.action_type", AccessLog.action_types.keys), @filters[:action_type])
       div
         = form.label :target_type, "対象種別"
-        = form.select :target_type, options_for_select([["すべて", ""], ["page", "page"], ["file", "file"], ["zip", "zip"]], @filters[:target_type])
+        = form.select :target_type, options_for_select([["すべて", ""]] + enum_options_for("access_logs.target_type", %w[page file zip]), @filters[:target_type])
       div
         = form.label :project_id, "案件"
         = form.select :project_id, options_for_select([["すべて", ""]] + @projects.map { [_1.name, _1.id] }, @filters[:project_id])
@@ -23,7 +23,7 @@ section.card
         = form.label :user_id, "ユーザー"
         = form.select :user_id, options_for_select([["すべて", ""]] + @users.map { ["#{_1.display_name} / #{_1.email_address}", _1.id] }, @filters[:user_id])
       div
-        = form.label :document_q, "文書名・slug"
+        = form.label :document_q, "文書名・URL識別子"
         = form.search_field :document_q, value: @filters[:document_q]
 
     p.actions
@@ -43,14 +43,14 @@ table
       th 案件
       th 文書
       th 版
-      th IP
+      th IPアドレス
   tbody
     - @access_logs.each do |log|
       tr
         td = log.accessed_at.strftime("%Y-%m-%d %H:%M:%S")
-        td = log.action_type
+        td = access_log_action_type_label(log)
         td
-          = log.target_type
+          = access_log_target_type_label(log)
           - if log.target_name.present?
             br
             code = log.target_name
@@ -64,7 +64,7 @@ table
             | -
         td
           - if log.document_version
-            = link_to log.document_version.version_label, document_version_path(log.document_version)
+            = link_to document_version_label(log.document_version), document_version_path(log.document_version)
           - else
             | -
         td = log.ip_address.presence || "-"
