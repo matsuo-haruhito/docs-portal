@@ -46,9 +46,7 @@ class Admin::CompaniesController < Admin::BaseController
   end
 
   def company_params
-    permitted = params.require(:company).permit(:domain, :code, :name, :active)
-    permitted[:domain] = permitted[:code] if permitted[:domain].blank? && permitted[:code].present?
-    permitted.except(:code)
+    params.require(:company).permit(:domain, :name, :active)
   end
 
   def require_company_master_admin_access!
