@@ -2,17 +2,14 @@
   <%= turbo_stream_from "document_tree" %>
 
   <style>
-    .document-tree-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -0.25rem 0 0; }
-    .document-tree-heading h2 { margin: 0; line-height: 1.2; }
-    .document-tree-actions { display: inline-flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; flex-shrink: 1; min-width: 0; }
+    .document-tree-toolbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; min-width: 0; }
+    .document-tree-toolbar h2 { margin: 0; line-height: 1.2; white-space: nowrap; }
+    .document-tree-actions { display: inline-flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; flex: 1 1 auto; min-width: 0; }
     .document-tree-actions form { margin: 0; }
     .document-tree-action-link { display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(15, 98, 254, 0.32); border-radius: 999px; padding: 2px 8px; font-size: 12px; line-height: 1.5; background: #fff; color: #0f62fe; cursor: pointer; font: inherit; white-space: nowrap; }
     .document-tree-action-link:hover, .document-tree-action-link:focus { background: #eff6ff; }
-    @container (max-width: 420px) {
-      .document-tree-actions { flex-direction: column; align-items: stretch; gap: 4px; }
-      .document-tree-action-link { width: 100%; }
-    }
     @media (max-width: 520px) {
+      .document-tree-toolbar { flex-direction: column; align-items: stretch; }
       .document-tree-actions { flex-direction: column; align-items: stretch; gap: 4px; }
       .document-tree-action-link { width: 100%; }
     }
@@ -26,15 +23,18 @@
 
   <% current_project = local_assigns[:current_project] || local_assigns[:current_document]&.project %>
 
-  <div class="document-tree-heading">
-    <h2>文書ツリー</h2>
-    <% if current_project.present? %>
-      <div class="document-tree-actions" aria-label="文書ツリー操作">
-        <%= button_to "案件の文書ツリーを開く", document_tree_all_project_path(current_project, tree_action: "show", format: :turbo_stream), method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て展開します" }, class: "document-tree-action-link" %>
-        <%= button_to "案件の文書ツリーを閉じる", document_tree_all_project_path(current_project, tree_action: "hide", format: :turbo_stream), method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て閉じます" }, class: "document-tree-action-link" %>
-      </div>
-    <% end %>
-  </div>
+  <% content_for :sidebar_toolbar do %>
+    <div class="document-tree-toolbar">
+      <h2>文書ツリー</h2>
+      <% if current_project.present? %>
+        <div class="document-tree-actions" aria-label="文書ツリー操作">
+          <%= button_to "案件の文書ツリーを開く", document_tree_all_project_path(current_project, tree_action: "show", format: :turbo_stream), method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て展開します" }, class: "document-tree-action-link" %>
+          <%= button_to "案件の文書ツリーを閉じる", document_tree_all_project_path(current_project, tree_action: "hide", format: :turbo_stream), method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て閉じます" }, class: "document-tree-action-link" %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
   <p class="muted">案件と文書の階層を表示します。</p>
 
   <% tree_projects = Array(projects) %>
