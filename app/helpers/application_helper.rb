@@ -66,6 +66,26 @@ module ApplicationHelper
     localized_label("document_relations.relation_type", value)
   end
 
+  def access_log_action_type_label(log_or_value)
+    value = log_or_value.respond_to?(:action_type) ? log_or_value.action_type : log_or_value
+    localized_label("access_logs.action_type", value)
+  end
+
+  def access_log_target_type_label(log_or_value)
+    value = log_or_value.respond_to?(:target_type) ? log_or_value.target_type : log_or_value
+    localized_label("access_logs.target_type", value)
+  end
+
+  def consent_scope_label(term_or_value)
+    value = term_or_value.respond_to?(:consent_scope) ? term_or_value.consent_scope : term_or_value
+    localized_label("consent_terms.consent_scope", value)
+  end
+
+  def consent_requirement_timing_label(term_or_value)
+    value = term_or_value.respond_to?(:requirement_timing) ? term_or_value.requirement_timing : term_or_value
+    localized_label("consent_terms.requirement_timing", value)
+  end
+
   def git_import_source_provider_label(source_or_value)
     value = source_or_value.respond_to?(:provider) ? source_or_value.provider : source_or_value
     localized_label("git_import_sources.provider", value)
