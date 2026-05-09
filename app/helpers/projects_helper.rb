@@ -6,7 +6,7 @@ module ProjectsHelper
   def project_document_detail_tree_render_state(project:, documents:, expansion_mode: nil, expanded_keys: nil)
     nodes = project_document_detail_tree_nodes(project:, documents:)
     tree_instance_key = project_document_detail_tree_instance_key(project)
-    expanded_keys ||= expansion_mode == "collapse" ? [] : project_document_detail_tree_expanded_keys(nodes)
+    expanded_keys ||= project_document_detail_tree_initial_expanded_keys(project:, nodes:, expansion_mode:)
 
     adapter = TreeView::GraphAdapter.new(
       roots: nodes,
@@ -122,6 +122,16 @@ module ProjectsHelper
   end
 
   private
+
+  def project_document_detail_tree_initial_expanded_keys(project:, nodes:, expansion_mode: nil)
+    return [] if expansion_mode == "collapse"
+    return project_document_detail_tree_expanded_keys(nodes) if expansion_mode == "expand"
+
+    persisted_state = current_user.respond_to?(:tree_view_state_for) ? current_user.tree_view_state_for(project_document_detail_tree_instance_key(project)) : nil
+    return Array(persisted_state.expanded_keys) if persisted_state
+
+    project_document_detail_tree_expanded_keys(nodes)
+  end
 
   def project_document_detail_tree_toggle_path(item, action)
     return unless item.is_a?(ProjectDocumentDetailTreeFolderNode)
