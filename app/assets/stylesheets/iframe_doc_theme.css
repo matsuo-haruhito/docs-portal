@@ -618,8 +618,9 @@ article details[open] summary {
   margin-bottom: 8px;
 }
 
-.header-anchor,
-.anchor {
+a.header-anchor,
+a.anchor,
+.hash-link {
   margin-left: 6px;
   color: var(--doc-text-muted);
   font-weight: 500;
@@ -627,14 +628,18 @@ article details[open] summary {
   opacity: 0;
 }
 
-h1:hover .header-anchor,
-h2:hover .header-anchor,
-h3:hover .header-anchor,
-h4:hover .header-anchor,
-h1:hover .anchor,
-h2:hover .anchor,
-h3:hover .anchor,
-h4:hover .anchor {
+h1:hover a.header-anchor,
+h2:hover a.header-anchor,
+h3:hover a.header-anchor,
+h4:hover a.header-anchor,
+h1:hover a.anchor,
+h2:hover a.anchor,
+h3:hover a.anchor,
+h4:hover a.anchor,
+h1:hover .hash-link,
+h2:hover .hash-link,
+h3:hover .hash-link,
+h4:hover .hash-link {
   opacity: 1;
 }
 
