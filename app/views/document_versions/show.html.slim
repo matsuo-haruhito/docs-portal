@@ -1,4 +1,4 @@
-- page_title "#{@document.title} #{@version.version_label}"
+- page_title "#{@document.title} #{document_version_label(@version)}"
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
 
@@ -10,13 +10,13 @@ p.muted
 h1
   = @document.title
   |  
-  = @version.version_label
+  = document_version_label(@version)
 
 table
   tbody
     tr
       th 状態
-      td = @version.status
+      td = document_version_status_label(@version)
     tr
       th 日時
       td = @version.published_at ? l(@version.published_at) : "-"
@@ -29,7 +29,7 @@ table
     - if current_user.internal?
       tr
         th 社外公開状態
-        td = @version.publication_window_state
+        td = localized_label("document_versions.publication_window_state", @version.publication_window_state)
     tr
       th 担当者
       td = @version.published_by_user&.name || "-"
@@ -38,13 +38,13 @@ table
       td
         code = @version.source_commit_hash
     tr
-      th Markdown entry path
+      th Markdown入口パス
       td = @version.markdown_entry_path.presence || "-"
     tr
-      th Site build path
+      th サイト生成パス
       td = @version.site_build_path.presence || "-"
     tr
-      th PDF snapshot path
+      th PDFスナップショットパス
       td = @version.pdf_snapshot_path.presence || "-"
 
 - if @version.changelog_summary.present?
@@ -54,19 +54,19 @@ table
 h2 出力時の扱い
 ul
   li HTML 表示には透かしを入れません。
-  li ZIP 出力では source path 準拠、Markdown 原本の有無、添付有無、PDF のみ出力を選べます。
+  li ZIP 出力では元パス準拠、Markdown 原本の有無、添付有無、PDF のみ出力を選べます。
   - if @export_watermark_text.present?
-    li PDF を含む持ち出し用出力では、利用者・案件・文書・出力時刻ベースの watermark metadata を使う設計です。
+    li PDF を含む持ち出し用出力では、利用者・案件・文書・出力時刻ベースの透かし情報を使う設計です。
     li
       | 例:
       code = @export_watermark_text
   - elsif @document.downloadable_by?(current_user)
-    li PDF 添付がある場合は、利用者・案件・文書・出力時刻ベースの watermark metadata を使う設計です。
+    li PDF 添付がある場合は、利用者・案件・文書・出力時刻ベースの透かし情報を使う設計です。
 
 h2 表示
 ul
   - if @version.rendered_site_available?
-    li = link_to "このバージョンをHTMLで表示", project_site_path(@project, site_path: @version.html_view_site_path, version_id: @version.public_id)
+    li = link_to "このバージョンを本文で開く", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path)
   - else
     li
       span.muted HTML未生成
@@ -87,7 +87,7 @@ h2 添付・元ファイル
     thead
       tr
         th ファイル名
-        th 種別
+        th ファイル種
         th サイズ
         th 操作
     tbody
@@ -147,7 +147,7 @@ h2 Q&A
       .form-grid
         div
           = form.label :comment_type, "種別"
-          = form.select :comment_type, DocumentReviewComment.comment_types.keys.map { [_1, _1] }
+          = form.select :comment_type, DocumentReviewComment.comment_types.keys.map { [localized_label("document_review_comments.comment_type", _1), _1] }
         div
           = form.label :text_line_start, "開始行"
           = form.number_field :text_line_start, min: 1
@@ -155,16 +155,16 @@ h2 Q&A
           = form.label :text_line_end, "終了行"
           = form.number_field :text_line_end, min: 1
         div
-          = form.label :text_anchor_type, "anchor type"
-          = form.select :text_anchor_type, [["未指定", ""], ["markdown_heading", "markdown_heading"], ["json_path", "json_path"], ["yaml_path", "yaml_path"], ["plain_line", "plain_line"]]
+          = form.label :text_anchor_type, "位置の種類"
+          = form.select :text_anchor_type, [["未指定", ""], ["Markdown見出し", "markdown_heading"], ["JSONパス", "json_path"], ["YAMLパス", "yaml_path"], ["行番号", "plain_line"]]
         div
-          = form.label :text_anchor_path, "anchor path"
+          = form.label :text_anchor_path, "位置パス"
           = form.text_field :text_anchor_path
         div
-          = form.label :text_anchor_label, "anchor label"
+          = form.label :text_anchor_label, "位置ラベル"
           = form.text_field :text_anchor_label
         div
-          = form.label :source_path, "source path"
+          = form.label :source_path, "元パス"
           = form.text_field :source_path
         div style="grid-column: 1 / -1;"
           = form.label :body, "内容"
@@ -185,13 +185,13 @@ h2 Q&A
       tbody
         - unresolved_comments.each do |comment|
           tr
-            td = comment.comment_type
+            td = document_review_comment_type_label(comment)
             td
               = simple_format(comment.body)
               - if comment.location_label.present?
                 p.muted = comment.location_label
             td = comment.author.name
-            td = comment.status
+            td = document_review_comment_status_label(comment)
             td.actions
               - if current_user.admin?
                 = button_to "解決", document_version_document_review_comment_path(@version, comment), method: :patch, params: { decision: "resolve" }, class: "button secondary"
@@ -214,26 +214,26 @@ h2 Q&A
       tbody
         - resolved_comments.each do |comment|
           tr
-            td = comment.comment_type
+            td = document_review_comment_type_label(comment)
             td
               = simple_format(comment.body)
               - if comment.location_label.present?
                 p.muted = comment.location_label
             td = comment.author.name
             td = comment.resolved_by&.name || "-"
-            td = comment.resolved_at ? comment.resolved_at.strftime("%Y-%m-%d %H:%M") : "-"
+            td = comment.resolved_at ? l(comment.resolved_at, format: :short) : "-"
 
 h2 他のバージョン
 ul
   - @versions.each do |version|
     li
       - if version == @version
-        strong = version.version_label
+        strong = document_version_label(version)
       - else
-        = link_to version.version_label, document_version_path(version)
+        = link_to document_version_label(version), document_version_path(version)
       span.muted
         |  (
-        = version.status
+        = document_version_status_label(version)
         | )
 
 p = link_to "文書詳細へ戻る", project_document_path(@project, @document.slug)
