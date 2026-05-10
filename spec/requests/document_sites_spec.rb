@@ -58,7 +58,7 @@ RSpec.describe "Document sites", type: :request do
     get site_document_version_path(version, site_path: site_build_path)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Document Viewer")
+    expect(response.body).to include("site-viewer-hero")
     expect(response.body).to include("site-viewer-frame")
     expect(response.body).to include(site_document_version_path(version, site_path: site_build_path, embedded: "1").gsub("&", "&amp;"))
   end
