@@ -39,6 +39,7 @@
 - client secret は暗号化カラムに保存する
 - 文書詳細の embedded file viewer で Office file を表示する場合、Rails は Microsoft Graph の client credentials flow で access token を取得する
 - Rails は対象ファイルを設定済み Drive のプレビュー用フォルダへ一時アップロードし、その driveItem に対して `/preview` を呼び出す
+- 250MBを超えるOffice fileはGraphへアップロードせず、iframe内に「プレビュー不可・ダウンロードのみ」の案内を表示する
 - iframe には Rails の `document_files/:public_id?embedded=1` を読み込ませ、同 route から Graph の preview URL へ redirect する
 - Graph preview URL は一時 URL として扱い、DB に永続化しない
 - Office preview への遷移もファイル閲覧として access log を記録する
