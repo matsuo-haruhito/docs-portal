@@ -313,6 +313,23 @@ Drive ID: 必須。例: b!xxxxxxxxxxxxxxxx
 
 Drive ID は、Microsoft Graph Explorer、SharePoint 管理者、または運用スクリプトで対象 site の drive / document library を確認して取得します。Drive ID が正しければ、Site ID が空でも Office preview の実行には影響しません。
 
+#### フォルダ共有URLでの設定
+
+管理者や利用者にとっては、Drive ID を調べて入力するより、SharePoint / OneDrive のフォルダ共有URLを指定する方が分かりやすいです。
+現行UIでは Drive ID と preview folder path を入力しますが、設定フローとしては次の形が望ましいです。
+
+1. SharePoint / OneDrive で preview 用フォルダを作成する。
+2. フォルダの共有URL、またはブラウザで開いているフォルダURLをコピーする。
+3. ポータル側でそのURLを解決し、Drive ID とフォルダ相対 path を自動入力する。
+4. Site ID は必要に応じて、解決した site 情報を運用メモとして保存する。
+
+```text
+ユーザー入力として分かりやすい値: フォルダ共有URL
+実行時に必要な値: Drive ID + preview folder path
+```
+
+このため、今後のUI改善では `Drive ID` 直入力だけでなく、`プレビュー用フォルダURL` 入力欄を用意し、Graphで Drive ID と folder path を解決して保存する形が推奨です。
+
 ### 必要な Microsoft Graph 権限
 
 現行実装では、対象ファイルを preview 用 Drive へアップロードし、その driveItem に対して `/preview` を呼び出します。
