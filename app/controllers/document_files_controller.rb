@@ -103,7 +103,7 @@ class DocumentFilesController < BaseController
   end
 
   def document_file_asset_base_path(file)
-    document_file_asset_path(file, asset_path: ".")
+    asset_document_file_path(file, asset_path: ".")
       .sub(%r{/\.\z}, "")
   end
 
