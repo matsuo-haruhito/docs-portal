@@ -12,10 +12,10 @@
       = form.text_field :name
     label
       | 種別
-      = form.select :set_type, DocumentSet.set_types.keys.map { [_1, _1] }
+      = form.select :set_type, enum_options_for("document_sets.set_type", DocumentSet.set_types.keys)
     label
       | 公開範囲
-      = form.select :visibility_policy, DocumentSet.visibility_policies.keys.map { [_1, _1] }
+      = form.select :visibility_policy, enum_options_for("document_sets.visibility_policy", DocumentSet.visibility_policies.keys)
     label
       | 表示順
       = form.number_field :sort_order, min: 0
@@ -30,7 +30,7 @@
       thead
         tr
           th 対象
-          th 文書
+          th 文書名
           th 固定版
           th 並び順
           th メモ
@@ -42,11 +42,11 @@
               = hidden_field_tag "document_set_items[#{index}][document_id]", document.id
               = check_box_tag "document_set_items[#{index}][selected]", "1", item.present?
             td
-              strong = document.title
+              strong = link_to document.title, project_document_path(document.project, document.slug)
               br
-              span.muted = document.slug
+              span.muted = "URL識別子: #{document.slug}"
             td
-              - version_options = [["最新版を使う", ""]] + document.document_versions.sort_by(&:created_at).reverse.map { |version| ["#{version.version_label} (#{version.status})", version.id] }
+              - version_options = [["最新版を使う", ""]] + document.document_versions.sort_by(&:created_at).reverse.map { |version| ["#{document_version_label(version)} (#{document_version_status_label(version)})", version.id] }
               = select_tag "document_set_items[#{index}][document_version_id]", options_for_select(version_options, item&.document_version_id)
             td
               = number_field_tag "document_set_items[#{index}][sort_order]", item&.sort_order || index, min: 0
