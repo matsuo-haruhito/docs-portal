@@ -52,6 +52,10 @@ ja:
         pdf_generated: "PDF化済み"
         submitted: "提出済み"
         attachment: "添付"
+    document_permissions:
+      access_level:
+        view: "閲覧"
+        download: "ダウンロード"
     document_review_comments:
       comment_type:
         question: "質問"
