@@ -29,7 +29,7 @@ class DocumentFilesController < BaseController
 
     if disposition == "inline" && embedded_request? && html_file?(file)
       response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
-      render html: embedded_html_for(file, file_path).html_safe, content_type: "text/html"
+      render html: embedded_html_for(file, file.absolute_path).html_safe, content_type: "text/html"
       return
     end
 
@@ -48,6 +48,12 @@ class DocumentFilesController < BaseController
     asset_file = embedded_asset_file_for(owner_file, params[:asset_path])
     unless asset_file&.deliverable_after_scan?(current_user)
       render plain: "File not found", status: :not_found
+      return
+    end
+
+    if html_file?(asset_file)
+      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(asset_file, disposition: "inline").header
+      render html: embedded_html_for(owner_file, asset_file.absolute_path, current_tree_path: asset_file.tree_path).html_safe, content_type: "text/html"
       return
     end
 
@@ -89,9 +95,9 @@ class DocumentFilesController < BaseController
     end
   end
 
-  def embedded_html_for(file, file_path)
+  def embedded_html_for(owner_file, file_path, current_tree_path: owner_file.tree_path)
     html = File.read(file_path, encoding: "UTF-8")
-    base_tag = %(<base href="#{ERB::Util.html_escape(document_file_asset_base_path(file))}/">)
+    base_tag = %(<base href="#{ERB::Util.html_escape(document_file_asset_base_path(owner_file, current_tree_path:))}/">)
 
     if html.match?(%r{<head[\s>]}i)
       html.sub(%r{(<head[^>]*>)}i, "\\1\n#{base_tag}")
@@ -102,8 +108,12 @@ class DocumentFilesController < BaseController
     File.binread(file_path)
   end
 
-  def document_file_asset_base_path(file)
-    asset_document_file_path(file, asset_path: ".")
+  def document_file_asset_base_path(file, current_tree_path: file.tree_path)
+    current_directory = File.dirname(current_tree_path.to_s)
+    current_directory = nil if current_directory == "."
+    asset_path = [current_directory, "."].compact_blank.join("/")
+
+    asset_document_file_path(file, asset_path:)
       .sub(%r{/\.\z}, "")
   end
 
@@ -111,12 +121,8 @@ class DocumentFilesController < BaseController
     normalized_asset_path = normalize_asset_path(requested_asset_path)
     return if normalized_asset_path.blank?
 
-    owner_directory = File.dirname(owner_file.tree_path.to_s)
-    owner_directory = nil if owner_directory == "."
-    target_tree_path = [owner_directory, normalized_asset_path].compact_blank.join("/")
-
     owner_file.document_version.document_files.detect do |candidate|
-      normalize_asset_path(candidate.tree_path) == target_tree_path
+      normalize_asset_path(candidate.tree_path) == normalized_asset_path
     end
   end
 
