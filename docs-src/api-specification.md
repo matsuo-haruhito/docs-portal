@@ -317,7 +317,7 @@ Drive ID は、Microsoft Graph Explorer、SharePoint 管理者、または運用
 
 Drive ID を手で調べる場合は、Microsoft Graph Explorer または同等の Graph API 実行環境で確認します。
 
-Site ID が分かっている場合は、対象 site の default document library を取得します。
+SharePoint の document library を使う場合、Site ID が分かっていれば対象 site の default document library を取得します。
 
 ```http
 GET https://graph.microsoft.com/v1.0/sites/{siteId}/drive
@@ -347,6 +347,32 @@ GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com:/sites/docs-pr
 
 返ってきた site の `id` を使って、上の `/sites/{siteId}/drive` または `/sites/{siteId}/drives` を実行します。
 
+OneDrive for Business を使う場合は、SharePoint site ID ではなくユーザーの drive を取得します。対象ユーザーの UPN または user ID が分かっている場合は次を実行します。
+
+```http
+GET https://graph.microsoft.com/v1.0/users/user@example.com/drive
+```
+
+返ってきた JSON の `id` が OneDrive の Drive ID です。
+
+```json
+{
+  "id": "b!onedrive-drive-id",
+  "driveType": "business",
+  "owner": {
+    "user": {
+      "email": "user@example.com"
+    }
+  }
+}
+```
+
+自分の OneDrive を delegated 権限で確認する場合は `GET /me/drive` でも確認できます。ただし、このポータルの Office preview は client credentials flow の application 権限で動くため、運用設定としては特定ユーザーの OneDrive よりも、共有の SharePoint document library を使う方が管理しやすいです。
+
+```http
+GET https://graph.microsoft.com/v1.0/me/drive
+```
+
 #### フォルダ共有URLでの設定
 
 管理者や利用者にとっては、Drive ID を調べて入力するより、SharePoint / OneDrive のフォルダ共有URLを指定する方が分かりやすいです。
@@ -364,6 +390,7 @@ GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com:/sites/docs-pr
 
 Graph API では共有URLを share token に変換し、`/shares/{shareIdOrUrl}/driveItem` で共有された DriveItem を取得できます。
 取得結果の `parentReference.driveId` が Drive ID、`parentReference.path` と item 名から folder path を導けます。
+SharePoint でも OneDrive でも、共有URLが取得できるフォルダであれば同じ考え方で解決できます。
 このため、今後のUI改善では `Drive ID` 直入力だけでなく、`プレビュー用フォルダURL` 入力欄を用意し、Graphで Drive ID と folder path を解決して保存する形が推奨です。
 
 ### 必要な Microsoft Graph 権限
