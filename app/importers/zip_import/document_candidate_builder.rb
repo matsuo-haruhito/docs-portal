@@ -35,7 +35,7 @@ module ZipImport
         absolute_path: path,
         logical_path:,
         title: inferred_title(logical_path),
-        slug: inferred_slug(logical_path),
+        slug: inferred_slug(logical_path, path),
         frontmatter:,
         document_kind: document_kind_for(path),
         attachment_paths: attachment_paths.uniq.sort_by(&:to_s),
@@ -127,18 +127,26 @@ module ZipImport
       base
     end
 
-    def inferred_slug(logical_path)
-      path = Pathname(logical_path)
-      slug_source =
-        if README_BASENAMES.include?(path.basename.sub_ext("").to_s.downcase)
-          path.dirname.to_s
-        else
-          path.sub_ext("").to_s
-        end
-      slug_source = "home" if slug_source.blank? || slug_source == "."
-
-      normalized = slug_source.split("/").map { |segment| segment.parameterize.presence || "part" }.join("-")
+    def inferred_slug(logical_path, path)
+      source = slug_source_for(logical_path, path)
+      normalized = source.split("/").map { |segment| segment.parameterize.presence || "part" }.join("-")
       normalized.presence || "document"
+    end
+
+    def slug_source_for(logical_path, path)
+      logical = Pathname(logical_path)
+      base = logical.basename.sub_ext("").to_s
+      if README_BASENAMES.include?(base.downcase)
+        source = logical.dirname.to_s
+        return "home" if source.blank? || source == "."
+
+        return source
+      end
+
+      return logical.sub_ext("").to_s if path_classifier.renderable_document_file?(path)
+
+      extension = logical.extname.delete_prefix(".").presence
+      extension ? "#{logical.sub_ext('')}-#{extension}" : logical.to_s
     end
   end
 end
