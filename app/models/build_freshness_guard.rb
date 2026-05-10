@@ -35,6 +35,9 @@ class BuildFreshnessGuard
     request_build!
     job_class.perform_later
     true
+  rescue
+    clear_build_request!
+    raise
   end
 
   private
