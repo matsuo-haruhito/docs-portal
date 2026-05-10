@@ -190,13 +190,14 @@ a.tree-toggle__action{
 
 .document-reader-shell{
   width: 100%;
+  min-height: calc(100vh - 100px);
   border-radius: 12px;
 }
 
 .document-reader-shell .site-viewer-frame{
   display: block;
   width: 100%;
-  min-height: calc(100vh - 170px);
+  min-height: calc(100vh - 100px);
 }
 
 .layout-with-sidebar:has(.document-reader){
