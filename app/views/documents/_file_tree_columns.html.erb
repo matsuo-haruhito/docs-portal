@@ -5,7 +5,7 @@
     <% file = item.document_file %>
     <% if file.downloadable_by?(current_user) %>
       <%= link_to item.label, document_file_path(file) %>
-      <%= link_to document_file_path(file, disposition: "download"), class: "tree-download-button", title: "このファイルをダウンロード", aria: { label: "このファイルをダウンロード" } do %>
+      <%= link_to document_file_path(file, disposition: "download"), class: "tree-download-button", title: "このファイルをダウンロード", data: { turbo: false }, aria: { label: "このファイルをダウンロード" } do %>
         <svg class="download-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
           <path d="M12 3a1.25 1.25 0 0 1 1.25 1.25v9.18l3.13-3.13a1.25 1.25 0 1 1 1.77 1.77l-5.26 5.25a1.25 1.25 0 0 1-1.78 0l-5.26-5.25a1.25 1.25 0 0 1 1.77-1.77l3.13 3.13V4.25A1.25 1.25 0 0 1 12 3Z"/>
           <path d="M4.25 15.5a1.25 1.25 0 0 1 1.25 1.25v1.75h13v-1.75a1.25 1.25 0 1 1 2.5 0v3A1.25 1.25 0 0 1 19.75 21H4.25A1.25 1.25 0 0 1 3 19.75v-3a1.25 1.25 0 0 1 1.25-1.25Z"/>
