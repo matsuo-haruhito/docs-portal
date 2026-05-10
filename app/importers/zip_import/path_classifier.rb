@@ -2,6 +2,7 @@ module ZipImport
   class PathClassifier
     MARKDOWN_EXTENSIONS = %w[.md .markdown .mdx].freeze
     DIAGRAM_EXTENSIONS = %w[.puml .plantuml .d2 .mmd .mermaid].freeze
+    HTML_EXTENSIONS = %w[.html .htm].freeze
     IGNORED_BASENAMES = %w[.ds_store thumbs.db].freeze
 
     def initialize(root:)
@@ -16,8 +17,20 @@ module ZipImport
       DIAGRAM_EXTENSIONS.include?(Pathname(path).extname.downcase)
     end
 
+    def html_file?(path)
+      HTML_EXTENSIONS.include?(Pathname(path).extname.downcase)
+    end
+
     def renderable_document_file?(path)
       markdown_file?(path) || diagram_file?(path)
+    end
+
+    def static_html_document_file?(path)
+      html_file?(path)
+    end
+
+    def attachment_owner_candidate_file?(path)
+      renderable_document_file?(path) || static_html_document_file?(path)
     end
 
     def document_candidate_file?(path)
