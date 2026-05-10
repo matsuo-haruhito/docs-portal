@@ -41,10 +41,28 @@ class DocumentFilesController < BaseController
     response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
   end
 
+  def asset
+    owner_file = DocumentFile.find_by!(public_id: params[:public_id])
+    require_file_access!(owner_file)
+
+    asset_file = embedded_asset_file_for(owner_file, params[:asset_path])
+    unless asset_file&.deliverable_after_scan?(current_user)
+      render plain: "File not found", status: :not_found
+      return
+    end
+
+    send_file(
+      asset_file.absolute_path,
+      disposition: "inline",
+      type: asset_file.effective_content_type
+    )
+    response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(asset_file, disposition: "inline").header
+  end
+
   private
 
   def require_file_access!(file)
-    if embedded_request?
+    if embedded_request? || action_name == "asset"
       require_document_version_view_access!(file.document_version)
       raise ApplicationError::Forbidden unless file.deliverable_after_scan?(current_user)
     else
@@ -73,7 +91,7 @@ class DocumentFilesController < BaseController
 
   def embedded_html_for(file, file_path)
     html = File.read(file_path, encoding: "UTF-8")
-    base_tag = %(<base href="#{ERB::Util.html_escape(document_file_asset_base_url(file))}/">)
+    base_tag = %(<base href="#{ERB::Util.html_escape(document_file_asset_base_path(file))}/">)
 
     if html.match?(%r{<head[\s>]}i)
       html.sub(%r{(<head[^>]*>)}i, "\\1\n#{base_tag}")
@@ -84,9 +102,30 @@ class DocumentFilesController < BaseController
     File.binread(file_path)
   end
 
-  def document_file_asset_base_url(file)
-    document_file_url(file, disposition: "inline", embedded: "1", only_path: true)
-      .sub(%r{/[^/]*\z}, "")
+  def document_file_asset_base_path(file)
+    document_file_asset_path(file, asset_path: ".")
+      .sub(%r{/\.\z}, "")
+  end
+
+  def embedded_asset_file_for(owner_file, requested_asset_path)
+    normalized_asset_path = normalize_asset_path(requested_asset_path)
+    return if normalized_asset_path.blank?
+
+    owner_directory = File.dirname(owner_file.tree_path.to_s)
+    owner_directory = nil if owner_directory == "."
+    target_tree_path = [owner_directory, normalized_asset_path].compact_blank.join("/")
+
+    owner_file.document_version.document_files.detect do |candidate|
+      normalize_asset_path(candidate.tree_path) == target_tree_path
+    end
+  end
+
+  def normalize_asset_path(value)
+    path = value.to_s.tr("\\", "/").delete_prefix("/")
+    normalized = Pathname.new(path.presence || ".").cleanpath.to_s
+    return if normalized.blank? || normalized == "." || normalized == ".." || normalized.start_with?("../")
+
+    normalized
   end
 
   def html_file?(file)
