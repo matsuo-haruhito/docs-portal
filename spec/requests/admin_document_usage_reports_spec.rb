@@ -31,9 +31,9 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Usage Project")
     expect(response.body).to include("Manual")
-    expect(response.body).to include("view:<strong> 1</strong>")
-    expect(response.body).to include("download:<strong> 1</strong>")
-    expect(response.body).to include("read confirmation:<strong> 1</strong>")
+    expect(response.body).to include("閲覧:<strong> 1</strong>")
+    expect(response.body).to include("ダウンロード:<strong> 1</strong>")
+    expect(response.body).to include("既読確認:<strong> 1</strong>")
   end
 
   it "forbids external users and company master admins" do
