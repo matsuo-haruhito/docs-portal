@@ -9,8 +9,15 @@ class CreateImportRouteSettings < ActiveRecord::Migration[8.1]
     end
 
     add_index :import_route_settings,
+      [:route_key, :setting_key],
+      unique: true,
+      where: "project_id IS NULL",
+      name: "index_import_route_settings_global_unique"
+
+    add_index :import_route_settings,
       [:project_id, :route_key, :setting_key],
       unique: true,
-      name: "index_import_route_settings_on_project_route_and_key"
+      where: "project_id IS NOT NULL",
+      name: "index_import_route_settings_project_unique"
   end
 end
