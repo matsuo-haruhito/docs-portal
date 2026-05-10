@@ -1,18 +1,30 @@
+<% download_icon = capture do %>
+  <svg class="download-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+    <path d="M12 3a1.25 1.25 0 0 1 1.25 1.25v9.18l3.13-3.13a1.25 1.25 0 1 1 1.77 1.77l-5.26 5.25a1.25 1.25 0 0 1-1.78 0l-5.26-5.25a1.25 1.25 0 0 1 1.77-1.77l3.13 3.13V4.25A1.25 1.25 0 0 1 12 3Z"/>
+    <path d="M4.25 15.5a1.25 1.25 0 0 1 1.25 1.25v1.75h13v-1.75a1.25 1.25 0 1 1 2.5 0v3A1.25 1.25 0 0 1 19.75 21H4.25A1.25 1.25 0 0 1 3 19.75v-3a1.25 1.25 0 0 1 1.25-1.25Z"/>
+  </svg>
+<% end %>
+
 <% if item.is_a?(ProjectsHelper::ProjectDocumentDetailTreeFolderNode) %>
   <td class="project-document-detail-tree__name-cell">
     <strong><%= item.label %></strong>
-    <%= button_to project_document_zip_path(item.project), method: :post, params: { source_path: item.path, zip_path_mode: "source_path", include_markdown_sources: true, include_attachments: true }, class: "tree-download-button", title: "このフォルダ内のすべてのファイルをZIPでダウンロード", form: { class: "tree-download-form" }, aria: { label: "このフォルダ内のすべてのファイルをZIPでダウンロード" } do %>
-      <svg class="download-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
-        <path d="M12 3a1.25 1.25 0 0 1 1.25 1.25v9.18l3.13-3.13a1.25 1.25 0 1 1 1.77 1.77l-5.26 5.25a1.25 1.25 0 0 1-1.78 0l-5.26-5.25a1.25 1.25 0 0 1 1.77-1.77l3.13 3.13V4.25A1.25 1.25 0 0 1 12 3Z"/>
-        <path d="M4.25 15.5a1.25 1.25 0 0 1 1.25 1.25v1.75h13v-1.75a1.25 1.25 0 1 1 2.5 0v3A1.25 1.25 0 0 1 19.75 21H4.25A1.25 1.25 0 0 1 3 19.75v-3a1.25 1.25 0 0 1 1.25-1.25Z"/>
-      </svg>
+    <%= button_to project_document_zip_path(item.project), method: :post, params: { source_path: item.path, zip_path_mode: "source_path", include_markdown_sources: true, include_attachments: true }, class: "tree-download-button tree-download-button--combined", title: "このフォルダ内のすべてのファイルをZIPでダウンロード", form: { class: "tree-download-form", data: { turbo: false } }, data: { turbo: false }, aria: { label: "このフォルダ内のすべてのファイルをZIPでダウンロード" } do %>
+      <%= tree_icon("folder_closed", title: nil) %>
+      <%= download_icon %>
     <% end %>
   </td>
   <td colspan="3"></td>
 <% else %>
   <% version = document_tree_version_for(item) %>
+  <% download_file = version&.embedded_view_file&.downloadable_by?(current_user) ? version.embedded_view_file : version&.document_files&.order(:sort_order, :id)&.detect { _1.downloadable_by?(current_user) } %>
   <td class="project-document-detail-tree__name-cell">
     <%= link_to tree_item_label(item), tree_item_path(item), class: "project-document-detail-tree__document-title" %>
+    <% if download_file %>
+      <%= link_to document_file_path(download_file, disposition: "download"), class: "tree-download-button tree-download-button--combined", title: "このファイルをダウンロード", data: { turbo: false }, aria: { label: "このファイルをダウンロード" } do %>
+        <%= document_file_icon(download_file, title: nil) %>
+        <%= download_icon %>
+      <% end %>
+    <% end %>
     <% tree_item_status_icons(item).each do |status_icon| %>
       <span id="<%= status_icon[:id] %>" class="project-document-detail-tree__status <%= status_icon[:class] %>" title="<%= status_icon[:title] %>" aria-label="<%= status_icon[:title] %>"><%= status_icon[:text] %></span>
     <% end %>
