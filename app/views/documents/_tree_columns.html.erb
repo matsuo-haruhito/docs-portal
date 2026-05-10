@@ -20,7 +20,6 @@
     class: ["tree-item-label", tree_item_label_size_class(item)].compact,
     title: tooltip,
     data: {
-      turbo_frame: "main_panel",
       tree_nav_link: true,
       tree_item_type: item.is_a?(DocumentsHelper::DocumentTreeFolderNode) ? "document_tree_folder" : item.class.name.underscore,
       tree_open_url: tree_open_path,
