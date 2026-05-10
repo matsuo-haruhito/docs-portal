@@ -1,4 +1,6 @@
+require "fileutils"
 require "open3"
+require Rails.root.join("db/seeds/support/docusaurus_runtime_checker")
 
 class Admin::ApiSpecificationPage
   SITE_PATH = "api-specification".freeze
@@ -42,6 +44,7 @@ class Admin::ApiSpecificationPage
   def build!
     raise ActiveRecord::RecordNotFound, "API specification source is missing" unless source_path.exist?
 
+    SeedSupport::DocusaurusRuntimeChecker.ensure_npm!
     FileUtils.mkdir_p(build_root)
     stdout, stderr, status = Open3.capture3(
       { "DOCUSAURUS_DOCS_PATH" => source_path.dirname.to_s },
