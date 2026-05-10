@@ -25,8 +25,6 @@ class DocumentSearch
     end
   end
 
-  alias apply_labels_for match_labels_for
-
   def self.match_target_labels
     DocumentQuerying::SearchMatchCatalog.labels
   end
