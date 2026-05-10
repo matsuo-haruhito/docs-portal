@@ -24,7 +24,7 @@ h1 ユーザーマスタ
         td = user.email_address
         td = user.display_name
         td
-          span.badge = user.user_type
+          span.badge = user_type_label(user)
         td = user.company&.display_name || "-"
         td = user.active? ? "有効" : "無効"
         td.actions
