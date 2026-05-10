@@ -12,7 +12,7 @@
     </label>
     <label>
       権限
-      <%= form.select :role, ProjectMembership.roles.keys.map { |key| [key, key] } %>
+      <%= form.select :role, enum_options_for("project_memberships.role", ProjectMembership.roles.keys) %>
     </label>
   </div>
   <p class="actions" style="margin-top:16px;">
