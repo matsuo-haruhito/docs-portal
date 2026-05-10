@@ -22,7 +22,7 @@ class Admin::ApiSpecificationPage
   end
 
   def iframe_src
-    @view_context.admin_api_specification_site_path(site_path: SITE_PATH)
+    @view_context.site_admin_api_specification_path(site_path: SITE_PATH)
   end
 
   def render_site(site_path)
@@ -30,7 +30,7 @@ class Admin::ApiSpecificationPage
       version: docusaurus_version,
       view_context: @view_context,
       embedded: true,
-      site_url_builder: lambda { |relative_path, _version| @view_context.admin_api_specification_site_path(site_path: relative_path) }
+      site_url_builder: lambda { |relative_path, _version| @view_context.site_admin_api_specification_path(site_path: relative_path) }
     ).render_html(site_path.presence || SITE_PATH)
   end
 
