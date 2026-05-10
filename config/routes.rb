@@ -33,6 +33,7 @@ Rails.application.routes.draw do
       post :sync, on: :member
     end
     resources :git_import_runs, only: [:index]
+    resources :microsoft_graph_connections, except: %i[show new]
     resources :documents, except: %i[show new] do
       patch :archive, on: :member
       patch :restore, on: :member
