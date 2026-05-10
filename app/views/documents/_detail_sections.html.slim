@@ -232,7 +232,7 @@ ul
           = form.number_field :text_line_end, min: 1
         div
           = form.label :text_anchor_type, "位置の種類"
-          = form.select :text_anchor_type, [["未指定", ""], ["Markdown見出し", "markdown_heading"], ["JSONパス", "json_path"], ["YAMLパス", "plain_line"]]
+          = form.select :text_anchor_type, [["未指定", ""], ["Markdown見出し", "markdown_heading"], ["JSONパス", "json_path"], ["YAMLパス", "yaml_path"], ["行番号", "plain_line"]]
         div
           = form.label :text_anchor_path, "位置パス"
           = form.text_field :text_anchor_path
