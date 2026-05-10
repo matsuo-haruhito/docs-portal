@@ -190,7 +190,7 @@ RSpec.describe "Project sites", type: :request do
     get project_path(project)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("ドキュメントを読む")
+    expect(response.body).to include("文書を読む")
     expect(response.body).to include(project_document_path(project, document.slug, version_id: version_v2.public_id, site_path: version_v2.html_view_site_path).gsub("&", "&amp;"))
   end
 
