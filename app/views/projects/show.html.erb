@@ -12,6 +12,7 @@
       <%= link_to "文書を読む", project_document_path(@project, site_version.document.slug, version_id: site_version.public_id, site_path: site_version.html_view_site_path), class: "button" %>
     <% end %>
     <%= link_to "文書一覧", project_documents_path(@project), class: "button secondary" %>
+    <%= button_to "📦 ダウンロード", project_document_zip_path(@project), method: :post, params: { zip_path_mode: "source_path", include_markdown_sources: true, include_attachments: true }, class: "button secondary", title: "この案件内のすべてのファイルをZIPでダウンロード", form: { class: "inline-form" } %>
     <%= link_to "AI向けコンテキスト", project_ai_context_path(@project), class: "button secondary" %>
     <%= link_to "文書セット", project_document_sets_path(@project), class: "button secondary" %>
     <%= link_to "文書カタログ", project_document_catalogs_path(@project), class: "button secondary" %>
