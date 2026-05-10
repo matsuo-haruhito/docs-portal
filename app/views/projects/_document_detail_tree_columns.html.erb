@@ -9,7 +9,7 @@
   <td class="project-document-detail-tree__name-cell">
     <strong><%= item.label %></strong>
     <%= button_to project_document_zip_path(item.project), method: :post, params: { source_path: item.path, zip_path_mode: "source_path", include_markdown_sources: true, include_attachments: true }, class: "tree-download-button tree-download-button--combined", title: "このフォルダ内のすべてのファイルをZIPでダウンロード", form: { class: "tree-download-form", data: { turbo: false } }, data: { turbo: false }, aria: { label: "このフォルダ内のすべてのファイルをZIPでダウンロード" } do %>
-      <%= tree_icon("folder_closed", title: nil) %>
+      <%= tree_icon("zip", title: nil) %>
       <%= download_icon %>
     <% end %>
   </td>
