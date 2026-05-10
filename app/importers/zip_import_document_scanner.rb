@@ -25,11 +25,11 @@ class ZipImportDocumentScanner
   def call
     raw_document_files = all_files.select { document_candidate_file?(_1) }
     raw_documents = raw_document_files.map { document_candidate_builder.call(_1) }
-    renderable_documents = raw_documents.select { path_classifier.renderable_document_file?(_1.absolute_path) }
-    renderable_document_paths = renderable_documents.map(&:absolute_path)
-    attachment_only_paths = renderable_documents
+    attachment_owner_documents = raw_documents.select { path_classifier.attachment_owner_candidate_file?(_1.absolute_path) }
+    attachment_owner_paths = attachment_owner_documents.map(&:absolute_path)
+    attachment_only_paths = attachment_owner_documents
       .flat_map(&:attachment_paths)
-      .uniq - renderable_document_paths
+      .uniq - attachment_owner_paths
     documents = raw_documents.reject { attachment_only_paths.include?(_1.absolute_path) }
     attached_paths = documents.flat_map(&:attachment_paths).uniq
     remaining_files = all_files.reject { attached_paths.include?(_1) || documents.map(&:absolute_path).include?(_1) }
