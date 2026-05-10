@@ -3,7 +3,7 @@
 = form_with model: [:admin, document_permission] do |form|
   .form-grid
     label style="grid-column: 1 / -1;"
-      | 文書
+      | 文書名
       = form.collection_select :document_id, @documents, :id, :title
     label
       | 会社
@@ -13,7 +13,7 @@
       = form.collection_select :user_id, @users, :id, :display_name, include_blank: "未指定"
     label
       | 権限
-      = form.select :access_level, DocumentPermission.access_levels.keys.map { |key| [key, key] }
+      = form.select :access_level, enum_options_for("document_permissions.access_level", DocumentPermission.access_levels.keys)
 
   p.muted 会社単位かユーザー単位のどちらかを指定してください。
   p.actions
