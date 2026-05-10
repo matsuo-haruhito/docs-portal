@@ -5,8 +5,11 @@ require "securerandom"
 RSpec.describe BuildFreshnessGuard do
   class BuildFreshnessGuardSpecJob < ApplicationJob
     cattr_accessor :performed_count, default: 0
+    cattr_accessor :raise_on_enqueue, default: false
 
     def self.perform_later
+      raise "enqueue failed" if raise_on_enqueue
+
       self.performed_count += 1
     end
   end
@@ -26,6 +29,7 @@ RSpec.describe BuildFreshnessGuard do
 
   before do
     BuildFreshnessGuardSpecJob.performed_count = 0
+    BuildFreshnessGuardSpecJob.raise_on_enqueue = false
     FileUtils.mkdir_p(workspace)
   end
 
@@ -63,6 +67,14 @@ RSpec.describe BuildFreshnessGuard do
 
     guard.clear_build_request!
 
+    expect(marker_path).not_to exist
+  end
+
+  it "clears the marker when enqueue fails" do
+    File.write(source_path, "source")
+    BuildFreshnessGuardSpecJob.raise_on_enqueue = true
+
+    expect { guard.enqueue_if_stale! }.to raise_error("enqueue failed")
     expect(marker_path).not_to exist
   end
 end
