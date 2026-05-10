@@ -59,7 +59,7 @@ table
         td = log.project&.name || "-"
         td
           - if log.document && log.project
-            = link_to log.document.title, project_document_path(log.project, log.document.slug)
+            = link_to log.document.title, project_document_path(log.project, log.document.slug), data: { turbo_frame: "_top" }
           - else
             | -
         td
