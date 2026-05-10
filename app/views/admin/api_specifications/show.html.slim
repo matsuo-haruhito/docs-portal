@@ -7,7 +7,8 @@ p.muted ドキュメント更新用 internal import API の仕様を確認でき
 
 section.card
   - if @api_specification_page.available?
-    iframe.api-specification-frame src=@api_specification_page.iframe_src title="API仕様"
+    .site-viewer-shell
+      iframe.site-viewer-frame src=@api_specification_page.iframe_src title="API仕様"
   - else
     h2 Docusaurus build が必要です
     p.muted API仕様のMarkdownは docs-src/api-specification.md にあります。Docusaurus build 後に、この画面でHTMLレンダリング結果を表示します。
