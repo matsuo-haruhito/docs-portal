@@ -20,12 +20,7 @@ class GitImportSource < ApplicationRecord
     no_auth: 9
   }
 
-  enum :dry_run_policy, {
-    require_confirmation: 0,
-    auto_confirm: 1
-  }
-
-  validates :repository_full_name, :branch, :source_path, :auth_type, :dry_run_policy, presence: true
+  validates :repository_full_name, :branch, :source_path, :auth_type, presence: true
   validates :repository_full_name, format: { with: %r{\A[\w.-]+/[\w.-]+\z}, message: "must be owner/repo" }
   validates :source_path, format: { with: %r{\A[^/].*\z}, message: "must be a relative path" }
   validates :repository_full_name, uniqueness: { scope: %i[project_id branch source_path] }
@@ -40,6 +35,14 @@ class GitImportSource < ApplicationRecord
 
   def normalized_source_path
     Pathname.new(source_path.to_s).cleanpath.to_s.delete_prefix("./")
+  end
+
+  def dry_run_policy
+    ImportRouteSetting.dry_run_policy_for(project:, route_key: "git", default: "require_confirmation")
+  end
+
+  def auto_confirm?
+    dry_run_policy == "auto_confirm"
   end
 
   def mark_synced!(commit_sha)
