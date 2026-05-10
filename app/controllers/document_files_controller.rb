@@ -1,7 +1,7 @@
 class DocumentFilesController < BaseController
   def show
     file = DocumentFile.find_by!(public_id: params[:public_id])
-    require_document_file_download_access!(file)
+    require_file_access!(file)
 
     disposition = disposition_for(file)
     consent_timing = embedded_request? ? :first_view : :download
@@ -36,6 +36,15 @@ class DocumentFilesController < BaseController
   end
 
   private
+
+  def require_file_access!(file)
+    if embedded_request?
+      require_document_version_view_access!(file.document_version)
+      raise ApplicationError::Forbidden unless file.deliverable_after_scan?(current_user)
+    else
+      require_document_file_download_access!(file)
+    end
+  end
 
   def disposition_for(file)
     case params[:disposition]
