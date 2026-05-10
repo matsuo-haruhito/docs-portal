@@ -287,6 +287,19 @@ X-Docs-Portal-Signature-256: sha256=<hmac_sha256_hex>
 このアプリは client credentials flow で `https://graph.microsoft.com/.default` を使って access token を取得します。
 そのため、Entra のアプリ登録に付与済みの Microsoft Graph application permission が token に反映されます。
 
+#### リダイレクトURI
+
+Office preview 用の Microsoft Graph 連携は client credentials flow のサーバー間認証であり、利用者をブラウザでサインインさせて戻す処理は行いません。
+そのため、通常の token 取得や Office preview 実行にリダイレクトURIは不要です。
+
+ただし、管理者同意を admin consent URL で手動付与する運用では、同意完了後の戻り先として登録済み redirect URI が必要になる場合があります。
+その場合は、ポータルの通常画面ではなく、同意完了後に表示できる管理用のURLを一時的または運用上の戻り先として登録します。
+
+```text
+通常のOffice preview実行: redirect URI 不要
+admin consent URL を手動で使う場合: 同意完了後の戻り先として redirect URI が必要になる場合あり
+```
+
 ### 必要な Microsoft Graph 権限
 
 現行実装では、対象ファイルを preview 用 Drive へアップロードし、その driveItem に対して `/preview` を呼び出します。
