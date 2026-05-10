@@ -32,6 +32,11 @@ module ApplicationHelper
     localized_label("documents.importance_level", value)
   end
 
+  def document_permission_access_level_label(permission_or_value)
+    value = permission_or_value.respond_to?(:access_level) ? permission_or_value.access_level : permission_or_value
+    localized_label("document_permissions.access_level", value)
+  end
+
   def document_version_status_label(version_or_value)
     value = version_or_value.respond_to?(:status) ? version_or_value.status : version_or_value
     localized_label("document_versions.status", value)
