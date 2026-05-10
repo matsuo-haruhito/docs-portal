@@ -131,6 +131,11 @@ module ApplicationHelper
     localized_label("git_import_runs.status", value)
   end
 
+  def microsoft_graph_connection_auth_type_label(connection_or_value)
+    value = connection_or_value.respond_to?(:auth_type) ? connection_or_value.auth_type : connection_or_value
+    localized_label("microsoft_graph_connections.auth_type", value)
+  end
+
   def bulk_edit_dry_run_status_label(run_or_value)
     value = run_or_value.respond_to?(:status) ? run_or_value.status : run_or_value
     localized_label("bulk_edit_dry_runs.status", value)
