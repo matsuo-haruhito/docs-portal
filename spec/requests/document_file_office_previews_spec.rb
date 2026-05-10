@@ -43,6 +43,22 @@ RSpec.describe "Document file Office previews", type: :request do
     expect(version.embedded_view_file).to eq(office_file)
   end
 
+  it "shows a download-only notice for Office files over 250MB" do
+    create(:microsoft_graph_connection, project:)
+    office_file.update!(file_size: 251.megabytes)
+    sign_in_as(user)
+
+    expect_any_instance_of(MicrosoftGraphClient).not_to receive(:preview_url_for_upload)
+
+    get document_file_path(office_file, disposition: "inline", embedded: "1")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("text/html")
+    expect(response.body).to include("プレビュー不可")
+    expect(response.body).to include("250MBを超えているため")
+    expect(response.body).to include(document_file_path(office_file, disposition: "download"))
+  end
+
   it "returns bad gateway when Microsoft Graph preview cannot be created" do
     create(:microsoft_graph_connection, project:)
     sign_in_as(user)
