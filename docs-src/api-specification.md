@@ -313,6 +313,40 @@ Drive ID: 必須。例: b!xxxxxxxxxxxxxxxx
 
 Drive ID は、Microsoft Graph Explorer、SharePoint 管理者、または運用スクリプトで対象 site の drive / document library を確認して取得します。Drive ID が正しければ、Site ID が空でも Office preview の実行には影響しません。
 
+#### Drive ID を手で調べる方法
+
+Drive ID を手で調べる場合は、Microsoft Graph Explorer または同等の Graph API 実行環境で確認します。
+
+Site ID が分かっている場合は、対象 site の default document library を取得します。
+
+```http
+GET https://graph.microsoft.com/v1.0/sites/{siteId}/drive
+```
+
+複数の document library から選ぶ場合は、site 配下の drives を一覧します。
+
+```http
+GET https://graph.microsoft.com/v1.0/sites/{siteId}/drives
+```
+
+返ってきた JSON の `id` が Drive ID です。
+
+```json
+{
+  "id": "b!xxxxxxxxxxxxxxxx",
+  "name": "Documents",
+  "webUrl": "https://contoso.sharepoint.com/sites/docs-preview/Shared%20Documents"
+}
+```
+
+Site ID が分からない場合は、先に SharePoint site の URL から site を取得します。
+
+```http
+GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com:/sites/docs-preview
+```
+
+返ってきた site の `id` を使って、上の `/sites/{siteId}/drive` または `/sites/{siteId}/drives` を実行します。
+
 #### フォルダ共有URLでの設定
 
 管理者や利用者にとっては、Drive ID を調べて入力するより、SharePoint / OneDrive のフォルダ共有URLを指定する方が分かりやすいです。
@@ -328,6 +362,8 @@ Drive ID は、Microsoft Graph Explorer、SharePoint 管理者、または運用
 実行時に必要な値: Drive ID + preview folder path
 ```
 
+Graph API では共有URLを share token に変換し、`/shares/{shareIdOrUrl}/driveItem` で共有された DriveItem を取得できます。
+取得結果の `parentReference.driveId` が Drive ID、`parentReference.path` と item 名から folder path を導けます。
 このため、今後のUI改善では `Drive ID` 直入力だけでなく、`プレビュー用フォルダURL` 入力欄を用意し、Graphで Drive ID と folder path を解決して保存する形が推奨です。
 
 ### 必要な Microsoft Graph 権限
