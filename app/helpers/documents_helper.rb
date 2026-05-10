@@ -187,7 +187,7 @@ module DocumentsHelper
   end
 
   def document_search_match_labels(document, keyword)
-    DocumentSearch.new(keyword).apply_labels_for(document)
+    DocumentSearch.new(keyword).match_labels_for(document)
   end
 
   private
