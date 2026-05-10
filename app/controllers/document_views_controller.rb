@@ -3,8 +3,8 @@ class DocumentViewsController < BaseController
     version = DocumentVersion.find_by!(public_id: params[:public_id])
     require_document_version_view_access!(version)
 
-    unless version.rendered_site_available?
-      render plain: "Rendered HTML is not available for this version. Run import/build first.", status: :not_found
+    unless version.embedded_view_available?
+      render plain: "Browser-viewable document body is not available for this version.", status: :not_found
       return
     end
 
