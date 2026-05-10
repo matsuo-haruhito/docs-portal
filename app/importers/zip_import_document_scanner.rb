@@ -11,14 +11,19 @@ class ZipImportDocumentScanner
   )
 
   ScanResult = Data.define(:documents, :orphan_files, :skipped_files, :warnings)
+  CANDIDATE_POLICIES = %i[all_files renderable_only].freeze
 
-  def initialize(root:)
+  def initialize(root:, candidate_policy: :all_files)
     @root = Pathname(root)
+    @candidate_policy = candidate_policy.to_sym
+    unless CANDIDATE_POLICIES.include?(@candidate_policy)
+      raise ArgumentError, "unknown candidate_policy: #{candidate_policy}"
+    end
     @path_classifier = ZipImport::PathClassifier.new(root:)
   end
 
   def call
-    raw_document_files = all_files.select { path_classifier.document_candidate_file?(_1) }
+    raw_document_files = all_files.select { document_candidate_file?(_1) }
     raw_documents = raw_document_files.map { document_candidate_builder.call(_1) }
     attachment_only_paths = raw_documents
       .select { path_classifier.renderable_document_file?(_1.absolute_path) }
@@ -56,7 +61,14 @@ class ZipImportDocumentScanner
 
   private
 
-  attr_reader :root, :path_classifier
+  attr_reader :root, :path_classifier, :candidate_policy
+
+  def document_candidate_file?(path)
+    return false if path_classifier.ignored_file?(path)
+    return path_classifier.renderable_document_file?(path) if candidate_policy == :renderable_only
+
+    true
+  end
 
   def all_files
     @all_files ||= Dir.glob(root.join("**", "*").to_s, File::FNM_DOTMATCH)
