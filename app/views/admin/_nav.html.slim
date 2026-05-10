@@ -1,6 +1,7 @@
 ul.nav-list
   li = link_to "ダッシュボード", admin_root_path
   - if admin_user?
+    li = link_to "API仕様", admin_api_specification_path
     li = link_to "モデルブラウザ", admin_model_browser_path
   - if company_master_admin?
     li = link_to "会社", admin_companies_path
