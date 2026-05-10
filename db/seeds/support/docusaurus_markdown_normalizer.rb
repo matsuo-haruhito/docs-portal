@@ -110,9 +110,7 @@ module SeedSupport
     end
 
     def escape_mdx_angle_brackets(line)
-      line
-        .gsub("<", "&lt;")
-        .gsub(">", "&gt;")
+      line.gsub("<", "&lt;")
     end
   end
 end
