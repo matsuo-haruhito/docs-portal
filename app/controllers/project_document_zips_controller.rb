@@ -10,7 +10,7 @@ class ProjectDocumentZipsController < BaseController
     archive = DocumentVersionsZipBuilder.new(
       versions:,
       user: current_user,
-      filename: "#{project.code}-documents.zip",
+      filename: zip_filename(project),
       zip_path_mode: zip_options[:zip_path_mode],
       include_markdown_sources: zip_options[:include_markdown_sources],
       include_attachments: zip_options[:include_attachments],
@@ -33,16 +33,48 @@ class ProjectDocumentZipsController < BaseController
   private
 
   def selected_versions(project)
-    ids = Array(params[:document_ids]).reject(&:blank?)
-    return [] if ids.empty?
-
-    project.documents
+    documents = project.documents
       .accessible_to(current_user)
-      .where(id: ids)
       .includes(:latest_version)
+
+    ids = Array(params[:document_ids]).reject(&:blank?)
+    documents = documents.where(id: ids) if ids.any?
+
+    source_path = normalized_source_path
+    documents = documents.select { |document| document_in_source_path?(document, source_path) } if source_path.present?
+
+    documents
       .select { _1.downloadable_by?(current_user) }
       .filter_map(&:latest_version)
       .select { _1.viewable_by?(current_user) }
+  end
+
+  def document_in_source_path?(document, source_path)
+    version = document.latest_version
+    return false unless version
+
+    source_directory = normalize_path(version.source_directory)
+    source_relative_path = normalize_path(version.source_relative_path)
+
+    source_directory == source_path ||
+      source_directory.start_with?("#{source_path}/") ||
+      source_relative_path.start_with?("#{source_path}/")
+  end
+
+  def zip_filename(project)
+    source_path = normalized_source_path
+    return "#{project.code}-documents.zip" if source_path.blank?
+
+    folder_name = source_path.split("/").last.presence || "folder"
+    "#{project.code}-#{folder_name}-documents.zip"
+  end
+
+  def normalized_source_path
+    @normalized_source_path ||= normalize_path(params[:source_path])
+  end
+
+  def normalize_path(value)
+    value.to_s.tr("\\", "/").split("/").reject(&:blank?).join("/")
   end
 
   def zip_options
