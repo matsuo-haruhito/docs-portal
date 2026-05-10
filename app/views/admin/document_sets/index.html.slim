@@ -21,8 +21,8 @@ h1 文書セット
       tr
         td = document_set.project.name
         td = document_set.name
-        td = document_set.set_type
-        td = document_set.visibility_policy
+        td = document_set_type_label(document_set)
+        td = document_set_visibility_policy_label(document_set)
         td = document_set.document_set_items.size
         td.actions
           = edit_link_to "編集", edit_admin_document_set_path(document_set)
