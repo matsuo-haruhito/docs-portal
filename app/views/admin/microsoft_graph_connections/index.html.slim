@@ -1,0 +1,42 @@
+- page_title "Microsoft Graph接続"
+
+h1 Microsoft Graph接続
+= render "admin/nav"
+
+.card
+  h2 新規登録
+  = render "form", microsoft_graph_connection: @microsoft_graph_connection
+
+= table_tag do
+  thead
+    tr
+      th 案件
+      th 接続名
+      th Tenant / Client
+      th Drive
+      th プレビュー用フォルダ
+      th 状態
+      th 操作
+  tbody
+    - @microsoft_graph_connections.each do |connection|
+      tr
+        td
+          = connection.project.name
+          br
+          code = connection.project.code
+        td = connection.name
+        td
+          code = connection.tenant_id
+          br
+          span.muted = connection.client_id
+        td
+          code = connection.drive_id
+          - if connection.site_id.present?
+            br
+            span.muted = "site: #{connection.site_id}"
+        td
+          code = connection.preview_folder_path
+        td = connection.enabled? ? "有効" : "無効"
+        td.actions
+          = edit_link_to "編集", edit_admin_microsoft_graph_connection_path(connection)
+          = delete_link_to "削除", admin_microsoft_graph_connection_path(connection), confirm: "Microsoft Graph接続設定を削除しますか？"

@@ -21,6 +21,15 @@ class DocumentFile < ApplicationRecord
     "application/json"
   ].freeze
 
+  OFFICE_PREVIEW_EXTENSIONS = %w[
+    .doc
+    .docx
+    .xls
+    .xlsx
+    .ppt
+    .pptx
+  ].freeze
+
   belongs_to :document_version
 
   enum :scan_status, {
@@ -70,6 +79,14 @@ class DocumentFile < ApplicationRecord
 
   def inline_disposition?
     INLINE_CONTENT_TYPE_PREFIXES.any? { effective_content_type.start_with?(_1) }
+  end
+
+  def office_previewable?
+    File.extname(file_name.to_s).downcase.in?(OFFICE_PREVIEW_EXTENSIONS)
+  end
+
+  def embeddable_viewer_file?
+    inline_disposition? || office_previewable?
   end
 
   def text_previewable?

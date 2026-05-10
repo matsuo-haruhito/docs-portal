@@ -1,0 +1,39 @@
+= render "shared/error_messages", record: microsoft_graph_connection
+
+= form_with model: [:admin, microsoft_graph_connection] do |form|
+  .form-grid
+    label
+      | 案件
+      = form.collection_select :project_id, @projects, :id, :name
+    label
+      | 接続名
+      = form.text_field :name, placeholder: "Office preview"
+    label
+      | 認証方式
+      = form.select :auth_type, enum_options_for("microsoft_graph_connections.auth_type", MicrosoftGraphConnection.auth_types.keys)
+    label
+      | Tenant ID
+      = form.text_field :tenant_id
+    label
+      | Client ID
+      = form.text_field :client_id
+    label
+      | Client secret
+      = form.password_field :client_secret, value: nil, autocomplete: "new-password", placeholder: microsoft_graph_connection.persisted? ? "変更時のみ入力" : "アプリのクライアントシークレット"
+    label
+      | Site ID
+      = form.text_field :site_id, placeholder: "任意"
+    label
+      | Drive ID
+      = form.text_field :drive_id
+    label
+      | プレビュー用フォルダ
+      = form.text_field :preview_folder_path, placeholder: "docs-portal-previews"
+    label
+      | 状態
+      = form.select :enabled, [["有効", true], ["無効", false]]
+  p.muted Officeファイルのプレビュー時に、指定Drive配下のプレビュー用フォルダへ一時アップロードし、Microsoft GraphのdriveItem preview URLを取得します。Client secretは暗号化カラムに保存されます。
+  p.actions
+    = form.submit "保存", class: "button"
+    - if microsoft_graph_connection.persisted?
+      = link_to "一覧へ戻る", admin_microsoft_graph_connections_path, class: "button secondary"

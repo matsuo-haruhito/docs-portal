@@ -7,6 +7,22 @@ class DocumentFilesController < BaseController
     consent_timing = embedded_request? ? :first_view : :download
     return if require_consent!(target: file, timing: consent_timing)
 
+    if disposition == "inline" && embedded_request? && file.office_previewable?
+      preview_url = office_preview_url_for(file)
+      record_file_access_log(file)
+      redirect_to preview_url, allow_other_host: true
+      return
+    rescue DocumentFileOfficePreview::FileTooLargeError
+      record_file_access_log(file)
+      @document_file = file
+      @download_available = file.downloadable_by?(current_user)
+      render :office_preview_unavailable, status: :ok
+      return
+    rescue DocumentFileOfficePreview::Error, MicrosoftGraphClient::Error => e
+      render plain: "Office preview is not available: #{e.message}", status: :bad_gateway
+      return
+    end
+
     file_path = file.absolute_path
 
     unless File.exist?(file_path)
@@ -87,12 +103,16 @@ class DocumentFilesController < BaseController
   def disposition_for(file)
     case params[:disposition]
     when "inline"
-      file.inline_disposition? ? "inline" : "attachment"
+      file.inline_disposition? || file.office_previewable? ? "inline" : "attachment"
     when "download"
       "attachment"
     else
-      file.inline_disposition? ? "inline" : "attachment"
+      file.inline_disposition? || file.office_previewable? ? "inline" : "attachment"
     end
+  end
+
+  def office_preview_url_for(file)
+    DocumentFileOfficePreview.new(file:, user: current_user).url
   end
 
   def embedded_html_for(owner_file, file_path, current_tree_path: owner_file.tree_path)

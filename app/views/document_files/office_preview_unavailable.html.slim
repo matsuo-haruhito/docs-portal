@@ -1,0 +1,18 @@
+- page_title "Officeプレビュー不可"
+
+.office-preview-unavailable
+  h1 プレビュー不可
+  p このOfficeファイルは250MBを超えているため、プレビュー表示できません。
+  p ダウンロードしてローカル環境で開いてください。
+
+  dl
+    dt ファイル名
+    dd = @document_file.file_name
+    dt サイズ
+    dd = number_to_human_size(@document_file.file_size)
+
+  - if @download_available
+    p.actions
+      = link_to "ダウンロード", document_file_path(@document_file, disposition: "download"), class: "button", target: "_blank", rel: "noopener"
+  - else
+    p.muted このファイルのダウンロード権限がないため、管理者に確認してください。
