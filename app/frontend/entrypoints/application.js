@@ -136,48 +136,7 @@ function setupNavDropdowns() {
   })
 }
 
-function navigateMainPanel(url) {
-  const frame = document.getElementById("main_panel")
-  if (!frame) return false
-
-  frame.src = url
-  return true
-}
-
-function refreshDocumentTree(link) {
-  const url = link.dataset.treeRefreshUrl
-  if (!url) return
-
-  fetch(url, {
-    headers: {
-      Accept: "text/vnd.turbo-stream.html"
-    },
-    credentials: "same-origin"
-  })
-    .then((response) => response.ok ? response.text() : "")
-    .then((html) => {
-      if (!html) return
-      window.Turbo?.renderStreamMessage(html)
-    })
-}
-
-function setupDocumentTreeNavigation() {
-  document.addEventListener("click", (event) => {
-    if (event.target.closest(".tree-toggle")) return
-
-    const link = event.target.closest("a[data-tree-nav-link='true']")
-    if (!link) return
-    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
-
-    event.preventDefault()
-    if (!navigateMainPanel(link.href)) return
-
-    refreshDocumentTree(link)
-  }, true)
-}
-
 setupNavDropdowns()
-setupDocumentTreeNavigation()
 
 document.addEventListener("turbo:load", setupSidebars)
 document.addEventListener("turbo:render", setupSidebars)
