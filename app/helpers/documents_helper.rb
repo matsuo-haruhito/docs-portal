@@ -81,6 +81,10 @@ module DocumentsHelper
     end
   end
 
+  def document_file_icon(document_file, title: nil)
+    tree_icon(document_file_icon_name(document_file), title: title || document_file.file_name)
+  end
+
   def tree_item_path(item)
     case item
     when Project
@@ -256,6 +260,13 @@ module DocumentsHelper
     return "tree_icons_document.svg" if DOCUMENT_TREE_DOCUMENT_ICON_NAMES.include?(icon_name.to_s)
 
     DOCUMENT_TREE_EXTRA_ICON_NAMES.include?(icon_name.to_s) ? "tree_icons_extra.svg" : "tree_icons.svg"
+  end
+
+  def document_file_icon_name(document_file)
+    extension = File.extname(document_file.file_name.to_s).delete_prefix(".").downcase.presence
+    return "document" if extension.blank?
+
+    DOCUMENT_TREE_ICON_NAMES.include?(extension) ? extension : "document"
   end
 
   def document_tree_icon_name(document)

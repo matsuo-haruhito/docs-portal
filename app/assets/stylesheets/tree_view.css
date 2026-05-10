@@ -98,6 +98,62 @@ a.tree-toggle__action{
   cursor: pointer;
 }
 
+.tree-download-form{
+  display: inline-flex;
+  margin: 0 0 0 0.25rem;
+  vertical-align: middle;
+}
+
+.tree-download-button,
+button.tree-download-button,
+a.tree-download-button{
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 1.45rem !important;
+  min-width: 1.45rem !important;
+  max-width: 1.45rem !important;
+  height: 1.45rem !important;
+  min-height: 1.45rem !important;
+  margin-left: 0.25rem;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+  line-height: 1 !important;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.tree-download-button--combined,
+button.tree-download-button--combined,
+a.tree-download-button--combined{
+  width: auto !important;
+  min-width: 2.75rem !important;
+  max-width: none !important;
+  gap: 0.25rem;
+  padding: 0 0.35rem !important;
+  border-radius: 999px !important;
+}
+
+.tree-download-button:hover,
+.tree-download-button:focus{
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+  text-decoration: none !important;
+}
+
+.tree-download-button .download-icon,
+.tree-download-button .tree-icon{
+  display: block;
+  flex: 0 0 auto;
+  fill: currentColor;
+  pointer-events: none;
+}
+
 .tree-toggle__action .tree-toggle__icon {
   pointer-events: none;
 }
@@ -190,13 +246,14 @@ a.tree-toggle__action{
 
 .document-reader-shell{
   width: 100%;
+  min-height: calc(100vh - 100px);
   border-radius: 12px;
 }
 
 .document-reader-shell .site-viewer-frame{
   display: block;
   width: 100%;
-  min-height: calc(100vh - 170px);
+  min-height: calc(100vh - 100px);
 }
 
 .layout-with-sidebar:has(.document-reader){

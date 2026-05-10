@@ -76,7 +76,9 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :document_files, only: [:show], param: :public_id
+  resources :document_files, only: [:show], param: :public_id do
+    get "assets/*asset_path", to: "document_files#asset", as: :asset, on: :member, format: false
+  end
 
   namespace :api do
     namespace :internal do

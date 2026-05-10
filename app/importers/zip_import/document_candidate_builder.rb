@@ -1,6 +1,19 @@
+require "cgi"
+require "nokogiri"
+
 module ZipImport
   class DocumentCandidateBuilder
     README_BASENAMES = %w[readme index].freeze
+    HTML_URL_ATTRIBUTES = {
+      "a" => "href",
+      "link" => "href",
+      "script" => "src",
+      "img" => "src",
+      "source" => "src",
+      "video" => "src",
+      "audio" => "src",
+      "iframe" => "src"
+    }.freeze
     LINK_PATTERN = /
       !?\[[^\]]*\]
       \(
@@ -9,6 +22,7 @@ module ZipImport
         \s*
       \)
     /x.freeze
+    CSS_URL_PATTERN = /url\(\s*['"]?(?<target>[^)'"#?]+(?:[#?][^)'"]*)?)['"]?\s*\)/i.freeze
 
     def initialize(root:, path_classifier:, document_candidate_class:)
       @root = Pathname(root)
@@ -21,10 +35,14 @@ module ZipImport
       frontmatter = path_classifier.markdown_file?(path) ? parse_frontmatter(path) : {}
       warnings = []
 
-      attachment_paths = if path_classifier.diagram_file?(path)
-        related_same_basename_files(path, logical_path)
-      else
+      attachment_paths = if path_classifier.markdown_file?(path)
         markdown_attachment_paths(path, logical_path, warnings)
+      elsif path_classifier.diagram_file?(path)
+        related_same_basename_files(path, logical_path)
+      elsif path_classifier.html_file?(path)
+        html_attachment_paths(path, logical_path, warnings)
+      else
+        [path]
       end
 
       attachment_paths.unshift(path) unless attachment_paths.include?(path)
@@ -33,9 +51,9 @@ module ZipImport
         absolute_path: path,
         logical_path:,
         title: inferred_title(logical_path),
-        slug: inferred_slug(logical_path),
+        slug: inferred_slug(logical_path, path),
         frontmatter:,
-        document_kind: path_classifier.markdown_file?(path) ? "markdown" : "mixed",
+        document_kind: document_kind_for(path),
         attachment_paths: attachment_paths.uniq.sort_by(&:to_s),
         warnings:
       )
@@ -45,9 +63,15 @@ module ZipImport
 
     attr_reader :root, :path_classifier, :document_candidate_class
 
+    def document_kind_for(path)
+      return "markdown" if path_classifier.markdown_file?(path)
+
+      "mixed"
+    end
+
     def markdown_attachment_paths(path, logical_path, warnings)
       attachments = []
-      referenced_targets(path).each do |target|
+      referenced_markdown_targets(path).each do |target|
         resolved = resolve_relative_target(logical_path, target)
         next if resolved.blank?
 
@@ -56,6 +80,34 @@ module ZipImport
           attachments << absolute_path
         else
           warnings << "referenced file is missing: #{resolved}"
+        end
+      end
+
+      attachments
+    end
+
+    def html_attachment_paths(path, logical_path, warnings)
+      attachments = []
+      queue = [path]
+      seen = Set.new
+
+      until queue.empty?
+        current_path = Pathname(queue.shift)
+        next if seen.include?(current_path.to_s)
+
+        seen << current_path.to_s
+        current_logical_path = path_classifier.logical_path_for(current_path)
+        referenced_static_targets(current_path).each do |target|
+          resolved = resolve_relative_target(current_logical_path, target)
+          next if resolved.blank?
+
+          absolute_path = root.join(resolved)
+          if absolute_path.file?
+            attachments << absolute_path
+            queue << absolute_path if path_classifier.html_file?(absolute_path) || absolute_path.extname.downcase == ".css"
+          else
+            warnings << "referenced file is missing: #{resolved}"
+          end
         end
       end
 
@@ -71,19 +123,54 @@ module ZipImport
         .select(&:file?)
     end
 
-    def referenced_targets(path)
+    def referenced_markdown_targets(path)
       content = File.read(path, encoding: "UTF-8")
       content.scan(LINK_PATTERN).filter_map do |target|
-        value = Array(target).first.to_s.strip
-        next if value.blank?
-        next if value.start_with?("#")
-        next if value.match?(%r{\A[a-z][a-z0-9+\-.]*://}i)
-        next if value.start_with?("mailto:")
-
-        value.split("#").first.presence
+        normalized_relative_target(Array(target).first)
       end.uniq
     rescue Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError
       []
+    end
+
+    def referenced_static_targets(path)
+      if path_classifier.html_file?(path)
+        referenced_html_targets(path)
+      elsif path.extname.downcase == ".css"
+        referenced_css_targets(path)
+      else
+        []
+      end
+    end
+
+    def referenced_html_targets(path)
+      content = File.read(path, encoding: "UTF-8")
+      document = Nokogiri::HTML5.parse(content)
+      HTML_URL_ATTRIBUTES.flat_map do |selector, attribute|
+        document.css("#{selector}[#{attribute}]").filter_map do |node|
+          normalized_relative_target(node[attribute])
+        end
+      end.uniq
+    rescue Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError
+      []
+    end
+
+    def referenced_css_targets(path)
+      content = File.read(path, encoding: "UTF-8")
+      content.scan(CSS_URL_PATTERN).filter_map do |target|
+        normalized_relative_target(Array(target).first)
+      end.uniq
+    rescue Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError
+      []
+    end
+
+    def normalized_relative_target(value)
+      value = CGI.unescape(value.to_s.strip)
+      return if value.blank?
+      return if value.start_with?("#")
+      return if value.match?(%r{\A[a-z][a-z0-9+\-.]*:}i)
+      return if value.start_with?("//")
+
+      value.split("#", 2).first.to_s.split("?", 2).first.presence
     end
 
     def resolve_relative_target(logical_path, target)
@@ -119,18 +206,26 @@ module ZipImport
       base
     end
 
-    def inferred_slug(logical_path)
-      path = Pathname(logical_path)
-      slug_source =
-        if README_BASENAMES.include?(path.basename.sub_ext("").to_s.downcase)
-          path.dirname.to_s
-        else
-          path.sub_ext("").to_s
-        end
-      slug_source = "home" if slug_source.blank? || slug_source == "."
-
-      normalized = slug_source.split("/").map { |segment| segment.parameterize.presence || "part" }.join("-")
+    def inferred_slug(logical_path, path)
+      source = slug_source_for(logical_path, path)
+      normalized = source.split("/").map { |segment| segment.parameterize.presence || "part" }.join("-")
       normalized.presence || "document"
+    end
+
+    def slug_source_for(logical_path, path)
+      logical = Pathname(logical_path)
+      base = logical.basename.sub_ext("").to_s
+      if README_BASENAMES.include?(base.downcase)
+        source = logical.dirname.to_s
+        return "home" if source.blank? || source == "."
+
+        return source
+      end
+
+      return logical.sub_ext("").to_s if path_classifier.renderable_document_file?(path)
+
+      extension = logical.extname.delete_prefix(".").presence
+      extension ? "#{logical.sub_ext('')}-#{extension}" : logical.to_s
     end
   end
 end

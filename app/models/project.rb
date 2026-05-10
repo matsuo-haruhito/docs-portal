@@ -15,6 +15,7 @@ class Project < ApplicationRecord
   has_many :project_consent_settings, dependent: :destroy
   has_many :consent_terms, through: :project_consent_settings
   has_many :git_import_sources, dependent: :destroy
+  has_many :import_route_settings, dependent: :destroy
 
   validates :code, :name, presence: true
   validates :code, uniqueness: true

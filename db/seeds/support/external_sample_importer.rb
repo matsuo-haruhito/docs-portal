@@ -20,33 +20,15 @@ module SeedSupport
           scopes << ["current", site_dir, snapshot_dirs]
 
           scopes.flat_map do |version_name, source_root, excluded_roots|
-            renderable_files_for_scope(source_root, excluded_roots: source_root == site_dir ? excluded_roots : []).map do |source_file|
-              logical_relative_path = relative_path(source_file, source_root)
-              slug = document_slug_for_markdown(site_dir, logical_relative_path)
-              version_label = version_label_for_name(version_name)
-              site_build_path = File.join(
-                "external_samples",
-                slug_for_name(project_name),
-                site_build_segment_for_name(version_name)
-              )
-
-              {
-                project_code:,
-                project_name:,
-                project_description: "external_samples/#{sample_set_key} 配下のサンプル文書サイト",
-                title: document_title_for_markdown(logical_relative_path, site_dir),
-                slug:,
-                version_label:,
-                source_commit_hash: "external-#{Digest::SHA1.hexdigest("#{project_name}/#{logical_relative_path}/#{version_label}")[0, 12]}",
-                source_dir: source_root,
-                markdown_source_file: Pathname(source_file),
-                markdown_logical_relative_path: logical_relative_path,
-                markdown_entry_path: site_page_path_for_markdown(logical_relative_path, site_build_path),
-                site_build_path:,
-                version_priority: source_root == site_dir ? 1 : 0,
-                attachment_files: attachment_files_for(source_file, logical_relative_path, source_root)
-              }
-            end
+            documents_for_scope(
+              sample_set_key:,
+              project_name:,
+              project_code:,
+              site_dir:,
+              version_name:,
+              source_root:,
+              excluded_roots: source_root == site_dir ? excluded_roots : []
+            )
           end
         end
       end
@@ -56,19 +38,40 @@ module SeedSupport
 
     attr_reader :context
 
-    def renderable_files_for_scope(source_root, excluded_roots: [])
-      Dir.glob(source_root.join("**/*").to_s).select do |path|
-        next false unless File.file?(path)
-        next false unless DocusaurusBuilder.renderable_document_file?(path)
+    def documents_for_scope(sample_set_key:, project_name:, project_code:, site_dir:, version_name:, source_root:, excluded_roots:)
+      scanner = ZipImportDocumentScanner.new(root: source_root)
+      scan_result = scanner.call
+      version_label = version_label_for_name(version_name)
+      site_build_path = File.join(
+        "external_samples",
+        slug_for_name(project_name),
+        site_build_segment_for_name(version_name)
+      )
 
-        excluded_roots.none? { Pathname(path).to_s.start_with?(_1.to_s + File::SEPARATOR) }
-      end.sort
-    end
+      scan_result.documents.filter_map do |candidate|
+        source_file = Pathname(candidate.absolute_path)
+        next if excluded_roots.any? { source_file.to_s.start_with?(_1.to_s + File::SEPARATOR) }
 
-    def attachment_files_for(source_file, logical_relative_path, source_root)
-      files = related_attachment_files(source_file, logical_relative_path, source_root).map { Pathname(_1) }
-      files.unshift(Pathname(source_file)) if DocusaurusBuilder.diagram_file?(source_file)
-      files
+        renderable = scanner.renderable_document_file?(source_file)
+        slug = document_slug_for_markdown(site_dir, candidate.logical_path)
+
+        {
+          project_code:,
+          project_name:,
+          project_description: "external_samples/#{sample_set_key} 配下のサンプル文書サイト",
+          title: candidate.title,
+          slug:,
+          version_label:,
+          source_commit_hash: "external-#{Digest::SHA1.hexdigest("#{project_name}/#{candidate.logical_path}/#{version_label}")[0, 12]}",
+          source_dir: source_root,
+          markdown_source_file: source_file,
+          markdown_logical_relative_path: candidate.logical_path,
+          markdown_entry_path: renderable ? site_page_path_for_markdown(candidate.logical_path, site_build_path) : nil,
+          site_build_path: renderable ? site_build_path : nil,
+          version_priority: source_root == site_dir ? 1 : 0,
+          attachment_files: candidate.attachment_paths.map { Pathname(_1) }
+        }
+      end
     end
 
     def method_missing(name, ...)

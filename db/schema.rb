@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_10_121000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -30,11 +30,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
     t.datetime "updated_at", null: false
     t.text "user_agent"
     t.bigint "user_id"
+    t.index ["accessed_at", "id"], name: "index_access_logs_on_recent_order", order: :desc
+    t.index ["action_type", "accessed_at", "id"], name: "index_access_logs_on_action_type_recent", order: { accessed_at: :desc, id: :desc }
+    t.index ["company_id", "accessed_at", "id"], name: "index_access_logs_on_company_recent", order: { accessed_at: :desc, id: :desc }
     t.index ["company_id"], name: "index_access_logs_on_company_id"
+    t.index ["document_id", "accessed_at", "id"], name: "index_access_logs_on_document_recent", order: { accessed_at: :desc, id: :desc }
     t.index ["document_id"], name: "index_access_logs_on_document_id"
     t.index ["document_version_id"], name: "index_access_logs_on_document_version_id"
+    t.index ["project_id", "accessed_at", "id"], name: "index_access_logs_on_project_recent", order: { accessed_at: :desc, id: :desc }
     t.index ["project_id"], name: "index_access_logs_on_project_id"
     t.index ["public_id"], name: "index_access_logs_on_public_id", unique: true
+    t.index ["target_type", "accessed_at", "id"], name: "index_access_logs_on_target_type_recent", order: { accessed_at: :desc, id: :desc }
+    t.index ["user_id", "accessed_at", "id"], name: "index_access_logs_on_user_recent", order: { accessed_at: :desc, id: :desc }
     t.index ["user_id"], name: "index_access_logs_on_user_id"
   end
 
@@ -193,7 +200,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
     t.datetime "created_at", null: false
     t.integer "delivery_type", default: 0, null: false
     t.bigint "document_id"
-    t.bigint "document_set_id"
     t.text "error_message"
     t.bigint "project_id", null: false
     t.string "public_id", null: false
@@ -205,7 +211,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
     t.datetime "updated_at", null: false
     t.index ["delivery_type"], name: "index_document_delivery_logs_on_delivery_type"
     t.index ["document_id"], name: "index_document_delivery_logs_on_document_id"
-    t.index ["document_set_id"], name: "index_document_delivery_logs_on_document_set_id"
     t.index ["project_id"], name: "index_document_delivery_logs_on_project_id"
     t.index ["public_id"], name: "index_document_delivery_logs_on_public_id", unique: true
     t.index ["sender_id"], name: "index_document_delivery_logs_on_sender_id"
@@ -233,6 +238,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
     t.index ["scan_status"], name: "index_document_files_on_scan_status"
     t.index ["search_text"], name: "index_document_files_on_search_text_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["storage_key"], name: "index_document_files_on_storage_key", unique: true
+    t.check_constraint "file_size >= 0", name: "document_files_file_size_non_negative"
+    t.check_constraint "sort_order >= 0", name: "document_files_sort_order_non_negative"
   end
 
   create_table "document_keywords", comment: "文書検索用のキーワード", force: :cascade do |t|
@@ -249,6 +256,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
     t.index ["normalized_keyword"], name: "index_document_keywords_on_normalized_keyword"
     t.index ["normalized_keyword"], name: "index_document_keywords_on_normalized_keyword_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["public_id"], name: "index_document_keywords_on_public_id", unique: true
+    t.check_constraint "sort_order >= 0", name: "document_keywords_sort_order_non_negative"
   end
 
   create_table "document_permissions", comment: "会社または利用者単位の文書アクセス権限", force: :cascade do |t|
@@ -260,6 +268,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
     t.datetime "updated_at", null: false
     t.bigint "user_id"
     t.index ["company_id"], name: "index_document_permissions_on_company_id"
+    t.index ["document_id", "company_id"], name: "index_document_permissions_unique_company_scope", unique: true, where: "((company_id IS NOT NULL) AND (user_id IS NULL))"
+    t.index ["document_id", "user_id"], name: "index_document_permissions_unique_user_scope", unique: true, where: "((user_id IS NOT NULL) AND (company_id IS NULL))"
     t.index ["document_id"], name: "index_document_permissions_on_document_id"
     t.index ["public_id"], name: "index_document_permissions_on_public_id", unique: true
     t.index ["user_id"], name: "index_document_permissions_on_user_id"
@@ -278,6 +288,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
     t.index ["source_document_id", "target_document_id", "relation_type"], name: "index_document_relations_unique_relation", unique: true
     t.index ["source_document_id"], name: "index_document_relations_on_source_document_id"
     t.index ["target_document_id"], name: "index_document_relations_on_target_document_id"
+    t.check_constraint "sort_order >= 0", name: "document_relations_sort_order_non_negative"
+    t.check_constraint "source_document_id <> target_document_id", name: "document_relations_source_target_different"
   end
 
   create_table "document_review_comments", comment: "文書レビューコメント・Q&A・指摘事項", force: :cascade do |t|
@@ -355,6 +367,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
     t.index ["document_id", "document_tag_id"], name: "index_document_taggings_on_document_id_and_document_tag_id", unique: true
     t.index ["document_id"], name: "index_document_taggings_on_document_id"
     t.index ["document_tag_id"], name: "index_document_taggings_on_document_tag_id"
+    t.check_constraint "sort_order >= 0", name: "document_taggings_sort_order_non_negative"
   end
 
   create_table "document_tags", comment: "文書分類用タグ", force: :cascade do |t|
@@ -398,9 +411,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
     t.index ["published_from"], name: "index_document_versions_on_published_from"
     t.index ["published_until"], name: "index_document_versions_on_published_until"
     t.index ["search_body_text"], name: "index_document_versions_on_search_body_text_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.index ["site_build_path"], name: "index_document_versions_on_site_build_path"
     t.index ["snapshot_kind"], name: "index_document_versions_on_snapshot_kind"
+    t.index ["source_basename"], name: "index_document_versions_on_source_basename"
     t.index ["source_directory"], name: "index_document_versions_on_source_directory"
     t.index ["source_directory"], name: "index_document_versions_on_source_directory_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.index ["source_extension"], name: "index_document_versions_on_source_extension"
     t.index ["source_file_name"], name: "index_document_versions_on_source_file_name_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["source_relative_path"], name: "index_document_versions_on_source_relative_path"
     t.index ["source_relative_path"], name: "index_document_versions_on_source_relative_path_trigram", opclass: :gin_trgm_ops, using: :gin
@@ -511,13 +527,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
     t.index ["status"], name: "index_import_dry_runs_on_status"
   end
 
+  create_table "import_route_settings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "project_id"
+    t.string "route_key", null: false
+    t.string "setting_key", null: false
+    t.string "setting_value", null: false
+    t.datetime "updated_at", null: false
+    t.index ["project_id", "route_key", "setting_key"], name: "index_import_route_settings_project_unique", unique: true, where: "(project_id IS NOT NULL)"
+    t.index ["project_id"], name: "index_import_route_settings_on_project_id"
+    t.index ["route_key", "setting_key"], name: "index_import_route_settings_global_unique", unique: true, where: "(project_id IS NULL)"
+  end
+
   create_table "notification_events", comment: "利用者へ通知するイベント本体", force: :cascade do |t|
     t.bigint "actor_user_id"
     t.text "body"
     t.datetime "created_at", null: false
     t.bigint "document_id"
     t.bigint "document_version_id"
-    t.integer "event_type", null: false
+    t.integer "event_type", default: 0, null: false
     t.datetime "occurred_at", null: false
     t.bigint "project_id"
     t.string "public_id", null: false
@@ -539,10 +567,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
     t.datetime "read_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["notification_event_id", "user_id"], name: "index_notification_receipts_unique_event_user", unique: true
+    t.index ["notification_event_id", "user_id"], name: "idx_notification_receipts_event_user", unique: true
     t.index ["notification_event_id"], name: "index_notification_receipts_on_notification_event_id"
     t.index ["public_id"], name: "index_notification_receipts_on_public_id", unique: true
-    t.index ["read_at"], name: "index_notification_receipts_on_read_at"
+    t.index ["user_id", "read_at"], name: "index_notification_receipts_on_user_id_and_read_at"
     t.index ["user_id"], name: "index_notification_receipts_on_user_id"
   end
 
@@ -723,7 +751,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
   add_foreign_key "document_catalog_items", "document_catalogs"
   add_foreign_key "document_catalog_items", "documents"
   add_foreign_key "document_catalogs", "projects"
-  add_foreign_key "document_delivery_logs", "document_sets"
   add_foreign_key "document_delivery_logs", "documents"
   add_foreign_key "document_delivery_logs", "projects"
   add_foreign_key "document_delivery_logs", "users", column: "sender_id"
@@ -756,6 +783,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_090000) do
   add_foreign_key "import_dry_runs", "projects"
   add_foreign_key "import_dry_runs", "users", column: "confirmed_by_id"
   add_foreign_key "import_dry_runs", "users", column: "created_by_id"
+  add_foreign_key "import_route_settings", "projects"
   add_foreign_key "notification_events", "document_versions"
   add_foreign_key "notification_events", "documents"
   add_foreign_key "notification_events", "projects"

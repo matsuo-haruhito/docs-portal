@@ -54,6 +54,17 @@ class BaseController < ApplicationController
     )
   end
 
+  def record_file_view_access_log(document_file)
+    version = document_file.document_version
+
+    record_access_log_safely(
+      action_type: :view,
+      target_type: "file",
+      target_name: document_file.file_name,
+      version:
+    )
+  end
+
   def record_download_access_log(document_file)
     version = document_file.document_version
 

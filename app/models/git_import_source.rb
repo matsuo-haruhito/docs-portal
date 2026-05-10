@@ -37,6 +37,14 @@ class GitImportSource < ApplicationRecord
     Pathname.new(source_path.to_s).cleanpath.to_s.delete_prefix("./")
   end
 
+  def dry_run_policy
+    ImportRouteSetting.dry_run_policy_for(project:, route_key: "git", default: "require_confirmation")
+  end
+
+  def auto_confirm?
+    dry_run_policy == "auto_confirm"
+  end
+
   def mark_synced!(commit_sha)
     update!(last_synced_commit_sha: commit_sha, last_synced_at: Time.current)
   end

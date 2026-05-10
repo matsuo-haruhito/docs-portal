@@ -57,7 +57,7 @@ ul
     |  (
     = document_version_status_label(@latest_viewable_version)
     | )
-    - if @latest_viewable_version.rendered_site_available?
+    - if @latest_viewable_version.embedded_view_available?
       |  - 
       - latest_reader_path = project_document_path(@project, @document.slug, version_id: @latest_viewable_version.public_id, site_path: @latest_viewable_version.html_view_site_path)
       - if @viewer_version == @latest_viewable_version
@@ -186,7 +186,7 @@ ul
       = document_version_status_label(version)
       | )
 
-      - if version.rendered_site_available?
+      - if version.embedded_view_available?
         |  - 
         - reader_path = project_document_path(@project, @document.slug, version_id: version.public_id, site_path: version.html_view_site_path)
         - if @viewer_version == version
@@ -195,7 +195,7 @@ ul
           = link_to "本文で開く", reader_path
       - else
         |  - 
-        span.muted HTML未生成
+        span.muted 表示可能な本文なし
 
       - files = version.document_files.order(:sort_order)
       - if files.any?
