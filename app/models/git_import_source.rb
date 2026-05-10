@@ -20,7 +20,12 @@ class GitImportSource < ApplicationRecord
     no_auth: 9
   }
 
-  validates :repository_full_name, :branch, :source_path, :auth_type, presence: true
+  enum :dry_run_policy, {
+    require_confirmation: 0,
+    auto_confirm: 1
+  }
+
+  validates :repository_full_name, :branch, :source_path, :auth_type, :dry_run_policy, presence: true
   validates :repository_full_name, format: { with: %r{\A[\w.-]+/[\w.-]+\z}, message: "must be owner/repo" }
   validates :source_path, format: { with: %r{\A[^/].*\z}, message: "must be a relative path" }
   validates :repository_full_name, uniqueness: { scope: %i[project_id branch source_path] }
