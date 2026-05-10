@@ -37,15 +37,13 @@ class DocumentsController < BaseController
     require_document_access!(@document)
     raise ApplicationError::Forbidden unless current_user.internal? || @document.visible_in_portal_for?(current_user)
 
-    @versions = @document.document_versions.select { _1.viewable_by?(current_user) }.sort_by(&:created_at).reverse
+    @versions = @document.document_versions.includes(:document_files).select { _1.viewable_by?(current_user) }.sort_by(&:created_at).reverse
     @latest_viewable_version = @document.latest_version if @document.latest_version && @versions.include?(@document.latest_version)
     @viewer_version = resolved_viewer_version
     mark_document_as_read!(@document, @viewer_version)
     @viewer_site_path = params[:site_path].presence || @viewer_version&.html_view_site_path
-    @viewer_iframe_src =
-      if @viewer_version&.rendered_site_available?
-        project_site_path(@project, site_path: @viewer_site_path, version_id: @viewer_version.public_id, embedded: "1")
-      end
+    @viewer_iframe_src = embedded_viewer_src(@viewer_version)
+    @viewer_popout_src = @viewer_iframe_src
     @source_breadcrumbs = SourcePathBreadcrumb.new(
       document: @document,
       version: @latest_viewable_version || @versions.first,
@@ -71,6 +69,16 @@ class DocumentsController < BaseController
   end
 
   private
+
+  def embedded_viewer_src(version)
+    return unless version
+
+    if version.rendered_site_available?
+      project_site_path(@project, site_path: @viewer_site_path, version_id: version.public_id, embedded: "1")
+    elsif (file = version.embedded_view_file)
+      document_file_path(file, disposition: "inline", embedded: "1")
+    end
+  end
 
   def mark_document_as_read!(document, document_version)
     current_user.read_confirmations.find_or_initialize_by(document:).tap do |confirmation|
