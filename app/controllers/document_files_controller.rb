@@ -48,7 +48,7 @@ class DocumentFilesController < BaseController
 
   def record_file_access_log(file)
     if embedded_request?
-      record_view_access_log(file.file_name, file.document_version)
+      record_file_view_access_log(file)
     else
       record_download_access_log(file)
     end
