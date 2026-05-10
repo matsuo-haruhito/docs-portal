@@ -24,7 +24,7 @@ h1 文書マスタ
     - @documents.each do |document|
       tr
         td = document.project.name
-        td = link_to document.title, project_document_path(document.project, document.slug)
+        td = link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" }
         td = document.slug
         td
           span.badge = document_category_label(document)

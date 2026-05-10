@@ -24,7 +24,7 @@ section.card
     tbody
       - @permission_overview_rows.each do |row|
         tr
-          td = link_to row.document.title, project_document_path(row.document.project, row.document.slug)
+          td = link_to row.document.title, project_document_path(row.document.project, row.document.slug), data: { turbo_frame: "_top" }
           td = row.document.project.name
           td = document_visibility_policy_label(row.document)
           td = row.company_permissions.size
@@ -45,7 +45,7 @@ table
   tbody
     - @document_permissions.each do |permission|
       tr
-        td = link_to permission.document.title, project_document_path(permission.document.project, permission.document.slug)
+        td = link_to permission.document.title, project_document_path(permission.document.project, permission.document.slug), data: { turbo_frame: "_top" }
         td = permission.company&.display_name || "-"
         td = permission.user&.display_name || "-"
         td
