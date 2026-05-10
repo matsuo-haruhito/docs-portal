@@ -115,7 +115,46 @@ curl -X POST https://portal.example.com/api/internal/zip_imports \
 管理メニューの **Git取込元** から、外部 Git repository を pull 型で同期できます。
 Push 型と同じ `DocumentImporter` を使い、対象 repository / branch / source path 配下の Markdown と添付を manifest 化して取り込みます。
 
-### 設定項目
+### GitHub 側の設定
+
+現行実装で pull 同期に使える認証方式は、公開 repository 向けの `no_auth` と、private repository 向けの `fine_grained_pat` です。
+画面上には `github_app` / `deploy_key` も選択肢としてありますが、pull 同期の実行処理ではまだ未実装のため、利用時は `fine_grained_pat` を選びます。
+
+#### Fine-grained PAT の作成例
+
+1. GitHub の対象 user または organization で fine-grained personal access token を作成する。
+2. Resource owner に対象 owner / organization を選ぶ。
+3. Repository access は取り込み対象 repository のみに絞る。
+4. Repository permissions で **Contents: Read-only** を付与する。
+5. private repository の一覧や repository metadata が必要な運用では **Metadata: Read-only** が利用できる状態にしておく。
+6. 有効期限を設定し、発行された token を控える。
+7. ポータルの **Git取込元** で認証方式 `fine_grained_pat` を選び、`認証シークレット` に token を入力する。
+
+#### GitHub repository 側の準備例
+
+```text
+Repository: example-org/customer-docs
+Branch: main
+取り込み対象: docs/customer-a
+必要な権限: Contents read
+推奨: token の repository access は example-org/customer-docs のみに限定
+```
+
+#### GitHub App を使う場合の準備メモ
+
+GitHub App 方式を使う場合は、GitHub 側で App を作成し、対象 repository に install して installation ID を控えます。
+ただし現行の pull 同期実行処理では GitHub App installation token の発行が未実装のため、設定欄は将来利用のための予約項目です。
+
+GitHub App を有効化する場合の想定設定は次のとおりです。
+
+```text
+GitHub App permissions: Contents read
+Repository access: Only selected repositories
+Installation target: example-org/customer-docs
+ポータル側: 認証方式 github_app / GitHub App installation ID を設定
+```
+
+### ポータル側の設定項目
 
 | 項目 | 設定例 | 内容 |
 | --- | --- | --- |
@@ -125,20 +164,21 @@ Push 型と同じ `DocumentImporter` を使い、対象 repository / branch / so
 | リポジトリ | `example-org/docs-repo` | `owner/repo` 形式 |
 | ブランチ | `main` | 同期対象 branch |
 | 取込元パス | `docs` | repository 内の相対 path。絶対 path や `../` は不可 |
-| 認証方式 | `github_app` | 本命の認証方式。検証時は `fine_grained_pat` も利用可能 |
-| GitHub App installation ID | `12345678` | GitHub App 認証時の installation ID |
+| 認証方式 | `fine_grained_pat` | private repository の現行推奨。公開 repository は `no_auth` も可 |
+| GitHub App installation ID | `12345678` | GitHub App 認証時の installation ID。現行 pull 実行では未使用 |
 | 認証情報の参照名 | `github/docs-repo/import` | secret store などを使う場合の参照名 |
 | 認証シークレット | `github_pat_...` | fine-grained PAT 利用時の secret。暗号化保存 |
 | 状態 | `有効` | 無効の場合は同期不可 |
 
 ### 運用フロー
 
-1. 管理メニューの **Git取込元** で設定を登録する。
-2. 一覧または詳細から手動同期を実行する。
-3. 対象 repository / branch を一時領域へ取得する。
-4. `source_path` 配下の Markdown と添付を import manifest に変換する。
-5. `DocumentImporter` が Document / DocumentVersion / DocumentFile を作成する。
-6. 管理メニューの **Git取込履歴** で結果を確認する。
+1. GitHub 側で fine-grained PAT を作成し、対象 repository の Contents read を付与する。
+2. 管理メニューの **Git取込元** で設定を登録する。
+3. 一覧または詳細から手動同期を実行する。
+4. 対象 repository / branch を一時領域へ clone する。
+5. `source_path` 配下の Markdown と添付を import manifest に変換する。
+6. `DocumentImporter` が Document / DocumentVersion / DocumentFile を作成する。
+7. 管理メニューの **Git取込履歴** で結果を確認する。
 
 同じ commit SHA が既に同期済みの場合は `skipped` として記録し、新しい版は作りません。
 
@@ -151,12 +191,20 @@ Organization: example-org
 リポジトリ: example-org/customer-docs
 ブランチ: main
 取込元パス: docs/customer-a
-認証方式: github_app
-GitHub App installation ID: 12345678
+認証方式: fine_grained_pat
+認証シークレット: github_pat_...
 状態: 有効
 ```
 
-検証用に PAT を使う場合は、認証方式を `fine_grained_pat` にし、対象 repository の Contents read 権限を持つ fine-grained PAT を `認証シークレット` に設定します。
+公開 repository の場合は次のように `no_auth` で同期できます。
+
+```text
+リポジトリ: example-org/public-docs
+ブランチ: main
+取込元パス: docs
+認証方式: no_auth
+状態: 有効
+```
 
 ## Webhook 通知
 
@@ -226,7 +274,43 @@ X-Docs-Portal-Signature-256: sha256=<hmac_sha256_hex>
 管理メニューの **Microsoft Graph** から、Office ファイルのプレビュー用接続を案件ごとに設定できます。
 `.doc`, `.docx`, `.xls`, `.xlsx`, `.ppt`, `.pptx` の embedded file viewer で使用します。
 
-### 設定項目
+### Microsoft Entra 側の設定
+
+1. Microsoft Entra 管理センターでアプリ登録を作成する。
+2. Application client ID と Directory tenant ID を控える。
+3. Client secret を作成し、値を控える。
+4. Microsoft Graph の application permission を追加する。
+5. 管理者の同意を付与する。
+6. preview 用の SharePoint / OneDrive for Business の Drive と folder を用意する。
+7. Drive ID と preview folder の相対 path を控える。
+
+このアプリは client credentials flow で `https://graph.microsoft.com/.default` を使って access token を取得します。
+そのため、Entra のアプリ登録に付与済みの Microsoft Graph application permission が token に反映されます。
+
+### 必要な Microsoft Graph 権限
+
+現行実装では、対象ファイルを preview 用 Drive へアップロードし、その driveItem に対して `/preview` を呼び出します。
+そのため、少なくとも次の操作ができる application permission が必要です。
+
+- preview 用 Drive へのファイルアップロード
+- アップロードした driveItem の preview URL 取得
+
+標準的には、SharePoint / OneDrive for Business の Drive に対する application permission として `Sites.ReadWrite.All` を付与します。
+テナントの権限設計でより狭い権限を採用する場合は、対象 site / drive に限定した権限設計を別途行います。
+
+### SharePoint / Drive 側の準備例
+
+```text
+Site: https://contoso.sharepoint.com/sites/docs-preview
+Drive: Documents
+Preview folder: docs-portal-previews
+Folder path rule: 相対 path のみ。先頭 / や ../ は不可
+```
+
+preview 用 folder は、ポータルが一時アップロードに使う領域です。
+一般利用者が直接編集する領域とは分け、不要ファイルの定期削除方針を決めておきます。
+
+### ポータル側の設定項目
 
 | 項目 | 設定例 | 内容 |
 | --- | --- | --- |
