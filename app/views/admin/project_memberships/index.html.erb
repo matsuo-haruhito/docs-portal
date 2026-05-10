@@ -21,7 +21,7 @@
       <tr>
         <td><%= membership.project.name %></td>
         <td><%= membership.user.email_address %></td>
-        <td><span class="badge"><%= membership.role %></span></td>
+        <td><span class="badge"><%= project_membership_role_label(membership) %></span></td>
         <td class="actions">
           <%= edit_link_to "編集", edit_admin_project_membership_path(membership) %>
           <%= delete_link_to "削除", admin_project_membership_path(membership), confirm: "案件所属を削除しますか？このユーザーは案件へアクセスできなくなります。" %>
