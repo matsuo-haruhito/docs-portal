@@ -137,6 +137,9 @@ ja:
         imported: "取込済み"
         skipped: "スキップ"
         failed: "失敗"
+    microsoft_graph_connections:
+      auth_type:
+        client_credentials: "Client credentials"
     bulk_edit_dry_runs:
       status:
         analyzed: "解析済み"
