@@ -18,10 +18,15 @@ class ZipImportDocumentScanner
   end
 
   def call
-    document_files = all_files.select { path_classifier.document_candidate_file?(_1) }
-    documents = document_files.map { document_candidate_builder.call(_1) }
+    raw_document_files = all_files.select { path_classifier.document_candidate_file?(_1) }
+    raw_documents = raw_document_files.map { document_candidate_builder.call(_1) }
+    attachment_only_paths = raw_documents
+      .select { path_classifier.renderable_document_file?(_1.absolute_path) }
+      .flat_map(&:attachment_paths)
+      .uniq - raw_documents.map(&:absolute_path)
+    documents = raw_documents.reject { attachment_only_paths.include?(_1.absolute_path) }
     attached_paths = documents.flat_map(&:attachment_paths).uniq
-    remaining_files = all_files.reject { attached_paths.include?(_1) || document_files.include?(_1) }
+    remaining_files = all_files.reject { attached_paths.include?(_1) || documents.map(&:absolute_path).include?(_1) }
     orphan_files = remaining_files.reject { path_classifier.ignored_file?(_1) }.map { path_classifier.logical_path_for(_1) }
     skipped_files = remaining_files.select { path_classifier.ignored_file?(_1) }.map { path_classifier.logical_path_for(_1) }
 
@@ -39,6 +44,10 @@ class ZipImportDocumentScanner
 
   def diagram_file?(path)
     path_classifier.diagram_file?(path)
+  end
+
+  def renderable_document_file?(path)
+    path_classifier.renderable_document_file?(path)
   end
 
   def content_type_for(path)
