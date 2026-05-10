@@ -53,7 +53,7 @@ section.card
     tbody
       - @report_hash[:documents].each do |row|
         tr
-          td = link_to row[:title], project_document_path(@selected_project, row[:slug])
+          td = link_to row[:title], project_document_path(@selected_project, row[:slug]), data: { turbo_frame: "_top" }
           td = document_category_label(row[:category])
           td = document_kind_label(row[:document_kind])
           td = document_visibility_policy_label(row[:visibility_policy])
