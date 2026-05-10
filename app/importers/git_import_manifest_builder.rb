@@ -15,7 +15,7 @@ class GitImportManifestBuilder
     FileUtils.rm_rf(artifact_root)
     FileUtils.mkdir_p(attachments_root)
 
-    scan_result = ZipImportDocumentScanner.new(root: @worktree_path).call
+    scan_result = ZipImportDocumentScanner.new(root: @worktree_path, candidate_policy: :renderable_only).call
     documents = scan_result.documents.map do |candidate|
       document_payload_for(candidate, attachments_root)
     end
