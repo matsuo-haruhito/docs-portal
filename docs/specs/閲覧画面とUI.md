@@ -31,6 +31,19 @@
 - iframe 側では Docusaurus navbar / footer / toc / sidebar を除去し、本文を中央寄せで表示する
 - iframe 側で rewrite される内部 link / asset URL も `embedded=1` を維持する
 
+## Office file preview
+
+- `.doc`, `.docx`, `.xls`, `.xlsx`, `.ppt`, `.pptx` は Office preview 対象とする
+- Office preview は管理画面の `Microsoft Graph` 接続マスタで案件ごとに設定する
+- 接続マスタには tenant ID、client ID、client secret、drive ID、プレビュー用フォルダを保存する
+- client secret は暗号化カラムに保存する
+- 文書詳細の embedded file viewer で Office file を表示する場合、Rails は Microsoft Graph の client credentials flow で access token を取得する
+- Rails は対象ファイルを設定済み Drive のプレビュー用フォルダへ一時アップロードし、その driveItem に対して `/preview` を呼び出す
+- iframe には Rails の `document_files/:public_id?embedded=1` を読み込ませ、同 route から Graph の preview URL へ redirect する
+- Graph preview URL は一時 URL として扱い、DB に永続化しない
+- Office preview への遷移もファイル閲覧として access log を記録する
+- Graph preview を作成できない場合は 502 とし、通常のダウンロード導線は残す
+
 ## 危険操作の安全装置
 
 - 危険操作に対して confirm と影響表示を優先する
