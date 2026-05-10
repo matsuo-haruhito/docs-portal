@@ -72,7 +72,7 @@ class DocumentVersion < ApplicationRecord
   end
 
   def embedded_view_file
-    @embedded_view_file ||= document_files.order(:sort_order, :id).detect(&:inline_disposition?)
+    @embedded_view_file ||= document_files.order(:sort_order, :id).detect(&:embeddable_viewer_file?)
   end
 
   def html_view_site_path
