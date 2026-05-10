@@ -1,4 +1,3 @@
-require "fileutils"
 require "open3"
 
 class Admin::ApiSpecificationPage
@@ -29,32 +28,15 @@ class Admin::ApiSpecificationPage
   end
 
   def stale?
-    return true unless available?
-    return false unless source_path.exist?
-
-    source_path.mtime > build_entry_path.mtime
-  end
-
-  def build_requested?
-    build_request_marker_path.exist?
-  end
-
-  def request_build!
-    FileUtils.mkdir_p(build_request_marker_path.dirname)
-    File.write(build_request_marker_path, Time.current.iso8601)
-  end
-
-  def clear_build_request!
-    FileUtils.rm_f(build_request_marker_path)
+    build_freshness_guard.stale?
   end
 
   def enqueue_build_if_stale!
-    return false unless stale?
-    return false if build_requested?
+    build_freshness_guard.enqueue_if_stale!
+  end
 
-    request_build!
-    ApiSpecificationBuildJob.perform_later
-    true
+  def clear_build_request!
+    build_freshness_guard.clear_build_request!
   end
 
   def build!
@@ -96,6 +78,15 @@ class Admin::ApiSpecificationPage
 
   def build_request_marker_path
     Rails.root.join("tmp", "api_specification_build.requested")
+  end
+
+  def build_freshness_guard
+    @build_freshness_guard ||= BuildFreshnessGuard.new(
+      source_path:,
+      build_entry_path:,
+      marker_path: build_request_marker_path,
+      job_class: ApiSpecificationBuildJob
+    )
   end
 
   def docusaurus_version
