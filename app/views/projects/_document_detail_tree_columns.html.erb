@@ -1,7 +1,9 @@
 <% if item.is_a?(ProjectsHelper::ProjectDocumentDetailTreeFolderNode) %>
-  <td class="project-document-detail-tree__name-cell" colspan="4">
+  <td class="project-document-detail-tree__name-cell">
     <strong><%= item.label %></strong>
+    <%= button_to "📦 ダウンロード", project_document_zip_path(item.project), method: :post, params: { source_path: item.path, zip_path_mode: "source_path", include_markdown_sources: true, include_attachments: true }, class: "project-document-detail-tree__action", title: "このフォルダ内のすべてのファイルをZIPでダウンロード", form: { class: "inline-form" } %>
   </td>
+  <td colspan="3"></td>
 <% else %>
   <% version = document_tree_version_for(item) %>
   <td class="project-document-detail-tree__name-cell">
