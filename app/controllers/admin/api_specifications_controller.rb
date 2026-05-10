@@ -4,10 +4,12 @@ class Admin::ApiSpecificationsController < Admin::BaseController
 
   def show
     @api_specification_page = Admin::ApiSpecificationPage.new(view_context:)
+    @api_specification_build_enqueued = @api_specification_page.enqueue_build_if_stale!
   end
 
   def site
     page = Admin::ApiSpecificationPage.new(view_context:)
+    page.enqueue_build_if_stale!
     raise ActiveRecord::RecordNotFound unless page.available?
 
     site_path = params[:site_path].presence || page.site_path
