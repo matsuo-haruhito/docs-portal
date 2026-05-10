@@ -1,3 +1,6 @@
+require "net/http"
+require "uri"
+
 class MicrosoftGraphClient
   TOKEN_URL_TEMPLATE = "https://login.microsoftonline.com/%<tenant_id>s/oauth2/v2.0/token".freeze
   GRAPH_ROOT = "https://graph.microsoft.com/v1.0".freeze
