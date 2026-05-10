@@ -49,7 +49,7 @@ table
         td = permission.company&.display_name || "-"
         td = permission.user&.display_name || "-"
         td
-          span.badge = permission.access_level
+          span.badge = document_permission_access_level_label(permission)
         td.actions
           = edit_link_to "編集", edit_admin_document_permission_path(permission)
           = delete_link_to "削除", admin_document_permission_path(permission), confirm: "この文書権限を削除しますか？対象ユーザー/会社の閲覧範囲が変わります。"
