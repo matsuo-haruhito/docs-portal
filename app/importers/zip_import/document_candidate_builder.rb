@@ -1,6 +1,8 @@
 module ZipImport
   class DocumentCandidateBuilder
     README_BASENAMES = %w[readme index].freeze
+    HTML_EXTENSIONS = %w[.html .htm].freeze
+    STYLESHEET_EXTENSIONS = %w[.css].freeze
     LINK_PATTERN = /
       !?\[[^\]]*\]
       \(
@@ -25,6 +27,8 @@ module ZipImport
         markdown_attachment_paths(path, logical_path, warnings)
       elsif path_classifier.diagram_file?(path)
         related_same_basename_files(path, logical_path)
+      elsif html_file?(path)
+        html_attachment_paths(path)
       else
         [path]
       end
@@ -68,6 +72,14 @@ module ZipImport
       end
 
       attachments
+    end
+
+    def html_attachment_paths(path)
+      path.dirname.children
+        .select(&:file?)
+        .select { STYLESHEET_EXTENSIONS.include?(_1.extname.downcase) }
+    rescue Errno::ENOENT
+      []
     end
 
     def related_same_basename_files(path, logical_path)
@@ -147,6 +159,10 @@ module ZipImport
 
       extension = logical.extname.delete_prefix(".").presence
       extension ? "#{logical.sub_ext('')}-#{extension}" : logical.to_s
+    end
+
+    def html_file?(path)
+      HTML_EXTENSIONS.include?(path.extname.downcase)
     end
   end
 end
