@@ -1,6 +1,7 @@
 - page_title @document.title
 - rendered_view_available = @viewer_iframe_src.present?
-- document_download_file = @viewer_version&.document_files&.order(:sort_order, :id)&.detect { _1.downloadable_by?(current_user) }
+- embedded_file = @viewer_version&.embedded_view_file
+- document_download_file = embedded_file&.downloadable_by?(current_user) ? embedded_file : @viewer_version&.document_files&.order(:sort_order, :id)&.detect { _1.downloadable_by?(current_user) }
 
 = turbo_stream.remove document_tree_unread_icon_id(@document)
 
