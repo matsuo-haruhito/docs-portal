@@ -347,7 +347,7 @@ GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com:/sites/docs-pr
 
 返ってきた site の `id` を使って、上の `/sites/{siteId}/drive` または `/sites/{siteId}/drives` を実行します。
 
-OneDrive for Business を使う場合は、SharePoint site ID ではなくユーザーの drive を取得します。対象ユーザーの UPN または user ID が分かっている場合は次を実行します。
+OneDrive for Business を使う場合は、SharePoint site ID ではなくユーザーの drive を取得します。対象ユーザーの UPN または user ID が分かっている場合、既定の OneDrive を取得するには単数形の `/drive` を実行します。
 
 ```http
 GET https://graph.microsoft.com/v1.0/users/user@example.com/drive
@@ -367,11 +367,25 @@ GET https://graph.microsoft.com/v1.0/users/user@example.com/drive
 }
 ```
 
-自分の OneDrive を delegated 権限で確認する場合は `GET /me/drive` でも確認できます。ただし、このポータルの Office preview は client credentials flow の application 権限で動くため、運用設定としては特定ユーザーの OneDrive よりも、共有の SharePoint document library を使う方が管理しやすいです。
+ユーザーが利用可能な drive を一覧したい場合は、複数形の `/drives` を使います。
+
+```http
+GET https://graph.microsoft.com/v1.0/users/user@example.com/drives
+```
+
+自分の OneDrive を delegated 権限で確認する場合も同様に、既定ドライブは `/me/drive`、利用可能な drive 一覧は `/me/drives` です。
 
 ```http
 GET https://graph.microsoft.com/v1.0/me/drive
 ```
+
+```http
+GET https://graph.microsoft.com/v1.0/me/drives
+```
+
+Microsoft Graph の仕様上、`/me/drives` は現在のユーザーが利用可能な Drive リソースの一覧を返します。ユーザーには通常1つの drive しかありませんが、一覧から選ぶ用途では `/me/drives` の方が分かりやすいです。
+
+ただし、このポータルの Office preview は client credentials flow の application 権限で動くため、運用設定としては特定ユーザーの OneDrive よりも、共有の SharePoint document library を使う方が管理しやすいです。
 
 #### フォルダ共有URLでの設定
 
