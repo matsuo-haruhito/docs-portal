@@ -21,10 +21,12 @@ module ZipImport
       frontmatter = path_classifier.markdown_file?(path) ? parse_frontmatter(path) : {}
       warnings = []
 
-      attachment_paths = if path_classifier.diagram_file?(path)
+      attachment_paths = if path_classifier.markdown_file?(path)
+        markdown_attachment_paths(path, logical_path, warnings)
+      elsif path_classifier.diagram_file?(path)
         related_same_basename_files(path, logical_path)
       else
-        markdown_attachment_paths(path, logical_path, warnings)
+        [path]
       end
 
       attachment_paths.unshift(path) unless attachment_paths.include?(path)
@@ -35,7 +37,7 @@ module ZipImport
         title: inferred_title(logical_path),
         slug: inferred_slug(logical_path),
         frontmatter:,
-        document_kind: path_classifier.markdown_file?(path) ? "markdown" : "mixed",
+        document_kind: document_kind_for(path),
         attachment_paths: attachment_paths.uniq.sort_by(&:to_s),
         warnings:
       )
@@ -44,6 +46,12 @@ module ZipImport
     private
 
     attr_reader :root, :path_classifier, :document_candidate_class
+
+    def document_kind_for(path)
+      return "markdown" if path_classifier.markdown_file?(path)
+
+      "mixed"
+    end
 
     def markdown_attachment_paths(path, logical_path, warnings)
       attachments = []
