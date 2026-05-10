@@ -12,6 +12,12 @@ class DocumentFilesController < BaseController
       record_file_access_log(file)
       redirect_to preview_url, allow_other_host: true
       return
+    rescue DocumentFileOfficePreview::FileTooLargeError
+      record_file_access_log(file)
+      @document_file = file
+      @download_available = file.downloadable_by?(current_user)
+      render :office_preview_unavailable, status: :ok
+      return
     rescue DocumentFileOfficePreview::Error, MicrosoftGraphClient::Error => e
       render plain: "Office preview is not available: #{e.message}", status: :bad_gateway
       return
