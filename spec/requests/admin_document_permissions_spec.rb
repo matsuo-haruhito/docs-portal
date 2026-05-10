@@ -17,7 +17,9 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("文書別の権限概要")
     expect(response.body).to include("Permission Target")
-    expect(response.body).to include("restricted_external")
+    expect(response.body).to include("限定公開")
+    expect(response.body).to include("閲覧")
+    expect(response.body).to include("ダウンロード")
     expect(response.body).to include("Customer Company")
     expect(response.body).to include("external@example.com")
   end
