@@ -29,7 +29,7 @@ RSpec.describe "Document importance display", type: :request do
 
     get project_path(project)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("優先して確認したい資料")
+    expect(response.body).to include("優先して確認したい文書")
     expect(response.body.index("Critical")).to be < response.body.index("Important")
     expect(response.body.index("Important")).to be < response.body.index("Reference")
 
@@ -46,6 +46,6 @@ RSpec.describe "Document importance display", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("重要度:")
-    expect(response.body).to include("critical")
+    expect(response.body).to include("最重要")
   end
 end
