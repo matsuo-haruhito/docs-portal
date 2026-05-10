@@ -67,6 +67,14 @@ class DocumentVersion < ApplicationRecord
     site_build_path.present? && site_entry_absolute_path&.exist?
   end
 
+  def embedded_view_available?
+    rendered_site_available? || embedded_view_file.present?
+  end
+
+  def embedded_view_file
+    @embedded_view_file ||= document_files.order(:sort_order, :id).detect(&:inline_disposition?)
+  end
+
   def html_view_site_path
     markdown_entry_path.presence || site_build_path
   end
