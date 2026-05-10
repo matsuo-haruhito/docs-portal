@@ -2,10 +2,12 @@ class DocumentFilesController < BaseController
   def show
     file = DocumentFile.find_by!(public_id: params[:public_id])
     require_document_file_download_access!(file)
-    return if require_consent!(target: file, timing: :download)
+
+    disposition = disposition_for(file)
+    consent_timing = embedded_request? ? :first_view : :download
+    return if require_consent!(target: file, timing: consent_timing)
 
     file_path = file.absolute_path
-    disposition = disposition_for(file)
 
     unless File.exist?(file_path)
       render plain: "File not found", status: :not_found
@@ -14,7 +16,7 @@ class DocumentFilesController < BaseController
 
     record_download_access_log(file)
 
-    if disposition == "inline" && file.text_previewable?
+    if disposition == "inline" && file.text_previewable? && !embedded_request?
       response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
       @document_file = file
       @document_version = file.document_version
@@ -44,5 +46,9 @@ class DocumentFilesController < BaseController
     else
       file.inline_disposition? ? "inline" : "attachment"
     end
+  end
+
+  def embedded_request?
+    ActiveModel::Type::Boolean.new.cast(params[:embedded])
   end
 end
