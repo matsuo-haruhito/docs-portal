@@ -10,6 +10,16 @@ ja:
       short: "%Y/%m/%d %H:%M"
       long: "%Y年%m月%d日 %H時%M分"
   labels:
+    users:
+      user_type:
+        internal: "社内ユーザー"
+        external: "社外ユーザー"
+        company_master_admin: "会社マスタ管理者"
+    project_memberships:
+      role:
+        viewer: "閲覧者"
+        editor: "編集者"
+        owner: "管理者"
     documents:
       category:
         spec: "仕様"
@@ -56,6 +66,19 @@ ja:
       access_level:
         view: "閲覧"
         download: "ダウンロード"
+    document_sets:
+      set_type:
+        delivery: "送付用"
+        requirement: "要件"
+        design: "設計"
+        operation: "運用"
+        customer_share: "顧客共有"
+        internal: "社内用"
+        other: "その他"
+      visibility_policy:
+        internal_only: "社内のみ"
+        restricted_external: "限定公開"
+        public_with_login: "ログインユーザー公開"
     document_review_comments:
       comment_type:
         question: "質問"
