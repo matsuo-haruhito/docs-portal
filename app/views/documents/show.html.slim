@@ -15,6 +15,8 @@
         = link_to "案件トップ", project_path(@project), class: "button secondary"
         = link_to "文書一覧", project_documents_path(@project), class: "button secondary"
         = link_to "版詳細", document_version_path(@viewer_version), class: "button secondary"
+        - if @viewer_popout_src.present?
+          = link_to "ポップアウト", @viewer_popout_src, class: "button secondary", target: "_blank", rel: "noopener"
 
     details.document-context-drawer#document-detail-panels
       summary
