@@ -12,6 +12,26 @@ module ApplicationHelper
     values.map { |value| [localized_label(scope, value), value] }
   end
 
+  def user_type_label(user_or_value)
+    value = user_or_value.respond_to?(:user_type) ? user_or_value.user_type : user_or_value
+    localized_label("users.user_type", value)
+  end
+
+  def project_membership_role_label(membership_or_value)
+    value = membership_or_value.respond_to?(:role) ? membership_or_value.role : membership_or_value
+    localized_label("project_memberships.role", value)
+  end
+
+  def document_set_type_label(document_set_or_value)
+    value = document_set_or_value.respond_to?(:set_type) ? document_set_or_value.set_type : document_set_or_value
+    localized_label("document_sets.set_type", value)
+  end
+
+  def document_set_visibility_policy_label(document_set_or_value)
+    value = document_set_or_value.respond_to?(:visibility_policy) ? document_set_or_value.visibility_policy : document_set_or_value
+    localized_label("document_sets.visibility_policy", value)
+  end
+
   def document_category_label(document_or_value)
     value = document_or_value.respond_to?(:category) ? document_or_value.category : document_or_value
     localized_label("documents.category", value)
