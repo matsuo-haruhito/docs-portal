@@ -16,7 +16,9 @@ class MicrosoftGraphClient
     access_token = fetch_access_token
     item = upload_preview_file(access_token:, file_path:, file_name:)
     preview = create_preview(access_token:, item_id: item.fetch("id"))
-    preview.fetch("getUrl")
+    preview_get_url(preview)
+  rescue KeyError => e
+    raise Error, "Microsoft Graph response did not include #{e.key}"
   end
 
   private
@@ -51,9 +53,16 @@ class MicrosoftGraphClient
     request = Net::HTTP::Post.new(uri)
     request["Authorization"] = "Bearer #{access_token}"
     request["Content-Type"] = "application/json"
-    request.body = { viewer: "office", chromeless: true }.to_json
+    request.body = {}.to_json
 
     parse_json_response(Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { _1.request(request) })
+  end
+
+  def preview_get_url(preview)
+    get_url = preview["getUrl"].presence
+    return get_url if get_url
+
+    raise Error, "Microsoft Graph preview response did not include getUrl"
   end
 
   def graph_uri(path)
