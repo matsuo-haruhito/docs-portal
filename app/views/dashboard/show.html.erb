@@ -4,7 +4,7 @@
   <h1>ダッシュボード</h1>
   <p class="muted">利用中の案件、最近触った文書、保留タスクをひとまとめにして次の操作へつなげます。</p>
   <p class="actions">
-    <%= link_to "案件一覧へ", projects_path, class: "button" %>
+    <%= link_to "案件一覧へ", projects_path, class: "button", data: { turbo_frame: "_top" } %>
     <%= link_to "文書ショートカット一覧", document_bookmarks_path, class: "button secondary" %>
     <% if current_user.internal? %>
       <%= link_to "確認依頼", document_approval_requests_path, class: "button secondary" %>
@@ -38,7 +38,7 @@
       <ul class="resource-list">
         <% @projects.each do |project| %>
           <li>
-            <strong><%= link_to project.name, project_path(project) %></strong>
+            <strong><%= link_to project.name, project_path(project), data: { turbo_frame: "_top" } %></strong>
             <span class="muted"><%= project.code %></span>
           </li>
         <% end %>
@@ -54,7 +54,7 @@
       <ul class="resource-list">
         <% @favorite_bookmarks.each do |bookmark| %>
           <li>
-            <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %></strong>
+            <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug), data: { turbo_frame: "_top" } %></strong>
             <span class="muted"><%= bookmark.document.project.name %></span>
           </li>
         <% end %>
@@ -70,7 +70,7 @@
       <ul class="resource-list">
         <% @read_later_bookmarks.each do |bookmark| %>
           <li>
-            <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %></strong>
+            <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug), data: { turbo_frame: "_top" } %></strong>
             <span class="muted"><%= bookmark.document.project.name %></span>
           </li>
         <% end %>
@@ -86,7 +86,7 @@
       <ul class="resource-list">
         <% @recent_documents.each do |document| %>
           <li>
-            <strong><%= link_to document.title, project_document_path(document.project, document.slug) %></strong>
+            <strong><%= link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" } %></strong>
             <span class="muted"><%= document.project.name %></span>
           </li>
         <% end %>
@@ -102,7 +102,7 @@
       <ul class="resource-list">
         <% @recently_updated_documents.each do |document| %>
           <li>
-            <strong><%= link_to document.title, project_document_path(document.project, document.slug) %></strong>
+            <strong><%= link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" } %></strong>
             <span class="muted"><%= document.project.name %></span>
           </li>
         <% end %>
