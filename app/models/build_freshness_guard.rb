@@ -1,3 +1,5 @@
+require "fileutils"
+
 class BuildFreshnessGuard
   def initialize(source_path:, build_entry_path:, marker_path:, job_class:)
     @source_path = Pathname.new(source_path)
