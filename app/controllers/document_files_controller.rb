@@ -14,7 +14,7 @@ class DocumentFilesController < BaseController
       return
     end
 
-    record_download_access_log(file)
+    record_file_access_log(file)
 
     if disposition == "inline" && file.text_previewable? && !embedded_request?
       response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
@@ -43,6 +43,14 @@ class DocumentFilesController < BaseController
       raise ApplicationError::Forbidden unless file.deliverable_after_scan?(current_user)
     else
       require_document_file_download_access!(file)
+    end
+  end
+
+  def record_file_access_log(file)
+    if embedded_request?
+      record_view_access_log(file.file_name, file.document_version)
+    else
+      record_download_access_log(file)
     end
   end
 
