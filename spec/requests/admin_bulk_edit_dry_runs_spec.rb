@@ -40,8 +40,8 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     dry_run = BulkEditDryRun.last
     expect(response).to redirect_to(admin_bulk_edit_dry_run_path(dry_run))
     follow_redirect!
-    expect(response.body).to include("dry-run ID")
-    expect(response.body).to include("visibility_policy")
+    expect(response.body).to include("事前確認ID")
+    expect(response.body).to include("公開範囲")
     expect(response.body).to include("確認して実行")
 
     expect do
