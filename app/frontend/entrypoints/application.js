@@ -21,61 +21,6 @@ function writeState(nextState) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...readState(), ...nextState }))
 }
 
-function csrfToken() {
-  return document.querySelector("meta[name='csrf-token']")?.content
-}
-
-function shouldHandleAsPlainLeftClick(event) {
-  return event.button === 0 &&
-    !event.metaKey &&
-    !event.ctrlKey &&
-    !event.shiftKey &&
-    !event.altKey
-}
-
-async function refreshTreeFromLink(link) {
-  const url = link.dataset.treeOpenUrl || link.dataset.treeRefreshUrl
-  if (!url) return
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      Accept: "text/vnd.turbo-stream.html",
-      "X-CSRF-Token": csrfToken() || ""
-    },
-    credentials: "same-origin"
-  })
-
-  if (!response.ok) return
-
-  const html = await response.text()
-  if (html.trim()) window.Turbo?.renderStreamMessage(html)
-}
-
-function setupTreeNavigation() {
-  if (document.documentElement.dataset.treeNavigationReady === "true") return
-  document.documentElement.dataset.treeNavigationReady = "true"
-
-  document.addEventListener("click", async (event) => {
-    const link = event.target.closest?.("a[data-tree-nav-link='true']")
-    if (!link || event.defaultPrevented || !shouldHandleAsPlainLeftClick(event)) return
-    if (link.target && link.target !== "_self") return
-
-    const destination = link.href
-    if (!destination) return
-
-    event.preventDefault()
-
-    try {
-      await refreshTreeFromLink(link)
-    } catch (_error) {
-      // Tree refresh is best-effort. Navigation should still proceed.
-    }
-
-    window.Turbo?.visit(destination) || window.location.assign(destination)
-  })
-}
-
 function applyCollapsedState(layout, toggle, collapsed) {
   layout.classList.toggle("is-sidebar-collapsed", collapsed)
   toggle.setAttribute("aria-expanded", String(!collapsed))
@@ -191,8 +136,48 @@ function setupNavDropdowns() {
   })
 }
 
+function navigateMainPanel(url) {
+  const frame = document.getElementById("main_panel")
+  if (!frame) return false
+
+  frame.src = url
+  return true
+}
+
+function refreshDocumentTree(link) {
+  const url = link.dataset.treeRefreshUrl
+  if (!url) return
+
+  fetch(url, {
+    headers: {
+      Accept: "text/vnd.turbo-stream.html"
+    },
+    credentials: "same-origin"
+  })
+    .then((response) => response.ok ? response.text() : "")
+    .then((html) => {
+      if (!html) return
+      window.Turbo?.renderStreamMessage(html)
+    })
+}
+
+function setupDocumentTreeNavigation() {
+  document.addEventListener("click", (event) => {
+    if (event.target.closest(".tree-toggle")) return
+
+    const link = event.target.closest("a[data-tree-nav-link='true']")
+    if (!link) return
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+
+    event.preventDefault()
+    if (!navigateMainPanel(link.href)) return
+
+    refreshDocumentTree(link)
+  }, true)
+}
+
 setupNavDropdowns()
-setupTreeNavigation()
+setupDocumentTreeNavigation()
 
 document.addEventListener("turbo:load", setupSidebars)
 document.addEventListener("turbo:render", setupSidebars)
