@@ -24,7 +24,7 @@ RSpec.describe "Admin model browsers", type: :request do
     get admin_model_browser_model_path("projects")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("最近の record")
+    expect(response.body).to include("最近のデータ")
     expect(response.body).to include(project.code)
     expect(response.body).to include(project.name)
   end
