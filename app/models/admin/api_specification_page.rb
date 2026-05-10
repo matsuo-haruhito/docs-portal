@@ -9,6 +9,10 @@ class Admin::ApiSpecificationPage
     "API仕様"
   end
 
+  def site_path
+    SITE_PATH
+  end
+
   def source_path
     Rails.root.join("docs-src", "api-specification.md")
   end
@@ -25,13 +29,13 @@ class Admin::ApiSpecificationPage
     @view_context.site_admin_api_specification_path(site_path: SITE_PATH)
   end
 
-  def render_site(site_path)
+  def renderer
     DocusaurusSiteRenderer.new(
       version: docusaurus_version,
       view_context: @view_context,
       embedded: true,
       site_url_builder: lambda { |relative_path, _version| @view_context.site_admin_api_specification_path(site_path: relative_path) }
-    ).render_html(site_path.presence || SITE_PATH)
+    )
   end
 
   private
