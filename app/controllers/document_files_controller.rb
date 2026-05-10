@@ -27,6 +27,12 @@ class DocumentFilesController < BaseController
       return
     end
 
+    if disposition == "inline" && embedded_request? && html_file?(file)
+      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
+      render html: embedded_html_for(file, file_path).html_safe, content_type: "text/html"
+      return
+    end
+
     send_file(
       file_path,
       disposition:,
@@ -63,6 +69,28 @@ class DocumentFilesController < BaseController
     else
       file.inline_disposition? ? "inline" : "attachment"
     end
+  end
+
+  def embedded_html_for(file, file_path)
+    html = File.read(file_path, encoding: "UTF-8")
+    base_tag = %(<base href="#{ERB::Util.html_escape(document_file_asset_base_url(file))}/">)
+
+    if html.match?(%r{<head[\s>]}i)
+      html.sub(%r{(<head[^>]*>)}i, "\\1\n#{base_tag}")
+    else
+      "#{base_tag}\n#{html}"
+    end
+  rescue Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError
+    File.binread(file_path)
+  end
+
+  def document_file_asset_base_url(file)
+    document_file_url(file, disposition: "inline", embedded: "1", only_path: true)
+      .sub(%r{/[^/]*\z}, "")
+  end
+
+  def html_file?(file)
+    file.effective_content_type.start_with?("text/html") || File.extname(file.file_name.to_s).downcase.in?(%w[.html .htm])
   end
 
   def embedded_request?
