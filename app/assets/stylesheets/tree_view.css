@@ -98,6 +98,49 @@ a.tree-toggle__action{
   cursor: pointer;
 }
 
+.tree-download-form{
+  display: inline-flex;
+  margin: 0 0 0 0.25rem;
+  vertical-align: middle;
+}
+
+.tree-download-button,
+button.tree-download-button,
+a.tree-download-button{
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 1.45rem !important;
+  min-width: 1.45rem !important;
+  max-width: 1.45rem !important;
+  height: 1.45rem !important;
+  min-height: 1.45rem !important;
+  margin-left: 0.25rem;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+  line-height: 1 !important;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.tree-download-button:hover,
+.tree-download-button:focus{
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+  text-decoration: none !important;
+}
+
+.tree-download-button .download-icon{
+  display: block;
+  fill: currentColor;
+  pointer-events: none;
+}
+
 .tree-toggle__action .tree-toggle__icon {
   pointer-events: none;
 }
