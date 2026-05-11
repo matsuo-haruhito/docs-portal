@@ -136,6 +136,36 @@ module ApplicationHelper
     localized_label("microsoft_graph_connections.auth_type", value)
   end
 
+  def external_folder_sync_source_provider_label(source_or_value)
+    value = source_or_value.respond_to?(:provider) ? source_or_value.provider : source_or_value
+    localized_label("external_folder_sync_sources.provider", value)
+  end
+
+  def external_folder_sync_source_sync_direction_label(source_or_value)
+    value = source_or_value.respond_to?(:sync_direction) ? source_or_value.sync_direction : source_or_value
+    localized_label("external_folder_sync_sources.sync_direction", value)
+  end
+
+  def external_folder_sync_source_conflict_policy_label(source_or_value)
+    value = source_or_value.respond_to?(:conflict_policy) ? source_or_value.conflict_policy : source_or_value
+    localized_label("external_folder_sync_sources.conflict_policy", value)
+  end
+
+  def external_folder_sync_run_status_label(run_or_value)
+    value = run_or_value.respond_to?(:status) ? run_or_value.status : run_or_value
+    localized_label("external_folder_sync_runs.status", value)
+  end
+
+  def external_folder_sync_run_mode_label(run_or_value)
+    value = run_or_value.respond_to?(:mode) ? run_or_value.mode : run_or_value
+    localized_label("external_folder_sync_runs.mode", value)
+  end
+
+  def external_folder_sync_item_status_label(item_or_value)
+    value = item_or_value.respond_to?(:sync_status) ? item_or_value.sync_status : item_or_value
+    localized_label("external_folder_sync_items.sync_status", value)
+  end
+
   def bulk_edit_dry_run_status_label(run_or_value)
     value = run_or_value.respond_to?(:status) ? run_or_value.status : run_or_value
     localized_label("bulk_edit_dry_runs.status", value)

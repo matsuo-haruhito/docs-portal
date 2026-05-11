@@ -140,6 +140,35 @@ ja:
     microsoft_graph_connections:
       auth_type:
         client_credentials: "Client credentials"
+    external_folder_sync_sources:
+      provider:
+        google_drive: "Google Drive"
+      sync_direction:
+        external_to_portal: "外部フォルダ → ポータル"
+        portal_to_external: "ポータル → 外部フォルダ"
+        bidirectional: "双方向"
+      conflict_policy:
+        manual: "手動解決"
+        external_wins: "外部フォルダを優先"
+        portal_wins: "ポータルを優先"
+    external_folder_sync_runs:
+      status:
+        pending: "待機中"
+        running: "実行中"
+        completed: "完了"
+        failed: "失敗"
+        partial: "一部失敗"
+      mode:
+        dry_run: "dry-run"
+        apply: "同期実行"
+    external_folder_sync_items:
+      sync_status:
+        synced: "同期済み"
+        external_changed: "外部変更あり"
+        portal_changed: "ポータル変更あり"
+        conflict: "競合"
+        delete_detected: "削除検知"
+        error: "エラー"
     bulk_edit_dry_runs:
       status:
         analyzed: "解析済み"

@@ -1,0 +1,97 @@
+- page_title "外部フォルダ同期詳細"
+
+h1 外部フォルダ同期詳細
+= render "admin/nav"
+
+.card
+  h2 = @external_folder_sync_source.name
+  dl.definition-list
+    dt 案件
+    dd
+      = @external_folder_sync_source.project.name
+      br
+      code = @external_folder_sync_source.project.code
+    dt プロバイダ
+    dd = external_folder_sync_source_provider_label(@external_folder_sync_source)
+    dt フォルダURL
+    dd = link_to @external_folder_sync_source.folder_url, @external_folder_sync_source.folder_url, target: "_blank", rel: "noopener"
+    dt フォルダID
+    dd
+      code = @external_folder_sync_source.external_folder_id
+    dt 同期方向
+    dd = external_folder_sync_source_sync_direction_label(@external_folder_sync_source)
+    dt 競合方針
+    dd = external_folder_sync_source_conflict_policy_label(@external_folder_sync_source)
+    dt 状態
+    dd = @external_folder_sync_source.enabled? ? "有効" : "無効"
+    dt 最終同期
+    dd = @external_folder_sync_source.last_synced_at ? l(@external_folder_sync_source.last_synced_at) : "-"
+    - if @external_folder_sync_source.cursor.present?
+      dt Google Drive cursor
+      dd
+        code = @external_folder_sync_source.cursor
+    - if @external_folder_sync_source.last_error_message.present?
+      dt 最終エラー
+      dd = @external_folder_sync_source.last_error_message
+  p.actions
+    = link_to "dry-run", dry_run_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post }, class: "button secondary"
+    = link_to "同期実行", apply_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post, turbo_confirm: "Google Driveからportalへ同期します。よろしいですか？" }, class: "button"
+    = link_to "同期ジョブ登録", enqueue_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post }, class: "button secondary"
+    = edit_link_to "編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source)
+    = link_to "一覧へ戻る", admin_external_folder_sync_sources_path, class: "button secondary"
+
+.card
+  h2 同期履歴
+  = table_tag do
+    thead
+      tr
+        th 実行日時
+        th モード
+        th 状態
+        th 作成
+        th 更新
+        th スキップ
+        th 削除検知
+        th エラー
+    tbody
+      - @runs.each do |run|
+        tr
+          td = run.started_at ? l(run.started_at) : "-"
+          td = external_folder_sync_run_mode_label(run)
+          td = external_folder_sync_run_status_label(run)
+          td = run.items_created_count
+          td = run.items_updated_count
+          td = run.items_skipped_count
+          td = run.items_deleted_count
+          td = run.errors_count
+          - if run.result_json.present?
+            tr
+              td colspan="8"
+                details
+                  summary 結果詳細
+                  pre = JSON.pretty_generate(run.result_json)
+
+.card
+  h2 同期アイテム
+  = table_tag do
+    thead
+      tr
+        th 状態
+        th パス
+        th Portal文書
+        th サイズ
+        th 更新日時
+        th エラー
+    tbody
+      - @items.each do |item|
+        tr
+          td = external_folder_sync_item_status_label(item)
+          td = item.path
+          td
+            - if item.document.present?
+              = link_to item.document.title, admin_documents_path(q: item.document.title)
+            - else
+              | -
+          td = item.size || "-"
+          td = item.external_modified_at ? l(item.external_modified_at) : "-"
+          td = item.last_error_message.presence || "-"

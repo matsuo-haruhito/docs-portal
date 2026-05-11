@@ -19,6 +19,7 @@ class User < ApplicationRecord
   has_many :requested_document_approval_requests, class_name: "DocumentApprovalRequest", foreign_key: :requester_id, dependent: :destroy
   has_many :approved_document_approval_requests, class_name: "DocumentApprovalRequest", foreign_key: :approver_id, dependent: :nullify
   has_many :acted_document_approval_requests, class_name: "DocumentApprovalRequest", foreign_key: :acted_by_id, dependent: :nullify
+  has_many :created_external_folder_sync_sources, class_name: "ExternalFolderSyncSource", foreign_key: :created_by_id, dependent: :restrict_with_error
   has_many :user_consents, dependent: :destroy
   has_many :consent_terms, through: :user_consents
 

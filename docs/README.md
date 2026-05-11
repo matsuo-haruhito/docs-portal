@@ -18,6 +18,7 @@
 - [importと変更系dry-run](./specs/importと変更系dry-run.md)
 - [publish.json 仕様と生成ルール](./publish.json%20仕様と生成ルール.md)
 - [Git連携インポート](./Git連携インポート.md)
+- [Google Drive外部フォルダ同期](./Google%20Drive外部フォルダ同期.md)
 - [利用規約・秘密保持の同意管理](./利用規約・秘密保持の同意管理.md)
 - [Webhook・外部API連携方針](./Webhook・外部API連携方針.md)
 
@@ -84,6 +85,7 @@
    - storage_key
    - build artifact
    - Git連携 import source / run
+   - 外部フォルダ同期 source / run / item
 
 7. AccessLog
    - 記録対象
@@ -95,6 +97,7 @@
    - 通知対象イベント
    - 署名付き JSON POST
    - 送信履歴
+   - Google Drive外部フォルダ同期
 
 9. 将来対応
    - 現時点の仕様に含めないものは [ToDo](./ToDo.md) に記載する
