@@ -24,7 +24,7 @@ module ExternalFolderSync
       @entries_by_id = entries.index_by(&:id)
       result = entries.map { plan_entry(_1) }
       result.each { apply_entry(_1) } if apply?
-      mark_missing_items!(entries, result) if apply?
+      append_missing_items!(entries, result)
       finish_success!(run, result)
     rescue => e
       finish_failure!(run, e) if defined?(run) && run
@@ -196,10 +196,10 @@ module ExternalFolderSync
       item.save!
     end
 
-    def mark_missing_items!(entries, result)
+    def append_missing_items!(entries, result)
       seen_ids = entries.map(&:id).to_set
       source.external_folder_sync_items.where.not(external_item_id: seen_ids).find_each do |item|
-        item.update!(sync_status: :delete_detected)
+        item.update!(sync_status: :delete_detected) if apply?
         result << {
           "action" => "delete_detected",
           "external_item_id" => item.external_item_id,
