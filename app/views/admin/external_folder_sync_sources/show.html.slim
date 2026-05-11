@@ -13,6 +13,11 @@ h1 外部フォルダ同期詳細
       code = @external_folder_sync_source.project.code
     dt プロバイダ
     dd = external_folder_sync_source_provider_label(@external_folder_sync_source)
+    dt 認証方式
+    dd = external_folder_sync_source_auth_type_label(@external_folder_sync_source)
+    - if @external_folder_sync_source.oauth_user?
+      dt OAuth接続
+      dd = @external_folder_sync_source.oauth_connected? ? "接続済み" : "未接続"
     dt フォルダURL
     dd = link_to @external_folder_sync_source.folder_url, @external_folder_sync_source.folder_url, target: "_blank", rel: "noopener"
     dt フォルダID
@@ -37,6 +42,10 @@ h1 外部フォルダ同期詳細
     = link_to "dry-run", dry_run_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post }, class: "button secondary"
     = link_to "同期実行", apply_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post, turbo_confirm: "Google Driveからportalへ同期します。よろしいですか？" }, class: "button"
     = link_to "同期ジョブ登録", enqueue_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post }, class: "button secondary"
+    - if @external_folder_sync_source.oauth_user?
+      = link_to "Google OAuth接続", new_admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), class: "button secondary"
+      - if @external_folder_sync_source.oauth_connected?
+        = link_to "OAuth解除", admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo_method: :delete, turbo_confirm: "Google Drive OAuth認可を解除しますか？" }, class: "button secondary"
     = edit_link_to "編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source)
     = link_to "一覧へ戻る", admin_external_folder_sync_sources_path, class: "button secondary"
 
