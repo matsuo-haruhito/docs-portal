@@ -13,5 +13,9 @@
   "frontMatter": {
     "slug": "/"
   },
-  "sidebar": "tutorialSidebar"
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "API仕様・連携設定",
+    "permalink": "/api-specification"
+  }
 }

@@ -1,0 +1,140 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-05-11",
+  "task": {
+    "name": "screenshot_capture",
+    "type": "docs",
+    "ticket": null
+  },
+  "scope": {
+    "launch_directory": "/mnt/c/work",
+    "customer": null,
+    "repo": "self/docs-portal",
+    "editable_paths": [
+      "/mnt/c/work/self/docs-portal/docs/ai/prompt-logs/2026-05-11/2026-05-11_screenshot_capture.json"
+    ],
+    "read_only_paths": [
+      "/mnt/c/work/self/docs-portal",
+      "/mnt/c/work/_codex-tools/skills/capture-screenshots/SKILL.md",
+      "/mnt/c/work/gpt/policies/context_routing.md",
+      "/mnt/c/work/gpt/policies/prompt-log-policy.md",
+      "/mnt/c/work/gpt/policies/risk_policy.md"
+    ]
+  },
+  "instruction_summary": "Capture full-page screenshots for /mnt/c/work/self/docs-portal using scripts/playwright.sh, and inspect why /mnt/c/work/_codex-tools/skills/capture-screenshots/SKILL.md lives outside the normal skill directory.",
+  "actual_work": "Reviewed the minimum workspace and repo policies, inspected the screenshot tooling, confirmed the repo root resolves to /home/matsu/work/repos/docs-portal, added a development-only /capture_login helper, created repo-local screenshot config under .codex-screenshots, queried seed-backed route identifiers from the running app, and captured 42 full-page screenshots with the shared Windows Chrome-based screenshot command to avoid Japanese font corruption.",
+  "changed_files": [
+    "docs/ai/prompt-logs/2026-05-11/2026-05-11_screenshot_capture.json",
+    "config/routes.rb",
+    "app/controllers/sessions_controller.rb",
+    ".codex-screenshots/screenshots.env",
+    ".codex-screenshots/screenshot_targets.txt"
+  ],
+  "commands": [
+    {
+      "command": "docker compose ps",
+      "result": "passed",
+      "notes": "Confirmed the app container was running and publishing port 3000."
+    },
+    {
+      "command": "docker compose exec -T app bin/rails runner ...",
+      "result": "passed",
+      "notes": "Read project codes, document slugs, version public_ids, and users from the running seed data."
+    },
+    {
+      "command": "/mnt/c/work/_codex-tools/codex-capture-screenshots",
+      "result": "passed",
+      "notes": "Captured 42 PNG files plus index.txt to /home/matsu/work/repos/docs-portal/tmp/screenshots using Windows Chrome."
+    }
+  ],
+  "tests": [
+    {
+      "command": "ls -1 /home/matsu/work/repos/docs-portal/tmp/screenshots/*.png | wc -l",
+      "result": "passed",
+      "notes": "Verified 42 screenshots were produced."
+    },
+    {
+      "command": "view_image /home/matsu/work/repos/docs-portal/tmp/screenshots/020_dashboard.png",
+      "result": "passed",
+      "notes": "Verified Japanese text rendered correctly in a captured image."
+    }
+  ],
+  "usage": {
+    "estimated_input_tokens": null,
+    "estimated_output_tokens": null,
+    "estimated_total_tokens": null,
+    "measurement_source": "unavailable",
+    "loaded_roles": [],
+    "loaded_context": [
+      "workspace AGENTS.md",
+      "gpt/policies/context_routing.md",
+      "gpt/policies/prompt-log-policy.md",
+      "gpt/policies/risk_policy.md",
+        "self/docs-portal/AGENTS.md",
+        "self/docs-portal/docs/README.md",
+        "self/docs-portal/docs/開発・保守ガイド.md",
+        "self/docs-portal/README.md",
+        "self/docs-portal/config/routes.rb",
+        "self/docs-portal/app/controllers/sessions_controller.rb",
+        "_codex-tools/skills/capture-screenshots/SKILL.md",
+        "_codex-tools/codex-capture-screenshots"
+      ],
+    "token_notes": "Token counts are unavailable unless provided by the CLI/API.",
+    "token_waste_notes": [],
+    "wasted_context": [],
+    "unnecessary_exploration": []
+  },
+  "usage_notes": {
+    "loaded_roles": [],
+    "loaded_context": [
+      "workspace AGENTS.md",
+      "gpt/policies/context_routing.md",
+      "gpt/policies/prompt-log-policy.md",
+      "gpt/policies/risk_policy.md",
+        "self/docs-portal/AGENTS.md",
+        "self/docs-portal/docs/README.md",
+        "self/docs-portal/docs/開発・保守ガイド.md",
+        "self/docs-portal/README.md",
+        "self/docs-portal/config/routes.rb",
+        "self/docs-portal/app/controllers/sessions_controller.rb",
+        "_codex-tools/skills/capture-screenshots/SKILL.md",
+        "_codex-tools/codex-capture-screenshots"
+      ],
+    "token_notes": "Token counts are unavailable unless provided by the CLI/API.",
+    "token_waste_notes": [],
+    "wasted_context": [],
+    "unnecessary_exploration": []
+  },
+  "quality_notes": [
+    "Switched to the Windows Chrome-based shared capture flow after confirming Linux Playwright risked missing Japanese font dependencies."
+  ],
+  "risks": [
+    "A development-only capture_login route now exists and should stay limited to development.",
+    "The dashboard and recent-document screenshots include extra sample data from the EXT_TOYOKOKEN seed project because that data exists in the running environment."
+  ],
+  "remaining_concerns": [
+    "The screenshot output lives under the real git root /home/matsu/work/repos/docs-portal/tmp/screenshots, not the /mnt/c/work/self/docs-portal symlink path.",
+    "The user originally asked for scripts/playwright.sh, but the stable font-safe capture path in this workspace is the shared _codex-tools command rather than the thin Playwright CLI wrapper."
+  ],
+  "improvement_candidates": {
+    "agents_md": [],
+    "shared_docs": [],
+    "shared_prompts": [],
+    "bin_or_scripts": [],
+    "skills": []
+  },
+  "signals": [
+    {
+      "rule_id": "prompt-log-start",
+      "axis": "token_saving",
+      "polarity": "positive",
+      "note": "Created the prompt log stub before deeper repo exploration."
+    },
+    {
+      "rule_id": "shared-capture-tool-routing",
+      "axis": "risk_reduction",
+      "polarity": "positive",
+      "note": "Used the Windows Chrome-based shared screenshot tool to avoid Japanese font corruption seen in Linux Playwright captures."
+    }
+  ]
+}

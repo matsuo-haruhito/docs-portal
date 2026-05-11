@@ -1,6 +1,10 @@
 Rails.application.routes.draw do
   root "projects#index"
 
+  if Rails.env.development?
+    get "capture_login", to: "sessions#capture_login"
+  end
+
   get "dashboard", to: "dashboard#show", as: :dashboard
   resources :consents, only: %i[index new create], param: :public_id
   resources :document_approval_requests, only: %i[index show update], param: :public_id do

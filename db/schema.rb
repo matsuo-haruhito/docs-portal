@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_10_121000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_10_231000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -539,6 +539,30 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_121000) do
     t.index ["route_key", "setting_key"], name: "index_import_route_settings_global_unique", unique: true, where: "(project_id IS NULL)"
   end
 
+  create_table "microsoft_graph_connections", force: :cascade do |t|
+    t.integer "auth_type", default: 0, null: false
+    t.string "client_id", null: false
+    t.text "client_secret", null: false
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id", null: false
+    t.string "drive_id", null: false
+    t.boolean "enabled", default: true, null: false
+    t.string "name", null: false
+    t.string "preview_folder_path", default: "docs-portal-previews", null: false
+    t.bigint "project_id", null: false
+    t.string "public_id", null: false
+    t.string "site_id"
+    t.string "tenant_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_microsoft_graph_connections_on_created_by_id"
+    t.index ["drive_id"], name: "index_microsoft_graph_connections_on_drive_id"
+    t.index ["project_id", "enabled"], name: "index_microsoft_graph_connections_on_project_id_and_enabled"
+    t.index ["project_id", "name"], name: "index_microsoft_graph_connections_on_project_id_and_name", unique: true
+    t.index ["project_id"], name: "index_microsoft_graph_connections_on_project_id"
+    t.index ["public_id"], name: "index_microsoft_graph_connections_on_public_id", unique: true
+    t.index ["tenant_id"], name: "index_microsoft_graph_connections_on_tenant_id"
+  end
+
   create_table "notification_events", comment: "利用者へ通知するイベント本体", force: :cascade do |t|
     t.bigint "actor_user_id"
     t.text "body"
@@ -784,6 +808,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_121000) do
   add_foreign_key "import_dry_runs", "users", column: "confirmed_by_id"
   add_foreign_key "import_dry_runs", "users", column: "created_by_id"
   add_foreign_key "import_route_settings", "projects"
+  add_foreign_key "microsoft_graph_connections", "projects"
+  add_foreign_key "microsoft_graph_connections", "users", column: "created_by_id"
   add_foreign_key "notification_events", "document_versions"
   add_foreign_key "notification_events", "documents"
   add_foreign_key "notification_events", "projects"
