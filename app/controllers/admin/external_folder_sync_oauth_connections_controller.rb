@@ -8,7 +8,7 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
 
   GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth".freeze
   GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token".freeze
-  DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly".freeze
+  DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file".freeze
   GOOGLE_OAUTH_ENV_KEYS = %w[
     GOOGLE_DRIVE_OAUTH_CLIENT_ID
     GOOGLE_DRIVE_OAUTH_CLIENT_SECRET
