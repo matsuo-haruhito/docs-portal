@@ -33,6 +33,7 @@ module SeedSupport
       return unless renderable_document_files?
 
       validate_kroki_endpoint!
+      clear_existing_site_build!
 
       with_temp_workspace do |workspace|
         docs_src = workspace.join("docs-src")
@@ -130,6 +131,13 @@ module SeedSupport
 
     def markdown_contains_diagram?(source)
       File.foreach(source).any? { |line| line.match?(DIAGRAM_FENCE_PATTERN) }
+    end
+
+    def clear_existing_site_build!
+      site_root = @version.site_root_absolute_path
+      return if site_root.blank?
+
+      FileUtils.rm_rf(site_root)
     end
 
     def with_temp_workspace
