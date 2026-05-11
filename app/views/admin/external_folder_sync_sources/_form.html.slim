@@ -7,7 +7,7 @@
       = form.collection_select :project_id, @projects, :id, :name
     label
       | プロバイダ
-      = form.select :provider, enum_options_for("external_folder_sync_sources.provider", ExternalFolderSyncSource.providers.keys)
+      = form.select :provider, enum_options_for("external_folder_sync_sources.provider", %w[google_drive])
     label
       | 名前
       = form.text_field :name, placeholder: "Google Drive同期"
@@ -19,10 +19,10 @@
       = form.text_field :external_folder_path, placeholder: "任意。例: Team Docs / Specs"
     label
       | 同期方向
-      = form.select :sync_direction, enum_options_for("external_folder_sync_sources.sync_direction", ExternalFolderSyncSource.sync_directions.keys)
+      = form.select :sync_direction, enum_options_for("external_folder_sync_sources.sync_direction", %w[external_to_portal])
     label
       | 競合方針
-      = form.select :conflict_policy, enum_options_for("external_folder_sync_sources.conflict_policy", ExternalFolderSyncSource.conflict_policies.keys)
+      = form.select :conflict_policy, enum_options_for("external_folder_sync_sources.conflict_policy", %w[manual])
     label
       | 状態
       = form.select :enabled, [["有効", true], ["無効", false]]
