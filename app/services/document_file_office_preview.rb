@@ -21,11 +21,18 @@ class DocumentFileOfficePreview
   def url
     raise Error, "Office preview is not available" unless office_file?
 
-    return microsoft_graph_preview_url if microsoft_graph_available? && !too_large_for_simple_upload?
+    if microsoft_graph_available? && !too_large_for_simple_upload?
+      begin
+        return microsoft_graph_preview_url
+      rescue Error, MicrosoftGraphClient::Error => e
+        Rails.logger.info("Microsoft Graph Office preview failed; trying Google Drive fallback: #{e.message}")
+      end
+    end
+
     return google_drive_preview.url if google_drive_preview.available?
 
     raise FileTooLargeError, "Office preview is not available for files over 250MB" if microsoft_graph_available? && too_large_for_simple_upload?
-    raise Error, "Office preview is not available"
+    raise Error, google_drive_preview.unavailable_message
   end
 
   private
