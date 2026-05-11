@@ -1,0 +1,39 @@
+- page_title "外部フォルダ同期"
+
+h1 外部フォルダ同期
+= render "admin/nav"
+
+.card
+  h2 新規登録
+  = render "form", external_folder_sync_source: @external_folder_sync_source
+
+= table_tag do
+  thead
+    tr
+      th 案件
+      th 名前
+      th プロバイダ
+      th フォルダ
+      th 状態
+      th 最終同期
+      th 操作
+  tbody
+    - @external_folder_sync_sources.each do |source|
+      tr
+        td
+          = source.project.name
+          br
+          code = source.project.code
+        td = link_to source.name, admin_external_folder_sync_source_path(source)
+        td = source.provider
+        td
+          code = source.external_folder_id
+          - if source.external_folder_path.present?
+            br
+            span.muted = source.external_folder_path
+        td = source.enabled? ? "有効" : "無効"
+        td = source.last_synced_at ? l(source.last_synced_at) : "-"
+        td.actions
+          = link_to "詳細", admin_external_folder_sync_source_path(source), class: "button secondary"
+          = edit_link_to "編集", edit_admin_external_folder_sync_source_path(source)
+          = delete_link_to "削除", admin_external_folder_sync_source_path(source), confirm: "外部フォルダ同期設定を削除しますか？"
