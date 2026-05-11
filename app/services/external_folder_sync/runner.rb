@@ -9,6 +9,7 @@ module ExternalFolderSync
       @source = source
       @mode = mode.to_s
       @actor = actor
+      @entries_by_id = {}
     end
 
     def call
@@ -20,6 +21,7 @@ module ExternalFolderSync
       )
 
       entries = client.list_files
+      @entries_by_id = entries.index_by(&:id)
       result = entries.map { plan_entry(_1) }
       result.each { apply_entry(_1) } if apply?
       mark_missing_items!(entries, result) if apply?
@@ -32,7 +34,7 @@ module ExternalFolderSync
 
     private
 
-    attr_reader :source, :mode, :actor
+    attr_reader :source, :mode, :actor, :entries_by_id
 
     def client
       @client ||= ExternalFolderSync::GoogleDriveClient.new(source:)
@@ -50,7 +52,7 @@ module ExternalFolderSync
 
     def plan_entry(entry)
       item = source.external_folder_sync_items.find_by(external_item_id: entry.id)
-      action = if entry.exportable
+      action = if entry.exportable && entry.export_mime_type.blank?
         "error"
       elsif item.blank?
         "create"
@@ -63,23 +65,28 @@ module ExternalFolderSync
       {
         "action" => action,
         "external_item_id" => entry.id,
-        "path" => entry.path,
-        "name" => entry.name,
-        "mime_type" => entry.mime_type,
+        "path" => entry.download_path,
+        "source_path" => entry.path,
+        "name" => entry.download_name,
+        "source_name" => entry.name,
+        "mime_type" => entry.download_mime_type,
+        "source_mime_type" => entry.mime_type,
         "size" => entry.size,
         "checksum" => entry.checksum,
         "external_modified_at" => entry.modified_at&.iso8601,
         "web_view_link" => entry.web_view_link,
+        "exported" => entry.exportable,
+        "export_mime_type" => entry.export_mime_type,
         "message" => message_for(action, entry)
       }
     end
 
     def changed?(item, entry)
-      item.checksum.to_s != entry.checksum.to_s || item.external_modified_at.to_i != entry.modified_at.to_i || item.path != entry.path
+      item.checksum.to_s != entry.checksum.to_s || item.external_modified_at.to_i != entry.modified_at.to_i || item.path != entry.download_path
     end
 
     def message_for(action, entry)
-      return "Google Docs native files are detected but not imported in this MVP" if action == "error" && entry.exportable
+      return "Google native file export is not supported for this mime type" if action == "error" && entry.exportable
       return "New file" if action == "create"
       return "External file changed" if action == "update"
       "Unchanged"
@@ -132,7 +139,8 @@ module ExternalFolderSync
     end
 
     def create_document_file!(version, plan)
-      content = client.download_file(plan.fetch("external_item_id"))
+      entry = entries_by_id.fetch(plan.fetch("external_item_id"))
+      content = client.download_entry(entry)
       storage_key = storage_key_for(version, plan.fetch("name"))
       path = DocumentFile.storage_root.join(storage_key)
       FileUtils.mkdir_p(path.dirname)
@@ -161,13 +169,13 @@ module ExternalFolderSync
         path: plan.fetch("path"),
         name: plan.fetch("name"),
         mime_type: plan.fetch("mime_type"),
-        size: plan.fetch("size"),
+        size: file.file_size,
         checksum: plan["checksum"],
         external_modified_at: parse_time(plan["external_modified_at"]),
         portal_modified_at: Time.current,
         sync_status: :synced,
         last_error_message: nil,
-        provider_metadata: { web_view_link: plan["web_view_link"] }
+        provider_metadata: provider_metadata_for(plan)
       )
       item.save!
     end
@@ -183,7 +191,7 @@ module ExternalFolderSync
         external_modified_at: parse_time(plan["external_modified_at"]),
         sync_status: :error,
         last_error_message: plan["message"],
-        provider_metadata: { web_view_link: plan["web_view_link"] }
+        provider_metadata: provider_metadata_for(plan)
       )
       item.save!
     end
@@ -216,8 +224,14 @@ module ExternalFolderSync
         summary_json: summary,
         result_json: result
       )
-      source.update!(last_synced_at: Time.current, last_error_message: nil) if apply?
+      source.update!(last_synced_at: Time.current, last_error_message: nil, cursor: safe_start_page_token) if apply?
       run
+    end
+
+    def safe_start_page_token
+      client.start_page_token
+    rescue ExternalFolderSync::GoogleDriveClient::Error
+      source.cursor
     end
 
     def finish_failure!(run, error)
@@ -235,6 +249,17 @@ module ExternalFolderSync
         "skipped_count" => result.count { _1["action"] == "skip" },
         "deleted_count" => result.count { _1["action"] == "delete_detected" },
         "errors_count" => result.count { _1["action"] == "error" }
+      }
+    end
+
+    def provider_metadata_for(plan)
+      {
+        web_view_link: plan["web_view_link"],
+        source_path: plan["source_path"],
+        source_name: plan["source_name"],
+        source_mime_type: plan["source_mime_type"],
+        exported: plan["exported"],
+        export_mime_type: plan["export_mime_type"]
       }
     end
 
