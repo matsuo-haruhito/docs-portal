@@ -19,13 +19,9 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
   end
 
   def callback
-    source = ExternalFolderSyncSource.find_by!(public_id: params[:source_id])
-    unless ActiveSupport::SecurityUtils.secure_compare(session.delete(:external_folder_sync_oauth_state).to_s, params[:state].to_s)
-      redirect_to admin_external_folder_sync_source_path(source), alert: "OAuth stateが一致しません。"
-      return
-    end
-
-    token = exchange_code!(params.require(:code), source)
+    state = verified_state!
+    source = ExternalFolderSyncSource.find_by!(public_id: state.fetch("source_public_id"))
+    token = exchange_code!(params.require(:code))
     source.merge_auth_config!(
       refresh_token: token.fetch("refresh_token", source.auth_config_json["refresh_token"]),
       access_token: token["access_token"],
@@ -35,7 +31,7 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
     )
 
     redirect_to admin_external_folder_sync_source_path(source), notice: "Google Drive OAuth認可を接続しました。"
-  rescue KeyError, ActionController::ParameterMissing => e
+  rescue ActiveSupport::MessageVerifier::InvalidSignature, KeyError, ActionController::ParameterMissing => e
     redirect_to admin_external_folder_sync_sources_path, alert: "OAuth認可に失敗しました: #{e.message}"
   end
 
@@ -64,7 +60,7 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
     uri.to_s
   end
 
-  def exchange_code!(code, source)
+  def exchange_code!(code)
     response = Net::HTTP.post_form(URI(GOOGLE_TOKEN_URL), {
       code:,
       client_id: google_client_id,
@@ -79,9 +75,25 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
   end
 
   def oauth_state_for(source)
-    payload = [source.public_id, SecureRandom.hex(16), Time.current.to_i].join(":")
-    verifier = ActiveSupport::MessageVerifier.new(Rails.application.secret_key_base, digest: "SHA256")
-    verifier.generate(payload)
+    verifier.generate(
+      source_public_id: source.public_id,
+      nonce: SecureRandom.hex(16),
+      issued_at: Time.current.to_i
+    )
+  end
+
+  def verified_state!
+    state = params.require(:state)
+    expected = session.delete(:external_folder_sync_oauth_state).to_s
+    unless expected.present? && ActiveSupport::SecurityUtils.secure_compare(expected, state)
+      raise ActiveSupport::MessageVerifier::InvalidSignature, "OAuth state mismatch"
+    end
+
+    verifier.verify(state)
+  end
+
+  def verifier
+    ActiveSupport::MessageVerifier.new(Rails.application.secret_key_base, digest: "SHA256")
   end
 
   def google_client_id
