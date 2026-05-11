@@ -104,13 +104,23 @@ class DocumentFileGoogleDriveUploadPreview
   end
 
   def preview_oauth_source
-    @preview_oauth_source ||= ExternalFolderSyncSource
+    @preview_oauth_source ||= project_preview_oauth_source || global_preview_oauth_source
+  end
+
+  def project_preview_oauth_source
+    oauth_sources.where(project: file.document_version.document.project).detect(&:oauth_connected?)
+  end
+
+  def global_preview_oauth_source
+    oauth_sources.detect(&:oauth_connected?)
+  end
+
+  def oauth_sources
+    ExternalFolderSyncSource
       .google_drive
       .oauth_user
       .enabled_only
-      .where(project: file.document_version.document.project)
       .order(:id)
-      .detect(&:oauth_connected?)
   end
 
   def preview_folder_id
