@@ -181,13 +181,12 @@ module ExternalFolderSync
       attempts = 0
 
       loop do
-        response = request_once(uri, request)
-        return response unless retryable_response?(response) && attempts < MAX_RETRIES
-
-        attempts += 1
-        sleep(0.2 * attempts)
-      rescue Timeout::Error, Errno::ECONNRESET, EOFError
-        raise if attempts >= MAX_RETRIES
+        begin
+          response = request_once(uri, request)
+          return response unless retryable_response?(response) && attempts < MAX_RETRIES
+        rescue Timeout::Error, Errno::ECONNRESET, EOFError
+          raise if attempts >= MAX_RETRIES
+        end
 
         attempts += 1
         sleep(0.2 * attempts)
