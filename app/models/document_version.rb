@@ -8,6 +8,7 @@ class DocumentVersion < ApplicationRecord
 
   has_many :document_files, dependent: :destroy
   has_many :document_review_comments, dependent: :nullify
+  has_many :external_folder_sync_items, dependent: :nullify
 
   enum :status, { draft: 0, published: 1, archived: 2 }
 
@@ -163,7 +164,7 @@ class DocumentVersion < ApplicationRecord
   private
 
   def normalize_search_body_text
-    self.search_body_text = self.class.search_text_for(search_body_text)
+    self.search_body_text = DocumentVersion.search_text_for(search_body_text)
   end
 
   def normalize_snapshot_kind!(value)
