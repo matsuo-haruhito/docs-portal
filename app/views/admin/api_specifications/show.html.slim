@@ -1,7 +1,7 @@
 - page_title "API仕様"
 
 h1 API仕様
-p.muted ドキュメント更新用 internal import API、外部フォルダ同期 Webhook、外部連携設定の仕様を確認できます。
+p.muted ドキュメント更新用 internal import API、Office preview、外部フォルダ同期 Webhook、外部連携設定の仕様を確認できます。
 
 = render "admin/nav"
 
@@ -16,6 +16,7 @@ section.card
   h2 主要ページ
   ul
     li = link_to "API仕様・連携設定", site_admin_api_specification_path(site_path: "api-specification")
+    li = link_to "Office preview", site_admin_api_specification_path(site_path: "office-preview")
     li = link_to "外部フォルダ同期 Webhook 受信仕様", site_admin_api_specification_path(site_path: "external-folder-sync-webhooks")
 
 section.card
@@ -24,6 +25,6 @@ section.card
       iframe.site-viewer-frame src=@api_specification_page.iframe_src title="API仕様"
   - else
     h2 Docusaurus build が必要です
-    p.muted API仕様のMarkdownは docs-src/api-specification.md と docs-src/external-folder-sync-webhooks.md にあります。Docusaurus build を開始している場合は、完了後に再読み込みするとHTMLレンダリング結果を表示します。
+    p.muted API仕様のMarkdownは docs-src/api-specification.md、docs-src/office-preview.md、docs-src/external-folder-sync-webhooks.md にあります。Docusaurus build を開始している場合は、完了後に再読み込みするとHTMLレンダリング結果を表示します。
     p
       code docs-src/api-specification.md
