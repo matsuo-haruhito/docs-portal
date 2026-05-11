@@ -23,6 +23,8 @@ class Admin::ModelBrowserCatalog
     Entry.new("external_folder_sync_sources", "外部フォルダ同期", "Google Driveなどの外部フォルダ同期元です。", ExternalFolderSyncSource, %i[public_id provider name external_folder_id enabled last_synced_at updated_at], :admin_external_folder_sync_sources_path),
     Entry.new("external_folder_sync_runs", "外部フォルダ同期履歴", "外部フォルダ同期の実行履歴です。", ExternalFolderSyncRun, %i[public_id mode status started_at finished_at updated_at], nil),
     Entry.new("external_folder_sync_items", "外部フォルダ同期アイテム", "外部ファイルとポータル文書の対応関係です。", ExternalFolderSyncItem, %i[public_id external_item_id sync_status path updated_at], nil),
+    Entry.new("external_folder_sync_subscriptions", "外部フォルダ同期購読", "Google Drive / SharePoint の変更通知購読です。", ExternalFolderSyncSubscription, %i[public_id provider status provider_subscription_id provider_channel_id expires_at updated_at], nil),
+    Entry.new("external_folder_sync_webhook_events", "外部フォルダ同期Webhook受信", "外部ストレージから受信した変更通知です。", ExternalFolderSyncWebhookEvent, %i[public_id provider status event_key received_at updated_at], nil),
     Entry.new("import_dry_runs", "インポート事前確認", "保存付きインポート確認の記録です。", ImportDryRun, %i[public_id import_mode status source_commit_hash updated_at], nil),
     Entry.new("bulk_edit_dry_runs", "一括編集事前確認", "文書一括変更の事前確認記録です。", BulkEditDryRun, %i[public_id operation_type status updated_at], nil),
     Entry.new("webhook_endpoints", "Webhook", "外部通知先の定義です。", WebhookEndpoint, %i[public_id name active event_types updated_at], :admin_webhook_endpoints_path),
