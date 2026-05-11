@@ -11,6 +11,14 @@ module ExternalFolderSync
     DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly".freeze
     FOLDER_MIME_TYPE = "application/vnd.google-apps.folder".freeze
     GOOGLE_APPS_PREFIX = "application/vnd.google-apps".freeze
+    MAX_RETRIES = 2
+
+    EXPORT_FORMATS = {
+      "application/vnd.google-apps.document" => ["application/vnd.openxmlformats-officedocument.wordprocessingml.document", ".docx"],
+      "application/vnd.google-apps.spreadsheet" => ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx"],
+      "application/vnd.google-apps.presentation" => ["application/vnd.openxmlformats-officedocument.presentationml.presentation", ".pptx"],
+      "application/vnd.google-apps.drawing" => ["application/pdf", ".pdf"]
+    }.freeze
 
     class Error < StandardError; end
 
@@ -18,14 +26,18 @@ module ExternalFolderSync
       :id,
       :parent_id,
       :name,
+      :download_name,
       :path,
+      :download_path,
       :mime_type,
+      :download_mime_type,
       :size,
       :checksum,
       :modified_at,
       :trashed,
       :web_view_link,
-      :exportable
+      :exportable,
+      :export_mime_type
     )
 
     def initialize(source:)
@@ -54,8 +66,27 @@ module ExternalFolderSync
       walk_folder(source.external_folder_id, folder_name)
     end
 
+    def download_entry(entry)
+      if entry.exportable
+        raise Error, "Google native file cannot be exported: #{entry.name}" if entry.export_mime_type.blank?
+
+        request_json(
+          "/files/#{escape(entry.id)}/export",
+          query: { mimeType: entry.export_mime_type },
+          parse_json: false
+        )
+      else
+        download_file(entry.id)
+      end
+    end
+
     def download_file(file_id)
       request_json("/files/#{escape(file_id)}", query: { alt: "media" }, parse_json: false)
+    end
+
+    def start_page_token
+      body = request_json("/changes/startPageToken", query: { supportsAllDrives: true })
+      body.fetch("startPageToken")
     end
 
     private
@@ -106,18 +137,27 @@ module ExternalFolderSync
 
     def entry_for(item, path)
       mime_type = item["mimeType"].to_s
+      export_mime_type, export_extension = EXPORT_FORMATS[mime_type]
+      native_file = mime_type.start_with?(GOOGLE_APPS_PREFIX)
+      download_name = native_file && export_extension.present? ? with_extension(item.fetch("name"), export_extension) : item.fetch("name")
+      download_path = native_file && export_extension.present? ? with_extension(path, export_extension) : path
+
       FileEntry.new(
         id: item.fetch("id"),
         parent_id: item.fetch("parents", []).first,
         name: item.fetch("name"),
+        download_name:,
         path:,
+        download_path:,
         mime_type:,
+        download_mime_type: export_mime_type.presence || mime_type,
         size: item["size"].to_i,
-        checksum: item["md5Checksum"],
+        checksum: item["md5Checksum"].presence || "google-modified-#{item["modifiedTime"]}",
         modified_at: parse_time(item["modifiedTime"]),
         trashed: item["trashed"] == true,
         web_view_link: item["webViewLink"],
-        exportable: mime_type.start_with?(GOOGLE_APPS_PREFIX)
+        exportable: native_file,
+        export_mime_type:
       )
     end
 
@@ -127,7 +167,7 @@ module ExternalFolderSync
       request = Net::HTTP::Get.new(uri)
       request["Authorization"] = "Bearer #{access_token}"
 
-      response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { _1.request(request) }
+      response = request_with_retry(uri, request)
       return response.body if response.is_a?(Net::HTTPSuccess) && !parse_json
 
       body = parse_response_body(response)
@@ -135,6 +175,24 @@ module ExternalFolderSync
 
       message = body.is_a?(Hash) ? body.dig("error", "message") : nil
       raise Error, "Google Drive request failed (#{response.code}): #{message || response.message}"
+    end
+
+    def request_with_retry(uri, request)
+      attempts = 0
+      begin
+        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { _1.request(request) }
+        return response unless response.code.to_i.in?([429, 500, 502, 503, 504]) && attempts < MAX_RETRIES
+
+        attempts += 1
+        sleep(0.2 * attempts)
+        retry
+      rescue Timeout::Error, Errno::ECONNRESET, EOFError
+        raise if attempts >= MAX_RETRIES
+
+        attempts += 1
+        sleep(0.2 * attempts)
+        retry
+      end
     end
 
     def parse_response_body(response)
@@ -194,6 +252,11 @@ module ExternalFolderSync
 
     def parse_time(value)
       Time.zone.parse(value) if value.present?
+    end
+
+    def with_extension(value, extension)
+      basename = value.to_s.sub(/\.[^\/\.]+\z/, "")
+      "#{basename}#{extension}"
     end
 
     def escape(value)
