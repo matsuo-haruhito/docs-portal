@@ -1,3 +1,4 @@
+require "digest"
 require "json"
 require "net/http"
 require "securerandom"
@@ -8,6 +9,7 @@ class DocumentFileGoogleDriveUploadPreview
   UPLOAD_ROOT = "https://www.googleapis.com/upload/drive/v3".freeze
   DRIVE_ROOT = "https://www.googleapis.com/drive/v3".freeze
   PREVIEW_FOLDER_ENV_KEY = "GOOGLE_DRIVE_PREVIEW_FOLDER_ID".freeze
+  DEFAULT_TTL = 7.days
 
   class Error < StandardError; end
 
@@ -23,8 +25,8 @@ class DocumentFileGoogleDriveUploadPreview
     raise Error, unavailable_message unless available?
     raise Error, "File not found" unless File.exist?(file.absolute_path)
 
-    drive_file_id = upload_file!
-    "https://drive.google.com/file/d/#{ERB::Util.url_encode(drive_file_id)}/preview"
+    upload = active_upload || create_upload!
+    "https://drive.google.com/file/d/#{ERB::Util.url_encode(upload.drive_file_id)}/preview"
   end
 
   def unavailable_message
@@ -38,6 +40,26 @@ class DocumentFileGoogleDriveUploadPreview
 
   attr_reader :file
 
+  def active_upload
+    DocumentFileGoogleDrivePreviewUpload
+      .active
+      .where(document_file: file, fingerprint:)
+      .order(expires_at: :desc, id: :desc)
+      .first
+  end
+
+  def create_upload!
+    drive_file = upload_file!
+    DocumentFileGoogleDrivePreviewUpload.create!(
+      document_file: file,
+      fingerprint:,
+      drive_file_id: drive_file.fetch("id"),
+      drive_web_view_link: drive_file["webViewLink"],
+      uploaded_at: Time.current,
+      expires_at: preview_upload_ttl.from_now
+    )
+  end
+
   def upload_file!
     uri = URI("#{UPLOAD_ROOT}/files")
     uri.query = URI.encode_www_form(uploadType: "multipart", supportsAllDrives: true, fields: "id,webViewLink")
@@ -49,7 +71,7 @@ class DocumentFileGoogleDriveUploadPreview
 
     response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { _1.request(request) }
     body = JSON.parse(response.body.presence || "{}")
-    return body.fetch("id") if response.is_a?(Net::HTTPSuccess)
+    return body if response.is_a?(Net::HTTPSuccess)
 
     message = body.is_a?(Hash) ? body.dig("error", "message") : nil
     raise Error, "Google Drive preview upload failed (#{response.code}): #{message || response.message}"
@@ -76,7 +98,18 @@ class DocumentFileGoogleDriveUploadPreview
 
   def upload_file_name
     base = file.file_name.to_s.presence || "document-file"
-    "docs-portal-preview-#{file.public_id}-#{Time.current.strftime('%Y%m%d%H%M%S')}-#{base}"
+    "docs-portal-preview-#{file.public_id}-#{fingerprint.first(12)}-#{base}"
+  end
+
+  def fingerprint
+    @fingerprint ||= Digest::SHA256.file(file.absolute_path).hexdigest
+  end
+
+  def preview_upload_ttl
+    value = ENV["GOOGLE_DRIVE_PREVIEW_UPLOAD_TTL_HOURS"].to_i
+    return value.hours if value.positive?
+
+    DEFAULT_TTL
   end
 
   def access_token
