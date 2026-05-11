@@ -11,7 +11,7 @@ class DocumentFileOfficePreview
   end
 
   def available?
-    office_file? && (microsoft_graph_available? || google_drive_preview.available?)
+    office_file? && (microsoft_graph_available? || google_drive_preview.available? || google_drive_upload_preview.available?)
   end
 
   def too_large_for_simple_upload?
@@ -30,9 +30,10 @@ class DocumentFileOfficePreview
     end
 
     return google_drive_preview.url if google_drive_preview.available?
+    return google_drive_upload_preview.url if google_drive_upload_preview.available?
 
     raise FileTooLargeError, "Office preview is not available for files over 250MB" if microsoft_graph_available? && too_large_for_simple_upload?
-    raise Error, google_drive_preview.unavailable_message
+    raise Error, [google_drive_preview.unavailable_message, google_drive_upload_preview.unavailable_message].join("; ")
   end
 
   private
@@ -58,6 +59,10 @@ class DocumentFileOfficePreview
 
   def google_drive_preview
     @google_drive_preview ||= DocumentFileGoogleDrivePreview.new(file:)
+  end
+
+  def google_drive_upload_preview
+    @google_drive_upload_preview ||= DocumentFileGoogleDriveUploadPreview.new(file:)
   end
 
   def connection
