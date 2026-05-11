@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_11_101000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_11_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -511,6 +511,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_101000) do
 
   create_table "external_folder_sync_sources", force: :cascade do |t|
     t.text "auth_config", null: false
+    t.integer "auth_type", default: 0, null: false
     t.integer "conflict_policy", default: 0, null: false
     t.datetime "created_at", null: false
     t.bigint "created_by_id", null: false
@@ -532,6 +533,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_101000) do
     t.index ["project_id", "enabled"], name: "idx_ext_sync_sources_on_project_enabled"
     t.index ["project_id", "provider", "name"], name: "idx_ext_sync_sources_unique_project_provider_name", unique: true
     t.index ["project_id"], name: "index_external_folder_sync_sources_on_project_id"
+    t.index ["provider", "auth_type"], name: "idx_ext_sync_sources_on_provider_auth_type"
     t.index ["provider", "external_folder_id"], name: "idx_ext_sync_sources_on_provider_folder"
     t.index ["public_id"], name: "index_external_folder_sync_sources_on_public_id", unique: true
   end
@@ -749,6 +751,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_101000) do
     t.index ["public_id"], name: "index_read_confirmations_on_public_id", unique: true
     t.index ["user_id", "document_id"], name: "index_read_confirmations_unique_user_document", unique: true
     t.index ["user_id"], name: "index_read_confirmations_on_user_id"
+  end
+
+  create_table "solid_cable_messages", force: :cascade do |t|
+    t.binary "channel", null: false
+    t.bigint "channel_hash", null: false
+    t.datetime "created_at", null: false
+    t.binary "payload", null: false
+    t.index ["channel"], name: "index_solid_cable_messages_on_channel"
+    t.index ["channel_hash"], name: "index_solid_cable_messages_on_channel_hash"
+    t.index ["created_at"], name: "index_solid_cable_messages_on_created_at"
   end
 
   create_table "tree_view_states", force: :cascade do |t|
