@@ -1,6 +1,6 @@
 class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   before_action :require_admin_only!
-  before_action :set_external_folder_sync_source, only: %i[show edit update destroy dry_run apply]
+  before_action :set_external_folder_sync_source, only: %i[show edit update destroy dry_run apply enqueue]
   before_action :load_form_collections, only: %i[index create edit update]
 
   def index
@@ -64,6 +64,11 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "同期を実行しました。（#{run.items_scanned_count}件）"
   rescue ExternalFolderSync::GoogleDriveClient::Error, ExternalFolderSync::Runner::Error => e
     redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
+  end
+
+  def enqueue
+    ExternalFolderSyncJob.perform_later(@external_folder_sync_source.id, current_user.id)
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "同期ジョブを登録しました。"
   end
 
   private
