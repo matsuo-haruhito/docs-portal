@@ -63,15 +63,15 @@ class DocumentFileGoogleDriveUploadPreview
       parents: [preview_folder_id]
     }
 
-    [
-      "--#{boundary}\r\n",
-      "Content-Type: application/json; charset=UTF-8\r\n\r\n",
-      metadata.to_json,
-      "\r\n--#{boundary}\r\n",
-      "Content-Type: #{file.effective_content_type}\r\n\r\n",
-      File.binread(file.absolute_path),
-      "\r\n--#{boundary}--\r\n"
-    ].join
+    body = String.new(capacity: file.file_size.to_i + 1024, encoding: Encoding::BINARY)
+    body << "--#{boundary}\r\n".b
+    body << "Content-Type: application/json; charset=UTF-8\r\n\r\n".b
+    body << metadata.to_json.b
+    body << "\r\n--#{boundary}\r\n".b
+    body << "Content-Type: #{file.effective_content_type}\r\n\r\n".b
+    body << File.binread(file.absolute_path)
+    body << "\r\n--#{boundary}--\r\n".b
+    body
   end
 
   def upload_file_name
