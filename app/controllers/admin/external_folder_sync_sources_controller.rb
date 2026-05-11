@@ -7,6 +7,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     @external_folder_sync_sources = external_folder_sync_sources_scope
     @external_folder_sync_source = ExternalFolderSyncSource.new(
       provider: :google_drive,
+      auth_type: :service_account,
       sync_direction: :external_to_portal,
       conflict_policy: :manual,
       enabled: true
@@ -89,6 +90,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     params.require(:external_folder_sync_source).permit(
       :project_id,
       :provider,
+      :auth_type,
       :name,
       :folder_url,
       :external_folder_path,
