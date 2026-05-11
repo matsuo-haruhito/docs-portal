@@ -53,7 +53,8 @@ class DocumentFileOfficePreview
 
     MicrosoftGraphClient.new(connection:).preview_url_for_upload(
       file_path: file.absolute_path,
-      file_name: file.file_name
+      file_name: file.file_name,
+      document_file: file
     )
   end
 
