@@ -1,3 +1,7 @@
+require "json"
+require "net/http"
+require "uri"
+
 class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_external_folder_sync_source, only: %i[new destroy]
@@ -50,7 +54,7 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
     uri = URI(GOOGLE_AUTH_URL)
     uri.query = URI.encode_www_form(
       client_id: google_client_id,
-      redirect_uri: callback_admin_external_folder_sync_oauth_connections_url,
+      redirect_uri: oauth_callback_url,
       response_type: "code",
       scope: DRIVE_SCOPE,
       access_type: "offline",
@@ -65,13 +69,17 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
       code:,
       client_id: google_client_id,
       client_secret: google_client_secret,
-      redirect_uri: callback_admin_external_folder_sync_oauth_connections_url,
+      redirect_uri: oauth_callback_url,
       grant_type: "authorization_code"
     })
     body = JSON.parse(response.body.presence || "{}")
     return body if response.is_a?(Net::HTTPSuccess)
 
     raise KeyError, body["error_description"] || body["error"] || response.message
+  end
+
+  def oauth_callback_url
+    admin_callback_external_folder_sync_oauth_connections_url
   end
 
   def oauth_state_for(source)
