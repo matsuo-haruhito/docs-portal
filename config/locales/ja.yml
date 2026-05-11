@@ -143,6 +143,9 @@ ja:
     external_folder_sync_sources:
       provider:
         google_drive: "Google Drive"
+      auth_type:
+        service_account: "Service Account"
+        oauth_user: "OAuth user"
       sync_direction:
         external_to_portal: "外部フォルダ → ポータル"
         portal_to_external: "ポータル → 外部フォルダ"
