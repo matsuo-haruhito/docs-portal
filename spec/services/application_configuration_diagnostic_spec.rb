@@ -22,6 +22,9 @@ RSpec.describe ApplicationConfigurationDiagnostic do
       "SECRET_KEY_BASE" => "#{"x" * 40}",
       "RAILS_MASTER_KEY" => "#{"y" * 32}",
       "DOC_IMPORT_TOKEN" => "#{"z" * 32}",
+      "ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY" => "#{"a" * 32}",
+      "ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY" => "#{"b" * 32}",
+      "ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT" => "#{"c" * 32}",
       "COMPOSE_FILE" => "docker-compose.yml"
     }
   end
@@ -58,6 +61,15 @@ RSpec.describe ApplicationConfigurationDiagnostic do
 
     expect(result.error_count).to eq(1)
     expect(result.checks.find { _1.key == "DATABASE_HOST" }).to be_error
+  end
+
+  it "reports missing Active Record Encryption variables as errors" do
+    env.delete("ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY")
+
+    result = described_class.new(env:, root:, rails_env: FakeEnv.new("development")).call
+
+    expect(result.error_count).to eq(1)
+    expect(result.checks.find { _1.key == "ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY" }).to be_error
   end
 
   it "reports invalid numeric environment variables as errors" do
