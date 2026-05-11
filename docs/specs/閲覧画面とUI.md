@@ -37,16 +37,20 @@
 ## Office file preview
 
 - `.doc`, `.docx`, `.xls`, `.xlsx`, `.ppt`, `.pptx` は Office preview 対象とする
-- Office preview は管理画面の `Microsoft Graph` 接続マスタで案件ごとに設定する
-- 接続マスタには tenant ID、client ID、client secret、drive ID、プレビュー用フォルダを保存する
-- client secret は暗号化カラムに保存する
-- 文書詳細の embedded file viewer で Office file を表示する場合、Rails は Microsoft Graph の client credentials flow で access token を取得する
+- Office preview は、まず案件ごとの `Microsoft Graph` 接続マスタを使う
+- Microsoft Graph 接続が有効な場合、Rails は client credentials flow で access token を取得する
 - Rails は対象ファイルを設定済み Drive のプレビュー用フォルダへ一時アップロードし、その driveItem に対して `/preview` を呼び出す
-- 250MBを超えるOffice fileはGraphへアップロードせず、iframe内に「プレビュー不可・ダウンロードのみ」の案内を表示する
-- iframe には Rails の `document_files/:public_id?embedded=1` を読み込ませ、同 route から Graph の preview URL へ redirect する
+- Microsoft Graph 接続がない場合、または Graph の simple upload 制限を超える場合は、Google Drive 同期由来ファイルに限り Google Drive viewer へ fallback する
+- Google Drive fallback は、`ExternalFolderSyncItem#external_item_id` と `provider_metadata.source_mime_type` から `drive.google.com/file/d/:id/preview` または `docs.google.com/.../:id/preview` を生成する
+- Google Drive fallback は利用者ブラウザ側の Google アカウント権限に依存するため、ポータル上の閲覧権限だけでは表示できない場合がある
+- Microsoft Graph 接続マスタには tenant ID、client ID、client secret、drive ID、プレビュー用フォルダを保存する
+- client secret は暗号化カラムに保存する
+- 250MBを超えるOffice fileは、Microsoft Graph へはアップロードしない。Google Drive fallback が使える場合は Google Drive viewer を優先し、使えない場合は iframe内に「プレビュー不可・ダウンロードのみ」の案内を表示する
+- iframe には Rails の `document_files/:public_id?embedded=1` を読み込ませ、同 route から Graph の preview URL または Google Drive viewer URL へ redirect する
 - Graph preview URL は一時 URL として扱い、DB に永続化しない
+- Google Drive viewer URL は元ファイルIDから都度生成し、DBには永続化しない
 - Office preview への遷移もファイル閲覧として access log を記録する
-- Graph preview を作成できない場合は 502 とし、通常のダウンロード導線は残す
+- Graph preview と Google Drive fallback のどちらも作成できない場合は 502 とし、通常のダウンロード導線は残す
 
 ## 危険操作の安全装置
 
