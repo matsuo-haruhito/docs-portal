@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_11_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_12_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -538,6 +538,49 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_180000) do
     t.index ["public_id"], name: "index_external_folder_sync_sources_on_public_id", unique: true
   end
 
+  create_table "external_folder_sync_subscriptions", force: :cascade do |t|
+    t.string "callback_url"
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.bigint "external_folder_sync_source_id", null: false
+    t.text "last_error_message"
+    t.datetime "last_renewed_at"
+    t.integer "provider", default: 0, null: false
+    t.string "provider_channel_id"
+    t.json "provider_metadata", default: {}, null: false
+    t.string "provider_resource_id"
+    t.string "provider_subscription_id"
+    t.string "public_id", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "verification_token_digest"
+    t.index ["external_folder_sync_source_id"], name: "idx_ext_sync_subscriptions_on_source"
+    t.index ["provider", "provider_channel_id"], name: "idx_ext_sync_subscriptions_on_provider_channel"
+    t.index ["provider", "provider_subscription_id"], name: "idx_ext_sync_subscriptions_on_provider_subscription"
+    t.index ["public_id"], name: "index_external_folder_sync_subscriptions_on_public_id", unique: true
+    t.index ["status", "expires_at"], name: "idx_ext_sync_subscriptions_on_status_expires_at"
+  end
+
+  create_table "external_folder_sync_webhook_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.string "event_key"
+    t.bigint "external_folder_sync_source_id"
+    t.bigint "external_folder_sync_subscription_id"
+    t.json "headers_json", default: {}, null: false
+    t.json "payload_json", default: {}, null: false
+    t.integer "provider", default: 0, null: false
+    t.string "public_id", null: false
+    t.datetime "received_at", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["external_folder_sync_source_id"], name: "idx_ext_sync_webhook_events_on_source"
+    t.index ["external_folder_sync_subscription_id"], name: "idx_ext_sync_webhook_events_on_subscription"
+    t.index ["provider", "event_key"], name: "idx_ext_sync_webhook_events_unique_provider_event", unique: true
+    t.index ["public_id"], name: "index_external_folder_sync_webhook_events_on_public_id", unique: true
+    t.index ["status", "received_at"], name: "idx_ext_sync_webhook_events_on_status_received_at"
+  end
+
   create_table "git_import_runs", comment: "Gitリポジトリ取り込み処理の実行履歴", force: :cascade do |t|
     t.string "branch", null: false
     t.string "commit_sha"
@@ -901,6 +944,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_11_180000) do
   add_foreign_key "external_folder_sync_runs", "external_folder_sync_sources"
   add_foreign_key "external_folder_sync_sources", "projects"
   add_foreign_key "external_folder_sync_sources", "users", column: "created_by_id"
+  add_foreign_key "external_folder_sync_subscriptions", "external_folder_sync_sources"
+  add_foreign_key "external_folder_sync_webhook_events", "external_folder_sync_sources"
+  add_foreign_key "external_folder_sync_webhook_events", "external_folder_sync_subscriptions"
   add_foreign_key "git_import_runs", "git_import_sources"
   add_foreign_key "git_import_sources", "projects"
   add_foreign_key "git_import_sources", "users", column: "created_by_id"
