@@ -37,6 +37,10 @@ Rails.application.routes.draw do
     end
     resources :git_import_runs, only: [:index]
     resources :microsoft_graph_connections, except: %i[show new]
+    resources :external_folder_sync_sources, except: %i[new] do
+      post :dry_run, on: :member
+      post :apply, on: :member
+    end
     resources :documents, except: %i[show new] do
       patch :archive, on: :member
       patch :restore, on: :member
