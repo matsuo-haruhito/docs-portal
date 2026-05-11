@@ -8,6 +8,8 @@ class ExternalFolderSyncSource < ApplicationRecord
 
   has_many :external_folder_sync_runs, dependent: :destroy
   has_many :external_folder_sync_items, dependent: :destroy
+  has_many :external_folder_sync_subscriptions, dependent: :destroy
+  has_many :external_folder_sync_webhook_events, dependent: :nullify
 
   encrypts :auth_config
 
