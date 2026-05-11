@@ -16,6 +16,9 @@ Rails.application.routes.draw do
 
   namespace :admin do
     root "dashboard#index"
+    resource :api_specification, only: [:show] do
+      get "site(/*site_path)", to: "api_specifications#site", as: :site, format: false
+    end
     get "model_browser", to: "model_browsers#index", as: :model_browser
     get "model_browser/:model_key", to: "model_browsers#show", as: :model_browser_model
 

@@ -14,6 +14,7 @@
 - `ImportDryRunValidator` は source path 妥当性、既存 Document 更新候補、分類推定、重複候補を dry-run 結果として返す
 - `ImportManifestDryRun` は manifest 内の document 群を project ごとに束ね、internal import API の validation mode で共通 dry-run 結果を返す
 - internal import API `POST /api/internal/doc_imports` は `validate_only=true` で dry-run を保存する
+- 管理画面の「API仕様」は `docs-src/api-specification.md` を Docusaurus build した HTML として表示し、internal import API の呼び出し仕様を管理者向けに提示する
 
 ## ZIP upload import
 

@@ -9,6 +9,9 @@
 - `admin` は全管理機能を利用できる
 - `admin` は Project 編集画面から標準文書テンプレートの preview と適用を実行できる
 - `admin` は案件単位の文書利用状況レポートを参照できる
+- `admin` は管理メニューの「API仕様」から、ドキュメント更新用 internal import API の仕様を参照できる
+- API仕様ページは `docs-src/api-specification.md` を Docusaurus build した HTML を same-origin iframe で表示する
+- API仕様ページは source Markdown が生成済み HTML より新しい場合に build job を enqueue し、生成HTMLの鮮度確認は `BuildFreshnessGuard` で共通化する
 - `company_master_admin` は自社の会社マスタ・自社ユーザー管理のみ利用できる
 - 文書詳細では `tree_view` gem を使って「案件 > 文書」の左ペインツリーを表示する
 - 文書詳細と版詳細の「添付・元ファイル」は、保持している相対 path を使って `tree_view` でフォルダ階層表示する

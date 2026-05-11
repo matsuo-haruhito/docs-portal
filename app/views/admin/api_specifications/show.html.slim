@@ -1,0 +1,23 @@
+- page_title "API仕様"
+
+h1 API仕様
+p.muted ドキュメント更新用 internal import API と関連する外部連携の仕様を確認できます。
+
+= render "admin/nav"
+
+- if @api_specification_build_enqueued
+  .notice.ok
+    | API仕様Markdownが更新されているため、Docusaurus build を開始しました。完了後に再読み込みすると最新のHTMLを確認できます。
+- elsif @api_specification_page.stale?
+  .notice.alert
+    | API仕様MarkdownがHTMLより新しい状態です。Docusaurus build の完了後に再読み込みしてください。
+
+section.card
+  - if @api_specification_page.available?
+    .site-viewer-shell
+      iframe.site-viewer-frame src=@api_specification_page.iframe_src title="API仕様"
+  - else
+    h2 Docusaurus build が必要です
+    p.muted API仕様のMarkdownは docs-src/api-specification.md にあります。Docusaurus build を開始している場合は、完了後に再読み込みするとHTMLレンダリング結果を表示します。
+    p
+      code docs-src/api-specification.md

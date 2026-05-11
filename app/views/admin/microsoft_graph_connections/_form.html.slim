@@ -22,10 +22,10 @@
       = form.password_field :client_secret, value: nil, autocomplete: "new-password", placeholder: microsoft_graph_connection.persisted? ? "変更時のみ入力" : "アプリのクライアントシークレット"
     label
       | Site ID
-      = form.text_field :site_id, placeholder: "任意"
+      = form.text_field :site_id, placeholder: "任意。Drive IDの取得元を追跡するためのメモ"
     label
       | Drive ID
-      = form.text_field :drive_id
+      = form.text_field :drive_id, placeholder: "b!xxxxxxxx"
     label
       | プレビュー用フォルダ
       = form.text_field :preview_folder_path, placeholder: "docs-portal-previews"
@@ -33,6 +33,7 @@
       | 状態
       = form.select :enabled, [["有効", true], ["無効", false]]
   p.muted Officeファイルのプレビュー時に、指定Drive配下のプレビュー用フォルダへ一時アップロードし、Microsoft GraphのdriveItem preview URLを取得します。Client secretは暗号化カラムに保存されます。
+  p.muted 現行UIではDrive IDとプレビュー用フォルダを入力します。管理者向けには、SharePoint / OneDrive のフォルダ共有URLからDrive IDとフォルダパスを解決して設定するUIにすると分かりやすくなります。
   p.actions
     = form.submit "保存", class: "button"
     - if microsoft_graph_connection.persisted?
