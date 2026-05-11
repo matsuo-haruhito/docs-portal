@@ -3,7 +3,7 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
 
   def google_drive
     event = record_event!(provider: :google_drive)
-    ExternalFolderSyncWebhookEventJob.perform_later(event.id) if event.external_folder_sync_source.present?
+    enqueue_event_if_needed(event)
 
     head :ok
   end
@@ -18,12 +18,19 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
     events = sharepoint_notifications.map do |notification|
       record_event!(provider: :sharepoint, payload: notification)
     end
-    events.each { ExternalFolderSyncWebhookEventJob.perform_later(_1.id) if _1.external_folder_sync_source.present? }
+    events.each { enqueue_event_if_needed(_1) }
 
     head :accepted
   end
 
   private
+
+  def enqueue_event_if_needed(event)
+    return unless event.external_folder_sync_source.present?
+    return unless event.received?
+
+    ExternalFolderSyncWebhookEventJob.perform_later(event.id)
+  end
 
   def record_event!(provider:, payload: request_payload)
     subscription = find_subscription(provider:, payload:)
