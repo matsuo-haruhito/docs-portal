@@ -1,0 +1,39 @@
+.collapsibleToc {
+  border: 1px solid var(--ifm-toc-border-color, var(--ifm-color-emphasis-200));
+  border-radius: 12px;
+  background: var(--ifm-background-surface-color);
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.collapsibleTocSummary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.65rem 0.75rem;
+  user-select: none;
+  list-style: none;
+}
+
+.collapsibleTocSummary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsibleTocSummary::after {
+  content: "▾";
+  float: right;
+  color: var(--ifm-color-primary);
+  transition: transform 120ms ease;
+}
+
+.collapsibleToc:not([open]) .collapsibleTocSummary::after {
+  transform: rotate(-90deg);
+}
+
+.collapsibleTocBody {
+  border-top: 1px solid var(--ifm-toc-border-color, var(--ifm-color-emphasis-200));
+  padding: 0.25rem 0.35rem 0.5rem;
+}
+
+.collapsibleToc:not([open]) {
+  max-height: 3rem;
+}
