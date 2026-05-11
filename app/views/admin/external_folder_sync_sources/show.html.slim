@@ -43,7 +43,7 @@ h1 外部フォルダ同期詳細
     = link_to "同期実行", apply_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post, turbo_confirm: "Google Driveからportalへ同期します。よろしいですか？" }, class: "button"
     = link_to "同期ジョブ登録", enqueue_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post }, class: "button secondary"
     - if @external_folder_sync_source.oauth_user?
-      = link_to "Google OAuth接続", new_admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), class: "button secondary"
+      = link_to "Google OAuth接続", new_admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo: false }, class: "button secondary"
       - if @external_folder_sync_source.oauth_connected?
         = link_to "OAuth解除", admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo_method: :delete, turbo_confirm: "Google Drive OAuth認可を解除しますか？" }, class: "button secondary"
     = edit_link_to "編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source)
