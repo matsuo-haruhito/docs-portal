@@ -83,11 +83,11 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
   end
 
   def oauth_state_for(source)
-    verifier.generate(
+    verifier.generate({
       source_public_id: source.public_id,
       nonce: SecureRandom.hex(16),
       issued_at: Time.current.to_i
-    )
+    })
   end
 
   def verified_state!
@@ -97,7 +97,7 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
       raise ActiveSupport::MessageVerifier::InvalidSignature, "OAuth state mismatch"
     end
 
-    verifier.verify(state)
+    verifier.verify(state).with_indifferent_access
   end
 
   def verifier
