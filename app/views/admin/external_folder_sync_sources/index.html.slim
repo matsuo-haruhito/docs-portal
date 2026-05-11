@@ -25,7 +25,7 @@ h1 外部フォルダ同期
           br
           code = source.project.code
         td = link_to source.name, admin_external_folder_sync_source_path(source)
-        td = source.provider
+        td = external_folder_sync_source_provider_label(source)
         td
           code = source.external_folder_id
           - if source.external_folder_path.present?
