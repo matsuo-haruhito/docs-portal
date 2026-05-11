@@ -12,16 +12,16 @@ h1 外部フォルダ同期詳細
       br
       code = @external_folder_sync_source.project.code
     dt プロバイダ
-    dd = @external_folder_sync_source.provider
+    dd = external_folder_sync_source_provider_label(@external_folder_sync_source)
     dt フォルダURL
     dd = link_to @external_folder_sync_source.folder_url, @external_folder_sync_source.folder_url, target: "_blank", rel: "noopener"
     dt フォルダID
     dd
       code = @external_folder_sync_source.external_folder_id
     dt 同期方向
-    dd = @external_folder_sync_source.sync_direction
+    dd = external_folder_sync_source_sync_direction_label(@external_folder_sync_source)
     dt 競合方針
-    dd = @external_folder_sync_source.conflict_policy
+    dd = external_folder_sync_source_conflict_policy_label(@external_folder_sync_source)
     dt 状態
     dd = @external_folder_sync_source.enabled? ? "有効" : "無効"
     dt 最終同期
@@ -52,8 +52,8 @@ h1 外部フォルダ同期詳細
       - @runs.each do |run|
         tr
           td = run.started_at ? l(run.started_at) : "-"
-          td = run.mode
-          td = run.status
+          td = external_folder_sync_run_mode_label(run)
+          td = external_folder_sync_run_status_label(run)
           td = run.items_created_count
           td = run.items_updated_count
           td = run.items_skipped_count
@@ -80,7 +80,7 @@ h1 外部フォルダ同期詳細
     tbody
       - @items.each do |item|
         tr
-          td = item.sync_status
+          td = external_folder_sync_item_status_label(item)
           td = item.path
           td
             - if item.document.present?
