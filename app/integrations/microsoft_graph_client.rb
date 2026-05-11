@@ -1,3 +1,4 @@
+require "digest"
 require "net/http"
 require "uri"
 
@@ -5,6 +6,7 @@ class MicrosoftGraphClient
   TOKEN_URL_TEMPLATE = "https://login.microsoftonline.com/%<tenant_id>s/oauth2/v2.0/token".freeze
   GRAPH_ROOT = "https://graph.microsoft.com/v1.0".freeze
   SCOPE = "https://graph.microsoft.com/.default".freeze
+  DEFAULT_PREVIEW_UPLOAD_TTL = 7.days
 
   class Error < StandardError; end
 
@@ -12,18 +14,70 @@ class MicrosoftGraphClient
     @connection = connection
   end
 
-  def preview_url_for_upload(file_path:, file_name:)
+  def preview_url_for_upload(file_path:, file_name:, document_file: nil)
     access_token = fetch_access_token
-    item = upload_preview_file(access_token:, file_path:, file_name:)
-    preview = create_preview(access_token:, item_id: item.fetch("id"))
+    upload = document_file.present? ? active_preview_upload(document_file:, file_path:) : nil
+    item_id = upload&.drive_item_id || begin
+      item = upload_preview_file(access_token:, file_path:, file_name:)
+      record_preview_upload!(document_file:, file_path:, file_name:, item:) if document_file.present?
+      item.fetch("id")
+    end
+    preview = create_preview(access_token:, item_id:)
     preview_get_url(preview)
   rescue KeyError => e
     raise Error, "Microsoft Graph response did not include #{e.key}"
   end
 
+  def delete_item(item_id:)
+    access_token = fetch_access_token
+    uri = graph_uri("/drives/#{connection.drive_id}/items/#{ERB::Util.url_encode(item_id)}")
+    request = Net::HTTP::Delete.new(uri)
+    request["Authorization"] = "Bearer #{access_token}"
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { _1.request(request) }
+    return if response.is_a?(Net::HTTPSuccess) || response.code.to_i == 404
+
+    body = JSON.parse(response.body.presence || "{}")
+    message = body.dig("error", "message") || body["error_description"] || response.message
+    raise Error, "Microsoft Graph delete failed (#{response.code}): #{message}"
+  rescue JSON::ParserError
+    raise Error, "Microsoft Graph delete failed (#{response&.code}): #{response&.body}"
+  end
+
   private
 
   attr_reader :connection
+
+  def active_preview_upload(document_file:, file_path:)
+    DocumentFileMicrosoftGraphPreviewUpload
+      .active
+      .where(document_file:, microsoft_graph_connection: connection, fingerprint: fingerprint_for(file_path))
+      .order(expires_at: :desc, id: :desc)
+      .first
+  end
+
+  def record_preview_upload!(document_file:, file_path:, file_name:, item:)
+    DocumentFileMicrosoftGraphPreviewUpload.create!(
+      document_file:,
+      microsoft_graph_connection: connection,
+      fingerprint: fingerprint_for(file_path),
+      drive_id: connection.drive_id,
+      drive_item_id: item.fetch("id"),
+      drive_item_path: item.dig("parentReference", "path").presence || preview_path_for(file_name),
+      uploaded_at: Time.current,
+      expires_at: preview_upload_ttl.from_now
+    )
+  end
+
+  def preview_upload_ttl
+    value = ENV["MICROSOFT_GRAPH_PREVIEW_UPLOAD_TTL_HOURS"].to_i
+    return value.hours if value.positive?
+
+    DEFAULT_PREVIEW_UPLOAD_TTL
+  end
+
+  def fingerprint_for(file_path)
+    Digest::SHA256.file(file_path).hexdigest
+  end
 
   def fetch_access_token
     uri = URI(format(TOKEN_URL_TEMPLATE, tenant_id: ERB::Util.url_encode(connection.tenant_id)))
@@ -38,7 +92,7 @@ class MicrosoftGraphClient
   end
 
   def upload_preview_file(access_token:, file_path:, file_name:)
-    preview_path = [connection.normalized_preview_folder_path, preview_file_name(file_name)].join("/")
+    preview_path = preview_path_for(file_name)
     uri = graph_uri("/drives/#{connection.drive_id}/root:/#{escape_path(preview_path)}:/content")
     request = Net::HTTP::Put.new(uri)
     request["Authorization"] = "Bearer #{access_token}"
@@ -71,6 +125,10 @@ class MicrosoftGraphClient
 
   def escape_path(path)
     path.split("/").map { ERB::Util.url_encode(_1) }.join("/")
+  end
+
+  def preview_path_for(file_name)
+    [connection.normalized_preview_folder_path, preview_file_name(file_name)].join("/")
   end
 
   def preview_file_name(file_name)
