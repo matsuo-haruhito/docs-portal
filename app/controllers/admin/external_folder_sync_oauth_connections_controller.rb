@@ -9,10 +9,20 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
   GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth".freeze
   GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token".freeze
   DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly".freeze
+  GOOGLE_OAUTH_ENV_KEYS = %w[
+    GOOGLE_DRIVE_OAUTH_CLIENT_ID
+    GOOGLE_DRIVE_OAUTH_CLIENT_SECRET
+  ].freeze
 
   def new
     unless @external_folder_sync_source.google_drive? && @external_folder_sync_source.oauth_user?
       redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: "OAuth認可はGoogle DriveのOAuth user認証でのみ利用できます。"
+      return
+    end
+
+    missing_keys = missing_google_oauth_env_keys
+    if missing_keys.any?
+      redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: "Google Drive OAuth設定が未設定です: #{missing_keys.join(', ')}"
       return
     end
 
@@ -102,6 +112,10 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
 
   def verifier
     ActiveSupport::MessageVerifier.new(Rails.application.secret_key_base, digest: "SHA256")
+  end
+
+  def missing_google_oauth_env_keys
+    GOOGLE_OAUTH_ENV_KEYS.reject { |key| ENV[key].present? }
   end
 
   def google_client_id
