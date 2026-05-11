@@ -54,6 +54,21 @@
 - 取り込み元 repository / branch / source_path / commit SHA を追跡する
 - Git 側で削除されたファイルは即 delete せず、同期結果の削除候補として記録する
 
+## 外部フォルダ同期
+
+- `ExternalFolderSyncSource` は、Google Driveなどの外部フォルダを案件に紐づく取り込み元として管理する
+- 初期providerは `google_drive` のみ、同期方向は `external_to_portal` のみ、競合方針は `manual` のみとする
+- `ExternalFolderSyncRun` は dry-run / apply の実行履歴と件数、詳細結果を保存する
+- `ExternalFolderSyncItem` は外部item IDと portal側 `Document` / `DocumentVersion` / `DocumentFile` の対応関係を保存する
+- dry-run は create / update / skip / delete_detected / error の予定を表示する
+- apply は create / update を portal側へ取り込み、Google Drive側で見えなくなった既存itemは `delete_detected` として記録する
+- Google Drive側削除を portal側の物理削除へ即反映してはならない
+- Google Docs / Sheets / Slides / Drawings はOffice形式またはPDFへexportして `DocumentFile` として保存する
+- apply成功後は Google Drive changes API 用の start page token を `ExternalFolderSyncSource.cursor` に保存する。ただし、現時点では厳密な差分同期には使わない
+- 管理画面から dry-run / 同期実行 / 同期ジョブ登録を行える
+- 定期実行は `ExternalFolderSyncJob` または `external_folder_sync:*` rake task を scheduler / queue adapter から呼び出す
+- 詳細仕様と運用手順は [Google Drive外部フォルダ同期](../Google%20Drive外部フォルダ同期.md) を参照する
+
 ## import
 
 - `DocumentImporter` は manifest と artifact を入力として、`Document`, `DocumentVersion`, `DocumentFile`, `PublishJob` を更新する
