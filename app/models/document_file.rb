@@ -32,6 +32,8 @@ class DocumentFile < ApplicationRecord
 
   belongs_to :document_version
 
+  has_many :external_folder_sync_items, dependent: :nullify
+
   enum :scan_status, {
     scan_pending: 0,
     scan_clean: 1,
@@ -158,6 +160,8 @@ class DocumentFile < ApplicationRecord
     when "zip_uploads"
       segments.drop(4).join("/").presence
     when "git_imports"
+      segments.drop(3).join("/").presence
+    when "external_folder_syncs"
       segments.drop(3).join("/").presence
     end
   end
