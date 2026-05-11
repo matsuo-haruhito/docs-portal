@@ -30,6 +30,7 @@ class ExternalFolderSyncSource < ApplicationRecord
   validates :name, :provider, :folder_url, :external_folder_id, :sync_direction, :conflict_policy, :auth_config, presence: true
   validates :name, uniqueness: { scope: [:project_id, :provider] }
   validate :google_drive_folder_id_must_be_present
+  validate :mvp_scope_must_be_read_only_google_drive
 
   scope :enabled_only, -> { where(enabled: true) }
 
@@ -48,5 +49,12 @@ class ExternalFolderSyncSource < ApplicationRecord
     return if external_folder_id.present?
 
     errors.add(:folder_url, "must include a Google Drive folder ID")
+  end
+
+  def mvp_scope_must_be_read_only_google_drive
+    return unless google_drive?
+
+    errors.add(:sync_direction, "must be external_to_portal for Google Drive MVP") unless external_to_portal?
+    errors.add(:conflict_policy, "must be manual for Google Drive MVP") unless manual?
   end
 end
