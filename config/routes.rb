@@ -5,6 +5,10 @@ Rails.application.routes.draw do
     get "capture_login", to: "sessions#capture_login"
   end
 
+  post "external_folder_sync_webhooks/google_drive", to: "external_folder_sync_webhooks#google_drive"
+  post "external_folder_sync_webhooks/sharepoint", to: "external_folder_sync_webhooks#sharepoint"
+  get "external_folder_sync_webhooks/sharepoint", to: "external_folder_sync_webhooks#sharepoint"
+
   get "dashboard", to: "dashboard#show", as: :dashboard
   resources :consents, only: %i[index new create], param: :public_id
   resources :document_approval_requests, only: %i[index show update], param: :public_id do
