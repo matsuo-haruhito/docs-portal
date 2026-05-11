@@ -128,15 +128,19 @@ module ExternalFolderSync
       request["Authorization"] = "Bearer #{access_token}"
 
       response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { _1.request(request) }
-      return response.body unless parse_json
+      return response.body if response.is_a?(Net::HTTPSuccess) && !parse_json
 
-      body = JSON.parse(response.body.presence || "{}")
+      body = parse_response_body(response)
       return body if response.is_a?(Net::HTTPSuccess)
 
-      message = body.dig("error", "message") || response.message
-      raise Error, "Google Drive request failed (#{response.code}): #{message}"
+      message = body.is_a?(Hash) ? body.dig("error", "message") : nil
+      raise Error, "Google Drive request failed (#{response.code}): #{message || response.message}"
+    end
+
+    def parse_response_body(response)
+      JSON.parse(response.body.presence || "{}")
     rescue JSON::ParserError
-      raise Error, "Google Drive request failed: #{response.body}"
+      raise Error, "Google Drive request failed (#{response.code}): #{response.body}"
     end
 
     def access_token
