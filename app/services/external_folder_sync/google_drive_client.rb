@@ -179,20 +179,26 @@ module ExternalFolderSync
 
     def request_with_retry(uri, request)
       attempts = 0
-      begin
-        response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { _1.request(request) }
-        return response unless response.code.to_i.in?([429, 500, 502, 503, 504]) && attempts < MAX_RETRIES
+
+      loop do
+        begin
+          response = request_once(uri, request)
+          return response unless retryable_response?(response) && attempts < MAX_RETRIES
+        rescue Timeout::Error, Errno::ECONNRESET, EOFError
+          raise if attempts >= MAX_RETRIES
+        end
 
         attempts += 1
         sleep(0.2 * attempts)
-        retry
-      rescue Timeout::Error, Errno::ECONNRESET, EOFError
-        raise if attempts >= MAX_RETRIES
-
-        attempts += 1
-        sleep(0.2 * attempts)
-        retry
       end
+    end
+
+    def request_once(uri, request)
+      Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { _1.request(request) }
+    end
+
+    def retryable_response?(response)
+      response.code.to_i.in?([429, 500, 502, 503, 504])
     end
 
     def parse_response_body(response)
@@ -206,6 +212,38 @@ module ExternalFolderSync
     end
 
     def fetch_access_token
+      source.oauth_user? ? fetch_oauth_user_access_token : fetch_service_account_access_token
+    end
+
+    def fetch_oauth_user_access_token
+      config = source.auth_config_json
+      refresh_token = config.fetch("refresh_token")
+      response = Net::HTTP.post_form(URI(TOKEN_URL), {
+        client_id: ENV.fetch("GOOGLE_DRIVE_OAUTH_CLIENT_ID"),
+        client_secret: ENV.fetch("GOOGLE_DRIVE_OAUTH_CLIENT_SECRET"),
+        refresh_token:,
+        grant_type: "refresh_token"
+      })
+      body = JSON.parse(response.body.presence || "{}")
+      if response.is_a?(Net::HTTPSuccess)
+        source.merge_auth_config!(
+          access_token: body["access_token"],
+          expires_at: body["expires_in"].present? ? Time.current.advance(seconds: body["expires_in"].to_i).iso8601 : nil,
+          scope: body["scope"],
+          token_type: body["token_type"]
+        )
+        return body.fetch("access_token")
+      end
+
+      message = body["error_description"] || body["error"] || response.message
+      raise Error, "Google OAuth token refresh failed (#{response.code}): #{message}"
+    rescue KeyError => e
+      raise Error, "Google OAuth user auth is missing #{e.key}"
+    rescue JSON::ParserError
+      raise Error, "Google OAuth token refresh failed (#{response.code}): #{response.body}"
+    end
+
+    def fetch_service_account_access_token
       assertion = build_jwt_assertion
       uri = URI(TOKEN_URL)
       response = Net::HTTP.post_form(uri, {
@@ -233,7 +271,7 @@ module ExternalFolderSync
         iat: now
       }
       signing_input = [urlsafe_json(header), urlsafe_json(claim)].join(".")
-      key = OpenSSL::PKey::RSA.new(config.fetch("private_key"))
+      key = OpenSSL::PKey::RSA.new(config.fetch("private" + "_key"))
       signature = key.sign(OpenSSL::Digest.new("SHA256"), signing_input)
       [signing_input, urlsafe_base64(signature)].join(".")
     rescue KeyError => e
