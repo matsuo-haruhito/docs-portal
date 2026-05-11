@@ -26,12 +26,17 @@ h1 外部フォルダ同期詳細
     dd = @external_folder_sync_source.enabled? ? "有効" : "無効"
     dt 最終同期
     dd = @external_folder_sync_source.last_synced_at ? l(@external_folder_sync_source.last_synced_at) : "-"
+    - if @external_folder_sync_source.cursor.present?
+      dt Google Drive cursor
+      dd
+        code = @external_folder_sync_source.cursor
     - if @external_folder_sync_source.last_error_message.present?
       dt 最終エラー
       dd = @external_folder_sync_source.last_error_message
   p.actions
     = link_to "dry-run", dry_run_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post }, class: "button secondary"
     = link_to "同期実行", apply_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post, turbo_confirm: "Google Driveからportalへ同期します。よろしいですか？" }, class: "button"
+    = link_to "同期ジョブ登録", enqueue_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post }, class: "button secondary"
     = edit_link_to "編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source)
     = link_to "一覧へ戻る", admin_external_folder_sync_sources_path, class: "button secondary"
 
