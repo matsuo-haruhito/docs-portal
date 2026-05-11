@@ -41,10 +41,12 @@ Rails.application.routes.draw do
     end
     resources :git_import_runs, only: [:index]
     resources :microsoft_graph_connections, except: %i[show new]
+    get "external_folder_sync_oauth_connections/callback", to: "external_folder_sync_oauth_connections#callback", as: :callback_external_folder_sync_oauth_connections
     resources :external_folder_sync_sources, except: %i[new] do
       post :dry_run, on: :member
       post :apply, on: :member
       post :enqueue, on: :member
+      resource :external_folder_sync_oauth_connection, only: %i[new destroy]
     end
     resources :documents, except: %i[show new] do
       patch :archive, on: :member
