@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_10_231000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_11_101000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -455,6 +455,87 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_231000) do
     t.index ["title"], name: "index_documents_on_title_trigram", opclass: :gin_trgm_ops, using: :gin
   end
 
+  create_table "external_folder_sync_items", force: :cascade do |t|
+    t.string "checksum"
+    t.datetime "created_at", null: false
+    t.bigint "document_file_id"
+    t.bigint "document_id"
+    t.bigint "document_version_id"
+    t.bigint "external_folder_sync_source_id", null: false
+    t.string "external_item_id", null: false
+    t.datetime "external_modified_at"
+    t.string "external_parent_id"
+    t.text "last_error_message"
+    t.string "mime_type"
+    t.string "name", null: false
+    t.string "path", null: false
+    t.datetime "portal_modified_at"
+    t.json "provider_metadata", default: {}, null: false
+    t.string "public_id", null: false
+    t.bigint "size"
+    t.integer "sync_status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["document_file_id"], name: "index_external_folder_sync_items_on_document_file_id"
+    t.index ["document_id"], name: "index_external_folder_sync_items_on_document_id"
+    t.index ["document_version_id"], name: "index_external_folder_sync_items_on_document_version_id"
+    t.index ["external_folder_sync_source_id", "external_item_id"], name: "idx_ext_sync_items_unique_source_item", unique: true
+    t.index ["external_folder_sync_source_id"], name: "idx_ext_sync_items_on_source"
+    t.index ["path"], name: "idx_ext_sync_items_on_path"
+    t.index ["public_id"], name: "index_external_folder_sync_items_on_public_id", unique: true
+    t.index ["sync_status", "updated_at"], name: "idx_ext_sync_items_on_status_updated_at"
+  end
+
+  create_table "external_folder_sync_runs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.integer "errors_count", default: 0, null: false
+    t.bigint "external_folder_sync_source_id", null: false
+    t.datetime "finished_at"
+    t.integer "items_created_count", default: 0, null: false
+    t.integer "items_deleted_count", default: 0, null: false
+    t.integer "items_scanned_count", default: 0, null: false
+    t.integer "items_skipped_count", default: 0, null: false
+    t.integer "items_updated_count", default: 0, null: false
+    t.integer "mode", default: 0, null: false
+    t.string "public_id", null: false
+    t.json "result_json", default: [], null: false
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.json "summary_json", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["external_folder_sync_source_id"], name: "idx_ext_sync_runs_on_source"
+    t.index ["mode", "started_at"], name: "idx_ext_sync_runs_on_mode_started_at"
+    t.index ["public_id"], name: "index_external_folder_sync_runs_on_public_id", unique: true
+    t.index ["status", "started_at"], name: "idx_ext_sync_runs_on_status_started_at"
+  end
+
+  create_table "external_folder_sync_sources", force: :cascade do |t|
+    t.text "auth_config", null: false
+    t.integer "conflict_policy", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id", null: false
+    t.text "cursor"
+    t.boolean "enabled", default: true, null: false
+    t.string "external_folder_id", null: false
+    t.string "external_folder_path"
+    t.string "folder_url", null: false
+    t.text "last_error_message"
+    t.datetime "last_synced_at"
+    t.string "name", null: false
+    t.bigint "project_id", null: false
+    t.integer "provider", default: 0, null: false
+    t.json "provider_metadata", default: {}, null: false
+    t.string "public_id", null: false
+    t.integer "sync_direction", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_external_folder_sync_sources_on_created_by_id"
+    t.index ["project_id", "enabled"], name: "idx_ext_sync_sources_on_project_enabled"
+    t.index ["project_id", "provider", "name"], name: "idx_ext_sync_sources_unique_project_provider_name", unique: true
+    t.index ["project_id"], name: "index_external_folder_sync_sources_on_project_id"
+    t.index ["provider", "external_folder_id"], name: "idx_ext_sync_sources_on_provider_folder"
+    t.index ["public_id"], name: "index_external_folder_sync_sources_on_public_id", unique: true
+  end
+
   create_table "git_import_runs", comment: "Gitリポジトリ取り込み処理の実行履歴", force: :cascade do |t|
     t.string "branch", null: false
     t.string "commit_sha"
@@ -801,6 +882,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_231000) do
   add_foreign_key "document_versions", "users", column: "published_by_user_id"
   add_foreign_key "documents", "projects"
   add_foreign_key "documents", "users", column: "archived_by_user_id"
+  add_foreign_key "external_folder_sync_items", "document_files"
+  add_foreign_key "external_folder_sync_items", "document_versions"
+  add_foreign_key "external_folder_sync_items", "documents"
+  add_foreign_key "external_folder_sync_items", "external_folder_sync_sources"
+  add_foreign_key "external_folder_sync_runs", "external_folder_sync_sources"
+  add_foreign_key "external_folder_sync_sources", "projects"
+  add_foreign_key "external_folder_sync_sources", "users", column: "created_by_id"
   add_foreign_key "git_import_runs", "git_import_sources"
   add_foreign_key "git_import_sources", "projects"
   add_foreign_key "git_import_sources", "users", column: "created_by_id"

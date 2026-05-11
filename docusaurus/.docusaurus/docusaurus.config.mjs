@@ -12,14 +12,16 @@ export default {
       "classic",
       {
         "docs": {
-          "path": "/app/docs-src",
+          "path": "/tmp/seed-docusaurus-20260512-1-2gib37/docs-src",
           "routeBasePath": "/",
           "sidebarPath": "./sidebars.ts",
           "lastVersion": "current",
           "remarkPlugins": [
             [
               null,
-              {}
+              {
+                "staticDir": "/tmp/seed-docusaurus-20260512-1-2gib37/static"
+              }
             ]
           ]
         },
