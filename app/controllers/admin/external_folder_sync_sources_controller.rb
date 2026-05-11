@@ -7,6 +7,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     @external_folder_sync_sources = external_folder_sync_sources_scope
     @external_folder_sync_source = ExternalFolderSyncSource.new(
       provider: :google_drive,
+      auth_type: :service_account,
       sync_direction: :external_to_portal,
       conflict_policy: :manual,
       enabled: true
@@ -19,7 +20,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def create
-    @external_folder_sync_source = ExternalFolderSyncSource.new(external_folder_sync_source_params)
+    @external_folder_sync_source = ExternalFolderSyncSource.new(normalized_external_folder_sync_source_params)
     @external_folder_sync_source.created_by = current_user
     assign_google_drive_folder_id(@external_folder_sync_source)
 
@@ -35,9 +36,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def update
-    attrs = external_folder_sync_source_params
-    attrs.delete(:auth_config) if attrs[:auth_config].blank?
-    @external_folder_sync_source.assign_attributes(attrs)
+    @external_folder_sync_source.assign_attributes(normalized_external_folder_sync_source_params)
     assign_google_drive_folder_id(@external_folder_sync_source)
 
     if @external_folder_sync_source.save
@@ -85,10 +84,21 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     ExternalFolderSyncSource.includes(:project, :created_by).order(:provider, :name, :id)
   end
 
+  def normalized_external_folder_sync_source_params
+    attrs = external_folder_sync_source_params.to_h
+    if attrs["auth_type"] == "oauth_user"
+      attrs["auth_config"] = @external_folder_sync_source&.oauth_user? ? @external_folder_sync_source.auth_config : {}.to_json
+    elsif attrs["auth_config"].blank?
+      attrs.delete("auth_config")
+    end
+    attrs
+  end
+
   def external_folder_sync_source_params
     params.require(:external_folder_sync_source).permit(
       :project_id,
       :provider,
+      :auth_type,
       :name,
       :folder_url,
       :external_folder_path,

@@ -11,6 +11,7 @@ Google Driveフォルダを外部文書置き場として登録し、docs-portal
 - providerは `google_drive` のみ
 - 同期方向は `external_to_portal` のみ
 - 競合方針は `manual` のみ
+- 認証方式は `service_account` または `oauth_user` を選択できる
 - 管理画面から `dry-run` / `同期実行` / `同期ジョブ登録` を行う
 - rake taskから全sourceまたは個別sourceを同期できる
 - Google Drive側削除はportal側から物理削除せず、`delete_detected` として記録する
@@ -22,16 +23,38 @@ Google Driveフォルダを外部文書置き場として登録し、docs-portal
 - 双方向同期
 - Google Drive側削除のportal側物理削除
 - Webhook / push notification
-- OAuthユーザー認可フロー
 - Google Drive changes APIを使った厳密な差分同期
 
 ## 認証
+
+### Service Account
 
 Google Cloud のService Account JSONを管理画面へ登録します。
 
 運用時は、同期対象のGoogle DriveフォルダをService Accountのメールアドレスへ共有してください。
 
 登録した認証設定は `ExternalFolderSyncSource.auth_config` に暗号化保存します。
+
+### OAuth user
+
+OAuth user方式では、管理画面で同期sourceを保存した後、詳細画面の「Google OAuth接続」からGoogle認可を行います。
+
+OAuth user方式では、次の環境変数が必要です。
+
+```bash
+GOOGLE_DRIVE_OAUTH_CLIENT_ID=...
+GOOGLE_DRIVE_OAUTH_CLIENT_SECRET=...
+```
+
+Google Cloud Console 側のOAuth redirect URIには、次の管理画面 callback URL を登録してください。
+
+```text
+https://<host>/admin/external_folder_sync_oauth_connections/callback
+```
+
+OAuth user方式では、認可したGoogleユーザーが閲覧できるDriveフォルダを同期対象にします。Service Accountへのフォルダ共有は不要です。
+
+取得したrefresh tokenは `ExternalFolderSyncSource.auth_config` に暗号化保存し、同期時にaccess tokenへ更新します。
 
 ## 主なモデル
 
@@ -41,6 +64,7 @@ Google Cloud のService Account JSONを管理画面へ登録します。
 
 - project
 - provider
+- auth_type
 - name
 - folder_url
 - external_folder_id
@@ -92,6 +116,7 @@ Googleネイティブ形式をexportした場合、`provider_metadata` に元の
 - `create`: portal側に未取り込み
 - `update`: 既存取り込み済みだがchecksum / modified_at / pathが変化
 - `skip`: 変更なし
+- `delete_detected`: Drive側で見えなくなった既存item。dry-runではDB状態を変更しない
 - `error`: export非対応のGoogleネイティブ形式など
 
 `apply` は `create` / `update` をportal側へ取り込み、Document / DocumentVersion / DocumentFileを作成します。
@@ -127,7 +152,6 @@ bin/rails 'external_folder_sync:sync[efs_xxx]'
 
 ## 今後の拡張候補
 
-- OAuthユーザー認可
 - Google Drive changes APIによる厳密な差分同期
 - Portal -> Google Drive publish
 - provider adapterとしてMicrosoft Graph / Boxを追加

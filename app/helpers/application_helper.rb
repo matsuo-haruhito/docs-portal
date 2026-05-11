@@ -141,6 +141,11 @@ module ApplicationHelper
     localized_label("external_folder_sync_sources.provider", value)
   end
 
+  def external_folder_sync_source_auth_type_label(source_or_value)
+    value = source_or_value.respond_to?(:auth_type) ? source_or_value.auth_type : source_or_value
+    localized_label("external_folder_sync_sources.auth_type", value)
+  end
+
   def external_folder_sync_source_sync_direction_label(source_or_value)
     value = source_or_value.respond_to?(:sync_direction) ? source_or_value.sync_direction : source_or_value
     localized_label("external_folder_sync_sources.sync_direction", value)
