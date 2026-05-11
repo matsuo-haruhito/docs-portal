@@ -125,12 +125,13 @@ class DocumentFile < ApplicationRecord
   def tree_path
     @tree_path ||= begin
       normalized_name = normalize_relative_path(file_name)
+      external_path = external_folder_sync_tree_path
       inferred_path = infer_tree_path_from_storage_key
 
       if normalized_name.include?("/")
         normalized_name
       else
-        inferred_path.presence || normalized_name
+        external_path.presence || inferred_path.presence || normalized_name
       end
     end
   end
@@ -151,6 +152,10 @@ class DocumentFile < ApplicationRecord
     return "document-file" if normalized.blank? || normalized == "." || normalized == ".." || normalized.start_with?("../")
 
     normalized
+  end
+
+  def external_folder_sync_tree_path
+    external_folder_sync_items.order(:id).first&.path
   end
 
   def infer_tree_path_from_storage_key
