@@ -6,6 +6,8 @@ class DocumentFileGoogleDrivePreview
     "application/vnd.google-apps.drawing" => "https://docs.google.com/drawings/d/%<id>s/preview"
   }.freeze
 
+  GOOGLE_DRIVE_SOURCE_PREFIX = "google-drive:".freeze
+
   class Error < StandardError; end
 
   def initialize(file:)
@@ -27,11 +29,32 @@ class DocumentFileGoogleDrivePreview
   attr_reader :file
 
   def google_drive_item
-    @google_drive_item ||= file.external_folder_sync_items
+    @google_drive_item ||= direct_google_drive_item || version_google_drive_item || document_google_drive_item || source_commit_google_drive_item
+  end
+
+  def direct_google_drive_item
+    google_drive_items.where(document_file: file).order(:id).first
+  end
+
+  def version_google_drive_item
+    google_drive_items.where(document_version: file.document_version).order(:id).first
+  end
+
+  def document_google_drive_item
+    google_drive_items.where(document: file.document_version.document).order(:id).first
+  end
+
+  def source_commit_google_drive_item
+    external_id = file.document_version.source_commit_hash.to_s.delete_prefix(GOOGLE_DRIVE_SOURCE_PREFIX)
+    return if external_id.blank? || external_id == file.document_version.source_commit_hash
+
+    google_drive_items.where(external_item_id: external_id).order(:id).first
+  end
+
+  def google_drive_items
+    ExternalFolderSyncItem
       .joins(:external_folder_sync_source)
-      .where(external_folder_sync_sources: { provider: ExternalFolderSyncSource.providers.fetch(:google_drive) })
-      .order(:id)
-      .first
+      .where(external_folder_sync_sources: { provider: ExternalFolderSyncSource.providers.fetch("google_drive") })
   end
 
   def external_item_id
