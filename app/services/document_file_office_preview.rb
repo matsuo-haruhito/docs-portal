@@ -11,7 +11,7 @@ class DocumentFileOfficePreview
   end
 
   def available?
-    office_file? && connection.present? && !too_large_for_simple_upload?
+    office_file? && (microsoft_graph_available? || google_drive_preview.available?)
   end
 
   def too_large_for_simple_upload?
@@ -19,14 +19,13 @@ class DocumentFileOfficePreview
   end
 
   def url
-    raise Error, "Office preview is not available" unless office_file? && connection.present?
-    raise FileTooLargeError, "Office preview is not available for files over 250MB" if too_large_for_simple_upload?
-    raise Error, "File not found" unless File.exist?(file.absolute_path)
+    raise Error, "Office preview is not available" unless office_file?
 
-    MicrosoftGraphClient.new(connection:).preview_url_for_upload(
-      file_path: file.absolute_path,
-      file_name: file.file_name
-    )
+    return microsoft_graph_preview_url if microsoft_graph_available? && !too_large_for_simple_upload?
+    return google_drive_preview.url if google_drive_preview.available?
+
+    raise FileTooLargeError, "Office preview is not available for files over 250MB" if microsoft_graph_available? && too_large_for_simple_upload?
+    raise Error, "Office preview is not available"
   end
 
   private
@@ -35,6 +34,23 @@ class DocumentFileOfficePreview
 
   def office_file?
     File.extname(file.file_name.to_s).downcase.in?(OFFICE_EXTENSIONS)
+  end
+
+  def microsoft_graph_available?
+    connection.present?
+  end
+
+  def microsoft_graph_preview_url
+    raise Error, "File not found" unless File.exist?(file.absolute_path)
+
+    MicrosoftGraphClient.new(connection:).preview_url_for_upload(
+      file_path: file.absolute_path,
+      file_name: file.file_name
+    )
+  end
+
+  def google_drive_preview
+    @google_drive_preview ||= DocumentFileGoogleDrivePreview.new(file:)
   end
 
   def connection
