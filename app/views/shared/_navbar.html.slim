@@ -30,8 +30,6 @@ nav
           .nav-dropdown__menu
             = link_to "管理画面", admin_root_path
             .nav-dropdown__divider aria-hidden="true"
-            = link_to "API仕様", admin_api_specification_path
-            = link_to "モデルブラウザ", admin_model_browser_path
             = link_to "会社", admin_companies_path
             = link_to "ユーザー", admin_users_path
             = link_to "案件", admin_projects_path
@@ -41,14 +39,19 @@ nav
             = link_to "文書", admin_documents_path
             = link_to "文書セット", admin_document_sets_path
             = link_to "文書権限", admin_document_permissions_path
-            = link_to "アクセスログ", admin_access_logs_path
             = link_to "アクセス申請", admin_access_requests_path
-            = link_to "文書利用レポート", admin_document_usage_reports_path
-            .nav-dropdown__divider aria-hidden="true"
             = link_to "文書一括編集", new_admin_bulk_edit_dry_run_path
+            = link_to "モデルブラウザ", admin_model_browser_path
+        details.nav-dropdown data-nav-dropdown="true"
+          summary.nav-dropdown__summary
+            | 連携メニュー
+          .nav-dropdown__menu
+            = link_to "API仕様", admin_api_specification_path
+            .nav-dropdown__divider aria-hidden="true"
             = link_to "Git取込元", admin_git_import_sources_path
             = link_to "Git取込履歴", admin_git_import_runs_path
             = link_to "Microsoft Graph", admin_microsoft_graph_connections_path
+            = link_to "外部フォルダ同期", admin_external_folder_sync_sources_path
             = link_to "Webhook", admin_webhook_endpoints_path
   .user-menu
     - if logged_in?
