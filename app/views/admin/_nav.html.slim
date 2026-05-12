@@ -3,6 +3,7 @@ ul.nav-list
   - if admin_user?
     li = link_to "API仕様", admin_api_specification_path
     li = link_to "モデルブラウザ", admin_model_browser_path
+    li = link_to "定期ジョブ", admin_recurring_job_schedules_path
   - if company_master_admin?
     li = link_to "会社", admin_companies_path
   li = link_to "ユーザー", admin_users_path
