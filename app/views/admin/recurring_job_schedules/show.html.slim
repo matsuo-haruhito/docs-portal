@@ -1,0 +1,67 @@
+- page_title "定期ジョブ詳細"
+
+h1 定期ジョブ詳細
+= render "admin/nav"
+
+.card
+  h2 = @schedule.job_key
+  dl.definition-list
+    dt ジョブクラス
+    dd
+      code = @schedule.job_class
+    dt キュー
+    dd = @schedule.queue_name
+    dt 状態
+    dd = @schedule.enabled? ? "有効" : "無効"
+    dt 重複実行
+    dd = @schedule.allow_overlap? ? "許可" : "禁止"
+    dt 実行間隔
+    dd = distance_of_time_in_words(@schedule.interval_seconds)
+    dt 次回実行
+    dd = @schedule.next_run_at ? l(@schedule.next_run_at) : "-"
+    dt 即時実行要求
+    dd = @schedule.run_requested_at ? l(@schedule.run_requested_at) : "-"
+    dt 前回enqueue
+    dd = @schedule.last_enqueued_at ? l(@schedule.last_enqueued_at) : "-"
+    dt 前回開始
+    dd = @schedule.last_started_at ? l(@schedule.last_started_at) : "-"
+    dt 前回終了
+    dd = @schedule.last_finished_at ? l(@schedule.last_finished_at) : "-"
+    dt 前回状態
+    dd = @schedule.last_status.presence || "-"
+    - if @schedule.last_error_message.present?
+      dt 前回エラー
+      dd = @schedule.last_error_message
+    dt 引数
+    dd
+      pre = JSON.pretty_generate(@schedule.args_json)
+    - if @schedule.description.present?
+      dt 説明
+      dd = @schedule.description
+  p.actions
+    = link_to "即時実行を要求", request_run_admin_recurring_job_schedule_path(@schedule), data: { turbo_method: :post }, class: "button"
+    = link_to "一覧へ戻る", admin_recurring_job_schedules_path, class: "button secondary"
+
+.card
+  h2 実行履歴
+  = table_tag do
+    thead
+      tr
+        th 予定時刻
+        th 状態
+        th enqueue
+        th 開始
+        th 終了
+        th ActiveJob ID
+        th エラー
+    tbody
+      - @runs.each do |run|
+        tr
+          td = run.scheduled_at ? l(run.scheduled_at) : "-"
+          td = run.status
+          td = run.enqueued_at ? l(run.enqueued_at) : "-"
+          td = run.started_at ? l(run.started_at) : "-"
+          td = run.finished_at ? l(run.finished_at) : "-"
+          td
+            code = run.active_job_id.presence || "-"
+          td = run.error_message.presence || "-"
