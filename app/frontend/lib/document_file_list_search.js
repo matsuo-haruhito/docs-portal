@@ -2,6 +2,26 @@ function normalizeText(value) {
   return (value || "").toString().trim().toLowerCase()
 }
 
+function injectDocumentFileSearchStyle() {
+  if (document.querySelector("style[data-document-file-search-style]")) return
+
+  const style = document.createElement("style")
+  style.dataset.documentFileSearchStyle = "true"
+  style.textContent = `
+    tr.is-document-file-search-match > td,
+    tr.is-document-file-search-match > th {
+      background: #fff7cc;
+      box-shadow: inset 4px 0 0 #f59e0b;
+    }
+    tr.is-document-file-search-context > td,
+    tr.is-document-file-search-context > th {
+      background: #f8fafc;
+      color: var(--doc-text-muted, #64748b);
+    }
+  `
+  document.head?.appendChild(style)
+}
+
 function firstPresentAttribute(element, names) {
   for (const name of names) {
     const value = element.getAttribute(name)
@@ -30,7 +50,11 @@ function parentRowKey(row) {
   ])
 }
 
-function visibleRowsForQuery(rows, query) {
+function rowMatchesQuery(row, query) {
+  return query.length > 0 && normalizeText(row.textContent).includes(query)
+}
+
+function visibleRowsForQuery(rows, query, matchedRows) {
   if (query.length === 0) return new Set(rows)
 
   const rowsByKey = new Map()
@@ -42,8 +66,9 @@ function visibleRowsForQuery(rows, query) {
   const visibleRows = new Set()
 
   rows.forEach((row) => {
-    if (!normalizeText(row.textContent).includes(query)) return
+    if (!rowMatchesQuery(row, query)) return
 
+    matchedRows.add(row)
     visibleRows.add(row)
 
     let parentKey = parentRowKey(row)
@@ -64,6 +89,7 @@ function visibleRowsForQuery(rows, query) {
 function setupFileListSearch(container) {
   if (container.dataset.fileListSearchReady === "true") return
   container.dataset.fileListSearchReady = "true"
+  injectDocumentFileSearchStyle()
 
   const input = container.querySelector("[data-document-file-search-input]")
   const clearButton = container.querySelector("[data-document-file-search-clear]")
@@ -75,16 +101,22 @@ function setupFileListSearch(container) {
 
   const update = () => {
     const query = normalizeText(input.value)
-    const visibleRows = visibleRowsForQuery(rows, query)
+    const matchedRows = new Set()
+    const visibleRows = visibleRowsForQuery(rows, query, matchedRows)
     let visibleCount = 0
+    let matchedCount = 0
 
     rows.forEach((row) => {
       const visible = visibleRows.has(row)
+      const matched = matchedRows.has(row)
       row.hidden = !visible
+      row.classList.toggle("is-document-file-search-match", matched)
+      row.classList.toggle("is-document-file-search-context", visible && query.length > 0 && !matched)
       if (visible) visibleCount += 1
+      if (matched) matchedCount += 1
     })
 
-    count.textContent = query.length === 0 ? `${rows.length}件` : `${visibleCount}/${rows.length}件`
+    count.textContent = query.length === 0 ? `${rows.length}件` : `${matchedCount}件一致 / ${visibleCount}件表示`
   }
 
   input.addEventListener("input", update)
