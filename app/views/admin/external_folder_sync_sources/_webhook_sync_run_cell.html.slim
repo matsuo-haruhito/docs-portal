@@ -1,5 +1,7 @@
 - if external_folder_sync_webhook_sync_run_present?(event)
-  code = external_folder_sync_webhook_sync_run_label(event)
+  - run_label = external_folder_sync_webhook_sync_run_label(event)
+  = link_to "##{run_label}", class: "inline-link" do
+    code = run_label
   br
   span.muted = external_folder_sync_webhook_sync_run_status(event)
   - if external_folder_sync_webhook_sync_run_warning_label(event).present?
