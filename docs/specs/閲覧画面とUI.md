@@ -31,7 +31,7 @@
 - 版詳細画面は、本文表示、添付、品質チェック、前版との差分確認へ迷わず移動できる preview hub として扱う
 - 版詳細画面では、閲覧可能な直前の `DocumentVersion` と比較し、添付・元ファイルの追加、変更、削除件数を表示する
 - 差分サマリは、保持済みファイルの `tree_path`、ファイルサイズ、content type、file name を使ったファイル単位の比較から始める
-- Markdown本文の行単位diffは、`.md` / `.markdown` の元ファイルを対象に、前版と新版の行差分として表示する
+- Markdown本文の行単位diffは、 `.md` / `.markdown` の元ファイルを対象に、前版と新版の行差分として表示する
 - Markdown本文の行単位diffでは、追加行、削除行、前後コンテキストを unified diff 風に表示する
 - 大きすぎるMarkdownファイル、または元ファイルを読み込めない場合は、行単位diffを省略し、理由を利用者へ表示する
 - レンダリング後HTML差分は、Docusaurus生成済みHTMLから表示テキストを抽出して表示する
@@ -111,6 +111,52 @@
 - download 権限がない利用者には、download only viewer ではなく権限申請導線を表示する
 - preview への遷移は、必要に応じて file view access log として記録する
 - viewer registry は、将来の表示対象宣言 metadata と連携し、primary / attachment / hidden / debug などの見せ方を扱えるようにする
+
+## Preview target metadata
+
+- 文書版は、添付・元ファイルを利用者へどう見せるかを宣言する preview target metadata を持てるようにする
+- preview target metadata は、qaboard の visualization 定義のように、表示対象、グループ、既定表示、非表示対象を宣言するための metadata として扱う
+- preview target metadata は Markdown 原文や生成済みHTMLを直接変更せず、docs-portal 側の viewer / 添付一覧 / 文書セット表示を整理するために使う
+- metadata がない文書版では、従来通り全ての閲覧可能な `DocumentFile` を tree path 順に表示する
+- metadata に存在しないファイルも、権限があれば「その他」または元ファイル一覧から到達できるようにし、利用者がファイルを失わないようにする
+
+例:
+
+```yaml
+preview:
+  primary: docs/index.md
+  attachments:
+    - specs/*.pdf
+    - tables/*.csv
+  hidden:
+    - debug/*
+    - intermediate/*
+  debug:
+    - logs/*
+    - generated/*.json
+  groups:
+    - name: API仕様
+      description: 外部連携に必要な仕様書
+      paths:
+        - api/*.md
+        - openapi/*.json
+    - name: 参考資料
+      paths:
+        - references/*
+```
+
+- `primary` は文書版の主要 preview として扱う
+- `attachments` は利用者へ通常表示する添付・元ファイルとして扱う
+- `hidden` は通常の添付一覧では折りたたみ、必要に応じて表示できるようにする
+- `debug` は社内向け・開発者向けの生成物やログとして扱い、既定では非表示にする
+- `groups` は添付・元ファイル一覧や文書セット詳細での見出しとして使う
+- `groups.paths` は glob 風の path pattern とし、保持済み `tree_path` に対して評価する
+- `primary` / `attachments` / `hidden` / `debug` に指定されたファイルにも、最終的な表示可否は通常の権限判定を適用する
+- metadata は viewer registry と連携し、各 path に対して適切な viewer を選択する
+- metadata の不正な path pattern、存在しない path、重複指定は品質チェックで警告する
+- metadata により通常表示されるファイルが0件になる場合は、品質チェックで警告する
+- admin は標準文書テンプレートの preview / apply 前に、metadata による表示結果を dry-run で確認できる
+- 将来的には Project / DocumentSet / DocumentVersion 単位で既定 metadata を上書きできるようにする
 
 ## Office file preview
 
