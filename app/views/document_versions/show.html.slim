@@ -75,8 +75,8 @@ p.muted
       - else
         = button_to "ダウンロード権限を申請", access_requests_path, params: { requestable_type: "Document", requestable_public_id: @document.public_id, requested_access_level: "download" }, class: "button secondary"
   .markdown-mode-tabs aria-label="Markdown preview modes"
-    span.is-active プレビュー
-    span 差分
+    span プレビュー
+    span.is-active 差分
     span 添付
     span 品質
   .markdown-preview-actions
@@ -92,7 +92,7 @@ p.muted
   .markdown-workspace__header
     div
       h2 版差分ビュー
-      p.muted 前版と比較した添付・元ファイルの追加、変更、削除を確認できます。
+      p.muted 前版と比較した添付・元ファイルの追加、変更、削除と、Markdown本文の行単位diffを確認できます。
     - if @previous_version
       = link_to "旧版を開く", document_version_path(@previous_version), class: "button secondary"
   - diff_files = @version_file_diff_summary.fetch(:files)
@@ -109,12 +109,35 @@ p.muted
               - if row.fetch(:removed_bytes).positive?
                 |  -#{number_to_human_size(row.fetch(:removed_bytes))}
       .diff-placeholder
-        h3 変更箇所の確認
-        p.muted 現時点ではファイル単位の差分サマリを表示します。Markdown本文の行単位diffとHTML差分は、この導線に接続する後続実装で追加します。
-        ul
-          li 追加・変更・削除されたファイルを左側に表示します。
-          li サイズ差分から大きな変更を見つけやすくします。
-          li 前版を開いて、内容確認に戻れるようにします。
+        h3 Markdown本文の行単位diff
+        - if @markdown_line_diffs.any?
+          .markdown-line-diff-list
+            - @markdown_line_diffs.each do |file_diff|
+              details.markdown-line-diff-file open=true
+                summary
+                  strong = file_diff.path
+                  span.muted = " / #{file_diff.status}"
+                - if file_diff.message.present?
+                  p.muted = file_diff.message
+                - elsif file_diff.lines.any?
+                  .markdown-line-diff-table role="table" aria-label="#{file_diff.path} diff"
+                    - file_diff.lines.each do |line|
+                      .markdown-line-diff-row class="is-#{line.kind}" role="row"
+                        span.diff-line-number role="cell" = line.old_number || ""
+                        span.diff-line-number role="cell" = line.new_number || ""
+                        code.diff-line-code role="cell"
+                          - prefix = case line.kind
+                          - when :added then "+ "
+                          - when :removed then "- "
+                          - when :gap then "  "
+                          - else "  "
+                          = "#{prefix}#{line.text}"
+                - else
+                  p.muted Markdown本文の差分はありません。
+        - else
+          p.muted Markdownファイルの行単位diffはありません。
+        h3 HTML差分
+        p.muted レンダリング後HTML差分は次の改善で追加します。現時点ではMarkdown行差分とHTMLプレビューを並行して確認してください。
   - else
     p.muted 前版との差分はありません。
 
