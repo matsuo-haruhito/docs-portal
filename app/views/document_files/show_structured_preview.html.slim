@@ -1,0 +1,33 @@
+- page_title "#{@document.title} / #{@document_file.file_name}"
+
+p.muted
+  = link_to @project.name, project_path(@project)
+  |  /
+  = link_to @document.title, project_document_path(@project, @document.slug)
+  |  /
+  = link_to @document_version.version_label, document_version_path(@document_version)
+
+.document-viewer
+  .document-viewer__header
+    div
+      h1.document-viewer__title = @document_file.file_name
+      p.document-viewer__meta
+        = @document_file.effective_content_type
+        |  / 
+        = number_to_human_size(@document_file.file_size)
+    p.actions
+      = link_to "ダウンロード", document_file_path(@document_file, disposition: "download"), class: "button secondary"
+
+  - if @structured_preview.error?
+    .card
+      h2 = "#{@structured_language} preview unavailable"
+      p.muted = @structured_preview.error
+      p.muted 全件確認が必要な場合はダウンロードしてください。
+  - else
+    .card
+      .markdown-workspace__header
+        div
+          h2 = "#{@structured_language} preview"
+          p.muted 構文解析後に整形表示しています。編集や保存は行いません。
+      pre
+        code = @structured_preview.formatted_text
