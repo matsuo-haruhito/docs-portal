@@ -18,6 +18,10 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     @runs = @external_folder_sync_source.external_folder_sync_runs.order(started_at: :desc, id: :desc).limit(20)
     @items = @external_folder_sync_source.external_folder_sync_items.order(:path, :id).limit(200)
     @subscriptions = @external_folder_sync_source.external_folder_sync_subscriptions.order(created_at: :desc, id: :desc).limit(20)
+    @webhook_events = @external_folder_sync_source.external_folder_sync_webhook_events
+      .includes(:external_folder_sync_subscription)
+      .order(received_at: :desc, id: :desc)
+      .limit(20)
   end
 
   def create

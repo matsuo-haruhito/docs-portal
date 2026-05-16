@@ -176,6 +176,15 @@ module ApplicationHelper
     localized_label("external_folder_sync_subscriptions.status", value)
   end
 
+  def external_folder_sync_webhook_event_status_label(event_or_value)
+    value = event_or_value.respond_to?(:status) ? event_or_value.status : event_or_value
+    localized_label("external_folder_sync_webhook_events.status", value)
+  end
+
+  def external_folder_sync_webhook_header(event, header_name)
+    event.headers_json&.fetch(header_name, nil).presence || "-"
+  end
+
   def external_folder_sync_plan_action_label(plan_or_value)
     value = plan_or_value.respond_to?(:[]) ? plan_or_value["action"] : plan_or_value
     localized_label("external_folder_sync_plans.action", value)

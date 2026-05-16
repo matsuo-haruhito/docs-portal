@@ -77,6 +77,42 @@ h1 外部フォルダ同期詳細
           td = subscription.last_error_message.presence || "-"
 
 .card
+  h2 Webhook受信イベント
+  = table_tag do
+    thead
+      tr
+        th 受信日時
+        th 状態
+        th Subscription
+        th Resource State
+        th Message No.
+        th Event Key
+        th エラー・理由
+        th 詳細
+    tbody
+      - @webhook_events.each do |event|
+        tr
+          td = l(event.received_at)
+          td = external_folder_sync_webhook_event_status_label(event)
+          td
+            - if event.external_folder_sync_subscription.present?
+              code = event.external_folder_sync_subscription.provider_channel_id.presence || event.external_folder_sync_subscription.public_id
+            - else
+              | -
+          td = external_folder_sync_webhook_header(event, "X_GOOG_RESOURCE_STATE")
+          td = external_folder_sync_webhook_header(event, "X_GOOG_MESSAGE_NUMBER")
+          td
+            code = event.event_key.presence || "-"
+          td = event.error_message.presence || "-"
+          td
+            details
+              summary Headers / Payload
+              h3 Headers
+              pre = JSON.pretty_generate(event.headers_json || {})
+              h3 Payload
+              pre = JSON.pretty_generate(event.payload_json || {})
+
+.card
   h2 同期履歴
   = table_tag do
     thead
