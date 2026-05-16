@@ -179,6 +179,12 @@ ja:
         expired: "期限切れ"
         failed: "失敗"
         disabled: "停止済み"
+    external_folder_sync_webhook_events:
+      status:
+        received: "受信"
+        enqueued: "同期ジョブ登録済み"
+        ignored: "無視"
+        failed: "失敗"
     external_folder_sync_plans:
       action:
         create: "作成"
