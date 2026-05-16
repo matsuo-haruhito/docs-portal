@@ -164,6 +164,12 @@ ja:
       mode:
         dry_run: "dry-run"
         apply: "同期実行"
+      safety_state:
+        not_run: "未実行"
+        blocked: "警告あり停止"
+        approved: "警告承認済み"
+        warning: "警告あり"
+        normal: "通常"
     external_folder_sync_items:
       sync_status:
         synced: "同期済み"

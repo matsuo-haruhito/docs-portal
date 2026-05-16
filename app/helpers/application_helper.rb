@@ -167,13 +167,7 @@ module ApplicationHelper
   end
 
   def external_folder_sync_run_safety_label(run)
-    case external_folder_sync_run_safety_state(run)
-    when :not_run then "未実行"
-    when :blocked then "警告あり停止"
-    when :approved then "警告承認済み"
-    when :warning then "警告あり"
-    else "通常"
-    end
+    localized_label("external_folder_sync_runs.safety_state", external_folder_sync_run_safety_state(run))
   end
 
   def external_folder_sync_run_safety_class(run)
