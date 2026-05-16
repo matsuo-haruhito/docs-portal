@@ -26,6 +26,11 @@
 
 javascript:
   (() => {
+    const TABLE_WIDTH_STORAGE_PREFIX = "docsPortal.previewTableWidth"
+    const TABLE_COLUMN_WIDTH_STORAGE_PREFIX = "docsPortal.previewTableColumnWidths"
+    const TABLE_STICKY_HEADER_STORAGE_PREFIX = "docsPortal.previewTableStickyHeader"
+    const TABLE_STICKY_COLUMN_STORAGE_PREFIX = "docsPortal.previewTableStickyColumn"
+
     function injectTableSearchStyle(frameDocument) {
       if (frameDocument.querySelector("style[data-docs-portal-table-search]")) return
 
@@ -73,6 +78,49 @@ javascript:
         }
       `
       frameDocument.head?.appendChild(style)
+    }
+
+    function tableSettingKey(prefix, frame, index) {
+      const url = frame.getAttribute("src") || frame.dataset.tableWidthSrc || window.location.pathname
+      return `${prefix}:${url}:table:${index}`
+    }
+
+    function clearTableSettings(frame, index) {
+      window.localStorage.removeItem(tableSettingKey(TABLE_WIDTH_STORAGE_PREFIX, frame, index))
+      window.localStorage.removeItem(tableSettingKey(TABLE_COLUMN_WIDTH_STORAGE_PREFIX, frame, index))
+      window.localStorage.removeItem(tableSettingKey(TABLE_STICKY_HEADER_STORAGE_PREFIX, frame, index))
+      window.localStorage.removeItem(tableSettingKey(TABLE_STICKY_COLUMN_STORAGE_PREFIX, frame, index))
+    }
+
+    function setPressedButton(button, text, pressed) {
+      if (!button) return
+      button.textContent = text
+      button.setAttribute("aria-pressed", String(pressed))
+    }
+
+    function resetTableDisplaySettings(frame, index, wrapper, table, status) {
+      clearTableSettings(frame, index)
+
+      wrapper.style.setProperty("--portal-table-width", "100%")
+      wrapper.classList.remove("has-sticky-header", "has-sticky-column")
+      table.style.tableLayout = ""
+      table.querySelector("colgroup[data-docs-portal-column-widths]")?.remove()
+
+      const widthRange = wrapper.querySelector(".portal-table-width-toolbar input[type='range']")
+      if (widthRange) {
+        widthRange.value = "100"
+        const valueText = widthRange.nextElementSibling
+        if (valueText) valueText.textContent = "100%"
+      }
+
+      const toolbarButtons = Array.from(wrapper.querySelectorAll(".portal-table-width-button"))
+      setPressedButton(toolbarButtons.find((button) => button.textContent.includes("ヘッダー固定")), "ヘッダー固定", false)
+      setPressedButton(toolbarButtons.find((button) => button.textContent.includes("先頭列固定")), "先頭列固定", false)
+
+      status.textContent = "表示設定をリセットしました"
+      window.setTimeout(() => {
+        status.textContent = ""
+      }, 1800)
     }
 
     function updateTableSearch(table, input, count) {
@@ -148,7 +196,7 @@ javascript:
 
       injectTableSearchStyle(frameDocument)
 
-      frameDocument.querySelectorAll(".portal-table-width-frame").forEach((wrapper) => {
+      frameDocument.querySelectorAll(".portal-table-width-frame").forEach((wrapper, index) => {
         if (wrapper.dataset.tableSearchReady === "true") return
         const table = wrapper.querySelector("table")
         const toolbar = wrapper.querySelector(".portal-table-width-toolbar")
@@ -174,6 +222,11 @@ javascript:
         clearButton.className = "portal-table-width-button"
         clearButton.textContent = "クリア"
 
+        const resetSettingsButton = frameDocument.createElement("button")
+        resetSettingsButton.type = "button"
+        resetSettingsButton.className = "portal-table-width-button"
+        resetSettingsButton.textContent = "表示リセット"
+
         const copyCsvButton = frameDocument.createElement("button")
         copyCsvButton.type = "button"
         copyCsvButton.className = "portal-table-width-button"
@@ -191,6 +244,7 @@ javascript:
         search.appendChild(input)
         search.appendChild(count)
         search.appendChild(clearButton)
+        search.appendChild(resetSettingsButton)
         search.appendChild(copyCsvButton)
         search.appendChild(copyMarkdownButton)
         search.appendChild(copyStatus)
@@ -202,6 +256,7 @@ javascript:
           updateTableSearch(table, input, count)
           input.focus()
         })
+        resetSettingsButton.addEventListener("click", () => resetTableDisplaySettings(frame, index, wrapper, table, copyStatus))
         copyCsvButton.addEventListener("click", () => copyText(tableToCsv(table), copyStatus))
         copyMarkdownButton.addEventListener("click", () => copyText(tableToMarkdown(table), copyStatus))
       })
