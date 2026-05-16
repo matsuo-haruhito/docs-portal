@@ -3,9 +3,9 @@ module ApplicationHelper
     content_for :title, parts.compact.join(" | ")
   end
 
-  def localized_label(scope, value, **options)
+  def localized_label(scope, value, **interpolations)
     value = value.to_s
-    I18n.t("labels.#{scope}.#{value}", **options, default: value)
+    I18n.t("labels.#{scope}.#{value}", **interpolations, default: value)
   end
 
   def enum_options_for(scope, values)
