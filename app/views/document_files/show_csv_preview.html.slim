@@ -26,13 +26,26 @@ p.muted
   - elsif @csv_preview.rows.any?
     - if @csv_preview.truncated?
       p.muted = "先頭#{@csv_preview.limit}行のみ表示しています。全件はダウンロードしてください。"
-    .rendered-table-diff-scroll
-      table.rendered-table-diff-table
-        tbody
-          - @csv_preview.rows.each_with_index do |row, row_index|
-            tr
-              th = row_index + 1
-              - row.each do |cell|
-                td = cell
+    .card data-csv-preview-tools="true"
+      .markdown-workspace__header
+        div
+          h2 CSV / TSV preview
+          p.muted 表示中の sample 行を検索・コピーできます。
+        .actions
+          span.muted data-csv-preview-count="true"
+          span.muted data-csv-preview-status="true"
+      .compare-version-form
+        label for="csv-preview-search-#{@document_file.id}" 表内検索
+        input id="csv-preview-search-#{@document_file.id}" type="search" placeholder="キーワード" data-csv-preview-search-input="true"
+        button.button.secondary type="button" data-csv-preview-search-clear="true" クリア
+        button.button.secondary type="button" data-csv-preview-copy="true" 表示中の行をCSVコピー
+      .rendered-table-diff-scroll
+        table.rendered-table-diff-table data-csv-preview-table="true"
+          tbody
+            - @csv_preview.rows.each_with_index do |row, row_index|
+              tr
+                th = row_index + 1
+                - row.each do |cell|
+                  td = cell
   - else
     p.muted 空のCSV/TSVファイルです。

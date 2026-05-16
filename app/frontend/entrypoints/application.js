@@ -5,6 +5,7 @@ import { setupMarkdownPreviewTableTools } from "../lib/markdown_preview_table_to
 import { setupMarkdownPreviewCodeblockTools } from "../lib/markdown_preview_codeblock_tools"
 import { setupMarkdownPreviewDocumentSearch } from "../lib/markdown_preview_document_search"
 import { setupDocumentFileListSearch } from "../lib/document_file_list_search"
+import { setupCsvPreviewTableTools } from "../lib/csv_preview_table_tools"
 
 const STORAGE_KEY = "docsPortal.sidebar"
 const DEFAULT_WIDTH = 360
@@ -673,6 +674,7 @@ document.addEventListener("turbo:load", () => {
   setupMarkdownPreviewTableTools()
   setupMarkdownPreviewCodeblockTools()
   setupDocumentFileListSearch()
+  setupCsvPreviewTableTools()
   setupTomSelectFields()
 })
 document.addEventListener("turbo:render", () => {
@@ -682,5 +684,6 @@ document.addEventListener("turbo:render", () => {
   setupMarkdownPreviewTableTools()
   setupMarkdownPreviewCodeblockTools()
   setupDocumentFileListSearch()
+  setupCsvPreviewTableTools()
   setupTomSelectFields()
 })
