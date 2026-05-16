@@ -16,9 +16,16 @@ h1 外部フォルダ同期
       th フォルダ
       th 状態
       th 最終同期
+      th 最終安全状態
+      th 警告数
+      th 最終エラー
       th 操作
   tbody
     - @external_folder_sync_sources.each do |source|
+      - latest_run = @latest_runs_by_source_id[source.id]
+      - blocked = latest_run&.summary_json&.fetch("blocked_by_conflict_warnings", false)
+      - allowed = latest_run&.summary_json&.fetch("conflict_warnings_allowed", false)
+      - warnings_count = latest_run&.summary_json&.fetch("conflict_warnings_count", nil)
       tr
         td
           = source.project.name
@@ -33,6 +40,19 @@ h1 外部フォルダ同期
             span.muted = source.external_folder_path
         td = source.enabled? ? "有効" : "無効"
         td = source.last_synced_at ? l(source.last_synced_at) : "-"
+        td
+          - if latest_run.blank?
+            span.muted 未実行
+          - elsif blocked
+            span.status-danger 警告あり停止
+          - elsif allowed
+            span.status-warning 警告承認済み
+          - elsif warnings_count.to_i.positive?
+            span.status-warning 警告あり
+          - else
+            span.muted 通常
+        td = warnings_count || "-"
+        td = latest_run&.error_message.presence || source.last_error_message.presence || "-"
         td.actions
           = link_to "詳細", admin_external_folder_sync_source_path(source), class: "button secondary"
           = edit_link_to "編集", edit_admin_external_folder_sync_source_path(source)

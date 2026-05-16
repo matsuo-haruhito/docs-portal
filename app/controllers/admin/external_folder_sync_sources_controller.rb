@@ -5,6 +5,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
   def index
     @external_folder_sync_sources = external_folder_sync_sources_scope
+    @latest_runs_by_source_id = latest_runs_by_source_id(@external_folder_sync_sources)
     @external_folder_sync_source = ExternalFolderSyncSource.new(
       provider: :google_drive,
       auth_type: :service_account,
@@ -33,6 +34,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
       redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "外部フォルダ同期設定を登録しました。"
     else
       @external_folder_sync_sources = external_folder_sync_sources_scope
+      @latest_runs_by_source_id = latest_runs_by_source_id(@external_folder_sync_sources)
       render :index, status: :unprocessable_entity
     end
   end
@@ -119,6 +121,15 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
   def external_folder_sync_sources_scope
     ExternalFolderSyncSource.includes(:project, :created_by).order(:provider, :name, :id)
+  end
+
+  def latest_runs_by_source_id(sources)
+    source_ids = sources.map(&:id)
+    ExternalFolderSyncRun
+      .where(external_folder_sync_source_id: source_ids)
+      .order(started_at: :desc, id: :desc)
+      .group_by(&:external_folder_sync_source_id)
+      .transform_values(&:first)
   end
 
   def normalized_external_folder_sync_source_params
