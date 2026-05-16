@@ -24,7 +24,7 @@ module ProjectsHelper
     ).build_turbo(
       hide_descendants_path_builder: ->(item, _depth, _scope) { project_document_detail_tree_toggle_path(item, "hide") },
       show_descendants_path_builder: ->(item, _depth, _scope) { project_document_detail_tree_toggle_path(item, "show") },
-      toggle_all_path_builder: ->(state) { document_detail_tree_project_path(project, tree_action: state, format: :turbo_stream) }
+      toggle_all_path_builder: ->(state) { project_document_detail_tree_toggle_all_path(project, state) }
     )
 
     TreeView::RenderState.new(
@@ -142,6 +142,12 @@ module ProjectsHelper
       source_path: item.path,
       format: :turbo_stream
     )
+  end
+
+  def project_document_detail_tree_toggle_all_path(project, state)
+    tree_action = state.to_sym == :expanded ? "expand" : "collapse"
+
+    document_detail_tree_project_path(project, tree_action:, format: :turbo_stream)
   end
 
   def sort_project_document_detail_tree_nodes!(nodes)
