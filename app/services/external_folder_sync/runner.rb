@@ -305,14 +305,15 @@ module ExternalFolderSync
     end
 
     def finish_success!(run, result, batch)
-      summary = summary_for(result).merge(
+      visible_result = sync_item_result(result)
+      summary = summary_for(visible_result).merge(
         "incremental" => batch.incremental,
         "full_scan_fallback" => batch.full_scan_fallback
       )
       run.update!(
         status: summary.fetch("errors_count").positive? ? :partial : :completed,
         finished_at: Time.current,
-        items_scanned_count: result.size,
+        items_scanned_count: visible_result.size,
         items_created_count: summary.fetch("created_count"),
         items_updated_count: summary.fetch("updated_count"),
         items_skipped_count: summary.fetch("skipped_count"),
@@ -339,15 +340,18 @@ module ExternalFolderSync
       )
     end
 
+    def sync_item_result(result)
+      result.reject { _1["action"] == "sync_metadata" }
+    end
+
     def summary_for(result)
-      visible_result = result.reject { _1["action"] == "sync_metadata" }
       {
-        "created_count" => visible_result.count { _1["action"] == "create" },
-        "updated_count" => visible_result.count { _1["action"] == "update" },
-        "skipped_count" => visible_result.count { _1["action"] == "skip" },
-        "deleted_count" => visible_result.count { _1["action"] == "delete_detected" },
-        "errors_count" => visible_result.count { _1["action"] == "error" },
-        "needs_attention_count" => visible_result.count { _1["attention_level"].in?(%w[warning danger]) }
+        "created_count" => result.count { _1["action"] == "create" },
+        "updated_count" => result.count { _1["action"] == "update" },
+        "skipped_count" => result.count { _1["action"] == "skip" },
+        "deleted_count" => result.count { _1["action"] == "delete_detected" },
+        "errors_count" => result.count { _1["action"] == "error" },
+        "needs_attention_count" => result.count { _1["attention_level"].in?(%w[warning danger]) }
       }
     end
 
