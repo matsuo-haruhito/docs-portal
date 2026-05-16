@@ -24,10 +24,13 @@ p.muted
       p.muted = @structured_preview.error
       p.muted 全件確認が必要な場合はダウンロードしてください。
   - else
-    .card
+    .card data-structured-preview-tools="true"
       .markdown-workspace__header
         div
           h2 = "#{@structured_language} preview"
           p.muted 構文解析後に整形表示しています。編集や保存は行いません。
+        .actions
+          span.muted data-structured-preview-status="true"
+          button.button.secondary type="button" data-structured-preview-copy="true" 整形済み内容をコピー
       pre
-        code = @structured_preview.formatted_text
+        code data-structured-preview-code="true" = @structured_preview.formatted_text
