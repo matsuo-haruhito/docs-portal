@@ -47,33 +47,52 @@ function setupStructuredPreview(container) {
 
   const input = container.querySelector("[data-structured-preview-search-input]")
   const clearButton = container.querySelector("[data-structured-preview-search-clear]")
+  const filterButton = container.querySelector("[data-structured-preview-filter-matches]")
   const copyButton = container.querySelector("[data-structured-preview-copy]")
   const count = container.querySelector("[data-structured-preview-count]")
   const status = container.querySelector("[data-structured-preview-status]")
   const code = container.querySelector("[data-structured-preview-code]")
-  if (!input || !clearButton || !copyButton || !count || !status || !code) return
+  if (!input || !clearButton || !filterButton || !copyButton || !count || !status || !code) return
 
   const lines = prepareCodeLines(code)
+  let filterMatches = false
+
+  const updateFilterButton = () => {
+    filterButton.setAttribute("aria-pressed", String(filterMatches))
+    filterButton.textContent = filterMatches ? "一致行のみ表示中" : "一致行のみ表示"
+  }
 
   const updateSearch = () => {
     const query = input.value.trim().toLowerCase()
     let matchedCount = 0
+    let visibleCount = 0
 
     lines.forEach((line) => {
       const matched = query.length > 0 && lineText(line).includes(query)
+      const visible = query.length === 0 || !filterMatches || matched
       line.classList.toggle("is-structured-preview-match", matched)
+      line.hidden = !visible
       if (matched) matchedCount += 1
+      if (visible) visibleCount += 1
     })
 
-    count.textContent = query.length === 0 ? `${lines.length}行` : `${matchedCount}/${lines.length}行`
+    count.textContent = query.length === 0 ? `${lines.length}行` : `${matchedCount}/${lines.length}行一致 / ${visibleCount}行表示`
   }
 
   input.addEventListener("input", updateSearch)
   input.addEventListener("search", updateSearch)
   clearButton.addEventListener("click", () => {
     input.value = ""
+    filterMatches = false
+    updateFilterButton()
     updateSearch()
     input.focus()
+  })
+
+  filterButton.addEventListener("click", () => {
+    filterMatches = !filterMatches
+    updateFilterButton()
+    updateSearch()
   })
 
   copyButton.addEventListener("click", async () => {
@@ -89,6 +108,7 @@ function setupStructuredPreview(container) {
     }, 1800)
   })
 
+  updateFilterButton()
   updateSearch()
 }
 
