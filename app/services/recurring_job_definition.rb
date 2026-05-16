@@ -23,6 +23,16 @@ class RecurringJobDefinition
       description: "期限切れのMicrosoft Graph preview用アップロードファイルを削除します。",
       enabled: true,
       allow_overlap: false
+    ),
+    Definition.new(
+      job_key: "renew_google_drive_external_folder_sync_webhooks",
+      job_class: "ExternalFolderSyncSubscriptionRenewalJob",
+      queue_name: "default",
+      interval_seconds: 6.hours.to_i,
+      args_json: { limit: 100 },
+      description: "期限が近いGoogle Drive外部フォルダ同期Webhook購読を更新します。",
+      enabled: true,
+      allow_overlap: false
     )
   ].freeze
 
