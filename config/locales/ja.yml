@@ -179,6 +179,7 @@ ja:
         skip: "スキップ"
         delete_detected: "削除検知"
         error: "エラー"
+        sync_metadata: "同期方式"
       attention_level:
         none: "確認不要"
         info: "通常"
