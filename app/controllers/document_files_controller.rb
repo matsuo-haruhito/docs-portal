@@ -35,6 +35,13 @@ class DocumentFilesController < BaseController
 
     record_file_access_log(file)
 
+    if disposition == "inline" && viewer_plan.viewer_kind == :image && !embedded_request?
+      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
+      assign_preview_context(file)
+      render :show_image_preview
+      return
+    end
+
     if disposition == "inline" && viewer_plan.viewer_kind == :csv && !embedded_request?
       response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
       assign_preview_context(file)
