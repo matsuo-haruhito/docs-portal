@@ -126,6 +126,36 @@ module ExternalFolderSync
       ChangeSet.new(entries: [], removed_ids: [], new_cursor: nil, full_scan_required: true)
     end
 
+    def watch_changes(callback_url:, channel_id:, token:, expires_at:, page_token: nil)
+      token_to_watch = page_token.presence || source.cursor.presence || start_page_token
+      request_json(
+        "/changes/watch",
+        method: Net::HTTP::Post,
+        query: {
+          pageToken: token_to_watch,
+          supportsAllDrives: true
+        },
+        body: {
+          id: channel_id,
+          type: "web_hook",
+          address: callback_url,
+          token: token,
+          expiration: (expires_at.to_f * 1000).to_i.to_s
+        }
+      )
+    end
+
+    def stop_channel(channel_id:, resource_id:)
+      request_json(
+        "/channels/stop",
+        method: Net::HTTP::Post,
+        body: {
+          id: channel_id,
+          resourceId: resource_id
+        }
+      )
+    end
+
     def download_entry(entry)
       if entry.exportable
         raise Error, "Google native file cannot be exported: #{entry.name}" if entry.export_mime_type.blank?
@@ -244,14 +274,19 @@ module ExternalFolderSync
       )
     end
 
-    def request_json(path, query: {}, parse_json: true)
+    def request_json(path, query: {}, method: Net::HTTP::Get, body: nil, parse_json: true)
       uri = URI("#{DRIVE_ROOT}#{path}")
       uri.query = URI.encode_www_form(query) if query.present?
-      request = Net::HTTP::Get.new(uri)
+      request = method.new(uri)
       request["Authorization"] = "Bearer #{access_token}"
+      if body.present?
+        request["Content-Type"] = "application/json"
+        request.body = body.to_json
+      end
 
       response = request_with_retry(uri, request)
       return response.body if response.is_a?(Net::HTTPSuccess) && !parse_json
+      return {} if response.is_a?(Net::HTTPNoContent)
 
       body = parse_response_body(response)
       return body if response.is_a?(Net::HTTPSuccess)

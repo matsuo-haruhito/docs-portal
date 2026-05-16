@@ -171,6 +171,11 @@ module ApplicationHelper
     localized_label("external_folder_sync_items.sync_status", value)
   end
 
+  def external_folder_sync_subscription_status_label(subscription_or_value)
+    value = subscription_or_value.respond_to?(:status) ? subscription_or_value.status : subscription_or_value
+    localized_label("external_folder_sync_subscriptions.status", value)
+  end
+
   def external_folder_sync_plan_action_label(plan_or_value)
     value = plan_or_value.respond_to?(:[]) ? plan_or_value["action"] : plan_or_value
     localized_label("external_folder_sync_plans.action", value)
