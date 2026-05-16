@@ -53,6 +53,37 @@
 - iframe 側では Docusaurus navbar / footer / toc / sidebar を除去し、本文を中央寄せで表示する
 - iframe 側で rewrite される内部 link / asset URL も `embedded=1` を維持する
 
+## Docusaurus build profiles
+
+- Docusaurus build は用途別 profile を持てるようにする
+- build profile は、qaboard の Web アプリ埋め込み用 build と webdriverio の生成前処理・strict link check の考え方を docs-portal 向けに整理したものとして扱う
+- build profile は `url`、`baseUrl`、`routeBasePath`、navbar / footer / sidebar の有無、broken link policy、前処理、出力先を切り替える
+- build profile は環境変数または明示的な build command で選択し、暗黙の分岐を避ける
+
+想定 profile:
+
+| profile | 用途 | 主な違い |
+| --- | --- | --- |
+| `portal_embedded` | Rails viewer shell の iframe 内表示 | navbar / footer / toc / sidebar を最小化、same-origin route 前提、`embedded=1` 互換 |
+| `standalone_public` | 将来の単体公開サイト | navbar / footer / search を有効化、canonical URL を外部公開向けに設定 |
+| `admin_api_spec` | 管理画面のAPI仕様 | internal import API docs を生成前処理で更新、admin viewer に最適化 |
+| `preview_check` | 標準文書テンプレート preview / apply 前確認 | strict link check、metadata validation、差分用 artifact 生成 |
+| `diff_metadata` | 版差分・品質チェック補助 | HTML本文抽出、見出し一覧、table index、codeblock index などを生成 |
+
+- `portal_embedded` では、Rails 側の viewer shell が navigation を担うため、Docusaurus 側の chrome は最小化する
+- `standalone_public` では、Docusaurus 側の navbar、footer、search、version dropdown を有効化できるようにする
+- `admin_api_spec` では、API仕様 Markdown の生成前処理を build 前に実行し、生成元が新しい場合は `BuildFreshnessGuard` で build job を enqueue する
+- `preview_check` では、broken links、存在しない metadata path、旧 path 参照、通常表示ファイル0件などを警告またはエラーにする
+- `diff_metadata` では、viewer runtime で重い解析を避けるため、見出し、code block、table、内部 link の index を生成できるようにする
+- broken link policy は profile ごとに変える
+  - internal preview は warning 中心
+  - external publish / preview apply は error 中心
+  - archived version は warning 中心
+- build profile の出力には、profile 名、source commit、build time、Docusaurus version、validation result を manifest として保存する
+- viewer shell は manifest を参照し、build profile 不一致や stale build を利用者へ表示できるようにする
+- build profile は Project / DocumentVersion / API仕様などの利用箇所ごとに既定値を持てるようにする
+- 将来的に複数 docs plugin / route 分割を導入する場合も、profile ごとに docs root と sidebar を選択できるようにする
+
 ## Codeblock actions
 
 - Docusaurus viewer 内の code block には、内容や言語に応じて利用者向け action を付与できるようにする
@@ -70,7 +101,7 @@
 | `json` | JSONコピー / 整形コピー / validation | API request sample や metadata sample に使う |
 | `yaml` / `yml` | YAMLコピー / validation | preview target metadata や workflow sample に使う |
 | `bash` / `sh` | コマンドコピー | 複数行コマンドは1つの script としてコピーできる |
-| `npm` / `yarn` / `pnpm` | package manager 切り替え | Docusaurus実例の npm/yarn 切り替えに相当する |
+| `npm` / `yarn` / `pnpm` | package manager 切り替え | Docusaurus実例の npm/yarn切り替えに相当する |
 | `http` | request sample コピー / dry-run | internal import API のサンプル検証に使う |
 | `ruby` / `rails` | コマンドコピー | admin向け運用手順に使う |
 | unknown | copy only | 言語不明でも最低限コピーは提供する |
