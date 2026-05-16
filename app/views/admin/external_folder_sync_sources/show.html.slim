@@ -126,6 +126,7 @@ h1 外部フォルダ同期詳細
         th 削除検知
         th エラー
         th 要確認
+        th 競合・重複警告
     tbody
       - @runs.each do |run|
         tr
@@ -138,9 +139,10 @@ h1 外部フォルダ同期詳細
           td = run.items_deleted_count
           td = run.errors_count
           td = run.summary_json&.fetch("needs_attention_count", nil) || "-"
+          td = run.summary_json&.fetch("conflict_warnings_count", nil) || "-"
         - if run.result_json.present?
           tr
-            td colspan="9"
+            td colspan="10"
               details
                 summary 結果詳細
                 = table_tag do
@@ -149,7 +151,7 @@ h1 外部フォルダ同期詳細
                       th 判定
                       th 確認
                       th パス
-                      th 変更理由
+                      th 変更理由・警告
                       th メッセージ
                   tbody
                     - run.result_json.each do |plan|
@@ -166,7 +168,7 @@ h1 外部フォルダ同期詳細
                             br
                             span.muted = "以前: #{plan["previous_path"]}"
                         td
-                          - reasons = external_folder_sync_change_reasons(plan)
+                          - reasons = external_folder_sync_plan_reasons(plan)
                           - if reasons.any?
                             ul
                               - reasons.each do |reason|
@@ -188,7 +190,7 @@ h1 外部フォルダ同期詳細
         th Portal文書
         th サイズ
         th 更新日時
-        th 前回変更理由
+        th 前回変更理由・警告
         th エラー
     tbody
       - @items.each do |item|
@@ -203,7 +205,7 @@ h1 外部フォルダ同期詳細
           td = item.size || "-"
           td = item.external_modified_at ? l(item.external_modified_at) : "-"
           td
-            - reasons = external_folder_sync_change_reasons(item)
+            - reasons = external_folder_sync_plan_reasons(item)
             - if reasons.any?
               ul
                 - reasons.each do |reason|
