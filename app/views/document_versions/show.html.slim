@@ -7,10 +7,116 @@ p.muted
   |  /
   = link_to @document.title, project_document_path(@project, @document.slug)
 
-h1
-  = @document.title
-  |  
-  = document_version_label(@version)
+.page-hero.markdown-preview-hero
+  p.eyebrow Markdown Preview
+  h1
+    = @document.title
+    |  
+    = document_version_label(@version)
+  p.muted
+    | Markdown本文の閲覧、HTMLプレビュー、前版との差分確認を同じ画面から行えます。
+  p.actions
+    - if @version.rendered_site_available?
+      = link_to "HTML本文を開く", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path), class: "button"
+    - else
+      span.button.secondary HTML未生成
+    = link_to "添付・元ファイル", "#version-files", class: "button secondary"
+    - if current_user.internal?
+      = link_to "品質チェック", document_version_quality_check_path(@version), class: "button secondary"
+
+.preview-summary-grid
+  .card.preview-summary-card
+    h2 比較対象
+    .version-flow
+      .version-pill
+        span.version-label 旧版
+        strong = @previous_version ? document_version_label(@previous_version) : "比較対象なし"
+        small.muted = @previous_version&.published_at ? l(@previous_version.published_at, format: :short) : "-"
+      .version-arrow →
+      .version-pill
+        span.version-label 新版
+        strong = document_version_label(@version)
+        small.muted = @version.published_at ? l(@version.published_at, format: :short) : "-"
+  .card.preview-summary-card
+    h2 変更サマリ
+    .diff-metrics
+      .diff-metric
+        strong = @version_file_diff_summary.fetch(:changed_count)
+        span 変更
+      .diff-metric
+        strong = @version_file_diff_summary.fetch(:added_count)
+        span 追加
+      .diff-metric
+        strong = @version_file_diff_summary.fetch(:removed_count)
+        span 削除
+  .card.preview-summary-card
+    h2 プレビュー状態
+    ul.compact-list
+      li
+        strong HTML本文: 
+        = @version.rendered_site_available? ? "表示可能" : "未生成"
+      li
+        strong Markdown入口: 
+        = @version.markdown_entry_path.presence || "未設定"
+      li
+        strong 元ファイル: 
+        = pluralize(@version.document_files.size, "file")
+
+.card.markdown-workspace
+  .markdown-workspace__header
+    div
+      h2 Markdown / HTML プレビュー
+      p.muted 表示可能な本文を優先し、生成済みHTMLがない場合も元ファイルと品質チェックへ誘導します。
+    .actions
+      - if @version.rendered_site_available?
+        = link_to "プレビュー", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path), class: "button"
+      - if @document.downloadable_by?(current_user)
+        = link_to "ZIPダウンロード", document_version_archive_path(@version), class: "button secondary"
+      - else
+        = button_to "ダウンロード権限を申請", access_requests_path, params: { requestable_type: "Document", requestable_public_id: @document.public_id, requested_access_level: "download" }, class: "button secondary"
+  .markdown-mode-tabs aria-label="Markdown preview modes"
+    span.is-active プレビュー
+    span 差分
+    span 添付
+    span 品質
+  .markdown-preview-actions
+    span.markdown-tool B
+    span.markdown-tool I
+    span.markdown-tool H
+    span.markdown-tool Link
+    span.markdown-tool Image
+    span.markdown-tool Code
+    span.markdown-tool Table
+
+.card.version-diff-viewer
+  .markdown-workspace__header
+    div
+      h2 版差分ビュー
+      p.muted 前版と比較した添付・元ファイルの追加、変更、削除を確認できます。
+    - if @previous_version
+      = link_to "旧版を開く", document_version_path(@previous_version), class: "button secondary"
+  - diff_files = @version_file_diff_summary.fetch(:files)
+  - if diff_files.any?
+    .diff-viewer-layout
+      .diff-file-list
+        - diff_files.each do |row|
+          .diff-file-row class="is-#{row.fetch(:status)}"
+            span.diff-status = row.fetch(:status).to_s.first.upcase
+            span.diff-path = row.fetch(:path)
+            span.diff-bytes
+              - if row.fetch(:added_bytes).positive?
+                | +#{number_to_human_size(row.fetch(:added_bytes))}
+              - if row.fetch(:removed_bytes).positive?
+                |  -#{number_to_human_size(row.fetch(:removed_bytes))}
+      .diff-placeholder
+        h3 変更箇所の確認
+        p.muted 現時点ではファイル単位の差分サマリを表示します。Markdown本文の行単位diffとHTML差分は、この導線に接続する後続実装で追加します。
+        ul
+          li 追加・変更・削除されたファイルを左側に表示します。
+          li サイズ差分から大きな変更を見つけやすくします。
+          li 前版を開いて、内容確認に戻れるようにします。
+  - else
+    p.muted 前版との差分はありません。
 
 table
   tbody
@@ -79,7 +185,7 @@ ul
   - if current_user.internal?
     li = link_to "品質チェックを表示", document_version_quality_check_path(@version)
 
-h2 添付・元ファイル
+h2#version-files 添付・元ファイル
 - files = @version.document_files.order(:sort_order, :file_name)
 - if files.any?
   - render_state = document_file_tree_render_state(files:, row_partial: "document_versions/file_tree_columns", node_prefix: "document_version_files_#{@version.id}")
