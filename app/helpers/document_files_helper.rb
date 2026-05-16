@@ -13,4 +13,8 @@ module DocumentFilesHelper
       ui_config:
     )
   end
+
+  def document_file_viewer_plan(file)
+    DocumentFileViewerPlan.new(file:, user: current_user).call
+  end
 end
