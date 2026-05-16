@@ -361,11 +361,8 @@ module ExternalFolderSync
 
     def finish_success!(run, result, batch)
       visible_result = sync_item_result(result)
-      summary = summary_for(visible_result).merge(
-        "incremental" => batch.incremental,
-        "full_scan_fallback" => batch.full_scan_fallback,
-        "blocked_by_conflict_warnings" => false,
-        "conflict_warnings_allowed" => allow_conflict_warnings?
+      summary = base_summary(visible_result, batch).merge(
+        "blocked_by_conflict_warnings" => false
       )
       run.update!(
         status: summary.fetch("errors_count").positive? ? :partial : :completed,
@@ -385,11 +382,8 @@ module ExternalFolderSync
 
     def finish_unsafe_apply!(run, result, batch)
       visible_result = sync_item_result(result)
-      summary = summary_for(visible_result).merge(
-        "incremental" => batch.incremental,
-        "full_scan_fallback" => batch.full_scan_fallback,
-        "blocked_by_conflict_warnings" => true,
-        "conflict_warnings_allowed" => false
+      summary = base_summary(visible_result, batch).merge(
+        "blocked_by_conflict_warnings" => true
       )
       message = "競合・重複警告があるため同期実行を停止しました。dry-run結果を確認してください。"
       run.update!(
@@ -407,6 +401,27 @@ module ExternalFolderSync
       )
       source.update!(last_error_message: message)
       run
+    end
+
+    def base_summary(result, batch)
+      summary_for(result).merge(
+        "incremental" => batch.incremental,
+        "full_scan_fallback" => batch.full_scan_fallback,
+        "conflict_warnings_allowed" => allow_conflict_warnings?,
+        "conflict_warnings_approval" => conflict_warnings_approval_summary
+      ).compact
+    end
+
+    def conflict_warnings_approval_summary
+      return unless allow_conflict_warnings?
+
+      {
+        "approved_at" => Time.current.iso8601,
+        "actor_id" => actor&.id,
+        "actor_public_id" => actor&.public_id,
+        "actor_name" => actor&.name,
+        "actor_email" => actor&.email
+      }.compact
     end
 
     def unsafe_apply?(result)

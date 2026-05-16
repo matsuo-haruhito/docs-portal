@@ -128,8 +128,10 @@ h1 外部フォルダ同期詳細
         th エラー
         th 要確認
         th 競合・重複警告
+        th 警告承認
     tbody
       - @runs.each do |run|
+        - approval = run.summary_json&.fetch("conflict_warnings_approval", nil)
         tr
           td = run.started_at ? l(run.started_at) : "-"
           td = external_folder_sync_run_mode_label(run)
@@ -141,9 +143,17 @@ h1 外部フォルダ同期詳細
           td = run.errors_count
           td = run.summary_json&.fetch("needs_attention_count", nil) || "-"
           td = run.summary_json&.fetch("conflict_warnings_count", nil) || "-"
+          td
+            - if approval.present?
+              = approval["actor_name"].presence || approval["actor_email"].presence || approval["actor_public_id"].presence || "承認済み"
+              - if approval["approved_at"].present?
+                br
+                span.muted = approval["approved_at"]
+            - else
+              | -
         - if run.result_json.present?
           tr
-            td colspan="10"
+            td colspan="11"
               details
                 summary 結果詳細
                 = table_tag do
