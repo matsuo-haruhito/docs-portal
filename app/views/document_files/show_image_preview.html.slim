@@ -19,10 +19,47 @@ p.muted
       = link_to "画像を別タブで開く", document_file_path(@document_file, disposition: "inline", embedded: true), class: "button secondary", target: "_blank", rel: "noopener"
       = link_to "ダウンロード", document_file_path(@document_file, disposition: "download"), class: "button secondary"
 
-  .card
+  .card data-image-preview-tools="true" data-image-preview-storage-key=@document_file.public_id
     .markdown-workspace__header
       div
         h2 Image preview
         p.muted ブラウザで表示可能な画像ファイルを inline preview します。
+      .actions
+        span.muted data-image-preview-status="true"
+        button.button.secondary type="button" data-image-preview-fit-toggle="true" aria-pressed="true" 画面に合わせる
     .rendered-table-diff-scroll
-      = image_tag document_file_path(@document_file, disposition: "inline", embedded: true), alt: @document_file.file_name, style: "display: block; max-width: 100%; height: auto; margin: 0 auto;"
+      = image_tag document_file_path(@document_file, disposition: "inline", embedded: true), alt: @document_file.file_name, data: { image_preview_image: true }, style: "display: block; max-width: 100%; height: auto; margin: 0 auto;"
+
+javascript:
+  (() => {
+    document.querySelectorAll("[data-image-preview-tools]").forEach((container) => {
+      if (container.dataset.imagePreviewToolsReady === "true") return
+      container.dataset.imagePreviewToolsReady = "true"
+
+      const image = container.querySelector("[data-image-preview-image]")
+      const toggle = container.querySelector("[data-image-preview-fit-toggle]")
+      const status = container.querySelector("[data-image-preview-status]")
+      if (!image || !toggle || !status) return
+
+      const storageKey = `docsPortal.imagePreviewFit:${container.dataset.imagePreviewStorageKey || window.location.pathname}`
+      const readFit = () => window.localStorage.getItem(storageKey) !== "original"
+      const writeFit = (enabled) => window.localStorage.setItem(storageKey, enabled ? "fit" : "original")
+
+      const applyFit = (enabled) => {
+        image.style.maxWidth = enabled ? "100%" : "none"
+        image.style.width = enabled ? "auto" : "auto"
+        image.style.height = "auto"
+        image.style.margin = enabled ? "0 auto" : "0"
+        toggle.setAttribute("aria-pressed", String(enabled))
+        toggle.textContent = enabled ? "画面に合わせる" : "原寸表示中"
+        status.textContent = enabled ? "画面幅に合わせて表示しています" : "原寸で表示しています"
+        writeFit(enabled)
+      }
+
+      toggle.addEventListener("click", () => {
+        applyFit(toggle.getAttribute("aria-pressed") !== "true")
+      })
+
+      applyFit(readFit())
+    })
+  })()
