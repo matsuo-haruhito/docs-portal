@@ -189,6 +189,7 @@ class AddJapaneseNameCommentsToTablesAndColumns < ActiveRecord::Migration[8.1]
     rejected_at: "却下日時",
     rejection_reason: "却下理由",
     relation_type: "関連種別",
+    repository_full_name: "リポジトリ完全名",
     request_body: "リクエスト本文",
     requestable_id: "申請対象ID",
     requestable_type: "申請対象種別",
