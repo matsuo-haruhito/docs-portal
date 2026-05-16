@@ -216,6 +216,20 @@ module ApplicationHelper
     Array(reasons).compact_blank
   end
 
+  def external_folder_sync_conflict_warnings(plan_or_item)
+    warnings = if plan_or_item.respond_to?(:[])
+      plan_or_item["conflict_warnings"]
+    else
+      plan_or_item.provider_metadata&.fetch("last_conflict_warnings", nil)
+    end
+
+    Array(warnings).compact_blank
+  end
+
+  def external_folder_sync_plan_reasons(plan_or_item)
+    external_folder_sync_change_reasons(plan_or_item) + external_folder_sync_conflict_warnings(plan_or_item)
+  end
+
   def bulk_edit_dry_run_status_label(run_or_value)
     value = run_or_value.respond_to?(:status) ? run_or_value.status : run_or_value
     localized_label("bulk_edit_dry_runs.status", value)
