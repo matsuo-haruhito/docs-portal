@@ -124,6 +124,7 @@ h1 外部フォルダ同期詳細
     thead
       tr
         th 実行日時
+        th Run ID
         th モード
         th 状態
         th 安全状態
@@ -139,6 +140,8 @@ h1 外部フォルダ同期詳細
       - @runs.each do |run|
         tr
           td = run.started_at ? l(run.started_at) : "-"
+          td
+            code = run.public_id
           td = external_folder_sync_run_mode_label(run)
           td = external_folder_sync_run_status_label(run)
           td
@@ -161,7 +164,7 @@ h1 外部フォルダ同期詳細
               | -
         - if run.result_json.present?
           tr
-            td colspan="12"
+            td colspan="13"
               details
                 summary 結果詳細
                 = table_tag do
