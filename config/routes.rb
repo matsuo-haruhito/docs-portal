@@ -53,6 +53,8 @@ Rails.application.routes.draw do
       post :dry_run, on: :member
       post :apply, on: :member
       post :enqueue, on: :member
+      post :subscribe, on: :member
+      delete :unsubscribe, on: :member
       resource :external_folder_sync_oauth_connection, only: %i[new destroy]
     end
     resources :documents, except: %i[show new] do
