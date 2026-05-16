@@ -263,6 +263,11 @@ module ApplicationHelper
     external_folder_sync_webhook_sync_run_summary(event)["conflict_warnings_count"].to_i
   end
 
+  def external_folder_sync_webhook_sync_run_warning_label(event)
+    count = external_folder_sync_webhook_sync_run_warnings_count(event)
+    count.positive? ? "警告 #{count}件" : nil
+  end
+
   def external_folder_sync_webhook_sync_run_present?(event)
     external_folder_sync_webhook_sync_run_summary(event).present?
   end
