@@ -26,6 +26,9 @@ p.muted
         p.muted ブラウザで表示可能な画像ファイルを inline preview します。
       .actions
         span.muted data-image-preview-status="true"
+        button.button.secondary type="button" data-image-preview-zoom-out="true" 縮小
+        button.button.secondary type="button" data-image-preview-zoom-reset="true" 100%
+        button.button.secondary type="button" data-image-preview-zoom-in="true" 拡大
         button.button.secondary type="button" data-image-preview-fit-toggle="true" aria-pressed="true" 画面に合わせる
     .rendered-table-diff-scroll
       = image_tag document_file_path(@document_file, disposition: "inline", embedded: true), alt: @document_file.file_name, data: { image_preview_image: true }, style: "display: block; max-width: 100%; height: auto; margin: 0 auto;"
@@ -37,29 +40,57 @@ javascript:
       container.dataset.imagePreviewToolsReady = "true"
 
       const image = container.querySelector("[data-image-preview-image]")
-      const toggle = container.querySelector("[data-image-preview-fit-toggle]")
+      const fitToggle = container.querySelector("[data-image-preview-fit-toggle]")
+      const zoomOutButton = container.querySelector("[data-image-preview-zoom-out]")
+      const zoomResetButton = container.querySelector("[data-image-preview-zoom-reset]")
+      const zoomInButton = container.querySelector("[data-image-preview-zoom-in]")
       const status = container.querySelector("[data-image-preview-status]")
-      if (!image || !toggle || !status) return
+      if (!image || !fitToggle || !zoomOutButton || !zoomResetButton || !zoomInButton || !status) return
 
-      const storageKey = `docsPortal.imagePreviewFit:${container.dataset.imagePreviewStorageKey || window.location.pathname}`
-      const readFit = () => window.localStorage.getItem(storageKey) !== "original"
-      const writeFit = (enabled) => window.localStorage.setItem(storageKey, enabled ? "fit" : "original")
+      const storageKey = `docsPortal.imagePreview:${container.dataset.imagePreviewStorageKey || window.location.pathname}`
+      const readState = () => {
+        try {
+          return { fit: true, zoom: 1, ...JSON.parse(window.localStorage.getItem(storageKey) || "{}") }
+        } catch (_error) {
+          return { fit: true, zoom: 1 }
+        }
+      }
+      const writeState = (state) => window.localStorage.setItem(storageKey, JSON.stringify(state))
+      const clampZoom = (value) => Math.min(4, Math.max(0.25, value))
+      let state = readState()
 
-      const applyFit = (enabled) => {
-        image.style.maxWidth = enabled ? "100%" : "none"
-        image.style.width = enabled ? "auto" : "auto"
+      const applyState = () => {
+        const zoom = clampZoom(Number(state.zoom) || 1)
+        state.zoom = zoom
+        if (state.fit) {
+          image.style.maxWidth = "100%"
+          image.style.width = "auto"
+          image.style.margin = "0 auto"
+        } else {
+          image.style.maxWidth = "none"
+          image.style.width = `${Math.round(zoom * 100)}%`
+          image.style.margin = "0"
+        }
         image.style.height = "auto"
-        image.style.margin = enabled ? "0 auto" : "0"
-        toggle.setAttribute("aria-pressed", String(enabled))
-        toggle.textContent = enabled ? "画面に合わせる" : "原寸表示中"
-        status.textContent = enabled ? "画面幅に合わせて表示しています" : "原寸で表示しています"
-        writeFit(enabled)
+        fitToggle.setAttribute("aria-pressed", String(state.fit))
+        fitToggle.textContent = state.fit ? "画面に合わせる" : "倍率表示中"
+        status.textContent = state.fit ? "画面幅に合わせて表示しています" : `${Math.round(zoom * 100)}%で表示しています`
+        writeState(state)
       }
 
-      toggle.addEventListener("click", () => {
-        applyFit(toggle.getAttribute("aria-pressed") !== "true")
-      })
+      const setZoom = (zoom) => {
+        state = { fit: false, zoom: clampZoom(zoom) }
+        applyState()
+      }
 
-      applyFit(readFit())
+      fitToggle.addEventListener("click", () => {
+        state = { ...state, fit: !state.fit }
+        applyState()
+      })
+      zoomOutButton.addEventListener("click", () => setZoom((Number(state.zoom) || 1) - 0.25))
+      zoomResetButton.addEventListener("click", () => setZoom(1))
+      zoomInButton.addEventListener("click", () => setZoom((Number(state.zoom) || 1) + 0.25))
+
+      applyState()
     })
   })()
