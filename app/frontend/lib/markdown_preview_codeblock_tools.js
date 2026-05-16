@@ -21,6 +21,24 @@ function injectCodeblockToolStyle(frameDocument) {
       background: rgb(255 255 255 / 86%);
       box-shadow: 0 8px 20px rgb(15 23 42 / 10%);
     }
+    .portal-codeblock-language,
+    .portal-codeblock-warning {
+      border-radius: 999px;
+      font-size: .72rem;
+      line-height: 1.2;
+      padding: .2rem .48rem;
+      white-space: nowrap;
+    }
+    .portal-codeblock-language {
+      background: var(--doc-bg-soft, #f8fafc);
+      color: var(--doc-text-muted, #64748b);
+      font-weight: 700;
+    }
+    .portal-codeblock-warning {
+      background: #fff7ed;
+      color: #c2410c;
+      font-weight: 700;
+    }
     .portal-codeblock-button {
       border: 1px solid var(--doc-primary-border, #bfdbfe);
       border-radius: 999px;
@@ -48,6 +66,16 @@ function injectCodeblockToolStyle(frameDocument) {
     }
   `
   frameDocument.head?.appendChild(style)
+}
+
+function detectCodeLanguage(codeElement) {
+  const className = codeElement.className || codeElement.closest("pre")?.className || ""
+  const match = className.match(/(?:language|lang)-([a-z0-9_+-]+)/i)
+  return match?.[1]?.toLowerCase() || "code"
+}
+
+function includesSensitiveKeyword(text) {
+  return /\b(secret|token|password|passwd|authorization|api[_-]?key|access[_-]?key|client[_-]?secret|bearer)\b/i.test(text)
 }
 
 async function copyCodeText(codeElement, status) {
@@ -85,6 +113,15 @@ function enhanceCodeblocksInFrame(frame) {
     const toolbar = frameDocument.createElement("div")
     toolbar.className = "portal-codeblock-toolbar"
 
+    const language = frameDocument.createElement("span")
+    language.className = "portal-codeblock-language"
+    language.textContent = detectCodeLanguage(codeElement)
+
+    const warning = frameDocument.createElement("span")
+    warning.className = "portal-codeblock-warning"
+    warning.textContent = "機密注意"
+    warning.hidden = !includesSensitiveKeyword(codeElement.textContent || "")
+
     const copyButton = frameDocument.createElement("button")
     copyButton.type = "button"
     copyButton.className = "portal-codeblock-button"
@@ -95,6 +132,8 @@ function enhanceCodeblocksInFrame(frame) {
     status.className = "portal-codeblock-status"
     status.setAttribute("aria-live", "polite")
 
+    toolbar.appendChild(language)
+    toolbar.appendChild(warning)
     toolbar.appendChild(copyButton)
     toolbar.appendChild(status)
 
