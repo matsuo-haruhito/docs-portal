@@ -17,6 +17,10 @@ function injectStructuredPreviewStyle() {
   document.head?.appendChild(style)
 }
 
+function isEditableTarget(target) {
+  return ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName) || target?.isContentEditable
+}
+
 function lineText(line) {
   return (line.textContent || "").toLowerCase()
 }
@@ -79,13 +83,17 @@ function setupStructuredPreview(container) {
     count.textContent = query.length === 0 ? `${lines.length}行` : `${matchedCount}/${lines.length}行一致 / ${visibleCount}行表示`
   }
 
-  input.addEventListener("input", updateSearch)
-  input.addEventListener("search", updateSearch)
-  clearButton.addEventListener("click", () => {
+  const clearSearch = () => {
     input.value = ""
     filterMatches = false
     updateFilterButton()
     updateSearch()
+  }
+
+  input.addEventListener("input", updateSearch)
+  input.addEventListener("search", updateSearch)
+  clearButton.addEventListener("click", () => {
+    clearSearch()
     input.focus()
   })
 
@@ -106,6 +114,23 @@ function setupStructuredPreview(container) {
     window.setTimeout(() => {
       status.textContent = ""
     }, 1800)
+  })
+
+  document.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
+
+    if (event.key === "/" && !isEditableTarget(event.target)) {
+      event.preventDefault()
+      input.focus()
+      input.select()
+      return
+    }
+
+    if (event.key === "Escape" && document.activeElement === input) {
+      event.preventDefault()
+      clearSearch()
+      input.blur()
+    }
   })
 
   updateFilterButton()
