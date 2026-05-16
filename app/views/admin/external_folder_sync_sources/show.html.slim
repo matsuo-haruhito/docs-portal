@@ -133,21 +133,13 @@ h1 外部フォルダ同期詳細
     tbody
       - @runs.each do |run|
         - approval = run.summary_json&.fetch("conflict_warnings_approval", nil)
-        - blocked = run.summary_json&.fetch("blocked_by_conflict_warnings", false)
-        - allowed = run.summary_json&.fetch("conflict_warnings_allowed", false)
         tr
           td = run.started_at ? l(run.started_at) : "-"
           td = external_folder_sync_run_mode_label(run)
           td = external_folder_sync_run_status_label(run)
           td
-            - if blocked
-              span.status-danger 警告あり停止
-            - elsif allowed
-              span.status-warning 警告承認済み
-            - elsif run.summary_json&.fetch("conflict_warnings_count", 0).to_i.positive?
-              span.status-warning 警告あり
-            - else
-              span.muted 通常
+            span class=external_folder_sync_run_safety_class(run)
+              = external_folder_sync_run_safety_label(run)
           td = run.items_created_count
           td = run.items_updated_count
           td = run.items_skipped_count
