@@ -1,6 +1,6 @@
 class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   before_action :require_admin_only!
-  before_action :set_external_folder_sync_source, only: %i[show edit update destroy dry_run apply enqueue]
+  before_action :set_external_folder_sync_source, only: %i[show edit update destroy dry_run apply enqueue subscribe unsubscribe]
   before_action :load_form_collections, only: %i[index create edit update]
 
   def index
@@ -17,6 +17,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   def show
     @runs = @external_folder_sync_source.external_folder_sync_runs.order(started_at: :desc, id: :desc).limit(20)
     @items = @external_folder_sync_source.external_folder_sync_items.order(:path, :id).limit(200)
+    @subscriptions = @external_folder_sync_source.external_folder_sync_subscriptions.order(created_at: :desc, id: :desc).limit(20)
   end
 
   def create
@@ -68,6 +69,26 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   def enqueue
     ExternalFolderSyncJob.perform_later(@external_folder_sync_source.id, current_user.id)
     redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "同期ジョブを登録しました。"
+  end
+
+  def subscribe
+    subscription = ExternalFolderSync::GoogleDriveSubscriptionManager.new(
+      source: @external_folder_sync_source,
+      callback_url: external_folder_sync_webhooks_google_drive_url
+    ).subscribe!
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "Google Drive webhook購読を開始しました。（期限: #{l(subscription.expires_at)}）"
+  rescue ExternalFolderSync::GoogleDriveSubscriptionManager::Error => e
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
+  end
+
+  def unsubscribe
+    ExternalFolderSync::GoogleDriveSubscriptionManager.new(
+      source: @external_folder_sync_source,
+      callback_url: external_folder_sync_webhooks_google_drive_url
+    ).stop_active_subscription!
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "Google Drive webhook購読を停止しました。"
+  rescue ExternalFolderSync::GoogleDriveSubscriptionManager::Error => e
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
   end
 
   private
