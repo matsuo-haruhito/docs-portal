@@ -98,6 +98,50 @@ javascript:
       count.textContent = query.length > 0 ? `${matchCount}件` : ""
     }
 
+    function tableRows(table) {
+      return Array.from(table.rows).map((row) => Array.from(row.cells).map((cell) => cell.textContent.trim().replace(/\s+/g, " ")))
+    }
+
+    function csvEscape(value) {
+      const text = String(value ?? "")
+      if (/[",\n\r]/.test(text)) return `"${text.replaceAll('"', '""')}"`
+      return text
+    }
+
+    function tableToCsv(table) {
+      return tableRows(table).map((row) => row.map(csvEscape).join(",")).join("\n")
+    }
+
+    function markdownEscape(value) {
+      return String(value ?? "").replaceAll("|", "\\|").replace(/\s+/g, " ").trim()
+    }
+
+    function tableToMarkdown(table) {
+      const rows = tableRows(table)
+      if (rows.length === 0) return ""
+
+      const columnCount = Math.max(...rows.map((row) => row.length), 0)
+      const normalizedRows = rows.map((row) => Array.from({ length: columnCount }, (_, index) => markdownEscape(row[index] || "")))
+      const header = normalizedRows[0]
+      const separator = Array.from({ length: columnCount }, () => "---")
+      const body = normalizedRows.slice(1)
+
+      return [header, separator, ...body].map((row) => `| ${row.join(" | ")} |`).join("\n")
+    }
+
+    async function copyText(text, status) {
+      try {
+        await navigator.clipboard.writeText(text)
+        status.textContent = "コピーしました"
+      } catch (_error) {
+        status.textContent = "コピーできませんでした"
+      }
+
+      window.setTimeout(() => {
+        status.textContent = ""
+      }, 1800)
+    }
+
     function enhanceTablesInFrame(frame) {
       const frameDocument = frame.contentDocument
       if (!frameDocument?.body) return
@@ -130,9 +174,26 @@ javascript:
         clearButton.className = "portal-table-width-button"
         clearButton.textContent = "クリア"
 
+        const copyCsvButton = frameDocument.createElement("button")
+        copyCsvButton.type = "button"
+        copyCsvButton.className = "portal-table-width-button"
+        copyCsvButton.textContent = "CSVコピー"
+
+        const copyMarkdownButton = frameDocument.createElement("button")
+        copyMarkdownButton.type = "button"
+        copyMarkdownButton.className = "portal-table-width-button"
+        copyMarkdownButton.textContent = "Markdownコピー"
+
+        const copyStatus = frameDocument.createElement("span")
+        copyStatus.className = "portal-table-search-count"
+        copyStatus.setAttribute("aria-live", "polite")
+
         search.appendChild(input)
         search.appendChild(count)
         search.appendChild(clearButton)
+        search.appendChild(copyCsvButton)
+        search.appendChild(copyMarkdownButton)
+        search.appendChild(copyStatus)
         toolbar.insertBefore(search, toolbar.firstChild)
 
         input.addEventListener("input", () => updateTableSearch(table, input, count))
@@ -141,6 +202,8 @@ javascript:
           updateTableSearch(table, input, count)
           input.focus()
         })
+        copyCsvButton.addEventListener("click", () => copyText(tableToCsv(table), copyStatus))
+        copyMarkdownButton.addEventListener("click", () => copyText(tableToMarkdown(table), copyStatus))
       })
     }
 
