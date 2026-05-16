@@ -52,8 +52,12 @@ class ExternalFolderSyncSubscriptionRenewalJob < ApplicationJob
   end
 
   def callback_url
-    Rails.application.routes.url_helpers.external_folder_sync_webhooks_google_drive_url(
-      host: Rails.application.config.action_mailer.default_url_options.fetch(:host)
-    )
+    ENV["EXTERNAL_FOLDER_SYNC_GOOGLE_DRIVE_WEBHOOK_URL"].presence ||
+      Rails.application.routes.url_helpers.external_folder_sync_webhooks_google_drive_url(host: callback_host)
+  end
+
+  def callback_host
+    Rails.application.config.action_mailer.default_url_options[:host].presence ||
+      ENV.fetch("APP_HOST")
   end
 end
