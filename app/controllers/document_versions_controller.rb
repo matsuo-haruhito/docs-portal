@@ -11,15 +11,17 @@ class DocumentVersionsController < BaseController
 
     @versions = @document.document_versions.includes(:document_files).select { |version| version.viewable_by?(current_user) }.sort_by(&:created_at).reverse
     @previous_version = previous_viewable_version
-    @version_file_diff_summary = build_file_diff_summary(@version, @previous_version)
+    @compare_version = selected_compare_version || @previous_version
+    @compare_version_options = compare_version_options
+    @version_file_diff_summary = build_file_diff_summary(@version, @compare_version)
     @markdown_line_diffs = MarkdownLineDiffBuilder.new(
       current_version: @version,
-      previous_version: @previous_version,
+      previous_version: @compare_version,
       file_rows: @version_file_diff_summary.fetch(:files)
     ).call
     @rendered_html_diff = RenderedHtmlDiffBuilder.new(
       current_version: @version,
-      previous_version: @previous_version
+      previous_version: @compare_version
     ).call
     visible_comments = @version.document_review_comments.visible_to(current_user)
     @question_threads = visible_comments.where(internal_only: false, comment_type: :question).roots.includes(:author, :resolved_by, replies: [:author, :resolved_by]).order(:created_at, :id)
@@ -35,6 +37,16 @@ class DocumentVersionsController < BaseController
   end
 
   private
+
+  def selected_compare_version
+    return if params[:compare_version_id].blank?
+
+    @versions.find { |version| version.public_id == params[:compare_version_id] && version != @version }
+  end
+
+  def compare_version_options
+    @versions.reject { |version| version == @version }
+  end
 
   def previous_viewable_version
     @versions
