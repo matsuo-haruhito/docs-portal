@@ -10,6 +10,8 @@ ja:
       short: "%Y/%m/%d %H:%M"
       long: "%Y年%m月%d日 %H時%M分"
   labels:
+    table:
+      empty: "（なし）"
     users:
       user_type:
         internal: "社内ユーザー"
