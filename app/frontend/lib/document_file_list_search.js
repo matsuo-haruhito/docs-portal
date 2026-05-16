@@ -2,6 +2,26 @@ function normalizeText(value) {
   return (value || "").toString().trim().toLowerCase()
 }
 
+function injectDocumentFileSearchStyle() {
+  if (document.querySelector("style[data-document-file-search-style]")) return
+
+  const style = document.createElement("style")
+  style.dataset.documentFileSearchStyle = "true"
+  style.textContent = `
+    tr.is-document-file-search-match > td,
+    tr.is-document-file-search-match > th {
+      background: #fff7cc;
+      box-shadow: inset 4px 0 0 #f59e0b;
+    }
+    tr.is-document-file-search-context > td,
+    tr.is-document-file-search-context > th {
+      background: #f8fafc;
+      color: var(--doc-text-muted, #64748b);
+    }
+  `
+  document.head?.appendChild(style)
+}
+
 function firstPresentAttribute(element, names) {
   for (const name of names) {
     const value = element.getAttribute(name)
@@ -69,6 +89,7 @@ function visibleRowsForQuery(rows, query, matchedRows) {
 function setupFileListSearch(container) {
   if (container.dataset.fileListSearchReady === "true") return
   container.dataset.fileListSearchReady = "true"
+  injectDocumentFileSearchStyle()
 
   const input = container.querySelector("[data-document-file-search-input]")
   const clearButton = container.querySelector("[data-document-file-search-clear]")
