@@ -185,6 +185,7 @@ ja:
         enqueued: "同期ジョブ登録済み"
         ignored: "無視"
         failed: "失敗"
+        completed: "同期完了"
     external_folder_sync_plans:
       action:
         create: "作成"

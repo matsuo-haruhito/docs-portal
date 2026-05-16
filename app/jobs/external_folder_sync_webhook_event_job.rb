@@ -22,7 +22,7 @@ class ExternalFolderSyncWebhookEventJob < ApplicationJob
       return
     end
 
-    ExternalFolderSyncJob.perform_later(source.id, source.created_by_id)
+    ExternalFolderSyncJob.perform_later(source.id, source.created_by_id, event.id)
     event.update!(status: :enqueued, error_message: nil)
   rescue => e
     event&.update!(status: :failed, error_message: e.message)

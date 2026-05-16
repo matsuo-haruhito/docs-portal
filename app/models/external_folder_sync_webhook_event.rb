@@ -15,7 +15,8 @@ class ExternalFolderSyncWebhookEvent < ApplicationRecord
     received: 0,
     enqueued: 1,
     ignored: 2,
-    failed: 3
+    failed: 3,
+    completed: 4
   }
 
   validates :provider, :status, :received_at, presence: true
