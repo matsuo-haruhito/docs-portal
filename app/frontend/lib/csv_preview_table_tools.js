@@ -1,5 +1,6 @@
 const MIN_COLUMN_WIDTH = 72
 const MAX_COLUMN_WIDTH = 960
+const COLUMN_WIDTH_STORAGE_PREFIX = "docsPortal.csvPreviewColumnWidths"
 
 function escapeCsvCell(value) {
   const text = (value || "").toString()
@@ -8,6 +9,28 @@ function escapeCsvCell(value) {
 
 function clampColumnWidth(value) {
   return Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, value))
+}
+
+function columnWidthStorageKey(container) {
+  const key = container.dataset.csvPreviewStorageKey || window.location.pathname
+  return `${COLUMN_WIDTH_STORAGE_PREFIX}:${key}`
+}
+
+function readColumnWidths(container) {
+  try {
+    const values = JSON.parse(window.localStorage.getItem(columnWidthStorageKey(container)) || "[]")
+    return Array.isArray(values) ? values.map((value) => Number(value)).filter(Number.isFinite) : []
+  } catch (_error) {
+    return []
+  }
+}
+
+function writeColumnWidths(container, widths) {
+  window.localStorage.setItem(columnWidthStorageKey(container), JSON.stringify(widths))
+}
+
+function clearColumnWidths(container) {
+  window.localStorage.removeItem(columnWidthStorageKey(container))
 }
 
 function injectCsvPreviewStyle() {
@@ -106,11 +129,22 @@ function ensureColgroup(table, columnCount) {
   return colgroup
 }
 
-function resetColumnWidths(table) {
+function applyColumnWidths(table, colgroup, widths) {
+  const hasWidths = widths.some((width) => Number.isFinite(width))
+  table.classList.toggle("has-resized-columns", hasWidths)
+
+  Array.from(colgroup.children).forEach((col, columnIndex) => {
+    const width = widths[columnIndex]
+    col.style.width = Number.isFinite(width) ? `${clampColumnWidth(width)}px` : ""
+  })
+}
+
+function resetColumnWidths(container, table) {
   table.querySelectorAll("colgroup[data-csv-preview-column-widths] col").forEach((col) => {
     col.style.width = ""
   })
   table.classList.remove("has-resized-columns")
+  clearColumnWidths(container)
 }
 
 function setupColumnResizers(container, table) {
@@ -118,6 +152,9 @@ function setupColumnResizers(container, table) {
   if (columnCount <= 1) return
 
   const colgroup = ensureColgroup(table, columnCount)
+  const widths = readColumnWidths(container)
+  applyColumnWidths(table, colgroup, widths)
+
   const headerRow = table.rows[0]
   if (!headerRow) return
 
@@ -136,11 +173,9 @@ function setupColumnResizers(container, table) {
     let startWidth = 0
 
     const applyWidth = (width) => {
-      const col = colgroup.children[columnIndex]
-      if (!col) return
-
-      table.classList.add("has-resized-columns")
-      col.style.width = `${clampColumnWidth(width)}px`
+      widths[columnIndex] = clampColumnWidth(width)
+      applyColumnWidths(table, colgroup, widths)
+      writeColumnWidths(container, widths)
     }
 
     const stopDragging = () => {
@@ -248,7 +283,7 @@ function setupCsvPreviewTable(container) {
   })
 
   resetColumnsButton.addEventListener("click", () => {
-    resetColumnWidths(table)
+    resetColumnWidths(container, table)
     status.textContent = "列幅をリセットしました"
     window.setTimeout(() => {
       status.textContent = ""
