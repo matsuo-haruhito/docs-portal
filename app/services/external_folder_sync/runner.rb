@@ -5,6 +5,8 @@ module ExternalFolderSync
   class Runner
     class Error < StandardError; end
 
+    SyncBatch = Data.define(:entries, :removed_ids, :cursor, :incremental, :full_scan_fallback)
+
     def initialize(source:, mode:, actor:)
       @source = source
       @mode = mode.to_s
@@ -20,12 +22,13 @@ module ExternalFolderSync
         started_at: Time.current
       )
 
-      entries = client.list_files
-      @entries_by_id = entries.index_by(&:id)
-      result = entries.map { plan_entry(_1) }
+      batch = build_sync_batch
+      @entries_by_id = batch.entries.index_by(&:id)
+      result = batch.entries.map { plan_entry(_1) }
       result.each { apply_entry(_1) } if apply?
-      append_missing_items!(entries, result)
-      finish_success!(run, result)
+      append_missing_items!(batch, result)
+      append_sync_strategy!(batch, result)
+      finish_success!(run, result, batch)
     rescue => e
       finish_failure!(run, e) if defined?(run) && run
       source.update!(last_error_message: e.message)
@@ -48,6 +51,34 @@ module ExternalFolderSync
 
     def apply?
       mode == "apply"
+    end
+
+    def build_sync_batch
+      if source.cursor.present?
+        changes = client.list_file_changes(source.cursor)
+        return build_full_scan_batch(full_scan_fallback: true) if changes.full_scan_required
+
+        return SyncBatch.new(
+          entries: changes.entries,
+          removed_ids: changes.removed_ids,
+          cursor: changes.new_cursor.presence || source.cursor,
+          incremental: true,
+          full_scan_fallback: false
+        )
+      end
+
+      build_full_scan_batch(full_scan_fallback: false)
+    end
+
+    def build_full_scan_batch(full_scan_fallback:)
+      entries = client.list_files
+      SyncBatch.new(
+        entries:,
+        removed_ids: [],
+        cursor: safe_start_page_token,
+        incremental: false,
+        full_scan_fallback:
+      )
     end
 
     def plan_entry(entry)
@@ -227,9 +258,17 @@ module ExternalFolderSync
       item.save!
     end
 
-    def append_missing_items!(entries, result)
-      seen_ids = entries.map(&:id).to_set
-      source.external_folder_sync_items.where.not(external_item_id: seen_ids).find_each do |item|
+    def append_missing_items!(batch, result)
+      if batch.incremental
+        append_removed_items!(batch.removed_ids, result)
+      else
+        seen_ids = batch.entries.map(&:id).to_set
+        append_removed_items!(source.external_folder_sync_items.where.not(external_item_id: seen_ids).pluck(:external_item_id), result)
+      end
+    end
+
+    def append_removed_items!(external_item_ids, result)
+      source.external_folder_sync_items.where(external_item_id: external_item_ids).find_each do |item|
         item.update!(sync_status: :delete_detected) if apply?
         result << {
           "action" => "delete_detected",
@@ -249,8 +288,27 @@ module ExternalFolderSync
       end
     end
 
-    def finish_success!(run, result)
-      summary = summary_for(result)
+    def append_sync_strategy!(batch, result)
+      result << {
+        "action" => "sync_metadata",
+        "attention_level" => batch.full_scan_fallback ? "warning" : "none",
+        "change_reasons" => sync_strategy_reasons(batch),
+        "message" => batch.incremental ? "Used Google Drive changes cursor" : "Used full folder scan"
+      }
+    end
+
+    def sync_strategy_reasons(batch)
+      reasons = []
+      reasons << (batch.incremental ? "Google Drive changes APIで差分のみ取得しました" : "Google Driveフォルダを全件走査しました")
+      reasons << "保存済みcursorが期限切れまたは無効だったため全件走査へフォールバックしました" if batch.full_scan_fallback
+      reasons
+    end
+
+    def finish_success!(run, result, batch)
+      summary = summary_for(result).merge(
+        "incremental" => batch.incremental,
+        "full_scan_fallback" => batch.full_scan_fallback
+      )
       run.update!(
         status: summary.fetch("errors_count").positive? ? :partial : :completed,
         finished_at: Time.current,
@@ -263,7 +321,7 @@ module ExternalFolderSync
         summary_json: summary,
         result_json: result
       )
-      source.update!(last_synced_at: Time.current, last_error_message: nil, cursor: safe_start_page_token) if apply?
+      source.update!(last_synced_at: Time.current, last_error_message: nil, cursor: batch.cursor) if apply?
       run
     end
 
@@ -282,13 +340,14 @@ module ExternalFolderSync
     end
 
     def summary_for(result)
+      visible_result = result.reject { _1["action"] == "sync_metadata" }
       {
-        "created_count" => result.count { _1["action"] == "create" },
-        "updated_count" => result.count { _1["action"] == "update" },
-        "skipped_count" => result.count { _1["action"] == "skip" },
-        "deleted_count" => result.count { _1["action"] == "delete_detected" },
-        "errors_count" => result.count { _1["action"] == "error" },
-        "needs_attention_count" => result.count { _1["attention_level"].in?(%w[warning danger]) }
+        "created_count" => visible_result.count { _1["action"] == "create" },
+        "updated_count" => visible_result.count { _1["action"] == "update" },
+        "skipped_count" => visible_result.count { _1["action"] == "skip" },
+        "deleted_count" => visible_result.count { _1["action"] == "delete_detected" },
+        "errors_count" => visible_result.count { _1["action"] == "error" },
+        "needs_attention_count" => visible_result.count { _1["attention_level"].in?(%w[warning danger]) }
       }
     end
 
