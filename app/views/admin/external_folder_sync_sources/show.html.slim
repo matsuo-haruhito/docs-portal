@@ -96,7 +96,6 @@ h1 外部フォルダ同期詳細
         th 詳細
     tbody
       - @webhook_events.each do |event|
-        - sync_run = event.payload_json&.fetch("sync_run", nil) || {}
         tr
           td = l(event.received_at)
           td = external_folder_sync_webhook_event_status_label(event)
@@ -108,13 +107,13 @@ h1 外部フォルダ同期詳細
           td = external_folder_sync_webhook_header(event, "X_GOOG_RESOURCE_STATE")
           td = external_folder_sync_webhook_header(event, "X_GOOG_MESSAGE_NUMBER")
           td
-            - if sync_run.present?
-              code = sync_run["public_id"].presence || sync_run["id"]
+            - if external_folder_sync_webhook_sync_run_present?(event)
+              code = external_folder_sync_webhook_sync_run_label(event)
               br
-              span.muted = sync_run["status"]
-              - if sync_run["conflict_warnings_count"].to_i.positive?
+              span.muted = external_folder_sync_webhook_sync_run_status(event)
+              - if external_folder_sync_webhook_sync_run_warnings_count(event).positive?
                 br
-                span.status-warning = "警告 #{sync_run["conflict_warnings_count"]}件"
+                span.status-warning = "警告 #{external_folder_sync_webhook_sync_run_warnings_count(event)}件"
             - else
               | -
           td
