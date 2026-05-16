@@ -43,6 +43,15 @@ class DocumentFilesController < BaseController
       return
     end
 
+    if disposition == "inline" && %i[json yaml].include?(viewer_plan.viewer_kind) && !embedded_request?
+      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
+      assign_preview_context(file)
+      @structured_preview = DocumentFileStructuredPreview.new(file:, viewer_kind: viewer_plan.viewer_kind).call
+      @structured_language = viewer_plan.viewer_kind.to_s.upcase
+      render :show_structured_preview
+      return
+    end
+
     if disposition == "inline" && file.text_previewable? && !embedded_request?
       response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
       assign_preview_context(file)
