@@ -195,6 +195,25 @@ module ApplicationHelper
     :normal
   end
 
+  def external_folder_sync_approval_summary(run)
+    return {} if run.blank?
+
+    run.summary_json&.fetch("conflict_warnings_approval", nil) || {}
+  end
+
+  def external_folder_sync_approval_actor_label(run)
+    approval = external_folder_sync_approval_summary(run)
+    approval["actor_name"].presence || approval["actor_email"].presence || approval["actor_public_id"].presence || "承認済み"
+  end
+
+  def external_folder_sync_approval_approved_at(run)
+    external_folder_sync_approval_summary(run)["approved_at"].presence
+  end
+
+  def external_folder_sync_approved?(run)
+    external_folder_sync_approval_summary(run).present?
+  end
+
   def external_folder_sync_item_status_label(item_or_value)
     value = item_or_value.respond_to?(:sync_status) ? item_or_value.sync_status : item_or_value
     localized_label("external_folder_sync_items.sync_status", value)
