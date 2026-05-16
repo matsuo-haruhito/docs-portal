@@ -79,6 +79,39 @@
 - 表幅、列幅、固定表示、検索、コピー、表示リセットはいずれも表示上の利用者個人設定・操作として扱い、Markdown 原文や生成済みHTMLは変更しない
 - Markdown table tool の JavaScript は view template に直接長く埋め込まず、フロントエンドモジュールとして保守できるようにする
 
+## DocumentFile viewer registry
+
+- 添付・元ファイルの preview は、ファイル種別ごとの viewer registry で選択する
+- viewer registry は、`DocumentFile` の content type、file extension、保持パス、外部同期 metadata、file size、viewer の利用可否を入力にして viewer を決める
+- viewer registry は、利用者が閲覧可能なファイルだけを対象にする
+- viewer registry は、ファイルを直接表示できない場合でも、理由と代替導線を利用者へ表示する
+- viewer registry は、preview 成功・fallback・preview 不可・download only の状態を区別する
+- viewer registry の判定は UI から直接分岐させず、サービスまたは presenter に集約する
+- viewer registry は、新しい viewer を追加しても既存の添付一覧 UI を大きく変えずに済む構造にする
+
+| 種別 | 主 viewer | fallback / 補足 |
+| --- | --- | --- |
+| Markdown (`.md`, `.markdown`) | Docusaurus HTML preview | 生成済みHTMLがない場合は source preview / download |
+| HTML (`.html`) | same-origin iframe | unsafe / external HTML は download only |
+| PDF | PDF preview | 大容量時は download only |
+| Office (`.doc`, `.docx`, `.xls`, `.xlsx`, `.ppt`, `.pptx`) | Microsoft Graph preview | Google Drive sync由来なら Google Drive viewer fallback |
+| CSV / TSV | table viewer | 大容量時は sample preview + download |
+| JSON / YAML | code viewer / tree viewer | parse不能時は text viewer |
+| Text / log | text viewer | 大容量時は head / tail preview + download |
+| Image | image viewer | 大容量時は resized preview + download |
+| ZIP / archive | archive tree | 展開不可時は download only |
+| Unknown binary | download only | preview不可理由を表示 |
+
+- Markdown viewer は、本文 preview、Markdown行diff、HTML差分、表セル差分と連携する
+- HTML viewer は、Docusaurus viewer shell と同じ安全な iframe 表示方針に合わせる
+- CSV / TSV viewer は、Markdown table viewer UX と同様に検索・コピー・幅調整などを再利用できる設計にする
+- JSON / YAML viewer は、将来的に JSON path / YAML path ベースのレビューコメント位置指定と接続できるようにする
+- Text / log viewer は、レビューや生成ログ確認のため、行番号表示と行への anchor を持てるようにする
+- archive viewer は、ZIP内ファイルを tree view で表示し、個別ファイル preview に viewer registry を再適用できるようにする
+- download 権限がない利用者には、download only viewer ではなく権限申請導線を表示する
+- preview への遷移は、必要に応じて file view access log として記録する
+- viewer registry は、将来の表示対象宣言 metadata と連携し、primary / attachment / hidden / debug などの見せ方を扱えるようにする
+
 ## Office file preview
 
 - `.doc`, `.docx`, `.xls`, `.xlsx`, `.ppt`, `.pptx` は Office preview 対象とする
