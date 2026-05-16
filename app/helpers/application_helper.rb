@@ -351,7 +351,7 @@ module ApplicationHelper
           thead.html_safe,
           tag.tbody do
             tag.tr do
-              tag.td(I18n.t("labels.table.empty"), colspan:, class: "muted")
+              tag.td(localized_label("table", "empty"), colspan:, class: "muted")
             end
           end
         ])
