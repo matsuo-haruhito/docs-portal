@@ -144,10 +144,17 @@ function addLineAnchors(frameDocument, codeElement, blockId) {
   })
 }
 
-async function copyCodeText(codeElement, status) {
-  const text = Array.from(codeElement.querySelectorAll(".portal-codeblock-line"))
+function codeText(codeElement) {
+  const lineElements = Array.from(codeElement.querySelectorAll(".portal-codeblock-line"))
+  if (lineElements.length === 0) return codeElement.textContent || ""
+
+  return lineElements
     .map((line) => line.textContent === " " ? "" : line.textContent)
-    .join("\n") || codeElement.textContent || ""
+    .join("\n")
+}
+
+async function copyCodeText(codeElement, status) {
+  const text = codeText(codeElement)
 
   try {
     await navigator.clipboard.writeText(text)
@@ -159,6 +166,19 @@ async function copyCodeText(codeElement, status) {
   window.setTimeout(() => {
     status.textContent = ""
   }, 1800)
+}
+
+function validateJsonCode(codeElement, status) {
+  try {
+    JSON.parse(codeText(codeElement))
+    status.textContent = "JSON OK"
+  } catch (error) {
+    status.textContent = `JSONエラー: ${error.message}`
+  }
+
+  window.setTimeout(() => {
+    status.textContent = ""
+  }, 3200)
 }
 
 function enhanceCodeblocksInFrame(frame) {
@@ -183,9 +203,10 @@ function enhanceCodeblocksInFrame(frame) {
     const toolbar = frameDocument.createElement("div")
     toolbar.className = "portal-codeblock-toolbar"
 
+    const detectedLanguage = detectCodeLanguage(codeElement)
     const language = frameDocument.createElement("span")
     language.className = "portal-codeblock-language"
-    language.textContent = detectCodeLanguage(codeElement)
+    language.textContent = detectedLanguage
 
     const warning = frameDocument.createElement("span")
     warning.className = "portal-codeblock-warning"
@@ -198,6 +219,13 @@ function enhanceCodeblocksInFrame(frame) {
     copyButton.textContent = "コピー"
     copyButton.setAttribute("aria-label", "コードブロックをコピー")
 
+    const validateJsonButton = frameDocument.createElement("button")
+    validateJsonButton.type = "button"
+    validateJsonButton.className = "portal-codeblock-button"
+    validateJsonButton.textContent = "JSON検証"
+    validateJsonButton.setAttribute("aria-label", "JSON構文を検証")
+    validateJsonButton.hidden = detectedLanguage !== "json"
+
     const status = frameDocument.createElement("span")
     status.className = "portal-codeblock-status"
     status.setAttribute("aria-live", "polite")
@@ -205,6 +233,7 @@ function enhanceCodeblocksInFrame(frame) {
     toolbar.appendChild(language)
     toolbar.appendChild(warning)
     toolbar.appendChild(copyButton)
+    toolbar.appendChild(validateJsonButton)
     toolbar.appendChild(status)
 
     pre.parentNode.insertBefore(wrapper, pre)
@@ -213,6 +242,7 @@ function enhanceCodeblocksInFrame(frame) {
     addLineAnchors(frameDocument, codeElement, blockId)
 
     copyButton.addEventListener("click", () => copyCodeText(codeElement, status))
+    validateJsonButton.addEventListener("click", () => validateJsonCode(codeElement, status))
   })
 }
 
