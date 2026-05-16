@@ -30,7 +30,12 @@ p.muted
           h2 = "#{@structured_language} preview"
           p.muted 構文解析後に整形表示しています。編集や保存は行いません。
         .actions
+          span.muted data-structured-preview-count="true"
           span.muted data-structured-preview-status="true"
-          button.button.secondary type="button" data-structured-preview-copy="true" 整形済み内容をコピー
+      .compare-version-form
+        label for="structured-preview-search-#{@document_file.id}" 内容を検索
+        input id="structured-preview-search-#{@document_file.id}" type="search" placeholder="キーワード" data-structured-preview-search-input="true"
+        button.button.secondary type="button" data-structured-preview-search-clear="true" クリア
+        button.button.secondary type="button" data-structured-preview-copy="true" 整形済み内容をコピー
       pre
         code data-structured-preview-code="true" = @structured_preview.formatted_text
