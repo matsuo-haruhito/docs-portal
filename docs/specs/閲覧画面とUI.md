@@ -33,6 +33,8 @@
 - 差分サマリは、保持済みファイルの `tree_path`、ファイルサイズ、content type、file name を使ったファイル単位の比較から始める
 - Markdown本文の行単位diff、レンダリング後HTML差分、ブラウザ上での編集保存は後続実装とし、既存画面ではその導線を先に用意する
 - HTML viewer shell は、本文 iframe の上に preview toolbar を持ち、版詳細、前版との差分、添付・元ファイルへ戻れるようにする
+- HTML viewer shell 内の Markdown table は、表ごとに幅を調整できる toolbar を付与し、横に長い表を読みやすくする
+- 表幅は利用者のブラウザに保存し、同じ preview route を開き直しても調整後の幅を維持する
 
 ## Docusaurus viewer
 
