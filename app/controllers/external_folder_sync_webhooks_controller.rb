@@ -36,15 +36,16 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
     subscription = find_subscription(provider:, payload:)
     source = subscription&.external_folder_sync_source
     event_key = event_key_for(provider:, payload:, subscription:)
+    verified = verified_subscription?(provider:, subscription:)
 
     ExternalFolderSyncWebhookEvent.find_or_create_by!(provider:, event_key:) do |event|
       event.external_folder_sync_subscription = subscription
       event.external_folder_sync_source = source
-      event.status = source.present? ? :received : :ignored
+      event.status = source.present? && verified ? :received : :ignored
       event.received_at = Time.current
       event.headers_json = filtered_headers
       event.payload_json = payload.presence || {}
-      event.error_message = "Matching external folder sync source was not found" if source.blank?
+      event.error_message = event_error_message(source:, verified:)
     end
   end
 
@@ -59,6 +60,20 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
       subscription_id = payload["subscriptionId"].presence
       ExternalFolderSyncSubscription.active.find_by(provider:, provider_subscription_id: subscription_id)
     end
+  end
+
+  def verified_subscription?(provider:, subscription:)
+    return false if subscription.blank?
+    return true unless provider.to_s == "google_drive"
+
+    token = request.headers["X-Goog-Channel-Token"].to_s
+    expected_digest = subscription.verification_token_digest.to_s
+    token.present? && expected_digest.present? && ActiveSupport::SecurityUtils.secure_compare(Digest::SHA256.hexdigest(token), expected_digest)
+  end
+
+  def event_error_message(source:, verified:)
+    return "Matching external folder sync source was not found" if source.blank?
+    return "Webhook verification token did not match" unless verified
   end
 
   def event_key_for(provider:, payload:, subscription:)
