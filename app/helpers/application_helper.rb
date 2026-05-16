@@ -245,6 +245,27 @@ module ApplicationHelper
     event.headers_json&.fetch(header_name, nil).presence || "-"
   end
 
+  def external_folder_sync_webhook_sync_run_summary(event)
+    event.payload_json&.fetch("sync_run", nil) || {}
+  end
+
+  def external_folder_sync_webhook_sync_run_label(event)
+    summary = external_folder_sync_webhook_sync_run_summary(event)
+    summary["public_id"].presence || summary["id"].presence || "-"
+  end
+
+  def external_folder_sync_webhook_sync_run_status(event)
+    external_folder_sync_webhook_sync_run_summary(event)["status"].presence
+  end
+
+  def external_folder_sync_webhook_sync_run_warnings_count(event)
+    external_folder_sync_webhook_sync_run_summary(event)["conflict_warnings_count"].to_i
+  end
+
+  def external_folder_sync_webhook_sync_run_present?(event)
+    external_folder_sync_webhook_sync_run_summary(event).present?
+  end
+
   def external_folder_sync_plan_action_label(plan_or_value)
     value = plan_or_value.respond_to?(:[]) ? plan_or_value["action"] : plan_or_value
     localized_label("external_folder_sync_plans.action", value)
