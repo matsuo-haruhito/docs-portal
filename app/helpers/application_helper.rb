@@ -265,7 +265,7 @@ module ApplicationHelper
 
   def external_folder_sync_webhook_sync_run_warning_label(event)
     count = external_folder_sync_webhook_sync_run_warnings_count(event)
-    count.positive? ? "警告 #{count}件" : nil
+    count.positive? ? I18n.t("labels.external_folder_sync_webhook_events.sync_run_warning_label", count:) : nil
   end
 
   def external_folder_sync_webhook_sync_run_link_title(_event)
