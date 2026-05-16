@@ -53,6 +53,41 @@
 - iframe 側では Docusaurus navbar / footer / toc / sidebar を除去し、本文を中央寄せで表示する
 - iframe 側で rewrite される内部 link / asset URL も `embedded=1` を維持する
 
+## Codeblock actions
+
+- Docusaurus viewer 内の code block には、内容や言語に応じて利用者向け action を付与できるようにする
+- codeblock actions は、API仕様、手順書、運用マニュアル、import API のサンプルで使いやすさを上げるための viewer 拡張として扱う
+- codeblock actions は Markdown 原文や生成済みHTMLを変更せず、viewer shell または iframe 内拡張として提供する
+- codeblock actions は、コピーなどの即時操作と、dry-run / 検証などのサーバー連携操作を区別する
+- サーバー連携操作は、権限判定、CSRF対策、実行前確認、結果表示、access log を必須とする
+- サーバー連携操作は、既定では destructive な処理を実行せず、dry-run / validation から始める
+
+想定 action:
+
+| 対象 | action | 補足 |
+| --- | --- | --- |
+| `curl` | コピー | token や secret らしき値は mask された表示を優先する |
+| `json` | JSONコピー / 整形コピー / validation | API request sample や metadata sample に使う |
+| `yaml` / `yml` | YAMLコピー / validation | preview target metadata や workflow sample に使う |
+| `bash` / `sh` | コマンドコピー | 複数行コマンドは1つの script としてコピーできる |
+| `npm` / `yarn` / `pnpm` | package manager 切り替え | Docusaurus実例の npm/yarn 切り替えに相当する |
+| `http` | request sample コピー / dry-run | internal import API のサンプル検証に使う |
+| `ruby` / `rails` | コマンドコピー | admin向け運用手順に使う |
+| unknown | copy only | 言語不明でも最低限コピーは提供する |
+
+- copy action はブラウザ clipboard API を使い、成功・失敗を code block 近くに表示する
+- copy action は iframe が same-origin の場合に有効化し、cross-origin の場合は viewer 表示を壊さず無効化する
+- secret、token、password、authorization header などを含む可能性がある code block は、自動実行や外部送信の対象にしない
+- dry-run action は、対象 API・操作種別・入力内容・実行ユーザーを明示してから実行する
+- dry-run 結果は、成功 / 警告 / エラーを code block 下に表示し、必要なら詳細ログを折りたたむ
+- import API dry-run は、実際の文書更新を行わず、作成予定の Project / Document / DocumentVersion / DocumentFile の概要を返す
+- codeblock action は、レビューコメントの anchor と連携できるように、code block id、言語、行番号を持てるようにする
+- code block 内の特定行に対して internal review comment を付けられるようにする
+- codeblock action の表示有無は、文書種別、利用者権限、code language、metadata に応じて制御できるようにする
+- admin は API仕様ページの codeblock action を dry-run で検証できる
+- external 利用者には copy 系 action を中心に表示し、server-side dry-run は必要な権限がある場合だけ表示する
+- action 実行時には、対象文書版、site path、code block id、action kind、結果を access log または audit log に残せるようにする
+
 ## Path history / redirect
 
 - 文書 slug、Docusaurus site path、添付・元ファイル tree path は、外部共有済みURLや社内bookmarkを壊さないため、履歴を持てるようにする
