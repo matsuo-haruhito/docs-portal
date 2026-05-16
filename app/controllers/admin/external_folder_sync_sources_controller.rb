@@ -90,6 +90,11 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def enqueue
+    if latest_dry_run_has_conflict_warnings?
+      redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: "直近のdry-runに競合・重複警告があります。警告を確認してから同期実行してください。"
+      return
+    end
+
     ExternalFolderSyncJob.perform_later(@external_folder_sync_source.id, current_user.id)
     redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "同期ジョブを登録しました。"
   end
@@ -141,11 +146,14 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     @latest_run ||= @external_folder_sync_source.external_folder_sync_runs.order(started_at: :desc, id: :desc).first
   end
 
-  def force_apply_allowed?
-    return false unless latest_run&.dry_run?
+  def latest_dry_run_has_conflict_warnings?
+    latest_run&.dry_run? && latest_run.summary_json&.fetch("conflict_warnings_count", 0).to_i.positive?
+  end
 
-    latest_run.summary_json&.fetch("conflict_warnings_count", 0).to_i.positive? &&
-      latest_run.summary_json&.fetch("conflict_warnings_approval", nil).blank?
+  def force_apply_allowed?
+    return false unless latest_dry_run_has_conflict_warnings?
+
+    latest_run.summary_json&.fetch("conflict_warnings_approval", nil).blank?
   end
 
   def normalized_external_folder_sync_source_params
