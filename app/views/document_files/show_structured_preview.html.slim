@@ -36,6 +36,7 @@ p.muted
         label for="structured-preview-search-#{@document_file.id}" 内容を検索
         input id="structured-preview-search-#{@document_file.id}" type="search" placeholder="キーワード" data-structured-preview-search-input="true"
         button.button.secondary type="button" data-structured-preview-search-clear="true" クリア
+        button.button.secondary type="button" data-structured-preview-filter-matches="true" aria-pressed="false" 一致行のみ表示
         button.button.secondary type="button" data-structured-preview-copy="true" 整形済み内容をコピー
       pre
         code data-structured-preview-code="true" = @structured_preview.formatted_text
