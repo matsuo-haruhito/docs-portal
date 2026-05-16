@@ -96,6 +96,10 @@ p.muted
     - if @previous_version
       = link_to "旧版を開く", document_version_path(@previous_version), class: "button secondary"
   - diff_files = @version_file_diff_summary.fetch(:files)
+  - html_diff_count = @rendered_html_diff&.lines&.count { |line| line.kind != :context && line.kind != :gap }.to_i
+  - table_diffs = @rendered_html_diff&.table_diffs || []
+  - table_diff_count = table_diffs.sum { |table_diff| table_diff.rows.sum { |row| (row.kind == :context ? 0 : 1) + row.cells.count { |cell| cell.kind != :context } } }
+  - markdown_diff_count = @markdown_line_diffs.sum { |file_diff| file_diff.lines.count { |line| line.kind != :context && line.kind != :gap } }
   - if diff_files.any? || @rendered_html_diff&.available
     .diff-viewer-layout
       .diff-file-list
@@ -109,72 +113,94 @@ p.muted
               - if row.fetch(:removed_bytes).positive?
                 |  -#{number_to_human_size(row.fetch(:removed_bytes))}
       .diff-placeholder
-        h3 Markdown本文の行単位diff
-        - if @markdown_line_diffs.any?
-          .markdown-line-diff-list
-            - @markdown_line_diffs.each do |file_diff|
-              details.markdown-line-diff-file open=true
-                summary
-                  strong = file_diff.path
-                  span.muted = " / #{file_diff.status}"
-                - if file_diff.message.present?
-                  p.muted = file_diff.message
-                - elsif file_diff.lines.any?
-                  .markdown-line-diff-table role="table" aria-label="#{file_diff.path} diff"
-                    - file_diff.lines.each do |line|
-                      .markdown-line-diff-row class="is-#{line.kind}" role="row"
-                        span.diff-line-number role="cell" = line.old_number || ""
-                        span.diff-line-number role="cell" = line.new_number || ""
-                        code.diff-line-code role="cell"
-                          - prefix = line.kind == :added ? "+ " : line.kind == :removed ? "- " : "  "
-                          = "#{prefix}#{line.text}"
-                - else
-                  p.muted Markdown本文の差分はありません。
-        - else
-          p.muted Markdownファイルの行単位diffはありません。
-        h3 HTML差分
-        - if @rendered_html_diff&.message.present?
-          p.muted = @rendered_html_diff.message
-        - elsif @rendered_html_diff&.lines&.any?
-          .markdown-line-diff-table role="table" aria-label="HTML diff"
-            - @rendered_html_diff.lines.each do |line|
-              .markdown-line-diff-row class="is-#{line.kind}" role="row"
-                span.diff-line-number role="cell" = line.old_number || ""
-                span.diff-line-number role="cell" = line.new_number || ""
-                code.diff-line-code role="cell"
-                  - prefix = line.kind == :added ? "+ " : line.kind == :removed ? "- " : "  "
-                  = "#{prefix}#{line.text}"
-        - else
-          p.muted レンダリング後HTML本文の差分はありません。
-        h3 表セル差分
-        - table_diffs = @rendered_html_diff&.table_diffs || []
-        - if table_diffs.any?
-          .rendered-table-diff-list
-            - table_diffs.each do |table_diff|
-              details.rendered-table-diff open=true
-                summary
-                  strong = "表 #{table_diff.index}"
-                  span.muted = " / #{table_diff.status}"
-                - if table_diff.message.present?
-                  p.muted = table_diff.message
-                - elsif table_diff.rows.any?
-                  .rendered-table-diff-scroll
-                    table.rendered-table-diff-table
-                      tbody
-                        - table_diff.rows.each_with_index do |row, row_index|
-                          tr class="is-#{row.kind}"
-                            th = row_index + 1
-                            - row.cells.each do |cell|
-                              td class="is-#{cell.kind}"
-                                - if cell.kind == :changed
-                                  del = cell.old_text
-                                  ins = cell.new_text
-                                - elsif cell.kind == :removed
-                                  del = cell.old_text
-                                - else
-                                  = cell.new_text.presence || cell.old_text
-        - else
-          p.muted 変更された表セルはありません。
+        .diff-section-tabs aria-label="diff sections"
+          a.diff-section-tab href="#markdown-line-diff"
+            span Markdown差分
+            span.diff-count = markdown_diff_count
+          a.diff-section-tab href="#html-rendered-diff"
+            span HTML差分
+            span.diff-count = html_diff_count
+          a.diff-section-tab href="#html-table-cell-diff"
+            span 表セル差分
+            span.diff-count = table_diff_count
+        section.diff-section-card#markdown-line-diff
+          .diff-section-heading
+            h3 Markdown本文の行単位diff
+            span.diff-count = markdown_diff_count
+          - if @markdown_line_diffs.any?
+            .markdown-line-diff-list
+              - @markdown_line_diffs.each do |file_diff|
+                details.markdown-line-diff-file open=file_diff.lines.any?
+                  summary
+                    strong = file_diff.path
+                    span.muted = " / #{file_diff.status}"
+                    - changed_lines = file_diff.lines.count { |line| line.kind != :context && line.kind != :gap }
+                    span.diff-count = changed_lines
+                  - if file_diff.message.present?
+                    p.muted = file_diff.message
+                  - elsif file_diff.lines.any?
+                    .markdown-line-diff-table role="table" aria-label="#{file_diff.path} diff"
+                      - file_diff.lines.each do |line|
+                        .markdown-line-diff-row class="is-#{line.kind}" role="row"
+                          span.diff-line-number role="cell" = line.old_number || ""
+                          span.diff-line-number role="cell" = line.new_number || ""
+                          code.diff-line-code role="cell"
+                            - prefix = line.kind == :added ? "+ " : line.kind == :removed ? "- " : "  "
+                            = "#{prefix}#{line.text}"
+                  - else
+                    p.muted Markdown本文の差分はありません。
+          - else
+            p.muted Markdownファイルの行単位diffはありません。
+        section.diff-section-card#html-rendered-diff
+          .diff-section-heading
+            h3 HTML差分
+            span.diff-count = html_diff_count
+          - if @rendered_html_diff&.message.present?
+            p.muted = @rendered_html_diff.message
+          - elsif @rendered_html_diff&.lines&.any?
+            .markdown-line-diff-table role="table" aria-label="HTML diff"
+              - @rendered_html_diff.lines.each do |line|
+                .markdown-line-diff-row class="is-#{line.kind}" role="row"
+                  span.diff-line-number role="cell" = line.old_number || ""
+                  span.diff-line-number role="cell" = line.new_number || ""
+                  code.diff-line-code role="cell"
+                    - prefix = line.kind == :added ? "+ " : line.kind == :removed ? "- " : "  "
+                    = "#{prefix}#{line.text}"
+          - else
+            p.muted レンダリング後HTML本文の差分はありません。
+        section.diff-section-card#html-table-cell-diff
+          .diff-section-heading
+            h3 表セル差分
+            span.diff-count = table_diff_count
+          - if table_diffs.any?
+            .rendered-table-diff-list
+              - table_diffs.each do |table_diff|
+                - changed_cells = table_diff.rows.sum { |row| (row.kind == :context ? 0 : 1) + row.cells.count { |cell| cell.kind != :context } }
+                details.rendered-table-diff open=changed_cells.positive?
+                  summary
+                    strong = "表 #{table_diff.index}"
+                    span.muted = " / #{table_diff.status}"
+                    span.diff-count = changed_cells
+                  - if table_diff.message.present?
+                    p.muted = table_diff.message
+                  - elsif table_diff.rows.any?
+                    .rendered-table-diff-scroll
+                      table.rendered-table-diff-table
+                        tbody
+                          - table_diff.rows.each_with_index do |row, row_index|
+                            tr class="is-#{row.kind}"
+                              th = row_index + 1
+                              - row.cells.each do |cell|
+                                td class="is-#{cell.kind}"
+                                  - if cell.kind == :changed
+                                    del = cell.old_text
+                                    ins = cell.new_text
+                                  - elsif cell.kind == :removed
+                                    del = cell.old_text
+                                  - else
+                                    = cell.new_text.presence || cell.old_text
+          - else
+            p.muted 変更された表セルはありません。
   - else
     p.muted 前版との差分はありません。
 
