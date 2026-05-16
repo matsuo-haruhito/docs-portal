@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>docs-portal Markdown Preview / Diff Viewer Mock</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --surface: #fff;
+      --surface-soft: #fbfcfd;
+      --line: #d8dee6;
+      --line-soft: #e9edf2;
+      --text: #17202a;
+      --muted: #647184;
+      --brand: #3157d5;
+      --brand-soft: #eef2ff;
+      --green-bg: #eaf8ee;
+      --green-text: #116329;
+      --red-bg: #fff0f0;
+      --red-text: #a40e26;
+      --yellow-bg: #fff8e5;
+      --yellow-line: #f0d88b;
+      --shadow: 0 10px 30px rgba(20, 30, 50, .08);
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.6; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 260px 1fr; }
+    .sidebar { background: #111827; color: #d7dce6; padding: 18px 14px; display: flex; flex-direction: column; gap: 18px; }
+    .logo { display: flex; gap: 10px; align-items: center; padding: 8px 10px 16px; border-bottom: 1px solid rgba(255,255,255,.1); }
+    .logo-mark { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, #5c7cfa, #22c55e); }
+    .logo-title { font-weight: 700; }
+    .logo-subtitle { font-size: 12px; color: #9aa3b2; }
+    .side-title { padding: 0 10px; font-size: 11px; color: #8d98aa; letter-spacing: .08em; text-transform: uppercase; }
+    .doc-list { display: grid; gap: 4px; }
+    .doc-item { display: grid; grid-template-columns: 20px 1fr auto; gap: 8px; align-items: center; padding: 9px 10px; color: #d7dce6; text-decoration: none; border-radius: 10px; font-size: 13px; }
+    .doc-item.active, .doc-item:hover { background: rgba(255,255,255,.09); }
+    .doc-status { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,.1); color: #aab4c4; }
+    .doc-status.changed { color: #bbf7d0; background: rgba(34,197,94,.16); }
+    .doc-status.added { color: #bfdbfe; background: rgba(59,130,246,.16); }
+    .doc-status.deleted { color: #fecaca; background: rgba(239,68,68,.16); }
+    .sidebar-footer { margin-top: auto; padding: 12px 10px; border-radius: 12px; background: rgba(255,255,255,.07); color: #bac3d2; font-size: 12px; }
+    .main { min-width: 0; }
+    .topbar { height: 64px; background: rgba(255,255,255,.92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line-soft); display: flex; align-items: center; justify-content: space-between; padding: 0 22px; position: sticky; top: 0; z-index: 5; }
+    .breadcrumb { color: var(--muted); font-size: 13px; }
+    .file-title { font-weight: 700; margin-top: 2px; }
+    .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .btn { border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 9px; min-height: 34px; padding: 7px 12px; font: inherit; font-size: 13px; }
+    .btn.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .btn.soft { background: var(--brand-soft); border-color: #d7ddff; color: #2746b2; }
+    .save-state { display: inline-flex; gap: 6px; align-items: center; color: var(--green-text); background: var(--green-bg); border: 1px solid #bde8c8; padding: 5px 9px; border-radius: 999px; font-size: 12px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .workspace { padding: 20px 22px 28px; display: grid; gap: 16px; }
+    .summary-grid { display: grid; grid-template-columns: 1.7fr 1fr 1fr; gap: 14px; }
+    .card { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .card-pad { padding: 16px; }
+    .card-title { font-size: 14px; font-weight: 700; margin: 0 0 12px; }
+    .version-flow { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    .version-pill { flex: 1; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--surface-soft); }
+    .version-label { font-size: 12px; color: var(--muted); }
+    .version-name { font-weight: 700; }
+    .arrow { color: #8893a3; font-size: 22px; }
+    .metric-row { display: flex; gap: 8px; }
+    .metric { flex: 1; padding: 9px 10px; border-radius: 12px; border: 1px solid var(--line-soft); background: var(--surface-soft); }
+    .metric-value { font-size: 22px; font-weight: 800; line-height: 1; }
+    .metric-label { font-size: 12px; color: var(--muted); margin-top: 5px; }
+    .notice { background: var(--yellow-bg); border: 1px solid var(--yellow-line); color: #6b5200; border-radius: 12px; padding: 12px 14px; font-size: 13px; }
+    .card-header { padding: 14px 16px; border-bottom: 1px solid var(--line-soft); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .tabs, .mini-toolbar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .tab { border: 1px solid var(--line); background: var(--surface-soft); border-radius: 999px; padding: 7px 12px; font-size: 13px; color: var(--muted); }
+    .tab.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .mini-toolbar { border-top: 1px solid var(--line-soft); padding-top: 12px; margin-top: 12px; }
+    .tool { font-size: 12px; padding: 5px 9px; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+    .editor-body { display: grid; grid-template-columns: 1fr 1fr; min-height: 440px; }
+    .pane + .pane { border-left: 1px solid var(--line-soft); }
+    .pane-header { height: 42px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line-soft); padding: 0 14px; color: var(--muted); font-size: 12px; background: var(--surface-soft); }
+    .markdown-editor { width: 100%; min-height: 398px; border: 0; outline: none; resize: none; padding: 18px 20px; font-family: var(--mono); font-size: 13px; line-height: 1.75; color: #1f2937; background: #fbfcff; }
+    .preview { padding: 20px 24px 28px; background: #fff; min-height: 398px; overflow: auto; }
+    .preview h1 { font-size: 26px; margin: 0 0 16px; border-bottom: 1px solid var(--line-soft); padding-bottom: 10px; }
+    .preview h2 { font-size: 19px; margin: 24px 0 8px; }
+    .preview code { background: #f1f5f9; padding: 2px 5px; border-radius: 5px; font-family: var(--mono); font-size: .93em; }
+    .preview table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+    .preview th, .preview td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; }
+    .preview th { background: #f8fafc; }
+    .broken-link { color: var(--red-text); text-decoration: underline wavy; }
+    .diff-layout { display: grid; grid-template-columns: 280px 1fr; min-height: 430px; }
+    .file-list { border-right: 1px solid var(--line-soft); background: var(--surface-soft); padding: 10px; }
+    .file-row { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 8px; padding: 10px 9px; border-radius: 10px; font-size: 13px; }
+    .file-row.active { background: #fff; box-shadow: 0 3px 12px rgba(20,30,50,.06); }
+    .badge { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 7px; font-size: 11px; font-weight: 700; }
+    .badge.m { background: var(--yellow-bg); color: #7a5a00; }
+    .badge.a { background: var(--green-bg); color: var(--green-text); }
+    .badge.d { background: var(--red-bg); color: var(--red-text); }
+    .numstat { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+    .diff-toolbar { height: 48px; padding: 0 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line-soft); }
+    .diff-view { font-family: var(--mono); font-size: 12.5px; line-height: 1.7; overflow: auto; background: #fff; }
+    .diff-line { display: grid; grid-template-columns: 46px 46px 1fr; min-height: 25px; }
+    .diff-line span { padding: 2px 8px; }
+    .ln { color: #8b949e; background: #f6f8fa; border-right: 1px solid #d0d7de; text-align: right; user-select: none; }
+    .code { white-space: pre; overflow: visible; }
+    .hunk .code, .hunk .ln { background: #ddf4ff; color: #0969da; }
+    .add .code, .add .ln { background: #e6ffec; }
+    .del .code, .del .ln { background: #ffebe9; }
+    .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .check-list { display: grid; gap: 8px; }
+    .check-item { display: flex; justify-content: space-between; border-bottom: 1px solid var(--line-soft); padding-bottom: 8px; font-size: 13px; }
+    .status-ok { color: var(--green-text); font-weight: 700; }
+    .status-warn { color: #8a6100; font-weight: 700; }
+    .cheatsheet { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .cheatsheet code { background: #f1f5f9; border: 1px solid var(--line-soft); padding: 8px 10px; border-radius: 9px; font-family: var(--mono); font-size: 12px; }
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .summary-grid, .editor-body, .diff-layout, .bottom-grid { grid-template-columns: 1fr; }
+      .pane + .pane, .file-list { border-left: 0; border-right: 0; border-top: 1px solid var(--line-soft); }
+      .topbar { height: auto; align-items: flex-start; gap: 12px; padding: 14px; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo"><div class="logo-mark"></div><div><div class="logo-title">docs-portal</div><div class="logo-subtitle">Markdown editor mock</div></div></div>
+      <div><div class="side-title">Documents</div><nav class="doc-list" aria-label="documents"><a class="doc-item active" href="#"><span>📝</span><span>要件定義書.md</span><span class="doc-status changed">M</span></a><a class="doc-item" href="#"><span>📄</span><span>機能一覧.md</span><span class="doc-status changed">M</span></a><a class="doc-item" href="#"><span>📘</span><span>用語集.md</span><span class="doc-status changed">M</span></a><a class="doc-item" href="#"><span>✨</span><span>テスト観点メモ.md</span><span class="doc-status added">A</span></a><a class="doc-item" href="#"><span>🗑</span><span>旧見積メモ.md</span><span class="doc-status deleted">D</span></a></nav></div>
+      <div><div class="side-title">Views</div><nav class="doc-list" aria-label="views"><a class="doc-item active" href="#"><span>✍️</span><span>編集・プレビュー</span><span></span></a><a class="doc-item" href="#"><span>🧾</span><span>版差分</span><span></span></a><a class="doc-item" href="#"><span>✅</span><span>チェック結果</span><span></span></a></nav></div>
+      <div class="sidebar-footer"><strong>Mock note</strong><br>HTML 単体モックです。ボタンは見た目確認用で、JS 動作は未実装です。</div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><div><div class="breadcrumb">案件A / 外部設計書 / Markdown Preview</div><div class="file-title">要件定義書.md</div></div><div class="actions"><span class="save-state"><span class="dot"></span>保存済み</span><button class="btn">Markdownの書き方</button><button class="btn soft">前版との差分</button><button class="btn primary">差分を確認して保存</button></div></header>
+      <section class="workspace">
+        <div class="summary-grid"><section class="card card-pad"><div class="card-title">比較対象</div><div class="version-flow"><div class="version-pill"><div class="version-label">旧版</div><div class="version-name">2026-04-24 提出済み</div></div><div class="arrow">→</div><div class="version-pill"><div class="version-label">新版</div><div class="version-name">2026-04-26 編集中</div></div></div></section><section class="card card-pad"><div class="card-title">変更サマリ</div><div class="metric-row"><div class="metric"><div class="metric-value">3</div><div class="metric-label">変更</div></div><div class="metric"><div class="metric-value">1</div><div class="metric-label">追加</div></div><div class="metric"><div class="metric-value">1</div><div class="metric-label">削除</div></div></div></section><section class="card card-pad"><div class="card-title">プレビュー警告</div><div class="notice">未解決リンク 1件、画像欠落 1件があります。本文は表示できます。</div></section></div>
+        <section class="card"><div class="card-header"><div><div class="card-title">Markdown Editor / HTML Preview</div><div class="tabs"><span class="tab">編集</span><span class="tab">プレビュー</span><span class="tab active">分割</span><span class="tab">差分</span></div><div class="mini-toolbar"><span class="tool"><strong>B</strong></span><span class="tool"><em>I</em></span><span class="tool">H</span><span class="tool">Link</span><span class="tool">Image</span><span class="tool">Code</span><span class="tool">Table</span></div></div><div class="actions"><button class="btn">旧版を開く</button><button class="btn">新版を開く</button></div></div><div class="editor-body"><section class="pane"><div class="pane-header"><span>Markdown</span><span>行 1-22</span></div><textarea class="markdown-editor" spellcheck="false"># 要件定義書
+
+## 概要
+この文書は docs-portal における Markdown 閲覧・編集・差分確認の要件をまとめます。
+
+## 画面要件
+- ブラウザ上で Markdown を編集できる
+- HTML プレビューを即時確認できる
+- 保存前に前版との差分を確認できる
+- 非エンジニアにも分かる表示にする
+
+## 追加方針
+旧仕様では Markdown ファイルをダウンロードして編集していました。
+新仕様ではブラウザ上で編集し、プレビューと差分を確認してから保存します。
+
+## 注意
+[古い仕様書](./old-spec.md) はリンク切れの可能性があります。
+
+| 項目 | 方針 |
+|---|---|
+| Editor | textarea から開始 |
+| Preview | HTML sanitize 後に表示 |
+| Diff | GitHub 風に表示 |</textarea></section><section class="pane"><div class="pane-header"><span>HTML Preview</span><span>sanitize 済み</span></div><article class="preview"><h1>要件定義書</h1><h2>概要</h2><p>この文書は docs-portal における Markdown 閲覧・編集・差分確認の要件をまとめます。</p><h2>画面要件</h2><ul><li>ブラウザ上で Markdown を編集できる</li><li>HTML プレビューを即時確認できる</li><li>保存前に前版との差分を確認できる</li><li>非エンジニアにも分かる表示にする</li></ul><h2>追加方針</h2><p>旧仕様では Markdown ファイルをダウンロードして編集していました。<br>新仕様ではブラウザ上で編集し、プレビューと差分を確認してから保存します。</p><h2>注意</h2><p><a class="broken-link" href="#">古い仕様書</a> はリンク切れの可能性があります。</p><table><thead><tr><th>項目</th><th>方針</th></tr></thead><tbody><tr><td>Editor</td><td><code>textarea</code> から開始</td></tr><tr><td>Preview</td><td>HTML sanitize 後に表示</td></tr><tr><td>Diff</td><td>GitHub 風に表示</td></tr></tbody></table></article></section></div></section>
+        <section class="card"><div class="card-header"><div><div class="card-title">Version Diff Viewer</div><div class="tabs"><span class="tab active">Markdown差分</span><span class="tab">左右比較</span><span class="tab">HTML差分</span><span class="tab">差分のみ</span><span class="tab">全文</span></div></div><div class="actions"><button class="btn">コメントを追加</button><button class="btn primary">この内容で保存</button></div></div><div class="diff-layout"><aside class="file-list"><div class="file-row active"><span class="badge m">M</span><span>要件定義書.md</span><span class="numstat">+12 -4</span></div><div class="file-row"><span class="badge m">M</span><span>機能一覧.md</span><span class="numstat">+8 -2</span></div><div class="file-row"><span class="badge m">M</span><span>用語集.md</span><span class="numstat">+3 -1</span></div><div class="file-row"><span class="badge a">A</span><span>テスト観点メモ.md</span><span class="numstat">+88</span></div><div class="file-row"><span class="badge d">D</span><span>旧見積メモ.md</span><span class="numstat">-41</span></div></aside><section><div class="diff-toolbar"><strong>要件定義書.md</strong><span class="numstat">+12 -4</span></div><div class="diff-view" aria-label="unified diff"><div class="diff-line hunk"><span class="ln">18</span><span class="ln">18</span><span class="code">@@ 画面要件 @@</span></div><div class="diff-line"><span class="ln">19</span><span class="ln">19</span><span class="code"> - ブラウザ上で Markdown を編集できる</span></div><div class="diff-line"><span class="ln">20</span><span class="ln">20</span><span class="code"> - HTML プレビューを即時確認できる</span></div><div class="diff-line del"><span class="ln">21</span><span class="ln"></span><span class="code">- - 保存後に変更内容を確認できる</span></div><div class="diff-line add"><span class="ln"></span><span class="ln">21</span><span class="code">+ - 保存前に前版との差分を確認できる</span></div><div class="diff-line add"><span class="ln"></span><span class="ln">22</span><span class="code">+ - 非エンジニアにも分かる表示にする</span></div><div class="diff-line hunk"><span class="ln">28</span><span class="ln">30</span><span class="code">@@ 追加方針 @@</span></div><div class="diff-line del"><span class="ln">29</span><span class="ln"></span><span class="code">- 旧仕様では Markdown ファイルをダウンロードして編集します。</span></div><div class="diff-line add"><span class="ln"></span><span class="ln">31</span><span class="code">+ 旧仕様では Markdown ファイルをダウンロードして編集していました。</span></div><div class="diff-line add"><span class="ln"></span><span class="ln">32</span><span class="code">+ 新仕様ではブラウザ上で編集し、プレビューと差分を確認してから保存します。</span></div></div></section></div></section>
+        <div class="bottom-grid"><section class="card card-pad"><div class="card-title">プレビュー品質チェック</div><div class="check-list"><div class="check-item"><span>Markdown 構文</span><span class="status-ok">OK</span></div><div class="check-item"><span>HTML sanitize</span><span class="status-ok">OK</span></div><div class="check-item"><span>未解決リンク</span><span class="status-warn">1件</span></div><div class="check-item"><span>画像欠落</span><span class="status-warn">1件</span></div></div></section><section class="card card-pad"><div class="card-title">Markdown チートシート</div><div class="cheatsheet"><code># 見出し1</code><code>**太字**</code><code>[リンク](url)</code><code>![画像](path)</code><code>- 箇条書き</code><code>```code```</code></div></section></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
