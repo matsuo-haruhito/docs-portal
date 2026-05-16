@@ -268,6 +268,14 @@ module ApplicationHelper
     count.positive? ? "警告 #{count}件" : nil
   end
 
+  def external_folder_sync_webhook_sync_run_link_title(_event)
+    "同期履歴の該当Runへ移動"
+  end
+
+  def external_folder_sync_webhook_sync_run_link_aria_label(event)
+    "同期履歴の該当Run #{external_folder_sync_webhook_sync_run_label(event)} へ移動"
+  end
+
   def external_folder_sync_webhook_sync_run_present?(event)
     external_folder_sync_webhook_sync_run_summary(event).present?
   end
