@@ -17,6 +17,10 @@ class DocumentVersionsController < BaseController
       previous_version: @previous_version,
       file_rows: @version_file_diff_summary.fetch(:files)
     ).call
+    @rendered_html_diff = RenderedHtmlDiffBuilder.new(
+      current_version: @version,
+      previous_version: @previous_version
+    ).call
     visible_comments = @version.document_review_comments.visible_to(current_user)
     @question_threads = visible_comments.where(internal_only: false, comment_type: :question).roots.includes(:author, :resolved_by, replies: [:author, :resolved_by]).order(:created_at, :id)
     @review_comments = visible_comments.where(internal_only: true).includes(:author, :resolved_by).order(:created_at, :id)
