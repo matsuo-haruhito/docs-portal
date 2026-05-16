@@ -138,7 +138,7 @@ h1 外部フォルダ同期詳細
         th 警告承認
     tbody
       - @runs.each do |run|
-        tr
+        tr id=run.public_id
           td = run.started_at ? l(run.started_at) : "-"
           td
             code = run.public_id
