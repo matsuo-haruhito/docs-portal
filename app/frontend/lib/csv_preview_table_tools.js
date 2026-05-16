@@ -49,7 +49,18 @@ function injectCsvPreviewStyle() {
       font-weight: 700;
     }
     [data-csv-preview-tools].has-sticky-header [data-csv-preview-table] tbody tr:first-child th {
+      z-index: 5;
+    }
+    [data-csv-preview-tools].has-sticky-column [data-csv-preview-table] tbody tr > :first-child {
+      position: sticky;
+      left: 0;
       z-index: 4;
+      background: var(--doc-surface, #fff);
+      box-shadow: 1px 0 0 var(--doc-border, #e5e7eb);
+    }
+    [data-csv-preview-tools].has-sticky-header.has-sticky-column [data-csv-preview-table] tbody tr:first-child > :first-child {
+      z-index: 6;
+      background: var(--doc-bg-soft, #f8fafc);
     }
     [data-csv-preview-table].has-resized-columns {
       table-layout: fixed;
@@ -229,11 +240,12 @@ function setupCsvPreviewTable(container) {
   const clearButton = container.querySelector("[data-csv-preview-search-clear]")
   const copyButton = container.querySelector("[data-csv-preview-copy]")
   const stickyHeaderButton = container.querySelector("[data-csv-preview-sticky-header]")
+  const stickyColumnButton = container.querySelector("[data-csv-preview-sticky-column]")
   const resetColumnsButton = container.querySelector("[data-csv-preview-reset-columns]")
   const count = container.querySelector("[data-csv-preview-count]")
   const status = container.querySelector("[data-csv-preview-status]")
   const table = container.querySelector("[data-csv-preview-table]")
-  if (!input || !clearButton || !copyButton || !stickyHeaderButton || !resetColumnsButton || !count || !status || !table) return
+  if (!input || !clearButton || !copyButton || !stickyHeaderButton || !stickyColumnButton || !resetColumnsButton || !count || !status || !table) return
 
   const rows = Array.from(table.querySelectorAll("tbody tr"))
 
@@ -255,6 +267,12 @@ function setupCsvPreviewTable(container) {
     container.classList.toggle("has-sticky-header", enabled)
     stickyHeaderButton.setAttribute("aria-pressed", String(enabled))
     stickyHeaderButton.textContent = enabled ? "先頭行固定中" : "先頭行固定"
+  }
+
+  const updateStickyColumn = (enabled) => {
+    container.classList.toggle("has-sticky-column", enabled)
+    stickyColumnButton.setAttribute("aria-pressed", String(enabled))
+    stickyColumnButton.textContent = enabled ? "先頭列固定中" : "先頭列固定"
   }
 
   input.addEventListener("input", updateSearch)
@@ -282,6 +300,10 @@ function setupCsvPreviewTable(container) {
     updateStickyHeader(!container.classList.contains("has-sticky-header"))
   })
 
+  stickyColumnButton.addEventListener("click", () => {
+    updateStickyColumn(!container.classList.contains("has-sticky-column"))
+  })
+
   resetColumnsButton.addEventListener("click", () => {
     resetColumnWidths(container, table)
     status.textContent = "列幅をリセットしました"
@@ -293,6 +315,7 @@ function setupCsvPreviewTable(container) {
   setupColumnResizers(container, table)
   updateSearch()
   updateStickyHeader(true)
+  updateStickyColumn(true)
 }
 
 export function setupCsvPreviewTableTools() {
