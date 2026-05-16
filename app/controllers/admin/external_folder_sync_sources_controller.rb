@@ -73,6 +73,11 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def force_apply
+    unless force_apply_allowed?
+      redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: "先にdry-runで競合・重複警告の内容を確認してください。"
+      return
+    end
+
     run = ExternalFolderSync::Runner.new(
       source: @external_folder_sync_source,
       mode: :apply,
@@ -130,6 +135,17 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
       .order(started_at: :desc, id: :desc)
       .group_by(&:external_folder_sync_source_id)
       .transform_values(&:first)
+  end
+
+  def latest_run
+    @latest_run ||= @external_folder_sync_source.external_folder_sync_runs.order(started_at: :desc, id: :desc).first
+  end
+
+  def force_apply_allowed?
+    return false unless latest_run&.dry_run?
+
+    latest_run.summary_json&.fetch("conflict_warnings_count", 0).to_i.positive? &&
+      latest_run.summary_json&.fetch("conflict_warnings_approval", nil).blank?
   end
 
   def normalized_external_folder_sync_source_params
