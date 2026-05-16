@@ -14,7 +14,7 @@ p.muted
     |  
     = document_version_label(@version)
   p.muted
-    | Markdown本文の閲覧、HTMLプレビュー、前版との差分確認を同じ画面から行えます。
+    | Markdown本文の閲覧、HTMLプレビュー、比較対象版との差分確認を同じ画面から行えます。
   p.actions
     - if @version.rendered_site_available?
       = link_to "HTML本文を開く", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path), class: "button"
@@ -29,14 +29,22 @@ p.muted
     h2 比較対象
     .version-flow
       .version-pill
-        span.version-label 旧版
-        strong = @previous_version ? document_version_label(@previous_version) : "比較対象なし"
-        small.muted = @previous_version&.published_at ? l(@previous_version.published_at, format: :short) : "-"
+        span.version-label 比較対象
+        strong = @compare_version ? document_version_label(@compare_version) : "比較対象なし"
+        small.muted = @compare_version&.published_at ? l(@compare_version.published_at, format: :short) : "-"
       .version-arrow →
       .version-pill
-        span.version-label 新版
+        span.version-label 表示中
         strong = document_version_label(@version)
         small.muted = @version.published_at ? l(@version.published_at, format: :short) : "-"
+    - if @compare_version_options.any?
+      = form_with url: document_version_path(@version), method: :get, local: true, class: "compare-version-form" do |form|
+        = form.label :compare_version_id, "比較対象版を選択"
+        = form.select :compare_version_id, @compare_version_options.map { |version| ["#{document_version_label(version)} / #{version.published_at ? l(version.published_at, format: :short) : '-'}", version.public_id] }, { selected: @compare_version&.public_id }, onchange: "this.form.submit()"
+        noscript
+          = form.submit "比較する", class: "button secondary"
+    - else
+      p.muted 比較できる他の版はありません。
   .card.preview-summary-card
     h2 変更サマリ
     .diff-metrics
@@ -92,9 +100,9 @@ p.muted
   .markdown-workspace__header
     div
       h2 版差分ビュー
-      p.muted 前版と比較した添付・元ファイルの追加、変更、削除と、Markdown本文・HTML本文の差分を確認できます。
-    - if @previous_version
-      = link_to "旧版を開く", document_version_path(@previous_version), class: "button secondary"
+      p.muted 比較対象版と表示中の版について、添付・元ファイルの追加、変更、削除と、Markdown本文・HTML本文の差分を確認できます。
+    - if @compare_version
+      = link_to "比較対象版を開く", document_version_path(@compare_version), class: "button secondary"
   - diff_files = @version_file_diff_summary.fetch(:files)
   - html_diff_count = @rendered_html_diff&.lines&.count { |line| line.kind != :context && line.kind != :gap }.to_i
   - table_diffs = @rendered_html_diff&.table_diffs || []
@@ -202,7 +210,7 @@ p.muted
           - else
             p.muted 変更された表セルはありません。
   - else
-    p.muted 前版との差分はありません。
+    p.muted 比較対象版との差分はありません。
 
 table
   tbody
