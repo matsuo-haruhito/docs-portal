@@ -2,6 +2,7 @@ require "base64"
 require "json"
 require "net/http"
 require "openssl"
+require "set"
 require "uri"
 
 module ExternalFolderSync
@@ -40,9 +41,13 @@ module ExternalFolderSync
       :export_mime_type
     )
 
+    ChangeSet = Data.define(:entries, :removed_ids, :new_cursor, :full_scan_required)
+
     def initialize(source:)
       @source = source
       @access_token = nil
+      @folder_name = nil
+      @metadata_cache = {}
     end
 
     def self.extract_folder_id(url)
@@ -62,8 +67,63 @@ module ExternalFolderSync
     end
 
     def list_files
-      folder_name = folder_metadata.fetch("name", source.external_folder_id)
-      walk_folder(source.external_folder_id, folder_name)
+      walk_folder(source.external_folder_id, source_folder_name)
+    end
+
+    def list_file_changes(page_token)
+      entries = []
+      removed_ids = Set.new
+      full_scan_required = false
+      new_cursor = nil
+      next_page_token = page_token
+
+      loop do
+        body = request_json("/changes", query: {
+          pageToken: next_page_token,
+          pageSize: 1000,
+          spaces: "drive",
+          supportsAllDrives: true,
+          includeItemsFromAllDrives: true,
+          fields: "newStartPageToken,nextPageToken,changes(fileId,removed,file(id,name,mimeType,size,md5Checksum,modifiedTime,trashed,webViewLink,parents))"
+        }.compact)
+
+        body.fetch("changes", []).each do |change|
+          file_id = change["fileId"]
+          if change["removed"] == true || change["file"].blank?
+            removed_ids << file_id if file_id.present?
+            next
+          end
+
+          file = change.fetch("file")
+          if file["trashed"] == true
+            removed_ids << file.fetch("id")
+            next
+          end
+
+          path = path_within_source_folder(file)
+          if path.blank?
+            removed_ids << file.fetch("id")
+            next
+          end
+
+          if file.fetch("mimeType") == FOLDER_MIME_TYPE
+            full_scan_required = true
+            next
+          end
+
+          entries << entry_for(file, path)
+        end
+
+        next_page_token = body["nextPageToken"]
+        new_cursor = body["newStartPageToken"] if body["newStartPageToken"].present?
+        break if next_page_token.blank?
+      end
+
+      ChangeSet.new(entries:, removed_ids: removed_ids.to_a, new_cursor:, full_scan_required:)
+    rescue Error => e
+      raise unless invalid_change_cursor_error?(e)
+
+      ChangeSet.new(entries: [], removed_ids: [], new_cursor: nil, full_scan_required: true)
     end
 
     def download_entry(entry)
@@ -129,10 +189,33 @@ module ExternalFolderSync
     end
 
     def get_file(file_id, fields:)
-      request_json("/files/#{escape(file_id)}", query: {
+      @metadata_cache[[file_id, fields]] ||= request_json("/files/#{escape(file_id)}", query: {
         fields:,
         supportsAllDrives: true
       })
+    end
+
+    def source_folder_name
+      @folder_name ||= folder_metadata.fetch("name", source.external_folder_id)
+    end
+
+    def path_within_source_folder(file)
+      return [source_folder_name, file.fetch("name")].join("/") if file.fetch("parents", []).include?(source.external_folder_id)
+
+      segments = [file.fetch("name")]
+      parent_id = file.fetch("parents", []).first
+      visited_ids = Set.new([file.fetch("id")])
+
+      while parent_id.present? && !visited_ids.include?(parent_id)
+        return [source_folder_name, *segments.reverse].join("/") if parent_id == source.external_folder_id
+
+        visited_ids << parent_id
+        parent = get_file(parent_id, fields: "id,name,mimeType,trashed,parents")
+        return if parent["trashed"] == true || parent["mimeType"] != FOLDER_MIME_TYPE
+
+        segments << parent.fetch("name")
+        parent_id = parent.fetch("parents", []).first
+      end
     end
 
     def entry_for(item, path)
@@ -199,6 +282,10 @@ module ExternalFolderSync
 
     def retryable_response?(response)
       response.code.to_i.in?([429, 500, 502, 503, 504])
+    end
+
+    def invalid_change_cursor_error?(error)
+      error.message.include?("Google Drive request failed (410)") || error.message.match?(/page token|pageToken|startPageToken/i)
     end
 
     def parse_response_body(response)
