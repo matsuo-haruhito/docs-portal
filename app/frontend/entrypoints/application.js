@@ -6,6 +6,7 @@ const STORAGE_KEY = "docsPortal.sidebar"
 const DEFAULT_WIDTH = 360
 const MIN_WIDTH = 260
 const MAX_WIDTH = 720
+const TABLE_WIDTH_STORAGE_PREFIX = "docsPortal.previewTableWidth"
 
 function clampWidth(value) {
   return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, value))
@@ -178,14 +179,201 @@ function setupDocumentTreeNavigation() {
   }, true)
 }
 
+function tableWidthStorageKey(frame, index) {
+  const url = frame.getAttribute("src") || frame.dataset.tableWidthSrc || window.location.pathname
+  return `${TABLE_WIDTH_STORAGE_PREFIX}:${url}:table:${index}`
+}
+
+function readTableWidth(frame, index) {
+  const value = Number(window.localStorage.getItem(tableWidthStorageKey(frame, index)))
+  return Number.isFinite(value) && value >= 80 && value <= 220 ? value : 100
+}
+
+function writeTableWidth(frame, index, value) {
+  window.localStorage.setItem(tableWidthStorageKey(frame, index), String(value))
+}
+
+function injectTableWidthStyle(frameDocument) {
+  if (frameDocument.querySelector("style[data-docs-portal-table-width]")) return
+
+  const style = frameDocument.createElement("style")
+  style.dataset.docsPortalTableWidth = "true"
+  style.textContent = `
+    .portal-table-width-frame {
+      margin: 1rem 0;
+      border: 1px solid var(--doc-border, #e5e7eb);
+      border-radius: 12px;
+      background: var(--doc-surface, #fff);
+      overflow: hidden;
+    }
+    .portal-table-width-toolbar {
+      display: flex;
+      gap: .55rem;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      padding: .55rem .75rem;
+      border-bottom: 1px solid var(--doc-border-soft, #eef2f7);
+      background: var(--doc-bg-soft, #f8fafc);
+      color: var(--doc-text-muted, #64748b);
+      font-size: .82rem;
+    }
+    .portal-table-width-toolbar label {
+      display: inline-flex;
+      gap: .45rem;
+      align-items: center;
+      margin: 0;
+      white-space: nowrap;
+    }
+    .portal-table-width-toolbar input[type="range"] {
+      width: 160px;
+      accent-color: var(--doc-primary, #2563eb);
+    }
+    .portal-table-width-actions {
+      display: inline-flex;
+      gap: .35rem;
+      align-items: center;
+    }
+    .portal-table-width-button {
+      border: 1px solid var(--doc-primary-border, #bfdbfe);
+      border-radius: 999px;
+      background: var(--doc-surface, #fff);
+      color: var(--doc-primary, #2563eb);
+      cursor: pointer;
+      font: inherit;
+      font-size: .78rem;
+      padding: .24rem .58rem;
+    }
+    .portal-table-width-button:hover,
+    .portal-table-width-button:focus {
+      border-color: var(--doc-primary, #2563eb);
+      outline: none;
+    }
+    .portal-table-width-scroll {
+      overflow-x: auto;
+      padding: .65rem;
+    }
+    .portal-table-width-frame table {
+      margin: 0 !important;
+      width: var(--portal-table-width, 100%) !important;
+      min-width: var(--portal-table-width, 100%) !important;
+      max-width: none !important;
+      display: table !important;
+    }
+    @media (max-width: 720px) {
+      .portal-table-width-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .portal-table-width-toolbar input[type="range"] {
+        width: 190px;
+      }
+    }
+  `
+  frameDocument.head?.appendChild(style)
+}
+
+function enhancePreviewTables(frame) {
+  const frameDocument = frame.contentDocument
+  if (!frameDocument?.body) return
+
+  injectTableWidthStyle(frameDocument)
+
+  const tables = Array.from(frameDocument.querySelectorAll(".markdown table, .theme-doc-markdown table, article table"))
+    .filter((table) => !table.closest(".portal-table-width-frame"))
+
+  tables.forEach((table, index) => {
+    const width = readTableWidth(frame, index)
+    const wrapper = frameDocument.createElement("div")
+    wrapper.className = "portal-table-width-frame"
+    wrapper.style.setProperty("--portal-table-width", `${width}%`)
+
+    const toolbar = frameDocument.createElement("div")
+    toolbar.className = "portal-table-width-toolbar"
+
+    const label = frameDocument.createElement("label")
+    label.textContent = "表の幅"
+
+    const range = frameDocument.createElement("input")
+    range.type = "range"
+    range.min = "80"
+    range.max = "220"
+    range.step = "10"
+    range.value = String(width)
+
+    const valueText = frameDocument.createElement("span")
+    valueText.textContent = `${width}%`
+
+    label.appendChild(range)
+    label.appendChild(valueText)
+
+    const actions = frameDocument.createElement("span")
+    actions.className = "portal-table-width-actions"
+
+    const fitButton = frameDocument.createElement("button")
+    fitButton.type = "button"
+    fitButton.className = "portal-table-width-button"
+    fitButton.textContent = "標準"
+
+    const wideButton = frameDocument.createElement("button")
+    wideButton.type = "button"
+    wideButton.className = "portal-table-width-button"
+    wideButton.textContent = "広め"
+
+    actions.appendChild(fitButton)
+    actions.appendChild(wideButton)
+    toolbar.appendChild(label)
+    toolbar.appendChild(actions)
+
+    const scroll = frameDocument.createElement("div")
+    scroll.className = "portal-table-width-scroll"
+
+    table.parentNode.insertBefore(wrapper, table)
+    scroll.appendChild(table)
+    wrapper.appendChild(toolbar)
+    wrapper.appendChild(scroll)
+
+    const applyWidth = (nextWidth) => {
+      wrapper.style.setProperty("--portal-table-width", `${nextWidth}%`)
+      range.value = String(nextWidth)
+      valueText.textContent = `${nextWidth}%`
+      writeTableWidth(frame, index, nextWidth)
+    }
+
+    range.addEventListener("input", () => applyWidth(Number(range.value)))
+    fitButton.addEventListener("click", () => applyWidth(100))
+    wideButton.addEventListener("click", () => applyWidth(160))
+  })
+}
+
+function setupPreviewTableResizers() {
+  document.querySelectorAll("iframe.site-viewer-frame").forEach((frame) => {
+    if (frame.dataset.tableWidthReady === "true") return
+    frame.dataset.tableWidthReady = "true"
+
+    const enhance = () => {
+      try {
+        enhancePreviewTables(frame)
+      } catch (_error) {
+        // Cross-origin fallback: if the preview ever becomes external, keep the viewer usable.
+      }
+    }
+
+    frame.addEventListener("load", enhance)
+    if (frame.contentDocument?.readyState === "complete") enhance()
+  })
+}
+
 setupNavDropdowns()
 setupDocumentTreeNavigation()
 
 document.addEventListener("turbo:load", () => {
   setupSidebars()
+  setupPreviewTableResizers()
   setupTomSelectFields()
 })
 document.addEventListener("turbo:render", () => {
   setupSidebars()
+  setupPreviewTableResizers()
   setupTomSelectFields()
 })
