@@ -166,6 +166,35 @@ module ApplicationHelper
     localized_label("external_folder_sync_runs.mode", value)
   end
 
+  def external_folder_sync_run_safety_label(run)
+    case external_folder_sync_run_safety_state(run)
+    when :not_run then "未実行"
+    when :blocked then "警告あり停止"
+    when :approved then "警告承認済み"
+    when :warning then "警告あり"
+    else "通常"
+    end
+  end
+
+  def external_folder_sync_run_safety_class(run)
+    case external_folder_sync_run_safety_state(run)
+    when :blocked then "status-danger"
+    when :approved, :warning then "status-warning"
+    else "muted"
+    end
+  end
+
+  def external_folder_sync_run_safety_state(run)
+    return :not_run if run.blank?
+
+    summary = run.summary_json || {}
+    return :blocked if summary.fetch("blocked_by_conflict_warnings", false)
+    return :approved if summary.fetch("conflict_warnings_allowed", false)
+    return :warning if summary.fetch("conflict_warnings_count", 0).to_i.positive?
+
+    :normal
+  end
+
   def external_folder_sync_item_status_label(item_or_value)
     value = item_or_value.respond_to?(:sync_status) ? item_or_value.sync_status : item_or_value
     localized_label("external_folder_sync_items.sync_status", value)

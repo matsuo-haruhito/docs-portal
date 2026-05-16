@@ -23,8 +23,6 @@ h1 外部フォルダ同期
   tbody
     - @external_folder_sync_sources.each do |source|
       - latest_run = @latest_runs_by_source_id[source.id]
-      - blocked = latest_run&.summary_json&.fetch("blocked_by_conflict_warnings", false)
-      - allowed = latest_run&.summary_json&.fetch("conflict_warnings_allowed", false)
       - warnings_count = latest_run&.summary_json&.fetch("conflict_warnings_count", nil)
       tr
         td
@@ -41,16 +39,8 @@ h1 外部フォルダ同期
         td = source.enabled? ? "有効" : "無効"
         td = source.last_synced_at ? l(source.last_synced_at) : "-"
         td
-          - if latest_run.blank?
-            span.muted 未実行
-          - elsif blocked
-            span.status-danger 警告あり停止
-          - elsif allowed
-            span.status-warning 警告承認済み
-          - elsif warnings_count.to_i.positive?
-            span.status-warning 警告あり
-          - else
-            span.muted 通常
+          span class=external_folder_sync_run_safety_class(latest_run)
+            = external_folder_sync_run_safety_label(latest_run)
         td = warnings_count || "-"
         td = latest_run&.error_message.presence || source.last_error_message.presence || "-"
         td.actions
