@@ -26,6 +26,14 @@
 - dashboard には、案件数・文書数・保存ショートカット数・保留中申請数などの workspace summary を表示する
 - 権限外文書は bookmark や access log に存在しても表示しない
 
+## Markdown preview / version diff
+
+- 版詳細画面は、本文表示、添付、品質チェック、前版との差分確認へ迷わず移動できる preview hub として扱う
+- 版詳細画面では、閲覧可能な直前の `DocumentVersion` と比較し、添付・元ファイルの追加、変更、削除件数を表示する
+- 差分サマリは、保持済みファイルの `tree_path`、ファイルサイズ、content type、file name を使ったファイル単位の比較から始める
+- Markdown本文の行単位diff、レンダリング後HTML差分、ブラウザ上での編集保存は後続実装とし、既存画面ではその導線を先に用意する
+- HTML viewer shell は、本文 iframe の上に preview toolbar を持ち、版詳細、前版との差分、添付・元ファイルへ戻れるようにする
+
 ## Docusaurus viewer
 
 - `GET /projects/:project_code/site/*site_path` および `GET /document_versions/:public_id/site/*site_path` の HTML 応答は、初期表示では viewer shell を返す

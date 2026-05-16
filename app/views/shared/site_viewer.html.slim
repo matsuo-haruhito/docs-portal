@@ -1,6 +1,7 @@
 - page_title @site_viewer_document.title, @site_viewer_version.version_label
 
 .page-hero.site-viewer-hero
+  p.eyebrow HTML Preview
   h1 = @site_viewer_document.title
   p.muted = site_viewer_meta_lines(project: @site_viewer_project, document: @site_viewer_document, version: @site_viewer_version).join(" / ")
   p.actions
@@ -8,5 +9,17 @@
     = link_to "案件トップ", project_path(@site_viewer_project), class: "button secondary"
     = link_to "版詳細", document_version_path(@site_viewer_version), class: "button secondary"
 
-.site-viewer-shell
+.site-viewer-shell.preview-viewer-shell
+  .preview-viewer-toolbar
+    .preview-viewer-toolbar__title
+      strong HTMLプレビュー
+      span.muted Docusaurus生成HTMLをポータル内で確認しています。
+    .markdown-mode-tabs aria-label="viewer modes"
+      span.is-active プレビュー
+      span 差分
+      span 添付
+      span 品質
+    .actions
+      = link_to "前版との差分", document_version_path(@site_viewer_version, anchor: "version-diff"), class: "button secondary"
+      = link_to "添付・元ファイル", document_version_path(@site_viewer_version, anchor: "version-files"), class: "button secondary"
   iframe.site-viewer-frame src=@site_viewer_iframe_src title="#{@site_viewer_document.title} #{@site_viewer_version.version_label}" loading="lazy"
