@@ -8,6 +8,7 @@ const MIN_WIDTH = 260
 const MAX_WIDTH = 720
 const TABLE_WIDTH_STORAGE_PREFIX = "docsPortal.previewTableWidth"
 const TABLE_COLUMN_WIDTH_STORAGE_PREFIX = "docsPortal.previewTableColumnWidths"
+const TABLE_STICKY_HEADER_STORAGE_PREFIX = "docsPortal.previewTableStickyHeader"
 const MIN_COLUMN_WIDTH = 72
 const MAX_COLUMN_WIDTH = 960
 
@@ -196,6 +197,11 @@ function tableColumnWidthStorageKey(frame, index) {
   return `${TABLE_COLUMN_WIDTH_STORAGE_PREFIX}:${url}:table:${index}`
 }
 
+function tableStickyHeaderStorageKey(frame, index) {
+  const url = frame.getAttribute("src") || frame.dataset.tableWidthSrc || window.location.pathname
+  return `${TABLE_STICKY_HEADER_STORAGE_PREFIX}:${url}:table:${index}`
+}
+
 function readTableWidth(frame, index) {
   const value = Number(window.localStorage.getItem(tableWidthStorageKey(frame, index)))
   return Number.isFinite(value) && value >= 80 && value <= 220 ? value : 100
@@ -218,11 +224,25 @@ function writeTableColumnWidths(frame, index, widths) {
   window.localStorage.setItem(tableColumnWidthStorageKey(frame, index), JSON.stringify(widths))
 }
 
+function readStickyHeader(frame, index) {
+  return window.localStorage.getItem(tableStickyHeaderStorageKey(frame, index)) === "true"
+}
+
+function writeStickyHeader(frame, index, enabled) {
+  window.localStorage.setItem(tableStickyHeaderStorageKey(frame, index), String(enabled))
+}
+
 function resetTableColumnWidths(frame, index, table) {
   window.localStorage.removeItem(tableColumnWidthStorageKey(frame, index))
   const colgroup = table.querySelector("colgroup[data-docs-portal-column-widths]")
   colgroup?.remove()
   table.style.tableLayout = ""
+}
+
+function applyStickyHeader(wrapper, button, enabled) {
+  wrapper.classList.toggle("has-sticky-header", enabled)
+  button.textContent = enabled ? "ヘッダー固定中" : "ヘッダー固定"
+  button.setAttribute("aria-pressed", String(enabled))
 }
 
 function injectTableWidthStyle(frameDocument) {
@@ -278,16 +298,22 @@ function injectTableWidthStyle(frameDocument) {
       padding: .24rem .58rem;
     }
     .portal-table-width-button:hover,
-    .portal-table-width-button:focus {
+    .portal-table-width-button:focus,
+    .portal-table-width-button[aria-pressed="true"] {
       border-color: var(--doc-primary, #2563eb);
       outline: none;
+    }
+    .portal-table-width-button[aria-pressed="true"] {
+      background: var(--doc-primary, #2563eb);
+      color: #fff;
     }
     .portal-table-width-hint {
       color: var(--doc-text-muted, #64748b);
       font-size: .78rem;
     }
     .portal-table-width-scroll {
-      overflow-x: auto;
+      overflow: auto;
+      max-height: min(70vh, 720px);
       padding: .65rem;
     }
     .portal-table-width-frame table {
@@ -301,11 +327,26 @@ function injectTableWidthStyle(frameDocument) {
     .portal-table-width-frame td {
       position: relative;
     }
+    .portal-table-width-frame.has-sticky-header thead th,
+    .portal-table-width-frame.has-sticky-header tr:first-child th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: var(--doc-bg-soft, #f8fafc);
+      box-shadow: 0 1px 0 var(--doc-border, #e5e7eb);
+    }
+    .portal-table-width-frame.has-sticky-header tr:first-child td {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: var(--doc-bg-soft, #f8fafc);
+      box-shadow: 0 1px 0 var(--doc-border, #e5e7eb);
+    }
     .portal-table-column-resizer {
       position: absolute;
       top: 0;
       right: -4px;
-      z-index: 2;
+      z-index: 4;
       width: 8px;
       height: 100%;
       min-height: 28px;
@@ -468,6 +509,7 @@ function enhancePreviewTables(frame) {
 
   tables.forEach((table, index) => {
     const width = readTableWidth(frame, index)
+    const stickyHeader = readStickyHeader(frame, index)
     const wrapper = frameDocument.createElement("div")
     wrapper.className = "portal-table-width-frame"
     wrapper.style.setProperty("--portal-table-width", `${width}%`)
@@ -504,6 +546,10 @@ function enhancePreviewTables(frame) {
     wideButton.className = "portal-table-width-button"
     wideButton.textContent = "広め"
 
+    const stickyHeaderButton = frameDocument.createElement("button")
+    stickyHeaderButton.type = "button"
+    stickyHeaderButton.className = "portal-table-width-button"
+
     const resetColumnsButton = frameDocument.createElement("button")
     resetColumnsButton.type = "button"
     resetColumnsButton.className = "portal-table-width-button"
@@ -515,6 +561,7 @@ function enhancePreviewTables(frame) {
 
     actions.appendChild(fitButton)
     actions.appendChild(wideButton)
+    actions.appendChild(stickyHeaderButton)
     actions.appendChild(resetColumnsButton)
     actions.appendChild(hint)
     toolbar.appendChild(label)
@@ -527,6 +574,7 @@ function enhancePreviewTables(frame) {
     scroll.appendChild(table)
     wrapper.appendChild(toolbar)
     wrapper.appendChild(scroll)
+    applyStickyHeader(wrapper, stickyHeaderButton, stickyHeader)
 
     const applyWidth = (nextWidth) => {
       wrapper.style.setProperty("--portal-table-width", `${nextWidth}%`)
@@ -538,6 +586,11 @@ function enhancePreviewTables(frame) {
     range.addEventListener("input", () => applyWidth(Number(range.value)))
     fitButton.addEventListener("click", () => applyWidth(100))
     wideButton.addEventListener("click", () => applyWidth(160))
+    stickyHeaderButton.addEventListener("click", () => {
+      const enabled = !wrapper.classList.contains("has-sticky-header")
+      applyStickyHeader(wrapper, stickyHeaderButton, enabled)
+      writeStickyHeader(frame, index, enabled)
+    })
     resetColumnsButton.addEventListener("click", () => resetTableColumnWidths(frame, index, table))
 
     setupColumnResizers(frame, table, index, wrapper)
