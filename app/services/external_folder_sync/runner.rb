@@ -25,9 +25,11 @@ module ExternalFolderSync
       batch = build_sync_batch
       @entries_by_id = batch.entries.index_by(&:id)
       result = batch.entries.map { plan_entry(_1) }
-      result.each { apply_entry(_1) } if apply?
       append_missing_items!(batch, result)
       append_sync_strategy!(batch, result)
+      return finish_unsafe_apply!(run, result, batch) if apply? && unsafe_apply?(result)
+
+      result.each { apply_entry(_1) } if apply?
       finish_success!(run, result, batch)
     rescue => e
       finish_failure!(run, e) if defined?(run) && run
@@ -200,6 +202,7 @@ module ExternalFolderSync
 
     def apply_entry(plan)
       return if plan.fetch("action") == "skip"
+      return if plan.fetch("action") == "sync_metadata"
       return record_error_item!(plan) if plan.fetch("action") == "error"
 
       ActiveRecord::Base.transaction do
@@ -355,7 +358,8 @@ module ExternalFolderSync
       visible_result = sync_item_result(result)
       summary = summary_for(visible_result).merge(
         "incremental" => batch.incremental,
-        "full_scan_fallback" => batch.full_scan_fallback
+        "full_scan_fallback" => batch.full_scan_fallback,
+        "blocked_by_conflict_warnings" => false
       )
       run.update!(
         status: summary.fetch("errors_count").positive? ? :partial : :completed,
@@ -371,6 +375,35 @@ module ExternalFolderSync
       )
       source.update!(last_synced_at: Time.current, last_error_message: nil, cursor: batch.cursor) if apply?
       run
+    end
+
+    def finish_unsafe_apply!(run, result, batch)
+      visible_result = sync_item_result(result)
+      summary = summary_for(visible_result).merge(
+        "incremental" => batch.incremental,
+        "full_scan_fallback" => batch.full_scan_fallback,
+        "blocked_by_conflict_warnings" => true
+      )
+      message = "競合・重複警告があるため同期実行を停止しました。dry-run結果を確認してください。"
+      run.update!(
+        status: :failed,
+        finished_at: Time.current,
+        error_message: message,
+        items_scanned_count: visible_result.size,
+        items_created_count: summary.fetch("created_count"),
+        items_updated_count: summary.fetch("updated_count"),
+        items_skipped_count: summary.fetch("skipped_count"),
+        items_deleted_count: summary.fetch("deleted_count"),
+        errors_count: summary.fetch("errors_count"),
+        summary_json: summary,
+        result_json: result
+      )
+      source.update!(last_error_message: message)
+      run
+    end
+
+    def unsafe_apply?(result)
+      sync_item_result(result).any? { Array(_1["conflict_warnings"]).any? }
     end
 
     def safe_start_page_token
