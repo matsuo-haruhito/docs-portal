@@ -209,7 +209,7 @@ module ApplicationHelper
 
   def external_folder_sync_approval_actor_label(run)
     approval = external_folder_sync_approval_summary(run)
-    approval["actor_name"].presence || approval["actor_email"].presence || approval["actor_public_id"].presence || "承認済み"
+    approval["actor_name"].presence || approval["actor_email"].presence || approval["actor_public_id"].presence || I18n.t("labels.external_folder_sync_runs.approval.fallback")
   end
 
   def external_folder_sync_approval_approved_at(run)
