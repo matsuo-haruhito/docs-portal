@@ -7,9 +7,16 @@ const DEFAULT_WIDTH = 360
 const MIN_WIDTH = 260
 const MAX_WIDTH = 720
 const TABLE_WIDTH_STORAGE_PREFIX = "docsPortal.previewTableWidth"
+const TABLE_COLUMN_WIDTH_STORAGE_PREFIX = "docsPortal.previewTableColumnWidths"
+const MIN_COLUMN_WIDTH = 72
+const MAX_COLUMN_WIDTH = 960
 
 function clampWidth(value) {
   return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, value))
+}
+
+function clampColumnWidth(value) {
+  return Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, value))
 }
 
 function readState() {
@@ -184,6 +191,11 @@ function tableWidthStorageKey(frame, index) {
   return `${TABLE_WIDTH_STORAGE_PREFIX}:${url}:table:${index}`
 }
 
+function tableColumnWidthStorageKey(frame, index) {
+  const url = frame.getAttribute("src") || frame.dataset.tableWidthSrc || window.location.pathname
+  return `${TABLE_COLUMN_WIDTH_STORAGE_PREFIX}:${url}:table:${index}`
+}
+
 function readTableWidth(frame, index) {
   const value = Number(window.localStorage.getItem(tableWidthStorageKey(frame, index)))
   return Number.isFinite(value) && value >= 80 && value <= 220 ? value : 100
@@ -191,6 +203,26 @@ function readTableWidth(frame, index) {
 
 function writeTableWidth(frame, index, value) {
   window.localStorage.setItem(tableWidthStorageKey(frame, index), String(value))
+}
+
+function readTableColumnWidths(frame, index) {
+  try {
+    const values = JSON.parse(window.localStorage.getItem(tableColumnWidthStorageKey(frame, index)) || "[]")
+    return Array.isArray(values) ? values.map((value) => Number(value)).filter(Number.isFinite) : []
+  } catch (_error) {
+    return []
+  }
+}
+
+function writeTableColumnWidths(frame, index, widths) {
+  window.localStorage.setItem(tableColumnWidthStorageKey(frame, index), JSON.stringify(widths))
+}
+
+function resetTableColumnWidths(frame, index, table) {
+  window.localStorage.removeItem(tableColumnWidthStorageKey(frame, index))
+  const colgroup = table.querySelector("colgroup[data-docs-portal-column-widths]")
+  colgroup?.remove()
+  table.style.tableLayout = ""
 }
 
 function injectTableWidthStyle(frameDocument) {
@@ -233,6 +265,7 @@ function injectTableWidthStyle(frameDocument) {
       display: inline-flex;
       gap: .35rem;
       align-items: center;
+      flex-wrap: wrap;
     }
     .portal-table-width-button {
       border: 1px solid var(--doc-primary-border, #bfdbfe);
@@ -249,6 +282,10 @@ function injectTableWidthStyle(frameDocument) {
       border-color: var(--doc-primary, #2563eb);
       outline: none;
     }
+    .portal-table-width-hint {
+      color: var(--doc-text-muted, #64748b);
+      font-size: .78rem;
+    }
     .portal-table-width-scroll {
       overflow-x: auto;
       padding: .65rem;
@@ -259,6 +296,46 @@ function injectTableWidthStyle(frameDocument) {
       min-width: var(--portal-table-width, 100%) !important;
       max-width: none !important;
       display: table !important;
+    }
+    .portal-table-width-frame th,
+    .portal-table-width-frame td {
+      position: relative;
+    }
+    .portal-table-column-resizer {
+      position: absolute;
+      top: 0;
+      right: -4px;
+      z-index: 2;
+      width: 8px;
+      height: 100%;
+      min-height: 28px;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      cursor: col-resize;
+    }
+    .portal-table-column-resizer::after {
+      content: "";
+      position: absolute;
+      top: 7px;
+      bottom: 7px;
+      left: 3px;
+      width: 2px;
+      border-radius: 999px;
+      background: transparent;
+    }
+    .portal-table-column-resizer:hover::after,
+    .portal-table-column-resizer:focus::after,
+    .portal-table-column-resizer.is-resizing::after {
+      background: var(--doc-primary, #2563eb);
+      box-shadow: 0 0 0 3px rgb(37 99 235 / 14%);
+    }
+    .portal-table-width-frame.is-column-resizing,
+    .portal-table-width-frame.is-column-resizing * {
+      cursor: col-resize !important;
+      user-select: none;
     }
     @media (max-width: 720px) {
       .portal-table-width-toolbar {
@@ -271,6 +348,113 @@ function injectTableWidthStyle(frameDocument) {
     }
   `
   frameDocument.head?.appendChild(style)
+}
+
+function tableColumnCount(table) {
+  return Math.max(...Array.from(table.rows).map((row) => row.cells.length), 0)
+}
+
+function ensureTableColgroup(frameDocument, table, columnCount) {
+  let colgroup = table.querySelector("colgroup[data-docs-portal-column-widths]")
+  if (!colgroup) {
+    colgroup = frameDocument.createElement("colgroup")
+    colgroup.dataset.docsPortalColumnWidths = "true"
+    table.prepend(colgroup)
+  }
+
+  while (colgroup.children.length < columnCount) {
+    colgroup.appendChild(frameDocument.createElement("col"))
+  }
+  while (colgroup.children.length > columnCount) {
+    colgroup.lastElementChild?.remove()
+  }
+
+  return colgroup
+}
+
+function applyTableColumnWidths(table, colgroup, widths) {
+  table.style.tableLayout = widths.some((width) => Number.isFinite(width)) ? "fixed" : ""
+  Array.from(colgroup.children).forEach((col, columnIndex) => {
+    const width = widths[columnIndex]
+    if (Number.isFinite(width)) {
+      col.style.width = `${clampColumnWidth(width)}px`
+    } else {
+      col.style.width = ""
+    }
+  })
+}
+
+function setupColumnResizers(frame, table, tableIndex, wrapper) {
+  const frameDocument = frame.contentDocument
+  const columnCount = tableColumnCount(table)
+  if (!frameDocument || columnCount <= 1) return
+
+  const colgroup = ensureTableColgroup(frameDocument, table, columnCount)
+  const widths = readTableColumnWidths(frame, tableIndex)
+  applyTableColumnWidths(table, colgroup, widths)
+
+  const headerRow = table.tHead?.rows?.[0] || table.rows[0]
+  if (!headerRow) return
+
+  Array.from(headerRow.cells).forEach((cell, columnIndex) => {
+    if (columnIndex >= columnCount - 1) return
+    if (cell.querySelector(".portal-table-column-resizer")) return
+
+    const resizer = frameDocument.createElement("button")
+    resizer.type = "button"
+    resizer.className = "portal-table-column-resizer"
+    resizer.setAttribute("aria-label", `${columnIndex + 1}列目の幅を調整`)
+    cell.appendChild(resizer)
+
+    let dragging = false
+    let startX = 0
+    let startWidth = 0
+
+    const stopDragging = () => {
+      if (!dragging) return
+      dragging = false
+      wrapper.classList.remove("is-column-resizing")
+      resizer.classList.remove("is-resizing")
+    }
+
+    const resizeColumn = (clientX) => {
+      const nextWidth = clampColumnWidth(startWidth + clientX - startX)
+      widths[columnIndex] = nextWidth
+      applyTableColumnWidths(table, colgroup, widths)
+      writeTableColumnWidths(frame, tableIndex, widths)
+    }
+
+    resizer.addEventListener("pointerdown", (event) => {
+      dragging = true
+      startX = event.clientX
+      startWidth = colgroup.children[columnIndex]?.getBoundingClientRect().width || cell.getBoundingClientRect().width
+      wrapper.classList.add("is-column-resizing")
+      resizer.classList.add("is-resizing")
+      resizer.setPointerCapture(event.pointerId)
+      event.preventDefault()
+      event.stopPropagation()
+    })
+
+    resizer.addEventListener("pointermove", (event) => {
+      if (!dragging) return
+      resizeColumn(event.clientX)
+    })
+
+    resizer.addEventListener("pointerup", stopDragging)
+    resizer.addEventListener("pointercancel", stopDragging)
+
+    resizer.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight", "Home"].includes(event.key)) return
+      event.preventDefault()
+      const currentWidth = colgroup.children[columnIndex]?.getBoundingClientRect().width || cell.getBoundingClientRect().width
+      const step = event.shiftKey ? 40 : 16
+      const nextWidth = event.key === "Home" ? MIN_COLUMN_WIDTH :
+        event.key === "ArrowLeft" ? currentWidth - step : currentWidth + step
+      widths[columnIndex] = clampColumnWidth(nextWidth)
+      applyTableColumnWidths(table, colgroup, widths)
+      writeTableColumnWidths(frame, tableIndex, widths)
+    })
+  })
 }
 
 function enhancePreviewTables(frame) {
@@ -320,8 +504,19 @@ function enhancePreviewTables(frame) {
     wideButton.className = "portal-table-width-button"
     wideButton.textContent = "広め"
 
+    const resetColumnsButton = frameDocument.createElement("button")
+    resetColumnsButton.type = "button"
+    resetColumnsButton.className = "portal-table-width-button"
+    resetColumnsButton.textContent = "列幅リセット"
+
+    const hint = frameDocument.createElement("span")
+    hint.className = "portal-table-width-hint"
+    hint.textContent = "列境界をドラッグできます"
+
     actions.appendChild(fitButton)
     actions.appendChild(wideButton)
+    actions.appendChild(resetColumnsButton)
+    actions.appendChild(hint)
     toolbar.appendChild(label)
     toolbar.appendChild(actions)
 
@@ -343,6 +538,9 @@ function enhancePreviewTables(frame) {
     range.addEventListener("input", () => applyWidth(Number(range.value)))
     fitButton.addEventListener("click", () => applyWidth(100))
     wideButton.addEventListener("click", () => applyWidth(160))
+    resetColumnsButton.addEventListener("click", () => resetTableColumnWidths(frame, index, table))
+
+    setupColumnResizers(frame, table, index, wrapper)
   })
 }
 
