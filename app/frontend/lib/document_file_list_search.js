@@ -30,7 +30,11 @@ function parentRowKey(row) {
   ])
 }
 
-function visibleRowsForQuery(rows, query) {
+function rowMatchesQuery(row, query) {
+  return query.length > 0 && normalizeText(row.textContent).includes(query)
+}
+
+function visibleRowsForQuery(rows, query, matchedRows) {
   if (query.length === 0) return new Set(rows)
 
   const rowsByKey = new Map()
@@ -42,8 +46,9 @@ function visibleRowsForQuery(rows, query) {
   const visibleRows = new Set()
 
   rows.forEach((row) => {
-    if (!normalizeText(row.textContent).includes(query)) return
+    if (!rowMatchesQuery(row, query)) return
 
+    matchedRows.add(row)
     visibleRows.add(row)
 
     let parentKey = parentRowKey(row)
@@ -75,16 +80,22 @@ function setupFileListSearch(container) {
 
   const update = () => {
     const query = normalizeText(input.value)
-    const visibleRows = visibleRowsForQuery(rows, query)
+    const matchedRows = new Set()
+    const visibleRows = visibleRowsForQuery(rows, query, matchedRows)
     let visibleCount = 0
+    let matchedCount = 0
 
     rows.forEach((row) => {
       const visible = visibleRows.has(row)
+      const matched = matchedRows.has(row)
       row.hidden = !visible
+      row.classList.toggle("is-document-file-search-match", matched)
+      row.classList.toggle("is-document-file-search-context", visible && query.length > 0 && !matched)
       if (visible) visibleCount += 1
+      if (matched) matchedCount += 1
     })
 
-    count.textContent = query.length === 0 ? `${rows.length}件` : `${visibleCount}/${rows.length}件`
+    count.textContent = query.length === 0 ? `${rows.length}件` : `${matchedCount}件一致 / ${visibleCount}件表示`
   }
 
   input.addEventListener("input", update)
