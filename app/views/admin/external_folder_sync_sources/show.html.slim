@@ -121,6 +121,7 @@ h1 外部フォルダ同期詳細
         th 実行日時
         th モード
         th 状態
+        th 安全状態
         th 作成
         th 更新
         th スキップ
@@ -132,10 +133,21 @@ h1 外部フォルダ同期詳細
     tbody
       - @runs.each do |run|
         - approval = run.summary_json&.fetch("conflict_warnings_approval", nil)
+        - blocked = run.summary_json&.fetch("blocked_by_conflict_warnings", false)
+        - allowed = run.summary_json&.fetch("conflict_warnings_allowed", false)
         tr
           td = run.started_at ? l(run.started_at) : "-"
           td = external_folder_sync_run_mode_label(run)
           td = external_folder_sync_run_status_label(run)
+          td
+            - if blocked
+              span.status-danger 警告あり停止
+            - elsif allowed
+              span.status-warning 警告承認済み
+            - elsif run.summary_json&.fetch("conflict_warnings_count", 0).to_i.positive?
+              span.status-warning 警告あり
+            - else
+              span.muted 通常
           td = run.items_created_count
           td = run.items_updated_count
           td = run.items_skipped_count
@@ -153,7 +165,7 @@ h1 外部フォルダ同期詳細
               | -
         - if run.result_json.present?
           tr
-            td colspan="11"
+            td colspan="12"
               details
                 summary 結果詳細
                 = table_tag do
