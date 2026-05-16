@@ -62,6 +62,7 @@ h1 外部フォルダ同期詳細
         th スキップ
         th 削除検知
         th エラー
+        th 要確認
     tbody
       - @runs.each do |run|
         tr
@@ -73,11 +74,45 @@ h1 外部フォルダ同期詳細
           td = run.items_skipped_count
           td = run.items_deleted_count
           td = run.errors_count
-          - if run.result_json.present?
-            tr
-              td colspan="8"
+          td = run.summary_json&.fetch("needs_attention_count", nil) || "-"
+        - if run.result_json.present?
+          tr
+            td colspan="9"
+              details
+                summary 結果詳細
+                = table_tag do
+                  thead
+                    tr
+                      th 判定
+                      th 確認
+                      th パス
+                      th 変更理由
+                      th メッセージ
+                  tbody
+                    - run.result_json.each do |plan|
+                      tr
+                        td = external_folder_sync_plan_action_label(plan)
+                        td class=external_folder_sync_plan_attention_class(plan)
+                          = external_folder_sync_plan_attention_label(plan)
+                        td
+                          - if plan["web_view_link"].present?
+                            = link_to plan["path"], plan["web_view_link"], target: "_blank", rel: "noopener"
+                          - else
+                            = plan["path"]
+                          - if plan["previous_path"].present? && plan["previous_path"] != plan["path"]
+                            br
+                            span.muted = "以前: #{plan["previous_path"]}"
+                        td
+                          - reasons = external_folder_sync_change_reasons(plan)
+                          - if reasons.any?
+                            ul
+                              - reasons.each do |reason|
+                                li = reason
+                          - else
+                            | -
+                        td = plan["message"].presence || "-"
                 details
-                  summary 結果詳細
+                  summary JSONを表示
                   pre = JSON.pretty_generate(run.result_json)
 
 .card
@@ -90,6 +125,7 @@ h1 外部フォルダ同期詳細
         th Portal文書
         th サイズ
         th 更新日時
+        th 前回変更理由
         th エラー
     tbody
       - @items.each do |item|
@@ -103,4 +139,12 @@ h1 外部フォルダ同期詳細
               | -
           td = item.size || "-"
           td = item.external_modified_at ? l(item.external_modified_at) : "-"
+          td
+            - reasons = external_folder_sync_change_reasons(item)
+            - if reasons.any?
+              ul
+                - reasons.each do |reason|
+                  li = reason
+            - else
+              | -
           td = item.last_error_message.presence || "-"
