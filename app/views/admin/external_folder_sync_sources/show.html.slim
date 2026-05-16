@@ -42,12 +42,39 @@ h1 外部フォルダ同期詳細
     = link_to "dry-run", dry_run_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post }, class: "button secondary"
     = link_to "同期実行", apply_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post, turbo_confirm: "Google Driveからportalへ同期します。よろしいですか？" }, class: "button"
     = link_to "同期ジョブ登録", enqueue_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post }, class: "button secondary"
+    = link_to "Webhook購読開始", subscribe_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post, turbo_confirm: "Google Drive changes.watch の購読を開始します。よろしいですか？" }, class: "button secondary"
+    = link_to "Webhook購読停止", unsubscribe_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :delete, turbo_confirm: "有効なGoogle Drive webhook購読を停止します。よろしいですか？" }, class: "button secondary"
     - if @external_folder_sync_source.oauth_user?
       = link_to "Google OAuth接続", new_admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo: false }, class: "button secondary"
       - if @external_folder_sync_source.oauth_connected?
         = link_to "OAuth解除", admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo_method: :delete, turbo_confirm: "Google Drive OAuth認可を解除しますか？" }, class: "button secondary"
     = edit_link_to "編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source)
     = link_to "一覧へ戻る", admin_external_folder_sync_sources_path, class: "button secondary"
+
+.card
+  h2 Webhook購読
+  = table_tag do
+    thead
+      tr
+        th 状態
+        th Channel ID
+        th Resource ID
+        th Callback URL
+        th 期限
+        th 更新日時
+        th エラー
+    tbody
+      - @subscriptions.each do |subscription|
+        tr
+          td = external_folder_sync_subscription_status_label(subscription)
+          td
+            code = subscription.provider_channel_id.presence || "-"
+          td
+            code = subscription.provider_resource_id.presence || "-"
+          td = subscription.callback_url.presence || "-"
+          td = subscription.expires_at ? l(subscription.expires_at) : "-"
+          td = subscription.last_renewed_at ? l(subscription.last_renewed_at) : "-"
+          td = subscription.last_error_message.presence || "-"
 
 .card
   h2 同期履歴
