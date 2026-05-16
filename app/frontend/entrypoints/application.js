@@ -2,6 +2,7 @@ import "@hotwired/turbo-rails"
 import "tom-select/dist/css/tom-select.css"
 import { setupTomSelectFields } from "../lib/tom_select_fields"
 import { setupMarkdownPreviewTableTools } from "../lib/markdown_preview_table_tools"
+import { setupMarkdownPreviewCodeblockTools } from "../lib/markdown_preview_codeblock_tools"
 
 const STORAGE_KEY = "docsPortal.sidebar"
 const DEFAULT_WIDTH = 360
@@ -667,11 +668,13 @@ document.addEventListener("turbo:load", () => {
   setupSidebars()
   setupPreviewTableResizers()
   setupMarkdownPreviewTableTools()
+  setupMarkdownPreviewCodeblockTools()
   setupTomSelectFields()
 })
 document.addEventListener("turbo:render", () => {
   setupSidebars()
   setupPreviewTableResizers()
   setupMarkdownPreviewTableTools()
+  setupMarkdownPreviewCodeblockTools()
   setupTomSelectFields()
 })
