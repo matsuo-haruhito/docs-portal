@@ -146,6 +146,35 @@ p.muted
                   = "#{prefix}#{line.text}"
         - else
           p.muted レンダリング後HTML本文の差分はありません。
+        h3 表セル差分
+        - table_diffs = @rendered_html_diff&.table_diffs || []
+        - if table_diffs.any?
+          .rendered-table-diff-list
+            - table_diffs.each do |table_diff|
+              details.rendered-table-diff open=true
+                summary
+                  strong = "表 #{table_diff.index}"
+                  span.muted = " / #{table_diff.status}"
+                - if table_diff.message.present?
+                  p.muted = table_diff.message
+                - elsif table_diff.rows.any?
+                  .rendered-table-diff-scroll
+                    table.rendered-table-diff-table
+                      tbody
+                        - table_diff.rows.each_with_index do |row, row_index|
+                          tr class="is-#{row.kind}"
+                            th = row_index + 1
+                            - row.cells.each do |cell|
+                              td class="is-#{cell.kind}"
+                                - if cell.kind == :changed
+                                  del = cell.old_text
+                                  ins = cell.new_text
+                                - elsif cell.kind == :removed
+                                  del = cell.old_text
+                                - else
+                                  = cell.new_text.presence || cell.old_text
+        - else
+          p.muted 変更された表セルはありません。
   - else
     p.muted 前版との差分はありません。
 
