@@ -106,6 +106,13 @@ function ensureColgroup(table, columnCount) {
   return colgroup
 }
 
+function resetColumnWidths(table) {
+  table.querySelectorAll("colgroup[data-csv-preview-column-widths] col").forEach((col) => {
+    col.style.width = ""
+  })
+  table.classList.remove("has-resized-columns")
+}
+
 function setupColumnResizers(container, table) {
   const columnCount = tableColumnCount(table)
   if (columnCount <= 1) return
@@ -187,10 +194,11 @@ function setupCsvPreviewTable(container) {
   const clearButton = container.querySelector("[data-csv-preview-search-clear]")
   const copyButton = container.querySelector("[data-csv-preview-copy]")
   const stickyHeaderButton = container.querySelector("[data-csv-preview-sticky-header]")
+  const resetColumnsButton = container.querySelector("[data-csv-preview-reset-columns]")
   const count = container.querySelector("[data-csv-preview-count]")
   const status = container.querySelector("[data-csv-preview-status]")
   const table = container.querySelector("[data-csv-preview-table]")
-  if (!input || !clearButton || !copyButton || !stickyHeaderButton || !count || !status || !table) return
+  if (!input || !clearButton || !copyButton || !stickyHeaderButton || !resetColumnsButton || !count || !status || !table) return
 
   const rows = Array.from(table.querySelectorAll("tbody tr"))
 
@@ -237,6 +245,14 @@ function setupCsvPreviewTable(container) {
 
   stickyHeaderButton.addEventListener("click", () => {
     updateStickyHeader(!container.classList.contains("has-sticky-header"))
+  })
+
+  resetColumnsButton.addEventListener("click", () => {
+    resetColumnWidths(table)
+    status.textContent = "列幅をリセットしました"
+    window.setTimeout(() => {
+      status.textContent = ""
+    }, 1800)
   })
 
   setupColumnResizers(container, table)
