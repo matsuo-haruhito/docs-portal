@@ -170,6 +170,8 @@ ja:
         approved: "警告承認済み"
         warning: "警告あり"
         normal: "通常"
+      approval:
+        fallback: "承認済み"
     external_folder_sync_items:
       sync_status:
         synced: "同期済み"
