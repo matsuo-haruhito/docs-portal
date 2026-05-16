@@ -282,16 +282,27 @@ ul
 h2#version-files 添付・元ファイル
 - files = @version.document_files.order(:sort_order, :file_name)
 - if files.any?
-  - render_state = document_file_tree_render_state(files:, row_partial: "document_versions/file_tree_columns", node_prefix: "document_version_files_#{@version.id}")
-  table.tree-view-table
-    thead
-      tr
-        th ファイル名
-        th ファイル種
-        th サイズ
-        th 操作
-    tbody
-      = tree_view_rows(render_state)
+  .card data-document-file-search="true"
+    .markdown-workspace__header
+      div
+        h3 添付・元ファイル検索
+        p.muted ファイル名、パス、ファイル種、操作列の文字列でこの一覧を絞り込みます。
+      .actions
+        span.muted data-document-file-search-count="true"
+    .compare-version-form
+      label for="document-file-search-#{@version.id}" ファイルを検索
+      input id="document-file-search-#{@version.id}" type="search" placeholder="例: pdf, docs/, api" data-document-file-search-input="true"
+      button.button.secondary type="button" data-document-file-search-clear="true" クリア
+    - render_state = document_file_tree_render_state(files:, row_partial: "document_versions/file_tree_columns", node_prefix: "document_version_files_#{@version.id}")
+    table.tree-view-table data-document-file-search-table="true"
+      thead
+        tr
+          th ファイル名
+          th ファイル種
+          th サイズ
+          th 操作
+      tbody
+        = tree_view_rows(render_state)
 - else
   p.muted 添付・元ファイルはありません。
 
