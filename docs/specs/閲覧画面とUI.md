@@ -31,20 +31,53 @@
 - 版詳細画面は、本文表示、添付、品質チェック、前版との差分確認へ迷わず移動できる preview hub として扱う
 - 版詳細画面では、閲覧可能な直前の `DocumentVersion` と比較し、添付・元ファイルの追加、変更、削除件数を表示する
 - 差分サマリは、保持済みファイルの `tree_path`、ファイルサイズ、content type、file name を使ったファイル単位の比較から始める
-- Markdown本文の行単位diff、レンダリング後HTML差分、ブラウザ上での編集保存は後続実装とし、既存画面ではその導線を先に用意する
-- HTML viewer shell は、本文 iframe の上に preview toolbar を持ち、版詳細、前版との差分、添付・元ファイルへ戻れるようにする
-- HTML viewer shell 内の Markdown table は、表ごとに幅を調整できる toolbar を付与し、横に長い表を読みやすくする
-- 表幅は利用者のブラウザに保存し、同じ preview route を開き直しても調整後の幅を維持する
-- Markdown table は列境界をドラッグして列幅も調整できるようにし、列幅も利用者のブラウザに保存する
-- 列幅調整は表示上の個人設定として扱い、Markdown 原文や生成済みHTMLは変更しない
+- Markdown本文の行単位diffは、`.md` / `.markdown` の元ファイルを対象に、前版と新版の行差分として表示する
+- Markdown本文の行単位diffでは、追加行、削除行、前後コンテキストを unified diff 風に表示する
+- 大きすぎるMarkdownファイル、または元ファイルを読み込めない場合は、行単位diffを省略し、理由を利用者へ表示する
+- レンダリング後HTML差分は、Docusaurus生成済みHTMLから表示テキストを抽出して表示する
+- レンダリング後HTML差分では、script、style、nav、sidebar、footer などの viewer chrome を除外し、本文に近い変更だけを表示する
+- HTML本文が未生成、大きすぎる、または読み込めない場合は、HTML差分を省略し、理由を利用者へ表示する
+- HTML本文内の table は、表単位・セル単位でも差分を表示する
+- 表セル差分では、表追加、表削除、セル追加、セル削除、セル変更を判定して表示する
+- 表セル数が多すぎる場合は、表セル差分を省略し、理由を利用者へ表示する
+- 差分ビューは Markdown差分、HTML差分、表セル差分へ移動できるタブ風ナビゲーションを持つ
+- 差分ビューのタブ、各セクション、Markdownファイル、表ごとに変更件数バッジを表示する
+- ブラウザ上でのMarkdown編集保存は後続実装とし、既存画面では preview / diff / 添付 / 品質チェックの閲覧導線を優先する
 
 ## Docusaurus viewer
 
 - `GET /projects/:project_code/site/*site_path` および `GET /document_versions/:public_id/site/*site_path` の HTML 応答は、初期表示では viewer shell を返す
 - viewer shell は Rails 側の header / breadcrumb / action を持ち、本文部分は same-origin iframe で読み込む
+- viewer shell は、本文 iframe の上に preview toolbar を持ち、版詳細、前版との差分、添付・元ファイルへ戻れるようにする
 - iframe 側の本文は `embedded=1` 付き同 route を使って取得する
 - iframe 側では Docusaurus navbar / footer / toc / sidebar を除去し、本文を中央寄せで表示する
 - iframe 側で rewrite される内部 link / asset URL も `embedded=1` を維持する
+
+## Markdown table viewer UX
+
+- HTML viewer shell 内の Markdown table は、表ごとに viewer toolbar を付与し、横長・縦長の表を読みやすくする
+- 表 toolbar の拡張は iframe 内の same-origin Docusaurus本文に対して行う
+- iframe が将来 cross-origin になった場合でも、table toolbar 拡張に失敗して viewer 表示自体を壊してはならない
+- 表幅は表ごとに調整できる
+- 表幅は利用者のブラウザに保存し、同じ preview route を開き直しても調整後の幅を維持する
+- Markdown table は列境界をドラッグして列幅も調整できる
+- 列幅は利用者のブラウザに保存し、同じ preview route を開き直しても調整後の列幅を維持する
+- 列幅はキーボードでも調整できるようにする
+- 表ごとに先頭行固定を ON / OFF できる
+- 表ごとに先頭列固定を ON / OFF できる
+- 先頭行固定と先頭列固定は併用でき、左上セルの重なりが崩れないようにする
+- 表ごとに表内検索ができる
+- 表内検索では一致セルをハイライトし、検索中は一致しない行を折りたたむ
+- 表内検索では一致件数を表示し、検索語をクリアできる
+- 表ごとに CSV 形式でコピーできる
+- 表ごとに Markdown table 形式でコピーできる
+- コピー操作では成功・失敗の状態を利用者へ表示する
+- 表ごとに表示設定をリセットできる
+- 表示リセットでは、表幅、列幅、先頭行固定、先頭列固定の保存値を削除し、現在表示中の表も標準状態へ戻す
+- 表 toolbar は、検索、表示、コピーのグループに分けて表示する
+- モバイル幅では表 toolbar のグループが縦積みになり、操作が崩れないようにする
+- 表幅、列幅、固定表示、検索、コピー、表示リセットはいずれも表示上の利用者個人設定・操作として扱い、Markdown 原文や生成済みHTMLは変更しない
+- Markdown table tool の JavaScript は view template に直接長く埋め込まず、フロントエンドモジュールとして保守できるようにする
 
 ## Office file preview
 
