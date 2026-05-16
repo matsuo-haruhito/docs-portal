@@ -32,6 +32,15 @@ function injectDocumentSearchStyle(frameDocument) {
       font-weight: 700;
       white-space: nowrap;
     }
+    .portal-document-search-shortcut {
+      border: 1px solid var(--doc-border, #dbe3ef);
+      border-radius: 6px;
+      background: var(--doc-bg-soft, #f8fafc);
+      color: var(--doc-text-muted, #64748b);
+      font-size: .7rem;
+      font-weight: 700;
+      padding: .05rem .32rem;
+    }
     .portal-document-search-bar input[type="search"] {
       width: 220px;
       border: 1px solid var(--doc-border, #dbe3ef);
@@ -199,6 +208,42 @@ function moveCurrent(root, count, state, direction) {
   count.textContent = `${state.currentIndex + 1}/${marks.length}`
 }
 
+function clearSearch(root, input, count, state) {
+  input.value = ""
+  clearMarks(root)
+  count.textContent = ""
+  state.currentIndex = 0
+}
+
+function isEditableTarget(target) {
+  return ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName) || target?.isContentEditable
+}
+
+function setupSearchShortcuts(frameDocument, root, input, count, state) {
+  frameDocument.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
+
+    if (event.key === "/" && !isEditableTarget(event.target)) {
+      event.preventDefault()
+      input.focus()
+      input.select()
+      return
+    }
+
+    if (event.key === "Escape" && frameDocument.activeElement === input) {
+      event.preventDefault()
+      clearSearch(root, input, count, state)
+      input.blur()
+      return
+    }
+
+    if (event.key === "Enter" && frameDocument.activeElement === input) {
+      event.preventDefault()
+      moveCurrent(root, count, state, event.shiftKey ? -1 : 1)
+    }
+  })
+}
+
 function enhanceDocumentSearchInFrame(frame) {
   const frameDocument = frame.contentDocument
   if (!frameDocument?.body) return
@@ -215,6 +260,11 @@ function enhanceDocumentSearchInFrame(frame) {
 
   const label = frameDocument.createElement("label")
   label.textContent = "この文書内を検索"
+
+  const shortcut = frameDocument.createElement("span")
+  shortcut.className = "portal-document-search-shortcut"
+  shortcut.textContent = "/"
+  shortcut.setAttribute("aria-hidden", "true")
 
   const input = frameDocument.createElement("input")
   input.type = "search"
@@ -242,6 +292,7 @@ function enhanceDocumentSearchInFrame(frame) {
 
   const state = { currentIndex: 0 }
 
+  label.appendChild(shortcut)
   label.appendChild(input)
   bar.appendChild(label)
   bar.appendChild(previousButton)
@@ -251,15 +302,16 @@ function enhanceDocumentSearchInFrame(frame) {
   root.insertBefore(bar, root.firstChild)
 
   input.addEventListener("input", () => updateSearch(frameDocument, root, input, count, state))
+  input.addEventListener("search", () => {
+    if (input.value === "") clearSearch(root, input, count, state)
+  })
   previousButton.addEventListener("click", () => moveCurrent(root, count, state, -1))
   nextButton.addEventListener("click", () => moveCurrent(root, count, state, 1))
   clearButton.addEventListener("click", () => {
-    input.value = ""
-    clearMarks(root)
-    count.textContent = ""
-    state.currentIndex = 0
+    clearSearch(root, input, count, state)
     input.focus()
   })
+  setupSearchShortcuts(frameDocument, root, input, count, state)
 }
 
 export function setupMarkdownPreviewDocumentSearch() {
