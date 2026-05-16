@@ -74,7 +74,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
   def force_apply
     unless force_apply_allowed?
-      redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: "先にdry-runで競合・重複警告の内容を確認してください。"
+      redirect_to_sync_source_with_warning(force_apply_blocked_message)
       return
     end
 
@@ -91,7 +91,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
   def enqueue
     if latest_dry_run_has_conflict_warnings?
-      redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: "直近のdry-runに競合・重複警告があります。警告を確認してから同期実行してください。"
+      redirect_to_sync_source_with_warning(manual_enqueue_blocked_message)
       return
     end
 
@@ -154,6 +154,18 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     return false unless latest_dry_run_has_conflict_warnings?
 
     latest_run.summary_json&.fetch("conflict_warnings_approval", nil).blank?
+  end
+
+  def redirect_to_sync_source_with_warning(message)
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: message
+  end
+
+  def force_apply_blocked_message
+    "先にdry-runで競合・重複警告の内容を確認してください。"
+  end
+
+  def manual_enqueue_blocked_message
+    "直近のdry-runに競合・重複警告があります。警告を確認してから同期実行してください。"
   end
 
   def normalized_external_folder_sync_source_params
