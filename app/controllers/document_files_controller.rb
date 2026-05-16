@@ -3,11 +3,12 @@ class DocumentFilesController < BaseController
     file = DocumentFile.find_by!(public_id: params[:public_id])
     require_file_access!(file)
 
-    disposition = disposition_for(file)
+    viewer_plan = viewer_plan_for(file)
+    disposition = disposition_for(viewer_plan)
     consent_timing = embedded_request? ? :first_view : :download
     return if require_consent!(target: file, timing: consent_timing)
 
-    if disposition == "inline" && embedded_request? && file.office_previewable?
+    if disposition == "inline" && embedded_request? && viewer_plan.viewer_kind == :office
       begin
         preview_url = office_preview_url_for(file)
         record_file_access_log(file)
@@ -16,7 +17,7 @@ class DocumentFilesController < BaseController
       rescue DocumentFileOfficePreview::FileTooLargeError
         record_file_access_log(file)
         @document_file = file
-        @download_available = file.downloadable_by?(current_user)
+        @download_available = viewer_plan.downloadable?
         render :office_preview_unavailable, status: :ok
         return
       rescue DocumentFileOfficePreview::Error, MicrosoftGraphClient::Error => e
@@ -102,15 +103,19 @@ class DocumentFilesController < BaseController
     end
   end
 
-  def disposition_for(file)
+  def disposition_for(viewer_plan)
     case params[:disposition]
     when "inline"
-      file.inline_disposition? || file.office_previewable? ? "inline" : "attachment"
+      viewer_plan.inline_disposition? ? "inline" : "attachment"
     when "download"
       "attachment"
     else
-      file.inline_disposition? || file.office_previewable? ? "inline" : "attachment"
+      viewer_plan.inline_disposition? ? "inline" : "attachment"
     end
+  end
+
+  def viewer_plan_for(file)
+    DocumentFileViewerPlan.new(file:, user: current_user).call
   end
 
   def office_preview_url_for(file)
