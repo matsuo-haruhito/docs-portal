@@ -1,6 +1,6 @@
 - if external_folder_sync_webhook_sync_run_present?(event)
   - run_label = external_folder_sync_webhook_sync_run_label(event)
-  = link_to "##{run_label}", class: "inline-link", title: "同期履歴の該当Runへ移動" do
+  = link_to "##{run_label}", class: "inline-link", title: "同期履歴の該当Runへ移動", aria: { label: "同期履歴の該当Run #{run_label} へ移動" } do
     code = run_label
   br
   span.muted = external_folder_sync_webhook_sync_run_status(event)
