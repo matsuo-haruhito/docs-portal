@@ -23,3 +23,149 @@
       = link_to "前版との差分", document_version_path(@site_viewer_version, anchor: "version-diff"), class: "button secondary"
       = link_to "添付・元ファイル", document_version_path(@site_viewer_version, anchor: "version-files"), class: "button secondary"
   iframe.site-viewer-frame src=@site_viewer_iframe_src title="#{@site_viewer_document.title} #{@site_viewer_version.version_label}" loading="lazy"
+
+javascript:
+  (() => {
+    function injectTableSearchStyle(frameDocument) {
+      if (frameDocument.querySelector("style[data-docs-portal-table-search]")) return
+
+      const style = frameDocument.createElement("style")
+      style.dataset.docsPortalTableSearch = "true"
+      style.textContent = `
+        .portal-table-search {
+          display: inline-flex;
+          gap: .35rem;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+        .portal-table-search input[type="search"] {
+          width: 180px;
+          border: 1px solid var(--doc-border, #dbe3ef);
+          border-radius: 999px;
+          background: var(--doc-surface, #fff);
+          color: inherit;
+          font: inherit;
+          font-size: .78rem;
+          padding: .25rem .65rem;
+        }
+        .portal-table-search input[type="search"]:focus {
+          border-color: var(--doc-primary, #2563eb);
+          outline: none;
+          box-shadow: 0 0 0 3px rgb(37 99 235 / 14%);
+        }
+        .portal-table-search-count {
+          min-width: 2.5rem;
+          color: var(--doc-text-muted, #64748b);
+          font-size: .78rem;
+        }
+        .portal-table-search-hidden {
+          display: none !important;
+        }
+        .portal-table-search-match {
+          background: #fff7cc !important;
+          outline: 2px solid #f59e0b;
+          outline-offset: -2px;
+        }
+        @media (max-width: 720px) {
+          .portal-table-search input[type="search"] {
+            width: 190px;
+          }
+        }
+      `
+      frameDocument.head?.appendChild(style)
+    }
+
+    function updateTableSearch(table, input, count) {
+      const query = input.value.trim().toLowerCase()
+      let matchCount = 0
+      Array.from(table.rows).forEach((row, rowIndex) => {
+        const cells = Array.from(row.cells)
+        let rowMatched = false
+
+        cells.forEach((cell) => {
+          const matched = query.length > 0 && cell.textContent.toLowerCase().includes(query)
+          cell.classList.toggle("portal-table-search-match", matched)
+          if (matched) {
+            matchCount += 1
+            rowMatched = true
+          }
+        })
+
+        const isHeaderRow = row.closest("thead") || rowIndex === 0
+        row.classList.toggle("portal-table-search-hidden", query.length > 0 && !rowMatched && !isHeaderRow)
+      })
+
+      count.textContent = query.length > 0 ? `${matchCount}件` : ""
+    }
+
+    function enhanceTablesInFrame(frame) {
+      const frameDocument = frame.contentDocument
+      if (!frameDocument?.body) return
+
+      injectTableSearchStyle(frameDocument)
+
+      frameDocument.querySelectorAll(".portal-table-width-frame").forEach((wrapper) => {
+        if (wrapper.dataset.tableSearchReady === "true") return
+        const table = wrapper.querySelector("table")
+        const toolbar = wrapper.querySelector(".portal-table-width-toolbar")
+        if (!table || !toolbar) return
+
+        wrapper.dataset.tableSearchReady = "true"
+
+        const search = frameDocument.createElement("label")
+        search.className = "portal-table-search"
+        search.textContent = "表内検索"
+
+        const input = frameDocument.createElement("input")
+        input.type = "search"
+        input.placeholder = "キーワード"
+        input.setAttribute("aria-label", "表内を検索")
+
+        const count = frameDocument.createElement("span")
+        count.className = "portal-table-search-count"
+        count.setAttribute("aria-live", "polite")
+
+        const clearButton = frameDocument.createElement("button")
+        clearButton.type = "button"
+        clearButton.className = "portal-table-width-button"
+        clearButton.textContent = "クリア"
+
+        search.appendChild(input)
+        search.appendChild(count)
+        search.appendChild(clearButton)
+        toolbar.insertBefore(search, toolbar.firstChild)
+
+        input.addEventListener("input", () => updateTableSearch(table, input, count))
+        clearButton.addEventListener("click", () => {
+          input.value = ""
+          updateTableSearch(table, input, count)
+          input.focus()
+        })
+      })
+    }
+
+    function setupTableSearch() {
+      document.querySelectorAll("iframe.site-viewer-frame").forEach((frame) => {
+        if (frame.dataset.tableSearchListenerReady !== "true") {
+          frame.dataset.tableSearchListenerReady = "true"
+          frame.addEventListener("load", () => {
+            try {
+              enhanceTablesInFrame(frame)
+            } catch (_error) {
+              // Cross-origin fallback: keep the viewer usable even if table search cannot be injected.
+            }
+          })
+        }
+
+        try {
+          enhanceTablesInFrame(frame)
+        } catch (_error) {
+          // Cross-origin fallback: keep the viewer usable even if table search cannot be injected.
+        }
+      })
+    }
+
+    document.addEventListener("turbo:load", setupTableSearch)
+    document.addEventListener("turbo:render", setupTableSearch)
+    setupTableSearch()
+  })()
