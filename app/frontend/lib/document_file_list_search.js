@@ -2,6 +2,65 @@ function normalizeText(value) {
   return (value || "").toString().trim().toLowerCase()
 }
 
+function firstPresentAttribute(element, names) {
+  for (const name of names) {
+    const value = element.getAttribute(name)
+    if (value) return value
+  }
+
+  return null
+}
+
+function rowKey(row) {
+  return firstPresentAttribute(row, [
+    "data-tree-view-node-id",
+    "data-tree-node-id",
+    "data-node-id",
+    "data-item-id",
+    "id"
+  ])
+}
+
+function parentRowKey(row) {
+  return firstPresentAttribute(row, [
+    "data-tree-view-parent-id",
+    "data-tree-parent-id",
+    "data-parent-id",
+    "data-parent-node-id"
+  ])
+}
+
+function visibleRowsForQuery(rows, query) {
+  if (query.length === 0) return new Set(rows)
+
+  const rowsByKey = new Map()
+  rows.forEach((row) => {
+    const key = rowKey(row)
+    if (key) rowsByKey.set(key, row)
+  })
+
+  const visibleRows = new Set()
+
+  rows.forEach((row) => {
+    if (!normalizeText(row.textContent).includes(query)) return
+
+    visibleRows.add(row)
+
+    let parentKey = parentRowKey(row)
+    const visitedParentKeys = new Set()
+    while (parentKey && !visitedParentKeys.has(parentKey)) {
+      visitedParentKeys.add(parentKey)
+      const parentRow = rowsByKey.get(parentKey)
+      if (!parentRow) break
+
+      visibleRows.add(parentRow)
+      parentKey = parentRowKey(parentRow)
+    }
+  })
+
+  return visibleRows
+}
+
 function setupFileListSearch(container) {
   if (container.dataset.fileListSearchReady === "true") return
   container.dataset.fileListSearchReady = "true"
@@ -16,12 +75,13 @@ function setupFileListSearch(container) {
 
   const update = () => {
     const query = normalizeText(input.value)
+    const visibleRows = visibleRowsForQuery(rows, query)
     let visibleCount = 0
 
     rows.forEach((row) => {
-      const matched = query.length === 0 || normalizeText(row.textContent).includes(query)
-      row.hidden = !matched
-      if (matched) visibleCount += 1
+      const visible = visibleRows.has(row)
+      row.hidden = !visible
+      if (visible) visibleCount += 1
     })
 
     count.textContent = query.length === 0 ? `${rows.length}件` : `${visibleCount}/${rows.length}件`
