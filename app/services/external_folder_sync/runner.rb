@@ -7,10 +7,11 @@ module ExternalFolderSync
 
     SyncBatch = Data.define(:entries, :removed_ids, :cursor, :incremental, :full_scan_fallback)
 
-    def initialize(source:, mode:, actor:)
+    def initialize(source:, mode:, actor:, allow_conflict_warnings: false)
       @source = source
       @mode = mode.to_s
       @actor = actor
+      @allow_conflict_warnings = allow_conflict_warnings
       @entries_by_id = {}
     end
 
@@ -53,6 +54,10 @@ module ExternalFolderSync
 
     def apply?
       mode == "apply"
+    end
+
+    def allow_conflict_warnings?
+      @allow_conflict_warnings == true
     end
 
     def build_sync_batch
@@ -359,7 +364,8 @@ module ExternalFolderSync
       summary = summary_for(visible_result).merge(
         "incremental" => batch.incremental,
         "full_scan_fallback" => batch.full_scan_fallback,
-        "blocked_by_conflict_warnings" => false
+        "blocked_by_conflict_warnings" => false,
+        "conflict_warnings_allowed" => allow_conflict_warnings?
       )
       run.update!(
         status: summary.fetch("errors_count").positive? ? :partial : :completed,
@@ -382,7 +388,8 @@ module ExternalFolderSync
       summary = summary_for(visible_result).merge(
         "incremental" => batch.incremental,
         "full_scan_fallback" => batch.full_scan_fallback,
-        "blocked_by_conflict_warnings" => true
+        "blocked_by_conflict_warnings" => true,
+        "conflict_warnings_allowed" => false
       )
       message = "競合・重複警告があるため同期実行を停止しました。dry-run結果を確認してください。"
       run.update!(
@@ -403,6 +410,8 @@ module ExternalFolderSync
     end
 
     def unsafe_apply?(result)
+      return false if allow_conflict_warnings?
+
       sync_item_result(result).any? { Array(_1["conflict_warnings"]).any? }
     end
 
