@@ -53,6 +53,40 @@
 - iframe 側では Docusaurus navbar / footer / toc / sidebar を除去し、本文を中央寄せで表示する
 - iframe 側で rewrite される内部 link / asset URL も `embedded=1` を維持する
 
+## Path history / redirect
+
+- 文書 slug、Docusaurus site path、添付・元ファイル tree path は、外部共有済みURLや社内bookmarkを壊さないため、履歴を持てるようにする
+- path history は、現在の canonical path と過去の alias path を区別する
+- 旧URLへアクセスした場合、閲覧権限を確認した上で canonical URL へ誘導する
+- redirect は権限判定より前に情報を漏らしてはならない
+- 権限がない旧URLでは、現在の文書名や移動先を表示せず、通常の権限エラーまたは申請導線を表示する
+- canonical URL へ誘導できる場合は 301 ではなく、まずは 302 / 303 など安全な一時 redirect として扱う
+- path history は、削除済み・アーカイブ済み・移動済みを区別する
+- 移動済み文書では、viewer shell または文書詳細に「この文書は移動しました」という notice を出せるようにする
+- アーカイブ済み文書では、最新版や後継文書がある場合に代替先を表示する
+- 削除済み文書では、代替先が明示されている場合だけ案内し、それ以外は通常の not found とする
+
+対象:
+
+| 対象 | 例 | 履歴の用途 |
+| --- | --- | --- |
+| Document slug | `/projects/:project_code/documents/:slug` | 文書名変更・整理後も旧URLを維持する |
+| Docusaurus site path | `/projects/:project_code/site/docs/old-page` | Markdown path / generated HTML path 変更後も旧URLから本文へ誘導する |
+| DocumentVersion site path | `/document_versions/:public_id/site/docs/old-page` | 版ごとの生成済みHTML内リンクを壊しにくくする |
+| DocumentFile tree path | `attachments/old/name.pdf` | 添付・元ファイルの移動やrename後も履歴・差分・metadataを追いやすくする |
+| Catalog / Set item path | curated list item | 文書カタログや文書セットの旧参照を保つ |
+
+- Document slug history は Project 内で一意に扱う
+- Docusaurus site path history は Document または DocumentVersion の scope 内で一意に扱う
+- DocumentFile tree path history は DocumentVersion 内で一意に扱う
+- 新しい path が既存 alias と衝突する場合は保存時にエラーまたは品質チェック警告を出す
+- path history は preview target metadata の `primary`、`attachments`、`hidden`、`debug`、`groups.paths` の解決にも使えるようにする
+- metadata の path pattern が旧 path に一致する場合、品質チェックで canonical path への更新候補を出す
+- 任意版比較では、tree path の変更を単純な削除・追加だけでなく、可能なら rename / moved として扱えるようにする
+- access log は、アクセスされた元URLと解決後の canonical target の両方を記録できるようにする
+- admin は slug / path 変更前に dry-run で影響範囲を確認できるようにする
+- dry-run では、旧URL数、catalog / set 参照、preview target metadata、内部リンク、外部送付履歴への影響を表示する
+
 ## Markdown table viewer UX
 
 - HTML viewer shell 内の Markdown table は、表ごとに viewer toolbar を付与し、横長・縦長の表を読みやすくする
