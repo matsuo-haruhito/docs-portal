@@ -1,6 +1,6 @@
 class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   before_action :require_admin_only!
-  before_action :set_external_folder_sync_source, only: %i[show edit update destroy dry_run apply enqueue subscribe unsubscribe]
+  before_action :set_external_folder_sync_source, only: %i[show edit update destroy dry_run apply force_apply enqueue subscribe unsubscribe]
   before_action :load_form_collections, only: %i[index create edit update]
 
   def index
@@ -66,6 +66,18 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   def apply
     run = ExternalFolderSync::Runner.new(source: @external_folder_sync_source, mode: :apply, actor: current_user).call
     redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "同期を実行しました。（#{run.items_scanned_count}件）"
+  rescue ExternalFolderSync::GoogleDriveClient::Error, ExternalFolderSync::Runner::Error => e
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
+  end
+
+  def force_apply
+    run = ExternalFolderSync::Runner.new(
+      source: @external_folder_sync_source,
+      mode: :apply,
+      actor: current_user,
+      allow_conflict_warnings: true
+    ).call
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "警告を承認して同期を実行しました。（#{run.items_scanned_count}件）"
   rescue ExternalFolderSync::GoogleDriveClient::Error, ExternalFolderSync::Runner::Error => e
     redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
   end
