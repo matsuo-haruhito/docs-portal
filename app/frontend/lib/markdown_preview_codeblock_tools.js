@@ -64,6 +64,38 @@ function injectCodeblockToolStyle(frameDocument) {
     .portal-codeblock-frame pre {
       padding-top: 2.4rem !important;
     }
+    .portal-codeblock-lines {
+      display: grid;
+      grid-template-columns: max-content minmax(0, 1fr);
+      column-gap: .8rem;
+    }
+    .portal-codeblock-line-number {
+      color: var(--doc-text-muted, #94a3b8);
+      font-variant-numeric: tabular-nums;
+      padding-left: .2rem;
+      text-align: right;
+      user-select: none;
+    }
+    .portal-codeblock-line-number a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .portal-codeblock-line-number a:hover,
+    .portal-codeblock-line-number a:focus {
+      color: var(--doc-primary, #2563eb);
+      outline: none;
+      text-decoration: underline;
+    }
+    .portal-codeblock-line {
+      min-width: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .portal-codeblock-line:target {
+      background: #fff7cc;
+      outline: 2px solid #f59e0b;
+      outline-offset: 2px;
+    }
   `
   frameDocument.head?.appendChild(style)
 }
@@ -78,8 +110,44 @@ function includesSensitiveKeyword(text) {
   return /\b(secret|token|password|passwd|authorization|api[_-]?key|access[_-]?key|client[_-]?secret|bearer)\b/i.test(text)
 }
 
-async function copyCodeText(codeElement, status) {
+function addLineAnchors(frameDocument, codeElement, blockId) {
+  if (codeElement.dataset.lineAnchorsReady === "true") return
+
   const text = codeElement.textContent || ""
+  const lines = text.split("\n")
+  if (lines.length <= 1) return
+
+  codeElement.dataset.lineAnchorsReady = "true"
+  codeElement.textContent = ""
+  codeElement.classList.add("portal-codeblock-lines")
+
+  lines.forEach((line, lineIndex) => {
+    const lineNumber = lineIndex + 1
+    const lineId = `${blockId}-L${lineNumber}`
+
+    const number = frameDocument.createElement("span")
+    number.className = "portal-codeblock-line-number"
+
+    const anchor = frameDocument.createElement("a")
+    anchor.href = `#${lineId}`
+    anchor.textContent = String(lineNumber)
+    anchor.setAttribute("aria-label", `${lineNumber}行目へのリンク`)
+    number.appendChild(anchor)
+
+    const content = frameDocument.createElement("span")
+    content.className = "portal-codeblock-line"
+    content.id = lineId
+    content.textContent = line.length > 0 ? line : " "
+
+    codeElement.appendChild(number)
+    codeElement.appendChild(content)
+  })
+}
+
+async function copyCodeText(codeElement, status) {
+  const text = Array.from(codeElement.querySelectorAll(".portal-codeblock-line"))
+    .map((line) => line.textContent === " " ? "" : line.textContent)
+    .join("\n") || codeElement.textContent || ""
 
   try {
     await navigator.clipboard.writeText(text)
@@ -106,9 +174,11 @@ function enhanceCodeblocksInFrame(frame) {
     const pre = codeElement.closest("pre")
     if (!pre) return
 
+    const blockId = `codeblock-${index + 1}`
     const wrapper = frameDocument.createElement("div")
     wrapper.className = "portal-codeblock-frame"
     wrapper.dataset.codeblockIndex = String(index + 1)
+    wrapper.id = blockId
 
     const toolbar = frameDocument.createElement("div")
     toolbar.className = "portal-codeblock-toolbar"
@@ -140,6 +210,7 @@ function enhanceCodeblocksInFrame(frame) {
     pre.parentNode.insertBefore(wrapper, pre)
     wrapper.appendChild(pre)
     wrapper.appendChild(toolbar)
+    addLineAnchors(frameDocument, codeElement, blockId)
 
     copyButton.addEventListener("click", () => copyCodeText(codeElement, status))
   })
