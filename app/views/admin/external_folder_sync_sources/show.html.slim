@@ -106,16 +106,7 @@ h1 外部フォルダ同期詳細
               | -
           td = external_folder_sync_webhook_header(event, "X_GOOG_RESOURCE_STATE")
           td = external_folder_sync_webhook_header(event, "X_GOOG_MESSAGE_NUMBER")
-          td
-            - if external_folder_sync_webhook_sync_run_present?(event)
-              code = external_folder_sync_webhook_sync_run_label(event)
-              br
-              span.muted = external_folder_sync_webhook_sync_run_status(event)
-              - if external_folder_sync_webhook_sync_run_warning_label(event).present?
-                br
-                span.status-warning = external_folder_sync_webhook_sync_run_warning_label(event)
-            - else
-              | -
+          td = render "webhook_sync_run_cell", event: event
           td
             code = event.event_key.presence || "-"
           td = event.error_message.presence || "-"
