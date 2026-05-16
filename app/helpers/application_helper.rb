@@ -199,8 +199,12 @@ module ApplicationHelper
     run.present? && run.summary_json&.fetch("conflict_warnings_count", 0).to_i.positive?
   end
 
+  def external_folder_sync_run_warning_dry_run?(run)
+    run.present? && run.dry_run? && external_folder_sync_run_has_conflict_warnings?(run)
+  end
+
   def external_folder_sync_force_apply_visible?(run)
-    external_folder_sync_run_has_conflict_warnings?(run) && !external_folder_sync_approved?(run)
+    external_folder_sync_run_warning_dry_run?(run) && !external_folder_sync_approved?(run)
   end
 
   def external_folder_sync_approval_summary(run)
