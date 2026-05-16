@@ -255,7 +255,8 @@ module ApplicationHelper
   end
 
   def external_folder_sync_webhook_sync_run_status(event)
-    external_folder_sync_webhook_sync_run_summary(event)["status"].presence
+    value = external_folder_sync_webhook_sync_run_summary(event)["status"]
+    value.present? ? external_folder_sync_run_status_label(value) : nil
   end
 
   def external_folder_sync_webhook_sync_run_warnings_count(event)
