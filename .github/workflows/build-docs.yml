@@ -26,7 +26,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
@@ -63,7 +63,7 @@ jobs:
           bundler-cache: false
 
       - name: Cache Ruby dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v4
         with:
           path: vendor/bundle
           key: ${{ runner.os }}-ruby-${{ hashFiles('Gemfile.lock') }}
@@ -76,7 +76,7 @@ jobs:
           bundle lock --add-platform x86_64-linux
           bundle install --jobs 4 --retry 3
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
@@ -114,7 +114,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Create .env from .env.example
         run: |
@@ -131,7 +131,7 @@ jobs:
           bundler-cache: false
 
       - name: Cache Ruby dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v4
         with:
           path: vendor/bundle
           key: ${{ runner.os }}-ruby-${{ hashFiles('Gemfile.lock') }}
@@ -157,7 +157,7 @@ jobs:
       }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -168,7 +168,7 @@ jobs:
           bundle lock --add-platform x86_64-linux
           bundle install --jobs 4 --retry 3
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
@@ -207,9 +207,9 @@ jobs:
       RAILS_PORTAL_IMPORT_TOKEN: ${{ secrets.RAILS_PORTAL_IMPORT_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
@@ -239,7 +239,7 @@ jobs:
         run: |
           tar -czf docs-site.tar.gz docusaurus/build attachments publish/manifest
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v4
         with:
           name: docs-site
           path: docs-site.tar.gz
