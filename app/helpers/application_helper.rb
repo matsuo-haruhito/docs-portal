@@ -3,9 +3,9 @@ module ApplicationHelper
     content_for :title, parts.compact.join(" | ")
   end
 
-  def localized_label(scope, value)
+  def localized_label(scope, value, **options)
     value = value.to_s
-    I18n.t("labels.#{scope}.#{value}", default: value)
+    I18n.t("labels.#{scope}.#{value}", **options, default: value)
   end
 
   def enum_options_for(scope, values)
@@ -259,16 +259,17 @@ module ApplicationHelper
 
   def external_folder_sync_webhook_sync_run_warning_label(event)
     count = external_folder_sync_webhook_sync_run_warnings_count(event)
-    count.positive? ? I18n.t("labels.external_folder_sync_webhook_events.sync_run_warning_label", count:) : nil
+    count.positive? ? localized_label("external_folder_sync_webhook_events", "sync_run_warning_label", count:) : nil
   end
 
   def external_folder_sync_webhook_sync_run_link_title(_event)
-    I18n.t("labels.external_folder_sync_webhook_events.sync_run_link_title")
+    localized_label("external_folder_sync_webhook_events", "sync_run_link_title")
   end
 
   def external_folder_sync_webhook_sync_run_link_aria_label(event)
-    I18n.t(
-      "labels.external_folder_sync_webhook_events.sync_run_link_aria_label",
+    localized_label(
+      "external_folder_sync_webhook_events",
+      "sync_run_link_aria_label",
       run_id: external_folder_sync_webhook_sync_run_label(event)
     )
   end
