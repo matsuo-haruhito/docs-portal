@@ -1,6 +1,13 @@
+const MIN_COLUMN_WIDTH = 72
+const MAX_COLUMN_WIDTH = 960
+
 function escapeCsvCell(value) {
   const text = (value || "").toString()
   return /[",\n\r]/.test(text) ? `"${text.replaceAll("\"", "\"\"")}"` : text
+}
+
+function clampColumnWidth(value) {
+  return Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, value))
 }
 
 function injectCsvPreviewStyle() {
@@ -21,6 +28,47 @@ function injectCsvPreviewStyle() {
     [data-csv-preview-tools].has-sticky-header [data-csv-preview-table] tbody tr:first-child th {
       z-index: 4;
     }
+    [data-csv-preview-table].has-resized-columns {
+      table-layout: fixed;
+    }
+    [data-csv-preview-table] tbody tr:first-child > th,
+    [data-csv-preview-table] tbody tr:first-child > td {
+      position: relative;
+    }
+    .csv-preview-column-resizer {
+      position: absolute;
+      top: 0;
+      right: -4px;
+      z-index: 8;
+      width: 8px;
+      height: 100%;
+      min-height: 28px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: col-resize;
+    }
+    .csv-preview-column-resizer::after {
+      content: "";
+      position: absolute;
+      top: 7px;
+      bottom: 7px;
+      left: 3px;
+      width: 2px;
+      border-radius: 999px;
+      background: transparent;
+    }
+    .csv-preview-column-resizer:hover::after,
+    .csv-preview-column-resizer:focus::after,
+    .csv-preview-column-resizer.is-resizing::after {
+      background: var(--doc-primary, #2563eb);
+      box-shadow: 0 0 0 3px rgb(37 99 235 / 14%);
+    }
+    [data-csv-preview-tools].is-column-resizing,
+    [data-csv-preview-tools].is-column-resizing * {
+      cursor: col-resize !important;
+      user-select: none;
+    }
   `
   document.head?.appendChild(style)
 }
@@ -38,6 +86,96 @@ function tableToCsv(table) {
       .map((cell) => escapeCsvCell(cell.textContent || ""))
       .join(","))
     .join("\n")
+}
+
+function tableColumnCount(table) {
+  return Math.max(...Array.from(table.rows).map((row) => row.cells.length), 0)
+}
+
+function ensureColgroup(table, columnCount) {
+  let colgroup = table.querySelector("colgroup[data-csv-preview-column-widths]")
+  if (!colgroup) {
+    colgroup = document.createElement("colgroup")
+    colgroup.dataset.csvPreviewColumnWidths = "true"
+    table.prepend(colgroup)
+  }
+
+  while (colgroup.children.length < columnCount) colgroup.appendChild(document.createElement("col"))
+  while (colgroup.children.length > columnCount) colgroup.lastElementChild?.remove()
+
+  return colgroup
+}
+
+function setupColumnResizers(container, table) {
+  const columnCount = tableColumnCount(table)
+  if (columnCount <= 1) return
+
+  const colgroup = ensureColgroup(table, columnCount)
+  const headerRow = table.rows[0]
+  if (!headerRow) return
+
+  Array.from(headerRow.cells).forEach((cell, columnIndex) => {
+    if (columnIndex >= columnCount - 1) return
+    if (cell.querySelector(".csv-preview-column-resizer")) return
+
+    const resizer = document.createElement("button")
+    resizer.type = "button"
+    resizer.className = "csv-preview-column-resizer"
+    resizer.setAttribute("aria-label", `${columnIndex + 1}列目の幅を調整`)
+    cell.appendChild(resizer)
+
+    let dragging = false
+    let startX = 0
+    let startWidth = 0
+
+    const applyWidth = (width) => {
+      const col = colgroup.children[columnIndex]
+      if (!col) return
+
+      table.classList.add("has-resized-columns")
+      col.style.width = `${clampColumnWidth(width)}px`
+    }
+
+    const stopDragging = () => {
+      if (!dragging) return
+      dragging = false
+      container.classList.remove("is-column-resizing")
+      resizer.classList.remove("is-resizing")
+    }
+
+    const resizeColumn = (clientX) => {
+      applyWidth(startWidth + clientX - startX)
+    }
+
+    resizer.addEventListener("pointerdown", (event) => {
+      dragging = true
+      startX = event.clientX
+      startWidth = colgroup.children[columnIndex]?.getBoundingClientRect().width || cell.getBoundingClientRect().width
+      container.classList.add("is-column-resizing")
+      resizer.classList.add("is-resizing")
+      resizer.setPointerCapture(event.pointerId)
+      event.preventDefault()
+      event.stopPropagation()
+    })
+
+    resizer.addEventListener("pointermove", (event) => {
+      if (!dragging) return
+      resizeColumn(event.clientX)
+    })
+
+    resizer.addEventListener("pointerup", stopDragging)
+    resizer.addEventListener("pointercancel", stopDragging)
+
+    resizer.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight", "Home"].includes(event.key)) return
+      event.preventDefault()
+      const currentWidth = colgroup.children[columnIndex]?.getBoundingClientRect().width || cell.getBoundingClientRect().width
+      const step = event.shiftKey ? 40 : 16
+      const nextWidth = event.key === "Home" ? MIN_COLUMN_WIDTH :
+        event.key === "ArrowLeft" ? currentWidth - step : currentWidth + step
+      applyWidth(nextWidth)
+    })
+  })
 }
 
 function setupCsvPreviewTable(container) {
@@ -101,6 +239,7 @@ function setupCsvPreviewTable(container) {
     updateStickyHeader(!container.classList.contains("has-sticky-header"))
   })
 
+  setupColumnResizers(container, table)
   updateSearch()
   updateStickyHeader(true)
 }
