@@ -37,6 +37,30 @@ javascript:
       const style = frameDocument.createElement("style")
       style.dataset.docsPortalTableSearch = "true"
       style.textContent = `
+        .portal-table-utility-bar {
+          display: flex;
+          gap: .45rem;
+          align-items: center;
+          flex-wrap: wrap;
+          width: 100%;
+        }
+        .portal-table-toolbar-group {
+          display: inline-flex;
+          gap: .35rem;
+          align-items: center;
+          flex-wrap: wrap;
+          padding: .2rem .35rem;
+          border: 1px solid var(--doc-border-soft, #eef2f7);
+          border-radius: 999px;
+          background: rgb(255 255 255 / 64%);
+        }
+        .portal-table-toolbar-label {
+          color: var(--doc-text-muted, #64748b);
+          font-size: .72rem;
+          font-weight: 700;
+          letter-spacing: .02em;
+          white-space: nowrap;
+        }
         .portal-table-search {
           display: inline-flex;
           gap: .35rem;
@@ -72,6 +96,12 @@ javascript:
           outline-offset: -2px;
         }
         @media (max-width: 720px) {
+          .portal-table-utility-bar,
+          .portal-table-toolbar-group {
+            align-items: flex-start;
+            border-radius: 12px;
+            flex-direction: column;
+          }
           .portal-table-search input[type="search"] {
             width: 190px;
           }
@@ -190,6 +220,18 @@ javascript:
       }, 1800)
     }
 
+    function createToolbarGroup(frameDocument, labelText) {
+      const group = frameDocument.createElement("span")
+      group.className = "portal-table-toolbar-group"
+
+      const label = frameDocument.createElement("span")
+      label.className = "portal-table-toolbar-label"
+      label.textContent = labelText
+      group.appendChild(label)
+
+      return group
+    }
+
     function enhanceTablesInFrame(frame) {
       const frameDocument = frame.contentDocument
       if (!frameDocument?.body) return
@@ -204,9 +246,15 @@ javascript:
 
         wrapper.dataset.tableSearchReady = "true"
 
+        const utilityBar = frameDocument.createElement("div")
+        utilityBar.className = "portal-table-utility-bar"
+
+        const searchGroup = createToolbarGroup(frameDocument, "検索")
+        const displayGroup = createToolbarGroup(frameDocument, "表示")
+        const copyGroup = createToolbarGroup(frameDocument, "コピー")
+
         const search = frameDocument.createElement("label")
         search.className = "portal-table-search"
-        search.textContent = "表内検索"
 
         const input = frameDocument.createElement("input")
         input.type = "search"
@@ -230,12 +278,12 @@ javascript:
         const copyCsvButton = frameDocument.createElement("button")
         copyCsvButton.type = "button"
         copyCsvButton.className = "portal-table-width-button"
-        copyCsvButton.textContent = "CSVコピー"
+        copyCsvButton.textContent = "CSV"
 
         const copyMarkdownButton = frameDocument.createElement("button")
         copyMarkdownButton.type = "button"
         copyMarkdownButton.className = "portal-table-width-button"
-        copyMarkdownButton.textContent = "Markdownコピー"
+        copyMarkdownButton.textContent = "Markdown"
 
         const copyStatus = frameDocument.createElement("span")
         copyStatus.className = "portal-table-search-count"
@@ -243,12 +291,17 @@ javascript:
 
         search.appendChild(input)
         search.appendChild(count)
-        search.appendChild(clearButton)
-        search.appendChild(resetSettingsButton)
-        search.appendChild(copyCsvButton)
-        search.appendChild(copyMarkdownButton)
-        search.appendChild(copyStatus)
-        toolbar.insertBefore(search, toolbar.firstChild)
+        searchGroup.appendChild(search)
+        searchGroup.appendChild(clearButton)
+        displayGroup.appendChild(resetSettingsButton)
+        copyGroup.appendChild(copyCsvButton)
+        copyGroup.appendChild(copyMarkdownButton)
+        copyGroup.appendChild(copyStatus)
+
+        utilityBar.appendChild(searchGroup)
+        utilityBar.appendChild(displayGroup)
+        utilityBar.appendChild(copyGroup)
+        toolbar.insertBefore(utilityBar, toolbar.firstChild)
 
         input.addEventListener("input", () => updateTableSearch(table, input, count))
         clearButton.addEventListener("click", () => {
