@@ -171,6 +171,37 @@ module ApplicationHelper
     localized_label("external_folder_sync_items.sync_status", value)
   end
 
+  def external_folder_sync_plan_action_label(plan_or_value)
+    value = plan_or_value.respond_to?(:[]) ? plan_or_value["action"] : plan_or_value
+    localized_label("external_folder_sync_plans.action", value)
+  end
+
+  def external_folder_sync_plan_attention_label(plan_or_value)
+    value = plan_or_value.respond_to?(:[]) ? plan_or_value["attention_level"] : plan_or_value
+    localized_label("external_folder_sync_plans.attention_level", value.presence || "none")
+  end
+
+  def external_folder_sync_plan_attention_class(plan_or_value)
+    value = plan_or_value.respond_to?(:[]) ? plan_or_value["attention_level"] : plan_or_value
+
+    case value.to_s
+    when "danger" then "status-danger"
+    when "warning" then "status-warning"
+    when "info" then "status-info"
+    else "muted"
+    end
+  end
+
+  def external_folder_sync_change_reasons(plan_or_item)
+    reasons = if plan_or_item.respond_to?(:[])
+      plan_or_item["change_reasons"]
+    else
+      plan_or_item.provider_metadata&.fetch("last_change_reasons", nil)
+    end
+
+    Array(reasons).compact_blank
+  end
+
   def bulk_edit_dry_run_status_label(run_or_value)
     value = run_or_value.respond_to?(:status) ? run_or_value.status : run_or_value
     localized_label("bulk_edit_dry_runs.status", value)

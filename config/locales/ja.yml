@@ -172,6 +172,18 @@ ja:
         conflict: "競合"
         delete_detected: "削除検知"
         error: "エラー"
+    external_folder_sync_plans:
+      action:
+        create: "作成"
+        update: "更新"
+        skip: "スキップ"
+        delete_detected: "削除検知"
+        error: "エラー"
+      attention_level:
+        none: "確認不要"
+        info: "通常"
+        warning: "要確認"
+        danger: "注意"
     bulk_edit_dry_runs:
       status:
         analyzed: "解析済み"
