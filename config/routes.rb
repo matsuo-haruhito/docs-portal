@@ -52,6 +52,7 @@ Rails.application.routes.draw do
     resources :external_folder_sync_sources, except: %i[new] do
       post :dry_run, on: :member
       post :apply, on: :member
+      post :force_apply, on: :member
       post :enqueue, on: :member
       post :subscribe, on: :member
       delete :unsubscribe, on: :member
