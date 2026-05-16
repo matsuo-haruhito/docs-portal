@@ -35,12 +35,17 @@ class DocumentFilesController < BaseController
 
     record_file_access_log(file)
 
+    if disposition == "inline" && viewer_plan.viewer_kind == :csv && !embedded_request?
+      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
+      assign_preview_context(file)
+      @csv_preview = DocumentFileCsvPreview.new(file:).call
+      render :show_csv_preview
+      return
+    end
+
     if disposition == "inline" && file.text_previewable? && !embedded_request?
       response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
-      @document_file = file
-      @document_version = file.document_version
-      @document = @document_version.document
-      @project = @document.project
+      assign_preview_context(file)
       @preview_lines = File.read(file_path, encoding: "UTF-8").lines(chomp: true)
       render :show_text_preview
       return
@@ -116,6 +121,13 @@ class DocumentFilesController < BaseController
 
   def viewer_plan_for(file)
     DocumentFileViewerPlan.new(file:, user: current_user).call
+  end
+
+  def assign_preview_context(file)
+    @document_file = file
+    @document_version = file.document_version
+    @document = @document_version.document
+    @project = @document.project
   end
 
   def office_preview_url_for(file)
