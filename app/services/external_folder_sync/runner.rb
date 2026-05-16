@@ -84,6 +84,7 @@ module ExternalFolderSync
     def plan_entry(entry)
       item = source.external_folder_sync_items.find_by(external_item_id: entry.id)
       change_reasons = change_reasons_for(item, entry)
+      conflict_warnings = conflict_warnings_for(item, entry)
       action = if entry.exportable && entry.export_mime_type.blank?
         "error"
       elsif item.blank?
@@ -94,10 +95,12 @@ module ExternalFolderSync
         "skip"
       end
 
+      attention_reasons = change_reasons + conflict_warnings
       {
         "action" => action,
-        "attention_level" => attention_level_for(action, change_reasons),
+        "attention_level" => attention_level_for(action, attention_reasons),
         "change_reasons" => change_reasons,
+        "conflict_warnings" => conflict_warnings,
         "external_item_id" => entry.id,
         "path" => entry.download_path,
         "source_path" => entry.path,
@@ -117,7 +120,7 @@ module ExternalFolderSync
         "web_view_link" => entry.web_view_link,
         "exported" => entry.exportable,
         "export_mime_type" => entry.export_mime_type,
-        "message" => message_for(action, entry, change_reasons)
+        "message" => message_for(action, entry, change_reasons, conflict_warnings)
       }
     end
 
@@ -138,17 +141,59 @@ module ExternalFolderSync
       reasons
     end
 
-    def attention_level_for(action, change_reasons)
+    def conflict_warnings_for(item, entry)
+      warnings = []
+      warnings << duplicate_path_warning(item, entry)
+      warnings << duplicate_checksum_warning(item, entry)
+      warnings << portal_changed_warning(item, entry)
+      warnings.compact
+    end
+
+    def duplicate_path_warning(item, entry)
+      duplicate = source.external_folder_sync_items
+        .where(path: entry.download_path)
+        .where.not(external_item_id: entry.id)
+        .first
+      return if duplicate.blank?
+
+      "同じ同期後パスの別ファイルが既にあります: #{duplicate.name}"
+    end
+
+    def duplicate_checksum_warning(item, entry)
+      return if entry.checksum.blank?
+
+      duplicate = source.external_folder_sync_items
+        .where(checksum: entry.checksum)
+        .where.not(external_item_id: entry.id)
+        .first
+      return if duplicate.blank?
+
+      "同じ内容とみられる別ファイルが既にあります: #{duplicate.path}"
+    end
+
+    def portal_changed_warning(item, entry)
+      return if item.blank?
+      return if item.portal_modified_at.blank? || item.external_modified_at.blank?
+      return unless item.portal_modified_at > item.external_modified_at
+      return unless item.external_modified_at.to_i != entry.modified_at.to_i || item.checksum.to_s != entry.checksum.to_s
+
+      "ポータル側更新後に外部側も更新されています。競合確認が必要です"
+    end
+
+    def attention_level_for(action, attention_reasons)
       return "danger" if action == "error" || action == "delete_detected"
-      return "warning" if change_reasons.any? { _1.include?("パス") || _1.include?("MIME") }
+      return "warning" if attention_reasons.any? { _1.include?("パス") || _1.include?("MIME") || _1.include?("競合") || _1.include?("別ファイル") }
       return "info" if action == "create" || action == "update"
       "none"
     end
 
-    def message_for(action, entry, change_reasons)
+    def message_for(action, entry, change_reasons, conflict_warnings = [])
       return "Google native file export is not supported for this mime type" if action == "error" && entry.exportable
-      return "New file" if action == "create"
-      return change_reasons.join(" / ") if action == "update" && change_reasons.any?
+      return "New file" if action == "create" && conflict_warnings.blank?
+      return (["New file"] + conflict_warnings).join(" / ") if action == "create"
+      messages = change_reasons + conflict_warnings
+      return messages.join(" / ") if action == "update" && messages.any?
+      return conflict_warnings.join(" / ") if conflict_warnings.any?
       return "External file changed" if action == "update"
       "Unchanged"
     end
@@ -274,6 +319,7 @@ module ExternalFolderSync
           "action" => "delete_detected",
           "attention_level" => "danger",
           "change_reasons" => ["外部フォルダの一覧に存在しません"],
+          "conflict_warnings" => [],
           "external_item_id" => item.external_item_id,
           "path" => item.path,
           "name" => item.name,
@@ -293,6 +339,7 @@ module ExternalFolderSync
         "action" => "sync_metadata",
         "attention_level" => batch.full_scan_fallback ? "warning" : "none",
         "change_reasons" => sync_strategy_reasons(batch),
+        "conflict_warnings" => [],
         "message" => batch.incremental ? "Used Google Drive changes cursor" : "Used full folder scan"
       }
     end
@@ -351,7 +398,8 @@ module ExternalFolderSync
         "skipped_count" => result.count { _1["action"] == "skip" },
         "deleted_count" => result.count { _1["action"] == "delete_detected" },
         "errors_count" => result.count { _1["action"] == "error" },
-        "needs_attention_count" => result.count { _1["attention_level"].in?(%w[warning danger]) }
+        "needs_attention_count" => result.count { _1["attention_level"].in?(%w[warning danger]) },
+        "conflict_warnings_count" => result.count { Array(_1["conflict_warnings"]).any? }
       }
     end
 
@@ -364,6 +412,7 @@ module ExternalFolderSync
         exported: plan["exported"],
         export_mime_type: plan["export_mime_type"],
         last_change_reasons: plan["change_reasons"],
+        last_conflict_warnings: plan["conflict_warnings"],
         last_attention_level: plan["attention_level"]
       }
     end
