@@ -52,11 +52,12 @@ module ExternalFolderSync
 
     def plan_entry(entry)
       item = source.external_folder_sync_items.find_by(external_item_id: entry.id)
+      change_reasons = change_reasons_for(item, entry)
       action = if entry.exportable && entry.export_mime_type.blank?
         "error"
       elsif item.blank?
         "create"
-      elsif changed?(item, entry)
+      elsif change_reasons.any?
         "update"
       else
         "skip"
@@ -64,30 +65,59 @@ module ExternalFolderSync
 
       {
         "action" => action,
+        "attention_level" => attention_level_for(action, change_reasons),
+        "change_reasons" => change_reasons,
         "external_item_id" => entry.id,
         "path" => entry.download_path,
         "source_path" => entry.path,
+        "previous_path" => item&.path,
         "name" => entry.download_name,
         "source_name" => entry.name,
+        "previous_name" => item&.name,
         "mime_type" => entry.download_mime_type,
         "source_mime_type" => entry.mime_type,
+        "previous_mime_type" => item&.mime_type,
         "size" => entry.size,
+        "previous_size" => item&.size,
         "checksum" => entry.checksum,
+        "previous_checksum" => item&.checksum,
         "external_modified_at" => entry.modified_at&.iso8601,
+        "previous_external_modified_at" => item&.external_modified_at&.iso8601,
         "web_view_link" => entry.web_view_link,
         "exported" => entry.exportable,
         "export_mime_type" => entry.export_mime_type,
-        "message" => message_for(action, entry)
+        "message" => message_for(action, entry, change_reasons)
       }
     end
 
     def changed?(item, entry)
-      item.checksum.to_s != entry.checksum.to_s || item.external_modified_at.to_i != entry.modified_at.to_i || item.path != entry.download_path
+      change_reasons_for(item, entry).any?
     end
 
-    def message_for(action, entry)
+    def change_reasons_for(item, entry)
+      return ["新規ファイル"] if item.blank?
+
+      reasons = []
+      reasons << "ファイル内容またはリビジョンが変更されています" if item.checksum.to_s != entry.checksum.to_s
+      reasons << "外部側の更新日時が変わっています" if item.external_modified_at.to_i != entry.modified_at.to_i
+      reasons << "同期後の保存パスが変わっています" if item.path != entry.download_path
+      reasons << "ファイル名が変わっています" if item.name != entry.download_name
+      reasons << "MIMEタイプが変わっています" if item.mime_type != entry.download_mime_type
+      reasons << "ファイルサイズが変わっています" if item.size.present? && entry.size.present? && item.size.to_i != entry.size.to_i
+      reasons
+    end
+
+    def attention_level_for(action, change_reasons)
+      return "danger" if action == "error" || action == "delete_detected"
+      return "warning" if change_reasons.any? { _1.include?("パス") || _1.include?("MIME") }
+      return "info" if action == "create" || action == "update"
+      "none"
+    end
+
+    def message_for(action, entry, change_reasons)
       return "Google native file export is not supported for this mime type" if action == "error" && entry.exportable
       return "New file" if action == "create"
+      return change_reasons.join(" / ") if action == "update" && change_reasons.any?
       return "External file changed" if action == "update"
       "Unchanged"
     end
@@ -104,6 +134,7 @@ module ExternalFolderSync
       end
     rescue => e
       plan["action"] = "error"
+      plan["attention_level"] = "danger"
       plan["message"] = e.message
       record_error_item!(plan)
     end
@@ -202,9 +233,17 @@ module ExternalFolderSync
         item.update!(sync_status: :delete_detected) if apply?
         result << {
           "action" => "delete_detected",
+          "attention_level" => "danger",
+          "change_reasons" => ["外部フォルダの一覧に存在しません"],
           "external_item_id" => item.external_item_id,
           "path" => item.path,
           "name" => item.name,
+          "previous_path" => item.path,
+          "previous_name" => item.name,
+          "previous_mime_type" => item.mime_type,
+          "previous_size" => item.size,
+          "previous_checksum" => item.checksum,
+          "previous_external_modified_at" => item.external_modified_at&.iso8601,
           "message" => "External file is no longer listed; portal content was kept"
         }
       end
@@ -248,7 +287,8 @@ module ExternalFolderSync
         "updated_count" => result.count { _1["action"] == "update" },
         "skipped_count" => result.count { _1["action"] == "skip" },
         "deleted_count" => result.count { _1["action"] == "delete_detected" },
-        "errors_count" => result.count { _1["action"] == "error" }
+        "errors_count" => result.count { _1["action"] == "error" },
+        "needs_attention_count" => result.count { _1["attention_level"].in?(%w[warning danger]) }
       }
     end
 
@@ -259,7 +299,9 @@ module ExternalFolderSync
         source_name: plan["source_name"],
         source_mime_type: plan["source_mime_type"],
         exported: plan["exported"],
-        export_mime_type: plan["export_mime_type"]
+        export_mime_type: plan["export_mime_type"],
+        last_change_reasons: plan["change_reasons"],
+        last_attention_level: plan["attention_level"]
       }
     end
 
