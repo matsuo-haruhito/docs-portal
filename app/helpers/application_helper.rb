@@ -269,11 +269,14 @@ module ApplicationHelper
   end
 
   def external_folder_sync_webhook_sync_run_link_title(_event)
-    "同期履歴の該当Runへ移動"
+    I18n.t("labels.external_folder_sync_webhook_events.sync_run_link_title")
   end
 
   def external_folder_sync_webhook_sync_run_link_aria_label(event)
-    "同期履歴の該当Run #{external_folder_sync_webhook_sync_run_label(event)} へ移動"
+    I18n.t(
+      "labels.external_folder_sync_webhook_events.sync_run_link_aria_label",
+      run_id: external_folder_sync_webhook_sync_run_label(event)
+    )
   end
 
   def external_folder_sync_webhook_sync_run_present?(event)
