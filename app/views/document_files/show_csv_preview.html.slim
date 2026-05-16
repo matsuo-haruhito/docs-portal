@@ -39,6 +39,7 @@ p.muted
         input id="csv-preview-search-#{@document_file.id}" type="search" placeholder="キーワード" data-csv-preview-search-input="true"
         button.button.secondary type="button" data-csv-preview-search-clear="true" クリア
         button.button.secondary type="button" data-csv-preview-copy="true" 表示中の行をCSVコピー
+        button.button.secondary type="button" data-csv-preview-sticky-header="true" aria-pressed="true" 先頭行固定中
       .rendered-table-diff-scroll
         table.rendered-table-diff-table data-csv-preview-table="true"
           tbody
