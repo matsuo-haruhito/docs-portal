@@ -1,0 +1,9 @@
+- if external_folder_sync_webhook_sync_run_present?(event)
+  code = external_folder_sync_webhook_sync_run_label(event)
+  br
+  span.muted = external_folder_sync_webhook_sync_run_status(event)
+  - if external_folder_sync_webhook_sync_run_warning_label(event).present?
+    br
+    span.status-warning = external_folder_sync_webhook_sync_run_warning_label(event)
+- else
+  | -
