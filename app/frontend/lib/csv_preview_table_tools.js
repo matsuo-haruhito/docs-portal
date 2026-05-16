@@ -1,6 +1,7 @@
 const MIN_COLUMN_WIDTH = 72
 const MAX_COLUMN_WIDTH = 960
 const COLUMN_WIDTH_STORAGE_PREFIX = "docsPortal.csvPreviewColumnWidths"
+const STICKY_STATE_STORAGE_PREFIX = "docsPortal.csvPreviewStickyState"
 
 function escapeCsvCell(value) {
   const text = (value || "").toString()
@@ -11,9 +12,17 @@ function clampColumnWidth(value) {
   return Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, value))
 }
 
-function columnWidthStorageKey(container) {
+function storageKey(container, prefix) {
   const key = container.dataset.csvPreviewStorageKey || window.location.pathname
-  return `${COLUMN_WIDTH_STORAGE_PREFIX}:${key}`
+  return `${prefix}:${key}`
+}
+
+function columnWidthStorageKey(container) {
+  return storageKey(container, COLUMN_WIDTH_STORAGE_PREFIX)
+}
+
+function stickyStateStorageKey(container) {
+  return storageKey(container, STICKY_STATE_STORAGE_PREFIX)
 }
 
 function readColumnWidths(container) {
@@ -31,6 +40,18 @@ function writeColumnWidths(container, widths) {
 
 function clearColumnWidths(container) {
   window.localStorage.removeItem(columnWidthStorageKey(container))
+}
+
+function readStickyState(container) {
+  try {
+    return { stickyHeader: true, stickyColumn: true, ...JSON.parse(window.localStorage.getItem(stickyStateStorageKey(container)) || "{}") }
+  } catch (_error) {
+    return { stickyHeader: true, stickyColumn: true }
+  }
+}
+
+function writeStickyState(container, state) {
+  window.localStorage.setItem(stickyStateStorageKey(container), JSON.stringify(state))
 }
 
 function injectCsvPreviewStyle() {
@@ -248,6 +269,7 @@ function setupCsvPreviewTable(container) {
   if (!input || !clearButton || !copyButton || !stickyHeaderButton || !stickyColumnButton || !resetColumnsButton || !count || !status || !table) return
 
   const rows = Array.from(table.querySelectorAll("tbody tr"))
+  const stickyState = readStickyState(container)
 
   const updateSearch = () => {
     const query = input.value.trim().toLowerCase()
@@ -264,15 +286,19 @@ function setupCsvPreviewTable(container) {
   }
 
   const updateStickyHeader = (enabled) => {
+    stickyState.stickyHeader = enabled
     container.classList.toggle("has-sticky-header", enabled)
     stickyHeaderButton.setAttribute("aria-pressed", String(enabled))
     stickyHeaderButton.textContent = enabled ? "先頭行固定中" : "先頭行固定"
+    writeStickyState(container, stickyState)
   }
 
   const updateStickyColumn = (enabled) => {
+    stickyState.stickyColumn = enabled
     container.classList.toggle("has-sticky-column", enabled)
     stickyColumnButton.setAttribute("aria-pressed", String(enabled))
     stickyColumnButton.textContent = enabled ? "先頭列固定中" : "先頭列固定"
+    writeStickyState(container, stickyState)
   }
 
   input.addEventListener("input", updateSearch)
@@ -314,8 +340,8 @@ function setupCsvPreviewTable(container) {
 
   setupColumnResizers(container, table)
   updateSearch()
-  updateStickyHeader(true)
-  updateStickyColumn(true)
+  updateStickyHeader(stickyState.stickyHeader)
+  updateStickyColumn(stickyState.stickyColumn)
 }
 
 export function setupCsvPreviewTableTools() {
