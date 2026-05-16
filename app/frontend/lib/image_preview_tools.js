@@ -1,3 +1,7 @@
+function isEditableTarget(target) {
+  return ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName) || target?.isContentEditable
+}
+
 function setupImagePreview(container) {
   if (container.dataset.imagePreviewToolsReady === "true") return
   container.dataset.imagePreviewToolsReady = "true"
@@ -61,16 +65,52 @@ function setupImagePreview(container) {
     applyState()
   }
 
-  fitToggle.addEventListener("click", () => {
+  const toggleFit = () => {
     state = { ...state, fit: !state.fit }
     applyState()
-  })
+  }
+
+  fitToggle.addEventListener("click", toggleFit)
   zoomOutButton.addEventListener("click", () => setZoom((Number(state.zoom) || 1) - 0.25))
   zoomResetButton.addEventListener("click", () => setZoom(1))
   zoomInButton.addEventListener("click", () => setZoom((Number(state.zoom) || 1) + 0.25))
   rotateLeftButton.addEventListener("click", () => setRotation((Number(state.rotation) || 0) - 90))
   rotateResetButton.addEventListener("click", () => setRotation(0))
   rotateRightButton.addEventListener("click", () => setRotation((Number(state.rotation) || 0) + 90))
+
+  document.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey || isEditableTarget(event.target)) return
+
+    if (["+", "=", "-", "_", "0", "f", "F", "[", "]"].includes(event.key)) {
+      event.preventDefault()
+    }
+
+    switch (event.key) {
+      case "+":
+      case "=":
+        setZoom((Number(state.zoom) || 1) + 0.25)
+        break
+      case "-":
+      case "_":
+        setZoom((Number(state.zoom) || 1) - 0.25)
+        break
+      case "0":
+        setZoom(1)
+        break
+      case "f":
+      case "F":
+        toggleFit()
+        break
+      case "[":
+        setRotation((Number(state.rotation) || 0) - 90)
+        break
+      case "]":
+        setRotation((Number(state.rotation) || 0) + 90)
+        break
+      default:
+        break
+    }
+  })
 
   applyState()
 }
