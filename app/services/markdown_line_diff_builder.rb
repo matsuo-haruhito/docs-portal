@@ -1,3 +1,5 @@
+require "set"
+
 class MarkdownLineDiffBuilder
   MAX_FILE_BYTES = 256.kilobytes
   CONTEXT_LINES = 3
