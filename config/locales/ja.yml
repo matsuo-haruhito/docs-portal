@@ -186,6 +186,8 @@ ja:
         ignored: "無視"
         failed: "失敗"
         completed: "同期完了"
+      sync_run_link_title: "同期履歴の該当Runへ移動"
+      sync_run_link_aria_label: "同期履歴の該当Run %{run_id} へ移動"
     external_folder_sync_plans:
       action:
         create: "作成"
