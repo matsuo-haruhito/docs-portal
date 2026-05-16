@@ -18,8 +18,24 @@ class ExternalFolderSyncJob < ApplicationJob
   def reflect_webhook_event_result!(webhook_event, run)
     webhook_event.update!(
       status: webhook_event_status_for(run),
-      error_message: webhook_event_message_for(run)
+      error_message: webhook_event_message_for(run),
+      payload_json: webhook_event.payload_json.to_h.merge("sync_run" => sync_run_summary(run))
     )
+  end
+
+  def sync_run_summary(run)
+    {
+      "id" => run.id,
+      "public_id" => run.public_id,
+      "status" => run.status,
+      "mode" => run.mode,
+      "started_at" => run.started_at&.iso8601,
+      "finished_at" => run.finished_at&.iso8601,
+      "items_scanned_count" => run.items_scanned_count,
+      "errors_count" => run.errors_count,
+      "conflict_warnings_count" => run.summary_json&.fetch("conflict_warnings_count", nil),
+      "blocked_by_conflict_warnings" => run.summary_json&.fetch("blocked_by_conflict_warnings", false)
+    }.compact
   end
 
   def webhook_event_status_for(run)
