@@ -92,11 +92,11 @@ p.muted
   .markdown-workspace__header
     div
       h2 版差分ビュー
-      p.muted 前版と比較した添付・元ファイルの追加、変更、削除と、Markdown本文の行単位diffを確認できます。
+      p.muted 前版と比較した添付・元ファイルの追加、変更、削除と、Markdown本文・HTML本文の差分を確認できます。
     - if @previous_version
       = link_to "旧版を開く", document_version_path(@previous_version), class: "button secondary"
   - diff_files = @version_file_diff_summary.fetch(:files)
-  - if diff_files.any?
+  - if diff_files.any? || @rendered_html_diff&.available
     .diff-viewer-layout
       .diff-file-list
         - diff_files.each do |row|
@@ -126,18 +126,26 @@ p.muted
                         span.diff-line-number role="cell" = line.old_number || ""
                         span.diff-line-number role="cell" = line.new_number || ""
                         code.diff-line-code role="cell"
-                          - prefix = case line.kind
-                          - when :added then "+ "
-                          - when :removed then "- "
-                          - when :gap then "  "
-                          - else "  "
+                          - prefix = line.kind == :added ? "+ " : line.kind == :removed ? "- " : "  "
                           = "#{prefix}#{line.text}"
                 - else
                   p.muted Markdown本文の差分はありません。
         - else
           p.muted Markdownファイルの行単位diffはありません。
         h3 HTML差分
-        p.muted レンダリング後HTML差分は次の改善で追加します。現時点ではMarkdown行差分とHTMLプレビューを並行して確認してください。
+        - if @rendered_html_diff&.message.present?
+          p.muted = @rendered_html_diff.message
+        - elsif @rendered_html_diff&.lines&.any?
+          .markdown-line-diff-table role="table" aria-label="HTML diff"
+            - @rendered_html_diff.lines.each do |line|
+              .markdown-line-diff-row class="is-#{line.kind}" role="row"
+                span.diff-line-number role="cell" = line.old_number || ""
+                span.diff-line-number role="cell" = line.new_number || ""
+                code.diff-line-code role="cell"
+                  - prefix = line.kind == :added ? "+ " : line.kind == :removed ? "- " : "  "
+                  = "#{prefix}#{line.text}"
+        - else
+          p.muted レンダリング後HTML本文の差分はありません。
   - else
     p.muted 前版との差分はありません。
 
