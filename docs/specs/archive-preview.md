@@ -16,7 +16,8 @@ ZIP preview では以下を表示する。
 - ZIP内サマリー
   - file 件数
   - folder 件数
-  - 操作候補 entry 件数
+  - text preview 候補 entry 件数
+  - download 候補 entry 件数
   - preview 対象 file の合計サイズ
 - ディレクトリサマリー
   - ディレクトリ path
@@ -29,7 +30,8 @@ ZIP preview では以下を表示する。
   - path
   - size
   - safe / unsafe path
-  - 操作候補または操作不可理由
+  - text preview 候補
+  - download 候補または操作不可理由
   - path copy 操作
 
 ## 表示上限
@@ -107,8 +109,11 @@ entry 単位 preview / download は便利だが、以下の検討が必要。
 - `safe_path?`
 - `actionable?`
 - `action_unavailable_reason`
+- `download_candidate?`
+- `text_preview_candidate?`
 
-現在の `actionable?` は、directory entry ではなく、かつ safe path であることだけを示す。
+現在の `download_candidate?` は、directory entry ではなく、かつ safe path であることだけを示す。
+`text_preview_candidate?` は `download_candidate?` に加えて、拡張子が `.txt` / `.log` / `.md` / `.csv` / `.tsv` / `.json` / `.yaml` / `.yml` などのテキスト系であることを示す。
 これは「将来操作候補」の意味であり、実際に preview / download 可能であることは意味しない。
 
 ### 初期実装ステップ案
