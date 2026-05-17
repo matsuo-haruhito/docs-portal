@@ -83,3 +83,30 @@ entry 単位 preview / download は便利だが、以下の検討が必要。
 - 一時ファイルを生成する場合の lifecycle
 
 そのため、まずは metadata preview / path copy / directory filter までを優先する。
+
+### 実装しない条件
+
+以下の条件に当てはまる entry は、entry 単位 preview / download の初期実装では扱わない。
+
+- directory entry
+- password protected / encrypted ZIP entry
+- entry path が空、絶対 path、または `..` を含むもの
+- nested archive と判定できるもの
+- 設定した entry size 上限を超えるもの
+- content type を安全に推定できないもの
+- preview 可能種別に入らない binary entry
+
+### 初期実装ステップ案
+
+1. entry path validator を service と spec で追加する
+2. entry metadata に `previewable` / `downloadable` / `reason` を持たせる
+3. UI ではまず disabled action と reason 表示だけを出す
+4. download は一時ファイルを作らず streaming できるか検討する
+5. preview は text / JSON / CSV など小さいテキスト entry に限定して検討する
+
+### 権限の考え方
+
+- archive 本体を閲覧できることは、entry を無制限に配信してよいことを意味しない
+- entry download を追加する場合も、document file download 権限を再確認する
+- preview だけを許可する場合は、既存の inline preview と同等の access log / consent timing を確認する
+- entry 配信時にも元 archive file の access log に紐づけて記録できるようにする
