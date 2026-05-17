@@ -16,7 +16,7 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
 
   def new
     unless @external_folder_sync_source.google_drive? && @external_folder_sync_source.oauth_user?
-      redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: "OAuth認可はGoogle DriveのOAuth user認証でのみ利用できます。"
+      redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: "OAuth接続はGoogle DriveのOAuthユーザー方式でのみ利用できます。"
       return
     end
 
@@ -44,14 +44,14 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
       token_type: token["token_type"]
     )
 
-    redirect_to admin_external_folder_sync_source_path(source), notice: "Google Drive OAuth認可を接続しました。"
+    redirect_to admin_external_folder_sync_source_path(source), notice: "Google Drive OAuth接続を完了しました。"
   rescue ActiveSupport::MessageVerifier::InvalidSignature, KeyError, ActionController::ParameterMissing => e
-    redirect_to admin_external_folder_sync_sources_path, alert: "OAuth認可に失敗しました: #{e.message}"
+    redirect_to admin_external_folder_sync_sources_path, alert: "OAuth接続に失敗しました: #{e.message}"
   end
 
   def destroy
     @external_folder_sync_source.update!(auth_config: {}.to_json)
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "Google Drive OAuth認可を解除しました。"
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "Google Drive OAuth接続を解除しました。"
   end
 
   private
