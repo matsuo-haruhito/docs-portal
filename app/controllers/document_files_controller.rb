@@ -109,25 +109,37 @@ class DocumentFilesController < BaseController
   end
 
   def render_inline_preview_for(file, viewer_plan, disposition)
-    if inline_preview_kind?(viewer_plan, disposition, :pdf)
-      render_inline_preview(:show_pdf_preview) { prepare_inline_preview!(file, disposition:) }
-    elsif inline_preview_kind?(viewer_plan, disposition, :image)
-      render_inline_preview(:show_image_preview) { prepare_inline_preview!(file, disposition:) }
-    elsif inline_preview_kind?(viewer_plan, disposition, :csv)
-      render_inline_preview(:show_csv_preview) { prepare_csv_preview!(file, disposition:) }
-    elsif inline_preview_kind?(viewer_plan, disposition, :json, :yaml)
-      render_inline_preview(:show_structured_preview) do
-        prepare_structured_preview!(file, viewer_kind: viewer_plan.viewer_kind, disposition:)
-      end
-    elsif inline_preview_kind?(viewer_plan, disposition, :archive)
-      render_inline_preview(:show_archive_preview) { prepare_archive_preview!(file, disposition:) }
-    elsif text_preview_request?(file, disposition)
-      render_inline_preview(:show_text_preview) { prepare_text_preview!(file, disposition:) }
-    else
-      return false
-    end
+    template = inline_preview_template_for(file, viewer_plan, disposition)
+    return false unless template
 
+    render_inline_preview(template) do
+      prepare_preview_for_template!(file, viewer_plan:, disposition:, template:)
+    end
     true
+  end
+
+  def inline_preview_template_for(file, viewer_plan, disposition)
+    return :show_pdf_preview if inline_preview_kind?(viewer_plan, disposition, :pdf)
+    return :show_image_preview if inline_preview_kind?(viewer_plan, disposition, :image)
+    return :show_csv_preview if inline_preview_kind?(viewer_plan, disposition, :csv)
+    return :show_structured_preview if inline_preview_kind?(viewer_plan, disposition, :json, :yaml)
+    return :show_archive_preview if inline_preview_kind?(viewer_plan, disposition, :archive)
+    return :show_text_preview if text_preview_request?(file, disposition)
+  end
+
+  def prepare_preview_for_template!(file, viewer_plan:, disposition:, template:)
+    case template
+    when :show_csv_preview
+      prepare_csv_preview!(file, disposition:)
+    when :show_structured_preview
+      prepare_structured_preview!(file, viewer_kind: viewer_plan.viewer_kind, disposition:)
+    when :show_archive_preview
+      prepare_archive_preview!(file, disposition:)
+    when :show_text_preview
+      prepare_text_preview!(file, disposition:)
+    else
+      prepare_inline_preview!(file, disposition:)
+    end
   end
 
   def render_embedded_html_preview_for(file, disposition)
