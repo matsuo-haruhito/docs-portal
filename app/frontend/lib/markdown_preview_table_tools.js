@@ -24,7 +24,7 @@ function injectTableSearchStyle(frameDocument) {
       padding: .2rem .35rem;
       border: 1px solid var(--doc-border-soft, #eef2f7);
       border-radius: 999px;
-      background: rgb(255 255 255 / 64%);
+      background: rgb(255 255 255 / 82%);
     }
     .portal-table-toolbar-label {
       color: var(--doc-text-muted, #64748b);
@@ -211,6 +211,10 @@ function createToolbarGroup(frameDocument, labelText) {
   return group
 }
 
+function toolbarInsertionTarget(toolbar) {
+  return toolbar.querySelector(".portal-table-width-toolbar-body") || toolbar
+}
+
 function enhanceTablesInFrame(frame) {
   const frameDocument = frame.contentDocument
   if (!frameDocument?.body) return
@@ -281,7 +285,9 @@ function enhanceTablesInFrame(frame) {
     utilityBar.appendChild(searchGroup)
     utilityBar.appendChild(displayGroup)
     utilityBar.appendChild(copyGroup)
-    toolbar.insertBefore(utilityBar, toolbar.firstChild)
+
+    const target = toolbarInsertionTarget(toolbar)
+    target.insertBefore(utilityBar, target.firstChild)
 
     input.addEventListener("input", () => updateTableSearch(table, input, count))
     clearButton.addEventListener("click", () => {
