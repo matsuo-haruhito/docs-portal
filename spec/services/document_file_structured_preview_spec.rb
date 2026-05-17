@@ -19,6 +19,7 @@ RSpec.describe DocumentFileStructuredPreview do
     preview = described_class.new(file:, viewer_kind: :json).call
 
     expect(preview).not_to be_error
+    expect(preview).not_to be_truncated
     expect(preview.formatted_text).to include("\"name\": \"docs\"")
     expect(preview.formatted_text).to include("\"enabled\": true")
   end
@@ -42,6 +43,7 @@ RSpec.describe DocumentFileStructuredPreview do
     preview = described_class.new(file:, viewer_kind: :yaml).call
 
     expect(preview).not_to be_error
+    expect(preview).not_to be_truncated
     expect(preview.formatted_text).to include("name: docs")
     expect(preview.formatted_text).to include("enabled: true")
   end
@@ -55,5 +57,17 @@ RSpec.describe DocumentFileStructuredPreview do
 
     expect(preview).to be_error
     expect(preview.formatted_text).to be_nil
+  end
+
+  it "falls back to source text for unknown structured viewer kind" do
+    storage_key = "spec/structured-preview/plain.txt"
+    write_storage_file(storage_key, "raw text\n")
+    file = create(:document_file, document_version: version, file_name: "plain.txt", content_type: "text/plain", storage_key:)
+
+    preview = described_class.new(file:, viewer_kind: :unknown).call
+
+    expect(preview).not_to be_error
+    expect(preview).not_to be_truncated
+    expect(preview.formatted_text).to eq("raw text\n")
   end
 end
