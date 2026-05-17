@@ -56,13 +56,19 @@
         .document-viewer__header
           div
             h2 ZIP内ファイル一覧
-            p.muted `/` で検索欄に移動できます。見出しボタンで並び替え、種別selectで file / folder を絞り込めます。行ごとのパスや表示中のパスをコピーできます。
+            p.muted `/` で検索欄に移動できます。ディレクトリ / 種別 / キーワードで絞り込み、見出しボタンで並び替えできます。行ごとのパスや表示中のパスをコピーできます。
           p.actions
             button.button.secondary type="button" data-archive-preview-copy-visible="true" 表示中のパスをコピー
         .document-filter
           label
             | 検索
             input type="search" placeholder="entry path" data-archive-preview-search-input="true"
+          label
+            | ディレクトリ
+            select data-archive-preview-directory-filter="true"
+              option value="all" すべて
+              - @archive_preview.directory_summaries.each do |summary|
+                option value=summary.path = summary.path
           label
             | 種別
             select data-archive-preview-type-filter="true"
@@ -86,7 +92,7 @@
             tbody data-archive-preview-entries="true"
               - @archive_preview.entries.each do |entry|
                 - entry_type = entry.directory? ? "folder" : "file"
-                tr data-archive-preview-entry="true" data-archive-preview-entry-type=entry_type data-archive-preview-entry-size=entry.size
+                tr data-archive-preview-entry="true" data-archive-preview-entry-directory=entry.parent_directory data-archive-preview-entry-type=entry_type data-archive-preview-entry-size=entry.size
                   td = entry_type
                   td
                     code data-archive-preview-entry-name="true" = entry.name
