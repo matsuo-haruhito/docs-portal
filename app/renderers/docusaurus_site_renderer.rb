@@ -116,12 +116,46 @@ class DocusaurusSiteRenderer
     rewrite_url_attributes(document, "link", "href", absolute_path:)
     rewrite_url_attributes(document, "script", "src", absolute_path:)
     rewrite_url_attributes(document, "img", "src", absolute_path:)
+    strip_embedded_docusaurus_chrome!(document) if @embedded
     inject_embedded_route_path!(document, site_path) if @embedded
     inject_portal_navigation!(document) unless @embedded
     inject_version_switcher!(document) unless @embedded
     inject_viewer_theme!(document)
 
     document.to_html.html_safe
+  end
+
+  def strip_embedded_docusaurus_chrome!(document)
+    document.css(embedded_chrome_selectors.join(", ")).each(&:remove)
+
+    document.css("main .row, .main-wrapper .row").each do |row|
+      row["class"] = row["class"].to_s.split.reject { _1.start_with?("row") }.join(" ")
+    end
+
+    document.css("main .col, main [class*='col--'], article[class*='col--']").each do |node|
+      node["class"] = node["class"].to_s.split.reject { _1 == "col" || _1.start_with?("col--") }.join(" ")
+    end
+  end
+
+  def embedded_chrome_selectors
+    [
+      "nav.navbar",
+      ".navbar",
+      ".navbar-sidebar",
+      ".navbar__items",
+      ".theme-doc-breadcrumbs",
+      ".theme-doc-sidebar-container",
+      "aside.theme-doc-sidebar-container",
+      "aside.theme-doc-toc-desktop",
+      ".theme-doc-toc-desktop",
+      ".theme-doc-toc-mobile",
+      ".table-of-contents",
+      ".theme-doc-footer",
+      ".theme-edit-this-page",
+      ".pagination-nav",
+      "footer.footer",
+      ".footer"
+    ]
   end
 
   def inject_embedded_route_path!(document, site_path)
