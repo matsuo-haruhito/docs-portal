@@ -390,6 +390,21 @@ body > main{
   vertical-align: middle;
 }
 
+td.actions{
+  display: table-cell;
+  white-space: nowrap;
+}
+
+td.actions form{
+  display: inline-flex;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+td.actions form:last-child{
+  margin-right: 0;
+}
+
 @media (min-width: 1200px){
   main:has(.site-viewer-shell){
     max-width: none;
