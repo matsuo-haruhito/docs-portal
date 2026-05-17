@@ -6,6 +6,7 @@ html
     = csrf_meta_tags
     = csp_meta_tag
     = stylesheet_link_tag "tree_view", media: "all"
+    = stylesheet_link_tag "document_comment_workspace", media: "all"
     = stylesheet_link_tag "rails_table_preferences", media: "all"
     = vite_client_tag
     = vite_javascript_tag "application"
@@ -118,31 +119,58 @@ html
       |   main { margin: 24px auto; }
       |   .document-viewer__header { flex-direction: column; }
       |   .line-preview__row { grid-template-columns: 3.2rem minmax(0, 1fr); }
-      |   .site-viewer-frame { min-height: 68vh; }
       | }
-  body
+  body data-sidebar-storage-key="docsPortalSidebarWidth"
     header
-      = render "shared/navbar"
+      nav
+        = link_to "文書ポータル", root_path, class: "brand-link"
+        .header-links
+          - if current_user
+            details.nav-dropdown
+              summary.nav-dropdown__summary 文書
+              .nav-dropdown__menu
+                = link_to "案件一覧", projects_path
+                = link_to "文書ショートカット", document_bookmarks_path
+                = link_to "既読状況", read_confirmations_path
+                = link_to "インポートジョブ", document_import_jobs_path
+                - if current_user.internal?
+                  .nav-dropdown__divider
+                  = link_to "同期ダッシュボード", external_sources_path
+                  = link_to "同期差分", external_sync_runs_path
+                  = link_to "同期レビュー", external_sync_suggestions_path
+            - if current_user.internal?
+              details.nav-dropdown
+                summary.nav-dropdown__summary 管理
+                .nav-dropdown__menu
+                  = link_to "ユーザー", users_path
+                  = link_to "同意文", consent_documents_path
+                  = link_to "横断検索", search_path
+                  = link_to "Docusaurus 管理", admin_docusaurus_builds_path
+                  = link_to "API仕様", admin_api_specifications_path
+          - else
+            = link_to "ログイン", new_session_path
+        - if current_user
+          .user-menu
+            span = current_user.name
+            = button_to "ログアウト", session_path, method: :delete, class: "button secondary"
     - if content_for?(:left_content)
-      - sidebar_content = capture do
-        = yield :left_content
-      .layout-with-sidebar data-sidebar-layout="true"
-        aside.sidebar-panel data-docs-sidebar="true"
+      .layout-with-sidebar data-sidebar-layout=true
+        aside.sidebar-panel data-sidebar-panel=true
           .sidebar-shell
             .sidebar-toolbar
               .sidebar-toolbar-content
-                = yield :sidebar_toolbar
-              button.sidebar-toggle type="button" data-sidebar-toggle="true" aria-label="文書ツリーを折りたたむ" aria-expanded="true" title="文書ツリーを折りたたむ"
-                | ◀
-            .sidebar-content data-sidebar-content="true"
-              = sidebar_content
-            .sidebar-resizer data-sidebar-resizer="true" role="separator" aria-orientation="vertical" aria-label="文書ツリーの幅を調整" tabindex="0"
-        main.main-panel
-          = render "shared/flash_messages"
-          = turbo_frame_tag "main_panel" do
-            = yield
+                - if content_for?(:sidebar_header)
+                  = yield :sidebar_header
+              button.sidebar-toggle type="button" data-sidebar-toggle=true aria-label="サイドバーを折りたたむ" aria-expanded="true" ⇤
+            .sidebar-content data-sidebar-content=true
+              = yield :left_content
+            .sidebar-resizer data-sidebar-resizer=true role="separator" aria-orientation="vertical" aria-label="サイドバー幅を調整" tabindex="0"
+        section.main-panel
+          - flash.each do |type, message|
+            .notice class=(type == "alert" ? "alert" : "ok") = message
+          = yield
     - else
       main
-        = render "shared/flash_messages"
-        = turbo_frame_tag "main_panel" do
-          = yield
+        - flash.each do |type, message|
+          .notice class=(type == "alert" ? "alert" : "ok") = message
+        = yield
