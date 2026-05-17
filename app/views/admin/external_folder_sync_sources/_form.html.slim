@@ -12,7 +12,7 @@
       | 認証方式
       = form.select :auth_type, enum_options_for("external_folder_sync_sources.auth_type", %w[service_account oauth_user])
     label
-      | 名前
+      | 同期設定名
       = form.text_field :name, placeholder: "Google Drive同期"
     label
       | Google DriveフォルダURL
