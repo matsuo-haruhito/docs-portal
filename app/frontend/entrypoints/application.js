@@ -1,4 +1,7 @@
 import "@hotwired/turbo-rails"
+import { Application } from "@hotwired/stimulus"
+import { RailsTablePreferencesController } from "rails_table_preferences"
+import { TomSelectController } from "rails_fields_kit"
 import "tom-select/dist/css/tom-select.css"
 import { setupTomSelectFields } from "../lib/tom_select_fields"
 import { setupMarkdownPreviewTableTools } from "../lib/markdown_preview_table_tools"
@@ -10,6 +13,10 @@ import { setupStructuredPreviewTools } from "../lib/structured_preview_tools"
 import { setupArchivePreviewTools } from "../lib/archive_preview_tools"
 import { setupImagePreviewTools } from "../lib/image_preview_tools"
 import { setupPdfPreviewTools } from "../lib/pdf_preview_tools"
+
+const application = Application.start()
+application.register("rails-table-preferences", RailsTablePreferencesController)
+application.register("rails-fields-kit--tom-select", TomSelectController)
 
 const STORAGE_KEY = "docsPortal.sidebar"
 const DEFAULT_WIDTH = 360
