@@ -4,24 +4,28 @@
 
 = form_with model: [:admin, document_set] do |form|
   .form-grid
-    label
-      | 案件
-      = form.collection_select :project_id, @projects, :id, :name
-    label
-      | 名称
-      = form.text_field :name
-    label
-      | 種別
-      = form.select :set_type, enum_options_for("document_sets.set_type", DocumentSet.set_types.keys)
-    label
-      | 公開範囲
-      = form.select :visibility_policy, enum_options_for("document_sets.visibility_policy", DocumentSet.visibility_policies.keys)
-    label
-      | 表示順
-      = form.number_field :sort_order, min: 0
-    label style="grid-column: 1 / -1;"
-      | 説明
-      = form.text_area :description
+    = form.rfk_select :project_id,
+      collection: @projects,
+      collection_value_method: :id,
+      collection_label_method: :name,
+      wrapper: true,
+      label: "案件",
+      allow_clear: true,
+      placeholder: "案件を選択"
+    = form.rfk_text_field :name, wrapper: true, label: "名称"
+    = form.rfk_select :set_type,
+      collection: enum_options_for("document_sets.set_type", DocumentSet.set_types.keys),
+      wrapper: true,
+      label: "種別"
+    = form.rfk_select :visibility_policy,
+      collection: enum_options_for("document_sets.visibility_policy", DocumentSet.visibility_policies.keys),
+      wrapper: true,
+      label: "公開範囲"
+    = form.rfk_number_field :sort_order, min: 0, wrapper: true, label: "表示順"
+    = form.rfk_text_area :description,
+      wrapper: true,
+      label: "説明",
+      wrapper_html: { style: "grid-column: 1 / -1;" }
 
   - if @project_documents.any?
     h2 対象文書
