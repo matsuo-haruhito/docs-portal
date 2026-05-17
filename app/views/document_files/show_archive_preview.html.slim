@@ -1,0 +1,35 @@
+.document-viewer
+  = render "preview_header",
+    project: @project,
+    document: @document,
+    document_version: @document_version,
+    document_file: @document_file
+
+  - if @archive_preview.error?
+    = render "preview_error_card", title: "archive previewを表示できません", message: @archive_preview.error
+  - else
+    - if @archive_preview.truncated?
+      .card
+        h2 先頭 #{@archive_preview.limit} 件を表示しています
+        p.muted 大きいZIPファイルのため、previewでは先頭のentryのみ表示しています。すべて確認する場合はダウンロードしてください。
+
+    - if @archive_preview.entries.any?
+      .card
+        h2 ZIP内ファイル一覧
+        p.muted ZIPを展開せず、entry名とサイズだけを表示しています。
+        .table-wrapper
+          table
+            thead
+              tr
+                th 種別
+                th パス
+                th サイズ
+            tbody
+              - @archive_preview.entries.each do |entry|
+                tr
+                  td = entry.directory? ? "folder" : "file"
+                  td
+                    code = entry.name
+                  td = entry.directory? ? "-" : number_to_human_size(entry.size)
+    - else
+      = render "preview_empty_card", title: "空のZIPファイルです", message: "表示できるentryがありません。必要に応じてファイルをダウンロードしてください。"
