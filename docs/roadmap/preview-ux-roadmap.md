@@ -71,6 +71,8 @@
   - 件数サマリー
   - ディレクトリサマリー
   - ディレクトリパスコピー
+  - safe / unsafe path 表示
+  - entry action metadata / 操作候補表示
   - truncated 時の対象範囲 warning
   - entry sort
   - 条件リセット
