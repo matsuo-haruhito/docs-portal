@@ -16,6 +16,7 @@
   - 先頭列固定
   - CSV / Markdown コピー
   - 表内検索
+  - 表示設定リセット
 
 ### Version diff
 
@@ -23,7 +24,50 @@
 - Markdown 行単位 diff
 - レンダリング後 HTML diff
 - HTML table cell diff
+- 差分ビューのタブ風ナビゲーション / 件数バッジ
 - 比較対象版 dropdown
+
+### 添付・元ファイル viewer
+
+- `DocumentFileViewerPlan` による viewer 種別判定
+- 添付一覧への viewer label / preview 不可理由表示
+- CSV / TSV preview
+  - sample table 表示
+  - 検索
+  - CSV コピー
+  - 先頭行固定
+  - 先頭列固定
+  - 列幅調整 / 保存 / リセット
+- JSON / YAML preview
+  - 整形表示
+  - コピー
+  - 内容検索
+  - 一致行のみ表示
+  - 検索ショートカット
+- text preview
+  - 先頭行表示制限
+  - 検索
+  - 一致行のみ表示
+  - コピー
+- image preview
+  - inline 表示
+  - fit / 原寸表示
+  - zoom
+  - rotate
+  - keyboard shortcuts
+- PDF preview
+  - wrapper 画面
+  - 表示高さ切り替え
+  - keyboard shortcut
+- ZIP preview
+  - entry 一覧
+  - entry 検索
+  - entry path 個別コピー
+  - 表示中 entry path 一括コピー
+  - file / folder filter
+  - 件数サマリー
+  - entry sort
+  - 条件リセット
 
 ### Codeblock actions
 
@@ -57,35 +101,45 @@
 
 ## 短期タスク
 
-### 1. 添付・元ファイル viewer registry の第一歩
+### 1. preview controller / viewer service の整理
 
 目的:
 
-- 添付一覧の操作列を file type 判定に寄せる
-- 今後の PDF / CSV / JSON / Office viewer 拡張の土台にする
+- ファイル種別ごとの preview 分岐を読みやすく保つ
+- viewer 追加時に controller が肥大化しないようにする
 
 候補:
 
-- `DocumentFileViewerPlan` service / presenter を追加
-- Markdown / HTML / PDF / Office / text / download only の最小判定を実装
-- 版詳細の添付一覧で viewer plan に応じた label / action を出す
-- preview 不可理由を UI に表示する
+- `DocumentFilesController#show` の preview dispatch をさらに薄くする
+- Office / embedded HTML / inline preview / send_file の責務境界を明確にする
+- preview service の Result helper を整える
+- 既存 preview service の spec を補強する
 
-### 2. CSV / TSV viewer
+### 2. specs index / 目次整理
 
 目的:
 
-- 表形式ファイルをブラウザ上で見やすくする
-- Markdown table toolbar の UX を添付ファイルにも広げる
+- 仕様書が増えてきたため、入口を整理する
 
 候補:
 
-- CSV / TSV を sample preview として表示
-- 大容量時は先頭 N 行だけ表示
-- 検索 / コピー / 列幅調整を再利用
-- download 権限がある場合は download 導線も残す
+- `docs/specs/README.md` を追加
+- 閲覧画面、検索、viewer registry、preview metadata、path history、codeblock actions への導線を整理
+- roadmap から関連仕様へリンクする
 
-### 3. 文書内検索UIの折りたたみ
+### 3. Codeblock JSON 整形コピー
+
+目的:
+
+- API仕様や import API sample の利用性を上げる
+
+候補:
+
+- JSON codeblock に「整形コピー」ボタンを追加
+- `JSON.parse` + `JSON.stringify(value, null, 2)` で整形
+- invalid JSON の場合は既存の JSON検証エラーを表示
+
+### 4. 文書内検索UIの折りたたみ
 
 目的:
 
@@ -98,29 +152,18 @@
 - `Esc` で検索解除 + 折りたたみ
 - モバイル幅での表示を調整
 
-### 4. Codeblock JSON 整形コピー
+### 5. ZIP entry 操作の次段
 
 目的:
 
-- API仕様や import API sample の利用性を上げる
+- ZIP preview を一覧確認から軽い調査ツールへ近づける
 
 候補:
 
-- JSON codeblock に「整形コピー」ボタンを追加
-- `JSON.parse` + `JSON.stringify(value, null, 2)` で整形
-- invalid JSON の場合は既存の JSON検証エラーを表示
-
-### 5. 検索仕様と既存UIのリンク整理
-
-目的:
-
-- `docs/specs/search.md` と既存UI仕様の参照関係を明確にする
-
-候補:
-
-- `docs/specs/README.md` を追加
-- 検索、閲覧画面、API、権限、外部連携などの仕様入口を整理
-- roadmap から関連仕様へリンクする
+- entry path の階層ごとの折りたたみ表示
+- directory summary
+- entry 単位 preview / download の設計
+- 大きいZIPでの表示上限 warning 強化
 
 ## 中期タスク
 
@@ -210,14 +253,15 @@
 
 目的:
 
-- 添付・元ファイルの preview 体験をファイル種別ごとに改善する
+- 添付・元ファイルの preview 体験をファイル種別ごとにさらに改善する
 
 候補:
 
-- Microsoft Graph Office preview
-- Google Drive fallback
-- PDF preview
-- image preview / resize
+- Microsoft Graph Office preview の fallback 整理
+- PDF.js 導入検討
+- PDF page thumbnail / outline
+- image thumbnail 生成
+- image metadata / dimensions 表示
 - text extraction metadata
 
 ### 3. External publish / standalone public build
@@ -251,18 +295,10 @@
 
 ## 実装順のおすすめ
 
-1. `DocumentFileViewerPlan` の最小実装
-2. CSV / TSV viewer
-3. `docs/specs/README.md` 追加
+1. preview controller / viewer service の残り整理
+2. `docs/specs/README.md` 追加
+3. Codeblock JSON 整形コピー
 4. Preview target metadata parser / validator
 5. Docusaurus build manifest
 6. Path history resolver
 7. Project 内検索
-
-## 方針
-
-- 編集保存はまだ後回しにする
-- まず preview / diff / search / viewer の閲覧体験を固める
-- サーバー連携 action は copy / local validation より慎重に扱う
-- 権限境界を越える検索・preview・redirect は必ず Rails route と権限判定を通す
-- Docusaurus iframe 内で完結する操作は、same-origin 前提で強化しつつ、cross-origin でも壊れない fallback を維持する
