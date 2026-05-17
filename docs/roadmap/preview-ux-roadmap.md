@@ -69,6 +69,7 @@
   - file / folder filter
   - 件数サマリー
   - ディレクトリサマリー
+  - ディレクトリパスコピー
   - entry sort
   - 条件リセット
 
