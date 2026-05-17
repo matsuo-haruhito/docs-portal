@@ -93,6 +93,14 @@ function compareRows(left, right, key, direction) {
   return direction === "desc" ? -comparison : comparison
 }
 
+function activeFilterLabel(candidateFilter, directoryFilter, typeFilter) {
+  const labels = []
+  if (candidateFilter.value !== "all") labels.push(`候補:${candidateFilter.value}`)
+  if (directoryFilter.value !== "all") labels.push(`dir:${directoryFilter.value}`)
+  if (typeFilter.value !== "all") labels.push(`種別:${typeFilter.value}`)
+  return labels.length > 0 ? ` / ${labels.join(" / ")}` : ""
+}
+
 function setupArchivePreview(container) {
   if (container.dataset.archivePreviewToolsReady === "true") return
   container.dataset.archivePreviewToolsReady = "true"
@@ -153,10 +161,8 @@ function setupArchivePreview(container) {
       if (visible) visibleCount += 1
     })
 
-    const candidateLabel = selectedCandidate === "all" ? "" : ` / ${selectedCandidate}`
-    const directoryLabel = selectedDirectory === "all" ? "" : ` / ${selectedDirectory}`
-    const typeLabel = selectedType === "all" ? "" : ` / ${selectedType}`
-    count.textContent = query.length === 0 ? `${visibleCount}/${rows.length}件表示${candidateLabel}${directoryLabel}${typeLabel}` : `${matchedCount}/${rows.length}件一致 / ${visibleCount}件表示${candidateLabel}${directoryLabel}${typeLabel}`
+    const filterLabel = activeFilterLabel(candidateFilter, directoryFilter, typeFilter)
+    count.textContent = query.length === 0 ? `${visibleCount}/${rows.length}件表示${filterLabel}` : `${matchedCount}/${rows.length}件一致 / ${visibleCount}件表示${filterLabel}`
   }
 
   const resetControls = () => {
@@ -194,7 +200,8 @@ function setupArchivePreview(container) {
     const entryNames = visibleEntryRows.map(archiveEntryName).filter(Boolean)
     const unsafeCount = visibleEntryRows.filter((row) => !archiveEntrySafe(row)).length
     const unsafeNote = unsafeCount > 0 ? `（unsafe ${unsafeCount}件を含みます）` : ""
-    copyText(entryNames.join("\n"), status, `${entryNames.length}件のパスをコピーしました${unsafeNote}`)
+    const filterNote = activeFilterLabel(candidateFilter, directoryFilter, typeFilter)
+    copyText(entryNames.join("\n"), status, `${entryNames.length}件の表示中パスをコピーしました${filterNote}${unsafeNote}`)
   })
 
   copyButtons.forEach((button) => {
