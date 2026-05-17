@@ -19,6 +19,7 @@ RSpec.describe DocumentFileTextPreview do
     preview = described_class.new(file:).call
 
     expect(preview.lines).to eq(%w[one two three])
+    expect(preview.line_count).to eq(3)
     expect(preview).not_to be_truncated
     expect(preview).not_to be_error
   end
@@ -31,6 +32,7 @@ RSpec.describe DocumentFileTextPreview do
     preview = described_class.new(file:).call
 
     expect(preview.lines).to eq(["one", "", "three"])
+    expect(preview.line_count).to eq(3)
   end
 
   it "truncates lines over the limit" do
@@ -41,6 +43,7 @@ RSpec.describe DocumentFileTextPreview do
     preview = described_class.new(file:, limit: 2).call
 
     expect(preview.lines).to eq(%w[one two])
+    expect(preview.line_count).to eq(2)
     expect(preview).to be_truncated
     expect(preview.limit).to eq(2)
   end
@@ -53,6 +56,7 @@ RSpec.describe DocumentFileTextPreview do
     preview = described_class.new(file:).call
 
     expect(preview.lines).to eq([])
+    expect(preview.line_count).to eq(0)
     expect(preview).to be_error
     expect(preview.error).to be_present
   end
