@@ -2,6 +2,8 @@
 
 この文書は、Markdown / Docusaurus preview、版差分、添付・元ファイル viewer、検索、codeblock actions 周辺の改善ロードマップを整理する。
 
+関連仕様の入口は [Specs index](../specs/README.md) を参照する。
+
 ## 現在までに入った主な改善
 
 ### Markdown / Docusaurus preview
@@ -91,13 +93,15 @@
 
 ### Specs / research
 
-- Docusaurus 実例調査メモ
+- [Specs index](../specs/README.md)
+- [検索責務仕様](../specs/search.md)
+- [閲覧画面とUI仕様](../specs/閲覧画面とUI.md)
+- [Docusaurus 実例調査メモ](../research/docusaurus-examples.md)
 - DocumentFile viewer registry 仕様
 - Preview target metadata 仕様
 - Path history / redirect 仕様
 - Codeblock actions 仕様
 - Docusaurus build profiles 仕様
-- 検索責務仕様
 
 ## 短期タスク
 
@@ -296,9 +300,8 @@
 ## 実装順のおすすめ
 
 1. preview controller / viewer service の残り整理
-2. `docs/specs/README.md` 追加
-3. Codeblock JSON 整形コピー
-4. Preview target metadata parser / validator
-5. Docusaurus build manifest
-6. Path history resolver
-7. Project 内検索
+2. Codeblock JSON 整形コピー
+3. Preview target metadata parser / validator
+4. Docusaurus build manifest
+5. Path history resolver
+6. Project 内検索
