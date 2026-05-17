@@ -63,6 +63,32 @@ RSpec.describe DocumentFileArchivePreview do
     expect(preview.total_file_size).to eq(8)
   end
 
+  it "summarizes entries by directory" do
+    storage_key = "spec/archive-preview/directory-summary.zip"
+    write_zip(storage_key, {
+      "docs/" => :directory,
+      "docs/readme.txt" => "hello",
+      "docs/images/" => :directory,
+      "docs/images/logo.png" => "png",
+      "index.html" => "html"
+    })
+    file = create(:document_file, document_version: version, file_name: "directory-summary.zip", content_type: "application/zip", storage_key:)
+
+    preview = described_class.new(file:).call
+
+    summaries = preview.directory_summaries.index_by(&:path)
+    expect(summaries.keys).to contain_exactly("/", "docs/", "docs/images/")
+    expect(summaries["/"].file_count).to eq(1)
+    expect(summaries["/"].folder_count).to eq(1)
+    expect(summaries["/"].total_file_size).to eq(4)
+    expect(summaries["docs/"].file_count).to eq(1)
+    expect(summaries["docs/"].folder_count).to eq(1)
+    expect(summaries["docs/"].total_file_size).to eq(5)
+    expect(summaries["docs/images/"].file_count).to eq(1)
+    expect(summaries["docs/images/"].folder_count).to eq(0)
+    expect(summaries["docs/images/"].total_file_size).to eq(3)
+  end
+
   it "truncates entries over the limit" do
     storage_key = "spec/archive-preview/large.zip"
     write_zip(storage_key, {
