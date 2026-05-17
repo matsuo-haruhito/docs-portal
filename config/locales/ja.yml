@@ -164,7 +164,7 @@ ja:
         failed: "失敗"
         partial: "一部失敗"
       mode:
-        dry_run: "dry-run"
+        dry_run: "同期プレビュー"
         apply: "同期実行"
       safety_state:
         not_run: "未実行"
