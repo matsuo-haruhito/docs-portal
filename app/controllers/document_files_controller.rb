@@ -36,14 +36,12 @@ class DocumentFilesController < BaseController
     record_file_access_log(file)
 
     if inline_preview_kind?(viewer_plan, disposition, :pdf)
-      prepare_pdf_preview!(file, disposition:)
-      render :show_pdf_preview
+      render_inline_preview(:show_pdf_preview, file, disposition:)
       return
     end
 
     if inline_preview_kind?(viewer_plan, disposition, :image)
-      prepare_image_preview!(file, disposition:)
-      render :show_image_preview
+      render_inline_preview(:show_image_preview, file, disposition:)
       return
     end
 
@@ -149,6 +147,11 @@ class DocumentFilesController < BaseController
 
   def inline_preview_kind?(viewer_plan, disposition, *viewer_kinds)
     inline_preview_request?(disposition) && viewer_plan.viewer_kind.in?(viewer_kinds)
+  end
+
+  def render_inline_preview(template, file, disposition:)
+    prepare_inline_preview!(file, disposition:)
+    render template
   end
 
   def prepare_inline_preview!(file, disposition:)
