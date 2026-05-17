@@ -66,6 +66,14 @@ class DocumentFilesController < BaseController
       return
     end
 
+    if disposition == "inline" && viewer_plan.viewer_kind == :archive && !embedded_request?
+      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
+      assign_preview_context(file)
+      @archive_preview = DocumentFileArchivePreview.new(file:).call
+      render :show_archive_preview
+      return
+    end
+
     if disposition == "inline" && file.text_previewable? && !embedded_request?
       response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
       assign_preview_context(file)
