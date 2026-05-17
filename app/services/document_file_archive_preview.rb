@@ -5,6 +5,11 @@ class DocumentFileArchivePreview
     def directory?
       directory
     end
+
+    def parent_directory
+      parent = File.dirname(name.to_s.delete_suffix("/"))
+      parent == "." ? "/" : "#{parent}/"
+    end
   end
 
   DirectorySummary = Data.define(:path, :file_count, :folder_count, :total_file_size)
@@ -40,8 +45,7 @@ class DocumentFileArchivePreview
       end
 
       entries.each do |entry|
-        parent_path = parent_directory_for(entry.name)
-        summary = summaries[parent_path]
+        summary = summaries[entry.parent_directory]
 
         if entry.directory?
           summary[:folder_count] += 1
@@ -54,13 +58,6 @@ class DocumentFileArchivePreview
       summaries.map do |path, values|
         DirectorySummary.new(path:, **values)
       end.sort_by(&:path)
-    end
-
-    private
-
-    def parent_directory_for(name)
-      parent = File.dirname(name.to_s.delete_suffix("/"))
-      parent == "." ? "/" : "#{parent}/"
     end
   end
 
