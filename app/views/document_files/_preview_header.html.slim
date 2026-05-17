@@ -17,4 +17,4 @@ p.muted
   p.actions
     - if local_assigns[:open_label].present? && local_assigns[:open_path].present?
       = link_to open_label, open_path, class: "button secondary", target: "_blank", rel: "noopener"
-    = link_to "ダウンロード", document_file_path(document_file, disposition: "download"), class: "button secondary"
+    = link_to "ダウンロード", document_file_path(document_file, disposition: "download"), class: "button secondary", data: { turbo: false }
