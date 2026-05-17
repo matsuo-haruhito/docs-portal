@@ -36,13 +36,13 @@ class DocumentFilesController < BaseController
     record_file_access_log(file)
 
     if inline_preview_kind?(viewer_plan, disposition, :pdf)
-      prepare_inline_preview!(file, disposition:)
+      prepare_pdf_preview!(file, disposition:)
       render :show_pdf_preview
       return
     end
 
     if inline_preview_kind?(viewer_plan, disposition, :image)
-      prepare_inline_preview!(file, disposition:)
+      prepare_image_preview!(file, disposition:)
       render :show_image_preview
       return
     end
@@ -154,6 +154,14 @@ class DocumentFilesController < BaseController
   def prepare_inline_preview!(file, disposition:)
     response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
     assign_preview_context(file)
+  end
+
+  def prepare_pdf_preview!(file, disposition:)
+    prepare_inline_preview!(file, disposition:)
+  end
+
+  def prepare_image_preview!(file, disposition:)
+    prepare_inline_preview!(file, disposition:)
   end
 
   def prepare_csv_preview!(file, disposition:)
