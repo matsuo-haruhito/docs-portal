@@ -22,12 +22,7 @@ class DocumentFilesController < BaseController
     return if render_inline_preview_for(file, viewer_plan, disposition)
     return if render_embedded_html_preview_for(file, disposition)
 
-    send_file(
-      file_path,
-      disposition:,
-      type: file.effective_content_type
-    )
-    response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
+    send_document_file(file, file_path:, disposition:)
   end
 
   def asset
@@ -46,12 +41,7 @@ class DocumentFilesController < BaseController
       return
     end
 
-    send_file(
-      asset_file.absolute_path,
-      disposition: "inline",
-      type: asset_file.effective_content_type
-    )
-    response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(asset_file, disposition: "inline").header
+    send_document_file(asset_file, file_path: asset_file.absolute_path, disposition: "inline")
   end
 
   private
@@ -188,6 +178,15 @@ class DocumentFilesController < BaseController
 
   def office_preview_url_for(file)
     DocumentFileOfficePreview.new(file:, user: current_user).url
+  end
+
+  def send_document_file(file, file_path:, disposition:)
+    send_file(
+      file_path,
+      disposition:,
+      type: file.effective_content_type
+    )
+    response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
   end
 
   def embedded_html_for(owner_file, file_path, current_tree_path: owner_file.tree_path)
