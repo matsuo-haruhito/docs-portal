@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_17_043000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_18_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -895,6 +895,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_043000) do
     t.index ["created_at"], name: "index_solid_cable_messages_on_created_at"
   end
 
+  create_table "table_preferences", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "default_flag", default: false, null: false
+    t.string "name", default: "default", null: false
+    t.string "scope_key"
+    t.string "scope_type", default: "owner", null: false
+    t.json "settings", null: false
+    t.string "table_key", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["scope_type", "scope_key", "user_id", "table_key", "default_flag"], name: "idx_table_preferences_scope_table_default"
+    t.index ["scope_type", "scope_key", "user_id", "table_key", "name"], name: "idx_table_preferences_scope_table_name", unique: true
+    t.index ["user_id"], name: "index_table_preferences_on_user_id"
+  end
+
   create_table "tree_view_states", id: { comment: "ID" }, comment: "ツリー表示状態", force: :cascade do |t|
     t.datetime "created_at", null: false, comment: "作成日時"
     t.json "expanded_keys", default: [], null: false, comment: "展開キー一覧"
@@ -1063,6 +1078,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_043000) do
   add_foreign_key "read_confirmations", "documents"
   add_foreign_key "read_confirmations", "users"
   add_foreign_key "recurring_job_runs", "recurring_job_schedules"
+  add_foreign_key "table_preferences", "users"
   add_foreign_key "user_consents", "consent_terms"
   add_foreign_key "user_consents", "users"
   add_foreign_key "users", "companies"
