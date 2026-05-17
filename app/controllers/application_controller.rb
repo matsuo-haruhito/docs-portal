@@ -1,7 +1,9 @@
 class ApplicationController < ActionController::Base
+  include RailsTablePreferences::Controller
+
   layout "application"
 
-  helper_method :current_user, :logged_in?, :admin_user?, :company_master_admin?
+  helper_method :current_user, :logged_in?, :admin_user?, :company_master_admin?, :rails_table_preference_settings
 
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
   rescue_from ActionController::ParameterMissing, with: :render_bad_request
