@@ -162,14 +162,6 @@ class DocumentFilesController < BaseController
     assign_preview_context(file)
   end
 
-  def prepare_pdf_preview!(file, disposition:)
-    prepare_inline_preview!(file, disposition:)
-  end
-
-  def prepare_image_preview!(file, disposition:)
-    prepare_inline_preview!(file, disposition:)
-  end
-
   def prepare_csv_preview!(file, disposition:)
     prepare_inline_preview!(file, disposition:)
     @csv_preview = DocumentFileCsvPreview.new(file:).call
