@@ -80,6 +80,27 @@ RSpec.describe DocumentFileArchivePreview do
     expect(safety["/absolute.txt"]).to eq(false)
   end
 
+  it "exposes entry action availability" do
+    storage_key = "spec/archive-preview/actionable.zip"
+    write_zip(storage_key, {
+      "docs/" => :directory,
+      "docs/readme.txt" => "hello",
+      "../outside.txt" => "bad"
+    })
+    file = create(:document_file, document_version: version, file_name: "actionable.zip", content_type: "application/zip", storage_key:)
+
+    preview = described_class.new(file:).call
+
+    entries = preview.entries.index_by(&:name)
+    expect(entries["docs/readme.txt"]).to be_actionable
+    expect(entries["docs/readme.txt"].action_unavailable_reason).to be_nil
+    expect(entries["docs/"]).not_to be_actionable
+    expect(entries["docs/"].action_unavailable_reason).to eq("directory entry は操作対象外です")
+    expect(entries["../outside.txt"]).not_to be_actionable
+    expect(entries["../outside.txt"].action_unavailable_reason).to eq("unsafe path のため操作できません")
+    expect(preview.actionable_entries.map(&:name)).to contain_exactly("docs/readme.txt")
+  end
+
   it "summarizes zip entries" do
     storage_key = "spec/archive-preview/summary.zip"
     write_zip(storage_key, {
