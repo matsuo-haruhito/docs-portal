@@ -2,13 +2,7 @@ class DocumentFileTextPreview
   DEFAULT_LIMIT = 2_000
 
   Result = Data.define(:lines, :truncated, :limit, :error) do
-    def truncated?
-      truncated
-    end
-
-    def error?
-      error.present?
-    end
+    include DocumentFilePreviewResultHelpers
 
     def line_count
       lines.count
