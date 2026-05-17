@@ -1,0 +1,73 @@
+- show_questions = local_assigns.fetch(:show_questions, true)
+- show_reviews = local_assigns.fetch(:show_reviews, false)
+- only_unresolved = local_assigns.fetch(:only_unresolved, false)
+- question_threads = show_questions ? @question_threads.to_a : []
+- review_comments = show_reviews ? @review_comments.to_a : []
+- question_threads = question_threads.reject(&:resolved?) if only_unresolved
+- review_comments = review_comments.reject(&:resolved?) if only_unresolved
+
+- if question_threads.any?
+  section.document-comment-thread-group
+    h3 Q&A
+    - question_threads.each do |thread|
+      article.document-comment-card
+        header.document-comment-card__header
+          div
+            strong = thread.author.name
+            span.muted = " / #{thread.qa_status_label}"
+            - if thread.document_version.present?
+              span.muted = " / #{document_version_label(thread.document_version)}"
+          span.badge Q&A
+        = simple_format(thread.body)
+        - if thread.replies.visible_to(current_user).any?
+          .document-comment-card__replies
+            h4 返信
+            - thread.replies.visible_to(current_user).order(:created_at, :id).each do |reply|
+              .document-comment-reply
+                p
+                  strong = reply.author.name
+                  - if reply.resolved?
+                    span.muted = " / 回答"
+                = simple_format(reply.body)
+        details.document-comment-reply-form
+          summary 返信を追加
+          = form_with model: [@project, @document, DocumentReviewComment.new], local: true do |form|
+            = form.hidden_field :comment_type, value: "question"
+            = form.hidden_field :internal_only, value: false
+            = form.hidden_field :parent_id, value: thread.id
+            - if thread.document_version.present?
+              = form.hidden_field :document_version_id, value: thread.document_version_id
+            div
+              = form.label :body, "返信内容"
+              = form.text_area :body, rows: 3
+            p.actions
+              = form.submit "返信する", class: "button secondary"
+
+- if review_comments.any?
+  section.document-comment-thread-group
+    h3 確認事項
+    - review_comments.each do |comment|
+      article.document-comment-card.document-comment-card--internal
+        header.document-comment-card__header
+          div
+            strong = comment.author.name
+            span.muted = " / #{document_review_comment_status_label(comment)}"
+            - if comment.document_version.present?
+              span.muted = " / #{document_version_label(comment.document_version)}"
+          span.badge = document_review_comment_type_label(comment)
+        - if comment.location_label.present?
+          p.document-comment-card__location
+            strong 位置: 
+            = comment.location_label
+        = simple_format(comment.body)
+
+- if question_threads.empty? && review_comments.empty?
+  p.muted
+    - if only_unresolved
+      | 未解決のコメントはありません。
+    - elsif show_questions && show_reviews
+      | まだ文書コメントはありません。
+    - elsif show_questions
+      | まだ質問はありません。
+    - else
+      | 確認事項はありません。
