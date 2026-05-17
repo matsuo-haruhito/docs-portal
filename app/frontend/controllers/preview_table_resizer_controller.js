@@ -64,17 +64,17 @@ function injectStyle(frameDocument) {
   style.dataset.docsPortalTableWidth = "true"
   style.textContent = `
     .portal-table-width-frame { margin: 1rem 0; border: 1px solid var(--doc-border, #e5e7eb); border-radius: 12px; background: var(--doc-surface, #fff); overflow: hidden; }
-    .portal-table-width-toolbar { border-bottom: 1px solid var(--doc-border-soft, #eef2f7); background: var(--doc-bg-soft, #f8fafc); color: var(--doc-text-muted, #64748b); font-size: .78rem; }
-    .portal-table-width-toolbar > summary { display: flex; gap: .35rem; align-items: center; justify-content: space-between; min-height: 1.9rem; padding: .28rem .55rem; cursor: pointer; list-style: none; user-select: none; }
+    .portal-table-width-toolbar { margin: 0; border: 0; border-bottom: 1px solid var(--doc-border-soft, #eef2f7); background: var(--doc-bg-soft, #f8fafc); color: var(--doc-text-muted, #64748b); font-size: .9rem; }
+    .portal-table-width-toolbar > summary { display: flex; gap: .35rem; align-items: center; justify-content: space-between; min-height: 1.35rem; margin: 0; padding: .08rem .28rem; cursor: pointer; list-style: none; user-select: none; }
     .portal-table-width-toolbar > summary::-webkit-details-marker { display: none; }
-    .portal-table-width-toolbar > summary::after { content: "開く"; border: 1px solid var(--doc-primary-border, #bfdbfe); border-radius: 999px; background: var(--doc-surface, #fff); color: var(--doc-primary, #2563eb); font-size: .68rem; line-height: 1; padding: .18rem .42rem; }
-    .portal-table-width-toolbar[open] > summary::after { content: "閉じる"; }
-    .portal-table-width-toolbar-title { color: var(--doc-text-soft, #334155); font-weight: 700; }
-    .portal-table-width-toolbar-body { display: flex; gap: .38rem; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 0 .55rem .42rem; }
-    .portal-table-width-toolbar label { display: inline-flex; gap: .35rem; align-items: center; margin: 0; white-space: nowrap; }
+    .portal-table-width-toolbar > summary::after { content: "▼"; display: inline-flex; align-items: center; justify-content: center; width: 1.35rem; height: 1.25rem; border: 0; border-radius: 4px; background: transparent; color: var(--doc-primary, #2563eb); font-size: 1rem; line-height: 1; padding: 0; }
+    .portal-table-width-toolbar[open] > summary::after { content: "▲"; }
+    .portal-table-width-toolbar-title { color: var(--doc-text-soft, #334155); font-size: 1rem; font-weight: 800; line-height: 1.15; }
+    .portal-table-width-toolbar-body { display: flex; gap: .25rem; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 0 .28rem .18rem; }
+    .portal-table-width-toolbar label { display: inline-flex; gap: .28rem; align-items: center; margin: 0; white-space: nowrap; }
     .portal-table-width-toolbar input[type="range"] { width: 132px; accent-color: var(--doc-primary, #2563eb); }
-    .portal-table-width-actions { display: inline-flex; gap: .28rem; align-items: center; flex-wrap: wrap; }
-    .portal-table-width-button { border: 1px solid var(--doc-primary-border, #bfdbfe); border-radius: 999px; background: var(--doc-surface, #fff); color: var(--doc-primary, #2563eb); cursor: pointer; font: inherit; font-size: .72rem; line-height: 1.15; padding: .16rem .46rem; }
+    .portal-table-width-actions { display: inline-flex; gap: .22rem; align-items: center; flex-wrap: wrap; }
+    .portal-table-width-button { border: 1px solid var(--doc-primary-border, #bfdbfe); border-radius: 999px; background: var(--doc-surface, #fff); color: var(--doc-primary, #2563eb); cursor: pointer; font: inherit; font-size: .72rem; line-height: 1.15; padding: .13rem .4rem; }
     .portal-table-width-button:hover, .portal-table-width-button:focus, .portal-table-width-button[aria-pressed="true"] { border-color: var(--doc-primary, #2563eb); outline: none; }
     .portal-table-width-button[aria-pressed="true"] { background: var(--doc-primary, #2563eb); color: #fff; }
     .portal-table-width-hint { color: var(--doc-text-muted, #64748b); font-size: .72rem; }
