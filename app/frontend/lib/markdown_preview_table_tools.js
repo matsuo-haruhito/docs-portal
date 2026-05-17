@@ -83,8 +83,15 @@ function injectTableSearchStyle(frameDocument) {
 }
 
 function tableSettingKey(prefix, frame, index) {
+  const wrapper = frame.contentDocument?.querySelector(`.portal-table-width-frame[data-docs-portal-table-index="${index}"]`)
+  const stableIndex = wrapper?.dataset.docsPortalTableIndex || String(index)
   const url = frame.getAttribute("src") || frame.dataset.tableWidthSrc || window.location.pathname
-  return `${prefix}:${url}:table:${index}`
+  return `${prefix}:${url}:table:${stableIndex}`
+}
+
+function tableIndex(wrapper, fallbackIndex) {
+  const index = Number(wrapper.dataset.docsPortalTableIndex)
+  return Number.isInteger(index) && index >= 0 ? index : fallbackIndex
 }
 
 function clearTableSettings(frame, index) {
@@ -210,13 +217,14 @@ function enhanceTablesInFrame(frame) {
 
   injectTableSearchStyle(frameDocument)
 
-  frameDocument.querySelectorAll(".portal-table-width-frame").forEach((wrapper, index) => {
+  frameDocument.querySelectorAll(".portal-table-width-frame").forEach((wrapper, fallbackIndex) => {
     if (wrapper.dataset.tableSearchReady === "true") return
     const table = wrapper.querySelector("table")
     const toolbar = wrapper.querySelector(".portal-table-width-toolbar")
     if (!table || !toolbar) return
 
     wrapper.dataset.tableSearchReady = "true"
+    const index = tableIndex(wrapper, fallbackIndex)
 
     const utilityBar = frameDocument.createElement("div")
     utilityBar.className = "portal-table-utility-bar"
@@ -292,6 +300,13 @@ export function setupMarkdownPreviewTableTools() {
     if (frame.dataset.tableSearchListenerReady !== "true") {
       frame.dataset.tableSearchListenerReady = "true"
       frame.addEventListener("load", () => {
+        try {
+          enhanceTablesInFrame(frame)
+        } catch (_error) {
+          // Cross-origin fallback: keep the viewer usable even if table tools cannot be injected.
+        }
+      })
+      frame.addEventListener("docs-portal:preview-tables-enhanced", () => {
         try {
           enhanceTablesInFrame(frame)
         } catch (_error) {
