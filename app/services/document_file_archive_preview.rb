@@ -15,6 +15,18 @@ class DocumentFileArchivePreview
     def error?
       error.present?
     end
+
+    def file_count
+      entries.count { !_1.directory? }
+    end
+
+    def folder_count
+      entries.count(&:directory?)
+    end
+
+    def total_file_size
+      entries.reject(&:directory?).sum(&:size)
+    end
   end
 
   def initialize(file:, limit: DEFAULT_LIMIT)
