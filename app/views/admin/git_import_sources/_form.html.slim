@@ -1,16 +1,22 @@
 = render "shared/error_messages", record: git_import_source
 
+.card
+  p.eyebrow かんたん接続
+  h2 GitHubリポジトリからpull型で取り込む
+  p.muted
+    | GitHub App連携を推奨します。Fine-grained PATやシークレットの貼り付けは開発・検証用の詳細設定として扱い、通常はリポジトリ、ブランチ、取込元パスだけを指定して同期します。
+  ol
+    li GitHub Appを対象Organizationまたはリポジトリにインストールする
+    li 取り込みたいリポジトリ、ブランチ、パスを指定する
+    li 保存後に手動同期を実行し、Markdownと添付ファイルの取り込み結果を確認する
+  p.muted
+    | 将来的にはGitHub Appのインストール済みリポジトリ一覧から選べるようにし、installation IDやPATの手入力をなくす想定です。
+
 = form_with model: [:admin, git_import_source] do |form|
   .form-grid
     label
       | 案件
       = form.collection_select :project_id, @projects, :id, :name
-    label
-      | 連携先
-      = form.select :provider, enum_options_for("git_import_sources.provider", GitImportSource.providers.keys)
-    label
-      | Organization
-      = form.text_field :organization_name, placeholder: "example-org"
     label
       | リポジトリ
       = form.text_field :repository_full_name, placeholder: "owner/repo"
@@ -23,19 +29,31 @@
     label
       | 認証方式
       = form.select :auth_type, enum_options_for("git_import_sources.auth_type", GitImportSource.auth_types.keys)
-    label
-      | GitHub App installation ID
-      = form.text_field :installation_id
-    label
-      | 認証情報の参照名
-      = form.text_field :credential_ref, placeholder: "secret store key etc."
-    label
-      | 認証シークレット
-      = form.password_field :credential_secret, value: nil, autocomplete: "new-password", placeholder: git_import_source.persisted? ? "変更時のみ入力" : "fine-grained PAT"
+      span.muted 通常はGitHub Appを選んでください。
     label
       | 状態
       = form.select :enabled, [["有効", true], ["無効", false]]
-  p.muted GitHub App を本命の認証方式として扱います。Fine-grained PAT は開発・検証用で、シークレットは暗号化カラムに保存されます。
+
+  details.card
+    summary 詳細設定（管理者・検証向け）
+    .form-grid
+      label
+        | 連携先
+        = form.select :provider, enum_options_for("git_import_sources.provider", GitImportSource.providers.keys)
+      label
+        | Organization
+        = form.text_field :organization_name, placeholder: "example-org"
+      label
+        | GitHub App installation ID
+        = form.text_field :installation_id
+      label
+        | 認証情報の参照名
+        = form.text_field :credential_ref, placeholder: "secret store key etc."
+      label
+        | 認証シークレット
+        = form.password_field :credential_secret, value: nil, autocomplete: "new-password", placeholder: git_import_source.persisted? ? "変更時のみ入力" : "fine-grained PAT"
+    p.muted GitHub App を本命の認証方式として扱います。Fine-grained PAT は開発・検証用で、シークレットは暗号化カラムに保存されます。
+
   p.actions
     = form.submit "保存", class: "button"
     - if git_import_source.persisted?
