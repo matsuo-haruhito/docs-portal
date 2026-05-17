@@ -16,7 +16,7 @@
   <td colspan="3"></td>
 <% else %>
   <% version = document_tree_version_for(item) %>
-  <% download_file = version&.embedded_view_file&.downloadable_by?(current_user) ? version.embedded_view_file : version&.document_files&.order(:sort_order, :id)&.detect { _1.downloadable_by?(current_user) } %>
+  <% download_file = document_version_download_file(version) %>
   <td class="project-document-detail-tree__name-cell">
     <%= link_to tree_item_label(item), tree_item_path(item), class: "project-document-detail-tree__document-title" %>
     <% if download_file %>

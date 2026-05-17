@@ -1,7 +1,6 @@
 - page_title @document.title
 - rendered_view_available = @viewer_iframe_src.present?
-- embedded_file = @viewer_version&.embedded_view_file
-- document_download_file = embedded_file&.downloadable_by?(current_user) ? embedded_file : @viewer_version&.document_files&.order(:sort_order, :id)&.detect { _1.downloadable_by?(current_user) }
+- document_download_file = document_version_download_file(@viewer_version)
 
 = turbo_stream.remove document_tree_unread_icon_id(@document)
 
@@ -18,7 +17,7 @@
         = link_to "文書一覧", project_documents_path(@project), class: "button secondary"
         = link_to "版詳細", document_version_path(@viewer_version), class: "button secondary"
         - if document_download_file
-          = link_to document_file_path(document_download_file, disposition: "download"), class: "button secondary", title: "このファイルをダウンロード" do
+          = link_to document_file_path(document_download_file, disposition: "download"), class: "button secondary", title: "このファイルをダウンロード", data: { turbo: false } do
             = document_file_icon(document_download_file, title: nil)
             |  ダウンロード
         - if @viewer_popout_src.present?
