@@ -101,6 +101,28 @@ RSpec.describe DocumentFileArchivePreview do
     expect(preview.actionable_entries.map(&:name)).to contain_exactly("docs/readme.txt")
   end
 
+  it "classifies preview and download action candidates" do
+    storage_key = "spec/archive-preview/action-candidates.zip"
+    write_zip(storage_key, {
+      "docs/readme.txt" => "hello",
+      "data/items.csv" => "id,name\n1,A",
+      "images/logo.png" => "png",
+      "../outside.txt" => "bad"
+    })
+    file = create(:document_file, document_version: version, file_name: "action-candidates.zip", content_type: "application/zip", storage_key:)
+
+    preview = described_class.new(file:).call
+
+    entries = preview.entries.index_by(&:name)
+    expect(entries["docs/readme.txt"]).to be_text_preview_candidate
+    expect(entries["data/items.csv"]).to be_text_preview_candidate
+    expect(entries["images/logo.png"]).not_to be_text_preview_candidate
+    expect(entries["images/logo.png"]).to be_download_candidate
+    expect(entries["../outside.txt"]).not_to be_download_candidate
+    expect(preview.text_preview_candidate_entries.map(&:name)).to contain_exactly("docs/readme.txt", "data/items.csv")
+    expect(preview.download_candidate_entries.map(&:name)).to contain_exactly("docs/readme.txt", "data/items.csv", "images/logo.png")
+  end
+
   it "summarizes zip entries" do
     storage_key = "spec/archive-preview/summary.zip"
     write_zip(storage_key, {
