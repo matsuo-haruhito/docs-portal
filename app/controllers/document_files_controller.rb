@@ -46,24 +46,24 @@ class DocumentFilesController < BaseController
     end
 
     if inline_preview_kind?(viewer_plan, disposition, :csv)
-      render_prepared_inline_preview(:show_csv_preview, file, disposition:) { prepare_csv_preview!(file, disposition:) }
+      render_prepared_inline_preview(:show_csv_preview) { prepare_csv_preview!(file, disposition:) }
       return
     end
 
     if inline_preview_kind?(viewer_plan, disposition, :json, :yaml)
-      render_prepared_inline_preview(:show_structured_preview, file, disposition:) do
+      render_prepared_inline_preview(:show_structured_preview) do
         prepare_structured_preview!(file, viewer_kind: viewer_plan.viewer_kind, disposition:)
       end
       return
     end
 
     if inline_preview_kind?(viewer_plan, disposition, :archive)
-      render_prepared_inline_preview(:show_archive_preview, file, disposition:) { prepare_archive_preview!(file, disposition:) }
+      render_prepared_inline_preview(:show_archive_preview) { prepare_archive_preview!(file, disposition:) }
       return
     end
 
     if inline_preview_request?(disposition) && file.text_previewable?
-      render_prepared_inline_preview(:show_text_preview, file, disposition:) { prepare_text_preview!(file, disposition:) }
+      render_prepared_inline_preview(:show_text_preview) { prepare_text_preview!(file, disposition:) }
       return
     end
 
@@ -152,7 +152,7 @@ class DocumentFilesController < BaseController
     render template
   end
 
-  def render_prepared_inline_preview(template, file, disposition:)
+  def render_prepared_inline_preview(template)
     yield
     render template
   end
