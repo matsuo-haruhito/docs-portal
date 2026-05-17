@@ -67,7 +67,7 @@ function setupArchivePreview(container) {
 
   const input = container.querySelector("[data-archive-preview-search-input]")
   const typeFilter = container.querySelector("[data-archive-preview-type-filter]")
-  const clearButton = container.querySelector("[data-archive-preview-search-clear]")
+  const resetButton = container.querySelector("[data-archive-preview-reset]")
   const copyVisibleButton = container.querySelector("[data-archive-preview-copy-visible]")
   const count = container.querySelector("[data-archive-preview-count]")
   const status = container.querySelector("[data-archive-preview-status]")
@@ -75,7 +75,7 @@ function setupArchivePreview(container) {
   const sortButtons = Array.from(container.querySelectorAll("[data-archive-preview-sort]"))
   const rows = Array.from(container.querySelectorAll("[data-archive-preview-entry]"))
   const copyButtons = Array.from(container.querySelectorAll("[data-archive-preview-copy-entry]"))
-  if (!input || !typeFilter || !clearButton || !copyVisibleButton || !count || !status || !tableBody || rows.length === 0) return
+  if (!input || !typeFilter || !resetButton || !copyVisibleButton || !count || !status || !tableBody || rows.length === 0) return
 
   let sortKey = "name"
   let sortDirection = "asc"
@@ -117,17 +117,20 @@ function setupArchivePreview(container) {
     count.textContent = query.length === 0 ? `${visibleCount}/${rows.length}件表示${typeLabel}` : `${matchedCount}/${rows.length}件一致 / ${visibleCount}件表示${typeLabel}`
   }
 
-  const clearSearch = () => {
+  const resetControls = () => {
     input.value = ""
     typeFilter.value = "all"
+    sortKey = "name"
+    sortDirection = "asc"
     updateSearch()
+    applySort()
   }
 
   input.addEventListener("input", updateSearch)
   input.addEventListener("search", updateSearch)
   typeFilter.addEventListener("change", updateSearch)
-  clearButton.addEventListener("click", () => {
-    clearSearch()
+  resetButton.addEventListener("click", () => {
+    resetControls()
     input.focus()
   })
 
@@ -177,7 +180,7 @@ function setupArchivePreview(container) {
 
     if (event.key === "Escape" && document.activeElement === input) {
       event.preventDefault()
-      clearSearch()
+      resetControls()
       input.blur()
     }
   })
