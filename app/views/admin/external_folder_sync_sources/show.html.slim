@@ -42,16 +42,16 @@ h1 外部フォルダ同期詳細
       dd = @external_folder_sync_source.last_error_message
   p.actions
     = link_to "同期プレビュー", dry_run_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post }, class: "button secondary"
-    = link_to "同期実行", apply_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post, turbo_confirm: "Google Driveからドキュメントポータルへ同期します。競合・重複警告がある場合は自動停止します。よろしいですか？" }, class: "button"
+    = link_to "同期する", apply_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post, turbo_confirm: "Google Driveからドキュメントポータルへ同期します。競合・重複警告がある場合は自動停止します。よろしいですか？" }, class: "button"
     - if external_folder_sync_force_apply_visible?(latest_run)
       = link_to "警告を承認して同期する", force_apply_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post, turbo_confirm: "競合・重複警告を承認して同期を実行します。同期プレビュー結果を確認済みの場合のみ実行してください。よろしいですか？" }, class: "button danger"
-    = link_to "同期ジョブを登録", enqueue_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post }, class: "button secondary"
+    = link_to "バックグラウンド同期を登録", enqueue_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post }, class: "button secondary"
     = link_to "変更通知の購読開始", subscribe_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :post, turbo_confirm: "Google Driveの変更通知の購読を開始します。よろしいですか？" }, class: "button secondary"
     = link_to "変更通知の購読停止", unsubscribe_admin_external_folder_sync_source_path(@external_folder_sync_source), data: { turbo_method: :delete, turbo_confirm: "有効なGoogle Driveの変更通知の購読を停止します。よろしいですか？" }, class: "button secondary"
     - if @external_folder_sync_source.oauth_user?
-      = link_to "Google OAuth接続", new_admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo: false }, class: "button secondary"
+      = link_to "Google OAuthを接続", new_admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo: false }, class: "button secondary"
       - if @external_folder_sync_source.oauth_connected?
-        = link_to "OAuth解除", admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo_method: :delete, turbo_confirm: "Google Drive OAuth認可を解除しますか？" }, class: "button secondary"
+        = link_to "OAuth接続を解除", admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo_method: :delete, turbo_confirm: "Google Drive OAuth認可を解除しますか？" }, class: "button secondary"
     = edit_link_to "編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source)
     = link_to "一覧へ戻る", admin_external_folder_sync_sources_path, class: "button secondary"
 
@@ -125,9 +125,9 @@ h1 外部フォルダ同期詳細
       tr
         th 実行日時
         th 実行ID
-        th モード
+        th 実行種別
         th 状態
-        th 安全状態
+        th 安全判定
         th 作成
         th 更新
         th スキップ
