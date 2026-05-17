@@ -8,7 +8,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     @latest_runs_by_source_id = latest_runs_by_source_id(@external_folder_sync_sources)
     @external_folder_sync_source = ExternalFolderSyncSource.new(
       provider: :google_drive,
-      auth_type: :service_account,
+      auth_type: :oauth_user,
       sync_direction: :external_to_portal,
       conflict_policy: :manual,
       enabled: true
