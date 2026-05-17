@@ -82,6 +82,10 @@ class DocumentFilesController < BaseController
     inline_preview_request?(disposition) && viewer_plan.viewer_kind.in?(viewer_kinds)
   end
 
+  def text_preview_request?(file, disposition)
+    inline_preview_request?(disposition) && file.text_previewable?
+  end
+
   def office_preview_request?(viewer_plan, disposition)
     disposition == "inline" && embedded_request? && viewer_plan.viewer_kind == :office
   end
@@ -117,7 +121,7 @@ class DocumentFilesController < BaseController
       end
     elsif inline_preview_kind?(viewer_plan, disposition, :archive)
       render_inline_preview(:show_archive_preview) { prepare_archive_preview!(file, disposition:) }
-    elsif inline_preview_request?(disposition) && file.text_previewable?
+    elsif text_preview_request?(file, disposition)
       render_inline_preview(:show_text_preview) { prepare_text_preview!(file, disposition:) }
     else
       return false
