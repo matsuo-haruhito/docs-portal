@@ -1,22 +1,5 @@
-- page_title "#{@document.title} / #{@document_file.file_name}"
-
-p.muted
-  = link_to @project.name, project_path(@project)
-  |  /
-  = link_to @document.title, project_document_path(@project, @document.slug)
-  |  /
-  = link_to @document_version.version_label, document_version_path(@document_version)
-
 .document-viewer
-  .document-viewer__header
-    div
-      h1.document-viewer__title = @document_file.file_name
-      p.document-viewer__meta
-        = @document_file.effective_content_type
-        |  / 
-        = number_to_human_size(@document_file.file_size)
-    p.actions
-      = link_to "ダウンロード", document_file_path(@document_file, disposition: "download"), class: "button secondary"
+  = render "document_files/preview_header", project: @project, document: @document, document_version: @document_version, document_file: @document_file
 
   - if @csv_preview.error?
     .card
