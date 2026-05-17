@@ -30,7 +30,7 @@
         p.muted 大きいテキストファイルのため、preview では先頭行のみ表示しています。全文が必要な場合はダウンロードしてください。
 
     .document-prose.document-prose--code
-      - if @text_preview.lines.any?
+      - if @text_preview.line_count.positive?
         ol.line-preview
           - @text_preview.lines.each_with_index do |line, index|
             li.line-preview__row data-text-preview-line="true"
