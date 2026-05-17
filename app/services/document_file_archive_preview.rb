@@ -7,6 +7,8 @@ class DocumentFileArchivePreview
     end
   end
 
+  DirectorySummary = Data.define(:path, :file_count, :folder_count, :total_file_size)
+
   Result = Data.define(:entries, :truncated, :limit, :error) do
     def truncated?
       truncated
@@ -30,6 +32,35 @@ class DocumentFileArchivePreview
 
     def total_file_size
       file_entries.sum(&:size)
+    end
+
+    def directory_summaries
+      summaries = Hash.new do |hash, path|
+        hash[path] = { file_count: 0, folder_count: 0, total_file_size: 0 }
+      end
+
+      entries.each do |entry|
+        parent_path = parent_directory_for(entry.name)
+        summary = summaries[parent_path]
+
+        if entry.directory?
+          summary[:folder_count] += 1
+        else
+          summary[:file_count] += 1
+          summary[:total_file_size] += entry.size
+        end
+      end
+
+      summaries.map do |path, values|
+        DirectorySummary.new(path:, **values)
+      end.sort_by(&:path)
+    end
+
+    private
+
+    def parent_directory_for(name)
+      parent = File.dirname(name.to_s.delete_suffix("/"))
+      parent == "." ? "/" : "#{parent}/"
     end
   end
 
