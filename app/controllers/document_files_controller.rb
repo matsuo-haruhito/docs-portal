@@ -35,40 +35,10 @@ class DocumentFilesController < BaseController
 
     record_file_access_log(file)
 
-    if inline_preview_kind?(viewer_plan, disposition, :pdf)
-      render_inline_preview(:show_pdf_preview) { prepare_inline_preview!(file, disposition:) }
-      return
-    end
-
-    if inline_preview_kind?(viewer_plan, disposition, :image)
-      render_inline_preview(:show_image_preview) { prepare_inline_preview!(file, disposition:) }
-      return
-    end
-
-    if inline_preview_kind?(viewer_plan, disposition, :csv)
-      render_inline_preview(:show_csv_preview) { prepare_csv_preview!(file, disposition:) }
-      return
-    end
-
-    if inline_preview_kind?(viewer_plan, disposition, :json, :yaml)
-      render_inline_preview(:show_structured_preview) do
-        prepare_structured_preview!(file, viewer_kind: viewer_plan.viewer_kind, disposition:)
-      end
-      return
-    end
-
-    if inline_preview_kind?(viewer_plan, disposition, :archive)
-      render_inline_preview(:show_archive_preview) { prepare_archive_preview!(file, disposition:) }
-      return
-    end
-
-    if inline_preview_request?(disposition) && file.text_previewable?
-      render_inline_preview(:show_text_preview) { prepare_text_preview!(file, disposition:) }
-      return
-    end
+    return if render_inline_preview_for(file, viewer_plan, disposition)
 
     if disposition == "inline" && embedded_request? && html_file?(file)
-      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
+      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition: "inline").header
       render html: embedded_html_for(file, file.absolute_path).html_safe, content_type: "text/html"
       return
     end
@@ -145,6 +115,28 @@ class DocumentFilesController < BaseController
 
   def inline_preview_kind?(viewer_plan, disposition, *viewer_kinds)
     inline_preview_request?(disposition) && viewer_plan.viewer_kind.in?(viewer_kinds)
+  end
+
+  def render_inline_preview_for(file, viewer_plan, disposition)
+    if inline_preview_kind?(viewer_plan, disposition, :pdf)
+      render_inline_preview(:show_pdf_preview) { prepare_inline_preview!(file, disposition:) }
+    elsif inline_preview_kind?(viewer_plan, disposition, :image)
+      render_inline_preview(:show_image_preview) { prepare_inline_preview!(file, disposition:) }
+    elsif inline_preview_kind?(viewer_plan, disposition, :csv)
+      render_inline_preview(:show_csv_preview) { prepare_csv_preview!(file, disposition:) }
+    elsif inline_preview_kind?(viewer_plan, disposition, :json, :yaml)
+      render_inline_preview(:show_structured_preview) do
+        prepare_structured_preview!(file, viewer_kind: viewer_plan.viewer_kind, disposition:)
+      end
+    elsif inline_preview_kind?(viewer_plan, disposition, :archive)
+      render_inline_preview(:show_archive_preview) { prepare_archive_preview!(file, disposition:) }
+    elsif inline_preview_request?(disposition) && file.text_previewable?
+      render_inline_preview(:show_text_preview) { prepare_text_preview!(file, disposition:) }
+    else
+      return false
+    end
+
+    true
   end
 
   def render_inline_preview(template)
