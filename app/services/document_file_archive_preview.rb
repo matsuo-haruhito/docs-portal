@@ -16,8 +16,12 @@ class DocumentFileArchivePreview
       error.present?
     end
 
+    def file_entries
+      entries.reject(&:directory?)
+    end
+
     def file_count
-      entries.count { !_1.directory? }
+      file_entries.count
     end
 
     def folder_count
@@ -25,7 +29,7 @@ class DocumentFileArchivePreview
     end
 
     def total_file_size
-      entries.reject(&:directory?).sum(&:size)
+      file_entries.sum(&:size)
     end
   end
 
