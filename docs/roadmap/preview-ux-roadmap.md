@@ -68,6 +68,7 @@
   - 表示中 entry path 一括コピー
   - file / folder filter
   - 件数サマリー
+  - ディレクトリサマリー
   - entry sort
   - 条件リセット
 
@@ -130,7 +131,6 @@
 候補:
 
 - entry path の階層ごとの折りたたみ表示
-- directory summary
 - entry 単位 preview / download の設計
 - 大きいZIPでの表示上限 warning 強化
 
