@@ -112,6 +112,7 @@ class DocumentFileViewerPlan
 
   def reason
     return "ウイルススキャン完了後に表示できます" if file.blocked_by_scan? && !user&.internal?
+    return "ZIP以外の圧縮ファイル preview は未対応です" if unsupported_archive?
     return "ブラウザ preview は未対応です" unless previewable?
 
     nil
@@ -167,5 +168,9 @@ class DocumentFileViewerPlan
 
   def zip_archive?
     extension == ".zip" || content_type == "application/zip"
+  end
+
+  def unsupported_archive?
+    archive? && !zip_archive?
   end
 end
