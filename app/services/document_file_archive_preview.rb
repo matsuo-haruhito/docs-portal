@@ -19,6 +19,17 @@ class DocumentFileArchivePreview
       true
     end
 
+    def actionable?
+      action_unavailable_reason.nil?
+    end
+
+    def action_unavailable_reason
+      return "directory entry は操作対象外です" if directory?
+      return "unsafe path のため操作できません" unless safe_path?
+
+      nil
+    end
+
     private
 
     def normalized_name
@@ -51,6 +62,10 @@ class DocumentFileArchivePreview
 
     def total_file_size
       file_entries.sum(&:size)
+    end
+
+    def actionable_entries
+      entries.select(&:actionable?)
     end
 
     def directory_summaries
