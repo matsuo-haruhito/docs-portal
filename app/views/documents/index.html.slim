@@ -9,50 +9,46 @@ h1
 section.card
   h2 検索・絞り込み
 
-  = form_with url: project_documents_path(@project), method: :get, local: true do |form|
-    div
-      = form.label :q, "キーワード"
-      br
-      = form.search_field :q, value: @filters[:q], placeholder: "文書名・URL識別子・版・本文・キーワード・添付ファイル名"
+  = form_with url: project_documents_path(@project), method: :get, local: true, class: "document-filter-form" do |form|
+    .form-grid.form-grid--compact
+      label.form-field
+        span キーワード
+        = form.search_field :q, value: @filters[:q], placeholder: "文書名・URL識別子・版・本文・キーワード・添付ファイル名"
 
-    div
-      = form.label :tag, "タグ"
-      br
-      = form.select :tag, options_for_select([["すべて", ""]] + @available_tags.map { [_1.name, _1.normalized_name] }, @filters[:tag])
+      label.form-field
+        span タグ
+        = form.select :tag, options_for_select([["すべて", ""]] + @available_tags.map { [_1.name, _1.normalized_name] }, @filters[:tag])
 
-    div
-      = form.label :category, "カテゴリ"
-      br
-      = form.select :category, options_for_select([["すべて", ""]] + Document.categories.keys.map { [localized_label("documents.category", _1), _1] }, @filters[:category])
+      label.form-field
+        span カテゴリ
+        = form.select :category, options_for_select([["すべて", ""]] + Document.categories.keys.map { [localized_label("documents.category", _1), _1] }, @filters[:category])
 
-    div
-      = form.label :document_kind, "ファイル種"
-      br
-      = form.select :document_kind, options_for_select([["すべて", ""]] + Document.document_kinds.keys.map { [localized_label("documents.document_kind", _1), _1] }, @filters[:document_kind])
+      label.form-field
+        span ファイル種
+        = form.select :document_kind, options_for_select([["すべて", ""]] + Document.document_kinds.keys.map { [localized_label("documents.document_kind", _1), _1] }, @filters[:document_kind])
 
-    div
-      = form.label :visibility_policy, "公開範囲"
-      br
-      = form.select :visibility_policy, options_for_select([["すべて", ""]] + Document.visibility_policies.keys.map { [localized_label("documents.visibility_policy", _1), _1] }, @filters[:visibility_policy])
+      label.form-field
+        span 公開範囲
+        = form.select :visibility_policy, options_for_select([["すべて", ""]] + Document.visibility_policies.keys.map { [localized_label("documents.visibility_policy", _1), _1] }, @filters[:visibility_policy])
 
-    fieldset
+    fieldset.filter-fieldset
       legend 実用フィルタ
-      label
+      label.check-field
         = check_box_tag :has_html, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_html])
-        |  HTML生成済み
-      label
+        span HTML生成済み
+      label.check-field
         = check_box_tag :has_files, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_files])
-        |  添付あり
-      label
+        span 添付あり
+      label.check-field
         = check_box_tag :has_pdf, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_pdf])
-        |  PDFあり
-      label
+        span PDFあり
+      label.check-field
         = check_box_tag :has_diagram, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_diagram])
-        |  図あり
+        span 図あり
 
-    p
-      = form.submit "検索"
-      =< link_to "条件をクリア", project_documents_path(@project)
+    p.actions.form-actions
+      = form.submit "検索", class: "button"
+      = link_to "条件をクリア", project_documents_path(@project), class: "button secondary"
 
 - page_start = @documents_count.zero? ? 0 : ((@current_page - 1) * @per_page) + 1
 - page_end = [@current_page * @per_page, @documents_count].min
