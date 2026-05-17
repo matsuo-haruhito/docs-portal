@@ -88,6 +88,7 @@
                   button.button.secondary type="button" data-archive-preview-sort="name" data-archive-preview-sort-label="パス" パス
                 th
                   button.button.secondary type="button" data-archive-preview-sort="size" data-archive-preview-sort-label="サイズ" サイズ
+                th 安全性
                 th 操作
             tbody data-archive-preview-entries="true"
               - @archive_preview.entries.each do |entry|
@@ -97,6 +98,11 @@
                   td
                     code data-archive-preview-entry-name="true" = entry.name
                   td = entry.directory? ? "-" : number_to_human_size(entry.size)
+                  td
+                    - if entry.safe_path?
+                      span.muted safe
+                    - else
+                      strong unsafe path
                   td
                     button.button.secondary type="button" data-archive-preview-copy-entry="true" パスをコピー
     - else
