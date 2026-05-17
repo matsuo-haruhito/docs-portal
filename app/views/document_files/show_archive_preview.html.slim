@@ -25,6 +25,12 @@
           label
             | 検索
             input type="search" placeholder="entry path" data-archive-preview-search-input="true"
+          label
+            | 種別
+            select data-archive-preview-type-filter="true"
+              option value="all" すべて
+              option value="file" file
+              option value="folder" folder
           button.button.secondary type="button" data-archive-preview-search-clear="true" クリア
           span.muted data-archive-preview-count="true"
           span.muted data-archive-preview-status="true"
@@ -38,8 +44,9 @@
                 th 操作
             tbody
               - @archive_preview.entries.each do |entry|
-                tr data-archive-preview-entry="true"
-                  td = entry.directory? ? "folder" : "file"
+                - entry_type = entry.directory? ? "folder" : "file"
+                tr data-archive-preview-entry="true" data-archive-preview-entry-type=entry_type
+                  td = entry_type
                   td
                     code data-archive-preview-entry-name="true" = entry.name
                   td = entry.directory? ? "-" : number_to_human_size(entry.size)
