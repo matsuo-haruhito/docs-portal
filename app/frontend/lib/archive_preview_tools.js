@@ -28,6 +28,10 @@ function archiveEntryType(row) {
   return row.dataset.archivePreviewEntryType || "file"
 }
 
+function archiveEntrySize(row) {
+  return Number(row.dataset.archivePreviewEntrySize || 0)
+}
+
 function visibleRows(rows) {
   return rows.filter((row) => !row.hidden)
 }
@@ -38,6 +42,22 @@ function setTemporaryStatus(status, message) {
   window.setTimeout(() => {
     status.textContent = ""
   }, 1800)
+}
+
+function sortValue(row, key) {
+  if (key === "type") return archiveEntryType(row)
+  if (key === "size") return archiveEntrySize(row)
+  return archiveEntryText(row)
+}
+
+function compareRows(left, right, key, direction) {
+  const leftValue = sortValue(left, key)
+  const rightValue = sortValue(right, key)
+  const comparison = typeof leftValue === "number" && typeof rightValue === "number" ?
+    leftValue - rightValue :
+    String(leftValue).localeCompare(String(rightValue), "ja")
+
+  return direction === "desc" ? -comparison : comparison
 }
 
 function setupArchivePreview(container) {
@@ -51,9 +71,30 @@ function setupArchivePreview(container) {
   const copyVisibleButton = container.querySelector("[data-archive-preview-copy-visible]")
   const count = container.querySelector("[data-archive-preview-count]")
   const status = container.querySelector("[data-archive-preview-status]")
+  const tableBody = container.querySelector("[data-archive-preview-entries]")
+  const sortButtons = Array.from(container.querySelectorAll("[data-archive-preview-sort]"))
   const rows = Array.from(container.querySelectorAll("[data-archive-preview-entry]"))
   const copyButtons = Array.from(container.querySelectorAll("[data-archive-preview-copy-entry]"))
-  if (!input || !typeFilter || !clearButton || !copyVisibleButton || !count || !status || rows.length === 0) return
+  if (!input || !typeFilter || !clearButton || !copyVisibleButton || !count || !status || !tableBody || rows.length === 0) return
+
+  let sortKey = "name"
+  let sortDirection = "asc"
+
+  const updateSortButtons = () => {
+    sortButtons.forEach((button) => {
+      const active = button.dataset.archivePreviewSort === sortKey
+      button.setAttribute("aria-pressed", String(active))
+      button.textContent = active ? `${button.dataset.archivePreviewSortLabel} ${sortDirection === "asc" ? "↑" : "↓"}` : button.dataset.archivePreviewSortLabel
+    })
+  }
+
+  const applySort = () => {
+    rows
+      .slice()
+      .sort((left, right) => compareRows(left, right, sortKey, sortDirection))
+      .forEach((row) => tableBody.appendChild(row))
+    updateSortButtons()
+  }
 
   const updateSearch = () => {
     const query = input.value.trim().toLowerCase()
@@ -88,6 +129,15 @@ function setupArchivePreview(container) {
   clearButton.addEventListener("click", () => {
     clearSearch()
     input.focus()
+  })
+
+  sortButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextKey = button.dataset.archivePreviewSort || "name"
+      sortDirection = sortKey === nextKey && sortDirection === "asc" ? "desc" : "asc"
+      sortKey = nextKey
+      applySort()
+    })
   })
 
   copyVisibleButton.addEventListener("click", async () => {
@@ -133,6 +183,7 @@ function setupArchivePreview(container) {
   })
 
   updateSearch()
+  applySort()
 }
 
 export function setupArchivePreviewTools() {
