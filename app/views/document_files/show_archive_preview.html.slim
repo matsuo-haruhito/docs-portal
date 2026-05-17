@@ -93,7 +93,7 @@
             tbody data-archive-preview-entries="true"
               - @archive_preview.entries.each do |entry|
                 - entry_type = entry.directory? ? "folder" : "file"
-                tr data-archive-preview-entry="true" data-archive-preview-entry-directory=entry.parent_directory data-archive-preview-entry-type=entry_type data-archive-preview-entry-size=entry.size
+                tr data-archive-preview-entry="true" data-archive-preview-entry-directory=entry.parent_directory data-archive-preview-entry-safe=(entry.safe_path? ? "true" : "false") data-archive-preview-entry-type=entry_type data-archive-preview-entry-size=entry.size
                   td = entry_type
                   td
                     code data-archive-preview-entry-name="true" = entry.name
