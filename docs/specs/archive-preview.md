@@ -44,6 +44,7 @@ ZIP preview では以下を表示する。
   - 検索
   - directory filter
   - 種別 filter
+  - 候補 filter
   - 並び替え
   - コピー操作
 
@@ -52,6 +53,10 @@ ZIP preview では以下を表示する。
 - entry path 検索
 - directory filter
 - file / folder filter
+- action candidate filter
+  - text preview候補
+  - download候補
+  - 操作不可
 - 種別 / path / size sort
 - 条件リセット
 - entry path 個別コピー
