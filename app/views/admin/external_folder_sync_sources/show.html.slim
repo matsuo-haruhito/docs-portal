@@ -29,7 +29,7 @@ h1 外部フォルダ同期設定詳細
     dd = external_folder_sync_source_sync_direction_label(@external_folder_sync_source)
     dt 競合方針
     dd = external_folder_sync_source_conflict_policy_label(@external_folder_sync_source)
-    dt 状態
+    dt 同期状態
     dd = @external_folder_sync_source.enabled? ? "有効" : "無効"
     dt 最終同期日時
     dd = @external_folder_sync_source.last_synced_at ? l(@external_folder_sync_source.last_synced_at) : "-"
@@ -51,7 +51,7 @@ h1 外部フォルダ同期設定詳細
     - if @external_folder_sync_source.oauth_user?
       = link_to "Google OAuthを接続", new_admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo: false }, class: "button secondary"
       - if @external_folder_sync_source.oauth_connected?
-        = link_to "OAuth接続を解除", admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo_method: :delete, turbo_confirm: "Google Drive OAuth認可を解除しますか？" }, class: "button secondary"
+        = link_to "OAuth接続を解除", admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo_method: :delete, turbo_confirm: "Google Drive OAuth接続を解除しますか？" }, class: "button secondary"
     = edit_link_to "編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source)
     = link_to "一覧へ戻る", admin_external_folder_sync_sources_path, class: "button secondary"
 
@@ -60,7 +60,7 @@ h1 外部フォルダ同期設定詳細
   = table_tag do
     thead
       tr
-        th 状態
+        th 購読状態
         th 通知チャンネルID
         th 通知リソースID
         th コールバックURL
@@ -86,7 +86,7 @@ h1 外部フォルダ同期設定詳細
     thead
       tr
         th 受信日時
-        th 状態
+        th 処理状態
         th 変更通知の購読
         th 変更種別
         th 通知番号
@@ -126,7 +126,7 @@ h1 外部フォルダ同期設定詳細
         th 実行日時
         th 実行ID
         th 実行種別
-        th 状態
+        th 実行状態
         th 安全判定
         th 作成件数
         th 更新件数
@@ -207,7 +207,7 @@ h1 外部フォルダ同期設定詳細
   = table_tag do
     thead
       tr
-        th 状態
+        th 同期状態
         th パス
         th ポータル文書
         th サイズ
