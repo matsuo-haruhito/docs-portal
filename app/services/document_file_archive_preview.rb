@@ -53,13 +53,7 @@ class DocumentFileArchivePreview
   DirectorySummary = Data.define(:path, :file_count, :folder_count, :total_file_size)
 
   Result = Data.define(:entries, :truncated, :limit, :error) do
-    def truncated?
-      truncated
-    end
-
-    def error?
-      error.present?
-    end
+    include DocumentFilePreviewResultHelpers
 
     def file_entries
       entries.reject(&:directory?)
