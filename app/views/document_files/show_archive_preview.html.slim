@@ -1,4 +1,4 @@
-.document-viewer
+.document-viewer data-archive-preview-tools="true"
   = render "preview_header",
     project: @project,
     document: @document,
@@ -15,8 +15,16 @@
 
     - if @archive_preview.entries.any?
       .card
-        h2 ZIP内ファイル一覧
-        p.muted ZIPを展開せず、entry名とサイズだけを表示しています。
+        .document-viewer__header
+          div
+            h2 ZIP内ファイル一覧
+            p.muted ZIPを展開せず、entry名とサイズだけを表示しています。`/` で検索欄に移動できます。
+        .document-filter
+          label
+            | 検索
+            input type="search" placeholder="entry path" data-archive-preview-search-input="true"
+          button.button.secondary type="button" data-archive-preview-search-clear="true" クリア
+          span.muted data-archive-preview-count="true"
         .table-wrapper
           table
             thead
@@ -26,10 +34,10 @@
                 th サイズ
             tbody
               - @archive_preview.entries.each do |entry|
-                tr
+                tr data-archive-preview-entry="true"
                   td = entry.directory? ? "folder" : "file"
                   td
-                    code = entry.name
+                    code data-archive-preview-entry-name="true" = entry.name
                   td = entry.directory? ? "-" : number_to_human_size(entry.size)
     - else
       = render "preview_empty_card", title: "空のZIPファイルです", message: "表示できるentryがありません。必要に応じてファイルをダウンロードしてください。"
