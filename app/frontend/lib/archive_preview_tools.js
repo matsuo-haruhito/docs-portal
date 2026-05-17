@@ -72,7 +72,7 @@ function setTemporaryStatus(status, message) {
 
   window.setTimeout(() => {
     status.textContent = ""
-  }, 1800)
+  }, 2200)
 }
 
 async function copyText(text, status, successMessage) {
@@ -100,13 +100,23 @@ function compareRows(left, right, key, direction) {
   return direction === "desc" ? -comparison : comparison
 }
 
-function activeFilterLabel(candidateFilter, directoryFilter, safetyFilter, typeFilter) {
+function filterParts(candidateFilter, directoryFilter, safetyFilter, typeFilter) {
   const labels = []
-  if (candidateFilter.value !== "all") labels.push(`候補:${candidateFilter.value}`)
-  if (directoryFilter.value !== "all") labels.push(`dir:${directoryFilter.value}`)
-  if (safetyFilter.value !== "all") labels.push(`安全性:${safetyFilter.value}`)
-  if (typeFilter.value !== "all") labels.push(`種別:${typeFilter.value}`)
+  if (candidateFilter.value !== "all") labels.push(`候補=${candidateFilter.value}`)
+  if (directoryFilter.value !== "all") labels.push(`dir=${directoryFilter.value}`)
+  if (safetyFilter.value !== "all") labels.push(`安全性=${safetyFilter.value}`)
+  if (typeFilter.value !== "all") labels.push(`種別=${typeFilter.value}`)
+  return labels
+}
+
+function activeFilterLabel(candidateFilter, directoryFilter, safetyFilter, typeFilter) {
+  const labels = filterParts(candidateFilter, directoryFilter, safetyFilter, typeFilter)
   return labels.length > 0 ? ` / ${labels.join(" / ")}` : ""
+}
+
+function activeFilterStatus(candidateFilter, directoryFilter, safetyFilter, typeFilter) {
+  const labels = filterParts(candidateFilter, directoryFilter, safetyFilter, typeFilter)
+  return labels.length > 0 ? `（条件: ${labels.join("、")}）` : ""
 }
 
 function setupArchivePreview(container) {
@@ -212,9 +222,9 @@ function setupArchivePreview(container) {
     const visibleEntryRows = visibleRows(rows)
     const entryNames = visibleEntryRows.map(archiveEntryName).filter(Boolean)
     const unsafeCount = visibleEntryRows.filter((row) => !archiveEntrySafe(row)).length
-    const unsafeNote = unsafeCount > 0 ? `（unsafe ${unsafeCount}件を含みます）` : ""
-    const filterNote = activeFilterLabel(candidateFilter, directoryFilter, safetyFilter, typeFilter)
-    copyText(entryNames.join("\n"), status, `${entryNames.length}件の表示中パスをコピーしました${filterNote}${unsafeNote}`)
+    const unsafeNote = unsafeCount > 0 ? ` unsafe ${unsafeCount}件を含みます。` : ""
+    const filterNote = activeFilterStatus(candidateFilter, directoryFilter, safetyFilter, typeFilter)
+    copyText(entryNames.join("\n"), status, `${entryNames.length}件の表示中パスをコピーしました。${filterNote}${unsafeNote}`)
   })
 
   copyButtons.forEach((button) => {
