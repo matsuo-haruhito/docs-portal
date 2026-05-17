@@ -63,6 +63,23 @@ RSpec.describe DocumentFileArchivePreview do
     expect(parents["index.html"]).to eq("/")
   end
 
+  it "marks safe and unsafe entry paths" do
+    storage_key = "spec/archive-preview/safe-paths.zip"
+    write_zip(storage_key, {
+      "docs/readme.txt" => "hello",
+      "../outside.txt" => "bad",
+      "/absolute.txt" => "bad"
+    })
+    file = create(:document_file, document_version: version, file_name: "safe-paths.zip", content_type: "application/zip", storage_key:)
+
+    preview = described_class.new(file:).call
+
+    safety = preview.entries.index_by(&:name).transform_values(&:safe_path?)
+    expect(safety["docs/readme.txt"]).to eq(true)
+    expect(safety["../outside.txt"]).to eq(false)
+    expect(safety["/absolute.txt"]).to eq(false)
+  end
+
   it "summarizes zip entries" do
     storage_key = "spec/archive-preview/summary.zip"
     write_zip(storage_key, {
