@@ -335,8 +335,13 @@ body > main{
   font-weight: 600;
 }
 
+.form-field--full{
+  grid-column: 1 / -1;
+}
+
 .form-field input,
-.form-field select{
+.form-field select,
+.form-field textarea{
   margin-top: 0;
 }
 
@@ -372,6 +377,19 @@ body > main{
   margin-top: 16px;
 }
 
+.document-file-search-form{
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.version-action-item form{
+  display: inline-flex;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
 @media (min-width: 1200px){
   main:has(.site-viewer-shell){
     max-width: none;
@@ -388,5 +406,11 @@ body > main{
 
   body > main{
     width: calc(100% - 24px) !important;
+  }
+}
+
+@media (max-width: 720px){
+  .document-file-search-form{
+    grid-template-columns: 1fr;
   }
 }
