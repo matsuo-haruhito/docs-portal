@@ -13,7 +13,7 @@ class DocumentFilesController < BaseController
     file_path = file.absolute_path
 
     unless File.exist?(file_path)
-      render plain: "File not found", status: :not_found
+      render_file_not_found
       return
     end
 
@@ -31,7 +31,7 @@ class DocumentFilesController < BaseController
 
     asset_file = embedded_asset_file_for(owner_file, params[:asset_path])
     unless asset_file&.deliverable_after_scan?(current_user)
-      render plain: "File not found", status: :not_found
+      render_file_not_found
       return
     end
 
@@ -145,6 +145,10 @@ class DocumentFilesController < BaseController
   def render_inline_preview(template)
     yield
     render template
+  end
+
+  def render_file_not_found
+    render plain: "File not found", status: :not_found
   end
 
   def prepare_inline_preview!(file, disposition:)
