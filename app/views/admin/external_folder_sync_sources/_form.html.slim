@@ -36,7 +36,7 @@
   p.muted OAuthユーザー方式では、保存後に詳細画面からGoogle Drive OAuth接続を行ってください。OAuthクライアント設定は環境変数で設定します。
   p.muted 初期版ではGoogle Driveからドキュメントポータルへの片方向同期のみ対応します。双方向同期、削除の物理反映は対象外です。
   p.actions
-    = form.submit "保存", class: "button"
+    = form.submit "設定を保存", class: "button"
     - if external_folder_sync_source.persisted?
       = link_to "詳細へ戻る", admin_external_folder_sync_source_path(external_folder_sync_source), class: "button secondary"
     - else
