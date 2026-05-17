@@ -43,6 +43,26 @@ RSpec.describe DocumentFileViewerPlan do
     expect(plan).to be_previewable
   end
 
+  it "classifies tsv files as table preview" do
+    file = create(:document_file, document_version: version, file_name: "items.tsv", content_type: "text/plain")
+
+    plan = plan_for(file)
+
+    expect(plan.viewer_kind).to eq(:csv)
+    expect(plan.label).to eq("Table preview")
+    expect(plan).to be_previewable
+  end
+
+  it "classifies csv content type as table preview" do
+    file = create(:document_file, document_version: version, file_name: "items.txt", content_type: "text/csv")
+
+    plan = plan_for(file)
+
+    expect(plan.viewer_kind).to eq(:csv)
+    expect(plan.label).to eq("Table preview")
+    expect(plan).to be_previewable
+  end
+
   it "classifies zip archives as previewable zip preview" do
     file = create(:document_file, document_version: version, file_name: "bundle.zip", content_type: "application/zip")
 
