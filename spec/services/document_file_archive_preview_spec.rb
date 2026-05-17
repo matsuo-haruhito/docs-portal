@@ -57,6 +57,7 @@ RSpec.describe DocumentFileArchivePreview do
 
     preview = described_class.new(file:).call
 
+    expect(preview.file_entries.map(&:name)).to contain_exactly("docs/readme.txt", "image.png")
     expect(preview.file_count).to eq(2)
     expect(preview.folder_count).to eq(1)
     expect(preview.total_file_size).to eq(8)
