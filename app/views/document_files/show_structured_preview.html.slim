@@ -2,10 +2,7 @@
   = render "document_files/preview_header", project: @project, document: @document, document_version: @document_version, document_file: @document_file
 
   - if @structured_preview.error?
-    .card
-      h2 = "#{@structured_language} preview unavailable"
-      p.muted = @structured_preview.error
-      p.muted 全件確認が必要な場合はダウンロードしてください。
+    = render "document_files/preview_error_card", title: "#{@structured_language} preview unavailable", message: @structured_preview.error
   - else
     .card data-structured-preview-tools="true"
       .markdown-workspace__header

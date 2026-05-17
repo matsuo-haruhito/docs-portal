@@ -2,10 +2,7 @@
   = render "document_files/preview_header", project: @project, document: @document, document_version: @document_version, document_file: @document_file
 
   - if @csv_preview.error?
-    .card
-      h2 CSV / TSV preview unavailable
-      p.muted = @csv_preview.error
-      p.muted 全件確認が必要な場合はダウンロードしてください。
+    = render "document_files/preview_error_card", title: "CSV / TSV preview unavailable", message: @csv_preview.error
   - elsif @csv_preview.rows.any?
     - if @csv_preview.truncated?
       p.muted = "先頭#{@csv_preview.limit}行のみ表示しています。全件はダウンロードしてください。"
