@@ -129,7 +129,7 @@ class DocumentFilesController < BaseController
   def render_embedded_html_preview_for(file, disposition)
     return false unless disposition == "inline" && embedded_request? && html_file?(file)
 
-    response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition: "inline").header
+    set_content_disposition_header(file, disposition: "inline")
     render html: embedded_html_for(file, file.absolute_path).html_safe, content_type: "text/html"
     true
   end
@@ -137,7 +137,7 @@ class DocumentFilesController < BaseController
   def render_embedded_html_asset_for(owner_file, asset_file)
     return false unless html_file?(asset_file)
 
-    response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(asset_file, disposition: "inline").header
+    set_content_disposition_header(asset_file, disposition: "inline")
     render html: embedded_html_for(owner_file, asset_file.absolute_path, current_tree_path: asset_file.tree_path).html_safe, content_type: "text/html"
     true
   end
@@ -148,7 +148,7 @@ class DocumentFilesController < BaseController
   end
 
   def prepare_inline_preview!(file, disposition:)
-    response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
+    set_content_disposition_header(file, disposition:)
     assign_preview_context(file)
   end
 
@@ -190,6 +190,10 @@ class DocumentFilesController < BaseController
       disposition:,
       type: file.effective_content_type
     )
+    set_content_disposition_header(file, disposition:)
+  end
+
+  def set_content_disposition_header(file, disposition:)
     response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
   end
 
