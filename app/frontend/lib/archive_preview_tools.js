@@ -119,12 +119,20 @@ function activeFilterStatus(candidateFilter, directoryFilter, safetyFilter, type
   return labels.length > 0 ? `（条件: ${labels.join("、")}）` : ""
 }
 
+function activeFilterSummary(input, candidateFilter, directoryFilter, safetyFilter, typeFilter) {
+  const labels = filterParts(candidateFilter, directoryFilter, safetyFilter, typeFilter)
+  const query = input.value.trim()
+  if (query.length > 0) labels.unshift(`検索=${query}`)
+  return labels.length > 0 ? `絞り込み中: ${labels.join(" / ")}` : "絞り込みなし"
+}
+
 function setupArchivePreview(container) {
   if (container.dataset.archivePreviewToolsReady === "true") return
   container.dataset.archivePreviewToolsReady = "true"
   injectArchivePreviewStyle()
 
   const input = container.querySelector("[data-archive-preview-search-input]")
+  const activeFilters = container.querySelector("[data-archive-preview-active-filters]")
   const candidateFilter = container.querySelector("[data-archive-preview-candidate-filter]")
   const directoryFilter = container.querySelector("[data-archive-preview-directory-filter]")
   const safetyFilter = container.querySelector("[data-archive-preview-safety-filter]")
@@ -138,7 +146,7 @@ function setupArchivePreview(container) {
   const rows = Array.from(container.querySelectorAll("[data-archive-preview-entry]"))
   const copyButtons = Array.from(container.querySelectorAll("[data-archive-preview-copy-entry]"))
   const copyDirectoryButtons = Array.from(container.querySelectorAll("[data-archive-preview-copy-directory]"))
-  if (!input || !candidateFilter || !directoryFilter || !safetyFilter || !typeFilter || !resetButton || !copyVisibleButton || !count || !status || !tableBody || rows.length === 0) return
+  if (!input || !activeFilters || !candidateFilter || !directoryFilter || !safetyFilter || !typeFilter || !resetButton || !copyVisibleButton || !count || !status || !tableBody || rows.length === 0) return
 
   let sortKey = "name"
   let sortDirection = "asc"
@@ -184,6 +192,7 @@ function setupArchivePreview(container) {
 
     const filterLabel = activeFilterLabel(candidateFilter, directoryFilter, safetyFilter, typeFilter)
     count.textContent = query.length === 0 ? `${visibleCount}/${rows.length}件表示${filterLabel}` : `${matchedCount}/${rows.length}件一致 / ${visibleCount}件表示${filterLabel}`
+    activeFilters.textContent = activeFilterSummary(input, candidateFilter, directoryFilter, safetyFilter, typeFilter)
   }
 
   const resetControls = () => {
