@@ -48,8 +48,7 @@ class DocumentFilesController < BaseController
     end
 
     if inline_preview_kind?(viewer_plan, disposition, :csv)
-      prepare_inline_preview!(file, disposition:)
-      @csv_preview = DocumentFileCsvPreview.new(file:).call
+      prepare_csv_preview!(file, disposition:)
       render :show_csv_preview
       return
     end
@@ -155,6 +154,11 @@ class DocumentFilesController < BaseController
   def prepare_inline_preview!(file, disposition:)
     response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
     assign_preview_context(file)
+  end
+
+  def prepare_csv_preview!(file, disposition:)
+    prepare_inline_preview!(file, disposition:)
+    @csv_preview = DocumentFileCsvPreview.new(file:).call
   end
 
   def prepare_structured_preview!(file, viewer_kind:, disposition:)
