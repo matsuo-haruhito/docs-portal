@@ -97,7 +97,6 @@ class DocumentFileViewerPlan
     when :markdown, :html, :pdf, :office, :json, :yaml, :image, :text
       true
     when :csv
-      # CSV / TSV will get a dedicated table viewer later. For now text preview can still open it.
       file.text_previewable?
     when :archive
       zip_archive?
