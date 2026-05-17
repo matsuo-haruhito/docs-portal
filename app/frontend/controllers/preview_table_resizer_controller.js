@@ -4,8 +4,18 @@ const TABLE_WIDTH_STORAGE_PREFIX = "docsPortal.previewTableWidth"
 const TABLE_COLUMN_WIDTH_STORAGE_PREFIX = "docsPortal.previewTableColumnWidths"
 const TABLE_STICKY_HEADER_STORAGE_PREFIX = "docsPortal.previewTableStickyHeader"
 const TABLE_STICKY_COLUMN_STORAGE_PREFIX = "docsPortal.previewTableStickyColumn"
+const MARKDOWN_TABLE_SELECTOR = [
+  ".markdown table",
+  ".theme-doc-markdown table",
+  ".theme-doc-content table",
+  ".docItemContainer table",
+  "main table",
+  "article table"
+].join(", ")
 const MIN_COLUMN_WIDTH = 72
 const MAX_COLUMN_WIDTH = 960
+const frameRefreshTimers = new WeakMap()
+const frameObservers = new WeakMap()
 
 function clampColumnWidth(value) {
   return Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, value))
@@ -106,6 +116,25 @@ function applyColumnWidths(table, colgroup, widths) {
   })
 }
 
+function tableLooksLikeMarkdownContent(table) {
+  if (!table.rows.length || table.closest(".portal-table-width-frame")) return false
+  if (table.closest("nav, header, footer, .navbar, .pagination-nav, .theme-doc-toc-desktop")) return false
+  return true
+}
+
+function markdownTables(frameDocument) {
+  return Array.from(frameDocument.querySelectorAll(MARKDOWN_TABLE_SELECTOR)).filter(tableLooksLikeMarkdownContent)
+}
+
+function tableIndex(frameDocument, table) {
+  const existingIndex = Number(table.dataset.docsPortalTableIndex)
+  if (Number.isInteger(existingIndex) && existingIndex >= 0) return existingIndex
+
+  const index = markdownTables(frameDocument).indexOf(table)
+  table.dataset.docsPortalTableIndex = String(index)
+  return index
+}
+
 export default class extends Controller {
   connect() {
     this.refresh = this.refresh.bind(this)
@@ -117,6 +146,7 @@ export default class extends Controller {
   disconnect() {
     document.removeEventListener("turbo:load", this.refresh)
     document.removeEventListener("turbo:render", this.refresh)
+    frameObservers.forEach?.((observer) => observer.disconnect())
   }
 
   refresh() {
@@ -129,16 +159,37 @@ export default class extends Controller {
     })
   }
 
+  scheduleFrameEnhancement(frame) {
+    window.clearTimeout(frameRefreshTimers.get(frame))
+    frameRefreshTimers.set(frame, window.setTimeout(() => this.enhanceFrame(frame), 80))
+  }
+
+  observeFrame(frame, frameDocument) {
+    if (frameObservers.has(frame)) return
+
+    const Observer = frame.contentWindow?.MutationObserver || window.MutationObserver
+    if (!Observer) return
+
+    const observer = new Observer(() => this.scheduleFrameEnhancement(frame))
+    observer.observe(frameDocument.body, { childList: true, subtree: true })
+    frameObservers.set(frame, observer)
+  }
+
+  notifyTablesEnhanced(frame) {
+    frame.dispatchEvent(new CustomEvent("docs-portal:preview-tables-enhanced"))
+  }
+
   enhanceFrame(frame) {
     try {
       const frameDocument = frame.contentDocument
       if (!frameDocument?.body) return
 
       injectStyle(frameDocument)
-      const tables = Array.from(frameDocument.querySelectorAll(".markdown table, .theme-doc-markdown table, article table"))
-        .filter((table) => !table.closest(".portal-table-width-frame"))
+      this.observeFrame(frame, frameDocument)
 
-      tables.forEach((table, index) => this.wrapTable(frame, frameDocument, table, index))
+      const tables = markdownTables(frameDocument).filter((table) => !table.closest(".portal-table-width-frame"))
+      tables.forEach((table) => this.wrapTable(frame, frameDocument, table, tableIndex(frameDocument, table)))
+      this.notifyTablesEnhanced(frame)
     } catch (_error) {
       // Cross-origin fallback: if the preview ever becomes external, keep the viewer usable.
     }
@@ -150,6 +201,7 @@ export default class extends Controller {
     const stickyColumn = readBoolean(TABLE_STICKY_COLUMN_STORAGE_PREFIX, frame, index)
     const wrapper = frameDocument.createElement("div")
     wrapper.className = "portal-table-width-frame"
+    wrapper.dataset.docsPortalTableIndex = String(index)
     wrapper.style.setProperty("--portal-table-width", `${width}%`)
 
     const toolbar = frameDocument.createElement("div")
