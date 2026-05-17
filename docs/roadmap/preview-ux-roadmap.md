@@ -90,6 +90,7 @@
 - embedded HTML base path helper の service 化
 - inline preview の template dispatch / prepare dispatch 分離
 - text inline preview predicate の切り出し
+- preview service Result helper concern の追加
 - `Content-Disposition` header 設定 helper 化
 
 ### Codeblock actions
@@ -138,8 +139,8 @@
 
 候補:
 
-- preview service の Result helper を整える
 - 既存 preview service の spec を補強する
+- entry 単位 preview / download の設計に入る前に safety metadata を再確認する
 
 ### 2. ZIP entry 操作の次段
 
@@ -293,7 +294,7 @@
 
 ## 実装順のおすすめ
 
-1. preview service の Result helper 整理 / spec 補強
+1. preview service の spec 補強
 2. ZIP entry 単位 preview / download の設計
 3. Preview target metadata parser / validator
 4. Docusaurus build manifest
