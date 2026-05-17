@@ -35,6 +35,19 @@ RSpec.describe DocumentFileTextPreview do
     expect(preview.line_count).to eq(3)
   end
 
+  it "keeps the last line without a trailing newline" do
+    storage_key = "spec/text-preview/no-trailing-newline.txt"
+    write_storage_file(storage_key, "one\ntwo")
+    file = create(:document_file, document_version: version, file_name: "no-trailing-newline.txt", content_type: "text/plain", storage_key:)
+
+    preview = described_class.new(file:).call
+
+    expect(preview.lines).to eq(%w[one two])
+    expect(preview.line_count).to eq(2)
+    expect(preview).not_to be_truncated
+    expect(preview).not_to be_error
+  end
+
   it "truncates lines over the limit" do
     storage_key = "spec/text-preview/large.txt"
     write_storage_file(storage_key, "one\ntwo\nthree\n")
