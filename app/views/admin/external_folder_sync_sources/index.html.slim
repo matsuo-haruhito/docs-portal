@@ -44,6 +44,6 @@ h1 外部フォルダ同期設定
         td = warnings_count || "-"
         td = latest_run&.error_message.presence || source.last_error_message.presence || "-"
         td.actions
-          = link_to "詳細", admin_external_folder_sync_source_path(source), class: "button secondary"
+          = link_to "設定詳細", admin_external_folder_sync_source_path(source), class: "button secondary"
           = edit_link_to "編集", edit_admin_external_folder_sync_source_path(source)
           = delete_link_to "削除", admin_external_folder_sync_source_path(source), confirm: "外部フォルダ同期設定を削除しますか？"
