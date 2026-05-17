@@ -128,13 +128,86 @@ entry 単位 preview / download は便利だが、以下の検討が必要。
 `text_preview_candidate?` は `download_candidate?` に加えて、拡張子が `.txt` / `.log` / `.md` / `.csv` / `.tsv` / `.json` / `.yaml` / `.yml` などのテキスト系であることを示す。
 これは「将来操作候補」の意味であり、実際に preview / download 可能であることは意味しない。
 
-### 初期実装ステップ案
+## entry 単位 action の初期実装案
 
-1. entry path validator を service と spec で追加する
-2. entry metadata に `previewable` / `downloadable` / `reason` を持たせる
-3. UI ではまず disabled action と reason 表示だけを出す
-4. download は一時ファイルを作らず streaming できるか検討する
-5. preview は text / JSON / CSV など小さいテキスト entry に限定して検討する
+### URL / controller 境界
+
+entry 単位 action を入れる場合は、archive 本体の `DocumentFile` にぶら下がる専用 action とする。
+
+候補:
+
+- `GET /document_files/:public_id/archive_entries/preview?entry_path=...`
+- `GET /document_files/:public_id/archive_entries/download?entry_path=...`
+
+controller では以下だけを担当する。
+
+1. archive 本体の取得
+2. archive 本体への閲覧 / download 権限確認
+3. entry path parameter の受け取り
+4. service 呼び出し
+5. service result に応じた render / send_data / error render
+
+ZIP entry の探索、path validation、size validation、content type 推定は controller に置かない。
+
+### service 境界
+
+entry action は専用 service に分ける。
+
+候補:
+
+- `DocumentFileArchiveEntryLookup`
+  - archive 本体と entry path を受け取る
+  - safe path であることを確認する
+  - ZIP 内で entry を探す
+  - directory / missing / encrypted / size over などを reason として返す
+- `DocumentFileArchiveEntryPreview`
+  - lookup result を受け取る
+  - text preview 対象だけを読み込む
+  - byte size / line count 上限を適用する
+- `DocumentFileArchiveEntryDownload`
+  - lookup result を受け取る
+  - 初期実装では `send_data` 用の binary と filename / content_type を返す
+  - 大容量 entry の streaming は後続検討にする
+
+### 初期実装で許可する範囲
+
+初期実装は preview だけを先に入れるのが安全。
+
+download は archive entry をそのまま配信するため影響が大きく、次の段階に回す。
+
+初期 preview では以下のみ許可する。
+
+- safe path
+- file entry
+- text preview candidate
+- entry size が設定上限以下
+- UTF-8 として安全に読めるもの
+- JSON / YAML / CSV / TSV / text は既存 preview service の表示思想に合わせる
+
+### 初期 UI
+
+entry 一覧には、実装段階に応じて以下の順で action を足す。
+
+1. disabled button + reason 表示
+2. text preview candidate にだけ preview link を表示
+3. preview link 先で小さな text preview を表示
+4. download candidate の download link は preview が安定してから追加
+
+### error result
+
+entry action service は例外を controller へ漏らさず、Result を返す。
+
+Result は以下を持つ。
+
+- `entry_path`
+- `found?`
+- `previewable?`
+- `downloadable?`
+- `error?`
+- `reason`
+- `content_type`
+- `filename`
+- `size`
 
 ### 権限の考え方
 
