@@ -61,8 +61,7 @@ class DocumentFilesController < BaseController
     end
 
     if inline_preview_kind?(viewer_plan, disposition, :archive)
-      prepare_inline_preview!(file, disposition:)
-      @archive_preview = DocumentFileArchivePreview.new(file:).call
+      prepare_archive_preview!(file, disposition:)
       render :show_archive_preview
       return
     end
@@ -163,6 +162,11 @@ class DocumentFilesController < BaseController
     prepare_inline_preview!(file, disposition:)
     @structured_preview = DocumentFileStructuredPreview.new(file:, viewer_kind:).call
     @structured_language = viewer_kind.to_s.upcase
+  end
+
+  def prepare_archive_preview!(file, disposition:)
+    prepare_inline_preview!(file, disposition:)
+    @archive_preview = DocumentFileArchivePreview.new(file:).call
   end
 
   def assign_preview_context(file)
