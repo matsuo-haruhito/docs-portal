@@ -16,6 +16,7 @@
     - if @archive_preview.entries.any?
       .card
         h2 ZIP内サマリー
+        p.muted ZIPを展開せず、preview対象のentryだけから件数と合計サイズを集計しています。
         .stats-grid
           .stat-card
             span.stat-card__label files
@@ -31,7 +32,7 @@
         .document-viewer__header
           div
             h2 ZIP内ファイル一覧
-            p.muted ZIPを展開せず、entry名とサイズだけを表示しています。`/` で検索欄に移動できます。
+            p.muted `/` で検索欄に移動できます。見出しボタンで並び替え、種別selectで file / folder を絞り込めます。
           p.actions
             button.button.secondary type="button" data-archive-preview-copy-visible="true" 表示中のパスをコピー
         .document-filter
