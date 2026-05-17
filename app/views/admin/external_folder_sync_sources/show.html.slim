@@ -13,7 +13,7 @@ h1 外部フォルダ同期詳細
       = @external_folder_sync_source.project.name
       br
       code = @external_folder_sync_source.project.code
-    dt プロバイダ
+    dt 連携先
     dd = external_folder_sync_source_provider_label(@external_folder_sync_source)
     dt 認証方式
     dd = external_folder_sync_source_auth_type_label(@external_folder_sync_source)
@@ -31,7 +31,7 @@ h1 外部フォルダ同期詳細
     dd = external_folder_sync_source_conflict_policy_label(@external_folder_sync_source)
     dt 状態
     dd = @external_folder_sync_source.enabled? ? "有効" : "無効"
-    dt 最終同期
+    dt 最終同期日時
     dd = @external_folder_sync_source.last_synced_at ? l(@external_folder_sync_source.last_synced_at) : "-"
     - if @external_folder_sync_source.cursor.present?
       dt Google Driveカーソル
