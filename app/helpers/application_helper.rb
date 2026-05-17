@@ -240,6 +240,11 @@ module ApplicationHelper
     event.headers_json&.fetch(header_name, nil).presence || "-"
   end
 
+  def external_folder_sync_webhook_resource_state_label(event)
+    value = event.headers_json&.fetch("X_GOOG_RESOURCE_STATE", nil).presence
+    value.present? ? localized_label("external_folder_sync_webhook_events.resource_state", value) : "-"
+  end
+
   def external_folder_sync_webhook_sync_run_summary(event)
     event.payload_json&.fetch("sync_run", nil) || {}
   end
