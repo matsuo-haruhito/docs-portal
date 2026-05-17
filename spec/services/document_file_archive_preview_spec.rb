@@ -1,0 +1,88 @@
+require "rails_helper"
+
+RSpec.describe DocumentFileArchivePreview do
+  let(:project) { create(:project) }
+  let(:document) { create(:document, project:) }
+  let(:version) { create(:document_version, document:) }
+
+  def storage_path(storage_key)
+    path = DocumentFile.verified_storage_path(storage_key)
+    FileUtils.mkdir_p(path.dirname)
+    path
+  end
+
+  def write_zip(storage_key, entries)
+    Zip::File.open(storage_path(storage_key), create: true) do |zip_file|
+      entries.each do |name, content|
+        if content == :directory
+          zip_file.mkdir(name)
+        else
+          zip_file.get_output_stream(name) { |io| io.write(content) }
+        end
+      end
+    end
+  end
+
+  def write_storage_file(storage_key, content)
+    File.binwrite(storage_path(storage_key), content)
+  end
+
+  it "lists zip entries" do
+    storage_key = "spec/archive-preview/items.zip"
+    write_zip(storage_key, {
+      "docs/" => :directory,
+      "docs/readme.txt" => "hello",
+      "image.png" => "png"
+    })
+    file = create(:document_file, document_version: version, file_name: "items.zip", content_type: "application/zip", storage_key:)
+
+    preview = described_class.new(file:).call
+
+    expect(preview).not_to be_error
+    expect(preview).not_to be_truncated
+    expect(preview.entries.map(&:name)).to include("docs/readme.txt", "image.png")
+    readme = preview.entries.find { _1.name == "docs/readme.txt" }
+    expect(readme).not_to be_directory
+    expect(readme.size).to eq(5)
+  end
+
+  it "truncates entries over the limit" do
+    storage_key = "spec/archive-preview/large.zip"
+    write_zip(storage_key, {
+      "one.txt" => "1",
+      "two.txt" => "2",
+      "three.txt" => "3"
+    })
+    file = create(:document_file, document_version: version, file_name: "large.zip", content_type: "application/zip", storage_key:)
+
+    preview = described_class.new(file:, limit: 2).call
+
+    expect(preview.entries.size).to eq(2)
+    expect(preview).to be_truncated
+    expect(preview.limit).to eq(2)
+  end
+
+  it "returns an error result for broken zip" do
+    storage_key = "spec/archive-preview/broken.zip"
+    write_storage_file(storage_key, "not a zip")
+    file = create(:document_file, document_version: version, file_name: "broken.zip", content_type: "application/zip", storage_key:)
+
+    preview = described_class.new(file:).call
+
+    expect(preview.entries).to eq([])
+    expect(preview).to be_error
+    expect(preview.error).to be_present
+  end
+
+  it "returns an error result for unsupported archive format" do
+    storage_key = "spec/archive-preview/items.tar"
+    write_storage_file(storage_key, "tar")
+    file = create(:document_file, document_version: version, file_name: "items.tar", content_type: "application/x-tar", storage_key:)
+
+    preview = described_class.new(file:).call
+
+    expect(preview.entries).to eq([])
+    expect(preview).to be_error
+    expect(preview.error).to include("未対応")
+  end
+end
