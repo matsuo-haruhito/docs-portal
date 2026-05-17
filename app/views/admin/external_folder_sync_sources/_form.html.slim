@@ -3,7 +3,7 @@
 = form_with model: [:admin, external_folder_sync_source] do |form|
   .form-grid
     label
-      | 案件
+      | 対象案件
       = form.collection_select :project_id, @projects, :id, :name
     label
       | 連携先
