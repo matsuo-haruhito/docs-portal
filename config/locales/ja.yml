@@ -165,7 +165,7 @@ ja:
         partial: "一部失敗"
       mode:
         dry_run: "同期プレビュー"
-        apply: "同期実行"
+        apply: "同期"
       safety_state:
         not_run: "未実行"
         blocked: "警告あり停止"
