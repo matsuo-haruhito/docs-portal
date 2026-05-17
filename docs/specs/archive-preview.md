@@ -16,6 +16,7 @@ ZIP preview では以下を表示する。
 - ZIP内サマリー
   - file 件数
   - folder 件数
+  - 操作候補 entry 件数
   - preview 対象 file の合計サイズ
 - ディレクトリサマリー
   - ディレクトリ path
@@ -27,6 +28,8 @@ ZIP preview では以下を表示する。
   - 種別
   - path
   - size
+  - safe / unsafe path
+  - 操作候補または操作不可理由
   - path copy 操作
 
 ## 表示上限
@@ -95,6 +98,18 @@ entry 単位 preview / download は便利だが、以下の検討が必要。
 - 設定した entry size 上限を超えるもの
 - content type を安全に推定できないもの
 - preview 可能種別に入らない binary entry
+
+### 現在の action metadata
+
+現時点では、実際の entry preview / download は提供しない。
+ただし、将来の action 表示に備えて以下を entry metadata として持つ。
+
+- `safe_path?`
+- `actionable?`
+- `action_unavailable_reason`
+
+現在の `actionable?` は、directory entry ではなく、かつ safe path であることだけを示す。
+これは「将来操作候補」の意味であり、実際に preview / download 可能であることは意味しない。
 
 ### 初期実装ステップ案
 
