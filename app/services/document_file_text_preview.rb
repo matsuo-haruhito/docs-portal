@@ -9,6 +9,10 @@ class DocumentFileTextPreview
     def error?
       error.present?
     end
+
+    def line_count
+      lines.count
+    end
   end
 
   def initialize(file:, limit: DEFAULT_LIMIT)
