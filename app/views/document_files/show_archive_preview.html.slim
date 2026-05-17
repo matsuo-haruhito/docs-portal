@@ -39,6 +39,7 @@
                 th files
                 th folders
                 th 直下file合計サイズ
+                th 操作
             tbody
               - @archive_preview.directory_summaries.each do |summary|
                 tr
@@ -47,6 +48,8 @@
                   td = number_with_delimiter(summary.file_count)
                   td = number_with_delimiter(summary.folder_count)
                   td = number_to_human_size(summary.total_file_size)
+                  td
+                    button.button.secondary type="button" data-archive-preview-copy-directory=summary.path パスをコピー
 
       .card
         .document-viewer__header
