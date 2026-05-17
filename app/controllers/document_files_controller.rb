@@ -35,48 +35,42 @@ class DocumentFilesController < BaseController
 
     record_file_access_log(file)
 
-    if disposition == "inline" && viewer_plan.viewer_kind == :pdf && !embedded_request?
-      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
-      assign_preview_context(file)
+    if inline_preview_request?(disposition) && viewer_plan.viewer_kind == :pdf
+      prepare_inline_preview!(file, disposition:)
       render :show_pdf_preview
       return
     end
 
-    if disposition == "inline" && viewer_plan.viewer_kind == :image && !embedded_request?
-      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
-      assign_preview_context(file)
+    if inline_preview_request?(disposition) && viewer_plan.viewer_kind == :image
+      prepare_inline_preview!(file, disposition:)
       render :show_image_preview
       return
     end
 
-    if disposition == "inline" && viewer_plan.viewer_kind == :csv && !embedded_request?
-      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
-      assign_preview_context(file)
+    if inline_preview_request?(disposition) && viewer_plan.viewer_kind == :csv
+      prepare_inline_preview!(file, disposition:)
       @csv_preview = DocumentFileCsvPreview.new(file:).call
       render :show_csv_preview
       return
     end
 
-    if disposition == "inline" && %i[json yaml].include?(viewer_plan.viewer_kind) && !embedded_request?
-      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
-      assign_preview_context(file)
+    if inline_preview_request?(disposition) && %i[json yaml].include?(viewer_plan.viewer_kind)
+      prepare_inline_preview!(file, disposition:)
       @structured_preview = DocumentFileStructuredPreview.new(file:, viewer_kind: viewer_plan.viewer_kind).call
       @structured_language = viewer_plan.viewer_kind.to_s.upcase
       render :show_structured_preview
       return
     end
 
-    if disposition == "inline" && viewer_plan.viewer_kind == :archive && !embedded_request?
-      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
-      assign_preview_context(file)
+    if inline_preview_request?(disposition) && viewer_plan.viewer_kind == :archive
+      prepare_inline_preview!(file, disposition:)
       @archive_preview = DocumentFileArchivePreview.new(file:).call
       render :show_archive_preview
       return
     end
 
-    if disposition == "inline" && file.text_previewable? && !embedded_request?
-      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
-      assign_preview_context(file)
+    if inline_preview_request?(disposition) && file.text_previewable?
+      prepare_inline_preview!(file, disposition:)
       @text_preview = DocumentFileTextPreview.new(file:).call
       render :show_text_preview
       return
@@ -152,6 +146,15 @@ class DocumentFilesController < BaseController
 
   def viewer_plan_for(file)
     DocumentFileViewerPlan.new(file:, user: current_user).call
+  end
+
+  def inline_preview_request?(disposition)
+    disposition == "inline" && !embedded_request?
+  end
+
+  def prepare_inline_preview!(file, disposition:)
+    response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
+    assign_preview_context(file)
   end
 
   def assign_preview_context(file)
