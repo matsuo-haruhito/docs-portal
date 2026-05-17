@@ -46,6 +46,23 @@ RSpec.describe DocumentFileArchivePreview do
     expect(readme.size).to eq(5)
   end
 
+  it "exposes entry parent directories" do
+    storage_key = "spec/archive-preview/parent-directory.zip"
+    write_zip(storage_key, {
+      "docs/" => :directory,
+      "docs/readme.txt" => "hello",
+      "index.html" => "html"
+    })
+    file = create(:document_file, document_version: version, file_name: "parent-directory.zip", content_type: "application/zip", storage_key:)
+
+    preview = described_class.new(file:).call
+
+    parents = preview.entries.index_by(&:name).transform_values(&:parent_directory)
+    expect(parents["docs/"]).to eq("/")
+    expect(parents["docs/readme.txt"]).to eq("docs/")
+    expect(parents["index.html"]).to eq("/")
+  end
+
   it "summarizes zip entries" do
     storage_key = "spec/archive-preview/summary.zip"
     write_zip(storage_key, {
