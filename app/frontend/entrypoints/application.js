@@ -7,6 +7,7 @@ import { setupMarkdownPreviewDocumentSearch } from "../lib/markdown_preview_docu
 import { setupDocumentFileListSearch } from "../lib/document_file_list_search"
 import { setupCsvPreviewTableTools } from "../lib/csv_preview_table_tools"
 import { setupStructuredPreviewTools } from "../lib/structured_preview_tools"
+import { setupArchivePreviewTools } from "../lib/archive_preview_tools"
 import { setupImagePreviewTools } from "../lib/image_preview_tools"
 import { setupPdfPreviewTools } from "../lib/pdf_preview_tools"
 
@@ -679,6 +680,7 @@ document.addEventListener("turbo:load", () => {
   setupDocumentFileListSearch()
   setupCsvPreviewTableTools()
   setupStructuredPreviewTools()
+  setupArchivePreviewTools()
   setupImagePreviewTools()
   setupPdfPreviewTools()
   setupTomSelectFields()
@@ -692,6 +694,7 @@ document.addEventListener("turbo:render", () => {
   setupDocumentFileListSearch()
   setupCsvPreviewTableTools()
   setupStructuredPreviewTools()
+  setupArchivePreviewTools()
   setupImagePreviewTools()
   setupPdfPreviewTools()
   setupTomSelectFields()
