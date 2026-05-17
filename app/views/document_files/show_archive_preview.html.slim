@@ -26,8 +26,11 @@
             span.stat-card__label folders
             strong.stat-card__value = number_with_delimiter(@archive_preview.folder_count)
           .stat-card
-            span.stat-card__label 操作候補
-            strong.stat-card__value = number_with_delimiter(@archive_preview.actionable_entries.count)
+            span.stat-card__label text preview候補
+            strong.stat-card__value = number_with_delimiter(@archive_preview.text_preview_candidate_entries.count)
+          .stat-card
+            span.stat-card__label download候補
+            strong.stat-card__value = number_with_delimiter(@archive_preview.download_candidate_entries.count)
           .stat-card
             span.stat-card__label 合計サイズ
             strong.stat-card__value = number_to_human_size(@archive_preview.total_file_size)
@@ -59,7 +62,7 @@
         .document-viewer__header
           div
             h2 ZIP内ファイル一覧
-            p.muted `/` で検索欄に移動できます。ディレクトリ / 種別 / キーワードで絞り込み、見出しボタンで並び替えできます。行ごとのパスや表示中のパスをコピーできます。操作候補は将来のentry preview/download対象の目安です。
+            p.muted `/` で検索欄に移動できます。ディレクトリ / 種別 / キーワードで絞り込み、見出しボタンで並び替えできます。行ごとのパスや表示中のパスをコピーできます。候補表示は将来のentry preview/download対象の目安です。
           p.actions
             button.button.secondary type="button" data-archive-preview-copy-visible="true" 表示中のパスをコピー
         .document-filter
@@ -92,7 +95,8 @@
                 th
                   button.button.secondary type="button" data-archive-preview-sort="size" data-archive-preview-sort-label="サイズ" サイズ
                 th 安全性
-                th 操作候補
+                th preview候補
+                th download候補
                 th 操作
             tbody data-archive-preview-entries="true"
               - @archive_preview.entries.each do |entry|
@@ -108,10 +112,15 @@
                     - else
                       strong unsafe path
                   td
-                    - if entry.actionable?
-                      span.muted action-ready
+                    - if entry.text_preview_candidate?
+                      span.muted text-ready
                     - else
-                      span.muted = entry.action_unavailable_reason
+                      span.muted -
+                  td
+                    - if entry.download_candidate?
+                      span.muted download-ready
+                    - else
+                      span.muted = entry.action_unavailable_reason || "-"
                   td
                     button.button.secondary type="button" data-archive-preview-copy-entry="true" パスをコピー
     - else
