@@ -153,13 +153,12 @@ ZIP entry の探索、path validation、size validation、content type 推定は
 
 entry action は専用 service に分ける。
 
-候補:
-
 - `DocumentFileArchiveEntryLookup`
   - archive 本体と entry path を受け取る
   - safe path であることを確認する
   - ZIP 内で entry を探す
-  - directory / missing / encrypted / size over などを reason として返す
+  - directory / missing / size over などを reason として返す
+  - entry 本体は読み込まない
 - `DocumentFileArchiveEntryPreview`
   - lookup result を受け取る
   - text preview 対象だけを読み込む
@@ -168,6 +167,27 @@ entry action は専用 service に分ける。
   - lookup result を受け取る
   - 初期実装では `send_data` 用の binary と filename / content_type を返す
   - 大容量 entry の streaming は後続検討にする
+
+### 実装済みの lookup service
+
+`DocumentFileArchiveEntryLookup` は実装済み。
+
+現在の lookup result は以下を持つ。
+
+- `entry_path`
+- `found?`
+- `directory?`
+- `safe_path?`
+- `previewable?`
+- `downloadable?`
+- `error?`
+- `reason`
+- `content_type`
+- `filename`
+- `size`
+
+lookup の時点では entry content は読まず、metadata と action 可否だけを返す。
+初期実装では、entry size が 1MB を超える場合は preview / download とも不可にしている。
 
 ### 初期実装で許可する範囲
 
@@ -192,22 +212,6 @@ entry 一覧には、実装段階に応じて以下の順で action を足す。
 2. text preview candidate にだけ preview link を表示
 3. preview link 先で小さな text preview を表示
 4. download candidate の download link は preview が安定してから追加
-
-### error result
-
-entry action service は例外を controller へ漏らさず、Result を返す。
-
-Result は以下を持つ。
-
-- `entry_path`
-- `found?`
-- `previewable?`
-- `downloadable?`
-- `error?`
-- `reason`
-- `content_type`
-- `filename`
-- `size`
 
 ### 権限の考え方
 
