@@ -7,7 +7,7 @@ RSpec.describe ExternalFolderSyncWebhookEventJob, type: :job do
 
     described_class.perform_now(event.id)
 
-    expect(ExternalFolderSyncJob).to have_received(:perform_later).with(event.external_folder_sync_source.id, event.external_folder_sync_source.created_by_id)
+    expect(ExternalFolderSyncJob).to have_received(:perform_later).with(event.external_folder_sync_source.id, event.external_folder_sync_source.created_by_id, event.id)
     expect(event.reload).to be_enqueued
     expect(event.error_message).to be_nil
   end

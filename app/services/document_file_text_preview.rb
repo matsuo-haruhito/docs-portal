@@ -21,9 +21,12 @@ class DocumentFileTextPreview
   end
 
   def call
-    lines = []
+    content = File.binread(file.absolute_path)
+    content.force_encoding("UTF-8")
+    raise Encoding::InvalidByteSequenceError, "invalid byte sequence in UTF-8" unless content.valid_encoding?
 
-    File.foreach(file.absolute_path, encoding: "UTF-8").with_index do |line, index|
+    lines = []
+    content.each_line.with_index do |line, index|
       return Result.new(lines:, truncated: true, limit:, error: nil) if index >= limit
 
       lines << line.chomp

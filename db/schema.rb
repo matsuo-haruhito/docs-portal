@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_18_000100) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_18_001000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -200,6 +200,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_18_000100) do
     t.datetime "created_at", null: false, comment: "作成日時"
     t.integer "delivery_type", default: 0, null: false, comment: "送付種別"
     t.bigint "document_id", comment: "文書ID"
+    t.bigint "document_set_id"
     t.text "error_message", comment: "エラーメッセージ"
     t.bigint "project_id", null: false, comment: "案件ID"
     t.string "public_id", null: false, comment: "公開ID"
@@ -211,6 +212,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_18_000100) do
     t.datetime "updated_at", null: false, comment: "更新日時"
     t.index ["delivery_type"], name: "index_document_delivery_logs_on_delivery_type"
     t.index ["document_id"], name: "index_document_delivery_logs_on_document_id"
+    t.index ["document_set_id"], name: "index_document_delivery_logs_on_document_set_id"
     t.index ["project_id"], name: "index_document_delivery_logs_on_project_id"
     t.index ["public_id"], name: "index_document_delivery_logs_on_public_id", unique: true
     t.index ["sender_id"], name: "index_document_delivery_logs_on_sender_id"
@@ -1015,6 +1017,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_18_000100) do
   add_foreign_key "document_catalog_items", "document_catalogs"
   add_foreign_key "document_catalog_items", "documents"
   add_foreign_key "document_catalogs", "projects"
+  add_foreign_key "document_delivery_logs", "document_sets"
   add_foreign_key "document_delivery_logs", "documents"
   add_foreign_key "document_delivery_logs", "projects"
   add_foreign_key "document_delivery_logs", "users", column: "sender_id"

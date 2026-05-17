@@ -50,7 +50,7 @@ module ZipImport
       document_candidate_class.new(
         absolute_path: path,
         logical_path:,
-        title: inferred_title(logical_path),
+        title: inferred_title(logical_path, path, frontmatter),
         slug: inferred_slug(logical_path, path),
         frontmatter:,
         document_kind: document_kind_for(path),
@@ -195,7 +195,13 @@ module ZipImport
       {}
     end
 
-    def inferred_title(logical_path)
+    def inferred_title(logical_path, path, frontmatter)
+      frontmatter_title = frontmatter["title"].presence if frontmatter.respond_to?(:[])
+      return frontmatter_title if frontmatter_title.present?
+
+      heading_title = first_markdown_heading(path) if path_classifier.markdown_file?(path)
+      return heading_title if heading_title.present?
+
       path = Pathname(logical_path)
       base = path.basename.sub_ext("").to_s
       if README_BASENAMES.include?(base.downcase)
@@ -204,6 +210,17 @@ module ZipImport
       end
 
       base
+    end
+
+    def first_markdown_heading(path)
+      File.foreach(path, encoding: "UTF-8") do |line|
+        match = line.match(/\A#\s+(.+?)\s*\z/)
+        return match[1].strip if match
+      end
+
+      nil
+    rescue Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError
+      nil
     end
 
     def inferred_slug(logical_path, path)

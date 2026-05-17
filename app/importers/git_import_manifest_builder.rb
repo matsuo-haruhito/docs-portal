@@ -15,8 +15,10 @@ class GitImportManifestBuilder
     FileUtils.rm_rf(artifact_root)
     FileUtils.mkdir_p(attachments_root)
 
+    path_classifier = ZipImport::PathClassifier.new(root: @worktree_path)
     scan_result = ZipImportDocumentScanner.new(root: @worktree_path, candidate_policy: :renderable_only).call
-    documents = scan_result.documents.map do |candidate|
+    document_candidates = scan_result.documents.select { |candidate| path_classifier.markdown_file?(candidate.absolute_path) }
+    documents = document_candidates.map do |candidate|
       document_payload_for(candidate, attachments_root)
     end
     deleted_candidates = deleted_candidates_for(documents)
@@ -67,8 +69,19 @@ class GitImportManifestBuilder
       source_relative_path: source_relative_path,
       snapshot_kind: classification.attributes[:snapshot_kind] || "git_import",
       changelog_summary: "Imported from #{@source.repository_full_name}@#{@commit_sha.first(12)}",
-      files: candidate.attachment_paths.each_with_index.map { |path, index| copy_attachment(path, attachments_root, index) }
+      files: attachment_paths_for(candidate).each_with_index.map { |path, index| copy_attachment(path, attachments_root, index) }
     }.compact
+  end
+
+  def attachment_paths_for(candidate)
+    paths = candidate.attachment_paths.map { Pathname(_1) }
+    sibling_paths = Dir.glob(Pathname(candidate.absolute_path).dirname.join("*").to_s)
+      .map { Pathname(_1) }
+      .select(&:file?)
+      .reject { |path| ZipImport::PathClassifier.new(root: @worktree_path).ignored_file?(path) }
+      .reject { |path| ZipImport::PathClassifier.new(root: @worktree_path).markdown_file?(path) && path != Pathname(candidate.absolute_path) }
+
+    (paths + sibling_paths).uniq.sort_by(&:to_s)
   end
 
   def copy_attachment(path, attachments_root, index)

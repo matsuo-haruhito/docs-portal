@@ -51,10 +51,10 @@ RSpec.describe DocumentDuplicateDetector do
   end
 
   it "ignores blank source metadata" do
-    create_document_with_version(title: "A", slug: "a")
-    create_document_with_version(title: "B", slug: "b")
+    first = create_document_with_version(title: "A", slug: "a")
+    second = create_document_with_version(title: "B", slug: "b")
 
-    candidates = described_class.new.call
+    candidates = described_class.new(scope: Document.where(id: [first.id, second.id])).call
 
     expect(candidates.map(&:reason)).not_to include(:same_source_relative_path)
     expect(candidates.map(&:reason)).not_to include(:same_source_basename)
