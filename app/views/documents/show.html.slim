@@ -25,14 +25,17 @@
 
     details.document-context-drawer#document-detail-panels
       summary
-        strong 文書情報・Q&A・版一覧を開く
-        span.muted 補助情報は必要なときだけ展開できます
+        strong 文書情報・版一覧を開く
+        span.muted 案件情報や版一覧は必要なときだけ展開できます
       .document-context-drawer__body
         .document-context-drawer__sections
           = render "detail_sections"
 
     .site-viewer-shell.document-reader-shell#document-content
       iframe.site-viewer-frame src=@viewer_iframe_src title="#{@document.title} #{@viewer_version.version_label}" loading="eager"
+
+    = render "comment_workspace", floating: true
 - else
   h1 = @document.title
+  = render "comment_workspace", floating: false
   = render "detail_sections"
