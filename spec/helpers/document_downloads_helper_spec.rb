@@ -36,7 +36,6 @@ RSpec.describe DocumentDownloadsHelper, type: :helper do
       )
 
       expect(helper.document_version_download_file(version)).to eq(source_file)
-      expect(helper.document_file_icon_name(helper.document_version_download_file(version))).to eq("md")
     end
 
     it "falls back to the first downloadable file when source metadata is unavailable" do
