@@ -24,6 +24,10 @@ function archiveEntryText(row) {
   return archiveEntryName(row).toLowerCase()
 }
 
+function archiveEntryDirectory(row) {
+  return row.dataset.archivePreviewEntryDirectory || "/"
+}
+
 function archiveEntryType(row) {
   return row.dataset.archivePreviewEntryType || "file"
 }
@@ -75,6 +79,7 @@ function setupArchivePreview(container) {
   injectArchivePreviewStyle()
 
   const input = container.querySelector("[data-archive-preview-search-input]")
+  const directoryFilter = container.querySelector("[data-archive-preview-directory-filter]")
   const typeFilter = container.querySelector("[data-archive-preview-type-filter]")
   const resetButton = container.querySelector("[data-archive-preview-reset]")
   const copyVisibleButton = container.querySelector("[data-archive-preview-copy-visible]")
@@ -85,7 +90,7 @@ function setupArchivePreview(container) {
   const rows = Array.from(container.querySelectorAll("[data-archive-preview-entry]"))
   const copyButtons = Array.from(container.querySelectorAll("[data-archive-preview-copy-entry]"))
   const copyDirectoryButtons = Array.from(container.querySelectorAll("[data-archive-preview-copy-directory]"))
-  if (!input || !typeFilter || !resetButton || !copyVisibleButton || !count || !status || !tableBody || rows.length === 0) return
+  if (!input || !directoryFilter || !typeFilter || !resetButton || !copyVisibleButton || !count || !status || !tableBody || rows.length === 0) return
 
   let sortKey = "name"
   let sortDirection = "asc"
@@ -108,27 +113,31 @@ function setupArchivePreview(container) {
 
   const updateSearch = () => {
     const query = input.value.trim().toLowerCase()
+    const selectedDirectory = directoryFilter.value
     const selectedType = typeFilter.value
     let matchedCount = 0
     let visibleCount = 0
 
     rows.forEach((row) => {
       const textMatched = query.length === 0 || archiveEntryText(row).includes(query)
+      const directoryMatched = selectedDirectory === "all" || archiveEntryDirectory(row) === selectedDirectory
       const typeMatched = selectedType === "all" || archiveEntryType(row) === selectedType
       const matched = query.length > 0 && textMatched
-      const visible = textMatched && typeMatched
+      const visible = textMatched && directoryMatched && typeMatched
       row.classList.toggle("is-archive-preview-match", matched)
       row.hidden = !visible
       if (query.length > 0 && textMatched) matchedCount += 1
       if (visible) visibleCount += 1
     })
 
+    const directoryLabel = selectedDirectory === "all" ? "" : ` / ${selectedDirectory}`
     const typeLabel = selectedType === "all" ? "" : ` / ${selectedType}`
-    count.textContent = query.length === 0 ? `${visibleCount}/${rows.length}件表示${typeLabel}` : `${matchedCount}/${rows.length}件一致 / ${visibleCount}件表示${typeLabel}`
+    count.textContent = query.length === 0 ? `${visibleCount}/${rows.length}件表示${directoryLabel}${typeLabel}` : `${matchedCount}/${rows.length}件一致 / ${visibleCount}件表示${directoryLabel}${typeLabel}`
   }
 
   const resetControls = () => {
     input.value = ""
+    directoryFilter.value = "all"
     typeFilter.value = "all"
     sortKey = "name"
     sortDirection = "asc"
@@ -138,6 +147,7 @@ function setupArchivePreview(container) {
 
   input.addEventListener("input", updateSearch)
   input.addEventListener("search", updateSearch)
+  directoryFilter.addEventListener("change", updateSearch)
   typeFilter.addEventListener("change", updateSearch)
   resetButton.addEventListener("click", () => {
     resetControls()
