@@ -35,26 +35,26 @@ class DocumentFilesController < BaseController
 
     record_file_access_log(file)
 
-    if inline_preview_request?(disposition) && viewer_plan.viewer_kind == :pdf
+    if inline_preview_kind?(viewer_plan, disposition, :pdf)
       prepare_inline_preview!(file, disposition:)
       render :show_pdf_preview
       return
     end
 
-    if inline_preview_request?(disposition) && viewer_plan.viewer_kind == :image
+    if inline_preview_kind?(viewer_plan, disposition, :image)
       prepare_inline_preview!(file, disposition:)
       render :show_image_preview
       return
     end
 
-    if inline_preview_request?(disposition) && viewer_plan.viewer_kind == :csv
+    if inline_preview_kind?(viewer_plan, disposition, :csv)
       prepare_inline_preview!(file, disposition:)
       @csv_preview = DocumentFileCsvPreview.new(file:).call
       render :show_csv_preview
       return
     end
 
-    if inline_preview_request?(disposition) && %i[json yaml].include?(viewer_plan.viewer_kind)
+    if inline_preview_kind?(viewer_plan, disposition, :json, :yaml)
       prepare_inline_preview!(file, disposition:)
       @structured_preview = DocumentFileStructuredPreview.new(file:, viewer_kind: viewer_plan.viewer_kind).call
       @structured_language = viewer_plan.viewer_kind.to_s.upcase
@@ -62,7 +62,7 @@ class DocumentFilesController < BaseController
       return
     end
 
-    if inline_preview_request?(disposition) && viewer_plan.viewer_kind == :archive
+    if inline_preview_kind?(viewer_plan, disposition, :archive)
       prepare_inline_preview!(file, disposition:)
       @archive_preview = DocumentFileArchivePreview.new(file:).call
       render :show_archive_preview
@@ -150,6 +150,10 @@ class DocumentFilesController < BaseController
 
   def inline_preview_request?(disposition)
     disposition == "inline" && !embedded_request?
+  end
+
+  def inline_preview_kind?(viewer_plan, disposition, *viewer_kinds)
+    inline_preview_request?(disposition) && viewer_plan.viewer_kind.in?(viewer_kinds)
   end
 
   def prepare_inline_preview!(file, disposition:)
