@@ -69,7 +69,7 @@ module SeedSupport
           markdown_entry_path: renderable ? site_page_path_for_markdown(candidate.logical_path, site_build_path) : nil,
           site_build_path: renderable ? site_build_path : nil,
           version_priority: source_root == site_dir ? 1 : 0,
-          attachment_files: candidate.attachment_paths.map { Pathname(_1) }
+          attachment_files: candidate.attachment_paths.map { Pathname(_1) }.sort_by { |path| [path == source_file ? 0 : 1, path.to_s] }
         }
       end
     end

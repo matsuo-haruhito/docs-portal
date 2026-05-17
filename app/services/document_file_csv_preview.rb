@@ -21,10 +21,10 @@ class DocumentFileCsvPreview
   def call
     rows = []
 
-    CSV.foreach(file.absolute_path, col_sep:, liberal_parsing: true).with_index do |row, index|
+    CSV.foreach(file.absolute_path, col_sep:).with_index do |row, index|
       return Result.new(rows:, truncated: true, limit:, error: nil) if index >= limit
 
-      rows << row.fields.map(&:to_s)
+      rows << row.map(&:to_s)
     end
 
     Result.new(rows:, truncated: false, limit:, error: nil)

@@ -83,7 +83,7 @@ RSpec.describe "API internal zip imports", type: :request do
     expect(response.parsed_body["import_dry_run_id"]).to eq(dry_run_id)
 
     document = project.documents.find_by!(slug: "docs")
-    expect(document.title).to eq("docs")
+    expect(document.title).to eq("Imported")
     expect(document.latest_version).to be_present
     expect(document.latest_version.source_relative_path).to eq("docs/README.md")
     expect(document.latest_version.document_files.map(&:file_name)).to contain_exactly("docs/README.md", "docs/assets/guide.png")

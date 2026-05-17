@@ -7,7 +7,8 @@ RSpec.describe "External folder sync webhooks", type: :request do
         :external_folder_sync_subscription,
         provider: :google_drive,
         provider_channel_id: "channel-1",
-        provider_resource_id: "resource-1"
+        provider_resource_id: "resource-1",
+        verification_token_digest: Digest::SHA256.hexdigest("token-1")
       )
       allow(ExternalFolderSyncWebhookEventJob).to receive(:perform_later)
 
@@ -15,7 +16,8 @@ RSpec.describe "External folder sync webhooks", type: :request do
         "X-Goog-Channel-ID" => "channel-1",
         "X-Goog-Resource-ID" => "resource-1",
         "X-Goog-Resource-State" => "change",
-        "X-Goog-Message-Number" => "42"
+        "X-Goog-Message-Number" => "42",
+        "X-Goog-Channel-Token" => "token-1"
       }
 
       expect(response).to have_http_status(:ok)

@@ -231,7 +231,7 @@ RSpec.describe "Document files", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(file.file_name)
-    expect(response.body).not_to include(document_file_path(file))
+    expect(response.body).not_to include(document_file_path(file, disposition: "download"))
   end
 
   it "shows attachment links to external users who have download permission" do

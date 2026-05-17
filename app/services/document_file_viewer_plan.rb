@@ -125,6 +125,10 @@ class DocumentFileViewerPlan
     file.effective_content_type.delete_suffix("; charset=utf-8")
   end
 
+  def raw_content_type
+    file.content_type.to_s.delete_suffix("; charset=utf-8")
+  end
+
   def markdown?
     extension.in?(MARKDOWN_EXTENSIONS) || content_type == "text/markdown"
   end
@@ -142,7 +146,9 @@ class DocumentFileViewerPlan
   end
 
   def csv?
-    extension.in?(CSV_EXTENSIONS) || content_type.in?(%w[text/csv text/tab-separated-values])
+    extension.in?(CSV_EXTENSIONS) ||
+      content_type.in?(%w[text/csv text/tab-separated-values]) ||
+      raw_content_type.in?(%w[text/csv text/tab-separated-values])
   end
 
   def json?

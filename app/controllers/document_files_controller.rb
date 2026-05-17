@@ -66,7 +66,7 @@ class DocumentFilesController < BaseController
     when "download"
       "attachment"
     else
-      viewer_plan.inline_disposition? ? "inline" : "attachment"
+      embedded_request? || viewer_plan.viewer_kind == :markdown ? "inline" : "attachment"
     end
   end
 

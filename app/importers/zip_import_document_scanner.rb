@@ -68,7 +68,7 @@ class ZipImportDocumentScanner
     return false if path_classifier.ignored_file?(path)
     return path_classifier.renderable_document_file?(path) if candidate_policy == :renderable_only
 
-    true
+    path_classifier.attachment_owner_candidate_file?(path)
   end
 
   def all_files

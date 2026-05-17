@@ -47,8 +47,8 @@ RSpec.describe BuildFreshnessGuard do
     FileUtils.mkdir_p(build_entry_path.dirname)
     File.write(source_path, "source")
     File.write(build_entry_path, "html")
-    File.utime(2.hours.ago, 2.hours.ago, build_entry_path)
-    File.utime(1.hour.ago, 1.hour.ago, source_path)
+    File.utime(2.hours.ago.to_time, 2.hours.ago.to_time, build_entry_path)
+    File.utime(1.hour.ago.to_time, 1.hour.ago.to_time, source_path)
 
     expect(guard).to be_stale
   end
