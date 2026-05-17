@@ -1,3 +1,7 @@
+function isEditableTarget(target) {
+  return ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName) || target?.isContentEditable
+}
+
 function setupPdfPreview(container) {
   if (container.dataset.pdfPreviewToolsReady === "true") return
   container.dataset.pdfPreviewToolsReady = "true"
@@ -19,8 +23,18 @@ function setupPdfPreview(container) {
     writeLarge(large)
   }
 
-  toggle.addEventListener("click", () => {
+  const toggleHeight = () => {
     applyHeight(toggle.getAttribute("aria-pressed") !== "true")
+  }
+
+  toggle.addEventListener("click", toggleHeight)
+
+  document.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey || isEditableTarget(event.target)) return
+    if (event.key !== "h" && event.key !== "H") return
+
+    event.preventDefault()
+    toggleHeight()
   })
 
   applyHeight(readLarge())
