@@ -30,9 +30,9 @@
       | 状態
       = form.select :enabled, [["有効", true], ["無効", false]]
   label.full-width
-    | Service Account JSON
-    = form.text_area :auth_config, value: nil, rows: 10, placeholder: external_folder_sync_source.persisted? ? "Service Account JSON変更時のみ入力。OAuthユーザー方式の場合は空で保存してください。" : "Service Account JSONを貼り付け。OAuthユーザー方式の場合は空で保存してください。"
-  p.muted Service Account方式では、Google DriveフォルダをService Accountのメールアドレスへ共有してください。
+    | サービスアカウントJSON
+    = form.text_area :auth_config, value: nil, rows: 10, placeholder: external_folder_sync_source.persisted? ? "サービスアカウントJSON変更時のみ入力。OAuthユーザー方式の場合は空で保存してください。" : "サービスアカウントJSONを貼り付け。OAuthユーザー方式の場合は空で保存してください。"
+  p.muted サービスアカウント方式では、Google Driveフォルダをサービスアカウントのメールアドレスへ共有してください。
   p.muted OAuthユーザー方式では、保存後に詳細画面からGoogle Drive OAuth認可を接続してください。OAuth client ID/secretは環境変数で設定します。
   p.muted 初期MVPではGoogle Driveからportalへの片方向同期のみ対応します。双方向同期、削除の物理反映は対象外です。
   p.actions
