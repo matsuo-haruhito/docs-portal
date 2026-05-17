@@ -240,20 +240,7 @@ class DocumentFilesController < BaseController
   end
 
   def embedded_asset_file_for(owner_file, requested_asset_path)
-    normalized_asset_path = normalize_asset_path(requested_asset_path)
-    return if normalized_asset_path.blank?
-
-    owner_file.document_version.document_files.detect do |candidate|
-      normalize_asset_path(candidate.tree_path) == normalized_asset_path
-    end
-  end
-
-  def normalize_asset_path(value)
-    path = value.to_s.tr("\\", "/").delete_prefix("/")
-    normalized = Pathname.new(path.presence || ".").cleanpath.to_s
-    return if normalized.blank? || normalized == "." || normalized == ".." || normalized.start_with?("../")
-
-    normalized
+    DocumentFileEmbeddedAssetResolver.new(owner_file:, requested_asset_path:).call
   end
 
   def html_file?(file)
