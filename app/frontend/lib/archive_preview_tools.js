@@ -44,6 +44,15 @@ function setTemporaryStatus(status, message) {
   }, 1800)
 }
 
+async function copyText(text, status, successMessage) {
+  try {
+    await navigator.clipboard.writeText(text)
+    setTemporaryStatus(status, successMessage)
+  } catch (_error) {
+    setTemporaryStatus(status, "コピーできませんでした")
+  }
+}
+
 function sortValue(row, key) {
   if (key === "type") return archiveEntryType(row)
   if (key === "size") return archiveEntrySize(row)
@@ -75,6 +84,7 @@ function setupArchivePreview(container) {
   const sortButtons = Array.from(container.querySelectorAll("[data-archive-preview-sort]"))
   const rows = Array.from(container.querySelectorAll("[data-archive-preview-entry]"))
   const copyButtons = Array.from(container.querySelectorAll("[data-archive-preview-copy-entry]"))
+  const copyDirectoryButtons = Array.from(container.querySelectorAll("[data-archive-preview-copy-directory]"))
   if (!input || !typeFilter || !resetButton || !copyVisibleButton || !count || !status || !tableBody || rows.length === 0) return
 
   let sortKey = "name"
@@ -143,28 +153,22 @@ function setupArchivePreview(container) {
     })
   })
 
-  copyVisibleButton.addEventListener("click", async () => {
+  copyVisibleButton.addEventListener("click", () => {
     const entryNames = visibleRows(rows).map(archiveEntryName).filter(Boolean)
-
-    try {
-      await navigator.clipboard.writeText(entryNames.join("\n"))
-      setTemporaryStatus(status, `${entryNames.length}件のパスをコピーしました`)
-    } catch (_error) {
-      setTemporaryStatus(status, "コピーできませんでした")
-    }
+    copyText(entryNames.join("\n"), status, `${entryNames.length}件のパスをコピーしました`)
   })
 
   copyButtons.forEach((button) => {
-    button.addEventListener("click", async () => {
+    button.addEventListener("click", () => {
       const row = button.closest("[data-archive-preview-entry]")
       const entryName = row ? archiveEntryName(row) : ""
+      copyText(entryName, status, "パスをコピーしました")
+    })
+  })
 
-      try {
-        await navigator.clipboard.writeText(entryName)
-        setTemporaryStatus(status, "パスをコピーしました")
-      } catch (_error) {
-        setTemporaryStatus(status, "コピーできませんでした")
-      }
+  copyDirectoryButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      copyText(button.dataset.archivePreviewCopyDirectory || "", status, "ディレクトリパスをコピーしました")
     })
   })
 
