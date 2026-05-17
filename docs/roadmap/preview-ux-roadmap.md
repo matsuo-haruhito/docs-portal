@@ -81,6 +81,15 @@
   - entry sort
   - 条件リセット
 
+### Controller / service structure
+
+- `DocumentFilesController#show` の preview / send / not found 分岐整理
+- Office preview rendering の helper 化
+- embedded HTML preview / asset rendering の helper 化
+- inline preview の template dispatch / prepare dispatch 分離
+- text inline preview predicate の切り出し
+- `Content-Disposition` header 設定 helper 化
+
 ### Codeblock actions
 
 - コードブロックコピー
@@ -127,10 +136,9 @@
 
 候補:
 
-- `DocumentFilesController#show` の preview dispatch をさらに薄くする
-- Office / embedded HTML / inline preview / send_file の責務境界を明確にする
 - preview service の Result helper を整える
 - 既存 preview service の spec を補強する
+- embedded asset path resolver の責務切り出しを検討する
 
 ### 2. ZIP entry 操作の次段
 
@@ -284,7 +292,7 @@
 
 ## 実装順のおすすめ
 
-1. preview controller / viewer service の残り整理
+1. preview service の Result helper 整理 / spec 補強
 2. ZIP entry 単位 preview / download の設計
 3. Preview target metadata parser / validator
 4. Docusaurus build manifest
