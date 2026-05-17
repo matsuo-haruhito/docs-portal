@@ -25,6 +25,7 @@
             input type="search" placeholder="entry path" data-archive-preview-search-input="true"
           button.button.secondary type="button" data-archive-preview-search-clear="true" クリア
           span.muted data-archive-preview-count="true"
+          span.muted data-archive-preview-status="true"
         .table-wrapper
           table
             thead
@@ -32,6 +33,7 @@
                 th 種別
                 th パス
                 th サイズ
+                th 操作
             tbody
               - @archive_preview.entries.each do |entry|
                 tr data-archive-preview-entry="true"
@@ -39,5 +41,7 @@
                   td
                     code data-archive-preview-entry-name="true" = entry.name
                   td = entry.directory? ? "-" : number_to_human_size(entry.size)
+                  td
+                    button.button.secondary type="button" data-archive-preview-copy-entry="true" パスをコピー
     - else
       = render "preview_empty_card", title: "空のZIPファイルです", message: "表示できるentryがありません。必要に応じてファイルをダウンロードしてください。"

@@ -31,8 +31,12 @@ function previewRowText(row) {
   return (row.querySelector(".line-preview__code")?.textContent || row.textContent || "").toLowerCase()
 }
 
+function archiveEntryName(row) {
+  return row.querySelector("[data-archive-preview-entry-name]")?.textContent || ""
+}
+
 function archiveEntryText(row) {
-  return (row.querySelector("[data-archive-preview-entry-name]")?.textContent || row.textContent || "").toLowerCase()
+  return archiveEntryName(row).toLowerCase()
 }
 
 function prepareCodeLines(code) {
@@ -248,8 +252,10 @@ function setupArchivePreview(container) {
   const input = container.querySelector("[data-archive-preview-search-input]")
   const clearButton = container.querySelector("[data-archive-preview-search-clear]")
   const count = container.querySelector("[data-archive-preview-count]")
+  const status = container.querySelector("[data-archive-preview-status]")
   const rows = Array.from(container.querySelectorAll("[data-archive-preview-entry]"))
-  if (!input || !clearButton || !count || rows.length === 0) return
+  const copyButtons = Array.from(container.querySelectorAll("[data-archive-preview-copy-entry]"))
+  if (!input || !clearButton || !count || !status || rows.length === 0) return
 
   const updateSearch = () => {
     const query = input.value.trim().toLowerCase()
@@ -278,6 +284,24 @@ function setupArchivePreview(container) {
   clearButton.addEventListener("click", () => {
     clearSearch()
     input.focus()
+  })
+
+  copyButtons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      const row = button.closest("[data-archive-preview-entry]")
+      const entryName = row ? archiveEntryName(row) : ""
+
+      try {
+        await navigator.clipboard.writeText(entryName)
+        status.textContent = "パスをコピーしました"
+      } catch (_error) {
+        status.textContent = "コピーできませんでした"
+      }
+
+      window.setTimeout(() => {
+        status.textContent = ""
+      }, 1800)
+    })
   })
 
   document.addEventListener("keydown", (event) => {
