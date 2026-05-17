@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   root "projects#index"
 
+  mount RailsTablePreferences::Engine, at: "/rails_table_preferences"
+
   if Rails.env.development?
     get "capture_login", to: "sessions#capture_login"
   end
