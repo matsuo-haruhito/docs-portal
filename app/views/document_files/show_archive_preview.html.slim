@@ -51,14 +51,17 @@
           table
             thead
               tr
-                th 種別
-                th パス
-                th サイズ
+                th
+                  button.button.secondary type="button" data-archive-preview-sort="type" data-archive-preview-sort-label="種別" 種別
+                th
+                  button.button.secondary type="button" data-archive-preview-sort="name" data-archive-preview-sort-label="パス" パス
+                th
+                  button.button.secondary type="button" data-archive-preview-sort="size" data-archive-preview-sort-label="サイズ" サイズ
                 th 操作
-            tbody
+            tbody data-archive-preview-entries="true"
               - @archive_preview.entries.each do |entry|
                 - entry_type = entry.directory? ? "folder" : "file"
-                tr data-archive-preview-entry="true" data-archive-preview-entry-type=entry_type
+                tr data-archive-preview-entry="true" data-archive-preview-entry-type=entry_type data-archive-preview-entry-size=entry.size
                   td = entry_type
                   td
                     code data-archive-preview-entry-name="true" = entry.name
