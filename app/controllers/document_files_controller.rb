@@ -231,12 +231,11 @@ class DocumentFilesController < BaseController
   end
 
   def document_file_asset_base_path(file, current_tree_path: file.tree_path)
-    current_directory = File.dirname(current_tree_path.to_s)
-    current_directory = nil if current_directory == "."
-    asset_path = [current_directory, "."].compact_blank.join("/")
-
-    asset_document_file_path(file, asset_path:)
-      .sub(%r{/\.\z}, "")
+    DocumentFileAssetBasePath.new(
+      file:,
+      current_tree_path:,
+      path_builder: ->(target_file, asset_path:) { asset_document_file_path(target_file, asset_path:) }
+    ).call
   end
 
   def embedded_asset_file_for(owner_file, requested_asset_path)
