@@ -66,6 +66,7 @@
   - entry 検索
   - entry path 個別コピー
   - 表示中 entry path 一括コピー
+  - directory filter
   - file / folder filter
   - 件数サマリー
   - ディレクトリサマリー
@@ -101,6 +102,7 @@
 - [Specs index](../specs/README.md)
 - [検索責務仕様](../specs/search.md)
 - [閲覧画面とUI仕様](../specs/閲覧画面とUI.md)
+- [Archive preview仕様](../specs/archive-preview.md)
 - [Docusaurus 実例調査メモ](../research/docusaurus-examples.md)
 - DocumentFile viewer registry 仕様
 - Preview target metadata 仕様
@@ -132,7 +134,6 @@
 
 候補:
 
-- entry path の階層ごとの折りたたみ表示
 - entry 単位 preview / download の設計
 
 ### 3. specs / roadmap の継続整理
@@ -278,7 +279,7 @@
 ## 実装順のおすすめ
 
 1. preview controller / viewer service の残り整理
-2. ZIP entry 操作の次段
+2. ZIP entry 単位 preview / download の設計
 3. Preview target metadata parser / validator
 4. Docusaurus build manifest
 5. Path history resolver
