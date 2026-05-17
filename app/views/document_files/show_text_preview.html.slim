@@ -1,15 +1,31 @@
-.document-viewer
+.document-viewer data-text-preview-tools="true"
   = render "preview_header",
     project: @project,
     document: @document,
     document_version: @document_version,
     document_file: @document_file
 
+  .card
+    .document-viewer__header
+      div
+        h2 テキスト内検索
+        p.muted 表示中のテキストを検索できます。`/` で検索欄に移動できます。
+      p.actions
+        button.button.secondary type="button" data-text-preview-copy="true" テキストをコピー
+    .document-filter
+      label
+        | 検索
+        input type="search" placeholder="キーワード" data-text-preview-search-input="true"
+      button.button.secondary type="button" data-text-preview-search-clear="true" クリア
+      button.button.secondary type="button" data-text-preview-filter-matches="true" 一致行のみ表示
+      span.muted data-text-preview-count="true"
+      span.muted data-text-preview-status="true"
+
   .document-prose.document-prose--code
     - if @preview_lines.any?
       ol.line-preview
         - @preview_lines.each_with_index do |line, index|
-          li.line-preview__row
+          li.line-preview__row data-text-preview-line="true"
             span.line-preview__number = index + 1
             code.line-preview__code = line.presence || " "
     - else
