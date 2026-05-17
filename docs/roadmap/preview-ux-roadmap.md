@@ -68,6 +68,7 @@
   - 表示中 entry path 一括コピー
   - directory filter
   - file / folder filter
+  - safety filter
   - candidate filter
   - 件数サマリー
   - ディレクトリサマリー
