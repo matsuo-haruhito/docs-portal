@@ -22,6 +22,37 @@ function injectDocumentSearchStyle(frameDocument) {
       background: rgb(255 255 255 / 92%);
       box-shadow: 0 10px 24px rgb(15 23 42 / 10%);
     }
+    .portal-document-search-bar.is-collapsed {
+      display: inline-flex;
+      padding: .2rem;
+    }
+    .portal-document-search-bar.is-collapsed .portal-document-search-controls {
+      display: none;
+    }
+    .portal-document-search-toggle {
+      border: 1px solid var(--doc-primary-border, #bfdbfe);
+      border-radius: 999px;
+      background: var(--doc-surface, #fff);
+      color: var(--doc-primary, #2563eb);
+      cursor: pointer;
+      font: inherit;
+      font-size: .78rem;
+      font-weight: 700;
+      line-height: 1.2;
+      padding: .25rem .65rem;
+      white-space: nowrap;
+    }
+    .portal-document-search-toggle:hover,
+    .portal-document-search-toggle:focus {
+      border-color: var(--doc-primary, #2563eb);
+      outline: none;
+    }
+    .portal-document-search-controls {
+      display: inline-flex;
+      gap: .45rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
     .portal-document-search-bar label {
       display: inline-flex;
       gap: .45rem;
@@ -91,6 +122,13 @@ function injectDocumentSearchStyle(frameDocument) {
       .portal-document-search-bar {
         align-items: flex-start;
         border-radius: 14px;
+        flex-direction: column;
+      }
+      .portal-document-search-bar.is-collapsed {
+        border-radius: 999px;
+      }
+      .portal-document-search-controls {
+        align-items: flex-start;
         flex-direction: column;
       }
       .portal-document-search-bar input[type="search"] {
@@ -215,25 +253,39 @@ function clearSearch(root, input, count, state) {
   state.currentIndex = 0
 }
 
+function expandSearchBar(bar, input, toggleButton) {
+  bar.classList.remove("is-collapsed")
+  toggleButton.setAttribute("aria-expanded", "true")
+  toggleButton.textContent = "検索を閉じる"
+  input.focus()
+  input.select()
+}
+
+function collapseSearchBar(bar, input, toggleButton) {
+  bar.classList.add("is-collapsed")
+  toggleButton.setAttribute("aria-expanded", "false")
+  toggleButton.textContent = "文書内検索 /"
+  input.blur()
+}
+
 function isEditableTarget(target) {
   return ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName) || target?.isContentEditable
 }
 
-function setupSearchShortcuts(frameDocument, root, input, count, state) {
+function setupSearchShortcuts(frameDocument, root, bar, input, count, state, toggleButton) {
   frameDocument.addEventListener("keydown", (event) => {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
 
     if (event.key === "/" && !isEditableTarget(event.target)) {
       event.preventDefault()
-      input.focus()
-      input.select()
+      expandSearchBar(bar, input, toggleButton)
       return
     }
 
     if (event.key === "Escape" && frameDocument.activeElement === input) {
       event.preventDefault()
       clearSearch(root, input, count, state)
-      input.blur()
+      collapseSearchBar(bar, input, toggleButton)
       return
     }
 
@@ -256,7 +308,16 @@ function enhanceDocumentSearchInFrame(frame) {
   injectDocumentSearchStyle(frameDocument)
 
   const bar = frameDocument.createElement("div")
-  bar.className = "portal-document-search-bar"
+  bar.className = "portal-document-search-bar is-collapsed"
+
+  const toggleButton = frameDocument.createElement("button")
+  toggleButton.type = "button"
+  toggleButton.className = "portal-document-search-toggle"
+  toggleButton.textContent = "文書内検索 /"
+  toggleButton.setAttribute("aria-expanded", "false")
+
+  const controls = frameDocument.createElement("div")
+  controls.className = "portal-document-search-controls"
 
   const label = frameDocument.createElement("label")
   label.textContent = "この文書内を検索"
@@ -294,13 +355,23 @@ function enhanceDocumentSearchInFrame(frame) {
 
   label.appendChild(shortcut)
   label.appendChild(input)
-  bar.appendChild(label)
-  bar.appendChild(previousButton)
-  bar.appendChild(nextButton)
-  bar.appendChild(clearButton)
-  bar.appendChild(count)
+  controls.appendChild(label)
+  controls.appendChild(previousButton)
+  controls.appendChild(nextButton)
+  controls.appendChild(clearButton)
+  controls.appendChild(count)
+  bar.appendChild(toggleButton)
+  bar.appendChild(controls)
   root.insertBefore(bar, root.firstChild)
 
+  toggleButton.addEventListener("click", () => {
+    if (bar.classList.contains("is-collapsed")) {
+      expandSearchBar(bar, input, toggleButton)
+    } else {
+      clearSearch(root, input, count, state)
+      collapseSearchBar(bar, input, toggleButton)
+    }
+  })
   input.addEventListener("input", () => updateSearch(frameDocument, root, input, count, state))
   input.addEventListener("search", () => {
     if (input.value === "") clearSearch(root, input, count, state)
@@ -311,7 +382,7 @@ function enhanceDocumentSearchInFrame(frame) {
     clearSearch(root, input, count, state)
     input.focus()
   })
-  setupSearchShortcuts(frameDocument, root, input, count, state)
+  setupSearchShortcuts(frameDocument, root, bar, input, count, state, toggleButton)
 }
 
 export function setupMarkdownPreviewDocumentSearch() {
