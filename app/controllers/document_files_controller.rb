@@ -67,8 +67,7 @@ class DocumentFilesController < BaseController
     end
 
     if inline_preview_request?(disposition) && file.text_previewable?
-      prepare_inline_preview!(file, disposition:)
-      @text_preview = DocumentFileTextPreview.new(file:).call
+      prepare_text_preview!(file, disposition:)
       render :show_text_preview
       return
     end
@@ -167,6 +166,11 @@ class DocumentFilesController < BaseController
   def prepare_archive_preview!(file, disposition:)
     prepare_inline_preview!(file, disposition:)
     @archive_preview = DocumentFileArchivePreview.new(file:).call
+  end
+
+  def prepare_text_preview!(file, disposition:)
+    prepare_inline_preview!(file, disposition:)
+    @text_preview = DocumentFileTextPreview.new(file:).call
   end
 
   def assign_preview_context(file)
