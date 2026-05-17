@@ -61,6 +61,9 @@ ZIP preview では以下を表示する。
   - text preview候補
   - download候補
   - 操作不可
+- active filter summary
+  - 検索語、directory、種別、安全性、候補条件を表示する
+  - 各条件 chip から個別解除できる
 - 種別 / path / size sort
 - 条件リセット
 - entry path 個別コピー
