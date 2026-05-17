@@ -19,7 +19,7 @@
       = form.text_field :folder_url, placeholder: "https://drive.google.com/drive/folders/..."
     label
       | 表示用フォルダパス
-      = form.text_field :external_folder_path, placeholder: "任意。例: チーム文書 / 仕様書"
+      = form.text_field :external_folder_path, placeholder: "任意入力。例: チーム文書 / 仕様書"
     label
       | 同期方向
       = form.select :sync_direction, enum_options_for("external_folder_sync_sources.sync_direction", %w[external_to_portal])
