@@ -1,5 +1,6 @@
 class DocumentFileArchivePreview
   DEFAULT_LIMIT = 300
+  TEXT_PREVIEW_EXTENSIONS = %w[.csv .json .log .md .markdown .txt .tsv .yaml .yml].freeze
 
   Entry = Data.define(:name, :directory, :size) do
     def directory?
@@ -9,6 +10,10 @@ class DocumentFileArchivePreview
     def parent_directory
       parent = File.dirname(normalized_name.delete_suffix("/"))
       parent == "." ? "/" : "#{parent}/"
+    end
+
+    def extension
+      File.extname(normalized_name).downcase
     end
 
     def safe_path?
@@ -21,6 +26,14 @@ class DocumentFileArchivePreview
 
     def actionable?
       action_unavailable_reason.nil?
+    end
+
+    def download_candidate?
+      actionable?
+    end
+
+    def text_preview_candidate?
+      actionable? && extension.in?(TEXT_PREVIEW_EXTENSIONS)
     end
 
     def action_unavailable_reason
@@ -66,6 +79,14 @@ class DocumentFileArchivePreview
 
     def actionable_entries
       entries.select(&:actionable?)
+    end
+
+    def text_preview_candidate_entries
+      entries.select(&:text_preview_candidate?)
+    end
+
+    def download_candidate_entries
+      entries.select(&:download_candidate?)
     end
 
     def directory_summaries
