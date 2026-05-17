@@ -24,6 +24,18 @@ function archiveEntryText(row) {
   return archiveEntryName(row).toLowerCase()
 }
 
+function visibleRows(rows) {
+  return rows.filter((row) => !row.hidden)
+}
+
+function setTemporaryStatus(status, message) {
+  status.textContent = message
+
+  window.setTimeout(() => {
+    status.textContent = ""
+  }, 1800)
+}
+
 function setupArchivePreview(container) {
   if (container.dataset.archivePreviewToolsReady === "true") return
   container.dataset.archivePreviewToolsReady = "true"
@@ -31,11 +43,12 @@ function setupArchivePreview(container) {
 
   const input = container.querySelector("[data-archive-preview-search-input]")
   const clearButton = container.querySelector("[data-archive-preview-search-clear]")
+  const copyVisibleButton = container.querySelector("[data-archive-preview-copy-visible]")
   const count = container.querySelector("[data-archive-preview-count]")
   const status = container.querySelector("[data-archive-preview-status]")
   const rows = Array.from(container.querySelectorAll("[data-archive-preview-entry]"))
   const copyButtons = Array.from(container.querySelectorAll("[data-archive-preview-copy-entry]"))
-  if (!input || !clearButton || !count || !status || rows.length === 0) return
+  if (!input || !clearButton || !copyVisibleButton || !count || !status || rows.length === 0) return
 
   const updateSearch = () => {
     const query = input.value.trim().toLowerCase()
@@ -66,6 +79,17 @@ function setupArchivePreview(container) {
     input.focus()
   })
 
+  copyVisibleButton.addEventListener("click", async () => {
+    const entryNames = visibleRows(rows).map(archiveEntryName).filter(Boolean)
+
+    try {
+      await navigator.clipboard.writeText(entryNames.join("\n"))
+      setTemporaryStatus(status, `${entryNames.length}件のパスをコピーしました`)
+    } catch (_error) {
+      setTemporaryStatus(status, "コピーできませんでした")
+    }
+  })
+
   copyButtons.forEach((button) => {
     button.addEventListener("click", async () => {
       const row = button.closest("[data-archive-preview-entry]")
@@ -73,14 +97,10 @@ function setupArchivePreview(container) {
 
       try {
         await navigator.clipboard.writeText(entryName)
-        status.textContent = "パスをコピーしました"
+        setTemporaryStatus(status, "パスをコピーしました")
       } catch (_error) {
-        status.textContent = "コピーできませんでした"
+        setTemporaryStatus(status, "コピーできませんでした")
       }
-
-      window.setTimeout(() => {
-        status.textContent = ""
-      }, 1800)
     })
   })
 
