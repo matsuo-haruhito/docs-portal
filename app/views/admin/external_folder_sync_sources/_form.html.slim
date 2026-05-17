@@ -34,7 +34,7 @@
     = form.text_area :auth_config, value: nil, rows: 10, placeholder: external_folder_sync_source.persisted? ? "サービスアカウントJSON変更時のみ入力。OAuthユーザー方式の場合は空で保存してください。" : "サービスアカウントJSONを貼り付け。OAuthユーザー方式の場合は空で保存してください。"
   p.muted サービスアカウント方式では、Google Driveフォルダをサービスアカウントのメールアドレスへ共有してください。
   p.muted OAuthユーザー方式では、保存後に詳細画面からGoogle Drive OAuth認可を接続してください。OAuth client ID/secretは環境変数で設定します。
-  p.muted 初期MVPではGoogle Driveからドキュメントポータルへの片方向同期のみ対応します。双方向同期、削除の物理反映は対象外です。
+  p.muted 初期版ではGoogle Driveからドキュメントポータルへの片方向同期のみ対応します。双方向同期、削除の物理反映は対象外です。
   p.actions
     = form.submit "保存", class: "button"
     - if external_folder_sync_source.persisted?
