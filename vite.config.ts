@@ -20,14 +20,14 @@ export default defineConfig({
     RubyPlugin(),
   ],
   resolve: {
-    alias: {
-      "@hotwired/stimulus": projectPath("node_modules/@hotwired/stimulus/dist/stimulus.js"),
-      "@hotwired/turbo-rails": projectPath("node_modules/@hotwired/turbo-rails/app/javascript/turbo/index.js"),
-      "tom-select": projectPath("node_modules/tom-select/dist/js/tom-select.complete.js"),
-      rails_table_preferences: gemJavaScriptPath("rails_table_preferences", "rails_table_preferences/index.js"),
-      "rails_table_preferences/controller": gemJavaScriptPath("rails_table_preferences", "rails_table_preferences/controller.js"),
-      rails_fields_kit: gemJavaScriptPath("rails_fields_kit", "rails_fields_kit/index.js"),
-      "rails_fields_kit/tom_select_controller": gemJavaScriptPath("rails_fields_kit", "rails_fields_kit/tom_select_controller.js"),
-    },
+    alias: [
+      { find: /^@hotwired\/stimulus$/, replacement: projectPath("node_modules/@hotwired/stimulus/dist/stimulus.js") },
+      { find: /^@hotwired\/turbo-rails$/, replacement: projectPath("node_modules/@hotwired/turbo-rails/app/javascript/turbo/index.js") },
+      { find: /^tom-select$/, replacement: projectPath("node_modules/tom-select/dist/js/tom-select.complete.js") },
+      { find: /^rails_table_preferences$/, replacement: gemJavaScriptPath("rails_table_preferences", "rails_table_preferences/index.js") },
+      { find: /^rails_table_preferences\/controller$/, replacement: gemJavaScriptPath("rails_table_preferences", "rails_table_preferences/controller.js") },
+      { find: /^rails_fields_kit$/, replacement: gemJavaScriptPath("rails_fields_kit", "rails_fields_kit/index.js") },
+      { find: /^rails_fields_kit\/tom_select_controller$/, replacement: gemJavaScriptPath("rails_fields_kit", "rails_fields_kit/tom_select_controller.js") },
+    ],
   },
 })
