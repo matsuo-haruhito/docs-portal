@@ -46,6 +46,22 @@ RSpec.describe DocumentFileArchivePreview do
     expect(readme.size).to eq(5)
   end
 
+  it "summarizes zip entries" do
+    storage_key = "spec/archive-preview/summary.zip"
+    write_zip(storage_key, {
+      "docs/" => :directory,
+      "docs/readme.txt" => "hello",
+      "image.png" => "png"
+    })
+    file = create(:document_file, document_version: version, file_name: "summary.zip", content_type: "application/zip", storage_key:)
+
+    preview = described_class.new(file:).call
+
+    expect(preview.file_count).to eq(2)
+    expect(preview.folder_count).to eq(1)
+    expect(preview.total_file_size).to eq(8)
+  end
+
   it "truncates entries over the limit" do
     storage_key = "spec/archive-preview/large.zip"
     write_zip(storage_key, {

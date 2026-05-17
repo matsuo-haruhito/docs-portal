@@ -15,6 +15,19 @@
 
     - if @archive_preview.entries.any?
       .card
+        h2 ZIP内サマリー
+        .stats-grid
+          .stat-card
+            span.stat-card__label files
+            strong.stat-card__value = number_with_delimiter(@archive_preview.file_count)
+          .stat-card
+            span.stat-card__label folders
+            strong.stat-card__value = number_with_delimiter(@archive_preview.folder_count)
+          .stat-card
+            span.stat-card__label 合計サイズ
+            strong.stat-card__value = number_to_human_size(@archive_preview.total_file_size)
+
+      .card
         .document-viewer__header
           div
             h2 ZIP内ファイル一覧
