@@ -64,29 +64,28 @@ function injectStyle(frameDocument) {
   style.dataset.docsPortalTableWidth = "true"
   style.textContent = `
     .portal-table-width-frame { margin: 1rem 0; border: 1px solid var(--doc-border, #e5e7eb); border-radius: 12px; background: var(--doc-surface, #fff); overflow: hidden; }
-    .portal-table-width-toolbar { border-bottom: 1px solid var(--doc-border-soft, #eef2f7); background: var(--doc-bg-soft, #f8fafc); color: var(--doc-text-muted, #64748b); font-size: .82rem; }
-    .portal-table-width-toolbar > summary { display: flex; gap: .45rem; align-items: center; justify-content: space-between; min-height: 2.6rem; padding: .55rem .75rem; cursor: pointer; list-style: none; user-select: none; }
+    .portal-table-width-toolbar { border-bottom: 1px solid var(--doc-border-soft, #eef2f7); background: var(--doc-bg-soft, #f8fafc); color: var(--doc-text-muted, #64748b); font-size: .78rem; }
+    .portal-table-width-toolbar > summary { display: flex; gap: .35rem; align-items: center; justify-content: space-between; min-height: 1.9rem; padding: .28rem .55rem; cursor: pointer; list-style: none; user-select: none; }
     .portal-table-width-toolbar > summary::-webkit-details-marker { display: none; }
-    .portal-table-width-toolbar > summary::after { content: "開く"; border: 1px solid var(--doc-primary-border, #bfdbfe); border-radius: 999px; background: var(--doc-surface, #fff); color: var(--doc-primary, #2563eb); font-size: .76rem; line-height: 1; padding: .28rem .55rem; }
+    .portal-table-width-toolbar > summary::after { content: "開く"; border: 1px solid var(--doc-primary-border, #bfdbfe); border-radius: 999px; background: var(--doc-surface, #fff); color: var(--doc-primary, #2563eb); font-size: .68rem; line-height: 1; padding: .18rem .42rem; }
     .portal-table-width-toolbar[open] > summary::after { content: "閉じる"; }
     .portal-table-width-toolbar-title { color: var(--doc-text-soft, #334155); font-weight: 700; }
-    .portal-table-width-toolbar-body { display: flex; gap: .55rem; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 0 .75rem .65rem; }
-    .portal-table-width-toolbar label { display: inline-flex; gap: .45rem; align-items: center; margin: 0; white-space: nowrap; }
-    .portal-table-width-toolbar input[type="range"] { width: 160px; accent-color: var(--doc-primary, #2563eb); }
-    .portal-table-width-actions { display: inline-flex; gap: .35rem; align-items: center; flex-wrap: wrap; }
-    .portal-table-width-button { border: 1px solid var(--doc-primary-border, #bfdbfe); border-radius: 999px; background: var(--doc-surface, #fff); color: var(--doc-primary, #2563eb); cursor: pointer; font: inherit; font-size: .78rem; padding: .24rem .58rem; }
+    .portal-table-width-toolbar-body { display: flex; gap: .38rem; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 0 .55rem .42rem; }
+    .portal-table-width-toolbar label { display: inline-flex; gap: .35rem; align-items: center; margin: 0; white-space: nowrap; }
+    .portal-table-width-toolbar input[type="range"] { width: 132px; accent-color: var(--doc-primary, #2563eb); }
+    .portal-table-width-actions { display: inline-flex; gap: .28rem; align-items: center; flex-wrap: wrap; }
+    .portal-table-width-button { border: 1px solid var(--doc-primary-border, #bfdbfe); border-radius: 999px; background: var(--doc-surface, #fff); color: var(--doc-primary, #2563eb); cursor: pointer; font: inherit; font-size: .72rem; line-height: 1.15; padding: .16rem .46rem; }
     .portal-table-width-button:hover, .portal-table-width-button:focus, .portal-table-width-button[aria-pressed="true"] { border-color: var(--doc-primary, #2563eb); outline: none; }
     .portal-table-width-button[aria-pressed="true"] { background: var(--doc-primary, #2563eb); color: #fff; }
-    .portal-table-width-hint { color: var(--doc-text-muted, #64748b); font-size: .78rem; }
-    .portal-table-width-scroll { position: relative; overflow: auto; max-height: min(70vh, 720px); padding: .65rem; background: var(--doc-surface, #fff); isolation: isolate; }
-    .portal-table-width-frame table { margin: 0 !important; width: var(--portal-table-width, 100%) !important; min-width: var(--portal-table-width, 100%) !important; max-width: none !important; display: table !important; border-collapse: separate !important; border-spacing: 0 !important; background: var(--doc-surface, #fff); }
-    .portal-table-width-frame th, .portal-table-width-frame td { position: relative; background-clip: padding-box; }
-    .portal-table-width-frame.has-sticky-header thead th, .portal-table-width-frame.has-sticky-header tr:first-child th { position: sticky; top: 0; z-index: 40; background: var(--doc-bg-soft, #f8fafc) !important; box-shadow: 0 1px 0 var(--doc-border, #e5e7eb), 0 3px 10px rgb(15 23 42 / 8%); }
-    .portal-table-width-frame.has-sticky-header tr:first-child td { position: sticky; top: 0; z-index: 35; background: var(--doc-bg-soft, #f8fafc) !important; box-shadow: 0 1px 0 var(--doc-border, #e5e7eb), 0 3px 10px rgb(15 23 42 / 8%); }
-    .portal-table-width-frame.has-sticky-column tr > :first-child { position: sticky; left: 0; z-index: 30; background: var(--doc-surface, #fff) !important; box-shadow: 1px 0 0 var(--doc-border, #e5e7eb), 4px 0 10px rgb(15 23 42 / 6%); }
-    .portal-table-width-frame.has-sticky-header.has-sticky-column thead tr > :first-child, .portal-table-width-frame.has-sticky-header.has-sticky-column tr:first-child > :first-child { z-index: 50; background: var(--doc-bg-soft, #f8fafc) !important; box-shadow: 1px 0 0 var(--doc-border, #e5e7eb), 0 1px 0 var(--doc-border, #e5e7eb), 4px 4px 12px rgb(15 23 42 / 10%); }
-    .portal-table-width-frame.has-sticky-column tbody tr:nth-child(even) > :first-child { background: #fbfdff !important; }
-    .portal-table-column-resizer { position: absolute; top: 0; right: -4px; z-index: 60; width: 8px; height: 100%; min-height: 28px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; cursor: col-resize; opacity: 0; }
+    .portal-table-width-hint { color: var(--doc-text-muted, #64748b); font-size: .72rem; }
+    .portal-table-width-scroll { overflow: auto; max-height: min(70vh, 720px); padding: .65rem; }
+    .portal-table-width-frame table { margin: 0 !important; width: var(--portal-table-width, 100%) !important; min-width: var(--portal-table-width, 100%) !important; max-width: none !important; display: table !important; }
+    .portal-table-width-frame th, .portal-table-width-frame td { position: relative; }
+    .portal-table-width-frame.has-sticky-header thead th, .portal-table-width-frame.has-sticky-header tr:first-child th { position: sticky; top: 0; z-index: 4; background: var(--doc-bg-soft, #f8fafc); box-shadow: 0 1px 0 var(--doc-border, #e5e7eb); }
+    .portal-table-width-frame.has-sticky-header tr:first-child td { position: sticky; top: 0; z-index: 3; background: var(--doc-bg-soft, #f8fafc); box-shadow: 0 1px 0 var(--doc-border, #e5e7eb); }
+    .portal-table-width-frame.has-sticky-column tr > :first-child { position: sticky; left: 0; z-index: 2; background: var(--doc-surface, #fff); box-shadow: 1px 0 0 var(--doc-border, #e5e7eb); }
+    .portal-table-width-frame.has-sticky-header.has-sticky-column thead tr > :first-child, .portal-table-width-frame.has-sticky-header.has-sticky-column tr:first-child > :first-child { z-index: 6; background: var(--doc-bg-soft, #f8fafc); }
+    .portal-table-column-resizer { position: absolute; top: 0; right: -4px; z-index: 7; width: 8px; height: 100%; min-height: 28px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; cursor: col-resize; opacity: 0; }
     .portal-table-width-frame:hover .portal-table-column-resizer, .portal-table-column-resizer:hover, .portal-table-column-resizer:focus, .portal-table-column-resizer.is-resizing { opacity: 1; }
     .portal-table-column-resizer::after { content: ""; position: absolute; top: 7px; bottom: 7px; left: 3px; width: 2px; border-radius: 999px; background: transparent; }
     .portal-table-column-resizer:hover::after, .portal-table-column-resizer:focus::after, .portal-table-column-resizer.is-resizing::after { background: var(--doc-primary, #2563eb); box-shadow: 0 0 0 3px rgb(37 99 235 / 14%); }
