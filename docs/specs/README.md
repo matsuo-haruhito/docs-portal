@@ -7,12 +7,14 @@
 ### 閲覧画面 / Preview UI
 
 - [閲覧画面とUI](./閲覧画面とUI.md)
+- [Archive preview](./archive-preview.md)
 
 対象:
 
 - 文書閲覧画面
 - Docusaurus preview
 - 添付・元ファイル viewer
+- archive / ZIP preview
 - 差分表示
 - preview 関連 UI
 
