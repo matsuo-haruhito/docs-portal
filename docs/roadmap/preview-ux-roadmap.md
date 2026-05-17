@@ -73,6 +73,7 @@
   - ディレクトリパスコピー
   - safe / unsafe path 表示
   - entry action metadata / 操作候補表示
+  - text preview / download 候補分類
   - truncated 時の対象範囲 warning
   - entry sort
   - 条件リセット
