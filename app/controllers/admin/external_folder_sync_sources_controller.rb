@@ -84,7 +84,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
       actor: current_user,
       allow_conflict_warnings: true
     ).call
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "警告を承認して同期を実行しました。（#{run.items_scanned_count}件）"
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "警告を承認して同期しました。（#{run.items_scanned_count}件）"
   rescue ExternalFolderSync::GoogleDriveClient::Error, ExternalFolderSync::Runner::Error => e
     redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
   end
@@ -96,7 +96,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     end
 
     ExternalFolderSyncJob.perform_later(@external_folder_sync_source.id, current_user.id)
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "同期ジョブを登録しました。"
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "バックグラウンド同期を登録しました。"
   end
 
   def subscribe
@@ -165,7 +165,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def manual_enqueue_blocked_message
-    "直近の同期プレビューに競合・重複警告があります。警告を確認してから同期実行してください。"
+    "直近の同期プレビューに競合・重複警告があります。警告を確認してから同期してください。"
   end
 
   def normalized_external_folder_sync_source_params
