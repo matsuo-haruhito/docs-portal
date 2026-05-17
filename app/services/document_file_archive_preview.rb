@@ -7,8 +7,22 @@ class DocumentFileArchivePreview
     end
 
     def parent_directory
-      parent = File.dirname(name.to_s.delete_suffix("/"))
+      parent = File.dirname(normalized_name.delete_suffix("/"))
       parent == "." ? "/" : "#{parent}/"
+    end
+
+    def safe_path?
+      return false if normalized_name.blank?
+      return false if normalized_name.start_with?("/", "\\")
+      return false if normalized_name.split("/").include?("..")
+
+      true
+    end
+
+    private
+
+    def normalized_name
+      name.to_s.tr("\\", "/")
     end
   end
 
