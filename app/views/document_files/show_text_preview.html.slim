@@ -5,28 +5,36 @@
     document_version: @document_version,
     document_file: @document_file
 
-  .card
-    .document-viewer__header
-      div
-        h2 テキスト内検索
-        p.muted 表示中のテキストを検索できます。`/` で検索欄に移動できます。
-      p.actions
-        button.button.secondary type="button" data-text-preview-copy="true" テキストをコピー
-    .document-filter
-      label
-        | 検索
-        input type="search" placeholder="キーワード" data-text-preview-search-input="true"
-      button.button.secondary type="button" data-text-preview-search-clear="true" クリア
-      button.button.secondary type="button" data-text-preview-filter-matches="true" 一致行のみ表示
-      span.muted data-text-preview-count="true"
-      span.muted data-text-preview-status="true"
+  - if @text_preview.error?
+    = render "preview_error_card", title: "テキストpreviewを表示できません", message: @text_preview.error
+  - else
+    .card
+      .document-viewer__header
+        div
+          h2 テキスト内検索
+          p.muted 表示中のテキストを検索できます。`/` で検索欄に移動できます。
+        p.actions
+          button.button.secondary type="button" data-text-preview-copy="true" テキストをコピー
+      .document-filter
+        label
+          | 検索
+          input type="search" placeholder="キーワード" data-text-preview-search-input="true"
+        button.button.secondary type="button" data-text-preview-search-clear="true" クリア
+        button.button.secondary type="button" data-text-preview-filter-matches="true" 一致行のみ表示
+        span.muted data-text-preview-count="true"
+        span.muted data-text-preview-status="true"
 
-  .document-prose.document-prose--code
-    - if @preview_lines.any?
-      ol.line-preview
-        - @preview_lines.each_with_index do |line, index|
-          li.line-preview__row data-text-preview-line="true"
-            span.line-preview__number = index + 1
-            code.line-preview__code = line.presence || " "
-    - else
-      = render "preview_empty_card", title: "空のテキストファイルです", message: "表示できる内容がありません。必要に応じてファイルをダウンロードしてください。"
+    - if @text_preview.truncated?
+      .card
+        h2 先頭 #{@text_preview.limit} 行を表示しています
+        p.muted 大きいテキストファイルのため、preview では先頭行のみ表示しています。全文が必要な場合はダウンロードしてください。
+
+    .document-prose.document-prose--code
+      - if @text_preview.lines.any?
+        ol.line-preview
+          - @text_preview.lines.each_with_index do |line, index|
+            li.line-preview__row data-text-preview-line="true"
+              span.line-preview__number = index + 1
+              code.line-preview__code = line.presence || " "
+      - else
+        = render "preview_empty_card", title: "空のテキストファイルです", message: "表示できる内容がありません。必要に応じてファイルをダウンロードしてください。"
