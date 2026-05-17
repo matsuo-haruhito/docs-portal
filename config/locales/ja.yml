@@ -147,7 +147,7 @@ ja:
         google_drive: "Google Drive"
       auth_type:
         service_account: "サービスアカウント方式"
-        oauth_user: "OAuth user"
+        oauth_user: "OAuthユーザー方式"
       sync_direction:
         external_to_portal: "外部フォルダ → ポータル"
         portal_to_external: "ポータル → 外部フォルダ"
