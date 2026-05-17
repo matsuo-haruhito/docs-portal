@@ -35,11 +35,7 @@ class DocumentFilesController < BaseController
       return
     end
 
-    if html_file?(asset_file)
-      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(asset_file, disposition: "inline").header
-      render html: embedded_html_for(owner_file, asset_file.absolute_path, current_tree_path: asset_file.tree_path).html_safe, content_type: "text/html"
-      return
-    end
+    return if render_embedded_html_asset_for(owner_file, asset_file)
 
     send_document_file(asset_file, file_path: asset_file.absolute_path, disposition: "inline")
   end
@@ -135,6 +131,14 @@ class DocumentFilesController < BaseController
 
     response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition: "inline").header
     render html: embedded_html_for(file, file.absolute_path).html_safe, content_type: "text/html"
+    true
+  end
+
+  def render_embedded_html_asset_for(owner_file, asset_file)
+    return false unless html_file?(asset_file)
+
+    response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(asset_file, disposition: "inline").header
+    render html: embedded_html_for(owner_file, asset_file.absolute_path, current_tree_path: asset_file.tree_path).html_safe, content_type: "text/html"
     true
   end
 
