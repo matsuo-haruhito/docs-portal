@@ -1,16 +1,24 @@
 = render "shared/error_messages", record: external_folder_sync_source
 
+.card
+  p.eyebrow かんたん接続
+  h2 Google Driveフォルダを取り込む
+  p.muted
+    | まずはトークンやJSONを貼らずに、Google OAuthで接続する流れを推奨します。保存後に詳細画面で「Google OAuthを接続」を押し、接続チェック代わりに同期プレビューで読み取れるファイルを確認してください。
+  ol
+    li 対象案件とDriveフォルダURLを入力する
+    li 認証方式は通常「OAuthユーザー方式」を選ぶ
+    li 保存後、詳細画面でGoogle OAuthを接続する
+    li 同期プレビューで対象ファイルと警告を確認する
+    li 問題なければ初回同期する
+  p.muted
+    | 公式画面のスクリーンショットは変わりやすいため、この画面では必要な作業だけを案内します。外部サービス側の画面では、表示された権限内容を確認して許可してください。
+
 = form_with model: [:admin, external_folder_sync_source] do |form|
   .form-grid
     label
       | 対象案件
       = form.collection_select :project_id, @projects, :id, :name
-    label
-      | 連携先
-      = form.select :provider, enum_options_for("external_folder_sync_sources.provider", %w[google_drive])
-    label
-      | 認証方式
-      = form.select :auth_type, enum_options_for("external_folder_sync_sources.auth_type", %w[service_account oauth_user])
     label
       | 同期設定名
       = form.text_field :name, placeholder: "Google Drive同期"
@@ -18,22 +26,33 @@
       | Google DriveフォルダURL
       = form.text_field :folder_url, placeholder: "https://drive.google.com/drive/folders/..."
     label
+      | 認証方式
+      = form.select :auth_type, enum_options_for("external_folder_sync_sources.auth_type", %w[oauth_user service_account])
+      span.muted 通常はOAuthユーザー方式を選んでください。
+    label
       | 表示用フォルダパス
       = form.text_field :external_folder_path, placeholder: "任意入力。例: チーム文書 / 仕様書"
     label
-      | 同期方向
-      = form.select :sync_direction, enum_options_for("external_folder_sync_sources.sync_direction", %w[external_to_portal])
-    label
-      | 競合方針
-      = form.select :conflict_policy, enum_options_for("external_folder_sync_sources.conflict_policy", %w[manual])
-    label
       | 同期状態
       = form.select :enabled, [["有効", true], ["無効", false]]
-  label.full-width
-    | サービスアカウントJSON
-    = form.text_area :auth_config, value: nil, rows: 10, placeholder: external_folder_sync_source.persisted? ? "サービスアカウントJSON変更時のみ入力。OAuthユーザー方式の場合は空で保存してください。" : "サービスアカウントJSONを貼り付け。OAuthユーザー方式の場合は空で保存してください。"
-  p.muted サービスアカウント方式では、Google Driveフォルダをサービスアカウントのメールアドレスへ共有してください。
-  p.muted OAuthユーザー方式では、保存後に詳細画面からGoogle Drive OAuth接続を行ってください。OAuthクライアント設定は環境変数で設定します。
+
+  details.card
+    summary 詳細設定（管理者向け）
+    .form-grid
+      label
+        | 連携先
+        = form.select :provider, enum_options_for("external_folder_sync_sources.provider", %w[google_drive])
+      label
+        | 同期方向
+        = form.select :sync_direction, enum_options_for("external_folder_sync_sources.sync_direction", %w[external_to_portal])
+      label
+        | 競合方針
+        = form.select :conflict_policy, enum_options_for("external_folder_sync_sources.conflict_policy", %w[manual])
+    label.full-width
+      | サービスアカウントJSON
+      = form.text_area :auth_config, value: nil, rows: 10, placeholder: external_folder_sync_source.persisted? ? "サービスアカウントJSON変更時のみ入力。OAuthユーザー方式の場合は空で保存してください。" : "サービスアカウント方式を使う場合のみ貼り付け。OAuthユーザー方式の場合は空で保存してください。"
+    p.muted サービスアカウント方式では、Google Driveフォルダをサービスアカウントのメールアドレスへ共有してください。通常ユーザー向けにはOAuthユーザー方式を推奨します。
+
   p.muted 現在はGoogle Driveからドキュメントポータルへの片方向同期のみ対応しています。双方向同期、削除の物理反映は対象外です。
   p.actions
     = form.submit "設定を保存", class: "button"
