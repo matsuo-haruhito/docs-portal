@@ -84,7 +84,7 @@ class DocumentFileViewerPlan
     when :text
       "Text preview"
     when :archive
-      "Archive"
+      zip_archive? ? "ZIP preview" : "Archive"
     else
       "Download only"
     end
@@ -99,13 +99,15 @@ class DocumentFileViewerPlan
     when :csv
       # CSV / TSV will get a dedicated table viewer later. For now text preview can still open it.
       file.text_previewable?
+    when :archive
+      zip_archive?
     else
       false
     end
   end
 
   def inline_disposition?
-    previewable? && (file.inline_disposition? || file.office_previewable?)
+    previewable? && (file.inline_disposition? || file.office_previewable? || zip_archive?)
   end
 
   def reason
@@ -161,5 +163,9 @@ class DocumentFileViewerPlan
 
   def archive?
     extension.in?(ARCHIVE_EXTENSIONS)
+  end
+
+  def zip_archive?
+    extension == ".zip" || content_type == "application/zip"
   end
 end
