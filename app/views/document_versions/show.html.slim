@@ -39,10 +39,12 @@ p.muted
         small.muted = @version.published_at ? l(@version.published_at, format: :short) : "-"
     - if @compare_version_options.any?
       = form_with url: document_version_path(@version), method: :get, local: true, class: "compare-version-form" do |form|
-        = form.label :compare_version_id, "比較対象版を選択"
-        = form.select :compare_version_id, @compare_version_options.map { |version| ["#{document_version_label(version)} / #{version.published_at ? l(version.published_at, format: :short) : '-'}", version.public_id] }, { selected: @compare_version&.public_id }, onchange: "this.form.submit()"
+        label.form-field
+          span 比較対象版を選択
+          = form.select :compare_version_id, @compare_version_options.map { |version| ["#{document_version_label(version)} / #{version.published_at ? l(version.published_at, format: :short) : '-'}", version.public_id] }, { selected: @compare_version&.public_id }, onchange: "this.form.submit()"
         noscript
-          = form.submit "比較する", class: "button secondary"
+          p.actions.form-actions
+            = form.submit "比較する", class: "button secondary"
     - else
       p.muted 比較できる他の版はありません。
   .card.preview-summary-card
@@ -270,12 +272,12 @@ ul
   - else
     li
       span.muted HTML未生成
-  li
+  li.version-action-item
     - if @document.downloadable_by?(current_user)
       = link_to "添付・元ファイルをZIPでダウンロード", document_version_archive_path(@version)
     - else
       span.muted ZIPダウンロード権限なし
-      =< button_to "ダウンロード権限を申請", access_requests_path, params: { requestable_type: "Document", requestable_public_id: @document.public_id, requested_access_level: "download" }, class: "button secondary"
+      = button_to "ダウンロード権限を申請", access_requests_path, params: { requestable_type: "Document", requestable_public_id: @document.public_id, requested_access_level: "download" }, class: "button secondary"
   - if current_user.internal?
     li = link_to "品質チェックを表示", document_version_quality_check_path(@version)
 
@@ -289,9 +291,10 @@ h2#version-files 添付・元ファイル
         p.muted ファイル名、パス、ファイル種、操作列の文字列でこの一覧を絞り込みます。
       .actions
         span.muted data-document-file-search-count="true"
-    .compare-version-form
-      label for="document-file-search-#{@version.id}" ファイルを検索
-      input id="document-file-search-#{@version.id}" type="search" placeholder="例: pdf, docs/, api" data-document-file-search-input="true"
+    .compare-version-form.document-file-search-form
+      label.form-field for="document-file-search-#{@version.id}"
+        span ファイルを検索
+        input id="document-file-search-#{@version.id}" type="search" placeholder="例: pdf, docs/, api" data-document-file-search-input="true"
       button.button.secondary type="button" data-document-file-search-clear="true" クリア
     - render_state = document_file_tree_render_state(files:, row_partial: "document_versions/file_tree_columns", node_prefix: "document_version_files_#{@version.id}")
     table.tree-view-table data-document-file-search-table="true"
@@ -310,11 +313,11 @@ h2 Q&A
 .card
   h3 この版について質問する
   = form_with model: [@version, DocumentReviewComment.new], local: true do |form|
-    = form.hidden_field :comment_type, value: "question"
-    div
-      = form.label :body, "質問内容"
+    label.form-field
+      span 質問内容
       = form.text_area :body
-    p.actions
+    = form.hidden_field :comment_type, value: "question"
+    p.actions.form-actions
       = form.submit "質問を投稿", class: "button"
 
 - if @question_threads.any?
@@ -338,10 +341,10 @@ h2 Q&A
         = form_with model: [@version, DocumentReviewComment.new], local: true do |form|
           = form.hidden_field :comment_type, value: "question"
           = form.hidden_field :parent_id, value: thread.id
-          div
-            = form.label :body, "返信内容"
+          label.form-field
+            span 返信内容
             = form.text_area :body
-          p.actions
+          p.actions.form-actions
             = form.submit "返信する", class: "button secondary"
 - else
   p.muted まだ質問はありません。
@@ -356,31 +359,31 @@ h2 Q&A
     h3 コメント追加
     = form_with model: [@version, DocumentReviewComment.new], local: true do |form|
       .form-grid
-        div
-          = form.label :comment_type, "種別"
+        label.form-field
+          span 種別
           = form.select :comment_type, DocumentReviewComment.comment_types.keys.map { [localized_label("document_review_comments.comment_type", _1), _1] }
-        div
-          = form.label :text_line_start, "開始行"
+        label.form-field
+          span 開始行
           = form.number_field :text_line_start, min: 1
-        div
-          = form.label :text_line_end, "終了行"
+        label.form-field
+          span 終了行
           = form.number_field :text_line_end, min: 1
-        div
-          = form.label :text_anchor_type, "位置の種類"
+        label.form-field
+          span 位置の種類
           = form.select :text_anchor_type, [["未指定", ""], ["Markdown見出し", "markdown_heading"], ["JSONパス", "json_path"], ["YAMLパス", "yaml_path"], ["行番号", "plain_line"]]
-        div
-          = form.label :text_anchor_path, "位置パス"
+        label.form-field
+          span 位置パス
           = form.text_field :text_anchor_path
-        div
-          = form.label :text_anchor_label, "位置ラベル"
+        label.form-field
+          span 位置ラベル
           = form.text_field :text_anchor_label
-        div
-          = form.label :source_path, "元パス"
+        label.form-field
+          span 元パス
           = form.text_field :source_path
-        div style="grid-column: 1 / -1;"
-          = form.label :body, "内容"
+        label.form-field.form-field--full
+          span 内容
           = form.text_area :body
-      p.actions
+      p.actions.form-actions
         = form.submit "コメント追加", class: "button"
 
   - if unresolved_comments.any?
