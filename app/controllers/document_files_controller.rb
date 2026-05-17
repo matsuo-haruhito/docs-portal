@@ -55,9 +55,7 @@ class DocumentFilesController < BaseController
     end
 
     if inline_preview_kind?(viewer_plan, disposition, :json, :yaml)
-      prepare_inline_preview!(file, disposition:)
-      @structured_preview = DocumentFileStructuredPreview.new(file:, viewer_kind: viewer_plan.viewer_kind).call
-      @structured_language = viewer_plan.viewer_kind.to_s.upcase
+      prepare_structured_preview!(file, viewer_kind: viewer_plan.viewer_kind, disposition:)
       render :show_structured_preview
       return
     end
@@ -159,6 +157,12 @@ class DocumentFilesController < BaseController
   def prepare_inline_preview!(file, disposition:)
     response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
     assign_preview_context(file)
+  end
+
+  def prepare_structured_preview!(file, viewer_kind:, disposition:)
+    prepare_inline_preview!(file, disposition:)
+    @structured_preview = DocumentFileStructuredPreview.new(file:, viewer_kind:).call
+    @structured_language = viewer_kind.to_s.upcase
   end
 
   def assign_preview_context(file)
