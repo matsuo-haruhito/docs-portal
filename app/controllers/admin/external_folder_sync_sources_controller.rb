@@ -67,7 +67,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
   def apply
     run = ExternalFolderSync::Runner.new(source: @external_folder_sync_source, mode: :apply, actor: current_user).call
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "同期を実行しました。（#{run.items_scanned_count}件）"
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "同期しました。（#{run.items_scanned_count}件）"
   rescue ExternalFolderSync::GoogleDriveClient::Error, ExternalFolderSync::Runner::Error => e
     redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
   end
