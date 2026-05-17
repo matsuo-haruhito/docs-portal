@@ -29,6 +29,26 @@
             strong.stat-card__value = number_to_human_size(@archive_preview.total_file_size)
 
       .card
+        h2 ディレクトリサマリー
+        p.muted 直下の file / folder 件数と、直下fileの合計サイズを表示しています。
+        .table-wrapper
+          table
+            thead
+              tr
+                th ディレクトリ
+                th files
+                th folders
+                th 直下file合計サイズ
+            tbody
+              - @archive_preview.directory_summaries.each do |summary|
+                tr
+                  td
+                    code = summary.path
+                  td = number_with_delimiter(summary.file_count)
+                  td = number_with_delimiter(summary.folder_count)
+                  td = number_to_human_size(summary.total_file_size)
+
+      .card
         .document-viewer__header
           div
             h2 ZIP内ファイル一覧
