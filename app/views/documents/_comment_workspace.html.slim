@@ -1,0 +1,96 @@
+- floating = local_assigns.fetch(:floating, false)
+- wrapper_classes = ["document-comment-workspace"]
+- wrapper_classes << (floating ? "document-comment-workspace--floating" : "document-comment-workspace--inline")
+- comment_target_version = @viewer_version || @latest_viewable_version
+- has_review_comments = current_user.internal? && @review_comments.any?
+- has_question_threads = @question_threads.any?
+- has_unresolved_questions = @question_threads.any? { !_1.resolved? }
+- has_unresolved_reviews = current_user.internal? && @review_comments.any? { !_1.resolved? }
+
+details class=wrapper_classes.join(" ") open=(!floating)
+  summary.document-comment-workspace__fab
+    span.document-comment-workspace__fab-icon aria-hidden="true" 📝
+    span 文書コメント
+  .document-comment-workspace__panel role="complementary" aria-label="文書コメント"
+    .document-comment-workspace__header
+      div
+        p.document-comment-workspace__eyebrow 文書を見ながら書く
+        h2 文書コメント
+        p.muted Q&A と内部向けの確認事項をここにまとめます。
+      span.document-comment-workspace__status
+        = @question_threads.size
+        | 件のQ&A / 
+        = current_user.internal? ? @review_comments.size : 0
+        | 件の確認事項
+
+    .document-comment-workspace__mode.card
+      h3 追加する内容
+      .comment-mode-switch
+        input#comment-mode-question.comment-mode-switch__input type="radio" name="comment_mode" checked=true
+        label.comment-mode-switch__label for="comment-mode-question"
+          strong 質問する
+          span 外部/利用者にも見えるQ&A
+        - if current_user.internal?
+          input#comment-mode-review.comment-mode-switch__input type="radio" name="comment_mode"
+          label.comment-mode-switch__label for="comment-mode-review"
+            strong 確認事項を残す
+            span 内部向けの確認・指摘・修正依頼
+
+        .comment-mode-switch__panel.comment-mode-switch__panel--question
+          = form_with model: [@project, @document, DocumentReviewComment.new], local: true do |form|
+            = form.hidden_field :comment_type, value: "question"
+            = form.hidden_field :internal_only, value: false
+            - if comment_target_version
+              = form.hidden_field :document_version_id, value: comment_target_version.id
+            div
+              = form.label :body, "質問内容"
+              = form.text_area :body, rows: 4, placeholder: "この文書について確認したいことを書いてください"
+            p.actions
+              = form.submit "質問を投稿", class: "button"
+        - if current_user.internal?
+          .comment-mode-switch__panel.comment-mode-switch__panel--review
+            = form_with model: [@project, @document, DocumentReviewComment.new], local: true do |form|
+              = form.hidden_field :comment_type, value: "request_change"
+              = form.hidden_field :internal_only, value: true
+              - if comment_target_version
+                = form.hidden_field :document_version_id, value: comment_target_version.id
+              .form-grid.form-grid--compact
+                div
+                  = form.label :comment_type, "種別"
+                  = form.select :comment_type, [["メモ", "note"], ["指摘", "issue"], ["修正依頼", "request_change"]], selected: "request_change"
+                div
+                  = form.label :text_line_start, "開始行"
+                  = form.number_field :text_line_start, min: 1
+                div
+                  = form.label :text_line_end, "終了行"
+                  = form.number_field :text_line_end, min: 1
+                div.form-field--full
+                  = form.label :source_path, "対象ファイル・位置メモ"
+                  = form.text_field :source_path, placeholder: "例: docs/spec.md / 見出し名 / 添付ファイル名"
+                div.form-field--full
+                  = form.label :body, "確認内容"
+                  = form.text_area :body, rows: 4, placeholder: "文書を見ながら気になった点を残してください"
+              p.actions
+                = form.submit "確認事項を追加", class: "button"
+
+    .document-comment-tabs.card
+      input#document-comment-tab-all.document-comment-tabs__input type="radio" name="document_comment_tab" checked=true
+      label.document-comment-tabs__label for="document-comment-tab-all" すべて
+      input#document-comment-tab-qa.document-comment-tabs__input type="radio" name="document_comment_tab"
+      label.document-comment-tabs__label for="document-comment-tab-qa" Q&A
+      input#document-comment-tab-review.document-comment-tabs__input type="radio" name="document_comment_tab"
+      label.document-comment-tabs__label for="document-comment-tab-review" 確認事項
+      input#document-comment-tab-unresolved.document-comment-tabs__input type="radio" name="document_comment_tab"
+      label.document-comment-tabs__label for="document-comment-tab-unresolved" 未解決
+
+      .document-comment-tabs__panel.document-comment-tabs__panel--all
+        = render "documents/comment_workspace_threads", show_questions: true, show_reviews: current_user.internal?, only_unresolved: false
+      .document-comment-tabs__panel.document-comment-tabs__panel--qa
+        = render "documents/comment_workspace_threads", show_questions: true, show_reviews: false, only_unresolved: false
+      .document-comment-tabs__panel.document-comment-tabs__panel--review
+        = render "documents/comment_workspace_threads", show_questions: false, show_reviews: current_user.internal?, only_unresolved: false
+      .document-comment-tabs__panel.document-comment-tabs__panel--unresolved
+        - if has_unresolved_questions || has_unresolved_reviews
+          = render "documents/comment_workspace_threads", show_questions: true, show_reviews: current_user.internal?, only_unresolved: true
+        - else
+          p.muted 未解決のコメントはありません。
