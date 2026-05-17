@@ -8,9 +8,9 @@
 - has_unresolved_reviews = current_user.internal? && @review_comments.any? { !_1.resolved? }
 
 details class=wrapper_classes.join(" ") open=(!floating)
-  summary.document-comment-workspace__fab
+  summary.document-comment-workspace__fab title="文書コメント" aria-label="文書コメントを開く"
     span.document-comment-workspace__fab-icon aria-hidden="true" 📝
-    span 文書コメント
+    span.document-comment-workspace__fab-label 文書コメント
   .document-comment-workspace__panel role="complementary" aria-label="文書コメント"
     .document-comment-workspace__header
       div
