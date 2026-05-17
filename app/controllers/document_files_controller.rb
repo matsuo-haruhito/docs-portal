@@ -69,7 +69,7 @@ class DocumentFilesController < BaseController
     if disposition == "inline" && file.text_previewable? && !embedded_request?
       response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition:).header
       assign_preview_context(file)
-      @preview_lines = File.read(file_path, encoding: "UTF-8").lines(chomp: true)
+      @text_preview = DocumentFileTextPreview.new(file:).call
       render :show_text_preview
       return
     end
