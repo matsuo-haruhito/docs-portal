@@ -4,7 +4,7 @@
   h1 ログイン
   p.muted 文書ポータルを利用するにはログインが必要です。
 
-  = form_with url: session_path, scope: :session do |form|
+  = form_with url: session_path, scope: :session, data: { turbo: false } do |form|
     .form-grid style="grid-template-columns: 1fr;"
       label
         | メールアドレス
