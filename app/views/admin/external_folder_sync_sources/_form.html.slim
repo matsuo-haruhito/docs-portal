@@ -27,7 +27,7 @@
       | 競合方針
       = form.select :conflict_policy, enum_options_for("external_folder_sync_sources.conflict_policy", %w[manual])
     label
-      | 状態
+      | 同期状態
       = form.select :enabled, [["有効", true], ["無効", false]]
   label.full-width
     | サービスアカウントJSON
