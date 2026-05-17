@@ -60,7 +60,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
   def dry_run
     run = ExternalFolderSync::Runner.new(source: @external_folder_sync_source, mode: :dry_run, actor: current_user).call
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "dry-runを実行しました。（#{run.items_scanned_count}件）"
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "同期プレビューを実行しました。（#{run.items_scanned_count}件）"
   rescue ExternalFolderSync::GoogleDriveClient::Error, ExternalFolderSync::Runner::Error => e
     redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
   end
@@ -104,7 +104,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
       source: @external_folder_sync_source,
       callback_url: external_folder_sync_webhooks_google_drive_url
     ).subscribe!
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "Google Drive webhook購読を開始しました。（期限: #{l(subscription.expires_at)}）"
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "Google Driveの変更通知の購読を開始しました。（期限: #{l(subscription.expires_at)}）"
   rescue ExternalFolderSync::GoogleDriveSubscriptionManager::Error => e
     redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
   end
@@ -114,7 +114,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
       source: @external_folder_sync_source,
       callback_url: external_folder_sync_webhooks_google_drive_url
     ).stop_active_subscription!
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "Google Drive webhook購読を停止しました。"
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "Google Driveの変更通知の購読を停止しました。"
   rescue ExternalFolderSync::GoogleDriveSubscriptionManager::Error => e
     redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
   end
@@ -161,11 +161,11 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def force_apply_blocked_message
-    "先にdry-runで競合・重複警告の内容を確認してください。"
+    "先に同期プレビューで競合・重複警告の内容を確認してください。"
   end
 
   def manual_enqueue_blocked_message
-    "直近のdry-runに競合・重複警告があります。警告を確認してから同期実行してください。"
+    "直近の同期プレビューに競合・重複警告があります。警告を確認してから同期実行してください。"
   end
 
   def normalized_external_folder_sync_source_params
