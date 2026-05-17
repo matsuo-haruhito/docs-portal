@@ -70,6 +70,7 @@
   - 件数サマリー
   - ディレクトリサマリー
   - ディレクトリパスコピー
+  - truncated 時の対象範囲 warning
   - entry sort
   - 条件リセット
 
@@ -133,7 +134,6 @@
 
 - entry path の階層ごとの折りたたみ表示
 - entry 単位 preview / download の設計
-- 大きいZIPでの表示上限 warning 強化
 
 ### 3. specs / roadmap の継続整理
 
