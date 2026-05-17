@@ -83,11 +83,12 @@
 ### Search
 
 - Docusaurus iframe 内の文書内検索
+- 文書内検索UIの初期折りたたみ
 - 文書内検索ショートカット
-  - `/` で検索欄 focus
+  - `/` で検索欄展開 / focus
   - `Enter` で次へ
   - `Shift+Enter` で前へ
-  - `Esc` で解除
+  - `Esc` で解除 / 折りたたみ
 - 添付・元ファイル一覧検索
 - 添付・元ファイル検索で親フォルダ行を維持
 - 添付・元ファイル検索で一致行 / 文脈行を区別表示
@@ -120,20 +121,7 @@
 - preview service の Result helper を整える
 - 既存 preview service の spec を補強する
 
-### 2. 文書内検索UIの折りたたみ
-
-目的:
-
-- iframe 内の検索バーが常時表示で本文を圧迫しすぎないようにする
-
-候補:
-
-- 初期状態では小さい「文書内検索」ボタンだけ表示
-- `/` またはクリックで検索バーを展開
-- `Esc` で検索解除 + 折りたたみ
-- モバイル幅での表示を調整
-
-### 3. ZIP entry 操作の次段
+### 2. ZIP entry 操作の次段
 
 目的:
 
@@ -146,7 +134,7 @@
 - entry 単位 preview / download の設計
 - 大きいZIPでの表示上限 warning 強化
 
-### 4. specs / roadmap の継続整理
+### 3. specs / roadmap の継続整理
 
 目的:
 
@@ -289,7 +277,7 @@
 ## 実装順のおすすめ
 
 1. preview controller / viewer service の残り整理
-2. 文書内検索UIの折りたたみ
+2. ZIP entry 操作の次段
 3. Preview target metadata parser / validator
 4. Docusaurus build manifest
 5. Path history resolver
