@@ -31,4 +31,4 @@
                 - row.each do |cell|
                   td = cell
   - else
-    p.muted 空のCSV/TSVファイルです。
+    = render "document_files/preview_empty_card", title: "CSV / TSV preview", message: "空のCSV/TSVファイルです。"
