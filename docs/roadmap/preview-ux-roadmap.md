@@ -70,6 +70,7 @@
   - file / folder filter
   - safety filter
   - candidate filter
+  - active filter summary / 個別解除 chip
   - 件数サマリー
   - ディレクトリサマリー
   - ディレクトリパスコピー
