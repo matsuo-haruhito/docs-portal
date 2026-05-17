@@ -324,6 +324,54 @@ body > main{
   max-width: 1760px !important;
 }
 
+.form-grid--compact{
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.form-field{
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.form-field input,
+.form-field select{
+  margin-top: 0;
+}
+
+.filter-fieldset{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 80, 0, 0.16);
+  border-radius: 14px;
+}
+
+.filter-fieldset legend{
+  padding: 0 6px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.check-field{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.check-field input[type="checkbox"]{
+  width: auto;
+  margin: 0;
+}
+
+.form-actions{
+  margin-top: 16px;
+}
+
 @media (min-width: 1200px){
   main:has(.site-viewer-shell){
     max-width: none;
