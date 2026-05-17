@@ -28,6 +28,10 @@ function archiveEntryDirectory(row) {
   return row.dataset.archivePreviewEntryDirectory || "/"
 }
 
+function archiveEntrySafe(row) {
+  return row.dataset.archivePreviewEntrySafe === "true"
+}
+
 function archiveEntryType(row) {
   return row.dataset.archivePreviewEntryType || "file"
 }
@@ -164,15 +168,19 @@ function setupArchivePreview(container) {
   })
 
   copyVisibleButton.addEventListener("click", () => {
-    const entryNames = visibleRows(rows).map(archiveEntryName).filter(Boolean)
-    copyText(entryNames.join("\n"), status, `${entryNames.length}件のパスをコピーしました`)
+    const visibleEntryRows = visibleRows(rows)
+    const entryNames = visibleEntryRows.map(archiveEntryName).filter(Boolean)
+    const unsafeCount = visibleEntryRows.filter((row) => !archiveEntrySafe(row)).length
+    const unsafeNote = unsafeCount > 0 ? `（unsafe ${unsafeCount}件を含みます）` : ""
+    copyText(entryNames.join("\n"), status, `${entryNames.length}件のパスをコピーしました${unsafeNote}`)
   })
 
   copyButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const row = button.closest("[data-archive-preview-entry]")
       const entryName = row ? archiveEntryName(row) : ""
-      copyText(entryName, status, "パスをコピーしました")
+      const unsafeNote = row && !archiveEntrySafe(row) ? "（unsafe path）" : ""
+      copyText(entryName, status, `パスをコピーしました${unsafeNote}`)
     })
   })
 
