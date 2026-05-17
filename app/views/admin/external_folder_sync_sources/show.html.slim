@@ -34,7 +34,7 @@ h1 外部フォルダ同期詳細
     dt 最終同期
     dd = @external_folder_sync_source.last_synced_at ? l(@external_folder_sync_source.last_synced_at) : "-"
     - if @external_folder_sync_source.cursor.present?
-      dt Google Drive cursor
+      dt Google Driveカーソル
       dd
         code = @external_folder_sync_source.cursor
     - if @external_folder_sync_source.last_error_message.present?
