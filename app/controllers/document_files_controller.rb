@@ -20,12 +20,7 @@ class DocumentFilesController < BaseController
     record_file_access_log(file)
 
     return if render_inline_preview_for(file, viewer_plan, disposition)
-
-    if disposition == "inline" && embedded_request? && html_file?(file)
-      response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition: "inline").header
-      render html: embedded_html_for(file, file.absolute_path).html_safe, content_type: "text/html"
-      return
-    end
+    return if render_embedded_html_preview_for(file, disposition)
 
     send_file(
       file_path,
@@ -142,6 +137,14 @@ class DocumentFilesController < BaseController
       return false
     end
 
+    true
+  end
+
+  def render_embedded_html_preview_for(file, disposition)
+    return false unless disposition == "inline" && embedded_request? && html_file?(file)
+
+    response.headers["Content-Disposition"] = DocumentFileContentDisposition.new(file, disposition: "inline").header
+    render html: embedded_html_for(file, file.absolute_path).html_safe, content_type: "text/html"
     true
   end
 
