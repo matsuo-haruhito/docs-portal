@@ -8,23 +8,7 @@ class DocumentFilesController < BaseController
     consent_timing = embedded_request? ? :first_view : :download
     return if require_consent!(target: file, timing: consent_timing)
 
-    if disposition == "inline" && embedded_request? && viewer_plan.viewer_kind == :office
-      begin
-        preview_url = office_preview_url_for(file)
-        record_file_access_log(file)
-        redirect_to preview_url, allow_other_host: true
-        return
-      rescue DocumentFileOfficePreview::FileTooLargeError
-        record_file_access_log(file)
-        @document_file = file
-        @download_available = viewer_plan.downloadable?
-        render :office_preview_unavailable, status: :ok
-        return
-      rescue DocumentFileOfficePreview::Error, MicrosoftGraphClient::Error => e
-        render plain: "Office preview is not available: #{e.message}", status: :bad_gateway
-        return
-      end
-    end
+    return if render_office_preview_for(file, viewer_plan, disposition)
 
     file_path = file.absolute_path
 
@@ -115,6 +99,28 @@ class DocumentFilesController < BaseController
 
   def inline_preview_kind?(viewer_plan, disposition, *viewer_kinds)
     inline_preview_request?(disposition) && viewer_plan.viewer_kind.in?(viewer_kinds)
+  end
+
+  def office_preview_request?(viewer_plan, disposition)
+    disposition == "inline" && embedded_request? && viewer_plan.viewer_kind == :office
+  end
+
+  def render_office_preview_for(file, viewer_plan, disposition)
+    return false unless office_preview_request?(viewer_plan, disposition)
+
+    preview_url = office_preview_url_for(file)
+    record_file_access_log(file)
+    redirect_to preview_url, allow_other_host: true
+    true
+  rescue DocumentFileOfficePreview::FileTooLargeError
+    record_file_access_log(file)
+    @document_file = file
+    @download_available = viewer_plan.downloadable?
+    render :office_preview_unavailable, status: :ok
+    true
+  rescue DocumentFileOfficePreview::Error, MicrosoftGraphClient::Error => e
+    render plain: "Office preview is not available: #{e.message}", status: :bad_gateway
+    true
   end
 
   def render_inline_preview_for(file, viewer_plan, disposition)
