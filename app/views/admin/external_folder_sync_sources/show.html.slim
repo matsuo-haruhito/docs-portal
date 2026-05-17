@@ -112,10 +112,10 @@ h1 外部フォルダ同期詳細
           td = event.error_message.presence || "-"
           td
             details
-              summary Headers / Payload
-              h3 Headers
+              summary ヘッダー / ペイロード
+              h3 ヘッダー
               pre = JSON.pretty_generate(event.headers_json || {})
-              h3 Payload
+              h3 ペイロード
               pre = JSON.pretty_generate(event.payload_json || {})
 
 .card
