@@ -6,7 +6,7 @@
       | 案件
       = form.collection_select :project_id, @projects, :id, :name
     label
-      | プロバイダ
+      | 連携先
       = form.select :provider, enum_options_for("external_folder_sync_sources.provider", %w[google_drive])
     label
       | 認証方式
