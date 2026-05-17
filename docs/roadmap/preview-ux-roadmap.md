@@ -78,6 +78,7 @@
 - 機密注意ラベル
 - 行番号 / 行 anchor
 - JSON codeblock のローカル構文検証
+- JSON codeblock の整形コピー
 
 ### Search
 
@@ -119,31 +120,7 @@
 - preview service の Result helper を整える
 - 既存 preview service の spec を補強する
 
-### 2. specs index / 目次整理
-
-目的:
-
-- 仕様書が増えてきたため、入口を整理する
-
-候補:
-
-- `docs/specs/README.md` を追加
-- 閲覧画面、検索、viewer registry、preview metadata、path history、codeblock actions への導線を整理
-- roadmap から関連仕様へリンクする
-
-### 3. Codeblock JSON 整形コピー
-
-目的:
-
-- API仕様や import API sample の利用性を上げる
-
-候補:
-
-- JSON codeblock に「整形コピー」ボタンを追加
-- `JSON.parse` + `JSON.stringify(value, null, 2)` で整形
-- invalid JSON の場合は既存の JSON検証エラーを表示
-
-### 4. 文書内検索UIの折りたたみ
+### 2. 文書内検索UIの折りたたみ
 
 目的:
 
@@ -156,7 +133,7 @@
 - `Esc` で検索解除 + 折りたたみ
 - モバイル幅での表示を調整
 
-### 5. ZIP entry 操作の次段
+### 3. ZIP entry 操作の次段
 
 目的:
 
@@ -168,6 +145,18 @@
 - directory summary
 - entry 単位 preview / download の設計
 - 大きいZIPでの表示上限 warning 強化
+
+### 4. specs / roadmap の継続整理
+
+目的:
+
+- 実装済みの preview 改善と仕様書の差分を小さく保つ
+
+候補:
+
+- 仕様ファイル追加時に `docs/specs/README.md` へリンクする
+- 実装済みタスクを roadmap から削除 / 移動する
+- research と仕様の参照関係を整理する
 
 ## 中期タスク
 
@@ -300,7 +289,7 @@
 ## 実装順のおすすめ
 
 1. preview controller / viewer service の残り整理
-2. Codeblock JSON 整形コピー
+2. 文書内検索UIの折りたたみ
 3. Preview target metadata parser / validator
 4. Docusaurus build manifest
 5. Path history resolver
