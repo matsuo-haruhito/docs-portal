@@ -87,6 +87,7 @@
 - Office preview rendering の helper 化
 - embedded HTML preview / asset rendering の helper 化
 - embedded asset path resolver service の切り出し
+- embedded HTML base path helper の service 化
 - inline preview の template dispatch / prepare dispatch 分離
 - text inline preview predicate の切り出し
 - `Content-Disposition` header 設定 helper 化
@@ -139,7 +140,6 @@
 
 - preview service の Result helper を整える
 - 既存 preview service の spec を補強する
-- embedded HTML base path helper の責務切り出しを検討する
 
 ### 2. ZIP entry 操作の次段
 
