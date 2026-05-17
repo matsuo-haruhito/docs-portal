@@ -3,9 +3,7 @@ require "yaml"
 
 class DocumentFileStructuredPreview
   Result = Data.define(:formatted_text, :error) do
-    def error?
-      error.present?
-    end
+    include DocumentFilePreviewResultHelpers
   end
 
   def initialize(file:, viewer_kind:)
