@@ -62,7 +62,7 @@
         .document-viewer__header
           div
             h2 ZIP内ファイル一覧
-            p.muted `/` で検索欄に移動できます。ディレクトリ / 種別 / 候補 / キーワードで絞り込み、見出しボタンで並び替えできます。行ごとのパスや表示中のパスをコピーできます。候補表示は将来のentry preview/download対象の目安です。
+            p.muted `/` で検索欄に移動できます。ディレクトリ / 種別 / 安全性 / 候補 / キーワードで絞り込み、見出しボタンで並び替えできます。行ごとのパスや表示中のパスをコピーできます。候補表示は将来のentry preview/download対象の目安です。
           p.actions
             button.button.secondary type="button" data-archive-preview-copy-visible="true" 表示中のパスをコピー
         .document-filter
@@ -81,6 +81,12 @@
               option value="all" すべて
               option value="file" file
               option value="folder" folder
+          label
+            | 安全性
+            select data-archive-preview-safety-filter="true"
+              option value="all" すべて
+              option value="safe" safe
+              option value="unsafe" unsafe path
           label
             | 候補
             select data-archive-preview-candidate-filter="true"
