@@ -11,7 +11,8 @@
     - if @archive_preview.truncated?
       .card
         h2 先頭 #{@archive_preview.limit} 件を表示しています
-        p.muted 大きいZIPファイルのため、previewでは先頭のentryのみ表示しています。すべて確認する場合はダウンロードしてください。
+        p.muted 大きいZIPファイルのため、previewでは先頭のentryのみ表示しています。サマリー、ディレクトリサマリー、検索、並び替え、コピー操作も表示中の先頭entryだけが対象です。
+        p.muted すべてのentryを確認する場合はファイルをダウンロードしてください。
 
     - if @archive_preview.entries.any?
       .card
