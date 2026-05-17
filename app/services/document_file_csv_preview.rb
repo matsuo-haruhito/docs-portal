@@ -4,13 +4,7 @@ class DocumentFileCsvPreview
   DEFAULT_LIMIT = 200
 
   Result = Data.define(:rows, :truncated, :limit, :error) do
-    def truncated?
-      truncated
-    end
-
-    def error?
-      error.present?
-    end
+    include DocumentFilePreviewResultHelpers
   end
 
   def initialize(file:, limit: DEFAULT_LIMIT)
