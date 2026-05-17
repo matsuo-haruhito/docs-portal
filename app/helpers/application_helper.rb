@@ -5,7 +5,8 @@ module ApplicationHelper
 
   def localized_label(scope, value, **interpolations)
     value = value.to_s
-    I18n.t("labels.#{scope}.#{value}", **interpolations.except(:default), default: value)
+    translation_options = interpolations.except(:default)
+    I18n.t("labels.#{scope}.#{value}", **translation_options, default: value)
   end
 
   def enum_options_for(scope, values)
