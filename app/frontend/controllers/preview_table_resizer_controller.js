@@ -78,7 +78,7 @@ function injectStyle(frameDocument) {
     .portal-table-width-button:hover, .portal-table-width-button:focus, .portal-table-width-button[aria-pressed="true"] { border-color: var(--doc-primary, #2563eb); outline: none; }
     .portal-table-width-button[aria-pressed="true"] { background: var(--doc-primary, #2563eb); color: #fff; }
     .portal-table-width-hint { color: var(--doc-text-muted, #64748b); font-size: .72rem; }
-    .portal-table-width-scroll { overflow: auto; max-height: min(70vh, 720px); padding: .65rem; }
+    .portal-table-width-scroll { overflow: auto; max-height: min(70vh, 720px); padding: 0; }
     .portal-table-width-frame table { margin: 0 !important; width: var(--portal-table-width, 100%) !important; min-width: var(--portal-table-width, 100%) !important; max-width: none !important; display: table !important; }
     .portal-table-width-frame th, .portal-table-width-frame td { position: relative; }
     .portal-table-width-frame.has-sticky-header thead th, .portal-table-width-frame.has-sticky-header tr:first-child th { position: sticky; top: 0; z-index: 4; background: var(--doc-bg-soft, #f8fafc); box-shadow: 0 1px 0 var(--doc-border, #e5e7eb); }
