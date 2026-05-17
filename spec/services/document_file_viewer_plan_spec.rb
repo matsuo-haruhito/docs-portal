@@ -43,6 +43,28 @@ RSpec.describe DocumentFileViewerPlan do
     expect(plan).to be_previewable
   end
 
+  it "classifies zip archives as previewable zip preview" do
+    file = create(:document_file, document_version: version, file_name: "bundle.zip", content_type: "application/zip")
+
+    plan = plan_for(file)
+
+    expect(plan.viewer_kind).to eq(:archive)
+    expect(plan.label).to eq("ZIP preview")
+    expect(plan).to be_previewable
+    expect(plan).to be_inline_disposition
+  end
+
+  it "explains unsupported non-zip archive previews" do
+    file = create(:document_file, document_version: version, file_name: "bundle.tar", content_type: "application/x-tar")
+
+    plan = plan_for(file)
+
+    expect(plan.viewer_kind).to eq(:archive)
+    expect(plan.label).to eq("Archive")
+    expect(plan).not_to be_previewable
+    expect(plan.reason).to eq("ZIP以外の圧縮ファイル preview は未対応です")
+  end
+
   it "falls back to download only for unknown binary files" do
     file = create(:document_file, document_version: version, file_name: "archive.bin", content_type: "application/octet-stream")
 
