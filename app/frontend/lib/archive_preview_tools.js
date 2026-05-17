@@ -100,13 +100,19 @@ function compareRows(left, right, key, direction) {
   return direction === "desc" ? -comparison : comparison
 }
 
+function filterDescriptors(input, candidateFilter, directoryFilter, safetyFilter, typeFilter) {
+  const descriptors = []
+  const query = input.value.trim()
+  if (query.length > 0) descriptors.push({ key: "search", label: `検索=${query}` })
+  if (candidateFilter.value !== "all") descriptors.push({ key: "candidate", label: `候補=${candidateFilter.value}` })
+  if (directoryFilter.value !== "all") descriptors.push({ key: "directory", label: `dir=${directoryFilter.value}` })
+  if (safetyFilter.value !== "all") descriptors.push({ key: "safety", label: `安全性=${safetyFilter.value}` })
+  if (typeFilter.value !== "all") descriptors.push({ key: "type", label: `種別=${typeFilter.value}` })
+  return descriptors
+}
+
 function filterParts(candidateFilter, directoryFilter, safetyFilter, typeFilter) {
-  const labels = []
-  if (candidateFilter.value !== "all") labels.push(`候補=${candidateFilter.value}`)
-  if (directoryFilter.value !== "all") labels.push(`dir=${directoryFilter.value}`)
-  if (safetyFilter.value !== "all") labels.push(`安全性=${safetyFilter.value}`)
-  if (typeFilter.value !== "all") labels.push(`種別=${typeFilter.value}`)
-  return labels
+  return filterDescriptors({ value: "" }, candidateFilter, directoryFilter, safetyFilter, typeFilter).map((descriptor) => descriptor.label)
 }
 
 function activeFilterLabel(candidateFilter, directoryFilter, safetyFilter, typeFilter) {
@@ -119,11 +125,27 @@ function activeFilterStatus(candidateFilter, directoryFilter, safetyFilter, type
   return labels.length > 0 ? `（条件: ${labels.join("、")}）` : ""
 }
 
-function activeFilterSummary(input, candidateFilter, directoryFilter, safetyFilter, typeFilter) {
-  const labels = filterParts(candidateFilter, directoryFilter, safetyFilter, typeFilter)
-  const query = input.value.trim()
-  if (query.length > 0) labels.unshift(`検索=${query}`)
-  return labels.length > 0 ? `絞り込み中: ${labels.join(" / ")}` : "絞り込みなし"
+function renderActiveFilterChips(activeFilters, descriptors, clearFilter) {
+  activeFilters.replaceChildren()
+
+  if (descriptors.length === 0) {
+    activeFilters.textContent = "絞り込みなし"
+    return
+  }
+
+  const label = document.createElement("span")
+  label.className = "muted"
+  label.textContent = "絞り込み中:"
+  activeFilters.appendChild(label)
+
+  descriptors.forEach((descriptor) => {
+    const button = document.createElement("button")
+    button.type = "button"
+    button.className = "button secondary"
+    button.textContent = `${descriptor.label} ×`
+    button.addEventListener("click", () => clearFilter(descriptor.key))
+    activeFilters.appendChild(button)
+  })
 }
 
 function setupArchivePreview(container) {
@@ -167,6 +189,15 @@ function setupArchivePreview(container) {
     updateSortButtons()
   }
 
+  const clearFilter = (key) => {
+    if (key === "search") input.value = ""
+    if (key === "candidate") candidateFilter.value = "all"
+    if (key === "directory") directoryFilter.value = "all"
+    if (key === "safety") safetyFilter.value = "all"
+    if (key === "type") typeFilter.value = "all"
+    updateSearch()
+  }
+
   const updateSearch = () => {
     const query = input.value.trim().toLowerCase()
     const selectedCandidate = candidateFilter.value
@@ -192,7 +223,7 @@ function setupArchivePreview(container) {
 
     const filterLabel = activeFilterLabel(candidateFilter, directoryFilter, safetyFilter, typeFilter)
     count.textContent = query.length === 0 ? `${visibleCount}/${rows.length}件表示${filterLabel}` : `${matchedCount}/${rows.length}件一致 / ${visibleCount}件表示${filterLabel}`
-    activeFilters.textContent = activeFilterSummary(input, candidateFilter, directoryFilter, safetyFilter, typeFilter)
+    renderActiveFilterChips(activeFilters, filterDescriptors(input, candidateFilter, directoryFilter, safetyFilter, typeFilter), clearFilter)
   }
 
   const resetControls = () => {
