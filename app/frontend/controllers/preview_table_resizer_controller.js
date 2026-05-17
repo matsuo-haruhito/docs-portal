@@ -64,7 +64,13 @@ function injectStyle(frameDocument) {
   style.dataset.docsPortalTableWidth = "true"
   style.textContent = `
     .portal-table-width-frame { margin: 1rem 0; border: 1px solid var(--doc-border, #e5e7eb); border-radius: 12px; background: var(--doc-surface, #fff); overflow: hidden; }
-    .portal-table-width-toolbar { display: flex; gap: .55rem; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: .55rem .75rem; border-bottom: 1px solid var(--doc-border-soft, #eef2f7); background: var(--doc-bg-soft, #f8fafc); color: var(--doc-text-muted, #64748b); font-size: .82rem; }
+    .portal-table-width-toolbar { border-bottom: 1px solid var(--doc-border-soft, #eef2f7); background: var(--doc-bg-soft, #f8fafc); color: var(--doc-text-muted, #64748b); font-size: .82rem; }
+    .portal-table-width-toolbar > summary { display: flex; gap: .45rem; align-items: center; justify-content: space-between; min-height: 2.6rem; padding: .55rem .75rem; cursor: pointer; list-style: none; user-select: none; }
+    .portal-table-width-toolbar > summary::-webkit-details-marker { display: none; }
+    .portal-table-width-toolbar > summary::after { content: "開く"; border: 1px solid var(--doc-primary-border, #bfdbfe); border-radius: 999px; background: var(--doc-surface, #fff); color: var(--doc-primary, #2563eb); font-size: .76rem; line-height: 1; padding: .28rem .55rem; }
+    .portal-table-width-toolbar[open] > summary::after { content: "閉じる"; }
+    .portal-table-width-toolbar-title { color: var(--doc-text-soft, #334155); font-weight: 700; }
+    .portal-table-width-toolbar-body { display: flex; gap: .55rem; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 0 .75rem .65rem; }
     .portal-table-width-toolbar label { display: inline-flex; gap: .45rem; align-items: center; margin: 0; white-space: nowrap; }
     .portal-table-width-toolbar input[type="range"] { width: 160px; accent-color: var(--doc-primary, #2563eb); }
     .portal-table-width-actions { display: inline-flex; gap: .35rem; align-items: center; flex-wrap: wrap; }
@@ -72,19 +78,21 @@ function injectStyle(frameDocument) {
     .portal-table-width-button:hover, .portal-table-width-button:focus, .portal-table-width-button[aria-pressed="true"] { border-color: var(--doc-primary, #2563eb); outline: none; }
     .portal-table-width-button[aria-pressed="true"] { background: var(--doc-primary, #2563eb); color: #fff; }
     .portal-table-width-hint { color: var(--doc-text-muted, #64748b); font-size: .78rem; }
-    .portal-table-width-scroll { overflow: auto; max-height: min(70vh, 720px); padding: .65rem; }
-    .portal-table-width-frame table { margin: 0 !important; width: var(--portal-table-width, 100%) !important; min-width: var(--portal-table-width, 100%) !important; max-width: none !important; display: table !important; }
-    .portal-table-width-frame th, .portal-table-width-frame td { position: relative; }
-    .portal-table-width-frame.has-sticky-header thead th, .portal-table-width-frame.has-sticky-header tr:first-child th { position: sticky; top: 0; z-index: 4; background: var(--doc-bg-soft, #f8fafc); box-shadow: 0 1px 0 var(--doc-border, #e5e7eb); }
-    .portal-table-width-frame.has-sticky-header tr:first-child td { position: sticky; top: 0; z-index: 3; background: var(--doc-bg-soft, #f8fafc); box-shadow: 0 1px 0 var(--doc-border, #e5e7eb); }
-    .portal-table-width-frame.has-sticky-column tr > :first-child { position: sticky; left: 0; z-index: 2; background: var(--doc-surface, #fff); box-shadow: 1px 0 0 var(--doc-border, #e5e7eb); }
-    .portal-table-width-frame.has-sticky-header.has-sticky-column thead tr > :first-child, .portal-table-width-frame.has-sticky-header.has-sticky-column tr:first-child > :first-child { z-index: 6; background: var(--doc-bg-soft, #f8fafc); }
-    .portal-table-column-resizer { position: absolute; top: 0; right: -4px; z-index: 7; width: 8px; height: 100%; min-height: 28px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; cursor: col-resize; }
+    .portal-table-width-scroll { position: relative; overflow: auto; max-height: min(70vh, 720px); padding: .65rem; background: var(--doc-surface, #fff); isolation: isolate; }
+    .portal-table-width-frame table { margin: 0 !important; width: var(--portal-table-width, 100%) !important; min-width: var(--portal-table-width, 100%) !important; max-width: none !important; display: table !important; border-collapse: separate !important; border-spacing: 0 !important; background: var(--doc-surface, #fff); }
+    .portal-table-width-frame th, .portal-table-width-frame td { position: relative; background-clip: padding-box; }
+    .portal-table-width-frame.has-sticky-header thead th, .portal-table-width-frame.has-sticky-header tr:first-child th { position: sticky; top: 0; z-index: 40; background: var(--doc-bg-soft, #f8fafc) !important; box-shadow: 0 1px 0 var(--doc-border, #e5e7eb), 0 3px 10px rgb(15 23 42 / 8%); }
+    .portal-table-width-frame.has-sticky-header tr:first-child td { position: sticky; top: 0; z-index: 35; background: var(--doc-bg-soft, #f8fafc) !important; box-shadow: 0 1px 0 var(--doc-border, #e5e7eb), 0 3px 10px rgb(15 23 42 / 8%); }
+    .portal-table-width-frame.has-sticky-column tr > :first-child { position: sticky; left: 0; z-index: 30; background: var(--doc-surface, #fff) !important; box-shadow: 1px 0 0 var(--doc-border, #e5e7eb), 4px 0 10px rgb(15 23 42 / 6%); }
+    .portal-table-width-frame.has-sticky-header.has-sticky-column thead tr > :first-child, .portal-table-width-frame.has-sticky-header.has-sticky-column tr:first-child > :first-child { z-index: 50; background: var(--doc-bg-soft, #f8fafc) !important; box-shadow: 1px 0 0 var(--doc-border, #e5e7eb), 0 1px 0 var(--doc-border, #e5e7eb), 4px 4px 12px rgb(15 23 42 / 10%); }
+    .portal-table-width-frame.has-sticky-column tbody tr:nth-child(even) > :first-child { background: #fbfdff !important; }
+    .portal-table-column-resizer { position: absolute; top: 0; right: -4px; z-index: 60; width: 8px; height: 100%; min-height: 28px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; cursor: col-resize; opacity: 0; }
+    .portal-table-width-frame:hover .portal-table-column-resizer, .portal-table-column-resizer:hover, .portal-table-column-resizer:focus, .portal-table-column-resizer.is-resizing { opacity: 1; }
     .portal-table-column-resizer::after { content: ""; position: absolute; top: 7px; bottom: 7px; left: 3px; width: 2px; border-radius: 999px; background: transparent; }
     .portal-table-column-resizer:hover::after, .portal-table-column-resizer:focus::after, .portal-table-column-resizer.is-resizing::after { background: var(--doc-primary, #2563eb); box-shadow: 0 0 0 3px rgb(37 99 235 / 14%); }
     .portal-table-width-frame.is-column-resizing, .portal-table-width-frame.is-column-resizing * { cursor: col-resize !important; user-select: none; }
     @media (max-width: 720px) {
-      .portal-table-width-toolbar { align-items: flex-start; flex-direction: column; }
+      .portal-table-width-toolbar > summary, .portal-table-width-toolbar-body { align-items: flex-start; flex-direction: column; }
       .portal-table-width-toolbar input[type="range"] { width: 190px; }
     }
   `
@@ -204,8 +212,17 @@ export default class extends Controller {
     wrapper.dataset.docsPortalTableIndex = String(index)
     wrapper.style.setProperty("--portal-table-width", `${width}%`)
 
-    const toolbar = frameDocument.createElement("div")
+    const toolbar = frameDocument.createElement("details")
     toolbar.className = "portal-table-width-toolbar"
+    const summary = frameDocument.createElement("summary")
+    const summaryTitle = frameDocument.createElement("span")
+    summaryTitle.className = "portal-table-width-toolbar-title"
+    summaryTitle.textContent = "表ツール"
+    summary.appendChild(summaryTitle)
+
+    const toolbarBody = frameDocument.createElement("div")
+    toolbarBody.className = "portal-table-width-toolbar-body"
+
     const label = frameDocument.createElement("label")
     label.textContent = "表の幅"
     const range = frameDocument.createElement("input")
@@ -230,7 +247,8 @@ export default class extends Controller {
     hint.className = "portal-table-width-hint"
     hint.textContent = "列境界をドラッグできます"
     actions.append(fitButton, wideButton, stickyHeaderButton, stickyColumnButton, resetColumnsButton, hint)
-    toolbar.append(label, actions)
+    toolbarBody.append(label, actions)
+    toolbar.append(summary, toolbarBody)
 
     const scroll = frameDocument.createElement("div")
     scroll.className = "portal-table-width-scroll"
@@ -297,56 +315,63 @@ export default class extends Controller {
     const colgroup = ensureColgroup(frameDocument, table, columnCount)
     const widths = readTableColumnWidths(frame, tableIndex)
     applyColumnWidths(table, colgroup, widths)
-    const headerRow = table.tHead?.rows?.[0] || table.rows[0]
-    if (!headerRow) return
 
-    Array.from(headerRow.cells).forEach((cell, columnIndex) => {
-      if (columnIndex >= columnCount - 1) return
-      const resizer = frameDocument.createElement("button")
-      resizer.type = "button"
-      resizer.className = "portal-table-column-resizer"
-      resizer.setAttribute("aria-label", `${columnIndex + 1}列目の幅を調整`)
-      cell.appendChild(resizer)
+    Array.from(table.rows).forEach((row) => {
+      Array.from(row.cells).forEach((cell, columnIndex) => {
+        if (columnIndex >= columnCount - 1) return
+        this.attachColumnResizer(frame, frameDocument, cell, columnIndex, tableIndex, table, colgroup, widths, wrapper)
+      })
+    })
+  }
 
-      let dragging = false
-      let startX = 0
-      let startWidth = 0
-      const stopDragging = () => {
-        dragging = false
-        wrapper.classList.remove("is-column-resizing")
-        resizer.classList.remove("is-resizing")
-      }
-      const resizeColumn = (clientX) => {
-        widths[columnIndex] = clampColumnWidth(startWidth + clientX - startX)
-        applyColumnWidths(table, colgroup, widths)
-        writeTableColumnWidths(frame, tableIndex, widths)
-      }
+  attachColumnResizer(frame, frameDocument, cell, columnIndex, tableIndex, table, colgroup, widths, wrapper) {
+    if (cell.querySelector(`.portal-table-column-resizer[data-column-index="${columnIndex}"]`)) return
 
-      resizer.addEventListener("pointerdown", (event) => {
-        dragging = true
-        startX = event.clientX
-        startWidth = colgroup.children[columnIndex]?.getBoundingClientRect().width || cell.getBoundingClientRect().width
-        wrapper.classList.add("is-column-resizing")
-        resizer.classList.add("is-resizing")
-        resizer.setPointerCapture(event.pointerId)
-        event.preventDefault()
-        event.stopPropagation()
-      })
-      resizer.addEventListener("pointermove", (event) => {
-        if (dragging) resizeColumn(event.clientX)
-      })
-      resizer.addEventListener("pointerup", stopDragging)
-      resizer.addEventListener("pointercancel", stopDragging)
-      resizer.addEventListener("keydown", (event) => {
-        if (!["ArrowLeft", "ArrowRight", "Home"].includes(event.key)) return
-        event.preventDefault()
-        const currentWidth = colgroup.children[columnIndex]?.getBoundingClientRect().width || cell.getBoundingClientRect().width
-        const step = event.shiftKey ? 40 : 16
-        const nextWidth = event.key === "Home" ? MIN_COLUMN_WIDTH : event.key === "ArrowLeft" ? currentWidth - step : currentWidth + step
-        widths[columnIndex] = clampColumnWidth(nextWidth)
-        applyColumnWidths(table, colgroup, widths)
-        writeTableColumnWidths(frame, tableIndex, widths)
-      })
+    const resizer = frameDocument.createElement("button")
+    resizer.type = "button"
+    resizer.className = "portal-table-column-resizer"
+    resizer.dataset.columnIndex = String(columnIndex)
+    resizer.setAttribute("aria-label", `${columnIndex + 1}列目の幅を調整`)
+    cell.appendChild(resizer)
+
+    let dragging = false
+    let startX = 0
+    let startWidth = 0
+    const stopDragging = () => {
+      dragging = false
+      wrapper.classList.remove("is-column-resizing")
+      wrapper.querySelectorAll(".portal-table-column-resizer.is-resizing").forEach((activeResizer) => activeResizer.classList.remove("is-resizing"))
+    }
+    const resizeColumn = (clientX) => {
+      widths[columnIndex] = clampColumnWidth(startWidth + clientX - startX)
+      applyColumnWidths(table, colgroup, widths)
+      writeTableColumnWidths(frame, tableIndex, widths)
+    }
+
+    resizer.addEventListener("pointerdown", (event) => {
+      dragging = true
+      startX = event.clientX
+      startWidth = colgroup.children[columnIndex]?.getBoundingClientRect().width || cell.getBoundingClientRect().width
+      wrapper.classList.add("is-column-resizing")
+      wrapper.querySelectorAll(`.portal-table-column-resizer[data-column-index="${columnIndex}"]`).forEach((sameColumnResizer) => sameColumnResizer.classList.add("is-resizing"))
+      resizer.setPointerCapture(event.pointerId)
+      event.preventDefault()
+      event.stopPropagation()
+    })
+    resizer.addEventListener("pointermove", (event) => {
+      if (dragging) resizeColumn(event.clientX)
+    })
+    resizer.addEventListener("pointerup", stopDragging)
+    resizer.addEventListener("pointercancel", stopDragging)
+    resizer.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight", "Home"].includes(event.key)) return
+      event.preventDefault()
+      const currentWidth = colgroup.children[columnIndex]?.getBoundingClientRect().width || cell.getBoundingClientRect().width
+      const step = event.shiftKey ? 40 : 16
+      const nextWidth = event.key === "Home" ? MIN_COLUMN_WIDTH : event.key === "ArrowLeft" ? currentWidth - step : currentWidth + step
+      widths[columnIndex] = clampColumnWidth(nextWidth)
+      applyColumnWidths(table, colgroup, widths)
+      writeTableColumnWidths(frame, tableIndex, widths)
     })
   }
 }
