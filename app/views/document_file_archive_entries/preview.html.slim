@@ -1,0 +1,52 @@
+.document-viewer
+  = render "document_files/preview_header",
+    project: @project,
+    document: @document,
+    document_version: @document_version,
+    document_file: @document_file
+
+  .card
+    h2 ZIP entry preview
+    p.muted
+      | ZIP内の小さいテキストentryだけをpreviewしています。downloadはまだ提供していません。
+    dl.details-list
+      dt entry path
+      dd
+        code = @entry_preview.entry_path
+      dt filename
+      dd = @entry_preview.filename || "-"
+      dt content type
+      dd = @entry_preview.content_type || "-"
+      dt size
+      dd = number_to_human_size(@entry_preview.size)
+
+  - if @entry_preview.previewable?
+    - if @entry_preview.truncated?
+      .card
+        h2 先頭 #{@entry_preview.line_limit} 行を表示しています
+        p.muted 大きいentryのため、previewでは先頭行のみ表示しています。
+
+    .card
+      h2 内容
+      .text-preview data-text-preview-tools="true"
+        .document-filter
+          label
+            | 検索
+            input type="search" placeholder="entry内を検索" data-text-preview-search-input="true"
+          label
+            input type="checkbox" data-text-preview-matches-only="true"
+            | 一致行のみ表示
+          button.button.secondary type="button" data-text-preview-copy="true" 表示中の行をコピー
+          button.button.secondary type="button" data-text-preview-reset="true" リセット
+          span.muted data-text-preview-count="true"
+          span.muted data-text-preview-status="true"
+        pre.text-preview__body
+          - @entry_preview.lines.each_with_index do |line, index|
+            code data-text-preview-line="true" data-text-preview-line-number=(index + 1)
+              span.text-preview__line-number = index + 1
+              span data-text-preview-line-content="true" = line
+  - else
+    .card
+      h2 previewできません
+      p = @entry_preview.reason
+      p.muted ZIP entry の preview は safe path、file entry、text preview候補、size上限内、UTF-8 のものだけが対象です。
