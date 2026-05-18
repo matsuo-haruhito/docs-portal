@@ -76,6 +76,8 @@
   - ディレクトリパスコピー
   - safe / unsafe path 表示
   - entry action metadata / 操作候補表示
+  - archive entry lookup service
+  - archive entry text preview service
   - text preview / download 候補分類
   - truncated 時の対象範囲 warning
   - entry sort
@@ -130,27 +132,32 @@
 
 ## 短期タスク
 
-### 1. preview controller / viewer service の整理
+### 1. ZIP entry preview の controller / UI 接続
 
 目的:
 
-- ファイル種別ごとの preview 分岐を読みやすく保つ
-- viewer 追加時に controller が肥大化しないようにする
+- 実装済みの lookup / preview service を安全に画面へつなぐ
 
 候補:
 
-- 既存 preview service の spec を補強する
-- entry 単位 preview / download の設計に入る前に safety metadata を再確認する
+- archive entry preview route 追加
+- archive entry preview controller action 追加
+- text preview candidate にだけ preview link を表示
+- preview action で access log / consent timing を確認する
+- download link は preview が安定するまで追加しない
 
-### 2. ZIP entry 操作の次段
+### 2. ZIP entry download の設計
 
 目的:
 
-- ZIP preview を一覧確認から軽い調査ツールへ近づける
+- ZIP entry preview が安定した後に、download の安全境界を決める
 
 候補:
 
-- entry 単位 preview / download の設計
+- download 権限の再確認
+- access log の記録方法
+- send_data / streaming の選定
+- size limit の扱い
 
 ### 3. specs / roadmap の継続整理
 
@@ -294,8 +301,8 @@
 
 ## 実装順のおすすめ
 
-1. preview service の spec 補強
-2. ZIP entry 単位 preview / download の設計
+1. ZIP entry preview の controller / UI 接続
+2. ZIP entry download の設計
 3. Preview target metadata parser / validator
 4. Docusaurus build manifest
 5. Path history resolver
