@@ -62,7 +62,7 @@
         .document-viewer__header
           div
             h2 ZIP内ファイル一覧
-            p.muted `/` で検索欄に移動できます。ディレクトリ / 種別 / 安全性 / 候補 / キーワードで絞り込み、見出しボタンで並び替えできます。行ごとのパスや表示中のパスをコピーできます。候補表示は将来のentry preview/download対象の目安です。
+            p.muted `/` で検索欄に移動できます。ディレクトリ / 種別 / 安全性 / 候補 / キーワードで絞り込み、見出しボタンで並び替えできます。text preview候補はentry previewを開けます。downloadはまだ提供していません。
           p.actions
             button.button.secondary type="button" data-archive-preview-copy-visible="true" 表示中のパスをコピー
         .document-filter
@@ -136,6 +136,8 @@
                     - else
                       span.muted = entry.action_unavailable_reason || "-"
                   td
+                    - if entry.text_preview_candidate?
+                      = link_to "preview", archive_entry_preview_document_file_path(@document_file, entry_path: entry.name), class: "button secondary"
                     button.button.secondary type="button" data-archive-preview-copy-entry="true" パスをコピー
     - else
       = render "preview_empty_card", title: "空のZIPファイルです", message: "表示できるentryがありません。必要に応じてファイルをダウンロードしてください。"
