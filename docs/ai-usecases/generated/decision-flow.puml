@@ -1,0 +1,26 @@
+@startuml
+start
+:目的を確認する;
+if (コードを扱う?) then (Yes)
+  if (コードを修正する?) then (Yes)
+    if (ローカルにコードがある?) then (Yes)
+      :PROC-CODE-LOCAL-EDIT\nCodex CLIで複数ファイル修正;
+    else (No)
+      if (PR作成まで必要?) then (Yes)
+        :PROC-CODE-GH-PR\nCodex Web/AppでPR作成;
+      else (No)
+        :PROC-CODE-GH-READ\nGitHub Connectorで調査;
+      endif
+    endif
+  else (No)
+    if (ローカルにコードがある?) then (Yes)
+      :PROC-CODE-LOCAL-READ\nCodex CLIでローカル調査;
+    else (No)
+      :PROC-CODE-GH-READ\nGitHub Connectorで調査;
+    endif
+  endif
+else (No)
+  :PROC-DOC-DRAFT\nChatGPTで資料ドラフト作成;
+endif
+stop
+@enduml
