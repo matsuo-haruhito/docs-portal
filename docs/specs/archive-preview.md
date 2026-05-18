@@ -160,9 +160,11 @@ entry action は専用 service に分ける。
   - directory / missing / size over などを reason として返す
   - entry 本体は読み込まない
 - `DocumentFileArchiveEntryPreview`
-  - lookup result を受け取る
-  - text preview 対象だけを読み込む
-  - byte size / line count 上限を適用する
+  - archive 本体と entry path を受け取る
+  - lookup result を使って preview 可否を判定する
+  - preview 対象だけ entry 本体を読み込む
+  - UTF-8 validation と line count 上限を適用する
+  - 例外を漏らさず Result として返す
 - `DocumentFileArchiveEntryDownload`
   - lookup result を受け取る
   - 初期実装では `send_data` 用の binary と filename / content_type を返す
@@ -188,6 +190,29 @@ entry action は専用 service に分ける。
 
 lookup の時点では entry content は読まず、metadata と action 可否だけを返す。
 初期実装では、entry size が 1MB を超える場合は preview / download とも不可にしている。
+
+### 実装済みの preview service
+
+`DocumentFileArchiveEntryPreview` は実装済み。
+
+現在の preview result は以下を持つ。
+
+- `lookup`
+- `entry_path`
+- `filename`
+- `content_type`
+- `size`
+- `text`
+- `lines`
+- `line_count`
+- `truncated?`
+- `line_limit`
+- `previewable?`
+- `error?`
+- `reason`
+
+preview service は lookup が `previewable?` の場合だけ entry 本体を読み込む。
+entry 本体は UTF-8 として validation し、既定 2,000 行を超える場合は `truncated?` を true にする。
 
 ### 初期実装で許可する範囲
 
