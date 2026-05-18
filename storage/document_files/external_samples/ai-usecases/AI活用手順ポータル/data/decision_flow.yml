@@ -1,0 +1,103 @@
+flow:
+  id: ai_usecase_decision_flow
+  title: 目的から探す判断フロー
+  description: AI利用目的と作業状況から、推奨手順IDを選ぶための判断フローです。
+  entry_label: 目的を確認する
+  default_diagram_language: text
+
+questions:
+  start:
+    text: コードを扱う?
+    yes: code_edit
+    no: doc_draft
+  code_edit:
+    text: コードを修正する?
+    yes: local_for_edit
+    no: local_for_read
+  local_for_edit:
+    text: ローカルにコードがある?
+    yes: proc_code_local_edit
+    no: pr_needed
+  pr_needed:
+    text: PR作成まで必要?
+    yes: proc_code_gh_pr
+    no: proc_code_gh_read
+  local_for_read:
+    text: ローカルにコードがある?
+    yes: proc_code_local_read
+    no: proc_code_gh_read
+
+results:
+  doc_draft:
+    procedure_id: PROC-DOC-DRAFT
+    title: ChatGPTで資料ドラフト作成
+    tool: ChatGPT
+    pattern: PAT-DOC-DRAFT
+    description: 文書、資料、議事録、要件整理など、コードを直接扱わない作業のたたき台を作成します。
+    href: ./procedures/PROC-DOC-DRAFT.md
+  proc_code_gh_read:
+    procedure_id: PROC-CODE-GH-READ
+    title: GitHub Connectorで調査
+    tool: ChatGPT + GitHub App Connector
+    pattern: PAT-CODE-GH-READ
+    description: GitHub上の既存コードから仕様、呼び出し元、影響範囲を調査します。
+    href: ./procedures/PROC-CODE-GH-READ.md
+  proc_code_local_read:
+    procedure_id: PROC-CODE-LOCAL-READ
+    title: Codex CLIでローカル調査
+    tool: Codex CLI
+    pattern: PAT-CODE-LOCAL-READ
+    description: ローカルの作業コピーや未コミット差分を含めて調査します。
+    href: ./procedures/PROC-CODE-LOCAL-READ.md
+  proc_code_local_edit:
+    procedure_id: PROC-CODE-LOCAL-EDIT
+    title: Codex CLIで複数ファイル修正
+    tool: Codex CLI
+    pattern: PAT-CODE-LOCAL-EDIT
+    description: ローカルで複数ファイルを修正し、テストまで確認します。
+    href: ./procedures/PROC-CODE-LOCAL-EDIT.md
+  proc_code_gh_pr:
+    procedure_id: PROC-CODE-GH-PR
+    title: Codex Web/AppでPR作成
+    tool: Codex Web/App
+    pattern: PAT-CODE-GH-PR
+    description: GitHub上でIssueや要件に基づき修正し、PR作成とCI確認まで進めます。
+    href: ./procedures/PROC-CODE-GH-PR.md
+
+rule_table:
+  - rule_id: RULE-001
+    priority: 10
+    condition: 対象=文書
+    pattern: PAT-DOC-DRAFT
+    tool: TOOL-CHATGPT
+    procedure: PROC-DOC-DRAFT
+  - rule_id: RULE-010
+    priority: 10
+    condition: 対象=コード
+    pattern: 次の質問へ
+    tool: ''
+    procedure: 次の質問へ
+  - rule_id: RULE-020
+    priority: 20
+    condition: 対象=コード, 修正=false, 場所=github
+    pattern: PAT-CODE-GH-READ
+    tool: TOOL-CHATGPT-GH
+    procedure: PROC-CODE-GH-READ
+  - rule_id: RULE-030
+    priority: 30
+    condition: 対象=コード, 修正=false, 場所=local
+    pattern: PAT-CODE-LOCAL-READ
+    tool: TOOL-CODEX-CLI
+    procedure: PROC-CODE-LOCAL-READ
+  - rule_id: RULE-040
+    priority: 40
+    condition: 対象=コード, 修正=true, 場所=local
+    pattern: PAT-CODE-LOCAL-EDIT
+    tool: TOOL-CODEX-CLI
+    procedure: PROC-CODE-LOCAL-EDIT
+  - rule_id: RULE-050
+    priority: 50
+    condition: 対象=コード, 修正=true, PR必要=true
+    pattern: PAT-CODE-GH-PR
+    tool: TOOL-CODEX-WEB
+    procedure: PROC-CODE-GH-PR
