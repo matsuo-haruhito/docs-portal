@@ -78,6 +78,8 @@
   - entry action metadata / 操作候補表示
   - archive entry lookup service
   - archive entry text preview service
+  - archive entry preview route / controller / view
+  - text preview candidate への preview link
   - text preview / download 候補分類
   - truncated 時の対象範囲 warning
   - entry sort
@@ -140,9 +142,7 @@
 
 候補:
 
-- archive entry preview route 追加
-- archive entry preview controller action 追加
-- text preview candidate にだけ preview link を表示
+- controller / route / view の request spec を追加する
 - preview action で access log / consent timing を確認する
 - download link は preview が安定するまで追加しない
 
@@ -301,7 +301,7 @@
 
 ## 実装順のおすすめ
 
-1. ZIP entry preview の controller / UI 接続
+1. ZIP entry preview の request spec 追加
 2. ZIP entry download の設計
 3. Preview target metadata parser / validator
 4. Docusaurus build manifest
