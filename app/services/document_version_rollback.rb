@@ -18,6 +18,7 @@ class DocumentVersionRollback
       if previous_version
         document.update!(latest_version: previous_version)
       else
+        document.update!(latest_version: nil)
         document.archive!(actor: actor)
       end
 
