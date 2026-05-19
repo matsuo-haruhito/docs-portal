@@ -38,6 +38,12 @@ class DocusaurusRendererClient
       archive_file: output,
       site_path: safe_site_path(response["X-Docs-Site-Path"].presence || DocumentVersion.normalize_site_page_path(entry_path))
     )
+  rescue ApplicationError::BadRequest
+    output&.close!
+    raise
+  rescue SystemCallError, Timeout::Error, SocketError, IOError => e
+    output&.close!
+    raise ApplicationError::BadRequest, "Docusaurus preview renderer is unavailable: #{e.message}"
   rescue
     output&.close!
     raise
