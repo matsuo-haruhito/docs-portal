@@ -284,26 +284,47 @@ ul
 h2#version-files 添付・元ファイル
 = render "preview_target_display_summary", summary: @preview_target_display_summary
 - classifications_by_path = @preview_target_display_summary&.classifications&.index_by(&:tree_path) || {}
-ul
-  - @version.document_files.each do |file|
-    - classification = classifications_by_path[file.tree_path]
-    li
-      = link_to file.file_name, document_file_path(file)
-      |  / #{file.content_type} / #{number_to_human_size(file.file_size)}
-      - if classification
-        |  / 
-        span.badge = classification.role
-        - if classification.grouped?
-          |  
-          span.badge = classification.group_name
-        - if classification.hidden?
-          |  
-          span.badge hidden
-        - if classification.debug?
-          |  
-          span.badge debug
-      - if file.downloadable_by?(current_user)
-        |  / 
-        = link_to "ダウンロード", document_file_path(file, disposition: "download"), data: { turbo: false }
+- file_rows = @version.document_files.order(:sort_order, :id).map { |file| [file, classifications_by_path[file.tree_path]] }
+- if @preview_target_display_summary&.present?
+  - visible_ungrouped_paths = @preview_target_display_summary.visible_ungrouped.map(&:tree_path).to_set
+  - hidden_paths = @preview_target_display_summary.hidden.map(&:tree_path).to_set
+  - debug_paths = @preview_target_display_summary.debug.map(&:tree_path).to_set
+  - grouped_paths = @preview_target_display_summary.grouped.map(&:tree_path).to_set
+  h3 通常表示ファイル
+  p.muted primary / attachment / normal は通常確認するファイルとして表示します。hidden / debug / group 指定のファイルは下の専用セクションに分けています。
+  ul
+    - file_rows.select { |file, _classification| visible_ungrouped_paths.include?(file.tree_path) }.each do |file, classification|
+      = render "document_file_list_item", file:, classification:
+  - @preview_target_display_summary.groups.each do |group_name, classifications|
+    - group_paths = classifications.map(&:tree_path).to_set
+    details open=true
+      summary group: #{group_name} #{classifications.count}件
+      ul
+        - file_rows.select { |file, _classification| group_paths.include?(file.tree_path) }.each do |file, classification|
+          = render "document_file_list_item", file:, classification:
+  - if @preview_target_display_summary.hidden.any?
+    details
+      summary hidden files #{@preview_target_display_summary.hidden.count}件
+      p.muted 通常の確認対象から外したい内部資料や補助ファイルです。必要な場合だけ展開して確認します。
+      ul
+        - file_rows.select { |file, _classification| hidden_paths.include?(file.tree_path) }.each do |file, classification|
+          = render "document_file_list_item", file:, classification:
+  - if @preview_target_display_summary.debug.any?
+    details
+      summary debug files #{@preview_target_display_summary.debug.count}件
+      p.muted レンダリング確認や調査用のファイルです。通常閲覧では優先度を下げています。
+      ul
+        - file_rows.select { |file, _classification| debug_paths.include?(file.tree_path) }.each do |file, classification|
+          = render "document_file_list_item", file:, classification:
+  - orphan_rows = file_rows.reject { |file, _classification| visible_ungrouped_paths.include?(file.tree_path) || hidden_paths.include?(file.tree_path) || debug_paths.include?(file.tree_path) || grouped_paths.include?(file.tree_path) }
+  - if orphan_rows.any?
+    h3 その他のファイル
+    ul
+      - orphan_rows.each do |file, classification|
+        = render "document_file_list_item", file:, classification:
+- else
+  ul
+    - file_rows.each do |file, classification|
+      = render "document_file_list_item", file:, classification:
 
 = render "documents/comment_workspace", floating: false, comment_target_version: @version
