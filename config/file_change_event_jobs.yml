@@ -1,0 +1,30 @@
+# File change event job registry.
+#
+# This file maps file CRUD events to ActiveJob classes and parameters.
+# Handlers for external sync, manual document edits, uploads, or future sources
+# should enqueue GeneratedFileChangeEventJob with changed_files/events; this
+# registry decides which jobs should run.
+#
+# Supported operation values: create, update, delete, any.
+# Supported param template variables:
+# - $changed_files: all changed file paths in the event
+# - $matched_files: file paths matched by this rule
+# - $event_source: event source passed to GeneratedFileChangeEventJob
+# - $metadata: metadata passed to GeneratedFileChangeEventJob
+# - $operations: operations of matched files
+rules:
+  - id: ai_usecase_decision_flow_generated_file_job
+    description: Rebuild AI usecase decision flow outputs when the flow DSL changes.
+    operations:
+      - create
+      - update
+      - delete
+    path_patterns:
+      - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
+    job_class: GeneratedFileJob
+    params:
+      changed_files: $matched_files
+      job_ids:
+        - ai_usecase_decision_flow
+      event_source: $event_source
+      metadata: $metadata
