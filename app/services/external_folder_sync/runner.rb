@@ -7,11 +7,12 @@ module ExternalFolderSync
 
     SyncBatch = Data.define(:entries, :removed_ids, :cursor, :incremental, :full_scan_fallback)
 
-    def initialize(source:, mode:, actor:, allow_conflict_warnings: false)
+    def initialize(source:, mode:, actor:, allow_conflict_warnings: false, change_event_notifier: GeneratedFiles::ChangeEventNotifier.new)
       @source = source
       @mode = mode.to_s
       @actor = actor
       @allow_conflict_warnings = allow_conflict_warnings
+      @change_event_notifier = change_event_notifier
       @entries_by_id = {}
       @generated_file_events = []
     end
@@ -43,7 +44,7 @@ module ExternalFolderSync
 
     private
 
-    attr_reader :source, :mode, :actor, :entries_by_id, :generated_file_events
+    attr_reader :source, :mode, :actor, :entries_by_id, :generated_file_events, :change_event_notifier
 
     def client
       @client ||= ExternalFolderSync::GoogleDriveClient.new(source:)
@@ -526,7 +527,7 @@ module ExternalFolderSync
       return unless apply?
       return if generated_file_events.empty?
 
-      GeneratedFileChangeEventJob.perform_later(
+      change_event_notifier.notify(
         file_events: generated_file_events.uniq.sort_by { [_1.fetch("path"), _1.fetch("operation")] },
         event_source: "external_folder_sync",
         metadata: {
