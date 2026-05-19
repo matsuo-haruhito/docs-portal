@@ -8,7 +8,7 @@ class DocumentVersionUploadReviewsController < BaseController
     case params.require(:decision)
     when "approve"
       review.approve!
-      redirect_to project_document_path(version.document.project, version.document, version_id: version.public_id), notice: "アップロード内容を反映しました。"
+      redirect_to project_document_path(version.document.project, version.document, version_id: version.public_id), notice: "アップロード内容を反映しました。誤りがあればすぐ取り消せます。", flash: { approved_upload_version_public_id: version.public_id }
     when "reject"
       document = version.document
       project = document.project
