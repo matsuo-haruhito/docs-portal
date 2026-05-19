@@ -112,8 +112,7 @@ RSpec.describe "API internal file upload content hash", type: :request do
       file: uploaded_file,
       relative_path: "docs/README.md",
       source_commit_hash: "source-hash-123",
-      content_hash: "0" * 64,
-      validate_only: true
+      content_hash: "0" * 64
     }, headers: headers
 
     expect(response).to have_http_status(:bad_request)
