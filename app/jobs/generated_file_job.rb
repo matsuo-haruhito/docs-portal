@@ -26,6 +26,11 @@ class GeneratedFileJob < ApplicationJob
       "metadata=#{metadata.to_h.inspect}"
     )
 
-    GeneratedFiles::Runner.new(changed_files:, job_ids:).call
+    GeneratedFiles::Runner.new(
+      changed_files:,
+      job_ids:,
+      event_source:,
+      metadata:
+    ).call
   end
 end
