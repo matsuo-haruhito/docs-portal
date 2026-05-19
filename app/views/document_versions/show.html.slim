@@ -76,6 +76,23 @@ p.muted
       li
         strong 元ファイル: 
         = pluralize(@version.document_files.size, "file")
+      - if @version.site_build_path.present?
+        li
+          strong Build manifest: 
+          = @docusaurus_build_manifest&.source_path.presence || "未検出"
+        li
+          strong Manifest warning: 
+          = pluralize(@docusaurus_build_manifest&.warnings&.size.to_i, "warning")
+    - if @docusaurus_build_manifest&.warnings&.any?
+      details
+        summary Docusaurus build manifest warnings
+        ul.compact-list
+          - @docusaurus_build_manifest.warnings.each do |warning|
+            li
+              code = warning.code
+              |  / #{warning.message}
+              - if warning.detail.present?
+                |  / #{warning.detail}
 
 = render "rollback_actions"
 
