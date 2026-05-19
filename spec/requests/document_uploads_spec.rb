@@ -6,12 +6,14 @@ RSpec.describe "Document uploads", type: :request do
   let(:user) { create(:user, :internal) }
   let(:project) { create(:project, code: "UPLOAD", name: "Upload Project") }
   let(:document_file_root) { Rails.root.join("storage", "document_files") }
+  let(:site_root) { Rails.root.join("storage", "docs_sites") }
 
   after do
     FileUtils.rm_rf(document_file_root.join("manual_uploads"))
+    FileUtils.rm_rf(site_root)
   end
 
-  it "creates a new document under the selected folder" do
+  it "creates a draft upload candidate under the selected folder" do
     sign_in_as(user)
 
     expect do
@@ -24,30 +26,71 @@ RSpec.describe "Document uploads", type: :request do
       .and change(DocumentFile, :count).by(1)
 
     document = project.documents.find_by!(title: "overview")
-    version = document.latest_version
+    version = document.document_versions.first
+    expect(document.latest_version).to be_nil
+    expect(version).to be_draft
     expect(version.source_relative_path).to eq("docs/specs/overview.md")
     expect(version.source_directory).to eq("docs/specs")
     expect(version.source_file_name).to eq("overview.md")
     expect(version.search_body_text).to include("Overview")
     expect(version.document_files.first.file_name).to eq("docs/specs/overview.md")
-    expect(response).to redirect_to(project_documents_path(project, q: "docs/specs/overview.md", upload_source_path: "docs/specs", uploaded_version_id: version.public_id))
+    expect(version.rendered_site_available?).to eq(true)
+    expect(response).to redirect_to(document_version_path(version, upload_review: "1"))
   end
 
-  it "shows a completion prompt with a diff link" do
+  it "shows review actions on a draft manual upload version" do
     sign_in_as(user)
     document = create(:document, project: project, title: "Guide", slug: "guide")
-    version = create(:document_version, document: document)
-    document.update!(latest_version: version)
+    version = create(:document_version, document: document, status: :draft, source_commit_hash: "manual-upload")
+    version.assign_source_path_metadata!(source_path: "docs/guide.md", snapshot_kind: "received_markdown")
+    version.save!
 
-    get project_documents_path(project, uploaded_version_id: version.public_id)
+    get document_version_path(version, upload_review: "1")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("アップロードを完了しました")
-    expect(response.body).to include("差異を確認")
-    expect(response.body).to include(document_version_path(version))
+    expect(response.body).to include("アップロード候補の確認")
+    expect(response.body).to include("OK：この内容を反映")
+    expect(response.body).to include("NG：この候補を破棄")
   end
 
-  it "creates a new version when dropped on a document with the same filename" do
+  it "approves a draft upload candidate as the latest version" do
+    sign_in_as(user)
+    document = create(:document, project: project, title: "Guide", slug: "guide")
+    previous_version = create(:document_version, document: document)
+    previous_version.assign_source_path_metadata!(source_path: "docs/guide.md", snapshot_kind: "received_markdown")
+    previous_version.save!
+    document.update!(latest_version: previous_version)
+    upload_version = create(:document_version, document: document, status: :draft, source_commit_hash: "manual-upload")
+    upload_version.assign_source_path_metadata!(source_path: "docs/guide.md", snapshot_kind: "received_markdown")
+    upload_version.save!
+
+    post document_version_upload_review_path(upload_version), params: { decision: "approve" }
+
+    expect(response).to redirect_to(project_document_path(project, document, version_id: upload_version.public_id))
+    expect(upload_version.reload).to be_published
+    expect(upload_version.published_by_user).to eq(user)
+    expect(document.reload.latest_version).to eq(upload_version)
+  end
+
+  it "rejects a draft upload candidate without promoting it" do
+    sign_in_as(user)
+    document = create(:document, project: project, title: "Guide", slug: "guide")
+    previous_version = create(:document_version, document: document)
+    previous_version.assign_source_path_metadata!(source_path: "docs/guide.md", snapshot_kind: "received_markdown")
+    previous_version.save!
+    document.update!(latest_version: previous_version)
+    upload_version = create(:document_version, document: document, status: :draft, source_commit_hash: "manual-upload")
+    upload_version.assign_source_path_metadata!(source_path: "docs/guide.md", snapshot_kind: "received_markdown")
+    upload_version.save!
+
+    post document_version_upload_review_path(upload_version), params: { decision: "reject" }
+
+    expect(response).to redirect_to(project_documents_path(project, q: "docs"))
+    expect(upload_version.reload).to be_archived
+    expect(document.reload.latest_version).to eq(previous_version)
+  end
+
+  it "creates a draft version when dropped on a document with the same filename" do
     sign_in_as(user)
     document = create(:document, project: project, title: "Guide", slug: "guide")
     version = create(:document_version, document: document)
@@ -63,13 +106,15 @@ RSpec.describe "Document uploads", type: :request do
     end.to change(Document, :count).by(0)
       .and change { document.document_versions.count }.by(1)
 
-    latest = document.reload.latest_version
-    expect(latest.source_relative_path).to eq("docs/guide.md")
-    expect(latest.search_body_text).to include("Updated Guide")
-    expect(latest.document_files.first.file_name).to eq("docs/guide.md")
+    candidate = document.document_versions.order(:created_at, :id).last
+    expect(document.reload.latest_version).to eq(version)
+    expect(candidate).to be_draft
+    expect(candidate.source_relative_path).to eq("docs/guide.md")
+    expect(candidate.search_body_text).to include("Updated Guide")
+    expect(candidate.document_files.first.file_name).to eq("docs/guide.md")
   end
 
-  it "creates a sibling document when dropped on a document with a different filename" do
+  it "creates a sibling draft document when dropped on a document with a different filename" do
     sign_in_as(user)
     document = create(:document, project: project, title: "Guide", slug: "guide")
     version = create(:document_version, document: document)
@@ -86,11 +131,14 @@ RSpec.describe "Document uploads", type: :request do
       .and change(DocumentVersion, :count).by(1)
 
     sibling = project.documents.find_by!(title: "appendix")
-    expect(sibling.latest_version.source_relative_path).to eq("docs/appendix.pdf")
-    expect(sibling.latest_version.source_directory).to eq("docs")
+    candidate = sibling.document_versions.first
+    expect(sibling.latest_version).to be_nil
+    expect(candidate).to be_draft
+    expect(candidate.source_relative_path).to eq("docs/appendix.pdf")
+    expect(candidate.source_directory).to eq("docs")
   end
 
-  it "rolls back the latest uploaded version to the previous version" do
+  it "rolls back the latest approved upload version to the previous version" do
     sign_in_as(user)
     document = create(:document, project: project, title: "Guide", slug: "guide")
     previous_version = create(:document_version, document: document)
@@ -123,24 +171,6 @@ RSpec.describe "Document uploads", type: :request do
     expect(response).to redirect_to(document_version_path(version))
     expect(document.reload.latest_version).to eq(version)
     expect(version.reload).to be_published
-  end
-
-  it "archives the document when rolling back its only version" do
-    sign_in_as(user)
-    document = create(:document, project: project, title: "Only", slug: "only")
-    uploaded_version = create(:document_version, document: document, source_commit_hash: "manual-upload")
-    uploaded_version.assign_source_path_metadata!(source_path: "docs/only.md", snapshot_kind: "received_markdown")
-    uploaded_version.save!
-    document.update!(latest_version: uploaded_version)
-
-    expect do
-      post document_version_rollback_path(uploaded_version)
-    end.not_to change(DocumentVersion, :count)
-
-    expect(response).to redirect_to(project_documents_path(project))
-    expect(document.reload).to be_archived
-    expect(document.latest_version).to be_nil
-    expect(uploaded_version.reload).to be_archived
   end
 
   private
