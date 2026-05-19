@@ -8,7 +8,8 @@ RSpec.describe DocumentsHelper, type: :helper do
     let!(:second_folder_doc) { create(:document, project:, title: "02. 設計") }
 
     before do
-      helper.define_singleton_method(:current_user) { internal_user }
+      user = internal_user
+      helper.define_singleton_method(:current_user) { user }
       first_version = create(:document_version, document: first_folder_doc, source_relative_path: "docs/01_requirements/index.md")
       second_version = create(:document_version, document: second_folder_doc, source_relative_path: "docs/02_design/index.md")
       first_folder_doc.update!(latest_version: first_version)
