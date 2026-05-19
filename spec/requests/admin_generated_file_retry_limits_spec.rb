@@ -5,19 +5,7 @@ RSpec.describe "Admin generated file retry limit notices", type: :request do
 
   it "shows the generated file run bulk retry limit" do
     sign_in_as(admin_user)
-    GeneratedFileRun.create!(
-      job_id: "sample_job",
-      generator: "sample_generator",
-      output_writer: "filesystem",
-      status: :failed,
-      event_source: "spec",
-      source_paths: [],
-      changed_files: [],
-      generated_paths: [],
-      metadata: {},
-      started_at: 1.minute.ago,
-      finished_at: Time.current
-    )
+    create(:generated_file_run, status: :failed)
 
     get admin_generated_file_runs_path
 
@@ -27,17 +15,7 @@ RSpec.describe "Admin generated file retry limit notices", type: :request do
 
   it "shows the generated file event bulk retry limit" do
     sign_in_as(admin_user)
-    GeneratedFileEvent.create!(
-      event_key: GeneratedFileEvent.build_event_key(path: "docs/source.yml", operation: "update", event_source: "spec"),
-      path: "docs/source.yml",
-      operation: "update",
-      event_source: "spec",
-      status: :failed,
-      metadata: {},
-      scheduled_at: 1.minute.ago,
-      last_seen_at: Time.current,
-      occurrences_count: 1
-    )
+    create(:generated_file_event, status: :failed, scheduled_at: 1.minute.ago)
 
     get admin_generated_file_events_path
 
