@@ -179,6 +179,7 @@ slug 候補は NFKC 正規化・小文字化・記号整理をして比較しま
 - slug が存在せず `DocumentSlugHistoryResolver` が `archived` / `deleted` を返した場合は redirect せず、canonical document を表示して terminal status notice を出す
 - `site_path` が `moved` の場合は `301 Moved Permanently` で現在の `site_path` に redirect
 - `site_path` が `archived` / `deleted` の場合は redirect せず、reader 上に terminal status notice を出す
+- project site route から `terminal_site_path` が渡された場合は、reader 側で再解決して同じ terminal status notice を出す
 - `canonical` の場合はそのまま viewer を表示
 - `missing` の場合は従来どおり viewer 処理を継続
 
@@ -195,9 +196,11 @@ site path redirect 先には現在の `version_id`、canonical `site_path`、元
 - redirect 先は query string の `site_path=...` ではなく、`/projects/:project_code/site/:site_path` の canonical path 形式にする
 - `previous_site_path` を redirect 先にも残す
 - `embedded=1` が付いている場合は redirect 先にも `embedded=1` を残す
-- `canonical` / `missing` / `archived` / `deleted` の場合は従来どおり renderer で処理する
+- `archived` / `deleted` の場合は non-embedded request では reader へ redirect し、`terminal_site_path` を渡す
+- embedded request では terminal status でも従来どおり renderer 処理を継続する
+- `canonical` / `missing` の場合は従来どおり renderer で処理する
 
-project site route が HTML ページを reader に誘導する場合も、`previous_site_path` を reader redirect に引き継ぎます。これにより、project site 直アクセスから始まった旧 path 移動でも、最終的な reader 画面で同じ移動 notice を表示できます。
+project site route が HTML ページを reader に誘導する場合も、`previous_site_path` や `terminal_site_path` を reader redirect に引き継ぎます。これにより、project site 直アクセスから始まった旧 path 移動や terminal status でも、最終的な reader 画面で同じ notice を表示できます。
 
 これにより、reader 経由の URL と Docusaurus HTML 直アクセス URL のどちらでも、旧 entry path から現在の canonical path へ誘導できます。
 
@@ -232,4 +235,4 @@ archived=1, deleted=1
 
 - path history を DB table で明示管理する
 - metadata と DB table の優先順位を整理する
-- `archived` / `deleted` を ProjectSitesController から reader へ渡す導線にも拡張する
+- embedded viewer 内で terminal status をどう表示するか検討する
