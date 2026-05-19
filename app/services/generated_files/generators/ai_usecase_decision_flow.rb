@@ -1,6 +1,7 @@
-require "fileutils"
 require "pathname"
 require "yaml"
+
+require_relative "../artifact"
 
 module GeneratedFiles
   module Generators
@@ -18,19 +19,26 @@ module GeneratedFiles
       )
         @root = Pathname(root || default_root).expand_path
         @source_path = absolute_path(source_path)
-        @markdown_path = absolute_path(markdown_path)
-        @plantuml_path = absolute_path(plantuml_path)
+        @markdown_path = Pathname(markdown_path)
+        @plantuml_path = Pathname(plantuml_path)
         @diagram_language = diagram_language
         @data = YAML.safe_load(@source_path.read, permitted_classes: [], aliases: false)
       end
 
       def call
         validate!
-        FileUtils.mkdir_p(@markdown_path.dirname)
-        FileUtils.mkdir_p(@plantuml_path.dirname)
-        @plantuml_path.write(plantuml, mode: "w", encoding: "UTF-8")
-        @markdown_path.write(markdown, mode: "w", encoding: "UTF-8")
-        [relative(@markdown_path), relative(@plantuml_path)]
+        [
+          GeneratedFiles::Artifact.new(
+            path: relative_output_path(@markdown_path),
+            content: markdown,
+            content_type: "text/markdown"
+          ),
+          GeneratedFiles::Artifact.new(
+            path: relative_output_path(@plantuml_path),
+            content: plantuml,
+            content_type: "text/vnd.plantuml"
+          )
+        ]
       end
 
       private
@@ -98,7 +106,7 @@ module GeneratedFiles
 
           1. `#{relative(@source_path)}` を変更する。
           2. `bin/rails ai_usecases:generate_flow` を実行する。
-          3. `#{relative(@markdown_path)}` と `#{relative(@plantuml_path)}` の差分を確認する。
+          3. `#{relative_output_path(@markdown_path)}` と `#{relative_output_path(@plantuml_path)}` の差分を確認する。
           4. `rails db:seed` でdocs-portalに取り込む。
         MARKDOWN
       end
@@ -181,6 +189,11 @@ module GeneratedFiles
 
       def relative(path)
         Pathname(path).relative_path_from(root).to_s
+      end
+
+      def relative_output_path(path)
+        path = Pathname(path)
+        path.absolute? ? relative(path) : path.cleanpath.to_s
       end
 
       def absolute_path(path)
