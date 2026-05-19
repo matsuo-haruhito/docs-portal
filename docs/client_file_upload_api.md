@@ -44,6 +44,7 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
     "relative_path": "docs/README.md",
     "source_path": "C:/work/customer-docs/docs/README.md",
     "file_size": 1234,
+    "content_hash": "sha256...",
     "source_commit_hash": "sha256...",
     "version_label": "file-YYYYMMDDHHMMSS-hash8",
     "zip_import_preview": {
