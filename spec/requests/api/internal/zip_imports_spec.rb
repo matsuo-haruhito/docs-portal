@@ -3,12 +3,13 @@ require "fileutils"
 require "tempfile"
 require "zip"
 
-RSpec.describe "API internal zip imports", type: :request do
+RSpec.describe "API internal zip uploads", type: :request do
   let(:token) { "secret-token" }
   let(:headers) { { "Authorization" => "Bearer #{token}" } }
   let(:project) { create(:project, code: "ZIPIMPORT", name: "ZIP Import Project") }
   let(:import_root) { Rails.root.join("storage", "imports") }
   let(:document_file_root) { Rails.root.join("storage", "document_files") }
+  let(:endpoint) { "/api/internal/zip_uploads" }
 
   before do
     allow(ENV).to receive(:fetch).and_call_original
@@ -32,7 +33,7 @@ RSpec.describe "API internal zip imports", type: :request do
     )
 
     expect do
-      post api_internal_zip_imports_path, params: {
+      post endpoint, params: {
         project_code: project.code,
         zip_file:,
         validate_only: true,
@@ -62,7 +63,7 @@ RSpec.describe "API internal zip imports", type: :request do
       "docs/assets/guide.png" => "image"
     )
 
-    post api_internal_zip_imports_path, params: {
+    post endpoint, params: {
       project_code: project.code,
       zip_file:,
       validate_only: true,
@@ -71,7 +72,7 @@ RSpec.describe "API internal zip imports", type: :request do
     dry_run_id = response.parsed_body.fetch("dry_run_id")
 
     expect do
-      post api_internal_zip_imports_path, params: {
+      post endpoint, params: {
         import_dry_run_id: dry_run_id
       }, headers: headers
     end.to change(Document, :count).by(1)
@@ -95,7 +96,7 @@ RSpec.describe "API internal zip imports", type: :request do
   end
 
   it "rejects execution without a saved dry-run id" do
-    post api_internal_zip_imports_path, params: {}, headers: headers
+    post endpoint, params: {}, headers: headers
 
     expect(response).to have_http_status(:bad_request)
     expect(response.parsed_body["error"]).to include("import_dry_run_id is required")
@@ -104,7 +105,7 @@ RSpec.describe "API internal zip imports", type: :request do
   it "rejects zip entries that escape the extraction root" do
     zip_file = build_uploaded_zip("../outside.md" => "# nope\n")
 
-    post api_internal_zip_imports_path, params: {
+    post endpoint, params: {
       project_code: project.code,
       zip_file:,
       validate_only: true
