@@ -9,103 +9,147 @@ RSpec.describe GeneratedFiles::ChangeEventHandler do
     end
   end
 
-  it "enqueues matching generated file jobs for changed source files" do
+  it "enqueues configured jobs with expanded params for matching CRUD events" do
     registry = write_registry(
-      jobs: [
+      rules: [
         {
           "id" => "matched",
-          "source_paths" => ["source.yml"],
-          "watch_paths" => ["bin/generate_matched"],
-          "command" => "ruby bin/generate_matched",
-          "generated_paths" => ["generated.md"]
+          "operations" => ["create", "update"],
+          "path_patterns" => ["source.yml"],
+          "job_class" => "GeneratedFileJob",
+          "params" => {
+            "changed_files" => "$matched_files",
+            "job_ids" => ["generated_job"],
+            "event_source" => "$event_source",
+            "metadata" => "$metadata"
+          }
         },
         {
           "id" => "unmatched",
-          "source_paths" => ["other.yml"],
-          "command" => "ruby bin/generate_unmatched",
-          "generated_paths" => ["other.md"]
+          "operations" => ["update"],
+          "path_patterns" => ["other.yml"],
+          "job_class" => "GeneratedFileJob",
+          "params" => {
+            "changed_files" => "$matched_files",
+            "job_ids" => ["other_job"]
+          }
         }
       ]
     )
-    job_class = class_double(GeneratedFileJob, perform_later: true)
+    allow(GeneratedFileJob).to receive(:perform_later)
 
-    job_ids = described_class.new(
-      changed_files: ["source.yml"],
+    rule_ids = described_class.new(
+      file_events: [{"path" => "source.yml", "operation" => "update"}],
       event_source: "spec",
       metadata: {"source_id" => 1},
       registry_path: registry,
       root: @root,
-      job_class:,
       output: StringIO.new
     ).call
 
-    expect(job_ids).to eq(["matched"])
-    expect(job_class).to have_received(:perform_later).with(
+    expect(rule_ids).to eq(["matched"])
+    expect(GeneratedFileJob).to have_received(:perform_later).with(
       changed_files: ["source.yml"],
-      job_ids: ["matched"],
+      job_ids: ["generated_job"],
       event_source: "spec",
       metadata: {"source_id" => 1}
     )
   end
 
-  it "enqueues jobs when watch paths change" do
+  it "supports glob path patterns and delete operations" do
     registry = write_registry(
-      jobs: [
+      rules: [
         {
-          "id" => "watcher",
-          "source_paths" => ["source.yml"],
-          "watch_paths" => ["bin/generate_watcher"],
-          "command" => "ruby bin/generate_watcher",
-          "generated_paths" => ["generated.md"]
+          "id" => "delete_rule",
+          "operations" => ["delete"],
+          "path_patterns" => ["docs/**/*.yml"],
+          "job_class" => "GeneratedFileJob",
+          "params" => {
+            "changed_files" => "$changed_files",
+            "job_ids" => ["cleanup_job"],
+            "metadata" => {"operations" => "$operations"}
+          }
         }
       ]
     )
-    job_class = class_double(GeneratedFileJob, perform_later: true)
+    allow(GeneratedFileJob).to receive(:perform_later)
 
-    job_ids = described_class.new(
-      changed_files: ["bin/generate_watcher"],
+    rule_ids = described_class.new(
+      file_events: [
+        {"path" => "docs/a/source.yml", "operation" => "delete"},
+        {"path" => "docs/a/ignored.md", "operation" => "delete"}
+      ],
       registry_path: registry,
       root: @root,
-      job_class:,
       output: StringIO.new
     ).call
 
-    expect(job_ids).to eq(["watcher"])
-    expect(job_class).to have_received(:perform_later).with(
-      changed_files: ["bin/generate_watcher"],
-      job_ids: ["watcher"],
-      event_source: nil,
-      metadata: {}
+    expect(rule_ids).to eq(["delete_rule"])
+    expect(GeneratedFileJob).to have_received(:perform_later).with(
+      changed_files: ["docs/a/ignored.md", "docs/a/source.yml"],
+      job_ids: ["cleanup_job"],
+      metadata: {operations: ["delete"]}
     )
   end
 
-  it "does not enqueue when no jobs match" do
+  it "treats changed_files as update events for backward compatibility" do
     registry = write_registry(
-      jobs: [
+      rules: [
         {
-          "id" => "unmatched",
-          "source_paths" => ["source.yml"],
-          "command" => "ruby bin/generate_unmatched",
-          "generated_paths" => ["generated.md"]
+          "id" => "legacy_update",
+          "operations" => ["update"],
+          "path_patterns" => ["source.yml"],
+          "job_class" => "GeneratedFileJob",
+          "params" => {
+            "changed_files" => "$matched_files",
+            "job_ids" => ["generated_job"]
+          }
         }
       ]
     )
-    job_class = class_double(GeneratedFileJob, perform_later: true)
+    allow(GeneratedFileJob).to receive(:perform_later)
 
-    job_ids = described_class.new(
-      changed_files: ["other.yml"],
+    rule_ids = described_class.new(
+      changed_files: ["source.yml"],
       registry_path: registry,
       root: @root,
-      job_class:,
       output: StringIO.new
     ).call
 
-    expect(job_ids).to eq([])
-    expect(job_class).not_to have_received(:perform_later)
+    expect(rule_ids).to eq(["legacy_update"])
+    expect(GeneratedFileJob).to have_received(:perform_later).with(
+      changed_files: ["source.yml"],
+      job_ids: ["generated_job"]
+    )
+  end
+
+  it "does not enqueue when no rules match" do
+    registry = write_registry(
+      rules: [
+        {
+          "id" => "unmatched",
+          "operations" => ["update"],
+          "path_patterns" => ["source.yml"],
+          "job_class" => "GeneratedFileJob",
+          "params" => {"changed_files" => "$matched_files"}
+        }
+      ]
+    )
+    allow(GeneratedFileJob).to receive(:perform_later)
+
+    rule_ids = described_class.new(
+      file_events: [{"path" => "other.yml", "operation" => "update"}],
+      registry_path: registry,
+      root: @root,
+      output: StringIO.new
+    ).call
+
+    expect(rule_ids).to eq([])
+    expect(GeneratedFileJob).not_to have_received(:perform_later)
   end
 
   def write_registry(content)
-    path = @root.join("generated-file-jobs.yml")
+    path = @root.join("file-change-event-jobs.yml")
     path.write(content.to_yaml)
     path
   end
