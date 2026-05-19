@@ -88,6 +88,18 @@ project site route が HTML ページを reader に誘導する場合も、`prev
 
 これにより、reader 経由の URL と Docusaurus HTML 直アクセス URL のどちらでも、旧 entry path から現在の canonical path へ誘導できます。
 
+## quality check
+
+`DocumentVersionQualityChecker` は、同一 document の過去 version に現在とは異なる HTML entry path がある場合、`path_history` warning を表示します。
+
+warning detail は次の形です。
+
+```text
+old/path, another/old/path -> current/path
+```
+
+この warning はエラーではありません。旧 URL から現在 URL へ redirect できる履歴があることを、公開前確認やレビューで見落とさないための通知です。
+
 ## current limitations
 
 - slug 自体の履歴はまだ扱わない
@@ -101,4 +113,3 @@ project site route が HTML ページを reader に誘導する場合も、`prev
 - slug history の resolver を追加する
 - path history を metadata または DB table で明示管理する
 - `canonical`, `moved`, `archived`, `deleted` を user-facing な状態として整理する
-- quality check で古い path / canonical path の不整合を warning する
