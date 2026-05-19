@@ -1,3 +1,6 @@
+require "active_support/core_ext/object/blank"
+require "pathname"
+
 module GeneratedFiles
   class ChangeEventNotifier
     def initialize(job_class: GeneratedFileChangeEventJob)
