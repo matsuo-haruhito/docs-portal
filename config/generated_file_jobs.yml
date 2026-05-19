@@ -8,9 +8,9 @@
 jobs:
   - id: ai_usecase_decision_flow
     description: Generate AI usecase decision flow Markdown and PlantUML from YAML DSL into repository files.
-    source_paths: &ai_usecase_decision_flow_source_paths
+    source_paths:
       - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
-    watch_paths: &ai_usecase_decision_flow_watch_paths
+    watch_paths:
       - app/controllers/api/internal/artifact_imports_controller.rb
       - app/controllers/api/internal/file_uploads_controller.rb
       - app/controllers/api/internal/zip_uploads_controller.rb
@@ -45,8 +45,35 @@ jobs:
 
   - id: ai_usecase_decision_flow_document_version
     description: Generate AI usecase decision flow Markdown and PlantUML into docs-portal DocumentVersion storage.
-    source_paths: *ai_usecase_decision_flow_source_paths
-    watch_paths: *ai_usecase_decision_flow_watch_paths
+    source_paths:
+      - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
+    watch_paths:
+      - app/controllers/api/internal/artifact_imports_controller.rb
+      - app/controllers/api/internal/file_uploads_controller.rb
+      - app/controllers/api/internal/zip_uploads_controller.rb
+      - app/importers/document_importer.rb
+      - app/jobs/generated_file_change_event_job.rb
+      - app/jobs/generated_file_event_dispatch_job.rb
+      - app/jobs/generated_file_job.rb
+      - app/models/generated_file_event.rb
+      - app/models/generated_file_run.rb
+      - app/services/generated_files/artifact.rb
+      - app/services/generated_files/change_event_handler.rb
+      - app/services/generated_files/change_event_notifier.rb
+      - app/services/generated_files/event_buffer.rb
+      - app/services/generated_files/file_change_event_registry.rb
+      - app/services/generated_files/generated_job_registry.rb
+      - app/services/generated_files/generators/ai_usecase_decision_flow.rb
+      - app/services/generated_files/output_writers/document_version.rb
+      - app/services/generated_files/output_writers/filesystem.rb
+      - app/services/generated_files/run_recorder.rb
+      - app/services/generated_files/runner.rb
+      - app/services/manual_document_upload.rb
+      - bin/generate_ai_usecase_flow
+      - bin/run_generated_file_jobs
+      - config/file_change_event_jobs.yml
+      - config/generated_file_jobs.yml
+      - lib/tasks/ai_usecases.rake
     generator: ai_usecase_decision_flow
     output_writer: document_version
     output_options:
