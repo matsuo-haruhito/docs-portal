@@ -1,5 +1,5 @@
 import {createServer} from 'node:http';
-import {mkdtemp, mkdir, rm, readFile} from 'node:fs/promises';
+import {mkdtemp, mkdir, rm, readFile, stat} from 'node:fs/promises';
 import {createWriteStream} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,6 +8,7 @@ import {spawn} from 'node:child_process';
 
 const PORT = Number(process.env.PORT || 3000);
 const MAX_UPLOAD_BYTES = Number(process.env.MAX_UPLOAD_BYTES || 20 * 1024 * 1024);
+const MAX_OUTPUT_BYTES = Number(process.env.MAX_OUTPUT_BYTES || 50 * 1024 * 1024);
 const BUILD_TIMEOUT_MS = Number(process.env.BUILD_TIMEOUT_MS || 60_000);
 const REPO_ROOT = process.env.REPO_ROOT || '/app';
 const DOCUSAURUS_DIR = path.join(REPO_ROOT, 'docusaurus');
@@ -51,6 +52,7 @@ const server = createServer(async (request, response) => {
 
     const sitePath = normalizeSitePagePath(entryPath);
     await createArchive(outputArchive, buildDir);
+    await ensureMaxFileSize(outputArchive, MAX_OUTPUT_BYTES, 'build output');
     const archive = await readFile(outputArchive);
 
     response.writeHead(200, {
@@ -90,6 +92,13 @@ async function writeBoundedRequestBody(request, destination) {
   });
 
   await pipeline(request, createWriteStream(destination));
+}
+
+async function ensureMaxFileSize(filePath, maxBytes, label) {
+  const info = await stat(filePath);
+  if (info.size > maxBytes) {
+    throw new Error(`${label} is too large: ${info.size} bytes`);
+  }
 }
 
 async function validateArchiveEntries(archivePath) {
