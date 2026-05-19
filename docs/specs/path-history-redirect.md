@@ -63,7 +63,7 @@ Path history / redirect は、文書の slug、Docusaurus site path、Markdown e
 | `archived` | アーカイブ済み | このURLに対応する文書はアーカイブ済みです。 |
 | `deleted` | 削除済み | このURLに対応する文書は削除済みです。 |
 
-現時点の resolver は主に `canonical` / `moved` / `missing` を返します。`archived` / `deleted` は DB table 化や明示 metadata 拡張後に使う予定の user-facing 状態です。
+現時点の resolver は主に `canonical` / `moved` / `missing` を返します。`archived` / `deleted` は metadata で読み取れますが、resolver からはまだ返しません。
 
 ## explicit metadata
 
@@ -84,9 +84,33 @@ path_history:
     - previous-guide
   site_paths:
     - docs/previous-guide
+  archived:
+    - kind: slug
+      value: old-manual
+      reason: replaced by current-manual
+  deleted:
+    - site_path: docs/deleted-manual
+      reason: removed from publication
 ```
 
-対応 key は `slugs` と `site_paths` のみです。未対応 key は `path_history_metadata` warning として表示します。
+対応 key は `slugs`, `site_paths`, `archived`, `deleted` です。未対応 key は `path_history_metadata` warning として表示します。
+
+`archived` / `deleted` の entry は次の形式を取れます。
+
+```yaml
+path_history:
+  archived:
+    - kind: slug
+      value: old-manual
+      reason: replaced by current-manual
+    - kind: site_path
+      value: docs/old-manual
+  deleted:
+    - slug: removed-manual
+    - site_path: docs/removed-manual
+```
+
+`kind` は `slug` または `site_path` のみ対応します。`slug:` / `site_path:` shortcut を使った場合は kind を自動推定します。現時点では `archived` / `deleted` entry は quality check と将来実装の準備用で、redirect resolver の返却 status にはまだ使いません。
 
 ## canonical 判定
 
@@ -174,11 +198,17 @@ old/path, another/old/path -> current/path
 
 `DocumentPathHistoryMetadata` が source file を検出した場合は `path_history_metadata` info を表示します。未対応 key や YAML parse error は `path_history_metadata` warning として表示します。
 
+`archived` / `deleted` entry がある場合は `path_history_metadata_status` info を表示します。detail は次の形式です。
+
+```text
+archived=1, deleted=1
+```
+
 ## current limitations
 
 - slug history は metadata と source/path 由来の推定で扱うが、明示 DB table はまだ持たない
 - site path history は metadata と過去 version の path で扱うが、明示 DB table はまだ持たない
-- `archived` / `deleted` は user-facing status として定義済みだが resolver からはまだ返さない
+- `archived` / `deleted` は user-facing status と metadata entry として定義済みだが resolver からはまだ返さない
 - 別 document への移動はまだ扱わない
 - asset path は redirect しない
 
