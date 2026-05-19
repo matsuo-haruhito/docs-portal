@@ -1,6 +1,9 @@
 - page_title @document.title
 - rendered_view_available = @viewer_iframe_src.present?
 - document_download_file = document_version_download_file(@viewer_version)
+- preview_drop_data = {}
+- if current_user.internal?
+  - preview_drop_data = { controller: "manual-document-upload", manual_document_upload_dragging_class: "is-dragging", manual_document_upload_url_value: project_document_uploads_path(@project), manual_document_upload_target_document_id: @document.public_id, action: "dragenter->manual-document-upload#dragenter dragover->manual-document-upload#dragover dragleave->manual-document-upload#dragleave drop->manual-document-upload#drop" }
 
 = turbo_stream.remove document_tree_unread_icon_id(@document)
 
@@ -12,6 +15,8 @@
     .page-hero.site-viewer-hero.document-reader-hero
       h1 = @document.title
       p.muted = site_viewer_meta_lines(project: @project, document: @document, version: @viewer_version).join(" / ")
+      - if current_user.internal?
+        p.muted このプレビュー領域へファイルをドロップすると、この文書の更新候補としてアップロードできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
       p.actions
         = link_to "案件トップ", project_path(@project), class: "button secondary"
         = link_to "文書一覧", project_documents_path(@project), class: "button secondary"
@@ -31,11 +36,18 @@
         .document-context-drawer__sections
           = render "detail_sections"
 
-    .site-viewer-shell.document-reader-shell#document-content
+    .site-viewer-shell.document-reader-shell.manual-document-upload-target#document-content data=preview_drop_data
       iframe.site-viewer-frame src=@viewer_iframe_src title="#{@document.title} #{@viewer_version.version_label}" loading="eager"
 
     = render "comment_workspace", floating: true
 - else
   h1 = @document.title
+  - if current_user.internal?
+    .card.manual-document-upload-panel data=preview_drop_data
+      h2 ファイルをアップロード
+      p.muted この文書の更新候補としてファイルをドロップできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
+      .manual-document-upload-panel__drop
+        strong ファイルをドラッグ＆ドロップ
+        span.muted 差異確認後にOK/NGを選択します。
   = render "comment_workspace", floating: false
   = render "detail_sections"
