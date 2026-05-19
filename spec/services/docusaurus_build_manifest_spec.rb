@@ -36,7 +36,7 @@ RSpec.describe DocusaurusBuildManifest do
       }
     )
 
-    result = described_class.new(version, expected_profile: "test").call
+    result = described_class.new(version, expected_profile: "test", now: Time.zone.parse("2026-05-21T00:00:00Z")).call
 
     expect(result).to be_valid
     expect(result.source_path).to eq("docs/guide/.docs-portal-build-manifest.json")
@@ -73,5 +73,29 @@ RSpec.describe DocusaurusBuildManifest do
       :entry_path_mismatch,
       :build_result_failed
     )
+  end
+
+  it "warns when built_at is older than the stale build threshold" do
+    write_manifest(
+      path: "docs/guide/build-manifest.json",
+      data: {
+        profile: "test",
+        source_commit: "abc123",
+        built_at: "2026-05-01T00:00:00Z",
+        entry_path: "docs/guide",
+        build_result: "success"
+      }
+    )
+
+    result = described_class.new(
+      version,
+      expected_profile: "test",
+      now: Time.zone.parse("2026-05-20T00:00:00Z"),
+      stale_build_age: 7.days
+    ).call
+
+    warning = result.warnings.find { _1.code == :stale_build }
+    expect(warning.message).to include("manifest is stale")
+    expect(warning.detail).to eq("2026-05-01T00:00:00Z")
   end
 end
