@@ -39,8 +39,10 @@ The renderer container is built from local repository code rather than a generic
 
 Kroki-generated SVGs should not be treated as source files. They should be generated under the Docusaurus build workspace and then copied into `storage/docs_sites/<version_id>/...` as part of the built site output.
 
-The Docusaurus config supports overriding the plugin static directory with:
+The Docusaurus config supports overriding the build workspace static directory with:
 
 ```bash
 DOCUSAURUS_STATIC_DIR=/path/to/build/workspace/static
 ```
+
+This value is used both by `remark-kroki-diagrams` as the SVG output directory and by Docusaurus `staticDirectories`, so generated SVGs are included in the returned build artifact without a separate HTML post-process step.
