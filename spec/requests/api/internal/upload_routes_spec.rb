@@ -26,8 +26,11 @@ RSpec.describe "API internal upload routes", type: :request do
   end
 
   it "does not expose the removed legacy internal upload URLs" do
-    expect { post "/api/internal/doc_imports", headers: headers }.to raise_error(ActionController::RoutingError)
-    expect { post "/api/internal/zip_imports", headers: headers }.to raise_error(ActionController::RoutingError)
+    post "/api/internal/doc_imports", headers: headers
+    expect(response).to have_http_status(:not_found)
+
+    post "/api/internal/zip_imports", headers: headers
+    expect(response).to have_http_status(:not_found)
   end
 
   it "creates a dry-run through the renamed ZIP upload API" do
@@ -40,7 +43,7 @@ RSpec.describe "API internal upload routes", type: :request do
         validate_only: true,
         version_label: "zip-v1"
       }, headers: headers
-    end.to change(ImportDryRun, :count).by(1)
+    end.to change(ImportDryRun, :count).by(1), response.parsed_body.inspect
 
     expect(response).to have_http_status(:created)
     expect(response.parsed_body["status"]).to eq("analyzed")
@@ -61,7 +64,7 @@ RSpec.describe "API internal upload routes", type: :request do
         validate_only: true,
         version_label: "file-v1"
       }, headers: headers
-    end.to change(ImportDryRun, :count).by(1)
+    end.to change(ImportDryRun, :count).by(1), response.parsed_body.inspect
 
     expect(response).to have_http_status(:created)
     expect(response.parsed_body["status"]).to eq("analyzed")
@@ -93,7 +96,7 @@ RSpec.describe "API internal upload routes", type: :request do
       }, headers: headers
     end.to change(Document, :count).by(1)
       .and change(DocumentVersion, :count).by(1)
-      .and change(DocumentFile, :count).by(1)
+      .and change(DocumentFile, :count).by(1), response.parsed_body.inspect
 
     expect(response).to have_http_status(:created)
     expect(response.parsed_body["status"]).to eq("imported")
