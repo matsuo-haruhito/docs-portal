@@ -43,9 +43,11 @@ class DocusaurusPreviewArchiveBuilder
   end
 
   def safe_relative_path(value)
-    path = value.to_s.tr("\\", "/").delete_prefix("/")
+    raw_path = value.to_s.tr("\\", "/")
+    invalid_absolute = raw_path.start_with?("/") || raw_path.match?(/\A[A-Za-z]:\//)
+    path = raw_path.delete_prefix("./")
     normalized = Pathname.new(path).cleanpath.to_s
-    invalid = normalized.blank? || normalized == "." || normalized == ".." || normalized.start_with?("../") || normalized.include?("\0")
+    invalid = invalid_absolute || normalized.blank? || normalized == "." || normalized == ".." || normalized.start_with?("../") || normalized.include?("\0")
     raise ApplicationError::BadRequest, "Docusaurus preview file path is invalid: #{value}" if invalid
 
     normalized
