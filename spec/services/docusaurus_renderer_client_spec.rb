@@ -58,6 +58,14 @@ RSpec.describe DocusaurusRendererClient do
     end.to raise_error(ApplicationError::BadRequest, /MDX parse failed/)
   end
 
+  it "raises a readable error when the renderer is unavailable" do
+    allow(http).to receive(:request).and_raise(Errno::ECONNREFUSED.new("renderer"))
+
+    expect do
+      client.build(archive_file: archive, entry_path: "docs/guide.md")
+    end.to raise_error(ApplicationError::BadRequest, /renderer is unavailable/)
+  end
+
   it "rejects invalid site path headers" do
     allow(http).to receive(:request).and_return(success_response("build archive", "../escape"))
 
