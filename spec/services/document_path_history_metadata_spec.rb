@@ -47,6 +47,50 @@ RSpec.describe DocumentPathHistoryMetadata do
     expect(result.site_paths).to eq(["docs/previous-guide"])
   end
 
+  it "parses archived and deleted status entries" do
+    create_file(
+      file_name: ".docs-portal-history.yml",
+      content: <<~YAML
+        path_history:
+          archived:
+            - kind: slug
+              value: old-manual
+              reason: replaced by current-manual
+          deleted:
+            - site_path: docs/deleted-manual
+              reason: removed from publication
+      YAML
+    )
+
+    result = described_class.new(version).call
+
+    expect(result.archived_entries.map(&:status)).to eq(["archived"])
+    expect(result.archived_entries.map(&:kind)).to eq(["slug"])
+    expect(result.archived_entries.map(&:value)).to eq(["old-manual"])
+    expect(result.archived_entries.map(&:reason)).to eq(["replaced by current-manual"])
+    expect(result.deleted_entries.map(&:kind)).to eq(["site_path"])
+    expect(result.deleted_entries.map(&:value)).to eq(["docs/deleted-manual"])
+    expect(result.deleted_entries.map(&:reason)).to eq(["removed from publication"])
+  end
+
+  it "warns about unsupported archived or deleted entry kinds" do
+    create_file(
+      file_name: "path-history.yaml",
+      content: <<~YAML
+        path_history:
+          archived:
+            - kind: external_url
+              value: https://example.invalid/old
+      YAML
+    )
+
+    result = described_class.new(version).call
+
+    warning = result.warnings.find { _1.code == :unsupported_status_kind }
+    expect(warning.message).to eq("path_history.archived kind is not supported")
+    expect(warning.detail).to eq("external_url")
+  end
+
   it "warns about unknown keys" do
     create_file(
       file_name: "path-history.yaml",
@@ -73,5 +117,6 @@ RSpec.describe DocumentPathHistoryMetadata do
     expect(result.source_file).to be_nil
     expect(result.slugs).to eq([])
     expect(result.site_paths).to eq([])
+    expect(result.status_entries).to eq([])
   end
 end
