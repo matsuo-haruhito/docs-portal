@@ -18,12 +18,13 @@ class ManualDocumentUpload
 
   MARKDOWN_EXTENSIONS = %w[.md .markdown .mdx].freeze
 
-  def initialize(project:, actor:, uploaded_file:, source_path: nil, target_document: nil)
+  def initialize(project:, actor:, uploaded_file:, source_path: nil, target_document: nil, change_event_notifier: GeneratedFiles::ChangeEventNotifier.new)
     @project = project
     @actor = actor
     @uploaded_file = uploaded_file
     @source_path = source_path
     @target_document = target_document
+    @change_event_notifier = change_event_notifier
   end
 
   def call
@@ -31,19 +32,23 @@ class ManualDocumentUpload
     directory = target_directory
     full_source_path = normalize_source_path(directory, filename)
     document = resolve_document(full_source_path, filename)
+    operation = document.new_record? ? "create" : "update"
 
-    Document.transaction do
+    result = Document.transaction do
       document.save! if document.new_record?
       version = create_version!(document, full_source_path)
       create_document_file!(version, full_source_path, filename)
       build_manual_html_preview!(version, full_source_path) if markdown_extension?(full_source_path)
       Result.new(document:, version:, source_path: full_source_path)
     end
+
+    notify_generated_file_change!(result, operation)
+    result
   end
 
   private
 
-  attr_reader :project, :actor, :uploaded_file, :source_path, :target_document
+  attr_reader :project, :actor, :uploaded_file, :source_path, :target_document, :change_event_notifier
 
   def target_directory
     return document_source_directory(target_document) if target_document
@@ -177,6 +182,19 @@ class ManualDocumentUpload
     else
       "<p>#{escaped}</p>"
     end
+  end
+
+  def notify_generated_file_change!(result, operation)
+    change_event_notifier.notify(
+      file_events: [{ path: result.source_path, operation: operation }],
+      event_source: "manual_document_upload",
+      metadata: {
+        project_id: project.id,
+        document_id: result.document.id,
+        document_version_id: result.version.id,
+        actor_id: actor&.id
+      }.compact
+    )
   end
 
   def searchable_text_extension?(path)
