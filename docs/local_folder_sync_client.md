@@ -38,11 +38,15 @@ NAS やローカルフォルダを docs-portal に同期するための常駐ク
 | --- | --- |
 | `project_code` | 同期先案件コード |
 | `file` | multipart upload のファイル実体 |
-| `relative_path` | 同期ルートからの相対パス |
+| `relative_path` | 同期ルートからの相対パス。省略時は `original_filename` または multipart の元ファイル名を使う |
+| `original_filename` | multipart 実装で元ファイル名が basename 化されるクライアント向けの明示的な元ファイル名 |
 | `source_path` | クライアント上のフルパスやNASパス |
 | `source_name` | 同期元名。例: `customer-nas-sync` |
 | `content_hash` | ファイル実体の SHA-256 |
 | `validate_only` | `true` |
+
+`relative_path` / `original_filename` はサーバー側でも traversal / absolute path / Windows full path を拒否する。
+通常の同期クライアントは `relative_path` を必ず送る。単体ファイル選択UIなど、同期ルート相対パスを持たないクライアントだけ `original_filename` を補助的に使う。
 
 `content_hash` はアップロード破損検知に使う。
 サーバーは受信ファイルの SHA-256 と照合し、不一致なら dry-run を作らない。
@@ -105,7 +109,7 @@ source_name + relative_path + content_hash
 - token はOSの資格情報ストアなどに保存する
 - ログに token を出さない
 - `source_path` は監査用であり、サーバー側の保存先決定には使わない
-- `relative_path` はサーバー側でも traversal / absolute path / Windows full path を拒否する
+- `relative_path` / `original_filename` はサーバー側でも traversal / absolute path / Windows full path を拒否する
 
 ## まず作る最小クライアント
 
