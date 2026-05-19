@@ -1,5 +1,6 @@
 require "fileutils"
 require "rubygems/package"
+require "tmpdir"
 require "zlib"
 
 class DocusaurusPreviewArtifactInstaller
@@ -11,19 +12,17 @@ class DocusaurusPreviewArtifactInstaller
 
   def install!
     destination = version.site_root_absolute_path
-    FileUtils.mkdir_p(destination)
-    FileUtils.rm_rf(destination.children)
+    FileUtils.mkdir_p(destination.parent)
 
-    Zlib::GzipReader.open(archive_path) do |gzip|
-      Gem::Package::TarReader.new(gzip) do |tar|
-        tar.each do |entry|
-          extract_entry(entry, destination)
-        end
-      end
+    Dir.mktmpdir("docusaurus-preview-", destination.parent.to_s) do |tmpdir|
+      staging = Pathname.new(tmpdir)
+      extract_archive!(staging)
+      expected_entry = staging.join(site_path, "index.html")
+      raise ApplicationError::BadRequest, "Docusaurus build output missing entry path: #{site_path}" unless expected_entry.exist?
+
+      FileUtils.rm_rf(destination)
+      FileUtils.mv(staging, destination)
     end
-
-    expected_entry = destination.join(site_path, "index.html")
-    raise ApplicationError::BadRequest, "Docusaurus build output missing entry path: #{site_path}" unless expected_entry.exist?
 
     version.update!(markdown_entry_path: version.source_relative_path, site_build_path: site_path)
   end
@@ -31,6 +30,16 @@ class DocusaurusPreviewArtifactInstaller
   private
 
   attr_reader :version, :archive_path, :site_path
+
+  def extract_archive!(destination)
+    Zlib::GzipReader.open(archive_path) do |gzip|
+      Gem::Package::TarReader.new(gzip) do |tar|
+        tar.each do |entry|
+          extract_entry(entry, destination)
+        end
+      end
+    end
+  end
 
   def extract_entry(entry, destination)
     relative_path = safe_relative_path(entry.full_name)
