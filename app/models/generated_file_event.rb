@@ -36,13 +36,19 @@ class GeneratedFileEvent < ApplicationRecord
   def path_must_be_safe_relative_path
     return if path.blank?
 
-    normalized_path = Pathname(path.to_s.strip).cleanpath.to_s.delete_prefix("./")
-    return unless normalized_path.blank? ||
-      normalized_path == "." ||
-      normalized_path.start_with?("/") ||
-      normalized_path.match?(%r{\A[A-Za-z]:/}) ||
-      normalized_path.split("/").include?("..")
+    raw_path = path.to_s.strip.tr("\\", "/")
+    normalized_path = Pathname(raw_path).cleanpath.to_s.delete_prefix("./")
+    return unless unsafe_relative_path?(raw_path) || unsafe_relative_path?(normalized_path)
 
     errors.add(:path, "must be a safe relative path")
+  end
+
+  def unsafe_relative_path?(value)
+    value.blank? ||
+      value == "." ||
+      value == ".." ||
+      value.start_with?("/") ||
+      value.match?(%r{\A[A-Za-z]:/}) ||
+      value.split("/").include?("..")
   end
 end
