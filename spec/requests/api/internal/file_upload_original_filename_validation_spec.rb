@@ -29,8 +29,7 @@ RSpec.describe "API internal file upload original filename validation", type: :r
     post "/api/internal/file_uploads", params: {
       project_code: project.code,
       file: uploaded_file,
-      original_filename: "../README.md",
-      validate_only: true
+      original_filename: "../README.md"
     }, headers: headers
 
     expect(response).to have_http_status(:bad_request)
