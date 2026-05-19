@@ -33,6 +33,20 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to match(%r{<div class="mt-1 text-2xl font-bold">2</div>})
     end
 
+    it "paginates generated file events" do
+      sign_in_as(admin_user)
+      newest = create_event!(path: "docs/newest.yml", scheduled_at: Time.zone.parse("2026-05-12 12:00:00"), created_at: Time.zone.parse("2026-05-12 12:00:00"))
+      middle = create_event!(path: "docs/middle.yml", scheduled_at: Time.zone.parse("2026-05-11 12:00:00"), created_at: Time.zone.parse("2026-05-11 12:00:00"))
+      oldest = create_event!(path: "docs/oldest.yml", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"), created_at: Time.zone.parse("2026-05-10 12:00:00"))
+
+      get admin_generated_file_events_path(page: 2, per_page: 1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(middle.public_id)
+      expect(response.body).not_to include(newest.public_id)
+      expect(response.body).not_to include(oldest.public_id)
+    end
+
     it "filters by status" do
       sign_in_as(admin_user)
       pending_event = create_event!(path: "docs/pending.yml", status: :pending)
