@@ -1,8 +1,9 @@
 require "fileutils"
 
 class BuildFreshnessGuard
-  def initialize(source_path:, build_entry_path:, marker_path:, job_class:)
+  def initialize(source_path:, build_entry_path:, marker_path:, job_class:, source_paths: nil)
     @source_path = Pathname.new(source_path)
+    @source_paths = Array(source_paths.presence || source_path).map { |path| Pathname.new(path) }
     @build_entry_path = Pathname.new(build_entry_path)
     @marker_path = Pathname.new(marker_path)
     @job_class = job_class
@@ -10,9 +11,10 @@ class BuildFreshnessGuard
 
   def stale?
     return true unless build_entry_path.exist?
-    return false unless source_path.exist?
 
-    source_path.mtime > build_entry_path.mtime
+    source_paths.any? do |path|
+      path.exist? && path.mtime > build_entry_path.mtime
+    end
   end
 
   def build_requested?
@@ -42,5 +44,5 @@ class BuildFreshnessGuard
 
   private
 
-  attr_reader :source_path, :build_entry_path, :marker_path, :job_class
+  attr_reader :source_path, :source_paths, :build_entry_path, :marker_path, :job_class
 end
