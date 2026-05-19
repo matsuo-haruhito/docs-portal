@@ -10,6 +10,7 @@ class DocumentsController < BaseController
     return if require_consent!(target: @project, timing: :first_view)
 
     @filters = document_filter_params
+    @selected_source_path = selected_source_path
     @available_tags = DocumentTag
       .joins(:documents)
       .merge(@project.documents.accessible_to(current_user))
@@ -136,6 +137,17 @@ class DocumentsController < BaseController
 
   def normalized_page
     @filters[:page]
+  end
+
+  def selected_source_path
+    keyword = @filters[:q].to_s.strip
+    return if keyword.blank?
+
+    normalized = keyword.tr("\\", "/").delete_prefix("/")
+    return if normalized.blank? || normalized.include?("*") || normalized.include?("?")
+    return if normalized == "." || normalized == ".." || normalized.start_with?("../")
+
+    normalized
   end
 
   def apply_keyword_filter(scope)
