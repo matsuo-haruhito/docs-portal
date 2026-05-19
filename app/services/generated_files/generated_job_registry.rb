@@ -12,7 +12,7 @@ module GeneratedFiles
     end
 
     def jobs
-      @jobs ||= YAML.safe_load(registry_path.read, permitted_classes: [Symbol], permitted_symbols: [], aliases: false).fetch("jobs")
+      @jobs ||= normalize_registry(YAML.safe_load(registry_path.read, permitted_classes: [Symbol], permitted_symbols: [], aliases: false)).fetch("jobs")
     end
 
     def select(changed_files:, job_ids: [])
@@ -43,6 +43,17 @@ module GeneratedFiles
     def absolute_path(path)
       path = Pathname(path)
       path.absolute? ? path : root.join(path)
+    end
+
+    def normalize_registry(value)
+      case value
+      when Hash
+        value.each_with_object({}) { |(key, child), hash| hash[key.to_s] = normalize_registry(child) }
+      when Array
+        value.map { |child| normalize_registry(child) }
+      else
+        value
+      end
     end
 
     def normalize_files(files)
