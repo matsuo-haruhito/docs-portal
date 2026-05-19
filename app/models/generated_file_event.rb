@@ -18,7 +18,7 @@ class GeneratedFileEvent < ApplicationRecord
   scope :due, ->(at = Time.current) { pending.where(scheduled_at: ..at) }
 
   def self.build_event_key(path:, operation:, event_source: nil)
-    normalized_path = Pathname(path.to_s.strip).cleanpath.to_s.delete_prefix("./")
+    normalized_path = Pathname(path.to_s.strip.tr("\\", "/")).cleanpath.to_s.delete_prefix("./")
     normalized_operation = operation.to_s.presence || "update"
     [normalized_path, normalized_operation, event_source.to_s].join(":")
   end
