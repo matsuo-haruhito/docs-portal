@@ -40,6 +40,15 @@ RSpec.describe GeneratedFileJob, type: :job do
       expect(key).to eq("generated-file-job:ids:sample")
     end
 
+    it "falls back to changed files when all job ids are blank" do
+      key = described_class.concurrency_key_for(
+        args: [],
+        kwargs: {job_ids: ["", nil], changed_files: ["source.yml"]}
+      )
+
+      expect(key).to eq("generated-file-job:files:source.yml")
+    end
+
     it "uses sorted changed files when job ids are absent" do
       key = described_class.concurrency_key_for(
         args: [],
