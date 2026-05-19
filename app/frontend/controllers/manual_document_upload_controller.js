@@ -42,8 +42,7 @@ export default class extends Controller {
 
   drop(event) {
     event.preventDefault()
-    this.mark(event.currentTarget, false)
-    this.element.classList.remove("is-file-dragging")
+    this.clearDragState()
 
     const files = Array.from(event.dataTransfer.files || [])
     if (files.length === 0) return
@@ -58,6 +57,9 @@ export default class extends Controller {
   upload(file, target) {
     const url = target.dataset.manualDocumentUploadUrl || this.urlValue
     if (!url) return
+
+    this.element.classList.add("is-uploading")
+    target.classList.add("is-uploading")
 
     const form = document.createElement("form")
     form.method = "post"
@@ -98,6 +100,15 @@ export default class extends Controller {
     target.classList.toggle(this.draggingClassName, active)
   }
 
+  clearDragState() {
+    this.element.classList.remove("is-file-dragging")
+    this.element.classList.remove(this.draggingClassName)
+    document.querySelectorAll(".manual-document-upload-target, .manual-document-upload-panel, .manual-document-upload-panel__drop").forEach((target) => {
+      target.classList.remove("is-file-dragging")
+      target.classList.remove(this.draggingClassName)
+    })
+  }
+
   windowDragEnter(event) {
     if (!this.hasFileDrag(event)) return
     this.element.classList.add("is-file-dragging")
@@ -109,8 +120,7 @@ export default class extends Controller {
   }
 
   windowDragEnd() {
-    this.element.classList.remove("is-file-dragging")
-    this.element.classList.remove(this.draggingClassName)
+    this.clearDragState()
   }
 
   hasFileDrag(event) {
