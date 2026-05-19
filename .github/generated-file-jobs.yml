@@ -1,0 +1,18 @@
+# Registry for source-driven generated files.
+#
+# Each entry describes one generation job. When any watched source changes,
+# .github/workflows/generated-file-jobs.yml runs the command and commits the
+# generated files back on main.
+#
+# Add future generators here instead of creating one-off workflows.
+jobs:
+  - id: ai_usecase_decision_flow
+    description: Generate AI usecase decision flow Markdown and PlantUML from YAML DSL.
+    source_paths:
+      - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
+    watch_paths:
+      - bin/generate_ai_usecase_flow
+    command: ruby bin/generate_ai_usecase_flow
+    generated_paths:
+      - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/decision-flow.md
+      - docs/ai-usecases/generated/decision-flow.puml
