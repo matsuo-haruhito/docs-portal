@@ -1,4 +1,5 @@
 - page_title "#{@document.title} #{document_version_label(@version)}"
+- docusaurus_preview_pending = @version.source_extension.to_s.in?(%w[md markdown mdx]) && !@version.rendered_site_available? && @version.source_commit_hash == "manual-upload"
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
 
@@ -18,6 +19,8 @@ p.muted
   p.actions
     - if @version.rendered_site_available?
       = link_to "HTML本文を開く", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path), class: "button"
+    - elsif docusaurus_preview_pending
+      span.button.secondary Docusaurusプレビュー生成中
     - else
       span.button.secondary HTML未生成
     = link_to "添付・元ファイル", "#version-files", class: "button secondary"
@@ -69,7 +72,12 @@ p.muted
     ul.compact-list
       li
         strong HTML本文: 
-        = @version.rendered_site_available? ? "表示可能" : "未生成"
+        - if @version.rendered_site_available?
+          | 表示可能
+        - elsif docusaurus_preview_pending
+          | Docusaurusプレビュー生成中
+        - else
+          | 未生成
       li
         strong Markdown入口: 
         = @version.markdown_entry_path.presence || "未設定"
@@ -83,6 +91,8 @@ p.muted
         li
           strong Manifest warning: 
           = pluralize(@docusaurus_build_manifest&.warnings&.size.to_i, "warning")
+    - if docusaurus_preview_pending
+      p.muted Solid QueueでDocusaurusプレビューを生成中です。しばらくしてから再読み込みしてください。元ファイルと差分確認はこの画面で先に確認できます。
     - if @docusaurus_build_manifest&.warnings&.any?
       details
         summary Docusaurus build manifest warnings
