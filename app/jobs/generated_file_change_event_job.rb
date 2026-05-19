@@ -37,9 +37,18 @@ class GeneratedFileChangeEventJob < ApplicationJob
   def self.normalized_path_for(path)
     raw_path = path.to_s.strip.tr("\\", "/")
     normalized = Pathname(raw_path).cleanpath.to_s.delete_prefix("./")
-    return nil if unsafe_path?(raw_path) || unsafe_path?(normalized)
+    return nil if unsafe_raw_path?(raw_path) || unsafe_path?(normalized)
 
     normalized
+  end
+
+  def self.unsafe_raw_path?(path)
+    path.blank? ||
+      path == "." ||
+      path == ".." ||
+      path.start_with?("/") ||
+      path.start_with?("../") ||
+      path.match?(%r{\A[A-Za-z]:/})
   end
 
   def self.unsafe_path?(path)
