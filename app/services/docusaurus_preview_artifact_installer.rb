@@ -55,6 +55,8 @@ class DocusaurusPreviewArtifactInstaller
       File.open(target, "wb") do |file|
         IO.copy_stream(entry, file)
       end
+    else
+      raise ApplicationError::BadRequest, "Docusaurus build artifact contains unsupported entry type: #{entry.full_name}"
     end
   end
 
