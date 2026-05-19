@@ -21,6 +21,7 @@
 - [Google Drive外部フォルダ同期](./Google%20Drive外部フォルダ同期.md)
 - [利用規約・秘密保持の同意管理](./利用規約・秘密保持の同意管理.md)
 - [Webhook・外部API連携方針](./Webhook・外部API連携方針.md)
+- [Internal upload API naming](./internal_upload_api_naming.md)
 - [Client file upload API flow](./client_file_upload_api.md)
 - [Local folder sync client design](./local_folder_sync_client.md)
 
