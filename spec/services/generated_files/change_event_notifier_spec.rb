@@ -59,7 +59,7 @@ RSpec.describe GeneratedFiles::ChangeEventNotifier do
     job_class = class_double(GeneratedFileChangeEventJob, perform_later: true)
     notifier = described_class.new(job_class:)
 
-    events = notifier.notify(file_events: ["", nil], event_source: "spec")
+    events = notifier.notify(file_events: ["", nil, "./"], event_source: "spec")
 
     expect(events).to eq([])
     expect(job_class).not_to have_received(:perform_later)
