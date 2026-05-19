@@ -26,5 +26,16 @@ RSpec.describe "Document upload review flow copy", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("docs/specs")
     expect(response.body).to include("直下の追加候補としてアップロードします")
+    expect(response.body).to include('data-manual-document-upload-source-path-value="docs/specs"')
+  end
+
+  it "does not treat unsafe path-like queries as upload destinations" do
+    sign_in_as(user)
+
+    get project_documents_path(project, q: "../secret")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("案件直下の追加候補としてアップロードします")
+    expect(response.body).not_to include('data-manual-document-upload-source-path-value="../secret"')
   end
 end
