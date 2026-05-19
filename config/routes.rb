@@ -98,6 +98,7 @@ Rails.application.routes.draw do
     resource :archive, only: [:show], controller: "document_version_archives"
     resource :quality_check, only: [:show], controller: "document_version_quality_checks"
     resource :rollback, only: [:create], controller: "document_version_rollbacks"
+    resource :upload_review, only: [:create], controller: "document_version_upload_reviews"
     resources :document_review_comments, only: %i[create update], param: :public_id
 
     member do
