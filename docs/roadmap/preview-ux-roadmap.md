@@ -90,6 +90,20 @@
   - entry sort
   - 条件リセット
 
+### Preview target metadata
+
+- `preview_targets` YAML / front matter parser
+- supported keys
+  - `primary`
+  - `attachments`
+  - `hidden`
+  - `debug`
+  - `groups`
+- unknown key warning
+- missing path warning
+- duplicate path warning
+- unsafe relative path normalization
+
 ### Controller / service structure
 
 - `DocumentFilesController#show` の preview / send / not found 分岐整理
@@ -139,7 +153,20 @@
 
 ## 短期タスク
 
-### 1. specs / roadmap の継続整理
+### 1. Preview target metadata integration
+
+目的:
+
+- parser 結果を品質チェックや viewer 表示制御へ接続する
+
+候補:
+
+- metadata source file の特定ルールを決める
+- quality check 画面に warning を出す
+- hidden / debug の表示制御方針を実装へ落とす
+- groups のUI表示方針を決める
+
+### 2. specs / roadmap の継続整理
 
 目的:
 
@@ -153,20 +180,18 @@
 
 ## 中期タスク
 
-### 1. Preview target metadata parser / validator
+### 1. Docusaurus build profiles の明示化
 
 目的:
 
-- `primary` / `attachments` / `hidden` / `debug` / `groups` を実際に検証できるようにする
+- portal embedded / admin API spec / preview check / diff metadata の用途を分ける
 
 候補:
 
-- YAML metadata parser service
-- glob path pattern validation
-- 存在しない path の warning
-- 重複指定の warning
-- 通常表示ファイル 0 件の warning
-- 品質チェック画面への表示
+- build command に profile を渡す
+- build manifest を保存する
+- manifest に profile / source commit / build time / validation result を含める
+- stale build / profile mismatch warning を viewer shell に表示する
 
 ### 2. Path history / redirect 実装
 
@@ -182,20 +207,7 @@
 - 旧 path 参照の品質チェック warning
 - slug / path 変更 dry-run
 
-### 3. Docusaurus build profiles の明示化
-
-目的:
-
-- portal embedded / admin API spec / preview check / diff metadata の用途を分ける
-
-候補:
-
-- build command に profile を渡す
-- build manifest を保存する
-- manifest に profile / source commit / build time / validation result を含める
-- stale build / profile mismatch warning を viewer shell に表示する
-
-### 4. Codeblock action のレビューコメント接続
+### 3. Codeblock action のレビューコメント接続
 
 目的:
 
@@ -207,7 +219,7 @@
 - codeblock line からコメント追加を開始できるようにする
 - コメント一覧から該当 codeblock line へ移動する
 
-### 5. Portal 横断検索の第一歩
+### 4. Portal 横断検索の第一歩
 
 目的:
 
@@ -281,7 +293,7 @@
 
 ## 実装順のおすすめ
 
-1. Preview target metadata parser / validator
+1. Preview target metadata integration
 2. Docusaurus build manifest
 3. Path history resolver
 4. Project 内検索
