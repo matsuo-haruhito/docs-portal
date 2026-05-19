@@ -177,7 +177,7 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
 
   def relative_path
     @relative_path ||= begin
-      value = params[:relative_path].presence || upload_file.original_filename.to_s
+      value = params[:relative_path].presence || params[:original_filename].presence || upload_file.original_filename.to_s
       normalized = value.tr("\\", "/")
       raise ApplicationError::BadRequest, "relative_path is invalid" if unsafe_relative_path?(normalized)
 
