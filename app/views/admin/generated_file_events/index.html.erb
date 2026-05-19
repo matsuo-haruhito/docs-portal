@@ -80,24 +80,30 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
-        <% @generated_file_events.each do |event| %>
+        <% if @generated_file_events.any? %>
+          <% @generated_file_events.each do |event| %>
+            <tr>
+              <td class="px-4 py-3 font-mono">
+                <%= link_to event.public_id, admin_generated_file_event_path(event.public_id), class: "text-blue-600 underline" %>
+              </td>
+              <td class="px-4 py-3"><%= event.status %></td>
+              <td class="px-4 py-3 font-mono"><%= event.path %></td>
+              <td class="px-4 py-3"><%= event.operation %></td>
+              <td class="px-4 py-3"><%= event.event_source.presence || "-" %></td>
+              <td class="px-4 py-3"><%= event.occurrences_count %></td>
+              <td class="px-4 py-3"><%= l(event.scheduled_at, format: :long) if event.scheduled_at %></td>
+              <td class="px-4 py-3"><%= l(event.processed_at, format: :long) if event.processed_at %></td>
+              <td class="px-4 py-3">
+                <div class="flex gap-2">
+                  <%= link_to "詳細", admin_generated_file_event_path(event.public_id), class: "rounded border px-2 py-1 text-xs" %>
+                  <%= button_to "再dispatch", retry_dispatch_admin_generated_file_event_path(event.public_id), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white" %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
           <tr>
-            <td class="px-4 py-3 font-mono">
-              <%= link_to event.public_id, admin_generated_file_event_path(event.public_id), class: "text-blue-600 underline" %>
-            </td>
-            <td class="px-4 py-3"><%= event.status %></td>
-            <td class="px-4 py-3 font-mono"><%= event.path %></td>
-            <td class="px-4 py-3"><%= event.operation %></td>
-            <td class="px-4 py-3"><%= event.event_source.presence || "-" %></td>
-            <td class="px-4 py-3"><%= event.occurrences_count %></td>
-            <td class="px-4 py-3"><%= l(event.scheduled_at, format: :long) if event.scheduled_at %></td>
-            <td class="px-4 py-3"><%= l(event.processed_at, format: :long) if event.processed_at %></td>
-            <td class="px-4 py-3">
-              <div class="flex gap-2">
-                <%= link_to "詳細", admin_generated_file_event_path(event.public_id), class: "rounded border px-2 py-1 text-xs" %>
-                <%= button_to "再dispatch", retry_dispatch_admin_generated_file_event_path(event.public_id), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white" %>
-              </div>
-            </td>
+            <td colspan="9" class="px-4 py-8 text-center text-gray-500">条件に一致する生成ファイルイベントはありません。</td>
           </tr>
         <% end %>
       </tbody>
