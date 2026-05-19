@@ -149,7 +149,7 @@ module GeneratedFiles
           if event.respond_to?(:fetch)
             FileEvent.new(
               path: normalize_path(event.fetch("path") { event.fetch(:path) }),
-              operation: normalize_operation(event.fetch("operation") { event.fetch(:operation) })
+              operation: normalize_operation(event.fetch("operation") { event.fetch(:operation, "update") })
             )
           else
             FileEvent.new(path: normalize_path(event), operation: normalize_operation(operation))
