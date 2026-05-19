@@ -4,6 +4,8 @@ require "fileutils"
 require "tempfile"
 
 RSpec.describe "API internal file upload default version label", type: :request do
+  include ActiveSupport::Testing::TimeHelpers
+
   let(:token) { "secret-token" }
   let(:headers) { { "Authorization" => "Bearer #{token}" } }
   let(:project) { create(:project, code: "FILEVER", name: "File Version Project") }
@@ -20,6 +22,7 @@ RSpec.describe "API internal file upload default version label", type: :request 
   end
 
   after do
+    travel_back
     FileUtils.rm_rf(import_root.join("zip_uploads"))
     FileUtils.rm_rf(document_file_root.join("zip_uploads"))
   end
