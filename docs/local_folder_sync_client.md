@@ -46,6 +46,9 @@ NAS やローカルフォルダを docs-portal に同期するための常駐ク
 `content_hash` はアップロード破損検知に使う。
 サーバーは受信ファイルの SHA-256 と照合し、不一致なら dry-run を作らない。
 
+レスポンスの `file_upload_preview.content_hash` は、クライアントが送った値ではなく、サーバーが実際に受信したファイルから計算した SHA-256 として扱う。
+クライアントは送信前に計算した SHA-256 とレスポンスの `file_upload_preview.content_hash` をログに残すと、再送や問い合わせ時に追跡しやすい。
+
 ## キューとリトライ
 
 FileSystemWatcher のイベントは重複しやすいため、クライアント側で queue に積む。
