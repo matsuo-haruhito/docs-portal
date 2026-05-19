@@ -38,10 +38,12 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
   "dry_run_id": "idry_xxxxx",
   "status": "analyzed",
   "file_upload_preview": {
+    "source_name": "customer-local-sync",
     "relative_path": "docs/README.md",
     "source_path": "C:/work/customer-docs/docs/README.md",
     "file_size": 1234,
     "source_commit_hash": "sha256...",
+    "version_label": "file-YYYYMMDDHHMMSS-hash8",
     "zip_import_preview": {
       "orphan_files": [],
       "skipped_files": [],
