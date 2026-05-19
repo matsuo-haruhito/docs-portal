@@ -10,6 +10,7 @@ RSpec.describe "Document upload review flow copy", type: :request do
     get project_documents_path(project)
 
     expect(response).to have_http_status(:ok)
+    expect(response.body).to include("文書名・URL識別子・元パス・版・本文・キーワード・添付ファイル名/パス")
     expect(response.body).to include("案件直下の追加候補としてアップロードします")
     expect(response.body).to include("アップロード後に差分確認画面でOK/NGを選択します")
     expect(response.body).to include("複数ファイルはZIPにまとめるか、1ファイルずつアップロードしてください")
