@@ -14,17 +14,31 @@ class GeneratedFileChangeEventJob < ApplicationJob
     operation = (payload[:operation] || payload["operation"] || :update).to_s
 
     normalized = if file_events.any?
-      file_events.map do |event|
-        path = event.fetch("path") { event.fetch(:path) }
+      file_events.filter_map do |event|
+        path = normalized_path_for(event.fetch("path") { event.fetch(:path) })
+        next if path.blank?
+
         event_operation = event.fetch("operation") { event.fetch(:operation, :update) }
         event_operation = :update if event_operation.blank?
-        "#{Pathname(path.to_s).cleanpath}:#{event_operation}"
+        "#{path}:#{event_operation}"
       end
     else
-      changed_files.map { "#{Pathname(_1.to_s).cleanpath}:#{operation}" }
+      changed_files.filter_map do |changed_file|
+        path = normalized_path_for(changed_file)
+        next if path.blank?
+
+        "#{path}:#{operation}"
+      end
     end
 
     "generated-file-change-event:#{normalized.sort.join(',')}"
+  end
+
+  def self.normalized_path_for(path)
+    normalized = Pathname(path.to_s.strip).cleanpath.to_s.delete_prefix("./")
+    return nil if normalized.blank? || normalized == "."
+
+    normalized
   end
 
   def perform(changed_files: nil, file_events: nil, operation: :update, event_source: nil, metadata: {}, debounce_seconds: nil)
