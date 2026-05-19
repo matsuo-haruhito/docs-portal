@@ -35,6 +35,14 @@ KROKI_ENDPOINT=http://kroki:8000
 
 The renderer container is built from local repository code rather than a generic public image because it depends on the repo-local Docusaurus config and `remark-kroki-diagrams` plugin.
 
+The renderer has bounded input, output, and execution time. Tune these only when preview builds need larger document bundles:
+
+```bash
+DOCUSAURUS_RENDERER_MAX_UPLOAD_BYTES=20971520
+DOCUSAURUS_RENDERER_MAX_OUTPUT_BYTES=52428800
+DOCUSAURUS_RENDERER_BUILD_TIMEOUT_MS=60000
+```
+
 ## Kroki generated SVGs
 
 Kroki-generated SVGs should not be treated as source files. They should be generated under the Docusaurus build workspace and then copied into `storage/docs_sites/<version_id>/...` as part of the built site output.
