@@ -133,6 +133,13 @@ html
       | .rendered-table-diff-table td.is-added, .rendered-table-diff-table tr.is-added td { background: #ecfdf5; }
       | .rendered-table-diff-table td.is-removed, .rendered-table-diff-table tr.is-removed td { background: #fef2f2; }
       | .rendered-table-diff-table td.is-changed, .rendered-table-diff-table tr.is-changed td { background: #fffbeb; outline: 2px solid #f59e0b; outline-offset: -2px; }
+      | .side-by-side-file-review__item { border: 1px solid var(--line); border-radius: 16px; padding: 0; margin-top: 14px; background: #fff; overflow: hidden; }
+      | .side-by-side-file-review__item summary { cursor: pointer; padding: 12px 16px; background: #f8fafc; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      | .side-by-side-file-review__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--line); }
+      | .side-by-side-file-review__pane { min-width: 0; padding: 16px; border-left: 1px solid var(--line); background: linear-gradient(180deg, #fff 0%, #fffaf7 100%); }
+      | .side-by-side-file-review__pane:first-child { border-left: 0; }
+      | .side-by-side-file-review__pane h3 { margin-top: 0; }
+      | .side-by-side-file-review__frame { display: block; width: 100%; min-height: 64vh; border: 1px solid var(--line); border-radius: 12px; background: white; }
       | @media (max-width: 960px) {
       |   main, .layout-with-sidebar { width: calc(100% - 32px); }
       |   .layout-with-sidebar { grid-template-columns: 1fr; margin: 24px auto; padding-right: 0; }
@@ -145,6 +152,9 @@ html
       |   .line-preview__row { grid-template-columns: 3.2rem minmax(0, 1fr); }
       |   .markdown-line-diff-row { grid-template-columns: 3rem 3rem minmax(0, 1fr); }
       |   .site-viewer-frame { min-height: 68vh; }
+      |   .side-by-side-file-review__grid { grid-template-columns: 1fr; }
+      |   .side-by-side-file-review__pane { border-left: 0; border-top: 1px solid var(--line); }
+      |   .side-by-side-file-review__pane:first-child { border-top: 0; }
       | }
   body
     header
