@@ -52,13 +52,13 @@ module DocumentDiffHelper
       if current_kind == kind
         current << char
       else
-        tokens << current if current.present?
+        tokens << current unless current.empty?
         current = +char
         current_kind = kind
       end
     end
 
-    tokens << current if current.present?
+    tokens << current unless current.empty?
     tokens
   end
 
