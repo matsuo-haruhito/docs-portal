@@ -26,10 +26,11 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   def retry_failed
+    @filters = run_filter_params
     runs = apply_filters(GeneratedFileRun.failed.order(created_at: :desc, id: :desc)).limit(MAX_PER_PAGE)
     runs.each { enqueue_retry!(_1, bulk: true) }
 
-    redirect_to admin_generated_file_runs_path(run_filter_params), notice: "失敗した生成ジョブ #{runs.size} 件の再実行をキューに投入しました。"
+    redirect_to admin_generated_file_runs_path(@filters), notice: "失敗した生成ジョブ #{runs.size} 件の再実行をキューに投入しました。"
   end
 
   private
@@ -44,14 +45,15 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   def apply_filters(scope)
-    scope = scope.public_send(@filters[:status]) if @filters[:status].in?(GeneratedFileRun.statuses.keys)
-    scope = scope.where(job_id: @filters[:job_id]) if @filters[:job_id].present?
-    scope = scope.where(generator: @filters[:generator]) if @filters[:generator].present?
-    scope = scope.where(output_writer: @filters[:output_writer]) if @filters[:output_writer].present?
-    scope = scope.where(event_source: @filters[:event_source]) if @filters[:event_source].present?
+    filters = @filters || {}
+    scope = scope.public_send(filters[:status]) if filters[:status].in?(GeneratedFileRun.statuses.keys)
+    scope = scope.where(job_id: filters[:job_id]) if filters[:job_id].present?
+    scope = scope.where(generator: filters[:generator]) if filters[:generator].present?
+    scope = scope.where(output_writer: filters[:output_writer]) if filters[:output_writer].present?
+    scope = scope.where(event_source: filters[:event_source]) if filters[:event_source].present?
 
-    created_from = parsed_time(@filters[:created_from], beginning: true)
-    created_to = parsed_time(@filters[:created_to], end_of_day: true)
+    created_from = parsed_time(filters[:created_from], beginning: true)
+    created_to = parsed_time(filters[:created_to], end_of_day: true)
     scope = scope.where("created_at >= ?", created_from) if created_from
     scope = scope.where("created_at <= ?", created_to) if created_to
     scope
