@@ -105,6 +105,21 @@ RSpec.describe GeneratedFiles::GeneratedJobRegistry do
     expect(selected.map { _1.fetch("id") }).to eq(["source", "watch"])
   end
 
+  it "ignores blank changed files and watched paths" do
+    registry_path = write_registry(
+      jobs: [
+        {"id" => "blank", "source_paths" => ["", "./"], "watch_paths" => ["./"]},
+        {"id" => "matched", "source_paths" => ["source.yml"]}
+      ]
+    )
+
+    selected = described_class.new(registry_path:, root: @root).select(
+      changed_files: ["", "./", "source.yml"]
+    )
+
+    expect(selected.map { _1.fetch("id") }).to eq(["matched"])
+  end
+
   def write_registry(content)
     path = @root.join("generated-file-jobs.yml")
     path.write(content.to_yaml)
