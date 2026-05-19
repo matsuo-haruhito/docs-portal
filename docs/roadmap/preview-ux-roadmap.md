@@ -81,6 +81,7 @@
   - archive entry preview route / controller / view
   - archive entry preview request spec
   - archive entry download design
+  - archive entry download service / spec
   - text preview candidate への preview link
   - text preview / download 候補分類
   - truncated 時の対象範囲 warning
@@ -136,18 +137,19 @@
 
 ## 短期タスク
 
-### 1. ZIP entry download の service 実装
+### 1. ZIP entry download の route / controller / request spec
 
 目的:
 
-- 設計済みの安全境界に沿って、UIへ出す前に download service と spec を固める
+- 実装済みの download service を安全に controller へ接続する
 
 候補:
 
-- `DocumentFileArchiveEntryDownload` service 追加
-- binary data / filename / content_type / size を Result で返す
-- unsafe / missing / directory / nested archive / size over を spec で固定する
-- controller / route / UI は service が安定してから追加する
+- archive entry download route 追加
+- download controller action 追加
+- 成功時だけ `record_download_access_log` を記録する
+- unsafe / missing / directory / nested archive / size over の request spec を追加する
+- UI link は request spec が安定してから追加する
 
 ### 2. specs / roadmap の継続整理
 
@@ -291,10 +293,9 @@
 
 ## 実装順のおすすめ
 
-1. ZIP entry download service / spec
-2. ZIP entry download route / controller / request spec
-3. ZIP entry download UI link
-4. Preview target metadata parser / validator
-5. Docusaurus build manifest
-6. Path history resolver
-7. Project 内検索
+1. ZIP entry download route / controller / request spec
+2. ZIP entry download UI link
+3. Preview target metadata parser / validator
+4. Docusaurus build manifest
+5. Path history resolver
+6. Project 内検索
