@@ -36,19 +36,39 @@ class DocumentSlugHistoryResolver
   attr_reader :project, :requested_slug, :candidate_documents
 
   def matching_document_version
+    explicit_match = matching_metadata_document_version
+    return explicit_match if explicit_match
+
+    matching_inferred_document_version
+  end
+
+  def matching_metadata_document_version
     documents.flat_map do |document|
       document.document_versions.map do |version|
-        matched_source = matched_source_for(version)
+        matched_source = metadata_slug_sources_for(version).find { |source| normalize_slug(source) == normalized_requested_slug }
         { document:, version:, source: matched_source } if matched_source.present?
       end
     end.compact.max_by { |match| [match.fetch(:version).created_at || Time.zone.at(0), match.fetch(:version).id || 0] }
   end
 
-  def matched_source_for(version)
-    slug_sources_for(version).find { |source| normalize_slug(source) == normalized_requested_slug }
+  def matching_inferred_document_version
+    documents.flat_map do |document|
+      document.document_versions.map do |version|
+        matched_source = matched_inferred_source_for(version)
+        { document:, version:, source: matched_source } if matched_source.present?
+      end
+    end.compact.max_by { |match| [match.fetch(:version).created_at || Time.zone.at(0), match.fetch(:version).id || 0] }
   end
 
-  def slug_sources_for(version)
+  def matched_inferred_source_for(version)
+    inferred_slug_sources_for(version).find { |source| normalize_slug(source) == normalized_requested_slug }
+  end
+
+  def metadata_slug_sources_for(version)
+    DocumentPathHistoryMetadata.new(version).call.slugs
+  end
+
+  def inferred_slug_sources_for(version)
     [
       source_file_stem(version.source_file_name),
       source_file_stem(version.source_relative_path),
@@ -86,7 +106,7 @@ class DocumentSlugHistoryResolver
   end
 
   def documents
-    @documents ||= Array(candidate_documents || project.documents.includes(:document_versions)).compact.reject { _1.slug == requested_slug }
+    @documents ||= Array(candidate_documents || project.documents.includes(document_versions: :document_files)).compact.reject { _1.slug == requested_slug }
   end
 
   def missing_result
