@@ -17,6 +17,14 @@ module DocumentQuerying
           value_resolver: ->(document) { [document.slug] }
         ),
         MatchTarget.new(
+          label: "タグ",
+          sql: "document_tags.name ILIKE :pattern",
+          normalized_sql: "document_tags.normalized_name LIKE :normalized_pattern",
+          value_resolver: lambda do |document|
+            document.document_tags.flat_map { [_1.name, _1.normalized_name] }
+          end
+        ),
+        MatchTarget.new(
           label: "バージョン",
           sql: "document_versions.version_label ILIKE :pattern",
           normalized_sql: nil,
@@ -37,6 +45,12 @@ module DocumentQuerying
           end
         ),
         MatchTarget.new(
+          label: "更新サマリ",
+          sql: "document_versions.changelog_summary ILIKE :pattern",
+          normalized_sql: nil,
+          value_resolver: ->(document) { document.document_versions.map(&:changelog_summary) }
+        ),
+        MatchTarget.new(
           label: "本文",
           sql: "document_versions.search_body_text ILIKE :pattern",
           normalized_sql: nil,
@@ -48,6 +62,14 @@ module DocumentQuerying
           normalized_sql: nil,
           value_resolver: lambda do |document|
             document.document_versions.flat_map { _1.document_files.map(&:file_name) }
+          end
+        ),
+        MatchTarget.new(
+          label: "添付tree path",
+          sql: nil,
+          normalized_sql: nil,
+          value_resolver: lambda do |document|
+            document.document_versions.flat_map { _1.document_files.map(&:tree_path) }
           end
         ),
         MatchTarget.new(
