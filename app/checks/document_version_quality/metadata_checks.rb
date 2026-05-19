@@ -18,6 +18,7 @@ module DocumentVersionQuality
         internal_only_text_check,
         path_history_check,
         path_history_metadata_source_check,
+        path_history_metadata_status_entries_check,
         *path_history_metadata_warning_checks,
         preview_target_metadata_source_check,
         *preview_target_metadata_warning_checks,
@@ -96,6 +97,14 @@ module DocumentVersionQuality
       return info(:path_history_metadata, "Path history metadata source is not set") unless path_history_metadata.source_file?
 
       info(:path_history_metadata, "Path history metadata source is set", path_history_metadata.source_file.tree_path)
+    end
+
+    def path_history_metadata_status_entries_check
+      return unless path_history_metadata.status_entries.any?
+
+      counts = path_history_metadata.status_entries.group_by(&:status).transform_values(&:count)
+      detail = counts.sort.map { |status, count| "#{status}=#{count}" }.join(", ")
+      info(:path_history_metadata_status, "Path history metadata status entries are set", detail)
     end
 
     def path_history_metadata_warning_checks
