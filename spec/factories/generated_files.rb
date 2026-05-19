@@ -11,6 +11,11 @@ FactoryBot.define do
     metadata { {} }
     started_at { 1.minute.ago }
     finished_at { Time.current }
+
+    trait :failed do
+      status { :failed }
+      error_message { "boom" }
+    end
   end
 
   factory :generated_file_event do
@@ -23,5 +28,18 @@ FactoryBot.define do
     scheduled_at { 1.minute.from_now }
     last_seen_at { Time.current }
     occurrences_count { 1 }
+
+    trait :failed do
+      status { :failed }
+      scheduled_at { 1.minute.ago }
+      processed_at { Time.current }
+      error_message { "boom" }
+    end
+
+    trait :processed do
+      status { :processed }
+      scheduled_at { 1.minute.ago }
+      processed_at { Time.current }
+    end
   end
 end
