@@ -59,6 +59,49 @@ RSpec.describe GeneratedFiles::OutputWriters::DocumentVersion do
     expect(files.second.absolute_path.read).to eq("@startuml\n@enduml")
   end
 
+  it "creates the output project when explicitly allowed" do
+    result = described_class.new(
+      project_code: "GENERATED_AI_USECASES",
+      project_name: "AI活用生成ドキュメント",
+      project_description: "AI活用判断フローなどの生成結果",
+      create_project_if_missing: true,
+      document_slug: "ai-usecase-generated-flow",
+      document_title: "AI活用判断フロー生成結果"
+    ).write([
+      GeneratedFiles::Artifact.new(
+        path: "generated/decision-flow.md",
+        content: "# Generated Flow",
+        content_type: "text/markdown"
+      )
+    ])
+
+    project = Project.find_by!(code: "GENERATED_AI_USECASES")
+    document = project.documents.find_by!(slug: "ai-usecase-generated-flow")
+    version = document.latest_version
+
+    expect(result).to eq(["document_versions/#{version.public_id}"])
+    expect(project.name).to eq("AI活用生成ドキュメント")
+    expect(project.description).to eq("AI活用判断フローなどの生成結果")
+    expect(document.title).to eq("AI活用判断フロー生成結果")
+    expect(version).to be_published
+  end
+
+  it "raises when the output project is missing and auto creation is disabled" do
+    expect do
+      described_class.new(
+        project_code: "MISSING_GENERATED_OUTPUT",
+        document_slug: "missing-generated-flow",
+        document_title: "Missing"
+      ).write([
+        GeneratedFiles::Artifact.new(
+          path: "generated/missing.md",
+          content: "missing",
+          content_type: "text/markdown"
+        )
+      ])
+    end.to raise_error(ActiveRecord::RecordNotFound, /Generated output project not found/)
+  end
+
   it "creates a new version on each write and keeps the same document" do
     project = Project.create!(code: "generated-output-repeat", name: "Generated Output Repeat")
     writer = described_class.new(
