@@ -24,11 +24,12 @@ RSpec.describe "API internal file upload original filename validation", type: :r
   end
 
   it "rejects an unsafe original filename when relative_path is omitted" do
-    uploaded_file = build_uploaded_file("# Unsafe Original Name\n", original_filename: "../README.md")
+    uploaded_file = build_uploaded_file("# Unsafe Original Name\n")
 
     post "/api/internal/file_uploads", params: {
       project_code: project.code,
       file: uploaded_file,
+      original_filename: "../README.md",
       validate_only: true
     }, headers: headers
 
@@ -40,14 +41,12 @@ RSpec.describe "API internal file upload original filename validation", type: :r
 
   private
 
-  def build_uploaded_file(content, original_filename:)
+  def build_uploaded_file(content)
     tempfile = Tempfile.new(["file-upload-original-filename-validation", ".md"])
     tempfile.binmode
     tempfile.write(content)
     tempfile.rewind
 
-    Rack::Test::UploadedFile.new(tempfile.path, "text/markdown", original_filename: "README.md").tap do |uploaded_file|
-      uploaded_file.define_singleton_method(:original_filename) { original_filename }
-    end
+    Rack::Test::UploadedFile.new(tempfile.path, "text/markdown", original_filename: "README.md")
   end
 end
