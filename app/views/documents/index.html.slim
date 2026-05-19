@@ -149,15 +149,19 @@ p.muted
       - @documents.each do |document|
         - latest_version = document.latest_version
         - files = document.document_versions.flat_map(&:document_files)
-        - match_labels = document_search_match_labels(document, @filters[:q])
+        - match_summaries = document_search_match_summaries(document, @filters[:q])
         tr
           td
             = check_box_tag "document_ids[]", document.id, false, id: "document_ids_#{document.id}", disabled: latest_version.blank?
             =< link_to document.title, project_document_path(@project, document.slug)
           td
-            - if match_labels.any?
-              - match_labels.each do |label|
-                span.badge = label
+            - if match_summaries.any?
+              ul.compact-list
+                - match_summaries.each do |summary|
+                  li
+                    span.badge = summary.label
+                    |  
+                    code = summary.value
             - else
               span.muted -
           td
