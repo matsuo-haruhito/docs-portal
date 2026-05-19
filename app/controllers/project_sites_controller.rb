@@ -13,6 +13,7 @@ class ProjectSitesController < BaseController
 
     path_history_resolution = resolve_project_site_path_history(site_path)
     return redirect_to_project_site_canonical_path(path_history_resolution) if path_history_resolution&.moved?
+    return redirect_terminal_project_site_history_to_reader(path_history_resolution) if path_history_resolution&.terminal? && !embedded_request?
 
     renderer = project_site_renderer(site_path, embedded: embedded_request?)
     file_path = renderer.file_response_path(site_path)
@@ -87,6 +88,16 @@ class ProjectSitesController < BaseController
     ), status: :moved_permanently
   end
 
+  def redirect_terminal_project_site_history_to_reader(path_history_resolution)
+    redirect_to project_document_path(
+      @project,
+      path_history_resolution.canonical_version.document.slug,
+      version_id: path_history_resolution.canonical_version.public_id,
+      site_path: path_history_resolution.canonical_path,
+      terminal_site_path: path_history_resolution.requested_path
+    )
+  end
+
   def render_html_or_shell(renderer, site_path)
     version_for_page = @current_document_version || @build_version
     require_document_version_view_access!(version_for_page)
@@ -98,6 +109,7 @@ class ProjectSitesController < BaseController
       reader_params = { version_id: version_for_page.public_id }
       reader_params[:site_path] = site_path if site_path.present?
       reader_params[:previous_site_path] = params[:previous_site_path] if params[:previous_site_path].present?
+      reader_params[:terminal_site_path] = params[:terminal_site_path] if params[:terminal_site_path].present?
       redirect_to project_document_path(@project, version_for_page.document.slug, reader_params)
     else
       @site_viewer_project = @project
