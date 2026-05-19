@@ -190,6 +190,10 @@ module DocumentsHelper
     DocumentSearch.new(keyword).match_labels_for(document)
   end
 
+  def document_search_match_summaries(document, keyword)
+    DocumentSearch.new(keyword).match_summaries_for(document)
+  end
+
   private
 
   def current_tree_item?(item, current_project:, current_document:)
