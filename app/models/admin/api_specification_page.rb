@@ -22,7 +22,7 @@ class Admin::ApiSpecificationPage
   end
 
   def source_paths
-    Dir[source_path.dirname.join("*.md")].map { |path| Pathname.new(path) }
+    Dir[source_path.dirname.join("**", "*.md")].map { |path| Pathname.new(path) }
   end
 
   def build_entry_path
