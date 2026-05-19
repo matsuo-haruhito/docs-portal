@@ -92,6 +92,40 @@ RSpec.describe GeneratedFiles::ChangeEventHandler do
     )
   end
 
+  it "uses update when file event operation is missing or blank" do
+    registry = write_registry(
+      rules: [
+        {
+          "id" => "default_update",
+          "operations" => ["update"],
+          "path_patterns" => ["*.yml"],
+          "job_class" => "GeneratedFileJob",
+          "params" => {
+            "changed_files" => "$matched_files",
+            "metadata" => {"operations" => "$operations"}
+          }
+        }
+      ]
+    )
+    allow(GeneratedFileJob).to receive(:perform_later)
+
+    rule_ids = described_class.new(
+      file_events: [
+        {"path" => "missing.yml"},
+        {"path" => "blank.yml", "operation" => ""}
+      ],
+      registry_path: registry,
+      root: @root,
+      output: StringIO.new
+    ).call
+
+    expect(rule_ids).to eq(["default_update"])
+    expect(GeneratedFileJob).to have_received(:perform_later).with(
+      changed_files: ["blank.yml", "missing.yml"],
+      metadata: {operations: ["update"]}
+    )
+  end
+
   it "treats changed_files as update events for backward compatibility" do
     registry = write_registry(
       rules: [
