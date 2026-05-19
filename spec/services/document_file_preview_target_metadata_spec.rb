@@ -85,16 +85,18 @@ RSpec.describe DocumentFilePreviewTargetMetadata do
     expect(warning.path).to eq("README.md")
   end
 
-  it "ignores unsafe relative paths and reports the remaining valid paths" do
+  it "warns about unsafe relative paths and reports the remaining valid paths" do
     result = parse(<<~YAML)
       preview_targets:
         attachments:
-          - ../secret.txt
+          - ../outside.txt
           - /attachments/spec.pdf
     YAML
 
     expect(result.paths_for(:attachments)).to eq(["attachments/spec.pdf"])
-    expect(result).to be_valid
+    warning = result.warnings.find { _1.code == :unsafe_relative_path }
+    expect(warning.path).to eq("../outside.txt")
+    expect(warning.message).to include("安全ではない相対パス")
   end
 
   it "returns an invalid yaml warning" do
