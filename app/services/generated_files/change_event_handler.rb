@@ -75,7 +75,7 @@ module GeneratedFiles
       return if matched_events.empty?
 
       params = expand_params(rule.fetch("params", {}), matched_events)
-      debounce_seconds = params.delete("debounce_seconds") || params.delete(:debounce_seconds)
+      debounce_seconds = params.delete(:debounce_seconds) || params.delete("debounce_seconds")
 
       if debounce_seconds.to_i.positive? && !dispatched_buffer_event?
         output.puts "Buffer file change event job: rule=#{rule.fetch('id')} debounce_seconds=#{debounce_seconds}"
@@ -91,12 +91,8 @@ module GeneratedFiles
       job_class = job_class_name.constantize
 
       output.puts "Enqueue file change event job: rule=#{rule.fetch('id')} job_class=#{job_class_name}"
-      job_class.perform_later(**job_kwargs(params))
+      job_class.perform_later(**params)
       rule.fetch("id")
-    end
-
-    def job_kwargs(params)
-      params.transform_keys(&:to_sym)
     end
 
     def dispatched_buffer_event?
@@ -123,7 +119,9 @@ module GeneratedFiles
     def expand_params(value, matched_events)
       case value
       when Hash
-        value.transform_values { expand_params(_1, matched_events) }
+        value.each_with_object({}) do |(key, child), hash|
+          hash[key.to_sym] = expand_params(child, matched_events)
+        end
       when Array
         value.map { expand_params(_1, matched_events) }
       when "$changed_files"
