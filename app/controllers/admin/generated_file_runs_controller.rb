@@ -17,7 +17,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
       metadata: retry_metadata
     )
 
-    redirect_to admin_generated_file_run_path(@generated_file_run), notice: "生成ジョブの再実行をキューに投入しました。"
+    redirect_to admin_generated_file_run_path(@generated_file_run.public_id), notice: "生成ジョブの再実行をキューに投入しました。"
   end
 
   private
