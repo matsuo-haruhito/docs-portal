@@ -5,6 +5,7 @@ require "pathname"
 
 ROOT = Pathname(__dir__).join("..").expand_path
 require_relative "../app/services/generated_files/generators/ai_usecase_decision_flow"
+require_relative "../app/services/generated_files/output_writers/filesystem"
 
 generator = GeneratedFiles::Generators::AiUsecaseDecisionFlow.new(
   source_path: ENV.fetch("AI_USECASE_FLOW_SOURCE", GeneratedFiles::Generators::AiUsecaseDecisionFlow::DEFAULT_SOURCE),
@@ -13,6 +14,7 @@ generator = GeneratedFiles::Generators::AiUsecaseDecisionFlow.new(
   root: ROOT
 )
 
-generated_paths = generator.call
+artifacts = generator.call
+generated_paths = GeneratedFiles::OutputWriters::Filesystem.new(root: ROOT).write(artifacts)
 puts "Generated files:"
 generated_paths.each { puts "- #{_1}" }
