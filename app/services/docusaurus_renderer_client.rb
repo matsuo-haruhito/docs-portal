@@ -39,7 +39,7 @@ class DocusaurusRendererClient
 
     Result.new(
       archive_file: output,
-      site_path: safe_site_path(response["X-Docs-Site-Path"].presence || DocumentVersion.normalize_site_page_path(entry_path))
+      site_path: safe_site_path(response["X-Docs-Site-Path"].presence || normalize_site_page_path(entry_path))
     )
   rescue ApplicationError::BadRequest
     output&.close!
@@ -72,11 +72,21 @@ class DocusaurusRendererClient
   end
 
   def safe_site_path(value)
-    path = value.to_s.tr("\\", "/").delete_prefix("/")
-    normalized = Pathname.new(path.presence || "index").cleanpath.to_s
-    invalid = normalized.blank? || normalized == "." || normalized == ".." || normalized.start_with?("../") || normalized.include?("\0")
+    raw_path = value.to_s.tr("\\", "/")
+    invalid_absolute = raw_path.start_with?("/") || raw_path.match?(/\A[A-Za-z]:\//)
+    normalized = Pathname.new(raw_path.presence || "index").cleanpath.to_s
+    invalid = invalid_absolute || normalized.blank? || normalized == "." || normalized == ".." || normalized.start_with?("../") || normalized.include?("\0")
     raise ApplicationError::BadRequest, "Docusaurus renderer returned invalid site path: #{value}" if invalid
 
     normalized
+  end
+
+  def normalize_site_page_path(path)
+    value = path.to_s.delete_prefix("/").sub(%r{\A/+}, "")
+    value = value.sub(%r{/(?:index|README)\.(?:md|markdown|mdx)\z}i, "")
+    value = value.sub(/\.(md|markdown|mdx)\z/i, "")
+    value = value.delete_suffix("/index.html")
+    value = value.delete_suffix(".html")
+    value.presence || "index"
   end
 end
