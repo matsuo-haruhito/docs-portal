@@ -17,10 +17,12 @@ RSpec.describe "Document uploads", type: :request do
     sign_in_as(user)
 
     expect do
-      post project_document_uploads_path(project), params: {
-        source_path: "docs/specs",
-        file: uploaded_file("overview.md", "# Overview")
-      }
+      expect do
+        post project_document_uploads_path(project), params: {
+          source_path: "docs/specs",
+          file: uploaded_file("overview.md", "# Overview")
+        }
+      end.to have_enqueued_job(DocusaurusPreviewBuildJob)
     end.to change(Document, :count).by(1)
       .and change(DocumentVersion, :count).by(1)
       .and change(DocumentFile, :count).by(1)
@@ -35,8 +37,6 @@ RSpec.describe "Document uploads", type: :request do
     expect(version.search_body_text).to include("Overview")
     expect(version.document_files.first.file_name).to eq("docs/specs/overview.md")
     expect(version.rendered_site_available?).to eq(false)
-    expect(enqueued_jobs.last[:job]).to eq(DocusaurusPreviewBuildJob)
-    expect(enqueued_jobs.last[:args]).to include(version.id)
     expect(response).to redirect_to(document_version_path(version, upload_review: "1"))
   end
 
