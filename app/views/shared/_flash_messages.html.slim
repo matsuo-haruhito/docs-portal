@@ -9,6 +9,3 @@
       .actions style="margin-top: 8px;"
         = link_to "反映済み版を確認", document_version_path(flash[:approved_upload_version_public_id], anchor: "version-diff"), class: "button secondary"
         = button_to "このアップロードを取り消す", document_version_rollback_path(flash[:approved_upload_version_public_id]), method: :post, class: "button danger", form: { data: { turbo_confirm: "この最新バージョンを取り消します。よろしいですか？" } }
-
-- if controller_name == "document_versions" && action_name == "show" && defined?(@version) && @version.present?
-  = render "document_versions/side_by_side_file_review"
