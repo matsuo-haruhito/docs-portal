@@ -180,7 +180,7 @@ class DocumentsController < BaseController
   end
 
   def normalized_page
-    @filters[:page]
+    @filters[:page].to_i.clamp(1, Float::INFINITY)
   end
 
   def selected_source_path
