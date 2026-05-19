@@ -31,6 +31,15 @@ RSpec.describe GeneratedFileJob, type: :job do
       expect(key).to eq("generated-file-job:ids:a,b")
     end
 
+    it "ignores blank job ids" do
+      key = described_class.concurrency_key_for(
+        args: [],
+        kwargs: {job_ids: ["", "  ", nil, "sample"], changed_files: ["z.yml"]}
+      )
+
+      expect(key).to eq("generated-file-job:ids:sample")
+    end
+
     it "uses sorted changed files when job ids are absent" do
       key = described_class.concurrency_key_for(
         args: [],
@@ -38,6 +47,15 @@ RSpec.describe GeneratedFileJob, type: :job do
       )
 
       expect(key).to eq("generated-file-job:files:a.yml,b.yml")
+    end
+
+    it "ignores blank changed files" do
+      key = described_class.concurrency_key_for(
+        args: [],
+        kwargs: {changed_files: ["", "./", "docs/../docs/source.yml"]}
+      )
+
+      expect(key).to eq("generated-file-job:files:docs/source.yml")
     end
 
     it "accepts string keys from serialized job payloads" do
