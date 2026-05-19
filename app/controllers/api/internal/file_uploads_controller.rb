@@ -69,7 +69,7 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
       actor: actor,
       source_repo: source_name,
       source_branch: relative_path,
-      source_commit_hash: params[:source_commit_hash].presence || uploaded_file_hash,
+      source_commit_hash: effective_source_commit_hash,
       version_label: version_label,
       status: params[:status]
     )
@@ -126,6 +126,10 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
 
   def uploaded_file_hash
     @uploaded_file_hash ||= Digest::SHA256.file(upload_file_path).hexdigest
+  end
+
+  def effective_source_commit_hash
+    @effective_source_commit_hash ||= params[:source_commit_hash].presence || params[:content_hash].presence || uploaded_file_hash
   end
 
   def uploaded_file_size
