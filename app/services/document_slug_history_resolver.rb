@@ -1,11 +1,23 @@
 class DocumentSlugHistoryResolver
-  Result = Data.define(:status, :requested_slug, :canonical_document, :matched_version, :matched_source) do
+  Result = Data.define(:status, :requested_slug, :canonical_document, :matched_version, :matched_source, :matched_entry) do
     def moved?
       status == :moved
     end
 
     def missing?
       status == :missing
+    end
+
+    def archived?
+      status == :archived
+    end
+
+    def deleted?
+      status == :deleted
+    end
+
+    def terminal?
+      archived? || deleted?
     end
   end
 
@@ -18,13 +30,25 @@ class DocumentSlugHistoryResolver
   def call
     return missing_result if requested_slug.blank?
 
+    if (status_match = matching_metadata_status_entry)
+      return Result.new(
+        status: status_match.fetch(:entry).status.to_sym,
+        requested_slug:,
+        canonical_document: status_match.fetch(:document),
+        matched_version: status_match.fetch(:version),
+        matched_source: status_match.fetch(:entry).value,
+        matched_entry: status_match.fetch(:entry)
+      )
+    end
+
     if (match = matching_document_version)
       return Result.new(
         status: :moved,
         requested_slug:,
         canonical_document: match.fetch(:document),
         matched_version: match.fetch(:version),
-        matched_source: match.fetch(:source)
+        matched_source: match.fetch(:source),
+        matched_entry: nil
       )
     end
 
@@ -34,6 +58,19 @@ class DocumentSlugHistoryResolver
   private
 
   attr_reader :project, :requested_slug, :candidate_documents
+
+  def matching_metadata_status_entry
+    documents.flat_map do |document|
+      document.document_versions.map do |version|
+        matched_entry = metadata_status_entries_for(version).find { |entry| entry.kind == "slug" && normalize_slug(entry.value) == normalized_requested_slug }
+        { document:, version:, entry: matched_entry } if matched_entry.present?
+      end
+    end.compact.max_by { |match| [match.fetch(:version).created_at || Time.zone.at(0), match.fetch(:version).id || 0] }
+  end
+
+  def metadata_status_entries_for(version)
+    DocumentPathHistoryMetadata.new(version).call.status_entries
+  end
 
   def matching_document_version
     explicit_match = matching_metadata_document_version
@@ -110,6 +147,6 @@ class DocumentSlugHistoryResolver
   end
 
   def missing_result
-    Result.new(status: :missing, requested_slug:, canonical_document: nil, matched_version: nil, matched_source: nil)
+    Result.new(status: :missing, requested_slug:, canonical_document: nil, matched_version: nil, matched_source: nil, matched_entry: nil)
   end
 end
