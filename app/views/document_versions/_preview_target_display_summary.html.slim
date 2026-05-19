@@ -1,0 +1,45 @@
+- return unless summary&.present?
+
+.card
+  h2 Preview target metadata
+  p.muted preview_targets metadata に基づく添付・元ファイルの分類です。hidden / debug は通常ファイルと区別して確認できます。
+  .stats-grid
+    .stat-card
+      span.stat-card__label primary
+      strong.stat-card__value = number_with_delimiter(summary.primary.count)
+    .stat-card
+      span.stat-card__label attachments
+      strong.stat-card__value = number_with_delimiter(summary.attachments.count)
+    .stat-card
+      span.stat-card__label hidden
+      strong.stat-card__value = number_with_delimiter(summary.hidden.count)
+    .stat-card
+      span.stat-card__label debug
+      strong.stat-card__value = number_with_delimiter(summary.debug.count)
+    .stat-card
+      span.stat-card__label groups
+      strong.stat-card__value = number_with_delimiter(summary.groups.size)
+
+  - if summary.hidden.any?
+    details
+      summary hidden files #{summary.hidden.count}件
+      ul.compact-list
+        - summary.hidden.each do |classification|
+          li
+            code = classification.tree_path
+  - if summary.debug.any?
+    details
+      summary debug files #{summary.debug.count}件
+      ul.compact-list
+        - summary.debug.each do |classification|
+          li
+            code = classification.tree_path
+  - if summary.groups.any?
+    details
+      summary groups #{summary.groups.size}件
+      - summary.groups.each do |group_name, classifications|
+        h3 = group_name
+        ul.compact-list
+          - classifications.each do |classification|
+            li
+              code = classification.tree_path
