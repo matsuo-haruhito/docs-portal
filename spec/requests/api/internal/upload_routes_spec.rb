@@ -126,8 +126,7 @@ RSpec.describe "API internal upload routes", type: :request do
     post "/api/internal/file_uploads", params: {
       project_code: project.code,
       file: uploaded_file,
-      relative_path: relative_path,
-      validate_only: true
+      relative_path: relative_path
     }, headers: headers
 
     expect(response).to have_http_status(:bad_request)
