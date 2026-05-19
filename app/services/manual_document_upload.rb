@@ -1,3 +1,4 @@
+require "erb"
 require "fileutils"
 require "securerandom"
 
@@ -14,6 +15,8 @@ class ManualDocumentUpload
     .yml
     .yaml
   ].freeze
+
+  MARKDOWN_EXTENSIONS = %w[.md .markdown .mdx].freeze
 
   def initialize(project:, actor:, uploaded_file:, source_path: nil, target_document: nil)
     @project = project
@@ -33,7 +36,7 @@ class ManualDocumentUpload
       document.save! if document.new_record?
       version = create_version!(document, full_source_path)
       create_document_file!(version, full_source_path, filename)
-      document.update!(latest_version: version)
+      build_manual_html_preview!(version, full_source_path) if markdown_extension?(full_source_path)
       Result.new(document:, version:, source_path: full_source_path)
     end
   end
@@ -81,11 +84,11 @@ class ManualDocumentUpload
   def create_version!(document, full_source_path)
     document.document_versions.create!(
       version_label: version_label,
-      status: :published,
+      status: :draft,
       source_commit_hash: "manual-upload",
       changelog_summary: "Manual file upload",
-      published_at: Time.current,
-      published_by_user: actor
+      published_at: nil,
+      published_by_user: nil
     ).tap do |version|
       version.assign_source_path_metadata!(source_path: full_source_path, snapshot_kind: snapshot_kind_for(full_source_path))
       version.save!
@@ -124,8 +127,64 @@ class ManualDocumentUpload
     version.update!(search_body_text: DocumentVersion.search_text_for(full_source_path))
   end
 
+  def build_manual_html_preview!(version, full_source_path)
+    source_file = version.document_files.order(:sort_order, :id).first
+    return unless source_file
+
+    markdown = source_file.absolute_path.read(encoding: "UTF-8", invalid: :replace, undef: :replace)
+    site_path = DocumentVersion.normalize_site_page_path(full_source_path)
+    destination = version.site_root_absolute_path.join(site_path, "index.html")
+    FileUtils.mkdir_p(destination.parent)
+    destination.write(manual_html_for(markdown, title: version.document.title), encoding: "UTF-8")
+    version.update!(markdown_entry_path: full_source_path, site_build_path: site_path)
+  end
+
+  def manual_html_for(markdown, title:)
+    escaped_title = ERB::Util.html_escape(title)
+    body = markdown.lines.map { |line| manual_markdown_line_to_html(line) }.join("\n")
+
+    <<~HTML
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>#{escaped_title}</title>
+        </head>
+        <body>
+          <main class="markdown manual-upload-preview">
+            #{body}
+          </main>
+        </body>
+      </html>
+    HTML
+  end
+
+  def manual_markdown_line_to_html(line)
+    stripped = line.chomp
+    escaped = ERB::Util.html_escape(stripped)
+
+    case stripped
+    when /\A#\s+(.+)/
+      "<h1>#{ERB::Util.html_escape(Regexp.last_match(1))}</h1>"
+    when /\A##\s+(.+)/
+      "<h2>#{ERB::Util.html_escape(Regexp.last_match(1))}</h2>"
+    when /\A###\s+(.+)/
+      "<h3>#{ERB::Util.html_escape(Regexp.last_match(1))}</h3>"
+    when /\A[-*]\s+(.+)/
+      "<p>#{escaped}</p>"
+    when ""
+      ""
+    else
+      "<p>#{escaped}</p>"
+    end
+  end
+
   def searchable_text_extension?(path)
     File.extname(path).downcase.in?(SEARCH_TEXT_EXTENSIONS)
+  end
+
+  def markdown_extension?(path)
+    File.extname(path).downcase.in?(MARKDOWN_EXTENSIONS)
   end
 
   def storage_key_for(version, filename)
