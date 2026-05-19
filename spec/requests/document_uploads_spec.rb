@@ -101,11 +101,11 @@ RSpec.describe "Document uploads", type: :request do
 
     expect do
       post document_version_rollback_path(uploaded_version)
-    end.to change(DocumentVersion, :count).by(-1)
+    end.not_to change(DocumentVersion, :count)
 
     expect(response).to redirect_to(document_version_path(previous_version))
     expect(document.reload.latest_version).to eq(previous_version)
-    expect(DocumentVersion.exists?(uploaded_version.id)).to eq(false)
+    expect(uploaded_version.reload).to be_archived
   end
 
   it "archives the document when rolling back its only version" do
@@ -118,10 +118,11 @@ RSpec.describe "Document uploads", type: :request do
 
     expect do
       post document_version_rollback_path(uploaded_version)
-    end.to change(DocumentVersion, :count).by(-1)
+    end.not_to change(DocumentVersion, :count)
 
     expect(response).to redirect_to(project_documents_path(project))
     expect(document.reload).to be_archived
+    expect(uploaded_version.reload).to be_archived
   end
 
   private
