@@ -57,6 +57,7 @@ jobs:
       - name: Run matched generated-file jobs
         env:
           GENERATED_FILE_JOB_CHANGED_FILES: ${{ steps.changed.outputs.files }}
+          GENERATED_FILE_JOB_REGISTRY: config/generated_file_jobs.yml
         run: ruby bin/run_generated_file_jobs
 
       - name: Commit generated files
