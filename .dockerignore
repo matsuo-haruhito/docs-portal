@@ -1,0 +1,18 @@
+.git
+.bundle
+coverage
+log
+node_modules
+tmp
+vendor/bundle
+storage/docs_sites
+storage/document_files
+storage/downloads
+storage/screenshots
+storage/tmp
+
+# Keep package manifests and renderer/Docusaurus source available for docker builds.
+!docusaurus/package.json
+!docusaurus/package-lock.json
+!docusaurus/**
+!docusaurus-renderer/**
