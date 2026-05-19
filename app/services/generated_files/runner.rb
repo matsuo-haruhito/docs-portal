@@ -5,8 +5,8 @@ require "open3"
 require "pathname"
 require "set"
 require "shellwords"
-require "yaml"
 
+require_relative "generated_job_registry"
 require_relative "run_recorder"
 
 module GeneratedFiles
@@ -17,7 +17,7 @@ module GeneratedFiles
       end
     end
 
-    DEFAULT_REGISTRY_PATH = "config/generated_file_jobs.yml"
+    DEFAULT_REGISTRY_PATH = GeneratedJobRegistry::DEFAULT_REGISTRY_PATH
 
     GENERATORS = {
       "ai_usecase_decision_flow" => {
@@ -46,10 +46,10 @@ module GeneratedFiles
       root: nil,
       output: $stdout,
       error_output: $stderr,
-      run_recorder: RunRecorder.new
+      run_recorder: RunRecorder.new,
+      registry: nil
     )
       @root = Pathname(root || default_root).expand_path
-      @registry_path = absolute_path(registry_path)
       @changed_files = normalize_files(changed_files)
       @job_ids = Array(job_ids).compact.map(&:to_s).to_set
       @event_source = event_source
@@ -57,10 +57,11 @@ module GeneratedFiles
       @output = output
       @error_output = error_output
       @run_recorder = run_recorder
+      @registry = registry || GeneratedJobRegistry.new(registry_path:, root: @root)
     end
 
     def call
-      selected_jobs = jobs.select { run_job?(_1) }
+      selected_jobs = registry.select(changed_files: changed_files.to_a, job_ids: job_ids.to_a)
 
       if selected_jobs.empty?
         output.puts "No generated-file jobs matched."
@@ -73,8 +74,8 @@ module GeneratedFiles
 
     private
 
-    attr_reader :root, :registry_path, :changed_files, :job_ids, :event_source, :metadata,
-      :output, :error_output, :run_recorder
+    attr_reader :root, :changed_files, :job_ids, :event_source, :metadata,
+      :output, :error_output, :run_recorder, :registry
 
     def default_root
       if defined?(Rails)
@@ -82,18 +83,6 @@ module GeneratedFiles
       else
         Pathname(__dir__).join("..", "..", "..").expand_path
       end
-    end
-
-    def jobs
-      YAML.safe_load(registry_path.read, permitted_classes: [], aliases: false).fetch("jobs")
-    end
-
-    def run_job?(job)
-      return true if job_ids.include?(job.fetch("id"))
-      return false unless job_ids.empty?
-
-      watch_paths = Array(job.fetch("source_paths")) + Array(job.fetch("watch_paths", []))
-      normalize_files(watch_paths).any? { changed_files.include?(_1) }
     end
 
     def execute_job_with_recording(job)
@@ -186,11 +175,6 @@ module GeneratedFiles
         output.puts "Generated paths:"
         generated_paths.each { output.puts "- #{_1}" }
       end
-    end
-
-    def absolute_path(path)
-      path = Pathname(path)
-      path.absolute? ? path : root.join(path)
     end
 
     def normalize_files(files)
