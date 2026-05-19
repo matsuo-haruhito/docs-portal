@@ -22,7 +22,11 @@ internal API は、用途が分かる名前に分ける。
 `file_uploads` は、受信した単体ファイルを一時ZIPとして staging し、既存の ZIP upload dry-run / manifest / `DocumentImporter` の流れへ合流させる。
 
 クライアントPC上のフルパスは `source_path` として参考情報に留め、取り込み上の安全な識別子には `relative_path` を使う。
-`relative_path` は先頭 `/` や `../` を拒否し、サーバー側の保存先決定には使わない。
+`relative_path` は先頭 `/`、Windows の `C:/...` 形式、`../` を拒否し、サーバー側の保存先決定には使わない。
+
+`source_commit_hash` が指定されない場合、`file_uploads` は内部生成した一時ZIPではなく、アップロードされた元ファイル実体の SHA-256 を使う。
+これにより、同期クライアントが同じファイルを再送した場合にも、内容単位で追跡しやすくする。
+`version_label` が指定されない場合は `file-YYYYMMDDHHMMSS` を使う。
 
 ## 現状
 
