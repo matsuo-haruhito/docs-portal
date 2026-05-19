@@ -123,6 +123,59 @@ RSpec.describe GeneratedFiles::ChangeEventHandler do
     )
   end
 
+  it "ignores generated-by-job events by default to prevent recursion" do
+    registry = write_registry(
+      rules: [
+        {
+          "id" => "default_ignore",
+          "operations" => ["update"],
+          "path_patterns" => ["generated.md"],
+          "job_class" => "GeneratedFileJob",
+          "params" => {"changed_files" => "$matched_files"}
+        }
+      ]
+    )
+    allow(GeneratedFileJob).to receive(:perform_later)
+
+    rule_ids = described_class.new(
+      file_events: [{"path" => "generated.md", "operation" => "update"}],
+      metadata: {"generated_by_job" => true, "generated_job_id" => "sample"},
+      registry_path: registry,
+      root: @root,
+      output: StringIO.new
+    ).call
+
+    expect(rule_ids).to eq([])
+    expect(GeneratedFileJob).not_to have_received(:perform_later)
+  end
+
+  it "can opt in to handling generated-by-job events" do
+    registry = write_registry(
+      rules: [
+        {
+          "id" => "allow_generated",
+          "operations" => ["update"],
+          "path_patterns" => ["generated.md"],
+          "ignore_generated_events" => false,
+          "job_class" => "GeneratedFileJob",
+          "params" => {"changed_files" => "$matched_files"}
+        }
+      ]
+    )
+    allow(GeneratedFileJob).to receive(:perform_later)
+
+    rule_ids = described_class.new(
+      file_events: [{"path" => "generated.md", "operation" => "update"}],
+      metadata: {"generated_by_job" => true, "generated_job_id" => "sample"},
+      registry_path: registry,
+      root: @root,
+      output: StringIO.new
+    ).call
+
+    expect(rule_ids).to eq(["allow_generated"])
+    expect(GeneratedFileJob).to have_received(:perform_later).with(changed_files: ["generated.md"])
+  end
+
   it "does not enqueue when no rules match" do
     registry = write_registry(
       rules: [
