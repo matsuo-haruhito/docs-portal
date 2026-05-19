@@ -11,7 +11,7 @@ Path history / redirect は、文書の slug、Docusaurus site path、Markdown e
 
 ## 現在の resolver
 
-`DocumentPathHistoryResolver` は、同一 document 内の過去 version の `html_view_site_path` を履歴として扱います。
+`DocumentPathHistoryResolver` は、同一 document 内の過去 version の `html_view_site_path` と明示 metadata の `site_paths` を履歴として扱います。
 
 入力:
 
@@ -31,7 +31,7 @@ Path history / redirect は、文書の slug、Docusaurus site path、Markdown e
 - `canonical_version`
 - `matched_version`
 
-`DocumentSlugHistoryResolver` は、同一 project 内の document versions から、旧 slug とみなせる source/path 由来の候補を現在の document slug へ解決します。
+`DocumentSlugHistoryResolver` は、同一 project 内の document versions から、明示 metadata の `slugs` と旧 slug とみなせる source/path 由来の候補を現在の document slug へ解決します。
 
 入力:
 
@@ -49,7 +49,7 @@ Path history / redirect は、文書の slug、Docusaurus site path、Markdown e
 - `matched_version`
 - `matched_source`
 
-`DocumentPathHistoryMetadata` は、明示 metadata file から slug / site path 履歴を読み取る準備用 reader です。現時点では quality check に source / warning を表示するだけで、redirect resolver の入力にはまだ使いません。
+`DocumentPathHistoryMetadata` は、明示 metadata file から slug / site path 履歴を読み取る reader です。metadata は resolver でも使い、quality check では source / warning を表示します。
 
 ## explicit metadata
 
@@ -88,9 +88,9 @@ status: canonical
 
 ## moved 判定
 
-要求された path が現在の canonical path ではなく、同一 document の過去 version の `normalized_html_view_site_path` 配下にある場合は `moved` とします。
+要求された path が現在の canonical path ではなく、明示 metadata の `site_paths` に一致する場合は `moved` とします。metadata に一致した場合は suffix 推定をせず、現在 version の canonical path へ誘導します。
 
-旧 path の suffix は現在 path に引き継ぎます。
+明示 metadata に一致しない場合は、同一 document の過去 version の `normalized_html_view_site_path` 配下にあるかを見ます。この場合、旧 path の suffix は現在 path に引き継ぎます。
 
 ```text
 old version html_view_site_path: docs/previous-guide
@@ -102,13 +102,14 @@ status: moved
 
 slug については、要求された slug が現在の document slug と一致せず、同一 project 内の document version に次のような一致候補がある場合に `moved` とします。
 
+- 明示 metadata の `path_history.slugs`
 - `source_file_name` の拡張子を除いた名前
 - `source_relative_path` の末尾ファイル名から拡張子を除いた名前
 - `source_directory` の末尾 segment
 - `html_view_site_path` の末尾 segment
 - `site_build_path` の末尾 segment
 
-slug 候補は NFKC 正規化・小文字化・記号整理をして比較します。
+slug 候補は NFKC 正規化・小文字化・記号整理をして比較します。明示 metadata の slug 候補を source/path 由来の推定候補より優先します。
 
 ## missing 判定
 
@@ -161,16 +162,14 @@ old/path, another/old/path -> current/path
 
 ## current limitations
 
-- slug history は source/path 由来の推定のみで、明示 DB table はまだ持たない
-- 明示 path history metadata は quality check にのみ使い、redirect resolver の入力にはまだ使わない
-- DB table として path history はまだ持たない
+- slug history は metadata と source/path 由来の推定で扱うが、明示 DB table はまだ持たない
+- site path history は metadata と過去 version の path で扱うが、明示 DB table はまだ持たない
 - archived / deleted / explicitly moved の状態管理はまだ持たない
 - 別 document への移動はまだ扱わない
 - asset path は redirect しない
 
 ## next steps
 
-- slug history metadata を redirect resolver に接続する
-- site path history metadata を redirect resolver に接続する
 - path history を DB table で明示管理する
+- metadata と DB table の優先順位を整理する
 - `canonical`, `moved`, `archived`, `deleted` を user-facing な状態として整理する
