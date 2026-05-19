@@ -24,6 +24,26 @@ RSpec.describe "API internal upload dry-run modes", type: :request do
     FileUtils.rm_rf(document_file_root.join("zip_uploads"))
   end
 
+  it "creates a file upload dry-run automatically when file is present" do
+    uploaded_file = build_uploaded_file("# Auto Dry Run\n")
+
+    post "/api/internal/file_uploads", params: {
+      project_code: project.code,
+      file: uploaded_file,
+      relative_path: "docs/README.md"
+    }, headers: headers
+
+    expect(response).to have_http_status(:created)
+    expect(response.parsed_body.fetch("dry_run_id")).to be_present
+    expect(response.parsed_body.fetch("file_upload_preview").fetch("relative_path")).to eq("docs/README.md")
+
+    dry_run = ImportDryRun.find_by!(public_id: response.parsed_body.fetch("dry_run_id"))
+    expect(dry_run.manual_upload?).to eq(true)
+    expect(dry_run.analyzed?).to eq(true)
+  ensure
+    uploaded_file&.tempfile&.close!
+  end
+
   it "does not execute a file upload dry-run through the ZIP endpoint" do
     uploaded_file = build_uploaded_file("# File Dry Run\n")
 
