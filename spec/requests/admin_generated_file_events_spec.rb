@@ -15,6 +15,7 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include(event.public_id)
       expect(response.body).to include("docs/source.yml")
       expect(response.body).to include("再dispatch")
+      expect(response.body).to include("失敗分を一括再dispatch")
     end
 
     it "shows status summary counts" do
@@ -135,6 +136,26 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(event.processed_at).to be_nil
       expect(event.error_message).to be_nil
       expect(GeneratedFileEventDispatchJob).to have_received(:perform_later)
+    end
+  end
+
+  describe "POST /admin/generated_file_events/retry_failed" do
+    it "bulk retries only failed events matching filters" do
+      sign_in_as(admin_user)
+      matched = create_event!(path: "docs/matched.yml", status: :failed, event_source: "manual_document_upload", error_message: "boom")
+      completed = create_event!(path: "docs/completed.yml", status: :processed, event_source: "manual_document_upload")
+      other_source = create_event!(path: "docs/other-source.yml", status: :failed, event_source: "artifact_import", error_message: "boom")
+      allow(GeneratedFileEventDispatchJob).to receive(:perform_later)
+
+      post retry_failed_admin_generated_file_events_path(event_source: "manual_document_upload")
+
+      expect(response).to redirect_to(admin_generated_file_events_path(event_source: "manual_document_upload"))
+      expect(matched.reload).to be_pending
+      expect(matched.error_message).to be_nil
+      expect(matched.processed_at).to be_nil
+      expect(completed.reload).to be_processed
+      expect(other_source.reload).to be_failed
+      expect(GeneratedFileEventDispatchJob).to have_received(:perform_later).once
     end
   end
 
