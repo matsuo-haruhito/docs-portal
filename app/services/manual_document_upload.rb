@@ -4,6 +4,17 @@ require "securerandom"
 class ManualDocumentUpload
   Result = Struct.new(:document, :version, :source_path, keyword_init: true)
 
+  SEARCH_TEXT_EXTENSIONS = %w[
+    .md
+    .markdown
+    .mdx
+    .txt
+    .csv
+    .json
+    .yml
+    .yaml
+  ].freeze
+
   def initialize(project:, actor:, uploaded_file:, source_path: nil, target_document: nil)
     @project = project
     @actor = actor
@@ -99,6 +110,22 @@ class ManualDocumentUpload
       document_file.assign_search_text_from_path!(full_source_path)
       document_file.save!
     end
+
+    assign_version_search_text!(version, destination, full_source_path)
+  end
+
+  def assign_version_search_text!(version, destination, full_source_path)
+    return unless searchable_text_extension?(full_source_path)
+
+    text = File.read(destination, encoding: "UTF-8")
+    version.assign_search_body_text_from_markdown!(markdown: text, source_path: full_source_path)
+    version.save!
+  rescue Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError
+    version.update!(search_body_text: DocumentVersion.search_text_for(full_source_path))
+  end
+
+  def searchable_text_extension?(path)
+    File.extname(path).downcase.in?(SEARCH_TEXT_EXTENSIONS)
   end
 
   def storage_key_for(version, filename)
