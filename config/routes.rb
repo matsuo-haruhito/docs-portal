@@ -114,8 +114,9 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :internal do
-      resources :doc_imports, only: [:create]
-      resources :zip_imports, only: [:create]
+      resources :artifact_imports, only: [:create]
+      resources :file_uploads, only: [:create], controller: :manual_uploads
+      resources :zip_uploads, only: [:create]
     end
   end
 end
