@@ -38,6 +38,7 @@ RSpec.describe "API internal file upload content hash", type: :request do
     }, headers: headers
 
     expect(response).to have_http_status(:created)
+    expect(response.parsed_body.dig("file_upload_preview", "content_hash")).to eq(content_hash)
     expect(response.parsed_body.dig("file_upload_preview", "source_commit_hash")).to eq(content_hash)
 
     dry_run = ImportDryRun.find_by!(public_id: response.parsed_body.fetch("dry_run_id"))
@@ -60,6 +61,7 @@ RSpec.describe "API internal file upload content hash", type: :request do
     }, headers: headers
 
     expect(response).to have_http_status(:created)
+    expect(response.parsed_body.dig("file_upload_preview", "content_hash")).to eq(content_hash)
     expect(response.parsed_body.dig("file_upload_preview", "source_commit_hash")).to eq(content_hash)
   ensure
     uploaded_file&.tempfile&.close!
@@ -97,6 +99,7 @@ RSpec.describe "API internal file upload content hash", type: :request do
     }, headers: headers
 
     expect(response).to have_http_status(:created)
+    expect(response.parsed_body.dig("file_upload_preview", "content_hash")).to eq(content_hash)
     expect(response.parsed_body.dig("file_upload_preview", "source_commit_hash")).to eq("source-hash-123")
 
     dry_run = ImportDryRun.find_by!(public_id: response.parsed_body.fetch("dry_run_id"))
