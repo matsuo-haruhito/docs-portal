@@ -51,7 +51,17 @@ module GeneratedFiles
     end
 
     def matching_rules
-      rules.select { matching_events_for(_1).any? }
+      rules.reject { generated_event_ignored_by?(_1) }.select { matching_events_for(_1).any? }
+    end
+
+    def generated_event_ignored_by?(rule)
+      return false unless generated_event?
+
+      rule.fetch("ignore_generated_events", true) != false
+    end
+
+    def generated_event?
+      metadata.fetch("generated_by_job") { metadata.fetch(:generated_by_job, false) } == true
     end
 
     def enqueue_rule(rule)
