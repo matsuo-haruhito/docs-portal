@@ -97,6 +97,8 @@
 - quality checker result integration
 - quality check hash / Markdown rendering spec
 - document file display classifier
+- document version page summary card / file role badges
+- document version page request spec
 - explicit metadata files
   - `.docs-portal-preview.yml`
   - `.docs-portal-preview.yaml`
@@ -169,18 +171,18 @@
 
 ## 短期タスク
 
-### 1. Preview target metadata UI integration
+### 1. Preview target metadata display refinement
 
 目的:
 
-- classifier 結果を添付・元ファイル一覧の表示に反映する
+- 可視化済みの分類情報を、実際の添付・元ファイル閲覧体験に合わせて整える
 
 候補:
 
 - hidden を通常一覧から除外または折りたたみ領域に移す
 - debug を debug セクションとして分ける
-- group_name を添付一覧に表示する
-- UI への接続は既存表示を壊さない小さい差分で行う
+- group_name による絞り込み / grouping を検討する
+- UI は既存表示を壊さない小さい差分で段階的に行う
 
 ### 2. specs / roadmap の継続整理
 
@@ -309,7 +311,7 @@
 
 ## 実装順のおすすめ
 
-1. Preview target metadata UI integration
+1. Preview target metadata display refinement
 2. Docusaurus build manifest
 3. Path history resolver
 4. Project 内検索
