@@ -81,15 +81,21 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
 
   def zipped_upload
     @zipped_upload ||= begin
-      tempfile = Tempfile.new(["file-upload", ".zip"])
-      tempfile.binmode
+      zip_tempfile = Tempfile.new(["file-upload", ".zip"])
+      zip_tempfile.binmode
+      zip_path = zip_tempfile.path
+      zip_tempfile.close
 
-      Zip::File.open(tempfile.path, create: true) do |zip_file|
+      Zip::File.open(zip_path, create: true) do |zip_file|
         zip_file.add(relative_path, upload_file_path)
       end
 
-      tempfile.rewind
-      UploadedZip.new(tempfile: tempfile, original_filename: "file_upload.zip", content_type: "application/zip")
+      @zipped_upload_tempfile = zip_tempfile
+      UploadedZip.new(
+        tempfile: File.open(zip_path, "rb"),
+        original_filename: "file_upload.zip",
+        content_type: "application/zip"
+      )
     end
   end
 
