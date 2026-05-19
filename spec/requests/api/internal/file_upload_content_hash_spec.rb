@@ -82,8 +82,31 @@ RSpec.describe "API internal file upload content hash", type: :request do
     uploaded_file&.tempfile&.close!
   end
 
-  it "prefers source_commit_hash over content_hash without validating content_hash" do
-    uploaded_file = build_uploaded_file("# Source Hash Wins\n")
+  it "prefers source_commit_hash over matching content_hash" do
+    file_content = "# Source Hash Wins\n"
+    uploaded_file = build_uploaded_file(file_content)
+    content_hash = Digest::SHA256.hexdigest(file_content)
+
+    post "/api/internal/file_uploads", params: {
+      project_code: project.code,
+      file: uploaded_file,
+      relative_path: "docs/README.md",
+      source_commit_hash: "source-hash-123",
+      content_hash: content_hash,
+      validate_only: true
+    }, headers: headers
+
+    expect(response).to have_http_status(:created)
+    expect(response.parsed_body.dig("file_upload_preview", "source_commit_hash")).to eq("source-hash-123")
+
+    dry_run = ImportDryRun.find_by!(public_id: response.parsed_body.fetch("dry_run_id"))
+    expect(dry_run.source_commit_hash).to eq("source-hash-123")
+  ensure
+    uploaded_file&.tempfile&.close!
+  end
+
+  it "rejects a mismatched content_hash even when source_commit_hash is present" do
+    uploaded_file = build_uploaded_file("# Source Hash With Bad Content Hash\n")
 
     post "/api/internal/file_uploads", params: {
       project_code: project.code,
@@ -94,11 +117,8 @@ RSpec.describe "API internal file upload content hash", type: :request do
       validate_only: true
     }, headers: headers
 
-    expect(response).to have_http_status(:created)
-    expect(response.parsed_body.dig("file_upload_preview", "source_commit_hash")).to eq("source-hash-123")
-
-    dry_run = ImportDryRun.find_by!(public_id: response.parsed_body.fetch("dry_run_id"))
-    expect(dry_run.source_commit_hash).to eq("source-hash-123")
+    expect(response).to have_http_status(:bad_request)
+    expect(response.parsed_body["error"]).to include("content_hash")
   ensure
     uploaded_file&.tempfile&.close!
   end
