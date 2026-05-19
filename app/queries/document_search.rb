@@ -22,13 +22,11 @@ class DocumentSearch
   end
 
   def match_labels_for(document)
-    match_summaries_for(document).map(&:label)
+    matching_targets_for(document).map(&:label)
   end
 
   def match_summaries_for(document, limit: MATCH_SUMMARY_LIMIT)
-    return [] if blank?
-
-    DocumentQuerying::SearchMatchCatalog.targets.filter_map do |target|
+    matching_targets_for(document).filter_map do |target|
       matched_value = first_matching_value(target.value_resolver.call(document))
       MatchSummary.new(label: target.label, value: truncate_match_value(matched_value)) if matched_value.present?
     end.first(limit)
@@ -39,6 +37,14 @@ class DocumentSearch
   end
 
   private
+
+  def matching_targets_for(document)
+    return [] if blank?
+
+    DocumentQuerying::SearchMatchCatalog.targets.select do |target|
+      first_matching_value(target.value_resolver.call(document)).present?
+    end
+  end
 
   def first_matching_value(values)
     Array(values).find { value_matches?(_1) }
