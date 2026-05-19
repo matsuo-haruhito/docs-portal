@@ -32,6 +32,7 @@
 - 本実行は保存済み `ImportDryRun(import_mode=manual_upload)` の `dry_run_id` を指定して行い、このとき `file` は送らない
 - `relative_path` は同期元フォルダ内の相対パスとして扱い、先頭 `/` や `../` は拒否する
 - `relative_path` が未指定の場合は `original_filename`、それもなければ upload file の元ファイル名を fallback として使う
+- `content_hash` が指定された場合は、アップロード実体の SHA-256 と照合し、不一致なら dry-run を作らない
 - `source_path` はクライアントPC上のフルパスなどの参考情報であり、取り込み先決定には使わない
 
 ### #88 初期完了範囲
