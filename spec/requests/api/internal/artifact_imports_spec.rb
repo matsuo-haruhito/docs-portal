@@ -102,6 +102,52 @@ RSpec.describe "API internal artifact imports", type: :request do
     expect(response.parsed_body["status"]).to eq("imported")
   end
 
+  it "notifies generated file events after importing documents" do
+    project = create(:project, code: "PJIMPORTNOTIFY", name: "Import Notify Project")
+    allow(GeneratedFileChangeEventJob).to receive(:perform_later)
+    File.write(
+      manifest_path,
+      {
+        source_repo: "repo",
+        source_branch: "main",
+        source_commit_hash: "commit-notify",
+        documents: [
+          {
+            project_code: project.code,
+            slug: "notify-doc",
+            title: "Notify Doc",
+            category: "spec",
+            document_kind: "mixed",
+            visibility_policy: "restricted_external",
+            version_label: "v1.0.0",
+            status: "published",
+            source_relative_path: "docs/notify-doc.md"
+          }
+        ]
+      }.to_json
+    )
+
+    post endpoint, params: {
+      artifact_root: artifact_root.to_s,
+      manifest_path: manifest_path.to_s
+    }, headers: headers
+
+    expect(response).to have_http_status(:created)
+    publish_job = PublishJob.find(response.parsed_body.fetch("publish_job_id"))
+    actor = User.find_by!(email_address: "importer@example.com")
+    expect(GeneratedFileChangeEventJob).to have_received(:perform_later).with(
+      file_events: [{path: "docs/notify-doc.md", operation: "create"}],
+      event_source: "artifact_import",
+      metadata: hash_including(
+        publish_job_id: publish_job.id,
+        actor_id: actor.id,
+        source_repo: "repo",
+        source_branch: "main",
+        source_commit_hash: "commit-notify"
+      )
+    )
+  end
+
   it "returns and saves a dry-run result in validate_only mode" do
     project = create(:project, code: "PJDRYRUN", name: "Dry Run Project")
     File.write(
