@@ -128,7 +128,7 @@ async function runCommand(command, args, options = {}) {
 }
 
 function safeRelativeHeader(value) {
-  const text = String(value || '').replaceAll('\\\\', '/').replace(/^\/+/, '');
+  const text = String(value || '').replaceAll('\\', '/').replace(/^\/+/, '');
   if (!text || text.includes('\0') || text.startsWith('../') || text === '..' || path.isAbsolute(text)) {
     throw new Error('entry path is invalid');
   }
