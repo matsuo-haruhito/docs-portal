@@ -43,6 +43,22 @@ RSpec.describe "DocumentVersionQuality path history metadata" do
     expect(check.detail).to eq(".docs-portal-history.yml")
   end
 
+  it "reports archived and deleted status entry counts" do
+    create_metadata_file(<<~YAML)
+      path_history:
+        archived:
+          - slug: old-manual
+        deleted:
+          - site_path: docs/deleted-manual
+    YAML
+
+    result = DocumentVersionQualityChecker.new(version).call
+
+    check = result.infos.find { _1.key == :path_history_metadata_status }
+    expect(check.message).to eq("Path history metadata status entries are set")
+    expect(check.detail).to eq("archived=1, deleted=1")
+  end
+
   it "reports metadata warnings" do
     create_metadata_file(<<~YAML)
       path_history:
