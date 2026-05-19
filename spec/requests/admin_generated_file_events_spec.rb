@@ -45,6 +45,9 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include(middle.public_id)
       expect(response.body).not_to include(newest.public_id)
       expect(response.body).not_to include(oldest.public_id)
+      expect(response.body).to include("全 3 件 / 2 / 3 ページ")
+      expect(response.body).to include("前へ")
+      expect(response.body).to include("次へ")
     end
 
     it "filters by status" do
