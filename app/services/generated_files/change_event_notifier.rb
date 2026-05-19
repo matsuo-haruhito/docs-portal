@@ -33,8 +33,11 @@ module GeneratedFiles
           operation = "update"
         end
 
-        normalized_path = Pathname(path.to_s.strip).cleanpath.to_s.delete_prefix("./")
-        next if normalized_path.blank?
+        raw_path = path.to_s.strip
+        next if raw_path.blank?
+
+        normalized_path = Pathname(raw_path).cleanpath.to_s.delete_prefix("./")
+        next if normalized_path.blank? || normalized_path == "."
 
         { path: normalized_path, operation: operation.to_s.presence || "update" }
       end.uniq
