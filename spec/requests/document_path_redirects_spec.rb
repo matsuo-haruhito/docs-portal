@@ -72,8 +72,8 @@ RSpec.describe "Document path redirects", type: :request do
     )
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("現在の場所へ移動しました")
-    expect(response.body).to include("docs/previous-guide")
-    expect(response.body).to include("docs/current-guide")
+    expect(response.body).to include("移動済み")
+    expect(response.body).to include("旧URLから現在の文書位置へ移動しました")
+    expect(response.body).to include("docs/previous-guide -&gt; docs/current-guide")
   end
 end
