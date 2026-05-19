@@ -12,7 +12,7 @@ class DocumentUploadsController < BaseController
       target_document: target_document(project)
     ).call
 
-    redirect_to project_documents_path(project, q: result.source_path), notice: "文書をアップロードしました。"
+    redirect_to project_documents_path(project, q: result.source_path, uploaded_version_id: result.version.public_id), notice: "文書をアップロードしました。"
   rescue ActionController::ParameterMissing, ApplicationError::BadRequest => e
     redirect_to project_documents_path(params[:project_code]), alert: e.message
   end
