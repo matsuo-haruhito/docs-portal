@@ -80,6 +80,30 @@ ruby bin/generate_ai_usecase_flow
 | `storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/decision-flow.md` | seedで取り込む判断フロー本文 |
 | `docs/ai-usecases/generated/decision-flow.puml` | PlantUMLソースの単体ファイル |
 
+## 自動生成ジョブ
+
+元ファイル更新時に関連生成物を追従させるため、汎用の生成ジョブ基盤を用意しています。
+
+| ファイル | 役割 |
+|---|---|
+| `.github/generated-file-jobs.yml` | 元ファイル、監視ファイル、生成コマンド、生成物のレジストリ |
+| `.github/workflows/generated-file-jobs.yml` | push時に変更ファイルを検知して該当ジョブを実行するGitHub Actions |
+| `bin/run_generated_file_jobs` | レジストリを読み、変更された元ファイルに対応する生成コマンドだけ実行する汎用runner |
+
+`decision_flow.yml`、生成スクリプト、またはレジストリを更新してmainにpushすると、GitHub Actionsが該当ジョブを実行し、生成物に差分があれば `chore: update generated files` でmainへ自動コミットします。
+
+手動で特定ファイルに対応するジョブを動かしたい場合は、workflow_dispatch の `changed_files` に対象パスを指定します。
+
+```text
+storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
+```
+
+ローカルで汎用runnerを試す場合は、変更ファイルを引数で渡せます。
+
+```bash
+ruby bin/run_generated_file_jobs storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
+```
+
 ## DSLの構造
 
 `decision_flow.yml` は、以下の構造を持ちます。
@@ -123,6 +147,26 @@ Kroki設定例です。
 KROKI_ENDPOINT=http://kroki:8000
 ```
 
+## 他機能へ応用する方法
+
+別のDSLやCSVから生成物を作る場合は、`.github/generated-file-jobs.yml` に1件追加します。
+
+```yaml
+jobs:
+  - id: sample_generator
+    description: Generate sample output from a source file.
+    source_paths:
+      - path/to/source.yml
+    watch_paths:
+      - bin/generate_sample
+    command: ruby bin/generate_sample
+    generated_paths:
+      - path/to/generated.md
+      - path/to/generated.puml
+```
+
+これにより、`source_paths` または `watch_paths` に差分が出たときだけ `command` が実行されます。
+
 ## 今後の拡張
 
 | やりたいこと | 追加・変更箇所 |
@@ -132,7 +176,7 @@ KROKI_ENDPOINT=http://kroki:8000
 | 新しいユースケースを追加する | usecases.md |
 | 新しい利用パターンを追加する | patterns.md |
 | 新しい手順書を追加する | procedures/ 配下にMarkdownを追加 |
-| 判断フローを更新する | data/decision_flow.yml を変更して `bin/rails ai_usecases:generate_flow` を実行 |
+| 判断フローを更新する | data/decision_flow.yml を変更する。GitHub Actionsが生成物を更新する。ローカルでは `bin/rails ai_usecases:generate_flow` を実行 |
 | マスタ駆動生成に寄せる | data-model.md のYAML構造を正本化する |
 
 ## 現時点で自動生成する範囲
@@ -150,6 +194,7 @@ KROKI_ENDPOINT=http://kroki:8000
 ## 注意点
 
 - `decision-flow.md` は生成物です。直接編集せず、`data/decision_flow.yml` を編集します。
+- 自動生成コミットの再帰実行を避けるため、GitHub Actionsは `chore: update generated files` のコミットでは実行しません。
 - 手順書本文にツール名を直接埋め込みすぎると、ツール追加時の修正範囲が広がります。
 - 手順書の正本をYAMLに寄せる場合は、Markdownは生成物として扱います。
 - Kroki未設定環境では `plantuml` / `d2` コードブロックがbuild失敗要因になるため、図化前のソースは `text` として置きます。
