@@ -15,7 +15,9 @@ module DocumentVersionQuality
         source_path_check,
         rendered_site_check,
         attachment_count_check,
-        internal_only_text_check
+        internal_only_text_check,
+        preview_target_metadata_source_check,
+        *preview_target_metadata_warning_checks
       ].compact
     end
 
@@ -73,6 +75,22 @@ module DocumentVersionQuality
       return unless pattern
 
       warning(:internal_only_text, "Document contains internal-only wording", pattern.source)
+    end
+
+    def preview_target_metadata_source_check
+      return info(:preview_target_metadata, "Preview target metadata source is not set") unless preview_target_metadata.source_file?
+
+      info(:preview_target_metadata, "Preview target metadata source is set", preview_target_metadata.source_file.tree_path)
+    end
+
+    def preview_target_metadata_warning_checks
+      preview_target_metadata.warnings.map do |metadata_warning|
+        warning(:preview_target_metadata, metadata_warning.message, metadata_warning.path)
+      end
+    end
+
+    def preview_target_metadata
+      @preview_target_metadata ||= DocumentVersionPreviewTargetMetadata.new(document_version).call
     end
 
     def info(key, message, detail = nil)
