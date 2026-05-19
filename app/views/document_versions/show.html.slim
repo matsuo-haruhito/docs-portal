@@ -286,17 +286,17 @@ h2#version-files 添付・元ファイル
 - classifications_by_path = @preview_target_display_summary&.classifications&.index_by(&:tree_path) || {}
 - file_rows = @version.document_files.order(:sort_order, :id).map { |file| [file, classifications_by_path[file.tree_path]] }
 - if @preview_target_display_summary&.present?
-  - visible_ungrouped_paths = @preview_target_display_summary.visible_ungrouped.map(&:tree_path).to_set
-  - hidden_paths = @preview_target_display_summary.hidden.map(&:tree_path).to_set
-  - debug_paths = @preview_target_display_summary.debug.map(&:tree_path).to_set
-  - grouped_paths = @preview_target_display_summary.grouped.map(&:tree_path).to_set
+  - visible_ungrouped_paths = @preview_target_display_summary.visible_ungrouped.map(&:tree_path)
+  - hidden_paths = @preview_target_display_summary.hidden.map(&:tree_path)
+  - debug_paths = @preview_target_display_summary.debug.map(&:tree_path)
+  - grouped_paths = @preview_target_display_summary.grouped.map(&:tree_path)
   h3 通常表示ファイル
   p.muted primary / attachment / normal は通常確認するファイルとして表示します。hidden / debug / group 指定のファイルは下の専用セクションに分けています。
   ul
     - file_rows.select { |file, _classification| visible_ungrouped_paths.include?(file.tree_path) }.each do |file, classification|
       = render "document_file_list_item", file:, classification:
   - @preview_target_display_summary.groups.each do |group_name, classifications|
-    - group_paths = classifications.map(&:tree_path).to_set
+    - group_paths = classifications.map(&:tree_path)
     details open=true
       summary group: #{group_name} #{classifications.count}件
       ul
