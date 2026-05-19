@@ -13,7 +13,7 @@ module ExternalFolderSync
       @actor = actor
       @allow_conflict_warnings = allow_conflict_warnings
       @entries_by_id = {}
-      @generated_file_event_paths = Set.new
+      @generated_file_events = []
     end
 
     def call
@@ -43,7 +43,7 @@ module ExternalFolderSync
 
     private
 
-    attr_reader :source, :mode, :actor, :entries_by_id, :generated_file_event_paths
+    attr_reader :source, :mode, :actor, :entries_by_id, :generated_file_events
 
     def client
       @client ||= ExternalFolderSync::GoogleDriveClient.new(source:)
@@ -217,7 +217,7 @@ module ExternalFolderSync
         document = find_or_create_document!(plan)
         version = create_document_version!(document, plan)
         file = create_document_file!(version, plan)
-        record_generated_file_event_path!(plan.fetch("path"))
+        record_generated_file_event!(plan.fetch("path"), plan.fetch("action"))
         upsert_item!(plan, document, version, file)
       end
     rescue => e
@@ -327,6 +327,7 @@ module ExternalFolderSync
     def append_removed_items!(external_item_ids, result)
       source.external_folder_sync_items.where(external_item_id: external_item_ids).find_each do |item|
         item.update!(sync_status: :delete_detected) if apply?
+        record_generated_file_event!(item.path, "delete") if apply?
         result << {
           "action" => "delete_detected",
           "attention_level" => "danger",
@@ -517,16 +518,16 @@ module ExternalFolderSync
       Time.zone.parse(value) if value.present?
     end
 
-    def record_generated_file_event_path!(path)
-      generated_file_event_paths << path.to_s
+    def record_generated_file_event!(path, operation)
+      generated_file_events << {"path" => path.to_s, "operation" => operation.to_s}
     end
 
     def dispatch_generated_file_change_event!
       return unless apply?
-      return if generated_file_event_paths.empty?
+      return if generated_file_events.empty?
 
       GeneratedFileChangeEventJob.perform_later(
-        changed_files: generated_file_event_paths.to_a.sort,
+        file_events: generated_file_events.uniq.sort_by { [_1.fetch("path"), _1.fetch("operation")] },
         event_source: "external_folder_sync",
         metadata: {
           external_folder_sync_source_id: source.id,
