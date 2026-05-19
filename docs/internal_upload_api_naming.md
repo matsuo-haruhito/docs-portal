@@ -26,7 +26,7 @@ internal API は、用途が分かる名前に分ける。
 
 `source_commit_hash` が指定されない場合、`file_uploads` は内部生成した一時ZIPではなく、アップロードされた元ファイル実体の SHA-256 を使う。
 これにより、同期クライアントが同じファイルを再送した場合にも、内容単位で追跡しやすくする。
-`version_label` が指定されない場合は `file-YYYYMMDDHHMMSS` を使う。
+`version_label` が指定されない場合は `file-YYYYMMDDHHMMSS-<hash8>` を使う。
 
 ## dry-run の本実行
 
