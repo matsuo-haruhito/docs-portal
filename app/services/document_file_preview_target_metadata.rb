@@ -56,14 +56,17 @@ class DocumentFilePreviewTargetMetadata
   end
 
   def normalize_paths(value)
-    case value
-    when Array
-      value.flat_map { normalize_paths(_1) }
-    when Hash
-      value.values.flat_map { normalize_paths(_1) }
-    else
-      normalized_path(value)
-    end.compact
+    normalized_paths =
+      case value
+      when Array
+        value.flat_map { |item| normalize_paths(item) }
+      when Hash
+        value.values.flat_map { |item| normalize_paths(item) }
+      else
+        [normalized_path(value)]
+      end
+
+    normalized_paths.compact
   end
 
   def validate_metadata(metadata)
@@ -78,15 +81,15 @@ class DocumentFilePreviewTargetMetadata
     targets = parsed_preview_targets
     return [] unless targets.is_a?(Hash)
 
-    targets.keys.map(&:to_s).reject { PREVIEW_TARGET_KEYS.include?(_1) }.map do |key|
+    targets.keys.map(&:to_s).reject { |key| PREVIEW_TARGET_KEYS.include?(key) }.map do |key|
       Warning.new(code: :unknown_key, message: "preview_targets.#{key} は未対応です", path: nil)
     end
   end
 
   def missing_path_warnings(metadata)
     metadata.flat_map do |key, paths|
-      paths.reject { existing_paths.include?(_1) }.map do |path|
-        Warning.new(code: :missing_path, message: "#{key} に指定された #{path} が存在しません", path:)
+      paths.reject { |path| existing_paths.include?(path) }.map do |path|
+        Warning.new(code: :missing_path, message: "#{key} に指定された #{path} が存在しません", path: path)
       end
     end
   end
@@ -94,7 +97,7 @@ class DocumentFilePreviewTargetMetadata
   def duplicate_path_warnings(metadata)
     all_paths = metadata.flat_map { |_key, paths| paths }
     all_paths.tally.select { |_path, count| count > 1 }.keys.map do |path|
-      Warning.new(code: :duplicate_path, message: "#{path} が複数の preview target に指定されています", path:)
+      Warning.new(code: :duplicate_path, message: "#{path} が複数の preview target に指定されています", path: path)
     end
   end
 
