@@ -13,6 +13,7 @@ module ExternalFolderSync
       @actor = actor
       @allow_conflict_warnings = allow_conflict_warnings
       @entries_by_id = {}
+      @generated_file_event_paths = Set.new
     end
 
     def call
@@ -31,7 +32,9 @@ module ExternalFolderSync
       return finish_unsafe_apply!(run, result, batch) if apply? && unsafe_apply?(result)
 
       result.each { apply_entry(_1) } if apply?
-      finish_success!(run, result, batch)
+      finished_run = finish_success!(run, result, batch)
+      dispatch_generated_file_change_event!
+      finished_run
     rescue => e
       finish_failure!(run, e) if defined?(run) && run
       source.update!(last_error_message: e.message)
@@ -40,7 +43,7 @@ module ExternalFolderSync
 
     private
 
-    attr_reader :source, :mode, :actor, :entries_by_id
+    attr_reader :source, :mode, :actor, :entries_by_id, :generated_file_event_paths
 
     def client
       @client ||= ExternalFolderSync::GoogleDriveClient.new(source:)
@@ -214,6 +217,7 @@ module ExternalFolderSync
         document = find_or_create_document!(plan)
         version = create_document_version!(document, plan)
         file = create_document_file!(version, plan)
+        record_generated_file_event_path!(plan.fetch("path"))
         upsert_item!(plan, document, version, file)
       end
     rescue => e
@@ -511,6 +515,25 @@ module ExternalFolderSync
 
     def parse_time(value)
       Time.zone.parse(value) if value.present?
+    end
+
+    def record_generated_file_event_path!(path)
+      generated_file_event_paths << path.to_s
+    end
+
+    def dispatch_generated_file_change_event!
+      return unless apply?
+      return if generated_file_event_paths.empty?
+
+      GeneratedFileChangeEventJob.perform_later(
+        changed_files: generated_file_event_paths.to_a.sort,
+        event_source: "external_folder_sync",
+        metadata: {
+          external_folder_sync_source_id: source.id,
+          project_id: source.project_id,
+          actor_id: actor&.id
+        }.compact
+      )
     end
   end
 end
