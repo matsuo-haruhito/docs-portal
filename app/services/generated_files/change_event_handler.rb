@@ -4,7 +4,6 @@ require "active_support/inflector"
 require "pathname"
 require "set"
 
-require_relative "event_buffer"
 require_relative "file_change_event_registry"
 
 module GeneratedFiles
@@ -92,8 +91,12 @@ module GeneratedFiles
       job_class = job_class_name.constantize
 
       output.puts "Enqueue file change event job: rule=#{rule.fetch('id')} job_class=#{job_class_name}"
-      job_class.perform_later(**params.deep_symbolize_keys)
+      job_class.perform_later(**job_kwargs(params))
       rule.fetch("id")
+    end
+
+    def job_kwargs(params)
+      params.transform_keys(&:to_sym)
     end
 
     def dispatched_buffer_event?
