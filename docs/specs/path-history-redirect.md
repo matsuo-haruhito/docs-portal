@@ -51,6 +51,20 @@ Path history / redirect は、文書の slug、Docusaurus site path、Markdown e
 
 `DocumentPathHistoryMetadata` は、明示 metadata file から slug / site path 履歴を読み取る reader です。metadata は resolver でも使い、quality check では source / warning を表示します。
 
+## user-facing status
+
+`DocumentHistoryStatusPresenter` は、resolver や将来の DB table 由来の履歴状態を利用者向け文言に変換します。
+
+| status | label | message |
+| --- | --- | --- |
+| `canonical` | 現在の場所 | このURLは現在の文書位置です。 |
+| `moved` | 移動済み | 旧URLから現在の文書位置へ移動しました。 |
+| `missing` | 未解決 | このURLに対応する現在の文書位置は見つかりませんでした。 |
+| `archived` | アーカイブ済み | このURLに対応する文書はアーカイブ済みです。 |
+| `deleted` | 削除済み | このURLに対応する文書は削除済みです。 |
+
+現時点の resolver は主に `canonical` / `moved` / `missing` を返します。`archived` / `deleted` は DB table 化や明示 metadata 拡張後に使う予定の user-facing 状態です。
+
 ## explicit metadata
 
 文書版の添付・元ファイルに、次のいずれかの YAML file を置くことで明示的な path history metadata として認識します。
@@ -127,9 +141,9 @@ slug 候補は NFKC 正規化・小文字化・記号整理をして比較しま
 - `canonical` の場合はそのまま viewer を表示
 - `missing` の場合は従来どおり viewer 処理を継続
 
-slug redirect 先には `previous_slug` を含めます。redirect 後の reader では、`previous_slug` がある場合に「現在の文書URLへ移動しました」という notice を表示し、旧 URL 識別子と現在 slug を並べて示します。
+slug redirect 先には `previous_slug` を含めます。redirect 後の reader では、`previous_slug` がある場合に `DocumentHistoryStatusPresenter` の `moved` 表示を使い、旧 URL 識別子と現在 slug を `old -> current` 形式で示します。
 
-site path redirect 先には現在の `version_id`、canonical `site_path`、元の `previous_site_path` を含めます。redirect 後の reader では、`previous_site_path` がある場合に「現在の場所へ移動しました」という notice を表示し、旧 path と現在 path を並べて示します。
+site path redirect 先には現在の `version_id`、canonical `site_path`、元の `previous_site_path` を含めます。redirect 後の reader では、`previous_site_path` がある場合に `DocumentHistoryStatusPresenter` の `moved` 表示を使い、旧 path と現在 path を `old -> current` 形式で示します。
 
 ## project site integration
 
@@ -164,7 +178,7 @@ old/path, another/old/path -> current/path
 
 - slug history は metadata と source/path 由来の推定で扱うが、明示 DB table はまだ持たない
 - site path history は metadata と過去 version の path で扱うが、明示 DB table はまだ持たない
-- archived / deleted / explicitly moved の状態管理はまだ持たない
+- `archived` / `deleted` は user-facing status として定義済みだが resolver からはまだ返さない
 - 別 document への移動はまだ扱わない
 - asset path は redirect しない
 
@@ -172,4 +186,4 @@ old/path, another/old/path -> current/path
 
 - path history を DB table で明示管理する
 - metadata と DB table の優先順位を整理する
-- `canonical`, `moved`, `archived`, `deleted` を user-facing な状態として整理する
+- `archived` / `deleted` を resolver と DB table に接続する
