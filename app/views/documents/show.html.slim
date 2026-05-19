@@ -18,14 +18,14 @@
       h1 = @document.title
       p.muted = site_viewer_meta_lines(project: @project, document: @document, version: @viewer_version).join(" / ")
       - if slug_history_status
-        .notice
+        .notice role="status" aria-live="polite"
           strong = slug_history_status.label
           p.muted
             = slug_history_status.message
             |  
             code = slug_history_status.detail
       - if path_history_status
-        .notice
+        .notice role="status" aria-live="polite"
           strong = path_history_status.label
           p.muted
             = path_history_status.message
@@ -65,14 +65,14 @@
 - else
   h1 = @document.title
   - if slug_history_status
-    .notice
+    .notice role="status" aria-live="polite"
       strong = slug_history_status.label
       p.muted
         = slug_history_status.message
         |  
         code = slug_history_status.detail
   - if path_history_status
-    .notice
+    .notice role="status" aria-live="polite"
       strong = path_history_status.label
       p.muted
         = path_history_status.message
