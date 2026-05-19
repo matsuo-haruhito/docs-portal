@@ -16,3 +16,7 @@ storage/tmp
 !docusaurus/package-lock.json
 !docusaurus/**
 !docusaurus-renderer/**
+
+# Never send installed dependencies even when Docusaurus source is re-included above.
+docusaurus/node_modules
+docusaurus-renderer/node_modules
