@@ -55,10 +55,14 @@ class DocumentPathHistoryMetadata
   end
 
   def parsed_history
-    data = YAML.safe_load(source_file.read, permitted_classes: [], permitted_symbols: [], aliases: false) || {}
+    data = YAML.safe_load(source_file_content, permitted_classes: [], permitted_symbols: [], aliases: false) || {}
     return {} unless data.is_a?(Hash)
 
     data.fetch(TOP_LEVEL_KEY, {})
+  end
+
+  def source_file_content
+    source_file.absolute_path.read
   end
 
   def normalize_metadata(value)
