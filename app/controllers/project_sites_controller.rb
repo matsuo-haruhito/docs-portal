@@ -11,6 +11,9 @@ class ProjectSitesController < BaseController
       return send_site_file(file_path, cacheable: true)
     end
 
+    path_history_resolution = resolve_project_site_path_history(site_path)
+    return redirect_to_project_site_canonical_path(path_history_resolution) if path_history_resolution&.moved?
+
     renderer = project_site_renderer(site_path, embedded: embedded_request?)
     file_path = renderer.file_response_path(site_path)
 
@@ -61,6 +64,26 @@ class ProjectSitesController < BaseController
         project_site_path(@project, site_path: resolved_site_path, version_id: version_for_url.public_id, embedded: embedded ? "1" : nil)
       end
     )
+  end
+
+  def resolve_project_site_path_history(site_path)
+    return unless @build_version&.document
+
+    DocumentPathHistoryResolver.new(
+      document: @build_version.document,
+      requested_site_path: site_path,
+      canonical_version: @build_version,
+      candidate_versions: @build_version.document.document_versions.select { _1.viewable_by?(current_user) }
+    ).call
+  end
+
+  def redirect_to_project_site_canonical_path(path_history_resolution)
+    redirect_to project_site_path(
+      @project,
+      site_path: path_history_resolution.canonical_path,
+      version_id: path_history_resolution.canonical_version.public_id,
+      embedded: embedded_request? ? "1" : nil
+    ), status: :moved_permanently
   end
 
   def render_html_or_shell(renderer, site_path)
