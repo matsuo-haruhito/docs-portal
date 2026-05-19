@@ -59,6 +59,9 @@ p.muted
       .diff-metric
         strong = @version_file_diff_summary.fetch(:removed_count)
         span 削除
+    p.actions
+      = link_to "差分本文へ移動", "#version-diff", class: "button secondary"
+      = link_to "添付・元ファイルへ移動", "#version-files", class: "button secondary"
   .card.preview-summary-card
     h2 プレビュー状態
     ul.compact-list
@@ -71,6 +74,8 @@ p.muted
       li
         strong 元ファイル: 
         = pluralize(@version.document_files.size, "file")
+
+= render "rollback_actions"
 
 .card.markdown-workspace
   .markdown-workspace__header
@@ -293,7 +298,5 @@ ul
       - if file.downloadable_by?(current_user)
         |  / 
         = link_to "ダウンロード", document_file_path(file, disposition: "download"), data: { turbo: false }
-
-= render "rollback_actions"
 
 = render "documents/comment_workspace", floating: false, comment_target_version: @version
