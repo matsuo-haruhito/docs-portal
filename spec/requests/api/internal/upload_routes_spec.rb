@@ -24,6 +24,11 @@ RSpec.describe "API internal upload routes", type: :request do
     FileUtils.rm_rf(document_file_root.join("zip_uploads"))
   end
 
+  it "does not expose the removed legacy internal upload URLs" do
+    expect { post "/api/internal/doc_imports", headers: headers }.to raise_error(ActionController::RoutingError)
+    expect { post "/api/internal/zip_imports", headers: headers }.to raise_error(ActionController::RoutingError)
+  end
+
   it "creates a dry-run through the renamed ZIP upload API" do
     zip_file = build_uploaded_zip("docs/README.md" => "# ZIP Upload\n")
 
