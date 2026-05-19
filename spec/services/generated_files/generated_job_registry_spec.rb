@@ -62,6 +62,22 @@ RSpec.describe GeneratedFiles::GeneratedJobRegistry do
     expect(selected.map { _1.fetch("id") }).to eq(["second"])
   end
 
+  it "normalizes explicit job ids before matching" do
+    registry_path = write_registry(
+      jobs: [
+        {"id" => "123", "source_paths" => ["source.yml"]},
+        {"id" => "other", "source_paths" => ["other.yml"]}
+      ]
+    )
+
+    selected = described_class.new(registry_path:, root: @root).select(
+      changed_files: [],
+      job_ids: [123, "123", nil]
+    )
+
+    expect(selected.map { _1.fetch("id") }).to eq(["123"])
+  end
+
   it "selects jobs when watch paths change" do
     registry_path = write_registry(
       jobs: [
