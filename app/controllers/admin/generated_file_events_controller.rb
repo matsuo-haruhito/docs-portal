@@ -19,11 +19,12 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
   end
 
   def retry_failed
+    @filters = event_filter_params
     events = apply_filters(GeneratedFileEvent.failed.order(created_at: :desc, id: :desc)).limit(100)
     events.each { reset_for_dispatch!(_1) }
     GeneratedFileEventDispatchJob.perform_later if events.any?
 
-    redirect_to admin_generated_file_events_path(event_filter_params), notice: "失敗した生成ファイルイベント #{events.size} 件の再dispatchをキューに投入しました。"
+    redirect_to admin_generated_file_events_path(@filters), notice: "失敗した生成ファイルイベント #{events.size} 件の再dispatchをキューに投入しました。"
   end
 
   private
@@ -38,13 +39,14 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
   end
 
   def apply_filters(scope)
-    scope = scope.public_send(@filters[:status]) if @filters[:status].in?(GeneratedFileEvent.statuses.keys)
-    scope = scope.where(operation: @filters[:operation]) if @filters[:operation].present?
-    scope = scope.where(event_source: @filters[:event_source]) if @filters[:event_source].present?
-    scope = scope.where("path LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(@filters[:path])}%") if @filters[:path].present?
+    filters = @filters || {}
+    scope = scope.public_send(filters[:status]) if filters[:status].in?(GeneratedFileEvent.statuses.keys)
+    scope = scope.where(operation: filters[:operation]) if filters[:operation].present?
+    scope = scope.where(event_source: filters[:event_source]) if filters[:event_source].present?
+    scope = scope.where("path LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(filters[:path])}%") if filters[:path].present?
 
-    scheduled_from = parsed_time(@filters[:scheduled_from], beginning: true)
-    scheduled_to = parsed_time(@filters[:scheduled_to], end_of_day: true)
+    scheduled_from = parsed_time(filters[:scheduled_from], beginning: true)
+    scheduled_to = parsed_time(filters[:scheduled_to], end_of_day: true)
     scope = scope.where("scheduled_at >= ?", scheduled_from) if scheduled_from
     scope = scope.where("scheduled_at <= ?", scheduled_to) if scheduled_to
     scope
