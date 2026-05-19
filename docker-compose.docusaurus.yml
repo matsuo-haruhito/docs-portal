@@ -1,0 +1,18 @@
+services:
+  app:
+    environment:
+      DOCUSAURUS_RENDERER_ENDPOINT: ${DOCUSAURUS_RENDERER_ENDPOINT:-http://docusaurus:3000}
+    depends_on:
+      - db
+      - docusaurus
+
+  docusaurus:
+    build:
+      context: .
+      dockerfile: docusaurus-renderer/Dockerfile
+    environment:
+      KROKI_ENDPOINT: ${KROKI_ENDPOINT:-http://kroki:8000}
+    ports:
+      - '${PUBLISH_DOCUSAURUS_RENDERER_PORT:-3001}:3000'
+    tmpfs:
+      - /tmp
