@@ -16,7 +16,7 @@
       h1 = @document.title
       p.muted = site_viewer_meta_lines(project: @project, document: @document, version: @viewer_version).join(" / ")
       - if current_user.internal?
-        p.muted このプレビュー領域へファイルをドロップすると、この文書の更新候補としてアップロードできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
+        p.muted このプレビュー領域へ1ファイルずつドロップすると、この文書の更新候補としてアップロードできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
       p.actions
         = link_to "案件トップ", project_path(@project), class: "button secondary"
         = link_to "文書一覧", project_documents_path(@project), class: "button secondary"
@@ -40,8 +40,8 @@
       - if current_user.internal?
         .document-preview-drop-overlay aria-hidden="true"
           .document-preview-drop-overlay__message
-            strong ここにファイルをドロップ
-            span 同名ならこの文書の更新候補、別名なら同じフォルダ直下に追加します。
+            strong ここに1ファイルをドロップ
+            span 同名ならこの文書の更新候補、別名なら同じフォルダ直下に追加します。複数ファイルはZIPにまとめるか、1ファイルずつアップロードしてください。
       iframe.site-viewer-frame src=@viewer_iframe_src title="#{@document.title} #{@viewer_version.version_label}" loading="eager"
 
     = render "comment_workspace", floating: true
@@ -50,9 +50,9 @@
   - if current_user.internal?
     .card.manual-document-upload-panel data=preview_drop_data
       h2 ファイルをアップロード
-      p.muted この文書の更新候補としてファイルをドロップできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
+      p.muted この文書の更新候補として1ファイルずつドロップできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
       .manual-document-upload-panel__drop
         strong ファイルをドラッグ＆ドロップ
-        span.muted 差異確認後にOK/NGを選択します。
+        span.muted 差異確認後にOK/NGを選択します。複数ファイルはZIPにまとめるか、1ファイルずつアップロードしてください。
   = render "comment_workspace", floating: false
   = render "detail_sections"
