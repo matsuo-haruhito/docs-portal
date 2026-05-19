@@ -28,6 +28,7 @@ RSpec.describe "Document uploads", type: :request do
     expect(version.source_relative_path).to eq("docs/specs/overview.md")
     expect(version.source_directory).to eq("docs/specs")
     expect(version.source_file_name).to eq("overview.md")
+    expect(version.search_body_text).to include("Overview")
     expect(version.document_files.first.file_name).to eq("docs/specs/overview.md")
     expect(response).to redirect_to(project_documents_path(project, q: "docs/specs/overview.md", upload_source_path: "docs/specs", uploaded_version_id: version.public_id))
   end
@@ -64,6 +65,7 @@ RSpec.describe "Document uploads", type: :request do
 
     latest = document.reload.latest_version
     expect(latest.source_relative_path).to eq("docs/guide.md")
+    expect(latest.search_body_text).to include("Updated Guide")
     expect(latest.document_files.first.file_name).to eq("docs/guide.md")
   end
 
