@@ -76,7 +76,8 @@ RSpec.describe "Project site path redirects", type: :request do
     get response.location
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("現在の場所へ移動しました")
+    expect(response.body).to include("移動済み")
+    expect(response.body).to include("旧URLから現在の文書位置へ移動しました")
     expect(response.body).to include("docs/previous-site")
     expect(response.body).to include("docs/current-site")
   end
