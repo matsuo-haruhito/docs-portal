@@ -88,11 +88,32 @@ ruby bin/generate_ai_usecase_flow
 |---|---|
 | `.github/generated-file-jobs.yml` | 元ファイル、監視ファイル、生成コマンド、生成物のレジストリ |
 | `.github/workflows/generated-file-jobs.yml` | push時に変更ファイルを検知して該当ジョブを実行するGitHub Actions |
-| `bin/run_generated_file_jobs` | レジストリを読み、変更された元ファイルに対応する生成コマンドだけ実行する汎用runner |
+| `app/services/generated_files/runner.rb` | レジストリを読み、変更された元ファイルに対応する生成コマンドだけ実行する共通サービス |
+| `app/jobs/generated_file_job.rb` | Railsアプリ内から生成ジョブを実行するActiveJob入口 |
+| `bin/run_generated_file_jobs` | GitHub ActionsやローカルCLIから共通サービスを呼び出すrunner |
 
 `decision_flow.yml`、生成スクリプト、またはレジストリを更新してmainにpushすると、GitHub Actionsが該当ジョブを実行し、生成物に差分があれば `chore: update generated files` でmainへ自動コミットします。
 
-手動で特定ファイルに対応するジョブを動かしたい場合は、workflow_dispatch の `changed_files` に対象パスを指定します。
+Railsアプリ内から即時実行する場合は、以下を使います。
+
+```bash
+CHANGED_FILES=storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml bin/rails generated_files:run
+```
+
+Railsアプリ内から非同期Jobとして投入する場合は、以下を使います。
+
+```bash
+CHANGED_FILES=storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml bin/rails generated_files:enqueue
+```
+
+特定ジョブIDを指定して実行する場合は、以下を使います。
+
+```bash
+JOB_ID=ai_usecase_decision_flow bin/rails generated_files:run_job
+JOB_ID=ai_usecase_decision_flow bin/rails generated_files:enqueue_job
+```
+
+手動でGitHub Actionsから特定ファイルに対応するジョブを動かしたい場合は、workflow_dispatch の `changed_files` に対象パスを指定します。
 
 ```text
 storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
@@ -165,7 +186,7 @@ jobs:
       - path/to/generated.puml
 ```
 
-これにより、`source_paths` または `watch_paths` に差分が出たときだけ `command` が実行されます。
+これにより、`source_paths` または `watch_paths` に差分が出たときだけ `command` が実行されます。Railsアプリ内からも `GeneratedFileJob` 経由で同じレジストリ・同じ生成コマンドを利用できます。
 
 ## 今後の拡張
 
@@ -177,6 +198,7 @@ jobs:
 | 新しい利用パターンを追加する | patterns.md |
 | 新しい手順書を追加する | procedures/ 配下にMarkdownを追加 |
 | 判断フローを更新する | data/decision_flow.yml を変更する。GitHub Actionsが生成物を更新する。ローカルでは `bin/rails ai_usecases:generate_flow` を実行 |
+| 管理画面やWebhookから生成を起動する | `GeneratedFileJob.perform_later` を呼び出す |
 | マスタ駆動生成に寄せる | data-model.md のYAML構造を正本化する |
 
 ## 現時点で自動生成する範囲
@@ -195,6 +217,7 @@ jobs:
 
 - `decision-flow.md` は生成物です。直接編集せず、`data/decision_flow.yml` を編集します。
 - 自動生成コミットの再帰実行を避けるため、GitHub Actionsは `chore: update generated files` のコミットでは実行しません。
+- Rails Jobはリポジトリ上の作業ツリー内ファイルを更新します。GitHubへのコミット・pushはGitHub Actions側の責務です。
 - 手順書本文にツール名を直接埋め込みすぎると、ツール追加時の修正範囲が広がります。
 - 手順書の正本をYAMLに寄せる場合は、Markdownは生成物として扱います。
 - Kroki未設定環境では `plantuml` / `d2` コードブロックがbuild失敗要因になるため、図化前のソースは `text` として置きます。
