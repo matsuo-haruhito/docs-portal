@@ -26,7 +26,7 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 | `source_path` | 任意 | クライアントPC上のフルパスなどの参考情報。取り込み先決定には使わない |
 | `source_name` | 任意 | 同期元名。未指定時は `file_upload` |
 | `source_commit_hash` | 任意 | クライアントが算出した内容ハッシュ。未指定時はサーバーが元ファイルのSHA-256を使う |
-| `version_label` | 任意 | 未指定時は `file-YYYYMMDDHHMMSS` |
+| `version_label` | 任意 | 未指定時は `file-YYYYMMDDHHMMSS-<hash8>` |
 | `status` | 任意 | 未指定時は `published` |
 
 ## 2. dry-run 結果確認
@@ -53,6 +53,7 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 
 `source_path` は監査・表示用であり、manifest の branch metadata には使わない。
 サーバー側の取り込み識別には `relative_path` と `source_commit_hash` を使う。
+`version_label` を明示しない場合は、秒単位の時刻と内容ハッシュ先頭8桁から作る。
 
 ## 3. 本実行
 
