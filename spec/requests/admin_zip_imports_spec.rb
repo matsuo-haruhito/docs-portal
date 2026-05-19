@@ -22,6 +22,7 @@ RSpec.describe "Admin zip imports", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("ZIPインポート")
+    expect(response.body).to include("dry-runで取り込み予定を確認してから実行")
     expect(response.body).to include("ZIPファイルをドラッグ")
     expect(response.body).to include("ZIPUI / ZIP UI Project")
   end
