@@ -36,6 +36,7 @@ RSpec.describe "Project site path redirects", type: :request do
 
     expect(response).to have_http_status(:moved_permanently)
     expect(response.location).to include("/projects/#{project.code}/site/docs/current-site")
+    expect(response.location).to include("previous_site_path=docs%2Fprevious-site")
     expect(response.location).to include("version_id=#{current_version.public_id}")
   end
 
@@ -50,6 +51,33 @@ RSpec.describe "Project site path redirects", type: :request do
 
     expect(response).to have_http_status(:moved_permanently)
     expect(response.location).to include("/projects/#{project.code}/site/docs/current-site/appendix")
+    expect(response.location).to include("previous_site_path=docs%2Fprevious-site%2Fappendix")
     expect(response.location).to include("embedded=1")
+  end
+
+  it "carries the previous path from project site redirect into the reader notice" do
+    create_site_version(label: "v0.9.0", entry_path: "docs/previous-site")
+    current_version = create_site_version(label: "v1.0.0", entry_path: "docs/current-site")
+    document.update!(latest_version: current_version)
+
+    sign_in_as(user)
+
+    get project_site_path(
+      project,
+      version_id: current_version.public_id,
+      site_path: "docs/current-site",
+      previous_site_path: "docs/previous-site"
+    )
+
+    expect(response).to have_http_status(:redirect)
+    expect(response.location).to include("/projects/#{project.code}/documents/#{document.slug}")
+    expect(response.location).to include("previous_site_path=docs%2Fprevious-site")
+
+    get response.location
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("現在の場所へ移動しました")
+    expect(response.body).to include("docs/previous-site")
+    expect(response.body).to include("docs/current-site")
   end
 end
