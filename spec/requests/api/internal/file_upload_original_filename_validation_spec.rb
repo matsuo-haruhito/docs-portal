@@ -1,10 +1,13 @@
 require "rails_helper"
+require "fileutils"
 require "tempfile"
 
 RSpec.describe "API internal file upload original filename validation", type: :request do
   let(:token) { "secret-token" }
   let(:headers) { { "Authorization" => "Bearer #{token}" } }
   let(:project) { create(:project, code: "FILEORIGVALID", name: "File Original Name Validation Project") }
+  let(:import_root) { Rails.root.join("storage", "imports") }
+  let(:document_file_root) { Rails.root.join("storage", "document_files") }
 
   before do
     allow(ENV).to receive(:fetch).and_call_original
@@ -13,6 +16,11 @@ RSpec.describe "API internal file upload original filename validation", type: :r
     allow(ENV).to receive(:[]).with("DOC_IMPORT_ACTOR_EMAIL").and_return("importer@example.com")
 
     create(:user, :internal, email_address: "importer@example.com")
+  end
+
+  after do
+    FileUtils.rm_rf(import_root.join("zip_uploads"))
+    FileUtils.rm_rf(document_file_root.join("zip_uploads"))
   end
 
   it "rejects an unsafe original filename when relative_path is omitted" do
