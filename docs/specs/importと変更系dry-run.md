@@ -27,6 +27,7 @@
 ## file upload import
 
 - internal file upload API `POST /api/internal/file_uploads` は単体ファイルを受け取り、サーバー側で一時ZIP化して ZIP upload と同じ pipeline に合流する
+- `file` パラメータがあるリクエストは dry-run 作成として扱うため、`validate_only=true` は省略できる
 - 本実行は保存済み `ImportDryRun(import_mode=manual_upload)` の `dry_run_id` を指定して行う
 - `relative_path` は同期元フォルダ内の相対パスとして扱い、先頭 `/` や `../` は拒否する
 - `source_path` はクライアントPC上のフルパスなどの参考情報であり、取り込み先決定には使わない
