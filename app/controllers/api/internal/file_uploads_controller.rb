@@ -61,20 +61,22 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
       uploaded_file: zipped_upload,
       project: project,
       actor: actor,
-      source_repo: params[:source_name].presence || "file_upload",
+      source_repo: source_name,
       source_branch: relative_path,
       source_commit_hash: params[:source_commit_hash].presence || uploaded_file_hash,
-      version_label: params[:version_label].presence || default_version_label,
+      version_label: version_label,
       status: params[:status]
     )
   end
 
   def file_upload_preview(staged)
     {
+      source_name: source_name,
       relative_path: relative_path,
       source_path: params[:source_path].to_s.presence,
       file_size: uploaded_file_size,
       source_commit_hash: staged.manifest["source_commit_hash"],
+      version_label: version_label,
       zip_import_preview: staged.manifest["zip_import_preview"]
     }
   end
@@ -117,6 +119,14 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
 
   def uploaded_file_size
     @uploaded_file_size ||= File.size(upload_file_path)
+  end
+
+  def source_name
+    @source_name ||= params[:source_name].presence || "file_upload"
+  end
+
+  def version_label
+    @version_label ||= params[:version_label].presence || default_version_label
   end
 
   def default_version_label
