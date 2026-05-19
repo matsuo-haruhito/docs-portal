@@ -14,6 +14,22 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include("生成ファイルイベント")
       expect(response.body).to include(event.public_id)
       expect(response.body).to include("docs/source.yml")
+      expect(response.body).to include("再dispatch")
+    end
+
+    it "shows status summary counts" do
+      sign_in_as(admin_user)
+      create_event!(status: :pending)
+      create_event!(status: :failed)
+      create_event!(status: :failed, path: "docs/failed-2.yml")
+
+      get admin_generated_file_events_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("pending")
+      expect(response.body).to include("failed")
+      expect(response.body).to include(admin_generated_file_events_path(status: "failed"))
+      expect(response.body).to match(%r{<div class="mt-1 text-2xl font-bold">2</div>})
     end
 
     it "filters by status" do
