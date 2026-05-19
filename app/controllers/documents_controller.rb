@@ -52,7 +52,7 @@ class DocumentsController < BaseController
     @previous_site_path = params[:previous_site_path].presence
     @previous_slug = params[:previous_slug].presence
     @terminal_slug_history_resolution = @slug_history_resolution if @slug_history_resolution&.terminal?
-    @terminal_path_history_resolution = @path_history_resolution if @path_history_resolution&.terminal?
+    @terminal_path_history_resolution = resolve_terminal_path_history || (@path_history_resolution if @path_history_resolution&.terminal?)
     @viewer_iframe_src = embedded_viewer_src(@viewer_version)
     @viewer_popout_src = @viewer_iframe_src
     @source_breadcrumbs = SourcePathBreadcrumb.new(
@@ -118,6 +118,18 @@ class DocumentsController < BaseController
       canonical_version: @viewer_version,
       candidate_versions: @versions
     ).call
+  end
+
+  def resolve_terminal_path_history
+    return if params[:terminal_site_path].blank? || @viewer_version.blank?
+
+    resolution = DocumentPathHistoryResolver.new(
+      document: @document,
+      requested_site_path: params[:terminal_site_path],
+      canonical_version: @viewer_version,
+      candidate_versions: @versions
+    ).call
+    resolution if resolution.terminal?
   end
 
   def redirect_to_canonical_site_path
