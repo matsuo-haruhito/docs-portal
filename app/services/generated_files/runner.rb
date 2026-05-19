@@ -28,6 +28,10 @@ module GeneratedFiles
       "filesystem" => {
         class_name: "GeneratedFiles::OutputWriters::Filesystem",
         require_path: "output_writers/filesystem"
+      },
+      "document_version" => {
+        class_name: "GeneratedFiles::OutputWriters::DocumentVersion",
+        require_path: "output_writers/document_version"
       }
     }.freeze
 
