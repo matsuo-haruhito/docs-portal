@@ -26,7 +26,16 @@ class GeneratedFileChangeEventJob < ApplicationJob
     "generated-file-change-event:#{normalized.sort.join(',')}"
   end
 
-  def perform(changed_files: nil, file_events: nil, operation: :update, event_source: nil, metadata: {})
+  def perform(changed_files: nil, file_events: nil, operation: :update, event_source: nil, metadata: {}, debounce_seconds: nil)
+    if debounce_seconds.to_i.positive?
+      GeneratedFiles::EventBuffer.new(debounce_seconds:).add(
+        file_events: normalize_buffer_events(file_events:, changed_files:, operation:),
+        event_source:,
+        metadata:
+      )
+      return
+    end
+
     GeneratedFiles::ChangeEventHandler.new(
       changed_files:,
       file_events:,
@@ -34,5 +43,13 @@ class GeneratedFileChangeEventJob < ApplicationJob
       event_source:,
       metadata:
     ).call
+  end
+
+  private
+
+  def normalize_buffer_events(file_events:, changed_files:, operation:)
+    return file_events if Array(file_events).any?
+
+    Array(changed_files).map { { path: _1, operation: operation } }
   end
 end
