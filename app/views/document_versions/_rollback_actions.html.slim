@@ -1,7 +1,7 @@
 - manual_upload_version = @version.source_commit_hash == ManualDocumentUploadReview::MANUAL_UPLOAD_SOURCE
 - if current_user.internal? && manual_upload_version
   - if @version.draft?
-    .card.upload-review-actions
+    .card.upload-review-actions#upload-review-actions
       h2 アップロード候補の確認
       p.muted 差異を確認して、問題なければOKで最新版として反映します。問題があればNGで候補版を破棄します。
       p.actions
@@ -9,7 +9,7 @@
         = button_to "NG：この候補を破棄", document_version_upload_review_path(@version), method: :post, params: { decision: "reject" }, class: "button danger", form: { data: { turbo_confirm: "このアップロード候補を破棄します。よろしいですか？" } }
         = link_to "文書一覧へ戻る", project_documents_path(@project, upload_source_path: @version.source_directory), class: "button secondary"
   - elsif @document.latest_version_id == @version.id
-    .card.upload-review-actions
+    .card.upload-review-actions#upload-review-actions
       h2 アップロード後の確認
       p.muted 反映済みの手動アップロード最新版に誤りがあった場合は、この版だけを取り消せます。
       p.actions
