@@ -2,7 +2,15 @@ require "tempfile"
 require "zip"
 
 class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
-  UploadedZip = Data.define(:tempfile, :original_filename)
+  UploadedZip = Data.define(:tempfile, :original_filename, :content_type) do
+    def read(*args)
+      tempfile.read(*args)
+    end
+
+    def rewind
+      tempfile.rewind
+    end
+  end
 
   private
 
@@ -42,7 +50,7 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
     public_id = params[:import_dry_run_id].to_s
     @confirmed_dry_run =
       if public_id.present?
-        ImportDryRun.find_by!(public_id:, status: :analyzed, import_mode: :manual_upload)
+        ImportDryRun.find_by!(public_id: public_id, status: :analyzed, import_mode: :manual_upload)
       end
   end
 
@@ -54,8 +62,8 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
   def stager
     @stager ||= ZipImportStager.new(
       uploaded_file: zipped_upload,
-      project:,
-      actor:,
+      project: project,
+      actor: actor,
       source_repo: params[:source_name].presence || "file_upload",
       source_branch: params[:source_path].presence || relative_path,
       source_commit_hash: params[:source_commit_hash],
@@ -74,7 +82,7 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
       end
 
       tempfile.rewind
-      UploadedZip.new(tempfile:, original_filename: "file_upload.zip")
+      UploadedZip.new(tempfile: tempfile, original_filename: "file_upload.zip", content_type: "application/zip")
     end
   end
 
