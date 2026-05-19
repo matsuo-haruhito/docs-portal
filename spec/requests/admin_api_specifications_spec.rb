@@ -11,6 +11,8 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("API仕様")
     expect(response.body).to include("docs-src/api-specification.md")
+    expect(response.body).to include("単体ファイルアップロードAPI")
+    expect(response.body).to include("client-file-upload-api")
   end
 
   it "notifies the admin when a stale API specification build is enqueued" do
