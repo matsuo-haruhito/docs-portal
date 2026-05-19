@@ -18,6 +18,7 @@ jobs:
       - app/services/generated_files/runner.rb
       - bin/generate_ai_usecase_flow
       - bin/run_generated_file_jobs
+      - config/file_change_event_jobs.yml
       - lib/tasks/ai_usecases.rake
     command: ruby bin/generate_ai_usecase_flow
     generated_paths:
