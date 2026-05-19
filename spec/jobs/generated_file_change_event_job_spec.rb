@@ -81,6 +81,24 @@ RSpec.describe GeneratedFileChangeEventJob, type: :job do
     expect(GeneratedFiles::ChangeEventHandler).not_to have_received(:new)
   end
 
+  it "normalizes backslash paths before buffering" do
+    buffer = instance_double(GeneratedFiles::EventBuffer, add: [])
+    allow(GeneratedFiles::EventBuffer).to receive(:new).and_return(buffer)
+    allow(GeneratedFiles::ChangeEventHandler).to receive(:new)
+
+    described_class.perform_now(
+      changed_files: ["docs\\source.yml"],
+      operation: :update,
+      debounce_seconds: 15
+    )
+
+    expect(buffer).to have_received(:add).with(
+      file_events: [{path: "docs/source.yml", operation: :update}],
+      event_source: nil,
+      metadata: {}
+    )
+  end
+
   it "does not buffer unsafe changed files" do
     buffer = instance_double(GeneratedFiles::EventBuffer, add: [])
     allow(GeneratedFiles::EventBuffer).to receive(:new).and_return(buffer)
