@@ -12,18 +12,30 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
   end
 
   def retry_dispatch
-    @generated_file_event.update!(
-      status: :pending,
-      scheduled_at: Time.current,
-      error_message: nil,
-      processed_at: nil
-    )
+    reset_for_dispatch!(@generated_file_event)
     GeneratedFileEventDispatchJob.perform_later
 
     redirect_to admin_generated_file_event_path(@generated_file_event.public_id), notice: "生成ファイルイベントの再dispatchをキューに投入しました。"
   end
 
+  def retry_failed
+    events = apply_filters(GeneratedFileEvent.failed.order(created_at: :desc, id: :desc)).limit(100)
+    events.each { reset_for_dispatch!(_1) }
+    GeneratedFileEventDispatchJob.perform_later if events.any?
+
+    redirect_to admin_generated_file_events_path(event_filter_params), notice: "失敗した生成ファイルイベント #{events.size} 件の再dispatchをキューに投入しました。"
+  end
+
   private
+
+  def reset_for_dispatch!(event)
+    event.update!(
+      status: :pending,
+      scheduled_at: Time.current,
+      error_message: nil,
+      processed_at: nil
+    )
+  end
 
   def apply_filters(scope)
     scope = scope.public_send(@filters[:status]) if @filters[:status].in?(GeneratedFileEvent.statuses.keys)
