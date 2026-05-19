@@ -46,6 +46,9 @@ Rails.application.routes.draw do
       post :sync, on: :member
     end
     resources :git_import_runs, only: [:index]
+    resources :generated_file_events, only: %i[index show], param: :public_id do
+      post :retry_dispatch, on: :member
+    end
     resources :generated_file_runs, only: %i[index show], param: :public_id do
       post :retry_run, on: :member
     end
