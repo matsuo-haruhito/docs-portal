@@ -15,6 +15,10 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
 
   private
 
+  def validate_only?
+    params[:file].present? || super
+  end
+
   def render_validation_result
     staged = stage_uploaded_file
     result = ImportManifestDryRun.new(manifest: staged.manifest).call
