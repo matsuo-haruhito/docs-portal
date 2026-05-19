@@ -32,12 +32,12 @@
             - if previous_file
               p.muted = "#{previous_file.effective_content_type} / #{number_to_human_size(previous_file.file_size)}"
               p.actions
-                = link_to "開く", document_file_path(previous_file), class: "button secondary"
-                = link_to "ダウンロード", document_file_path(previous_file, disposition: "download"), class: "button secondary", data: { turbo: false }
+                = link_to "前版を開く", document_file_path(previous_file), class: "button secondary", target: "_blank", rel: "noopener", data: { turbo: false }
+                = link_to "前版をダウンロード", document_file_path(previous_file, disposition: "download"), class: "button secondary", data: { turbo: false }
               - if previous_file.embeddable_viewer_file?
                 iframe.side-by-side-file-review__frame src=document_file_path(previous_file, disposition: "inline", embedded: "1") title="#{path} previous"
               - else
-                p.muted このファイルはブラウザ内プレビューに対応していません。ダウンロードして比較してください。
+                p.muted このファイルはブラウザ内プレビューに対応していません。別タブで開くか、ダウンロードして比較してください。
             - else
               p.muted 比較対象版にはありません。
           .side-by-side-file-review__pane
@@ -45,11 +45,11 @@
             - if current_file
               p.muted = "#{current_file.effective_content_type} / #{number_to_human_size(current_file.file_size)}"
               p.actions
-                = link_to "開く", document_file_path(current_file), class: "button secondary"
-                = link_to "ダウンロード", document_file_path(current_file, disposition: "download"), class: "button secondary", data: { turbo: false }
+                = link_to "今回版を開く", document_file_path(current_file), class: "button secondary", target: "_blank", rel: "noopener", data: { turbo: false }
+                = link_to "今回版をダウンロード", document_file_path(current_file, disposition: "download"), class: "button secondary", data: { turbo: false }
               - if current_file.embeddable_viewer_file?
                 iframe.side-by-side-file-review__frame src=document_file_path(current_file, disposition: "inline", embedded: "1") title="#{path} current"
               - else
-                p.muted このファイルはブラウザ内プレビューに対応していません。ダウンロードして比較してください。
+                p.muted このファイルはブラウザ内プレビューに対応していません。別タブで開くか、ダウンロードして比較してください。
             - else
               p.muted 表示中の版にはありません。
