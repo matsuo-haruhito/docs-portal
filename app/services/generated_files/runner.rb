@@ -12,7 +12,7 @@ module GeneratedFiles
       end
     end
 
-    DEFAULT_REGISTRY_PATH = ".github/generated-file-jobs.yml"
+    DEFAULT_REGISTRY_PATH = "config/generated_file_jobs.yml"
 
     def initialize(
       registry_path: DEFAULT_REGISTRY_PATH,
