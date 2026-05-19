@@ -35,7 +35,7 @@ RSpec.describe "Project site path redirects", type: :request do
     get project_site_path(project, version_id: current_version.public_id, site_path: "docs/previous-site")
 
     expect(response).to have_http_status(:moved_permanently)
-    expect(response.location).to include("site_path=docs%2Fcurrent-site")
+    expect(response.location).to include("/projects/#{project.code}/site/docs/current-site")
     expect(response.location).to include("version_id=#{current_version.public_id}")
   end
 
@@ -49,7 +49,7 @@ RSpec.describe "Project site path redirects", type: :request do
     get project_site_path(project, version_id: current_version.public_id, site_path: "docs/previous-site/appendix", embedded: "1")
 
     expect(response).to have_http_status(:moved_permanently)
-    expect(response.location).to include("site_path=docs%2Fcurrent-site%2Fappendix")
+    expect(response.location).to include("/projects/#{project.code}/site/docs/current-site/appendix")
     expect(response.location).to include("embedded=1")
   end
 end
