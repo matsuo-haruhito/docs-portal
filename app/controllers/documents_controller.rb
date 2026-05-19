@@ -51,6 +51,8 @@ class DocumentsController < BaseController
     @viewer_site_path = @path_history_resolution&.canonical_path.presence || params[:site_path].presence || @viewer_version&.html_view_site_path
     @previous_site_path = params[:previous_site_path].presence
     @previous_slug = params[:previous_slug].presence
+    @terminal_slug_history_resolution = @slug_history_resolution if @slug_history_resolution&.terminal?
+    @terminal_path_history_resolution = @path_history_resolution if @path_history_resolution&.terminal?
     @viewer_iframe_src = embedded_viewer_src(@viewer_version)
     @viewer_popout_src = @viewer_iframe_src
     @source_breadcrumbs = SourcePathBreadcrumb.new(
@@ -93,10 +95,12 @@ class DocumentsController < BaseController
     document = @project.documents.includes(:document_tags, :document_keywords).find_by(slug: params[:slug])
     return document if document
 
-    slug_resolution = DocumentSlugHistoryResolver.new(project: @project, requested_slug: params[:slug]).call
-    raise ActiveRecord::RecordNotFound, "Document not found" unless slug_resolution.moved?
+    @slug_history_resolution = DocumentSlugHistoryResolver.new(project: @project, requested_slug: params[:slug]).call
+    raise ActiveRecord::RecordNotFound, "Document not found" if @slug_history_resolution.missing?
 
-    redirect_to_canonical_document_slug(slug_resolution)
+    return @slug_history_resolution.canonical_document if @slug_history_resolution.terminal?
+
+    redirect_to_canonical_document_slug(@slug_history_resolution)
     nil
   end
 
@@ -180,18 +184,11 @@ class DocumentsController < BaseController
   end
 
   def normalized_page
-    @filters[:page].to_i.clamp(1, Float::INFINITY)
+    @filters[:page]
   end
 
   def selected_source_path
-    normalize_source_path_param(params[:upload_source_path].presence) || query_source_path_candidate
-  end
-
-  def query_source_path_candidate
-    query = @filters[:q].to_s.strip
-    return if query.blank? || query.exclude?("/")
-
-    normalize_source_path_param(query)
+    normalize_source_path_param(params[:upload_source_path].presence)
   end
 
   def normalize_source_path_param(value)
