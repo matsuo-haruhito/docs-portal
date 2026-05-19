@@ -4,6 +4,43 @@
     <p class="text-sm text-gray-600">ファイルCRUDイベントから起動された生成Jobの履歴です。</p>
   </div>
 
+  <%= form_with url: admin_generated_file_runs_path, method: :get, local: true, class: "rounded-lg border bg-white p-4" do |form| %>
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
+      <div>
+        <%= form.label :status, "Status", class: "block text-sm font-semibold" %>
+        <%= form.select :status, options_for_select([["すべて", ""]] + GeneratedFileRun.statuses.keys.map { [_1, _1] }, @filters[:status]), {}, class: "mt-1 w-full rounded border px-2 py-1" %>
+      </div>
+      <div>
+        <%= form.label :job_id, "Job ID", class: "block text-sm font-semibold" %>
+        <%= form.text_field :job_id, value: @filters[:job_id], class: "mt-1 w-full rounded border px-2 py-1" %>
+      </div>
+      <div>
+        <%= form.label :generator, "Generator", class: "block text-sm font-semibold" %>
+        <%= form.text_field :generator, value: @filters[:generator], class: "mt-1 w-full rounded border px-2 py-1" %>
+      </div>
+      <div>
+        <%= form.label :output_writer, "Output Writer", class: "block text-sm font-semibold" %>
+        <%= form.text_field :output_writer, value: @filters[:output_writer], class: "mt-1 w-full rounded border px-2 py-1" %>
+      </div>
+      <div>
+        <%= form.label :event_source, "Event Source", class: "block text-sm font-semibold" %>
+        <%= form.text_field :event_source, value: @filters[:event_source], class: "mt-1 w-full rounded border px-2 py-1" %>
+      </div>
+      <div>
+        <%= form.label :created_from, "Created From", class: "block text-sm font-semibold" %>
+        <%= form.text_field :created_from, value: @filters[:created_from], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1" %>
+      </div>
+      <div>
+        <%= form.label :created_to, "Created To", class: "block text-sm font-semibold" %>
+        <%= form.text_field :created_to, value: @filters[:created_to], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1" %>
+      </div>
+      <div class="flex items-end gap-2">
+        <%= form.submit "絞り込み", class: "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
+        <%= link_to "クリア", admin_generated_file_runs_path, class: "rounded border px-3 py-2 text-sm" %>
+      </div>
+    </div>
+  <% end %>
+
   <div class="overflow-x-auto rounded-lg border bg-white">
     <table class="min-w-full divide-y divide-gray-200 text-sm">
       <thead class="bg-gray-50">
