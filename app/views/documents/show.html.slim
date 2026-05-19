@@ -38,10 +38,11 @@
 
     .site-viewer-shell.document-reader-shell.manual-document-upload-target#document-content data=preview_drop_data
       - if current_user.internal?
-        .document-preview-drop-overlay aria-hidden="true"
+        .document-preview-drop-overlay role="status" aria-live="polite"
           .document-preview-drop-overlay__message
             strong ここに1ファイルをドロップ
             span 同名ならこの文書の更新候補、別名なら同じフォルダ直下に追加します。複数ファイルはZIPにまとめるか、1ファイルずつアップロードしてください。
+            span.document-preview-drop-overlay__uploading アップロード中です。差異確認画面へ移動します。
       iframe.site-viewer-frame src=@viewer_iframe_src title="#{@document.title} #{@viewer_version.version_label}" loading="eager"
 
     = render "comment_workspace", floating: true
@@ -51,7 +52,7 @@
     .card.manual-document-upload-panel data=preview_drop_data
       h2 ファイルをアップロード
       p.muted この文書の更新候補として1ファイルずつドロップできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
-      .manual-document-upload-panel__drop
+      .manual-document-upload-panel__drop role="status" aria-live="polite"
         strong ファイルをドラッグ＆ドロップ
         span.muted 差異確認後にOK/NGを選択します。複数ファイルはZIPにまとめるか、1ファイルずつアップロードしてください。
   = render "comment_workspace", floating: false
