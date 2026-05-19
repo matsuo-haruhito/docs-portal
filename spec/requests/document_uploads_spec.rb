@@ -122,6 +122,7 @@ RSpec.describe "Document uploads", type: :request do
 
     expect(response).to redirect_to(project_documents_path(project))
     expect(document.reload).to be_archived
+    expect(document.latest_version).to be_nil
     expect(uploaded_version.reload).to be_archived
   end
 
