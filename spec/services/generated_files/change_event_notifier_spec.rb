@@ -70,7 +70,7 @@ RSpec.describe GeneratedFiles::ChangeEventNotifier do
     notifier = described_class.new(job_class:)
 
     events = notifier.notify(
-      file_events: ["../outside.yml", "/tmp/source.yml", "docs/source.yml"],
+      file_events: ["../outside.yml", "/tmp/source.yml", "C:/tmp/source.yml", "docs/source.yml"],
       event_source: "spec"
     )
 
