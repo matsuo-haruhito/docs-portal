@@ -15,7 +15,6 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
   after do
     FileUtils.rm_rf(DocumentFile.storage_root.join("spec/docusaurus-preview-build-job"))
     FileUtils.rm_rf(version.site_root_absolute_path) if version&.persisted?
-    build_archive&.close! if defined?(build_archive) && build_archive
   end
 
   it "sends the version archive to the renderer and installs the returned artifact" do
