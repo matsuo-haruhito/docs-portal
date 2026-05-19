@@ -40,7 +40,7 @@ RSpec.describe "Document pagination", type: :request do
   end
 
   it "normalizes invalid page values to the first page" do
-    2.times do |index|
+    21.times do |index|
       create(
         :document,
         project:,
@@ -54,11 +54,13 @@ RSpec.describe "Document pagination", type: :request do
     get project_documents_path(project, page: "not-a-number")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("ページ 1 / 1")
+    expect(result_titles.size).to eq(20)
+    expect(response.body).to include("ページ 1 / 2")
 
     get project_documents_path(project, page: 0)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("ページ 1 / 1")
+    expect(result_titles.size).to eq(20)
+    expect(response.body).to include("ページ 1 / 2")
   end
 end
