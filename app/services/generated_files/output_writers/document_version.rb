@@ -9,6 +9,9 @@ module GeneratedFiles
         project_code:,
         document_slug:,
         document_title:,
+        project_name: nil,
+        project_description: nil,
+        create_project_if_missing: false,
         document_category: "other",
         document_kind: "mixed",
         visibility_policy: "internal_only",
@@ -19,6 +22,9 @@ module GeneratedFiles
         root: nil
       )
         @project_code = project_code
+        @project_name = project_name
+        @project_description = project_description
+        @create_project_if_missing = create_project_if_missing
         @document_slug = document_slug
         @document_title = document_title
         @document_category = document_category
@@ -47,7 +53,8 @@ module GeneratedFiles
 
       private
 
-      attr_reader :project_code, :document_slug, :document_title, :document_category, :document_kind,
+      attr_reader :project_code, :project_name, :project_description, :create_project_if_missing,
+        :document_slug, :document_title, :document_category, :document_kind,
         :visibility_policy, :importance_level, :version_label_prefix, :source_identifier, :snapshot_kind, :root
 
       def default_root
@@ -59,7 +66,18 @@ module GeneratedFiles
       end
 
       def project
-        @project ||= Project.find_by!(code: project_code)
+        @project ||= begin
+          existing = Project.find_by(code: project_code)
+          return existing if existing
+          raise ActiveRecord::RecordNotFound, "Generated output project not found: #{project_code}" unless create_project_if_missing
+
+          Project.create!(
+            code: project_code,
+            name: project_name.presence || project_code,
+            description: project_description,
+            active: true
+          )
+        end
       end
 
       def find_or_create_document!
