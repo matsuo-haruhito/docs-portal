@@ -270,11 +270,26 @@ ul
     li PDF出力時の透かし: #{@export_watermark_text}
 
 h2#version-files 添付・元ファイル
+= render "preview_target_display_summary", summary: @preview_target_display_summary
+- classifications_by_path = @preview_target_display_summary&.classifications&.index_by(&:tree_path) || {}
 ul
   - @version.document_files.each do |file|
+    - classification = classifications_by_path[file.tree_path]
     li
       = link_to file.file_name, document_file_path(file)
       |  / #{file.content_type} / #{number_to_human_size(file.file_size)}
+      - if classification
+        |  / 
+        span.badge = classification.role
+        - if classification.grouped?
+          |  
+          span.badge = classification.group_name
+        - if classification.hidden?
+          |  
+          span.badge hidden
+        - if classification.debug?
+          |  
+          span.badge debug
       - if file.downloadable_by?(current_user)
         |  / 
         = link_to "ダウンロード", document_file_path(file, disposition: "download"), data: { turbo: false }
