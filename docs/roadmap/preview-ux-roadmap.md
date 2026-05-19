@@ -80,6 +80,7 @@
   - archive entry text preview service
   - archive entry preview route / controller / view
   - archive entry preview request spec
+  - archive entry download design
   - text preview candidate への preview link
   - text preview / download 候補分類
   - truncated 時の対象範囲 warning
@@ -135,18 +136,18 @@
 
 ## 短期タスク
 
-### 1. ZIP entry download の設計
+### 1. ZIP entry download の service 実装
 
 目的:
 
-- ZIP entry preview が安定した後に、download の安全境界を決める
+- 設計済みの安全境界に沿って、UIへ出す前に download service と spec を固める
 
 候補:
 
-- download 権限の再確認
-- access log の記録方法
-- send_data / streaming の選定
-- size limit の扱い
+- `DocumentFileArchiveEntryDownload` service 追加
+- binary data / filename / content_type / size を Result で返す
+- unsafe / missing / directory / nested archive / size over を spec で固定する
+- controller / route / UI は service が安定してから追加する
 
 ### 2. specs / roadmap の継続整理
 
@@ -290,8 +291,10 @@
 
 ## 実装順のおすすめ
 
-1. ZIP entry download の設計
-2. Preview target metadata parser / validator
-3. Docusaurus build manifest
-4. Path history resolver
-5. Project 内検索
+1. ZIP entry download service / spec
+2. ZIP entry download route / controller / request spec
+3. ZIP entry download UI link
+4. Preview target metadata parser / validator
+5. Docusaurus build manifest
+6. Path history resolver
+7. Project 内検索
