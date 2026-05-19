@@ -18,6 +18,20 @@ RSpec.describe DocumentDiffHelper, type: :helper do
     expect(added_html).to include('<mark class="diff-inline-change">new</mark>')
   end
 
+  it "keeps unchanged middle tokens unmarked when a line has multiple changed fragments" do
+    lines = [
+      Line.new(kind: :removed, old_number: 1, new_number: nil, text: "alpha old beta red gamma"),
+      Line.new(kind: :added, old_number: nil, new_number: 1, text: "alpha new beta blue gamma")
+    ]
+
+    removed_html = helper.diff_line_code_with_inline_highlight(lines, 0)
+    added_html = helper.diff_line_code_with_inline_highlight(lines, 1)
+
+    expect(removed_html).to include('<mark class="diff-inline-change">old</mark> beta <mark class="diff-inline-change">red</mark>')
+    expect(added_html).to include('<mark class="diff-inline-change">new</mark> beta <mark class="diff-inline-change">blue</mark>')
+    expect(removed_html).not_to include('<mark class="diff-inline-change">old beta red</mark>')
+  end
+
   it "escapes line text before highlighting" do
     lines = [
       Line.new(kind: :removed, old_number: 1, new_number: nil, text: "name: A < B"),
