@@ -46,6 +46,10 @@ RSpec.describe "API internal file upload original filename validation", type: :r
     tempfile.write(content)
     tempfile.rewind
 
-    Rack::Test::UploadedFile.new(tempfile.path, "text/markdown", original_filename: original_filename)
+    ActionDispatch::Http::UploadedFile.new(
+      tempfile: tempfile,
+      filename: original_filename,
+      type: "text/markdown"
+    )
   end
 end
