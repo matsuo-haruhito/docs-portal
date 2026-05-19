@@ -20,4 +20,33 @@ RSpec.describe GeneratedFileJob, type: :job do
     )
     expect(runner).to have_received(:call)
   end
+
+  describe ".concurrency_key_for" do
+    it "uses sorted job ids when job ids are present" do
+      key = described_class.concurrency_key_for(
+        args: [],
+        kwargs: {job_ids: ["b", "a"], changed_files: ["z.yml"]}
+      )
+
+      expect(key).to eq("generated-file-job:ids:a,b")
+    end
+
+    it "uses sorted changed files when job ids are absent" do
+      key = described_class.concurrency_key_for(
+        args: [],
+        kwargs: {changed_files: ["b.yml", "a.yml"]}
+      )
+
+      expect(key).to eq("generated-file-job:files:a.yml,b.yml")
+    end
+
+    it "accepts string keys from serialized job payloads" do
+      key = described_class.concurrency_key_for(
+        args: [{"job_ids" => ["serialized"], "changed_files" => ["source.yml"]}],
+        kwargs: {}
+      )
+
+      expect(key).to eq("generated-file-job:ids:serialized")
+    end
+  end
 end
