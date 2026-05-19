@@ -33,6 +33,7 @@ const server = createServer(async (request, response) => {
     const staticDir = path.join(workRoot, 'static');
     const buildDir = path.join(workRoot, 'build');
     const outputArchive = path.join(workRoot, 'build.tar.gz');
+    const docusaurusDocsDir = path.relative(DOCUSAURUS_DIR, sourceDir);
     const docusaurusStaticDir = path.relative(DOCUSAURUS_DIR, staticDir);
 
     await writeBoundedRequestBody(request, sourceArchive);
@@ -45,7 +46,7 @@ const server = createServer(async (request, response) => {
       cwd: DOCUSAURUS_DIR,
       env: {
         ...process.env,
-        DOCUSAURUS_DOCS_PATH: sourceDir,
+        DOCUSAURUS_DOCS_PATH: docusaurusDocsDir,
         DOCUSAURUS_STATIC_DIR: docusaurusStaticDir,
       },
       timeoutMs: BUILD_TIMEOUT_MS,
