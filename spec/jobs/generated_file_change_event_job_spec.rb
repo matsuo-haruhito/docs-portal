@@ -125,6 +125,22 @@ RSpec.describe GeneratedFileChangeEventJob, type: :job do
       expect(key).to eq("generated-file-change-event:docs/source.yml:update")
     end
 
+    it "ignores unsafe file event paths" do
+      key = described_class.concurrency_key_for(
+        args: [],
+        kwargs: {
+          file_events: [
+            {path: "../outside.yml", operation: "update"},
+            {path: "/tmp/source.yml", operation: "update"},
+            {path: "C:/tmp/source.yml", operation: "update"},
+            {path: "docs/source.yml", operation: "update"}
+          ]
+        }
+      )
+
+      expect(key).to eq("generated-file-change-event:docs/source.yml:update")
+    end
+
     it "uses changed files and operation when file events are absent" do
       key = described_class.concurrency_key_for(
         args: [],
