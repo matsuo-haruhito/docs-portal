@@ -78,11 +78,13 @@ ruby bin/generate_ai_usecase_flow
 | ファイル | 役割 |
 |---|---|
 | `config/file_change_event_jobs.yml` | ファイルCRUDイベントから起動するJobとパラメーターの定義 |
-| `config/generated_file_jobs.yml` | GeneratedFileJobが実行する生成JobID、generator、生成物の定義 |
+| `config/generated_file_jobs.yml` | GeneratedFileJobが実行する生成JobID、generator、output writer、生成物の定義 |
 | `.github/workflows/generated-file-jobs.yml` | GitHub push時に `config/generated_file_jobs.yml` を読んで生成物を更新する安全網 |
 | `app/services/generated_files/change_event_handler.rb` | CRUDイベントを受け取り、`config/file_change_event_jobs.yml` に従ってJobをenqueueする共通ハンドラ |
 | `app/jobs/generated_file_change_event_job.rb` | 外部同期、手修正、アップロードなどから呼ぶファイル変更イベント用ActiveJob |
 | `app/services/generated_files/runner.rb` | `config/generated_file_jobs.yml` を読み、generatorまたは後方互換のcommandを実行する共通サービス |
+| `app/services/generated_files/artifact.rb` | Generatorが返す生成成果物の値オブジェクト |
+| `app/services/generated_files/output_writers/filesystem.rb` | 生成成果物をファイルシステムへ保存するOutputWriter |
 | `app/services/generated_files/generators/ai_usecase_decision_flow.rb` | AI活用判断フローDSLをMarkdown/PlantUMLへ変換するGenerator class |
 | `app/jobs/generated_file_job.rb` | 実際の生成処理を実行するActiveJob |
 | `bin/run_generated_file_jobs` | GitHub ActionsやローカルCLIから共通サービスを呼び出すrunner |
@@ -151,12 +153,26 @@ jobs:
     source_paths:
       - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
     generator: ai_usecase_decision_flow
+    output_writer: filesystem
     generated_paths:
       - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/decision-flow.md
       - docs/ai-usecases/generated/decision-flow.puml
 ```
 
-`generator` は `GeneratedFiles::Runner::GENERATORS` のAllowListに登録されたGenerator classへ解決されます。既存互換として `command` も実行できますが、新規追加はGenerator class方式を優先します。
+`generator` は `GeneratedFiles::Runner::GENERATORS` のAllowListに登録されたGenerator classへ解決されます。Generatorは `GeneratedFiles::Artifact` を返し、`output_writer` が保存先を決めます。既存互換として `command` も実行できますが、新規追加はGenerator class方式を優先します。
+
+## OutputWriter
+
+現時点では `filesystem` に対応しています。
+
+```text
+GeneratedFiles::Generators::*
+  ↓ Artifact[]
+GeneratedFiles::OutputWriters::Filesystem
+  ↓ ファイルシステムへ保存
+```
+
+次の段階で `document_version` writer を追加し、生成先を作業ツリーではなく `DocumentVersion / DocumentFile / storage` に寄せます。
 
 ## 重複・連続更新への対策
 
@@ -207,6 +223,7 @@ jobs:
     source_paths:
       - path/to/source.yml
     generator: sample_generator
+    output_writer: filesystem
     generated_paths:
       - path/to/generated.md
 ```
