@@ -17,7 +17,9 @@ module DocumentVersionQuality
         attachment_count_check,
         internal_only_text_check,
         preview_target_metadata_source_check,
-        *preview_target_metadata_warning_checks
+        *preview_target_metadata_warning_checks,
+        docusaurus_build_manifest_source_check,
+        *docusaurus_build_manifest_warning_checks
       ].compact
     end
 
@@ -89,8 +91,27 @@ module DocumentVersionQuality
       end
     end
 
+    def docusaurus_build_manifest_source_check
+      return if document_version.site_build_path.blank?
+      return info(:docusaurus_build_manifest, "Docusaurus build manifest source is not set") unless docusaurus_build_manifest.source_file?
+
+      info(:docusaurus_build_manifest, "Docusaurus build manifest source is set", docusaurus_build_manifest.source_path)
+    end
+
+    def docusaurus_build_manifest_warning_checks
+      return [] if document_version.site_build_path.blank?
+
+      docusaurus_build_manifest.warnings.map do |manifest_warning|
+        warning(:docusaurus_build_manifest, manifest_warning.message, manifest_warning.detail)
+      end
+    end
+
     def preview_target_metadata
       @preview_target_metadata ||= DocumentVersionPreviewTargetMetadata.new(document_version).call
+    end
+
+    def docusaurus_build_manifest
+      @docusaurus_build_manifest ||= DocusaurusBuildManifest.new(document_version).call
     end
 
     def info(key, message, detail = nil)
