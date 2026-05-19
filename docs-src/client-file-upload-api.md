@@ -29,7 +29,8 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 | --- | --- | --- |
 | `project_code` | dry-run時必須 | 取り込み先案件コード |
 | `file` | dry-run時必須 | multipart upload のファイル実体。指定された場合は dry-run 作成になる |
-| `relative_path` | 任意 | 同期元フォルダ内の相対パス。未指定時はアップロードファイル名 |
+| `relative_path` | 任意 | 同期元フォルダ内の相対パス。未指定時は `original_filename`、それもなければ upload file の元ファイル名 |
+| `original_filename` | 任意 | multipart 実装で元ファイル名が basename 化されるクライアント向けの明示的な元ファイル名 |
 | `source_path` | 任意 | クライアントPC上のフルパスなどの参考情報。取り込み先決定には使わない |
 | `source_name` | 任意 | 同期元名。未指定時は `file_upload` |
 | `content_hash` | 任意 | 同期クライアント向けの内容ハッシュ。指定時はアップロード実体のSHA-256と照合する |
@@ -108,7 +109,7 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 
 ## path validation
 
-`relative_path` は次を拒否します。
+`relative_path` と、fallback に使う `original_filename` / upload file の元ファイル名は次を拒否します。
 
 - 空文字
 - `/README.md` のような絶対パス
