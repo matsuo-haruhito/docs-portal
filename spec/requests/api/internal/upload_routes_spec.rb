@@ -30,10 +30,10 @@ RSpec.describe "API internal upload routes", type: :request do
     expect do
       post "/api/internal/zip_uploads", params: {
         project_code: project.code,
-        zip_file:,
+        zip_file: zip_file,
         validate_only: true,
         version_label: "zip-v1"
-      }, headers:
+      }, headers: headers
     end.to change(ImportDryRun, :count).by(1)
 
     expect(response).to have_http_status(:created)
@@ -53,7 +53,7 @@ RSpec.describe "API internal upload routes", type: :request do
         source_path: "C:/work/docs/README.md",
         validate_only: true,
         version_label: "file-v1"
-      }, headers:
+      }, headers: headers
     end.to change(ImportDryRun, :count).by(1)
 
     expect(response).to have_http_status(:created)
@@ -76,13 +76,13 @@ RSpec.describe "API internal upload routes", type: :request do
       relative_path: "docs/README.md",
       validate_only: true,
       version_label: "file-v1"
-    }, headers:
+    }, headers: headers
     dry_run_id = response.parsed_body.fetch("dry_run_id")
 
     expect do
       post "/api/internal/file_uploads", params: {
         import_dry_run_id: dry_run_id
-      }, headers:
+      }, headers: headers
     end.to change(Document, :count).by(1)
       .and change(DocumentVersion, :count).by(1)
       .and change(DocumentFile, :count).by(1)
@@ -106,9 +106,9 @@ RSpec.describe "API internal upload routes", type: :request do
       post "/api/internal/file_uploads", params: {
         project_code: project.code,
         file: uploaded_file,
-        relative_path:,
+        relative_path: relative_path,
         validate_only: true
-      }, headers:
+      }, headers: headers
 
       expect(response).to have_http_status(:bad_request)
       expect(response.parsed_body["error"]).to include("relative_path")
@@ -125,7 +125,7 @@ RSpec.describe "API internal upload routes", type: :request do
 
     Zip::File.open(tempfile.path, create: true) do |zip_file|
       entries.each do |path, content|
-        zip_file.get_output_stream(path) { _1.write(content) }
+        zip_file.get_output_stream(path) { |stream| stream.write(content) }
       end
     end
 
