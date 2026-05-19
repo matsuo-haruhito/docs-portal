@@ -126,6 +126,32 @@ RSpec.describe GeneratedFiles::ChangeEventHandler do
     )
   end
 
+  it "ignores blank file event paths" do
+    registry = write_registry(
+      rules: [
+        {
+          "id" => "blank_matcher",
+          "operations" => ["update"],
+          "path_patterns" => ["*"],
+          "job_class" => "GeneratedFileJob",
+          "params" => {"changed_files" => "$matched_files"}
+        }
+      ]
+    )
+    allow(GeneratedFileJob).to receive(:perform_later)
+
+    rule_ids = described_class.new(
+      file_events: [{"path" => "", "operation" => "update"}, nil],
+      changed_files: ["", "./"],
+      registry_path: registry,
+      root: @root,
+      output: StringIO.new
+    ).call
+
+    expect(rule_ids).to eq([])
+    expect(GeneratedFileJob).not_to have_received(:perform_later)
+  end
+
   it "treats changed_files as update events for backward compatibility" do
     registry = write_registry(
       rules: [
