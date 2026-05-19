@@ -26,11 +26,13 @@ RSpec.describe "API internal upload routes", type: :request do
   end
 
   it "does not expose the removed legacy internal upload URLs" do
-    post "/api/internal/doc_imports", headers: headers
-    expect(response).to have_http_status(:not_found)
+    expect do
+      Rails.application.routes.recognize_path("/api/internal/doc_imports", method: :post)
+    end.to raise_error(ActionController::RoutingError)
 
-    post "/api/internal/zip_imports", headers: headers
-    expect(response).to have_http_status(:not_found)
+    expect do
+      Rails.application.routes.recognize_path("/api/internal/zip_imports", method: :post)
+    end.to raise_error(ActionController::RoutingError)
   end
 
   it "creates a dry-run through the renamed ZIP upload API" do
