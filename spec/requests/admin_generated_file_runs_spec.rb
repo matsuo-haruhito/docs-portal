@@ -15,6 +15,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).to include(run.public_id)
       expect(response.body).to include("ai_usecase_decision_flow")
       expect(response.body).to include("再実行")
+      expect(response.body).to include("失敗分を一括再実行")
     end
 
     it "shows status summary counts" do
@@ -121,6 +122,30 @@ RSpec.describe "Admin generated file runs", type: :request do
           "actor_id" => 123,
           "retry_of_generated_file_run_public_id" => run.public_id,
           "retry_requested_by_user_id" => admin_user.id
+        )
+      )
+    end
+  end
+
+  describe "POST /admin/generated_file_runs/retry_failed" do
+    it "bulk retries only failed runs matching filters" do
+      sign_in_as(admin_user)
+      matched = create_run!(job_id: "matched_job", status: :failed, output_writer: "document_version", changed_files: ["matched.yml"])
+      create_run!(job_id: "completed_job", status: :completed, output_writer: "document_version")
+      create_run!(job_id: "other_writer_job", status: :failed, output_writer: "filesystem")
+      allow(GeneratedFileJob).to receive(:perform_later)
+
+      post retry_failed_admin_generated_file_runs_path(output_writer: "document_version")
+
+      expect(response).to redirect_to(admin_generated_file_runs_path(output_writer: "document_version"))
+      expect(GeneratedFileJob).to have_received(:perform_later).once.with(
+        changed_files: ["matched.yml"],
+        job_ids: ["matched_job"],
+        event_source: "generated_file_run_bulk_retry",
+        metadata: hash_including(
+          "retry_of_generated_file_run_public_id" => matched.public_id,
+          "retry_requested_by_user_id" => admin_user.id,
+          "bulk_retry" => true
         )
       )
     end
