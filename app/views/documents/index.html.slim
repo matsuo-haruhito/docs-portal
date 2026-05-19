@@ -69,12 +69,12 @@ section.card
       - if @selected_source_path.present?
         | ここにドロップすると「
         code = @selected_source_path
-        | 」直下に文書を追加します。
+        | 」直下の追加候補としてアップロードします。
       - else
-        | ここにドロップすると案件直下に文書を追加します。左のTreeViewのフォルダや文書にも直接ドロップできます。
-    .manual-document-upload-panel__drop data-action="dragenter->manual-document-upload#dragenter dragover->manual-document-upload#dragover dragleave->manual-document-upload#dragleave drop->manual-document-upload#drop"
+        | ここにドロップすると案件直下の追加候補としてアップロードします。左のTreeViewのフォルダや文書にも直接ドロップできます。
+    .manual-document-upload-panel__drop role="status" aria-live="polite" data-action="dragenter->manual-document-upload#dragenter dragover->manual-document-upload#dragover dragleave->manual-document-upload#dragleave drop->manual-document-upload#drop"
       strong ファイルをドラッグ＆ドロップ
-      span.muted 即時に文書を作成または版更新します。
+      span.muted アップロード後に差分確認画面でOK/NGを選択します。複数ファイルはZIPにまとめるか、1ファイルずつアップロードしてください。
 
 - page_start = @documents_count.zero? ? 0 : ((@current_page - 1) * @per_page) + 1
 - page_end = [@current_page * @per_page, @documents_count].min
