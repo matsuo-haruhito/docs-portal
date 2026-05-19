@@ -15,6 +15,15 @@
     .page-hero.site-viewer-hero.document-reader-hero
       h1 = @document.title
       p.muted = site_viewer_meta_lines(project: @project, document: @document, version: @viewer_version).join(" / ")
+      - if @previous_slug.present?
+        .notice
+          strong 現在の文書URLへ移動しました
+          p.muted
+            | 旧URL識別子 
+            code = @previous_slug
+            |  は現在 
+            code = @document.slug
+            |  として表示しています。
       - if @previous_site_path.present?
         .notice
           strong 現在の場所へ移動しました
@@ -57,6 +66,15 @@
     = render "comment_workspace", floating: true
 - else
   h1 = @document.title
+  - if @previous_slug.present?
+    .notice
+      strong 現在の文書URLへ移動しました
+      p.muted
+        | 旧URL識別子 
+        code = @previous_slug
+        |  は現在 
+        code = @document.slug
+        |  として扱っています。
   - if @previous_site_path.present?
     .notice
       strong 現在の場所へ移動しました
