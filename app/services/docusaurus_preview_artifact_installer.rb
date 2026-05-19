@@ -7,7 +7,7 @@ class DocusaurusPreviewArtifactInstaller
   def initialize(version:, archive_path:, site_path:)
     @version = version
     @archive_path = archive_path
-    @site_path = site_path
+    @site_path = safe_relative_path(site_path, label: "Docusaurus site path")
   end
 
   def install!
@@ -43,7 +43,7 @@ class DocusaurusPreviewArtifactInstaller
   end
 
   def extract_entry(entry, destination)
-    relative_path = safe_relative_path(entry.full_name)
+    relative_path = safe_relative_path(entry.full_name, label: "Docusaurus build artifact path")
     return if relative_path.blank?
 
     target = safe_destination(destination, relative_path)
@@ -60,13 +60,15 @@ class DocusaurusPreviewArtifactInstaller
     end
   end
 
-  def safe_relative_path(value)
-    path = value.to_s.tr("\\", "/").delete_prefix("./").delete_prefix("/")
+  def safe_relative_path(value, label:)
+    raw_path = value.to_s.tr("\\", "/")
+    invalid_absolute = raw_path.start_with?("/") || raw_path.match?(/\A[A-Za-z]:\//)
+    path = raw_path.delete_prefix("./")
     return nil if path.blank? || path == "."
 
     normalized = Pathname.new(path).cleanpath.to_s
-    invalid = normalized == ".." || normalized.start_with?("../") || normalized.include?("\0")
-    raise ApplicationError::BadRequest, "Docusaurus build artifact contains invalid path: #{value}" if invalid
+    invalid = invalid_absolute || normalized == ".." || normalized.start_with?("../") || normalized.include?("\0")
+    raise ApplicationError::BadRequest, "#{label} is invalid: #{value}" if invalid
 
     normalized
   end
