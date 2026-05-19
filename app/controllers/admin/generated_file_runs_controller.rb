@@ -2,10 +2,18 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_generated_file_run, only: %i[show retry_run]
 
+  DEFAULT_PER_PAGE = 50
+  MAX_PER_PAGE = 100
+
   def index
     @filters = run_filter_params
+    @page = page_param
+    @per_page = per_page_param
     @status_counts = GeneratedFileRun.group(:status).count
-    @generated_file_runs = apply_filters(GeneratedFileRun.order(created_at: :desc, id: :desc)).limit(100)
+    @filtered_generated_file_runs = apply_filters(GeneratedFileRun.order(created_at: :desc, id: :desc))
+    @total_count = @filtered_generated_file_runs.count
+    @total_pages = total_pages(@total_count)
+    @generated_file_runs = @filtered_generated_file_runs.offset((@page - 1) * @per_page).limit(@per_page)
   end
 
   def show
@@ -18,7 +26,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   def retry_failed
-    runs = apply_filters(GeneratedFileRun.failed.order(created_at: :desc, id: :desc)).limit(100)
+    runs = apply_filters(GeneratedFileRun.failed.order(created_at: :desc, id: :desc)).limit(MAX_PER_PAGE)
     runs.each { enqueue_retry!(_1, bulk: true) }
 
     redirect_to admin_generated_file_runs_path(run_filter_params), notice: "失敗した生成ジョブ #{runs.size} 件の再実行をキューに投入しました。"
@@ -51,6 +59,19 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
 
   def run_filter_params
     params.permit(:status, :job_id, :generator, :output_writer, :event_source, :created_from, :created_to).to_h.symbolize_keys
+  end
+
+  def page_param
+    [params[:page].to_i, 1].max
+  end
+
+  def per_page_param
+    requested = params[:per_page].presence&.to_i || DEFAULT_PER_PAGE
+    requested.clamp(1, MAX_PER_PAGE)
+  end
+
+  def total_pages(count)
+    [(count.to_f / @per_page).ceil, 1].max
   end
 
   def parsed_time(value, beginning: false, end_of_day: false)
