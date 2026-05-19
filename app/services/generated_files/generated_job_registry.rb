@@ -12,7 +12,7 @@ module GeneratedFiles
     end
 
     def jobs
-      @jobs ||= YAML.safe_load(registry_path.read, permitted_classes: [], aliases: false).fetch("jobs")
+      @jobs ||= YAML.safe_load(registry_path.read, permitted_classes: [Symbol], permitted_symbols: [], aliases: false).fetch("jobs")
     end
 
     def select(changed_files:, job_ids: [])
@@ -24,7 +24,7 @@ module GeneratedFiles
         next false unless normalized_job_ids.empty?
 
         watched_paths = normalize_files(Array(job.fetch("source_paths", [])) + Array(job.fetch("watch_paths", [])))
-        watched_paths.any? { normalized_changed_files.include?(_1) }
+        watched_paths.any? { |path| normalized_changed_files.include?(path) }
       end
     end
 
