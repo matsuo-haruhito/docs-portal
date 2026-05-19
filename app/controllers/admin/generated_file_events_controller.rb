@@ -29,8 +29,11 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
     scope = scope.where(operation: @filters[:operation]) if @filters[:operation].present?
     scope = scope.where(event_source: @filters[:event_source]) if @filters[:event_source].present?
     scope = scope.where("path LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(@filters[:path])}%") if @filters[:path].present?
-    scope = scope.where("scheduled_at >= ?", parsed_time(@filters[:scheduled_from], beginning: true)) if @filters[:scheduled_from].present?
-    scope = scope.where("scheduled_at <= ?", parsed_time(@filters[:scheduled_to], end_of_day: true)) if @filters[:scheduled_to].present?
+
+    scheduled_from = parsed_time(@filters[:scheduled_from], beginning: true)
+    scheduled_to = parsed_time(@filters[:scheduled_to], end_of_day: true)
+    scope = scope.where("scheduled_at >= ?", scheduled_from) if scheduled_from
+    scope = scope.where("scheduled_at <= ?", scheduled_to) if scheduled_to
     scope
   end
 
@@ -39,6 +42,8 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
   end
 
   def parsed_time(value, beginning: false, end_of_day: false)
+    return if value.blank?
+
     time = Time.zone.parse(value.to_s)
     return time.beginning_of_day if beginning && value.to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)
     return time.end_of_day if end_of_day && value.to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)
