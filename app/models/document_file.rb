@@ -6,6 +6,7 @@ class DocumentFile < ApplicationRecord
   EXTENSION_CONTENT_TYPES = {
     ".md" => "text/markdown",
     ".markdown" => "text/markdown",
+    ".mdx" => "text/markdown",
     ".txt" => "text/plain",
     ".csv" => "text/csv",
     ".json" => "application/json",
