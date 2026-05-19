@@ -44,6 +44,33 @@ RSpec.describe "API internal upload dry-run modes", type: :request do
     uploaded_file&.tempfile&.close!
   end
 
+  it "prioritizes a new uploaded file over import_dry_run_id" do
+    first_file = build_uploaded_file("# Existing Dry Run\n")
+    second_file = build_uploaded_file("# New Dry Run\n")
+
+    post "/api/internal/file_uploads", params: {
+      project_code: project.code,
+      file: first_file,
+      relative_path: "docs/existing.md"
+    }, headers: headers
+    existing_dry_run_id = response.parsed_body.fetch("dry_run_id")
+
+    post "/api/internal/file_uploads", params: {
+      project_code: project.code,
+      file: second_file,
+      relative_path: "docs/new.md",
+      import_dry_run_id: existing_dry_run_id
+    }, headers: headers
+
+    expect(response).to have_http_status(:created)
+    expect(response.parsed_body.fetch("dry_run_id")).not_to eq(existing_dry_run_id)
+    expect(response.parsed_body.fetch("file_upload_preview").fetch("relative_path")).to eq("docs/new.md")
+    expect(ImportDryRun.find_by!(public_id: existing_dry_run_id).analyzed?).to eq(true)
+  ensure
+    first_file&.tempfile&.close!
+    second_file&.tempfile&.close!
+  end
+
   it "does not execute a file upload dry-run through the ZIP endpoint" do
     uploaded_file = build_uploaded_file("# File Dry Run\n")
 
