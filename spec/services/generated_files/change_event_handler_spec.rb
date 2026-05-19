@@ -123,6 +123,79 @@ RSpec.describe GeneratedFiles::ChangeEventHandler do
     )
   end
 
+  it "buffers matching rules when debounce_seconds is configured" do
+    registry = write_registry(
+      rules: [
+        {
+          "id" => "debounced",
+          "operations" => ["update"],
+          "path_patterns" => ["source.yml"],
+          "job_class" => "GeneratedFileJob",
+          "params" => {
+            "changed_files" => "$matched_files",
+            "job_ids" => ["generated_job"],
+            "debounce_seconds" => 10
+          }
+        }
+      ]
+    )
+    buffer = instance_double(GeneratedFiles::EventBuffer, add: [])
+    buffer_class = class_double(GeneratedFiles::EventBuffer, new: buffer)
+    allow(GeneratedFileJob).to receive(:perform_later)
+
+    rule_ids = described_class.new(
+      file_events: [{"path" => "source.yml", "operation" => "update"}],
+      event_source: "spec",
+      metadata: {"source_id" => 1},
+      registry_path: registry,
+      root: @root,
+      output: StringIO.new,
+      event_buffer_class: buffer_class
+    ).call
+
+    expect(rule_ids).to eq(["debounced"])
+    expect(buffer_class).to have_received(:new).with(debounce_seconds: 10)
+    expect(buffer).to have_received(:add).with(
+      file_events: [{path: "source.yml", operation: "update"}],
+      event_source: "spec",
+      metadata: {"source_id" => 1}
+    )
+    expect(GeneratedFileJob).not_to have_received(:perform_later)
+  end
+
+  it "does not debounce events dispatched from the generated file event buffer" do
+    registry = write_registry(
+      rules: [
+        {
+          "id" => "debounced",
+          "operations" => ["update"],
+          "path_patterns" => ["source.yml"],
+          "job_class" => "GeneratedFileJob",
+          "params" => {
+            "changed_files" => "$matched_files",
+            "job_ids" => ["generated_job"],
+            "debounce_seconds" => 10
+          }
+        }
+      ]
+    )
+    allow(GeneratedFileJob).to receive(:perform_later)
+
+    rule_ids = described_class.new(
+      file_events: [{"path" => "source.yml", "operation" => "update"}],
+      metadata: {"generated_file_event_public_ids" => ["gfe_1"]},
+      registry_path: registry,
+      root: @root,
+      output: StringIO.new
+    ).call
+
+    expect(rule_ids).to eq(["debounced"])
+    expect(GeneratedFileJob).to have_received(:perform_later).with(
+      changed_files: ["source.yml"],
+      job_ids: ["generated_job"]
+    )
+  end
+
   it "ignores generated-by-job events by default to prevent recursion" do
     registry = write_registry(
       rules: [
