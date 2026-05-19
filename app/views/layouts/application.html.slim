@@ -108,8 +108,28 @@ html
       | .tree-item-meta { display: inline-block; margin-left: 6px; font-size: 12px; }
       | .tree-item-detail-link { display: inline-block; margin-left: 6px; font-size: 12px; }
       | .tree-view-table .html-unavailable > a:first-child { color: #666; }
-      | .site-viewer-shell { border: 1px solid rgba(255, 80, 0, 0.14); border-radius: 22px; overflow: hidden; background: linear-gradient(180deg, #ffffff 0%, #fff8f4 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.9); }
+      | .site-viewer-shell { border: 1px solid rgba(255, 80, 0, 0.14); border-radius: 22px; overflow: hidden; background: linear-gradient(180deg, #ffffff 0%, #fff8f4 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.9); position: relative; }
       | .site-viewer-frame { display: block; width: 100%; min-height: 78vh; border: 0; background: transparent; }
+      | .document-preview-drop-overlay { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; padding: 24px; background: rgba(15, 23, 42, 0.08); backdrop-filter: blur(1px); opacity: 0; pointer-events: none; transition: opacity 120ms ease; }
+      | .manual-document-upload-target.is-file-dragging .document-preview-drop-overlay, .manual-document-upload-target.is-dragging .document-preview-drop-overlay { opacity: 1; pointer-events: auto; }
+      | .document-preview-drop-overlay__message { display: grid; gap: 8px; max-width: 520px; padding: 24px 28px; border-radius: 22px; border: 2px dashed var(--accent); background: rgba(255, 255, 255, 0.94); color: var(--ink); text-align: center; box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18); }
+      | .document-preview-drop-overlay__message strong { font-size: 1.25rem; color: var(--accent-strong); }
+      | .manual-document-upload-target.is-dragging { outline: 3px solid rgba(255, 80, 0, 0.42); outline-offset: 4px; }
+      | .markdown-line-diff-table { width: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+      | .markdown-line-diff-row { display: grid; grid-template-columns: 4.5rem 4.5rem minmax(0, 1fr); align-items: stretch; border-top: 1px solid #eef2f7; }
+      | .markdown-line-diff-row:first-child { border-top: 0; }
+      | .markdown-line-diff-row.is-added { background: #ecfdf5; }
+      | .markdown-line-diff-row.is-removed { background: #fef2f2; }
+      | .markdown-line-diff-row.is-changed { background: #fffbeb; }
+      | .markdown-line-diff-row.is-gap { background: #f8fafc; color: var(--muted); }
+      | .diff-line-number { padding: 0.55rem 0.7rem; text-align: right; color: #64748b; background: rgba(248, 250, 252, 0.72); border-right: 1px solid #e2e8f0; font-variant-numeric: tabular-nums; user-select: none; }
+      | .diff-line-code { display: block; padding: 0.55rem 0.8rem; white-space: pre-wrap; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      | .markdown-line-diff-row.is-added .diff-line-code { box-shadow: inset 4px 0 0 #22c55e; }
+      | .markdown-line-diff-row.is-removed .diff-line-code { box-shadow: inset 4px 0 0 #ef4444; }
+      | .markdown-line-diff-row.is-changed .diff-line-code { box-shadow: inset 4px 0 0 #f59e0b; }
+      | .rendered-table-diff-table td.is-added, .rendered-table-diff-table tr.is-added td { background: #ecfdf5; }
+      | .rendered-table-diff-table td.is-removed, .rendered-table-diff-table tr.is-removed td { background: #fef2f2; }
+      | .rendered-table-diff-table td.is-changed, .rendered-table-diff-table tr.is-changed td { background: #fffbeb; outline: 2px solid #f59e0b; outline-offset: -2px; }
       | @media (max-width: 960px) {
       |   main, .layout-with-sidebar { width: calc(100% - 32px); }
       |   .layout-with-sidebar { grid-template-columns: 1fr; margin: 24px auto; padding-right: 0; }
@@ -120,6 +140,7 @@ html
       |   main { margin: 24px auto; }
       |   .document-viewer__header { flex-direction: column; }
       |   .line-preview__row { grid-template-columns: 3.2rem minmax(0, 1fr); }
+      |   .markdown-line-diff-row { grid-template-columns: 3rem 3rem minmax(0, 1fr); }
       |   .site-viewer-frame { min-height: 68vh; }
       | }
   body
