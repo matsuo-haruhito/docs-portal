@@ -198,6 +198,7 @@ site path redirect 先には現在の `version_id`、canonical `site_path`、元
 - `embedded=1` が付いている場合は redirect 先にも `embedded=1` を残す
 - `archived` / `deleted` の場合は non-embedded request では reader へ redirect し、`terminal_site_path` を渡す
 - embedded request では terminal status でも従来どおり renderer 処理を継続する
+- embedded response には `X-Docs-Portal-History-Status`, `X-Docs-Portal-History-Requested-Path`, `X-Docs-Portal-History-Canonical-Path` を付与する
 - `canonical` / `missing` の場合は従来どおり renderer で処理する
 
 project site route が HTML ページを reader に誘導する場合も、`previous_site_path` や `terminal_site_path` を reader redirect に引き継ぎます。これにより、project site 直アクセスから始まった旧 path 移動や terminal status でも、最終的な reader 画面で同じ notice を表示できます。
@@ -230,9 +231,10 @@ archived=1, deleted=1
 - site path history は metadata と過去 version の path で扱うが、明示 DB table はまだ持たない
 - 別 document への移動はまだ扱わない
 - asset path は redirect しない
+- embedded viewer 内の user-facing overlay はまだ実装せず、response header に状態を渡すところまでに留める
 
 ## next steps
 
 - path history を DB table で明示管理する
 - metadata と DB table の優先順位を整理する
-- embedded viewer 内で terminal status をどう表示するか検討する
+- embedded viewer shell で terminal status header を overlay 表示に使う
