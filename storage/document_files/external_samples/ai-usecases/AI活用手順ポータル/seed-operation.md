@@ -83,6 +83,8 @@ ruby bin/generate_ai_usecase_flow
 | `app/services/generated_files/change_event_handler.rb` | CRUDイベントを受け取り、`config/file_change_event_jobs.yml` に従ってJobをenqueueする共通ハンドラ |
 | `app/jobs/generated_file_change_event_job.rb` | 外部同期、手修正、アップロードなどから呼ぶファイル変更イベント用ActiveJob |
 | `app/services/generated_files/runner.rb` | `config/generated_file_jobs.yml` を読み、generatorまたは後方互換のcommandを実行する共通サービス |
+| `app/services/generated_files/run_recorder.rb` | 生成実行履歴を `generated_file_runs` に記録するrecorder |
+| `app/models/generated_file_run.rb` | 生成実行履歴モデル |
 | `app/services/generated_files/artifact.rb` | Generatorが返す生成成果物の値オブジェクト |
 | `app/services/generated_files/output_writers/filesystem.rb` | 生成成果物をファイルシステムへ保存するOutputWriter |
 | `app/services/generated_files/output_writers/document_version.rb` | 生成成果物をDocumentVersion / DocumentFile / storageへ保存するOutputWriter |
@@ -196,6 +198,25 @@ output_options:
 ```
 
 `document_version` writer はdocs-portal側を正本にするための足場です。既存のAI活用判断フローは、GitHub側のseedサンプルとの互換を維持するため、まだ `filesystem` のままです。
+
+## 生成実行履歴
+
+`GeneratedFiles::Runner` は、Railsアプリ内で `generated_file_runs` テーブルが存在する場合、生成実行を記録します。
+
+| 項目 | 内容 |
+|---|---|
+| `job_id` | 実行した生成JobID |
+| `generator` | 使用したGenerator key |
+| `output_writer` | 使用したOutputWriter key |
+| `status` | running / completed / failed / skipped |
+| `event_source` | manual_edit、external_folder_syncなどの呼び出し元 |
+| `source_paths` | Job定義上の元ファイル |
+| `changed_files` | イベントから渡された変更ファイル |
+| `generated_paths` | 出力先パスまたはDocumentVersion参照 |
+| `metadata` | 呼び出し元から渡された補足情報 |
+| `error_message` | 失敗時のエラー |
+
+GitHub ActionsやRails未起動のCLIでDBが使えない場合、記録はスキップされ、生成処理だけ実行されます。
 
 ## 重複・連続更新への対策
 
