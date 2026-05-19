@@ -42,8 +42,11 @@ class DocumentsController < BaseController
     @versions = @document.document_versions.includes(:document_files).select { |version| version.viewable_by?(current_user) }.sort_by(&:created_at).reverse
     @latest_viewable_version = @document.latest_version if @document.latest_version && @versions.include?(@document.latest_version)
     @viewer_version = resolved_viewer_version
+    @path_history_resolution = resolve_path_history
+    return redirect_to_canonical_site_path if @path_history_resolution&.moved?
+
     mark_document_as_read!(@document, @viewer_version)
-    @viewer_site_path = params[:site_path].presence || @viewer_version&.html_view_site_path
+    @viewer_site_path = @path_history_resolution&.canonical_path.presence || params[:site_path].presence || @viewer_version&.html_view_site_path
     @viewer_iframe_src = embedded_viewer_src(@viewer_version)
     @viewer_popout_src = @viewer_iframe_src
     @source_breadcrumbs = SourcePathBreadcrumb.new(
@@ -80,6 +83,25 @@ class DocumentsController < BaseController
     elsif (file = version.embedded_view_file)
       document_file_path(file, disposition: "inline", embedded: "1")
     end
+  end
+
+  def resolve_path_history
+    return unless @viewer_version
+
+    DocumentPathHistoryResolver.new(
+      document: @document,
+      requested_site_path: params[:site_path].presence,
+      canonical_version: @viewer_version,
+      candidate_versions: @versions
+    ).call
+  end
+
+  def redirect_to_canonical_site_path
+    redirect_params = request.query_parameters.merge(
+      version_id: @path_history_resolution.canonical_version.public_id,
+      site_path: @path_history_resolution.canonical_path
+    )
+    redirect_to project_document_path(@project, @document.slug, redirect_params), status: :moved_permanently
   end
 
   def mark_document_as_read!(document, document_version)
