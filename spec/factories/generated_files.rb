@@ -17,7 +17,7 @@ FactoryBot.define do
     path { "docs/source.yml" }
     operation { "update" }
     event_source { "spec" }
-    event_key { GeneratedFileEvent.build_event_key(path:, operation:, event_source:) }
+    sequence(:event_key) { |n| "docs/source.yml:update:spec:#{n}" }
     status { :pending }
     metadata { {} }
     scheduled_at { 1.minute.from_now }
