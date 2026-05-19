@@ -16,7 +16,7 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
   private
 
   def render_validation_result
-    staged = stager.call
+    staged = stage_uploaded_file
     result = ImportManifestDryRun.new(manifest: staged.manifest).call
     dry_run = ImportDryRun.create!(
       import_mode: :manual_upload,
@@ -39,6 +39,12 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
       expires_at: dry_run.expires_at,
       file_upload_preview: dry_run.result_json["file_upload_preview"]
     ), status: :created
+  end
+
+  def stage_uploaded_file
+    stager.call
+  ensure
+    close_zipped_upload!
   end
 
   def confirmed_dry_run
@@ -99,6 +105,11 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
         content_type: "application/zip"
       )
     end
+  end
+
+  def close_zipped_upload!
+    @zipped_upload&.tempfile&.close unless @zipped_upload&.tempfile&.closed?
+    @zipped_upload_tempfile&.close!
   end
 
   def upload_file
