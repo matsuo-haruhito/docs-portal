@@ -9,6 +9,7 @@
 - [閲覧画面とUI](./閲覧画面とUI.md)
 - [Archive preview](./archive-preview.md)
 - [Preview target metadata](./preview-target-metadata.md)
+- [Docusaurus build manifest](./docusaurus-build-manifest.md)
 
 対象:
 
@@ -19,6 +20,7 @@
 - 差分表示
 - preview 関連 UI
 - preview target metadata
+- Docusaurus build manifest
 
 ### Search
 
