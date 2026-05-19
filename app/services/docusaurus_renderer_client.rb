@@ -1,4 +1,6 @@
+require "json"
 require "net/http"
+require "pathname"
 require "tempfile"
 require "uri"
 
