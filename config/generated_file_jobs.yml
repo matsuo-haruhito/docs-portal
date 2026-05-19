@@ -1,0 +1,26 @@
+# Registry for source-driven generated files.
+#
+# This is the Rails/docs-portal runtime configuration for generated file jobs.
+# GitHub Actions, CLI runners, and Rails jobs all read this file.
+#
+# `config/file_change_event_jobs.yml` decides which job to enqueue for file CRUD
+# events. This file decides what a GeneratedFileJob ID actually does.
+jobs:
+  - id: ai_usecase_decision_flow
+    description: Generate AI usecase decision flow Markdown and PlantUML from YAML DSL.
+    source_paths:
+      - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
+    watch_paths:
+      - app/jobs/generated_file_change_event_job.rb
+      - app/jobs/generated_file_job.rb
+      - app/services/generated_files/change_event_handler.rb
+      - app/services/generated_files/runner.rb
+      - bin/generate_ai_usecase_flow
+      - bin/run_generated_file_jobs
+      - config/file_change_event_jobs.yml
+      - config/generated_file_jobs.yml
+      - lib/tasks/ai_usecases.rake
+    command: ruby bin/generate_ai_usecase_flow
+    generated_paths:
+      - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/decision-flow.md
+      - docs/ai-usecases/generated/decision-flow.puml
