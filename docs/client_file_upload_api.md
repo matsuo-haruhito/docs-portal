@@ -2,6 +2,7 @@
 
 同期クライアントや簡易アップローダーは、単体ファイルを `POST /api/internal/file_uploads` に送る。
 アップロードと公開は分離し、必ず dry-run を作ってから本実行する。
+`file` パラメータがあるリクエストは dry-run 作成として扱うため、`validate_only=true` は省略できる。
 
 ## 1. dry-run 作成
 
@@ -13,16 +14,17 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
   -F "relative_path=docs/README.md" \
   -F "source_path=C:/work/customer-docs/docs/README.md" \
   -F "source_name=customer-local-sync" \
-  -F "content_hash=sha256..." \
-  -F "validate_only=true"
+  -F "content_hash=sha256..."
 ```
+
+`validate_only=true` を付けても同じく dry-run 作成として処理する。
 
 ### 主なパラメータ
 
 | parameter | required | note |
 | --- | --- | --- |
 | `project_code` | dry-run時必須 | 取り込み先案件コード |
-| `file` | dry-run時必須 | multipart upload のファイル実体 |
+| `file` | dry-run時必須 | multipart upload のファイル実体。指定された場合は dry-run 作成になる |
 | `relative_path` | 任意 | 同期元フォルダ内の相対パス。未指定時はアップロードファイル名 |
 | `source_path` | 任意 | クライアントPC上のフルパスなどの参考情報。取り込み先決定には使わない |
 | `source_name` | 任意 | 同期元名。未指定時は `file_upload` |
@@ -30,6 +32,7 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 | `source_commit_hash` | 任意 | artifact import と揃えるための採用ハッシュ名。`content_hash` と両方ある場合、採用値はこちらを優先する |
 | `version_label` | 任意 | 未指定時は `file-YYYYMMDDHHMMSS-hash8` |
 | `status` | 任意 | 未指定時は `published` |
+| `validate_only` | 任意 | `true` でも dry-run 作成になる。`file` があれば省略可 |
 
 ## 2. dry-run 結果確認
 
@@ -87,6 +90,9 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 `file_uploads` で作った dry-run は `file_uploads` で本実行する。
 `zip_uploads` で作った dry-run は `zip_uploads` で本実行する。
 別APIの `import_dry_run_id` を渡しても実行しない。
+
+`file` と `import_dry_run_id` を同時に送った場合は、`file` を優先して新しい dry-run を作る。
+既存 dry-run を本実行するときは `import_dry_run_id` だけを送る。
 
 ## path validation
 
