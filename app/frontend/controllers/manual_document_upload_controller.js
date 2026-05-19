@@ -45,8 +45,12 @@ export default class extends Controller {
     this.mark(event.currentTarget, false)
     this.element.classList.remove("is-file-dragging")
 
-    const files = event.dataTransfer.files
-    if (!files || files.length === 0) return
+    const files = Array.from(event.dataTransfer.files || [])
+    if (files.length === 0) return
+    if (files.length > 1) {
+      window.alert("複数ファイルの同時アップロードはまだ未対応です。ZIPにまとめるか、1ファイルずつアップロードしてください。")
+      return
+    }
 
     this.upload(files[0], event.currentTarget)
   }
