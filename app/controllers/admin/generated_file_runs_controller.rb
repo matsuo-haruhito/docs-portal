@@ -3,7 +3,8 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   before_action :set_generated_file_run, only: %i[show retry_run]
 
   def index
-    @generated_file_runs = GeneratedFileRun.order(created_at: :desc, id: :desc).limit(100)
+    @filters = run_filter_params
+    @generated_file_runs = apply_filters(GeneratedFileRun.order(created_at: :desc, id: :desc)).limit(100)
   end
 
   def show
@@ -21,6 +22,31 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   private
+
+  def apply_filters(scope)
+    scope = scope.public_send(@filters[:status]) if @filters[:status].in?(GeneratedFileRun.statuses.keys)
+    scope = scope.where(job_id: @filters[:job_id]) if @filters[:job_id].present?
+    scope = scope.where(generator: @filters[:generator]) if @filters[:generator].present?
+    scope = scope.where(output_writer: @filters[:output_writer]) if @filters[:output_writer].present?
+    scope = scope.where(event_source: @filters[:event_source]) if @filters[:event_source].present?
+    scope = scope.where("created_at >= ?", parsed_time(@filters[:created_from], beginning: true)) if @filters[:created_from].present?
+    scope = scope.where("created_at <= ?", parsed_time(@filters[:created_to], end_of_day: true)) if @filters[:created_to].present?
+    scope
+  end
+
+  def run_filter_params
+    params.permit(:status, :job_id, :generator, :output_writer, :event_source, :created_from, :created_to).to_h.symbolize_keys
+  end
+
+  def parsed_time(value, beginning: false, end_of_day: false)
+    time = Time.zone.parse(value.to_s)
+    return time.beginning_of_day if beginning && value.to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+    return time.end_of_day if end_of_day && value.to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+
+    time
+  rescue ArgumentError, TypeError
+    nil
+  end
 
   def set_generated_file_run
     @generated_file_run = GeneratedFileRun.find_by!(public_id: params[:public_id])
