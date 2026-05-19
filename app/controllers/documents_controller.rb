@@ -11,6 +11,7 @@ class DocumentsController < BaseController
 
     @filters = document_filter_params
     @selected_source_path = selected_source_path
+    @uploaded_version = uploaded_version_for_confirmation
     @available_tags = DocumentTag
       .joins(:documents)
       .merge(@project.documents.accessible_to(current_user))
@@ -100,7 +101,7 @@ class DocumentsController < BaseController
   end
 
   def export_preview_files
-    @export_preview_files ||= @versions.flat_map(&:document_files).select { _1.downloadable_by?(current_user) }.select do |file|
+    @export_preview_files ||= @versions.flat_map(&:document_files).select { |file| file.downloadable_by?(current_user) }.select do |file|
       file.effective_content_type.start_with?("application/pdf") || file.file_name.to_s.downcase.end_with?(".pdf")
     end
   end
@@ -148,6 +149,15 @@ class DocumentsController < BaseController
     return if normalized == "." || normalized == ".." || normalized.start_with?("../")
 
     normalized
+  end
+
+  def uploaded_version_for_confirmation
+    return if params[:uploaded_version_id].blank?
+
+    DocumentVersion.includes(:document).find_by(public_id: params[:uploaded_version_id]).tap do |version|
+      return unless version&.document&.project_id == @project.id
+      return unless version.viewable_by?(current_user)
+    end
   end
 
   def apply_keyword_filter(scope)
