@@ -1,4 +1,3 @@
-require "erb"
 require "fileutils"
 require "securerandom"
 
@@ -38,10 +37,10 @@ class ManualDocumentUpload
       document.save! if document.new_record?
       version = create_version!(document, full_source_path)
       create_document_file!(version, full_source_path, filename)
-      build_manual_html_preview!(version, full_source_path) if markdown_extension?(full_source_path)
       Result.new(document:, version:, source_path: full_source_path)
     end
 
+    enqueue_preview_build!(result.version) if markdown_extension?(full_source_path)
     notify_generated_file_change!(result, operation)
     result
   end
@@ -132,186 +131,8 @@ class ManualDocumentUpload
     version.update!(search_body_text: DocumentVersion.search_text_for(full_source_path))
   end
 
-  def build_manual_html_preview!(version, full_source_path)
-    source_file = version.document_files.order(:sort_order, :id).first
-    return unless source_file
-
-    markdown = source_file.absolute_path.read(encoding: "UTF-8", invalid: :replace, undef: :replace)
-    site_path = DocumentVersion.normalize_site_page_path(full_source_path)
-    destination = version.site_root_absolute_path.join(site_path, "index.html")
-    FileUtils.mkdir_p(destination.parent)
-    destination.write(manual_html_for(markdown, title: version.document.title), encoding: "UTF-8")
-    version.update!(markdown_entry_path: full_source_path, site_build_path: site_path)
-  end
-
-  def manual_html_for(markdown, title:)
-    escaped_title = ERB::Util.html_escape(title)
-    body = render_manual_markdown(markdown)
-
-    <<~HTML
-      <!doctype html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <title>#{escaped_title}</title>
-          <style>
-            body { margin: 0; padding: 32px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172033; line-height: 1.75; background: #fff; }
-            main { max-width: 980px; margin: 0 auto; }
-            h1, h2, h3 { line-height: 1.25; color: #111827; }
-            h1 { font-size: 2rem; margin: 0 0 1.2rem; }
-            h2 { font-size: 1.45rem; margin: 2rem 0 0.8rem; padding-bottom: 0.35rem; border-bottom: 1px solid #e5e7eb; }
-            h3 { font-size: 1.2rem; margin: 1.5rem 0 0.6rem; }
-            p, ul, ol, table, pre, blockquote { margin: 0 0 1rem; }
-            ul, ol { padding-left: 1.5rem; }
-            code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #f8fafc; padding: 0.1rem 0.3rem; border-radius: 0.35rem; }
-            pre { overflow-x: auto; padding: 1rem; border-radius: 0.75rem; background: #0f172a; color: #e2e8f0; }
-            pre code { background: transparent; padding: 0; color: inherit; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #d9e2ec; padding: 0.55rem 0.7rem; text-align: left; vertical-align: top; }
-            th { background: #f8fafc; }
-            blockquote { padding: 0.6rem 1rem; border-left: 4px solid #ff5000; background: #fff7f2; color: #334155; }
-          </style>
-        </head>
-        <body>
-          <main class="markdown manual-upload-preview">
-            #{body}
-          </main>
-        </body>
-      </html>
-    HTML
-  end
-
-  def render_manual_markdown(markdown)
-    html = []
-    paragraph = []
-    list_items = []
-    code_lines = nil
-    table_rows = []
-
-    flush_paragraph = -> do
-      unless paragraph.empty?
-        html << "<p>#{render_inline_markdown(paragraph.join(' '))}</p>"
-        paragraph.clear
-      end
-    end
-    flush_list = -> do
-      unless list_items.empty?
-        html << "<ul>#{list_items.map { |item| "<li>#{render_inline_markdown(item)}</li>" }.join}</ul>"
-        list_items.clear
-      end
-    end
-    flush_table = -> do
-      unless table_rows.empty?
-        html << render_manual_markdown_table(table_rows)
-        table_rows.clear
-      end
-    end
-
-    markdown.lines.each do |raw_line|
-      line = raw_line.chomp
-
-      if code_lines
-        if line.start_with?("```")
-          html << "<pre><code>#{ERB::Util.html_escape(code_lines.join("\n"))}</code></pre>"
-          code_lines = nil
-        else
-          code_lines << line
-        end
-        next
-      end
-
-      if line.start_with?("```")
-        flush_paragraph.call
-        flush_list.call
-        flush_table.call
-        code_lines = []
-        next
-      end
-
-      if line.blank?
-        flush_paragraph.call
-        flush_list.call
-        flush_table.call
-        next
-      end
-
-      case line
-      when /\A###\s+(.+)/
-        flush_paragraph.call
-        flush_list.call
-        flush_table.call
-        html << "<h3>#{render_inline_markdown(Regexp.last_match(1))}</h3>"
-      when /\A##\s+(.+)/
-        flush_paragraph.call
-        flush_list.call
-        flush_table.call
-        html << "<h2>#{render_inline_markdown(Regexp.last_match(1))}</h2>"
-      when /\A#\s+(.+)/
-        flush_paragraph.call
-        flush_list.call
-        flush_table.call
-        html << "<h1>#{render_inline_markdown(Regexp.last_match(1))}</h1>"
-      when /\A[-*]\s+(.+)/
-        flush_paragraph.call
-        flush_table.call
-        list_items << Regexp.last_match(1)
-      when /\A>\s?(.+)/
-        flush_paragraph.call
-        flush_list.call
-        flush_table.call
-        html << "<blockquote>#{render_inline_markdown(Regexp.last_match(1))}</blockquote>"
-      else
-        if markdown_table_line?(line)
-          flush_paragraph.call
-          flush_list.call
-          table_rows << line
-        else
-          flush_table.call
-          paragraph << line
-        end
-      end
-    end
-
-    if code_lines
-      html << "<pre><code>#{ERB::Util.html_escape(code_lines.join("\n"))}</code></pre>"
-    end
-    flush_paragraph.call
-    flush_list.call
-    flush_table.call
-    html.join("\n")
-  end
-
-  def render_manual_markdown_table(rows)
-    normalized_rows = rows.reject { |row| markdown_table_separator?(row) }.map do |row|
-      row.strip.delete_prefix("|").delete_suffix("|").split("|").map(&:strip)
-    end
-    return normalized_rows.map { |row| "<p>#{render_inline_markdown(row.join(' | '))}</p>" }.join if normalized_rows.empty?
-
-    header = normalized_rows.first
-    body_rows = normalized_rows.drop(1)
-    <<~HTML.squish
-      <table>
-        <thead><tr>#{header.map { |cell| "<th>#{render_inline_markdown(cell)}</th>" }.join}</tr></thead>
-        <tbody>#{body_rows.map { |row| "<tr>#{row.map { |cell| "<td>#{render_inline_markdown(cell)}</td>" }.join}</tr>" }.join}</tbody>
-      </table>
-    HTML
-  end
-
-  def markdown_table_line?(line)
-    line.include?("|") && line.count("|") >= 2
-  end
-
-  def markdown_table_separator?(line)
-    line.strip.delete_prefix("|").delete_suffix("|").split("|").all? { |cell| cell.strip.match?(/\A:?-{3,}:?\z/) }
-  end
-
-  def render_inline_markdown(text)
-    escaped = ERB::Util.html_escape(text.to_s)
-    escaped = escaped.gsub(/`([^`]+)`/, "<code>\\1</code>")
-    escaped = escaped.gsub(/\*\*([^*]+)\*\*/, "<strong>\\1</strong>")
-    escaped = escaped.gsub(/__([^_]+)__/, "<strong>\\1</strong>")
-    escaped = escaped.gsub(/(?<!\*)\*([^*]+)\*(?!\*)/, "<em>\\1</em>")
-    escaped.gsub(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/, '<a href="\\2" target="_blank" rel="noopener">\\1</a>')
+  def enqueue_preview_build!(version)
+    DocusaurusPreviewBuildJob.perform_later(version.id)
   end
 
   def notify_generated_file_change!(result, operation)
