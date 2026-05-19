@@ -1,6 +1,15 @@
 require "rails_helper"
 
 RSpec.describe GeneratedFileEventDispatchJob, type: :job do
+  it "does nothing when there are no due events" do
+    create(:generated_file_event, scheduled_at: 1.minute.from_now)
+    allow(GeneratedFileChangeEventJob).to receive(:perform_later)
+
+    described_class.perform_now
+
+    expect(GeneratedFileChangeEventJob).not_to have_received(:perform_later)
+  end
+
   it "dispatches due pending events grouped by event source" do
     due_a = create(:generated_file_event, path: "docs/a.yml", operation: "update", event_source: "manual", scheduled_at: 1.minute.ago, metadata: {"a" => 1}, occurrences_count: 2)
     due_b = create(:generated_file_event, path: "docs/b.yml", operation: "delete", event_source: "manual", scheduled_at: Time.current, metadata: {"b" => 2}, occurrences_count: 3)
@@ -46,13 +55,17 @@ RSpec.describe GeneratedFileEventDispatchJob, type: :job do
     )
   end
 
-  it "marks events failed when dispatch raises" do
+  it "marks all due events failed when dispatch raises" do
     event = create(:generated_file_event, path: "docs/a.yml", operation: "update", event_source: "manual", scheduled_at: 1.minute.ago)
+    other_due = create(:generated_file_event, path: "docs/b.yml", operation: "update", event_source: "manual", scheduled_at: 1.minute.ago)
+    future = create(:generated_file_event, path: "docs/future.yml", operation: "update", event_source: "manual", scheduled_at: 1.minute.from_now)
     allow(GeneratedFileChangeEventJob).to receive(:perform_later).and_raise("boom")
 
     expect { described_class.perform_now }.to raise_error(RuntimeError, "boom")
 
     expect(event.reload).to be_failed
+    expect(other_due.reload).to be_failed
+    expect(future.reload).to be_pending
     expect(event.error_message).to eq("boom")
   end
 end
