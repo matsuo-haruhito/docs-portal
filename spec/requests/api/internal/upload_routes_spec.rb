@@ -1,3 +1,4 @@
+require "digest"
 require "rails_helper"
 require "fileutils"
 require "tempfile"
@@ -48,7 +49,8 @@ RSpec.describe "API internal upload routes", type: :request do
   end
 
   it "creates a dry-run from a single uploaded file" do
-    uploaded_file = build_uploaded_file("# File Upload\n")
+    file_content = "# File Upload\n"
+    uploaded_file = build_uploaded_file(file_content)
 
     expect do
       post "/api/internal/file_uploads", params: {
@@ -65,6 +67,7 @@ RSpec.describe "API internal upload routes", type: :request do
     expect(response.parsed_body["status"]).to eq("analyzed")
     dry_run = ImportDryRun.find_by!(public_id: response.parsed_body.fetch("dry_run_id"))
     expect(dry_run.manual_upload?).to eq(true)
+    expect(dry_run.source_commit_hash).to eq(Digest::SHA256.hexdigest(file_content))
     expect(dry_run.result_json["artifact_root"]).to include("/storage/imports/zip_uploads/")
     expect(dry_run.result_json.dig("file_upload_preview", "relative_path")).to eq("docs/README.md")
     expect(dry_run.result_json.dig("file_upload_preview", "source_path")).to eq("C:/work/docs/README.md")
