@@ -7,6 +7,7 @@ import { setupTomSelectFields } from "../lib/tom_select_fields"
 import NavDropdownsController from "../controllers/nav_dropdowns_controller"
 import DocumentTreeNavigationController from "../controllers/document_tree_navigation_controller"
 import FileDropzoneController from "../controllers/file_dropzone_controller"
+import ManualDocumentUploadController from "../controllers/manual_document_upload_controller"
 import PreviewTableResizerController from "../controllers/preview_table_resizer_controller"
 import PreviewToolsController from "../controllers/preview_tools_controller"
 import SidebarController from "../controllers/sidebar_controller"
@@ -20,6 +21,7 @@ function attachRootControllers() {
   [
     "nav-dropdowns",
     "document-tree-navigation",
+    "manual-document-upload",
     "preview-table-resizer",
     "preview-tools"
   ].forEach((controllerName) => appendController(document.documentElement, controllerName))
@@ -46,6 +48,7 @@ application.register("rails-fields-kit--tom-select", TomSelectController)
 application.register("nav-dropdowns", NavDropdownsController)
 application.register("document-tree-navigation", DocumentTreeNavigationController)
 application.register("file-dropzone", FileDropzoneController)
+application.register("manual-document-upload", ManualDocumentUploadController)
 application.register("preview-table-resizer", PreviewTableResizerController)
 application.register("preview-tools", PreviewToolsController)
 application.register("sidebar", SidebarController)
