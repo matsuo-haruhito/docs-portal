@@ -95,6 +95,7 @@
 - `preview_targets` YAML / front matter parser
 - document version metadata source resolver
 - quality checker result integration
+- quality check hash / Markdown rendering spec
 - explicit metadata files
   - `.docs-portal-preview.yml`
   - `.docs-portal-preview.yaml`
@@ -166,19 +167,17 @@
 
 ## 短期タスク
 
-### 1. Preview target metadata quality check rendering
+### 1. Preview target metadata display rules
 
 目的:
 
-- quality checker result に入った preview target metadata check を HTML / JSON / Markdown 出力で確認しやすくする
+- `hidden` / `debug` / `groups` の表示制御方針を実装へ落とす
 
 候補:
 
-- quality check HTML 表示の見出し / detail を確認する
-- JSON hash に preview_target_metadata check が含まれることを spec で固定する
-- Markdown export に preview_target_metadata check が含まれることを spec で固定する
-- hidden / debug の表示制御方針を実装へ落とす
-- groups のUI表示方針を決める
+- document file list に適用する classifier service を追加する
+- hidden / debug / grouped / normal の分類結果を spec で固定する
+- viewer UI への表示制御は分類 service が安定してから接続する
 
 ### 2. specs / roadmap の継続整理
 
@@ -307,7 +306,7 @@
 
 ## 実装順のおすすめ
 
-1. Preview target metadata quality check rendering
+1. Preview target metadata display classifier
 2. Docusaurus build manifest
 3. Path history resolver
 4. Project 内検索
