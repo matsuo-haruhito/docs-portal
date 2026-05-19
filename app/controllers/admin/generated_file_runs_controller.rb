@@ -4,6 +4,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
 
   def index
     @filters = run_filter_params
+    @status_counts = GeneratedFileRun.group(:status).count
     @generated_file_runs = apply_filters(GeneratedFileRun.order(created_at: :desc, id: :desc)).limit(100)
   end
 
