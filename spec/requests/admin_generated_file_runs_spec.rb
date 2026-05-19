@@ -148,7 +148,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       run = create_run!(
         job_id: "ai_usecase_decision_flow",
         status: :failed,
-        changed_files: nil
+        changed_files: []
       )
       allow(GeneratedFileJob).to receive(:perform_later)
 
@@ -192,7 +192,7 @@ RSpec.describe "Admin generated file runs", type: :request do
 
     it "uses an empty changed file list when bulk retrying runs without changed files" do
       sign_in_as(admin_user)
-      matched = create_run!(job_id: "matched_job", status: :failed, changed_files: nil)
+      matched = create_run!(job_id: "matched_job", status: :failed, changed_files: [])
       allow(GeneratedFileJob).to receive(:perform_later)
 
       post retry_failed_admin_generated_file_runs_path
