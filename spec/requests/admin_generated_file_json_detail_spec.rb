@@ -7,10 +7,10 @@ RSpec.describe "Admin generated file JSON detail defaults", type: :request do
     sign_in_as(admin_user)
     run = create(
       :generated_file_run,
-      source_paths: nil,
-      changed_files: nil,
-      generated_paths: nil,
-      metadata: nil
+      source_paths: [],
+      changed_files: [],
+      generated_paths: [],
+      metadata: {}
     )
 
     get admin_generated_file_run_path(run.public_id)
@@ -22,7 +22,7 @@ RSpec.describe "Admin generated file JSON detail defaults", type: :request do
 
   it "shows an empty JSON object for generated file event metadata" do
     sign_in_as(admin_user)
-    event = create(:generated_file_event, metadata: nil)
+    event = create(:generated_file_event, metadata: {})
 
     get admin_generated_file_event_path(event.public_id)
 
