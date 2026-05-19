@@ -184,11 +184,18 @@ class DocumentsController < BaseController
   end
 
   def normalized_page
-    @filters[:page]
+    @filters[:page].to_i.clamp(1, Float::INFINITY)
   end
 
   def selected_source_path
-    normalize_source_path_param(params[:upload_source_path].presence)
+    normalize_source_path_param(params[:upload_source_path].presence) || query_source_path_candidate
+  end
+
+  def query_source_path_candidate
+    query = @filters[:q].to_s.strip
+    return if query.blank? || query.exclude?("/")
+
+    normalize_source_path_param(query)
   end
 
   def normalize_source_path_param(value)
