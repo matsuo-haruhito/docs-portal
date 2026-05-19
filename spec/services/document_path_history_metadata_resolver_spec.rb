@@ -66,4 +66,40 @@ RSpec.describe "Document path history metadata resolver integration" do
     expect(result.matched_version).to eq(version)
     expect(result.matched_source).to eq("explicit-previous-guide")
   end
+
+  it "resolves archived site paths from metadata" do
+    create_metadata_file(<<~YAML)
+      path_history:
+        archived:
+          - site_path: docs/archived-guide
+            reason: old publication
+    YAML
+
+    result = DocumentPathHistoryResolver.new(
+      document:,
+      requested_site_path: "docs/archived-guide",
+      canonical_version: version
+    ).call
+
+    expect(result).to be_archived
+    expect(result).to be_terminal
+    expect(result.matched_entry.reason).to eq("old publication")
+    expect(result.canonical_path).to eq("docs/current-guide")
+  end
+
+  it "resolves deleted slugs from metadata" do
+    create_metadata_file(<<~YAML)
+      path_history:
+        deleted:
+          - slug: deleted-guide
+            reason: removed from scope
+    YAML
+
+    result = DocumentSlugHistoryResolver.new(project:, requested_slug: "deleted-guide").call
+
+    expect(result).to be_deleted
+    expect(result).to be_terminal
+    expect(result.canonical_document).to eq(document)
+    expect(result.matched_entry.reason).to eq("removed from scope")
+  end
 end
