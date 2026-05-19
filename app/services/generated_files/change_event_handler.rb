@@ -1,62 +1,96 @@
-require "yaml"
+require "active_support/core_ext/hash/keys"
+require "active_support/core_ext/object/blank"
+require "active_support/inflector"
+require "pathname"
+require "set"
+
+require_relative "file_change_event_registry"
 
 module GeneratedFiles
   class ChangeEventHandler
+    DEFAULT_REGISTRY_PATH = FileChangeEventRegistry::DEFAULT_REGISTRY_PATH
+
     FileEvent = Data.define(:path, :operation)
 
-    def initialize(registry_path:, file_events: nil, changed_files: nil, event_source: nil, metadata: {}, job_class: GeneratedFileJob)
-      @registry_path = Pathname(registry_path)
-      @file_events = normalize_file_events(file_events, changed_files)
+    def initialize(
+      changed_files: nil,
+      file_events: nil,
+      operation: :update,
+      event_source: nil,
+      metadata: {},
+      registry_path: DEFAULT_REGISTRY_PATH,
+      root: nil,
+      output: $stdout,
+      registry: nil
+    )
+      @root = Pathname(root || default_root).expand_path
+      @file_events = normalize_events(file_events, changed_files, operation)
       @event_source = event_source
-      @metadata = metadata
-      @job_class = job_class
+      @metadata = metadata || {}
+      @output = output
+      @registry = registry || FileChangeEventRegistry.new(registry_path:, root: @root)
     end
 
     def call
-      matching_rules.each do |rule, matched_events|
-        job_class.perform_later(
-          rule.fetch("job_id"),
-          params: expand_params(rule.fetch("params", {}), matched_events),
-          event_source: event_source,
-          metadata: metadata
-        )
+      enqueued_rules = matching_rules.filter_map { enqueue_rule(_1) }
+      if enqueued_rules.empty?
+        output.puts "No file change event jobs matched."
+        output.puts "Event source: #{event_source}" if event_source.present?
+        output.puts "Changed files: #{changed_files.to_a.sort.join(', ')}" unless changed_files.empty?
       end
+
+      enqueued_rules
     end
 
     private
 
-    attr_reader :registry_path, :file_events, :event_source, :metadata, :job_class
+    attr_reader :root, :file_events, :event_source, :metadata, :output, :registry
 
-    def normalize_file_events(file_events, changed_files)
-      events = Array(file_events).map do |event|
-        case event
-        when FileEvent
-          event
-        when Hash
-          FileEvent.new(path: event.fetch(:path, event["path"]).to_s, operation: event.fetch(:operation, event["operation"] || "update").to_s)
-        else
-          FileEvent.new(path: event.to_s, operation: "update")
-        end
+    def default_root
+      if defined?(Rails)
+        Rails.root
+      else
+        Pathname(__dir__).join("..", "..", "..").expand_path
       end
-
-      events += Array(changed_files).map { |path| FileEvent.new(path: path.to_s, operation: "update") }
-      events
     end
 
     def matching_rules
-      rules.filter_map do |rule|
-        matched_events = file_events.select { |event| rule_matches_event?(rule, event) }
-        [rule, matched_events] if matched_events.any?
+      registry.rules.reject { generated_event_ignored_by?(_1) }.select { matching_events_for(_1).any? }
+    end
+
+    def generated_event_ignored_by?(rule)
+      return false unless generated_event?
+
+      rule.fetch("ignore_generated_events", true) != false
+    end
+
+    def generated_event?
+      metadata.fetch("generated_by_job") { metadata.fetch(:generated_by_job, false) } == true
+    end
+
+    def enqueue_rule(rule)
+      matched_events = matching_events_for(rule)
+      return if matched_events.empty?
+
+      job_class_name = rule.fetch("job_class")
+      job_class = job_class_name.constantize
+      params = expand_params(rule.fetch("params", {}), matched_events)
+
+      output.puts "Enqueue file change event job: rule=#{rule.fetch('id')} job_class=#{job_class_name}"
+      job_class.perform_later(**params.deep_symbolize_keys)
+      rule.fetch("id")
+    end
+
+    def matching_events_for(rule)
+      operations = Array(rule.fetch("operations", ["any"])).map(&:to_s)
+      patterns = Array(rule.fetch("path_patterns") { rule.fetch("paths") })
+
+      file_events.select do |event|
+        operation_matches?(operations, event.operation) && patterns.any? { path_matches?(_1, event.path) }
       end
     end
 
-    def rule_matches_event?(rule, event)
-      operation_matches?(Array(rule.fetch("operations", "any")), event.operation) &&
-        Array(rule.fetch("paths")).any? { |pattern| path_matches?(pattern, event.path) }
-    end
-
     def operation_matches?(operations, operation)
-      operations = operations.map(&:to_s)
       operations.include?("any") || operations.include?(operation.to_s)
     end
 
@@ -67,9 +101,9 @@ module GeneratedFiles
     def expand_params(value, matched_events)
       case value
       when Hash
-        value.transform_values { |child| expand_params(child, matched_events) }
+        value.transform_values { expand_params(_1, matched_events) }
       when Array
-        value.map { |child| expand_params(child, matched_events) }
+        value.map { expand_params(_1, matched_events) }
       when "$changed_files"
         changed_files.to_a.sort
       when "$matched_files"
@@ -85,12 +119,35 @@ module GeneratedFiles
       end
     end
 
-    def rules
-      YAML.safe_load(registry_path.read, permitted_classes: [Symbol], permitted_symbols: [], aliases: false).fetch("rules")
-    end
-
     def changed_files
       file_events.map(&:path).to_set
+    end
+
+    def normalize_events(file_events, changed_files, operation)
+      if file_events.present?
+        return Array(file_events).map do |event|
+          if event.respond_to?(:fetch)
+            FileEvent.new(
+              path: normalize_path(event.fetch("path") { event.fetch(:path) }),
+              operation: normalize_operation(event.fetch("operation") { event.fetch(:operation) })
+            )
+          else
+            FileEvent.new(path: normalize_path(event), operation: normalize_operation(operation))
+          end
+        end
+      end
+
+      Array(changed_files).map do |path|
+        FileEvent.new(path: normalize_path(path), operation: normalize_operation(operation))
+      end
+    end
+
+    def normalize_path(path)
+      Pathname(path.to_s.strip).cleanpath.to_s.delete_prefix("./")
+    end
+
+    def normalize_operation(operation)
+      operation.to_s.presence || "update"
     end
   end
 end
