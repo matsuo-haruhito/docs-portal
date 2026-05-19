@@ -24,6 +24,10 @@ class ImportDryRun < ApplicationRecord
   validates :summary_json, :result_json, presence: true
   validate :json_arrays_must_be_present
 
+  def to_param
+    public_id
+  end
+
   private
 
   def json_arrays_must_be_present
