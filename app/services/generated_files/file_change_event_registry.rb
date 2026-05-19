@@ -11,7 +11,7 @@ module GeneratedFiles
     end
 
     def rules
-      @rules ||= YAML.safe_load(registry_path.read, permitted_classes: [], aliases: false).fetch("rules")
+      @rules ||= YAML.safe_load(registry_path.read, permitted_classes: [Symbol], permitted_symbols: [], aliases: false).fetch("rules")
     end
 
     private
