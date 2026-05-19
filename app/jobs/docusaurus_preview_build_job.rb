@@ -19,10 +19,11 @@ class DocusaurusPreviewBuildJob < ApplicationJob
 
     DocusaurusPreviewArtifactInstaller.new(
       version: version,
-      archive_path: result.archive_path,
+      archive_path: result.archive_file.path,
       site_path: result.site_path
     ).install!
   ensure
+    result&.archive_file&.close!
     archive&.close!
   end
 
