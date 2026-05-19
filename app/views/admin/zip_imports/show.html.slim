@@ -1,0 +1,59 @@
+- page_title "ZIPインポートdry-run"
+h1 ZIPインポートdry-run
+= render "admin/nav"
+
+.card
+  h2 取り込み概要
+  dl.definition-list
+    dt 案件
+    dd = @import_dry_run.project ? "#{@import_dry_run.project.code} / #{@import_dry_run.project.name}" : "-"
+    dt 状態
+    dd = @import_dry_run.status
+    dt dry-run ID
+    dd = @import_dry_run.public_id
+
+  .stats-grid
+    .card.metric-card
+      p.muted 合計
+      p.metric-number = @summary["total"].to_i
+    .card.metric-card
+      p.muted 新規
+      p.metric-number = @summary["create_count"].to_i
+    .card.metric-card
+      p.muted 更新
+      p.metric-number = @summary["update_count"].to_i
+    .card.metric-card
+      p.muted 警告
+      p.metric-number = @summary["warning_count"].to_i
+
+  p.actions
+    - if @import_dry_run.analyzed?
+      = button_to "この内容で取り込む", admin_zip_import_path(@import_dry_run), method: :patch, class: "button"
+    = link_to "別のZIPをアップロード", new_admin_zip_import_path, class: "button secondary"
+
+.card
+  h2 TreeViewプレビュー
+  p.muted 左が現在の案件文書ツリー、右がZIP取り込み後の見込みです。
+  .tree-diff-preview
+    .tree-diff-preview__pane
+      h3 現在
+      - if @tree_preview[:before_rows].any?
+        ul.tree-diff-preview__tree
+          - @tree_preview[:before_rows].each do |row|
+            li.tree-diff-preview__row style="--depth: #{row.depth}"
+              span.tree-diff-preview__label = row.label
+              span.tree-diff-preview__path = row.path
+      - else
+        p.muted 既存文書はありません。
+    .tree-diff-preview__pane
+      h3 取り込み後
+      - if @tree_preview[:after_rows].any?
+        ul.tree-diff-preview__tree
+          - @tree_preview[:after_rows].each do |row|
+            li.tree-diff-preview__row style="--depth: #{row.depth}"
+              span.tree-diff-preview__label = row.label
+              span.tree-diff-preview__path = row.path
+              - if row.change_type.present?
+                span.badge = row.change_type
+      - else
+        p.muted 取り込み後の文書候補はありません。
