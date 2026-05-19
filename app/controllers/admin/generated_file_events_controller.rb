@@ -4,6 +4,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
 
   def index
     @filters = event_filter_params
+    @status_counts = GeneratedFileEvent.group(:status).count
     @generated_file_events = apply_filters(GeneratedFileEvent.order(created_at: :desc, id: :desc)).limit(100)
   end
 
