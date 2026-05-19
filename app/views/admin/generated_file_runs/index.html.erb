@@ -22,7 +22,7 @@
         <% @generated_file_runs.each do |run| %>
           <tr>
             <td class="px-4 py-3 font-mono">
-              <%= link_to run.public_id, admin_generated_file_run_path(run), class: "text-blue-600 underline" %>
+              <%= link_to run.public_id, admin_generated_file_run_path(run.public_id), class: "text-blue-600 underline" %>
             </td>
             <td class="px-4 py-3"><%= run.status %></td>
             <td class="px-4 py-3 font-mono"><%= run.job_id %></td>
