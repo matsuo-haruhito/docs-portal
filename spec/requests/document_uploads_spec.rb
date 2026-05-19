@@ -65,7 +65,7 @@ RSpec.describe "Document uploads", type: :request do
     expect(version.site_build_path).to be_blank
   end
 
-  it "shows review actions on a draft manual upload version" do
+  it "shows review actions and pending preview state on a draft manual upload version" do
     sign_in_as(user)
     document = create(:document, project: project, title: "Guide", slug: "guide")
     version = create(:document_version, document: document, status: :draft, source_commit_hash: "manual-upload")
@@ -78,6 +78,7 @@ RSpec.describe "Document uploads", type: :request do
     expect(response.body).to include("アップロード候補の確認")
     expect(response.body).to include("OK：この内容を反映")
     expect(response.body).to include("NG：この候補を破棄")
+    expect(response.body).to include("Docusaurusプレビュー生成中")
   end
 
   it "approves a draft upload candidate as the latest version" do
