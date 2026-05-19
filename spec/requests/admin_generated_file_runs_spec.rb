@@ -28,7 +28,8 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("completed")
       expect(response.body).to include("failed")
-      expect(response.body).to include(">2</div>".gsub("\"", "&quot;")).or include("2")
+      expect(response.body).to include(admin_generated_file_runs_path(status: "failed"))
+      expect(response.body).to match(%r{<div class="mt-1 text-2xl font-bold">2</div>})
     end
 
     it "filters by status, job id, output writer, event source, and date range" do
