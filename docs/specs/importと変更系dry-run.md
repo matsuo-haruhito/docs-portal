@@ -13,15 +13,23 @@
 
 - `ImportDryRunValidator` は source path 妥当性、既存 Document 更新候補、分類推定、重複候補を dry-run 結果として返す
 - `ImportManifestDryRun` は manifest 内の document 群を project ごとに束ね、internal import API の validation mode で共通 dry-run 結果を返す
-- internal import API `POST /api/internal/doc_imports` は `validate_only=true` で dry-run を保存する
-- 管理画面の「API仕様」は `docs-src/api-specification.md` を Docusaurus build した HTML として表示し、internal import API の呼び出し仕様を管理者向けに提示する
+- artifact import API `POST /api/internal/artifact_imports` は `validate_only=true` で dry-run を保存する
+- file upload / ZIP upload API はアップロードされたファイルを staging し、manifest 化したうえで保存付き dry-run を作成する
+- 管理画面の「API仕様」は `docs-src/api-specification.md` を Docusaurus build した HTML として表示し、internal import / upload API の呼び出し仕様を管理者向けに提示する
 
 ## ZIP upload import
 
-- internal ZIP import API `POST /api/internal/zip_imports` は ZIP を `storage/imports/zip_uploads/...` に安全に展開したうえで manifest を自動生成する
+- internal ZIP upload API `POST /api/internal/zip_uploads` は ZIP を `storage/imports/zip_uploads/...` に安全に展開したうえで manifest を自動生成する
 - preview には `zip_import_preview` として `orphan_files`, `skipped_files`, `warnings` を含める
 - 初期実装では Markdown / MDX / markdown 拡張子の文書、および standalone diagram を import 対象にする
 - 本実行は保存済み `ImportDryRun(import_mode=zip)` の `dry_run_id` を指定して行う
+
+## file upload import
+
+- internal file upload API `POST /api/internal/file_uploads` は単体ファイルを受け取り、サーバー側で一時ZIP化して ZIP upload と同じ pipeline に合流する
+- 本実行は保存済み `ImportDryRun(import_mode=manual_upload)` の `dry_run_id` を指定して行う
+- `relative_path` は同期元フォルダ内の相対パスとして扱い、先頭 `/` や `../` は拒否する
+- `source_path` はクライアントPC上のフルパスなどの参考情報であり、取り込み先決定には使わない
 
 ### #88 初期完了範囲
 
@@ -50,7 +58,7 @@
 ## Git連携 import
 
 - Git リポジトリから指定 branch / path 配下の Markdown と添付を取り込めるようにする
-- push 型 internal import API と pull 型 Git 同期で、`DocumentImporter` を共通利用する
+- push 型 artifact import API と pull 型 Git 同期で、`DocumentImporter` を共通利用する
 - 取り込み元 repository / branch / source_path / commit SHA を追跡する
 - Git 側で削除されたファイルは即 delete せず、同期結果の削除候補として記録する
 
