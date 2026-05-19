@@ -28,6 +28,14 @@ class DocumentVersionPreviewTargetDisplaySummary
       classifications.select { |classification| classification.role == :normal }
     end
 
+    def visible
+      classifications.select(&:visible?)
+    end
+
+    def visible_ungrouped
+      visible.reject(&:grouped?)
+    end
+
     def groups
       grouped.group_by(&:group_name).sort.to_h
     end
