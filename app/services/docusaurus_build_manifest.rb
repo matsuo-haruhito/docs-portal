@@ -6,6 +6,7 @@ class DocusaurusBuildManifest
     docs-portal-build-manifest.json
     build-manifest.json
   ].freeze
+  STALE_BUILD_AGE = 7.days
 
   Warning = Data.define(:code, :message, :detail)
   Result = Data.define(:source_path, :metadata, :warnings) do
@@ -38,9 +39,11 @@ class DocusaurusBuildManifest
     end
   end
 
-  def initialize(document_version, expected_profile: Rails.env)
+  def initialize(document_version, expected_profile: Rails.env, stale_build_age: STALE_BUILD_AGE, now: Time.current)
     @document_version = document_version
     @expected_profile = expected_profile.to_s.presence
+    @stale_build_age = stale_build_age
+    @now = now
   end
 
   def call
@@ -57,7 +60,7 @@ class DocusaurusBuildManifest
 
   private
 
-  attr_reader :document_version, :expected_profile
+  attr_reader :document_version, :expected_profile, :stale_build_age, :now
 
   def manifest_path
     candidate_manifest_paths.detect(&:exist?)
@@ -90,6 +93,7 @@ class DocusaurusBuildManifest
     warnings << Warning.new(code: :source_commit_mismatch, message: "Docusaurus build source commit does not match", detail: "expected=#{document_version.source_commit_hash} actual=#{metadata['source_commit']}") if source_commit_mismatch?(metadata)
     warnings << Warning.new(code: :entry_path_mismatch, message: "Docusaurus build entry path does not match", detail: "expected=#{expected_entry_path} actual=#{metadata['entry_path']}") if entry_path_mismatch?(metadata)
     warnings << Warning.new(code: :build_result_failed, message: "Docusaurus build manifest reports an unsuccessful build", detail: metadata["build_result"]) if build_result_failed?(metadata)
+    warnings << Warning.new(code: :stale_build, message: "Docusaurus build manifest is stale", detail: metadata["built_at"]) if stale_build?(metadata)
     warnings
   end
 
@@ -107,6 +111,17 @@ class DocusaurusBuildManifest
 
   def build_result_failed?(metadata)
     metadata["build_result"].present? && metadata["build_result"].to_s != "success"
+  end
+
+  def stale_build?(metadata)
+    built_at = parsed_built_at(metadata)
+    built_at.present? && built_at < now - stale_build_age
+  end
+
+  def parsed_built_at(metadata)
+    Time.zone.parse(metadata["built_at"].to_s) if metadata["built_at"].present?
+  rescue ArgumentError
+    nil
   end
 
   def expected_entry_path
