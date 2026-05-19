@@ -103,9 +103,13 @@ async function ensureMaxFileSize(filePath, maxBytes, label) {
 }
 
 async function validateArchiveEntries(archivePath) {
-  const listing = await captureCommand('tar', ['-tzf', archivePath], {timeoutMs: BUILD_TIMEOUT_MS});
-  listing.split('\n').filter(Boolean).forEach((entryName) => {
-    safeArchiveEntryName(entryName);
+  const listing = await captureCommand('tar', ['-tvzf', archivePath], {timeoutMs: BUILD_TIMEOUT_MS});
+  listing.split('\n').filter(Boolean).forEach((line) => {
+    const mode = line.slice(0, 1);
+    if (!['-', 'd'].includes(mode)) {
+      throw new Error(`archive entry type is not allowed: ${line}`);
+    }
+    safeArchiveEntryName(archiveEntryNameFromVerboseLine(line));
   });
 }
 
@@ -168,6 +172,14 @@ function safeRelativeHeader(value) {
     throw new Error('entry path is invalid');
   }
   return path.posix.normalize(text);
+}
+
+function archiveEntryNameFromVerboseLine(line) {
+  const parts = line.trim().split(/\s+/);
+  if (parts.length < 6) {
+    throw new Error(`archive entry line is invalid: ${line}`);
+  }
+  return parts.slice(5).join(' ');
 }
 
 function safeArchiveEntryName(value) {
