@@ -1,0 +1,13 @@
+<div class="flex items-center justify-between rounded-lg border bg-white p-3 text-sm text-gray-700">
+  <div>
+    全 <%= total_count %> 件 / <%= page %> / <%= total_pages %> ページ
+  </div>
+  <div class="flex gap-2">
+    <% if page > 1 %>
+      <%= link_to "前へ", path.call(page - 1), class: "rounded border px-3 py-1" %>
+    <% end %>
+    <% if page < total_pages %>
+      <%= link_to "次へ", path.call(page + 1), class: "rounded border px-3 py-1" %>
+    <% end %>
+  </div>
+</div>
