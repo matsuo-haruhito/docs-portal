@@ -41,17 +41,23 @@ class DocumentVersionsController < BaseController
   def selected_compare_version
     return if params[:compare_version_id].blank?
 
-    @versions.find { |version| version.public_id == params[:compare_version_id] && version != @version }
+    compare_version_candidates.find { |version| version.public_id == params[:compare_version_id] && version != @version }
   end
 
   def compare_version_options
-    @versions.reject { |version| version == @version }
+    compare_version_candidates.reject { |version| version == @version }
   end
 
   def previous_viewable_version
-    @versions
+    compare_version_candidates
       .select { |version| version.created_at < @version.created_at }
       .max_by(&:created_at)
+  end
+
+  def compare_version_candidates
+    @compare_version_candidates ||= @versions.select do |version|
+      version == @version || version.published?
+    end
   end
 
   def build_file_diff_summary(version, previous_version)
