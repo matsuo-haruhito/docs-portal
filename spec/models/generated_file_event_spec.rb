@@ -34,6 +34,14 @@ RSpec.describe GeneratedFileEvent, type: :model do
 
       expect(key).to eq("docs/source.yml:update:manual")
     end
+
+    it "uses an empty source segment when event source is blank" do
+      nil_source_key = described_class.build_event_key(path: "docs/source.yml", operation: "update", event_source: nil)
+      blank_source_key = described_class.build_event_key(path: "docs/source.yml", operation: "update", event_source: "")
+
+      expect(nil_source_key).to eq("docs/source.yml:update:")
+      expect(blank_source_key).to eq(nil_source_key)
+    end
   end
 
   describe ".due" do
