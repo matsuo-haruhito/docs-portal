@@ -48,6 +48,23 @@ RSpec.describe DocusaurusPreviewArtifactInstaller do
     archive&.close!
   end
 
+  it "keeps the existing site when a new artifact is invalid" do
+    existing = version.site_root_absolute_path.join("docs/guide/index.html")
+    FileUtils.mkdir_p(existing.dirname)
+    existing.write("existing")
+    version.update!(markdown_entry_path: "docs/guide.md", site_build_path: "docs/guide")
+    archive = build_archive("docs/other/index.html" => "other")
+
+    expect do
+      described_class.new(version: version, archive_path: archive.path, site_path: "docs/guide").install!
+    end.to raise_error(ApplicationError::BadRequest)
+
+    expect(existing.read).to eq("existing")
+    expect(version.reload.site_build_path).to eq("docs/guide")
+  ensure
+    archive&.close!
+  end
+
   private
 
   def build_archive(entries)
