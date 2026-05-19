@@ -36,6 +36,7 @@ const server = createServer(async (request, response) => {
     await writeBoundedRequestBody(request, sourceArchive);
     await mkdir(sourceDir, {recursive: true});
     await mkdir(staticDir, {recursive: true});
+    await validateArchiveEntries(sourceArchive);
     await extractArchive(sourceArchive, sourceDir);
 
     await runCommand('npm', ['run', 'build', '--', '--out-dir', buildDir], {
@@ -91,12 +92,28 @@ async function writeBoundedRequestBody(request, destination) {
   await pipeline(request, createWriteStream(destination));
 }
 
+async function validateArchiveEntries(archivePath) {
+  const listing = await captureCommand('tar', ['-tzf', archivePath], {timeoutMs: BUILD_TIMEOUT_MS});
+  listing.split('\n').filter(Boolean).forEach((entryName) => {
+    safeArchiveEntryName(entryName);
+  });
+}
+
 async function extractArchive(archivePath, destination) {
   await runCommand('tar', ['-xzf', archivePath, '-C', destination], {timeoutMs: BUILD_TIMEOUT_MS});
 }
 
 async function createArchive(archivePath, sourceDir) {
   await runCommand('tar', ['-czf', archivePath, '-C', sourceDir, '.'], {timeoutMs: BUILD_TIMEOUT_MS});
+}
+
+async function captureCommand(command, args, options = {}) {
+  const stdoutChunks = [];
+  await runCommand(command, args, {
+    ...options,
+    onStdout: (chunk) => stdoutChunks.push(chunk),
+  });
+  return Buffer.concat(stdoutChunks).toString('utf8');
 }
 
 async function runCommand(command, args, options = {}) {
@@ -112,7 +129,10 @@ async function runCommand(command, args, options = {}) {
     child.kill('SIGKILL');
   }, options.timeoutMs || BUILD_TIMEOUT_MS);
 
-  child.stdout.on('data', (chunk) => stdoutChunks.push(chunk));
+  child.stdout.on('data', (chunk) => {
+    stdoutChunks.push(chunk);
+    options.onStdout?.(chunk);
+  });
   child.stderr.on('data', (chunk) => stderrChunks.push(chunk));
 
   const exitCode = await new Promise((resolve, reject) => {
@@ -128,11 +148,20 @@ async function runCommand(command, args, options = {}) {
 }
 
 function safeRelativeHeader(value) {
-  const text = String(value || '').replaceAll('\\', '/').replace(/^\/+/, '');
+  const text = normalizeSlashes(value).replace(/^\/+/, '');
   if (!text || text.includes('\0') || text.startsWith('../') || text === '..' || path.isAbsolute(text)) {
     throw new Error('entry path is invalid');
   }
   return path.posix.normalize(text);
+}
+
+function safeArchiveEntryName(value) {
+  const text = normalizeSlashes(value).replace(/^\.\//, '').replace(/^\/+/, '');
+  const normalized = path.posix.normalize(text);
+  if (!normalized || normalized === '.' || normalized === '..' || normalized.startsWith('../') || normalized.includes('\0') || path.isAbsolute(text)) {
+    throw new Error(`archive entry path is invalid: ${value}`);
+  }
+  return normalized;
 }
 
 function normalizeSitePagePath(entryPath) {
@@ -142,6 +171,10 @@ function normalizeSitePagePath(entryPath) {
   value = value.replace(/\/index\.html$/i, '');
   value = value.replace(/\.html$/i, '');
   return value || 'index';
+}
+
+function normalizeSlashes(value) {
+  return String(value || '').replaceAll('\\', '/');
 }
 
 function sendJson(response, status, payload) {
