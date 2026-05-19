@@ -16,7 +16,8 @@ class GeneratedFileChangeEventJob < ApplicationJob
     normalized = if file_events.any?
       file_events.map do |event|
         path = event.fetch("path") { event.fetch(:path) }
-        event_operation = event.fetch("operation") { event.fetch(:operation) }
+        event_operation = event.fetch("operation") { event.fetch(:operation, :update) }
+        event_operation = :update if event_operation.blank?
         "#{Pathname(path.to_s).cleanpath}:#{event_operation}"
       end
     else
