@@ -55,8 +55,8 @@ RSpec.describe "Document slug redirects", type: :request do
     get project_document_path(project, document.slug, previous_slug: "previous-guide")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("現在の文書URLへ移動しました")
-    expect(response.body).to include("previous-guide")
-    expect(response.body).to include("current-guide")
+    expect(response.body).to include("移動済み")
+    expect(response.body).to include("旧URLから現在の文書位置へ移動しました")
+    expect(response.body).to include("previous-guide -&gt; current-guide")
   end
 end
