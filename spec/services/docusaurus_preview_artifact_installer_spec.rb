@@ -33,7 +33,27 @@ RSpec.describe DocusaurusPreviewArtifactInstaller do
 
     expect do
       described_class.new(version: version, archive_path: archive.path, site_path: "docs/guide").install!
-    end.to raise_error(ApplicationError::BadRequest, /invalid path/)
+    end.to raise_error(ApplicationError::BadRequest, /invalid/)
+  ensure
+    archive&.close!
+  end
+
+  it "rejects absolute artifact paths" do
+    archive = build_archive("/escape.txt" => "escape", "docs/guide/index.html" => "ok")
+
+    expect do
+      described_class.new(version: version, archive_path: archive.path, site_path: "docs/guide").install!
+    end.to raise_error(ApplicationError::BadRequest, /invalid/)
+  ensure
+    archive&.close!
+  end
+
+  it "rejects invalid returned site paths" do
+    archive = build_archive("docs/guide/index.html" => "ok")
+
+    expect do
+      described_class.new(version: version, archive_path: archive.path, site_path: "../guide").install!
+    end.to raise_error(ApplicationError::BadRequest, /site path/)
   ensure
     archive&.close!
   end
