@@ -29,8 +29,11 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
     scope = scope.where(generator: @filters[:generator]) if @filters[:generator].present?
     scope = scope.where(output_writer: @filters[:output_writer]) if @filters[:output_writer].present?
     scope = scope.where(event_source: @filters[:event_source]) if @filters[:event_source].present?
-    scope = scope.where("created_at >= ?", parsed_time(@filters[:created_from], beginning: true)) if @filters[:created_from].present?
-    scope = scope.where("created_at <= ?", parsed_time(@filters[:created_to], end_of_day: true)) if @filters[:created_to].present?
+
+    created_from = parsed_time(@filters[:created_from], beginning: true)
+    created_to = parsed_time(@filters[:created_to], end_of_day: true)
+    scope = scope.where("created_at >= ?", created_from) if created_from
+    scope = scope.where("created_at <= ?", created_to) if created_to
     scope
   end
 
@@ -39,6 +42,8 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   def parsed_time(value, beginning: false, end_of_day: false)
+    return if value.blank?
+
     time = Time.zone.parse(value.to_s)
     return time.beginning_of_day if beginning && value.to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)
     return time.end_of_day if end_of_day && value.to_s.match?(/\A\d{4}-\d{2}-\d{2}\z/)
