@@ -31,6 +31,7 @@
 - `validate_only=true` を付けても同じく dry-run 作成として扱う
 - 本実行は保存済み `ImportDryRun(import_mode=manual_upload)` の `dry_run_id` を指定して行い、このとき `file` は送らない
 - `relative_path` は同期元フォルダ内の相対パスとして扱い、先頭 `/` や `../` は拒否する
+- `relative_path` が未指定の場合は `original_filename`、それもなければ upload file の元ファイル名を fallback として使う
 - `source_path` はクライアントPC上のフルパスなどの参考情報であり、取り込み先決定には使わない
 
 ### #88 初期完了範囲
