@@ -110,6 +110,21 @@ RSpec.describe "Document uploads", type: :request do
     expect(uploaded_version.reload).to be_archived
   end
 
+  it "does not roll back a non-manual latest version" do
+    sign_in_as(user)
+    document = create(:document, project: project, title: "Imported", slug: "imported")
+    version = create(:document_version, document: document, source_commit_hash: "git-import")
+    version.assign_source_path_metadata!(source_path: "docs/imported.md", snapshot_kind: "received_markdown")
+    version.save!
+    document.update!(latest_version: version)
+
+    post document_version_rollback_path(version)
+
+    expect(response).to redirect_to(document_version_path(version))
+    expect(document.reload.latest_version).to eq(version)
+    expect(version.reload).to be_published
+  end
+
   it "archives the document when rolling back its only version" do
     sign_in_as(user)
     document = create(:document, project: project, title: "Only", slug: "only")
