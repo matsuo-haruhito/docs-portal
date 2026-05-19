@@ -1,3 +1,7 @@
 - flash.each do |type, message|
   .notice class=(type == "alert" ? "alert" : "ok")
     = message
+
+- if controller_name == "document_versions" && action_name == "show" && defined?(@version) && @version.present?
+  = render "document_versions/rollback_actions"
+  = render "document_versions/side_by_side_file_review"
