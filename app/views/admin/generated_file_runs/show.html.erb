@@ -6,7 +6,7 @@
     </div>
     <div class="flex gap-2">
       <%= link_to "一覧へ戻る", admin_generated_file_runs_path, class: "rounded border px-3 py-2 text-sm" %>
-      <%= button_to "再実行", retry_run_admin_generated_file_run_path(@generated_file_run), method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
+      <%= button_to "再実行", retry_run_admin_generated_file_run_path(@generated_file_run.public_id), method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
     </div>
   </div>
 
