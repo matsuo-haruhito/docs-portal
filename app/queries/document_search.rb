@@ -13,7 +13,7 @@ class DocumentSearch
     return scope if blank?
 
     scope
-      .left_joins(:document_keywords, document_versions: :document_files)
+      .left_joins(:document_tags, :document_keywords, document_versions: :document_files)
       .where(DocumentQuerying::SearchMatchCatalog.sql_condition, pattern:, normalized_pattern:)
   end
 
