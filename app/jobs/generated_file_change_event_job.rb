@@ -73,6 +73,11 @@ class GeneratedFileChangeEventJob < ApplicationJob
   def normalize_buffer_events(file_events:, changed_files:, operation:)
     return file_events if Array(file_events).any?
 
-    Array(changed_files).map { { path: _1, operation: operation } }
+    Array(changed_files).filter_map do |changed_file|
+      path = self.class.normalized_path_for(changed_file)
+      next if path.blank?
+
+      { path: path, operation: operation }
+    end
   end
 end
