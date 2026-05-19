@@ -26,6 +26,18 @@ RSpec.describe GeneratedFiles::ChangeEventNotifier do
     )
   end
 
+  it "uses update when operation is blank" do
+    job_class = class_double(GeneratedFileChangeEventJob, perform_later: true)
+    notifier = described_class.new(job_class:)
+
+    events = notifier.notify(
+      file_events: [{path: "docs/source.yml", operation: ""}],
+      event_source: "spec"
+    )
+
+    expect(events).to eq([{path: "docs/source.yml", operation: "update"}])
+  end
+
   it "uses empty metadata when metadata is nil" do
     job_class = class_double(GeneratedFileChangeEventJob, perform_later: true)
     notifier = described_class.new(job_class:)
