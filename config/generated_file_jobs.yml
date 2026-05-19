@@ -14,13 +14,14 @@ jobs:
       - app/jobs/generated_file_change_event_job.rb
       - app/jobs/generated_file_job.rb
       - app/services/generated_files/change_event_handler.rb
+      - app/services/generated_files/generators/ai_usecase_decision_flow.rb
       - app/services/generated_files/runner.rb
       - bin/generate_ai_usecase_flow
       - bin/run_generated_file_jobs
       - config/file_change_event_jobs.yml
       - config/generated_file_jobs.yml
       - lib/tasks/ai_usecases.rake
-    command: ruby bin/generate_ai_usecase_flow
+    generator: ai_usecase_decision_flow
     generated_paths:
       - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/decision-flow.md
       - docs/ai-usecases/generated/decision-flow.puml
