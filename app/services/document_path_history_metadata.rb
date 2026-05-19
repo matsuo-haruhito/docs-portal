@@ -115,10 +115,10 @@ class DocumentPathHistoryMetadata
       kind = value["kind"].presence || value[:kind].presence || inferred_status_kind(value)
       raw_value = value["value"].presence || value[:value].presence || value["slug"].presence || value[:slug].presence || value["site_path"].presence || value[:site_path].presence
       reason = value["reason"].presence || value[:reason].presence
-      build_status_entry(status:, kind:, value: raw_value, reason:)
+      Array(build_status_entry(status:, kind:, value: raw_value, reason:)).compact
     else
-      build_status_entry(status:, kind: "site_path", value:, reason: nil)
-    end.compact
+      Array(build_status_entry(status:, kind: "site_path", value:, reason: nil)).compact
+    end
   end
 
   def inferred_status_kind(value)
