@@ -13,10 +13,15 @@ jobs:
     watch_paths:
       - app/jobs/generated_file_change_event_job.rb
       - app/jobs/generated_file_job.rb
+      - app/models/generated_file_run.rb
       - app/services/generated_files/artifact.rb
       - app/services/generated_files/change_event_handler.rb
+      - app/services/generated_files/file_change_event_registry.rb
+      - app/services/generated_files/generated_job_registry.rb
       - app/services/generated_files/generators/ai_usecase_decision_flow.rb
+      - app/services/generated_files/output_writers/document_version.rb
       - app/services/generated_files/output_writers/filesystem.rb
+      - app/services/generated_files/run_recorder.rb
       - app/services/generated_files/runner.rb
       - bin/generate_ai_usecase_flow
       - bin/run_generated_file_jobs
