@@ -48,9 +48,11 @@ Rails.application.routes.draw do
     resources :git_import_runs, only: [:index]
     resources :generated_file_events, only: %i[index show], param: :public_id do
       post :retry_dispatch, on: :member
+      post :retry_failed, on: :collection
     end
     resources :generated_file_runs, only: %i[index show], param: :public_id do
       post :retry_run, on: :member
+      post :retry_failed, on: :collection
     end
     resources :zip_imports, only: %i[new create show update], param: :public_id
     resources :microsoft_graph_connections, except: %i[show new]
