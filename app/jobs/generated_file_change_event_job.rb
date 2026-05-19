@@ -36,9 +36,17 @@ class GeneratedFileChangeEventJob < ApplicationJob
 
   def self.normalized_path_for(path)
     normalized = Pathname(path.to_s.strip).cleanpath.to_s.delete_prefix("./")
-    return nil if normalized.blank? || normalized == "."
+    return nil if unsafe_path?(normalized)
 
     normalized
+  end
+
+  def self.unsafe_path?(path)
+    path.blank? ||
+      path == "." ||
+      path.start_with?("/") ||
+      path.match?(%r{\A[A-Za-z]:/}) ||
+      path.split("/").include?("..")
   end
 
   def perform(changed_files: nil, file_events: nil, operation: :update, event_source: nil, metadata: {}, debounce_seconds: nil)
