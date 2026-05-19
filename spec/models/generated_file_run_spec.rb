@@ -25,5 +25,15 @@ RSpec.describe GeneratedFileRun, type: :model do
       expect(run.error_message).to eq("boom")
       expect(run.finished_at).to be_present
     end
+
+    it "stores an empty generated path list when generated paths are nil" do
+      run = create(:generated_file_run, status: :running, generated_paths: ["old.md"], finished_at: nil)
+
+      run.finish!(status: :completed, generated_paths: nil)
+
+      expect(run).to be_completed
+      expect(run.generated_paths).to eq([])
+      expect(run.finished_at).to be_present
+    end
   end
 end
