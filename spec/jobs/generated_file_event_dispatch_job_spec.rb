@@ -27,6 +27,25 @@ RSpec.describe GeneratedFileEventDispatchJob, type: :job do
     expect(future.reload).to be_pending
   end
 
+  it "dispatches separate jobs for separate event sources" do
+    manual = create(:generated_file_event, path: "docs/manual.yml", operation: "update", event_source: "manual", scheduled_at: 1.minute.ago)
+    external = create(:generated_file_event, path: "docs/external.yml", operation: "update", event_source: "external_folder_sync", scheduled_at: 1.minute.ago)
+    allow(GeneratedFileChangeEventJob).to receive(:perform_later)
+
+    described_class.perform_now
+
+    expect(GeneratedFileChangeEventJob).to have_received(:perform_later).with(
+      file_events: [{path: manual.path, operation: manual.operation}],
+      event_source: "manual",
+      metadata: hash_including("generated_file_event_public_ids" => [manual.public_id])
+    )
+    expect(GeneratedFileChangeEventJob).to have_received(:perform_later).with(
+      file_events: [{path: external.path, operation: external.operation}],
+      event_source: "external_folder_sync",
+      metadata: hash_including("generated_file_event_public_ids" => [external.public_id])
+    )
+  end
+
   it "marks events failed when dispatch raises" do
     event = create(:generated_file_event, path: "docs/a.yml", operation: "update", event_source: "manual", scheduled_at: 1.minute.ago)
     allow(GeneratedFileChangeEventJob).to receive(:perform_later).and_raise("boom")
