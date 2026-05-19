@@ -85,7 +85,7 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
       tempfile.binmode
 
       Zip::File.open(tempfile.path, create: true) do |zip_file|
-        zip_file.add(relative_path, upload_file.tempfile.path)
+        zip_file.add(relative_path, upload_file_path)
       end
 
       tempfile.rewind
@@ -94,15 +94,23 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
   end
 
   def upload_file
-    params.require(:file)
+    @upload_file ||= params.require(:file).tap do |file|
+      unless file.respond_to?(:tempfile) && file.tempfile.respond_to?(:path)
+        raise ApplicationError::BadRequest, "file must be a multipart upload"
+      end
+    end
+  end
+
+  def upload_file_path
+    upload_file.tempfile.path
   end
 
   def uploaded_file_hash
-    @uploaded_file_hash ||= Digest::SHA256.file(upload_file.tempfile.path).hexdigest
+    @uploaded_file_hash ||= Digest::SHA256.file(upload_file_path).hexdigest
   end
 
   def uploaded_file_size
-    @uploaded_file_size ||= File.size(upload_file.tempfile.path)
+    @uploaded_file_size ||= File.size(upload_file_path)
   end
 
   def default_version_label
