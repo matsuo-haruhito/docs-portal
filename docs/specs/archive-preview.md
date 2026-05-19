@@ -239,6 +239,91 @@ entry 本体は UTF-8 として validation し、既定 2,000 行を超える場
 - entry size が設定上限以下
 - UTF-8 として安全に読めるもの
 
+## entry download 設計
+
+entry download は、entry preview が安定した後に段階導入する。
+
+### download URL / controller 境界
+
+候補 route:
+
+- `GET /document_files/:public_id/archive_entries/download?entry_path=...`
+
+controller は preview と同様に thin controller にする。
+
+1. archive 本体の取得
+2. archive 本体に対する download 権限確認
+3. consent 確認
+4. entry path parameter の受け取り
+5. `DocumentFileArchiveEntryDownload` service 呼び出し
+6. 成功時は `send_data`
+7. 失敗時は error card または plain error を返す
+8. 成功時だけ access log を `download` として記録する
+
+preview と違い、download では `require_document_file_download_access!` 相当を使う。
+view 権限だけの external user には entry download を許可しない。
+
+### download service 境界
+
+`DocumentFileArchiveEntryDownload` を追加する。
+
+入力:
+
+- archive file
+- entry path
+- optional lookup result
+
+Result:
+
+- `entry_path`
+- `filename`
+- `content_type`
+- `size`
+- `data`
+- `downloadable?`
+- `error?`
+- `reason`
+
+責務:
+
+- `DocumentFileArchiveEntryLookup` を使って safe path / missing / directory / size over を判定する
+- lookup が `downloadable?` でない場合は entry 本体を読まない
+- entry 本体を binary として読む
+- 例外を controller に漏らさない
+- filename は entry path の basename を使う
+- content type は lookup result の content type を使う
+
+### 初期 download の制限
+
+初期 download は使いやすさより安全性を優先し、以下の制約を置く。
+
+- ZIP のみ対象
+- safe path の file entry のみ対象
+- directory entry は不可
+- missing entry は不可
+- nested archive は不可にする方針。ただし初期 metadata が不足する場合は extension 判定で `.zip` / `.tar` / `.gz` / `.tgz` を不可にする
+- entry size は lookup と同じ上限を使う
+- streaming は行わず、上限内 entry のみ `send_data` する
+- archive 全体の download 権限がない user には許可しない
+
+### 初期 download UI
+
+UI は service / request spec が安定してから追加する。
+
+段階:
+
+1. service と request spec だけ追加する
+2. text / binary を問わず `downloadable?` の entry にだけ link を出す
+3. link label は `download entry` とし、archive 本体 download と混同しない文言にする
+4. truncated preview の対象外 entry には link を出さない。ZIP preview が先頭 N entry のみを表示するため、画面に表示される entry だけが操作対象になる
+
+### access log
+
+- preview は `view` として archive 本体に紐づけて記録する
+- download は `download` として archive 本体に紐づけて記録する
+- target name は archive file name のままにするか、後続で `archive.zip:entry/path.txt` 形式へ拡張する
+- 初期実装では既存 `record_download_access_log` を使い、ログ schema 変更は行わない
+
 ### 権限の考え方
 
 - archive 本体を閲覧できることは、entry を無制限に配信してよいことを意味しない
