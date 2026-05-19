@@ -15,7 +15,8 @@ class DocusaurusPreviewArtifactInstaller
     FileUtils.mkdir_p(destination.parent)
 
     Dir.mktmpdir("docusaurus-preview-", destination.parent.to_s) do |tmpdir|
-      staging = Pathname.new(tmpdir)
+      staging = Pathname.new(tmpdir).join("site")
+      FileUtils.mkdir_p(staging)
       extract_archive!(staging)
       expected_entry = staging.join(site_path, "index.html")
       raise ApplicationError::BadRequest, "Docusaurus build output missing entry path: #{site_path}" unless expected_entry.exist?
