@@ -26,10 +26,13 @@ Path history / redirect は、文書の slug、Docusaurus site path、Markdown e
   - `canonical`
   - `moved`
   - `missing`
+  - `archived`
+  - `deleted`
 - `requested_path`
 - `canonical_path`
 - `canonical_version`
 - `matched_version`
+- `matched_entry`
 
 `DocumentSlugHistoryResolver` は、同一 project 内の document versions から、明示 metadata の `slugs` と旧 slug とみなせる source/path 由来の候補を現在の document slug へ解決します。
 
@@ -44,10 +47,13 @@ Path history / redirect は、文書の slug、Docusaurus site path、Markdown e
 - `status`
   - `moved`
   - `missing`
+  - `archived`
+  - `deleted`
 - `requested_slug`
 - `canonical_document`
 - `matched_version`
 - `matched_source`
+- `matched_entry`
 
 `DocumentPathHistoryMetadata` は、明示 metadata file から slug / site path 履歴を読み取る reader です。metadata は resolver でも使い、quality check では source / warning を表示します。
 
@@ -63,7 +69,7 @@ Path history / redirect は、文書の slug、Docusaurus site path、Markdown e
 | `archived` | アーカイブ済み | このURLに対応する文書はアーカイブ済みです。 |
 | `deleted` | 削除済み | このURLに対応する文書は削除済みです。 |
 
-現時点の resolver は主に `canonical` / `moved` / `missing` を返します。`archived` / `deleted` は metadata で読み取れますが、resolver からはまだ返しません。
+`archived` / `deleted` は terminal status として扱い、redirect せず reader 上に warning notice として表示します。
 
 ## explicit metadata
 
@@ -110,7 +116,7 @@ path_history:
     - site_path: docs/removed-manual
 ```
 
-`kind` は `slug` または `site_path` のみ対応します。`slug:` / `site_path:` shortcut を使った場合は kind を自動推定します。現時点では `archived` / `deleted` entry は quality check と将来実装の準備用で、redirect resolver の返却 status にはまだ使いません。
+`kind` は `slug` または `site_path` のみ対応します。`slug:` / `site_path:` shortcut を使った場合は kind を自動推定します。
 
 ## canonical 判定
 
@@ -149,6 +155,15 @@ slug については、要求された slug が現在の document slug と一致
 
 slug 候補は NFKC 正規化・小文字化・記号整理をして比較します。明示 metadata の slug 候補を source/path 由来の推定候補より優先します。
 
+## archived / deleted 判定
+
+要求された slug または site path が明示 metadata の `archived` / `deleted` entry に一致する場合は、その status を返します。
+
+- `kind: slug` は `DocumentSlugHistoryResolver` が扱う
+- `kind: site_path` は `DocumentPathHistoryResolver` が扱う
+- `archived` / `deleted` は terminal status なので 301 redirect しない
+- reader は現在の canonical document を表示しつつ、該当 URL が archived/deleted である notice を表示する
+
 ## missing 判定
 
 現在 version にも過去 version にも一致しない場合は `missing` とします。
@@ -161,7 +176,9 @@ slug 候補は NFKC 正規化・小文字化・記号整理をして比較しま
 
 - slug が現在 document に一致する場合は通常表示
 - slug が存在せず `DocumentSlugHistoryResolver` が `moved` を返した場合は現在 document slug へ `301 Moved Permanently`
+- slug が存在せず `DocumentSlugHistoryResolver` が `archived` / `deleted` を返した場合は redirect せず、canonical document を表示して terminal status notice を出す
 - `site_path` が `moved` の場合は `301 Moved Permanently` で現在の `site_path` に redirect
+- `site_path` が `archived` / `deleted` の場合は redirect せず、reader 上に terminal status notice を出す
 - `canonical` の場合はそのまま viewer を表示
 - `missing` の場合は従来どおり viewer 処理を継続
 
@@ -178,7 +195,7 @@ site path redirect 先には現在の `version_id`、canonical `site_path`、元
 - redirect 先は query string の `site_path=...` ではなく、`/projects/:project_code/site/:site_path` の canonical path 形式にする
 - `previous_site_path` を redirect 先にも残す
 - `embedded=1` が付いている場合は redirect 先にも `embedded=1` を残す
-- `canonical` / `missing` の場合は従来どおり renderer で処理する
+- `canonical` / `missing` / `archived` / `deleted` の場合は従来どおり renderer で処理する
 
 project site route が HTML ページを reader に誘導する場合も、`previous_site_path` を reader redirect に引き継ぎます。これにより、project site 直アクセスから始まった旧 path 移動でも、最終的な reader 画面で同じ移動 notice を表示できます。
 
@@ -208,7 +225,6 @@ archived=1, deleted=1
 
 - slug history は metadata と source/path 由来の推定で扱うが、明示 DB table はまだ持たない
 - site path history は metadata と過去 version の path で扱うが、明示 DB table はまだ持たない
-- `archived` / `deleted` は user-facing status と metadata entry として定義済みだが resolver からはまだ返さない
 - 別 document への移動はまだ扱わない
 - asset path は redirect しない
 
@@ -216,4 +232,4 @@ archived=1, deleted=1
 
 - path history を DB table で明示管理する
 - metadata と DB table の優先順位を整理する
-- `archived` / `deleted` を resolver と DB table に接続する
+- `archived` / `deleted` を ProjectSitesController から reader へ渡す導線にも拡張する
