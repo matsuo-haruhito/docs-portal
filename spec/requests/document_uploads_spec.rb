@@ -29,6 +29,21 @@ RSpec.describe "Document uploads", type: :request do
     expect(version.source_directory).to eq("docs/specs")
     expect(version.source_file_name).to eq("overview.md")
     expect(version.document_files.first.file_name).to eq("docs/specs/overview.md")
+    expect(response).to redirect_to(project_documents_path(project, q: "docs/specs/overview.md", uploaded_version_id: version.public_id))
+  end
+
+  it "shows a completion prompt with a diff link" do
+    sign_in_as(user)
+    document = create(:document, project: project, title: "Guide", slug: "guide")
+    version = create(:document_version, document: document)
+    document.update!(latest_version: version)
+
+    get project_documents_path(project, uploaded_version_id: version.public_id)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("アップロードを完了しました")
+    expect(response.body).to include("差異を確認")
+    expect(response.body).to include(document_version_path(version))
   end
 
   it "creates a new version when dropped on a document with the same filename" do
@@ -71,6 +86,42 @@ RSpec.describe "Document uploads", type: :request do
     sibling = project.documents.find_by!(title: "appendix")
     expect(sibling.latest_version.source_relative_path).to eq("docs/appendix.pdf")
     expect(sibling.latest_version.source_directory).to eq("docs")
+  end
+
+  it "rolls back the latest uploaded version to the previous version" do
+    sign_in_as(user)
+    document = create(:document, project: project, title: "Guide", slug: "guide")
+    previous_version = create(:document_version, document: document)
+    previous_version.assign_source_path_metadata!(source_path: "docs/guide.md", snapshot_kind: "received_markdown")
+    previous_version.save!
+    uploaded_version = create(:document_version, document: document, source_commit_hash: "manual-upload")
+    uploaded_version.assign_source_path_metadata!(source_path: "docs/guide.md", snapshot_kind: "received_markdown")
+    uploaded_version.save!
+    document.update!(latest_version: uploaded_version)
+
+    expect do
+      post document_version_rollback_path(uploaded_version)
+    end.to change(DocumentVersion, :count).by(-1)
+
+    expect(response).to redirect_to(document_version_path(previous_version))
+    expect(document.reload.latest_version).to eq(previous_version)
+    expect(DocumentVersion.exists?(uploaded_version.id)).to eq(false)
+  end
+
+  it "archives the document when rolling back its only version" do
+    sign_in_as(user)
+    document = create(:document, project: project, title: "Only", slug: "only")
+    uploaded_version = create(:document_version, document: document, source_commit_hash: "manual-upload")
+    uploaded_version.assign_source_path_metadata!(source_path: "docs/only.md", snapshot_kind: "received_markdown")
+    uploaded_version.save!
+    document.update!(latest_version: uploaded_version)
+
+    expect do
+      post document_version_rollback_path(uploaded_version)
+    end.to change(DocumentVersion, :count).by(-1)
+
+    expect(response).to redirect_to(project_documents_path(project))
+    expect(document.reload).to be_archived
   end
 
   private
