@@ -7,10 +7,10 @@
 # events. This file decides what a GeneratedFileJob ID actually does.
 jobs:
   - id: ai_usecase_decision_flow
-    description: Generate AI usecase decision flow Markdown and PlantUML from YAML DSL.
-    source_paths:
+    description: Generate AI usecase decision flow Markdown and PlantUML from YAML DSL into repository files.
+    source_paths: &ai_usecase_decision_flow_source_paths
       - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
-    watch_paths:
+    watch_paths: &ai_usecase_decision_flow_watch_paths
       - app/controllers/api/internal/artifact_imports_controller.rb
       - app/controllers/api/internal/file_uploads_controller.rb
       - app/controllers/api/internal/zip_uploads_controller.rb
@@ -42,3 +42,26 @@ jobs:
     generated_paths:
       - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/decision-flow.md
       - docs/ai-usecases/generated/decision-flow.puml
+
+  - id: ai_usecase_decision_flow_document_version
+    description: Generate AI usecase decision flow Markdown and PlantUML into docs-portal DocumentVersion storage.
+    source_paths: *ai_usecase_decision_flow_source_paths
+    watch_paths: *ai_usecase_decision_flow_watch_paths
+    generator: ai_usecase_decision_flow
+    output_writer: document_version
+    output_options:
+      project_code: GENERATED_AI_USECASES
+      project_name: AI活用生成ドキュメント
+      project_description: AI活用判断フローなど、YAML DSLから生成されるdocs-portal側正本用ドキュメント。
+      create_project_if_missing: true
+      document_slug: ai-usecase-decision-flow-generated
+      document_title: AI活用判断フロー生成結果
+      document_category: other
+      document_kind: mixed
+      visibility_policy: internal_only
+      importance_level: reference
+      version_label_prefix: ai-usecase-flow
+      source_identifier: generated:ai_usecase_decision_flow
+      snapshot_kind: attachment
+    generated_paths:
+      - document_versions/ai-usecase-decision-flow-generated
