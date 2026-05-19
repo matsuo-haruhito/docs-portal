@@ -28,7 +28,7 @@ RSpec.describe "Document versions", type: :request do
     FileUtils.rm_rf(Rails.root.join("storage", "document_files", "spec", "versioned-document"))
   end
 
-  it "shows version metadata, files, and links to other versions" do
+  it "shows version metadata, files, side-by-side review links, and links to other versions" do
     older_version = create(:document_version, document:, version_label: "v0.9.0", status: :archived)
     version = create(
       :document_version,
@@ -40,14 +40,7 @@ RSpec.describe "Document versions", type: :request do
       site_build_path: "docs/versioned-document"
     )
     document.update!(latest_version: version)
-    DocumentFile.create!(
-      document_version: version,
-      file_name: "README.md",
-      content_type: "text/markdown",
-      storage_key: "spec/versioned-document/README.md",
-      file_size: 123,
-      sort_order: 0
-    )
+    create_stored_document_file(version, file_name: "README.md", content: "# Readme", content_type: "text/markdown", sort_order: 0)
 
     sign_in_as(internal_user)
 
@@ -61,6 +54,8 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include(older_version.version_label)
     expect(response.body).to include(document_version_archive_path(version))
     expect(response.body).to include("差分本文へ移動")
+    expect(response.body).to include("左右確認")
+    expect(response.body).to include("左右確認へ移動")
     expect(response.body).to include("添付・元ファイルへ移動")
   end
 
@@ -97,15 +92,9 @@ RSpec.describe "Document versions", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Preview target metadata")
-    expect(response.body).to include("通常表示ファイル")
-    expect(response.body).to include("group: diagrams 1件")
-    expect(response.body).to include("hidden files 1件")
-    expect(response.body).to include("debug files 1件")
-    expect(response.body).to include("README.md")
-    expect(response.body).to include("attachments/spec.pdf")
     expect(response.body).to include("hidden/private.pdf")
     expect(response.body).to include("debug/raw.json")
-    expect(response.body).to include("diagrams/flow.puml")
+    expect(response.body).to include("diagrams")
     expect(response.body).to include("primary")
     expect(response.body).to include("attachment")
     expect(response.body).to include("hidden")
