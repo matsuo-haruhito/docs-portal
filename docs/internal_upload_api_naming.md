@@ -14,6 +14,8 @@ internal API は、用途が分かる名前に分ける。
   - 同期クライアントや手動アップロードから単体ファイルを受ける入口。
   - `file`、`project_code`、`relative_path` を受け取る。
 
+詳細な呼び出し例は [Client file upload API flow](./client_file_upload_api.md) と、管理者向けの `docs-src/api-specification.md` を参照する。
+
 `doc_imports` は、実態が document file upload ではなく artifact import だったため、新しい用途名では使わない。
 `zip_imports` は、internal API としてはファイル受信口であることが分かるよう `zip_uploads` に改名した。
 
