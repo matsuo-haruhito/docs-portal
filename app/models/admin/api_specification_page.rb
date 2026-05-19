@@ -21,6 +21,10 @@ class Admin::ApiSpecificationPage
     Rails.root.join("docs-src", "api-specification.md")
   end
 
+  def source_paths
+    Dir[source_path.dirname.join("*.md")].map { |path| Pathname.new(path) }
+  end
+
   def build_entry_path
     build_root.join(SITE_PATH, "index.html")
   end
@@ -86,6 +90,7 @@ class Admin::ApiSpecificationPage
   def build_freshness_guard
     @build_freshness_guard ||= BuildFreshnessGuard.new(
       source_path:,
+      source_paths:,
       build_entry_path:,
       marker_path: build_request_marker_path,
       job_class: ApiSpecificationBuildJob
