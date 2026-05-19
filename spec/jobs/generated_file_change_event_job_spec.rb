@@ -77,6 +77,20 @@ RSpec.describe GeneratedFileChangeEventJob, type: :job do
       expect(key).to eq("generated-file-change-event:docs/a.yml:update,docs/b.yml:delete")
     end
 
+    it "uses update for missing or blank file event operations" do
+      key = described_class.concurrency_key_for(
+        args: [],
+        kwargs: {
+          file_events: [
+            {path: "docs/missing.yml"},
+            {path: "docs/blank.yml", operation: ""}
+          ]
+        }
+      )
+
+      expect(key).to eq("generated-file-change-event:docs/blank.yml:update,docs/missing.yml:update")
+    end
+
     it "uses changed files and operation when file events are absent" do
       key = described_class.concurrency_key_for(
         args: [],
