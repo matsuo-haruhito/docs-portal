@@ -29,7 +29,7 @@ RSpec.describe "Document uploads", type: :request do
     expect(version.source_directory).to eq("docs/specs")
     expect(version.source_file_name).to eq("overview.md")
     expect(version.document_files.first.file_name).to eq("docs/specs/overview.md")
-    expect(response).to redirect_to(project_documents_path(project, q: "docs/specs/overview.md", uploaded_version_id: version.public_id))
+    expect(response).to redirect_to(project_documents_path(project, q: "docs/specs/overview.md", upload_source_path: "docs/specs", uploaded_version_id: version.public_id))
   end
 
   it "shows a completion prompt with a diff link" do
