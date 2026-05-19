@@ -28,12 +28,22 @@ internal API は、用途が分かる名前に分ける。
 これにより、同期クライアントが同じファイルを再送した場合にも、内容単位で追跡しやすくする。
 `version_label` が指定されない場合は `file-YYYYMMDDHHMMSS` を使う。
 
+## dry-run の本実行
+
+upload 系APIは dry-run を作った入口と、本実行の入口を一致させる。
+
+- `zip_uploads` で作った dry-run は `zip_uploads` で実行する。
+- `file_uploads` で作った dry-run は `file_uploads` で実行する。
+- 別APIの `import_dry_run_id` を渡しても実行しない。
+
+これにより、ZIP一括アップロードと単体ファイルアップロードの取り違えを防ぐ。
+
 ## 現状
 
 - `config/routes.rb` では新しい3系統の internal API だけを公開する。
 - 旧 `doc_imports` / `zip_imports` ルートは公開しない。
 - 旧 `Api::Internal::DocImportsController` / `Api::Internal::ZipImportsController` は削除済み。
-- request spec は `artifact_imports_spec` / `zip_uploads_spec` / `upload_routes_spec` に整理済み。
+- request spec は `artifact_imports_spec` / `zip_uploads_spec` / `upload_routes_spec` と file upload 補助 spec に整理済み。
 
 ## 後方互換
 
