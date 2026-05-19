@@ -21,6 +21,7 @@ p.muted
     - else
       span.button.secondary HTML未生成
     = link_to "添付・元ファイル", "#version-files", class: "button secondary"
+    = link_to "左右確認", "#side-by-side-file-review", class: "button secondary"
     - if current_user.internal?
       = link_to "品質チェック", document_version_quality_check_path(@version), class: "button secondary"
 
@@ -61,6 +62,7 @@ p.muted
         span 削除
     p.actions
       = link_to "差分本文へ移動", "#version-diff", class: "button secondary"
+      = link_to "左右確認へ移動", "#side-by-side-file-review", class: "button secondary"
       = link_to "添付・元ファイルへ移動", "#version-files", class: "button secondary"
   .card.preview-summary-card
     h2 プレビュー状態
@@ -138,6 +140,9 @@ p.muted
           a.diff-section-tab href="#html-table-cell-diff"
             span 表セル差分
             span.diff-count = table_diff_count
+          a.diff-section-tab href="#side-by-side-file-review"
+            span 左右確認
+            span.diff-count = diff_files.size
         section.diff-section-card#markdown-line-diff
           .diff-section-heading
             h3 Markdown本文の行単位diff
@@ -216,6 +221,8 @@ p.muted
             p.muted 変更された表セルはありません。
   - else
     p.muted 比較対象版との差分はありません。
+
+= render "side_by_side_file_review"
 
 table
   tbody
