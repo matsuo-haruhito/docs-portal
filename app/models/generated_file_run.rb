@@ -15,7 +15,7 @@ class GeneratedFileRun < ApplicationRecord
   def finish!(status:, generated_paths: [], error_message: nil)
     update!(
       status: status,
-      generated_paths: generated_paths,
+      generated_paths: Array(generated_paths),
       error_message: error_message,
       finished_at: Time.current
     )
