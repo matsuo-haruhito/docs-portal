@@ -7,7 +7,9 @@ RSpec.describe GeneratedFileJob, type: :job do
 
     described_class.perform_now(
       changed_files: ["source.yml"],
-      job_ids: ["sample"]
+      job_ids: ["sample"],
+      event_source: "spec",
+      metadata: {"source_id" => 1}
     )
 
     expect(GeneratedFiles::Runner).to have_received(:new).with(
