@@ -73,6 +73,27 @@ RSpec.describe DocumentPathHistoryMetadata do
     expect(result.deleted_entries.map(&:reason)).to eq(["removed from publication"])
   end
 
+  it "normalizes archived and deleted entry kinds" do
+    create_file(
+      file_name: ".docs-portal-history.yml",
+      content: <<~YAML
+        path_history:
+          archived:
+            - kind: " Slug "
+              value: old-manual
+          deleted:
+            - kind: " Site_Path "
+              value: docs/deleted-manual
+      YAML
+    )
+
+    result = described_class.new(version).call
+
+    expect(result.archived_entries.map(&:kind)).to eq(["slug"])
+    expect(result.deleted_entries.map(&:kind)).to eq(["site_path"])
+    expect(result.warnings).to be_empty
+  end
+
   it "warns about unsupported archived or deleted entry kinds" do
     create_file(
       file_name: "path-history.yaml",
