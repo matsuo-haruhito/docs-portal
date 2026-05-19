@@ -21,6 +21,25 @@ RSpec.describe GeneratedFileChangeEventJob, type: :job do
     expect(handler).to have_received(:call)
   end
 
+  it "uses nil metadata safely when delegating to the handler" do
+    handler = instance_double(GeneratedFiles::ChangeEventHandler, call: [])
+    allow(GeneratedFiles::ChangeEventHandler).to receive(:new).and_return(handler)
+
+    described_class.perform_now(
+      file_events: [{"path" => "source.yml", "operation" => "update"}],
+      metadata: nil
+    )
+
+    expect(GeneratedFiles::ChangeEventHandler).to have_received(:new).with(
+      changed_files: nil,
+      file_events: [{"path" => "source.yml", "operation" => "update"}],
+      operation: :update,
+      event_source: nil,
+      metadata: nil
+    )
+    expect(handler).to have_received(:call)
+  end
+
   it "keeps changed_files as a backward-compatible update event input" do
     handler = instance_double(GeneratedFiles::ChangeEventHandler, call: [])
     allow(GeneratedFiles::ChangeEventHandler).to receive(:new).and_return(handler)
