@@ -85,22 +85,22 @@ class Api::Internal::ManualUploadsController < Api::Internal::ZipUploadsControll
   def relative_path
     @relative_path ||= begin
       value = params[:relative_path].presence || upload_file.original_filename.to_s
-      normalized = value.tr("\\", "/").delete_prefix("/")
-      path = Pathname(normalized).cleanpath.to_s
-      raise ApplicationError::BadRequest, "relative_path is invalid" if unsafe_relative_path?(path)
+      normalized = value.tr("\\", "/")
+      raise ApplicationError::BadRequest, "relative_path is invalid" if unsafe_relative_path?(normalized)
 
-      path
+      Pathname(normalized.delete_prefix("/")).cleanpath.to_s
     end
   end
 
   def unsafe_relative_path?(path)
+    segments = path.split("/")
+
     path.blank? ||
       path == "." ||
       path == ".." ||
       path.start_with?("/") ||
-      path.start_with?("../") ||
-      path.include?("/../") ||
       path.match?(%r{\A[A-Za-z]:/}) ||
-      path.include?("\0")
+      path.include?("\0") ||
+      segments.include?("..")
   end
 end
