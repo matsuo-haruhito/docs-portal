@@ -7,6 +7,8 @@ require "set"
 require "shellwords"
 require "yaml"
 
+require_relative "run_recorder"
+
 module GeneratedFiles
   class Runner
     Result = Data.define(:job_id, :command, :generator, :output_writer, :generated_paths, :stdout, :stderr, :status) do
@@ -39,16 +41,22 @@ module GeneratedFiles
       registry_path: DEFAULT_REGISTRY_PATH,
       changed_files: nil,
       job_ids: nil,
+      event_source: nil,
+      metadata: {},
       root: nil,
       output: $stdout,
-      error_output: $stderr
+      error_output: $stderr,
+      run_recorder: RunRecorder.new
     )
       @root = Pathname(root || default_root).expand_path
       @registry_path = absolute_path(registry_path)
       @changed_files = normalize_files(changed_files)
       @job_ids = Array(job_ids).compact.map(&:to_s).to_set
+      @event_source = event_source
+      @metadata = metadata || {}
       @output = output
       @error_output = error_output
+      @run_recorder = run_recorder
     end
 
     def call
@@ -60,12 +68,13 @@ module GeneratedFiles
         return []
       end
 
-      selected_jobs.map { execute_job(_1) }
+      selected_jobs.map { execute_job_with_recording(_1) }
     end
 
     private
 
-    attr_reader :root, :registry_path, :changed_files, :job_ids, :output, :error_output
+    attr_reader :root, :registry_path, :changed_files, :job_ids, :event_source, :metadata,
+      :output, :error_output, :run_recorder
 
     def default_root
       if defined?(Rails)
@@ -85,6 +94,16 @@ module GeneratedFiles
 
       watch_paths = Array(job.fetch("source_paths")) + Array(job.fetch("watch_paths", []))
       normalize_files(watch_paths).any? { changed_files.include?(_1) }
+    end
+
+    def execute_job_with_recording(job)
+      run = run_recorder.start(job: job, changed_files: changed_files.to_a.sort, event_source: event_source, metadata: metadata)
+      result = execute_job(job)
+      run.finish!(status: :completed, generated_paths: result.generated_paths)
+      result
+    rescue StandardError => error
+      run.finish!(status: :failed, error_message: error.message) if defined?(run) && run
+      raise
     end
 
     def execute_job(job)
@@ -116,7 +135,7 @@ module GeneratedFiles
         command: nil,
         generator: generator_key,
         output_writer: output_writer_key,
-        generated_paths:,
+        generated_paths: generated_paths,
         stdout: "",
         stderr: "",
         status: true
@@ -137,7 +156,7 @@ module GeneratedFiles
       output.puts stdout unless stdout.empty?
       error_output.puts stderr unless stderr.empty?
 
-      result = Result.new(job_id: id, command:, generator: nil, output_writer: nil, generated_paths:, stdout:, stderr:, status:)
+      result = Result.new(job_id: id, command: command, generator: nil, output_writer: nil, generated_paths: generated_paths, stdout: stdout, stderr: stderr, status: status)
       raise "generated-file job failed: #{id}" unless result.success?
 
       output_generated_paths(id, generated_paths)
