@@ -8,7 +8,7 @@
 - `.tar` / `.gz` / `.tgz` など ZIP 以外の archive は download only とする
 - ZIP preview 本体は展開せず、entry metadata のみ読み取る
 - entry 本体 preview は text preview 候補に限定して専用画面で行う
-- entry download は service / spec まで実装済み。route / controller / UI は未接続
+- entry download は service / route / controller / request spec まで実装済み。UI link は未接続
 
 ## 現状の UI
 
@@ -133,25 +133,22 @@ entry 単位 preview / download は便利だが、以下の検討が必要。
 
 ### URL / controller 境界
 
-entry 単位 preview は、archive 本体の `DocumentFile` にぶら下がる専用 action とする。
+entry 単位 action は、archive 本体の `DocumentFile` にぶら下がる専用 action とする。
 
 実装済み:
 
 - `GET /document_files/:public_id/archive_entries/preview?entry_path=...`
-
-未実装:
-
 - `GET /document_files/:public_id/archive_entries/download?entry_path=...`
 
 controller では以下だけを担当する。
 
 1. archive 本体の取得
-2. archive 本体への閲覧権限確認
+2. archive 本体への権限確認
 3. consent 確認
 4. access log 記録
 5. entry path parameter の受け取り
 6. service 呼び出し
-7. service result に応じた render
+7. service result に応じた render / send_data
 
 ZIP entry の探索、path validation、size validation、content type 推定は controller に置かない。
 
@@ -240,7 +237,6 @@ entry 本体は UTF-8 として validation し、既定 2,000 行を超える場
 - `reason`
 
 lookup が `downloadable?` であり、かつ entry path の拡張子が `.zip` / `.tar` / `.gz` / `.tgz` ではない場合だけ entry 本体を binary として読み込む。
-route / controller / UI にはまだ接続していない。
 
 ### 実装済みの preview UI
 
@@ -249,6 +245,13 @@ route / controller / UI にはまだ接続していない。
 - 既存 text preview UI と同じ検索 / 一致行のみ表示 / コピー / reset を使う
 - preview できない場合は reason を表示する
 - download link はまだ表示しない
+
+### 実装済みの download controller / request spec
+
+- download action は archive 本体の download 権限を確認する
+- download action は success 時だけ `record_download_access_log` を記録する
+- request spec で success / unsafe path / nested archive block を固定している
+- UI link はまだ表示しない
 
 ### 初期実装で許可する範囲
 
@@ -266,7 +269,7 @@ entry download は、entry preview が安定した後に段階導入する。
 
 ### download URL / controller 境界
 
-候補 route:
+実装済み route:
 
 - `GET /document_files/:public_id/archive_entries/download?entry_path=...`
 
@@ -278,7 +281,7 @@ controller は preview と同様に thin controller にする。
 4. entry path parameter の受け取り
 5. `DocumentFileArchiveEntryDownload` service 呼び出し
 6. 成功時は `send_data`
-7. 失敗時は error card または plain error を返す
+7. 失敗時は plain error を返す
 8. 成功時だけ access log を `download` として記録する
 
 preview と違い、download では `require_document_file_download_access!` 相当を使う。
