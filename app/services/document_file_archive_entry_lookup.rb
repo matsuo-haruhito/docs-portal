@@ -1,7 +1,7 @@
 class DocumentFileArchiveEntryLookup
   DEFAULT_MAX_SIZE = 1.megabyte
 
-  Result = Data.define(:entry_path, :found, :directory, :safe_path, :size, :content_type, :filename, :reason) do
+  Result = Data.define(:entry_path, :found, :directory, :safe_path, :size, :content_type, :filename, :reason, :max_size) do
     def found?
       found
     end
@@ -31,7 +31,7 @@ class DocumentFileArchiveEntryLookup
     end
 
     def size_over_limit?
-      size.to_i > DEFAULT_MAX_SIZE
+      size.to_i > max_size.to_i
     end
   end
 
@@ -68,18 +68,19 @@ class DocumentFileArchiveEntryLookup
     Result.new(
       entry_path: normalized_path,
       found: true,
-      directory:,
+      directory: directory,
       safe_path: true,
-      size:,
+      size: size,
       content_type: content_type_for(normalized_path),
       filename: File.basename(normalized_path.delete_suffix("/")),
-      reason:
+      reason: reason,
+      max_size: max_size
     )
   end
 
   def unavailable_reason(normalized_path, directory:, size:)
     return "directory entry は操作対象外です" if directory
-    return "entry size が上限を超えています" if size.to_i > max_size
+    return "entry size が上限を超えています" if size.to_i > max_size.to_i
     return "text preview 対象外です" unless text_preview_candidate?(normalized_path)
 
     nil
@@ -90,11 +91,12 @@ class DocumentFileArchiveEntryLookup
       entry_path: normalized_path,
       found: false,
       directory: false,
-      safe_path:,
+      safe_path: safe_path,
       size: 0,
       content_type: nil,
       filename: nil,
-      reason:
+      reason: reason,
+      max_size: max_size
     )
   end
 
