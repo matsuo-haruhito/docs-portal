@@ -37,7 +37,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
 
   def enqueue_retry!(run, bulk: false)
     GeneratedFileJob.perform_later(
-      changed_files: run.changed_files,
+      changed_files: Array(run.changed_files),
       job_ids: [run.job_id],
       event_source: bulk ? "generated_file_run_bulk_retry" : "generated_file_run_retry",
       metadata: retry_metadata_for(run, bulk:)
