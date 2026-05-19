@@ -59,6 +59,24 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include("添付・元ファイルへ移動")
   end
 
+  it "opens side-by-side review files outside turbo frames" do
+    older_version = create(:document_version, document:, version_label: "v0.9.0", status: :published)
+    version = create(:document_version, document:, version_label: "v1.0.0", status: :published)
+    document.update!(latest_version: version)
+    create_stored_document_file(older_version, file_name: "manual.pdf", content: "%PDF old", content_type: "application/pdf", sort_order: 0)
+    create_stored_document_file(version, file_name: "manual.pdf", content: "%PDF new", content_type: "application/pdf", sort_order: 0)
+
+    sign_in_as(internal_user)
+    get document_version_path(version, compare_version_id: older_version.public_id)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("前版を開く")
+    expect(response.body).to include("今回版を開く")
+    expect(response.body).to include('target="_blank"')
+    expect(response.body).to include('data-turbo="false"')
+    expect(response.body).to include("別タブで開くか、ダウンロードして比較してください")
+  end
+
   it "shows preview target metadata summary and organized sections" do
     version = create(:document_version, document:, version_label: "v1.0.0", status: :published)
     document.update!(latest_version: version)
