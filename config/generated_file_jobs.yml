@@ -18,6 +18,7 @@ jobs:
       - app/models/generated_file_run.rb
       - app/services/generated_files/artifact.rb
       - app/services/generated_files/change_event_handler.rb
+      - app/services/generated_files/change_event_notifier.rb
       - app/services/generated_files/event_buffer.rb
       - app/services/generated_files/file_change_event_registry.rb
       - app/services/generated_files/generated_job_registry.rb
@@ -26,6 +27,7 @@ jobs:
       - app/services/generated_files/output_writers/filesystem.rb
       - app/services/generated_files/run_recorder.rb
       - app/services/generated_files/runner.rb
+      - app/services/manual_document_upload.rb
       - bin/generate_ai_usecase_flow
       - bin/run_generated_file_jobs
       - config/file_change_event_jobs.yml
