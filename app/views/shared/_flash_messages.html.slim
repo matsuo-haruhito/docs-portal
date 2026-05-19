@@ -1,7 +1,10 @@
 - flash.each do |type, message|
   .notice class=(type == "alert" ? "alert" : "ok")
     = message
+    - if type.to_s == "notice" && flash[:upload_review_version_public_id].present?
+      .actions style="margin-top: 8px;"
+        = link_to "差異を確認", document_version_path(flash[:upload_review_version_public_id], upload_review: "1", anchor: "version-diff"), class: "button secondary"
+        = link_to "OK/NGを選ぶ", document_version_path(flash[:upload_review_version_public_id], upload_review: "1", anchor: "upload-review-actions"), class: "button secondary"
 
 - if controller_name == "document_versions" && action_name == "show" && defined?(@version) && @version.present?
-  = render "document_versions/rollback_actions"
   = render "document_versions/side_by_side_file_review"
