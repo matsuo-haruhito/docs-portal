@@ -28,12 +28,13 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 | `source_name` | 任意 | 同期元名。未指定時は `file_upload` |
 | `content_hash` | 任意 | 同期クライアント向けの内容ハッシュ。指定時はアップロード実体のSHA-256と照合する |
 | `source_commit_hash` | 任意 | artifact import と揃えるための採用ハッシュ名。`content_hash` と両方ある場合、採用値はこちらを優先する |
-| `version_label` | 任意 | 未指定時は `file-YYYYMMDDHHMMSS-<hash8>` |
+| `version_label` | 任意 | 未指定時は `file-YYYYMMDDHHMMSS-hash8` |
 | `status` | 任意 | 未指定時は `published` |
 
 ## 2. dry-run 結果確認
 
 レスポンスには `dry_run_id` と `file_upload_preview` が含まれる。
+`file_upload_preview.content_hash` は、クライアントが送った値ではなく、実際にアップロードされたファイルの SHA-256 である。
 
 ```json
 {
@@ -58,10 +59,10 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 
 `source_path` は監査・表示用であり、manifest の branch metadata には使わない。
 サーバー側の取り込み識別には `relative_path` と、採用後の `source_commit_hash` を使う。
-クライアントは通常 `content_hash` を送ればよい。`content_hash` は `sha256:<hash>` 形式でも `<hash>` 形式でもよい。
+クライアントは通常 `content_hash` を送ればよい。`content_hash` は `sha256:` 接頭辞付き、または 64 桁 hex 形式で送る。
 `content_hash` が送られた場合は、`source_commit_hash` の有無に関わらずアップロード実体と照合する。不一致なら dry-run を作らない。
 `source_commit_hash` と `content_hash` の両方があり、`content_hash` が実体と一致する場合は、採用値として `source_commit_hash` を優先する。
-`version_label` を明示しない場合は、秒単位の時刻と内容ハッシュ先頭8桁から作る。
+`version_label` を明示しない場合は、秒単位の時刻とアップロードファイルSHA-256先頭8桁から作る。
 
 ## 3. 本実行
 
