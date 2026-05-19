@@ -60,6 +60,8 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include("README.md")
     expect(response.body).to include(older_version.version_label)
     expect(response.body).to include(document_version_archive_path(version))
+    expect(response.body).to include("差分本文へ移動")
+    expect(response.body).to include("添付・元ファイルへ移動")
   end
 
   it "shows export handling notes on version detail" do
@@ -90,6 +92,7 @@ RSpec.describe "Document versions", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(document_version_path(version))
+    expect(response.body).to include("1ファイルずつ")
   end
 
   it "downloads version files as a zip archive and records a download log" do
