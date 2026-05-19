@@ -81,6 +81,60 @@
   outline-color: var(--accent);
 }
 
+.upload-complete-dialog {
+  position: sticky;
+  top: 16px;
+  z-index: 30;
+  margin-bottom: 18px;
+}
+
+.upload-complete-dialog__panel,
+.upload-review-actions {
+  border: 1px solid rgba(22, 163, 74, 0.22);
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+  box-shadow: 0 16px 36px rgba(22, 163, 74, 0.14);
+}
+
+.side-by-side-file-review__item {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  margin-top: 12px;
+  background: #fff;
+}
+
+.side-by-side-file-review__item summary {
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.side-by-side-file-review__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.side-by-side-file-review__pane {
+  border: 1px solid rgba(15, 98, 254, 0.14);
+  border-radius: 14px;
+  padding: 12px;
+  background: #f8fbff;
+  min-width: 0;
+}
+
+.side-by-side-file-review__frame {
+  display: block;
+  width: 100%;
+  min-height: 62vh;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
 .tree-diff-preview {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
