@@ -93,6 +93,26 @@ p.muted
     = @total_pages
     | ページ）
 
+- if @documents_count.zero?
+  section.card.empty-state
+    h2 条件に一致する文書はありません
+    - if @filters[:q].present?
+      p
+        | キーワード「
+        code = @filters[:q]
+        | 」に一致する閲覧可能な文書がありませんでした。
+    - else
+      p 絞り込み条件に一致する閲覧可能な文書がありませんでした。
+    ul.compact-list
+      li キーワードを短くする、または別名・ファイル名・タグで検索してください。
+      li タグ、カテゴリ、ファイル種、公開範囲、実用フィルタを外して再検索してください。
+      - unless current_user.internal?
+        li 必要な文書が表示されない場合は、担当者へ閲覧権限の確認を依頼してください。
+    p.actions
+      = link_to "条件をクリア", project_documents_path(@project), class: "button secondary"
+      - if current_user.internal?
+        = link_to "案件直下にアップロード", project_documents_path(@project, upload_source_path: nil), class: "button secondary"
+
 - pagination_params = @filters.to_h.symbolize_keys.except(:page).compact_blank
 - if @total_pages > 1
   nav.pagination aria-label="文書一覧ページネーション"
@@ -112,73 +132,74 @@ p.muted
     - else
       span.button.secondary.disabled 次へ
 
-= form_with url: project_document_zip_path(@project), method: :post, local: true do
-  .card
-    h2 ZIP出力オプション
-    .form-grid
-      label
-        | ZIP内パス
-        = select_tag :zip_path_mode, options_for_select([["文書名準拠", "document_title"], ["元パス準拠", "source_path"]], "document_title")
-      label
-        = check_box_tag :include_markdown_sources, "1", true
-        |  Markdown原本を含める
-      label
-        = check_box_tag :include_attachments, "1", true
-        |  添付ファイルを含める
-      label
-        = check_box_tag :pdf_only, "1", false
-        |  PDFだけ出力
-  p.actions
-    = submit_tag "選択した文書の最新版をZIPでダウンロード", class: "button"
+- if @documents_count.positive?
+  = form_with url: project_document_zip_path(@project), method: :post, local: true do
+    .card
+      h2 ZIP出力オプション
+      .form-grid
+        label
+          | ZIP内パス
+          = select_tag :zip_path_mode, options_for_select([["文書名準拠", "document_title"], ["元パス準拠", "source_path"]], "document_title")
+        label
+          = check_box_tag :include_markdown_sources, "1", true
+          |  Markdown原本を含める
+        label
+          = check_box_tag :include_attachments, "1", true
+          |  添付ファイルを含める
+        label
+          = check_box_tag :pdf_only, "1", false
+          |  PDFだけ出力
+    p.actions
+      = submit_tag "選択した文書の最新版をZIPでダウンロード", class: "button"
 
-  table
-    thead
-      tr
-        th 文書名
-        th ヒット理由
-        th タグ
-        th カテゴリ
-        th ファイル種
-        th 重要度
-        th 公開範囲
-        th 最新版
-        th HTML
-        th 添付
-        th 最終更新
-    tbody
-      - @documents.each do |document|
-        - latest_version = document.latest_version
-        - files = document.document_versions.flat_map(&:document_files)
-        - match_summaries = document_search_match_summaries(document, @filters[:q])
+    table
+      thead
         tr
-          td
-            = check_box_tag "document_ids[]", document.id, false, id: "document_ids_#{document.id}", disabled: latest_version.blank?
-            =< link_to document.title, project_document_path(@project, document.slug)
-          td
-            - if match_summaries.any?
-              ul.compact-list
-                - match_summaries.each do |summary|
-                  li
-                    span.badge = summary.label
-                    |  
-                    code = summary.value
-            - else
-              span.muted -
-          td
-            - if document.document_tags.any?
-              - document.document_tags.sort_by(&:normalized_name).each do |tag|
-                = link_to tag.name, project_documents_path(@project, tag: tag.normalized_name), class: "badge"
-            - else
-              span.muted なし
-          td
-            span.badge = document_category_label(document)
-          td = document_kind_label(document)
-          td
-            span.badge = document_importance_level_label(document)
-          td = document_visibility_policy_label(document)
-          td = latest_version ? document_version_label(latest_version) : "-"
-          td = latest_version&.site_build_path.present? ? "あり" : "なし"
-          td = files.any? ? "#{files.size}件" : "なし"
-          td = document.updated_at.strftime("%Y-%m-%d %H:%M")
+          th 文書名
+          th ヒット理由
+          th タグ
+          th カテゴリ
+          th ファイル種
+          th 重要度
+          th 公開範囲
+          th 最新版
+          th HTML
+          th 添付
+          th 最終更新
+      tbody
+        - @documents.each do |document|
+          - latest_version = document.latest_version
+          - files = document.document_versions.flat_map(&:document_files)
+          - match_summaries = document_search_match_summaries(document, @filters[:q])
+          tr
+            td
+              = check_box_tag "document_ids[]", document.id, false, id: "document_ids_#{document.id}", disabled: latest_version.blank?
+              =< link_to document.title, project_document_path(@project, document.slug)
+            td
+              - if match_summaries.any?
+                ul.compact-list
+                  - match_summaries.each do |summary|
+                    li
+                      span.badge = summary.label
+                      |  
+                      code = summary.value
+              - else
+                span.muted -
+            td
+              - if document.document_tags.any?
+                - document.document_tags.sort_by(&:normalized_name).each do |tag|
+                  = link_to tag.name, project_documents_path(@project, tag: tag.normalized_name), class: "badge"
+              - else
+                span.muted なし
+            td
+              span.badge = document_category_label(document)
+            td = document_kind_label(document)
+            td
+              span.badge = document_importance_level_label(document)
+            td = document_visibility_policy_label(document)
+            td = latest_version ? document_version_label(latest_version) : "-"
+            td = latest_version&.site_build_path.present? ? "あり" : "なし"
+            td = files.any? ? "#{files.size}件" : "なし"
+            td = document.updated_at.strftime("%Y-%m-%d %H:%M")
 
 p = link_to "案件一覧へ戻る", projects_path
