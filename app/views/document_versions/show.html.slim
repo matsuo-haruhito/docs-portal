@@ -247,6 +247,17 @@ table
       th PDFスナップショットパス
       td = @version.pdf_snapshot_path.presence || "-"
 
+- if @versions.any?
+  .card.version-history-card
+    h2 他の版
+    ul.resource-list
+      - @versions.each do |version|
+        li
+          = link_to document_version_label(version), document_version_path(version)
+          - if version == @version
+            span.badge 表示中
+          span.muted = " / #{document_version_status_label(version)}"
+
 - if @version.changelog_summary.present?
   h2 更新内容
   p = simple_format(@version.changelog_summary)
