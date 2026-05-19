@@ -81,6 +81,7 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
       relative_path: relative_path,
       source_path: params[:source_path].to_s.presence,
       file_size: uploaded_file_size,
+      content_hash: normalized_content_hash,
       source_commit_hash: staged.manifest["source_commit_hash"],
       version_label: version_label,
       zip_import_preview: staged.manifest["zip_import_preview"]
