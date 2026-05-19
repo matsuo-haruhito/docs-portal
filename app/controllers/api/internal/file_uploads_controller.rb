@@ -1,3 +1,4 @@
+require "digest"
 require "tempfile"
 require "zip"
 
@@ -66,8 +67,8 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
       actor: actor,
       source_repo: params[:source_name].presence || "file_upload",
       source_branch: params[:source_path].presence || relative_path,
-      source_commit_hash: params[:source_commit_hash],
-      version_label: params[:version_label],
+      source_commit_hash: params[:source_commit_hash].presence || uploaded_file_hash,
+      version_label: params[:version_label].presence || default_version_label,
       status: params[:status]
     )
   end
@@ -88,6 +89,14 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
 
   def upload_file
     params.require(:file)
+  end
+
+  def uploaded_file_hash
+    @uploaded_file_hash ||= Digest::SHA256.file(upload_file.tempfile.path).hexdigest
+  end
+
+  def default_version_label
+    @default_version_label ||= "file-#{Time.current.strftime('%Y%m%d%H%M%S')}"
   end
 
   def relative_path
