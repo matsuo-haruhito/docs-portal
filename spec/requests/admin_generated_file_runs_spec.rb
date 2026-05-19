@@ -16,6 +16,45 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).to include("ai_usecase_decision_flow")
     end
 
+    it "filters by status, job id, output writer, event source, and date range" do
+      sign_in_as(admin_user)
+      matched = create_run!(
+        job_id: "ai_usecase_decision_flow_document_version",
+        status: :failed,
+        output_writer: "document_version",
+        event_source: "manual_document_upload",
+        created_at: Time.zone.parse("2026-05-10 12:00:00")
+      )
+      unmatched_status = create_run!(job_id: "ai_usecase_decision_flow_document_version", status: :completed, output_writer: "document_version", event_source: "manual_document_upload")
+      unmatched_job = create_run!(job_id: "other_job", status: :failed, output_writer: "document_version", event_source: "manual_document_upload")
+      unmatched_date = create_run!(job_id: "ai_usecase_decision_flow_document_version", status: :failed, output_writer: "document_version", event_source: "manual_document_upload", created_at: Time.zone.parse("2026-05-01 12:00:00"))
+
+      get admin_generated_file_runs_path(
+        status: "failed",
+        job_id: "ai_usecase_decision_flow_document_version",
+        output_writer: "document_version",
+        event_source: "manual_document_upload",
+        created_from: "2026-05-10",
+        created_to: "2026-05-10"
+      )
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(matched.public_id)
+      expect(response.body).not_to include(unmatched_status.public_id)
+      expect(response.body).not_to include(unmatched_job.public_id)
+      expect(response.body).not_to include(unmatched_date.public_id)
+    end
+
+    it "ignores invalid date filters" do
+      sign_in_as(admin_user)
+      run = create_run!(job_id: "ai_usecase_decision_flow")
+
+      get admin_generated_file_runs_path(created_from: "invalid", created_to: "also-invalid")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(run.public_id)
+    end
+
     it "forbids external users" do
       sign_in_as(create(:user, :external))
 
