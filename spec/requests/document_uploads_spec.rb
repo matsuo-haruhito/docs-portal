@@ -101,6 +101,8 @@ RSpec.describe "Document uploads", type: :request do
     post document_version_upload_review_path(upload_version), params: { decision: "approve" }
 
     expect(response).to redirect_to(project_document_path(project, document, version_id: upload_version.public_id))
+    expect(flash[:notice]).to include("誤りがあればすぐ取り消せます")
+    expect(flash[:approved_upload_version_public_id]).to eq(upload_version.public_id)
     expect(upload_version.reload).to be_published
     expect(upload_version.published_by_user).to eq(user)
     expect(document.reload.latest_version).to eq(upload_version)
