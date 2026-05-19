@@ -1,0 +1,7 @@
+- if current_user.internal? && @document.latest_version_id == @version.id
+  .card.upload-review-actions
+    h2 アップロード後の確認
+    p.muted 差異確認で誤りに気づいた場合は、この最新アップロード版だけを取り消せます。前の版があれば前の版へ戻し、初回アップロードの場合は文書をアーカイブします。
+    p.actions
+      = button_to "このアップロードを取り消す", document_version_rollback_path(@version), method: :post, class: "button danger", form: { data: { turbo_confirm: "この最新バージョンを取り消します。よろしいですか？" } }
+      = link_to "文書一覧へ戻る", project_documents_path(@project, q: @version.source_directory), class: "button secondary"
