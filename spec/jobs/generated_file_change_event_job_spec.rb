@@ -91,6 +91,21 @@ RSpec.describe GeneratedFileChangeEventJob, type: :job do
       expect(key).to eq("generated-file-change-event:docs/blank.yml:update,docs/missing.yml:update")
     end
 
+    it "ignores blank file event paths" do
+      key = described_class.concurrency_key_for(
+        args: [],
+        kwargs: {
+          file_events: [
+            {path: "", operation: "update"},
+            {path: "./", operation: "delete"},
+            {path: "docs/source.yml", operation: "update"}
+          ]
+        }
+      )
+
+      expect(key).to eq("generated-file-change-event:docs/source.yml:update")
+    end
+
     it "uses changed files and operation when file events are absent" do
       key = described_class.concurrency_key_for(
         args: [],
@@ -98,6 +113,15 @@ RSpec.describe GeneratedFileChangeEventJob, type: :job do
       )
 
       expect(key).to eq("generated-file-change-event:a.yml:create,b.yml:create")
+    end
+
+    it "ignores blank changed files" do
+      key = described_class.concurrency_key_for(
+        args: [],
+        kwargs: {changed_files: ["", "./", "source.yml"], operation: :update}
+      )
+
+      expect(key).to eq("generated-file-change-event:source.yml:update")
     end
 
     it "accepts string keys from serialized job payloads" do
