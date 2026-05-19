@@ -57,6 +57,7 @@
           <th class="px-4 py-3 text-left font-semibold">Count</th>
           <th class="px-4 py-3 text-left font-semibold">Scheduled</th>
           <th class="px-4 py-3 text-left font-semibold">Processed</th>
+          <th class="px-4 py-3 text-left font-semibold">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
@@ -72,6 +73,12 @@
             <td class="px-4 py-3"><%= event.occurrences_count %></td>
             <td class="px-4 py-3"><%= l(event.scheduled_at, format: :long) if event.scheduled_at %></td>
             <td class="px-4 py-3"><%= l(event.processed_at, format: :long) if event.processed_at %></td>
+            <td class="px-4 py-3">
+              <div class="flex gap-2">
+                <%= link_to "詳細", admin_generated_file_event_path(event.public_id), class: "rounded border px-2 py-1 text-xs" %>
+                <%= button_to "再dispatch", retry_dispatch_admin_generated_file_event_path(event.public_id), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white" %>
+              </div>
+            </td>
           </tr>
         <% end %>
       </tbody>
