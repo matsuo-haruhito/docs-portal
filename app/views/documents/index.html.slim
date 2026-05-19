@@ -6,6 +6,18 @@ h1
   = @project.name
   |  / 文書一覧
 
+- if @uploaded_version.present?
+  .upload-complete-dialog role="dialog" aria-modal="false" aria-label="アップロード完了"
+    .upload-complete-dialog__panel
+      h2 アップロードを完了しました
+      p.muted
+        = @uploaded_version.document.title
+        |  / 
+        = document_version_label(@uploaded_version)
+      p.actions
+        = link_to "差異を確認", document_version_path(@uploaded_version), class: "button"
+        = link_to "OK", project_documents_path(@project, q: @selected_source_path), class: "button secondary"
+
 section.card
   h2 検索・絞り込み
 
