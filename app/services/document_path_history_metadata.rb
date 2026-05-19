@@ -132,7 +132,11 @@ class DocumentPathHistoryMetadata
     normalized_value = value.to_s.strip
     return if normalized_value.blank?
 
-    StatusEntry.new(status: status.to_s, kind: kind.to_s, value: normalized_value, reason: reason.to_s.presence)
+    StatusEntry.new(status: status.to_s, kind: normalize_status_kind(kind), value: normalized_value, reason: reason.to_s.presence)
+  end
+
+  def normalize_status_kind(kind)
+    kind.to_s.strip.downcase
   end
 
   def validate_metadata(metadata)
