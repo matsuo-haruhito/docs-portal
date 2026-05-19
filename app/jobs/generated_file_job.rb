@@ -31,17 +31,19 @@ class GeneratedFileJob < ApplicationJob
   end
 
   def perform(changed_files: [], job_ids: [], event_source: nil, metadata: {})
+    safe_metadata = metadata || {}
+
     Rails.logger.info(
       "GeneratedFileJob started: event_source=#{event_source.inspect} " \
       "job_ids=#{Array(job_ids).join(',')} changed_files=#{Array(changed_files).join(',')} " \
-      "metadata=#{metadata.to_h.inspect}"
+      "metadata=#{safe_metadata.to_h.inspect}"
     )
 
     GeneratedFiles::Runner.new(
       changed_files:,
       job_ids:,
       event_source:,
-      metadata:
+      metadata: safe_metadata
     ).call
   end
 end
