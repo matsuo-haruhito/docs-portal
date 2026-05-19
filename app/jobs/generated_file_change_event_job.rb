@@ -35,8 +35,9 @@ class GeneratedFileChangeEventJob < ApplicationJob
   end
 
   def self.normalized_path_for(path)
-    normalized = Pathname(path.to_s.strip).cleanpath.to_s.delete_prefix("./")
-    return nil if unsafe_path?(normalized)
+    raw_path = path.to_s.strip.tr("\\", "/")
+    normalized = Pathname(raw_path).cleanpath.to_s.delete_prefix("./")
+    return nil if unsafe_path?(raw_path) || unsafe_path?(normalized)
 
     normalized
   end
@@ -44,6 +45,7 @@ class GeneratedFileChangeEventJob < ApplicationJob
   def self.unsafe_path?(path)
     path.blank? ||
       path == "." ||
+      path == ".." ||
       path.start_with?("/") ||
       path.match?(%r{\A[A-Za-z]:/}) ||
       path.split("/").include?("..")
@@ -71,7 +73,15 @@ class GeneratedFileChangeEventJob < ApplicationJob
   private
 
   def normalize_buffer_events(file_events:, changed_files:, operation:)
-    return file_events if Array(file_events).any?
+    normalized_file_events = Array(file_events).filter_map do |event|
+      path = self.class.normalized_path_for(event.fetch("path") { event.fetch(:path) })
+      next if path.blank?
+
+      event_operation = event.fetch("operation") { event.fetch(:operation, :update) }
+      event_operation = :update if event_operation.blank?
+      { path:, operation: event_operation }
+    end
+    return normalized_file_events if Array(file_events).any?
 
     Array(changed_files).filter_map do |changed_file|
       path = self.class.normalized_path_for(changed_file)
