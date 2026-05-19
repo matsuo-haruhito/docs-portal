@@ -74,6 +74,21 @@ RSpec.describe GeneratedFiles::GeneratedJobRegistry do
     expect(selected.map { _1.fetch("id") }).to eq(["watched"])
   end
 
+  it "normalizes changed files, source paths, and watch paths before matching" do
+    registry_path = write_registry(
+      jobs: [
+        {"id" => "source", "source_paths" => ["./docs/../docs/source.yml"]},
+        {"id" => "watch", "source_paths" => ["source.yml"], "watch_paths" => ["./lib/../lib/generator.rb"]}
+      ]
+    )
+
+    selected = described_class.new(registry_path:, root: @root).select(
+      changed_files: ["docs/source.yml", "lib/generator.rb"]
+    )
+
+    expect(selected.map { _1.fetch("id") }).to eq(["source", "watch"])
+  end
+
   def write_registry(content)
     path = @root.join("generated-file-jobs.yml")
     path.write(content.to_yaml)
