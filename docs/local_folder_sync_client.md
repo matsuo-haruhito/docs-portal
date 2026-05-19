@@ -13,9 +13,12 @@ NAS やローカルフォルダを docs-portal に同期するための常駐ク
 1. 同期対象フォルダを設定する
 2. ファイル変更を検知する
 3. 対象ファイルの SHA-256 を計算する
-4. `POST /api/internal/file_uploads` に `validate_only=true` で送る
+4. `POST /api/internal/file_uploads` に `file` とメタデータを送って dry-run を作る
 5. レスポンスの `file_upload_preview` と dry-run 結果を確認する
 6. 公開してよい dry-run だけ `import_dry_run_id` で本実行する
+
+`file_uploads` は `file` パラメータがあるリクエストを dry-run 作成として扱うため、同期クライアントは `validate_only=true` を省略できる。
+本実行時は `file` を送らず、`import_dry_run_id` だけを送る。
 
 ## FileSystemWatcher 方針
 
@@ -37,16 +40,15 @@ NAS やローカルフォルダを docs-portal に同期するための常駐ク
 | parameter | value |
 | --- | --- |
 | `project_code` | 同期先案件コード |
-| `file` | multipart upload のファイル実体 |
-| `relative_path` | 同期ルートからの相対パス。省略時は `original_filename` または multipart の元ファイル名を使う |
-| `original_filename` | multipart 実装で元ファイル名が basename 化されるクライアント向けの明示的な元ファイル名 |
+| `file` | multipart upload のファイル実体。指定された場合は dry-run 作成になる |
+| `relative_path` | 同期ルートからの相対パス。省略時は upload file の `original_filename` を使う |
 | `source_path` | クライアント上のフルパスやNASパス |
 | `source_name` | 同期元名。例: `customer-nas-sync` |
 | `content_hash` | ファイル実体の SHA-256 |
-| `validate_only` | `true` |
+| `validate_only` | 任意。`true` でも dry-run 作成になるが、`file` があれば省略可 |
 
-`relative_path` / `original_filename` はサーバー側でも traversal / absolute path / Windows full path を拒否する。
-通常の同期クライアントは `relative_path` を必ず送る。単体ファイル選択UIなど、同期ルート相対パスを持たないクライアントだけ `original_filename` を補助的に使う。
+`relative_path` はサーバー側でも traversal / absolute path / Windows full path を拒否する。
+通常の同期クライアントは `relative_path` を必ず送る。単体ファイル選択UIなど、同期ルート相対パスを持たないクライアントは upload file の `original_filename` に fallback できるが、unsafe な名前は拒否される。
 
 `content_hash` はアップロード破損検知に使う。
 サーバーは受信ファイルの SHA-256 と照合し、不一致なら dry-run を作らない。
@@ -109,7 +111,7 @@ source_name + relative_path + content_hash
 - token はOSの資格情報ストアなどに保存する
 - ログに token を出さない
 - `source_path` は監査用であり、サーバー側の保存先決定には使わない
-- `relative_path` / `original_filename` はサーバー側でも traversal / absolute path / Windows full path を拒否する
+- `relative_path` はサーバー側でも traversal / absolute path / Windows full path を拒否する
 
 ## まず作る最小クライアント
 
