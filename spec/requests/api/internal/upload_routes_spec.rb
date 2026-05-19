@@ -38,15 +38,15 @@ RSpec.describe "API internal upload routes", type: :request do
   it "creates a dry-run through the renamed ZIP upload API" do
     zip_file = build_uploaded_zip("docs/README.md" => "# ZIP Upload\n")
 
-    expect do
-      post "/api/internal/zip_uploads", params: {
-        project_code: project.code,
-        zip_file: zip_file,
-        validate_only: true,
-        version_label: "zip-v1"
-      }, headers: headers
-    end.to change(ImportDryRun, :count).by(1), response.parsed_body.inspect
+    before_count = ImportDryRun.count
+    post "/api/internal/zip_uploads", params: {
+      project_code: project.code,
+      zip_file: zip_file,
+      validate_only: true,
+      version_label: "zip-v1"
+    }, headers: headers
 
+    expect(ImportDryRun.count).to eq(before_count + 1), response.parsed_body.inspect
     expect(response).to have_http_status(:created)
     expect(response.parsed_body["status"]).to eq("analyzed")
   ensure
@@ -57,17 +57,17 @@ RSpec.describe "API internal upload routes", type: :request do
     file_content = "# File Upload\n"
     uploaded_file = build_uploaded_file(file_content)
 
-    expect do
-      post "/api/internal/file_uploads", params: {
-        project_code: project.code,
-        file: uploaded_file,
-        relative_path: "docs/README.md",
-        source_path: "C:/work/docs/README.md",
-        validate_only: true,
-        version_label: "file-v1"
-      }, headers: headers
-    end.to change(ImportDryRun, :count).by(1), response.parsed_body.inspect
+    before_count = ImportDryRun.count
+    post "/api/internal/file_uploads", params: {
+      project_code: project.code,
+      file: uploaded_file,
+      relative_path: "docs/README.md",
+      source_path: "C:/work/docs/README.md",
+      validate_only: true,
+      version_label: "file-v1"
+    }, headers: headers
 
+    expect(ImportDryRun.count).to eq(before_count + 1), response.parsed_body.inspect
     expect(response).to have_http_status(:created)
     expect(response.parsed_body["status"]).to eq("analyzed")
     dry_run = ImportDryRun.find_by!(public_id: response.parsed_body.fetch("dry_run_id"))
@@ -92,14 +92,16 @@ RSpec.describe "API internal upload routes", type: :request do
     }, headers: headers
     dry_run_id = response.parsed_body.fetch("dry_run_id")
 
-    expect do
-      post "/api/internal/file_uploads", params: {
-        import_dry_run_id: dry_run_id
-      }, headers: headers
-    end.to change(Document, :count).by(1)
-      .and change(DocumentVersion, :count).by(1)
-      .and change(DocumentFile, :count).by(1), response.parsed_body.inspect
+    before_document_count = Document.count
+    before_version_count = DocumentVersion.count
+    before_file_count = DocumentFile.count
+    post "/api/internal/file_uploads", params: {
+      import_dry_run_id: dry_run_id
+    }, headers: headers
 
+    expect(Document.count).to eq(before_document_count + 1), response.parsed_body.inspect
+    expect(DocumentVersion.count).to eq(before_version_count + 1), response.parsed_body.inspect
+    expect(DocumentFile.count).to eq(before_file_count + 1), response.parsed_body.inspect
     expect(response).to have_http_status(:created)
     expect(response.parsed_body["status"]).to eq("imported")
     expect(response.parsed_body["import_dry_run_id"]).to eq(dry_run_id)
