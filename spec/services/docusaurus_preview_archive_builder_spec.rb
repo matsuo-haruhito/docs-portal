@@ -29,8 +29,28 @@ RSpec.describe DocusaurusPreviewArchiveBuilder do
     archive&.close!
   end
 
-  it "rejects unsafe document file paths" do
+  it "rejects traversal document file paths" do
     create_document_file!("../escape.md", "escape")
+
+    expect do
+      archive = described_class.new(version).build
+    end.to raise_error(ApplicationError::BadRequest, /invalid/)
+  ensure
+    archive&.close! if defined?(archive) && archive
+  end
+
+  it "rejects absolute document file paths" do
+    create_document_file!("/escape.md", "escape")
+
+    expect do
+      archive = described_class.new(version).build
+    end.to raise_error(ApplicationError::BadRequest, /invalid/)
+  ensure
+    archive&.close! if defined?(archive) && archive
+  end
+
+  it "rejects drive-letter document file paths" do
+    create_document_file!("C:/escape.md", "escape")
 
     expect do
       archive = described_class.new(version).build
