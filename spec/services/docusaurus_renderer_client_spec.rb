@@ -70,14 +70,18 @@ RSpec.describe DocusaurusRendererClient do
 
   def success_response(body, site_path = nil)
     Net::HTTPOK.new("1.1", "200", "OK").tap do |response|
-      response.body = body
+      set_response_body(response, body)
       response["X-Docs-Site-Path"] = site_path if site_path
     end
   end
 
   def error_response(body)
     Net::HTTPUnprocessableEntity.new("1.1", "422", "Unprocessable Entity").tap do |response|
-      response.body = body
+      set_response_body(response, body)
     end
+  end
+
+  def set_response_body(response, body)
+    response.instance_variable_set(:@body, body)
   end
 end
