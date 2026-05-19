@@ -1,3 +1,6 @@
+require "active_support/core_ext/hash/keys"
+require "active_support/core_ext/object/blank"
+require "active_support/inflector"
 require "open3"
 require "pathname"
 require "set"
@@ -15,7 +18,10 @@ module GeneratedFiles
     DEFAULT_REGISTRY_PATH = "config/generated_file_jobs.yml"
 
     GENERATORS = {
-      "ai_usecase_decision_flow" => "GeneratedFiles::Generators::AiUsecaseDecisionFlow"
+      "ai_usecase_decision_flow" => {
+        class_name: "GeneratedFiles::Generators::AiUsecaseDecisionFlow",
+        require_path: "generators/ai_usecase_decision_flow"
+      }
     }.freeze
 
     def initialize(
@@ -123,10 +129,11 @@ module GeneratedFiles
     end
 
     def generator_class_for(generator_key)
-      class_name = GENERATORS.fetch(generator_key) do
+      generator = GENERATORS.fetch(generator_key) do
         raise KeyError, "Unknown generated-file generator: #{generator_key}"
       end
-      class_name.constantize
+      require_relative generator.fetch(:require_path)
+      generator.fetch(:class_name).constantize
     end
 
     def output_generated_paths(id, generated_paths)
