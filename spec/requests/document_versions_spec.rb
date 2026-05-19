@@ -64,7 +64,7 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include("添付・元ファイルへ移動")
   end
 
-  it "shows preview target metadata summary and badges" do
+  it "shows preview target metadata summary and organized sections" do
     version = create(:document_version, document:, version_label: "v1.0.0", status: :published)
     document.update!(latest_version: version)
     create_stored_document_file(
@@ -97,9 +97,15 @@ RSpec.describe "Document versions", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Preview target metadata")
+    expect(response.body).to include("通常表示ファイル")
+    expect(response.body).to include("group: diagrams 1件")
+    expect(response.body).to include("hidden files 1件")
+    expect(response.body).to include("debug files 1件")
+    expect(response.body).to include("README.md")
+    expect(response.body).to include("attachments/spec.pdf")
     expect(response.body).to include("hidden/private.pdf")
     expect(response.body).to include("debug/raw.json")
-    expect(response.body).to include("diagrams")
+    expect(response.body).to include("diagrams/flow.puml")
     expect(response.body).to include("primary")
     expect(response.body).to include("attachment")
     expect(response.body).to include("hidden")
