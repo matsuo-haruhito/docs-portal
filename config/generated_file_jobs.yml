@@ -12,10 +12,13 @@ jobs:
       - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
     watch_paths:
       - app/jobs/generated_file_change_event_job.rb
+      - app/jobs/generated_file_event_dispatch_job.rb
       - app/jobs/generated_file_job.rb
+      - app/models/generated_file_event.rb
       - app/models/generated_file_run.rb
       - app/services/generated_files/artifact.rb
       - app/services/generated_files/change_event_handler.rb
+      - app/services/generated_files/event_buffer.rb
       - app/services/generated_files/file_change_event_registry.rb
       - app/services/generated_files/generated_job_registry.rb
       - app/services/generated_files/generators/ai_usecase_decision_flow.rb
