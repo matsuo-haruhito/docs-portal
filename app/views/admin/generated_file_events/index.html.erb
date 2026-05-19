@@ -55,6 +55,12 @@
     </div>
   <% end %>
 
+  <%= render "admin/shared/pagination",
+    total_count: @total_count,
+    page: @page,
+    total_pages: @total_pages,
+    path: ->(target_page) { admin_generated_file_events_path(request.query_parameters.merge(page: target_page, per_page: @per_page)) } %>
+
   <div class="overflow-x-auto rounded-lg border bg-white">
     <table class="min-w-full divide-y divide-gray-200 text-sm">
       <thead class="bg-gray-50">
