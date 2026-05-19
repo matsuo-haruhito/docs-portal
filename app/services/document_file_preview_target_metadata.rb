@@ -22,6 +22,7 @@ class DocumentFilePreviewTargetMetadata
   end
 
   def call
+    @unsafe_paths = []
     metadata = normalize_metadata(parsed_preview_targets)
     warnings = validate_metadata(metadata)
     Result.new(metadata:, warnings:)
@@ -31,7 +32,7 @@ class DocumentFilePreviewTargetMetadata
 
   private
 
-  attr_reader :source, :document_files
+  attr_reader :source, :document_files, :unsafe_paths
 
   def parsed_preview_targets
     data = YAML.safe_load(front_matter_yaml, permitted_classes: [], permitted_symbols: [], aliases: false) || {}
@@ -91,6 +92,7 @@ class DocumentFilePreviewTargetMetadata
   def validate_metadata(metadata)
     warnings = []
     warnings.concat(unknown_key_warnings)
+    warnings.concat(unsafe_path_warnings)
     warnings.concat(missing_path_warnings(metadata))
     warnings.concat(duplicate_path_warnings(metadata))
     warnings
@@ -102,6 +104,12 @@ class DocumentFilePreviewTargetMetadata
 
     targets.keys.map(&:to_s).reject { |key| PREVIEW_TARGET_KEYS.include?(key) }.map do |key|
       Warning.new(code: :unknown_key, message: "preview_targets.#{key} は未対応です", path: nil)
+    end
+  end
+
+  def unsafe_path_warnings
+    unsafe_paths.uniq.map do |path|
+      Warning.new(code: :unsafe_relative_path, message: "#{path} は preview target として安全ではない相対パスです", path: path)
     end
   end
 
@@ -127,9 +135,13 @@ class DocumentFilePreviewTargetMetadata
   end
 
   def normalized_path(value)
-    path = value.to_s.strip.tr("\\", "/").delete_prefix("/")
+    raw_path = value.to_s.strip.tr("\\", "/")
+    path = raw_path.delete_prefix("/")
     normalized = Pathname.new(path.presence || ".").cleanpath.to_s
-    return if normalized.blank? || normalized == "." || normalized == ".." || normalized.start_with?("../")
+    if normalized.blank? || normalized == "." || normalized == ".." || normalized.start_with?("../")
+      unsafe_paths << raw_path.presence || value.inspect
+      return nil
+    end
 
     normalized
   end
