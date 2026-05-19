@@ -30,6 +30,10 @@ class DocumentPathHistoryResolver
 
     return canonical_result(requested:, canonical_path:) if path_under?(normalized_requested, normalized_canonical)
 
+    if (matched_version = matched_metadata_version(normalized_requested))
+      return moved_result(requested:, canonical_path:, matched_version:)
+    end
+
     if (matched_version = matched_historical_version(normalized_requested))
       suffix = suffix_under(normalized_requested, matched_version.normalized_html_view_site_path)
       return moved_result(
@@ -48,6 +52,16 @@ class DocumentPathHistoryResolver
 
   def candidate_versions_list
     @candidate_versions_list ||= Array(candidate_versions || document.document_versions).compact
+  end
+
+  def matched_metadata_version(normalized_requested)
+    candidate_versions_list
+      .select { |version| metadata_site_paths_for(version).any? { |path| normalize(path) == normalized_requested } }
+      .max_by { |version| [version.created_at || Time.zone.at(0), version.id || 0] }
+  end
+
+  def metadata_site_paths_for(version)
+    DocumentPathHistoryMetadata.new(version).call.site_paths
   end
 
   def matched_historical_version(normalized_requested)
