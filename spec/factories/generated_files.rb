@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :generated_file_run do
-    job_id { "sample_job" }
+    sequence(:job_id) { |n| "sample_job_#{n}" }
     generator { "sample_generator" }
     output_writer { "filesystem" }
     status { :completed }
