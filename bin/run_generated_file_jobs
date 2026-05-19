@@ -3,60 +3,17 @@
 
 require "open3"
 require "pathname"
-require "set"
 require "shellwords"
-require "yaml"
 
 ROOT = Pathname(__dir__).join("..").expand_path
-DEFAULT_REGISTRY = ROOT.join(".github/generated-file-jobs.yml")
+require_relative "../app/services/generated_files/runner"
 
-class GeneratedFileJobRunner
-  def initialize(registry_path:, changed_files: nil)
-    @registry_path = Pathname(registry_path)
-    @changed_files = normalize_files(changed_files || changed_files_from_env || changed_files_from_git)
-  end
-
+class ChangedFilesDetector
   def call
-    jobs = YAML.safe_load(@registry_path.read, permitted_classes: [], aliases: false).fetch("jobs")
-    selected_jobs = jobs.select { should_run?(_1) }
-
-    if selected_jobs.empty?
-      puts "No generated-file jobs matched changed files."
-      puts "Changed files: #{changed_files.to_a.sort.join(', ')}" unless changed_files.empty?
-      return
-    end
-
-    selected_jobs.each { run_job(_1) }
+    changed_files_from_env || changed_files_from_git
   end
 
   private
-
-  attr_reader :changed_files
-
-  def should_run?(job)
-    watch_paths = Array(job.fetch("source_paths")) + Array(job.fetch("watch_paths", []))
-    normalize_files(watch_paths).any? { |path| changed_files.include?(path) }
-  end
-
-  def run_job(job)
-    id = job.fetch("id")
-    command = job.fetch("command")
-    puts "Running generated-file job: #{id}"
-    puts "Command: #{command}"
-
-    stdout, stderr, status = Open3.capture3(command, chdir: ROOT.to_s)
-    puts stdout unless stdout.empty?
-    warn stderr unless stderr.empty?
-    raise "generated-file job failed: #{id}" unless status.success?
-
-    generated_paths = Array(job.fetch("generated_paths", []))
-    if generated_paths.empty?
-      puts "No generated_paths declared for #{id}."
-    else
-      puts "Generated paths:"
-      generated_paths.each { puts "- #{_1}" }
-    end
-  end
 
   def changed_files_from_env
     raw = ENV["GENERATED_FILE_JOB_CHANGED_FILES"]
@@ -82,17 +39,10 @@ class GeneratedFileJobRunner
 
     stdout.lines.map(&:strip).reject(&:empty?)
   end
-
-  def normalize_files(files)
-    files.each_with_object(Set.new) do |file, result|
-      path = file.to_s.strip
-      next if path.empty?
-
-      result << Pathname(path).cleanpath.to_s.delete_prefix("./")
-    end
-  end
 end
 
-registry = Pathname(ENV.fetch("GENERATED_FILE_JOB_REGISTRY", DEFAULT_REGISTRY.to_s))
+registry = ENV.fetch("GENERATED_FILE_JOB_REGISTRY", GeneratedFiles::Runner::DEFAULT_REGISTRY_PATH)
 explicit_files = ARGV.empty? ? nil : ARGV
-GeneratedFileJobRunner.new(registry_path: registry, changed_files: explicit_files).call
+changed_files = explicit_files || ChangedFilesDetector.new.call
+
+GeneratedFiles::Runner.new(registry_path: registry, changed_files:, root: ROOT).call
