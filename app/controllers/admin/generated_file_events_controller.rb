@@ -2,10 +2,18 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_generated_file_event, only: %i[show retry_dispatch]
 
+  DEFAULT_PER_PAGE = 50
+  MAX_PER_PAGE = 100
+
   def index
     @filters = event_filter_params
+    @page = page_param
+    @per_page = per_page_param
     @status_counts = GeneratedFileEvent.group(:status).count
-    @generated_file_events = apply_filters(GeneratedFileEvent.order(created_at: :desc, id: :desc)).limit(100)
+    @filtered_generated_file_events = apply_filters(GeneratedFileEvent.order(created_at: :desc, id: :desc))
+    @total_count = @filtered_generated_file_events.count
+    @total_pages = total_pages(@total_count)
+    @generated_file_events = @filtered_generated_file_events.offset((@page - 1) * @per_page).limit(@per_page)
   end
 
   def show
@@ -20,7 +28,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
 
   def retry_failed
     @filters = event_filter_params
-    events = apply_filters(GeneratedFileEvent.failed.order(created_at: :desc, id: :desc)).limit(100)
+    events = apply_filters(GeneratedFileEvent.failed.order(created_at: :desc, id: :desc)).limit(MAX_PER_PAGE)
     events.each { reset_for_dispatch!(_1) }
     GeneratedFileEventDispatchJob.perform_later if events.any?
 
@@ -54,6 +62,19 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
 
   def event_filter_params
     params.permit(:status, :operation, :event_source, :path, :scheduled_from, :scheduled_to).to_h.symbolize_keys
+  end
+
+  def page_param
+    [params[:page].to_i, 1].max
+  end
+
+  def per_page_param
+    requested = params[:per_page].presence&.to_i || DEFAULT_PER_PAGE
+    requested.clamp(1, MAX_PER_PAGE)
+  end
+
+  def total_pages(count)
+    [(count.to_f / @per_page).ceil, 1].max
   end
 
   def parsed_time(value, beginning: false, end_of_day: false)
