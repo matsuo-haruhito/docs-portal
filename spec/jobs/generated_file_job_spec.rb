@@ -21,6 +21,24 @@ RSpec.describe GeneratedFileJob, type: :job do
     expect(runner).to have_received(:call)
   end
 
+  it "uses empty metadata when metadata is nil" do
+    runner = instance_double(GeneratedFiles::Runner, call: [])
+    allow(GeneratedFiles::Runner).to receive(:new).and_return(runner)
+
+    described_class.perform_now(
+      changed_files: ["source.yml"],
+      metadata: nil
+    )
+
+    expect(GeneratedFiles::Runner).to have_received(:new).with(
+      changed_files: ["source.yml"],
+      job_ids: [],
+      event_source: nil,
+      metadata: {}
+    )
+    expect(runner).to have_received(:call)
+  end
+
   describe ".concurrency_key_for" do
     it "uses sorted job ids when job ids are present" do
       key = described_class.concurrency_key_for(
