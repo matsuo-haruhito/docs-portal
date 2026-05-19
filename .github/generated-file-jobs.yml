@@ -11,7 +11,10 @@ jobs:
     source_paths:
       - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
     watch_paths:
+      - .github/generated-file-jobs.yml
       - bin/generate_ai_usecase_flow
+      - bin/run_generated_file_jobs
+      - lib/tasks/ai_usecases.rake
     command: ruby bin/generate_ai_usecase_flow
     generated_paths:
       - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/decision-flow.md
