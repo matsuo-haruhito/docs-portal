@@ -85,6 +85,7 @@ ruby bin/generate_ai_usecase_flow
 | `app/services/generated_files/runner.rb` | `config/generated_file_jobs.yml` を読み、generatorまたは後方互換のcommandを実行する共通サービス |
 | `app/services/generated_files/artifact.rb` | Generatorが返す生成成果物の値オブジェクト |
 | `app/services/generated_files/output_writers/filesystem.rb` | 生成成果物をファイルシステムへ保存するOutputWriter |
+| `app/services/generated_files/output_writers/document_version.rb` | 生成成果物をDocumentVersion / DocumentFile / storageへ保存するOutputWriter |
 | `app/services/generated_files/generators/ai_usecase_decision_flow.rb` | AI活用判断フローDSLをMarkdown/PlantUMLへ変換するGenerator class |
 | `app/jobs/generated_file_job.rb` | 実際の生成処理を実行するActiveJob |
 | `bin/run_generated_file_jobs` | GitHub ActionsやローカルCLIから共通サービスを呼び出すrunner |
@@ -163,16 +164,38 @@ jobs:
 
 ## OutputWriter
 
-現時点では `filesystem` に対応しています。
+現時点では `filesystem` と `document_version` に対応しています。
 
 ```text
 GeneratedFiles::Generators::*
   ↓ Artifact[]
-GeneratedFiles::OutputWriters::Filesystem
-  ↓ ファイルシステムへ保存
+GeneratedFiles::OutputWriters::*
+  ↓ 保存先へ保存
 ```
 
-次の段階で `document_version` writer を追加し、生成先を作業ツリーではなく `DocumentVersion / DocumentFile / storage` に寄せます。
+`filesystem` は生成成果物を作業ツリー上のファイルへ保存します。
+
+```yaml
+output_writer: filesystem
+```
+
+`document_version` は生成成果物を1つのDocumentVersionとして保存し、各ArtifactをDocumentFileとして添付します。
+
+```yaml
+output_writer: document_version
+output_options:
+  project_code: sample-project
+  document_slug: ai-usecase-generated-flow
+  document_title: AI活用判断フロー生成結果
+  document_category: other
+  document_kind: mixed
+  visibility_policy: internal_only
+  importance_level: reference
+  version_label_prefix: generated-flow
+  source_identifier: generated:ai_usecase_decision_flow
+```
+
+`document_version` writer はdocs-portal側を正本にするための足場です。既存のAI活用判断フローは、GitHub側のseedサンプルとの互換を維持するため、まだ `filesystem` のままです。
 
 ## 重複・連続更新への対策
 
@@ -191,7 +214,7 @@ GitHub Actionsは、GitHub側の正本が変わった場合の安全網です。
 
 `decision_flow.yml`、生成スクリプト、または `config/generated_file_jobs.yml` を更新してmainにpushすると、GitHub Actionsが該当ジョブを実行し、生成物に差分があれば `chore: update generated files` でmainへ自動コミットします。
 
-アプリ内の `GeneratedFileJob` はdocs-portal側の作業ツリー上の生成物を更新する責務を持ち、GitHubへのコミット・pushは行いません。
+アプリ内の `GeneratedFileJob` はdocs-portal側の作業ツリーまたはDocumentVersionを更新する責務を持ち、GitHubへのコミット・pushは行いません。
 
 ## 手動実行
 
@@ -223,9 +246,13 @@ jobs:
     source_paths:
       - path/to/source.yml
     generator: sample_generator
-    output_writer: filesystem
+    output_writer: document_version
+    output_options:
+      project_code: sample-project
+      document_slug: sample-generated-document
+      document_title: サンプル生成文書
     generated_paths:
-      - path/to/generated.md
+      - document_versions/generated
 ```
 
 ```yaml
