@@ -154,6 +154,15 @@ RSpec.describe GeneratedFileChangeEventJob, type: :job do
       expect(key).to eq("generated-file-change-event:docs/a.yml:update,docs/b.yml:delete")
     end
 
+    it "normalizes backslash paths in concurrency keys" do
+      key = described_class.concurrency_key_for(
+        args: [],
+        kwargs: {changed_files: ["docs\\source.yml"], operation: :update}
+      )
+
+      expect(key).to eq("generated-file-change-event:docs/source.yml:update")
+    end
+
     it "uses update for missing or blank file event operations" do
       key = described_class.concurrency_key_for(
         args: [],
