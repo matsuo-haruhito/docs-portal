@@ -26,6 +26,23 @@ RSpec.describe GeneratedFiles::ChangeEventNotifier do
     )
   end
 
+  it "uses empty metadata when metadata is nil" do
+    job_class = class_double(GeneratedFileChangeEventJob, perform_later: true)
+    notifier = described_class.new(job_class:)
+
+    events = notifier.notify(
+      file_events: ["docs/source.yml"],
+      event_source: "spec",
+      metadata: nil
+    )
+
+    expect(job_class).to have_received(:perform_later).with(
+      file_events: events,
+      event_source: "spec",
+      metadata: {}
+    )
+  end
+
   it "does not enqueue when no valid paths are present" do
     job_class = class_double(GeneratedFileChangeEventJob, perform_later: true)
     notifier = described_class.new(job_class:)
