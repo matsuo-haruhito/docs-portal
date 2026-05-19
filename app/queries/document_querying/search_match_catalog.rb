@@ -66,10 +66,10 @@ module DocumentQuerying
         ),
         MatchTarget.new(
           label: "添付tree path",
-          sql: nil,
+          sql: "document_files.storage_key ILIKE :pattern",
           normalized_sql: nil,
           value_resolver: lambda do |document|
-            document.document_versions.flat_map { _1.document_files.map(&:tree_path) }
+            document.document_versions.flat_map { |version| version.document_files.flat_map { [_1.tree_path, _1.storage_key] } }
           end
         ),
         MatchTarget.new(
