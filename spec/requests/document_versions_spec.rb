@@ -8,7 +8,7 @@ RSpec.describe "Document versions", type: :request do
   let(:project) { create(:project, code: "VERSIONED", name: "Versioned Project") }
   let(:document) { create(:document, project:, title: "Versioned Document", slug: "versioned-document") }
 
-  def create_stored_document_file(version, file_name:, content:, sort_order: 0)
+  def create_stored_document_file(version, file_name:, content:, sort_order: 0, content_type: "text/plain")
     storage_key = "spec/versioned-document/#{SecureRandom.hex(8)}/#{file_name}"
     absolute_path = Rails.root.join("storage", "document_files", storage_key)
     FileUtils.mkdir_p(absolute_path.dirname)
@@ -17,7 +17,7 @@ RSpec.describe "Document versions", type: :request do
     DocumentFile.create!(
       document_version: version,
       file_name:,
-      content_type: "text/plain",
+      content_type:,
       storage_key:,
       file_size: content.bytesize,
       sort_order:
@@ -62,6 +62,48 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include(document_version_archive_path(version))
     expect(response.body).to include("差分本文へ移動")
     expect(response.body).to include("添付・元ファイルへ移動")
+  end
+
+  it "shows preview target metadata summary and badges" do
+    version = create(:document_version, document:, version_label: "v1.0.0", status: :published)
+    document.update!(latest_version: version)
+    create_stored_document_file(
+      version,
+      file_name: ".docs-portal-preview.yml",
+      content_type: "text/yaml",
+      content: <<~YAML,
+        preview_targets:
+          primary: README.md
+          attachments:
+            - attachments/spec.pdf
+          hidden:
+            - hidden/private.pdf
+          debug:
+            - debug/raw.json
+          groups:
+            diagrams:
+              - diagrams/flow.puml
+      YAML
+      sort_order: 0
+    )
+    create_stored_document_file(version, file_name: "README.md", content_type: "text/markdown", content: "# Readme", sort_order: 1)
+    create_stored_document_file(version, file_name: "attachments/spec.pdf", content_type: "application/pdf", content: "%PDF", sort_order: 2)
+    create_stored_document_file(version, file_name: "hidden/private.pdf", content_type: "application/pdf", content: "%PDF", sort_order: 3)
+    create_stored_document_file(version, file_name: "debug/raw.json", content_type: "application/json", content: "{}", sort_order: 4)
+    create_stored_document_file(version, file_name: "diagrams/flow.puml", content_type: "text/plain", content: "@startuml", sort_order: 5)
+
+    sign_in_as(internal_user)
+    get document_version_path(version)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Preview target metadata")
+    expect(response.body).to include("hidden/private.pdf")
+    expect(response.body).to include("debug/raw.json")
+    expect(response.body).to include("diagrams")
+    expect(response.body).to include("primary")
+    expect(response.body).to include("attachment")
+    expect(response.body).to include("hidden")
+    expect(response.body).to include("debug")
   end
 
   it "shows export handling notes on version detail" do
