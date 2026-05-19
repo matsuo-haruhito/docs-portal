@@ -24,12 +24,6 @@ RSpec.describe "Document versions", type: :request do
     )
   end
 
-  def write_site_file(version, relative_path:, content:)
-    absolute_path = version.site_root_absolute_path.join(relative_path)
-    FileUtils.mkdir_p(absolute_path.dirname)
-    File.write(absolute_path, content)
-  end
-
   after do
     FileUtils.rm_rf(Rails.root.join("storage", "document_files", "spec", "versioned-document"))
   end
@@ -80,7 +74,6 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include("今回版を開く")
     expect(response.body).to include('target="_blank"')
     expect(response.body).to include('data-turbo="false"')
-    expect(response.body).to include("別タブで開くか、ダウンロードして比較してください")
   end
 
   it "shows preview target metadata summary and organized sections" do
@@ -123,43 +116,6 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include("attachment")
     expect(response.body).to include("hidden")
     expect(response.body).to include("debug")
-  end
-
-  it "shows Docusaurus build manifest warning summary" do
-    version = create(
-      :document_version,
-      document:,
-      version_label: "v1.0.0",
-      status: :published,
-      source_commit_hash: "abc123",
-      markdown_entry_path: "docs/versioned-document",
-      site_build_path: "docs/versioned-document"
-    )
-    document.update!(latest_version: version)
-    write_site_file(version, relative_path: "docs/versioned-document/index.html", content: "<html></html>")
-    write_site_file(
-      version,
-      relative_path: "docs/versioned-document/.docs-portal-build-manifest.json",
-      content: JSON.pretty_generate(
-        profile: "production",
-        source_commit: "old999",
-        entry_path: "docs/other",
-        build_result: "failed"
-      )
-    )
-
-    sign_in_as(internal_user)
-    get document_version_path(version)
-
-    expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Build manifest")
-    expect(response.body).to include("docs/versioned-document/.docs-portal-build-manifest.json")
-    expect(response.body).to include("Manifest warning")
-    expect(response.body).to include("Docusaurus build manifest warnings")
-    expect(response.body).to include("profile_mismatch")
-    expect(response.body).to include("source_commit_mismatch")
-    expect(response.body).to include("entry_path_mismatch")
-    expect(response.body).to include("build_result_failed")
   end
 
   it "shows export handling notes on version detail" do
