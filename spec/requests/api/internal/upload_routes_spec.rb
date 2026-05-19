@@ -20,7 +20,6 @@ RSpec.describe "API internal upload routes", type: :request do
   end
 
   after do
-    FileUtils.rm_rf(import_root.join("file_uploads"))
     FileUtils.rm_rf(import_root.join("zip_uploads"))
     FileUtils.rm_rf(document_file_root.join("zip_uploads"))
   end
@@ -51,6 +50,7 @@ RSpec.describe "API internal upload routes", type: :request do
         project_code: project.code,
         file: uploaded_file,
         relative_path: "docs/README.md",
+        source_path: "C:/work/docs/README.md",
         validate_only: true,
         version_label: "file-v1"
       }, headers:
@@ -59,8 +59,37 @@ RSpec.describe "API internal upload routes", type: :request do
     expect(response).to have_http_status(:created)
     expect(response.parsed_body["status"]).to eq("analyzed")
     dry_run = ImportDryRun.find_by!(public_id: response.parsed_body.fetch("dry_run_id"))
-    expect(dry_run.zip?).to eq(true)
+    expect(dry_run.manual_upload?).to eq(true)
     expect(dry_run.result_json["artifact_root"]).to include("/storage/imports/zip_uploads/")
+    expect(dry_run.result_json.dig("file_upload_preview", "relative_path")).to eq("docs/README.md")
+    expect(dry_run.result_json.dig("file_upload_preview", "source_path")).to eq("C:/work/docs/README.md")
+  ensure
+    uploaded_file&.tempfile&.close!
+  end
+
+  it "imports from a saved single-file dry-run" do
+    uploaded_file = build_uploaded_file("# File Upload Import\n")
+
+    post "/api/internal/file_uploads", params: {
+      project_code: project.code,
+      file: uploaded_file,
+      relative_path: "docs/README.md",
+      validate_only: true,
+      version_label: "file-v1"
+    }, headers:
+    dry_run_id = response.parsed_body.fetch("dry_run_id")
+
+    expect do
+      post "/api/internal/file_uploads", params: {
+        import_dry_run_id: dry_run_id
+      }, headers:
+    end.to change(Document, :count).by(1)
+      .and change(DocumentVersion, :count).by(1)
+      .and change(DocumentFile, :count).by(1)
+
+    expect(response).to have_http_status(:created)
+    expect(response.parsed_body["status"]).to eq("imported")
+    expect(response.parsed_body["import_dry_run_id"]).to eq(dry_run_id)
   ensure
     uploaded_file&.tempfile&.close!
   end
