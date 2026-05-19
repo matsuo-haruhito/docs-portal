@@ -1,4 +1,8 @@
 class DocumentSearch
+  MatchSummary = Data.define(:label, :value)
+  MATCH_SUMMARY_LIMIT = 3
+  MATCH_VALUE_MAX_LENGTH = 80
+
   attr_reader :keyword
 
   def initialize(keyword)
@@ -18,11 +22,16 @@ class DocumentSearch
   end
 
   def match_labels_for(document)
+    match_summaries_for(document).map(&:label)
+  end
+
+  def match_summaries_for(document, limit: MATCH_SUMMARY_LIMIT)
     return [] if blank?
 
     DocumentQuerying::SearchMatchCatalog.targets.filter_map do |target|
-      target.label if target.value_resolver.call(document).any? { value_matches?(_1) }
-    end
+      matched_value = first_matching_value(target.value_resolver.call(document))
+      MatchSummary.new(label: target.label, value: truncate_match_value(matched_value)) if matched_value.present?
+    end.first(limit)
   end
 
   def self.match_target_labels
@@ -30,6 +39,10 @@ class DocumentSearch
   end
 
   private
+
+  def first_matching_value(values)
+    Array(values).find { value_matches?(_1) }
+  end
 
   def pattern
     "%#{ActiveRecord::Base.sanitize_sql_like(keyword)}%"
@@ -47,6 +60,10 @@ class DocumentSearch
     return false if value.blank?
 
     normalize_for_match(value).include?(normalize_for_match(keyword))
+  end
+
+  def truncate_match_value(value)
+    value.to_s.squish.truncate(MATCH_VALUE_MAX_LENGTH)
   end
 
   def normalize_for_match(value)
