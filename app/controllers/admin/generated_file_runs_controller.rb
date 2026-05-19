@@ -12,17 +12,28 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   def retry_run
-    GeneratedFileJob.perform_later(
-      changed_files: @generated_file_run.changed_files,
-      job_ids: [@generated_file_run.job_id],
-      event_source: "generated_file_run_retry",
-      metadata: retry_metadata
-    )
+    enqueue_retry!(@generated_file_run)
 
     redirect_to admin_generated_file_run_path(@generated_file_run.public_id), notice: "生成ジョブの再実行をキューに投入しました。"
   end
 
+  def retry_failed
+    runs = apply_filters(GeneratedFileRun.failed.order(created_at: :desc, id: :desc)).limit(100)
+    runs.each { enqueue_retry!(_1, bulk: true) }
+
+    redirect_to admin_generated_file_runs_path(run_filter_params), notice: "失敗した生成ジョブ #{runs.size} 件の再実行をキューに投入しました。"
+  end
+
   private
+
+  def enqueue_retry!(run, bulk: false)
+    GeneratedFileJob.perform_later(
+      changed_files: run.changed_files,
+      job_ids: [run.job_id],
+      event_source: bulk ? "generated_file_run_bulk_retry" : "generated_file_run_retry",
+      metadata: retry_metadata_for(run, bulk:)
+    )
+  end
 
   def apply_filters(scope)
     scope = scope.public_send(@filters[:status]) if @filters[:status].in?(GeneratedFileRun.statuses.keys)
@@ -59,10 +70,15 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   def retry_metadata
-    (@generated_file_run.metadata || {}).merge(
-      "retry_of_generated_file_run_public_id" => @generated_file_run.public_id,
+    retry_metadata_for(@generated_file_run)
+  end
+
+  def retry_metadata_for(run, bulk: false)
+    (run.metadata || {}).merge(
+      "retry_of_generated_file_run_public_id" => run.public_id,
       "retry_requested_at" => Time.current.iso8601,
-      "retry_requested_by_user_id" => current_user&.id
+      "retry_requested_by_user_id" => current_user&.id,
+      "bulk_retry" => bulk
     ).compact
   end
 end
