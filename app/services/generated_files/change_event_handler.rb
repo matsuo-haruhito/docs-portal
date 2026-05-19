@@ -4,6 +4,7 @@ require "active_support/inflector"
 require "pathname"
 require "set"
 
+require_relative "event_buffer"
 require_relative "file_change_event_registry"
 
 module GeneratedFiles
@@ -21,7 +22,8 @@ module GeneratedFiles
       registry_path: DEFAULT_REGISTRY_PATH,
       root: nil,
       output: $stdout,
-      registry: nil
+      registry: nil,
+      event_buffer_class: EventBuffer
     )
       @root = Pathname(root || default_root).expand_path
       @file_events = normalize_events(file_events, changed_files, operation)
@@ -29,6 +31,7 @@ module GeneratedFiles
       @metadata = metadata || {}
       @output = output
       @registry = registry || FileChangeEventRegistry.new(registry_path:, root: @root)
+      @event_buffer_class = event_buffer_class
     end
 
     def call
@@ -44,7 +47,7 @@ module GeneratedFiles
 
     private
 
-    attr_reader :root, :file_events, :event_source, :metadata, :output, :registry
+    attr_reader :root, :file_events, :event_source, :metadata, :output, :registry, :event_buffer_class
 
     def default_root
       if defined?(Rails)
@@ -72,13 +75,29 @@ module GeneratedFiles
       matched_events = matching_events_for(rule)
       return if matched_events.empty?
 
+      params = expand_params(rule.fetch("params", {}), matched_events)
+      debounce_seconds = params.delete("debounce_seconds") || params.delete(:debounce_seconds)
+
+      if debounce_seconds.to_i.positive? && !dispatched_buffer_event?
+        output.puts "Buffer file change event job: rule=#{rule.fetch('id')} debounce_seconds=#{debounce_seconds}"
+        event_buffer_class.new(debounce_seconds: debounce_seconds).add(
+          file_events: matched_events.map { { path: _1.path, operation: _1.operation } },
+          event_source: event_source,
+          metadata: metadata
+        )
+        return rule.fetch("id")
+      end
+
       job_class_name = rule.fetch("job_class")
       job_class = job_class_name.constantize
-      params = expand_params(rule.fetch("params", {}), matched_events)
 
       output.puts "Enqueue file change event job: rule=#{rule.fetch('id')} job_class=#{job_class_name}"
       job_class.perform_later(**params.deep_symbolize_keys)
       rule.fetch("id")
+    end
+
+    def dispatched_buffer_event?
+      metadata.key?("generated_file_event_public_ids") || metadata.key?(:generated_file_event_public_ids)
     end
 
     def matching_events_for(rule)
