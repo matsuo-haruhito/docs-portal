@@ -31,8 +31,7 @@ RSpec.describe "API internal file upload source hash override", type: :request d
       project_code: project.code,
       file: uploaded_file,
       relative_path: "docs/README.md",
-      source_commit_hash: source_commit_hash,
-      validate_only: true
+      source_commit_hash: source_commit_hash
     }, headers: headers
 
     expect(response).to have_http_status(:created)
