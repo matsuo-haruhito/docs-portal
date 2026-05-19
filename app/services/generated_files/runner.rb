@@ -9,7 +9,7 @@ require "yaml"
 
 module GeneratedFiles
   class Runner
-    Result = Data.define(:job_id, :command, :generator, :generated_paths, :stdout, :stderr, :status) do
+    Result = Data.define(:job_id, :command, :generator, :output_writer, :generated_paths, :stdout, :stderr, :status) do
       def success?
         status.respond_to?(:success?) ? status.success? : status == true
       end
@@ -21,6 +21,13 @@ module GeneratedFiles
       "ai_usecase_decision_flow" => {
         class_name: "GeneratedFiles::Generators::AiUsecaseDecisionFlow",
         require_path: "generators/ai_usecase_decision_flow"
+      }
+    }.freeze
+
+    OUTPUT_WRITERS = {
+      "filesystem" => {
+        class_name: "GeneratedFiles::OutputWriters::Filesystem",
+        require_path: "output_writers/filesystem"
       }
     }.freeze
 
@@ -87,19 +94,24 @@ module GeneratedFiles
     def execute_generator_job(job)
       id = job.fetch("id")
       generator_key = job.fetch("generator")
-      generated_paths = Array(job.fetch("generated_paths", []))
+      output_writer_key = job.fetch("output_writer", "filesystem")
       options = job.fetch("options", {})
+      output_options = job.fetch("output_options", {})
 
       output.puts "Running generated-file job: #{id}"
       output.puts "Generator: #{generator_key}"
+      output.puts "Output writer: #{output_writer_key}"
 
-      generated = generator_class_for(generator_key).new(**options.deep_symbolize_keys.merge(root: root)).call
-      generated_paths = generated if generated_paths.empty? && generated.present?
+      artifacts = generator_class_for(generator_key).new(**options.deep_symbolize_keys.merge(root: root)).call
+      generated_paths = output_writer_class_for(output_writer_key)
+        .new(**output_options.deep_symbolize_keys.merge(root: root))
+        .write(artifacts)
 
       result = Result.new(
         job_id: id,
         command: nil,
         generator: generator_key,
+        output_writer: output_writer_key,
         generated_paths:,
         stdout: "",
         stderr: "",
@@ -121,7 +133,7 @@ module GeneratedFiles
       output.puts stdout unless stdout.empty?
       error_output.puts stderr unless stderr.empty?
 
-      result = Result.new(job_id: id, command:, generator: nil, generated_paths:, stdout:, stderr:, status:)
+      result = Result.new(job_id: id, command:, generator: nil, output_writer: nil, generated_paths:, stdout:, stderr:, status:)
       raise "generated-file job failed: #{id}" unless result.success?
 
       output_generated_paths(id, generated_paths)
@@ -136,9 +148,17 @@ module GeneratedFiles
       generator.fetch(:class_name).constantize
     end
 
+    def output_writer_class_for(output_writer_key)
+      writer = OUTPUT_WRITERS.fetch(output_writer_key) do
+        raise KeyError, "Unknown generated-file output writer: #{output_writer_key}"
+      end
+      require_relative writer.fetch(:require_path)
+      writer.fetch(:class_name).constantize
+    end
+
     def output_generated_paths(id, generated_paths)
       if generated_paths.empty?
-        output.puts "No generated_paths declared for #{id}."
+        output.puts "No generated paths produced for #{id}."
       else
         output.puts "Generated paths:"
         generated_paths.each { output.puts "- #{_1}" }
