@@ -148,7 +148,12 @@ async function runCommand(command, args, options = {}) {
 }
 
 function safeRelativeHeader(value) {
-  const text = normalizeSlashes(value).replace(/^\/+/, '');
+  const raw = normalizeSlashes(value);
+  if (raw.startsWith('/')) {
+    throw new Error('entry path is invalid');
+  }
+
+  const text = raw.replace(/^\/+/, '');
   if (!text || text.includes('\0') || text.startsWith('../') || text === '..' || path.isAbsolute(text)) {
     throw new Error('entry path is invalid');
   }
@@ -156,7 +161,12 @@ function safeRelativeHeader(value) {
 }
 
 function safeArchiveEntryName(value) {
-  const text = normalizeSlashes(value).replace(/^\.\//, '').replace(/^\/+/, '');
+  const raw = normalizeSlashes(value);
+  if (raw.startsWith('/')) {
+    throw new Error(`archive entry path is invalid: ${value}`);
+  }
+
+  const text = raw.replace(/^\.\//, '');
   const normalized = path.posix.normalize(text);
   if (!normalized || normalized === '.' || normalized === '..' || normalized.startsWith('../') || normalized.includes('\0') || path.isAbsolute(text)) {
     throw new Error(`archive entry path is invalid: ${value}`);
