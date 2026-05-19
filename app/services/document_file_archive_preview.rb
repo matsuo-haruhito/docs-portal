@@ -1,6 +1,7 @@
 class DocumentFileArchivePreview
   DEFAULT_LIMIT = 300
   TEXT_PREVIEW_EXTENSIONS = %w[.csv .json .log .md .markdown .txt .tsv .yaml .yml].freeze
+  BLOCKED_DOWNLOAD_EXTENSIONS = %w[.gz .tar .tgz .zip].freeze
 
   Entry = Data.define(:name, :directory, :size) do
     def directory?
@@ -29,7 +30,11 @@ class DocumentFileArchivePreview
     end
 
     def download_candidate?
-      actionable?
+      actionable? && !download_blocked_archive?
+    end
+
+    def download_blocked_archive?
+      extension.in?(BLOCKED_DOWNLOAD_EXTENSIONS)
     end
 
     def text_preview_candidate?
@@ -39,6 +44,7 @@ class DocumentFileArchivePreview
     def action_unavailable_reason
       return "directory entry は操作対象外です" if directory?
       return "unsafe path のため操作できません" unless safe_path?
+      return "nested archive entry はdownload対象外です" if download_blocked_archive?
 
       nil
     end
