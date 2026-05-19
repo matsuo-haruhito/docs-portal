@@ -4,6 +4,15 @@
     <p class="text-sm text-gray-600">ファイルCRUDイベントから起動された生成Jobの履歴です。</p>
   </div>
 
+  <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+    <% GeneratedFileRun.statuses.keys.each do |status| %>
+      <%= link_to admin_generated_file_runs_path(status: status), class: "rounded-lg border bg-white p-4" do %>
+        <div class="text-xs font-semibold uppercase text-gray-500"><%= status %></div>
+        <div class="mt-1 text-2xl font-bold"><%= @status_counts.fetch(status, 0) %></div>
+      <% end %>
+    <% end %>
+  </div>
+
   <%= form_with url: admin_generated_file_runs_path, method: :get, local: true, class: "rounded-lg border bg-white p-4" do |form| %>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
       <div>
