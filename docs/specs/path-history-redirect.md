@@ -80,8 +80,11 @@ redirect 先には現在の `version_id`、canonical `site_path`、元の `previ
 - asset path、つまり `assets/...` は cacheable asset として従来どおり扱い、path history redirect の対象外にする
 - `moved` の場合は `301 Moved Permanently` で現在の project site `site_path` に redirect
 - redirect 先は query string の `site_path=...` ではなく、`/projects/:project_code/site/:site_path` の canonical path 形式にする
+- `previous_site_path` を redirect 先にも残す
 - `embedded=1` が付いている場合は redirect 先にも `embedded=1` を残す
 - `canonical` / `missing` の場合は従来どおり renderer で処理する
+
+project site route が HTML ページを reader に誘導する場合も、`previous_site_path` を reader redirect に引き継ぎます。これにより、project site 直アクセスから始まった旧 path 移動でも、最終的な reader 画面で同じ移動 notice を表示できます。
 
 これにより、reader 経由の URL と Docusaurus HTML 直アクセス URL のどちらでも、旧 entry path から現在の canonical path へ誘導できます。
 
@@ -99,4 +102,3 @@ redirect 先には現在の `version_id`、canonical `site_path`、元の `previ
 - path history を metadata または DB table で明示管理する
 - `canonical`, `moved`, `archived`, `deleted` を user-facing な状態として整理する
 - quality check で古い path / canonical path の不整合を warning する
-- ProjectSitesController から reader に入る redirect でも notice を統一する
