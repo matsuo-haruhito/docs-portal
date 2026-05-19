@@ -24,7 +24,7 @@ RSpec.describe "Generated file runner changed file normalization" do
 
     results = GeneratedFiles::Runner.new(
       registry_path: registry,
-      changed_files: ["", "./docs/../docs/source.yml", "docs/source.yml"],
+      changed_files: ["", "./", "./docs/../docs/source.yml", "docs/source.yml"],
       root: @root,
       output: StringIO.new,
       error_output: StringIO.new,
