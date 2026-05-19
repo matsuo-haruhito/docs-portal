@@ -25,8 +25,10 @@ internal API は、用途が分かる名前に分ける。
 `relative_path` は先頭 `/`、Windows の `C:/...` 形式、`../` を拒否し、サーバー側の保存先決定には使わない。
 
 `content_hash` は同期クライアント向けの内容ハッシュ名として受け付ける。
-`source_commit_hash` は artifact import と揃えるための名前で、`content_hash` より優先する。
-どちらも指定されない場合、`file_uploads` は内部生成した一時ZIPではなく、アップロードされた元ファイル実体の SHA-256 を使う。
+指定された `content_hash` は `sha256:<hash>` 形式でも `<hash>` 形式でも受け付け、アップロードされた元ファイル実体の SHA-256 と常に照合する。
+不一致の場合は dry-run を作らない。
+`source_commit_hash` は artifact import と揃えるための採用ハッシュ名で、`content_hash` と両方ある場合、採用値としてはこちらを優先する。
+どちらも指定されない場合、`file_uploads` は内部生成した一時ZIPではなく、アップロードされた元ファイル実体の SHA-256 を採用する。
 これにより、同期クライアントが同じファイルを再送した場合にも、内容単位で追跡しやすくする。
 `version_label` が指定されない場合は `file-YYYYMMDDHHMMSS-<hash8>` を使う。
 
