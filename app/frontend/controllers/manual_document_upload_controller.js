@@ -7,6 +7,23 @@ export default class extends Controller {
   }
   static classes = ["dragging"]
 
+  connect() {
+    this.boundWindowDragEnter = this.windowDragEnter.bind(this)
+    this.boundWindowDragOver = this.windowDragOver.bind(this)
+    this.boundWindowDragEnd = this.windowDragEnd.bind(this)
+    window.addEventListener("dragenter", this.boundWindowDragEnter)
+    window.addEventListener("dragover", this.boundWindowDragOver)
+    window.addEventListener("drop", this.boundWindowDragEnd)
+    window.addEventListener("dragend", this.boundWindowDragEnd)
+  }
+
+  disconnect() {
+    window.removeEventListener("dragenter", this.boundWindowDragEnter)
+    window.removeEventListener("dragover", this.boundWindowDragOver)
+    window.removeEventListener("drop", this.boundWindowDragEnd)
+    window.removeEventListener("dragend", this.boundWindowDragEnd)
+  }
+
   dragenter(event) {
     event.preventDefault()
     this.mark(event.currentTarget, true)
@@ -19,12 +36,14 @@ export default class extends Controller {
 
   dragleave(event) {
     event.preventDefault()
+    if (event.currentTarget.contains(event.relatedTarget)) return
     this.mark(event.currentTarget, false)
   }
 
   drop(event) {
     event.preventDefault()
     this.mark(event.currentTarget, false)
+    this.element.classList.remove("is-file-dragging")
 
     const files = event.dataTransfer.files
     if (!files || files.length === 0) return
@@ -73,6 +92,25 @@ export default class extends Controller {
 
   mark(target, active) {
     target.classList.toggle(this.draggingClassName, active)
+  }
+
+  windowDragEnter(event) {
+    if (!this.hasFileDrag(event)) return
+    this.element.classList.add("is-file-dragging")
+  }
+
+  windowDragOver(event) {
+    if (!this.hasFileDrag(event)) return
+    this.element.classList.add("is-file-dragging")
+  }
+
+  windowDragEnd() {
+    this.element.classList.remove("is-file-dragging")
+    this.element.classList.remove(this.draggingClassName)
+  }
+
+  hasFileDrag(event) {
+    return Array.from(event.dataTransfer?.types || []).includes("Files")
   }
 
   get draggingClassName() {
