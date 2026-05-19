@@ -150,13 +150,12 @@ p.muted
                     p.muted = file_diff.message
                   - elsif file_diff.lines.any?
                     .markdown-line-diff-table role="table" aria-label="#{file_diff.path} diff"
-                      - file_diff.lines.each do |line|
+                      - file_diff.lines.each_with_index do |line, line_index|
                         .markdown-line-diff-row class="is-#{line.kind}" role="row"
                           span.diff-line-number role="cell" = line.old_number || ""
                           span.diff-line-number role="cell" = line.new_number || ""
                           code.diff-line-code role="cell"
-                            - prefix = line.kind == :added ? "+ " : line.kind == :removed ? "- " : "  "
-                            = "#{prefix}#{line.text}"
+                            = diff_line_code_with_inline_highlight(file_diff.lines, line_index)
                   - else
                     p.muted Markdown本文の差分はありません。
           - else
@@ -169,13 +168,12 @@ p.muted
             p.muted = @rendered_html_diff.message
           - elsif @rendered_html_diff&.lines&.any?
             .markdown-line-diff-table role="table" aria-label="HTML diff"
-              - @rendered_html_diff.lines.each do |line|
+              - @rendered_html_diff.lines.each_with_index do |line, line_index|
                 .markdown-line-diff-row class="is-#{line.kind}" role="row"
                   span.diff-line-number role="cell" = line.old_number || ""
                   span.diff-line-number role="cell" = line.new_number || ""
                   code.diff-line-code role="cell"
-                    - prefix = line.kind == :added ? "+ " : line.kind == :removed ? "- " : "  "
-                    = "#{prefix}#{line.text}"
+                    = diff_line_code_with_inline_highlight(@rendered_html_diff.lines, line_index)
           - else
             p.muted レンダリング後HTML本文の差分はありません。
         section.diff-section-card#html-table-cell-diff
@@ -258,196 +256,18 @@ ul
   li HTML 表示には透かしを入れません。
   li ZIP 出力では元パス準拠、Markdown 原本の有無、添付有無、PDF のみ出力を選べます。
   - if @export_watermark_text.present?
-    li PDF を含む持ち出し用出力では、利用者・案件・文書・出力時刻ベースの透かし情報を使う設計です。
-    li
-      | 例:
-      code = @export_watermark_text
-  - elsif @document.downloadable_by?(current_user)
-    li PDF 添付がある場合は、利用者・案件・文書・出力時刻ベースの透かし情報を使う設計です。
-
-h2 表示
-ul
-  - if @version.rendered_site_available?
-    li = link_to "このバージョンを本文で開く", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path)
-  - else
-    li
-      span.muted HTML未生成
-  li.version-action-item
-    - if @document.downloadable_by?(current_user)
-      = link_to "添付・元ファイルをZIPでダウンロード", document_version_archive_path(@version)
-    - else
-      span.muted ZIPダウンロード権限なし
-      = button_to "ダウンロード権限を申請", access_requests_path, params: { requestable_type: "Document", requestable_public_id: @document.public_id, requested_access_level: "download" }, class: "button secondary"
-  - if current_user.internal?
-    li = link_to "品質チェックを表示", document_version_quality_check_path(@version)
+    li PDF出力時の透かし: #{@export_watermark_text}
 
 h2#version-files 添付・元ファイル
-- files = @version.document_files.order(:sort_order, :file_name)
-- if files.any?
-  .card data-document-file-search="true"
-    .markdown-workspace__header
-      div
-        h3 添付・元ファイル検索
-        p.muted ファイル名、パス、ファイル種、操作列の文字列でこの一覧を絞り込みます。
-      .actions
-        span.muted data-document-file-search-count="true"
-    .compare-version-form.document-file-search-form
-      label.form-field for="document-file-search-#{@version.id}"
-        span ファイルを検索
-        input id="document-file-search-#{@version.id}" type="search" placeholder="例: pdf, docs/, api" data-document-file-search-input="true"
-      button.button.secondary type="button" data-document-file-search-clear="true" クリア
-    - render_state = document_file_tree_render_state(files:, row_partial: "document_versions/file_tree_columns", node_prefix: "document_version_files_#{@version.id}")
-    table.tree-view-table data-document-file-search-table="true"
-      thead
-        tr
-          th ファイル名
-          th ファイル種
-          th サイズ
-          th 操作
-      tbody
-        = tree_view_rows(render_state)
-- else
-  p.muted 添付・元ファイルはありません。
-
-h2 Q&A
-.card
-  h3 この版について質問する
-  = form_with model: [@version, DocumentReviewComment.new], local: true do |form|
-    label.form-field
-      span 質問内容
-      = form.text_area :body
-    = form.hidden_field :comment_type, value: "question"
-    p.actions.form-actions
-      = form.submit "質問を投稿", class: "button"
-
-- if @question_threads.any?
-  - @question_threads.each do |thread|
-    .card
-      p
-        strong = thread.author.name
-        span.muted = " / #{thread.qa_status_label}"
-      = simple_format(thread.body)
-      - if thread.replies.visible_to(current_user).any?
-        h4 返信
-        - thread.replies.visible_to(current_user).order(:created_at, :id).each do |reply|
-          .card
-            p
-              strong = reply.author.name
-              - if reply.resolved?
-                span.muted = " / 回答"
-            = simple_format(reply.body)
-      .card
-        h4 返信を追加
-        = form_with model: [@version, DocumentReviewComment.new], local: true do |form|
-          = form.hidden_field :comment_type, value: "question"
-          = form.hidden_field :parent_id, value: thread.id
-          label.form-field
-            span 返信内容
-            = form.text_area :body
-          p.actions.form-actions
-            = form.submit "返信する", class: "button secondary"
-- else
-  p.muted まだ質問はありません。
-
-- if current_user.internal?
-  h2 社内レビューコメント
-
-  - unresolved_comments = @review_comments.select { _1.open? || _1.rejected? }
-  - resolved_comments = @review_comments.select(&:resolved?)
-
-  .card
-    h3 コメント追加
-    = form_with model: [@version, DocumentReviewComment.new], local: true do |form|
-      .form-grid
-        label.form-field
-          span 種別
-          = form.select :comment_type, DocumentReviewComment.comment_types.keys.map { [localized_label("document_review_comments.comment_type", _1), _1] }
-        label.form-field
-          span 開始行
-          = form.number_field :text_line_start, min: 1
-        label.form-field
-          span 終了行
-          = form.number_field :text_line_end, min: 1
-        label.form-field
-          span 位置の種類
-          = form.select :text_anchor_type, [["未指定", ""], ["Markdown見出し", "markdown_heading"], ["JSONパス", "json_path"], ["YAMLパス", "yaml_path"], ["行番号", "plain_line"]]
-        label.form-field
-          span 位置パス
-          = form.text_field :text_anchor_path
-        label.form-field
-          span 位置ラベル
-          = form.text_field :text_anchor_label
-        label.form-field
-          span 元パス
-          = form.text_field :source_path
-        label.form-field.form-field--full
-          span 内容
-          = form.text_area :body
-      p.actions.form-actions
-        = form.submit "コメント追加", class: "button"
-
-  - if unresolved_comments.any?
-    h3 未解決・差し戻し
-    table
-      thead
-        tr
-          th 種別
-          th 内容
-          th 作成者
-          th 状態
-          th
-      tbody
-        - unresolved_comments.each do |comment|
-          tr
-            td = document_review_comment_type_label(comment)
-            td
-              = simple_format(comment.body)
-              - if comment.location_label.present?
-                p.muted = comment.location_label
-            td = comment.author.name
-            td = document_review_comment_status_label(comment)
-            td.actions
-              - if current_user.admin?
-                = button_to "解決", document_version_document_review_comment_path(@version, comment), method: :patch, params: { decision: "resolve" }, class: "button secondary"
-                = button_to "却下", document_version_document_review_comment_path(@version, comment), method: :patch, params: { decision: "reject" }, class: "button secondary"
-              - else
-                span.muted -
-  - else
-    p.muted 未解決コメントはありません。
-
-  - if resolved_comments.any?
-    h3 解決済み
-    table
-      thead
-        tr
-          th 種別
-          th 内容
-          th 作成者
-          th 解決者
-          th 解決日時
-      tbody
-        - resolved_comments.each do |comment|
-          tr
-            td = document_review_comment_type_label(comment)
-            td
-              = simple_format(comment.body)
-              - if comment.location_label.present?
-                p.muted = comment.location_label
-            td = comment.author.name
-            td = comment.resolved_by&.name || "-"
-            td = comment.resolved_at ? l(comment.resolved_at, format: :short) : "-"
-
-h2 他のバージョン
 ul
-  - @versions.each do |version|
+  - @version.document_files.each do |file|
     li
-      - if version == @version
-        strong = document_version_label(version)
-      - else
-        = link_to document_version_label(version), document_version_path(version)
-      span.muted
-        |  (
-        = document_version_status_label(version)
-        | )
+      = link_to file.file_name, document_file_path(file)
+      |  / #{file.content_type} / #{number_to_human_size(file.file_size)}
+      - if file.downloadable_by?(current_user)
+        |  / 
+        = link_to "ダウンロード", document_file_path(file, disposition: "download"), data: { turbo: false }
 
-p = link_to "文書詳細へ戻る", project_document_path(@project, @document.slug)
+= render "rollback_actions"
+
+= render "document_review_comments/comment_panel", version: @version, question_threads: @question_threads, review_comments: @review_comments
