@@ -28,6 +28,47 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).not_to include(pending_event.public_id)
     end
 
+    it "filters by operation, event source, path, and scheduled date range" do
+      sign_in_as(admin_user)
+      matched = create_event!(
+        path: "storage/document_files/source.yml",
+        operation: "update",
+        event_source: "manual_document_upload",
+        status: :pending,
+        scheduled_at: Time.zone.parse("2026-05-10 12:00:00")
+      )
+      unmatched_operation = create_event!(path: "storage/document_files/source.yml", operation: "delete", event_source: "manual_document_upload", status: :pending, scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
+      unmatched_source = create_event!(path: "storage/document_files/source.yml", operation: "update", event_source: "artifact_import", status: :pending, scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
+      unmatched_path = create_event!(path: "other/source.yml", operation: "update", event_source: "manual_document_upload", status: :pending, scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
+      unmatched_date = create_event!(path: "storage/document_files/source.yml", operation: "update", event_source: "manual_document_upload", status: :pending, scheduled_at: Time.zone.parse("2026-05-01 12:00:00"))
+
+      get admin_generated_file_events_path(
+        status: "pending",
+        operation: "update",
+        event_source: "manual_document_upload",
+        path: "document_files",
+        scheduled_from: "2026-05-10",
+        scheduled_to: "2026-05-10"
+      )
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(matched.public_id)
+      expect(response.body).not_to include(unmatched_operation.public_id)
+      expect(response.body).not_to include(unmatched_source.public_id)
+      expect(response.body).not_to include(unmatched_path.public_id)
+      expect(response.body).not_to include(unmatched_date.public_id)
+    end
+
+    it "ignores invalid scheduled date filters" do
+      sign_in_as(admin_user)
+      event = create_event!(path: "docs/source.yml", status: :pending)
+
+      get admin_generated_file_events_path(scheduled_from: "invalid", scheduled_to: "also-invalid")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(event.public_id)
+    end
+
     it "forbids external users" do
       sign_in_as(create(:user, :external))
 
