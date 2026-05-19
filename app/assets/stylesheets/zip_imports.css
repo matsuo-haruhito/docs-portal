@@ -75,6 +75,22 @@
   box-shadow: 0 10px 24px rgba(255, 80, 0, 0.16);
 }
 
+.manual-document-upload-panel.is-uploading .manual-document-upload-panel__drop,
+.manual-document-upload-panel__drop.is-uploading,
+.manual-document-upload-target.is-uploading {
+  border-color: #16a34a;
+  background: #f0fdf4;
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.16);
+}
+
+.manual-document-upload-panel.is-uploading .manual-document-upload-panel__drop::after,
+.manual-document-upload-panel__drop.is-uploading::after {
+  content: "アップロード中です...";
+  display: block;
+  color: #166534;
+  font-weight: 700;
+}
+
 .manual-document-upload-target {
   border-radius: 8px;
   outline: 1px dashed transparent;
@@ -83,6 +99,11 @@
 
 .manual-document-upload-target.is-dragging {
   outline-color: var(--accent);
+}
+
+.manual-document-upload-target.is-uploading {
+  outline: 3px solid rgba(22, 163, 74, 0.32);
+  outline-offset: 4px;
 }
 
 .upload-complete-dialog {
