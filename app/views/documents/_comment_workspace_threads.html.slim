@@ -45,7 +45,7 @@
 
 - if review_comments.any?
   section.document-comment-thread-group
-    h3 確認事項
+    h3 確認事項（社内レビューコメント）
     - review_comments.each do |comment|
       article.document-comment-card.document-comment-card--internal
         header.document-comment-card__header
@@ -60,6 +60,9 @@
             strong 位置: 
             = comment.location_label
         = simple_format(comment.body)
+        - if current_user.admin? && !comment.resolved?
+          p.actions
+            = button_to "解決", document_version_document_review_comment_path(comment.document_version || @version, comment), method: :patch, params: { decision: "resolve" }, class: "button secondary"
 
 - if question_threads.empty? && review_comments.empty?
   p.muted
