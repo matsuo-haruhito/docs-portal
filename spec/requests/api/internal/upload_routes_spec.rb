@@ -101,23 +101,27 @@ RSpec.describe "API internal upload routes", type: :request do
       "C:/work/docs/README.md",
       "docs/../README.md"
     ].each do |relative_path|
-      uploaded_file = build_uploaded_file("# Unsafe\n")
-
-      post "/api/internal/file_uploads", params: {
-        project_code: project.code,
-        file: uploaded_file,
-        relative_path: relative_path,
-        validate_only: true
-      }, headers: headers
-
-      expect(response).to have_http_status(:bad_request)
-      expect(response.parsed_body["error"]).to include("relative_path")
-    ensure
-      uploaded_file&.tempfile&.close!
+      expect_file_upload_path_to_be_rejected(relative_path)
     end
   end
 
   private
+
+  def expect_file_upload_path_to_be_rejected(relative_path)
+    uploaded_file = build_uploaded_file("# Unsafe\n")
+
+    post "/api/internal/file_uploads", params: {
+      project_code: project.code,
+      file: uploaded_file,
+      relative_path: relative_path,
+      validate_only: true
+    }, headers: headers
+
+    expect(response).to have_http_status(:bad_request)
+    expect(response.parsed_body["error"]).to include("relative_path")
+  ensure
+    uploaded_file&.tempfile&.close!
+  end
 
   def build_uploaded_zip(entries)
     tempfile = Tempfile.new(["zip-upload-request", ".zip"])
