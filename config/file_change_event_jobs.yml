@@ -12,6 +12,9 @@
 # - $event_source: event source passed to GeneratedFileChangeEventJob
 # - $metadata: metadata passed to GeneratedFileChangeEventJob
 # - $operations: operations of matched files
+#
+# `debounce_seconds` is passed to the target job when declared in params. It is
+# useful when multiple save/upload/sync events can arrive within a short window.
 rules:
   - id: ai_usecase_decision_flow_generated_file_job
     description: Rebuild AI usecase decision flow outputs when the flow DSL changes.
@@ -28,3 +31,4 @@ rules:
         - ai_usecase_decision_flow
       event_source: $event_source
       metadata: $metadata
+      debounce_seconds: 10
