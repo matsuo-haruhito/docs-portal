@@ -37,6 +37,11 @@
           = render "detail_sections"
 
     .site-viewer-shell.document-reader-shell.manual-document-upload-target#document-content data=preview_drop_data
+      - if current_user.internal?
+        .document-preview-drop-overlay aria-hidden="true"
+          .document-preview-drop-overlay__message
+            strong ここにファイルをドロップ
+            span 同名ならこの文書の更新候補、別名なら同じフォルダ直下に追加します。
       iframe.site-viewer-frame src=@viewer_iframe_src title="#{@document.title} #{@viewer_version.version_label}" loading="eager"
 
     = render "comment_workspace", floating: true
