@@ -77,6 +77,72 @@ RSpec.describe GeneratedFiles::Runner do
     expect(@root.join("generated/decision-flow.puml")).to exist
   end
 
+  it "records generated file runs when a recorder is provided" do
+    registry = write_registry(
+      jobs: [
+        {
+          "id" => "recorded",
+          "source_paths" => ["source.yml"],
+          "command" => ruby_write_command("recorded.txt", "ok"),
+          "generated_paths" => ["recorded.txt"]
+        }
+      ]
+    )
+    recorder = FakeRunRecorder.new
+
+    described_class.new(
+      registry_path: registry,
+      changed_files: ["source.yml"],
+      event_source: "spec",
+      metadata: {"actor_id" => 1},
+      root: @root,
+      output: StringIO.new,
+      error_output: StringIO.new,
+      run_recorder: recorder
+    ).call
+
+    expect(recorder.started_payloads).to contain_exactly(
+      hash_including(
+        job_id: "recorded",
+        changed_files: ["source.yml"],
+        event_source: "spec",
+        metadata: {"actor_id" => 1}
+      )
+    )
+    expect(recorder.runs.first.finished_payloads).to contain_exactly(
+      {status: :completed, generated_paths: ["recorded.txt"], error_message: nil}
+    )
+  end
+
+  it "marks recorded runs as failed when execution raises" do
+    registry = write_registry(
+      jobs: [
+        {
+          "id" => "failing",
+          "source_paths" => ["source.yml"],
+          "command" => "ruby -e 'abort(%q[boom])'",
+          "generated_paths" => ["missing.txt"]
+        }
+      ]
+    )
+    recorder = FakeRunRecorder.new
+
+    expect do
+      described_class.new(
+        registry_path: registry,
+        changed_files: ["source.yml"],
+        root: @root,
+        output: StringIO.new,
+        error_output: StringIO.new,
+        run_recorder: recorder
+      ).call
+    end.to raise_error(RuntimeError, /generated-file job failed: failing/)
+
+    expect(recorder.runs.first.finished_payloads).to contain_exactly(
+      hash_including(status: :failed, generated_paths: [], error_message: "generated-file job failed: failing")
+    )
+  end
+
   it "runs explicit job ids regardless of changed files" do
     registry = write_registry(
       jobs: [
@@ -169,5 +235,38 @@ RSpec.describe GeneratedFiles::Runner do
       },
       "rule_table" => []
     }.to_yaml
+  end
+
+  class FakeRunRecorder
+    attr_reader :started_payloads, :runs
+
+    def initialize
+      @started_payloads = []
+      @runs = []
+    end
+
+    def start(job:, changed_files:, event_source:, metadata:)
+      run = FakeRun.new
+      @runs << run
+      @started_payloads << {
+        job_id: job.fetch("id"),
+        changed_files: changed_files,
+        event_source: event_source,
+        metadata: metadata
+      }
+      run
+    end
+  end
+
+  class FakeRun
+    attr_reader :finished_payloads
+
+    def initialize
+      @finished_payloads = []
+    end
+
+    def finish!(status:, generated_paths: [], error_message: nil)
+      @finished_payloads << {status: status, generated_paths: generated_paths, error_message: error_message}
+    end
   end
 end
