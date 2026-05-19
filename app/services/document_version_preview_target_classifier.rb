@@ -86,6 +86,15 @@ class DocumentVersionPreviewTargetClassifier
   end
 
   def groups
-    Hash(metadata["groups"]).transform_values { Array(_1) }
+    case metadata["groups"]
+    when Hash
+      metadata["groups"].transform_keys(&:to_s).transform_values { Array(_1) }
+    when Array
+      metadata["groups"].each_with_index.to_h { |paths, index| ["group_#{index + 1}", Array(paths)] }
+    when nil
+      {}
+    else
+      { "group_1" => Array(metadata["groups"]) }
+    end
   end
 end
