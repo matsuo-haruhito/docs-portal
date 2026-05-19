@@ -36,7 +36,7 @@ class DocusaurusRendererClient
 
     Result.new(
       archive_file: output,
-      site_path: safe_site_path(response["X-Docs-Site-Path"].presence || entry_path)
+      site_path: safe_site_path(response["X-Docs-Site-Path"].presence || DocumentVersion.normalize_site_page_path(entry_path))
     )
   rescue
     output&.close!
