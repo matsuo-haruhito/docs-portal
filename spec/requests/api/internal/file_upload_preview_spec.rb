@@ -41,6 +41,7 @@ RSpec.describe "API internal file upload preview", type: :request do
 
     expect(response).to have_http_status(:created)
     preview = response.parsed_body.fetch("file_upload_preview")
+    expect(preview["content_hash"]).to eq(expected_hash)
     expect(preview["source_commit_hash"]).to eq(expected_hash)
     expect(preview["file_size"]).to eq(file_content.bytesize)
     expect(preview["source_name"]).to eq("local-sync")
@@ -48,6 +49,7 @@ RSpec.describe "API internal file upload preview", type: :request do
 
     dry_run = ImportDryRun.find_by!(public_id: response.parsed_body.fetch("dry_run_id"))
     expect(dry_run.source_commit_hash).to eq(expected_hash)
+    expect(dry_run.result_json.dig("file_upload_preview", "content_hash")).to eq(expected_hash)
     expect(dry_run.result_json.dig("file_upload_preview", "source_commit_hash")).to eq(expected_hash)
     expect(dry_run.result_json.dig("file_upload_preview", "file_size")).to eq(file_content.bytesize)
     expect(dry_run.result_json.dig("file_upload_preview", "source_name")).to eq("local-sync")
