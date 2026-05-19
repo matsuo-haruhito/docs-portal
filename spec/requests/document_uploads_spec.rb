@@ -38,6 +38,40 @@ RSpec.describe "Document uploads", type: :request do
     expect(response).to redirect_to(document_version_path(version, upload_review: "1"))
   end
 
+  it "renders richer HTML preview for manually uploaded markdown" do
+    sign_in_as(user)
+    markdown = <<~MD
+      # Preview
+
+      - one
+      - **two**
+
+      | Name | Value |
+      | --- | --- |
+      | Alpha | `1` |
+
+      ```
+      code sample
+      ```
+    MD
+
+    post project_document_uploads_path(project), params: {
+      source_path: "docs/specs",
+      file: uploaded_file("preview.md", markdown)
+    }
+
+    version = project.documents.find_by!(title: "preview").document_versions.first
+    html_path = version.site_root_absolute_path.join(version.site_build_path, "index.html")
+    html = html_path.read
+
+    expect(html).to include("<h1>Preview</h1>")
+    expect(html).to include("<ul>")
+    expect(html).to include("<strong>two</strong>")
+    expect(html).to include("<table>")
+    expect(html).to include("<code>1</code>")
+    expect(html).to include("<pre><code>code sample</code></pre>")
+  end
+
   it "shows review actions on a draft manual upload version" do
     sign_in_as(user)
     document = create(:document, project: project, title: "Guide", slug: "guide")
