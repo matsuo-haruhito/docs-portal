@@ -88,17 +88,30 @@ ruby bin/generate_ai_usecase_flow
 
 | ファイル | 役割 |
 |---|---|
-| `.github/generated-file-jobs.yml` | 元ファイル、監視ファイル、生成コマンド、生成物のレジストリ |
+| `config/file_change_event_jobs.yml` | ファイルCRUDイベントから起動するJobとパラメーターの定義 |
+| `.github/generated-file-jobs.yml` | 生成JobID、生成コマンド、生成物のレジストリ |
 | `.github/workflows/generated-file-jobs.yml` | push時に変更ファイルを検知して該当ジョブを実行するGitHub Actions |
-| `app/services/generated_files/change_event_handler.rb` | ファイル変更イベントを受け取り、該当する生成ジョブをenqueueする共通ハンドラ |
+| `app/services/generated_files/change_event_handler.rb` | ファイル変更イベントを受け取り、`config/file_change_event_jobs.yml` に従ってJobをenqueueする共通ハンドラ |
 | `app/jobs/generated_file_change_event_job.rb` | 外部同期、手修正、アップロードなどから呼ぶファイル変更イベント用ActiveJob |
-| `app/services/generated_files/runner.rb` | レジストリを読み、生成コマンドを実行する共通サービス |
+| `app/services/generated_files/runner.rb` | `.github/generated-file-jobs.yml` を読み、生成コマンドを実行する共通サービス |
 | `app/jobs/generated_file_job.rb` | 実際の生成処理を実行するActiveJob |
 | `bin/run_generated_file_jobs` | GitHub ActionsやローカルCLIから共通サービスを呼び出すrunner |
 
-## ファイル変更イベントからの起動
+## ファイルCRUDイベントからの起動
 
 通常運用では、Rakeを直接使うのではなく、何らかの方法でファイル変更が確定したタイミングで以下を呼びます。
+
+```ruby
+GeneratedFileChangeEventJob.perform_later(
+  file_events: [
+    { path: "storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml", operation: "update" }
+  ],
+  event_source: "manual_edit",
+  metadata: { actor_id: current_user.id }
+)
+```
+
+後方互換として、単純な更新イベントなら以下も使えます。
 
 ```ruby
 GeneratedFileChangeEventJob.perform_later(
@@ -108,9 +121,39 @@ GeneratedFileChangeEventJob.perform_later(
 )
 ```
 
-`GeneratedFiles::ChangeEventHandler` は `.github/generated-file-jobs.yml` を参照し、変更されたファイルに一致する生成ジョブだけを `GeneratedFileJob` としてenqueueします。
+`GeneratedFiles::ChangeEventHandler` は `config/file_change_event_jobs.yml` を参照し、CRUD種別、パスパターン、起動Job、渡すパラメーターを解決します。
 
-現在は、外部ファイル同期の apply 後に、同期で作成・更新されたパスを収集して `GeneratedFileChangeEventJob` をenqueueします。今後、ドキュメント手修正、ファイルアップロード、管理画面の保存処理などでも同じJobを呼び出します。
+定義例です。
+
+```yaml
+rules:
+  - id: ai_usecase_decision_flow_generated_file_job
+    operations:
+      - create
+      - update
+      - delete
+    path_patterns:
+      - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
+    job_class: GeneratedFileJob
+    params:
+      changed_files: $matched_files
+      job_ids:
+        - ai_usecase_decision_flow
+      event_source: $event_source
+      metadata: $metadata
+```
+
+利用できるテンプレート値です。
+
+| テンプレート | 内容 |
+|---|---|
+| `$changed_files` | イベント内の全変更ファイル |
+| `$matched_files` | そのruleに一致したファイル |
+| `$event_source` | 呼び出し元種別 |
+| `$metadata` | 呼び出し元から渡されたメタデータ |
+| `$operations` | 一致したCRUD種別 |
+
+現在は、外部ファイル同期の apply 後に、同期で作成・更新・削除検知されたパスを収集して `GeneratedFileChangeEventJob` をenqueueします。今後、ドキュメント手修正、ファイルアップロード、管理画面の保存処理などでも同じJobを呼び出します。
 
 処理の流れは以下です。
 
@@ -121,13 +164,13 @@ GeneratedFileChangeEventJob
   ↓
 GeneratedFiles::ChangeEventHandler
   ↓
-.github/generated-file-jobs.yml で該当ジョブを判定
+config/file_change_event_jobs.yml でCRUDイベントに対応するJobを判定
   ↓
-GeneratedFileJob
+GeneratedFileJob など任意のJob
   ↓
 GeneratedFiles::Runner
   ↓
-生成コマンド実行
+.github/generated-file-jobs.yml の生成コマンド実行
   ↓
 関連ファイル更新
 ```
@@ -207,23 +250,38 @@ KROKI_ENDPOINT=http://kroki:8000
 
 ## 他機能へ応用する方法
 
-別のDSLやCSVから生成物を作る場合は、`.github/generated-file-jobs.yml` に1件追加します。
+別のDSLやCSVから生成物を作る場合は、`.github/generated-file-jobs.yml` に生成コマンドを追加し、`config/file_change_event_jobs.yml` にCRUDイベントから起動するJob定義を追加します。
 
 ```yaml
+# .github/generated-file-jobs.yml
 jobs:
   - id: sample_generator
-    description: Generate sample output from a source file.
     source_paths:
       - path/to/source.yml
-    watch_paths:
-      - bin/generate_sample
     command: ruby bin/generate_sample
     generated_paths:
       - path/to/generated.md
       - path/to/generated.puml
 ```
 
-これにより、`source_paths` または `watch_paths` に差分が出たときだけ `command` が実行されます。外部同期、手修正、ファイルアップロードなどの変更確定ハンドラから `GeneratedFileChangeEventJob` を呼ぶことで、同じレジストリ・同じ生成コマンドを利用できます。
+```yaml
+# config/file_change_event_jobs.yml
+rules:
+  - id: run_sample_generator
+    operations:
+      - create
+      - update
+    path_patterns:
+      - path/to/source.yml
+    job_class: GeneratedFileJob
+    params:
+      changed_files: $matched_files
+      job_ids:
+        - sample_generator
+      metadata: $metadata
+```
+
+これにより、外部同期、手修正、ファイルアップロードなどの変更確定ハンドラから `GeneratedFileChangeEventJob` を呼ぶだけで、個別の生成処理を知らずに必要なJobを起動できます。
 
 ## 今後の拡張
 
@@ -234,7 +292,7 @@ jobs:
 | 新しいユースケースを追加する | usecases.md |
 | 新しい利用パターンを追加する | patterns.md |
 | 新しい手順書を追加する | procedures/ 配下にMarkdownを追加 |
-| 判断フローを更新する | data/decision_flow.yml を変更する。ファイル変更イベントからGeneratedFileChangeEventJobが生成物更新をenqueueする |
+| 判断フローを更新する | data/decision_flow.yml を変更する。ファイルCRUDイベントからGeneratedFileChangeEventJobが生成物更新をenqueueする |
 | 管理画面やWebhookから生成を起動する | `GeneratedFileChangeEventJob.perform_later` を呼び出す |
 | マスタ駆動生成に寄せる | data-model.md のYAML構造を正本化する |
 
