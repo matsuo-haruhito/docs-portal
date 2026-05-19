@@ -1,0 +1,47 @@
+<div class="space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold">生成ファイルイベント</h1>
+      <p class="text-sm text-gray-600">debounce / coalesce 用に蓄積されたファイル変更イベントです。</p>
+    </div>
+    <div class="flex gap-2 text-sm">
+      <%= link_to "すべて", admin_generated_file_events_path, class: "rounded border px-3 py-2" %>
+      <% GeneratedFileEvent.statuses.keys.each do |status| %>
+        <%= link_to status, admin_generated_file_events_path(status: status), class: "rounded border px-3 py-2" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto rounded-lg border bg-white">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left font-semibold">Event ID</th>
+          <th class="px-4 py-3 text-left font-semibold">Status</th>
+          <th class="px-4 py-3 text-left font-semibold">Path</th>
+          <th class="px-4 py-3 text-left font-semibold">Operation</th>
+          <th class="px-4 py-3 text-left font-semibold">Source</th>
+          <th class="px-4 py-3 text-left font-semibold">Count</th>
+          <th class="px-4 py-3 text-left font-semibold">Scheduled</th>
+          <th class="px-4 py-3 text-left font-semibold">Processed</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        <% @generated_file_events.each do |event| %>
+          <tr>
+            <td class="px-4 py-3 font-mono">
+              <%= link_to event.public_id, admin_generated_file_event_path(event.public_id), class: "text-blue-600 underline" %>
+            </td>
+            <td class="px-4 py-3"><%= event.status %></td>
+            <td class="px-4 py-3 font-mono"><%= event.path %></td>
+            <td class="px-4 py-3"><%= event.operation %></td>
+            <td class="px-4 py-3"><%= event.event_source.presence || "-" %></td>
+            <td class="px-4 py-3"><%= event.occurrences_count %></td>
+            <td class="px-4 py-3"><%= l(event.scheduled_at, format: :long) if event.scheduled_at %></td>
+            <td class="px-4 py-3"><%= l(event.processed_at, format: :long) if event.processed_at %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
