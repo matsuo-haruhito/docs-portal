@@ -64,4 +64,16 @@ RSpec.describe GeneratedFiles::ChangeEventNotifier do
     expect(events).to eq([])
     expect(job_class).not_to have_received(:perform_later)
   end
+
+  it "ignores unsafe paths" do
+    job_class = class_double(GeneratedFileChangeEventJob, perform_later: true)
+    notifier = described_class.new(job_class:)
+
+    events = notifier.notify(
+      file_events: ["../outside.yml", "/tmp/source.yml", "docs/source.yml"],
+      event_source: "spec"
+    )
+
+    expect(events).to eq([{path: "docs/source.yml", operation: "update"}])
+  end
 end
