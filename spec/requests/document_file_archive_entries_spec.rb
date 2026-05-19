@@ -71,4 +71,41 @@ RSpec.describe "Document file archive entries", type: :request do
     expect(response.body).to include("previewできません")
     expect(response.body).to include("text preview")
   end
+
+  it "downloads an archive entry and records a download access log" do
+    write_zip("docs/readme.txt" => "hello")
+    sign_in_as(user)
+
+    expect do
+      get archive_entry_download_document_file_path(archive_file, entry_path: "docs/readme.txt")
+    end.to change(AccessLog.where(action_type: :download), :count).by(1)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to eq("hello")
+    expect(response.headers["Content-Type"]).to include("text/plain")
+    expect(response.headers["Content-Disposition"]).to include("attachment")
+    expect(response.headers["Content-Disposition"]).to include("readme.txt")
+  end
+
+  it "does not record a download log when entry download is rejected" do
+    write_zip("docs/readme.txt" => "hello")
+    sign_in_as(user)
+
+    expect do
+      get archive_entry_download_document_file_path(archive_file, entry_path: "../secret.txt")
+    end.not_to change(AccessLog.where(action_type: :download), :count)
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response.body).to include("unsafe path")
+  end
+
+  it "does not download nested archive entries" do
+    write_zip("nested/archive.zip" => "zip")
+    sign_in_as(user)
+
+    get archive_entry_download_document_file_path(archive_file, entry_path: "nested/archive.zip")
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response.body).to include("nested archive")
+  end
 end
