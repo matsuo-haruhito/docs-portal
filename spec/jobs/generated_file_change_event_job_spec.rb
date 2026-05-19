@@ -81,6 +81,24 @@ RSpec.describe GeneratedFileChangeEventJob, type: :job do
     expect(GeneratedFiles::ChangeEventHandler).not_to have_received(:new)
   end
 
+  it "does not buffer unsafe changed files" do
+    buffer = instance_double(GeneratedFiles::EventBuffer, add: [])
+    allow(GeneratedFiles::EventBuffer).to receive(:new).and_return(buffer)
+    allow(GeneratedFiles::ChangeEventHandler).to receive(:new)
+
+    described_class.perform_now(
+      changed_files: ["../outside.yml", "/tmp/source.yml", "C:/tmp/source.yml", "docs/source.yml"],
+      operation: :update,
+      debounce_seconds: 15
+    )
+
+    expect(buffer).to have_received(:add).with(
+      file_events: [{path: "docs/source.yml", operation: :update}],
+      event_source: nil,
+      metadata: {}
+    )
+  end
+
   describe ".concurrency_key_for" do
     it "uses sorted normalized file events when file events are present" do
       key = described_class.concurrency_key_for(
