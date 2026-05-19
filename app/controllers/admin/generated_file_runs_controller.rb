@@ -27,7 +27,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
 
   def retry_failed
     @filters = run_filter_params
-    runs = apply_filters(GeneratedFileRun.failed.order(created_at: :desc, id: :desc)).limit(MAX_PER_PAGE)
+    runs = apply_filters(GeneratedFileRun.failed.order(created_at: :asc, id: :asc)).limit(MAX_PER_PAGE)
     runs.each { enqueue_retry!(_1, bulk: true) }
 
     redirect_to admin_generated_file_runs_path(@filters), notice: "失敗した生成ジョブ #{runs.size} 件の再実行をキューに投入しました。"
