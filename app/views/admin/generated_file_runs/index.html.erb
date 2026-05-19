@@ -1,7 +1,10 @@
 <div class="space-y-6">
-  <div>
-    <h1 class="text-2xl font-bold">生成ファイル実行履歴</h1>
-    <p class="text-sm text-gray-600">ファイルCRUDイベントから起動された生成Jobの履歴です。</p>
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold">生成ファイル実行履歴</h1>
+      <p class="text-sm text-gray-600">ファイルCRUDイベントから起動された生成Jobの履歴です。</p>
+    </div>
+    <%= button_to "失敗分を一括再実行", retry_failed_admin_generated_file_runs_path, method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
   </div>
 
   <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
