@@ -120,7 +120,7 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
   end
 
   def default_version_label
-    @default_version_label ||= "file-#{Time.current.strftime('%Y%m%d%H%M%S')}"
+    @default_version_label ||= "file-#{Time.current.strftime('%Y%m%d%H%M%S')}-#{uploaded_file_hash.first(8)}"
   end
 
   def relative_path
