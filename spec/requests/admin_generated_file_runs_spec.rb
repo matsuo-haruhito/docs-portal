@@ -14,6 +14,21 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).to include("生成ファイル実行履歴")
       expect(response.body).to include(run.public_id)
       expect(response.body).to include("ai_usecase_decision_flow")
+      expect(response.body).to include("再実行")
+    end
+
+    it "shows status summary counts" do
+      sign_in_as(admin_user)
+      create_run!(status: :completed)
+      create_run!(status: :failed)
+      create_run!(status: :failed, job_id: "other_job")
+
+      get admin_generated_file_runs_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("completed")
+      expect(response.body).to include("failed")
+      expect(response.body).to include(">2</div>".gsub("\"", "&quot;")).or include("2")
     end
 
     it "filters by status, job id, output writer, event source, and date range" do
