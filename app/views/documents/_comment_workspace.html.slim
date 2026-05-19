@@ -1,7 +1,7 @@
 - floating = local_assigns.fetch(:floating, false)
 - wrapper_classes = ["document-comment-workspace"]
 - wrapper_classes << (floating ? "document-comment-workspace--floating" : "document-comment-workspace--inline")
-- comment_target_version = @viewer_version || @latest_viewable_version
+- comment_target_version = local_assigns.fetch(:comment_target_version) { @viewer_version || @latest_viewable_version }
 - has_review_comments = current_user.internal? && @review_comments.any?
 - has_question_threads = @question_threads.any?
 - has_unresolved_questions = @question_threads.any? { !_1.resolved? }
