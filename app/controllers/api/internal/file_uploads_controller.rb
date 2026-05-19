@@ -138,6 +138,10 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
   def verify_content_hash!
     return if normalized_content_hash.blank?
 
+    unless normalized_content_hash.match?(/\A[0-9a-f]{64}\z/)
+      raise ApplicationError::BadRequest, "content_hash must be a SHA-256 hex digest"
+    end
+
     unless ActiveSupport::SecurityUtils.secure_compare(normalized_content_hash, uploaded_file_hash)
       raise ApplicationError::BadRequest, "content_hash does not match uploaded file"
     end
