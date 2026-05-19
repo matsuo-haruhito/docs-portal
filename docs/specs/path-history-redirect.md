@@ -49,6 +49,31 @@ Path history / redirect は、文書の slug、Docusaurus site path、Markdown e
 - `matched_version`
 - `matched_source`
 
+`DocumentPathHistoryMetadata` は、明示 metadata file から slug / site path 履歴を読み取る準備用 reader です。現時点では quality check に source / warning を表示するだけで、redirect resolver の入力にはまだ使いません。
+
+## explicit metadata
+
+文書版の添付・元ファイルに、次のいずれかの YAML file を置くことで明示的な path history metadata として認識します。
+
+- `.docs-portal-history.yml`
+- `.docs-portal-history.yaml`
+- `.path-history.yml`
+- `.path-history.yaml`
+- `path-history.yml`
+- `path-history.yaml`
+
+YAML 形式:
+
+```yaml
+path_history:
+  slugs:
+    - previous-guide
+  site_paths:
+    - docs/previous-guide
+```
+
+対応 key は `slugs` と `site_paths` のみです。未対応 key は `path_history_metadata` warning として表示します。
+
 ## canonical 判定
 
 要求された path を `DocumentVersion.normalize_site_page_path` で正規化し、現在の canonical version の `normalized_html_view_site_path` 配下であれば `canonical` とします。
@@ -132,9 +157,12 @@ old/path, another/old/path -> current/path
 
 この warning はエラーではありません。旧 URL から現在 URL へ redirect できる履歴があることを、公開前確認やレビューで見落とさないための通知です。
 
+`DocumentPathHistoryMetadata` が source file を検出した場合は `path_history_metadata` info を表示します。未対応 key や YAML parse error は `path_history_metadata` warning として表示します。
+
 ## current limitations
 
 - slug history は source/path 由来の推定のみで、明示 DB table はまだ持たない
+- 明示 path history metadata は quality check にのみ使い、redirect resolver の入力にはまだ使わない
 - DB table として path history はまだ持たない
 - archived / deleted / explicitly moved の状態管理はまだ持たない
 - 別 document への移動はまだ扱わない
@@ -142,6 +170,7 @@ old/path, another/old/path -> current/path
 
 ## next steps
 
-- slug history を metadata または DB table で明示管理する
-- path history を metadata または DB table で明示管理する
+- slug history metadata を redirect resolver に接続する
+- site path history metadata を redirect resolver に接続する
+- path history を DB table で明示管理する
 - `canonical`, `moved`, `archived`, `deleted` を user-facing な状態として整理する
