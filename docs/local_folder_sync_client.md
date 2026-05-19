@@ -30,6 +30,7 @@ NAS やローカルフォルダを docs-portal に同期するための常駐ク
 
 初期スライスでは `Created` / `Changed` / `Renamed` を upload 対象にする。
 `Deleted` は portal 側で即削除せず、後続で削除候補 dry-run として扱う。
+現時点の `file_uploads` API はファイル追加・更新の入口であり、削除同期は扱わない。
 
 ## 送信パラメータ
 
