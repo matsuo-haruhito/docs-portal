@@ -68,8 +68,10 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 クライアントは通常 `content_hash` を送れば十分です。
 
 - `content_hash` は `sha256:<hash>` 形式でも `<hash>` 形式でもよい
+- `<hash>` は 64 桁の SHA-256 hex digest とする
+- 大文字小文字は区別せず、レスポンスでは小文字に正規化する
 - `content_hash` が送られた場合は、`source_commit_hash` の有無に関わらずアップロード実体と照合する
-- `content_hash` が不一致なら dry-run を作らない
+- `content_hash` が形式不正または不一致なら dry-run を作らない
 - `source_commit_hash` と `content_hash` の両方があり、`content_hash` が実体と一致する場合は、採用値として `source_commit_hash` を優先する
 - どちらも未指定の場合は、サーバーが元ファイル実体のSHA-256を採用する
 
