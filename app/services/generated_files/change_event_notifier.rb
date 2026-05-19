@@ -44,7 +44,11 @@ module GeneratedFiles
     end
 
     def unsafe_path?(path)
-      path.blank? || path == "." || path.start_with?("/") || path.split("/").include?("..")
+      path.blank? ||
+        path == "." ||
+        path.start_with?("/") ||
+        path.match?(%r{\A[A-Za-z]:/}) ||
+        path.split("/").include?("..")
     end
   end
 end
