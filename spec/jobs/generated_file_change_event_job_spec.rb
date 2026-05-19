@@ -39,4 +39,26 @@ RSpec.describe GeneratedFileChangeEventJob, type: :job do
     )
     expect(handler).to have_received(:call)
   end
+
+  it "buffers events when debounce seconds are specified" do
+    buffer = instance_double(GeneratedFiles::EventBuffer, add: [])
+    allow(GeneratedFiles::EventBuffer).to receive(:new).and_return(buffer)
+    allow(GeneratedFiles::ChangeEventHandler).to receive(:new)
+
+    described_class.perform_now(
+      changed_files: ["source.yml"],
+      operation: :update,
+      event_source: "spec",
+      metadata: {"source_id" => 1},
+      debounce_seconds: 15
+    )
+
+    expect(GeneratedFiles::EventBuffer).to have_received(:new).with(debounce_seconds: 15)
+    expect(buffer).to have_received(:add).with(
+      file_events: [{path: "source.yml", operation: :update}],
+      event_source: "spec",
+      metadata: {"source_id" => 1}
+    )
+    expect(GeneratedFiles::ChangeEventHandler).not_to have_received(:new)
+  end
 end
