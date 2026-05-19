@@ -61,7 +61,7 @@ docs/ai-usecases/generated/
 storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
 ```
 
-YAMLを変更したら、以下を実行してMarkdownとPlantUMLを再生成します。
+初期データ投入やローカル検証で明示的に再生成したい場合は、以下を実行します。
 
 ```bash
 bin/rails ai_usecases:generate_flow
@@ -72,6 +72,8 @@ Rails環境を通さずに生成スクリプトだけ実行する場合は以下
 ```bash
 ruby bin/generate_ai_usecase_flow
 ```
+
+通常運用では、ファイル変更イベントから `GeneratedFileChangeEventJob` をenqueueし、該当する生成ジョブを非同期実行します。
 
 生成されるファイルは以下です。
 
@@ -88,36 +90,71 @@ ruby bin/generate_ai_usecase_flow
 |---|---|
 | `.github/generated-file-jobs.yml` | 元ファイル、監視ファイル、生成コマンド、生成物のレジストリ |
 | `.github/workflows/generated-file-jobs.yml` | push時に変更ファイルを検知して該当ジョブを実行するGitHub Actions |
-| `app/services/generated_files/runner.rb` | レジストリを読み、変更された元ファイルに対応する生成コマンドだけ実行する共通サービス |
-| `app/jobs/generated_file_job.rb` | Railsアプリ内から生成ジョブを実行するActiveJob入口 |
+| `app/services/generated_files/change_event_handler.rb` | ファイル変更イベントを受け取り、該当する生成ジョブをenqueueする共通ハンドラ |
+| `app/jobs/generated_file_change_event_job.rb` | 外部同期、手修正、アップロードなどから呼ぶファイル変更イベント用ActiveJob |
+| `app/services/generated_files/runner.rb` | レジストリを読み、生成コマンドを実行する共通サービス |
+| `app/jobs/generated_file_job.rb` | 実際の生成処理を実行するActiveJob |
 | `bin/run_generated_file_jobs` | GitHub ActionsやローカルCLIから共通サービスを呼び出すrunner |
+
+## ファイル変更イベントからの起動
+
+通常運用では、Rakeを直接使うのではなく、何らかの方法でファイル変更が確定したタイミングで以下を呼びます。
+
+```ruby
+GeneratedFileChangeEventJob.perform_later(
+  changed_files: ["storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml"],
+  event_source: "manual_edit",
+  metadata: { actor_id: current_user.id }
+)
+```
+
+`GeneratedFiles::ChangeEventHandler` は `.github/generated-file-jobs.yml` を参照し、変更されたファイルに一致する生成ジョブだけを `GeneratedFileJob` としてenqueueします。
+
+現在は、外部ファイル同期の apply 後に、同期で作成・更新されたパスを収集して `GeneratedFileChangeEventJob` をenqueueします。今後、ドキュメント手修正、ファイルアップロード、管理画面の保存処理などでも同じJobを呼び出します。
+
+処理の流れは以下です。
+
+```text
+外部ファイル同期 / 手修正 / アップロード
+  ↓
+GeneratedFileChangeEventJob
+  ↓
+GeneratedFiles::ChangeEventHandler
+  ↓
+.github/generated-file-jobs.yml で該当ジョブを判定
+  ↓
+GeneratedFileJob
+  ↓
+GeneratedFiles::Runner
+  ↓
+生成コマンド実行
+  ↓
+関連ファイル更新
+```
+
+## GitHub Actionsとの関係
+
+GitHub Actionsは、リポジトリへのpushでDSLや生成スクリプトが変更された場合の安全網です。
 
 `decision_flow.yml`、生成スクリプト、またはレジストリを更新してmainにpushすると、GitHub Actionsが該当ジョブを実行し、生成物に差分があれば `chore: update generated files` でmainへ自動コミットします。
 
-Railsアプリ内から即時実行する場合は、以下を使います。
+アプリ内の `GeneratedFileJob` は作業ツリー上の生成物を更新する責務を持ち、GitHubへのコミット・pushはGitHub Actions側の責務として分けます。
 
-```bash
-CHANGED_FILES=storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml bin/rails generated_files:run
-```
+## 手動実行
 
-Railsアプリ内から非同期Jobとして投入する場合は、以下を使います。
+初期データ投入や検証用途では、以下のRake入口を使えます。
 
 ```bash
 CHANGED_FILES=storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml bin/rails generated_files:enqueue
 ```
 
-特定ジョブIDを指定して実行する場合は、以下を使います。
+特定ジョブIDを指定して投入する場合は以下です。
 
 ```bash
-JOB_ID=ai_usecase_decision_flow bin/rails generated_files:run_job
 JOB_ID=ai_usecase_decision_flow bin/rails generated_files:enqueue_job
 ```
 
-手動でGitHub Actionsから特定ファイルに対応するジョブを動かしたい場合は、workflow_dispatch の `changed_files` に対象パスを指定します。
-
-```text
-storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
-```
+即時実行したい場合は `enqueue` の代わりに `run` / `run_job` を使います。
 
 ローカルで汎用runnerを試す場合は、変更ファイルを引数で渡せます。
 
@@ -186,7 +223,7 @@ jobs:
       - path/to/generated.puml
 ```
 
-これにより、`source_paths` または `watch_paths` に差分が出たときだけ `command` が実行されます。Railsアプリ内からも `GeneratedFileJob` 経由で同じレジストリ・同じ生成コマンドを利用できます。
+これにより、`source_paths` または `watch_paths` に差分が出たときだけ `command` が実行されます。外部同期、手修正、ファイルアップロードなどの変更確定ハンドラから `GeneratedFileChangeEventJob` を呼ぶことで、同じレジストリ・同じ生成コマンドを利用できます。
 
 ## 今後の拡張
 
@@ -197,8 +234,8 @@ jobs:
 | 新しいユースケースを追加する | usecases.md |
 | 新しい利用パターンを追加する | patterns.md |
 | 新しい手順書を追加する | procedures/ 配下にMarkdownを追加 |
-| 判断フローを更新する | data/decision_flow.yml を変更する。GitHub Actionsが生成物を更新する。ローカルでは `bin/rails ai_usecases:generate_flow` を実行 |
-| 管理画面やWebhookから生成を起動する | `GeneratedFileJob.perform_later` を呼び出す |
+| 判断フローを更新する | data/decision_flow.yml を変更する。ファイル変更イベントからGeneratedFileChangeEventJobが生成物更新をenqueueする |
+| 管理画面やWebhookから生成を起動する | `GeneratedFileChangeEventJob.perform_later` を呼び出す |
 | マスタ駆動生成に寄せる | data-model.md のYAML構造を正本化する |
 
 ## 現時点で自動生成する範囲
