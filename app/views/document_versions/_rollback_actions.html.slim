@@ -1,8 +1,17 @@
-- manual_upload_version = @version.source_commit_hash == DocumentVersionRollback::MANUAL_UPLOAD_SOURCE
-- if current_user.internal? && @document.latest_version_id == @version.id && manual_upload_version
-  .card.upload-review-actions
-    h2 アップロード後の確認
-    p.muted 差異確認で誤りに気づいた場合は、この最新アップロード版だけを取り消せます。前の版があれば前の版へ戻し、初回アップロードの場合は文書をアーカイブします。
-    p.actions
-      = button_to "このアップロードを取り消す", document_version_rollback_path(@version), method: :post, class: "button danger", form: { data: { turbo_confirm: "この最新バージョンを取り消します。よろしいですか？" } }
-      = link_to "文書一覧へ戻る", project_documents_path(@project, q: @version.source_directory), class: "button secondary"
+- manual_upload_version = @version.source_commit_hash == ManualDocumentUploadReview::MANUAL_UPLOAD_SOURCE
+- if current_user.internal? && manual_upload_version
+  - if @version.draft?
+    .card.upload-review-actions
+      h2 アップロード候補の確認
+      p.muted 差異を確認して、問題なければOKで最新版として反映します。問題があればNGで候補版を破棄します。
+      p.actions
+        = button_to "OK：この内容を反映", document_version_upload_review_path(@version), method: :post, params: { decision: "approve" }, class: "button"
+        = button_to "NG：この候補を破棄", document_version_upload_review_path(@version), method: :post, params: { decision: "reject" }, class: "button danger", form: { data: { turbo_confirm: "このアップロード候補を破棄します。よろしいですか？" } }
+        = link_to "文書一覧へ戻る", project_documents_path(@project, upload_source_path: @version.source_directory), class: "button secondary"
+  - elsif @document.latest_version_id == @version.id
+    .card.upload-review-actions
+      h2 アップロード後の確認
+      p.muted 反映済みの手動アップロード最新版に誤りがあった場合は、この版だけを取り消せます。
+      p.actions
+        = button_to "このアップロードを取り消す", document_version_rollback_path(@version), method: :post, class: "button danger", form: { data: { turbo_confirm: "この最新バージョンを取り消します。よろしいですか？" } }
+        = link_to "文書一覧へ戻る", project_documents_path(@project, upload_source_path: @version.source_directory), class: "button secondary"
