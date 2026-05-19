@@ -53,6 +53,27 @@ RSpec.describe BuildFreshnessGuard do
     expect(guard).to be_stale
   end
 
+  it "is stale when any watched source is newer than the build entry" do
+    extra_source_path = workspace.join("extra.md")
+    multi_source_guard = described_class.new(
+      source_path: source_path,
+      source_paths: [source_path, extra_source_path],
+      build_entry_path: build_entry_path,
+      marker_path: marker_path,
+      job_class: BuildFreshnessGuardSpecJob
+    )
+
+    FileUtils.mkdir_p(build_entry_path.dirname)
+    File.write(source_path, "source")
+    File.write(extra_source_path, "extra")
+    File.write(build_entry_path, "html")
+    File.utime(3.hours.ago.to_time, 3.hours.ago.to_time, source_path)
+    File.utime(2.hours.ago.to_time, 2.hours.ago.to_time, build_entry_path)
+    File.utime(1.hour.ago.to_time, 1.hour.ago.to_time, extra_source_path)
+
+    expect(multi_source_guard).to be_stale
+  end
+
   it "does not enqueue more than once while a marker exists" do
     File.write(source_path, "source")
 
