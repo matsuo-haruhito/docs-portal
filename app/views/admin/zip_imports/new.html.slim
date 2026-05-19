@@ -1,0 +1,41 @@
+- page_title "ZIPインポート"
+h1 ZIPインポート
+= render "admin/nav"
+
+.card
+  h2 ZIPファイルをアップロード
+  p.muted ZIP内のMarkdown/MDX文書と添付ファイルを解析し、dry-runで取り込み予定を確認してから実行します。
+
+  - project_options = @projects.map { |project| ["#{project.code} / #{project.name}", project.id] }
+  = form_with url: admin_zip_imports_path, method: :post, local: true, html: { multipart: true } do |form|
+    .form-grid
+      div
+        = form.label :project_id, "案件"
+        = form.select :project_id, options_for_select(project_options), { prompt: "選択してください" }, required: true
+      div
+        = form.label :version_label, "版ラベル"
+        = form.text_field :version_label, placeholder: "例: zip-v1"
+      div
+        = form.label :status, "取り込み後ステータス"
+        = form.select :status, options_for_select(DocumentVersion.statuses.keys.map { |status| [status, status] }, "draft")
+      div
+        = form.label :source_repo, "取り込み元リポジトリ/メモ"
+        = form.text_field :source_repo, placeholder: "任意"
+      div
+        = form.label :source_branch, "取り込み元ブランチ"
+        = form.text_field :source_branch, placeholder: "任意"
+      div
+        = form.label :source_commit_hash, "取り込み元commit"
+        = form.text_field :source_commit_hash, placeholder: "任意"
+
+    .file-dropzone data-controller="file-dropzone" data-file-dropzone-dragging-class="is-dragging"
+      = form.label :zip_file, class: "file-dropzone__surface", data: { file_dropzone_target: "surface", action: "dragenter->file-dropzone#dragenter dragover->file-dropzone#dragover dragleave->file-dropzone#dragleave drop->file-dropzone#drop" } do
+        span.file-dropzone__icon ZIP
+        span.file-dropzone__title ZIPファイルをドラッグ＆ドロップ
+        span.file-dropzone__hint またはクリックしてファイルを選択
+        span.file-dropzone__filename data-file-dropzone-target="filename" 選択されていません
+      = form.file_field :zip_file, accept: ".zip,application/zip,application/x-zip-compressed", required: true, class: "file-dropzone__input", data: { file_dropzone_target: "input", action: "change->file-dropzone#change" }
+
+    p.actions
+      = form.submit "dry-runを作成", class: "button"
+      = link_to "管理画面へ戻る", admin_root_path, class: "button secondary"
