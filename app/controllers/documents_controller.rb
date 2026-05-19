@@ -47,6 +47,7 @@ class DocumentsController < BaseController
 
     mark_document_as_read!(@document, @viewer_version)
     @viewer_site_path = @path_history_resolution&.canonical_path.presence || params[:site_path].presence || @viewer_version&.html_view_site_path
+    @previous_site_path = params[:previous_site_path].presence
     @viewer_iframe_src = embedded_viewer_src(@viewer_version)
     @viewer_popout_src = @viewer_iframe_src
     @source_breadcrumbs = SourcePathBreadcrumb.new(
@@ -99,7 +100,8 @@ class DocumentsController < BaseController
   def redirect_to_canonical_site_path
     redirect_params = request.query_parameters.merge(
       version_id: @path_history_resolution.canonical_version.public_id,
-      site_path: @path_history_resolution.canonical_path
+      site_path: @path_history_resolution.canonical_path,
+      previous_site_path: @path_history_resolution.requested_path
     )
     redirect_to project_document_path(@project, @document.slug, redirect_params), status: :moved_permanently
   end
