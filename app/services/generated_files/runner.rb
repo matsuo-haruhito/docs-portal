@@ -6,13 +6,17 @@ require "yaml"
 
 module GeneratedFiles
   class Runner
-    Result = Data.define(:job_id, :command, :generated_paths, :stdout, :stderr, :status) do
+    Result = Data.define(:job_id, :command, :generator, :generated_paths, :stdout, :stderr, :status) do
       def success?
-        status.success?
+        status.respond_to?(:success?) ? status.success? : status == true
       end
     end
 
     DEFAULT_REGISTRY_PATH = "config/generated_file_jobs.yml"
+
+    GENERATORS = {
+      "ai_usecase_decision_flow" => "GeneratedFiles::Generators::AiUsecaseDecisionFlow"
+    }.freeze
 
     def initialize(
       registry_path: DEFAULT_REGISTRY_PATH,
@@ -67,6 +71,39 @@ module GeneratedFiles
     end
 
     def execute_job(job)
+      if job.key?("generator")
+        execute_generator_job(job)
+      else
+        execute_command_job(job)
+      end
+    end
+
+    def execute_generator_job(job)
+      id = job.fetch("id")
+      generator_key = job.fetch("generator")
+      generated_paths = Array(job.fetch("generated_paths", []))
+      options = job.fetch("options", {})
+
+      output.puts "Running generated-file job: #{id}"
+      output.puts "Generator: #{generator_key}"
+
+      generated = generator_class_for(generator_key).new(**options.deep_symbolize_keys.merge(root: root)).call
+      generated_paths = generated if generated_paths.empty? && generated.present?
+
+      result = Result.new(
+        job_id: id,
+        command: nil,
+        generator: generator_key,
+        generated_paths:,
+        stdout: "",
+        stderr: "",
+        status: true
+      )
+      output_generated_paths(id, generated_paths)
+      result
+    end
+
+    def execute_command_job(job)
       id = job.fetch("id")
       command = job.fetch("command")
       generated_paths = Array(job.fetch("generated_paths", []))
@@ -78,17 +115,27 @@ module GeneratedFiles
       output.puts stdout unless stdout.empty?
       error_output.puts stderr unless stderr.empty?
 
-      result = Result.new(job_id: id, command:, generated_paths:, stdout:, stderr:, status:)
+      result = Result.new(job_id: id, command:, generator: nil, generated_paths:, stdout:, stderr:, status:)
       raise "generated-file job failed: #{id}" unless result.success?
 
+      output_generated_paths(id, generated_paths)
+      result
+    end
+
+    def generator_class_for(generator_key)
+      class_name = GENERATORS.fetch(generator_key) do
+        raise KeyError, "Unknown generated-file generator: #{generator_key}"
+      end
+      class_name.constantize
+    end
+
+    def output_generated_paths(id, generated_paths)
       if generated_paths.empty?
         output.puts "No generated_paths declared for #{id}."
       else
         output.puts "Generated paths:"
         generated_paths.each { output.puts "- #{_1}" }
       end
-
-      result
     end
 
     def absolute_path(path)
