@@ -63,7 +63,6 @@ RSpec.describe "API internal upload routes", type: :request do
       file: uploaded_file,
       relative_path: "docs/README.md",
       source_path: "C:/work/docs/README.md",
-      validate_only: true,
       version_label: "file-v1"
     }, headers: headers
 
