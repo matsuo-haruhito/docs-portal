@@ -78,11 +78,12 @@ ruby bin/generate_ai_usecase_flow
 | ファイル | 役割 |
 |---|---|
 | `config/file_change_event_jobs.yml` | ファイルCRUDイベントから起動するJobとパラメーターの定義 |
-| `config/generated_file_jobs.yml` | GeneratedFileJobが実行する生成JobID、生成コマンド、生成物の定義 |
+| `config/generated_file_jobs.yml` | GeneratedFileJobが実行する生成JobID、generator、生成物の定義 |
 | `.github/workflows/generated-file-jobs.yml` | GitHub push時に `config/generated_file_jobs.yml` を読んで生成物を更新する安全網 |
 | `app/services/generated_files/change_event_handler.rb` | CRUDイベントを受け取り、`config/file_change_event_jobs.yml` に従ってJobをenqueueする共通ハンドラ |
 | `app/jobs/generated_file_change_event_job.rb` | 外部同期、手修正、アップロードなどから呼ぶファイル変更イベント用ActiveJob |
-| `app/services/generated_files/runner.rb` | `config/generated_file_jobs.yml` を読み、生成コマンドを実行する共通サービス |
+| `app/services/generated_files/runner.rb` | `config/generated_file_jobs.yml` を読み、generatorまたは後方互換のcommandを実行する共通サービス |
+| `app/services/generated_files/generators/ai_usecase_decision_flow.rb` | AI活用判断フローDSLをMarkdown/PlantUMLへ変換するGenerator class |
 | `app/jobs/generated_file_job.rb` | 実際の生成処理を実行するActiveJob |
 | `bin/run_generated_file_jobs` | GitHub ActionsやローカルCLIから共通サービスを呼び出すrunner |
 
@@ -149,13 +150,13 @@ jobs:
   - id: ai_usecase_decision_flow
     source_paths:
       - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
-    command: ruby bin/generate_ai_usecase_flow
+    generator: ai_usecase_decision_flow
     generated_paths:
       - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/decision-flow.md
       - docs/ai-usecases/generated/decision-flow.puml
 ```
 
-現時点では `command` 方式ですが、将来的にはshellではなくGenerator class方式に寄せる想定です。
+`generator` は `GeneratedFiles::Runner::GENERATORS` のAllowListに登録されたGenerator classへ解決されます。既存互換として `command` も実行できますが、新規追加はGenerator class方式を優先します。
 
 ## 重複・連続更新への対策
 
@@ -197,7 +198,7 @@ AI_USECASE_FLOW_DIAGRAM_LANGUAGE=plantuml bin/rails ai_usecases:generate_flow
 
 ## 他機能へ応用する方法
 
-別のDSLやCSVから生成物を作る場合は、`config/generated_file_jobs.yml` に生成コマンドを追加し、`config/file_change_event_jobs.yml` にCRUDイベントから起動するJob定義を追加します。
+別のDSLやCSVから生成物を作る場合は、Generator classを追加し、`config/generated_file_jobs.yml` と `config/file_change_event_jobs.yml` に定義を追加します。
 
 ```yaml
 # config/generated_file_jobs.yml
@@ -205,7 +206,7 @@ jobs:
   - id: sample_generator
     source_paths:
       - path/to/source.yml
-    command: ruby bin/generate_sample
+    generator: sample_generator
     generated_paths:
       - path/to/generated.md
 ```
@@ -230,7 +231,7 @@ rules:
 ## 将来の方向性
 
 - 生成先をリポジトリ上のファイルではなく、DocumentVersion / storage / build artifact に寄せます。
-- `command` 方式はGenerator class方式に置き換えていきます。
+- 後方互換の `command` 方式は段階的に減らし、Generator class方式に寄せます。
 - `config/file_change_event_jobs.yml` の内容は、将来的にマスタメンテ画面から管理できる形にできます。その場合は、選択可能なJobやパラメーターをAllowListまたはmodel上のマッピングとして定義します。
 
 ## 注意点
