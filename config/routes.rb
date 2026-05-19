@@ -46,6 +46,9 @@ Rails.application.routes.draw do
       post :sync, on: :member
     end
     resources :git_import_runs, only: [:index]
+    resources :generated_file_runs, only: %i[index show], param: :public_id do
+      post :retry_run, on: :member
+    end
     resources :zip_imports, only: %i[new create show update], param: :public_id
     resources :microsoft_graph_connections, except: %i[show new]
     resources :recurring_job_schedules, only: %i[index show], param: :public_id do
