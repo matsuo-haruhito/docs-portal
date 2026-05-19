@@ -9,10 +9,11 @@
     .markdown-workspace__header
       div
         h2 左右確認ビュー
-        p.muted PDFやOfficeなどテキストdiffが取りにくいファイルは、前版と今回版を左右に並べて見比べられます。
+        p.muted PDFやOfficeなどテキストdiffが取りにくいファイルは、前版と今回版を左右に並べて見比べられます。ブラウザ内表示できない形式はダウンロードして確認してください。
       .actions
         - if @compare_version
           = link_to "比較対象版を開く", document_version_path(@compare_version), class: "button secondary"
+        = link_to "添付・元ファイルへ移動", "#version-files", class: "button secondary"
     - review_paths.each do |path|
       - current_file = current_by_path[path]
       - previous_file = previous_by_path[path]
@@ -29,22 +30,26 @@
           .side-by-side-file-review__pane
             h3 比較対象
             - if previous_file
-              p.muted = previous_file.effective_content_type
+              p.muted = "#{previous_file.effective_content_type} / #{number_to_human_size(previous_file.file_size)}"
+              p.actions
+                = link_to "開く", document_file_path(previous_file), class: "button secondary"
+                = link_to "ダウンロード", document_file_path(previous_file, disposition: "download"), class: "button secondary", data: { turbo: false }
               - if previous_file.embeddable_viewer_file?
                 iframe.side-by-side-file-review__frame src=document_file_path(previous_file, disposition: "inline", embedded: "1") title="#{path} previous"
               - else
-                p.muted このファイルはブラウザ内プレビューに対応していません。
-                = link_to "ダウンロード", document_file_path(previous_file), class: "button secondary"
+                p.muted このファイルはブラウザ内プレビューに対応していません。ダウンロードして比較してください。
             - else
               p.muted 比較対象版にはありません。
           .side-by-side-file-review__pane
             h3 表示中
             - if current_file
-              p.muted = current_file.effective_content_type
+              p.muted = "#{current_file.effective_content_type} / #{number_to_human_size(current_file.file_size)}"
+              p.actions
+                = link_to "開く", document_file_path(current_file), class: "button secondary"
+                = link_to "ダウンロード", document_file_path(current_file, disposition: "download"), class: "button secondary", data: { turbo: false }
               - if current_file.embeddable_viewer_file?
                 iframe.side-by-side-file-review__frame src=document_file_path(current_file, disposition: "inline", embedded: "1") title="#{path} current"
               - else
-                p.muted このファイルはブラウザ内プレビューに対応していません。
-                = link_to "ダウンロード", document_file_path(current_file), class: "button secondary"
+                p.muted このファイルはブラウザ内プレビューに対応していません。ダウンロードして比較してください。
             - else
               p.muted 表示中の版にはありません。
