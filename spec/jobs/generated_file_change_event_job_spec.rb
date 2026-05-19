@@ -61,4 +61,38 @@ RSpec.describe GeneratedFileChangeEventJob, type: :job do
     )
     expect(GeneratedFiles::ChangeEventHandler).not_to have_received(:new)
   end
+
+  describe ".concurrency_key_for" do
+    it "uses sorted normalized file events when file events are present" do
+      key = described_class.concurrency_key_for(
+        args: [],
+        kwargs: {
+          file_events: [
+            {path: "./docs/b.yml", operation: "delete"},
+            {"path" => "docs/../docs/a.yml", "operation" => "update"}
+          ]
+        }
+      )
+
+      expect(key).to eq("generated-file-change-event:docs/a.yml:update,docs/b.yml:delete")
+    end
+
+    it "uses changed files and operation when file events are absent" do
+      key = described_class.concurrency_key_for(
+        args: [],
+        kwargs: {changed_files: ["b.yml", "a.yml"], operation: :create}
+      )
+
+      expect(key).to eq("generated-file-change-event:a.yml:create,b.yml:create")
+    end
+
+    it "accepts string keys from serialized job payloads" do
+      key = described_class.concurrency_key_for(
+        args: [{"changed_files" => ["source.yml"], "operation" => "delete"}],
+        kwargs: {}
+      )
+
+      expect(key).to eq("generated-file-change-event:source.yml:delete")
+    end
+  end
 end
