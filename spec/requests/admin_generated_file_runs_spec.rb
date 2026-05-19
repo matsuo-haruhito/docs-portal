@@ -33,6 +33,20 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).to match(%r{<div class="mt-1 text-2xl font-bold">2</div>})
     end
 
+    it "paginates generated file runs" do
+      sign_in_as(admin_user)
+      newest = create_run!(job_id: "newest", created_at: Time.zone.parse("2026-05-12 12:00:00"))
+      middle = create_run!(job_id: "middle", created_at: Time.zone.parse("2026-05-11 12:00:00"))
+      oldest = create_run!(job_id: "oldest", created_at: Time.zone.parse("2026-05-10 12:00:00"))
+
+      get admin_generated_file_runs_path(page: 2, per_page: 1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(middle.public_id)
+      expect(response.body).not_to include(newest.public_id)
+      expect(response.body).not_to include(oldest.public_id)
+    end
+
     it "filters by status, job id, output writer, event source, and date range" do
       sign_in_as(admin_user)
       matched = create_run!(
