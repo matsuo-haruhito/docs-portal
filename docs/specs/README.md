@@ -10,6 +10,7 @@
 - [Archive preview](./archive-preview.md)
 - [Preview target metadata](./preview-target-metadata.md)
 - [Docusaurus build manifest](./docusaurus-build-manifest.md)
+- [Path history / redirect](./path-history-redirect.md)
 
 対象:
 
@@ -21,6 +22,7 @@
 - preview 関連 UI
 - preview target metadata
 - Docusaurus build manifest
+- path history / redirect
 
 ### Search
 
@@ -51,7 +53,6 @@
 
 以下は roadmap 上の予定です。仕様ファイルを追加したら、この README からリンクしてください。
 
-- path history / redirect
 - codeblock actions
 - Docusaurus build profiles
 - external publish / standalone public build
