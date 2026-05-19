@@ -4,12 +4,15 @@
       <h1 class="text-2xl font-bold">生成ファイルイベント</h1>
       <p class="text-sm text-gray-600">debounce / coalesce 用に蓄積されたファイル変更イベントです。</p>
     </div>
-    <div class="flex items-center gap-2 text-sm">
-      <%= button_to "失敗分を一括再dispatch", retry_failed_admin_generated_file_events_path, method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
-      <%= link_to "すべて", admin_generated_file_events_path, class: "rounded border px-3 py-2" %>
-      <% GeneratedFileEvent.statuses.keys.each do |status| %>
-        <%= link_to status, admin_generated_file_events_path(status: status), class: "rounded border px-3 py-2" %>
-      <% end %>
+    <div class="space-y-2 text-right text-sm">
+      <div class="flex items-center gap-2">
+        <%= button_to "失敗分を一括再dispatch", retry_failed_admin_generated_file_events_path, method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
+        <%= link_to "すべて", admin_generated_file_events_path, class: "rounded border px-3 py-2" %>
+        <% GeneratedFileEvent.statuses.keys.each do |status| %>
+          <%= link_to status, admin_generated_file_events_path(status: status), class: "rounded border px-3 py-2" %>
+        <% end %>
+      </div>
+      <p class="text-xs text-gray-500">一括再dispatchは古い失敗分から最大100件です。</p>
     </div>
   </div>
 
