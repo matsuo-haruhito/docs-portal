@@ -65,7 +65,7 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
   -F "import_dry_run_id=idry_xxxxx"
 ```
 
-成功時は `PublishJob` のIDと状態を返す。
+成功時は `PublishJob` のIDと状態を返す。本実行レスポンスは公開反映結果だけを返し、dry-run 用の `file_upload_preview` は返さない。
 
 ```json
 {
