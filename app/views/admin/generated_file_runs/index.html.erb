@@ -1,0 +1,39 @@
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold">生成ファイル実行履歴</h1>
+    <p class="text-sm text-gray-600">ファイルCRUDイベントから起動された生成Jobの履歴です。</p>
+  </div>
+
+  <div class="overflow-x-auto rounded-lg border bg-white">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left font-semibold">実行ID</th>
+          <th class="px-4 py-3 text-left font-semibold">Status</th>
+          <th class="px-4 py-3 text-left font-semibold">Job</th>
+          <th class="px-4 py-3 text-left font-semibold">Generator</th>
+          <th class="px-4 py-3 text-left font-semibold">Output</th>
+          <th class="px-4 py-3 text-left font-semibold">Event</th>
+          <th class="px-4 py-3 text-left font-semibold">Started</th>
+          <th class="px-4 py-3 text-left font-semibold">Finished</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        <% @generated_file_runs.each do |run| %>
+          <tr>
+            <td class="px-4 py-3 font-mono">
+              <%= link_to run.public_id, admin_generated_file_run_path(run), class: "text-blue-600 underline" %>
+            </td>
+            <td class="px-4 py-3"><%= run.status %></td>
+            <td class="px-4 py-3 font-mono"><%= run.job_id %></td>
+            <td class="px-4 py-3 font-mono"><%= run.generator.presence || "-" %></td>
+            <td class="px-4 py-3 font-mono"><%= run.output_writer.presence || "-" %></td>
+            <td class="px-4 py-3"><%= run.event_source.presence || "-" %></td>
+            <td class="px-4 py-3"><%= l(run.started_at, format: :long) if run.started_at %></td>
+            <td class="px-4 py-3"><%= l(run.finished_at, format: :long) if run.finished_at %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
