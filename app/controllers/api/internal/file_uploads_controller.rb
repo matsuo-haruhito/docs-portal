@@ -129,7 +129,24 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
   end
 
   def effective_source_commit_hash
-    @effective_source_commit_hash ||= params[:source_commit_hash].presence || params[:content_hash].presence || uploaded_file_hash
+    @effective_source_commit_hash ||= params[:source_commit_hash].presence || verified_content_hash || uploaded_file_hash
+  end
+
+  def verified_content_hash
+    return nil if normalized_content_hash.blank?
+
+    unless ActiveSupport::SecurityUtils.secure_compare(normalized_content_hash, uploaded_file_hash)
+      raise ApplicationError::BadRequest, "content_hash does not match uploaded file"
+    end
+
+    normalized_content_hash
+  end
+
+  def normalized_content_hash
+    return @normalized_content_hash if defined?(@normalized_content_hash)
+
+    value = params[:content_hash].to_s.strip.downcase.delete_prefix("sha256:")
+    @normalized_content_hash = value.presence
   end
 
   def uploaded_file_size
