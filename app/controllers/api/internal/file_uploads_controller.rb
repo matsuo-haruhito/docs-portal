@@ -27,11 +27,7 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
       result_json: result.merge(
         artifact_root: staged.artifact_root.to_s,
         manifest_path: staged.manifest_path.to_s,
-        file_upload_preview: {
-          relative_path: relative_path,
-          source_path: params[:source_path].to_s.presence,
-          zip_import_preview: staged.manifest["zip_import_preview"]
-        }
+        file_upload_preview: file_upload_preview(staged)
       ),
       warnings_json: result[:warnings] + Array(staged.manifest.dig("zip_import_preview", "warnings")),
       errors_json: result[:errors]
@@ -73,6 +69,16 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
     )
   end
 
+  def file_upload_preview(staged)
+    {
+      relative_path: relative_path,
+      source_path: params[:source_path].to_s.presence,
+      file_size: uploaded_file_size,
+      source_commit_hash: staged.manifest["source_commit_hash"],
+      zip_import_preview: staged.manifest["zip_import_preview"]
+    }
+  end
+
   def zipped_upload
     @zipped_upload ||= begin
       tempfile = Tempfile.new(["file-upload", ".zip"])
@@ -93,6 +99,10 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
 
   def uploaded_file_hash
     @uploaded_file_hash ||= Digest::SHA256.file(upload_file.tempfile.path).hexdigest
+  end
+
+  def uploaded_file_size
+    @uploaded_file_size ||= File.size(upload_file.tempfile.path)
   end
 
   def default_version_label
