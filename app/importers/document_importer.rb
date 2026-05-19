@@ -5,12 +5,14 @@ class DocumentImporter
 
   attr_reader :artifact_root, :manifest_path, :manifest
 
-  def initialize(artifact_root:, manifest_path:, actor:)
+  def initialize(artifact_root:, manifest_path:, actor:, change_event_notifier: GeneratedFiles::ChangeEventNotifier.new)
     @import_root = import_root_path
     @artifact_root = resolve_allowed_path!(artifact_root, type: :directory)
     @manifest_path = resolve_allowed_path!(manifest_path, type: :file)
     @manifest = JSON.parse(File.read(@manifest_path))
     @actor = actor
+    @change_event_notifier = change_event_notifier
+    @generated_file_events = []
   end
 
   def call
@@ -27,6 +29,7 @@ class DocumentImporter
     end
 
     publish_job.update!(status: :imported, log_message: "Imported successfully")
+    dispatch_generated_file_change_event!(publish_job)
     publish_job
   rescue => e
     publish_job&.update!(status: :failed, log_message: e.message)
@@ -35,11 +38,14 @@ class DocumentImporter
 
   private
 
+  attr_reader :change_event_notifier, :generated_file_events
+
   def import_document!(payload)
     project = Project.find_by!(code: payload.fetch("project_code"))
 
     Document.transaction do
       document = resolve_document(project, payload)
+      operation = document.new_record? ? "create" : "update"
       document.assign_attributes(
         title: payload.fetch("title"),
         category: payload.fetch("category"),
@@ -82,6 +88,7 @@ class DocumentImporter
       end
 
       document.update!(latest_version: version) if version.published?
+      record_generated_file_event!(source_path_for(payload), operation)
     end
   end
 
@@ -149,6 +156,26 @@ class DocumentImporter
     FileUtils.mkdir_p(destination.parent)
     FileUtils.cp(source, destination)
     normalized_storage_key
+  end
+
+  def dispatch_generated_file_change_event!(publish_job)
+    return if generated_file_events.empty?
+
+    change_event_notifier.notify(
+      file_events: generated_file_events.uniq.sort_by { [_1.fetch(:path), _1.fetch(:operation)] },
+      event_source: "artifact_import",
+      metadata: {
+        publish_job_id: publish_job.id,
+        actor_id: @actor&.id,
+        source_repo: manifest["source_repo"],
+        source_branch: manifest["source_branch"],
+        source_commit_hash: manifest["source_commit_hash"]
+      }.compact
+    )
+  end
+
+  def record_generated_file_event!(path, operation)
+    generated_file_events << { path: path.to_s, operation: operation.to_s }
   end
 
   def import_root_path
