@@ -145,25 +145,37 @@ module GeneratedFiles
 
     def normalize_events(file_events, changed_files, operation)
       if file_events.present?
-        return Array(file_events).map do |event|
+        return Array(file_events).filter_map do |event|
           if event.respond_to?(:fetch)
+            path = normalize_path(event.fetch("path") { event.fetch(:path) })
+            next if path.blank?
+
             FileEvent.new(
-              path: normalize_path(event.fetch("path") { event.fetch(:path) }),
+              path: path,
               operation: normalize_operation(event.fetch("operation") { event.fetch(:operation, "update") })
             )
           else
-            FileEvent.new(path: normalize_path(event), operation: normalize_operation(operation))
+            path = normalize_path(event)
+            next if path.blank?
+
+            FileEvent.new(path: path, operation: normalize_operation(operation))
           end
         end
       end
 
-      Array(changed_files).map do |path|
-        FileEvent.new(path: normalize_path(path), operation: normalize_operation(operation))
+      Array(changed_files).filter_map do |path|
+        normalized_path = normalize_path(path)
+        next if normalized_path.blank?
+
+        FileEvent.new(path: normalized_path, operation: normalize_operation(operation))
       end
     end
 
     def normalize_path(path)
-      Pathname(path.to_s.strip).cleanpath.to_s.delete_prefix("./")
+      normalized = Pathname(path.to_s.strip).cleanpath.to_s.delete_prefix("./")
+      return nil if normalized.blank? || normalized == "."
+
+      normalized
     end
 
     def normalize_operation(operation)
