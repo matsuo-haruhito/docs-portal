@@ -96,6 +96,7 @@
 - document version metadata source resolver
 - quality checker result integration
 - quality check hash / Markdown rendering spec
+- document file display classifier
 - explicit metadata files
   - `.docs-portal-preview.yml`
   - `.docs-portal-preview.yaml`
@@ -117,6 +118,7 @@
 - missing path warning
 - duplicate path warning
 - unsafe relative path normalization
+- primary / attachment / hidden / debug / grouped / normal classification
 
 ### Controller / service structure
 
@@ -167,17 +169,18 @@
 
 ## 短期タスク
 
-### 1. Preview target metadata display rules
+### 1. Preview target metadata UI integration
 
 目的:
 
-- `hidden` / `debug` / `groups` の表示制御方針を実装へ落とす
+- classifier 結果を添付・元ファイル一覧の表示に反映する
 
 候補:
 
-- document file list に適用する classifier service を追加する
-- hidden / debug / grouped / normal の分類結果を spec で固定する
-- viewer UI への表示制御は分類 service が安定してから接続する
+- hidden を通常一覧から除外または折りたたみ領域に移す
+- debug を debug セクションとして分ける
+- group_name を添付一覧に表示する
+- UI への接続は既存表示を壊さない小さい差分で行う
 
 ### 2. specs / roadmap の継続整理
 
@@ -306,7 +309,7 @@
 
 ## 実装順のおすすめ
 
-1. Preview target metadata display classifier
+1. Preview target metadata UI integration
 2. Docusaurus build manifest
 3. Path history resolver
 4. Project 内検索
