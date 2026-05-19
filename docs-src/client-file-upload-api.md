@@ -32,12 +32,13 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 | `source_name` | 任意 | 同期元名。未指定時は `file_upload` |
 | `content_hash` | 任意 | 同期クライアント向けの内容ハッシュ。指定時はアップロード実体のSHA-256と照合する |
 | `source_commit_hash` | 任意 | artifact import と揃えるための採用ハッシュ名。`content_hash` と両方ある場合、採用値はこちらを優先する |
-| `version_label` | 任意 | 未指定時は `file-YYYYMMDDHHMMSS-<hash8>` |
+| `version_label` | 任意 | 未指定時は `file-YYYYMMDDHHMMSS-hash8` |
 | `status` | 任意 | 未指定時は `published` |
 
 ## 2. dry-run 結果確認
 
 レスポンスには `dry_run_id` と `file_upload_preview` が含まれます。
+`file_upload_preview.content_hash` は、クライアントが送った値ではなく、実際にアップロードされたファイルの SHA-256 です。
 
 ```json
 {
@@ -67,13 +68,13 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 
 クライアントは通常 `content_hash` を送れば十分です。
 
-- `content_hash` は `sha256:<hash>` 形式でも `<hash>` 形式でもよい
-- `<hash>` は 64 桁の SHA-256 hex digest とする
-- 大文字小文字は区別せず、レスポンスでは小文字に正規化する
+- `content_hash` は `sha256:` 接頭辞付き、または 64 桁 hex 形式で送る
+- 大文字小文字は区別せず、小文字に正規化する
 - `content_hash` が送られた場合は、`source_commit_hash` の有無に関わらずアップロード実体と照合する
 - `content_hash` が形式不正または不一致なら dry-run を作らない
 - `source_commit_hash` と `content_hash` の両方があり、`content_hash` が実体と一致する場合は、採用値として `source_commit_hash` を優先する
 - どちらも未指定の場合は、サーバーが元ファイル実体のSHA-256を採用する
+- dry-run レスポンスの `file_upload_preview.content_hash` は常に実アップロードファイルのSHA-256を返す
 
 ## 4. 本実行
 
