@@ -1,10 +1,13 @@
 # Docusaurus build runtime notes
 
-Docusaurus builds are executed from the Rails seed/build flow when external sample documents are converted into static HTML.
+Docusaurus builds are executed in two paths:
+
+- Rails seed/build flow for external sample documents
+- Docusaurus renderer service for manual Markdown/MDX upload previews
 
 ## Node.js / npm
 
-The build runner invokes `npm run build` under `docusaurus/`, so the execution environment must include Node.js and npm.
+The seed build runner invokes `npm run build` under `docusaurus/`, so the execution environment must include Node.js and npm.
 
 For local Docker development, rebuild the app image when npm is missing:
 
@@ -15,6 +18,22 @@ docker compose run --rm app bash -lc "which node && node -v && which npm && npm 
 ```
 
 Use `docker compose` consistently. Mixing the legacy `docker-compose` command with the v2 `docker compose` command can make it unclear which project/image is being used.
+
+## Manual upload preview renderer
+
+Manual Markdown/MDX uploads do not render HTML inside the Rails request. `ManualDocumentUpload` stores the draft `DocumentVersion` and enqueues `DocusaurusPreviewBuildJob`.
+
+The job sends a `tar.gz` archive of the version's document files to the internal Docusaurus renderer API. The renderer builds with the repo-local `docusaurus/` configuration and returns a build artifact archive. Rails then expands the artifact under `storage/docs_sites/<version_id>/...` and updates `markdown_entry_path` / `site_build_path`.
+
+For local development, enable the renderer compose file, and include Kroki when PlantUML / D2 diagrams should be rendered:
+
+```bash
+COMPOSE_FILE=docker-compose.yml:docker-compose.kroki.yml:docker-compose.docusaurus.yml
+DOCUSAURUS_RENDERER_ENDPOINT=http://docusaurus:3000
+KROKI_ENDPOINT=http://kroki:8000
+```
+
+The renderer container is built from local repository code rather than a generic public image because it depends on the repo-local Docusaurus config and `remark-kroki-diagrams` plugin.
 
 ## Kroki generated SVGs
 
