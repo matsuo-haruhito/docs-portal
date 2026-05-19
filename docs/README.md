@@ -21,6 +21,7 @@
 - [Google Drive外部フォルダ同期](./Google%20Drive外部フォルダ同期.md)
 - [利用規約・秘密保持の同意管理](./利用規約・秘密保持の同意管理.md)
 - [Webhook・外部API連携方針](./Webhook・外部API連携方針.md)
+- [Client file upload API flow](./client_file_upload_api.md)
 
 ## UIモック
 
@@ -90,6 +91,7 @@
    - build artifact
    - Git連携 import source / run
    - 外部フォルダ同期 source / run / item
+   - file_uploads / zip_uploads / artifact_imports の internal API
 
 7. AccessLog
    - 記録対象
