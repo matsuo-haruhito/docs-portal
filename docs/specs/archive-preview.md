@@ -8,7 +8,7 @@
 - `.tar` / `.gz` / `.tgz` など ZIP 以外の archive は download only とする
 - ZIP preview 本体は展開せず、entry metadata のみ読み取る
 - entry 本体 preview は text preview 候補に限定して専用画面で行う
-- entry download は service / route / controller / request spec まで実装済み。UI link は未接続
+- entry download は service / route / controller / request spec / UI link まで実装済み
 
 ## 現状の UI
 
@@ -34,6 +34,7 @@ ZIP preview では以下を表示する。
   - text preview 候補
   - download 候補または操作不可理由
   - text preview 候補への preview link
+  - download 候補への download entry link
   - path copy 操作
 
 ## 表示上限
@@ -69,6 +70,7 @@ ZIP preview では以下を表示する。
 - 種別 / path / size sort
 - 条件リセット
 - text preview候補 entry の preview link
+- download候補 entry の download entry link
 - entry path 個別コピー
 - 表示中 entry path 一括コピー
 - directory path 個別コピー
@@ -125,8 +127,9 @@ entry 単位 preview / download は便利だが、以下の検討が必要。
 - `action_unavailable_reason`
 - `download_candidate?`
 - `text_preview_candidate?`
+- `download_blocked_archive?`
 
-現在の `download_candidate?` は、directory entry ではなく、かつ safe path であることだけを示す。
+現在の `download_candidate?` は、directory entry ではなく、safe path であり、かつ nested archive extension ではないことを示す。
 `text_preview_candidate?` は `download_candidate?` に加えて、拡張子が `.txt` / `.log` / `.md` / `.csv` / `.tsv` / `.json` / `.yaml` / `.yml` などのテキスト系であることを示す。
 
 ## entry 単位 action の初期実装
@@ -244,14 +247,13 @@ lookup が `downloadable?` であり、かつ entry path の拡張子が `.zip` 
 - preview link 先では entry metadata と本文行を表示する
 - 既存 text preview UI と同じ検索 / 一致行のみ表示 / コピー / reset を使う
 - preview できない場合は reason を表示する
-- download link はまだ表示しない
 
-### 実装済みの download controller / request spec
+### 実装済みの download controller / request spec / UI
 
 - download action は archive 本体の download 権限を確認する
 - download action は success 時だけ `record_download_access_log` を記録する
 - request spec で success / unsafe path / nested archive block を固定している
-- UI link はまだ表示しない
+- ZIP entry 一覧では download candidate の entry にだけ `download entry` link を表示する
 
 ### 初期実装で許可する範囲
 
@@ -302,14 +304,12 @@ view 権限だけの external user には entry download を許可しない。
 
 ### 初期 download UI
 
-UI は route / controller / request spec が安定してから追加する。
+実装済み:
 
-段階:
-
-1. service と request spec だけ追加する
-2. text / binary を問わず `downloadable?` の entry にだけ link を出す
-3. link label は `download entry` とし、archive 本体 download と混同しない文言にする
-4. truncated preview の対象外 entry には link を出さない。ZIP preview が先頭 N entry のみを表示するため、画面に表示される entry だけが操作対象になる
+- text / binary を問わず `download_candidate?` の entry にだけ link を出す
+- link label は `download entry` とし、archive 本体 download と混同しない文言にする
+- unsafe / directory / nested archive / size over は reason 表示のままにする
+- truncated preview の対象外 entry には link を出さない。ZIP preview が先頭 N entry のみを表示するため、画面に表示される entry だけが操作対象になる
 
 ### access log
 
