@@ -1,6 +1,19 @@
 require "rails_helper"
 
 RSpec.describe GeneratedFileEvent, type: :model do
+  describe "validations" do
+    it "requires event key, path, operation, scheduled time, and last seen time" do
+      event = described_class.new
+
+      expect(event).not_to be_valid
+      expect(event.errors[:event_key]).to be_present
+      expect(event.errors[:path]).to be_present
+      expect(event.errors[:operation]).to be_present
+      expect(event.errors[:scheduled_at]).to be_present
+      expect(event.errors[:last_seen_at]).to be_present
+    end
+  end
+
   describe ".build_event_key" do
     it "normalizes relative path prefixes" do
       key = described_class.build_event_key(
