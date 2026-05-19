@@ -28,7 +28,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
 
   def retry_failed
     @filters = event_filter_params
-    events = apply_filters(GeneratedFileEvent.failed.order(created_at: :desc, id: :desc)).limit(MAX_PER_PAGE)
+    events = apply_filters(GeneratedFileEvent.failed.order(created_at: :asc, id: :asc)).limit(MAX_PER_PAGE)
     events.each { reset_for_dispatch!(_1) }
     GeneratedFileEventDispatchJob.perform_later if events.any?
 
