@@ -13,6 +13,7 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
   -F "relative_path=docs/README.md" \
   -F "source_path=C:/work/customer-docs/docs/README.md" \
   -F "source_name=customer-local-sync" \
+  -F "content_hash=sha256..." \
   -F "validate_only=true"
 ```
 
@@ -25,7 +26,8 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 | `relative_path` | 任意 | 同期元フォルダ内の相対パス。未指定時はアップロードファイル名 |
 | `source_path` | 任意 | クライアントPC上のフルパスなどの参考情報。取り込み先決定には使わない |
 | `source_name` | 任意 | 同期元名。未指定時は `file_upload` |
-| `source_commit_hash` | 任意 | クライアントが算出した内容ハッシュ。未指定時はサーバーが元ファイルのSHA-256を使う |
+| `content_hash` | 任意 | 同期クライアント向けの内容ハッシュ。未指定時はサーバーが元ファイルのSHA-256を使う |
+| `source_commit_hash` | 任意 | artifact import と揃えるための別名。`content_hash` より優先される |
 | `version_label` | 任意 | 未指定時は `file-YYYYMMDDHHMMSS-<hash8>` |
 | `status` | 任意 | 未指定時は `published` |
 
@@ -54,7 +56,8 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 ```
 
 `source_path` は監査・表示用であり、manifest の branch metadata には使わない。
-サーバー側の取り込み識別には `relative_path` と `source_commit_hash` を使う。
+サーバー側の取り込み識別には `relative_path` と、採用後の `source_commit_hash` を使う。
+クライアントは通常 `content_hash` を送ればよい。`source_commit_hash` と `content_hash` の両方がある場合は `source_commit_hash` を優先する。
 `version_label` を明示しない場合は、秒単位の時刻と内容ハッシュ先頭8桁から作る。
 
 ## 3. 本実行
