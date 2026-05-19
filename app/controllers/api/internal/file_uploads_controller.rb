@@ -62,7 +62,7 @@ class Api::Internal::FileUploadsController < Api::Internal::ZipUploadsController
       project: project,
       actor: actor,
       source_repo: params[:source_name].presence || "file_upload",
-      source_branch: params[:source_path].presence || relative_path,
+      source_branch: relative_path,
       source_commit_hash: params[:source_commit_hash].presence || uploaded_file_hash,
       version_label: params[:version_label].presence || default_version_label,
       status: params[:status]
