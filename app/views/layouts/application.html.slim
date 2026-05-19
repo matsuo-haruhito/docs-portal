@@ -124,9 +124,12 @@ html
       | .markdown-line-diff-row.is-gap { background: #f8fafc; color: var(--muted); }
       | .diff-line-number { padding: 0.55rem 0.7rem; text-align: right; color: #64748b; background: rgba(248, 250, 252, 0.72); border-right: 1px solid #e2e8f0; font-variant-numeric: tabular-nums; user-select: none; }
       | .diff-line-code { display: block; padding: 0.55rem 0.8rem; white-space: pre-wrap; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      | .diff-inline-change { display: inline; padding: 0.05rem 0.16rem; border-radius: 0.28rem; background: #fde68a; color: #78350f; box-shadow: inset 0 -2px 0 rgba(245, 158, 11, 0.34); }
       | .markdown-line-diff-row.is-added .diff-line-code { box-shadow: inset 4px 0 0 #22c55e; }
       | .markdown-line-diff-row.is-removed .diff-line-code { box-shadow: inset 4px 0 0 #ef4444; }
       | .markdown-line-diff-row.is-changed .diff-line-code { box-shadow: inset 4px 0 0 #f59e0b; }
+      | .markdown-line-diff-row.is-added .diff-inline-change { background: #bbf7d0; color: #14532d; box-shadow: inset 0 -2px 0 rgba(34, 197, 94, 0.32); }
+      | .markdown-line-diff-row.is-removed .diff-inline-change { background: #fecaca; color: #7f1d1d; box-shadow: inset 0 -2px 0 rgba(239, 68, 68, 0.32); }
       | .rendered-table-diff-table td.is-added, .rendered-table-diff-table tr.is-added td { background: #ecfdf5; }
       | .rendered-table-diff-table td.is-removed, .rendered-table-diff-table tr.is-removed td { background: #fef2f2; }
       | .rendered-table-diff-table td.is-changed, .rendered-table-diff-table tr.is-changed td { background: #fffbeb; outline: 2px solid #f59e0b; outline-offset: -2px; }
