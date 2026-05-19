@@ -8,6 +8,7 @@
 
 - [閲覧画面とUI](./閲覧画面とUI.md)
 - [Archive preview](./archive-preview.md)
+- [Preview target metadata](./preview-target-metadata.md)
 
 対象:
 
@@ -17,6 +18,7 @@
 - archive / ZIP preview
 - 差分表示
 - preview 関連 UI
+- preview target metadata
 
 ### Search
 
@@ -47,7 +49,6 @@
 
 以下は roadmap 上の予定です。仕様ファイルを追加したら、この README からリンクしてください。
 
-- preview target metadata
 - path history / redirect
 - codeblock actions
 - Docusaurus build profiles
