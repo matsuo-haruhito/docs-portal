@@ -117,21 +117,28 @@ curl -X POST https://portal.example.com/api/internal/zip_uploads \
 
 同期クライアントや手動アップロードから、単体ファイルをアップロードして dry-run を作成します。
 サーバー側では受信ファイルを一時ZIP化し、ZIP upload と同じ dry-run / manifest / `DocumentImporter` の流れへ合流させます。
+`file` パラメータがあるリクエストは dry-run 作成として扱うため、`validate_only=true` は省略できます。
 
 | パラメータ | 必須 | 内容 |
 | --- | --- | --- |
-| `file` | dry-run時必須 | 取り込み対象ファイル |
+| `file` | dry-run時必須 | 取り込み対象ファイル。指定された場合は dry-run 作成になる |
 | `project_code` | dry-run時必須 | 取り込み先案件コード |
-| `relative_path` | 任意 | 同期元フォルダ内の相対パス。未指定時はアップロードファイル名 |
+| `relative_path` | 任意 | 同期元フォルダ内の相対パス。未指定時は `original_filename`、それもなければ upload file の元ファイル名 |
+| `original_filename` | 任意 | multipart 実装で元ファイル名が basename 化されるクライアント向けの明示的な元ファイル名 |
 | `source_path` | 任意 | クライアントPC上のフルパスなどの参考情報。取り込み先決定には使わない |
 | `source_name` | 任意 | 同期元名。未指定時は `file_upload` |
-| `validate_only` | 任意 | `true` の場合は dry-run のみ実行 |
-| `import_dry_run_id` | 本実行時必須 | dry-run で発行されたID |
-| `source_commit_hash` | 任意 | クライアント側で算出したハッシュなど。未指定時はサーバー側で算出 |
-| `version_label` | 任意 | 作成する文書版のラベル |
+| `validate_only` | 任意 | `true` でも dry-run 作成になる。`file` があれば省略可 |
+| `import_dry_run_id` | 本実行時必須 | dry-run で発行されたID。本実行時は `file` を送らない |
+| `content_hash` | 任意 | 同期クライアント向けの内容ハッシュ。指定時はアップロード実体のSHA-256と照合する |
+| `source_commit_hash` | 任意 | クライアント側で算出した採用ハッシュなど。`content_hash` と両方ある場合、採用値はこちらを優先する |
+| `version_label` | 任意 | 作成する文書版のラベル。未指定時は `file-YYYYMMDDHHMMSS-hash8` |
 | `status` | 任意 | 作成する文書版の公開状態。未指定時は `published` |
 
-`relative_path` は先頭 `/` や `../` を拒否します。`source_path` は監査・表示用の参考情報であり、サーバー側の保存先決定には使いません。
+`relative_path` と、fallback に使う `original_filename` / upload file の元ファイル名は先頭 `/`、`../`、Windows の `C:/...` 形式を拒否します。
+`source_path` は監査・表示用の参考情報であり、サーバー側の保存先決定には使いません。
+
+`content_hash` は `sha256:` 接頭辞付き、または 64 桁 hex 形式を受け付けます。
+指定された場合はアップロード実体の SHA-256 と常に照合し、不一致なら dry-run を作りません。
 
 ### dry-run
 
@@ -142,8 +149,11 @@ curl -X POST https://portal.example.com/api/internal/file_uploads \
   -F "file=@README.md" \
   -F "relative_path=docs/README.md" \
   -F "source_path=C:/work/customer-docs/docs/README.md" \
-  -F "validate_only=true"
+  -F "source_name=customer-local-sync" \
+  -F "content_hash=sha256..."
 ```
+
+`validate_only=true` を付けても同じく dry-run 作成として処理します。
 
 ### 本実行
 
@@ -540,6 +550,7 @@ Drive ID: b!xxxxxxxxxxxxxxxx
 ## 運用メモ
 
 - `validate_only=true` で事前検証し、差分や警告を確認してから本実行します。
+- `file_uploads` では `file` があれば dry-run 作成として扱うため、`validate_only=true` は省略できます。
 - `source_commit_hash` が manifest と dry-run で食い違う場合、本実行は拒否されます。
 - ZIP upload / file upload の本実行では `import_dry_run_id` が必須です。
 - 取り込み失敗時は管理画面の Git同期履歴、または import dry-run の結果を確認します。
