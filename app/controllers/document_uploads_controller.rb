@@ -12,7 +12,7 @@ class DocumentUploadsController < BaseController
       target_document: target_document(project)
     ).call
 
-    redirect_to document_version_path(result.version, upload_review: "1"), notice: "文書をアップロードしました。差異を確認してOK/NGを選択してください。"
+    redirect_to document_version_path(result.version, upload_review: "1"), notice: "文書をアップロードしました。差異を確認してOK/NGを選択してください。", flash: { upload_review_version_public_id: result.version.public_id }
   rescue ActionController::ParameterMissing, ApplicationError::BadRequest => e
     redirect_to project_documents_path(params[:project_code]), alert: e.message
   end
