@@ -1,3 +1,5 @@
+require "pathname"
+
 class GeneratedFileEvent < ApplicationRecord
   include PublicIdentifiable
 
