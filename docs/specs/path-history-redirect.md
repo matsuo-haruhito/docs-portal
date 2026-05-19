@@ -31,6 +31,24 @@ Path history / redirect は、文書の slug、Docusaurus site path、Markdown e
 - `canonical_version`
 - `matched_version`
 
+`DocumentSlugHistoryResolver` は、同一 project 内の document versions から、旧 slug とみなせる source/path 由来の候補を現在の document slug へ解決します。
+
+入力:
+
+- `project`
+- `requested_slug`
+- `candidate_documents`
+
+出力:
+
+- `status`
+  - `moved`
+  - `missing`
+- `requested_slug`
+- `canonical_document`
+- `matched_version`
+- `matched_source`
+
 ## canonical 判定
 
 要求された path を `DocumentVersion.normalize_site_page_path` で正規化し、現在の canonical version の `normalized_html_view_site_path` 配下であれば `canonical` とします。
@@ -57,6 +75,16 @@ canonical_path: docs/current-guide/appendix/page
 status: moved
 ```
 
+slug については、要求された slug が現在の document slug と一致せず、同一 project 内の document version に次のような一致候補がある場合に `moved` とします。
+
+- `source_file_name` の拡張子を除いた名前
+- `source_relative_path` の末尾ファイル名から拡張子を除いた名前
+- `source_directory` の末尾 segment
+- `html_view_site_path` の末尾 segment
+- `site_build_path` の末尾 segment
+
+slug 候補は NFKC 正規化・小文字化・記号整理をして比較します。
+
 ## missing 判定
 
 現在 version にも過去 version にも一致しない場合は `missing` とします。
@@ -67,11 +95,15 @@ status: moved
 
 `DocumentsController#show` では、reader 用の `site_path` に対して resolver を呼びます。
 
-- `moved` の場合は `301 Moved Permanently` で現在の `site_path` に redirect
+- slug が現在 document に一致する場合は通常表示
+- slug が存在せず `DocumentSlugHistoryResolver` が `moved` を返した場合は現在 document slug へ `301 Moved Permanently`
+- `site_path` が `moved` の場合は `301 Moved Permanently` で現在の `site_path` に redirect
 - `canonical` の場合はそのまま viewer を表示
 - `missing` の場合は従来どおり viewer 処理を継続
 
-redirect 先には現在の `version_id`、canonical `site_path`、元の `previous_site_path` を含めます。redirect 後の reader では、`previous_site_path` がある場合に「現在の場所へ移動しました」という notice を表示し、旧 path と現在 path を並べて示します。
+slug redirect 先には `previous_slug` を含めます。redirect 後の reader では、`previous_slug` がある場合に「現在の文書URLへ移動しました」という notice を表示し、旧 URL 識別子と現在 slug を並べて示します。
+
+site path redirect 先には現在の `version_id`、canonical `site_path`、元の `previous_site_path` を含めます。redirect 後の reader では、`previous_site_path` がある場合に「現在の場所へ移動しました」という notice を表示し、旧 path と現在 path を並べて示します。
 
 ## project site integration
 
@@ -102,7 +134,7 @@ old/path, another/old/path -> current/path
 
 ## current limitations
 
-- slug 自体の履歴はまだ扱わない
+- slug history は source/path 由来の推定のみで、明示 DB table はまだ持たない
 - DB table として path history はまだ持たない
 - archived / deleted / explicitly moved の状態管理はまだ持たない
 - 別 document への移動はまだ扱わない
@@ -110,6 +142,6 @@ old/path, another/old/path -> current/path
 
 ## next steps
 
-- slug history の resolver を追加する
+- slug history を metadata または DB table で明示管理する
 - path history を metadata または DB table で明示管理する
 - `canonical`, `moved`, `archived`, `deleted` を user-facing な状態として整理する
