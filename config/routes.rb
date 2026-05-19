@@ -81,6 +81,7 @@ Rails.application.routes.draw do
     resource :ai_context, only: [:show], controller: "project_ai_contexts"
     get "site(/*site_path)", to: "project_sites#show", as: :site, format: false
     resource :document_zip, only: [:create], controller: "project_document_zips"
+    resources :document_uploads, only: [:create]
     resources :document_sets, only: %i[index show], param: :public_id
     resources :document_catalogs, only: %i[index show], param: :public_id
     resources :documents, only: [:index, :show], param: :slug do
