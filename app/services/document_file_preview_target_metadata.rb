@@ -1,0 +1,112 @@
+require "yaml"
+
+class DocumentFilePreviewTargetMetadata
+  FRONT_MATTER_PATTERN = /\A---\s*\n(?<yaml>.*?)\n---\s*(?:\n|\z)/m
+  PREVIEW_TARGET_KEYS = %w[primary attachments hidden debug groups].freeze
+  TOP_LEVEL_KEY = "preview_targets"
+
+  Warning = Data.define(:code, :message, :path)
+  Result = Data.define(:metadata, :warnings) do
+    def valid?
+      warnings.empty?
+    end
+
+    def paths_for(key)
+      Array(metadata[key.to_s])
+    end
+  end
+
+  def initialize(source:, document_files: [])
+    @source = source.to_s
+    @document_files = document_files
+  end
+
+  def call
+    metadata = normalize_metadata(parsed_preview_targets)
+    warnings = validate_metadata(metadata)
+    Result.new(metadata:, warnings:)
+  rescue Psych::Exception => e
+    Result.new(metadata: {}, warnings: [Warning.new(code: :invalid_yaml, message: e.message, path: nil)])
+  end
+
+  private
+
+  attr_reader :source, :document_files
+
+  def parsed_preview_targets
+    data = YAML.safe_load(front_matter_yaml, permitted_classes: [], permitted_symbols: [], aliases: false) || {}
+    return data.fetch(TOP_LEVEL_KEY, {}) if data.is_a?(Hash)
+
+    {}
+  end
+
+  def front_matter_yaml
+    match = source.match(FRONT_MATTER_PATTERN)
+    match ? match[:yaml] : source
+  end
+
+  def normalize_metadata(value)
+    return {} unless value.is_a?(Hash)
+
+    value.each_with_object({}) do |(key, raw_value), hash|
+      next unless PREVIEW_TARGET_KEYS.include?(key.to_s)
+
+      hash[key.to_s] = normalize_paths(raw_value)
+    end
+  end
+
+  def normalize_paths(value)
+    case value
+    when Array
+      value.flat_map { normalize_paths(_1) }
+    when Hash
+      value.values.flat_map { normalize_paths(_1) }
+    else
+      normalized_path(value)
+    end.compact
+  end
+
+  def validate_metadata(metadata)
+    warnings = []
+    warnings.concat(unknown_key_warnings)
+    warnings.concat(missing_path_warnings(metadata))
+    warnings.concat(duplicate_path_warnings(metadata))
+    warnings
+  end
+
+  def unknown_key_warnings
+    targets = parsed_preview_targets
+    return [] unless targets.is_a?(Hash)
+
+    targets.keys.map(&:to_s).reject { PREVIEW_TARGET_KEYS.include?(_1) }.map do |key|
+      Warning.new(code: :unknown_key, message: "preview_targets.#{key} は未対応です", path: nil)
+    end
+  end
+
+  def missing_path_warnings(metadata)
+    metadata.flat_map do |key, paths|
+      paths.reject { existing_paths.include?(_1) }.map do |path|
+        Warning.new(code: :missing_path, message: "#{key} に指定された #{path} が存在しません", path:)
+      end
+    end
+  end
+
+  def duplicate_path_warnings(metadata)
+    all_paths = metadata.flat_map { |_key, paths| paths }
+    all_paths.tally.select { |_path, count| count > 1 }.keys.map do |path|
+      Warning.new(code: :duplicate_path, message: "#{path} が複数の preview target に指定されています", path:)
+    end
+  end
+
+  def existing_paths
+    @existing_paths ||= document_files.map(&:tree_path).to_set
+  end
+
+  def normalized_path(value)
+    path = value.to_s.strip.tr("\\", "/").delete_prefix("/")
+    normalized = Pathname.new(path.presence || ".").cleanpath.to_s
+    return if normalized.blank? || normalized == "." || normalized == ".." || normalized.start_with?("../")
+
+    normalized
+  end
+end
