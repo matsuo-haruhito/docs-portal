@@ -49,9 +49,28 @@ class DocumentFilePreviewTargetMetadata
     return {} unless value.is_a?(Hash)
 
     value.each_with_object({}) do |(key, raw_value), hash|
-      next unless PREVIEW_TARGET_KEYS.include?(key.to_s)
+      key = key.to_s
+      next unless PREVIEW_TARGET_KEYS.include?(key)
 
-      hash[key.to_s] = normalize_paths(raw_value)
+      hash[key] = key == "groups" ? normalize_groups(raw_value) : normalize_paths(raw_value)
+    end
+  end
+
+  def normalize_groups(value)
+    case value
+    when Hash
+      value.each_with_object({}) do |(group_name, paths), groups|
+        normalized_paths = normalize_paths(paths)
+        groups[group_name.to_s] = normalized_paths if normalized_paths.any?
+      end
+    when Array
+      value.each_with_index.each_with_object({}) do |(paths, index), groups|
+        normalized_paths = normalize_paths(paths)
+        groups["group_#{index + 1}"] = normalized_paths if normalized_paths.any?
+      end
+    else
+      normalized_paths = normalize_paths(value)
+      normalized_paths.any? ? { "group_1" => normalized_paths } : {}
     end
   end
 
@@ -87,15 +106,17 @@ class DocumentFilePreviewTargetMetadata
   end
 
   def missing_path_warnings(metadata)
-    metadata.flat_map do |key, paths|
-      paths.reject { |path| existing_paths.include?(path) }.map do |path|
+    grouped_paths = Array(metadata["groups"]&.values).flatten
+    metadata.except("groups").merge("groups" => grouped_paths).flat_map do |key, paths|
+      Array(paths).reject { |path| existing_paths.include?(path) }.map do |path|
         Warning.new(code: :missing_path, message: "#{key} に指定された #{path} が存在しません", path: path)
       end
     end
   end
 
   def duplicate_path_warnings(metadata)
-    all_paths = metadata.flat_map { |_key, paths| paths }
+    grouped_paths = Array(metadata["groups"]&.values).flatten
+    all_paths = metadata.except("groups").flat_map { |_key, paths| Array(paths) } + grouped_paths
     all_paths.tally.select { |_path, count| count > 1 }.keys.map do |path|
       Warning.new(code: :duplicate_path, message: "#{path} が複数の preview target に指定されています", path: path)
     end
