@@ -83,6 +83,7 @@
   - archive entry download design
   - archive entry download service / spec
   - archive entry download route / controller / request spec
+  - archive entry download UI link
   - text preview candidate への preview link
   - text preview / download 候補分類
   - truncated 時の対象範囲 warning
@@ -138,20 +139,7 @@
 
 ## 短期タスク
 
-### 1. ZIP entry download UI link
-
-目的:
-
-- 実装済みの download route / controller を ZIP entry 一覧へ安全に露出する
-
-候補:
-
-- `downloadable?` の entry にだけ `download entry` link を出す
-- archive 本体 download と混同しない文言にする
-- unsafe / directory / nested archive / size over は reason 表示のままにする
-- UI 追加後に request / view spec を必要に応じて補強する
-
-### 2. specs / roadmap の継続整理
+### 1. specs / roadmap の継続整理
 
 目的:
 
@@ -293,8 +281,7 @@
 
 ## 実装順のおすすめ
 
-1. ZIP entry download UI link
-2. Preview target metadata parser / validator
-3. Docusaurus build manifest
-4. Path history resolver
-5. Project 内検索
+1. Preview target metadata parser / validator
+2. Docusaurus build manifest
+3. Path history resolver
+4. Project 内検索
