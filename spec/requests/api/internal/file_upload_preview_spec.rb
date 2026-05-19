@@ -34,17 +34,24 @@ RSpec.describe "API internal file upload preview", type: :request do
       file: uploaded_file,
       relative_path: "docs/README.md",
       source_path: "C:/work/docs/README.md",
+      source_name: "local-sync",
+      version_label: "manual-v1",
       validate_only: true
     }, headers: headers
 
     expect(response).to have_http_status(:created)
-    expect(response.parsed_body.dig("file_upload_preview", "source_commit_hash")).to eq(expected_hash)
-    expect(response.parsed_body.dig("file_upload_preview", "file_size")).to eq(file_content.bytesize)
+    preview = response.parsed_body.fetch("file_upload_preview")
+    expect(preview["source_commit_hash"]).to eq(expected_hash)
+    expect(preview["file_size"]).to eq(file_content.bytesize)
+    expect(preview["source_name"]).to eq("local-sync")
+    expect(preview["version_label"]).to eq("manual-v1")
 
     dry_run = ImportDryRun.find_by!(public_id: response.parsed_body.fetch("dry_run_id"))
     expect(dry_run.source_commit_hash).to eq(expected_hash)
     expect(dry_run.result_json.dig("file_upload_preview", "source_commit_hash")).to eq(expected_hash)
     expect(dry_run.result_json.dig("file_upload_preview", "file_size")).to eq(file_content.bytesize)
+    expect(dry_run.result_json.dig("file_upload_preview", "source_name")).to eq("local-sync")
+    expect(dry_run.result_json.dig("file_upload_preview", "version_label")).to eq("manual-v1")
   ensure
     uploaded_file&.tempfile&.close!
   end
