@@ -29,7 +29,7 @@ export default class extends Controller {
     const files = event.dataTransfer.files
     if (!files || files.length === 0) return
 
-    Array.from(files).forEach((file) => this.upload(file, event.currentTarget))
+    this.upload(files[0], event.currentTarget)
   }
 
   upload(file, target) {
@@ -72,6 +72,10 @@ export default class extends Controller {
   }
 
   mark(target, active) {
-    target.classList.toggle(this.draggingClass, active)
+    target.classList.toggle(this.draggingClassName, active)
+  }
+
+  get draggingClassName() {
+    return this.hasDraggingClass ? this.draggingClass : "is-dragging"
   }
 }
