@@ -53,6 +53,7 @@
           <th class="px-4 py-3 text-left font-semibold">Event</th>
           <th class="px-4 py-3 text-left font-semibold">Started</th>
           <th class="px-4 py-3 text-left font-semibold">Finished</th>
+          <th class="px-4 py-3 text-left font-semibold">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
@@ -68,6 +69,12 @@
             <td class="px-4 py-3"><%= run.event_source.presence || "-" %></td>
             <td class="px-4 py-3"><%= l(run.started_at, format: :long) if run.started_at %></td>
             <td class="px-4 py-3"><%= l(run.finished_at, format: :long) if run.finished_at %></td>
+            <td class="px-4 py-3">
+              <div class="flex gap-2">
+                <%= link_to "詳細", admin_generated_file_run_path(run.public_id), class: "rounded border px-2 py-1 text-xs" %>
+                <%= button_to "再実行", retry_run_admin_generated_file_run_path(run.public_id), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white" %>
+              </div>
+            </td>
           </tr>
         <% end %>
       </tbody>
