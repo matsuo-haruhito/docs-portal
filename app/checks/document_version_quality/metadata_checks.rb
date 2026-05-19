@@ -17,6 +17,8 @@ module DocumentVersionQuality
         attachment_count_check,
         internal_only_text_check,
         path_history_check,
+        path_history_metadata_source_check,
+        *path_history_metadata_warning_checks,
         preview_target_metadata_source_check,
         *preview_target_metadata_warning_checks,
         docusaurus_build_manifest_source_check,
@@ -90,6 +92,18 @@ module DocumentVersionQuality
       )
     end
 
+    def path_history_metadata_source_check
+      return info(:path_history_metadata, "Path history metadata source is not set") unless path_history_metadata.source_file?
+
+      info(:path_history_metadata, "Path history metadata source is set", path_history_metadata.source_file.tree_path)
+    end
+
+    def path_history_metadata_warning_checks
+      path_history_metadata.warnings.map do |metadata_warning|
+        warning(:path_history_metadata, metadata_warning.message, metadata_warning.detail)
+      end
+    end
+
     def preview_target_metadata_source_check
       return info(:preview_target_metadata, "Preview target metadata source is not set") unless preview_target_metadata.source_file?
 
@@ -121,6 +135,10 @@ module DocumentVersionQuality
       @path_history_summary ||= DocumentPathHistorySummary.new(document_version).call
     end
 
+    def path_history_metadata
+      @path_history_metadata ||= DocumentPathHistoryMetadata.new(document_version).call
+    end
+
     def preview_target_metadata
       @preview_target_metadata ||= DocumentVersionPreviewTargetMetadata.new(document_version).call
     end
@@ -138,7 +156,7 @@ module DocumentVersionQuality
     end
 
     def error(key, message, detail = nil)
-      check_class.new(key:, severity: :error, message:, detail:)
+      check_class.new(key:, severity: :error, detail:, message:)
     end
   end
 end
