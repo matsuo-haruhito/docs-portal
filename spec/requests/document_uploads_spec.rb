@@ -34,42 +34,35 @@ RSpec.describe "Document uploads", type: :request do
     expect(version.source_file_name).to eq("overview.md")
     expect(version.search_body_text).to include("Overview")
     expect(version.document_files.first.file_name).to eq("docs/specs/overview.md")
-    expect(version.rendered_site_available?).to eq(true)
+    expect(version.rendered_site_available?).to eq(false)
+    expect(enqueued_jobs.last[:job]).to eq(DocusaurusPreviewBuildJob)
+    expect(enqueued_jobs.last[:args]).to include(version.id)
     expect(response).to redirect_to(document_version_path(version, upload_review: "1"))
   end
 
-  it "renders richer HTML preview for manually uploaded markdown" do
+  it "enqueues a Docusaurus preview build for manually uploaded markdown" do
     sign_in_as(user)
     markdown = <<~MD
       # Preview
 
-      - one
-      - **two**
-
-      | Name | Value |
-      | --- | --- |
-      | Alpha | `1` |
-
-      ```
-      code sample
+      ```plantuml
+      @startuml
+      Alice -> Bob: hello
+      @enduml
       ```
     MD
 
-    post project_document_uploads_path(project), params: {
-      source_path: "docs/specs",
-      file: uploaded_file("preview.md", markdown)
-    }
+    expect do
+      post project_document_uploads_path(project), params: {
+        source_path: "docs/specs",
+        file: uploaded_file("preview.md", markdown)
+      }
+    end.to have_enqueued_job(DocusaurusPreviewBuildJob)
 
     version = project.documents.find_by!(title: "preview").document_versions.first
-    html_path = version.site_root_absolute_path.join(version.site_build_path, "index.html")
-    html = html_path.read
-
-    expect(html).to include("<h1>Preview</h1>")
-    expect(html).to include("<ul>")
-    expect(html).to include("<strong>two</strong>")
-    expect(html).to include("<table>")
-    expect(html).to include("<code>1</code>")
-    expect(html).to include("<pre><code>code sample</code></pre>")
+    expect(version.rendered_site_available?).to eq(false)
+    expect(version.markdown_entry_path).to be_blank
+    expect(version.site_build_path).to be_blank
   end
 
   it "shows review actions on a draft manual upload version" do
