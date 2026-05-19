@@ -57,7 +57,7 @@ class MarkdownLineDiffBuilder
   end
 
   def markdown_file?(file)
-    File.extname(file.file_name.to_s).downcase.in?(%w[.md .markdown])
+    File.extname(file.file_name.to_s).downcase.in?(%w[.md .markdown .mdx])
   end
 
   def file_too_large?(file)
