@@ -3,7 +3,7 @@ require "tempfile"
 require "uri"
 
 class DocusaurusRendererClient
-  Result = Struct.new(:archive_path, :site_path, keyword_init: true)
+  Result = Struct.new(:archive_file, :site_path, keyword_init: true)
 
   DEFAULT_ENDPOINT = "http://docusaurus:3000"
   OPEN_TIMEOUT = 5
@@ -33,11 +33,12 @@ class DocusaurusRendererClient
     output.rewind
 
     Result.new(
-      archive_path: output.path,
+      archive_file: output,
       site_path: safe_site_path(response["X-Docs-Site-Path"].presence || entry_path)
     )
-  ensure
-    output&.close
+  rescue
+    output&.close!
+    raise
   end
 
   private
