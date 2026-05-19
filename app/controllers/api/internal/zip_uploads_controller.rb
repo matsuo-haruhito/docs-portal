@@ -6,7 +6,7 @@ class Api::Internal::ZipUploadsController < Api::BaseController
       render_validation_result and return
     end
 
-    ensure_upload_dry_run!
+    ensure_zip_dry_run!
     result = importer.call
     attach_confirmed_dry_run!(result)
 
@@ -49,7 +49,7 @@ class Api::Internal::ZipUploadsController < Api::BaseController
     ), status: :created
   end
 
-  def ensure_upload_dry_run!
+  def ensure_zip_dry_run!
     raise ApplicationError::BadRequest, "import_dry_run_id is required for ZIP upload execution" unless confirmed_dry_run
     raise ApplicationError::BadRequest, "ZIP dry-run artifact is missing" if confirmed_dry_run.result_json["artifact_root"].blank? || confirmed_dry_run.result_json["manifest_path"].blank?
   end
