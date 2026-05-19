@@ -82,6 +82,7 @@ class ProjectSitesController < BaseController
       @project,
       site_path: path_history_resolution.canonical_path,
       version_id: path_history_resolution.canonical_version.public_id,
+      previous_site_path: path_history_resolution.requested_path,
       embedded: embedded_request? ? "1" : nil
     ), status: :moved_permanently
   end
@@ -96,6 +97,7 @@ class ProjectSitesController < BaseController
     elsif version_for_page.document.present?
       reader_params = { version_id: version_for_page.public_id }
       reader_params[:site_path] = site_path if site_path.present?
+      reader_params[:previous_site_path] = params[:previous_site_path] if params[:previous_site_path].present?
       redirect_to project_document_path(@project, version_for_page.document.slug, reader_params)
     else
       @site_viewer_project = @project
