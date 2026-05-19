@@ -95,19 +95,26 @@ RSpec.describe "API internal upload routes", type: :request do
   end
 
   it "rejects unsafe single-file relative paths" do
-    uploaded_file = build_uploaded_file("# Unsafe\n")
+    [
+      "../README.md",
+      "/README.md",
+      "C:/work/docs/README.md",
+      "docs/../README.md"
+    ].each do |relative_path|
+      uploaded_file = build_uploaded_file("# Unsafe\n")
 
-    post "/api/internal/file_uploads", params: {
-      project_code: project.code,
-      file: uploaded_file,
-      relative_path: "../README.md",
-      validate_only: true
-    }, headers:
+      post "/api/internal/file_uploads", params: {
+        project_code: project.code,
+        file: uploaded_file,
+        relative_path:,
+        validate_only: true
+      }, headers:
 
-    expect(response).to have_http_status(:bad_request)
-    expect(response.parsed_body["error"]).to include("relative_path")
-  ensure
-    uploaded_file&.tempfile&.close!
+      expect(response).to have_http_status(:bad_request)
+      expect(response.parsed_body["error"]).to include("relative_path")
+    ensure
+      uploaded_file&.tempfile&.close!
+    end
   end
 
   private
