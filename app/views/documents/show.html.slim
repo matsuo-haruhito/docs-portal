@@ -15,6 +15,15 @@
     .page-hero.site-viewer-hero.document-reader-hero
       h1 = @document.title
       p.muted = site_viewer_meta_lines(project: @project, document: @document, version: @viewer_version).join(" / ")
+      - if @previous_site_path.present?
+        .notice
+          strong 現在の場所へ移動しました
+          p.muted
+            | 旧パス 
+            code = @previous_site_path
+            |  は現在 
+            code = @viewer_site_path
+            |  として表示しています。
       - if current_user.internal?
         p.muted このプレビュー領域へ1ファイルずつドロップすると、この文書の更新候補としてアップロードできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
       p.actions
@@ -48,6 +57,15 @@
     = render "comment_workspace", floating: true
 - else
   h1 = @document.title
+  - if @previous_site_path.present?
+    .notice
+      strong 現在の場所へ移動しました
+      p.muted
+        | 旧パス 
+        code = @previous_site_path
+        |  は現在 
+        code = @viewer_site_path
+        |  として扱っています。
   - if current_user.internal?
     .card.manual-document-upload-panel data=preview_drop_data
       h2 ファイルをアップロード
