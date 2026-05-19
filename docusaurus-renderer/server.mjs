@@ -109,7 +109,7 @@ async function validateArchiveEntries(archivePath) {
 }
 
 async function extractArchive(archivePath, destination) {
-  await runCommand('tar', ['-xzf', archivePath, '-C', destination], {timeoutMs: BUILD_TIMEOUT_MS});
+  await runCommand('tar', ['--no-same-owner', '--no-same-permissions', '-xzf', archivePath, '-C', destination], {timeoutMs: BUILD_TIMEOUT_MS});
 }
 
 async function createArchive(archivePath, sourceDir) {
