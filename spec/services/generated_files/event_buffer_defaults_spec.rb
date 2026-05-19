@@ -27,4 +27,19 @@ RSpec.describe "Generated file event buffer defaults" do
 
     expect(events.first.metadata).to eq({})
   end
+
+  it "ignores blank paths without scheduling a dispatch" do
+    dispatcher = class_double(GeneratedFileEventDispatchJob).as_stubbed_const
+    scheduled_dispatcher = class_double(GeneratedFileEventDispatchJob, perform_later: true)
+    allow(dispatcher).to receive(:set).and_return(scheduled_dispatcher)
+
+    events = GeneratedFiles::EventBuffer.new(debounce_seconds: 5, dispatcher_job: dispatcher).add(
+      file_events: [{path: "", operation: "update"}, "./"],
+      event_source: "spec"
+    )
+
+    expect(events).to eq([])
+    expect(dispatcher).not_to have_received(:set)
+    expect(scheduled_dispatcher).not_to have_received(:perform_later)
+  end
 end
