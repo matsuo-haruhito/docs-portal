@@ -28,6 +28,9 @@ internal API は、用途が分かる名前に分ける。
 これにより、同期クライアントが同じファイルを再送した場合にも、内容単位で追跡しやすくする。
 `version_label` が指定されない場合は `file-YYYYMMDDHHMMSS-<hash8>` を使う。
 
+`file_upload_preview` には、採用された `source_name`、`relative_path`、参考情報の `source_path`、`file_size`、`source_commit_hash`、`version_label`、および内部ZIP化後の `zip_import_preview` を返す。
+レスポンスだけで dry-run の主要条件を確認できるようにする。
+
 ## dry-run の本実行
 
 upload 系APIは dry-run を作った入口と、本実行の入口を一致させる。
