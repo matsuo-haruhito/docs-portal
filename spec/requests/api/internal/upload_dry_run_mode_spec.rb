@@ -44,6 +44,23 @@ RSpec.describe "API internal upload dry-run modes", type: :request do
     uploaded_file&.tempfile&.close!
   end
 
+  it "keeps validate_only compatible for file upload dry-runs" do
+    uploaded_file = build_uploaded_file("# Explicit Dry Run\n")
+
+    post "/api/internal/file_uploads", params: {
+      project_code: project.code,
+      file: uploaded_file,
+      relative_path: "docs/explicit.md",
+      validate_only: true
+    }, headers: headers
+
+    expect(response).to have_http_status(:created)
+    expect(response.parsed_body.fetch("status")).to eq("analyzed")
+    expect(response.parsed_body.fetch("file_upload_preview").fetch("relative_path")).to eq("docs/explicit.md")
+  ensure
+    uploaded_file&.tempfile&.close!
+  end
+
   it "prioritizes a new uploaded file over import_dry_run_id" do
     first_file = build_uploaded_file("# Existing Dry Run\n")
     second_file = build_uploaded_file("# New Dry Run\n")
