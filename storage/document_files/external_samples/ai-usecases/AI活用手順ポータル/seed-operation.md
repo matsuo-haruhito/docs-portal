@@ -137,6 +137,7 @@ rules:
       changed_files: $matched_files
       job_ids:
         - ai_usecase_decision_flow
+        - ai_usecase_decision_flow_document_version
       event_source: $event_source
       metadata: $metadata
       debounce_seconds: 10
@@ -189,6 +190,8 @@ GeneratedFileJob
 
 `GeneratedFileJob` が実行する生成処理は `config/generated_file_jobs.yml` に定義します。
 
+GitHub上のseedサンプルと生成物ファイルを更新するJobです。
+
 ```yaml
 jobs:
   - id: ai_usecase_decision_flow
@@ -200,6 +203,33 @@ jobs:
       - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/decision-flow.md
       - docs/ai-usecases/generated/decision-flow.puml
 ```
+
+Docs Portal側のDocumentVersion / DocumentFile / storageへ保存するJobです。
+
+```yaml
+jobs:
+  - id: ai_usecase_decision_flow_document_version
+    source_paths:
+      - storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml
+    generator: ai_usecase_decision_flow
+    output_writer: document_version
+    output_options:
+      project_code: GENERATED_AI_USECASES
+      project_name: AI活用生成ドキュメント
+      project_description: AI活用判断フローなど、YAML DSLから生成されるdocs-portal側正本用ドキュメント。
+      create_project_if_missing: true
+      document_slug: ai-usecase-decision-flow-generated
+      document_title: AI活用判断フロー生成結果
+      document_category: other
+      document_kind: mixed
+      visibility_policy: internal_only
+      importance_level: reference
+      version_label_prefix: ai-usecase-flow
+      source_identifier: generated:ai_usecase_decision_flow
+      snapshot_kind: attachment
+```
+
+ファイル変更イベントからは、上記2つのJobをまとめて起動します。これにより、GitHub上の生成物ファイルとdocs-portal上のDocumentVersion保存を同じ元DSLから追従させます。
 
 `generator` は `GeneratedFiles::Runner::GENERATORS` のAllowListに登録されたGenerator classへ解決されます。Generatorは `GeneratedFiles::Artifact` を返し、`output_writer` が保存先を決めます。既存互換として `command` も実行できますが、新規追加はGenerator class方式を優先します。
 
@@ -220,23 +250,17 @@ GeneratedFiles::OutputWriters::*
 output_writer: filesystem
 ```
 
-`document_version` は生成成果物を1つのDocumentVersionとして保存し、各ArtifactをDocumentFileとして添付します。
+`document_version` は生成成果物を1つのDocumentVersionとして保存し、各ArtifactをDocumentFileとして添付します。`create_project_if_missing: true` を指定すると、生成結果専用Projectが存在しない場合に自動作成します。
 
 ```yaml
 output_writer: document_version
 output_options:
-  project_code: sample-project
-  document_slug: ai-usecase-generated-flow
+  project_code: GENERATED_AI_USECASES
+  project_name: AI活用生成ドキュメント
+  create_project_if_missing: true
+  document_slug: ai-usecase-decision-flow-generated
   document_title: AI活用判断フロー生成結果
-  document_category: other
-  document_kind: mixed
-  visibility_policy: internal_only
-  importance_level: reference
-  version_label_prefix: generated-flow
-  source_identifier: generated:ai_usecase_decision_flow
 ```
-
-`document_version` writer はdocs-portal側を正本にするための足場です。既存のAI活用判断フローは、GitHub側のseedサンプルとの互換を維持するため、まだ `filesystem` のままです。
 
 ## 生成実行履歴
 
@@ -284,6 +308,7 @@ GitHub Actionsは、GitHub側の正本が変わった場合の安全網です。
 ```bash
 CHANGED_FILES=storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml bin/rails generated_files:enqueue
 JOB_ID=ai_usecase_decision_flow bin/rails generated_files:enqueue_job
+JOB_ID=ai_usecase_decision_flow_document_version bin/rails generated_files:enqueue_job
 ```
 
 即時実行したい場合は `enqueue` の代わりに `run` / `run_job` を使います。
@@ -336,8 +361,8 @@ rules:
 
 ## 将来の方向性
 
-- 生成先をリポジトリ上のファイルではなく、DocumentVersion / storage / build artifact に寄せます。
 - 後方互換の `command` 方式は段階的に減らし、Generator class方式に寄せます。
+- 生成先は用途に応じて `filesystem` / `document_version` / 将来のbuild artifact writerを選べるようにします。
 - `config/file_change_event_jobs.yml` の内容は、将来的にマスタメンテ画面から管理できる形にできます。その場合は、選択可能なJobやパラメーターをAllowListまたはmodel上のマッピングとして定義します。
 
 ## 注意点
