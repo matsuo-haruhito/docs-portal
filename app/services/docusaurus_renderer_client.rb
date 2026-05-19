@@ -6,6 +6,8 @@ require "timeout"
 require "uri"
 
 class DocusaurusRendererClient
+  class TransientError < StandardError; end
+
   Result = Struct.new(:archive_file, :site_path, keyword_init: true)
 
   DEFAULT_ENDPOINT = "http://docusaurus:3000"
@@ -44,7 +46,7 @@ class DocusaurusRendererClient
     raise
   rescue SystemCallError, Timeout::Error, SocketError, IOError => e
     output&.close!
-    raise ApplicationError::BadRequest, "Docusaurus preview renderer is unavailable: #{e.message}"
+    raise TransientError, "Docusaurus preview renderer did not respond: #{e.message}"
   rescue
     output&.close!
     raise
