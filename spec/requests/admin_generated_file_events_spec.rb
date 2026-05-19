@@ -174,6 +174,17 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(other_source.reload).to be_failed
       expect(GeneratedFileEventDispatchJob).to have_received(:perform_later).once
     end
+
+    it "does not enqueue dispatch when there are no failed events to retry" do
+      sign_in_as(admin_user)
+      create_event!(path: "docs/processed.yml", status: :processed)
+      allow(GeneratedFileEventDispatchJob).to receive(:perform_later)
+
+      post retry_failed_admin_generated_file_events_path
+
+      expect(response).to redirect_to(admin_generated_file_events_path)
+      expect(GeneratedFileEventDispatchJob).not_to have_received(:perform_later)
+    end
   end
 
   def create_event!(attributes = {})
