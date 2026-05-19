@@ -35,7 +35,9 @@ class DocumentsController < BaseController
     require_project_access!(@project)
     return if require_consent!(target: @project, timing: :first_view)
 
-    @document = @project.documents.includes(:document_tags, :document_keywords).find_by!(slug: params[:slug])
+    @document = find_document_or_redirect_from_historical_slug
+    return if performed?
+
     require_document_access!(@document)
     raise ApplicationError::Forbidden unless current_user.internal? || @document.visible_in_portal_for?(current_user)
 
@@ -48,6 +50,7 @@ class DocumentsController < BaseController
     mark_document_as_read!(@document, @viewer_version)
     @viewer_site_path = @path_history_resolution&.canonical_path.presence || params[:site_path].presence || @viewer_version&.html_view_site_path
     @previous_site_path = params[:previous_site_path].presence
+    @previous_slug = params[:previous_slug].presence
     @viewer_iframe_src = embedded_viewer_src(@viewer_version)
     @viewer_popout_src = @viewer_iframe_src
     @source_breadcrumbs = SourcePathBreadcrumb.new(
@@ -84,6 +87,22 @@ class DocumentsController < BaseController
     elsif (file = version.embedded_view_file)
       document_file_path(file, disposition: "inline", embedded: "1")
     end
+  end
+
+  def find_document_or_redirect_from_historical_slug
+    document = @project.documents.includes(:document_tags, :document_keywords).find_by(slug: params[:slug])
+    return document if document
+
+    slug_resolution = DocumentSlugHistoryResolver.new(project: @project, requested_slug: params[:slug]).call
+    raise ActiveRecord::RecordNotFound, "Document not found" unless slug_resolution.moved?
+
+    redirect_to_canonical_document_slug(slug_resolution)
+    nil
+  end
+
+  def redirect_to_canonical_document_slug(slug_resolution)
+    redirect_params = request.query_parameters.merge(previous_slug: slug_resolution.requested_slug)
+    redirect_to project_document_path(@project, slug_resolution.canonical_document.slug, redirect_params), status: :moved_permanently
   end
 
   def resolve_path_history
