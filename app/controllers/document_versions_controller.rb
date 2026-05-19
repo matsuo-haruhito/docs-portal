@@ -108,7 +108,7 @@ class DocumentVersionsController < BaseController
   end
 
   def file_diff_signature(file)
-    [file.file_size, file.content_type, file.file_name]
+    [file.file_size, file.content_type, file.file_name, file.storage_key]
   end
 
   def file_diff_status_order(status)
