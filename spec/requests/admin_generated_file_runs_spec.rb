@@ -189,6 +189,26 @@ RSpec.describe "Admin generated file runs", type: :request do
         )
       )
     end
+
+    it "uses an empty changed file list when bulk retrying runs without changed files" do
+      sign_in_as(admin_user)
+      matched = create_run!(job_id: "matched_job", status: :failed, changed_files: nil)
+      allow(GeneratedFileJob).to receive(:perform_later)
+
+      post retry_failed_admin_generated_file_runs_path
+
+      expect(response).to redirect_to(admin_generated_file_runs_path)
+      expect(GeneratedFileJob).to have_received(:perform_later).once.with(
+        changed_files: [],
+        job_ids: ["matched_job"],
+        event_source: "generated_file_run_bulk_retry",
+        metadata: hash_including(
+          "retry_of_generated_file_run_public_id" => matched.public_id,
+          "retry_requested_by_user_id" => admin_user.id,
+          "bulk_retry" => true
+        )
+      )
+    end
   end
 
   def create_run!(attributes = {})
