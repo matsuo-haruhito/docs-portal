@@ -41,7 +41,7 @@ RSpec.describe GeneratedFiles::Runner do
     expect(@root.join("other.txt")).not_to exist
   end
 
-  it "runs generator jobs" do
+  it "runs generator jobs through the filesystem output writer" do
     source = @root.join("flow.yml")
     source.write(minimal_flow_yaml)
     registry = write_registry(
@@ -50,6 +50,7 @@ RSpec.describe GeneratedFiles::Runner do
           "id" => "flow",
           "source_paths" => ["flow.yml"],
           "generator" => "ai_usecase_decision_flow",
+          "output_writer" => "filesystem",
           "options" => {
             "source_path" => "flow.yml",
             "markdown_path" => "generated/decision-flow.md",
@@ -70,6 +71,8 @@ RSpec.describe GeneratedFiles::Runner do
 
     expect(results.map(&:job_id)).to eq(["flow"])
     expect(results.first.generator).to eq("ai_usecase_decision_flow")
+    expect(results.first.output_writer).to eq("filesystem")
+    expect(results.first.generated_paths).to eq(["generated/decision-flow.md", "generated/decision-flow.puml"])
     expect(@root.join("generated/decision-flow.md")).to exist
     expect(@root.join("generated/decision-flow.puml")).to exist
   end
