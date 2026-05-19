@@ -2,11 +2,13 @@ require "rails_helper"
 
 RSpec.describe DocumentsHelper, type: :helper do
   describe "#document_tree_render_state" do
+    let(:internal_user) { create(:user, :internal) }
     let(:project) { create(:project, code: "TREE", name: "Tree Project") }
     let!(:first_folder_doc) { create(:document, project:, title: "01. 要件") }
     let!(:second_folder_doc) { create(:document, project:, title: "02. 設計") }
 
     before do
+      allow(helper).to receive(:current_user).and_return(internal_user)
       first_version = create(:document_version, document: first_folder_doc, source_relative_path: "docs/01_requirements/index.md")
       second_version = create(:document_version, document: second_folder_doc, source_relative_path: "docs/02_design/index.md")
       first_folder_doc.update!(latest_version: first_version)
