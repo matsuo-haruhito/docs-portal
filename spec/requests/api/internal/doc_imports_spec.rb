@@ -1,12 +1,13 @@
 require "rails_helper"
 require "fileutils"
 
-RSpec.describe "API internal doc imports", type: :request do
+RSpec.describe "API internal artifact imports", type: :request do
   let(:token) { "secret-token" }
   let(:import_root) { Rails.root.join("storage", "imports") }
   let(:artifact_root) { import_root.join("artifact-set") }
   let(:manifest_path) { artifact_root.join("manifest.json") }
   let(:headers) { { "Authorization" => "Bearer #{token}" } }
+  let(:endpoint) { "/api/internal/artifact_imports" }
 
   before do
     allow(ENV).to receive(:fetch).and_call_original
@@ -29,7 +30,7 @@ RSpec.describe "API internal doc imports", type: :request do
       FileUtils.mkdir_p(outside_manifest.dirname)
       File.write(outside_manifest, { source_repo: "repo", source_branch: "main", source_commit_hash: "abc", documents: [] }.to_json)
 
-      post api_internal_doc_imports_path, params: {
+      post endpoint, params: {
         artifact_root: outside_manifest.dirname.to_s,
         manifest_path: outside_manifest.to_s
       }, headers: headers
@@ -72,7 +73,7 @@ RSpec.describe "API internal doc imports", type: :request do
       }.to_json
     )
 
-    post api_internal_doc_imports_path, params: {
+    post endpoint, params: {
       artifact_root: artifact_root.to_s,
       manifest_path: manifest_path.to_s
     }, headers: headers
@@ -92,7 +93,7 @@ RSpec.describe "API internal doc imports", type: :request do
       }.to_json
     )
 
-    post api_internal_doc_imports_path, params: {
+    post endpoint, params: {
       artifact_root: artifact_root.to_s,
       manifest_path: manifest_path.to_s
     }, headers: headers
@@ -126,7 +127,7 @@ RSpec.describe "API internal doc imports", type: :request do
     )
 
     expect do
-      post api_internal_doc_imports_path, params: {
+      post endpoint, params: {
         artifact_root: artifact_root.to_s,
         manifest_path: manifest_path.to_s,
         validate_only: true
@@ -170,14 +171,14 @@ RSpec.describe "API internal doc imports", type: :request do
       }.to_json
     )
 
-    post api_internal_doc_imports_path, params: {
+    post endpoint, params: {
       artifact_root: artifact_root.to_s,
       manifest_path: manifest_path.to_s,
       validate_only: true
     }, headers: headers
     dry_run_id = response.parsed_body.fetch("dry_run_id")
 
-    post api_internal_doc_imports_path, params: {
+    post endpoint, params: {
       artifact_root: artifact_root.to_s,
       manifest_path: manifest_path.to_s,
       import_dry_run_id: dry_run_id
@@ -217,7 +218,7 @@ RSpec.describe "API internal doc imports", type: :request do
       }.to_json
     )
 
-    post api_internal_doc_imports_path, params: {
+    post endpoint, params: {
       artifact_root: artifact_root.to_s,
       manifest_path: manifest_path.to_s,
       validate_only: true
@@ -234,7 +235,7 @@ RSpec.describe "API internal doc imports", type: :request do
       }.to_json
     )
 
-    post api_internal_doc_imports_path, params: {
+    post endpoint, params: {
       artifact_root: artifact_root.to_s,
       manifest_path: manifest_path.to_s,
       import_dry_run_id: dry_run_id
@@ -257,7 +258,7 @@ RSpec.describe "API internal doc imports", type: :request do
       }.to_json
     )
 
-    post api_internal_doc_imports_path, params: {
+    post endpoint, params: {
       artifact_root: artifact_root.to_s,
       manifest_path: manifest_path.to_s
     }, headers: headers
