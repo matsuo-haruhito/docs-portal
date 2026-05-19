@@ -19,7 +19,7 @@ class DocumentsController < BaseController
       .distinct
 
     documents_scope = filtered_documents.recommended_first.includes(:latest_version, :document_tags, :document_keywords, document_versions: :document_files)
-    visible_documents = current_user.internal? ? documents_scope.to_a : documents_scope.to_a.select { _1.visible_in_portal_for?(current_user) }
+    visible_documents = current_user.internal? ? documents_scope.to_a : documents_scope.to_a.select { |document| document.visible_in_portal_for?(current_user) }
     @documents_count = visible_documents.size
     @current_page = normalized_page
     @per_page = DOCUMENTS_PER_PAGE
@@ -39,7 +39,7 @@ class DocumentsController < BaseController
     require_document_access!(@document)
     raise ApplicationError::Forbidden unless current_user.internal? || @document.visible_in_portal_for?(current_user)
 
-    @versions = @document.document_versions.includes(:document_files).select { _1.viewable_by?(current_user) }.sort_by(&:created_at).reverse
+    @versions = @document.document_versions.includes(:document_files).select { |version| version.viewable_by?(current_user) }.sort_by(&:created_at).reverse
     @latest_viewable_version = @document.latest_version if @document.latest_version && @versions.include?(@document.latest_version)
     @viewer_version = resolved_viewer_version
     mark_document_as_read!(@document, @viewer_version)
@@ -94,7 +94,7 @@ class DocumentsController < BaseController
     requested_public_id = params[:version_id].presence
     return @latest_viewable_version || @versions.first if requested_public_id.blank?
 
-    version = @versions.find { _1.public_id == requested_public_id }
+    version = @versions.find { |candidate| candidate.public_id == requested_public_id }
     raise ActiveRecord::RecordNotFound, "Document version not found" unless version
 
     version
@@ -123,13 +123,13 @@ class DocumentsController < BaseController
       .order(:code)
     return projects if current_user.internal?
 
-    visible_projects = projects.select { visible_project_for_portal?(_1) }
+    visible_projects = projects.select { |project| visible_project_for_portal?(project) }
     visible_projects << include_project if include_project.present? && visible_projects.exclude?(include_project)
     visible_projects
   end
 
   def visible_project_for_portal?(project)
-    project.documents.any? { _1.visible_in_portal_for?(current_user) }
+    project.documents.any? { |document| document.visible_in_portal_for?(current_user) }
   end
 
   def document_filter_params
@@ -141,10 +141,13 @@ class DocumentsController < BaseController
   end
 
   def selected_source_path
-    keyword = @filters[:q].to_s.strip
-    return if keyword.blank?
+    normalize_source_path_param(params[:upload_source_path].presence)
+  end
 
-    normalized = keyword.tr("\\", "/").delete_prefix("/")
+  def normalize_source_path_param(value)
+    return if value.blank?
+
+    normalized = value.to_s.tr("\\", "/").delete_prefix("/")
     return if normalized.blank? || normalized.include?("*") || normalized.include?("?")
     return if normalized == "." || normalized == ".." || normalized.start_with?("../")
 
@@ -210,7 +213,7 @@ class DocumentsController < BaseController
 
   def filter_diagram_available(scope)
     file_name_sql = DIAGRAM_EXTENSIONS.map { "LOWER(document_files.file_name) LIKE ?" }.join(" OR ")
-    file_name_patterns = DIAGRAM_EXTENSIONS.map { "%.#{_1}" }
+    file_name_patterns = DIAGRAM_EXTENSIONS.map { |extension| "%.#{extension}" }
 
     scope
       .left_joins(document_versions: :document_files)
