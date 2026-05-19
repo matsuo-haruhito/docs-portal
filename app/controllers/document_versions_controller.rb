@@ -15,6 +15,7 @@ class DocumentVersionsController < BaseController
     @compare_version_options = compare_version_options
     @version_file_diff_summary = build_file_diff_summary(@version, @compare_version)
     @preview_target_display_summary = DocumentVersionPreviewTargetDisplaySummary.new(@version).call
+    @docusaurus_build_manifest = DocusaurusBuildManifest.new(@version).call
     @markdown_line_diffs = MarkdownLineDiffBuilder.new(
       current_version: @version,
       previous_version: @compare_version,
