@@ -12,6 +12,15 @@ RSpec.describe GeneratedFileEvent, type: :model do
       expect(event.errors[:scheduled_at]).to be_present
       expect(event.errors[:last_seen_at]).to be_present
     end
+
+    it "rejects unsafe paths" do
+      ["../outside.yml", "/tmp/source.yml", "C:/tmp/source.yml"].each do |path|
+        event = build(:generated_file_event, path: path)
+
+        expect(event).not_to be_valid
+        expect(event.errors[:path]).to be_present
+      end
+    end
   end
 
   describe ".build_event_key" do
