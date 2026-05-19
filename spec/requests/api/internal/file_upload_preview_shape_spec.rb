@@ -35,8 +35,7 @@ RSpec.describe "API internal file upload preview shape", type: :request do
       relative_path: "docs/README.md",
       source_path: "local/docs/README.md",
       source_name: "client-sync",
-      content_hash: content_hash,
-      validate_only: true
+      content_hash: content_hash
     }, headers: headers
 
     expect(response).to have_http_status(:created)
