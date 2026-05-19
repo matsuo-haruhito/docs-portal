@@ -93,6 +93,17 @@
 ### Preview target metadata
 
 - `preview_targets` YAML / front matter parser
+- document version metadata source resolver
+- explicit metadata files
+  - `.docs-portal-preview.yml`
+  - `.docs-portal-preview.yaml`
+  - `.preview-targets.yml`
+  - `.preview-targets.yaml`
+  - `preview-targets.yml`
+  - `preview-targets.yaml`
+  - `preview_targets.yml`
+  - `preview_targets.yaml`
+- Markdown front matter fallback
 - supported keys
   - `primary`
   - `attachments`
@@ -153,16 +164,16 @@
 
 ## 短期タスク
 
-### 1. Preview target metadata integration
+### 1. Preview target metadata quality check integration
 
 目的:
 
-- parser 結果を品質チェックや viewer 表示制御へ接続する
+- parser / source resolver 結果を品質チェック画面へ接続する
 
 候補:
 
-- metadata source file の特定ルールを決める
-- quality check 画面に warning を出す
+- `DocumentVersionQualityChecker` の result に preview target metadata warnings を追加する
+- quality check HTML / JSON / Markdown に warning を出す
 - hidden / debug の表示制御方針を実装へ落とす
 - groups のUI表示方針を決める
 
@@ -293,7 +304,7 @@
 
 ## 実装順のおすすめ
 
-1. Preview target metadata integration
+1. Preview target metadata quality check integration
 2. Docusaurus build manifest
 3. Path history resolver
 4. Project 内検索
