@@ -19,7 +19,7 @@ FactoryBot.define do
   end
 
   factory :generated_file_event do
-    path { "docs/source.yml" }
+    sequence(:path) { |n| "docs/source-#{n}.yml" }
     operation { "update" }
     event_source { "spec" }
     event_key { GeneratedFileEvent.build_event_key(path: path, operation: operation, event_source: event_source) }
