@@ -46,7 +46,6 @@ Rails.application.routes.draw do
       post :sync, on: :member
     end
     resources :git_import_runs, only: [:index]
-    resources :zip_imports, only: %i[new create show update], param: :public_id
     resources :microsoft_graph_connections, except: %i[show new]
     resources :recurring_job_schedules, only: %i[index show], param: :public_id do
       post :request_run, on: :member
@@ -81,7 +80,6 @@ Rails.application.routes.draw do
     resource :ai_context, only: [:show], controller: "project_ai_contexts"
     get "site(/*site_path)", to: "project_sites#show", as: :site, format: false
     resource :document_zip, only: [:create], controller: "project_document_zips"
-    resources :document_uploads, only: [:create]
     resources :document_sets, only: %i[index show], param: :public_id
     resources :document_catalogs, only: %i[index show], param: :public_id
     resources :documents, only: [:index, :show], param: :slug do
@@ -107,6 +105,7 @@ Rails.application.routes.draw do
 
   resources :document_files, only: [:show], param: :public_id do
     get "archive_entries/preview", to: "document_file_archive_entries#preview", as: :archive_entry_preview, on: :member
+    get "archive_entries/download", to: "document_file_archive_entries#download", as: :archive_entry_download, on: :member
     get "assets/*asset_path", to: "document_files#asset", as: :asset, on: :member, format: false
   end
 
