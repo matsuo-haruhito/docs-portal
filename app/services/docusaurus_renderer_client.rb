@@ -34,7 +34,7 @@ class DocusaurusRendererClient
 
     output = Tempfile.new(["docusaurus-build", ".tar.gz"])
     output.binmode
-    output.write(response.body)
+    output.write(response.body.to_s)
     output.rewind
 
     Result.new(
