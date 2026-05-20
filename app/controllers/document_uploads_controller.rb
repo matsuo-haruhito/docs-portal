@@ -1,20 +1,20 @@
 class DocumentUploadsController < BaseController
   def create
-    project = Project.find_by!(code: params.require(:project_code))
-    require_project_access!(project)
+    @project = Project.find_by!(code: params.require(:project_code))
+    require_project_access!(@project)
     raise ApplicationError::Forbidden unless current_user.internal?
 
     result = ManualDocumentUpload.new(
-      project: project,
+      project: @project,
       actor: current_user,
       uploaded_file: params.require(:file),
       source_path: params[:source_path],
-      target_document: target_document(project)
+      target_document: target_document(@project)
     ).call
 
     redirect_to document_version_path(result.version, upload_review: "1"), notice: "文書をアップロードしました。差異を確認してOK/NGを選択してください。", flash: { upload_review_version_public_id: result.version.public_id }
   rescue ActionController::ParameterMissing, ApplicationError::BadRequest => e
-    redirect_to project_documents_path(params[:project_code]), alert: e.message
+    redirect_to project_documents_path(@project || params[:project_code]), alert: e.message
   end
 
   private
