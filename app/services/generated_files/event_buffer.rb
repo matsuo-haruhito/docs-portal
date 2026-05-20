@@ -51,13 +51,23 @@ module GeneratedFiles
         operation = "update"
       end
 
-      normalized_path = Pathname(path.to_s.strip).cleanpath.to_s.delete_prefix("./")
-      return if normalized_path.blank? || normalized_path == "."
+      raw_path = path.to_s.strip.tr("\\", "/")
+      normalized_path = Pathname(raw_path).cleanpath.to_s.delete_prefix("./")
+      return if unsafe_path?(raw_path) || unsafe_path?(normalized_path)
 
       {
         path: normalized_path,
         operation: operation.to_s.presence || "update"
       }
+    end
+
+    def unsafe_path?(path)
+      path.blank? ||
+        path == "." ||
+        path == ".." ||
+        path.start_with?("/") ||
+        path.match?(%r{\A[A-Za-z]:/}) ||
+        path.split("/").include?("..")
     end
 
     def merge_metadata(existing, incoming)
