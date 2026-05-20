@@ -127,6 +127,7 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(event.public_id)
       expect(response.body).to include("docs/source.yml")
+      expect(response.body).to include("/ 区切りで保存されます。")
       expect(response.body).to include("boom")
       expect(response.body).to include("actor_id")
     end
