@@ -39,6 +39,32 @@ RSpec.describe ManualDocumentUpload do
     )
   end
 
+  it "omits actor metadata when the upload actor is absent" do
+    project = create(:project)
+    notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
+
+    result = described_class.new(
+      project:,
+      actor: nil,
+      uploaded_file: uploaded_file("decision_flow.yml", "flow: {}"),
+      source_path: "data",
+      change_event_notifier: notifier
+    ).call
+
+    expect(notifier).to have_received(:notify).with(
+      file_events: [{path: "data/decision_flow.yml", operation: "create"}],
+      event_source: "manual_document_upload",
+      metadata: hash_including(
+        project_id: project.id,
+        document_id: result.document.id,
+        document_version_id: result.version.id
+      )
+    )
+    expect(notifier).to have_received(:notify) do |payload|
+      expect(payload[:metadata]).not_to have_key(:actor_id)
+    end
+  end
+
   it "notifies an update file event after uploading a new version for an existing document" do
     project = create(:project)
     actor = create(:user, :internal)
@@ -73,6 +99,23 @@ RSpec.describe ManualDocumentUpload do
         actor_id: actor.id
       )
     )
+  end
+
+  it "extracts markdown upload text for document search" do
+    project = create(:project)
+    actor = create(:user, :internal)
+    notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
+    allow(DocusaurusPreviewBuildJob).to receive(:perform_later)
+
+    result = described_class.new(
+      project:,
+      actor:,
+      uploaded_file: uploaded_file("guide.md", "# Guide\n\nSearchable manual upload body", content_type: "text/markdown"),
+      source_path: "docs",
+      change_event_notifier: notifier
+    ).call
+
+    expect(result.version.reload.search_body_text).to include("Searchable manual upload body")
   end
 
   it "enqueues preview builds for uppercase markdown uploads" do
