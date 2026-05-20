@@ -116,6 +116,7 @@ export default class extends Controller {
 
   windowDragOver(event) {
     if (!this.hasFileDrag(event)) return
+    event.preventDefault()
     this.element.classList.add("is-file-dragging")
   }
 
