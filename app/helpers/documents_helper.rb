@@ -274,13 +274,24 @@ module DocumentsHelper
   end
 
   def document_tree_icon_name(document)
-    return "document" if document.document_kind == "markdown"
-
     extension = document_tree_source_extension(document)
-    return "document" if extension.blank?
+    if extension.present?
+      normalized_extension = extension.tr(".", "").downcase
+      return normalized_extension if DOCUMENT_TREE_ICON_NAMES.include?(normalized_extension)
+    end
 
-    normalized_extension = extension.tr(".", "").downcase
-    DOCUMENT_TREE_ICON_NAMES.include?(normalized_extension) ? normalized_extension : "document"
+    case document.document_kind
+    when "markdown"
+      "md"
+    when "pdf"
+      "pdf"
+    when "excel"
+      "xlsx"
+    when "word"
+      "docx"
+    else
+      "document"
+    end
   end
 
   def document_tree_source_extension(document)
@@ -309,7 +320,7 @@ module DocumentsHelper
       documents = if project.association(:documents).loaded?
         project.documents.to_a
       else
-        project.documents.includes(:latest_version, :document_versions).to_a
+        project.documents.includes(:latest_version, document_versions: :document_files).to_a
       end
 
       documents = documents.reject { |document| document.archived_at.present? }
@@ -324,7 +335,7 @@ module DocumentsHelper
 
   def document_tree_documents_for(project)
     @document_tree_documents_by_project_id&.fetch(project.id, nil) || begin
-      documents = project.documents.accessible_to(current_user).includes(:latest_version, :document_versions).order(:title).to_a
+      documents = project.documents.accessible_to(current_user).includes(:latest_version, document_versions: :document_files).order(:title).to_a
       current_user.internal? ? documents : documents.select { _1.visible_in_portal_for?(current_user) }
     end
   end
@@ -460,9 +471,16 @@ module DocumentsHelper
     return directory if directory.present?
 
     relative_path = normalize_document_tree_path(version&.source_relative_path)
-    return if relative_path.blank?
+    if relative_path.present?
+      segments = relative_path.split("/")
+      segments.pop
+      return segments.join("/")
+    end
 
-    segments = relative_path.split("/")
+    file_tree_path = document_tree_primary_file_tree_path(version)
+    return if file_tree_path.blank?
+
+    segments = file_tree_path.split("/")
     segments.pop
     segments.join("/")
   end
@@ -473,9 +491,12 @@ module DocumentsHelper
     return file_name if file_name.present?
 
     relative_path = normalize_document_tree_path(version&.source_relative_path)
-    return if relative_path.blank?
+    return relative_path.split("/").last if relative_path.present?
 
-    relative_path.split("/").last
+    file_tree_path = document_tree_primary_file_tree_path(version)
+    return if file_tree_path.blank?
+
+    file_tree_path.split("/").last
   end
 
   def document_tree_version_for(document)
@@ -483,11 +504,12 @@ module DocumentsHelper
 
     latest = document.latest_version
     return latest if document_tree_version_has_source_path?(latest)
+    return latest if document_tree_version_has_display_file?(latest)
 
     versions = document.document_versions.to_a
 
     versions
-      .select { |version| document_tree_version_has_source_path?(version) }
+      .select { |version| document_tree_version_has_source_path?(version) || document_tree_version_has_display_file?(version) }
       .max_by { |version| [version.created_at || Time.zone.at(0), version.id || 0] } ||
       latest ||
       versions.max_by { |version| [version.created_at || Time.zone.at(0), version.id || 0] }
@@ -499,6 +521,25 @@ module DocumentsHelper
       version.source_relative_path.present? ||
       version.source_file_name.present?
     )
+  end
+
+  def document_tree_version_has_display_file?(version)
+    document_tree_primary_file_for(version).present?
+  end
+
+  def document_tree_primary_file_tree_path(version)
+    document_tree_primary_file_for(version)&.tree_path.to_s.then { normalize_document_tree_path(_1) }.presence
+  end
+
+  def document_tree_primary_file_for(version)
+    return unless version
+
+    files = version.document_files
+    if files.loaded?
+      files.to_a.min_by { |file| [file.sort_order || 0, file.id || 0] }
+    else
+      files.order(:sort_order, :id).first
+    end
   end
 
   def normalize_document_tree_path(path)
