@@ -136,6 +136,23 @@ RSpec.describe ManualDocumentUpload do
     expect(result.version.source_file_name).to eq("secret.md")
   end
 
+  it "normalizes upload destination folders that stay inside the project tree" do
+    project = create(:project)
+    actor = create(:user, :internal)
+    notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
+    allow(DocusaurusPreviewBuildJob).to receive(:perform_later)
+
+    result = described_class.new(
+      project:,
+      actor:,
+      uploaded_file: uploaded_file("guide.md", "# Guide", content_type: "text/markdown"),
+      source_path: "docs/../docs/manuals",
+      change_event_notifier: notifier
+    ).call
+
+    expect(result.source_path).to eq("docs/manuals/guide.md")
+  end
+
   it "rejects unsafe upload destination folders" do
     project = create(:project)
     actor = create(:user, :internal)
@@ -150,6 +167,24 @@ RSpec.describe ManualDocumentUpload do
         change_event_notifier: notifier
       ).call
     end.to raise_error(ApplicationError::BadRequest, /アップロード先フォルダが不正です/)
+  end
+
+  it "rejects absolute and drive-letter upload destination folders" do
+    project = create(:project)
+    actor = create(:user, :internal)
+    notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
+
+    ["/secret", "C:/secret"].each do |source_path|
+      expect do
+        described_class.new(
+          project:,
+          actor:,
+          uploaded_file: uploaded_file("guide.md", "# Guide", content_type: "text/markdown"),
+          source_path:,
+          change_event_notifier: notifier
+        ).call
+      end.to raise_error(ApplicationError::BadRequest, /アップロード先フォルダが不正です/)
+    end
   end
 
   it "enqueues preview builds for uppercase markdown uploads" do
