@@ -74,6 +74,7 @@
           <th class="px-4 py-3 text-left font-semibold">Path</th>
           <th class="px-4 py-3 text-left font-semibold">Operation</th>
           <th class="px-4 py-3 text-left font-semibold">Source</th>
+          <th class="px-4 py-3 text-left font-semibold">Error</th>
           <th class="px-4 py-3 text-left font-semibold">Count</th>
           <th class="px-4 py-3 text-left font-semibold">Scheduled</th>
           <th class="px-4 py-3 text-left font-semibold">Processed</th>
@@ -91,6 +92,7 @@
               <td class="px-4 py-3 font-mono"><%= event.path %></td>
               <td class="px-4 py-3"><%= event.operation %></td>
               <td class="px-4 py-3"><%= event.event_source.presence || "-" %></td>
+              <td class="max-w-xs truncate px-4 py-3 text-gray-700" title="<%= event.error_message %>"><%= event.error_message.presence || "-" %></td>
               <td class="px-4 py-3"><%= event.occurrences_count %></td>
               <td class="px-4 py-3"><%= l(event.scheduled_at, format: :long) if event.scheduled_at %></td>
               <td class="px-4 py-3"><%= l(event.processed_at, format: :long) if event.processed_at %></td>
@@ -104,7 +106,7 @@
           <% end %>
         <% else %>
           <tr>
-            <td colspan="9" class="px-4 py-8 text-center text-gray-500">条件に一致する生成ファイルイベントはありません。</td>
+            <td colspan="10" class="px-4 py-8 text-center text-gray-500">条件に一致する生成ファイルイベントはありません。</td>
           </tr>
         <% end %>
       </tbody>
