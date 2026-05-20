@@ -4,6 +4,8 @@ require "tempfile"
 require "zlib"
 
 class DocusaurusPreviewArchiveBuilder
+  FILE_MODE = 0o644
+
   def initialize(version)
     @version = version
   end
@@ -34,9 +36,8 @@ class DocusaurusPreviewArchiveBuilder
   def add_file(tar, document_file)
     relative_path = safe_relative_path(document_file.file_name)
     absolute_path = document_file.absolute_path
-    mode = File.stat(absolute_path).mode
 
-    tar.add_file(relative_path, mode) do |entry|
+    tar.add_file(relative_path, FILE_MODE) do |entry|
       File.open(absolute_path, "rb") do |file|
         IO.copy_stream(file, entry)
       end
