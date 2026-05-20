@@ -74,6 +74,24 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
     expect(existing_file.read).to eq("existing")
   end
 
+  it "closes the source archive when the renderer fails" do
+    create_source_file!("docs/guide.md", "# Guide")
+    source_archive = build_artifact("docs/guide.md" => "# Guide")
+    archive_builder = instance_double(DocusaurusPreviewArchiveBuilder)
+    client = instance_double(DocusaurusRendererClient)
+
+    allow(DocusaurusPreviewArchiveBuilder).to receive(:new).with(version).and_return(archive_builder)
+    allow(archive_builder).to receive(:build).and_return(source_archive)
+    allow(DocusaurusRendererClient).to receive(:new).and_return(client)
+    allow(client).to receive(:build).and_raise(ApplicationError::BadRequest, "renderer failed")
+
+    expect do
+      described_class.perform_now(version.id)
+    end.to raise_error(ApplicationError::BadRequest, /renderer failed/)
+
+    expect(source_archive).to be_closed
+  end
+
   it "builds MDX versions through the renderer" do
     version.assign_source_path_metadata!(source_path: "docs/guide.mdx", snapshot_kind: "received_markdown")
     version.save!
