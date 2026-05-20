@@ -23,7 +23,8 @@ RSpec.describe "Project detail tree titles", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("設計書タイトル")
     expect(response.body).to include("project-document-detail-tree__file-name muted")
-    expect(response.body).to include("design.pdf")
+    expect(response.body).to include('title="design.pdf"')
+    expect(response.body).to include('aria-label="design.pdf をダウンロード"')
     expect(response.body).not_to include('project-document-detail-tree__document-title" href="/projects/DETAILTREE/documents/design-title">design.pdf')
   end
 
