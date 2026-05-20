@@ -92,6 +92,61 @@ RSpec.describe GeneratedFiles::ChangeEventHandler do
     )
   end
 
+  it "normalizes backslash paths before matching" do
+    registry = write_registry(
+      rules: [
+        {
+          "id" => "windows_path",
+          "operations" => ["update"],
+          "path_patterns" => ["docs/source.yml"],
+          "job_class" => "GeneratedFileJob",
+          "params" => {"changed_files" => "$matched_files"}
+        }
+      ]
+    )
+    allow(GeneratedFileJob).to receive(:perform_later)
+
+    rule_ids = described_class.new(
+      changed_files: ["docs\\source.yml"],
+      registry_path: registry,
+      root: @root,
+      output: StringIO.new
+    ).call
+
+    expect(rule_ids).to eq(["windows_path"])
+    expect(GeneratedFileJob).to have_received(:perform_later).with(changed_files: ["docs/source.yml"])
+  end
+
+  it "ignores unsafe event paths" do
+    registry = write_registry(
+      rules: [
+        {
+          "id" => "safe_only",
+          "operations" => ["update"],
+          "path_patterns" => ["**/*.yml"],
+          "job_class" => "GeneratedFileJob",
+          "params" => {"changed_files" => "$matched_files"}
+        }
+      ]
+    )
+    allow(GeneratedFileJob).to receive(:perform_later)
+
+    rule_ids = described_class.new(
+      file_events: [
+        {"path" => "../outside.yml", "operation" => "update"},
+        {"path" => "/tmp/source.yml", "operation" => "update"},
+        {"path" => "C:/tmp/source.yml", "operation" => "update"},
+        {"path" => "docs/source.yml", "operation" => "update"}
+      ],
+      registry_path: registry,
+      root: @root,
+      output: StringIO.new
+    ).call
+
+    expect(rule_ids).to eq(["safe_only"])
+    expect(GeneratedFileJob).to have_received(:perform_later).with(changed_files: ["docs/source.yml"])
+  end
+
   it "uses update when file event operation is missing or blank" do
     registry = write_registry(
       rules: [
