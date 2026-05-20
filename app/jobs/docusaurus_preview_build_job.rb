@@ -1,7 +1,11 @@
 class DocusaurusPreviewBuildJob < ApplicationJob
   queue_as :default
 
-  retry_on DocusaurusRendererClient::TransientError, wait: 30.seconds, attempts: 5
+  retry_on DocusaurusRendererClient::TransientError, wait: 30.seconds, attempts: 5 do |job, error|
+    version_id = job.arguments.first
+    DocumentVersion.find_by(id: version_id)&.mark_preview_build_failed!(error.message)
+    raise error
+  end
 
   if respond_to?(:limits_concurrency)
     limits_concurrency to: 1,
