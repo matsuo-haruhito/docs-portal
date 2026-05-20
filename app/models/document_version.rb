@@ -47,6 +47,7 @@ class DocumentVersion < ApplicationRecord
 
   def site_entry_relative_path
     return if site_build_path.blank?
+    return "index.html" if site_build_path == "index"
 
     Pathname.new(site_build_path).join("index.html").to_s
   end
