@@ -1,3 +1,4 @@
+require "pathname"
 require "rubygems/package"
 require "tempfile"
 require "zlib"
