@@ -50,6 +50,16 @@ RSpec.describe DocusaurusRendererClient do
     result&.archive_file&.close!
   end
 
+  it "accepts site path headers that normalize within the site tree" do
+    allow(http).to receive(:request).and_return(success_response("build archive", "docs/../docs/guide"))
+
+    result = client.build(archive_file: archive, entry_path: "docs/guide.md")
+
+    expect(result.site_path).to eq("docs/guide")
+  ensure
+    result&.archive_file&.close!
+  end
+
   it "raises a readable error when the renderer returns json failure" do
     allow(http).to receive(:request).and_return(error_response({ error: "MDX parse failed" }.to_json))
 
@@ -76,6 +86,14 @@ RSpec.describe DocusaurusRendererClient do
 
   it "rejects invalid site path headers" do
     allow(http).to receive(:request).and_return(success_response("build archive", "../escape"))
+
+    expect do
+      client.build(archive_file: archive, entry_path: "docs/guide.md")
+    end.to raise_error(ApplicationError::BadRequest, /invalid site path/)
+  end
+
+  it "rejects Windows absolute site path headers" do
+    allow(http).to receive(:request).and_return(success_response("build archive", "C:\\tmp\\guide"))
 
     expect do
       client.build(archive_file: archive, entry_path: "docs/guide.md")
