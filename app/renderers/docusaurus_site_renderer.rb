@@ -264,7 +264,13 @@ class DocusaurusSiteRenderer
     return if @user.internal?
 
     document.css("nav a[href], aside a[href], .theme-doc-sidebar-menu a[href]").each do |node|
-      site_path = site_path_from_url(node["href"].to_s.split(/[?#]/, 2).first, absolute_path:)
+      href = node["href"].to_s
+      next if href.blank? || external_or_anchor_url?(href)
+
+      path_part, = split_url_suffix(href)
+      next if path_part.blank?
+
+      site_path = site_path_from_url(path_part, absolute_path:)
       next unless site_path
 
       linked_version = @document_version_resolver.call(site_path)
