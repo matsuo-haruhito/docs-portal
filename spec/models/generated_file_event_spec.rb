@@ -1,6 +1,28 @@
 require "rails_helper"
 
 RSpec.describe GeneratedFileEvent, type: :model do
+  describe "validations" do
+    it "requires event key, path, operation, scheduled time, and last seen time" do
+      event = described_class.new
+
+      expect(event).not_to be_valid
+      expect(event.errors[:event_key]).to be_present
+      expect(event.errors[:path]).to be_present
+      expect(event.errors[:operation]).to be_present
+      expect(event.errors[:scheduled_at]).to be_present
+      expect(event.errors[:last_seen_at]).to be_present
+    end
+
+    it "rejects unsafe paths" do
+      ["../outside.yml", "/tmp/source.yml", "C:/tmp/source.yml"].each do |path|
+        event = build(:generated_file_event, path: path)
+
+        expect(event).not_to be_valid
+        expect(event.errors[:path]).to be_present
+      end
+    end
+  end
+
   describe ".build_event_key" do
     it "normalizes relative path prefixes" do
       key = described_class.build_event_key(
@@ -10,6 +32,34 @@ RSpec.describe GeneratedFileEvent, type: :model do
       )
 
       expect(key).to eq("docs/source.yml:update:manual")
+    end
+
+    it "normalizes backslash path separators" do
+      key = described_class.build_event_key(
+        path: "docs\\source.yml",
+        operation: "update",
+        event_source: "manual"
+      )
+
+      expect(key).to eq("docs/source.yml:update:manual")
+    end
+
+    it "uses update when operation is blank" do
+      key = described_class.build_event_key(
+        path: "docs/source.yml",
+        operation: "",
+        event_source: "manual"
+      )
+
+      expect(key).to eq("docs/source.yml:update:manual")
+    end
+
+    it "uses an empty source segment when event source is blank" do
+      nil_source_key = described_class.build_event_key(path: "docs/source.yml", operation: "update", event_source: nil)
+      blank_source_key = described_class.build_event_key(path: "docs/source.yml", operation: "update", event_source: "")
+
+      expect(nil_source_key).to eq("docs/source.yml:update:")
+      expect(blank_source_key).to eq(nil_source_key)
     end
   end
 

@@ -35,8 +35,7 @@ RSpec.describe "API internal file upload preview", type: :request do
       relative_path: "docs/README.md",
       source_path: "C:/work/docs/README.md",
       source_name: "local-sync",
-      version_label: "manual-v1",
-      validate_only: true
+      version_label: "manual-v1"
     }, headers: headers
 
     expect(response).to have_http_status(:created)

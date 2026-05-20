@@ -20,6 +20,16 @@
       <div><dt class="font-semibold">Event Source</dt><dd><%= @generated_file_run.event_source.presence || "-" %></dd></div>
       <div><dt class="font-semibold">Started</dt><dd><%= l(@generated_file_run.started_at, format: :long) if @generated_file_run.started_at %></dd></div>
       <div><dt class="font-semibold">Finished</dt><dd><%= l(@generated_file_run.finished_at, format: :long) if @generated_file_run.finished_at %></dd></div>
+      <% if @generated_file_run.metadata&.dig("retry_of_generated_file_run_public_id").present? %>
+        <div>
+          <dt class="font-semibold">Retry Of</dt>
+          <dd class="font-mono"><%= @generated_file_run.metadata["retry_of_generated_file_run_public_id"] %></dd>
+        </div>
+        <div>
+          <dt class="font-semibold">Retry Requested</dt>
+          <dd><%= @generated_file_run.metadata["retry_requested_at"].presence || "-" %></dd>
+        </div>
+      <% end %>
     </dl>
   </div>
 

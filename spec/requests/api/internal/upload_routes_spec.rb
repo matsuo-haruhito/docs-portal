@@ -63,7 +63,6 @@ RSpec.describe "API internal upload routes", type: :request do
       file: uploaded_file,
       relative_path: "docs/README.md",
       source_path: "C:/work/docs/README.md",
-      validate_only: true,
       version_label: "file-v1"
     }, headers: headers
 
@@ -87,7 +86,6 @@ RSpec.describe "API internal upload routes", type: :request do
       project_code: project.code,
       file: uploaded_file,
       relative_path: "docs/README.md",
-      validate_only: true,
       version_label: "file-v1"
     }, headers: headers
     dry_run_id = response.parsed_body.fetch("dry_run_id")
@@ -128,8 +126,7 @@ RSpec.describe "API internal upload routes", type: :request do
     post "/api/internal/file_uploads", params: {
       project_code: project.code,
       file: uploaded_file,
-      relative_path: relative_path,
-      validate_only: true
+      relative_path: relative_path
     }, headers: headers
 
     expect(response).to have_http_status(:bad_request)

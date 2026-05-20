@@ -28,8 +28,7 @@ RSpec.describe "API internal file upload original filename", type: :request do
 
     post "/api/internal/file_uploads", params: {
       project_code: project.code,
-      file: uploaded_file,
-      validate_only: true
+      file: uploaded_file
     }, headers: headers
 
     expect(response).to have_http_status(:created)

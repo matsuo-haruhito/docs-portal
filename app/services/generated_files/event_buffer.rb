@@ -10,7 +10,7 @@ module GeneratedFiles
     def add(file_events:, event_source: nil, metadata: {})
       now = Time.current
       scheduled_at = now + debounce_seconds.seconds
-      events = Array(file_events).map { normalize_event(_1) }
+      events = Array(file_events).filter_map { normalize_event(_1) }
 
       buffered = events.map do |event|
         key = GeneratedFileEvent.build_event_key(
@@ -51,8 +51,11 @@ module GeneratedFiles
         operation = "update"
       end
 
+      normalized_path = Pathname(path.to_s.strip).cleanpath.to_s.delete_prefix("./")
+      return if normalized_path.blank? || normalized_path == "."
+
       {
-        path: Pathname(path.to_s.strip).cleanpath.to_s.delete_prefix("./"),
+        path: normalized_path,
         operation: operation.to_s.presence || "update"
       }
     end

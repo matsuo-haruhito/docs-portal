@@ -36,8 +36,7 @@ RSpec.describe "API internal file upload default version label", type: :request 
       post "/api/internal/file_uploads", params: {
         project_code: project.code,
         file: uploaded_file,
-        relative_path: "docs/README.md",
-        validate_only: true
+        relative_path: "docs/README.md"
       }, headers: headers
     end
 

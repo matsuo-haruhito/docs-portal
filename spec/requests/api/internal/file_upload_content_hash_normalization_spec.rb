@@ -33,8 +33,7 @@ RSpec.describe "API internal file upload content hash normalization", type: :req
       project_code: project.code,
       file: uploaded_file,
       relative_path: "docs/README.md",
-      content_hash: "SHA256:#{content_hash.upcase}",
-      validate_only: true
+      content_hash: "SHA256:#{content_hash.upcase}"
     }, headers: headers
 
     expect(response).to have_http_status(:created)

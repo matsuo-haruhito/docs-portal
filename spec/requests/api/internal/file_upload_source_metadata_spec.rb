@@ -31,8 +31,7 @@ RSpec.describe "API internal file upload source metadata", type: :request do
       project_code: project.code,
       file: uploaded_file,
       relative_path: "docs/README.md",
-      source_path: source_path,
-      validate_only: true
+      source_path: source_path
     }, headers: headers
 
     expect(response).to have_http_status(:created)

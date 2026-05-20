@@ -31,7 +31,6 @@ RSpec.describe "API internal upload imports generated file events", type: :reque
     allow(GeneratedFileChangeEventJob).to receive(:perform_later)
 
     post "/api/internal/zip_uploads", params: {
-      project_code: project.code,
       import_dry_run_id: dry_run.public_id
     }, headers: headers
 
@@ -55,7 +54,6 @@ RSpec.describe "API internal upload imports generated file events", type: :reque
     allow(GeneratedFileChangeEventJob).to receive(:perform_later)
 
     post "/api/internal/file_uploads", params: {
-      project_code: project.code,
       import_dry_run_id: dry_run.public_id
     }, headers: headers
 

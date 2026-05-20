@@ -1,5 +1,5 @@
 class DocumentPathHistoryResolver
-  Result = Data.define(:status, :requested_path, :canonical_path, :canonical_version, :matched_version) do
+  Result = Data.define(:status, :requested_path, :canonical_path, :canonical_version, :matched_version, :matched_entry) do
     def canonical?
       status == :canonical
     end
@@ -10,6 +10,18 @@ class DocumentPathHistoryResolver
 
     def missing?
       status == :missing
+    end
+
+    def archived?
+      status == :archived
+    end
+
+    def deleted?
+      status == :deleted
+    end
+
+    def terminal?
+      archived? || deleted?
     end
   end
 
@@ -29,6 +41,20 @@ class DocumentPathHistoryResolver
     normalized_canonical = canonical_version.normalized_html_view_site_path
 
     return canonical_result(requested:, canonical_path:) if path_under?(normalized_requested, normalized_canonical)
+
+    if (status_match = matched_metadata_status_entry(normalized_requested))
+      return status_result(
+        status: status_match.fetch(:entry).status.to_sym,
+        requested:,
+        canonical_path:,
+        matched_version: status_match.fetch(:version),
+        matched_entry: status_match.fetch(:entry)
+      )
+    end
+
+    if (matched_version = matched_metadata_version(normalized_requested))
+      return moved_result(requested:, canonical_path:, matched_version:)
+    end
 
     if (matched_version = matched_historical_version(normalized_requested))
       suffix = suffix_under(normalized_requested, matched_version.normalized_html_view_site_path)
@@ -50,12 +76,34 @@ class DocumentPathHistoryResolver
     @candidate_versions_list ||= Array(candidate_versions || document.document_versions).compact
   end
 
+  def matched_metadata_status_entry(normalized_requested)
+    candidate_versions_list.flat_map do |version|
+      metadata_status_entries_for(version).map do |entry|
+        { version:, entry: } if entry.kind == "site_path" && normalize(entry.value) == normalized_requested
+      end
+    end.compact.max_by { |match| [match.fetch(:version).created_at || Time.zone.at(0), match.fetch(:version).id || 0] }
+  end
+
+  def metadata_status_entries_for(version)
+    DocumentPathHistoryMetadata.new(version).call.status_entries
+  end
+
+  def matched_metadata_version(normalized_requested)
+    candidate_versions_list
+      .select { |version| metadata_site_paths_for(version).any? { |path| normalize(path) == normalized_requested } }
+      .max_by { |version| [version.created_at || Time.zone.at(0), version.id || 0] }
+  end
+
+  def metadata_site_paths_for(version)
+    DocumentPathHistoryMetadata.new(version).call.site_paths
+  end
+
   def matched_historical_version(normalized_requested)
     candidate_versions_list
       .reject { |version| version == canonical_version }
       .select { |version| version.html_view_site_path.present? }
       .select { |version| path_under?(normalized_requested, version.normalized_html_view_site_path) }
-      .max_by { |version| version.normalized_html_view_site_path.length }
+      .max_by { _1.normalized_html_view_site_path.length }
   end
 
   def path_under?(normalized_path, normalized_base)
@@ -84,7 +132,8 @@ class DocumentPathHistoryResolver
       requested_path: requested,
       canonical_path:,
       canonical_version:,
-      matched_version: canonical_version
+      matched_version: canonical_version,
+      matched_entry: nil
     )
   end
 
@@ -94,7 +143,19 @@ class DocumentPathHistoryResolver
       requested_path: requested,
       canonical_path:,
       canonical_version:,
-      matched_version:
+      matched_version:,
+      matched_entry: nil
+    )
+  end
+
+  def status_result(status:, requested:, canonical_path:, matched_version:, matched_entry:)
+    Result.new(
+      status:,
+      requested_path: requested,
+      canonical_path:,
+      canonical_version:,
+      matched_version:,
+      matched_entry:
     )
   end
 
@@ -104,7 +165,8 @@ class DocumentPathHistoryResolver
       requested_path: requested,
       canonical_path:,
       canonical_version:,
-      matched_version: nil
+      matched_version: nil,
+      matched_entry: nil
     )
   end
 end

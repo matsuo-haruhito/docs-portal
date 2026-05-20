@@ -35,7 +35,9 @@ class DocumentsController < BaseController
     require_project_access!(@project)
     return if require_consent!(target: @project, timing: :first_view)
 
-    @document = @project.documents.includes(:document_tags, :document_keywords).find_by!(slug: params[:slug])
+    @document = find_document_or_redirect_from_historical_slug
+    return if performed?
+
     require_document_access!(@document)
     raise ApplicationError::Forbidden unless current_user.internal? || @document.visible_in_portal_for?(current_user)
 
@@ -47,6 +49,10 @@ class DocumentsController < BaseController
 
     mark_document_as_read!(@document, @viewer_version)
     @viewer_site_path = @path_history_resolution&.canonical_path.presence || params[:site_path].presence || @viewer_version&.html_view_site_path
+    @previous_site_path = params[:previous_site_path].presence
+    @previous_slug = params[:previous_slug].presence
+    @terminal_slug_history_resolution = @slug_history_resolution if @slug_history_resolution&.terminal?
+    @terminal_path_history_resolution = resolve_terminal_path_history || (@path_history_resolution if @path_history_resolution&.terminal?)
     @viewer_iframe_src = embedded_viewer_src(@viewer_version)
     @viewer_popout_src = @viewer_iframe_src
     @source_breadcrumbs = SourcePathBreadcrumb.new(
@@ -85,6 +91,24 @@ class DocumentsController < BaseController
     end
   end
 
+  def find_document_or_redirect_from_historical_slug
+    document = @project.documents.includes(:document_tags, :document_keywords).find_by(slug: params[:slug])
+    return document if document
+
+    @slug_history_resolution = DocumentSlugHistoryResolver.new(project: @project, requested_slug: params[:slug]).call
+    raise ActiveRecord::RecordNotFound, "Document not found" if @slug_history_resolution.missing?
+
+    return @slug_history_resolution.canonical_document if @slug_history_resolution.terminal?
+
+    redirect_to_canonical_document_slug(@slug_history_resolution)
+    nil
+  end
+
+  def redirect_to_canonical_document_slug(slug_resolution)
+    redirect_params = request.query_parameters.merge(previous_slug: slug_resolution.requested_slug)
+    redirect_to project_document_path(@project, slug_resolution.canonical_document.slug, redirect_params), status: :moved_permanently
+  end
+
   def resolve_path_history
     return unless @viewer_version
 
@@ -96,10 +120,23 @@ class DocumentsController < BaseController
     ).call
   end
 
+  def resolve_terminal_path_history
+    return if params[:terminal_site_path].blank? || @viewer_version.blank?
+
+    resolution = DocumentPathHistoryResolver.new(
+      document: @document,
+      requested_site_path: params[:terminal_site_path],
+      canonical_version: @viewer_version,
+      candidate_versions: @versions
+    ).call
+    resolution if resolution.terminal?
+  end
+
   def redirect_to_canonical_site_path
     redirect_params = request.query_parameters.merge(
       version_id: @path_history_resolution.canonical_version.public_id,
-      site_path: @path_history_resolution.canonical_path
+      site_path: @path_history_resolution.canonical_path,
+      previous_site_path: @path_history_resolution.requested_path
     )
     redirect_to project_document_path(@project, @document.slug, redirect_params), status: :moved_permanently
   end
@@ -159,11 +196,18 @@ class DocumentsController < BaseController
   end
 
   def normalized_page
-    @filters[:page]
+    @filters[:page].to_i.clamp(1, Float::INFINITY)
   end
 
   def selected_source_path
-    normalize_source_path_param(params[:upload_source_path].presence)
+    normalize_source_path_param(params[:upload_source_path].presence) || query_source_path_candidate
+  end
+
+  def query_source_path_candidate
+    query = @filters[:q].to_s.strip
+    return if query.blank? || query.exclude?("/")
+
+    normalize_source_path_param(query)
   end
 
   def normalize_source_path_param(value)

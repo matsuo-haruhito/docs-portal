@@ -33,6 +33,20 @@ RSpec.describe GeneratedFiles::RunRecorder do
     expect(run.finished_at).to be_present
   end
 
+  it "uses empty arrays and metadata for nil optional values" do
+    run = described_class.new.start(
+      job: {"id" => "sample_job", "source_paths" => nil},
+      changed_files: nil,
+      event_source: nil,
+      metadata: nil
+    )
+
+    expect(run).to be_running
+    expect(run.source_paths).to eq([])
+    expect(run.changed_files).to eq([])
+    expect(run.metadata).to eq({})
+  end
+
   it "returns a null run when disabled" do
     run = described_class.new(enabled: false).start(
       job: {"id" => "sample_job"},

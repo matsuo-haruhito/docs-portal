@@ -30,8 +30,7 @@ RSpec.describe "API internal file upload content hash format", type: :request do
       project_code: project.code,
       file: uploaded_file,
       relative_path: "docs/README.md",
-      content_hash: "not-a-sha256",
-      validate_only: true
+      content_hash: "not-a-sha256"
     }, headers: headers
 
     expect(response).to have_http_status(:bad_request)

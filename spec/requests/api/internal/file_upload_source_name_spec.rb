@@ -29,8 +29,7 @@ RSpec.describe "API internal file upload source name", type: :request do
     post "/api/internal/file_uploads", params: {
       project_code: project.code,
       file: uploaded_file,
-      relative_path: "docs/README.md",
-      validate_only: true
+      relative_path: "docs/README.md"
     }, headers: headers
 
     expect(response).to have_http_status(:created)
@@ -50,8 +49,7 @@ RSpec.describe "API internal file upload source name", type: :request do
       project_code: project.code,
       file: uploaded_file,
       relative_path: "docs/README.md",
-      source_name: "client-sync",
-      validate_only: true
+      source_name: "client-sync"
     }, headers: headers
 
     expect(response).to have_http_status(:created)

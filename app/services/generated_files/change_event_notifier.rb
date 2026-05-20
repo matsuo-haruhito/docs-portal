@@ -37,10 +37,18 @@ module GeneratedFiles
         next if raw_path.blank?
 
         normalized_path = Pathname(raw_path).cleanpath.to_s.delete_prefix("./")
-        next if normalized_path.blank? || normalized_path == "."
+        next if unsafe_path?(normalized_path)
 
         { path: normalized_path, operation: operation.to_s.presence || "update" }
       end.uniq
+    end
+
+    def unsafe_path?(path)
+      path.blank? ||
+        path == "." ||
+        path.start_with?("/") ||
+        path.match?(%r{\A[A-Za-z]:/}) ||
+        path.split("/").include?("..")
     end
   end
 end

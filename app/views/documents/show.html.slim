@@ -1,6 +1,10 @@
 - page_title @document.title
 - rendered_view_available = @viewer_iframe_src.present?
 - document_download_file = document_version_download_file(@viewer_version)
+- slug_history_status = @previous_slug.present? ? DocumentHistoryStatusPresenter.new(status: :moved, requested_value: @previous_slug, canonical_value: @document.slug) : nil
+- path_history_status = @previous_site_path.present? ? DocumentHistoryStatusPresenter.new(status: :moved, requested_value: @previous_site_path, canonical_value: @viewer_site_path) : nil
+- terminal_slug_history_status = @terminal_slug_history_resolution ? DocumentHistoryStatusPresenter.new(status: @terminal_slug_history_resolution.status, requested_value: @terminal_slug_history_resolution.requested_slug, canonical_value: @document.slug) : nil
+- terminal_path_history_status = @terminal_path_history_resolution ? DocumentHistoryStatusPresenter.new(status: @terminal_path_history_resolution.status, requested_value: @terminal_path_history_resolution.requested_path, canonical_value: @viewer_site_path) : nil
 - preview_drop_data = {}
 - if current_user.internal?
   - preview_drop_data = { controller: "manual-document-upload", manual_document_upload_dragging_class: "is-dragging", manual_document_upload_url_value: project_document_uploads_path(@project), manual_document_upload_target_document_id: @document.public_id, action: "dragenter->manual-document-upload#dragenter dragover->manual-document-upload#dragover dragleave->manual-document-upload#dragleave drop->manual-document-upload#drop" }
@@ -15,6 +19,14 @@
     .page-hero.site-viewer-hero.document-reader-hero
       h1 = @document.title
       p.muted = site_viewer_meta_lines(project: @project, document: @document, version: @viewer_version).join(" / ")
+      - [slug_history_status, path_history_status, terminal_slug_history_status, terminal_path_history_status].compact.each do |history_status|
+        .notice role="status" aria-live="polite" class=(history_status.warning? ? "notice--warning" : nil)
+          strong = history_status.label
+          p.muted
+            = history_status.message
+            - if history_status.detail.present?
+              |  
+              code = history_status.detail
       - if current_user.internal?
         p.muted このプレビュー領域へ1ファイルずつドロップすると、この文書の更新候補としてアップロードできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
       p.actions
@@ -48,6 +60,14 @@
     = render "comment_workspace", floating: true
 - else
   h1 = @document.title
+  - [slug_history_status, path_history_status, terminal_slug_history_status, terminal_path_history_status].compact.each do |history_status|
+    .notice role="status" aria-live="polite" class=(history_status.warning? ? "notice--warning" : nil)
+      strong = history_status.label
+      p.muted
+        = history_status.message
+        - if history_status.detail.present?
+          |  
+          code = history_status.detail
   - if current_user.internal?
     .card.manual-document-upload-panel data=preview_drop_data
       h2 ファイルをアップロード

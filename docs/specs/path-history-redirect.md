@@ -11,7 +11,7 @@ Path history / redirect は、文書の slug、Docusaurus site path、Markdown e
 
 ## 現在の resolver
 
-`DocumentPathHistoryResolver` は、同一 document 内の過去 version の `html_view_site_path` を履歴として扱います。
+`DocumentPathHistoryResolver` は、同一 document 内の過去 version の `html_view_site_path` と明示 metadata の `site_paths` を履歴として扱います。
 
 入力:
 
@@ -26,10 +26,97 @@ Path history / redirect は、文書の slug、Docusaurus site path、Markdown e
   - `canonical`
   - `moved`
   - `missing`
+  - `archived`
+  - `deleted`
 - `requested_path`
 - `canonical_path`
 - `canonical_version`
 - `matched_version`
+- `matched_entry`
+
+`DocumentSlugHistoryResolver` は、同一 project 内の document versions から、明示 metadata の `slugs` と旧 slug とみなせる source/path 由来の候補を現在の document slug へ解決します。
+
+入力:
+
+- `project`
+- `requested_slug`
+- `candidate_documents`
+
+出力:
+
+- `status`
+  - `moved`
+  - `missing`
+  - `archived`
+  - `deleted`
+- `requested_slug`
+- `canonical_document`
+- `matched_version`
+- `matched_source`
+- `matched_entry`
+
+`DocumentPathHistoryMetadata` は、明示 metadata file から slug / site path 履歴を読み取る reader です。metadata は resolver でも使い、quality check では source / warning を表示します。
+
+## user-facing status
+
+`DocumentHistoryStatusPresenter` は、resolver や将来の DB table 由来の履歴状態を利用者向け文言に変換します。
+
+| status | label | message |
+| --- | --- | --- |
+| `canonical` | 現在の場所 | このURLは現在の文書位置です。 |
+| `moved` | 移動済み | 旧URLから現在の文書位置へ移動しました。 |
+| `missing` | 未解決 | このURLに対応する現在の文書位置は見つかりませんでした。 |
+| `archived` | アーカイブ済み | このURLに対応する文書はアーカイブ済みです。 |
+| `deleted` | 削除済み | このURLに対応する文書は削除済みです。 |
+
+`archived` / `deleted` は terminal status として扱い、redirect せず reader 上に warning notice として表示します。
+
+## explicit metadata
+
+文書版の添付・元ファイルに、次のいずれかの YAML file を置くことで明示的な path history metadata として認識します。
+
+- `.docs-portal-history.yml`
+- `.docs-portal-history.yaml`
+- `.path-history.yml`
+- `.path-history.yaml`
+- `path-history.yml`
+- `path-history.yaml`
+
+YAML 形式:
+
+```yaml
+path_history:
+  slugs:
+    - previous-guide
+  site_paths:
+    - docs/previous-guide
+  archived:
+    - kind: slug
+      value: old-manual
+      reason: replaced by current-manual
+  deleted:
+    - site_path: docs/deleted-manual
+      reason: removed from publication
+```
+
+対応 key は `slugs`, `site_paths`, `archived`, `deleted` です。未対応 key は `path_history_metadata` warning として表示します。
+
+`archived` / `deleted` の entry は次の形式を取れます。
+
+```yaml
+path_history:
+  archived:
+    - kind: slug
+      value: old-manual
+      reason: replaced by current-manual
+    - kind: site_path
+      value: docs/old-manual
+  deleted:
+    - slug: removed-manual
+    - site_path: docs/removed-manual
+```
+
+`kind` は `slug` または `site_path` のみ対応します。`slug:` / `site_path:` shortcut を使った場合は kind を自動推定します。
 
 ## canonical 判定
 
@@ -45,9 +132,9 @@ status: canonical
 
 ## moved 判定
 
-要求された path が現在の canonical path ではなく、同一 document の過去 version の `normalized_html_view_site_path` 配下にある場合は `moved` とします。
+要求された path が現在の canonical path ではなく、明示 metadata の `site_paths` に一致する場合は `moved` とします。metadata に一致した場合は suffix 推定をせず、現在 version の canonical path へ誘導します。
 
-旧 path の suffix は現在 path に引き継ぎます。
+明示 metadata に一致しない場合は、同一 document の過去 version の `normalized_html_view_site_path` 配下にあるかを見ます。この場合、旧 path の suffix は現在 path に引き継ぎます。
 
 ```text
 old version html_view_site_path: docs/previous-guide
@@ -56,6 +143,26 @@ requested site_path: docs/previous-guide/appendix/page
 canonical_path: docs/current-guide/appendix/page
 status: moved
 ```
+
+slug については、要求された slug が現在の document slug と一致せず、同一 project 内の document version に次のような一致候補がある場合に `moved` とします。
+
+- 明示 metadata の `path_history.slugs`
+- `source_file_name` の拡張子を除いた名前
+- `source_relative_path` の末尾ファイル名から拡張子を除いた名前
+- `source_directory` の末尾 segment
+- `html_view_site_path` の末尾 segment
+- `site_build_path` の末尾 segment
+
+slug 候補は NFKC 正規化・小文字化・記号整理をして比較します。明示 metadata の slug 候補を source/path 由来の推定候補より優先します。
+
+## archived / deleted 判定
+
+要求された slug または site path が明示 metadata の `archived` / `deleted` entry に一致する場合は、その status を返します。
+
+- `kind: slug` は `DocumentSlugHistoryResolver` が扱う
+- `kind: site_path` は `DocumentPathHistoryResolver` が扱う
+- `archived` / `deleted` は terminal status なので 301 redirect しない
+- reader は現在の canonical document を表示しつつ、該当 URL が archived/deleted である notice を表示する
 
 ## missing 判定
 
@@ -67,24 +174,67 @@ status: moved
 
 `DocumentsController#show` では、reader 用の `site_path` に対して resolver を呼びます。
 
-- `moved` の場合は `301 Moved Permanently` で現在の `site_path` に redirect
+- slug が現在 document に一致する場合は通常表示
+- slug が存在せず `DocumentSlugHistoryResolver` が `moved` を返した場合は現在 document slug へ `301 Moved Permanently`
+- slug が存在せず `DocumentSlugHistoryResolver` が `archived` / `deleted` を返した場合は redirect せず、canonical document を表示して terminal status notice を出す
+- `site_path` が `moved` の場合は `301 Moved Permanently` で現在の `site_path` に redirect
+- `site_path` が `archived` / `deleted` の場合は redirect せず、reader 上に terminal status notice を出す
+- project site route から `terminal_site_path` が渡された場合は、reader 側で再解決して同じ terminal status notice を出す
 - `canonical` の場合はそのまま viewer を表示
 - `missing` の場合は従来どおり viewer 処理を継続
 
-redirect 先には現在の `version_id` と canonical `site_path` を含めます。
+slug redirect 先には `previous_slug` を含めます。redirect 後の reader では、`previous_slug` がある場合に `DocumentHistoryStatusPresenter` の `moved` 表示を使い、旧 URL 識別子と現在 slug を `old -> current` 形式で示します。
+
+site path redirect 先には現在の `version_id`、canonical `site_path`、元の `previous_site_path` を含めます。redirect 後の reader では、`previous_site_path` がある場合に `DocumentHistoryStatusPresenter` の `moved` 表示を使い、旧 path と現在 path を `old -> current` 形式で示します。
+
+## project site integration
+
+`ProjectSitesController#show` でも、HTML 直アクセス用の `site_path` に対して同じ resolver を呼びます。
+
+- asset path、つまり `assets/...` は cacheable asset として従来どおり扱い、path history redirect の対象外にする
+- `moved` の場合は `301 Moved Permanently` で現在の project site `site_path` に redirect
+- redirect 先は query string の `site_path=...` ではなく、`/projects/:project_code/site/:site_path` の canonical path 形式にする
+- `previous_site_path` を redirect 先にも残す
+- `embedded=1` が付いている場合は redirect 先にも `embedded=1` を残す
+- `archived` / `deleted` の場合は non-embedded request では reader へ redirect し、`terminal_site_path` を渡す
+- embedded request では terminal status でも従来どおり renderer 処理を継続する
+- embedded response には `X-Docs-Portal-History-Status`, `X-Docs-Portal-History-Requested-Path`, `X-Docs-Portal-History-Canonical-Path` を付与する
+- `canonical` / `missing` の場合は従来どおり renderer で処理する
+
+project site route が HTML ページを reader に誘導する場合も、`previous_site_path` や `terminal_site_path` を reader redirect に引き継ぎます。これにより、project site 直アクセスから始まった旧 path 移動や terminal status でも、最終的な reader 画面で同じ notice を表示できます。
+
+これにより、reader 経由の URL と Docusaurus HTML 直アクセス URL のどちらでも、旧 entry path から現在の canonical path へ誘導できます。
+
+## quality check
+
+`DocumentVersionQualityChecker` は、同一 document の過去 version に現在とは異なる HTML entry path がある場合、`path_history` warning を表示します。
+
+warning detail は次の形です。
+
+```text
+old/path, another/old/path -> current/path
+```
+
+この warning はエラーではありません。旧 URL から現在 URL へ redirect できる履歴があることを、公開前確認やレビューで見落とさないための通知です。
+
+`DocumentPathHistoryMetadata` が source file を検出した場合は `path_history_metadata` info を表示します。未対応 key や YAML parse error は `path_history_metadata` warning として表示します。
+
+`archived` / `deleted` entry がある場合は `path_history_metadata_status` info を表示します。detail は次の形式です。
+
+```text
+archived=1, deleted=1
+```
 
 ## current limitations
 
-- slug 自体の履歴はまだ扱わない
-- DB table として path history はまだ持たない
-- archived / deleted / explicitly moved の状態管理はまだ持たない
+- slug history は metadata と source/path 由来の推定で扱うが、明示 DB table はまだ持たない
+- site path history は metadata と過去 version の path で扱うが、明示 DB table はまだ持たない
 - 別 document への移動はまだ扱わない
-- ProjectSitesController 側の site route にはまだ直接接続していない
+- asset path は redirect しない
+- embedded viewer 内の user-facing overlay はまだ実装せず、response header に状態を渡すところまでに留める
 
 ## next steps
 
-- slug history の resolver を追加する
-- path history を metadata または DB table で明示管理する
-- `canonical`, `moved`, `archived`, `deleted` を user-facing な状態として整理する
-- quality check で古い path / canonical path の不整合を warning する
-- ProjectSitesController の direct site route でも同じ resolver を使う
+- path history を DB table で明示管理する
+- metadata と DB table の優先順位を整理する
+- embedded viewer shell で terminal status header を overlay 表示に使う

@@ -61,7 +61,10 @@ module GeneratedFiles
         path = file.to_s.strip
         next if path.empty?
 
-        result << Pathname(path).cleanpath.to_s.delete_prefix("./")
+        normalized_path = Pathname(path).cleanpath.to_s.delete_prefix("./")
+        next if normalized_path.empty? || normalized_path == "."
+
+        result << normalized_path
       end
     end
   end
