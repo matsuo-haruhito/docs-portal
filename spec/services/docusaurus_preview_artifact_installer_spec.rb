@@ -53,7 +53,7 @@ RSpec.describe DocusaurusPreviewArtifactInstaller do
 
     expect do
       described_class.new(version: version, archive_path: archive.path, site_path: "../guide").install!
-    end.to raise_error(ApplicationError::BadRequest, /site path/)
+    end.to raise_error(ApplicationError::BadRequest, /path is invalid/)
   ensure
     archive&.close!
   end
