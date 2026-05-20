@@ -1,6 +1,8 @@
 require "nokogiri"
 
 class DocusaurusSiteRenderer
+  MARKDOWN_EXTENSIONS_PATTERN = "md|markdown|mdx"
+
   def initialize(
     version:,
     view_context:,
@@ -77,12 +79,12 @@ class DocusaurusSiteRenderer
     cleaned = normalize_site_path(site_path)
     variants = [cleaned]
 
-    if cleaned.match?(/\.(md|markdown)\z/i)
-      without_markdown_ext = cleaned.sub(/\.(md|markdown)\z/i, "")
+    if cleaned.match?(/\.(#{MARKDOWN_EXTENSIONS_PATTERN})\z/i)
+      without_markdown_ext = cleaned.sub(/\.(#{MARKDOWN_EXTENSIONS_PATTERN})\z/i, "")
       variants << without_markdown_ext
 
-      if cleaned.match?(%r{/(?:index|README)\.(md|markdown)\z}i)
-        variants << cleaned.sub(%r{/(?:index|README)\.(md|markdown)\z}i, "")
+      if cleaned.match?(%r{/(?:index|README)\.(#{MARKDOWN_EXTENSIONS_PATTERN})\z}i)
+        variants << cleaned.sub(%r{/(?:index|README)\.(#{MARKDOWN_EXTENSIONS_PATTERN})\z}i, "")
       end
     end
 
