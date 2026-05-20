@@ -164,7 +164,7 @@ async function runCommand(command, args, options = {}) {
 
 function safeRelativeHeader(value) {
   const raw = normalizeSlashes(value);
-  if (raw.startsWith('/')) {
+  if (raw.startsWith('/') || hasDriveLetter(raw)) {
     throw new Error('entry path is invalid');
   }
 
@@ -185,7 +185,7 @@ function archiveEntryNameFromVerboseLine(line) {
 
 function safeArchiveEntryName(value) {
   const raw = normalizeSlashes(value);
-  if (raw.startsWith('/')) {
+  if (raw.startsWith('/') || hasDriveLetter(raw)) {
     throw new Error(`archive entry path is invalid: ${value}`);
   }
 
@@ -208,6 +208,10 @@ function normalizeSitePagePath(entryPath) {
 
 function normalizeSlashes(value) {
   return String(value || '').replaceAll('\\', '/');
+}
+
+function hasDriveLetter(value) {
+  return /^[A-Za-z]:\//.test(value);
 }
 
 function sendJson(response, status, payload) {
