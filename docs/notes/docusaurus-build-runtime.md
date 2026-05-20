@@ -57,6 +57,8 @@ The Rails side applies this boundary in three places:
 
 The renderer service applies the same boundary before extracting the uploaded archive. It validates the `X-Docs-Entry-Path` header, rejects unsafe tar entries before extraction, and only returns a site path derived from the validated entry path.
 
+Successful artifact install replaces the version's existing site directory atomically via a staging directory, so stale files from a previous build are removed. If validation fails before replacement, the existing site directory and metadata are left intact.
+
 Temporary archives returned from the renderer are closed by `DocusaurusPreviewBuildJob` after installation, including success and error paths.
 
 ## Kroki generated SVGs
