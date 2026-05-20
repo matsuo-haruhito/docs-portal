@@ -19,8 +19,7 @@ class DocusaurusPreviewArtifactInstaller
       staging = Pathname.new(tmpdir).join("site")
       FileUtils.mkdir_p(staging)
       extract_archive!(staging)
-      expected_entry = staging.join(site_path, "index.html")
-      raise ApplicationError::BadRequest, "Docusaurus build output missing entry path: #{site_path}" unless expected_entry.exist?
+      raise ApplicationError::BadRequest, "Docusaurus build output missing entry path: #{site_path}" unless expected_entry_exists?(staging)
 
       FileUtils.rm_rf(destination)
       FileUtils.mv(staging, destination)
@@ -59,6 +58,16 @@ class DocusaurusPreviewArtifactInstaller
     else
       raise ApplicationError::BadRequest, "Docusaurus build artifact contains unsupported entry type: #{entry.full_name}"
     end
+  end
+
+  def expected_entry_exists?(staging)
+    expected_entry_candidates(staging).any?(&:exist?)
+  end
+
+  def expected_entry_candidates(staging)
+    candidates = [staging.join(site_path, "index.html")]
+    candidates << staging.join("index.html") if site_path == "index"
+    candidates
   end
 
   def safe_site_path(value)
