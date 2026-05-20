@@ -133,7 +133,7 @@ RSpec.describe ManualDocumentUpload do
     ).call
 
     expect(result.source_path).to eq("docs/Guide.MDX")
-    expect(result.version.preview_build_status).to eq("queued")
+    expect(result.version.preview_build_status).to eq("preview_queued")
     expect(DocusaurusPreviewBuildJob).to have_received(:perform_later).with(result.version.id)
   end
 
@@ -152,7 +152,7 @@ RSpec.describe ManualDocumentUpload do
     ).call
 
     expect(result.source_path).to eq("docs/guide.pdf")
-    expect(result.version.preview_build_status).not_to eq("queued")
+    expect(result.version.preview_build_status).not_to eq("preview_queued")
     expect(DocusaurusPreviewBuildJob).not_to have_received(:perform_later)
   end
 
