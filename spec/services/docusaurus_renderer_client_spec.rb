@@ -58,6 +58,14 @@ RSpec.describe DocusaurusRendererClient do
     end.to raise_error(ApplicationError::BadRequest, /MDX parse failed/)
   end
 
+  it "rejects empty successful renderer artifacts" do
+    allow(http).to receive(:request).and_return(success_response(""))
+
+    expect do
+      client.build(archive_file: archive, entry_path: "docs/guide.md")
+    end.to raise_error(ApplicationError::BadRequest, /empty artifact/)
+  end
+
   it "raises a transient error when the renderer does not respond" do
     allow(http).to receive(:request).and_raise(Errno::ECONNREFUSED.new("renderer"))
 
