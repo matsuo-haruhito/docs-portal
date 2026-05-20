@@ -11,7 +11,7 @@ RSpec.describe "Project detail tree titles", type: :request do
     FileUtils.rm_rf(DocumentFile.storage_root.join("spec/project-detail-tree-titles"))
   end
 
-  it "shows document titles rather than primary file names on the project detail tree" do
+  it "shows document titles as the primary label and file names as secondary text" do
     version = create(:document_version, document:, version_label: "v1.0.0", status: :published)
     document.update!(latest_version: version)
     create_document_file!(version, file_name: "design.pdf")
@@ -22,6 +22,8 @@ RSpec.describe "Project detail tree titles", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("設計書タイトル")
+    expect(response.body).to include("project-document-detail-tree__file-name muted")
+    expect(response.body).to include("design.pdf")
     expect(response.body).not_to include('project-document-detail-tree__document-title" href="/projects/DETAILTREE/documents/design-title">design.pdf')
   end
 
