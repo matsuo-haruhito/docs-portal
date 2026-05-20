@@ -172,10 +172,20 @@ module GeneratedFiles
     end
 
     def normalize_path(path)
-      normalized = Pathname(path.to_s.strip).cleanpath.to_s.delete_prefix("./")
-      return nil if normalized.blank? || normalized == "."
+      raw_path = path.to_s.strip.tr("\\", "/")
+      normalized = Pathname(raw_path).cleanpath.to_s.delete_prefix("./")
+      return nil if unsafe_path?(raw_path) || unsafe_path?(normalized)
 
       normalized
+    end
+
+    def unsafe_path?(path)
+      path.blank? ||
+        path == "." ||
+        path == ".." ||
+        path.start_with?("/") ||
+        path.match?(%r{\A[A-Za-z]:/}) ||
+        path.split("/").include?("..")
     end
 
     def normalize_operation(operation)
