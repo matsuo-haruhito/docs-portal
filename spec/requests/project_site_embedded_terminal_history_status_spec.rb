@@ -23,7 +23,7 @@ RSpec.describe "Project site embedded terminal history status", type: :request d
       document.update!(latest_version: version)
       index_path = version.site_root_absolute_path.join("docs/current-guide", "index.html")
       FileUtils.mkdir_p(index_path.dirname)
-      File.write(index_path, "<html><body>current</body></html>")
+      File.write(index_path, "<html><head></head><body>current</body></html>")
     end
   end
 
@@ -58,6 +58,8 @@ RSpec.describe "Project site embedded terminal history status", type: :request d
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("current")
+    expect(response.body).to include('var routePath = "/docs/current-guide"')
+    expect(response.body).not_to include('var routePath = "/docs/archived-guide"')
     expect(response.headers["X-Docs-Portal-History-Status"]).to eq("archived")
     expect(response.headers["X-Docs-Portal-History-Requested-Path"]).to eq("docs/archived-guide")
     expect(response.headers["X-Docs-Portal-History-Canonical-Path"]).to eq("docs/current-guide")
