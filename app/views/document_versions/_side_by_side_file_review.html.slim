@@ -4,16 +4,17 @@
 - previous_by_path = previous_files.index_by(&:tree_path)
 - review_paths = (current_by_path.keys + previous_by_path.keys).compact.uniq.sort
 
-- if review_paths.any?
-  .card.side-by-side-file-review#side-by-side-file-review
-    .markdown-workspace__header
-      div
-        h2 左右確認ビュー
-        p.muted PDFやOfficeなどテキストdiffが取りにくいファイルは、前版と今回版を左右に並べて見比べられます。ブラウザ内表示できない形式はダウンロードして確認してください。
-      .actions
-        - if @compare_version
-          = link_to "比較対象版を開く", document_version_path(@compare_version), class: "button secondary"
-        = link_to "添付・元ファイルへ移動", "#version-files", class: "button secondary"
+.card.side-by-side-file-review#side-by-side-file-review
+  .markdown-workspace__header
+    div
+      h2 左右確認ビュー
+      p.muted PDFやOfficeなどテキストdiffが取りにくいファイルは、前版と今回版を左右に並べて見比べられます。ブラウザ内表示できない形式はダウンロードして確認してください。
+    .actions
+      - if @compare_version
+        = link_to "比較対象版を開く", document_version_path(@compare_version), class: "button secondary"
+      = link_to "添付・元ファイルへ移動", "#version-files", class: "button secondary"
+
+  - if review_paths.any?
     - review_paths.each do |path|
       - current_file = current_by_path[path]
       - previous_file = previous_by_path[path]
@@ -53,3 +54,5 @@
                 p.muted このファイルはブラウザ内プレビューに対応していません。別タブで開くか、ダウンロードして比較してください。
             - else
               p.muted 表示中の版にはありません。
+  - else
+    p.muted 比較対象ファイルはまだありません。
