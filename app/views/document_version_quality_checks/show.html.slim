@@ -1,4 +1,5 @@
 - page_title "#{@document.title} #{@version.version_label} 品質チェック"
+- preview_checks = @quality_check_hash[:checks].select { |check| check[:key].to_s == "rendered_site" && %w[error warning].include?(check[:severity].to_s) }
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
 
@@ -30,6 +31,19 @@ p
   p.actions
     = link_to "JSON", document_version_quality_check_path(@version, format: :json), class: "button secondary"
     = link_to "Markdown", document_version_quality_check_path(@version, format: :md), class: "button secondary"
+
+- if preview_checks.any?
+  .card
+    h2 Preview
+    ul
+      - preview_checks.each do |check|
+        li
+          strong = check[:severity]
+          |  
+          = check[:message]
+          - if check[:detail].present?
+            |  — 
+            code = check[:detail]
 
 = table_tag do
   thead
