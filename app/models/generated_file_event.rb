@@ -12,6 +12,8 @@ class GeneratedFileEvent < ApplicationRecord
     failed: 3
   }
 
+  before_validation :normalize_path
+
   validates :event_key, :path, :operation, :scheduled_at, :last_seen_at, presence: true
   validate :path_must_be_safe_relative_path
 
