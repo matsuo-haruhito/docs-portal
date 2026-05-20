@@ -118,6 +118,40 @@ RSpec.describe ManualDocumentUpload do
     expect(result.version.reload.search_body_text).to include("Searchable manual upload body")
   end
 
+  it "uses the basename of uploaded file names" do
+    project = create(:project)
+    actor = create(:user, :internal)
+    notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
+    allow(DocusaurusPreviewBuildJob).to receive(:perform_later)
+
+    result = described_class.new(
+      project:,
+      actor:,
+      uploaded_file: uploaded_file("../secret.md", "# Secret", content_type: "text/markdown"),
+      source_path: "docs",
+      change_event_notifier: notifier
+    ).call
+
+    expect(result.source_path).to eq("docs/secret.md")
+    expect(result.version.source_file_name).to eq("secret.md")
+  end
+
+  it "rejects unsafe upload destination folders" do
+    project = create(:project)
+    actor = create(:user, :internal)
+    notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
+
+    expect do
+      described_class.new(
+        project:,
+        actor:,
+        uploaded_file: uploaded_file("guide.md", "# Guide", content_type: "text/markdown"),
+        source_path: "../secret",
+        change_event_notifier: notifier
+      ).call
+    end.to raise_error(ApplicationError::BadRequest, /アップロード先フォルダが不正です/)
+  end
+
   it "enqueues preview builds for uppercase markdown uploads" do
     project = create(:project)
     actor = create(:user, :internal)
