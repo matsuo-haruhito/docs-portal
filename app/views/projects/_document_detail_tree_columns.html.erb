@@ -20,6 +20,7 @@
   <td class="project-document-detail-tree__name-cell">
     <%= link_to item.title, tree_item_path(item), class: "project-document-detail-tree__document-title" %>
     <% if download_file %>
+      <span class="project-document-detail-tree__file-name muted">（<%= download_file.file_name %>）</span>
       <%= link_to document_file_path(download_file, disposition: "download"), class: "tree-download-button tree-download-button--combined", title: "このファイルをダウンロード", data: { turbo: false }, aria: { label: "このファイルをダウンロード" } do %>
         <%= document_file_icon(download_file, title: nil) %>
         <%= download_icon %>
