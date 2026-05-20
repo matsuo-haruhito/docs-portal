@@ -15,7 +15,7 @@ class MarkdownLineDiffBuilder
     return [] unless @previous_version
 
     @file_rows
-      .select { |row| markdown_file?(row.fetch(:file)) }
+      .select { |row| markdown_file?(row.fetch(:file, nil) || row.fetch(:previous_file, nil)) }
       .map { |row| build_file_diff(row) }
   end
 
@@ -57,6 +57,8 @@ class MarkdownLineDiffBuilder
   end
 
   def markdown_file?(file)
+    return false unless file
+
     File.extname(file.file_name.to_s).downcase.in?(%w[.md .markdown .mdx])
   end
 
