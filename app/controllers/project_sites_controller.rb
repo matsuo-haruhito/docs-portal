@@ -17,11 +17,12 @@ class ProjectSitesController < BaseController
 
     set_terminal_history_response_headers(path_history_resolution) if path_history_resolution&.terminal?
 
-    renderer = project_site_renderer(site_path, embedded: embedded_request?)
-    file_path = renderer.file_response_path(site_path)
+    render_site_path = renderable_site_path(site_path, path_history_resolution)
+    renderer = project_site_renderer(render_site_path, embedded: embedded_request?)
+    file_path = renderer.file_response_path(render_site_path)
 
     if html_file?(file_path)
-      render_html_or_shell(renderer, site_path)
+      render_html_or_shell(renderer, render_site_path)
     else
       send_site_file(file_path)
     end
@@ -104,6 +105,12 @@ class ProjectSitesController < BaseController
     response.headers["X-Docs-Portal-History-Status"] = path_history_resolution.status.to_s
     response.headers["X-Docs-Portal-History-Requested-Path"] = path_history_resolution.requested_path.to_s
     response.headers["X-Docs-Portal-History-Canonical-Path"] = path_history_resolution.canonical_path.to_s
+  end
+
+  def renderable_site_path(site_path, path_history_resolution)
+    return path_history_resolution.canonical_path if path_history_resolution&.terminal? && embedded_request?
+
+    site_path
   end
 
   def render_html_or_shell(renderer, site_path)
