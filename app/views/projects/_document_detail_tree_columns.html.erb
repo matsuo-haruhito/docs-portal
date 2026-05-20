@@ -18,7 +18,7 @@
   <% version = document_tree_version_for(item) %>
   <% download_file = document_version_download_file(version) %>
   <td class="project-document-detail-tree__name-cell">
-    <%= link_to tree_item_label(item), tree_item_path(item), class: "project-document-detail-tree__document-title" %>
+    <%= link_to item.title, tree_item_path(item), class: "project-document-detail-tree__document-title" %>
     <% if download_file %>
       <%= link_to document_file_path(download_file, disposition: "download"), class: "tree-download-button tree-download-button--combined", title: "このファイルをダウンロード", data: { turbo: false }, aria: { label: "このファイルをダウンロード" } do %>
         <%= document_file_icon(download_file, title: nil) %>
