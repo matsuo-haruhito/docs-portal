@@ -32,13 +32,14 @@ RSpec.describe "Document version quality checks", type: :request do
 
   it "highlights preview quality checks in html" do
     version.assign_source_path_metadata!(source_path: "docs/manual.md", snapshot_kind: "received_markdown")
-    version.save!
+    version.mark_preview_build_queued!
     sign_in_as(internal_user)
 
     get document_version_quality_check_path(version)
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Preview")
+    expect(response.body).to include("Preview build is queued")
     expect(response.body).to include("Markdown preview site is not built yet")
     expect(response.body).to include("docs/manual.md")
   end
