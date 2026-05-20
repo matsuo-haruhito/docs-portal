@@ -17,13 +17,29 @@
       <div><dt class="font-semibold">Job ID</dt><dd class="font-mono"><%= @generated_file_run.job_id %></dd></div>
       <div><dt class="font-semibold">Generator</dt><dd class="font-mono"><%= @generated_file_run.generator.presence || "-" %></dd></div>
       <div><dt class="font-semibold">Output Writer</dt><dd class="font-mono"><%= @generated_file_run.output_writer.presence || "-" %></dd></div>
-      <div><dt class="font-semibold">Event Source</dt><dd><%= @generated_file_run.event_source.presence || "-" %></dd></div>
+      <div>
+        <dt class="font-semibold">Event Source</dt>
+        <dd>
+          <%= @generated_file_run.event_source.presence || "-" %>
+          <% if @generated_file_run.event_source == "generated_file_run_retry" %>
+            <span class="badge">Retry</span>
+          <% elsif @generated_file_run.event_source == "generated_file_run_bulk_retry" %>
+            <span class="badge">Bulk Retry</span>
+          <% end %>
+        </dd>
+      </div>
       <div><dt class="font-semibold">Started</dt><dd><%= l(@generated_file_run.started_at, format: :long) if @generated_file_run.started_at %></dd></div>
       <div><dt class="font-semibold">Finished</dt><dd><%= l(@generated_file_run.finished_at, format: :long) if @generated_file_run.finished_at %></dd></div>
-      <% if @generated_file_run.metadata&.dig("retry_of_generated_file_run_public_id").present? %>
+      <% if @retry_of_generated_file_run_public_id.present? %>
         <div>
           <dt class="font-semibold">Retry Of</dt>
-          <dd class="font-mono"><%= @generated_file_run.metadata["retry_of_generated_file_run_public_id"] %></dd>
+          <dd class="font-mono">
+            <% if @retry_of_generated_file_run %>
+              <%= link_to @retry_of_generated_file_run_public_id, admin_generated_file_run_path(@retry_of_generated_file_run_public_id), class: "text-blue-600 underline" %>
+            <% else %>
+              <%= @retry_of_generated_file_run_public_id %>
+            <% end %>
+          </dd>
         </div>
         <div>
           <dt class="font-semibold">Retry Requested</dt>
@@ -32,6 +48,46 @@
       <% end %>
     </dl>
   </div>
+
+  <% if @related_generated_file_event_public_ids.any? || @retry_child_runs.any? %>
+    <div class="rounded-lg border bg-white p-4">
+      <h2 class="mb-3 text-lg font-semibold">関連情報</h2>
+
+      <% if @related_generated_file_event_public_ids.any? %>
+        <div class="mb-4">
+          <h3 class="mb-2 text-sm font-semibold">関連Event</h3>
+          <ul class="space-y-1 text-sm">
+            <% @related_generated_file_event_public_ids.each do |public_id| %>
+              <% event = @related_generated_file_events_by_public_id[public_id] %>
+              <li>
+                <% if event %>
+                  <%= link_to public_id, admin_generated_file_event_path(public_id), class: "font-mono text-blue-600 underline" %>
+                  <span class="muted"><%= event.status %></span>
+                <% else %>
+                  <span class="font-mono"><%= public_id %></span>
+                  <span class="muted">(missing)</span>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <% if @retry_child_runs.any? %>
+        <div>
+          <h3 class="mb-2 text-sm font-semibold">このRunから派生したRetry</h3>
+          <ul class="space-y-1 text-sm">
+            <% @retry_child_runs.each do |run| %>
+              <li>
+                <%= link_to run.public_id, admin_generated_file_run_path(run.public_id), class: "font-mono text-blue-600 underline" %>
+                <span class="muted"><%= run.status %></span>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 
   <% if @generated_file_run.error_message.present? %>
     <div class="rounded-lg border border-red-200 bg-red-50 p-4">
