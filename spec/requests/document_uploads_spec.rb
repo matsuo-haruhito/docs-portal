@@ -40,6 +40,34 @@ RSpec.describe "Document uploads", type: :request do
     expect(response).to redirect_to(document_version_path(version, upload_review: "1"))
   end
 
+  it "rejects unsafe upload target folders" do
+    sign_in_as(user)
+
+    expect do
+      post project_document_uploads_path(project), params: {
+        source_path: "/etc",
+        file: uploaded_file("overview.md", "# Overview")
+      }
+    end.not_to change(Document, :count)
+
+    expect(response).to have_http_status(:bad_request)
+    expect(response.body).to include("アップロード先フォルダが不正です")
+  end
+
+  it "rejects drive-letter upload target folders" do
+    sign_in_as(user)
+
+    expect do
+      post project_document_uploads_path(project), params: {
+        source_path: "C:/docs",
+        file: uploaded_file("overview.md", "# Overview")
+      }
+    end.not_to change(Document, :count)
+
+    expect(response).to have_http_status(:bad_request)
+    expect(response.body).to include("アップロード先フォルダが不正です")
+  end
+
   it "enqueues a Docusaurus preview build for manually uploaded markdown" do
     sign_in_as(user)
     markdown = <<~MD
