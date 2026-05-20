@@ -21,6 +21,12 @@
     .tree-item-label.tree-label--length-gt-15 { font-size: calc(1em - 1.5pt); }
     .tree-item-label.tree-label--length-gt-20 { font-size: calc(1em - 2pt); }
     .tree-item-label.tree-label--length-gt-25 { font-size: calc(1em - 2.5pt); }
+    .document-tree-scroll-spacer { padding-bottom: 5rem; }
+    .document-tree-scroll-spacer::after { content: ""; display: block; height: 2rem; }
+    @media (max-width: 520px) {
+      .document-tree-scroll-spacer { padding-bottom: 3rem; }
+      .document-tree-scroll-spacer::after { height: 1rem; }
+    }
   </style>
 
   <% content_for :sidebar_toolbar do %>
@@ -41,7 +47,7 @@
       collapsed_source_path: local_assigns[:collapsed_source_path]
     ) %>
 
-    <div class="document-tree-scroll-spacer" style="padding-bottom: 3.5rem;">
+    <div class="document-tree-scroll-spacer">
       <table class="tree-view-table">
         <tbody>
           <%= tree_view_rows(render_state) %>
