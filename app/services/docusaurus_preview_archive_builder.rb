@@ -12,7 +12,7 @@ class DocusaurusPreviewArchiveBuilder
     tempfile = Tempfile.new(["docusaurus-preview-#{version.id}", ".tar.gz"])
     tempfile.binmode
 
-    Zlib::GzipWriter.wrap(tempfile) do |gzip|
+    Zlib::GzipWriter.open(tempfile.path) do |gzip|
       Gem::Package::TarWriter.new(gzip) do |tar|
         version.document_files.order(:sort_order, :id).each do |document_file|
           add_file(tar, document_file)
