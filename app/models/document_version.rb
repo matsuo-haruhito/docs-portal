@@ -11,6 +11,13 @@ class DocumentVersion < ApplicationRecord
   has_many :external_folder_sync_items, dependent: :nullify
 
   enum :status, { draft: 0, published: 1, archived: 2 }
+  enum :preview_build_status, {
+    preview_not_requested: 0,
+    preview_queued: 1,
+    preview_running: 2,
+    preview_succeeded: 3,
+    preview_failed: 4
+  }
 
   validates :version_label, :source_commit_hash, presence: true
   validate :published_until_after_published_from
@@ -83,6 +90,40 @@ class DocumentVersion < ApplicationRecord
 
   def normalized_html_view_site_path
     self.class.normalize_site_page_path(html_view_site_path)
+  end
+
+  def mark_preview_build_queued!
+    update!(
+      preview_build_status: :preview_queued,
+      preview_build_error_message: nil,
+      preview_build_attempted_at: Time.current,
+      preview_build_completed_at: nil
+    )
+  end
+
+  def mark_preview_build_running!
+    update!(
+      preview_build_status: :preview_running,
+      preview_build_error_message: nil,
+      preview_build_attempted_at: Time.current,
+      preview_build_completed_at: nil
+    )
+  end
+
+  def mark_preview_build_succeeded!
+    update!(
+      preview_build_status: :preview_succeeded,
+      preview_build_error_message: nil,
+      preview_build_completed_at: Time.current
+    )
+  end
+
+  def mark_preview_build_failed!(error)
+    update!(
+      preview_build_status: :preview_failed,
+      preview_build_error_message: error.to_s.truncate(2_000),
+      preview_build_completed_at: Time.current
+    )
   end
 
   def viewable_by?(user)
