@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_18_001000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_19_002000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -620,6 +620,56 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_18_001000) do
     t.index ["provider", "event_key"], name: "idx_ext_sync_webhook_events_unique_provider_event", unique: true
     t.index ["public_id"], name: "index_external_folder_sync_webhook_events_on_public_id", unique: true
     t.index ["status", "received_at"], name: "idx_ext_sync_webhook_events_on_status_received_at"
+  end
+
+  create_table "generated_file_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.string "event_key", null: false
+    t.string "event_source"
+    t.datetime "last_seen_at", null: false
+    t.json "metadata", default: {}, null: false
+    t.integer "occurrences_count", default: 1, null: false
+    t.string "operation", null: false
+    t.string "path", null: false
+    t.datetime "processed_at"
+    t.string "public_id", null: false
+    t.datetime "scheduled_at", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_key", "status"], name: "index_generated_file_events_on_event_key_and_status"
+    t.index ["event_key"], name: "index_generated_file_events_on_event_key"
+    t.index ["event_source"], name: "index_generated_file_events_on_event_source"
+    t.index ["operation"], name: "index_generated_file_events_on_operation"
+    t.index ["path"], name: "index_generated_file_events_on_path"
+    t.index ["public_id"], name: "index_generated_file_events_on_public_id", unique: true
+    t.index ["scheduled_at"], name: "index_generated_file_events_on_scheduled_at"
+    t.index ["status", "scheduled_at"], name: "index_generated_file_events_on_status_and_scheduled_at"
+    t.index ["status"], name: "index_generated_file_events_on_status"
+  end
+
+  create_table "generated_file_runs", force: :cascade do |t|
+    t.json "changed_files", default: [], null: false
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.string "event_source"
+    t.datetime "finished_at"
+    t.json "generated_paths", default: [], null: false
+    t.string "generator"
+    t.string "job_id", null: false
+    t.json "metadata", default: {}, null: false
+    t.string "output_writer"
+    t.string "public_id", null: false
+    t.json "source_paths", default: [], null: false
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_source"], name: "index_generated_file_runs_on_event_source"
+    t.index ["job_id", "started_at"], name: "index_generated_file_runs_on_job_id_and_started_at"
+    t.index ["job_id"], name: "index_generated_file_runs_on_job_id"
+    t.index ["public_id"], name: "index_generated_file_runs_on_public_id", unique: true
+    t.index ["started_at"], name: "index_generated_file_runs_on_started_at"
+    t.index ["status"], name: "index_generated_file_runs_on_status"
   end
 
   create_table "git_import_runs", id: { comment: "ID" }, comment: "Git取り込み実行", force: :cascade do |t|

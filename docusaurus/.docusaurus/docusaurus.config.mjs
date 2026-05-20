@@ -7,12 +7,15 @@ export default {
   "title": "External Document Site",
   "url": "https://example.invalid",
   "baseUrl": "/",
+  "staticDirectories": [
+    "../../tmp/seed-docusaurus-20260520-1-x8j896/static"
+  ],
   "presets": [
     [
       "classic",
       {
         "docs": {
-          "path": "/tmp/seed-docusaurus-20260517-1-xf7v5c/docs-src",
+          "path": "/tmp/seed-docusaurus-20260520-1-x8j896/docs-src",
           "routeBasePath": "/",
           "sidebarPath": "./sidebars.ts",
           "lastVersion": "current",
@@ -20,7 +23,7 @@ export default {
             [
               null,
               {
-                "staticDir": "/tmp/seed-docusaurus-20260517-1-xf7v5c/static"
+                "staticDir": "/tmp/seed-docusaurus-20260520-1-x8j896/static"
               }
             ]
           ]
@@ -88,9 +91,6 @@ export default {
   },
   "onBrokenAnchors": "warn",
   "onDuplicateRoutes": "warn",
-  "staticDirectories": [
-    "static"
-  ],
   "customFields": {},
   "plugins": [],
   "themeConfig": {

@@ -4,68 +4,67 @@
 # belong in git's global ignore instead:
 # `$XDG_CONFIG_HOME/git/ignore` or `~/.config/git/ignore`
 
-# Ignore bundler config.
+# Bundler
 /.bundle
 /vendor/bundle/*
 !/vendor/bundle/.keep
 
-# dotenv
+# Environment files
 /.env
+/.env.*
+!/.env.example
+*.local
 
-# Ignore all logfiles and tempfiles.
+# Rails logs, temp files, and pid files
 /log/*
 /tmp/*
 !/log/.keep
 !/tmp/.keep
-
-# Ignore pidfiles, but keep the directory.
 /tmp/pids/*
 !/tmp/pids/
 !/tmp/pids/.keep
 
-# Ignore storage (uploaded files in development and any SQLite databases).
+# Uploaded files, generated sites, and local storage
 /storage/*
 !/storage/.keep
 /tmp/storage/*
 !/tmp/storage/
 !/tmp/storage/.keep
 
-/public/assets
-
-# Ignore master key for decrypting credentials and more.
+# Rails credentials
 /config/master.key
 
-# Vite Ruby
+# Rails assets and Vite
+/public/assets
 /public/vite*
-node_modules
-# Vite uses dotenv and suggests to ignore local-only env files. See
-# https://vitejs.dev/guide/env-and-mode.html#env-files
-*.local
+/node_modules/
+/npm-debug.log*
+/yarn-debug.log*
+/yarn-error.log*
+/pnpm-debug.log*
 
-# backup
+# Backups
 /backup/*
 !/backup/README.md
 
-# Docusaurus generated artifacts and dependencies
+# Docusaurus dependencies and generated artifacts
+/docusaurus/node_modules/
 /docusaurus/.docusaurus/
 /docusaurus/build/
-/docusaurus/node_modules/
-/docusaurus/static/generated/
 /docusaurus/.cache/
 /docusaurus/.turbo/
+/docusaurus/static/generated/
 /docusaurus/npm-debug.log*
 /docusaurus/yarn-debug.log*
 /docusaurus/yarn-error.log*
 /docusaurus/pnpm-debug.log*
 
+# Local Docker/build scratch files
+/.docker-build-cache/
+/tmp-docker-*/
+
+# Codex / local AI assistant scratch files
+/.codex/
 .codex
 .tmp.*
-
 AGENTS.md
-
-# Vite Ruby
-/public/vite*
-node_modules
-# Vite uses dotenv and suggests to ignore local-only env files. See
-# https://vitejs.dev/guide/env-and-mode.html#env-files
-*.local
