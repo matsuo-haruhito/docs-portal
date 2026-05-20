@@ -1,5 +1,7 @@
 module DocumentVersionQuality
   class MetadataChecks
+    MARKDOWN_EXTENSIONS = %w[.md .markdown .mdx].freeze
+
     def initialize(document_version:, check_class:)
       @document_version = document_version
       @document = document_version.document
@@ -62,10 +64,19 @@ module DocumentVersionQuality
     end
 
     def rendered_site_check
-      return if document_version.site_build_path.blank?
+      if document_version.site_build_path.blank?
+        return warning(:rendered_site, "Markdown preview site is not built yet", document_version.source_relative_path) if markdown_source?
+
+        return
+      end
+
       return info(:rendered_site, "Rendered site entry exists", document_version.site_entry_relative_path) if document_version.rendered_site_available?
 
       error(:rendered_site, "Rendered site entry is missing", document_version.site_entry_relative_path)
+    end
+
+    def markdown_source?
+      File.extname(document_version.source_relative_path.to_s).downcase.in?(MARKDOWN_EXTENSIONS)
     end
 
     def attachment_count_check
