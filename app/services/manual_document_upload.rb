@@ -199,10 +199,12 @@ class ManualDocumentUpload
   def normalize_directory(value)
     return if value.blank?
 
-    path = value.to_s.tr("\\", "/").delete_prefix("/")
-    normalized = Pathname.new(path).cleanpath.to_s
+    raw_path = value.to_s.tr("\\", "/")
+    raise ApplicationError::BadRequest, "アップロード先フォルダが不正です。" if raw_path.start_with?("/") || raw_path.match?(/\A[A-Za-z]:\//)
+
+    normalized = Pathname.new(raw_path).cleanpath.to_s
     return if normalized.blank? || normalized == "."
-    raise ApplicationError::BadRequest, "アップロード先フォルダが不正です。" if normalized == ".." || normalized.start_with?("../")
+    raise ApplicationError::BadRequest, "アップロード先フォルダが不正です。" if normalized == ".." || normalized.start_with?("../") || normalized.include?("\0")
 
     normalized
   end
