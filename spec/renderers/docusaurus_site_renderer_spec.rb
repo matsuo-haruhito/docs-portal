@@ -42,7 +42,7 @@ RSpec.describe DocusaurusSiteRenderer do
     Current.reset
   end
 
-  it "resolves markdown and README-style paths to generated html files" do
+  it "resolves markdown, mdx, and README-style paths to generated html files" do
     write_site_file("#{site_build_path}/guide/index.html", "<html><body>Guide</body></html>")
 
     renderer = described_class.new(version:, view_context:)
@@ -50,7 +50,13 @@ RSpec.describe DocusaurusSiteRenderer do
     expect(renderer.file_response_path("#{site_build_path}/guide.md")).to eq(
       version.site_root_absolute_path.join(site_build_path, "guide", "index.html")
     )
+    expect(renderer.file_response_path("#{site_build_path}/guide.mdx")).to eq(
+      version.site_root_absolute_path.join(site_build_path, "guide", "index.html")
+    )
     expect(renderer.file_response_path("#{site_build_path}/guide/README.md")).to eq(
+      version.site_root_absolute_path.join(site_build_path, "guide", "index.html")
+    )
+    expect(renderer.file_response_path("#{site_build_path}/guide/index.mdx")).to eq(
       version.site_root_absolute_path.join(site_build_path, "guide", "index.html")
     )
   end
