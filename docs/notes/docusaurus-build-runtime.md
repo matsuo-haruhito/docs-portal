@@ -59,6 +59,8 @@ The renderer service applies the same boundary before extracting the uploaded ar
 
 Successful artifact install replaces the version's existing site directory atomically via a staging directory, so stale files from a previous build are removed. If validation fails before replacement, the existing site directory and metadata are left intact.
 
+If the renderer request itself fails before an artifact is installed, `DocusaurusPreviewBuildJob` raises the error and leaves the existing `site_build_path` and site files unchanged. Transient renderer failures are retried by the job; validation failures surface for review without replacing the current preview.
+
 Temporary archives returned from the renderer are closed by `DocusaurusPreviewBuildJob` after installation, including success and error paths.
 
 ## Kroki generated SVGs
