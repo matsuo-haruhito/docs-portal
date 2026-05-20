@@ -69,7 +69,7 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
     tempfile = Tempfile.new(["docusaurus-job-artifact", ".tar.gz"])
     tempfile.binmode
 
-    Zlib::GzipWriter.wrap(tempfile) do |gzip|
+    Zlib::GzipWriter.open(tempfile.path) do |gzip|
       Gem::Package::TarWriter.new(gzip) do |tar|
         entries.each do |path, content|
           tar.add_file(path, 0o644) { |entry| entry.write(content) }
