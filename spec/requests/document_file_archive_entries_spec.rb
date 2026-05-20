@@ -56,7 +56,7 @@ RSpec.describe "Document file archive entries", type: :request do
 
     get archive_entry_preview_document_file_path(archive_file, entry_path: "../secret.txt")
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("previewできません")
     expect(response.body).to include("unsafe path")
   end
@@ -67,7 +67,7 @@ RSpec.describe "Document file archive entries", type: :request do
 
     get archive_entry_preview_document_file_path(archive_file, entry_path: "images/logo.png")
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("previewできません")
     expect(response.body).to include("text preview")
   end
@@ -95,7 +95,7 @@ RSpec.describe "Document file archive entries", type: :request do
       get archive_entry_download_document_file_path(archive_file, entry_path: "../secret.txt")
     end.not_to change(AccessLog.where(action_type: :download), :count)
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("unsafe path")
   end
 
@@ -105,7 +105,7 @@ RSpec.describe "Document file archive entries", type: :request do
 
     get archive_entry_download_document_file_path(archive_file, entry_path: "nested/archive.zip")
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("nested archive")
   end
 end
