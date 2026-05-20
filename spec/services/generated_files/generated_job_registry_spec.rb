@@ -46,6 +46,40 @@ RSpec.describe GeneratedFiles::GeneratedJobRegistry do
     )
   end
 
+  it "validates registry structure" do
+    registry_path = write_registry(
+      jobs: [
+        {
+          "id" => "ai_usecase_decision_flow",
+          "source_paths" => ["source.yml"],
+          "generator" => "ai_usecase_decision_flow",
+          "output_writer" => "filesystem",
+          "generated_paths" => ["docs/generated.md"]
+        }
+      ]
+    )
+
+    expect(described_class.new(registry_path:, root: @root).validate!).to eq(true)
+  end
+
+  it "raises for invalid registry entries" do
+    registry_path = write_registry(
+      jobs: [
+        {
+          "id" => "",
+          "source_paths" => [],
+          "generator" => "unknown_generator",
+          "output_writer" => "unknown_writer",
+          "generated_paths" => "broken"
+        }
+      ]
+    )
+
+    expect {
+      described_class.new(registry_path:, root: @root).validate!
+    }.to raise_error(ArgumentError, /generated_file_jobs.yml is invalid/)
+  end
+
   it "selects explicit job ids even when changed files are empty" do
     registry_path = write_registry(
       jobs: [
