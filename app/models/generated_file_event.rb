@@ -35,6 +35,13 @@ class GeneratedFileEvent < ApplicationRecord
 
   private
 
+  def normalize_path
+    return if path.blank?
+
+    raw_path = path.to_s.strip.tr("\\", "/")
+    self.path = Pathname(raw_path).cleanpath.to_s.delete_prefix("./")
+  end
+
   def path_must_be_safe_relative_path
     return if path.blank?
 
