@@ -1,5 +1,6 @@
 - page_title "#{@document.title} #{@version.version_label} 品質チェック"
-- preview_checks = @quality_check_hash[:checks].select { |check| check[:key].to_s == "rendered_site" && %w[error warning].include?(check[:severity].to_s) }
+- preview_check_keys = %w[rendered_site preview_build_status]
+- preview_checks = @quality_check_hash[:checks].select { |check| preview_check_keys.include?(check[:key].to_s) && %w[error warning].include?(check[:severity].to_s) }
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
 
