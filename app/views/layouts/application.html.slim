@@ -175,10 +175,10 @@ html
             .sidebar-resizer data-sidebar-resizer="true" role="separator" aria-orientation="vertical" aria-label="文書ツリーの幅を調整" tabindex="0"
         main.main-panel
           = render "shared/flash_messages"
-          = turbo_frame_tag "main_panel" do
+          = turbo_frame_tag "main_panel", target: "_top" do
             = yield
     - else
       main
         = render "shared/flash_messages"
-        = turbo_frame_tag "main_panel" do
+        = turbo_frame_tag "main_panel", target: "_top" do
           = yield
