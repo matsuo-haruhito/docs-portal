@@ -1,5 +1,6 @@
 require "rails_helper"
 require "rubygems/package"
+require "securerandom"
 require "zlib"
 
 RSpec.describe DocusaurusPreviewArchiveBuilder do
