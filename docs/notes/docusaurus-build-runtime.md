@@ -55,6 +55,8 @@ The Rails side applies this boundary in three places:
 - `DocusaurusRendererClient` validates the renderer's `X-Docs-Site-Path` response header before installing the returned artifact.
 - `DocusaurusPreviewArtifactInstaller` validates tar entries and checks that the expected entry HTML exists before replacing the current site directory.
 
+The renderer service applies the same boundary before extracting the uploaded archive. It validates the `X-Docs-Entry-Path` header, rejects unsafe tar entries before extraction, and only returns a site path derived from the validated entry path.
+
 Temporary archives returned from the renderer are closed by `DocusaurusPreviewBuildJob` after installation, including success and error paths.
 
 ## Kroki generated SVGs
