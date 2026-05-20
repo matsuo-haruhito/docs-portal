@@ -29,6 +29,18 @@ RSpec.describe DocusaurusPreviewArtifactInstaller do
     archive&.close!
   end
 
+  it "installs a flat html Docusaurus build artifact" do
+    archive = build_archive("docs/guide.html" => "<main>Flat Guide</main>")
+
+    described_class.new(version: version, archive_path: archive.path, site_path: "docs/guide").install!
+
+    expect(version.reload.markdown_entry_path).to eq("docs/guide.md")
+    expect(version.site_build_path).to eq("docs/guide")
+    expect(version.site_root_absolute_path.join("docs/guide.html").read).to include("Flat Guide")
+  ensure
+    archive&.close!
+  end
+
   it "installs a root index Docusaurus build artifact" do
     version.assign_source_path_metadata!(source_path: "index.md", snapshot_kind: "received_markdown")
     version.save!
