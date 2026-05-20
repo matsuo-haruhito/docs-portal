@@ -1,4 +1,5 @@
 require "fileutils"
+require "pathname"
 require "rubygems/package"
 require "tmpdir"
 require "zlib"
@@ -61,7 +62,7 @@ class DocusaurusPreviewArtifactInstaller
   end
 
   def safe_site_path(value)
-    normalized = normalized_relative_path(value)
+    normalized = normalized_relative_path(value, label: "Docusaurus site path")
     if normalized.blank? || normalized == "."
       raise ApplicationError::BadRequest, "Docusaurus site path is invalid: #{value}"
     end
@@ -70,19 +71,19 @@ class DocusaurusPreviewArtifactInstaller
   end
 
   def safe_artifact_path(value)
-    normalized = normalized_relative_path(value)
+    normalized = normalized_relative_path(value, label: "Docusaurus build artifact path")
     return nil if normalized.blank? || normalized == "."
 
     normalized
   end
 
-  def normalized_relative_path(value)
+  def normalized_relative_path(value, label:)
     raw_path = value.to_s.tr("\\", "/")
     invalid_absolute = raw_path.start_with?("/") || raw_path.match?(/\A[A-Za-z]:\//)
     path = raw_path.delete_prefix("./")
     normalized = Pathname.new(path).cleanpath.to_s
     invalid = invalid_absolute || normalized == ".." || normalized.start_with?("../") || normalized.include?("\0")
-    raise ApplicationError::BadRequest, "Docusaurus path is invalid: #{value}" if invalid
+    raise ApplicationError::BadRequest, "#{label} is invalid: #{value}" if invalid
 
     normalized
   end
