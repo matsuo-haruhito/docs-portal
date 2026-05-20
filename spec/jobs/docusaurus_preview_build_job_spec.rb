@@ -37,6 +37,10 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
     )
     expect(version.reload.markdown_entry_path).to eq("docs/guide.md")
     expect(version.site_build_path).to eq("docs/guide")
+    expect(version).to be_preview_succeeded
+    expect(version.preview_build_error_message).to be_nil
+    expect(version.preview_build_attempted_at).to be_present
+    expect(version.preview_build_completed_at).to be_present
     expect(version.site_root_absolute_path.join("docs/guide/index.html").read).to include("Guide")
   end
 
@@ -71,6 +75,10 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
     end.to raise_error(ApplicationError::BadRequest, /renderer failed/)
 
     expect(version.reload.site_build_path).to eq("docs/guide")
+    expect(version).to be_preview_failed
+    expect(version.preview_build_error_message).to include("renderer failed")
+    expect(version.preview_build_attempted_at).to be_present
+    expect(version.preview_build_completed_at).to be_present
     expect(existing_file.read).to eq("existing")
   end
 
@@ -111,6 +119,7 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
       entry_path: "docs/guide.mdx"
     )
     expect(version.reload.site_build_path).to eq("docs/guide")
+    expect(version).to be_preview_succeeded
   end
 
   it "builds uppercase markdown extensions through the renderer" do
@@ -140,6 +149,8 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
     expect(DocusaurusRendererClient).not_to receive(:new)
 
     described_class.perform_now(version.id)
+
+    expect(version.reload).to be_preview_not_requested
   end
 
   private
