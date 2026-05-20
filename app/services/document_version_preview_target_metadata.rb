@@ -10,7 +10,7 @@ class DocumentVersionPreviewTargetMetadata
     preview_targets.yaml
   ].freeze
 
-  MARKDOWN_EXTENSIONS = %w[.md .markdown].freeze
+  MARKDOWN_EXTENSIONS = %w[.md .markdown .mdx].freeze
 
   Result = Data.define(:source_file, :metadata, :warnings) do
     def source_file?
