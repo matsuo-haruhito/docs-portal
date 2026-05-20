@@ -1,4 +1,6 @@
 require "rails_helper"
+require "pathname"
+require "tempfile"
 
 RSpec.describe MarkdownLineDiffBuilder do
   LineFile = Struct.new(:file_name, :file_size, :absolute_path, keyword_init: true)
