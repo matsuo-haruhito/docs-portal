@@ -16,6 +16,7 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include("docs/source.yml")
       expect(response.body).to include("再dispatch")
       expect(response.body).to include("失敗分を一括再dispatch")
+      expect(response.body).to include("一括再dispatchは古い失敗分から最大100件です。")
     end
 
     it "shows status summary counts" do
