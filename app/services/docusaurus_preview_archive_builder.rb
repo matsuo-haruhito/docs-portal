@@ -1,5 +1,6 @@
 require "pathname"
 require "rubygems/package"
+require "stringio"
 require "tempfile"
 require "zlib"
 
@@ -14,12 +15,15 @@ class DocusaurusPreviewArchiveBuilder
     tempfile = Tempfile.new(["docusaurus-preview-#{version.id}", ".tar.gz"])
     tempfile.binmode
 
-    Zlib::GzipWriter.open(tempfile.path) do |gzip|
-      Gem::Package::TarWriter.new(gzip) do |tar|
-        version.document_files.order(:sort_order, :id).each do |document_file|
-          add_file(tar, document_file)
-        end
+    tar_buffer = StringIO.new.binmode
+    Gem::Package::TarWriter.new(tar_buffer) do |tar|
+      version.document_files.order(:sort_order, :id).each do |document_file|
+        add_file(tar, document_file)
       end
+    end
+
+    Zlib::GzipWriter.open(tempfile.path) do |gzip|
+      gzip.write(tar_buffer.string)
     end
 
     tempfile.rewind
