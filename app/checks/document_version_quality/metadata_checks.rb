@@ -15,6 +15,7 @@ module DocumentVersionQuality
         document_kind_check,
         visibility_policy_check,
         source_path_check,
+        preview_build_status_check,
         rendered_site_check,
         attachment_count_check,
         internal_only_text_check,
@@ -61,6 +62,32 @@ module DocumentVersionQuality
       return info(:source_relative_path, "Source path is set", document_version.source_relative_path) if document_version.source_relative_path.present?
 
       info(:source_relative_path, "Source path is not set")
+    end
+
+    def preview_build_status_check
+      return unless markdown_source?
+
+      case document_version.preview_build_status.to_s
+      when "preview_succeeded"
+        info(:preview_build_status, "Preview build succeeded", preview_build_detail)
+      when "preview_failed"
+        error(:preview_build_status, "Preview build failed", preview_build_detail)
+      when "preview_running"
+        warning(:preview_build_status, "Preview build is running", preview_build_detail)
+      when "preview_queued"
+        warning(:preview_build_status, "Preview build is queued", preview_build_detail)
+      else
+        info(:preview_build_status, "Preview build has not been requested", preview_build_detail)
+      end
+    end
+
+    def preview_build_detail
+      [
+        document_version.preview_build_status,
+        document_version.preview_build_error_message,
+        document_version.preview_build_attempted_at&.iso8601,
+        document_version.preview_build_completed_at&.iso8601
+      ].compact_blank.join(" / ")
     end
 
     def rendered_site_check
