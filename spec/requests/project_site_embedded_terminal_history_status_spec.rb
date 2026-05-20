@@ -57,6 +57,7 @@ RSpec.describe "Project site embedded terminal history status", type: :request d
     get project_site_path(project, version_id: version.public_id, site_path: "docs/archived-guide", embedded: "1")
 
     expect(response).to have_http_status(:ok)
+    expect(response.body).to include("current")
     expect(response.headers["X-Docs-Portal-History-Status"]).to eq("archived")
     expect(response.headers["X-Docs-Portal-History-Requested-Path"]).to eq("docs/archived-guide")
     expect(response.headers["X-Docs-Portal-History-Canonical-Path"]).to eq("docs/current-guide")
