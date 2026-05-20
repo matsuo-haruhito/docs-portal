@@ -1,5 +1,6 @@
 require "rails_helper"
 require "fileutils"
+require "securerandom"
 
 RSpec.describe DocumentVersionQuality::MarkdownReferenceChecks do
   let(:check_class) { DocumentVersionQualityChecker::Check }
