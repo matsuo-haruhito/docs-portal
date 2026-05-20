@@ -66,6 +66,7 @@ class DocusaurusPreviewArtifactInstaller
 
   def expected_entry_candidates(staging)
     candidates = [staging.join(site_path, "index.html")]
+    candidates << staging.join("#{site_path}.html")
     candidates << staging.join("index.html") if site_path == "index"
     candidates
   end
