@@ -42,6 +42,7 @@
       <div>
         <%= form.label :path, "Path contains", class: "block text-sm font-semibold" %>
         <%= form.text_field :path, value: @filters[:path], class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">Windowsの区切り文字 \ は / として検索します。</p>
       </div>
       <div>
         <%= form.label :scheduled_from, "Scheduled From", class: "block text-sm font-semibold" %>
