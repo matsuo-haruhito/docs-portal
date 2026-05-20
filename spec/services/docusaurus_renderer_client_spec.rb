@@ -50,6 +50,26 @@ RSpec.describe DocusaurusRendererClient do
     result&.archive_file&.close!
   end
 
+  it "normalizes a missing site path header from nested index entry paths" do
+    allow(http).to receive(:request).and_return(success_response("build archive"))
+
+    result = client.build(archive_file: archive, entry_path: "docs/guide/index.md")
+
+    expect(result.site_path).to eq("docs/guide")
+  ensure
+    result&.archive_file&.close!
+  end
+
+  it "normalizes a missing site path header from README entry paths" do
+    allow(http).to receive(:request).and_return(success_response("build archive"))
+
+    result = client.build(archive_file: archive, entry_path: "docs/guide/README.mdx")
+
+    expect(result.site_path).to eq("docs/guide")
+  ensure
+    result&.archive_file&.close!
+  end
+
   it "accepts site path headers that normalize within the site tree" do
     allow(http).to receive(:request).and_return(success_response("build archive", "docs/../docs/guide"))
 
@@ -66,6 +86,22 @@ RSpec.describe DocusaurusRendererClient do
     expect do
       client.build(archive_file: archive, entry_path: "docs/guide.md")
     end.to raise_error(ApplicationError::BadRequest, /MDX parse failed/)
+  end
+
+  it "raises a readable error when the renderer returns json message failure" do
+    allow(http).to receive(:request).and_return(error_response({ message: "Renderer crashed" }.to_json))
+
+    expect do
+      client.build(archive_file: archive, entry_path: "docs/guide.md")
+    end.to raise_error(ApplicationError::BadRequest, /Renderer crashed/)
+  end
+
+  it "raises a readable error when the renderer returns json errors failure" do
+    allow(http).to receive(:request).and_return(error_response({ errors: ["MDX failed", "Broken link"] }.to_json))
+
+    expect do
+      client.build(archive_file: archive, entry_path: "docs/guide.md")
+    end.to raise_error(ApplicationError::BadRequest, /MDX failed, Broken link/)
   end
 
   it "rejects empty successful renderer artifacts" do
