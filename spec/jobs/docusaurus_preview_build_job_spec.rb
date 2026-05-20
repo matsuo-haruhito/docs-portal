@@ -113,6 +113,26 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
     expect(version.reload.site_build_path).to eq("docs/guide")
   end
 
+  it "builds uppercase markdown extensions through the renderer" do
+    version.assign_source_path_metadata!(source_path: "docs/guide.MDX", snapshot_kind: "received_markdown")
+    version.save!
+    create_source_file!("docs/guide.MDX", "# Guide")
+    artifact = build_artifact("docs/guide/index.html" => "<main>Guide</main>")
+    client = instance_double(DocusaurusRendererClient)
+
+    allow(DocusaurusRendererClient).to receive(:new).and_return(client)
+    allow(client).to receive(:build).and_return(
+      DocusaurusRendererClient::Result.new(archive_file: artifact, site_path: "docs/guide")
+    )
+
+    described_class.perform_now(version.id)
+
+    expect(client).to have_received(:build).with(
+      archive_file: an_instance_of(Tempfile),
+      entry_path: "docs/guide.MDX"
+    )
+  end
+
   it "skips non-markdown versions" do
     version.assign_source_path_metadata!(source_path: "docs/guide.pdf", snapshot_kind: "pdf_generated")
     version.save!
