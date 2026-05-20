@@ -55,6 +55,25 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
     expect(artifact).to be_closed
   end
 
+  it "keeps existing site metadata and files when the renderer fails" do
+    create_source_file!("docs/guide.md", "# Guide")
+    existing_file = version.site_root_absolute_path.join("docs/guide/index.html")
+    FileUtils.mkdir_p(existing_file.dirname)
+    existing_file.write("existing")
+    version.update!(markdown_entry_path: "docs/guide.md", site_build_path: "docs/guide")
+    client = instance_double(DocusaurusRendererClient)
+
+    allow(DocusaurusRendererClient).to receive(:new).and_return(client)
+    allow(client).to receive(:build).and_raise(ApplicationError::BadRequest, "renderer failed")
+
+    expect do
+      described_class.perform_now(version.id)
+    end.to raise_error(ApplicationError::BadRequest, /renderer failed/)
+
+    expect(version.reload.site_build_path).to eq("docs/guide")
+    expect(existing_file.read).to eq("existing")
+  end
+
   it "builds MDX versions through the renderer" do
     version.assign_source_path_metadata!(source_path: "docs/guide.mdx", snapshot_kind: "received_markdown")
     version.save!
