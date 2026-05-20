@@ -17,6 +17,8 @@ storage/tmp
 !docusaurus/**
 !docusaurus-renderer/**
 
-# Never send installed dependencies even when Docusaurus source is re-included above.
+# Never send installed or generated Docusaurus artifacts even when Docusaurus source is re-included above.
 docusaurus/node_modules
+docusaurus/.docusaurus
+docusaurus/build
 docusaurus-renderer/node_modules
