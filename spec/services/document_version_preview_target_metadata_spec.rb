@@ -80,6 +80,27 @@ RSpec.describe DocumentVersionPreviewTargetMetadata do
     expect(result).to be_valid
   end
 
+  it "falls back to mdx front matter when no metadata file exists" do
+    mdx = create_document_file(
+      file_name: "README.mdx",
+      storage_key: "spec/preview-target-version/fallback-mdx/README.mdx",
+      content: <<~MARKDOWN,
+        ---
+        preview_targets:
+          primary: README.mdx
+        ---
+
+        # Readme
+      MARKDOWN
+      sort_order: 0)
+
+    result = described_class.new(version).call
+
+    expect(result.source_file).to eq(mdx)
+    expect(result.paths_for(:primary)).to eq(["README.mdx"])
+    expect(result).to be_valid
+  end
+
   it "returns an empty result when there is no metadata source file" do
     create_document_file(
       file_name: "attachments/spec.pdf",
