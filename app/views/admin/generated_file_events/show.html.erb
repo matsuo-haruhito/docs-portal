@@ -15,7 +15,7 @@
     <dl class="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
       <div><dt class="font-semibold">Status</dt><dd><%= @generated_file_event.status %></dd></div>
       <div><dt class="font-semibold">Event Key</dt><dd class="font-mono"><%= @generated_file_event.event_key %></dd></div>
-      <div><dt class="font-semibold">Path</dt><dd class="font-mono"><%= @generated_file_event.path %></dd></div>
+      <div><dt class="font-semibold">Path</dt><dd class="font-mono"><%= @generated_file_event.path %></dd><dd class="text-xs text-gray-500">/ 区切りで保存されます。</dd></div>
       <div><dt class="font-semibold">Operation</dt><dd><%= @generated_file_event.operation %></dd></div>
       <div><dt class="font-semibold">Event Source</dt><dd><%= @generated_file_event.event_source.presence || "-" %></dd></div>
       <div><dt class="font-semibold">Occurrences</dt><dd><%= @generated_file_event.occurrences_count %></dd></div>
