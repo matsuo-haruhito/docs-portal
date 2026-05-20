@@ -6,6 +6,13 @@ namespace :ai_usecases do
 end
 
 namespace :generated_files do
+  desc "Validate generated file job and file change event config"
+  task validate_config: :environment do
+    GeneratedFiles::GeneratedJobRegistry.new.validate!
+    GeneratedFiles::FileChangeEventRegistry.new.validate!
+    puts "generated file config is valid"
+  end
+
   desc "Run generated file jobs for changed files. Pass CHANGED_FILES as comma separated paths."
   task run: :environment do
     changed_files = ENV.fetch("CHANGED_FILES", "").split(",").map(&:strip).reject(&:blank?)
