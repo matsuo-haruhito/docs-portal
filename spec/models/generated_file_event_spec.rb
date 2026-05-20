@@ -13,6 +13,13 @@ RSpec.describe GeneratedFileEvent, type: :model do
       expect(event.errors[:last_seen_at]).to be_present
     end
 
+    it "normalizes path separators before validation" do
+      event = build(:generated_file_event, path: "docs\\source.yml")
+
+      expect(event).to be_valid
+      expect(event.path).to eq("docs/source.yml")
+    end
+
     it "rejects unsafe paths" do
       ["../outside.yml", "/tmp/source.yml", "C:/tmp/source.yml"].each do |path|
         event = build(:generated_file_event, path: path)
