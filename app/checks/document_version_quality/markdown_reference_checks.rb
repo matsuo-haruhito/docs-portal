@@ -88,17 +88,31 @@ module DocumentVersionQuality
     def markdown_reference_resolved?(reference)
       case reference[:kind]
       when :document_link
-        available_document_targets.include?(reference[:resolved_target]) ||
-          available_document_targets.include?("#{reference[:resolved_target]}.md") ||
-          available_document_targets.include?("#{reference[:resolved_target]}.markdown") ||
-          available_document_targets.include?(Pathname.new(reference[:resolved_target]).join("README.md").to_s) ||
-          available_document_targets.include?(Pathname.new(reference[:resolved_target]).join("index.md").to_s)
+        document_target_candidates(reference[:resolved_target]).any? do |candidate|
+          available_document_targets.include?(candidate)
+        end
       when :image, :attachment
         available_attachment_targets.include?(File.basename(reference[:resolved_target])) ||
           available_attachment_targets.include?(reference[:resolved_target])
       else
         false
       end
+    end
+
+    def document_target_candidates(resolved_target)
+      base = Pathname.new(resolved_target)
+      [
+        resolved_target,
+        "#{resolved_target}.md",
+        "#{resolved_target}.markdown",
+        "#{resolved_target}.mdx",
+        base.join("README.md").to_s,
+        base.join("README.markdown").to_s,
+        base.join("README.mdx").to_s,
+        base.join("index.md").to_s,
+        base.join("index.markdown").to_s,
+        base.join("index.mdx").to_s
+      ]
     end
 
     def available_document_targets

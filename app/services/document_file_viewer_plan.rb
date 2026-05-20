@@ -20,7 +20,7 @@ class DocumentFileViewerPlan
     end
   end
 
-  MARKDOWN_EXTENSIONS = %w[.md .markdown].freeze
+  MARKDOWN_EXTENSIONS = %w[.md .markdown .mdx].freeze
   HTML_EXTENSIONS = %w[.html .htm].freeze
   CSV_EXTENSIONS = %w[.csv .tsv].freeze
   JSON_EXTENSIONS = %w[.json].freeze

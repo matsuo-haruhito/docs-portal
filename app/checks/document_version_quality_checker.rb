@@ -57,6 +57,7 @@ class DocumentVersionQualityChecker
   MARKDOWN_EXTENSIONS = %w[
     .md
     .markdown
+    .mdx
   ].freeze
 
   def initialize(document_version)

@@ -47,6 +47,7 @@ class DocumentVersion < ApplicationRecord
 
   def site_entry_relative_path
     return if site_build_path.blank?
+    return "index.html" if site_build_path == "index"
 
     Pathname.new(site_build_path).join("index.html").to_s
   end
@@ -150,8 +151,8 @@ class DocumentVersion < ApplicationRecord
 
   def self.normalize_site_page_path(path)
     value = path.to_s.delete_prefix("/").sub(%r{\A/+}, "")
-    value = value.sub(%r{/(?:index|README)\.(?:md|markdown)\z}i, "")
-    value = value.sub(/\.(md|markdown)\z/i, "")
+    value = value.sub(%r{/(?:index|README)\.(?:md|markdown|mdx)\z}i, "")
+    value = value.sub(/\.(md|markdown|mdx)\z/i, "")
     value = value.delete_suffix("/index.html")
     value = value.delete_suffix(".html")
     value.presence || "index"

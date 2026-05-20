@@ -1,6 +1,9 @@
 require "nokogiri"
+require "pathname"
 
 class DocusaurusSiteRenderer
+  MARKDOWN_EXTENSIONS_PATTERN = "md|markdown|mdx"
+
   def initialize(
     version:,
     view_context:,
@@ -77,12 +80,12 @@ class DocusaurusSiteRenderer
     cleaned = normalize_site_path(site_path)
     variants = [cleaned]
 
-    if cleaned.match?(/\.(md|markdown)\z/i)
-      without_markdown_ext = cleaned.sub(/\.(md|markdown)\z/i, "")
+    if cleaned.match?(/\.(#{MARKDOWN_EXTENSIONS_PATTERN})\z/i)
+      without_markdown_ext = cleaned.sub(/\.(#{MARKDOWN_EXTENSIONS_PATTERN})\z/i, "")
       variants << without_markdown_ext
 
-      if cleaned.match?(%r{/(?:index|README)\.(md|markdown)\z}i)
-        variants << cleaned.sub(%r{/(?:index|README)\.(md|markdown)\z}i, "")
+      if cleaned.match?(%r{/(?:index|README)\.(#{MARKDOWN_EXTENSIONS_PATTERN})\z}i)
+        variants << cleaned.sub(%r{/(?:index|README)\.(#{MARKDOWN_EXTENSIONS_PATTERN})\z}i, "")
       end
     end
 
@@ -191,10 +194,24 @@ class DocusaurusSiteRenderer
   end
 
   def rewrite_url(value, absolute_path:)
-    relative_path = site_path_from_url(value, absolute_path:)
+    return if external_or_anchor_url?(value)
+
+    path_part, suffix = split_url_suffix(value)
+    return if path_part.blank?
+
+    relative_path = site_path_from_url(path_part, absolute_path:)
     return unless relative_path
 
-    build_site_url(relative_path, @current_document_version || @version)
+    "#{build_site_url(relative_path, @current_document_version || @version)}#{suffix}"
+  end
+
+  def external_or_anchor_url?(value)
+    value.start_with?("http://", "https://", "//", "mailto:", "tel:", "#")
+  end
+
+  def split_url_suffix(value)
+    match = value.to_s.match(/\A([^?#]*)(.*)\z/)
+    [match[1], match[2].to_s]
   end
 
   def resolve_relative_url(value, absolute_path)
@@ -206,8 +223,6 @@ class DocusaurusSiteRenderer
   end
 
   def site_path_from_url(value, absolute_path:)
-    return if value.start_with?("http://", "https://", "//", "mailto:", "tel:", "#")
-
     if value.start_with?("/")
       value.delete_prefix("/")
     else
@@ -249,7 +264,13 @@ class DocusaurusSiteRenderer
     return if @user.internal?
 
     document.css("nav a[href], aside a[href], .theme-doc-sidebar-menu a[href]").each do |node|
-      site_path = site_path_from_url(node["href"], absolute_path:)
+      href = node["href"].to_s
+      next if href.blank? || external_or_anchor_url?(href)
+
+      path_part, = split_url_suffix(href)
+      next if path_part.blank?
+
+      site_path = site_path_from_url(path_part, absolute_path:)
       next unless site_path
 
       linked_version = @document_version_resolver.call(site_path)

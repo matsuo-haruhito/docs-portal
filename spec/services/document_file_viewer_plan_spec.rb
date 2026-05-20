@@ -11,6 +11,17 @@ RSpec.describe DocumentFileViewerPlan do
     described_class.new(file:, user:).call
   end
 
+  it "classifies mdx files as markdown preview" do
+    file = create(:document_file, document_version: version, file_name: "guide.mdx", content_type: "application/octet-stream")
+
+    plan = plan_for(file)
+
+    expect(plan.viewer_kind).to eq(:markdown)
+    expect(plan.label).to eq("Markdown preview")
+    expect(plan).to be_previewable
+    expect(plan).to be_inline_disposition
+  end
+
   it "classifies pdf files as previewable pdf" do
     file = create(:document_file, document_version: version, file_name: "manual.pdf", content_type: "application/pdf")
 

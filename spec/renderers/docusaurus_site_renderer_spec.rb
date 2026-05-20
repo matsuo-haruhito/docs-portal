@@ -42,7 +42,7 @@ RSpec.describe DocusaurusSiteRenderer do
     Current.reset
   end
 
-  it "resolves markdown and README-style paths to generated html files" do
+  it "resolves markdown, mdx, and README-style paths to generated html files" do
     write_site_file("#{site_build_path}/guide/index.html", "<html><body>Guide</body></html>")
 
     renderer = described_class.new(version:, view_context:)
@@ -50,7 +50,13 @@ RSpec.describe DocusaurusSiteRenderer do
     expect(renderer.file_response_path("#{site_build_path}/guide.md")).to eq(
       version.site_root_absolute_path.join(site_build_path, "guide", "index.html")
     )
+    expect(renderer.file_response_path("#{site_build_path}/guide.mdx")).to eq(
+      version.site_root_absolute_path.join(site_build_path, "guide", "index.html")
+    )
     expect(renderer.file_response_path("#{site_build_path}/guide/README.md")).to eq(
+      version.site_root_absolute_path.join(site_build_path, "guide", "index.html")
+    )
+    expect(renderer.file_response_path("#{site_build_path}/guide/index.mdx")).to eq(
       version.site_root_absolute_path.join(site_build_path, "guide", "index.html")
     )
   end
@@ -62,6 +68,7 @@ RSpec.describe DocusaurusSiteRenderer do
         <html>
           <body>
             <a href="guide/getting-started">Guide</a>
+            <a href="guide/search?q=abc#top">Guide with suffix</a>
             <a href="https://example.com">External</a>
             <a href="mailto:test@example.com">Mail</a>
             <a href="tel:0000000000">Phone</a>
@@ -75,6 +82,7 @@ RSpec.describe DocusaurusSiteRenderer do
     html = renderer.render_html("#{site_build_path}/index")
 
     expect(html).to include("/document_versions/#{version.public_id}/site/#{site_build_path}/guide/getting-started")
+    expect(html).to include("/document_versions/#{version.public_id}/site/#{site_build_path}/guide/search?q=abc#top")
     expect(html).to include('href="https://example.com"')
     expect(html).to include('href="mailto:test@example.com"')
     expect(html).to include('href="tel:0000000000"')

@@ -1,6 +1,6 @@
 module GitImport
   class PathCatalog
-    MARKDOWN_EXTENSIONS = %w[.md .mdx].freeze
+    MARKDOWN_EXTENSIONS = %w[.md .markdown .mdx].freeze
     DIAGRAM_EXTENSIONS = %w[.mmd .mermaid .puml .plantuml .d2].freeze
 
     def initialize(worktree_path:)
@@ -24,7 +24,7 @@ module GitImport
 
     def content_type_for(path)
       case path.extname.downcase
-      when ".md", ".mdx"
+      when ".md", ".markdown", ".mdx"
         "text/markdown"
       when ".png"
         "image/png"
