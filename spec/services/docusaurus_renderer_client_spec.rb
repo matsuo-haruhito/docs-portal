@@ -99,5 +99,6 @@ RSpec.describe DocusaurusRendererClient do
 
   def set_response_body(response, body)
     response.instance_variable_set(:@body, body)
+    response.instance_variable_set(:@read, true)
   end
 end
