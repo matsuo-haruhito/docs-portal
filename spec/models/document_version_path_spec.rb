@@ -15,4 +15,18 @@ RSpec.describe DocumentVersion, type: :model do
       expect(described_class.normalize_site_page_path("README.mdx")).to eq("README")
     end
   end
+
+  describe "#site_entry_relative_path" do
+    it "uses the root index html for root index builds" do
+      version = described_class.new(site_build_path: "index")
+
+      expect(version.site_entry_relative_path).to eq("index.html")
+    end
+
+    it "uses nested index html for normal build paths" do
+      version = described_class.new(site_build_path: "docs/guide")
+
+      expect(version.site_entry_relative_path).to eq("docs/guide/index.html")
+    end
+  end
 end
