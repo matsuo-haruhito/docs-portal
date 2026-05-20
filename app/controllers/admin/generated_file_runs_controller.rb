@@ -17,6 +17,11 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   def show
+    @related_generated_file_event_public_ids = Array(@generated_file_run.metadata&.dig("generated_file_event_public_ids")).compact_blank.uniq
+    @related_generated_file_events_by_public_id = GeneratedFileEvent.where(public_id: @related_generated_file_event_public_ids).index_by(&:public_id)
+    @retry_of_generated_file_run_public_id = @generated_file_run.metadata&.dig("retry_of_generated_file_run_public_id").presence
+    @retry_of_generated_file_run = GeneratedFileRun.find_by(public_id: @retry_of_generated_file_run_public_id) if @retry_of_generated_file_run_public_id
+    @retry_child_runs = recent_runs_related_to(@generated_file_run.public_id)
   end
 
   def retry_run
@@ -42,6 +47,15 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
       event_source: bulk ? "generated_file_run_bulk_retry" : "generated_file_run_retry",
       metadata: retry_metadata_for(run, bulk:)
     )
+  end
+
+  def recent_runs_related_to(public_id)
+    GeneratedFileRun
+      .where.not(id: @generated_file_run.id)
+      .order(created_at: :desc, id: :desc)
+      .limit(200)
+      .select { |run| run.metadata&.dig("retry_of_generated_file_run_public_id") == public_id }
+      .first(10)
   end
 
   def apply_filters(scope)
