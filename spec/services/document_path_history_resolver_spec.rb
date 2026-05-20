@@ -52,6 +52,20 @@ RSpec.describe DocumentPathHistoryResolver do
     expect(result.matched_version).to eq(old_version)
   end
 
+  it "moves old mdx entry paths to the current canonical entry path" do
+    old_version.update!(markdown_entry_path: "docs/old-guide.mdx", site_build_path: "docs/old-guide")
+
+    result = described_class.new(
+      document:,
+      requested_site_path: "docs/old-guide.mdx",
+      canonical_version: new_version
+    ).call
+
+    expect(result).to be_moved
+    expect(result.canonical_path).to eq("docs/new-guide")
+    expect(result.matched_version).to eq(old_version)
+  end
+
   it "preserves nested suffixes when moving old paths" do
     result = described_class.new(
       document:,
