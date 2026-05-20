@@ -149,6 +149,7 @@ RSpec.describe "Admin generated file events", type: :request do
       post retry_dispatch_admin_generated_file_event_path(event.public_id)
 
       expect(response).to redirect_to(admin_generated_file_event_path(event.public_id))
+      expect(flash[:notice]).to eq("生成ファイルイベントの再dispatchをキューに投入しました。")
       event.reload
       expect(event).to be_pending
       expect(event.scheduled_at).to be_within(5.seconds).of(Time.current)
