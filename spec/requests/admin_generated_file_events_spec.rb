@@ -186,6 +186,7 @@ RSpec.describe "Admin generated file events", type: :request do
       post retry_failed_admin_generated_file_events_path
 
       expect(response).to redirect_to(admin_generated_file_events_path)
+      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 0 件の再dispatchをキューに投入しました。")
       expect(GeneratedFileEventDispatchJob).not_to have_received(:perform_later)
     end
   end
