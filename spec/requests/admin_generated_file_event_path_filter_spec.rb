@@ -26,4 +26,14 @@ RSpec.describe "Admin generated file event path filter escaping", type: :request
     expect(response.body).to include(literal.public_id)
     expect(response.body).not_to include(wildcard_match.public_id)
   end
+
+  it "normalizes backslash path filters" do
+    sign_in_as(admin_user)
+    event = create(:generated_file_event, path: "docs/source.yml")
+
+    get admin_generated_file_events_path(path: "docs\\source.yml")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(event.public_id)
+  end
 end
