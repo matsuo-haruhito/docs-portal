@@ -30,6 +30,19 @@ RSpec.describe "Document version quality checks", type: :request do
     expect(response.body).to include("# Quality check: Manual")
   end
 
+  it "highlights preview quality checks in html" do
+    version.assign_source_path_metadata!(source_path: "docs/manual.md", snapshot_kind: "received_markdown")
+    version.save!
+    sign_in_as(internal_user)
+
+    get document_version_quality_check_path(version)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Preview")
+    expect(response.body).to include("Markdown preview site is not built yet")
+    expect(response.body).to include("docs/manual.md")
+  end
+
   it "forbids external users" do
     create(:project_membership, project:, user: external_user)
     create(:document_permission, document:, company: external_user.company, access_level: :view)
