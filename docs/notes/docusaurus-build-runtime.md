@@ -25,6 +25,8 @@ Manual Markdown/MDX uploads do not render HTML inside the Rails request. `Manual
 
 The job sends a `tar.gz` archive of the version's document files to the internal Docusaurus renderer API. The renderer builds with the repo-local `docusaurus/` configuration and returns a build artifact archive. Rails then expands the artifact under `storage/docs_sites/<version_id>/...` and updates `markdown_entry_path` / `site_build_path`.
 
+`DocusaurusPreviewBuildJob` treats `.md`, `.markdown`, and `.mdx` as renderer targets. Non-Markdown versions, such as PDF or Office uploads, skip the renderer path and continue to use file viewers / side-by-side review.
+
 For local development, enable the renderer compose file, and include Kroki when PlantUML / D2 diagrams should be rendered:
 
 ```bash
@@ -42,6 +44,18 @@ DOCUSAURUS_RENDERER_MAX_UPLOAD_BYTES=20971520
 DOCUSAURUS_RENDERER_MAX_OUTPUT_BYTES=52428800
 DOCUSAURUS_RENDERER_BUILD_TIMEOUT_MS=60000
 ```
+
+## Path safety and artifact lifecycle
+
+Preview build inputs and outputs intentionally allow paths that normalize safely inside the site tree, such as `docs/../docs/guide.md`, while rejecting traversal, absolute, drive-letter, and NUL-containing paths.
+
+The Rails side applies this boundary in three places:
+
+- `DocusaurusPreviewArchiveBuilder` normalizes version file names before packing the source archive.
+- `DocusaurusRendererClient` validates the renderer's `X-Docs-Site-Path` response header before installing the returned artifact.
+- `DocusaurusPreviewArtifactInstaller` validates tar entries and checks that the expected entry HTML exists before replacing the current site directory.
+
+Temporary archives returned from the renderer are closed by `DocusaurusPreviewBuildJob` after installation, including success and error paths.
 
 ## Kroki generated SVGs
 
