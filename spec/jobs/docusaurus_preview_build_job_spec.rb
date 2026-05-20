@@ -1,6 +1,7 @@
 require "rails_helper"
 require "rubygems/package"
 require "securerandom"
+require "stringio"
 require "tempfile"
 require "zlib"
 
@@ -70,12 +71,15 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
     tempfile = Tempfile.new(["docusaurus-job-artifact", ".tar.gz"])
     tempfile.binmode
 
-    Zlib::GzipWriter.open(tempfile.path) do |gzip|
-      Gem::Package::TarWriter.new(gzip) do |tar|
-        entries.each do |path, content|
-          tar.add_file(path, 0o644) { |entry| entry.write(content) }
-        end
+    tar_buffer = StringIO.new.binmode
+    Gem::Package::TarWriter.new(tar_buffer) do |tar|
+      entries.each do |path, content|
+        tar.add_file(path, 0o644) { |entry| entry.write(content) }
       end
+    end
+
+    Zlib::GzipWriter.open(tempfile.path) do |gzip|
+      gzip.write(tar_buffer.string)
     end
 
     tempfile.rewind
