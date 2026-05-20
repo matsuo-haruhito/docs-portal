@@ -1,4 +1,6 @@
 require "rails_helper"
+require "fileutils"
+require "pathname"
 require "tmpdir"
 
 RSpec.describe GitImport::PathCatalog do
