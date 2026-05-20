@@ -40,6 +40,42 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
     expect(version.site_root_absolute_path.join("docs/guide/index.html").read).to include("Guide")
   end
 
+  it "closes the renderer artifact after installing it" do
+    create_source_file!("docs/guide.md", "# Guide")
+    artifact = build_artifact("docs/guide/index.html" => "<main>Guide</main>")
+    client = instance_double(DocusaurusRendererClient)
+
+    allow(DocusaurusRendererClient).to receive(:new).and_return(client)
+    allow(client).to receive(:build).and_return(
+      DocusaurusRendererClient::Result.new(archive_file: artifact, site_path: "docs/guide")
+    )
+
+    described_class.perform_now(version.id)
+
+    expect(artifact).to be_closed
+  end
+
+  it "builds MDX versions through the renderer" do
+    version.assign_source_path_metadata!(source_path: "docs/guide.mdx", snapshot_kind: "received_markdown")
+    version.save!
+    create_source_file!("docs/guide.mdx", "# Guide")
+    artifact = build_artifact("docs/guide/index.html" => "<main>Guide</main>")
+    client = instance_double(DocusaurusRendererClient)
+
+    allow(DocusaurusRendererClient).to receive(:new).and_return(client)
+    allow(client).to receive(:build).and_return(
+      DocusaurusRendererClient::Result.new(archive_file: artifact, site_path: "docs/guide")
+    )
+
+    described_class.perform_now(version.id)
+
+    expect(client).to have_received(:build).with(
+      archive_file: an_instance_of(Tempfile),
+      entry_path: "docs/guide.mdx"
+    )
+    expect(version.reload.site_build_path).to eq("docs/guide")
+  end
+
   it "skips non-markdown versions" do
     version.assign_source_path_metadata!(source_path: "docs/guide.pdf", snapshot_kind: "pdf_generated")
     version.save!
