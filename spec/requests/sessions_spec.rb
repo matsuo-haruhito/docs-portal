@@ -35,7 +35,7 @@ RSpec.describe "Sessions", type: :request do
         }
       }
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("メールアドレスまたはパスワードが正しくありません。")
     end
   end
