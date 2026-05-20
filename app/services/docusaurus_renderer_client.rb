@@ -70,8 +70,14 @@ class DocusaurusRendererClient
   def renderer_error_message(response)
     body = response.body.to_s
     json = JSON.parse(body) rescue nil
-    message = json&.fetch("error", nil).presence || body.presence || response.message
+    message = renderer_error_from_json(json).presence || body.presence || response.message
     "Docusaurus preview build failed: #{message}"
+  end
+
+  def renderer_error_from_json(json)
+    return unless json.is_a?(Hash)
+
+    json["error"].presence || json["message"].presence || Array(json["errors"]).compact_blank.join(", ").presence
   end
 
   def safe_site_path(value)
