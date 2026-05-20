@@ -1,4 +1,4 @@
-import path from 'node:path';
+import * as path from 'node:path';
 import type {Config} from '@docusaurus/types';
 import remarkKrokiDiagrams from './plugins/remark-kroki-diagrams.mjs';
 
