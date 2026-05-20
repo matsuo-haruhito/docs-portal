@@ -13,6 +13,7 @@ class DocusaurusPreviewBuildJob < ApplicationJob
     version = DocumentVersion.find(version_id)
     return unless markdown_version?(version)
 
+    version.mark_preview_build_running!
     archive = DocusaurusPreviewArchiveBuilder.new(version).build
     result = DocusaurusRendererClient.new.build(
       archive_file: archive,
@@ -24,6 +25,12 @@ class DocusaurusPreviewBuildJob < ApplicationJob
       archive_path: result.archive_file.path,
       site_path: result.site_path
     ).install!
+    version.reload.mark_preview_build_succeeded!
+  rescue DocusaurusRendererClient::TransientError
+    raise
+  rescue StandardError => e
+    version&.mark_preview_build_failed!(e.message)
+    raise
   ensure
     result&.archive_file&.close!
     archive&.close!
