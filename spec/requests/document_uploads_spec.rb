@@ -50,8 +50,8 @@ RSpec.describe "Document uploads", type: :request do
       }
     end.not_to change(Document, :count)
 
-    expect(response).to have_http_status(:bad_request)
-    expect(response.body).to include("アップロード先フォルダが不正です")
+    expect(response).to redirect_to(project_documents_path(project))
+    expect(flash[:alert]).to include("アップロード先フォルダが不正です")
   end
 
   it "rejects drive-letter upload target folders" do
@@ -64,8 +64,8 @@ RSpec.describe "Document uploads", type: :request do
       }
     end.not_to change(Document, :count)
 
-    expect(response).to have_http_status(:bad_request)
-    expect(response.body).to include("アップロード先フォルダが不正です")
+    expect(response).to redirect_to(project_documents_path(project))
+    expect(flash[:alert]).to include("アップロード先フォルダが不正です")
   end
 
   it "enqueues a Docusaurus preview build for manually uploaded markdown" do
