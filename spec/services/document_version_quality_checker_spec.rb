@@ -91,6 +91,25 @@ RSpec.describe DocumentVersionQualityChecker do
     expect(result.errors.map(&:key)).to include(:rendered_site)
   end
 
+  it "reports unbuilt markdown preview as a warning" do
+    create_file_record
+
+    result = described_class.new(version).call
+
+    warning = result.warnings.find { _1.key == :rendered_site }
+    expect(warning.message).to eq("Markdown preview site is not built yet")
+    expect(warning.detail).to eq("docs/manual.md")
+  end
+
+  it "does not report unbuilt preview warning for non-markdown sources" do
+    version.update!(source_relative_path: "docs/manual.pdf")
+    create_file_record
+
+    result = described_class.new(version).call
+
+    expect(result.warnings.select { _1.key == :rendered_site }).to be_empty
+  end
+
   it "reports internal-only wording as a warning" do
     version.update!(search_body_text: "This document is internal_only.")
     create_file_record
