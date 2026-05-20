@@ -31,6 +31,9 @@ RSpec.describe "Document uploads", type: :request do
     version = document.document_versions.first
     expect(document.latest_version).to be_nil
     expect(version).to be_draft
+    expect(version).to be_preview_queued
+    expect(version.preview_build_attempted_at).to be_present
+    expect(version.preview_build_completed_at).to be_nil
     expect(version.source_relative_path).to eq("docs/specs/overview.md")
     expect(version.source_directory).to eq("docs/specs")
     expect(version.source_file_name).to eq("overview.md")
@@ -88,6 +91,7 @@ RSpec.describe "Document uploads", type: :request do
     end.to have_enqueued_job(DocusaurusPreviewBuildJob)
 
     version = project.documents.find_by!(title: "preview").document_versions.first
+    expect(version).to be_preview_queued
     expect(version.rendered_site_available?).to eq(false)
     expect(version.markdown_entry_path).to be_blank
     expect(version.site_build_path).to be_blank
@@ -167,6 +171,7 @@ RSpec.describe "Document uploads", type: :request do
     candidate = document.document_versions.order(:created_at, :id).last
     expect(document.reload.latest_version).to eq(version)
     expect(candidate).to be_draft
+    expect(candidate).to be_preview_queued
     expect(candidate.source_relative_path).to eq("docs/guide.md")
     expect(candidate.search_body_text).to include("Updated Guide")
     expect(candidate.document_files.first.file_name).to eq("docs/guide.md")
@@ -192,6 +197,7 @@ RSpec.describe "Document uploads", type: :request do
     candidate = sibling.document_versions.first
     expect(sibling.latest_version).to be_nil
     expect(candidate).to be_draft
+    expect(candidate).to be_preview_not_requested
     expect(candidate.source_relative_path).to eq("docs/appendix.pdf")
     expect(candidate.source_directory).to eq("docs")
   end
