@@ -68,6 +68,7 @@ RSpec.describe DocusaurusSiteRenderer do
         <html>
           <body>
             <a href="guide/getting-started">Guide</a>
+            <a href="guide/search?q=abc#top">Guide with suffix</a>
             <a href="https://example.com">External</a>
             <a href="mailto:test@example.com">Mail</a>
             <a href="tel:0000000000">Phone</a>
@@ -81,6 +82,7 @@ RSpec.describe DocusaurusSiteRenderer do
     html = renderer.render_html("#{site_build_path}/index")
 
     expect(html).to include("/document_versions/#{version.public_id}/site/#{site_build_path}/guide/getting-started")
+    expect(html).to include("/document_versions/#{version.public_id}/site/#{site_build_path}/guide/search?q=abc#top")
     expect(html).to include('href="https://example.com"')
     expect(html).to include('href="mailto:test@example.com"')
     expect(html).to include('href="tel:0000000000"')
