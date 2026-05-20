@@ -3,8 +3,10 @@ services:
     environment:
       DOCUSAURUS_RENDERER_ENDPOINT: ${DOCUSAURUS_RENDERER_ENDPOINT:-http://docusaurus:3000}
     depends_on:
-      - db
-      - docusaurus
+      db:
+        condition: service_started
+      docusaurus:
+        condition: service_healthy
 
   docusaurus:
     build:
