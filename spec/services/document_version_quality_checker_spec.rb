@@ -82,6 +82,50 @@ RSpec.describe DocumentVersionQualityChecker do
     expect(result.errors.map(&:key)).to include(:document_file_scan)
   end
 
+  it "reports preview build queued as a warning" do
+    version.mark_preview_build_queued!
+    create_file_record
+
+    result = described_class.new(version).call
+
+    check = result.warnings.find { _1.key == :preview_build_status }
+    expect(check.message).to eq("Preview build is queued")
+    expect(check.detail).to include("preview_queued")
+  end
+
+  it "reports preview build running as a warning" do
+    version.mark_preview_build_running!
+    create_file_record
+
+    result = described_class.new(version).call
+
+    check = result.warnings.find { _1.key == :preview_build_status }
+    expect(check.message).to eq("Preview build is running")
+    expect(check.detail).to include("preview_running")
+  end
+
+  it "reports preview build failure as an error" do
+    version.mark_preview_build_failed!("renderer failed")
+    create_file_record
+
+    result = described_class.new(version).call
+
+    check = result.errors.find { _1.key == :preview_build_status }
+    expect(check.message).to eq("Preview build failed")
+    expect(check.detail).to include("renderer failed")
+  end
+
+  it "reports preview build success as info" do
+    version.mark_preview_build_succeeded!
+    create_file_record
+
+    result = described_class.new(version).call
+
+    check = result.infos.find { _1.key == :preview_build_status }
+    expect(check.message).to eq("Preview build succeeded")
+    expect(check.detail).to include("preview_succeeded")
+  end
+
   it "reports missing rendered site entries as errors" do
     version.update!(site_build_path: "manual")
     create_file_record
@@ -108,6 +152,7 @@ RSpec.describe DocumentVersionQualityChecker do
     result = described_class.new(version).call
 
     expect(result.warnings.select { _1.key == :rendered_site }).to be_empty
+    expect(result.checks.select { _1.key == :preview_build_status }).to be_empty
   end
 
   it "reports internal-only wording as a warning" do
