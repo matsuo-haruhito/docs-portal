@@ -1,4 +1,5 @@
 require "nokogiri"
+require "pathname"
 
 class DocusaurusSiteRenderer
   MARKDOWN_EXTENSIONS_PATTERN = "md|markdown|mdx"
