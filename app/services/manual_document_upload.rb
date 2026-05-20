@@ -133,6 +133,7 @@ class ManualDocumentUpload
   end
 
   def enqueue_preview_build!(version)
+    version.mark_preview_build_queued!
     DocusaurusPreviewBuildJob.perform_later(version.id)
   end
 
@@ -240,31 +241,23 @@ class ManualDocumentUpload
     case File.extname(path).downcase
     when ".md", ".markdown", ".mdx"
       "received_markdown"
-    when ".pdf"
-      "pdf_generated"
     else
       "attachment"
     end
   end
 
   def content_type_for(filename)
-    ext = File.extname(filename).downcase
-    DocumentFile::EXTENSION_CONTENT_TYPES.fetch(ext) do
-      uploaded_file.content_type.presence || Rack::Mime.mime_type(ext, "application/octet-stream")
-    end
+    Rack::Mime.mime_type(File.extname(filename), "application/octet-stream")
   end
 
   def unique_slug_for(full_source_path)
-    base = Pathname.new(full_source_path).sub_ext("").to_s
-    normalized = base.split("/").map { |segment| segment.parameterize.presence || "part" }.join("-")
-    candidate = normalized.presence || "document"
+    base = File.basename(full_source_path, File.extname(full_source_path)).parameterize.presence || "document"
+    slug = base
     suffix = 2
-
-    while project.documents.exists?(slug: candidate)
-      candidate = "#{normalized}-#{suffix}"
+    while project.documents.exists?(slug: slug)
+      slug = "#{base}-#{suffix}"
       suffix += 1
     end
-
-    candidate
+    slug
   end
 end
