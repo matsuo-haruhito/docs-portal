@@ -48,4 +48,37 @@ RSpec.describe GeneratedFiles::EventBuffer do
     expect(events.map(&:operation)).to contain_exactly("create", "delete")
     expect(GeneratedFileEvent.pending.count).to eq(2)
   end
+
+  it "normalizes backslash paths before buffering" do
+    dispatcher = class_double(GeneratedFileEventDispatchJob).as_stubbed_const
+    scheduled_dispatcher = class_double(GeneratedFileEventDispatchJob, perform_later: true)
+    allow(dispatcher).to receive(:set).and_return(scheduled_dispatcher)
+
+    events = described_class.new(debounce_seconds: 5, dispatcher_job: dispatcher).add(
+      file_events: [{path: "docs\\source.yml", operation: "update"}],
+      event_source: "spec"
+    )
+
+    expect(events.map(&:path)).to eq(["docs/source.yml"])
+  end
+
+  it "ignores unsafe paths" do
+    dispatcher = class_double(GeneratedFileEventDispatchJob).as_stubbed_const
+    scheduled_dispatcher = class_double(GeneratedFileEventDispatchJob, perform_later: true)
+    allow(dispatcher).to receive(:set).and_return(scheduled_dispatcher)
+
+    events = described_class.new(debounce_seconds: 5, dispatcher_job: dispatcher).add(
+      file_events: [
+        {path: "../outside.yml", operation: "update"},
+        {path: "/tmp/source.yml", operation: "update"},
+        {path: "C:/tmp/source.yml", operation: "update"},
+        {path: "docs/source.yml", operation: "update"}
+      ],
+      event_source: "spec"
+    )
+
+    expect(events.map(&:path)).to eq(["docs/source.yml"])
+    expect(dispatcher).to have_received(:set).once
+    expect(scheduled_dispatcher).to have_received(:perform_later).once
+  end
 end
