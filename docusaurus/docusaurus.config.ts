@@ -1,13 +1,17 @@
+import path from 'node:path';
 import type {Config} from '@docusaurus/types';
 import remarkKrokiDiagrams from './plugins/remark-kroki-diagrams.mjs';
 
 const staticDir = process.env.DOCUSAURUS_STATIC_DIR ?? 'static';
+const docusaurusStaticDir = path.isAbsolute(staticDir)
+  ? path.relative(process.cwd(), staticDir)
+  : staticDir;
 
 const config: Config = {
   title: 'External Document Site',
   url: 'https://example.invalid',
   baseUrl: '/',
-  staticDirectories: [staticDir],
+  staticDirectories: [docusaurusStaticDir],
   presets: [
     [
       'classic',
