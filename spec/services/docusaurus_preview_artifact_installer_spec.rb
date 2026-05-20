@@ -29,6 +29,21 @@ RSpec.describe DocusaurusPreviewArtifactInstaller do
     archive&.close!
   end
 
+  it "replaces the previous site directory on successful install" do
+    stale_file = version.site_root_absolute_path.join("docs/guide/stale.html")
+    FileUtils.mkdir_p(stale_file.dirname)
+    stale_file.write("stale")
+    version.update!(markdown_entry_path: "docs/guide.md", site_build_path: "docs/guide")
+    archive = build_archive("docs/guide/index.html" => "<main>Fresh</main>")
+
+    described_class.new(version: version, archive_path: archive.path, site_path: "docs/guide").install!
+
+    expect(version.site_root_absolute_path.join("docs/guide/index.html").read).to include("Fresh")
+    expect(stale_file).not_to exist
+  ensure
+    archive&.close!
+  end
+
   it "installs a flat html Docusaurus build artifact" do
     archive = build_archive("docs/guide.html" => "<main>Flat Guide</main>")
 
