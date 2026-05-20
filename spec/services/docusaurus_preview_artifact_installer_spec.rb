@@ -28,6 +28,20 @@ RSpec.describe DocusaurusPreviewArtifactInstaller do
     archive&.close!
   end
 
+  it "installs a root index Docusaurus build artifact" do
+    version.assign_source_path_metadata!(source_path: "index.md", snapshot_kind: "received_markdown")
+    version.save!
+    archive = build_archive("index.html" => "<main>Root</main>")
+
+    described_class.new(version: version, archive_path: archive.path, site_path: "index").install!
+
+    expect(version.reload.markdown_entry_path).to eq("index.md")
+    expect(version.site_build_path).to eq("index")
+    expect(version.site_root_absolute_path.join("index.html").read).to include("Root")
+  ensure
+    archive&.close!
+  end
+
   it "rejects artifacts that escape the destination" do
     archive = build_archive("../escape.txt" => "escape", "docs/guide/index.html" => "ok")
 
