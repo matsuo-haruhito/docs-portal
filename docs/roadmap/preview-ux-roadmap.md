@@ -11,6 +11,13 @@
 - Rails viewer shell + same-origin iframe による Docusaurus HTML 表示
 - iframe 内の Docusaurus navbar / footer / toc / sidebar 除去
 - viewer toolbar から版詳細、差分、添付・元ファイルへ移動
+- Docusaurus preview renderer client / artifact installer
+  - renderer artifact の空応答検出
+  - renderer error JSON の `error` / `message` / `errors` 読み取り
+  - renderer が `X-Docs-Site-Path` を返さない場合の entry path fallback
+  - `index.md` / `README.mdx` 由来の site path 正規化
+  - `site_path/index.html` と `site_path.html` artifact の受け入れ
+  - artifact path traversal / absolute path 防止
 - Markdown table toolbar
   - 表幅調整
   - 列幅調整
@@ -238,80 +245,3 @@
 - コメント一覧から該当 codeblock line へ移動する
 
 ### 4. Portal 横断検索の第一歩
-
-目的:
-
-- dashboard / project 内で閲覧可能な文書・版・添付を検索できるようにする
-
-候補:
-
-- Project 内検索
-- Document title / slug / tag / keyword / latest version summary 検索
-- DocumentFile file name / tree path 検索
-- 権限判定後の結果だけ表示
-
-## 長期タスク
-
-### 1. Full-text search index
-
-目的:
-
-- 文書本文、添付抽出テキスト、metadata を対象にした高速検索
-
-候補:
-
-- project / company / public / admin scope ごとの index 分離
-- hidden / debug file の検索対象制御
-- stale index warning
-- Docusaurus build profile / diff metadata との連携
-
-### 2. Office / PDF / image viewer 強化
-
-目的:
-
-- 添付・元ファイルの preview 体験をファイル種別ごとにさらに改善する
-
-候補:
-
-- Microsoft Graph Office preview の fallback 整理
-- PDF.js 導入検討
-- PDF page thumbnail / outline
-- image thumbnail 生成
-- image metadata / dimensions 表示
-- text extraction metadata
-
-### 3. External publish / standalone public build
-
-目的:
-
-- Rails portal 内 preview と外部公開用 Docusaurus build を分離する
-
-候補:
-
-- `standalone_public` profile
-- public search
-- canonical URL / redirect
-- public-only index
-- 公開前 preview check
-
-### 4. Diff metadata build
-
-目的:
-
-- viewer runtime で重い解析を避ける
-
-候補:
-
-- heading index
-- table index
-- codeblock index
-- internal link index
-- HTML text extraction artifact
-- version diff / search / review anchor への再利用
-
-## 実装順のおすすめ
-
-1. Preview target metadata display refinement
-2. Docusaurus build manifest
-3. Path history resolver
-4. Project 内検索
