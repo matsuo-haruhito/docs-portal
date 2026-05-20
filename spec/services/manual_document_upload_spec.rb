@@ -75,11 +75,49 @@ RSpec.describe ManualDocumentUpload do
     )
   end
 
-  def uploaded_file(name, content)
+  it "enqueues preview builds for uppercase markdown uploads" do
+    project = create(:project)
+    actor = create(:user, :internal)
+    notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
+    allow(DocusaurusPreviewBuildJob).to receive(:perform_later)
+
+    result = described_class.new(
+      project:,
+      actor:,
+      uploaded_file: uploaded_file("Guide.MDX", "# Guide", content_type: "text/markdown"),
+      source_path: "docs",
+      change_event_notifier: notifier
+    ).call
+
+    expect(result.source_path).to eq("docs/Guide.MDX")
+    expect(result.version.preview_build_status).to eq("queued")
+    expect(DocusaurusPreviewBuildJob).to have_received(:perform_later).with(result.version.id)
+  end
+
+  it "does not enqueue preview builds for non-markdown uploads" do
+    project = create(:project)
+    actor = create(:user, :internal)
+    notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
+    allow(DocusaurusPreviewBuildJob).to receive(:perform_later)
+
+    result = described_class.new(
+      project:,
+      actor:,
+      uploaded_file: uploaded_file("guide.pdf", "%PDF", content_type: "application/pdf"),
+      source_path: "docs",
+      change_event_notifier: notifier
+    ).call
+
+    expect(result.source_path).to eq("docs/guide.pdf")
+    expect(result.version.preview_build_status).not_to eq("queued")
+    expect(DocusaurusPreviewBuildJob).not_to have_received(:perform_later)
+  end
+
+  def uploaded_file(name, content, content_type: "text/yaml")
     tempfile = Tempfile.new([File.basename(name, ".*"), File.extname(name)])
     tempfile.write(content)
     tempfile.rewind
 
-    Rack::Test::UploadedFile.new(tempfile.path, "text/yaml", original_filename: name)
+    Rack::Test::UploadedFile.new(tempfile.path, content_type, original_filename: name)
   end
 end
