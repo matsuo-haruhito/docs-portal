@@ -32,9 +32,12 @@ class DocusaurusRendererClient
       raise ApplicationError::BadRequest, renderer_error_message(response)
     end
 
+    body = response.body.to_s
+    raise ApplicationError::BadRequest, "Docusaurus preview build failed: renderer returned empty artifact" if body.blank?
+
     output = Tempfile.new(["docusaurus-build", ".tar.gz"])
     output.binmode
-    output.write(response.body.to_s)
+    output.write(body)
     output.rewind
 
     Result.new(
