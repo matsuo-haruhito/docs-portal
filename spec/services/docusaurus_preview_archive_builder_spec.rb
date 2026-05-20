@@ -30,6 +30,16 @@ RSpec.describe DocusaurusPreviewArchiveBuilder do
     archive&.close!
   end
 
+  it "normalizes document file paths that stay inside the archive tree" do
+    create_document_file!("docs/../docs/guide.md", "# Guide")
+
+    archive = described_class.new(version).build
+
+    expect(read_archive(archive.path)).to include("docs/guide.md" => "# Guide")
+  ensure
+    archive&.close!
+  end
+
   it "rejects traversal document file paths" do
     create_document_file!("../escape.md", "escape")
 
