@@ -66,7 +66,7 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
       }
     }
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("一括編集対象の文書を選択してください")
   end
 
