@@ -1,12 +1,41 @@
 require "set"
 
 module DocumentDiffHelper
+  SideBySideDiffRow = Data.define(:old_line, :new_line, :kind)
+
   def diff_line_code_with_inline_highlight(lines, index)
     line = lines[index]
     pair = diff_line_pair(lines, index)
     text_html = pair ? highlight_changed_fragment(line.text.to_s, pair.text.to_s) : ERB::Util.html_escape(line.text.to_s)
 
     safe_join([ERB::Util.html_escape(diff_line_prefix(line.kind)), text_html.respond_to?(:html_safe) ? text_html.html_safe : text_html])
+  end
+
+  def side_by_side_diff_rows(lines)
+    rows = []
+    index = 0
+    line_list = Array(lines)
+
+    while index < line_list.length
+      line = line_list[index]
+      next_line = line_list[index + 1]
+
+      if line.kind == :removed && next_line&.kind == :added
+        rows << SideBySideDiffRow.new(old_line: line, new_line: next_line, kind: :changed)
+        index += 2
+      elsif line.kind == :removed
+        rows << SideBySideDiffRow.new(old_line: line, new_line: nil, kind: :removed)
+        index += 1
+      elsif line.kind == :added
+        rows << SideBySideDiffRow.new(old_line: nil, new_line: line, kind: :added)
+        index += 1
+      else
+        rows << SideBySideDiffRow.new(old_line: line, new_line: line, kind: line.kind)
+        index += 1
+      end
+    end
+
+    rows
   end
 
   private
