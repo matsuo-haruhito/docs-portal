@@ -1,20 +1,122 @@
-- content_for :title, [@document.title, document_version_label(@version)].join(" | ")
+- page_title "#{@document.title} #{document_version_label(@version)}"
+- docusaurus_preview_pending = @version.source_extension.to_s.in?(%w[md markdown mdx]) && !@version.rendered_site_available? && @version.source_commit_hash == "manual-upload"
+- content_for :left_content do
+  = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
 
-- if @document.project.present?
-  - content_for :left_content do
-    = render "documents/tree", projects: [@document.project], current_project: @document.project, current_document: @document
+p.muted
+  = link_to @project.name, project_path(@project)
+  |  /
+  = link_to @document.title, project_document_path(@project, @document.slug)
 
-.card
-  .actions
-    = link_to "← 文書へ戻る", project_document_path(@document.project, @document.slug), class: "button secondary"
-    = link_to "HTML表示", project_site_path(@document.project, site_path: @version.html_view_site_path, version_id: @version.public_id), class: "button", target: "_blank", rel: "noopener", data: { turbo: false }
-    = link_to "ZIP出力", export_project_document_version_path(@document.project, @document.slug, @version, format: :zip), class: "button secondary", data: { turbo: false }
-    = link_to "PDF出力", export_project_document_version_path(@document.project, @document.slug, @version, format: :pdf), class: "button secondary", data: { turbo: false }
+.page-hero.markdown-preview-hero
+  p.eyebrow Markdown Preview
+  h1
+    = @document.title
+    |  
+    = document_version_label(@version)
+  p.muted
+    | Markdown本文の閲覧、HTMLプレビュー、比較対象版との差分確認を同じ画面から行えます。
+  p.actions
+    - if @version.rendered_site_available?
+      = link_to "HTML本文を開く", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path), class: "button"
+    - elsif docusaurus_preview_pending
+      span.button.secondary Docusaurusプレビュー生成中
+    - else
+      span.button.secondary HTML未生成
+    = link_to "添付・元ファイル", "#version-files", class: "button secondary"
+    = link_to "左右確認", "#side-by-side-file-review", class: "button secondary"
     - if current_user.internal?
-      = link_to "編集", edit_project_document_document_version_path(@document.project, @document.slug, @version), class: "button secondary"
-      = button_to "公開", publish_project_document_document_version_path(@document.project, @document.slug, @version), method: :post, class: "button"
-      = button_to "アーカイブ", archive_project_document_document_version_path(@document.project, @document.slug, @version), method: :post, class: "button danger"
-      - unless @document.downloadable_by?(current_user)
+      = link_to "品質チェック", document_version_quality_check_path(@version), class: "button secondary"
+
+.preview-summary-grid
+  .card.preview-summary-card
+    h2 比較対象
+    .version-flow
+      .version-pill
+        span.version-label 比較対象
+        strong = @compare_version ? document_version_label(@compare_version) : "比較対象なし"
+        small.muted = @compare_version&.published_at ? l(@compare_version.published_at, format: :short) : "-"
+      .version-arrow →
+      .version-pill
+        span.version-label 表示中
+        strong = document_version_label(@version)
+        small.muted = @version.published_at ? l(@version.published_at, format: :short) : "-"
+    - if @compare_version_options.any?
+      = form_with url: document_version_path(@version), method: :get, local: true, class: "compare-version-form" do |form|
+        label.form-field
+          span 比較対象版を選択
+          = form.select :compare_version_id, @compare_version_options.map { |version| ["#{document_version_label(version)} / #{version.published_at ? l(version.published_at, format: :short) : '-'}", version.public_id] }, { selected: @compare_version&.public_id }, onchange: "this.form.submit()"
+        noscript
+          p.actions.form-actions
+            = form.submit "比較する", class: "button secondary"
+    - else
+      p.muted 比較できる他の版はありません。
+  .card.preview-summary-card
+    h2 変更サマリ
+    .diff-metrics
+      .diff-metric
+        strong = @version_file_diff_summary.fetch(:changed_count)
+        span 変更
+      .diff-metric
+        strong = @version_file_diff_summary.fetch(:added_count)
+        span 追加
+      .diff-metric
+        strong = @version_file_diff_summary.fetch(:removed_count)
+        span 削除
+    p.actions
+      = link_to "差分本文へ移動", "#version-diff", class: "button secondary"
+      = link_to "左右確認へ移動", "#side-by-side-file-review", class: "button secondary"
+      = link_to "添付・元ファイルへ移動", "#version-files", class: "button secondary"
+  .card.preview-summary-card
+    h2 プレビュー状態
+    ul.compact-list
+      li
+        strong HTML本文: 
+        - if @version.rendered_site_available?
+          | 表示可能
+        - elsif docusaurus_preview_pending
+          | Docusaurusプレビュー生成中
+        - else
+          | 未生成
+      li
+        strong Markdown入口: 
+        = @version.markdown_entry_path.presence || "未設定"
+      li
+        strong 元ファイル: 
+        = pluralize(@version.document_files.size, "file")
+      - if @version.site_build_path.present?
+        li
+          strong Build manifest: 
+          = @docusaurus_build_manifest&.source_path.presence || "未検出"
+        li
+          strong Manifest warning: 
+          = pluralize(@docusaurus_build_manifest&.warnings&.size.to_i, "warning")
+    - if docusaurus_preview_pending
+      p.muted Solid QueueでDocusaurusプレビューを生成中です。しばらくしてから再読み込みしてください。元ファイルと差分確認はこの画面で先に確認できます。
+    - if @docusaurus_build_manifest&.warnings&.any?
+      details
+        summary Docusaurus build manifest warnings
+        ul.compact-list
+          - @docusaurus_build_manifest.warnings.each do |warning|
+            li
+              code = warning.code
+              |  / #{warning.message}
+              - if warning.detail.present?
+                |  / #{warning.detail}
+
+= render "rollback_actions"
+
+.card.markdown-workspace
+  .markdown-workspace__header
+    div
+      h2 Markdown / HTML プレビュー
+      p.muted 表示可能な本文を優先し、生成済みHTMLがない場合も元ファイルと品質チェックへ誘導します。
+    .actions
+      - if @version.rendered_site_available?
+        = link_to "プレビュー", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path), class: "button"
+      - if @document.downloadable_by?(current_user)
+        = link_to "ZIPダウンロード", document_version_archive_path(@version), class: "button secondary"
+      - else
         = button_to "ダウンロード権限を申請", access_requests_path, params: { requestable_type: "Document", requestable_public_id: @document.public_id, requested_access_level: "download" }, class: "button secondary"
   .markdown-mode-tabs aria-label="Markdown preview modes"
     span プレビュー
@@ -84,27 +186,7 @@
                   - if file_diff.message.present?
                     p.muted = file_diff.message
                   - elsif file_diff.lines.any?
-                    details.markdown-side-by-side-preview
-                      summary 左右比較プレビュー
-                      .side-by-side-file-review__grid
-                        .side-by-side-file-review__pane
-                          h3 変更前
-                        .side-by-side-file-review__pane
-                          h3 変更後
-                      - side_by_side_diff_rows(file_diff.lines).each do |row|
-                        .side-by-side-file-review__grid class="is-#{row.kind}"
-                          .side-by-side-file-review__pane
-                            - if row.old_line
-                              .markdown-line-diff-row class="is-#{row.old_line.kind}"
-                                span.diff-line-number = row.old_line.old_number || ""
-                                code.diff-line-code
-                                  = row.old_line.text
-                          .side-by-side-file-review__pane
-                            - if row.new_line
-                              .markdown-line-diff-row class="is-#{row.new_line.kind}"
-                                span.diff-line-number = row.new_line.new_number || ""
-                                code.diff-line-code
-                                  = row.new_line.text
+                    = render "side_by_side_text_diff", lines: file_diff.lines, title: "Markdown左右比較"
                     .markdown-line-diff-table role="table" aria-label="#{file_diff.path} diff"
                       - file_diff.lines.each_with_index do |line, line_index|
                         .markdown-line-diff-row class="is-#{line.kind}" role="row"
@@ -123,6 +205,7 @@
           - if @rendered_html_diff&.message.present?
             p.muted = @rendered_html_diff.message
           - elsif @rendered_html_diff&.lines&.any?
+            = render "side_by_side_text_diff", lines: @rendered_html_diff.lines, title: "HTML左右比較"
             .markdown-line-diff-table role="table" aria-label="HTML diff"
               - @rendered_html_diff.lines.each_with_index do |line, line_index|
                 .markdown-line-diff-row class="is-#{line.kind}" role="row"
@@ -169,3 +252,108 @@
     p.muted 比較対象版との差分はありません。
 
 = render "side_by_side_file_review"
+
+table
+  tbody
+    tr
+      th 状態
+      td = document_version_status_label(@version)
+    tr
+      th 日時
+      td = @version.published_at ? l(@version.published_at) : "-"
+    tr
+      th 公開開始
+      td = @version.published_from ? l(@version.published_from) : "-"
+    tr
+      th 公開終了
+      td = @version.published_until ? l(@version.published_until) : "-"
+    - if current_user.internal?
+      tr
+        th 社外公開状態
+        td = localized_label("document_versions.publication_window_state", @version.publication_window_state)
+    tr
+      th 担当者
+      td = @version.published_by_user&.name || "-"
+    tr
+      th ソースコミット
+      td
+        code = @version.source_commit_hash
+    tr
+      th Markdown入口パス
+      td = @version.markdown_entry_path.presence || "-"
+    tr
+      th サイト生成パス
+      td = @version.site_build_path.presence || "-"
+    tr
+      th PDFスナップショットパス
+      td = @version.pdf_snapshot_path.presence || "-"
+
+- if @versions.any?
+  .card.version-history-card
+    h2 他の版
+    ul.resource-list
+      - @versions.each do |version|
+        li
+          = link_to document_version_label(version), document_version_path(version)
+          - if version == @version
+            span.badge 表示中
+          span.muted = " / #{document_version_status_label(version)}"
+
+- if @version.changelog_summary.present?
+  h2 更新内容
+  p = simple_format(@version.changelog_summary)
+
+h2 出力時の扱い
+ul
+  li HTML 表示には透かしを入れません。
+  li ZIP 出力では元パス準拠、Markdown 原本の有無、添付有無、PDF のみ出力を選べます。
+  - if @export_watermark_text.present?
+    li PDF出力時の透かし: #{@export_watermark_text}
+
+h2#version-files 添付・元ファイル
+= render "preview_target_display_summary", summary: @preview_target_display_summary
+- classifications_by_path = @preview_target_display_summary&.classifications&.index_by(&:tree_path) || {}
+- file_rows = @version.document_files.order(:sort_order, :id).map { |file| [file, classifications_by_path[file.tree_path]] }
+- if @preview_target_display_summary&.present?
+  - visible_ungrouped_paths = @preview_target_display_summary.visible_ungrouped.map(&:tree_path)
+  - hidden_paths = @preview_target_display_summary.hidden.map(&:tree_path)
+  - debug_paths = @preview_target_display_summary.debug.map(&:tree_path)
+  - grouped_paths = @preview_target_display_summary.grouped.map(&:tree_path)
+  h3 通常表示ファイル
+  p.muted primary / attachment / normal は通常確認するファイルとして表示します。hidden / debug / group 指定のファイルは下の専用セクションに分けています。
+  ul
+    - file_rows.select { |file, _classification| visible_ungrouped_paths.include?(file.tree_path) }.each do |file, classification|
+      = render "document_file_list_item", file:, classification:
+  - @preview_target_display_summary.groups.each do |group_name, classifications|
+    - group_paths = classifications.map(&:tree_path)
+    details open=true
+      summary group: #{group_name} #{classifications.count}件
+      ul
+        - file_rows.select { |file, _classification| group_paths.include?(file.tree_path) }.each do |file, classification|
+          = render "document_file_list_item", file:, classification:
+  - if @preview_target_display_summary.hidden.any?
+    details
+      summary hidden files #{@preview_target_display_summary.hidden.count}件
+      p.muted 通常の確認対象から外したい内部資料や補助ファイルです。必要な場合だけ展開して確認します。
+      ul
+        - file_rows.select { |file, _classification| hidden_paths.include?(file.tree_path) }.each do |file, classification|
+          = render "document_file_list_item", file:, classification:
+  - if @preview_target_display_summary.debug.any?
+    details
+      summary debug files #{@preview_target_display_summary.debug.count}件
+      p.muted レンダリング確認や調査用のファイルです。通常閲覧では優先度を下げています。
+      ul
+        - file_rows.select { |file, _classification| debug_paths.include?(file.tree_path) }.each do |file, classification|
+          = render "document_file_list_item", file:, classification:
+  - orphan_rows = file_rows.reject { |file, _classification| visible_ungrouped_paths.include?(file.tree_path) || hidden_paths.include?(file.tree_path) || debug_paths.include?(file.tree_path) || grouped_paths.include?(file.tree_path) }
+  - if orphan_rows.any?
+    h3 その他のファイル
+    ul
+      - orphan_rows.each do |file, classification|
+        = render "document_file_list_item", file:, classification:
+- else
+  ul
+    - file_rows.each do |file, classification|
+      = render "document_file_list_item", file:, classification:
+
+= render "documents/comment_workspace", floating: false, comment_target_version: @version
