@@ -5,8 +5,9 @@
       <p class="text-sm text-gray-600">debounce / coalesce 用に蓄積されたファイル変更イベントです。</p>
     </div>
     <div class="space-y-2 text-right text-sm">
+      <% bulk_retry_class = @filters[:status] == "failed" ? "rounded bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow" : "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
       <div class="flex items-center gap-2">
-        <%= button_to "失敗分を一括再dispatch", retry_failed_admin_generated_file_events_path(@filters.compact_blank), method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
+        <%= button_to "失敗分を一括再dispatch", retry_failed_admin_generated_file_events_path(@filters.compact_blank), method: :post, class: bulk_retry_class %>
         <%= link_to "すべて", admin_generated_file_events_path, class: "rounded border px-3 py-2" %>
         <% GeneratedFileEvent.statuses.keys.each do |status| %>
           <%= link_to status, admin_generated_file_events_path(status: status), class: "rounded border px-3 py-2" %>
