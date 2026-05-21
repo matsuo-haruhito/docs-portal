@@ -101,6 +101,43 @@ RSpec.describe ManualDocumentUpload do
     )
   end
 
+  it "creates a sibling document when dropping a different file onto an existing document" do
+    project = create(:project)
+    actor = create(:user, :internal)
+    notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
+    allow(DocusaurusPreviewBuildJob).to receive(:perform_later)
+
+    original = described_class.new(
+      project:,
+      actor:,
+      uploaded_file: uploaded_file("guide.md", "# Guide", content_type: "text/markdown"),
+      source_path: "docs/manuals",
+      change_event_notifier: notifier
+    ).call
+
+    notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
+    sibling = described_class.new(
+      project:,
+      actor:,
+      uploaded_file: uploaded_file("appendix.md", "# Appendix", content_type: "text/markdown"),
+      target_document: original.document,
+      change_event_notifier: notifier
+    ).call
+
+    expect(sibling.document).not_to eq(original.document)
+    expect(sibling.source_path).to eq("docs/manuals/appendix.md")
+    expect(notifier).to have_received(:notify).with(
+      file_events: [{path: "docs/manuals/appendix.md", operation: "create"}],
+      event_source: "manual_document_upload",
+      metadata: hash_including(
+        project_id: project.id,
+        document_id: sibling.document.id,
+        document_version_id: sibling.version.id,
+        actor_id: actor.id
+      )
+    )
+  end
+
   it "extracts markdown upload text for document search" do
     project = create(:project)
     actor = create(:user, :internal)
