@@ -1,4 +1,5 @@
 - page_title "#{@document.title} #{document_version_label(@version)}"
+- preview_build_status = PreviewBuildStatusPresenter.new(@version)
 - docusaurus_preview_pending = @version.source_extension.to_s.in?(%w[md markdown mdx]) && !@version.rendered_site_available? && @version.source_commit_hash == "manual-upload"
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
@@ -79,6 +80,9 @@ p.muted
         - else
           | 未生成
       li
+        strong Build status: 
+        = preview_build_status.label
+      li
         strong Markdown入口: 
         = @version.markdown_entry_path.presence || "未設定"
       li
@@ -91,6 +95,11 @@ p.muted
         li
           strong Manifest warning: 
           = pluralize(@docusaurus_build_manifest&.warnings&.size.to_i, "warning")
+    p.muted = preview_build_status.message
+    - if preview_build_status.detail_lines.any?
+      ul.compact-list
+        - preview_build_status.detail_lines.each do |line|
+          li = line
     - if docusaurus_preview_pending
       p.muted Solid QueueでDocusaurusプレビューを生成中です。しばらくしてから再読み込みしてください。元ファイルと差分確認はこの画面で先に確認できます。
     - if @docusaurus_build_manifest&.warnings&.any?
