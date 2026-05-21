@@ -89,6 +89,9 @@ RSpec.describe ManualDocumentUpload do
     ).call
 
     expect(second.document).to eq(first.document)
+    expect(first.document.reload.document_versions.count).to eq(2)
+    expect(first.document.latest_version).to eq(second.version)
+    expect(second.version.version_label).to eq("v2")
     expect(notifier).to have_received(:notify).with(
       file_events: [{path: "data/decision_flow.yml", operation: "update"}],
       event_source: "manual_document_upload",
