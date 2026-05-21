@@ -1,0 +1,27 @@
+- rows = side_by_side_diff_rows(lines)
+- changed_count = rows.count { |row| row.kind != :context && row.kind != :gap }
+
+details.side-by-side-text-diff
+  summary
+    strong = title
+    span.muted = " / #{changed_count} changes"
+  .side-by-side-text-diff__header
+    .side-by-side-text-diff__cell
+      strong 変更前
+    .side-by-side-text-diff__cell
+      strong 変更後
+  .side-by-side-text-diff__body
+    - rows.each do |row|
+      .side-by-side-text-diff__row class="is-#{row.kind}"
+        .side-by-side-text-diff__cell
+          - if row.old_line
+            .markdown-line-diff-row class="is-#{row.old_line.kind}"
+              span.diff-line-number = row.old_line.old_number || ""
+              code.diff-line-code
+                = row.old_line.text
+        .side-by-side-text-diff__cell
+          - if row.new_line
+            .markdown-line-diff-row class="is-#{row.new_line.kind}"
+              span.diff-line-number = row.new_line.new_number || ""
+              code.diff-line-code
+                = row.new_line.text
