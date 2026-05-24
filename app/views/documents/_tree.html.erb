@@ -21,11 +21,16 @@
     .tree-item-label.tree-label--length-gt-15 { font-size: calc(1em - 1.5pt); }
     .tree-item-label.tree-label--length-gt-20 { font-size: calc(1em - 2pt); }
     .tree-item-label.tree-label--length-gt-25 { font-size: calc(1em - 2.5pt); }
-    .document-tree-scroll-spacer { padding-bottom: 5rem; }
-    .document-tree-scroll-spacer::after { content: ""; display: block; height: 2rem; }
+    .document-tree-end-spacer { pointer-events: none; }
+    .document-tree-end-spacer > td {
+      height: 3rem;
+      padding: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+      line-height: 0;
+    }
     @media (max-width: 520px) {
-      .document-tree-scroll-spacer { padding-bottom: 3rem; }
-      .document-tree-scroll-spacer::after { height: 1rem; }
+      .document-tree-end-spacer > td { height: 1.5rem; }
     }
   </style>
 
@@ -47,10 +52,13 @@
       collapsed_source_path: local_assigns[:collapsed_source_path]
     ) %>
 
-    <div class="document-tree-scroll-spacer">
+    <div>
       <table class="tree-view-table">
         <tbody>
           <%= tree_view_rows(render_state) %>
+          <tr class="document-tree-end-spacer" aria-hidden="true">
+            <td colspan="99"></td>
+          </tr>
         </tbody>
       </table>
     </div>
