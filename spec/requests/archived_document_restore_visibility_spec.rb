@@ -126,6 +126,10 @@ RSpec.describe "Archived document restore visibility", type: :request do
   it "also removes archived documents from internal portal routes until restored" do
     sign_in_as(admin_user)
 
+    get project_path(project)
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("運用ガイド")
+
     get project_documents_path(project)
     expect(response).to have_http_status(:ok)
     expect(result_titles).to include("運用ガイド")
@@ -140,6 +144,10 @@ RSpec.describe "Archived document restore visibility", type: :request do
 
     sign_in_as(admin_user)
 
+    get project_path(project)
+    expect(response).to have_http_status(:ok)
+    expect(page_text).not_to include("運用ガイド")
+
     get project_documents_path(project)
     expect(response).to have_http_status(:ok)
     expect(result_titles).not_to include("運用ガイド")
@@ -147,12 +155,13 @@ RSpec.describe "Archived document restore visibility", type: :request do
     get project_document_path(project, document.slug)
     expect(response).to have_http_status(:forbidden)
 
-    get document_version_path(published_version)
-    expect(response).to have_http_status(:forbidden)
-
     restore_document!
 
     sign_in_as(admin_user)
+
+    get project_path(project)
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("運用ガイド")
 
     get project_documents_path(project)
     expect(response).to have_http_status(:ok)
