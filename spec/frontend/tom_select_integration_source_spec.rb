@@ -1,6 +1,14 @@
 require "rails_helper"
 
 RSpec.describe "Tom Select integration source" do
+  it "keeps document set form selects on rails fields kit helpers" do
+    form_source = Rails.root.join("app/views/admin/document_sets/_form.html.slim").read
+
+    expect(form_source).to include("= form.rfk_select :project_id,")
+    expect(form_source).to include("= form.rfk_select :set_type,")
+    expect(form_source).to include("= form.rfk_select :visibility_policy,")
+  end
+
   it "registers the rails fields kit controller without calling the legacy shim" do
     entrypoint_source = Rails.root.join("app/frontend/entrypoints/application.js").read
 
