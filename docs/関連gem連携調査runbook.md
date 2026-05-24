@@ -17,6 +17,28 @@
 - `docs/開発・保守ガイド.md`
   - repo 全体の読み進め方と依存 gem の採用理由を確認する
 
+## 現在の解決 revision の見方
+
+`docs-portal` は 3 gem を `git:` 参照で読み込んでいるため、現時点で app が実際に解決している revision は `Gemfile.lock` を見るのが最短です。`#477` の固定方針が決まるまでは、次の表を「current main が今使っている snapshot」として扱います。
+
+| gem | 主な責務 | current resolved revision | 最初の確認先 |
+| --- | --- | --- | --- |
+| `tree_view` | 文書ツリー / 詳細ツリー / persisted expand state | `17b98f4314af79d93508bc681f6e9f6c50852747` | `docs-portal` の helper / partial と `tree_view-rails` の `docs/ja/*` |
+| `rails_table_preferences` | 一覧の列表示 / filter / sort / preset UI | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `config/initializers/rails_table_preferences.rb` と `rails_table_preferences` の README / `docs/*` |
+| `rails_fields_kit` | Tom Select 系 field helper / controller / metadata | `37199d464fe58f21997eee1e10079e887b39154b` | `app/frontend/entrypoints/application.js` / `vite.config.ts` と `rails_fields_kit` の `doc/*` |
+
+### revision が変わったときの最短確認順
+
+1. `Gemfile.lock` で変わった revision を確認する
+2. 対応する gem repo の README / docs / 関連 issue・PR を読む
+3. この runbook の app-side verification checklist で `docs-portal` 側の seam を点検する
+4. upstream docs の不足か、`docs-portal` 固有の組み込み差分か、仕様判断待ちかを切り分ける
+
+### 補足
+
+- `Gemfile` が `ref:` 未固定でも、現行 app の再現根拠は `Gemfile.lock` の revision を優先して記録します
+- `#477` の固定方針が決まったら、この節は `Gemfile` / lock のどちらを正本にするかに合わせて更新します
+
 ## tree_view
 
 ### 主な責務
@@ -58,9 +80,8 @@
 
 ### upstream docs / issue も確認する目安
 
-- `TreeView::RenderState`、`UiConfigBuilder`、`tree_view_rows`、persisted state 自体の使い方が曖昧な場合
-- host app responsibility と gem responsibility の境界を見直したい場合
-- gem README の導線や導入手順を見直したい場合
+- `TreeView::RenderState`、toolbar helper、公開 API の理解不足なら upstream docs / issue を先に見る
+- icon、label、route、layout だけがずれているなら `docs-portal` 側 issue を優先する
 
 ### gem 更新後の app-side verification checklist
 
@@ -154,6 +175,7 @@
 - `rails_table_preferences#11` Rails Fields Kit renderer 連携の end-to-end docs
 - `rails_table_preferences#12` 既存 Stimulus application への登録前提
 - `rails_table_preferences#13` Vite / `app/frontend` での import 解決前提
+- `rails_table_preferences#20` 既存 HTML table に data 属性を付けて導入する最小例
 
 ## rails_fields_kit
 
