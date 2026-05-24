@@ -3,11 +3,10 @@
 - docusaurus_preview_pending = @version.source_extension.to_s.in?(%w[md markdown mdx]) && !@version.rendered_site_available? && @version.source_commit_hash == "manual-upload"
 - side_by_side_label = @compare_version ? "左右確認" : "左右確認（比較対象なし）"
 - preview_path = @version.rendered_site_available? ? project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path) : nil
-- version_mode_tabs = [
-  { label: "プレビュー", href: preview_path, state: preview_path.present? ? :link : :disabled, disabled_reason: docusaurus_preview_pending ? "Docusaurusプレビュー生成中" : "HTML未生成" },
-  { label: "差分", href: nil, state: :active },
-  { label: "添付", href: "#version-files", state: :link }
-]
+- version_mode_tabs = []
+- version_mode_tabs << { label: "プレビュー", href: preview_path, state: preview_path.present? ? :link : :disabled, disabled_reason: docusaurus_preview_pending ? "Docusaurusプレビュー生成中" : "HTML未生成" }
+- version_mode_tabs << { label: "差分", href: nil, state: :active }
+- version_mode_tabs << { label: "添付", href: "#version-files", state: :link }
 - if current_user.internal?
   - version_mode_tabs << { label: "品質", href: document_version_quality_check_path(@version), state: :link }
 - content_for :left_content do
