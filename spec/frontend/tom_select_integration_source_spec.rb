@@ -62,10 +62,12 @@ RSpec.describe "Admin document sets Tom Select", type: :system do
     expect_tom_select_initialized("document_set_set_type")
     expect_tom_select_initialized("document_set_visibility_policy")
 
-    find("select#document_set_project_id + .ts-wrapper .ts-control", visible: :all).click
-    find(".ts-dropdown .option", text: project.name).click
-    fill_in "名称", with: existing_document_set.name
-    click_button "保存"
+    within("form[action='#{admin_document_sets_path}']") do
+      find("select#document_set_project_id + .ts-wrapper .ts-control", visible: :all).click
+      find(".ts-dropdown .option", text: project.name).click
+      fill_in "名称", with: existing_document_set.name
+      click_button "保存"
+    end
 
     expect(page).to have_current_path(admin_document_sets_path, ignore_query: true)
     expect(page).to have_content("入力内容を確認してください。")
