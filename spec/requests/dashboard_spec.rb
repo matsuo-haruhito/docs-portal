@@ -35,6 +35,16 @@ RSpec.describe "Dashboard", type: :request do
     expect(response.body).to include("Visible Manual")
   end
 
+  it "declares root stimulus controllers in the full-page layout markup" do
+    create_viewable_document(title: "Visible Manual", slug: "visible-manual")
+
+    sign_in_as(user)
+    get dashboard_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include('body data-controller="nav-dropdowns document-tree-navigation manual-document-upload preview-table-resizer preview-tools"')
+  end
+
   it "does not show documents that are not readable by the user" do
     visible = create_viewable_document(title: "Visible Manual", slug: "visible-manual")
     hidden = create(:document, project:, title: "Hidden Manual", slug: "hidden-manual", visibility_policy: :internal_only)
