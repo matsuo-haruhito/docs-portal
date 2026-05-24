@@ -1,3 +1,4 @@
+import "./application.css"
 import "@hotwired/turbo-rails"
 import { Application } from "@hotwired/stimulus"
 import { RailsTablePreferencesController } from "rails_table_preferences"
