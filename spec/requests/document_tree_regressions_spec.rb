@@ -4,6 +4,10 @@ RSpec.describe "Document tree regressions", type: :request do
   let(:user) { create(:user, :internal) }
   let(:project) { create(:project, code: "TREE01", name: "Tree Regression Project") }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
   let!(:markdown_document) do
     create(:document, project:, title: "導入ガイド", slug: "intro-guide", document_kind: :markdown)
   end
@@ -77,7 +81,12 @@ RSpec.describe "Document tree regressions", type: :request do
     get project_document_path(project, markdown_document.slug)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include('class="layout-with-sidebar" data-sidebar-layout="true" data-controller="sidebar"')
+
+    layout = parsed_html.at_css(".layout-with-sidebar")
+
+    expect(layout).to be_present
+    expect(layout["data-sidebar-layout"]).to eq("true")
+    expect(layout["data-controller"].to_s.split).to include("sidebar")
   end
 
   it "keeps mixed document kinds visible when the tree refreshes through turbo stream" do
