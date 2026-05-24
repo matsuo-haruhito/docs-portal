@@ -46,7 +46,7 @@ RSpec.describe "Admin generated file events", type: :request do
       get admin_generated_file_events_path(filters)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(%(action="#{retry_failed_admin_generated_file_events_path(filters)}"))
+      expect(response.body).to include(%(action="#{ERB::Util.html_escape(retry_failed_admin_generated_file_events_path(filters))}"))
     end
 
     it "shows status summary counts" do
