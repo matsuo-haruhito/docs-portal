@@ -12,6 +12,42 @@ RSpec.describe "Admin document sets", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def document_set_select_names
+    parsed_html.css('select[name^="document_set["]').map { |node| node["name"] }
+  end
+
+  it "renders the document set select fields on initial load and invalid rerender" do
+    sign_in_as(admin)
+
+    get admin_document_sets_path
+
+    expect(response).to have_http_status(:ok)
+    expect(document_set_select_names).to include(
+      "document_set[project_id]",
+      "document_set[set_type]",
+      "document_set[visibility_policy]"
+    )
+
+    post admin_document_sets_path, params: {
+      document_set: {
+        project_id: project.id,
+        name: "",
+        description: "first delivery",
+        set_type: "delivery",
+        visibility_policy: "restricted_external",
+        sort_order: 3
+      },
+      document_set_items: {}
+    }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(document_set_select_names).to include(
+      "document_set[project_id]",
+      "document_set[set_type]",
+      "document_set[visibility_policy]"
+    )
+  end
+
   it "renders rails_table_preferences editor and stable column keys on the index page" do
     sign_in_as(admin)
 
