@@ -7,6 +7,7 @@ RSpec.describe "Document versions", type: :request do
   let(:external_user) { create(:user, :external) }
   let(:project) { create(:project, code: "VERSIONED", name: "Versioned Project") }
   let(:document) { create(:document, project:, title: "Versioned Document", slug: "versioned-document") }
+  let(:created_site_roots) { [] }
 
   def create_stored_document_file(version, file_name:, content:, sort_order: 0, content_type: "text/plain")
     storage_key = "spec/versioned-document/#{SecureRandom.hex(8)}/#{file_name}"
@@ -24,7 +25,17 @@ RSpec.describe "Document versions", type: :request do
     )
   end
 
+  def create_rendered_site(version, html:, site_build_path: "docs/versioned-document")
+    version.update!(site_build_path:)
+    relative_path = version.site_entry_relative_path
+    absolute_path = version.site_root_absolute_path.join(relative_path)
+    FileUtils.mkdir_p(absolute_path.dirname)
+    File.write(absolute_path, html)
+    created_site_roots << version.site_root_absolute_path
+  end
+
   after do
+    created_site_roots.each { |path| FileUtils.rm_rf(path) }
     FileUtils.rm_rf(Rails.root.join("storage", "document_files", "spec", "versioned-document"))
   end
 
@@ -57,6 +68,32 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include("左右確認")
     expect(response.body).to include("左右確認へ移動")
     expect(response.body).to include("添付・元ファイルへ移動")
+  end
+
+  it "offers unified and side-by-side display modes for markdown and html diffs" do
+    older_version = create(:document_version, document:, version_label: "v0.9.0", status: :published)
+    version = create(:document_version, document:, version_label: "v1.0.0", status: :published)
+    document.update!(latest_version: version)
+    create_stored_document_file(older_version, file_name: "README.md", content: "# Old heading\nsame line\nold value", content_type: "text/markdown", sort_order: 0)
+    create_stored_document_file(version, file_name: "README.md", content: "# New heading\nsame line\nnew value", content_type: "text/markdown", sort_order: 0)
+    create_rendered_site(older_version, html: "<main><h1>Old heading</h1><p>old value</p></main>", site_build_path: "docs/versioned-document/old")
+    create_rendered_site(version, html: "<main><h1>New heading</h1><p>new value</p></main>", site_build_path: "docs/versioned-document/current")
+
+    sign_in_as(internal_user)
+
+    get document_version_path(version, compare_version_id: older_version.public_id)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Markdown本文の行単位diff")
+    expect(response.body).to include("HTML差分")
+    expect(response.body).to include("統合diff")
+    expect(response.body).to include("左右diff")
+    expect(response.body).to include('id="markdown-diff-mode-0-unified"')
+    expect(response.body).to include('id="markdown-diff-mode-0-side-by-side"')
+    expect(response.body).to include('id="html-diff-mode-unified"')
+    expect(response.body).to include('id="html-diff-mode-side-by-side"')
+    expect(response.body).to include("Markdown左右比較")
+    expect(response.body).to include("HTML左右比較")
   end
 
   it "opens side-by-side review files outside turbo frames" do
