@@ -66,7 +66,7 @@ RSpec.describe "Admin document sets Tom Select", type: :system do
       find("select#document_set_project_id + .ts-wrapper .ts-control", visible: :all).click
       find(".ts-dropdown .option", text: project.name).click
       fill_in "名称", with: existing_document_set.name
-      click_button "保存"
+      find("input[type='submit'][value='保存']", match: :first).click
     end
 
     expect(page).to have_current_path(admin_document_sets_path, ignore_query: true)
