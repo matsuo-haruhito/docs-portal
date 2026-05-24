@@ -21,7 +21,7 @@ class DocumentSitesController < BaseController
     if html_file?(file_path)
       if embedded_request? || params[:site_path].blank?
         record_view_access_log(site_path, resolved_version)
-        render html: renderer.render_html(site_path)
+        render html: decorate_embedded_site_html(renderer.render_html(site_path), version: resolved_version, site_path:)
       else
         @site_viewer_project = @version.document.project
         @site_viewer_document = @version.document
@@ -44,6 +44,22 @@ class DocumentSitesController < BaseController
 
   def html_file?(file_path)
     file_path.extname == ".html"
+  end
+
+  def decorate_embedded_site_html(html, version:, site_path:)
+    document = Nokogiri::HTML.parse(html.to_s)
+    body = document.at_css("body")
+    return html if body.blank?
+
+    body["data-docs-portal-preview-context-key"] = preview_table_context_key(version:, site_path:)
+    document.to_html.html_safe
+  rescue StandardError
+    html
+  end
+
+  def preview_table_context_key(version:, site_path:)
+    normalized_site_path = DocumentVersion.normalize_site_page_path(site_path.presence || version.html_view_site_path)
+    "document_version:#{version.public_id}:#{normalized_site_path}"
   end
 
   def embedded_request?
