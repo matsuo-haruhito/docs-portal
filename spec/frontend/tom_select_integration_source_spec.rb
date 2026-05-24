@@ -28,7 +28,9 @@ RSpec.describe "Tom Select integration source" do
 end
 
 RSpec.describe "Admin document sets Tom Select", type: :system do
-  driven_by(:selenium, using: :headless_chrome, screen_size: [1400, 1400])
+  before do
+    driven_by(:selenium, using: :headless_chrome, screen_size: [1400, 1400])
+  end
 
   let!(:admin) { create(:user, :admin, email_address: "admin-system@example.com") }
   let!(:project) { create(:project, name: "Delivery Project") }
