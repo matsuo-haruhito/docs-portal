@@ -88,7 +88,7 @@ RSpec.describe "Document versions", type: :request do
     get document_version_path(version)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("aria-label=\"版詳細の移動\"")
+    expect(response.body).to include('aria-label="版詳細の移動"')
     expect(response.body).to include(project_document_path(project, document.slug, version_id: version.public_id, site_path: version.html_view_site_path))
     expect(response.body).to include(document_version_quality_check_path(version))
     expect(response.body).to include('class="markdown-mode-tab is-active" aria-current="page">差分')
