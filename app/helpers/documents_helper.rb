@@ -3,6 +3,8 @@ require "digest"
 module DocumentsHelper
   DocumentTreeFolderNode = Data.define(:project, :path, :label, :children)
   DOCUMENT_TREE_INSTANCE_KEY = "documents:sidebar"
+  DOCUMENT_TREE_RENDER_WINDOW_THRESHOLD = 80
+  DOCUMENT_TREE_RENDER_WINDOW_LIMIT = 50
   DOCUMENT_TREE_ICON_NAMES = %w[
     7z ai company_lit company_unlit css csv doc document docx fig folder_closed folder_open gz htm html ini jpeg jpg json key log md mdx odp ods odt pages parquet pdf png ppt pptx psd rst rtf svg tar tex tif tiff toml tsv txt webp xls xlsm xlsx xml yaml yml zip
   ].freeze
@@ -69,6 +71,34 @@ module DocumentsHelper
     )
     render_state.define_singleton_method(:expanded_keys) { expanded_keys } unless render_state.respond_to?(:expanded_keys)
     render_state
+  end
+
+  def document_tree_render_window(render_state, current_document: nil, requested_offset: document_tree_window_request_offset)
+    visible_rows = TreeView::VisibleRows.new(
+      tree: render_state.tree,
+      root_items: render_state.root_items,
+      render_state: render_state
+    ).to_a
+    return if visible_rows.length <= DOCUMENT_TREE_RENDER_WINDOW_THRESHOLD
+
+    TreeView::RenderWindow.new(
+      visible_rows,
+      offset: document_tree_render_window_offset(
+        visible_rows:,
+        current_document:,
+        requested_offset:
+      ),
+      limit: DOCUMENT_TREE_RENDER_WINDOW_LIMIT
+    )
+  end
+
+  def document_tree_window_path(project:, current_document: nil, offset:)
+    project_document_tree_path(
+      project,
+      document_slug: current_document&.slug,
+      tree_window_offset: offset,
+      format: :turbo_stream
+    )
   end
 
   def tree_toggle_button_label(item, state, context)
@@ -199,7 +229,7 @@ module DocumentsHelper
 
   private
 
-  def current_tree_item?(item, current_project:, current_document:)
+  def current_tree_item?(item, current_project: nil, current_document: nil)
     case item
     when Project
       item.id == current_project&.id || item.id == current_document&.project_id || item == @project
@@ -451,22 +481,26 @@ module DocumentsHelper
   end
 
   def document_tree_toggle_path(item, action, scope: nil)
+    path_options = {
+      tree_action: action == :hide ? "hide" : "show",
+      scope:,
+      format: :turbo_stream
+    }
+    current_window_offset = document_tree_window_request_offset
+    path_options[:tree_window_offset] = current_window_offset if current_window_offset.is_a?(Integer)
+
     case item
     when Project
       project_document_tree_path(
         item,
         node_id: item.id,
-        tree_action: action == :hide ? "hide" : "show",
-        scope:,
-        format: :turbo_stream
+        **path_options
       )
     when DocumentTreeFolderNode
       project_document_tree_path(
         item.project,
-        tree_action: action == :hide ? "hide" : "show",
         source_path: item.path,
-        scope:,
-        format: :turbo_stream
+        **path_options
       )
     end
   end
@@ -584,8 +618,41 @@ module DocumentsHelper
     version = document.latest_version
     version = nil unless version&.rendered_site_available?
     version = nil unless version&.viewable_by?(current_user)
-    @document_tree_html_version_by_document_id[document.id] = version if @document_tree_html_version_by_document_id
+    @document_tree_html_version_by_document_id = version if @document_tree_html_version_by_document_id
     version
+  end
+
+  def document_tree_render_window_offset(visible_rows:, current_document:, requested_offset:)
+    max_offset = [visible_rows.length - DOCUMENT_TREE_RENDER_WINDOW_LIMIT, 0].max
+
+    if requested_offset.is_a?(Integer) && requested_offset >= 0
+      return [requested_offset, max_offset].min
+    end
+
+    current_index = document_tree_visible_row_index_for(visible_rows, current_document)
+    return 0 unless current_index
+
+    desired_offset = [current_index - (DOCUMENT_TREE_RENDER_WINDOW_LIMIT / 2), 0].max
+    [desired_offset, max_offset].min
+  end
+
+  def document_tree_visible_row_index_for(visible_rows, current_document)
+    return unless current_document
+
+    current_key = node_key(current_document)
+    visible_rows.index { |row| row.node_key == current_key }
+  end
+
+  def document_tree_window_request_offset
+    return unless respond_to?(:params)
+
+    raw_offset = params[:tree_window_offset]
+    return if raw_offset.blank?
+
+    parsed_offset = Integer(raw_offset)
+    parsed_offset if parsed_offset >= 0
+  rescue ArgumentError, TypeError
+    nil
   end
 
   def node_key(item_or_id)
