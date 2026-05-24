@@ -4,7 +4,7 @@
 
 ## 1. 入力ファイル
 
-入力は [publish/documents.json](./publish/documents.json) とします
+入力は [publish/documents.json](../publish/documents.json) とします
 
 - `publish/documents.json` は文書 repo 側の公開対象一覧
 - `publish.json` は Rails 取り込み用の確定 manifest
@@ -80,7 +80,7 @@ Rails 側では次の保存先へコピーします
 
 ## 5. 生成スクリプト
 
-生成は [scripts/generate_publish_manifest.mjs](./scripts/generate_publish_manifest.mjs) で行います
+生成は [scripts/generate_publish_manifest.mjs](../scripts/generate_publish_manifest.mjs) で行います
 
 実行例:
 
