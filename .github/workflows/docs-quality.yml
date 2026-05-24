@@ -1,0 +1,39 @@
+name: docs-quality
+
+on:
+  push:
+    branches: [dev, main]
+    paths:
+      - README.md
+      - docs/**/*.md
+      - .github/workflows/docs-quality.yml
+      - .github/scripts/check_markdown_links.rb
+      - .markdownlint-cli2.yaml
+  pull_request:
+    paths:
+      - README.md
+      - docs/**/*.md
+      - .github/workflows/docs-quality.yml
+      - .github/scripts/check_markdown_links.rb
+      - .markdownlint-cli2.yaml
+
+jobs:
+  docs-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+
+      - name: Run markdown lint
+        uses: DavidAnson/markdownlint-cli2-action@v20
+        with:
+          globs: |
+            README.md
+            docs/**/*.md
+
+      - name: Check relative markdown links
+        run: ruby .github/scripts/check_markdown_links.rb
