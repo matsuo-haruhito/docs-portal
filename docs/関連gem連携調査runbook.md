@@ -62,6 +62,20 @@
 - host app responsibility と gem responsibility の境界を見直したい場合
 - gem README の導線や導入手順を見直したい場合
 
+### gem 更新後の app-side verification checklist
+
+- `app/helpers/documents_helper.rb` と `app/helpers/projects_helper.rb`
+  - folder node、icon、current node、toggle path が現行の tree row 描画と噛み合っているか確認する
+- `app/views/documents/_tree.html.erb` と `app/views/projects/_document_detail_tree.html.erb`
+  - `tree_view_rows`、toolbar、spacer が desktop / mobile 幅で崩れていないか確認する
+- `app/controllers/projects_controller.rb` と `app/models/concerns/tree_view_state_owner.rb`
+  - expand / collapse と persisted state が今の render state に追従しているか確認する
+- `spec/requests/document_tree_regressions_spec.rb` など公開ツリー導線に近い request spec
+  - archived / restore、current document link、tree visibility が回帰していないか確認する
+- 切り分け
+  - `RenderState`、toolbar helper、公開 API の理解不足なら upstream docs / issue を先に見る
+  - icon、label、route、layout だけがずれているなら `docs-portal` 側 issue を優先する
+
 ### 関連 issue
 
 - `docs-portal#471` 文書ツリー上のファイルアイコン追従
@@ -117,6 +131,23 @@
 - Vite / `app/frontend` での Stimulus 登録や import path 解決の前提を見直したい場合
 - host app がどこまで table UI を持ち、gem がどこまで面倒を見るか判断したい場合
 
+### gem 更新後の app-side verification checklist
+
+- `config/routes.rb`、`app/controllers/application_controller.rb`、`config/initializers/rails_table_preferences.rb`
+  - engine mount、helper 公開、table key、label resolution、mount path がずれていないか確認する
+- `app/frontend/entrypoints/application.js`、`vite.config.ts`、`app/views/layouts/application.html.slim`
+  - Stimulus controller 登録、gem JS alias、stylesheet 読み込みが current main の前提どおりか確認する
+- `app/helpers/admin/document_sets_helper.rb`
+  - `table_preferences_column(...)` の metadata が対象一覧画面の列構成と合っているか確認する
+- `app/views/admin/document_sets/_form.html.slim` と table preference editor を出す一覧画面
+  - host form と table preference UI が同居しても操作導線が壊れていないか確認する
+- request / system spec の確認方針
+  - 既存の管理画面 request spec や対象画面に近い system spec を見て、一覧表示、保存導線、主要 path を固定する
+  - 近い spec が見当たらない画面では、gem 更新後の代表導線を 1 本だけでも追加しておく
+- 切り分け
+  - Vite / Stimulus / metadata docs の曖昧さが原因なら upstream docs / issue を先に見る
+  - mount path、table key、partial composition など `docs-portal` 固有の組み込み差分なら app 側 issue を優先する
+
 ### 関連 issue
 
 - `docs-portal#475` Markdown 由来の HTML table と table preferences
@@ -168,6 +199,21 @@
 - Vite / `app/frontend` 向けの導入例や import 解決前提を見直したい場合
 - table metadata 連携や public import path の扱いを確認したい場合
 - helper / controller helper / events の公開面を再確認したい場合
+
+### gem 更新後の app-side verification checklist
+
+- `app/frontend/entrypoints/application.js`、`vite.config.ts`、`config/initializers/rails_fields_kit.rb`
+  - controller 名、alias、default config が current main と食い違っていないか確認する
+- `app/frontend/lib/tom_select_fields.js`
+  - no-op shim のままか確認し、app 側に再初期化責務が戻っていたら app-side regression として扱う
+- `app/views/admin/document_sets/_form.html.slim` など `rfk_*` helper を使う画面
+  - Turbo 再訪、selected value、placeholder、search/create 導線が崩れていないか確認する
+- request / system spec の確認方針
+  - `rfk_*` helper を使う host 画面に近い request / system spec を見て、主要フォーム導線を固定する
+  - JS 挙動の差分が出たら、まず対象画面に寄った小さな system spec を足す
+- 切り分け
+  - import path、controller registration、event contract の説明不足なら upstream docs / issue を先に見る
+  - 画面固有の param、DOM、Turbo 導線だけが崩れるなら `docs-portal` 側 issue を優先する
 
 ### 関連 issue
 
