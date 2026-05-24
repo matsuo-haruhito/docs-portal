@@ -9,6 +9,10 @@ RSpec.describe "Dashboard", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def metric_cta_links
+    parsed_html.css(".metric-card .metric-card__cta")
+  end
+
   def create_viewable_document(title:, slug:)
     document = create(:document, project:, title:, slug:, visibility_policy: :restricted_external)
     create(:document_permission, document:, company:, access_level: :view)
@@ -37,6 +41,18 @@ RSpec.describe "Dashboard", type: :request do
     expect(response.body).to include("最近見た文書")
     expect(response.body).to include("最近更新された文書")
     expect(response.body).to include("Visible Manual")
+    expect(metric_cta_links.map(&:text)).to include(
+      "案件一覧へ",
+      "案件から文書を探す",
+      "ショートカット一覧へ",
+      "申請一覧へ"
+    )
+    expect(metric_cta_links.map { |link| link["href"] }).to include(
+      projects_path,
+      document_bookmarks_path,
+      access_requests_path
+    )
+    expect(response.body).not_to include(document_approval_requests_path)
   end
 
   it "declares root stimulus controllers in the full-page layout markup" do
@@ -72,5 +88,22 @@ RSpec.describe "Dashboard", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Visible Manual")
     expect(response.body).not_to include("Hidden Manual")
+  end
+
+  it "keeps internal approval navigation separate from summary actions" do
+    internal_user = create(:user, :internal)
+
+    sign_in_as(internal_user)
+    get dashboard_path
+
+    expect(response).to have_http_status(:ok)
+    expect(metric_cta_links.map(&:text)).to include(
+      "案件一覧へ",
+      "案件から文書を探す",
+      "ショートカット一覧へ",
+      "申請一覧へ"
+    )
+    expect(metric_cta_links.map { |link| link["href"] }).not_to include(document_approval_requests_path)
+    expect(parsed_html.css(".page-hero .actions a").map { |link| link["href"] }).to include(document_approval_requests_path)
   end
 end

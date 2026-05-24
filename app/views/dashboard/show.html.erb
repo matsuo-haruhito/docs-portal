@@ -1,5 +1,34 @@
 <% page_title "ダッシュボード" %>
 
+<%
+  summary_cards = [
+    {
+      label: "閲覧可能案件",
+      count: @dashboard_stats[:project_count],
+      path: projects_path,
+      cta: "案件一覧へ"
+    },
+    {
+      label: "閲覧可能文書",
+      count: @dashboard_stats[:document_count],
+      path: projects_path,
+      cta: "案件から文書を探す"
+    },
+    {
+      label: "保存ショートカット",
+      count: @dashboard_stats[:bookmark_count],
+      path: document_bookmarks_path,
+      cta: "ショートカット一覧へ"
+    },
+    {
+      label: "保留中の申請",
+      count: @dashboard_stats[:pending_access_request_count],
+      path: access_requests_path,
+      cta: "申請一覧へ"
+    }
+  ]
+%>
+
 <section class="page-hero">
   <h1>ダッシュボード</h1>
   <p class="muted">利用中の案件、最近触った文書、保留タスクをひとまとめにして次の操作へつなげます。</p>
@@ -13,22 +42,13 @@
 </section>
 
 <section class="stats-grid">
-  <article class="card metric-card">
-    <p class="eyebrow">閲覧可能案件</p>
-    <p class="metric-number"><%= @dashboard_stats[:project_count] %></p>
-  </article>
-  <article class="card metric-card">
-    <p class="eyebrow">閲覧可能文書</p>
-    <p class="metric-number"><%= @dashboard_stats[:document_count] %></p>
-  </article>
-  <article class="card metric-card">
-    <p class="eyebrow">保存ショートカット</p>
-    <p class="metric-number"><%= @dashboard_stats[:bookmark_count] %></p>
-  </article>
-  <article class="card metric-card">
-    <p class="eyebrow">保留中の申請</p>
-    <p class="metric-number"><%= @dashboard_stats[:pending_access_request_count] %></p>
-  </article>
+  <% summary_cards.each do |card| %>
+    <article class="card metric-card">
+      <p class="eyebrow"><%= card[:label] %></p>
+      <p class="metric-number"><%= card[:count] %></p>
+      <%= link_to card[:cta], card[:path], class: "metric-card__cta", data: { turbo_frame: "_top" } %>
+    </article>
+  <% end %>
 </section>
 
 <section class="dashboard-grid">
