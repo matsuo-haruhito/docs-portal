@@ -43,7 +43,7 @@ RSpec.describe "Admin document sets Tom Select", type: :system do
     fill_in "パスワード", with: "password123!"
     click_button "ログイン"
 
-    expect(page).to have_current_path(projects_path, ignore_query: true)
+    expect(page).to have_current_path(root_path, ignore_query: true)
   end
 
   def expect_tom_select_initialized(field_id)
@@ -51,10 +51,11 @@ RSpec.describe "Admin document sets Tom Select", type: :system do
     expect(page).to have_css("select##{field_id} + .ts-wrapper", visible: :all)
   end
 
-  it "keeps rails fields kit selects initialized after a turbo invalid rerender" do
+  it "keeps rails fields kit selects initialized after turbo navigation and invalid rerender" do
     sign_in_via_browser(admin)
 
-    visit admin_document_sets_path
+    visit admin_root_path
+    click_link "文書セット"
 
     expect(page).to have_current_path(admin_document_sets_path, ignore_query: true)
     expect_tom_select_initialized("document_set_project_id")
