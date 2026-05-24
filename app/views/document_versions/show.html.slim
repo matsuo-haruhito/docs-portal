@@ -144,15 +144,6 @@ p.muted
     span.markdown-tool Code
     span.markdown-tool Table
 
-style
-  | .diff-display-mode{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
-  | .diff-display-mode__input{position:absolute;opacity:0;pointer-events:none}
-  | .diff-display-mode__label{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;border:1px solid #cbd5e1;background:#f8fafc;color:#334155;font-weight:700;cursor:pointer}
-  | .diff-display-mode__input:checked + .diff-display-mode__label{border-color:#ff5000;background:#fff3ec;color:#9a3412}
-  | .diff-display-mode__panel{display:none;flex:1 1 100%}
-  | .diff-display-mode__input--unified:checked ~ .diff-display-mode__panel--unified,.diff-display-mode__input--side-by-side:checked ~ .diff-display-mode__panel--side-by-side{display:block}
-  | @media (max-width:720px){.diff-display-mode__label{flex:1 1 calc(50% - 8px)}}
-
 .card.version-diff-viewer#version-diff
   .markdown-workspace__header
     div

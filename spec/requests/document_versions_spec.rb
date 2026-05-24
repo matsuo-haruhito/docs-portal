@@ -66,7 +66,7 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include(document_version_archive_path(version))
     expect(response.body).to include("差分本文へ移動")
     expect(response.body).to include("左右確認")
-    expect(response.body).to include("左右確認へ移動")
+    expect(response.body).to include("左右確認（比較対象なし）")
     expect(response.body).to include("添付・元ファイルへ移動")
   end
 
