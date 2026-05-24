@@ -80,6 +80,15 @@ RSpec.describe "Document tree regressions", type: :request do
     expect(response.body).to include('class="layout-with-sidebar" data-sidebar-layout="true" data-controller="sidebar"')
   end
 
+  it "serves sidebar layout styles from frontend assets instead of inline style tags" do
+    sign_in_as(user)
+
+    get project_document_path(project, markdown_document.slug)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include("<style")
+  end
+
   it "keeps mixed document kinds visible when the tree refreshes through turbo stream" do
     sign_in_as(user)
 
