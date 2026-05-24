@@ -50,11 +50,13 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   def recent_runs_related_to(public_id)
+    related_retry_parent_public_ids = [public_id, @retry_of_generated_file_run_public_id].compact.uniq
+
     GeneratedFileRun
       .where.not(id: @generated_file_run.id)
       .order(created_at: :desc, id: :desc)
       .limit(200)
-      .select { |run| run.metadata&.dig("retry_of_generated_file_run_public_id") == public_id }
+      .select { |run| related_retry_parent_public_ids.include?(run.metadata&.dig("retry_of_generated_file_run_public_id")) }
       .first(10)
   end
 
