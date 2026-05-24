@@ -162,6 +162,34 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include("boom")
       expect(response.body).to include("actor_id")
     end
+
+    it "shows related runs that reference the event" do
+      sign_in_as(admin_user)
+      event = create_event!(path: "docs/source.yml")
+      retry_run = create_run!(
+        job_id: "retry_job",
+        event_source: "generated_file_run_retry",
+        metadata: {"generated_file_event_public_ids" => [event.public_id]}
+      )
+      bulk_retry_run = create_run!(
+        job_id: "bulk_retry_job",
+        event_source: "generated_file_run_bulk_retry",
+        metadata: {"generated_file_event_public_ids" => [event.public_id]}
+      )
+      unrelated_run = create_run!(
+        job_id: "unrelated_job",
+        metadata: {"generated_file_event_public_ids" => ["gf_evt_other"]}
+      )
+
+      get admin_generated_file_event_path(event.public_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(admin_generated_file_run_path(retry_run.public_id))
+      expect(response.body).to include(admin_generated_file_run_path(bulk_retry_run.public_id))
+      expect(response.body).not_to include(unrelated_run.public_id)
+      expect(response.body).to include("Retry")
+      expect(response.body).to include("Bulk Retry")
+    end
   end
 
   describe "POST /admin/generated_file_events/:public_id/retry_dispatch" do
@@ -238,5 +266,22 @@ RSpec.describe "Admin generated file events", type: :request do
       occurrences_count: 1
     }
     GeneratedFileEvent.create!(defaults.merge(attributes))
+  end
+
+  def create_run!(attributes = {})
+    defaults = {
+      job_id: "sample_job",
+      generator: "sample_generator",
+      output_writer: "filesystem",
+      status: :completed,
+      event_source: "spec",
+      source_paths: ["source.yml"],
+      changed_files: ["source.yml"],
+      generated_paths: ["generated.md"],
+      metadata: {},
+      started_at: 1.minute.ago,
+      finished_at: Time.current
+    }
+    GeneratedFileRun.create!(defaults.merge(attributes))
   end
 end
