@@ -17,13 +17,42 @@
       <div><dt class="font-semibold">Event Key</dt><dd class="font-mono"><%= @generated_file_event.event_key %></dd></div>
       <div><dt class="font-semibold">Path</dt><dd class="font-mono"><%= @generated_file_event.path %></dd><dd class="text-xs text-gray-500">/ 区切りで保存されます。</dd></div>
       <div><dt class="font-semibold">Operation</dt><dd><%= @generated_file_event.operation %></dd></div>
-      <div><dt class="font-semibold">Event Source</dt><dd><%= @generated_file_event.event_source.presence || "-" %></dd></div>
+      <div>
+        <dt class="font-semibold">Event Source</dt>
+        <dd>
+          <%= @generated_file_event.event_source.presence || "-" %>
+          <% if @generated_file_event.event_source == "generated_file_run_retry" %>
+            <span class="badge">Retry</span>
+          <% elsif @generated_file_event.event_source == "generated_file_run_bulk_retry" %>
+            <span class="badge">Bulk Retry</span>
+          <% end %>
+        </dd>
+      </div>
       <div><dt class="font-semibold">Occurrences</dt><dd><%= @generated_file_event.occurrences_count %></dd></div>
       <div><dt class="font-semibold">Scheduled</dt><dd><%= l(@generated_file_event.scheduled_at, format: :long) if @generated_file_event.scheduled_at %></dd></div>
       <div><dt class="font-semibold">Last Seen</dt><dd><%= l(@generated_file_event.last_seen_at, format: :long) if @generated_file_event.last_seen_at %></dd></div>
       <div><dt class="font-semibold">Processed</dt><dd><%= l(@generated_file_event.processed_at, format: :long) if @generated_file_event.processed_at %></dd></div>
     </dl>
   </div>
+
+  <% if @related_generated_file_runs.any? %>
+    <div class="rounded-lg border bg-white p-4">
+      <h2 class="mb-3 text-lg font-semibold">関連Run</h2>
+      <ul class="space-y-1 text-sm">
+        <% @related_generated_file_runs.each do |run| %>
+          <li>
+            <%= link_to run.public_id, admin_generated_file_run_path(run.public_id), class: "font-mono text-blue-600 underline" %>
+            <span class="muted"><%= run.status %></span>
+            <% if run.event_source == "generated_file_run_retry" %>
+              <span class="badge">Retry</span>
+            <% elsif run.event_source == "generated_file_run_bulk_retry" %>
+              <span class="badge">Bulk Retry</span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
 
   <% if @generated_file_event.error_message.present? %>
     <div class="rounded-lg border border-red-200 bg-red-50 p-4">
