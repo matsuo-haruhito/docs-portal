@@ -6,6 +6,8 @@ Google Driveフォルダを外部文書置き場として登録し、docs-portal
 
 この機能は Microsoft Graph / SharePoint / OneDrive の双方向同期を実装する前に、外部フォルダ同期の共通モデルとdry-run運用を小さく検証するために追加します。
 
+preview 用の `MicrosoftGraphConnection` との役割分担や、Google Drive OAuth / preview folder をどこで使うかは [preview接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md) を参照してください。
+
 ## 対象
 
 - providerは `google_drive` のみ
