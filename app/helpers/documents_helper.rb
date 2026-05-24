@@ -618,7 +618,7 @@ module DocumentsHelper
     version = document.latest_version
     version = nil unless version&.rendered_site_available?
     version = nil unless version&.viewable_by?(current_user)
-    @document_tree_html_version_by_document_id = version if @document_tree_html_version_by_document_id
+    @document_tree_html_version_by_document_id[document.id] = version if @document_tree_html_version_by_document_id
     version
   end
 
