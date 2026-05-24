@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe "Document versions", type: :request do
-  let(:project) { create(:project, name: "Versioned", slug: "VERSIONED") }
+  let(:project) { create(:project, name: "Versioned", code: "VERSIONED") }
   let(:document) do
     create(
       :document,
