@@ -136,6 +136,7 @@ RSpec.describe "Project sites", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("見積対象・費用感整理")
     expect(response.body).to include("portal-doc-body")
+    expect(response.body).to include(%(data-docs-portal-preview-context-key="document_version:#{version_v1.public_id}:#{version_v1.normalized_html_view_site_path}"))
     expect(response.body).not_to include("portal-site-nav")
     expect(response.body).not_to include("案件トップへ戻る")
     expect(response.body).to include(project_site_path(project, site_path: "external_samples/sample-site/edit-original/other-doc", version_id: version_v1.public_id, embedded: "1").gsub("&", "&amp;"))

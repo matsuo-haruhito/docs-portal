@@ -119,7 +119,7 @@ class ProjectSitesController < BaseController
     record_view_access_log(site_path, version_for_page)
 
     if embedded_request?
-      render html: renderer.render_html(site_path)
+      render html: decorate_embedded_site_html(renderer.render_html(site_path), version: version_for_page, site_path:)
     elsif version_for_page.document.present?
       reader_params = { version_id: version_for_page.public_id }
       reader_params[:site_path] = site_path if site_path.present?
@@ -134,6 +134,22 @@ class ProjectSitesController < BaseController
       @site_viewer_back_path = project_document_path(@project, @site_viewer_document.slug)
       render "shared/site_viewer"
     end
+  end
+
+  def decorate_embedded_site_html(html, version:, site_path:)
+    document = Nokogiri::HTML.parse(html.to_s)
+    body = document.at_css("body")
+    return html if body.blank?
+
+    body["data-docs-portal-preview-context-key"] = preview_table_context_key(version:, site_path:)
+    document.to_html.html_safe
+  rescue StandardError
+    html
+  end
+
+  def preview_table_context_key(version:, site_path:)
+    normalized_site_path = DocumentVersion.normalize_site_page_path(site_path.presence || version.html_view_site_path)
+    "document_version:#{version.public_id}:#{normalized_site_path}"
   end
 
   def asset_path?(site_path)

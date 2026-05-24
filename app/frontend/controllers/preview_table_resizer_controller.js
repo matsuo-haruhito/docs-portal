@@ -21,9 +21,49 @@ function clampColumnWidth(value) {
   return Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, value))
 }
 
+function rawFrameLocation(frame) {
+  return frame.getAttribute("src") || frame.dataset.tableWidthSrc || window.location.pathname
+}
+
+function normalizeSitePath(path) {
+  let value = path.toString().replace(/^\/+/, "")
+  value = value.replace(/\/(?:index|README)\.(?:md|markdown|mdx)$/i, "")
+  value = value.replace(/\.(md|markdown|mdx)$/i, "")
+  value = value.replace(/\/index\.html$/i, "")
+  value = value.replace(/\.html$/i, "")
+  return value || "index"
+}
+
+function previewContextKeyFromBody(frame) {
+  try {
+    return frame.contentDocument?.body?.dataset?.docsPortalPreviewContextKey || null
+  } catch (_error) {
+    return null
+  }
+}
+
+function previewContextKeyFromUrl(frame) {
+  const rawLocation = rawFrameLocation(frame)
+
+  try {
+    const url = new URL(rawLocation, window.location.origin)
+    const versionId = url.searchParams.get("version_id") || url.pathname.match(/\/document_versions\/([^/]+)\/site(?:\/|$)/)?.[1]
+    const sitePath = url.pathname.match(/\/projects\/[^/]+\/site(?:\/(.*))?$/)?.[1] || url.pathname.match(/\/document_versions\/[^/]+\/site(?:\/(.*))?$/)?.[1] || ""
+
+    if (!versionId) return rawLocation
+
+    return `document_version:${versionId}:${normalizeSitePath(decodeURIComponent(sitePath))}`
+  } catch (_error) {
+    return rawLocation
+  }
+}
+
+function previewContextKey(frame) {
+  return previewContextKeyFromBody(frame) || previewContextKeyFromUrl(frame)
+}
+
 function storageKey(prefix, frame, index) {
-  const url = frame.getAttribute("src") || frame.dataset.tableWidthSrc || window.location.pathname
-  return `${prefix}:${url}:table:${index}`
+  return `${prefix}:${previewContextKey(frame)}:table:${index}`
 }
 
 function readNumber(key, fallback) {

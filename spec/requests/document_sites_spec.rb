@@ -71,6 +71,7 @@ RSpec.describe "Document sites", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("API Spec")
     expect(response.body).to include("portal-doc-body")
+    expect(response.body).to include(%(data-docs-portal-preview-context-key="document_version:#{version.public_id}:#{version.normalized_html_view_site_path}"))
     expect(response.body).not_to include("portal-site-nav")
     expect(response.body).to include(site_document_version_path(version, site_path: "assets/css/styles.css", embedded: "1").gsub("&", "&amp;"))
   end
