@@ -1,4 +1,8 @@
 - page_title "文書セット"
+- table_key = :admin_document_sets
+- table_columns = document_set_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
+
 h1 文書セット
 = render "admin/nav"
 
@@ -6,23 +10,31 @@ h1 文書セット
   h2 新規登録
   = render "form", document_set: @document_set
 
-= table_tag do
+.card
+  = table_preferences_editor(
+    table_key: table_key,
+    settings: table_settings,
+    columns: table_columns,
+    title: "文書セット一覧の表示設定"
+  )
+
+= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
   thead
     tr
-      th 案件
-      th 名称
-      th 種別
-      th 公開範囲
-      th 文書数
-      th
+      th data-rails-table-preferences-column-key="project" 案件
+      th data-rails-table-preferences-column-key="name" 名称
+      th data-rails-table-preferences-column-key="set_type" 種別
+      th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
+      th data-rails-table-preferences-column-key="documents_count" 文書数
+      th data-rails-table-preferences-column-key="actions"
   tbody
     - @document_sets.each do |document_set|
       tr
-        td = document_set.project.name
-        td = document_set.name
-        td = document_set_type_label(document_set)
-        td = document_set_visibility_policy_label(document_set)
-        td = document_set.document_set_items.size
-        td.actions
+        td data-rails-table-preferences-column-key="project" = document_set.project.name
+        td data-rails-table-preferences-column-key="name" = document_set.name
+        td data-rails-table-preferences-column-key="set_type" = document_set_type_label(document_set)
+        td data-rails-table-preferences-column-key="visibility_policy" = document_set_visibility_policy_label(document_set)
+        td data-rails-table-preferences-column-key="documents_count" = document_set.document_set_items.size
+        td.actions data-rails-table-preferences-column-key="actions"
           = edit_link_to "編集", edit_admin_document_set_path(document_set)
           = delete_link_to "削除", admin_document_set_path(document_set), confirm: "文書セット「#{document_set.name}」を削除しますか？登録済み文書 #{document_set.document_set_items.size} 件との対応も失われます。"
