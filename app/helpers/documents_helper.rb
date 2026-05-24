@@ -50,6 +50,7 @@ module DocumentsHelper
 
     persisted_state = document_tree_persisted_state
     expanded_keys = (Array(persisted_state&.expanded_keys) + expansion_state.fetch(:expanded_keys, [])).uniq
+    expanded_keys |= document_tree_all_folder_keys_for(current_document.project) if current_document.present? && persisted_state.nil?
     collapsed_keys = expansion_state.fetch(:collapsed_keys, [])
     expanded_keys -= collapsed_keys
 
@@ -418,6 +419,13 @@ module DocumentsHelper
     end
 
     { expanded_keys:, collapsed_keys: }
+  end
+
+  def document_tree_all_folder_keys_for(project)
+    return [] unless project
+
+    document_tree_nodes_for(project)
+    (@document_tree_folder_nodes_by_project_and_path&.dig(project.id) || {}).values.map { node_key(_1) }
   end
 
   def document_tree_folder_ancestor_paths(source_path)
