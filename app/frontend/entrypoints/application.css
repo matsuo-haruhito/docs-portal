@@ -476,6 +476,14 @@ ul {
 }
 
 .metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 100%;
+  margin-bottom: 0;
+}
+
+.metric-card .eyebrow {
   margin-bottom: 0;
 }
 
@@ -489,6 +497,19 @@ ul {
 .metric-number--small {
   font-size: 1.1rem;
   line-height: 1.4;
+}
+
+.metric-card__cta {
+  margin-top: auto;
+  align-self: flex-start;
+  font-weight: 700;
+}
+
+.metric-card__cta:hover,
+.metric-card__cta:focus {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 .resource-list {
