@@ -81,6 +81,11 @@
               <li>
                 <%= link_to run.public_id, admin_generated_file_run_path(run.public_id), class: "font-mono text-blue-600 underline" %>
                 <span class="muted"><%= run.status %></span>
+                <% if run.event_source == "generated_file_run_retry" %>
+                  <span class="badge">Retry</span>
+                <% elsif run.event_source == "generated_file_run_bulk_retry" %>
+                  <span class="badge">Bulk Retry</span>
+                <% end %>
               </li>
             <% end %>
           </ul>
