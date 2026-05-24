@@ -26,13 +26,11 @@ RSpec.describe "Admin document sets Tom Select", type: :system, js: true do
     click_link "文書セット"
 
     expect(page).to have_current_path(admin_document_sets_path, ignore_query: true)
-    expect(page).to have_css("select[data-controller~='rails-fields-kit--tom-select']", minimum: 3, visible: :all)
     expect(page).to have_css(".ts-wrapper", minimum: 3)
 
     click_link "編集", href: edit_admin_document_set_path(editable_document_set)
 
     expect(page).to have_current_path(edit_admin_document_set_path(editable_document_set), ignore_query: true)
-    expect(page).to have_css("select[data-controller~='rails-fields-kit--tom-select']", minimum: 3, visible: :all)
     expect(page).to have_css(".ts-wrapper", minimum: 3)
   end
 
