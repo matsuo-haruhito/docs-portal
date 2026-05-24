@@ -70,6 +70,61 @@ RSpec.describe "External document access boundaries", type: :request do
     expect(response).to have_http_status(:forbidden)
   end
 
+  it "hides archived documents from external routes until an admin restores them" do
+    admin_user = create(:user, :internal)
+    archived_document = create(:document, project: member_project, title: "運用手順書", slug: "ops-manual")
+    published_version = create(:document_version, document: archived_document, version_label: "v1.0.0", status: :published)
+    archived_document.update!(latest_version: published_version)
+    create(:document_permission, document: archived_document, company: external_user.company, access_level: :view)
+
+    sign_in_as(external_user)
+
+    get project_path(member_project)
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("運用手順書")
+
+    get project_documents_path(member_project)
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to include("運用手順書")
+
+    get project_document_path(member_project, archived_document.slug)
+    expect(response).to have_http_status(:ok)
+
+    sign_in_as(admin_user)
+
+    patch archive_admin_document_path(archived_document)
+    expect(response).to redirect_to(admin_documents_path)
+    expect(archived_document.reload).to be_archived
+
+    sign_in_as(external_user)
+
+    get project_path(member_project)
+    expect(response).to have_http_status(:ok)
+    expect(page_text).not_to include("運用手順書")
+
+    get project_documents_path(member_project)
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).not_to include("運用手順書")
+
+    get project_document_path(member_project, archived_document.slug)
+    expect(response).to have_http_status(:forbidden)
+
+    sign_in_as(admin_user)
+
+    patch restore_admin_document_path(archived_document)
+    expect(response).to redirect_to(admin_documents_path)
+    expect(archived_document.reload).not_to be_archived
+
+    sign_in_as(external_user)
+
+    get project_documents_path(member_project)
+    expect(response).to have_http_status(:ok)
+    expect(result_titles).to include("運用手順書")
+
+    get project_document_path(member_project, archived_document.slug)
+    expect(response).to have_http_status(:ok)
+  end
+
   it "allows public_with_login documents without document permissions but still protects downloads" do
     document = create(:document, project: member_project, title: "ログイン公開資料", slug: "login-visible-doc", visibility_policy: :public_with_login)
     version = create(
