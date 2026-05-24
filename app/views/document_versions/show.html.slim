@@ -83,21 +83,21 @@ p.muted
         - else
           | 未生成
       li
-        strong Build status: 
+        strong ビルド状態: 
         = preview_build_status.label
       li
         strong Markdown入口: 
         = @version.markdown_entry_path.presence || "未設定"
       li
         strong 元ファイル: 
-        = pluralize(@version.document_files.size, "file")
+        = "#{@version.document_files.size}件"
       - if @version.site_build_path.present?
         li
-          strong Build manifest: 
+          strong ビルドマニフェスト: 
           = @docusaurus_build_manifest&.source_path.presence || "未検出"
         li
-          strong Manifest warning: 
-          = pluralize(@docusaurus_build_manifest&.warnings&.size.to_i, "warning")
+          strong マニフェスト警告: 
+          = "#{@docusaurus_build_manifest&.warnings&.size.to_i}件"
     p.muted = preview_build_status.message
     - if preview_build_status.detail_lines.any?
       ul.compact-list
@@ -107,7 +107,7 @@ p.muted
       p.muted Solid QueueでDocusaurusプレビューを生成中です。しばらくしてから再読み込みしてください。元ファイルと差分確認はこの画面で先に確認できます。
     - if @docusaurus_build_manifest&.warnings&.any?
       details
-        summary Docusaurus build manifest warnings
+        summary Docusaurusビルド警告の詳細
         ul.compact-list
           - @docusaurus_build_manifest.warnings.each do |warning|
             li
