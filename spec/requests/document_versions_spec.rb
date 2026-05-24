@@ -88,10 +88,10 @@ RSpec.describe "Document versions", type: :request do
     get document_version_path(version)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include('aria-label="版詳細の移動"')
+    expect(response.body).to include(%q(aria-label="版詳細の移動"))
     expect(response.body).to include(project_document_path(project, document.slug, version_id: version.public_id, site_path: version.html_view_site_path))
     expect(response.body).to include(document_version_quality_check_path(version))
-    expect(response.body).to include('class="markdown-mode-tab is-active" aria-current="page">差分')
+    expect(response.body).to include(%q(class="markdown-mode-tab is-active" aria-current="page">差分))
   end
 
   it "shows a clear no-compare state in the side-by-side section when no previous version is available" do
@@ -266,7 +266,7 @@ RSpec.describe "Document versions", type: :request do
 
     get document_version_path(published_version)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include('aria-current="page">差分')
+    expect(response.body).to include(%q(aria-current="page">差分))
     expect(response.body).not_to include(document_version_quality_check_path(published_version))
 
     get document_version_archive_path(published_version)
