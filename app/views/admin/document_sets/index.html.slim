@@ -11,12 +11,7 @@ h1 文書セット
   = render "form", document_set: @document_set
 
 .card
-  = table_preferences_editor(
-    table_key: table_key,
-    settings: table_settings,
-    columns: table_columns,
-    title: "文書セット一覧の表示設定"
-  )
+  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書セット一覧の表示設定")
 
 = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
   thead
