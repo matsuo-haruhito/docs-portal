@@ -1,7 +1,8 @@
 - rows = side_by_side_diff_rows(lines)
 - changed_count = rows.count { |row| row.kind != :context && row.kind != :gap }
+- expanded = local_assigns.fetch(:expanded, false)
 
-details.side-by-side-text-diff
+details.side-by-side-text-diff open=expanded
   summary
     strong = title
     span.muted = " / #{changed_count} changes"

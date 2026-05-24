@@ -141,6 +141,15 @@ p.muted
     span.markdown-tool Code
     span.markdown-tool Table
 
+style
+  | .diff-display-mode{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+  | .diff-display-mode__input{position:absolute;opacity:0;pointer-events:none}
+  | .diff-display-mode__label{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;border:1px solid #cbd5e1;background:#f8fafc;color:#334155;font-weight:700;cursor:pointer}
+  | .diff-display-mode__input:checked + .diff-display-mode__label{border-color:#ff5000;background:#fff3ec;color:#9a3412}
+  | .diff-display-mode__panel{display:none;flex:1 1 100%}
+  | .diff-display-mode__input--unified:checked ~ .diff-display-mode__panel--unified,.diff-display-mode__input--side-by-side:checked ~ .diff-display-mode__panel--side-by-side{display:block}
+  | @media (max-width:720px){.diff-display-mode__label{flex:1 1 calc(50% - 8px)}}
+
 .card.version-diff-viewer#version-diff
   .markdown-workspace__header
     div
@@ -185,7 +194,7 @@ p.muted
             span.diff-count = markdown_diff_count
           - if @markdown_line_diffs.any?
             .markdown-line-diff-list
-              - @markdown_line_diffs.each do |file_diff|
+              - @markdown_line_diffs.each_with_index do |file_diff, file_index|
                 details.markdown-line-diff-file open=file_diff.lines.any?
                   summary
                     strong = file_diff.path
@@ -195,14 +204,24 @@ p.muted
                   - if file_diff.message.present?
                     p.muted = file_diff.message
                   - elsif file_diff.lines.any?
-                    = render "side_by_side_text_diff", lines: file_diff.lines, title: "Markdown左右比較"
-                    .markdown-line-diff-table role="table" aria-label="#{file_diff.path} diff"
-                      - file_diff.lines.each_with_index do |line, line_index|
-                        .markdown-line-diff-row class="is-#{line.kind}" role="row"
-                          span.diff-line-number role="cell" = line.old_number || ""
-                          span.diff-line-number role="cell" = line.new_number || ""
-                          code.diff-line-code role="cell"
-                            = diff_line_code_with_inline_highlight(file_diff.lines, line_index)
+                    - markdown_mode_name = "markdown-diff-mode-#{file_index}"
+                    - markdown_unified_mode_id = "#{markdown_mode_name}-unified"
+                    - markdown_side_by_side_mode_id = "#{markdown_mode_name}-side-by-side"
+                    .diff-display-mode
+                      input.diff-display-mode__input.diff-display-mode__input--unified type="radio" name=markdown_mode_name id=markdown_unified_mode_id checked=true
+                      label.diff-display-mode__label for=markdown_unified_mode_id 統合diff
+                      input.diff-display-mode__input.diff-display-mode__input--side-by-side type="radio" name=markdown_mode_name id=markdown_side_by_side_mode_id
+                      label.diff-display-mode__label for=markdown_side_by_side_mode_id 左右diff
+                      .diff-display-mode__panel.diff-display-mode__panel--unified
+                        .markdown-line-diff-table role="table" aria-label="#{file_diff.path} diff"
+                          - file_diff.lines.each_with_index do |line, line_index|
+                            .markdown-line-diff-row class="is-#{line.kind}" role="row"
+                              span.diff-line-number role="cell" = line.old_number || ""
+                              span.diff-line-number role="cell" = line.new_number || ""
+                              code.diff-line-code role="cell"
+                                = diff_line_code_with_inline_highlight(file_diff.lines, line_index)
+                      .diff-display-mode__panel.diff-display-mode__panel--side-by-side
+                        = render "side_by_side_text_diff", lines: file_diff.lines, title: "Markdown左右比較", expanded: true
                   - else
                     p.muted Markdown本文の差分はありません。
           - else
@@ -214,14 +233,23 @@ p.muted
           - if @rendered_html_diff&.message.present?
             p.muted = @rendered_html_diff.message
           - elsif @rendered_html_diff&.lines&.any?
-            = render "side_by_side_text_diff", lines: @rendered_html_diff.lines, title: "HTML左右比較"
-            .markdown-line-diff-table role="table" aria-label="HTML diff"
-              - @rendered_html_diff.lines.each_with_index do |line, line_index|
-                .markdown-line-diff-row class="is-#{line.kind}" role="row"
-                  span.diff-line-number role="cell" = line.old_number || ""
-                  span.diff-line-number role="cell" = line.new_number || ""
-                  code.diff-line-code role="cell"
-                    = diff_line_code_with_inline_highlight(@rendered_html_diff.lines, line_index)
+            - html_unified_mode_id = "html-diff-mode-unified"
+            - html_side_by_side_mode_id = "html-diff-mode-side-by-side"
+            .diff-display-mode
+              input.diff-display-mode__input.diff-display-mode__input--unified type="radio" name="html-diff-mode" id=html_unified_mode_id checked=true
+              label.diff-display-mode__label for=html_unified_mode_id 統合diff
+              input.diff-display-mode__input.diff-display-mode__input--side-by-side type="radio" name="html-diff-mode" id=html_side_by_side_mode_id
+              label.diff-display-mode__label for=html_side_by_side_mode_id 左右diff
+              .diff-display-mode__panel.diff-display-mode__panel--unified
+                .markdown-line-diff-table role="table" aria-label="HTML diff"
+                  - @rendered_html_diff.lines.each_with_index do |line, line_index|
+                    .markdown-line-diff-row class="is-#{line.kind}" role="row"
+                      span.diff-line-number role="cell" = line.old_number || ""
+                      span.diff-line-number role="cell" = line.new_number || ""
+                      code.diff-line-code role="cell"
+                        = diff_line_code_with_inline_highlight(@rendered_html_diff.lines, line_index)
+              .diff-display-mode__panel.diff-display-mode__panel--side-by-side
+                = render "side_by_side_text_diff", lines: @rendered_html_diff.lines, title: "HTML左右比較", expanded: true
           - else
             p.muted レンダリング後HTML本文の差分はありません。
         section.diff-section-card#html-table-cell-diff
