@@ -261,7 +261,7 @@ p.muted
           - if table_diffs.any?
             .rendered-table-diff-list
               - table_diffs.each do |table_diff|
-                - changed_cells = table_diff.rows.sum { |row| (row.kind == :context ? 0 : 1) + row.cells.count { |cell| cell.kind != :context } } }
+                - changed_cells = table_diff.rows.sum { |row| (row.kind == :context ? 0 : 1) + row.cells.count { |cell| cell.kind != :context } }
                 details.rendered-table-diff open=changed_cells.positive?
                   summary
                     strong = "表 #{table_diff.index}"
