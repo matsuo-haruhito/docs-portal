@@ -50,7 +50,9 @@ module DocumentsHelper
 
     persisted_state = document_tree_persisted_state
     expanded_keys = (Array(persisted_state&.expanded_keys) + expansion_state.fetch(:expanded_keys, [])).uniq
-    expanded_keys |= document_tree_all_folder_keys_for(current_document.project) if current_document.present? && persisted_state.nil?
+    if current_document.present? && Array(persisted_state&.expanded_keys).blank?
+      expanded_keys |= document_tree_all_folder_keys_for(current_document.project)
+    end
     collapsed_keys = expansion_state.fetch(:collapsed_keys, [])
     expanded_keys -= collapsed_keys
 
