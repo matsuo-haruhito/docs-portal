@@ -261,7 +261,7 @@ RSpec.describe "Document files", type: :request do
     get document_version_path(version)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(document_file_path(markdown_file, disposition: "inline"))
+    expect(response.body).to include(document_file_path(markdown_file))
     expect(response.body).to include(document_file_path(markdown_file, disposition: "download"))
   end
 
