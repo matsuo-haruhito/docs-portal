@@ -71,6 +71,15 @@ RSpec.describe "Document tree regressions", type: :request do
     expect(response.body).to include(project_document_path(project, csv_document.slug))
   end
 
+  it "declares the sidebar controller in the server-rendered document layout" do
+    sign_in_as(user)
+
+    get project_document_path(project, markdown_document.slug)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include('class="layout-with-sidebar" data-sidebar-layout="true" data-controller="sidebar"')
+  end
+
   it "keeps mixed document kinds visible when the tree refreshes through turbo stream" do
     sign_in_as(user)
 
