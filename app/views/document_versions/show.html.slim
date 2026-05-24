@@ -1,6 +1,7 @@
 - page_title "#{@document.title} #{document_version_label(@version)}"
 - preview_build_status = PreviewBuildStatusPresenter.new(@version)
 - docusaurus_preview_pending = @version.source_extension.to_s.in?(%w[md markdown mdx]) && !@version.rendered_site_available? && @version.source_commit_hash == "manual-upload"
+- side_by_side_label = @compare_version ? "左右確認" : "左右確認（比較対象なし）"
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
 
@@ -25,7 +26,7 @@ p.muted
     - else
       span.button.secondary HTML未生成
     = link_to "添付・元ファイル", "#version-files", class: "button secondary"
-    = link_to "左右確認", "#side-by-side-file-review", class: "button secondary"
+    = link_to side_by_side_label, "#side-by-side-file-review", class: "button secondary"
     - if current_user.internal?
       = link_to "品質チェック", document_version_quality_check_path(@version), class: "button secondary"
 
@@ -66,8 +67,10 @@ p.muted
         span 削除
     p.actions
       = link_to "差分本文へ移動", "#version-diff", class: "button secondary"
-      = link_to "左右確認へ移動", "#side-by-side-file-review", class: "button secondary"
+      = link_to side_by_side_label, "#side-by-side-file-review", class: "button secondary"
       = link_to "添付・元ファイルへ移動", "#version-files", class: "button secondary"
+    - unless @compare_version
+      p.muted 公開済みの比較対象版がまだないため、この版では左右比較や差分表示は行わず、元ファイル確認が中心になります。
   .card.preview-summary-card
     h2 プレビュー状態
     ul.compact-list

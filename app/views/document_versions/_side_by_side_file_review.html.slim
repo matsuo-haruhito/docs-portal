@@ -3,6 +3,8 @@
 - current_by_path = current_files.index_by(&:tree_path)
 - previous_by_path = previous_files.index_by(&:tree_path)
 - review_paths = (current_by_path.keys + previous_by_path.keys).compact.uniq.sort
+- markdown_diff_available = @markdown_line_diffs.any?
+- html_diff_available = @rendered_html_diff&.lines&.any?
 
 .card.side-by-side-file-review#side-by-side-file-review
   .markdown-workspace__header
@@ -14,45 +16,59 @@
         = link_to "比較対象版を開く", document_version_path(@compare_version), class: "button secondary"
       = link_to "添付・元ファイルへ移動", "#version-files", class: "button secondary"
 
-  - if review_paths.any?
-    - review_paths.each do |path|
-      - current_file = current_by_path[path]
-      - previous_file = previous_by_path[path]
-      details.side-by-side-file-review__item open=(current_file.present? && previous_file.present?)
-        summary
-          strong = path
-          - if current_file && previous_file
-            span.badge changed
-          - elsif current_file
-            span.badge added
-          - else
-            span.badge removed
-        .side-by-side-file-review__grid
-          .side-by-side-file-review__pane
-            h3 比較対象
-            - if previous_file
-              p.muted = "#{previous_file.effective_content_type} / #{number_to_human_size(previous_file.file_size)}"
-              p.actions
-                = link_to "前版を開く", document_file_path(previous_file), class: "button secondary", target: "_blank", rel: "noopener", data: { turbo: false }
-                = link_to "前版をダウンロード", document_file_path(previous_file, disposition: "download"), class: "button secondary", data: { turbo: false }
-              - if previous_file.embeddable_viewer_file?
-                iframe.side-by-side-file-review__frame src=document_file_path(previous_file, disposition: "inline", embedded: "1") title="#{path} previous"
-              - else
-                p.muted このファイルはブラウザ内プレビューに対応していません。別タブで開くか、ダウンロードして比較してください。
-            - else
-              p.muted 比較対象版にはありません。
-          .side-by-side-file-review__pane
-            h3 表示中
-            - if current_file
-              p.muted = "#{current_file.effective_content_type} / #{number_to_human_size(current_file.file_size)}"
-              p.actions
-                = link_to "今回版を開く", document_file_path(current_file), class: "button secondary", target: "_blank", rel: "noopener", data: { turbo: false }
-                = link_to "今回版をダウンロード", document_file_path(current_file, disposition: "download"), class: "button secondary", data: { turbo: false }
-              - if current_file.embeddable_viewer_file?
-                iframe.side-by-side-file-review__frame src=document_file_path(current_file, disposition: "inline", embedded: "1") title="#{path} current"
-              - else
-                p.muted このファイルはブラウザ内プレビューに対応していません。別タブで開くか、ダウンロードして比較してください。
-            - else
-              p.muted 表示中の版にはありません。
+  - unless @compare_version
+    p.muted 比較対象となる公開済みの版がまだないため、この画面では左右比較を表示しません。まずは現在版の元ファイルを確認し、次の公開版以降で比較してください。
+    p.actions
+      = link_to "添付・元ファイルへ移動", "#version-files", class: "button secondary"
   - else
-    p.muted 比較対象ファイルはまだありません。
+    - if markdown_diff_available || html_diff_available
+      p.muted テキスト系ファイルの差分は、このページの版差分ビューから確認できます。必要に応じて左右diffへ切り替えてください。
+      p.actions
+        - if markdown_diff_available
+          = link_to "Markdown差分へ移動", "#markdown-line-diff", class: "button secondary"
+        - if html_diff_available
+          = link_to "HTML差分へ移動", "#html-rendered-diff", class: "button secondary"
+        = link_to "版差分ビューへ移動", "#version-diff", class: "button secondary"
+
+    - if review_paths.any?
+      - review_paths.each do |path|
+        - current_file = current_by_path[path]
+        - previous_file = previous_by_path[path]
+        details.side-by-side-file-review__item open=(current_file.present? && previous_file.present?)
+          summary
+            strong = path
+            - if current_file && previous_file
+              span.badge changed
+            - elsif current_file
+              span.badge added
+            - else
+              span.badge removed
+          .side-by-side-file-review__grid
+            .side-by-side-file-review__pane
+              h3 比較対象
+              - if previous_file
+                p.muted = "#{previous_file.effective_content_type} / #{number_to_human_size(previous_file.file_size)}"
+                p.actions
+                  = link_to "前版を開く", document_file_path(previous_file), class: "button secondary", target: "_blank", rel: "noopener", data: { turbo: false }
+                  = link_to "前版をダウンロード", document_file_path(previous_file, disposition: "download"), class: "button secondary", data: { turbo: false }
+                - if previous_file.embeddable_viewer_file?
+                  iframe.side-by-side-file-review__frame src=document_file_path(previous_file, disposition: "inline", embedded: "1") title="#{path} previous"
+                - else
+                  p.muted このファイルはブラウザ内プレビューに対応していません。別タブで開くか、ダウンロードして比較してください。
+              - else
+                p.muted 比較対象版にはありません。
+            .side-by-side-file-review__pane
+              h3 表示中
+              - if current_file
+                p.muted = "#{current_file.effective_content_type} / #{number_to_human_size(current_file.file_size)}"
+                p.actions
+                  = link_to "今回版を開く", document_file_path(current_file), class: "button secondary", target: "_blank", rel: "noopener", data: { turbo: false }
+                  = link_to "今回版をダウンロード", document_file_path(current_file, disposition: "download"), class: "button secondary", data: { turbo: false }
+                - if current_file.embeddable_viewer_file?
+                  iframe.side-by-side-file-review__frame src=document_file_path(current_file, disposition: "inline", embedded: "1") title="#{path} current"
+                - else
+                  p.muted このファイルはブラウザ内プレビューに対応していません。別タブで開くか、ダウンロードして比較してください。
+              - else
+                p.muted 表示中の版にはありません。
+    - else
+      p.muted 比較対象ファイルはまだありません。
