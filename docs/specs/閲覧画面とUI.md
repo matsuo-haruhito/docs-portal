@@ -303,6 +303,8 @@ preview:
 - `DocumentSet` は Project 配下の用途別 document grouping である
 - route は `projects/:project_code/document_sets/:public_id` を使う
 - `admin` は管理画面から `DocumentSet` を作成・編集・削除できる
+- `admin` は管理画面の `admin/document_sets` 一覧で `rails_table_preferences` の表示設定 UI を開ける
+- `admin/document_sets` 一覧の表示設定は `admin_document_sets` を table key とし、案件、名称、種別、公開範囲、文書数、操作列を対象にする
 - fixed version を指定しない item は、その `Document` の `latest_version` を使う
 
 ## AI向けコンテキスト生成
