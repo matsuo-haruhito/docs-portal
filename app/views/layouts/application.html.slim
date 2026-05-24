@@ -156,13 +156,13 @@ html
       |   .side-by-side-file-review__pane { border-left: 0; border-top: 1px solid var(--line); }
       |   .side-by-side-file-review__pane:first-child { border-top: 0; }
       | }
-  body
+  body data-controller="nav-dropdowns document-tree-navigation manual-document-upload preview-table-resizer preview-tools"
     header
       = render "shared/navbar"
     - if content_for?(:left_content)
       - sidebar_content = capture do
         = yield :left_content
-      .layout-with-sidebar data-sidebar-layout="true"
+      .layout-with-sidebar data-sidebar-layout="true" data-controller="sidebar"
         aside.sidebar-panel data-docs-sidebar="true"
           .sidebar-shell
             .sidebar-toolbar

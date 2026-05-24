@@ -3,7 +3,6 @@ import { Application } from "@hotwired/stimulus"
 import { RailsTablePreferencesController } from "rails_table_preferences"
 import { TomSelectController } from "rails_fields_kit"
 import "tom-select/dist/css/tom-select.css"
-import { setupTomSelectFields } from "../lib/tom_select_fields"
 import NavDropdownsController from "../controllers/nav_dropdowns_controller"
 import DocumentTreeNavigationController from "../controllers/document_tree_navigation_controller"
 import FileDropzoneController from "../controllers/file_dropzone_controller"
@@ -11,36 +10,6 @@ import ManualDocumentUploadController from "../controllers/manual_document_uploa
 import PreviewTableResizerController from "../controllers/preview_table_resizer_controller"
 import PreviewToolsController from "../controllers/preview_tools_controller"
 import SidebarController from "../controllers/sidebar_controller"
-
-function appendController(element, controllerName) {
-  const currentControllers = (element.dataset.controller || "").split(/\s+/).filter(Boolean)
-  element.dataset.controller = Array.from(new Set([...currentControllers, controllerName])).join(" ")
-}
-
-function attachRootControllers() {
-  [
-    "nav-dropdowns",
-    "document-tree-navigation",
-    "manual-document-upload",
-    "preview-table-resizer",
-    "preview-tools"
-  ].forEach((controllerName) => appendController(document.documentElement, controllerName))
-}
-
-function attachSidebarControllers(root = document) {
-  root.querySelectorAll("[data-sidebar-layout]").forEach((layout) => appendController(layout, "sidebar"))
-}
-
-attachRootControllers()
-attachSidebarControllers()
-setupTomSelectFields()
-
-document.addEventListener("turbo:before-render", (event) => {
-  attachSidebarControllers(event.detail.newBody)
-})
-
-document.addEventListener("turbo:load", () => setupTomSelectFields())
-document.addEventListener("turbo:render", () => setupTomSelectFields())
 
 const application = Application.start()
 application.register("rails-table-preferences", RailsTablePreferencesController)
