@@ -17,6 +17,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
   end
 
   def show
+    @related_generated_file_runs = recent_runs_related_to(@generated_file_event.public_id)
   end
 
   def retry_dispatch
@@ -44,6 +45,14 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
       error_message: nil,
       processed_at: nil
     )
+  end
+
+  def recent_runs_related_to(public_id)
+    GeneratedFileRun
+      .order(created_at: :desc, id: :desc)
+      .limit(200)
+      .select { |run| Array(run.metadata&.dig("generated_file_event_public_ids")).include?(public_id) }
+      .first(10)
   end
 
   def apply_filters(scope)
