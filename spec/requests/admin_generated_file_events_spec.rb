@@ -34,24 +34,19 @@ RSpec.describe "Admin generated file events", type: :request do
     it "keeps current filters on the bulk retry form" do
       sign_in_as(admin_user)
       create_event!(path: "storage/document_files/source.yml", status: :failed, event_source: "manual_document_upload")
-
-      get admin_generated_file_events_path(
+      filters = {
         status: "failed",
         operation: "update",
         event_source: "manual_document_upload",
         path: "document_files",
         scheduled_from: "2026-05-10",
         scheduled_to: "2026-05-11"
-      )
+      }
+
+      get admin_generated_file_events_path(filters)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(%(action="#{retry_failed_admin_generated_file_events_path}"))
-      expect(response.body).to include(%(name="status" value="failed"))
-      expect(response.body).to include(%(name="operation" value="update"))
-      expect(response.body).to include(%(name="event_source" value="manual_document_upload"))
-      expect(response.body).to include(%(name="path" value="document_files"))
-      expect(response.body).to include(%(name="scheduled_from" value="2026-05-10"))
-      expect(response.body).to include(%(name="scheduled_to" value="2026-05-11"))
+      expect(response.body).to include(%(action="#{retry_failed_admin_generated_file_events_path(filters)}"))
     end
 
     it "shows status summary counts" do
