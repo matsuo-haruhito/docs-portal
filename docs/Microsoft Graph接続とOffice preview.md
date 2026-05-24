@@ -2,6 +2,8 @@
 
 この文書は、`docs-portal` で Office ファイルの inline preview を有効にするための接続前提と、運用時の確認観点をまとめた正本です。
 
+preview 用の `MicrosoftGraphConnection` と、外部フォルダ同期元である `ExternalFolderSyncSource` の役割分担、`.env` に置く値との境界は [preview接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md) を参照してください。
+
 ## 何のための設定か
 
 - `.doc`, `.docx`, `.xls`, `.xlsx`, `.ppt`, `.pptx` は Office preview 対象です。
@@ -118,5 +120,6 @@ Google Drive 同期由来でなくても、次がそろっていれば upload pr
 
 - [README](../README.md)
 - [閲覧画面とUI](./specs/閲覧画面とUI.md)
-- [Google Drive外部フォルダ同期](./Google%20Drive外部フォルダ同期.md)
+- [preview接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md)
+- [Google Drive外部フォルダ同期](./Google%20Drive%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F.md)
 - [.env.example](../.env.example)
