@@ -130,11 +130,19 @@ p.muted
         = link_to "ZIPダウンロード", document_version_archive_path(@version), class: "button secondary"
       - else
         = button_to "ダウンロード権限を申請", access_requests_path, params: { requestable_type: "Document", requestable_public_id: @document.public_id, requested_access_level: "download" }, class: "button secondary"
-  .markdown-mode-tabs aria-label="Markdown preview modes"
-    span プレビュー
-    span.is-active 差分
-    span 添付
-    span 品質
+  nav.markdown-mode-tabs aria-label="版詳細ナビゲーション"
+    - if @version.rendered_site_available?
+      = link_to "プレビュー", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path)
+    - elsif docusaurus_preview_pending
+      span.is-disabled プレビュー（生成中）
+    - else
+      span.is-disabled プレビュー（未生成）
+    span.is-active aria-current="page" 差分
+    = link_to "添付", "#version-files"
+    - if current_user.internal?
+      = link_to "品質", document_version_quality_check_path(@version)
+    - else
+      span.is-disabled 品質（社内のみ）
   .markdown-preview-actions
     span.markdown-tool B
     span.markdown-tool I
