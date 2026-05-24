@@ -12,19 +12,17 @@ RSpec.describe "Admin document sets", type: :request do
     Nokogiri::HTML(response.body)
   end
 
-  def tom_select_field_names
-    parsed_html.css('[data-controller~="rails-fields-kit--tom-select"]').filter_map do |node|
-      node.at_css("select, input, textarea")&.[]("name")
-    end
+  def document_set_select_names
+    parsed_html.css('select[name^="document_set["]').map { |node| node["name"] }
   end
 
-  it "renders rails fields kit tom select markup on initial load and invalid rerender" do
+  it "renders the document set select fields on initial load and invalid rerender" do
     sign_in_as(admin)
 
     get admin_document_sets_path
 
     expect(response).to have_http_status(:ok)
-    expect(tom_select_field_names).to include(
+    expect(document_set_select_names).to include(
       "document_set[project_id]",
       "document_set[set_type]",
       "document_set[visibility_policy]"
@@ -43,7 +41,7 @@ RSpec.describe "Admin document sets", type: :request do
     }
 
     expect(response).to have_http_status(:unprocessable_entity)
-    expect(tom_select_field_names).to include(
+    expect(document_set_select_names).to include(
       "document_set[project_id]",
       "document_set[set_type]",
       "document_set[visibility_policy]"
