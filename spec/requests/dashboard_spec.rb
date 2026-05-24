@@ -5,6 +5,10 @@ RSpec.describe "Dashboard", type: :request do
   let(:project) { create(:project, name: "Visible Project") }
   let(:user) { create(:user, :external, company:) }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
   def create_viewable_document(title:, slug:)
     document = create(:document, project:, title:, slug:, visibility_policy: :restricted_external)
     create(:document_permission, document:, company:, access_level: :view)
@@ -42,7 +46,17 @@ RSpec.describe "Dashboard", type: :request do
     get dashboard_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include('body data-controller="nav-dropdowns document-tree-navigation manual-document-upload preview-table-resizer preview-tools"')
+
+    body = parsed_html.at_css("body")
+
+    expect(body).to be_present
+    expect(body["data-controller"].to_s.split).to include(
+      "nav-dropdowns",
+      "document-tree-navigation",
+      "manual-document-upload",
+      "preview-table-resizer",
+      "preview-tools"
+    )
   end
 
   it "does not show documents that are not readable by the user" do
