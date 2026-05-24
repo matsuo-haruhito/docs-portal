@@ -2,6 +2,15 @@
 - preview_build_status = PreviewBuildStatusPresenter.new(@version)
 - docusaurus_preview_pending = @version.source_extension.to_s.in?(%w[md markdown mdx]) && !@version.rendered_site_available? && @version.source_commit_hash == "manual-upload"
 - side_by_side_label = @compare_version ? "左右確認" : "左右確認（比較対象なし）"
+- preview_path = if @version.rendered_site_available?
+    project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path)
+- version_mode_tabs = [
+  { label: "プレビュー", href: preview_path, state: preview_path.present? ? :link : :disabled, disabled_reason: docusaurus_preview_pending ? "Docusaurusプレビュー生成中" : "HTML未生成" },
+  { label: "差分", href: nil, state: :active },
+  { label: "添付", href: "#version-files", state: :link }
+]
+- if current_user.internal?
+  - version_mode_tabs << { label: "品質", href: document_version_quality_check_path(@version), state: :link }
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
 
@@ -130,11 +139,14 @@ p.muted
         = link_to "ZIPダウンロード", document_version_archive_path(@version), class: "button secondary"
       - else
         = button_to "ダウンロード権限を申請", access_requests_path, params: { requestable_type: "Document", requestable_public_id: @document.public_id, requested_access_level: "download" }, class: "button secondary"
-  .markdown-mode-tabs aria-label="Markdown preview modes"
-    span プレビュー
-    span.is-active 差分
-    span 添付
-    span 品質
+  nav.markdown-mode-tabs aria-label="版詳細の移動"
+    - version_mode_tabs.each do |tab|
+      - if tab[:state] == :active
+        span.markdown-mode-tab.is-active aria-current="page" = tab[:label]
+      - elsif tab[:state] == :disabled
+        span.markdown-mode-tab.is-disabled title=tab[:disabled_reason] = tab[:label]
+      - else
+        = link_to tab[:label], tab[:href], class: "markdown-mode-tab"
   .markdown-preview-actions
     span.markdown-tool B
     span.markdown-tool I
