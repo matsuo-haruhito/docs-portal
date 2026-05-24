@@ -111,6 +111,14 @@
 - 一覧の列表示、順序、幅、固定列、filter UI 状態、sort UI 状態、preset 保存の基盤を担います。
 - どの table を対象にするか、どの column metadata を出すか、Markdown 由来 HTML にどう適用するかは `docs-portal` 側責務です。
 
+### Markdown preview table の current main contract
+
+- Docusaurus / preview iframe 内の Markdown table は、current `main` では `rails_table_preferences` 未適用です。
+- 代わりに `app/frontend/controllers/preview_table_resizer_controller.js` が app 側 fallback path として、表幅、列幅、ヘッダー固定、先頭列固定、localStorage ベースの永続状態を扱います。
+- `docs-portal#475` は「Markdown table にどこまで gem を適用するか」の親論点で、`needs-human` のままです。
+- `docs-portal#542` と PR `#550` は fallback path の stable key を `document_version:<public_id>:<normalized_site_path>:table:<index>` に寄せた first slice です。
+- `docs-portal#547` は、その fallback path が通常表示と embedded 表示で state を共有できることを守る quality queue です。
+
 ### docs-portal 側の主な確認場所
 
 - `app/controllers/application_controller.rb`
@@ -127,6 +135,8 @@
   - `stylesheet_link_tag "rails_table_preferences"` を確認する
 - `app/helpers/admin/document_sets_helper.rb`
   - `table_preferences_column(...)` を使う現行の table column 定義入口を確認する
+- `app/frontend/controllers/preview_table_resizer_controller.js`
+  - Markdown preview table の current fallback path、stable key、localStorage state を確認する
 - `docs-portal#475`
   - Markdown 由来 table への適用検討では、HTML rewrite で何を足すかの論点整理を先に読む
 
@@ -145,6 +155,7 @@
 - mount / helper include / initializer 設定 / stylesheet / Stimulus 登録のどこかが欠けていそうな場合
 - app 独自の column 定義、table key、renderer、HTML rewrite、文書ごとの preference key が論点になる場合
 - Markdown 由来 HTML table のように、通常の Rails helper を通らない描画経路を扱う場合
+- Markdown preview table の幅調整、sticky state、embedded 共有、stable key が論点になる場合
 
 ### upstream docs / issue も確認する目安
 
@@ -162,12 +173,16 @@
   - `table_preferences_column(...)` の metadata が対象一覧画面の列構成と合っているか確認する
 - `app/views/admin/document_sets/_form.html.slim` と table preference editor を出す一覧画面
   - host form と table preference UI が同居しても操作導線が壊れていないか確認する
+- `app/frontend/controllers/preview_table_resizer_controller.js`
+  - Markdown preview table に触る issue では、fallback path の key / state / embedded 共有が current main と矛盾していないか確認する
 - request / system spec の確認方針
   - 既存の管理画面 request spec や対象画面に近い system spec を見て、一覧表示、保存導線、主要 path を固定する
   - 近い spec が見当たらない画面では、gem 更新後の代表導線を 1 本だけでも追加しておく
 - 切り分け
   - Vite / Stimulus / metadata docs の曖昧さが原因なら upstream docs / issue を先に見る
   - mount path、table key、partial composition など `docs-portal` 固有の組み込み差分なら app 側 issue を優先する
+  - preview table tool の state や embedded 共有の崩れは app 側 issue を優先する
+  - Markdown preview table へ `rails_table_preferences` をどこまで導入するかは `docs-portal#475` の仕様判断なので `needs-human` として扱う
 
 ### 関連 issue
 
