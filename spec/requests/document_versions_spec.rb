@@ -70,6 +70,28 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include("添付・元ファイルへ移動")
   end
 
+  it "shows a clear no-compare state in the side-by-side section when no previous version is available" do
+    version = create(
+      :document_version,
+      document:,
+      version_label: "v1.0.0",
+      status: :published,
+      markdown_entry_path: "docs/versioned-document",
+      site_build_path: "docs/versioned-document"
+    )
+    document.update!(latest_version: version)
+    create_stored_document_file(version, file_name: "README.md", content: "# Readme", content_type: "text/markdown", sort_order: 0)
+
+    sign_in_as(internal_user)
+
+    get document_version_path(version)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("左右確認（比較対象なし）")
+    expect(response.body).to include("公開済みの比較対象版がまだないため、この版では左右比較や差分表示は行わず")
+    expect(response.body).to include("比較対象となる公開済みの版がまだないため、この画面では左右比較を表示しません")
+  end
+
   it "offers unified and side-by-side display modes for markdown and html diffs" do
     older_version = create(:document_version, document:, version_label: "v0.9.0", status: :published)
     version = create(:document_version, document:, version_label: "v1.0.0", status: :published)
@@ -94,6 +116,9 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include('id="html-diff-mode-side-by-side"')
     expect(response.body).to include("Markdown左右比較")
     expect(response.body).to include("HTML左右比較")
+    expect(response.body).to include("Markdown差分へ移動")
+    expect(response.body).to include("HTML差分へ移動")
+    expect(response.body).to include("版差分ビューへ移動")
   end
 
   it "opens side-by-side review files outside turbo frames" do
