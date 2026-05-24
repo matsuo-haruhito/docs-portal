@@ -70,6 +70,30 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include("添付・元ファイルへ移動")
   end
 
+  it "renders truthful mode navigation for internal users" do
+    version = create(
+      :document_version,
+      document:,
+      version_label: "v1.0.0",
+      status: :published,
+      markdown_entry_path: "docs/versioned-document",
+      site_build_path: "docs/versioned-document"
+    )
+    document.update!(latest_version: version)
+    create_stored_document_file(version, file_name: "README.md", content: "# Readme", content_type: "text/markdown", sort_order: 0)
+    create_rendered_site(version, html: "<main><h1>Preview</h1></main>", site_build_path: "docs/versioned-document/current")
+
+    sign_in_as(internal_user)
+
+    get document_version_path(version)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("aria-label=\"版詳細の移動\"")
+    expect(response.body).to include(project_document_path(project, document.slug, version_id: version.public_id, site_path: version.html_view_site_path))
+    expect(response.body).to include(document_version_quality_check_path(version))
+    expect(response.body).to include('class="markdown-mode-tab is-active" aria-current="page">差分')
+  end
+
   it "shows a clear no-compare state in the side-by-side section when no previous version is available" do
     version = create(
       :document_version,
@@ -242,6 +266,8 @@ RSpec.describe "Document versions", type: :request do
 
     get document_version_path(published_version)
     expect(response).to have_http_status(:ok)
+    expect(response.body).to include('aria-current="page">差分')
+    expect(response.body).not_to include(document_version_quality_check_path(published_version))
 
     get document_version_archive_path(published_version)
     expect(response).to have_http_status(:forbidden)
