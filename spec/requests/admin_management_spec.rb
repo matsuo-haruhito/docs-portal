@@ -137,6 +137,7 @@ RSpec.describe "Admin management", type: :request do
   end
 
   describe "company master user management" do
+    let(:internal_user) { create(:user, :internal) }
     let!(:company) { create(:company, domain: "tenant.example.com", name: "Tenant") }
     let!(:other_company) { create(:company, domain: "other.example.com", name: "Other") }
     let!(:manager) { create(:user, :external, user_type: :company_master_admin, company:, email_address: "manager@example.com") }
@@ -182,6 +183,30 @@ RSpec.describe "Admin management", type: :request do
 
       get admin_projects_path
       expect(response).to have_http_status(:forbidden)
+    end
+
+    it "keeps company_master_admin users out of unrelated admin surfaces" do
+      guarded_paths = [
+        admin_projects_path,
+        admin_documents_path,
+        admin_document_permissions_path,
+        admin_access_logs_path,
+        admin_document_usage_reports_path
+      ]
+
+      sign_in_as(internal_user)
+
+      guarded_paths.each do |path|
+        get path
+        expect(response).to have_http_status(:ok)
+      end
+
+      sign_in_as(manager)
+
+      guarded_paths.each do |path|
+        get path
+        expect(response).to have_http_status(:forbidden)
+      end
     end
   end
 end
