@@ -28,7 +28,7 @@ RSpec.describe "Document version preview build status", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("プレビュー状態")
-    expect(response.body).to include("Build status")
+    expect(response.body).to include("ビルド状態")
     expect(response.body).to include("待機中")
     expect(response.body).to include("Docusaurusプレビュー生成を待機しています")
     expect(response.body).to include("試行:")
