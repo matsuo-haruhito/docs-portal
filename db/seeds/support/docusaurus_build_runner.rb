@@ -15,7 +15,7 @@ module SeedSupport
     end
 
     def run!
-      DocusaurusRuntimeChecker.ensure_npm!
+      DocusaurusRuntimeChecker.ensure_runtime!
       run_build!
       copy_build!
     end

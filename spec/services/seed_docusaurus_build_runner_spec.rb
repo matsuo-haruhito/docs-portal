@@ -22,6 +22,7 @@ RSpec.describe SeedSupport::DocusaurusBuildRunner do
   end
 
   it "copies build output to the version site root when npm build succeeds" do
+    allow(SeedSupport::DocusaurusRuntimeChecker).to receive(:ensure_runtime!).and_return(true)
     allow(Open3).to receive(:capture3).and_return(["", "", instance_double(Process::Status, success?: true)])
 
     described_class.new(
