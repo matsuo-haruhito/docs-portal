@@ -115,6 +115,40 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).to include("boom")
       expect(response.body).to include("generated.md")
     end
+
+    it "shows related event and retry links without crashing on missing records" do
+      sign_in_as(admin_user)
+      related_event = create_event!(path: "docs/source.yml")
+      original_run = create_run!(job_id: "ai_usecase_decision_flow", status: :failed)
+      retry_child_run = create_run!(
+        job_id: "ai_usecase_decision_flow",
+        status: :completed,
+        event_source: "generated_file_run_bulk_retry",
+        metadata: {
+          "retry_of_generated_file_run_public_id" => original_run.public_id,
+          "generated_file_event_public_ids" => [related_event.public_id]
+        }
+      )
+      run = create_run!(
+        job_id: "ai_usecase_decision_flow",
+        status: :failed,
+        event_source: "generated_file_run_retry",
+        metadata: {
+          "generated_file_event_public_ids" => [related_event.public_id, "missing-event"],
+          "retry_of_generated_file_run_public_id" => original_run.public_id
+        }
+      )
+
+      get admin_generated_file_run_path(run.public_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(admin_generated_file_event_path(related_event.public_id))
+      expect(response.body).to include(admin_generated_file_run_path(original_run.public_id))
+      expect(response.body).to include(admin_generated_file_run_path(retry_child_run.public_id))
+      expect(response.body).to include("missing-event")
+      expect(response.body).to include("Retry")
+      expect(response.body).to include("Bulk Retry")
+    end
   end
 
   describe "POST /admin/generated_file_runs/:public_id/retry_run" do
@@ -226,5 +260,23 @@ RSpec.describe "Admin generated file runs", type: :request do
       finished_at: Time.current
     }
     GeneratedFileRun.create!(defaults.merge(attributes))
+  end
+
+  def create_event!(attributes = {})
+    path = attributes.fetch(:path, "docs/source.yml")
+    operation = attributes.fetch(:operation, "update")
+    event_source = attributes.fetch(:event_source, "spec")
+    defaults = {
+      event_key: GeneratedFileEvent.build_event_key(path:, operation:, event_source:),
+      path: path,
+      operation: operation,
+      event_source: event_source,
+      status: :pending,
+      metadata: {},
+      scheduled_at: 1.minute.from_now,
+      last_seen_at: Time.current,
+      occurrences_count: 1
+    }
+    GeneratedFileEvent.create!(defaults.merge(attributes))
   end
 end
