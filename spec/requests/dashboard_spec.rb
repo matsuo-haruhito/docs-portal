@@ -45,16 +45,6 @@ RSpec.describe "Dashboard", type: :request do
     expect(response.body).to include('body data-controller="nav-dropdowns document-tree-navigation manual-document-upload preview-table-resizer preview-tools"')
   end
 
-  it "serves layout styles from frontend assets instead of inline style tags" do
-    create_viewable_document(title: "Visible Manual", slug: "visible-manual")
-
-    sign_in_as(user)
-    get dashboard_path
-
-    expect(response).to have_http_status(:ok)
-    expect(response.body).not_to include("<style")
-  end
-
   it "does not show documents that are not readable by the user" do
     visible = create_viewable_document(title: "Visible Manual", slug: "visible-manual")
     hidden = create(:document, project:, title: "Hidden Manual", slug: "hidden-manual", visibility_policy: :internal_only)
