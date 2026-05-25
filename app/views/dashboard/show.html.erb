@@ -27,6 +27,15 @@
       cta: "申請一覧へ"
     }
   ]
+
+  if current_user.internal?
+    summary_cards << {
+      label: "保留中の確認依頼",
+      count: @dashboard_stats[:pending_approval_count],
+      path: document_approval_requests_path,
+      cta: "確認依頼一覧へ"
+    }
+  end
 %>
 
 <section class="page-hero">
