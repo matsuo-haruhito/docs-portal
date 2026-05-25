@@ -1,4 +1,7 @@
 - page_title "ユーザーマスタ"
+- table_key = :admin_users
+- table_columns = admin_user_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
 
 h1 ユーザーマスタ
 = render "admin/nav"
@@ -7,26 +10,29 @@ h1 ユーザーマスタ
   h2 新規登録
   = render "form", user: @user
 
-= table_tag do
+.card
+  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "ユーザー一覧の表示設定")
+
+= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
   thead
     tr
-      th ユーザー名（表示用）
-      th メールアドレス
-      th 表示名
-      th 種別
-      th 会社
-      th 状態
-      th
+      th data-rails-table-preferences-column-key="name" ユーザー名（表示用）
+      th data-rails-table-preferences-column-key="email_address" メールアドレス
+      th data-rails-table-preferences-column-key="display_name" 表示名
+      th data-rails-table-preferences-column-key="user_type" 種別
+      th data-rails-table-preferences-column-key="company" 会社
+      th data-rails-table-preferences-column-key="status" 状態
+      th data-rails-table-preferences-column-key="actions"
   tbody
     - @users.each do |user|
       tr
-        td = user.name.presence || "-"
-        td = user.email_address
-        td = user.display_name
-        td
+        td data-rails-table-preferences-column-key="name" = user.name.presence || "-"
+        td data-rails-table-preferences-column-key="email_address" = user.email_address
+        td data-rails-table-preferences-column-key="display_name" = user.display_name
+        td data-rails-table-preferences-column-key="user_type"
           span.badge = user_type_label(user)
-        td = user.company&.display_name || "-"
-        td = user.active? ? "有効" : "無効"
-        td.actions
+        td data-rails-table-preferences-column-key="company" = user.company&.display_name || "-"
+        td data-rails-table-preferences-column-key="status" = user.active? ? "有効" : "無効"
+        td.actions data-rails-table-preferences-column-key="actions"
           = edit_link_to "編集", edit_admin_user_path(user)
           = delete_link_to "削除", admin_user_path(user), confirm: "ユーザー「#{user.display_name}」を削除しますか？アクセス履歴や所属情報との関係を確認してください。"

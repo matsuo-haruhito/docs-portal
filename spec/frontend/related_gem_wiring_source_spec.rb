@@ -30,6 +30,39 @@ RSpec.describe "Related gem wiring source" do
     end
   end
 
+  describe "admin master table preferences seams" do
+    it "routes project and user indexes through table preference helpers without changing action links" do
+      projects_index = read_source("app/views/admin/projects/index.html.slim")
+      users_index = read_source("app/views/admin/users/index.html.slim")
+      projects_helper = read_source("app/helpers/admin/projects_helper.rb")
+      users_helper = read_source("app/helpers/admin/users_helper.rb")
+
+      aggregate_failures do
+        expect(projects_index).to include("- table_key = :admin_projects")
+        expect(projects_index).to include("project_table_columns")
+        expect(projects_index).to include("table_preferences_editor(")
+        expect(projects_index).to include("table_preferences_table_tag(")
+        expect(projects_index).to include('data-rails-table-preferences-column-key="code"')
+        expect(projects_index).to include('data-rails-table-preferences-column-key="actions"')
+        expect(projects_index).to include('edit_link_to "編集"')
+        expect(projects_index).to include('delete_link_to "削除"')
+        expect(projects_helper).to include('table_preferences_column(:code')
+        expect(projects_helper).to include('table_preferences_column(:actions')
+
+        expect(users_index).to include("- table_key = :admin_users")
+        expect(users_index).to include("admin_user_table_columns")
+        expect(users_index).to include("table_preferences_editor(")
+        expect(users_index).to include("table_preferences_table_tag(")
+        expect(users_index).to include('data-rails-table-preferences-column-key="email_address"')
+        expect(users_index).to include('data-rails-table-preferences-column-key="actions"')
+        expect(users_index).to include('edit_link_to "編集"')
+        expect(users_index).to include('delete_link_to "削除"')
+        expect(users_helper).to include('table_preferences_column(:email_address')
+        expect(users_helper).to include('table_preferences_column(:actions')
+      end
+    end
+  end
+
   describe "Vite alias wiring" do
     it "resolves rails table preferences and rails fields kit entrypoints from gem paths" do
       vite_source = read_source("vite.config.ts")
