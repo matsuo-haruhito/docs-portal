@@ -1,0 +1,157 @@
+- page_title "閲覧可能文書"
+h1 閲覧可能文書
+
+p.muted
+  | 案件をまたいで、閲覧できる文書をそのまま検索できます。
+
+section.card
+  h2 検索・絞り込み
+
+  = form_with url: documents_path, method: :get, local: true, class: "document-filter-form" do |form|
+    .form-grid.form-grid--compact
+      label.form-field
+        span キーワード
+        = form.search_field :q, value: @filters[:q], placeholder: "案件名・文書名・URL識別子・元パス・版・本文・キーワード・添付ファイル名/パス"
+
+      label.form-field
+        span タグ
+        = form.select :tag, options_for_select([["すべて", ""]] + @available_tags.map { [_1.name, _1.normalized_name] }, @filters[:tag])
+
+      label.form-field
+        span カテゴリ
+        = form.select :category, options_for_select([["すべて", ""]] + Document.categories.keys.map { [localized_label("documents.category", _1), _1] }, @filters[:category])
+
+      label.form-field
+        span ファイル種
+        = form.select :document_kind, options_for_select([["すべて", ""]] + Document.document_kinds.keys.map { [localized_label("documents.document_kind", _1), _1] }, @filters[:document_kind])
+
+      label.form-field
+        span 公開範囲
+        = form.select :visibility_policy, options_for_select([["すべて", ""]] + Document.visibility_policies.keys.map { [localized_label("documents.visibility_policy", _1), _1] }, @filters[:visibility_policy])
+
+    fieldset.filter-fieldset
+      legend 実用フィルタ
+      label.check-field
+        = check_box_tag :has_html, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_html])
+        span HTML生成済み
+      label.check-field
+        = check_box_tag :has_files, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_files])
+        span 添付あり
+      label.check-field
+        = check_box_tag :has_pdf, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_pdf])
+        span PDFあり
+      label.check-field
+        = check_box_tag :has_diagram, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_diagram])
+        span 図あり
+
+    p.actions.form-actions
+      = form.submit "検索", class: "button"
+      = link_to "条件をクリア", documents_path, class: "button secondary"
+
+- page_start = @documents_count.zero? ? 0 : ((@current_page - 1) * @per_page) + 1
+- page_end = [@current_page * @per_page, @documents_count].min
+p.muted
+  | 検索結果:
+  = @documents_count
+  | 件
+  - if @documents_count.positive?
+    |  （
+    = page_start
+    | -
+    = page_end
+    | 件目 /
+    = @current_page
+    | /
+    = @total_pages
+    | ページ）
+
+- if @documents_count.zero?
+  section.card.empty-state
+    h2 条件に一致する文書はありません
+    - if @filters[:q].present?
+      p
+        | キーワード「
+        code = @filters[:q]
+        | 」に一致する閲覧可能な文書がありませんでした。
+    - else
+      p 絞り込み条件に一致する閲覧可能な文書がありませんでした。
+    ul.compact-list
+      li キーワードを短くする、または別名・ファイル名・タグで検索してください。
+      li タグ、カテゴリ、ファイル種、公開範囲、実用フィルタを外して再検索してください。
+      - unless current_user.internal?
+        li 必要な文書が表示されない場合は、担当者へ閲覧権限の確認を依頼してください。
+
+- pagination_params = @filters.to_h.symbolize_keys.except(:page).compact_blank
+- if @total_pages > 1
+  nav.pagination aria-label="閲覧可能文書ページネーション"
+    - if @current_page > 1
+      = link_to "前へ", documents_path(pagination_params.merge(page: @current_page - 1)), class: "button secondary"
+    - else
+      span.button.secondary.disabled 前へ
+
+    span.muted
+      | ページ
+      = @current_page
+      |  /
+      = @total_pages
+
+    - if @current_page < @total_pages
+      = link_to "次へ", documents_path(pagination_params.merge(page: @current_page + 1)), class: "button secondary"
+    - else
+      span.button.secondary.disabled 次へ
+
+- if @documents_count.positive?
+  section.card
+    table
+      thead
+        tr
+          th 案件
+          th 文書名
+          th ヒット理由
+          th タグ
+          th カテゴリ
+          th ファイル種
+          th 重要度
+          th 公開範囲
+          th 最新版
+          th HTML
+          th 添付
+          th 最終更新
+      tbody
+        - @documents.each do |document|
+          - latest_version = document.latest_version
+          - files = document.document_versions.flat_map(&:document_files)
+          - match_summaries = document_search_match_summaries(document, @filters[:q])
+          tr
+            td = link_to document.project.name, project_path(document.project), data: { turbo_frame: "_top" }
+            td = link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" }
+            td
+              - if match_summaries.any?
+                ul.compact-list
+                  - match_summaries.each do |summary|
+                    li
+                      span.badge = summary.label
+                      |  
+                      code = summary.value
+              - else
+                span.muted -
+            td
+              - if document.document_tags.any?
+                - document.document_tags.sort_by(&:normalized_name).each do |tag|
+                  = link_to tag.name, documents_path(tag: tag.normalized_name), class: "badge"
+              - else
+                span.muted なし
+            td
+              span.badge = document_category_label(document)
+            td = document_kind_label(document)
+            td
+              span.badge = document_importance_level_label(document)
+            td = document_visibility_policy_label(document)
+            td = latest_version ? document_version_label(latest_version) : "-"
+            td = latest_version&.site_build_path.present? ? "あり" : "なし"
+            td = files.any? ? "#{files.size}件" : "なし"
+            td = document.updated_at.strftime("%Y-%m-%d %H:%M")
+
+p.actions
+  = link_to "ダッシュボードへ戻る", dashboard_path, class: "button secondary"
+  = link_to "案件一覧へ", projects_path, class: "button secondary"
