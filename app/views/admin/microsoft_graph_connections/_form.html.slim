@@ -2,9 +2,13 @@
 
 = form_with model: [:admin, microsoft_graph_connection] do |form|
   .form-grid
-    label
-      | 案件
-      = form.collection_select :project_id, @projects, :id, :name
+    = form.rfk_select :project_id,
+      collection: @projects,
+      collection_value_method: :id,
+      collection_label_method: :name,
+      wrapper: true,
+      label: "案件",
+      placeholder: "案件を選択"
     label
       | 接続名
       = form.text_field :name, placeholder: "Office preview"
