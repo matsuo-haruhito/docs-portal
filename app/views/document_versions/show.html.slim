@@ -2,11 +2,7 @@
 - preview_build_status = PreviewBuildStatusPresenter.new(@version)
 - docusaurus_preview_pending = @version.source_extension.to_s.in?(%w[md markdown mdx]) && !@version.rendered_site_available? && @version.source_commit_hash == "manual-upload"
 - side_by_side_label = @compare_version ? "左右確認" : "左右確認（比較対象なし）"
-- diff_status_labels = {
-  "changed" => "変更",
-  "added" => "追加",
-  "removed" => "削除"
-}
+- diff_status_labels = { "changed" => "変更", "added" => "追加", "removed" => "削除" }
 - diff_status_label = ->(status) { diff_status_labels.fetch(status.to_s, status.to_s.humanize) }
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
@@ -267,7 +263,7 @@ p.muted
           - if table_diffs.any?
             .rendered-table-diff-list
               - table_diffs.each do |table_diff|
-                - changed_cells = table_diff.rows.sum { |row| (row.kind == :context ? 0 : 1) + row.cells.count { |cell| cell.kind != :context } } }
+                - changed_cells = table_diff.rows.sum { |row| (row.kind == :context ? 0 : 1) + row.cells.count { |cell| cell.kind != :context } }
                 details.rendered-table-diff open=changed_cells.positive?
                   summary
                     strong = "表 #{table_diff.index}"
