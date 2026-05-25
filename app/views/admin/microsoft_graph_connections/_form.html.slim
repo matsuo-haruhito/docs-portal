@@ -37,6 +37,7 @@
       | 状態
       = form.select :enabled, [["有効", true], ["無効", false]]
   p.muted Officeファイルのプレビュー時に、指定Drive配下のプレビュー用フォルダへ一時アップロードし、Microsoft GraphのdriveItem preview URLを取得します。Client secretは暗号化カラムに保存されます。
+  p.muted 同一案件で有効にできる Microsoft Graph 接続は 1 件だけです。切り替える場合は、現在の有効接続を先に無効化してから保存してください。
   p.muted 現行UIではDrive IDとプレビュー用フォルダを入力します。管理者向けには、SharePoint / OneDrive のフォルダ共有URLからDrive IDとフォルダパスを解決して設定するUIにすると分かりやすくなります。
   p.actions
     = form.submit "保存", class: "button"
