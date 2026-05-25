@@ -5,12 +5,21 @@ class DocumentApprovalRequestsController < BaseController
   def index
     raise ApplicationError::Forbidden unless current_user.internal?
 
-    if params[:project_code].present?
+    base_relation = if params[:project_code].present?
       set_document_from_nested_route
-      @document_approval_requests = @document.document_approval_requests.recent_first.includes(:requester, :approver, :acted_by)
+      @document.document_approval_requests.includes(:requester, :approver, :acted_by)
     else
-      @document_approval_requests = DocumentApprovalRequest.recent_first.includes(:document, :requester, :approver, :acted_by)
+      DocumentApprovalRequest.includes(:document, :requester, :approver, :acted_by)
     end
+
+    @status_filter = normalized_status_filter
+    @pending_count = base_relation.pending.count
+    @approved_count = base_relation.approved.count
+    @cancelled_count = base_relation.cancelled.count
+
+    scoped_relation = @status_filter.present? ? base_relation.where(status: @status_filter) : base_relation
+    @document_approval_requests = scoped_relation.recent_first
+    @document_approval_request_sections = build_sections(@document_approval_requests)
   end
 
   def show
@@ -68,5 +77,31 @@ class DocumentApprovalRequestsController < BaseController
 
   def cancelable_request?
     @document_approval_request.pending? && (current_user.internal? || current_user == @document_approval_request.requester)
+  end
+
+  def normalized_status_filter
+    params[:status].presence_in(DocumentApprovalRequest.statuses.keys)
+  end
+
+  def build_sections(requests)
+    return [[status_section_title(@status_filter), requests]] if @status_filter.present?
+
+    pending_requests = requests.select(&:pending?)
+    processed_requests = requests.reject(&:pending?)
+
+    [["対応待ち", pending_requests], ["処理済み", processed_requests]]
+  end
+
+  def status_section_title(status)
+    case status
+    when "pending"
+      "対応待ち"
+    when "approved"
+      "OK済み"
+    when "cancelled"
+      "Cancel済み"
+    else
+      "確認依頼"
+    end
   end
 end
