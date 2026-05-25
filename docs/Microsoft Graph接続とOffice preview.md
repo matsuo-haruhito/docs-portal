@@ -2,7 +2,7 @@
 
 この文書は、`docs-portal` で Office ファイルの inline preview を有効にするための接続前提と、運用時の確認観点をまとめた正本です。
 
-preview 用の `MicrosoftGraphConnection` と、外部フォルダ同期元である `ExternalFolderSyncSource` の役割分担、`.env` に置く値との境界は [preview接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md) を参照してください。
+preview 用の `MicrosoftGraphConnection` と、外部フォルダ同期元である `ExternalFolderSyncSource` の役割分担、`.env` に置く値との境界は [preview接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md) を参照してください。日常運用で `admin/microsoft_graph_connections` の一覧を見返すときは [Microsoft Graph接続管理runbook](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E7%AE%A1%E7%90%86runbook.md) を併せて参照してください。
 
 ## 何のための設定か
 
@@ -119,6 +119,7 @@ Google Drive 同期由来でなくても、次がそろっていれば upload pr
 ## 関連ドキュメント
 
 - [README](../README.md)
+- [Microsoft Graph接続管理runbook](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E7%AE%A1%E7%90%86runbook.md)
 - [閲覧画面とUI](./specs/閲覧画面とUI.md)
 - [preview接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md)
 - [Google Drive外部フォルダ同期](./Google%20Drive%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F.md)
