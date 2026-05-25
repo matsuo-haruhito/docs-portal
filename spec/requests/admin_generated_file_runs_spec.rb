@@ -207,7 +207,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       post retry_run_admin_generated_file_run_path(run.public_id)
 
       expect(response).to redirect_to(admin_generated_file_run_path(run.public_id))
-      expect(GeneratedFileJob).to haveReceived(:perform_later).with(
+      expect(GeneratedFileJob).to have_received(:perform_later).with(
         changed_files: [],
         job_ids: ["ai_usecase_decision_flow"],
         event_source: "generated_file_run_retry",
