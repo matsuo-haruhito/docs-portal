@@ -108,7 +108,7 @@ RSpec.describe "External document access boundaries", type: :request do
 
     sign_in_as(external_user)
 
-    get project_path(member_project)
+    get project_documents_path(member_project)
     expect(response).to have_http_status(:ok)
     expect(link_hrefs).to include(project_document_path(member_project, document.slug))
 
