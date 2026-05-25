@@ -360,28 +360,28 @@ h2#version-files 添付・元ファイル
   - hidden_paths = @preview_target_display_summary.hidden.map(&:tree_path)
   - debug_paths = @preview_target_display_summary.debug.map(&:tree_path)
   - grouped_paths = @preview_target_display_summary.grouped.map(&:tree_path)
-  h3 通常表示ファイル
-  p.muted primary / attachment / normal は通常確認するファイルとして表示します。hidden / debug / group 指定のファイルは下の専用セクションに分けています。
+  h3 通常確認ファイル
+  p.muted 通常確認するファイルを先に表示し、補助ファイル・デバッグ用ファイル・グループごとの資料は下の専用セクションに分けています。
   ul
     - file_rows.select { |file, _classification| visible_ungrouped_paths.include?(file.tree_path) }.each do |file, classification|
       = render "document_file_list_item", file:, classification:
   - @preview_target_display_summary.groups.each do |group_name, classifications|
     - group_paths = classifications.map(&:tree_path)
     details open=true
-      summary group: #{group_name} #{classifications.count}件
+      summary グループ: #{group_name} #{classifications.count}件
       ul
         - file_rows.select { |file, _classification| group_paths.include?(file.tree_path) }.each do |file, classification|
           = render "document_file_list_item", file:, classification:
   - if @preview_target_display_summary.hidden.any?
     details
-      summary hidden files #{@preview_target_display_summary.hidden.count}件
-      p.muted 通常の確認対象から外したい内部資料や補助ファイルです。必要な場合だけ展開して確認します。
+      summary 補助ファイル #{@preview_target_display_summary.hidden.count}件
+      p.muted 通常の確認対象から外している内部資料や補助ファイルです。必要なときだけ展開して確認します。
       ul
         - file_rows.select { |file, _classification| hidden_paths.include?(file.tree_path) }.each do |file, classification|
           = render "document_file_list_item", file:, classification:
   - if @preview_target_display_summary.debug.any?
     details
-      summary debug files #{@preview_target_display_summary.debug.count}件
+      summary デバッグ用ファイル #{@preview_target_display_summary.debug.count}件
       p.muted レンダリング確認や調査用のファイルです。通常閲覧では優先度を下げています。
       ul
         - file_rows.select { |file, _classification| debug_paths.include?(file.tree_path) }.each do |file, classification|
