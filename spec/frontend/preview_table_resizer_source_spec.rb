@@ -21,7 +21,7 @@ RSpec.describe "preview table resizer source" do
   it "keeps the URL fallback aligned with document-version scoped stable keys" do
     aggregate_failures do
       expect(resizer_source).to include('frame.getAttribute("src") || frame.dataset.tableWidthSrc || window.location.pathname')
-      expect(resizer_source).to include('const versionId = url.searchParams.get("version_id") || url.pathname.match(/\\/document_versions\\/([^/]+)\\/site(?:\\/|$)/)?.[1]')
+      expect(resizer_source).to include('const versionId = url.searchParams.get("version_id") || url.pathname.match(/\/document_versions\/([^/]+)\/site(?:\/|$)/)?.[1]')
       expect(resizer_source).to include('return `document_version:${versionId}:${normalizeSitePath(decodeURIComponent(sitePath))}`')
     end
   end
