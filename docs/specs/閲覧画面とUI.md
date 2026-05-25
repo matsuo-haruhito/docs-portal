@@ -43,6 +43,10 @@
 - 差分ビューは Markdown差分、HTML差分、表セル差分へ移動できるタブ風ナビゲーションを持つ
 - 差分ビューのタブ、各セクション、Markdownファイル、表ごとに変更件数バッジを表示する
 - ブラウザ上でのMarkdown編集保存は後続実装とし、既存画面では preview / diff / 添付 / 品質チェックの閲覧導線を優先する
+- 版詳細画面の hero、workspace 見出し、補助文言は Markdown 専用固定にせず、版種別に関わらず「版詳細の確認ハブ」であることが先に伝わる表現を優先する
+- read-only の版詳細画面では、操作不能な編集風 toolbar や、押せないのに押せそうに見える control を置かない
+- タブ風ナビゲーションや mode 切り替えを置く場合は、現在地表示か、実際に移動できる導線だけで構成する
+- `添付・元ファイル` の分類表示は、internal key をそのまま見せず、利用者向けラベルと内部分類値を分ける
 
 ## Docusaurus viewer
 
@@ -52,6 +56,9 @@
 - iframe 側の本文は `embedded=1` 付き同 route を使って取得する
 - iframe 側では Docusaurus navbar / footer / toc / sidebar を除去し、本文を中央寄せで表示する
 - iframe 側で rewrite される内部 link / asset URL も `embedded=1` を維持する
+- viewer shell の hero、toolbar、aria label は portal 全体の表示言語に合わせ、利用者向け文言へそろえる
+- viewer shell では、版詳細、差分、添付・元ファイル、品質などの戻り先を action / link として明示し、静的な疑似タブだけを残さない
+- viewer shell の現在地表示をタブ風に見せる場合も、非アクティブ項目は link にするか plain な current-state 表示に留め、押下不能な control に見せない
 
 ## Docusaurus build profiles
 
