@@ -2,14 +2,16 @@
 
 <%= form_with model: [:admin, project_membership] do |form| %>
   <div class="form-grid">
-    <label>
-      案件
-      <%= form.collection_select :project_id, @projects, :id, :name %>
-    </label>
-    <label>
-      ユーザー
-      <%= form.collection_select :user_id, @users, :id, :email_address %>
-    </label>
+    <%= form.rfk_select :project_id,
+      collection: @projects.map { [project_membership_project_option_label(_1), _1.id] },
+      wrapper: true,
+      label: "案件",
+      placeholder: "案件を選択" %>
+    <%= form.rfk_select :user_id,
+      collection: @users.map { [project_membership_user_option_label(_1), _1.id] },
+      wrapper: true,
+      label: "ユーザー",
+      placeholder: "ユーザーを選択" %>
     <label>
       権限
       <%= form.select :role, enum_options_for("project_memberships.role", ProjectMembership.roles.keys) %>
