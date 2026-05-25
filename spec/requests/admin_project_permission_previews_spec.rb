@@ -16,7 +16,9 @@ RSpec.describe "Admin project permission previews", type: :request do
 
     sign_in_as(admin_user)
 
-    get permission_preview_admin_project_path(project.code), params: {
+    expect(permission_preview_admin_project_path(project)).to eq("/admin/projects/PREVIEW/permission_preview")
+
+    get permission_preview_admin_project_path(project), params: {
       company_ids: [company.id],
       grant_download_document_ids: [downloadable.id],
       revoke_document_ids: [visible.id],
@@ -55,7 +57,7 @@ RSpec.describe "Admin project permission previews", type: :request do
   it "forbids external users" do
     sign_in_as(create(:user, :external, company:))
 
-    get permission_preview_admin_project_path(project.code), params: { company_ids: [company.id] }
+    get permission_preview_admin_project_path(project), params: { company_ids: [company.id] }
 
     expect(response).to have_http_status(:forbidden)
   end
