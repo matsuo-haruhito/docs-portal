@@ -17,6 +17,12 @@ RSpec.describe "Admin document usage reports", type: :request do
     parsed_html.text.squish
   end
 
+  def clear_link
+    parsed_html.css("a[href='#{admin_document_usage_reports_path}']").find do |link|
+      link.text.include?("条件をクリア")
+    end
+  end
+
   it "shows selection controls and a prompt when no project is selected" do
     project
     sign_in_as(admin_user)
@@ -35,7 +41,6 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(option_texts).to include("選択してください")
     expect(option_texts.any? { |text| text.include?("Usage Project") }).to be(true)
 
-    clear_link = parsed_html.at_css("a[href='#{admin_document_usage_reports_path}']")
     expect(clear_link).to be_present
     expect(clear_link.text).to include("条件をクリア")
   end
@@ -69,7 +74,6 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(document_link).to be_present
     expect(document_link.text).to eq("Manual")
 
-    clear_link = parsed_html.at_css("a[href='#{admin_document_usage_reports_path}']")
     expect(clear_link).to be_present
     expect(clear_link.text).to include("条件をクリア")
   end
