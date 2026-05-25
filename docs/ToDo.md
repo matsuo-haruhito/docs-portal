@@ -6,10 +6,7 @@
 
 ## 権限・管理画面
 
-- `company_master_admin` 向けの管理画面導線を実装する
-  - 自社ユーザー管理
-  - 自社会社マスタ管理
-  - 他社情報・案件・文書・文書権限へアクセスできないことを確認する
+- `company_master_admin` が `/admin` で forbidden に止まらず、許可済みの `会社` / `ユーザー` 管理へ自然に入れる導線を整える
 - `internal` と `admin` の分離を UI / route / controller で徹底する
 - 管理画面でも DB id ではなく public_id / code / slug を使うようにする
 - 正式なレビュー・承認ワークフローを導入するかは、コメント・品質チェック・公開制御・送付運用が固まってから再評価する
@@ -24,12 +21,7 @@
 
 ## public_id / URL
 
-- 外部公開 route を public_id / code / slug へ移行する
-  - Project: code
-  - Document: slug
-  - DocumentVersion: public_id
-  - DocumentFile: public_id
-- numeric id 直指定 route を段階的に廃止する
+- 公開側の主要 route は `code` / `slug` / `public_id` へ移行済み。管理画面や internal 導線の numeric id 直指定 route は段階的に廃止する
 
 ## latest_version / バージョン管理
 
@@ -105,7 +97,5 @@
 
 ## テスト
 
-- company_master_admin の権限制御 request spec を追加する
-- public_id route の request spec を追加する
 - latest_version の created_at 基準と override 方針が変わる場合は、そのルールを request / service spec に追加する
 - AccessLog の記録対象 spec を追加する
