@@ -1,4 +1,8 @@
 <% page_title "案件所属" %>
+<% table_key = :admin_project_memberships %>
+<% table_columns = project_membership_table_columns %>
+<% table_settings = rails_table_preference_settings(table_key: table_key) %>
+
 <h1>案件所属</h1>
 <%= render "admin/nav" %>
 
@@ -7,22 +11,32 @@
   <%= render "form", project_membership: @project_membership %>
 </div>
 
-<%= table_tag do %>
+<div class="card">
+  <%= table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件所属一覧の表示設定") %>
+</div>
+
+<%= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do %>
   <thead>
     <tr>
-      <th>案件</th>
-      <th>ユーザー</th>
-      <th>権限</th>
-      <th></th>
+      <th data-rails-table-preferences-column-key="project">案件</th>
+      <th data-rails-table-preferences-column-key="user">ユーザー</th>
+      <th data-rails-table-preferences-column-key="role">権限</th>
+      <th data-rails-table-preferences-column-key="actions">操作</th>
     </tr>
   </thead>
   <tbody>
     <% @project_memberships.each do |membership| %>
       <tr>
-        <td><%= membership.project.name %></td>
-        <td><%= membership.user.email_address %></td>
-        <td><span class="badge"><%= project_membership_role_label(membership) %></span></td>
-        <td class="actions">
+        <td data-rails-table-preferences-column-key="project">
+          <%= membership.project.name %>
+          <% if membership.project.code.present? %>
+            <br>
+            <code><%= membership.project.code %></code>
+          <% end %>
+        </td>
+        <td data-rails-table-preferences-column-key="user"><%= project_membership_user_option_label(membership.user) %></td>
+        <td data-rails-table-preferences-column-key="role"><span class="badge"><%= project_membership_role_label(membership) %></span></td>
+        <td class="actions" data-rails-table-preferences-column-key="actions">
           <%= edit_link_to "編集", edit_admin_project_membership_path(membership) %>
           <%= delete_link_to "削除", admin_project_membership_path(membership), confirm: "案件所属を削除しますか？このユーザーは案件へアクセスできなくなります。" %>
         </td>
