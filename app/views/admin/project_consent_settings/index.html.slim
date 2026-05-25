@@ -1,4 +1,7 @@
 - page_title "案件同意設定"
+- table_key = :admin_project_consent_settings
+- table_columns = project_consent_setting_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
 
 h1 案件同意設定
 = render "admin/nav"
@@ -7,27 +10,30 @@ h1 案件同意設定
   h2 新規登録
   = render "form", project_consent_setting: @project_consent_setting
 
-= table_tag do
+.card
+  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件同意設定一覧の表示設定")
+
+= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
   thead
     tr
-      th 案件
-      th 同意文面
-      th 必須タイミング
-      th 状態
-      th
+      th data-rails-table-preferences-column-key="project" 案件
+      th data-rails-table-preferences-column-key="consent_term" 同意文面
+      th data-rails-table-preferences-column-key="version_label" 版
+      th data-rails-table-preferences-column-key="required_on" 必須タイミング
+      th data-rails-table-preferences-column-key="enabled" 状態
+      th data-rails-table-preferences-column-key="actions"
   tbody
     - @project_consent_settings.each do |setting|
       tr
-        td
+        td data-rails-table-preferences-column-key="project"
           = setting.project.name
           br
           code = setting.project.code
-        td
-          = setting.consent_term.title
-          br
+        td data-rails-table-preferences-column-key="consent_term" = setting.consent_term.title
+        td data-rails-table-preferences-column-key="version_label"
           span.muted = setting.consent_term.version_label
-        td = setting.required_on
-        td = setting.enabled? ? "有効" : "無効"
-        td.actions
+        td data-rails-table-preferences-column-key="required_on" = setting.required_on
+        td data-rails-table-preferences-column-key="enabled" = setting.enabled? ? "有効" : "無効"
+        td.actions data-rails-table-preferences-column-key="actions"
           = edit_link_to "編集", edit_admin_project_consent_setting_path(setting)
-          = delete_link_to "削除", admin_project_consent_setting_path(setting), confirm: "案件同意設定を削除しますか？"
+          = delete_link_to "削除", admin_project_consent_settings_path(setting), confirm: "案件同意設定を削除しますか？"
