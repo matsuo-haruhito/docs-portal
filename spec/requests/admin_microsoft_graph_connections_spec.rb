@@ -8,6 +8,7 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
     it "shows which enabled connection is currently used for preview" do
       sign_in_as(admin_user)
       active = create(:microsoft_graph_connection, project:, name: "Primary connection", enabled: true)
+      create(:microsoft_graph_connection, project:, name: "Standby connection", enabled: false)
       create(:microsoft_graph_connection, project: create(:project, code: "GRAPH002", name: "Other Project"), name: "Other active", enabled: true)
 
       get admin_microsoft_graph_connections_path
