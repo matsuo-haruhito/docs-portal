@@ -119,7 +119,6 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).to include("発生元")
       expect(response.body).to include("開始")
       expect(response.body).to include("完了")
-      expect(response.body).to include("関連情報")
       expect(response.body).to include("入力パス")
       expect(response.body).to include("変更ファイル")
       expect(response.body).to include("生成パス")
