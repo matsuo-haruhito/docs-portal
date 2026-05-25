@@ -1,4 +1,7 @@
 - page_title "同意文面管理"
+- table_key = :admin_consent_terms
+- table_columns = consent_term_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
 
 h1 同意文面管理
 = render "admin/nav"
@@ -7,23 +10,30 @@ h1 同意文面管理
   h2 新規登録
   = render "form", consent_term: @consent_term
 
-= table_tag do
+.card
+  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "同意文面一覧の表示設定")
+
+= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
   thead
     tr
-      th タイトル
-      th 版
-      th 種別
-      th 再同意方針
-      th 状態
-      th
+      th data-rails-table-preferences-column-key="title" タイトル
+      th data-rails-table-preferences-column-key="version_label" 版
+      th data-rails-table-preferences-column-key="consent_scope" 種別
+      th data-rails-table-preferences-column-key="requirement_timing" 再同意方針
+      th data-rails-table-preferences-column-key="status" 状態
+      th data-rails-table-preferences-column-key="actions"
   tbody
     - @consent_terms.each do |term|
       tr
-        td = term.title
-        td = term.version_label
-        td = consent_scope_label(term)
-        td = consent_requirement_timing_label(term)
-        td = term.active? ? "有効" : "無効"
-        td.actions
+        td data-rails-table-preferences-column-key="title" = term.title
+        td data-rails-table-preferences-column-key="version_label"
+          span.badge = term.version_label
+        td data-rails-table-preferences-column-key="consent_scope"
+          span.badge = consent_scope_label(term)
+        td data-rails-table-preferences-column-key="requirement_timing"
+          span.badge = consent_requirement_timing_label(term)
+        td data-rails-table-preferences-column-key="status"
+          span.badge = consent_term_status_label(term)
+        td.actions data-rails-table-preferences-column-key="actions"
           = edit_link_to "編集", edit_admin_consent_term_path(term)
           = delete_link_to "削除", admin_consent_term_path(term), confirm: "同意文面「#{term.title} #{term.version_label}」を削除しますか？履歴がある場合は削除できません。"
