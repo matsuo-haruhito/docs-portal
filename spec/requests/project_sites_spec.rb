@@ -144,6 +144,19 @@ RSpec.describe "Project sites", type: :request do
     expect(response.body).to include(project_site_path(project, site_path: "assets/js/app.js", version_id: version_v1.public_id, embedded: "1").gsub("&", "&amp;"))
   end
 
+  it "uses the same preview context key for project and document embedded routes of the same page" do
+    sign_in_as(user)
+
+    get project_site_path(project, site_path: version_v1.html_view_site_path, version_id: version_v1.public_id, embedded: "1")
+    project_context_key = Nokogiri::HTML(response.body).at_css("body")&.[]("data-docs-portal-preview-context-key")
+
+    get site_document_version_path(version_v1, site_path: version_v1.html_view_site_path, embedded: "1")
+    document_context_key = Nokogiri::HTML(response.body).at_css("body")&.[]("data-docs-portal-preview-context-key")
+
+    expect(project_context_key).to eq("document_version:#{version_v1.public_id}:#{version_v1.normalized_html_view_site_path}")
+    expect(document_context_key).to eq(project_context_key)
+  end
+
   it "serves assets from the project site route" do
     sign_in_as(user)
 
