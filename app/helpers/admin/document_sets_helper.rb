@@ -11,4 +11,15 @@ module Admin::DocumentSetsHelper
       table_preferences_column(:actions, label: "操作", default_width: 150, pinned: true)
     ]
   end
+
+  def document_set_version_select_html_options(placeholder: "固定する版を検索")
+    {
+      data: {
+        controller: "rails-fields-kit--tom-select",
+        rails_fields_kit__tom_select_kind_value: "select",
+        rails_fields_kit__tom_select_placeholder_value: placeholder,
+        rails_fields_kit__tom_select_plugins_value: ["clear_button"]
+      }
+    }
+  end
 end
