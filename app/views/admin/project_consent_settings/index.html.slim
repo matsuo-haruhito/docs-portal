@@ -36,4 +36,4 @@ h1 案件同意設定
         td data-rails-table-preferences-column-key="enabled" = setting.enabled? ? "有効" : "無効"
         td.actions data-rails-table-preferences-column-key="actions"
           = edit_link_to "編集", edit_admin_project_consent_setting_path(setting)
-          = delete_link_to "削除", admin_project_consent_settings_path(setting), confirm: "案件同意設定を削除しますか？"
+          = delete_link_to "削除", admin_project_consent_setting_path(setting), confirm: "案件同意設定を削除しますか？"
