@@ -27,6 +27,8 @@ RSpec.describe "Admin project external previews", type: :request do
 
     sign_in_as(admin_user)
 
+    expect(external_preview_admin_project_path(project)).to eq("/admin/projects/PVWADM/external_preview")
+
     expect do
       get external_preview_admin_project_path(project), params: { user_id: external_user.id }
     end.to change(AccessLog.where(target_type: "external_preview"), :count).by(1)
