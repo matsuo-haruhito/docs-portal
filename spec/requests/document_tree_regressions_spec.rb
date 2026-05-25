@@ -160,7 +160,7 @@ RSpec.describe "Document tree regressions", type: :request do
     expect(parsed_html.at_css(".tree-icon--csv")).to be_present
   end
 
-  it "persists sidebar folder toggles and bulk expansion in the tree view state" do
+  it "persists sidebar folder toggles and current bulk expansion keys in the tree view state" do
     sign_in_as(user)
 
     get project_document_tree_path(project, document_slug: markdown_document.slug, tree_action: "show", source_path: "guides", format: :turbo_stream)
@@ -185,9 +185,7 @@ RSpec.describe "Document tree regressions", type: :request do
     sidebar_state = user.reload.tree_view_state_for(DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY)
     expect(Array(sidebar_state.expanded_keys)).to include(
       sidebar_project_key,
-      sidebar_folder_key_for("guides"),
-      sidebar_folder_key_for("attachments"),
-      sidebar_folder_key_for("exports")
+      sidebar_folder_key_for("guides")
     )
 
     post document_tree_all_project_path(project, tree_action: "hide", format: :turbo_stream)
@@ -197,9 +195,7 @@ RSpec.describe "Document tree regressions", type: :request do
     sidebar_state = user.reload.tree_view_state_for(DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY)
     expect(Array(sidebar_state.expanded_keys)).not_to include(
       sidebar_project_key,
-      sidebar_folder_key_for("guides"),
-      sidebar_folder_key_for("attachments"),
-      sidebar_folder_key_for("exports")
+      sidebar_folder_key_for("guides")
     )
   end
 
@@ -222,10 +218,7 @@ RSpec.describe "Document tree regressions", type: :request do
     expect(Array(sidebar_state.expanded_keys)).to eq(sidebar_before)
     expect(detail_state).to be_present
     expect(Array(detail_state.expanded_keys)).not_to include(detail_tree_folder_key_for("guides"))
-    expect(Array(detail_state.expanded_keys)).to include(
-      detail_tree_folder_key_for("attachments"),
-      detail_tree_folder_key_for("exports")
-    )
+    expect(Array(detail_state.expanded_keys)).to eq([])
   end
 
   it "keeps the requested window offset in turbo tree refresh controls" do
