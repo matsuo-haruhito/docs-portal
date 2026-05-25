@@ -11,9 +11,14 @@
     label
       | ユーザー種別
       = form.select :user_type, enum_options_for("users.user_type", User.user_types.keys)
-    label
-      | 会社
-      = form.collection_select :company_id, @companies, :id, :display_name, include_blank: "未所属"
+    = form.rfk_select :company_id,
+      collection: @companies,
+      collection_value_method: :id,
+      collection_label_method: :display_name,
+      wrapper: true,
+      label: "会社",
+      allow_clear: true,
+      placeholder: "会社を選択（未所属可）"
     label
       | 有効
       = form.select :active, [["有効", true], ["無効", false]]
