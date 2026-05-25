@@ -104,8 +104,9 @@ RSpec.describe "Project document zips", type: :request do
     expect(response.body).not_to include("view-only/v1.0.0/view-only.txt")
   end
 
-  it "shows checkbox bulk zip form on the document index" do
-    document = create_document_with_file(title: "First", slug: "first", file_name: "README.md", content: "first")
+  it "shows current-page bulk selection controls on the document index while keeping unavailable documents disabled" do
+    available_document = create_document_with_file(title: "First", slug: "first", file_name: "README.md", content: "first")
+    unavailable_document = create(:document, project:, title: "Unavailable", slug: "unavailable")
 
     sign_in_as(user)
 
@@ -113,9 +114,23 @@ RSpec.describe "Project document zips", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(project_document_zip_path(project))
-    expect(response.body).to include("document_ids_#{document.id}")
     expect(response.body).to include("選択した文書の最新版をZIPでダウンロード")
     expect(response.body).to include("ZIP出力オプション")
+    expect(response.body).to include("このページを全選択")
+    expect(response.body).to include("選択解除")
+    expect(response.body).to include("0件選択中")
+
+    html = Nokogiri::HTML.parse(response.body)
+    available_checkbox = html.at_css("input#document_ids_#{available_document.id}")
+    unavailable_checkbox = html.at_css("input#document_ids_#{unavailable_document.id}")
+    count = html.at_css('[data-document-zip-selection-target="count"]')
+
+    aggregate_failures do
+      expect(available_checkbox["data-action"]).to include("document-zip-selection#sync")
+      expect(available_checkbox["data-document-zip-selection-target"]).to eq("checkbox")
+      expect(unavailable_checkbox["disabled"]).to eq("disabled")
+      expect(count.text).to include("0件選択中")
+    end
   end
 
   it "supports zip path and file type options" do
