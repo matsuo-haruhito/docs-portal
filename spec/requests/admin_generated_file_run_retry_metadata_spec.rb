@@ -13,9 +13,9 @@ RSpec.describe "Admin generated file run retry metadata", type: :request do
     get admin_generated_file_run_path(run.public_id)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Retry Of")
+    expect(response.body).to include("再実行元")
     expect(response.body).to include("gfr_original")
-    expect(response.body).to include("Retry Requested")
+    expect(response.body).to include("再実行依頼時刻")
     expect(response.body).to include("2026-05-20T10:00:00+09:00")
   end
 end

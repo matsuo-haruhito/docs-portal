@@ -13,26 +13,26 @@
   <div class="rounded-lg border bg-white p-4">
     <h2 class="mb-3 text-lg font-semibold">概要</h2>
     <dl class="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
-      <div><dt class="font-semibold">Status</dt><dd><%= @generated_file_run.status %></dd></div>
-      <div><dt class="font-semibold">Job ID</dt><dd class="font-mono"><%= @generated_file_run.job_id %></dd></div>
-      <div><dt class="font-semibold">Generator</dt><dd class="font-mono"><%= @generated_file_run.generator.presence || "-" %></dd></div>
-      <div><dt class="font-semibold">Output Writer</dt><dd class="font-mono"><%= @generated_file_run.output_writer.presence || "-" %></dd></div>
+      <div><dt class="font-semibold">状態</dt><dd><%= @generated_file_run.status %></dd></div>
+      <div><dt class="font-semibold">ジョブID</dt><dd class="font-mono"><%= @generated_file_run.job_id %></dd></div>
+      <div><dt class="font-semibold">ジェネレータ</dt><dd class="font-mono"><%= @generated_file_run.generator.presence || "-" %></dd></div>
+      <div><dt class="font-semibold">出力ライター</dt><dd class="font-mono"><%= @generated_file_run.output_writer.presence || "-" %></dd></div>
       <div>
-        <dt class="font-semibold">Event Source</dt>
+        <dt class="font-semibold">発生元</dt>
         <dd>
           <%= @generated_file_run.event_source.presence || "-" %>
           <% if @generated_file_run.event_source == "generated_file_run_retry" %>
-            <span class="badge">Retry</span>
+            <span class="badge">再実行</span>
           <% elsif @generated_file_run.event_source == "generated_file_run_bulk_retry" %>
-            <span class="badge">Bulk Retry</span>
+            <span class="badge">一括再実行</span>
           <% end %>
         </dd>
       </div>
-      <div><dt class="font-semibold">Started</dt><dd><%= l(@generated_file_run.started_at, format: :long) if @generated_file_run.started_at %></dd></div>
-      <div><dt class="font-semibold">Finished</dt><dd><%= l(@generated_file_run.finished_at, format: :long) if @generated_file_run.finished_at %></dd></div>
+      <div><dt class="font-semibold">開始</dt><dd><%= l(@generated_file_run.started_at, format: :long) if @generated_file_run.started_at %></dd></div>
+      <div><dt class="font-semibold">完了</dt><dd><%= l(@generated_file_run.finished_at, format: :long) if @generated_file_run.finished_at %></dd></div>
       <% if @retry_of_generated_file_run_public_id.present? %>
         <div>
-          <dt class="font-semibold">Retry Of</dt>
+          <dt class="font-semibold">再実行元</dt>
           <dd class="font-mono">
             <% if @retry_of_generated_file_run %>
               <%= link_to @retry_of_generated_file_run_public_id, admin_generated_file_run_path(@retry_of_generated_file_run_public_id), class: "text-blue-600 underline" %>
@@ -42,7 +42,7 @@
           </dd>
         </div>
         <div>
-          <dt class="font-semibold">Retry Requested</dt>
+          <dt class="font-semibold">再実行依頼時刻</dt>
           <dd><%= @generated_file_run.metadata["retry_requested_at"].presence || "-" %></dd>
         </div>
       <% end %>
@@ -55,7 +55,7 @@
 
       <% if @related_generated_file_event_public_ids.any? %>
         <div class="mb-4">
-          <h3 class="mb-2 text-sm font-semibold">関連Event</h3>
+          <h3 class="mb-2 text-sm font-semibold">関連イベント</h3>
           <ul class="space-y-1 text-sm">
             <% @related_generated_file_event_public_ids.each do |public_id| %>
               <% event = @related_generated_file_events_by_public_id[public_id] %>
@@ -65,7 +65,7 @@
                   <span class="muted"><%= event.status %></span>
                 <% else %>
                   <span class="font-mono"><%= public_id %></span>
-                  <span class="muted">(missing)</span>
+                  <span class="muted">（未検出）</span>
                 <% end %>
               </li>
             <% end %>
@@ -75,16 +75,16 @@
 
       <% if @retry_child_runs.any? %>
         <div>
-          <h3 class="mb-2 text-sm font-semibold">このRunから派生したRetry</h3>
+          <h3 class="mb-2 text-sm font-semibold">この実行から派生した再実行</h3>
           <ul class="space-y-1 text-sm">
             <% @retry_child_runs.each do |run| %>
               <li>
                 <%= link_to run.public_id, admin_generated_file_run_path(run.public_id), class: "font-mono text-blue-600 underline" %>
                 <span class="muted"><%= run.status %></span>
                 <% if run.event_source == "generated_file_run_retry" %>
-                  <span class="badge">Retry</span>
+                  <span class="badge">再実行</span>
                 <% elsif run.event_source == "generated_file_run_bulk_retry" %>
-                  <span class="badge">Bulk Retry</span>
+                  <span class="badge">一括再実行</span>
                 <% end %>
               </li>
             <% end %>
@@ -96,26 +96,26 @@
 
   <% if @generated_file_run.error_message.present? %>
     <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-      <h2 class="mb-2 text-lg font-semibold text-red-700">Error</h2>
+      <h2 class="mb-2 text-lg font-semibold text-red-700">エラー</h2>
       <pre class="whitespace-pre-wrap text-sm"><%= @generated_file_run.error_message %></pre>
     </div>
   <% end %>
 
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
     <div class="rounded-lg border bg-white p-4">
-      <h2 class="mb-2 text-lg font-semibold">Source Paths</h2>
+      <h2 class="mb-2 text-lg font-semibold">入力パス</h2>
       <pre class="whitespace-pre-wrap text-sm"><%= JSON.pretty_generate(@generated_file_run.source_paths || []) %></pre>
     </div>
     <div class="rounded-lg border bg-white p-4">
-      <h2 class="mb-2 text-lg font-semibold">Changed Files</h2>
+      <h2 class="mb-2 text-lg font-semibold">変更ファイル</h2>
       <pre class="whitespace-pre-wrap text-sm"><%= JSON.pretty_generate(@generated_file_run.changed_files || []) %></pre>
     </div>
     <div class="rounded-lg border bg-white p-4">
-      <h2 class="mb-2 text-lg font-semibold">Generated Paths</h2>
+      <h2 class="mb-2 text-lg font-semibold">生成パス</h2>
       <pre class="whitespace-pre-wrap text-sm"><%= JSON.pretty_generate(@generated_file_run.generated_paths || []) %></pre>
     </div>
     <div class="rounded-lg border bg-white p-4">
-      <h2 class="mb-2 text-lg font-semibold">Metadata</h2>
+      <h2 class="mb-2 text-lg font-semibold">メタデータ</h2>
       <pre class="whitespace-pre-wrap text-sm"><%= JSON.pretty_generate(@generated_file_run.metadata || {}) %></pre>
     </div>
   </div>
