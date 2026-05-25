@@ -120,12 +120,23 @@ RSpec.describe "Project sites", type: :request do
     FileUtils.rm_rf(restricted_version.site_root_absolute_path)
   end
 
-  it "redirects a non-embedded project site html page to the unified document reader" do
+  it "redirects a non-embedded project site html page to the unified document reader and records a page view access log" do
     sign_in_as(user)
 
-    get project_site_path(project, site_path: version_v1.html_view_site_path, version_id: version_v1.public_id)
+    expect do
+      get project_site_path(project, site_path: version_v1.html_view_site_path, version_id: version_v1.public_id)
+    end.to change(AccessLog, :count).by(1)
 
     expect(response).to redirect_to(project_document_path(project, document.slug, version_id: version_v1.public_id, site_path: version_v1.html_view_site_path))
+
+    log = AccessLog.order(:id).last
+    expect(log.user).to eq(user)
+    expect(log.project).to eq(project)
+    expect(log.document).to eq(document)
+    expect(log.document_version).to eq(version_v1)
+    expect(log.action_type).to eq("view")
+    expect(log.target_type).to eq("page")
+    expect(log.target_name).to eq(version_v1.html_view_site_path)
   end
 
   it "renders embedded project site html for the iframe body" do
@@ -222,7 +233,7 @@ RSpec.describe "Project sites", type: :request do
     expect(response).to have_http_status(:forbidden)
   end
 
-  it "filters restricted site navigation links for external users and blocks direct page access" do
+  it "filters restricted site navigation links for external users and blocks direct page access without recording an access log" do
     external_user = create(:user, :external)
     create(:project_membership, project:, user: external_user)
     create(:document_permission, document:, company: external_user.company, access_level: :view)
@@ -235,7 +246,9 @@ RSpec.describe "Project sites", type: :request do
     expect(response.body).to include("Allowed page")
     expect(response.body).not_to include("Restricted page")
 
-    get project_site_path(project, site_path: restricted_version.html_view_site_path, version_id: version_v1.public_id)
+    expect do
+      get project_site_path(project, site_path: restricted_version.html_view_site_path, version_id: version_v1.public_id)
+    end.not_to change(AccessLog, :count)
 
     expect(response).to have_http_status(:forbidden)
   end

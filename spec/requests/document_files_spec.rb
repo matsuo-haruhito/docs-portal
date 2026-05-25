@@ -69,6 +69,28 @@ RSpec.describe "Document files", type: :request do
     expect(log.document).to eq(document)
     expect(log.document_version).to eq(version)
     expect(log.action_type).to eq("download")
+    expect(log.target_type).to eq("file")
+    expect(log.target_name).to eq("manual.pdf")
+  end
+
+  it "records a file view access log for embedded preview requests" do
+    sign_in_as(user)
+
+    expect do
+      get document_file_path(file, embedded: "1")
+    end.to change(AccessLog, :count).by(1)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("application/pdf")
+    expect(response.headers["content-disposition"]).to include("inline")
+
+    log = AccessLog.order(:id).last
+    expect(log.user).to eq(user)
+    expect(log.project).to eq(project)
+    expect(log.document).to eq(document)
+    expect(log.document_version).to eq(version)
+    expect(log.action_type).to eq("view")
+    expect(log.target_type).to eq("file")
     expect(log.target_name).to eq("manual.pdf")
   end
 
@@ -174,7 +196,9 @@ RSpec.describe "Document files", type: :request do
 
     sign_in_as(external_user)
 
-    get document_file_path(file)
+    expect do
+      get document_file_path(file)
+    end.not_to change(AccessLog, :count)
 
     expect(response).to have_http_status(:forbidden)
   end
