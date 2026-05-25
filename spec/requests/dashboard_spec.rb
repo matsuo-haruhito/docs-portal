@@ -52,6 +52,7 @@ RSpec.describe "Dashboard", type: :request do
       document_bookmarks_path,
       access_requests_path
     )
+    expect(response.body).not_to include("保留中の確認依頼")
     expect(response.body).not_to include(document_approval_requests_path)
   end
 
@@ -90,20 +91,26 @@ RSpec.describe "Dashboard", type: :request do
     expect(response.body).not_to include("Hidden Manual")
   end
 
-  it "keeps internal approval navigation separate from summary actions" do
+  it "shows pending approval summary for internal users while keeping the hero action separate" do
     internal_user = create(:user, :internal)
+    approval_project = create(:project, code: "APR", name: "Approval Project")
+    approval_document = create(:document, project: approval_project, title: "確認資料", slug: "approval-doc")
+    create(:document_approval_request, document: approval_document, requester: internal_user, approver: internal_user, title: "確認お願いします")
 
     sign_in_as(internal_user)
     get dashboard_path
 
     expect(response).to have_http_status(:ok)
+    expect(response.body).to include("保留中の確認依頼")
+    expect(response.body).to include("1")
     expect(metric_cta_links.map(&:text)).to include(
       "案件一覧へ",
       "案件から文書を探す",
       "ショートカット一覧へ",
-      "申請一覧へ"
+      "申請一覧へ",
+      "確認依頼一覧へ"
     )
-    expect(metric_cta_links.map { |link| link["href"] }).not_to include(document_approval_requests_path)
+    expect(metric_cta_links.map { |link| link["href"] }).to include(document_approval_requests_path)
     expect(parsed_html.css(".page-hero .actions a").map { |link| link["href"] }).to include(document_approval_requests_path)
   end
 end
