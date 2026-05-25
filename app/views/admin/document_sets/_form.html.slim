@@ -51,7 +51,8 @@
               span.muted = "URL識別子: #{document.slug}"
             td
               - version_options = [["最新版を使う", ""]] + document.document_versions.sort_by(&:created_at).reverse.map { |version| ["#{document_version_label(version)} (#{document_version_status_label(version)})", version.id] }
-              = select_tag "document_set_items[#{index}][document_version_id]",
+              = select_tag(
+                "document_set_items[#{index}][document_version_id]",
                 options_for_select(version_options, item&.document_version_id),
                 data: {
                   controller: "rails-fields-kit--tom-select",
@@ -59,6 +60,7 @@
                   rails_fields_kit__tom_select_placeholder_value: "固定する版を検索",
                   rails_fields_kit__tom_select_plugins_value: ["clear_button"]
                 }
+              )
             td
               = number_field_tag "document_set_items[#{index}][sort_order]", item&.sort_order || index, min: 0
             td
