@@ -4,7 +4,7 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
   before_action :load_form_collections, only: %i[index create edit update]
 
   def index
-    @microsoft_graph_connections = microsoft_graph_connections_scope
+    load_index_state
     @microsoft_graph_connection = MicrosoftGraphConnection.new(auth_type: :client_credentials, preview_folder_path: "docs-portal-previews", enabled: true)
   end
 
@@ -15,7 +15,7 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
     if @microsoft_graph_connection.save
       redirect_to admin_microsoft_graph_connections_path, notice: "Microsoft Graph接続設定を登録しました。"
     else
-      @microsoft_graph_connections = microsoft_graph_connections_scope
+      load_index_state
       render :index, status: :unprocessable_entity
     end
   end
@@ -47,6 +47,17 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
 
   def load_form_collections
     @projects = Project.order(:code)
+  end
+
+  def load_index_state
+    @microsoft_graph_connections = microsoft_graph_connections_scope
+    project_ids = @microsoft_graph_connections.map(&:project_id)
+    @preview_connection_ids_by_project = MicrosoftGraphConnection.preview_selected_ids_by_project(project_ids)
+    @duplicate_enabled_project_ids = MicrosoftGraphConnection.enabled_only.where(project_id: project_ids)
+      .group(:project_id)
+      .having("COUNT(*) > 1")
+      .count
+      .keys
   end
 
   def microsoft_graph_connections_scope
