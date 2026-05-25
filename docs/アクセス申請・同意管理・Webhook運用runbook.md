@@ -1,0 +1,118 @@
+# アクセス申請・同意管理・Webhook運用runbook
+
+この runbook は、管理画面の `アクセス申請` `同意文面` `案件同意設定` `Webhook` を日常運用で見直すときの入口をまとめる。
+
+新しい運用ポリシーはここでは定義しない。current 実装と既存仕様 docs を前提に、どの画面で何を確認するか、変更時にどこへ戻るかを整理する。
+
+## 先に見るもの
+
+1. 利用者向けの同意仕様を確認したいときは [利用規約・秘密保持の同意管理](./利用規約・秘密保持の同意管理.md)
+2. 外部通知の payload や署名仕様を確認したいときは [Webhook・外部API連携方針](./Webhook・外部API連携方針.md)
+3. 管理画面の位置関係は `app/views/admin/_nav.html.slim` の `アクセス申請` `同意文面` `案件同意設定` `Webhook` を起点に確認する
+
+## 画面ごとの役割
+
+### 1. アクセス申請
+
+`admin/access_requests` は、利用者から届いた閲覧・ダウンロード・管理権限の申請を internal 管理者が裁く画面。
+
+- 一覧には `日時 / 申請者 / 対象 / 要求権限 / 状態 / 理由 / 承認者` が出る
+- 対象は `Project` `Document` `DocumentFile` のいずれかで、承認前は `承認` / `却下` ボタンが出る
+- 申請の状態は `pending / approved / rejected / cancelled`
+- 要求権限は `view / download / manage`
+
+日常確認ポイント:
+
+- `pending` が溜まっていないか
+- 申請対象と `requested_access_level` が利用者の想定と合っているか
+- すでに処理済みの申請で、承認者が想定どおり記録されているか
+
+変更時の注意:
+
+- current UI の却下導線は固定の `rejection_reason` を送るだけなので、詳細な却下理由の共有方法は別運用で補う前提
+- 権限モデル自体の正本はアプリ仕様側にあり、この runbook では承認基準を新設しない
+
+戻り先:
+
+- 権限や公開範囲の意味は [アプリケーション仕様](./アプリケーション仕様.md)
+- 同意前提を含む利用者導線は [利用規約・秘密保持の同意管理](./利用規約・秘密保持の同意管理.md)
+
+### 2. 同意文面
+
+`admin/consent_terms` は、利用規約・秘密保持・注意事項などの文面そのものを管理する画面。
+
+- `タイトル / 版 / 種別 / 再同意方針 / 状態` を一覧で確認できる
+- 新規登録と編集では `title` `version_label` `consent_scope` `requirement_timing` `active` `body` を扱う
+- `title` と `version_label` の組み合わせは重複できない
+- 利用履歴や設定が残っている文面は削除できないため、通常は `無効` へ切り替えて運用する
+
+日常確認ポイント:
+
+- 利用中の文面が `有効` のまま残っているか
+- 改訂時に `version_label` を上げているか
+- `consent_scope` と `requirement_timing` が intended な利用箇所と合っているか
+
+変更時の注意:
+
+- 文面本文の変更を既存版へ上書きすると、どの版に同意したかの追跡が曖昧になりやすい。改訂時は新しい `version_label` を使う
+- 法務レビューや文面の妥当性そのものはアプリ外運用で担保する
+
+戻り先:
+
+- モデル責務と enforcement 範囲は [利用規約・秘密保持の同意管理](./利用規約・秘密保持の同意管理.md)
+
+### 3. 案件同意設定
+
+`admin/project_consent_settings` は、どの案件でどの同意文面を必須にするかを結び付ける画面。
+
+- `案件 / 同意文面 / 必須タイミング / 状態` を一覧で確認できる
+- フォームで選べる文面は `active` な `ConsentTerm` のみ
+- `required_on` は `first_access` `download` `shared_link_access` `shared_link_download`
+- current 実装で実際に enforcement 済みなのは `first_access` と `download`
+
+日常確認ポイント:
+
+- 案件ごとに `enabled` な設定だけが残っているか
+- `consent_term` の版が current 運用で要求したいものと一致しているか
+- `required_on` が intended な入口と一致しているか
+
+変更時の注意:
+
+- `shared_link_access` と `shared_link_download` は将来拡張用の予約値で、現時点の shared link 実装を意味しない
+- 同じ案件・同じ必須タイミングには 1 つの文面しか結び付けられない
+
+戻り先:
+
+- 利用者画面での同意 enforcement は [利用規約・秘密保持の同意管理](./利用規約・秘密保持の同意管理.md)
+
+### 4. Webhook
+
+`admin/webhook_endpoints` は、外部通知先 endpoint の設定と、最近の送信結果を確認する画面。
+
+- 設定一覧では `名称 / 送信先URL / イベント / 有効` を確認できる
+- フォームでは `name` `target_url` `secret_token` `active` `event_types[]` を更新できる
+- 新規作成時の既定イベントは `document_updated` と `document_published`
+- 送信履歴には `作成日時 / 設定 / イベント / ステータス / HTTP / エラー` が出て、recent 50 件を確認できる
+
+日常確認ポイント:
+
+- `active` な endpoint が intended な通知先だけに絞られているか
+- `failed` な配信が増えていないか
+- `response_status` や `error_message` から、受信側障害か設定誤りかを切り分けられるか
+
+変更時の注意:
+
+- current 実装には自動再送キューがないため、失敗配信の再送要否は送信履歴を見て個別に判断する
+- `event_types` は `WebhookEndpoint::EVENT_TYPES` に含まれる値だけが有効
+- 署名シークレットを設定した場合は `X-Docs-Portal-Signature-256` を付与する
+
+戻り先:
+
+- payload とヘッダー仕様は [Webhook・外部API連携方針](./Webhook・外部API連携方針.md)
+
+## 迷ったときの切り分け
+
+- 利用者に何を同意させるか、どの入口で止めるかを見直したい: 同意仕様 docs を先に確認する
+- どの案件にどの文面を適用するか迷う: `同意文面` と `案件同意設定` を対で確認する
+- 外部通知の失敗原因を追いたい: `Webhook` の recent deliveries と通知仕様 docs を対で確認する
+- 権限付与の是非そのものが曖昧: この runbook では判断せず、案件運用や権限仕様の人間確認へ戻す
