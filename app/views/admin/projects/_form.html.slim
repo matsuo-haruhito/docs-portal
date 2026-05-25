@@ -8,9 +8,14 @@
     label
       | 案件名
       = form.text_field :name
-    label
-      | 企業
-      = form.collection_select :company_id, @companies, :id, :display_name, { include_blank: "未設定" }
+    = form.rfk_select :company_id,
+      collection: @companies,
+      collection_value_method: :id,
+      collection_label_method: :display_name,
+      wrapper: true,
+      label: "企業",
+      allow_clear: true,
+      placeholder: "企業を選択（未設定可）"
     label
       | 有効
       = form.select :active, [["有効", true], ["無効", false]]
