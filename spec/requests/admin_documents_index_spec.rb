@@ -46,6 +46,8 @@ RSpec.describe "Admin documents index", type: :request do
 
     expect(editor).to be_present
     expect(editor["data-rails-table-preferences-table-key-value"]).to eq("admin_documents")
+    expect(editor["data-rails-table-preferences-collection-url-value"]).to end_with("/rails_table_preferences/preferences/admin_documents")
+    expect(editor["data-rails-table-preferences-url-value"]).to end_with("/rails_table_preferences/preferences/admin_documents/default")
 
     header_keys = parsed_html.css("thead th[data-rails-table-preferences-column-key]").map do |node|
       node["data-rails-table-preferences-column-key"]
@@ -60,12 +62,12 @@ RSpec.describe "Admin documents index", type: :request do
     expect(archived_row).to be_present
 
     expect(active_row.at_css('td[data-rails-table-preferences-column-key="project"]').text).to include("Alpha Project")
+    expect(active_row.at_css('td[data-rails-table-preferences-column-key="title"]').to_html).to include(project_document_path(project, active_document.slug))
     expect(active_row.at_css('td[data-rails-table-preferences-column-key="status"]').text).to include("有効")
     expect(active_row.at_css('td[data-rails-table-preferences-column-key="retention_until"]').text).to include("2026")
 
     active_actions = active_row.at_css('td[data-rails-table-preferences-column-key="actions"]')
 
-    expect(active_actions.to_html).to include(project_document_path(project, active_document.slug))
     expect(active_actions.to_html).to include(edit_admin_document_path(active_document))
     expect(active_actions.to_html).to include(archive_admin_document_path(active_document))
     expect(active_actions.to_html).to include(admin_document_path(active_document))
