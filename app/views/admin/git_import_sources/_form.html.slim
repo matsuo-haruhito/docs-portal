@@ -14,9 +14,11 @@
 
 = form_with model: [:admin, git_import_source] do |form|
   .form-grid
-    label
-      | 案件
-      = form.collection_select :project_id, @projects, :id, :name
+    = form.rfk_select :project_id,
+      collection: @projects.map { [git_import_source_project_option_label(_1), _1.id] },
+      wrapper: true,
+      label: "案件",
+      placeholder: "案件を選択"
     label
       | リポジトリ
       = form.text_field :repository_full_name, placeholder: "owner/repo"
