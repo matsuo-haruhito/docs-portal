@@ -198,8 +198,8 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include(admin_generated_file_run_path(retry_run.public_id))
       expect(response.body).to include(admin_generated_file_run_path(bulk_retry_run.public_id))
       expect(response.body).not_to include(unrelated_run.public_id)
-      expect(response.body).to include("Retry")
-      expect(response.body).to include("Bulk Retry")
+      expect(response.body).to include("再実行")
+      expect(response.body).to include("一括再実行")
     end
   end
 
