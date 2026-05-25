@@ -4,7 +4,7 @@
   p.eyebrow provider-aware な入口
   h2 外部フォルダを取り込む
   p.muted
-    | この画面では、現在は Google Drive の同期設定を登録できます。SharePoint / OneDrive は後続 issue で metadata 解決と保存後導線を広げる予定のため、ここでは準備する内容と次の入口を分けて案内します。
+    | この画面では、現在は Google Drive の同期設定を登録できます。SharePoint / OneDrive は後続 issue でフォルダ情報の解決と保存後導線を広げる予定のため、ここでは準備する内容と次の入口を分けて案内します。
   h3 Google Drive から始める
   ol
     li 対象案件と Google Drive フォルダ URL を入力する
@@ -16,7 +16,7 @@
   ol
     li Microsoft Graph 接続で Tenant ID / Client ID / Drive ID などを確認する
     li 同期対象の共有 URL とフォルダ構成を整理する
-    li folder metadata 解決と保存後の運用導線は後続 issue で扱う
+    li フォルダ情報の解決と保存後の運用導線は後続 issue で扱う
   p.muted
     | 公式画面のスクリーンショットは変わりやすいため、この画面では必要な作業だけを案内します。外部サービス側の画面では、表示された権限内容を確認して許可してください。
   p.actions
@@ -65,18 +65,18 @@
         | 同期方向
         = form.hidden_field :sync_direction, value: sync_direction_value
         span = external_folder_sync_source_sync_direction_label(sync_direction_value)
-        span.muted first slice では、外部フォルダからドキュメントポータルへ取り込む片方向同期だけを扱います。
+        span.muted この画面では、外部フォルダからドキュメントポータルへ取り込む片方向同期だけを扱います。
       label
         | 競合方針
         = form.hidden_field :conflict_policy, value: conflict_policy_value
         span = external_folder_sync_source_conflict_policy_label(conflict_policy_value)
-        span.muted first slice では、自動で競合解決せず、同期プレビューで確認してから取り込む前提です。
+        span.muted この画面では、自動で競合解決せず、同期プレビューで確認してから取り込む前提です。
     label.full-width
       | サービスアカウントJSON
       = form.text_area :auth_config, value: nil, rows: 10, placeholder: external_folder_sync_source.persisted? ? "サービスアカウントJSON変更時のみ入力。OAuthユーザー方式の場合は空で保存してください。" : "サービスアカウント方式を使う場合のみ貼り付け。OAuthユーザー方式の場合は空で保存してください。"
     p.muted サービスアカウント方式は Google Drive でのみ利用します。Google Drive フォルダをサービスアカウントのメールアドレスへ共有してください。
 
-  p.muted 現在この画面から保存できるのは、Google Drive からドキュメントポータルへの片方向同期のみです。SharePoint / OneDrive の metadata 解決と保存後導線は後続 issue で拡張します。
+  p.muted 現在この画面から保存できるのは、Google Drive からドキュメントポータルへの片方向同期のみです。SharePoint / OneDrive のフォルダ情報解決と保存後導線は後続 issue で拡張します。
   p.actions
     = form.submit "設定を保存", class: "button"
     - if external_folder_sync_source.persisted?
