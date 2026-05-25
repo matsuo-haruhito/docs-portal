@@ -1,0 +1,13 @@
+ja:
+  labels:
+    import_dry_runs:
+      status:
+        analyzed: "解析済み"
+        confirmed: "取込済み"
+        expired: "期限切れ"
+        failed: "失敗"
+    import_dry_run_tree_preview:
+      change_type:
+        create: "新規"
+        update: "更新"
+        change: "変更候補"

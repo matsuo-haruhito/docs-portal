@@ -8,7 +8,7 @@ h1 ZIPインポートdry-run
     dt 案件
     dd = @import_dry_run.project ? "#{@import_dry_run.project.code} / #{@import_dry_run.project.name}" : "-"
     dt 状態
-    dd = @import_dry_run.status
+    dd = import_dry_run_status_label(@import_dry_run)
     dt dry-run ID
     dd = @import_dry_run.public_id
 
@@ -54,6 +54,6 @@ h1 ZIPインポートdry-run
               span.tree-diff-preview__label = row.label
               span.tree-diff-preview__path = row.path
               - if row.change_type.present?
-                span.badge = row.change_type
+                span.badge = import_dry_run_tree_change_type_label(row.change_type)
       - else
         p.muted 取り込み後の文書候補はありません。
