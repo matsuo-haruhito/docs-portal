@@ -1,4 +1,6 @@
 - page_title "確認依頼"
+- list_path = @document.present? ? ->(path_params = {}) { project_document_document_approval_requests_path(@project, @document, path_params) } : ->(path_params = {}) { document_approval_requests_path(path_params) }
+- total_count = @pending_count + @approved_count + @cancelled_count
 
 h1 確認依頼
 
@@ -8,24 +10,37 @@ h1 確認依頼
     |  /
     = link_to @document.title, project_document_path(@project, @document.slug)
 
+p.muted
+  | 対応待ち #{@pending_count}件 / OK済み #{@approved_count}件 / Cancel済み #{@cancelled_count}件
+
+p.actions
+  = link_to "すべて (#{total_count})", list_path.call, class: @status_filter.blank? ? "button" : "button secondary"
+  = link_to "対応待ち (#{@pending_count})", list_path.call(status: :pending), class: @status_filter == "pending" ? "button" : "button secondary"
+  = link_to "OK済み (#{@approved_count})", list_path.call(status: :approved), class: @status_filter == "approved" ? "button" : "button secondary"
+  = link_to "Cancel済み (#{@cancelled_count})", list_path.call(status: :cancelled), class: @status_filter == "cancelled" ? "button" : "button secondary"
+
 - if @document_approval_requests.any?
-  table
-    thead
-      tr
-        th 日時
-        th 文書名
-        th 依頼名
-        th 依頼者
-        th 確認相手
-        th 状態
-    tbody
-      - @document_approval_requests.each do |request|
+  - @document_approval_request_sections.each do |section_title, requests|
+    - next if requests.empty?
+    h2 = section_title
+    p.muted = "#{requests.size}件"
+    table
+      thead
         tr
-          td = request.created_at.strftime("%Y-%m-%d %H:%M")
-          td = link_to request.document.title, project_document_path(request.document.project, request.document.slug)
-          td = link_to request.title, document_approval_request_path(request)
-          td = request.requester.name
-          td = request.approver&.name || "-"
-          td = document_approval_request_status_label(request)
+          th 日時
+          th 文書名
+          th 依頼名
+          th 依頼者
+          th 確認相手
+          th 状態
+      tbody
+        - requests.each do |request|
+          tr
+            td = request.created_at.strftime("%Y-%m-%d %H:%M")
+            td = link_to request.document.title, project_document_path(request.document.project, request.document.slug)
+            td = link_to request.title, document_approval_request_path(request)
+            td = request.requester.name
+            td = request.approver&.name || "-"
+            td = document_approval_request_status_label(request)
 - else
   p.muted 確認依頼はありません。

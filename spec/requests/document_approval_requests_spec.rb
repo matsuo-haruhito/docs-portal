@@ -31,14 +31,59 @@ RSpec.describe "Document approval requests", type: :request do
     expect(approval_request).to be_pending
   end
 
-  it "shows index/detail to internal users and supports OK / Cancel" do
-    approval_request = create(:document_approval_request, document:, requester:, title: "確認お願いします")
+  it "shows pending requests before processed ones and supports status filtering" do
+    pending_request = create(:document_approval_request, document:, requester:, title: "確認お願いします")
+    approved_request = create(
+      :document_approval_request,
+      document:,
+      requester:,
+      title: "確認完了",
+      status: :approved,
+      acted_by: internal_user,
+      approved_at: 1.hour.ago,
+      cancelled_at: nil
+    )
+    cancelled_request = create(
+      :document_approval_request,
+      document:,
+      requester:,
+      title: "今回は進めない",
+      status: :cancelled,
+      acted_by: requester,
+      cancelled_at: 30.minutes.ago,
+      approved_at: nil
+    )
 
     sign_in_as(internal_user)
 
     get project_document_document_approval_requests_path(project, document)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("確認お願いします")
+    expect(response.body).to include("対応待ち")
+    expect(response.body).to include("処理済み")
+    expect(response.body).to include("対応待ち (1)")
+    expect(response.body).to include("OK済み (1)")
+    expect(response.body).to include("Cancel済み (1)")
+    expect(response.body).to include(pending_request.title)
+    expect(response.body).to include(approved_request.title)
+    expect(response.body).to include(cancelled_request.title)
+
+    get project_document_document_approval_requests_path(project, document), params: { status: :pending }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(pending_request.title)
+    expect(response.body).not_to include(approved_request.title)
+    expect(response.body).not_to include(cancelled_request.title)
+
+    get document_approval_requests_path, params: { status: :approved }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(approved_request.title)
+    expect(response.body).not_to include(pending_request.title)
+    expect(response.body).not_to include(cancelled_request.title)
+  end
+
+  it "shows detail to internal users and supports OK / Cancel" do
+    approval_request = create(:document_approval_request, document:, requester:, title: "確認お願いします")
+
+    sign_in_as(internal_user)
 
     get document_approval_request_path(approval_request)
     expect(response).to have_http_status(:ok)
