@@ -4,6 +4,8 @@
 
 現時点の正本は各個別文書にあります。このページでは仕様を増やさず、既存 docs と current code の読み分けをしやすくすることだけを目的にします。
 
+外部フォルダ同期の一覧・詳細で何を見返すか、`dry_run` / `apply` / `force_apply` / `enqueue` / 購読操作の使い分けは [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md) を参照してください。このページは設定責務と current support の境界を整理する補助に留めます。
+
 ## 先に結論
 
 | やりたいこと | 主な登録先 | 追加で見るもの | current support |
@@ -136,4 +138,5 @@ current main では docs 先行または後続 issue の整理段階です。`#4
 - [docs/README](./README.md)
 - [Microsoft Graph接続とOffice preview](./Microsoft%20Graph接続とOffice%20preview.md)
 - [Google Drive外部フォルダ同期](./Google%20Drive外部フォルダ同期.md)
+- [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md)
 - [ローカルセットアップと環境変数](./ローカルセットアップと環境変数.md)
