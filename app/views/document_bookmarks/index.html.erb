@@ -6,11 +6,19 @@
 <section class="card">
   <h2>お気に入り</h2>
   <% if @favorite_bookmarks.any? %>
-    <ul>
+    <ul class="resource-list">
       <% @favorite_bookmarks.each do |bookmark| %>
-        <li>
-          <%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %>
-          <%= button_to "解除", document_bookmark_path(bookmark), method: :delete %>
+        <li class="resource-list__item">
+          <div class="resource-list__content">
+            <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %></strong>
+            <div class="resource-list__meta">
+              <span class="muted"><%= bookmark.document.project.name %></span>
+              <span class="badge">よく開く文書</span>
+            </div>
+          </div>
+          <div class="resource-list__actions">
+            <%= button_to "解除", document_bookmark_path(bookmark), method: :delete, class: "button secondary" %>
+          </div>
         </li>
       <% end %>
     </ul>
@@ -22,11 +30,19 @@
 <section class="card">
   <h2>後で読む</h2>
   <% if @read_later_bookmarks.any? %>
-    <ul>
+    <ul class="resource-list">
       <% @read_later_bookmarks.each do |bookmark| %>
-        <li>
-          <%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %>
-          <%= button_to "解除", document_bookmark_path(bookmark), method: :delete %>
+        <li class="resource-list__item">
+          <div class="resource-list__content">
+            <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %></strong>
+            <div class="resource-list__meta">
+              <span class="muted"><%= bookmark.document.project.name %></span>
+              <span class="badge">あとで確認</span>
+            </div>
+          </div>
+          <div class="resource-list__actions">
+            <%= button_to "解除", document_bookmark_path(bookmark), method: :delete, class: "button secondary" %>
+          </div>
         </li>
       <% end %>
     </ul>
@@ -38,9 +54,17 @@
 <section class="card">
   <h2>最近見た文書</h2>
   <% if @recent_documents.any? %>
-    <ul>
+    <ul class="resource-list">
       <% @recent_documents.each do |document| %>
-        <li><%= link_to document.title, project_document_path(document.project, document.slug) %></li>
+        <li class="resource-list__item">
+          <div class="resource-list__content">
+            <strong><%= link_to document.title, project_document_path(document.project, document.slug) %></strong>
+            <div class="resource-list__meta">
+              <span class="muted"><%= document.project.name %></span>
+              <span class="badge">最近見た文書</span>
+            </div>
+          </div>
+        </li>
       <% end %>
     </ul>
   <% else %>
