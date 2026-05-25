@@ -5,6 +5,12 @@
 - review_paths = (current_by_path.keys + previous_by_path.keys).compact.uniq.sort
 - markdown_diff_available = @markdown_line_diffs.any?
 - html_diff_available = @rendered_html_diff&.lines&.any?
+- diff_status_labels = {
+  "changed" => "変更",
+  "added" => "追加",
+  "removed" => "削除"
+}
+- diff_status_label = ->(status) { diff_status_labels.fetch(status.to_s, status.to_s.humanize) }
 
 .card.side-by-side-file-review#side-by-side-file-review
   .markdown-workspace__header
@@ -38,11 +44,11 @@
           summary
             strong = path
             - if current_file && previous_file
-              span.badge changed
+              span.badge = diff_status_label.call(:changed)
             - elsif current_file
-              span.badge added
+              span.badge = diff_status_label.call(:added)
             - else
-              span.badge removed
+              span.badge = diff_status_label.call(:removed)
           .side-by-side-file-review__grid
             .side-by-side-file-review__pane
               h3 比較対象
