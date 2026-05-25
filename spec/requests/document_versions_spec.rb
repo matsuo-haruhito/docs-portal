@@ -170,14 +170,14 @@ RSpec.describe "Document versions", type: :request do
     get document_version_path(version)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Preview target metadata")
+    expect(response.body).to include("添付分類サマリ")
     expect(response.body).to include("hidden/private.pdf")
     expect(response.body).to include("debug/raw.json")
     expect(response.body).to include("diagrams")
-    expect(response.body).to include("primary")
-    expect(response.body).to include("attachment")
-    expect(response.body).to include("hidden")
-    expect(response.body).to include("debug")
+    expect(response.body).to include("主要ファイル")
+    expect(response.body).to include("通常表示")
+    expect(response.body).to include("補助")
+    expect(response.body).to include("デバッグ")
   end
 
   it "shows export handling notes on version detail" do
