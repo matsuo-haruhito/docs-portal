@@ -26,8 +26,8 @@ RSpec.describe MicrosoftGraphConnection, type: :model do
     it "returns true only for the connection currently used for preview in that project" do
       project = create(:project)
       selected = create(:microsoft_graph_connection, project:, enabled: true)
-      standby = build(:microsoft_graph_connection, project:, enabled: true)
-      standby.save!(validate: false)
+      standby = create(:microsoft_graph_connection, project:, enabled: false)
+      standby.update_column(:enabled, true)
 
       expect(selected.preview_selected?).to be(true)
       expect(standby.preview_selected?).to be(false)
