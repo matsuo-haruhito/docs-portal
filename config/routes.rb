@@ -34,7 +34,7 @@ Rails.application.routes.draw do
 
     resources :companies, except: %i[show new]
     resources :users, except: %i[show new]
-    resources :projects, except: %i[show new] do
+    resources :projects, except: %i[show new], param: :code do
       get "external_preview", to: "project_external_previews#show", on: :member
       get "permission_preview", to: "project_permission_previews#show", on: :member
       post "apply_template", to: "project_templates#create", on: :member
