@@ -1,4 +1,10 @@
 - page_title "Webhook"
+- endpoint_table_key = :admin_webhook_endpoints
+- endpoint_table_columns = webhook_endpoint_table_columns
+- endpoint_table_settings = rails_table_preference_settings(table_key: endpoint_table_key)
+- delivery_table_key = :admin_webhook_deliveries
+- delivery_table_columns = webhook_delivery_table_columns
+- delivery_table_settings = rails_table_preference_settings(table_key: delivery_table_key)
 
 h1 Webhook
 = render "admin/nav"
@@ -7,46 +13,53 @@ h1 Webhook
   h2 新規登録
   = render "form", webhook_endpoint: @webhook_endpoint
 
-section.card
+.card
   h2 Webhook設定
-  table
-    thead
-      tr
-        th 名称
-        th 送信先URL
-        th イベント
-        th 有効
-        th
-    tbody
-      - @webhook_endpoints.each do |endpoint|
-        tr
-          td = endpoint.name
-          td = endpoint.target_url
-          td = endpoint.normalized_event_types.join(", ")
-          td = endpoint.active? ? "有効" : "停止"
-          td.actions
-            = edit_link_to "編集", edit_admin_webhook_endpoint_path(endpoint)
-            = delete_link_to "削除", admin_webhook_endpoint_path(endpoint), confirm: "このWebhook設定を削除しますか？"
+  = table_preferences_editor(table_key: endpoint_table_key, settings: endpoint_table_settings, columns: endpoint_table_columns, title: "Webhook設定一覧の表示設定")
 
-section.card
+= table_preferences_table_tag(table_key: endpoint_table_key, settings: endpoint_table_settings, columns: endpoint_table_columns) do
+  thead
+    tr
+      th data-rails-table-preferences-column-key="name" 名称
+      th data-rails-table-preferences-column-key="target_url" 送信先URL
+      th data-rails-table-preferences-column-key="event_types" イベント
+      th data-rails-table-preferences-column-key="active" 状態
+      th data-rails-table-preferences-column-key="actions"
+  tbody
+    - @webhook_endpoints.each do |endpoint|
+      tr
+        td data-rails-table-preferences-column-key="name" = endpoint.name
+        td data-rails-table-preferences-column-key="target_url" = endpoint.target_url
+        td data-rails-table-preferences-column-key="event_types"
+          - endpoint.normalized_event_types.each do |event_type|
+            span.badge = event_type
+        td data-rails-table-preferences-column-key="active"
+          span.badge = webhook_endpoint_status_label(endpoint)
+        td.actions data-rails-table-preferences-column-key="actions"
+          = edit_link_to "編集", edit_admin_webhook_endpoint_path(endpoint)
+          = delete_link_to "削除", admin_webhook_endpoint_path(endpoint), confirm: "このWebhook設定を削除しますか？"
+
+.card
   h2 最近の送信履歴
   p.muted 送信成功/失敗、HTTPステータス、エラー内容を確認できます。失敗時の再送は送信履歴をもとに個別運用で判断します。
-  table
-    thead
+  = table_preferences_editor(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns, title: "Webhook送信履歴の表示設定")
+
+= table_preferences_table_tag(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns) do
+  thead
+    tr
+      th data-rails-table-preferences-column-key="created_at" 作成日時
+      th data-rails-table-preferences-column-key="endpoint" 設定
+      th data-rails-table-preferences-column-key="event_type" イベント
+      th data-rails-table-preferences-column-key="status" ステータス
+      th data-rails-table-preferences-column-key="response_status" HTTP
+      th data-rails-table-preferences-column-key="error_message" エラー
+  tbody
+    - @recent_deliveries.each do |delivery|
       tr
-        th 作成日時
-        th 設定
-        th イベント
-        th ステータス
-        th HTTP
-        th エラー
-    tbody
-      - @recent_deliveries.each do |delivery|
-        tr
-          td = l(delivery.created_at, format: :short)
-          td = delivery.webhook_endpoint.name
-          td = delivery.event_type
-          td
-            span.badge = delivery.status
-          td = delivery.response_status || "-"
-          td = delivery.error_message.presence || "-"
+        td data-rails-table-preferences-column-key="created_at" = l(delivery.created_at, format: :short)
+        td data-rails-table-preferences-column-key="endpoint" = delivery.webhook_endpoint.name
+        td data-rails-table-preferences-column-key="event_type" = delivery.event_type
+        td data-rails-table-preferences-column-key="status"
+          span.badge = webhook_delivery_status_label(delivery)
+        td data-rails-table-preferences-column-key="response_status" = delivery.response_status || "-"
+        td data-rails-table-preferences-column-key="error_message" = delivery.error_message.presence || "-"
