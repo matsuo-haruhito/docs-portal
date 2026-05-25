@@ -1,4 +1,7 @@
 - page_title "監査ログ"
+- table_key = :admin_access_logs
+- table_columns = access_log_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
 
 h1 監査ログ
 = render "admin/nav"
@@ -15,13 +18,19 @@ section.card
         = form.select :target_type, options_for_select([["すべて", ""]] + enum_options_for("access_logs.target_type", %w[page file zip]), @filters[:target_type])
       div
         = form.label :project_id, "案件"
-        = form.select :project_id, options_for_select([["すべて", ""]] + @projects.map { [_1.name, _1.id] }, @filters[:project_id])
+        = select_tag :project_id,
+          options_for_select([["すべて", ""]] + access_log_project_filter_options(@projects), @filters[:project_id]),
+          access_log_filter_select_html_options(placeholder: "案件で絞り込み")
       div
         = form.label :company_id, "会社"
-        = form.select :company_id, options_for_select([["すべて", ""]] + @companies.map { [_1.display_name, _1.id] }, @filters[:company_id])
+        = select_tag :company_id,
+          options_for_select([["すべて", ""]] + access_log_company_filter_options(@companies), @filters[:company_id]),
+          access_log_filter_select_html_options(placeholder: "会社で絞り込み")
       div
         = form.label :user_id, "ユーザー"
-        = form.select :user_id, options_for_select([["すべて", ""]] + @users.map { ["#{_1.display_name} / #{_1.email_address}", _1.id] }, @filters[:user_id])
+        = select_tag :user_id,
+          options_for_select([["すべて", ""]] + access_log_user_filter_options(@users), @filters[:user_id]),
+          access_log_filter_select_html_options(placeholder: "ユーザーで絞り込み")
       div
         = form.label :document_q, "文書名・URL識別子"
         = form.search_field :document_q, value: @filters[:document_q]
@@ -32,39 +41,42 @@ section.card
 
 p.muted 最新200件を表示します。
 
-table
+.card
+  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "監査ログ一覧の表示設定")
+
+= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
   thead
     tr
-      th 日時
-      th 操作
-      th 対象
-      th ユーザー
-      th 会社
-      th 案件
-      th 文書
-      th 版
-      th IPアドレス
+      th data-rails-table-preferences-column-key="accessed_at" 日時
+      th data-rails-table-preferences-column-key="action_type" 操作
+      th data-rails-table-preferences-column-key="target" 対象
+      th data-rails-table-preferences-column-key="user" ユーザー
+      th data-rails-table-preferences-column-key="company" 会社
+      th data-rails-table-preferences-column-key="project" 案件
+      th data-rails-table-preferences-column-key="document" 文書
+      th data-rails-table-preferences-column-key="document_version" 版
+      th data-rails-table-preferences-column-key="ip_address" IPアドレス
   tbody
     - @access_logs.each do |log|
       tr
-        td = log.accessed_at.strftime("%Y-%m-%d %H:%M:%S")
-        td = access_log_action_type_label(log)
-        td
+        td data-rails-table-preferences-column-key="accessed_at" = log.accessed_at.strftime("%Y-%m-%d %H:%M:%S")
+        td data-rails-table-preferences-column-key="action_type" = access_log_action_type_label(log)
+        td data-rails-table-preferences-column-key="target"
           = access_log_target_type_label(log)
           - if log.target_name.present?
             br
             code = log.target_name
-        td = log.user ? "#{log.user.display_name} / #{log.user.email_address}" : "-"
-        td = log.company&.display_name || "-"
-        td = log.project&.name || "-"
-        td
+        td data-rails-table-preferences-column-key="user" = log.user ? "#{log.user.display_name} / #{log.user.email_address}" : "-"
+        td data-rails-table-preferences-column-key="company" = log.company&.display_name || "-"
+        td data-rails-table-preferences-column-key="project" = log.project&.name || "-"
+        td data-rails-table-preferences-column-key="document"
           - if log.document && log.project
             = link_to log.document.title, project_document_path(log.project, log.document.slug), data: { turbo_frame: "_top" }
           - else
             | -
-        td
+        td data-rails-table-preferences-column-key="document_version"
           - if log.document_version
             = link_to document_version_label(log.document_version), document_version_path(log.document_version)
           - else
             | -
-        td = log.ip_address.presence || "-"
+        td data-rails-table-preferences-column-key="ip_address" = log.ip_address.presence || "-"
