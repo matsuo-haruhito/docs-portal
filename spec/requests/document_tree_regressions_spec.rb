@@ -8,6 +8,14 @@ RSpec.describe "Document tree regressions", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def normalized_text(node)
+    node.text.gsub(/\s+/, " ").strip
+  end
+
+  def tree_panel
+    parsed_html.at_css("#document_tree_panel")
+  end
+
   let!(:markdown_document) do
     create(:document, project:, title: "導入ガイド", slug: "intro-guide", document_kind: :markdown)
   end
@@ -64,15 +72,19 @@ RSpec.describe "Document tree regressions", type: :request do
     get project_document_path(project, markdown_document.slug)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("document-tree-scroll-spacer")
-    expect(response.body).to include("intro-guide.md")
-    expect(response.body).to include("operations-manual.pdf")
-    expect(response.body).to include("inventory.csv")
-    expect(response.body).to include("tree-icon--md")
-    expect(response.body).to include("tree-icon--pdf")
-    expect(response.body).to include("tree-icon--csv")
-    expect(response.body).to include(project_document_path(project, pdf_document.slug))
-    expect(response.body).to include(project_document_path(project, csv_document.slug))
+    expect(tree_panel).to be_present
+
+    panel_text = normalized_text(tree_panel)
+    panel_links = tree_panel.css("a[href]").map { _1["href"] }
+
+    expect(panel_text).to include("intro-guide.md")
+    expect(panel_text).to include("operations-manual.pdf")
+    expect(panel_text).to include("inventory.csv")
+    expect(tree_panel.at_css(".tree-icon--md")).to be_present
+    expect(tree_panel.at_css(".tree-icon--pdf")).to be_present
+    expect(tree_panel.at_css(".tree-icon--csv")).to be_present
+    expect(panel_links).to include(project_document_path(project, pdf_document.slug))
+    expect(panel_links).to include(project_document_path(project, csv_document.slug))
   end
 
   it "removes archived documents from the tree until they are restored" do
@@ -80,7 +92,7 @@ RSpec.describe "Document tree regressions", type: :request do
 
     get project_document_path(project, markdown_document.slug)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("operations-manual.pdf")
+    expect(normalized_text(tree_panel)).to include("operations-manual.pdf")
 
     patch archive_admin_document_path(pdf_document)
     expect(response).to redirect_to(admin_documents_path)
@@ -88,14 +100,14 @@ RSpec.describe "Document tree regressions", type: :request do
 
     get project_document_path(project, markdown_document.slug)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("intro-guide.md")
-    expect(response.body).to include("inventory.csv")
-    expect(response.body).not_to include("operations-manual.pdf")
+    expect(normalized_text(tree_panel)).to include("intro-guide.md")
+    expect(normalized_text(tree_panel)).to include("inventory.csv")
+    expect(normalized_text(tree_panel)).not_to include("operations-manual.pdf")
 
     get project_document_tree_path(project, document_slug: markdown_document.slug, format: :turbo_stream)
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
-    expect(response.body).not_to include("operations-manual.pdf")
+    expect(normalized_text(tree_panel)).not_to include("operations-manual.pdf")
 
     patch restore_admin_document_path(pdf_document)
     expect(response).to redirect_to(admin_documents_path)
@@ -103,7 +115,7 @@ RSpec.describe "Document tree regressions", type: :request do
 
     get project_document_path(project, markdown_document.slug)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("operations-manual.pdf")
+    expect(normalized_text(tree_panel)).to include("operations-manual.pdf")
   end
 
   it "declares the sidebar controller in the server-rendered document layout" do
@@ -127,13 +139,16 @@ RSpec.describe "Document tree regressions", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
-    expect(response.body).to include("document_tree_panel")
-    expect(response.body).to include("document_tree_toolbar")
-    expect(response.body).to include("intro-guide.md")
-    expect(response.body).to include("operations-manual.pdf")
-    expect(response.body).to include("inventory.csv")
-    expect(response.body).to include("tree-icon--pdf")
-    expect(response.body).to include("tree-icon--csv")
+    expect(tree_panel).to be_present
+    expect(parsed_html.at_css("#document_tree_toolbar")).to be_present
+
+    panel_text = normalized_text(tree_panel)
+
+    expect(panel_text).to include("intro-guide.md")
+    expect(panel_text).to include("operations-manual.pdf")
+    expect(panel_text).to include("inventory.csv")
+    expect(tree_panel.at_css(".tree-icon--pdf")).to be_present
+    expect(tree_panel.at_css(".tree-icon--csv")).to be_present
   end
 
   it "keeps the requested window offset in turbo tree refresh controls" do
@@ -165,9 +180,16 @@ RSpec.describe "Document tree regressions", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
-    expect(response.body).to include("document-tree-window-summary")
-    expect(response.body).to include("前の50行")
-    expect(response.body).to include("次の50行")
+
+    window_summary = parsed_html.at_css(".document-tree-window-summary")
+
+    expect(window_summary).to be_present
+    expect(normalized_text(window_summary)).to include("大きなツリーのため 51-100 / 123 行を表示しています。")
+
+    action_labels = parsed_html.css(".document-tree-actions .document-tree-action-link").map { normalized_text(_1) }
+
+    expect(action_labels).to include("前の50行")
+    expect(action_labels).to include("次の50行")
 
     toolbar_actions = parsed_html.css("#document_tree_toolbar form[action]").map { _1["action"] }
 
