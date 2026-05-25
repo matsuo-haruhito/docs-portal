@@ -187,13 +187,13 @@ class ProjectsController < BaseController
   end
 
   def document_tree_project_expanded_keys(project)
-    ["project_#{project.id}", *document_tree_folder_keys_for(project)]
+    [document_tree_project_node_key(project), *document_tree_folder_keys_for(project)]
   end
 
   def document_tree_folder_keys_for(project)
     portal_documents_for(project).flat_map do |document|
       document_tree_folder_ancestor_paths(document_tree_document_source_directory(document)).map do |path|
-        "folder_#{project.id}_#{Digest::SHA256.hexdigest(path).first(16)}"
+        document_tree_folder_node_key(project, path)
       end
     end.compact_blank.uniq
   end
@@ -215,12 +215,29 @@ class ProjectsController < BaseController
 
   def document_tree_toggled_node_key(expanded_source_path:, collapsed_source_path:)
     if expanded_source_path.present?
-      "folder_#{@project.id}_#{Digest::SHA256.hexdigest(expanded_source_path).first(16)}"
+      document_tree_folder_node_key(@project, expanded_source_path)
     elsif collapsed_source_path.present?
-      "folder_#{@project.id}_#{Digest::SHA256.hexdigest(collapsed_source_path).first(16)}"
+      document_tree_folder_node_key(@project, collapsed_source_path)
     elsif params[:node_id].present?
-      "project_#{params[:node_id]}"
+      document_tree_project_node_key(params[:node_id])
     end
+  end
+
+  def document_tree_project_node_key(project_or_id)
+    project = project_or_id.respond_to?(:id) ? project_or_id : Project.new(id: project_or_id)
+    helpers.send(:node_key, project)
+  end
+
+  def document_tree_folder_node_key(project, path)
+    helpers.send(
+      :node_key,
+      DocumentsHelper::DocumentTreeFolderNode.new(
+        project:,
+        path: path.to_s,
+        label: "",
+        children: []
+      )
+    )
   end
 
   def portal_tree_projects(include_project: nil)
