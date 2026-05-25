@@ -11,6 +11,48 @@ h1 文書マスタ
   = render "form", document: @document
 
 .card
+  h2 検索・絞り込み
+
+  = form_with url: admin_documents_path, method: :get, local: true, class: "document-filter-form" do |form|
+    .form-grid.form-grid--compact
+      label.form-field
+        span キーワード
+        = form.search_field :q, value: @filters[:q], placeholder: "案件名・案件コード・文書名・URL識別子"
+
+      label.form-field
+        span カテゴリ
+        = form.select :category, options_for_select(admin_document_category_filter_options, @filters[:category])
+
+      label.form-field
+        span 種別
+        = form.select :document_kind, options_for_select(admin_document_kind_filter_options, @filters[:document_kind])
+
+      label.form-field
+        span 公開範囲
+        = form.select :visibility_policy, options_for_select(admin_document_visibility_filter_options, @filters[:visibility_policy])
+
+      label.form-field
+        span アーカイブ状態
+        = form.select :archived, options_for_select(admin_document_archived_filter_options, @filters[:archived])
+
+      label.form-field
+        span 保管期限
+        = form.select :retention, options_for_select(admin_document_retention_filter_options, @filters[:retention])
+
+      label.form-field
+        span 廃棄候補
+        = form.select :discard, options_for_select(admin_document_discard_filter_options, @filters[:discard])
+
+    p.actions.form-actions
+      = form.submit "検索", class: "button"
+      = link_to "条件をクリア", admin_documents_path, class: "button secondary"
+
+  p.muted
+    | 検索結果: 
+    = @documents.size
+    | 件
+
+.card
   = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定")
 
 = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do

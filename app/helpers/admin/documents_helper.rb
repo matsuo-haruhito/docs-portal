@@ -15,4 +15,28 @@ module Admin::DocumentsHelper
       table_preferences_column(:actions, label: "操作", default_width: 180, pinned: true)
     ]
   end
+
+  def admin_document_category_filter_options
+    [["すべて", ""]] + Document.categories.keys.map { |key| [localized_label("documents.category", key), key] }
+  end
+
+  def admin_document_kind_filter_options
+    [["すべて", ""]] + Document.document_kinds.keys.map { |key| [localized_label("documents.document_kind", key), key] }
+  end
+
+  def admin_document_visibility_filter_options
+    [["すべて", ""]] + Document.visibility_policies.keys.map { |key| [localized_label("documents.visibility_policy", key), key] }
+  end
+
+  def admin_document_archived_filter_options
+    [["すべて", ""], ["有効のみ", "active"], ["アーカイブ済みのみ", "archived"]]
+  end
+
+  def admin_document_retention_filter_options
+    [["すべて", ""], ["保管期限あり", "set"], ["保管期限なし", "missing"], ["保管期限切れ", "due"]]
+  end
+
+  def admin_document_discard_filter_options
+    [["すべて", ""], ["廃棄候補あり", "set"], ["廃棄候補なし", "missing"], ["廃棄候補期限切れ", "due"]]
+  end
 end
