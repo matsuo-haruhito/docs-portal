@@ -7,13 +7,20 @@ RSpec.describe "External document access boundaries", type: :request do
   let(:member_project) { create(:project, code: "PJ#{SecureRandom.hex(4)}", name: "Member Project") }
   let(:other_project) { create(:project, code: "PJ#{SecureRandom.hex(4)}", name: "Other Project") }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
   def result_titles
-    html = Nokogiri::HTML(response.body)
-    html.css("main table tbody tr td:first-child").map { _1.text.strip }
+    parsed_html.css("main table tbody tr td:first-child").map { _1.text.strip }
+  end
+
+  def link_hrefs
+    parsed_html.css("a[href]").map { _1["href"] }
   end
 
   def page_text
-    Nokogiri::HTML(response.body).text
+    parsed_html.text
   end
 
   def write_site_file(version, relative_path, content)
@@ -68,6 +75,63 @@ RSpec.describe "External document access boundaries", type: :request do
 
     get project_document_path(member_project, other_company_document.slug)
     expect(response).to have_http_status(:forbidden)
+  end
+
+  it "uses project codes, document slugs, and public ids across external viewing routes" do
+    document = create(
+      :document,
+      project: member_project,
+      title: "識別子確認資料",
+      slug: "identifier-route-doc",
+      visibility_policy: :public_with_login
+    )
+    version = create(
+      :document_version,
+      document:,
+      version_label: "v2.4.0",
+      status: :published,
+      site_build_path: "docs/identifier-route-doc"
+    )
+    document.update!(latest_version: version)
+    file = DocumentFile.create!(
+      document_version: version,
+      file_name: "identifier-route-doc.pdf",
+      content_type: "application/pdf",
+      storage_key: "spec/#{SecureRandom.hex(8)}-identifier-route-doc.pdf",
+      file_size: 10,
+      scan_status: :scan_clean
+    )
+    create(:document_permission, document:, company: external_user.company, access_level: :download)
+    write_site_file(version, "docs/identifier-route-doc/index.html", "<html><body><h1>Identifier Route Doc</h1></body></html>")
+    FileUtils.mkdir_p(file.absolute_path.dirname)
+    File.write(file.absolute_path, "%PDF-1.4")
+
+    sign_in_as(external_user)
+
+    get project_documents_path(member_project)
+    expect(response).to have_http_status(:ok)
+    expect(link_hrefs).to include(project_document_path(member_project, document.slug))
+
+    get project_document_path(member_project, document.slug)
+    expect(response).to have_http_status(:ok)
+    expect(link_hrefs).to include(project_path(member_project))
+    expect(link_hrefs).to include(project_documents_path(member_project))
+    expect(link_hrefs).to include(document_version_path(version))
+    expect(link_hrefs).to include(document_file_path(file, disposition: "download"))
+    expect(parsed_html.at_css("iframe.site-viewer-frame")["src"]).to include("version_id=#{version.public_id}")
+
+    get document_version_path(version)
+    expect(response).to have_http_status(:ok)
+    expect(request.path).to eq("/document_versions/#{version.public_id}")
+    expect(page_text).to include("v2.4.0")
+
+    get document_file_path(file)
+    expect(response).to have_http_status(:ok)
+    expect(request.path).to eq("/document_files/#{file.public_id}")
+    expect(response.media_type).to eq("application/pdf")
+  ensure
+    FileUtils.rm_f(file.absolute_path) if file&.id
+    FileUtils.rm_rf(version.site_root_absolute_path) if version&.id
   end
 
   it "hides archived documents from external routes until an admin restores them" do

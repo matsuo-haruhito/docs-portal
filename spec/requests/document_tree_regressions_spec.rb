@@ -1,4 +1,5 @@
 require "rails_helper"
+require "digest"
 
 RSpec.describe "Document tree regressions", type: :request do
   let(:user) { create(:user, :internal) }
@@ -10,6 +11,18 @@ RSpec.describe "Document tree regressions", type: :request do
 
   def page_text
     parsed_html.text.squish
+  end
+
+  def sidebar_folder_key_for(path)
+    "folder_#{project.id}_#{Digest::SHA256.hexdigest(path).first(16)}"
+  end
+
+  def sidebar_project_key
+    "project_#{project.id}"
+  end
+
+  def detail_tree_folder_key_for(path)
+    "project_detail_folder_#{project.id}_#{Digest::SHA256.hexdigest(path).first(16)}"
   end
 
   let!(:markdown_document) do
@@ -60,6 +73,12 @@ RSpec.describe "Document tree regressions", type: :request do
       sort_order: 0,
       scan_status: :scan_clean
     )
+  end
+
+  before do
+    markdown_document.update!(latest_version: markdown_version)
+    pdf_document.update!(latest_version: pdf_version)
+    csv_document.update!(latest_version: csv_version)
   end
 
   it "shows mixed document kinds with extension-specific icons in the document page tree" do
@@ -139,6 +158,67 @@ RSpec.describe "Document tree regressions", type: :request do
     expect(page_text).to include("inventory.csv")
     expect(parsed_html.at_css(".tree-icon--pdf")).to be_present
     expect(parsed_html.at_css(".tree-icon--csv")).to be_present
+  end
+
+  it "persists sidebar folder toggles and current bulk expansion keys in the tree view state" do
+    sign_in_as(user)
+
+    get project_document_tree_path(project, document_slug: markdown_document.slug, tree_action: "show", source_path: "guides", format: :turbo_stream)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
+
+    sidebar_state = user.reload.tree_view_state_for(DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY)
+    expect(Array(sidebar_state.expanded_keys)).to include(sidebar_folder_key_for("guides"))
+
+    get project_document_tree_path(project, document_slug: markdown_document.slug, tree_action: "hide", source_path: "guides", format: :turbo_stream)
+
+    expect(response).to have_http_status(:ok)
+
+    sidebar_state = user.reload.tree_view_state_for(DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY)
+    expect(Array(sidebar_state.expanded_keys)).not_to include(sidebar_folder_key_for("guides"))
+
+    post document_tree_all_project_path(project, tree_action: "show", format: :turbo_stream)
+
+    expect(response).to have_http_status(:ok)
+
+    sidebar_state = user.reload.tree_view_state_for(DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY)
+    expect(Array(sidebar_state.expanded_keys)).to include(
+      sidebar_project_key,
+      sidebar_folder_key_for("guides")
+    )
+
+    post document_tree_all_project_path(project, tree_action: "hide", format: :turbo_stream)
+
+    expect(response).to have_http_status(:ok)
+
+    sidebar_state = user.reload.tree_view_state_for(DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY)
+    expect(Array(sidebar_state.expanded_keys)).not_to include(
+      sidebar_project_key,
+      sidebar_folder_key_for("guides")
+    )
+  end
+
+  it "stores project detail tree expansion separately from the sidebar tree state" do
+    sign_in_as(user)
+
+    get project_document_tree_path(project, document_slug: markdown_document.slug, tree_action: "show", source_path: "guides", format: :turbo_stream)
+    sidebar_before = Array(user.reload.tree_view_state_for(DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY).expanded_keys)
+
+    post document_detail_tree_project_path(project, tree_action: "collapse", source_path: "guides", format: :turbo_stream)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
+    expect(parsed_html.at_css(%(turbo-stream[target="project_document_detail_tree"]))).to be_present
+
+    user.reload
+    sidebar_state = user.tree_view_state_for(DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY)
+    detail_state = user.tree_view_state_for("documents:project_detail:#{project.id}")
+
+    expect(Array(sidebar_state.expanded_keys)).to eq(sidebar_before)
+    expect(detail_state).to be_present
+    expect(Array(detail_state.expanded_keys)).not_to include(detail_tree_folder_key_for("guides"))
+    expect(Array(detail_state.expanded_keys)).to eq([])
   end
 
   it "keeps the requested window offset in turbo tree refresh controls" do
