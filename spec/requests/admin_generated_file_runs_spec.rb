@@ -112,6 +112,19 @@ RSpec.describe "Admin generated file runs", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(run.public_id)
+      expect(response.body).to include("状態")
+      expect(response.body).to include("ジョブID")
+      expect(response.body).to include("ジェネレータ")
+      expect(response.body).to include("出力ライター")
+      expect(response.body).to include("発生元")
+      expect(response.body).to include("開始")
+      expect(response.body).to include("完了")
+      expect(response.body).to include("関連情報")
+      expect(response.body).to include("入力パス")
+      expect(response.body).to include("変更ファイル")
+      expect(response.body).to include("生成パス")
+      expect(response.body).to include("メタデータ")
+      expect(response.body).to include("エラー")
       expect(response.body).to include("boom")
       expect(response.body).to include("generated.md")
     end
@@ -142,12 +155,17 @@ RSpec.describe "Admin generated file runs", type: :request do
       get admin_generated_file_run_path(run.public_id)
 
       expect(response).to have_http_status(:ok)
+      expect(response.body).to include("関連イベント")
+      expect(response.body).to include("再実行元")
+      expect(response.body).to include("再実行依頼時刻")
+      expect(response.body).to include("この実行から派生した再実行")
       expect(response.body).to include(admin_generated_file_event_path(related_event.public_id))
       expect(response.body).to include(admin_generated_file_run_path(original_run.public_id))
       expect(response.body).to include(admin_generated_file_run_path(retry_child_run.public_id))
       expect(response.body).to include("missing-event")
-      expect(response.body).to include("Retry")
-      expect(response.body).to include("Bulk Retry")
+      expect(response.body).to include("（未検出）")
+      expect(response.body).to include("再実行")
+      expect(response.body).to include("一括再実行")
     end
   end
 
@@ -189,7 +207,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       post retry_run_admin_generated_file_run_path(run.public_id)
 
       expect(response).to redirect_to(admin_generated_file_run_path(run.public_id))
-      expect(GeneratedFileJob).to have_received(:perform_later).with(
+      expect(GeneratedFileJob).to haveReceived(:perform_later).with(
         changed_files: [],
         job_ids: ["ai_usecase_decision_flow"],
         event_source: "generated_file_run_retry",
