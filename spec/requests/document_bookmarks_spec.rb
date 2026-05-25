@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe "Document bookmarks", type: :request do
   let(:company) { create(:company) }
-  let(:project) { create(:project) }
+  let(:project) { create(:project, name: "Visible Project") }
   let(:user) { create(:user, :external, company:) }
   let(:document) { create(:document, project:, title: "Manual", slug: "manual", visibility_policy: :restricted_external) }
 
@@ -11,8 +11,14 @@ RSpec.describe "Document bookmarks", type: :request do
     create(:document_permission, document:, company:, access_level: :view)
   end
 
-  it "shows bookmark lists" do
+  it "shows bookmark lists with project context and section cues" do
+    later_document = create(:document, project:, title: "Checklist", slug: "checklist", visibility_policy: :restricted_external)
+    recent_document = create(:document, project:, title: "Guide", slug: "guide", visibility_policy: :restricted_external)
+    create(:document_permission, document: later_document, company:, access_level: :view)
+    create(:document_permission, document: recent_document, company:, access_level: :view)
     create(:document_bookmark, user:, document:, bookmark_type: :favorite)
+    create(:document_bookmark, user:, document: later_document, bookmark_type: :read_later)
+    create(:access_log, user:, company:, project:, document: recent_document, action_type: :view, target_type: "document", accessed_at: Time.current)
     sign_in_as(user)
 
     get document_bookmarks_path
@@ -20,6 +26,13 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("文書ショートカット")
     expect(response.body).to include("Manual")
+    expect(response.body).to include("Checklist")
+    expect(response.body).to include("Guide")
+    expect(response.body).to include("Visible Project")
+    expect(response.body).to include("よく開く文書")
+    expect(response.body).to include("あとで確認")
+    expect(response.body).to include("最近見た文書")
+    expect(response.body.scan("解除").size).to eq(2)
   end
 
   it "creates a favorite bookmark" do
