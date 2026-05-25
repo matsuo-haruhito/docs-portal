@@ -42,7 +42,6 @@
 
 - Document 単位 archive / restore は admin 管理画面で実装済み
 - retention / discard candidate を使った一覧・一括操作・自動通知は後続
-- archived version を通常導線に出さないことを request spec で確認する
 
 ## Import / GitHub Actions
 
@@ -109,5 +108,4 @@
 - company_master_admin の権限制御 request spec を追加する
 - public_id route の request spec を追加する
 - latest_version の created_at 基準と override 方針が変わる場合は、そのルールを request / service spec に追加する
-- archived の非表示・復元 spec を追加する
 - AccessLog の記録対象 spec を追加する
