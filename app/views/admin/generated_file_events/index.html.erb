@@ -1,3 +1,19 @@
+<%
+  event_status_labels = {
+    "pending" => "未処理",
+    "processing" => "処理中",
+    "processed" => "処理済み",
+    "failed" => "失敗"
+  }
+  operation_labels = {
+    "create" => "作成",
+    "update" => "更新",
+    "delete" => "削除"
+  }
+  event_status_label = ->(status) { event_status_labels.fetch(status.to_s, status.to_s) }
+  operation_label = ->(operation) { operation_labels.fetch(operation.to_s, operation.to_s) }
+%>
+
 <div class="space-y-6">
   <div class="flex items-start justify-between gap-4">
     <div>
@@ -10,7 +26,7 @@
         <%= button_to "失敗分を一括再dispatch", retry_failed_admin_generated_file_events_path(@filters.compact_blank), method: :post, class: bulk_retry_class %>
         <%= link_to "すべて", admin_generated_file_events_path, class: "rounded border px-3 py-2" %>
         <% GeneratedFileEvent.statuses.keys.each do |status| %>
-          <%= link_to status, admin_generated_file_events_path(status: status), class: "rounded border px-3 py-2" %>
+          <%= link_to event_status_label.call(status), admin_generated_file_events_path(status: status), class: "rounded border px-3 py-2" %>
         <% end %>
       </div>
       <p class="text-xs text-gray-500">一括再dispatchは古い失敗分から最大100件です。</p>
@@ -20,7 +36,7 @@
   <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
     <% GeneratedFileEvent.statuses.keys.each do |status| %>
       <%= link_to admin_generated_file_events_path(status: status), class: "rounded-lg border bg-white p-4" do %>
-        <div class="text-xs font-semibold uppercase text-gray-500"><%= status %></div>
+        <div class="text-xs font-semibold uppercase text-gray-500"><%= event_status_label.call(status) %></div>
         <div class="mt-1 text-2xl font-bold"><%= @status_counts.fetch(status, 0) %></div>
       <% end %>
     <% end %>
@@ -29,28 +45,28 @@
   <%= form_with url: admin_generated_file_events_path, method: :get, local: true, class: "rounded-lg border bg-white p-4" do |form| %>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
       <div>
-        <%= form.label :status, "Status", class: "block text-sm font-semibold" %>
-        <%= form.select :status, options_for_select([["すべて", ""]] + GeneratedFileEvent.statuses.keys.map { [_1, _1] }, @filters[:status]), {}, class: "mt-1 w-full rounded border px-2 py-1" %>
+        <%= form.label :status, "状態", class: "block text-sm font-semibold" %>
+        <%= form.select :status, options_for_select([["すべて", ""]] + GeneratedFileEvent.statuses.keys.map { [event_status_label.call(_1), _1] }, @filters[:status]), {}, class: "mt-1 w-full rounded border px-2 py-1" %>
       </div>
       <div>
-        <%= form.label :operation, "Operation", class: "block text-sm font-semibold" %>
-        <%= form.select :operation, options_for_select([["すべて", ""], ["create", "create"], ["update", "update"], ["delete", "delete"]], @filters[:operation]), {}, class: "mt-1 w-full rounded border px-2 py-1" %>
+        <%= form.label :operation, "操作種別", class: "block text-sm font-semibold" %>
+        <%= form.select :operation, options_for_select([["すべて", ""], ["作成", "create"], ["更新", "update"], ["削除", "delete"]], @filters[:operation]), {}, class: "mt-1 w-full rounded border px-2 py-1" %>
       </div>
       <div>
-        <%= form.label :event_source, "Event Source", class: "block text-sm font-semibold" %>
+        <%= form.label :event_source, "イベント発生元", class: "block text-sm font-semibold" %>
         <%= form.text_field :event_source, value: @filters[:event_source], class: "mt-1 w-full rounded border px-2 py-1" %>
       </div>
       <div>
-        <%= form.label :path, "Path contains", class: "block text-sm font-semibold" %>
+        <%= form.label :path, "パスを含む", class: "block text-sm font-semibold" %>
         <%= form.text_field :path, value: @filters[:path], class: "mt-1 w-full rounded border px-2 py-1" %>
         <p class="mt-1 text-xs text-gray-500">Windowsの区切り文字 \ は / として検索します。</p>
       </div>
       <div>
-        <%= form.label :scheduled_from, "Scheduled From", class: "block text-sm font-semibold" %>
+        <%= form.label :scheduled_from, "実行予定日(開始)", class: "block text-sm font-semibold" %>
         <%= form.text_field :scheduled_from, value: @filters[:scheduled_from], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1" %>
       </div>
       <div>
-        <%= form.label :scheduled_to, "Scheduled To", class: "block text-sm font-semibold" %>
+        <%= form.label :scheduled_to, "実行予定日(終了)", class: "block text-sm font-semibold" %>
         <%= form.text_field :scheduled_to, value: @filters[:scheduled_to], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1" %>
       </div>
       <div class="flex items-end gap-2">
@@ -70,16 +86,16 @@
     <table class="min-w-full divide-y divide-gray-200 text-sm">
       <thead class="bg-gray-50">
         <tr>
-          <th class="px-4 py-3 text-left font-semibold">Event ID</th>
-          <th class="px-4 py-3 text-left font-semibold">Status</th>
-          <th class="px-4 py-3 text-left font-semibold">Path</th>
-          <th class="px-4 py-3 text-left font-semibold">Operation</th>
-          <th class="px-4 py-3 text-left font-semibold">Source</th>
-          <th class="px-4 py-3 text-left font-semibold">Error</th>
-          <th class="px-4 py-3 text-left font-semibold">Count</th>
-          <th class="px-4 py-3 text-left font-semibold">Scheduled</th>
-          <th class="px-4 py-3 text-left font-semibold">Processed</th>
-          <th class="px-4 py-3 text-left font-semibold">Actions</th>
+          <th class="px-4 py-3 text-left font-semibold">イベントID</th>
+          <th class="px-4 py-3 text-left font-semibold">状態</th>
+          <th class="px-4 py-3 text-left font-semibold">パス</th>
+          <th class="px-4 py-3 text-left font-semibold">操作種別</th>
+          <th class="px-4 py-3 text-left font-semibold">発生元</th>
+          <th class="px-4 py-3 text-left font-semibold">エラー</th>
+          <th class="px-4 py-3 text-left font-semibold">回数</th>
+          <th class="px-4 py-3 text-left font-semibold">実行予定</th>
+          <th class="px-4 py-3 text-left font-semibold">処理完了</th>
+          <th class="px-4 py-3 text-left font-semibold">操作</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
@@ -89,9 +105,9 @@
               <td class="px-4 py-3 font-mono">
                 <%= link_to event.public_id, admin_generated_file_event_path(event.public_id), class: "text-blue-600 underline" %>
               </td>
-              <td class="px-4 py-3"><%= event.status %></td>
+              <td class="px-4 py-3"><%= event_status_label.call(event.status) %></td>
               <td class="px-4 py-3 font-mono"><%= event.path %></td>
-              <td class="px-4 py-3"><%= event.operation %></td>
+              <td class="px-4 py-3"><%= operation_label.call(event.operation) %></td>
               <td class="px-4 py-3"><%= event.event_source.presence || "-" %></td>
               <td class="max-w-xs truncate px-4 py-3 text-gray-700" title="<%= event.error_message %>"><%= event.error_message.presence || "-" %></td>
               <td class="px-4 py-3"><%= event.occurrences_count %></td>
