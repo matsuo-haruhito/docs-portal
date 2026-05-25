@@ -1,4 +1,7 @@
 - page_title "文書マスタ"
+- table_key = :admin_documents
+- table_columns = document_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
 
 h1 文書マスタ
 = render "admin/nav"
@@ -7,39 +10,42 @@ h1 文書マスタ
   h2 新規登録
   = render "form", document: @document
 
-= table_tag do
+.card
+  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定")
+
+= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
   thead
     tr
-      th 案件
-      th 文書名
-      th URL識別子
-      th カテゴリ
-      th 種別
-      th 公開範囲
-      th 状態
-      th 保管期限
-      th 廃棄候補
-      th
+      th data-rails-table-preferences-column-key="project" 案件
+      th data-rails-table-preferences-column-key="title" 文書名
+      th data-rails-table-preferences-column-key="slug" URL識別子
+      th data-rails-table-preferences-column-key="category" カテゴリ
+      th data-rails-table-preferences-column-key="document_kind" 種別
+      th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
+      th data-rails-table-preferences-column-key="status" 状態
+      th data-rails-table-preferences-column-key="retention_until" 保管期限
+      th data-rails-table-preferences-column-key="discard_candidate_at" 廃棄候補
+      th data-rails-table-preferences-column-key="actions"
   tbody
     - @documents.each do |document|
       tr
-        td = document.project.name
-        td = link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" }
-        td = document.slug
-        td
+        td data-rails-table-preferences-column-key="project" = document.project.name
+        td data-rails-table-preferences-column-key="title" = link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" }
+        td data-rails-table-preferences-column-key="slug" = document.slug
+        td data-rails-table-preferences-column-key="category"
           span.badge = document_category_label(document)
-        td = document_kind_label(document)
-        td = document_visibility_policy_label(document)
-        td
+        td data-rails-table-preferences-column-key="document_kind" = document_kind_label(document)
+        td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(document)
+        td data-rails-table-preferences-column-key="status"
           - if document.archived?
             span.badge アーカイブ済み
             br
             span.muted = "実行者: #{document.archived_by_user&.name || '-'}"
           - else
             span.badge 有効
-        td = document.retention_until ? l(document.retention_until) : "-"
-        td = document.discard_candidate_at ? l(document.discard_candidate_at) : "-"
-        td.actions
+        td data-rails-table-preferences-column-key="retention_until" = document.retention_until ? l(document.retention_until) : "-"
+        td data-rails-table-preferences-column-key="discard_candidate_at" = document.discard_candidate_at ? l(document.discard_candidate_at) : "-"
+        td.actions data-rails-table-preferences-column-key="actions"
           = edit_link_to "編集", edit_admin_document_path(document)
           - if document.archived?
             = button_to "復元", restore_admin_document_path(document), method: :patch, class: "button secondary"
