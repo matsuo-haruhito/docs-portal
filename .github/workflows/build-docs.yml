@@ -37,7 +37,12 @@ jobs:
           set -euo pipefail
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
-            changed_files=$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD)
+            if git merge-base "origin/${{ github.base_ref }}" HEAD >/dev/null 2>&1; then
+              changed_files=$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD)
+            else
+              echo "merge base unavailable for origin/${{ github.base_ref }}...HEAD; falling back to tree diff against the pull request merge commit" >&2
+              changed_files=$(git diff --name-only "origin/${{ github.base_ref }}" HEAD)
+            fi
           else
             changed_files=$(git diff --name-only HEAD^ HEAD)
           fi
