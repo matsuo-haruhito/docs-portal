@@ -43,12 +43,13 @@ RSpec.describe "Dashboard", type: :request do
     expect(response.body).to include("Visible Manual")
     expect(metric_cta_links.map(&:text)).to include(
       "案件一覧へ",
-      "案件から文書を探す",
+      "文書一覧へ",
       "ショートカット一覧へ",
       "申請一覧へ"
     )
     expect(metric_cta_links.map { |link| link["href"] }).to include(
       projects_path,
+      documents_path,
       document_bookmarks_path,
       access_requests_path
     )
@@ -99,7 +100,7 @@ RSpec.describe "Dashboard", type: :request do
     expect(response).to have_http_status(:ok)
     expect(metric_cta_links.map(&:text)).to include(
       "案件一覧へ",
-      "案件から文書を探す",
+      "文書一覧へ",
       "ショートカット一覧へ",
       "申請一覧へ"
     )
