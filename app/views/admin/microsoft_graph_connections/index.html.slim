@@ -7,6 +7,14 @@ h1 Microsoft Graph接続
   h2 新規登録
   = render "form", microsoft_graph_connection: @microsoft_graph_connection
 
+- if @duplicate_enabled_project_ids.any?
+  .card
+    h2 preview 利用中の接続を要整理の案件
+    p.muted 同一案件に複数の有効接続が残っています。preview で使用中の 1 件だけを残し、他は無効化してください。
+    ul
+      - @microsoft_graph_connections.select { |connection| @duplicate_enabled_project_ids.include?(connection.project_id) }.map(&:project).uniq.each do |project|
+        li = "#{project.name} (#{project.code})"
+
 = table_tag do
   thead
     tr
@@ -16,6 +24,7 @@ h1 Microsoft Graph接続
       th Drive
       th プレビュー用フォルダ
       th 状態
+      th preview利用
       th 操作
   tbody
     - @microsoft_graph_connections.each do |connection|
@@ -37,6 +46,15 @@ h1 Microsoft Graph接続
         td
           code = connection.preview_folder_path
         td = connection.enabled? ? "有効" : "無効"
+        td
+          - if connection.enabled? && @preview_connection_ids_by_project[connection.project_id] == connection.id
+            strong previewで使用中
+          - elsif connection.enabled?
+            strong 有効だが未使用
+            br
+            span.muted 別の有効接続が preview に使われます
+          - else
+            span.muted previewでは未使用
         td.actions
           = edit_link_to "編集", edit_admin_microsoft_graph_connection_path(connection)
           = delete_link_to "削除", admin_microsoft_graph_connection_path(connection), confirm: "Microsoft Graph接続設定を削除しますか？"
