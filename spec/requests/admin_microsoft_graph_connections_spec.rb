@@ -22,8 +22,8 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
     it "highlights legacy duplicate enabled connections that need cleanup" do
       sign_in_as(admin_user)
       create(:microsoft_graph_connection, project:, name: "Primary connection", enabled: true)
-      duplicate = build(:microsoft_graph_connection, project:, name: "Duplicate connection", enabled: true)
-      duplicate.save!(validate: false)
+      duplicate = create(:microsoft_graph_connection, project:, name: "Duplicate connection", enabled: false)
+      duplicate.update_column(:enabled, true)
 
       get admin_microsoft_graph_connections_path
 
