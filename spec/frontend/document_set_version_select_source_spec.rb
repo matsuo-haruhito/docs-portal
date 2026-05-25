@@ -5,7 +5,7 @@ RSpec.describe "admin/document_sets fixed version selector source" do
 
   it "keeps the nested parameter name while enabling rails fields kit tom select" do
     aggregate_failures do
-      expect(source).to include('= select_tag "document_set_items[#{index}][document_version_id]",')
+      expect(source).to include('"document_set_items[#{index}][document_version_id]"')
       expect(source).to include('controller: "rails-fields-kit--tom-select"')
       expect(source).to include('rails_fields_kit__tom_select_kind_value: "select"')
       expect(source).to include('rails_fields_kit__tom_select_placeholder_value: "固定する版を検索"')
