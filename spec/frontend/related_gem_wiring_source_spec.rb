@@ -69,6 +69,8 @@ RSpec.describe "Related gem wiring source" do
       expect(runbook_source).to include("`app/helpers/documents_helper.rb`")
       expect(runbook_source).to include("`app/views/documents/_tree.html.erb`")
       expect(runbook_source).to include("`app/views/projects/_document_detail_tree.html.erb`")
+      expect(sidebar_tree_source).to include("tree_view_rows(render_state")
+      expect(detail_tree_source).to include("<%= tree_view_rows(render_state) %>")
       expect(sidebar_tree_source).to include("document_tree_render_state(")
       expect(sidebar_tree_source).to match(/tree_view_rows\(render_state/)
       expect(detail_tree_source).to include("project_document_detail_tree_render_state(")

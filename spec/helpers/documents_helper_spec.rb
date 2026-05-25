@@ -29,6 +29,71 @@ RSpec.describe DocumentsHelper, type: :helper do
     end
   end
 
+  describe "#document_tree_render_window" do
+    let(:internal_user) { create(:user, :internal) }
+
+    before do
+      user = internal_user
+      helper.define_singleton_method(:current_user) { user }
+    end
+
+    it "skips windowing for small trees" do
+      project = create(:project, code: "SMALL", name: "Small Tree")
+      document = create(:document, project:, title: "Overview")
+      version = create(:document_version, document:, source_relative_path: "docs/overview/index.md")
+      document.update!(latest_version: version)
+
+      render_state = helper.document_tree_render_state(projects: [project], current_project: project, current_document: document)
+
+      expect(helper.document_tree_render_window(render_state, current_document: document)).to be_nil
+    end
+
+    it "windows large trees while keeping the current document visible" do
+      project = create(:project, code: "LARGE", name: "Large Tree")
+      documents = Array.new(90) do |index|
+        document = create(:document, project:, title: format("Document %03d", index))
+        version = create(
+          :document_version,
+          document:,
+          source_relative_path: format("docs/section_%02d/document_%03d.md", index / 3, index)
+        )
+        document.update!(latest_version: version)
+        document
+      end
+      current_document = documents.fetch(75)
+
+      render_state = helper.document_tree_render_state(projects: [project], current_project: project, current_document: current_document)
+      window = helper.document_tree_render_window(render_state, current_document: current_document)
+
+      expect(window).to be_a(TreeView::RenderWindow)
+      expect(window.total_count).to be > DocumentsHelper::DOCUMENT_TREE_RENDER_WINDOW_THRESHOLD
+      expect(window.rows.length).to eq(DocumentsHelper::DOCUMENT_TREE_RENDER_WINDOW_LIMIT)
+      expect(window.offset).to be > 0
+      expect(window.rows.map(&:node_key)).to include(helper.send(:node_key, current_document))
+    end
+
+    it "clamps explicit offsets to the last full window" do
+      project = create(:project, code: "CLAMP", name: "Clamp Tree")
+      documents = Array.new(90) do |index|
+        document = create(:document, project:, title: format("Node %03d", index))
+        version = create(
+          :document_version,
+          document:,
+          source_relative_path: format("docs/group_%02d/node_%03d.md", index / 3, index)
+        )
+        document.update!(latest_version: version)
+        document
+      end
+
+      render_state = helper.document_tree_render_state(projects: [project], current_project: project, current_document: documents.last)
+      window = helper.document_tree_render_window(render_state, current_document: documents.last, requested_offset: 10_000)
+
+      expect(window).to be_a(TreeView::RenderWindow)
+      expect(window.offset).to eq(window.total_count - DocumentsHelper::DOCUMENT_TREE_RENDER_WINDOW_LIMIT)
+      expect(window.rows.map(&:node_key)).to include(helper.send(:node_key, documents.last))
+    end
+  end
+
   describe "#document_search_match_labels" do
     let(:project) { create(:project, code: "MATCH") }
     let(:document) { create(:document, project:, title: "出荷API仕様", slug: "shipping-api") }

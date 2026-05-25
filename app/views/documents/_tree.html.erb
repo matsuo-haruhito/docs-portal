@@ -29,6 +29,8 @@
       background: transparent !important;
       line-height: 0;
     }
+    .document-tree-window-controls { display: grid; gap: 6px; margin-top: 8px; }
+    .document-tree-window-summary { margin: 0; }
     @media (max-width: 520px) {
       .document-tree-end-spacer > td { height: 1.5rem; }
     }
@@ -51,16 +53,34 @@
       expanded_source_path: local_assigns[:expanded_source_path],
       collapsed_source_path: local_assigns[:collapsed_source_path]
     ) %>
+    <% window = document_tree_render_window(render_state, current_document: local_assigns[:current_document]) %>
+    <% window_project = local_assigns[:current_project] || local_assigns[:current_document]&.project %>
 
     <div class="document-tree-scroll-spacer">
       <table class="tree-view-table">
         <tbody>
-          <%= tree_view_rows(render_state) %>
+          <%= window ? tree_view_rows(render_state, window:) : tree_view_rows(render_state) %>
           <tr class="document-tree-end-spacer" aria-hidden="true">
             <td colspan="99"></td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <% if window.present? %>
+      <div class="document-tree-window-controls" aria-label="文書ツリー表示範囲">
+        <p class="muted document-tree-window-summary">大きなツリーのため <%= window.start_index + 1 %>-<%= window.end_index %> / <%= window.total_count %> 行を表示しています。</p>
+        <% if window_project.present? %>
+          <div class="document-tree-actions">
+            <% if window.previous? %>
+              <%= button_to "前の#{DocumentsHelper::DOCUMENT_TREE_RENDER_WINDOW_LIMIT}行", document_tree_window_path(project: window_project, current_document: local_assigns[:current_document], offset: window.previous_offset), method: :get, form: { data: { turbo_stream: true } }, class: "document-tree-action-link" %>
+            <% end %>
+            <% if window.next? %>
+              <%= button_to "次の#{DocumentsHelper::DOCUMENT_TREE_RENDER_WINDOW_LIMIT}行", document_tree_window_path(project: window_project, current_document: local_assigns[:current_document], offset: window.next_offset), method: :get, form: { data: { turbo_stream: true } }, class: "document-tree-action-link" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
   <% end %>
 </div>
