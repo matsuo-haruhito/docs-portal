@@ -156,6 +156,7 @@ RSpec.describe "Admin generated file events", type: :request do
       get admin_generated_file_event_path(event.public_id)
 
       expect(response).to have_http_status(:ok)
+      expect(response.body).to include(event.public_id)
       expect(response.body).to include("状態")
       expect(response.body).to include("イベントキー")
       expect(response.body).to include("対象パス")
@@ -167,7 +168,6 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include("処理日時")
       expect(response.body).to include("エラー")
       expect(response.body).to include("メタデータ")
-      expect(response.body).to include(event.public_id)
       expect(response.body).to include("docs/source.yml")
       expect(response.body).to include("/ 区切りで保存されます。")
       expect(response.body).to include("boom")
