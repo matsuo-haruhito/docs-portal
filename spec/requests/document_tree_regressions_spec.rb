@@ -75,6 +75,12 @@ RSpec.describe "Document tree regressions", type: :request do
     )
   end
 
+  before do
+    markdown_document.update!(latest_version: markdown_version)
+    pdf_document.update!(latest_version: pdf_version)
+    csv_document.update!(latest_version: csv_version)
+  end
+
   it "shows mixed document kinds with extension-specific icons in the document page tree" do
     sign_in_as(user)
 
@@ -203,7 +209,7 @@ RSpec.describe "Document tree regressions", type: :request do
     get project_document_tree_path(project, document_slug: markdown_document.slug, tree_action: "show", source_path: "guides", format: :turbo_stream)
     sidebar_before = Array(user.reload.tree_view_state_for(DocumentsHelper::DOCUMENT_TREE_INSTANCE_KEY).expanded_keys)
 
-    post project_document_detail_tree_path(project, tree_action: "collapse", source_path: "guides", format: :turbo_stream)
+    post document_detail_tree_project_path(project, tree_action: "collapse", source_path: "guides", format: :turbo_stream)
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
