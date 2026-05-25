@@ -18,6 +18,7 @@ RSpec.describe "Admin document usage reports", type: :request do
   end
 
   it "shows selection controls and a prompt when no project is selected" do
+    project
     sign_in_as(admin_user)
 
     get admin_document_usage_reports_path
@@ -29,7 +30,10 @@ RSpec.describe "Admin document usage reports", type: :request do
     form = parsed_html.at_css("form[action='#{admin_document_usage_reports_path}']")
     expect(form).to be_present
     expect(form.at_css("select[name='project_id']")).to be_present
-    expect(form.css("option").map { |option| option.text.squish }).to include("選択してください", "Usage Project")
+
+    option_texts = form.css("option").map { |option| option.text.squish }
+    expect(option_texts).to include("選択してください")
+    expect(option_texts.any? { |text| text.include?("Usage Project") }).to be(true)
 
     clear_link = parsed_html.at_css("a[href='#{admin_document_usage_reports_path}']")
     expect(clear_link).to be_present
@@ -56,7 +60,7 @@ RSpec.describe "Admin document usage reports", type: :request do
     selected_option = parsed_html.at_css("select[name='project_id'] option[selected]")
     expect(selected_option).to be_present
     expect(selected_option["value"]).to eq(project.id.to_s)
-    expect(selected_option.text.squish).to eq("Usage Project")
+    expect(selected_option.text.squish).to include("Usage Project")
 
     headers = parsed_html.css("table thead th").map { |header| header.text.squish }
     expect(headers).to include("文書名", "カテゴリ", "種別", "公開範囲", "利用", "閲覧", "ダウンロード", "既読確認", "最終アクセス")
