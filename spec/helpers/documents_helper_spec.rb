@@ -92,6 +92,31 @@ RSpec.describe DocumentsHelper, type: :helper do
       expect(window.offset).to eq(window.total_count - DocumentsHelper::DOCUMENT_TREE_RENDER_WINDOW_LIMIT)
       expect(window.rows.map(&:node_key)).to include(helper.send(:node_key, documents.last))
     end
+
+    it "exposes previous and next offsets for intermediate windows" do
+      project = create(:project, code: "MID", name: "Middle Window Tree")
+      documents = Array.new(140) do |index|
+        document = create(:document, project:, title: format("Window %03d", index))
+        version = create(
+          :document_version,
+          document:,
+          source_relative_path: format("window_%03d.md", index)
+        )
+        document.update!(latest_version: version)
+        document
+      end
+      current_document = documents.fetch(60)
+
+      render_state = helper.document_tree_render_state(projects: [project], current_project: project, current_document: current_document)
+      window = helper.document_tree_render_window(render_state, current_document: current_document, requested_offset: 50)
+
+      expect(window).to be_a(TreeView::RenderWindow)
+      expect(window.offset).to eq(50)
+      expect(window).to be_previous
+      expect(window.previous_offset).to eq(0)
+      expect(window).to be_next
+      expect(window.next_offset).to eq(100)
+    end
   end
 
   describe "#document_search_match_labels" do

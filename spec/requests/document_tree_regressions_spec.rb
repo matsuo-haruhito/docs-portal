@@ -135,4 +135,45 @@ RSpec.describe "Document tree regressions", type: :request do
     expect(response.body).to include("tree-icon--pdf")
     expect(response.body).to include("tree-icon--csv")
   end
+
+  it "keeps the requested window offset in turbo tree refresh controls" do
+    sign_in_as(user)
+
+    documents = Array.new(120) do |index|
+      document = create(
+        :document,
+        project:,
+        title: format("Windowed Document %03d", index),
+        slug: format("windowed-document-%03d", index)
+      )
+      version = create(
+        :document_version,
+        document:,
+        version_label: format("v%<index>d.0.0", index: index + 1),
+        source_relative_path: format("windowed/document_%03d.md", index),
+        source_directory: "windowed",
+        source_file_name: format("document_%03d.md", index),
+        source_basename: format("document_%03d", index),
+        source_extension: "md"
+      )
+      document.update!(latest_version: version)
+      document
+    end
+    current_document = documents.fetch(70)
+
+    get project_document_tree_path(project, document_slug: current_document.slug, tree_window_offset: 50, format: :turbo_stream)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
+    expect(response.body).to include("document-tree-window-summary")
+    expect(response.body).to include("前の50行")
+    expect(response.body).to include("次の50行")
+
+    toolbar_actions = parsed_html.css("#document_tree_toolbar form[action]").map { _1["action"] }
+
+    expect(toolbar_actions).not_to be_empty
+    expect(toolbar_actions).to all(include("tree_window_offset=50"))
+    expect(toolbar_actions.any? { _1.include?("tree_action=show") }).to be(true)
+    expect(toolbar_actions.any? { _1.include?("tree_action=hide") }).to be(true)
+  end
 end
