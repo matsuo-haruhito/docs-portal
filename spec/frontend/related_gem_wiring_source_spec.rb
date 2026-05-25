@@ -47,18 +47,43 @@ RSpec.describe "Related gem wiring source" do
     end
   end
 
+  describe "layout asset wiring" do
+    it "mounts related gem stylesheets and the shared Vite application entrypoint from the application layout" do
+      layout_source = read_source("app/views/layouts/application.html.slim")
+
+      expect(layout_source).to include('= stylesheet_link_tag "tree_view", media: "all"')
+      expect(layout_source).to include('= stylesheet_link_tag "rails_table_preferences", media: "all"')
+      expect(layout_source).to include("= vite_client_tag")
+      expect(layout_source).to include('= vite_javascript_tag "application"')
+    end
+  end
+
   describe "tree_view app-side seam" do
     it "keeps tree rendering anchored in server-rendered helpers and partials" do
       runbook_source = read_source("docs/関連gem連携調査runbook.md")
       sidebar_tree_source = read_source("app/views/documents/_tree.html.erb")
       detail_tree_source = read_source("app/views/projects/_document_detail_tree.html.erb")
+      projects_helper_source = read_source("app/helpers/projects_helper.rb")
 
       expect(runbook_source).to include("`tree_view` | 文書ツリー / 詳細ツリー / persisted expand state")
       expect(runbook_source).to include("`app/helpers/documents_helper.rb`")
       expect(runbook_source).to include("`app/views/documents/_tree.html.erb`")
       expect(runbook_source).to include("`app/views/projects/_document_detail_tree.html.erb`")
-      expect(sidebar_tree_source).to include("<%= tree_view_rows(render_state) %>")
-      expect(detail_tree_source).to include("<%= tree_view_rows(render_state) %>")
+      expect(sidebar_tree_source).to include("document_tree_render_state(")
+      expect(sidebar_tree_source).to match(/tree_view_rows\(render_state/)
+      expect(detail_tree_source).to include("project_document_detail_tree_render_state(")
+      expect(detail_tree_source).to match(/tree_view_rows\(render_state/)
+      expect(projects_helper_source).to include("TreeView::RenderState.new(")
+    end
+
+    it "routes sidebar persisted state keys through DocumentsHelper key generation" do
+      controller_source = read_source("app/controllers/projects_controller.rb")
+
+      expect(controller_source).to match(/helpers\.send\(:node_key,\s*project\)/)
+      expect(controller_source).to match(/helpers\.send\(\s*:node_key,\s*DocumentsHelper::DocumentTreeFolderNode\.new\(/m)
+      expect(controller_source).to include("document_tree_folder_node_key(project, path)")
+      expect(controller_source).to include("document_tree_folder_node_key(@project, expanded_source_path)")
+      expect(controller_source).to include("document_tree_folder_node_key(@project, collapsed_source_path)")
     end
   end
 end
