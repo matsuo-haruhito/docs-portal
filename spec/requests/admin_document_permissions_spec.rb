@@ -16,6 +16,11 @@ RSpec.describe "Admin document permissions", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("文書別の権限概要")
+    expect(response.body).to include("権限概要の表示設定")
+    expect(response.body).to include("権限一覧の表示設定")
+    expect(response.body).to include('data-rails-table-preferences-column-key="document"')
+    expect(response.body).to include('data-rails-table-preferences-column-key="company"')
+    expect(response.body).to include('data-rails-table-preferences-column-key="access_level"')
     expect(response.body).to include("Permission Target")
     expect(response.body).to include("限定公開")
     expect(response.body).to include("閲覧")
