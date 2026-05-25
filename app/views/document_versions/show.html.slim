@@ -2,6 +2,8 @@
 - preview_build_status = PreviewBuildStatusPresenter.new(@version)
 - docusaurus_preview_pending = @version.source_extension.to_s.in?(%w[md markdown mdx]) && !@version.rendered_site_available? && @version.source_commit_hash == "manual-upload"
 - side_by_side_label = @compare_version ? "左右確認" : "左右確認（比較対象なし）"
+- diff_status_labels = { "changed" => "変更", "added" => "追加", "removed" => "削除" }
+- diff_status_label = ->(status) { diff_status_labels.fetch(status.to_s, status.to_s.humanize) }
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
 
@@ -169,7 +171,7 @@ p.muted
       .diff-file-list
         - diff_files.each do |row|
           .diff-file-row class="is-#{row.fetch(:status)}"
-            span.diff-status = row.fetch(:status).to_s.first.upcase
+            span.diff-status = diff_status_label.call(row.fetch(:status))
             span.diff-path = row.fetch(:path)
             span.diff-bytes
               - if row.fetch(:added_bytes).positive?
@@ -200,7 +202,7 @@ p.muted
                 details.markdown-line-diff-file open=file_diff.lines.any?
                   summary
                     strong = file_diff.path
-                    span.muted = " / #{file_diff.status}"
+                    span.muted = " / #{diff_status_label.call(file_diff.status)}"
                     - changed_lines = file_diff.lines.count { |line| line.kind != :context && line.kind != :gap }
                     span.diff-count = changed_lines
                   - if file_diff.message.present?
@@ -265,7 +267,7 @@ p.muted
                 details.rendered-table-diff open=changed_cells.positive?
                   summary
                     strong = "表 #{table_diff.index}"
-                    span.muted = " / #{table_diff.status}"
+                    span.muted = " / #{diff_status_label.call(table_diff.status)}"
                     span.diff-count = changed_cells
                   - if table_diff.message.present?
                     p.muted = table_diff.message
