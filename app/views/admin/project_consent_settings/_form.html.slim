@@ -2,12 +2,18 @@
 
 = form_with model: [:admin, project_consent_setting] do |form|
   .form-grid
-    label
-      | 案件
-      = form.collection_select :project_id, @projects, :id, :name
-    label
-      | 同意文面
-      = form.select :consent_term_id, @consent_terms.map { |term| ["#{term.title} / #{term.version_label}", term.id] }
+    = form.rfk_select :project_id,
+      collection: @projects,
+      collection_value_method: :id,
+      collection_label_method: :name,
+      wrapper: true,
+      label: "案件",
+      placeholder: "案件を選択"
+    = form.rfk_select :consent_term_id,
+      collection: @consent_terms.map { [project_consent_term_option_label(_1), _1.id] },
+      wrapper: true,
+      label: "同意文面",
+      placeholder: "同意文面を選択"
     label
       | 必須タイミング
       = form.select :required_on, ProjectConsentSetting.required_ons.keys.map { [_1, _1] }
