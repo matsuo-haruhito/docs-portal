@@ -9,14 +9,22 @@ RSpec.describe "Admin document usage reports", type: :request do
   let(:viewer) { create(:user, :external, company:) }
   let(:document) { create(:document, project:, title: "Manual", slug: "manual") }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def normalized_text(node)
+    node.text.gsub(/\s+/, " ").strip
+  end
+
   it "shows a prompt when no project is selected" do
     sign_in_as(admin_user)
 
     get admin_document_usage_reports_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("文書利用状況")
-    expect(response.body).to include("案件を選択すると集計結果を表示します。")
+    expect(parsed_html.at_css("h1")&.text).to include("文書利用状況")
+    expect(parsed_html.at_css("p.muted")&.text).to include("案件を選択すると集計結果を表示します。")
   end
 
   it "shows usage summary for the selected project" do
@@ -29,11 +37,29 @@ RSpec.describe "Admin document usage reports", type: :request do
     get admin_document_usage_reports_path(project_id: project.id)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Usage Project")
-    expect(response.body).to include("Manual")
-    expect(response.body).to include("閲覧:<strong> 1</strong>")
-    expect(response.body).to include("ダウンロード:<strong> 1</strong>")
-    expect(response.body).to include("既読確認:<strong> 1</strong>")
+
+    summary_card = parsed_html.css("section.card").find do |section|
+      normalized_text(section.at_css("h2")).include?("集計サマリ")
+    end
+
+    expect(summary_card).to be_present
+
+    summary_lines = summary_card.css("p").map { normalized_text(_1) }
+
+    expect(summary_lines).to include("案件: Usage Project (USAGE)")
+    expect(summary_lines).to include("閲覧: 1 / ダウンロード: 1 / 既読確認: 1")
+
+    document_row = parsed_html.css("table tbody tr").find do |row|
+      normalized_text(row.at_css("td")) == "Manual"
+    end
+
+    expect(document_row).to be_present
+
+    cells = document_row.css("td").map { normalized_text(_1) }
+
+    expect(cells[0]).to eq("Manual")
+    expect(cells[4]).to eq("あり")
+    expect(cells[5..7]).to eq(%w[1 1 1])
   end
 
   it "forbids external users and company master admins" do
