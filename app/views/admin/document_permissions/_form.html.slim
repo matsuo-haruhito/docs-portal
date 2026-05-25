@@ -2,18 +2,28 @@
 
 = form_with model: [:admin, document_permission] do |form|
   .form-grid
-    label style="grid-column: 1 / -1;"
-      | 文書名
-      = form.collection_select :document_id, @documents, :id, :title
-    label
-      | 会社
-      = form.collection_select :company_id, @companies, :id, :display_name, include_blank: "未指定"
-    label
-      | ユーザー
-      = form.collection_select :user_id, @users, :id, :display_name, include_blank: "未指定"
-    label
-      | 権限
-      = form.select :access_level, enum_options_for("document_permissions.access_level", DocumentPermission.access_levels.keys)
+    = form.rfk_select :document_id,
+      collection: document_permission_form_document_options(@documents),
+      wrapper: true,
+      label: "文書名",
+      placeholder: "文書を選択",
+      wrapper_html: { style: "grid-column: 1 / -1;" }
+    = form.rfk_select :company_id,
+      collection: document_permission_form_company_options(@companies),
+      wrapper: true,
+      label: "会社",
+      allow_clear: true,
+      placeholder: "会社を選択"
+    = form.rfk_select :user_id,
+      collection: document_permission_form_user_options(@users),
+      wrapper: true,
+      label: "ユーザー",
+      allow_clear: true,
+      placeholder: "ユーザーを選択"
+    = form.rfk_select :access_level,
+      collection: enum_options_for("document_permissions.access_level", DocumentPermission.access_levels.keys),
+      wrapper: true,
+      label: "権限"
 
   p.muted 会社単位かユーザー単位のどちらかを指定してください。
   p.actions
