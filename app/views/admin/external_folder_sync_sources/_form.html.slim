@@ -16,9 +16,13 @@
 
 = form_with model: [:admin, external_folder_sync_source] do |form|
   .form-grid
-    label
-      | 対象案件
-      = form.collection_select :project_id, @projects, :id, :name
+    = form.rfk_select :project_id,
+      collection: @projects,
+      collection_value_method: :id,
+      collection_label_method: :name,
+      wrapper: true,
+      label: "対象案件",
+      placeholder: "案件を選択"
     label
       | 同期設定名
       = form.text_field :name, placeholder: "Google Drive同期"
