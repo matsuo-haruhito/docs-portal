@@ -9,14 +9,18 @@ RSpec.describe "Admin document usage reports", type: :request do
   let(:viewer) { create(:user, :external, company:) }
   let(:document) { create(:document, project:, title: "Manual", slug: "manual") }
 
+  def page_text
+    Nokogiri::HTML(response.body).text.squish
+  end
+
   it "shows a prompt when no project is selected" do
     sign_in_as(admin_user)
 
     get admin_document_usage_reports_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("文書利用状況")
-    expect(response.body).to include("案件を選択すると集計結果を表示します。")
+    expect(page_text).to include("文書利用状況")
+    expect(page_text).to include("案件を選択すると集計結果を表示します。")
   end
 
   it "shows usage summary for the selected project" do
@@ -29,11 +33,11 @@ RSpec.describe "Admin document usage reports", type: :request do
     get admin_document_usage_reports_path(project_id: project.id)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Usage Project")
-    expect(response.body).to include("Manual")
-    expect(response.body).to include("閲覧:<strong> 1</strong>")
-    expect(response.body).to include("ダウンロード:<strong> 1</strong>")
-    expect(response.body).to include("既読確認:<strong> 1</strong>")
+    expect(page_text).to include("Usage Project")
+    expect(page_text).to include("Manual")
+    expect(page_text).to include("閲覧: 1")
+    expect(page_text).to include("ダウンロード: 1")
+    expect(page_text).to include("既読確認: 1")
   end
 
   it "forbids external users and company master admins" do
