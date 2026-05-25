@@ -1,39 +1,56 @@
 - page_title "Git同期履歴"
+- table_key = :admin_git_import_runs
+- table_columns = git_import_run_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
 
 h1 Git同期履歴
 = render "admin/nav"
 
-= table_tag do
+.card
+  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "Git同期履歴の表示設定")
+
+= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
   thead
     tr
-      th 実行日時
-      th リポジトリ
-      th ブランチ/パス
-      th コミット
-      th 状態
-      th 実行結果
-      th エラー
+      th data-rails-table-preferences-column-key="created_at" 実行日時
+      th data-rails-table-preferences-column-key="project" 案件
+      th data-rails-table-preferences-column-key="repository" リポジトリ
+      th data-rails-table-preferences-column-key="branch_path" ブランチ/パス
+      th data-rails-table-preferences-column-key="commit_sha" コミット
+      th data-rails-table-preferences-column-key="status" 状態
+      th data-rails-table-preferences-column-key="summary" 実行結果
+      th data-rails-table-preferences-column-key="error_message" エラー
   tbody
     - @git_import_runs.each do |run|
+      - project = run.git_import_source&.project
       tr
-        td = l(run.created_at)
-        td = run.repository_full_name
-        td
+        td data-rails-table-preferences-column-key="created_at" = l(run.created_at)
+        td data-rails-table-preferences-column-key="project"
+          - if project.present?
+            = project.name
+            - if project.code.present?
+              br
+              code = project.code
+          - else
+            span.muted 不明
+        td data-rails-table-preferences-column-key="repository" = run.repository_full_name
+        td data-rails-table-preferences-column-key="branch_path"
           code = run.branch
           br
           code = run.source_path
-        td
+        td data-rails-table-preferences-column-key="commit_sha"
           - if run.commit_sha.present?
             code = run.commit_sha.first(12)
           - else
             span.muted 未取得
-        td = git_import_run_status_label(run)
-        td
+        td data-rails-table-preferences-column-key="status"
+          span.badge = git_import_run_status_label(run)
+        td data-rails-table-preferences-column-key="summary"
           - if run.summary_json.present?
             pre = JSON.pretty_generate(run.summary_json)
           - else
             span.muted なし
-        td
+        td data-rails-table-preferences-column-key="error_message"
           - if run.error_message.present?
             pre = run.error_message
           - else
