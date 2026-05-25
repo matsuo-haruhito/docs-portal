@@ -133,7 +133,7 @@ p.muted
       span.button.secondary.disabled 次へ
 
 - if @documents_count.positive?
-  = form_with url: project_document_zip_path(@project), method: :post, local: true do
+  = form_with url: project_document_zip_path(@project), method: :post, local: true, data: { controller: "document-zip-selection" } do
     .card
       h2 ZIP出力オプション
       .form-grid
@@ -150,7 +150,10 @@ p.muted
           = check_box_tag :pdf_only, "1", false
           |  PDFだけ出力
     p.actions
+      button.button.secondary type="button" data-action="document-zip-selection#selectPage" このページを全選択
+      button.button.secondary type="button" data-action="document-zip-selection#clearSelection" 選択解除
       = submit_tag "選択した文書の最新版をZIPでダウンロード", class: "button"
+      span.muted data-document-zip-selection-target="count" 0件選択中
 
     table
       thead
@@ -173,7 +176,7 @@ p.muted
           - match_summaries = document_search_match_summaries(document, @filters[:q])
           tr
             td
-              = check_box_tag "document_ids[]", document.id, false, id: "document_ids_#{document.id}", disabled: latest_version.blank?
+              = check_box_tag "document_ids[]", document.id, false, id: "document_ids_#{document.id}", disabled: latest_version.blank?, data: { document_zip_selection_target: "checkbox", action: "change->document-zip-selection#sync" }
               =< link_to document.title, project_document_path(@project, document.slug)
             td
               - if match_summaries.any?
