@@ -6,30 +6,30 @@
     document_file: @document_file
 
   - if @archive_preview.error?
-    = render "preview_error_card", title: "archive previewを表示できません", message: @archive_preview.error
+    = render "preview_error_card", title: "ZIPプレビューを表示できません", message: @archive_preview.error
   - else
     - if @archive_preview.truncated?
       .card
         h2 先頭 #{@archive_preview.limit} 件を表示しています
-        p.muted 大きいZIPファイルのため、previewでは先頭のentryのみ表示しています。サマリー、ディレクトリサマリー、検索、並び替え、コピー操作も表示中の先頭entryだけが対象です。
-        p.muted すべてのentryを確認する場合はファイルをダウンロードしてください。
+        p.muted 大きいZIPファイルのため、プレビューでは先頭の項目だけを表示しています。サマリー、ディレクトリサマリー、検索、並び替え、コピー操作も表示中の先頭項目だけが対象です。
+        p.muted すべての項目を確認する場合はファイルをダウンロードしてください。
 
     - if @archive_preview.entries.any?
       .card
         h2 ZIP内サマリー
-        p.muted ZIPを展開せず、preview対象のentryだけから件数と合計サイズを集計しています。
+        p.muted ZIPを展開せず、プレビュー対象の項目だけから件数と合計サイズを集計しています。
         .stats-grid
           .stat-card
-            span.stat-card__label files
+            span.stat-card__label ファイル数
             strong.stat-card__value = number_with_delimiter(@archive_preview.file_count)
           .stat-card
-            span.stat-card__label folders
+            span.stat-card__label フォルダ数
             strong.stat-card__value = number_with_delimiter(@archive_preview.folder_count)
           .stat-card
-            span.stat-card__label text preview候補
+            span.stat-card__label テキスト確認候補
             strong.stat-card__value = number_with_delimiter(@archive_preview.text_preview_candidate_entries.count)
           .stat-card
-            span.stat-card__label download候補
+            span.stat-card__label ダウンロード候補
             strong.stat-card__value = number_with_delimiter(@archive_preview.download_candidate_entries.count)
           .stat-card
             span.stat-card__label 合計サイズ
@@ -37,15 +37,15 @@
 
       .card
         h2 ディレクトリサマリー
-        p.muted 直下の file / folder 件数と、直下fileの合計サイズを表示しています。必要なディレクトリパスは行ごとにコピーできます。
+        p.muted 直下のファイル / フォルダ件数と、直下ファイルの合計サイズを表示しています。必要なディレクトリパスは行ごとにコピーできます。
         .table-wrapper
           table
             thead
               tr
                 th ディレクトリ
-                th files
-                th folders
-                th 直下file合計サイズ
+                th ファイル数
+                th フォルダ数
+                th 直下ファイル合計サイズ
                 th 操作
             tbody
               - @archive_preview.directory_summaries.each do |summary|
@@ -62,13 +62,13 @@
         .document-viewer__header
           div
             h2 ZIP内ファイル一覧
-            p.muted `/` で検索欄に移動できます。ディレクトリ / 種別 / 安全性 / 候補 / キーワードで絞り込み、見出しボタンで並び替えできます。text preview候補はentry previewを開けます。download候補はentry単位でdownloadできます。
+            p.muted `/` で検索欄に移動できます。ディレクトリ / 種別 / 安全性 / 候補 / キーワードで絞り込み、見出しボタンで並び替えできます。テキスト確認候補は個別プレビューを開けます。ダウンロード候補は項目ごとにダウンロードできます。
           p.actions
             button.button.secondary type="button" data-archive-preview-copy-visible="true" 表示中のパスをコピー
         .document-filter
           label
             | 検索
-            input type="search" placeholder="entry path" data-archive-preview-search-input="true"
+            input type="search" placeholder="パスで検索" data-archive-preview-search-input="true"
           label
             | ディレクトリ
             select data-archive-preview-directory-filter="true"
@@ -79,20 +79,20 @@
             | 種別
             select data-archive-preview-type-filter="true"
               option value="all" すべて
-              option value="file" file
-              option value="folder" folder
+              option value="file" ファイル
+              option value="folder" フォルダ
           label
             | 安全性
             select data-archive-preview-safety-filter="true"
               option value="all" すべて
-              option value="safe" safe
-              option value="unsafe" unsafe path
+              option value="safe" 安全
+              option value="unsafe" 要注意パス
           label
             | 候補
             select data-archive-preview-candidate-filter="true"
               option value="all" すべて
-              option value="text-preview" text preview候補
-              option value="download" download候補
+              option value="text-preview" テキスト確認候補
+              option value="download" ダウンロード候補
               option value="unavailable" 操作不可
           button.button.secondary type="button" data-archive-preview-reset="true" 条件をリセット
           span.muted data-archive-preview-count="true"
@@ -109,37 +109,37 @@
                 th
                   button.button.secondary type="button" data-archive-preview-sort="size" data-archive-preview-sort-label="サイズ" サイズ
                 th 安全性
-                th preview候補
-                th download候補
+                th プレビュー候補
+                th ダウンロード候補
                 th 操作
             tbody data-archive-preview-entries="true"
               - @archive_preview.entries.each do |entry|
                 - entry_type = entry.directory? ? "folder" : "file"
                 tr data-archive-preview-entry="true" data-archive-preview-entry-directory=entry.parent_directory data-archive-preview-entry-download-candidate=(entry.download_candidate? ? "true" : "false") data-archive-preview-entry-safe=(entry.safe_path? ? "true" : "false") data-archive-preview-entry-text-preview-candidate=(entry.text_preview_candidate? ? "true" : "false") data-archive-preview-entry-type=entry_type data-archive-preview-entry-size=entry.size
-                  td = entry_type
+                  td = entry.directory? ? "フォルダ" : "ファイル"
                   td
                     code data-archive-preview-entry-name="true" = entry.name
                   td = entry.directory? ? "-" : number_to_human_size(entry.size)
                   td
                     - if entry.safe_path?
-                      span.muted safe
+                      span.muted 安全
                     - else
-                      strong unsafe path
+                      strong 要注意パス
                   td
                     - if entry.text_preview_candidate?
-                      span.muted text-ready
+                      span.muted 確認可能
                     - else
                       span.muted -
                   td
                     - if entry.download_candidate?
-                      span.muted download-ready
+                      span.muted 取得可能
                     - else
                       span.muted = entry.action_unavailable_reason || "-"
                   td
                     - if entry.text_preview_candidate?
-                      = link_to "preview", archive_entry_preview_document_file_path(@document_file, entry_path: entry.name), class: "button secondary"
+                      = link_to "プレビュー", archive_entry_preview_document_file_path(@document_file, entry_path: entry.name), class: "button secondary"
                     - if entry.download_candidate?
-                      = link_to "download entry", archive_entry_download_document_file_path(@document_file, entry_path: entry.name), class: "button secondary"
+                      = link_to "個別ダウンロード", archive_entry_download_document_file_path(@document_file, entry_path: entry.name), class: "button secondary"
                     button.button.secondary type="button" data-archive-preview-copy-entry="true" パスをコピー
     - else
-      = render "preview_empty_card", title: "空のZIPファイルです", message: "表示できるentryがありません。必要に応じてファイルをダウンロードしてください。"
+      = render "preview_empty_card", title: "空のZIPファイルです", message: "表示できる項目がありません。必要に応じてファイルをダウンロードしてください。"
