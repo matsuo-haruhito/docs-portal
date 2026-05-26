@@ -30,6 +30,15 @@ RSpec.describe "Admin management", type: :request do
       )
     end
 
+    it "redirects company_master_admin users to company master" do
+      company = create(:company, domain: "alpha.example.com", name: "Alpha")
+      sign_in_as(create(:user, :external, :company_master_admin, company:))
+
+      get admin_root_path
+
+      expect(response).to redirect_to(admin_companies_path)
+    end
+
     it "forbids external users" do
       sign_in_as(create(:user, :external))
 
