@@ -61,7 +61,7 @@
 
 ## 現在の解決 revision の見方
 
-`docs-portal` は 3 gem を `git:` 参照で読み込んでいるため、現時点で app が実際に解決している revision は `Gemfile.lock` を見るのが最短です。`#477` の固定方針が決まるまでは、次の表を「current main が今使っている snapshot」として扱います。
+`docs-portal` の `Gemfile` は 3 gem を `ref:` 固定で取り込んでいます。更新方針の正本は `Gemfile`、その時点で app が実際に解決している snapshot は `Gemfile.lock` を見るのが最短です。調査や update log では、必要に応じて `Gemfile` の target ref と `Gemfile.lock` の resolved revision を両方控えます。
 
 | gem | 主な責務 | current resolved revision | 最初の確認先 |
 | --- | --- | --- | --- |
@@ -78,8 +78,8 @@
 
 ### 補足
 
-- `Gemfile` が `ref:` 未固定でも、現行 app の再現根拠は `Gemfile.lock` の revision を優先して記録します
-- `#477` の固定方針が決まったら、この節は `Gemfile` / lock のどちらを正本にするかに合わせて更新します
+- `Gemfile` の `ref:` は「次にどの revision を target にするか」の基準、`Gemfile.lock` の revision は「current main が今どの snapshot を解決しているか」の基準として使い分けます
+- gem bump の記録では、`Gemfile.lock` の from / to revision を正本にしつつ、必要なら `Gemfile` の target ref や関連 issue / PR も一緒に残します
 
 ## release train の最小運用
 
@@ -89,6 +89,24 @@
 - bump 後の記録は `docs-portal` 側の issue か PR 本文に残し、少なくとも `gem 名 / from SHA / to SHA / 実施した代表 smoke / 結果` を書きます。コード上の証跡は `Gemfile.lock` diff を正本として扱います。
 - 3 gem すべてに follow-up が必要でも、同一 PR に混ぜず、小さい issue や checklist に分けて順に進めます。
 - smoke の失敗原因が `docs-portal` 固有の helper / partial / spec drift なら app 側 issue を切り、public API や導入手順の読みづらさが原因なら upstream docs / issue を先に確認します。
+
+### current queue の読み分け
+
+- `#674` は parent queue です。3 gem 全体の順序や次にどの gem を上げるかを見直すときに参照し、実装や docs 更新の最小単位としては扱いません。
+- `#778` は `tree_view` baseline 更新の first child です。`tree_view_toolbar_actions` / `tree_view_toolbar_action_metadata` を前提にする前に、まずここで dependency bump と from / to SHA の記録を済ませます。
+- `#699` は `tree_view` の downstream reuse child です。`#778` が target baseline をそろえた後に、sidebar 文書ツリー toolbar を upstream helper metadata へ寄せる slice として読みます。
+- `rails_table_preferences` と `rails_fields_kit` は `tree_view` と同じ PR に載せず、必要になった時点で別 child issue / PR に分けます。`admin/document_sets` を current canary として、現行 revision のまま smoke を保てているかを先に確認します。
+
+### 代表 smoke の早見表
+
+| gem | current canary surface | 最小の spec / evidence | update log に残す観点 |
+| --- | --- | --- | --- |
+| `tree_view` | `app/views/documents/_tree.html.erb` と `app/views/projects/_document_detail_tree.html.erb` | `spec/requests/document_tree_regressions_spec.rb` の tree visibility / persisted state / window offset | sidebar tree、detail tree、persisted state のどこを確認したか |
+| `rails_table_preferences` | `app/views/admin/document_sets/index.html.slim` の editor + table | `spec/requests/admin_document_sets_index_spec.rb` と `spec/requests/admin_document_sets_spec.rb` の editor / mounted engine 保存 | stable column key、filter/preset、engine save のどこを確認したか |
+| `rails_fields_kit` | `app/views/admin/document_sets/_form.html.slim` の `rfk_select` 群 | `spec/requests/admin_document_sets_spec.rb` の initial load / invalid rerender | selected value 保持、placeholder、Turbo 再訪で何を確認したか |
+
+- `rails_table_preferences` と `rails_fields_kit` は同じ `admin/document_sets` surface を share していますが、update log は helper / table metadata と field helper / Tom Select wiring を分けて残します。
+- `tree_view` は sidebar tree と detail tree の 2 画面が別 surface なので、片方だけ見た場合は未確認側を明記します。
 
 ### update log の残し方
 
