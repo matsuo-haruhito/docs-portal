@@ -20,12 +20,13 @@ p.actions
     = "表示中: #{@schedules.size}件"
     - if @filters[:status].present?
       |  / 状態: #{recurring_job_status_label(@filters[:status])}
-  p.muted
-    = [
-      "失敗: #{@status_counts.fetch("failed", 0)}件",
-      "実行中: #{@status_counts.fetch("running", 0)}件",
-      "投入済み: #{@status_counts.fetch("enqueued", 0)}件"
-    ].join(" / ")
+
+  - triage_counts = [
+    "失敗: #{@status_counts.fetch('failed', 0)}件",
+    "実行中: #{@status_counts.fetch('running', 0)}件",
+    "投入済み: #{@status_counts.fetch('enqueued', 0)}件"
+  ]
+  p.muted = triage_counts.join(" / ")
 
   = table_tag do
     thead
