@@ -1,28 +1,30 @@
 ul.nav-list
-  li = link_to "ダッシュボード", admin_root_path
   - if admin_user?
+    li = link_to "ダッシュボード", admin_root_path
     li = link_to "API仕様", admin_api_specification_path
     li = link_to "モデルブラウザ", admin_model_browser_path
     li = link_to "定期ジョブ", admin_recurring_job_schedules_path
     li = link_to "生成ファイルイベント", admin_generated_file_events_path
     li = link_to "生成ファイル実行履歴", admin_generated_file_runs_path
-  - if company_master_admin?
     li = link_to "会社", admin_companies_path
-  li = link_to "ユーザー", admin_users_path
-  li = link_to "案件", admin_projects_path
-  li = link_to "案件所属", admin_project_memberships_path
-  li = link_to "同意文面", admin_consent_terms_path
-  li = link_to "案件同意設定", admin_project_consent_settings_path
-  li = link_to "文書", admin_documents_path
-  li = link_to "文書セット", admin_document_sets_path
-  li = link_to "文書権限", admin_document_permissions_path
-  li = link_to "監査ログ", admin_access_logs_path
-  li = link_to "アクセス申請", admin_access_requests_path
-  li = link_to "利用状況", admin_document_usage_reports_path
-  li = link_to "文書一括編集", new_admin_bulk_edit_dry_run_path
-  li = link_to "ZIPインポート", new_admin_zip_import_path
-  li = link_to "Git連携", admin_git_import_sources_path
-  li = link_to "Git同期履歴", admin_git_import_runs_path
-  li = link_to "Microsoft Graph", admin_microsoft_graph_connections_path
-  li = link_to "外部フォルダ同期設定", admin_external_folder_sync_sources_path
-  li = link_to "Webhook", admin_webhook_endpoints_path
+    li = link_to "ユーザー", admin_users_path
+    li = link_to "案件", admin_projects_path
+    li = link_to "案件所属", admin_project_memberships_path
+    li = link_to "同意文面", admin_consent_terms_path
+    li = link_to "案件同意設定", admin_project_consent_settings_path
+    li = link_to "文書", admin_documents_path
+    li = link_to "文書セット", admin_document_sets_path
+    li = link_to "文書権限", admin_document_permissions_path
+    li = link_to "監査ログ", admin_access_logs_path
+    li = link_to "アクセス申請", admin_access_requests_path
+    li = link_to "利用状況", admin_document_usage_reports_path
+    li = link_to "文書一括編集", new_admin_bulk_edit_dry_run_path
+    li = link_to "ZIPインポート", new_admin_zip_import_path
+    li = link_to "Git連携", admin_git_import_sources_path
+    li = link_to "Git同期履歴", admin_git_import_runs_path
+    li = link_to "Microsoft Graph", admin_microsoft_graph_connections_path
+    li = link_to "外部フォルダ同期設定", admin_external_folder_sync_sources_path
+    li = link_to "Webhook", admin_webhook_endpoints_path
+  - elsif company_master_admin?
+    li = link_to "会社", admin_companies_path
+    li = link_to "ユーザー", admin_users_path
