@@ -46,7 +46,7 @@ RSpec.describe "Document file archive previews", type: :request do
 
     get document_file_path(archive_file, embedded: "1", disposition: "inline")
 
-    body = response.body.dup.force_encoding("UTF-8")
+    body = response.body.b.force_encoding("UTF-8").scrub
 
     expect(response).to have_http_status(:ok)
     expect(body).to include("ZIP内サマリー")
