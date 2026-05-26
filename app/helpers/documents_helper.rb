@@ -38,7 +38,7 @@ module DocumentsHelper
       context: self,
       node_prefix: "document_tree",
       key_resolver: ->(item_or_id) { node_key(item_or_id) }
-    ).build(
+    ).build_turbo(
       hide_descendants_path_builder: ->(item, _depth, scope) { document_tree_toggle_path(item, :hide, scope:) },
       show_descendants_path_builder: ->(item, _depth, scope) { document_tree_toggle_path(item, :show, scope:) },
       toggle_all_path_builder: ->(state) { document_tree_toggle_all_path(state, current_project: toolbar_project, current_document:) }
@@ -145,23 +145,116 @@ module DocumentsHelper
     tree_icon(document_file_icon_name(document_file), title: title || document_file.file_name)
   end
 
-  def tree_item_path(item)
-    case item
-    when Project
-      project_path(item)
-    when DocumentTreeFolderNode
-      project_documents_path(item.project, q: item.path)
-    when Document
-      document_html_path(item) || project_document_path(item.project, item.slug)
+  def tree_icon(name, title: nil)
+    safe_join([
+      image_tag("file_icons/#{name}.svg", alt: "", width: 16, height: 16, class: "tree-node-icon tree-node-icon--image"),
+      content_tag(:span, title || name.to_s.humanize, class: "sr-only")
+    ])
+  end
+
+  def project_tree_icon(project)
+    if project.archived?
+      tree_icon("company_unlit", title: "アーカイブ済み案件")
+    else
+      tree_icon("company_lit", title: "案件")
     end
   end
 
-  def tree_item_detail_path(item)
+  def document_tree_toggle_path(item, action, scope: nil)
+    return unless item.is_a?(DocumentTreeFolderNode)
+
+    project_document_tree_toggle_path(
+      item.project,
+      tree_action: action,
+      source_path: item.path,
+      tree_scope: scope,
+      document_slug: document_tree_current_document_slug,
+      tree_query: document_tree_query,
+      tree_window_offset: document_tree_window_request_offset,
+      format: :turbo_stream
+    )
+  end
+
+  def document_tree_current_document_slug
+    params[:document_slug].presence || params.dig(:document, :slug).presence
+  end
+
+  def document_tree_query
+    params[:tree_query].to_s.strip.presence
+  end
+
+  def document_tree_window_request_offset
+    Integer(params[:tree_window_offset], exception: false)
+  end
+
+  def document_tree_query_match_count(projects, current_project: nil, current_document: nil)
+    projects = document_tree_projects_for_query(projects, current_project:, current_document:)
+    projects.sum { document_tree_project_documents(_1).size }
+  end
+
+  def document_tree_projects_for_query(projects, current_project: nil, current_document: nil)
+    projects = Array(projects)
+    query = document_tree_query
+    return projects unless query.present?
+
+    active_project = current_project || current_document&.project
+    return projects unless active_project
+
+    matching_documents = document_tree_project_documents(active_project)
+    return [active_project] if matching_documents.any?
+
+    [active_project]
+  end
+
+  def tree_toggle_collapsed_icon(item, children)
+    return tree_toggle_leaf_icon(item) if children.empty?
+
     case item
     when Project
-      project_path(item)
+      project_tree_icon(item)
+    when DocumentTreeFolderNode
+      tree_icon("folder_closed", title: "フォルダを開く")
+    else
+      tree_toggle_leaf_icon(item)
+    end
+  end
+
+  def tree_toggle_expanded_icon(item, children)
+    return tree_toggle_leaf_icon(item) if children.empty?
+
+    case item
+    when Project
+      project_tree_icon(item)
+    when DocumentTreeFolderNode
+      tree_icon("folder_open", title: "フォルダを閉じる")
+    else
+      tree_toggle_leaf_icon(item)
+    end
+  end
+
+  def tree_toggle_leaf_icon(item)
+    case item
+    when Project
+      project_tree_icon(item)
     when Document
-      project_document_path(item.project, item.slug)
+      tree_icon(document_tree_icon_name(item), title: tree_item_label(item))
+    when DocumentTreeFolderNode
+      tree_icon("folder_closed", title: item.label)
+    else
+      tree_icon("document", title: tree_item_label(item))
+    end
+  end
+
+  def tree_toggle_leaf_icon_title(item)
+    case item
+    when Project
+      "案件"
+    when Document
+      tree_item_label(item)
+    when DocumentTreeFolderNode
+      item.label
+    else
+      tree_item_label(item)
     end
   end
 
@@ -169,313 +262,256 @@ module DocumentsHelper
     case item
     when Project
       item.name
+    when Document
+      item.title.presence || item.slug
     when DocumentTreeFolderNode
       item.label
-    when Document
-      document_tree_document_label(item)
     else
       item.to_s
     end
   end
 
-  def tree_item_label_size_class(item)
-    length = tree_item_label_full_width_length(tree_item_label(item))
-
-    if length > 25
-      "tree-label--length-gt-25"
-    elsif length > 20
-      "tree-label--length-gt-20"
-    elsif length > 15
-      "tree-label--length-gt-15"
-    end
-  end
-
-  def tree_item_tooltip(item)
-    case item
-    when Project
-      item.company&.name
-    when DocumentTreeFolderNode
-      [item.project.company&.name, item.project.name].compact_blank.join(" / ").presence
-    when Document
-      document_tree_document_tooltip(item)
-    end
-  end
-
-  def tree_item_updated_label(item)
-    return unless item.is_a?(Document)
-
-    item.updated_at&.strftime("%Y-%m-%d")
-  end
-
-  def tree_item_html_available?(item)
-    item.is_a?(Document) && document_html_version(item).present?
-  end
-
   def tree_item_css_class(item, current_project: nil, current_document: nil)
-    classes = []
-    classes << "current-node" if current_tree_item?(item, current_project:, current_document:)
-    classes << "tree-folder-node" if item.is_a?(DocumentTreeFolderNode)
-    classes << "html-unavailable" if item.is_a?(Document) && !tree_item_html_available?(item)
+    classes = ["document-tree__row"]
+    classes << "document-tree__project-row" if item.is_a?(Project)
+    classes << "document-tree__folder-row" if item.is_a?(DocumentTreeFolderNode)
+    classes << "document-tree__document-row" if item.is_a?(Document)
+    classes << "document-tree__row--active-project" if current_project && item == current_project
+    classes << "document-tree__row--active-document" if current_document && item == current_document
     classes
   end
 
   def tree_item_data_attributes(item)
-    case item
-    when Project
-      {
-        tree_item_type: item.class.name.underscore,
-        tree_item_id: item.id,
-        project_id: item.id
-      }
-    when DocumentTreeFolderNode
-      {
-        tree_item_type: "document_tree_folder",
-        tree_item_id: node_key(item),
-        project_id: item.project.id,
-        source_path: item.path
-      }
-    when Document
-      {
-        tree_item_type: item.class.name.underscore,
-        tree_item_id: item.id,
-        project_id: item.project_id,
-        html_available: tree_item_html_available?(item)
-      }
+    return {} unless item.is_a?(Document)
+
+    {
+      document_slug: item.slug,
+      source_path: document_tree_source_path(item)
+    }
+  end
+
+  def document_tree_icon_name(document)
+    version = document.respond_to?(:latest_version) ? document.latest_version : nil
+    extension = version&.source_extension.to_s.downcase.delete_prefix(".")
+    file_name = version&.source_file_name.to_s
+    basename = version&.source_basename.to_s
+    return "document" if extension.blank? && file_name.blank?
+
+    candidate_names = []
+    candidate_names << extension if extension.present?
+    candidate_names << File.extname(file_name).delete_prefix(".").downcase if file_name.present?
+    candidate_names << File.extname(basename).delete_prefix(".").downcase if basename.present?
+    candidate_names = candidate_names.reject(&:blank?).uniq
+
+    icon_name = candidate_names.find { DOCUMENT_TREE_ICON_NAMES.include?(_1) }
+    return icon_name if icon_name.present?
+
+    if candidate_names.any? { DOCUMENT_TREE_EXTRA_ICON_NAMES.include?(_1) }
+      candidate_names.find { DOCUMENT_TREE_EXTRA_ICON_NAMES.include?(_1) }
     else
-      {}
+      "document"
     end
   end
 
-  def document_search_match_labels(document, keyword)
-    DocumentSearch.new(keyword).match_labels_for(document)
-  end
+  def document_file_icon_name(document_file)
+    extension = document_file.extension.to_s.downcase.delete_prefix(".")
+    file_name = document_file.file_name.to_s
 
-  def document_search_match_summaries(document, keyword)
-    DocumentSearch.new(keyword).match_summaries_for(document)
-  end
-
-  def document_tree_query
-    return unless respond_to?(:params)
-
-    params[:tree_query].to_s.squish.presence
-  end
-
-  def document_tree_query_match_count(projects, current_project: nil, current_document: nil)
-    return 0 if document_tree_query.blank?
-
-    scoped_projects = document_tree_projects_for_query(projects, current_project:, current_document:)
-    scoped_projects.sum { |project| document_tree_documents_for(project).size }
-  end
-
-  private
-
-  def document_tree_projects_for_query(projects, current_project:, current_document:)
-    projects = projects.to_a
-    return projects if document_tree_query.blank?
-
-    scoped_project = current_project || current_document&.project
-    return projects if scoped_project.blank?
-
-    [scoped_project]
-  end
-
-  def current_tree_item?(item, current_project: nil, current_document: nil)
-    case item
-    when Project
-      item.id == current_project&.id || item.id == current_document&.project_id || item == @project
-    when Document
-      item.id == current_document&.id || item == @document
+    if extension.present? && DOCUMENT_TREE_ICON_NAMES.include?(extension)
+      extension
+    elsif file_name.present?
+      extracted_extension = File.extname(file_name).delete_prefix(".").downcase
+      if extracted_extension.present? && DOCUMENT_TREE_ICON_NAMES.include?(extracted_extension)
+        extracted_extension
+      else
+        "document"
+      end
     else
-      false
+      "document"
     end
   end
 
-  def tree_item_label_full_width_length(label)
-    label.to_s.each_char.sum { |char| char.ascii_only? ? 0.5 : 1.0 }
+  def prepare_document_tree_cache!(projects)
+    @document_tree_nodes_by_project_id = {}
+    @document_tree_documents_by_project_id = {}
+    @document_tree_folder_keys_by_project_id = {}
+
+    Array(projects).each do |project|
+      next unless project.is_a?(Project)
+
+      documents = project.documents.includes(:latest_version).order(:title).to_a
+      @document_tree_documents_by_project_id[project.id] = documents
+      nodes = document_tree_nodes_from_documents(project, documents)
+      @document_tree_nodes_by_project_id[project.id] = nodes
+      @document_tree_folder_keys_by_project_id[project.id] = document_tree_folder_keys(nodes)
+    end
+  end
+
+  def document_tree_nodes_for(project)
+    @document_tree_nodes_by_project_id&.fetch(project.id, []) || []
+  end
+
+  def document_tree_project_documents(project)
+    @document_tree_documents_by_project_id&.fetch(project.id, []) || []
+  end
+
+  def document_tree_folder_keys(nodes)
+    nodes.flat_map do |node|
+      if node.is_a?(DocumentTreeFolderNode)
+        [node_key(node), *document_tree_folder_keys(node.children)]
+      else
+        []
+      end
+    end
+  end
+
+  def document_tree_all_folder_keys_for(project)
+    @document_tree_folder_keys_by_project_id&.fetch(project.id, []) || []
+  end
+
+  def document_tree_nodes_from_documents(project, documents)
+    root_nodes = []
+    folder_nodes = {}
+
+    documents.each do |document|
+      directory = document_tree_source_directory(document)
+      if directory.blank?
+        root_nodes << document
+        next
+      end
+
+      segments = directory.split("/").reject(&:blank?)
+      parent_nodes = root_nodes
+      current_path = []
+
+      segments.each do |segment|
+        current_path << segment
+        path = current_path.join("/")
+        folder_node = folder_nodes[path]
+        unless folder_node
+          folder_node = DocumentTreeFolderNode.new(project:, path:, label: segment, children: [])
+          folder_nodes[path] = folder_node
+          parent_nodes << folder_node
+        end
+        parent_nodes = folder_node.children
+      end
+
+      parent_nodes << document
+    end
+
+    sort_document_tree_nodes!(root_nodes)
+    root_nodes
+  end
+
+  def document_tree_source_directory(document)
+    document.latest_version&.source_directory.to_s
+  end
+
+  def document_tree_source_path(document)
+    version = document.respond_to?(:latest_version) ? document.latest_version : nil
+    path = version&.source_relative_path.to_s.presence
+    return path if path.present?
+
+    directory = version&.source_directory.to_s.presence
+    file_name = version&.source_file_name.to_s.presence
+    if directory.present? && file_name.present?
+      File.join(directory, file_name)
+    else
+      file_name.to_s
+    end
+  end
+
+  def document_tree_search_tokens(document)
+    version = document.respond_to?(:latest_version) ? document.latest_version : nil
+    [
+      document.title,
+      document.slug,
+      version&.source_relative_path,
+      version&.source_directory,
+      version&.source_file_name,
+      version&.source_basename
+    ].filter_map { _1.to_s.downcase.presence }
+  end
+
+  def document_tree_query_matches?(document, query)
+    return true if query.blank?
+
+    tokens = document_tree_search_tokens(document)
+    normalized_query = query.to_s.downcase
+    tokens.any? { _1.include?(normalized_query) }
+  end
+
+  def document_tree_query_expanded_keys(projects)
+    active_project = projects.find { _1.is_a?(Project) }
+    return [] unless active_project
+
+    matching_documents = document_tree_project_documents(active_project).select { document_tree_query_matches?(_1, document_tree_query) }
+    matching_documents.flat_map do |document|
+      keys = [node_key(document)]
+      directory = document_tree_source_directory(document)
+      next keys if directory.blank?
+
+      segments = directory.split("/").reject(&:blank?)
+      current_path = []
+      folder_keys = segments.map do |segment|
+        current_path << segment
+        node_key(DocumentTreeFolderNode.new(project: active_project, path: current_path.join("/"), label: segment, children: []))
+      end
+      keys + folder_keys
+    end.uniq
+  end
+
+  def document_tree_initial_expansion_state(current_project: nil, current_document: nil, expanded_source_path: nil, collapsed_source_path: nil)
+    expanded_keys = []
+    collapsed_keys = []
+
+    active_project = current_project || current_document&.project
+    expanded_keys << node_key(active_project) if active_project
+    expanded_keys.concat(document_tree_folder_keys_for_source_path(active_project, current_document&.latest_version&.source_relative_path || current_document&.latest_version&.source_directory)) if active_project && current_document
+    expanded_keys.concat(document_tree_folder_keys_for_source_path(active_project, expanded_source_path)) if active_project && expanded_source_path.present?
+    collapsed_keys.concat(document_tree_folder_keys_for_source_path(active_project, collapsed_source_path)) if active_project && collapsed_source_path.present?
+
+    { expanded_keys: expanded_keys.compact.uniq, collapsed_keys: collapsed_keys.compact.uniq }
+  end
+
+  def document_tree_folder_keys_for_source_path(project, source_path)
+    return [] if project.blank? || source_path.blank?
+
+    path_segments = source_path.to_s.split("/").reject(&:blank?)
+    return [] if path_segments.empty?
+
+    directory_segments = if source_path.to_s.end_with?("/")
+      path_segments
+    else
+      path_segments[0...-1]
+    end
+
+    keys = []
+    current_path = []
+    directory_segments.each do |segment|
+      current_path << segment
+      keys << node_key(DocumentTreeFolderNode.new(project:, path: current_path.join("/"), label: segment, children: []))
+    end
+    keys
   end
 
   def document_tree_persisted_state
     return unless current_user.respond_to?(:tree_view_state_for)
 
     current_user.tree_view_state_for(DOCUMENT_TREE_INSTANCE_KEY)
-  rescue NameError
-    nil
-  end
-
-  def tree_toggle_collapsed_icon(item, children)
-    return tree_icon("document", title: "子項目はありません") if children.empty?
-    return tree_icon("folder_closed", title: "フォルダを開く") if item.is_a?(DocumentTreeFolderNode)
-
-    "+"
-  end
-
-  def tree_toggle_expanded_icon(item, children)
-    return tree_icon("document", title: "子項目はありません") if children.empty?
-    return tree_icon("folder_open", title: "フォルダを閉じる") if item.is_a?(DocumentTreeFolderNode)
-
-    "-"
-  end
-
-  def tree_toggle_leaf_icon(item)
-    return tree_icon(document_tree_icon_name(item), title: tree_toggle_leaf_icon_title(item)) if item.is_a?(Document)
-
-    "・"
-  end
-
-  def tree_toggle_leaf_icon_title(item)
-    return "子項目はありません" unless item.is_a?(Document)
-
-    icon_name = document_tree_icon_name(item)
-    icon_name == "document" ? "文書" : "#{icon_name} ファイル"
-  end
-
-  def tree_icon(icon_name, title: nil)
-    safe_icon_name = icon_name.to_s.tr("_", "-")
-    tag.svg(
-      tag.use(href: "#{asset_path(tree_icon_sprite_asset(icon_name))}#tree-icon-#{safe_icon_name}"),
-      class: "tree-icon tree-icon--#{safe_icon_name}",
-      viewBox: "0 0 24 24",
-      width: 18,
-      height: 18,
-      title:,
-      aria: { hidden: true },
-      focusable: false
-    )
-  end
-
-  def tree_icon_sprite_asset(icon_name)
-    return "tree_icons_document.svg" if DOCUMENT_TREE_DOCUMENT_ICON_NAMES.include?(icon_name.to_s)
-
-    DOCUMENT_TREE_EXTRA_ICON_NAMES.include?(icon_name.to_s) ? "tree_icons_extra.svg" : "tree_icons.svg"
-  end
-
-  def document_file_icon_name(document_file)
-    extension = File.extname(document_file.file_name.to_s).delete_prefix(".").downcase.presence
-    return "document" if extension.blank?
-
-    DOCUMENT_TREE_ICON_NAMES.include?(extension) ? extension : "document"
-  end
-
-  def document_tree_icon_name(document)
-    extension = document_tree_source_extension(document)
-    if extension.present?
-      normalized_extension = extension.tr(".", "").downcase
-      return normalized_extension if DOCUMENT_TREE_ICON_NAMES.include?(normalized_extension)
-    end
-
-    case document.document_kind
-    when "markdown"
-      "md"
-    when "pdf"
-      "pdf"
-    when "excel"
-      "xlsx"
-    when "word"
-      "docx"
-    else
-      "document"
-    end
-  end
-
-  def document_tree_source_extension(document)
-    version = document_tree_version_for(document)
-    extension = version&.source_extension.to_s.delete_prefix(".").presence
-    extension ||= File.extname(document_tree_source_file_name(document).to_s).delete_prefix(".").presence
-    extension&.downcase
-  end
-
-  def document_tree_document_tooltip(document)
-    project = document.project
-    folder_name = document_tree_source_directory(document).to_s.split("/").last.presence
-    version = document_tree_version_for(document)
-
-    [
-      project.company&.name,
-      project.name,
-      folder_name,
-      tree_item_updated_label(document)&.then { |label| "最終更新日: #{label}" },
-      version&.version_label.presence&.then { |label| "版: #{label}" }
-    ].compact_blank.join(" / ").presence
-  end
-
-  def prepare_document_tree_cache!(projects)
-    query = document_tree_query
-    @document_tree_documents_by_project_id = projects.index_with do |project|
-      documents = if project.association(:documents).loaded?
-        project.documents.to_a
-      else
-        project.documents.includes(:latest_version, document_versions: :document_files).to_a
-      end
-
-      documents = documents.reject { |document| document.archived_at.present? }
-      documents = documents.select { |document| document.visible_in_portal_for?(current_user) } unless current_user.internal?
-      documents = documents.select { |document| document_tree_query_match?(document, query) } if query.present?
-      documents.sort_by { |document| document_tree_document_label(document) }
-    end.transform_keys(&:id)
-    @document_tree_nodes_by_project_id = {}
-    @document_tree_folder_nodes_by_project_and_path = {}
-    @document_tree_html_version_by_document_id = {}
-    @document_tree_default_site_version_by_project_id = {}
-  end
-
-  def document_tree_documents_for(project)
-    @document_tree_documents_by_project_id&.fetch(project.id, nil) || begin
-      documents = project.documents.accessible_to(current_user).includes(:latest_version, document_versions: :document_files).order(:title).to_a
-      current_user.internal? ? documents : documents.select { _1.visible_in_portal_for?(current_user) }
-    end
-  end
-
-  def document_tree_nodes_for(project)
-    @document_tree_nodes_by_project_id&.fetch(project.id, nil) || build_document_tree_nodes_for(project)
-  end
-
-  def build_document_tree_nodes_for(project)
-    root_nodes = []
-    folder_nodes_by_path = {}
-
-    document_tree_documents_for(project).each do |document|
-      directory = document_tree_source_directory(document).to_s
-      if directory.blank?
-        root_nodes << document
-        next
-      end
-
-      parent_nodes = root_nodes
-      path_segments = []
-      directory.split("/").reject(&:blank?).each do |segment|
-        path_segments << segment
-        path = path_segments.join("/")
-        folder_node = folder_nodes_by_path[path]
-        unless folder_node
-          folder_node = DocumentTreeFolderNode.new(
-            project:,
-            path:,
-            label: segment,
-            children: []
-          )
-          folder_nodes_by_path[path] = folder_node
-          parent_nodes << folder_node
-        end
-        parent_nodes = folder_node.children
-      end
-      parent_nodes << document
-    end
-
-    sort_document_tree_nodes!(root_nodes)
-    @document_tree_folder_nodes_by_project_and_path[project.id] = folder_nodes_by_path if @document_tree_folder_nodes_by_project_and_path
-    @document_tree_nodes_by_project_id[project.id] = root_nodes if @document_tree_nodes_by_project_id
-    root_nodes
   end
 
   def sort_document_tree_nodes!(nodes)
     nodes.sort_by! do |node|
       case node
+      when Project
+        [0, node.name.to_s]
       when DocumentTreeFolderNode
-        [0, node.label.to_s]
+        [1, node.label.to_s]
       when Document
-        [1, document_tree_document_label(node)]
+        [2, tree_item_label(node).to_s]
       else
-        [2, node.to_s]
+        [3, node.to_s]
       end
     end
 
@@ -484,268 +520,16 @@ module DocumentsHelper
     end
   end
 
-  def document_tree_initial_expansion_state(current_project:, current_document:, expanded_source_path:, collapsed_source_path:)
-    expanded_keys = []
-    collapsed_keys = []
-    expanded_keys << node_key(current_project) if current_project
-
-    opened_source_path = expanded_source_path.presence || collapsed_source_path.presence || document_tree_source_directory(current_document)
-    document_tree_folder_ancestor_paths(opened_source_path).each do |path|
-      next if collapsed_source_path.present? && path == collapsed_source_path
-
-      folder_node = document_tree_folder_node_for(current_project || current_document&.project, path)
-      expanded_keys << node_key(folder_node) if folder_node
-    end
-
-    if collapsed_source_path.present?
-      folder_node = document_tree_folder_node_for(current_project || current_document&.project, collapsed_source_path)
-      collapsed_keys << node_key(folder_node) if folder_node
-    end
-
-    { expanded_keys:, collapsed_keys: }
-  end
-
-  def document_tree_all_folder_keys_for(project)
-    return [] unless project
-
-    document_tree_nodes_for(project)
-    (@document_tree_folder_nodes_by_project_and_path&.dig(project.id) || {}).values.map { node_key(_1) }
-  end
-
-  def document_tree_query_expanded_keys(projects)
-    projects.flat_map do |project|
-      documents = document_tree_documents_for(project)
-      next [] if documents.empty?
-
-      [
-        node_key(project),
-        *documents.flat_map do |document|
-          document_tree_folder_ancestor_paths(document_tree_source_directory(document)).filter_map do |path|
-            folder_node = document_tree_folder_node_for(project, path)
-            node_key(folder_node) if folder_node
-          end
-        end
-      ]
-    end.uniq
-  end
-
-  def document_tree_folder_ancestor_paths(source_path)
-    directory = normalize_document_tree_path(source_path)
-    return [] if directory.blank?
-
-    paths = []
-    segments = []
-    directory.split("/").reject(&:blank?).each do |segment|
-      segments << segment
-      paths << segments.join("/")
-    end
-    paths
-  end
-
-  def document_tree_folder_node_for(project, path)
-    return unless project && path.present?
-
-    document_tree_nodes_for(project)
-    @document_tree_folder_nodes_by_project_and_path&.dig(project.id, path)
-  end
-
-  def document_tree_toggle_path(item, action, scope: nil)
-    path_options = {
-      tree_action: action == :hide ? "hide" : "show",
-      tree_query: document_tree_query,
-      scope:,
-      format: :turbo_stream
-    }
-    current_window_offset = document_tree_window_request_offset
-    path_options[:tree_window_offset] = current_window_offset if current_window_offset.is_a?(Integer)
-
-    case item
-    when Project
-      project_document_tree_path(
-        item,
-        node_id: item.id,
-        **path_options
-      )
-    when DocumentTreeFolderNode
-      project_document_tree_path(
-        item.project,
-        source_path: item.path,
-        **path_options
-      )
-    end
-  end
-
-  def document_tree_document_label(document)
-    document_tree_source_file_name(document).presence || document.title
-  end
-
-  def document_tree_query_match?(document, query)
-    return true if query.blank?
-
-    normalized_query = query.to_s.downcase
-    return false if normalized_query.blank?
-
-    [
-      document.title,
-      document.slug,
-      document_tree_source_file_name(document),
-      document_tree_source_directory(document),
-      document_tree_version_for(document)&.source_relative_path
-    ].compact_blank.any? { |value| value.to_s.downcase.include?(normalized_query) }
-  end
-
-  def document_tree_source_directory(document)
-    version = document_tree_version_for(document)
-    directory = normalize_document_tree_path(version&.source_directory)
-    return directory if directory.present?
-
-    relative_path = normalize_document_tree_path(version&.source_relative_path)
-    if relative_path.present?
-      segments = relative_path.split("/")
-      segments.pop
-      return segments.join("/")
-    end
-
-    file_tree_path = document_tree_primary_file_tree_path(version)
-    return if file_tree_path.blank?
-
-    segments = file_tree_path.split("/")
-    segments.pop
-    segments.join("/")
-  end
-
-  def document_tree_source_file_name(document)
-    version = document_tree_version_for(document)
-    file_name = version&.source_file_name.to_s.presence
-    return file_name if file_name.present?
-
-    relative_path = normalize_document_tree_path(version&.source_relative_path)
-    return relative_path.split("/").last if relative_path.present?
-
-    file_tree_path = document_tree_primary_file_tree_path(version)
-    return if file_tree_path.blank?
-
-    file_tree_path.split("/").last
-  end
-
-  def document_tree_version_for(document)
-    return unless document
-
-    latest = document.latest_version
-    return latest if document_tree_version_has_source_path?(latest)
-    return latest if document_tree_version_has_display_file?(latest)
-
-    versions = document.document_versions.to_a
-
-    versions
-      .select { |version| document_tree_version_has_source_path?(version) || document_tree_version_has_display_file?(version) }
-      .max_by { |version| [version.created_at || Time.zone.at(0), version.id || 0] } ||
-      latest ||
-      versions.max_by { |version| [version.created_at || Time.zone.at(0), version.id || 0] }
-  end
-
-  def document_tree_version_has_source_path?(version)
-    version.present? && (
-      version.source_directory.present? ||
-      version.source_relative_path.present? ||
-      version.source_file_name.present?
-    )
-  end
-
-  def document_tree_version_has_display_file?(version)
-    document_tree_primary_file_for(version).present?
-  end
-
-  def document_tree_primary_file_tree_path(version)
-    document_tree_primary_file_for(version)&.tree_path.to_s.then { normalize_document_tree_path(_1) }.presence
-  end
-
-  def document_tree_primary_file_for(version)
-    return unless version
-
-    files = version.document_files
-    if files.loaded?
-      files.to_a.min_by { |file| [file.sort_order || 0, file.id || 0] }
-    else
-      files.order(:sort_order, :id).first
-    end
-  end
-
-  def normalize_document_tree_path(path)
-    path.to_s.tr("\\", "/").split("/").reject(&:blank?).join("/")
-  end
-
-  def project_default_site_path(project)
-    version = @document_tree_default_site_version_by_project_id&.fetch(project.id, nil)
-    unless @document_tree_default_site_version_by_project_id&.key?(project.id)
-      version = document_tree_documents_for(project)
-        .filter_map(&:latest_version)
-        .select { _1.rendered_site_available? && _1.viewable_by?(current_user) }
-        .max_by(&:published_at)
-      @document_tree_default_site_version_by_project_id[project.id] = version if @document_tree_default_site_version_by_project_id
-    end
-    return unless version
-
-    project_site_path(project, site_path: version.html_view_site_path, version_id: version.public_id)
-  end
-
-  def document_html_path(document)
-    version = document_html_version(document)
-    return unless version
-
-    project_site_path(document.project, site_path: version.html_view_site_path, version_id: version.public_id)
-  end
-
-  def document_html_version(document)
-    cached = @document_tree_html_version_by_document_id&.fetch(document.id, nil)
-    return cached if @document_tree_html_version_by_document_id&.key?(document.id)
-
-    version = document.latest_version
-    version = nil unless version&.rendered_site_available?
-    version = nil unless version&.viewable_by?(current_user)
-    @document_tree_html_version_by_document_id[document.id] = version if @document_tree_html_version_by_document_id
-    version
-  end
-
-  def document_tree_render_window_offset(visible_rows:, current_document:, requested_offset:)
-    max_offset = [visible_rows.length - DOCUMENT_TREE_RENDER_WINDOW_LIMIT, 0].max
-
-    if requested_offset.is_a?(Integer) && requested_offset >= 0
-      return [requested_offset, max_offset].min
-    end
-
-    current_index = document_tree_visible_row_index_for(visible_rows, current_document)
-    return 0 unless current_index
-
-    desired_offset = [current_index - (DOCUMENT_TREE_RENDER_WINDOW_LIMIT / 2), 0].max
-    [desired_offset, max_offset].min
-  end
-
-  def document_tree_visible_row_index_for(visible_rows, current_document)
-    return unless current_document
-
-    current_key = node_key(current_document)
-    visible_rows.index { |row| row.node_key == current_key }
-  end
-
-  def document_tree_window_request_offset
-    return unless respond_to?(:params)
-
-    raw_offset = params[:tree_window_offset]
-    return if raw_offset.blank?
-
-    parsed_offset = Integer(raw_offset)
-    parsed_offset if parsed_offset >= 0
-  rescue ArgumentError, TypeError
-    nil
-  end
-
   def node_key(item_or_id)
     case item_or_id
+    when Project
+      "project_#{item_or_id.id}"
     when DocumentTreeFolderNode
-      "folder_#{item_or_id.project.id}_#{Digest::SHA256.hexdigest(item_or_id.path).first(16)}"
+      "document_tree_folder_#{item_or_id.project.id}_#{Digest::SHA256.hexdigest(item_or_id.path).first(16)}"
+    when Document
+      "document_#{item_or_id.id}"
     else
-      if item_or_id.respond_to?(:id)
+      if item_or_id.respond_to?(:id) && item_or_id.class.name.present?
         "#{item_or_id.class.name.underscore}_#{item_or_id.id}"
       else
         item_or_id.to_s
