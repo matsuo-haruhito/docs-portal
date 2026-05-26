@@ -110,8 +110,8 @@ RSpec.describe "Admin document usage reports", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 3件")
-    expect(page_text).to include("利用状況: 利用あり")
-    expect(page_text).to include("並び順: 最終アクセスが新しい順")
+    expect(page_text).to match(/利用状況:\s*利用あり/)
+    expect(page_text).to match(/並び順:\s*最終アクセスが新しい順/)
     expect(row_titles).to eq(["Guide", "Manual", "Policy"])
     expect(row_titles).not_to include("Checklist")
 
