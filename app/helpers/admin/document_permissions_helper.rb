@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 module Admin::DocumentPermissionsHelper
+  DOCUMENT_PERMISSION_FORM_BASE_ERROR_MESSAGES = {
+    "company_id or user_id is required" => "適用対象は会社かユーザーのどちらか一方を指定してください。",
+    "company_id and user_id cannot both be set" => "適用対象は会社かユーザーのどちらか一方だけを指定してください。"
+  }.freeze
+
   def document_permission_overview_table_columns
     [
       table_preferences_column(:document, label: "文書名", default_width: 260, pinned: true, overflow: :ellipsis, sortable: true),
@@ -41,5 +46,15 @@ module Admin::DocumentPermissionsHelper
       label = primary_label == user.email_address ? primary_label : "#{primary_label} / #{user.email_address}"
       [label, user.id]
     end
+  end
+
+  def document_permission_form_error_messages(document_permission)
+    document_permission.errors.map do |error|
+      if error.attribute == :base
+        DOCUMENT_PERMISSION_FORM_BASE_ERROR_MESSAGES.fetch(error.message, error.message)
+      else
+        document_permission.errors.full_message(error.attribute, error.message)
+      end
+    end.uniq
   end
 end
