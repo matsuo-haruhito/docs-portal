@@ -258,25 +258,37 @@ class DocumentsController < BaseController
   end
 
   def filter_html_available(scope)
-    scope.joins(:latest_version).where.not(document_versions: { site_build_path: [nil, ""] })
+    html_version_ids = DocumentVersion.where.not(site_build_path: [nil, ""]).select(:id)
+    scope.where(latest_version_id: html_version_ids)
   end
 
   def filter_file_attached(scope)
-    scope.joins(latest_version: :document_files).distinct
+    document_ids = DocumentVersion.joins(:document_files).select(:document_id)
+    scope.where(id: document_ids)
   end
 
   def filter_pdf_available(scope)
-    pdf_file_ids = DocumentFile.where(content_type: "application/pdf").select(:document_version_id)
-    scope.joins(:latest_version).where(document_versions: { id: pdf_file_ids })
+    scope
+      .left_joins(document_versions: :document_files)
+      .where(
+        "documents.document_kind = :pdf_kind OR LOWER(document_files.file_name) LIKE :pdf_file_name",
+        pdf_kind: Document.document_kinds[:pdf],
+        pdf_file_name: "%.pdf"
+      )
   end
 
   def filter_diagram_available(scope)
-    matching_file_ids = DocumentFile.where("LOWER(file_name) SIMILAR TO ?", "%.(#{DIAGRAM_EXTENSIONS.join("|")})")
-                                   .select(:document_version_id)
-    scope.joins(:latest_version).where(document_versions: { id: matching_file_ids })
+    file_name_sql = DIAGRAM_EXTENSIONS.map { "LOWER(document_files.file_name) LIKE ?" }.join(" OR ")
+    file_name_patterns = DIAGRAM_EXTENSIONS.map { |extension| "%.#{extension}" }
+
+    scope
+      .left_joins(document_versions: :document_files)
+      .where(
+        ["document_versions.source_extension IN (?) OR #{file_name_sql}", DIAGRAM_EXTENSIONS, *file_name_patterns]
+      )
   end
 
   def enabled_filter?(key)
-    ActiveModel::Type::Boolean.new.cast(@filters[key])
+    @filters[key] == true
   end
 end
