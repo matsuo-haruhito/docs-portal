@@ -65,9 +65,9 @@
 
 | gem | 主な責務 | current resolved revision | 最初の確認先 |
 | --- | --- | --- | --- |
-| `tree_view` | 文書ツリー / 詳細ツリー / persisted expand state | `17b98f4314af79d93508bc681f6e9f6c50852747` | `docs-portal` の helper / partial と `tree_view-rails` の `docs/ja/*` |
+| `tree_view` | 文書ツリー / 詳細ツリー / persisted expand state | `9c538f9ee7946fa5af24f15c99402a0431677303` | `docs-portal` の helper / partial と `tree_view-rails` の `docs/ja/*` |
 | `rails_table_preferences` | 一覧の列表示 / filter / sort / preset UI | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `config/initializers/rails_table_preferences.rb` と `rails_table_preferences` の README / `docs/*` |
-| `rails_fields_kit` | Tom Select 系 field helper / controller / metadata | `37199d464fe58f21997eee1e10079e887b39154b` | `app/frontend/entrypoints/application.js` / `vite.config.ts` と `rails_fields_kit` の `doc/*` |
+| `rails_fields_kit` | Tom Select 系 field helper / controller / metadata | `b1a4b1c7d52425726395018ff2e575d616e65f51` | `app/frontend/entrypoints/application.js` / `vite.config.ts` と `rails_fields_kit` の `doc/*` |
 
 ### revision が変わったときの最短確認順
 
@@ -93,9 +93,9 @@
 ### current queue の読み分け
 
 - `#674` は parent queue です。3 gem 全体の順序や次にどの gem を上げるかを見直すときに参照し、実装や docs 更新の最小単位としては扱いません。
-- `#778` は `tree_view` baseline 更新の first child です。`tree_view_toolbar_actions` / `tree_view_toolbar_action_metadata` を前提にする前に、まずここで dependency bump と from / to SHA の記録を済ませます。
-- `#699` は `tree_view` の downstream reuse child です。`#778` が target baseline をそろえた後に、sidebar 文書ツリー toolbar を upstream helper metadata へ寄せる slice として読みます。
-- `rails_table_preferences` と `rails_fields_kit` は `tree_view` と同じ PR に載せず、必要になった時点で別 child issue / PR に分けます。`admin/document_sets` を current canary として、現行 revision のまま smoke を保てているかを先に確認します。
+- `#804` は current open の `tree_view` baseline bump child です。`#778` でそろえた前回 baseline と `#699` の downstream toolbar reuse は完了済みの参照として扱い、次の bump はここから切り分けます。
+- `#789` は `rails_table_preferences` の current child ですが、upstream の known-good revision 判断がまだ必要なので `status:needs-human` を前提に読みます。human decision が入る前に broad bump や screen rollout を混ぜません。
+- `#783` は `rails_fields_kit` baseline 更新の完了済み child です。`#737` のような host app canary はこの baseline を前提に進め、次の dependency bump が必要になった場合も別 child issue / PR に切り分けます。
 
 ### 代表 smoke の早見表
 
@@ -125,7 +125,7 @@
 
 ```text
 - gem: rails_fields_kit
-- from: 37199d464fe58f21997eee1e10079e887b39154b
+- from: b1a4b1c7d52425726395018ff2e575d616e65f51
 - to: <target SHA or tag>
 - representative smoke:
   - admin/document_sets form の preload / selected value 保持
@@ -134,7 +134,7 @@
   - request spec と画面確認で current contract 維持
   - 追加の follow-up: なし
 - rollback target:
-  - 37199d464fe58f21997eee1e10079e887b39154b
+  - b1a4b1c7d52425726395018ff2e575d616e65f51
 ```
 
 ## tree_view
