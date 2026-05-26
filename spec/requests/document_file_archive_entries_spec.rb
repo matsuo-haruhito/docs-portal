@@ -44,10 +44,15 @@ RSpec.describe "Document file archive entries", type: :request do
     end.to change(AccessLog.where(action_type: :view), :count).by(1)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("ZIP entry preview")
+    expect(response.body).to include("ZIP項目プレビュー")
+    expect(response.body).to include("項目パス")
+    expect(response.body).to include("ファイル名")
+    expect(response.body).to include("コンテンツタイプ")
     expect(response.body).to include("docs/readme.txt")
     expect(response.body).to include("one")
     expect(response.body).to include("two")
+    expect(response.body).not_to include("ZIP entry preview")
+    expect(response.body).not_to include("entry path")
   end
 
   it "rejects unsafe archive entry paths" do
@@ -57,7 +62,7 @@ RSpec.describe "Document file archive entries", type: :request do
     get archive_entry_preview_document_file_path(archive_file, entry_path: "../secret.txt")
 
     expect(response).to have_http_status(:unprocessable_content)
-    expect(response.body).to include("previewできません")
+    expect(response.body).to include("プレビューできません")
     expect(response.body).to include("unsafe path")
   end
 
@@ -68,7 +73,7 @@ RSpec.describe "Document file archive entries", type: :request do
     get archive_entry_preview_document_file_path(archive_file, entry_path: "images/logo.png")
 
     expect(response).to have_http_status(:unprocessable_content)
-    expect(response.body).to include("previewできません")
+    expect(response.body).to include("プレビューできません")
     expect(response.body).to include("text preview")
   end
 

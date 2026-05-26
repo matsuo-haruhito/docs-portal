@@ -68,6 +68,9 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include("左右確認")
     expect(response.body).to include("左右確認（比較対象なし）")
     expect(response.body).to include("添付・元ファイルへ移動")
+    expect(response.body).to include("版詳細ナビゲーション")
+    expect(response.body).not_to include("markdown-preview-actions")
+    expect(response.body).not_to include("markdown-tool")
   end
 
   it "shows a clear no-compare state in the side-by-side section when no previous version is available" do
