@@ -18,12 +18,12 @@ section.card
         include_blank: "選択してください",
         allow_clear: true,
         selected: @selected_project&.id
-      label
+      = label_tag :usage_filter do
         | 利用状況
-        = form.select :usage_filter, options_for_select(document_usage_report_filter_options, @usage_filter)
-      label
+        = select_tag :usage_filter, options_for_select(document_usage_report_filter_options, @usage_filter)
+      = label_tag :sort_order do
         | 並び順
-        = form.select :sort_order, options_for_select(document_usage_report_sort_options, @sort_order)
+        = select_tag :sort_order, options_for_select(document_usage_report_sort_options, @sort_order)
     p.actions
       = form.submit "集計"
       = link_to "条件をクリア", admin_document_usage_reports_path
