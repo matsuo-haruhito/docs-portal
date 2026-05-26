@@ -40,7 +40,7 @@ class Admin::DocumentPermissionsController < Admin::BaseController
   private
 
   def set_document_permission
-    @document_permission = DocumentPermission.find(params[:id])
+    @document_permission = DocumentPermission.find_by!(public_id: params[:public_id])
   end
 
   def load_master_options

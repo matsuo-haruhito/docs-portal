@@ -73,4 +73,97 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(response.body).to include("Customer Company")
     expect(response.body).to include("external@example.com")
   end
+
+  it "uses public_id-based action links on the index" do
+    permission = create(:document_permission, access_level: :view)
+
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(edit_admin_document_permission_path(permission.public_id))
+    expect(response.body).to include(admin_document_permission_path(permission.public_id))
+    expect(response.body).not_to include(edit_admin_document_permission_path(permission.id))
+    expect(response.body).not_to include(admin_document_permission_path(permission.id))
+  end
+
+  it "finds the edit page by public_id" do
+    permission = create(:document_permission)
+
+    sign_in_as(admin_user)
+
+    get edit_admin_document_permission_path(permission.public_id)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("文書権限編集")
+  end
+
+  it "rejects numeric ids on the edit page" do
+    permission = create(:document_permission)
+
+    sign_in_as(admin_user)
+
+    get edit_admin_document_permission_path(permission.id)
+
+    expect(response).to have_http_status(:not_found)
+  end
+
+  it "updates a document permission via public_id and keeps the index redirect" do
+    permission = create(:document_permission, access_level: :view)
+
+    sign_in_as(admin_user)
+
+    patch admin_document_permission_path(permission.public_id), params: {
+      document_permission: {
+        document_id: permission.document_id,
+        company_id: permission.company_id,
+        user_id: permission.user_id,
+        access_level: :download
+      }
+    }
+
+    expect(response).to redirect_to(admin_document_permissions_path)
+    expect(permission.reload.access_level).to eq("download")
+  end
+
+  it "rejects numeric ids on update" do
+    permission = create(:document_permission, access_level: :view)
+
+    sign_in_as(admin_user)
+
+    patch admin_document_permission_path(permission.id), params: {
+      document_permission: {
+        document_id: permission.document_id,
+        company_id: permission.company_id,
+        user_id: permission.user_id,
+        access_level: :download
+      }
+    }
+
+    expect(response).to have_http_status(:not_found)
+    expect(permission.reload.access_level).to eq("view")
+  end
+
+  it "destroys a document permission via public_id and keeps the index redirect" do
+    permission = create(:document_permission)
+
+    sign_in_as(admin_user)
+
+    delete admin_document_permission_path(permission.public_id)
+
+    expect(response).to redirect_to(admin_document_permissions_path)
+    expect(DocumentPermission.exists?(permission.id)).to be(false)
+  end
+
+  it "rejects numeric ids on destroy" do
+    permission = create(:document_permission)
+
+    sign_in_as(admin_user)
+
+    delete admin_document_permission_path(permission.id)
+
+    expect(response).to have_http_status(:not_found)
+    expect(DocumentPermission.exists?(permission.id)).to be(true)
+  end
 end
