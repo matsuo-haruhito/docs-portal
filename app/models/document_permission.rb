@@ -15,6 +15,10 @@ class DocumentPermission < ApplicationRecord
 
   after_commit :broadcast_document_tree_refresh_later
 
+  def to_param
+    public_id
+  end
+
   private
 
   def exactly_one_owner_scope
