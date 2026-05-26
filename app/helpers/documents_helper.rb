@@ -40,7 +40,7 @@ module DocumentsHelper
     ).build(
       hide_descendants_path_builder: ->(item, _depth, scope) { document_tree_toggle_path(item, :hide, scope:) },
       show_descendants_path_builder: ->(item, _depth, scope) { document_tree_toggle_path(item, :show, scope:) },
-      toggle_all_path_builder: ->(_state) { nil }
+      toggle_all_path_builder: ->(state) { document_tree_toggle_all_path(project: current_project || current_document&.project, state:) }
     )
 
     expansion_state = document_tree_initial_expansion_state(
@@ -101,6 +101,20 @@ module DocumentsHelper
       tree_window_offset: offset,
       format: :turbo_stream
     )
+  end
+
+  def document_tree_toggle_all_path(project:, state:)
+    return if project.blank?
+
+    path_options = {
+      tree_action: document_tree_toggle_all_action(state),
+      tree_query: document_tree_query,
+      format: :turbo_stream
+    }
+    current_window_offset = document_tree_window_request_offset
+    path_options[:tree_window_offset] = current_window_offset if current_window_offset.is_a?(Integer)
+
+    document_tree_all_project_path(project, **path_options)
   end
 
   def tree_toggle_button_label(item, state, context)
@@ -243,6 +257,15 @@ module DocumentsHelper
   end
 
   private
+
+  def document_tree_toggle_all_action(state)
+    case state.to_sym
+    when :collapsed, :collapse, :hide
+      "hide"
+    else
+      "show"
+    end
+  end
 
   def document_tree_projects_for_query(projects, current_project:, current_document:)
     projects = projects.to_a
