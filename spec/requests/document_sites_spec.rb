@@ -73,9 +73,9 @@ RSpec.describe "Document sites", type: :request do
     expect(response.body).to include('aria-label="表示中の画面"')
     expect(response.body).to include(document_version_path(version, anchor: "version-diff"))
     expect(response.body).to include(document_version_path(version, anchor: "version-files"))
+    expect(response.body).to include(">差分</a>")
     expect(response.body).not_to include("HTML Preview")
     expect(response.body).not_to include('aria-label="viewer modes"')
-    expect(response.body).not_to include(">差分<")
   end
 
   it "serves embedded docusaurus html for the iframe body" do
