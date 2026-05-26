@@ -6,7 +6,6 @@
 
 ## 権限・管理画面
 
-- `company_master_admin` が `/admin` で forbidden に止まらず、許可済みの `会社` / `ユーザー` 管理へ自然に入れる導線を整える
 - `internal` と `admin` の分離を UI / route / controller で徹底する
 - 管理画面でも DB id ではなく public_id / code / slug を使うようにする
 - 正式なレビュー・承認ワークフローを導入するかは、コメント・品質チェック・公開制御・送付運用が固まってから再評価する
