@@ -18,4 +18,20 @@ module Admin::DocumentUsageReportsHelper
   def document_usage_report_project_option_label(project)
     [project.code, project.name].compact_blank.join(" / ")
   end
+
+  def document_usage_report_filter_options
+    [["すべて", "all"], ["利用あり", "used"], ["未利用", "unused"]]
+  end
+
+  def document_usage_report_filter_label(value)
+    document_usage_report_filter_options.to_h.invert.fetch(value, "すべて")
+  end
+
+  def document_usage_report_sort_options
+    [["タイトル順", "title"], ["最終アクセスが新しい順", "last_accessed_desc"], ["最終アクセスが古い順", "last_accessed_asc"]]
+  end
+
+  def document_usage_report_sort_label(value)
+    document_usage_report_sort_options.to_h.invert.fetch(value, "タイトル順")
+  end
 end

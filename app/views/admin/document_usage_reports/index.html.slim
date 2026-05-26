@@ -18,6 +18,12 @@ section.card
         include_blank: "選択してください",
         allow_clear: true,
         selected: @selected_project&.id
+      = label_tag :usage_filter do
+        | 利用状況
+        = select_tag :usage_filter, options_for_select(document_usage_report_filter_options, @usage_filter)
+      = label_tag :sort_order do
+        | 並び順
+        = select_tag :sort_order, options_for_select(document_usage_report_sort_options, @sort_order)
     p.actions
       = form.submit "集計"
       = link_to "条件をクリア", admin_document_usage_reports_path
@@ -45,33 +51,43 @@ section.card
       strong = " #{@report_hash.dig(:summary, :total_downloads)}"
       |  / 既読確認:
       strong = " #{@report_hash.dig(:summary, :total_read_confirmations)}"
+    p
+      | 表示中:
+      strong = " #{@report_hash[:documents].size}件"
+      |  / 利用状況:
+      strong = " #{document_usage_report_filter_label(@usage_filter)}"
+      |  / 並び順:
+      strong = " #{document_usage_report_sort_label(@sort_order)}"
 
   section.card
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書利用一覧の表示設定")
 
-  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
-    thead
-      tr
-        th data-rails-table-preferences-column-key="title" 文書名
-        th data-rails-table-preferences-column-key="category" カテゴリ
-        th data-rails-table-preferences-column-key="document_kind" 種別
-        th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
-        th data-rails-table-preferences-column-key="used" 利用
-        th data-rails-table-preferences-column-key="view_count" 閲覧
-        th data-rails-table-preferences-column-key="download_count" ダウンロード
-        th data-rails-table-preferences-column-key="read_confirmation_count" 既読確認
-        th data-rails-table-preferences-column-key="last_accessed_at" 最終アクセス
-    tbody
-      - @report_hash[:documents].each do |row|
+  - if @report_hash[:documents].any?
+    = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+      thead
         tr
-          td data-rails-table-preferences-column-key="title" = link_to row[:title], project_document_path(@selected_project, row[:slug]), data: { turbo_frame: "_top" }
-          td data-rails-table-preferences-column-key="category" = document_category_label(row[:category])
-          td data-rails-table-preferences-column-key="document_kind" = document_kind_label(row[:document_kind])
-          td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(row[:visibility_policy])
-          td data-rails-table-preferences-column-key="used" = row[:used] ? "あり" : "なし"
-          td data-rails-table-preferences-column-key="view_count" = row[:view_count]
-          td data-rails-table-preferences-column-key="download_count" = row[:download_count]
-          td data-rails-table-preferences-column-key="read_confirmation_count" = row[:read_confirmation_count]
-          td data-rails-table-preferences-column-key="last_accessed_at" = row[:last_accessed_at].presence || "-"
+          th data-rails-table-preferences-column-key="title" 文書名
+          th data-rails-table-preferences-column-key="category" カテゴリ
+          th data-rails-table-preferences-column-key="document_kind" 種別
+          th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
+          th data-rails-table-preferences-column-key="used" 利用
+          th data-rails-table-preferences-column-key="view_count" 閲覧
+          th data-rails-table-preferences-column-key="download_count" ダウンロード
+          th data-rails-table-preferences-column-key="read_confirmation_count" 既読確認
+          th data-rails-table-preferences-column-key="last_accessed_at" 最終アクセス
+      tbody
+        - @report_hash[:documents].each do |row|
+          tr
+            td data-rails-table-preferences-column-key="title" = link_to row[:title], project_document_path(@selected_project, row[:slug]), data: { turbo_frame: "_top" }
+            td data-rails-table-preferences-column-key="category" = document_category_label(row[:category])
+            td data-rails-table-preferences-column-key="document_kind" = document_kind_label(row[:document_kind])
+            td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(row[:visibility_policy])
+            td data-rails-table-preferences-column-key="used" = row[:used] ? "あり" : "なし"
+            td data-rails-table-preferences-column-key="view_count" = row[:view_count]
+            td data-rails-table-preferences-column-key="download_count" = row[:download_count]
+            td data-rails-table-preferences-column-key="read_confirmation_count" = row[:read_confirmation_count]
+            td data-rails-table-preferences-column-key="last_accessed_at" = row[:last_accessed_at].presence || "-"
+  - else
+    p.muted 条件に一致する文書はありません。
 - else
   p.muted 案件を選択すると集計結果を表示します。
