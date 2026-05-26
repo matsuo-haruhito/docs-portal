@@ -41,7 +41,7 @@ class Admin::DocumentSetsController < Admin::BaseController
   private
 
   def set_document_set
-    @document_set = DocumentSet.find(params[:id])
+    @document_set = DocumentSet.find_by!(public_id: params[:public_id])
   end
 
   def load_projects
