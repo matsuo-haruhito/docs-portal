@@ -254,11 +254,43 @@ RSpec.describe "Document tree regressions", type: :request do
     expect(page_text).to include("前の50行")
     expect(page_text).to include("次の50行")
 
-    toolbar_actions = parsed_html.css("#document_tree_toolbar form[action]").map { _1["action"] }
+    toolbar_actions = parsed_html.css("#document_tree_toolbar .document-tree-toolbar__action-row form[action]").map { _1["action"] }
 
     expect(toolbar_actions).not_to be_empty
     expect(toolbar_actions).to all(include("tree_window_offset=50"))
     expect(toolbar_actions.any? { _1.include?("tree_action=show") }).to be(true)
     expect(toolbar_actions.any? { _1.include?("tree_action=hide") }).to be(true)
+  end
+
+  it "filters the current project tree by file name, slug, and source path" do
+    sign_in_as(user)
+
+    get project_document_tree_path(project, document_slug: markdown_document.slug, tree_query: "inventory", format: :turbo_stream)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
+    expect(page_text).to include("「inventory」に一致する文書を 1 件表示しています。")
+    expect(page_text).to include("inventory.csv")
+    expect(page_text).not_to include("intro-guide.md")
+    expect(page_text).not_to include("operations-manual.pdf")
+
+    toolbar_actions = parsed_html.css("#document_tree_toolbar .document-tree-toolbar__action-row form[action]").map { _1["action"] }
+
+    expect(toolbar_actions).not_to be_empty
+    expect(toolbar_actions).to all(include("tree_query=inventory"))
+
+    get project_document_tree_path(project, document_slug: markdown_document.slug, tree_query: "exports", format: :turbo_stream)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("「exports」に一致する文書を 1 件表示しています。")
+    expect(page_text).to include("inventory.csv")
+
+    get project_document_tree_path(project, document_slug: markdown_document.slug, tree_query: "missing-path", format: :turbo_stream)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("「missing-path」に一致する文書はありません。")
+    expect(page_text).not_to include("intro-guide.md")
+    expect(page_text).not_to include("operations-manual.pdf")
+    expect(page_text).not_to include("inventory.csv")
   end
 end
