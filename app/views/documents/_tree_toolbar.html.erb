@@ -11,6 +11,8 @@
     collapsed_source_path: local_assigns[:collapsed_source_path]
   ) %>
 <% end %>
+<% expand_all_path = document_tree_toggle_all_path(:expanded, current_project:, current_document:) %>
+<% collapse_all_path = document_tree_toggle_all_path(:collapsed, current_project:, current_document:) %>
 
 <div id="document_tree_toolbar" class="document-tree-toolbar">
   <div class="document-tree-toolbar__title-row">
@@ -18,11 +20,14 @@
   </div>
   <% if current_project.present? && render_state.present? %>
     <div class="document-tree-toolbar__action-row">
-      <%= tree_view_toolbar(
-        render_state,
-        labels: { expand_all: "案件の文書ツリーを開く", collapse_all: "案件の文書ツリーを閉じる" },
-        button_class_name: "document-tree-action-link"
-      ) %>
+      <div class="tree-view-toolbar" aria-label="文書ツリー操作">
+        <% if expand_all_path.present? %>
+          <%= button_to "案件の文書ツリーを開く", expand_all_path, method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て展開します" }, class: "document-tree-action-link" %>
+        <% end %>
+        <% if collapse_all_path.present? %>
+          <%= button_to "案件の文書ツリーを閉じる", collapse_all_path, method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て閉じます" }, class: "document-tree-action-link" %>
+        <% end %>
+      </div>
     </div>
   <% end %>
 </div>
