@@ -38,7 +38,7 @@ class Admin::ProjectMembershipsController < Admin::BaseController
   private
 
   def set_project_membership
-    @project_membership = ProjectMembership.find(params[:id])
+    @project_membership = ProjectMembership.find_by!(public_id: params[:public_id])
   end
 
   def load_master_options
