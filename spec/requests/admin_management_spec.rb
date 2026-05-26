@@ -1,6 +1,14 @@
 require "rails_helper"
 
 RSpec.describe "Admin management", type: :request do
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def admin_nav_hrefs
+    parsed_html.css("ul.nav-list a").map { |link| link["href"] }
+  end
+
   describe "GET /admin" do
     it "redirects unauthenticated users to the login page" do
       get admin_root_path
@@ -15,6 +23,11 @@ RSpec.describe "Admin management", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("管理画面")
+      expect(admin_nav_hrefs).to include(
+        admin_root_path,
+        admin_projects_path,
+        admin_document_usage_reports_path
+      )
     end
 
     it "forbids external users" do
@@ -145,7 +158,7 @@ RSpec.describe "Admin management", type: :request do
     let(:internal_user) { create(:user, :internal) }
     let!(:company) { create(:company, domain: "tenant.example.com", name: "Tenant") }
     let!(:other_company) { create(:company, domain: "other.example.com", name: "Other") }
-    let!(:manager) { create(:user, :external, user_type: :company_master_admin, company:, email_address: "manager@example.com") }
+    let!(:manager) { create(:user, :external, company:, email_address: "manager@example.com") }
     let!(:managed_user) { create(:user, :external, company:, email_address: "member@example.com") }
     let!(:other_user) { create(:user, :external, company: other_company, email_address: "other@example.com") }
 
@@ -156,6 +169,16 @@ RSpec.describe "Admin management", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("member@example.com")
       expect(response.body).not_to include("other@example.com")
+      expect(admin_nav_hrefs).to include(admin_companies_path, admin_users_path)
+      expect(admin_nav_hrefs).not_to include(
+        admin_root_path,
+        admin_projects_path,
+        admin_project_memberships_path,
+        admin_documents_path,
+        admin_document_permissions_path,
+        admin_access_logs_path,
+        admin_document_usage_reports_path
+      )
 
       patch admin_user_path(managed_user), params: {
         user: { name: "Member Updated", email_address: managed_user.email_address, user_type: :internal, company_id: other_company.id, active: true }
