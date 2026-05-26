@@ -11,6 +11,10 @@ RSpec.describe "Admin access logs", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def page_text
+    parsed_html.text.squish
+  end
+
   def log_rows
     parsed_html.css("table tbody tr")
   end
@@ -48,7 +52,32 @@ RSpec.describe "Admin access logs", type: :request do
     expect(response.body).to include("監査ログ")
     expect(response.body).to include("Audit Project")
     expect(response.body).to include("Audit Document")
+    expect(page_text).to include("表示中: 1件 / 最新200件までを表示")
+    expect(response.body).to include("監査ログ一覧の表示設定")
     expect(log_target_names).to eq(["audit.zip"])
+  end
+
+  it "shows an empty state when no access logs exist yet" do
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("まだ監査ログはありません。")
+    expect(page_text).to include("操作が記録されると、最新200件をここで確認できます。")
+    expect(response.body).not_to include("監査ログ一覧の表示設定")
+    expect(response.body).not_to include('data-rails-table-preferences-column-key="accessed_at"')
+  end
+
+  it "shows a filtered empty state when no access logs match the current filters" do
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path, params: { document_q: "does-not-match" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("条件に一致する監査ログはありません。")
+    expect(page_text).to include("絞り込み条件を見直すか、「条件をクリア」で最新200件を確認してください。")
+    expect(response.body).not_to include("監査ログ一覧の表示設定")
   end
 
   it "filters access logs by action type and target type" do

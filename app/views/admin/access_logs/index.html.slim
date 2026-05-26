@@ -2,6 +2,7 @@
 - table_key = :admin_access_logs
 - table_columns = access_log_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- has_active_filters = @filters.to_h.values.any?(&:present?)
 
 h1 監査ログ
 = render "admin/nav"
@@ -39,44 +40,56 @@ section.card
       = form.submit "検索"
       = link_to "条件をクリア", admin_access_logs_path
 
-p.muted 最新200件を表示します。
+- if @access_logs.any?
+  p.muted
+    | 表示中:
+    strong = " #{@access_logs.size}件"
+    |  / 最新200件までを表示
+    - if has_active_filters
+      |  / 絞り込み中
 
-.card
-  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "監査ログ一覧の表示設定")
+  .card
+    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "監査ログ一覧の表示設定")
 
-= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
-  thead
-    tr
-      th data-rails-table-preferences-column-key="accessed_at" 日時
-      th data-rails-table-preferences-column-key="action_type" 操作
-      th data-rails-table-preferences-column-key="target" 対象
-      th data-rails-table-preferences-column-key="user" ユーザー
-      th data-rails-table-preferences-column-key="company" 会社
-      th data-rails-table-preferences-column-key="project" 案件
-      th data-rails-table-preferences-column-key="document" 文書
-      th data-rails-table-preferences-column-key="document_version" 版
-      th data-rails-table-preferences-column-key="ip_address" IPアドレス
-  tbody
-    - @access_logs.each do |log|
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+    thead
       tr
-        td data-rails-table-preferences-column-key="accessed_at" = log.accessed_at.strftime("%Y-%m-%d %H:%M:%S")
-        td data-rails-table-preferences-column-key="action_type" = access_log_action_type_label(log)
-        td data-rails-table-preferences-column-key="target"
-          = access_log_target_type_label(log)
-          - if log.target_name.present?
-            br
-            code = log.target_name
-        td data-rails-table-preferences-column-key="user" = log.user ? "#{log.user.display_name} / #{log.user.email_address}" : "-"
-        td data-rails-table-preferences-column-key="company" = log.company&.display_name || "-"
-        td data-rails-table-preferences-column-key="project" = log.project&.name || "-"
-        td data-rails-table-preferences-column-key="document"
-          - if log.document && log.project
-            = link_to log.document.title, project_document_path(log.project, log.document.slug), data: { turbo_frame: "_top" }
-          - else
-            | -
-        td data-rails-table-preferences-column-key="document_version"
-          - if log.document_version
-            = link_to document_version_label(log.document_version), document_version_path(log.document_version)
-          - else
-            | -
-        td data-rails-table-preferences-column-key="ip_address" = log.ip_address.presence || "-"
+        th data-rails-table-preferences-column-key="accessed_at" 日時
+        th data-rails-table-preferences-column-key="action_type" 操作
+        th data-rails-table-preferences-column-key="target" 対象
+        th data-rails-table-preferences-column-key="user" ユーザー
+        th data-rails-table-preferences-column-key="company" 会社
+        th data-rails-table-preferences-column-key="project" 案件
+        th data-rails-table-preferences-column-key="document" 文書
+        th data-rails-table-preferences-column-key="document_version" 版
+        th data-rails-table-preferences-column-key="ip_address" IPアドレス
+    tbody
+      - @access_logs.each do |log|
+        tr
+          td data-rails-table-preferences-column-key="accessed_at" = log.accessed_at.strftime("%Y-%m-%d %H:%M:%S")
+          td data-rails-table-preferences-column-key="action_type" = access_log_action_type_label(log)
+          td data-rails-table-preferences-column-key="target"
+            = access_log_target_type_label(log)
+            - if log.target_name.present?
+              br
+              code = log.target_name
+          td data-rails-table-preferences-column-key="user" = log.user ? "#{log.user.display_name} / #{log.user.email_address}" : "-"
+          td data-rails-table-preferences-column-key="company" = log.company&.display_name || "-"
+          td data-rails-table-preferences-column-key="project" = log.project&.name || "-"
+          td data-rails-table-preferences-column-key="document"
+            - if log.document && log.project
+              = link_to log.document.title, project_document_path(log.project, log.document.slug), data: { turbo_frame: "_top" }
+            - else
+              | -
+          td data-rails-table-preferences-column-key="document_version"
+            - if log.document_version
+              = link_to document_version_label(log.document_version), document_version_path(log.document_version)
+            - else
+              | -
+          td data-rails-table-preferences-column-key="ip_address" = log.ip_address.presence || "-"
+- elsif has_active_filters
+  p.muted 条件に一致する監査ログはありません。
+  p.muted 絞り込み条件を見直すか、「条件をクリア」で最新200件を確認してください。
+- else
+  p.muted まだ監査ログはありません。
+  p.muted 操作が記録されると、最新200件をここで確認できます。
