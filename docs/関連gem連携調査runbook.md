@@ -73,13 +73,21 @@
 
 1. `Gemfile.lock` で変わった revision を確認する
 2. 対応する gem repo の README / docs / 関連 issue・PR を読む
-3. この runbook の app-side verification checklist で `docs-portal` 側の seam を点検する
+3. この runbook の app-side verification checklist と代表 smoke contract で `docs-portal` 側の seam を点検する
 4. upstream docs の不足か、`docs-portal` 固有の組み込み差分か、仕様判断待ちかを切り分ける
 
 ### 補足
 
 - `Gemfile` が `ref:` 未固定でも、現行 app の再現根拠は `Gemfile.lock` の revision を優先して記録します
 - `#477` の固定方針が決まったら、この節は `Gemfile` / lock のどちらを正本にするかに合わせて更新します
+
+## release train の最小運用
+
+- 3 gem を同じ branch / PR で同時に上げない。`1 gem = 1 branch = 1 PR` を基本とし、他 2 gem は current resolved revision のまま据え置きます。
+- bump 前に `Gemfile.lock` の current resolved revision を控え、対応する upstream issue / PR / commit を読んでから target revision を決めます。
+- bump 後の記録は `docs-portal` 側の issue か PR 本文に残し、少なくとも `gem 名 / from SHA / to SHA / 実施した代表 smoke / 結果` を書きます。コード上の証跡は `Gemfile.lock` diff を正本として扱います。
+- 3 gem すべてに follow-up が必要でも、同一 PR に混ぜず、小さい issue や checklist に分けて順に進めます。
+- smoke の失敗原因が `docs-portal` 固有の helper / partial / spec drift なら app 側 issue を切り、public API や導入手順の読みづらさが原因なら upstream docs / issue を先に確認します。
 
 ## tree_view
 
@@ -138,6 +146,17 @@
 - 切り分け
   - `RenderState`、toolbar helper、公開 API の理解不足なら upstream docs / issue を先に見る
   - icon、label、route、layout だけがずれているなら `docs-portal` 側 issue を優先する
+
+### 代表 smoke contract
+
+- サイドバーの文書ツリー (`app/views/documents/_tree.html.erb`)
+  - 代表フォルダ 1 つを開閉し、current document link が消えたり別階層へ飛んだりしないことを確認します。
+- 文書詳細のツリー (`app/views/projects/_document_detail_tree.html.erb`)
+  - 同じ文書 / フォルダ階層が detail 側でも見え、toolbar から expand / collapse を実行できることを確認します。
+- persisted state (`app/models/concerns/tree_view_state_owner.rb`)
+  - 開いた状態を保存したあと、同じ利用者の再訪や再描画で expand state が戻ることを確認します。
+- request spec の裏づけ
+  - `spec/requests/document_tree_regressions_spec.rb` に近い既存 spec で、tree visibility や current document 導線が崩れていないことを確認します。
 
 ### 関連 issue
 
@@ -226,6 +245,17 @@
   - preview table tool の state や embedded 共有の崩れは app 側 issue を優先する
   - Markdown preview table へ `rails_table_preferences` をどこまで導入するかは `docs-portal#475` の仕様判断なので `needs-human` として扱う
 
+### 代表 smoke contract
+
+- `admin/document_sets` の一覧表示
+  - `app/views/admin/document_sets/index.html.slim` で editor と table が同じ `table_key` を共有し、代表列の stable column key が描画されることを確認します。
+- filter panel の最小導線
+  - 代表列 1 本で filter panel を開き、apply / clear を往復しても host form や一覧描画が崩れないことを確認します。
+- preset の保存または読み戻し
+  - engine 経由の preset 保存が対象 issue の範囲なら保存から再読込まで確認し、保存を触らない slice でも既存 preset の読み戻しが壊れていないことを確認します。
+- Markdown preview table を触る issue の扱い
+  - preview iframe 内 table は app 側 fallback path が正本なので、この smoke だけで代替せず `docs-portal#475` `#542` `#547` の論点と分けて扱います。
+
 ### 関連 issue
 
 - `docs-portal#475` Markdown 由来の HTML table と table preferences
@@ -293,6 +323,17 @@
 - 切り分け
   - import path、controller registration、event contract の説明不足なら upstream docs / issue を先に見る
   - 画面固有の param、DOM、Turbo 導線だけが崩れるなら `docs-portal` 側 issue を優先する
+
+### 代表 smoke contract
+
+- `admin/document_sets/_form.html.slim` の preload 導線
+  - 代表 field が initial load で描画され、`allow_clear` と placeholder が current main のまま出ていることを確認します。
+- selected value の保持
+  - validation error 後または Turbo 再訪後も同じ field 名と selected value が残ることを確認します。
+- wiring の健全性
+  - `app/frontend/entrypoints/application.js`、`vite.config.ts`、`config/initializers/rails_fields_kit.rb`、`app/frontend/lib/tom_select_fields.js` をまとめて見て、controller registration と no-op shim の責務が戻っていないことを確認します。
+- remote search を触る issue の扱い
+  - current main の代表 smoke は preload / collection path で足りますが、remote search を変える issue では対象 endpoint と selected value の両方を追加確認します。
 
 ### 関連 issue
 
