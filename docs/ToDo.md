@@ -6,7 +6,7 @@
 
 ## 権限・管理画面
 
-- `internal` と `admin` の分離を UI / route / controller で徹底する
+- `company_master_admin` の current `/admin` redirect と `会社` / `ユーザー` 管理の制約は [company_master_admin会社・ユーザー管理runbook](./company_master_admin会社・ユーザー管理runbook.md) を正本とし、ここには未解決の導線改善だけを残す
 - 管理画面でも DB id ではなく public_id / code / slug を使うようにする
 - 正式なレビュー・承認ワークフローを導入するかは、コメント・品質チェック・公開制御・送付運用が固まってから再評価する
 - 形式的な workflow とは別に、最小確認依頼 / OK・Cancel 機能は独立 issue で扱う
@@ -95,4 +95,3 @@
 ## テスト
 
 - latest_version の created_at 基準と override 方針が変わる場合は、そのルールを request / service spec に追加する
-- AccessLog の記録対象 spec を追加する
