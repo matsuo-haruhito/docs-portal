@@ -47,10 +47,7 @@ RSpec.describe "Dashboard", type: :request do
     expect(response).to have_http_status(:ok)
     expect(heading_texts).to include("ダッシュボード", "最近見た文書", "最近更新された文書")
     expect(metric_card_texts.any? { _1.include?("閲覧可能案件") }).to be(true)
-    expect(metric_card_texts.any? { _1.include?("お気に入り") }).to be(true)
-    expect(metric_card_texts.any? { _1.include?("後で読む") }).to be(true)
-    expect(page_text).to include("Visible Project")
-    expect(page_text).to include("Visible Manual")
+    expect(page_text).to include("Visible Project", "Visible Manual", "お気に入り", "後で読む")
     expect(metric_cta_links.map(&:text)).to include(
       "案件一覧へ",
       "文書一覧へ",
