@@ -44,7 +44,7 @@ RSpec.describe "admin external integration project selectors source" do
     aggregate_failures do
       expect(external_folder_sync_source_show).to include("provider_label = external_folder_sync_source_provider_label(@external_folder_sync_source)")
       expect(external_folder_sync_source_show).to include("google_drive_source = @external_folder_sync_source.google_drive?")
-      expect(external_folder_sync_source_show).to include("apply_confirm_message = \"#{provider_label} からドキュメントポータルへ同期します。競合・重複警告がある場合は自動停止します。よろしいですか？\"")
+      expect(external_folder_sync_source_show).to include('apply_confirm_message = "#{provider_label} からドキュメントポータルへ同期します。競合・重複警告がある場合は自動停止します。よろしいですか？"')
       expect(external_folder_sync_source_show).to include("dt 外部フォルダURL")
       expect(external_folder_sync_source_show).to include("dt 外部フォルダID")
       expect(external_folder_sync_source_show).to include("dt 同期カーソル")
