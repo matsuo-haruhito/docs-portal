@@ -81,8 +81,11 @@ class ProjectsController < BaseController
       collapsed_source_path:
     }
     toolbar_locals = {
+      projects:,
       current_project:,
-      current_document:
+      current_document:,
+      expanded_source_path:,
+      collapsed_source_path:
     }
 
     respond_to do |format|
