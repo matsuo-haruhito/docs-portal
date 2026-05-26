@@ -21,11 +21,7 @@ p.actions
     - if @filters[:status].present?
       |  / 状態: #{recurring_job_status_label(@filters[:status])}
 
-  - triage_counts = [
-    "失敗: #{@status_counts.fetch('failed', 0)}件",
-    "実行中: #{@status_counts.fetch('running', 0)}件",
-    "投入済み: #{@status_counts.fetch('enqueued', 0)}件"
-  ]
+  - triage_counts = ["失敗: #{@status_counts.fetch('failed', 0)}件", "実行中: #{@status_counts.fetch('running', 0)}件", "投入済み: #{@status_counts.fetch('enqueued', 0)}件"]
   p.muted = triage_counts.join(" / ")
 
   = table_tag do
