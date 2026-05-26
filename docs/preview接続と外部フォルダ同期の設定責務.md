@@ -10,11 +10,11 @@
 
 | やりたいこと | 主な登録先 | 追加で見るもの | current support |
 | --- | --- | --- | --- |
-| Office ファイルの inline preview を Microsoft Graph で開く | 管理画面 `Microsoft Graph接続` | [Microsoft Graph接続とOffice preview](./Microsoft%20Graph接続とOffice%20preview.md) | 対応済み |
+| Office ファイルの inline preview を Microsoft Graph で開く | 管理画面 `Microsoft Graph接続` | [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md) | 対応済み |
 | Google Drive フォルダを portal へ取り込む | 管理画面 `外部フォルダ同期` | [Google Drive外部フォルダ同期](./Google%20Drive外部フォルダ同期.md) | 対応済み |
-| Graph preview が失敗したときに Google Drive upload preview へ fallback する | 管理画面 `外部フォルダ同期` の OAuth 接続 + `.env` の `GOOGLE_DRIVE_*` | [Microsoft Graph接続とOffice preview](./Microsoft%20Graph接続とOffice%20preview.md) | 対応済み |
-| SharePoint / OneDrive の共有 URL から同期元 metadata を解決する | まだ専用 UI / docs は未完成 | `#496`, `#552` | 未対応、後続 issue で検討中 |
-| Microsoft Graph / SharePoint / OneDrive を同期元として dry-run / apply する | まだ専用 UI / docs は未完成 | `#503` | 未対応、後続 issue で検討中 |
+| Graph preview が失敗したときに Google Drive upload preview へ fallback する | 管理画面 `外部フォルダ同期` の OAuth 接続 + `.env` の `GOOGLE_DRIVE_*` | [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md) | 対応済み |
+| SharePoint / OneDrive の共有 URL から同期元 metadata を解決して保存する | 管理画面 `外部フォルダ同期` + 案件ごとの `Microsoft Graph接続` | [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md), [Microsoft Graph接続管理runbook](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E7%AE%A1%E7%90%86runbook.md) | 対応済み（metadata 保存まで） |
+| Microsoft Graph / SharePoint / OneDrive を同期元として dry-run / apply する | 管理画面 `外部フォルダ同期` | `#503`, [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md) | 未対応、後続 issue で検討中 |
 
 ## 何をどこに置くか
 
@@ -53,7 +53,7 @@ Office preview 用の接続です。管理画面の `admin/microsoft_graph_conne
 - `enabled`
 - `auth_config`
 
-現行 docs と current code で stable に説明できる provider は `google_drive` だけです。同期方向も `external_to_portal` のみです。
+現行 docs と current code で stable に説明できる provider は `google_drive` に加えて、`microsoft_graph` の metadata 保存 first slice です。どちらも同期方向は `external_to_portal` 前提ですが、`dry_run` / `apply` / `enqueue` / 変更通知の購読まで進められるのは Google Drive のみです。
 
 ### 3. `.env` に置く値
 
@@ -86,6 +86,7 @@ Office preview 用の接続です。管理画面の `admin/microsoft_graph_conne
 - `ExternalFolderSyncSource`
   - 外部フォルダの列挙、dry-run、apply、同期履歴の起点
   - current support は Google Drive の片方向同期
+  - SharePoint / OneDrive では共有 URL から `drive_id` / `folder_item_id` / `folder_path` / `site_id` を保存する first slice まで対応済み
 
 この 2 つは同じ「外部ストレージ連携」でも責務が違います。
 
@@ -105,16 +106,16 @@ Office preview 用の接続です。管理画面の `admin/microsoft_graph_conne
 ### Microsoft Graph
 
 - Office preview 用接続: 対応済み
-- SharePoint / OneDrive の同期元 metadata 解決: 未対応
+- SharePoint / OneDrive の共有 URL から metadata を保存する first slice: 対応済み
 - Graph -> Portal の dry-run / apply: 未対応
 
 ### SharePoint / OneDrive
 
-- 共有 URL から metadata を解決して同期元へ保存する流れ: `#496` の対象
-- provider-aware な同期元作成 UI: `#552` の対象
-- Graph -> Portal の手動同期: `#503` の対象
+- 共有 URL から `drive_id` / `folder_item_id` / `folder_path` / `site_id` を保存する: current `main` で対応済み
+- provider-aware な同期元作成 UI と保存済み metadata の確認: current `main` で対応済み
+- Graph -> Portal の手動同期、`enqueue`、変更通知: `#503` など後続 issue の対象
 
-現時点では、SharePoint / OneDrive を「すでに Google Drive と同じ同期元として使える」と読まないでください。current docs から安全に言えるのは、関連 issue が切られており、役割分担の整理が必要だという段階までです。
+現時点では、SharePoint / OneDrive を「すでに Google Drive と同じ同期元として使える」と読まないでください。current docs から安全に言えるのは、共有 URL から同期元 metadata を保存できる一方、同期本体や変更通知はまだ未対応という段階までです。
 
 ## よくある判断
 
@@ -130,13 +131,15 @@ Office preview 用の接続です。管理画面の `admin/microsoft_graph_conne
 
 ### SharePoint / OneDrive の共有 URL を貼って同期したい
 
-current main では docs 先行または後続 issue の整理段階です。`#496` `#503` `#552` を合わせて確認してください。
+current `main` では、共有 URL から metadata を保存するところまでは進められます。保存後は `drive_id` / `folder_item_id` / `folder_path` / `site_id` が取得できているかを確認してください。
+
+ただし、`dry_run` / `apply` / `enqueue` / 変更通知はまだ未対応です。同期本体まで進めたい場合は `#503` などの後続 issue と [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md) を合わせて確認してください。
 
 ## 関連ドキュメント
 
 - [README](../README.md)
 - [docs/README](./README.md)
-- [Microsoft Graph接続とOffice preview](./Microsoft%20Graph接続とOffice%20preview.md)
+- [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md)
 - [Google Drive外部フォルダ同期](./Google%20Drive外部フォルダ同期.md)
 - [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md)
 - [ローカルセットアップと環境変数](./ローカルセットアップと環境変数.md)
