@@ -52,6 +52,21 @@ RSpec.describe "AccessibleDocuments", type: :request do
     expect(response.body).to match(/ページ\s*2\s*\/\s*2/)
   end
 
+  it "applies practical checkbox filters from request params" do
+    with_files = create_viewable_document(project: project_a, title: "Attached Manual", slug: "attached-manual")
+    without_files = create_viewable_document(project: project_b, title: "Plain Handbook", slug: "plain-handbook")
+
+    version = create(:document_version, document: with_files)
+    create(:document_file, document_version: version, file_name: "attached-manual.pdf")
+
+    sign_in_as(user)
+    get documents_path, params: { has_files: "1" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(with_files.title)
+    expect(response.body).not_to include(without_files.title)
+  end
+
   it "keeps internal-only documents available to internal users" do
     internal_user = create(:user, :internal)
     internal_project = create(:project, name: "Internal Project")
