@@ -78,6 +78,8 @@ RSpec.describe "Admin access requests", type: :request do
     expect(action_forms.size).to eq(2)
     expect(page_text).to include("承認")
     expect(page_text).to include("却下")
+    expect(action_forms.last.to_html).to include("承認条件を満たしていないため却下しました")
+    expect(action_forms.last.to_html).not_to include("Not approved")
   end
 
   it "filters requests by requester or target search terms" do
@@ -129,11 +131,11 @@ RSpec.describe "Admin access requests", type: :request do
 
     sign_in_as(admin_user)
 
-    patch admin_access_request_path(access_request), params: { decision: "reject", rejection_reason: "Not approved" }
+    patch admin_access_request_path(access_request), params: { decision: "reject", rejection_reason: "承認条件を満たしていないため却下しました" }
 
     expect(response).to redirect_to(admin_access_requests_path)
     expect(access_request.reload).to be_rejected
-    expect(access_request.rejection_reason).to eq("Not approved")
+    expect(access_request.rejection_reason).to eq("承認条件を満たしていないため却下しました")
   end
 
   it "forbids external users" do
