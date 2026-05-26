@@ -7,6 +7,16 @@ RSpec.describe "Admin document sets", type: :request do
   let(:document_b) { create(:document, project:, title: "社内メモ", slug: "internal-memo") }
   let!(:version_a1) { create(:document_version, document: document_a, version_label: "v1.0.0") }
   let!(:version_a2) { create(:document_version, document: document_a, version_label: "v2.0.0") }
+  let!(:existing_document_set) do
+    create(
+      :document_set,
+      project:,
+      name: "既存セット",
+      set_type: :delivery,
+      visibility_policy: :restricted_external,
+      sort_order: 1
+    )
+  end
 
   def parsed_html
     Nokogiri::HTML(response.body)
@@ -68,6 +78,16 @@ RSpec.describe "Admin document sets", type: :request do
     end
 
     expect(header_keys).to eq(%w[project name set_type visibility_policy documents_count actions])
+  end
+
+  it "renders edit and delete actions with public_id based paths" do
+    sign_in_as(admin)
+
+    get admin_document_sets_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(edit_admin_document_set_path(existing_document_set))
+    expect(response.body).to include(admin_document_set_path(existing_document_set))
   end
 
   it "persists document set table preferences through the mounted engine api" do
@@ -160,5 +180,43 @@ RSpec.describe "Admin document sets", type: :request do
     expect(document_set.document_set_items.ordered.map(&:document)).to eq([document_a, document_b])
     expect(document_set.document_set_items.ordered.first.document_version).to eq(version_a1)
     expect(document_set.document_set_items.ordered.second.document_version).to be_nil
+  end
+
+  it "resolves edit, update, and destroy through public_id" do
+    sign_in_as(admin)
+
+    get edit_admin_document_set_path(existing_document_set)
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_html.at_css(%(form[action="#{admin_document_set_path(existing_document_set)}"]))).to be_present
+
+    patch admin_document_set_path(existing_document_set), params: {
+      document_set: {
+        project_id: project.id,
+        name: "更新後セット",
+        description: existing_document_set.description,
+        set_type: existing_document_set.set_type,
+        visibility_policy: existing_document_set.visibility_policy,
+        sort_order: existing_document_set.sort_order
+      },
+      document_set_items: {}
+    }
+
+    expect(response).to redirect_to(admin_document_sets_path)
+    expect(existing_document_set.reload.name).to eq("更新後セット")
+
+    expect do
+      delete admin_document_set_path(existing_document_set)
+    end.to change(DocumentSet, :count).by(-1)
+
+    expect(response).to redirect_to(admin_document_sets_path)
+  end
+
+  it "does not resolve edit by numeric id once admin routes use public_id" do
+    sign_in_as(admin)
+
+    get "/admin/document_sets/#{existing_document_set.id}/edit"
+
+    expect(response).to have_http_status(:not_found)
   end
 end
