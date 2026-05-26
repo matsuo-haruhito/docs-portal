@@ -37,8 +37,7 @@
 
 ## Import / GitHub Actions
 
-- `publish/documents.json` から `publish.json` を生成するスクリプトを整備する
-- GitHub Actions を 1 本化し、build -> manifest 生成 -> import API まで通す
+- current の manifest 生成手順と `build-docs` workflow の確認順は [build-docs workflow確認runbook](./build-docs%20workflow確認runbook.md) を正本とし、ここでは未完了論点だけを残す
 - artifact の永続保存方式を検討する
 - バージョン管理しない Document の上書き import を実装する
 - `latest_version` の明示切り替えや別ルール更新を入れる場合は、現行の created_at 基準との差分を整理してから扱う
