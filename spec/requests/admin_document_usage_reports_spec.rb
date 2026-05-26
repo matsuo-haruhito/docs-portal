@@ -60,7 +60,7 @@ RSpec.describe "Admin document usage reports", type: :request do
 
     sign_in_as(admin_user)
 
-    get admin_document_usage_reports_path(project_id: project.id)
+    get admin_document_usage_reports_path, params: { project_id: project.id }
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("Usage Project")
@@ -106,7 +106,7 @@ RSpec.describe "Admin document usage reports", type: :request do
 
     sign_in_as(admin_user)
 
-    get admin_document_usage_reports_path(project_id: project.id, usage_filter: "used", sort_order: "last_accessed_desc")
+    get admin_document_usage_reports_path, params: { project_id: project.id, usage_filter: "used", sort_order: "last_accessed_desc" }
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 3件")
@@ -129,7 +129,7 @@ RSpec.describe "Admin document usage reports", type: :request do
 
     sign_in_as(admin_user)
 
-    get admin_document_usage_reports_path(project_id: project.id, usage_filter: "used")
+    get admin_document_usage_reports_path, params: { project_id: project.id, usage_filter: "used" }
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 0件")
