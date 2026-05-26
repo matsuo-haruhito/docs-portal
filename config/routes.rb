@@ -33,8 +33,8 @@ Rails.application.routes.draw do
     get "model_browser", to: "model_browsers#index", as: :model_browser
     get "model_browser/:model_key", to: "model_browsers#show", as: :model_browser_model
 
-    resources :companies, except: %i[show new]
-    resources :users, except: %i[show new]
+    resources :companies, except: %i[show new], param: :public_id
+    resources :users, except: %i[show new], param: :public_id
     resources :projects, except: %i[show new], param: :code do
       get "external_preview", to: "project_external_previews#show", on: :member
       get "permission_preview", to: "project_permission_previews#show", on: :member
