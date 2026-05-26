@@ -31,7 +31,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       get admin_generated_file_runs_path
 
       expect(response).to have_http_status(:ok)
-      failed_summary_card = parsed_html.at_css(%(a[href="#{admin_generated_file_runs_path(status: "failed")}"]))
+      failed_summary_card = parsed_html.css(%(a[href="#{admin_generated_file_runs_path(status: "failed")}"])).find { |node| node.at_css(".text-2xl.font-bold") }
       expect(failed_summary_card).to be_present
       expect(failed_summary_card.text).to include("失敗")
       expect(failed_summary_card.at_css(".text-2xl.font-bold")&.text).to eq("2")
