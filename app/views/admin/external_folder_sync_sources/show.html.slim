@@ -6,23 +6,24 @@ h1 外部フォルダ同期設定詳細
 - latest_run = @runs.first
 - provider_label = external_folder_sync_source_provider_label(@external_folder_sync_source)
 - google_drive_source = @external_folder_sync_source.google_drive?
+- microsoft_graph_source = @external_folder_sync_source.microsoft_graph?
+- provider_metadata = @external_folder_sync_source.provider_metadata || {}
 - apply_confirm_message = "#{provider_label} からドキュメントポータルへ同期します。競合・重複警告がある場合は自動停止します。よろしいですか？"
 
 .card
   p.eyebrow 次にやること
   h2 = @external_folder_sync_source.name
   p.muted = "#{provider_label} 連携の設定と次の操作を、この画面で順に確認できます。"
-  - if @external_folder_sync_source.oauth_user? && !@external_folder_sync_source.oauth_connected?
-    - if google_drive_source
-      p.muted Google Drive OAuthが未接続です。まずGoogleアカウントで許可してから、同期プレビューで読み取れるファイルを確認してください。
-      p.actions
-        = link_to "Google OAuthを接続", new_admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo: false }, class: "button"
-        = edit_link_to "設定を編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source)
-    - else
-      p.muted = "#{provider_label} の接続確認と保存後導線は後続 issue で拡張予定です。現時点では、外部サービス側の接続情報を見直してから設定内容を確認してください。"
-      p.actions
-        = link_to "Microsoft Graph接続を確認", admin_microsoft_graph_connections_path, class: "button secondary"
-        = edit_link_to "設定を編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source)
+  - if microsoft_graph_source
+    p.muted SharePoint / OneDrive の共有URLからフォルダ metadata を保存しました。差分同期本体と変更通知は後続 issue で対応予定です。必要に応じて Microsoft Graph 接続と保存済み metadata を確認してください。
+    p.actions
+      = link_to "Microsoft Graph接続を確認", admin_microsoft_graph_connections_path, class: "button secondary"
+      = edit_link_to "設定を編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source)
+  - elsif @external_folder_sync_source.oauth_user? && !@external_folder_sync_source.oauth_connected?
+    p.muted Google Drive OAuthが未接続です。まずGoogleアカウントで許可してから、同期プレビューで読み取れるファイルを確認してください。
+    p.actions
+      = link_to "Google OAuthを接続", new_admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo: false }, class: "button"
+      = edit_link_to "設定を編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source)
   - elsif latest_run.blank? || latest_run.dry_run?
     p.muted = "まず同期プレビューを実行し、#{provider_label} から読み取れるファイル、スキップ、競合警告を確認してください。"
     p.actions
@@ -56,9 +57,24 @@ h1 外部フォルダ同期設定詳細
       dd = @external_folder_sync_source.oauth_connected? ? "接続済み" : "未接続"
     dt 外部フォルダURL
     dd = link_to @external_folder_sync_source.folder_url, @external_folder_sync_source.folder_url, target: "_blank", rel: "noopener"
-    dt 外部フォルダID
-    dd
-      code = @external_folder_sync_source.external_folder_id
+    - if microsoft_graph_source
+      dt Drive ID
+      dd
+        code = provider_metadata["drive_id"] || "-"
+      dt Folder item ID
+      dd
+        code = @external_folder_sync_source.external_folder_id
+      dt Folder path
+      dd
+        code = @external_folder_sync_source.external_folder_path.presence || provider_metadata["folder_path"] || "-"
+      - if provider_metadata["site_id"].present?
+        dt Site ID
+        dd
+          code = provider_metadata["site_id"]
+    - else
+      dt 外部フォルダID
+      dd
+        code = @external_folder_sync_source.external_folder_id
     dt 同期方向
     dd = external_folder_sync_source_sync_direction_label(@external_folder_sync_source)
     dt 競合方針
@@ -89,8 +105,8 @@ h1 外部フォルダ同期設定詳細
   - else
     ol
       li = "#{provider_label} 側の接続情報と共有設定を確認する"
-      li 同期対象のフォルダ URL / ID / path を整理する
-      li 保存後の接続確認、プレビュー、変更通知の導線は後続 issue で拡張する
+      li 共有URLから Drive ID / folder item ID / folder path / site ID を保存できていることを確認する
+      li 差分同期、変更通知、Webhook 受信は後続 issue で provider ごとに拡張する
       li 実際に同期できる操作範囲は、対応する provider 実装と docs を確認する
   p.muted 公式サービス側の画面は変わりやすいため、ここでは操作の目的と確認ポイントを案内します。
 
@@ -106,8 +122,8 @@ h1 外部フォルダ同期設定詳細
         - if @external_folder_sync_source.oauth_user? && @external_folder_sync_source.oauth_connected?
           = link_to "OAuth接続を解除", admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source), data: { turbo_method: :delete, turbo_confirm: "Google Drive OAuth接続を解除しますか？" }, class: "button secondary"
     - else
-      summary バックグラウンド同期と今後の拡張
-      p.muted = "#{provider_label} の変更通知、OAuth解除、保存後の追加操作は後続 issue で provider ごとに拡張予定です。現時点では、接続情報の確認と設定の見直しを優先してください。"
+      summary 保存済み metadata と今後の拡張
+      p.muted = "#{provider_label} の差分同期、変更通知、保存後の追加操作は後続 issue で provider ごとに拡張予定です。現時点では、接続情報の確認と設定の見直しを優先してください。"
       p.actions
         = link_to "Microsoft Graph接続を確認", admin_microsoft_graph_connections_path, class: "button secondary"
         = edit_link_to "設定を編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source)

@@ -14,12 +14,14 @@ class ExternalFolderSyncSource < ApplicationRecord
   encrypts :auth_config
 
   enum :provider, {
-    google_drive: 0
+    google_drive: 0,
+    microsoft_graph: 1
   }
 
   enum :auth_type, {
     service_account: 0,
-    oauth_user: 1
+    oauth_user: 1,
+    microsoft_graph_connection: 2
   }
 
   enum :sync_direction, {
@@ -37,7 +39,9 @@ class ExternalFolderSyncSource < ApplicationRecord
   validates :name, :provider, :auth_type, :folder_url, :external_folder_id, :sync_direction, :conflict_policy, presence: true
   validates :auth_config, presence: true, if: :auth_config_required?
   validates :name, uniqueness: { scope: [:project_id, :provider] }
+  validate :auth_type_must_match_provider
   validate :google_drive_folder_id_must_be_present
+  validate :microsoft_graph_connection_must_be_present
   validate :mvp_scope_must_be_read_only_google_drive
 
   scope :enabled_only, -> { where(enabled: true) }
@@ -65,10 +69,26 @@ class ExternalFolderSyncSource < ApplicationRecord
     update!(auth_config: merged.to_json)
   end
 
+  def microsoft_graph_connection
+    return unless project_id.present?
+
+    MicrosoftGraphConnection.enabled_only.find_by(project_id: project_id)
+  end
+
   private
 
   def auth_config_required?
     service_account? || oauth_connected?
+  end
+
+  def auth_type_must_match_provider
+    return if provider.blank? || auth_type.blank?
+
+    if google_drive? && microsoft_graph_connection?
+      errors.add(:auth_type, "は Google Drive 用の接続方式を選択してください。")
+    elsif microsoft_graph? && !microsoft_graph_connection?
+      errors.add(:auth_type, "は Microsoft Graph接続 を選択してください。")
+    end
   end
 
   def google_drive_folder_id_must_be_present
@@ -76,6 +96,13 @@ class ExternalFolderSyncSource < ApplicationRecord
     return if external_folder_id.present?
 
     errors.add(:folder_url, "must include a Google Drive folder ID")
+  end
+
+  def microsoft_graph_connection_must_be_present
+    return unless microsoft_graph?
+    return if microsoft_graph_connection.present?
+
+    errors.add(:project_id, "に有効な Microsoft Graph接続 が必要です。")
   end
 
   def mvp_scope_must_be_read_only_google_drive

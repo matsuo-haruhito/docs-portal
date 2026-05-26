@@ -145,9 +145,11 @@ ja:
     external_folder_sync_sources:
       provider:
         google_drive: "Google Drive"
+        microsoft_graph: "SharePoint / OneDrive"
       auth_type:
         service_account: "サービスアカウント方式"
         oauth_user: "OAuthユーザー方式"
+        microsoft_graph_connection: "Microsoft Graph接続"
       sync_direction:
         external_to_portal: "外部フォルダ → ポータル"
         portal_to_external: "ポータル → 外部フォルダ"

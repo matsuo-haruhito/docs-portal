@@ -2,6 +2,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_external_folder_sync_source, only: %i[show edit update destroy dry_run apply force_apply enqueue subscribe unsubscribe]
   before_action :load_form_collections, only: %i[index create edit update]
+  before_action :ensure_google_drive_runtime_supported!, only: %i[dry_run apply force_apply enqueue subscribe unsubscribe]
 
   def index
     @external_folder_sync_sources = external_folder_sync_sources_scope
@@ -28,15 +29,18 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   def create
     @external_folder_sync_source = ExternalFolderSyncSource.new(normalized_external_folder_sync_source_params)
     @external_folder_sync_source.created_by = current_user
-    assign_google_drive_folder_id(@external_folder_sync_source)
+    assign_external_folder_metadata(@external_folder_sync_source)
 
     if @external_folder_sync_source.save
       redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "外部フォルダ同期設定を登録しました。"
     else
-      @external_folder_sync_sources = external_folder_sync_sources_scope
-      @latest_runs_by_source_id = latest_runs_by_source_id(@external_folder_sync_sources)
+      load_index_state
       render :index, status: :unprocessable_entity
     end
+  rescue ExternalFolderSync::MicrosoftGraphFolderResolver::Error => e
+    @external_folder_sync_source.errors.add(:folder_url, e.message)
+    load_index_state
+    render :index, status: :unprocessable_entity
   end
 
   def edit
@@ -44,13 +48,16 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
   def update
     @external_folder_sync_source.assign_attributes(normalized_external_folder_sync_source_params)
-    assign_google_drive_folder_id(@external_folder_sync_source)
+    assign_external_folder_metadata(@external_folder_sync_source)
 
     if @external_folder_sync_source.save
       redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "外部フォルダ同期設定を更新しました。"
     else
       render :edit, status: :unprocessable_entity
     end
+  rescue ExternalFolderSync::MicrosoftGraphFolderResolver::Error => e
+    @external_folder_sync_source.errors.add(:folder_url, e.message)
+    render :edit, status: :unprocessable_entity
   end
 
   def destroy
@@ -129,6 +136,17 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     @projects = Project.order(:code)
   end
 
+  def load_index_state
+    @external_folder_sync_sources = external_folder_sync_sources_scope
+    @latest_runs_by_source_id = latest_runs_by_source_id(@external_folder_sync_sources)
+  end
+
+  def ensure_google_drive_runtime_supported!
+    return if @external_folder_sync_source.google_drive?
+
+    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: "SharePoint / OneDrive の差分同期と変更通知は後続 issue で対応予定です。現在は共有URLからフォルダ metadata を保存するところまで利用できます。"
+  end
+
   def external_folder_sync_sources_scope
     ExternalFolderSyncSource.includes(:project, :created_by).order(:provider, :name, :id)
   end
@@ -172,6 +190,8 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     attrs = external_folder_sync_source_params.to_h
     if attrs["auth_type"] == "oauth_user"
       attrs["auth_config"] = @external_folder_sync_source&.oauth_user? ? @external_folder_sync_source.auth_config : {}.to_json
+    elsif attrs["auth_type"] == "microsoft_graph_connection"
+      attrs["auth_config"] = {}.to_json
     elsif attrs["auth_config"].blank?
       attrs.delete("auth_config")
     end
@@ -193,10 +213,24 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     )
   end
 
-  def assign_google_drive_folder_id(source)
-    return unless source.google_drive?
+  def assign_external_folder_metadata(source)
+    if source.google_drive?
+      folder_id = ExternalFolderSync::GoogleDriveClient.extract_folder_id(source.folder_url)
+      source.external_folder_id = folder_id if folder_id.present?
+      source.provider_metadata = {}
+      return
+    end
 
-    folder_id = ExternalFolderSync::GoogleDriveClient.extract_folder_id(source.folder_url)
-    source.external_folder_id = folder_id if folder_id.present?
+    return unless source.microsoft_graph?
+
+    resolved = ExternalFolderSync::MicrosoftGraphFolderResolver.new(source: source).resolve
+    source.external_folder_id = resolved.fetch(:folder_item_id)
+    source.external_folder_path = resolved.fetch(:folder_path)
+    source.provider_metadata = {
+      "drive_id" => resolved.fetch(:drive_id),
+      "folder_item_id" => resolved.fetch(:folder_item_id),
+      "folder_path" => resolved.fetch(:folder_path),
+      "site_id" => resolved[:site_id]
+    }.compact
   end
 end
