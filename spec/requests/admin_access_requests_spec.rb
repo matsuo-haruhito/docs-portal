@@ -36,6 +36,7 @@ RSpec.describe "Admin access requests", type: :request do
     expect(page_text).to include(access_request.reason)
     expect(page_text).to include("Manual")
     expect(page_text).to include("表示中: 1件")
+    expect(page_text).to include("表示中内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
     expect(filter_form).to be_present
     expect(filter_form.at_css("select[name='status']")).to be_present
     expect(filter_form.at_css("input[name='q']")).to be_present
@@ -70,6 +71,7 @@ RSpec.describe "Admin access requests", type: :request do
     expect(page_text).to include("Pending review")
     expect(page_text).not_to include("Approved already")
     expect(page_text).not_to include("Rejected already")
+    expect(page_text).to include("表示中内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
     expect(parsed_html.css("tbody tr").size).to eq(1)
 
     action_forms = parsed_html.css("form[action='#{admin_access_request_path(pending_request)}']")
@@ -92,6 +94,7 @@ RSpec.describe "Admin access requests", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("Need Manual access")
     expect(page_text).not_to include("Ops access")
+    expect(page_text).to include("表示中内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
     expect(parsed_html.css("tbody tr").size).to eq(1)
     expect(filter_form.at_css("input[name='q']")["value"]).to eq("manual")
   end
