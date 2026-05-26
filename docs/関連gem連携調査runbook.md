@@ -83,11 +83,41 @@
 
 ## release train の最小運用
 
+- この節は `#674` の release train を docs-only で支える子 lane として使います。gem 更新そのものをここで実施するのではなく、「どの revision を見て、どの代表 smoke を通し、どこへ記録するか」を固定するための土台です。
 - 3 gem を同じ branch / PR で同時に上げない。`1 gem = 1 branch = 1 PR` を基本とし、他 2 gem は current resolved revision のまま据え置きます。
 - bump 前に `Gemfile.lock` の current resolved revision を控え、対応する upstream issue / PR / commit を読んでから target revision を決めます。
 - bump 後の記録は `docs-portal` 側の issue か PR 本文に残し、少なくとも `gem 名 / from SHA / to SHA / 実施した代表 smoke / 結果` を書きます。コード上の証跡は `Gemfile.lock` diff を正本として扱います。
 - 3 gem すべてに follow-up が必要でも、同一 PR に混ぜず、小さい issue や checklist に分けて順に進めます。
 - smoke の失敗原因が `docs-portal` 固有の helper / partial / spec drift なら app 側 issue を切り、public API や導入手順の読みづらさが原因なら upstream docs / issue を先に確認します。
+
+### update log の残し方
+
+- 記録先は `docs-portal` 側の issue、PR 本文、または review follow-up comment のいずれか 1 つに固定し、同じ更新の履歴を複数箇所へ重複して残しません。
+- 最低限、次の 6 点を 1 セットで残します。
+  - `gem 名`
+  - `from SHA / tag`
+  - `to SHA / tag`
+  - `使った代表 smoke`
+  - `確認結果`
+  - `rollback 時に戻す SHA / tag`
+- 代表 smoke と確認結果は「通った / 落ちた」だけでなく、どの `docs-portal` 画面や request spec を見たかが分かる粒度で書きます。
+- rollback 先は通常 `from SHA / tag` と同じで構いませんが、hotfix や別 branch を挟む場合は実際に戻す revision を明記します。
+
+### update log テンプレート
+
+```text
+- gem: rails_fields_kit
+- from: 37199d464fe58f21997eee1e10079e887b39154b
+- to: <target SHA or tag>
+- representative smoke:
+  - admin/document_sets form の preload / selected value 保持
+  - application.js / vite.config.ts / rails_fields_kit initializer の wiring
+- result:
+  - request spec と画面確認で current contract 維持
+  - 追加の follow-up: なし
+- rollback target:
+  - 37199d464fe58f21997eee1e10079e887b39154b
+```
 
 ## tree_view
 
