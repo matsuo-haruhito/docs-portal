@@ -67,7 +67,7 @@ class Admin::AccessRequestsController < Admin::BaseController
   def access_request_status_counts(scope, access_requests)
     return access_request_status_counts_from_loaded(access_requests) if @filters[:q].present?
 
-    counts = scope.group(:status).count
+    counts = scope.unscope(:order).group(:status).count
     AccessRequest.statuses.keys.to_h do |status|
       [status, counts[status].to_i]
     end
