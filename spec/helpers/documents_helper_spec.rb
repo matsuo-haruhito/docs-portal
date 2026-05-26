@@ -119,6 +119,43 @@ RSpec.describe DocumentsHelper, type: :helper do
     end
   end
 
+  describe "#document_tree_toggle_all_path" do
+    let(:internal_user) { create(:user, :internal) }
+    let(:project) { create(:project, code: "TOOLBAR", name: "Toolbar Tree") }
+
+    before do
+      user = internal_user
+      helper.define_singleton_method(:current_user) { user }
+      helper.define_singleton_method(:params) do
+        ActionController::Parameters.new(tree_query: "仕様", tree_window_offset: "25")
+      end
+    end
+
+    it "builds the expand-all path through the project-wide tree action route" do
+      expect(helper.document_tree_toggle_all_path(project:, state: :expanded)).to eq(
+        helper.document_tree_all_project_path(
+          project,
+          tree_action: "show",
+          tree_query: "仕様",
+          tree_window_offset: 25,
+          format: :turbo_stream
+        )
+      )
+    end
+
+    it "maps collapsed states to the hide action" do
+      expect(helper.document_tree_toggle_all_path(project:, state: :collapsed)).to eq(
+        helper.document_tree_all_project_path(
+          project,
+          tree_action: "hide",
+          tree_query: "仕様",
+          tree_window_offset: 25,
+          format: :turbo_stream
+        )
+      )
+    end
+  end
+
   describe "#document_search_match_labels" do
     let(:project) { create(:project, code: "MATCH") }
     let(:document) { create(:document, project:, title: "出荷API仕様", slug: "shipping-api") }
