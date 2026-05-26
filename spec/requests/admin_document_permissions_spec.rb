@@ -14,10 +14,38 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(response.body.scan("まだ権限は登録されていません。").size).to eq(2)
     expect(response.body).to include("上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して保存すると、文書ごとの権限数と閲覧/ダウンロード内訳をここで見比べられます。")
     expect(response.body).to include("まずは上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して 1 件登録してください。")
-    expect(response.body).to include("会社単位かユーザー単位のどちらかを指定してください。")
+    expect(response.body).to include("適用対象は、会社向けかユーザー向けのどちらか一方を選びます。")
+    expect(response.body).to include("会社全体に付与するときは「会社」を、個人に付与するときは「ユーザー」を指定してください。2つ同時には選択しません。")
+    expect(response.body).to include("会社向けに付与する場合に選択")
+    expect(response.body).to include("ユーザー向けに付与する場合に選択")
+    expect(response.body).to include("会社単位かユーザー単位のどちらか一方を指定してください。")
     expect(response.body).not_to include("権限概要の表示設定")
     expect(response.body).not_to include("権限一覧の表示設定")
     expect(response.body).not_to include('data-rails-table-preferences-column-key="document"')
+  end
+
+  it "shows owner-scope guidance again when both company and user are submitted" do
+    document = create(:document, title: "Permission Target")
+    company = create(:company, name: "Customer Company")
+    external_user = create(:user, :external, email_address: "external@example.com")
+
+    sign_in_as(admin_user)
+
+    post admin_document_permissions_path, params: {
+      document_permission: {
+        document_id: document.id,
+        company_id: company.id,
+        user_id: external_user.id,
+        access_level: "view"
+      }
+    }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response.body).to include("入力内容を確認してください。")
+    expect(response.body).to include("company_id and user_id cannot both be set")
+    expect(response.body).to include("適用対象は会社かユーザーのどちらか一方だけを指定してください。")
+    expect(response.body).to include("会社向けに付与する場合に選択")
+    expect(response.body).to include("ユーザー向けに付与する場合に選択")
   end
 
   it "shows document permission overview" do
