@@ -86,7 +86,9 @@
 - `DocumentImporter` は manifest と artifact を入力として、`Document`, `DocumentVersion`, `DocumentFile`, `PublishJob` を更新する
 - `DocumentVersion` の source path metadata を保存する
 - 同一 Document + version_label の重複 import は失敗させる
-- 既存 Document の新 Version 候補は、同一 source path または十分に狭い既存文書一致で判定する
+- `version_label` を持つ payload は、新しい `DocumentVersion` を作成して取り込む
+- `version_label` を持たない payload は、同一 source path または slug で既存 `Document` を解決できた場合に限り、`latest_version` または直近 version を上書き更新する
+- `version_label` を持たない payload で既存 `Document` を解決できない場合は、new document import としては扱わず失敗させる
 
 ## publish manifest
 
