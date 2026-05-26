@@ -5,6 +5,7 @@ module Admin::AccessRequestsHelper
     "rejected" => "却下",
     "cancelled" => "取消済み"
   }.freeze
+  DEFAULT_ACCESS_REQUEST_REJECTION_REASON = "承認条件を満たしていないため却下しました".freeze
 
   def admin_access_request_status_filter_options
     [["すべて", nil]] + AccessRequest.statuses.keys.map do |status|
@@ -33,5 +34,9 @@ module Admin::AccessRequestsHelper
     return requestable[:document_title] if requestable[:document_title].present?
 
     nil
+  end
+
+  def admin_access_request_default_rejection_reason
+    DEFAULT_ACCESS_REQUEST_REJECTION_REASON
   end
 end
