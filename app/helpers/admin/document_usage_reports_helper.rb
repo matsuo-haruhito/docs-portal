@@ -24,7 +24,7 @@ module Admin::DocumentUsageReportsHelper
   end
 
   def document_usage_report_filter_label(value)
-    document_usage_report_filter_options.to_h.fetch(value, "すべて")
+    document_usage_report_filter_options.to_h.invert.fetch(value, "すべて")
   end
 
   def document_usage_report_sort_options
@@ -32,6 +32,6 @@ module Admin::DocumentUsageReportsHelper
   end
 
   def document_usage_report_sort_label(value)
-    document_usage_report_sort_options.to_h.fetch(value, "タイトル順")
+    document_usage_report_sort_options.to_h.invert.fetch(value, "タイトル順")
   end
 end
