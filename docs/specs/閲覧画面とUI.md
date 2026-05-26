@@ -14,6 +14,7 @@
 - API仕様ページは source Markdown が生成済み HTML より新しい場合に build job を enqueue し、生成HTMLの鮮度確認は `BuildFreshnessGuard` で共通化する
 - `company_master_admin` は自社の会社マスタ・自社ユーザー管理のみ利用できる
 - 文書詳細では `tree_view` gem を使って「案件 > 文書」の左ペインツリーを表示する
+- 文書一覧と文書詳細の左ペイン `文書ツリー` では、current project 内の文書名・slug・元パスを使って文書を絞り込める
 - 文書詳細と版詳細の「添付・元ファイル」は、保持している相対 path を使って `tree_view` でフォルダ階層表示する
 - Project 配下で文書カタログ一覧・詳細を表示できる
 - 管理画面には、主要 model の件数・最近の record・既存 CRUD への入口を横断表示する `model browser` を持つ
