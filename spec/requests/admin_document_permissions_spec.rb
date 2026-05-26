@@ -21,7 +21,7 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(response.body).to include("会社単位かユーザー単位のどちらか一方を指定してください。")
     expect(response.body).not_to include("権限概要の表示設定")
     expect(response.body).not_to include("権限一覧の表示設定")
-    expect(response.body).not_to include('data-rails-table-preferences-column-key=\"document\"')
+    expect(response.body).not_to include('data-rails-table-preferences-column-key="document"')
   end
 
   it "shows owner-scope guidance again when both company and user are submitted" do
@@ -63,9 +63,9 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(response.body).to include("文書別の権限概要")
     expect(response.body).to include("権限概要の表示設定")
     expect(response.body).to include("権限一覧の表示設定")
-    expect(response.body).to include('data-rails-table-preferences-column-key=\"document\"')
-    expect(response.body).to include('data-rails-table-preferences-column-key=\"company\"')
-    expect(response.body).to include('data-rails-table-preferences-column-key=\"access_level\"')
+    expect(response.body).to include('data-rails-table-preferences-column-key="document"')
+    expect(response.body).to include('data-rails-table-preferences-column-key="company"')
+    expect(response.body).to include('data-rails-table-preferences-column-key="access_level"')
     expect(response.body).to include("Permission Target")
     expect(response.body).to include("限定公開")
     expect(response.body).to include("閲覧")
