@@ -9,6 +9,18 @@ RSpec.describe "Dashboard", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def page_text
+    parsed_html.text.squish
+  end
+
+  def heading_texts
+    parsed_html.css("h1, h2, h3").map { _1.text.squish }.reject(&:empty?)
+  end
+
+  def metric_card_texts
+    parsed_html.css(".metric-card").map { _1.text.squish }
+  end
+
   def metric_cta_links
     parsed_html.css(".metric-card .metric-card__cta")
   end
@@ -33,14 +45,12 @@ RSpec.describe "Dashboard", type: :request do
     get dashboard_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("ダッシュボード")
-    expect(response.body).to include("閲覧可能案件")
-    expect(response.body).to include("Visible Project")
-    expect(response.body).to include("お気に入り")
-    expect(response.body).to include("後で読む")
-    expect(response.body).to include("最近見た文書")
-    expect(response.body).to include("最近更新された文書")
-    expect(response.body).to include("Visible Manual")
+    expect(heading_texts).to include("ダッシュボード", "最近見た文書", "最近更新された文書")
+    expect(metric_card_texts.any? { _1.include?("閲覧可能案件") }).to be(true)
+    expect(metric_card_texts.any? { _1.include?("お気に入り") }).to be(true)
+    expect(metric_card_texts.any? { _1.include?("後で読む") }).to be(true)
+    expect(page_text).to include("Visible Project")
+    expect(page_text).to include("Visible Manual")
     expect(metric_cta_links.map(&:text)).to include(
       "案件一覧へ",
       "文書一覧へ",
@@ -53,8 +63,8 @@ RSpec.describe "Dashboard", type: :request do
       document_bookmarks_path,
       access_requests_path
     )
-    expect(response.body).not_to include("保留中の確認依頼")
-    expect(response.body).not_to include(document_approval_requests_path)
+    expect(metric_card_texts.any? { _1.include?("保留中の確認依頼") }).to be(false)
+    expect(metric_cta_links.map { |link| link["href"] }).not_to include(document_approval_requests_path)
   end
 
   it "declares root stimulus controllers in the full-page layout markup" do
@@ -88,8 +98,8 @@ RSpec.describe "Dashboard", type: :request do
     get dashboard_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Visible Manual")
-    expect(response.body).not_to include("Hidden Manual")
+    expect(page_text).to include("Visible Manual")
+    expect(page_text).not_to include("Hidden Manual")
   end
 
   it "shows pending approval summary for internal users while keeping the hero action separate" do
@@ -102,8 +112,11 @@ RSpec.describe "Dashboard", type: :request do
     get dashboard_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("保留中の確認依頼")
-    expect(response.body).to include("1")
+
+    pending_approval_card = metric_card_texts.find { _1.include?("保留中の確認依頼") }
+
+    expect(pending_approval_card).to be_present
+    expect(pending_approval_card).to include("1")
     expect(metric_cta_links.map(&:text)).to include(
       "案件一覧へ",
       "文書一覧へ",
