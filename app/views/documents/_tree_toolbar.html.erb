@@ -1,5 +1,16 @@
 <% current_project = local_assigns[:current_project] || local_assigns[:current_document]&.project %>
+<% current_document = local_assigns[:current_document] %>
 <% render_state = local_assigns[:render_state] %>
+<% tree_projects = Array(local_assigns[:projects]) %>
+<% if render_state.blank? && tree_projects.present? %>
+  <% render_state = document_tree_render_state(
+    projects: tree_projects,
+    current_project:,
+    current_document:,
+    expanded_source_path: local_assigns[:expanded_source_path],
+    collapsed_source_path: local_assigns[:collapsed_source_path]
+  ) %>
+<% end %>
 
 <div id="document_tree_toolbar" class="document-tree-toolbar">
   <div class="document-tree-toolbar__title-row">
