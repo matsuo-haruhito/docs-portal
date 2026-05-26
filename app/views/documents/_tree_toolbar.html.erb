@@ -1,16 +1,17 @@
 <% current_project = local_assigns[:current_project] || local_assigns[:current_document]&.project %>
-<% tree_window_offset = document_tree_window_request_offset %>
+<% render_state = local_assigns[:render_state] %>
 
 <div id="document_tree_toolbar" class="document-tree-toolbar">
   <div class="document-tree-toolbar__title-row">
     <h2>文書ツリー</h2>
   </div>
-  <% if current_project.present? %>
+  <% if current_project.present? && render_state.present? %>
     <div class="document-tree-toolbar__action-row">
-      <div class="document-tree-actions" aria-label="文書ツリー操作">
-        <%= button_to "案件の文書ツリーを開く", document_tree_all_project_path(current_project, tree_action: "show", tree_window_offset:, format: :turbo_stream), method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て展開します" }, class: "document-tree-action-link" %>
-        <%= button_to "案件の文書ツリーを閉じる", document_tree_all_project_path(current_project, tree_action: "hide", tree_window_offset:, format: :turbo_stream), method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て閉じます" }, class: "document-tree-action-link" %>
-      </div>
+      <%= tree_view_toolbar(
+        render_state,
+        labels: { expand_all: "案件の文書ツリーを開く", collapse_all: "案件の文書ツリーを閉じる" },
+        button_class_name: "document-tree-action-link"
+      ) %>
     </div>
   <% end %>
 </div>
