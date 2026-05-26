@@ -118,7 +118,7 @@ module DocumentsHelper
     current_window_offset = document_tree_window_request_offset
     path_options[:tree_window_offset] = current_window_offset if current_window_offset.is_a?(Integer)
 
-    project_document_tree_all_path(project, **path_options)
+    document_tree_all_project_path(project, **path_options)
   end
 
   def tree_toggle_button_label(item, state, context)
