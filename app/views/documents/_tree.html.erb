@@ -5,12 +5,17 @@
     .document-tree-toolbar { display: grid; gap: 8px; min-width: 0; width: 100%; }
     .document-tree-toolbar__title-row { display: flex; align-items: center; min-width: 0; }
     .document-tree-toolbar h2 { margin: 0; line-height: 1.2; white-space: nowrap; }
+    .document-tree-toolbar__search-row { min-width: 0; }
+    .document-tree-toolbar__search-form { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+    .document-tree-toolbar__search-input { flex: 1 1 220px; min-width: 0; border: 1px solid rgba(15, 23, 42, 0.16); border-radius: 999px; padding: 6px 10px; font: inherit; }
     .document-tree-toolbar__action-row { display: flex; justify-content: flex-end; min-width: 0; }
     .document-tree-actions { display: inline-flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
     .document-tree-actions form { margin: 0; }
     .document-tree-action-link { display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(15, 98, 254, 0.32); border-radius: 999px; padding: 2px 8px; font-size: 12px; line-height: 1.5; background: #fff; color: #0f62fe; cursor: pointer; font: inherit; white-space: nowrap; }
     .document-tree-action-link:hover, .document-tree-action-link:focus { background: #eff6ff; }
     @media (max-width: 520px) {
+      .document-tree-toolbar__search-form { flex-direction: column; }
+      .document-tree-toolbar__search-input { flex-basis: auto; width: 100%; }
       .document-tree-toolbar__action-row { justify-content: stretch; }
       .document-tree-actions { flex-direction: column; align-items: stretch; gap: 4px; width: 100%; }
       .document-tree-action-link { width: 100%; }
@@ -29,6 +34,7 @@
       background: transparent !important;
       line-height: 0;
     }
+    .document-tree-filter-summary { margin-bottom: 8px; }
     .document-tree-window-controls { display: grid; gap: 6px; margin-top: 8px; }
     .document-tree-window-summary { margin: 0; }
     @media (max-width: 520px) {
@@ -53,21 +59,33 @@
       expanded_source_path: local_assigns[:expanded_source_path],
       collapsed_source_path: local_assigns[:collapsed_source_path]
     ) %>
+    <% tree_query = document_tree_query %>
+    <% query_match_count = tree_query.present? ? document_tree_query_match_count(tree_projects, current_project: local_assigns[:current_project], current_document: local_assigns[:current_document]) : nil %>
     <% window = document_tree_render_window(render_state, current_document: local_assigns[:current_document]) %>
     <% window_project = local_assigns[:current_project] || local_assigns[:current_document]&.project %>
 
-    <div class="document-tree-scroll-spacer">
-      <table class="tree-view-table">
-        <tbody>
-          <%= window ? tree_view_rows(render_state, window:) : tree_view_rows(render_state) %>
-          <tr class="document-tree-end-spacer" aria-hidden="true">
-            <td colspan="99"></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <% if tree_query.present? %>
+      <% if query_match_count.to_i.positive? %>
+        <p class="muted document-tree-filter-summary">「<%= tree_query %>」に一致する文書を <%= query_match_count %> 件表示しています。</p>
+      <% else %>
+        <p class="muted document-tree-filter-summary">「<%= tree_query %>」に一致する文書はありません。文書名、slug、元パスで絞り込めます。</p>
+      <% end %>
+    <% end %>
 
-    <% if window.present? %>
+    <% if tree_query.blank? || query_match_count.to_i.positive? %>
+      <div class="document-tree-scroll-spacer">
+        <table class="tree-view-table">
+          <tbody>
+            <%= window ? tree_view_rows(render_state, window:) : tree_view_rows(render_state) %>
+            <tr class="document-tree-end-spacer" aria-hidden="true">
+              <td colspan="99"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+
+    <% if window.present? && (tree_query.blank? || query_match_count.to_i.positive?) %>
       <div class="document-tree-window-controls" aria-label="文書ツリー表示範囲">
         <p class="muted document-tree-window-summary">大きなツリーのため <%= window.start_index + 1 %>-<%= window.end_index %> / <%= window.total_count %> 行を表示しています。</p>
         <% if window_project.present? %>
