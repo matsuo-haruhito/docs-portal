@@ -14,6 +14,19 @@
     collapsed_source_path: local_assigns[:collapsed_source_path]
   ) %>
 <% end %>
+<% toolbar_action_titles = {
+  expand_all: "現在開いている案件の文書ツリーを全て展開します",
+  collapse_all: "現在開いている案件の文書ツリーを全て閉じます"
+} %>
+<% toolbar_actions = if render_state.present?
+  tree_view_toolbar_actions(
+    render_state,
+    labels: {
+      expand_all: "案件の文書ツリーを開く",
+      collapse_all: "案件の文書ツリーを閉じる"
+    }
+  )
+end %>
 
 <div id="document_tree_toolbar" class="document-tree-toolbar">
   <div class="document-tree-toolbar__title-row">
@@ -30,15 +43,17 @@
       <% end %>
     </div>
     <div class="document-tree-toolbar__action-row">
-      <% if render_state.present? %>
-        <%= tree_view_toolbar(
-          render_state,
-          labels: {
-            expand_all: "案件の文書ツリーを開く",
-            collapse_all: "案件の文書ツリーを閉じる"
-          },
-          button_class_name: "document-tree-action-link"
-        ) %>
+      <% if toolbar_actions.present? %>
+        <div class="document-tree-actions" aria-label="文書ツリー操作">
+          <% toolbar_actions.each do |action| %>
+            <% title = toolbar_action_titles.fetch(action[:action], action[:label]) %>
+            <% if action[:path].present? %>
+              <%= button_to action[:label], action[:path], method: :post, form: { data: { turbo_stream: true }.merge(action[:data]), title: }, class: "document-tree-action-link" %>
+            <% else %>
+              <%= button_tag action[:label], type: "button", class: "document-tree-action-link", disabled: true, data: action[:data], title: %>
+            <% end %>
+          <% end %>
+        </div>
       <% else %>
         <div class="document-tree-actions" aria-label="文書ツリー操作">
           <%= button_to "案件の文書ツリーを開く", document_tree_all_project_path(current_project, tree_action: "show", tree_query:, tree_window_offset:, format: :turbo_stream), method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て展開します" }, class: "document-tree-action-link" %>
