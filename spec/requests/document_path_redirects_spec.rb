@@ -36,7 +36,7 @@ RSpec.describe "Document path redirects", type: :request do
 
     get project_document_path(project, document.slug, version_id: current_version.public_id, site_path: "docs/previous-guide")
 
-    expect(response).to have_http_status(:moved_permanently)
+    expect(response).to have_http_status(:found)
     expect(response.location).to include("site_path=docs%2Fcurrent-guide")
     expect(response.location).to include("previous_site_path=docs%2Fprevious-guide")
     expect(response.location).to include("version_id=#{current_version.public_id}")
@@ -51,7 +51,7 @@ RSpec.describe "Document path redirects", type: :request do
 
     get project_document_path(project, document.slug, version_id: current_version.public_id, site_path: "docs/previous-guide/appendix/page")
 
-    expect(response).to have_http_status(:moved_permanently)
+    expect(response).to have_http_status(:found)
     expect(response.location).to include("site_path=docs%2Fcurrent-guide%2Fappendix%2Fpage")
     expect(response.location).to include("previous_site_path=docs%2Fprevious-guide%2Fappendix%2Fpage")
   end
