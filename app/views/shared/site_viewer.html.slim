@@ -1,7 +1,7 @@
 - page_title @site_viewer_document.title, @site_viewer_version.version_label
 
 .page-hero.site-viewer-hero
-  p.eyebrow HTML Preview
+  p.eyebrow HTMLビューア
   h1 = @site_viewer_document.title
   p.muted = site_viewer_meta_lines(project: @site_viewer_project, document: @site_viewer_document, version: @site_viewer_version).join(" / ")
   p.actions
@@ -14,11 +14,12 @@
     .preview-viewer-toolbar__title
       strong HTMLプレビュー
       span.muted Docusaurus生成HTMLをポータル内で確認しています。
-    .markdown-mode-tabs aria-label="viewer modes"
-      span.is-active プレビュー
-      span 差分
-      span 添付
-      span 品質
+    .markdown-mode-tabs aria-label="表示中の画面"
+      span.is-active aria-current="page" プレビュー
+      = link_to "差分", document_version_path(@site_viewer_version, anchor: "version-diff")
+      = link_to "添付・元ファイル", document_version_path(@site_viewer_version, anchor: "version-files")
+      - if current_user.internal?
+        = link_to "品質", document_version_quality_check_path(@site_viewer_version)
     .actions
       = link_to "前版との差分", document_version_path(@site_viewer_version, anchor: "version-diff"), class: "button secondary"
       = link_to "添付・元ファイル", document_version_path(@site_viewer_version, anchor: "version-files"), class: "button secondary"
