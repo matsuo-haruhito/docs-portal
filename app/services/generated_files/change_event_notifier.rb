@@ -33,11 +33,11 @@ module GeneratedFiles
           operation = "update"
         end
 
-        raw_path = path.to_s.strip
+        raw_path = path.to_s.strip.tr("\\", "/")
         next if raw_path.blank?
 
         normalized_path = Pathname(raw_path).cleanpath.to_s.delete_prefix("./")
-        next if unsafe_path?(normalized_path)
+        next if unsafe_path?(raw_path) || unsafe_path?(normalized_path)
 
         { path: normalized_path, operation: operation.to_s.presence || "update" }
       end.uniq
@@ -46,6 +46,7 @@ module GeneratedFiles
     def unsafe_path?(path)
       path.blank? ||
         path == "." ||
+        path == ".." ||
         path.start_with?("/") ||
         path.match?(%r{\A[A-Za-z]:/}) ||
         path.split("/").include?("..")
