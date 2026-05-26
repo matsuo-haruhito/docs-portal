@@ -28,7 +28,8 @@ section.card
       |  / 検索:
       strong = " #{@filters[:q]}"
   p.muted
-    | 承認待ち:
+    | 表示中内訳:
+    |  承認待ち:
     strong = " #{@status_counts["pending"]}"
     |  / 承認済み:
     strong = " #{@status_counts["approved"]}"

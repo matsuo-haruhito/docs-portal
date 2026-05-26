@@ -3,8 +3,9 @@ class Admin::AccessRequestsController < Admin::BaseController
 
   def index
     @filters = filter_params
-    @access_requests = filtered_access_requests
-    @status_counts = access_request_status_counts(@access_requests)
+    scope = filtered_access_request_scope
+    @access_requests = filtered_access_requests(scope)
+    @status_counts = access_request_status_counts(scope, @access_requests)
   end
 
   def update
@@ -27,11 +28,17 @@ class Admin::AccessRequestsController < Admin::BaseController
 
   private
 
-  def filtered_access_requests
-    requests = AccessRequest.recent_first.includes(:requester, :approver, :requestable).to_a
-    requests = requests.select { |access_request| access_request.status == @filters[:status] } if @filters[:status].present?
-    requests = requests.select { |access_request| access_request_matches_query?(access_request, @filters[:q]) } if @filters[:q].present?
-    requests
+  def filtered_access_request_scope
+    scope = AccessRequest.recent_first.includes(:requester, :approver, :requestable)
+    scope = scope.where(status: @filters[:status]) if @filters[:status].present?
+    scope
+  end
+
+  def filtered_access_requests(scope)
+    requests = scope.to_a
+    return requests unless @filters[:q].present?
+
+    requests.select { |access_request| access_request_matches_query?(access_request, @filters[:q]) }
   end
 
   def access_request_matches_query?(access_request, query)
@@ -57,7 +64,16 @@ class Admin::AccessRequestsController < Admin::BaseController
     ].compact.join(" ").downcase
   end
 
-  def access_request_status_counts(access_requests)
+  def access_request_status_counts(scope, access_requests)
+    return access_request_status_counts_from_loaded(access_requests) if @filters[:q].present?
+
+    counts = scope.group(:status).count
+    AccessRequest.statuses.keys.to_h do |status|
+      [status, counts[status].to_i]
+    end
+  end
+
+  def access_request_status_counts_from_loaded(access_requests)
     AccessRequest.statuses.keys.to_h do |status|
       [status, access_requests.count { |access_request| access_request.status == status }]
     end
