@@ -158,7 +158,7 @@ RSpec.describe "Admin management", type: :request do
     let(:internal_user) { create(:user, :internal) }
     let!(:company) { create(:company, domain: "tenant.example.com", name: "Tenant") }
     let!(:other_company) { create(:company, domain: "other.example.com", name: "Other") }
-    let!(:manager) { create(:user, :external, company:, email_address: "manager@example.com") }
+    let!(:manager) { create(:user, :external, :company_master_admin, company:, email_address: "manager@example.com") }
     let!(:managed_user) { create(:user, :external, company:, email_address: "member@example.com") }
     let!(:other_user) { create(:user, :external, company: other_company, email_address: "other@example.com") }
 
