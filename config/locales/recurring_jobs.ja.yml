@@ -1,0 +1,10 @@
+ja:
+  labels:
+    recurring_jobs:
+      status:
+        not_run: "未実行"
+        enqueued: "キュー待ち"
+        running: "実行中"
+        completed: "完了"
+        failed: "失敗"
+        skipped: "スキップ"

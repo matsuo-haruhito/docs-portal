@@ -78,10 +78,12 @@ RSpec.describe "Document sites", type: :request do
     expect(response.body).not_to include('aria-label="viewer modes"')
   end
 
-  it "serves embedded docusaurus html for the iframe body" do
+  it "records an access log for embedded docusaurus html views" do
     sign_in_as(user)
 
-    get site_document_version_path(version, site_path: site_build_path, embedded: "1")
+    expect do
+      get site_document_version_path(version, site_path: site_build_path, embedded: "1")
+    end.to change(AccessLog.where(action_type: :view, target_type: "page"), :count).by(1)
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("API Spec")
@@ -89,12 +91,23 @@ RSpec.describe "Document sites", type: :request do
     expect(response.body).to include(%(data-docs-portal-preview-context-key="document_version:#{version.public_id}:#{version.normalized_html_view_site_path}"))
     expect(response.body).not_to include("portal-site-nav")
     expect(response.body).to include(site_document_version_path(version, site_path: "assets/css/styles.css", embedded: "1").gsub("&", "&amp;"))
+
+    log = AccessLog.order(:id).last
+    expect(log.user).to eq(user)
+    expect(log.project).to eq(project)
+    expect(log.document).to eq(document)
+    expect(log.document_version).to eq(version)
+    expect(log.action_type).to eq("view")
+    expect(log.target_type).to eq("page")
+    expect(log.target_name).to eq(site_build_path)
   end
 
-  it "serves shared docusaurus css asset when version storage does not include it" do
+  it "does not record access logs for shared docusaurus assets" do
     sign_in_as(user)
 
-    get site_document_version_path(version, site_path: "assets/css/styles.css")
+    expect do
+      get site_document_version_path(version, site_path: "assets/css/styles.css")
+    end.not_to change(AccessLog, :count)
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("text/css")

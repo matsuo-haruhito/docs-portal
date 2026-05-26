@@ -28,7 +28,7 @@ h1 定期ジョブ詳細
     dt 前回終了
     dd = @schedule.last_finished_at ? l(@schedule.last_finished_at) : "-"
     dt 前回状態
-    dd = @schedule.last_status.presence || "-"
+    dd = recurring_job_status_badge(@schedule.last_status)
     - if @schedule.last_error_message.present?
       dt 前回エラー
       dd = @schedule.last_error_message
@@ -58,7 +58,7 @@ h1 定期ジョブ詳細
       - @runs.each do |run|
         tr
           td = run.scheduled_at ? l(run.scheduled_at) : "-"
-          td = run.status
+          td = recurring_job_status_badge(run.status)
           td = run.enqueued_at ? l(run.enqueued_at) : "-"
           td = run.started_at ? l(run.started_at) : "-"
           td = run.finished_at ? l(run.finished_at) : "-"
