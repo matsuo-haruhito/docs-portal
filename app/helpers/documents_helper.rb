@@ -33,6 +33,7 @@ module DocumentsHelper
     )
 
     tree = TreeView::Tree.new(adapter:)
+    toolbar_project = current_project || current_document&.project
     ui_config = TreeView::UiConfigBuilder.new(
       context: self,
       node_prefix: "document_tree",
@@ -40,7 +41,7 @@ module DocumentsHelper
     ).build(
       hide_descendants_path_builder: ->(item, _depth, scope) { document_tree_toggle_path(item, :hide, scope:) },
       show_descendants_path_builder: ->(item, _depth, scope) { document_tree_toggle_path(item, :show, scope:) },
-      toggle_all_path_builder: ->(_state) { nil }
+      toggle_all_path_builder: ->(state) { document_tree_toggle_all_path(state, current_project: toolbar_project, current_document:) }
     )
 
     expansion_state = document_tree_initial_expansion_state(
@@ -101,6 +102,30 @@ module DocumentsHelper
       tree_window_offset: offset,
       format: :turbo_stream
     )
+  end
+
+  def document_tree_toggle_all_path(state, current_project: nil, current_document: nil)
+    project = current_project || current_document&.project
+    return unless project
+
+    tree_action =
+      case state.to_sym
+      when :expanded, :show
+        "show"
+      when :collapsed, :hide
+        "hide"
+      end
+    return unless tree_action
+
+    path_options = {
+      tree_action:,
+      tree_query: document_tree_query,
+      format: :turbo_stream
+    }
+    current_window_offset = document_tree_window_request_offset
+    path_options[:tree_window_offset] = current_window_offset if current_window_offset.is_a?(Integer)
+
+    document_tree_all_project_path(project, **path_options)
   end
 
   def tree_toggle_button_label(item, state, context)
@@ -657,7 +682,7 @@ module DocumentsHelper
         .filter_map(&:latest_version)
         .select { _1.rendered_site_available? && _1.viewable_by?(current_user) }
         .max_by(&:published_at)
-      @document_tree_default_site_version_by_project_id[project.id] = version if @document_tree_default_site_version_by_project_id
+      @document_tree_default_site_version_by_project_id[project.id] = version if @document_tree_default_SITE_VERSION_by_project_id
     end
     return unless version
 
