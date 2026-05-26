@@ -46,18 +46,20 @@ RSpec.describe "Document file archive previews", type: :request do
 
     get document_file_path(archive_file, embedded: "1", disposition: "inline")
 
+    body = response.body.dup.force_encoding("UTF-8")
+
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("ZIP内サマリー")
-    expect(response.body).to include("ファイル数")
-    expect(response.body).to include("フォルダ数")
-    expect(response.body).to include("テキスト確認候補")
-    expect(response.body).to include("ダウンロード候補")
-    expect(response.body).to include("プレビュー候補")
-    expect(response.body).to include("要注意パス")
-    expect(response.body).to include("個別ダウンロード")
-    expect(response.body).not_to include(">files<")
-    expect(response.body).not_to include(">folders<")
-    expect(response.body).not_to include("entry path")
-    expect(response.body).not_to include("download entry")
+    expect(body).to include("ZIP内サマリー")
+    expect(body).to include("ファイル数")
+    expect(body).to include("フォルダ数")
+    expect(body).to include("テキスト確認候補")
+    expect(body).to include("ダウンロード候補")
+    expect(body).to include("プレビュー候補")
+    expect(body).to include("要注意パス")
+    expect(body).to include("個別ダウンロード")
+    expect(body).not_to include(">files<")
+    expect(body).not_to include(">folders<")
+    expect(body).not_to include("entry path")
+    expect(body).not_to include("download entry")
   end
 end
