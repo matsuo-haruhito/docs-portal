@@ -11,4 +11,8 @@ class ProjectMembership < ApplicationRecord
   validates :project_id, uniqueness: { scope: :user_id }
 
   after_commit :broadcast_document_tree_refresh_later
+
+  def to_param
+    public_id
+  end
 end
