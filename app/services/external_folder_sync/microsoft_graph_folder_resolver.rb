@@ -20,7 +20,7 @@ module ExternalFolderSync
       raise Error, "有効な Microsoft Graph接続 が見つかりません。" if connection.blank?
 
       item = request_json(
-        "/shares/#{escape(share_token(source.folder_url))}/driveItem",
+        "/shares/#{share_token(source.folder_url)}/driveItem",
         query: {
           "$select" => "id,name,folder,parentReference,sharepointIds,webUrl"
         }
@@ -111,10 +111,6 @@ module ExternalFolderSync
       JSON.parse(response.body.presence || "{}")
     rescue JSON::ParserError
       response.body
-    end
-
-    def escape(value)
-      CGI.escape(value.to_s).gsub("+", "%20")
     end
   end
 end
