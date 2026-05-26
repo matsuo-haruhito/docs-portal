@@ -622,7 +622,7 @@ module DocumentsHelper
     relative_path = normalize_document_tree_path(version&.source_relative_path)
     return relative_path.split("/").last if relative_path.present?
 
-    file_tree_path = document_tree_primary_file_tree_path(version)
+    file_tree_path = document_tree_primary_file_TREE_path(version)
     return if file_tree_path.blank?
 
     file_tree_path.split("/").last
@@ -682,7 +682,7 @@ module DocumentsHelper
         .filter_map(&:latest_version)
         .select { _1.rendered_site_available? && _1.viewable_by?(current_user) }
         .max_by(&:published_at)
-      @document_tree_default_site_version_by_project_id[project.id] = version if @document_tree_default_SITE_VERSION_by_project_id
+      @document_tree_default_site_version_by_project_id[project.id] = version if @document_tree_default_site_version_by_project_id
     end
     return unless version
 
