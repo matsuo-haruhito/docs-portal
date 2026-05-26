@@ -5,6 +5,10 @@ RSpec.describe "admin external integration project selectors source" do
     Rails.root.join("app/views/admin/external_folder_sync_sources/_form.html.slim").read
   end
 
+  let(:external_folder_sync_source_show) do
+    Rails.root.join("app/views/admin/external_folder_sync_sources/show.html.slim").read
+  end
+
   let(:external_folder_sync_sources_index) do
     Rails.root.join("app/views/admin/external_folder_sync_sources/index.html.slim").read
   end
@@ -33,6 +37,21 @@ RSpec.describe "admin external integration project selectors source" do
       expect(external_folder_sync_source_form).to include("| 外部フォルダURL")
       expect(external_folder_sync_source_form).not_to include("h2 Google Driveフォルダを取り込む")
       expect(external_folder_sync_source_form).not_to include("| Google DriveフォルダURL")
+    end
+  end
+
+  it "keeps provider-aware guidance for the external folder sync source detail" do
+    aggregate_failures do
+      expect(external_folder_sync_source_show).to include("provider_label = external_folder_sync_source_provider_label(@external_folder_sync_source)")
+      expect(external_folder_sync_source_show).to include("google_drive_source = @external_folder_sync_source.google_drive?")
+      expect(external_folder_sync_source_show).to include('apply_confirm_message = "#{provider_label} からドキュメントポータルへ同期します。競合・重複警告がある場合は自動停止します。よろしいですか？"')
+      expect(external_folder_sync_source_show).to include("dt 外部フォルダURL")
+      expect(external_folder_sync_source_show).to include("dt 外部フォルダID")
+      expect(external_folder_sync_source_show).to include("dt 同期カーソル")
+      expect(external_folder_sync_source_show).to include("h2 変更通知とイベント受信")
+      expect(external_folder_sync_source_show).not_to include("dt Google DriveフォルダURL")
+      expect(external_folder_sync_source_show).not_to include("dt Google DriveフォルダID")
+      expect(external_folder_sync_source_show).not_to include("dt Google Driveカーソル")
     end
   end
 
