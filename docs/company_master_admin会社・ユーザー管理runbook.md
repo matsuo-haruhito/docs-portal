@@ -7,8 +7,7 @@
 ## 先に見るもの
 
 1. role の正本は [基本モデルと権限](./specs/基本モデルと権限.md)
-2. 将来対応として残っている `/admin` 入口の改善は [ToDo](./ToDo.md)
-3. internal admin 向けの広い管理 runbook は [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md) や [アクセス申請・同意管理・Webhook運用runbook](./アクセス申請・同意管理・Webhook運用runbook.md)
+2. internal admin 向けの広い管理 runbook は [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md) や [アクセス申請・同意管理・Webhook運用runbook](./アクセス申請・同意管理・Webhook運用runbook.md)
 
 ## role の要約
 
@@ -20,16 +19,15 @@ current `main` の前提:
 - `案件` `文書` `文書権限` `監査ログ` `利用状況` などの admin surface には入れない
 - 文書閲覧権限は `external` と同じ制約に従い、admin 相当の全文書閲覧は持たない
 
-## 入口と current limitation
+## 入口と current flow
 
-current `main` では `Admin::DashboardController` が `admin` 専用のため、`company_master_admin` が `/admin` へ直接入ると forbidden で止まる。
+current `main` では、`/admin` へ入ると `Admin::DashboardController` が `会社` 一覧 (`/admin/companies`) へ redirect する。
 
-そのため、日常運用で使える管理画面の入口は次の 2 つに限られる。
+その後は role-aware な nav で `会社` と `ユーザー` だけが表示されるため、日常運用では次の flow を入口として使う。
 
-- `会社` (`/admin/companies`)
-- `ユーザー` (`/admin/users`)
-
-これらの画面では admin nav も role-aware になっており、`company_master_admin` には `会社` と `ユーザー` だけが表示される。
+- `/admin` から入って `会社` 一覧へ着地する
+- nav から `ユーザー` へ移動する
+- それ以外の admin surface が必要になったら internal admin へ引き継ぐ
 
 ## 1. 会社画面でできること
 
@@ -73,7 +71,7 @@ current `main` で確認できること:
 
 internal admin へ戻すもの:
 
-- user type を `internal` / `admin` へ変える相談
+- user type を `internal` へ変える相談
 - 他社所属ユーザーの調整
 - 案件所属や文書権限まで含む広いアクセス設計
 
@@ -81,7 +79,6 @@ internal admin へ戻すもの:
 
 current request spec で `company_master_admin` が forbidden として固定されている主な画面は次のとおり。
 
-- `/admin`
 - `案件`
 - `文書`
 - `文書権限`
@@ -109,12 +106,11 @@ current request spec で `company_master_admin` が forbidden として固定さ
 - 自社会社情報を直したい: `会社`
 - 自社ユーザーを追加・無効化したい: `ユーザー`
 - 案件所属や文書権限を見直したい: internal admin へ引き継ぐ
-- `/admin` に入れず止まった: current limitation なので、`会社` または `ユーザー` の許可済み画面を使う
+- `/admin` から入りたい: current `main` では `会社` 一覧へ redirect されるので、そこを入口に使う
 
-## 既知の未解決事項
+## 補足
 
-- `/admin` から自然に許可済み画面へ入る導線は、current `main` では未実装
-- この残件は [ToDo](./ToDo.md) の `company_master_admin` 導線整理として追跡している
+- `company_master_admin` 専用の dashboard はなく、`/admin` は許可済み画面への入口として扱う
 - current behavior を変える判断は docs ではなく runtime 側の issue / PR で扱う
 
 ## 関連画面・根拠
