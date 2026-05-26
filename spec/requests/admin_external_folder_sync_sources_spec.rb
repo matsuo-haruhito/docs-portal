@@ -110,8 +110,8 @@ RSpec.describe "Admin external folder sync sources", type: :request do
 
       expect(response).to redirect_to(admin_external_folder_sync_source_path(source))
       follow_redirect!
-      expect(response.body).to include("差分同期と変更通知は後続 issue で対応予定です")
-      expect(response.body).not_to include("同期する")
+      expect(response.body).to include("後続 issue で対応予定")
+      expect(response.body).not_to include("同期プレビュー")
     end
   end
 end
