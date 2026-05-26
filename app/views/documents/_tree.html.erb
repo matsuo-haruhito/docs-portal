@@ -6,13 +6,13 @@
     .document-tree-toolbar__title-row { display: flex; align-items: center; min-width: 0; }
     .document-tree-toolbar h2 { margin: 0; line-height: 1.2; white-space: nowrap; }
     .document-tree-toolbar__action-row { display: flex; justify-content: flex-end; min-width: 0; }
-    .document-tree-actions { display: inline-flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
-    .document-tree-actions form { margin: 0; }
+    .document-tree-toolbar__action-row .tree-view-toolbar { display: inline-flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
+    .document-tree-toolbar__action-row .tree-view-toolbar form { margin: 0; }
     .document-tree-action-link { display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(15, 98, 254, 0.32); border-radius: 999px; padding: 2px 8px; font-size: 12px; line-height: 1.5; background: #fff; color: #0f62fe; cursor: pointer; font: inherit; white-space: nowrap; }
     .document-tree-action-link:hover, .document-tree-action-link:focus { background: #eff6ff; }
     @media (max-width: 520px) {
       .document-tree-toolbar__action-row { justify-content: stretch; }
-      .document-tree-actions { flex-direction: column; align-items: stretch; gap: 4px; width: 100%; }
+      .document-tree-toolbar__action-row .tree-view-toolbar { flex-direction: column; align-items: stretch; gap: 4px; width: 100%; }
       .document-tree-action-link { width: 100%; }
     }
     .tree-item-status-icon { display: inline-flex; align-items: center; justify-content: center; margin-left: 4px; font-size: 0.85em; line-height: 1; vertical-align: middle; }
@@ -36,16 +36,9 @@
     }
   </style>
 
-  <% content_for :sidebar_toolbar do %>
-    <%= render "documents/tree_toolbar", current_project: local_assigns[:current_project], current_document: local_assigns[:current_document] %>
-  <% end %>
-
-  <p class="muted">案件と文書の階層を表示します。</p>
-
   <% tree_projects = Array(projects) %>
-  <% if tree_projects.empty? %>
-    <p class="muted">表示できる案件はありません。</p>
-  <% else %>
+  <% render_state = nil %>
+  <% if tree_projects.present? %>
     <% render_state = document_tree_render_state(
       projects: tree_projects,
       current_project: local_assigns[:current_project],
@@ -53,6 +46,17 @@
       expanded_source_path: local_assigns[:expanded_source_path],
       collapsed_source_path: local_assigns[:collapsed_source_path]
     ) %>
+  <% end %>
+
+  <% content_for :sidebar_toolbar do %>
+    <%= render "documents/tree_toolbar", current_project: local_assigns[:current_project], current_document: local_assigns[:current_document], render_state: render_state %>
+  <% end %>
+
+  <p class="muted">案件と文書の階層を表示します。</p>
+
+  <% if tree_projects.empty? %>
+    <p class="muted">表示できる案件はありません。</p>
+  <% else %>
     <% window = document_tree_render_window(render_state, current_document: local_assigns[:current_document]) %>
     <% window_project = local_assigns[:current_project] || local_assigns[:current_document]&.project %>
 
