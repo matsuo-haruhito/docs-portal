@@ -5,6 +5,10 @@ RSpec.describe "admin external integration project selectors source" do
     Rails.root.join("app/views/admin/external_folder_sync_sources/_form.html.slim").read
   end
 
+  let(:external_folder_sync_sources_index) do
+    Rails.root.join("app/views/admin/external_folder_sync_sources/index.html.slim").read
+  end
+
   let(:microsoft_graph_connection_form) do
     Rails.root.join("app/views/admin/microsoft_graph_connections/_form.html.slim").read
   end
@@ -17,6 +21,25 @@ RSpec.describe "admin external integration project selectors source" do
       expect(external_folder_sync_source_form).to include("collection_label_method: :name")
       expect(external_folder_sync_source_form).to include('label: "対象案件"')
       expect(external_folder_sync_source_form).not_to include("collection_select :project_id")
+    end
+  end
+
+  it "keeps provider-aware guidance for the external folder sync source entry" do
+    aggregate_failures do
+      expect(external_folder_sync_source_form).to include("h2 外部フォルダを取り込む")
+      expect(external_folder_sync_source_form).to include("h3 Google Drive から始める")
+      expect(external_folder_sync_source_form).to include("h3 SharePoint / OneDrive を準備する")
+      expect(external_folder_sync_source_form).to include("admin_microsoft_graph_connections_path")
+      expect(external_folder_sync_source_form).to include("| 外部フォルダURL")
+      expect(external_folder_sync_source_form).not_to include("h2 Google Driveフォルダを取り込む")
+      expect(external_folder_sync_source_form).not_to include("| Google DriveフォルダURL")
+    end
+  end
+
+  it "uses a provider-neutral folder id header on the external folder sync index" do
+    aggregate_failures do
+      expect(external_folder_sync_sources_index).to include("th 外部フォルダID")
+      expect(external_folder_sync_sources_index).not_to include("th Google DriveフォルダID")
     end
   end
 

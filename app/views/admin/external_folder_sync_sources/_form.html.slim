@@ -1,18 +1,30 @@
 = render "shared/error_messages", record: external_folder_sync_source
 
 .card
-  p.eyebrow かんたん接続
-  h2 Google Driveフォルダを取り込む
+  p.eyebrow provider-aware な入口
+  h2 外部フォルダを取り込む
   p.muted
-    | まずはトークンやJSONを貼らずに、Google OAuthで接続する流れを推奨します。保存後に詳細画面で「Google OAuthを接続」を押し、接続チェック代わりに同期プレビューで読み取れるファイルを確認してください。
+    | この画面では、現在は Google Drive の同期設定を登録できます。SharePoint / OneDrive は後続 issue でフォルダ情報の解決と保存後導線を広げる予定のため、ここでは準備する内容と次の入口を分けて案内します。
+  h3 Google Drive から始める
   ol
-    li 対象案件とDriveフォルダURLを入力する
-    li 認証方式は通常「OAuthユーザー方式」を選ぶ
-    li 保存後、詳細画面でGoogle OAuthを接続する
+    li 対象案件と Google Drive フォルダ URL を入力する
+    li 接続方式は通常「OAuthユーザー方式」を選ぶ
+    li 保存後、詳細画面で Google OAuth を接続する
     li 同期プレビューで対象ファイルと警告を確認する
     li 問題なければ初回同期する
+  h3 SharePoint / OneDrive を準備する
+  ol
+    li Microsoft Graph 接続で Tenant ID / Client ID / Drive ID などを確認する
+    li 同期対象の共有 URL とフォルダ構成を整理する
+    li フォルダ情報の解決と保存後の運用導線は後続 issue で扱う
   p.muted
     | 公式画面のスクリーンショットは変わりやすいため、この画面では必要な作業だけを案内します。外部サービス側の画面では、表示された権限内容を確認して許可してください。
+  p.actions
+    = link_to "Microsoft Graph接続を確認", admin_microsoft_graph_connections_path, class: "button secondary"
+
+- provider_value = external_folder_sync_source.provider.presence || "google_drive"
+- sync_direction_value = external_folder_sync_source.sync_direction.presence || "external_to_portal"
+- conflict_policy_value = external_folder_sync_source.conflict_policy.presence || "manual"
 
 = form_with model: [:admin, external_folder_sync_source] do |form|
   .form-grid
@@ -25,14 +37,15 @@
       placeholder: "案件を選択"
     label
       | 同期設定名
-      = form.text_field :name, placeholder: "Google Drive同期"
+      = form.text_field :name, placeholder: "外部フォルダ同期"
     label
-      | Google DriveフォルダURL
+      | 外部フォルダURL
       = form.text_field :folder_url, placeholder: "https://drive.google.com/drive/folders/..."
+      span.muted 現在この登録画面で受け付けるのは Google Drive フォルダ URL です。SharePoint / OneDrive は Microsoft Graph 接続と後続 issue で扱います。
     label
-      | 認証方式
+      | 接続方式
       = form.select :auth_type, enum_options_for("external_folder_sync_sources.auth_type", %w[oauth_user service_account])
-      span.muted 通常はOAuthユーザー方式を選んでください。
+      span.muted Google Drive の登録では通常「OAuthユーザー方式」を選びます。SharePoint / OneDrive の接続情報は Microsoft Graph 接続側で管理します。
     label
       | 表示用フォルダパス
       = form.text_field :external_folder_path, placeholder: "任意入力。例: チーム文書 / 仕様書"
@@ -44,20 +57,26 @@
     summary 詳細設定（管理者向け）
     .form-grid
       label
-        | 連携先
-        = form.select :provider, enum_options_for("external_folder_sync_sources.provider", %w[google_drive])
+        | 同期元プロバイダ
+        = form.hidden_field :provider, value: provider_value
+        span = external_folder_sync_source_provider_label(provider_value)
+        span.muted 現在この登録画面から保存できるのは Google Drive のみです。SharePoint / OneDrive は Microsoft Graph 接続と後続 issue で扱います。
       label
         | 同期方向
-        = form.select :sync_direction, enum_options_for("external_folder_sync_sources.sync_direction", %w[external_to_portal])
+        = form.hidden_field :sync_direction, value: sync_direction_value
+        span = external_folder_sync_source_sync_direction_label(sync_direction_value)
+        span.muted この画面では、外部フォルダからドキュメントポータルへ取り込む片方向同期だけを扱います。
       label
         | 競合方針
-        = form.select :conflict_policy, enum_options_for("external_folder_sync_sources.conflict_policy", %w[manual])
+        = form.hidden_field :conflict_policy, value: conflict_policy_value
+        span = external_folder_sync_source_conflict_policy_label(conflict_policy_value)
+        span.muted この画面では、自動で競合解決せず、同期プレビューで確認してから取り込む前提です。
     label.full-width
       | サービスアカウントJSON
       = form.text_area :auth_config, value: nil, rows: 10, placeholder: external_folder_sync_source.persisted? ? "サービスアカウントJSON変更時のみ入力。OAuthユーザー方式の場合は空で保存してください。" : "サービスアカウント方式を使う場合のみ貼り付け。OAuthユーザー方式の場合は空で保存してください。"
-    p.muted サービスアカウント方式では、Google Driveフォルダをサービスアカウントのメールアドレスへ共有してください。通常ユーザー向けにはOAuthユーザー方式を推奨します。
+    p.muted サービスアカウント方式は Google Drive でのみ利用します。Google Drive フォルダをサービスアカウントのメールアドレスへ共有してください。
 
-  p.muted 現在はGoogle Driveからドキュメントポータルへの片方向同期のみ対応しています。双方向同期、削除の物理反映は対象外です。
+  p.muted 現在この画面から保存できるのは、Google Drive からドキュメントポータルへの片方向同期のみです。SharePoint / OneDrive のフォルダ情報解決と保存後導線は後続 issue で拡張します。
   p.actions
     = form.submit "設定を保存", class: "button"
     - if external_folder_sync_source.persisted?
