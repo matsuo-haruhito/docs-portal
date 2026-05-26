@@ -33,5 +33,5 @@ p.actions
           td = schedule.last_enqueued_at ? l(schedule.last_enqueued_at) : "-"
           td = schedule.last_started_at ? l(schedule.last_started_at) : "-"
           td = schedule.last_finished_at ? l(schedule.last_finished_at) : "-"
-          td = schedule.last_status.presence || "-"
+          td = recurring_job_status_badge(schedule.last_status)
           td = link_to "詳細", admin_recurring_job_schedule_path(schedule), class: "button secondary"

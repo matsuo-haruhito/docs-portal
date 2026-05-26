@@ -26,6 +26,23 @@ RSpec.describe GeneratedFiles::ChangeEventNotifier do
     )
   end
 
+  it "normalizes backslash path separators before enqueueing" do
+    job_class = class_double(GeneratedFileChangeEventJob, perform_later: true)
+    notifier = described_class.new(job_class:)
+
+    events = notifier.notify(
+      file_events: [{path: "docs\\source.yml", operation: "update"}],
+      event_source: "spec"
+    )
+
+    expect(events).to eq([{path: "docs/source.yml", operation: "update"}])
+    expect(job_class).to have_received(:perform_later).with(
+      file_events: events,
+      event_source: "spec",
+      metadata: {}
+    )
+  end
+
   it "uses update when operation is blank" do
     job_class = class_double(GeneratedFileChangeEventJob, perform_later: true)
     notifier = described_class.new(job_class:)
@@ -70,7 +87,13 @@ RSpec.describe GeneratedFiles::ChangeEventNotifier do
     notifier = described_class.new(job_class:)
 
     events = notifier.notify(
-      file_events: ["../outside.yml", "/tmp/source.yml", "C:/tmp/source.yml", "docs/source.yml"],
+      file_events: [
+        "../outside.yml",
+        "/tmp/source.yml",
+        "C:/tmp/source.yml",
+        "C:\\tmp\\source.yml",
+        "docs/source.yml"
+      ],
       event_source: "spec"
     )
 
