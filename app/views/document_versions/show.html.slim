@@ -6,14 +6,8 @@
 - side_by_side_label = @compare_version ? "左右確認" : "左右確認（比較対象なし）"
 - diff_status_labels = { "changed" => "変更", "added" => "追加", "removed" => "削除" }
 - diff_status_label = ->(status) { diff_status_labels.fetch(status.to_s, status.to_s.humanize) }
-- hero_description = if markdown_source
-  - "Markdown本文、HTMLプレビュー、比較対象版との差分確認を同じ画面から行えます。"
-  - else
-  - "この版で確認できるプレビュー、比較対象版との差分、添付・元ファイルを同じ画面から確認できます。"
-- workspace_description = if markdown_source
-  - "表示可能な本文を優先し、生成済みHTMLがない場合も元ファイルと品質チェックへ誘導します。"
-  - else
-  - "表示可能なプレビューを優先し、本文プレビューがない場合も元ファイルと品質チェックへ誘導します。"
+- hero_description = markdown_source ? "Markdown本文、HTMLプレビュー、比較対象版との差分確認を同じ画面から行えます。" : "この版で確認できるプレビュー、比較対象版との差分、添付・元ファイルを同じ画面から確認できます。"
+- workspace_description = markdown_source ? "表示可能な本文を優先し、生成済みHTMLがない場合も元ファイルと品質チェックへ誘導します。" : "表示可能なプレビューを優先し、本文プレビューがない場合も元ファイルと品質チェックへ誘導します。"
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
 
