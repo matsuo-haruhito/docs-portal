@@ -111,6 +111,6 @@ class AccessibleDocumentsController < BaseController
   end
 
   def enabled_filter?(key)
-    @filters[key] == true
+    ActiveModel::Type::Boolean.new.cast(@filters[key])
   end
 end
