@@ -106,7 +106,7 @@ class DocumentsController < BaseController
 
   def redirect_to_canonical_document_slug(slug_resolution)
     redirect_params = request.query_parameters.merge(previous_slug: slug_resolution.requested_slug)
-    redirect_to project_document_path(@project, slug_resolution.canonical_document.slug, redirect_params), status: :moved_permanently
+    redirect_to project_document_path(@project, slug_resolution.canonical_document.slug, redirect_params), status: :found
   end
 
   def resolve_path_history
@@ -138,7 +138,7 @@ class DocumentsController < BaseController
       site_path: @path_history_resolution.canonical_path,
       previous_site_path: @path_history_resolution.requested_path
     )
-    redirect_to project_document_path(@project, @document.slug, redirect_params), status: :moved_permanently
+    redirect_to project_document_path(@project, @document.slug, redirect_params), status: :found
   end
 
   def mark_document_as_read!(document, document_version)
@@ -258,37 +258,25 @@ class DocumentsController < BaseController
   end
 
   def filter_html_available(scope)
-    html_version_ids = DocumentVersion.where.not(site_build_path: [nil, ""]).select(:id)
-    scope.where(latest_version_id: html_version_ids)
+    scope.joins(:latest_version).where.not(document_versions: { site_build_path: [nil, ""] })
   end
 
   def filter_file_attached(scope)
-    document_ids = DocumentVersion.joins(:document_files).select(:document_id)
-    scope.where(id: document_ids)
+    scope.joins(latest_version: :document_files).distinct
   end
 
   def filter_pdf_available(scope)
-    scope
-      .left_joins(document_versions: :document_files)
-      .where(
-        "documents.document_kind = :pdf_kind OR LOWER(document_files.file_name) LIKE :pdf_file_name",
-        pdf_kind: Document.document_kinds[:pdf],
-        pdf_file_name: "%.pdf"
-      )
+    pdf_file_ids = DocumentFile.where(content_type: "application/pdf").select(:document_version_id)
+    scope.joins(:latest_version).where(document_versions: { id: pdf_file_ids })
   end
 
   def filter_diagram_available(scope)
-    file_name_sql = DIAGRAM_EXTENSIONS.map { "LOWER(document_files.file_name) LIKE ?" }.join(" OR ")
-    file_name_patterns = DIAGRAM_EXTENSIONS.map { |extension| "%.#{extension}" }
-
-    scope
-      .left_joins(document_versions: :document_files)
-      .where(
-        ["document_versions.source_extension IN (?) OR #{file_name_sql}", DIAGRAM_EXTENSIONS, *file_name_patterns]
-      )
+    matching_file_ids = DocumentFile.where("LOWER(file_name) SIMILAR TO ?", "%.(#{DIAGRAM_EXTENSIONS.join("|")})")
+                                   .select(:document_version_id)
+    scope.joins(:latest_version).where(document_versions: { id: matching_file_ids })
   end
 
   def enabled_filter?(key)
-    @filters[key] == true
+    ActiveModel::Type::Boolean.new.cast(@filters[key])
   end
 end
