@@ -265,7 +265,7 @@ module ApplicationHelper
 
   def external_folder_sync_webhook_sync_run_warning_label(event)
     count = external_folder_sync_webhook_sync_run_warnings_count(event)
-    count.positive? ? localized_label("external_folder_sync_webhook_events", "sync_run_warning_label", count:) : nil
+    count.positive? ? localized_label("external_folder_sync_webhook_events", "sync_run_warning_label", count: count) : nil
   end
 
   def external_folder_sync_webhook_sync_run_link_title(_event)
@@ -329,6 +329,32 @@ module ApplicationHelper
     external_folder_sync_change_reasons(plan_or_item) + external_folder_sync_conflict_warnings(plan_or_item)
   end
 
+  def recurring_job_status_label(status_or_value)
+    value = status_or_value.respond_to?(:status) ? status_or_value.status : status_or_value
+    value = value.to_s
+    return "-" if value.blank?
+
+    {
+      "pending" => "待機中",
+      "enqueued" => "投入済み",
+      "running" => "実行中",
+      "completed" => "完了",
+      "failed" => "失敗",
+      "skipped" => "スキップ"
+    }.fetch(value, value)
+  end
+
+  def recurring_job_status_badge_class(status_or_value)
+    value = status_or_value.respond_to?(:status) ? status_or_value.status : status_or_value
+
+    case value.to_s
+    when "failed" then "status-danger"
+    when "running", "pending" then "status-warning"
+    when "enqueued" then "status-info"
+    else "muted"
+    end
+  end
+
   def bulk_edit_dry_run_status_label(run_or_value)
     value = run_or_value.respond_to?(:status) ? run_or_value.status : run_or_value
     localized_label("bulk_edit_dry_runs.status", value)
@@ -358,7 +384,7 @@ module ApplicationHelper
           thead.html_safe,
           tag.tbody do
             tag.tr do
-              tag.td(localized_label("table", "empty"), colspan:, class: "muted")
+              tag.td(localized_label("table", "empty"), colspan: colspan, class: "muted")
             end
           end
         ])
