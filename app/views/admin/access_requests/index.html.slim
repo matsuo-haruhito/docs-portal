@@ -3,7 +3,41 @@
 h1 アクセス申請
 = render "admin/nav"
 
+section.card
+  h2 絞り込み
+  = form_with url: admin_access_requests_path, method: :get, local: true do |form|
+    .form-grid
+      div
+        = form.label :status, "状態"
+        = form.select :status, options_for_select(admin_access_request_status_filter_options, @filters[:status])
+      div
+        = form.label :q, "申請者・対象"
+        = form.search_field :q, value: @filters[:q], placeholder: "名前、メール、対象名で検索"
+
+    p.actions
+      = form.submit "検索"
+      = link_to "条件をクリア", admin_access_requests_path
+
 - if @access_requests.any?
+  p.muted
+    | 表示中:
+    strong = " #{@access_requests.size}件"
+    |  / 状態:
+    strong = " #{admin_access_request_status_filter_label(@filters[:status])}"
+    - if @filters[:q].present?
+      |  / 検索:
+      strong = " #{@filters[:q]}"
+  p.muted
+    | 承認待ち:
+    strong = " #{@status_counts["pending"]}"
+    |  / 承認済み:
+    strong = " #{@status_counts["approved"]}"
+    |  / 却下:
+    strong = " #{@status_counts["rejected"]}"
+    - if @status_counts["cancelled"].to_i.positive?
+      |  / 取消済み:
+      strong = " #{@status_counts["cancelled"]}"
+
   table
     thead
       tr
@@ -19,22 +53,20 @@ h1 アクセス申請
       - @access_requests.each do |access_request|
         - request_hash = AccessRequestHash.new(access_request).call
         - requestable = request_hash[:requestable]
+        - primary_label = admin_access_request_primary_target_label(requestable)
+        - secondary_label = admin_access_request_secondary_target_label(requestable)
         tr
           td = access_request.created_at.strftime("%Y-%m-%d %H:%M")
           td = "#{access_request.requester.name} / #{access_request.requester.email_address}"
           td
             = requestable[:type]
             br
-            - if requestable[:name].present?
-              = requestable[:name]
-            - elsif requestable[:title].present?
-              = requestable[:title]
-            - elsif requestable[:file_name].present?
-              = requestable[:file_name]
-            - else
-              = requestable[:public_id]
-          td = access_request.requested_access_level
-          td = access_request.status
+            = primary_label
+            - if secondary_label.present?
+              br
+              span.muted = secondary_label
+          td = document_permission_access_level_label(access_request.requested_access_level)
+          td = admin_access_request_status_label(access_request)
           td = access_request.reason
           td = access_request.approver&.email_address || "-"
           td.actions
@@ -44,4 +76,7 @@ h1 アクセス申請
             - else
               span.muted -
 - else
-  p.muted 申請はありません。
+  - if @filters[:status].present? || @filters[:q].present?
+    p.muted 条件に一致する申請はありません。
+  - else
+    p.muted 申請はありません。
