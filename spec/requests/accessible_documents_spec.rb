@@ -49,7 +49,7 @@ RSpec.describe "AccessibleDocuments", type: :request do
     get documents_path, params: { page: 2 }
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("ページ 2 / 2")
+    expect(response.body).to match(/ページ\s*2\s*\/\s*2/)
   end
 
   it "keeps internal-only documents available to internal users" do
