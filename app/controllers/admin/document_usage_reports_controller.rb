@@ -18,15 +18,17 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
   end
 
   def usage_filter_param
-    return params[:usage_filter] if %w[all used unused].include?(params[:usage_filter])
-
-    "all"
+    normalized_enum_param(params[:usage_filter], allowed: %w[all used unused], default: "all")
   end
 
   def sort_order_param
-    return params[:sort_order] if %w[title last_accessed_desc last_accessed_asc].include?(params[:sort_order])
+    normalized_enum_param(params[:sort_order], allowed: %w[title last_accessed_desc last_accessed_asc], default: "title")
+  end
 
-    "title"
+  def normalized_enum_param(value, allowed:, default:)
+    candidate = Array.wrap(value).compact_blank.first
+
+    allowed.include?(candidate) ? candidate : default
   end
 
   def build_report_hash(project)
