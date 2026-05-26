@@ -44,7 +44,7 @@ RSpec.describe "Document file archive previews", type: :request do
     )
     sign_in_as(user)
 
-    get document_file_path(archive_file, embedded: "1", disposition: "inline")
+    get document_file_path(archive_file, disposition: "inline")
 
     body = response.body.b.force_encoding("UTF-8").scrub
 
