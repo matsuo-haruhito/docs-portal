@@ -1,9 +1,19 @@
 - page_title "#{@document.title} #{document_version_label(@version)}"
 - preview_build_status = PreviewBuildStatusPresenter.new(@version)
-- docusaurus_preview_pending = @version.source_extension.to_s.in?(%w[md markdown mdx]) && !@version.rendered_site_available? && @version.source_commit_hash == "manual-upload"
+- source_extension = @version.source_extension.to_s
+- markdown_source = source_extension.in?(%w[md markdown mdx])
+- docusaurus_preview_pending = markdown_source && !@version.rendered_site_available? && @version.source_commit_hash == "manual-upload"
 - side_by_side_label = @compare_version ? "左右確認" : "左右確認（比較対象なし）"
 - diff_status_labels = { "changed" => "変更", "added" => "追加", "removed" => "削除" }
 - diff_status_label = ->(status) { diff_status_labels.fetch(status.to_s, status.to_s.humanize) }
+- hero_description = if markdown_source
+  - "Markdown本文、HTMLプレビュー、比較対象版との差分確認を同じ画面から行えます。"
+  - else
+  - "この版で確認できるプレビュー、比較対象版との差分、添付・元ファイルを同じ画面から確認できます。"
+- workspace_description = if markdown_source
+  - "表示可能な本文を優先し、生成済みHTMLがない場合も元ファイルと品質チェックへ誘導します。"
+  - else
+  - "表示可能なプレビューを優先し、本文プレビューがない場合も元ファイルと品質チェックへ誘導します。"
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
 
@@ -13,13 +23,12 @@ p.muted
   = link_to @document.title, project_document_path(@project, @document.slug)
 
 .page-hero.markdown-preview-hero
-  p.eyebrow Markdown Preview
+  p.eyebrow 版詳細プレビュー
   h1
     = @document.title
     |  
     = document_version_label(@version)
-  p.muted
-    | Markdown本文の閲覧、HTMLプレビュー、比較対象版との差分確認を同じ画面から行えます。
+  p.muted = hero_description
   p.actions
     - if @version.rendered_site_available?
       = link_to "HTML本文を開く", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path), class: "button"
@@ -123,8 +132,8 @@ p.muted
 .card.markdown-workspace
   .markdown-workspace__header
     div
-      h2 Markdown / HTML プレビュー
-      p.muted 表示可能な本文を優先し、生成済みHTMLがない場合も元ファイルと品質チェックへ誘導します。
+      h2 版詳細ワークスペース
+      p.muted = workspace_description
     .actions
       - if @version.rendered_site_available?
         = link_to "プレビュー", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path), class: "button"
