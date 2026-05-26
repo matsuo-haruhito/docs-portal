@@ -73,7 +73,7 @@ section.card
           td.actions
             - if access_request.pending?
               = button_to "承認", admin_access_request_path(access_request), method: :patch, params: { decision: "approve" }, class: "button"
-              = button_to "却下", admin_access_request_path(access_request), method: :patch, params: { decision: "reject", rejection_reason: "Not approved" }, class: "button secondary"
+              = button_to "却下", admin_access_request_path(access_request), method: :patch, params: { decision: "reject", rejection_reason: admin_access_request_default_rejection_reason }, class: "button secondary"
             - else
               span.muted -
 - else
