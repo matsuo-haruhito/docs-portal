@@ -309,6 +309,82 @@ RSpec.describe "External document access boundaries", type: :request do
     expect(response).to have_http_status(:forbidden)
   end
 
+  it "redirects historical document slugs with a temporary redirect while preserving query params" do
+    document = create(:document, project: member_project, title: "Canonical Guide", slug: "canonical-guide")
+    version = create(
+      :document_version,
+      document:,
+      version_label: "v1.0.0",
+      status: :published,
+      source_relative_path: "guides/legacy-guide.md",
+      source_directory: "guides",
+      source_file_name: "legacy-guide.md",
+      source_basename: "legacy-guide",
+      source_extension: "md",
+      site_build_path: "docs/canonical-guide"
+    )
+    document.update!(latest_version: version)
+    create(:document_permission, document:, company: external_user.company, access_level: :view)
+
+    sign_in_as(external_user)
+
+    get project_document_path(member_project, "legacy-guide"), params: {
+      site_path: "docs/canonical-guide/getting-started",
+      version_id: version.public_id,
+      embedded: "1"
+    }
+
+    expect(response).to have_http_status(:found)
+    expect(response).to redirect_to(
+      project_document_path(member_project, document.slug, {
+        site_path: "docs/canonical-guide/getting-started",
+        version_id: version.public_id,
+        embedded: "1",
+        previous_slug: "legacy-guide"
+      })
+    )
+  end
+
+  it "redirects historical site paths with a temporary redirect while preserving existing query params" do
+    document = create(:document, project: member_project, title: "Canonical Guide", slug: "canonical-guide")
+    older_version = create(
+      :document_version,
+      document:,
+      version_label: "v0.9.0",
+      status: :published,
+      site_build_path: "docs/legacy-guide"
+    )
+    latest_version = create(
+      :document_version,
+      document:,
+      version_label: "v1.0.0",
+      status: :published,
+      site_build_path: "docs/canonical-guide"
+    )
+    document.update!(latest_version: latest_version)
+    create(:document_permission, document:, company: external_user.company, access_level: :view)
+
+    sign_in_as(external_user)
+
+    get project_document_path(member_project, document.slug), params: {
+      version_id: latest_version.public_id,
+      site_path: "docs/legacy-guide/getting-started",
+      previous_slug: "legacy-guide",
+      embedded: "1"
+    }
+
+    expect(response).to have_http_status(:found)
+    expect(response).to redirect_to(
+      project_document_path(member_project, document.slug, {
+        version_id: latest_version.public_id,
+        site_path: "docs/canonical-guide/getting-started",
+        previous_site_path: "docs/legacy-guide/getting-started",
+        previous_slug: "legacy-guide",
+        embedded: "1"
+      })
+    )
+  end
+
   it "checks direct document site html and asset access with document permissions" do
     document = create(:document, project: member_project, title: "サイト資料", slug: "site-doc")
     version = create(

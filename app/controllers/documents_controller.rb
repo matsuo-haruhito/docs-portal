@@ -106,7 +106,7 @@ class DocumentsController < BaseController
 
   def redirect_to_canonical_document_slug(slug_resolution)
     redirect_params = request.query_parameters.merge(previous_slug: slug_resolution.requested_slug)
-    redirect_to project_document_path(@project, slug_resolution.canonical_document.slug, redirect_params), status: :moved_permanently
+    redirect_to project_document_path(@project, slug_resolution.canonical_document.slug, redirect_params), status: :found
   end
 
   def resolve_path_history
@@ -138,7 +138,7 @@ class DocumentsController < BaseController
       site_path: @path_history_resolution.canonical_path,
       previous_site_path: @path_history_resolution.requested_path
     )
-    redirect_to project_document_path(@project, @document.slug, redirect_params), status: :moved_permanently
+    redirect_to project_document_path(@project, @document.slug, redirect_params), status: :found
   end
 
   def mark_document_as_read!(document, document_version)
