@@ -3,6 +3,23 @@ require "rails_helper"
 RSpec.describe "Admin document permissions", type: :request do
   let(:admin_user) { create(:user, :internal) }
 
+  it "shows empty-state guidance when no document permissions exist" do
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("文書別の権限概要")
+    expect(response.body).to include("権限一覧")
+    expect(response.body.scan("まだ権限は登録されていません。").size).to eq(2)
+    expect(response.body).to include("上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して保存すると、文書ごとの権限数と閲覧/ダウンロード内訳をここで見比べられます。")
+    expect(response.body).to include("まずは上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して 1 件登録してください。")
+    expect(response.body).to include("会社単位かユーザー単位のどちらかを指定してください。")
+    expect(response.body).not_to include("権限概要の表示設定")
+    expect(response.body).not_to include("権限一覧の表示設定")
+    expect(response.body).not_to include('data-rails-table-preferences-column-key="document"')
+  end
+
   it "shows document permission overview" do
     document = create(:document, title: "Permission Target", visibility_policy: :restricted_external)
     company = create(:company, name: "Customer Company")

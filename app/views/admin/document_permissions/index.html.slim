@@ -17,50 +17,58 @@ section.card
   h2 文書別の権限概要
   p.muted 文書ごとの会社単位・ユーザー単位の権限数と、閲覧/ダウンロードの内訳を確認できます。
 
-  = table_preferences_editor(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns, title: "権限概要の表示設定")
+  - if @permission_overview_rows.any?
+    = table_preferences_editor(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns, title: "権限概要の表示設定")
 
-  = table_preferences_table_tag(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns) do
-    thead
-      tr
-        th data-rails-table-preferences-column-key="document" 文書名
-        th data-rails-table-preferences-column-key="project" 案件
-        th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
-        th data-rails-table-preferences-column-key="company_permissions" 会社権限
-        th data-rails-table-preferences-column-key="user_permissions" ユーザー権限
-        th data-rails-table-preferences-column-key="view_allowed" 閲覧
-        th data-rails-table-preferences-column-key="download_allowed" ダウンロード
-    tbody
-      - @permission_overview_rows.each do |row|
+    = table_preferences_table_tag(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns) do
+      thead
         tr
-          td data-rails-table-preferences-column-key="document" = link_to row.document.title, project_document_path(row.document.project, row.document.slug), data: { turbo_frame: "_top" }
-          td data-rails-table-preferences-column-key="project" = row.document.project.name
-          td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(row.document)
-          td data-rails-table-preferences-column-key="company_permissions" = row.company_permissions.size
-          td data-rails-table-preferences-column-key="user_permissions" = row.user_permissions.size
-          td data-rails-table-preferences-column-key="view_allowed" = row.view_allowed_count
-          td data-rails-table-preferences-column-key="download_allowed" = row.download_allowed_count
+          th data-rails-table-preferences-column-key="document" 文書名
+          th data-rails-table-preferences-column-key="project" 案件
+          th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
+          th data-rails-table-preferences-column-key="company_permissions" 会社権限
+          th data-rails-table-preferences-column-key="user_permissions" ユーザー権限
+          th data-rails-table-preferences-column-key="view_allowed" 閲覧
+          th data-rails-table-preferences-column-key="download_allowed" ダウンロード
+      tbody
+        - @permission_overview_rows.each do |row|
+          tr
+            td data-rails-table-preferences-column-key="document" = link_to row.document.title, project_document_path(row.document.project, row.document.slug), data: { turbo_frame: "_top" }
+            td data-rails-table-preferences-column-key="project" = row.document.project.name
+            td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(row.document)
+            td data-rails-table-preferences-column-key="company_permissions" = row.company_permissions.size
+            td data-rails-table-preferences-column-key="user_permissions" = row.user_permissions.size
+            td data-rails-table-preferences-column-key="view_allowed" = row.view_allowed_count
+            td data-rails-table-preferences-column-key="download_allowed" = row.download_allowed_count
+  - else
+    p.muted まだ権限は登録されていません。
+    p.muted 上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して保存すると、文書ごとの権限数と閲覧/ダウンロード内訳をここで見比べられます。
 
 section.card
   h2 権限一覧
 
-  = table_preferences_editor(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns, title: "権限一覧の表示設定")
+  - if @document_permissions.any?
+    = table_preferences_editor(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns, title: "権限一覧の表示設定")
 
-  = table_preferences_table_tag(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns) do
-    thead
-      tr
-        th data-rails-table-preferences-column-key="document" 文書名
-        th data-rails-table-preferences-column-key="company" 会社
-        th data-rails-table-preferences-column-key="user" ユーザー
-        th data-rails-table-preferences-column-key="access_level" 権限
-        th data-rails-table-preferences-column-key="actions"
-    tbody
-      - @document_permissions.each do |permission|
+    = table_preferences_table_tag(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns) do
+      thead
         tr
-          td data-rails-table-preferences-column-key="document" = link_to permission.document.title, project_document_path(permission.document.project, permission.document.slug), data: { turbo_frame: "_top" }
-          td data-rails-table-preferences-column-key="company" = permission.company&.display_name || "-"
-          td data-rails-table-preferences-column-key="user" = permission.user&.display_name || "-"
-          td data-rails-table-preferences-column-key="access_level"
-            span.badge = document_permission_access_level_label(permission)
-          td.actions data-rails-table-preferences-column-key="actions"
-            = edit_link_to "編集", edit_admin_document_permission_path(permission)
-            = delete_link_to "削除", admin_document_permission_path(permission), confirm: "この文書権限を削除しますか？対象ユーザー/会社の閲覧範囲が変わります。"
+          th data-rails-table-preferences-column-key="document" 文書名
+          th data-rails-table-preferences-column-key="company" 会社
+          th data-rails-table-preferences-column-key="user" ユーザー
+          th data-rails-table-preferences-column-key="access_level" 権限
+          th data-rails-table-preferences-column-key="actions"
+      tbody
+        - @document_permissions.each do |permission|
+          tr
+            td data-rails-table-preferences-column-key="document" = link_to permission.document.title, project_document_path(permission.document.project, permission.document.slug), data: { turbo_frame: "_top" }
+            td data-rails-table-preferences-column-key="company" = permission.company&.display_name || "-"
+            td data-rails-table-preferences-column-key="user" = permission.user&.display_name || "-"
+            td data-rails-table-preferences-column-key="access_level"
+              span.badge = document_permission_access_level_label(permission)
+            td.actions data-rails-table-preferences-column-key="actions"
+              = edit_link_to "編集", edit_admin_document_permission_path(permission)
+              = delete_link_to "削除", admin_document_permission_path(permission), confirm: "この文書権限を削除しますか？対象ユーザー/会社の閲覧範囲が変わります。"
+  - else
+    p.muted まだ権限は登録されていません。
+    p.muted まずは上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して 1 件登録してください。
