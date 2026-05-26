@@ -8,6 +8,25 @@ p.actions
   = link_to "定義を同期", admin_recurring_job_schedules_path(sync_definitions: 1), class: "button secondary"
 
 .card
+  = form_with url: admin_recurring_job_schedules_path, method: :get, local: true do
+    p.actions
+      = label_tag :status, "前回状態"
+      = select_tag :status, options_for_select([["すべて", ""]] + @status_options.map { |status| [recurring_job_status_label(status), status] }, @filters[:status])
+      = submit_tag "絞り込む", class: "button secondary"
+      - if @filters[:status].present?
+        = link_to "解除", admin_recurring_job_schedules_path, class: "button secondary"
+
+  p.muted
+    = "表示中: #{@schedules.size}件"
+    - if @filters[:status].present?
+      |  / 状態: #{recurring_job_status_label(@filters[:status])}
+  p.muted
+    = [
+      "失敗: #{@status_counts.fetch("failed", 0)}件",
+      "実行中: #{@status_counts.fetch("running", 0)}件",
+      "投入済み: #{@status_counts.fetch("enqueued", 0)}件"
+    ].join(" / ")
+
   = table_tag do
     thead
       tr
@@ -33,5 +52,9 @@ p.actions
           td = schedule.last_enqueued_at ? l(schedule.last_enqueued_at) : "-"
           td = schedule.last_started_at ? l(schedule.last_started_at) : "-"
           td = schedule.last_finished_at ? l(schedule.last_finished_at) : "-"
-          td = schedule.last_status.presence || "-"
+          td
+            - if schedule.last_status.present?
+              span class=recurring_job_status_badge_class(schedule.last_status) = recurring_job_status_label(schedule.last_status)
+            - else
+              | -
           td = link_to "詳細", admin_recurring_job_schedule_path(schedule), class: "button secondary"
