@@ -11,7 +11,7 @@ class Admin::DashboardController < Admin::BaseController
   private
 
   def redirect_company_master_admin_to_allowed_surface!
-    return unless company_master_admin?
+    return unless current_user&.company_master_admin?
 
     redirect_to admin_companies_path
   end
