@@ -28,7 +28,11 @@ h1 定期ジョブ詳細
     dt 前回終了
     dd = @schedule.last_finished_at ? l(@schedule.last_finished_at) : "-"
     dt 前回状態
-    dd = @schedule.last_status.presence || "-"
+    dd
+      - if @schedule.last_status.present?
+        span class=recurring_job_status_badge_class(@schedule.last_status) = recurring_job_status_label(@schedule.last_status)
+      - else
+        | -
     - if @schedule.last_error_message.present?
       dt 前回エラー
       dd = @schedule.last_error_message
@@ -44,6 +48,19 @@ h1 定期ジョブ詳細
 
 .card
   h2 実行履歴
+  = form_with url: admin_recurring_job_schedule_path(@schedule), method: :get, local: true do
+    p.actions
+      = label_tag :status, "実行状態"
+      = select_tag :status, options_for_select([["すべて", ""]] + @run_status_options.map { |status| [recurring_job_status_label(status), status] }, @run_filters[:status])
+      = submit_tag "絞り込む", class: "button secondary"
+      - if @run_filters[:status].present?
+        = link_to "解除", admin_recurring_job_schedule_path(@schedule), class: "button secondary"
+
+  p.muted
+    = "表示中: #{@runs.size}件"
+    - if @run_filters[:status].present?
+      |  / 状態: #{recurring_job_status_label(@run_filters[:status])}
+
   = table_tag do
     thead
       tr
@@ -58,7 +75,8 @@ h1 定期ジョブ詳細
       - @runs.each do |run|
         tr
           td = run.scheduled_at ? l(run.scheduled_at) : "-"
-          td = run.status
+          td
+            span class=recurring_job_status_badge_class(run.status) = recurring_job_status_label(run.status)
           td = run.enqueued_at ? l(run.enqueued_at) : "-"
           td = run.started_at ? l(run.started_at) : "-"
           td = run.finished_at ? l(run.finished_at) : "-"
