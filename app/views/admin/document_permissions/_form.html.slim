@@ -1,4 +1,10 @@
-= render "shared/error_messages", record: document_permission
+- error_messages = document_permission_form_error_messages(document_permission)
+- if error_messages.any?
+  .error-messages
+    strong 入力内容を確認してください。
+    ul
+      - error_messages.each do |message|
+        li = message
 
 = form_with model: [:admin, document_permission] do |form|
   .form-grid
@@ -11,8 +17,6 @@
     div style="grid-column: 1 / -1;"
       p.muted style="margin-bottom: 0.25rem;" 適用対象は、会社向けかユーザー向けのどちらか一方を選びます。
       p.muted style="margin-top: 0;" 会社全体に付与するときは「会社」を、個人に付与するときは「ユーザー」を指定してください。2つ同時には選択しません。
-      - if document_permission.errors[:base].any?
-        p style="margin: 0.5rem 0 0; color: #b42318;" 適用対象は会社かユーザーのどちらか一方だけを指定してください。
     = form.rfk_select :company_id,
       collection: document_permission_form_company_options(@companies),
       wrapper: true,
