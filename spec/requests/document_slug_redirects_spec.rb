@@ -32,7 +32,7 @@ RSpec.describe "Document slug redirects", type: :request do
 
     get project_document_path(project, "previous-guide")
 
-    expect(response).to have_http_status(:moved_permanently)
+    expect(response).to have_http_status(:found)
     expect(response.location).to include("/projects/#{project.code}/documents/current-guide")
     expect(response.location).to include("previous_slug=previous-guide")
   end
