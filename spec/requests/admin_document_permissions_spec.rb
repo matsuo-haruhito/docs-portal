@@ -42,8 +42,8 @@ RSpec.describe "Admin document permissions", type: :request do
 
     expect(response).to have_http_status(:unprocessable_entity)
     expect(response.body).to include("入力内容を確認してください。")
-    expect(response.body).to include("company_id and user_id cannot both be set")
     expect(response.body).to include("適用対象は会社かユーザーのどちらか一方だけを指定してください。")
+    expect(response.body).not_to include("company_id and user_id cannot both be set")
     expect(response.body).to include("会社向けに付与する場合に選択")
     expect(response.body).to include("ユーザー向けに付与する場合に選択")
   end
