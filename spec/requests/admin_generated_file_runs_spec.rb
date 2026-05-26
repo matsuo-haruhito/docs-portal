@@ -3,6 +3,10 @@ require "rails_helper"
 RSpec.describe "Admin generated file runs", type: :request do
   let(:admin_user) { create(:user, :internal) }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
   describe "GET /admin/generated_file_runs" do
     it "shows generated file run history for admin users" do
       sign_in_as(admin_user)
@@ -27,10 +31,10 @@ RSpec.describe "Admin generated file runs", type: :request do
       get admin_generated_file_runs_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("completed")
-      expect(response.body).to include("failed")
-      expect(response.body).to include(admin_generated_file_runs_path(status: "failed"))
-      expect(response.body).to match(%r{<div class="mt-1 text-2xl font-bold">2</div>})
+      failed_summary_card = parsed_html.at_css(%(a[href="#{admin_generated_file_runs_path(status: "failed")}"]))
+      expect(failed_summary_card).to be_present
+      expect(failed_summary_card.text).to include("失敗")
+      expect(failed_summary_card.at_css(".text-2xl.font-bold")&.text).to eq("2")
     end
 
     it "paginates generated file runs" do
