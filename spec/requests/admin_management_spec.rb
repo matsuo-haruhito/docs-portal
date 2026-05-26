@@ -113,6 +113,8 @@ RSpec.describe "Admin management", type: :request do
       project = Project.find_by!(code: "PJ999")
       expect(response).to redirect_to(admin_projects_path)
       expect(project.company).to eq(company)
+      expect(admin_project_path(project)).to eq("/admin/projects/PJ999")
+      expect(edit_admin_project_path(project)).to eq("/admin/projects/PJ999/edit")
 
       get admin_projects_path
       expect(response.body).to include("Client Co")
@@ -125,6 +127,9 @@ RSpec.describe "Admin management", type: :request do
       expect(project.reload.name).to eq("Portal Refresh Updated")
       expect(project.company).to be_nil
       expect(project.active).to be(false)
+
+      get edit_admin_project_path(project.id)
+      expect(response).to have_http_status(:not_found)
     end
 
     it "forbids external users" do

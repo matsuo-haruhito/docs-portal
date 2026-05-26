@@ -18,7 +18,11 @@ class Admin::ProjectPermissionPreviewsController < Admin::BaseController
   private
 
   def set_project
-    @project = Project.find_by!(code: params[:id])
+    @project = Project.find_by!(code: project_code_param)
+  end
+
+  def project_code_param
+    params[:code] || params[:id]
   end
 
   def preview_viewers

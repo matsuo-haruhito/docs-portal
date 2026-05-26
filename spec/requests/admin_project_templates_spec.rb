@@ -14,10 +14,13 @@ RSpec.describe "Admin project templates", type: :request do
     expect(response.body).to include("標準文書テンプレート")
     expect(response.body).to include("作成予定")
     expect(response.body).to include("要件定義 README")
+    expect(response.body).to include(apply_template_admin_project_path(project))
   end
 
   it "applies the standard project template from admin" do
     sign_in_as(admin_user)
+
+    expect(apply_template_admin_project_path(project)).to eq("/admin/projects/TPLADM/apply_template")
 
     expect do
       post apply_template_admin_project_path(project)

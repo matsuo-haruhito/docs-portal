@@ -11,7 +11,11 @@ class Admin::ProjectTemplatesController < Admin::BaseController
   private
 
   def set_project
-    @project = Project.find_by!(code: params[:id] || params[:project_id])
+    @project = Project.find_by!(code: project_code_param)
+  end
+
+  def project_code_param
+    params[:code] || params[:project_code] || params[:id] || params[:project_id]
   end
 
   def notice_message(result)
