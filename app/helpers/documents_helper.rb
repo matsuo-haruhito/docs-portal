@@ -14,7 +14,7 @@ module DocumentsHelper
   DOCUMENT_TREE_DOCUMENT_ICON_NAMES = %w[doc document].freeze
 
   def document_tree_render_state(projects:, current_project: nil, current_document: nil, expanded_source_path: nil, collapsed_source_path: nil)
-    projects = projects.to_a
+    projects = document_tree_projects_for_query(projects, current_project:, current_document:)
     prepare_document_tree_cache!(projects)
 
     adapter = TreeView::GraphAdapter.new(
@@ -55,6 +55,7 @@ module DocumentsHelper
     if current_document.present? && Array(persisted_state&.expanded_keys).blank?
       expanded_keys |= document_tree_all_folder_keys_for(current_document.project)
     end
+    expanded_keys |= document_tree_query_expanded_keys(projects) if document_tree_query.present?
     collapsed_keys = expansion_state.fetch(:collapsed_keys, [])
     expanded_keys -= collapsed_keys
 
@@ -96,6 +97,7 @@ module DocumentsHelper
     project_document_tree_path(
       project,
       document_slug: current_document&.slug,
+      tree_query: document_tree_query,
       tree_window_offset: offset,
       format: :turbo_stream
     )
@@ -227,7 +229,30 @@ module DocumentsHelper
     DocumentSearch.new(keyword).match_summaries_for(document)
   end
 
+  def document_tree_query
+    return unless respond_to?(:params)
+
+    params[:tree_query].to_s.squish.presence
+  end
+
+  def document_tree_query_match_count(projects, current_project: nil, current_document: nil)
+    return 0 if document_tree_query.blank?
+
+    scoped_projects = document_tree_projects_for_query(projects, current_project:, current_document:)
+    scoped_projects.sum { |project| document_tree_documents_for(project).size }
+  end
+
   private
+
+  def document_tree_projects_for_query(projects, current_project:, current_document:)
+    projects = projects.to_a
+    return projects if document_tree_query.blank?
+
+    scoped_project = current_project || current_document&.project
+    return projects if scoped_project.blank?
+
+    [scoped_project]
+  end
 
   def current_tree_item?(item, current_project: nil, current_document: nil)
     case item
@@ -349,6 +374,7 @@ module DocumentsHelper
   end
 
   def prepare_document_tree_cache!(projects)
+    query = document_tree_query
     @document_tree_documents_by_project_id = projects.index_with do |project|
       documents = if project.association(:documents).loaded?
         project.documents.to_a
@@ -358,6 +384,7 @@ module DocumentsHelper
 
       documents = documents.reject { |document| document.archived_at.present? }
       documents = documents.select { |document| document.visible_in_portal_for?(current_user) } unless current_user.internal?
+      documents = documents.select { |document| document_tree_query_match?(document, query) } if query.present?
       documents.sort_by { |document| document_tree_document_label(document) }
     end.transform_keys(&:id)
     @document_tree_nodes_by_project_id = {}
@@ -460,6 +487,23 @@ module DocumentsHelper
     (@document_tree_folder_nodes_by_project_and_path&.dig(project.id) || {}).values.map { node_key(_1) }
   end
 
+  def document_tree_query_expanded_keys(projects)
+    projects.flat_map do |project|
+      documents = document_tree_documents_for(project)
+      next [] if documents.empty?
+
+      [
+        node_key(project),
+        *documents.flat_map do |document|
+          document_tree_folder_ancestor_paths(document_tree_source_directory(document)).filter_map do |path|
+            folder_node = document_tree_folder_node_for(project, path)
+            node_key(folder_node) if folder_node
+          end
+        end
+      ]
+    end.uniq
+  end
+
   def document_tree_folder_ancestor_paths(source_path)
     directory = normalize_document_tree_path(source_path)
     return [] if directory.blank?
@@ -483,6 +527,7 @@ module DocumentsHelper
   def document_tree_toggle_path(item, action, scope: nil)
     path_options = {
       tree_action: action == :hide ? "hide" : "show",
+      tree_query: document_tree_query,
       scope:,
       format: :turbo_stream
     }
@@ -507,6 +552,21 @@ module DocumentsHelper
 
   def document_tree_document_label(document)
     document_tree_source_file_name(document).presence || document.title
+  end
+
+  def document_tree_query_match?(document, query)
+    return true if query.blank?
+
+    normalized_query = query.to_s.downcase
+    return false if normalized_query.blank?
+
+    [
+      document.title,
+      document.slug,
+      document_tree_source_file_name(document),
+      document_tree_source_directory(document),
+      document_tree_version_for(document)&.source_relative_path
+    ].compact_blank.any? { |value| value.to_s.downcase.include?(normalized_query) }
   end
 
   def document_tree_source_directory(document)
