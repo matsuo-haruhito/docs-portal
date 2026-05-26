@@ -66,7 +66,7 @@ RSpec.describe "Admin management", type: :request do
       expect(response).to redirect_to(admin_companies_path)
       expect(flash[:notice]).to eq("会社を登録しました。")
 
-      patch admin_company_path(created), params: {
+      patch admin_company_path(created.public_id), params: {
         company: { domain: "beta.example.com", name: "Beta Updated", active: false }
       }
 
@@ -75,10 +75,42 @@ RSpec.describe "Admin management", type: :request do
       expect(created.active).to be(false)
 
       expect do
-        delete admin_company_path(created)
+        delete admin_company_path(created.public_id)
       end.to change(Company, :count).by(-1)
 
       expect(response).to redirect_to(admin_companies_path)
+    end
+
+    it "uses public_id-based company action links and rejects numeric ids" do
+      sign_in_as(internal_user)
+
+      get admin_companies_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(edit_admin_company_path(company.public_id))
+      expect(response.body).to include(admin_company_path(company.public_id))
+      expect(response.body).not_to include(edit_admin_company_path(company.id))
+      expect(response.body).not_to include(admin_company_path(company.id))
+      expect(admin_company_path(company)).to eq("/admin/companies/#{company.public_id}")
+      expect(edit_admin_company_path(company)).to eq("/admin/companies/#{company.public_id}/edit")
+
+      get edit_admin_company_path(company.public_id)
+      expect(response).to have_http_status(:ok)
+
+      get edit_admin_company_path(company.id)
+      expect(response).to have_http_status(:not_found)
+
+      patch admin_company_path(company.id), params: {
+        company: { domain: company.domain, name: "Numeric Id Update", active: false }
+      }
+
+      expect(response).to have_http_status(:not_found)
+      expect(company.reload.name).to eq("Alpha")
+
+      delete admin_company_path(company.id)
+
+      expect(response).to have_http_status(:not_found)
+      expect(Company.exists?(company.id)).to be(true)
     end
 
     it "forbids external users from company master access" do
@@ -98,14 +130,14 @@ RSpec.describe "Admin management", type: :request do
       expect(response.body).to include("Alpha")
       expect(response.body).not_to include("Omega")
 
-      patch admin_company_path(company), params: {
+      patch admin_company_path(company.public_id), params: {
         company: { domain: company.domain, name: "Alpha Updated", active: false }
       }
 
       expect(response).to redirect_to(admin_companies_path)
       expect(company.reload.name).to eq("Alpha Updated")
 
-      patch admin_company_path(other_company), params: {
+      patch admin_company_path(other_company.public_id), params: {
         company: { domain: other_company.domain, name: "Omega Updated", active: false }
       }
 
@@ -189,7 +221,7 @@ RSpec.describe "Admin management", type: :request do
         admin_document_usage_reports_path
       )
 
-      patch admin_user_path(managed_user), params: {
+      patch admin_user_path(managed_user.public_id), params: {
         user: { name: "Member Updated", email_address: managed_user.email_address, user_type: :internal, company_id: other_company.id, active: true }
       }
 
@@ -198,7 +230,7 @@ RSpec.describe "Admin management", type: :request do
       expect(managed_user.user_type).to eq("external")
       expect(managed_user.company_id).to eq(company.id)
 
-      get edit_admin_user_path(other_user)
+      get edit_admin_user_path(other_user.public_id)
       expect(response).to have_http_status(:not_found)
 
       post admin_users_path, params: {
@@ -220,6 +252,54 @@ RSpec.describe "Admin management", type: :request do
 
       get admin_projects_path
       expect(response).to have_http_status(:forbidden)
+    end
+
+    it "uses public_id-based user action links and rejects numeric ids" do
+      sign_in_as(manager)
+
+      get admin_users_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(edit_admin_user_path(managed_user.public_id))
+      expect(response.body).to include(admin_user_path(managed_user.public_id))
+      expect(response.body).not_to include(edit_admin_user_path(managed_user.id))
+      expect(response.body).not_to include(admin_user_path(managed_user.id))
+      expect(admin_user_path(managed_user)).to eq("/admin/users/#{managed_user.public_id}")
+      expect(edit_admin_user_path(managed_user)).to eq("/admin/users/#{managed_user.public_id}/edit")
+
+      get edit_admin_user_path(managed_user.public_id)
+      expect(response).to have_http_status(:ok)
+
+      get edit_admin_user_path(managed_user.id)
+      expect(response).to have_http_status(:not_found)
+
+      patch admin_user_path(managed_user.id), params: {
+        user: {
+          name: "Numeric Id Update",
+          email_address: managed_user.email_address,
+          user_type: :external,
+          company_id: company.id,
+          active: true
+        }
+      }
+
+      expect(response).to have_http_status(:not_found)
+      expect(managed_user.reload.name).not_to eq("Numeric Id Update")
+    end
+
+    it "destroys same-company users via public_id and rejects numeric ids" do
+      sign_in_as(manager)
+
+      delete admin_user_path(managed_user.id)
+
+      expect(response).to have_http_status(:not_found)
+      expect(User.exists?(managed_user.id)).to be(true)
+
+      expect do
+        delete admin_user_path(managed_user.public_id)
+      end.to change(User, :count).by(-1)
+
+      expect(response).to redirect_to(admin_users_path)
     end
 
     it "keeps company_master_admin users out of unrelated admin surfaces" do

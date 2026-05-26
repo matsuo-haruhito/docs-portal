@@ -41,7 +41,7 @@ class Admin::UsersController < Admin::BaseController
   private
 
   def set_user
-    @user = user_scope.find(params[:id])
+    @user = user_scope.find_by!(public_id: params[:public_id])
   end
 
   def load_companies

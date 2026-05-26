@@ -16,6 +16,10 @@ class Company < ApplicationRecord
     name.presence || domain
   end
 
+  def to_param
+    public_id
+  end
+
   private
 
   def normalize_domain

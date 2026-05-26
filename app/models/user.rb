@@ -50,6 +50,10 @@ class User < ApplicationRecord
     name.presence || email_address
   end
 
+  def to_param
+    public_id
+  end
+
   def email_domain
     email_address.to_s.split("@", 2).last.presence
   end
