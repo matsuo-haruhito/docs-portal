@@ -42,16 +42,9 @@
     }
   </style>
 
-  <% content_for :sidebar_toolbar do %>
-    <%= render "documents/tree_toolbar", current_project: local_assigns[:current_project], current_document: local_assigns[:current_document] %>
-  <% end %>
-
-  <p class="muted">案件と文書の階層を表示します。</p>
-
   <% tree_projects = Array(projects) %>
-  <% if tree_projects.empty? %>
-    <p class="muted">表示できる案件はありません。</p>
-  <% else %>
+  <% render_state = nil %>
+  <% if tree_projects.present? %>
     <% render_state = document_tree_render_state(
       projects: tree_projects,
       current_project: local_assigns[:current_project],
@@ -59,6 +52,23 @@
       expanded_source_path: local_assigns[:expanded_source_path],
       collapsed_source_path: local_assigns[:collapsed_source_path]
     ) %>
+  <% end %>
+
+  <% content_for :sidebar_toolbar do %>
+    <%= render "documents/tree_toolbar",
+      current_project: local_assigns[:current_project],
+      current_document: local_assigns[:current_document],
+      projects: tree_projects,
+      render_state: render_state,
+      expanded_source_path: local_assigns[:expanded_source_path],
+      collapsed_source_path: local_assigns[:collapsed_source_path] %>
+  <% end %>
+
+  <p class="muted">案件と文書の階層を表示します。</p>
+
+  <% if tree_projects.empty? %>
+    <p class="muted">表示できる案件はありません。</p>
+  <% else %>
     <% tree_query = document_tree_query %>
     <% query_match_count = tree_query.present? ? document_tree_query_match_count(tree_projects, current_project: local_assigns[:current_project], current_document: local_assigns[:current_document]) : nil %>
     <% window = document_tree_render_window(render_state, current_document: local_assigns[:current_document]) %>

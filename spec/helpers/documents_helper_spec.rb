@@ -119,6 +119,32 @@ RSpec.describe DocumentsHelper, type: :helper do
     end
   end
 
+  describe "#document_tree_toggle_all_path" do
+    let(:project) { create(:project, code: "PATH", name: "Path Tree") }
+
+    before do
+      helper.define_singleton_method(:params) do
+        ActionController::Parameters.new(tree_query: "legacy slug", tree_window_offset: "25")
+      end
+    end
+
+    it "preserves query and render window state for expand-all actions" do
+      expect(helper.document_tree_toggle_all_path(:expanded, current_project: project)).to eq(
+        helper.document_tree_all_project_path(
+          project,
+          tree_action: "show",
+          tree_query: "legacy slug",
+          tree_window_offset: 25,
+          format: :turbo_stream
+        )
+      )
+    end
+
+    it "returns nil without a current project context" do
+      expect(helper.document_tree_toggle_all_path(:expanded)).to be_nil
+    end
+  end
+
   describe "#document_search_match_labels" do
     let(:project) { create(:project, code: "MATCH") }
     let(:document) { create(:document, project:, title: "出荷API仕様", slug: "shipping-api") }

@@ -1,7 +1,32 @@
 <% current_project = local_assigns[:current_project] || local_assigns[:current_document]&.project %>
+<% current_document = local_assigns[:current_document] %>
+<% render_state = local_assigns[:render_state] %>
+<% tree_projects = Array(local_assigns[:projects]) %>
 <% tree_window_offset = document_tree_window_request_offset %>
 <% tree_query = document_tree_query %>
-<% tree_filter_path = current_project.present? ? project_document_tree_path(current_project, document_slug: local_assigns[:current_document]&.slug, format: :turbo_stream) : nil %>
+<% tree_filter_path = current_project.present? ? project_document_tree_path(current_project, document_slug: current_document&.slug, format: :turbo_stream) : nil %>
+<% if render_state.blank? && tree_projects.present? %>
+  <% render_state = document_tree_render_state(
+    projects: tree_projects,
+    current_project:,
+    current_document:,
+    expanded_source_path: local_assigns[:expanded_source_path],
+    collapsed_source_path: local_assigns[:collapsed_source_path]
+  ) %>
+<% end %>
+<% toolbar_action_titles = {
+  expand_all: "現在開いている案件の文書ツリーを全て展開します",
+  collapse_all: "現在開いている案件の文書ツリーを全て閉じます"
+} %>
+<% toolbar_actions = if render_state.present?
+  tree_view_toolbar_actions(
+    render_state,
+    labels: {
+      expand_all: "案件の文書ツリーを開く",
+      collapse_all: "案件の文書ツリーを閉じる"
+    }
+  )
+end %>
 
 <div id="document_tree_toolbar" class="document-tree-toolbar">
   <div class="document-tree-toolbar__title-row">
@@ -18,10 +43,23 @@
       <% end %>
     </div>
     <div class="document-tree-toolbar__action-row">
-      <div class="document-tree-actions" aria-label="文書ツリー操作">
-        <%= button_to "案件の文書ツリーを開く", document_tree_all_project_path(current_project, tree_action: "show", tree_query:, tree_window_offset:, format: :turbo_stream), method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て展開します" }, class: "document-tree-action-link" %>
-        <%= button_to "案件の文書ツリーを閉じる", document_tree_all_project_path(current_project, tree_action: "hide", tree_query:, tree_window_offset:, format: :turbo_stream), method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て閉じます" }, class: "document-tree-action-link" %>
-      </div>
+      <% if toolbar_actions.present? %>
+        <div class="document-tree-actions" aria-label="文書ツリー操作">
+          <% toolbar_actions.each do |action| %>
+            <% title = toolbar_action_titles.fetch(action[:action], action[:label]) %>
+            <% if action[:path].present? %>
+              <%= button_to action[:label], action[:path], method: :post, form: { data: { turbo_stream: true }.merge(action[:data]), title: }, class: "document-tree-action-link" %>
+            <% else %>
+              <%= button_tag action[:label], type: "button", class: "document-tree-action-link", disabled: true, data: action[:data], title: %>
+            <% end %>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="document-tree-actions" aria-label="文書ツリー操作">
+          <%= button_to "案件の文書ツリーを開く", document_tree_all_project_path(current_project, tree_action: "show", tree_query:, tree_window_offset:, format: :turbo_stream), method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て展開します" }, class: "document-tree-action-link" %>
+          <%= button_to "案件の文書ツリーを閉じる", document_tree_all_project_path(current_project, tree_action: "hide", tree_query:, tree_window_offset:, format: :turbo_stream), method: :post, form: { data: { turbo_stream: true }, title: "現在開いている案件の文書ツリーを全て閉じます" }, class: "document-tree-action-link" %>
+        </div>
+      <% end %>
     </div>
   <% end %>
 </div>
