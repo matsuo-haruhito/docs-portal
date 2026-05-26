@@ -42,7 +42,7 @@ class Admin::CompaniesController < Admin::BaseController
   private
 
   def set_company
-    @company = company_scope.find(params[:id])
+    @company = company_scope.find_by!(public_id: params[:public_id])
   end
 
   def company_params
