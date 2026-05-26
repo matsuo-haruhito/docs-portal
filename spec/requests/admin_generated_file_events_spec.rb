@@ -3,6 +3,10 @@ require "rails_helper"
 RSpec.describe "Admin generated file events", type: :request do
   let(:admin_user) { create(:user, :internal) }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
   describe "GET /admin/generated_file_events" do
     it "shows generated file events for admin users" do
       sign_in_as(admin_user)
@@ -46,7 +50,8 @@ RSpec.describe "Admin generated file events", type: :request do
       get admin_generated_file_events_path(filters)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(%(action="#{ERB::Util.html_escape(retry_failed_admin_generated_file_events_path(filters))}"))
+      bulk_retry_form = parsed_html.at_css(%(form[action="#{retry_failed_admin_generated_file_events_path(filters)}"]))
+      expect(bulk_retry_form).to be_present
     end
 
     it "shows status summary counts" do
@@ -58,10 +63,10 @@ RSpec.describe "Admin generated file events", type: :request do
       get admin_generated_file_events_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("pending")
-      expect(response.body).to include("failed")
-      expect(response.body).to include(admin_generated_file_events_path(status: "failed"))
-      expect(response.body).to match(%r{<div class="mt-1 text-2xl font-bold">2</div>})
+      failed_summary_card = parsed_html.css(%(a[href="#{admin_generated_file_events_path(status: "failed")}"])).find { |node| node.at_css(".text-2xl.font-bold") }
+      expect(failed_summary_card).to be_present
+      expect(failed_summary_card.text).to include("失敗")
+      expect(failed_summary_card.at_css(".text-2xl.font-bold")&.text).to eq("2")
     end
 
     it "paginates generated file events" do
