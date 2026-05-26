@@ -40,7 +40,7 @@ Rails.application.routes.draw do
       get "permission_preview", to: "project_permission_previews#show", on: :member
       post "apply_template", to: "project_templates#create", on: :member
     end
-    resources :project_memberships, except: %i[show new]
+    resources :project_memberships, except: %i[show new], param: :public_id
     resources :consent_terms, except: %i[show new]
     resources :project_consent_settings, except: %i[show new]
     resources :git_import_sources, except: %i[show new] do
