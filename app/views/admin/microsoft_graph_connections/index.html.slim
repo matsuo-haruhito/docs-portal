@@ -1,4 +1,13 @@
 - page_title "Microsoft Graph接続"
+- selected_filter_labels = []
+- if @selected_preview_usage == "preview_selected"
+  - selected_filter_labels << "previewで使用中"
+- elsif @selected_preview_usage == "enabled_unused"
+  - selected_filter_labels << "有効だが未使用"
+- elsif @selected_preview_usage == "disabled"
+  - selected_filter_labels << "無効 / previewでは未使用"
+- end
+- selected_filter_labels << "要整理案件のみ" if @duplicate_only
 
 h1 Microsoft Graph接続
 = render "admin/nav"
@@ -7,15 +16,55 @@ h1 Microsoft Graph接続
   h2 新規登録
   = render "form", microsoft_graph_connection: @microsoft_graph_connection
 
-- if @duplicate_enabled_project_ids.any?
+- if @duplicate_projects.any?
   .card
     h2 preview 利用中の接続を要整理の案件
     p.muted 同一案件に複数の有効接続が残っています。preview で使用中の 1 件だけを残し、他は無効化してください。
     ul
-      - @microsoft_graph_connections.select { |connection| @duplicate_enabled_project_ids.include?(connection.project_id) }.map(&:project).uniq.each do |project|
-        li = "#{project.name} (#{project.code})"
+      - @duplicate_projects.each do |project|
+        li
+          = link_to "#{project.name} (#{project.code})", "#{admin_microsoft_graph_connections_path(duplicate_only: 1)}#microsoft-graph-project-#{project.id}"
+
+- if @preview_usage_counts[:all].positive?
+  .card
+    h2 一覧の絞り込み
+    p.muted preview利用の状態と、要整理案件だけに絞って確認できます。
+    ul
+      li
+        - if @selected_preview_usage.blank? && !@duplicate_only
+          strong = "すべて (#{@preview_usage_counts[:all]})"
+        - else
+          = link_to "すべて (#{@preview_usage_counts[:all]})", admin_microsoft_graph_connections_path
+      li
+        - if @selected_preview_usage == "preview_selected"
+          strong = "previewで使用中 (#{@preview_usage_counts[:preview_selected]})"
+        - else
+          = link_to "previewで使用中 (#{@preview_usage_counts[:preview_selected]})", admin_microsoft_graph_connections_path(preview_usage: :preview_selected)
+      li
+        - if @selected_preview_usage == "enabled_unused"
+          strong = "有効だが未使用 (#{@preview_usage_counts[:enabled_unused]})"
+        - else
+          = link_to "有効だが未使用 (#{@preview_usage_counts[:enabled_unused]})", admin_microsoft_graph_connections_path(preview_usage: :enabled_unused)
+      li
+        - if @selected_preview_usage == "disabled"
+          strong = "無効 / previewでは未使用 (#{@preview_usage_counts[:disabled]})"
+        - else
+          = link_to "無効 / previewでは未使用 (#{@preview_usage_counts[:disabled]})", admin_microsoft_graph_connections_path(preview_usage: :disabled)
+      li
+        - if @duplicate_only
+          strong = "要整理案件のみ (#{@duplicate_projects.size}案件)"
+        - else
+          = link_to "要整理案件のみ (#{@duplicate_projects.size}案件)", admin_microsoft_graph_connections_path(duplicate_only: 1)
+    - if selected_filter_labels.any?
+      p.muted
+        = "現在の絞り込み: #{selected_filter_labels.join(' / ')}"
+        br
+        = link_to "絞り込みを解除", admin_microsoft_graph_connections_path
 
 - if @microsoft_graph_connections.any?
+  .card
+    p.muted = "#{@microsoft_graph_connections.size} / #{@preview_usage_counts[:all]} 件を表示しています。"
+
   = table_tag do
     thead
       tr
@@ -28,8 +77,13 @@ h1 Microsoft Graph接続
         th preview利用
         th 操作
     tbody
+      - anchored_project_ids = []
       - @microsoft_graph_connections.each do |connection|
-        tr
+        - row_id = nil
+        - unless anchored_project_ids.include?(connection.project_id)
+          - row_id = "microsoft-graph-project-#{connection.project_id}"
+          - anchored_project_ids << connection.project_id
+        tr id=row_id
           td
             = connection.project.name
             br
@@ -59,6 +113,10 @@ h1 Microsoft Graph接続
           td.actions
             = edit_link_to "編集", edit_admin_microsoft_graph_connection_path(connection)
             = delete_link_to "削除", admin_microsoft_graph_connection_path(connection), confirm: "Microsoft Graph接続設定を削除しますか？"
+- elsif @preview_usage_counts[:all].positive?
+  .card
+    p.muted 現在の絞り込みに一致する Microsoft Graph接続はありません。
+    p.muted = link_to "絞り込みを解除", admin_microsoft_graph_connections_path
 - else
   .card
     p.muted まだMicrosoft Graph接続は登録されていません。
