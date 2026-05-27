@@ -133,7 +133,15 @@ p.muted
       span.button.secondary.disabled 次へ
 
 - if @documents_count.positive?
-  = form_with url: project_document_zip_path(@project), method: :post, local: true, data: { controller: "document-zip-selection" } do
+  = form_with url: project_document_zip_path(@project), method: :post, local: true, data: { controller: "document-zip-selection", document_zip_selection_matching_count_value: @documents_count } do
+    = hidden_field_tag :selection_scope, "explicit", data: { document_zip_selection_target: "scopeField" }
+    - %i[q tag category document_kind visibility_policy has_html has_files has_pdf has_diagram].each do |key|
+      - value = @filters[key]
+      - next if value.blank? || value == false
+      = hidden_field_tag key, value
+    - if @selected_source_path.present?
+      = hidden_field_tag :source_path, @selected_source_path
+
     .card
       h2 ZIP出力オプション
       .form-grid
@@ -151,6 +159,8 @@ p.muted
           |  PDFだけ出力
     p.actions
       button.button.secondary type="button" data-action="document-zip-selection#selectPage" このページを全選択
+      button.button.secondary type="button" data-action="document-zip-selection#selectMatching"
+        = "検索結果#{@documents_count}件を全選択"
       button.button.secondary type="button" data-action="document-zip-selection#clearSelection" 選択解除
       = submit_tag "選択した文書の最新版をZIPでダウンロード", class: "button"
       span.muted data-document-zip-selection-target="count" 0件選択中
