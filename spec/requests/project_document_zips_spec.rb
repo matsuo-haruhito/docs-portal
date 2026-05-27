@@ -159,6 +159,44 @@ RSpec.describe "Project document zips", type: :request do
     end
   end
 
+  it "does not reuse slash-containing keyword queries as zip source_path state" do
+    document = create(:document, project:, title: "guides/folder-guide", slug: "folder-guide")
+    version = create(:document_version, document:, version_label: "v1.0.0", source_relative_path: "guides/folder-guide/README.md")
+    document.update!(latest_version: version)
+
+    sign_in_as(user)
+
+    get project_documents_path(project), params: { q: "guides/folder-guide" }
+
+    expect(response).to have_http_status(:ok)
+
+    html = Nokogiri::HTML.parse(response.body)
+    zip_form = html.at_css("form[action='#{project_document_zip_path(project)}']")
+
+    aggregate_failures do
+      expect(zip_form.at_css('input[name="q"]')["value"]).to eq("guides/folder-guide")
+      expect(zip_form.at_css('input[name="source_path"]')).to be_nil
+    end
+  end
+
+  it "keeps upload-source folder context in the zip form" do
+    document = create(:document, project:, title: "Folder doc", slug: "folder-doc")
+    version = create(:document_version, document:, version_label: "v1.0.0", source_relative_path: "guides/folder-doc/README.md")
+    document.update!(latest_version: version)
+
+    sign_in_as(user)
+
+    get project_documents_path(project), params: { upload_source_path: "guides/folder-doc" }
+
+    expect(response).to have_http_status(:ok)
+
+    html = Nokogiri::HTML.parse(response.body)
+    zip_form = html.at_css("form[action='#{project_document_zip_path(project)}']")
+    source_path_field = zip_form.at_css('input[name="source_path"]')
+
+    expect(source_path_field["value"]).to eq("guides/folder-doc")
+  end
+
   it "supports zip path and file type options" do
     document = create(:document, project:, title: "仕様書", slug: "spec-doc")
     version = create(:document_version, document:, version_label: "v1.0.0", source_relative_path: "deliverables/spec-doc/README.md")
