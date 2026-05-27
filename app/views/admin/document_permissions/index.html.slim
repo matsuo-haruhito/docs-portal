@@ -41,8 +41,7 @@ section.card
             td data-rails-table-preferences-column-key="view_allowed" = row.view_allowed_count
             td data-rails-table-preferences-column-key="download_allowed" = row.download_allowed_count
   - else
-    p.muted まだ権限は登録されていません。
-    p.muted 上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して保存すると、文書ごとの権限数と閲覧/ダウンロード内訳をここで見比べられます。
+    p.muted まだ権限は登録されていません。最初の 1 件を登録すると、文書ごとの権限数と閲覧/ダウンロード内訳をここで確認できます。
 
 section.card
   h2 権限一覧
@@ -60,15 +59,31 @@ section.card
           th data-rails-table-preferences-column-key="actions"
       tbody
         - @document_permissions.each do |permission|
+          - company_primary_label = document_permission_company_primary_label(permission.company)
+          - company_secondary_label = document_permission_company_secondary_label(permission.company)
+          - user_primary_label = document_permission_user_primary_label(permission.user)
+          - user_secondary_label = document_permission_user_secondary_label(permission.user)
           tr
             td data-rails-table-preferences-column-key="document" = link_to permission.document.title, project_document_path(permission.document.project, permission.document.slug), data: { turbo_frame: "_top" }
-            td data-rails-table-preferences-column-key="company" = permission.company&.display_name || "-"
-            td data-rails-table-preferences-column-key="user" = permission.user&.display_name || "-"
+            td data-rails-table-preferences-column-key="company"
+              - if company_primary_label.present?
+                div = company_primary_label
+                - if company_secondary_label.present?
+                  div.muted = company_secondary_label
+              - else
+                = "-"
+            td data-rails-table-preferences-column-key="user"
+              - if user_primary_label.present?
+                div = user_primary_label
+                - if user_secondary_label.present?
+                  div.muted = user_secondary_label
+              - else
+                = "-"
             td data-rails-table-preferences-column-key="access_level"
               span.badge = document_permission_access_level_label(permission)
             td.actions data-rails-table-preferences-column-key="actions"
               = edit_link_to "編集", edit_admin_document_permission_path(permission)
               = delete_link_to "削除", admin_document_permission_path(permission), confirm: "この文書権限を削除しますか？対象ユーザー/会社の閲覧範囲が変わります。"
   - else
-    p.muted まだ権限は登録されていません。
-    p.muted まずは上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して 1 件登録してください。
+    p.muted まだ権限は登録されていません。まずは上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して 1 件登録してください。
+    p.muted 登録後は、会社別・ユーザー別の対象主体や権限内容をこの一覧で確認、編集できます。
