@@ -14,7 +14,7 @@ RSpec.describe "Admin document archives", type: :request do
   it "archives and restores a document from the admin screen" do
     sign_in_as(admin_user)
 
-    patch archive_admin_document_path(document), params: {
+    patch archive_admin_document_path(document.public_id), params: {
       retention_until: "2026-12-31 00:00",
       discard_candidate_at: "2027-01-31 00:00"
     }
@@ -25,7 +25,7 @@ RSpec.describe "Admin document archives", type: :request do
     expect(document.retention_until).to be_present
     expect(document.discard_candidate_at).to be_present
 
-    patch restore_admin_document_path(document)
+    patch restore_admin_document_path(document.public_id)
 
     expect(response).to redirect_to(admin_documents_path)
     expect(document.reload.archived?).to eq(false)
