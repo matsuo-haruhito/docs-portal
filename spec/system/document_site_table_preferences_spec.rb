@@ -111,7 +111,7 @@ RSpec.describe "Document site table preferences", type: :system do
   end
 
   def post_default_preference(table_key, settings)
-    page.execute_async_script(<<~JS)
+    page.evaluate_async_script(<<~JS)
       const done = arguments[0]
 
       fetch(`/rails_table_preferences/preferences/${encodeURIComponent(#{table_key.to_json})}`, {
@@ -129,7 +129,7 @@ RSpec.describe "Document site table preferences", type: :system do
   end
 
   def fetch_default_preference(table_key)
-    page.execute_async_script(<<~JS)
+    page.evaluate_async_script(<<~JS)
       const done = arguments[0]
 
       fetch(`/rails_table_preferences/preferences/${encodeURIComponent(#{table_key.to_json})}/default`, {
