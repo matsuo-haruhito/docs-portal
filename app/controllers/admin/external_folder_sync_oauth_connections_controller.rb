@@ -57,7 +57,7 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
   private
 
   def set_external_folder_sync_source
-    @external_folder_sync_source = ExternalFolderSyncSource.find_by!(public_id: params[:external_folder_sync_source_id])
+    @external_folder_sync_source = ExternalFolderSyncSource.find_by!(public_id: params[:external_folder_sync_source_public_id])
   end
 
   def oauth_authorization_url(state)
