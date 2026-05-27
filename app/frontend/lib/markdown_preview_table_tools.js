@@ -2,6 +2,7 @@ const TABLE_WIDTH_STORAGE_PREFIX = "docsPortal.previewTableWidth"
 const TABLE_COLUMN_WIDTH_STORAGE_PREFIX = "docsPortal.previewTableColumnWidths"
 const TABLE_STICKY_HEADER_STORAGE_PREFIX = "docsPortal.previewTableStickyHeader"
 const TABLE_STICKY_COLUMN_STORAGE_PREFIX = "docsPortal.previewTableStickyColumn"
+const TABLE_PREFERENCE_COLLECTION_PATH = "/rails_table_preferences/preferences"
 
 function injectTableSearchStyle(frameDocument) {
   if (frameDocument.querySelector("style[data-docs-portal-table-search]")) return
@@ -67,6 +68,73 @@ function injectTableSearchStyle(frameDocument) {
       outline: 2px solid #f59e0b;
       outline-offset: -2px;
     }
+    .portal-table-preference-panel {
+      width: 100%;
+      margin-top: .2rem;
+      border: 1px solid var(--doc-border-soft, #eef2f7);
+      border-radius: 12px;
+      background: rgb(255 255 255 / 88%);
+      overflow: hidden;
+    }
+    .portal-table-preference-panel > summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+      padding: .35rem .55rem;
+      cursor: pointer;
+      list-style: none;
+      color: var(--doc-text-soft, #334155);
+      font-size: .8rem;
+      font-weight: 700;
+    }
+    .portal-table-preference-panel > summary::-webkit-details-marker {
+      display: none;
+    }
+    .portal-table-preference-panel > summary::after {
+      content: "▼";
+      color: var(--doc-primary, #2563eb);
+      font-size: .8rem;
+    }
+    .portal-table-preference-panel[open] > summary::after {
+      content: "▲";
+    }
+    .portal-table-preference-panel__body {
+      display: grid;
+      gap: .5rem;
+      padding: 0 .55rem .55rem;
+    }
+    .portal-table-preference-panel__rows {
+      display: grid;
+      gap: .35rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+    .portal-table-preference-panel__row {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      min-height: 2rem;
+      padding: .35rem .45rem;
+      border: 1px solid var(--doc-border-soft, #eef2f7);
+      border-radius: 10px;
+      background: var(--doc-surface, #fff);
+      color: var(--doc-text-soft, #334155);
+      font-size: .78rem;
+    }
+    .portal-table-preference-panel__row input[type="checkbox"] {
+      margin: 0;
+      accent-color: var(--doc-primary, #2563eb);
+    }
+    .portal-table-preference-panel__actions {
+      display: flex;
+      gap: .35rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .portal-table-preference-status {
+      color: var(--doc-text-muted, #64748b);
+      font-size: .75rem;
+    }
     @media (max-width: 720px) {
       .portal-table-utility-bar,
       .portal-table-toolbar-group {
@@ -76,6 +144,9 @@ function injectTableSearchStyle(frameDocument) {
       }
       .portal-table-search input[type="search"] {
         width: 190px;
+      }
+      .portal-table-preference-panel__rows {
+        grid-template-columns: 1fr;
       }
     }
   `
@@ -215,6 +286,228 @@ function toolbarInsertionTarget(toolbar) {
   return toolbar.querySelector(".portal-table-width-toolbar-body") || toolbar
 }
 
+function csrfToken() {
+  return document.querySelector("meta[name='csrf-token']")?.content || ""
+}
+
+function preferenceCollectionUrl(tableKey) {
+  return `${TABLE_PREFERENCE_COLLECTION_PATH}/${encodeURIComponent(tableKey)}`
+}
+
+function preferencePresetUrl(tableKey, name = "default") {
+  return `${preferenceCollectionUrl(tableKey)}/${encodeURIComponent(name)}`
+}
+
+function tableColumnDefinitions(table) {
+  const headerRow = table.tHead?.rows?.[0] || table.rows?.[0]
+  if (!headerRow) return []
+
+  return Array.from(headerRow.cells).map((cell, index) => {
+    const key = cell.dataset.railsTablePreferencesColumnKey || `column_${index + 1}`
+    cell.dataset.railsTablePreferencesColumnKey = key
+
+    return {
+      key,
+      label: cell.textContent.trim() || `列${index + 1}`,
+      index
+    }
+  })
+}
+
+function tableCellsForColumn(table, columnIndex) {
+  return Array.from(table.rows)
+    .map((row) => row.cells[columnIndex])
+    .filter(Boolean)
+}
+
+function normalizePreferenceColumns(definitions, settings = {}) {
+  const savedColumns = new Map(Array.isArray(settings.columns) ? settings.columns.map((column) => [column.key, column]) : [])
+  return definitions.map((definition, index) => {
+    const saved = savedColumns.get(definition.key) || {}
+    return {
+      key: definition.key,
+      label: definition.label,
+      order: saved.order ?? (index + 1) * 10,
+      visible: saved.visible !== false
+    }
+  })
+}
+
+function preferenceSettingsPayload(definitions, settings = {}) {
+  return {
+    columns: normalizePreferenceColumns(definitions, settings)
+  }
+}
+
+function applyTablePreferences(table, definitions, settings = {}) {
+  const columns = normalizePreferenceColumns(definitions, settings)
+  columns.forEach((column, columnIndex) => {
+    tableCellsForColumn(table, columnIndex).forEach((cell) => {
+      cell.hidden = column.visible === false
+    })
+  })
+}
+
+function renderPreferenceRows(frameDocument, rowsContainer, definitions, settings) {
+  rowsContainer.innerHTML = ""
+
+  normalizePreferenceColumns(definitions, settings).forEach((column) => {
+    const label = frameDocument.createElement("label")
+    label.className = "portal-table-preference-panel__row"
+
+    const checkbox = frameDocument.createElement("input")
+    checkbox.type = "checkbox"
+    checkbox.checked = column.visible !== false
+    checkbox.dataset.preferenceColumnKey = column.key
+
+    const text = frameDocument.createElement("span")
+    text.textContent = column.label
+
+    label.append(checkbox, text)
+    rowsContainer.appendChild(label)
+  })
+}
+
+function settingsFromPreferenceEditor(rowsContainer, definitions) {
+  const visibleByKey = new Map(
+    Array.from(rowsContainer.querySelectorAll("input[data-preference-column-key]"))
+      .map((input) => [input.dataset.preferenceColumnKey, input.checked])
+  )
+
+  return {
+    columns: definitions.map((definition, index) => ({
+      key: definition.key,
+      label: definition.label,
+      order: (index + 1) * 10,
+      visible: visibleByKey.get(definition.key) !== false
+    }))
+  }
+}
+
+async function readPreferenceSettings(tableKey) {
+  const response = await fetch(preferencePresetUrl(tableKey), {
+    headers: { Accept: "application/json" },
+    cache: "no-store"
+  })
+
+  if (response.status === 404) return null
+  if (!response.ok) throw new Error(`Failed to load table preferences: ${response.status}`)
+  return response.json()
+}
+
+async function writePreferenceSettings(tableKey, settings) {
+  const headers = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-CSRF-Token": csrfToken()
+  }
+
+  const patchResponse = await fetch(preferencePresetUrl(tableKey), {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ settings })
+  })
+
+  if (patchResponse.ok) return patchResponse.json()
+  if (patchResponse.status !== 404) throw new Error(`Failed to save table preferences: ${patchResponse.status}`)
+
+  const createResponse = await fetch(preferenceCollectionUrl(tableKey), {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ name: "default", settings })
+  })
+
+  if (!createResponse.ok) throw new Error(`Failed to create table preferences: ${createResponse.status}`)
+  return createResponse.json()
+}
+
+function ensurePreferencePanel(frameDocument, displayGroup) {
+  let panel = displayGroup.querySelector(".portal-table-preference-panel")
+  if (panel) return panel
+
+  panel = frameDocument.createElement("details")
+  panel.className = "portal-table-preference-panel"
+
+  const summary = frameDocument.createElement("summary")
+  summary.textContent = "列表示"
+
+  const body = frameDocument.createElement("div")
+  body.className = "portal-table-preference-panel__body"
+
+  const rows = frameDocument.createElement("div")
+  rows.className = "portal-table-preference-panel__rows"
+
+  const actions = frameDocument.createElement("div")
+  actions.className = "portal-table-preference-panel__actions"
+
+  const saveButton = frameDocument.createElement("button")
+  saveButton.type = "button"
+  saveButton.className = "portal-table-width-button"
+  saveButton.textContent = "保存"
+  saveButton.dataset.preferenceAction = "save"
+
+  const status = frameDocument.createElement("span")
+  status.className = "portal-table-preference-status"
+  status.setAttribute("aria-live", "polite")
+
+  actions.append(saveButton, status)
+  body.append(rows, actions)
+  panel.append(summary, body)
+  displayGroup.appendChild(panel)
+  return panel
+}
+
+function installPreferencePanel(frameDocument, table, displayGroup, copyStatus) {
+  const definitions = tableColumnDefinitions(table)
+  if (definitions.length === 0) return
+
+  const tableKey = table.dataset.railsTablePreferencesTableKey
+  if (!tableKey) return
+
+  const panel = ensurePreferencePanel(frameDocument, displayGroup)
+  const rowsContainer = panel.querySelector(".portal-table-preference-panel__rows")
+  const saveButton = panel.querySelector("[data-preference-action='save']")
+  const status = panel.querySelector(".portal-table-preference-status")
+
+  const setStatus = (message) => {
+    status.textContent = message
+  }
+
+  const applyAndRender = (settings) => {
+    applyTablePreferences(table, definitions, settings)
+    renderPreferenceRows(frameDocument, rowsContainer, definitions, settings)
+  }
+
+  applyAndRender({})
+
+  window.setTimeout(() => {
+    readPreferenceSettings(tableKey)
+      .then((payload) => {
+        if (!payload) return
+        applyAndRender(payload.settings || {})
+        setStatus("保存済み設定を読み込みました")
+      })
+      .catch(() => {
+        setStatus("保存済み設定を読み込めませんでした")
+      })
+  }, 80)
+
+  saveButton.addEventListener("click", async () => {
+    const settings = settingsFromPreferenceEditor(rowsContainer, definitions)
+    applyTablePreferences(table, definitions, settings)
+    setStatus("保存中...")
+
+    try {
+      const payload = await writePreferenceSettings(tableKey, settings)
+      applyAndRender(payload.settings || settings)
+      setStatus("保存しました")
+      copyStatus.textContent = ""
+    } catch (_error) {
+      setStatus("保存できませんでした")
+    }
+  })
+}
+
 function enhanceTablesInFrame(frame) {
   const frameDocument = frame.contentDocument
   if (!frameDocument?.body) return
@@ -288,6 +581,8 @@ function enhanceTablesInFrame(frame) {
 
     const target = toolbarInsertionTarget(toolbar)
     target.insertBefore(utilityBar, target.firstChild)
+
+    installPreferencePanel(frameDocument, table, displayGroup, copyStatus)
 
     input.addEventListener("input", () => updateTableSearch(table, input, count))
     clearButton.addEventListener("click", () => {

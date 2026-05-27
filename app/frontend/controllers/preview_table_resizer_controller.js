@@ -182,6 +182,19 @@ function tableIndex(frameDocument, table) {
   return index
 }
 
+function copyTablePreferenceMetadata(wrapper, table) {
+  const metadata = {
+    docsPortalDocumentVersion: table.dataset.docsPortalDocumentVersion,
+    docsPortalSitePath: table.dataset.docsPortalSitePath,
+    docsPortalTableIndex: table.dataset.docsPortalTableIndex,
+    railsTablePreferencesTableKey: table.dataset.railsTablePreferencesTableKey
+  }
+
+  Object.entries(metadata).forEach(([key, value]) => {
+    if (value) wrapper.dataset[key] = value
+  })
+}
+
 export default class extends Controller {
   connect() {
     this.refresh = this.refresh.bind(this)
@@ -248,6 +261,7 @@ export default class extends Controller {
     const stickyColumn = readBoolean(TABLE_STICKY_COLUMN_STORAGE_PREFIX, frame, index)
     const wrapper = frameDocument.createElement("div")
     wrapper.className = "portal-table-width-frame"
+    copyTablePreferenceMetadata(wrapper, table)
     wrapper.dataset.docsPortalTableIndex = String(index)
     wrapper.style.setProperty("--portal-table-width", `${width}%`)
 

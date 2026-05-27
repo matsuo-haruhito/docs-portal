@@ -1,4 +1,4 @@
-require "cgi"
+require "base64"
 require "nokogiri"
 require "pathname"
 
@@ -122,7 +122,7 @@ class DocusaurusSiteRenderer
     rewrite_url_attributes(document, "img", "src", absolute_path:)
     strip_embedded_docusaurus_chrome!(document) if @embedded
     inject_embedded_route_path!(document, site_path) if @embedded
-    annotate_document_tables!(document, site_path) unless @embedded
+    annotate_document_tables!(document, site_path)
     inject_portal_navigation!(document) unless @embedded
     inject_version_switcher!(document) unless @embedded
     inject_viewer_theme!(document)
@@ -157,12 +157,16 @@ class DocusaurusSiteRenderer
     DocumentVersion.normalize_site_page_path(site_path.presence || @version.html_view_site_path)
   end
 
+  def stable_table_site_path_key(normalized_site_path)
+    Base64.urlsafe_encode64(normalized_site_path.to_s, padding: false)
+  end
+
   def build_table_preference_key(version_for_key, normalized_site_path, table_index)
     [
       "document-version",
       version_for_key.public_id,
       "site-path",
-      CGI.escape(normalized_site_path),
+      stable_table_site_path_key(normalized_site_path),
       "table",
       table_index
     ].join(":")
