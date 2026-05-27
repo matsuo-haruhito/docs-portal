@@ -15,46 +15,52 @@ h1 Microsoft Graph接続
       - @microsoft_graph_connections.select { |connection| @duplicate_enabled_project_ids.include?(connection.project_id) }.map(&:project).uniq.each do |project|
         li = "#{project.name} (#{project.code})"
 
-= table_tag do
-  thead
-    tr
-      th 案件
-      th 接続名
-      th Tenant / Client
-      th Drive
-      th プレビュー用フォルダ
-      th 状態
-      th preview利用
-      th 操作
-  tbody
-    - @microsoft_graph_connections.each do |connection|
+- if @microsoft_graph_connections.any?
+  = table_tag do
+    thead
       tr
-        td
-          = connection.project.name
-          br
-          code = connection.project.code
-        td = connection.name
-        td
-          code = connection.tenant_id
-          br
-          span.muted = connection.client_id
-        td
-          code = connection.drive_id
-          - if connection.site_id.present?
+        th 案件
+        th 接続名
+        th Tenant / Client
+        th Drive
+        th プレビュー用フォルダ
+        th 状態
+        th preview利用
+        th 操作
+    tbody
+      - @microsoft_graph_connections.each do |connection|
+        tr
+          td
+            = connection.project.name
             br
-            span.muted = "site: #{connection.site_id}"
-        td
-          code = connection.preview_folder_path
-        td = connection.enabled? ? "有効" : "無効"
-        td
-          - if connection.enabled? && @preview_connection_ids_by_project[connection.project_id] == connection.id
-            strong previewで使用中
-          - elsif connection.enabled?
-            strong 有効だが未使用
+            code = connection.project.code
+          td = connection.name
+          td
+            code = connection.tenant_id
             br
-            span.muted 別の有効接続が preview に使われます
-          - else
-            span.muted previewでは未使用
-        td.actions
-          = edit_link_to "編集", edit_admin_microsoft_graph_connection_path(connection)
-          = delete_link_to "削除", admin_microsoft_graph_connection_path(connection), confirm: "Microsoft Graph接続設定を削除しますか？"
+            span.muted = connection.client_id
+          td
+            code = connection.drive_id
+            - if connection.site_id.present?
+              br
+              span.muted = "site: #{connection.site_id}"
+          td
+            code = connection.preview_folder_path
+          td = connection.enabled? ? "有効" : "無効"
+          td
+            - if connection.enabled? && @preview_connection_ids_by_project[connection.project_id] == connection.id
+              strong previewで使用中
+            - elsif connection.enabled?
+              strong 有効だが未使用
+              br
+              span.muted 別の有効接続が preview に使われます
+            - else
+              span.muted previewでは未使用
+          td.actions
+            = edit_link_to "編集", edit_admin_microsoft_graph_connection_path(connection)
+            = delete_link_to "削除", admin_microsoft_graph_connection_path(connection), confirm: "Microsoft Graph接続設定を削除しますか？"
+- else
+  .card
+    p.muted まだMicrosoft Graph接続は登録されていません。
+    p.muted 上の「新規登録」で案件、接続名、Tenant ID、Client ID、Drive ID、プレビュー用フォルダを設定して最初の接続を保存してください。
+    p.muted 同一案件で有効にできる Microsoft Graph 接続は 1 件だけです。切り替えるときは現在の有効接続を先に無効化してください。
