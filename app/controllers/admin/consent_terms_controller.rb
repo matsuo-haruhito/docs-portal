@@ -39,7 +39,7 @@ class Admin::ConsentTermsController < Admin::BaseController
   private
 
   def set_consent_term
-    @consent_term = ConsentTerm.find_by!(public_id: params[:id])
+    @consent_term = ConsentTerm.find_by!(public_id: params[:public_id])
   end
 
   def consent_term_params
