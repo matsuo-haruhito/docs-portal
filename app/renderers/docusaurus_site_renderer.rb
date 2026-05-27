@@ -162,14 +162,10 @@ class DocusaurusSiteRenderer
       "document-version",
       version_for_key.public_id,
       "site-path",
-      route_safe_table_key_component(normalized_site_path),
+      normalized_site_path,
       "table",
       table_index
     ].join(":")
-  end
-
-  def route_safe_table_key_component(value)
-    CGI.escape(value).gsub(".", "%2E")
   end
 
   def ensure_table_wrapper!(document, table)
