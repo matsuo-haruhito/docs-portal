@@ -1,6 +1,7 @@
 = render "shared/error_messages", record: document
 
-= form_with model: [:admin, document] do |form|
+- form_url = document.persisted? ? admin_document_path(document.public_id) : admin_documents_path
+= form_with model: [:admin, document], url: form_url do |form|
   .form-grid
     label
       | 案件

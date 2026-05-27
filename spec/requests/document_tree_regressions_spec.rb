@@ -105,7 +105,7 @@ RSpec.describe "Document tree regressions", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("operations-manual.pdf")
 
-    patch archive_admin_document_path(pdf_document)
+    patch archive_admin_document_path(pdf_document.public_id)
     expect(response).to redirect_to(admin_documents_path)
     expect(pdf_document.reload).to be_archived
 
@@ -121,7 +121,7 @@ RSpec.describe "Document tree regressions", type: :request do
     expect(parsed_html.at_css(%(turbo-stream[target="document_tree_panel"]))).to be_present
     expect(page_text).not_to include("operations-manual.pdf")
 
-    patch restore_admin_document_path(pdf_document)
+    patch restore_admin_document_path(pdf_document.public_id)
     expect(response).to redirect_to(admin_documents_path)
     expect(pdf_document.reload).not_to be_archived
 
