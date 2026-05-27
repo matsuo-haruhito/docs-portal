@@ -2,6 +2,7 @@ const TABLE_WIDTH_STORAGE_PREFIX = "docsPortal.previewTableWidth"
 const TABLE_COLUMN_WIDTH_STORAGE_PREFIX = "docsPortal.previewTableColumnWidths"
 const TABLE_STICKY_HEADER_STORAGE_PREFIX = "docsPortal.previewTableStickyHeader"
 const TABLE_STICKY_COLUMN_STORAGE_PREFIX = "docsPortal.previewTableStickyColumn"
+const TABLE_PREFERENCE_COLLECTION_PATH = "/rails_table_preferences/preferences"
 
 function injectTableSearchStyle(frameDocument) {
   if (frameDocument.querySelector("style[data-docs-portal-table-search]")) return
@@ -67,6 +68,73 @@ function injectTableSearchStyle(frameDocument) {
       outline: 2px solid #f59e0b;
       outline-offset: -2px;
     }
+    .portal-table-preference-panel {
+      width: 100%;
+      margin-top: .2rem;
+      border: 1px solid var(--doc-border-soft, #eef2f7);
+      border-radius: 12px;
+      background: rgb(255 255 255 / 88%);
+      overflow: hidden;
+    }
+    .portal-table-preference-panel > summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+      padding: .35rem .55rem;
+      cursor: pointer;
+      list-style: none;
+      color: var(--doc-text-soft, #334155);
+      font-size: .8rem;
+      font-weight: 700;
+    }
+    .portal-table-preference-panel > summary::-webkit-details-marker {
+      display: none;
+    }
+    .portal-table-preference-panel > summary::after {
+      content: "▼";
+      color: var(--doc-primary, #2563eb);
+      font-size: .8rem;
+    }
+    .portal-table-preference-panel[open] > summary::after {
+      content: "▲";
+    }
+    .portal-table-preference-panel__body {
+      display: grid;
+      gap: .5rem;
+      padding: 0 .55rem .55rem;
+    }
+    .portal-table-preference-panel__rows {
+      display: grid;
+      gap: .35rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+    .portal-table-preference-panel__row {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      min-height: 2rem;
+      padding: .35rem .45rem;
+      border: 1px solid var(--doc-border-soft, #eef2f7);
+      border-radius: 10px;
+      background: var(--doc-surface, #fff);
+      color: var(--doc-text-soft, #334155);
+      font-size: .78rem;
+    }
+    .portal-table-preference-panel__row input[type="checkbox"] {
+      margin: 0;
+      accent-color: var(--doc-primary, #2563eb);
+    }
+    .portal-table-preference-panel__actions {
+      display: flex;
+      gap: .35rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .portal-table-preference-status {
+      color: var(--doc-text-muted, #64748b);
+      font-size: .75rem;
+    }
     @media (max-width: 720px) {
       .portal-table-utility-bar,
       .portal-table-toolbar-group {
@@ -76,6 +144,9 @@ function injectTableSearchStyle(frameDocument) {
       }
       .portal-table-search input[type="search"] {
         width: 190px;
+      }
+      .portal-table-preference-panel__rows {
+        grid-template-columns: 1fr;
       }
     }
   `
@@ -215,6 +286,275 @@ function toolbarInsertionTarget(toolbar) {
   return toolbar.querySelector(".portal-table-width-toolbar-body") || toolbar
 }
 
+function cgiEscape(value) {
+  return encodeURIComponent(String(value ?? "")).replace(/%20/g, "+")
+}
+
+function stableTablePreferenceKeyFromContext(previewContextKey, tableIndexValue) {
+  const parts = String(previewContextKey || "").split(":")
+  if (parts.length >= 3 && parts[0] === "document_version") {
+    const versionId = parts[1]
+    const sitePath = parts.slice(2).join(":")
+    return [
+      "document-version",
+      versionId,
+      "site-path",
+      cgiEscape(sitePath),
+      "table",
+      tableIndexValue
+    ].join(":")
+  }
+
+  return `document-preview:${cgiEscape(previewContextKey || "unknown")}:table:${tableIndexValue}`
+}
+
+function resolveTablePreferenceKey(frame, wrapper, table, fallbackIndex) {
+  const explicitKey =
+    wrapper.dataset.railsTablePreferencesTableKey ||
+    table.dataset.railsTablePreferencesTableKey ||
+    table.closest("[data-rails-table-preferences-table-key]")?.dataset.railsTablePreferencesTableKey
+  if (explicitKey) return explicitKey
+
+  const previewContextKey = frame.contentDocument?.body?.dataset?.docsPortalPreviewContextKey
+  return stableTablePreferenceKeyFromContext(previewContextKey, tableIndex(wrapper, fallbackIndex))
+}
+
+function collectTableColumns(table) {
+  const headerCells = Array.from(table.querySelectorAll("thead tr:first-child th"))
+  const fallbackCells = headerCells.length > 0 ? headerCells : Array.from(table.rows[0]?.cells || [])
+  const columnCount = Math.max(fallbackCells.length, ...Array.from(table.rows).map((row) => row.cells.length), 0)
+
+  return Array.from({ length: columnCount }, (_, index) => {
+    const key = fallbackCells[index]?.dataset?.railsTablePreferencesColumnKey || `column_${index + 1}`
+    const label = fallbackCells[index]?.textContent?.trim() || `列${index + 1}`
+    return {
+      key,
+      label,
+      visible: true,
+      order: (index + 1) * 10
+    }
+  })
+}
+
+function applyColumnKeys(table, columns) {
+  Array.from(table.rows).forEach((row) => {
+    Array.from(row.cells).forEach((cell, index) => {
+      if (!columns[index]) return
+      cell.dataset.railsTablePreferencesColumnKey = columns[index].key
+    })
+  })
+}
+
+function mergeTablePreferenceColumns(defaultColumns, savedColumns) {
+  const savedByKey = new Map(Array(savedColumns || []).map((column) => [column.key, column]))
+  return defaultColumns.map((column, index) => {
+    const saved = savedByKey.get(column.key) || {}
+    return {
+      key: column.key,
+      label: column.label,
+      visible: saved.visible ?? column.visible,
+      order: saved.order ?? column.order ?? (index + 1) * 10
+    }
+  }).sort((left, right) => Number(left.order) - Number(right.order))
+}
+
+function applyTablePreferenceSettings(table, settings) {
+  const columns = mergeTablePreferenceColumns(collectTableColumns(table), settings?.columns || [])
+  const orderedKeys = columns.map((column) => column.key)
+  const visibilityByKey = new Map(columns.map((column) => [column.key, column.visible !== false]))
+
+  Array.from(table.rows).forEach((row) => {
+    const keyedCells = new Map(Array.from(row.children).map((cell) => [cell.dataset.railsTablePreferencesColumnKey, cell]))
+    orderedKeys.forEach((key) => {
+      const cell = keyedCells.get(key)
+      if (!cell) return
+      row.appendChild(cell)
+      cell.hidden = visibilityByKey.get(key) === false
+    })
+  })
+
+  return {
+    columns,
+    filters: settings?.filters || {},
+    sorts: settings?.sorts || []
+  }
+}
+
+function preferenceCollectionUrl(tableKey) {
+  return `${TABLE_PREFERENCE_COLLECTION_PATH}/${encodeURIComponent(tableKey)}`
+}
+
+function preferenceDefaultUrl(tableKey) {
+  return `${preferenceCollectionUrl(tableKey)}/default`
+}
+
+async function loadTablePreference(tableKey) {
+  const response = await fetch(preferenceDefaultUrl(tableKey), { headers: { Accept: "application/json" } })
+  if (response.status === 404) return null
+  if (!response.ok) throw new Error(`Failed to load table preference: ${response.status}`)
+  return response.json()
+}
+
+async function saveTablePreference(tableKey, settings) {
+  const csrfToken = document.querySelector("meta[name='csrf-token']")?.content || ""
+  const headers = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-CSRF-Token": csrfToken
+  }
+
+  const patchResponse = await fetch(preferenceDefaultUrl(tableKey), {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ settings })
+  })
+
+  if (patchResponse.status !== 404) {
+    if (!patchResponse.ok) throw new Error(`Failed to save table preference: ${patchResponse.status}`)
+    return patchResponse.json()
+  }
+
+  const createResponse = await fetch(preferenceCollectionUrl(tableKey), {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ name: "default", settings })
+  })
+  if (!createResponse.ok) throw new Error(`Failed to create table preference: ${createResponse.status}`)
+  return createResponse.json()
+}
+
+function buildPreferencePanel(frameDocument, table, initialSettings, tableKey) {
+  const panel = frameDocument.createElement("details")
+  panel.className = "portal-table-preference-panel"
+
+  const summary = frameDocument.createElement("summary")
+  summary.textContent = "列表示設定"
+  panel.appendChild(summary)
+
+  const body = frameDocument.createElement("div")
+  body.className = "portal-table-preference-panel__body"
+
+  const rows = frameDocument.createElement("div")
+  rows.className = "portal-table-preference-panel__rows"
+
+  const actions = frameDocument.createElement("div")
+  actions.className = "portal-table-preference-panel__actions"
+
+  const applyButton = frameDocument.createElement("button")
+  applyButton.type = "button"
+  applyButton.className = "portal-table-width-button"
+  applyButton.textContent = "適用"
+
+  const saveButton = frameDocument.createElement("button")
+  saveButton.type = "button"
+  saveButton.className = "portal-table-width-button"
+  saveButton.textContent = "保存"
+
+  const resetButton = frameDocument.createElement("button")
+  resetButton.type = "button"
+  resetButton.className = "portal-table-width-button"
+  resetButton.textContent = "リセット"
+
+  const status = frameDocument.createElement("span")
+  status.className = "portal-table-preference-status"
+  status.setAttribute("aria-live", "polite")
+
+  actions.append(applyButton, saveButton, resetButton, status)
+  body.append(rows, actions)
+  panel.appendChild(body)
+
+  const renderRows = (settings) => {
+    rows.innerHTML = ""
+    settings.columns.forEach((column) => {
+      const label = frameDocument.createElement("label")
+      label.className = "portal-table-preference-panel__row"
+      label.dataset.railsTablePreferenceColumnKey = column.key
+
+      const checkbox = frameDocument.createElement("input")
+      checkbox.type = "checkbox"
+      checkbox.checked = column.visible !== false
+      checkbox.dataset.railsTablePreferenceVisible = "true"
+
+      const text = frameDocument.createElement("span")
+      text.textContent = column.label
+
+      label.append(checkbox, text)
+      rows.appendChild(label)
+    })
+  }
+
+  const settingsFromRows = () => {
+    const columns = Array.from(rows.querySelectorAll("[data-rails-table-preference-column-key]")).map((row, index) => ({
+      key: row.dataset.railsTablePreferenceColumnKey,
+      label: row.textContent.trim(),
+      visible: row.querySelector("[data-rails-table-preference-visible]")?.checked !== false,
+      order: (index + 1) * 10
+    }))
+    return {
+      columns,
+      filters: initialSettings.filters || {},
+      sorts: initialSettings.sorts || []
+    }
+  }
+
+  let currentSettings = {
+    columns: mergeTablePreferenceColumns(initialSettings.columns, initialSettings.columns),
+    filters: initialSettings.filters || {},
+    sorts: initialSettings.sorts || []
+  }
+
+  renderRows(currentSettings)
+  currentSettings = applyTablePreferenceSettings(table, currentSettings)
+
+  applyButton.addEventListener("click", () => {
+    currentSettings = applyTablePreferenceSettings(table, settingsFromRows())
+    status.textContent = "表示を更新しました"
+    window.setTimeout(() => {
+      status.textContent = ""
+    }, 1800)
+  })
+
+  saveButton.addEventListener("click", async () => {
+    currentSettings = applyTablePreferenceSettings(table, settingsFromRows())
+    saveButton.disabled = true
+    status.textContent = "保存中…"
+    try {
+      const payload = await saveTablePreference(tableKey, currentSettings)
+      currentSettings = applyTablePreferenceSettings(table, payload?.settings || currentSettings)
+      renderRows(currentSettings)
+      status.textContent = "保存しました"
+    } catch (_error) {
+      status.textContent = "保存できませんでした"
+    } finally {
+      saveButton.disabled = false
+      window.setTimeout(() => {
+        status.textContent = ""
+      }, 1800)
+    }
+  })
+
+  resetButton.addEventListener("click", () => {
+    currentSettings = applyTablePreferenceSettings(table, { columns: collectTableColumns(table), filters: {}, sorts: [] })
+    renderRows(currentSettings)
+    status.textContent = "既定表示に戻しました"
+    window.setTimeout(() => {
+      status.textContent = ""
+    }, 1800)
+  })
+
+  return {
+    panel,
+    applyLoadedSettings(settings) {
+      currentSettings = applyTablePreferenceSettings(table, {
+        columns: mergeTablePreferenceColumns(initialSettings.columns, settings?.columns || []),
+        filters: settings?.filters || {},
+        sorts: settings?.sorts || []
+      })
+      renderRows(currentSettings)
+    }
+  }
+}
+
 function enhanceTablesInFrame(frame) {
   const frameDocument = frame.contentDocument
   if (!frameDocument?.body) return
@@ -229,6 +569,12 @@ function enhanceTablesInFrame(frame) {
 
     wrapper.dataset.tableSearchReady = "true"
     const index = tableIndex(wrapper, fallbackIndex)
+    const tableKey = resolveTablePreferenceKey(frame, wrapper, table, index)
+    wrapper.dataset.railsTablePreferencesTableKey = tableKey
+    table.dataset.railsTablePreferencesTableKey = tableKey
+
+    const columns = collectTableColumns(table)
+    applyColumnKeys(table, columns)
 
     const utilityBar = frameDocument.createElement("div")
     utilityBar.className = "portal-table-utility-bar"
@@ -289,6 +635,9 @@ function enhanceTablesInFrame(frame) {
     const target = toolbarInsertionTarget(toolbar)
     target.insertBefore(utilityBar, target.firstChild)
 
+    const preferencePanel = buildPreferencePanel(frameDocument, table, { columns, filters: {}, sorts: [] }, tableKey)
+    target.appendChild(preferencePanel.panel)
+
     input.addEventListener("input", () => updateTableSearch(table, input, count))
     clearButton.addEventListener("click", () => {
       input.value = ""
@@ -298,6 +647,15 @@ function enhanceTablesInFrame(frame) {
     resetSettingsButton.addEventListener("click", () => resetTableDisplaySettings(frame, index, wrapper, table, copyStatus))
     copyCsvButton.addEventListener("click", () => copyText(tableToCsv(table), copyStatus))
     copyMarkdownButton.addEventListener("click", () => copyText(tableToMarkdown(table), copyStatus))
+
+    loadTablePreference(tableKey)
+      .then((payload) => {
+        if (!payload?.settings) return
+        preferencePanel.applyLoadedSettings(payload.settings)
+      })
+      .catch(() => {
+        // Keep the local bridge usable even when saved presets are unavailable.
+      })
   })
 }
 
