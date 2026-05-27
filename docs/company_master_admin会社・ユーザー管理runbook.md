@@ -58,13 +58,17 @@ internal admin へ戻すもの:
 current `main` で確認できること:
 
 - 一覧には自社ユーザーだけが出る
+- 表示中の範囲にユーザーが 0 件のときは、空 table ではなく `ユーザー一覧` の empty state が出る
+- 0 件時は上の `新規登録` card から、メールアドレスと必要な項目を入れて最初の 1 件を作る
 - 他社ユーザーの edit は `not_found` になる
 - 自社ユーザーの `name` や `active` は更新できる
+- `company_master_admin` が見る form では、`ユーザー種別` は `external` 固定、`会社` は自社固定の read-only 表示になる
 - form で `internal` や他社 `company_id` を送っても、保存時には `external` / 自社所属へ矯正される
 - 新規作成も自社所属の `external` user として保存される
 
 使いどころ:
 
+- 自社ユーザーがまだいないときの最初の登録
 - 自社ユーザーの有効化・無効化
 - 自社ユーザー名やメールアドレスの保守
 - 自社メンバーの追加
@@ -75,7 +79,23 @@ internal admin へ戻すもの:
 - 他社所属ユーザーの調整
 - 案件所属や文書権限まで含む広いアクセス設計
 
-## 3. 入れない管理画面
+## 3. company 管理者フォームの見え方
+
+`company_master_admin` が `ユーザー` の新規登録や編集を開くと、current `main` では保存結果に沿った fixed 表示を先に見せる。
+
+見分け方:
+
+- `ユーザー種別` は選択肢ではなく、`external` 固定の表示として見える
+- `会社` も選択肢ではなく、自社名の固定表示として見える
+- `name` `email_address` `active` `password` `password_confirmation` は通常どおり入力・更新する
+- 補足 copy でも「会社管理者から登録するユーザーは、所属会社とユーザー種別が自動で固定される」と案内される
+
+意味合い:
+
+- 画面上で `internal` や他社所属を選べないように見せつつ、server-side の保存契約とも矛盾しないようにしている
+- role を広げたのではなく、もともとの保存矯正ルールを UI でも読み取りやすくした current state と考える
+
+## 4. 入れない管理画面
 
 current request spec で `company_master_admin` が forbidden として固定されている主な画面は次のとおり。
 
@@ -90,7 +110,7 @@ current request spec で `company_master_admin` が forbidden として固定さ
 - `company_master_admin` は company / user master の最小管理 role であり、案件運用や公開制御の role ではない
 - 文書閲覧や添付ダウンロードは、管理画面ではなく通常の project / document 側の権限で判断される
 
-## 4. 文書閲覧境界の見方
+## 5. 文書閲覧境界の見方
 
 `company_master_admin` の閲覧権限は `external` と同じルールで決まる。
 
@@ -104,7 +124,9 @@ current request spec で `company_master_admin` が forbidden として固定さ
 ## 日常運用の見分け方
 
 - 自社会社情報を直したい: `会社`
+- 自社ユーザーを追加したいがまだ 0 件: `ユーザー` 画面上部の `新規登録`
 - 自社ユーザーを追加・無効化したい: `ユーザー`
+- `ユーザー種別` や `会社` を変えたいように見えるが固定表示になっている: current role の範囲外なので internal admin へ引き継ぐ
 - 案件所属や文書権限を見直したい: internal admin へ引き継ぐ
 - `/admin` から入りたい: current `main` では `会社` 一覧へ redirect されるので、そこを入口に使う
 
@@ -119,4 +141,6 @@ current request spec で `company_master_admin` が forbidden として固定さ
 - `app/controllers/admin/base_controller.rb`
 - `app/controllers/admin/dashboard_controller.rb`
 - `app/views/admin/_nav.html.slim`
+- `app/views/admin/users/index.html.slim`
+- `app/views/admin/users/_form.html.slim`
 - `spec/requests/admin_management_spec.rb`
