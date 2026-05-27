@@ -47,7 +47,12 @@ module Admin::AccessLogsHelper
   end
 
   def access_log_company_secondary_label(company)
-    company&.domain.presence
+    return unless company
+
+    domain = company.domain.presence
+    return if domain.blank? || company.display_name == domain
+
+    domain
   end
 
   def access_log_project_secondary_label(project)
