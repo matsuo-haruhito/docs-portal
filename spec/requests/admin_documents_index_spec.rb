@@ -68,17 +68,17 @@ RSpec.describe "Admin documents index", type: :request do
 
     active_actions = active_row.at_css('td[data-rails-table-preferences-column-key="actions"]')
 
-    expect(active_actions.to_html).to include(edit_admin_document_path(active_document))
-    expect(active_actions.to_html).to include(archive_admin_document_path(active_document))
-    expect(active_actions.to_html).to include(admin_document_path(active_document))
+    expect(active_actions.to_html).to include(edit_admin_document_path(active_document.public_id))
+    expect(active_actions.to_html).to include(archive_admin_document_path(active_document.public_id))
+    expect(active_actions.to_html).to include(admin_document_path(active_document.public_id))
 
     archived_status = archived_row.at_css('td[data-rails-table-preferences-column-key="status"]')
     archived_actions = archived_row.at_css('td[data-rails-table-preferences-column-key="actions"]')
 
     expect(archived_status.text).to include("アーカイブ済み")
     expect(archived_status.text).to include("実行者: 管理者")
-    expect(archived_actions.to_html).to include(edit_admin_document_path(archived_document))
-    expect(archived_actions.to_html).to include(restore_admin_document_path(archived_document))
-    expect(archived_actions.to_html).to include(admin_document_path(archived_document))
+    expect(archived_actions.to_html).to include(edit_admin_document_path(archived_document.public_id))
+    expect(archived_actions.to_html).to include(restore_admin_document_path(archived_document.public_id))
+    expect(archived_actions.to_html).to include(admin_document_path(archived_document.public_id))
   end
 end
