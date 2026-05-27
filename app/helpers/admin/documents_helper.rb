@@ -39,4 +39,8 @@ module Admin::DocumentsHelper
   def admin_document_discard_filter_options
     [["すべて", ""], ["廃棄候補あり", "set"], ["廃棄候補なし", "missing"], ["廃棄候補期限切れ", "due"]]
   end
+
+  def admin_document_project_secondary_label(project)
+    project.code.presence
+  end
 end
