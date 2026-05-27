@@ -23,4 +23,9 @@
     .actions
       = link_to "前版との差分", document_version_path(@site_viewer_version, anchor: "version-diff"), class: "button secondary"
       = link_to "添付・元ファイル", document_version_path(@site_viewer_version, anchor: "version-files"), class: "button secondary"
-  iframe.site-viewer-frame src=@site_viewer_iframe_src title="#{@site_viewer_document.title} #{@site_viewer_version.version_label}" loading="lazy"
+  iframe.site-viewer-frame(
+    src=@site_viewer_iframe_src
+    title="#{@site_viewer_document.title} #{@site_viewer_version.version_label}"
+    loading="lazy"
+    data-docs-portal-auto-height="true"
+  )
