@@ -1,5 +1,7 @@
 = render "shared/error_messages", record: user
 
+- fixed_company_name = user.company&.display_name || @fixed_company_for_form&.display_name || "-"
+
 = form_with model: [:admin, user] do |form|
   .form-grid
     label
@@ -8,17 +10,27 @@
     label
       | メールアドレス
       = form.email_field :email_address
-    label
-      | ユーザー種別
-      = form.select :user_type, enum_options_for("users.user_type", User.user_types.keys)
-    = form.rfk_select :company_id,
-      collection: @companies,
-      collection_value_method: :id,
-      collection_label_method: :display_name,
-      wrapper: true,
-      label: "会社",
-      allow_clear: true,
-      placeholder: "会社を選択（未所属可）"
+    - if @company_admin_user_form
+      label
+        | ユーザー種別
+        = form.hidden_field :user_type, value: user.user_type
+        = text_field_tag :user_type_display, user_type_label(user), readonly: true, disabled: true
+      label
+        | 会社
+        = form.hidden_field :company_id, value: user.company_id || @fixed_company_for_form&.id
+        = text_field_tag :company_display, fixed_company_name, readonly: true, disabled: true
+    - else
+      label
+        | ユーザー種別
+        = form.select :user_type, enum_options_for("users.user_type", User.user_types.keys)
+      = form.rfk_select :company_id,
+        collection: @companies,
+        collection_value_method: :id,
+        collection_label_method: :display_name,
+        wrapper: true,
+        label: "会社",
+        allow_clear: true,
+        placeholder: "会社を選択（未所属可）"
     label
       | 有効
       = form.select :active, [["有効", true], ["無効", false]]
@@ -29,6 +41,8 @@
       | パスワード確認
       = form.password_field :password_confirmation
   p.muted ユーザー名が空の場合はメールアドレスを表示名として使用します。編集時にパスワードを変えない場合は空欄のまま保存できます。
+  - if @company_admin_user_form
+    p.muted 会社管理者から登録するユーザーは、所属会社とユーザー種別が自動で固定されます。
   p.actions
     = form.submit "保存", class: "button"
     - if user.persisted?
