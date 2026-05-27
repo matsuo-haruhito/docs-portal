@@ -11,36 +11,44 @@
   <%= render "form", project_membership: @project_membership %>
 </div>
 
-<div class="card">
-  <%= table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件所属一覧の表示設定") %>
-</div>
+<% if @project_memberships.any? %>
+  <div class="card">
+    <%= table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件所属一覧の表示設定") %>
+  </div>
 
-<%= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do %>
-  <thead>
-    <tr>
-      <th data-rails-table-preferences-column-key="project">案件</th>
-      <th data-rails-table-preferences-column-key="user">ユーザー</th>
-      <th data-rails-table-preferences-column-key="role">権限</th>
-      <th data-rails-table-preferences-column-key="actions">操作</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @project_memberships.each do |membership| %>
+  <%= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do %>
+    <thead>
       <tr>
-        <td data-rails-table-preferences-column-key="project">
-          <%= membership.project.name %>
-          <% if membership.project.code.present? %>
-            <br>
-            <code><%= membership.project.code %></code>
-          <% end %>
-        </td>
-        <td data-rails-table-preferences-column-key="user"><%= project_membership_user_option_label(membership.user) %></td>
-        <td data-rails-table-preferences-column-key="role"><span class="badge"><%= project_membership_role_label(membership) %></span></td>
-        <td class="actions" data-rails-table-preferences-column-key="actions">
-          <%= edit_link_to "編集", edit_admin_project_membership_path(membership) %>
-          <%= delete_link_to "削除", admin_project_membership_path(membership), confirm: "案件所属を削除しますか？このユーザーは案件へアクセスできなくなります。" %>
-        </td>
+        <th data-rails-table-preferences-column-key="project">案件</th>
+        <th data-rails-table-preferences-column-key="user">ユーザー</th>
+        <th data-rails-table-preferences-column-key="role">権限</th>
+        <th data-rails-table-preferences-column-key="actions">操作</th>
       </tr>
-    <% end %>
-  </tbody>
+    </thead>
+    <tbody>
+      <% @project_memberships.each do |membership| %>
+        <tr>
+          <td data-rails-table-preferences-column-key="project">
+            <%= membership.project.name %>
+            <% if membership.project.code.present? %>
+              <br>
+              <code><%= membership.project.code %></code>
+            <% end %>
+          </td>
+          <td data-rails-table-preferences-column-key="user"><%= project_membership_user_option_label(membership.user) %></td>
+          <td data-rails-table-preferences-column-key="role"><span class="badge"><%= project_membership_role_label(membership) %></span></td>
+          <td class="actions" data-rails-table-preferences-column-key="actions">
+            <%= edit_link_to "編集", edit_admin_project_membership_path(membership) %>
+            <%= delete_link_to "削除", admin_project_membership_path(membership), confirm: "案件所属を削除しますか？このユーザーは案件へアクセスできなくなります。" %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  <% end %>
+<% else %>
+  <div class="card">
+    <p class="muted">まだ案件所属はありません。</p>
+    <p class="muted">上の「新規登録」で案件、ユーザー、権限を選んで保存すると、ここに一覧が表示されます。</p>
+    <p class="muted">この画面では、案件アクセスの入口になる所属と権限を確認できます。</p>
+  </div>
 <% end %>
