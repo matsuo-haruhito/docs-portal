@@ -43,6 +43,7 @@ RSpec.describe "Admin external folder sync sources", type: :request do
 
       source = ExternalFolderSyncSource.order(:id).last
       expect(response).to redirect_to(admin_external_folder_sync_source_path(source))
+      expect(response.location).to end_with("/admin/external_folder_sync_sources/#{source.public_id}")
       expect(source.provider).to eq("microsoft_graph")
       expect(source.auth_type).to eq("microsoft_graph_connection")
       expect(source.external_folder_id).to eq("item-456")
@@ -61,6 +62,7 @@ RSpec.describe "Admin external folder sync sources", type: :request do
       expect(response.body).to include("drive-123")
       expect(response.body).to include("Folder item ID")
       expect(response.body).to include("item-456")
+      expect(response.body).to include("/admin/external_folder_sync_sources/#{source.public_id}/edit")
     end
 
     it "shows a resolver error without creating a source" do
@@ -81,8 +83,8 @@ RSpec.describe "Admin external folder sync sources", type: :request do
     end
   end
 
-  describe "POST /admin/external_folder_sync_sources/:id/dry_run" do
-    it "blocks dry-run for Microsoft Graph metadata-only sources" do
+  describe "GET /admin/external_folder_sync_sources/:public_id" do
+    it "returns 404 for numeric ids" do
       sign_in_as(admin_user)
       create(:microsoft_graph_connection, project:, enabled: true)
       source = ExternalFolderSyncSource.create!(
@@ -106,12 +108,92 @@ RSpec.describe "Admin external folder sync sources", type: :request do
         }
       )
 
+      get admin_external_folder_sync_source_path(source.id)
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe "POST /admin/external_folder_sync_sources/:public_id/dry_run" do
+    let!(:graph_connection) { create(:microsoft_graph_connection, project:, enabled: true) }
+    let(:source) do
+      ExternalFolderSyncSource.create!(
+        project:,
+        created_by: admin_user,
+        provider: :microsoft_graph,
+        auth_type: :microsoft_graph_connection,
+        name: "SharePoint docs",
+        folder_url: "https://contoso.sharepoint.com/:f:/s/TeamDocs/ExampleFolder",
+        external_folder_id: "item-456",
+        external_folder_path: "Shared Documents/Policies",
+        sync_direction: :external_to_portal,
+        conflict_policy: :manual,
+        enabled: true,
+        auth_config: {}.to_json,
+        provider_metadata: {
+          "drive_id" => "drive-123",
+          "folder_item_id" => "item-456",
+          "folder_path" => "Shared Documents/Policies",
+          "site_id" => "site-789"
+        }
+      )
+    end
+
+    it "blocks dry-run for Microsoft Graph metadata-only sources" do
+      sign_in_as(admin_user)
+
       post dry_run_admin_external_folder_sync_source_path(source)
 
       expect(response).to redirect_to(admin_external_folder_sync_source_path(source))
       follow_redirect!
       expect(response.body).to include("後続 issue で対応予定")
       expect(response.body).not_to include("同期プレビュー")
+    end
+
+    it "returns 404 for numeric ids" do
+      sign_in_as(admin_user)
+
+      post dry_run_admin_external_folder_sync_source_path(source.id)
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe "GET /admin/external_folder_sync_sources/:external_folder_sync_source_public_id/external_folder_sync_oauth_connection/new" do
+    let(:source) do
+      ExternalFolderSyncSource.create!(
+        project:,
+        created_by: admin_user,
+        provider: :google_drive,
+        auth_type: :oauth_user,
+        name: "Drive docs",
+        folder_url: "https://drive.google.com/drive/folders/folder-123",
+        external_folder_id: "folder-123",
+        sync_direction: :external_to_portal,
+        conflict_policy: :manual,
+        enabled: true,
+        auth_config: {}.to_json,
+        provider_metadata: {}
+      )
+    end
+
+    it "resolves nested routes via public_id" do
+      sign_in_as(admin_user)
+      allow_any_instance_of(Admin::ExternalFolderSyncOauthConnectionsController)
+        .to receive(:missing_google_oauth_env_keys).and_return(["GOOGLE_DRIVE_OAUTH_CLIENT_ID"])
+
+      get new_admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(source)
+
+      expect(response).to redirect_to(admin_external_folder_sync_source_path(source))
+      expect(response.location).to end_with("/admin/external_folder_sync_sources/#{source.public_id}")
+    end
+
+    it "returns 404 for numeric ids" do
+      sign_in_as(admin_user)
+
+      get new_admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(source.id)
+
+      expect(response).to have_http_status(:not_found)
     end
   end
 end
