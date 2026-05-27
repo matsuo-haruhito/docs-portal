@@ -1,4 +1,6 @@
 class ProjectSitesController < BaseController
+  EMBEDDED_VIEWER_HEIGHT_MESSAGE = "docs-portal:site-viewer-height".freeze
+
   before_action :set_project
   before_action :set_build_version
   skip_after_action :verify_same_origin_request, only: :show
@@ -142,9 +144,88 @@ class ProjectSitesController < BaseController
     return html if body.blank?
 
     body["data-docs-portal-preview-context-key"] = preview_table_context_key(version:, site_path:)
+    inject_embedded_viewer_height_sync!(document)
     document.to_html.html_safe
   rescue StandardError
     html
+  end
+
+  def inject_embedded_viewer_height_sync!(document)
+    body = document.at_css("body")
+    return if body.blank?
+    return if document.at_css("script[data-docs-portal-embedded-height-sync]").present?
+
+    body["data-docs-portal-embedded-viewer"] = "true"
+
+    script = Nokogiri::XML::Node.new("script", document)
+    script["data-docs-portal-embedded-height-sync"] = "true"
+    script.content = <<~JS
+      (() => {
+        if (window.__docsPortalEmbeddedHeightSyncReady) return
+        window.__docsPortalEmbeddedHeightSyncReady = true
+
+        const messageType = "#{EMBEDDED_VIEWER_HEIGHT_MESSAGE}"
+
+        const collectHeight = () => {
+          const body = document.body
+          const root = document.documentElement
+          const height = Math.max(
+            body?.scrollHeight || 0,
+            body?.offsetHeight || 0,
+            root?.scrollHeight || 0,
+            root?.offsetHeight || 0,
+            root?.clientHeight || 0
+          )
+          return Math.ceil(height)
+        }
+
+        const postHeight = () => {
+          try {
+            const height = collectHeight()
+            if (height <= 0 || !window.parent || window.parent === window) return
+            window.parent.postMessage({ type: messageType, height }, window.location.origin)
+          } catch (_error) {
+          }
+        }
+
+        const schedulePostHeight = () => {
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(postHeight)
+          })
+        }
+
+        if (document.readyState === "complete") {
+          schedulePostHeight()
+        } else {
+          window.addEventListener("load", schedulePostHeight, { once: true })
+        }
+
+        document.addEventListener("readystatechange", schedulePostHeight)
+        window.addEventListener("resize", schedulePostHeight)
+
+        if (window.ResizeObserver) {
+          const resizeObserver = new ResizeObserver(schedulePostHeight)
+          resizeObserver.observe(document.documentElement)
+          if (document.body) resizeObserver.observe(document.body)
+        } else if (window.MutationObserver && document.body) {
+          const mutationObserver = new MutationObserver(schedulePostHeight)
+          mutationObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            characterData: true
+          })
+        }
+
+        Array.from(document.images || []).forEach((image) => {
+          if (image.complete) return
+          image.addEventListener("load", schedulePostHeight, { once: true })
+        })
+
+        schedulePostHeight()
+      })()
+    JS
+    body.add_child(script)
   end
 
   def preview_table_context_key(version:, site_path:)
