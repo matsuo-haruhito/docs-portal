@@ -163,21 +163,18 @@ RSpec.describe "Document site table preferences", type: :system do
     raise "Timed out waiting for preference save request for #{table_key}: #{requests.inspect}"
   end
 
-  def wait_for_loaded_row_states(expected_row_states)
-    Timeout.timeout(10) do
-      loop do
-        infos = viewer_table_infos
-        matches = expected_row_states.each_with_index.all? do |expected_row_state, index|
-          infos.fetch(index).fetch("rowState") == expected_row_state
-        end
-        return infos if matches
+  def wait_for_reloaded_hidden_columns
+    within_frame(find("iframe.site-viewer-frame")) do
+      wrappers = all(".portal-table-width-frame", count: 2)
 
-        sleep 0.1
+      within(wrappers[0]) do
+        expect(page).to have_css("tbody tr:first-child td:nth-child(2)[hidden]", wait: 10)
+      end
+
+      within(wrappers[1]) do
+        expect(page).to have_css("tbody tr:first-child td:nth-child(1)[hidden]", wait: 10)
       end
     end
-  rescue Timeout::Error
-    infos = viewer_table_infos
-    raise "Timed out waiting for loaded row states: #{infos.inspect}"
   end
 
   def save_table_visibility(panel_index:, table_key:, checked_states:)
@@ -227,7 +224,9 @@ RSpec.describe "Document site table preferences", type: :system do
 
     visit site_document_version_path(version, site_path: site_build_path)
     wait_for_viewer_preference_panels
+    wait_for_reloaded_hidden_columns
 
+    loaded_infos = viewer_table_infos
     expected_row_states = [
       [
         { "text" => "Alpha", "hidden" => false },
@@ -238,7 +237,6 @@ RSpec.describe "Document site table preferences", type: :system do
         { "text" => "公開中", "hidden" => false }
       ]
     ]
-    loaded_infos = wait_for_loaded_row_states(expected_row_states)
 
     aggregate_failures do
       expect(loaded_infos[0].fetch("rowState")).to eq(expected_row_states[0])
