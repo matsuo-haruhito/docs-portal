@@ -123,7 +123,11 @@ p.muted
           - files = document.document_versions.flat_map(&:document_files)
           - match_summaries = document_search_match_summaries(document, @filters[:q])
           tr
-            td = link_to document.project.name, project_path(document.project), data: { turbo_frame: "_top" }
+            td
+              = link_to document.project.name, project_path(document.project), data: { turbo_frame: "_top" }
+              - if document.project.code.present?
+                br
+                code = document.project.code
             td = link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" }
             td
               - if match_summaries.any?
