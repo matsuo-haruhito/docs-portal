@@ -24,8 +24,8 @@ RSpec.describe "Admin document usage reports", type: :request do
   end
 
   def row_titles
-    parsed_html.css("tbody td[data-rails-table-preferences-column-key='title'] a").map do |link|
-      link.text.squish
+    parsed_html.css("tbody td[data-rails-table-preferences-column-key='title']").map do |cell|
+      cell.css("a").first.text.squish
     end
   end
 
