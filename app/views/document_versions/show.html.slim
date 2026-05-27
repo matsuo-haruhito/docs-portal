@@ -8,6 +8,8 @@
 - diff_status_label = ->(status) { diff_status_labels.fetch(status.to_s, status.to_s.humanize) }
 - hero_description = markdown_source ? "Markdown本文、HTMLプレビュー、比較対象版との差分確認を同じ画面から行えます。" : "この版で確認できるプレビュー、比較対象版との差分、添付・元ファイルを同じ画面から確認できます。"
 - workspace_description = markdown_source ? "表示可能な本文を優先し、生成済みHTMLがない場合も元ファイルと品質チェックへ誘導します。" : "表示可能なプレビューを優先し、本文プレビューがない場合も元ファイルと品質チェックへ誘導します。"
+- preview_nav_message = @version.rendered_site_available? ? nil : (docusaurus_preview_pending ? "プレビューは生成中" : "プレビューは未生成")
+- quality_nav_message = current_user.internal? ? nil : "品質は社内のみ"
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
 
@@ -138,16 +140,14 @@ p.muted
   nav.markdown-mode-tabs aria-label="版詳細ナビゲーション"
     - if @version.rendered_site_available?
       = link_to "プレビュー", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path)
-    - elsif docusaurus_preview_pending
-      span.is-disabled プレビュー（生成中）
     - else
-      span.is-disabled プレビュー（未生成）
-    span.is-active aria-current="page" 差分
+      span.muted = preview_nav_message
+    span.badge aria-current="page" 現在: 差分
     = link_to "添付", "#version-files"
     - if current_user.internal?
       = link_to "品質", document_version_quality_check_path(@version)
     - else
-      span.is-disabled 品質（社内のみ）
+      span.muted = quality_nav_message
 
 .card.version-diff-viewer#version-diff
   .markdown-workspace__header
