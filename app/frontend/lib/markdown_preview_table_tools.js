@@ -287,7 +287,9 @@ function toolbarInsertionTarget(toolbar) {
 }
 
 function cgiEscape(value) {
-  return encodeURIComponent(String(value ?? "")).replace(/%20/g, "+")
+  return encodeURIComponent(String(value ?? ""))
+    .replace(/%20/g, "+")
+    .replace(/\./g, "%2E")
 }
 
 function stableTablePreferenceKeyFromContext(previewContextKey, tableIndexValue) {
