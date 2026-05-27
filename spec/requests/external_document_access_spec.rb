@@ -156,7 +156,7 @@ RSpec.describe "External document access boundaries", type: :request do
 
     sign_in_as(admin_user)
 
-    patch archive_admin_document_path(archived_document)
+    patch archive_admin_document_path(archived_document.public_id)
     expect(response).to redirect_to(admin_documents_path)
     expect(archived_document.reload).to be_archived
 
@@ -175,7 +175,7 @@ RSpec.describe "External document access boundaries", type: :request do
 
     sign_in_as(admin_user)
 
-    patch restore_admin_document_path(archived_document)
+    patch restore_admin_document_path(archived_document.public_id)
     expect(response).to redirect_to(admin_documents_path)
     expect(archived_document.reload).not_to be_archived
 
