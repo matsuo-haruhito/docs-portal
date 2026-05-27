@@ -3,6 +3,7 @@ require "rails_helper"
 RSpec.describe "Admin document sets", type: :request do
   let(:admin) { create(:user, :admin) }
   let(:project) { create(:project, name: "Delivery Project") }
+  let(:empty_project) { create(:project, name: "Empty Project") }
   let(:document_a) { create(:document, project:, title: "概要仕様", slug: "overview") }
   let(:document_b) { create(:document, project:, title: "社内メモ", slug: "internal-memo") }
   let!(:version_a1) { create(:document_version, document: document_a, version_label: "v1.0.0") }
@@ -56,6 +57,36 @@ RSpec.describe "Admin document sets", type: :request do
       "document_set[set_type]",
       "document_set[visibility_policy]"
     )
+  end
+
+  it "shows different guidance for an unselected project and a selected project without documents" do
+    sign_in_as(admin)
+
+    get admin_document_sets_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("案件を選ぶと対象文書を設定できます。")
+    expect(response.body).not_to include("まだ対象文書がありません。")
+    expect(response.body).not_to include(admin_git_import_sources_path)
+    expect(response.body).not_to include(admin_git_import_runs_path)
+
+    post admin_document_sets_path, params: {
+      document_set: {
+        project_id: empty_project.id,
+        name: "",
+        description: "empty project setup",
+        set_type: "delivery",
+        visibility_policy: "restricted_external",
+        sort_order: 0
+      },
+      document_set_items: {}
+    }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response.body).to include("まだ対象文書がありません。")
+    expect(response.body).to include(admin_git_import_sources_path)
+    expect(response.body).to include(admin_git_import_runs_path)
+    expect(response.body).not_to include("案件を選ぶと対象文書を設定できます。")
   end
 
   it "renders rails_table_preferences editor and stable column keys on the index page" do
@@ -188,6 +219,8 @@ RSpec.describe "Admin document sets", type: :request do
     get edit_admin_document_set_path(existing_document_set)
 
     expect(response).to have_http_status(:ok)
+    expect(response.body).to include("対象文書")
+    expect(response.body).to include(document_a.title)
     expect(parsed_html.at_css(%(form[action="#{admin_document_set_path(existing_document_set)}"]))).to be_present
 
     patch admin_document_set_path(existing_document_set), params: {
