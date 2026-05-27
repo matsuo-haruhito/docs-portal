@@ -80,7 +80,7 @@ RSpec.describe "Document site table preferences", type: :system do
   def sign_in_via_browser(user)
     visit new_session_path
 
-    fill_in "メールアドレス", with: user.email_address
+    fill_in "メールア��レス", with: user.email_address
     fill_in "パスワード", with: "password123!"
     click_button "ログイン"
 
@@ -137,7 +137,7 @@ RSpec.describe "Document site table preferences", type: :system do
     end
   end
 
-  def wait_for_preference_save_request(table_key)
+  def wait_for_preference_request(table_key, method:, statuses:)
     Timeout.timeout(10) do
       loop do
         request = page.evaluate_script(<<~JS)
@@ -146,9 +146,9 @@ RSpec.describe "Document site table preferences", type: :system do
             const requests = window.__docsPortalPreferenceRequests || []
             return requests.find((entry) => {
               if (typeof entry.url !== "string") return false
-              if (!(entry.method === "PATCH" || entry.method === "POST")) return false
+              if (entry.method !== #{method.to_json}) return false
               if (!entry.url.includes(`/rails_table_preferences/preferences/${encodedTableKey}`)) return false
-              return entry.status === 200 || entry.status === 201
+              return #{statuses}.includes(entry.status)
             }) || null
           })()
         JS
@@ -160,21 +160,32 @@ RSpec.describe "Document site table preferences", type: :system do
     end
   rescue Timeout::Error
     requests = page.evaluate_script("window.__docsPortalPreferenceRequests || []")
-    raise "Timed out waiting for preference save request for #{table_key}: #{requests.inspect}"
+    raise "Timed out waiting for #{method} preference request for #{table_key}: #{requests.inspect}"
+  end
+
+  def wait_for_preference_save_request(table_key)
+    wait_for_preference_request(table_key, method: "PATCH", statuses: [200]) ||
+      wait_for_preference_request(table_key, method: "POST", statuses: [201])
+  rescue RuntimeError
+    wait_for_preference_request(table_key, method: "POST", statuses: [201])
+  end
+
+  def wait_for_preference_load_request(table_key)
+    wait_for_preference_request(table_key, method: "GET", statuses: [200])
   end
 
   def wait_for_reloaded_hidden_columns
-    within_frame(find("iframe.site-viewer-frame")) do
-      wrappers = all(".portal-table-width-frame", count: 2)
-
-      within(wrappers[0]) do
-        expect(page).to have_css("tbody tr:first-child td:nth-child(2)[hidden]", wait: 10)
-      end
-
-      within(wrappers[1]) do
-        expect(page).to have_css("tbody tr:first-child td:nth-child(1)[hidden]", wait: 10)
+    Timeout.timeout(10) do
+      loop do
+        loaded_infos = viewer_table_infos
+        first_hidden = loaded_infos.dig(0, "rowState", 1, "hidden")
+        second_hidden = loaded_infos.dig(1, "rowState", 0, "hidden")
+        return if first_hidden == true && second_hidden == true
+        sleep 0.1
       end
     end
+  rescue Timeout::Error
+    raise "Timed out waiting for reloaded hidden columns: #{viewer_table_infos.inspect}"
   end
 
   def save_table_visibility(panel_index:, table_key:, checked_states:)
@@ -223,7 +234,10 @@ RSpec.describe "Document site table preferences", type: :system do
     end
 
     visit site_document_version_path(version, site_path: site_build_path)
+    install_preference_request_probe
     wait_for_viewer_preference_panels
+    wait_for_preference_load_request(table_keys.first)
+    wait_for_preference_load_request(table_keys.second)
     wait_for_reloaded_hidden_columns
 
     loaded_infos = viewer_table_infos
