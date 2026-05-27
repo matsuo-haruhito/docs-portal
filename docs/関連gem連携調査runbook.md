@@ -67,7 +67,12 @@
 | --- | --- | --- | --- |
 | `tree_view` | 文書ツリー / 詳細ツリー / persisted expand state | `9c538f9ee7946fa5af24f15c99402a0431677303` | `docs-portal` の helper / partial と `tree_view-rails` の `docs/ja/*` |
 | `rails_table_preferences` | 一覧の列表示 / filter / sort / preset UI | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `config/initializers/rails_table_preferences.rb` と `rails_table_preferences` の README / `docs/*` |
-| `rails_fields_kit` | Tom Select 系 field helper / controller / metadata | `b1a4b1c7d52425726395018ff2e575d616e65f51` | `app/frontend/entrypoints/application.js` / `vite.config.ts` と `rails_fields_kit` の `doc/*` |
+| `rails_fields_kit` | Tom Select 系 field helper / controller / metadata | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | `app/frontend/entrypoints/application.js` / `vite.config.ts` と `rails_fields_kit` の `doc/*` |
+
+### current release-train queue の補足
+
+- `rails_fields_kit` の current resolved revision `0c29bb935a1df3e61add860a966a2fc7ea586b1a` は baseline child `#783` の完了後に `Gemfile` / `Gemfile.lock` へ反映済みです。いまは「最初の active bump family」ではなく、host-app canary や後続 form issue の前提 revision として扱います。
+- 残る active family は `tree_view` (`#804`) と `rails_table_preferences` (`#904`) が中心です。とくに `rails_table_preferences` は `#789` の known-good revision 判断を gate として読み、human decision の前に broad bump や canary rollout を混ぜません。
 
 ### revision が変わったときの最短確認順
 
@@ -83,7 +88,7 @@
 
 ## release train の最小運用
 
-- この節は `#674` の release train を docs-only で支える子 lane として使います。gem 更新そのものをここで実施するのではなく、「どの revision を見て、どの代表 smoke を通し、どこへ記録するか」を固定するための土台です。
+- この節は `#858` の release train を docs-only で支える子 lane として使います。gem 更新そのものをここで実施するのではなく、「どの revision を見て、どの代表 smoke を通し、どこへ記録するか」を固定するための土台です。
 - 3 gem を同じ branch / PR で同時に上げない。`1 gem = 1 branch = 1 PR` を基本とし、他 2 gem は current resolved revision のまま据え置きます。
 - bump 前に `Gemfile.lock` の current resolved revision を控え、対応する upstream issue / PR / commit を読んでから target revision を決めます。
 - bump 後の記録は `docs-portal` 側の issue か PR 本文に残し、少なくとも `gem 名 / from SHA / to SHA / 実施した代表 smoke / 結果` を書きます。コード上の証跡は `Gemfile.lock` diff を正本として扱います。
@@ -92,10 +97,11 @@
 
 ### current queue の読み分け
 
-- `#674` は parent queue です。3 gem 全体の順序や次にどの gem を上げるかを見直すときに参照し、実装や docs 更新の最小単位としては扱いません。
-- `#804` は current open の `tree_view` baseline bump child です。`#778` でそろえた前回 baseline と `#699` の downstream toolbar reuse は完了済みの参照として扱い、次の bump はここから切り分けます。
-- `#789` は `rails_table_preferences` の current child ですが、upstream の known-good revision 判断がまだ必要なので `status:needs-human` を前提に読みます。human decision が入る前に broad bump や screen rollout を混ぜません。
-- `#783` は `rails_fields_kit` baseline 更新の完了済み child です。`#737` のような host app canary はこの baseline を前提に進め、次の dependency bump が必要になった場合も別 child issue / PR に切り分けます。
+- `#858` は parent queue です。3 gem 全体の更新順や child slice を見直すときに参照し、実装や docs 更新の最小単位としては扱いません。
+- `#804` は current open の `tree_view` baseline bump child です。`#699` でそろえた前回 baseline を完了済み参照として扱い、残る active family の先頭としてここから切り分けます。
+- `#904` は current open の `rails_table_preferences` third-slice child です。representative smoke と rollback note の置き場を固定する主 lane として読みます。
+- `#789` は `rails_table_preferences` の known-good revision 判断を扱う `status:needs-human` issue です。human decision が入る前に broad bump や downstream canary を混ぜません。
+- `#783` は `rails_fields_kit` baseline 更新の完了済み child です。current pinned ref を参照するときの履歴として扱い、次の dependency move が必要でも別 child issue / PR に切り分けます。
 
 ### 代表 smoke の早見表
 
@@ -125,7 +131,7 @@
 
 ```text
 - gem: rails_fields_kit
-- from: b1a4b1c7d52425726395018ff2e575d616e65f51
+- from: 0c29bb935a1df3e61add860a966a2fc7ea586b1a
 - to: <target SHA or tag>
 - representative smoke:
   - admin/document_sets form の preload / selected value 保持
@@ -134,7 +140,7 @@
   - request spec と画面確認で current contract 維持
   - 追加の follow-up: なし
 - rollback target:
-  - b1a4b1c7d52425726395018ff2e575d616e65f51
+  - 0c29bb935a1df3e61add860a966a2fc7ea586b1a
 ```
 
 ## tree_view
