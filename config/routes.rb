@@ -41,9 +41,9 @@ Rails.application.routes.draw do
       post "apply_template", to: "project_templates#create", on: :member
     end
     resources :project_memberships, except: %i[show new], param: :public_id
-    resources :consent_terms, except: %i[show new]
-    resources :project_consent_settings, except: %i[show new]
-    resources :git_import_sources, except: %i[show new] do
+    resources :consent_terms, except: %i[show new], param: :public_id
+    resources :project_consent_settings, except: %i[show new], param: :public_id
+    resources :git_import_sources, except: %i[show new], param: :public_id do
       post :sync, on: :member
     end
     resources :git_import_runs, only: [:index]
@@ -56,7 +56,7 @@ Rails.application.routes.draw do
       post :retry_failed, on: :collection
     end
     resources :zip_imports, only: %i[new create show update], param: :public_id
-    resources :microsoft_graph_connections, except: %i[show new]
+    resources :microsoft_graph_connections, except: %i[show new], param: :public_id
     resources :recurring_job_schedules, only: %i[index show], param: :public_id do
       post :request_run, on: :member
     end
@@ -77,7 +77,7 @@ Rails.application.routes.draw do
     resources :bulk_edit_dry_runs, only: %i[new create show update], param: :public_id
     resources :document_sets, except: %i[show new], param: :public_id
     resources :document_permissions, except: %i[show new], param: :public_id
-    resources :webhook_endpoints, except: %i[show new]
+    resources :webhook_endpoints, except: %i[show new], param: :public_id
     resources :access_logs, only: [:index]
     resources :access_requests, only: %i[index update], param: :public_id
     resources :document_usage_reports, only: [:index]
