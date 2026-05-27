@@ -61,7 +61,7 @@ Rails.application.routes.draw do
       post :request_run, on: :member
     end
     get "external_folder_sync_oauth_connections/callback", to: "external_folder_sync_oauth_connections#callback", as: :callback_external_folder_sync_oauth_connections
-    resources :external_folder_sync_sources, except: %i[new] do
+    resources :external_folder_sync_sources, except: %i[new], param: :public_id do
       post :dry_run, on: :member
       post :apply, on: :member
       post :force_apply, on: :member
