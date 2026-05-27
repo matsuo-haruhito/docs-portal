@@ -122,7 +122,7 @@ class DocusaurusSiteRenderer
     rewrite_url_attributes(document, "img", "src", absolute_path:)
     strip_embedded_docusaurus_chrome!(document) if @embedded
     inject_embedded_route_path!(document, site_path) if @embedded
-    annotate_document_tables!(document, site_path) unless @embedded
+    annotate_document_tables!(document, site_path)
     inject_portal_navigation!(document) unless @embedded
     inject_version_switcher!(document) unless @embedded
     inject_viewer_theme!(document)
