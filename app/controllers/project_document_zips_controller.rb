@@ -33,12 +33,14 @@ class ProjectDocumentZipsController < BaseController
   private
 
   def selected_versions(project)
-    documents = project.documents
-      .accessible_to(current_user)
-      .includes(:latest_version)
+    documents = filtered_documents(project)
 
-    ids = Array(params[:document_ids]).reject(&:blank?)
-    documents = documents.where(id: ids) if ids.any?
+    unless selecting_matching_documents?
+      ids = Array(params[:document_ids]).reject(&:blank?)
+      return [] if ids.empty?
+
+      documents = documents.where(id: ids)
+    end
 
     source_path = normalized_source_path
     documents = documents.select { |document| document_in_source_path?(document, source_path) } if source_path.present?
@@ -47,6 +49,20 @@ class ProjectDocumentZipsController < BaseController
       .select { _1.downloadable_by?(current_user) }
       .filter_map(&:latest_version)
       .select { _1.viewable_by?(current_user) }
+  end
+
+  def filtered_documents(project)
+    ProjectDocumentFilter.new(project:, user: current_user, filters: document_filter_params)
+      .call
+      .includes(:latest_version)
+  end
+
+  def document_filter_params
+    params.to_unsafe_h.symbolize_keys.slice(*ProjectDocumentFilter::FILTER_KEYS)
+  end
+
+  def selecting_matching_documents?
+    params[:selection_scope] == "matching"
   end
 
   def document_in_source_path?(document, source_path)

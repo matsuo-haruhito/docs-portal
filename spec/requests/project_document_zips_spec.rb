@@ -104,7 +104,30 @@ RSpec.describe "Project document zips", type: :request do
     expect(response.body).not_to include("view-only/v1.0.0/view-only.txt")
   end
 
-  it "shows current-page bulk selection controls on the document index while keeping unavailable documents disabled" do
+  it "downloads all matching documents across the current filters when matching selection is requested" do
+    external_user = create(:user, :external)
+    visible = create_document_with_file(title: "Alpha Visible", slug: "alpha-visible", file_name: "visible.txt", content: "visible")
+    hidden = create_document_with_file(title: "Alpha Hidden", slug: "alpha-hidden", file_name: "hidden.txt", content: "hidden")
+    create(:document, project:, title: "Alpha No Version", slug: "alpha-no-version")
+    other = create_document_with_file(title: "Beta Visible", slug: "beta-visible", file_name: "beta.txt", content: "beta")
+    create(:project_membership, project:, user: external_user)
+    create(:document_permission, document: visible, company: external_user.company, access_level: :download)
+    create(:document_permission, document: other, company: external_user.company, access_level: :download)
+
+    sign_in_as(external_user)
+
+    post project_document_zip_path(project), params: {
+      selection_scope: "matching",
+      q: "Alpha"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("alpha-visible/v1.0.0/visible.txt")
+    expect(response.body).not_to include("alpha-hidden/v1.0.0/hidden.txt")
+    expect(response.body).not_to include("beta-visible/v1.0.0/beta.txt")
+  end
+
+  it "shows page and matching bulk selection controls on the document index while keeping unavailable documents disabled" do
     available_document = create_document_with_file(title: "First", slug: "first", file_name: "README.md", content: "first")
     unavailable_document = create(:document, project:, title: "Unavailable", slug: "unavailable")
 
@@ -117,6 +140,7 @@ RSpec.describe "Project document zips", type: :request do
     expect(response.body).to include("選択した文書の最新版をZIPでダウンロード")
     expect(response.body).to include("ZIP出力オプション")
     expect(response.body).to include("このページを全選択")
+    expect(response.body).to include("検索結果1件を全選択")
     expect(response.body).to include("選択解除")
     expect(response.body).to include("0件選択中")
 
@@ -124,13 +148,53 @@ RSpec.describe "Project document zips", type: :request do
     available_checkbox = html.at_css("input#document_ids_#{available_document.id}")
     unavailable_checkbox = html.at_css("input#document_ids_#{unavailable_document.id}")
     count = html.at_css('[data-document-zip-selection-target="count"]')
+    scope_field = html.at_css('input[name="selection_scope"]')
 
     aggregate_failures do
       expect(available_checkbox["data-action"]).to include("document-zip-selection#sync")
       expect(available_checkbox["data-document-zip-selection-target"]).to eq("checkbox")
       expect(unavailable_checkbox["disabled"]).to eq("disabled")
       expect(count.text).to include("0件選択中")
+      expect(scope_field["value"]).to eq("explicit")
     end
+  end
+
+  it "does not reuse slash-containing keyword queries as zip source_path state" do
+    document = create(:document, project:, title: "guides/folder-guide", slug: "folder-guide")
+    version = create(:document_version, document:, version_label: "v1.0.0", source_relative_path: "guides/folder-guide/README.md")
+    document.update!(latest_version: version)
+
+    sign_in_as(user)
+
+    get project_documents_path(project), params: { q: "guides/folder-guide" }
+
+    expect(response).to have_http_status(:ok)
+
+    html = Nokogiri::HTML.parse(response.body)
+    zip_form = html.at_css("form[action='#{project_document_zip_path(project)}']")
+
+    aggregate_failures do
+      expect(zip_form.at_css('input[name="q"]')["value"]).to eq("guides/folder-guide")
+      expect(zip_form.at_css('input[name="source_path"]')).to be_nil
+    end
+  end
+
+  it "keeps upload-source folder context in the zip form" do
+    document = create(:document, project:, title: "Folder doc", slug: "folder-doc")
+    version = create(:document_version, document:, version_label: "v1.0.0", source_relative_path: "guides/folder-doc/README.md")
+    document.update!(latest_version: version)
+
+    sign_in_as(user)
+
+    get project_documents_path(project), params: { upload_source_path: "guides/folder-doc" }
+
+    expect(response).to have_http_status(:ok)
+
+    html = Nokogiri::HTML.parse(response.body)
+    zip_form = html.at_css("form[action='#{project_document_zip_path(project)}']")
+    source_path_field = zip_form.at_css('input[name="source_path"]')
+
+    expect(source_path_field["value"]).to eq("guides/folder-doc")
   end
 
   it "supports zip path and file type options" do
