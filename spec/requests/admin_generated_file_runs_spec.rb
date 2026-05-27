@@ -83,6 +83,26 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).not_to include(unmatched_date.public_id)
     end
 
+    it "preserves the current filters in the bulk retry form action" do
+      sign_in_as(admin_user)
+      create_run!(status: :failed)
+      filters = {
+        status: "failed",
+        generator: "ai_usecase_decision_flow",
+        output_writer: "document_version",
+        event_source: "manual_document_upload",
+        created_from: "2026-05-10",
+        created_to: "2026-05-11"
+      }
+
+      get admin_generated_file_runs_path(filters)
+
+      expect(response).to have_http_status(:ok)
+      bulk_retry_form = parsed_html.at_css(%(form[action="#{retry_failed_admin_generated_file_runs_path(filters)}"]))
+      expect(bulk_retry_form).to be_present
+      expect(bulk_retry_form.at_css("button")&.text).to include("失敗分を一括再実行")
+    end
+
     it "ignores invalid date filters" do
       sign_in_as(admin_user)
       run = create_run!(job_id: "ai_usecase_decision_flow")
@@ -223,16 +243,36 @@ RSpec.describe "Admin generated file runs", type: :request do
   end
 
   describe "POST /admin/generated_file_runs/retry_failed" do
-    it "bulk retries only failed runs matching filters" do
+    it "bulk retries only failed runs matching the current filters and preserves them in the redirect" do
       sign_in_as(admin_user)
-      matched = create_run!(job_id: "matched_job", status: :failed, output_writer: "document_version", changed_files: ["matched.yml"])
-      create_run!(job_id: "completed_job", status: :completed, output_writer: "document_version")
-      create_run!(job_id: "other_writer_job", status: :failed, output_writer: "filesystem")
+      matched = create_run!(
+        job_id: "matched_job",
+        generator: "ai_usecase_decision_flow",
+        status: :failed,
+        output_writer: "document_version",
+        event_source: "manual_document_upload",
+        changed_files: ["matched.yml"],
+        created_at: Time.zone.parse("2026-05-10 12:00:00")
+      )
+      create_run!(job_id: "completed_job", generator: "ai_usecase_decision_flow", status: :completed, output_writer: "document_version", event_source: "manual_document_upload")
+      create_run!(job_id: "other_generator_job", generator: "other_generator", status: :failed, output_writer: "document_version", event_source: "manual_document_upload")
+      create_run!(job_id: "other_writer_job", generator: "ai_usecase_decision_flow", status: :failed, output_writer: "filesystem", event_source: "manual_document_upload")
+      create_run!(job_id: "other_source_job", generator: "ai_usecase_decision_flow", status: :failed, output_writer: "document_version", event_source: "scheduled_sync")
+      create_run!(job_id: "other_date_job", generator: "ai_usecase_decision_flow", status: :failed, output_writer: "document_version", event_source: "manual_document_upload", created_at: Time.zone.parse("2026-05-09 12:00:00"))
       allow(GeneratedFileJob).to receive(:perform_later)
 
-      post retry_failed_admin_generated_file_runs_path(output_writer: "document_version")
+      filters = {
+        status: "failed",
+        generator: "ai_usecase_decision_flow",
+        output_writer: "document_version",
+        event_source: "manual_document_upload",
+        created_from: "2026-05-10",
+        created_to: "2026-05-10"
+      }
 
-      expect(response).to redirect_to(admin_generated_file_runs_path(output_writer: "document_version"))
+      post retry_failed_admin_generated_file_runs_path(filters)
+
+      expect(response).to redirect_to(admin_generated_file_runs_path(filters))
       expect(GeneratedFileJob).to have_received(:perform_later).once.with(
         changed_files: ["matched.yml"],
         job_ids: ["matched_job"],
