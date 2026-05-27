@@ -5,8 +5,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   before_action :ensure_google_drive_runtime_supported!, only: %i[dry_run apply force_apply enqueue subscribe unsubscribe]
 
   def index
-    @external_folder_sync_sources = external_folder_sync_sources_scope
-    @latest_runs_by_source_id = latest_runs_by_source_id(@external_folder_sync_sources)
+    load_index_state
     @external_folder_sync_source = ExternalFolderSyncSource.new(
       provider: :google_drive,
       auth_type: :oauth_user,
@@ -137,8 +136,11 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def load_index_state
-    @external_folder_sync_sources = external_folder_sync_sources_scope
-    @latest_runs_by_source_id = latest_runs_by_source_id(@external_folder_sync_sources)
+    base_sources = external_folder_sync_sources_scope.to_a
+    @latest_runs_by_source_id = latest_runs_by_source_id(base_sources)
+    @review_filter_counts = review_filter_counts(base_sources)
+    @selected_review_filter = normalize_review_filter(params[:review])
+    @external_folder_sync_sources = filter_external_folder_sync_sources(base_sources)
   end
 
   def ensure_google_drive_runtime_supported!
@@ -151,6 +153,44 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     ExternalFolderSyncSource.includes(:project, :created_by).order(:provider, :name, :id)
   end
 
+  def filter_external_folder_sync_sources(sources)
+    sources.select { |source| review_filter_matches?(source, @selected_review_filter) }
+  end
+
+  def review_filter_counts(sources)
+    {
+      all: sources.size,
+      warnings: sources.count { |source| conflict_warnings_count(source).positive? },
+      errors: sources.count { |source| latest_error_message(source).present? },
+      disabled: sources.count { |source| !source.enabled? },
+      google_drive: sources.count(&:google_drive?),
+      microsoft_graph: sources.count(&:microsoft_graph?)
+    }
+  end
+
+  def normalize_review_filter(value)
+    return value if %w[warnings errors disabled google_drive microsoft_graph].include?(value)
+
+    nil
+  end
+
+  def review_filter_matches?(source, selected_review_filter)
+    case selected_review_filter
+    when "warnings"
+      conflict_warnings_count(source).positive?
+    when "errors"
+      latest_error_message(source).present?
+    when "disabled"
+      !source.enabled?
+    when "google_drive"
+      source.google_drive?
+    when "microsoft_graph"
+      source.microsoft_graph?
+    else
+      true
+    end
+  end
+
   def latest_runs_by_source_id(sources)
     source_ids = sources.map(&:id)
     ExternalFolderSyncRun
@@ -158,6 +198,18 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
       .order(started_at: :desc, id: :desc)
       .group_by(&:external_folder_sync_source_id)
       .transform_values(&:first)
+  end
+
+  def latest_run_for(source)
+    @latest_runs_by_source_id[source.id]
+  end
+
+  def conflict_warnings_count(source)
+    latest_run_for(source)&.summary_json&.fetch("conflict_warnings_count", 0).to_i
+  end
+
+  def latest_error_message(source)
+    latest_run_for(source)&.error_message.presence || source.last_error_message.presence
   end
 
   def latest_run
