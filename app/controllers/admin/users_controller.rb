@@ -1,6 +1,7 @@
 class Admin::UsersController < Admin::BaseController
   before_action :set_user, only: %i[edit update destroy]
   before_action :load_companies, only: %i[index create edit update]
+  before_action :prepare_form_context, only: %i[index create edit update]
 
   def index
     @users = user_scope.includes(:company).order(:email_address)
@@ -46,6 +47,11 @@ class Admin::UsersController < Admin::BaseController
 
   def load_companies
     @companies = company_master_admin? ? Company.where(id: current_user.company_id) : Company.order(:domain)
+  end
+
+  def prepare_form_context
+    @company_admin_user_form = company_master_admin?
+    @fixed_company_for_form = current_user.company if @company_admin_user_form
   end
 
   def user_params
