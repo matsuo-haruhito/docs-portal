@@ -91,7 +91,7 @@ RSpec.describe "Document site table preferences", type: :system do
 
     within_frame(find("iframe.site-viewer-frame")) do
       expect(page).to have_css(".portal-table-width-frame", count: 2, wait: 10)
-      expect(page).to have_css(".portal-table-preference-panel", count: 2, wait: 10)
+      expect(page).to have_css(".portal-table-preference-panel", count: 2, visible: :all, wait: 10)
     end
   end
 
