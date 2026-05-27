@@ -45,4 +45,12 @@ module Admin::AccessLogsHelper
       [label, user.id]
     end
   end
+
+  def access_log_company_secondary_label(company)
+    company&.domain.presence
+  end
+
+  def access_log_project_secondary_label(project)
+    project&.code.presence
+  end
 end
