@@ -20,6 +20,9 @@ class DocumentsController < BaseController
     documents_scope = filtered_documents.recommended_first.includes(:latest_version, :document_tags, :document_keywords, document_versions: :document_files)
     visible_documents = current_user.internal? ? documents_scope.to_a : documents_scope.to_a.select { |document| document.visible_in_portal_for?(current_user) }
     @documents_count = visible_documents.size
+    @selectable_documents_count = visible_documents.count do |document|
+      document.latest_version.present? && document.downloadable_by?(current_user) && document.latest_version.viewable_by?(current_user)
+    end
     @current_page = normalized_page
     @per_page = DOCUMENTS_PER_PAGE
     @total_pages = [(@documents_count.to_f / @per_page).ceil, 1].max
