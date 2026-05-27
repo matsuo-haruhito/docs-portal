@@ -50,18 +50,62 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
   end
 
   def load_index_state
-    @microsoft_graph_connections = microsoft_graph_connections_scope
-    project_ids = @microsoft_graph_connections.map(&:project_id)
+    base_connections = microsoft_graph_connections_scope.to_a
+    project_ids = base_connections.map(&:project_id)
     @preview_connection_ids_by_project = MicrosoftGraphConnection.preview_selected_ids_by_project(project_ids)
     @duplicate_enabled_project_ids = MicrosoftGraphConnection.enabled_only.where(project_id: project_ids)
       .group(:project_id)
       .having("COUNT(*) > 1")
       .count
       .keys
+    @duplicate_projects = base_connections.select { |connection| @duplicate_enabled_project_ids.include?(connection.project_id) }.map(&:project).uniq
+    @preview_usage_counts = preview_usage_counts(base_connections)
+    @selected_preview_usage = normalize_preview_usage(params[:preview_usage])
+    @duplicate_only = params[:duplicate_only] == "1"
+    @microsoft_graph_connections = filter_connections(base_connections)
   end
 
   def microsoft_graph_connections_scope
     MicrosoftGraphConnection.includes(:project, :created_by).order(:name, :id)
+  end
+
+  def filter_connections(connections)
+    filtered = connections.select { |connection| preview_usage_matches?(connection, @selected_preview_usage) }
+    return filtered unless @duplicate_only
+
+    filtered.select { |connection| @duplicate_enabled_project_ids.include?(connection.project_id) }
+  end
+
+  def preview_usage_counts(connections)
+    {
+      all: connections.size,
+      preview_selected: connections.count { |connection| preview_selected_connection?(connection) },
+      enabled_unused: connections.count { |connection| connection.enabled? && !preview_selected_connection?(connection) },
+      disabled: connections.count { |connection| !connection.enabled? }
+    }
+  end
+
+  def normalize_preview_usage(value)
+    return value if %w[preview_selected enabled_unused disabled].include?(value)
+
+    nil
+  end
+
+  def preview_usage_matches?(connection, selected_preview_usage)
+    case selected_preview_usage
+    when "preview_selected"
+      preview_selected_connection?(connection)
+    when "enabled_unused"
+      connection.enabled? && !preview_selected_connection?(connection)
+    when "disabled"
+      !connection.enabled?
+    else
+      true
+    end
+  end
+
+  def preview_selected_connection?(connection)
+    connection.enabled? && @preview_connection_ids_by_project[connection.project_id] == connection.id
   end
 
   def microsoft_graph_connection_params
