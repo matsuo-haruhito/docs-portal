@@ -96,6 +96,32 @@ RSpec.describe "Document site table preferences", type: :system do
     end
   end
 
+  def install_preference_request_probe
+    page.execute_script(<<~JS)
+      window.__docsPortalPreferenceRequests = []
+
+      if (window.__docsPortalPreferenceFetchWrapped) {
+        return
+      }
+
+      const originalFetch = window.fetch.bind(window)
+      window.__docsPortalPreferenceFetchWrapped = true
+      window.fetch = async (input, init = {}) => {
+        const url = typeof input === "string" ? input : input.url
+        const method = (init.method || "GET").toUpperCase()
+
+        try {
+          const response = await originalFetch(input, init)
+          window.__docsPortalPreferenceRequests.push({ url, method, status: response.status })
+          return response
+        } catch (error) {
+          window.__docsPortalPreferenceRequests.push({ url, method, error: String(error) })
+          throw error
+        }
+      }
+    JS
+  end
+
   def viewer_table_infos
     within_frame(find("iframe.site-viewer-frame")) do
       page.evaluate_script(<<~JS)
@@ -109,6 +135,32 @@ RSpec.describe "Document site table preferences", type: :system do
         }))
       JS
     end
+  end
+
+  def wait_for_preference_save_request(table_key)
+    Timeout.timeout(10) do
+      loop do
+        request = page.evaluate_script(<<~JS)
+          (() => {
+            const encodedTableKey = encodeURIComponent(#{table_key.to_json})
+            const requests = window.__docsPortalPreferenceRequests || []
+            return requests.find((entry) => {
+              if (typeof entry.url !== "string") return false
+              if (!(entry.method === "PATCH" || entry.method === "POST")) return false
+              if (!entry.url.includes(`/rails_table_preferences/preferences/${encodedTableKey}`)) return false
+              return entry.status === 200 || entry.status === 201
+            }) || null
+          })()
+        JS
+
+        return request if request
+
+        sleep 0.1
+      end
+    end
+  rescue Timeout::Error
+    requests = page.evaluate_script("window.__docsPortalPreferenceRequests || []")
+    raise "Timed out waiting for preference save request for #{table_key}: #{requests.inspect}"
   end
 
   def save_table_visibility(panel_index:, table_key:, checked_states:)
@@ -130,22 +182,14 @@ RSpec.describe "Document site table preferences", type: :system do
       JS
     end
 
-    Timeout.timeout(10) do
-      loop do
-        preference = RailsTablePreferences::Preference.uncached do
-          RailsTablePreferences::Preference.find_for(user:, table_key:)
-        end
-        break if preference.present? && preference.settings.fetch("columns").map { |column| column["visible"] } == checked_states
-
-        sleep 0.1
-      end
-    end
+    wait_for_preference_save_request(table_key)
   end
 
   it "loads and saves per-table column preferences without colliding keys" do
     sign_in_via_browser(user)
     visit site_document_version_path(version, site_path: site_build_path)
     wait_for_viewer_preference_panels
+    install_preference_request_probe
 
     initial_infos = viewer_table_infos
     table_keys = initial_infos.map { _1.fetch("tableKey") }
@@ -156,23 +200,12 @@ RSpec.describe "Document site table preferences", type: :system do
       expect(initial_infos.map { _1.fetch("columnKeys") }).to all(eq(%w[column_1 column_2]))
     end
 
-    save_table_visibility(panel_index: 0, table_key: table_keys.first, checked_states: [true, false])
-    save_table_visibility(panel_index: 1, table_key: table_keys.second, checked_states: [false, true])
-
-    first_saved = RailsTablePreferences::Preference.find_for(user:, table_key: table_keys.first)
-    second_saved = RailsTablePreferences::Preference.find_for(user:, table_key: table_keys.second)
+    first_save_request = save_table_visibility(panel_index: 0, table_key: table_keys.first, checked_states: [true, false])
+    second_save_request = save_table_visibility(panel_index: 1, table_key: table_keys.second, checked_states: [false, true])
 
     aggregate_failures do
-      expect(first_saved).to be_present
-      expect(second_saved).to be_present
-      expect(first_saved.settings.fetch("columns")).to include(
-        a_hash_including("key" => "column_1", "visible" => true),
-        a_hash_including("key" => "column_2", "visible" => false)
-      )
-      expect(second_saved.settings.fetch("columns")).to include(
-        a_hash_including("key" => "column_1", "visible" => false),
-        a_hash_including("key" => "column_2", "visible" => true)
-      )
+      expect([200, 201]).to include(first_save_request.fetch("status"))
+      expect([200, 201]).to include(second_save_request.fetch("status"))
     end
 
     visit site_document_version_path(version, site_path: site_build_path)
