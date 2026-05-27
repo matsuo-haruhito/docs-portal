@@ -110,40 +110,26 @@ RSpec.describe "Document site table preferences", type: :system do
     end
   end
 
-  def post_default_preference(table_key, settings)
-    page.evaluate_async_script(<<~JS)
-      const done = arguments[0]
+  def save_table_visibility(panel_index:, checked_states:)
+    within_frame(find("iframe.site-viewer-frame")) do
+      statements = checked_states.each_with_index.map do |checked, index|
+        "checkboxes[#{index}].checked = #{checked ? 'true' : 'false'}"
+      end.join("\n")
 
-      fetch(`/rails_table_preferences/preferences/${encodeURIComponent(#{table_key.to_json})}`, {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content || ""
-        },
-        body: JSON.stringify({ name: "default", settings: #{settings.to_json} })
-      })
-        .then(async (response) => done({ status: response.status, body: await response.json() }))
-        .catch((error) => done({ error: String(error) }))
-    JS
-  end
+      page.execute_script(<<~JS)
+        const panel = document.querySelectorAll(".portal-table-preference-panel")[#{panel_index}]
+        panel.open = true
 
-  def fetch_default_preference(table_key)
-    page.evaluate_async_script(<<~JS)
-      const done = arguments[0]
+        const checkboxes = panel.querySelectorAll('input[type="checkbox"]')
+        #{statements}
 
-      fetch(`/rails_table_preferences/preferences/${encodeURIComponent(#{table_key.to_json})}/default`, {
-        headers: { "Accept": "application/json" }
-      })
-        .then(async (response) => done({ status: response.status, body: await response.json() }))
-        .catch((error) => done({ error: String(error) }))
-    JS
-  end
+        Array.from(panel.querySelectorAll("button"))
+          .find((button) => button.textContent.trim() === "保存")
+          ?.click()
+      JS
 
-  def reload_viewer_frame
-    frame = find("iframe.site-viewer-frame")
-    page.execute_script("arguments[0].src = arguments[0].src", frame)
-    wait_for_viewer_preference_panels
+      expect(page).to have_text("保存しました", wait: 10)
+    end
   end
 
   it "loads and saves per-table column preferences without colliding keys" do
@@ -160,33 +146,27 @@ RSpec.describe "Document site table preferences", type: :system do
       expect(initial_infos.map { _1.fetch("columnKeys") }).to all(eq(%w[column_1 column_2]))
     end
 
-    first_preference = post_default_preference(
-      table_keys.first,
-      {
-        columns: [
-          { key: "column_1", visible: true, order: 10 },
-          { key: "column_2", visible: false, order: 20 }
-        ],
-        filters: {},
-        sorts: []
-      }
-    )
-    second_preference = post_default_preference(
-      table_keys.second,
-      {
-        columns: [
-          { key: "column_1", visible: false, order: 10 },
-          { key: "column_2", visible: true, order: 20 }
-        ],
-        filters: {},
-        sorts: []
-      }
-    )
+    save_table_visibility(panel_index: 0, checked_states: [true, false])
+    save_table_visibility(panel_index: 1, checked_states: [false, true])
 
-    expect(first_preference).to include("status" => 201)
-    expect(second_preference).to include("status" => 201)
+    first_saved = RailsTablePreferences::Preference.find_for(user:, table_key: table_keys.first)
+    second_saved = RailsTablePreferences::Preference.find_for(user:, table_key: table_keys.second)
 
-    reload_viewer_frame
+    aggregate_failures do
+      expect(first_saved).to be_present
+      expect(second_saved).to be_present
+      expect(first_saved.settings.fetch("columns")).to include(
+        a_hash_including("key" => "column_1", "visible" => true),
+        a_hash_including("key" => "column_2", "visible" => false)
+      )
+      expect(second_saved.settings.fetch("columns")).to include(
+        a_hash_including("key" => "column_1", "visible" => false),
+        a_hash_including("key" => "column_2", "visible" => true)
+      )
+    end
+
+    visit site_document_version_path(version, site_path: site_build_path)
+    wait_for_viewer_preference_panels
 
     loaded_infos = viewer_table_infos
 
@@ -200,31 +180,5 @@ RSpec.describe "Document site table preferences", type: :system do
         a_hash_including("text" => "公開中", "hidden" => false)
       )
     end
-
-    within_frame(find("iframe.site-viewer-frame")) do
-      page.execute_script(<<~JS)
-        const panel = document.querySelectorAll(".portal-table-preference-panel")[1]
-        panel.open = true
-
-        const checkboxes = panel.querySelectorAll('input[type="checkbox"]')
-        checkboxes[0].checked = true
-        checkboxes[1].checked = false
-
-        Array.from(panel.querySelectorAll("button"))
-          .find((button) => button.textContent.trim() === "保存")
-          ?.click()
-      JS
-
-      expect(page).to have_text("保存しました", wait: 10)
-    end
-
-    saved_preference = fetch_default_preference(table_keys.second)
-    saved_columns = saved_preference.dig("body", "settings", "columns")
-
-    expect(saved_preference).to include("status" => 200)
-    expect(saved_columns).to include(
-      a_hash_including("key" => "column_1", "visible" => true),
-      a_hash_including("key" => "column_2", "visible" => false)
-    )
   end
 end
