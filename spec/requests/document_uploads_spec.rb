@@ -152,7 +152,7 @@ RSpec.describe "Document uploads", type: :request do
     expect(document.reload.latest_version).to eq(previous_version)
   end
 
-  it "creates a draft version when dropped on a document with the same filename" do
+  it "creates a new draft candidate version when dropped on a document with the same filename instead of overwriting latest_version" do
     sign_in_as(user)
     document = create(:document, project: project, title: "Guide", slug: "guide")
     version = create(:document_version, document: document)

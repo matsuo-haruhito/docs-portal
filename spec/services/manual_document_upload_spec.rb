@@ -65,7 +65,7 @@ RSpec.describe ManualDocumentUpload do
     end
   end
 
-  it "notifies an update file event after uploading a new version for an existing document" do
+  it "adds a new manual version for an existing document instead of overwriting latest_version" do
     project = create(:project)
     actor = create(:user, :internal)
     notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
