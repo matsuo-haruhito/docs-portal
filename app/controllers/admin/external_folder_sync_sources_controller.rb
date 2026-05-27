@@ -5,8 +5,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   before_action :ensure_google_drive_runtime_supported!, only: %i[dry_run apply force_apply enqueue subscribe unsubscribe]
 
   def index
-    @external_folder_sync_sources = external_folder_sync_sources_scope
-    @latest_runs_by_source_id = latest_runs_by_source_id(@external_folder_sync_sources)
+    load_index_state
     @external_folder_sync_source = ExternalFolderSyncSource.new(
       provider: :google_drive,
       auth_type: :oauth_user,
