@@ -139,8 +139,8 @@ p.muted
       - value = @filters[key]
       - next if value.blank? || value == false
       = hidden_field_tag key, value
-    - if @selected_source_path.present?
-      = hidden_field_tag :source_path, @selected_source_path
+    - if @zip_source_path.present?
+      = hidden_field_tag :source_path, @zip_source_path
 
     .card
       h2 ZIP出力オプション
