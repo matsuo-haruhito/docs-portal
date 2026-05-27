@@ -15,7 +15,7 @@
       <p class="text-sm text-gray-600">ファイルCRUDイベントから起動された生成Jobの履歴です。</p>
     </div>
     <div class="text-right">
-      <%= button_to "失敗分を一括再実行", retry_failed_admin_generated_file_runs_path, method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
+      <%= button_to "失敗分を一括再実行", retry_failed_admin_generated_file_runs_path(@filters.compact_blank), method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
       <p class="mt-1 text-xs text-gray-500">一括再実行は古い失敗分から最大100件です。</p>
     </div>
   </div>
