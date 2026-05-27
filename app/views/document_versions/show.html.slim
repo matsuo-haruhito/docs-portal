@@ -350,46 +350,76 @@ h2#version-files 添付・元ファイル
 = render "preview_target_display_summary", summary: @preview_target_display_summary
 - classifications_by_path = @preview_target_display_summary&.classifications&.index_by(&:tree_path) || {}
 - file_rows = @version.document_files.order(:sort_order, :id).map { |file| [file, classifications_by_path[file.tree_path]] }
+- visible_ungrouped_paths = @preview_target_display_summary&.visible_ungrouped&.map(&:tree_path) || []
+- hidden_paths = @preview_target_display_summary&.hidden&.map(&:tree_path) || []
+- debug_paths = @preview_target_display_summary&.debug&.map(&:tree_path) || []
+- grouped_paths = @preview_target_display_summary&.grouped&.map(&:tree_path) || []
+- visible_rows = file_rows.select { |file, _classification| visible_ungrouped_paths.include?(file.tree_path) }
+- orphan_rows = file_rows.reject { |file, _classification| visible_ungrouped_paths.include?(file.tree_path) || hidden_paths.include?(file.tree_path) || debug_paths.include?(file.tree_path) || grouped_paths.include?(file.tree_path) }
+- file_browser_filters = [["all", "すべて"], ["visible", "通常"], ["grouped", "グループ"], ["hidden", "補助"], ["debug", "デバッグ"], ["other", "その他"]]
+
+.section-file-browser data-controller="document-file-browser"
+  label.form-field
+    span ファイル名・パス・グループ名で絞り込み
+    input type="search" name="version_file_query" placeholder="README / attachments/spec.pdf / diagrams" data-document-file-browser-target="query" data-action="input->document-file-browser#filter"
+  - if @preview_target_display_summary.present?
+    p.actions
+      - file_browser_filters.each do |kind, label|
+        button.button.secondary type="button" data-action="document-file-browser#selectKind" data-document-file-browser-kind-param=kind data-document-file-browser-target="filterButton" aria-pressed=(kind == "all").to_s = label
+  p.muted data-document-file-browser-target="status" = "#{file_rows.size}件を表示中 / 分類: すべて"
+  p.muted hidden=true data-document-file-browser-target="empty" 一致するファイルはありません。
+
 - if @preview_target_display_summary&.present?
-  - visible_ungrouped_paths = @preview_target_display_summary.visible_ungrouped.map(&:tree_path)
-  - hidden_paths = @preview_target_display_summary.hidden.map(&:tree_path)
-  - debug_paths = @preview_target_display_summary.debug.map(&:tree_path)
-  - grouped_paths = @preview_target_display_summary.grouped.map(&:tree_path)
-  h3 通常確認ファイル
-  p.muted 通常確認するファイルを先に表示し、補助ファイル・デバッグ用ファイル・グループごとの資料は下の専用セクションに分けています。
-  ul
-    - file_rows.select { |file, _classification| visible_ungrouped_paths.include?(file.tree_path) }.each do |file, classification|
-      = render "document_file_list_item", file:, classification:
+  - if visible_rows.any?
+    section data-document-file-browser-target="section" data-section-kind="visible" data-section-search="通常確認ファイル"
+      h3 通常確認ファイル
+      p.muted 通常確認するファイルを先に表示し、補助ファイル・デバッグ用ファイル・グループごとの資料は下の専用セクションに分けています。
+      ul
+        - visible_rows.each do |file, classification|
+          - item_search = [file.file_name, file.tree_path, classification&.role].compact.join(" ")
+          = render "document_file_list_item", file:, classification:, li_options: { data: { document_file_browser_target: "item", item_kind: "visible", item_search: item_search } }
   - @preview_target_display_summary.groups.each do |group_name, classifications|
     - group_paths = classifications.map(&:tree_path)
-    details open=true
-      summary グループ: #{group_name} #{classifications.count}件
-      ul
-        - file_rows.select { |file, _classification| group_paths.include?(file.tree_path) }.each do |file, classification|
-          = render "document_file_list_item", file:, classification:
+    - group_rows = file_rows.select { |file, _classification| group_paths.include?(file.tree_path) }
+    section data-document-file-browser-target="section" data-section-kind="grouped" data-section-search="グループ #{group_name}"
+      details open=true
+        summary グループ: #{group_name} #{classifications.count}件
+        ul
+          - group_rows.each do |file, classification|
+            - item_search = [file.file_name, file.tree_path, classification&.role, group_name].compact.join(" ")
+            = render "document_file_list_item", file:, classification:, li_options: { data: { document_file_browser_target: "item", item_kind: "grouped", item_search: item_search } }
   - if @preview_target_display_summary.hidden.any?
-    details
-      summary 補助ファイル #{@preview_target_display_summary.hidden.count}件
-      p.muted 通常の確認対象から外している内部資料や補助ファイルです。必要なときだけ展開して確認します。
-      ul
-        - file_rows.select { |file, _classification| hidden_paths.include?(file.tree_path) }.each do |file, classification|
-          = render "document_file_list_item", file:, classification:
+    - hidden_rows = file_rows.select { |file, _classification| hidden_paths.include?(file.tree_path) }
+    section data-document-file-browser-target="section" data-section-kind="hidden" data-section-search="補助ファイル"
+      details
+        summary 補助ファイル #{@preview_target_display_summary.hidden.count}件
+        p.muted 通常の確認対象から外している内部資料や補助ファイルです。必要なときだけ展開して確認します。
+        ul
+          - hidden_rows.each do |file, classification|
+            - item_search = [file.file_name, file.tree_path, classification&.role].compact.join(" ")
+            = render "document_file_list_item", file:, classification:, li_options: { data: { document_file_browser_target: "item", item_kind: "hidden", item_search: item_search } }
   - if @preview_target_display_summary.debug.any?
-    details
-      summary デバッグ用ファイル #{@preview_target_display_summary.debug.count}件
-      p.muted レンダリング確認や調査用のファイルです。通常閲覧では優先度を下げています。
-      ul
-        - file_rows.select { |file, _classification| debug_paths.include?(file.tree_path) }.each do |file, classification|
-          = render "document_file_list_item", file:, classification:
-  - orphan_rows = file_rows.reject { |file, _classification| visible_ungrouped_paths.include?(file.tree_path) || hidden_paths.include?(file.tree_path) || debug_paths.include?(file.tree_path) || grouped_paths.include?(file.tree_path) }
+    - debug_rows = file_rows.select { |file, _classification| debug_paths.include?(file.tree_path) }
+    section data-document-file-browser-target="section" data-section-kind="debug" data-section-search="デバッグ用ファイル"
+      details
+        summary デバッグ用ファイル #{@preview_target_display_summary.debug.count}件
+        p.muted レンダリング確認や調査用のファイルです。通常閲覧では優先度を下げています。
+        ul
+          - debug_rows.each do |file, classification|
+            - item_search = [file.file_name, file.tree_path, classification&.role].compact.join(" ")
+            = render "document_file_list_item", file:, classification:, li_options: { data: { document_file_browser_target: "item", item_kind: "debug", item_search: item_search } }
   - if orphan_rows.any?
-    h3 その他のファイル
-    ul
-      - orphan_rows.each do |file, classification|
-        = render "document_file_list_item", file:, classification:
+    section data-document-file-browser-target="section" data-section-kind="other" data-section-search="その他のファイル"
+      h3 その他のファイル
+      ul
+        - orphan_rows.each do |file, classification|
+          - item_search = [file.file_name, file.tree_path, classification&.role].compact.join(" ")
+          = render "document_file_list_item", file:, classification:, li_options: { data: { document_file_browser_target: "item", item_kind: "other", item_search: item_search } }
 - else
-  ul
-    - file_rows.each do |file, classification|
-      = render "document_file_list_item", file:, classification:
+  section data-document-file-browser-target="section" data-section-kind="all" data-section-search="添付・元ファイル"
+    ul
+      - file_rows.each do |file, classification|
+        - item_search = [file.file_name, file.tree_path].compact.join(" ")
+        = render "document_file_list_item", file:, classification:, li_options: { data: { document_file_browser_target: "item", item_kind: "all", item_search: item_search } }
 
 = render "documents/comment_workspace", floating: false, comment_target_version: @version
