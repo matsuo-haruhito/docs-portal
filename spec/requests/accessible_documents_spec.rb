@@ -2,14 +2,24 @@ require "rails_helper"
 
 RSpec.describe "AccessibleDocuments", type: :request do
   let(:company) { create(:company) }
-  let(:project_a) { create(:project, name: "Alpha Project") }
-  let(:project_b) { create(:project, name: "Beta Project") }
+  let(:project_a) { create(:project, name: "Alpha Project", code: "ALPHA") }
+  let(:project_b) { create(:project, name: "Beta Project", code: "BETA") }
   let(:user) { create(:user, :external, company:) }
 
   def create_viewable_document(project:, title:, slug:)
     document = create(:document, project:, title:, slug:, visibility_policy: :restricted_external)
     create(:document_permission, document:, company:, access_level: :view)
     document
+  end
+
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def project_column_texts
+    parsed_html.css("table tbody tr td:first-child").map do |cell|
+      cell.text.split.join(" ")
+    end
   end
 
   before do
@@ -28,7 +38,7 @@ RSpec.describe "AccessibleDocuments", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("閲覧可能文書")
     expect(response.body).to include(alpha.title, beta.title)
-    expect(response.body).to include(project_a.name, project_b.name)
+    expect(project_column_texts).to include("Alpha Project ALPHA", "Beta Project BETA")
     expect(response.body).not_to include(hidden.title)
   end
 
