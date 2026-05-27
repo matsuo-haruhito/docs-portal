@@ -42,7 +42,7 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
   private
 
   def set_microsoft_graph_connection
-    @microsoft_graph_connection = MicrosoftGraphConnection.find_by!(public_id: params[:id])
+    @microsoft_graph_connection = MicrosoftGraphConnection.find_by!(public_id: params[:public_id])
   end
 
   def load_form_collections

@@ -39,7 +39,7 @@ class Admin::WebhookEndpointsController < Admin::BaseController
   private
 
   def set_webhook_endpoint
-    @webhook_endpoint = WebhookEndpoint.find_by(id: params[:id]) || WebhookEndpoint.find_by!(public_id: params[:id])
+    @webhook_endpoint = WebhookEndpoint.find_by!(public_id: params[:public_id])
   end
 
   def webhook_endpoint_params
