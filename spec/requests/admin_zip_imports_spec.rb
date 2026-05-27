@@ -64,7 +64,7 @@ RSpec.describe "Admin zip imports", type: :request do
       }
     end.not_to change(ImportDryRun, :count)
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("ZIPインポート")
     expect(response.body).to include("ZIPUI / ZIP UI Project")
   end
