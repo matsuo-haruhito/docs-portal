@@ -44,8 +44,9 @@ RSpec.describe "Admin document sets index", type: :request do
     expect(row.at_css('td[data-rails-table-preferences-column-key="documents_count"]').text.squish).to include("1")
 
     actions_cell = row.at_css('td[data-rails-table-preferences-column-key="actions"]')
-    action_hrefs = actions_cell.css("a[href]").map { |link| link["href"] }
+    action_targets = actions_cell.css("a[href], form[action]").map { |node| node["href"] || node["action"] }
 
-    expect(action_hrefs).to include(edit_admin_document_set_path(document_set), admin_document_set_path(document_set))
+    expect(actions_cell.text.squish).to include("編集", "削除")
+    expect(action_targets).to include(edit_admin_document_set_path(document_set), admin_document_set_path(document_set))
   end
 end
