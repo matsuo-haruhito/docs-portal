@@ -225,3 +225,399 @@ function updateTableSearch(table, input, count) {
 
   count.textContent = query.length > 0 ? `${matchCount}件` : ""
 }
+
+function tableRows(table) {
+  return Array.from(table.rows).map((row) => Array.from(row.cells).map((cell) => cell.textContent.trim().replace(/\s+/g, " ")))
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "")
+  if (/[",\n\r]/.test(text)) return `"${text.replaceAll('"', '""')}"`
+  return text
+}
+
+function tableToCsv(table) {
+  return tableRows(table).map((row) => row.map(csvEscape).join(",")).join("\n")
+}
+
+function markdownEscape(value) {
+  return String(value ?? "").replaceAll("|", "\\|").replace(/\s+/g, " ").trim()
+}
+
+function tableToMarkdown(table) {
+  const rows = tableRows(table)
+  if (rows.length === 0) return ""
+
+  const columnCount = Math.max(...rows.map((row) => row.length), 0)
+  const normalizedRows = rows.map((row) => Array.from({ length: columnCount }, (_, index) => markdownEscape(row[index] || "")))
+  const header = normalizedRows[0]
+  const separator = Array.from({ length: columnCount }, () => "---")
+  const body = normalizedRows.slice(1)
+
+  return [header, separator, ...body].map((row) => `| ${row.join(" | ")} |`).join("\n")
+}
+
+async function copyText(text, status) {
+  try {
+    await navigator.clipboard.writeText(text)
+    status.textContent = "コピーしました"
+  } catch (_error) {
+    status.textContent = "コピーできませんでした"
+  }
+
+  window.setTimeout(() => {
+    status.textContent = ""
+  }, 1800)
+}
+
+function createToolbarGroup(frameDocument, labelText) {
+  const group = frameDocument.createElement("span")
+  group.className = "portal-table-toolbar-group"
+
+  const label = frameDocument.createElement("span")
+  label.className = "portal-table-toolbar-label"
+  label.textContent = labelText
+  group.appendChild(label)
+
+  return group
+}
+
+function toolbarInsertionTarget(toolbar) {
+  return toolbar.querySelector(".portal-table-width-toolbar-body") || toolbar
+}
+
+function csrfToken() {
+  return document.querySelector("meta[name='csrf-token']")?.content || ""
+}
+
+function preferenceCollectionUrl(tableKey) {
+  return `${TABLE_PREFERENCE_COLLECTION_PATH}/${encodeURIComponent(tableKey)}`
+}
+
+function preferencePresetUrl(tableKey, name = "default") {
+  return `${preferenceCollectionUrl(tableKey)}/${encodeURIComponent(name)}`
+}
+
+function tableColumnDefinitions(table) {
+  const headerRow = table.tHead?.rows?.[0] || table.rows?.[0]
+  if (!headerRow) return []
+
+  return Array.from(headerRow.cells).map((cell, index) => {
+    const key = cell.dataset.railsTablePreferencesColumnKey || `column_${index + 1}`
+    cell.dataset.railsTablePreferencesColumnKey = key
+
+    return {
+      key,
+      label: cell.textContent.trim() || `列${index + 1}`,
+      index
+    }
+  })
+}
+
+function tableCellsForColumn(table, columnIndex) {
+  return Array.from(table.rows)
+    .map((row) => row.cells[columnIndex])
+    .filter(Boolean)
+}
+
+function normalizePreferenceColumns(definitions, settings = {}) {
+  const savedColumns = new Map(Array.isArray(settings.columns) ? settings.columns.map((column) => [column.key, column]) : [])
+  return definitions.map((definition, index) => {
+    const saved = savedColumns.get(definition.key) || {}
+    return {
+      key: definition.key,
+      label: definition.label,
+      order: saved.order ?? (index + 1) * 10,
+      visible: saved.visible !== false
+    }
+  })
+}
+
+function preferenceSettingsPayload(definitions, settings = {}) {
+  return {
+    columns: normalizePreferenceColumns(definitions, settings)
+  }
+}
+
+function applyTablePreferences(table, definitions, settings = {}) {
+  const columns = normalizePreferenceColumns(definitions, settings)
+  columns.forEach((column, columnIndex) => {
+    tableCellsForColumn(table, columnIndex).forEach((cell) => {
+      cell.hidden = column.visible === false
+    })
+  })
+}
+
+function renderPreferenceRows(frameDocument, rowsContainer, definitions, settings) {
+  rowsContainer.innerHTML = ""
+
+  normalizePreferenceColumns(definitions, settings).forEach((column) => {
+    const label = frameDocument.createElement("label")
+    label.className = "portal-table-preference-panel__row"
+
+    const checkbox = frameDocument.createElement("input")
+    checkbox.type = "checkbox"
+    checkbox.checked = column.visible !== false
+    checkbox.dataset.preferenceColumnKey = column.key
+
+    const text = frameDocument.createElement("span")
+    text.textContent = column.label
+
+    label.append(checkbox, text)
+    rowsContainer.appendChild(label)
+  })
+}
+
+function settingsFromPreferenceEditor(rowsContainer, definitions) {
+  const visibleByKey = new Map(
+    Array.from(rowsContainer.querySelectorAll("input[data-preference-column-key]"))
+      .map((input) => [input.dataset.preferenceColumnKey, input.checked])
+  )
+
+  return {
+    columns: definitions.map((definition, index) => ({
+      key: definition.key,
+      label: definition.label,
+      order: (index + 1) * 10,
+      visible: visibleByKey.get(definition.key) !== false
+    }))
+  }
+}
+
+async function readPreferenceSettings(tableKey) {
+  const response = await fetch(preferencePresetUrl(tableKey), {
+    headers: { Accept: "application/json" },
+    cache: "no-store"
+  })
+
+  if (response.status === 404) return null
+  if (!response.ok) throw new Error(`Failed to load table preferences: ${response.status}`)
+  return response.json()
+}
+
+async function writePreferenceSettings(tableKey, settings) {
+  const headers = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-CSRF-Token": csrfToken()
+  }
+
+  const patchResponse = await fetch(preferencePresetUrl(tableKey), {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ settings })
+  })
+
+  if (patchResponse.ok) return patchResponse.json()
+  if (patchResponse.status !== 404) throw new Error(`Failed to save table preferences: ${patchResponse.status}`)
+
+  const createResponse = await fetch(preferenceCollectionUrl(tableKey), {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ name: "default", settings })
+  })
+
+  if (!createResponse.ok) throw new Error(`Failed to create table preferences: ${createResponse.status}`)
+  return createResponse.json()
+}
+
+function ensurePreferencePanel(frameDocument, displayGroup) {
+  let panel = displayGroup.querySelector(".portal-table-preference-panel")
+  if (panel) return panel
+
+  panel = frameDocument.createElement("details")
+  panel.className = "portal-table-preference-panel"
+
+  const summary = frameDocument.createElement("summary")
+  summary.textContent = "列表示"
+
+  const body = frameDocument.createElement("div")
+  body.className = "portal-table-preference-panel__body"
+
+  const rows = frameDocument.createElement("div")
+  rows.className = "portal-table-preference-panel__rows"
+
+  const actions = frameDocument.createElement("div")
+  actions.className = "portal-table-preference-panel__actions"
+
+  const saveButton = frameDocument.createElement("button")
+  saveButton.type = "button"
+  saveButton.className = "portal-table-width-button"
+  saveButton.textContent = "保存"
+  saveButton.dataset.preferenceAction = "save"
+
+  const status = frameDocument.createElement("span")
+  status.className = "portal-table-preference-status"
+  status.setAttribute("aria-live", "polite")
+
+  actions.append(saveButton, status)
+  body.append(rows, actions)
+  panel.append(summary, body)
+  displayGroup.appendChild(panel)
+  return panel
+}
+
+function installPreferencePanel(frameDocument, table, displayGroup, copyStatus) {
+  const definitions = tableColumnDefinitions(table)
+  if (definitions.length === 0) return
+
+  const tableKey = table.dataset.railsTablePreferencesTableKey
+  if (!tableKey) return
+
+  const panel = ensurePreferencePanel(frameDocument, displayGroup)
+  const rowsContainer = panel.querySelector(".portal-table-preference-panel__rows")
+  const saveButton = panel.querySelector("[data-preference-action='save']")
+  const status = panel.querySelector(".portal-table-preference-status")
+
+  const setStatus = (message) => {
+    status.textContent = message
+  }
+
+  const applyAndRender = (settings) => {
+    applyTablePreferences(table, definitions, settings)
+    renderPreferenceRows(frameDocument, rowsContainer, definitions, settings)
+  }
+
+  applyAndRender({})
+
+  readPreferenceSettings(tableKey)
+    .then((payload) => {
+      if (!payload) return
+      applyAndRender(payload.settings || {})
+      setStatus("保存済み設定を読み込みました")
+    })
+    .catch(() => {
+      setStatus("保存済み設定を読み込めませんでした")
+    })
+
+  saveButton.addEventListener("click", async () => {
+    const settings = settingsFromPreferenceEditor(rowsContainer, definitions)
+    applyTablePreferences(table, definitions, settings)
+    setStatus("保存中...")
+
+    try {
+      const payload = await writePreferenceSettings(tableKey, settings)
+      applyAndRender(payload.settings || settings)
+      setStatus("保存しました")
+      copyStatus.textContent = ""
+    } catch (_error) {
+      setStatus("保存できませんでした")
+    }
+  })
+}
+
+function enhanceTablesInFrame(frame) {
+  const frameDocument = frame.contentDocument
+  if (!frameDocument?.body) return
+
+  injectTableSearchStyle(frameDocument)
+
+  frameDocument.querySelectorAll(".portal-table-width-frame").forEach((wrapper, fallbackIndex) => {
+    if (wrapper.dataset.tableSearchReady === "true") return
+    const table = wrapper.querySelector("table")
+    const toolbar = wrapper.querySelector(".portal-table-width-toolbar")
+    if (!table || !toolbar) return
+
+    wrapper.dataset.tableSearchReady = "true"
+    const index = tableIndex(wrapper, fallbackIndex)
+
+    const utilityBar = frameDocument.createElement("div")
+    utilityBar.className = "portal-table-utility-bar"
+
+    const searchGroup = createToolbarGroup(frameDocument, "検索")
+    const displayGroup = createToolbarGroup(frameDocument, "表示")
+    const copyGroup = createToolbarGroup(frameDocument, "コピー")
+
+    const search = frameDocument.createElement("label")
+    search.className = "portal-table-search"
+
+    const input = frameDocument.createElement("input")
+    input.type = "search"
+    input.placeholder = "キーワード"
+    input.setAttribute("aria-label", "表内を検索")
+
+    const count = frameDocument.createElement("span")
+    count.className = "portal-table-search-count"
+    count.setAttribute("aria-live", "polite")
+
+    const clearButton = frameDocument.createElement("button")
+    clearButton.type = "button"
+    clearButton.className = "portal-table-width-button"
+    clearButton.textContent = "クリア"
+
+    const resetSettingsButton = frameDocument.createElement("button")
+    resetSettingsButton.type = "button"
+    resetSettingsButton.className = "portal-table-width-button"
+    resetSettingsButton.textContent = "表示リセット"
+
+    const copyCsvButton = frameDocument.createElement("button")
+    copyCsvButton.type = "button"
+    copyCsvButton.className = "portal-table-width-button"
+    copyCsvButton.textContent = "CSV"
+
+    const copyMarkdownButton = frameDocument.createElement("button")
+    copyMarkdownButton.type = "button"
+    copyMarkdownButton.className = "portal-table-width-button"
+    copyMarkdownButton.textContent = "Markdown"
+
+    const copyStatus = frameDocument.createElement("span")
+    copyStatus.className = "portal-table-search-count"
+    copyStatus.setAttribute("aria-live", "polite")
+
+    search.appendChild(input)
+    search.appendChild(count)
+    searchGroup.appendChild(search)
+    searchGroup.appendChild(clearButton)
+    displayGroup.appendChild(resetSettingsButton)
+    copyGroup.appendChild(copyCsvButton)
+    copyGroup.appendChild(copyMarkdownButton)
+    copyGroup.appendChild(copyStatus)
+
+    utilityBar.appendChild(searchGroup)
+    utilityBar.appendChild(displayGroup)
+    utilityBar.appendChild(copyGroup)
+
+    const target = toolbarInsertionTarget(toolbar)
+    target.insertBefore(utilityBar, target.firstChild)
+
+    installPreferencePanel(frameDocument, table, displayGroup, copyStatus)
+
+    input.addEventListener("input", () => updateTableSearch(table, input, count))
+    clearButton.addEventListener("click", () => {
+      input.value = ""
+      updateTableSearch(table, input, count)
+      input.focus()
+    })
+    resetSettingsButton.addEventListener("click", () => resetTableDisplaySettings(frame, index, wrapper, table, copyStatus))
+    copyCsvButton.addEventListener("click", () => copyText(tableToCsv(table), copyStatus))
+    copyMarkdownButton.addEventListener("click", () => copyText(tableToMarkdown(table), copyStatus))
+  })
+}
+
+export function setupMarkdownPreviewTableTools() {
+  document.querySelectorAll("iframe.site-viewer-frame").forEach((frame) => {
+    if (frame.dataset.tableSearchListenerReady !== "true") {
+      frame.dataset.tableSearchListenerReady = "true"
+      frame.addEventListener("load", () => {
+        try {
+          enhanceTablesInFrame(frame)
+        } catch (_error) {
+          // Cross-origin fallback: keep the viewer usable even if table tools cannot be injected.
+        }
+      })
+      frame.addEventListener("docs-portal:preview-tables-enhanced", () => {
+        try {
+          enhanceTablesInFrame(frame)
+        } catch (_error) {
+          // Cross-origin fallback: keep the viewer usable even if table tools cannot be injected.
+        }
+      })
+    }
+
+    try {
+      enhanceTablesInFrame(frame)
+    } catch (_error) {
+      // Cross-origin fallback: keep the viewer usable even if table tools cannot be injected.
+    }
+  })
+}
