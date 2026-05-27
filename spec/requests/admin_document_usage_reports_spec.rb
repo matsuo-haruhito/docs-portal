@@ -24,9 +24,13 @@ RSpec.describe "Admin document usage reports", type: :request do
   end
 
   def row_titles
-    parsed_html.css("tbody td[data-rails-table-preferences-column-key='title'] a").map do |link|
-      link.text.squish
+    parsed_html.css("tbody td[data-rails-table-preferences-column-key='title']").map do |cell|
+      cell.css("a").first.text.squish
     end
+  end
+
+  def audit_log_link(slug)
+    parsed_html.at_css("a[href='#{admin_access_logs_path(project_id: project.id, document_q: slug)}']")
   end
 
   it "shows selection controls and a prompt when no project is selected" do
@@ -91,6 +95,10 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(document_link).to be_present
     expect(document_link.text).to eq("Manual")
 
+    audit_log_document_link = audit_log_link(document.slug)
+    expect(audit_log_document_link).to be_present
+    expect(audit_log_document_link.text).to eq("監査ログへ")
+
     expect(clear_link).to be_present
     expect(clear_link.text).to include("条件をクリア")
   end
@@ -114,6 +122,10 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(page_text).to match(/並び順:\s*最終アクセスが新しい順/)
     expect(row_titles).to eq(["Guide", "Manual", "Policy"])
     expect(row_titles).not_to include("Checklist")
+    expect(audit_log_link(newest_document.slug)).to be_present
+    expect(audit_log_link(document.slug)).to be_present
+    expect(audit_log_link(read_only_document.slug)).not_to be_present
+    expect(audit_log_link(unused_document.slug)).not_to be_present
 
     usage_filter_option = parsed_html.at_css("select[name='usage_filter'] option[selected]")
     expect(usage_filter_option).to be_present
