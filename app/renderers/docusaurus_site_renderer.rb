@@ -1,3 +1,4 @@
+require "cgi"
 require "nokogiri"
 require "pathname"
 
@@ -121,11 +122,67 @@ class DocusaurusSiteRenderer
     rewrite_url_attributes(document, "img", "src", absolute_path:)
     strip_embedded_docusaurus_chrome!(document) if @embedded
     inject_embedded_route_path!(document, site_path) if @embedded
+    annotate_document_tables!(document, site_path) unless @embedded
     inject_portal_navigation!(document) unless @embedded
     inject_version_switcher!(document) unless @embedded
     inject_viewer_theme!(document)
 
     document.to_html.html_safe
+  end
+
+  def annotate_document_tables!(document, site_path)
+    version_for_key = @current_document_version || @version
+    normalized_site_path = stable_table_site_path(site_path)
+
+    document.css("table").each.with_index(1) do |table, table_index|
+      table_key = build_table_preference_key(version_for_key, normalized_site_path, table_index)
+      wrapper = ensure_table_wrapper!(document, table)
+
+      append_css_class(wrapper, "portal-doc-table-preference-wrapper")
+      wrapper["data-docs-portal-table-wrapper"] = "true"
+      wrapper["data-docs-portal-document-version"] = version_for_key.public_id.to_s
+      wrapper["data-docs-portal-site-path"] = normalized_site_path
+      wrapper["data-docs-portal-table-index"] = table_index.to_s
+      wrapper["data-rails-table-preferences-table-key"] = table_key
+
+      append_css_class(table, "portal-doc-preference-table")
+      table["data-docs-portal-document-version"] = version_for_key.public_id.to_s
+      table["data-docs-portal-site-path"] = normalized_site_path
+      table["data-docs-portal-table-index"] = table_index.to_s
+      table["data-rails-table-preferences-table-key"] = table_key
+    end
+  end
+
+  def stable_table_site_path(site_path)
+    DocumentVersion.normalize_site_page_path(site_path.presence || @version.html_view_site_path)
+  end
+
+  def build_table_preference_key(version_for_key, normalized_site_path, table_index)
+    [
+      "document-version",
+      version_for_key.public_id,
+      "site-path",
+      CGI.escape(normalized_site_path),
+      "table",
+      table_index
+    ].join(":")
+  end
+
+  def ensure_table_wrapper!(document, table)
+    parent = table.parent
+    return parent if parent&.element? && parent["data-docs-portal-table-wrapper"] == "true"
+
+    wrapper = Nokogiri::XML::Node.new("div", document)
+    table.replace(wrapper)
+    wrapper.add_child(table)
+    wrapper
+  end
+
+  def append_css_class(node, class_name)
+    classes = node["class"].to_s.split
+    return if classes.include?(class_name)
+
+    node["class"] = (classes << class_name).join(" ")
   end
 
   def strip_embedded_docusaurus_chrome!(document)
