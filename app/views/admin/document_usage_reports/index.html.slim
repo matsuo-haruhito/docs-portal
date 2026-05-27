@@ -78,7 +78,11 @@ section.card
       tbody
         - @report_hash[:documents].each do |row|
           tr
-            td data-rails-table-preferences-column-key="title" = link_to row[:title], project_document_path(@selected_project, row[:slug]), data: { turbo_frame: "_top" }
+            td data-rails-table-preferences-column-key="title"
+              = link_to row[:title], project_document_path(@selected_project, row[:slug]), data: { turbo_frame: "_top" }
+              br
+              span.muted
+                = link_to "監査ログへ", admin_access_logs_path(project_id: @selected_project.id, document_q: row[:slug]), data: { turbo_frame: "_top" }
             td data-rails-table-preferences-column-key="category" = document_category_label(row[:category])
             td data-rails-table-preferences-column-key="document_kind" = document_kind_label(row[:document_kind])
             td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(row[:visibility_policy])
