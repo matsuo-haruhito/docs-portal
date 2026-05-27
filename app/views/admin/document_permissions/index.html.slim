@@ -33,7 +33,9 @@ section.card
       tbody
         - @permission_overview_rows.each do |row|
           tr
-            td data-rails-table-preferences-column-key="document" = link_to row.document.title, project_document_path(row.document.project, row.document.slug), data: { turbo_frame: "_top" }
+            td data-rails-table-preferences-column-key="document"
+              div = link_to row.document.title, project_document_path(row.document.project, row.document.slug), data: { turbo_frame: "_top" }
+              div = link_to "権限一覧へ", "#document-permissions-for-#{row.document.id}", class: "muted"
             td data-rails-table-preferences-column-key="project" = row.document.project.name
             td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(row.document)
             td data-rails-table-preferences-column-key="company_permissions" = row.company_permissions.size
@@ -48,6 +50,7 @@ section.card
   h2 権限一覧
 
   - if @document_permissions.any?
+    - anchored_document_ids = {}
     = table_preferences_editor(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns, title: "権限一覧の表示設定")
 
     = table_preferences_table_tag(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns) do
@@ -60,7 +63,9 @@ section.card
           th data-rails-table-preferences-column-key="actions"
       tbody
         - @document_permissions.each do |permission|
-          tr
+          - row_anchor_id = anchored_document_ids[permission.document_id] ? nil : "document-permissions-for-#{permission.document_id}"
+          - anchored_document_ids[permission.document_id] = true
+          tr id=row_anchor_id
             td data-rails-table-preferences-column-key="document" = link_to permission.document.title, project_document_path(permission.document.project, permission.document.slug), data: { turbo_frame: "_top" }
             td data-rails-table-preferences-column-key="company" = permission.company&.display_name || "-"
             td data-rails-table-preferences-column-key="user" = permission.user&.display_name || "-"
