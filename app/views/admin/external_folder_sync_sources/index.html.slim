@@ -7,43 +7,49 @@ h1 外部フォルダ同期設定
   h2 外部フォルダ同期設定を追加
   = render "form", external_folder_sync_source: @external_folder_sync_source
 
-= table_tag do
-  thead
-    tr
-      th 対象案件
-      th 同期設定名
-      th 連携先
-      th 外部フォルダID
-      th 同期状態
-      th 最終同期日時
-      th 最新安全判定
-      th 競合・重複警告
-      th 最新エラー
-      th 操作
-  tbody
-    - @external_folder_sync_sources.each do |source|
-      - latest_run = @latest_runs_by_source_id[source.id]
-      - warnings_count = latest_run&.summary_json&.fetch("conflict_warnings_count", nil)
+- if @external_folder_sync_sources.any?
+  = table_tag do
+    thead
       tr
-        td
-          = source.project.name
-          br
-          code = source.project.code
-        td = link_to source.name, admin_external_folder_sync_source_path(source)
-        td = external_folder_sync_source_provider_label(source)
-        td
-          code = source.external_folder_id
-          - if source.external_folder_path.present?
+        th 対象案件
+        th 同期設定名
+        th 連携先
+        th 外部フォルダID
+        th 同期状態
+        th 最終同期日時
+        th 最新安全判定
+        th 競合・重複警告
+        th 最新エラー
+        th 操作
+    tbody
+      - @external_folder_sync_sources.each do |source|
+        - latest_run = @latest_runs_by_source_id[source.id]
+        - warnings_count = latest_run&.summary_json&.fetch("conflict_warnings_count", nil)
+        tr
+          td
+            = source.project.name
             br
-            span.muted = source.external_folder_path
-        td = source.enabled? ? "有効" : "無効"
-        td = source.last_synced_at ? l(source.last_synced_at) : "-"
-        td
-          span class=external_folder_sync_run_safety_class(latest_run)
-            = external_folder_sync_run_safety_label(latest_run)
-        td = warnings_count || "-"
-        td = latest_run&.error_message.presence || source.last_error_message.presence || "-"
-        td.actions
-          = link_to "設定詳細", admin_external_folder_sync_source_path(source), class: "button secondary"
-          = edit_link_to "編集", edit_admin_external_folder_sync_source_path(source)
-          = delete_link_to "削除", admin_external_folder_sync_source_path(source), confirm: "外部フォルダ同期設定を削除しますか？"
+            code = source.project.code
+          td = link_to source.name, admin_external_folder_sync_source_path(source)
+          td = external_folder_sync_source_provider_label(source)
+          td
+            code = source.external_folder_id
+            - if source.external_folder_path.present?
+              br
+              span.muted = source.external_folder_path
+          td = source.enabled? ? "有効" : "無効"
+          td = source.last_synced_at ? l(source.last_synced_at) : "-"
+          td
+            span class=external_folder_sync_run_safety_class(latest_run)
+              = external_folder_sync_run_safety_label(latest_run)
+          td = warnings_count || "-"
+          td = latest_run&.error_message.presence || source.last_error_message.presence || "-"
+          td.actions
+            = link_to "設定詳細", admin_external_folder_sync_source_path(source), class: "button secondary"
+            = edit_link_to "編集", edit_admin_external_folder_sync_source_path(source)
+            = delete_link_to "削除", admin_external_folder_sync_source_path(source), confirm: "外部フォルダ同期設定を削除しますか？"
+- else
+  .card
+    p.muted まだ外部フォルダ同期設定は登録されていません。
+    p.muted 上の「外部フォルダ同期設定を追加」で対象案件、同期設定名、同期元プロバイダ、外部フォルダURLを設定して最初の同期設定を保存してください。
+    p.muted SharePoint / OneDrive を使うときは、先に Microsoft Graph接続を登録すると設定を始めやすくなります.
