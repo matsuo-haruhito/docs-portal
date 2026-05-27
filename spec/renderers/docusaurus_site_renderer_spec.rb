@@ -158,6 +158,41 @@ RSpec.describe DocusaurusSiteRenderer do
     expect(parsed.at_css("pre code")&.text).to include("<table><tr><td>example</td></tr></table>")
   end
 
+  it "adds stable table preference metadata in embedded mode without portal chrome" do
+    write_site_file(
+      "#{site_build_path}/index.html",
+      <<~HTML
+        <html>
+          <head></head>
+          <body>
+            <table><tbody><tr><td>Embedded</td></tr></tbody></table>
+          </body>
+        </html>
+      HTML
+    )
+
+    renderer = described_class.new(
+      version:,
+      view_context:,
+      current_document_version: version,
+      project:,
+      embedded: true
+    )
+    html = renderer.render_html("#{site_build_path}/index")
+    parsed = Nokogiri::HTML5.parse(html)
+
+    wrapper = parsed.at_css(".portal-doc-table-preference-wrapper")
+    table = parsed.at_css("table")
+
+    expect(wrapper).to be_present
+    expect(wrapper["data-rails-table-preferences-table-key"]).to eq(
+      table["data-rails-table-preferences-table-key"]
+    )
+    expect(wrapper["data-docs-portal-table-index"]).to eq("1")
+    expect(html).not_to include("portal-site-nav")
+    expect(html).not_to include("document-version-switcher")
+  end
+
   it "injects portal navigation links when project context is provided" do
     write_site_file("#{site_build_path}/index.html", "<html><body><h1>操作説明</h1></body></html>")
 
