@@ -25,7 +25,7 @@ section.card
     thead
       tr
         - @entry.summary_fields.each do |field|
-          th = field.to_s.humanize
+          th = summary_field_label(@entry, field)
     tbody
       - @records.each do |record|
         tr
