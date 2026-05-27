@@ -1,4 +1,4 @@
-require "cgi"
+require "base64"
 require "nokogiri"
 require "pathname"
 
@@ -157,12 +157,16 @@ class DocusaurusSiteRenderer
     DocumentVersion.normalize_site_page_path(site_path.presence || @version.html_view_site_path)
   end
 
+  def stable_table_site_path_key(normalized_site_path)
+    Base64.urlsafe_encode64(normalized_site_path.to_s, padding: false)
+  end
+
   def build_table_preference_key(version_for_key, normalized_site_path, table_index)
     [
       "document-version",
       version_for_key.public_id,
       "site-path",
-      normalized_site_path,
+      stable_table_site_path_key(normalized_site_path),
       "table",
       table_index
     ].join(":")
