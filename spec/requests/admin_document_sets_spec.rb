@@ -67,8 +67,7 @@ RSpec.describe "Admin document sets", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("案件を選ぶと対象文書を設定できます。")
     expect(response.body).not_to include("まだ対象文書がありません。")
-    expect(response.body).not_to include(admin_git_import_sources_path)
-    expect(response.body).not_to include(admin_git_import_runs_path)
+    expect(response.body).not_to include("ほかの import 経路を確認してから戻ってください。")
 
     post admin_document_sets_path, params: {
       document_set: {
@@ -86,6 +85,7 @@ RSpec.describe "Admin document sets", type: :request do
     expect(response.body).to include("まだ対象文書がありません。")
     expect(response.body).to include(admin_git_import_sources_path)
     expect(response.body).to include(admin_git_import_runs_path)
+    expect(response.body).to include("ほかの import 経路を確認してから戻ってください。")
     expect(response.body).not_to include("案件を選ぶと対象文書を設定できます。")
   end
 
