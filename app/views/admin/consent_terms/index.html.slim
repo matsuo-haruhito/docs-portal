@@ -10,30 +10,36 @@ h1 同意文面管理
   h2 新規登録
   = render "form", consent_term: @consent_term
 
-.card
-  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "同意文面一覧の表示設定")
+- if @consent_terms.any?
+  .card
+    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "同意文面一覧の表示設定")
 
-= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
-  thead
-    tr
-      th data-rails-table-preferences-column-key="title" タイトル
-      th data-rails-table-preferences-column-key="version_label" 版
-      th data-rails-table-preferences-column-key="consent_scope" 種別
-      th data-rails-table-preferences-column-key="requirement_timing" 再同意方針
-      th data-rails-table-preferences-column-key="status" 状態
-      th data-rails-table-preferences-column-key="actions"
-  tbody
-    - @consent_terms.each do |term|
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+    thead
       tr
-        td data-rails-table-preferences-column-key="title" = term.title
-        td data-rails-table-preferences-column-key="version_label"
-          span.badge = term.version_label
-        td data-rails-table-preferences-column-key="consent_scope"
-          span.badge = consent_scope_label(term)
-        td data-rails-table-preferences-column-key="requirement_timing"
-          span.badge = consent_requirement_timing_label(term)
-        td data-rails-table-preferences-column-key="status"
-          span.badge = consent_term_status_label(term)
-        td.actions data-rails-table-preferences-column-key="actions"
-          = edit_link_to "編集", edit_admin_consent_term_path(term)
-          = delete_link_to "削除", admin_consent_term_path(term), confirm: "同意文面「#{term.title} #{term.version_label}」を削除しますか？履歴がある場合は削除できません。"
+        th data-rails-table-preferences-column-key="title" タイトル
+        th data-rails-table-preferences-column-key="version_label" 版
+        th data-rails-table-preferences-column-key="consent_scope" 種別
+        th data-rails-table-preferences-column-key="requirement_timing" 再同意方針
+        th data-rails-table-preferences-column-key="status" 状態
+        th data-rails-table-preferences-column-key="actions"
+    tbody
+      - @consent_terms.each do |term|
+        tr
+          td data-rails-table-preferences-column-key="title" = term.title
+          td data-rails-table-preferences-column-key="version_label"
+            span.badge = term.version_label
+          td data-rails-table-preferences-column-key="consent_scope"
+            span.badge = consent_scope_label(term)
+          td data-rails-table-preferences-column-key="requirement_timing"
+            span.badge = consent_requirement_timing_label(term)
+          td data-rails-table-preferences-column-key="status"
+            span.badge = consent_term_status_label(term)
+          td.actions data-rails-table-preferences-column-key="actions"
+            = edit_link_to "編集", edit_admin_consent_term_path(term)
+            = delete_link_to "削除", admin_consent_term_path(term), confirm: "同意文面「#{term.title} #{term.version_label}」を削除しますか？履歴がある場合は削除できません。"
+- else
+  .card
+    p.muted まだ同意文面はありません。
+    p.muted 上の「新規登録」でタイトル、版、種別、再同意方針を設定して最初の文面を保存してください。
+    p.muted この画面では、利用中の文面の版や状態をあとから見直せます。
