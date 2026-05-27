@@ -49,7 +49,7 @@ class Admin::GitImportSourcesController < Admin::BaseController
   private
 
   def set_git_import_source
-    @git_import_source = GitImportSource.find_by!(public_id: params[:id])
+    @git_import_source = GitImportSource.find_by!(public_id: params[:public_id])
   end
 
   def load_form_collections
