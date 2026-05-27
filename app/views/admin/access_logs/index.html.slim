@@ -74,8 +74,20 @@ section.card
               br
               code = log.target_name
           td data-rails-table-preferences-column-key="user" = log.user ? "#{log.user.display_name} / #{log.user.email_address}" : "-"
-          td data-rails-table-preferences-column-key="company" = log.company&.display_name || "-"
-          td data-rails-table-preferences-column-key="project" = log.project&.name || "-"
+          td data-rails-table-preferences-column-key="company"
+            - if log.company
+              div = log.company.display_name
+              - if access_log_company_secondary_label(log.company)
+                div.muted = access_log_company_secondary_label(log.company)
+            - else
+              | -
+          td data-rails-table-preferences-column-key="project"
+            - if log.project
+              div = log.project.name
+              - if access_log_project_secondary_label(log.project)
+                div.muted = access_log_project_secondary_label(log.project)
+            - else
+              | -
           td data-rails-table-preferences-column-key="document"
             - if log.document && log.project
               = link_to log.document.title, project_document_path(log.project, log.document.slug), data: { turbo_frame: "_top" }

@@ -1,7 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Admin access logs", type: :request do
-  let(:admin_user) { create(:user, :internal) }
+  let(:admin_company) { create(:company, domain: "audit.example.com", name: "Audit Company") }
+  let(:admin_user) { create(:user, :internal, company: admin_company) }
   let(:external_user) { create(:user, :external) }
   let(:project) { create(:project, code: "AUDIT", name: "Audit Project") }
   let(:document) { create(:document, project:, title: "Audit Document", slug: "audit-document") }
@@ -22,6 +23,18 @@ RSpec.describe "Admin access logs", type: :request do
   def log_target_names
     log_rows.filter_map do |row|
       row.at_css("td:nth-child(3) code")&.text&.squish
+    end
+  end
+
+  def row_column_texts(column_key)
+    log_rows.map do |row|
+      cell = row.at_css(%(td[data-rails-table-preferences-column-key="#{column_key}"]))
+      next unless cell
+
+      cell.xpath(".//text()").filter_map do |node|
+        text = node.text.squish
+        text.presence
+      end.join(" ")
     end
   end
 
@@ -55,6 +68,8 @@ RSpec.describe "Admin access logs", type: :request do
     expect(page_text).to include("表示中: 1件 / 最新200件までを表示")
     expect(response.body).to include("監査ログ一覧の表示設定")
     expect(log_target_names).to eq(["audit.zip"])
+    expect(row_column_texts("company")).to eq(["Audit Company audit.example.com"])
+    expect(row_column_texts("project")).to eq(["Audit Project AUDIT"])
   end
 
   it "shows an empty state when no access logs exist yet" do
@@ -156,6 +171,42 @@ RSpec.describe "Admin access logs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(log_target_names).to eq(["matching.html"])
+    expect(row_column_texts("company")).to eq(["Filter Co filter.example.com"])
+    expect(row_column_texts("project")).to eq(["Filter Project FILTER"])
+  end
+
+  it "renders only non-duplicated secondary identifiers in company and project rows" do
+    domain_only_company = create(:company, name: nil, domain: "domain-only.example.com")
+    plain_project = create(:project, code: "PLAIN", name: "Plain Project")
+    plain_document = create(:document, project: plain_project, title: "Plain Document", slug: "plain-document")
+    plain_version = create(:document_version, document: plain_document, version_label: "v2.1.0")
+
+    create_access_log!(
+      action_type: :view,
+      target_type: "page",
+      target_name: "plain.html",
+      user: admin_user,
+      company: domain_only_company,
+      project: plain_project,
+      document: plain_document,
+      document_version: plain_version,
+      accessed_at: Time.current + 1.second
+    )
+    create_access_log!(action_type: :download, target_type: "zip", target_name: "audit.zip")
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path
+
+    expect(response).to have_http_status(:ok)
+    expect(row_column_texts("company")).to eq([
+      "domain-only.example.com",
+      "Audit Company audit.example.com"
+    ])
+    expect(row_column_texts("project")).to eq([
+      "Plain Project PLAIN",
+      "Audit Project AUDIT"
+    ])
   end
 
   it "filters access logs by document title" do
