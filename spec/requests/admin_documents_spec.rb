@@ -7,8 +7,35 @@ RSpec.describe "Admin documents", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def page_text
+    parsed_html.text.squish
+  end
+
   def document_rows
     parsed_html.css("table tbody tr")
+  end
+
+  def document_row_for(title)
+    document_rows.find do |row|
+      row.at_css(%(td[data-rails-table-preferences-column-key="title"] a))&.text&.squish == title
+    end
+  end
+
+  def title_targets
+    document_rows.filter_map do |row|
+      row.at_css(%(td[data-rails-table-preferences-column-key="title"] a))&.[]("href")
+    end
+  end
+
+  def action_targets_for(title)
+    action_cell = document_row_for(title)&.at_css(%(td[data-rails-table-preferences-column-key="actions"]))
+    return [] unless action_cell
+
+    action_cell.css("a[href], form[action]").filter_map { |node| node["href"] || node["action"] }
+  end
+
+  def route_targets
+    parsed_html.css("a[href], form[action]").filter_map { |node| node["href"] || node["action"] }
   end
 
   def row_column_texts(column_key)
@@ -30,19 +57,28 @@ RSpec.describe "Admin documents", type: :request do
     get admin_documents_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(project_document_path(active_document.project, active_document.slug))
-    expect(response.body).to include(edit_admin_document_path(active_document.public_id))
-    expect(response.body).to include(archive_admin_document_path(active_document.public_id))
-    expect(response.body).to include(admin_document_path(active_document.public_id))
-    expect(response.body).to include(edit_admin_document_path(archived_document.public_id))
-    expect(response.body).to include(restore_admin_document_path(archived_document.public_id))
-    expect(response.body).to include(admin_document_path(archived_document.public_id))
-    expect(response.body).not_to include(edit_admin_document_path(active_document.id))
-    expect(response.body).not_to include(archive_admin_document_path(active_document.id))
-    expect(response.body).not_to include(admin_document_path(active_document.id))
-    expect(response.body).not_to include(edit_admin_document_path(active_document.slug))
-    expect(response.body).not_to include(archive_admin_document_path(active_document.slug))
-    expect(response.body).not_to include(admin_document_path(active_document.slug))
+    expect(title_targets).to include(
+      project_document_path(active_document.project, active_document.slug),
+      project_document_path(archived_document.project, archived_document.slug)
+    )
+    expect(action_targets_for("Active Document")).to include(
+      edit_admin_document_path(active_document.public_id),
+      archive_admin_document_path(active_document.public_id),
+      admin_document_path(active_document.public_id)
+    )
+    expect(action_targets_for("Archived Document")).to include(
+      edit_admin_document_path(archived_document.public_id),
+      restore_admin_document_path(archived_document.public_id),
+      admin_document_path(archived_document.public_id)
+    )
+    expect(route_targets).not_to include(
+      edit_admin_document_path(active_document.id),
+      archive_admin_document_path(active_document.id),
+      admin_document_path(active_document.id),
+      edit_admin_document_path(active_document.slug),
+      archive_admin_document_path(active_document.slug),
+      admin_document_path(active_document.slug)
+    )
   end
 
   it "shows project codes in the project column so keyword search results stay easy to verify" do
@@ -56,8 +92,8 @@ RSpec.describe "Admin documents", type: :request do
     get admin_documents_path, params: { q: "DOCS-001" }
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(project_document_path(matching_project, matching_document.slug))
-    expect(response.body).not_to include(project_document_path(similar_project, other_document.slug))
+    expect(title_targets).to include(project_document_path(matching_project, matching_document.slug))
+    expect(title_targets).not_to include(project_document_path(similar_project, other_document.slug))
     expect(row_column_texts("project")).to eq(["Operations Portal DOCS-001"])
   end
 
@@ -68,7 +104,7 @@ RSpec.describe "Admin documents", type: :request do
 
     get edit_admin_document_path(document.public_id)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("文書マスタ編集")
+    expect(page_text).to include("文書マスタ編集")
 
     get edit_admin_document_path(document.id)
     expect(response).to have_http_status(:not_found)
