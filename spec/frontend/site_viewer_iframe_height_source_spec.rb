@@ -7,7 +7,7 @@ RSpec.describe "site viewer iframe height source" do
   let(:controller_source) { Rails.root.join("app/controllers/document_sites_controller.rb").read }
 
   it "marks the site viewer iframe for auto height sync" do
-    expect(view_source).to include(%q(data-docs-portal-auto-height="true"))
+    expect(view_source).to include("data-docs-portal-auto-height=\"true\"")
   end
 
   it "refreshes iframe height sync from the preview tools controller" do
