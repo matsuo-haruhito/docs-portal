@@ -27,7 +27,7 @@
 - semantic version 以外の任意バージョン記号に対応するか検討する
 - `latest_version` を管理画面/APIで明示指定できるようにするか検討する
 - 採番ルールを変更した場合に、古い DocumentVersion を整理・削除・archive する運用を検討する
-- バージョン管理しない Document の上書き運用を UI/API 上で明確にする
+- importer は latest version 上書き、手動アップロードは `manual-*` draft 候補を追加して review で `latest_version` を切り替える current 差分を、どこまで統一するか再判断する
 
 ## archived / 復元
 
