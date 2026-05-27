@@ -129,7 +129,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   private
 
   def set_external_folder_sync_source
-    @external_folder_sync_source = ExternalFolderSyncSource.find_by!(public_id: params[:id])
+    @external_folder_sync_source = ExternalFolderSyncSource.find_by!(public_id: params[:public_id])
   end
 
   def load_form_collections
