@@ -480,15 +480,17 @@ function installPreferencePanel(frameDocument, table, displayGroup, copyStatus) 
 
   applyAndRender({})
 
-  readPreferenceSettings(tableKey)
-    .then((payload) => {
-      if (!payload) return
-      applyAndRender(payload.settings || {})
-      setStatus("保存済み設定を読み込みました")
-    })
-    .catch(() => {
-      setStatus("保存済み設定を読み込めませんでした")
-    })
+  window.setTimeout(() => {
+    readPreferenceSettings(tableKey)
+      .then((payload) => {
+        if (!payload) return
+        applyAndRender(payload.settings || {})
+        setStatus("保存済み設定を読み込みました")
+      })
+      .catch(() => {
+        setStatus("保存済み設定を読み込めませんでした")
+      })
+  }, 80)
 
   saveButton.addEventListener("click", async () => {
     const settings = settingsFromPreferenceEditor(rowsContainer, definitions)
