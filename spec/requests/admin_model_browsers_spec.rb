@@ -29,6 +29,23 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include(project.name)
   end
 
+  it "localizes summary field labels and boolean values on model pages" do
+    create(:user, :internal, name: "Active User", email_address: "active@example.com", active: true)
+    create(:user, :internal, name: "Inactive User", email_address: "inactive@example.com", active: false)
+
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("users")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("公開ID")
+    expect(response.body).to include("メールアドレス")
+    expect(response.body).to include("有効")
+    expect(response.body).to include("更新日時")
+    expect(response.body).to include("はい")
+    expect(response.body).to include("いいえ")
+    expect(response.body).to include("inactive@example.com")
+  end
+
   it "forbids company master admins from the model browser" do
     sign_in_as(company_master_admin)
     get admin_model_browser_path
