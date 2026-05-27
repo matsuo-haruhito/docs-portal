@@ -18,7 +18,10 @@ RSpec.describe "AccessibleDocuments", type: :request do
 
   def project_column_texts
     parsed_html.css("table tbody tr td:first-child").map do |cell|
-      cell.text.split.join(" ")
+      cell.children.filter_map do |node|
+        text = node.text.to_s.strip
+        text if text.present?
+      end.join(" ")
     end
   end
 
