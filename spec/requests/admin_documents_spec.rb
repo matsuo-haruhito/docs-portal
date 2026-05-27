@@ -35,7 +35,7 @@ RSpec.describe "Admin documents", type: :request do
 
     get edit_admin_document_path(document.public_id)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("文書編集")
+    expect(response.body).to include("文書マスタ編集")
 
     get edit_admin_document_path(document.id)
     expect(response).to have_http_status(:not_found)
