@@ -124,7 +124,7 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(row_titles).not_to include("Checklist")
     expect(audit_log_link(newest_document.slug)).to be_present
     expect(audit_log_link(document.slug)).to be_present
-    expect(audit_log_link(read_only_document.slug)).to be_present
+    expect(audit_log_link(read_only_document.slug)).not_to be_present
     expect(audit_log_link(unused_document.slug)).not_to be_present
 
     usage_filter_option = parsed_html.at_css("select[name='usage_filter'] option[selected]")
