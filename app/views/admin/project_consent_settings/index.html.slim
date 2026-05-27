@@ -10,30 +10,36 @@ h1 案件同意設定
   h2 新規登録
   = render "form", project_consent_setting: @project_consent_setting
 
-.card
-  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件同意設定一覧の表示設定")
+- if @project_consent_settings.any?
+  .card
+    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件同意設定一覧の表示設定")
 
-= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
-  thead
-    tr
-      th data-rails-table-preferences-column-key="project" 案件
-      th data-rails-table-preferences-column-key="consent_term" 同意文面
-      th data-rails-table-preferences-column-key="version_label" 版
-      th data-rails-table-preferences-column-key="required_on" 必須タイミング
-      th data-rails-table-preferences-column-key="enabled" 状態
-      th data-rails-table-preferences-column-key="actions"
-  tbody
-    - @project_consent_settings.each do |setting|
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+    thead
       tr
-        td data-rails-table-preferences-column-key="project"
-          = setting.project.name
-          br
-          code = setting.project.code
-        td data-rails-table-preferences-column-key="consent_term" = setting.consent_term.title
-        td data-rails-table-preferences-column-key="version_label"
-          span.muted = setting.consent_term.version_label
-        td data-rails-table-preferences-column-key="required_on" = setting.required_on
-        td data-rails-table-preferences-column-key="enabled" = setting.enabled? ? "有効" : "無効"
-        td.actions data-rails-table-preferences-column-key="actions"
-          = edit_link_to "編集", edit_admin_project_consent_setting_path(setting)
-          = delete_link_to "削除", admin_project_consent_setting_path(setting), confirm: "案件同意設定を削除しますか？"
+        th data-rails-table-preferences-column-key="project" 案件
+        th data-rails-table-preferences-column-key="consent_term" 同意文面
+        th data-rails-table-preferences-column-key="version_label" 版
+        th data-rails-table-preferences-column-key="required_on" 必須タイミング
+        th data-rails-table-preferences-column-key="enabled" 状態
+        th data-rails-table-preferences-column-key="actions"
+    tbody
+      - @project_consent_settings.each do |setting|
+        tr
+          td data-rails-table-preferences-column-key="project"
+            = setting.project.name
+            br
+            code = setting.project.code
+          td data-rails-table-preferences-column-key="consent_term" = setting.consent_term.title
+          td data-rails-table-preferences-column-key="version_label"
+            span.muted = setting.consent_term.version_label
+          td data-rails-table-preferences-column-key="required_on" = setting.required_on
+          td data-rails-table-preferences-column-key="enabled" = setting.enabled? ? "有効" : "無効"
+          td.actions data-rails-table-preferences-column-key="actions"
+            = edit_link_to "編集", edit_admin_project_consent_setting_path(setting)
+            = delete_link_to "削除", admin_project_consent_setting_path(setting), confirm: "案件同意設定を削除しますか？"
+- else
+  .card
+    p.muted まだ案件同意設定はありません。
+    p.muted 先に「同意文面管理」で有効な文面を用意し、上の「新規登録」で案件と必須タイミングを選んで保存すると、ここに一覧が表示されます。
+    p.muted この画面では、案件ごとにどの同意をいつ必須にするかを確認できます。
