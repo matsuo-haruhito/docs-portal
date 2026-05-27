@@ -1,4 +1,15 @@
 - page_title "外部フォルダ同期設定"
+- selected_filter_labels = []
+- if @selected_review_filter == "warnings"
+  - selected_filter_labels << "warning あり"
+- elsif @selected_review_filter == "errors"
+  - selected_filter_labels << "error あり"
+- elsif @selected_review_filter == "disabled"
+  - selected_filter_labels << "無効"
+- elsif @selected_review_filter == "google_drive"
+  - selected_filter_labels << "Google Drive"
+- elsif @selected_review_filter == "microsoft_graph"
+  - selected_filter_labels << "SharePoint / OneDrive"
 
 h1 外部フォルダ同期設定
 = render "admin/nav"
@@ -7,7 +18,53 @@ h1 外部フォルダ同期設定
   h2 外部フォルダ同期設定を追加
   = render "form", external_folder_sync_source: @external_folder_sync_source
 
+- if @review_filter_counts[:all].positive?
+  .card
+    h2 一覧の絞り込み
+    p.muted warning / error / provider 差分を絞って、気になる同期元を先に確認できます。
+    ul
+      li
+        - if @selected_review_filter.blank?
+          strong = "すべて (#{@review_filter_counts[:all]})"
+        - else
+          = link_to "すべて (#{@review_filter_counts[:all]})", admin_external_folder_sync_sources_path
+      li
+        - if @selected_review_filter == "warnings"
+          strong = "warning あり (#{@review_filter_counts[:warnings]})"
+        - else
+          = link_to "warning あり (#{@review_filter_counts[:warnings]})", admin_external_folder_sync_sources_path(review: :warnings)
+      li
+        - if @selected_review_filter == "errors"
+          strong = "error あり (#{@review_filter_counts[:errors]})"
+        - else
+          = link_to "error あり (#{@review_filter_counts[:errors]})", admin_external_folder_sync_sources_path(review: :errors)
+      li
+        - if @selected_review_filter == "disabled"
+          strong = "無効 (#{@review_filter_counts[:disabled]})"
+        - else
+          = link_to "無効 (#{@review_filter_counts[:disabled]})", admin_external_folder_sync_sources_path(review: :disabled)
+      li
+        - if @selected_review_filter == "google_drive"
+          strong = "Google Drive (#{@review_filter_counts[:google_drive]})"
+        - else
+          = link_to "Google Drive (#{@review_filter_counts[:google_drive]})", admin_external_folder_sync_sources_path(review: :google_drive)
+      li
+        - if @selected_review_filter == "microsoft_graph"
+          strong = "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})"
+        - else
+          = link_to "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})", admin_external_folder_sync_sources_path(review: :microsoft_graph)
+    p.muted Google Drive は `最新安全判定` `競合・重複警告` `最新エラー` を見てから `設定詳細` へ進みます。
+    p.muted SharePoint / OneDrive は metadata-only なので、`設定詳細` で `drive_id` と `folder_path` の保存状況を確認します。
+    - if selected_filter_labels.any?
+      p.muted
+        = "現在の絞り込み: #{selected_filter_labels.join(' / ')}"
+        br
+        = link_to "絞り込みを解除", admin_external_folder_sync_sources_path
+
 - if @external_folder_sync_sources.any?
+  .card
+    p.muted = "#{@external_folder_sync_sources.size} / #{@review_filter_counts[:all]} 件を表示しています。"
+
   = table_tag do
     thead
       tr
@@ -25,6 +82,7 @@ h1 外部フォルダ同期設定
       - @external_folder_sync_sources.each do |source|
         - latest_run = @latest_runs_by_source_id[source.id]
         - warnings_count = latest_run&.summary_json&.fetch("conflict_warnings_count", nil)
+        - latest_error_message = latest_run&.error_message.presence || source.last_error_message.presence
         tr
           td
             = source.project.name
@@ -43,11 +101,15 @@ h1 外部フォルダ同期設定
             span class=external_folder_sync_run_safety_class(latest_run)
               = external_folder_sync_run_safety_label(latest_run)
           td = warnings_count || "-"
-          td = latest_run&.error_message.presence || source.last_error_message.presence || "-"
+          td = latest_error_message || "-"
           td.actions
             = link_to "設定詳細", admin_external_folder_sync_source_path(source), class: "button secondary"
             = edit_link_to "編集", edit_admin_external_folder_sync_source_path(source)
             = delete_link_to "削除", admin_external_folder_sync_source_path(source), confirm: "外部フォルダ同期設定を削除しますか？"
+- elsif @review_filter_counts[:all].positive?
+  .card
+    p.muted 現在の絞り込みに一致する外部フォルダ同期設定はありません。
+    p.muted = link_to "絞り込みを解除", admin_external_folder_sync_sources_path
 - else
   .card
     p.muted まだ外部フォルダ同期設定は登録されていません。
