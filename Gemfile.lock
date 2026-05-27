@@ -17,7 +17,7 @@ GIT
 
 GIT
   remote: https://github.com/matsuo-haruhito/rails_fields_kit.git
-  revision: b1a4b1c7d52425726395018ff2e575d616e65f51
+  revision: 0c29bb935a1df3e61add860a966a2fc7ea586b1a
   specs:
     rails_fields_kit (0.1.0)
       rails (>= 7.0, < 9.0)

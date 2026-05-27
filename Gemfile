@@ -26,7 +26,7 @@ gem "rparam", git: "https://github.com/kmdtmyk/rparam", ref: "3a4e94706999ff794b
 gem "rtypes", git: "https://github.com/kmdtmyk/rtypes", ref: "b4a177a933261019825a3a5bfd727ad8e493ae45"
 gem "tree_view", git: "https://github.com/matsuo-haruhito/tree_view-rails.git", ref: "9c538f9ee7946fa5af24f15c99402a0431677303"
 gem "rails_table_preferences", git: "https://github.com/matsuo-haruhito/rails_table_preferences.git", ref: "b3f1a9d6eb46aefe568c637396fab63151aef322"
-gem "rails_fields_kit", git: "https://github.com/matsuo-haruhito/rails_fields_kit.git", ref: "b1a4b1c7d52425726395018ff2e575d616e65f51"
+gem "rails_fields_kit", git: "https://github.com/matsuo-haruhito/rails_fields_kit.git", ref: "0c29bb935a1df3e61add860a966a2fc7ea586b1a"
 
 group :development, :test do
   gem "debug", platforms: %i[mri windows], require: "debug/prelude"
