@@ -51,10 +51,12 @@ RSpec.describe "Admin document permissions", type: :request do
 
   it "shows document permission overview" do
     document = create(:document, title: "Permission Target", visibility_policy: :restricted_external)
+    other_document = create(:document, title: "Another Target")
     company = create(:company, name: "Customer Company")
     external_user = create(:user, :external, name: nil, email_address: "external@example.com")
     create(:document_permission, document:, company:, access_level: :view)
     create(:document_permission, document:, user: external_user, access_level: :download)
+    create(:document_permission, document: other_document, company:, access_level: :view)
 
     sign_in_as(admin_user)
 
@@ -73,6 +75,11 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(response.body).to include("ダウンロード")
     expect(response.body).to include("Customer Company")
     expect(response.body).to include("external@example.com")
+    expect(response.body).to include(project_document_path(document.project, document.slug))
+    expect(response.body).to include(%(href="#document-permissions-for-#{document.id}"))
+    expect(response.body).to include(%(href="#document-permissions-for-#{other_document.id}"))
+    expect(response.body.scan(%(id="document-permissions-for-#{document.id}")).size).to eq(1)
+    expect(response.body.scan(%(id="document-permissions-for-#{other_document.id}")).size).to eq(1)
   end
 
   it "uses public_id-based action links on the index" do
