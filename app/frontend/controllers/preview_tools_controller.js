@@ -8,6 +8,7 @@ import { setupStructuredPreviewTools } from "../lib/structured_preview_tools"
 import { setupArchivePreviewTools } from "../lib/archive_preview_tools"
 import { setupImagePreviewTools } from "../lib/image_preview_tools"
 import { setupPdfPreviewTools } from "../lib/pdf_preview_tools"
+import { setupSiteViewerIframeHeightSync } from "../lib/site_viewer_iframe_height"
 
 export default class extends Controller {
   connect() {
@@ -23,6 +24,7 @@ export default class extends Controller {
   }
 
   refresh() {
+    setupSiteViewerIframeHeightSync()
     setupMarkdownPreviewDocumentSearch()
     setupMarkdownPreviewTableTools()
     setupMarkdownPreviewCodeblockTools()
