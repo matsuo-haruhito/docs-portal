@@ -70,7 +70,7 @@ Rails.application.routes.draw do
       delete :unsubscribe, on: :member
       resource :external_folder_sync_oauth_connection, only: %i[new destroy]
     end
-    resources :documents, except: %i[show new] do
+    resources :documents, except: %i[show new], param: :public_id do
       patch :archive, on: :member
       patch :restore, on: :member
     end
