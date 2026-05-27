@@ -1,7 +1,7 @@
 class Admin::ModelBrowsersController < Admin::BaseController
   before_action :require_admin_only!
 
-  helper_method :entry_index_path, :record_summary_value
+  helper_method :entry_index_path, :record_summary_value, :summary_field_label
 
   def index
     @entries = Admin::ModelBrowserCatalog.entries
@@ -44,6 +44,10 @@ class Admin::ModelBrowsersController < Admin::BaseController
     view_context.public_send(entry.index_path_helper)
   end
 
+  def summary_field_label(entry, field)
+    association_summary_field_label(entry, field) || generic_summary_field_label(field)
+  end
+
   def record_summary_value(record, field)
     return "-" unless record.respond_to?(field)
 
@@ -52,13 +56,37 @@ class Admin::ModelBrowsersController < Admin::BaseController
     when Time, ActiveSupport::TimeWithZone
       I18n.l(value, format: :short)
     when TrueClass
-      "yes"
+      I18n.t("labels.boolean.true")
     when FalseClass
-      "no"
+      I18n.t("labels.boolean.false")
     when Array
       value.join(", ")
     else
       value.presence || "-"
     end
+  end
+
+  def association_summary_field_label(entry, field)
+    field_name = field.to_s
+    return unless field_name.end_with?("_id")
+
+    association_name = field_name.delete_suffix("_id")
+    explicit_label = I18n.t("labels.model_browser_associations.#{association_name}", default: nil)
+    return explicit_label if explicit_label.is_a?(String)
+
+    reflection = entry.model_class.reflect_on_association(association_name.to_sym)
+    return unless reflection
+
+    human_name = reflection.klass.model_name.human
+    return if human_name == reflection.klass.model_name.name.humanize
+
+    human_name
+  end
+
+  def generic_summary_field_label(field)
+    explicit_label = I18n.t("labels.model_browser_fields.#{field}", default: nil)
+    return explicit_label if explicit_label.is_a?(String)
+
+    field.to_s.humanize
   end
 end
