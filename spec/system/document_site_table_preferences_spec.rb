@@ -80,7 +80,7 @@ RSpec.describe "Document site table preferences", type: :system do
   def sign_in_via_browser(user)
     visit new_session_path
 
-    fill_in "メールア��レス", with: user.email_address
+    fill_in "メールアドレス", with: user.email_address
     fill_in "パスワード", with: "password123!"
     click_button "ログイン"
 
