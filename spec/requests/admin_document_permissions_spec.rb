@@ -27,6 +27,10 @@ RSpec.describe "Admin document permissions", type: :request do
     end
   end
 
+  def node_ids
+    parsed_html.css("[id]").map { _1["id"] }
+  end
+
   it "shows empty-state guidance when no document permissions exist" do
     sign_in_as(admin_user)
 
@@ -74,10 +78,12 @@ RSpec.describe "Admin document permissions", type: :request do
 
   it "shows document permission overview" do
     document = create(:document, title: "Permission Target", visibility_policy: :restricted_external)
+    other_document = create(:document, title: "Another Target")
     company = create(:company, name: "Customer Company")
     external_user = create(:user, :external, name: nil, email_address: "external@example.com")
     create(:document_permission, document:, company:, access_level: :view)
     create(:document_permission, document:, user: external_user, access_level: :download)
+    create(:document_permission, document: other_document, company:, access_level: :view)
 
     sign_in_as(admin_user)
 
@@ -94,6 +100,13 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(page_text).to include("ダウンロード")
     expect(page_text).to include("Customer Company")
     expect(page_text).to include("external@example.com")
+    expect(action_targets).to include(
+      project_document_path(document.project, document.slug),
+      "#document-permissions-for-#{document.id}",
+      "#document-permissions-for-#{other_document.id}"
+    )
+    expect(node_ids.count("document-permissions-for-#{document.id}")).to eq(1)
+    expect(node_ids.count("document-permissions-for-#{other_document.id}")).to eq(1)
   end
 
   it "uses public_id-based action links on the index" do
