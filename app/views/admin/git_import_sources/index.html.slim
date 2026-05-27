@@ -10,47 +10,52 @@ h1 Git連携
   h2 新規登録
   = render "form", git_import_source: @git_import_source
 
-.card
-  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "Git連携設定一覧の表示設定")
+- if @git_import_sources.any?
+  .card
+    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "Git連携設定一覧の表示設定")
 
-= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
-  thead
-    tr
-      th data-rails-table-preferences-column-key="project" 案件
-      th data-rails-table-preferences-column-key="repository" リポジトリ
-      th data-rails-table-preferences-column-key="branch_path" ブランチ/パス
-      th data-rails-table-preferences-column-key="auth_type" 認証方式
-      th data-rails-table-preferences-column-key="last_synced" 最終同期
-      th data-rails-table-preferences-column-key="enabled" 状態
-      th data-rails-table-preferences-column-key="actions" 操作
-  tbody
-    - @git_import_sources.each do |source|
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+    thead
       tr
-        td data-rails-table-preferences-column-key="project"
-          = source.project.name
-          - if source.project.code.present?
+        th data-rails-table-preferences-column-key="project" 案件
+        th data-rails-table-preferences-column-key="repository" リポジトリ
+        th data-rails-table-preferences-column-key="branch_path" ブランチ/パス
+        th data-rails-table-preferences-column-key="auth_type" 認証方式
+        th data-rails-table-preferences-column-key="last_synced" 最終同期
+        th data-rails-table-preferences-column-key="enabled" 状態
+        th data-rails-table-preferences-column-key="actions" 操作
+    tbody
+      - @git_import_sources.each do |source|
+        tr
+          td data-rails-table-preferences-column-key="project"
+            = source.project.name
+            - if source.project.code.present?
+              br
+              code = source.project.code
+          td data-rails-table-preferences-column-key="repository" = source.repository_full_name
+          td data-rails-table-preferences-column-key="branch_path"
+            code = source.branch
             br
-            code = source.project.code
-        td data-rails-table-preferences-column-key="repository" = source.repository_full_name
-        td data-rails-table-preferences-column-key="branch_path"
-          code = source.branch
-          br
-          code = source.source_path
-        td data-rails-table-preferences-column-key="auth_type"
-          = git_import_source_auth_type_label(source)
-          - if source.installation_id.present?
-            br
-            span.muted = "installation ID: #{source.installation_id}"
-        td data-rails-table-preferences-column-key="last_synced"
-          - if source.last_synced_commit_sha.present?
-            code = source.last_synced_commit_sha.first(12)
-            br
-            span.muted = l(source.last_synced_at) if source.last_synced_at
-          - else
-            span.muted 未同期
-        td data-rails-table-preferences-column-key="enabled"
-          span.badge = source.enabled? ? "有効" : "無効"
-        td.actions data-rails-table-preferences-column-key="actions"
-          = button_to "手動同期", sync_admin_git_import_source_path(source), method: :post, class: "button", form: { data: { turbo_confirm: "#{source.repository_full_name} を同期しますか？" } }
-          = edit_link_to "編集", edit_admin_git_import_source_path(source)
-          = delete_link_to "削除", admin_git_import_source_path(source), confirm: "Git連携設定を削除しますか？"
+            code = source.source_path
+          td data-rails-table-preferences-column-key="auth_type"
+            = git_import_source_auth_type_label(source)
+            - if source.installation_id.present?
+              br
+              span.muted = "installation ID: #{source.installation_id}"
+          td data-rails-table-preferences-column-key="last_synced"
+            - if source.last_synced_commit_sha.present?
+              code = source.last_synced_commit_sha.first(12)
+              br
+              span.muted = l(source.last_synced_at) if source.last_synced_at
+            - else
+              span.muted 未同期
+          td data-rails-table-preferences-column-key="enabled"
+            span.badge = source.enabled? ? "有効" : "無効"
+          td.actions data-rails-table-preferences-column-key="actions"
+            = button_to "手動同期", sync_admin_git_import_source_path(source), method: :post, class: "button", form: { data: { turbo_confirm: "#{source.repository_full_name} を同期しますか？" } }
+            = edit_link_to "編集", edit_admin_git_import_source_path(source)
+            = delete_link_to "削除", admin_git_import_source_path(source), confirm: "Git連携設定を削除しますか？"
+- else
+  .card
+    p.muted まだGit連携は登録されていません。
+    p.muted 上の「新規登録」で案件、リポジトリ、ブランチ、取込元パスを設定して最初のGit連携を保存してください。

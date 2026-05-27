@@ -10,26 +10,31 @@ h1 案件マスタ
   h2 新規登録
   = render "form", project: @project
 
-.card
-  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件一覧の表示設定")
+- if @projects.any?
+  .card
+    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件一覧の表示設定")
 
-= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
-  thead
-    tr
-      th data-rails-table-preferences-column-key="code" コード
-      th data-rails-table-preferences-column-key="name" 案件名
-      th data-rails-table-preferences-column-key="company" 企業
-      th data-rails-table-preferences-column-key="description" 説明
-      th data-rails-table-preferences-column-key="status" 状態
-      th data-rails-table-preferences-column-key="actions"
-  tbody
-    - @projects.each do |project|
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+    thead
       tr
-        td data-rails-table-preferences-column-key="code" = project.code
-        td data-rails-table-preferences-column-key="name" = project.name
-        td data-rails-table-preferences-column-key="company" = project.company&.display_name || "未設定"
-        td data-rails-table-preferences-column-key="description" = project.description
-        td data-rails-table-preferences-column-key="status" = project.active? ? "有効" : "無効"
-        td.actions data-rails-table-preferences-column-key="actions"
-          = edit_link_to "編集", edit_admin_project_path(project)
-          = delete_link_to "削除", admin_project_path(project), confirm: "案件「#{project.name}」を削除しますか？関連文書や所属設定に影響します。"
+        th data-rails-table-preferences-column-key="code" コード
+        th data-rails-table-preferences-column-key="name" 案件名
+        th data-rails-table-preferences-column-key="company" 企業
+        th data-rails-table-preferences-column-key="description" 説明
+        th data-rails-table-preferences-column-key="status" 状態
+        th data-rails-table-preferences-column-key="actions"
+    tbody
+      - @projects.each do |project|
+        tr
+          td data-rails-table-preferences-column-key="code" = project.code
+          td data-rails-table-preferences-column-key="name" = project.name
+          td data-rails-table-preferences-column-key="company" = project.company&.display_name || "未設定"
+          td data-rails-table-preferences-column-key="description" = project.description
+          td data-rails-table-preferences-column-key="status" = project.active? ? "有効" : "無効"
+          td.actions data-rails-table-preferences-column-key="actions"
+            = edit_link_to "編集", edit_admin_project_path(project)
+            = delete_link_to "削除", admin_project_path(project), confirm: "案件「#{project.name}」を削除しますか？関連文書や所属設定に影響します。"
+- else
+  .card
+    p.muted まだ案件は登録されていません。
+    p.muted 上の「新規登録」でコードと案件名を入力し、必要に応じて企業を選ぶと最初の案件を登録できます。
