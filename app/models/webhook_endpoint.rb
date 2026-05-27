@@ -23,6 +23,10 @@ class WebhookEndpoint < ApplicationRecord
   scope :active, -> { where(active: true) }
   scope :subscribed_to, ->(event_type) { active.select { |endpoint| endpoint.subscribed_to?(event_type) } }
 
+  def to_param
+    public_id
+  end
+
   def subscribed_to?(event_type)
     normalized_event_types.include?(event_type.to_s)
   end
