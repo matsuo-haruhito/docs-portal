@@ -71,7 +71,10 @@ h1 文書マスタ
   tbody
     - @documents.each do |document|
       tr
-        td data-rails-table-preferences-column-key="project" = document.project.name
+        td data-rails-table-preferences-column-key="project"
+          div = document.project.name
+          - if admin_document_project_secondary_label(document.project)
+            div.muted = admin_document_project_secondary_label(document.project)
         td data-rails-table-preferences-column-key="title" = link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" }
         td data-rails-table-preferences-column-key="slug" = document.slug
         td data-rails-table-preferences-column-key="category"
