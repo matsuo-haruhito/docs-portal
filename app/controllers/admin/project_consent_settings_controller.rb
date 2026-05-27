@@ -40,7 +40,7 @@ class Admin::ProjectConsentSettingsController < Admin::BaseController
   private
 
   def set_project_consent_setting
-    @project_consent_setting = ProjectConsentSetting.find_by!(public_id: params[:id])
+    @project_consent_setting = ProjectConsentSetting.find_by!(public_id: params[:public_id])
   end
 
   def load_form_collections
