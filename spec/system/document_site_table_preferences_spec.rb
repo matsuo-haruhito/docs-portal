@@ -163,6 +163,23 @@ RSpec.describe "Document site table preferences", type: :system do
     raise "Timed out waiting for preference save request for #{table_key}: #{requests.inspect}"
   end
 
+  def wait_for_loaded_row_states(expected_row_states)
+    Timeout.timeout(10) do
+      loop do
+        infos = viewer_table_infos
+        matches = expected_row_states.each_with_index.all? do |expected_row_state, index|
+          infos.fetch(index).fetch("rowState") == expected_row_state
+        end
+        return infos if matches
+
+        sleep 0.1
+      end
+    end
+  rescue Timeout::Error
+    infos = viewer_table_infos
+    raise "Timed out waiting for loaded row states: #{infos.inspect}"
+  end
+
   def save_table_visibility(panel_index:, table_key:, checked_states:)
     within_frame(find("iframe.site-viewer-frame")) do
       statements = checked_states.each_with_index.map do |checked, index|
@@ -211,17 +228,21 @@ RSpec.describe "Document site table preferences", type: :system do
     visit site_document_version_path(version, site_path: site_build_path)
     wait_for_viewer_preference_panels
 
-    loaded_infos = viewer_table_infos
+    expected_row_states = [
+      [
+        { "text" => "Alpha", "hidden" => false },
+        { "text" => "100", "hidden" => true }
+      ],
+      [
+        { "text" => "Beta", "hidden" => true },
+        { "text" => "公開中", "hidden" => false }
+      ]
+    ]
+    loaded_infos = wait_for_loaded_row_states(expected_row_states)
 
     aggregate_failures do
-      expect(loaded_infos[0].fetch("rowState")).to contain_exactly(
-        a_hash_including("text" => "Alpha", "hidden" => false),
-        a_hash_including("text" => "100", "hidden" => true)
-      )
-      expect(loaded_infos[1].fetch("rowState")).to contain_exactly(
-        a_hash_including("text" => "Beta", "hidden" => true),
-        a_hash_including("text" => "公開中", "hidden" => false)
-      )
+      expect(loaded_infos[0].fetch("rowState")).to eq(expected_row_states[0])
+      expect(loaded_infos[1].fetch("rowState")).to eq(expected_row_states[1])
     end
   end
 end
