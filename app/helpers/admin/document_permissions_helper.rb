@@ -48,6 +48,28 @@ module Admin::DocumentPermissionsHelper
     end
   end
 
+  def document_permission_company_primary_label(company)
+    company&.display_name.presence || company&.domain
+  end
+
+  def document_permission_company_secondary_label(company)
+    return if company.blank? || company.display_name.blank? || company.domain.blank?
+    return if company.display_name == company.domain
+
+    company.domain
+  end
+
+  def document_permission_user_primary_label(user)
+    user&.display_name.presence || user&.email_address
+  end
+
+  def document_permission_user_secondary_label(user)
+    return if user.blank? || user.display_name.blank? || user.email_address.blank?
+    return if user.display_name == user.email_address
+
+    user.email_address
+  end
+
   def document_permission_form_error_messages(document_permission)
     document_permission.errors.map do |error|
       if error.attribute == :base
