@@ -7,7 +7,7 @@ RSpec.describe "document zip selection source" do
 
   it "wires the project documents zip form to a dedicated stimulus controller" do
     aggregate_failures do
-      expect(view_source).to include('data: { controller: "document-zip-selection" }')
+      expect(view_source).to include('controller: "document-zip-selection"')
       expect(view_source).to include('document_zip_selection_matching_count_value: @selectable_documents_count')
       expect(view_source).to include('data-document-zip-selection-target="count"')
       expect(view_source).to include('document_zip_selection_target: "scopeField"')
