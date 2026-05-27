@@ -286,6 +286,16 @@ function toolbarInsertionTarget(toolbar) {
   return toolbar.querySelector(".portal-table-width-toolbar-body") || toolbar
 }
 
+function base64UrlEncode(value) {
+  const bytes = new TextEncoder().encode(String(value ?? ""))
+  let binary = ""
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte)
+  })
+
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
+}
+
 function stableTablePreferenceKeyFromContext(previewContextKey, tableIndexValue) {
   const parts = String(previewContextKey || "").split(":")
   if (parts.length >= 3 && parts[0] === "document_version") {
@@ -295,7 +305,7 @@ function stableTablePreferenceKeyFromContext(previewContextKey, tableIndexValue)
       "document-version",
       versionId,
       "site-path",
-      sitePath,
+      base64UrlEncode(sitePath),
       "table",
       tableIndexValue
     ].join(":")
