@@ -69,6 +69,9 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include("左右確認（比較対象なし）")
     expect(response.body).to include("添付・元ファイルへ移動")
     expect(response.body).to include("版詳細ナビゲーション")
+    expect(response.body).to include("ファイル名・パス・グループ名で絞り込み")
+    expect(response.body).to include('name="version_file_query"')
+    expect(response.body).to include('data-document-file-browser-target="status"')
     expect(response.body).not_to include("markdown-preview-actions")
     expect(response.body).not_to include("markdown-tool")
   end
@@ -141,7 +144,7 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include('data-turbo="false"')
   end
 
-  it "shows preview target metadata summary and organized sections" do
+  it "shows preview target metadata summary, organized sections, and file browser filters" do
     version = create(:document_version, document:, version_label: "v1.0.0", status: :published)
     document.update!(latest_version: version)
     create_stored_document_file(
@@ -181,6 +184,10 @@ RSpec.describe "Document versions", type: :request do
     expect(response.body).to include("通常表示")
     expect(response.body).to include("補助")
     expect(response.body).to include("デバッグ")
+    expect(response.body).to include("すべて")
+    expect(response.body).to include("通常")
+    expect(response.body).to include("グループ")
+    expect(response.body).to include('data-section-kind="grouped"')
   end
 
   it "shows export handling notes on version detail" do
