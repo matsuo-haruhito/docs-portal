@@ -28,7 +28,10 @@ RSpec.describe "Admin access logs", type: :request do
 
   def row_column_texts(column_key)
     log_rows.map do |row|
-      row.at_css(%(td[data-rails-table-preferences-column-key="#{column_key}"]))&.text&.squish
+      cell = row.at_css(%(td[data-rails-table-preferences-column-key="#{column_key}"]))
+      next unless cell
+
+      cell.xpath(".//text()").map { |node| node.text.squish }.reject(&:empty?).join(" ")
     end
   end
 
@@ -169,8 +172,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(row_column_texts("project")).to eq(["Filter Project FILTER"])
   end
 
-  it "renders only the available secondary identifiers in company and project rows" do
-    no_domain_company = create(:company, name: "Domainless Co", domain: nil)
+  it "renders only the available identifiers when company or project data is missing" do
     plain_project = create(:project, code: "PLAIN", name: "Plain Project")
     plain_document = create(:document, project: plain_project, title: "Plain Document", slug: "plain-document")
     plain_version = create(:document_version, document: plain_document, version_label: "v2.1.0")
@@ -180,7 +182,7 @@ RSpec.describe "Admin access logs", type: :request do
       target_type: "page",
       target_name: "plain.html",
       user: admin_user,
-      company: no_domain_company,
+      company: nil,
       project: plain_project,
       document: plain_document,
       document_version: plain_version,
@@ -194,7 +196,7 @@ RSpec.describe "Admin access logs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(row_column_texts("company")).to eq([
-      "Domainless Co",
+      "-",
       "Audit Company audit.example.com"
     ])
     expect(row_column_texts("project")).to eq([
