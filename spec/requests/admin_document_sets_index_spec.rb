@@ -19,13 +19,17 @@ RSpec.describe "Admin document sets index", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def page_text
+    parsed_html.text.squish
+  end
+
   it "renders the table preferences editor and stable column keys" do
     sign_in_as(admin)
 
     get admin_document_sets_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("文書セット一覧の表示設定")
+    expect(page_text).to include("文書セット一覧の表示設定")
 
     headers = parsed_html.css("thead th[data-rails-table-preferences-column-key]")
 
@@ -36,12 +40,12 @@ RSpec.describe "Admin document sets index", type: :request do
     row = parsed_html.css("tbody tr").find { |candidate| candidate.text.include?("Release Bundle") }
 
     expect(row).to be_present
-    expect(row.at_css('td[data-rails-table-preferences-column-key="project"]').text).to include("Alpha Project")
-    expect(row.at_css('td[data-rails-table-preferences-column-key="documents_count"]').text).to include("1")
+    expect(row.at_css('td[data-rails-table-preferences-column-key="project"]').text.squish).to include("Alpha Project")
+    expect(row.at_css('td[data-rails-table-preferences-column-key="documents_count"]').text.squish).to include("1")
 
     actions_cell = row.at_css('td[data-rails-table-preferences-column-key="actions"]')
+    action_hrefs = actions_cell.css("a[href]").map { |link| link["href"] }
 
-    expect(actions_cell.to_html).to include(edit_admin_document_set_path(document_set))
-    expect(actions_cell.to_html).to include(admin_document_set_path(document_set))
+    expect(action_hrefs).to include(edit_admin_document_set_path(document_set), admin_document_set_path(document_set))
   end
 end
