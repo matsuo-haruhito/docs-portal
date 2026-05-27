@@ -89,6 +89,75 @@ RSpec.describe DocusaurusSiteRenderer do
     expect(html).to include('href="#section"')
   end
 
+  it "adds stable table preference metadata to each standalone markdown table" do
+    write_site_file(
+      "#{site_build_path}/index.html",
+      <<~HTML
+        <html>
+          <head></head>
+          <body>
+            <table><tbody><tr><td>First</td></tr></tbody></table>
+            <table><tbody><tr><td>Second</td></tr></tbody></table>
+          </body>
+        </html>
+      HTML
+    )
+
+    renderer = described_class.new(
+      version:,
+      view_context:,
+      current_document_version: version,
+      project:
+    )
+    html = renderer.render_html("#{site_build_path}/index")
+    parsed = Nokogiri::HTML5.parse(html)
+
+    wrappers = parsed.css(".portal-doc-table-preference-wrapper")
+    tables = parsed.css("table")
+    expected_site_path = DocumentVersion.normalize_site_page_path("#{site_build_path}/index")
+
+    expect(wrappers.size).to eq(2)
+    expect(tables.size).to eq(2)
+    expect(wrappers.map { _1["data-docs-portal-table-index"] }).to eq(%w[1 2])
+    expect(wrappers.map { _1["data-docs-portal-site-path"] }).to all(eq(expected_site_path))
+    expect(wrappers.map { _1["data-docs-portal-document-version"] }).to all(eq(version.public_id))
+
+    table_keys = wrappers.map { _1["data-rails-table-preferences-table-key"] }
+    expect(table_keys.uniq.size).to eq(2)
+    expect(table_keys).to all(include("document-version:#{version.public_id}:site-path:"))
+    expect(tables.map { _1["data-rails-table-preferences-table-key"] }).to eq(table_keys)
+  end
+
+  it "keeps mermaid and code blocks intact while annotating real tables" do
+    write_site_file(
+      "#{site_build_path}/index.html",
+      <<~HTML
+        <html>
+          <head></head>
+          <body>
+            <div class="mermaid">graph TD; A-->B;</div>
+            <pre><code>&lt;table&gt;&lt;tr&gt;&lt;td&gt;example&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</code></pre>
+            <table><tbody><tr><td>Visible table</td></tr></tbody></table>
+          </body>
+        </html>
+      HTML
+    )
+
+    renderer = described_class.new(
+      version:,
+      view_context:,
+      current_document_version: version,
+      project:
+    )
+    html = renderer.render_html("#{site_build_path}/index")
+    parsed = Nokogiri::HTML5.parse(html)
+
+    expect(parsed.css(".portal-doc-table-preference-wrapper").size).to eq(1)
+    expect(parsed.css("table").size).to eq(1)
+    expect(parsed.at_css(".mermaid")&.text).to include("graph TD; A-->B;")
+    expect(parsed.at_css("pre code")&.text).to include("<table><tr><td>example</td></tr></table>")
+  end
+
   it "injects portal navigation links when project context is provided" do
     write_site_file("#{site_build_path}/index.html", "<html><body><h1>操作説明</h1></body></html>")
 
