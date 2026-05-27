@@ -45,6 +45,20 @@ DOCUSAURUS_RENDERER_MAX_OUTPUT_BYTES=52428800
 DOCUSAURUS_RENDERER_BUILD_TIMEOUT_MS=60000
 ```
 
+## Viewer HTML rewrite and table annotation
+
+`DocusaurusSiteRenderer` rewrites internal links and asset URLs before returning HTML to Rails-side viewer routes. The same rewrite path also decides which chrome is removed for `embedded=1` responses and where portal-specific metadata can be added safely.
+
+Current `main` includes a first slice for Markdown table follow-up work:
+
+- standalone viewer responses annotate each real HTML `<table>` with `data-rails-table-preferences-table-key`
+- the key is built from `DocumentVersion.public_id`, normalized `site_path`, and the per-page table index so multiple tables on the same page do not collide
+- each annotated table is wrapped with `div.portal-doc-table-preference-wrapper` and matching `data-docs-portal-*` attributes so later UI/controller slices can target the table without reparsing the whole page
+- Mermaid output and code blocks that merely contain table-like text are left untouched; only actual `<table>` nodes are annotated
+- this first slice applies only to standalone viewer responses; `embedded=1` keeps the chrome-stripped body path and does not add table wrapper metadata yet
+
+This is intentionally narrower than restoring the full `rails_table_preferences` UI inside Markdown pages. Column editors, saved resize controls, sticky rows/columns, and embedded-viewer parity remain follow-up work.
+
 ## Path safety and artifact lifecycle
 
 Preview build inputs and outputs intentionally allow paths that normalize safely inside the site tree, such as `docs/../docs/guide.md`, while rejecting traversal, absolute, drive-letter, and NUL-containing paths.
