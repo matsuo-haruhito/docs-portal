@@ -5,6 +5,7 @@ import { Application } from "@hotwired/stimulus"
 import { RailsTablePreferencesController } from "rails_table_preferences"
 import { TomSelectController } from "rails_fields_kit"
 import "tom-select/dist/css/tom-select.css"
+import DocumentFileBrowserController from "../controllers/document_file_browser_controller"
 import DocumentZipSelectionController from "../controllers/document_zip_selection_controller"
 import NavDropdownsController from "../controllers/nav_dropdowns_controller"
 import DocumentTreeNavigationController from "../controllers/document_tree_navigation_controller"
@@ -17,6 +18,7 @@ import SidebarController from "../controllers/sidebar_controller"
 const application = Application.start()
 application.register("rails-table-preferences", RailsTablePreferencesController)
 application.register("rails-fields-kit--tom-select", TomSelectController)
+application.register("document-file-browser", DocumentFileBrowserController)
 application.register("document-zip-selection", DocumentZipSelectionController)
 application.register("nav-dropdowns", NavDropdownsController)
 application.register("document-tree-navigation", DocumentTreeNavigationController)
