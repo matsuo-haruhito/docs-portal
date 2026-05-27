@@ -21,7 +21,9 @@ concurrency:
 jobs:
   generate:
     # Avoid a commit produced by this workflow recursively triggering itself.
-    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, 'chore: update generated files') }}
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          !contains(github.event.head_commit.message, 'chore: update generated files') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
