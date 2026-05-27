@@ -286,12 +286,6 @@ function toolbarInsertionTarget(toolbar) {
   return toolbar.querySelector(".portal-table-width-toolbar-body") || toolbar
 }
 
-function cgiEscape(value) {
-  return encodeURIComponent(String(value ?? ""))
-    .replace(/%20/g, "+")
-    .replace(/\./g, "%2E")
-}
-
 function stableTablePreferenceKeyFromContext(previewContextKey, tableIndexValue) {
   const parts = String(previewContextKey || "").split(":")
   if (parts.length >= 3 && parts[0] === "document_version") {
@@ -301,13 +295,13 @@ function stableTablePreferenceKeyFromContext(previewContextKey, tableIndexValue)
       "document-version",
       versionId,
       "site-path",
-      cgiEscape(sitePath),
+      sitePath,
       "table",
       tableIndexValue
     ].join(":")
   }
 
-  return `document-preview:${cgiEscape(previewContextKey || "unknown")}:table:${tableIndexValue}`
+  return `document-preview:${previewContextKey || "unknown"}:table:${tableIndexValue}`
 }
 
 function resolveTablePreferenceKey(frame, wrapper, table, fallbackIndex) {
