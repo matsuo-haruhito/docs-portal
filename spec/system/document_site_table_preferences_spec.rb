@@ -1,6 +1,7 @@
 require "rails_helper"
 require "fileutils"
 require "securerandom"
+require "timeout"
 
 RSpec.describe "Document site table preferences", type: :system do
   before do
@@ -110,7 +111,7 @@ RSpec.describe "Document site table preferences", type: :system do
     end
   end
 
-  def save_table_visibility(panel_index:, checked_states:)
+  def save_table_visibility(panel_index:, table_key:, checked_states:)
     within_frame(find("iframe.site-viewer-frame")) do
       statements = checked_states.each_with_index.map do |checked, index|
         "checkboxes[#{index}].checked = #{checked ? 'true' : 'false'}"
@@ -127,8 +128,15 @@ RSpec.describe "Document site table preferences", type: :system do
           .find((button) => button.textContent.trim() === "保存")
           ?.click()
       JS
+    end
 
-      expect(page).to have_text("保存しました", wait: 10)
+    Timeout.timeout(10) do
+      loop do
+        preference = RailsTablePreferences::Preference.find_for(user:, table_key:)
+        break if preference.present? && preference.settings.fetch("columns").map { |column| column["visible"] } == checked_states
+
+        sleep 0.1
+      end
     end
   end
 
@@ -146,8 +154,8 @@ RSpec.describe "Document site table preferences", type: :system do
       expect(initial_infos.map { _1.fetch("columnKeys") }).to all(eq(%w[column_1 column_2]))
     end
 
-    save_table_visibility(panel_index: 0, checked_states: [true, false])
-    save_table_visibility(panel_index: 1, checked_states: [false, true])
+    save_table_visibility(panel_index: 0, table_key: table_keys.first, checked_states: [true, false])
+    save_table_visibility(panel_index: 1, table_key: table_keys.second, checked_states: [false, true])
 
     first_saved = RailsTablePreferences::Preference.find_for(user:, table_key: table_keys.first)
     second_saved = RailsTablePreferences::Preference.find_for(user:, table_key: table_keys.second)
