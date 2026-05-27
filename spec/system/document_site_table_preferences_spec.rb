@@ -132,7 +132,9 @@ RSpec.describe "Document site table preferences", type: :system do
 
     Timeout.timeout(10) do
       loop do
-        preference = RailsTablePreferences::Preference.find_for(user:, table_key:)
+        preference = RailsTablePreferences::Preference.uncached do
+          RailsTablePreferences::Preference.find_for(user:, table_key:)
+        end
         break if preference.present? && preference.settings.fetch("columns").map { |column| column["visible"] } == checked_states
 
         sleep 0.1
