@@ -1,3 +1,4 @@
+require "base64"
 require "rails_helper"
 require "fileutils"
 require "securerandom"
@@ -115,6 +116,7 @@ RSpec.describe DocusaurusSiteRenderer do
     wrappers = parsed.css(".portal-doc-table-preference-wrapper")
     tables = parsed.css("table")
     expected_site_path = DocumentVersion.normalize_site_page_path("#{site_build_path}/index")
+    expected_site_path_key = Base64.urlsafe_encode64(expected_site_path, padding: false)
 
     expect(wrappers.size).to eq(2)
     expect(tables.size).to eq(2)
@@ -124,7 +126,8 @@ RSpec.describe DocusaurusSiteRenderer do
 
     table_keys = wrappers.map { _1["data-rails-table-preferences-table-key"] }
     expect(table_keys.uniq.size).to eq(2)
-    expect(table_keys).to all(include("document-version:#{version.public_id}:site-path:"))
+    expect(table_keys).to all(include("document-version:#{version.public_id}:site-path:#{expected_site_path_key}:table:"))
+    expect(table_keys).to all(satisfy { |key| !key.include?("/") })
     expect(tables.map { _1["data-rails-table-preferences-table-key"] }).to eq(table_keys)
   end
 
