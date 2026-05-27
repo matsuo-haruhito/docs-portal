@@ -10,6 +10,7 @@ class DocumentsController < BaseController
 
     @filters = document_filter_params
     @selected_source_path = selected_source_path
+    @zip_source_path = zip_source_path
     @uploaded_version = uploaded_version_for_confirmation
     @available_tags = DocumentTag
       .joins(:documents)
@@ -195,7 +196,11 @@ class DocumentsController < BaseController
   end
 
   def selected_source_path
-    normalize_source_path_param(params[:upload_source_path].presence) || query_source_path_candidate
+    zip_source_path || query_source_path_candidate
+  end
+
+  def zip_source_path
+    normalize_source_path_param(params[:upload_source_path].presence)
   end
 
   def query_source_path_candidate
