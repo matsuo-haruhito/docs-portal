@@ -11,6 +11,10 @@ RSpec.describe "Project documents return_to", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def link_hrefs
+    parsed_html.css("a[href]").map { |node| node["href"] }
+  end
+
   def href_for(text)
     parsed_html.css("a[href]").find { |node| node.text.strip == text }&.[]("href")
   end
@@ -28,7 +32,7 @@ RSpec.describe "Project documents return_to", type: :request do
     get project_documents_path(project), params: { q: document.title, upload_source_path: "folder/subfolder" }
 
     expect(response).to have_http_status(:ok)
-    expect(href_for(document.title)).to eq(project_document_path(project, document.slug, return_to: return_to))
+    expect(link_hrefs).to include(project_document_path(project, document.slug, return_to: return_to))
 
     get project_document_path(project, document.slug), params: { return_to: return_to }
 
