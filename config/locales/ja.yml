@@ -22,6 +22,12 @@ ja:
         viewer: "閲覧者"
         editor: "編集者"
         owner: "管理者"
+    consents:
+      target_type:
+        project: "案件"
+        document: "文書"
+        document_file: "ファイル"
+        document_version: "文書版"
     documents:
       category:
         spec: "仕様"
