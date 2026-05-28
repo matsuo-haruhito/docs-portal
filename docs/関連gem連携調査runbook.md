@@ -59,6 +59,29 @@
 
 この順で見ると、form helper、table metadata、entrypoint wiring、回帰確認の責務分担を current main から短時間で把握できます。
 
+### 5. package-root import / direct entrypoint の使い分け
+
+- `docs-portal` の current `app/frontend/entrypoints/application.js` は `import { RailsTablePreferencesController } from "rails_table_preferences"` と `import { TomSelectController } from "rails_fields_kit"` を使っています。current main の host-app default は、このように upstream README / public API が stable export として案内している package root を先に使う形です。
+- `vite.config.ts` では package root (`rails_table_preferences`, `rails_fields_kit`) と documented direct entrypoint (`rails_table_preferences/controller`, `rails_fields_kit/tom_select_controller`) の両方を alias しています。これは current app が direct entrypoint を常用しているという意味ではなく、upstream docs の Vite 例や copied-controller migration をそのまま検証できるようにするための compatibility lane として残しています。
+- direct entrypoint は「package root で欲しい export がまだ公開されていない」「upstream docs がその path を正規の integration path として案内している」「copied controller / custom boot path からの移行途中で current issue scope がそこに閉じている」といった場合だけ選びます。host app 固有の convenience のために undocumented path や gem 内部ファイルへ飛び込むのは避けます。
+- `tree_view` は current `docs-portal` では helper / partial integration が先で、`app/frontend/entrypoints/application.js` から直接 controller import をしていません。JavaScript hook が必要になったら、`tree_view/index.js` を public entrypoint として扱い、`TreeViewEventNames`、`TreeViewControllerIdentifiers`、`registerTreeViewControllers(application)` のような documented package-root export から読み始めます。event 名や controller identifier を raw string で写経したり、`app/javascript/tree_view/*` 配下の内部 file path に依存したりしません。
+- `rails_table_preferences` は upstream `docs/javascript_entrypoints.md` が `rails_table_preferences/controller` も `rails_table_preferences` package root も両方案内していますが、current `docs-portal` の representative import は package-root named export です。screen issue で controller 登録の説明を書くときは、まず current `application.js` と同じ package-root import を基準にし、direct path は fallback / migration note としてだけ扱います。
+- `rails_fields_kit` も upstream README / `doc/public_api.md` が `TomSelectController` の package-root export と direct import の両方を documented surface としています。current `docs-portal` の representative import は package-root named export なので、新しい helper / controller helper / JS helper を downstream docs に出す前に、README か `doc/public_api.md` で public export になっているかを確認します。未着地の upstream PR で提案されている export 名を current main の durable import として先走って書きません。
+
+### 6. representative smoke で確認する最小観点
+
+- `app/frontend/entrypoints/application.js`
+  - package-root import が current host app の default として解決しているかを確認する
+- `vite.config.ts`
+  - package root と documented direct entrypoint の alias が、upstream docs にある import path と矛盾していないかを確認する
+- upstream README / public API docs
+  - `rails_fields_kit`: `TomSelectController`
+  - `rails_table_preferences`: `RailsTablePreferencesController`
+  - `tree_view`: `tree_view/index.js`, `TreeViewEventNames`, `TreeViewControllerIdentifiers`, `registerTreeViewControllers(application)`
+  - のように、host app が使う import / export 名が documented public surface として見えるかを確認する
+- issue / PR の update log
+  - 「package-root import を使ったか」「direct entrypoint を使ったか」「その理由が upstream docs 由来か current migration lane 由来か」を 1 行で残す
+
 ## 現在の解決 revision の見方
 
 `docs-portal` の `Gemfile` は 3 gem を `ref:` 固定で取り込んでいます。更新方針の正本は `Gemfile`、その時点で app が実際に解決している snapshot は `Gemfile.lock` を見るのが最短です。調査や update log では、必要に応じて `Gemfile` の target ref と `Gemfile.lock` の resolved revision を両方控えます。
