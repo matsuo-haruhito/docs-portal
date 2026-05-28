@@ -15,4 +15,25 @@ module Admin::ProjectConsentSettingsHelper
   def project_consent_term_option_label(term)
     "#{term.title} / #{term.version_label}"
   end
+
+  def project_consent_setting_required_on_label(required_on)
+    case required_on.to_s
+    when "first_access"
+      "閲覧前"
+    when "download"
+      "ダウンロード前"
+    when "shared_link_access"
+      "共有リンク閲覧前（予約）"
+    when "shared_link_download"
+      "共有リンクダウンロード前（予約）"
+    else
+      required_on.to_s
+    end
+  end
+
+  def project_consent_setting_required_on_options
+    ProjectConsentSetting.required_ons.keys.map do |required_on|
+      [project_consent_setting_required_on_label(required_on), required_on]
+    end
+  end
 end

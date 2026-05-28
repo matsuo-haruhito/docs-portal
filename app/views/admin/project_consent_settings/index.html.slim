@@ -33,7 +33,7 @@ h1 案件同意設定
           td data-rails-table-preferences-column-key="consent_term" = setting.consent_term.title
           td data-rails-table-preferences-column-key="version_label"
             span.muted = setting.consent_term.version_label
-          td data-rails-table-preferences-column-key="required_on" = setting.required_on
+          td data-rails-table-preferences-column-key="required_on" = project_consent_setting_required_on_label(setting.required_on)
           td data-rails-table-preferences-column-key="enabled" = setting.enabled? ? "有効" : "無効"
           td.actions data-rails-table-preferences-column-key="actions"
             = edit_link_to "編集", edit_admin_project_consent_setting_path(setting)
