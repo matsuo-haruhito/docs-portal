@@ -40,12 +40,20 @@ RSpec.describe "Project documents return_to", type: :request do
     expect(href_for("文書一覧へ戻る")).to eq(return_to)
   end
 
-  it "falls back to the default list path for an invalid return_to" do
+  it "falls back to the default list path for non-root-relative return_to values" do
     sign_in_as(external_user)
 
-    get project_document_path(project, document.slug), params: { return_to: "https://example.com/outside" }
+    [
+      "https://example.com/outside",
+      "//example.com/outside",
+      "javascript:alert(1)",
+      "data:text/html,test",
+      "documents/portal-guide"
+    ].each do |unsafe_return_to|
+      get project_document_path(project, document.slug), params: { return_to: unsafe_return_to }
 
-    expect(response).to have_http_status(:ok)
-    expect(href_for("文書一覧へ戻る")).to eq(project_documents_path(project))
+      expect(response).to have_http_status(:ok)
+      expect(href_for("文書一覧へ戻る")).to eq(project_documents_path(project))
+    end
   end
 end
