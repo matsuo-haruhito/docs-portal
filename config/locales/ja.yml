@@ -98,6 +98,16 @@ ja:
         open: "未対応"
         rejected: "差し戻し"
         canceled: "取り消し"
+    document_delivery_logs:
+      delivery_type:
+        portal_link: "ポータルリンク"
+        shared_link: "共有リンク"
+        attachment: "添付ファイル"
+        zip_attachment: "ZIP添付"
+      status:
+        draft: "下書き"
+        sent: "送付済み"
+        failed: "送付失敗"
     document_relations:
       relation_type:
         references: "参照"
