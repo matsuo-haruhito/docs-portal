@@ -1,4 +1,6 @@
 class ConsentsController < BaseController
+  helper_method :safe_return_to
+
   before_action :set_target, only: %i[new create]
   before_action :set_timing, only: %i[new create]
 

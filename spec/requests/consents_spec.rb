@@ -7,6 +7,17 @@ RSpec.describe "Consents", type: :request do
   let(:project) { create(:project, code: "CONSENT", name: "Consent Project") }
   let(:document) { create(:document, project:, title: "Consent Document", slug: "consent-document", visibility_policy: :restricted_external) }
   let(:version) { create(:document_version, document:, version_label: "v1.0.0", status: :published) }
+  let(:file) do
+    create(
+      :document_file,
+      document_version: version,
+      file_name: "manual.pdf",
+      content_type: "application/pdf",
+      storage_key: "spec/consents/manual.pdf",
+      file_size: 8,
+      scan_status: :scan_clean
+    )
+  end
 
   before do
     create(:project_membership, project:, user:)
@@ -38,10 +49,34 @@ RSpec.describe "Consents", type: :request do
     expect(response.body).to include("Consent Document")
   end
 
+  it "uses the current return_to for the back link when it is safe" do
+    term = create(:consent_term, title: "Project Terms", consent_scope: :project, version_label: "v1")
+    create(:project_consent_setting, project:, consent_term: term, required_on: :first_access)
+
+    sign_in_as(user)
+
+    get new_consent_path(target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to: document_file_path(file))
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(%(href="#{document_file_path(file)}"))
+  end
+
+  it "falls back to projects_path for the back link when return_to is unsafe" do
+    term = create(:consent_term, title: "Project Terms", consent_scope: :project, version_label: "v1")
+    create(:project_consent_setting, project:, consent_term: term, required_on: :first_access)
+
+    sign_in_as(user)
+
+    get new_consent_path(target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to: "https://example.com/outside")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(%(href="#{projects_path}"))
+    expect(response.body).not_to include("https://example.com/outside")
+  end
+
   it "redirects file downloads to download consent and does not log before consent" do
     term = create(:consent_term, title: "Download Terms", consent_scope: :download, version_label: "v1")
     create(:project_consent_setting, project:, consent_term: term, required_on: :download)
-    file = create(:document_file, document_version: version, file_name: "manual.pdf", content_type: "application/pdf", storage_key: "spec/consents/manual.pdf", file_size: 8, scan_status: :scan_clean)
     FileUtils.mkdir_p(file.absolute_path.dirname)
     File.binwrite(file.absolute_path, "%PDF-1.4")
 
