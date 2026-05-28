@@ -12,9 +12,20 @@ class DocumentDeliveryLogsController < BaseController
     base_scope = current_user.internal? ? DocumentDeliveryLog.all : DocumentDeliveryLog.where(sender: current_user)
 
     @status_filter = normalized_status_filter
-    @status_counts = STATUS_FILTER_LABELS.keys.index_with { |status| base_scope.public_send(status).count }
+    @delivery_type_filter = normalized_delivery_type_filter
+    @status_summary_counts = STATUS_FILTER_LABELS.keys.index_with { |status| base_scope.public_send(status).count }
 
-    scoped_scope = @status_filter.present? ? base_scope.public_send(@status_filter) : base_scope
+    status_filter_scope = @delivery_type_filter.present? ? base_scope.public_send(@delivery_type_filter) : base_scope
+    @status_filter_counts = STATUS_FILTER_LABELS.keys.index_with { |status| status_filter_scope.public_send(status).count }
+
+    delivery_type_filter_scope = @status_filter.present? ? base_scope.public_send(@status_filter) : base_scope
+    @delivery_type_counts = DocumentDeliveryLog.delivery_types.keys.index_with do |delivery_type|
+      delivery_type_filter_scope.public_send(delivery_type).count
+    end
+
+    scoped_scope = base_scope
+    scoped_scope = scoped_scope.public_send(@status_filter) if @status_filter.present?
+    scoped_scope = scoped_scope.public_send(@delivery_type_filter) if @delivery_type_filter.present?
     @delivery_logs = scoped_scope.includes(:project, :document, :document_set, :sender).recent_first
   end
 
@@ -137,5 +148,9 @@ class DocumentDeliveryLogsController < BaseController
 
   def normalized_status_filter
     params[:status].presence_in(DocumentDeliveryLog.statuses.keys)
+  end
+
+  def normalized_delivery_type_filter
+    params[:delivery_type].presence_in(DocumentDeliveryLog.delivery_types.keys)
   end
 end
