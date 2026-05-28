@@ -2,14 +2,10 @@
 
 - selected_items = document_set.document_set_items.index_by(&:document_id)
 - filters = (@filters || {}).compact_blank
-- form_options =
-  if document_set.persisted?
-    { model: [:admin, document_set] }
-  else
-    { model: [:admin, document_set], url: admin_document_sets_path(filters) }
-  end
+- form_url = document_set.persisted? ? admin_document_set_path(document_set) : admin_document_sets_path(filters)
+- form_method = document_set.persisted? ? :patch : :post
 
-= form_with(**form_options) do |form|
+= form_with model: [:admin, document_set], url: form_url, method: form_method do |form|
   .form-grid
     = form.rfk_select :project_id,
       collection: @projects,
