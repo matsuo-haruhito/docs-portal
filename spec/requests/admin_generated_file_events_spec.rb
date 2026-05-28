@@ -236,6 +236,23 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include("再実行")
       expect(response.body).to include("一括再実行")
     end
+
+    it "falls back to the index path for protocol-relative return_to values" do
+      sign_in_as(admin_user)
+      event = create_event!(path: "docs/source.yml", status: :failed)
+      invalid_return_to = "//example.com"
+      allow(GeneratedFileEventDispatchJob).to receive(:perform_later)
+
+      get admin_generated_file_event_path(event.public_id, return_to: invalid_return_to)
+
+      expect(response).to have_http_status(:ok)
+      expect(parsed_html.at_css(%(a[href="#{admin_generated_file_events_path}"]))).to be_present
+
+      post retry_dispatch_admin_generated_file_event_path(event.public_id, return_to: invalid_return_to)
+
+      expect(response).to redirect_to(admin_generated_file_event_path(event.public_id, return_to: admin_generated_file_events_path))
+      expect(GeneratedFileEventDispatchJob).to have_received(:perform_later)
+    end
   end
 
   describe "POST /admin/generated_file_events/:public_id/retry_dispatch" do
