@@ -191,8 +191,8 @@ RSpec.describe "Admin external folder sync sources", type: :request do
       end.to change(ExternalFolderSyncSource, :count).by(1)
 
       source = ExternalFolderSyncSource.order(:id).last
-      expect(response).to redirect_to(admin_external_folder_sync_source_path(source))
-      expect(response.location).to end_with("/admin/external_folder_sync_sources/#{source.public_id}")
+      expect(response).to redirect_to(admin_external_folder_sync_source_path(source, return_to: admin_external_folder_sync_sources_path))
+      expect(response.location).to end_with("/admin/external_folder_sync_sources/#{source.public_id}?return_to=%2Fadmin%2Fexternal_folder_sync_sources")
       expect(source.provider).to eq("microsoft_graph")
       expect(source.auth_type).to eq("microsoft_graph_connection")
       expect(source.external_folder_id).to eq("item-456")
@@ -339,7 +339,7 @@ RSpec.describe "Admin external folder sync sources", type: :request do
 
       post dry_run_admin_external_folder_sync_source_path(source)
 
-      expect(response).to redirect_to(admin_external_folder_sync_source_path(source))
+      expect(response).to redirect_to(admin_external_folder_sync_source_path(source, return_to: admin_external_folder_sync_sources_path))
       follow_redirect!
       expect(response.body).to include("後続 issue で対応予定")
       expect(response.body).not_to include("同期プレビュー")
