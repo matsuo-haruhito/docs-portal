@@ -16,6 +16,16 @@ RSpec.describe "Admin access logs", type: :request do
     parsed_html.text.squish
   end
 
+  def heading_texts
+    parsed_html.css("h1, h2, h3").map { _1.text.squish }.reject(&:empty?)
+  end
+
+  def table_preference_column_keys
+    parsed_html.css("[data-rails-table-preferences-column-key]").map do |node|
+      node["data-rails-table-preferences-column-key"]
+    end
+  end
+
   def log_rows
     parsed_html.css("table tbody tr")
   end
@@ -62,11 +72,11 @@ RSpec.describe "Admin access logs", type: :request do
     get admin_access_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("監査ログ")
-    expect(response.body).to include("Audit Project")
-    expect(response.body).to include("Audit Document")
+    expect(heading_texts).to include("監査ログ")
+    expect(page_text).to include("Audit Project")
+    expect(page_text).to include("Audit Document")
     expect(page_text).to include("表示中: 1件 / 最新200件までを表示")
-    expect(response.body).to include("監査ログ一覧の表示設定")
+    expect(page_text).to include("監査ログ一覧の表示設定")
     expect(log_target_names).to eq(["audit.zip"])
     expect(row_column_texts("company")).to eq(["Audit Company audit.example.com"])
     expect(row_column_texts("project")).to eq(["Audit Project AUDIT"])
@@ -78,10 +88,11 @@ RSpec.describe "Admin access logs", type: :request do
     get admin_access_logs_path
 
     expect(response).to have_http_status(:ok)
+    expect(heading_texts).to include("監査ログ")
     expect(page_text).to include("まだ監査ログはありません。")
     expect(page_text).to include("操作が記録されると、最新200件をここで確認できます。")
-    expect(response.body).not_to include("監査ログ一覧の表示設定")
-    expect(response.body).not_to include('data-rails-table-preferences-column-key="accessed_at"')
+    expect(page_text).not_to include("監査ログ一覧の表示設定")
+    expect(table_preference_column_keys).to be_empty
   end
 
   it "shows a filtered empty state when no access logs match the current filters" do
@@ -90,9 +101,11 @@ RSpec.describe "Admin access logs", type: :request do
     get admin_access_logs_path, params: { document_q: "does-not-match" }
 
     expect(response).to have_http_status(:ok)
+    expect(heading_texts).to include("監査ログ")
     expect(page_text).to include("条件に一致する監査ログはありません。")
     expect(page_text).to include("絞り込み条件を見直すか、「条件をクリア」で最新200件を確認してください。")
-    expect(response.body).not_to include("監査ログ一覧の表示設定")
+    expect(page_text).not_to include("監査ログ一覧の表示設定")
+    expect(table_preference_column_keys).to be_empty
   end
 
   it "filters access logs by action type and target type" do
