@@ -68,6 +68,7 @@ ja:
       access_level:
         view: "閲覧"
         download: "ダウンロード"
+        manage: "管理"
     document_sets:
       set_type:
         delivery: "送付用"
@@ -113,6 +114,16 @@ ja:
         references: "参照"
         supersedes: "置き換え"
         related: "関連"
+    access_requests:
+      status:
+        pending: "申請中"
+        approved: "承認済み"
+        rejected: "却下"
+        cancelled: "取消済み"
+      requestable_type:
+        project: "案件"
+        document: "文書"
+        document_file: "ファイル"
     access_logs:
       action_type:
         view: "閲覧"

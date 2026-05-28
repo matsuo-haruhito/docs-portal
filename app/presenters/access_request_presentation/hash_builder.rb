@@ -8,7 +8,9 @@ module AccessRequestPresentation
       {
         public_id: access_request.public_id,
         status: access_request.status,
+        status_label: access_request_status_label,
         requested_access_level: access_request.requested_access_level,
+        requested_access_level_label: requested_access_level_label,
         reason: access_request.reason,
         rejection_reason: access_request.rejection_reason,
         requester: user_hash(access_request.requester),
@@ -42,6 +44,7 @@ module AccessRequestPresentation
       target = access_request.requestable
       base = {
         type: target.class.name,
+        type_label: requestable_type_label(target),
         public_id: target.public_id
       }
 
@@ -56,6 +59,21 @@ module AccessRequestPresentation
       else
         base
       end
+    end
+
+    def requested_access_level_label
+      I18n.t(
+        "labels.document_permissions.access_level.#{access_request.requested_access_level}",
+        default: access_request.requested_access_level.to_s
+      )
+    end
+
+    def access_request_status_label
+      I18n.t("labels.access_requests.status.#{access_request.status}", default: access_request.status.to_s)
+    end
+
+    def requestable_type_label(target)
+      I18n.t("labels.access_requests.requestable_type.#{target.model_name.singular}", default: target.class.name)
     end
   end
 end
