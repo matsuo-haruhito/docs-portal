@@ -49,7 +49,13 @@ class Admin::DocumentSetsController < Admin::BaseController
   end
 
   def load_document_sets
-    @document_sets = DocumentSet.includes(:project, document_set_items: %i[document document_version]).ordered
+    @filters = document_set_filter_params
+
+    scope = DocumentSet.includes(:project, document_set_items: %i[document document_version]).ordered
+    scope = apply_enum_filter(scope, :set_type, DocumentSet.set_types)
+    scope = apply_enum_filter(scope, :visibility_policy, DocumentSet.visibility_policies)
+
+    @document_sets = scope
   end
 
   def load_project_documents
@@ -70,6 +76,17 @@ class Admin::DocumentSetsController < Admin::BaseController
 
   def document_set_params
     params.require(:document_set).permit(:project_id, :name, :description, :set_type, :visibility_policy, :sort_order)
+  end
+
+  def document_set_filter_params
+    params.to_unsafe_h.symbolize_keys.slice(:set_type, :visibility_policy)
+  end
+
+  def apply_enum_filter(scope, key, enum_values)
+    value = @filters[key].to_s
+    return scope if value.blank? || !enum_values.key?(value)
+
+    scope.where(key => value)
   end
 
   def save_document_set(document_set)
