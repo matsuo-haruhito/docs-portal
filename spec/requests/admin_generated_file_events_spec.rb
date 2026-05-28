@@ -54,6 +54,21 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(bulk_retry_form).to be_present
     end
 
+    it "preserves the current list path in detail links" do
+      sign_in_as(admin_user)
+      event = create_event!(path: "docs/source.yml", status: :failed, created_at: 1.day.ago)
+      25.times do |i|
+        create_event!(path: "docs/newer-#{i}.yml", status: :failed)
+      end
+      return_to_path = admin_generated_file_events_path(status: "failed", path: "docs", page: 2, per_page: 25)
+
+      get return_to_path
+
+      expect(response).to have_http_status(:ok)
+      detail_link = parsed_html.at_css(%(a[href="#{admin_generated_file_event_path(event.public_id, return_to: return_to_path)}"]))
+      expect(detail_link).to be_present
+    end
+
     it "shows status summary counts" do
       sign_in_as(admin_user)
       create_event!(status: :pending)
@@ -181,6 +196,17 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include("actor_id")
     end
 
+    it "shows a back link to the filtered list" do
+      sign_in_as(admin_user)
+      event = create_event!(path: "docs/source.yml", status: :failed)
+      return_to_path = admin_generated_file_events_path(status: "failed", path: "docs", page: 2, per_page: 25)
+
+      get admin_generated_file_event_path(event.public_id, return_to: return_to_path)
+
+      expect(response).to have_http_status(:ok)
+      expect(parsed_html.at_css(%(a[href="#{return_to_path}"]))).to be_present
+    end
+
     it "shows related runs that reference the event" do
       sign_in_as(admin_user)
       event = create_event!(path: "docs/source.yml")
@@ -213,7 +239,7 @@ RSpec.describe "Admin generated file events", type: :request do
   end
 
   describe "POST /admin/generated_file_events/:public_id/retry_dispatch" do
-    it "resets event to pending and enqueues dispatch job" do
+    it "resets event to pending, enqueues dispatch job, and preserves the return path" do
       sign_in_as(admin_user)
       event = create_event!(
         path: "docs/source.yml",
@@ -223,10 +249,11 @@ RSpec.describe "Admin generated file events", type: :request do
         error_message: "boom"
       )
       allow(GeneratedFileEventDispatchJob).to receive(:perform_later)
+      return_to_path = admin_generated_file_events_path(status: "failed", page: 2, per_page: 25)
 
-      post retry_dispatch_admin_generated_file_event_path(event.public_id)
+      post retry_dispatch_admin_generated_file_event_path(event.public_id, return_to: return_to_path)
 
-      expect(response).to redirect_to(admin_generated_file_event_path(event.public_id))
+      expect(response).to redirect_to(admin_generated_file_event_path(event.public_id, return_to: return_to_path))
       expect(flash[:notice]).to eq("生成ファイルイベントの再dispatchをキューに投入しました。")
       event.reload
       expect(event).to be_pending
