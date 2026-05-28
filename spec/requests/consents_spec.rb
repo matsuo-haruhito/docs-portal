@@ -66,9 +66,15 @@ RSpec.describe "Consents", type: :request do
     FileUtils.rm_rf(Rails.root.join("storage", "document_files", "spec", "consents"))
   end
 
-  it "shows active terms and the user's consent history" do
+  it "shows active terms and the user's consent history with localized target labels" do
+    file = create(:document_file, document_version: version, file_name: "history.pdf")
     term = create(:consent_term, title: "Visible Terms", body: "Handle carefully", version_label: "v1")
+
     create(:user_consent, user:, consent_term: term, target: nil, consent_term_version_label: "v1")
+    create(:user_consent, user:, consent_term: term, target: project, consent_term_version_label: "v1")
+    create(:user_consent, user:, consent_term: term, target: document, consent_term_version_label: "v1")
+    create(:user_consent, user:, consent_term: term, target: file, consent_term_version_label: "v1")
+    create(:user_consent, user:, consent_term: term, target: version, consent_term_version_label: "v1")
 
     sign_in_as(user)
     get consents_path
@@ -77,5 +83,14 @@ RSpec.describe "Consents", type: :request do
     expect(response.body).to include("Visible Terms")
     expect(response.body).to include("Handle carefully")
     expect(response.body).to include("v1")
+    expect(response.body).to include("全体")
+    expect(response.body).to include("案件 / Consent Project")
+    expect(response.body).to include("文書 / Consent Document")
+    expect(response.body).to include("ファイル / history.pdf")
+    expect(response.body).to include("文書版 / v1.0.0")
+    expect(response.body).not_to include("Project / Consent Project")
+    expect(response.body).not_to include("Document / Consent Document")
+    expect(response.body).not_to include("DocumentFile / history.pdf")
+    expect(response.body).not_to include("DocumentVersion / v1.0.0")
   end
 end
