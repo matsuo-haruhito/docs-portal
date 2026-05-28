@@ -271,6 +271,23 @@ RSpec.describe "Admin generated file runs", type: :request do
         )
       )
     end
+
+    it "falls back to the index path for protocol-relative return_to values" do
+      sign_in_as(admin_user)
+      run = create_run!(job_id: "ai_usecase_decision_flow", status: :failed)
+      invalid_return_to = "//example.com"
+      allow(GeneratedFileJob).to receive(:perform_later)
+
+      get admin_generated_file_run_path(run.public_id, return_to: invalid_return_to)
+
+      expect(response).to have_http_status(:ok)
+      expect(parsed_html.at_css(%(a[href="#{admin_generated_file_runs_path}"]))).to be_present
+
+      post retry_run_admin_generated_file_run_path(run.public_id, return_to: invalid_return_to)
+
+      expect(response).to redirect_to(admin_generated_file_run_path(run.public_id, return_to: admin_generated_file_runs_path))
+      expect(GeneratedFileJob).to have_received(:perform_later)
+    end
   end
 
   describe "POST /admin/generated_file_runs/retry_failed" do
