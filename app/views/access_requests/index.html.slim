@@ -19,7 +19,7 @@ p.muted 自分が送信した申請の状態を確認できます。
         - requestable = request_hash[:requestable]
         tr
           td
-            = requestable[:type]
+            = requestable[:type_label]
             br
             - if requestable[:name].present?
               = requestable[:name]
@@ -29,8 +29,8 @@ p.muted 自分が送信した申請の状態を確認できます。
               = requestable[:file_name]
             - else
               = requestable[:public_id]
-          td = request_hash[:requested_access_level]
-          td = request_hash[:status]
+          td = request_hash[:requested_access_level_label]
+          td = request_hash[:status_label]
           td = request_hash[:reason]
           td = request_hash.dig(:approver, :email_address) || "-"
           td
