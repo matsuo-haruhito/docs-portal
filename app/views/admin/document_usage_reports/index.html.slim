@@ -52,6 +52,8 @@ section.card
       |  / 既読確認:
       strong = " #{@report_hash.dig(:summary, :total_read_confirmations)}"
     p
+      = link_to "案件の監査ログへ", admin_access_logs_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
+    p
       | 表示中:
       strong = " #{@report_hash[:documents].size}件"
       |  / 利用状況:
@@ -95,4 +97,4 @@ section.card
   - else
     p.muted 条件に一致する文書はありません。
 - else
-  p.muted 案件を選択すると集計結果を表示します。
+  p.muted 案件を選択すると集計結果を表示します.
