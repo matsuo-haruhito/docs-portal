@@ -72,7 +72,7 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(response.body).to include("すべて (2)")
     expect(response.body).to include("下書き (1)")
     expect(response.body).to include("送付済み (1)")
-    expect(response.body).to include("失敗 (0)")
+    expect(response.body).to include("送付失敗 (0)")
     expect(response.body).to include(own_draft.to_addresses)
     expect(response.body).to include(own_sent.to_addresses)
     expect(response.body).not_to include(other_failed.to_addresses)
@@ -90,5 +90,73 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(response.body).to include(other_failed.to_addresses)
     expect(response.body).not_to include(own_draft.to_addresses)
     expect(response.body).not_to include(own_sent.to_addresses)
+  end
+
+  it "renders localized delivery labels in the index" do
+    sign_in_as(external_user)
+
+    DocumentDeliveryLog.create!(
+      project:,
+      document:,
+      sender: external_user,
+      to_addresses: "client@example.com",
+      subject: "Please review",
+      body: "Portal link",
+      delivery_type: :portal_link,
+      status: :draft
+    )
+
+    get document_delivery_logs_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("ポータルリンク")
+    expect(response.body).to include("下書き")
+    expect(response.body).not_to include("portal_link")
+  end
+
+  it "shows localized labels and links back to the project and document" do
+    sign_in_as(external_user)
+
+    log = DocumentDeliveryLog.create!(
+      project:,
+      document:,
+      sender: external_user,
+      to_addresses: "client@example.com",
+      subject: "Please review",
+      body: "Portal link",
+      delivery_type: :portal_link,
+      status: :draft
+    )
+
+    get document_delivery_log_path(log)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("ポータルリンク")
+    expect(response.body).to include("下書き")
+    expect(response.body).to include(project_path(project))
+    expect(response.body).to include(project_document_path(project, document.slug))
+    expect(response.body).to include("対象の文書へ戻る")
+  end
+
+  it "shows links back to the project and document set" do
+    sign_in_as(external_user)
+
+    log = DocumentDeliveryLog.create!(
+      project:,
+      document_set:,
+      sender: external_user,
+      to_addresses: "client@example.com",
+      subject: "Set review",
+      body: "Please review the set.",
+      delivery_type: :portal_link,
+      status: :draft
+    )
+
+    get document_delivery_log_path(log)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(project_path(project))
+    expect(response.body).to include(project_document_set_path(project, document_set))
+    expect(response.body).to include("対象の文書セットへ戻る")
   end
 end
