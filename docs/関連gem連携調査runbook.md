@@ -82,6 +82,39 @@
 - issue / PR の update log
   - 「package-root import を使ったか」「direct entrypoint を使ったか」「その理由が upstream docs 由来か current migration lane 由来か」を 1 行で残す
 
+## `#607` と `#858` をつなぐ最小ルール
+
+- `#607` は、screen-by-screen に internal UI gem を広げるときの host app 側共通パターンを扱う親 queue です。新しい画面 issue では、この runbook の host-app 採用パターンと代表画面を先に読み、個別画面の convenience のために raw string / raw data attribute / ad-hoc helper を増やさないことを優先します。
+- `#858` は、3 gem の pinned ref 更新順、representative smoke、rollback note を扱う release-train 親 queue です。revision を動かす話は screen 改修と同じ PR に混ぜず、child issue (`#921` `#903` `#904`) とこの runbook の matrix を正本に切り分けます。
+- `#982` はその橋渡しです。screen adoption を進める人も gem bump を進める人も、同じ public surface / representative smoke / rollback note を参照できる状態を維持します。
+
+### rails_fields_kit を広げるとき
+
+- `#607` の host-app pattern は `admin/document_sets` の `form.rfk_select` と `application.js` / `vite.config.ts` / initializer の wiring を baseline にします。
+- `#737` は canary form で `error_surface` をどう opt-in するかを扱う issue です。failure copy や stale error clear を決めたいときは、この runbook の wiring / helper 前提を踏まえつつ `#737` の representative form に閉じて進めます。
+- `#921` は release-train child です。target SHA、representative smoke、rollback note は child issue / PR へ残し、host-app failure pattern の設計判断は混ぜません。
+- downstream では `data-controller`、remote-search payload、selected preload metadata を raw string / raw data attribute / ad-hoc JSON decode で再実装しません。先に upstream README / `doc/public_api.md` で public export や helper option を確認し、package-root helper export で足りないときだけ issue に理由を残して fallback を選びます。
+
+### tree_view を広げるとき
+
+- `#607` の host-app pattern は `app/helpers/documents_helper.rb`、`app/helpers/projects_helper.rb`、2 つの tree partial、`app/models/concerns/tree_view_state_owner.rb` を first read にします。row label、route context、persisted state を app 側責務としてそろえ、upstream の event / hook export は helper や partial から必要になった分だけ使います。
+- `#903` は release-train child です。sidebar tree、detail tree、persisted state の representative smoke と rollback note は child issue / PR へ残し、新しい tree seam の screen adoption とは切り分けます。
+- JavaScript hook が必要でも raw event 名、controller identifier、gem 内部 file path を直書きしません。まず documented package-root export (`TreeViewEventNames`, `TreeViewControllerIdentifiers`, `registerTreeViewControllers(application)` など) を確認し、host app 側では route / icon / current row 文脈だけを決めます。
+
+### rails_table_preferences を広げるとき
+
+- `#607` の host-app pattern は `admin/document_sets` の helper metadata + editor + table composition を baseline にします。column metadata、pinned decision、filter label、preset 導線を view 直下へ散らさず、helper と `table_key` でまとめます。
+- `#904` は release-train child です。representative admin list / embedded table seam / rollback note は child issue / PR へ残し、screen-by-screen migration の convenience patch と同じ PR に混ぜません。
+- preview iframe 内 table は current `main` では `app/frontend/controllers/preview_table_resizer_controller.js` の app-side fallback が正本です。通常一覧と同じつもりで data attribute を足し始めたり、embedded table contract を preview fallback へ混ぜたりせず、仕様判断が必要な場合は `#475` を `needs-human` として参照します。
+- export payload、hidden column、saved order の smoke は representative admin list で 1 つずつ固定します。画面ごとに ad-hoc helper や one-off preset を増やす前に、既存 helper metadata へ寄せられないかを確認します。
+
+### 新しい issue / PR を切る前の確認順
+
+1. screen adoption が主題なら `#607` とこの runbook の host-app 採用パターンを読む
+2. canary や representative form / tree / list の選定が必要なら、関連 child (`#737` `#921` `#903` `#904`) を読む
+3. revision を動かす話なら `#858` とこの runbook の verification matrix / update log template を正本にする
+4. upstream docs へ依存する public surface 名は README / public API docs で確認し、未着地の PR 提案名を current main の durable contract として書かない
+
 ## 現在の解決 revision の見方
 
 `docs-portal` の `Gemfile` は 3 gem を `ref:` 固定で取り込んでいます。更新方針の正本は `Gemfile`、その時点で app が実際に解決している snapshot は `Gemfile.lock` を見るのが最短です。調査や update log では、必要に応じて `Gemfile` の target ref と `Gemfile.lock` の resolved revision を両方控えます。
