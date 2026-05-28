@@ -1,6 +1,8 @@
 class DocumentsController < BaseController
   before_action :apply_rparam, only: :index
 
+  helper_method :safe_return_to
+
   DOCUMENTS_PER_PAGE = 20
 
   def index
@@ -218,6 +220,13 @@ class DocumentsController < BaseController
     return if normalized == "." || normalized == ".." || normalized.start_with?("../")
 
     normalized
+  end
+
+  def safe_return_to(fallback = project_documents_path(@project))
+    path = params[:return_to].to_s
+    return fallback if path.blank? || path.start_with?("//") || path.match?(%r{\Ahttps?://})
+
+    path
   end
 
   def uploaded_version_for_confirmation
