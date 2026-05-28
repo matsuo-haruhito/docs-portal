@@ -35,6 +35,39 @@ RSpec.describe "Access requests", type: :request do
     expect(request.reason).to include("manual.pdf")
   end
 
+  it "stores and displays japanese default reasons for project, document, and file requests" do
+    sign_in_as(user)
+
+    post access_requests_path, params: {
+      requestable_type: "Project",
+      requestable_public_id: project.code,
+      requested_access_level: "manage"
+    }
+    expect(AccessRequest.order(:id).last.reason).to eq("案件「Request Project」に管理権限が必要です。")
+
+    post access_requests_path, params: {
+      requestable_type: "Document",
+      requestable_public_id: document.public_id,
+      requested_access_level: "download"
+    }
+    expect(AccessRequest.order(:id).last.reason).to eq("文書「Manual」にダウンロード権限が必要です。")
+
+    post access_requests_path, params: {
+      requestable_type: "DocumentFile",
+      requestable_public_id: file.public_id,
+      requested_access_level: "download"
+    }
+    expect(AccessRequest.order(:id).last.reason).to eq("ファイル「manual.pdf」にダウンロード権限が必要です。")
+
+    get access_requests_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("案件「Request Project」に管理権限が必要です。")
+    expect(response.body).to include("文書「Manual」にダウンロード権限が必要です。")
+    expect(response.body).to include("ファイル「manual.pdf」にダウンロード権限が必要です。")
+    expect(response.body).not_to include("Need ")
+  end
+
   it "does not duplicate the same pending request" do
     sign_in_as(user)
     create(:access_request, requester: user, requestable: file, requested_access_level: :download)
