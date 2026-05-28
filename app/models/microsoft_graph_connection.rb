@@ -1,6 +1,8 @@
 class MicrosoftGraphConnection < ApplicationRecord
   include PublicIdentifiable
 
+  attr_accessor :shared_folder_url
+
   public_id_prefix "mgc"
 
   belongs_to :project
