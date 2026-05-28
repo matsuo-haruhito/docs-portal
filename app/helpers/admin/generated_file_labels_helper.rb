@@ -19,6 +19,20 @@ module Admin::GeneratedFileLabelsHelper
     "delete" => "削除"
   }.freeze
 
+  SOURCE_LABELS = {
+    "manual_document_upload" => "文書手動アップロード",
+    "artifact_import" => "ZIP / APIインポート",
+    "generated_file_run_retry" => "生成ジョブからの再実行",
+    "generated_file_run_bulk_retry" => "生成ジョブからの一括再実行",
+    "scheduled_sync" => "定期同期",
+    "spec" => "テスト"
+  }.freeze
+
+  SOURCE_BADGE_LABELS = {
+    "generated_file_run_retry" => "再実行",
+    "generated_file_run_bulk_retry" => "一括再実行"
+  }.freeze
+
   def generated_file_event_status_label(status)
     EVENT_STATUS_LABELS.fetch(status.to_s, status.to_s)
   end
@@ -29,5 +43,16 @@ module Admin::GeneratedFileLabelsHelper
 
   def generated_file_operation_label(operation)
     OPERATION_LABELS.fetch(operation.to_s, operation.to_s)
+  end
+
+  def generated_file_source_label(event_source)
+    value = event_source.to_s
+    return "-" if value.blank?
+
+    SOURCE_LABELS.fetch(value, value.humanize)
+  end
+
+  def generated_file_source_badge_label(event_source)
+    SOURCE_BADGE_LABELS[event_source.to_s]
   end
 end
