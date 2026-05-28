@@ -21,12 +21,10 @@
       <div><dt class="font-semibold">出力ライター</dt><dd class="font-mono"><%= @generated_file_run.output_writer.presence || "-" %></dd></div>
       <div>
         <dt class="font-semibold">発生元</dt>
-        <dd>
-          <%= @generated_file_run.event_source.presence || "-" %>
-          <% if @generated_file_run.event_source == "generated_file_run_retry" %>
-            <span class="badge">再実行</span>
-          <% elsif @generated_file_run.event_source == "generated_file_run_bulk_retry" %>
-            <span class="badge">一括再実行</span>
+        <dd class="flex flex-wrap items-center gap-2">
+          <span><%= generated_file_source_label(@generated_file_run.event_source) %></span>
+          <% if (badge_label = generated_file_source_badge_label(@generated_file_run.event_source)) %>
+            <span class="badge"><%= badge_label %></span>
           <% end %>
         </dd>
       </div>
