@@ -11,6 +11,10 @@ RSpec.describe "Admin document permissions", type: :request do
     parsed_html.text.squish
   end
 
+  def select_placeholder(field_name)
+    parsed_html.at_css(%(select[name="#{field_name}"]))&.[]("placeholder")
+  end
+
   def heading_texts
     parsed_html.css("h1, h2, h3").map { _1.text.squish }.reject(&:empty?)
   end
@@ -44,8 +48,8 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(page_text).to include("登録後は、会社別・ユーザー別の対象主体や権限内容をこの一覧で確認、編集できます。")
     expect(page_text).to include("適用対象は、会社向けかユーザー向けのどちらか一方を選びます。")
     expect(page_text).to include("会社全体に付与するときは「会社」を、個人に付与するときは「ユーザー」を指定してください。2つ同時には選択しません。")
-    expect(response.body).to include("会社向けに付与する場合に選択")
-    expect(response.body).to include("ユーザー向けに付与する場合に選択")
+    expect(select_placeholder("document_permission[company_id]")).to eq("会社向けに付与する場合に選択")
+    expect(select_placeholder("document_permission[user_id]")).to eq("ユーザー向けに付与する場合に選択")
     expect(page_text).to include("会社単位かユーザー単位のどちらか一方を指定してください。")
     expect(page_text).not_to include("権限概要の表示設定")
     expect(page_text).not_to include("権限一覧の表示設定")
@@ -72,8 +76,8 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(page_text).to include("入力内容を確認してください。")
     expect(page_text).to include("適用対象は会社かユーザーのどちらか一方だけを指定してください。")
     expect(page_text).not_to include("company_id and user_id cannot both be set")
-    expect(response.body).to include("会社向けに付与する場合に選択")
-    expect(response.body).to include("ユーザー向けに付与する場合に選択")
+    expect(select_placeholder("document_permission[company_id]")).to eq("会社向けに付与する場合に選択")
+    expect(select_placeholder("document_permission[user_id]")).to eq("ユーザー向けに付与する場合に選択")
   end
 
   it "shows document permission overview" do
