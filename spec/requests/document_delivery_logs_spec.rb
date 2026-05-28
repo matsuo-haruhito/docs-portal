@@ -10,6 +10,14 @@ RSpec.describe "Document delivery logs", type: :request do
   let(:version) { create(:document_version, document:, version_label: "v1.0.0", status: :published) }
   let(:document_set) { create(:document_set, project:, name: "顧客送付セット", visibility_policy: :restricted_external) }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def page_text
+    parsed_html.text.gsub(/[[:space:]]+/, " ").strip
+  end
+
   def localized_status_label(status)
     I18n.t("labels.document_delivery_logs.status.#{status}", default: status.to_s)
   end
@@ -136,9 +144,9 @@ RSpec.describe "Document delivery logs", type: :request do
     get document_delivery_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("ポータルリンク")
-    expect(response.body).to include("下書き")
-    expect(response.body).not_to include(">portal_link<")
+    expect(page_text).to include("ポータルリンク")
+    expect(page_text).to include("下書き")
+    expect(page_text).not_to include("portal_link")
   end
 
   it "shows localized labels and links back to the project and document" do
