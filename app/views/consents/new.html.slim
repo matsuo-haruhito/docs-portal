@@ -9,7 +9,7 @@ p.muted このポータルで閲覧・ダウンロードする情報の取り扱
     = hidden_field_tag :target_type, @result.target.class.name
     = hidden_field_tag :target_public_id, @result.target.public_id
     = hidden_field_tag :timing, @timing
-    = hidden_field_tag :return_to, params[:return_to]
+    = hidden_field_tag :return_to, safe_return_to
 
     - @result.missing_terms.each do |term|
       section.card
