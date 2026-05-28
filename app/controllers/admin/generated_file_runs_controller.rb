@@ -27,7 +27,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   def retry_run
     enqueue_retry!(@generated_file_run)
 
-    redirect_to admin_generated_file_run_path(@generated_file_run.public_id), notice: "生成ジョブの再実行をキューに投入しました。"
+    redirect_to admin_generated_file_run_path(@generated_file_run.public_id, return_to: @return_to_path), notice: "生成ジョブの再実行をキューに投入しました。"
   end
 
   def retry_failed
@@ -106,6 +106,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
 
   def set_generated_file_run
     @generated_file_run = GeneratedFileRun.find_by!(public_id: params[:public_id])
+    @return_to_path = safe_return_to_path(admin_generated_file_runs_path)
   end
 
   def retry_metadata
@@ -119,5 +120,10 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
       "retry_requested_by_user_id" => current_user&.id,
       "bulk_retry" => bulk
     ).compact
+  end
+
+  def safe_return_to_path(fallback)
+    return_to = params[:return_to].to_s
+    return_to.start_with?("/") ? return_to : fallback
   end
 end
