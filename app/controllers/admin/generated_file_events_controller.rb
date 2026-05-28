@@ -109,6 +109,6 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
 
   def safe_return_to_path(fallback)
     return_to = params[:return_to].to_s
-    return_to.start_with?("/") ? return_to : fallback
+    return_to.start_with?("/") && !return_to.start_with?("//") ? return_to : fallback
   end
 end
