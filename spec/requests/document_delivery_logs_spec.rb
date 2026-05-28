@@ -9,6 +9,20 @@ RSpec.describe "Document delivery logs", type: :request do
   let(:version) { create(:document_version, document:, version_label: "v1.0.0", status: :published) }
   let(:document_set) { create(:document_set, project:, name: "顧客送付セット", visibility_policy: :restricted_external) }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def page_text
+    parsed_html.text.squish
+  end
+
+  def action_targets
+    parsed_html.css("a[href], form[action]").map do |node|
+      node["href"] || node["action"]
+    end
+  end
+
   before do
     document.update!(latest_version: version)
     create(:project_membership, project:, user: external_user)
@@ -69,27 +83,27 @@ RSpec.describe "Document delivery logs", type: :request do
 
     get document_delivery_logs_path
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("すべて (2)")
-    expect(response.body).to include("下書き (1)")
-    expect(response.body).to include("送付済み (1)")
-    expect(response.body).to include("送付失敗 (0)")
-    expect(response.body).to include(own_draft.to_addresses)
-    expect(response.body).to include(own_sent.to_addresses)
-    expect(response.body).not_to include(other_failed.to_addresses)
+    expect(page_text).to include("すべて (2)")
+    expect(page_text).to include("下書き (1)")
+    expect(page_text).to include("送付済み (1)")
+    expect(page_text).to include("送付失敗 (0)")
+    expect(page_text).to include(own_draft.to_addresses)
+    expect(page_text).to include(own_sent.to_addresses)
+    expect(page_text).not_to include(other_failed.to_addresses)
 
     get document_delivery_logs_path, params: { status: :draft }
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(own_draft.to_addresses)
-    expect(response.body).not_to include(own_sent.to_addresses)
-    expect(response.body).not_to include(other_failed.to_addresses)
+    expect(page_text).to include(own_draft.to_addresses)
+    expect(page_text).not_to include(own_sent.to_addresses)
+    expect(page_text).not_to include(other_failed.to_addresses)
 
     sign_in_as(internal_user)
 
     get document_delivery_logs_path, params: { status: :failed }
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(other_failed.to_addresses)
-    expect(response.body).not_to include(own_draft.to_addresses)
-    expect(response.body).not_to include(own_sent.to_addresses)
+    expect(page_text).to include(other_failed.to_addresses)
+    expect(page_text).not_to include(own_draft.to_addresses)
+    expect(page_text).not_to include(own_sent.to_addresses)
   end
 
   it "renders localized delivery labels in the index" do
@@ -109,9 +123,9 @@ RSpec.describe "Document delivery logs", type: :request do
     get document_delivery_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("ポータルリンク")
-    expect(response.body).to include("下書き")
-    expect(response.body).not_to include("portal_link")
+    expect(page_text).to include("ポータルリンク")
+    expect(page_text).to include("下書き")
+    expect(page_text).not_to include("portal_link")
   end
 
   it "shows localized labels and links back to the project and document" do
@@ -131,11 +145,10 @@ RSpec.describe "Document delivery logs", type: :request do
     get document_delivery_log_path(log)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("ポータルリンク")
-    expect(response.body).to include("下書き")
-    expect(response.body).to include(project_path(project))
-    expect(response.body).to include(project_document_path(project, document.slug))
-    expect(response.body).to include("対象の文書へ戻る")
+    expect(page_text).to include("ポータルリンク")
+    expect(page_text).to include("下書き")
+    expect(page_text).to include("対象の文書へ戻る")
+    expect(action_targets).to include(project_path(project), project_document_path(project, document.slug))
   end
 
   it "shows links back to the project and document set" do
@@ -155,8 +168,7 @@ RSpec.describe "Document delivery logs", type: :request do
     get document_delivery_log_path(log)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(project_path(project))
-    expect(response.body).to include(project_document_set_path(project, document_set))
-    expect(response.body).to include("対象の文書セットへ戻る")
+    expect(page_text).to include("対象の文書セットへ戻る")
+    expect(action_targets).to include(project_path(project), project_document_set_path(project, document_set))
   end
 end

@@ -23,8 +23,18 @@ RSpec.describe "Admin document sets", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def page_text
+    parsed_html.text.squish
+  end
+
   def document_set_select_names
     parsed_html.css('select[name^="document_set["]').map { |node| node["name"] }
+  end
+
+  def action_targets
+    parsed_html.css("a[href], form[action]").map do |node|
+      node["href"] || node["action"]
+    end
   end
 
   it "renders the document set select fields on initial load and invalid rerender" do
@@ -65,9 +75,9 @@ RSpec.describe "Admin document sets", type: :request do
     get admin_document_sets_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("案件を選ぶと対象文書を設定できます。")
-    expect(response.body).not_to include("まだ対象文書がありません。")
-    expect(response.body).not_to include("ほかの import 経路を確認してから戻ってください。")
+    expect(page_text).to include("案件を選ぶと対象文書を設定できます。")
+    expect(page_text).not_to include("まだ対象文書がありません。")
+    expect(page_text).not_to include("ほかの import 経路を確認してから戻ってください。")
 
     post admin_document_sets_path, params: {
       document_set: {
@@ -82,11 +92,11 @@ RSpec.describe "Admin document sets", type: :request do
     }
 
     expect(response).to have_http_status(:unprocessable_entity)
-    expect(response.body).to include("まだ対象文書がありません。")
-    expect(response.body).to include(admin_git_import_sources_path)
-    expect(response.body).to include(admin_git_import_runs_path)
-    expect(response.body).to include("ほかの import 経路を確認してから戻ってください。")
-    expect(response.body).not_to include("案件を選ぶと対象文書を設定できます。")
+    expect(page_text).to include("まだ対象文書がありません。")
+    expect(page_text).to include("この案件の文書が取り込まれると、ここで対象文書を選べます。")
+    expect(page_text).to include("ほかの import 経路を確認してから戻ってください。")
+    expect(action_targets).to include(admin_git_import_sources_path, admin_git_import_runs_path)
+    expect(page_text).not_to include("案件を選ぶと対象文書を設定できます。")
   end
 
   it "renders rails_table_preferences editor and stable column keys on the index page" do
