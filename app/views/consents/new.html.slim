@@ -23,7 +23,7 @@ p.muted このポータルで閲覧・ダウンロードする情報の取り扱
 
     p.actions
       = form.submit "確認して同意する", class: "button"
-      = link_to "同意せず戻る", projects_path, class: "button secondary"
+      = link_to "同意せず戻る", safe_return_to, class: "button secondary"
 - else
   p 必要な同意は完了しています。
-  p = link_to "戻る", params[:return_to].presence || projects_path, class: "button"
+  p = link_to "戻る", safe_return_to, class: "button"
