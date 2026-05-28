@@ -20,7 +20,7 @@
     - WebhookEndpoint::EVENT_TYPES.each do |event_type|
       label.checkbox-label
         = check_box_tag "webhook_endpoint[event_types][]", event_type, webhook_endpoint.normalized_event_types.include?(event_type), id: "webhook_endpoint_event_types_#{event_type}"
-        = event_type
+        = webhook_event_type_label(event_type)
 
   p.muted 署名シークレットを設定すると、送信時に X-Docs-Portal-Signature-256 ヘッダーへ HMAC-SHA256 署名を付与します。
   p.actions
