@@ -224,7 +224,8 @@ class DocumentsController < BaseController
 
   def safe_return_to(fallback = project_documents_path(@project))
     path = params[:return_to].to_s
-    return fallback if path.blank? || path.start_with?("//") || path.match?(%r{\Ahttps?://})
+    return fallback unless path.start_with?("/")
+    return fallback if path.start_with?("//")
 
     path
   end
