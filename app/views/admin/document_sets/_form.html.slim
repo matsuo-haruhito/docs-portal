@@ -1,8 +1,15 @@
 = render "shared/error_messages", record: document_set
 
 - selected_items = document_set.document_set_items.index_by(&:document_id)
+- filters = (@filters || {}).compact_blank
+- form_options =
+  if document_set.persisted?
+    { model: [:admin, document_set] }
+  else
+    { model: [:admin, document_set], url: admin_document_sets_path(filters) }
+  end
 
-= form_with model: [:admin, document_set] do |form|
+= form_with(**form_options) do |form|
   .form-grid
     = form.rfk_select :project_id,
       collection: @projects,
