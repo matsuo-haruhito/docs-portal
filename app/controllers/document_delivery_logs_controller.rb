@@ -2,9 +2,20 @@ class DocumentDeliveryLogsController < BaseController
   before_action :set_context, only: %i[new create]
   before_action :set_delivery_log, only: %i[show update]
 
+  STATUS_FILTER_LABELS = {
+    "draft" => "下書き",
+    "sent" => "送付済み",
+    "failed" => "失敗"
+  }.freeze
+
   def index
-    scope = current_user.internal? ? DocumentDeliveryLog.all : DocumentDeliveryLog.where(sender: current_user)
-    @delivery_logs = scope.includes(:project, :document, :document_set, :sender).recent_first
+    base_scope = current_user.internal? ? DocumentDeliveryLog.all : DocumentDeliveryLog.where(sender: current_user)
+
+    @status_filter = normalized_status_filter
+    @status_counts = STATUS_FILTER_LABELS.keys.index_with { |status| base_scope.public_send(status).count }
+
+    scoped_scope = @status_filter.present? ? base_scope.public_send(@status_filter) : base_scope
+    @delivery_logs = scoped_scope.includes(:project, :document, :document_set, :sender).recent_first
   end
 
   def show
@@ -122,5 +133,9 @@ class DocumentDeliveryLogsController < BaseController
       body: log.body
     }.compact.to_query
     "mailto:#{ERB::Util.url_encode(log.recipients.join(","))}?#{query}"
+  end
+
+  def normalized_status_filter
+    params[:status].presence_in(DocumentDeliveryLog.statuses.keys)
   end
 end
