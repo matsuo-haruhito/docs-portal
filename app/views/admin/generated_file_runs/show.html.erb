@@ -13,7 +13,7 @@
   <div class="rounded-lg border bg-white p-4">
     <h2 class="mb-3 text-lg font-semibold">概要</h2>
     <dl class="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
-      <div><dt class="font-semibold">状態</dt><dd><%= @generated_file_run.status %></dd></div>
+      <div><dt class="font-semibold">状態</dt><dd><%= generated_file_run_status_label(@generated_file_run.status) %></dd></div>
       <div><dt class="font-semibold">ジョブID</dt><dd class="font-mono"><%= @generated_file_run.job_id %></dd></div>
       <div><dt class="font-semibold">ジェネレータ</dt><dd class="font-mono"><%= @generated_file_run.generator.presence || "-" %></dd></div>
       <div><dt class="font-semibold">出力ライター</dt><dd class="font-mono"><%= @generated_file_run.output_writer.presence || "-" %></dd></div>
@@ -62,7 +62,7 @@
               <li>
                 <% if event %>
                   <%= link_to public_id, admin_generated_file_event_path(public_id), class: "font-mono text-blue-600 underline" %>
-                  <span class="muted"><%= event.status %></span>
+                  <span class="muted"><%= generated_file_event_status_label(event.status) %></span>
                 <% else %>
                   <span class="font-mono"><%= public_id %></span>
                   <span class="muted">（未検出）</span>
@@ -80,7 +80,7 @@
             <% @retry_child_runs.each do |run| %>
               <li>
                 <%= link_to run.public_id, admin_generated_file_run_path(run.public_id), class: "font-mono text-blue-600 underline" %>
-                <span class="muted"><%= run.status %></span>
+                <span class="muted"><%= generated_file_run_status_label(run.status) %></span>
                 <% if run.event_source == "generated_file_run_retry" %>
                   <span class="badge">再実行</span>
                 <% elsif run.event_source == "generated_file_run_bulk_retry" %>
