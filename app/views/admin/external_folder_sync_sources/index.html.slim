@@ -1,4 +1,5 @@
 - page_title "外部フォルダ同期設定"
+- current_return_to = request.fullpath
 - selected_filter_labels = []
 - if @selected_review_filter == "warnings"
   - selected_filter_labels << "warning あり"
@@ -16,7 +17,7 @@ h1 外部フォルダ同期設定
 
 .card
   h2 外部フォルダ同期設定を追加
-  = render "form", external_folder_sync_source: @external_folder_sync_source
+  = render "form", external_folder_sync_source: @external_folder_sync_source, return_to: current_return_to
 
 - if @review_filter_counts[:all].positive?
   .card
@@ -88,7 +89,7 @@ h1 外部フォルダ同期設定
             = source.project.name
             br
             code = source.project.code
-          td = link_to source.name, admin_external_folder_sync_source_path(source)
+          td = link_to source.name, admin_external_folder_sync_source_path(source, return_to: current_return_to)
           td = external_folder_sync_source_provider_label(source)
           td
             code = source.external_folder_id
@@ -103,9 +104,9 @@ h1 外部フォルダ同期設定
           td = warnings_count || "-"
           td = latest_error_message || "-"
           td.actions
-            = link_to "設定詳細", admin_external_folder_sync_source_path(source), class: "button secondary"
-            = edit_link_to "編集", edit_admin_external_folder_sync_source_path(source)
-            = delete_link_to "削除", admin_external_folder_sync_source_path(source), confirm: "外部フォルダ同期設定を削除しますか？"
+            = link_to "設定詳細", admin_external_folder_sync_source_path(source, return_to: current_return_to), class: "button secondary"
+            = edit_link_to "編集", edit_admin_external_folder_sync_source_path(source, return_to: current_return_to)
+            = delete_link_to "削除", admin_external_folder_sync_source_path(source, return_to: current_return_to), confirm: "外部フォルダ同期設定を削除しますか？"
 - elsif @review_filter_counts[:all].positive?
   .card
     p.muted 現在の絞り込みに一致する外部フォルダ同期設定はありません。
