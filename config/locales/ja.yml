@@ -92,8 +92,10 @@ ja:
         rejected: "却下"
     document_approval_requests:
       status:
+        pending: "対応待ち"
+        approved: "OK済み"
+        cancelled: "Cancel済み"
         open: "未対応"
-        approved: "承認済み"
         rejected: "差し戻し"
         canceled: "取り消し"
     document_relations:

@@ -13,10 +13,10 @@
   <div class="rounded-lg border bg-white p-4">
     <h2 class="mb-3 text-lg font-semibold">概要</h2>
     <dl class="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
-      <div><dt class="font-semibold">状態</dt><dd><%= @generated_file_event.status %></dd></div>
+      <div><dt class="font-semibold">状態</dt><dd><%= generated_file_event_status_label(@generated_file_event.status) %></dd></div>
       <div><dt class="font-semibold">イベントキー</dt><dd class="font-mono"><%= @generated_file_event.event_key %></dd></div>
       <div><dt class="font-semibold">対象パス</dt><dd class="font-mono"><%= @generated_file_event.path %></dd><dd class="text-xs text-gray-500">/ 区切りで保存されます。</dd></div>
-      <div><dt class="font-semibold">操作</dt><dd><%= @generated_file_event.operation %></dd></div>
+      <div><dt class="font-semibold">操作</dt><dd><%= generated_file_operation_label(@generated_file_event.operation) %></dd></div>
       <div>
         <dt class="font-semibold">発生元</dt>
         <dd>
@@ -42,7 +42,7 @@
         <% @related_generated_file_runs.each do |run| %>
           <li>
             <%= link_to run.public_id, admin_generated_file_run_path(run.public_id), class: "font-mono text-blue-600 underline" %>
-            <span class="muted"><%= run.status %></span>
+            <span class="muted"><%= generated_file_run_status_label(run.status) %></span>
             <% if run.event_source == "generated_file_run_retry" %>
               <span class="badge">再実行</span>
             <% elsif run.event_source == "generated_file_run_bulk_retry" %>
