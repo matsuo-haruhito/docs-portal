@@ -116,4 +116,22 @@ RSpec.describe "Document approval requests", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Cancel済み")
   end
+
+  it "falls back to the index path for protocol-relative return_to values" do
+    approval_request = create(:document_approval_request, document:, requester:, title: "確認お願いします")
+    invalid_return_to = "//example.com"
+
+    sign_in_as(internal_user)
+
+    get document_approval_request_path(approval_request, return_to: invalid_return_to)
+    expect(response).to have_http_status(:ok)
+    expect(parsed_html.at_css(%(a[href="#{document_approval_requests_path}"]))).to be_present
+
+    patch document_approval_request_path(approval_request, return_to: invalid_return_to)
+    expect(response).to redirect_to(document_approval_request_path(approval_request, return_to: document_approval_requests_path))
+
+    another_request = create(:document_approval_request, document:, requester:, title: "今回は進めない")
+    post cancel_document_approval_request_path(another_request, return_to: invalid_return_to)
+    expect(response).to redirect_to(document_approval_request_path(another_request, return_to: document_approval_requests_path))
+  end
 end
