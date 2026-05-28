@@ -7,6 +7,10 @@ RSpec.describe "Admin generated file events", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def link_hrefs
+    parsed_html.css("a[href]").map { _1["href"] }
+  end
+
   describe "GET /admin/generated_file_events" do
     it "shows generated file events for admin users" do
       sign_in_as(admin_user)
@@ -52,6 +56,26 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response).to have_http_status(:ok)
       bulk_retry_form = parsed_html.at_css(%(form[action="#{retry_failed_admin_generated_file_events_path(filters)}"]))
       expect(bulk_retry_form).to be_present
+    end
+
+    it "keeps active filters on status quick links" do
+      sign_in_as(admin_user)
+      create_event!(path: "storage/document_files/source.yml", status: :failed, event_source: "manual_document_upload")
+      filters = {
+        status: "failed",
+        operation: "update",
+        event_source: "manual_document_upload",
+        path: "document_files",
+        scheduled_from: "2026-05-10",
+        scheduled_to: "2026-05-11"
+      }
+
+      get admin_generated_file_events_path(filters)
+
+      expect(response).to have_http_status(:ok)
+      expect(link_hrefs).to include(admin_generated_file_events_path(filters.except(:status)))
+      expect(link_hrefs).to include(admin_generated_file_events_path(filters.merge(status: "pending")))
+      expect(link_hrefs).to include(admin_generated_file_events_path(filters.merge(status: "processed")))
     end
 
     it "preserves the current list path in detail links" do
