@@ -18,6 +18,26 @@ RSpec.describe "Admin document sets", type: :request do
       sort_order: 1
     )
   end
+  let!(:internal_document_set) do
+    create(
+      :document_set,
+      project:,
+      name: "内部セット",
+      set_type: :delivery,
+      visibility_policy: :internal_only,
+      sort_order: 2
+    )
+  end
+  let!(:requirement_document_set) do
+    create(
+      :document_set,
+      project:,
+      name: "要件セット",
+      set_type: :requirement,
+      visibility_policy: :restricted_external,
+      sort_order: 3
+    )
+  end
 
   def parsed_html
     Nokogiri::HTML(response.body)
@@ -34,6 +54,12 @@ RSpec.describe "Admin document sets", type: :request do
   def action_targets
     parsed_html.css("a[href], form[action]").map do |node|
       node["href"] || node["action"]
+    end
+  end
+
+  def document_set_form_action
+    parsed_html.css("form[action]").map { |node| node["action"] }.find do |action|
+      action == admin_document_sets_path || action.start_with?("#{admin_document_sets_path}?")
     end
   end
 
@@ -67,6 +93,53 @@ RSpec.describe "Admin document sets", type: :request do
       "document_set[set_type]",
       "document_set[visibility_policy]"
     )
+  end
+
+  it "filters document sets by set_type and visibility_policy" do
+    sign_in_as(admin)
+
+    get admin_document_sets_path, params: { set_type: "delivery" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("既存セット")
+    expect(page_text).to include("内部セット")
+    expect(page_text).not_to include("要件セット")
+
+    get admin_document_sets_path, params: { visibility_policy: "restricted_external" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("既存セット")
+    expect(page_text).to include("要件セット")
+    expect(page_text).not_to include("内部セット")
+
+    get admin_document_sets_path, params: { set_type: "delivery", visibility_policy: "restricted_external" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("既存セット")
+    expect(page_text).not_to include("内部セット")
+    expect(page_text).not_to include("要件セット")
+  end
+
+  it "preserves the current filter context on invalid create rerender" do
+    sign_in_as(admin)
+
+    post admin_document_sets_path(set_type: "delivery", visibility_policy: "restricted_external"), params: {
+      document_set: {
+        project_id: project.id,
+        name: "",
+        description: "first delivery",
+        set_type: "delivery",
+        visibility_policy: "restricted_external",
+        sort_order: 3
+      },
+      document_set_items: {}
+    }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(document_set_form_action).to eq(admin_document_sets_path(set_type: "delivery", visibility_policy: "restricted_external"))
+    expect(page_text).to include("既存セット")
+    expect(page_text).not_to include("内部セット")
+    expect(page_text).not_to include("要件セット")
   end
 
   it "shows different guidance for an unselected project and a selected project without documents" do
