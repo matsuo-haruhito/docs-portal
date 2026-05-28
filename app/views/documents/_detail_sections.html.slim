@@ -1,3 +1,5 @@
+- return_to = safe_return_to
+
 section.document-detail-summary
   p.muted
     | 案件: 
@@ -177,4 +179,4 @@ ul
             tbody
               = tree_view_rows(render_state)
 
-p = link_to "文書一覧へ戻る", project_documents_path(@project)
+p = link_to "文書一覧へ戻る", return_to
