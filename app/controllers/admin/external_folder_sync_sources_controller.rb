@@ -4,6 +4,8 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   before_action :load_form_collections, only: %i[index create edit update]
   before_action :ensure_google_drive_runtime_supported!, only: %i[dry_run apply force_apply enqueue subscribe unsubscribe]
 
+  helper_method :safe_return_to
+
   def index
     load_index_state
     @external_folder_sync_source = ExternalFolderSyncSource.new(
@@ -31,7 +33,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     assign_external_folder_metadata(@external_folder_sync_source)
 
     if @external_folder_sync_source.save
-      redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "外部フォルダ同期設定を登録しました。"
+      redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source, return_to: safe_return_to), notice: "外部フォルダ同期設定を登録しました。"
     else
       load_index_state
       render :index, status: :unprocessable_entity
@@ -50,7 +52,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     assign_external_folder_metadata(@external_folder_sync_source)
 
     if @external_folder_sync_source.save
-      redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "外部フォルダ同期設定を更新しました。"
+      redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source, return_to: safe_return_to), notice: "外部フォルダ同期設定を更新しました。"
     else
       render :edit, status: :unprocessable_entity
     end
@@ -61,21 +63,21 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
   def destroy
     @external_folder_sync_source.destroy!
-    redirect_to admin_external_folder_sync_sources_path, notice: "外部フォルダ同期設定を削除しました。"
+    redirect_to safe_return_to(admin_external_folder_sync_sources_path), notice: "外部フォルダ同期設定を削除しました。"
   end
 
   def dry_run
     run = ExternalFolderSync::Runner.new(source: @external_folder_sync_source, mode: :dry_run, actor: current_user).call
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "同期プレビューを実行しました。（#{run.items_scanned_count}件）"
+    redirect_to sync_source_path_with_return_to, notice: "同期プレビューを実行しました。（#{run.items_scanned_count}件）"
   rescue ExternalFolderSync::GoogleDriveClient::Error, ExternalFolderSync::Runner::Error => e
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
+    redirect_to sync_source_path_with_return_to, alert: e.message
   end
 
   def apply
     run = ExternalFolderSync::Runner.new(source: @external_folder_sync_source, mode: :apply, actor: current_user).call
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "同期しました。（#{run.items_scanned_count}件）"
+    redirect_to sync_source_path_with_return_to, notice: "同期しました。（#{run.items_scanned_count}件）"
   rescue ExternalFolderSync::GoogleDriveClient::Error, ExternalFolderSync::Runner::Error => e
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
+    redirect_to sync_source_path_with_return_to, alert: e.message
   end
 
   def force_apply
@@ -90,9 +92,9 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
       actor: current_user,
       allow_conflict_warnings: true
     ).call
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "警告を承認して同期しました。（#{run.items_scanned_count}件）"
+    redirect_to sync_source_path_with_return_to, notice: "警告を承認して同期しました。（#{run.items_scanned_count}件）"
   rescue ExternalFolderSync::GoogleDriveClient::Error, ExternalFolderSync::Runner::Error => e
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
+    redirect_to sync_source_path_with_return_to, alert: e.message
   end
 
   def enqueue
@@ -102,7 +104,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     end
 
     ExternalFolderSyncJob.perform_later(@external_folder_sync_source.id, current_user.id)
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "バックグラウンド同期を登録しました。"
+    redirect_to sync_source_path_with_return_to, notice: "バックグラウンド同期を登録しました。"
   end
 
   def subscribe
@@ -110,9 +112,9 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
       source: @external_folder_sync_source,
       callback_url: external_folder_sync_webhooks_google_drive_url
     ).subscribe!
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "Google Driveの変更通知の購読を開始しました。（期限: #{l(subscription.expires_at)}）"
+    redirect_to sync_source_path_with_return_to, notice: "Google Driveの変更通知の購読を開始しました。（期限: #{l(subscription.expires_at)}）"
   rescue ExternalFolderSync::GoogleDriveSubscriptionManager::Error => e
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
+    redirect_to sync_source_path_with_return_to, alert: e.message
   end
 
   def unsubscribe
@@ -120,9 +122,9 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
       source: @external_folder_sync_source,
       callback_url: external_folder_sync_webhooks_google_drive_url
     ).stop_active_subscription!
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "Google Driveの変更通知の購読を停止しました。"
+    redirect_to sync_source_path_with_return_to, notice: "Google Driveの変更通知の購読を停止しました。"
   rescue ExternalFolderSync::GoogleDriveSubscriptionManager::Error => e
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: e.message
+    redirect_to sync_source_path_with_return_to, alert: e.message
   end
 
   private
@@ -146,7 +148,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   def ensure_google_drive_runtime_supported!
     return if @external_folder_sync_source.google_drive?
 
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: "SharePoint / OneDrive の差分同期と変更通知は後続 issue で対応予定です。現在は共有URLからフォルダ metadata を保存するところまで利用できます。"
+    redirect_to sync_source_path_with_return_to, alert: "SharePoint / OneDrive の差分同期と変更通知は後続 issue で対応予定です。現在は共有URLからフォルダ metadata を保存するところまで利用できます。"
   end
 
   def external_folder_sync_sources_scope
@@ -227,7 +229,18 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def redirect_to_sync_source_with_warning(message)
-    redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: message
+    redirect_to sync_source_path_with_return_to, alert: message
+  end
+
+  def safe_return_to(fallback = admin_external_folder_sync_sources_path)
+    path = params[:return_to].to_s
+    return fallback if path.blank? || path.start_with?("//") || path.match?(%r{\Ahttps?://})
+
+    path
+  end
+
+  def sync_source_path_with_return_to
+    admin_external_folder_sync_source_path(@external_folder_sync_source, return_to: safe_return_to)
   end
 
   def force_apply_blocked_message

@@ -1,5 +1,7 @@
 = render "shared/error_messages", record: external_folder_sync_source
 
+- return_to = local_assigns[:return_to].presence
+
 .card
   p.eyebrow provider-aware な入口
   h2 外部フォルダを取り込む
@@ -27,6 +29,9 @@
 - conflict_policy_value = external_folder_sync_source.conflict_policy.presence || "manual"
 
 = form_with model: [:admin, external_folder_sync_source] do |form|
+  - if return_to.present?
+    = hidden_field_tag :return_to, return_to
+
   .form-grid
     = form.rfk_select :project_id,
       collection: @projects,
@@ -79,6 +84,6 @@
   p.actions
     = form.submit "設定を保存", class: "button"
     - if external_folder_sync_source.persisted?
-      = link_to "詳細へ戻る", admin_external_folder_sync_source_path(external_folder_sync_source), class: "button secondary"
+      = link_to "詳細へ戻る", admin_external_folder_sync_source_path(external_folder_sync_source, return_to: return_to), class: "button secondary"
     - else
-      = link_to "一覧へ戻る", admin_external_folder_sync_sources_path, class: "button secondary"
+      = link_to "一覧へ戻る", return_to || admin_external_folder_sync_sources_path, class: "button secondary"
