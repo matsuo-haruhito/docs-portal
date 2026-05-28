@@ -88,15 +88,24 @@ RSpec.describe "Document approval requests", type: :request do
     get document_approval_request_path(approval_request)
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("OK")
+    expect(response.body).to include("対応待ち")
 
     patch document_approval_request_path(approval_request)
     expect(response).to redirect_to(document_approval_request_path(approval_request))
     expect(approval_request.reload).to be_approved
     expect(approval_request.acted_by).to eq(internal_user)
 
+    get document_approval_request_path(approval_request)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("OK済み")
+
     another_request = create(:document_approval_request, document:, requester:, title: "今回は進めない")
     post cancel_document_approval_request_path(another_request)
     expect(response).to redirect_to(document_approval_request_path(another_request))
     expect(another_request.reload).to be_cancelled
+
+    get document_approval_request_path(another_request)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Cancel済み")
   end
 end
