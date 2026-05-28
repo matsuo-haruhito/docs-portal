@@ -1,16 +1,28 @@
 - page_title "送付履歴"
 - status_labels = %w[draft sent failed].index_with { |status| document_delivery_log_status_label(status) }
-- total_count = @status_counts.values.sum
+- delivery_type_labels = DocumentDeliveryLog.delivery_types.keys.index_with { |delivery_type| document_delivery_log_delivery_type_label(delivery_type) }
+- summary_status_counts = @status_summary_counts || {}
+- status_filter_counts = @status_filter_counts || {}
+- delivery_type_counts = @delivery_type_counts || {}
+- status_total_count = status_filter_counts.values.sum
+- delivery_type_total_count = delivery_type_counts.values.sum
 
 h1 送付履歴
 
 p.muted
-  | #{status_labels.fetch("draft")} #{@status_counts.fetch("draft", 0)}件 / #{status_labels.fetch("sent")} #{@status_counts.fetch("sent", 0)}件 / #{status_labels.fetch("failed")} #{@status_counts.fetch("failed", 0)}件
+  | #{status_labels.fetch("draft")} #{summary_status_counts.fetch("draft", 0)}件 / #{status_labels.fetch("sent")} #{summary_status_counts.fetch("sent", 0)}件 / #{status_labels.fetch("failed")} #{summary_status_counts.fetch("failed", 0)}件
 
 p.actions
-  = link_to "すべて (#{total_count})", document_delivery_logs_path, class: @status_filter.blank? ? "button" : "button secondary"
+  span.muted 状態:
+  = link_to "すべて (#{status_total_count})", document_delivery_logs_path(delivery_type: @delivery_type_filter.presence), class: @status_filter.blank? ? "button" : "button secondary"
   - status_labels.each do |status, label|
-    = link_to "#{label} (#{@status_counts.fetch(status, 0)})", document_delivery_logs_path(status: status), class: @status_filter == status ? "button" : "button secondary"
+    = link_to "#{label} (#{status_filter_counts.fetch(status, 0)})", document_delivery_logs_path(status:, delivery_type: @delivery_type_filter.presence), class: @status_filter == status ? "button" : "button secondary"
+
+p.actions
+  span.muted 方式:
+  = link_to "すべて (#{delivery_type_total_count})", document_delivery_logs_path(status: @status_filter.presence), class: @delivery_type_filter.blank? ? "button" : "button secondary"
+  - delivery_type_labels.each do |delivery_type, label|
+    = link_to "#{label} (#{delivery_type_counts.fetch(delivery_type, 0)})", document_delivery_logs_path(status: @status_filter.presence, delivery_type:), class: @delivery_type_filter == delivery_type ? "button" : "button secondary"
 
 - if @delivery_logs.any?
   table
