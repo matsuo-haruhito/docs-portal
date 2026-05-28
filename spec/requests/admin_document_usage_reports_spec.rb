@@ -33,6 +33,10 @@ RSpec.describe "Admin document usage reports", type: :request do
     parsed_html.at_css("a[href='#{admin_access_logs_path(project_id: project.id, document_q: slug)}']")
   end
 
+  def summary_audit_log_link
+    parsed_html.at_css("a[href='#{admin_access_logs_path(project_id: project.id)}']")
+  end
+
   it "shows selection controls and a prompt when no project is selected" do
     project
     sign_in_as(admin_user)
@@ -95,6 +99,10 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(document_link).to be_present
     expect(document_link.text).to eq("Manual")
 
+    summary_link = summary_audit_log_link
+    expect(summary_link).to be_present
+    expect(summary_link.text).to eq("案件の監査ログへ")
+
     audit_log_document_link = audit_log_link(document.slug)
     expect(audit_log_document_link).to be_present
     expect(audit_log_document_link.text).to eq("監査ログへ")
@@ -122,6 +130,7 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(page_text).to match(/並び順:\s*最終アクセスが新しい順/)
     expect(row_titles).to eq(["Guide", "Manual", "Policy"])
     expect(row_titles).not_to include("Checklist")
+    expect(summary_audit_log_link).to be_present
     expect(audit_log_link(newest_document.slug)).to be_present
     expect(audit_log_link(document.slug)).to be_present
     expect(audit_log_link(read_only_document.slug)).not_to be_present
@@ -146,6 +155,7 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 0件")
     expect(page_text).to include("条件に一致する文書はありません。")
+    expect(summary_audit_log_link).to be_present
     expect(parsed_html.css("table tbody tr")).to be_empty
   end
 
