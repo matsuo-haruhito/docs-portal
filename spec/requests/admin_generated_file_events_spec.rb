@@ -56,7 +56,10 @@ RSpec.describe "Admin generated file events", type: :request do
 
     it "preserves the current list path in detail links" do
       sign_in_as(admin_user)
-      event = create_event!(path: "docs/source.yml", status: :failed)
+      event = create_event!(path: "docs/source.yml", status: :failed, created_at: 1.day.ago)
+      25.times do |i|
+        create_event!(path: "docs/newer-#{i}.yml", status: :failed)
+      end
       return_to_path = admin_generated_file_events_path(status: "failed", path: "docs", page: 2, per_page: 25)
 
       get return_to_path
