@@ -67,6 +67,49 @@ RSpec.describe "Access requests", type: :request do
     expect(own_request.reload).to be_cancelled
   end
 
+  it "shows localized labels for requestable type, access level, and status on the index" do
+    localized_project = create(:project, code: "LOC", name: "案件A")
+    localized_document = create(:document, project: localized_project, title: "利用規約", slug: "terms", visibility_policy: :restricted_external)
+    localized_version = create(:document_version, document: localized_document, version_label: "v1.0.0", status: :published)
+    localized_file = create(:document_file, document_version: localized_version, file_name: "案内.pdf", content_type: "application/pdf", file_size: 10)
+    approver = create(:user, :internal)
+
+    localized_document.update!(latest_version: localized_version)
+    create(:project_membership, project: localized_project, user:)
+    create(:document_permission, document: localized_document, company:, access_level: :view)
+
+    create(:access_request, requester: user, requestable: localized_project, requested_access_level: :manage, reason: "案件の管理が必要です。")
+    create(:access_request, requester: user, requestable: localized_document, requested_access_level: :download, status: :approved, approver:, approved_at: Time.current, reason: "文書確認のためです。")
+    create(:access_request, requester: user, requestable: localized_file, requested_access_level: :view, status: :rejected, approver:, rejected_at: Time.current, rejection_reason: "対象外です。", reason: "内容確認のためです。")
+    create(:access_request, requester: user, requestable: file, requested_access_level: :download, status: :cancelled, cancelled_at: Time.current, reason: "取り下げました。")
+
+    sign_in_as(user)
+
+    get access_requests_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("案件")
+    expect(page_text).to include("文書")
+    expect(page_text).to include("ファイル")
+    expect(page_text).to include("管理")
+    expect(page_text).to include("ダウンロード")
+    expect(page_text).to include("閲覧")
+    expect(page_text).to include("申請中")
+    expect(page_text).to include("承認済み")
+    expect(page_text).to include("却下")
+    expect(page_text).to include("取消済み")
+    expect(page_text).to include("取消")
+    expect(page_text).not_to include("Project")
+    expect(page_text).not_to include("Document")
+    expect(page_text).not_to include("DocumentFile")
+    expect(page_text).not_to include("manage")
+    expect(page_text).not_to include("download")
+    expect(page_text).not_to include("pending")
+    expect(page_text).not_to include("approved")
+    expect(page_text).not_to include("rejected")
+    expect(page_text).not_to include("cancelled")
+  end
+
   it "shows request buttons on the version page when download is not allowed" do
     sign_in_as(user)
 
@@ -75,5 +118,9 @@ RSpec.describe "Access requests", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("ダウンロード権限を申請")
     expect(response.body).to include("申請")
+  end
+
+  def page_text
+    Nokogiri::HTML.parse(response.body).text.squish
   end
 end
