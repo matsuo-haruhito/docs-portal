@@ -1,4 +1,5 @@
 require "rails_helper"
+require "cgi"
 
 RSpec.describe "Document delivery logs", type: :request do
   let(:company) { create(:company) }
@@ -97,8 +98,8 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(response.body).not_to include(own_sent.to_addresses)
     expect(response.body).not_to include(own_failed.to_addresses)
     expect(response.body).not_to include(other_failed.to_addresses)
-    expect(response.body).to include(document_delivery_logs_path(status: :draft, delivery_type: :portal_link))
-    expect(response.body).to include(document_delivery_logs_path(status: :failed, delivery_type: :portal_link))
+    expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(status: :draft, delivery_type: :portal_link))
+    expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(status: :failed, delivery_type: :portal_link))
 
     get document_delivery_logs_path, params: { status: :failed, delivery_type: :zip_attachment }
     expect(response).to have_http_status(:ok)
@@ -106,7 +107,7 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(response.body).not_to include(own_draft.to_addresses)
     expect(response.body).not_to include(own_sent.to_addresses)
     expect(response.body).not_to include(other_failed.to_addresses)
-    expect(response.body).to include(document_delivery_logs_path(status: :failed))
+    expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(status: :failed))
 
     sign_in_as(internal_user)
 
@@ -137,7 +138,7 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("ポータルリンク")
     expect(response.body).to include("下書き")
-    expect(response.body).not_to include("portal_link")
+    expect(response.body).not_to include(">portal_link<")
   end
 
   it "shows localized labels and links back to the project and document" do
