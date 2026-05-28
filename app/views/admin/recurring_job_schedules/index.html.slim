@@ -1,4 +1,5 @@
 - page_title "定期ジョブ"
+- current_list_path = request.fullpath
 
 h1 定期ジョブ
 p.muted recurring_job_schedules に登録された定期実行ジョブの状態を確認します。未登録の定義は dispatcher 実行時に自動登録されます。
@@ -24,7 +25,7 @@ p.actions
       - @schedules.each do |schedule|
         tr
           td
-            = link_to schedule.job_key, admin_recurring_job_schedule_path(schedule)
+            = link_to schedule.job_key, admin_recurring_job_schedule_path(schedule, return_to: current_list_path)
             br
             code = schedule.job_class
           td = schedule.enabled? ? "有効" : "無効"
@@ -34,4 +35,4 @@ p.actions
           td = schedule.last_started_at ? l(schedule.last_started_at) : "-"
           td = schedule.last_finished_at ? l(schedule.last_finished_at) : "-"
           td = recurring_job_status_badge(schedule.last_status)
-          td = link_to "詳細", admin_recurring_job_schedule_path(schedule), class: "button secondary"
+          td = link_to "詳細", admin_recurring_job_schedule_path(schedule, return_to: current_list_path), class: "button secondary"
