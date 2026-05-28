@@ -2,6 +2,7 @@ class Admin::DocumentSetsController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_document_set, only: %i[edit update destroy]
   before_action :load_projects, only: %i[index create edit update]
+  before_action :load_filters, only: %i[index create]
   before_action :load_document_sets, only: %i[index create]
   before_action :load_project_documents, only: %i[index create edit update]
 
@@ -48,8 +49,15 @@ class Admin::DocumentSetsController < Admin::BaseController
     @projects = Project.order(:code)
   end
 
+  def load_filters
+    @filters = document_set_filter_params
+  end
+
   def load_document_sets
-    @document_sets = DocumentSet.includes(:project, document_set_items: %i[document document_version]).ordered
+    scope = DocumentSet.includes(:project, document_set_items: %i[document document_version])
+    scope = apply_enum_filter(scope, :set_type, DocumentSet.set_types)
+    scope = apply_enum_filter(scope, :visibility_policy, DocumentSet.visibility_policies)
+    @document_sets = scope.ordered
   end
 
   def load_project_documents
@@ -66,6 +74,10 @@ class Admin::DocumentSetsController < Admin::BaseController
 
   def document_set_project_id
     params.dig(:document_set, :project_id).presence || @document_set&.project_id
+  end
+
+  def document_set_filter_params
+    params.to_unsafe_h.symbolize_keys.slice(:set_type, :visibility_policy)
   end
 
   def document_set_params
@@ -117,5 +129,12 @@ class Admin::DocumentSetsController < Admin::BaseController
   rescue ActiveRecord::RecordInvalid => e
     document_set.errors.add(:base, e.record.errors.full_messages.join(", "))
     raise
+  end
+
+  def apply_enum_filter(scope, key, enum_values)
+    value = @filters[key].to_s
+    return scope if value.blank? || !enum_values.key?(value)
+
+    scope.where(key => value)
   end
 end
