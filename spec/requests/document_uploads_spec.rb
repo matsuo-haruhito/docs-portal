@@ -13,6 +13,16 @@ RSpec.describe "Document uploads", type: :request do
     FileUtils.rm_rf(site_root)
   end
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def write_site_file(version, relative_path, content)
+    path = version.site_root_absolute_path.join(relative_path)
+    FileUtils.mkdir_p(path.dirname)
+    File.write(path, content)
+  end
+
   it "creates a draft upload candidate under the selected folder" do
     sign_in_as(user)
 
@@ -111,6 +121,36 @@ RSpec.describe "Document uploads", type: :request do
     expect(response.body).to include("OK：この内容を反映")
     expect(response.body).to include("NG：この候補を破棄")
     expect(response.body).to include("Docusaurusプレビュー生成中")
+  end
+
+  it "renders iframe upload wiring on the preview page for internal users" do
+    sign_in_as(user)
+    document = create(:document, project: project, title: "Guide", slug: "guide")
+    version = create(
+      :document_version,
+      document: document,
+      status: :published,
+      version_label: "v1.0.0",
+      source_commit_hash: "git-import",
+      site_build_path: "docs/guide"
+    )
+    version.assign_source_path_metadata!(source_path: "docs/guide.md", snapshot_kind: "received_markdown")
+    version.save!
+    document.update!(latest_version: version)
+    write_site_file(version, "docs/guide/index.html", "<html><body><h1>Guide</h1></body></html>")
+
+    get project_document_path(project, document.slug)
+
+    expect(response).to have_http_status(:ok)
+
+    shell = parsed_html.at_css(".site-viewer-shell.manual-document-upload-target")
+    expect(shell).to be_present
+    expect(shell["data-controller"].to_s.split).to include("manual-document-upload")
+    expect(shell["data-manual-document-upload-url-value"]).to eq(project_document_uploads_path(project))
+    expect(shell["data-manual-document-upload-target-document-id"]).to eq(document.public_id)
+    expect(shell["data-action"]).to include("drop->manual-document-upload#drop")
+    expect(parsed_html.at_css(".document-preview-drop-overlay[data-manual-document-upload-target='overlay']")).to be_present
+    expect(parsed_html.at_css("iframe.site-viewer-frame[data-manual-document-upload-target='frame']")).to be_present
   end
 
   it "approves a draft upload candidate as the latest version" do
