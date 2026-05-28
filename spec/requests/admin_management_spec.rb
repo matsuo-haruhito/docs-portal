@@ -5,8 +5,18 @@ RSpec.describe "Admin management", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def page_text
+    parsed_html.text.squish
+  end
+
   def admin_nav_hrefs
     parsed_html.css("ul.nav-list a").map { |link| link["href"] }
+  end
+
+  def action_targets
+    parsed_html.css("a[href], form[action]").map do |node|
+      node["href"] || node["action"]
+    end
   end
 
   describe "GET /admin" do
@@ -22,7 +32,7 @@ RSpec.describe "Admin management", type: :request do
       get admin_root_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("管理画面")
+      expect(page_text).to include("管理画面")
       expect(admin_nav_hrefs).to include(
         admin_root_path,
         admin_projects_path,
@@ -87,10 +97,10 @@ RSpec.describe "Admin management", type: :request do
       get admin_companies_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(edit_admin_company_path(company.public_id))
-      expect(response.body).to include(admin_company_path(company.public_id))
-      expect(response.body).not_to include(edit_admin_company_path(company.id))
-      expect(response.body).not_to include(admin_company_path(company.id))
+      expect(action_targets).to include(edit_admin_company_path(company.public_id))
+      expect(action_targets).to include(admin_company_path(company.public_id))
+      expect(action_targets).not_to include(edit_admin_company_path(company.id))
+      expect(action_targets).not_to include(admin_company_path(company.id))
       expect(admin_company_path(company)).to eq("/admin/companies/#{company.public_id}")
       expect(edit_admin_company_path(company)).to eq("/admin/companies/#{company.public_id}/edit")
 
@@ -127,8 +137,8 @@ RSpec.describe "Admin management", type: :request do
 
       get admin_companies_path
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Alpha")
-      expect(response.body).not_to include("Omega")
+      expect(page_text).to include("Alpha")
+      expect(page_text).not_to include("Omega")
 
       patch admin_company_path(company.public_id), params: {
         company: { domain: company.domain, name: "Alpha Updated", active: false }
@@ -171,7 +181,7 @@ RSpec.describe "Admin management", type: :request do
       expect(edit_admin_project_path(project)).to eq("/admin/projects/PJ999/edit")
 
       get admin_projects_path
-      expect(response.body).to include("Client Co")
+      expect(page_text).to include("Client Co")
 
       patch admin_project_path(project), params: {
         project: { code: "PJ999", name: "Portal Refresh Updated", description: "changed", company_id: "", active: false }
@@ -208,8 +218,8 @@ RSpec.describe "Admin management", type: :request do
 
       get admin_users_path
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("member@example.com")
-      expect(response.body).not_to include("other@example.com")
+      expect(page_text).to include("member@example.com")
+      expect(page_text).not_to include("other@example.com")
       expect(admin_nav_hrefs).to include(admin_companies_path, admin_users_path)
       expect(admin_nav_hrefs).not_to include(
         admin_root_path,
@@ -260,10 +270,10 @@ RSpec.describe "Admin management", type: :request do
       get admin_users_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(edit_admin_user_path(managed_user.public_id))
-      expect(response.body).to include(admin_user_path(managed_user.public_id))
-      expect(response.body).not_to include(edit_admin_user_path(managed_user.id))
-      expect(response.body).not_to include(admin_user_path(managed_user.id))
+      expect(action_targets).to include(edit_admin_user_path(managed_user.public_id))
+      expect(action_targets).to include(admin_user_path(managed_user.public_id))
+      expect(action_targets).not_to include(edit_admin_user_path(managed_user.id))
+      expect(action_targets).not_to include(admin_user_path(managed_user.id))
       expect(admin_user_path(managed_user)).to eq("/admin/users/#{managed_user.public_id}")
       expect(edit_admin_user_path(managed_user)).to eq("/admin/users/#{managed_user.public_id}/edit")
 
