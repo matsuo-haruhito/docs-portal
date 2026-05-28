@@ -7,6 +7,10 @@ RSpec.describe "Admin generated file runs", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def link_hrefs
+    parsed_html.css("a[href]").map { _1["href"] }
+  end
+
   describe "GET /admin/generated_file_runs" do
     it "shows generated file run history for admin users" do
       sign_in_as(admin_user)
@@ -35,6 +39,26 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(failed_summary_card).to be_present
       expect(failed_summary_card.text).to include("失敗")
       expect(failed_summary_card.at_css(".text-2xl.font-bold")&.text).to eq("2")
+    end
+
+    it "keeps active filters on status summary links" do
+      sign_in_as(admin_user)
+      create_run!(status: :failed)
+      filters = {
+        status: "failed",
+        job_id: "ai_usecase_decision_flow_document_version",
+        generator: "ai_usecase_decision_flow",
+        output_writer: "document_version",
+        event_source: "manual_document_upload",
+        created_from: "2026-05-10",
+        created_to: "2026-05-11"
+      }
+
+      get admin_generated_file_runs_path(filters)
+
+      expect(response).to have_http_status(:ok)
+      expect(link_hrefs).to include(admin_generated_file_runs_path(filters.merge(status: "completed")))
+      expect(link_hrefs).to include(admin_generated_file_runs_path(filters.merge(status: "failed")))
     end
 
     it "preserves the current list path in detail links" do
