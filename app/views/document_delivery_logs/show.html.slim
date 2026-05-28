@@ -3,13 +3,13 @@
 h1 送付履歴
 
 p.muted
-  = @delivery_log.project.name
+  = link_to @delivery_log.project.name, project_path(@delivery_log.project)
   - if @delivery_log.document.present?
     |  / 
-    = @delivery_log.document.title
+    = link_to @delivery_log.document.title, project_document_path(@delivery_log.project, @delivery_log.document.slug)
   - elsif @delivery_log.document_set.present?
     |  / 
-    = @delivery_log.document_set.name
+    = link_to @delivery_log.document_set.name, project_document_set_path(@delivery_log.project, @delivery_log.document_set)
 
 table
   tbody
@@ -24,10 +24,10 @@ table
       td = @delivery_log.bcc_addresses.presence || "-"
     tr
       th 方式
-      td = @delivery_log.delivery_type
+      td = document_delivery_log_delivery_type_label(@delivery_log)
     tr
       th 状態
-      td = @delivery_log.status
+      td = document_delivery_log_status_label(@delivery_log)
     tr
       th 送信日時
       td = @delivery_log.sent_at ? l(@delivery_log.sent_at) : "-"
@@ -43,5 +43,11 @@ p.actions
   - if @delivery_log.draft?
     = button_to "送付済みにする", document_delivery_log_path(@delivery_log), method: :patch, params: { decision: "mark_sent" }, class: "button secondary"
     = button_to "送付失敗として記録", document_delivery_log_path(@delivery_log), method: :patch, params: { decision: "mark_failed" }, class: "button secondary"
+  - if @delivery_log.document.present?
+    = link_to "対象の文書へ戻る", project_document_path(@delivery_log.project, @delivery_log.document.slug), class: "button secondary"
+  - elsif @delivery_log.document_set.present?
+    = link_to "対象の文書セットへ戻る", project_document_set_path(@delivery_log.project, @delivery_log.document_set), class: "button secondary"
+  - else
+    = link_to "対象の案件へ戻る", project_path(@delivery_log.project), class: "button secondary"
 
 p = link_to "送付履歴一覧へ戻る", document_delivery_logs_path
