@@ -1,6 +1,9 @@
 class AccessRequestsController < BaseController
   def index
-    @access_requests = AccessRequest.where(requester: current_user).recent_first.includes(:approver, :requestable)
+    @status_filter = normalized_status_filter
+    scope = AccessRequest.where(requester: current_user).recent_first.includes(:approver, :requestable)
+    @status_counts = scope.unscope(:order).group(:status).count
+    @access_requests = @status_filter.present? ? scope.public_send(@status_filter) : scope
   end
 
   def create
@@ -27,6 +30,14 @@ class AccessRequestsController < BaseController
   end
 
   private
+
+  def normalized_status_filter
+    status = params[:status].to_s
+    return if status.blank?
+    return status if AccessRequest.statuses.key?(status)
+
+    nil
+  end
 
   def find_requestable
     case params[:requestable_type]

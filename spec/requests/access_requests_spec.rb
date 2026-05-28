@@ -100,6 +100,45 @@ RSpec.describe "Access requests", type: :request do
     expect(own_request.reload).to be_cancelled
   end
 
+  it "filters the current user's requests by status" do
+    approver = create(:user, :internal)
+    pending_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "Pending reason")
+    approved_request = create(:access_request, requester: user, requestable: document, requested_access_level: :download, status: :approved, approver:, approved_at: Time.current, reason: "Approved reason")
+    rejected_request = create(:access_request, requester: user, requestable: project, requested_access_level: :manage, status: :rejected, approver:, rejected_at: Time.current, rejection_reason: "NG", reason: "Rejected reason")
+    cancelled_request = create(:access_request, requester: user, requestable: file, requested_access_level: :view, status: :cancelled, cancelled_at: Time.current, reason: "Cancelled reason")
+    create(:access_request, requester: other_user, requestable: file, requested_access_level: :download, status: :approved, approver:, approved_at: Time.current, reason: "Other user approved reason")
+
+    sign_in_as(user)
+
+    get access_requests_path(status: :pending)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("申請中 1件 / 承認済み 1件 / 却下 1件 / 取消済み 1件")
+    expect(page_text).to include(pending_request.reason)
+    expect(page_text).not_to include(approved_request.reason)
+    expect(page_text).not_to include(rejected_request.reason)
+    expect(page_text).not_to include(cancelled_request.reason)
+    expect(page_text).not_to include("Other user approved reason")
+    expect(response.body).to include(">取消<")
+
+    get access_requests_path(status: :approved)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).not_to include(pending_request.reason)
+    expect(page_text).to include(approved_request.reason)
+    expect(page_text).not_to include(rejected_request.reason)
+    expect(page_text).not_to include(cancelled_request.reason)
+    expect(response.body).not_to include(">取消<")
+
+    get access_requests_path(status: :invalid)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(pending_request.reason)
+    expect(page_text).to include(approved_request.reason)
+    expect(page_text).to include(rejected_request.reason)
+    expect(page_text).to include(cancelled_request.reason)
+  end
+
   it "shows localized labels for requestable type, access level, and status on the index" do
     localized_project = create(:project, code: "LOC", name: "案件A")
     localized_document = create(:document, project: localized_project, title: "利用規約", slug: "terms", visibility_policy: :restricted_external)
