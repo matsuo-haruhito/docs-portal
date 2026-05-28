@@ -10,7 +10,7 @@ table
   tbody
     tr
       th 状態
-      td = @document_approval_request.status
+      td = document_approval_request_status_label(@document_approval_request)
     tr
       th 依頼者
       td = @document_approval_request.requester.name
