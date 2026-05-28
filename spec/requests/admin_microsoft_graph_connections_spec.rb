@@ -3,9 +3,14 @@ require "rails_helper"
 RSpec.describe "Admin Microsoft Graph connections", type: :request do
   let(:admin_user) { create(:user, :internal) }
   let(:project) { create(:project, code: "GRAPH001", name: "Graph Project") }
+  let(:shared_folder_url) { "https://contoso.sharepoint.com/:f:/s/DocsPortal/ExampleSharedFolder" }
 
   def parsed_html
     Nokogiri::HTML(response.body)
+  end
+
+  def input_value(name)
+    parsed_html.at_css(%(input[name="#{name}"]))&.[]("value")
   end
 
   describe "GET /admin/microsoft_graph_connections" do
@@ -122,6 +127,138 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.body).to include("同一案件で1件だけ有効にできます")
       expect(response.body).to include("現在の有効接続を先に無効化")
+    end
+
+    it "fills drive details from a shared folder url without saving" do
+      sign_in_as(admin_user)
+      resolved_result = instance_double(
+        MicrosoftGraphSharedFolderResolver::Result,
+        drive_id: "b!resolved-drive",
+        site_id: "contoso.sharepoint.com,site-id,web-id",
+        preview_folder_path: "Shared Documents/Docs Portal Previews"
+      )
+      resolver = instance_double(MicrosoftGraphSharedFolderResolver, resolve: resolved_result)
+      allow(MicrosoftGraphSharedFolderResolver).to receive(:new).and_return(resolver)
+
+      expect do
+        post admin_microsoft_graph_connections_path, params: {
+          resolve_share_url: "1",
+          microsoft_graph_connection: {
+            project_id: project.id,
+            name: "Office preview",
+            auth_type: "client_credentials",
+            tenant_id: "tenant-id",
+            client_id: "client-id",
+            client_secret: "client-secret",
+            site_id: "",
+            drive_id: "",
+            preview_folder_path: "",
+            shared_folder_url: shared_folder_url,
+            enabled: "true"
+          }
+        }
+      end.not_to change(MicrosoftGraphConnection, :count)
+
+      expect(response).to have_http_status(:ok)
+      expect(input_value("microsoft_graph_connection[drive_id]")).to eq("b!resolved-drive")
+      expect(input_value("microsoft_graph_connection[site_id]")).to eq("contoso.sharepoint.com,site-id,web-id")
+      expect(input_value("microsoft_graph_connection[preview_folder_path]")).to eq("Shared Documents/Docs Portal Previews")
+      expect(MicrosoftGraphSharedFolderResolver).to have_received(:new).with(
+        tenant_id: "tenant-id",
+        client_id: "client-id",
+        client_secret: "client-secret",
+        shared_folder_url: shared_folder_url
+      )
+    end
+
+    it "shows a resolve error without attempting to save" do
+      sign_in_as(admin_user)
+      resolver = instance_double(MicrosoftGraphSharedFolderResolver)
+      allow(MicrosoftGraphSharedFolderResolver).to receive(:new).and_return(resolver)
+      allow(resolver).to receive(:resolve).and_raise(
+        MicrosoftGraphSharedFolderResolver::ResolutionError,
+        "共有URLからDrive情報を解決できませんでした。"
+      )
+
+      expect do
+        post admin_microsoft_graph_connections_path, params: {
+          resolve_share_url: "1",
+          microsoft_graph_connection: {
+            project_id: project.id,
+            name: "Office preview",
+            auth_type: "client_credentials",
+            tenant_id: "tenant-id",
+            client_id: "client-id",
+            client_secret: "client-secret",
+            site_id: "",
+            drive_id: "",
+            preview_folder_path: "",
+            shared_folder_url: shared_folder_url,
+            enabled: "true"
+          }
+        }
+      end.not_to change(MicrosoftGraphConnection, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("共有URLからDrive情報を解決できませんでした。")
+      expect(input_value("microsoft_graph_connection[shared_folder_url]")).to eq(shared_folder_url)
+    end
+  end
+
+  describe "PATCH /admin/microsoft_graph_connections/:public_id" do
+    it "uses the stored client secret when resolving from edit" do
+      sign_in_as(admin_user)
+      connection = create(
+        :microsoft_graph_connection,
+        project:,
+        name: "Existing connection",
+        tenant_id: "tenant-id",
+        client_id: "client-id",
+        client_secret: "stored-secret",
+        site_id: "old-site-id",
+        drive_id: "old-drive-id",
+        preview_folder_path: "old-folder",
+        enabled: true
+      )
+
+      resolved_result = instance_double(
+        MicrosoftGraphSharedFolderResolver::Result,
+        drive_id: "b!updated-drive",
+        site_id: "contoso.sharepoint.com,new-site-id,new-web-id",
+        preview_folder_path: "Shared Documents/New Preview Folder"
+      )
+      resolver = instance_double(MicrosoftGraphSharedFolderResolver, resolve: resolved_result)
+      allow(MicrosoftGraphSharedFolderResolver).to receive(:new).and_return(resolver)
+
+      expect do
+        patch admin_microsoft_graph_connection_path(connection), params: {
+          resolve_share_url: "1",
+          microsoft_graph_connection: {
+            project_id: connection.project_id,
+            name: connection.name,
+            auth_type: connection.auth_type,
+            tenant_id: connection.tenant_id,
+            client_id: connection.client_id,
+            client_secret: "",
+            site_id: connection.site_id,
+            drive_id: connection.drive_id,
+            preview_folder_path: connection.preview_folder_path,
+            shared_folder_url: shared_folder_url,
+            enabled: connection.enabled?.to_s
+          }
+        }
+      end.not_to change { connection.reload.drive_id }
+
+      expect(response).to have_http_status(:ok)
+      expect(input_value("microsoft_graph_connection[drive_id]")).to eq("b!updated-drive")
+      expect(input_value("microsoft_graph_connection[site_id]")).to eq("contoso.sharepoint.com,new-site-id,new-web-id")
+      expect(input_value("microsoft_graph_connection[preview_folder_path]")).to eq("Shared Documents/New Preview Folder")
+      expect(MicrosoftGraphSharedFolderResolver).to have_received(:new).with(
+        tenant_id: "tenant-id",
+        client_id: "client-id",
+        client_secret: "stored-secret",
+        shared_folder_url: shared_folder_url
+      )
     end
   end
 end
