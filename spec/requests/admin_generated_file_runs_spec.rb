@@ -39,9 +39,9 @@ RSpec.describe "Admin generated file runs", type: :request do
 
     it "preserves the current list path in detail links" do
       sign_in_as(admin_user)
-      run = create_run!(job_id: "ai_usecase_decision_flow", status: :failed, created_at: 1.day.ago)
+      run = create_run!(job_id: "ai_usecase_decision_flow", generator: "ai_usecase_decision_flow", status: :failed, created_at: 1.day.ago)
       25.times do |i|
-        create_run!(job_id: "newer_job_#{i}", status: :failed)
+        create_run!(job_id: "newer_job_#{i}", generator: "ai_usecase_decision_flow", status: :failed)
       end
       return_to_path = admin_generated_file_runs_path(status: "failed", generator: "ai_usecase_decision_flow", page: 2, per_page: 25)
 
@@ -369,6 +369,6 @@ RSpec.describe "Admin generated file runs", type: :request do
       last_seen_at: Time.current,
       occurrences_count: 1
     }
-    GeneratedFileRun.create!(defaults.merge(attributes))
+    GeneratedFileEvent.create!(defaults.merge(attributes))
   end
 end
