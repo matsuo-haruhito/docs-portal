@@ -168,6 +168,15 @@ ja:
         imported: "取込済み"
         skipped: "スキップ"
         failed: "失敗"
+    webhook_events:
+      event_type:
+        document_updated: "文書更新"
+        document_published: "文書公開"
+        import_completed: "インポート完了"
+        import_failed: "インポート失敗"
+        review_approved: "レビュー承認"
+        qa_posted: "Q&A投稿"
+        qa_answered: "Q&A回答"
     microsoft_graph_connections:
       auth_type:
         client_credentials: "Client credentials"
