@@ -92,7 +92,7 @@
               <td class="px-4 py-3 font-mono"><%= run.job_id %></td>
               <td class="px-4 py-3 font-mono"><%= run.generator.presence || "-" %></td>
               <td class="px-4 py-3 font-mono"><%= run.output_writer.presence || "-" %></td>
-              <td class="px-4 py-3"><%= run.event_source.presence || "-" %></td>
+              <td class="px-4 py-3"><%= generated_file_source_label(run.event_source) %></td>
               <td class="px-4 py-3"><%= l(run.started_at, format: :long) if run.started_at %></td>
               <td class="px-4 py-3"><%= l(run.finished_at, format: :long) if run.finished_at %></td>
               <td class="px-4 py-3">
