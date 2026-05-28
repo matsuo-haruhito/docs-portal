@@ -87,6 +87,16 @@ module ApplicationHelper
     localized_label("document_approval_requests.status", value)
   end
 
+  def document_delivery_log_delivery_type_label(log_or_value)
+    value = log_or_value.respond_to?(:delivery_type) ? log_or_value.delivery_type : log_or_value
+    localized_label("document_delivery_logs.delivery_type", value)
+  end
+
+  def document_delivery_log_status_label(log_or_value)
+    value = log_or_value.respond_to?(:status) ? log_or_value.status : log_or_value
+    localized_label("document_delivery_logs.status", value)
+  end
+
   def document_relation_type_label(result_or_value)
     value = result_or_value.respond_to?(:relation_type) ? result_or_value.relation_type : result_or_value
     localized_label("document_relations.relation_type", value)
