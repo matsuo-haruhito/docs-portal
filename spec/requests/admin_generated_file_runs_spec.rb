@@ -137,6 +137,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(run.public_id)
       expect(response.body).to include("状態")
+      expect(response.body).to include("失敗")
       expect(response.body).to include("ジョブID")
       expect(response.body).to include("ジェネレータ")
       expect(response.body).to include("出力ライター")
@@ -186,7 +187,10 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).to include(admin_generated_file_run_path(original_run.public_id))
       expect(response.body).to include(admin_generated_file_run_path(retry_child_run.public_id))
       expect(response.body).to include("missing-event")
+      expect(response.body).to include("未処理")
       expect(response.body).to include("（未検出）")
+      expect(response.body).to include("失敗")
+      expect(response.body).to include("完了")
       expect(response.body).to include("再実行")
       expect(response.body).to include("一括再実行")
     end
