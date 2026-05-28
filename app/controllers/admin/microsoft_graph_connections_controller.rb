@@ -12,7 +12,11 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
     @microsoft_graph_connection = MicrosoftGraphConnection.new(microsoft_graph_connection_params)
     @microsoft_graph_connection.created_by = current_user
 
-    if @microsoft_graph_connection.save
+    if resolve_share_url_request?
+      resolve_shared_folder_for(@microsoft_graph_connection, client_secret: @microsoft_graph_connection.client_secret)
+      load_index_state
+      render :index, status: @microsoft_graph_connection.errors.any? ? :unprocessable_entity : :ok
+    elsif @microsoft_graph_connection.save
       redirect_to admin_microsoft_graph_connections_path, notice: "Microsoft Graph接続設定を登録しました。"
     else
       load_index_state
@@ -25,6 +29,16 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
 
   def update
     attrs = microsoft_graph_connection_params
+
+    if resolve_share_url_request?
+      resolution_attrs = attrs.except(:client_secret)
+      resolution_attrs[:client_secret] = attrs[:client_secret] if attrs[:client_secret].present?
+      @microsoft_graph_connection.assign_attributes(resolution_attrs)
+      resolve_shared_folder_for(@microsoft_graph_connection, client_secret: attrs[:client_secret].presence || @microsoft_graph_connection.client_secret)
+      render :edit, status: @microsoft_graph_connection.errors.any? ? :unprocessable_entity : :ok
+      return
+    end
+
     attrs.delete(:client_secret) if attrs[:client_secret].blank?
 
     if @microsoft_graph_connection.update(attrs)
@@ -108,6 +122,25 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
     connection.enabled? && @preview_connection_ids_by_project[connection.project_id] == connection.id
   end
 
+  def resolve_share_url_request?
+    params[:resolve_share_url].present?
+  end
+
+  def resolve_shared_folder_for(connection, client_secret:)
+    result = MicrosoftGraphSharedFolderResolver.new(
+      tenant_id: connection.tenant_id,
+      client_id: connection.client_id,
+      client_secret: client_secret,
+      shared_folder_url: connection.shared_folder_url
+    ).resolve
+
+    connection.drive_id = result.drive_id
+    connection.site_id = result.site_id if result.site_id.present?
+    connection.preview_folder_path = result.preview_folder_path
+  rescue MicrosoftGraphSharedFolderResolver::ResolutionError => e
+    connection.errors.add(:base, e.message)
+  end
+
   def microsoft_graph_connection_params
     params.require(:microsoft_graph_connection).permit(
       :project_id,
@@ -119,7 +152,8 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
       :site_id,
       :drive_id,
       :preview_folder_path,
-      :enabled
+      :enabled,
+      :shared_folder_url
     )
   end
 end
