@@ -8,19 +8,30 @@ RSpec.describe "Admin external folder sync sources", type: :request do
     Nokogiri::HTML(response.body)
   end
 
-  def create_google_drive_source(project:, name:, enabled: true, last_error_message: nil)
+  def href_for(text)
+    link = parsed_html.css("a").find { |node| node.text.strip == text }
+    link&.[]("href")
+  end
+
+  def hidden_field_value(name)
+    parsed_html.at_css(%(input[name="#{name}"]))&.[]("value")
+  end
+
+  def create_google_drive_source(project:, name:, enabled: true, last_error_message: nil, auth_type: :oauth_user, auth_config: nil)
+    auth_config ||= auth_type.to_sym == :service_account ? { client_email: "sync@example.com" }.to_json : {}.to_json
+
     ExternalFolderSyncSource.create!(
       project:,
       created_by: admin_user,
       provider: :google_drive,
-      auth_type: :oauth_user,
+      auth_type:,
       name:,
       folder_url: "https://drive.google.com/drive/folders/#{name.parameterize}",
       external_folder_id: "folder-#{name.parameterize}",
       sync_direction: :external_to_portal,
       conflict_policy: :manual,
       enabled:,
-      auth_config: {}.to_json,
+      auth_config:,
       last_error_message:
     )
   end
@@ -121,6 +132,24 @@ RSpec.describe "Admin external folder sync sources", type: :request do
       expect(response.body).to include("1 / 4 件を表示しています。")
       reset_link = parsed_html.at_css(%(a[href="#{admin_external_folder_sync_sources_path}"]))
       expect(reset_link).to be_present
+    end
+
+    it "preserves the review filter in detail and edit links" do
+      sign_in_as(admin_user)
+      warning_source = create_google_drive_source(project:, name: "Warning source")
+      ExternalFolderSyncRun.create!(
+        external_folder_sync_source: warning_source,
+        status: :completed,
+        mode: :dry_run,
+        started_at: Time.current,
+        summary_json: { "conflict_warnings_count" => 2 }
+      )
+      return_to = admin_external_folder_sync_sources_path(review: "warnings")
+
+      get admin_external_folder_sync_sources_path, params: { review: "warnings" }
+
+      expect(href_for("設定詳細")).to eq(admin_external_folder_sync_source_path(warning_source, return_to: return_to))
+      expect(href_for("編集")).to eq(edit_admin_external_folder_sync_source_path(warning_source, return_to: return_to))
     end
   end
 
@@ -232,6 +261,52 @@ RSpec.describe "Admin external folder sync sources", type: :request do
 
       expect(response).to have_http_status(:not_found)
     end
+
+    it "renders detail and edit back links with the review filter context" do
+      sign_in_as(admin_user)
+      graph_project = create(:project, code: "SYNC002", name: "Graph Project")
+      source = create_microsoft_graph_source(project: graph_project, name: "SharePoint source")
+      return_to = admin_external_folder_sync_sources_path(review: "microsoft_graph")
+
+      get admin_external_folder_sync_source_path(source), params: { return_to: return_to }
+
+      expect(response).to have_http_status(:ok)
+      expect(href_for("一覧へ戻る")).to eq(return_to)
+      expect(href_for("編集")).to eq(edit_admin_external_folder_sync_source_path(source, return_to: return_to))
+
+      get edit_admin_external_folder_sync_source_path(source), params: { return_to: return_to }
+
+      expect(response).to have_http_status(:ok)
+      expect(hidden_field_value("return_to")).to eq(return_to)
+      expect(href_for("詳細へ戻る")).to eq(admin_external_folder_sync_source_path(source, return_to: return_to))
+    end
+  end
+
+  describe "PATCH /admin/external_folder_sync_sources/:public_id" do
+    it "redirects back to the source detail with return_to preserved" do
+      sign_in_as(admin_user)
+      source = create_google_drive_source(project:, name: "Drive source", auth_type: :service_account)
+      return_to = admin_external_folder_sync_sources_path(review: "google_drive")
+
+      patch admin_external_folder_sync_source_path(source), params: {
+        return_to: return_to,
+        external_folder_sync_source: {
+          project_id: project.id,
+          provider: "google_drive",
+          auth_type: "service_account",
+          name: "Drive source updated",
+          folder_url: source.folder_url,
+          external_folder_path: "",
+          sync_direction: "external_to_portal",
+          conflict_policy: "manual",
+          enabled: "true",
+          auth_config: { client_email: "sync@example.com" }.to_json
+        }
+      }
+
+      expect(response).to redirect_to(admin_external_folder_sync_source_path(source, return_to: return_to))
+      expect(source.reload.name).to eq("Drive source updated")
+    end
   end
 
   describe "POST /admin/external_folder_sync_sources/:public_id/dry_run" do
@@ -268,6 +343,19 @@ RSpec.describe "Admin external folder sync sources", type: :request do
       follow_redirect!
       expect(response.body).to include("後続 issue で対応予定")
       expect(response.body).not_to include("同期プレビュー")
+    end
+
+    it "preserves return_to after a Google Drive dry run" do
+      sign_in_as(admin_user)
+      google_source = create_google_drive_source(project:, name: "Drive source", auth_type: :service_account)
+      return_to = admin_external_folder_sync_sources_path(review: "google_drive")
+      run = instance_double(ExternalFolderSyncRun, items_scanned_count: 3)
+      runner = instance_double(ExternalFolderSync::Runner, call: run)
+      allow(ExternalFolderSync::Runner).to receive(:new).and_return(runner)
+
+      post dry_run_admin_external_folder_sync_source_path(google_source), params: { return_to: return_to }
+
+      expect(response).to redirect_to(admin_external_folder_sync_source_path(google_source, return_to: return_to))
     end
 
     it "returns 404 for numeric ids" do
