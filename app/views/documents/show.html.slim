@@ -5,9 +5,7 @@
 - path_history_status = @previous_site_path.present? ? DocumentHistoryStatusPresenter.new(status: :moved, requested_value: @previous_site_path, canonical_value: @viewer_site_path) : nil
 - terminal_slug_history_status = @terminal_slug_history_resolution ? DocumentHistoryStatusPresenter.new(status: @terminal_slug_history_resolution.status, requested_value: @terminal_slug_history_resolution.requested_slug, canonical_value: @document.slug) : nil
 - terminal_path_history_status = @terminal_path_history_resolution ? DocumentHistoryStatusPresenter.new(status: @terminal_path_history_resolution.status, requested_value: @terminal_path_history_resolution.requested_path, canonical_value: @viewer_site_path) : nil
-- preview_drop_data = {}
-- if current_user.internal?
-  - preview_drop_data = { controller: "manual-document-upload", manual_document_upload_dragging_class: "is-dragging", manual_document_upload_url_value: project_document_uploads_path(@project), manual_document_upload_target_document_id: @document.public_id, action: "dragenter->manual-document-upload#dragenter dragover->manual-document-upload#dragover dragleave->manual-document-upload#dragleave drop->manual-document-upload#drop" }
+- preview_drop_action = "dragenter->manual-document-upload#dragenter dragover->manual-document-upload#dragover dragleave->manual-document-upload#dragleave drop->manual-document-upload#drop"
 
 = turbo_stream.remove document_tree_unread_icon_id(@document)
 
@@ -48,14 +46,17 @@
         .document-context-drawer__sections
           = render "detail_sections"
 
-    .site-viewer-shell.document-reader-shell.manual-document-upload-target#document-content data=preview_drop_data
-      - if current_user.internal?
+    - if current_user.internal?
+      .site-viewer-shell.document-reader-shell.manual-document-upload-target#document-content data-controller="manual-document-upload" data-manual-document-upload-dragging-class="is-dragging" data-manual-document-upload-url-value=project_document_uploads_path(@project) data-manual-document-upload-target-document-id=@document.public_id data-action=preview_drop_action
         .document-preview-drop-overlay role="status" aria-live="polite" data-manual-document-upload-target="overlay"
           .document-preview-drop-overlay__message
             strong ここに1ファイルをドロップ
             span 同名ならこの文書の更新候補、別名なら同じフォルダ直下に追加します。複数ファイルはZIPにまとめるか、1ファイルずつアップロードしてください。
             span.document-preview-drop-overlay__uploading アップロード中です。差異確認画面へ移動します。
-      iframe.site-viewer-frame src=@viewer_iframe_src title="#{@document.title} #{@viewer_version.version_label}" loading="eager" data-manual-document-upload-target="frame"
+        iframe.site-viewer-frame src=@viewer_iframe_src title="#{@document.title} #{@viewer_version.version_label}" loading="eager" data-manual-document-upload-target="frame"
+    - else
+      .site-viewer-shell.document-reader-shell.manual-document-upload-target#document-content
+        iframe.site-viewer-frame src=@viewer_iframe_src title="#{@document.title} #{@viewer_version.version_label}" loading="eager"
 
     = render "comment_workspace", floating: true
 - else
@@ -69,7 +70,7 @@
           |  
           code = history_status.detail
   - if current_user.internal?
-    .card.manual-document-upload-panel data=preview_drop_data
+    .card.manual-document-upload-panel data-controller="manual-document-upload" data-manual-document-upload-dragging-class="is-dragging" data-manual-document-upload-url-value=project_document_uploads_path(@project) data-manual-document-upload-target-document-id=@document.public_id data-action=preview_drop_action
       h2 ファイルをアップロード
       p.muted この文書の更新候補として1ファイルずつドロップできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
       .manual-document-upload-panel__drop role="status" aria-live="polite"
