@@ -1,11 +1,11 @@
 - page_title "送付履歴"
-- status_labels = { "draft" => "下書き", "sent" => "送付済み", "failed" => "失敗" }
+- status_labels = %w[draft sent failed].index_with { |status| document_delivery_log_status_label(status) }
 - total_count = @status_counts.values.sum
 
 h1 送付履歴
 
 p.muted
-  | 下書き #{@status_counts.fetch("draft", 0)}件 / 送付済み #{@status_counts.fetch("sent", 0)}件 / 失敗 #{@status_counts.fetch("failed", 0)}件
+  | #{status_labels.fetch("draft")} #{@status_counts.fetch("draft", 0)}件 / #{status_labels.fetch("sent")} #{@status_counts.fetch("sent", 0)}件 / #{status_labels.fetch("failed")} #{@status_counts.fetch("failed", 0)}件
 
 p.actions
   = link_to "すべて (#{total_count})", document_delivery_logs_path, class: @status_filter.blank? ? "button" : "button secondary"
@@ -35,7 +35,7 @@ p.actions
             - else
               span.muted "-"
           td = log.to_addresses
-          td = log.delivery_type
-          td = link_to log.status, document_delivery_log_path(log)
+          td = document_delivery_log_delivery_type_label(log)
+          td = link_to document_delivery_log_status_label(log), document_delivery_log_path(log)
 - else
   p.muted 送付履歴はありません。
