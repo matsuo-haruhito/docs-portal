@@ -96,7 +96,7 @@
               <td class="px-4 py-3"><%= generated_file_event_status_label(event.status) %></td>
               <td class="px-4 py-3 font-mono"><%= event.path %></td>
               <td class="px-4 py-3"><%= generated_file_operation_label(event.operation) %></td>
-              <td class="px-4 py-3"><%= event.event_source.presence || "-" %></td>
+              <td class="px-4 py-3"><%= generated_file_source_label(event.event_source) %></td>
               <td class="max-w-xs truncate px-4 py-3 text-gray-700" title="<%= event.error_message %>"><%= event.error_message.presence || "-" %></td>
               <td class="px-4 py-3"><%= event.occurrences_count %></td>
               <td class="px-4 py-3"><%= l(event.scheduled_at, format: :long) if event.scheduled_at %></td>
