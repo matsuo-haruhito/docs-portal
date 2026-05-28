@@ -38,4 +38,9 @@ module Admin::WebhookEndpointsHelper
       delivery.status.to_s
     end
   end
+
+  def webhook_event_type_label(event_or_value)
+    value = event_or_value.respond_to?(:event_type) ? event_or_value.event_type : event_or_value
+    localized_label("webhook_events.event_type", value)
+  end
 end
