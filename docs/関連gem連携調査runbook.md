@@ -103,6 +103,20 @@
 - `#789` は `rails_table_preferences` の known-good revision 判断を扱う `status:needs-human` issue です。human decision が入る前に broad bump や downstream canary を混ぜません。
 - `#783` は `rails_fields_kit` baseline 更新の完了済み child です。current pinned ref を参照するときの履歴として扱い、次の dependency move が必要でも別 child issue / PR に切り分けます。
 
+### 3 gem 共通 verification matrix
+
+この matrix は `#930` の shared note です。3 gem を同じ粒度で見比べるための source of truth として使い、target SHA の最終判断や bump 実施そのものは各 child issue / PR に残します。
+
+| gem | child lane | current status | current resolved revision | target / gate | representative smoke | upstream review / blocker | rollback target |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `rails_fields_kit` | `#921` | `status:needs-human` | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | 次の target SHA は未確定。upstream helper-export lane の human review / merge 後に child 側で決める | `admin/document_sets` form の selected 値保持、preload or remote search 1 導線、validation rerender 後の redisplay | human-review-first lane は `rails_fields_kit#273` → `#195` / `#170`。この matrix では merge point を決めない | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` |
+| `tree_view` | `#903` | `status:ready-for-agent` | `9c538f9ee7946fa5af24f15c99402a0431677303` | 次の target SHA は `#903` の update log で child 単位に決める | sidebar tree の expand / collapse、detail tree の route context、persisted state | public hook / selection lane のレビューは upstream 側に残し、downstream では smoke と rollback note に閉じる | `9c538f9ee7946fa5af24f15c99402a0431677303` |
+| `rails_table_preferences` | `#904` | `status:ready-for-agent` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | 次の target SHA は child 単位で決める。known-good revision の human gate は `#789` に残す | `admin/document_sets` の editor / filter / preset、mounted engine save。embedded table を触るときだけ別途 note を足す | `#789` の known-good revision 判断と、preview table fallback (`#475` 系) の仕様論点はここへ混ぜない | `b3f1a9d6eb46aefe568c637396fab63151aef322` |
+
+- `#921` は matrix 追加によって再オープン扱いにしません。current status は `needs-human` のまま読みます。
+- `#903` と `#904` は executable child ですが、target SHA と詳細な smoke evidence は各 child issue / PR 本文で残します。
+- 実際の bump を書くときは、この matrix を見出しの正本にしつつ、下の update log テンプレートへ from / to SHA と結果を書き足します。
+
 ### 代表 smoke の早見表
 
 | gem | current canary surface | 最小の spec / evidence | update log に残す観点 |
