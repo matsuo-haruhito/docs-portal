@@ -236,7 +236,7 @@ module ApplicationHelper
     localized_label("external_folder_sync_items.sync_status", value)
   end
 
-  def external_folderSync_subscription_status_label(subscription_or_value)
+  def external_folder_sync_subscription_status_label(subscription_or_value)
     value = subscription_or_value.respond_to?(:status) ? subscription_or_value.status : subscription_or_value
     localized_label("external_folder_sync_subscriptions.status", value)
   end
