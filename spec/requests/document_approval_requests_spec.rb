@@ -7,6 +7,10 @@ RSpec.describe "Document approval requests", type: :request do
   let(:project) { create(:project, code: "APR", name: "Approval Project") }
   let(:document) { create(:document, project:, title: "確認資料", slug: "approval-doc", visibility_policy: :restricted_external) }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
   before do
     create(:project_membership, project:, user: requester)
     create(:document_permission, document:, company:, access_level: :view)
@@ -72,6 +76,8 @@ RSpec.describe "Document approval requests", type: :request do
     expect(response.body).to include(pending_request.title)
     expect(response.body).not_to include(approved_request.title)
     expect(response.body).not_to include(cancelled_request.title)
+    detail_link = parsed_html.at_css(%(a[href="#{document_approval_request_path(pending_request, return_to: project_document_document_approval_requests_path(project, document, status: :pending))}"]))
+    expect(detail_link).to be_present
 
     get document_approval_requests_path, params: { status: :approved }
     expect(response).to have_http_status(:ok)
@@ -82,29 +88,31 @@ RSpec.describe "Document approval requests", type: :request do
 
   it "shows detail to internal users and supports OK / Cancel" do
     approval_request = create(:document_approval_request, document:, requester:, title: "確認お願いします")
+    return_to_path = project_document_document_approval_requests_path(project, document, status: :pending)
 
     sign_in_as(internal_user)
 
-    get document_approval_request_path(approval_request)
+    get document_approval_request_path(approval_request, return_to: return_to_path)
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("OK")
     expect(response.body).to include("対応待ち")
+    expect(parsed_html.at_css(%(a[href="#{return_to_path}"]))).to be_present
 
-    patch document_approval_request_path(approval_request)
-    expect(response).to redirect_to(document_approval_request_path(approval_request))
+    patch document_approval_request_path(approval_request, return_to: return_to_path)
+    expect(response).to redirect_to(document_approval_request_path(approval_request, return_to: return_to_path))
     expect(approval_request.reload).to be_approved
     expect(approval_request.acted_by).to eq(internal_user)
 
-    get document_approval_request_path(approval_request)
+    get document_approval_request_path(approval_request, return_to: return_to_path)
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("OK済み")
 
     another_request = create(:document_approval_request, document:, requester:, title: "今回は進めない")
-    post cancel_document_approval_request_path(another_request)
-    expect(response).to redirect_to(document_approval_request_path(another_request))
+    post cancel_document_approval_request_path(another_request, return_to: return_to_path)
+    expect(response).to redirect_to(document_approval_request_path(another_request, return_to: return_to_path))
     expect(another_request.reload).to be_cancelled
 
-    get document_approval_request_path(another_request)
+    get document_approval_request_path(another_request, return_to: return_to_path)
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Cancel済み")
   end
