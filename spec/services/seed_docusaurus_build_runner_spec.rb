@@ -10,6 +10,8 @@ RSpec.describe SeedSupport::DocusaurusBuildRunner do
   let(:workspace) { Rails.root.join("tmp", "build-runner-#{SecureRandom.hex(4)}") }
   let(:docs_src) { workspace.join("docs-src") }
   let(:build_output_dir) { workspace.join("build") }
+  let(:success_status) { instance_double(Process::Status, success?: true) }
+  let(:failure_status) { instance_double(Process::Status, success?: false) }
 
   before do
     FileUtils.mkdir_p(build_output_dir.join("docs", "runner-doc"))
@@ -23,7 +25,7 @@ RSpec.describe SeedSupport::DocusaurusBuildRunner do
 
   it "copies build output to the version site root when npm build succeeds" do
     allow(SeedSupport::DocusaurusRuntimeChecker).to receive(:ensure_runtime!).and_return(true)
-    allow(Open3).to receive(:capture3).and_return(["", "", instance_double(Process::Status, success?: true)])
+    allow(Open3).to receive(:capture3).and_return(["", "", success_status])
 
     described_class.new(
       source_dir: workspace,
@@ -34,5 +36,48 @@ RSpec.describe SeedSupport::DocusaurusBuildRunner do
 
     expect(version.site_entry_absolute_path).to exist
     expect(version.site_entry_absolute_path.read).to include("ok")
+  end
+
+  it "raises build failures with command, path, stderr, and stdout context" do
+    static_dir = workspace.join("static")
+    allow(SeedSupport::DocusaurusRuntimeChecker).to receive(:ensure_runtime!).and_return(true)
+    allow(Open3).to receive(:capture3).and_return(["stdout detail", "stderr detail", failure_status])
+
+    runner = described_class.new(
+      source_dir: workspace,
+      version:,
+      docs_src:,
+      build_output_dir:,
+      static_dir:
+    )
+
+    expect { runner.run! }.to raise_error(RuntimeError) { |error|
+      expect(error.message).to include("Docusaurus build failed")
+      expect(error.message).to include("source_dir: #{workspace}")
+      expect(error.message).to include("docs_path: #{docs_src}")
+      expect(error.message).to include("out_dir: #{build_output_dir}")
+      expect(error.message).to include("static_dir: #{static_dir}")
+      expect(error.message).to include("command: npm run build -- --out-dir #{build_output_dir}")
+      expect(error.message).to include("stderr:\nstderr detail")
+      expect(error.message).to include("stdout:\nstdout detail")
+    }
+  end
+
+  it "keeps stdout-only build failures readable" do
+    allow(SeedSupport::DocusaurusRuntimeChecker).to receive(:ensure_runtime!).and_return(true)
+    allow(Open3).to receive(:capture3).and_return(["stdout only", "", failure_status])
+
+    runner = described_class.new(
+      source_dir: workspace,
+      version:,
+      docs_src:,
+      build_output_dir:
+    )
+
+    expect { runner.run! }.to raise_error(RuntimeError) { |error|
+      expect(error.message).to include("stdout:\nstdout only")
+      expect(error.message).not_to include("stderr:")
+      expect(error.message).not_to include("static_dir:")
+    }
   end
 end
