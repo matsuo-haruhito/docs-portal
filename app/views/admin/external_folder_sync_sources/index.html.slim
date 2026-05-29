@@ -4,6 +4,9 @@
 - table_columns = external_folder_sync_source_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - selected_filter_labels = []
+- filter_base_style = "display:inline-flex;align-items:center;gap:0.35rem;padding:0.35rem 0.7rem;border-radius:999px;border:1px solid #d8dee4;line-height:1.2;text-decoration:none;white-space:nowrap;"
+- filter_selected_style = "#{filter_base_style}background:#eaf3ff;border-color:#9ec5fe;color:#1f5aa6;font-weight:700;"
+- filter_link_style = "#{filter_base_style}background:#fff;color:#24292f;"
 - if @selected_review_filter == "warnings"
   - selected_filter_labels << "warning あり"
 - elsif @selected_review_filter == "errors"
@@ -25,40 +28,46 @@ h1 外部フォルダ同期設定
 - if @review_filter_counts[:all].positive?
   .card
     h2 一覧の絞り込み
-    p.muted warning / error / provider 差分を絞って、気になる同期元を先に確認できます。
-    ul
-      li
+    p.muted warning / error / disabled を先に確認し、必要に応じて provider 別に絞り込めます。
+    .external-sync-filter-section style="margin-top:0.75rem;"
+      strong レビュー優先
+      p.muted style="margin:0.25rem 0 0.5rem;" 日常確認で先に見る同期元です。
+      p.actions style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0;"
         - if @selected_review_filter.blank?
-          strong = "すべて (#{@review_filter_counts[:all]})"
+          strong style=filter_selected_style
+            = "すべて (#{@review_filter_counts[:all]})"
         - else
-          = link_to "すべて (#{@review_filter_counts[:all]})", admin_external_folder_sync_sources_path
-      li
+          = link_to "すべて (#{@review_filter_counts[:all]})", admin_external_folder_sync_sources_path, style: filter_link_style
         - if @selected_review_filter == "warnings"
-          strong = "warning あり (#{@review_filter_counts[:warnings]})"
+          strong style=filter_selected_style
+            = "warning あり (#{@review_filter_counts[:warnings]})"
         - else
-          = link_to "warning あり (#{@review_filter_counts[:warnings]})", admin_external_folder_sync_sources_path(review: :warnings)
-      li
+          = link_to "warning あり (#{@review_filter_counts[:warnings]})", admin_external_folder_sync_sources_path(review: :warnings), style: filter_link_style
         - if @selected_review_filter == "errors"
-          strong = "error あり (#{@review_filter_counts[:errors]})"
+          strong style=filter_selected_style
+            = "error あり (#{@review_filter_counts[:errors]})"
         - else
-          = link_to "error あり (#{@review_filter_counts[:errors]})", admin_external_folder_sync_sources_path(review: :errors)
-      li
+          = link_to "error あり (#{@review_filter_counts[:errors]})", admin_external_folder_sync_sources_path(review: :errors), style: filter_link_style
         - if @selected_review_filter == "disabled"
-          strong = "無効 (#{@review_filter_counts[:disabled]})"
+          strong style=filter_selected_style
+            = "無効 (#{@review_filter_counts[:disabled]})"
         - else
-          = link_to "無効 (#{@review_filter_counts[:disabled]})", admin_external_folder_sync_sources_path(review: :disabled)
-      li
+          = link_to "無効 (#{@review_filter_counts[:disabled]})", admin_external_folder_sync_sources_path(review: :disabled), style: filter_link_style
+    .external-sync-filter-section style="margin-top:1rem;"
+      strong Provider
+      p.muted style="margin:0.25rem 0 0.5rem;" 同期対応と metadata-only の境界を分けて確認します。
+      p.actions style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0;"
         - if @selected_review_filter == "google_drive"
-          strong = "Google Drive (#{@review_filter_counts[:google_drive]})"
+          strong style=filter_selected_style
+            = "Google Drive (#{@review_filter_counts[:google_drive]})"
         - else
-          = link_to "Google Drive (#{@review_filter_counts[:google_drive]})", admin_external_folder_sync_sources_path(review: :google_drive)
-      li
+          = link_to "Google Drive (#{@review_filter_counts[:google_drive]})", admin_external_folder_sync_sources_path(review: :google_drive), style: filter_link_style
         - if @selected_review_filter == "microsoft_graph"
-          strong = "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})"
+          strong style=filter_selected_style
+            = "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})"
         - else
-          = link_to "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})", admin_external_folder_sync_sources_path(review: :microsoft_graph)
-    p.muted Google Drive は `最新安全判定` `競合・重複警告` `最新エラー` を見てから `設定詳細` へ進みます。
-    p.muted SharePoint / OneDrive は metadata-only なので、`設定詳細` で `drive_id` と `folder_path` の保存状況を確認します。
+          = link_to "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})", admin_external_folder_sync_sources_path(review: :microsoft_graph), style: filter_link_style
+    p.muted style="margin-top:1rem;" Google Drive は同期実行対象です。SharePoint / OneDrive は metadata-only として、保存済みの drive_id と folder_path を確認します。
     - if selected_filter_labels.any?
       p.muted
         = "現在の絞り込み: #{selected_filter_labels.join(' / ')}"
@@ -95,6 +104,19 @@ h1 外部フォルダ同期設定
             = source.project.name
             br
             code = source.project.code
+          td = link_to source.name, admin_external_folder_sync_source_path(source, return_to: current_return_to)
+          td
+            = external_folder_sync_source_provider_label(source)
+            br
+            - if source.google_drive?
+              span style="display:inline-flex;align-items:center;padding:0.15rem 0.5rem;border-radius:999px;border:1px solid #b7e2c5;background:#eaf7ee;color:#1f6b3b;font-size:0.85em;font-weight:600;line-height:1.3;white-space:nowrap;" 同期対応
+              br
+              span.muted dry-run / apply 対象
+            - else
+              span style="display:inline-flex;align-items:center;padding:0.15rem 0.5rem;border-radius:999px;border:1px solid #d8dee4;background:#f6f8fa;color:#57606a;font-size:0.85em;font-weight:600;line-height:1.3;white-space:nowrap;" metadata-only
+              br
+              span.muted drive_id / folder_path 保存
+          td
           td data-rails-table-preferences-column-key="name" = link_to source.name, admin_external_folder_sync_source_path(source, return_to: current_return_to)
           td data-rails-table-preferences-column-key="provider" = external_folder_sync_source_provider_label(source)
           td data-rails-table-preferences-column-key="external_folder_location"
