@@ -1,5 +1,6 @@
 - page_title "定期ジョブ詳細"
 - return_to_path = @return_to_path || admin_recurring_job_schedules_path
+- run_triage_counts = ["失敗: #{@run_status_counts.fetch('failed', 0)}件", "実行中: #{@run_status_counts.fetch('running', 0)}件", "キュー待ち: #{@run_status_counts.fetch('enqueued', 0)}件"].join(" / ")
 
 h1 定期ジョブ詳細
 = render "admin/nav"
@@ -45,6 +46,15 @@ h1 定期ジョブ詳細
 
 .card
   h2 実行履歴
+  = form_with url: admin_recurring_job_schedule_path(@schedule), method: :get, local: true, class: "filters" do
+    = hidden_field_tag :return_to, return_to_path
+    = label_tag :run_status, "状態"
+    = select_tag :run_status, options_for_select(@run_status_options, @selected_run_status), onchange: "this.form.requestSubmit()"
+    - if @selected_run_status.present?
+      = link_to "絞り込み解除", admin_recurring_job_schedule_path(@schedule, return_to: return_to_path), class: "button secondary"
+  p.muted = "Triage対象: #{run_triage_counts}"
+  p.muted = "表示中: #{@runs.size}件（最新50件まで）"
+
   = table_tag do
     thead
       tr
