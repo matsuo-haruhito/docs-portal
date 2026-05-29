@@ -139,14 +139,11 @@ RSpec.describe DocumentVersion, type: :model do
   describe "latest version promotion" do
     it "uses published creation order instead of parsing version labels" do
       document = create(:document)
+      older_version = create(:document_version, document:, version_label: "9999-final", status: :published)
+      older_version.update_column(:created_at, 2.days.ago)
+      document.update_column(:latest_version_id, older_version.id)
 
-      travel_to 2.days.ago do
-        create(:document_version, document:, version_label: "9999-final", status: :published)
-      end
-
-      travel_to 1.day.ago do
-        create(:document_version, document:, version_label: "client-a-draft", status: :published)
-      end
+      create(:document_version, document:, version_label: "client-a-draft", status: :published)
 
       expect(document.reload.latest_version.version_label).to eq("client-a-draft")
     end
