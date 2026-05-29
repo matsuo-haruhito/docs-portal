@@ -17,6 +17,10 @@ RSpec.describe "Admin external folder sync sources", type: :request do
     parsed_html.at_css(%(input[name="#{name}"]))&.[]("value")
   end
 
+  def table_preference_column_keys
+    parsed_html.css("[data-rails-table-preferences-column-key]").map { |node| node["data-rails-table-preferences-column-key"] }.uniq
+  end
+
   def create_google_drive_source(project:, name:, enabled: true, last_error_message: nil, auth_type: :oauth_user, auth_config: nil)
     auth_config ||= auth_type.to_sym == :service_account ? { client_email: "sync@example.com" }.to_json : {}.to_json
 
@@ -86,6 +90,56 @@ RSpec.describe "Admin external folder sync sources", type: :request do
       expect(response.body).to include("Google Drive (3)")
       expect(response.body).to include("SharePoint / OneDrive (1)")
       expect(response.body).to include("metadata-only")
+    end
+
+    it "renders table preference editor and stable column keys" do
+      sign_in_as(admin_user)
+      create_google_drive_source(project:, name: "Drive source")
+
+      get admin_external_folder_sync_sources_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("外部フォルダ同期設定一覧の表示設定")
+      expect(response.body).to include("admin_external_folder_sync_sources")
+      expect(table_preference_column_keys).to include(
+        "project",
+        "name",
+        "provider",
+        "external_folder_location",
+        "status",
+        "last_synced_at",
+        "latest_safety",
+        "warning_count",
+        "latest_error",
+        "actions"
+      )
+      expect(response.body).to include("folder-drive-source")
+    end
+
+    it "keeps table preferences visible with review filters and preserves return_to links" do
+      sign_in_as(admin_user)
+      warning_source = create_google_drive_source(project:, name: "Warning source")
+      create_google_drive_source(project:, name: "Error source", last_error_message: "latest sync failed")
+      ExternalFolderSyncRun.create!(
+        external_folder_sync_source: warning_source,
+        status: :completed,
+        mode: :dry_run,
+        started_at: Time.current,
+        summary_json: { "conflict_warnings_count" => 2 }
+      )
+      return_to = admin_external_folder_sync_sources_path(review: "warnings")
+
+      get admin_external_folder_sync_sources_path, params: { review: "warnings" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("外部フォルダ同期設定一覧の表示設定")
+      expect(table_preference_column_keys).to include("external_folder_location", "latest_error", "actions")
+      expect(response.body).to include(warning_source.name)
+      expect(response.body).not_to include("Error source")
+      expect(response.body).to include("現在の絞り込み")
+      expect(response.body).to include("1 / 2 件を表示しています。")
+      expect(href_for("設定詳細")).to eq(admin_external_folder_sync_source_path(warning_source, return_to: return_to))
+      expect(href_for("編集")).to eq(edit_admin_external_folder_sync_source_path(warning_source, return_to: return_to))
     end
 
     it "filters the table to warning sources only" do
