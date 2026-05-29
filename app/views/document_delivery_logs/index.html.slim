@@ -6,6 +6,7 @@
 - delivery_type_counts = @delivery_type_counts || {}
 - status_total_count = status_filter_counts.values.sum
 - delivery_type_total_count = delivery_type_counts.values.sum
+- current_delivery_logs_path = request.fullpath
 
 h1 送付履歴
 
@@ -48,6 +49,6 @@ p.actions
               span.muted "-"
           td = log.to_addresses
           td = document_delivery_log_delivery_type_label(log)
-          td = link_to document_delivery_log_status_label(log), document_delivery_log_path(log)
+          td = link_to document_delivery_log_status_label(log), document_delivery_log_path(log, return_to: current_delivery_logs_path)
 - else
   p.muted 送付履歴はありません。
