@@ -31,6 +31,26 @@ function fileSizeOrThrow(filePath) {
   return fs.statSync(filePath).size;
 }
 
+function optionalString(value) {
+  return value === undefined || value === "" ? null : value;
+}
+
+function posixRelativePath(rootDir, targetPath) {
+  return path.relative(rootDir, targetPath).split(path.sep).join(path.posix.sep);
+}
+
+function buildArtifactMetadata(args, rootDir, outputPath) {
+  return {
+    name: optionalString(args["artifact-name"]) ?? "docs-site",
+    source_repo: args.repository,
+    source_branch: args.branch,
+    source_commit_hash: args.sha,
+    workflow_run_id: optionalString(args["workflow-run-id"]),
+    workflow_run_attempt: optionalString(args["workflow-run-attempt"]),
+    manifest_path: optionalString(args["manifest-path"]) ?? posixRelativePath(rootDir, outputPath)
+  };
+}
+
 function normalizeDocument(doc, rootDir) {
   const publish = doc.publish ?? doc.status === "published";
   if (!publish) {
@@ -104,6 +124,7 @@ function main() {
     source_repo: args.repository,
     source_branch: args.branch,
     source_commit_hash: args.sha,
+    artifact: buildArtifactMetadata(args, rootDir, outputPath),
     documents
   };
 

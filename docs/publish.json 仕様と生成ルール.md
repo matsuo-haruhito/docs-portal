@@ -58,7 +58,28 @@ GitHub Actions では、次の項目を付与して `publish/manifest/publish.js
 - `source_repo`
 - `source_branch`
 - `source_commit_hash`
+- `artifact`
 - `documents`
+
+`artifact` は import failure 時の replay / rebuild 判断に使う metadata です。Rails importer の保存契約は引き続き top-level の `source_repo` `source_branch` `source_commit_hash` と `documents` を正本にします。
+
+```json
+{
+  "source_repo": "example/docs-repo",
+  "source_branch": "main",
+  "source_commit_hash": "abc123",
+  "artifact": {
+    "name": "docs-site",
+    "source_repo": "example/docs-repo",
+    "source_branch": "main",
+    "source_commit_hash": "abc123",
+    "workflow_run_id": "1234567890",
+    "workflow_run_attempt": "1",
+    "manifest_path": "publish/manifest/publish.json"
+  },
+  "documents": []
+}
+```
 
 `documents` の各要素は、Rails の `DocumentImporter` がそのまま読める形式に揃えます
 
@@ -90,8 +111,14 @@ node ./scripts/generate_publish_manifest.mjs \
   --output ./publish/manifest/publish.json \
   --repository example/docs-repo \
   --branch main \
-  --sha abc123
+  --sha abc123 \
+  --artifact-name docs-site \
+  --workflow-run-id 1234567890 \
+  --workflow-run-attempt 1 \
+  --manifest-path publish/manifest/publish.json
 ```
+
+`--artifact-name` を省略した場合は `docs-site` を使います。`--manifest-path` を省略した場合は output path から repository root 相対 path を生成します。
 
 ## 6. バリデーション方針
 
@@ -115,3 +142,4 @@ node ./scripts/generate_publish_manifest.mjs \
 - 修正版は `v1.0.1` のように版を上げる
 - `draft` は build しても Rails import の manifest には入れない
 - `archived` は公開 manifest には入れない
+- `artifact` metadata は replay 判断用であり、artifact の長期保存やアクセス制御の最終方針を決めるものではない
