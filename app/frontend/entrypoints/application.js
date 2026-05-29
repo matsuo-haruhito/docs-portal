@@ -14,6 +14,7 @@ import ManualDocumentUploadController from "../controllers/manual_document_uploa
 import PreviewTableResizerController from "../controllers/preview_table_resizer_controller"
 import PreviewToolsController from "../controllers/preview_tools_controller"
 import SidebarController from "../controllers/sidebar_controller"
+import SiteViewerFrameController from "../controllers/site_viewer_frame_controller"
 
 const application = Application.start()
 application.register("rails-table-preferences", RailsTablePreferencesController)
@@ -27,3 +28,4 @@ application.register("manual-document-upload", ManualDocumentUploadController)
 application.register("preview-table-resizer", PreviewTableResizerController)
 application.register("preview-tools", PreviewToolsController)
 application.register("sidebar", SidebarController)
+application.register("site-viewer-frame", SiteViewerFrameController)
