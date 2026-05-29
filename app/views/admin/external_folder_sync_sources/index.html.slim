@@ -31,19 +31,23 @@ h1 外部フォルダ同期設定
       p.muted style="margin:0.25rem 0 0.5rem;" 日常確認で先に見る同期元です。
       p.actions style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0;"
         - if @selected_review_filter.blank?
-          strong style=filter_selected_style = "すべて (#{@review_filter_counts[:all]})"
+          strong style=filter_selected_style
+            = "すべて (#{@review_filter_counts[:all]})"
         - else
           = link_to "すべて (#{@review_filter_counts[:all]})", admin_external_folder_sync_sources_path, style: filter_link_style
         - if @selected_review_filter == "warnings"
-          strong style=filter_selected_style = "warning あり (#{@review_filter_counts[:warnings]})"
+          strong style=filter_selected_style
+            = "warning あり (#{@review_filter_counts[:warnings]})"
         - else
           = link_to "warning あり (#{@review_filter_counts[:warnings]})", admin_external_folder_sync_sources_path(review: :warnings), style: filter_link_style
         - if @selected_review_filter == "errors"
-          strong style=filter_selected_style = "error あり (#{@review_filter_counts[:errors]})"
+          strong style=filter_selected_style
+            = "error あり (#{@review_filter_counts[:errors]})"
         - else
           = link_to "error あり (#{@review_filter_counts[:errors]})", admin_external_folder_sync_sources_path(review: :errors), style: filter_link_style
         - if @selected_review_filter == "disabled"
-          strong style=filter_selected_style = "無効 (#{@review_filter_counts[:disabled]})"
+          strong style=filter_selected_style
+            = "無効 (#{@review_filter_counts[:disabled]})"
         - else
           = link_to "無効 (#{@review_filter_counts[:disabled]})", admin_external_folder_sync_sources_path(review: :disabled), style: filter_link_style
     .external-sync-filter-section style="margin-top:1rem;"
@@ -51,11 +55,13 @@ h1 外部フォルダ同期設定
       p.muted style="margin:0.25rem 0 0.5rem;" 同期対応と metadata-only の境界を分けて確認します。
       p.actions style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0;"
         - if @selected_review_filter == "google_drive"
-          strong style=filter_selected_style = "Google Drive (#{@review_filter_counts[:google_drive]})"
+          strong style=filter_selected_style
+            = "Google Drive (#{@review_filter_counts[:google_drive]})"
         - else
           = link_to "Google Drive (#{@review_filter_counts[:google_drive]})", admin_external_folder_sync_sources_path(review: :google_drive), style: filter_link_style
         - if @selected_review_filter == "microsoft_graph"
-          strong style=filter_selected_style = "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})"
+          strong style=filter_selected_style
+            = "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})"
         - else
           = link_to "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})", admin_external_folder_sync_sources_path(review: :microsoft_graph), style: filter_link_style
     p.muted style="margin-top:1rem;" Google Drive は同期実行対象です。SharePoint / OneDrive は metadata-only として、保存済みの drive_id と folder_path を確認します。
