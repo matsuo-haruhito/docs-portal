@@ -1,5 +1,6 @@
 <%
   detail_path_params = { return_to: request.fullpath }
+  status_filter_params = request.query_parameters.except(:page, :per_page).compact_blank
 %>
 
 <div class="space-y-6">
@@ -16,7 +17,7 @@
 
   <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
     <% GeneratedFileRun.statuses.keys.each do |status| %>
-      <%= link_to admin_generated_file_runs_path(status: status), class: "rounded-lg border bg-white p-4" do %>
+      <%= link_to admin_generated_file_runs_path(status_filter_params.merge("status" => status)), class: "rounded-lg border bg-white p-4" do %>
         <div class="text-xs font-semibold uppercase text-gray-500"><%= generated_file_run_status_label(status) %></div>
         <div class="mt-1 text-2xl font-bold"><%= @status_counts.fetch(status, 0) %></div>
       <% end %>
