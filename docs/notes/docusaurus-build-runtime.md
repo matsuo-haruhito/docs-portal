@@ -9,6 +9,8 @@ Docusaurus builds are executed in two paths:
 
 The seed build runner invokes `npm run build` under `docusaurus/`, so the execution environment must include Node.js and npm.
 
+When the seed build command fails, the raised error includes the source directory, `DOCUSAURUS_DOCS_PATH`, `--out-dir`, optional `DOCUSAURUS_STATIC_DIR`, command shape, and separated stderr/stdout output. Use those fields to distinguish an input path problem from a build-output or static-asset problem before changing renderer behavior.
+
 For local Docker development, rebuild the app image when npm is missing:
 
 ```bash
