@@ -61,7 +61,10 @@ export default class extends Controller {
       this.mutationObserver.observe(frameDocument.body, { childList: true, subtree: true, attributes: true })
     }
 
-    frameDocument.fonts?.ready?.then(this.boundResize).catch(() => {})
+    const fontReady = frameDocument.fonts?.ready
+    if (fontReady) {
+      fontReady.then(this.boundResize).catch(() => {})
+    }
   }
 
   disconnectObservers() {
