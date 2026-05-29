@@ -1,6 +1,6 @@
 - page_title "定期ジョブ"
 - current_list_path = request.fullpath
-- triage_counts = ["失敗: #{@triage_status_counts.fetch("failed", 0)}件", "実行中: #{@triage_status_counts.fetch("running", 0)}件", "キュー待ち: #{@triage_status_counts.fetch("enqueued", 0)}件"].join(" / ")
+- triage_counts = ["失敗: #{@triage_status_counts.fetch('failed', 0)}件", "実行中: #{@triage_status_counts.fetch('running', 0)}件", "キュー待ち: #{@triage_status_counts.fetch('enqueued', 0)}件"].join(" / ")
 
 h1 定期ジョブ
 p.muted recurring_job_schedules に登録された定期実行ジョブの状態を確認します。未登録の定義は dispatcher 実行時に自動登録されます。
@@ -11,7 +11,7 @@ p.actions
 
 .card
   = form_with url: admin_recurring_job_schedules_path, method: :get, local: true, class: "filters" do
-    label for="status" 前回状態
+    = label_tag :status, "前回状態"
     = select_tag :status, options_for_select(@schedule_status_options, @selected_status), onchange: "this.form.requestSubmit()"
     - if @selected_status.present?
       = link_to "絞り込み解除", admin_recurring_job_schedules_path, class: "button secondary"
