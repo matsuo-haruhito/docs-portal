@@ -24,7 +24,6 @@ RSpec.describe "Document delivery logs", type: :request do
 
   def localized_delivery_type_label(delivery_type)
     I18n.t("labels.document_delivery_logs.delivery_type.#{delivery_type}", default: delivery_type.to_s)
-    parsed_html.text.squish
   end
 
   def action_targets
