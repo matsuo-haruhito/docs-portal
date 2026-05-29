@@ -61,10 +61,10 @@ section.card
       |  / 並び順:
       strong = " #{document_usage_report_sort_label(@sort_order)}"
 
-  section.card
-    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書利用一覧の表示設定")
-
   - if @report_hash[:documents].any?
+    section.card
+      = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書利用一覧の表示設定")
+
     = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
       thead
         tr
@@ -95,6 +95,15 @@ section.card
             td data-rails-table-preferences-column-key="read_confirmation_count" = row[:read_confirmation_count]
             td data-rails-table-preferences-column-key="last_accessed_at" = row[:last_accessed_at].presence || "-"
   - else
-    p.muted 条件に一致する文書はありません。
+    section.card
+      h2 条件に一致する文書はありません
+      p.muted
+        | 現在の利用状況は「
+        strong = document_usage_report_filter_label(@usage_filter)
+        | 」、並び順は「
+        strong = document_usage_report_sort_label(@sort_order)
+        | 」です。条件を変えるか、クリアして案件全体を確認してください。
+      p.actions
+        = link_to "条件をクリア", admin_document_usage_reports_path(project_id: @selected_project.id)
 - else
   p.muted 案件を選択すると集計結果を表示します。
