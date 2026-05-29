@@ -119,9 +119,10 @@ RSpec.describe "Dashboard", type: :request do
       "文書一覧へ",
       "ショートカット一覧へ",
       "申請一覧へ",
-      "確認依頼一覧へ"
+      "未処理の確認依頼を見る"
     )
     expect(metric_cta_links.map { |link| link["href"] }).to include(document_approval_requests_path)
-    expect(parsed_html.css(".page-hero .actions a").map { |link| link["href"] }).to include(document_approval_requests_path)
+    expect(parsed_html.css(".page-hero .actions a").map { |link| link["href"] }).not_to include(document_approval_requests_path)
+    expect(parsed_html.css(".dashboard-grid a").map { |link| link["href"] }).to include(document_approval_requests_path)
   end
 end
