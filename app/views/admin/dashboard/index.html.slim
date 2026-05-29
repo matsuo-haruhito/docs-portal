@@ -9,13 +9,13 @@
   section.card
     h2 使える管理画面
     p.muted 会社管理者として操作できる範囲は次の 2 画面に限定されています。
-    .form-grid
-      .card
-        h3 = link_to "会社", admin_companies_path
-        p.muted 自社の会社名、ドメイン、状態を確認・更新します。他社の会社は表示されません。
-      .card
-        h3 = link_to "ユーザー", admin_users_path
-        p.muted 自社ユーザーの追加、編集、有効化・無効化を行います。0 件のときもユーザー画面上部の新規登録から開始できます。
+    ul
+      li
+        = link_to "会社", admin_companies_path
+        |  - 自社の会社名、ドメイン、状態を確認・更新します。他社の会社は表示されません。
+      li
+        = link_to "ユーザー", admin_users_path
+        |  - 自社ユーザーの追加、編集、有効化・無効化を行います。0 件のときもユーザー画面上部の新規登録から開始できます。
 
   section.card
     h2 internal admin へ戻す範囲
