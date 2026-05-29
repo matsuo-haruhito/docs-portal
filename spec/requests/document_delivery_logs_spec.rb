@@ -109,16 +109,13 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(response.body).to include(own_sent.to_addresses)
     expect(response.body).to include(own_failed.to_addresses)
     expect(response.body).not_to include(other_failed.to_addresses)
-    expect(page_text).to include("すべて (2)")
-    expect(page_text).to include("下書き (1)")
-    expect(page_text).to include("送付済み (1)")
-    expect(page_text).to include("送付失敗 (0)")
-    expect(page_text).to include(own_draft.to_addresses)
-    expect(page_text).to include(own_sent.to_addresses)
-    expect(page_text).not_to include(other_failed.to_addresses)
 
     get document_delivery_logs_path, params: { delivery_type: :portal_link }
     expect(response).to have_http_status(:ok)
+    expect(page_text).to include("すべて (1)")
+    expect(page_text).to include("下書き (1)")
+    expect(page_text).to include("送付済み (0)")
+    expect(page_text).to include("送付失敗 (0)")
     expect(response.body).to include(own_draft.to_addresses)
     expect(response.body).not_to include(own_sent.to_addresses)
     expect(response.body).not_to include(own_failed.to_addresses)
@@ -128,14 +125,13 @@ RSpec.describe "Document delivery logs", type: :request do
 
     get document_delivery_logs_path, params: { status: :failed, delivery_type: :zip_attachment }
     expect(response).to have_http_status(:ok)
+    expect(page_text).to include("すべて (1)")
+    expect(page_text).to include("送付失敗 (1)")
     expect(response.body).to include(own_failed.to_addresses)
     expect(response.body).not_to include(own_draft.to_addresses)
     expect(response.body).not_to include(own_sent.to_addresses)
     expect(response.body).not_to include(other_failed.to_addresses)
     expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(status: :failed))
-    expect(page_text).to include(own_draft.to_addresses)
-    expect(page_text).not_to include(own_sent.to_addresses)
-    expect(page_text).not_to include(other_failed.to_addresses)
 
     sign_in_as(internal_user)
 
