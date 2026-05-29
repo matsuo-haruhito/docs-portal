@@ -52,6 +52,68 @@ RSpec.describe DocumentImporter do
       FileUtils.rm_rf(import_root) if import_root
     end
 
+    it "imports non-semver version labels as opaque document version labels" do
+      import_root = Rails.root.join("tmp", "spec_imports", SecureRandom.hex(8))
+      artifact_root = import_root.join("artifact")
+      manifest_path = import_root.join("manifest.json")
+      actor = create(:user, :internal)
+      project = create(:project, code: "SRCOPAQUE")
+
+      FileUtils.mkdir_p(artifact_root)
+      File.write(
+        manifest_path,
+        JSON.generate(
+          source_repo: "example/docs",
+          source_branch: "main",
+          source_commit_hash: "abc123",
+          documents: [
+            {
+              project_code: project.code,
+              slug: "quarterly-plan",
+              title: "四半期計画",
+              category: "spec",
+              document_kind: "markdown",
+              visibility_policy: "restricted_external",
+              version_label: "2026-Q2",
+              status: "published",
+              source_relative_path: "docs/quarterly-plan.md"
+            },
+            {
+              project_code: project.code,
+              slug: "client-review",
+              title: "顧客レビュー",
+              category: "manual",
+              document_kind: "markdown",
+              visibility_policy: "restricted_external",
+              version_label: "client-a-draft",
+              status: "draft",
+              source_relative_path: "docs/client-review.md"
+            }
+          ]
+        )
+      )
+
+      stub_const("DocumentImporter::IMPORT_ROOT", import_root)
+
+      described_class.new(
+        artifact_root: artifact_root.to_s,
+        manifest_path: manifest_path.to_s,
+        actor: actor
+      ).call
+
+      published_document = Document.find_by!(slug: "quarterly-plan")
+      draft_document = Document.find_by!(slug: "client-review")
+      published_version = published_document.document_versions.sole
+      draft_version = draft_document.document_versions.sole
+
+      expect(published_version.version_label).to eq("2026-Q2")
+      expect(published_document.latest_version_id).to eq(published_version.id)
+      expect(draft_version.version_label).to eq("client-a-draft")
+      expect(draft_document.latest_version).to be_nil
+    ensure
+      FileUtils.rm_rf(import_root) if import_root
+    end
+
     it "overwrites the existing latest version when version_label is omitted" do
       import_root = Rails.root.join("tmp", "spec_imports", SecureRandom.hex(8))
       artifact_root = import_root.join("artifact")
@@ -174,14 +236,14 @@ RSpec.describe DocumentImporter do
       FileUtils.rm_f(Rails.root.join("storage", "document_files", "imports-spec", "new-manual.pdf"))
     end
 
-    it "rejects duplicate versioned imports for the same document" do
+    it "rejects duplicate opaque versioned imports for the same document" do
       import_root = Rails.root.join("tmp", "spec_imports", SecureRandom.hex(8))
       artifact_root = import_root.join("artifact")
       manifest_path = import_root.join("manifest.json")
       actor = create(:user, :internal)
       project = create(:project, code: "SRCDUP")
       document = create(:document, project: project, slug: "design-doc")
-      version = create(:document_version, document: document, version_label: "v1.0.0", status: :published)
+      version = create(:document_version, document: document, version_label: "2026-Q2", status: :published)
       version.assign_source_path_metadata!(source_path: "docs/design-doc.md")
       version.save!
       document.update!(latest_version: version)
@@ -201,7 +263,7 @@ RSpec.describe DocumentImporter do
               category: "spec",
               document_kind: "markdown",
               visibility_policy: "restricted_external",
-              version_label: "v1.0.0",
+              version_label: "2026-Q2",
               status: "published",
               source_relative_path: "docs/design-doc.md"
             }
@@ -217,7 +279,7 @@ RSpec.describe DocumentImporter do
           manifest_path: manifest_path.to_s,
           actor: actor
         ).call
-      end.to raise_error(ArgumentError, "Document version already exists: design-doc v1.0.0")
+      end.to raise_error(ArgumentError, "Document version already exists: design-doc 2026-Q2")
 
       expect(document.reload.document_versions.count).to eq(1)
     ensure
