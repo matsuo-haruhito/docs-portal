@@ -97,7 +97,35 @@ jobs:
         run: bundle exec rails db:migrate
 
       - name: Run specs
-        run: bundle exec rspec
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p tmp
+          bundle exec rspec 2>&1 | tee tmp/rspec.log
+          status=${PIPESTATUS[0]}
+
+          if [[ "$status" -ne 0 ]]; then
+            echo
+            echo "RSpec failure summary"
+            ruby <<'RUBY'
+          log = File.read("tmp/rspec.log")
+          failure_index = log.index(/^Failures:\n/)
+          failed_examples_index = log.index(/^Failed examples:\n/)
+
+          summary = if failure_index
+            finish_index = log.index(/^Finished in /, failure_index) || log.length
+            log[failure_index...finish_index]
+          elsif failed_examples_index
+            log[failed_examples_index..]
+          else
+            log.lines.last(160).join
+          end
+
+          puts summary.lines.first(240).join
+          RUBY
+          fi
+
+          exit "$status"
 
   seed-smoke:
     runs-on: ubuntu-latest
