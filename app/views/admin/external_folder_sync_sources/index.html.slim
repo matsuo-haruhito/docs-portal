@@ -104,8 +104,8 @@ h1 外部フォルダ同期設定
             = source.project.name
             br
             code = source.project.code
-          td = link_to source.name, admin_external_folder_sync_source_path(source, return_to: current_return_to)
-          td
+          td data-rails-table-preferences-column-key="name" = link_to source.name, admin_external_folder_sync_source_path(source, return_to: current_return_to)
+          td data-rails-table-preferences-column-key="provider"
             = external_folder_sync_source_provider_label(source)
             br
             - if source.google_drive?
@@ -116,9 +116,6 @@ h1 外部フォルダ同期設定
               span style="display:inline-flex;align-items:center;padding:0.15rem 0.5rem;border-radius:999px;border:1px solid #d8dee4;background:#f6f8fa;color:#57606a;font-size:0.85em;font-weight:600;line-height:1.3;white-space:nowrap;" metadata-only
               br
               span.muted drive_id / folder_path 保存
-          td
-          td data-rails-table-preferences-column-key="name" = link_to source.name, admin_external_folder_sync_source_path(source, return_to: current_return_to)
-          td data-rails-table-preferences-column-key="provider" = external_folder_sync_source_provider_label(source)
           td data-rails-table-preferences-column-key="external_folder_location"
             code = source.external_folder_id
             - if source.external_folder_path.present?
