@@ -3,6 +3,8 @@ class ProjectAiContextsController < BaseController
 
   def show
     @mode = requested_mode
+    return render_unsupported_mode unless @mode
+
     @scope = requested_scope
     @plan = AiContextExportPlan.new(project: @project, viewer: current_user, scope: @scope).call
     @hash = AiContextHashExporter.new(project: @project, viewer: current_user, mode: @mode, scope: @scope).call
@@ -23,6 +25,8 @@ class ProjectAiContextsController < BaseController
 
   private
 
+  SUPPORTED_MODES = AiContextHashExporter::MODES.index_by(&:to_s).freeze
+
   def set_project
     @project = Project.find_by!(code: params[:project_code] || params[:code])
     require_project_access!(@project)
@@ -30,7 +34,15 @@ class ProjectAiContextsController < BaseController
   end
 
   def requested_mode
-    params.fetch(:mode, :compact).to_sym
+    SUPPORTED_MODES[params.fetch(:mode, :compact).to_s]
+  end
+
+  def render_unsupported_mode
+    respond_to do |format|
+      format.html { render plain: "unsupported mode", status: :bad_request }
+      format.json { render json: { error: "unsupported mode" }, status: :bad_request }
+      format.md { render plain: "unsupported mode\n", status: :bad_request, content_type: "text/markdown; charset=utf-8" }
+    end
   end
 
   def requested_scope
