@@ -36,7 +36,28 @@ module SeedSupport
 
       return if status.success?
 
-      raise "Docusaurus build failed for #{@source_dir}: #{stderr.presence || stdout}"
+      raise build_failure_message(stdout:, stderr:)
+    end
+
+    def build_failure_message(stdout:, stderr:)
+      [
+        "Docusaurus build failed",
+        "source_dir: #{@source_dir}",
+        "docs_path: #{@docs_src}",
+        "out_dir: #{@build_output_dir}",
+        ("static_dir: #{@static_dir}" if @static_dir),
+        "command: npm run build -- --out-dir #{@build_output_dir}",
+        "output:",
+        build_output_message(stdout:, stderr:)
+      ].compact.join("\n")
+    end
+
+    def build_output_message(stdout:, stderr:)
+      sections = []
+      sections << "stderr:\n#{stderr}" if stderr.present?
+      sections << "stdout:\n#{stdout}" if stdout.present?
+
+      sections.presence&.join("\n\n") || "(no stdout or stderr)"
     end
 
     def copy_build!

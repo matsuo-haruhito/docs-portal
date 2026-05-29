@@ -9,6 +9,8 @@ Docusaurus builds are executed in two paths:
 
 The seed build runner invokes `npm run build` under `docusaurus/`, so the execution environment must include Node.js and npm.
 
+When the seed build command fails, the raised error includes the source directory, `DOCUSAURUS_DOCS_PATH`, `--out-dir`, optional `DOCUSAURUS_STATIC_DIR`, command shape, and separated stderr/stdout output. Use those fields to distinguish an input path problem from a build-output or static-asset problem before changing renderer behavior.
+
 For local Docker development, rebuild the app image when npm is missing:
 
 ```bash
@@ -58,6 +60,14 @@ Current `main` includes a first slice for Markdown table follow-up work:
 - this first slice applies only to standalone viewer responses; `embedded=1` keeps the chrome-stripped body path and does not add table wrapper metadata yet
 
 This is intentionally narrower than restoring the full `rails_table_preferences` UI inside Markdown pages. Column editors, saved resize controls, sticky rows/columns, and embedded-viewer parity remain follow-up work.
+
+## Embedded viewer sizing
+
+`documents/show` displays generated Docusaurus HTML through the `embedded=1` iframe path. The parent page owns the iframe sizing: `auto-height-frame` reads same-origin iframe content height after load and on content changes, then applies an explicit iframe height to reduce nested scrolling.
+
+The CSS `min-height` remains the fallback for missing generated HTML, inaccessible iframe content, and very short pages. Keep viewer route contracts, Docusaurus renderer output, and manual upload state separate from this parent-page sizing behavior.
+
+If a future embedded response cannot be measured from the parent page, prefer a small `postMessage` height payload from the embedded response before adding search UI or changing the standalone viewer chrome.
 
 ## Path safety and artifact lifecycle
 

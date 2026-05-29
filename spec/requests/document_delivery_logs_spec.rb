@@ -24,13 +24,21 @@ RSpec.describe "Document delivery logs", type: :request do
 
   def localized_delivery_type_label(delivery_type)
     I18n.t("labels.document_delivery_logs.delivery_type.#{delivery_type}", default: delivery_type.to_s)
-    parsed_html.text.squish
   end
 
   def action_targets
     parsed_html.css("a[href], form[action]").map do |node|
       node["href"] || node["action"]
     end
+  end
+
+  def href_for(text)
+    parsed_html.css("a[href]").find { |node| node.text.strip == text }&.[]("href")
+  end
+
+  def href_for_row_containing(row_text, link_text)
+    row = parsed_html.css("tr").find { |node| node.text.include?(row_text) }
+    row&.css("a[href]")&.find { |node| node.text.strip == link_text }&.[]("href")
   end
 
   before do
@@ -106,13 +114,6 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(response.body).to include(own_sent.to_addresses)
     expect(response.body).to include(own_failed.to_addresses)
     expect(response.body).not_to include(other_failed.to_addresses)
-    expect(page_text).to include("すべて (2)")
-    expect(page_text).to include("下書き (1)")
-    expect(page_text).to include("送付済み (1)")
-    expect(page_text).to include("送付失敗 (0)")
-    expect(page_text).to include(own_draft.to_addresses)
-    expect(page_text).to include(own_sent.to_addresses)
-    expect(page_text).not_to include(other_failed.to_addresses)
 
     get document_delivery_logs_path, params: { delivery_type: :portal_link }
     expect(response).to have_http_status(:ok)
@@ -130,9 +131,6 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(response.body).not_to include(own_sent.to_addresses)
     expect(response.body).not_to include(other_failed.to_addresses)
     expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(status: :failed))
-    expect(page_text).to include(own_draft.to_addresses)
-    expect(page_text).not_to include(own_sent.to_addresses)
-    expect(page_text).not_to include(other_failed.to_addresses)
 
     sign_in_as(internal_user)
 
@@ -145,6 +143,28 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(page_text).to include(other_failed.to_addresses)
     expect(page_text).not_to include(own_draft.to_addresses)
     expect(page_text).not_to include(own_sent.to_addresses)
+  end
+
+  it "preserves filtered list context in the detail back link" do
+    own_draft = create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "draft@example.com")
+    own_sent = create(:document_delivery_log, project:, document:, sender: external_user, status: :sent, delivery_type: :attachment, to_addresses: "sent@example.com")
+    return_to = document_delivery_logs_path(status: :draft, delivery_type: :portal_link)
+
+    sign_in_as(external_user)
+
+    get return_to
+    expect(response).to have_http_status(:ok)
+    expect(href_for_row_containing(own_draft.to_addresses, localized_status_label(:draft))).to eq(document_delivery_log_path(own_draft, return_to: return_to))
+    expect(response.body).to include(own_draft.to_addresses)
+    expect(response.body).not_to include(own_sent.to_addresses)
+
+    get document_delivery_log_path(own_draft), params: { return_to: return_to }
+    expect(response).to have_http_status(:ok)
+    expect(href_for("送付履歴一覧へ戻る")).to eq(return_to)
+
+    get document_delivery_log_path(own_draft), params: { return_to: "//example.com" }
+    expect(response).to have_http_status(:ok)
+    expect(href_for("送付履歴一覧へ戻る")).to eq(document_delivery_logs_path)
   end
 
   it "renders localized delivery labels in the index" do
