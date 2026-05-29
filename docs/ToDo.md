@@ -1,15 +1,17 @@
 # ToDo
 
-この文書には、現時点の仕様には含めないが、将来検討・実装する可能性があるものを記載する
+この文書には、現時点の仕様には含めないが、将来検討・実装する可能性があるものを記載する。
 
-仕様として確定したものは、該当する docs 文書へ移動する
+仕様として確定したものは、該当する docs 文書へ移動する。具体 Issue があるものは、この文書に要件を重複して残さず、Issue 番号と正本 docs への導線だけを残す。
+
+未起票のまま残す項目は、まだ起票しない理由を短く添える。実装痛点、運用要件、顧客確認、または対象画面が具体化した時点で、1 つの concrete issue に切り出す。
 
 ## 権限・管理画面
 
 - `company_master_admin` の current `/admin` redirect と `会社` / `ユーザー` 管理の制約は [company_master_admin会社・ユーザー管理runbook](./company_master_admin会社・ユーザー管理runbook.md) を正本とし、ここには未解決の導線改善だけを残す
-- 管理画面でも DB id ではなく public_id / code / slug を使うようにする
-- 正式なレビュー・承認ワークフローを導入するかは、コメント・品質チェック・公開制御・送付運用が固まってから再評価する
-- 形式的な workflow とは別に、最小確認依頼 / OK・Cancel 機能は独立 issue で扱う
+- 管理画面でも DB id ではなく public_id / code / slug を使うようにする。未起票で残す理由: 対象 route と互換影響を棚卸ししてから concrete issue に分ける必要がある
+- 正式なレビュー・承認ワークフローを導入するかは、コメント・品質チェック・公開制御・送付運用が固まってから再評価する。未起票で残す理由: ワークフロー仕様の正誤判断が必要
+- 形式的な workflow とは別に、最小確認依頼 / OK・Cancel 機能は独立 issue で扱う。未起票で残す理由: 対象画面と通知要件が具体化してから切る
 
 ## UI / UX
 
@@ -20,31 +22,31 @@
 
 ## public_id / URL
 
-- 公開側の主要 route は `code` / `slug` / `public_id` へ移行済み。管理画面や internal 導線の numeric id 直指定 route は段階的に廃止する
+- 公開側の主要 route は `code` / `slug` / `public_id` へ移行済み。管理画面や internal 導線の numeric id 直指定 route は段階的に廃止する。未起票で残す理由: 管理画面 route ごとの互換性を確認してから小さく切る
 
 ## latest_version / バージョン管理
 
-- semantic version 以外の任意バージョン記号に対応するか検討する
-- `latest_version` を管理画面/APIで明示指定できるようにするか検討する
-- 採番ルールを変更した場合に、古い DocumentVersion を整理・削除・archive する運用を検討する
-- importer は latest version 上書き、手動アップロードは `manual-*` draft 候補を追加して review で `latest_version` を切り替える current 差分を、どこまで統一するか再判断する
+- semantic version 以外の任意バージョン記号に対応するか検討する。未起票で残す理由: 実利用する version 表記の要件がまだない
+- `latest_version` を管理画面/APIで明示指定できるようにするか検討する。未起票で残す理由: 手動切り替えの権限・監査・UI 要件が未確定
+- 採番ルールを変更した場合に、古い DocumentVersion を整理・削除・archive する運用を検討する。未起票で残す理由: retention 方針と復元要件の判断が必要
+- importer は latest version 上書き、手動アップロードは `manual-*` draft 候補を追加して review で `latest_version` を切り替える current 差分を、どこまで統一するか再判断する。手動アップロード契約の first slice は `#758` で扱う
 
 ## archived / 復元
 
 - Document 単位 archive / restore は admin 管理画面で実装済み
-- retention / discard candidate を使った一覧・一括操作・自動通知は後続
+- retention / discard candidate を使った一覧・一括操作・自動通知は後続。未起票で残す理由: 保存期間、通知先、復元期限の方針判断が必要
 
 ## Import / GitHub Actions
 
 - current の manifest 生成手順と `build-docs` workflow の確認順は [build-docs workflow確認runbook](./build-docs%20workflow確認runbook.md) を正本とし、ここでは未完了論点だけを残す
-- artifact の永続保存方式を検討する
-- `latest_version` の明示切り替えや別ルール更新を入れる場合は、現行の created_at 基準との差分を整理してから扱う
+- artifact の永続保存方式と再取り込み replay 方針は `#1039` で扱う
+- `latest_version` の明示切り替えや別ルール更新を入れる場合は、現行の created_at 基準との差分を整理してから扱う。未起票で残す理由: `latest_version` 明示指定の要件と同じ判断に依存する
 
 ## Docusaurus / seed
 
-- seed 用 Docusaurus build で id front matter を自動付与する処理を安定化する
-- seed 用 Markdown build 失敗時のログを見やすくする
-- embedded viewer 前提での iframe 高さ追従や document-site 内検索など、本文 UX を追加検討する
+- seed 用 Docusaurus build で id front matter を自動付与する処理の安定化は `#1040` で扱う
+- seed 用 Markdown build 失敗時のログ改善は `#1022` / PR `#1036` で扱う。current runtime 前提は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) を正本にする
+- embedded viewer 前提の iframe 高さ追従 first slice は `#1020` で扱う。本文内検索 UI は、browser native search で足りない痛点が具体化した時点で別 issue に分ける
 
 ## 多言語 / localization
 
@@ -94,4 +96,4 @@
 
 ## テスト
 
-- latest_version の created_at 基準と override 方針が変わる場合は、そのルールを request / service spec に追加する
+- latest_version の created_at 基準と override 方針が変わる場合は、そのルールを request / service spec に追加する。未起票で残す理由: product contract が決まってから test issue に切る
