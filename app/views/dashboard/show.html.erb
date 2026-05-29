@@ -70,7 +70,12 @@
         <% end %>
       </ul>
     <% else %>
-      <p class="muted">閲覧可能な案件はありません。</p>
+      <div class="dashboard-empty-state">
+        <p class="muted">閲覧可能な案件はありません。案件一覧で参加中の案件を確認できます。</p>
+        <p class="dashboard-empty-state__actions">
+          <%= link_to "案件一覧へ", projects_path, class: "dashboard-empty-state__link", data: { turbo_frame: "_top" } %>
+        </p>
+      </div>
     <% end %>
   </article>
 
@@ -86,7 +91,13 @@
         <% end %>
       </ul>
     <% else %>
-      <p class="muted">お気に入りはありません。</p>
+      <div class="dashboard-empty-state">
+        <p class="muted">お気に入りはありません。文書を見つけたら、詳細画面からお気に入りに追加できます。</p>
+        <p class="dashboard-empty-state__actions">
+          <%= link_to "文書一覧へ", documents_path, class: "dashboard-empty-state__link", data: { turbo_frame: "_top" } %>
+          <%= link_to "ショートカット一覧へ", document_bookmarks_path, class: "dashboard-empty-state__link" %>
+        </p>
+      </div>
     <% end %>
   </article>
 
@@ -102,7 +113,13 @@
         <% end %>
       </ul>
     <% else %>
-      <p class="muted">後で読む文書はありません。</p>
+      <div class="dashboard-empty-state">
+        <p class="muted">後で読む文書はありません。あとで確認したい文書は、詳細画面から後で読むに追加できます。</p>
+        <p class="dashboard-empty-state__actions">
+          <%= link_to "文書一覧へ", documents_path, class: "dashboard-empty-state__link", data: { turbo_frame: "_top" } %>
+          <%= link_to "ショートカット一覧へ", document_bookmarks_path, class: "dashboard-empty-state__link" %>
+        </p>
+      </div>
     <% end %>
   </article>
 
@@ -118,7 +135,12 @@
         <% end %>
       </ul>
     <% else %>
-      <p class="muted">最近見た文書はありません。</p>
+      <div class="dashboard-empty-state">
+        <p class="muted">最近見た文書はありません。文書一覧から読み始めると、直近の閲覧履歴がここに表示されます。</p>
+        <p class="dashboard-empty-state__actions">
+          <%= link_to "文書一覧へ", documents_path, class: "dashboard-empty-state__link", data: { turbo_frame: "_top" } %>
+        </p>
+      </div>
     <% end %>
   </article>
 
@@ -134,7 +156,12 @@
         <% end %>
       </ul>
     <% else %>
-      <p class="muted">最近更新された文書はありません。</p>
+      <div class="dashboard-empty-state">
+        <p class="muted">最近更新された文書はありません。閲覧可能な文書は文書一覧から確認できます。</p>
+        <p class="dashboard-empty-state__actions">
+          <%= link_to "文書一覧へ", documents_path, class: "dashboard-empty-state__link", data: { turbo_frame: "_top" } %>
+        </p>
+      </div>
     <% end %>
   </article>
 
