@@ -1,108 +1,137 @@
-- page_title "管理ダッシュボード"
+- if company_master_admin?
+  - page_title "会社・ユーザー管理"
 
-h1 管理画面
-p.muted 内部ユーザーのみが各種マスタを管理できます。
+  h1 会社・ユーザー管理
+  p.muted 自社の会社情報とユーザーだけを管理できます。案件、文書、文書権限、監査ログ、利用状況は internal admin へ引き継いでください。
 
-= render "admin/nav"
+  = render "admin/nav"
 
-section.card
-  h2 モデル観測
-  p.muted 主要 model の件数と最近の record を横断確認できます。仕様整理や運用確認の入口として使います。
-  .dashboard-grid
-    - @model_browser_entries.each do |entry|
-      article.card.metric-card
-        h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
-        p.muted = entry.description
-  p.actions
-    = link_to "モデルブラウザを開く", admin_model_browser_path, class: "button"
+  section.card
+    h2 使える管理画面
+    p.muted 会社管理者として操作できる範囲は次の 2 画面に限定されています。
+    .form-grid
+      .card
+        h3 = link_to "会社", admin_companies_path
+        p.muted 自社の会社名、ドメイン、状態を確認・更新します。他社の会社は表示されません。
+      .card
+        h3 = link_to "ユーザー", admin_users_path
+        p.muted 自社ユーザーの追加、編集、有効化・無効化を行います。0 件のときもユーザー画面上部の新規登録から開始できます。
 
-section.card
-  h2 アプリ設定診断
+  section.card
+    h2 internal admin へ戻す範囲
+    p.muted 次の管理はこの role では扱いません。必要な場合は internal admin に依頼してください。
+    ul
+      li 案件、案件所属、文書、文書権限
+      li 監査ログ、利用状況、アクセス申請
+      li ユーザー種別の internal 化、他社ユーザーや他社会社の調整
 
-  p
-    | OK: 
-    strong = @configuration_diagnostic.ok_count
-    |  / 警告: 
-    strong = @configuration_diagnostic.warning_count
-    |  / エラー: 
-    strong = @configuration_diagnostic.error_count
+  p = link_to "案件一覧へ戻る", projects_path
+- else
+  - page_title "管理ダッシュボード"
 
-  - if @configuration_diagnostic.healthy?
-    p.muted 必須設定の致命的な不足は検出されていません。
-  - else
-    p.muted 必須設定に不足または不正な値があります。.env.example と本番設定を確認してください。
+  h1 管理画面
+  p.muted 内部ユーザーのみが各種マスタを管理できます。
 
-  table
-    thead
-      tr
-        th 状態
-        th 項目
-        th 内容
-        th 補足
-    tbody
-      - @configuration_diagnostic.checks.each do |check|
-        tr
-          td = check.status.to_s.upcase
-          td = check.key
-          td
-            strong = check.label
-            br
-            span.muted = check.message
-          td
-            - if check.detail.present?
-              code = check.detail
-            - else
-              span.muted -
+  = render "admin/nav"
 
-section.card
-  h2 文書ファイル健全性
+  section.card
+    h2 モデル観測
+    p.muted 主要 model の件数と最近の record を横断確認できます。仕様整理や運用確認の入口として使います。
+    .dashboard-grid
+      - @model_browser_entries.each do |entry|
+        article.card.metric-card
+          h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
+          p.muted = entry.description
+    p.actions
+      = link_to "モデルブラウザを開く", admin_model_browser_path, class: "button"
 
-  p
-    | 登録ファイル数: 
-    strong = @document_file_health.total_count
-    |  / 実体欠落: 
-    strong = @document_file_health.missing_count
+  section.card
+    h2 アプリ設定診断
 
-  - if @document_file_health.healthy?
-    p.muted 実体ファイルの欠落は検出されていません。
-  - else
-    p.muted storage/document_files 配下に実体が存在しないファイルがあります。
+    p
+      | OK: 
+      strong = @configuration_diagnostic.ok_count
+      |  / 警告: 
+      strong = @configuration_diagnostic.warning_count
+      |  / エラー: 
+      strong = @configuration_diagnostic.error_count
+
+    - if @configuration_diagnostic.healthy?
+      p.muted 必須設定の致命的な不足は検出されていません。
+    - else
+      p.muted 必須設定に不足または不正な値があります。.env.example と本番設定を確認してください。
 
     table
       thead
         tr
-          th 案件
-          th 文書
-          th 版
-          th ファイル名
-          th Storage key
+          th 状態
+          th 項目
+          th 内容
+          th 補足
       tbody
-        - @document_file_health.missing_files.each do |file|
-          - version = file.document_version
-          - document = version.document
-          - project = document.project
+        - @configuration_diagnostic.checks.each do |check|
           tr
-            td = project.name
-            td = link_to document.title, project_document_path(project, document.slug)
-            td = link_to version.version_label, document_version_path(version)
-            td = file.file_name
+            td = check.status.to_s.upcase
+            td = check.key
             td
-              code = file.storage_key
+              strong = check.label
+              br
+              span.muted = check.message
+            td
+              - if check.detail.present?
+                code = check.detail
+              - else
+                span.muted -
 
-.form-grid
-  .card
-    h2 基本マスタ
-    ul
-      - if company_master_admin?
-        li = link_to "会社マスタ", admin_companies_path
-      li = link_to "ユーザーマスタ", admin_users_path
-      li = link_to "案件マスタ", admin_projects_path
+  section.card
+    h2 文書ファイル健全性
 
-  .card
-    h2 関連設定
-    ul
-      li = link_to "案件所属", admin_project_memberships_path
-      li = link_to "文書マスタ", admin_documents_path
-      li = link_to "文書公開権限", admin_document_permissions_path
+    p
+      | 登録ファイル数: 
+      strong = @document_file_health.total_count
+      |  / 実体欠落: 
+      strong = @document_file_health.missing_count
 
-p = link_to "案件一覧へ戻る", projects_path
+    - if @document_file_health.healthy?
+      p.muted 実体ファイルの欠落は検出されていません。
+    - else
+      p.muted storage/document_files 配下に実体が存在しないファイルがあります。
+
+      table
+        thead
+          tr
+            th 案件
+            th 文書
+            th 版
+            th ファイル名
+            th Storage key
+        tbody
+          - @document_file_health.missing_files.each do |file|
+            - version = file.document_version
+            - document = version.document
+            - project = document.project
+            tr
+              td = project.name
+              td = link_to document.title, project_document_path(project, document.slug)
+              td = link_to version.version_label, document_version_path(version)
+              td = file.file_name
+              td
+                code = file.storage_key
+
+  .form-grid
+    .card
+      h2 基本マスタ
+      ul
+        - if company_master_admin?
+          li = link_to "会社マスタ", admin_companies_path
+        li = link_to "ユーザーマスタ", admin_users_path
+        li = link_to "案件マスタ", admin_projects_path
+
+    .card
+      h2 関連設定
+      ul
+        li = link_to "案件所属", admin_project_memberships_path
+        li = link_to "文書マスタ", admin_documents_path
+        li = link_to "文書公開権限", admin_document_permissions_path
+
+  p = link_to "案件一覧へ戻る", projects_path
