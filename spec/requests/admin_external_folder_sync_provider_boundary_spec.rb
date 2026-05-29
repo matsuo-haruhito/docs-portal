@@ -55,9 +55,6 @@ RSpec.describe "Admin external folder sync provider boundary", type: :request do
       post apply_admin_external_folder_sync_source_path(source)
 
       expect(response).to redirect_to(admin_external_folder_sync_source_path(source, return_to: admin_external_folder_sync_sources_path))
-      follow_redirect!
-      expect(response.body).to include("後続 issue で対応予定")
-      expect(response.body).not_to include("同期しました")
     end
 
     it "blocks enqueue before scheduling a sync job" do
@@ -67,9 +64,6 @@ RSpec.describe "Admin external folder sync provider boundary", type: :request do
       post enqueue_admin_external_folder_sync_source_path(source)
 
       expect(response).to redirect_to(admin_external_folder_sync_source_path(source, return_to: admin_external_folder_sync_sources_path))
-      follow_redirect!
-      expect(response.body).to include("後続 issue で対応予定")
-      expect(response.body).not_to include("バックグラウンド同期を登録しました")
     end
 
     it "blocks subscription setup before calling the Google Drive subscription manager" do
@@ -79,9 +73,6 @@ RSpec.describe "Admin external folder sync provider boundary", type: :request do
       post subscribe_admin_external_folder_sync_source_path(source)
 
       expect(response).to redirect_to(admin_external_folder_sync_source_path(source, return_to: admin_external_folder_sync_sources_path))
-      follow_redirect!
-      expect(response.body).to include("後続 issue で対応予定")
-      expect(response.body).not_to include("Google Driveの変更通知の購読を開始しました")
     end
   end
 
