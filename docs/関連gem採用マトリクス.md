@@ -11,6 +11,23 @@
 - Markdown preview table は current app 側 fallback として扱います。`rails_table_preferences` 採用済みとは読まず、方針判断は `#475` 側に残します。
 - 実際の gem bump、target SHA 決定、system spec 追加はこの文書では行いません。必要な場合は個別 issue / PR に分けます。
 
+## JavaScript public surface の比較
+
+この表は 3 gem の API を同じ名前へそろえるためのものではありません。`docs-portal` から見える package-root import、controller import、hook / event / helper export を比較し、どの repo の正本を読みに行くかを決めるための用語表です。
+
+| gem / surface | package-root import | controller / direct entrypoint | hook / event / rendered contract | host app で直接持つ責務 | 参照先 |
+| --- | --- | --- | --- | --- | --- |
+| `tree_view` | host app の current `application.js` では package-root controller import を常用していない。Rails helper / partial / render state が主 surface | JavaScript controller 登録が必要なときは upstream installation / public API docs を確認する | documented hook / event / selection / lazy-loading surface は TreeView の DOM interaction contract。host app はこれを前提に文書 query や action を組み立てる | 文書 node、folder node、権限、route、business action、lazy loading query、selection 後の業務処理 | [`tree_view-rails` README](https://github.com/matsuo-haruhito/tree_view-rails/blob/main/README.md), [`tree_view` installation](https://github.com/matsuo-haruhito/tree_view-rails/blob/main/docs/en/installation.md), `tree_view-rails#583`, `#664`, `#665`, `#706` |
+| `rails_table_preferences` | `import { RailsTablePreferencesController } from "rails_table_preferences"` を package-root export として使える | `rails_table_preferences/controller` は documented direct entrypoint。copied-controller migration や Vite alias 検証時に読む | table settings editor、column metadata、filter / preset、mounted engine API が主 surface。raw DOM hook を host app で勝手に増やすより stable column key と helper metadata を先に見る | `table_key`、列 label / width / pinned / filter、row action、画面固有の検索や export、Markdown preview table を採用済み扱いにしない判断 | [`rails_table_preferences` README](https://github.com/matsuo-haruhito/rails_table_preferences/blob/main/README.md), [JavaScript entrypoints](https://github.com/matsuo-haruhito/rails_table_preferences/blob/main/docs/javascript_entrypoints.md), [Resource table adapters](https://github.com/matsuo-haruhito/rails_table_preferences/blob/main/docs/resource_tables.md), `docs-portal#789`, `#904` |
+| `rails_fields_kit` | `import { TomSelectController } from "rails_fields_kit"` を package-root export として使える | `rails_fields_kit/tom_select_controller` は documented direct entrypoint。Vite alias や importmap pin の検証時に読む | rendered contract helper export と Stimulus events は field helper の再描画 / remote search / selected preload を読むための surface。`tree_view` の tree hook と同一概念ではない | field 名、params shape、collection、selected value、placeholder、validation rerender、remote endpoint、Tom Select CSS / dependency wiring | [`rails_fields_kit` README](https://github.com/matsuo-haruhito/rails_fields_kit/blob/main/README.md), [Public API](https://github.com/matsuo-haruhito/rails_fields_kit/blob/main/doc/public_api.md), [Events](https://github.com/matsuo-haruhito/rails_fields_kit/blob/main/doc/events.md), `rails_fields_kit#364`, `#297`, `#292` |
+
+使い分けの目安は次です。
+
+- package-root export は upstream README / public API が stable として案内しているときの host app default にします。
+- direct entrypoint は documented fallback、copied-controller migration、Vite / importmap の alias 検証で必要なときに参照します。
+- raw DOM hook を host app に直接書く前に、upstream gem が公開している helper、event、column metadata、rendered contract で表現できるかを確認します。
+- upstream issue にしかない API 候補は、docs-portal 側で実装済みのように書かず、参照導線と検討中の位置づけに留めます。
+
 ## 統合採用マトリクス
 
 | 代表 surface | 主な gem / fallback | gem responsibility | host app responsibility | 代表ファイル / 画面 | 関連 docs / issue |
