@@ -26,8 +26,8 @@
 
 ## latest_version / バージョン管理
 
-- semantic version 以外の任意バージョン記号に対応するか検討する。未起票で残す理由: 実利用する version 表記の要件がまだない
-- `latest_version` を管理画面/APIで明示指定できるようにするか検討する。未起票で残す理由: 手動切り替えの権限・監査・UI 要件が未確定
+- `version_label` は semantic version として解釈・sort せず、任意の表示用ラベルとして扱う。`2026-Q2` / `review-2026-05` / `client-a-draft` のような label を importer から受けても opaque label として保存する current contract は `#1050` で spec 固定する
+- `latest_version` は current では published version の作成・更新時に promoted される。管理画面/API/import manifest で明示指定できるようにするかは後続判断として残す。未起票で残す理由: 手動切り替えの権限・監査・UI 要件が未確定
 - 採番ルールを変更した場合に、古い DocumentVersion を整理・削除・archive する運用を検討する。未起票で残す理由: retention 方針と復元要件の判断が必要
 - importer は latest version 上書き、手動アップロードは `manual-*` draft 候補を追加して review で `latest_version` を切り替える current 差分を、どこまで統一するか再判断する。手動アップロード契約の first slice は `#758` で扱う
 
