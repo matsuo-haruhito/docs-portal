@@ -62,6 +62,50 @@ RSpec.describe "Admin public_id member routes", type: :request do
     sign_in_as(admin_user)
   end
 
+  it "keeps admin member route params on stable non-numeric identifiers" do
+    expected_member_route_params = {
+      "admin/companies" => "public_id",
+      "admin/users" => "public_id",
+      "admin/projects" => "code",
+      "admin/project_external_previews" => "code",
+      "admin/project_permission_previews" => "code",
+      "admin/project_templates" => "code",
+      "admin/project_memberships" => "public_id",
+      "admin/consent_terms" => "public_id",
+      "admin/project_consent_settings" => "public_id",
+      "admin/git_import_sources" => "public_id",
+      "admin/generated_file_events" => "public_id",
+      "admin/generated_file_runs" => "public_id",
+      "admin/zip_imports" => "public_id",
+      "admin/microsoft_graph_connections" => "public_id",
+      "admin/recurring_job_schedules" => "public_id",
+      "admin/external_folder_sync_sources" => "public_id",
+      "admin/external_folder_sync_oauth_connections" => "external_folder_sync_source_public_id",
+      "admin/documents" => "public_id",
+      "admin/bulk_edit_dry_runs" => "public_id",
+      "admin/document_sets" => "public_id",
+      "admin/document_permissions" => "public_id",
+      "admin/webhook_endpoints" => "public_id",
+      "admin/access_requests" => "public_id"
+    }
+
+    route_parts_by_controller = Rails.application.routes.routes.each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |route, route_parts|
+      controller = route.defaults[:controller]
+      next unless expected_member_route_params.key?(controller)
+
+      route_parts[controller].concat(route.required_parts.map(&:to_s))
+    end
+
+    aggregate_failures do
+      expected_member_route_params.each do |controller, expected_param|
+        route_parts = route_parts_by_controller.fetch(controller).uniq
+
+        expect(route_parts).to include(expected_param)
+        expect(route_parts).not_to include("id")
+      end
+    end
+  end
+
   it "renders public_id member links for operational admin resources" do
     get admin_git_import_sources_path
 
