@@ -1,3 +1,8 @@
+<%
+  detail_path_params = { return_to: request.fullpath }
+  status_filter_params = request.query_parameters.except(:page, :per_page).compact_blank
+%>
+
 <div class="space-y-6">
   <div class="flex items-start justify-between gap-4">
     <div>
@@ -12,7 +17,7 @@
 
   <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
     <% GeneratedFileRun.statuses.keys.each do |status| %>
-      <%= link_to admin_generated_file_runs_path(status: status), class: "rounded-lg border bg-white p-4" do %>
+      <%= link_to admin_generated_file_runs_path(status_filter_params.merge("status" => status)), class: "rounded-lg border bg-white p-4" do %>
         <div class="text-xs font-semibold uppercase text-gray-500"><%= generated_file_run_status_label(status) %></div>
         <div class="mt-1 text-2xl font-bold"><%= @status_counts.fetch(status, 0) %></div>
       <% end %>
@@ -82,18 +87,18 @@
           <% @generated_file_runs.each do |run| %>
             <tr>
               <td class="px-4 py-3 font-mono">
-                <%= link_to run.public_id, admin_generated_file_run_path(run.public_id), class: "text-blue-600 underline" %>
+                <%= link_to run.public_id, admin_generated_file_run_path(run.public_id, detail_path_params), class: "text-blue-600 underline" %>
               </td>
               <td class="px-4 py-3"><%= generated_file_run_status_label(run.status) %></td>
               <td class="px-4 py-3 font-mono"><%= run.job_id %></td>
               <td class="px-4 py-3 font-mono"><%= run.generator.presence || "-" %></td>
               <td class="px-4 py-3 font-mono"><%= run.output_writer.presence || "-" %></td>
-              <td class="px-4 py-3"><%= run.event_source.presence || "-" %></td>
+              <td class="px-4 py-3"><%= generated_file_source_label(run.event_source) %></td>
               <td class="px-4 py-3"><%= l(run.started_at, format: :long) if run.started_at %></td>
               <td class="px-4 py-3"><%= l(run.finished_at, format: :long) if run.finished_at %></td>
               <td class="px-4 py-3">
                 <div class="flex gap-2">
-                  <%= link_to "詳細", admin_generated_file_run_path(run.public_id), class: "rounded border px-2 py-1 text-xs" %>
+                  <%= link_to "詳細", admin_generated_file_run_path(run.public_id, detail_path_params), class: "rounded border px-2 py-1 text-xs" %>
                   <%= button_to "再実行", retry_run_admin_generated_file_run_path(run.public_id), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white" %>
                 </div>
               </td>

@@ -1,4 +1,5 @@
 - page_title "定期ジョブ詳細"
+- return_to_path = @return_to_path || admin_recurring_job_schedules_path
 
 h1 定期ジョブ詳細
 = render "admin/nav"
@@ -39,8 +40,8 @@ h1 定期ジョブ詳細
       dt 説明
       dd = @schedule.description
   p.actions
-    = link_to "即時実行を要求", request_run_admin_recurring_job_schedule_path(@schedule), data: { turbo_method: :post }, class: "button"
-    = link_to "一覧へ戻る", admin_recurring_job_schedules_path, class: "button secondary"
+    = link_to "即時実行を要求", request_run_admin_recurring_job_schedule_path(@schedule, return_to: return_to_path), data: { turbo_method: :post }, class: "button"
+    = link_to "一覧へ戻る", return_to_path, class: "button secondary"
 
 .card
   h2 実行履歴

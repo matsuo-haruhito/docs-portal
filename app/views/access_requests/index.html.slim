@@ -1,7 +1,22 @@
 - page_title "アクセス申請"
+- pending_count = @status_counts.fetch("pending", 0)
+- approved_count = @status_counts.fetch("approved", 0)
+- rejected_count = @status_counts.fetch("rejected", 0)
+- cancelled_count = @status_counts.fetch("cancelled", 0)
+- total_count = pending_count + approved_count + rejected_count + cancelled_count
 
 h1 アクセス申請
 p.muted 自分が送信した申請の状態を確認できます。
+
+p.muted
+  | 申請中 #{pending_count}件 / 承認済み #{approved_count}件 / 却下 #{rejected_count}件 / 取消済み #{cancelled_count}件
+
+p.actions
+  = link_to "すべて (#{total_count})", access_requests_path, class: @status_filter.blank? ? "button" : "button secondary"
+  = link_to "申請中 (#{pending_count})", access_requests_path(status: :pending), class: @status_filter == "pending" ? "button" : "button secondary"
+  = link_to "承認済み (#{approved_count})", access_requests_path(status: :approved), class: @status_filter == "approved" ? "button" : "button secondary"
+  = link_to "却下 (#{rejected_count})", access_requests_path(status: :rejected), class: @status_filter == "rejected" ? "button" : "button secondary"
+  = link_to "取消済み (#{cancelled_count})", access_requests_path(status: :cancelled), class: @status_filter == "cancelled" ? "button" : "button secondary"
 
 - if @access_requests.any?
   table
@@ -19,7 +34,7 @@ p.muted 自分が送信した申請の状態を確認できます。
         - requestable = request_hash[:requestable]
         tr
           td
-            = requestable[:type]
+            = requestable[:type_label]
             br
             - if requestable[:name].present?
               = requestable[:name]
@@ -29,8 +44,8 @@ p.muted 自分が送信した申請の状態を確認できます。
               = requestable[:file_name]
             - else
               = requestable[:public_id]
-          td = request_hash[:requested_access_level]
-          td = request_hash[:status]
+          td = request_hash[:requested_access_level_label]
+          td = request_hash[:status_label]
           td = request_hash[:reason]
           td = request_hash.dig(:approver, :email_address) || "-"
           td

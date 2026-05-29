@@ -35,10 +35,6 @@ section.card
             td = consent.consented_at.strftime("%Y-%m-%d %H:%M")
             td = consent.consent_term.title
             td = consent.consent_term_version_label
-            td
-              - if consent.target.present?
-                = "#{consent.target_type} / #{consent.target.try(:name) || consent.target.try(:title) || consent.target.try(:file_name) || consent.target.to_param}"
-              - else
-                | 全体
+            td = consent_target_display(consent)
   - else
     p.muted まだ同意履歴はありません。

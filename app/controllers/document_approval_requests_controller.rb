@@ -41,14 +41,14 @@ class DocumentApprovalRequestsController < BaseController
     raise ApplicationError::Forbidden unless current_user.internal?
 
     @document_approval_request.approve!(actor: current_user)
-    redirect_to document_approval_request_path(@document_approval_request), notice: "確認依頼を OK にしました。"
+    redirect_to document_approval_request_path(@document_approval_request, return_to: @return_to_path), notice: "確認依頼を OK にしました。"
   end
 
   def cancel
     raise ApplicationError::Forbidden unless cancelable_request?
 
     @document_approval_request.cancel!(actor: current_user)
-    redirect_to document_approval_request_path(@document_approval_request), notice: "確認依頼を Cancel にしました。"
+    redirect_to document_approval_request_path(@document_approval_request, return_to: @return_to_path), notice: "確認依頼を Cancel にしました。"
   end
 
   private
@@ -64,6 +64,7 @@ class DocumentApprovalRequestsController < BaseController
     @document_approval_request = DocumentApprovalRequest.includes(:document, :requester, :approver, :acted_by).find_by!(public_id: params[:public_id])
     @document = @document_approval_request.document
     @project = @document.project
+    @return_to_path = safe_return_to_path(document_approval_requests_path)
     require_document_access!(@document)
   end
 
@@ -103,5 +104,10 @@ class DocumentApprovalRequestsController < BaseController
     else
       "確認依頼"
     end
+  end
+
+  def safe_return_to_path(fallback)
+    return_to = params[:return_to].to_s
+    return_to.start_with?("/") && !return_to.start_with?("//") ? return_to : fallback
   end
 end

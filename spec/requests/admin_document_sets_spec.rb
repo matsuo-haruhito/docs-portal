@@ -18,13 +18,55 @@ RSpec.describe "Admin document sets", type: :request do
       sort_order: 1
     )
   end
+  let!(:delivery_internal_set) do
+    create(
+      :document_set,
+      project:,
+      name: "配送社内セット",
+      set_type: :delivery,
+      visibility_policy: :internal_only,
+      sort_order: 2
+    )
+  end
+  let!(:design_public_set) do
+    create(
+      :document_set,
+      project:,
+      name: "設計公開セット",
+      set_type: :design,
+      visibility_policy: :public_with_login,
+      sort_order: 3
+    )
+  end
 
   def parsed_html
     Nokogiri::HTML(response.body)
   end
 
+  def page_text
+    parsed_html.text.squish
+  end
+
   def document_set_select_names
     parsed_html.css('select[name^="document_set["]').map { |node| node["name"] }
+  end
+
+  def action_targets
+    parsed_html.css("a[href], form[action]").map do |node|
+      node["href"] || node["action"]
+    end
+  end
+
+  def listed_document_set_names
+    parsed_html.css('tbody td[data-rails-table-preferences-column-key="name"]').map do |node|
+      node.text.squish
+    end
+  end
+
+  def document_set_form_action
+    parsed_html.css("form[action]").find do |node|
+      node.at_css('input[name="document_set[name]"]')
+    end&.[]("action")
   end
 
   it "renders the document set select fields on initial load and invalid rerender" do
@@ -65,9 +107,9 @@ RSpec.describe "Admin document sets", type: :request do
     get admin_document_sets_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("案件を選ぶと対象文書を設定できます。")
-    expect(response.body).not_to include("まだ対象文書がありません。")
-    expect(response.body).not_to include("ほかの import 経路を確認してから戻ってください。")
+    expect(page_text).to include("案件を選ぶと対象文書を設定できます。")
+    expect(page_text).not_to include("まだ対象文書がありません。")
+    expect(page_text).not_to include("ほかの import 経路を確認してから戻ってください。")
 
     post admin_document_sets_path, params: {
       document_set: {
@@ -82,11 +124,50 @@ RSpec.describe "Admin document sets", type: :request do
     }
 
     expect(response).to have_http_status(:unprocessable_entity)
-    expect(response.body).to include("まだ対象文書がありません。")
-    expect(response.body).to include(admin_git_import_sources_path)
-    expect(response.body).to include(admin_git_import_runs_path)
-    expect(response.body).to include("ほかの import 経路を確認してから戻ってください。")
-    expect(response.body).not_to include("案件を選ぶと対象文書を設定できます。")
+    expect(page_text).to include("まだ対象文書がありません。")
+    expect(page_text).to include("この案件の文書が取り込まれると、ここで対象文書を選べます。")
+    expect(page_text).to include("ほかの import 経路を確認してから戻ってください。")
+    expect(action_targets).to include(admin_git_import_sources_path, admin_git_import_runs_path)
+    expect(page_text).not_to include("案件を選ぶと対象文書を設定できます。")
+  end
+
+  it "filters document sets by set_type and visibility_policy" do
+    sign_in_as(admin)
+
+    get admin_document_sets_path, params: { set_type: "delivery" }
+
+    expect(response).to have_http_status(:ok)
+    expect(listed_document_set_names).to eq(["既存セット", "配送社内セット"])
+
+    get admin_document_sets_path, params: { visibility_policy: "internal_only" }
+
+    expect(response).to have_http_status(:ok)
+    expect(listed_document_set_names).to eq(["配送社内セット"])
+
+    get admin_document_sets_path, params: { set_type: "delivery", visibility_policy: "restricted_external" }
+
+    expect(response).to have_http_status(:ok)
+    expect(listed_document_set_names).to eq(["既存セット"])
+  end
+
+  it "keeps the current filter context on invalid create rerender" do
+    sign_in_as(admin)
+
+    post admin_document_sets_path(set_type: "delivery", visibility_policy: "internal_only"), params: {
+      document_set: {
+        project_id: project.id,
+        name: "",
+        description: "filtered create",
+        set_type: "delivery",
+        visibility_policy: "internal_only",
+        sort_order: 4
+      },
+      document_set_items: {}
+    }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(listed_document_set_names).to eq(["配送社内セット"])
+    expect(document_set_form_action).to eq(admin_document_sets_path(set_type: "delivery", visibility_policy: "internal_only"))
   end
 
   it "renders rails_table_preferences editor and stable column keys on the index page" do
@@ -117,8 +198,8 @@ RSpec.describe "Admin document sets", type: :request do
     get admin_document_sets_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(edit_admin_document_set_path(existing_document_set))
-    expect(response.body).to include(admin_document_set_path(existing_document_set))
+    expect(action_targets).to include(edit_admin_document_set_path(existing_document_set))
+    expect(action_targets).to include(admin_document_set_path(existing_document_set))
   end
 
   it "persists document set table preferences through the mounted engine api" do
@@ -219,9 +300,9 @@ RSpec.describe "Admin document sets", type: :request do
     get edit_admin_document_set_path(existing_document_set)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("対象文書")
-    expect(response.body).to include(document_a.title)
-    expect(parsed_html.at_css(%(form[action="#{admin_document_set_path(existing_document_set)}"]))).to be_present
+    expect(page_text).to include("対象文書")
+    expect(page_text).to include(document_a.title)
+    expect(document_set_form_action).to eq(admin_document_set_path(existing_document_set))
 
     patch admin_document_set_path(existing_document_set), params: {
       document_set: {

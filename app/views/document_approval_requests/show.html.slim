@@ -1,4 +1,5 @@
 - page_title @document_approval_request.title
+- return_to_path = @return_to_path || document_approval_requests_path
 
 h1 = @document_approval_request.title
 p.muted
@@ -33,7 +34,7 @@ table
 
 p.actions
   - if current_user.internal? && @document_approval_request.pending?
-    = button_to "OK", document_approval_request_path(@document_approval_request), method: :patch, class: "button"
+    = button_to "OK", document_approval_request_path(@document_approval_request, return_to: return_to_path), method: :patch, class: "button"
   - if @document_approval_request.pending? && (current_user.internal? || current_user == @document_approval_request.requester)
-    = button_to "Cancel", cancel_document_approval_request_path(@document_approval_request), method: :post, class: "button secondary"
-  = link_to "一覧へ戻る", document_approval_requests_path, class: "button secondary"
+    = button_to "Cancel", cancel_document_approval_request_path(@document_approval_request, return_to: return_to_path), method: :post, class: "button secondary"
+  = link_to "一覧へ戻る", return_to_path, class: "button secondary"

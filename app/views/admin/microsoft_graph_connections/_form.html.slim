@@ -25,6 +25,9 @@
       | Client secret
       = form.password_field :client_secret, value: nil, autocomplete: "new-password", placeholder: microsoft_graph_connection.persisted? ? "変更時のみ入力" : "アプリのクライアントシークレット"
     label
+      | 共有フォルダURL
+      = form.url_field :shared_folder_url, placeholder: "https://contoso.sharepoint.com/..."
+    label
       | Site ID
       = form.text_field :site_id, placeholder: "任意。Drive IDの取得元を追跡するためのメモ"
     label
@@ -38,8 +41,9 @@
       = form.select :enabled, [["有効", true], ["無効", false]]
   p.muted Officeファイルのプレビュー時に、指定Drive配下のプレビュー用フォルダへ一時アップロードし、Microsoft GraphのdriveItem preview URLを取得します。Client secretは暗号化カラムに保存されます。
   p.muted 同一案件で有効にできる Microsoft Graph 接続は 1 件だけです。切り替える場合は、現在の有効接続を先に無効化してから保存してください。
-  p.muted 現行UIではDrive IDとプレビュー用フォルダを入力します。管理者向けには、SharePoint / OneDrive のフォルダ共有URLからDrive IDとフォルダパスを解決して設定するUIにすると分かりやすくなります。
+  p.muted SharePoint / OneDrive の共有フォルダURLが分かる場合は、「共有URLからDrive情報を解決」を押すと Drive ID とプレビュー用フォルダ候補をフォームへ戻せます。保存はまだ行いません。
   p.actions
     = form.submit "保存", class: "button"
+    = form.submit "共有URLからDrive情報を解決", name: "resolve_share_url", value: "1", class: "button secondary"
     - if microsoft_graph_connection.persisted?
       = link_to "一覧へ戻る", admin_microsoft_graph_connections_path, class: "button secondary"

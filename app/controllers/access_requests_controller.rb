@@ -1,6 +1,9 @@
 class AccessRequestsController < BaseController
   def index
-    @access_requests = AccessRequest.where(requester: current_user).recent_first.includes(:approver, :requestable)
+    @status_filter = normalized_status_filter
+    scope = AccessRequest.where(requester: current_user).recent_first.includes(:approver, :requestable)
+    @status_counts = scope.unscope(:order).group(:status).count
+    @access_requests = @status_filter.present? ? scope.public_send(@status_filter) : scope
   end
 
   def create
@@ -27,6 +30,14 @@ class AccessRequestsController < BaseController
   end
 
   private
+
+  def normalized_status_filter
+    status = params[:status].to_s
+    return if status.blank?
+    return status if AccessRequest.statuses.key?(status)
+
+    nil
+  end
 
   def find_requestable
     case params[:requestable_type]
@@ -56,15 +67,30 @@ class AccessRequestsController < BaseController
   end
 
   def default_reason_for(requestable, requested_access_level)
+    access_level_label = requested_access_level_label(requested_access_level)
+
     case requestable
     when Project
-      "Need #{requested_access_level} access to project #{requestable.name}."
+      "案件「#{requestable.name}」に#{access_level_label}権限が必要です。"
     when Document
-      "Need #{requested_access_level} access to document #{requestable.title}."
+      "文書「#{requestable.title}」に#{access_level_label}権限が必要です。"
     when DocumentFile
-      "Need #{requested_access_level} access to file #{requestable.file_name}."
+      "ファイル「#{requestable.file_name}」に#{access_level_label}権限が必要です。"
     else
-      "Need additional access."
+      "追加のアクセス権限が必要です。"
+    end
+  end
+
+  def requested_access_level_label(requested_access_level)
+    case requested_access_level.to_s
+    when "view"
+      "閲覧"
+    when "download"
+      "ダウンロード"
+    when "manage"
+      "管理"
+    else
+      requested_access_level.to_s
     end
   end
 end

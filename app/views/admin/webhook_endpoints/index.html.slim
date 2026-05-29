@@ -37,7 +37,7 @@ h1 Webhook
           td data-rails-table-preferences-column-key="target_url" = endpoint.target_url
           td data-rails-table-preferences-column-key="event_types"
             - endpoint.normalized_event_types.each do |event_type|
-              span.badge = event_type
+              span.badge = webhook_event_type_label(event_type)
           td data-rails-table-preferences-column-key="active"
             span.badge = webhook_endpoint_status_label(endpoint)
           td.actions data-rails-table-preferences-column-key="actions"
@@ -68,7 +68,7 @@ h1 Webhook
         tr
           td data-rails-table-preferences-column-key="created_at" = l(delivery.created_at, format: :short)
           td data-rails-table-preferences-column-key="endpoint" = delivery.webhook_endpoint.name
-          td data-rails-table-preferences-column-key="event_type" = delivery.event_type
+          td data-rails-table-preferences-column-key="event_type" = webhook_event_type_label(delivery)
           td data-rails-table-preferences-column-key="status"
             span.badge = webhook_delivery_status_label(delivery)
           td data-rails-table-preferences-column-key="response_status" = delivery.response_status || "-"

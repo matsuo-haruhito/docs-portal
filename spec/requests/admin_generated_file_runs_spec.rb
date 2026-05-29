@@ -7,6 +7,10 @@ RSpec.describe "Admin generated file runs", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def link_hrefs
+    parsed_html.css("a[href]").map { _1["href"] }
+  end
+
   describe "GET /admin/generated_file_runs" do
     it "shows generated file run history for admin users" do
       sign_in_as(admin_user)
@@ -35,6 +39,41 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(failed_summary_card).to be_present
       expect(failed_summary_card.text).to include("失敗")
       expect(failed_summary_card.at_css(".text-2xl.font-bold")&.text).to eq("2")
+    end
+
+    it "keeps active filters on status summary links" do
+      sign_in_as(admin_user)
+      create_run!(status: :failed)
+      filters = {
+        status: "failed",
+        job_id: "ai_usecase_decision_flow_document_version",
+        generator: "ai_usecase_decision_flow",
+        output_writer: "document_version",
+        event_source: "manual_document_upload",
+        created_from: "2026-05-10",
+        created_to: "2026-05-11"
+      }
+
+      get admin_generated_file_runs_path(filters)
+
+      expect(response).to have_http_status(:ok)
+      expect(link_hrefs).to include(admin_generated_file_runs_path(filters.merge(status: "completed")))
+      expect(link_hrefs).to include(admin_generated_file_runs_path(filters.merge(status: "failed")))
+    end
+
+    it "preserves the current list path in detail links" do
+      sign_in_as(admin_user)
+      run = create_run!(job_id: "ai_usecase_decision_flow", generator: "ai_usecase_decision_flow", status: :failed, created_at: 1.day.ago)
+      25.times do |i|
+        create_run!(job_id: "newer_job_#{i}", generator: "ai_usecase_decision_flow", status: :failed)
+      end
+      return_to_path = admin_generated_file_runs_path(status: "failed", generator: "ai_usecase_decision_flow", page: 2, per_page: 25)
+
+      get return_to_path
+
+      expect(response).to have_http_status(:ok)
+      detail_link = parsed_html.at_css(%(a[href="#{admin_generated_file_run_path(run.public_id, return_to: return_to_path)}"]))
+      expect(detail_link).to be_present
     end
 
     it "paginates generated file runs" do
@@ -153,6 +192,17 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).to include("generated.md")
     end
 
+    it "shows a back link to the filtered list" do
+      sign_in_as(admin_user)
+      run = create_run!(job_id: "ai_usecase_decision_flow", status: :failed)
+      return_to_path = admin_generated_file_runs_path(status: "failed", generator: "ai_usecase_decision_flow", page: 2, per_page: 25)
+
+      get admin_generated_file_run_path(run.public_id, return_to: return_to_path)
+
+      expect(response).to have_http_status(:ok)
+      expect(parsed_html.at_css(%(a[href="#{return_to_path}"]))).to be_present
+    end
+
     it "shows related event and retry links without crashing on missing records" do
       sign_in_as(admin_user)
       related_event = create_event!(path: "docs/source.yml")
@@ -197,7 +247,7 @@ RSpec.describe "Admin generated file runs", type: :request do
   end
 
   describe "POST /admin/generated_file_runs/:public_id/retry_run" do
-    it "enqueues a generated file job with the original job id and changed files" do
+    it "enqueues a generated file job with the original job id, changed files, and preserves the return path" do
       sign_in_as(admin_user)
       run = create_run!(
         job_id: "ai_usecase_decision_flow",
@@ -206,10 +256,11 @@ RSpec.describe "Admin generated file runs", type: :request do
         metadata: {"actor_id" => 123}
       )
       allow(GeneratedFileJob).to receive(:perform_later)
+      return_to_path = admin_generated_file_runs_path(status: "failed", page: 2, per_page: 25)
 
-      post retry_run_admin_generated_file_run_path(run.public_id)
+      post retry_run_admin_generated_file_run_path(run.public_id, return_to: return_to_path)
 
-      expect(response).to redirect_to(admin_generated_file_run_path(run.public_id))
+      expect(response).to redirect_to(admin_generated_file_run_path(run.public_id, return_to: return_to_path))
       expect(GeneratedFileJob).to have_received(:perform_later).with(
         changed_files: ["source.yml"],
         job_ids: ["ai_usecase_decision_flow"],
@@ -233,8 +284,8 @@ RSpec.describe "Admin generated file runs", type: :request do
 
       post retry_run_admin_generated_file_run_path(run.public_id)
 
-      expect(response).to redirect_to(admin_generated_file_run_path(run.public_id))
-      expect(GeneratedFileJob).to have_received(:perform_later).with(
+      expect(response).to redirect_to(admin_generated_file_run_path(run.public_id, return_to: admin_generated_file_runs_path))
+      expect(GeneratedFileJob).to have_received(:perform_later).once.with(
         changed_files: [],
         job_ids: ["ai_usecase_decision_flow"],
         event_source: "generated_file_run_retry",
@@ -243,6 +294,23 @@ RSpec.describe "Admin generated file runs", type: :request do
           "retry_requested_by_user_id" => admin_user.id
         )
       )
+    end
+
+    it "falls back to the index path for protocol-relative return_to values" do
+      sign_in_as(admin_user)
+      run = create_run!(job_id: "ai_usecase_decision_flow", status: :failed)
+      invalid_return_to = "//example.com"
+      allow(GeneratedFileJob).to receive(:perform_later)
+
+      get admin_generated_file_run_path(run.public_id, return_to: invalid_return_to)
+
+      expect(response).to have_http_status(:ok)
+      expect(parsed_html.at_css(%(a[href="#{admin_generated_file_runs_path}"]))).to be_present
+
+      post retry_run_admin_generated_file_run_path(run.public_id, return_to: invalid_return_to)
+
+      expect(response).to redirect_to(admin_generated_file_run_path(run.public_id, return_to: admin_generated_file_runs_path))
+      expect(GeneratedFileJob).to have_received(:perform_later)
     end
   end
 

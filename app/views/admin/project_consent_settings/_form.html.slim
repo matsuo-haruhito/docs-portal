@@ -16,7 +16,7 @@
       placeholder: "同意文面を選択"
     label
       | 必須タイミング
-      = form.select :required_on, ProjectConsentSetting.required_ons.keys.map { [_1, _1] }
+      = form.select :required_on, project_consent_setting_required_on_options
     label
       | 状態
       = form.select :enabled, [["有効", true], ["無効", false]]

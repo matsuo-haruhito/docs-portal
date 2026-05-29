@@ -22,6 +22,12 @@ ja:
         viewer: "閲覧者"
         editor: "編集者"
         owner: "管理者"
+    consents:
+      target_type:
+        project: "案件"
+        document: "文書"
+        document_file: "ファイル"
+        document_version: "文書版"
     documents:
       category:
         spec: "仕様"
@@ -68,6 +74,7 @@ ja:
       access_level:
         view: "閲覧"
         download: "ダウンロード"
+        manage: "管理"
     document_sets:
       set_type:
         delivery: "送付用"
@@ -113,6 +120,16 @@ ja:
         references: "参照"
         supersedes: "置き換え"
         related: "関連"
+    access_requests:
+      status:
+        pending: "申請中"
+        approved: "承認済み"
+        rejected: "却下"
+        cancelled: "取消済み"
+      requestable_type:
+        project: "案件"
+        document: "文書"
+        document_file: "ファイル"
     access_logs:
       action_type:
         view: "閲覧"
@@ -151,6 +168,15 @@ ja:
         imported: "取込済み"
         skipped: "スキップ"
         failed: "失敗"
+    webhook_events:
+      event_type:
+        document_updated: "文書更新"
+        document_published: "文書公開"
+        import_completed: "インポート完了"
+        import_failed: "インポート失敗"
+        review_approved: "レビュー承認"
+        qa_posted: "Q&A投稿"
+        qa_answered: "Q&A回答"
     microsoft_graph_connections:
       auth_type:
         client_credentials: "Client credentials"

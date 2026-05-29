@@ -16,6 +16,7 @@
 - 3 画面とも internal admin 向けの `/admin` 配下にある。`company_master_admin` が見られる画面境界は [company_master_admin会社・ユーザー管理runbook](./company_master_admin会社・ユーザー管理runbook.md) を正本にする。
 - `文書セット` は、対象案件に文書が取り込まれてから初めて `対象文書` を選べる。最初の 1 件は `案件` と `Git連携` を先に整える方が迷いにくい。
 - Git 以外の経路で文書を入れる場合は、[ローカル編集からポータル更新までの最小運用案](./ローカル編集からポータル更新までの最小運用案.md)、[ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)、[internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md) を使い、文書が入ってから `文書セット` へ戻る。
+- `文書セット` 画面そのものの列の見方や、`固定版` と `最新版を使う` の使い分けを見直したいときは [文書セット運用runbook](./文書セット運用runbook.md) を併せて確認する。
 
 ## まず見る順序
 
@@ -128,6 +129,7 @@ current code では、文書が 1 件も無い案件では `対象文書` table 
 ## 関連文書
 
 - [Git連携設定と同期失敗確認runbook](./Git連携設定と同期失敗確認runbook.md)
+- [文書セット運用runbook](./文書セット運用runbook.md)
 - [ローカル編集からポータル更新までの最小運用案](./ローカル編集からポータル更新までの最小運用案.md)
 - [ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)
 - [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)
