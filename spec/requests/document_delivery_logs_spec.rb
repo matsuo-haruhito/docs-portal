@@ -36,6 +36,11 @@ RSpec.describe "Document delivery logs", type: :request do
     parsed_html.css("a[href]").find { |node| node.text.strip == text }&.[]("href")
   end
 
+  def href_for_row_containing(row_text, link_text)
+    row = parsed_html.css("tr").find { |node| node.text.include?(row_text) }
+    row&.css("a[href]")&.find { |node| node.text.strip == link_text }&.[]("href")
+  end
+
   before do
     document.update!(latest_version: version)
     create(:project_membership, project:, user: external_user)
@@ -149,7 +154,7 @@ RSpec.describe "Document delivery logs", type: :request do
 
     get return_to
     expect(response).to have_http_status(:ok)
-    expect(href_for(localized_status_label(:draft))).to eq(document_delivery_log_path(own_draft, return_to: return_to))
+    expect(href_for_row_containing(own_draft.to_addresses, localized_status_label(:draft))).to eq(document_delivery_log_path(own_draft, return_to: return_to))
     expect(response.body).to include(own_draft.to_addresses)
     expect(response.body).not_to include(own_sent.to_addresses)
 
