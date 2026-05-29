@@ -103,8 +103,11 @@ RSpec.describe DocumentImporter do
 
       published_document = Document.find_by!(slug: "quarterly-plan")
       draft_document = Document.find_by!(slug: "client-review")
-      published_version = published_document.document_versions.sole
-      draft_version = draft_document.document_versions.sole
+      expect(published_document.document_versions.count).to eq(1)
+      expect(draft_document.document_versions.count).to eq(1)
+
+      published_version = published_document.document_versions.first
+      draft_version = draft_document.document_versions.first
 
       expect(published_version.version_label).to eq("2026-Q2")
       expect(published_document.latest_version_id).to eq(published_version.id)
