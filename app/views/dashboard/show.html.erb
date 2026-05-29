@@ -33,7 +33,7 @@
       label: "保留中の確認依頼",
       count: @dashboard_stats[:pending_approval_count],
       path: document_approval_requests_path,
-      cta: "確認依頼一覧へ"
+      cta: "未処理の確認依頼を見る"
     }
   end
 %>
@@ -44,9 +44,6 @@
   <p class="actions">
     <%= link_to "案件一覧へ", projects_path, class: "button", data: { turbo_frame: "_top" } %>
     <%= link_to "文書ショートカット一覧", document_bookmarks_path, class: "button secondary" %>
-    <% if current_user.internal? %>
-      <%= link_to "確認依頼", document_approval_requests_path, class: "button secondary" %>
-    <% end %>
   </p>
 </section>
 
