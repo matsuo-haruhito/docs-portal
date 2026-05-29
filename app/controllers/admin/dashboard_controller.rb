@@ -2,7 +2,10 @@ class Admin::DashboardController < Admin::BaseController
   before_action :require_internal_admin_for_dashboard!, only: :index
 
   def index
-    return if current_user&.company_master_admin?
+    if current_user&.company_master_admin?
+      render :company_master_admin
+      return
+    end
 
     @configuration_diagnostic = ApplicationConfigurationDiagnostic.new.call
     @document_file_health = DocumentFileHealthCheck.new.call
