@@ -198,8 +198,8 @@ RSpec.describe "Admin document sets", type: :request do
     get admin_document_sets_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(edit_admin_document_set_path(existing_document_set))
-    expect(response.body).to include(admin_document_set_path(existing_document_set))
+    expect(action_targets).to include(edit_admin_document_set_path(existing_document_set))
+    expect(action_targets).to include(admin_document_set_path(existing_document_set))
   end
 
   it "persists document set table preferences through the mounted engine api" do
@@ -300,9 +300,9 @@ RSpec.describe "Admin document sets", type: :request do
     get edit_admin_document_set_path(existing_document_set)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("対象文書")
-    expect(response.body).to include(document_a.title)
-    expect(parsed_html.at_css(%(form[action="#{admin_document_set_path(existing_document_set)}"]))).to be_present
+    expect(page_text).to include("対象文書")
+    expect(page_text).to include(document_a.title)
+    expect(document_set_form_action).to eq(admin_document_set_path(existing_document_set))
 
     patch admin_document_set_path(existing_document_set), params: {
       document_set: {
