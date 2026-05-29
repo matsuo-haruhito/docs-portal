@@ -25,6 +25,16 @@ RSpec.describe "Dashboard", type: :request do
     parsed_html.css(".metric-card .metric-card__cta")
   end
 
+  def dashboard_section(title)
+    parsed_html.css(".dashboard-grid .card").find do |section|
+      section.at_css("h2")&.text&.squish == title
+    end
+  end
+
+  def dashboard_section_links(title)
+    dashboard_section(title).css("a")
+  end
+
   def create_viewable_document(title:, slug:)
     document = create(:document, project:, title:, slug:, visibility_policy: :restricted_external)
     create(:document_permission, document:, company:, access_level: :view)
@@ -62,6 +72,26 @@ RSpec.describe "Dashboard", type: :request do
     )
     expect(metric_card_texts.any? { _1.include?("保留中の確認依頼") }).to be(false)
     expect(metric_cta_links.map { |link| link["href"] }).not_to include(document_approval_requests_path)
+  end
+
+  it "shows nearby next actions for empty dashboard sections" do
+    sign_in_as(user)
+    get dashboard_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(
+      "参加中の案件は案件一覧で確認できます。",
+      "詳細画面からお気に入りに追加できます。",
+      "詳細画面から後で読むに追加できます。",
+      "文書一覧から読み始めると、直近の閲覧履歴がここに表示されます。",
+      "閲覧可能な文書は文書一覧から確認できます。"
+    )
+    expect(dashboard_section_links("案件").map { |link| [link.text.squish, link["href"]] }).to include(["案件一覧へ", projects_path])
+
+    ["お気に入り", "後で読む", "最近見た文書", "最近更新された文書"].each do |section_title|
+      expect(dashboard_section_links(section_title).map { |link| [link.text.squish, link["href"]] }).to include(["文書一覧へ", documents_path])
+    end
+    expect(parsed_html.css(".dashboard-grid a").map { |link| link["href"] }).not_to include(document_approval_requests_path)
   end
 
   it "declares root stimulus controllers in the full-page layout markup" do
