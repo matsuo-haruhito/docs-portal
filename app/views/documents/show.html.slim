@@ -47,16 +47,16 @@
           = render "detail_sections"
 
     - if current_user.internal?
-      .site-viewer-shell.document-reader-shell.manual-document-upload-target#document-content data-controller="manual-document-upload" data-manual-document-upload-dragging-class="is-dragging" data-manual-document-upload-url-value=project_document_uploads_path(@project) data-manual-document-upload-target-document-id=@document.public_id data-action=preview_drop_action
+      .site-viewer-shell.document-reader-shell.manual-document-upload-target#document-content data-controller="manual-document-upload auto-height-frame" data-auto-height-frame-min-height-value="480" data-manual-document-upload-dragging-class="is-dragging" data-manual-document-upload-url-value=project_document_uploads_path(@project) data-manual-document-upload-target-document-id=@document.public_id data-action=preview_drop_action
         .document-preview-drop-overlay role="status" aria-live="polite" data-manual-document-upload-target="overlay"
           .document-preview-drop-overlay__message
             strong ここに1ファイルをドロップ
             span 同名ならこの文書の更新候補、別名なら同じフォルダ直下に追加します。複数ファイルはZIPにまとめるか、1ファイルずつアップロードしてください。
             span.document-preview-drop-overlay__uploading アップロード中です。差異確認画面へ移動します。
-        iframe.site-viewer-frame src=@viewer_iframe_src title="#{@document.title} #{@viewer_version.version_label}" loading="eager" data-manual-document-upload-target="frame"
+        iframe.site-viewer-frame src=@viewer_iframe_src title="#{@document.title} #{@viewer_version.version_label}" loading="eager" data-manual-document-upload-target="frame" data-auto-height-frame-target="frame"
     - else
-      .site-viewer-shell.document-reader-shell.manual-document-upload-target#document-content
-        iframe.site-viewer-frame src=@viewer_iframe_src title="#{@document.title} #{@viewer_version.version_label}" loading="eager"
+      .site-viewer-shell.document-reader-shell.manual-document-upload-target#document-content data-controller="auto-height-frame" data-auto-height-frame-min-height-value="480"
+        iframe.site-viewer-frame src=@viewer_iframe_src title="#{@document.title} #{@viewer_version.version_label}" loading="eager" data-auto-height-frame-target="frame"
 
     = render "comment_workspace", floating: true
 - else

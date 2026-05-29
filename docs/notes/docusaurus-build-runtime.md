@@ -61,6 +61,14 @@ Current `main` includes a first slice for Markdown table follow-up work:
 
 This is intentionally narrower than restoring the full `rails_table_preferences` UI inside Markdown pages. Column editors, saved resize controls, sticky rows/columns, and embedded-viewer parity remain follow-up work.
 
+## Embedded viewer sizing
+
+`documents/show` displays generated Docusaurus HTML through the `embedded=1` iframe path. The parent page owns the iframe sizing: `auto-height-frame` reads same-origin iframe content height after load and on content changes, then applies an explicit iframe height to reduce nested scrolling.
+
+The CSS `min-height` remains the fallback for missing generated HTML, inaccessible iframe content, and very short pages. Keep viewer route contracts, Docusaurus renderer output, and manual upload state separate from this parent-page sizing behavior.
+
+If a future embedded response cannot be measured from the parent page, prefer a small `postMessage` height payload from the embedded response before adding search UI or changing the standalone viewer chrome.
+
 ## Path safety and artifact lifecycle
 
 Preview build inputs and outputs intentionally allow paths that normalize safely inside the site tree, such as `docs/../docs/guide.md`, while rejecting traversal, absolute, drive-letter, and NUL-containing paths.
