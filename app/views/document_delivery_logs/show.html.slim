@@ -50,4 +50,4 @@ p.actions
   - else
     = link_to "対象の案件へ戻る", project_path(@delivery_log.project), class: "button secondary"
 
-p = link_to "送付履歴一覧へ戻る", document_delivery_logs_path
+p = link_to "送付履歴一覧へ戻る", @return_to_path

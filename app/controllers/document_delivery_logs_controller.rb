@@ -32,6 +32,7 @@ class DocumentDeliveryLogsController < BaseController
   def show
     raise ApplicationError::Forbidden unless visible_log?(@delivery_log)
 
+    @return_to_path = safe_return_to_path(document_delivery_logs_path)
     @mailto_url = build_mailto_url(@delivery_log)
   end
 
@@ -152,5 +153,10 @@ class DocumentDeliveryLogsController < BaseController
 
   def normalized_delivery_type_filter
     params[:delivery_type].presence_in(DocumentDeliveryLog.delivery_types.keys)
+  end
+
+  def safe_return_to_path(fallback)
+    return_to = params[:return_to].to_s
+    return_to.start_with?("/") && !return_to.start_with?("//") ? return_to : fallback
   end
 end
