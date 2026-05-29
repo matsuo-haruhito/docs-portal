@@ -43,6 +43,25 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(response.body).not_to include("Secret body text.")
   end
 
+  it "returns bad request for unsupported modes before exporting or logging access" do
+    sign_in_as(external_user)
+
+    expect do
+      get project_ai_context_path(project, mode: "verbose")
+      expect(response).to have_http_status(:bad_request)
+      expect(response.body).to include("unsupported mode")
+
+      get project_ai_context_path(project, format: :json, mode: "verbose")
+      expect(response).to have_http_status(:bad_request)
+      expect(JSON.parse(response.body)).to eq("error" => "unsupported mode")
+
+      get project_ai_context_path(project, format: :md, mode: "verbose")
+      expect(response).to have_http_status(:bad_request)
+      expect(response.media_type).to eq("text/markdown")
+      expect(response.body).to include("unsupported mode")
+    end.not_to change(AccessLog.where(target_type: "ai_context"), :count)
+  end
+
   it "records access logs for html and export responses" do
     create_exportable_document(title: "Visible Manual", slug: "visible", body: "Visible body text.")
 
