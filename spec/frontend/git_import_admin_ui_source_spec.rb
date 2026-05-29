@@ -17,6 +17,15 @@ RSpec.describe "admin git import admin UI source" do
     end
   end
 
+  it "keeps git import auth and external sync boundary copy explicit" do
+    aggregate_failures do
+      expect(form_source).to include("GitHub App は本命、Fine-grained PAT は検証用、認証なしは公開リポジトリ用です。")
+      expect(form_source).to include("同期元設定、run履歴、manifest化、削除候補")
+      expect(form_source).to include("Google Drive / SharePoint 本体や自動同期はこの画面では追加しません。")
+      expect(form_source).to include("認証なしは公開リポジトリの clone に限定して使います。")
+    end
+  end
+
   it "wires the source index to rails table preferences" do
     aggregate_failures do
       expect(sources_index_source).to include("table_preferences_editor")
@@ -45,6 +54,8 @@ RSpec.describe "admin git import admin UI source" do
       expect(runs_index_source).to include('data-rails-table-preferences-column-key="summary"')
       expect(runs_index_source).to include('data-rails-table-preferences-column-key="error_message"')
       expect(runs_index_source).to include("run.git_import_source&.project")
+      expect(runs_index_source).to include("git_import_run_summary_lines(run)")
+      expect(runs_index_source).to include("raw summary_json")
     end
   end
 
@@ -60,6 +71,8 @@ RSpec.describe "admin git import admin UI source" do
       expect(runs_helper_source).to include("table_preferences_column(:project")
       expect(runs_helper_source).to include("table_preferences_column(:status")
       expect(runs_helper_source).to include("table_preferences_column(:error_message")
+      expect(runs_helper_source).to include("def git_import_run_summary_lines(run)")
+      expect(runs_helper_source).to include("削除候補")
     end
   end
 end

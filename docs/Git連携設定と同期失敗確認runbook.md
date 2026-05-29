@@ -14,6 +14,8 @@ admin ナビゲーションでは、次の 2 画面が Git 連携の確認入口
 - 取り込み先案件、対象 repository、branch、path、認証方式を登録・見直ししたいときは `Git連携`
 - 手動同期を実行したあとに、どの commit を取り込み、どの状態で終わったかを見たいときは `Git同期履歴`
 
+Git 連携で後続 provider に渡す基準契約は、同期元設定、run 履歴、manifest 化、summary_json、削除候補です。repository / branch / path / commit は Git 専用の入力と revision として扱い、Google Drive / SharePoint の folder ID や delta token とは混ぜません。
+
 ## 2. 最初の切り分け順
 
 1. Git 連携設定そのものがあるかを `Git連携` 一覧で確認する
@@ -34,7 +36,9 @@ admin ナビゲーションでは、次の 2 画面が Git 連携の確認入口
 - `認証方式`: 通常は `GitHub App` を使う
 - `状態`: 一時停止したい場合だけ `無効` にする
 
-詳細設定では `installation_id`、`credential_ref`、`credential_secret` を持てますが、current form copy のとおり通常運用は `GitHub App` 前提です。`fine_grained_pat` は開発・検証用の詳細設定として扱います。
+詳細設定では `installation_id`、`credential_ref`、`credential_secret` を持てますが、current form copy のとおり通常運用は `GitHub App` 前提です。`fine_grained_pat` は開発・検証用の詳細設定として扱います。`no_auth` は公開 repository 用で、private repository には使いません。
+
+current validation では `fine_grained_pat` のときだけ `credential_secret` が必須です。GitHub App installation token 発行、repository 一覧取得、branch / path picker は未実装なので、運用上は入力値と同期履歴で切り分けます。
 
 ### 一覧で見返す項目
 
@@ -43,7 +47,7 @@ admin ナビゲーションでは、次の 2 画面が Git 連携の確認入口
 - `案件`: 案件名と project code
 - `リポジトリ`: 同期元 repository
 - `ブランチ/パス`: どの branch と path を取り込むか
-- `認証方式`: `GitHub App` か、検証用の PAT か
+- `認証方式`: `GitHub App` か、検証用の PAT か、公開 repository 用の認証なし設定か
 - `最終同期`: 直近で取り込んだ commit と日時
 - `状態`: 設定が有効か無効か
 
@@ -73,10 +77,10 @@ admin ナビゲーションでは、次の 2 画面が Git 連携の確認入口
 - `ブランチ/パス`: どの branch / path を読んだか
 - `コミット`: 取り込み対象 commit。未取得なら `未取得`
 - `状態`: sync の到達状態
-- `実行結果`: `summary_json` の内容。取り込み件数や削除候補の要約を見る
+- `実行結果`: `summary_json` の要約。取り込み文書、添付、取込元パス、commit、skip reason、PublishJob、削除候補数を見る
 - `エラー`: failure 時の例外や validation エラーを確認する
 
-この画面は run 単位の履歴なので、同じ設定を何度同期したか、どの commit で `skipped` になったかも追えます。
+この画面は run 単位の履歴なので、同じ設定を何度同期したか、どの commit で `skipped` になったかも追えます。raw `summary_json` は詳細表示で残しておき、要約で読み違えたときに確認します。
 
 ## 5. status の読み方
 
@@ -85,7 +89,7 @@ admin ナビゲーションでは、次の 2 画面が Git 連携の確認入口
 - `pending`: run が作られ、まだ処理前の状態
 - `running`: fetch / manifest build / import の途中
 - `imported`: 取り込み完了。`GitImportSource` の `last_synced_commit_sha` と `last_synced_at` も更新される
-- `skipped`: すでに同期済みの commit などで、新しい取り込みを作らなかった状態
+- `skipped`: すでに同期済みの commit、または対象文書なしなどで、新しい取り込みを作らなかった状態
 - `failed`: 同期処理が失敗した状態。`エラー` を見る
 
 ## 6. よくある見直しポイント
@@ -96,7 +100,7 @@ admin ナビゲーションでは、次の 2 画面が Git 連携の確認入口
 
 ### `skipped` が続く
 
-current implementation では、同じ commit SHA が既に同期済みなら `skipped` として記録します。repository 側に新しい commit がないか、対象 branch / path が意図どおりかを見直します。
+current implementation では、同じ commit SHA が既に同期済みなら `skipped` として記録します。repository 側に新しい commit がないか、対象 branch / path が意図どおりかを見直します。`reason: no_documents` の場合は、対象 path 配下に取り込み対象の Markdown / MDX があるかを先に確認します。
 
 ### `failed` で止まった
 
@@ -110,7 +114,9 @@ current implementation では、同じ commit SHA が既に同期済みなら `s
 
 - current provider は `github` のみです
 - current flow は `pull` 型の手動同期が中心です
-- Webhook 自動同期、定期同期、Git 側削除の自動 archive / delete は、既存仕様でも未対応のままです
+- GitHub App は本命認証、Fine-grained PAT は検証用、`no_auth` は公開 repository 用です
+- Webhook 自動同期、定期同期、repository 一覧取得、branch / path picker、Git 側削除の自動 archive / delete は、既存仕様でも未対応のままです
+- Google Drive / SharePoint / OneDrive の同期本体は、この Git 連携 runbook では扱いません
 
 `Git連携インポート` の仕様文書は「何を取り込むか」の正本で、この runbook は「管理画面でどこを見返すか」の補助です。
 

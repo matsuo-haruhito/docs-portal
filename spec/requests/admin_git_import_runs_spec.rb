@@ -64,6 +64,46 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(run_rows.size).to eq(1)
   end
 
+  it "summarizes imported, skipped, failed, and deleted candidate context" do
+    create_git_import_run!(
+      summary_json: {
+        "documents" => 3,
+        "attachments" => 5,
+        "source_path" => "docs",
+        "commit_sha" => "abcdef1234567890",
+        "deleted_candidates" => ["docs/old.md"],
+        "publish_job_id" => "pub_123"
+      }
+    )
+    create_git_import_run!(
+      status: :skipped,
+      summary_json: { "reason" => "already_synced", "commit_sha" => "abcdef1234567890" },
+      created_at: Time.zone.parse("2026-05-02 00:00:00 UTC")
+    )
+    create_git_import_run!(
+      status: :failed,
+      summary_json: {},
+      error_message: "repository not found",
+      created_at: Time.zone.parse("2026-05-03 00:00:00 UTC")
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_git_import_runs_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("provider、pull/push、status、summary_json、削除候補を追跡します")
+    expect(page_text).to include("取り込み文書: 3")
+    expect(page_text).to include("添付: 5")
+    expect(page_text).to include("取込元パス: docs")
+    expect(page_text).to include("commit: abcdef1234567890")
+    expect(page_text).to include("削除候補: 1")
+    expect(page_text).to include("PublishJob: pub_123")
+    expect(page_text).to include("理由: already_synced")
+    expect(page_text).to include("repository not found")
+    expect(page_text).to include("raw summary_json")
+  end
+
   it "forbids external users" do
     sign_in_as(external_user)
 

@@ -10,6 +10,8 @@
     li 取り込みたいリポジトリ、ブランチ、パスを指定する
     li 保存後に手動同期を実行し、Markdownと添付ファイルの取り込み結果を確認する
   p.muted
+    | Git連携の共通契約は「同期元設定、run履歴、manifest化、削除候補」です。repository / branch / path / commit は Git 専用の入力として扱い、Google Drive / SharePoint 本体や自動同期はこの画面では追加しません。
+  p.muted
     | 将来的にはGitHub Appのインストール済みリポジトリ一覧から選べるようにし、installation IDやPATの手入力をなくす想定です。
 
 = form_with model: [:admin, git_import_source] do |form|
@@ -31,7 +33,7 @@
     label
       | 認証方式
       = form.select :auth_type, enum_options_for("git_import_sources.auth_type", GitImportSource.auth_types.keys)
-      span.muted 通常はGitHub Appを選んでください。
+      span.muted GitHub App は本命、Fine-grained PAT は検証用、認証なしは公開リポジトリ用です。
     label
       | 状態
       = form.select :enabled, [["有効", true], ["無効", false]]
@@ -54,7 +56,7 @@
       label
         | 認証シークレット
         = form.password_field :credential_secret, value: nil, autocomplete: "new-password", placeholder: git_import_source.persisted? ? "変更時のみ入力" : "fine-grained PAT"
-    p.muted GitHub App を本命の認証方式として扱います。Fine-grained PAT は開発・検証用で、シークレットは暗号化カラムに保存されます。
+    p.muted GitHub App を本命の認証方式として扱います。Fine-grained PAT は開発・検証用で、シークレットは暗号化カラムに保存されます。認証なしは公開リポジトリの clone に限定して使います。
 
   p.actions
     = form.submit "保存", class: "button"
