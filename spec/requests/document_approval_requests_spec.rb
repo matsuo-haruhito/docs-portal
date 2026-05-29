@@ -29,7 +29,7 @@ RSpec.describe "Document approval requests", type: :request do
     end.to change(DocumentApprovalRequest, :count).by(1)
 
     approval_request = DocumentApprovalRequest.order(:id).last
-    expect(response).to redirect_to(document_approval_request_path(approval_request))
+    expect(response).to redirect_to(document_approval_request_path(approval_request, return_to: project_document_path(project, document.slug)))
     expect(approval_request.requester).to eq(requester)
     expect(approval_request.document).to eq(document)
     expect(approval_request).to be_pending
@@ -115,6 +115,23 @@ RSpec.describe "Document approval requests", type: :request do
     get document_approval_request_path(another_request, return_to: return_to_path)
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Cancel済み")
+  end
+
+  it "falls back to document detail for requester users without a safe return_to" do
+    approval_request = create(:document_approval_request, document:, requester:, title: "確認お願いします")
+    document_detail_path = project_document_path(project, document.slug)
+
+    sign_in_as(requester)
+
+    get document_approval_request_path(approval_request)
+    expect(response).to have_http_status(:ok)
+    expect(parsed_html.at_css(%(a[href="#{document_detail_path}"]))).to be_present
+    expect(parsed_html.at_css(%(a[href="#{document_approval_requests_path}"]))).to be_nil
+
+    another_request = create(:document_approval_request, document:, requester:, title: "今回は進めない")
+    post cancel_document_approval_request_path(another_request, return_to: "//example.com")
+    expect(response).to redirect_to(document_approval_request_path(another_request, return_to: document_detail_path))
+    expect(another_request.reload).to be_cancelled
   end
 
   it "falls back to the index path for protocol-relative return_to values" do
