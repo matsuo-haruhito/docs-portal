@@ -57,8 +57,8 @@ RSpec.describe "admin external integration project selectors source" do
 
   it "uses a provider-neutral folder id header on the external folder sync index" do
     aggregate_failures do
-      expect(external_folder_sync_sources_index).to include("th 外部フォルダID")
-      expect(external_folder_sync_sources_index).not_to include("th Google DriveフォルダID")
+      expect(external_folder_sync_sources_index).to include('data-rails-table-preferences-column-key="external_folder_location" 外部フォルダID')
+      expect(external_folder_sync_sources_index).not_to include("Google DriveフォルダID")
     end
   end
 
