@@ -238,7 +238,11 @@ jobs:
             --output ./publish/manifest/publish.json \
             --repository "${{ github.repository }}" \
             --branch "${{ github.ref_name }}" \
-            --sha "${{ github.sha }}"
+            --sha "${{ github.sha }}" \
+            --artifact-name "docs-site" \
+            --workflow-run-id "${{ github.run_id }}" \
+            --workflow-run-attempt "${{ github.run_attempt }}" \
+            --manifest-path "publish/manifest/publish.json"
 
       - name: Archive build output
         run: |
