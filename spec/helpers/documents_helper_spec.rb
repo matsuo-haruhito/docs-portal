@@ -27,6 +27,99 @@ RSpec.describe DocumentsHelper, type: :helper do
         helper.send(:node_key, second_folder)
       )
     end
+
+    it "keeps non-Markdown documents in the tree using representative file paths when no source path exists" do
+      markdown_doc = create(:document, project:, title: "03. Markdown guide", document_kind: :markdown)
+      markdown_version = create(:document_version, document: markdown_doc, source_relative_path: "docs/shared/guide.md")
+      markdown_doc.update!(latest_version: markdown_version)
+
+      pdf_doc = create(:document, project:, title: "04. PDF policy", document_kind: :pdf)
+      pdf_version = create(:document_version, document: pdf_doc)
+      create(
+        :document_file,
+        document_version: pdf_version,
+        file_name: "docs/shared/policy.pdf",
+        content_type: "application/pdf",
+        storage_key: "spec/document-tree/policy.pdf"
+      )
+      pdf_doc.update!(latest_version: pdf_version)
+
+      excel_doc = create(:document, project:, title: "05. Excel matrix", document_kind: :excel)
+      excel_version = create(:document_version, document: excel_doc)
+      create(
+        :document_file,
+        document_version: excel_version,
+        file_name: "docs/shared/matrix.xlsx",
+        content_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        storage_key: "spec/document-tree/matrix.xlsx"
+      )
+      excel_doc.update!(latest_version: excel_version)
+
+      helper.document_tree_render_state(projects: [project], current_project: project)
+      docs_folder = helper.send(:document_tree_nodes_for, project).find { _1.label == "docs" }
+      shared_folder = docs_folder.children.find { _1.label == "shared" }
+
+      expect(shared_folder.children).to include(markdown_doc, pdf_doc, excel_doc)
+      expect(helper.send(:document_tree_source_file_name, pdf_doc)).to eq("policy.pdf")
+      expect(helper.send(:document_tree_source_file_name, excel_doc)).to eq("matrix.xlsx")
+      expect(helper.send(:tree_item_html_available?, pdf_doc)).to eq(false)
+      expect(helper.send(:tree_item_html_available?, excel_doc)).to eq(false)
+    end
+
+    it "preserves external visibility and archived filters for file-backed tree rows" do
+      external_user = create(:user, :external)
+      project.update!(company: external_user.company)
+      create(:project_membership, project:, user: external_user)
+      helper.define_singleton_method(:current_user) { external_user }
+
+      visible_doc = create(:document, project:, title: "Visible PDF", document_kind: :pdf, visibility_policy: :public_with_login)
+      visible_version = create(:document_version, document: visible_doc)
+      create(:document_file, document_version: visible_version, file_name: "external/visible.pdf", content_type: "application/pdf")
+      visible_doc.update!(latest_version: visible_version)
+
+      internal_doc = create(:document, project:, title: "Internal PDF", document_kind: :pdf, visibility_policy: :internal_only)
+      internal_version = create(:document_version, document: internal_doc)
+      create(:document_file, document_version: internal_version, file_name: "external/internal.pdf", content_type: "application/pdf")
+      internal_doc.update!(latest_version: internal_version)
+
+      archived_doc = create(:document, project:, title: "Archived PDF", document_kind: :pdf, visibility_policy: :public_with_login, archived_at: Time.current)
+      archived_version = create(:document_version, document: archived_doc)
+      create(:document_file, document_version: archived_version, file_name: "external/archived.pdf", content_type: "application/pdf")
+      archived_doc.update!(latest_version: archived_version)
+
+      helper.document_tree_render_state(projects: [project], current_project: project)
+      documents = helper.send(:document_tree_documents_for, project)
+
+      expect(documents).to include(visible_doc)
+      expect(documents).not_to include(internal_doc, archived_doc)
+    end
+
+    it "chooses document tree icons from source extension, primary file, then document kind" do
+      mdx_doc = create(:document, project:, title: "MDX page", document_kind: :markdown)
+      mdx_version = create(:document_version, document: mdx_doc, source_relative_path: "docs/page.mdx", source_extension: "mdx")
+      mdx_doc.update!(latest_version: mdx_version)
+
+      uploaded_pdf = create(:document, project:, title: "Uploaded PDF", document_kind: :markdown)
+      pdf_version = create(:document_version, document: uploaded_pdf)
+      create(:document_file, document_version: pdf_version, file_name: "uploads/confirmed.PDF", content_type: "application/pdf")
+      uploaded_pdf.update!(latest_version: pdf_version)
+
+      word_doc = create(:document, project:, title: "Word fallback", document_kind: :word)
+      word_version = create(:document_version, document: word_doc)
+      word_doc.update!(latest_version: word_version)
+
+      zip_doc = create(:document, project:, title: "Zip bundle", document_kind: :mixed)
+      zip_version = create(:document_version, document: zip_doc)
+      create(:document_file, document_version: zip_version, file_name: "uploads/bundle.zip", content_type: "application/zip")
+      zip_doc.update!(latest_version: zip_version)
+
+      helper.document_tree_render_state(projects: [project], current_project: project)
+
+      expect(helper.send(:document_tree_icon_name, mdx_doc)).to eq("mdx")
+      expect(helper.send(:document_tree_icon_name, uploaded_pdf)).to eq("pdf")
+      expect(helper.send(:document_tree_icon_name, word_doc)).to eq("docx")
+      expect(helper.send(:document_tree_icon_name, zip_doc)).to eq("zip")
+    end
   end
 
   describe "#document_tree_render_window" do
