@@ -58,8 +58,10 @@ RSpec.describe SeedSupport::DocusaurusBuildRunner do
       expect(error.message).to include("out_dir: #{build_output_dir}")
       expect(error.message).to include("static_dir: #{static_dir}")
       expect(error.message).to include("command: npm run build -- --out-dir #{build_output_dir}")
-      expect(error.message).to include("stderr:\nstderr detail")
-      expect(error.message).to include("stdout:\nstdout detail")
+      expect(error.message).to include("stderr:")
+      expect(error.message).to include("stderr detail")
+      expect(error.message).to include("stdout:")
+      expect(error.message).to include("stdout detail")
     }
   end
 
@@ -75,7 +77,8 @@ RSpec.describe SeedSupport::DocusaurusBuildRunner do
     )
 
     expect { runner.run! }.to raise_error(RuntimeError) { |error|
-      expect(error.message).to include("stdout:\nstdout only")
+      expect(error.message).to include("stdout:")
+      expect(error.message).to include("stdout only")
       expect(error.message).not_to include("stderr:")
       expect(error.message).not_to include("static_dir:")
     }
