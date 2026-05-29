@@ -34,7 +34,7 @@
 ## archived / 復元
 
 - Document 単位 archive / restore は admin 管理画面で実装済み
-- retention / discard candidate を使った一覧・一括操作・自動通知は後続。未起票で残す理由: 保存期間、通知先、復元期限の方針判断が必要
+- retention / discard candidate を使った一覧・一括操作・自動通知は後続。保管期限 / 廃棄候補の first slice は `#1054` で扱う
 
 ## Import / GitHub Actions
 
@@ -51,8 +51,8 @@
 ## 多言語 / localization
 
 - 多言語版管理は、実際に同一文書の多言語運用需要が出てから再評価する
-- 初期に導入する場合でも、翻訳自動生成より先に `language` と翻訳文書の関連付け導線を検討する
-- Docusaurus viewer / Rails preview / 検索 / カタログ / コメントとの結合点が増えるため、独立した具体 issue に分けてから着手する
+- `language` と翻訳文書の関連付けを検討する first slice は `#1065` で扱う。翻訳自動生成、機械翻訳、Docusaurus i18n 全体移行は同 Issue の非目標として切り分ける
+- Docusaurus viewer / Rails preview / 検索 / カタログ / コメントとの結合点は、`#1065` の整理後に必要な画面またはモデル単位の concrete issue へ分ける
 
 ## Job / 運用自動化
 
