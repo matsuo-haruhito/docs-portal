@@ -97,17 +97,22 @@ jobs:
         run: bundle exec rails db:migrate
 
       - name: Run specs
+        id: rspec
         shell: bash
+        continue-on-error: true
         run: |
           set -o pipefail
           mkdir -p tmp
           bundle exec rspec 2>&1 | tee tmp/rspec.log
           status=${PIPESTATUS[0]}
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit "$status"
 
-          if [[ "$status" -ne 0 ]]; then
-            echo
-            echo "RSpec failure summary"
-            ruby <<'RUBY'
+      - name: RSpec failure summary
+        if: ${{ steps.rspec.outcome == 'failure' }}
+        shell: bash
+        run: |
+          ruby <<'RUBY' | tee -a "$GITHUB_STEP_SUMMARY"
           log = File.read("tmp/rspec.log")
           failure_index = log.index(/^Failures:\n/)
           failed_examples_index = log.index(/^Failed examples:\n/)
@@ -121,11 +126,20 @@ jobs:
             log.lines.last(160).join
           end
 
+          puts "RSpec failure summary"
+          puts
           puts summary.lines.first(240).join
           RUBY
-          fi
 
-          exit "$status"
+      - uses: actions/upload-artifact@v7
+        if: ${{ steps.rspec.outcome == 'failure' }}
+        with:
+          name: rspec-log
+          path: tmp/rspec.log
+
+      - name: Fail when specs fail
+        if: ${{ steps.rspec.outcome == 'failure' }}
+        run: exit 1
 
   seed-smoke:
     runs-on: ubuntu-latest
