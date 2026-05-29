@@ -16,6 +16,8 @@
 ## UI / UX
 
 - dashboard / navbar / viewer shell / admin model browser の基礎導線は実装済み
+- dashboard の internal user 向け確認依頼導線の重複感整理は `#1072` で扱う
+- 文書利用状況の絞り込み 0 件時 empty state と表示設定 editor の優先度整理は `#1077` で扱う
 - 社内 / 社外 / 管理者ごとの導線差分は、必要になったタイミングで画面群ごとに個別 issue へ分けて扱う
 - 総合 UI/UX 見直しは包括 issue として残さず、必要になった時点で viewer / dashboard / navigation / admin UX など具体 issue に分けて扱う
 - 本文表示の改善は viewer 単位の issue を優先し、全画面の大規模 redesign は後回しにする
@@ -47,6 +49,11 @@
 - seed 用 Docusaurus build で id front matter を自動付与する処理の安定化は `#1040` で扱う
 - seed 用 Markdown build 失敗時のログ改善は `#1022` / PR `#1036` で扱う。current runtime 前提は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) を正本にする
 - embedded viewer 前提の iframe 高さ追従 first slice は `#1020` で扱う。本文内検索 UI は、browser native search で足りない痛点が具体化した時点で別 issue に分ける
+
+## Data Classification
+
+- `visibility_policy` と `data_classification_tags` の責務境界は [文書ライフサイクルと公開](./specs/文書ライフサイクルと公開.md) を正本にする
+- DocumentVersion / DocumentFile / DocumentSet / Catalog 単位へ `data_classification_tags` を広げる前の責務境界整理は `#1066` で扱う
 
 ## 多言語 / localization
 
