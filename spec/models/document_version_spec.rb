@@ -1,6 +1,15 @@
 require "rails_helper"
 
 RSpec.describe DocumentVersion, type: :model do
+  describe "version labels" do
+    it "allows non-semver labels without parsing them" do
+      version = build(:document_version, version_label: "review-2026-05")
+
+      expect(version).to be_valid
+      expect(version.version_label).to eq("review-2026-05")
+    end
+  end
+
   describe ".source_path_metadata_for!" do
     it "normalizes Windows separators and extracts path metadata" do
       metadata = described_class.source_path_metadata_for!("作成資料\\編集正本\\README.md")
@@ -124,6 +133,22 @@ RSpec.describe DocumentVersion, type: :model do
 
       expect(version).not_to be_valid
       expect(version.errors[:published_until]).to be_present
+    end
+  end
+
+  describe "latest version promotion" do
+    it "uses published creation order instead of parsing version labels" do
+      document = create(:document)
+
+      travel_to 2.days.ago do
+        create(:document_version, document:, version_label: "9999-final", status: :published)
+      end
+
+      travel_to 1.day.ago do
+        create(:document_version, document:, version_label: "client-a-draft", status: :published)
+      end
+
+      expect(document.reload.latest_version.version_label).to eq("client-a-draft")
     end
   end
 end
