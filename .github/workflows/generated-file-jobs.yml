@@ -35,7 +35,13 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.4'
-          bundler-cache: true
+          bundler-cache: false
+
+      - name: Install Ruby dependencies
+        run: |
+          bundle config set path vendor/bundle
+          bundle lock --add-platform x86_64-linux
+          bundle install --jobs 4 --retry 3
 
       - name: Detect changed files
         id: changed
@@ -66,6 +72,10 @@ jobs:
       - name: Commit generated files
         shell: bash
         run: |
+          if ! git diff --quiet -- Gemfile.lock; then
+            git checkout -- Gemfile.lock
+          fi
+
           if git diff --quiet; then
             echo 'No generated file changes.'
             exit 0
