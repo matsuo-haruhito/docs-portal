@@ -109,7 +109,7 @@ RSpec.describe "Admin document sets", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("案件を選ぶと対象文書を設定できます。")
     expect(page_text).not_to include("まだ対象文書がありません。")
-    expect(page_text).not_to include("ほかの import 経路を確認してから戻ってください。")
+    expect(action_targets).not_to include(new_admin_zip_import_path)
 
     post admin_document_sets_path, params: {
       document_set: {
@@ -125,9 +125,12 @@ RSpec.describe "Admin document sets", type: :request do
 
     expect(response).to have_http_status(:unprocessable_entity)
     expect(page_text).to include("まだ対象文書がありません。")
-    expect(page_text).to include("この案件の文書が取り込まれると、ここで対象文書を選べます。")
-    expect(page_text).to include("ほかの import 経路を確認してから戻ってください。")
-    expect(action_targets).to include(admin_git_import_sources_path, admin_git_import_runs_path)
+    expect(page_text).to include("この案件に文書を取り込むと、ここで対象文書を選べます。")
+    expect(action_targets).to include(
+      admin_git_import_sources_path,
+      admin_git_import_runs_path,
+      new_admin_zip_import_path
+    )
     expect(page_text).not_to include("案件を選ぶと対象文書を設定できます。")
   end
 

@@ -60,12 +60,15 @@
   - elsif document_set.project_id.present?
     h2 対象文書
     p.muted まだ対象文書がありません。
+    p.muted この案件に文書を取り込むと、ここで対象文書を選べます。
     p.muted
-      | この案件の文書が取り込まれると、ここで対象文書を選べます。まず
+      | まず
       = link_to "Git連携", admin_git_import_sources_path
-      | や
+      | 、
       = link_to "Git同期履歴", admin_git_import_runs_path
-      | 、ほかの import 経路を確認してから戻ってください。
+      | 、
+      = link_to "ZIPインポート", new_admin_zip_import_path
+      | を確認してから戻ってください。
   - else
     p.muted 案件を選ぶと対象文書を設定できます。
 
