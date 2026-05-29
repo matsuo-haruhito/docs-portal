@@ -40,13 +40,28 @@ RSpec.describe "Admin management", type: :request do
       )
     end
 
-    it "redirects company_master_admin users to company master" do
+    it "shows company_master_admin users a scoped company and user landing" do
       company = create(:company, domain: "alpha.example.com", name: "Alpha")
       sign_in_as(create(:user, :external, :company_master_admin, company:))
 
       get admin_root_path
 
-      expect(response).to redirect_to(admin_companies_path)
+      expect(response).to have_http_status(:ok)
+      expect(page_text).to include("会社・ユーザー管理")
+      expect(page_text).to include("使える管理画面")
+      expect(page_text).to include("internal admin へ戻す範囲")
+      expect(page_text).to include("0 件のときもユーザー画面上部の新規登録から開始できます")
+      expect(action_targets).to include(admin_companies_path, admin_users_path)
+      expect(action_targets).not_to include(
+        admin_projects_path,
+        admin_project_memberships_path,
+        admin_documents_path,
+        admin_document_permissions_path,
+        admin_access_logs_path,
+        admin_document_usage_reports_path
+      )
+      expect(page_text).not_to include("モデル観測")
+      expect(page_text).not_to include("アプリ設定診断")
     end
 
     it "forbids external users" do

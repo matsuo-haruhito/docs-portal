@@ -21,12 +21,18 @@ current `main` の前提:
 
 ## 入口と current flow
 
-current `main` では、`/admin` へ入ると `Admin::DashboardController` が `会社` 一覧 (`/admin/companies`) へ redirect する。
+current `main` では、`/admin` へ入ると `会社・ユーザー管理` の landing が表示される。
 
-その後は role-aware な nav で `会社` と `ユーザー` だけが表示されるため、日常運用では次の flow を入口として使う。
+landing は role-aware な入口であり、次だけを表示する。
 
-- `/admin` から入って `会社` 一覧へ着地する
-- nav から `ユーザー` へ移動する
+- 使える管理画面: `会社` と `ユーザー`
+- internal admin へ戻す範囲: `案件` `案件所属` `文書` `文書権限` `監査ログ` `利用状況` など
+- ユーザーが 0 件のときは `ユーザー` 画面上部の `新規登録` から開始できること
+
+landing から forbidden な admin surface への link は出さない。日常運用では次の flow を入口として使う。
+
+- `/admin` から入って `会社・ユーザー管理` landing で範囲を確認する
+- `会社` または `ユーザー` へ移動する
 - それ以外の admin surface が必要になったら internal admin へ引き継ぐ
 
 ## 1. 会社画面でできること
@@ -60,6 +66,7 @@ current `main` で確認できること:
 - 一覧には自社ユーザーだけが出る
 - 表示中の範囲にユーザーが 0 件のときは、空 table ではなく `ユーザー一覧` の empty state が出る
 - 0 件時は上の `新規登録` card から、メールアドレスと必要な項目を入れて最初の 1 件を作る
+- `/admin` landing からも `ユーザー` へ直接移動できる
 - 他社ユーザーの edit は `not_found` になる
 - 自社ユーザーの `name` や `active` は更新できる
 - `company_master_admin` が見る form では、`ユーザー種別` は `external` 固定、`会社` は自社固定の read-only 表示になる
@@ -109,6 +116,7 @@ current request spec で `company_master_admin` が forbidden として固定さ
 
 - `company_master_admin` は company / user master の最小管理 role であり、案件運用や公開制御の role ではない
 - 文書閲覧や添付ダウンロードは、管理画面ではなく通常の project / document 側の権限で判断される
+- `/admin` landing でもこれらの画面へ link せず、internal admin へ戻す範囲としてだけ表示する
 
 ## 5. 文書閲覧境界の見方
 
@@ -123,16 +131,17 @@ current request spec で `company_master_admin` が forbidden として固定さ
 
 ## 日常運用の見分け方
 
+- `/admin` から入りたい: `会社・ユーザー管理` landing で範囲を確認し、`会社` または `ユーザー` へ進む
 - 自社会社情報を直したい: `会社`
 - 自社ユーザーを追加したいがまだ 0 件: `ユーザー` 画面上部の `新規登録`
 - 自社ユーザーを追加・無効化したい: `ユーザー`
 - `ユーザー種別` や `会社` を変えたいように見えるが固定表示になっている: current role の範囲外なので internal admin へ引き継ぐ
 - 案件所属や文書権限を見直したい: internal admin へ引き継ぐ
-- `/admin` から入りたい: current `main` では `会社` 一覧へ redirect されるので、そこを入口に使う
 
 ## 補足
 
-- `company_master_admin` 専用の dashboard はなく、`/admin` は許可済み画面への入口として扱う
+- `company_master_admin` 専用の広い dashboard はなく、`/admin` は許可済み画面への role-aware landing として扱う
+- internal admin 向けの診断 card、model browser、広い管理リンクは `company_master_admin` には表示しない
 - current behavior を変える判断は docs ではなく runtime 側の issue / PR で扱う
 
 ## 関連画面・根拠
@@ -140,6 +149,7 @@ current request spec で `company_master_admin` が forbidden として固定さ
 - `docs/specs/基本モデルと権限.md`
 - `app/controllers/admin/base_controller.rb`
 - `app/controllers/admin/dashboard_controller.rb`
+- `app/views/admin/dashboard/index.html.slim`
 - `app/views/admin/_nav.html.slim`
 - `app/views/admin/users/index.html.slim`
 - `app/views/admin/users/_form.html.slim`

@@ -1,0 +1,27 @@
+- page_title "会社・ユーザー管理"
+
+h1 会社・ユーザー管理
+p.muted 自社の会社情報とユーザーだけを管理できます。案件、文書、文書権限、監査ログ、利用状況は internal admin へ引き継いでください。
+
+= render "admin/nav"
+
+section.card
+  h2 使える管理画面
+  p.muted 会社管理者として操作できる範囲は次の 2 画面に限定されています。
+  ul
+    li
+      = link_to "会社", admin_companies_path
+      |  - 自社の会社名、ドメイン、状態を確認・更新します。他社の会社は表示されません。
+    li
+      = link_to "ユーザー", admin_users_path
+      |  - 自社ユーザーの追加、編集、有効化・無効化を行います。0 件のときもユーザー画面上部の新規登録から開始できます。
+
+section.card
+  h2 internal admin へ戻す範囲
+  p.muted 次の管理はこの role では扱いません。必要な場合は internal admin に依頼してください。
+  ul
+    li 案件、案件所属、文書、文書権限
+    li 監査ログ、利用状況、アクセス申請
+    li ユーザー種別の internal 化、他社ユーザーや他社会社の調整
+
+p = link_to "案件一覧へ戻る", projects_path
