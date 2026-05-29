@@ -23,6 +23,12 @@ RSpec.describe "Admin document usage reports", type: :request do
     end
   end
 
+  def selected_project_clear_link
+    parsed_html.css("a[href='#{admin_document_usage_reports_path(project_id: project.id)}']").find do |link|
+      link.text.include?("条件をクリア")
+    end
+  end
+
   def row_titles
     parsed_html.css("tbody td[data-rails-table-preferences-column-key='title']").map do |cell|
       cell.css("a").first.text.squish
@@ -78,6 +84,7 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(page_text).to include("ダウンロード: 1")
     expect(page_text).to include("既読確認: 1")
     expect(page_text).to include("表示中: 1件")
+    expect(page_text).to include("文書利用一覧の表示設定")
 
     selected_option = parsed_html.at_css("select[name='project_id'] option[selected]")
     expect(selected_option).to be_present
@@ -154,8 +161,12 @@ RSpec.describe "Admin document usage reports", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 0件")
-    expect(page_text).to include("条件に一致する文書はありません。")
+    expect(page_text).to include("条件に一致する文書はありません")
+    expect(page_text).to include("現在の利用状況は「利用あり」、並び順は「タイトル順」です。")
+    expect(page_text).to include("条件を変えるか、クリアして案件全体を確認してください。")
+    expect(page_text).not_to include("文書利用一覧の表示設定")
     expect(summary_audit_log_link).to be_present
+    expect(selected_project_clear_link).to be_present
     expect(parsed_html.css("table tbody tr")).to be_empty
   end
 
