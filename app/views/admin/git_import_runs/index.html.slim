@@ -11,6 +11,7 @@ h1 Git同期履歴
     | 表示中:
     strong = " #{@git_import_runs.size}件"
     |  / 最新100件までを表示
+  p.muted Git同期履歴は外部同期共通の run 境界として、provider、pull/push、status、summary_json、削除候補を追跡します。repository / branch / path / commit は Git 専用の入力と revision です。
 
   .card
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "Git同期履歴の表示設定")
@@ -53,7 +54,14 @@ h1 Git同期履歴
             span.badge = git_import_run_status_label(run)
           td data-rails-table-preferences-column-key="summary"
             - if run.summary_json.present?
-              pre = JSON.pretty_generate(run.summary_json)
+              - summary_lines = git_import_run_summary_lines(run)
+              - if summary_lines.any?
+                ul
+                  - summary_lines.each do |line|
+                    li = line
+              details
+                summary raw summary_json
+                pre = JSON.pretty_generate(run.summary_json)
             - else
               span.muted なし
           td data-rails-table-preferences-column-key="error_message"
