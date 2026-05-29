@@ -34,7 +34,8 @@
 ## archived / 復元
 
 - Document 単位 archive / restore は admin 管理画面で実装済み
-- retention / discard candidate を使った一覧・一括操作・自動通知は後続。未起票で残す理由: 保存期間、通知先、復元期限の方針判断が必要
+- 保管期限 / 廃棄候補の first slice は `#1054` で current 文書マスタの filter・一覧列・手動 archive / restore 判断として明文化する
+- bulk archive / bulk restore / discard candidate marking、自動通知、自動削除、非可逆 discard、期限間近の新閾値定義は後続判断として残す。未起票で残す理由: retention policy、通知先、復元期限、不可逆操作の承認要件を分けて判断する必要がある
 
 ## Import / GitHub Actions
 
