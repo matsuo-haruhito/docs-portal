@@ -22,7 +22,7 @@ class GitImportRun < ApplicationRecord
     failed: 4
   }
 
-  validates :repository_full_name, :branch, :source_path, :summary_json, presence: true
+  validates :repository_full_name, :branch, :source_path, presence: true
 
   def finish!(status:, summary: {}, error_message: nil)
     update!(
