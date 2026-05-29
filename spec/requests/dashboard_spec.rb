@@ -21,6 +21,10 @@ RSpec.describe "Dashboard", type: :request do
     parsed_html.css(".metric-card").map { _1.text.squish }
   end
 
+  def metric_card_for(label)
+    metric_card_texts.find { _1.include?(label) }
+  end
+
   def metric_cta_links
     parsed_html.css(".metric-card .metric-card__cta")
   end
@@ -60,6 +64,58 @@ RSpec.describe "Dashboard", type: :request do
       document_bookmarks_path,
       access_requests_path
     )
+    expect(metric_card_texts.any? { _1.include?("保留中の確認依頼") }).to be(false)
+    expect(metric_cta_links.map { |link| link["href"] }).not_to include(document_approval_requests_path)
+  end
+
+  it "keeps the external user dashboard usable when all personal sections are empty" do
+    empty_user = create(:user, :external, company:)
+
+    sign_in_as(empty_user)
+    get dashboard_path
+
+    expect(response).to have_http_status(:ok)
+    expect(heading_texts).to include(
+      "ダッシュボード",
+      "案件",
+      "お気に入り",
+      "後で読む",
+      "最近見た文書",
+      "最近更新された文書"
+    )
+    expect(metric_card_for("閲覧可能案件")).to include("0", "案件一覧へ")
+    expect(metric_card_for("閲覧可能文書")).to include("0", "文書一覧へ")
+    expect(metric_card_for("保存ショートカット")).to include("0", "ショートカット一覧へ")
+    expect(metric_card_for("保留中の申請")).to include("0", "申請一覧へ")
+    expect(page_text).to include(
+      "閲覧可能な案件はありません。",
+      "お気に入りはありません。",
+      "後で読む文書はありません。",
+      "最近見た文書はありません。",
+      "最近更新された文書はありません。"
+    )
+    expect(metric_cta_links.map { |link| link["href"] }).to include(
+      projects_path,
+      documents_path,
+      document_bookmarks_path,
+      access_requests_path
+    )
+    expect(metric_card_texts.any? { _1.include?("保留中の確認依頼") }).to be(false)
+    expect(page_text).not_to include("社内向け導線", "確認依頼一覧")
+    expect(metric_cta_links.map { |link| link["href"] }).not_to include(document_approval_requests_path)
+  end
+
+  it "counts only the signed-in external user's pending access requests" do
+    other_user = create(:user, :external, company:)
+    create(:access_request, requester: user, requestable: project)
+    create(:access_request, requester: other_user, requestable: project)
+
+    sign_in_as(user)
+    get dashboard_path
+
+    expect(response).to have_http_status(:ok)
+    expect(metric_card_for("保留中の申請")).to include("1", "申請一覧へ")
+    expect(metric_cta_links.map { |link| link["href"] }).to include(access_requests_path)
     expect(metric_card_texts.any? { _1.include?("保留中の確認依頼") }).to be(false)
     expect(metric_cta_links.map { |link| link["href"] }).not_to include(document_approval_requests_path)
   end
@@ -119,9 +175,10 @@ RSpec.describe "Dashboard", type: :request do
       "文書一覧へ",
       "ショートカット一覧へ",
       "申請一覧へ",
-      "確認依頼一覧へ"
+      "未処理の確認依頼を見る"
     )
     expect(metric_cta_links.map { |link| link["href"] }).to include(document_approval_requests_path)
-    expect(parsed_html.css(".page-hero .actions a").map { |link| link["href"] }).to include(document_approval_requests_path)
+    expect(parsed_html.css(".page-hero .actions a").map { |link| link["href"] }).not_to include(document_approval_requests_path)
+    expect(parsed_html.css(".dashboard-grid a").map { |link| link["href"] }).to include(document_approval_requests_path)
   end
 end
