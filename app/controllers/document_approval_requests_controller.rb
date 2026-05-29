@@ -31,7 +31,7 @@ class DocumentApprovalRequestsController < BaseController
     document_approval_request.requester = current_user
 
     if document_approval_request.save
-      redirect_to document_approval_request_path(document_approval_request), notice: "確認依頼を登録しました。"
+      redirect_to document_approval_request_path(document_approval_request, return_to: project_document_path(@project, @document.slug)), notice: "確認依頼を登録しました。"
     else
       redirect_to project_document_path(@project, @document.slug), alert: document_approval_request.errors.full_messages.join(", ")
     end
@@ -64,7 +64,7 @@ class DocumentApprovalRequestsController < BaseController
     @document_approval_request = DocumentApprovalRequest.includes(:document, :requester, :approver, :acted_by).find_by!(public_id: params[:public_id])
     @document = @document_approval_request.document
     @project = @document.project
-    @return_to_path = safe_return_to_path(document_approval_requests_path)
+    @return_to_path = safe_return_to_path(default_return_to_path)
     require_document_access!(@document)
   end
 
@@ -104,6 +104,10 @@ class DocumentApprovalRequestsController < BaseController
     else
       "確認依頼"
     end
+  end
+
+  def default_return_to_path
+    current_user.internal? ? document_approval_requests_path : project_document_path(@project, @document.slug)
   end
 
   def safe_return_to_path(fallback)
