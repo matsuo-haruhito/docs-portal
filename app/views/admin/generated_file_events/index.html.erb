@@ -31,6 +31,17 @@
     <% end %>
   </div>
 
+  <% if @filter_warnings.present? %>
+    <div class="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+      <p class="font-semibold">日時フィルタを確認してください。</p>
+      <ul class="mt-1 list-disc pl-5">
+        <% @filter_warnings.each do |warning| %>
+          <li><%= warning %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
   <%= form_with url: admin_generated_file_events_path, method: :get, local: true, class: "rounded-lg border bg-white p-4" do |form| %>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
       <div>
