@@ -8,8 +8,10 @@
 
 - internal admin で `admin/webhook_endpoints` の `Webhook` 画面を開きます。
 - 画面には `新規登録`、`Webhook設定`、`最近の送信履歴` が並びます。
-- 送信履歴は `WebhookDelivery.recent.limit(50)` の範囲で、直近 50 件を新しい順に確認します。
+- 送信履歴は `WebhookDelivery.recent.limit(50)` の範囲で、選択した表示条件ごとに最大 50 件を新しい順に確認します。
+- 画面には `表示範囲: ...  N件中M件を表示しています` が出るため、status filter 後の総件数と表示件数を分けて確認します。
 - 送信履歴は `すべて` / `送信待ち` / `成功` / `失敗` で表示を絞り込めます。
+- 50 件外の履歴まで探す必要がある場合は、この画面だけで判断せず、endpoint / event type / 日付などの追加条件を決める後続 slice として扱います。
 
 ## 新規登録・編集で見る項目
 
@@ -39,18 +41,19 @@ current `WebhookEndpoint::EVENT_TYPES` は次の 7 種類です。
 - `ステータス`: `送信待ち` / `成功` / `失敗` を表示します。
 - `HTTP`: 受信先から返った HTTP status です。通信例外など response がない失敗では空になります。
 - `エラー`: 例外時の error message です。HTTP non-2xx の場合は `HTTP` と保存済み response body を手掛かりにします。
-- `操作`: failed かつ endpoint が有効な delivery には `再送` ボタンが表示されます。それ以外は `再送不可` と表示されます。
+- `操作`: `詳細` から delivery の response body / sent_at / target URL などを確認できます。failed かつ endpoint が有効な delivery には `再送` ボタンも表示されます。それ以外は `再送不可` と表示されます。
 
-`WebhookDelivery` には request body、response body、error message、sent_at も保存されます。ただし current index 画面で直接見えるのは status / HTTP / error message / 再送可否までなので、response body の詳細確認が必要なときはモデルブラウザやログ確認に切り替えます。
+`WebhookDelivery` には request body、response body、error message、sent_at も保存されます。ただし detail 画面でも request body は first slice では非表示です。secret や個人情報を含みうるため、request body の全表示が必要な場合は表示範囲とマスキング方針を別途確認してください。
 
 ## 失敗時の確認順
 
 1. `Webhook設定` で endpoint が `有効` になっているか、対象 event type が選ばれているかを確認します。
-2. `送信先URL` が現在の受信先 URL と一致しているか、受信先側で route / token / IP allowlist などが変わっていないかを確認します。
-3. `HTTP` が 4xx の場合は、受信先の認証・署名検証・payload validation を先に見ます。
-4. `HTTP` が 5xx の場合は、受信先サービスの障害・timeout・一時的な処理失敗を先に見ます。
-5. `エラー` に timeout や接続例外が出ている場合は、ネットワーク疎通、DNS、TLS、受信先の稼働状態を確認します。
-6. `mail / webhook の継続失敗` として監視側で拾われている場合は、[監視・アラート設計](./監視・アラート設計.md) の外部依存確認と合わせて見ます。
+2. `送信履歴` を `失敗` に絞り込み、表示範囲の総件数と表示件数を確認します。50 件外まで調べる必要がある場合は、この画面だけで網羅確認したと判断しないでください。
+3. `送信先URL` が現在の受信先 URL と一致しているか、受信先側で route / token / IP allowlist などが変わっていないかを確認します。
+4. `HTTP` が 4xx の場合は、受信先の認証・署名検証・payload validation を先に見ます。
+5. `HTTP` が 5xx の場合は、受信先サービスの障害・timeout・一時的な処理失敗を先に見ます。
+6. `エラー` に timeout や接続例外が出ている場合は、ネットワーク疎通、DNS、TLS、受信先の稼働状態を確認します。
+7. `mail / webhook の継続失敗` として監視側で拾われている場合は、[監視・アラート設計](./監視・アラート設計.md) の外部依存確認と合わせて見ます。
 
 ## 手動再送の扱い
 
