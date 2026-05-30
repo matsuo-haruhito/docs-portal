@@ -81,6 +81,17 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(page_text).not_to include("200")
   end
 
+  it "links recent deliveries to the detail page" do
+    sign_in_as(admin_user)
+
+    delivery = create(:webhook_delivery, status: :failed)
+
+    get admin_webhook_endpoints_path
+
+    expect(response).to have_http_status(:ok)
+    expect(action_targets).to include(admin_webhook_delivery_path(delivery.public_id))
+  end
+
   it "shows manual redelivery only for failed deliveries on active endpoints" do
     sign_in_as(admin_user)
 
@@ -98,6 +109,51 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(action_targets).not_to include(retry_dispatch_admin_webhook_delivery_path(succeeded_delivery.public_id))
     expect(action_targets).not_to include(retry_dispatch_admin_webhook_delivery_path(inactive_delivery.public_id))
     expect(page_text).to include("受信先側の重複処理に注意")
+  end
+
+  it "shows delivery detail without exposing request body" do
+    sign_in_as(admin_user)
+
+    endpoint = create(:webhook_endpoint, name: "Failure Hook", active: true, target_url: "https://hooks.example.test/docs")
+    event = create(:notification_event, event_type: :document_published)
+    delivery = create(
+      :webhook_delivery,
+      webhook_endpoint: endpoint,
+      notification_event: event,
+      event_type: "document_published",
+      status: :failed,
+      target_url: endpoint.target_url,
+      request_body: '{"secret":"do-not-show"}',
+      response_status: 503,
+      response_body: "service unavailable",
+      error_message: "upstream timeout",
+      sent_at: Time.zone.local(2026, 5, 30, 12, 0, 0)
+    )
+
+    get admin_webhook_delivery_path(delivery.public_id)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("Failure Hook")
+    expect(page_text).to include("文書公開")
+    expect(page_text).to include("失敗")
+    expect(page_text).to include("503")
+    expect(page_text).to include("service unavailable")
+    expect(page_text).to include("upstream timeout")
+    expect(page_text).to include("リクエスト本文")
+    expect(page_text).to include("first slice では非表示です")
+    expect(page_text).not_to include("do-not-show")
+    expect(action_targets).to include(retry_dispatch_admin_webhook_delivery_path(delivery.public_id))
+  end
+
+  it "forbids non-admin users from delivery detail" do
+    external_user = create(:user, :external)
+    delivery = create(:webhook_delivery, status: :failed)
+
+    sign_in_as(external_user)
+
+    get admin_webhook_delivery_path(delivery.public_id)
+
+    expect(response).to have_http_status(:forbidden)
   end
 
   it "redelivers a failed delivery and keeps the new result in delivery history" do
