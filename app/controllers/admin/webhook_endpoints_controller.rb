@@ -16,6 +16,7 @@ class Admin::WebhookEndpointsController < Admin::BaseController
     @recent_deliveries_total_count = filtered_deliveries_scope.count
     @recent_deliveries_limit = RECENT_DELIVERY_DISPLAY_LIMIT
     @recent_deliveries = filtered_deliveries_scope.limit(@recent_deliveries_limit)
+    @bulk_retryable_deliveries = bulk_retryable_deliveries(@recent_deliveries)
   end
 
   def create
@@ -32,6 +33,7 @@ class Admin::WebhookEndpointsController < Admin::BaseController
       @recent_deliveries_total_count = recent_deliveries_scope.count
       @recent_deliveries_limit = RECENT_DELIVERY_DISPLAY_LIMIT
       @recent_deliveries = recent_deliveries_scope.limit(@recent_deliveries_limit)
+      @bulk_retryable_deliveries = []
       render :index, status: :unprocessable_entity
     end
   end
@@ -73,5 +75,11 @@ class Admin::WebhookEndpointsController < Admin::BaseController
     return scope if @delivery_status_filter == "all"
 
     scope.public_send(@delivery_status_filter)
+  end
+
+  def bulk_retryable_deliveries(deliveries)
+    return [] unless @delivery_status_filter == "failed"
+
+    deliveries.select(&:retryable?)
   end
 end
