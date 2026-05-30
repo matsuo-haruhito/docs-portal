@@ -63,7 +63,9 @@ AccessLog は HTML preview と JSON / Markdown download の両方で作成され
 - HTML preview: `action_type: view`
 - JSON / Markdown: `action_type: download`
 - `target_type: ai_context`
-- `target_name: mode=<mode>`
+- `target_name: mode=<mode>;scope=all|selected;selected_count=<n>;exported_count=<n>`
+
+`target_name` の `scope` は `document_ids[]` がない場合に `all`、明示選択がある場合に `selected` です。`selected_count` は request で指定された文書 ID 数、`exported_count` は viewer が実際に export できる文書数です。文書 ID や title は AccessLog に残さず、必要な場合は preview の `含まれる文書` / `除外された文書` と照合します。
 
 ログ作成に失敗した場合は controller が error log を出して処理を継続します。監査上は `監査ログ` 画面で `target_type` や action を見て、preview と download の両方が残る前提で確認します。
 
