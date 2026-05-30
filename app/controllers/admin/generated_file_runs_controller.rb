@@ -69,6 +69,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
     scope = scope.where(generator: filters[:generator]) if filters[:generator].present?
     scope = scope.where(output_writer: filters[:output_writer]) if filters[:output_writer].present?
     scope = scope.where(event_source: filters[:event_source]) if filters[:event_source].present?
+    scope = apply_search(scope, filters[:q]) if filters[:q].present?
 
     created_from = parsed_time(filters[:created_from], label: "作成日(開始)", beginning: true)
     created_to = parsed_time(filters[:created_to], label: "作成日(終了)", end_of_day: true)
@@ -77,8 +78,22 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
     scope
   end
 
+  def apply_search(scope, query)
+    escaped_query = ActiveRecord::Base.sanitize_sql_like(query.to_s.strip.downcase)
+    return scope if escaped_query.blank?
+
+    pattern = "%#{escaped_query}%"
+    scope.where(
+      "LOWER(public_id) LIKE :pattern OR " \
+      "LOWER(CAST(source_paths AS text)) LIKE :pattern OR " \
+      "LOWER(CAST(changed_files AS text)) LIKE :pattern OR " \
+      "LOWER(CAST(generated_paths AS text)) LIKE :pattern",
+      pattern:
+    )
+  end
+
   def run_filter_params
-    params.permit(:status, :job_id, :generator, :output_writer, :event_source, :created_from, :created_to).to_h.symbolize_keys
+    params.permit(:status, :job_id, :generator, :output_writer, :event_source, :created_from, :created_to, :q).to_h.symbolize_keys
   end
 
   def page_param
