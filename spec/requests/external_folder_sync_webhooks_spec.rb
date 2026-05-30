@@ -95,19 +95,11 @@ RSpec.describe "External folder sync webhooks", type: :request do
       )
       allow(ExternalFolderSyncWebhookEventJob).to receive(:perform_later)
 
-      post "/external_folder_sync_webhooks/sharepoint",
-        params: {
-          value: [
-            {
-              subscriptionId: "sub-1",
-              resource: "drives/drive-id/root",
-              changeType: "updated",
-              clientState: "client-state",
-              sequenceNumber: "99"
-            }
-          ]
-        }.to_json,
-        headers: { "CONTENT_TYPE" => "application/json" }
+      post_sharepoint_notification(
+        subscription_id: "sub-1",
+        client_state: "client-state",
+        sequence_number: "99"
+      )
 
       expect(response).to have_http_status(:accepted)
       event = ExternalFolderSyncWebhookEvent.find_by!(event_key: "sub-1:drives/drive-id/root:updated:client-state:99")
@@ -117,5 +109,67 @@ RSpec.describe "External folder sync webhooks", type: :request do
       expect(event.payload_json).to include("subscriptionId" => "sub-1")
       expect(ExternalFolderSyncWebhookEventJob).to have_received(:perform_later).with(event.id).once
     end
+
+    it "accepts SharePoint notifications when clientState matches the stored digest" do
+      subscription = create(
+        :external_folder_sync_subscription,
+        provider: :sharepoint,
+        provider_subscription_id: "sub-secure",
+        verification_token_digest: Digest::SHA256.hexdigest("expected-client-state")
+      )
+      allow(ExternalFolderSyncWebhookEventJob).to receive(:perform_later)
+
+      post_sharepoint_notification(
+        subscription_id: "sub-secure",
+        client_state: "expected-client-state",
+        sequence_number: "100"
+      )
+
+      expect(response).to have_http_status(:accepted)
+      event = ExternalFolderSyncWebhookEvent.find_by!(event_key: "sub-secure:drives/drive-id/root:updated:expected-client-state:100")
+      expect(event).to be_received
+      expect(event.external_folder_sync_subscription).to eq(subscription)
+      expect(event.error_message).to be_nil
+      expect(ExternalFolderSyncWebhookEventJob).to have_received(:perform_later).with(event.id).once
+    end
+
+    it "ignores SharePoint notifications when clientState does not match the stored digest" do
+      create(
+        :external_folder_sync_subscription,
+        provider: :sharepoint,
+        provider_subscription_id: "sub-secure",
+        verification_token_digest: Digest::SHA256.hexdigest("expected-client-state")
+      )
+      allow(ExternalFolderSyncWebhookEventJob).to receive(:perform_later)
+
+      post_sharepoint_notification(
+        subscription_id: "sub-secure",
+        client_state: "wrong-client-state",
+        sequence_number: "101"
+      )
+
+      expect(response).to have_http_status(:accepted)
+      event = ExternalFolderSyncWebhookEvent.find_by!(event_key: "sub-secure:drives/drive-id/root:updated:wrong-client-state:101")
+      expect(event).to be_ignored
+      expect(event.external_folder_sync_source).to be_present
+      expect(event.error_message).to eq("Webhook verification token did not match")
+      expect(ExternalFolderSyncWebhookEventJob).not_to have_received(:perform_later)
+    end
+  end
+
+  def post_sharepoint_notification(subscription_id:, client_state:, sequence_number:)
+    post "/external_folder_sync_webhooks/sharepoint",
+      params: {
+        value: [
+          {
+            subscriptionId: subscription_id,
+            resource: "drives/drive-id/root",
+            changeType: "updated",
+            clientState: client_state,
+            sequenceNumber: sequence_number
+          }
+        ]
+      }.to_json,
+      headers: { "CONTENT_TYPE" => "application/json" }
   end
 end
