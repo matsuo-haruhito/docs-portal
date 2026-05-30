@@ -41,16 +41,15 @@ RSpec.describe "Admin document permissions", type: :request do
     get admin_document_permissions_path
 
     expect(response).to have_http_status(:ok)
-    expect(heading_texts).to include("文書別の権限概要", "権限一覧")
+    expect(heading_texts).to include("文書別の権限概要", "適用対象", "権限一覧")
     expect(page_text.scan("まだ権限は登録されていません。").size).to eq(2)
     expect(page_text).to include("まだ権限は登録されていません。最初の 1 件を登録すると、文書ごとの権限数と閲覧/ダウンロード内訳をここで確認できます。")
     expect(page_text).to include("まずは上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して 1 件登録してください。")
     expect(page_text).to include("登録後は、会社別・ユーザー別の対象主体や権限内容をこの一覧で確認、編集できます。")
-    expect(page_text).to include("適用対象は、会社向けかユーザー向けのどちらか一方を選びます。")
-    expect(page_text).to include("会社全体に付与するときは「会社」を、個人に付与するときは「ユーザー」を指定してください。2つ同時には選択しません。")
+    expect(page_text).to include("会社向けかユーザー向けのどちらか一方を選びます。会社全体に付与するときは「会社」、個人に付与するときは「ユーザー」を指定してください。2つ同時には選択しません。")
     expect(select_placeholder("document_permission[company_id]")).to eq("会社向けに付与する場合に選択")
     expect(select_placeholder("document_permission[user_id]")).to eq("ユーザー向けに付与する場合に選択")
-    expect(page_text).to include("会社単位かユーザー単位のどちらか一方を指定してください。")
+    expect(page_text).not_to include("会社単位かユーザー単位のどちらか一方を指定してください。")
     expect(page_text).not_to include("権限概要の表示設定")
     expect(page_text).not_to include("権限一覧の表示設定")
     expect(table_preference_column_keys).to be_empty
@@ -75,6 +74,7 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(response).to have_http_status(:unprocessable_entity)
     expect(page_text).to include("入力内容を確認してください。")
     expect(page_text).to include("適用対象は会社かユーザーのどちらか一方だけを指定してください。")
+    expect(page_text).to include("会社向けかユーザー向けのどちらか一方を選びます。会社全体に付与するときは「会社」、個人に付与するときは「ユーザー」を指定してください。2つ同時には選択しません。")
     expect(page_text).not_to include("company_id and user_id cannot both be set")
     expect(select_placeholder("document_permission[company_id]")).to eq("会社向けに付与する場合に選択")
     expect(select_placeholder("document_permission[user_id]")).to eq("ユーザー向けに付与する場合に選択")

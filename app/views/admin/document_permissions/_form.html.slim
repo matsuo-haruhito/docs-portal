@@ -14,27 +14,27 @@
       label: "文書名",
       placeholder: "文書を選択",
       wrapper_html: { style: "grid-column: 1 / -1;" }
-    div style="grid-column: 1 / -1;"
-      p.muted style="margin-bottom: 0.25rem;" 適用対象は、会社向けかユーザー向けのどちらか一方を選びます。
-      p.muted style="margin-top: 0;" 会社全体に付与するときは「会社」を、個人に付与するときは「ユーザー」を指定してください。2つ同時には選択しません。
-    = form.rfk_select :company_id,
-      collection: document_permission_form_company_options(@companies),
-      wrapper: true,
-      label: "会社",
-      allow_clear: true,
-      placeholder: "会社向けに付与する場合に選択"
-    = form.rfk_select :user_id,
-      collection: document_permission_form_user_options(@users),
-      wrapper: true,
-      label: "ユーザー",
-      allow_clear: true,
-      placeholder: "ユーザー向けに付与する場合に選択"
+    .form-section style="grid-column: 1 / -1;"
+      h3 style="margin-bottom: 0.25rem;" 適用対象
+      p.muted style="margin-top: 0; margin-bottom: 0.75rem;" 会社向けかユーザー向けのどちらか一方を選びます。会社全体に付与するときは「会社」、個人に付与するときは「ユーザー」を指定してください。2つ同時には選択しません。
+      .form-grid
+        = form.rfk_select :company_id,
+          collection: document_permission_form_company_options(@companies),
+          wrapper: true,
+          label: "会社",
+          allow_clear: true,
+          placeholder: "会社向けに付与する場合に選択"
+        = form.rfk_select :user_id,
+          collection: document_permission_form_user_options(@users),
+          wrapper: true,
+          label: "ユーザー",
+          allow_clear: true,
+          placeholder: "ユーザー向けに付与する場合に選択"
     = form.rfk_select :access_level,
       collection: enum_options_for("document_permissions.access_level", DocumentPermission.access_levels.keys),
       wrapper: true,
       label: "権限"
 
-  p.muted 会社単位かユーザー単位のどちらか一方を指定してください。
   p.actions
     = form.submit "保存", class: "button"
     - if document_permission.persisted?
