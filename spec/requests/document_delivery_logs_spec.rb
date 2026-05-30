@@ -191,6 +191,49 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(page_text).not_to include(own_sent.to_addresses)
   end
 
+  it "searches delivery logs by project code while preserving status and delivery type filters" do
+    other_project = create(:project, code: "ARCH", name: "Archive Project")
+    other_document = create(:document, project: other_project, title: "Archive Manual")
+    matching_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :failed, delivery_type: :portal_link, to_addresses: "project-code@example.com")
+    non_matching_log = create(:document_delivery_log, project: other_project, document: other_document, sender: external_user, status: :failed, delivery_type: :portal_link, to_addresses: "archive@example.com")
+    wrong_status_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "draft-code@example.com")
+
+    sign_in_as(internal_user)
+
+    get document_delivery_logs_path, params: { q: "dlv1", status: :failed, delivery_type: :portal_link }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(matching_log.to_addresses)
+    expect(page_text).not_to include(non_matching_log.to_addresses)
+    expect(page_text).not_to include(wrong_status_log.to_addresses)
+    expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(q: "dlv1", status: :draft, delivery_type: :portal_link))
+    expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(q: "dlv1", status: :failed))
+    expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(status: :failed, delivery_type: :portal_link))
+  end
+
+  it "keeps external delivery log search limited to the current sender" do
+    other_external_user = create(:user, :external, company:)
+    own_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "client@example.com")
+    other_log = create(:document_delivery_log, project:, document:, sender: other_external_user, status: :draft, delivery_type: :portal_link, to_addresses: "client-secret@example.com")
+
+    sign_in_as(external_user)
+
+    get document_delivery_logs_path, params: { q: "client" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(own_log.to_addresses)
+    expect(page_text).not_to include(other_log.to_addresses)
+  end
+
+  it "shows a search-specific empty state" do
+    sign_in_as(internal_user)
+
+    get document_delivery_logs_path, params: { q: "missing recipient" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索条件に一致する送付履歴はありません。")
+  end
+
   it "preserves filtered list context in the detail back link" do
     own_draft = create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "draft@example.com")
     own_sent = create(:document_delivery_log, project:, document:, sender: external_user, status: :sent, delivery_type: :attachment, to_addresses: "sent@example.com")

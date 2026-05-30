@@ -13,17 +13,19 @@ class DocumentDeliveryLogsController < BaseController
 
     @status_filter = normalized_status_filter
     @delivery_type_filter = normalized_delivery_type_filter
-    @status_summary_counts = STATUS_FILTER_LABELS.keys.index_with { |status| base_scope.public_send(status).count }
+    @query = normalized_query
+    searchable_scope = filter_by_query(base_scope)
+    @status_summary_counts = STATUS_FILTER_LABELS.keys.index_with { |status| searchable_scope.public_send(status).count }
 
-    status_filter_scope = @delivery_type_filter.present? ? base_scope.public_send(@delivery_type_filter) : base_scope
+    status_filter_scope = @delivery_type_filter.present? ? searchable_scope.public_send(@delivery_type_filter) : searchable_scope
     @status_filter_counts = STATUS_FILTER_LABELS.keys.index_with { |status| status_filter_scope.public_send(status).count }
 
-    delivery_type_filter_scope = @status_filter.present? ? base_scope.public_send(@status_filter) : base_scope
+    delivery_type_filter_scope = @status_filter.present? ? searchable_scope.public_send(@status_filter) : searchable_scope
     @delivery_type_counts = DocumentDeliveryLog.delivery_types.keys.index_with do |delivery_type|
       delivery_type_filter_scope.public_send(delivery_type).count
     end
 
-    scoped_scope = base_scope
+    scoped_scope = searchable_scope
     scoped_scope = scoped_scope.public_send(@status_filter) if @status_filter.present?
     scoped_scope = scoped_scope.public_send(@delivery_type_filter) if @delivery_type_filter.present?
     @delivery_logs = scoped_scope.includes(:project, :document, :document_set, :sender).recent_first
@@ -153,6 +155,20 @@ class DocumentDeliveryLogsController < BaseController
 
   def normalized_delivery_type_filter
     params[:delivery_type].presence_in(DocumentDeliveryLog.delivery_types.keys)
+  end
+
+  def normalized_query
+    params[:q].to_s.strip.presence
+  end
+
+  def filter_by_query(scope)
+    return scope if @query.blank?
+
+    query = "%#{ActiveRecord::Base.sanitize_sql_like(@query.downcase)}%"
+    scope.joins(:project).where(
+      "LOWER(projects.name) LIKE :query OR LOWER(projects.code) LIKE :query OR LOWER(document_delivery_logs.to_addresses) LIKE :query",
+      query:
+    )
   end
 
   def safe_return_to_path(fallback)
