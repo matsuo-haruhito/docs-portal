@@ -65,11 +65,13 @@ h1 文書マスタ
       th data-rails-table-preferences-column-key="document_kind" 種別
       th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
       th data-rails-table-preferences-column-key="status" 状態
+      th data-rails-table-preferences-column-key="latest_version" 最新版/HTML
       th data-rails-table-preferences-column-key="retention_until" 保管期限
       th data-rails-table-preferences-column-key="discard_candidate_at" 廃棄候補
       th data-rails-table-preferences-column-key="actions"
   tbody
     - @documents.each do |document|
+      - latest_version = document.latest_version
       tr
         td data-rails-table-preferences-column-key="project"
           div = document.project.name
@@ -88,6 +90,19 @@ h1 文書マスタ
             span.muted = "実行者: #{document.archived_by_user&.name || '-'}"
           - else
             span.badge 有効
+        td data-rails-table-preferences-column-key="latest_version"
+          - if latest_version
+            span.badge = document_version_label(latest_version)
+            br
+            span.muted = document_version_status_label(latest_version)
+            br
+            span.muted = admin_document_latest_version_publication_label(latest_version)
+            br
+            span.muted = admin_document_latest_version_preview_label(latest_version)
+          - else
+            span.muted 最新版なし
+            br
+            span.muted 公開版がまだ選択されていません
         td data-rails-table-preferences-column-key="retention_until" = document.retention_until ? l(document.retention_until) : "-"
         td data-rails-table-preferences-column-key="discard_candidate_at" = document.discard_candidate_at ? l(document.discard_candidate_at) : "-"
         td.actions data-rails-table-preferences-column-key="actions"
