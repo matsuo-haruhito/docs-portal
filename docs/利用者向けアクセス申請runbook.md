@@ -44,6 +44,8 @@ dashboard とのつながり:
 
 検索条件がある 0 件のときは `検索条件に一致するアクセス申請はありません。` と表示し、まだ 1 件も申請していない通常の空一覧とは区別します。
 
+status filter だけを選んで 0 件のときは、`申請中のアクセス申請はありません。` のように選択中の状態名付きで表示されます。
+
 ### 対象
 
 - `Project` `Document` `DocumentFile` のどれに対する申請かを先頭で見分ける
@@ -91,7 +93,9 @@ dashboard とのつながり:
 ## 4. empty state の読み方
 
 - `送信済みのアクセス申請はありません。` は、current user がまだ 1 件も申請していない状態を示す
+- `申請中のアクセス申請はありません。` のような状態名付きの文言は、status filter に該当する申請だけが 0 件の状態を示す
 - `検索条件に一致するアクセス申請はありません。` は、current user の申請はあるかもしれないが、検索語と status filter に一致する行がない状態を示す
+- status filter 後 0 件の empty state では `すべての申請を見る` から filter を外して全件一覧へ戻れる
 - dashboard の `保留中のアクセス申請はありません。` は、current user に pending の申請がない状態を示す
 - pending の summary card 件数が 0 でも、この一覧には approved / rejected / cancelled の過去申請が残りうる
 - 一覧が空なら、まず「まだ送っていない」のか「検索や status filter で絞り込まれているだけか」を切り分ける
