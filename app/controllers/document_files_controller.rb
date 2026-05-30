@@ -128,6 +128,8 @@ class DocumentFilesController < BaseController
   end
 
   def prepare_preview_for_template!(file, viewer_plan:, disposition:, template:)
+    @viewer_plan = viewer_plan
+
     case template
     when :show_csv_preview
       prepare_csv_preview!(file, disposition:)
