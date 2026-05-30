@@ -49,10 +49,9 @@ h1 Webhook
   h2 最近の送信履歴
   - if @recent_deliveries_any
     - if failed_delivery_count.positive?
-      p.muted = "直近の送信履歴に失敗が#{failed_delivery_count}件あります。失敗のみで絞り込み、HTTPステータスとエラー内容を確認してください。"
+      p.muted = "直近の送信履歴に失敗が#{failed_delivery_count}件あります。失敗した送信は、現在のWebhook設定で1件ずつ手動再送できます。受信先側の重複処理に注意してください。"
     - else
       p.muted 直近の送信履歴に失敗はありません。成功/失敗、HTTPステータス、エラー内容をここで確認できます。
-    p.muted 失敗時の再送は送信履歴をもとに個別運用で判断します。
     p.muted
       | 表示:
       - webhook_delivery_status_filter_options.each do |value, label|
@@ -78,6 +77,7 @@ h1 Webhook
         th data-rails-table-preferences-column-key="status" ステータス
         th data-rails-table-preferences-column-key="response_status" HTTP
         th data-rails-table-preferences-column-key="error_message" エラー
+        th data-rails-table-preferences-column-key="actions"
     tbody
       - @recent_deliveries.each do |delivery|
         tr
@@ -88,3 +88,8 @@ h1 Webhook
             span.badge = webhook_delivery_status_label(delivery)
           td data-rails-table-preferences-column-key="response_status" = delivery.response_status || "-"
           td data-rails-table-preferences-column-key="error_message" = delivery.error_message.presence || "-"
+          td.actions data-rails-table-preferences-column-key="actions"
+            - if delivery.retryable?
+              = button_to "再送", retry_dispatch_admin_webhook_delivery_path(delivery.public_id), method: :post, class: "button secondary", form: { data: { turbo_confirm: "このWebhook送信を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。" } }
+            - else
+              span.muted 再送不可
