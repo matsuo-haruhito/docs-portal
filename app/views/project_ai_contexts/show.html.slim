@@ -24,8 +24,8 @@ p
     li compact: summary と文書メタデータ中心で、AI に渡す概要を軽く確認できます。
     li full: compact の内容に加えて本文テキストを含め、詳細な文脈を渡せます。
   p.actions
-    = link_to "compact に切り替え", project_ai_context_path(@project, mode: :compact), class: "button secondary"
-    = link_to "full に切り替え", project_ai_context_path(@project, mode: :full), class: "button secondary"
+    = link_to "compact に切り替え", project_ai_context_path(@project, @scoped_link_params.merge(mode: :compact)), class: "button secondary"
+    = link_to "full に切り替え", project_ai_context_path(@project, @scoped_link_params.merge(mode: :full)), class: "button secondary"
 
 .card
   h2 Export
@@ -34,8 +34,31 @@ p
     = current_mode_name
     | ）で出力します。文書スコープと権限フィルタは画面下の一覧と同じです。
   p.actions
-    = link_to "JSON を出力", project_ai_context_path(@project, mode: @mode, format: :json), class: "button secondary"
-    = link_to "Markdown を出力", project_ai_context_path(@project, mode: @mode, format: :md), class: "button secondary"
+    = link_to "JSON を出力", project_ai_context_path(@project, @scoped_link_params.merge(mode: @mode, format: :json)), class: "button secondary"
+    = link_to "Markdown を出力", project_ai_context_path(@project, @scoped_link_params.merge(mode: @mode, format: :md)), class: "button secondary"
+
+.card
+  h2 対象文書を絞り込む
+  p.muted 選択した文書だけで preview と export を更新します。未選択の状態では閲覧可能な文書全体を対象にします。
+  - if @selectable_documents.any?
+    = form_with url: project_ai_context_path(@project), method: :get, local: true do
+      = hidden_field_tag :mode, @mode
+      fieldset.filter-fieldset
+        legend Export対象
+        - @selectable_documents.each do |document|
+          - checked = @requested_document_ids.empty? || @requested_document_ids.include?(document.id)
+          label.check-field
+            = check_box_tag "document_ids[]", document.id, checked, id: "ai_context_document_ids_#{document.id}"
+            span
+              = document.title
+              span.muted
+                |  / 
+                = document.slug
+      p.actions.form-actions
+        = submit_tag "選択した文書でpreview", class: "button"
+        = link_to "すべての文書に戻す", project_ai_context_path(@project, mode: @mode), class: "button secondary"
+  - else
+    p.muted 選択できる閲覧可能な文書はありません。
 
 .card
   h2 含まれる文書（export対象）
