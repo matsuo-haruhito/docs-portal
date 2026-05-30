@@ -58,10 +58,9 @@
 
 ## 多言語 / localization
 
-- 多言語文書の first slice は [文書ライフサイクルと公開](./specs/文書ライフサイクルと公開.md) の「多言語文書」節を正本にし、`Document` 単位の `language` と `Document` 間の manual translation relation を候補正本として扱う
-- `latest_version` / `published` / `archived` / 権限は翻訳間で共有せず、各 `Document` の既存契約を維持する
-- 初期表示は viewer / 文書一覧で翻訳候補の存在を示す範囲に閉じ、検索 index 多言語最適化、コメント翻訳、Docusaurus i18n 全面移行には広げない
-- 後続実装は DB migration + admin manual relation + 最小表示確認を 1 lane として切り、DocumentVersion 単位の language や版ごとの翻訳対応は別 issue で再評価する
+- 多言語文書の first slice は [文書ライフサイクルと公開](./specs/文書ライフサイクルと公開.md) の「多言語文書」節を正本にし、具体 feature queue は `#1162` で扱う
+- ToDo 側には `Document` 単位の `language`、manual translation relation、翻訳間で権限や公開状態を共有しない境界の詳細要件を重複して残さない
+- `#1162` の範囲を超える Docusaurus i18n 全面移行、機械翻訳、DocumentVersion 単位の language、版ごとの翻訳差分、コメント翻訳は、実装痛点が具体化した時点で別 issue として再評価する
 
 ## Job / 運用自動化
 
