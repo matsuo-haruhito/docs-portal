@@ -59,7 +59,7 @@ RSpec.describe "Dashboard", type: :request do
     get dashboard_path
 
     expect(response).to have_http_status(:ok)
-    expect(heading_texts).to include("ダッシュボード", "最近見た文書", "最近更新された文書")
+    expect(heading_texts).to include("ダッシュボード", "保留中のアクセス申請", "最近見た文書", "最近更新された文書")
     expect(metric_card_texts.any? { _1.include?("閲覧可能案件") }).to be(true)
     expect(page_text).to include("Visible Project", "Visible Manual", "お気に入り", "後で読む")
     expect(metric_cta_links.map(&:text)).to include(
@@ -87,6 +87,7 @@ RSpec.describe "Dashboard", type: :request do
     expect(response).to have_http_status(:ok)
     expect(heading_texts).to include(
       "ダッシュボード",
+      "保留中のアクセス申請",
       "案件",
       "お気に入り",
       "後で読む",
@@ -98,12 +99,14 @@ RSpec.describe "Dashboard", type: :request do
     expect(metric_card_for("保存ショートカット")).to include("0", "ショートカット一覧へ")
     expect(metric_card_for("保留中の申請")).to include("0", "申請一覧へ")
     expect(page_text).to include(
+      "保留中のアクセス申請はありません。過去の申請は申請一覧で確認できます。",
       "参加中の案件は案件一覧で確認できます。",
       "詳細画面からお気に入りに追加できます。",
       "詳細画面から後で読むに追加できます。",
       "文書一覧から読み始めると、直近の閲覧履歴がここに表示されます。",
       "閲覧可能な文書は文書一覧から確認できます。"
     )
+    expect(dashboard_section_links("保留中のアクセス申請").map { |link| [link.text.squish, link["href"]] }).to include(["申請一覧で詳しく見る", access_requests_path])
     expect(dashboard_section_links("案件").map { |link| [link.text.squish, link["href"]] }).to include(["案件一覧へ", projects_path])
 
     ["お気に入り", "後で読む", "最近見た文書", "最近更新された文書"].each do |section_title|
@@ -134,6 +137,38 @@ RSpec.describe "Dashboard", type: :request do
     expect(metric_cta_links.map { |link| link["href"] }).to include(access_requests_path)
     expect(metric_card_texts.any? { _1.include?("保留中の確認依頼") }).to be(false)
     expect(metric_cta_links.map { |link| link["href"] }).not_to include(document_approval_requests_path)
+  end
+
+  it "shows recent pending access request summaries for the signed-in user only" do
+    pending_project = create(:project, name: "Pending Project", code: "PND")
+    older_pending_project = create(:project, name: "Older Pending Project", code: "OLD")
+    other_user_project = create(:project, name: "Other User Project", code: "OTH")
+    approved_project = create(:project, name: "Approved Project", code: "APR")
+    other_user = create(:user, :external, company:)
+    approver = create(:user, :internal)
+
+    create(:access_request, requester: user, requestable: older_pending_project, requested_access_level: :view, created_at: 2.days.ago)
+    create(:access_request, requester: user, requestable: pending_project, requested_access_level: :download, created_at: 1.hour.ago)
+    create(:access_request, requester: other_user, requestable: other_user_project, requested_access_level: :manage)
+    create(:access_request, requester: user, requestable: approved_project, status: :approved, approver:, approved_at: 1.day.ago)
+
+    sign_in_as(user)
+    get dashboard_path
+
+    expect(response).to have_http_status(:ok)
+    expect(metric_card_for("保留中の申請")).to include("2", "申請一覧へ")
+    expect(page_text).to include(
+      "保留中のアクセス申請",
+      "最近の申請を確認できます。",
+      "Pending Project",
+      "Older Pending Project",
+      "ダウンロード",
+      "閲覧",
+      "申請中",
+      "申請一覧で詳しく見る"
+    )
+    expect(page_text).not_to include("Other User Project", "Approved Project")
+    expect(dashboard_section_links("保留中のアクセス申請").map { |link| link["href"] }).to include(access_requests_path)
   end
 
   it "declares root stimulus controllers in the full-page layout markup" do
