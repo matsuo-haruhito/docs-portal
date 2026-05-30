@@ -53,7 +53,7 @@ RSpec.describe "Admin documents index", type: :request do
       node["data-rails-table-preferences-column-key"]
     end
 
-    expect(header_keys).to eq(%w[project title slug category document_kind visibility_policy status retention_until discard_candidate_at actions])
+    expect(header_keys).to eq(%w[project title slug category document_kind visibility_policy status latest_version retention_until discard_candidate_at actions])
 
     active_row = parsed_html.css("tbody tr").find { |row| row.text.include?("運用手順") }
     archived_row = parsed_html.css("tbody tr").find { |row| row.text.include?("旧仕様") }
@@ -64,6 +64,7 @@ RSpec.describe "Admin documents index", type: :request do
     expect(active_row.at_css('td[data-rails-table-preferences-column-key="project"]').text).to include("Alpha Project")
     expect(active_row.at_css('td[data-rails-table-preferences-column-key="title"]').to_html).to include(project_document_path(project, active_document.slug))
     expect(active_row.at_css('td[data-rails-table-preferences-column-key="status"]').text).to include("有効")
+    expect(active_row.at_css('td[data-rails-table-preferences-column-key="latest_version"]').text).to include("最新版なし")
     expect(active_row.at_css('td[data-rails-table-preferences-column-key="retention_until"]').text).to include("2026")
 
     active_actions = active_row.at_css('td[data-rails-table-preferences-column-key="actions"]')
