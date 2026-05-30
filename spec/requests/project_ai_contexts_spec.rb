@@ -115,15 +115,25 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(json.fetch("documents").map { _1.fetch("public_id") }).to contain_exactly(selected.public_id, other_visible.public_id)
   end
 
-  it "records access logs for html and export responses" do
-    create_exportable_document(title: "Visible Manual", slug: "visible", body: "Visible body text.")
+  it "records access logs for html and export responses with scope metadata" do
+    visible = create_exportable_document(title: "Visible Manual", slug: "visible", body: "Visible body text.")
+    other_visible = create_exportable_document(title: "Other Manual", slug: "other", body: "Other body text.")
+    internal = create_exportable_document(title: "Internal Note", slug: "internal", body: "Secret body text.", visibility_policy: :internal_only)
 
     sign_in_as(external_user)
 
     expect do
       get project_ai_context_path(project)
-      get project_ai_context_path(project, format: :json)
-      get project_ai_context_path(project, format: :md)
+      get project_ai_context_path(project, format: :json, document_ids: [visible.id, internal.id])
+      get project_ai_context_path(project, format: :md, mode: :full, document_ids: [visible.id, other_visible.id])
     end.to change(AccessLog.where(target_type: "ai_context"), :count).by(3)
+
+    logs = AccessLog.where(target_type: "ai_context").order(:id).last(3)
+    expect(logs.map(&:action_type)).to eq(%w[view download download])
+    expect(logs.map(&:target_name)).to eq([
+      "mode=compact;scope=all;selected_count=0;exported_count=2",
+      "mode=compact;scope=selected;selected_count=2;exported_count=1",
+      "mode=full;scope=selected;selected_count=2;exported_count=2"
+    ])
   end
 end
