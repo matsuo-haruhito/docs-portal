@@ -22,7 +22,25 @@ class Admin::AccessLogsController < Admin::BaseController
     scope = scope.where(company_id: @filters[:company_id]) if @filters[:company_id].present?
     scope = scope.where(user_id: @filters[:user_id]) if @filters[:user_id].present?
     scope = scope.where(document_id: document_scope.select(:id)) if @filters[:document_q].present?
+    scope = apply_accessed_at_filters(scope)
     scope
+  end
+
+  def apply_accessed_at_filters(scope)
+    from_date = parse_filter_date(@filters[:from])
+    to_date = parse_filter_date(@filters[:to])
+
+    scope = scope.where("accessed_at >= ?", from_date.beginning_of_day) if from_date
+    scope = scope.where("accessed_at <= ?", to_date.end_of_day) if to_date
+    scope
+  end
+
+  def parse_filter_date(value)
+    return if value.blank?
+
+    Date.iso8601(value.to_s)
+  rescue ArgumentError
+    nil
   end
 
   def document_scope
@@ -31,6 +49,6 @@ class Admin::AccessLogsController < Admin::BaseController
   end
 
   def filter_params
-    params.permit(:action_type, :target_type, :project_id, :company_id, :user_id, :document_q)
+    params.permit(:action_type, :target_type, :project_id, :company_id, :user_id, :document_q, :from, :to)
   end
 end
