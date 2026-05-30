@@ -1,5 +1,3 @@
-require "selenium/webdriver"
-
 module HeadlessChromeDriverHelper
   CHROME_ARGUMENTS = %w[
     --no-sandbox
@@ -8,10 +6,9 @@ module HeadlessChromeDriverHelper
   ].freeze
 
   def driven_by_headless_chrome(screen_size: [1400, 1400])
-    options = Selenium::WebDriver::Chrome::Options.new
-    CHROME_ARGUMENTS.each { |argument| options.add_argument(argument) }
-
-    driven_by(:selenium, using: :headless_chrome, screen_size:, options:)
+    driven_by(:selenium, using: :headless_chrome, screen_size:) do |options|
+      CHROME_ARGUMENTS.each { |argument| options.add_argument(argument) }
+    end
   end
 end
 
