@@ -3,6 +3,9 @@ class DocumentDeliveryLog < ApplicationRecord
 
   public_id_prefix "ddl"
 
+  EMAIL_ADDRESS_PATTERN = /\A[^@\s]+@[^@\s]+\z/.freeze
+  ADDRESS_FIELDS = %i[to_addresses cc_addresses bcc_addresses].freeze
+
   belongs_to :project
   belongs_to :document, optional: true
   belongs_to :document_set, optional: true
@@ -24,6 +27,7 @@ class DocumentDeliveryLog < ApplicationRecord
   validates :to_addresses, :subject, :body, presence: true
   validates :delivery_type, :status, presence: true
   validate :document_or_set_presence
+  validate :address_format
 
   before_validation :normalize_address_fields
   scope :recent_first, -> { order(created_at: :desc, id: :desc) }
@@ -50,6 +54,14 @@ class DocumentDeliveryLog < ApplicationRecord
     return if document.present? || document_set.present?
 
     errors.add(:base, "document or document_set must be present")
+  end
+
+  def address_format
+    ADDRESS_FIELDS.each do |field|
+      parse_addresses(public_send(field)).each do |address|
+        errors.add(field, :invalid) unless EMAIL_ADDRESS_PATTERN.match?(address)
+      end
+    end
   end
 
   def normalize_address_fields
