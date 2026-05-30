@@ -4,7 +4,7 @@
 - comment_target_version = local_assigns.fetch(:comment_target_version) { @viewer_version || @latest_viewable_version }
 - has_review_comments = current_user.internal? && @review_comments.any?
 - has_question_threads = @question_threads.any?
-- unresolved_question_count = @question_threads.count { !_1.resolved? }
+- unresolved_question_count = @question_threads.count(&:open?)
 - unresolved_review_count = current_user.internal? ? @review_comments.count { !_1.resolved? } : 0
 - has_unresolved_questions = unresolved_question_count.positive?
 - has_unresolved_reviews = unresolved_review_count.positive?
