@@ -1,4 +1,6 @@
 - page_title "#{@project.name} AI context"
+- current_mode_name = @mode.to_s
+- current_mode_description = current_mode_name == "full" ? "本文まで含めて出力します。" : "summary と文書メタデータ中心で出力します。"
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: nil
 
@@ -8,20 +10,36 @@ p.muted
 h1 AI向けコンテキスト
 
 p
-  | mode:
-  = @mode
-  |  / exported:
+  | export対象:
   = @hash.dig(:summary, :document_count)
   |  件
 
-p.actions
-  = link_to "compact", project_ai_context_path(@project, mode: :compact), class: "button secondary"
-  = link_to "full", project_ai_context_path(@project, mode: :full), class: "button secondary"
-  = link_to "JSON", project_ai_context_path(@project, mode: @mode, format: :json), class: "button secondary"
-  = link_to "Markdown", project_ai_context_path(@project, mode: @mode, format: :md), class: "button secondary"
+.card
+  h2 出力モード
+  p
+    | 現在の mode:
+    strong = " #{current_mode_name}"
+  p.muted = current_mode_description
+  ul
+    li compact: summary と文書メタデータ中心で、AI に渡す概要を軽く確認できます。
+    li full: compact の内容に加えて本文テキストを含め、詳細な文脈を渡せます。
+  p.actions
+    = link_to "compact に切り替え", project_ai_context_path(@project, mode: :compact), class: "button secondary"
+    = link_to "full に切り替え", project_ai_context_path(@project, mode: :full), class: "button secondary"
 
 .card
-  h2 含まれる文書
+  h2 Export
+  p.muted
+    | JSON / Markdown は現在の mode（
+    = current_mode_name
+    | ）で出力します。文書スコープと権限フィルタは画面下の一覧と同じです。
+  p.actions
+    = link_to "JSON を出力", project_ai_context_path(@project, mode: @mode, format: :json), class: "button secondary"
+    = link_to "Markdown を出力", project_ai_context_path(@project, mode: @mode, format: :md), class: "button secondary"
+
+.card
+  h2 含まれる文書（export対象）
+  p.muted この一覧の文書だけが現在の mode で export されます。
   - if @plan.included_items.any?
     = table_tag do
       thead
@@ -29,7 +47,7 @@ p.actions
           th タイトル
           th slug
           th version
-          th reason
+          th 含まれる理由
       tbody
         - @plan.included_items.each do |item|
           tr
@@ -38,17 +56,18 @@ p.actions
             td = item.document_version&.version_label || "-"
             td = item.reason
   - else
-    p.muted 出力対象の文書はありません。
+    p.muted 現在の権限で export 対象になる文書はありません。
 
 .card
-  h2 除外された文書
+  h2 除外された文書（権限・公開状態の確認）
+  p.muted export から外れた文書と理由を確認できます。権限フィルタ自体はこの画面では変更できません。
   - if @plan.excluded_items.any?
     = table_tag do
       thead
         tr
           th タイトル
           th slug
-          th reason
+          th 除外理由
       tbody
         - @plan.excluded_items.each do |item|
           tr
@@ -56,6 +75,6 @@ p.actions
             td = item.document.slug
             td = item.reason
   - else
-    p.muted 除外文書はありません。
+    p.muted 権限や公開状態により除外された文書はありません。
 
 p = link_to "案件詳細へ戻る", project_path(@project)
