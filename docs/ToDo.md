@@ -16,8 +16,8 @@
 ## UI / UX
 
 - dashboard / navbar / viewer shell / admin model browser の基礎導線は実装済み
-- dashboard の internal user 向け確認依頼導線の重複感整理は `#1072` で扱う
-- 文書利用状況の絞り込み 0 件時 empty state と表示設定 editor の優先度整理は `#1077` で扱う
+- dashboard の internal user 向け確認依頼導線は [ダッシュボードと文書ショートカット・確認依頼の使い分け](./ダッシュボードと文書ショートカット・確認依頼の使い分け.md) を正本にする。#1072 の重複感整理は completed のため、ここには追加で必要になった dashboard UX 論点だけを残す
+- 文書利用状況の絞り込み 0 件時 empty state と表示設定 editor の優先度整理は #1077 で completed。current 運用は [文書利用状況運用runbook](./文書利用状況運用runbook.md) を正本にする
 - 社内 / 社外 / 管理者ごとの導線差分は、必要になったタイミングで画面群ごとに個別 issue へ分けて扱う
 - 総合 UI/UX 見直しは包括 issue として残さず、必要になった時点で viewer / dashboard / navigation / admin UX など具体 issue に分けて扱う
 - 本文表示の改善は viewer 単位の issue を優先し、全画面の大規模 redesign は後回しにする
@@ -28,7 +28,7 @@
 
 ## latest_version / バージョン管理
 
-- `version_label` は semantic version として解釈・sort せず、任意の表示用ラベルとして扱う。`2026-Q2` / `review-2026-05` / `client-a-draft` のような label を importer から受けても opaque label として保存する current contract は `#1050` で spec 固定する
+- `version_label` は semantic version として解釈・sort せず、任意の表示用ラベルとして扱う。`2026-Q2` / `review-2026-05` / `client-a-draft` のような label を importer から受けても opaque label として保存する current contract は #1050 で整理済み。sort や latest 判定の扱いを変える場合は #1112 または別の具体 Issue に切る
 - `latest_version` は current では published version の作成・更新時に promoted される。管理画面/API/import manifest で明示指定できるようにするかは `#1112` で扱う。ToDo 側では手動切り替えの権限・監査・UI 要件を #1112 の判断論点として参照する
 - 採番ルールを変更した場合に、古い DocumentVersion を整理・削除・archive する運用を検討する。未起票で残す理由: retention 方針と復元要件の判断が必要
 - importer は latest version 上書き、手動アップロードは `manual-*` draft 候補を追加して review で `latest_version` を切り替える current 差分を、どこまで統一するか再判断する。手動アップロード契約の first slice は `#758` で扱う
@@ -36,20 +36,20 @@
 ## archived / 復元
 
 - Document 単位 archive / restore は admin 管理画面で実装済み
-- 保管期限 / 廃棄候補の first slice は `#1054` で current 文書マスタの filter・一覧列・手動 archive / restore 判断として明文化する
+- 保管期限 / 廃棄候補の current 文書マスタ filter・一覧列・手動 archive / restore 判断は [文書マスタ運用runbook](./文書マスタ運用runbook.md) を正本にする。#1054 の first slice は completed のため、ここには current support 外の後続判断だけを残す
 - bulk archive / bulk restore / discard candidate marking、自動通知、自動削除、非可逆 discard、期限間近の新閾値定義は後続判断として残す。未起票で残す理由: retention policy、通知先、復元期限、不可逆操作の承認要件を分けて判断する必要がある
 
 ## Import / GitHub Actions
 
 - current の manifest 生成手順と `build-docs` workflow の確認順は [build-docs workflow確認runbook](./build-docs%20workflow確認runbook.md) を正本とし、ここでは未完了論点だけを残す
-- artifact の永続保存方式と再取り込み replay 方針は `#1039` で扱う
+- artifact の永続保存方式と再取り込み replay 方針の first slice は #1039 で completed。後続で実装する場合は、保存期間・アクセス制御・replay 対象の確定範囲を個別 issue に切る
 - `latest_version` の明示切り替えや別ルール更新を入れる場合は、現行の created_at 基準との差分を `#1112` の latest_version 明示切り替え contract と合わせて扱う
 
 ## Docusaurus / seed
 
-- seed 用 Docusaurus build で id front matter を自動付与する処理の安定化は `#1040` で扱う
-- seed 用 Markdown build 失敗時のログ改善は `#1022` / PR `#1036` で扱う。current runtime 前提は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) を正本にする
-- embedded viewer 前提の iframe 高さ追従 first slice は `#1020` で扱う。本文内検索 UI は、browser native search で足りない痛点が具体化した時点で別 issue に分ける
+- seed 用 Docusaurus build で id front matter を自動付与する処理の安定化は #1040 で completed。current runtime 前提は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) を正本にする
+- seed 用 Markdown build 失敗時のログ改善は #1022 / PR #1036 で completed。current runtime 前提は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) を正本にする
+- embedded viewer 前提の iframe 高さ追従 first slice は #1020 で completed。本文内検索 UI は、browser native search で足りない痛点が具体化した時点で別 issue に分ける
 
 ## Data Classification
 
