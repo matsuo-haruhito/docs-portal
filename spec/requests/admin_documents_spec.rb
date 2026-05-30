@@ -102,6 +102,39 @@ RSpec.describe "Admin documents", type: :request do
     expect(row_column_texts("project")).to eq(["Operations Portal DOCS-001"])
   end
 
+  it "shows lifecycle filter guidance only when retention or discard filters are active" do
+    create(:document, title: "Regular Document")
+
+    sign_in_as(admin_user)
+
+    get admin_documents_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).not_to include("保管期限・廃棄候補の絞り込み中です")
+    expect(page_text).not_to include("行単位で編集・アーカイブ・復元")
+
+    get admin_documents_path, params: { retention: "due" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("保管期限・廃棄候補の絞り込み中です")
+    expect(page_text).to include("状態、保管期限、廃棄候補、公開側文書を確認")
+    expect(page_text).to include("必要な場合だけ行単位で編集・アーカイブ・復元")
+  end
+
+  it "keeps the lifecycle empty result copy as target-none guidance" do
+    create(:document, title: "Future Retention", retention_until: 1.month.from_now)
+
+    sign_in_as(admin_user)
+
+    get admin_documents_path, params: { discard: "due" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 0件")
+    expect(page_text).to include("0件の場合は現在の条件に合う対象がない状態です")
+    expect(page_text).not_to include("自動削除")
+    expect(page_text).not_to include("非可逆")
+  end
+
   it "shows latest version and preview state without mixing them with archive status" do
     failed_preview_document = create(:document, title: "Failed Preview Document", slug: "failed-preview")
     create(
