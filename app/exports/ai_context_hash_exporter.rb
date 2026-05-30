@@ -26,7 +26,7 @@ class AiContextHashExporter
 
   def documents
     @documents ||= (scope || project.documents)
-      .includes(:project, :latest_version)
+      .includes(:project, latest_version: :document_files)
       .select { _1.visible_in_portal_for?(viewer) }
       .sort_by { [_1.title.to_s, _1.id] }
   end
@@ -65,7 +65,8 @@ class AiContextHashExporter
       category: document.category,
       document_kind: document.document_kind,
       visibility_policy: document.visibility_policy,
-      version: version_hash(version)
+      version: version_hash(version),
+      document_files: document_file_hashes(version)
     }
 
     full? ? base.merge(body_text: body_for(version)) : base.merge(summary: summary_for(version))
@@ -80,6 +81,21 @@ class AiContextHashExporter
       status: version.status,
       source_relative_path: version.source_relative_path
     }
+  end
+
+  def document_file_hashes(version)
+    return [] if version.blank?
+
+    version.document_files.sort_by { [_1.sort_order, _1.id] }.map do |document_file|
+      {
+        public_id: document_file.public_id,
+        file_name: document_file.file_name,
+        content_type: document_file.content_type,
+        file_size: document_file.file_size,
+        scan_status: document_file.scan_status,
+        downloadable: document_file.downloadable_by?(viewer)
+      }
+    end
   end
 
   def full?

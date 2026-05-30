@@ -9,11 +9,11 @@ RSpec.describe "Project AI contexts", type: :request do
     create(:project_membership, project:, user: external_user)
   end
 
-  def create_exportable_document(title:, slug:, body:, visibility_policy: :restricted_external)
+  def create_exportable_document(title:, slug:, body:, visibility_policy: :restricted_external, access_level: :view)
     document = create(:document, project:, title:, slug:, visibility_policy:)
     version = create(:document_version, document:, version_label: "v1", source_relative_path: "docs/#{slug}.md", search_body_text: body)
     document.update!(latest_version: version)
-    create(:document_permission, document:, company:, access_level: :view) unless visibility_policy == :internal_only
+    create(:document_permission, document:, company:, access_level:) unless visibility_policy == :internal_only
     document
   end
 
@@ -60,6 +60,81 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(response.body).to include("# Project: AI Context Project")
     expect(response.body).to include("Visible body text.")
     expect(response.body).not_to include("Secret body text.")
+  end
+
+  it "exports document file metadata without binary, signed urls, or hidden document leakage" do
+    downloadable = create_exportable_document(
+      title: "Downloadable Manual",
+      slug: "downloadable",
+      body: "Downloadable body text.",
+      access_level: :download
+    )
+    view_only = create_exportable_document(title: "View Only Manual", slug: "view-only", body: "View only body text.")
+    internal = create_exportable_document(title: "Internal Attachment Note", slug: "internal-attachment", body: "Secret body text.", visibility_policy: :internal_only)
+    downloadable_file = create(
+      :document_file,
+      document_version: downloadable.latest_version,
+      file_name: "requirements.pdf",
+      content_type: "application/pdf",
+      file_size: 12_345,
+      scan_status: :scan_clean,
+      storage_key: "spec/ai-context/requirements.pdf"
+    )
+    view_only_file = create(
+      :document_file,
+      document_version: view_only.latest_version,
+      file_name: "diagram.png",
+      content_type: "image/png",
+      file_size: 2_048,
+      scan_status: :scan_clean,
+      storage_key: "spec/ai-context/diagram.png"
+    )
+    create(
+      :document_file,
+      document_version: internal.latest_version,
+      file_name: "secret-plan.pdf",
+      content_type: "application/pdf",
+      file_size: 99,
+      scan_status: :scan_clean,
+      storage_key: "spec/ai-context/secret-plan.pdf"
+    )
+
+    sign_in_as(external_user)
+
+    get project_ai_context_path(project, format: :json, mode: :compact)
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    downloadable_json = json.fetch("documents").find { _1.fetch("public_id") == downloadable.public_id }
+    view_only_json = json.fetch("documents").find { _1.fetch("public_id") == view_only.public_id }
+    expect(downloadable_json.fetch("document_files")).to contain_exactly(
+      a_hash_including(
+        "public_id" => downloadable_file.public_id,
+        "file_name" => "requirements.pdf",
+        "content_type" => "application/pdf",
+        "file_size" => 12_345,
+        "scan_status" => "scan_clean",
+        "downloadable" => true
+      )
+    )
+    expect(view_only_json.fetch("document_files")).to contain_exactly(
+      a_hash_including(
+        "public_id" => view_only_file.public_id,
+        "file_name" => "diagram.png",
+        "content_type" => "image/png",
+        "file_size" => 2_048,
+        "scan_status" => "scan_clean",
+        "downloadable" => false
+      )
+    )
+    expect(response.body).not_to include("secret-plan.pdf", "spec/ai-context", "signed_id", "download_url")
+
+    get project_ai_context_path(project, format: :md, mode: :full)
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("text/markdown")
+    expect(response.body).to include("Attachments:")
+    expect(response.body).to include("- requirements.pdf (content_type: application/pdf, size: 12345, scan_status: scan_clean, downloadable: true)")
+    expect(response.body).to include("- diagram.png (content_type: image/png, size: 2048, scan_status: scan_clean, downloadable: false)")
+    expect(response.body).not_to include("secret-plan.pdf", "spec/ai-context", "signed_id", "download_url")
   end
 
   it "returns bad request for unsupported modes before exporting or logging access" do
