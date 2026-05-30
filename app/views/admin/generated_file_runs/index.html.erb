@@ -99,7 +99,7 @@
               <td class="px-4 py-3">
                 <div class="flex gap-2">
                   <%= link_to "詳細", admin_generated_file_run_path(run.public_id, detail_path_params), class: "rounded border px-2 py-1 text-xs" %>
-                  <%= button_to "再実行", retry_run_admin_generated_file_run_path(run.public_id), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white" %>
+                  <%= button_to "再実行", retry_run_admin_generated_file_run_path(run.public_id, detail_path_params), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white" %>
                 </div>
               </td>
             </tr>
