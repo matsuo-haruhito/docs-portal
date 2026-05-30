@@ -10,7 +10,8 @@ RSpec.describe "Admin generated file retry limit notices", type: :request do
     get admin_generated_file_runs_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("一括再実行は古い失敗分から最大100件です。")
+    expect(response.body).to include("現在の条件で再実行対象")
+    expect(response.body).to include("一括再実行は現在条件に一致する古い失敗分から最大100件です。")
   end
 
   it "shows the generated file event bulk retry limit" do

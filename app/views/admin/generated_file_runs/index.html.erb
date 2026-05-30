@@ -2,6 +2,9 @@
   detail_path_params = { return_to: request.fullpath }
   status_filter_params = request.query_parameters.except(:page, :per_page).compact_blank
   has_active_filters = @filters.compact_blank.any?
+  bulk_retry_target_count = @bulk_retry_target_count.to_i
+  bulk_retry_available = bulk_retry_target_count.positive?
+  bulk_retry_button_classes = bulk_retry_available ? "rounded bg-blue-600 px-3 py-2 text-sm text-white" : "rounded bg-gray-300 px-3 py-2 text-sm text-gray-600 cursor-not-allowed"
 %>
 
 <div class="space-y-6">
@@ -11,8 +14,13 @@
       <p class="text-sm text-gray-600">ファイルCRUDイベントから起動された生成Jobの履歴です。</p>
     </div>
     <div class="text-right">
-      <%= button_to "失敗分を一括再実行", retry_failed_admin_generated_file_runs_path(@filters.compact_blank), method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
-      <p class="mt-1 text-xs text-gray-500">一括再実行は古い失敗分から最大100件です。</p>
+      <%= button_to "失敗分を一括再実行", retry_failed_admin_generated_file_runs_path(@filters.compact_blank), method: :post, disabled: !bulk_retry_available, class: bulk_retry_button_classes %>
+      <p class="mt-1 text-xs text-gray-500">現在の条件で再実行対象: <strong><%= bulk_retry_target_count %> 件</strong></p>
+      <% if bulk_retry_available %>
+        <p class="mt-1 text-xs text-gray-500">一括再実行は現在条件に一致する古い失敗分から最大100件です。</p>
+      <% else %>
+        <p class="mt-1 text-xs text-gray-500">対象がないため一括再実行できません。</p>
+      <% end %>
     </div>
   </div>
 
