@@ -5,6 +5,7 @@
 - cancelled_count = @status_counts.fetch("cancelled", 0)
 - total_count = pending_count + approved_count + rejected_count + cancelled_count
 - current_query = @query.presence
+- status_filter_labels = { "pending" => "申請中", "approved" => "承認済み", "rejected" => "却下", "cancelled" => "取消済み" }
 
 h1 アクセス申請
 p.muted 自分が送信した申請の状態を確認できます。
@@ -66,5 +67,9 @@ p.actions
 - else
   - if @query.present?
     p.muted 検索条件に一致するアクセス申請はありません。
+  - elsif @status_filter.present?
+    p.muted = "#{status_filter_labels.fetch(@status_filter, @status_filter)}のアクセス申請はありません。"
+    p.actions
+      = link_to "すべての申請を見る", access_requests_path, class: "button secondary"
   - else
     p.muted 送信済みのアクセス申請はありません。
