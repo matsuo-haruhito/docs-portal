@@ -17,6 +17,8 @@ RUN apk update && \
     sudo \
     shared-mime-info
 
+ENV SE_CHROMEDRIVER=/usr/bin/chromedriver
+
 ARG uid
 ARG gid
 
