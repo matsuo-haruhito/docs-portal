@@ -1,0 +1,50 @@
+- page_title "Webhook送信履歴詳細"
+- delivery = @webhook_delivery
+- endpoint = delivery.webhook_endpoint
+
+h1 Webhook送信履歴詳細
+= render "admin/nav"
+
+p.actions
+  = link_to "Webhook一覧へ戻る", admin_webhook_endpoints_path
+
+.card
+  h2 概要
+  dl.definition-list
+    dt 設定
+    dd = endpoint.name
+    dt イベント
+    dd = webhook_event_type_label(delivery)
+    dt ステータス
+    dd
+      span.badge = webhook_delivery_status_label(delivery)
+    dt HTTPステータス
+    dd = delivery.response_status || "-"
+    dt 送信日時
+    dd = delivery.sent_at ? l(delivery.sent_at, format: :long) : "-"
+    dt 作成日時
+    dd = l(delivery.created_at, format: :long)
+    dt 送信先URL
+    dd = delivery.target_url
+
+.card
+  h2 失敗調査
+  dl.definition-list
+    dt エラー
+    dd = delivery.error_message.presence || "-"
+    dt レスポンス本文
+    dd
+      - if delivery.response_body.present?
+        pre = delivery.response_body
+      - else
+        span.muted "-"
+    dt リクエスト本文
+    dd.muted first slice では非表示です。secret や個人情報を含む可能性があるため、必要な場合は別途表示範囲とマスク方針を確認してください。
+
+.card
+  h2 操作
+  - if delivery.retryable?
+    p.muted この送信は現在のWebhook設定で1件だけ手動再送できます。受信先側の重複処理に注意してください。
+    = button_to "再送", retry_dispatch_admin_webhook_delivery_path(delivery.public_id), method: :post, class: "button secondary", form: { data: { turbo_confirm: "このWebhook送信を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。" } }
+  - else
+    p.muted この送信履歴は再送できません。再送できるのは失敗した送信で、Webhook設定が有効な場合だけです。
