@@ -4,8 +4,10 @@
 - comment_target_version = local_assigns.fetch(:comment_target_version) { @viewer_version || @latest_viewable_version }
 - has_review_comments = current_user.internal? && @review_comments.any?
 - has_question_threads = @question_threads.any?
-- has_unresolved_questions = @question_threads.any? { !_1.resolved? }
-- has_unresolved_reviews = current_user.internal? && @review_comments.any? { !_1.resolved? }
+- unresolved_question_count = @question_threads.count { !_1.resolved? }
+- unresolved_review_count = current_user.internal? ? @review_comments.count { !_1.resolved? } : 0
+- has_unresolved_questions = unresolved_question_count.positive?
+- has_unresolved_reviews = unresolved_review_count.positive?
 
 details class=wrapper_classes.join(" ") open=(!floating)
   summary.document-comment-workspace__fab title="文書コメント" aria-label="文書コメントを開く"
@@ -22,6 +24,17 @@ details class=wrapper_classes.join(" ") open=(!floating)
         | 件のQ&A / 
         = current_user.internal? ? @review_comments.size : 0
         | 件の確認事項
+        br
+        - if current_user.internal?
+          | 未解決: Q&A 
+          = unresolved_question_count
+          | 件 / 確認事項 
+          = unresolved_review_count
+          | 件
+        - else
+          | 未解決: Q&A 
+          = unresolved_question_count
+          | 件
 
     .document-comment-workspace__mode.card
       h3 追加する内容
@@ -93,4 +106,8 @@ details class=wrapper_classes.join(" ") open=(!floating)
         - if has_unresolved_questions || has_unresolved_reviews
           = render "documents/comment_workspace_threads", show_questions: true, show_reviews: current_user.internal?, only_unresolved: true
         - else
-          p.muted 未解決のコメントはありません。
+          p.muted
+            - if current_user.internal?
+              | 未解決のQ&A/確認事項はありません。
+            - else
+              | 未解決のQ&Aはありません。
