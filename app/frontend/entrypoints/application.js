@@ -1,4 +1,3 @@
-import "bootstrap/dist/css/bootstrap.css"
 import "./application.css"
 import "./bootstrap_overrides.css"
 import "./document_version_diff_display_mode.css"
