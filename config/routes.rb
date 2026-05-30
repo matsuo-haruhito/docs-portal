@@ -80,6 +80,7 @@ Rails.application.routes.draw do
     resources :webhook_endpoints, except: %i[show new], param: :public_id
     resources :webhook_deliveries, only: [:show], param: :public_id do
       post :retry_dispatch, on: :member
+      post :retry_failed, on: :collection
     end
     resources :access_logs, only: [:index]
     resources :access_requests, only: %i[index update], param: :public_id

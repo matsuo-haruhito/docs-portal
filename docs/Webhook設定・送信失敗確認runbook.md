@@ -11,6 +11,7 @@
 - 送信履歴は `WebhookDelivery.recent.limit(50)` の範囲で、選択した表示条件ごとに最大 50 件を新しい順に確認します。
 - 画面には `表示範囲: ...  N件中M件を表示しています` が出るため、status filter 後の総件数と表示件数を分けて確認します。
 - 送信履歴は `すべて` / `送信待ち` / `成功` / `失敗` で表示を絞り込めます。
+- `失敗` 表示中のまとめて再送は、表示中の最大 50 件のうち failed かつ endpoint が有効な delivery だけを対象にします。
 - 50 件外の履歴まで探す必要がある場合は、この画面だけで判断せず、endpoint / event type / 日付などの追加条件を決める後続 slice として扱います。
 
 ## 新規登録・編集で見る項目
@@ -57,15 +58,16 @@ current `WebhookEndpoint::EVENT_TYPES` は次の 7 種類です。
 
 ## 手動再送の扱い
 
-current 実装では、失敗した delivery だけを管理画面から 1 件ずつ手動再送できます。自動 retry queue、scheduled retry、指数 backoff、retry metadata、親子 delivery relation はまだありません。
+current 実装では、失敗した delivery だけを管理画面から 1 件ずつ、または `失敗` 表示中の表示範囲のうち再送可能な delivery だけをまとめて手動再送できます。まとめて再送の対象は failed かつ endpoint が有効な delivery に限定され、停止中 endpoint、成功済み、送信待ちの delivery は対象外です。自動 retry queue、scheduled retry、指数 backoff、retry metadata、親子 delivery relation はまだありません。
 
 手動再送するときは次を確認します。
 
 1. 送信履歴を `失敗` に絞り込み、対象 delivery の endpoint と event type を確認します。
-2. 受信先側で同じ event を再処理しても問題ないかを確認します。受信側は `X-Docs-Portal-Delivery` などの delivery identifier を冪等キーとして扱えるようにしておくのが安全です。
-3. 対象行に `再送` ボタンが出ていることを確認します。failed ではない delivery、または停止中 endpoint の delivery は再送できません。
-4. 確認ダイアログで、現在の Webhook 設定を使って再送することと、受信先側の重複処理に注意することを確認して実行します。
-5. 再送結果は元 delivery を上書きせず、新しい `WebhookDelivery` として送信履歴に残ります。実行後は送信履歴の新しい行で status / HTTP / error を確認します。
+2. まとめて再送を使う場合は、画面に表示される対象件数、endpoint、event type の内訳を確認します。
+3. 受信先側で同じ event を再処理しても問題ないかを確認します。受信側は `X-Docs-Portal-Delivery` などの delivery identifier を冪等キーとして扱えるようにしておくのが安全です。
+4. 対象行に `再送` ボタンが出ていること、または `失敗` 表示中に `表示中の失敗Webhookをまとめて再送` ボタンが出ていることを確認します。failed ではない delivery、または停止中 endpoint の delivery は再送できません。
+5. 確認ダイアログで、現在の Webhook 設定を使って再送することと、受信先側の重複処理に注意することを確認して実行します。
+6. 再送結果は元 delivery を上書きせず、新しい `WebhookDelivery` として送信履歴に残ります。実行後は送信履歴の新しい行で status / HTTP / error を確認します。
 
 再送できない delivery を無理に再送するためにコードやデータを直接操作する必要がある場合は、この runbook だけで判断せず、対象 event、受信先の冪等性、重複送信時の扱いを人間確認に回してください。
 
