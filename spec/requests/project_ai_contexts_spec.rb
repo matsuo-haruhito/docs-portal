@@ -170,7 +170,7 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(page_text).to include("export対象:1 件")
     expect(page_text).to include("明示選択: 1件 / export対象: 1件")
     expect(page_text).to include("選択文書のうち閲覧可能な文書だけが preview / export に含まれます。")
-    expect(page_text).to include("Export対象（1 / 3件選択中）")
+    expect(page_text).to include("Export対象（1 / 2件選択中）")
     expect(page_text).to include("Selected Manual", "Other Manual")
     expect(ai_context_link_href("compact に切り替え")).to include("document_ids%5B%5D=#{selected.id}")
     expect(ai_context_link_href("full に切り替え")).to include("document_ids%5B%5D=#{selected.id}")
