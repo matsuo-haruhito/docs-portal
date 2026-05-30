@@ -72,6 +72,52 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(log.sent_at).to be_present
   end
 
+  it "renders validation errors for invalid delivery draft recipients" do
+    sign_in_as(external_user)
+
+    expect do
+      post project_document_document_delivery_logs_path(project, document), params: {
+        document_delivery_log: {
+          to_addresses: "client@example.com, invalid-recipient",
+          cc_addresses: "cc@example.com",
+          bcc_addresses: "bcc@example.com",
+          subject: "Please review",
+          body: "Portal link"
+        }
+      }
+    end.not_to change(DocumentDeliveryLog, :count)
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(parsed_html.css("li").map { _1.text.strip }.join(" ")).not_to be_empty
+    expect(page_text).to include("client@example.com, invalid-recipient")
+  end
+
+  it "builds a mailto link from normalized recipients, cc, bcc, subject, and body" do
+    sign_in_as(external_user)
+
+    post project_document_document_delivery_logs_path(project, document), params: {
+      document_delivery_log: {
+        to_addresses: " Client@Example.com ; second@example.com ",
+        cc_addresses: " Cc@Example.com ",
+        bcc_addresses: " Bcc@Example.com ",
+        subject: "Please review & confirm",
+        body: "Portal link\nThanks"
+      }
+    }
+
+    log = DocumentDeliveryLog.order(:id).last
+    expect(response).to redirect_to(document_delivery_log_path(log))
+
+    get document_delivery_log_path(log)
+
+    mailto = href_for("メーラーを開く")
+    expect(mailto).to start_with("mailto:client%40example.com%2Csecond%40example.com?")
+    expect(mailto).to include("cc=cc%40example.com")
+    expect(mailto).to include("bcc=bcc%40example.com")
+    expect(mailto).to include("subject=Please+review+%26+confirm")
+    expect(mailto).to include("body=Portal+link%0AThanks")
+  end
+
   it "creates a portal-link delivery draft for a document set" do
     sign_in_as(external_user)
 
