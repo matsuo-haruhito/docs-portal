@@ -56,10 +56,11 @@ h1 Webhook
     p.muted
       | 表示:
       - webhook_delivery_status_filter_options.each do |value, label|
+        | 
         - if @delivery_status_filter == value
           span.badge = label
         - else
-          =< link_to label, value == "all" ? admin_webhook_endpoints_path : admin_webhook_endpoints_path(delivery_status: value)
+          = link_to label, value == "all" ? admin_webhook_endpoints_path : admin_webhook_endpoints_path(delivery_status: value)
     = table_preferences_editor(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns, title: "Webhook送信履歴の表示設定")
     - if @recent_deliveries.empty?
       p.muted = "#{webhook_delivery_status_filter_label(@delivery_status_filter)}の送信履歴はありません。表示を「すべて」に戻すと直近の送信履歴を確認できます。"
