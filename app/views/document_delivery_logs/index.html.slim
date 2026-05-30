@@ -8,6 +8,9 @@
 - delivery_type_total_count = delivery_type_counts.values.sum
 - current_delivery_logs_path = request.fullpath
 - current_query = @query.presence
+- delivery_logs_total_count = @delivery_logs_total_count.to_i
+- delivery_logs_limit = @delivery_logs_limit.to_i
+- delivery_logs_display_count = @delivery_logs.size
 
 h1 送付履歴
 
@@ -38,6 +41,7 @@ p.actions
     = link_to "#{label} (#{delivery_type_counts.fetch(delivery_type, 0)})", document_delivery_logs_path(q: current_query, status: @status_filter.presence, delivery_type:), class: @delivery_type_filter == delivery_type ? "button" : "button secondary"
 
 - if @delivery_logs.any?
+  p.muted = "表示範囲: #{delivery_logs_total_count}件中#{delivery_logs_display_count}件を表示しています。#{delivery_logs_total_count > delivery_logs_limit ? "さらに絞り込む場合は検索・状態・方式フィルタを使ってください。" : ""}"
   table
     thead
       tr

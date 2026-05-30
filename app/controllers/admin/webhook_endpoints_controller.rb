@@ -1,5 +1,6 @@
 class Admin::WebhookEndpointsController < Admin::BaseController
   DELIVERY_STATUS_FILTERS = %w[failed pending succeeded].freeze
+  RECENT_DELIVERY_DISPLAY_LIMIT = 50
 
   before_action :require_admin_only!
   before_action :set_webhook_endpoint, only: %i[edit update destroy]
@@ -11,7 +12,10 @@ class Admin::WebhookEndpointsController < Admin::BaseController
     recent_deliveries_scope = WebhookDelivery.includes(:webhook_endpoint, :notification_event).recent
     @recent_delivery_counts = WebhookDelivery.group(:status).count
     @recent_deliveries_any = @recent_delivery_counts.values.sum.positive?
-    @recent_deliveries = filtered_delivery_scope(recent_deliveries_scope).limit(50)
+    filtered_deliveries_scope = filtered_delivery_scope(recent_deliveries_scope)
+    @recent_deliveries_total_count = filtered_deliveries_scope.count
+    @recent_deliveries_limit = RECENT_DELIVERY_DISPLAY_LIMIT
+    @recent_deliveries = filtered_deliveries_scope.limit(@recent_deliveries_limit)
   end
 
   def create
@@ -25,7 +29,9 @@ class Admin::WebhookEndpointsController < Admin::BaseController
       recent_deliveries_scope = WebhookDelivery.includes(:webhook_endpoint, :notification_event).recent
       @recent_delivery_counts = WebhookDelivery.group(:status).count
       @recent_deliveries_any = @recent_delivery_counts.values.sum.positive?
-      @recent_deliveries = recent_deliveries_scope.limit(50)
+      @recent_deliveries_total_count = recent_deliveries_scope.count
+      @recent_deliveries_limit = RECENT_DELIVERY_DISPLAY_LIMIT
+      @recent_deliveries = recent_deliveries_scope.limit(@recent_deliveries_limit)
       render :index, status: :unprocessable_entity
     end
   end
