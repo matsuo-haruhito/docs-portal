@@ -13,12 +13,19 @@ RSpec.describe SeedSupport::DocusaurusMarkdownNormalizer do
     expect(result).to include("# Hello")
   end
 
-  it "replaces existing front matter id" do
-    result = normalize("---\nid: old-id\ntitle: Old\n---\n# Hello\n", generated_id: "seed-new")
+  it "adds generated id when existing front matter has no id" do
+    result = normalize("---\ntitle: Old\n---\n# Hello\n", generated_id: "seed-new")
 
     expect(result).to include("id: seed-new")
     expect(result).to include("title: Old")
-    expect(result).not_to include("id: old-id")
+  end
+
+  it "preserves an existing front matter id" do
+    result = normalize("---\nid: old-id\ntitle: Old\n---\n# Hello\n", generated_id: "seed-new")
+
+    expect(result).to include("id: old-id")
+    expect(result).to include("title: Old")
+    expect(result).not_to include("id: seed-new")
   end
 
   it "rewrites local README markdown links for seed builds" do
