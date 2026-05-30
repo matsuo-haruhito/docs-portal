@@ -231,7 +231,23 @@ RSpec.describe "Document delivery logs", type: :request do
     get document_delivery_logs_path, params: { q: "missing recipient" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索条件に一致する送付履歴はありません。")
+    expect(page_text).to include("条件に一致する送付履歴はありません。")
+    expect(page_text).to include("検索語・状態・方式を見直すか、「すべての送付履歴を見る」で条件を解除してください。")
+    expect(href_for("すべての送付履歴を見る")).to eq(document_delivery_logs_path)
+  end
+
+  it "shows a filter-specific empty state" do
+    create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "draft@example.com")
+
+    sign_in_as(external_user)
+
+    get document_delivery_logs_path, params: { status: :failed, delivery_type: :portal_link }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("条件に一致する送付履歴はありません。")
+    expect(page_text).to include("検索語・状態・方式を見直すか、「すべての送付履歴を見る」で条件を解除してください。")
+    expect(page_text).not_to include("送付履歴はありません。")
+    expect(href_for("すべての送付履歴を見る")).to eq(document_delivery_logs_path)
   end
 
   it "preserves filtered list context in the detail back link" do
