@@ -117,12 +117,113 @@ RSpec.describe "Document review comments", type: :request do
     expect(response.body).to include("Yes. The current published version is valid.")
   end
 
+  it "keeps externally submitted Q&A threads public even when visibility params are tampered with" do
+    sign_in_as(external_user)
+
+    expect do
+      post project_document_document_review_comments_path(project, document), params: {
+        document_review_comment: {
+          comment_type: "question",
+          internal_only: "1",
+          body: "Can this be shared with partners?"
+        }
+      }
+    end.to change(DocumentReviewComment, :count).by(1)
+
+    question = DocumentReviewComment.order(:id).last
+    expect(question.author).to eq(external_user)
+    expect(question).to be_question
+    expect(question.internal_only).to eq(false)
+
+    expect do
+      post project_document_document_review_comments_path(project, document), params: {
+        document_review_comment: {
+          comment_type: "request_change",
+          internal_only: "1",
+          parent_id: question.id,
+          body: "Please treat this as public follow-up."
+        }
+      }
+    end.to change(DocumentReviewComment, :count).by(1)
+
+    reply = DocumentReviewComment.order(:id).last
+    expect(reply.parent).to eq(question)
+    expect(reply).to be_question
+    expect(reply.internal_only).to eq(false)
+  end
+
+  it "prevents replies from crossing internal visibility or document boundaries" do
+    internal_parent = create(:document_review_comment, document:, document_version: version, author: internal_user, body: "Internal parent")
+    other_document = create(:document, project:, title: "Other Manual", slug: "other-manual", visibility_policy: :restricted_external)
+    other_parent = create(:document_review_comment, document: other_document, author: internal_user, body: "Other document question", internal_only: false, comment_type: :question)
+
+    sign_in_as(external_user)
+
+    expect do
+      post project_document_document_review_comments_path(project, document), params: {
+        document_review_comment: {
+          comment_type: "question",
+          parent_id: internal_parent.id,
+          body: "This must not attach to an internal thread."
+        }
+      }
+    end.not_to change(DocumentReviewComment, :count)
+    expect(response).to redirect_to(project_document_path(project, document.slug))
+
+    expect do
+      post project_document_document_review_comments_path(project, document), params: {
+        document_review_comment: {
+          comment_type: "question",
+          parent_id: other_parent.id,
+          body: "This must not attach to another document."
+        }
+      }
+    end.not_to change(DocumentReviewComment, :count)
+    expect(response).to redirect_to(project_document_path(project, document.slug))
+  end
+
+  it "uses the route document version and rejects tampered version ids from another document" do
+    other_document = create(:document, project:, title: "Versioned Other Manual", slug: "versioned-other-manual", visibility_policy: :restricted_external)
+    other_version = create(:document_version, document: other_document, version_label: "v2.0.0", status: :published)
+
+    sign_in_as(internal_user)
+
+    expect do
+      post document_version_document_review_comments_path(version), params: {
+        document_review_comment: {
+          comment_type: "issue",
+          document_version_id: other_version.id,
+          body: "This must stay on the routed version."
+        }
+      }
+    end.not_to change(DocumentReviewComment, :count)
+    expect(response).to redirect_to(document_version_path(version))
+
+    expect do
+      post document_version_document_review_comments_path(version), params: {
+        document_review_comment: {
+          comment_type: "issue",
+          body: "This belongs to the routed version."
+        }
+      }
+    end.to change(DocumentReviewComment, :count).by(1)
+
+    comment = DocumentReviewComment.order(:id).last
+    expect(comment.document).to eq(document)
+    expect(comment.document_version).to eq(version)
+  end
+
   it "hides review comments from external users and forbids create/update" do
     comment = create(:document_review_comment, document:, document_version: version, author: internal_user, body: "Internal only")
 
     sign_in_as(external_user)
 
     get document_version_path(version)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include("社内レビューコメント")
+    expect(response.body).not_to include("Internal only")
+
+    get project_document_path(project, document.slug)
     expect(response).to have_http_status(:ok)
     expect(response.body).not_to include("社内レビューコメント")
     expect(response.body).not_to include("Internal only")
