@@ -15,9 +15,10 @@
           div
             strong = thread.author.name
             span.muted = " / #{thread.qa_status_label}"
+            span.muted = " / 公開範囲: 外部/利用者にも表示"
             - if thread.document_version.present?
               span.muted = " / #{document_version_label(thread.document_version)}"
-          span.badge Q&A
+          span.badge 外部公開Q&A
         = simple_format(thread.body)
         - if thread.replies.visible_to(current_user).any?
           .document-comment-card__replies
@@ -52,8 +53,10 @@
           div
             strong = comment.author.name
             span.muted = " / #{document_review_comment_status_label(comment)}"
+            span.muted = " / 公開範囲: 内部のみ"
             - if comment.document_version.present?
               span.muted = " / #{document_version_label(comment.document_version)}"
+          span.badge 内部限定
           span.badge = document_review_comment_type_label(comment)
         - if comment.location_label.present?
           p.document-comment-card__location
