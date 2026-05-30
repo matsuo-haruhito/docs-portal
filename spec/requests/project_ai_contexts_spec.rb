@@ -26,6 +26,12 @@ RSpec.describe "Project AI contexts", type: :request do
     get project_ai_context_path(project)
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("AI向けコンテキスト")
+    expect(response.body).to include("現在の mode:")
+    expect(response.body).to include("compact: summary と文書メタデータ中心")
+    expect(response.body).to include("full: compact の内容に加えて本文テキストを含め")
+    expect(response.body).to include("JSON / Markdown は現在の mode")
+    expect(response.body).to include("含まれる文書（export対象）")
+    expect(response.body).to include("除外された文書（権限・公開状態の確認）")
     expect(response.body).to include("Visible Manual")
     expect(response.body).to include("Internal Note")
 
