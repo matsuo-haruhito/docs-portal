@@ -1,6 +1,7 @@
 require "rails_helper"
 require "fileutils"
 require "securerandom"
+require "zip"
 
 RSpec.describe "Document files", type: :request do
   let(:user) { create(:user, :internal) }
@@ -40,6 +41,46 @@ RSpec.describe "Document files", type: :request do
     )
   end
 
+  def create_preview_file(file_name:, content_type:, storage_key:, content: nil, sort_order: 10, binary: false)
+    document_file = DocumentFile.create!(
+      document_version: version,
+      file_name:,
+      content_type:,
+      storage_key:,
+      file_size: content.to_s.bytesize,
+      sort_order:,
+      scan_status: :scan_clean
+    )
+
+    @preview_files ||= []
+    @preview_files << document_file
+
+    FileUtils.mkdir_p(document_file.absolute_path.dirname)
+    if content
+      binary ? File.binwrite(document_file.absolute_path, content) : File.write(document_file.absolute_path, content)
+    end
+
+    document_file
+  end
+
+  def create_zip_preview_file
+    zip_file = create_preview_file(
+      file_name: "bundle.zip",
+      content_type: "application/zip",
+      storage_key: "spec/bundle.zip",
+      content: nil,
+      sort_order: 20,
+      binary: true
+    )
+
+    Zip::OutputStream.open(zip_file.absolute_path.to_s) do |zip|
+      zip.put_next_entry("docs/readme.txt")
+      zip.write("hello from zip\n")
+    end
+
+    zip_file
+  end
+
   before do
     FileUtils.mkdir_p(file.absolute_path.dirname)
     File.write(file.absolute_path, "%PDF-1.4")
@@ -51,6 +92,7 @@ RSpec.describe "Document files", type: :request do
     FileUtils.rm_f(file.absolute_path)
     FileUtils.rm_f(markdown_file.absolute_path)
     FileUtils.rm_f(binary_file.absolute_path)
+    Array(@preview_files).each { |preview_file| FileUtils.rm_f(preview_file.absolute_path) }
   end
 
   it "downloads the file and records an access log" do
@@ -160,6 +202,89 @@ RSpec.describe "Document files", type: :request do
     expect(response.body).to include("line-preview")
     expect(response.body).to include("README.md")
     expect(response.body).to include("# hello")
+  end
+
+  it "routes CSV files to the table preview template" do
+    csv_file = create_preview_file(
+      file_name: "rows.csv",
+      content_type: "text/csv",
+      storage_key: "spec/rows.csv",
+      content: "name,status\nalpha,ready\n"
+    )
+    sign_in_as(user)
+
+    get document_file_path(csv_file, disposition: "inline")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("text/html")
+    expect(response.body).to include("CSV / TSV preview")
+    expect(response.body).to include("data-csv-preview-tools")
+    expect(response.body).to include("alpha")
+  end
+
+  it "routes structured files to the JSON preview template" do
+    json_file = create_preview_file(
+      file_name: "settings.json",
+      content_type: "application/json",
+      storage_key: "spec/settings.json",
+      content: '{"feature":"preview","enabled":true}'
+    )
+    sign_in_as(user)
+
+    get document_file_path(json_file, disposition: "inline")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("text/html")
+    expect(response.body).to include("JSON preview")
+    expect(response.body).to include("data-structured-preview-tools")
+    expect(response.body).to include("feature")
+  end
+
+  it "routes log files to the text preview template" do
+    log_file = create_preview_file(
+      file_name: "import.log",
+      content_type: "text/plain",
+      storage_key: "spec/import.log",
+      content: "boot ok\nfinished\n"
+    )
+    sign_in_as(user)
+
+    get document_file_path(log_file, disposition: "inline")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("text/html")
+    expect(response.body).to include("data-text-preview-tools")
+    expect(response.body).to include("line-preview")
+    expect(response.body).to include("boot ok")
+  end
+
+  it "routes ZIP files to the archive preview template" do
+    zip_file = create_zip_preview_file
+    sign_in_as(user)
+
+    get document_file_path(zip_file, disposition: "inline")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("text/html")
+    expect(response.body).to include("data-archive-preview-tools")
+    expect(response.body).to include("ZIP内サマリー")
+    expect(response.body).to include("docs/readme.txt")
+  end
+
+  it "falls back to attachment for unsupported archive files" do
+    tar_file = create_preview_file(
+      file_name: "bundle.tar",
+      content_type: "application/x-tar",
+      storage_key: "spec/bundle.tar",
+      content: "tar bytes",
+      binary: true
+    )
+    sign_in_as(user)
+
+    get document_file_path(tar_file, disposition: "inline")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.headers["content-disposition"]).to include("attachment")
   end
 
   it "serves inline-capable files inline when inline disposition is requested" do
