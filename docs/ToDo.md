@@ -54,7 +54,8 @@
 ## Data Classification
 
 - `visibility_policy` と `data_classification_tags` の責務境界は [文書ライフサイクルと公開](./specs/文書ライフサイクルと公開.md) を正本にする
-- DocumentVersion / DocumentFile / DocumentSet / Catalog 単位へ `data_classification_tags` を広げる前の責務境界整理は `#1066` で扱う
+- DocumentVersion / DocumentFile / DocumentSet / Catalog 単位へ広げる場合も、親 Document の分類タグを継承して表示・警告に使う first slice を優先し、権限判定や公開可否には混ぜない
+- 後続実装 issue は DocumentFile 表示補助、DocumentVersion quality warning、import/upload 確認、ZIP/download/送付履歴など 1 model または 1 screen/surface に分けて扱う
 
 ## 多言語 / localization
 
