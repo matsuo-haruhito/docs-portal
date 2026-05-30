@@ -108,8 +108,8 @@ RSpec.describe "Admin documents index filters", type: :request do
       expect(response.body).to include(I18n.l(due_document.retention_until))
       expect(response.body).to include(I18n.l(future_document.retention_until))
       expect(response.body).not_to include(missing_document.title)
-      expect(response.body).to include("アーカイブ")
-      expect(response.body).not_to include("復元")
+      expect_active_archive_action_for(due_document)
+      expect_active_archive_action_for(future_document)
     end
 
     get admin_documents_path, params: { retention: "missing" }
@@ -119,8 +119,7 @@ RSpec.describe "Admin documents index filters", type: :request do
       expect(response.body).to include(missing_document.title)
       expect(response.body).not_to include(due_document.title)
       expect(response.body).not_to include(future_document.title)
-      expect(response.body).to include("アーカイブ")
-      expect(response.body).not_to include("復元")
+      expect_active_archive_action_for(missing_document)
     end
 
     get admin_documents_path, params: { retention: "due" }
@@ -131,8 +130,7 @@ RSpec.describe "Admin documents index filters", type: :request do
       expect(response.body).to include(I18n.l(due_document.retention_until))
       expect(response.body).not_to include(future_document.title)
       expect(response.body).not_to include(missing_document.title)
-      expect(response.body).to include("アーカイブ")
-      expect(response.body).not_to include("復元")
+      expect_active_archive_action_for(due_document)
     end
   end
 
@@ -167,8 +165,8 @@ RSpec.describe "Admin documents index filters", type: :request do
       expect(response.body).to include(I18n.l(due_document.discard_candidate_at))
       expect(response.body).to include(I18n.l(future_document.discard_candidate_at))
       expect(response.body).not_to include(missing_document.title)
-      expect(response.body).to include("アーカイブ")
-      expect(response.body).not_to include("復元")
+      expect_active_archive_action_for(due_document)
+      expect_active_archive_action_for(future_document)
     end
 
     get admin_documents_path, params: { discard: "missing" }
@@ -178,8 +176,7 @@ RSpec.describe "Admin documents index filters", type: :request do
       expect(response.body).to include(missing_document.title)
       expect(response.body).not_to include(due_document.title)
       expect(response.body).not_to include(future_document.title)
-      expect(response.body).to include("アーカイブ")
-      expect(response.body).not_to include("復元")
+      expect_active_archive_action_for(missing_document)
     end
 
     get admin_documents_path, params: { discard: "due" }
@@ -190,8 +187,12 @@ RSpec.describe "Admin documents index filters", type: :request do
       expect(response.body).to include(I18n.l(due_document.discard_candidate_at))
       expect(response.body).not_to include(future_document.title)
       expect(response.body).not_to include(missing_document.title)
-      expect(response.body).to include("アーカイブ")
-      expect(response.body).not_to include("復元")
+      expect_active_archive_action_for(due_document)
     end
+  end
+
+  def expect_active_archive_action_for(document)
+    expect(response.body).to include(archive_admin_document_path(document.public_id))
+    expect(response.body).not_to include(restore_admin_document_path(document.public_id))
   end
 end
