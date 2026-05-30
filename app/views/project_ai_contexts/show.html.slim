@@ -1,6 +1,12 @@
 - page_title "#{@project.name} AI context"
 - current_mode_name = @mode.to_s
 - current_mode_description = current_mode_name == "full" ? "本文まで含めて出力します。" : "summary と文書メタデータ中心で出力します。"
+- exported_document_count = @hash.dig(:summary, :document_count).to_i
+- selectable_document_count = @selectable_documents.size
+- selected_document_count = @requested_document_ids.empty? ? selectable_document_count : @requested_document_ids.size
+- scope_summary = @requested_document_ids.empty? ? "現在は閲覧可能な文書全体（#{exported_document_count}件）を export 対象にしています。" : "明示選択: #{selected_document_count}件 / export対象: #{exported_document_count}件"
+- scope_help = @requested_document_ids.empty? ? "個別に絞り込む場合は、対象にしたい文書だけを残して preview してください。" : "選択文書のうち閲覧可能な文書だけが preview / export に含まれます。"
+- document_filter_legend = @requested_document_ids.empty? ? "Export対象（全#{selectable_document_count}件）" : "Export対象（#{selected_document_count} / #{selectable_document_count}件選択中）"
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: nil
 
@@ -11,7 +17,7 @@ h1 AI向けコンテキスト
 
 p
   | export対象:
-  = @hash.dig(:summary, :document_count)
+  = exported_document_count
   |  件
 
 .card
@@ -40,11 +46,14 @@ p
 .card
   h2 対象文書を絞り込む
   p.muted 選択した文書だけで preview と export を更新します。未選択の状態では閲覧可能な文書全体を対象にします。
+  p
+    strong = scope_summary
+  p.muted = scope_help
   - if @selectable_documents.any?
     = form_with url: project_ai_context_path(@project), method: :get, local: true do
       = hidden_field_tag :mode, @mode
       fieldset.filter-fieldset
-        legend Export対象
+        legend = document_filter_legend
         - @selectable_documents.each do |document|
           - checked = @requested_document_ids.empty? || @requested_document_ids.include?(document.id)
           label.check-field
