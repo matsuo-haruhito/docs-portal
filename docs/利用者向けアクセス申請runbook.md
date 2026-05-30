@@ -41,6 +41,9 @@ dashboard とのつながり:
 
 - current 申請で求めている access level を確認する列
 - 同じ対象に複数の申請が並ぶときは、まずこの列で何を求めた申請かを切り分ける
+- `要求権限` は申請時に保存された希望内容であり、承認後に実際へ付与された membership / permission をそのまま表す列ではない
+- 承認されたときの付与先は対象種別で変わる。Project は viewer membership、Document / DocumentFile は DocumentPermission の view / download へ変換される
+- `manage` は要求値として表示されうるが、current 承認処理では明示的な管理権限付与には対応していない。`manage` 申請の扱いは管理者 runbook と後続 issue の判断対象として読む
 
 ### 状態
 
