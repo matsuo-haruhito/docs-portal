@@ -36,7 +36,7 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
     subscription = find_subscription(provider:, payload:)
     source = subscription&.external_folder_sync_source
     event_key = event_key_for(provider:, payload:, subscription:)
-    verified = verified_subscription?(provider:, subscription:)
+    verified = verified_subscription?(provider:, payload:, subscription:)
 
     ExternalFolderSyncWebhookEvent.find_or_create_by!(provider:, event_key:) do |event|
       event.external_folder_sync_subscription = subscription
@@ -62,12 +62,25 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
     end
   end
 
-  def verified_subscription?(provider:, subscription:)
+  def verified_subscription?(provider:, payload:, subscription:)
     return false if subscription.blank?
-    return true unless provider.to_s == "google_drive"
 
-    token = request.headers["X-Goog-Channel-Token"].to_s
-    expected_digest = subscription.verification_token_digest.to_s
+    case provider.to_s
+    when "google_drive"
+      secure_digest_match?(request.headers["X-Goog-Channel-Token"], subscription.verification_token_digest)
+    when "sharepoint"
+      expected_digest = subscription.verification_token_digest.to_s
+      return true if expected_digest.blank?
+
+      secure_digest_match?(payload["clientState"], expected_digest)
+    else
+      true
+    end
+  end
+
+  def secure_digest_match?(token, expected_digest)
+    token = token.to_s
+    expected_digest = expected_digest.to_s
     token.present? && expected_digest.present? && ActiveSupport::SecurityUtils.secure_compare(Digest::SHA256.hexdigest(token), expected_digest)
   end
 
