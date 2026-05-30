@@ -200,6 +200,8 @@ RSpec.describe "Document files", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("text/html")
     expect(response.body).to include("line-preview")
+    expect(response.body).to include("表示モード:")
+    expect(response.body).to include("Markdown preview")
     expect(response.body).to include("README.md")
     expect(response.body).to include("# hello")
   end
@@ -218,6 +220,7 @@ RSpec.describe "Document files", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("text/html")
     expect(response.body).to include("CSV / TSV preview")
+    expect(response.body).to include("Table preview")
     expect(response.body).to include("data-csv-preview-tools")
     expect(response.body).to include("alpha")
   end
@@ -254,6 +257,7 @@ RSpec.describe "Document files", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("text/html")
     expect(response.body).to include("data-text-preview-tools")
+    expect(response.body).to include("Text preview")
     expect(response.body).to include("line-preview")
     expect(response.body).to include("boot ok")
   end
@@ -306,6 +310,7 @@ RSpec.describe "Document files", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("text/html")
     expect(response.body).to include("data-archive-preview-tools")
+    expect(response.body).to include("ZIP preview")
     expect(response.body).to include("ZIP内サマリー")
     expect(response.body).to include("docs/readme.txt")
   end

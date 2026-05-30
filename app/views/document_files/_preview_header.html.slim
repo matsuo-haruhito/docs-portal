@@ -1,4 +1,5 @@
 - page_title "#{document.title} / #{document_file.file_name}"
+- viewer_plan = local_assigns[:viewer_plan] || local_assigns[:document_file_viewer_plan] || @viewer_plan
 
 p.muted
   = link_to project.name, project_path(project)
@@ -14,6 +15,13 @@ p.muted
       = document_file.effective_content_type
       |  / 
       = number_to_human_size(document_file.file_size)
+    - if viewer_plan.present?
+      p.document-viewer__meta
+        span.muted 表示モード: 
+        span.badge = viewer_plan.label
+        - if viewer_plan.reason.present?
+          |  
+          span.muted = viewer_plan.reason
   p.actions
     - if local_assigns[:open_label].present? && local_assigns[:open_path].present?
       = link_to open_label, open_path, class: "button secondary", target: "_blank", rel: "noopener"
