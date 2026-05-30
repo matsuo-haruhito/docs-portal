@@ -1,6 +1,8 @@
 class ProjectAiContextsController < BaseController
   before_action :set_project
 
+  PREVIEW_DOCUMENT_LIMIT = 50
+
   def show
     @mode = requested_mode
     return render_unsupported_mode unless @mode
@@ -8,8 +10,14 @@ class ProjectAiContextsController < BaseController
     @requested_document_ids = requested_document_ids
     @scope = requested_scope
     @selectable_documents = selectable_documents
+    @selectable_document_count = @selectable_documents.size
+    @preview_document_limit = PREVIEW_DOCUMENT_LIMIT
+    @selectable_documents_preview = preview_documents(@selectable_documents)
+    @selectable_documents_truncated = @selectable_document_count > @selectable_documents_preview.size
     @scoped_link_params = scoped_link_params
     @plan = AiContextExportPlan.new(project: @project, viewer: current_user, scope: @scope).call
+    @plan_included_items_preview = @plan.included_items.first(PREVIEW_DOCUMENT_LIMIT)
+    @plan_excluded_items_preview = @plan.excluded_items.first(PREVIEW_DOCUMENT_LIMIT)
     @hash = AiContextHashExporter.new(project: @project, viewer: current_user, mode: @mode, scope: @scope).call
 
     respond_to do |format|
@@ -67,6 +75,14 @@ class ProjectAiContextsController < BaseController
       .includes(:project, :latest_version)
       .select { _1.visible_in_portal_for?(current_user) }
       .sort_by { [_1.title.to_s, _1.id] }
+  end
+
+  def preview_documents(documents)
+    visible_preview = documents.first(PREVIEW_DOCUMENT_LIMIT)
+    return visible_preview if @requested_document_ids.empty?
+
+    selected_documents = documents.select { @requested_document_ids.include?(_1.id) }
+    (visible_preview + selected_documents).uniq
   end
 
   def scoped_link_params

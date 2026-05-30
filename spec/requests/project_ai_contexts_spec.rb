@@ -29,6 +29,10 @@ RSpec.describe "Project AI contexts", type: :request do
     parsed_html.css("a").find { _1.text.squish == label }["href"]
   end
 
+  def document_choice_labels
+    parsed_html.css("fieldset.filter-fieldset label.check-field").map { _1.text.squish }
+  end
+
   it "shows project AI context html and exports json/markdown for visible documents only" do
     visible = create_exportable_document(title: "Visible Manual", slug: "visible", body: "Visible body text.")
     create_exportable_document(title: "Internal Note", slug: "internal", body: "Secret body text.", visibility_policy: :internal_only)
@@ -45,6 +49,7 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(response.body).to include("対象文書を絞り込む")
     expect(page_text).to include("現在は閲覧可能な文書全体（1件）を export 対象にしています。")
     expect(page_text).to include("個別に絞り込む場合は、対象にしたい文書だけを残して preview してください。")
+    expect(page_text).to include("Export候補（表示中1 / 全1件）")
     expect(response.body).to include("含まれる文書（export対象）")
     expect(response.body).to include("除外された文書（権限・公開状態の確認）")
     expect(response.body).to include("Visible Manual")
@@ -170,7 +175,7 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(page_text).to include("export対象:1 件")
     expect(page_text).to include("明示選択: 1件 / export対象: 1件")
     expect(page_text).to include("選択文書のうち閲覧可能な文書だけが preview / export に含まれます。")
-    expect(page_text).to include("Export対象（1 / 2件選択中）")
+    expect(page_text).to include("Export候補（1 / 2件選択中、表示中2件）")
     expect(page_text).to include("Selected Manual", "Other Manual")
     expect(ai_context_link_href("compact に切り替え")).to include("document_ids%5B%5D=#{selected.id}")
     expect(ai_context_link_href("full に切り替え")).to include("document_ids%5B%5D=#{selected.id}")
@@ -193,6 +198,36 @@ RSpec.describe "Project AI contexts", type: :request do
     json = JSON.parse(response.body)
     expect(json.dig("summary", "document_count")).to eq(2)
     expect(json.fetch("documents").map { _1.fetch("public_id") }).to contain_exactly(selected.public_id, other_visible.public_id)
+  end
+
+  it "bounds large HTML previews without changing all-scope export semantics" do
+    documents = 55.times.map do |index|
+      suffix = format("%03d", index)
+      create_exportable_document(title: "Bulk Manual #{suffix}", slug: "bulk-#{suffix}", body: "Bulk body #{suffix}.")
+    end
+
+    sign_in_as(external_user)
+
+    get project_ai_context_path(project)
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中の候補: 50件 / 閲覧可能: 55件")
+    expect(page_text).to include("checkbox候補は50件まで表示しています")
+    expect(page_text).to include("含まれる文書は 50件だけ表示しています（全55件）。")
+    expect(document_choice_labels.size).to eq(50)
+    expect(document_choice_labels.first).to include("Bulk Manual 000")
+    expect(document_choice_labels.last).to include("Bulk Manual 049")
+
+    get project_ai_context_path(project, format: :json, mode: :compact)
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    expect(json.dig("summary", "document_count")).to eq(55)
+    expect(json.fetch("documents").map { _1.fetch("public_id") }).to include(documents.last.public_id)
+
+    get project_ai_context_path(project, document_ids: [documents.last.id])
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("明示選択: 1件 / export対象: 1件")
+    expect(document_choice_labels.size).to eq(51)
+    expect(document_choice_labels.last).to include("Bulk Manual 054")
   end
 
   it "records access logs for html and export responses with scope metadata" do
