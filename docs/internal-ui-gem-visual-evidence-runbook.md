@@ -4,7 +4,7 @@
 
 `docs-portal` が downstream host app として使う `rails_fields_kit` / `tree_view-rails` / `rails_table_preferences` の static visual artifact を変更した PR で、最低限どの確認証跡を残すかをそろえるための runbook です。
 
-screen-by-screen adoption や pinned ref 更新の責務境界は [関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) を正本にし、この文書では visual reference、mockup、focused HTML の確認記録だけを扱います。
+screen-by-screen adoption や pinned ref 更新の責務境界は [関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) を正本にし、この文書では visual reference、mockup、focused HTML の確認記録だけを扱います。`#858` の release train や `#607` 系の画面別展開では、ここで evidence 種別を選び、実際の target SHA / host smoke / rollback note は各 child issue へ残します。
 
 ## 対象になる artifact
 
@@ -30,9 +30,23 @@ production UI の実装、runtime JavaScript、CI workflow への screenshot job
 
 static visual reference / mockup は「表示対象が非空で、主要見出し・リンク・sample region が崩れていないこと」を軽量に守ります。generated demo や host-app integration のように実操作が意味を持つものは、browser / system smoke で代表導線を守ります。downstream smoke は upstream artifact の代替ではなく、pinned ref 更新時に docs-portal の代表画面が壊れていないことを示す acceptance evidence です。
 
+## design / dependency issue からの読み替え早見表
+
+| issue lane | 先に読む evidence | docs-portal 側で残すもの | 境界 |
+| --- | --- | --- | --- |
+| `#858` release train | この runbook の matrix と [関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) の 3 gem 共通 verification matrix | child issue ごとの target SHA、代表 smoke、rollback note | umbrella 側で target SHA をまとめて決めず、`#903` / `#991` / `#904` など child に分ける |
+| `#991` Rails Fields Kit | upstream visual reference family、table metadata / native helper / token search states のうち対象 PR が触る state | `admin/document_sets` form の selected value、placeholder、validation rerender の確認結果 | helper export や host form redesign は別 issue に残す |
+| `#903` TreeView | mockup gallery、default tree、row status、selection / persisted state page | sidebar tree、detail tree、persisted state の代表 smoke と rollback note | public hook や selection API の仕様判断は upstream 側へ戻す |
+| `#904` / `#789` Rails Table Preferences | visual overview、generated demo、manual QA checklist、editor / table mockup | `admin/document_sets` の editor / filter / preset、mounted engine save、必要時だけ embedded table の確認結果 | `#789` の known-good revision 判断を、この runbook の design evidence review で代替しない |
+| `#607` screen-by-screen adoption | 対象画面に対応する上流 artifact と、`docs-portal` の代表 canary surface | 画面別 issue / PR に、参照した upstream artifact path と host smoke の範囲 | dependency bump、visual evidence review、host app implementation を同じ PR に混ぜない |
+
+この表は「どの証跡を先に見るか」を決めるための入口です。実際の画面変更、依存更新、upstream artifact 修正は、それぞれの issue で対象 file と acceptance を切ってから進めます。
+
 ## pinned ref update train からの参照方法
 
+- `#858` は release train の親 issue として読みます。target SHA、実際の smoke、rollback target は `#903` / `#991` / `#904` など child issue / PR の update log に残します。
 - `#903` / `#991` / `#904` では、この matrix で evidence 種別を選び、実際の from / to SHA、通した smoke、rollback target は各 child issue / PR の update log に残します。
+- `#789` のような known-good revision 判断は human gate として扱い、この runbook では visual evidence と host smoke の読み順だけを補助します。
 - `rails_fields_kit#466` や `tree_view-rails#717` のような upstream quality gate issue では、static artifact の軽量 check と browser smoke の境界がこの matrix と矛盾しないかだけ確認します。
 - screenshot approval、pixel baseline、full visual regression suite の導入判断は、この runbook では扱いません。必要になったら別 issue で、対象 repo と採用範囲を切って判断します。
 
