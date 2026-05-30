@@ -30,7 +30,7 @@ RSpec.describe StaleSeleniumCacheGuard do
   end
 
   it "keeps chromedriver cache when the cached executable exists" do
-    chromedriver_path = @cache_root.join("chromedriver", "149.0.7827.54", "linux64", "chromedriver")
+    chromedriver_path = @cache_root.join("chromedriver", "linux64", "149.0.7827.54", "chromedriver")
     FileUtils.mkdir_p(chromedriver_path.dirname)
     FileUtils.touch(chromedriver_path)
     FileUtils.chmod(0o755, chromedriver_path)
