@@ -14,6 +14,12 @@ function injectStructuredPreviewStyle() {
       background: #fff7cc;
       box-shadow: inset 4px 0 0 #f59e0b;
     }
+    .line-preview__row:target,
+    .line-preview__row.is-text-preview-anchor-target {
+      background: #dbeafe;
+      box-shadow: inset 4px 0 0 #2563eb;
+      scroll-margin-top: 1rem;
+    }
   `
   document.head?.appendChild(style)
 }
@@ -158,6 +164,13 @@ function setupTextPreview(container) {
 
   let filterMatches = false
 
+  const updateAnchorTarget = () => {
+    const targetId = decodeURIComponent(window.location.hash.replace(/^#/, ""))
+    rows.forEach((row) => {
+      row.classList.toggle("is-text-preview-anchor-target", targetId.length > 0 && row.id === targetId)
+    })
+  }
+
   const updateFilterButton = () => {
     filterButton.setAttribute("aria-pressed", String(filterMatches))
     filterButton.textContent = filterMatches ? "一致行のみ表示中" : "一致行のみ表示"
@@ -231,8 +244,11 @@ function setupTextPreview(container) {
     }
   })
 
+  window.addEventListener("hashchange", updateAnchorTarget)
+
   updateFilterButton()
   updateSearch()
+  updateAnchorTarget()
 }
 
 export function setupStructuredPreviewTools() {
