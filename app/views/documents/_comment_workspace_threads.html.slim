@@ -3,7 +3,7 @@
 - only_unresolved = local_assigns.fetch(:only_unresolved, false)
 - question_threads = show_questions ? @question_threads.to_a : []
 - review_comments = show_reviews ? @review_comments.to_a : []
-- question_threads = question_threads.reject(&:resolved?) if only_unresolved
+- question_threads = question_threads.select(&:open?) if only_unresolved
 - review_comments = review_comments.reject(&:resolved?) if only_unresolved
 
 - if question_threads.any?
