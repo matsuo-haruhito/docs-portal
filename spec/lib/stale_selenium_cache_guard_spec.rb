@@ -32,7 +32,7 @@ RSpec.describe StaleSeleniumCacheGuard do
 
   it "removes the chromedriver cache and metadata when the cached executable is missing" do
     write_metadata(@cache_root)
-    @cache_root.join("chromedriver", "linux64", "149.0.7827.54").mkpath
+    FileUtils.mkdir_p(@cache_root.join("chromedriver", "linux64", "149.0.7827.54"))
 
     described_class.remove_stale_chromedriver_cache(cache_root: @cache_root)
 
@@ -43,9 +43,9 @@ RSpec.describe StaleSeleniumCacheGuard do
   it "keeps a chromedriver cache that has an executable for the metadata version" do
     write_metadata(@cache_root)
     chromedriver_path = @cache_root.join("chromedriver", "linux64", "149.0.7827.54", "chromedriver")
-    chromedriver_path.dirname.mkpath
-    chromedriver_path.write("")
-    chromedriver_path.chmod(0o755)
+    FileUtils.mkdir_p(chromedriver_path.dirname)
+    FileUtils.touch(chromedriver_path)
+    FileUtils.chmod(0o755, chromedriver_path)
 
     described_class.remove_stale_chromedriver_cache(cache_root: @cache_root)
 
