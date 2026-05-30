@@ -12,6 +12,33 @@ module Admin::DocumentSetsHelper
     ]
   end
 
+  def admin_document_set_type_filter_options
+    [["すべて", ""]] + DocumentSet.set_types.keys.map { |key| [document_set_type_label(key), key] }
+  end
+
+  def admin_document_set_visibility_filter_options
+    [["すべて", ""]] + DocumentSet.visibility_policies.keys.map { |key| [document_set_visibility_policy_label(key), key] }
+  end
+
+  def admin_document_set_filter_labels(filters)
+    filters = filters.to_h.symbolize_keys
+    labels = []
+
+    if DocumentSet.set_types.key?(filters[:set_type].to_s)
+      labels << "種別: #{document_set_type_label(filters[:set_type])}"
+    end
+
+    if DocumentSet.visibility_policies.key?(filters[:visibility_policy].to_s)
+      labels << "公開範囲: #{document_set_visibility_policy_label(filters[:visibility_policy])}"
+    end
+
+    labels
+  end
+
+  def admin_document_set_filters_active?(filters)
+    admin_document_set_filter_labels(filters).any?
+  end
+
   def document_set_version_select_html_options(placeholder: "固定する版を検索")
     {
       data: {
