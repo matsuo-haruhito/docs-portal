@@ -217,7 +217,7 @@ RSpec.describe "Admin access logs", type: :request do
       project: matching_project,
       document: matching_document,
       document_version: matching_version,
-      accessed_at: Time.zone.parse("2026-05-09 23:59:59 UTC")
+      accessed_at: Time.zone.parse("2026-05-09 00:00:00 UTC")
     )
     create_access_log!(
       action_type: :view,
