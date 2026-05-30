@@ -5,6 +5,7 @@
 - delivery_table_key = :admin_webhook_deliveries
 - delivery_table_columns = webhook_delivery_table_columns
 - delivery_table_settings = rails_table_preference_settings(table_key: delivery_table_key)
+- failed_delivery_count = webhook_delivery_status_count(@recent_delivery_counts || {}, :failed)
 
 h1 Webhook
 = render "admin/nav"
@@ -46,9 +47,23 @@ h1 Webhook
 
 .card
   h2 最近の送信履歴
-  - if @recent_deliveries.any?
-    p.muted 送信成功/失敗、HTTPステータス、エラー内容を確認できます。失敗時の再送は送信履歴をもとに個別運用で判断します。
+  - if @recent_deliveries_any
+    - if failed_delivery_count.positive?
+      p.muted = "直近の送信履歴に失敗が#{failed_delivery_count}件あります。失敗のみで絞り込み、HTTPステータスとエラー内容を確認してください。"
+    - else
+      p.muted 直近の送信履歴に失敗はありません。成功/失敗、HTTPステータス、エラー内容をここで確認できます。
+    p.muted 失敗時の再送は送信履歴をもとに個別運用で判断します。
+    p.muted
+      | 表示:
+      - webhook_delivery_status_filter_options.each do |value, label|
+        | 
+        - if @delivery_status_filter == value
+          span.badge = label
+        - else
+          = link_to label, value == "all" ? admin_webhook_endpoints_path : admin_webhook_endpoints_path(delivery_status: value)
     = table_preferences_editor(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns, title: "Webhook送信履歴の表示設定")
+    - if @recent_deliveries.empty?
+      p.muted = "#{webhook_delivery_status_filter_label(@delivery_status_filter)}の送信履歴はありません。表示を「すべて」に戻すと直近の送信履歴を確認できます。"
   - else
     p.muted まだ送信履歴はありません。
     p.muted Webhookを保存して通知対象イベントが発生すると、成功/失敗やHTTPステータスをここで確認できます。
