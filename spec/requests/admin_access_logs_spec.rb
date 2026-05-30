@@ -202,6 +202,73 @@ RSpec.describe "Admin access logs", type: :request do
     expect(row_column_texts("project")).to eq(["Filter Project FILTER"])
   end
 
+  it "filters access logs by accessed date range with existing filters" do
+    matching_project = create(:project, code: "RANGE", name: "Range Project")
+    other_project = create(:project, code: "OTHER", name: "Other Project")
+    matching_document = create(:document, project: matching_project, title: "Range Document", slug: "range-document")
+    matching_version = create(:document_version, document: matching_document, version_label: "v2.0.0")
+    other_document = create(:document, project: other_project, title: "Other Document", slug: "other-document")
+    other_version = create(:document_version, document: other_document, version_label: "v3.0.0")
+
+    create_access_log!(
+      action_type: :view,
+      target_type: "page",
+      target_name: "before-range.html",
+      project: matching_project,
+      document: matching_document,
+      document_version: matching_version,
+      accessed_at: Time.zone.parse("2026-05-09 23:59:59 UTC")
+    )
+    create_access_log!(
+      action_type: :view,
+      target_type: "page",
+      target_name: "range-match.html",
+      project: matching_project,
+      document: matching_document,
+      document_version: matching_version,
+      accessed_at: Time.zone.parse("2026-05-11 10:00:00 UTC")
+    )
+    create_access_log!(
+      action_type: :view,
+      target_type: "page",
+      target_name: "range-other-project.html",
+      project: other_project,
+      document: other_document,
+      document_version: other_version,
+      accessed_at: Time.zone.parse("2026-05-11 12:00:00 UTC")
+    )
+    create_access_log!(
+      action_type: :view,
+      target_type: "page",
+      target_name: "after-range.html",
+      project: matching_project,
+      document: matching_document,
+      document_version: matching_version,
+      accessed_at: Time.zone.parse("2026-05-13 00:00:00 UTC")
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(project_id: matching_project.id, from: "2026-05-10", to: "2026-05-12")
+
+    expect(response).to have_http_status(:ok)
+    expect(log_target_names).to eq(["range-match.html"])
+    expect(page_text).to include("表示中: 1件 / 最新200件までを表示 / 絞り込み中")
+    expect(page_text).to include("期間指定後も、条件に一致する監査ログを新しい順に最新200件まで表示します。")
+  end
+
+  it "ignores invalid accessed date filters without failing" do
+    create_access_log!(action_type: :download, target_type: "zip", target_name: "audit.zip")
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(from: "not-a-date", to: "2026-99-99")
+
+    expect(response).to have_http_status(:ok)
+    expect(log_target_names).to eq(["audit.zip"])
+    expect(page_text).to include("表示中: 1件 / 最新200件までを表示 / 絞り込み中")
+  end
+
   it "renders only non-duplicated secondary identifiers in company and project rows" do
     domain_only_company = create(:company, name: nil, domain: "domain-only.example.com")
     plain_project = create(:project, code: "PLAIN", name: "Plain Project")
