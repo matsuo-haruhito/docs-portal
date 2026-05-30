@@ -53,7 +53,8 @@ module Admin::WebhookEndpointsHelper
   end
 
   def webhook_delivery_status_count(counts, status)
-    counts.fetch(status.to_s, counts.fetch(WebhookDelivery.statuses.fetch(status.to_s), 0))
+    status_key = status.to_s
+    counts[status_key] || counts[WebhookDelivery.statuses.fetch(status_key)] || 0
   end
 
   def webhook_event_type_label(event_or_value)
