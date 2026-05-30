@@ -80,4 +80,40 @@ RSpec.describe WebhookDeliveryDispatcher do
     expect(deliveries.first.error_message).to be_present
     expect(deliveries.first.sent_at).to be_present
   end
+
+  it "records failed delivery history when the endpoint returns a non-success response" do
+    create(:webhook_endpoint, event_types: %w[document_updated])
+    response = Net::HTTPInternalServerError.new("1.1", "500", "Internal Server Error").tap do |http_response|
+      http_response.instance_variable_set(:@read, true)
+      http_response.instance_variable_set(:@body, "upstream failure")
+    end
+    http_client = StubWebhookHttp.new(response:)
+
+    deliveries = described_class.new(http_client:).dispatch!(event)
+
+    delivery = deliveries.first
+    expect(delivery).to be_failed
+    expect(delivery.error_message).to be_blank
+    expect(delivery.response_status).to eq(500)
+    expect(delivery.response_body).to eq("upstream failure")
+    expect(delivery.sent_at).to be_present
+  end
+
+  it "truncates long non-success response bodies in the delivery history" do
+    create(:webhook_endpoint, event_types: %w[document_updated])
+    response_body = "x" * 10_050
+    response = Net::HTTPUnprocessableEntity.new("1.1", "422", "Unprocessable Entity").tap do |http_response|
+      http_response.instance_variable_set(:@read, true)
+      http_response.instance_variable_set(:@body, response_body)
+    end
+    http_client = StubWebhookHttp.new(response:)
+
+    deliveries = described_class.new(http_client:).dispatch!(event)
+
+    delivery = deliveries.first
+    expect(delivery).to be_failed
+    expect(delivery.response_status).to eq(422)
+    expect(delivery.response_body.length).to eq(10_000)
+    expect(delivery.response_body).to start_with("x" * 9_900)
+  end
 end
