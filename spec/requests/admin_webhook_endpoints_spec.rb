@@ -111,6 +111,44 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(page_text).to include("受信先側の重複処理に注意")
   end
 
+  it "shows bulk redelivery only on the failed filter with retryable delivery summary" do
+    sign_in_as(admin_user)
+
+    active_endpoint = create(:webhook_endpoint, name: "Active Hook", active: true)
+    inactive_endpoint = create(:webhook_endpoint, name: "Stopped Hook", active: false)
+    event = create(:notification_event, event_type: :document_updated)
+    create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, event_type: "document_updated", status: :failed)
+    create(:webhook_delivery, webhook_endpoint: inactive_endpoint, notification_event: event, event_type: "document_updated", status: :failed)
+
+    get admin_webhook_endpoints_path
+
+    expect(response).to have_http_status(:ok)
+    expect(action_targets).not_to include(retry_failed_admin_webhook_deliveries_path(delivery_status: "failed"))
+
+    get admin_webhook_endpoints_path(delivery_status: "failed")
+
+    expect(response).to have_http_status(:ok)
+    expect(action_targets).to include(retry_failed_admin_webhook_deliveries_path(delivery_status: "failed"))
+    expect(page_text).to include("表示中のまとめて再送対象: 1件")
+    expect(page_text).to include("表示範囲: 失敗のみ 2件中2件を表示しています")
+    expect(page_text).to include("Active Hook")
+    expect(page_text).to include("文書更新")
+    expect(page_text).to include("受信先側の重複処理に注意")
+  end
+
+  it "hides bulk redelivery when the failed filter has no retryable deliveries" do
+    sign_in_as(admin_user)
+
+    inactive_endpoint = create(:webhook_endpoint, active: false)
+    create(:webhook_delivery, webhook_endpoint: inactive_endpoint, status: :failed)
+
+    get admin_webhook_endpoints_path(delivery_status: "failed")
+
+    expect(response).to have_http_status(:ok)
+    expect(action_targets).not_to include(retry_failed_admin_webhook_deliveries_path(delivery_status: "failed"))
+    expect(page_text).to include("再送可能なWebhook送信履歴はありません")
+  end
+
   it "shows delivery detail without exposing request body" do
     sign_in_as(admin_user)
 
@@ -177,6 +215,54 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(response).to redirect_to(admin_webhook_endpoints_path)
     follow_redirect!
     expect(page_text).to include("Webhookを再送しました")
+  end
+
+  it "bulk redelivers only failed deliveries on active endpoints" do
+    sign_in_as(admin_user)
+
+    active_endpoint = create(:webhook_endpoint, active: true)
+    inactive_endpoint = create(:webhook_endpoint, active: false)
+    event = create(:notification_event, event_type: :document_updated)
+    retryable_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :failed)
+    another_retryable_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :failed)
+    succeeded_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :succeeded)
+    pending_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :pending)
+    inactive_delivery = create(:webhook_delivery, webhook_endpoint: inactive_endpoint, notification_event: event, status: :failed)
+    dispatcher = instance_double(WebhookDeliveryDispatcher)
+
+    allow(WebhookDeliveryDispatcher).to receive(:new).and_return(dispatcher)
+    allow(dispatcher).to receive(:redeliver!) do |delivery|
+      create(:webhook_delivery, webhook_endpoint: delivery.webhook_endpoint, notification_event: delivery.notification_event, status: :succeeded)
+    end
+
+    expect do
+      post retry_failed_admin_webhook_deliveries_path(delivery_status: "failed")
+    end.to change(WebhookDelivery, :count).by(2)
+
+    expect(dispatcher).to have_received(:redeliver!).with(retryable_delivery)
+    expect(dispatcher).to have_received(:redeliver!).with(another_retryable_delivery)
+    expect(dispatcher).not_to have_received(:redeliver!).with(succeeded_delivery)
+    expect(dispatcher).not_to have_received(:redeliver!).with(pending_delivery)
+    expect(dispatcher).not_to have_received(:redeliver!).with(inactive_delivery)
+    expect(response).to redirect_to(admin_webhook_endpoints_path(delivery_status: "failed"))
+    follow_redirect!
+    expect(page_text).to include("Webhookを2件まとめて再送しました")
+  end
+
+  it "rejects bulk redelivery outside the failed filter" do
+    sign_in_as(admin_user)
+
+    create(:webhook_delivery, status: :failed)
+    allow(WebhookDeliveryDispatcher).to receive(:new)
+
+    expect do
+      post retry_failed_admin_webhook_deliveries_path
+    end.not_to change(WebhookDelivery, :count)
+
+    expect(WebhookDeliveryDispatcher).not_to have_received(:new)
+    expect(response).to redirect_to(admin_webhook_endpoints_path)
+    follow_redirect!
+    expect(page_text).to include("まとめて再送は失敗のみ表示から実行してください")
   end
 
   it "rejects redelivery for succeeded deliveries" do
