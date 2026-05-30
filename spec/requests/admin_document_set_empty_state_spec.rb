@@ -31,7 +31,7 @@ RSpec.describe "Admin document set empty state", type: :request do
       document_set_items: {}
     }
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(page_text).to include("まだ対象文書がありません。")
     expect(page_text).to include("この案件に文書を取り込むと、ここで対象文書を選べます。")
     expect(page_text).not_to include("案件を選ぶと対象文書を設定できます。")
