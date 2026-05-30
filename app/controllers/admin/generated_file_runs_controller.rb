@@ -7,6 +7,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
 
   def index
     @filters = run_filter_params
+    @filter_warnings = []
     @page = page_param
     @per_page = per_page_param
     @status_counts = GeneratedFileRun.group(:status).count
@@ -32,6 +33,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
 
   def retry_failed
     @filters = run_filter_params
+    @filter_warnings = []
     runs = apply_filters(GeneratedFileRun.failed.order(created_at: :asc, id: :asc)).limit(MAX_PER_PAGE)
     runs.each { enqueue_retry!(_1, bulk: true) }
 
@@ -68,8 +70,8 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
     scope = scope.where(output_writer: filters[:output_writer]) if filters[:output_writer].present?
     scope = scope.where(event_source: filters[:event_source]) if filters[:event_source].present?
 
-    created_from = parsed_time(filters[:created_from], beginning: true)
-    created_to = parsed_time(filters[:created_to], end_of_day: true)
+    created_from = parsed_time(filters[:created_from], label: "作成日(開始)", beginning: true)
+    created_to = parsed_time(filters[:created_to], label: "作成日(終了)", end_of_day: true)
     scope = scope.where("created_at >= ?", created_from) if created_from
     scope = scope.where("created_at <= ?", created_to) if created_to
     scope
@@ -92,7 +94,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
     [(count.to_f / @per_page).ceil, 1].max
   end
 
-  def parsed_time(value, beginning: false, end_of_day: false)
+  def parsed_time(value, label:, beginning: false, end_of_day: false)
     return if value.blank?
 
     time = Time.zone.parse(value.to_s)
@@ -101,6 +103,8 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
 
     time
   rescue ArgumentError, TypeError
+    @filter_warnings ||= []
+    @filter_warnings << "#{label}「#{value}」は日時として解釈できないため、この条件は適用していません。"
     nil
   end
 
