@@ -191,6 +191,20 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(page_text).not_to include(own_sent.to_addresses)
   end
 
+  it "shows a failure summary in the status column for failed logs" do
+    draft_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "draft@example.com")
+    failed_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :failed, delivery_type: :portal_link, to_addresses: "failed@example.com", error_message: "SMTP timeout while contacting upstream gateway")
+
+    sign_in_as(external_user)
+
+    get document_delivery_logs_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("失敗理由: SMTP timeout while contacting upstream gateway")
+    expect(href_for_row_containing(failed_log.to_addresses, localized_status_label(:failed))).to eq(document_delivery_log_path(failed_log, return_to: document_delivery_logs_path))
+    expect(parsed_html.css("tr").find { |node| node.text.include?(draft_log.to_addresses) }.text).not_to include("失敗理由:")
+  end
+
   it "searches delivery logs by project code while preserving status and delivery type filters" do
     other_project = create(:project, code: "ARCH", name: "Archive Project")
     other_document = create(:document, project: other_project, title: "Archive Manual")
