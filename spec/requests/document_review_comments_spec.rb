@@ -118,6 +118,72 @@ RSpec.describe "Document review comments", type: :request do
     expect(response.body).not_to include("Internal visibility check")
   end
 
+  it "counts and filters unresolved Q&A threads by open status" do
+    open_question = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Open Q&A remains unresolved"
+    )
+    answered_question = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      status: :resolved,
+      resolved_by: admin_user,
+      resolved_at: 1.hour.ago,
+      body: "Answered Q&A stays in the Q&A tab"
+    )
+    closed_question = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      status: :rejected,
+      body: "Closed Q&A stays in the Q&A tab"
+    )
+    rejected_review = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: internal_user,
+      comment_type: :request_change,
+      internal_only: true,
+      status: :rejected,
+      body: "Rejected internal review stays unresolved"
+    )
+
+    sign_in_as(admin_user)
+
+    get project_document_path(project, document.slug)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("未解決: Q&A 1件 / 確認事項 1件")
+
+    html = Nokogiri::HTML(response.body)
+    qa_panel_text = html.at_css(".document-comment-tabs__panel--qa").text
+    unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
+
+    expect(qa_panel_text).to include(open_question.body)
+    expect(qa_panel_text).to include(answered_question.body)
+    expect(qa_panel_text).to include(closed_question.body)
+    expect(qa_panel_text).to include("回答済み")
+    expect(qa_panel_text).to include("クローズ")
+
+    expect(unresolved_panel_text).to include(open_question.body)
+    expect(unresolved_panel_text).not_to include(answered_question.body)
+    expect(unresolved_panel_text).not_to include(closed_question.body)
+    expect(unresolved_panel_text).to include(rejected_review.body)
+  end
+
   it "allows external users to create public Q&A threads and internal users to reply" do
     sign_in_as(external_user)
 
