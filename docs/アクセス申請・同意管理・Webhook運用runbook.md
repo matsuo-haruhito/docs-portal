@@ -23,6 +23,21 @@
 - 一覧上部の `状態` では `すべて / 承認待ち / 承認済み / 却下 / 取消済み` を切り替えられる
 - `申請者・対象` 検索では、申請者名・メールアドレス・理由・対象名・案件コード・文書名・ファイル名・公開IDをまとめて検索する
 
+#### requested_access_level と実際の付与先
+
+`要求権限` は利用者が申請した `requested_access_level` であり、承認時に作られる role / permission と 1:1 ではない。current `AccessRequestResolver` の付与先は次の通り。
+
+| 対象 | 承認時の付与先 | current mapping |
+| --- | --- | --- |
+| `Project` | `ProjectMembership` | 要求権限にかかわらず requester を `viewer` role として所属させる |
+| `Document` | `DocumentPermission` | `download` 申請は `download`、それ以外は `view` |
+| `DocumentFile` | 親 `Document` の `DocumentPermission` | file 単位の permission は作らず、親 Document へ `download` または `view` を付与する |
+
+- `manage` は enum と一覧表示上の要求値として存在するが、current resolver は明示的な manage grant を持たない
+- `manage` 申請を承認しても、Project 管理者 role や Document 管理権限を付与したものとして扱わない
+- `manage` の扱いを変えるかどうかは `#1124` / `#1126` の design / feature lane、current mapping の regression guard は `#1127` の quality lane で扱う
+- この runbook は current behavior の読み分けを補うだけで、承認基準や新しい権限仕様は定義しない
+
 #### 結果サマリと empty state の見方
 
 - `表示中` は、現在の `状態` filter と `申請者・対象` 検索を適用したあとに一覧へ残っている申請件数
