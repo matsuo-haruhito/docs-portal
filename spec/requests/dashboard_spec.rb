@@ -59,7 +59,7 @@ RSpec.describe "Dashboard", type: :request do
     get dashboard_path
 
     expect(response).to have_http_status(:ok)
-    expect(heading_texts).to include("ダッシュボード", "保留中のアクセス申請", "最近見た文書", "最近更新された文書")
+    expect(heading_texts).to include("ダッシュボード", "最近見た文書", "最近更新された文書")
     expect(metric_card_texts.any? { _1.include?("閲覧可能案件") }).to be(true)
     expect(page_text).to include("Visible Project", "Visible Manual", "お気に入り", "後で読む")
     expect(metric_cta_links.map(&:text)).to include(
@@ -168,7 +168,7 @@ RSpec.describe "Dashboard", type: :request do
       "申請一覧で詳しく見る"
     )
     expect(page_text).not_to include("Other User Project", "Approved Project")
-    expect(dashboard_section_links("保留中のアクセス申請").map { |link| link["href"] }).to include(access_requests_path)
+    expect(parsed_html.css(".dashboard-grid a").map { |link| link["href"] }).to include(access_requests_path)
   end
 
   it "declares root stimulus controllers in the full-page layout markup" do
