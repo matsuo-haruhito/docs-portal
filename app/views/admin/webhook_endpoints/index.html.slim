@@ -89,6 +89,7 @@ h1 Webhook
           td data-rails-table-preferences-column-key="response_status" = delivery.response_status || "-"
           td data-rails-table-preferences-column-key="error_message" = delivery.error_message.presence || "-"
           td.actions data-rails-table-preferences-column-key="actions"
+            = link_to "詳細", admin_webhook_delivery_path(delivery.public_id)
             - if delivery.retryable?
               = button_to "再送", retry_dispatch_admin_webhook_delivery_path(delivery.public_id), method: :post, class: "button secondary", form: { data: { turbo_confirm: "このWebhook送信を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。" } }
             - else
