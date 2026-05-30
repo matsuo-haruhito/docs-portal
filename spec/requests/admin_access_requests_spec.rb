@@ -42,6 +42,27 @@ RSpec.describe "Admin access requests", type: :request do
     expect(filter_form.at_css("input[name='q']")).to be_present
   end
 
+  it "marks pending manage requests without changing pending actions" do
+    manage_request = create(:access_request, requester:, requestable: project, requested_access_level: :manage, reason: "Need project management")
+    create(:access_request, requester:, requestable: document, requested_access_level: :download, reason: "Need manual download")
+
+    sign_in_as(admin_user)
+
+    get admin_access_requests_path, params: { status: "pending" }
+
+    expect(response).to have_http_status(:ok)
+
+    rows = parsed_html.css("tbody tr")
+    manage_row = rows.find { |row| row.text.include?("Need project management") }
+    download_row = rows.find { |row| row.text.include?("Need manual download") }
+
+    expect(manage_row.text.squish).to include("管理権限申請")
+    expect(manage_row.text.squish).to include("現行の承認処理では管理者 role を付与しません")
+    expect(download_row.text.squish).not_to include("管理権限申請")
+    expect(download_row.text.squish).not_to include("現行の承認処理では管理者 role を付与しません")
+    expect(manage_row.css("form[action='#{admin_access_request_path(manage_request)}']").size).to eq(2)
+  end
+
   it "filters requests by status and keeps pending actions visible" do
     pending_request = create(:access_request, requester:, requestable: document, requested_access_level: :download, reason: "Pending review")
     create(:access_request,
