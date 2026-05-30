@@ -2,6 +2,7 @@
 - table_key = :admin_document_sets
 - table_columns = document_set_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- active_filter_labels = admin_document_set_filter_labels(@filters)
 
 h1 文書セット
 = render "admin/nav"
@@ -9,6 +10,37 @@ h1 文書セット
 .card
   h2 新規登録
   = render "form", document_set: @document_set
+
+.card#document-set-filters
+  h2 一覧の絞り込み
+
+  = form_with url: admin_document_sets_path(anchor: "document-set-filters"), method: :get, local: true, class: "document-set-filter-form" do |form|
+    .form-grid.form-grid--compact
+      label.form-field
+        span 種別
+        = form.select :set_type, options_for_select(admin_document_set_type_filter_options, @filters[:set_type])
+
+      label.form-field
+        span 公開範囲
+        = form.select :visibility_policy, options_for_select(admin_document_set_visibility_filter_options, @filters[:visibility_policy])
+
+    p.actions.form-actions
+      = form.submit "絞り込み", class: "button"
+      = link_to "条件をクリア", admin_document_sets_path, class: "button secondary"
+
+  - if active_filter_labels.any?
+    p.muted
+      | 適用中: 
+      - active_filter_labels.each do |label|
+        span.badge = label
+    p.muted 表示設定は列の表示・幅を調整し、絞り込みは一覧に出す文書セットを切り替えます。
+  - else
+    p.muted 種別や公開範囲で一覧に出す文書セットを絞り込めます。表示設定は列の表示・幅を調整します。
+
+  p.muted
+    | 検索結果: 
+    = @document_sets.size
+    | 件
 
 - if @document_sets.any?
   .card
@@ -36,5 +68,9 @@ h1 文書セット
             = delete_link_to "削除", admin_document_set_path(document_set), confirm: "文書セット「#{document_set.name}」を削除しますか？登録済み文書 #{document_set.document_set_items.size} 件との対応も失われます。"
 - else
   .card
-    p.muted まだ文書セットは登録されていません。
-    p.muted 上の「新規登録」で案件と名称を設定して保存すると、対象文書を選べる文書セットを作成できます。
+    - if admin_document_set_filters_active?(@filters)
+      p.muted 条件に一致する文書セットはありません。
+      p.muted = link_to "条件をクリア", admin_document_sets_path
+    - else
+      p.muted まだ文書セットは登録されていません。
+      p.muted 上の「新規登録」で案件と名称を設定して保存すると、対象文書を選べる文書セットを作成できます。
