@@ -71,9 +71,26 @@ RSpec.describe "Admin generated file run search", type: :request do
       get admin_generated_file_runs_path(filters)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(admin_generated_file_runs_path(filters.merge(status: "completed")))
-      expect(response.body).to include(retry_failed_admin_generated_file_runs_path(filters))
+      expect(link_matching(admin_generated_file_runs_path, status: "completed", q: "docs/source/manual")).to be_present
+      expect(form_matching(retry_failed_admin_generated_file_runs_path, status: "failed", q: "docs/source/manual")).to be_present
     end
+  end
+
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def link_matching(path, expected_query)
+    parsed_html.css("a[href]").find { same_path_and_query?(_1["href"], path, expected_query) }
+  end
+
+  def form_matching(path, expected_query)
+    parsed_html.css("form[action]").find { same_path_and_query?(_1["action"], path, expected_query) }
+  end
+
+  def same_path_and_query?(href, path, expected_query)
+    uri = URI.parse(href)
+    uri.path == path && Rack::Utils.parse_nested_query(uri.query) == expected_query.stringify_keys
   end
 
   def create_run!(attributes = {})
