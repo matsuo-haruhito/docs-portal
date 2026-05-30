@@ -51,6 +51,20 @@ RSpec.describe "Admin document sets", type: :request do
     parsed_html.css('select[name^="document_set["]').map { |node| node["name"] }
   end
 
+  def document_set_filter_select_names
+    parsed_html.css("form.document-set-filter-form select").map { |node| node["name"] }
+  end
+
+  def document_set_filter_options(name)
+    parsed_html.css(%(form.document-set-filter-form select[name="#{name}"] option)).map do |node|
+      [node.text.squish, node["value"]]
+    end
+  end
+
+  def clear_filter_targets
+    parsed_html.css('a[href]').select { |node| node.text.squish == "条件をクリア" }.map { |node| node["href"] }
+  end
+
   def action_targets
     parsed_html.css("a[href], form[action]").map do |node|
       node["href"] || node["action"]
@@ -138,23 +152,37 @@ RSpec.describe "Admin document sets", type: :request do
     expect(page_text).not_to include("案件を選ぶと対象文書を設定できます。")
   end
 
-  it "filters document sets by set_type and visibility_policy" do
+  it "renders and applies document set filters by set_type and visibility_policy" do
     sign_in_as(admin)
+
+    get admin_document_sets_path
+
+    expect(response).to have_http_status(:ok)
+    expect(document_set_filter_select_names).to contain_exactly("set_type", "visibility_policy")
+    expect(document_set_filter_options("set_type")).to include(["すべて", ""], ["送付用", "delivery"], ["設計", "design"])
+    expect(document_set_filter_options("visibility_policy")).to include(["すべて", ""], ["限定公開", "restricted_external"], ["社内のみ", "internal_only"])
+    expect(page_text).to include("表示設定は列の表示・幅を調整します")
 
     get admin_document_sets_path, params: { set_type: "delivery" }
 
     expect(response).to have_http_status(:ok)
     expect(listed_document_set_names).to eq(["既存セット", "配送社内セット"])
+    expect(page_text).to include("種別: 送付用")
+    expect(clear_filter_targets).to include(admin_document_sets_path)
 
     get admin_document_sets_path, params: { visibility_policy: "internal_only" }
 
     expect(response).to have_http_status(:ok)
     expect(listed_document_set_names).to eq(["配送社内セット"])
+    expect(page_text).to include("公開範囲: 社内のみ")
+    expect(clear_filter_targets).to include(admin_document_sets_path)
 
     get admin_document_sets_path, params: { set_type: "delivery", visibility_policy: "restricted_external" }
 
     expect(response).to have_http_status(:ok)
     expect(listed_document_set_names).to eq(["既存セット"])
+    expect(page_text).to include("種別: 送付用")
+    expect(page_text).to include("公開範囲: 限定公開")
   end
 
   it "keeps the current filter context on invalid create rerender" do
@@ -174,6 +202,8 @@ RSpec.describe "Admin document sets", type: :request do
 
     expect(response).to have_http_status(:unprocessable_entity)
     expect(listed_document_set_names).to eq(["配送社内セット"])
+    expect(page_text).to include("種別: 送付用")
+    expect(page_text).to include("公開範囲: 社内のみ")
     expect(document_set_form_action).to eq(admin_document_sets_path(set_type: "delivery", visibility_policy: "internal_only"))
   end
 
