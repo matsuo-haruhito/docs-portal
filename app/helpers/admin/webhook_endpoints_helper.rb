@@ -39,6 +39,24 @@ module Admin::WebhookEndpointsHelper
     end
   end
 
+  def webhook_delivery_status_filter_options
+    [
+      ["all", "すべて"],
+      ["failed", "失敗のみ"],
+      ["pending", "送信待ち"],
+      ["succeeded", "成功"]
+    ]
+  end
+
+  def webhook_delivery_status_filter_label(value)
+    webhook_delivery_status_filter_options.to_h.fetch(value.to_s, "すべて")
+  end
+
+  def webhook_delivery_status_count(counts, status)
+    status_key = status.to_s
+    counts[status_key] || counts[WebhookDelivery.statuses.fetch(status_key)] || 0
+  end
+
   def webhook_event_type_label(event_or_value)
     value = event_or_value.respond_to?(:event_type) ? event_or_value.event_type : event_or_value
     localized_label("webhook_events.event_type", value)
