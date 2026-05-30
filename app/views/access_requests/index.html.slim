@@ -4,6 +4,7 @@
 - rejected_count = @status_counts.fetch("rejected", 0)
 - cancelled_count = @status_counts.fetch("cancelled", 0)
 - total_count = pending_count + approved_count + rejected_count + cancelled_count
+- current_query = @query.presence
 
 h1 アクセス申請
 p.muted 自分が送信した申請の状態を確認できます。
@@ -11,12 +12,21 @@ p.muted 自分が送信した申請の状態を確認できます。
 p.muted
   | 申請中 #{pending_count}件 / 承認済み #{approved_count}件 / 却下 #{rejected_count}件 / 取消済み #{cancelled_count}件
 
+= form_with url: access_requests_path, method: :get, local: true do |form|
+  - if @status_filter.present?
+    = hidden_field_tag :status, @status_filter
+  p.actions
+    = form.search_field :q, value: @query, placeholder: "対象名・理由で検索"
+    = form.submit "検索", class: "button"
+    - if @query.present?
+      = link_to "検索をクリア", access_requests_path(status: @status_filter.presence), class: "button secondary"
+
 p.actions
-  = link_to "すべて (#{total_count})", access_requests_path, class: @status_filter.blank? ? "button" : "button secondary"
-  = link_to "申請中 (#{pending_count})", access_requests_path(status: :pending), class: @status_filter == "pending" ? "button" : "button secondary"
-  = link_to "承認済み (#{approved_count})", access_requests_path(status: :approved), class: @status_filter == "approved" ? "button" : "button secondary"
-  = link_to "却下 (#{rejected_count})", access_requests_path(status: :rejected), class: @status_filter == "rejected" ? "button" : "button secondary"
-  = link_to "取消済み (#{cancelled_count})", access_requests_path(status: :cancelled), class: @status_filter == "cancelled" ? "button" : "button secondary"
+  = link_to "すべて (#{total_count})", access_requests_path(q: current_query), class: @status_filter.blank? ? "button" : "button secondary"
+  = link_to "申請中 (#{pending_count})", access_requests_path(q: current_query, status: :pending), class: @status_filter == "pending" ? "button" : "button secondary"
+  = link_to "承認済み (#{approved_count})", access_requests_path(q: current_query, status: :approved), class: @status_filter == "approved" ? "button" : "button secondary"
+  = link_to "却下 (#{rejected_count})", access_requests_path(q: current_query, status: :rejected), class: @status_filter == "rejected" ? "button" : "button secondary"
+  = link_to "取消済み (#{cancelled_count})", access_requests_path(q: current_query, status: :cancelled), class: @status_filter == "cancelled" ? "button" : "button secondary"
 
 - if @access_requests.any?
   table
@@ -54,4 +64,7 @@ p.actions
             - else
               span.muted -
 - else
-  p.muted 送信済みのアクセス申請はありません。
+  - if @query.present?
+    p.muted 検索条件に一致するアクセス申請はありません。
+  - else
+    p.muted 送信済みのアクセス申請はありません。

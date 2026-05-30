@@ -1,9 +1,12 @@
 class AccessRequestsController < BaseController
   def index
     @status_filter = normalized_status_filter
+    @query = normalized_query
+
     scope = AccessRequest.where(requester: current_user).recent_first.includes(:approver, :requestable)
-    @status_counts = scope.unscope(:order).group(:status).count
-    @access_requests = @status_filter.present? ? scope.public_send(@status_filter) : scope
+    @access_requests = filtered_access_requests(scope)
+    @status_counts = access_request_status_counts(scope, @access_requests)
+    @access_requests = @access_requests.select { |access_request| access_request.status == @status_filter } if @status_filter.present?
   end
 
   def create
@@ -31,12 +34,58 @@ class AccessRequestsController < BaseController
 
   private
 
+  def filtered_access_requests(scope)
+    requests = scope.to_a
+    return requests if @query.blank?
+
+    requests.select { |access_request| access_request_matches_query?(access_request, @query) }
+  end
+
+  def access_request_matches_query?(access_request, query)
+    access_request_search_text(access_request).include?(query.downcase)
+  end
+
+  def access_request_search_text(access_request)
+    request_hash = AccessRequestHash.new(access_request).call
+    requestable = request_hash[:requestable] || {}
+
+    [
+      request_hash[:reason],
+      requestable[:code],
+      requestable[:name],
+      requestable[:project_code],
+      requestable[:title],
+      requestable[:document_title],
+      requestable[:file_name],
+      requestable[:public_id]
+    ].compact.join(" ").downcase
+  end
+
+  def access_request_status_counts(scope, access_requests)
+    return access_request_status_counts_from_loaded(access_requests) if @query.present?
+
+    counts = scope.unscope(:order).group(:status).count
+    AccessRequest.statuses.keys.to_h do |status|
+      [status, counts[status].to_i]
+    end
+  end
+
+  def access_request_status_counts_from_loaded(access_requests)
+    AccessRequest.statuses.keys.to_h do |status|
+      [status, access_requests.count { |access_request| access_request.status == status }]
+    end
+  end
+
   def normalized_status_filter
     status = params[:status].to_s
     return if status.blank?
     return status if AccessRequest.statuses.key?(status)
 
     nil
+  end
+
+  def normalized_query
+    params[:q].to_s.strip.presence
   end
 
   def find_requestable
