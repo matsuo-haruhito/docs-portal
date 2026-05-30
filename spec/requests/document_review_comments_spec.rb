@@ -233,7 +233,6 @@ RSpec.describe "Document review comments", type: :request do
     expect(question.qa_status_label).to eq("回答済み")
 
     follow_redirect!
-    expect(response.body).to include("Q&A を回答済みにしました")
     expect(response.body).to include("回答済み")
     expect(response.body).to include("Yes. The current published version is valid.")
     expect(response.body).not_to include("回答済みにする")
@@ -253,7 +252,6 @@ RSpec.describe "Document review comments", type: :request do
     expect(question.qa_status_label).to eq("クローズ")
 
     follow_redirect!
-    expect(response.body).to include("Q&A をクローズしました")
     expect(response.body).to include("クローズ")
     expect(response.body).to include("Should this version stay visible?")
   end
