@@ -8,6 +8,7 @@
 - delivery_type_total_count = delivery_type_counts.values.sum
 - current_delivery_logs_path = request.fullpath
 - current_query = @query.presence
+- has_active_filters = @query.present? || @status_filter.present? || @delivery_type_filter.present?
 
 h1 送付履歴
 
@@ -62,8 +63,10 @@ p.actions
           td = log.to_addresses
           td = document_delivery_log_delivery_type_label(log)
           td = link_to document_delivery_log_status_label(log), document_delivery_log_path(log, return_to: current_delivery_logs_path)
+- elsif has_active_filters
+  p.muted 条件に一致する送付履歴はありません。
+  p.muted 検索語・状態・方式を見直すか、「すべての送付履歴を見る」で条件を解除してください。
+  p.actions
+    = link_to "すべての送付履歴を見る", document_delivery_logs_path, class: "button secondary"
 - else
-  - if @query.present?
-    p.muted 検索条件に一致する送付履歴はありません。
-  - else
-    p.muted 送付履歴はありません。
+  p.muted 送付履歴はありません。
