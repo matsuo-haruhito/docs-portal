@@ -37,14 +37,20 @@ module StaleSeleniumCacheGuard
   end
 
   def directory_versions(chromedriver_root)
-    chromedriver_root.children.select(&:directory?).map { |path| path.basename.to_s }
-  rescue Errno::ENOENT
-    []
+    Dir.glob(chromedriver_root.join("*", "*").to_s).filter_map do |path|
+      pathname = Pathname.new(path)
+      pathname.basename.to_s if pathname.directory?
+    end
   end
 
   def chromedriver_executable_present?(chromedriver_root, version)
-    Dir.glob(chromedriver_root.join(version, "*", "chromedriver").to_s).any? do |path|
-      File.file?(path) && File.executable?(path)
+    cache_patterns = [
+      chromedriver_root.join("*", version, "chromedriver"),
+      chromedriver_root.join(version, "*", "chromedriver")
+    ]
+
+    cache_patterns.any? do |pattern|
+      Dir.glob(pattern.to_s).any? { |path| File.file?(path) && File.executable?(path) }
     end
   end
 end
