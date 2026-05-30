@@ -9,7 +9,7 @@
 ## 権限・管理画面
 
 - `company_master_admin` の current `/admin` redirect と `会社` / `ユーザー` 管理の制約は [company_master_admin会社・ユーザー管理runbook](./company_master_admin会社・ユーザー管理runbook.md) を正本とし、ここには未解決の導線改善だけを残す
-- 管理画面でも DB id ではなく public_id / code / slug を使うようにする。未起票で残す理由: 対象 route と互換影響を棚卸ししてから concrete issue に分ける必要がある
+- 管理画面の主要 member route は current `config/routes.rb` では `public_id` または `code` を URL 識別子に使う。`admin/companies`, `admin/users`, `admin/project_memberships`, `admin/consent_terms`, `admin/project_consent_settings`, `admin/git_import_sources`, `admin/generated_file_events`, `admin/generated_file_runs`, `admin/zip_imports`, `admin/microsoft_graph_connections`, `admin/recurring_job_schedules`, `admin/external_folder_sync_sources`, `admin/documents`, `admin/bulk_edit_dry_runs`, `admin/document_sets`, `admin/document_permissions`, `admin/webhook_endpoints`, `admin/access_requests` は `param: :public_id`、`admin/projects` は `param: :code` を使う。新たな numeric id 導線を見つけた場合だけ、対象 resource と URL を確認して concrete issue に切る
 - 正式なレビュー・承認ワークフローを導入するかは、コメント・品質チェック・公開制御・送付運用が固まってから再評価する。未起票で残す理由: ワークフロー仕様の正誤判断が必要
 - 形式的な workflow とは別に、最小確認依頼 / OK・Cancel 機能は独立 issue で扱う。未起票で残す理由: 対象画面と通知要件が具体化してから切る
 
@@ -24,7 +24,7 @@
 
 ## public_id / URL
 
-- 公開側の主要 route は `code` / `slug` / `public_id` へ移行済み。管理画面や internal 導線の numeric id 直指定 route は段階的に廃止する。未起票で残す理由: 管理画面 route ごとの互換性を確認してから小さく切る
+- 公開側の主要 route は `code` / `slug` / `public_id` へ移行済み。管理画面の主要 member route も `public_id` / `code` を使うため、広い route 移行メモとしては残さない。未確認の numeric id 導線が見つかった場合は、対象 resource と URL を確認できた時点で個別 issue に切る
 
 ## latest_version / バージョン管理
 
