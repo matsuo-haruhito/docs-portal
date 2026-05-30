@@ -48,8 +48,13 @@ body {
 }
 
 header :where(a),
+.nav-list :where(a),
+.button:where(a) {
+  text-decoration: none;
+}
+
 .document-prose :where(a) {
-  text-decoration-thickness: inherit;
+  text-decoration-thickness: 0.08em;
 }
 
 :where(a, button, .button, summary, [role="button"]):focus-visible {
