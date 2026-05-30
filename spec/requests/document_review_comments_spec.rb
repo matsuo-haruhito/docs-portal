@@ -77,6 +77,47 @@ RSpec.describe "Document review comments", type: :request do
     expect(comment.resolved_by).to eq(admin_user)
   end
 
+  it "labels unresolved counts, question visibility, and internal-only review comments" do
+    create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Can external users read this answer?"
+    )
+    create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: internal_user,
+      comment_type: :request_change,
+      internal_only: true,
+      body: "Internal visibility check"
+    )
+
+    sign_in_as(admin_user)
+
+    get project_document_path(project, document.slug)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("未解決: Q&A 1件 / 確認事項 1件")
+    expect(response.body).to include("外部公開Q&A")
+    expect(response.body).to include("公開範囲: 外部/利用者にも表示")
+    expect(response.body).to include("内部限定")
+    expect(response.body).to include("公開範囲: 内部のみ")
+
+    sign_in_as(external_user)
+
+    get project_document_path(project, document.slug)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("未解決: Q&A 1件")
+    expect(response.body).to include("外部公開Q&A")
+    expect(response.body).not_to include("確認事項 1件")
+    expect(response.body).not_to include("内部限定")
+    expect(response.body).not_to include("Internal visibility check")
+  end
+
   it "allows external users to create public Q&A threads and internal users to reply" do
     sign_in_as(external_user)
 
