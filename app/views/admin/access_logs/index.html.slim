@@ -16,7 +16,7 @@ section.card
         = form.select :action_type, options_for_select([["すべて", ""]] + enum_options_for("access_logs.action_type", AccessLog.action_types.keys), @filters[:action_type])
       div
         = form.label :target_type, "対象種別"
-        = form.select :target_type, options_for_select([["すべて", ""]] + enum_options_for("access_logs.target_type", %w[page file zip]), @filters[:target_type])
+        = form.select :target_type, options_for_select([["すべて", ""]] + access_log_target_type_filter_options, @filters[:target_type])
       div
         = form.label :project_id, "案件"
         = select_tag :project_id,
