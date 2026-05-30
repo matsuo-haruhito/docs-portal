@@ -59,6 +59,29 @@
 
 <section class="dashboard-grid">
   <article class="card">
+    <h2>保留中のアクセス申請</h2>
+    <% if @pending_access_requests.any? %>
+      <p class="muted">最近の申請を確認できます。取消や過去申請の確認は申請一覧で行います。</p>
+      <ul class="resource-list">
+        <% @pending_access_requests.each do |access_request| %>
+          <% request_hash = AccessRequestHash.new(access_request).call %>
+          <% requestable = request_hash[:requestable] %>
+          <% requestable_name = requestable[:name] || requestable[:title] || requestable[:file_name] || requestable[:public_id] %>
+          <li>
+            <strong><%= requestable_name %></strong>
+            <span class="muted"><%= requestable[:type_label] %> / <%= request_hash[:requested_access_level_label] %> / <%= request_hash[:status_label] %> / <%= l(access_request.created_at, format: :short) %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="muted">保留中のアクセス申請はありません。過去の申請は申請一覧で確認できます。</p>
+    <% end %>
+    <p class="actions">
+      <%= link_to "申請一覧で詳しく見る", access_requests_path, class: "button secondary", data: { turbo_frame: "_top" } %>
+    </p>
+  </article>
+
+  <article class="card">
     <h2>案件</h2>
     <% if @projects.any? %>
       <ul class="resource-list">
