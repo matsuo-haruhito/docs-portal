@@ -2,6 +2,7 @@
 - table_key = :admin_documents
 - table_columns = document_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- has_lifecycle_filter = @filters.values_at(:retention, :discard).any?(&:present?)
 
 h1 文書マスタ
 = render "admin/nav"
@@ -51,6 +52,9 @@ h1 文書マスタ
     | 検索結果: 
     = @documents.size
     | 件
+  - if has_lifecycle_filter
+    p.muted
+      | 保管期限・廃棄候補の絞り込み中です。状態、保管期限、廃棄候補、公開側文書を確認し、必要な場合だけ行単位で編集・アーカイブ・復元してください。0件の場合は現在の条件に合う対象がない状態です。
 
 .card
   = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定")
