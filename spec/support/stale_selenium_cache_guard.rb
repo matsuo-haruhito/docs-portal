@@ -10,8 +10,9 @@ module StaleSeleniumCacheGuard
   def remove_stale_chromedriver_cache(cache_root: DEFAULT_CACHE_ROOT)
     cache_root = Pathname.new(cache_root.to_s)
     chromedriver_root = cache_root.join("chromedriver")
-    return unless chromedriver_root.directory?
-    return if cached_chromedriver_versions(chromedriver_root).all? { |version| chromedriver_executable_present?(chromedriver_root, version) }
+    versions = cached_chromedriver_versions(chromedriver_root)
+    return if versions.empty? && !chromedriver_root.directory?
+    return if chromedriver_root.directory? && versions.all? { |version| chromedriver_executable_present?(chromedriver_root, version) }
 
     FileUtils.rm_rf(chromedriver_root)
     FileUtils.rm_f(cache_root.join("se-metadata.json"))
