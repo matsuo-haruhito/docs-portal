@@ -7,6 +7,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
 
   def index
     @filters = event_filter_params
+    @filter_warnings = []
     @page = page_param
     @per_page = per_page_param
     @status_counts = GeneratedFileEvent.group(:status).count
@@ -29,6 +30,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
 
   def retry_failed
     @filters = event_filter_params
+    @filter_warnings = []
     events = apply_filters(GeneratedFileEvent.failed.order(created_at: :asc, id: :asc)).limit(MAX_PER_PAGE)
     events.each { reset_for_dispatch!(_1) }
     GeneratedFileEventDispatchJob.perform_later if events.any?
@@ -62,8 +64,8 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
     scope = scope.where(event_source: filters[:event_source]) if filters[:event_source].present?
     scope = scope.where("path LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(normalized_path_filter(filters[:path]))}%") if filters[:path].present?
 
-    scheduled_from = parsed_time(filters[:scheduled_from], beginning: true)
-    scheduled_to = parsed_time(filters[:scheduled_to], end_of_day: true)
+    scheduled_from = parsed_time(filters[:scheduled_from], label: "実行予定日(開始)", beginning: true)
+    scheduled_to = parsed_time(filters[:scheduled_to], label: "実行予定日(終了)", end_of_day: true)
     scope = scope.where("scheduled_at >= ?", scheduled_from) if scheduled_from
     scope = scope.where("scheduled_at <= ?", scheduled_to) if scheduled_to
     scope
@@ -90,7 +92,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
     [(count.to_f / @per_page).ceil, 1].max
   end
 
-  def parsed_time(value, beginning: false, end_of_day: false)
+  def parsed_time(value, label:, beginning: false, end_of_day: false)
     return if value.blank?
 
     time = Time.zone.parse(value.to_s)
@@ -99,6 +101,8 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
 
     time
   rescue ArgumentError, TypeError
+    @filter_warnings ||= []
+    @filter_warnings << "#{label}「#{value}」は日時として解釈できないため、この条件は適用していません。"
     nil
   end
 
