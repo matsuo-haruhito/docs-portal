@@ -12,6 +12,10 @@ class WebhookDeliveryDispatcher
     end
   end
 
+  def redeliver!(delivery)
+    deliver_to_endpoint!(delivery.webhook_endpoint, delivery.notification_event)
+  end
+
   private
 
   attr_reader :http_client

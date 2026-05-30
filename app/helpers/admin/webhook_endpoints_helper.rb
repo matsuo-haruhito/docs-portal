@@ -18,7 +18,8 @@ module Admin::WebhookEndpointsHelper
       table_preferences_column(:event_type, label: "イベント", default_width: 220),
       table_preferences_column(:status, label: "ステータス", default_width: 110, pinned: true),
       table_preferences_column(:response_status, label: "HTTP", default_width: 90),
-      table_preferences_column(:error_message, label: "エラー", default_width: 340, overflow: :ellipsis)
+      table_preferences_column(:error_message, label: "エラー", default_width: 340, overflow: :ellipsis),
+      table_preferences_column(:actions, label: "操作", default_width: 120, pinned: true)
     ]
   end
 

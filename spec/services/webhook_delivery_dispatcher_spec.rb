@@ -116,4 +116,53 @@ RSpec.describe WebhookDeliveryDispatcher do
     expect(delivery.response_body.length).to eq(10_000)
     expect(delivery.response_body).to start_with("x" * 9_900)
   end
+
+  it "redelivers a failed delivery as a new delivery using the current endpoint settings" do
+    endpoint = create(:webhook_endpoint, event_types: %w[document_updated], target_url: "https://example.com/old-webhook")
+    failed_delivery = create(
+      :webhook_delivery,
+      webhook_endpoint: endpoint,
+      notification_event: event,
+      status: :failed,
+      target_url: "https://example.com/old-webhook",
+      request_body: { stale: true }.to_json,
+      error_message: "network error"
+    )
+    endpoint.update!(target_url: "https://example.com/current-webhook")
+    http_client = StubWebhookHttp.new
+
+    redelivery = nil
+    expect do
+      redelivery = described_class.new(http_client:).redeliver!(failed_delivery)
+    end.to change(WebhookDelivery, :count).by(1)
+
+    expect(redelivery).to be_succeeded
+    expect(redelivery).not_to eq(failed_delivery)
+    expect(redelivery.webhook_endpoint).to eq(endpoint)
+    expect(redelivery.notification_event).to eq(event)
+    expect(redelivery.target_url).to eq("https://example.com/current-webhook")
+    expect(JSON.parse(redelivery.request_body)).to include(
+      "id" => event.public_id,
+      "event_type" => "document_updated"
+    )
+
+    request = http_client.requests.first.request
+    expect(request["X-Docs-Portal-Event"]).to eq("document_updated")
+  end
+
+  it "keeps redelivery failures in a new delivery history row" do
+    endpoint = create(:webhook_endpoint, event_types: %w[document_updated])
+    failed_delivery = create(:webhook_delivery, webhook_endpoint: endpoint, notification_event: event, status: :failed)
+    http_client = StubWebhookHttp.new(error: StandardError.new("network error"))
+
+    redelivery = nil
+    expect do
+      redelivery = described_class.new(http_client:).redeliver!(failed_delivery)
+    end.to change(WebhookDelivery, :count).by(1)
+
+    expect(redelivery).to be_failed
+    expect(redelivery).not_to eq(failed_delivery)
+    expect(redelivery.error_message).to include("network error")
+    expect(redelivery.sent_at).to be_present
+  end
 end
