@@ -82,12 +82,25 @@ class ProjectAiContextsController < BaseController
       project: @project,
       action_type:,
       target_type: "ai_context",
-      target_name: "mode=#{@mode}",
+      target_name: ai_context_access_log_target_name,
       ip_address: request.remote_ip,
       user_agent: request.user_agent,
       accessed_at: Time.current
     )
   rescue StandardError => e
     Rails.logger.error("AI context AccessLog skipped: #{e.class}: #{e.message}")
+  end
+
+  def ai_context_access_log_target_name
+    [
+      "mode=#{@mode}",
+      "scope=#{@requested_document_ids.empty? ? "all" : "selected"}",
+      "selected_count=#{@requested_document_ids.size}",
+      "exported_count=#{ai_context_exported_document_count}"
+    ].join(";")
+  end
+
+  def ai_context_exported_document_count
+    @hash.dig(:summary, :document_count) || @hash.dig("summary", "document_count") || 0
   end
 end
