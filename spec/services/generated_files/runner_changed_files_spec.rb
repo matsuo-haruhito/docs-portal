@@ -1,4 +1,5 @@
 require "rails_helper"
+require "rbconfig"
 require "stringio"
 
 RSpec.describe "Generated file runner changed file normalization" do
@@ -42,7 +43,7 @@ RSpec.describe "Generated file runner changed file normalization" do
   end
 
   def ruby_write_command(path, content)
-    "ruby -e 'File.write(#{path.to_s.inspect}, #{content.to_s.inspect})'"
+    "#{Shellwords.escape(RbConfig.ruby)} -e 'File.write(#{path.to_s.inspect}, #{content.to_s.inspect})'"
   end
 
   class FakeRunRecorder

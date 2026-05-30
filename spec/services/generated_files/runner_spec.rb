@@ -1,4 +1,5 @@
 require "rails_helper"
+require "rbconfig"
 require "stringio"
 
 RSpec.describe GeneratedFiles::Runner do
@@ -120,7 +121,7 @@ RSpec.describe GeneratedFiles::Runner do
         {
           "id" => "failing",
           "source_paths" => ["source.yml"],
-          "command" => "ruby -e 'abort(%q[boom])'",
+          "command" => "#{Shellwords.escape(RbConfig.ruby)} -e 'abort(%q[boom])'",
           "generated_paths" => ["missing.txt"]
         }
       ]
@@ -201,7 +202,7 @@ RSpec.describe GeneratedFiles::Runner do
   def ruby_write_command(path, content)
     escaped_path = path.to_s.inspect
     escaped_content = content.to_s.inspect
-    "ruby -e 'File.write(#{escaped_path}, #{escaped_content})'"
+    "#{Shellwords.escape(RbConfig.ruby)} -e 'File.write(#{escaped_path}, #{escaped_content})'"
   end
 
   def minimal_flow_yaml
