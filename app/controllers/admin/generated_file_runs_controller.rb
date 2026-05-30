@@ -12,6 +12,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
     @per_page = per_page_param
     @status_counts = GeneratedFileRun.group(:status).count
     @filtered_generated_file_runs = apply_filters(GeneratedFileRun.order(created_at: :desc, id: :desc))
+    @bulk_retry_target_count = bulk_retry_target_count
     @total_count = @filtered_generated_file_runs.count
     @total_pages = total_pages(@total_count)
     @generated_file_runs = @filtered_generated_file_runs.offset((@page - 1) * @per_page).limit(@per_page)
@@ -49,6 +50,10 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
       event_source: bulk ? "generated_file_run_bulk_retry" : "generated_file_run_retry",
       metadata: retry_metadata_for(run, bulk:)
     )
+  end
+
+  def bulk_retry_target_count
+    apply_filters(GeneratedFileRun.failed.order(created_at: :asc, id: :asc)).limit(MAX_PER_PAGE).to_a.size
   end
 
   def recent_runs_related_to(public_id)
