@@ -2,6 +2,8 @@ class DocumentDeliveryLogsController < BaseController
   before_action :set_context, only: %i[new create]
   before_action :set_delivery_log, only: %i[show update]
 
+  DELIVERY_LOG_DISPLAY_LIMIT = 50
+
   STATUS_FILTER_LABELS = {
     "draft" => "下書き",
     "sent" => "送付済み",
@@ -28,7 +30,9 @@ class DocumentDeliveryLogsController < BaseController
     scoped_scope = searchable_scope
     scoped_scope = scoped_scope.public_send(@status_filter) if @status_filter.present?
     scoped_scope = scoped_scope.public_send(@delivery_type_filter) if @delivery_type_filter.present?
-    @delivery_logs = scoped_scope.includes(:project, :document, :document_set, :sender).recent_first
+    @delivery_logs_total_count = scoped_scope.count
+    @delivery_logs_limit = DELIVERY_LOG_DISPLAY_LIMIT
+    @delivery_logs = scoped_scope.includes(:project, :document, :document_set, :sender).recent_first.limit(@delivery_logs_limit)
   end
 
   def show
