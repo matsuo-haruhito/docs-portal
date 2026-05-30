@@ -1,11 +1,17 @@
 class Admin::WebhookEndpointsController < Admin::BaseController
+  DELIVERY_STATUS_FILTERS = %w[failed pending succeeded].freeze
+
   before_action :require_admin_only!
   before_action :set_webhook_endpoint, only: %i[edit update destroy]
 
   def index
     @webhook_endpoints = WebhookEndpoint.order(:name)
     @webhook_endpoint = WebhookEndpoint.new(active: true, event_types: %w[document_updated document_published])
-    @recent_deliveries = WebhookDelivery.includes(:webhook_endpoint, :notification_event).recent.limit(50)
+    @delivery_status_filter = delivery_status_filter
+    recent_deliveries_scope = WebhookDelivery.includes(:webhook_endpoint, :notification_event).recent
+    @recent_delivery_counts = WebhookDelivery.group(:status).count
+    @recent_deliveries_any = @recent_delivery_counts.values.sum.positive?
+    @recent_deliveries = filtered_delivery_scope(recent_deliveries_scope).limit(50)
   end
 
   def create
@@ -15,7 +21,11 @@ class Admin::WebhookEndpointsController < Admin::BaseController
       redirect_to admin_webhook_endpoints_path, notice: "Webhook設定を登録しました。"
     else
       @webhook_endpoints = WebhookEndpoint.order(:name)
-      @recent_deliveries = WebhookDelivery.includes(:webhook_endpoint, :notification_event).recent.limit(50)
+      @delivery_status_filter = "all"
+      recent_deliveries_scope = WebhookDelivery.includes(:webhook_endpoint, :notification_event).recent
+      @recent_delivery_counts = WebhookDelivery.group(:status).count
+      @recent_deliveries_any = @recent_delivery_counts.values.sum.positive?
+      @recent_deliveries = recent_deliveries_scope.limit(50)
       render :index, status: :unprocessable_entity
     end
   end
@@ -46,5 +56,16 @@ class Admin::WebhookEndpointsController < Admin::BaseController
     permitted = params.require(:webhook_endpoint).permit(:name, :target_url, :secret_token, :active, event_types: [])
     permitted[:event_types] = Array(permitted[:event_types]).reject(&:blank?)
     permitted
+  end
+
+  def delivery_status_filter
+    filter = params[:delivery_status].to_s
+    DELIVERY_STATUS_FILTERS.include?(filter) ? filter : "all"
+  end
+
+  def filtered_delivery_scope(scope)
+    return scope if @delivery_status_filter == "all"
+
+    scope.public_send(@delivery_status_filter)
   end
 end
