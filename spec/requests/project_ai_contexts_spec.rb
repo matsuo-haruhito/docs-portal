@@ -17,6 +17,18 @@ RSpec.describe "Project AI contexts", type: :request do
     document
   end
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def page_text
+    parsed_html.text.squish
+  end
+
+  def ai_context_link_href(label)
+    parsed_html.css("a").find { _1.text.squish == label }["href"]
+  end
+
   it "shows project AI context html and exports json/markdown for visible documents only" do
     visible = create_exportable_document(title: "Visible Manual", slug: "visible", body: "Visible body text.")
     create_exportable_document(title: "Internal Note", slug: "internal", body: "Secret body text.", visibility_policy: :internal_only)
@@ -30,6 +42,7 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(response.body).to include("compact: summary と文書メタデータ中心")
     expect(response.body).to include("full: compact の内容に加えて本文テキストを含め")
     expect(response.body).to include("JSON / Markdown は現在の mode")
+    expect(response.body).to include("対象文書を絞り込む")
     expect(response.body).to include("含まれる文書（export対象）")
     expect(response.body).to include("除外された文書（権限・公開状態の確認）")
     expect(response.body).to include("Visible Manual")
@@ -66,6 +79,40 @@ RSpec.describe "Project AI contexts", type: :request do
       expect(response.media_type).to eq("text/markdown")
       expect(response.body).to include("unsupported mode")
     end.not_to change(AccessLog.where(target_type: "ai_context"), :count)
+  end
+
+  it "keeps selected document ids across preview and scoped exports" do
+    selected = create_exportable_document(title: "Selected Manual", slug: "selected", body: "Selected body text.")
+    other_visible = create_exportable_document(title: "Other Manual", slug: "other", body: "Other body text.")
+    internal = create_exportable_document(title: "Internal Note", slug: "internal", body: "Secret body text.", visibility_policy: :internal_only)
+
+    sign_in_as(external_user)
+
+    get project_ai_context_path(project, mode: :full, document_ids: [selected.id])
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("export対象:1 件")
+    expect(page_text).to include("Selected Manual", "Other Manual")
+    expect(ai_context_link_href("compact に切り替え")).to include("document_ids%5B%5D=#{selected.id}")
+    expect(ai_context_link_href("full に切り替え")).to include("document_ids%5B%5D=#{selected.id}")
+    expect(ai_context_link_href("JSON を出力")).to include("mode=full", "document_ids%5B%5D=#{selected.id}")
+    expect(ai_context_link_href("Markdown を出力")).to include("mode=full", "document_ids%5B%5D=#{selected.id}")
+
+    get project_ai_context_path(project, format: :json, mode: :compact, document_ids: [selected.id, internal.id])
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    expect(json.dig("summary", "document_count")).to eq(1)
+    expect(json.fetch("documents").map { _1.fetch("public_id") }).to eq([selected.public_id])
+
+    get project_ai_context_path(project, format: :md, mode: :full, document_ids: [selected.id])
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Selected body text.")
+    expect(response.body).not_to include("Other body text.", "Secret body text.")
+
+    get project_ai_context_path(project, format: :json, mode: :compact)
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    expect(json.dig("summary", "document_count")).to eq(2)
+    expect(json.fetch("documents").map { _1.fetch("public_id") }).to contain_exactly(selected.public_id, other_visible.public_id)
   end
 
   it "records access logs for html and export responses" do
