@@ -16,6 +16,8 @@
   - app 側責務と gem 側責務の切り分けを確認する
 - `docs/開発・保守ガイド.md`
   - repo 全体の読み進め方と依存 gem の採用理由を確認する
+- `docs/internal-ui-gem-js-resolver-matrix.md`
+  - 3 gem の package-root import / direct entrypoint / Vite resolver 境界を同じ粒度で確認する
 
 ## docs-portal での host app 側採用パターン
 
