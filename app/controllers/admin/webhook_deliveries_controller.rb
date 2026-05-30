@@ -1,6 +1,9 @@
 class Admin::WebhookDeliveriesController < Admin::BaseController
   before_action :require_admin_only!
-  before_action :set_webhook_delivery, only: :retry_dispatch
+  before_action :set_webhook_delivery, only: %i[show retry_dispatch]
+
+  def show
+  end
 
   def retry_dispatch
     unless @webhook_delivery.failed?
