@@ -113,6 +113,8 @@ event / run の `retry_failed` はどちらも current filter を前提に、古
 - event source / generator / output writer の切り分けが意図どおりか
 - path や created/scheduled time の範囲が広すぎないか
 
+日時 filter に不正な入力がある場合、一覧には「日時フィルタを確認してください。」という warning が表示され、その日時条件が適用されなかったことが分かります。warning が出ている状態では、bulk retry 前に日付入力を直すか、意図して外した条件だけが残っているかを確認します。
+
 この runbook では current implementation の説明に留め、運用上の承認ルールや retry 回数ポリシーまでは新設しません。
 
 ## 8. 自動リトライを検討する前に
