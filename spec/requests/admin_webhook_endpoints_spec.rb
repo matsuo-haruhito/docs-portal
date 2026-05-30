@@ -60,6 +60,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(page_text).to include("失敗のみ")
     expect(page_text).to include("Failed Hook")
     expect(page_text).to include("Success Hook")
+    expect(page_text).to include("200")
 
     get admin_webhook_endpoints_path(delivery_status: "failed")
 
@@ -67,6 +68,6 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(page_text).to include("失敗のみ")
     expect(page_text).to include("Failed Hook")
     expect(page_text).to include("timeout")
-    expect(page_text).not_to include("Success Hook")
+    expect(page_text).not_to include("200")
   end
 end
