@@ -35,6 +35,19 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response.body.scan("解除").size).to eq(2)
   end
 
+  it "does not list bookmarks for documents no longer readable by the current user" do
+    hidden_document = create(:document, title: "Hidden Manual", slug: "hidden-manual", visibility_policy: :restricted_external)
+    create(:document_bookmark, user:, document:, bookmark_type: :favorite)
+    create(:document_bookmark, user:, document: hidden_document, bookmark_type: :favorite)
+    sign_in_as(user)
+
+    get document_bookmarks_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Manual")
+    expect(response.body).not_to include("Hidden Manual")
+  end
+
   it "creates a favorite bookmark" do
     sign_in_as(user)
 
@@ -61,6 +74,22 @@ RSpec.describe "Document bookmarks", type: :request do
         }
       }
     end.to change(DocumentBookmark.read_later, :count).by(1)
+  end
+
+  it "falls back to favorite when bookmark_type is invalid" do
+    sign_in_as(user)
+
+    expect do
+      post document_bookmarks_path, params: {
+        document_bookmark: {
+          document_id: document.public_id,
+          bookmark_type: "unexpected"
+        }
+      }
+    end.to change(DocumentBookmark.favorite, :count).by(1)
+
+    expect(user.document_bookmarks.sole).to be_favorite
+    expect(response).to redirect_to(root_path)
   end
 
   it "does not duplicate an existing bookmark" do
@@ -100,5 +129,18 @@ RSpec.describe "Document bookmarks", type: :request do
     expect do
       delete document_bookmark_path(bookmark)
     end.to change(DocumentBookmark, :count).by(-1)
+  end
+
+  it "does not destroy another user's bookmark" do
+    other_user = create(:user, :external, company:)
+    bookmark = create(:document_bookmark, user: other_user, document:, bookmark_type: :favorite)
+    sign_in_as(user)
+
+    expect do
+      delete document_bookmark_path(bookmark)
+    end.not_to change(DocumentBookmark, :count)
+
+    expect(response).to have_http_status(:not_found)
+    expect(bookmark.reload).to be_present
   end
 end
