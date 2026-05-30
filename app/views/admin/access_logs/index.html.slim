@@ -3,6 +3,7 @@
 - table_columns = access_log_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - has_active_filters = @filters.to_h.values.any?(&:present?)
+- reached_display_limit = @access_logs.size >= 200
 
 h1 監査ログ
 = render "admin/nav"
@@ -47,6 +48,12 @@ section.card
     |  / 最新200件までを表示
     - if has_active_filters
       |  / 絞り込み中
+  - if reached_display_limit
+    p.muted
+      - if has_active_filters
+        | 表示上限の200件に達しています。目的の証跡が見つからない場合は、案件・会社・ユーザー・文書名などの条件を追加してさらに絞り込んでください。
+      - else
+        | 表示上限の200件に達しています。古い証跡を探す場合は、案件・会社・ユーザー・文書名などの条件を追加してください。
 
   .card
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "監査ログ一覧の表示設定")
