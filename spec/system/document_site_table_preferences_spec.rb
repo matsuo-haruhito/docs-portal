@@ -5,7 +5,7 @@ require "timeout"
 
 RSpec.describe "Document site table preferences", type: :system do
   before do
-    driven_by(:selenium, using: :headless_chrome, screen_size: [1600, 1400])
+    driven_by_headless_chrome(screen_size: [1600, 1400])
   end
 
   let(:site_build_path) { "docs-#{SecureRandom.hex(3)}/dispatch-api-spec/v1.0.0" }
