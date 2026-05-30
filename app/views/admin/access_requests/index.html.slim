@@ -66,7 +66,13 @@ section.card
             - if secondary_label.present?
               br
               span.muted = secondary_label
-          td = document_permission_access_level_label(access_request.requested_access_level)
+          td
+            = document_permission_access_level_label(access_request.requested_access_level)
+            - if access_request.requested_access_level.to_s == "manage"
+              br
+              span.status-warning 管理権限申請
+              br
+              span.muted 現行の承認処理では管理者 role を付与しません
           td = admin_access_request_status_label(access_request)
           td = access_request.reason
           td = access_request.approver&.email_address || "-"
