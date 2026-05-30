@@ -120,6 +120,20 @@ RSpec.describe "Admin access logs", type: :request do
     expect(log_target_names).to eq(["audit.zip"])
   end
 
+  it "shows and filters AI context export access logs by target type" do
+    create_access_log!(action_type: :download, target_type: "ai_context", target_name: "mode=full")
+    create_access_log!(action_type: :view, target_type: "page", target_name: "project page")
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(target_type: "ai_context")
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_html.at_css('select[name="target_type"] option[value="ai_context"][selected]').text).to eq("AI context export")
+    expect(page_text).to include("AI context export")
+    expect(log_target_names).to eq(["mode=full"])
+  end
+
   it "filters access logs by project, company, and user" do
     matching_project = create(:project, code: "FILTER", name: "Filter Project")
     matching_company = create(:company, domain: "filter.example.com", name: "Filter Co")

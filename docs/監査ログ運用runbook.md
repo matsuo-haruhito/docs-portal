@@ -31,9 +31,10 @@ current 実装の前提:
 
 ### 2. 対象種別
 
-- `target_type` は current UI では `page` `file` `zip` を扱う
-- HTML 本文の閲覧か、添付ファイル配布か、ZIP 配布かを切り分けたいときに使う
-- 一覧の `対象` 列には対象種別に加えて `target_name` が出るので、同じ種別の中でもどのファイルやページだったかを見分けやすい
+- `target_type` は current UI では `page` `file` `zip` `ai_context` を扱う
+- HTML 本文の閲覧、添付ファイル配布、ZIP 配布、AI context export の利用証跡を切り分けたいときに使う
+- AI context export は HTML preview と JSON / Markdown download の証跡を `target_type: ai_context` として残す
+- 一覧の `対象` 列には対象種別に加えて `target_name` が出るので、同じ種別の中でもどのファイルやページ、または AI context export の mode だったかを見分けやすい
 
 ### 3. 案件 / 会社 / ユーザー
 
@@ -70,6 +71,7 @@ current 実装の前提:
 
 - 想定した案件や利用者に対して、閲覧とダウンロードのどちらが起きているか
 - ZIP 配布や添付ダウンロードが特定案件だけに偏っていないか
+- AI context export の HTML preview / JSON / Markdown download が想定した案件や利用者で発生しているか
 - 文書・版・利用者のどれを主語にして見たいのかに合わせて、表示設定で不要な列を外せているか
 - 文書 detail や版 detail へ戻って、対象文書や公開状態をその場で見直す必要があるか
 - 目的の証跡が見つからないとき、最新 200 件制限の影響で一覧からあふれていないか

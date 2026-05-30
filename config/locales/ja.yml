@@ -139,6 +139,7 @@ ja:
         page: "ページ"
         file: "ファイル"
         zip: "ZIP"
+        ai_context: "AI context export"
     consent_terms:
       consent_scope:
         global: "全体"
