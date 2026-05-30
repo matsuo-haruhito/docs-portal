@@ -29,7 +29,7 @@ end
 
 RSpec.describe "Admin document sets Tom Select", type: :system do
   before do
-    driven_by(:selenium, using: :headless_chrome, screen_size: [1400, 1400])
+    driven_by_headless_chrome(screen_size: [1400, 1400])
   end
 
   let!(:admin) { create(:user, :admin, email_address: "admin-system@example.com") }
