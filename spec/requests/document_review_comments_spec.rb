@@ -213,6 +213,61 @@ RSpec.describe "Document review comments", type: :request do
     expect(comment.document_version).to eq(version)
   end
 
+  it "allows admins to mark document-level Q&A threads as answered" do
+    question = create(:document_review_comment, document:, author: external_user, comment_type: :question, internal_only: false, body: "Can we use this procedure next month?")
+    create(:document_review_comment, document:, parent: question, author: internal_user, comment_type: :question, internal_only: false, body: "Yes. The current published version is valid.")
+
+    sign_in_as(admin_user)
+
+    get project_document_path(project, document.slug)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("受付中")
+    expect(response.body).to include("回答済みにする")
+    expect(response.body).to include("クローズする")
+
+    patch project_document_document_review_comment_path(project, document, question), params: { decision: "resolve" }
+
+    expect(response).to redirect_to(project_document_path(project, document.slug))
+    expect(question.reload).to be_resolved
+    expect(question.resolved_by).to eq(admin_user)
+    expect(question.qa_status_label).to eq("回答済み")
+
+    follow_redirect!
+    expect(response.body).to include("回答済み")
+    expect(response.body).to include("Yes. The current published version is valid.")
+    expect(response.body).not_to include("回答済みにする")
+  end
+
+  it "allows admins to close version-level Q&A threads" do
+    question = create(:document_review_comment, document:, document_version: version, author: external_user, comment_type: :question, internal_only: false, body: "Should this version stay visible?")
+
+    sign_in_as(admin_user)
+
+    patch document_version_document_review_comment_path(version, question), params: { decision: "reject" }
+
+    expect(response).to redirect_to(document_version_path(version))
+    expect(question.reload).to be_rejected
+    expect(question.resolved_by).to be_nil
+    expect(question.resolved_at).to be_nil
+    expect(question.qa_status_label).to eq("クローズ")
+
+    follow_redirect!
+    expect(response.body).to include("クローズ")
+    expect(response.body).to include("Should this version stay visible?")
+  end
+
+  it "keeps external users from changing Q&A thread status" do
+    question = create(:document_review_comment, document:, author: external_user, comment_type: :question, internal_only: false, body: "Can I close this myself?")
+
+    sign_in_as(external_user)
+
+    patch project_document_document_review_comment_path(project, document, question), params: { decision: "resolve" }
+
+    expect(response).to have_http_status(:forbidden)
+    expect(question.reload).to be_open
+    expect(question.qa_status_label).to eq("受付中")
+  end
+
   it "hides review comments from external users and forbids create/update" do
     comment = create(:document_review_comment, document:, document_version: version, author: internal_user, body: "Internal only")
 

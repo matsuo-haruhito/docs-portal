@@ -23,10 +23,10 @@ class DocumentReviewCommentsController < BaseController
     case params[:decision]
     when "resolve"
       comment.resolve!(current_user)
-      notice = "レビューコメントを解決済みにしました。"
+      notice = decision_success_message_for(comment, :resolve)
     when "reject"
       comment.update!(status: :rejected, resolved_by: nil, resolved_at: nil)
-      notice = "レビューコメントを却下扱いにしました。"
+      notice = decision_success_message_for(comment, :reject)
     else
       raise ApplicationError::BadRequest, "unsupported decision"
     end
@@ -77,6 +77,17 @@ class DocumentReviewCommentsController < BaseController
     return "Q&A を投稿しました。" if comment.public_thread?
 
     "レビューコメントを追加しました。"
+  end
+
+  def decision_success_message_for(comment, decision)
+    if comment.public_thread?
+      return "Q&A を回答済みにしました。" if decision == :resolve
+      return "Q&A をクローズしました。" if decision == :reject
+    end
+
+    return "レビューコメントを解決済みにしました。" if decision == :resolve
+
+    "レビューコメントを却下扱いにしました。"
   end
 
   def comment_params

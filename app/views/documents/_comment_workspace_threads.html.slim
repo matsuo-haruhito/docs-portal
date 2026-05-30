@@ -19,6 +19,11 @@
               span.muted = " / #{document_version_label(thread.document_version)}"
           span.badge Q&A
         = simple_format(thread.body)
+        - if current_user&.admin? && thread.open?
+          p.actions
+            - status_action_path = thread.document_version.present? ? document_version_document_review_comment_path(thread.document_version, thread) : project_document_document_review_comment_path(@project, @document, thread)
+            = button_to "回答済みにする", status_action_path, method: :patch, params: { decision: "resolve" }, class: "button secondary"
+            = button_to "クローズする", status_action_path, method: :patch, params: { decision: "reject" }, class: "button secondary"
         - if thread.replies.visible_to(current_user).any?
           .document-comment-card__replies
             h4 返信
