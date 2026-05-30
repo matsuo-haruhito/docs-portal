@@ -12,6 +12,8 @@ RUN apk update && \
     bash \
     nodejs \
     npm \
+    chromium \
+    chromium-chromedriver \
     sudo \
     shared-mime-info
 
