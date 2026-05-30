@@ -61,7 +61,11 @@ p.actions
               span.muted "-"
           td = log.to_addresses
           td = document_delivery_log_delivery_type_label(log)
-          td = link_to document_delivery_log_status_label(log), document_delivery_log_path(log, return_to: current_delivery_logs_path)
+          td
+            = link_to document_delivery_log_status_label(log), document_delivery_log_path(log, return_to: current_delivery_logs_path)
+            - if log.failed?
+              - failure_summary = log.error_message.presence || "詳細で失敗内容を確認してください。"
+              div.muted = "失敗理由: #{truncate(failure_summary, length: 60)}"
 - else
   - if @query.present?
     p.muted 検索条件に一致する送付履歴はありません。
