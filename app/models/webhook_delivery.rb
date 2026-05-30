@@ -15,4 +15,8 @@ class WebhookDelivery < ApplicationRecord
   validates :event_type, :target_url, :request_body, presence: true
 
   scope :recent, -> { order(created_at: :desc, id: :desc) }
+
+  def retryable?
+    failed? && webhook_endpoint.active?
+  end
 end
