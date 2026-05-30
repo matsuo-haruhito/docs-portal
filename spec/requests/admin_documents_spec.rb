@@ -47,6 +47,11 @@ RSpec.describe "Admin documents", type: :request do
     end
   end
 
+  def row_column_text(title, column_key)
+    cell = document_row_for(title)&.at_css(%(td[data-rails-table-preferences-column-key="#{column_key}"]))
+    cell&.xpath(".//text()")&.map { |node| node.text.squish }&.reject(&:empty?)&.join(" ")
+  end
+
   it "uses public_id-based admin action links while keeping the public document link on the index" do
     active_document = create(:document, title: "Active Document")
     archived_document = create(:document, title: "Archived Document")
@@ -95,6 +100,30 @@ RSpec.describe "Admin documents", type: :request do
     expect(title_targets).to include(project_document_path(matching_project, matching_document.slug))
     expect(title_targets).not_to include(project_document_path(similar_project, other_document.slug))
     expect(row_column_texts("project")).to eq(["Operations Portal DOCS-001"])
+  end
+
+  it "shows latest version and preview state without mixing them with archive status" do
+    failed_preview_document = create(:document, title: "Failed Preview Document", slug: "failed-preview")
+    create(
+      :document_version,
+      document: failed_preview_document,
+      version_label: "v2.0",
+      preview_build_status: :preview_failed,
+      preview_build_error_message: "Build failed"
+    )
+    create(:document, title: "No Latest Document", slug: "no-latest")
+    archived_document = create(:document, title: "Archived Document", slug: "archived-document")
+    archived_document.archive!(actor: admin_user)
+
+    sign_in_as(admin_user)
+
+    get admin_documents_path
+
+    expect(response).to have_http_status(:ok)
+    expect(row_column_text("Failed Preview Document", "status")).to include("有効")
+    expect(row_column_text("Failed Preview Document", "latest_version")).to include("v2.0", "公開期間中", "プレビュー失敗")
+    expect(row_column_text("No Latest Document", "latest_version")).to include("最新版なし", "公開版がまだ選択されていません")
+    expect(row_column_text("Archived Document", "status")).to include("アーカイブ済み")
   end
 
   it "finds the edit page by public_id and rejects numeric ids and slugs" do
