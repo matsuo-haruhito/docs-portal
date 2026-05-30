@@ -258,6 +258,45 @@ RSpec.describe "Document files", type: :request do
     expect(response.body).to include("boot ok")
   end
 
+  it "renders stable line anchors for text previews" do
+    log_file = create_preview_file(
+      file_name: "import.log",
+      content_type: "text/plain",
+      storage_key: "spec/import-anchors.log",
+      content: "boot ok\nfinished\n"
+    )
+    sign_in_as(user)
+
+    get document_file_path(log_file, disposition: "inline")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include('id="L1"')
+    expect(response.body).to include('data-text-preview-line-number="1"')
+    expect(response.body).to include('href="#L1"')
+    expect(response.body).to include('aria-label="1行目へのリンク"')
+    expect(response.body).to include('id="L2"')
+    expect(response.body).to include('href="#L2"')
+  end
+
+  it "does not render anchors for text preview lines outside the truncated sample" do
+    content = (1..(DocumentFileTextPreview::DEFAULT_LIMIT + 1)).map { |line_number| "line #{line_number}" }.join("\n")
+    log_file = create_preview_file(
+      file_name: "large.log",
+      content_type: "text/plain",
+      storage_key: "spec/large.log",
+      content:
+    )
+    sign_in_as(user)
+
+    get document_file_path(log_file, disposition: "inline")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("先頭 #{DocumentFileTextPreview::DEFAULT_LIMIT} 行を表示しています")
+    expect(response.body).to include("id=\"L#{DocumentFileTextPreview::DEFAULT_LIMIT}\"")
+    expect(response.body).not_to include("id=\"L#{DocumentFileTextPreview::DEFAULT_LIMIT + 1}\"")
+    expect(response.body).not_to include("href=\"#L#{DocumentFileTextPreview::DEFAULT_LIMIT + 1}\"")
+  end
+
   it "routes ZIP files to the archive preview template" do
     zip_file = create_zip_preview_file
     sign_in_as(user)

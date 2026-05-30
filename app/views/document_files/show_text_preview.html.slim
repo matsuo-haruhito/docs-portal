@@ -33,8 +33,11 @@
       - if @text_preview.line_count.positive?
         ol.line-preview
           - @text_preview.lines.each_with_index do |line, index|
-            li.line-preview__row data-text-preview-line="true"
-              span.line-preview__number = index + 1
+            - line_number = index + 1
+            - line_anchor = "L#{line_number}"
+            li.line-preview__row id=line_anchor data-text-preview-line="true" data-text-preview-line-number=line_number
+              span.line-preview__number
+                = link_to line_anchor, "##{line_anchor}", data: { text_preview_line_anchor: true }, aria: { label: "#{line_number}行目へのリンク" }
               code.line-preview__code = line.presence || " "
       - else
         = render "preview_empty_card", title: "空のテキストファイルです", message: "表示できる内容がありません。必要に応じてファイルをダウンロードしてください。"
