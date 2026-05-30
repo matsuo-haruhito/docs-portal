@@ -2,11 +2,14 @@
 - current_mode_name = @mode.to_s
 - current_mode_description = current_mode_name == "full" ? "本文まで含めて出力します。" : "summary と文書メタデータ中心で出力します。"
 - exported_document_count = @hash.dig(:summary, :document_count).to_i
-- selectable_document_count = @selectable_documents.size
+- selectable_document_count = @selectable_document_count
+- selectable_document_preview_count = @selectable_documents_preview.size
 - selected_document_count = @requested_document_ids.empty? ? selectable_document_count : @requested_document_ids.size
 - scope_summary = @requested_document_ids.empty? ? "現在は閲覧可能な文書全体（#{exported_document_count}件）を export 対象にしています。" : "明示選択: #{selected_document_count}件 / export対象: #{exported_document_count}件"
 - scope_help = @requested_document_ids.empty? ? "個別に絞り込む場合は、対象にしたい文書だけを残して preview してください。" : "選択文書のうち閲覧可能な文書だけが preview / export に含まれます。"
-- document_filter_legend = @requested_document_ids.empty? ? "Export対象（全#{selectable_document_count}件）" : "Export対象（#{selected_document_count} / #{selectable_document_count}件選択中）"
+- document_filter_legend = @requested_document_ids.empty? ? "Export候補（表示中#{selectable_document_preview_count} / 全#{selectable_document_count}件）" : "Export候補（#{selected_document_count} / #{selectable_document_count}件選択中、表示中#{selectable_document_preview_count}件）"
+- included_omitted_count = @plan.included_items.size - @plan_included_items_preview.size
+- excluded_omitted_count = @plan.excluded_items.size - @plan_excluded_items_preview.size
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: nil
 
@@ -49,12 +52,25 @@ p
   p
     strong = scope_summary
   p.muted = scope_help
-  - if @selectable_documents.any?
+  p.muted
+    | 表示中の候補: 
+    = selectable_document_preview_count
+    | 件 / 閲覧可能: 
+    = selectable_document_count
+    | 件
+  - if @selectable_documents_truncated
+    p.muted
+      | 文書が多いため、checkbox候補は
+      = @preview_document_limit
+      | 件まで表示しています。未選択のまま JSON / Markdown を出力する場合は閲覧可能な
+      = exported_document_count
+      | 件すべてが対象です。
+  - if @selectable_documents_preview.any?
     = form_with url: project_ai_context_path(@project), method: :get, local: true do
       = hidden_field_tag :mode, @mode
       fieldset.filter-fieldset
         legend = document_filter_legend
-        - @selectable_documents.each do |document|
+        - @selectable_documents_preview.each do |document|
           - checked = @requested_document_ids.empty? || @requested_document_ids.include?(document.id)
           label.check-field
             = check_box_tag "document_ids[]", document.id, checked, id: "ai_context_document_ids_#{document.id}"
@@ -71,7 +87,7 @@ p
 
 .card
   h2 含まれる文書（export対象）
-  p.muted この一覧の文書だけが現在の mode で export されます。
+  p.muted export 対象になる文書と理由を確認できます。文書が多い場合は表示件数を省略します。
   - if @plan.included_items.any?
     = table_tag do
       thead
@@ -81,12 +97,21 @@ p
           th version
           th 含まれる理由
       tbody
-        - @plan.included_items.each do |item|
+        - @plan_included_items_preview.each do |item|
           tr
             td = item.document.title
             td = item.document.slug
             td = item.document_version&.version_label || "-"
             td = item.reason
+    - if included_omitted_count.positive?
+      p.muted
+        | 含まれる文書は 
+        = @plan_included_items_preview.size
+        | 件だけ表示しています（全
+        = @plan.included_items.size
+        | 件）。JSON / Markdown export には全
+        = exported_document_count
+        | 件が含まれます。
   - else
     p.muted 現在の権限で export 対象になる文書はありません。
 
@@ -101,11 +126,18 @@ p
           th slug
           th 除外理由
       tbody
-        - @plan.excluded_items.each do |item|
+        - @plan_excluded_items_preview.each do |item|
           tr
             td = item.document.title
             td = item.document.slug
             td = item.reason
+    - if excluded_omitted_count.positive?
+      p.muted
+        | 除外された文書は 
+        = @plan_excluded_items_preview.size
+        | 件だけ表示しています（全
+        = @plan.excluded_items.size
+        | 件）。
   - else
     p.muted 権限や公開状態により除外された文書はありません。
 
