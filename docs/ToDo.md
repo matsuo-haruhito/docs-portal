@@ -29,7 +29,7 @@
 ## latest_version / バージョン管理
 
 - `version_label` は semantic version として解釈・sort せず、任意の表示用ラベルとして扱う。`2026-Q2` / `review-2026-05` / `client-a-draft` のような label を importer から受けても opaque label として保存する current contract は `#1050` で spec 固定する
-- `latest_version` は current では published version の作成・更新時に promoted される。管理画面/API/import manifest で明示指定できるようにするかは後続判断として残す。未起票で残す理由: 手動切り替えの権限・監査・UI 要件が未確定
+- `latest_version` は current では published version の作成・更新時に promoted される。管理画面/API/import manifest で明示指定できるようにするかは `#1112` で扱う。ToDo 側では手動切り替えの権限・監査・UI 要件を #1112 の判断論点として参照する
 - 採番ルールを変更した場合に、古い DocumentVersion を整理・削除・archive する運用を検討する。未起票で残す理由: retention 方針と復元要件の判断が必要
 - importer は latest version 上書き、手動アップロードは `manual-*` draft 候補を追加して review で `latest_version` を切り替える current 差分を、どこまで統一するか再判断する。手動アップロード契約の first slice は `#758` で扱う
 
@@ -43,7 +43,7 @@
 
 - current の manifest 生成手順と `build-docs` workflow の確認順は [build-docs workflow確認runbook](./build-docs%20workflow確認runbook.md) を正本とし、ここでは未完了論点だけを残す
 - artifact の永続保存方式と再取り込み replay 方針は `#1039` で扱う
-- `latest_version` の明示切り替えや別ルール更新を入れる場合は、現行の created_at 基準との差分を整理してから扱う。未起票で残す理由: `latest_version` 明示指定の要件と同じ判断に依存する
+- `latest_version` の明示切り替えや別ルール更新を入れる場合は、現行の created_at 基準との差分を `#1112` の latest_version 明示切り替え contract と合わせて扱う
 
 ## Docusaurus / seed
 
@@ -102,4 +102,4 @@
 
 ## テスト
 
-- latest_version の created_at 基準と override 方針が変わる場合は、そのルールを request / service spec に追加する。未起票で残す理由: product contract が決まってから test issue に切る
+- latest_version の created_at 基準と override 方針が変わる場合は、そのルールを `#1112` の受け入れ条件に含めて扱う
