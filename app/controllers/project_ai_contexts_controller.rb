@@ -5,7 +5,10 @@ class ProjectAiContextsController < BaseController
     @mode = requested_mode
     return render_unsupported_mode unless @mode
 
+    @requested_document_ids = requested_document_ids
     @scope = requested_scope
+    @selectable_documents = selectable_documents
+    @scoped_link_params = scoped_link_params
     @plan = AiContextExportPlan.new(project: @project, viewer: current_user, scope: @scope).call
     @hash = AiContextHashExporter.new(project: @project, viewer: current_user, mode: @mode, scope: @scope).call
 
@@ -45,11 +48,31 @@ class ProjectAiContextsController < BaseController
     end
   end
 
-  def requested_scope
-    ids = Array(params[:document_ids]).map(&:to_i).uniq
-    return nil if ids.empty?
+  def requested_document_ids
+    Array(params[:document_ids]).filter_map do |value|
+      id = Integer(value, exception: false)
+      id if id&.positive?
+    end.uniq
+  end
 
-    @project.documents.where(id: ids)
+  def requested_scope
+    return nil if @requested_document_ids.empty?
+
+    @project.documents.where(id: @requested_document_ids)
+  end
+
+  def selectable_documents
+    Document.accessible_to(current_user)
+      .where(project: @project)
+      .includes(:project, :latest_version)
+      .select { _1.visible_in_portal_for?(current_user) }
+      .sort_by { [_1.title.to_s, _1.id] }
+  end
+
+  def scoped_link_params
+    return {} if @requested_document_ids.empty?
+
+    { document_ids: @requested_document_ids }
   end
 
   def record_ai_context_access_log!(action_type)
