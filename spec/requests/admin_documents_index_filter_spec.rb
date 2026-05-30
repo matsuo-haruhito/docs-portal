@@ -76,4 +76,123 @@ RSpec.describe "Admin documents index filters", type: :request do
       expect(response.body).not_to include(future_document.title)
     end
   end
+
+  it "filters retention states without changing archive action targets" do
+    due_document = create(
+      :document,
+      title: "Retention Due Document",
+      retention_until: 2.days.ago,
+      discard_candidate_at: nil
+    )
+    future_document = create(
+      :document,
+      title: "Retention Future Document",
+      retention_until: 2.days.from_now,
+      discard_candidate_at: nil
+    )
+    missing_document = create(
+      :document,
+      title: "Retention Missing Document",
+      retention_until: nil,
+      discard_candidate_at: nil
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_documents_path, params: { retention: "set" }
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures "retention set" do
+      expect(response.body).to include(due_document.title)
+      expect(response.body).to include(future_document.title)
+      expect(response.body).to include(I18n.l(due_document.retention_until))
+      expect(response.body).to include(I18n.l(future_document.retention_until))
+      expect(response.body).not_to include(missing_document.title)
+      expect_active_archive_action_for(due_document)
+      expect_active_archive_action_for(future_document)
+    end
+
+    get admin_documents_path, params: { retention: "missing" }
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures "retention missing" do
+      expect(response.body).to include(missing_document.title)
+      expect(response.body).not_to include(due_document.title)
+      expect(response.body).not_to include(future_document.title)
+      expect_active_archive_action_for(missing_document)
+    end
+
+    get admin_documents_path, params: { retention: "due" }
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures "retention due" do
+      expect(response.body).to include(due_document.title)
+      expect(response.body).to include(I18n.l(due_document.retention_until))
+      expect(response.body).not_to include(future_document.title)
+      expect(response.body).not_to include(missing_document.title)
+      expect_active_archive_action_for(due_document)
+    end
+  end
+
+  it "filters discard candidate states without changing archive action targets" do
+    due_document = create(
+      :document,
+      title: "Discard Due Document",
+      retention_until: nil,
+      discard_candidate_at: 1.day.ago
+    )
+    future_document = create(
+      :document,
+      title: "Discard Future Document",
+      retention_until: nil,
+      discard_candidate_at: 3.days.from_now
+    )
+    missing_document = create(
+      :document,
+      title: "Discard Missing Document",
+      retention_until: nil,
+      discard_candidate_at: nil
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_documents_path, params: { discard: "set" }
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures "discard set" do
+      expect(response.body).to include(due_document.title)
+      expect(response.body).to include(future_document.title)
+      expect(response.body).to include(I18n.l(due_document.discard_candidate_at))
+      expect(response.body).to include(I18n.l(future_document.discard_candidate_at))
+      expect(response.body).not_to include(missing_document.title)
+      expect_active_archive_action_for(due_document)
+      expect_active_archive_action_for(future_document)
+    end
+
+    get admin_documents_path, params: { discard: "missing" }
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures "discard missing" do
+      expect(response.body).to include(missing_document.title)
+      expect(response.body).not_to include(due_document.title)
+      expect(response.body).not_to include(future_document.title)
+      expect_active_archive_action_for(missing_document)
+    end
+
+    get admin_documents_path, params: { discard: "due" }
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures "discard due" do
+      expect(response.body).to include(due_document.title)
+      expect(response.body).to include(I18n.l(due_document.discard_candidate_at))
+      expect(response.body).not_to include(future_document.title)
+      expect(response.body).not_to include(missing_document.title)
+      expect_active_archive_action_for(due_document)
+    end
+  end
+
+  def expect_active_archive_action_for(document)
+    expect(response.body).to include(archive_admin_document_path(document.public_id))
+    expect(response.body).not_to include(restore_admin_document_path(document.public_id))
+  end
 end
