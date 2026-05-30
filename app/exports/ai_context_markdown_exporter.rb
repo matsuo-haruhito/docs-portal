@@ -57,6 +57,8 @@ class AiContextMarkdownExporter
       "- source_path: #{version&.source_relative_path || '-'}"
     ]
 
+    lines += document_files_section(version)
+
     if full?
       lines += ["", body_for(version)]
     else
@@ -68,9 +70,30 @@ class AiContextMarkdownExporter
 
   def documents
     @documents ||= (scope || project.documents)
-      .includes(:project, :latest_version)
+      .includes(:project, latest_version: :document_files)
       .select { _1.visible_in_portal_for?(viewer) }
       .sort_by { [_1.title.to_s, _1.id] }
+  end
+
+  def document_files_section(version)
+    document_files = sorted_document_files(version)
+    return [] if document_files.empty?
+
+    [
+      "",
+      "Attachments:",
+      *document_files.map { document_file_line(_1) }
+    ]
+  end
+
+  def sorted_document_files(version)
+    return [] if version.blank?
+
+    version.document_files.sort_by { [_1.sort_order, _1.id] }
+  end
+
+  def document_file_line(document_file)
+    "- #{document_file.file_name} (content_type: #{document_file.content_type}, size: #{document_file.file_size}, scan_status: #{document_file.scan_status}, downloadable: #{document_file.downloadable_by?(viewer)})"
   end
 
   def full?
