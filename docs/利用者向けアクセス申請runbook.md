@@ -16,6 +16,7 @@
 `GET /access_requests` は、current user 自身が送信したアクセス申請を時系列で見返す一覧です。
 
 - dashboard の `保留中の申請` summary card から `申請一覧へ` で入る
+- dashboard 本体の `保留中のアクセス申請` では、current user 自身の pending 申請のうち最近の最大 3 件だけを概要確認できる
 - 一覧に出るのは current user 自身が requester の申請だけで、internal 管理者向けの `admin/access_requests` とは別画面
 - 画面の役割は「送信済み申請の状態確認」と「pending の申請取消」に閉じている
 - 新しい申請はこの一覧で作るのではなく、案件・文書・ファイル側でアクセス不足に応じて送信する current flow を前提にする
@@ -23,7 +24,8 @@
 dashboard とのつながり:
 
 - summary card の `保留中の申請` 件数は pending の申請数を見るための入口
-- 一覧へ入ると pending 以外の processed request も recent first で見返せる
+- dashboard 本体では pending 申請の対象、要求権限、状態、申請日時を確認し、詳細な取消や過去申請の確認は一覧へ進む
+- pending が 0 件のときも、一覧へ入ると pending 以外の processed request を recent first で見返せる
 
 ## 2. 一覧の見方
 
@@ -70,6 +72,7 @@ dashboard とのつながり:
 ## 4. empty state の読み方
 
 - `送信済みのアクセス申請はありません。` は、current user がまだ 1 件も申請していない状態を示す
+- dashboard の `保留中のアクセス申請はありません。` は、current user に pending の申請がない状態を示す
 - pending の summary card 件数が 0 でも、この一覧には approved / rejected / cancelled の過去申請が残りうる
 - 一覧が空なら、まず「まだ送っていない」のか「別対象でのアクセス不足を解消したかったのか」を切り分ける
 

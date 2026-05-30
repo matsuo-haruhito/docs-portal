@@ -5,6 +5,7 @@ class DashboardController < BaseController
     @read_later_bookmarks = bookmark_scope.read_later.limit(8)
     @recent_documents = RecentDocumentsQuery.new(user: current_user, limit: 10).call
     @recently_updated_documents = recently_updated_documents
+    @pending_access_requests = pending_access_requests
     @dashboard_stats = {
       project_count: accessible_projects.count,
       document_count: Document.accessible_to(current_user).count,
@@ -33,5 +34,13 @@ class DashboardController < BaseController
       .recommended_first
       .order(updated_at: :desc)
       .limit(10)
+  end
+
+  def pending_access_requests
+    current_user.access_requests
+      .pending
+      .recent_first
+      .includes(:requestable)
+      .limit(3)
   end
 end
