@@ -1,6 +1,7 @@
 <%
   detail_path_params = { return_to: request.fullpath }
   status_filter_params = request.query_parameters.except(:page, :per_page).compact_blank
+  has_active_filters = @filters.compact_blank.any?
 %>
 
 <div class="space-y-6">
@@ -37,6 +38,11 @@
 
   <%= form_with url: admin_generated_file_runs_path, method: :get, local: true, class: "rounded-lg border bg-white p-4" do |form| %>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
+      <div class="md:col-span-2">
+        <%= form.label :q, "実行ID / パス", class: "block text-sm font-semibold" %>
+        <%= form.text_field :q, value: @filters[:q], placeholder: "gfr... または docs/source.yml", class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">入力パス・変更ファイル・生成パスを検索します。</p>
+      </div>
       <div>
         <%= form.label :status, "状態", class: "block text-sm font-semibold" %>
         <%= form.select :status, options_for_select([["すべて", ""]] + GeneratedFileRun.statuses.keys.map { [generated_file_run_status_label(_1), _1] }, @filters[:status]), {}, class: "mt-1 w-full rounded border px-2 py-1" %>
@@ -117,7 +123,9 @@
           <% end %>
         <% else %>
           <tr>
-            <td colspan="9" class="px-4 py-8 text-center text-gray-500">条件に一致する生成ファイル実行履歴はありません。</td>
+            <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+              <%= has_active_filters ? "条件に一致する生成ファイル実行履歴はありません。" : "生成ファイル実行履歴はまだありません。" %>
+            </td>
           </tr>
         <% end %>
       </tbody>
