@@ -43,7 +43,8 @@ module SeedSupport
 
     def build_markdown_with_front_matter(front_matter, body)
       lines = front_matter.lines
-      lines = lines.reject { _1.match?(/\A\s*id:\s*/) }
+      return "#{front_matter}#{body}" if lines.any? { _1.match?(/\A\s*id:\s*/) }
+
       lines.insert(1, "id: #{@generated_id}\n")
 
       "#{lines.join}#{body}"
