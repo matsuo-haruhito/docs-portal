@@ -76,6 +76,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(page_text).to include("Audit Project")
     expect(page_text).to include("Audit Document")
     expect(page_text).to include("表示中: 1件 / 最新200件までを表示")
+    expect(page_text).not_to include("表示上限の200件に達しています。")
     expect(page_text).to include("監査ログ一覧の表示設定")
     expect(log_target_names).to eq(["audit.zip"])
     expect(row_column_texts("company")).to eq(["Audit Company audit.example.com"])
@@ -311,10 +312,33 @@ RSpec.describe "Admin access logs", type: :request do
     get admin_access_logs_path
 
     expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示上限の200件に達しています。")
+    expect(page_text).to include("古い証跡を探す場合は、案件・会社・ユーザー・文書名などの条件を追加してください。")
     expect(log_target_names.size).to eq(200)
     expect(log_target_names.first).to eq("entry-204")
     expect(log_target_names.last).to eq("entry-5")
     expect(log_target_names).not_to include("entry-4", "entry-3", "entry-2", "entry-1", "entry-0")
+  end
+
+  it "shows filtered guidance when the access log limit is reached with filters" do
+    base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
+
+    200.times do |index|
+      create_access_log!(
+        action_type: :view,
+        target_type: "page",
+        target_name: "filtered-entry-#{index}",
+        accessed_at: base_time + index.seconds
+      )
+    end
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(action_type: "view")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示上限の200件に達しています。")
+    expect(page_text).to include("目的の証跡が見つからない場合は、案件・会社・ユーザー・文書名などの条件を追加してさらに絞り込んでください。")
   end
 
   it "forbids external users" do
