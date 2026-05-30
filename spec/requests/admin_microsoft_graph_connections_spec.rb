@@ -124,7 +124,7 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
         }
       end.not_to change(MicrosoftGraphConnection, :count)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("同一案件で1件だけ有効にできます")
       expect(response.body).to include("現在の有効接続を先に無効化")
     end
@@ -199,7 +199,7 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
         }
       end.not_to change(MicrosoftGraphConnection, :count)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("共有URLからDrive情報を解決できませんでした。")
       expect(input_value("microsoft_graph_connection[shared_folder_url]")).to eq(shared_folder_url)
     end

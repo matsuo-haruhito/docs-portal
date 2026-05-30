@@ -71,7 +71,7 @@ RSpec.describe "Admin document permissions", type: :request do
       }
     }
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(page_text).to include("入力内容を確認してください。")
     expect(page_text).to include("適用対象は会社かユーザーのどちらか一方だけを指定してください。")
     expect(page_text).to include("会社向けかユーザー向けのどちらか一方を選びます。会社全体に付与するときは「会社」、個人に付与するときは「ユーザー」を指定してください。2つ同時には選択しません。")

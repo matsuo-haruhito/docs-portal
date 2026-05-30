@@ -111,7 +111,7 @@ RSpec.describe "Admin document sets", type: :request do
       document_set_items: {}
     }
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(document_set_select_names).to include(
       "document_set[project_id]",
       "document_set[set_type]",
@@ -141,7 +141,7 @@ RSpec.describe "Admin document sets", type: :request do
       document_set_items: {}
     }
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(page_text).to include("まだ対象文書がありません。")
     expect(page_text).to include("この案件に文書を取り込むと、ここで対象文書を選べます。")
     expect(empty_project_import_targets).to include(
@@ -200,7 +200,7 @@ RSpec.describe "Admin document sets", type: :request do
       document_set_items: {}
     }
 
-    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response).to have_http_status(:unprocessable_content)
     expect(listed_document_set_names).to eq(["配送社内セット"])
     expect(page_text).to include("種別: 送付用")
     expect(page_text).to include("公開範囲: 社内のみ")
