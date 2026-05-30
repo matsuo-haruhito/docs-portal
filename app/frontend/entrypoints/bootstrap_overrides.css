@@ -1,0 +1,122 @@
+/*
+ * App-specific Bootstrap boundary.
+ * Bootstrap provides common primitives; product-specific areas stay in
+ * application.css, gem stylesheets, and dedicated document/tree styles.
+ */
+:root {
+  --bs-primary: var(--accent-2);
+  --bs-primary-rgb: 15, 98, 254;
+  --bs-link-color: var(--accent-2);
+  --bs-link-hover-color: #0b5ed7;
+  --bs-border-radius: 0.375rem;
+  --bs-border-radius-sm: 0.25rem;
+  --bs-border-radius-lg: 0.5rem;
+  --bs-focus-ring-color: rgba(13, 110, 253, 0.25);
+  --bs-body-font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --bs-body-color: var(--ink);
+}
+
+body {
+  color: var(--ink);
+  background: var(--bg);
+}
+
+header a,
+.nav-list a,
+.button,
+button {
+  text-decoration: none;
+}
+
+.button,
+button {
+  --bs-btn-font-weight: 600;
+  --bs-btn-border-radius: var(--bs-border-radius);
+  --bs-btn-focus-box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.button,
+button:not(.nav-link):not(.dropdown-item) {
+  min-height: 2.375rem;
+}
+
+.button.secondary,
+button.secondary {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--bs-secondary);
+  --bs-btn-border-color: var(--bs-secondary);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #5c636a;
+  --bs-btn-hover-border-color: #565e64;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #565e64;
+  --bs-btn-active-border-color: #51585e;
+}
+
+.button.danger,
+button.danger {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--bs-danger);
+  --bs-btn-border-color: var(--bs-danger);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #bb2d3b;
+  --bs-btn-hover-border-color: #b02a37;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #b02a37;
+  --bs-btn-active-border-color: #a52834;
+}
+
+header .button.secondary,
+header button.secondary {
+  --bs-btn-color: #bfdbfe;
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: #bfdbfe;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: rgba(255, 255, 255, 0.14);
+  --bs-btn-hover-border-color: #fff;
+}
+
+.sidebar-toggle {
+  min-height: 0;
+}
+
+.badge {
+  --bs-badge-font-weight: 700;
+}
+
+.notice {
+  --bs-alert-margin-bottom: 1rem;
+  --bs-alert-border-radius: var(--bs-border-radius);
+  position: relative;
+  padding: var(--bs-alert-padding-y, 1rem) var(--bs-alert-padding-x, 1rem);
+  border: var(--bs-alert-border, 1px solid transparent);
+  border-radius: var(--bs-alert-border-radius);
+  margin-bottom: var(--bs-alert-margin-bottom);
+}
+
+.notice.ok {
+  --bs-alert-color: var(--bs-success-text-emphasis);
+  --bs-alert-bg: var(--bs-success-bg-subtle);
+  --bs-alert-border-color: var(--bs-success-border-subtle);
+  color: var(--bs-alert-color);
+  background-color: var(--bs-alert-bg);
+  border-color: var(--bs-alert-border-color);
+}
+
+.notice.alert,
+.error-messages {
+  --bs-alert-color: var(--bs-danger-text-emphasis);
+  --bs-alert-bg: var(--bs-danger-bg-subtle);
+  --bs-alert-border-color: var(--bs-danger-border-subtle);
+  color: var(--bs-alert-color);
+  background-color: var(--bs-alert-bg);
+  border-color: var(--bs-alert-border-color);
+}
+
+.document-prose a {
+  text-decoration-thickness: 0.08em;
+}
