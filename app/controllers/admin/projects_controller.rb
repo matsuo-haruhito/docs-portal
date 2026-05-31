@@ -4,7 +4,7 @@ class Admin::ProjectsController < Admin::BaseController
   before_action :set_companies, only: %i[index create edit update]
 
   def index
-    @projects = Project.includes(:company).order(:code)
+    @projects = filtered_projects
     @project = Project.new(active: true)
   end
 
@@ -14,7 +14,7 @@ class Admin::ProjectsController < Admin::BaseController
     if @project.save
       redirect_to admin_projects_path, notice: "案件を登録しました。"
     else
-      @projects = Project.includes(:company).order(:code)
+      @projects = filtered_projects
       render :index, status: :unprocessable_entity
     end
   end
@@ -41,6 +41,57 @@ class Admin::ProjectsController < Admin::BaseController
   end
 
   private
+
+  def filtered_projects
+    @project_filter_params = project_filter_params
+    @projects_total_count = Project.count
+
+    Project.includes(:company).then { |scope| apply_project_filters(scope) }.order(:code)
+  end
+
+  def apply_project_filters(scope)
+    scope = filter_projects_by_keyword(scope)
+    scope = filter_projects_by_active(scope)
+    filter_projects_by_company(scope)
+  end
+
+  def filter_projects_by_keyword(scope)
+    keyword = @project_filter_params["q"].to_s.strip
+    return scope if keyword.blank?
+
+    pattern = "%#{Project.sanitize_sql_like(keyword.downcase)}%"
+    scope.where(
+      "LOWER(projects.code) LIKE :keyword OR LOWER(projects.name) LIKE :keyword OR LOWER(projects.description) LIKE :keyword",
+      keyword: pattern
+    )
+  end
+
+  def filter_projects_by_active(scope)
+    case @project_filter_params["active"]
+    when "true"
+      scope.where(active: true)
+    when "false"
+      scope.where(active: false)
+    else
+      scope
+    end
+  end
+
+  def filter_projects_by_company(scope)
+    company_id = @project_filter_params["company_id"].to_s
+
+    if company_id == "none"
+      scope.where(company_id: nil)
+    elsif company_id.match?(/\A\d+\z/)
+      scope.where(company_id: company_id)
+    else
+      scope
+    end
+  end
+
+  def project_filter_params
+    params.permit(:q, :active, :company_id).to_h
+  end
 
   def set_project
     @project = Project.find_by!(code: project_code_param)
