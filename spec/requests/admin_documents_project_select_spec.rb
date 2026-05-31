@@ -21,7 +21,24 @@ RSpec.describe "Admin documents project select", type: :request do
     project_select.css("option[selected]").first&.[]("value")
   end
 
-  it "renders the new document project field through rails_fields_kit on the index form" do
+  it "uses rails_fields_kit for only the document project selector" do
+    form_source = Rails.root.join("app/views/admin/documents/_form.html.slim").read
+
+    aggregate_failures do
+      expect(form_source).to include("= form.rfk_select :project_id,")
+      expect(form_source).to include("collection: @projects")
+      expect(form_source).to include("collection_value_method: :id")
+      expect(form_source).to include("collection_label_method: :name")
+      expect(form_source).to include('label: "案件"')
+      expect(form_source).to include('placeholder: "案件を選択"')
+      expect(form_source).not_to include("collection_select :project_id")
+      expect(form_source).to include("= form.select :category")
+      expect(form_source).to include("= form.select :document_kind")
+      expect(form_source).to include("= form.select :visibility_policy")
+    end
+  end
+
+  it "renders the document project field on the index form" do
     sign_in_as(admin)
 
     get admin_documents_path
@@ -31,7 +48,6 @@ RSpec.describe "Admin documents project select", type: :request do
     expect(project_select["name"]).to eq("document[project_id]")
     expect(project_select["id"]).to eq("document_project_id")
     expect(project_option_values).to include(project.id.to_s, other_project.id.to_s)
-    expect(response.body).to include("rails-fields-kit")
   end
 
   it "keeps the existing document project selected on the edit form" do
