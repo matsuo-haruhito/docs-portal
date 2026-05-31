@@ -149,7 +149,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(page_text).to include("再送可能なWebhook送信履歴はありません")
   end
 
-  it "shows delivery detail without exposing request body" do
+  it "shows masked JSON request body preview on delivery detail" do
     sign_in_as(admin_user)
 
     endpoint = create(:webhook_endpoint, name: "Failure Hook", active: true, target_url: "https://hooks.example.test/docs")
@@ -161,7 +161,20 @@ RSpec.describe "Admin webhook endpoints", type: :request do
       event_type: "document_published",
       status: :failed,
       target_url: endpoint.target_url,
-      request_body: '{"secret":"do-not-show"}',
+      request_body: JSON.generate(
+        event_type: "document_published",
+        document_slug: "installation-guide",
+        secret: "do-not-show",
+        authorization: "Bearer hidden-token",
+        user: {
+          email: "customer@example.test",
+          name: "Sensitive Name",
+          company_id: "company-visible"
+        },
+        items: [
+          {title: "Visible Section", phone: "090-0000-0000"}
+        ]
+      ),
       response_status: 503,
       response_body: "service unavailable",
       error_message: "upstream timeout",
@@ -178,9 +191,38 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(page_text).to include("service unavailable")
     expect(page_text).to include("upstream timeout")
     expect(page_text).to include("リクエスト本文")
-    expect(page_text).to include("first slice では非表示です")
+    expect(page_text).to include("マスク済み preview")
+    expect(page_text).to include("document_published")
+    expect(page_text).to include("installation-guide")
+    expect(page_text).to include("company-visible")
+    expect(page_text).to include("Visible Section")
+    expect(page_text).to include("[masked]")
+    expect(page_text).not_to include("first slice では非表示です")
     expect(page_text).not_to include("do-not-show")
+    expect(page_text).not_to include("hidden-token")
+    expect(page_text).not_to include("customer@example.test")
+    expect(page_text).not_to include("Sensitive Name")
+    expect(page_text).not_to include("090-0000-0000")
     expect(action_targets).to include(retry_dispatch_admin_webhook_delivery_path(delivery.public_id))
+  end
+
+  it "truncates non-JSON request body preview after masking sensitive values" do
+    sign_in_as(admin_user)
+
+    delivery = create(
+      :webhook_delivery,
+      status: :failed,
+      request_body: "event_type=document_updated token=non-json-secret note=#{'a' * 800}"
+    )
+
+    get admin_webhook_delivery_path(delivery.public_id)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("event_type=document_updated")
+    expect(page_text).to include("token=[masked]")
+    expect(page_text).to include("...省略...")
+    expect(page_text).not_to include("non-json-secret")
+    expect(page_text).not_to include("#{'a' * 700}")
   end
 
   it "forbids non-admin users from delivery detail" do
@@ -226,8 +268,8 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     retryable_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :failed)
     another_retryable_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :failed)
     succeeded_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :succeeded)
-    pending_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :pending)
-    inactive_delivery = create(:webhook_delivery, webhook_endpoint: inactive_endpoint, notification_event: event, status: :failed)
+    pending_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, status: :pending)
+    inactive_delivery = create(:webhook_delivery, webhook_endpoint: inactive_endpoint, status: :failed)
     dispatcher = instance_double(WebhookDeliveryDispatcher)
 
     allow(WebhookDeliveryDispatcher).to receive(:new).and_return(dispatcher)
