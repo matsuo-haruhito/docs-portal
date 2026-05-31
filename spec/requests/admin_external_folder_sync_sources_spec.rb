@@ -142,6 +142,82 @@ RSpec.describe "Admin external folder sync sources", type: :request do
       expect(href_for("編集")).to eq(edit_admin_external_folder_sync_source_path(warning_source, return_to: return_to))
     end
 
+    it "filters the table by sync source and project search query" do
+      sign_in_as(admin_user)
+      create_google_drive_source(project:, name: "Finance policies")
+      other_project = create(:project, code: "OPS002", name: "Operations Project")
+      ops_source = create_google_drive_source(project: other_project, name: "Team handbook")
+      create_google_drive_source(project:, name: "Security notes")
+
+      get admin_external_folder_sync_sources_path, params: { q: "ops002" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(ops_source.name)
+      expect(response.body).to include("検索: ops002")
+      expect(response.body).not_to include("Finance policies")
+      expect(response.body).not_to include("Security notes")
+      expect(response.body).to include("1 / 3 件を表示しています。")
+    end
+
+    it "filters by external folder id and path" do
+      sign_in_as(admin_user)
+      drive_source = create_google_drive_source(project:, name: "Finance policies")
+      graph_project = create(:project, code: "SYNC002", name: "Graph Project")
+      graph_source = create_microsoft_graph_source(project: graph_project, name: "SharePoint source")
+
+      get admin_external_folder_sync_sources_path, params: { q: graph_source.external_folder_path.downcase }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(graph_source.name)
+      expect(response.body).not_to include(drive_source.name)
+
+      get admin_external_folder_sync_sources_path, params: { q: drive_source.external_folder_id.upcase }
+
+      expect(response.body).to include(drive_source.name)
+      expect(response.body).not_to include(graph_source.name)
+    end
+
+    it "combines review filters with search and preserves query links" do
+      sign_in_as(admin_user)
+      warning_source = create_google_drive_source(project:, name: "Finance warnings")
+      create_google_drive_source(project:, name: "Finance clean")
+      create_google_drive_source(project:, name: "Security warnings")
+      ExternalFolderSyncRun.create!(
+        external_folder_sync_source: warning_source,
+        status: :completed,
+        mode: :dry_run,
+        started_at: Time.current,
+        summary_json: { "conflict_warnings_count" => 2 }
+      )
+      return_to = "#{admin_external_folder_sync_sources_path}?review=warnings&q=finance"
+
+      get admin_external_folder_sync_sources_path, params: { review: "warnings", q: "finance" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(warning_source.name)
+      expect(response.body).not_to include("Finance clean")
+      expect(response.body).not_to include("Security warnings")
+      expect(response.body).to include("現在の絞り込み: warning あり / 検索: finance")
+      expect(response.body).to include("1 / 3 件を表示しています。")
+      expect(href_for("Google Drive (3)")).to eq(admin_external_folder_sync_sources_path(review: :google_drive, q: "finance"))
+      expect(href_for("絞り込みを解除")).to eq(admin_external_folder_sync_sources_path(q: "finance"))
+      expect(href_for("検索を解除")).to eq(admin_external_folder_sync_sources_path(review: "warnings"))
+      expect(href_for("設定詳細")).to eq(admin_external_folder_sync_source_path(warning_source, return_to: return_to))
+      expect(href_for("編集")).to eq(edit_admin_external_folder_sync_source_path(warning_source, return_to: return_to))
+    end
+
+    it "distinguishes no search matches from the unregistered empty state" do
+      sign_in_as(admin_user)
+      create_google_drive_source(project:, name: "Finance policies")
+
+      get admin_external_folder_sync_sources_path, params: { q: "missing-source" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("現在の検索 / 絞り込みに一致する外部フォルダ同期設定はありません。")
+      expect(response.body).to include("検索: missing-source")
+      expect(response.body).not_to include("まだ外部フォルダ同期設定は登録されていません。")
+    end
+
     it "filters the table to warning sources only" do
       sign_in_as(admin_user)
       warning_source = create_google_drive_source(project:, name: "Warning source")
