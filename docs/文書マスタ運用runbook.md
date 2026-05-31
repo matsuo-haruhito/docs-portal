@@ -63,6 +63,8 @@
 
 current first slice は、ここで候補を一覧確認し、必要に応じて `編集` で期限系メタデータを直すか、行単位の `アーカイブ` / `復元` を手動で判断するところまでです。期限間近の独自閾値、bulk 操作、通知条件の確定、自動削除、非可逆 discard はこの画面の current support には含めません。
 
+後続 issue は次の役割で読み分けます。#1264 は画面上で次に何を見ればよいかの案内 copy、#1265 は filter と一覧列の request spec による contract 固定、#1266 は廃棄候補レビュー記録の proposal / feature slice です。いずれも retention policy の最終決定、bulk 操作、自動通知、自動削除、非可逆 discard をこの runbook で実装済み扱いにするものではありません。
+
 ### 条件を戻したいとき
 
 - `検索`: 現在の条件で一覧を更新する
@@ -156,6 +158,7 @@ current first slice は、ここで候補を一覧確認し、必要に応じて
 - この runbook は current `main` の `admin/documents` 一覧と周辺操作だけを扱います
 - 検索条件は `キーワード`、各 enum filter、`アーカイブ状態`、`保管期限`、`廃棄候補` までです
 - 保管期限 / 廃棄候補の first slice は、一覧確認、表示列、行単位の手動 archive / restore 判断までです
+- #1264 / #1265 / #1266 は、画面 copy、filter contract spec、レビュー記録 proposal を分けて扱う後続 issue です。この runbook では要件や実装詳細を重複定義しません
 - bulk archive、bulk restore、bulk delete、discard candidate marking、全文検索の高度化、追加 filter の提案までは扱いません
 - 自動通知、自動削除、非可逆 discard、期限間近の新閾値定義、retention policy の最終決定は別 issue で扱います
 - route 識別子や公開側 URL 契約の将来変更は、この文書で先回りして定義しません
