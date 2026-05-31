@@ -57,6 +57,7 @@ section.card
         - primary_label = admin_access_request_primary_target_label(requestable)
         - secondary_label = admin_access_request_secondary_target_label(requestable)
         - action_filter_params = @filters.compact
+        - rejection_reason_field_id = "rejection_reason_#{access_request.public_id}"
         tr
           td = access_request.created_at.strftime("%Y-%m-%d %H:%M")
           td = "#{access_request.requester.name} / #{access_request.requester.email_address}"
@@ -80,7 +81,13 @@ section.card
           td.actions
             - if access_request.pending?
               = button_to "承認", admin_access_request_path(access_request), method: :patch, params: action_filter_params.merge(decision: "approve"), class: "button"
-              = button_to "却下", admin_access_request_path(access_request), method: :patch, params: action_filter_params.merge(decision: "reject", rejection_reason: admin_access_request_default_rejection_reason), class: "button secondary"
+              = form_with url: admin_access_request_path(access_request), method: :patch, local: true do |form|
+                - action_filter_params.each do |key, value|
+                  = hidden_field_tag key, value
+                = form.hidden_field :decision, value: "reject"
+                = form.label :rejection_reason, "却下理由", for: rejection_reason_field_id
+                = form.text_field :rejection_reason, id: rejection_reason_field_id, value: admin_access_request_default_rejection_reason, placeholder: "却下理由", aria: { label: "却下理由" }
+                = form.submit "却下", class: "button secondary"
             - else
               span.muted -
 - else
