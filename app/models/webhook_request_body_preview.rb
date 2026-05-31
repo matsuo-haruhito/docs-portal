@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 class WebhookRequestBodyPreview
   MAX_LENGTH = 600
   MASK = "[masked]"
@@ -11,7 +13,7 @@ class WebhookRequestBodyPreview
   end
 
   def to_s
-    return "-" if @request_body.blank?
+    return "-" if @request_body.empty?
 
     truncate(render_preview)
   end
@@ -45,7 +47,7 @@ class WebhookRequestBodyPreview
   end
 
   def mask_sensitive_text(text)
-    text.gsub(SENSITIVE_TEXT_PATTERN) { "#{$1}#{MASK}" }
+    text.gsub(SENSITIVE_TEXT_PATTERN) { "#{Regexp.last_match(1)}#{MASK}" }
   end
 
   def truncate(text)
