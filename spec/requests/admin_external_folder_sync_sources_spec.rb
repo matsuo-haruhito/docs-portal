@@ -410,6 +410,49 @@ RSpec.describe "Admin external folder sync sources", type: :request do
       expect(hidden_field_value("return_to")).to eq(return_to)
       expect(href_for("詳細へ戻る")).to eq(admin_external_folder_sync_source_path(source, return_to: return_to))
     end
+
+    it "shows force apply warning count and examples near the approval action" do
+      sign_in_as(admin_user)
+      source = create_google_drive_source(project:, name: "Warning source", auth_type: :service_account)
+      ExternalFolderSyncRun.create!(
+        external_folder_sync_source: source,
+        status: :completed,
+        mode: :dry_run,
+        started_at: Time.current,
+        summary_json: { "conflict_warnings_count" => 2, "blocked_by_conflict_warnings" => true },
+        result_json: [
+          {
+            "action" => "update",
+            "attention_level" => "warning",
+            "path" => "Policies/handbook.pdf",
+            "conflict_warnings" => ["portal側にも更新があります"],
+            "message" => "確認してください"
+          },
+          {
+            "action" => "create",
+            "attention_level" => "warning",
+            "path" => "Policies/duplicate.pdf",
+            "conflict_warnings" => ["同名ファイルがあります"],
+            "message" => "確認してください"
+          }
+        ]
+      )
+
+      get admin_external_folder_sync_source_path(source)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("承認対象: 直近の同期プレビューにある競合・重複警告 2件")
+      expect(response.body).to include("Policies/handbook.pdf")
+      expect(response.body).to include("portal側にも更新があります")
+      expect(response.body).to include("Policies/duplicate.pdf")
+      expect(response.body).to include("同名ファイルがあります")
+      expect(response.body).to include("詳細は下の同期履歴の「結果詳細」を正本として確認してください。")
+      expect(response.body).not_to include("まず同期プレビューを実行し")
+
+      force_apply_link = parsed_html.css("a").find { |node| node.text.strip == "警告を承認して同期する" }
+      expect(force_apply_link).to be_present
+      expect(force_apply_link["data-turbo-confirm"]).to include("競合・重複警告 2件を承認して同期します")
+    end
   end
 
   describe "PATCH /admin/external_folder_sync_sources/:public_id" do
