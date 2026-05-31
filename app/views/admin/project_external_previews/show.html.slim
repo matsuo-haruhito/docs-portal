@@ -20,7 +20,12 @@ h1 外部表示プレビュー
     .form-grid
       label
         | 外部ユーザー
-        = form.select :user_id, options_from_collection_for_select(@preview_users, :id, :display_name, @selected_user&.id), include_blank: "選択してください"
+        = form.rfk_select :user_id,
+          collection: external_preview_user_options(@preview_users),
+          selected: @selected_user&.id,
+          allow_clear: true,
+          placeholder: "外部ユーザーを検索"
+    p.muted ユーザー名、メールアドレス、会社名を手がかりに選べます。
     p.actions
       = form.submit "このユーザーでプレビュー", class: "button"
 
@@ -37,7 +42,7 @@ h1 外部表示プレビュー
 - if @selected_user.present?
   .card
     h2 対象ユーザー
-    p = @selected_user.display_name
+    p = external_preview_user_label(@selected_user)
 - elsif @selected_company.present?
   .card
     h2 対象会社
