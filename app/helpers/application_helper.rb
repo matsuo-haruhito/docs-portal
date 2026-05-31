@@ -29,7 +29,7 @@ module ApplicationHelper
   end
 
   def document_set_visibility_policy_label(document_set_or_value)
-    value = document_set_or_value.respond_to?(:visibility_policy) ? document_set_or_value.visibility_policy : document_or_value
+    value = document_set_or_value.respond_to?(:visibility_policy) ? document_set_or_value.visibility_policy : document_set_or_value
     localized_label("document_sets.visibility_policy", value)
   end
 
