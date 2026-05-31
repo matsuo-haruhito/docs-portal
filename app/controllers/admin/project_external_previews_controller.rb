@@ -31,7 +31,11 @@ class Admin::ProjectExternalPreviewsController < Admin::BaseController
     if @selected_user.present?
       [@selected_user]
     elsif @selected_company.present?
-      @preview_users.select { _1.company_id == @selected_company.id }
+      external_viewer_scope
+        .where(company_id: @selected_company.id)
+        .includes(:company)
+        .order(:email_address)
+        .to_a
     else
       []
     end
