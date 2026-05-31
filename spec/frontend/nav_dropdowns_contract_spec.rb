@@ -19,6 +19,21 @@ RSpec.describe "Nav dropdown contract" do
     expect(navbar_source).to include("履歴照会")
   end
 
+  it "keeps role-specific scan group labels in the shared navbar" do
+    expect(navbar_source.scan("nav-dropdown__section-label").size).to be >= 8
+    expect(navbar_source).to include("日常操作")
+    expect(navbar_source).to include("社内確認")
+    expect(navbar_source).to include("送付・同意")
+    expect(navbar_source).to include("監査・管理履歴")
+    expect(navbar_source).to include("管理ホーム")
+    expect(navbar_source).to include("組織・案件")
+    expect(navbar_source).to include("同意・文書")
+    expect(navbar_source).to include("Git連携")
+    expect(navbar_source).to include("外部サービス")
+    expect(navbar_source).to include("- if current_user.internal?")
+    expect(navbar_source).to include("- if admin_user?")
+  end
+
   it "keeps document listener registration and cleanup paired" do
     expect(controller_source).to include('document.addEventListener("toggle", this.onToggle, true)')
     expect(controller_source).to include('document.removeEventListener("toggle", this.onToggle, true)')
