@@ -35,33 +35,77 @@ class Admin::AccessRequestsController < Admin::BaseController
   end
 
   def filtered_access_requests(scope)
-    requests = scope.to_a
-    return requests unless @filters[:q].present?
-
-    requests.select { |access_request| access_request_matches_query?(access_request, @filters[:q]) }
+    scope = scope.where(access_request_search_condition, query: access_request_query_pattern(@filters[:q])) if @filters[:q].present?
+    scope.to_a
   end
 
-  def access_request_matches_query?(access_request, query)
-    access_request_search_text(access_request).include?(query.downcase)
+  def access_request_query_pattern(query)
+    "%#{ActiveRecord::Base.sanitize_sql_like(query.downcase)}%"
   end
 
-  def access_request_search_text(access_request)
-    request_hash = AccessRequestHash.new(access_request).call
-    requestable = request_hash[:requestable] || {}
-
-    [
-      request_hash.dig(:requester, :name),
-      request_hash.dig(:requester, :email_address),
-      request_hash[:reason],
-      requestable[:type],
-      requestable[:code],
-      requestable[:name],
-      requestable[:project_code],
-      requestable[:title],
-      requestable[:document_title],
-      requestable[:file_name],
-      requestable[:public_id]
-    ].compact.join(" ").downcase
+  def access_request_search_condition
+    <<~SQL.squish
+      LOWER(access_requests.public_id) LIKE :query
+      OR LOWER(access_requests.reason) LIKE :query
+      OR EXISTS (
+        SELECT 1
+        FROM users requesters
+        WHERE requesters.id = access_requests.requester_id
+          AND (
+            LOWER(requesters.name) LIKE :query
+            OR LOWER(requesters.email_address) LIKE :query
+          )
+      )
+      OR (
+        access_requests.requestable_type = 'Project'
+        AND EXISTS (
+          SELECT 1
+          FROM projects
+          WHERE projects.id = access_requests.requestable_id
+            AND (
+              LOWER(projects.public_id) LIKE :query
+              OR LOWER(projects.code) LIKE :query
+              OR LOWER(projects.name) LIKE :query
+            )
+        )
+      )
+      OR (
+        access_requests.requestable_type = 'Document'
+        AND EXISTS (
+          SELECT 1
+          FROM documents
+          LEFT JOIN projects document_projects ON document_projects.id = documents.project_id
+          WHERE documents.id = access_requests.requestable_id
+            AND (
+              LOWER(documents.public_id) LIKE :query
+              OR LOWER(documents.slug) LIKE :query
+              OR LOWER(documents.title) LIKE :query
+              OR LOWER(document_projects.code) LIKE :query
+              OR LOWER(document_projects.name) LIKE :query
+            )
+        )
+      )
+      OR (
+        access_requests.requestable_type = 'DocumentFile'
+        AND EXISTS (
+          SELECT 1
+          FROM document_files
+          LEFT JOIN document_versions ON document_versions.id = document_files.document_version_id
+          LEFT JOIN documents file_documents ON file_documents.id = document_versions.document_id
+          LEFT JOIN projects file_projects ON file_projects.id = file_documents.project_id
+          WHERE document_files.id = access_requests.requestable_id
+            AND (
+              LOWER(document_files.public_id) LIKE :query
+              OR LOWER(document_files.file_name) LIKE :query
+              OR LOWER(document_files.search_text) LIKE :query
+              OR LOWER(file_documents.title) LIKE :query
+              OR LOWER(file_documents.slug) LIKE :query
+              OR LOWER(file_projects.code) LIKE :query
+              OR LOWER(file_projects.name) LIKE :query
+            )
+        )
+      )
+    SQL
   end
 
   def access_request_status_counts(scope, access_requests)
