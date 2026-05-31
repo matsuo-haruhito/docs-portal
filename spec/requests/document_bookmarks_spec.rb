@@ -40,6 +40,7 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response.body).to include("あとで確認")
     expect(response.body).to include("最近見た文書")
     expect(response.body.scan("解除").size).to eq(2)
+    expect(response.body.scan("お気に入りへ移す").size).to eq(1)
   end
 
   it "shows actionable empty states with zero counts" do
@@ -123,6 +124,63 @@ RSpec.describe "Document bookmarks", type: :request do
         }
       }
     end.not_to change(DocumentBookmark, :count)
+  end
+
+  it "moves a read-later bookmark to favorites" do
+    bookmark = create(:document_bookmark, user:, document:, bookmark_type: :read_later)
+    sign_in_as(user)
+
+    expect do
+      post move_to_favorite_document_bookmark_path(bookmark)
+    end.to change(DocumentBookmark.favorite, :count).by(1)
+      .and change(DocumentBookmark.read_later, :count).by(-1)
+
+    expect(response).to redirect_to(root_path)
+    expect(flash[:notice]).to eq("お気に入りへ移しました。")
+    expect(user.document_bookmarks.find_by(document:, bookmark_type: :favorite)).to be_present
+    expect(user.document_bookmarks.find_by(document:, bookmark_type: :read_later)).to be_nil
+  end
+
+  it "moves a read-later bookmark without duplicating an existing favorite" do
+    bookmark = create(:document_bookmark, user:, document:, bookmark_type: :read_later)
+    create(:document_bookmark, user:, document:, bookmark_type: :favorite)
+    favorite_count = DocumentBookmark.favorite.count
+    sign_in_as(user)
+
+    expect do
+      post move_to_favorite_document_bookmark_path(bookmark)
+    end.to change(DocumentBookmark.read_later, :count).by(-1)
+
+    expect(DocumentBookmark.favorite.count).to eq(favorite_count)
+    expect(user.document_bookmarks.where(document:, bookmark_type: :favorite).count).to eq(1)
+    expect(user.document_bookmarks.find_by(document:, bookmark_type: :read_later)).to be_nil
+  end
+
+  it "does not move another user's read-later bookmark" do
+    other_user = create(:user, :external, company:)
+    bookmark = create(:document_bookmark, user: other_user, document:, bookmark_type: :read_later)
+    sign_in_as(user)
+
+    expect do
+      post move_to_favorite_document_bookmark_path(bookmark)
+    end.not_to change(DocumentBookmark, :count)
+
+    expect(response).to have_http_status(:not_found)
+    expect(bookmark.reload).to be_present
+  end
+
+  it "does not move unreadable documents to favorites" do
+    bookmark = create(:document_bookmark, user:, document:, bookmark_type: :read_later)
+    document.update!(visibility_policy: :internal_only)
+    sign_in_as(user)
+
+    expect do
+      post move_to_favorite_document_bookmark_path(bookmark)
+    end.not_to change(DocumentBookmark, :count)
+
+    expect(response).to have_http_status(:forbidden)
+    expect(bookmark.reload).to be_present
+    expect(user.document_bookmarks.find_by(document:, bookmark_type: :favorite)).to be_nil
   end
 
   it "does not create bookmarks for unreadable documents" do
