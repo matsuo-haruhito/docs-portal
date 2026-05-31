@@ -85,6 +85,16 @@ section.card
               span.muted -
 - else
   - if @filters[:status].present? || @filters[:q].present?
-    p.muted 条件に一致する申請はありません。
+    p.muted
+      | 条件に一致する申請はありません。
+      - if @filters[:status].present?
+        |  状態:
+        strong = " #{admin_access_request_status_filter_label(@filters[:status])}"
+      - if @filters[:q].present?
+        - if @filters[:status].present?
+          |  / 検索:
+        - else
+          |  検索:
+        strong = " #{@filters[:q]}"
   - else
     p.muted 申請はありません。

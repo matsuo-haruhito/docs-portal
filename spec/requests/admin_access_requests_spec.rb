@@ -153,15 +153,34 @@ RSpec.describe "Admin access requests", type: :request do
     expect(parsed_html.css("form[action='#{admin_access_request_path(pending_match)}']").size).to eq(2)
   end
 
-  it "shows a filtered empty state when no requests match" do
+  it "shows active filters in the filtered empty state" do
+    create(:access_request, requester:, requestable: document, requested_access_level: :download)
+
+    sign_in_as(admin_user)
+
+    get admin_access_requests_path, params: { status: "rejected", q: "does-not-match" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("条件に一致する申請はありません。")
+    expect(page_text).to include("状態: 却下")
+    expect(page_text).to include("検索: does-not-match")
+    expect(page_text).not_to include("状態: rejected")
+  end
+
+  it "does not show an unset status in the query-only filtered empty state" do
     create(:access_request, requester:, requestable: document, requested_access_level: :download)
 
     sign_in_as(admin_user)
 
     get admin_access_requests_path, params: { q: "does-not-match" }
 
+    empty_state_text = parsed_html.css("p.muted").find { |node| node.text.include?("条件に一致する申請はありません。") }.text.squish
+
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("条件に一致する申請はありません。")
+    expect(empty_state_text).to include("条件に一致する申請はありません。")
+    expect(empty_state_text).to include("検索: does-not-match")
+    expect(empty_state_text).not_to include("状態:")
+    expect(empty_state_text).not_to include("状態: すべて")
   end
 
   it "approves a pending request" do
