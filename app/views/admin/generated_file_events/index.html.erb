@@ -10,15 +10,26 @@
       <p class="text-sm text-gray-600">debounce / coalesce 用に蓄積されたファイル変更イベントです。</p>
     </div>
     <div class="space-y-2 text-right text-sm">
-      <% bulk_retry_class = @filters[:status] == "failed" ? "rounded bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow" : "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
+      <% bulk_retry_disabled = @bulk_retry_target_count.to_i.zero? %>
+      <% bulk_retry_class = if bulk_retry_disabled
+           "rounded bg-gray-300 px-3 py-2 text-sm text-gray-600"
+         elsif @filters[:status] == "failed"
+           "rounded bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow"
+         else
+           "rounded bg-blue-600 px-3 py-2 text-sm text-white"
+         end %>
       <div class="flex items-center gap-2">
-        <%= button_to "失敗分を一括再dispatch", retry_failed_admin_generated_file_events_path(@filters.compact_blank), method: :post, class: bulk_retry_class %>
+        <%= button_to "失敗分を一括再dispatch", retry_failed_admin_generated_file_events_path(@filters.compact_blank), method: :post, class: bulk_retry_class, disabled: bulk_retry_disabled %>
         <%= link_to "すべて", admin_generated_file_events_path(status_filter_params.except("status")), class: "rounded border px-3 py-2" %>
         <% GeneratedFileEvent.statuses.keys.each do |status| %>
           <%= link_to generated_file_event_status_label(status), admin_generated_file_events_path(status_filter_params.merge("status" => status)), class: "rounded border px-3 py-2" %>
         <% end %>
       </div>
+      <p class="text-xs text-gray-500">現在の条件で再dispatch対象: <%= @bulk_retry_target_count %> 件</p>
       <p class="text-xs text-gray-500">一括再dispatchは古い失敗分から最大100件です。</p>
+      <% if bulk_retry_disabled %>
+        <p class="text-xs text-gray-500">対象がないため一括再dispatchできません。</p>
+      <% end %>
     </div>
   </div>
 
