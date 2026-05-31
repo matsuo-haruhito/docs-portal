@@ -1,12 +1,14 @@
 - page_title "Webhook送信履歴詳細"
 - delivery = @webhook_delivery
 - endpoint = delivery.webhook_endpoint
+- delivery_return_path = @return_delivery_status == "all" ? admin_webhook_endpoints_path : admin_webhook_endpoints_path(delivery_status: @return_delivery_status)
+- delivery_return_params = @return_delivery_status == "all" ? {} : { return_delivery_status: @return_delivery_status }
 
 h1 Webhook送信履歴詳細
 = render "admin/nav"
 
 p.actions
-  = link_to "Webhook一覧へ戻る", admin_webhook_endpoints_path
+  = link_to "Webhook一覧へ戻る", delivery_return_path
 
 .card
   h2 概要
@@ -45,6 +47,6 @@ p.actions
   h2 操作
   - if delivery.retryable?
     p.muted この送信は現在のWebhook設定で1件だけ手動再送できます。受信先側の重複処理に注意してください。
-    = button_to "再送", retry_dispatch_admin_webhook_delivery_path(delivery.public_id), method: :post, class: "button secondary", form: { data: { turbo_confirm: "このWebhook送信を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。" } }
+    = button_to "再送", retry_dispatch_admin_webhook_delivery_path(delivery.public_id, delivery_return_params), method: :post, class: "button secondary", form: { data: { turbo_confirm: "このWebhook送信を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。" } }
   - else
     p.muted この送信履歴は再送できません。再送できるのは失敗した送信で、Webhook設定が有効な場合だけです。
