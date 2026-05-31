@@ -12,7 +12,7 @@ RSpec.describe "Admin generated file events", type: :request do
   end
 
   def bulk_retry_button(filters = {})
-    parsed_html.at_css(%(form[action="#{retry_failed_admin_generated_file_events_path(filters)}"] button[type="submit"))
+    parsed_html.at_css(%(form[action="#{retry_failed_admin_generated_file_events_path(filters)}"] button[type="submit"])))
   end
 
   describe "GET /admin/generated_file_events" do
