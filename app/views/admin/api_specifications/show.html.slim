@@ -36,6 +36,14 @@ section.card
       dt HTML更新時刻
       dd = l(build_status.build_entry_mtime, format: :long)
   p.muted build 状態は API仕様ページ専用の直近結果だけを案内します。build queue や iframe 配信条件は変更していません。
+  - if build_status.state == :failed
+    .notice.alert
+      h3 失敗調査の入口
+      p.muted raw log は画面に出さず、まず runbook と主要 source を順に確認してください。
+      ul
+        li = link_to "API仕様ページとdocs-src更新確認runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/API仕様ページとdocs-src更新確認runbook.md"
+        li = link_to "build-docs workflow確認runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/build-docs%20workflow確認runbook.md"
+      p.muted 主要 source: docs-src/api-specification.md、docs-src/client-file-upload-api.md、docs-src/office-preview.md、docs-src/external-folder-sync-webhooks.md
 
 section.card
   h2 主要ページとsource
