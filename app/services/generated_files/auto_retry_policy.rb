@@ -68,7 +68,7 @@ module GeneratedFiles
         "retry_requested_by_user_id" => nil,
         "auto_retry" => true,
         "retry_reason" => RETRY_REASON
-      ).compact
+      )
     end
 
     def metadata_for(run)
