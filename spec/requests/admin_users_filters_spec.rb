@@ -46,12 +46,12 @@ RSpec.describe "Admin users filters", type: :request do
   end
 
   it "filters users by active status and distinguishes filtered empty results" do
-    active_user = create(:user, :external, company:, name: "Active Search", email_address: "active-search@example.com", active: true)
-    inactive_user = create(:user, :external, company:, name: "Inactive Search", email_address: "inactive-search@example.com", active: false)
+    active_user = create(:user, :external, company:, name: "Enabled Match Target", email_address: "enabled-target@example.com", active: true)
+    inactive_user = create(:user, :external, company:, name: "Disabled Match Target", email_address: "disabled-target@example.com", active: false)
 
     sign_in_as(internal_user)
 
-    get admin_users_path, params: { q: "search", active: "false" }
+    get admin_users_path, params: { q: "match target", active: "false" }
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include(inactive_user.email_address)
