@@ -21,6 +21,8 @@
           span.badge 外部公開Q&A
         = simple_format(thread.body)
         - if current_user&.admin? && thread.open?
+          p.document-comment-card__action-note.muted
+            | 回答済みは回答・対応が終わった質問、クローズは対応しない・受付を閉じる質問に使います。どちらも通知やSLAを示す操作ではありません。
           p.actions
             - status_action_path = thread.document_version.present? ? document_version_document_review_comment_path(thread.document_version, thread) : project_document_document_review_comment_path(@project, @document, thread)
             = button_to "回答済みにする", status_action_path, method: :patch, params: { decision: "resolve" }, class: "button secondary"
