@@ -24,6 +24,12 @@ section.card
       = label_tag :sort_order do
         | 並び順
         = select_tag :sort_order, options_for_select(document_usage_report_sort_options, @sort_order)
+      = label_tag :from do
+        | 開始日
+        = date_field_tag :from, @from_date&.iso8601
+      = label_tag :to do
+        | 終了日
+        = date_field_tag :to, @to_date&.iso8601
     p.actions
       = form.submit "集計"
       = link_to "条件をクリア", admin_document_usage_reports_path
@@ -37,6 +43,11 @@ section.card
       |  (
       = @report_hash.dig(:project, :code)
       | )
+    p
+      | 期間:
+      strong = " #{document_usage_report_period_label(@from_date, @to_date)}"
+    p.muted
+      | 期間指定時は、閲覧・ダウンロード・既読確認・利用あり判定・最終アクセスを期間内の実績で集計します。
     p
       | 文書数:
       strong = " #{@report_hash.dig(:summary, :document_count)}"
