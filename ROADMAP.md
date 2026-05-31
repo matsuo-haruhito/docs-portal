@@ -18,7 +18,7 @@
 
 列が多い、または利用頻度が高い一覧から優先して、表示列、列幅、順序、フィルタ状態を保存できるようにする。
 
-候補:
+現時点で `rails_table_preferences` の editor / table / stable column key を持つ代表画面:
 
 - `admin/documents`
 - `admin/projects`
@@ -26,7 +26,7 @@
 - `admin/external_folder_sync_sources`
 - `admin/document_sets`
 
-まず 1〜2 画面で実装パターンを固め、その後ほかの一覧へ横展開する。
+これらは新規展開候補ではなく、current main の実装済み代表画面として扱う。次の作業では、新しい一覧へ広げる前に、既存画面の column metadata、filter / preset、empty state、保存済み設定の代表 smoke を確認し、実装済み guard と未展開候補を issue 上で分ける。
 
 #### フォームの `rails_fields_kit` 化
 
