@@ -8,17 +8,17 @@ class ExternalFolderSyncWebhookEventJob < ApplicationJob
     source = event.external_folder_sync_source
 
     unless source&.enabled?
-      event.update!(status: :ignored, error_message: "External folder sync source is missing or disabled")
+      event.update!(status: :ignored, error_message: ExternalFolderSyncWebhookEvent::SOURCE_UNAVAILABLE_ERROR_MESSAGE)
       return
     end
 
     if source.external_folder_sync_runs.running.exists?
-      event.update!(status: :ignored, error_message: "External folder sync is already running; webhook event was coalesced")
+      event.update!(status: :ignored, error_message: ExternalFolderSyncWebhookEvent::RUNNING_COALESCED_ERROR_MESSAGE)
       return
     end
 
     if recently_enqueued_event?(event, source)
-      event.update!(status: :ignored, error_message: "A recent webhook sync job is already enqueued; webhook event was coalesced")
+      event.update!(status: :ignored, error_message: ExternalFolderSyncWebhookEvent::RECENT_ENQUEUED_COALESCED_ERROR_MESSAGE)
       return
     end
 

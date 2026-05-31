@@ -15,4 +15,26 @@ module Admin::ExternalFolderSyncSourcesHelper
       table_preferences_column(:actions, label: "操作", default_width: 230, pinned: true)
     ]
   end
+
+  def external_folder_sync_webhook_event_status_label(event_or_value)
+    if event_or_value.respond_to?(:ignored_reason) && event_or_value.ignored_reason.present?
+      return external_folder_sync_webhook_ignored_reason_label(event_or_value.ignored_reason)
+    end
+
+    value = event_or_value.respond_to?(:status) ? event_or_value.status : event_or_value
+    localized_label("external_folder_sync_webhook_events.status", value)
+  end
+
+  def external_folder_sync_webhook_ignored_reason_label(reason)
+    case reason.to_s
+    when "coalesced_running"
+      "無視（実行中のため集約）"
+    when "coalesced_recent"
+      "無視（登録済みジョブへ集約）"
+    when "source_unavailable"
+      "無視（同期元なし / 無効）"
+    else
+      "無視（要確認）"
+    end
+  end
 end
