@@ -15,25 +15,27 @@ p.muted
   .notice.alert
     | API仕様MarkdownがHTMLより新しい状態です。Docusaurus build の完了後に再読み込みしてください。
 
+- build_status = @api_specification_page.build_status
 section.card
   h2 表示状態
-  - if @api_specification_build_enqueued
-    p
-      strong build待ち
-      | : Docusaurus build を開始しました。完了後に再読み込みすると、更新後のHTMLを確認できます。
-  - elsif @api_specification_page.available? && @api_specification_page.stale?
-    p
-      strong source更新あり
-      | : 表示中のHTMLは古い可能性があります。Docusaurus build の完了後に再読み込みしてください。
-  - elsif @api_specification_page.available?
-    p
-      strong HTML表示可能
-      | : built HTML を表示できます。source を更新した直後は、stale notice が出ていないか確認してください。
-  - else
-    p
-      strong HTML未生成
-      | : まだ built HTML がありません。source Markdown を確認し、Docusaurus build の完了後に再読み込みしてください。
-  p.muted build 状態の表示は source / built HTML の現在の差分だけを案内します。build queue や iframe 配信条件は変更していません。
+  p
+    strong = build_status.label
+    | :
+    = " #{build_status.message}"
+  dl
+    - if build_status.success_at
+      dt 最終成功
+      dd = l(build_status.success_at, format: :long)
+    - if build_status.recorded_at
+      dt 最終記録
+      dd = l(build_status.recorded_at, format: :long)
+    - if build_status.requested_at
+      dt build 開始要求
+      dd = l(build_status.requested_at, format: :long)
+    - if build_status.build_entry_mtime
+      dt HTML更新時刻
+      dd = l(build_status.build_entry_mtime, format: :long)
+  p.muted build 状態は API仕様ページ専用の直近結果だけを案内します。build queue や iframe 配信条件は変更していません。
 
 section.card
   h2 主要ページとsource
