@@ -4,7 +4,8 @@
 <p class="muted">お気に入り、後で読む、最近見た文書を最低限の一覧で表示します。</p>
 
 <section class="card">
-  <h2>お気に入り</h2>
+  <h2>お気に入り <span class="muted"><%= @favorite_bookmarks.size %>件</span></h2>
+  <p class="muted">よく開く文書をここからすぐ確認できます。</p>
   <% if @favorite_bookmarks.any? %>
     <ul class="resource-list">
       <% @favorite_bookmarks.each do |bookmark| %>
@@ -23,12 +24,13 @@
       <% end %>
     </ul>
   <% else %>
-    <p class="muted">お気に入りはまだありません。</p>
+    <p class="muted">文書画面でお気に入りに追加すると、ここに表示されます。</p>
   <% end %>
 </section>
 
 <section class="card">
-  <h2>後で読む</h2>
+  <h2>後で読む <span class="muted"><%= @read_later_bookmarks.size %>件</span></h2>
+  <p class="muted">あとで確認したい文書を一時的に集めておけます。</p>
   <% if @read_later_bookmarks.any? %>
     <ul class="resource-list">
       <% @read_later_bookmarks.each do |bookmark| %>
@@ -47,12 +49,13 @@
       <% end %>
     </ul>
   <% else %>
-    <p class="muted">後で読む文書はまだありません。</p>
+    <p class="muted">文書画面で後で読むに追加すると、ここに表示されます。</p>
   <% end %>
 </section>
 
 <section class="card">
-  <h2>最近見た文書</h2>
+  <h2>最近見た文書 <span class="muted"><%= @recent_documents.size %>件</span></h2>
+  <p class="muted">閲覧履歴から自動で表示されます。お気に入りや後で読むとは別の一覧です。</p>
   <% if @recent_documents.any? %>
     <ul class="resource-list">
       <% @recent_documents.each do |document| %>
@@ -68,7 +71,7 @@
       <% end %>
     </ul>
   <% else %>
-    <p class="muted">最近見た文書はまだありません。</p>
+    <p class="muted">文書を開くと、最近見た文書としてここに表示されます。</p>
   <% end %>
 </section>
 
