@@ -136,6 +136,75 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(page_text).to include("受信先側の重複処理に注意")
   end
 
+  it "keeps bulk redelivery scoped to the recent failed delivery display limit" do
+    sign_in_as(admin_user)
+
+    event = create(:notification_event, event_type: :document_updated)
+    active_endpoint = create(:webhook_endpoint, name: "Recent Active Hook", active: true)
+    inactive_endpoint = create(:webhook_endpoint, name: "Recent Stopped Hook", active: false)
+    old_endpoint = create(:webhook_endpoint, name: "Old Active Hook", active: true)
+    base_time = Time.zone.local(2026, 5, 30, 12, 0, 0)
+
+    create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :succeeded, created_at: base_time + 4.hours)
+    create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :pending, created_at: base_time + 3.hours)
+    recent_retryable_deliveries = Array.new(49) do |index|
+      create(
+        :webhook_delivery,
+        webhook_endpoint: active_endpoint,
+        notification_event: event,
+        event_type: "document_updated",
+        status: :failed,
+        created_at: base_time + index.minutes
+      )
+    end
+    inactive_delivery = create(
+      :webhook_delivery,
+      webhook_endpoint: inactive_endpoint,
+      notification_event: event,
+      event_type: "document_updated",
+      status: :failed,
+      created_at: base_time + 2.hours
+    )
+    old_retryable_delivery = create(
+      :webhook_delivery,
+      webhook_endpoint: old_endpoint,
+      notification_event: event,
+      event_type: "document_updated",
+      status: :failed,
+      created_at: base_time - 1.day
+    )
+    dispatcher = instance_double(WebhookDeliveryDispatcher)
+
+    allow(WebhookDeliveryDispatcher).to receive(:new).and_return(dispatcher)
+    allow(dispatcher).to receive(:redeliver!) do |delivery|
+      create(:webhook_delivery, webhook_endpoint: delivery.webhook_endpoint, notification_event: delivery.notification_event, status: :succeeded)
+    end
+
+    get admin_webhook_endpoints_path(delivery_status: "failed")
+
+    expect(response).to have_http_status(:ok)
+    expect(action_targets).to include(retry_failed_admin_webhook_deliveries_path(delivery_status: "failed"))
+    expect(page_text).to include("表示中のまとめて再送対象: 49件")
+    expect(page_text).to include("表示範囲: 失敗のみ 51件中50件を表示しています")
+    expect(page_text).to include("Recent Active Hook")
+    expect(page_text).to include("Recent Stopped Hook")
+    expect(action_targets).not_to include(admin_webhook_delivery_path(old_retryable_delivery.public_id))
+    expect(action_targets).not_to include(retry_dispatch_admin_webhook_delivery_path(inactive_delivery.public_id))
+    expect(action_targets).not_to include(retry_dispatch_admin_webhook_delivery_path(old_retryable_delivery.public_id))
+
+    expect do
+      post retry_failed_admin_webhook_deliveries_path(delivery_status: "failed")
+    end.to change(WebhookDelivery, :count).by(49)
+
+    recent_retryable_deliveries.each do |delivery|
+      expect(dispatcher).to have_received(:redeliver!).with(delivery)
+    end
+    expect(dispatcher).to have_received(:redeliver!).exactly(49).times
+    expect(dispatcher).not_to have_received(:redeliver!).with(inactive_delivery)
+    expect(dispatcher).not_to have_received(:redeliver!).with(old_retryable_delivery)
+    expect(response).to redirect_to(admin_webhook_endpoints_path(delivery_status: "failed"))
+  end
+
   it "hides bulk redelivery when the failed filter has no retryable deliveries" do
     sign_in_as(admin_user)
 
