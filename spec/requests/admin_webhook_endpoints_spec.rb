@@ -188,7 +188,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(page_text).to include("表示範囲: 失敗のみ 51件中50件を表示しています")
     expect(page_text).to include("Recent Active Hook")
     expect(page_text).to include("Recent Stopped Hook")
-    expect(page_text).not_to include("Old Active Hook")
+    expect(action_targets).not_to include(admin_webhook_delivery_path(old_retryable_delivery.public_id))
     expect(action_targets).not_to include(retry_dispatch_admin_webhook_delivery_path(inactive_delivery.public_id))
     expect(action_targets).not_to include(retry_dispatch_admin_webhook_delivery_path(old_retryable_delivery.public_id))
 
