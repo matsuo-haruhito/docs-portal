@@ -96,11 +96,16 @@ RSpec.describe "Admin access requests", type: :request do
     expect(parsed_html.css("tbody tr").size).to eq(1)
 
     action_forms = parsed_html.css("form[action='#{admin_access_request_path(pending_request)}']")
+    reject_form = action_forms.last
+    reason_input = reject_form.at_css("input[name='rejection_reason']")
+
     expect(action_forms.size).to eq(2)
     expect(page_text).to include("承認")
     expect(page_text).to include("却下")
-    expect(action_forms.last.to_html).to include("承認条件を満たしていないため却下しました")
-    expect(action_forms.last.to_html).not_to include("Not approved")
+    expect(reject_form.at_css("input[name='decision']")["value"]).to eq("reject")
+    expect(reason_input["value"]).to eq("承認条件を満たしていないため却下しました")
+    expect(reason_input["aria-label"]).to eq("却下理由")
+    expect(reject_form.to_html).not_to include("Not approved")
   end
 
   it "filters requests by requester or target search terms" do
@@ -150,7 +155,12 @@ RSpec.describe "Admin access requests", type: :request do
     expect(page_text).not_to include("Pending ops access")
     expect(page_text).to include("表示中内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
     expect(parsed_html.css("tbody tr").size).to eq(1)
-    expect(parsed_html.css("form[action='#{admin_access_request_path(pending_match)}']").size).to eq(2)
+
+    action_forms = parsed_html.css("form[action='#{admin_access_request_path(pending_match)}']")
+    reject_form = action_forms.last
+    expect(action_forms.size).to eq(2)
+    expect(reject_form.at_css("input[name='status']")["value"]).to eq("pending")
+    expect(reject_form.at_css("input[name='q']")["value"]).to eq("manual")
   end
 
   it "shows active filters in the filtered empty state" do
@@ -216,16 +226,16 @@ RSpec.describe "Admin access requests", type: :request do
     expect(access_request.reload).to be_approved
   end
 
-  it "rejects a pending request" do
+  it "rejects a pending request with a custom reason" do
     access_request = create(:access_request, requester:, requestable: project, requested_access_level: :view)
 
     sign_in_as(admin_user)
 
-    patch admin_access_request_path(access_request), params: { decision: "reject", rejection_reason: "承認条件を満たしていないため却下しました" }
+    patch admin_access_request_path(access_request), params: { decision: "reject", rejection_reason: "契約情報が不足しています" }
 
     expect(response).to redirect_to(admin_access_requests_path)
     expect(access_request.reload).to be_rejected
-    expect(access_request.rejection_reason).to eq("承認条件を満たしていないため却下しました")
+    expect(access_request.rejection_reason).to eq("契約情報が不足しています")
   end
 
   it "keeps permitted filters after rejection" do
@@ -271,6 +281,27 @@ RSpec.describe "Admin access requests", type: :request do
     expect(response).to have_http_status(:bad_request)
     expect(access_request.reload).to be_pending
     expect(access_request.rejection_reason).to be_blank
+  end
+
+  it "does not render html-like rejection reasons as raw html in requester lists" do
+    access_request = create(:access_request, requester:, requestable: project, requested_access_level: :view, reason: "Need project view")
+    html_like_reason = "<script>alert('x')</script>を確認してください"
+
+    sign_in_as(admin_user)
+
+    patch admin_access_request_path(access_request), params: { decision: "reject", rejection_reason: html_like_reason }
+
+    expect(response).to redirect_to(admin_access_requests_path)
+    expect(access_request.reload.rejection_reason).to eq(html_like_reason)
+
+    sign_in_as(requester)
+
+    get access_requests_path(status: :rejected)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("Need project view")
+    expect(response.body).not_to include(html_like_reason)
+    expect(response.body).not_to include("<script>alert")
   end
 
   it "forbids external users" do
