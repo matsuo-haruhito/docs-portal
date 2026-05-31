@@ -28,12 +28,25 @@ landing は role-aware な入口であり、次だけを表示する。
 - 使える管理画面: `会社` と `ユーザー`
 - internal admin へ戻す範囲: `案件` `案件所属` `文書` `文書権限` `監査ログ` `利用状況` など
 - ユーザーが 0 件のときは `ユーザー` 画面上部の `新規登録` から開始できること
+- internal admin へ依頼するときに添える確認項目
 
 landing から forbidden な admin surface への link は出さない。日常運用では次の flow を入口として使う。
 
 - `/admin` から入って `会社・ユーザー管理` landing で範囲を確認する
 - `会社` または `ユーザー` へ移動する
 - それ以外の admin surface が必要になったら internal admin へ引き継ぐ
+
+## internal admin へ引き継ぐときの確認項目
+
+依頼先名、メールアドレス、ticket URL は hard-code しない。組織ごとの連絡手段に従い、次の情報を添えて internal admin へ渡す。
+
+- 自社会社名
+- 対象ユーザーの名前とメールアドレス
+- 必要な案件所属、文書権限、アクセス申請などの目的
+- ユーザー種別を `internal` に変える相談か、他社会社・他社ユーザーの調整か
+- 期限や背景がある場合は、その理由と希望時期
+
+この checklist は依頼内容を整理するためのものであり、`company_master_admin` の権限、文書閲覧範囲、案件所属、文書権限を広げるものではない。
 
 ## 1. 会社画面でできること
 
@@ -137,6 +150,7 @@ current request spec で `company_master_admin` が forbidden として固定さ
 - 自社ユーザーを追加・無効化したい: `ユーザー`
 - `ユーザー種別` や `会社` を変えたいように見えるが固定表示になっている: current role の範囲外なので internal admin へ引き継ぐ
 - 案件所属や文書権限を見直したい: internal admin へ引き継ぐ
+- internal admin へ依頼する: 自社会社名、対象ユーザー、必要な案件所属や文書権限、user type 変更の有無を添える
 
 ## 補足
 
