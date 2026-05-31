@@ -17,6 +17,21 @@ class DocumentBookmarksController < BaseController
     redirect_to_back notice: bookmark_created_message
   end
 
+  def move_to_favorite
+    bookmark = current_user.document_bookmarks.read_later.find_by!(public_id: params[:public_id])
+    require_document_access!(bookmark.document)
+
+    DocumentBookmark.transaction do
+      current_user.document_bookmarks.find_or_create_by!(
+        document: bookmark.document,
+        bookmark_type: :favorite
+      )
+      bookmark.destroy!
+    end
+
+    redirect_to_back notice: "お気に入りへ移しました。"
+  end
+
   def destroy
     bookmark = current_user.document_bookmarks.find_by!(public_id: params[:public_id])
     bookmark.destroy!

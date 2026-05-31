@@ -43,6 +43,7 @@
             </div>
           </div>
           <div class="resource-list__actions">
+            <%= button_to "お気に入りへ移す", move_to_favorite_document_bookmark_path(bookmark), method: :post, class: "button" %>
             <%= button_to "解除", document_bookmark_path(bookmark), method: :delete, class: "button secondary" %>
           </div>
         </li>
