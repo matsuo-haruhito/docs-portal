@@ -18,7 +18,7 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
   -F "relative_path=docs/README.md" \
   -F "source_path=C:/work/customer-docs/docs/README.md" \
   -F "source_name=customer-local-sync" \
-  -F "content_hash=sha256..."
+  -F "content_hash=sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 ```
 
 `validate_only=true` を付けても同じく dry-run 作成として処理します。
@@ -53,8 +53,8 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
     "relative_path": "docs/README.md",
     "source_path": "C:/work/customer-docs/docs/README.md",
     "file_size": 1234,
-    "content_hash": "sha256...",
-    "source_commit_hash": "sha256...",
+    "content_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_commit_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "version_label": "file-YYYYMMDDHHMMSS-hash8",
     "zip_import_preview": {
       "orphan_files": [],
@@ -79,6 +79,8 @@ curl -X POST "https://portal.example.com/api/internal/file_uploads" \
 - `source_commit_hash` と `content_hash` の両方があり、`content_hash` が実体と一致する場合は、採用値として `source_commit_hash` を優先する
 - どちらも未指定の場合は、サーバーが元ファイル実体のSHA-256を採用する
 - dry-run レスポンスの `file_upload_preview.content_hash` は常に実アップロードファイルのSHA-256を返す
+
+入力では `sha256:` 接頭辞付きも受け付けますが、レスポンスに出る `content_hash` と、`source_commit_hash` に採用される値は 64 桁 hex です。
 
 ## 4. 本実行
 
