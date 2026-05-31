@@ -21,6 +21,34 @@ module DocumentAccess
         )
         .distinct
     }
+
+    scope :portal_visible_to, lambda { |user|
+      accessible_to(user).where(
+        portal_visible_version_condition,
+        published_status: DocumentVersion.statuses[:published],
+        now: Time.current
+      )
+    }
+  end
+
+  class_methods do
+    def portal_visible_version_condition
+      <<~SQL.squish
+        NOT EXISTS (
+          SELECT 1
+          FROM document_versions
+          WHERE document_versions.document_id = documents.id
+        )
+        OR EXISTS (
+          SELECT 1
+          FROM document_versions
+          WHERE document_versions.document_id = documents.id
+            AND document_versions.status = :published_status
+            AND (document_versions.published_from IS NULL OR document_versions.published_from <= :now)
+            AND (document_versions.published_until IS NULL OR document_versions.published_until >= :now)
+        )
+      SQL
+    end
   end
 
   def viewable_by?(user)
