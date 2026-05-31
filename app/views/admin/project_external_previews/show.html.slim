@@ -35,12 +35,7 @@ h1 外部表示プレビュー
     .form-grid
       label
         | 会社
-        = form.rfk_select :company_id,
-          collection: external_preview_company_options(@preview_companies),
-          selected: @selected_company&.id,
-          allow_clear: true,
-          placeholder: "会社を検索"
-    p.muted 会社名とドメインを手がかりに選べます。
+        = form.select :company_id, options_from_collection_for_select(@preview_companies, :id, :display_name, @selected_company&.id), include_blank: "選択してください"
     p.actions
       = form.submit "この会社でプレビュー", class: "button"
 
@@ -52,7 +47,7 @@ h1 外部表示プレビュー
   .card
     h2 対象会社
     p
-      = external_preview_company_label(@selected_company)
+      = @selected_company.display_name
       |  /
       = @resolved_preview_users.size
       | 名の有効ユーザー
