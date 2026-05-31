@@ -7,6 +7,7 @@
 - elsif @selected_preview_usage == "disabled"
   - selected_filter_labels << "無効 / previewでは未使用"
 - selected_filter_labels << "要整理案件のみ" if @duplicate_only
+- selected_filter_labels << "検索: #{@search_query}" if @search_query.present?
 
 h1 Microsoft Graph接続
 = render "admin/nav"
@@ -22,38 +23,50 @@ h1 Microsoft Graph接続
     ul
       - @duplicate_projects.each do |project|
         li
-          = link_to "#{project.name} (#{project.code})", "#{admin_microsoft_graph_connections_path(duplicate_only: 1)}#microsoft-graph-project-#{project.id}"
+          = link_to "#{project.name} (#{project.code})", "#{admin_microsoft_graph_connections_path(duplicate_only: 1, q: @search_query.presence)}#microsoft-graph-project-#{project.id}"
 
 - if @preview_usage_counts[:all].positive?
   .card
     h2 一覧の絞り込み
-    p.muted preview利用の状態と、要整理案件だけに絞って確認できます。
+    p.muted preview利用の状態、要整理案件、案件・接続名・Drive情報で絞って確認できます。
+    = form_with url: admin_microsoft_graph_connections_path, method: :get, local: true do
+      - if @selected_preview_usage.present?
+        = hidden_field_tag :preview_usage, @selected_preview_usage
+      - if @duplicate_only
+        = hidden_field_tag :duplicate_only, "1"
+      p
+        = label_tag :q, "検索"
+        br
+        = text_field_tag :q, @search_query, placeholder: "案件名・code・接続名・Drive ID・Site ID・フォルダ"
+        = submit_tag "検索"
+      - if @search_query.present?
+        p.muted = link_to "検索を解除", admin_microsoft_graph_connections_path(preview_usage: @selected_preview_usage, duplicate_only: (@duplicate_only ? "1" : nil))
     ul
       li
         - if @selected_preview_usage.blank? && !@duplicate_only
           strong = "すべて (#{@preview_usage_counts[:all]})"
         - else
-          = link_to "すべて (#{@preview_usage_counts[:all]})", admin_microsoft_graph_connections_path
+          = link_to "すべて (#{@preview_usage_counts[:all]})", admin_microsoft_graph_connections_path(q: @search_query.presence)
       li
         - if @selected_preview_usage == "preview_selected"
           strong = "previewで使用中 (#{@preview_usage_counts[:preview_selected]})"
         - else
-          = link_to "previewで使用中 (#{@preview_usage_counts[:preview_selected]})", admin_microsoft_graph_connections_path(preview_usage: :preview_selected)
+          = link_to "previewで使用中 (#{@preview_usage_counts[:preview_selected]})", admin_microsoft_graph_connections_path(preview_usage: :preview_selected, q: @search_query.presence)
       li
         - if @selected_preview_usage == "enabled_unused"
           strong = "有効だが未使用 (#{@preview_usage_counts[:enabled_unused]})"
         - else
-          = link_to "有効だが未使用 (#{@preview_usage_counts[:enabled_unused]})", admin_microsoft_graph_connections_path(preview_usage: :enabled_unused)
+          = link_to "有効だが未使用 (#{@preview_usage_counts[:enabled_unused]})", admin_microsoft_graph_connections_path(preview_usage: :enabled_unused, q: @search_query.presence)
       li
         - if @selected_preview_usage == "disabled"
           strong = "無効 / previewでは未使用 (#{@preview_usage_counts[:disabled]})"
         - else
-          = link_to "無効 / previewでは未使用 (#{@preview_usage_counts[:disabled]})", admin_microsoft_graph_connections_path(preview_usage: :disabled)
+          = link_to "無効 / previewでは未使用 (#{@preview_usage_counts[:disabled]})", admin_microsoft_graph_connections_path(preview_usage: :disabled, q: @search_query.presence)
       li
         - if @duplicate_only
           strong = "要整理案件のみ (#{@duplicate_projects.size}案件)"
         - else
-          = link_to "要整理案件のみ (#{@duplicate_projects.size}案件)", admin_microsoft_graph_connections_path(duplicate_only: 1)
+          = link_to "要整理案件のみ (#{@duplicate_projects.size}案件)", admin_microsoft_graph_connections_path(duplicate_only: 1, q: @search_query.presence)
     - if selected_filter_labels.any?
       p.muted
         = "現在の絞り込み: #{selected_filter_labels.join(' / ')}"
@@ -115,7 +128,7 @@ h1 Microsoft Graph接続
 - elsif @preview_usage_counts[:all].positive?
   .card
     p.muted 現在の絞り込みに一致する Microsoft Graph接続はありません。
-    p.muted = link_to "絞り込みを解除", admin_microsoft_graph_connections_path
+    p.muted = link_to "検索と絞り込みを解除", admin_microsoft_graph_connections_path
 - else
   .card
     p.muted まだMicrosoft Graph接続は登録されていません。

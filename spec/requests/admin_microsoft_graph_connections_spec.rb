@@ -100,6 +100,93 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
       expect(response.body).to include("microsoft-graph-project-#{project.id}")
       expect(response.body).to include("2 / 3 件を表示しています。")
     end
+
+    it "searches connections by project and Graph connection fields" do
+      sign_in_as(admin_user)
+      target_project = create(:project, code: "APOLLO42", name: "Apollo Launch")
+      target = create(
+        :microsoft_graph_connection,
+        project: target_project,
+        name: "Launch preview",
+        tenant_id: "tenant-alpha",
+        client_id: "client-alpha",
+        site_id: "site-alpha",
+        drive_id: "drive-alpha",
+        preview_folder_path: "Shared Documents/Apollo"
+      )
+      other = create(:microsoft_graph_connection, project: create(:project, code: "BETA01", name: "Beta Project"), name: "Beta preview", drive_id: "drive-beta")
+
+      get admin_microsoft_graph_connections_path, params: { q: "apollo" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(target.name)
+      expect(response.body).to include(target_project.code)
+      expect(response.body).not_to include(other.name)
+      expect(response.body).to include("検索: apollo")
+      expect(response.body).to include("1 / 2 件を表示しています。")
+      expect(input_value("q")).to eq("apollo")
+    end
+
+    it "keeps the search query while applying preview usage filters" do
+      sign_in_as(admin_user)
+      active = create(:microsoft_graph_connection, project:, name: "Archive primary", enabled: true)
+      disabled = create(:microsoft_graph_connection, project:, name: "Archive disabled", enabled: false)
+      create(:microsoft_graph_connection, project: create(:project, code: "GRAPH002", name: "Other Project"), name: "Other disabled", enabled: false)
+
+      get admin_microsoft_graph_connections_path, params: { q: "Archive", preview_usage: "disabled" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(disabled.name)
+      expect(response.body).not_to include(active.name)
+      expect(response.body).to include("現在の絞り込み: 無効 / previewでは未使用 / 検索: Archive")
+      expect(parsed_html.at_css(%(a[href="#{admin_microsoft_graph_connections_path(preview_usage: :enabled_unused, q: "Archive")}"]))).to be_present
+      expect(parsed_html.at_css(%(a[href="#{admin_microsoft_graph_connections_path(preview_usage: "disabled")}"])).text).to include("検索を解除")
+    end
+
+    it "combines duplicate cleanup filtering with the search query" do
+      sign_in_as(admin_user)
+      create(:microsoft_graph_connection, project:, name: "Primary connection", enabled: true)
+      duplicate = create(:microsoft_graph_connection, project:, name: "Standby cleanup", enabled: false, drive_id: "standby-drive")
+      duplicate.update_column(:enabled, true)
+      other_duplicate_project = create(:project, code: "GRAPH002", name: "Other Project")
+      create(:microsoft_graph_connection, project: other_duplicate_project, name: "Other primary", enabled: true)
+      other_duplicate = create(:microsoft_graph_connection, project: other_duplicate_project, name: "Other duplicate", enabled: false)
+      other_duplicate.update_column(:enabled, true)
+
+      get admin_microsoft_graph_connections_path, params: { duplicate_only: "1", q: "standby" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(duplicate.name)
+      expect(response.body).not_to include("Primary connection")
+      expect(response.body).not_to include(other_duplicate.name)
+      expect(response.body).to include("現在の絞り込み: 要整理案件のみ / 検索: standby")
+      expect(response.body).to include("1 / 4 件を表示しています。")
+    end
+
+    it "shows filtered empty state separately from an unregistered empty state" do
+      sign_in_as(admin_user)
+      connection = create(:microsoft_graph_connection, project:, name: "Primary connection")
+
+      get admin_microsoft_graph_connections_path, params: { q: "missing" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include(connection.name)
+      expect(response.body).to include("現在の絞り込みに一致する Microsoft Graph接続はありません。")
+      expect(response.body).to include("検索と絞り込みを解除")
+      expect(response.body).not_to include("まだMicrosoft Graph接続は登録されていません。")
+    end
+
+    it "treats a blank search query as no search" do
+      sign_in_as(admin_user)
+      connection = create(:microsoft_graph_connection, project:, name: "Primary connection")
+
+      get admin_microsoft_graph_connections_path, params: { q: "   " }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(connection.name)
+      expect(response.body).not_to include("検索:")
+      expect(response.body).to include("1 / 1 件を表示しています。")
+    end
   end
 
   describe "POST /admin/microsoft_graph_connections" do

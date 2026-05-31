@@ -76,6 +76,7 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
     @preview_usage_counts = preview_usage_counts(base_connections)
     @selected_preview_usage = normalize_preview_usage(params[:preview_usage])
     @duplicate_only = params[:duplicate_only] == "1"
+    @search_query = normalize_search_query(params[:q])
     @microsoft_graph_connections = filter_connections(base_connections)
   end
 
@@ -85,9 +86,9 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
 
   def filter_connections(connections)
     filtered = connections.select { |connection| preview_usage_matches?(connection, @selected_preview_usage) }
-    return filtered unless @duplicate_only
-
-    filtered.select { |connection| @duplicate_enabled_project_ids.include?(connection.project_id) }
+    filtered = filtered.select { |connection| @duplicate_enabled_project_ids.include?(connection.project_id) } if @duplicate_only
+    filtered = filtered.select { |connection| connection_search_matches?(connection, @search_query) } if @search_query.present?
+    filtered
   end
 
   def preview_usage_counts(connections)
@@ -105,6 +106,10 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
     nil
   end
 
+  def normalize_search_query(value)
+    value.to_s.squish.presence
+  end
+
   def preview_usage_matches?(connection, selected_preview_usage)
     case selected_preview_usage
     when "preview_selected"
@@ -116,6 +121,24 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
     else
       true
     end
+  end
+
+  def connection_search_matches?(connection, search_query)
+    query = search_query.downcase
+    searchable_connection_fields(connection).any? { |value| value.to_s.downcase.include?(query) }
+  end
+
+  def searchable_connection_fields(connection)
+    [
+      connection.project&.name,
+      connection.project&.code,
+      connection.name,
+      connection.tenant_id,
+      connection.client_id,
+      connection.drive_id,
+      connection.site_id,
+      connection.preview_folder_path
+    ]
   end
 
   def preview_selected_connection?(connection)
