@@ -139,8 +139,9 @@ RSpec.describe "Project document zips", type: :request do
     expect(response.body).to include(project_document_zip_path(project))
     expect(response.body).to include("選択した文書の最新版をZIPでダウンロード")
     expect(response.body).to include("ZIP出力オプション")
-    expect(response.body).to include("このページを全選択")
-    expect(response.body).to include("検索結果1件を全選択")
+    expect(response.body).to include("ZIP対象: 検索結果全体 1件 / このページ 1件")
+    expect(response.body).to include("このページ内の選択可能1件を全選択")
+    expect(response.body).to include("検索結果全体のZIP対象1件を全選択")
     expect(response.body).to include("選択解除")
     expect(response.body).to include("0件選択中")
 

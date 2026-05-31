@@ -134,6 +134,7 @@ p.muted
       span.button.secondary.disabled 次へ
 
 - if @documents_count.positive?
+  - page_selectable_documents_count = @documents.count { |document| document.latest_version.present? }
   = form_with url: project_document_zip_path(@project), method: :post, local: true, data: { controller: "document-zip-selection", document_zip_selection_matching_count_value: @selectable_documents_count } do
     = hidden_field_tag :selection_scope, "explicit", data: { document_zip_selection_target: "scopeField" }
     - %i[q tag category document_kind visibility_policy has_html has_files has_pdf has_diagram].each do |key|
@@ -158,10 +159,17 @@ p.muted
         label
           = check_box_tag :pdf_only, "1", false
           |  PDFだけ出力
+    p.muted
+      | ZIP対象: 検索結果全体 
+      = @selectable_documents_count
+      | 件 / このページ 
+      = page_selectable_documents_count
+      | 件。最新版がない文書はZIP対象にできないため、チェックできません。
     p.actions
-      button.button.secondary type="button" data-action="document-zip-selection#selectPage" このページを全選択
+      button.button.secondary type="button" data-action="document-zip-selection#selectPage"
+        = "このページ内の選択可能#{page_selectable_documents_count}件を全選択"
       button.button.secondary type="button" data-action="document-zip-selection#selectMatching"
-        = "検索結果#{@selectable_documents_count}件を全選択"
+        = "検索結果全体のZIP対象#{@selectable_documents_count}件を全選択"
       button.button.secondary type="button" data-action="document-zip-selection#clearSelection" 選択解除
       = submit_tag "選択した文書の最新版をZIPでダウンロード", class: "button"
       span.muted data-document-zip-selection-target="count" 0件選択中
