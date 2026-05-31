@@ -48,7 +48,8 @@ RSpec.describe "Admin generated file events", type: :request do
         event_source: "manual_document_upload",
         path: "document_files",
         scheduled_from: "2026-05-10",
-        scheduled_to: "2026-05-11"
+        scheduled_to: "2026-05-11",
+        q: "source"
       }
 
       get admin_generated_file_events_path(filters)
@@ -67,7 +68,8 @@ RSpec.describe "Admin generated file events", type: :request do
         event_source: "manual_document_upload",
         path: "document_files",
         scheduled_from: "2026-05-10",
-        scheduled_to: "2026-05-11"
+        scheduled_to: "2026-05-11",
+        q: "source"
       }
 
       get admin_generated_file_events_path(filters)
@@ -166,6 +168,57 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).not_to include(unmatched_source.public_id)
       expect(response.body).not_to include(unmatched_path.public_id)
       expect(response.body).not_to include(unmatched_date.public_id)
+    end
+
+    it "filters by event id, path, and error fragments with q" do
+      sign_in_as(admin_user)
+      id_event = create_event!(path: "docs/id-target.yml", status: :pending)
+      path_event = create_event!(path: "docs/source.yml", status: :pending)
+      error_event = create_event!(path: "docs/error.yml", status: :failed, error_message: "Missing token in payload")
+      unmatched_event = create_event!(path: "docs/unmatched.yml", status: :processed, error_message: "completed")
+
+      get admin_generated_file_events_path(q: id_event.public_id.last(8))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(id_event.public_id)
+      expect(response.body).not_to include(path_event.public_id)
+      expect(response.body).not_to include(error_event.public_id)
+      expect(response.body).not_to include(unmatched_event.public_id)
+
+      get admin_generated_file_events_path(q: "docs\\source.yml")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(path_event.public_id)
+      expect(response.body).not_to include(id_event.public_id)
+      expect(response.body).not_to include(error_event.public_id)
+      expect(response.body).not_to include(unmatched_event.public_id)
+
+      get admin_generated_file_events_path(q: "missing token")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(error_event.public_id)
+      expect(response.body).not_to include(id_event.public_id)
+      expect(response.body).not_to include(path_event.public_id)
+      expect(response.body).not_to include(unmatched_event.public_id)
+    end
+
+    it "combines q with existing filters" do
+      sign_in_as(admin_user)
+      matched = create_event!(path: "docs/search-target.yml", status: :failed, operation: "update", event_source: "manual_document_upload", error_message: "Retry timeout")
+      unmatched_status = create_event!(path: "docs/search-target.yml", status: :pending, operation: "update", event_source: "manual_document_upload", error_message: "Retry timeout")
+      unmatched_source = create_event!(path: "docs/search-target.yml", status: :failed, operation: "update", event_source: "artifact_import", error_message: "Retry timeout")
+
+      get admin_generated_file_events_path(
+        status: "failed",
+        operation: "update",
+        event_source: "manual_document_upload",
+        q: "timeout"
+      )
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(matched.public_id)
+      expect(response.body).not_to include(unmatched_status.public_id)
+      expect(response.body).not_to include(unmatched_source.public_id)
     end
 
     it "ignores invalid scheduled date filters" do
