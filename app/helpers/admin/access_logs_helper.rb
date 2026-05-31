@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 module Admin::AccessLogsHelper
-  ACCESS_LOG_TARGET_TYPE_FILTERS = %w[page file zip ai_context].freeze
-
   def access_log_table_columns
     [
       table_preferences_column(:accessed_at, label: "日時", default_width: 170, pinned: true, sortable: true),
@@ -18,7 +16,7 @@ module Admin::AccessLogsHelper
   end
 
   def access_log_target_type_filter_options
-    enum_options_for("access_logs.target_type", ACCESS_LOG_TARGET_TYPE_FILTERS)
+    enum_options_for("access_logs.target_type", AccessLog::TARGET_TYPE_FILTERS)
   end
 
   def access_log_filter_select_html_options(placeholder:)

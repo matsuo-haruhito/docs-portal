@@ -3,6 +3,8 @@ class AccessLog < ApplicationRecord
 
   public_id_prefix "alog"
 
+  TARGET_TYPE_FILTERS = %w[page file zip ai_context].freeze
+
   belongs_to :user, optional: true
   belongs_to :company, optional: true
   belongs_to :project, optional: true
