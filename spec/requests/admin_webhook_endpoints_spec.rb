@@ -92,6 +92,55 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(action_targets).to include(admin_webhook_delivery_path(delivery.public_id))
   end
 
+  it "preserves the failed delivery filter through detail and row redelivery" do
+    sign_in_as(admin_user)
+
+    endpoint = create(:webhook_endpoint, active: true)
+    event = create(:notification_event, event_type: :document_updated)
+    delivery = create(:webhook_delivery, webhook_endpoint: endpoint, notification_event: event, status: :failed)
+    dispatcher = instance_double(WebhookDeliveryDispatcher)
+
+    allow(WebhookDeliveryDispatcher).to receive(:new).and_return(dispatcher)
+    allow(dispatcher).to receive(:redeliver!) do |redelivered_delivery|
+      create(:webhook_delivery, webhook_endpoint: redelivered_delivery.webhook_endpoint, notification_event: redelivered_delivery.notification_event, status: :succeeded)
+    end
+
+    get admin_webhook_endpoints_path(delivery_status: "failed")
+
+    detail_path = admin_webhook_delivery_path(delivery.public_id, return_delivery_status: "failed")
+    retry_path = retry_dispatch_admin_webhook_delivery_path(delivery.public_id, return_delivery_status: "failed")
+    expect(response).to have_http_status(:ok)
+    expect(action_targets).to include(detail_path)
+    expect(action_targets).to include(retry_path)
+
+    get detail_path
+
+    expect(response).to have_http_status(:ok)
+    expect(action_targets).to include(admin_webhook_endpoints_path(delivery_status: "failed"))
+    expect(action_targets).to include(retry_path)
+
+    expect do
+      post retry_path
+    end.to change(WebhookDelivery, :count).by(1)
+
+    expect(dispatcher).to have_received(:redeliver!).with(delivery)
+    expect(response).to redirect_to(admin_webhook_endpoints_path(delivery_status: "failed"))
+    follow_redirect!
+    expect(page_text).to include("Webhookを再送しました")
+  end
+
+  it "falls back to the unfiltered list for invalid delivery return filters" do
+    sign_in_as(admin_user)
+
+    delivery = create(:webhook_delivery, status: :failed)
+
+    get admin_webhook_delivery_path(delivery.public_id, return_delivery_status: "https://evil.example.test")
+
+    expect(response).to have_http_status(:ok)
+    expect(action_targets).to include(admin_webhook_endpoints_path)
+    expect(action_targets).not_to include("https://evil.example.test")
+  end
+
   it "shows manual redelivery only for failed deliveries on active endpoints" do
     sign_in_as(admin_user)
 
