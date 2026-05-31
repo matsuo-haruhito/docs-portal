@@ -43,6 +43,14 @@ RSpec.describe "Admin document usage reports", type: :request do
     parsed_html.at_css("a[href='#{admin_access_logs_path(project_id: project.id)}']")
   end
 
+  def read_confirmation_link(slug)
+    parsed_html.at_css("a[href='#{admin_read_confirmations_path(project_id: project.id, document_slug: slug)}']")
+  end
+
+  def summary_read_confirmation_link
+    parsed_html.at_css("a[href='#{admin_read_confirmations_path(project_id: project.id)}']")
+  end
+
   it "shows selection controls and a prompt when no project is selected" do
     project
     sign_in_as(admin_user)
@@ -85,6 +93,7 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(page_text).to include("既読確認: 1")
     expect(page_text).to include("表示中: 1件")
     expect(page_text).to include("行内の「監査ログへ」は閲覧またはダウンロードがある文書だけに表示されます。")
+    expect(page_text).to include("既読確認件数の「内訳へ」から確認者と確認時刻を追えます。")
     expect(page_text).to include("文書利用一覧の表示設定")
 
     selected_option = parsed_html.at_css("select[name='project_id'] option[selected]")
@@ -111,9 +120,17 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(summary_link).to be_present
     expect(summary_link.text).to eq("案件の監査ログへ")
 
+    summary_confirmation_link = summary_read_confirmation_link
+    expect(summary_confirmation_link).to be_present
+    expect(summary_confirmation_link.text).to eq("案件の既読確認内訳へ")
+
     audit_log_document_link = audit_log_link(document.slug)
     expect(audit_log_document_link).to be_present
     expect(audit_log_document_link.text).to eq("監査ログへ")
+
+    confirmation_document_link = read_confirmation_link(document.slug)
+    expect(confirmation_document_link).to be_present
+    expect(confirmation_document_link.text).to eq("内訳へ")
 
     expect(clear_link).to be_present
     expect(clear_link.text).to include("条件をクリア")
@@ -136,14 +153,17 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(page_text).to include("表示中: 3件")
     expect(page_text).to match(/利用状況:\s*利用あり/)
     expect(page_text).to match(/並び順:\s*最終アクセスが新しい順/)
-    expect(page_text).to include("既読確認だけで利用ありの文書は、既読確認件数で確認してください。")
+    expect(page_text).to include("既読確認件数の「内訳へ」から確認者と確認時刻を追えます。")
     expect(row_titles).to eq(["Guide", "Manual", "Policy"])
     expect(row_titles).not_to include("Checklist")
     expect(summary_audit_log_link).to be_present
+    expect(summary_read_confirmation_link).to be_present
     expect(audit_log_link(newest_document.slug)).to be_present
     expect(audit_log_link(document.slug)).to be_present
     expect(audit_log_link(read_only_document.slug)).not_to be_present
     expect(audit_log_link(unused_document.slug)).not_to be_present
+    expect(read_confirmation_link(read_only_document.slug)).to be_present
+    expect(read_confirmation_link(unused_document.slug)).not_to be_present
 
     usage_filter_option = parsed_html.at_css("select[name='usage_filter'] option[selected]")
     expect(usage_filter_option).to be_present
@@ -218,6 +238,7 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(page_text).to include("条件を変えるか、クリアして案件全体を確認してください。")
     expect(page_text).not_to include("文書利用一覧の表示設定")
     expect(summary_audit_log_link).to be_present
+    expect(summary_read_confirmation_link).to be_present
     expect(selected_project_clear_link).to be_present
     expect(parsed_html.css("table tbody tr")).to be_empty
   end
