@@ -1,5 +1,6 @@
 require "rails_helper"
 require "fileutils"
+require "json"
 
 RSpec.describe "Admin API specifications", type: :request do
   let(:admin_user) { create(:user, :internal) }
@@ -8,6 +9,8 @@ RSpec.describe "Admin API specifications", type: :request do
   let(:site_index_path) { site_root.join("index.html") }
   let(:asset_css_path) { build_root.join("assets", "css", "api-spec-site-fixture.css") }
   let(:runtime_js_path) { build_root.join("assets", "js", "runtime~main.api-spec-fixture.js") }
+  let(:build_status_marker_path) { Rails.root.join("tmp", "api_specification_build.status.json") }
+  let(:build_request_marker_path) { Rails.root.join("tmp", "api_specification_build.requested") }
 
   before do
     @original_api_specification_site_index = site_index_path.exist? ? site_index_path.read : nil
@@ -18,6 +21,8 @@ RSpec.describe "Admin API specifications", type: :request do
     restore_api_specification_site_index
     FileUtils.rm_f(asset_css_path)
     FileUtils.rm_f(runtime_js_path)
+    FileUtils.rm_f(build_status_marker_path)
+    FileUtils.rm_f(build_request_marker_path)
   end
 
   it "shows the API specification page from the admin menu" do
@@ -34,24 +39,22 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response.body).to include("docs-src/client-file-upload-api.md")
   end
 
-  it "shows the available HTML status when the build is current" do
-    allow_any_instance_of(Admin::ApiSpecificationPage).to receive(:available?).and_return(true)
-    allow_any_instance_of(Admin::ApiSpecificationPage).to receive(:stale?).and_return(false)
-    allow_any_instance_of(Admin::ApiSpecificationPage).to receive(:enqueue_build_if_stale!).and_return(false)
-
+  it "shows the current successful build status" do
+    write_api_specification_site_fixture
     sign_in_as(admin_user)
 
     get admin_api_specification_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("HTML表示可能")
-    expect(response.body).to include("built HTML を表示できます")
+    expect(response.body).to include("最新 build 成功")
+    expect(response.body).to include("最終成功")
   end
 
   it "notifies the admin when a stale API specification build is enqueued" do
     allow_any_instance_of(Admin::ApiSpecificationPage).to receive(:available?).and_return(false)
     allow_any_instance_of(Admin::ApiSpecificationPage).to receive(:stale?).and_return(true)
     allow_any_instance_of(Admin::ApiSpecificationPage).to receive(:enqueue_build_if_stale!).and_return(true)
+    write_build_request_marker
 
     sign_in_as(admin_user)
 
@@ -59,7 +62,18 @@ RSpec.describe "Admin API specifications", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Docusaurus build を開始しました")
-    expect(response.body).to include("build待ち")
+    expect(response.body).to include("build 待ち/実行中")
+  end
+
+  it "shows a sanitized failed build status" do
+    write_failed_build_marker("failed at [path] token=[FILTERED]")
+    sign_in_as(admin_user)
+
+    get admin_api_specification_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("build 失敗")
+    expect(response.body).to include("failed at [path] token=[FILTERED]")
   end
 
   it "shows when the source is newer than the rendered HTML" do
@@ -72,8 +86,8 @@ RSpec.describe "Admin API specifications", type: :request do
     get admin_api_specification_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("source更新あり")
-    expect(response.body).to include("表示中のHTMLは古い可能性があります")
+    expect(response.body).to include("HTML未生成または stale")
+    expect(response.body).to include("Markdownより古い状態")
   end
 
   it "shows when the rendered HTML has not been generated yet" do
@@ -86,7 +100,7 @@ RSpec.describe "Admin API specifications", type: :request do
     get admin_api_specification_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("HTML未生成")
+    expect(response.body).to include("HTML未生成または stale")
     expect(response.body).to include("Docusaurus build が必要です")
   end
 
@@ -172,6 +186,19 @@ RSpec.describe "Admin API specifications", type: :request do
 
     FileUtils.mkdir_p(runtime_js_path.dirname)
     File.write(runtime_js_path, '(()=>{f.p="/";var d=f.p+f.u(r);return d;})();')
+  end
+
+  def write_failed_build_marker(message)
+    FileUtils.mkdir_p(build_status_marker_path.dirname)
+    File.write(
+      build_status_marker_path,
+      JSON.generate(status: "failed", recorded_at: Time.current.iso8601, message:)
+    )
+  end
+
+  def write_build_request_marker
+    FileUtils.mkdir_p(build_request_marker_path.dirname)
+    File.write(build_request_marker_path, Time.current.iso8601)
   end
 
   def restore_api_specification_site_index
