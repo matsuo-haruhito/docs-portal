@@ -19,7 +19,9 @@ Rails.application.routes.draw do
   end
   resources :document_delivery_logs, only: %i[index show update], param: :public_id
   resource :session, only: %i[new create destroy]
-  resources :document_bookmarks, only: %i[index create destroy], param: :public_id
+  resources :document_bookmarks, only: %i[index create destroy], param: :public_id do
+    post :move_to_favorite, on: :member
+  end
   resources :read_confirmations, only: %i[create destroy], param: :public_id
   resources :access_requests, only: %i[index create], param: :public_id do
     post :cancel, on: :member
