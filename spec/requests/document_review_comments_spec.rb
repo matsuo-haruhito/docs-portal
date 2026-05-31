@@ -116,6 +116,7 @@ RSpec.describe "Document review comments", type: :request do
     expect(response.body).not_to include("確認事項 1件")
     expect(response.body).not_to include("内部限定")
     expect(response.body).not_to include("Internal visibility check")
+    expect(response.body).not_to include("回答済みは回答・対応が終わった質問")
   end
 
   it "allows external users to create public Q&A threads and internal users to reply" do
@@ -263,6 +264,8 @@ RSpec.describe "Document review comments", type: :request do
     get project_document_path(project, document.slug)
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("受付中")
+    expect(response.body).to include("回答済みは回答・対応が終わった質問")
+    expect(response.body).to include("どちらも通知やSLAを示す操作ではありません")
     expect(response.body).to include("回答済みにする")
     expect(response.body).to include("クローズする")
 
