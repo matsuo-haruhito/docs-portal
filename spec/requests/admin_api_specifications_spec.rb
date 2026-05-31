@@ -5,15 +5,17 @@ RSpec.describe "Admin API specifications", type: :request do
   let(:admin_user) { create(:user, :internal) }
   let(:build_root) { Rails.root.join("docusaurus", "build") }
   let(:site_root) { build_root.join(Admin::ApiSpecificationPage::SITE_PATH) }
+  let(:site_index_path) { site_root.join("index.html") }
   let(:asset_css_path) { build_root.join("assets", "css", "api-spec-site-fixture.css") }
   let(:runtime_js_path) { build_root.join("assets", "js", "runtime~main.api-spec-fixture.js") }
 
   before do
+    @original_api_specification_site_index = site_index_path.exist? ? site_index_path.read : nil
     allow_any_instance_of(Admin::ApiSpecificationPage).to receive(:enqueue_build_if_stale!).and_return(false)
   end
 
   after do
-    FileUtils.rm_rf(site_root)
+    restore_api_specification_site_index
     FileUtils.rm_f(asset_css_path)
     FileUtils.rm_f(runtime_js_path)
   end
@@ -82,7 +84,7 @@ RSpec.describe "Admin API specifications", type: :request do
   end
 
   it "returns not found when the API specification build entry is missing" do
-    FileUtils.rm_rf(site_root)
+    allow_any_instance_of(Admin::ApiSpecificationPage).to receive(:available?).and_return(false)
     sign_in_as(admin_user)
 
     get site_admin_api_specification_path(site_path: Admin::ApiSpecificationPage::SITE_PATH)
@@ -105,7 +107,7 @@ RSpec.describe "Admin API specifications", type: :request do
   def write_api_specification_site_fixture
     FileUtils.mkdir_p(site_root)
     File.write(
-      site_root.join("index.html"),
+      site_index_path,
       <<~HTML
         <!DOCTYPE html>
         <html>
@@ -125,5 +127,15 @@ RSpec.describe "Admin API specifications", type: :request do
 
     FileUtils.mkdir_p(runtime_js_path.dirname)
     File.write(runtime_js_path, '(()=>{f.p="/";var d=f.p+f.u(r);return d;})();')
+  end
+
+  def restore_api_specification_site_index
+    if @original_api_specification_site_index
+      FileUtils.mkdir_p(site_root)
+      File.write(site_index_path, @original_api_specification_site_index)
+    else
+      FileUtils.rm_f(site_index_path)
+      FileUtils.rmdir(site_root) if site_root.exist? && site_root.children.empty?
+    end
   end
 end
