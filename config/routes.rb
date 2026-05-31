@@ -88,6 +88,7 @@ Rails.application.routes.draw do
     resources :access_logs, only: [:index]
     resources :access_requests, only: %i[index update], param: :public_id
     resources :document_usage_reports, only: [:index]
+    resources :read_confirmations, only: [:index]
   end
 
   resources :projects, only: [:index, :show], param: :code do
