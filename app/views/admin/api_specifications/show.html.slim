@@ -16,12 +16,40 @@ p.muted
     | API仕様MarkdownがHTMLより新しい状態です。Docusaurus build の完了後に再読み込みしてください。
 
 section.card
-  h2 主要ページ
+  h2 表示状態
+  - if @api_specification_build_enqueued
+    p
+      strong build待ち
+      | : Docusaurus build を開始しました。完了後に再読み込みすると、更新後のHTMLを確認できます。
+  - elsif @api_specification_page.available? && @api_specification_page.stale?
+    p
+      strong source更新あり
+      | : 表示中のHTMLは古い可能性があります。Docusaurus build の完了後に再読み込みしてください。
+  - elsif @api_specification_page.available?
+    p
+      strong HTML表示可能
+      | : built HTML を表示できます。source を更新した直後は、stale notice が出ていないか確認してください。
+  - else
+    p
+      strong HTML未生成
+      | : まだ built HTML がありません。source Markdown を確認し、Docusaurus build の完了後に再読み込みしてください。
+  p.muted build 状態の表示は source / built HTML の現在の差分だけを案内します。build queue や iframe 配信条件は変更していません。
+
+section.card
+  h2 主要ページとsource
   ul
-    li = link_to "API仕様・連携設定", site_admin_api_specification_path(site_path: "api-specification")
-    li = link_to "単体ファイルアップロードAPI", site_admin_api_specification_path(site_path: "client-file-upload-api")
-    li = link_to "Office preview", site_admin_api_specification_path(site_path: "office-preview")
-    li = link_to "外部フォルダ同期 Webhook 受信仕様", site_admin_api_specification_path(site_path: "external-folder-sync-webhooks")
+    li
+      = link_to "API仕様・連携設定", site_admin_api_specification_path(site_path: "api-specification")
+      span.muted  - docs-src/api-specification.md
+    li
+      = link_to "単体ファイルアップロードAPI", site_admin_api_specification_path(site_path: "client-file-upload-api")
+      span.muted  - docs-src/client-file-upload-api.md
+    li
+      = link_to "Office preview", site_admin_api_specification_path(site_path: "office-preview")
+      span.muted  - docs-src/office-preview.md
+    li
+      = link_to "外部フォルダ同期 Webhook 受信仕様", site_admin_api_specification_path(site_path: "external-folder-sync-webhooks")
+      span.muted  - docs-src/external-folder-sync-webhooks.md
 
 section.card
   - if @api_specification_page.available?
