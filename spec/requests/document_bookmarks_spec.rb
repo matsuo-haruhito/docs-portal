@@ -29,10 +29,29 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response.body).to include("Checklist")
     expect(response.body).to include("Guide")
     expect(response.body).to include("Visible Project")
+    expect(response.body).to include("お気に入り")
+    expect(response.body).to include("後で読む")
+    expect(response.body).to include("最近見た文書")
+    expect(response.body.scan("1件").size).to eq(3)
+    expect(response.body).to include("よく開く文書をここからすぐ確認できます。")
+    expect(response.body).to include("あとで確認したい文書を一時的に集めておけます。")
+    expect(response.body).to include("閲覧履歴から自動で表示されます。お気に入りや後で読むとは別の一覧です。")
     expect(response.body).to include("よく開く文書")
     expect(response.body).to include("あとで確認")
     expect(response.body).to include("最近見た文書")
     expect(response.body.scan("解除").size).to eq(2)
+  end
+
+  it "shows actionable empty states with zero counts" do
+    sign_in_as(user)
+
+    get document_bookmarks_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body.scan("0件").size).to eq(3)
+    expect(response.body).to include("文書画面でお気に入りに追加すると、ここに表示されます。")
+    expect(response.body).to include("文書画面で後で読むに追加すると、ここに表示されます。")
+    expect(response.body).to include("文書を開くと、最近見た文書としてここに表示されます。")
   end
 
   it "does not list bookmarks for documents no longer readable by the current user" do
