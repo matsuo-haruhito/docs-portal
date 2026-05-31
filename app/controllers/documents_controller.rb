@@ -175,12 +175,13 @@ class DocumentsController < BaseController
   end
 
   def portal_tree_projects(include_project: nil)
-    projects = Project.accessible_to(current_user)
-      .includes(documents: :latest_version)
-      .order(:code)
-    return projects if current_user.internal?
+    projects = Project.accessible_to(current_user).order(:code)
+    return projects.includes(documents: :latest_version) if current_user.internal?
 
-    visible_projects = projects.select { |project| visible_project_for_portal?(project) }
+    visible_projects = projects
+      .with_portal_visible_documents_for(current_user)
+      .includes(documents: [:latest_version, :document_versions])
+      .select { |project| visible_project_for_portal?(project) }
     visible_projects << include_project if include_project.present? && visible_projects.exclude?(include_project)
     visible_projects
   end
