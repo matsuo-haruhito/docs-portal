@@ -142,6 +142,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     @latest_runs_by_source_id = latest_runs_by_source_id(base_sources)
     @review_filter_counts = review_filter_counts(base_sources)
     @selected_review_filter = normalize_review_filter(params[:review])
+    @search_query = normalize_search_query(params[:q])
     @external_folder_sync_sources = filter_external_folder_sync_sources(base_sources)
   end
 
@@ -156,7 +157,9 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def filter_external_folder_sync_sources(sources)
-    sources.select { |source| review_filter_matches?(source, @selected_review_filter) }
+    sources.select do |source|
+      review_filter_matches?(source, @selected_review_filter) && search_query_matches?(source, @search_query)
+    end
   end
 
   def review_filter_counts(sources)
@@ -176,6 +179,10 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     nil
   end
 
+  def normalize_search_query(value)
+    value.to_s.squish.presence
+  end
+
   def review_filter_matches?(source, selected_review_filter)
     case selected_review_filter
     when "warnings"
@@ -191,6 +198,25 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     else
       true
     end
+  end
+
+  def search_query_matches?(source, search_query)
+    return true if search_query.blank?
+
+    normalized_search_query = search_query.downcase
+    searchable_external_folder_sync_source_values(source).any? do |value|
+      value.to_s.downcase.include?(normalized_search_query)
+    end
+  end
+
+  def searchable_external_folder_sync_source_values(source)
+    [
+      source.name,
+      source.project&.name,
+      source.project&.code,
+      source.external_folder_id,
+      source.external_folder_path
+    ]
   end
 
   def latest_runs_by_source_id(sources)

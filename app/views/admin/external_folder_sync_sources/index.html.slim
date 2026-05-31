@@ -4,6 +4,8 @@
 - table_columns = external_folder_sync_source_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - selected_filter_labels = []
+- search_params = { q: @search_query.presence }.compact
+- selected_review_params = { review: @selected_review_filter.presence }.compact
 - filter_base_style = "display:inline-flex;align-items:center;gap:0.35rem;padding:0.35rem 0.7rem;border-radius:999px;border:1px solid #d8dee4;line-height:1.2;text-decoration:none;white-space:nowrap;"
 - filter_selected_style = "#{filter_base_style}background:#eaf3ff;border-color:#9ec5fe;color:#1f5aa6;font-weight:700;"
 - filter_link_style = "#{filter_base_style}background:#fff;color:#24292f;"
@@ -17,6 +19,8 @@
   - selected_filter_labels << "Google Drive"
 - elsif @selected_review_filter == "microsoft_graph"
   - selected_filter_labels << "SharePoint / OneDrive"
+- if @search_query.present?
+  - selected_filter_labels << "検索: #{@search_query}"
 
 h1 外部フォルダ同期設定
 = render "admin/nav"
@@ -28,7 +32,17 @@ h1 外部フォルダ同期設定
 - if @review_filter_counts[:all].positive?
   .card
     h2 一覧の絞り込み
-    p.muted warning / error / disabled を先に確認し、必要に応じて provider 別に絞り込めます。
+    p.muted warning / error / disabled を先に確認し、必要に応じて provider 別や検索で絞り込めます。
+    .external-sync-filter-section style="margin-top:0.75rem;"
+      strong 検索
+      p.muted style="margin:0.25rem 0 0.5rem;" 同期設定名、案件名 / code、外部フォルダ ID / path から探せます。
+      = form_with url: admin_external_folder_sync_sources_path, method: :get, local: true, html: { style: "display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;margin:0;" } do
+        - if @selected_review_filter.present?
+          = hidden_field_tag :review, @selected_review_filter
+        = search_field_tag :q, @search_query, placeholder: "同期設定名・案件・外部フォルダ", style: "min-width:18rem;max-width:100%;padding:0.4rem 0.55rem;border:1px solid #d8dee4;border-radius:6px;"
+        = submit_tag "検索", class: "button secondary"
+        - if @search_query.present?
+          = link_to "検索を解除", admin_external_folder_sync_sources_path(selected_review_params), class: "button secondary"
     .external-sync-filter-section style="margin-top:0.75rem;"
       strong レビュー優先
       p.muted style="margin:0.25rem 0 0.5rem;" 日常確認で先に見る同期元です。
@@ -37,22 +51,22 @@ h1 外部フォルダ同期設定
           strong style=filter_selected_style
             = "すべて (#{@review_filter_counts[:all]})"
         - else
-          = link_to "すべて (#{@review_filter_counts[:all]})", admin_external_folder_sync_sources_path, style: filter_link_style
+          = link_to "すべて (#{@review_filter_counts[:all]})", admin_external_folder_sync_sources_path(search_params), style: filter_link_style
         - if @selected_review_filter == "warnings"
           strong style=filter_selected_style
             = "warning あり (#{@review_filter_counts[:warnings]})"
         - else
-          = link_to "warning あり (#{@review_filter_counts[:warnings]})", admin_external_folder_sync_sources_path(review: :warnings), style: filter_link_style
+          = link_to "warning あり (#{@review_filter_counts[:warnings]})", admin_external_folder_sync_sources_path({ review: :warnings }.merge(search_params)), style: filter_link_style
         - if @selected_review_filter == "errors"
           strong style=filter_selected_style
             = "error あり (#{@review_filter_counts[:errors]})"
         - else
-          = link_to "error あり (#{@review_filter_counts[:errors]})", admin_external_folder_sync_sources_path(review: :errors), style: filter_link_style
+          = link_to "error あり (#{@review_filter_counts[:errors]})", admin_external_folder_sync_sources_path({ review: :errors }.merge(search_params)), style: filter_link_style
         - if @selected_review_filter == "disabled"
           strong style=filter_selected_style
             = "無効 (#{@review_filter_counts[:disabled]})"
         - else
-          = link_to "無効 (#{@review_filter_counts[:disabled]})", admin_external_folder_sync_sources_path(review: :disabled), style: filter_link_style
+          = link_to "無効 (#{@review_filter_counts[:disabled]})", admin_external_folder_sync_sources_path({ review: :disabled }.merge(search_params)), style: filter_link_style
     .external-sync-filter-section style="margin-top:1rem;"
       strong Provider
       p.muted style="margin:0.25rem 0 0.5rem;" 同期対応と metadata-only の境界を分けて確認します。
@@ -61,18 +75,25 @@ h1 外部フォルダ同期設定
           strong style=filter_selected_style
             = "Google Drive (#{@review_filter_counts[:google_drive]})"
         - else
-          = link_to "Google Drive (#{@review_filter_counts[:google_drive]})", admin_external_folder_sync_sources_path(review: :google_drive), style: filter_link_style
+          = link_to "Google Drive (#{@review_filter_counts[:google_drive]})", admin_external_folder_sync_sources_path({ review: :google_drive }.merge(search_params)), style: filter_link_style
         - if @selected_review_filter == "microsoft_graph"
           strong style=filter_selected_style
             = "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})"
         - else
-          = link_to "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})", admin_external_folder_sync_sources_path(review: :microsoft_graph), style: filter_link_style
+          = link_to "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})", admin_external_folder_sync_sources_path({ review: :microsoft_graph }.merge(search_params)), style: filter_link_style
     p.muted style="margin-top:1rem;" Google Drive は同期実行対象です。SharePoint / OneDrive は metadata-only として、保存済みの drive_id と folder_path を確認します。
     - if selected_filter_labels.any?
       p.muted
         = "現在の絞り込み: #{selected_filter_labels.join(' / ')}"
         br
-        = link_to "絞り込みを解除", admin_external_folder_sync_sources_path
+        - if @selected_review_filter.present?
+          = link_to "絞り込みを解除", admin_external_folder_sync_sources_path(search_params)
+          - if @search_query.present?
+            = " / "
+        - if @search_query.present?
+          = link_to "検索を解除", admin_external_folder_sync_sources_path(selected_review_params)
+          = " / "
+          = link_to "すべて解除", admin_external_folder_sync_sources_path
 
 - if @external_folder_sync_sources.any?
   .card
@@ -134,8 +155,10 @@ h1 外部フォルダ同期設定
             = delete_link_to "削除", admin_external_folder_sync_source_path(source, return_to: current_return_to), confirm: "外部フォルダ同期設定を削除しますか？"
 - elsif @review_filter_counts[:all].positive?
   .card
-    p.muted 現在の絞り込みに一致する外部フォルダ同期設定はありません。
-    p.muted = link_to "絞り込みを解除", admin_external_folder_sync_sources_path
+    p.muted 現在の検索 / 絞り込みに一致する外部フォルダ同期設定はありません。
+    - if selected_filter_labels.any?
+      p.muted = "現在の絞り込み: #{selected_filter_labels.join(' / ')}"
+    p.muted = link_to "すべて解除", admin_external_folder_sync_sources_path
 - else
   .card
     p.muted まだ外部フォルダ同期設定は登録されていません。
