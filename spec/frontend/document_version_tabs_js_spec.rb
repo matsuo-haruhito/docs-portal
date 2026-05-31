@@ -1,3 +1,4 @@
+require "rails_helper"
 require "open3"
 
 RSpec.describe "document_version_tabs.js" do
