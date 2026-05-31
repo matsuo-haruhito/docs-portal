@@ -189,7 +189,7 @@ RSpec.describe "Admin external folder sync sources", type: :request do
         started_at: Time.current,
         summary_json: { "conflict_warnings_count" => 2 }
       )
-      return_to = admin_external_folder_sync_sources_path(review: "warnings", q: "finance")
+      return_to = "#{admin_external_folder_sync_sources_path}?review=warnings&q=finance"
 
       get admin_external_folder_sync_sources_path, params: { review: "warnings", q: "finance" }
 
