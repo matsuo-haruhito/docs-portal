@@ -48,6 +48,36 @@ current 実装の前提:
 - 最近の record の shape や値を短く確認したい: `モデルブラウザ` show
 - 編集や登録をしたい: `モデルブラウザ` ではなく `既存画面へ` から元の管理画面へ戻る
 
+### Catalog を追加・見直すとき
+
+`Admin::ModelBrowserCatalog` は、dashboard の `モデル観測` と `admin/model_browser` が参照する model 一覧の正本。新しい model や運用画面を追加したときは、catalog に載せるか、既存の専用管理画面だけで十分かを先に分ける。
+
+追加判断の目安:
+
+- 日常運用で件数・最終更新・最近の record を横断確認したい model は catalog 候補にする
+- 既存の専用管理画面があっても、dashboard や model browser から全体変化を見たい model は catalog に残す
+- 中間テーブルや履歴 model は、障害調査やデータ整合確認で最近の record を見る意味がある場合だけ載せる
+- UI や workflow の新規仕様を catalog だけで表現しない。編集・再実行・承認などの操作は既存管理画面や専用 runbook の正本へ戻す
+
+`summary_fields` の選び方:
+
+- `public_id`、状態、種別、関連先 ID、時刻など、最近の record を識別しやすい短い値を優先する
+- `secret`、token、authorization、raw payload、request / response body、長大 text、個人情報の本文相当は入れない
+- ファイル本文、Webhook request body、外部 API の raw response などは、model browser ではなく専用のマスク済み preview や詳細画面の方針に従う
+- association は `*_id` のような短い参照値に留め、名前や本文をたどる必要がある場合は既存画面や関連 runbook への導線で補う
+
+`index_path_helper` の考え方:
+
+- 既存の一覧管理画面で編集・絞り込み・再実行などを扱う model は `index_path_helper` を持たせ、model browser から `既存画面へ` で戻れるようにする
+- `DocumentVersion`、`DocumentFile`、履歴・購読・preview upload など専用 index がない model は、model browser show で read-only に最近の record を確認する入口として扱う
+- `index_path_helper` がないことは欠落とは限らない。操作画面を新設する判断は、この runbook ではなく対象機能の Issue / PR で扱う
+
+Dashboard との関係:
+
+- dashboard の `モデル観測` は `entries.first(8)` の主要 model だけを見せる概要であり、catalog 全体の網羅表ではない
+- 先頭 8 件の順序を変えると dashboard の見え方も変わるため、catalog の並び替えは dashboard で最初に見せたい model の優先度も含めて確認する
+- current main の catalog entry には group metadata はない。領域別 group を追加する実装が入った場合は、group 名と分類基準をこの runbook に追従させる
+
 ## 2. アプリ設定診断
 
 `アプリ設定診断` は、起動に必要な前提や sample 値の流用を current app がどう見ているかを一覧で返す。
