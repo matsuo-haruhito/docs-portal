@@ -33,6 +33,20 @@ module Admin::GeneratedFileLabelsHelper
     "generated_file_run_bulk_retry" => "一括再実行"
   }.freeze
 
+  def generated_file_run_table_columns
+    [
+      table_preferences_column(:public_id, label: "実行ID", default_width: 160, pinned: true, sortable: true),
+      table_preferences_column(:status, label: "状態", default_width: 110, pinned: true),
+      table_preferences_column(:job_id, label: "ジョブ", default_width: 180, overflow: :ellipsis),
+      table_preferences_column(:generator, label: "ジェネレーター", default_width: 180, overflow: :ellipsis),
+      table_preferences_column(:output_writer, label: "出力先", default_width: 180, overflow: :ellipsis),
+      table_preferences_column(:event_source, label: "イベント発生元", default_width: 180, overflow: :ellipsis),
+      table_preferences_column(:started_at, label: "開始", default_width: 180, sortable: true),
+      table_preferences_column(:finished_at, label: "終了", default_width: 180, sortable: true),
+      table_preferences_column(:actions, label: "操作", default_width: 160, pinned: true)
+    ]
+  end
+
   def generated_file_event_status_label(status)
     EVENT_STATUS_LABELS.fetch(status.to_s, status.to_s)
   end
