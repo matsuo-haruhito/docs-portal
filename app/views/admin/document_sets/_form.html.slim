@@ -31,32 +31,37 @@
   - if @project_documents.any?
     h2 対象文書
     p.muted チェックした文書だけセットに含めます。版固定しない場合は最新版を使います。
-    table
-      thead
-        tr
-          th 対象
-          th 文書名
-          th 固定版
-          th 並び順
-          th メモ
-      tbody
-        - @project_documents.each_with_index do |document, index|
-          - item = selected_items[document.id]
+    section.document-set-document-filter data-controller="document-set-document-filter"
+      .document-set-document-filter__bar
+        label.document-set-document-filter__label for="document-set-document-filter-query" 対象文書を検索
+        input#document-set-document-filter-query.document-set-document-filter__input type="search" placeholder="文書名またはURL識別子" autocomplete="off" data-document-set-document-filter-target="query" data-action="input->document-set-document-filter#filter"
+        span.document-set-document-filter__status.muted data-document-set-document-filter-target="status"
+      table
+        thead
           tr
-            td
-              = hidden_field_tag "document_set_items[#{index}][document_id]", document.id
-              = check_box_tag "document_set_items[#{index}][selected]", "1", item.present?
-            td
-              strong = link_to document.title, project_document_path(document.project, document.slug)
-              br
-              span.muted = "URL識別子: #{document.slug}"
-            td
-              - version_options = [["最新版を使う", ""]] + document.document_versions.sort_by(&:created_at).reverse.map { |version| ["#{document_version_label(version)} (#{document_version_status_label(version)})", version.id] }
-              = select_tag("document_set_items[#{index}][document_version_id]", options_for_select(version_options, item&.document_version_id), document_set_version_select_html_options)
-            td
-              = number_field_tag "document_set_items[#{index}][sort_order]", item&.sort_order || index, min: 0
-            td
-              = text_field_tag "document_set_items[#{index}][note]", item&.note
+            th 対象
+            th 文書名
+            th 固定版
+            th 並び順
+            th メモ
+        tbody
+          - @project_documents.each_with_index do |document, index|
+            - item = selected_items[document.id]
+            tr data-document-set-document-filter-target="row" data-document-set-document-filter-search-text="#{document.title} #{document.slug}"
+              td
+                = hidden_field_tag "document_set_items[#{index}][document_id]", document.id
+                = check_box_tag "document_set_items[#{index}][selected]", "1", item.present?
+              td
+                strong = link_to document.title, project_document_path(document.project, document.slug)
+                br
+                span.muted = "URL識別子: #{document.slug}"
+              td
+                - version_options = [["最新版を使う", ""]] + document.document_versions.sort_by(&:created_at).reverse.map { |version| ["#{document_version_label(version)} (#{document_version_status_label(version)})", version.id] }
+                = select_tag("document_set_items[#{index}][document_version_id]", options_for_select(version_options, item&.document_version_id), document_set_version_select_html_options)
+              td
+                = number_field_tag "document_set_items[#{index}][sort_order]", item&.sort_order || index, min: 0
+              td
+                = text_field_tag "document_set_items[#{index}][note]", item&.note
   - elsif document_set.project_id.present?
     h2 対象文書
     p.muted まだ対象文書がありません。
