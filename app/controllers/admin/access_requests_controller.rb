@@ -35,7 +35,13 @@ class Admin::AccessRequestsController < Admin::BaseController
   end
 
   def filtered_access_requests(scope)
-    scope = scope.where(access_request_search_condition, query: access_request_query_pattern(@filters[:q])) if @filters[:q].present?
+    if @filters[:q].present?
+      scope = scope.where(
+        access_request_search_condition,
+        query: access_request_query_pattern(@filters[:q])
+      )
+    end
+
     scope.to_a
   end
 
