@@ -5,7 +5,7 @@ RSpec.describe Admin::AccessLogsHelper, type: :helper do
     it "renders active filters with readable labels" do
       project = build_stubbed(:project, id: 101, code: "AUDIT", name: "Audit Project")
       company = build_stubbed(:company, id: 202, domain: "audit.example.com", name: "Audit Company")
-      user = build_stubbed(:user, id: 303, email_address: "owner@example.com", name: "owner", display_name: "Owner User")
+      user = build_stubbed(:user, id: 303, email_address: "owner@example.com", name: "Owner User")
 
       summaries = helper.access_log_active_filter_summaries(
         {
