@@ -1,4 +1,5 @@
 import "./application.css"
+import "./bootstrap_overrides.css"
 import "./document_version_diff_display_mode.css"
 import "@hotwired/turbo-rails"
 import { Application } from "@hotwired/stimulus"
