@@ -23,7 +23,7 @@ class Admin::AccessRequestsController < Admin::BaseController
       raise ApplicationError::BadRequest, "unsupported decision"
     end
 
-    redirect_to admin_access_requests_path, notice:
+    redirect_to admin_access_requests_path(redirect_filter_params), notice:
   end
 
   private
@@ -134,6 +134,10 @@ class Admin::AccessRequestsController < Admin::BaseController
     raise ApplicationError::BadRequest, "rejection_reason is required" if reason.blank?
 
     reason
+  end
+
+  def redirect_filter_params
+    filter_params.compact
   end
 
   def filter_params
