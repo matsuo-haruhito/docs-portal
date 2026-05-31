@@ -34,4 +34,17 @@ module Admin::DocumentUsageReportsHelper
   def document_usage_report_sort_label(value)
     document_usage_report_sort_options.to_h.invert.fetch(value, "タイトル順")
   end
+
+  def document_usage_report_period_label(from_date, to_date)
+    case [from_date.present?, to_date.present?]
+    when [true, true]
+      "#{from_date.iso8601} から #{to_date.iso8601} まで"
+    when [true, false]
+      "#{from_date.iso8601} 以降"
+    when [false, true]
+      "#{to_date.iso8601} まで"
+    else
+      "指定なし（案件全体の累積）"
+    end
+  end
 end
