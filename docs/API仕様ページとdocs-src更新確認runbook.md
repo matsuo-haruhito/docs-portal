@@ -62,6 +62,18 @@
 
 API仕様ページは source を直接編集する画面ではありません。表示に違和感があるときは、まず `docs-src/` 側を正本として見直します。
 
+## build 失敗時の切り分け
+
+`ApiSpecificationBuildJob` は `Admin::ApiSpecificationPage#build!` を実行し、終了時に build request marker を消します。失敗理由は API仕様ページの notice だけでは完結しないことがあるため、次の順で切り分けます。
+
+1. source file の有無を確認します。entry は `docs-src/api-specification.md` で、関連ページは `docs-src/client-file-upload-api.md`、`docs-src/office-preview.md`、`docs-src/external-folder-sync-webhooks.md` です。
+2. 各 Markdown の front matter と slug を確認します。主要ページのリンク先は `/api-specification`、`/client-file-upload-api`、`/office-preview`、`/external-folder-sync-webhooks` です。
+3. Docusaurus runtime 前提を確認します。`npm` や repo-local dependency の準備手順は [docs/notes/docusaurus-build-runtime.md](./notes/docusaurus-build-runtime.md) を正本にし、この runbook には重複して書きません。
+4. job / CI logs を確認します。build command は `DOCUSAURUS_DOCS_PATH=docs-src` を渡して `docusaurus/` 配下で `npm run build` を実行します。stderr / stdout に source path、slug、link、package dependency のどれが出ているかを先に見ます。
+5. GitHub Actions 側で落ちている場合は [build-docs workflow確認runbook](./build-docs%20workflow%E7%A2%BA%E8%AA%8Drunbook.md) へ進み、`test` / `seed-smoke` / `build-docs` のどの段階の失敗かを分けます。
+
+API仕様ページの UI 変更や job history 追加がない状態では、画面上の stale notice だけで失敗原因を断定しません。source、runtime、job / CI logs の順で根拠を揃えてから、docs-src の修正か runtime / workflow 側の対応かを判断します。
+
 ## 更新対象の切り分け
 
 - internal import API や Git / ZIP / file upload の説明を直すときは `docs-src/api-specification.md`
