@@ -39,7 +39,9 @@ p.actions
       - else
         span.muted "-"
     dt リクエスト本文
-    dd.muted first slice では非表示です。secret や個人情報を含む可能性があるため、必要な場合は別途表示範囲とマスク方針を確認してください。
+    dd
+      p.muted マスク済み preview です。secret、token、authorization、個人情報らしい key の値は表示しません。長大な本文は省略されます。
+      pre = WebhookRequestBodyPreview.new(delivery.request_body).to_s
 
 .card
   h2 操作
