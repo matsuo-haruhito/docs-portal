@@ -9,6 +9,14 @@ RSpec.describe "admin/document_sets fixed version selector source" do
     Rails.root.join("app/helpers/admin/document_sets_helper.rb").read
   end
 
+  let(:application_entrypoint) do
+    Rails.root.join("app/frontend/entrypoints/application.js").read
+  end
+
+  let(:document_filter_controller) do
+    Rails.root.join("app/frontend/controllers/document_set_document_filter_controller.js").read
+  end
+
   it "keeps the fixed version selector param shape and delegates rails fields kit wiring to a helper" do
     aggregate_failures do
       expect(document_set_form).to include('select_tag("document_set_items[#{index}][document_version_id]"')
@@ -25,6 +33,31 @@ RSpec.describe "admin/document_sets fixed version selector source" do
       expect(document_sets_helper).to include('rails_fields_kit__tom_select_kind_value: "select"')
       expect(document_sets_helper).to include('rails_fields_kit__tom_select_placeholder_value: placeholder')
       expect(document_sets_helper).to include('rails_fields_kit__tom_select_plugins_value: ["clear_button"]')
+    end
+  end
+
+  it "keeps the document table param shape while adding a progressive filter" do
+    aggregate_failures do
+      expect(document_set_form).to include('data-controller="document-set-document-filter"')
+      expect(document_set_form).to include('data-action="input->document-set-document-filter#filter"')
+      expect(document_set_form).to include('data-document-set-document-filter-target="row"')
+      expect(document_set_form).to include('data-document-set-document-filter-search-text="#{document.title} #{document.slug}"')
+      expect(document_set_form).to include('hidden_field_tag "document_set_items[#{index}][document_id]"')
+      expect(document_set_form).to include('check_box_tag "document_set_items[#{index}][selected]"')
+      expect(document_set_form).to include('number_field_tag "document_set_items[#{index}][sort_order]"')
+      expect(document_set_form).to include('text_field_tag "document_set_items[#{index}][note]"')
+      expect(document_set_form).not_to include("remote: true")
+    end
+  end
+
+  it "registers a local row filter without changing the fixed version selector wiring" do
+    aggregate_failures do
+      expect(application_entrypoint).to include('import "./document_set_document_filter.css"')
+      expect(application_entrypoint).to include('import DocumentSetDocumentFilterController from "../controllers/document_set_document_filter_controller"')
+      expect(application_entrypoint).to include('application.register("document-set-document-filter", DocumentSetDocumentFilterController)')
+      expect(document_filter_controller).to include('static targets = ["query", "row", "status"]')
+      expect(document_filter_controller).to include("row.hidden = !visible")
+      expect(document_filter_controller).not_to include("fetch(")
     end
   end
 end
