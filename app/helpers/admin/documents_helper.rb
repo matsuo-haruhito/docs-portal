@@ -17,6 +17,20 @@ module Admin::DocumentsHelper
     ]
   end
 
+  def admin_document_active_filter_summaries(filters)
+    filters = filters.to_h.with_indifferent_access
+
+    [
+      admin_document_text_filter_summary("キーワード", filters[:q]),
+      admin_document_option_filter_summary("カテゴリ", filters[:category], admin_document_category_filter_options),
+      admin_document_option_filter_summary("種別", filters[:document_kind], admin_document_kind_filter_options),
+      admin_document_option_filter_summary("公開範囲", filters[:visibility_policy], admin_document_visibility_filter_options),
+      admin_document_option_filter_summary("アーカイブ状態", filters[:archived], admin_document_archived_filter_options),
+      admin_document_option_filter_summary("保管期限", filters[:retention], admin_document_retention_filter_options),
+      admin_document_option_filter_summary("廃棄候補", filters[:discard], admin_document_discard_filter_options)
+    ].compact
+  end
+
   def admin_document_category_filter_options
     [["すべて", ""]] + Document.categories.keys.map { |key| [localized_label("documents.category", key), key] }
   end
@@ -67,5 +81,22 @@ module Admin::DocumentsHelper
     else
       "公開期間中"
     end
+  end
+
+  private
+
+  def admin_document_text_filter_summary(label, value)
+    value = value.to_s.strip
+    return if value.blank?
+
+    "#{label}: #{value}"
+  end
+
+  def admin_document_option_filter_summary(label, value, options)
+    return if value.blank?
+
+    selected_option = options.find { |(_, option_value)| option_value.to_s == value.to_s }
+    display = selected_option ? selected_option.first : "指定あり"
+    "#{label}: #{display}"
   end
 end
