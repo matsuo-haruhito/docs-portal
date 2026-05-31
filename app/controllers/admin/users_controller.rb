@@ -4,7 +4,7 @@ class Admin::UsersController < Admin::BaseController
   before_action :prepare_form_context, only: %i[index create edit update]
 
   def index
-    @users = user_scope.includes(:company).order(:email_address)
+    @users = filtered_users
     @user = User.new(active: true, user_type: default_user_type_for_form, company: default_company_for_form)
   end
 
@@ -14,7 +14,7 @@ class Admin::UsersController < Admin::BaseController
     if @user.save
       redirect_to admin_users_path, notice: "ユーザーを登録しました。"
     else
-      @users = user_scope.includes(:company).order(:email_address)
+      @users = filtered_users
       render :index, status: :unprocessable_entity
     end
   end
@@ -40,6 +40,44 @@ class Admin::UsersController < Admin::BaseController
   end
 
   private
+
+  def filtered_users
+    @user_filter_params = user_filter_params
+    @users_total_count = user_scope.count
+
+    user_scope.includes(:company).then { |scope| apply_user_filters(scope) }.order(:email_address)
+  end
+
+  def apply_user_filters(scope)
+    scope = filter_users_by_keyword(scope)
+    filter_users_by_active(scope)
+  end
+
+  def filter_users_by_keyword(scope)
+    keyword = @user_filter_params["q"].to_s.strip
+    return scope if keyword.blank?
+
+    pattern = "%#{User.sanitize_sql_like(keyword.downcase)}%"
+    scope.where(
+      "LOWER(users.name) LIKE :keyword OR LOWER(users.email_address) LIKE :keyword",
+      keyword: pattern
+    )
+  end
+
+  def filter_users_by_active(scope)
+    case @user_filter_params["active"]
+    when "true"
+      scope.where(active: true)
+    when "false"
+      scope.where(active: false)
+    else
+      scope
+    end
+  end
+
+  def user_filter_params
+    params.permit(:q, :active).to_h
+  end
 
   def set_user
     @user = user_scope.find_by!(public_id: params[:public_id])
