@@ -50,6 +50,21 @@ module Admin::AccessLogsHelper
     end
   end
 
+  def access_log_active_filter_summaries(filters, projects:, companies:, users:)
+    filters = filters.to_h.with_indifferent_access
+
+    [
+      access_log_enum_filter_summary("操作", filters[:action_type], "access_logs.action_type", AccessLog.action_types.keys),
+      access_log_enum_filter_summary("対象種別", filters[:target_type], "access_logs.target_type", AccessLog::TARGET_TYPE_FILTERS),
+      access_log_record_filter_summary("案件", filters[:project_id], projects) { access_log_project_filter_label(_1) },
+      access_log_record_filter_summary("会社", filters[:company_id], companies) { access_log_company_filter_label(_1) },
+      access_log_record_filter_summary("ユーザー", filters[:user_id], users) { access_log_user_filter_label(_1) },
+      access_log_text_filter_summary("文書名・URL識別子", filters[:document_q]),
+      access_log_date_filter_summary("開始日", filters[:from]),
+      access_log_date_filter_summary("終了日", filters[:to])
+    ].compact
+  end
+
   def access_log_company_secondary_label(company)
     return unless company
 
@@ -61,5 +76,53 @@ module Admin::AccessLogsHelper
 
   def access_log_project_secondary_label(project)
     project&.code.presence
+  end
+
+  private
+
+  def access_log_enum_filter_summary(label, value, scope, known_values)
+    return if value.blank?
+
+    display = known_values.include?(value.to_s) ? localized_label(scope, value) : "指定あり"
+    "#{label}: #{display}"
+  end
+
+  def access_log_record_filter_summary(label, value, records)
+    return if value.blank?
+
+    record = records.find { _1.id.to_s == value.to_s }
+    display = record ? yield(record) : "指定あり"
+    "#{label}: #{display}"
+  end
+
+  def access_log_text_filter_summary(label, value)
+    value = value.to_s.strip
+    return if value.blank?
+
+    "#{label}: #{value}"
+  end
+
+  def access_log_date_filter_summary(label, value)
+    return if value.blank?
+
+    date = Date.iso8601(value.to_s)
+    "#{label}: #{date.strftime('%Y-%m-%d')}"
+  rescue ArgumentError
+    "#{label}: 日付を確認"
+  end
+
+  def access_log_project_filter_label(project)
+    [project.code.presence, project.name.presence].compact.join(" / ")
+  end
+
+  def access_log_company_filter_label(company)
+    label = company.display_name
+    label = "#{label} / #{company.domain}" if company.domain.present?
+    label
+  end
+
+  def access_log_user_filter_label(user)
+    primary_label = user.display_name.presence || user.email_address
+    primary_label == user.email_address ? primary_label : "#{primary_label} / #{user.email_address}"
   end
 end
