@@ -6,6 +6,8 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
     @selected_project = selected_project
     @usage_filter = usage_filter_param
     @sort_order = sort_order_param
+    @from_date = date_param(:from)
+    @to_date = date_param(:to)
     @report_hash = build_report_hash(@selected_project) if @selected_project
   end
 
@@ -25,6 +27,15 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
     normalized_enum_param(params[:sort_order], allowed: %w[title last_accessed_desc last_accessed_asc], default: "title")
   end
 
+  def date_param(name)
+    candidate = Array.wrap(params[name]).compact_blank.first
+    return if candidate.blank?
+
+    Date.iso8601(candidate)
+  rescue ArgumentError
+    nil
+  end
+
   def normalized_enum_param(value, allowed:, default:)
     candidate = Array.wrap(value).compact_blank.first
 
@@ -32,10 +43,18 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
   end
 
   def build_report_hash(project)
-    result = DocumentUsageReport.new(project:).call
+    result = DocumentUsageReport.new(project:, from: report_from, to: report_to).call
     report_hash = DocumentUsageReportHash.new(result).call
 
     report_hash.merge(documents: sort_rows(filter_rows(report_hash[:documents])))
+  end
+
+  def report_from
+    @from_date&.beginning_of_day
+  end
+
+  def report_to
+    @to_date&.end_of_day
   end
 
   def filter_rows(rows)
