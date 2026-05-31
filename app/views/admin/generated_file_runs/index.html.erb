@@ -47,9 +47,9 @@
   <%= form_with url: admin_generated_file_runs_path, method: :get, local: true, class: "rounded-lg border bg-white p-4" do |form| %>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
       <div class="md:col-span-2">
-        <%= form.label :q, "実行ID / パス", class: "block text-sm font-semibold" %>
-        <%= form.text_field :q, value: @filters[:q], placeholder: "gfr... または docs/source.yml", class: "mt-1 w-full rounded border px-2 py-1" %>
-        <p class="mt-1 text-xs text-gray-500">入力パス・変更ファイル・生成パスを検索します。</p>
+        <%= form.label :q, "実行ID / パス / エラー / 再実行元", class: "block text-sm font-semibold" %>
+        <%= form.text_field :q, value: @filters[:q], placeholder: "gfr... / docs/source.yml / timeout / 再実行元ID", class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">入力パス・変更ファイル・生成パス・エラー文・再実行元/関連イベントIDを検索します。</p>
       </div>
       <div>
         <%= form.label :status, "状態", class: "block text-sm font-semibold" %>
