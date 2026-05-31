@@ -56,7 +56,6 @@ section.card
         - requestable = request_hash[:requestable]
         - primary_label = admin_access_request_primary_target_label(requestable)
         - secondary_label = admin_access_request_secondary_target_label(requestable)
-        - action_filter_params = @filters.compact
         tr
           td = access_request.created_at.strftime("%Y-%m-%d %H:%M")
           td = "#{access_request.requester.name} / #{access_request.requester.email_address}"
@@ -79,12 +78,22 @@ section.card
           td = access_request.approver&.email_address || "-"
           td.actions
             - if access_request.pending?
-              = button_to "承認", admin_access_request_path(access_request), method: :patch, params: action_filter_params.merge(decision: "approve"), class: "button"
-              = button_to "却下", admin_access_request_path(access_request), method: :patch, params: action_filter_params.merge(decision: "reject", rejection_reason: admin_access_request_default_rejection_reason), class: "button secondary"
+              = button_to "承認", admin_access_request_path(access_request), method: :patch, params: { decision: "approve" }, class: "button"
+              = button_to "却下", admin_access_request_path(access_request), method: :patch, params: { decision: "reject", rejection_reason: admin_access_request_default_rejection_reason }, class: "button secondary"
             - else
               span.muted -
 - else
   - if @filters[:status].present? || @filters[:q].present?
-    p.muted 条件に一致する申請はありません。
+    p.muted
+      | 条件に一致する申請はありません。
+      - if @filters[:status].present?
+        |  状態:
+        strong = " #{admin_access_request_status_filter_label(@filters[:status])}"
+      - if @filters[:q].present?
+        - if @filters[:status].present?
+          |  / 検索:
+        - else
+          |  検索:
+        strong = " #{@filters[:q]}"
   - else
     p.muted 申請はありません。

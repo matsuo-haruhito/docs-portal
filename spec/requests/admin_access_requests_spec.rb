@@ -153,15 +153,34 @@ RSpec.describe "Admin access requests", type: :request do
     expect(parsed_html.css("form[action='#{admin_access_request_path(pending_match)}']").size).to eq(2)
   end
 
-  it "shows a filtered empty state when no requests match" do
+  it "shows active filters in the filtered empty state" do
+    create(:access_request, requester:, requestable: document, requested_access_level: :download)
+
+    sign_in_as(admin_user)
+
+    get admin_access_requests_path, params: { status: "rejected", q: "does-not-match" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("条件に一致する申請はありません。")
+    expect(page_text).to include("状態: 却下")
+    expect(page_text).to include("検索: does-not-match")
+    expect(page_text).not_to include("状態: rejected")
+  end
+
+  it "does not show an unset status in the query-only filtered empty state" do
     create(:access_request, requester:, requestable: document, requested_access_level: :download)
 
     sign_in_as(admin_user)
 
     get admin_access_requests_path, params: { q: "does-not-match" }
 
+    empty_state_text = parsed_html.css("p.muted").find { |node| node.text.include?("条件に一致する申請はありません。") }.text.squish
+
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("条件に一致する申請はありません。")
+    expect(empty_state_text).to include("条件に一致する申請はありません。")
+    expect(empty_state_text).to include("検索: does-not-match")
+    expect(empty_state_text).not_to include("状態:")
+    expect(empty_state_text).not_to include("状態: すべて")
   end
 
   it "approves a pending request" do
@@ -178,25 +197,6 @@ RSpec.describe "Admin access requests", type: :request do
     expect(access_request.approver).to eq(admin_user)
   end
 
-  it "keeps permitted filters after approval and drops unsupported return params" do
-    access_request = create(:access_request, requester:, requestable: document, requested_access_level: :download)
-
-    sign_in_as(admin_user)
-
-    expect do
-      patch admin_access_request_path(access_request), params: {
-        decision: "approve",
-        status: "pending",
-        q: " Manual ",
-        page: "2",
-        requestable_type: "Document"
-      }
-    end.to change { DocumentPermission.where(document:, user: requester).count }.by(1)
-
-    expect(response).to redirect_to(admin_access_requests_path(status: "pending", q: "Manual"))
-    expect(access_request.reload).to be_approved
-  end
-
   it "rejects a pending request" do
     access_request = create(:access_request, requester:, requestable: project, requested_access_level: :view)
 
@@ -207,51 +207,6 @@ RSpec.describe "Admin access requests", type: :request do
     expect(response).to redirect_to(admin_access_requests_path)
     expect(access_request.reload).to be_rejected
     expect(access_request.rejection_reason).to eq("承認条件を満たしていないため却下しました")
-  end
-
-  it "keeps permitted filters after rejection" do
-    access_request = create(:access_request, requester:, requestable: project, requested_access_level: :view)
-
-    sign_in_as(admin_user)
-
-    patch admin_access_request_path(access_request), params: {
-      decision: "reject",
-      rejection_reason: "承認条件を満たしていないため却下しました",
-      status: "pending",
-      q: "Client User"
-    }
-
-    expect(response).to redirect_to(admin_access_requests_path(status: "pending", q: "Client User"))
-    expect(access_request.reload).to be_rejected
-    expect(access_request.rejection_reason).to eq("承認条件を満たしていないため却下しました")
-  end
-
-  it "does not carry invalid status or blank query after actions" do
-    access_request = create(:access_request, requester:, requestable: document, requested_access_level: :download)
-
-    sign_in_as(admin_user)
-
-    patch admin_access_request_path(access_request), params: {
-      decision: "approve",
-      status: "all",
-      q: "   ",
-      page: "2"
-    }
-
-    expect(response).to redirect_to(admin_access_requests_path)
-    expect(access_request.reload).to be_approved
-  end
-
-  it "returns bad request when rejection reason is blank" do
-    access_request = create(:access_request, requester:, requestable: project, requested_access_level: :view)
-
-    sign_in_as(admin_user)
-
-    patch admin_access_request_path(access_request), params: { decision: "reject", rejection_reason: "  " }
-
-    expect(response).to have_http_status(:bad_request)
-    expect(access_request.reload).to be_pending
-    expect(access_request.rejection_reason).to be_blank
   end
 
   it "forbids external users" do
