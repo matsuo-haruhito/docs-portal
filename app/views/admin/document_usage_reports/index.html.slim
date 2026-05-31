@@ -60,6 +60,8 @@ section.card
       strong = " #{document_usage_report_filter_label(@usage_filter)}"
       |  / 並び順:
       strong = " #{document_usage_report_sort_label(@sort_order)}"
+    p.muted
+      | 行内の「監査ログへ」は閲覧またはダウンロードがある文書だけに表示されます。既読確認だけで利用ありの文書は、既読確認件数で確認してください。
 
   - if @report_hash[:documents].any?
     section.card
