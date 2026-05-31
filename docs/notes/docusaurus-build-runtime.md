@@ -98,3 +98,19 @@ DOCUSAURUS_STATIC_DIR=/path/to/build/workspace/static
 ```
 
 This value is used both by `remark-kroki-diagrams` as the SVG output directory and by Docusaurus `staticDirectories`, so generated SVGs are included in the returned build artifact without a separate HTML post-process step.
+
+### Kroki smoke fixture
+
+The representative smoke fixture is `docusaurus/plugins/remark-kroki-diagrams.smoke.test.mjs`. It uses this minimal PlantUML block:
+
+```plantuml
+@startuml
+Alice -> Bob: hello
+@enduml
+```
+
+The smoke keeps Kroki optional by passing a mocked fetch implementation. It verifies that a configured endpoint posts to `/plantuml/svg`, writes the returned SVG under `generated/kroki`, and replaces the Markdown code node with an image URL pointing at that generated asset.
+
+When `KROKI_ENDPOINT` is not set, the expected behavior is a renderer failure that names the missing endpoint and source file. The normal Rails/RSpec suite should still pass without a running Kroki service because the smoke does not contact Kroki.
+
+For a manual local smoke with the optional compose service, use the renderer and Kroki environment shown above, then run a preview/build with Markdown that includes the same PlantUML block. The generated build artifact should contain `generated/kroki/plantuml-*.svg`, and the rendered page should reference `/generated/kroki/plantuml-*.svg`. Do not commit the generated SVG.
