@@ -6,6 +6,7 @@ require "pathname"
 require "set"
 require "shellwords"
 
+require_relative "auto_retry_policy"
 require_relative "generated_job_registry"
 require_relative "run_recorder"
 
@@ -47,6 +48,7 @@ module GeneratedFiles
       output: $stdout,
       error_output: $stderr,
       run_recorder: RunRecorder.new,
+      auto_retry_policy: AutoRetryPolicy.new,
       registry: nil
     )
       @root = Pathname(root || default_root).expand_path
@@ -57,6 +59,7 @@ module GeneratedFiles
       @output = output
       @error_output = error_output
       @run_recorder = run_recorder
+      @auto_retry_policy = auto_retry_policy
       @registry = registry || GeneratedJobRegistry.new(registry_path:, root: @root)
     end
 
@@ -75,7 +78,7 @@ module GeneratedFiles
     private
 
     attr_reader :root, :changed_files, :job_ids, :event_source, :metadata,
-      :output, :error_output, :run_recorder, :registry
+      :output, :error_output, :run_recorder, :auto_retry_policy, :registry
 
     def default_root
       if defined?(Rails)
@@ -91,7 +94,10 @@ module GeneratedFiles
       run.finish!(status: :completed, generated_paths: result.generated_paths)
       result
     rescue StandardError => error
-      run.finish!(status: :failed, error_message: error.message) if defined?(run) && run
+      if defined?(run) && run
+        run.finish!(status: :failed, error_message: error.message)
+        auto_retry_policy.enqueue_for(run)
+      end
       raise
     end
 
