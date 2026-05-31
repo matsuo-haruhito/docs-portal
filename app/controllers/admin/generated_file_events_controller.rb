@@ -12,6 +12,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
     @per_page = per_page_param
     @status_counts = GeneratedFileEvent.group(:status).count
     @filtered_generated_file_events = apply_filters(GeneratedFileEvent.order(created_at: :desc, id: :desc))
+    @bulk_retry_target_count = bulk_retry_target_scope.size
     @total_count = @filtered_generated_file_events.count
     @total_pages = total_pages(@total_count)
     @generated_file_events = @filtered_generated_file_events.offset((@page - 1) * @per_page).limit(@per_page)
@@ -31,7 +32,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
   def retry_failed
     @filters = event_filter_params
     @filter_warnings = []
-    events = apply_filters(GeneratedFileEvent.failed.order(created_at: :asc, id: :asc)).limit(MAX_PER_PAGE)
+    events = bulk_retry_target_scope.to_a
     events.each { reset_for_dispatch!(_1) }
     GeneratedFileEventDispatchJob.perform_later if events.any?
 
@@ -55,6 +56,10 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
       .limit(200)
       .select { |run| Array(run.metadata&.dig("generated_file_event_public_ids")).include?(public_id) }
       .first(10)
+  end
+
+  def bulk_retry_target_scope
+    apply_filters(GeneratedFileEvent.failed.order(created_at: :asc, id: :asc)).limit(MAX_PER_PAGE)
   end
 
   def apply_filters(scope)
