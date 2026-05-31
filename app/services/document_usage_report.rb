@@ -35,7 +35,9 @@ class DocumentUsageReport
   end
 
   def call
-    Result.new(project:, rows: documents.map { row_for(_1) })
+    selected_documents = documents
+
+    Result.new(project:, rows: selected_documents.map { row_for(_1) })
   end
 
   private
@@ -47,28 +49,40 @@ class DocumentUsageReport
   end
 
   def row_for(document)
-    logs = access_logs_for(document)
+    logs = access_logs_by_document_id.fetch(document.id, [])
 
     Row.new(
       document:,
       view_count: logs.count(&:view?),
       download_count: logs.count(&:download?),
-      read_confirmation_count: read_confirmations_for(document).count,
+      read_confirmation_count: read_confirmation_counts_by_document_id.fetch(document.id, 0),
       last_accessed_at: logs.map(&:accessed_at).compact.max
     )
   end
 
-  def access_logs_for(document)
-    logs = AccessLog.where(project:, document:)
-    logs = logs.where("accessed_at >= ?", from) if from.present?
-    logs = logs.where("accessed_at <= ?", to) if to.present?
-    logs.to_a
+  def access_logs_by_document_id
+    @access_logs_by_document_id ||= begin
+      return {} if document_ids.empty?
+
+      logs = AccessLog.where(project:, document_id: document_ids)
+      logs = logs.where("accessed_at >= ?", from) if from.present?
+      logs = logs.where("accessed_at <= ?", to) if to.present?
+      logs.select(:document_id, :action_type, :accessed_at).to_a.group_by(&:document_id)
+    end
   end
 
-  def read_confirmations_for(document)
-    confirmations = ReadConfirmation.where(document:)
-    confirmations = confirmations.where("confirmed_at >= ?", from) if from.present?
-    confirmations = confirmations.where("confirmed_at <= ?", to) if to.present?
-    confirmations
+  def read_confirmation_counts_by_document_id
+    @read_confirmation_counts_by_document_id ||= begin
+      return {} if document_ids.empty?
+
+      confirmations = ReadConfirmation.where(document_id: document_ids)
+      confirmations = confirmations.where("confirmed_at >= ?", from) if from.present?
+      confirmations = confirmations.where("confirmed_at <= ?", to) if to.present?
+      confirmations.group(:document_id).count
+    end
+  end
+
+  def document_ids
+    @document_ids ||= documents.map(&:id).compact
   end
 end
