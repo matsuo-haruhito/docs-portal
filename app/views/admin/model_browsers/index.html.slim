@@ -5,18 +5,21 @@ p.muted 主要な管理対象の件数と最近のデータを横断確認でき
 
 = render "admin/nav"
 
-.dashboard-grid
-  - @entries.each do |entry|
-    - summary = @entry_summaries.fetch(entry)
-    section.card.metric-card
-      h2 = link_to entry.label, admin_model_browser_model_path(entry.key)
-      p.muted = entry.description
-      dl.definition-list
-        dt 件数
-        dd = summary[:total_count]
-        dt 最終更新
-        dd = summary[:latest_updated_at] ? l(summary[:latest_updated_at], format: :short) : "-"
-      p.actions
-        = link_to "詳細を見る", admin_model_browser_model_path(entry.key), class: "button"
-        - if (index_path = entry_index_path(entry))
-          = link_to "既存画面へ", index_path, class: "button secondary"
+- @entry_groups.each do |_group, group_label, entries|
+  section.model-browser-group
+    h2 = group_label
+    .dashboard-grid
+      - entries.each do |entry|
+        - summary = @entry_summaries.fetch(entry)
+        section.card.metric-card
+          h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
+          p.muted = entry.description
+          dl.definition-list
+            dt 件数
+            dd = summary[:total_count]
+            dt 最終更新
+            dd = summary[:latest_updated_at] ? l(summary[:latest_updated_at], format: :short) : "-"
+          p.actions
+            = link_to "詳細を見る", admin_model_browser_model_path(entry.key), class: "button"
+            - if (index_path = entry_index_path(entry))
+              = link_to "既存画面へ", index_path, class: "button secondary"
