@@ -27,6 +27,33 @@ function collectUntil(startElement, stopElement) {
   return elements
 }
 
+function wrapPanel(tabId, elements) {
+  if (elements.length === 0) {
+    return null
+  }
+
+  if (elements.length === 1 && elements[0].id === tabId) {
+    return elements[0]
+  }
+
+  const wrapper = document.createElement("section")
+  wrapper.id = tabId
+  wrapper.className = "version-detail-tab-panel"
+
+  const firstElement = elements[0]
+  firstElement.parentNode.insertBefore(wrapper, firstElement)
+
+  elements.forEach((element) => {
+    if (element.id === tabId) {
+      element.id = `${tabId}-heading`
+    }
+
+    wrapper.appendChild(element)
+  })
+
+  return wrapper
+}
+
 function buildPanelMap() {
   const diffPanel = document.getElementById("version-diff")
   const sideBySidePanel = document.getElementById("side-by-side-file-review")
@@ -38,10 +65,10 @@ function buildPanelMap() {
   }
 
   return {
-    "version-diff": [diffPanel],
-    "side-by-side-file-review": [sideBySidePanel],
-    "version-info": collectUntil(sideBySidePanel.nextElementSibling, filesHeading),
-    "version-files": collectUntil(filesHeading, comments)
+    "version-diff": diffPanel,
+    "side-by-side-file-review": sideBySidePanel,
+    "version-info": wrapPanel("version-info", collectUntil(sideBySidePanel.nextElementSibling, filesHeading)),
+    "version-files": wrapPanel("version-files", collectUntil(filesHeading, comments))
   }
 }
 
@@ -50,25 +77,23 @@ function normalizeTabId() {
 }
 
 function setPanelAccessibility(panelMap) {
-  Object.entries(panelMap).forEach(([tabId, elements]) => {
-    const firstElement = elements[0]
-
-    if (!firstElement) {
+  Object.entries(panelMap).forEach(([tabId, panel]) => {
+    if (!panel) {
       return
     }
 
-    firstElement.setAttribute("role", "tabpanel")
-    firstElement.setAttribute("aria-labelledby", `version-tab-${tabId}`)
-
-    if (tabId === "version-info" && !firstElement.id) {
-      firstElement.id = tabId
-    }
+    panel.setAttribute("role", "tabpanel")
+    panel.setAttribute("aria-labelledby", `version-tab-${tabId}`)
   })
 }
 
 function renderTabs(nav, panelMap) {
   const originalItems = Array.from(nav.children)
   const secondaryItems = originalItems.filter((item) => {
+    if (item.getAttribute("aria-current") === "page" || item.classList.contains("badge")) {
+      return false
+    }
+
     if (item.tagName !== "A") {
       return true
     }
@@ -81,7 +106,7 @@ function renderTabs(nav, panelMap) {
   nav.setAttribute("role", "tablist")
 
   TAB_DEFINITIONS.forEach(({ id, label }) => {
-    if (!panelMap[id]?.length) {
+    if (!panelMap[id]) {
       return
     }
 
@@ -116,12 +141,12 @@ function renderTabs(nav, panelMap) {
 }
 
 function activateTab(nav, panelMap, activeTabId = normalizeTabId()) {
-  Object.entries(panelMap).forEach(([tabId, elements]) => {
-    const active = tabId === activeTabId
+  Object.entries(panelMap).forEach(([tabId, panel]) => {
+    if (!panel) {
+      return
+    }
 
-    elements.forEach((element) => {
-      element.hidden = !active
-    })
+    panel.hidden = tabId !== activeTabId
   })
 
   nav.querySelectorAll("[data-version-tab]").forEach((tab) => {
