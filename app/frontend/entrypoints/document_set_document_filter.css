@@ -1,0 +1,20 @@
+.document-set-document-filter__bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.document-set-document-filter__label {
+  font-weight: 700;
+}
+
+.document-set-document-filter__input {
+  min-width: min(100%, 24rem);
+  flex: 1 1 18rem;
+}
+
+.document-set-document-filter__status {
+  white-space: nowrap;
+}
