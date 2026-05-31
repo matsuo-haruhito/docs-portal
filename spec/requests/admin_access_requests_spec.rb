@@ -123,7 +123,11 @@ RSpec.describe "Admin access requests", type: :request do
   end
 
   it "combines status and query search before loading access requests" do
-    pending_match = create(:access_request, requester:, requestable: document, requested_access_level: :download, reason: "Pending manual access")
+    pending_match = create(:access_request,
+      requester:,
+      requestable: document,
+      requested_access_level: :download,
+      reason: "Pending manual access")
     create(:access_request,
       requester:,
       requestable: document,
