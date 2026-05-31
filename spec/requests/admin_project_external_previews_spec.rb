@@ -16,6 +16,10 @@ RSpec.describe "Admin project external previews", type: :request do
     [document, file]
   end
 
+  def preview_result_headings
+    Nokogiri::HTML(response.body).css(".card h2").map { _1.text.squish }
+  end
+
   before do
     create(:project_membership, project:, user: external_user)
     create(:project_membership, project:, user: other_external_user)
@@ -61,11 +65,9 @@ RSpec.describe "Admin project external previews", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("対象会社")
     expect(response.body).to include("Preview Co")
-    expect(response.body).to include("2")
-    expect(response.body).to include("viewer@example.com")
-    expect(response.body).to include("viewer2@example.com")
-    expect(response.body).not_to include("other-company@example.com")
-    expect(response.body).not_to include("inactive@example.com")
+    expect(response.body).to include("2名の有効ユーザー")
+    expect(preview_result_headings).to include("viewer@example.com", "viewer2@example.com")
+    expect(preview_result_headings).not_to include("other-company@example.com", "inactive@example.com")
 
     log = AccessLog.order(:id).last
     expect(log.company).to eq(company)
