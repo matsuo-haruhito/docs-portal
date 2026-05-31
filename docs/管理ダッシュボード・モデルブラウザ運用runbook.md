@@ -112,12 +112,14 @@ current 実装の前提:
 - `実体欠落` は `DocumentFile#absolute_path` に実ファイルが存在しなかった件数
 - 欠落一覧は最大 20 件までで、`案件` `文書` `版` `ファイル名` `Storage key` を表示する
 - 一覧の `文書` は公開側の project/document detail、`版` は document version detail へ戻れる
+- dashboard 表示時点の current 実装は `DocumentFile` を `find_each` で走査する。cache / async 化や detail 画面化はこの runbook ではなく、ファイル数が増えたときの別 Issue で判断する
 
 読み方:
 
 - `実体欠落` が 0 でないときは、まず欠落が特定案件だけか、複数案件へ広がっているかを見る
 - `Storage key` は storage 配下の期待位置を見直す手がかりとして使う
 - `文書` や `版` へ戻り、対象が current 版か添付・原本か、import 直後の版かを確認する
+- `実体欠落` が表示件数より多い場合、dashboard の一覧は先頭 20 件のサンプルとして扱い、全件確認は storage 側や database 側の調査へ切り替える
 
 注意点:
 
