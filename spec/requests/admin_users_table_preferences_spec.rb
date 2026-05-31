@@ -57,7 +57,7 @@ RSpec.describe "Admin users table preferences", type: :request do
     end
     expect(helper_source).to include("table_preferences_column(:actions, label: \"操作\", default_width: 180, pinned: true)")
 
-    empty_state_source = view_source.fetch(view_source.index("- else")..)
+    empty_state_source = view_source[view_source.index("- else")..]
     expect(empty_state_source).to include("section.card")
     expect(empty_state_source).to include("まだ表示中の範囲にユーザーは登録されていません。")
     expect(empty_state_source).not_to include("table_preferences_editor")
