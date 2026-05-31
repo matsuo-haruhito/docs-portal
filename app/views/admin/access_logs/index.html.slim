@@ -55,7 +55,7 @@ section.card
     strong = " #{@access_logs.size}件"
     |  / 最新200件までを表示
     - if active_filter_summaries.any?
-      |  / 絞り込み条件あり
+      |  / 絞り込み中
   - if active_filter_summaries.any?
     p.muted
       | 有効な条件:
