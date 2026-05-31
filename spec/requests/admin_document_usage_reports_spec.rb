@@ -58,6 +58,8 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(form.at_css("select[name='project_id']")).to be_present
     expect(form.at_css("select[name='usage_filter']")).to be_present
     expect(form.at_css("select[name='sort_order']")).to be_present
+    expect(form.at_css("input[name='from'][type='date']")).to be_present
+    expect(form.at_css("input[name='to'][type='date']")).to be_present
 
     option_texts = form.css("option").map { |option| option.text.squish }
     expect(option_texts).to include("選択してください", "すべて", "利用あり", "未利用", "タイトル順")
@@ -80,6 +82,8 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(page_text).to include("Usage Project")
     expect(page_text).to include("USAGE")
     expect(page_text).to include("Manual")
+    expect(page_text).to include("期間: 指定なし（案件全体の累積）")
+    expect(page_text).to include("期間指定時は、閲覧・ダウンロード・既読確認・利用あり判定・最終アクセスを期間内の実績で集計します。")
     expect(page_text).to include("閲覧: 1")
     expect(page_text).to include("ダウンロード: 1")
     expect(page_text).to include("既読確認: 1")
@@ -98,6 +102,9 @@ RSpec.describe "Admin document usage reports", type: :request do
     sort_order_option = parsed_html.at_css("select[name='sort_order'] option[selected]")
     expect(sort_order_option).to be_present
     expect(sort_order_option["value"]).to eq("title")
+
+    expect(parsed_html.at_css("input[name='from']")["value"]).to be_blank
+    expect(parsed_html.at_css("input[name='to']")["value"]).to be_blank
 
     headers = parsed_html.css("table thead th").map { |header| header.text.squish }
     expect(headers).to include("文書名", "カテゴリ", "種別", "公開範囲", "利用", "閲覧", "ダウンロード", "既読確認", "最終アクセス")
@@ -150,6 +157,76 @@ RSpec.describe "Admin document usage reports", type: :request do
     sort_order_option = parsed_html.at_css("select[name='sort_order'] option[selected]")
     expect(sort_order_option).to be_present
     expect(sort_order_option["value"]).to eq("last_accessed_desc")
+  end
+
+  it "applies the date range to usage counts, used filtering, and last access sorting" do
+    newest_document = create(:document, project:, title: "Guide", slug: "guide")
+    read_only_document = create(:document, project:, title: "Policy", slug: "policy")
+    outside_document = create(:document, project:, title: "Checklist", slug: "checklist")
+
+    create(:access_log, project:, document:, user: viewer, company:, action_type: :download, accessed_at: Time.zone.local(2026, 5, 1, 10, 0, 0))
+    create(:access_log, project:, document: newest_document, user: viewer, company:, action_type: :view, accessed_at: Time.zone.local(2026, 5, 2, 10, 0, 0))
+    create(:read_confirmation, document: read_only_document, user: viewer, confirmed_at: Time.zone.local(2026, 5, 2, 12, 0, 0))
+    create(:access_log, project:, document: outside_document, user: viewer, company:, action_type: :view, accessed_at: Time.zone.local(2026, 5, 3, 10, 0, 0))
+    create(:read_confirmation, document: outside_document, user: viewer, confirmed_at: Time.zone.local(2026, 5, 3, 12, 0, 0))
+
+    sign_in_as(admin_user)
+
+    get admin_document_usage_reports_path(
+      project_id: project.id,
+      usage_filter: "used",
+      sort_order: "last_accessed_desc",
+      from: "2026-05-01",
+      to: "2026-05-02"
+    )
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("期間: 2026-05-01 から 2026-05-02 まで")
+    expect(page_text).to include("閲覧: 1")
+    expect(page_text).to include("ダウンロード: 1")
+    expect(page_text).to include("既読確認: 1")
+    expect(page_text).to include("表示中: 3件")
+    expect(row_titles).to eq(["Guide", "Manual", "Policy"])
+    expect(row_titles).not_to include("Checklist")
+    expect(parsed_html.at_css("input[name='from']")["value"]).to eq("2026-05-01")
+    expect(parsed_html.at_css("input[name='to']")["value"]).to eq("2026-05-02")
+    expect(summary_audit_log_link).to be_present
+    expect(audit_log_link(newest_document.slug)).to be_present
+    expect(audit_log_link(document.slug)).to be_present
+    expect(audit_log_link(read_only_document.slug)).not_to be_present
+    expect(audit_log_link(outside_document.slug)).not_to be_present
+  end
+
+  it "treats documents with only out-of-range activity as unused for the selected period" do
+    outside_document = create(:document, project:, title: "Checklist", slug: "checklist")
+
+    create(:access_log, project:, document: outside_document, user: viewer, company:, action_type: :view, accessed_at: Time.zone.local(2026, 4, 30, 10, 0, 0))
+    create(:read_confirmation, document: outside_document, user: viewer, confirmed_at: Time.zone.local(2026, 4, 30, 12, 0, 0))
+
+    sign_in_as(admin_user)
+
+    get admin_document_usage_reports_path(project_id: project.id, usage_filter: "unused", from: "2026-05-01", to: "2026-05-02")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("期間: 2026-05-01 から 2026-05-02 まで")
+    expect(page_text).to include("表示中: 1件")
+    expect(row_titles).to eq(["Checklist"])
+    expect(audit_log_link(outside_document.slug)).not_to be_present
+  end
+
+  it "ignores invalid date inputs without returning an error" do
+    create(:access_log, project:, document:, user: viewer, company:, action_type: :view, accessed_at: Time.zone.local(2026, 5, 1, 10, 0, 0))
+    create(:access_log, project:, document:, user: viewer, company:, action_type: :view, accessed_at: Time.zone.local(2026, 5, 2, 10, 0, 0))
+
+    sign_in_as(admin_user)
+
+    get admin_document_usage_reports_path(project_id: project.id, from: "not-a-date", to: "2026-05-01")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("期間: 2026-05-01 まで")
+    expect(page_text).to include("閲覧: 1")
+    expect(parsed_html.at_css("input[name='from']")["value"]).to be_blank
+    expect(parsed_html.at_css("input[name='to']")["value"]).to eq("2026-05-01")
   end
 
   it "shows an empty-state message when the selected filter has no matching rows" do
