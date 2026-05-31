@@ -34,7 +34,7 @@ export default class extends Controller {
     }
 
     const count = this.checkboxTargets.filter((checkbox) => !checkbox.disabled && checkbox.checked).length
-    const text = this.matchingSelection ? `${this.matchingCountValue}件選択中（検索結果全体）` : `${count}件選択中`
+    const text = this.selectionCountText(count)
     this.countTargets.forEach((target) => {
       target.textContent = text
     })
@@ -46,5 +46,12 @@ export default class extends Controller {
       checkbox.checked = checked
     })
     this.sync()
+  }
+
+  selectionCountText(count) {
+    if (this.matchingSelection) return `${this.matchingCountValue}件選択中（検索結果全体のZIP対象）`
+    if (this.scopeFieldTarget.value === "page") return `${count}件選択中（このページ内のZIP対象）`
+
+    return `${count}件選択中（明示選択）`
   }
 }
