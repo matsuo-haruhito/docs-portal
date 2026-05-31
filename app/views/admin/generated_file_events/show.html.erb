@@ -37,7 +37,8 @@
 
   <% if @related_generated_file_runs.any? %>
     <div class="rounded-lg border bg-white p-4">
-      <h2 class="mb-3 text-lg font-semibold">関連実行</h2>
+      <h2 class="mb-1 text-lg font-semibold">関連実行</h2>
+      <p class="mb-3 text-xs text-gray-500">最新200件の実行履歴から、このイベントに関連する最大10件を表示します。</p>
       <ul class="space-y-1 text-sm">
         <% @related_generated_file_runs.each do |run| %>
           <li>
