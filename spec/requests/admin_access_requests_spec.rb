@@ -122,6 +122,33 @@ RSpec.describe "Admin access requests", type: :request do
     expect(filter_form.at_css("input[name='q']")["value"]).to eq("manual")
   end
 
+  it "combines status and query search before loading access requests" do
+    pending_match = create(:access_request, requester:, requestable: document, requested_access_level: :download, reason: "Pending manual access")
+    create(:access_request,
+      requester:,
+      requestable: document,
+      requested_access_level: :view,
+      status: :approved,
+      approver: admin_user,
+      approved_at: Time.zone.local(2026, 5, 1, 12, 0, 0),
+      reason: "Approved manual access")
+    other_project = create(:project, code: "OPS", name: "Operations")
+    create(:access_request, requester:, requestable: other_project, requested_access_level: :view, reason: "Pending ops access")
+
+    sign_in_as(admin_user)
+
+    get admin_access_requests_path, params: { status: "pending", q: "manual" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("状態: 承認待ち")
+    expect(page_text).to include("Pending manual access")
+    expect(page_text).not_to include("Approved manual access")
+    expect(page_text).not_to include("Pending ops access")
+    expect(page_text).to include("表示中内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
+    expect(parsed_html.css("tbody tr").size).to eq(1)
+    expect(parsed_html.css("form[action='#{admin_access_request_path(pending_match)}']").size).to eq(2)
+  end
+
   it "shows a filtered empty state when no requests match" do
     create(:access_request, requester:, requestable: document, requested_access_level: :download)
 
