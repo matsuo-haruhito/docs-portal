@@ -205,17 +205,63 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Detect security audit dependency changes
+        id: audit-scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+            if git merge-base "origin/${{ github.base_ref }}" HEAD >/dev/null 2>&1; then
+              changed_files=$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD)
+            else
+              echo "merge base unavailable for origin/${{ github.base_ref }}...HEAD; falling back to tree diff against the pull request merge commit" >&2
+              changed_files=$(git diff --name-only "origin/${{ github.base_ref }}" HEAD)
+            fi
+
+            if echo "$changed_files" | grep -Eq '^(Gemfile|Gemfile.lock)$'; then
+              ruby=true
+            else
+              ruby=false
+            fi
+
+            if echo "$changed_files" | grep -Eq '^(package.json|package-lock.json)$'; then
+              root_js=true
+            else
+              root_js=false
+            fi
+
+            if echo "$changed_files" | grep -Eq '^docusaurus/(package.json|package-lock.json)$'; then
+              docusaurus=true
+            else
+              docusaurus=false
+            fi
+          else
+            ruby=true
+            root_js=true
+            docusaurus=true
+          fi
+
+          echo "ruby=$ruby" >> "$GITHUB_OUTPUT"
+          echo "root_js=$root_js" >> "$GITHUB_OUTPUT"
+          echo "docusaurus=$docusaurus" >> "$GITHUB_OUTPUT"
 
       - uses: ruby/setup-ruby@v1
+        if: ${{ steps.audit-scope.outputs.ruby == 'true' }}
         with:
           bundler-cache: false
 
       - name: Install Ruby dependencies
+        if: ${{ steps.audit-scope.outputs.ruby == 'true' }}
         run: |
           bundle lock --add-platform x86_64-linux
           bundle install --jobs 4 --retry 3
 
       - uses: actions/setup-node@v6
+        if: ${{ steps.audit-scope.outputs.root_js == 'true' || steps.audit-scope.outputs.docusaurus == 'true' }}
         with:
           node-version: 24
           cache: npm
@@ -225,18 +271,22 @@ jobs:
           registry-url: https://registry.npmjs.org/
 
       - name: Audit Ruby dependencies
+        if: ${{ steps.audit-scope.outputs.ruby == 'true' }}
         run: bundle exec bundler-audit check --update
 
       - name: Audit JavaScript dependencies
+        if: ${{ steps.audit-scope.outputs.root_js == 'true' }}
         run: npm audit --audit-level=high
 
       - name: Install Docusaurus dependencies
+        if: ${{ steps.audit-scope.outputs.docusaurus == 'true' }}
         working-directory: ./docusaurus
         run: |
           npm config set registry https://registry.npmjs.org/
           npm ci
 
       - name: Audit Docusaurus dependencies
+        if: ${{ steps.audit-scope.outputs.docusaurus == 'true' }}
         working-directory: ./docusaurus
         run: npm audit --audit-level=high
 
