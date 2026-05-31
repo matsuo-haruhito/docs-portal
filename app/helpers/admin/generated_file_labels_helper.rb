@@ -33,6 +33,21 @@ module Admin::GeneratedFileLabelsHelper
     "generated_file_run_bulk_retry" => "一括再実行"
   }.freeze
 
+  def generated_file_event_table_columns
+    [
+      table_preferences_column(:public_id, label: "イベントID", default_width: 160, pinned: true, sortable: true),
+      table_preferences_column(:status, label: "状態", default_width: 110, pinned: true),
+      table_preferences_column(:path, label: "パス", default_width: 320, overflow: :ellipsis, sortable: true),
+      table_preferences_column(:operation, label: "操作種別", default_width: 120),
+      table_preferences_column(:event_source, label: "発生元", default_width: 180, overflow: :ellipsis),
+      table_preferences_column(:error_message, label: "エラー", default_width: 280, overflow: :ellipsis),
+      table_preferences_column(:occurrences_count, label: "回数", default_width: 90),
+      table_preferences_column(:scheduled_at, label: "実行予定", default_width: 180, sortable: true),
+      table_preferences_column(:processed_at, label: "処理完了", default_width: 180, sortable: true),
+      table_preferences_column(:actions, label: "操作", default_width: 160, pinned: true)
+    ]
+  end
+
   def generated_file_run_table_columns
     [
       table_preferences_column(:public_id, label: "実行ID", default_width: 160, pinned: true, sortable: true),
