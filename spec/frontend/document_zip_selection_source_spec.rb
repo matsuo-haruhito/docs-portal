@@ -16,9 +16,19 @@ RSpec.describe "document zip selection source" do
       expect(view_source).to include('document-zip-selection#selectPage')
       expect(view_source).to include('document-zip-selection#selectMatching')
       expect(view_source).to include('document-zip-selection#clearSelection')
-      expect(view_source).to include('このページを全選択')
-      expect(view_source).to include('検索結果#{@selectable_documents_count}件を全選択')
+      expect(view_source).to include('このページ内の選択可能#{page_selectable_documents_count}件を全選択')
+      expect(view_source).to include('検索結果全体のZIP対象#{@selectable_documents_count}件を全選択')
       expect(view_source).to include('選択解除')
+    end
+  end
+
+  it "shows the search total and selectable zip totals as separate counts" do
+    aggregate_failures do
+      expect(view_source).to include('@documents_count')
+      expect(view_source).to include('@selectable_documents_count')
+      expect(view_source).to include('page_selectable_documents_count = @documents.count { |document| document.latest_version.present? }')
+      expect(view_source).to include('ZIP対象: 検索結果全体')
+      expect(view_source).to include('最新版がない文書はZIP対象にできないため、チェックできません。')
     end
   end
 
@@ -42,8 +52,10 @@ RSpec.describe "document zip selection source" do
       expect(controller_source).to include('this.scopeFieldTarget.value = "explicit"')
       expect(controller_source).to include("if (event)")
       expect(controller_source).to include("if (checkbox.disabled) return")
-      expect(controller_source).to include('`${this.matchingCountValue}件選択中（検索結果全体）`')
-      expect(controller_source).to include('`${count}件選択中`')
+      expect(controller_source).to include("selectionCountText(count)")
+      expect(controller_source).to include('`${this.matchingCountValue}件選択中（検索結果全体のZIP対象）`')
+      expect(controller_source).to include('`${count}件選択中（このページ内のZIP対象）`')
+      expect(controller_source).to include('`${count}件選択中（明示選択）`')
     end
   end
 end
