@@ -29,7 +29,7 @@ module ApplicationHelper
   end
 
   def document_set_visibility_policy_label(document_set_or_value)
-    value = document_set_or_value.respond_to?(:visibility_policy) ? document_set_or_value.visibility_policy : document_set_or_value
+    value = document_set_or_value.respond_to?(:visibility_policy) ? document_set_or_value.visibility_policy : document_or_value
     localized_label("document_sets.visibility_policy", value)
   end
 
@@ -333,6 +333,22 @@ module ApplicationHelper
     end
 
     Array(warnings).compact_blank
+  end
+
+  def external_folder_sync_force_apply_warning_count(run)
+    run&.summary_json&.fetch("conflict_warnings_count", 0).to_i
+  end
+
+  def external_folder_sync_force_apply_warning_examples(run, limit: 3)
+    Array(run&.result_json).filter_map do |plan|
+      warnings = external_folder_sync_conflict_warnings(plan).map(&:to_s)
+      next if warnings.blank?
+
+      {
+        path: plan["path"].presence || "-",
+        warnings: warnings.first(2)
+      }
+    end.first(limit)
   end
 
   def external_folder_sync_plan_reasons(plan_or_item)
