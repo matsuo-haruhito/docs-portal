@@ -1,6 +1,7 @@
 import "./application.css"
 import "./bootstrap_overrides.css"
 import "./document_version_diff_display_mode.css"
+import "./document_version_tabs.css"
 import "@hotwired/turbo-rails"
 import { Application } from "@hotwired/stimulus"
 import { RailsTablePreferencesController } from "rails_table_preferences"
@@ -16,6 +17,7 @@ import ManualDocumentUploadController from "../controllers/manual_document_uploa
 import PreviewTableResizerController from "../controllers/preview_table_resizer_controller"
 import PreviewToolsController from "../controllers/preview_tools_controller"
 import SidebarController from "../controllers/sidebar_controller"
+import "../controllers/document_version_tabs"
 
 const application = Application.start()
 application.register("rails-table-preferences", RailsTablePreferencesController)
