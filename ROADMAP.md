@@ -14,6 +14,18 @@
 
 導入済み基盤を、実際の管理画面や文書閲覧画面へ段階的に展開する。
 
+#### 展開候補の現在地
+
+| 領域 | 現在地 | 代表 issue / PR | 次に見る境界 |
+| --- | --- | --- | --- |
+| `rails_table_preferences` 一覧 | 実装済み代表画面あり | `admin/documents`, `admin/projects`, `admin/users`, `admin/external_folder_sync_sources`, `admin/document_sets` | 新しい一覧へ広げる前に、既存画面の column metadata、filter / preset、empty state、保存済み設定 smoke を確認する |
+| `rails_fields_kit` フォーム | `admin/document_sets` が host app 側の実装済み代表例 | #1348 / PR #1366 で `document_set_items` の対象文書 local filter と fixed version selector の wiring を追加済み | remote search endpoint、table replacement、他フォームへの横展開は別 issue に分ける |
+| `tree_view` 連携 | 候補整理段階 | 文書ツリーの展開状態、選択状態、表示列状態の保存候補 | ツリー UX と table state の責務境界が決まるまでは、実装済み current support として書かない |
+
+`docs-portal` 側 issue では、画面固有の view、helper、route、params、Stimulus wiring、request / system spec を扱う。gem の public API、import path、controller registration、Vite alias 前提、導入手順の不足が論点になる場合は、upstream gem 側の issue / docs と分けて確認する。
+
+新しい first slice が merge されたら、該当画面をこの表の「現在地」に反映し、open PR の番号だけが ROADMAP 上に残らないようにする。closed issue の網羅表にはせず、次に agent が見る判断材料だけを短く残す。
+
 #### 一覧画面の `rails_table_preferences` 化
 
 列が多い、または利用頻度が高い一覧から優先して、表示列、列幅、順序、フィルタ状態を保存できるようにする。
