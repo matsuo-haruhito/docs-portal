@@ -45,6 +45,11 @@
   <%= form_with url: admin_generated_file_events_path, method: :get, local: true, class: "rounded-lg border bg-white p-4" do |form| %>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
       <div>
+        <%= form.label :q, "イベントID / パス / エラー", class: "block text-sm font-semibold" %>
+        <%= form.search_field :q, value: @filters[:q], class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">ログ断片から探します。パス内の \ は / として検索します。</p>
+      </div>
+      <div>
         <%= form.label :status, "状態", class: "block text-sm font-semibold" %>
         <%= form.select :status, options_for_select([["すべて", ""]] + GeneratedFileEvent.statuses.keys.map { [generated_file_event_status_label(_1), _1] }, @filters[:status]), {}, class: "mt-1 w-full rounded border px-2 py-1" %>
       </div>
