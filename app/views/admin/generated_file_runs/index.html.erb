@@ -5,6 +5,9 @@
   bulk_retry_target_count = @bulk_retry_target_count.to_i
   bulk_retry_available = bulk_retry_target_count.positive?
   bulk_retry_button_classes = bulk_retry_available ? "rounded bg-blue-600 px-3 py-2 text-sm text-white" : "rounded bg-gray-300 px-3 py-2 text-sm text-gray-600 cursor-not-allowed"
+  table_key = :admin_generated_file_runs
+  table_columns = generated_file_run_table_columns
+  table_settings = rails_table_preference_settings(table_key: table_key)
 %>
 
 <div class="space-y-6">
@@ -92,36 +95,42 @@
     total_pages: @total_pages,
     path: ->(target_page) { admin_generated_file_runs_path(request.query_parameters.merge(page: target_page, per_page: @per_page)) } %>
 
+  <% if @generated_file_runs.any? %>
+    <div class="rounded-lg border bg-white p-4">
+      <%= table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "生成ファイル実行履歴一覧の表示設定") %>
+    </div>
+  <% end %>
+
   <div class="overflow-x-auto rounded-lg border bg-white">
-    <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <%= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do %>
       <thead class="bg-gray-50">
         <tr>
-          <th class="px-4 py-3 text-left font-semibold">実行ID</th>
-          <th class="px-4 py-3 text-left font-semibold">状態</th>
-          <th class="px-4 py-3 text-left font-semibold">ジョブ</th>
-          <th class="px-4 py-3 text-left font-semibold">ジェネレーター</th>
-          <th class="px-4 py-3 text-left font-semibold">出力先</th>
-          <th class="px-4 py-3 text-left font-semibold">イベント発生元</th>
-          <th class="px-4 py-3 text-left font-semibold">開始</th>
-          <th class="px-4 py-3 text-left font-semibold">終了</th>
-          <th class="px-4 py-3 text-left font-semibold">操作</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="public_id">実行ID</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="status">状態</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="job_id">ジョブ</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="generator">ジェネレーター</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="output_writer">出力先</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="event_source">イベント発生元</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="started_at">開始</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="finished_at">終了</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="actions">操作</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
         <% if @generated_file_runs.any? %>
           <% @generated_file_runs.each do |run| %>
             <tr>
-              <td class="px-4 py-3 font-mono">
+              <td class="px-4 py-3 font-mono" data-rails-table-preferences-column-key="public_id">
                 <%= link_to run.public_id, admin_generated_file_run_path(run.public_id, detail_path_params), class: "text-blue-600 underline" %>
               </td>
-              <td class="px-4 py-3"><%= generated_file_run_status_label(run.status) %></td>
-              <td class="px-4 py-3 font-mono"><%= run.job_id %></td>
-              <td class="px-4 py-3 font-mono"><%= run.generator.presence || "-" %></td>
-              <td class="px-4 py-3 font-mono"><%= run.output_writer.presence || "-" %></td>
-              <td class="px-4 py-3"><%= generated_file_source_label(run.event_source) %></td>
-              <td class="px-4 py-3"><%= l(run.started_at, format: :long) if run.started_at %></td>
-              <td class="px-4 py-3"><%= l(run.finished_at, format: :long) if run.finished_at %></td>
-              <td class="px-4 py-3">
+              <td class="px-4 py-3" data-rails-table-preferences-column-key="status"><%= generated_file_run_status_label(run.status) %></td>
+              <td class="px-4 py-3 font-mono" data-rails-table-preferences-column-key="job_id"><%= run.job_id %></td>
+              <td class="px-4 py-3 font-mono" data-rails-table-preferences-column-key="generator"><%= run.generator.presence || "-" %></td>
+              <td class="px-4 py-3 font-mono" data-rails-table-preferences-column-key="output_writer"><%= run.output_writer.presence || "-" %></td>
+              <td class="px-4 py-3" data-rails-table-preferences-column-key="event_source"><%= generated_file_source_label(run.event_source) %></td>
+              <td class="px-4 py-3" data-rails-table-preferences-column-key="started_at"><%= l(run.started_at, format: :long) if run.started_at %></td>
+              <td class="px-4 py-3" data-rails-table-preferences-column-key="finished_at"><%= l(run.finished_at, format: :long) if run.finished_at %></td>
+              <td class="px-4 py-3" data-rails-table-preferences-column-key="actions">
                 <div class="flex gap-2">
                   <%= link_to "詳細", admin_generated_file_run_path(run.public_id, detail_path_params), class: "rounded border px-2 py-1 text-xs" %>
                   <%= button_to "再実行", retry_run_admin_generated_file_run_path(run.public_id, detail_path_params), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white" %>
@@ -131,12 +140,12 @@
           <% end %>
         <% else %>
           <tr>
-            <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+            <td colspan="<%= table_columns.size %>" class="px-4 py-8 text-center text-gray-500">
               <%= has_active_filters ? "条件に一致する生成ファイル実行履歴はありません。" : "生成ファイル実行履歴はまだありません。" %>
             </td>
           </tr>
         <% end %>
       </tbody>
-    </table>
+    <% end %>
   </div>
 </div>
