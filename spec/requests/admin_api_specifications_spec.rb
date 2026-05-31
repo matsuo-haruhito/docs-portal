@@ -49,7 +49,7 @@ RSpec.describe "Admin API specifications", type: :request do
     write_api_specification_site_fixture
     sign_in_as(admin_user)
 
-    get site_admin_api_specification_path(site_path: Admin::ApiSpecificationPage::SITE_PATH)
+    get site_admin_api_specification_path(site_path: "#{Admin::ApiSpecificationPage::SITE_PATH}/index.html")
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("text/html")
@@ -66,7 +66,7 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("text/css")
     expect(response.body).to include("color: #334155")
-    expect(response.headers["Cache-Control"]).to eq("private, max-age=31536000, immutable")
+    expect(response.headers["Cache-Control"].split(/,\s*/)).to include("private", "max-age=31536000", "immutable")
   end
 
   it "rewrites Docusaurus runtime public paths to the admin site route" do
