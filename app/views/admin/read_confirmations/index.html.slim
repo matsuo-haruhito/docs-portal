@@ -1,0 +1,78 @@
+- page_title "既読確認内訳"
+
+h1 既読確認内訳
+= render "admin/nav"
+
+section.card
+  h2 絞り込み
+  = form_with url: admin_read_confirmations_path, method: :get, local: true do |form|
+    .form-grid
+      = form.rfk_select :project_id,
+        collection: @projects.map { [[_1.code, _1.name].compact_blank.join(" / "), _1.id] },
+        wrapper: true,
+        label: "案件",
+        placeholder: "案件を選択",
+        include_blank: "選択してください",
+        allow_clear: true,
+        selected: @selected_project&.id
+      div
+        = form.label :document_slug, "文書URL識別子"
+        = form.search_field :document_slug, value: @document_slug
+    p.actions
+      = form.submit "表示"
+      = link_to "条件をクリア", admin_read_confirmations_path
+
+- if @selected_project
+  section.card
+    h2 対象
+    p
+      | 案件:
+      strong = " #{@selected_project.name}"
+      |  (
+      = @selected_project.code
+      | )
+    - if @document_slug.present?
+      p
+        | 文書URL識別子:
+        strong = " #{@document_slug}"
+        - if @selected_document
+          |  / 文書名:
+          strong = " #{@selected_document.title}"
+      - unless @selected_document
+        p.muted 指定した文書はこの案件に見つかりません。文書利用状況の文書名リンクから slug を確認してください。
+    - else
+      p.muted 文書URL識別子を指定しない場合は、案件内の既読確認を新しい順に表示します。
+    p
+      = link_to "文書利用状況へ", admin_document_usage_reports_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
+    p.muted
+      | 表示中:
+      strong = " #{@read_confirmations.size}件"
+      |  / 最新200件までを表示
+
+  - if @read_confirmations.any?
+    table
+      thead
+        tr
+          th 確認日時
+          th 文書
+          th 確認者
+          th 会社
+          th 文書URL識別子
+      tbody
+        - @read_confirmations.each do |confirmation|
+          tr
+            td = confirmation.confirmed_at.strftime("%Y-%m-%d %H:%M:%S")
+            td = link_to confirmation.document.title, project_document_path(confirmation.document.project, confirmation.document.slug), data: { turbo_frame: "_top" }
+            td = "#{confirmation.user.display_name} / #{confirmation.user.email_address}"
+            td = confirmation.user.company&.display_name || "-"
+            td
+              code = confirmation.document.slug
+  - else
+    section.card
+      h2 既読確認はありません
+      - if @document_slug.present? && @selected_document.blank?
+        p.muted 指定した文書URL識別子に一致する文書がないため、既読確認は表示されません。
+      - else
+        p.muted 選択した条件に一致する既読確認はありません。
+- else
+  p.muted 案件を選択すると既読確認の内訳を表示します。
