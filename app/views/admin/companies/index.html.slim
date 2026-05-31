@@ -1,10 +1,11 @@
 - page_title "会社マスタ"
+- company_form_title = admin_user? ? "新規登録" : "自社会社情報の更新"
 
 h1 会社マスタ
 = render "admin/nav"
 
 .card
-  h2 新規登録
+  h2 = company_form_title
   = render "form", company: @company
 
 = table_tag do
@@ -24,4 +25,5 @@ h1 会社マスタ
         td = company.active? ? "有効" : "無効"
         td.actions
           = edit_link_to "編集", edit_admin_company_path(company)
-          = delete_link_to "削除", admin_company_path(company), confirm: "会社「#{company.display_name}」を削除しますか？所属ユーザーや文書権限への影響を確認してください。"
+          - if admin_user?
+            = delete_link_to "削除", admin_company_path(company), confirm: "会社「#{company.display_name}」を削除しますか？所属ユーザーや文書権限への影響を確認してください。"

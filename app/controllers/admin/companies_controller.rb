@@ -5,7 +5,7 @@ class Admin::CompaniesController < Admin::BaseController
 
   def index
     @companies = company_scope.order(:domain)
-    @company = company_master_admin? ? current_user.company : Company.new(active: true)
+    @company = admin_user? ? Company.new(active: true) : current_user.company
   end
 
   def create
