@@ -44,7 +44,7 @@ NAS やローカルフォルダを docs-portal に同期するための常駐ク
 | `relative_path` | 同期ルートからの相対パス。省略時は upload file の `original_filename` を使う |
 | `source_path` | クライアント上のフルパスやNASパス |
 | `source_name` | 同期元名。例: `customer-nas-sync` |
-| `content_hash` | ファイル実体の SHA-256 |
+| `content_hash` | ファイル実体の SHA-256。`sha256:` 接頭辞付き、または 64 桁 hex で送る |
 | `validate_only` | 任意。`true` でも dry-run 作成になるが、`file` があれば省略可 |
 
 `relative_path` はサーバー側でも traversal / absolute path / Windows full path を拒否する。
@@ -52,6 +52,7 @@ NAS やローカルフォルダを docs-portal に同期するための常駐ク
 
 `content_hash` はアップロード破損検知に使う。
 サーバーは受信ファイルの SHA-256 と照合し、不一致なら dry-run を作らない。
+`sha256:` 接頭辞付きで送っても照合時には 64 桁 hex へ正規化される。
 
 レスポンスの `file_upload_preview.content_hash` は、クライアントが送った値ではなく、サーバーが実際に受信したファイルから計算した SHA-256 として扱う。
 クライアントは送信前に計算した SHA-256 とレスポンスの `file_upload_preview.content_hash` をログに残すと、再送や問い合わせ時に追跡しやすい。
