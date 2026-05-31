@@ -59,9 +59,9 @@ class Admin::ProjectsController < Admin::BaseController
     keyword = @project_filter_params["q"].to_s.strip
     return scope if keyword.blank?
 
-    pattern = "%#{Project.sanitize_sql_like(keyword)}%"
+    pattern = "%#{Project.sanitize_sql_like(keyword.downcase)}%"
     scope.where(
-      "projects.code LIKE :keyword OR projects.name LIKE :keyword OR projects.description LIKE :keyword",
+      "LOWER(projects.code) LIKE :keyword OR LOWER(projects.name) LIKE :keyword OR LOWER(projects.description) LIKE :keyword",
       keyword: pattern
     )
   end
