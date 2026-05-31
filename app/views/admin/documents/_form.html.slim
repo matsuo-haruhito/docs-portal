@@ -3,9 +3,13 @@
 - form_url = document.persisted? ? admin_document_path(document.public_id) : admin_documents_path
 = form_with model: [:admin, document], url: form_url do |form|
   .form-grid
-    label
-      | 案件
-      = form.collection_select :project_id, @projects, :id, :name
+    = form.rfk_select :project_id,
+      collection: @projects,
+      collection_value_method: :id,
+      collection_label_method: :name,
+      wrapper: true,
+      label: "案件",
+      placeholder: "案件を選択"
     label
       | 文書名
       = form.text_field :title
