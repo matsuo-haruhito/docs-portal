@@ -11,6 +11,10 @@ RSpec.describe "Admin generated file events", type: :request do
     parsed_html.css("a[href]").map { _1["href"] }
   end
 
+  def bulk_retry_button(filters = {})
+    parsed_html.at_css(%(form[action="#{retry_failed_admin_generated_file_events_path(filters)}"] button[type="submit"))
+  end
+
   describe "GET /admin/generated_file_events" do
     it "shows generated file events for admin users" do
       sign_in_as(admin_user)
@@ -24,6 +28,7 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include("docs/source.yml")
       expect(response.body).to include("再dispatch")
       expect(response.body).to include("失敗分を一括再dispatch")
+      expect(response.body).to include("現在の条件で再dispatch対象: 0 件")
       expect(response.body).to include("一括再dispatchは古い失敗分から最大100件です。")
     end
 
@@ -54,8 +59,56 @@ RSpec.describe "Admin generated file events", type: :request do
       get admin_generated_file_events_path(filters)
 
       expect(response).to have_http_status(:ok)
-      bulk_retry_form = parsed_html.at_css(%(form[action="#{retry_failed_admin_generated_file_events_path(filters)}"]))
-      expect(bulk_retry_form).to be_present
+      expect(bulk_retry_button(filters)).to be_present
+    end
+
+    it "shows a filtered bulk retry target count and keeps the action enabled" do
+      sign_in_as(admin_user)
+      matched = create_event!(path: "storage/document_files/source.yml", status: :failed, event_source: "manual_document_upload", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
+      create_event!(path: "storage/document_files/processed.yml", status: :processed, event_source: "manual_document_upload", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
+      create_event!(path: "storage/other/source.yml", status: :failed, event_source: "manual_document_upload", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
+      create_event!(path: "storage/document_files/other-source.yml", status: :failed, event_source: "artifact_import", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
+      filters = {
+        status: "failed",
+        event_source: "manual_document_upload",
+        path: "document_files",
+        scheduled_from: "2026-05-10",
+        scheduled_to: "2026-05-10"
+      }
+
+      get admin_generated_file_events_path(filters)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(matched.public_id)
+      expect(response.body).to include("現在の条件で再dispatch対象: 1 件")
+      expect(bulk_retry_button(filters)).to be_present
+      expect(bulk_retry_button(filters)["disabled"]).to be_nil
+    end
+
+    it "disables bulk retry when the current filters have no failed targets" do
+      sign_in_as(admin_user)
+      create_event!(path: "docs/processed.yml", status: :processed)
+
+      get admin_generated_file_events_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("現在の条件で再dispatch対象: 0 件")
+      expect(response.body).to include("対象がないため一括再dispatchできません。")
+      expect(bulk_retry_button).to be_present
+      expect(bulk_retry_button["disabled"]).to eq("disabled")
+    end
+
+    it "caps the displayed bulk retry target count at the dispatch limit" do
+      sign_in_as(admin_user)
+      101.times do |i|
+        create_event!(path: "docs/failed-#{i}.yml", status: :failed)
+      end
+
+      get admin_generated_file_events_path(status: "failed")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("現在の条件で再dispatch対象: 100 件")
+      expect(bulk_retry_button(status: "failed")["disabled"]).to be_nil
     end
 
     it "keeps active filters on status quick links" do
