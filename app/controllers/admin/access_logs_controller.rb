@@ -49,6 +49,12 @@ class Admin::AccessLogsController < Admin::BaseController
   end
 
   def filter_params
-    params.permit(:action_type, :target_type, :project_id, :company_id, :user_id, :document_q, :from, :to)
+    permitted = params.permit(:action_type, :target_type, :project_id, :company_id, :user_id, :document_q, :from, :to)
+    permitted[:target_type] = nil if unknown_target_type_filter?(permitted[:target_type])
+    permitted
+  end
+
+  def unknown_target_type_filter?(target_type)
+    target_type.present? && AccessLog::TARGET_TYPE_FILTERS.exclude?(target_type)
   end
 end

@@ -120,6 +120,22 @@ RSpec.describe "Admin access logs", type: :request do
     expect(log_target_names).to eq(["audit.zip"])
   end
 
+  it "ignores unknown target type filters" do
+    base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
+    create_access_log!(action_type: :download, target_type: "zip", target_name: "audit.zip", accessed_at: base_time)
+    create_access_log!(action_type: :view, target_type: "page", target_name: "index.html", accessed_at: base_time + 1.second)
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(target_type: "unknown")
+
+    expect(response).to have_http_status(:ok)
+    expect(log_target_names).to eq(["index.html", "audit.zip"])
+    expect(parsed_html.at_css('select[name="target_type"] option[value="unknown"][selected]')).to be_nil
+    expect(page_text).to include("表示中: 2件 / 最新200件までを表示")
+    expect(page_text).not_to include("絞り込み中")
+  end
+
   it "shows and filters AI context export access logs by target type" do
     create_access_log!(action_type: :download, target_type: "ai_context", target_name: "mode=full")
     create_access_log!(action_type: :view, target_type: "page", target_name: "project page")
