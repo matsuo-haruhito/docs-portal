@@ -152,6 +152,56 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(sort_order_option["value"]).to eq("last_accessed_desc")
   end
 
+  it "falls back to default filter options when unknown filter params are provided" do
+    unused_document = create(:document, project:, title: "Checklist", slug: "checklist")
+    create(:access_log, project:, document:, user: viewer, company:, action_type: :view, accessed_at: Time.zone.local(2026, 5, 1, 10, 0, 0))
+
+    sign_in_as(admin_user)
+
+    get admin_document_usage_reports_path(project_id: project.id, usage_filter: "archived", sort_order: "updated_desc")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 2件")
+    expect(page_text).to match(/利用状況:\s*すべて/)
+    expect(page_text).to match(/並び順:\s*タイトル順/)
+    expect(row_titles).to include("Manual", "Checklist")
+
+    usage_filter_option = parsed_html.at_css("select[name='usage_filter'] option[selected]")
+    expect(usage_filter_option).to be_present
+    expect(usage_filter_option["value"]).to eq("all")
+
+    sort_order_option = parsed_html.at_css("select[name='sort_order'] option[selected]")
+    expect(sort_order_option).to be_present
+    expect(sort_order_option["value"]).to eq("title")
+    expect(audit_log_link(document.slug)).to be_present
+    expect(audit_log_link(unused_document.slug)).not_to be_present
+  end
+
+  it "returns to the project selection state when project_id does not match a readable project" do
+    project
+    sign_in_as(admin_user)
+
+    get admin_document_usage_reports_path(project_id: "999999", usage_filter: "used", sort_order: "last_accessed_desc")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("案件を選択すると集計結果を表示します。")
+    expect(page_text).not_to include("集計サマリ")
+    expect(page_text).not_to include("文書利用一覧の表示設定")
+    expect(parsed_html.css("table tbody tr")).to be_empty
+
+    selected_project_option = parsed_html.at_css("select[name='project_id'] option[selected]")
+    expect(selected_project_option).to be_nil
+
+    usage_filter_option = parsed_html.at_css("select[name='usage_filter'] option[selected]")
+    expect(usage_filter_option).to be_present
+    expect(usage_filter_option["value"]).to eq("used")
+
+    sort_order_option = parsed_html.at_css("select[name='sort_order'] option[selected]")
+    expect(sort_order_option).to be_present
+    expect(sort_order_option["value"]).to eq("last_accessed_desc")
+    expect(clear_link).to be_present
+  end
+
   it "shows an empty-state message when the selected filter has no matching rows" do
     create(:document, project:, title: "Checklist", slug: "checklist")
 
