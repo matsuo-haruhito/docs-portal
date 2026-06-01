@@ -90,7 +90,7 @@ RSpec.describe "Admin bulk edit dry runs", type: :request do
             published_from: ""
           },
           tag_changes: {
-            add_tag_names: " ,、\n ",
+            add_tag_names: "",
             remove_tag_names: ""
           },
           archive_action: "delete"
