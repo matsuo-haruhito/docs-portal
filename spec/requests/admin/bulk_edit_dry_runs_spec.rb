@@ -69,7 +69,7 @@ RSpec.describe "Admin bulk edit dry runs", type: :request do
     it "passes an empty changes hash when every change input is blank or unsupported" do
       sign_in_as(admin_user)
       document = create(:document)
-      dry_run = create(:bulk_edit_dry_run, created_by: admin_user, target_document_ids: [document.id], params_json: {})
+      dry_run = create(:bulk_edit_dry_run, created_by: admin_user, target_document_ids: [document.id])
       preview_service = double("DocumentBulkEditPreview", call: double(bulk_edit_dry_run: dry_run))
 
       expect(preview_class).to receive(:new).with(
