@@ -15,6 +15,7 @@ class Admin::AccessLogsController < Admin::BaseController
     @has_previous_page = @page > 1
     @has_next_page = @access_logs.size > ACCESS_LOGS_PER_PAGE
     @access_logs = @access_logs.first(ACCESS_LOGS_PER_PAGE)
+    @reached_display_limit = @access_logs.size >= ACCESS_LOGS_PER_PAGE
     @pagination_params = pagination_params
   end
 
