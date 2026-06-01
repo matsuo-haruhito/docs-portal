@@ -18,6 +18,7 @@
 - `#1509`: 完了済み。`docs/internal-ui-gem-public-surface-package-verification-matrix.md` を追加した matrix issue として参照する。
 - `#1470`: state cue inventory の parallel design lane。dependency bump、target SHA、Gemfile / lockfile 更新とは混ぜない。
 - `#1552`: この current queue を `docs/関連gem連携調査runbook.md` から誤読しないための docs sync issue。
+- `#1616`: release train 前に見る upstream PR readiness snapshot。target SHA の最終決定ではなく、open / merged upstream PR を docs-only、public API / helper、UI behavior、stacked PR に分ける入口として読む。
 
 ## historical / old child numbers
 
@@ -34,6 +35,7 @@
 
 ## 先に見る docs
 
+- `docs/internal-ui-gem-upstream-readiness-snapshot.md`: release train 前に確認する upstream open / recently merged PR の時点 snapshot。target SHA 決定ではなく、再確認対象と human gate を分ける入口
 - `docs/internal-gem-release-train-smoke.md`: human handoff、representative smoke、rollback target、update log template
 - `docs/internal-ui-gem-public-surface-package-verification-matrix.md`: package-root export、direct entrypoint、manifest / package verification の境界
 - `docs/関連gem連携調査runbook.md`: host app 採用パターン、screen-by-screen adoption、upstream docs 入口
