@@ -2,8 +2,8 @@ require "rails_helper"
 
 RSpec.describe "Admin bulk edit dry runs", type: :request do
   let(:admin_user) { create(:user, :admin) }
-  let(:preview_class) { Class.new }
-  let(:executor_class) { Class.new }
+  let(:preview_class) { double("DocumentBulkEditPreview") }
+  let(:executor_class) { double("DocumentBulkEditExecutor") }
 
   before do
     stub_const("DocumentBulkEditPreview", preview_class)
