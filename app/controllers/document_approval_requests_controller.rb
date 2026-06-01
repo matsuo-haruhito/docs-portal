@@ -13,11 +13,13 @@ class DocumentApprovalRequestsController < BaseController
     end
 
     @status_filter = normalized_status_filter
+    @query = normalized_query
     @pending_count = base_relation.pending.count
     @approved_count = base_relation.approved.count
     @cancelled_count = base_relation.cancelled.count
 
     scoped_relation = @status_filter.present? ? base_relation.where(status: @status_filter) : base_relation
+    scoped_relation = apply_query_filter(scoped_relation) if @query.present?
     @document_approval_requests = scoped_relation.recent_first
     @document_approval_request_sections = build_sections(@document_approval_requests)
   end
@@ -82,6 +84,34 @@ class DocumentApprovalRequestsController < BaseController
 
   def normalized_status_filter
     params[:status].presence_in(DocumentApprovalRequest.statuses.keys)
+  end
+
+  def normalized_query
+    params[:q].to_s.strip.presence
+  end
+
+  def apply_query_filter(relation)
+    pattern = "%#{ActiveRecord::Base.sanitize_sql_like(@query)}%"
+
+    relation.left_outer_joins(:document).where(
+      <<~SQL.squish,
+        document_approval_requests.title ILIKE :pattern
+        OR document_approval_requests.body ILIKE :pattern
+        OR documents.title ILIKE :pattern
+        OR documents.slug ILIKE :pattern
+        OR EXISTS (
+          SELECT 1 FROM users requester_search
+          WHERE requester_search.id = document_approval_requests.requester_id
+            AND requester_search.name ILIKE :pattern
+        )
+        OR EXISTS (
+          SELECT 1 FROM users approver_search
+          WHERE approver_search.id = document_approval_requests.approver_id
+            AND approver_search.name ILIKE :pattern
+        )
+      SQL
+      pattern:
+    )
   end
 
   def build_sections(requests)
