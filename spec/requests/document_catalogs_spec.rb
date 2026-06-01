@@ -58,6 +58,30 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response).to have_http_status(:forbidden)
   end
 
+  it "forbids external users without project membership from the catalog index" do
+    other_external_user = create(:user, :external, company:)
+    create(:document_catalog, project:, name: "Customer Pack", visibility_policy: :restricted_external)
+
+    sign_in_as(other_external_user)
+
+    get project_document_catalogs_path(project)
+
+    expect(response).to have_http_status(:forbidden)
+    expect(response.body).not_to include("Customer Pack")
+  end
+
+  it "forbids external users without project membership from catalog details" do
+    other_external_user = create(:user, :external, company:)
+    catalog = create(:document_catalog, project:, name: "Customer Pack", visibility_policy: :restricted_external)
+
+    sign_in_as(other_external_user)
+
+    get project_document_catalog_path(project, catalog)
+
+    expect(response).to have_http_status(:forbidden)
+    expect(response.body).not_to include("Customer Pack")
+  end
+
   it "allows internal users to view internal-only catalogs" do
     document = create(:document, project:, title: "Internal Manual", slug: "internal-manual", visibility_policy: :internal_only)
     version = create(:document_version, document:, version_label: "v1.0.0", status: :published)

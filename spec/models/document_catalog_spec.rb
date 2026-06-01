@@ -29,6 +29,21 @@ RSpec.describe DocumentCatalog, type: :model do
     expect(catalog.viewable_by?(external_user)).to be(false)
   end
 
+  it "hides catalogs from inactive users even when they have project membership" do
+    inactive_user = create(:user, :external, company:, active: false)
+    create(:project_membership, project:, user: inactive_user)
+    catalog = create(:document_catalog, project:, visibility_policy: :restricted_external)
+
+    expect(catalog.viewable_by?(inactive_user)).to be(false)
+  end
+
+  it "hides restricted catalogs from external users without project membership" do
+    other_external_user = create(:user, :external, company:)
+    catalog = create(:document_catalog, project:, visibility_policy: :restricted_external)
+
+    expect(catalog.viewable_by?(other_external_user)).to be(false)
+  end
+
   it "shows restricted catalogs to external users who can view the project" do
     catalog = create(:document_catalog, project:, visibility_policy: :restricted_external)
 
