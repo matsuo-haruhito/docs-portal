@@ -135,11 +135,12 @@
   <article class="card">
     <h2>最近見た文書</h2>
     <% if @recent_documents.any? %>
+      <p class="muted">あなたの閲覧履歴から表示しています。</p>
       <ul class="resource-list">
         <% @recent_documents.each do |document| %>
           <li>
             <strong><%= link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" } %></strong>
-            <span class="muted"><%= document.project.name %></span>
+            <span class="muted"><%= document.project.name %> / あなたが最近閲覧</span>
           </li>
         <% end %>
       </ul>
@@ -152,11 +153,12 @@
   <article class="card">
     <h2>最近更新された文書</h2>
     <% if @recently_updated_documents.any? %>
+      <p class="muted">閲覧可能な文書を更新日時の新しい順に表示しています。</p>
       <ul class="resource-list">
         <% @recently_updated_documents.each do |document| %>
           <li>
             <strong><%= link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" } %></strong>
-            <span class="muted"><%= document.project.name %></span>
+            <span class="muted"><%= document.project.name %> / 更新日時 <%= l(document.updated_at, format: :short) %></span>
           </li>
         <% end %>
       </ul>
