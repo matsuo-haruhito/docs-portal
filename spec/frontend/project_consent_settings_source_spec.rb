@@ -28,6 +28,17 @@ RSpec.describe "admin/project_consent_settings admin UI source" do
     end
   end
 
+  it "keeps list filters separate from table preferences" do
+    aggregate_failures do
+      expect(index_source).to include('class: "filters"')
+      expect(index_source).to include("select_tag :project_id")
+      expect(index_source).to include("select_tag :consent_term_id")
+      expect(index_source).to include("select_tag :enabled")
+      expect(index_source).to include("絞り込み解除")
+      expect(index_source).to include("列の表示設定は下の table preferences")
+    end
+  end
+
   it "defines helper metadata for the admin table and consent term labels" do
     aggregate_failures do
       expect(helper_source).to include("def project_consent_setting_table_columns")
