@@ -55,6 +55,10 @@ RSpec.describe "Consents", type: :request do
 
     follow_redirect!
     expect(page_text).to include("Project Terms")
+    expect(page_text).to include("対象:")
+    expect(page_text).to include("案件 / Consent Project")
+    expect(page_text).to include("種別:")
+    expect(page_text).to include("案件")
 
     expect do
       post consents_path, params: { target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to: project_path(project) }
@@ -121,9 +125,9 @@ RSpec.describe "Consents", type: :request do
     FileUtils.rm_rf(Rails.root.join("storage", "document_files", "spec", "consents"))
   end
 
-  it "shows active terms and the user's consent history with localized target labels" do
+  it "shows active terms and the user's consent history with localized target and scope labels" do
     file = create(:document_file, document_version: version, file_name: "history.pdf")
-    term = create(:consent_term, title: "Visible Terms", body: "Handle carefully", version_label: "v1")
+    term = create(:consent_term, title: "Visible Terms", body: "Handle carefully", version_label: "v1", consent_scope: :download)
 
     create(:user_consent, user:, consent_term: term, target: nil, consent_term_version_label: "v1")
     create(:user_consent, user:, consent_term: term, target: project, consent_term_version_label: "v1")
@@ -137,6 +141,8 @@ RSpec.describe "Consents", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("Visible Terms")
     expect(page_text).to include("Handle carefully")
+    expect(page_text).to include("種別")
+    expect(page_text).to include("ダウンロード")
     expect(page_text).to include("v1")
     expect(page_text).to include("全体")
     expect(page_text).to include("案件 / Consent Project")
@@ -147,5 +153,6 @@ RSpec.describe "Consents", type: :request do
     expect(page_text).not_to include("Document / Consent Document")
     expect(page_text).not_to include("DocumentFile / history.pdf")
     expect(page_text).not_to include("DocumentVersion / v1.0.0")
+    expect(page_text).not_to include(">download<")
   end
 end
