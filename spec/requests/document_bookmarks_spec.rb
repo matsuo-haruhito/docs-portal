@@ -36,11 +36,56 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response.body).to include("よく開く文書をここからすぐ確認できます。")
     expect(response.body).to include("あとで確認したい文書を一時的に集めておけます。")
     expect(response.body).to include("閲覧履歴から自動で表示されます。お気に入りや後で読むとは別の一覧です。")
+    expect(response.body).to include("最近見た文書を検索")
+    expect(response.body).to include("文書名・案件名で検索")
     expect(response.body).to include("よく開く文書")
     expect(response.body).to include("あとで確認")
     expect(response.body).to include("最近見た文書")
     expect(response.body.scan("解除").size).to eq(2)
     expect(response.body.scan("お気に入りへ移す").size).to eq(1)
+  end
+
+  it "filters recent documents by query without filtering saved shortcuts" do
+    beta_project = create(:project, name: "Beta Project")
+    beta_document = create(:document, project: beta_project, title: "Quarterly Plan", slug: "quarterly-plan", visibility_policy: :restricted_external)
+    other_recent_document = create(:document, project:, title: "Operations Guide", slug: "operations-guide", visibility_policy: :restricted_external)
+    hidden_document = create(:document, project: beta_project, title: "Beta Hidden Notes", slug: "beta-hidden-notes", visibility_policy: :restricted_external)
+    later_document = create(:document, project:, title: "Checklist", slug: "checklist", visibility_policy: :restricted_external)
+    create(:project_membership, project: beta_project, user:)
+    create(:document_permission, document: beta_document, company:, access_level: :view)
+    create(:document_permission, document: other_recent_document, company:, access_level: :view)
+    create(:document_permission, document: later_document, company:, access_level: :view)
+    create(:document_bookmark, user:, document:, bookmark_type: :favorite)
+    create(:document_bookmark, user:, document: later_document, bookmark_type: :read_later)
+    create(:access_log, user:, company:, project: beta_project, document: beta_document, action_type: :view, target_type: "document", accessed_at: 2.minutes.ago)
+    create(:access_log, user:, company:, project:, document: other_recent_document, action_type: :view, target_type: "document", accessed_at: 1.minute.ago)
+    create(:access_log, user:, company:, project: beta_project, document: hidden_document, action_type: :view, target_type: "document", accessed_at: Time.current)
+    sign_in_as(user)
+
+    get document_bookmarks_path, params: { recent_q: "beta" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Manual")
+    expect(response.body).to include("Checklist")
+    expect(response.body).to include("Quarterly Plan")
+    expect(response.body).to include("Beta Project")
+    expect(response.body).to include("条件をクリア")
+    expect(response.body).not_to include("Operations Guide")
+    expect(response.body).not_to include("Beta Hidden Notes")
+  end
+
+  it "shows a recent document no-match empty state for unsupported query text" do
+    recent_document = create(:document, project:, title: "Guide", slug: "guide", visibility_policy: :restricted_external)
+    create(:document_permission, document: recent_document, company:, access_level: :view)
+    create(:access_log, user:, company:, project:, document: recent_document, action_type: :view, target_type: "document", accessed_at: Time.current)
+    sign_in_as(user)
+
+    get document_bookmarks_path, params: { recent_q: "zzz" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("条件に一致する最近見た文書はありません。検索語を変えて探してください。")
+    expect(response.body).not_to include("Guide")
+    expect(response.body).not_to include("文書を開くと、最近見た文書としてここに表示されます。")
   end
 
   it "shows actionable empty states with zero counts" do
