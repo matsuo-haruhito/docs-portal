@@ -48,6 +48,7 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("最新 build 成功")
     expect(response.body).to include("最終成功")
+    expect(response.body).not_to include("失敗調査の入口")
   end
 
   it "notifies the admin when a stale API specification build is enqueued" do
@@ -63,6 +64,7 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Docusaurus build を開始しました")
     expect(response.body).to include("build 待ち/実行中")
+    expect(response.body).not_to include("失敗調査の入口")
   end
 
   it "shows a sanitized failed build status" do
@@ -74,6 +76,26 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("build 失敗")
     expect(response.body).to include("failed at [path] token=[FILTERED]")
+  end
+
+  it "shows safe runbook guidance for failed API specification builds" do
+    raw_failure = "failed at /app/tmp/build.log token=raw-secret stderr=#{"x" * 220}"
+    write_failed_build_marker("failed at [path] token=[FILTERED]")
+    sign_in_as(admin_user)
+
+    get admin_api_specification_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("失敗調査の入口")
+    expect(response.body).to include("API仕様ページとdocs-src更新確認runbook")
+    expect(response.body).to include("build-docs workflow確認runbook")
+    expect(response.body).to include("docs-src/api-specification.md")
+    expect(response.body).to include("docs-src/client-file-upload-api.md")
+    expect(response.body).to include("docs-src/office-preview.md")
+    expect(response.body).to include("docs-src/external-folder-sync-webhooks.md")
+    expect(response.body).not_to include(raw_failure)
+    expect(response.body).not_to include("raw-secret")
+    expect(response.body).not_to include("/app/tmp/build.log")
   end
 
   it "shows when the source is newer than the rendered HTML" do
@@ -88,6 +110,7 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("HTML未生成または stale")
     expect(response.body).to include("Markdownより古い状態")
+    expect(response.body).not_to include("失敗調査の入口")
   end
 
   it "shows when the rendered HTML has not been generated yet" do
