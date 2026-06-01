@@ -36,6 +36,13 @@ RSpec.describe "Document delivery logs", type: :request do
     parsed_html.css("a[href]").find { |node| node.text.strip == text }&.[]("href")
   end
 
+  def form_param_for_submit(submit_value, param_name)
+    form = parsed_html.css("form").find do |node|
+      node.css("input, button").any? { |control| control["value"] == submit_value || control.text.strip == submit_value }
+    end
+    form&.at_css("input[name='#{param_name}']")&.[]("value")
+  end
+
   def href_for_row_containing(row_text, link_text)
     row = parsed_html.css("tr").find { |node| node.text.include?(row_text) }
     row&.css("a[href]")&.find { |node| node.text.strip == link_text }&.[]("href")
@@ -252,6 +259,44 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(href_for("送付履歴一覧へ戻る")).to eq(return_to)
 
     get document_delivery_log_path(own_draft), params: { return_to: "//example.com" }
+    expect(response).to have_http_status(:ok)
+    expect(href_for("送付履歴一覧へ戻る")).to eq(document_delivery_logs_path)
+  end
+
+  it "preserves filtered list context after manual delivery log updates" do
+    own_draft = create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "draft@example.com")
+    return_to = document_delivery_logs_path(q: "DLV1", status: :draft, delivery_type: :portal_link)
+
+    sign_in_as(external_user)
+
+    get document_delivery_log_path(own_draft), params: { return_to: return_to }
+    expect(response).to have_http_status(:ok)
+    expect(form_param_for_submit("送付済みにする", "return_to")).to eq(return_to)
+    expect(form_param_for_submit("送付失敗として記録", "return_to")).to eq(return_to)
+
+    patch document_delivery_log_path(own_draft), params: { decision: "mark_sent", return_to: return_to }
+
+    expect(response).to redirect_to(document_delivery_log_path(own_draft, return_to: return_to))
+    expect(own_draft.reload.status).to eq("sent")
+    expect(own_draft.sent_at).to be_present
+
+    follow_redirect!
+    expect(response).to have_http_status(:ok)
+    expect(href_for("送付履歴一覧へ戻る")).to eq(return_to)
+  end
+
+  it "falls back to the delivery logs list when manual update return_to is unsafe" do
+    own_draft = create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "draft@example.com")
+
+    sign_in_as(external_user)
+
+    patch document_delivery_log_path(own_draft), params: { decision: "mark_failed", return_to: "//example.com", error_message: "manual failure" }
+
+    expect(response).to redirect_to(document_delivery_log_path(own_draft, return_to: document_delivery_logs_path))
+    expect(own_draft.reload.status).to eq("failed")
+    expect(own_draft.error_message).to eq("manual failure")
+
+    follow_redirect!
     expect(response).to have_http_status(:ok)
     expect(href_for("送付履歴一覧へ戻る")).to eq(document_delivery_logs_path)
   end
