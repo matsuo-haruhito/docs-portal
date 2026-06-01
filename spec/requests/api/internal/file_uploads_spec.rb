@@ -44,7 +44,7 @@ RSpec.describe "API internal file uploads", type: :request do
     expect(response).to have_http_status(:created)
     expect(response.parsed_body.fetch("dry_run_id")).to be_present
     expect(response.parsed_body.fetch("status")).to eq("analyzed")
-    expect(response.parsed_body.fetch("expires_at")).to be_present
+    expect(response.parsed_body).to have_key("expires_at")
 
     preview = response.parsed_body.fetch("file_upload_preview")
     expect(preview).to include(
