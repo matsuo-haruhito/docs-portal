@@ -1,21 +1,32 @@
 class Admin::AccessLogsController < Admin::BaseController
   AI_CONTEXT_MODE_FILTERS = %w[compact full].freeze
   AI_CONTEXT_SCOPE_FILTERS = %w[all selected].freeze
+  ACCESS_LOGS_PER_PAGE = 200
 
   before_action :require_admin_only!
 
   def index
     @filters = filter_params
+    @page = page_param
     @projects = Project.order(:code)
     @companies = Company.order(:domain)
     @users = User.order(:email_address)
-    @access_logs = filtered_access_logs
-      .includes(:user, :company, :project, :document, :document_version)
-      .order(accessed_at: :desc, id: :desc)
-      .limit(200)
+    @access_logs = paginated_access_logs
+    @has_previous_page = @page > 1
+    @has_next_page = @access_logs.size > ACCESS_LOGS_PER_PAGE
+    @access_logs = @access_logs.first(ACCESS_LOGS_PER_PAGE)
+    @pagination_params = pagination_params
   end
 
   private
+
+  def paginated_access_logs
+    filtered_access_logs
+      .includes(:user, :company, :project, :document, :document_version)
+      .order(accessed_at: :desc, id: :desc)
+      .offset((@page - 1) * ACCESS_LOGS_PER_PAGE)
+      .limit(ACCESS_LOGS_PER_PAGE + 1)
+  end
 
   def filtered_access_logs
     scope = AccessLog.all
@@ -80,6 +91,17 @@ class Admin::AccessLogsController < Admin::BaseController
     end
 
     permitted
+  end
+
+  def page_param
+    page = params[:page].to_i
+    page.positive? ? page : 1
+  end
+
+  def pagination_params
+    @filters.to_h.each_with_object({}) do |(key, value), params_hash|
+      params_hash[key] = value if value.present?
+    end
   end
 
   def unknown_target_type_filter?(target_type)
