@@ -2,6 +2,8 @@
 - wrapper_classes = ["document-comment-workspace"]
 - wrapper_classes << (floating ? "document-comment-workspace--floating" : "document-comment-workspace--inline")
 - comment_target_version = local_assigns.fetch(:comment_target_version) { @viewer_version || @latest_viewable_version }
+- comment_search_query = @comment_search_query.to_s
+- comment_search_active = comment_search_query.present?
 - has_review_comments = current_user.internal? && @review_comments.any?
 - has_question_threads = @question_threads.any?
 - unresolved_question_count = @question_threads.count(&:open?)
@@ -86,6 +88,26 @@ details class=wrapper_classes.join(" ") open=(!floating)
               p.actions
                 = form.submit "確認事項を追加", class: "button"
 
+    .document-comment-search.card
+      h3 コメントを検索
+      = form_with url: request.path, method: :get, local: true do
+        - request.query_parameters.except("comment_q").each do |key, value|
+          - Array(value).each do |item|
+            = hidden_field_tag key, item
+        .form-grid.form-grid--compact
+          label.form-field--full
+            | コメント本文 / 位置メモ
+            = search_field_tag :comment_q, comment_search_query, placeholder: current_user.internal? ? "例: 修正依頼 / docs/spec.md" : "例: 質問内容"
+        p.actions.form-actions
+          = submit_tag "コメントを検索", class: "button secondary"
+          - if comment_search_active
+            = link_to "検索を解除", url_for(request.query_parameters.except("comment_q").merge(only_path: true)), class: "button secondary"
+      - if comment_search_active
+        p.muted
+          | 検索条件: 
+          strong = comment_search_query
+          | 。検索は、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます。
+
     .document-comment-tabs.card
       input#document-comment-tab-all.document-comment-tabs__input type="radio" name="document_comment_tab" checked=true
       label.document-comment-tabs__label for="document-comment-tab-all" すべて
@@ -107,7 +129,9 @@ details class=wrapper_classes.join(" ") open=(!floating)
           = render "documents/comment_workspace_threads", show_questions: true, show_reviews: current_user.internal?, only_unresolved: true
         - else
           p.muted
-            - if current_user.internal?
+            - if comment_search_active
+              | 検索条件に一致する未解決のコメントはありません。
+            - elsif current_user.internal?
               | 未解決のQ&A/確認事項はありません。
             - else
               | 未解決のQ&Aはありません。
