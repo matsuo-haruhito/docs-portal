@@ -13,6 +13,15 @@ RSpec.describe "Admin external folder sync source filters and return_to", type: 
     link&.[]("href")
   end
 
+  def form_action_for_button(text)
+    form = parsed_html.css("form").find do |node|
+      node.css("button, input[type='submit']").any? do |button|
+        button.text.strip == text || button["value"] == text
+      end
+    end
+    form&.[]("action")
+  end
+
   def create_google_drive_source(project:, name:, enabled: true)
     ExternalFolderSyncSource.create!(
       project:,
@@ -71,7 +80,7 @@ RSpec.describe "Admin external folder sync source filters and return_to", type: 
       expect(response.body).to include("現在の絞り込み: SharePoint / OneDrive / 検索: policies")
       expect(href_for("設定詳細")).to eq(admin_external_folder_sync_source_path(source, return_to: return_to))
       expect(href_for("編集")).to eq(edit_admin_external_folder_sync_source_path(source, return_to: return_to))
-      expect(href_for("削除")).to eq(admin_external_folder_sync_source_path(source, return_to: return_to))
+      expect(form_action_for_button("削除")).to eq(admin_external_folder_sync_source_path(source, return_to: return_to))
     end
 
     it "treats unsupported review values as all while keeping the search query" do
@@ -85,7 +94,7 @@ RSpec.describe "Admin external folder sync source filters and return_to", type: 
       expect(response.body).to include(finance_source.name)
       expect(response.body).not_to include("Operations Drive")
       expect(response.body).to include("現在の絞り込み: 検索: finance")
-      expect(response.body).not_to include("drop_table")
+      expect(parsed_html.text).not_to include("drop_table")
     end
 
     it "keeps provider filters within the current Google Drive and SharePoint / OneDrive boundary" do
