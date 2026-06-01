@@ -82,8 +82,8 @@ RSpec.describe "Admin access log pagination", type: :request do
       create_access_log!(
         target_name: "ai-entry-#{index}",
         target_type: "ai_context",
-        accessed_at: base_time + index.seconds)
-     )
+        accessed_at: base_time + index.seconds
+      )
     end
     create_access_log!(
       target_name: "zip-entry",
