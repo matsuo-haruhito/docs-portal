@@ -14,9 +14,7 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboard#show", as: :dashboard
   get "documents", to: "accessible_documents#index", as: :documents
   resources :consents, only: %i[index new create], param: :public_id
-  resources :document_approval_requests, only: %i[index show update], param: :public_id do
-    post :cancel, on: :member
-  end
+  resources :document_approval_requests, only: %i[index show update], param: :public_id
   resources :document_delivery_logs, only: %i[index show update], param: :public_id
   resource :session, only: %i[new create destroy]
   resources :document_bookmarks, only: %i[index create destroy], param: :public_id do
@@ -58,7 +56,7 @@ Rails.application.routes.draw do
       post :retry_failed, on: :collection
     end
     resources :zip_imports, only: %i[new create show update], param: :public_id
-    resources :file_upload_dry_runs, only: %i[show update], param: :public_id
+    resources :file_upload_dry_runs, only: %i[index show update], param: :public_id
     resources :microsoft_graph_connections, except: %i[show new], param: :public_id
     resources :recurring_job_schedules, only: %i[index show], param: :public_id do
       post :request_run, on: :member
