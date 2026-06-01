@@ -83,7 +83,7 @@ class Admin::DocumentsController < Admin::BaseController
     @bulk_edit_candidate_ids = []
     return if @bulk_edit_candidate_count.zero? || @bulk_edit_candidate_count > @bulk_edit_candidate_limit
 
-    @bulk_edit_candidate_ids = @documents.limit(@bulk_edit_candidate_limit).pluck(:id)
+    @bulk_edit_candidate_ids = @documents.to_a.map(&:id)
   end
 
   def filtered_documents
