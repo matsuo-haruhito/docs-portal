@@ -37,6 +37,10 @@ RSpec.describe "Consents", type: :request do
 
     follow_redirect!
     expect(response.body).to include("Project Terms")
+    expect(response.body).to include("対象:")
+    expect(response.body).to include("案件 / Consent Project")
+    expect(response.body).to include("種別:")
+    expect(response.body).to include("案件")
 
     expect do
       post consents_path, params: { target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to: project_path(project) }
@@ -101,9 +105,9 @@ RSpec.describe "Consents", type: :request do
     FileUtils.rm_rf(Rails.root.join("storage", "document_files", "spec", "consents"))
   end
 
-  it "shows active terms and the user's consent history with localized target labels" do
+  it "shows active terms and the user's consent history with localized target and scope labels" do
     file = create(:document_file, document_version: version, file_name: "history.pdf")
-    term = create(:consent_term, title: "Visible Terms", body: "Handle carefully", version_label: "v1")
+    term = create(:consent_term, title: "Visible Terms", body: "Handle carefully", version_label: "v1", consent_scope: :download)
 
     create(:user_consent, user:, consent_term: term, target: nil, consent_term_version_label: "v1")
     create(:user_consent, user:, consent_term: term, target: project, consent_term_version_label: "v1")
@@ -117,6 +121,8 @@ RSpec.describe "Consents", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Visible Terms")
     expect(response.body).to include("Handle carefully")
+    expect(response.body).to include("種別")
+    expect(response.body).to include("ダウンロード")
     expect(response.body).to include("v1")
     expect(response.body).to include("全体")
     expect(response.body).to include("案件 / Consent Project")
@@ -127,5 +133,6 @@ RSpec.describe "Consents", type: :request do
     expect(response.body).not_to include("Document / Consent Document")
     expect(response.body).not_to include("DocumentFile / history.pdf")
     expect(response.body).not_to include("DocumentVersion / v1.0.0")
+    expect(response.body).not_to include(">download<")
   end
 end
