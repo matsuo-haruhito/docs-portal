@@ -53,7 +53,7 @@ p.actions
         th data={ rails_table_preferences_column_key: "created_at" } 作成日時
         th data={ rails_table_preferences_column_key: "project" } 案件
         th data={ rails_table_preferences_column_key: "target" } 文書名/文書セット名
-        th data={ rails_table_preferences_column_key: "recipients" } 宛先
+        th data={ rails_table_preferences_column_key: "recipients" } 受信者
         th data={ rails_table_preferences_column_key: "delivery_type" } 方式
         th data={ rails_table_preferences_column_key: "status" } 状態
         th data={ rails_table_preferences_column_key: "failure_reason" } 失敗理由
@@ -69,7 +69,11 @@ p.actions
               = link_to log.document_set.name, project_document_set_path(log.project, log.document_set)
             - else
               span.muted "-"
-          td data={ rails_table_preferences_column_key: "recipients" } = log.to_addresses
+          td data={ rails_table_preferences_column_key: "recipients" }
+            - document_delivery_log_recipient_groups(log).each do |label, addresses|
+              div
+                strong = "#{label}:"
+                = " #{truncate(addresses, length: 72)}"
           td data={ rails_table_preferences_column_key: "delivery_type" } = document_delivery_log_delivery_type_label(log)
           td data={ rails_table_preferences_column_key: "status" }
             = link_to document_delivery_log_status_label(log), document_delivery_log_path(log, return_to: current_delivery_logs_path)
