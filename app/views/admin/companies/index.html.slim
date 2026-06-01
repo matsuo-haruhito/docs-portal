@@ -1,5 +1,8 @@
 - page_title "会社マスタ"
 - company_form_title = admin_user? ? "新規登録" : "自社会社情報の更新"
+- table_key = :admin_companies
+- table_columns = admin_company_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
 
 h1 会社マスタ
 = render "admin/nav"
@@ -8,22 +11,34 @@ h1 会社マスタ
   h2 = company_form_title
   = render "form", company: @company
 
-= table_tag do
-  thead
-    tr
-      th ドメイン
-      th 会社名（表示用）
-      th 表示名
-      th 状態
-      th
-  tbody
-    - @companies.each do |company|
+- if @companies.any?
+  .card
+    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "会社一覧の表示設定")
+
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+    thead
       tr
-        td = company.domain
-        td = company.name.presence || "-"
-        td = company.display_name
-        td = company.active? ? "有効" : "無効"
-        td.actions
-          = edit_link_to "編集", edit_admin_company_path(company)
-          - if admin_user?
-            = delete_link_to "削除", admin_company_path(company), confirm: "会社「#{company.display_name}」を削除しますか？所属ユーザーや文書権限への影響を確認してください。"
+        th data-rails-table-preferences-column-key="domain" ドメイン
+        th data-rails-table-preferences-column-key="name" 会社名（表示用）
+        th data-rails-table-preferences-column-key="display_name" 表示名
+        th data-rails-table-preferences-column-key="status" 状態
+        th data-rails-table-preferences-column-key="actions"
+    tbody
+      - @companies.each do |company|
+        tr
+          td data-rails-table-preferences-column-key="domain" = company.domain
+          td data-rails-table-preferences-column-key="name" = company.name.presence || "-"
+          td data-rails-table-preferences-column-key="display_name" = company.display_name
+          td data-rails-table-preferences-column-key="status" = company.active? ? "有効" : "無効"
+          td.actions data-rails-table-preferences-column-key="actions"
+            = edit_link_to "編集", edit_admin_company_path(company)
+            - if admin_user?
+              = delete_link_to "削除", admin_company_path(company), confirm: "会社「#{company.display_name}」を削除しますか？所属ユーザーや文書権限への影響を確認してください。"
+- else
+  section.card
+    h2 会社一覧
+    p.muted まだ会社は登録されていません。
+    - if admin_user?
+      p.muted 上の「新規登録」でドメインと会社名を入力して、最初の会社を登録してください。
+    - else
+      p.muted 表示できる自社会社情報がありません。必要な場合は internal admin に確認してください。

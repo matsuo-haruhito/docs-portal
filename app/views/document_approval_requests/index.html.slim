@@ -2,6 +2,9 @@
 - list_path = @document.present? ? ->(path_params = {}) { project_document_document_approval_requests_path(@project, @document, path_params) } : ->(path_params = {}) { document_approval_requests_path(path_params) }
 - total_count = @pending_count + @approved_count + @cancelled_count
 - current_list_path = request.fullpath
+- table_key = :document_approval_requests
+- table_columns = document_approval_request_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
 
 h1 確認依頼
 
@@ -21,27 +24,30 @@ p.actions
   = link_to "Cancel済み (#{@cancelled_count})", list_path.call(status: :cancelled), class: @status_filter == "cancelled" ? "button" : "button secondary"
 
 - if @document_approval_requests.any?
+  .card
+    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "確認依頼一覧の表示設定")
+
   - @document_approval_request_sections.each do |section_title, requests|
     - next if requests.empty?
     h2 = section_title
     p.muted = "#{requests.size}件"
-    table
+    = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
       thead
         tr
-          th 日時
-          th 文書名
-          th 依頼名
-          th 依頼者
-          th 確認相手
-          th 状態
+          th data-rails-table-preferences-column-key="created_at" 日時
+          th data-rails-table-preferences-column-key="document" 文書名
+          th data-rails-table-preferences-column-key="title" 依頼名
+          th data-rails-table-preferences-column-key="requester" 依頼者
+          th data-rails-table-preferences-column-key="approver" 確認相手
+          th data-rails-table-preferences-column-key="status" 状態
       tbody
         - requests.each do |request|
           tr
-            td = request.created_at.strftime("%Y-%m-%d %H:%M")
-            td = link_to request.document.title, project_document_path(request.document.project, request.document.slug)
-            td = link_to request.title, document_approval_request_path(request, return_to: current_list_path)
-            td = request.requester.name
-            td = request.approver&.name || "-"
-            td = document_approval_request_status_label(request)
+            td data-rails-table-preferences-column-key="created_at" = request.created_at.strftime("%Y-%m-%d %H:%M")
+            td data-rails-table-preferences-column-key="document" = link_to request.document.title, project_document_path(request.document.project, request.document.slug)
+            td data-rails-table-preferences-column-key="title" = link_to request.title, document_approval_request_path(request, return_to: current_list_path)
+            td data-rails-table-preferences-column-key="requester" = request.requester.name
+            td data-rails-table-preferences-column-key="approver" = request.approver&.name || "-"
+            td data-rails-table-preferences-column-key="status" = document_approval_request_status_label(request)
 - else
   p.muted 確認依頼はありません。
