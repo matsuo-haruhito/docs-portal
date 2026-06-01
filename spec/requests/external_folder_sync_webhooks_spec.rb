@@ -29,6 +29,88 @@ RSpec.describe "External folder sync webhooks", type: :request do
       expect(ExternalFolderSyncWebhookEventJob).to have_received(:perform_later).with(event.id).once
     end
 
+    it "ignores Google Drive notifications when the channel token does not match" do
+      subscription = create(
+        :external_folder_sync_subscription,
+        provider: :google_drive,
+        provider_channel_id: "channel-token-mismatch",
+        provider_resource_id: "resource-token-mismatch",
+        verification_token_digest: Digest::SHA256.hexdigest("expected-token")
+      )
+      allow(ExternalFolderSyncWebhookEventJob).to receive(:perform_later)
+
+      post "/external_folder_sync_webhooks/google_drive", headers: {
+        "X-Goog-Channel-ID" => "channel-token-mismatch",
+        "X-Goog-Resource-ID" => "resource-token-mismatch",
+        "X-Goog-Resource-State" => "change",
+        "X-Goog-Message-Number" => "43",
+        "X-Goog-Channel-Token" => "wrong-token"
+      }
+
+      expect(response).to have_http_status(:ok)
+      event = ExternalFolderSyncWebhookEvent.find_by!(event_key: "channel-token-mismatch:resource-token-mismatch:change:43")
+      expect(event).to be_ignored
+      expect(event.external_folder_sync_subscription).to eq(subscription)
+      expect(event.external_folder_sync_source).to eq(subscription.external_folder_sync_source)
+      expect(event.error_message).to eq("Webhook verification token did not match")
+      expect(ExternalFolderSyncWebhookEventJob).not_to have_received(:perform_later)
+    end
+
+    it "ignores Google Drive notifications when a required channel token is missing" do
+      subscription = create(
+        :external_folder_sync_subscription,
+        provider: :google_drive,
+        provider_channel_id: "channel-token-missing",
+        provider_resource_id: "resource-token-missing",
+        verification_token_digest: Digest::SHA256.hexdigest("expected-token")
+      )
+      allow(ExternalFolderSyncWebhookEventJob).to receive(:perform_later)
+
+      post "/external_folder_sync_webhooks/google_drive", headers: {
+        "X-Goog-Channel-ID" => "channel-token-missing",
+        "X-Goog-Resource-ID" => "resource-token-missing",
+        "X-Goog-Resource-State" => "change",
+        "X-Goog-Message-Number" => "44"
+      }
+
+      expect(response).to have_http_status(:ok)
+      event = ExternalFolderSyncWebhookEvent.find_by!(event_key: "channel-token-missing:resource-token-missing:change:44")
+      expect(event).to be_ignored
+      expect(event.external_folder_sync_subscription).to eq(subscription)
+      expect(event.external_folder_sync_source).to eq(subscription.external_folder_sync_source)
+      expect(event.error_message).to eq("Webhook verification token did not match")
+      expect(ExternalFolderSyncWebhookEventJob).not_to have_received(:perform_later)
+    end
+
+    it "stores malformed Google Drive JSON as raw payload without failing the endpoint" do
+      subscription = create(
+        :external_folder_sync_subscription,
+        provider: :google_drive,
+        provider_channel_id: "channel-malformed",
+        provider_resource_id: "resource-malformed",
+        verification_token_digest: Digest::SHA256.hexdigest("token-malformed")
+      )
+      allow(ExternalFolderSyncWebhookEventJob).to receive(:perform_later)
+
+      post "/external_folder_sync_webhooks/google_drive",
+        params: "{not-json",
+        headers: {
+          "CONTENT_TYPE" => "application/json",
+          "X-Goog-Channel-ID" => "channel-malformed",
+          "X-Goog-Resource-ID" => "resource-malformed",
+          "X-Goog-Resource-State" => "change",
+          "X-Goog-Message-Number" => "45",
+          "X-Goog-Channel-Token" => "token-malformed"
+        }
+
+      expect(response).to have_http_status(:ok)
+      event = ExternalFolderSyncWebhookEvent.find_by!(event_key: "channel-malformed:resource-malformed:change:45")
+      expect(event).to be_received
+      expect(event.external_folder_sync_subscription).to eq(subscription)
+      expect(event.payload_json).to eq("raw" => "{not-json")
+      expect(ExternalFolderSyncWebhookEventJob).to have_received(:perform_later).with(event.id).once
+    end
+
     it "does not enqueue duplicate Google Drive notifications" do
       subscription = create(
         :external_folder_sync_subscription,
@@ -154,6 +236,55 @@ RSpec.describe "External folder sync webhooks", type: :request do
       expect(event.external_folder_sync_source).to be_present
       expect(event.error_message).to eq("Webhook verification token did not match")
       expect(ExternalFolderSyncWebhookEventJob).not_to have_received(:perform_later)
+    end
+
+    it "records mixed SharePoint notifications and enqueues only received events" do
+      received_subscription = create(
+        :external_folder_sync_subscription,
+        provider: :sharepoint,
+        provider_subscription_id: "sub-mixed-received",
+        verification_token_digest: Digest::SHA256.hexdigest("expected-client-state")
+      )
+      ignored_subscription = create(
+        :external_folder_sync_subscription,
+        provider: :sharepoint,
+        provider_subscription_id: "sub-mixed-ignored",
+        verification_token_digest: Digest::SHA256.hexdigest("expected-client-state")
+      )
+      allow(ExternalFolderSyncWebhookEventJob).to receive(:perform_later)
+
+      post "/external_folder_sync_webhooks/sharepoint",
+        params: {
+          value: [
+            {
+              subscriptionId: "sub-mixed-received",
+              resource: "drives/drive-id/root",
+              changeType: "updated",
+              clientState: "expected-client-state",
+              sequenceNumber: "201"
+            },
+            {
+              subscriptionId: "sub-mixed-ignored",
+              resource: "drives/drive-id/root",
+              changeType: "updated",
+              clientState: "wrong-client-state",
+              sequenceNumber: "202"
+            }
+          ]
+        }.to_json,
+        headers: { "CONTENT_TYPE" => "application/json" }
+
+      expect(response).to have_http_status(:accepted)
+      received_event = ExternalFolderSyncWebhookEvent.find_by!(event_key: "sub-mixed-received:drives/drive-id/root:updated:expected-client-state:201")
+      ignored_event = ExternalFolderSyncWebhookEvent.find_by!(event_key: "sub-mixed-ignored:drives/drive-id/root:updated:wrong-client-state:202")
+      expect(received_event).to be_received
+      expect(received_event.external_folder_sync_subscription).to eq(received_subscription)
+      expect(ignored_event).to be_ignored
+      expect(ignored_event.external_folder_sync_subscription).to eq(ignored_subscription)
+      expect(ignored_event.external_folder_sync_source).to be_present
+      expect(ignored_event.error_message).to eq("Webhook verification token did not match")
+      expect(ExternalFolderSyncWebhookEventJob).to have_received(:perform_later).with(received_event.id).once
+      expect(ExternalFolderSyncWebhookEventJob).not_to have_received(:perform_later).with(ignored_event.id)
     end
   end
 
