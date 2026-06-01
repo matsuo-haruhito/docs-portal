@@ -16,7 +16,10 @@ p.actions
   = form_with url: admin_recurring_job_schedules_path, method: :get, local: true, class: "filters" do
     = label_tag :status, "前回状態"
     = select_tag :status, options_for_select(@schedule_status_options, @selected_status), onchange: "this.form.requestSubmit()"
-    - if @selected_status.present?
+    = label_tag :q, "検索"
+    = search_field_tag :q, @selected_query, placeholder: "ジョブキー / class / queue / 前回エラー"
+    = submit_tag "検索", class: "button secondary"
+    - if @selected_status.present? || @selected_query.present?
       = link_to "絞り込み解除", admin_recurring_job_schedules_path, class: "button secondary"
   p.muted = "Triage対象: #{triage_counts}"
   p.muted = "表示中: #{@schedules.size}件"

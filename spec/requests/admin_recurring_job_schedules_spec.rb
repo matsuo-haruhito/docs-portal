@@ -33,6 +33,53 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(listed_schedule_keys).to eq(["completed_job", "failed_job", "not_run_job"])
   end
 
+  it "filters schedules by job key, job class, queue, and previous error fragments" do
+    sign_in_as(admin_user)
+    create_schedule!(job_key: "daily_report_export", job_class: "ReportExportJob", queue_name: "default", last_error_message: "timeout while exporting")
+    create_schedule!(job_key: "stale_cleanup", job_class: "CleanupJob", queue_name: "maintenance")
+    create_schedule!(job_key: "mail_delivery", job_class: "MailDeliveryJob", queue_name: "critical_mailers")
+
+    get admin_recurring_job_schedules_path(q: "REPORT")
+    expect(response).to have_http_status(:ok)
+    expect(listed_schedule_keys).to eq(["daily_report_export"])
+
+    get admin_recurring_job_schedules_path(q: "CleanupJob")
+    expect(listed_schedule_keys).to eq(["stale_cleanup"])
+
+    get admin_recurring_job_schedules_path(q: "mailers")
+    expect(listed_schedule_keys).to eq(["mail_delivery"])
+
+    get admin_recurring_job_schedules_path(q: "timeout")
+    expect(listed_schedule_keys).to eq(["daily_report_export"])
+  end
+
+  it "combines schedule search with previous status and keeps the list return path" do
+    sign_in_as(admin_user)
+    target = create_schedule!(job_key: "invoice_digest", job_class: "InvoiceDigestJob", last_status: "failed")
+    create_schedule!(job_key: "invoice_completed", job_class: "InvoiceDigestJob", last_status: "completed")
+    create_schedule!(job_key: "billing_worker", job_class: "BillingWorkerJob", last_status: "failed")
+
+    list_path = admin_recurring_job_schedules_path(status: "failed", q: "invoice")
+    get list_path
+
+    expect(response).to have_http_status(:ok)
+    expect(listed_schedule_keys).to eq(["invoice_digest"])
+    expect(response.body).to include("表示中: 1件")
+    expect(parsed_html.at_css(%(input[name="q"][value="invoice"]))).to be_present
+    expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedule_path(target, return_to: list_path)}"]))).to be_present
+  end
+
+  it "treats blank schedule search as an empty condition" do
+    sign_in_as(admin_user)
+    create_schedule!(job_key: "alpha_job")
+    create_schedule!(job_key: "beta_job")
+
+    get admin_recurring_job_schedules_path(q: "   ")
+
+    expect(response).to have_http_status(:ok)
+    expect(listed_schedule_keys).to eq(["alpha_job", "beta_job"])
+  end
+
   it "filters schedules with no previous run status" do
     sign_in_as(admin_user)
     create_schedule!(job_key: "failed_job", last_status: "failed")
