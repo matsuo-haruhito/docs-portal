@@ -5,6 +5,7 @@
 - review_comments = show_reviews ? @review_comments.to_a : []
 - question_threads = question_threads.select(&:open?) if only_unresolved
 - review_comments = review_comments.reject(&:resolved?) if only_unresolved
+- comment_search_active = @comment_search_query.to_s.present?
 
 - if question_threads.any?
   section.document-comment-thread-group
@@ -76,7 +77,15 @@
 
 - if question_threads.empty? && review_comments.empty?
   p.muted
-    - if only_unresolved
+    - if comment_search_active && only_unresolved
+      | 検索条件に一致する未解決のコメントはありません。
+    - elsif comment_search_active && show_questions && show_reviews
+      | 検索条件に一致する文書コメントはありません。
+    - elsif comment_search_active && show_questions
+      | 検索条件に一致するQ&Aはありません。
+    - elsif comment_search_active
+      | 検索条件に一致する確認事項はありません。
+    - elsif only_unresolved
       | 未解決のコメントはありません。
     - elsif show_questions && show_reviews
       | まだ文書コメントはありません。
