@@ -11,10 +11,10 @@ section.card
       .card
         h3 = term.title
         p.muted
-          | 版: 
+          | 種別: 
+          strong = consent_scope_label(term)
+          |  / 版: 
           strong = term.version_label
-          |  / 種別: 
-          strong = term.consent_scope
         = simple_format(term.body)
   - else
     p.muted 現在有効な注意事項はありません。
@@ -27,6 +27,7 @@ section.card
         tr
           th 同意日時
           th 文面
+          th 種別
           th 版
           th 対象
       tbody
@@ -34,6 +35,7 @@ section.card
           tr
             td = consent.consented_at.strftime("%Y-%m-%d %H:%M")
             td = consent.consent_term.title
+            td = consent_scope_label(consent.consent_term)
             td = consent.consent_term_version_label
             td = consent_target_display(consent)
   - else
