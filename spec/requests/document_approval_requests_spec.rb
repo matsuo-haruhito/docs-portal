@@ -141,7 +141,7 @@ RSpec.describe "Document approval requests", type: :request do
     expect(response.body).to include(nested_request.title)
     expect(response.body).not_to include(other_request.title)
 
-    expected_return_to = project_document_document_approval_requests_path(project, document, status: :pending, q: "契約")
+    expected_return_to = request.fullpath
     detail_link = parsed_html.css(%(a[href^="#{document_approval_request_path(nested_request)}"])).find { |link| link.text == nested_request.title }
     expect(detail_link).to be_present
     detail_params = Rack::Utils.parse_nested_query(URI.parse(detail_link["href"]).query)
