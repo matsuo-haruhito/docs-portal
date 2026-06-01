@@ -32,6 +32,14 @@
 - ただし current CI、mergeability、`#789` の human gate、representative smoke の状態で実行可否を再判断する
 - この snapshot 更新だけでは `Gemfile` / `Gemfile.lock` を変更しない
 
+## upstream PR readiness snapshot
+
+作業直前の上流 PR の merge / review / branch refresh 状態は、`docs/internal-ui-gem-upstream-readiness-snapshot.md` を先に確認します。この snapshot は target SHA を決める正本ではなく、`rails_fields_kit` / `tree_view-rails` / `rails_table_preferences` の open PR を「含めたいもの」「含めなくてよいもの」「human review 待ち」に分けるための時点メモです。
+
+- snapshot は時点依存なので、bump PR 作成時に上流 `main`、candidate PR、CI、mergeability を再確認する
+- 未マージの docs/design PR (`#1510` や `#1620`) を前提にした link や target 判断は避ける
+- public API / helper signature / bundled UI behavior を変える上流 PRは、`#1300` / `#1301` / `#789` の child lane で人間判断に戻す
+
 ## dependency bump human handoff
 
 `#1300` / `#1301` / `#789` のような dependency bump lane は、作業直前の upstream 状態と lockfile 再生成結果を正本にします。エージェント環境で checkout、Bundler、代表 smoke を安全に実行できない場合は、`Gemfile.lock` の SHA 行だけを connector 手編集して完了扱いにしません。
