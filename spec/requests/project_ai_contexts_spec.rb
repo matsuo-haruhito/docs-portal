@@ -50,6 +50,8 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(page_text).to include("現在は閲覧可能な文書全体（1件）を export 対象にしています。")
     expect(page_text).to include("個別に絞り込む場合は、対象にしたい文書だけを残して preview してください。")
     expect(page_text).to include("Export候補（表示中1 / 全1件）")
+    expect(page_text).to include("文書名 / slug で検索")
+    expect(page_text).to include("検索後も、明示選択済みの文書は候補に残します。")
     expect(response.body).to include("含まれる文書（export対象）")
     expect(response.body).to include("除外された文書（権限・公開状態の確認）")
     expect(response.body).to include("Visible Manual")
@@ -228,6 +230,24 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(page_text).to include("明示選択: 1件 / export対象: 1件")
     expect(document_choice_labels.size).to eq(51)
     expect(document_choice_labels.last).to include("Bulk Manual 054")
+
+    get project_ai_context_path(project, document_q: "bulk-054")
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中の候補: 1件 / 検索結果: 1件 / 閲覧可能: 55件")
+    expect(page_text).to include("検索条件: bulk-054")
+    expect(page_text).to include("Export候補（検索結果1 / 閲覧可能55件、表示中1件）")
+    expect(document_choice_labels).to contain_exactly(a_string_including("Bulk Manual 054"))
+
+    get project_ai_context_path(project, format: :json, mode: :compact, document_q: "bulk-054")
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    expect(json.dig("summary", "document_count")).to eq(55)
+
+    get project_ai_context_path(project, document_q: "bulk-000", document_ids: [documents.last.id])
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("明示選択: 1件 / export対象: 1件")
+    expect(page_text).to include("Export候補（1件選択中、検索結果2 / 閲覧可能55件、表示中2件）")
+    expect(document_choice_labels).to include(a_string_including("Bulk Manual 000"), a_string_including("Bulk Manual 054"))
   end
 
   it "records access logs for html and export responses with scope metadata" do

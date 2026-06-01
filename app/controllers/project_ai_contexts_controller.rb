@@ -9,7 +9,10 @@ class ProjectAiContextsController < BaseController
 
     @requested_document_ids = requested_document_ids
     @scope = requested_scope
-    @selectable_documents = selectable_documents
+    @document_query = params[:document_q].to_s.strip
+    selectable_documents_all = selectable_documents
+    @selectable_document_total_count = selectable_documents_all.size
+    @selectable_documents = filtered_selectable_documents(selectable_documents_all)
     @selectable_document_count = @selectable_documents.size
     @preview_document_limit = PREVIEW_DOCUMENT_LIMIT
     @selectable_documents_preview = preview_documents(@selectable_documents)
@@ -75,6 +78,18 @@ class ProjectAiContextsController < BaseController
       .includes(:project, :latest_version)
       .select { _1.visible_in_portal_for?(current_user) }
       .sort_by { [_1.title.to_s, _1.id] }
+  end
+
+  def filtered_selectable_documents(documents)
+    return documents if @document_query.blank?
+
+    normalized_query = @document_query.downcase
+    filtered = documents.select do |document|
+      [document.title, document.slug].any? { _1.to_s.downcase.include?(normalized_query) }
+    end
+    selected = documents.select { @requested_document_ids.include?(_1.id) }
+
+    (filtered + selected).uniq
   end
 
   def preview_documents(documents)
