@@ -4,11 +4,14 @@
 
 `docs-portal` が current main で実際に import / register しているものと、upstream gem が公開している package-root export / direct entrypoint を混同しないことを目的にします。ここでは runtime code、`Gemfile`、`Gemfile.lock`、`vite.config.ts` は変更しません。
 
+package verification、TypeScript declaration、public API manifest、CI package-sensitive 判定の責務分担は、隣接する `docs/internal-ui-gem-public-surface-package-verification-matrix.md` で確認します。
+
 ## 先に見る正本
 
 - `app/frontend/entrypoints/application.js`: downstream が current main で実際に register している Stimulus controller
 - `vite.config.ts`: downstream が解決している package root / documented direct entrypoint alias
 - `docs/関連gem連携調査runbook.md`: host app 採用パターン、release train、representative smoke の正本
+- `docs/internal-ui-gem-public-surface-package-verification-matrix.md`: package verification / TypeScript declaration / public API manifest の責務分担
 - upstream docs / manifest:
   - `tree_view-rails` の `README.md`、`docs/ja/*`、`config/public_api_manifest.yml`
   - `rails_table_preferences` の `README.md`、`docs/javascript_entrypoints.md`、`docs/javascript_controller.md`
@@ -35,6 +38,8 @@ internal UI gem の JS import / resolver を触る issue では、update log に
 ```
 
 `tree_view` は current downstream で controller import が未採用なので、JS hook を追加する issue では `tree_view-rails` の package-root manifest と `#903` の smoke / rollback note を先に確認します。単に sidebar / detail tree の helper・partial・route 文脈だけを直す場合は、JS controller adoption を同じ PR に混ぜません。
+
+package verification、TypeScript declaration、public API manifest を判断材料にする場合は、`docs/internal-ui-gem-public-surface-package-verification-matrix.md` の責務分担を併読し、docs-portal 側で upstream package policy を決めないことを確認します。
 
 ## #858 child issue とのつなぎ方
 
