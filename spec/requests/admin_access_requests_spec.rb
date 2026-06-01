@@ -36,9 +36,13 @@ RSpec.describe "Admin access requests", type: :request do
     expect(page_text).to include(access_request.reason)
     expect(page_text).to include("Manual")
     expect(page_text).to include("表示中: 1件")
+    expect(page_text).to include("要求権限: すべて")
+    expect(page_text).to include("対象種別: すべて")
     expect(page_text).to include("表示中内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
     expect(filter_form).to be_present
     expect(filter_form.at_css("select[name='status']")).to be_present
+    expect(filter_form.at_css("select[name='requested_access_level']")).to be_present
+    expect(filter_form.at_css("select[name='requestable_type']")).to be_present
     expect(filter_form.at_css("input[name='q']")).to be_present
   end
 
@@ -51,7 +55,6 @@ RSpec.describe "Admin access requests", type: :request do
     get admin_access_requests_path, params: { status: "pending" }
 
     expect(response).to have_http_status(:ok)
-
     rows = parsed_html.css("tbody tr")
     manage_row = rows.find { |row| row.text.include?("Need project management") }
     download_row = rows.find { |row| row.text.include?("Need manual download") }
@@ -101,6 +104,89 @@ RSpec.describe "Admin access requests", type: :request do
     expect(page_text).to include("却下")
     expect(action_forms.last.to_html).to include("承認条件を満たしていないため却下しました")
     expect(action_forms.last.to_html).not_to include("Not approved")
+  end
+
+  it "filters requests by requested access level" do
+    download_request = create(:access_request, requester:, requestable: document, requested_access_level: :download, reason: "Need manual download")
+    create(:access_request, requester:, requestable: project, requested_access_level: :view, reason: "Need project view")
+
+    sign_in_as(admin_user)
+
+    get admin_access_requests_path, params: { requested_access_level: "download" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("要求権限: ダウンロード")
+    expect(page_text).to include("Need manual download")
+    expect(page_text).not_to include("Need project view")
+    expect(filter_form.at_css("select[name='requested_access_level'] option[selected]")["value"]).to eq("download")
+    expect(parsed_html.css("form[action='#{admin_access_request_path(download_request)}']").last.to_html).to include("requested_access_level")
+  end
+
+  it "filters requests by requestable type" do
+    document_file = create(:document_file, document_version: create(:document_version, document:), file_name: "manual.pdf")
+    create(:access_request, requester:, requestable: document_file, requested_access_level: :download, reason: "Need attachment")
+    create(:access_request, requester:, requestable: document, requested_access_level: :download, reason: "Need document")
+
+    sign_in_as(admin_user)
+
+    get admin_access_requests_path, params: { requestable_type: "DocumentFile" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("対象種別: 添付ファイル")
+    expect(page_text).to include("Need attachment")
+    expect(page_text).not_to include("Need document")
+    expect(filter_form.at_css("select[name='requestable_type'] option[selected]")["value"]).to eq("DocumentFile")
+  end
+
+  it "combines status, query, requested access level, and requestable type filters" do
+    document_file = create(:document_file, document_version: create(:document_version, document:), file_name: "manual.pdf")
+    matching_request = create(:access_request, requester:, requestable: document_file, requested_access_level: :download, reason: "Pending manual file")
+    create(:access_request, requester:, requestable: document_file, requested_access_level: :view, reason: "Pending manual view")
+    create(:access_request, requester:, requestable: document, requested_access_level: :download, reason: "Pending manual document")
+    create(:access_request,
+      requester:,
+      requestable: document_file,
+      requested_access_level: :download,
+      status: :approved,
+      approver: admin_user,
+      approved_at: Time.zone.local(2026, 5, 1, 12, 0, 0),
+      reason: "Approved manual file")
+
+    sign_in_as(admin_user)
+
+    get admin_access_requests_path, params: {
+      status: "pending",
+      q: "manual",
+      requested_access_level: "download",
+      requestable_type: "DocumentFile"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("状態: 承認待ち")
+    expect(page_text).to include("要求権限: ダウンロード")
+    expect(page_text).to include("対象種別: 添付ファイル")
+    expect(page_text).to include("Pending manual file")
+    expect(page_text).not_to include("Pending manual view")
+    expect(page_text).not_to include("Pending manual document")
+    expect(page_text).not_to include("Approved manual file")
+    expect(page_text).to include("表示中内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
+    expect(parsed_html.css("tbody tr").size).to eq(1)
+    expect(parsed_html.css("form[action='#{admin_access_request_path(matching_request)}']").size).to eq(2)
+  end
+
+  it "ignores unsupported requested access level and requestable type filters" do
+    create(:access_request, requester:, requestable: document, requested_access_level: :download, reason: "Need Manual access")
+
+    sign_in_as(admin_user)
+
+    get admin_access_requests_path, params: { requested_access_level: "owner", requestable_type: "User" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("Need Manual access")
+    expect(page_text).to include("要求権限: すべて")
+    expect(page_text).to include("対象種別: すべて")
+    expect(filter_form.at_css("select[name='requested_access_level'] option[value='owner']")).to be_nil
+    expect(filter_form.at_css("select[name='requestable_type'] option[value='User']")).to be_nil
   end
 
   it "filters requests by requester or target search terms" do
@@ -158,16 +244,23 @@ RSpec.describe "Admin access requests", type: :request do
 
     sign_in_as(admin_user)
 
-    get admin_access_requests_path, params: { status: "rejected", q: "does-not-match" }
+    get admin_access_requests_path, params: {
+      status: "rejected",
+      q: "does-not-match",
+      requested_access_level: "manage",
+      requestable_type: "Project"
+    }
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("条件に一致する申請はありません。")
     expect(page_text).to include("状態: 却下")
+    expect(page_text).to include("要求権限: 管理")
+    expect(page_text).to include("対象種別: 案件")
     expect(page_text).to include("検索: does-not-match")
     expect(page_text).not_to include("状態: rejected")
   end
 
-  it "does not show an unset status in the query-only filtered empty state" do
+  it "does not show unset filters in the query-only filtered empty state" do
     create(:access_request, requester:, requestable: document, requested_access_level: :download)
 
     sign_in_as(admin_user)
@@ -181,6 +274,8 @@ RSpec.describe "Admin access requests", type: :request do
     expect(empty_state_text).to include("検索: does-not-match")
     expect(empty_state_text).not_to include("状態:")
     expect(empty_state_text).not_to include("状態: すべて")
+    expect(empty_state_text).not_to include("要求権限:")
+    expect(empty_state_text).not_to include("対象種別:")
   end
 
   it "approves a pending request" do
@@ -208,11 +303,17 @@ RSpec.describe "Admin access requests", type: :request do
         status: "pending",
         q: " Manual ",
         page: "2",
+        requested_access_level: "download",
         requestable_type: "Document"
       }
     end.to change { DocumentPermission.where(document:, user: requester).count }.by(1)
 
-    expect(response).to redirect_to(admin_access_requests_path(status: "pending", q: "Manual"))
+    expect(response).to redirect_to(admin_access_requests_path(
+      status: "pending",
+      q: "Manual",
+      requested_access_level: "download",
+      requestable_type: "Document"
+    ))
     expect(access_request.reload).to be_approved
   end
 
@@ -237,15 +338,22 @@ RSpec.describe "Admin access requests", type: :request do
       decision: "reject",
       rejection_reason: "承認条件を満たしていないため却下しました",
       status: "pending",
-      q: "Client User"
+      q: "Client User",
+      requested_access_level: "view",
+      requestable_type: "Project"
     }
 
-    expect(response).to redirect_to(admin_access_requests_path(status: "pending", q: "Client User"))
+    expect(response).to redirect_to(admin_access_requests_path(
+      status: "pending",
+      q: "Client User",
+      requested_access_level: "view",
+      requestable_type: "Project"
+    ))
     expect(access_request.reload).to be_rejected
     expect(access_request.rejection_reason).to eq("承認条件を満たしていないため却下しました")
   end
 
-  it "does not carry invalid status or blank query after actions" do
+  it "does not carry invalid filters or blank query after actions" do
     access_request = create(:access_request, requester:, requestable: document, requested_access_level: :download)
 
     sign_in_as(admin_user)
@@ -254,7 +362,9 @@ RSpec.describe "Admin access requests", type: :request do
       decision: "approve",
       status: "all",
       q: "   ",
-      page: "2"
+      page: "2",
+      requested_access_level: "owner",
+      requestable_type: "User"
     }
 
     expect(response).to redirect_to(admin_access_requests_path)
