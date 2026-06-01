@@ -51,4 +51,62 @@ RSpec.describe Admin::AccessLogsHelper, type: :helper do
       ])
     end
   end
+
+  describe "#access_log_ai_context_target_details" do
+    def build_log(target_type:, target_name:)
+      instance_double(AccessLog, target_type: target_type, target_name: target_name)
+    end
+
+    it "splits a known ai_context target_name into readable segments" do
+      log = build_log(
+        target_type: "ai_context",
+        target_name: "mode=compact;scope=selected;selected_count=3;exported_count=2"
+      )
+
+      details = helper.access_log_ai_context_target_details(log)
+
+      expect(details).to eq(
+        raw: "mode=compact;scope=selected;selected_count=3;exported_count=2",
+        segments: [
+          { label: "mode", value: "compact" },
+          { label: "scope", value: "選択" },
+          { label: "選択", value: "3件" },
+          { label: "出力", value: "2件" }
+        ]
+      )
+    end
+
+    it "keeps all-scope context readable" do
+      log = build_log(
+        target_type: "ai_context",
+        target_name: "mode=full;scope=all;selected_count=0;exported_count=12"
+      )
+
+      details = helper.access_log_ai_context_target_details(log)
+
+      expect(details[:segments]).to include(
+        { label: "mode", value: "full" },
+        { label: "scope", value: "全件" },
+        { label: "選択", value: "0件" },
+        { label: "出力", value: "12件" }
+      )
+    end
+
+    it "falls back to raw display for malformed ai_context target names" do
+      malformed_log = build_log(target_type: "ai_context", target_name: "mode=compact;scope=selected")
+      non_numeric_log = build_log(
+        target_type: "ai_context",
+        target_name: "mode=compact;scope=selected;selected_count=many;exported_count=2"
+      )
+
+      expect(helper.access_log_ai_context_target_details(malformed_log)).to be_nil
+      expect(helper.access_log_ai_context_target_details(non_numeric_log)).to be_nil
+    end
+
+    it "does not change other target types" do
+      log = build_log(target_type: "page", target_name: "docs/setup")
+
+      expect(helper.access_log_ai_context_target_details(log)).to be_nil
+    end
+  end
 end
