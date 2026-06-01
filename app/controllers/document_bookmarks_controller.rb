@@ -2,7 +2,9 @@ class DocumentBookmarksController < BaseController
   def index
     @favorite_bookmarks = bookmarks_for(:favorite)
     @read_later_bookmarks = bookmarks_for(:read_later)
-    @recent_documents = RecentDocumentsQuery.new(user: current_user, limit: 20).call
+    @recent_documents_query = recent_documents_query
+    @all_recent_documents = RecentDocumentsQuery.new(user: current_user, limit: 20).call
+    @recent_documents = filter_recent_documents(@all_recent_documents)
   end
 
   def create
@@ -47,6 +49,19 @@ class DocumentBookmarksController < BaseController
       .includes(document: [:project, :latest_version])
       .readable_by(current_user)
       .order(created_at: :desc)
+  end
+
+  def filter_recent_documents(documents)
+    return documents if recent_documents_query.blank?
+
+    query = recent_documents_query.downcase
+    documents.select do |document|
+      [document.title, document.project.name].any? { _1.to_s.downcase.include?(query) }
+    end
+  end
+
+  def recent_documents_query
+    @recent_documents_query ||= params[:recent_q].to_s.strip
   end
 
   def bookmark_params
