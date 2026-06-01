@@ -17,7 +17,8 @@
 current 実装の前提:
 
 - 一覧は `accessed_at desc, id desc` の順で最新 200 件まで表示する
-- 絞り込みは `action_type` `target_type` `project_id` `company_id` `user_id` `document_q` `from` `to` を受け付ける
+- 絞り込みは `action_type` `target_type` `project_id` `company_id` `user_id` `document_q` `from` `to` `ai_context_mode` `ai_context_scope` を受け付ける
+- AI context の `mode` / `scope` filter は `target_type=ai_context` のときだけ有効になり、他の `target_type` では無視される
 - `document_q` は文書タイトルと `slug` の両方に対して部分一致で絞り込む
 - `from` / `to` は `accessed_at` の日付範囲で絞り込み、指定後も一覧の並び順と最大 200 件表示は変わらない
 - 不正な日付入力は 500 にせず、その日付条件だけを無視する
@@ -38,23 +39,31 @@ current 実装の前提:
 - AI context export は HTML preview と JSON / Markdown download の証跡を `target_type: ai_context` として残す
 - 一覧の `対象` 列には対象種別に加えて `target_name` が出るので、同じ種別の中でもどのファイルやページ、または AI context export の mode だったかを見分けやすい
 
-### 3. 案件 / 会社 / ユーザー
+### 3. AI context mode / scope
+
+- `AI context mode` は `compact` / `full` のどちらかで AI context export の証跡を絞り込む
+- `AI context scope` は `全件` / `選択` のどちらかで AI context export の証跡を絞り込む。内部値は `all` / `selected` として扱われる
+- どちらも `対象種別` が `ai_context` のときだけ有効になる。`page` `file` `zip` では mode / scope を選んでも条件から外れる
+- 不正な mode / scope 値は無視されるため、意図した条件になっているかは `有効な条件` の badge で確認する
+- 一覧の `対象` 列では、AI context export の `mode`、`scope`、選択件数、出力件数が badge と raw value で表示される
+
+### 4. 案件 / 会社 / ユーザー
 
 - `project_id` は案件単位の追跡に使う
 - `company_id` は社外会社ごとの利用状況を見たいときに使う
 - `user_id` は個別利用者の行動確認に使う
 - 3 つを組み合わせると、対象をかなり狭くして最新 200 件制限の中で追いやすくなる
 
-### 4. 文書名・URL識別子
+### 5. 文書名・URL識別子
 
 - `document_q` は文書タイトルと `slug` の両方に効く
 - 管理画面や公開 URL で覚えている文字列が title か slug か分からないときでも、同じ入力欄で探せる
 
-### 5. 開始日 / 終了日
+### 6. 開始日 / 終了日
 
 - `from` は指定日の 00:00:00 以降、`to` は指定日の 23:59:59 までの `accessed_at` に効く
 - 「先週の送付後」「特定日の問い合わせ前後」のように、時期を主語に確認したいときに使う
-- 案件・会社・ユーザー・文書名などの既存 filter と併用できる
+- 案件・会社・ユーザー・文書名・AI context mode / scope などの既存 filter と併用できる
 - 期間指定後も、表示は `accessed_at desc, id desc` の新しい順で最新 200 件までに留まる。200 件に達する場合は、期間を短くするか他の条件を足して絞り込む
 - 日付として解釈できない入力は落とさず無視されるため、意図した期間になっているか画面の件数と条件を見直す
 
@@ -82,6 +91,7 @@ current 実装の前提:
 - 想定した案件や利用者に対して、閲覧とダウンロードのどちらが起きているか
 - ZIP 配布や添付ダウンロードが特定案件だけに偏っていないか
 - AI context export の HTML preview / JSON / Markdown download が想定した案件や利用者で発生しているか
+- AI context export を見るとき、`compact` / `full` と `全件` / `選択` のどちらで出力された証跡なのかを絞り込みと `対象` 列で確認できているか
 - 日付起点で問い合わせや送付後の利用を見たいとき、開始日 / 終了日で対象期間を狭めてから案件・会社・ユーザーを足せているか
 - 文書・版・利用者のどれを主語にして見たいのかに合わせて、表示設定で不要な列を外せているか
 - 文書 detail や版 detail へ戻って、対象文書や公開状態をその場で見直す必要があるか
@@ -92,6 +102,7 @@ current 実装の前提:
 - 期間指定は一覧の絞り込みであり、監査ログ保存期間や retention policy は変えない
 - current UI にページネーションはない。古い証跡を追いたい場合、この画面だけで完結しないことがある
 - `document_q` は title / slug の検索であり、target file name や IP アドレス検索ではない
+- AI context mode / scope filter は `target_type=ai_context` の `target_name` に保存された `mode=<value>;` / `scope=<value>;` を使う補助 filter であり、任意の `target_name` 全文検索ではない
 - `監査ログ一覧の表示設定` は一覧の表示列を切り替えるだけで、記録対象や絞り込み結果そのものは変えない
 - company master admin や external user は使えない画面なので、社外利用者向け運用手順としては扱わない
 
@@ -104,6 +115,7 @@ current 実装の前提:
 ## 迷ったときの切り分け
 
 - まず利用が起きたかどうかを見たい: `操作` と `対象種別` で絞る
+- AI context export の出力形態だけを狭めたい: `対象種別` を `ai_context` にしてから `AI context mode` / `AI context scope` を足す
 - どの案件や会社の話かを狭めたい: `案件` `会社` `ユーザー` を足す
 - 特定日の前後だけを見たい: `開始日` / `終了日` を入れて、必要なら他の条件を足す
 - 文書 detail から利用傾向を振り返りたい: `document_q` で title / slug を入れて戻る
