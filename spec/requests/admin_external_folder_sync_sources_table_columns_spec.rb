@@ -53,6 +53,7 @@ RSpec.describe "Admin external folder sync source table columns", type: :request
     expect(body_keys).to eq(expected_keys)
     expect(row.css("> td").size).to eq(expected_keys.size)
     expect(row.text.scan("Drive source").size).to eq(1)
-    expect(row.text).to include("同期対応")
+    expect(row.text).to include("同期実行対象")
+    expect(row.text).to include("dry-run / apply 可能")
   end
 end
