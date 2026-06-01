@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module Admin::AccessLogsHelper
+  AI_CONTEXT_TARGET_KEYS = %w[mode scope selected_count exported_count].freeze
+
   def access_log_table_columns
     [
       table_preferences_column(:accessed_at, label: "日時", default_width: 170, pinned: true, sortable: true),
@@ -65,6 +67,26 @@ module Admin::AccessLogsHelper
     ].compact
   end
 
+  def access_log_ai_context_target_details(log)
+    return unless log.target_type.to_s == "ai_context"
+
+    raw_target_name = log.target_name.to_s.strip
+    return if raw_target_name.blank?
+
+    values = parse_ai_context_target_name(raw_target_name)
+    return unless values
+
+    {
+      raw: raw_target_name,
+      segments: [
+        { label: "mode", value: values.fetch("mode") },
+        { label: "scope", value: ai_context_scope_label(values.fetch("scope")) },
+        { label: "選択", value: "#{values.fetch('selected_count')}件" },
+        { label: "出力", value: "#{values.fetch('exported_count')}件" }
+      ]
+    }
+  end
+
   def access_log_company_secondary_label(company)
     return unless company
 
@@ -79,6 +101,31 @@ module Admin::AccessLogsHelper
   end
 
   private
+
+  def parse_ai_context_target_name(raw_target_name)
+    pairs = raw_target_name.split(";").each_with_object({}) do |part, values|
+      key, value = part.split("=", 2).map { _1.to_s.strip }
+      return nil if key.blank? || value.blank?
+
+      values[key] = value
+    end
+
+    return unless AI_CONTEXT_TARGET_KEYS.all? { pairs[_1].present? }
+    return unless pairs["selected_count"].match?(/\A\d+\z/) && pairs["exported_count"].match?(/\A\d+\z/)
+
+    pairs.slice(*AI_CONTEXT_TARGET_KEYS)
+  end
+
+  def ai_context_scope_label(scope)
+    case scope
+    when "all"
+      "全件"
+    when "selected"
+      "選択"
+    else
+      scope
+    end
+  end
 
   def access_log_enum_filter_summary(label, value, scope, known_values)
     return if value.blank?
