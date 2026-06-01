@@ -33,6 +33,18 @@ RSpec.describe "admin document usage reports source" do
     end
   end
 
+  it "keeps usage state cues close to the usage column without changing drill-down links" do
+    aggregate_failures do
+      expect(view_source).to include("document_usage_report_usage_badge_class(row)")
+      expect(view_source).to include("document_usage_report_usage_badge_label(row)")
+      expect(view_source).to include("document_usage_report_usage_hint(row)")
+      expect(view_source).to include("未利用は期間内の閲覧・ダウンロード・既読確認がない文書")
+      expect(view_source).to include("既読のみは閲覧・ダウンロードなしで既読確認だけがある文書")
+      expect(view_source).to include("admin_access_logs_path(project_id: @selected_project.id, document_q: row[:slug])")
+      expect(view_source).to include("admin_read_confirmations_path(project_id: @selected_project.id, document_slug: row[:slug])")
+    end
+  end
+
   it "defines helper metadata for columns and project labels" do
     aggregate_failures do
       expect(helper_source).to include("def document_usage_report_table_columns")
