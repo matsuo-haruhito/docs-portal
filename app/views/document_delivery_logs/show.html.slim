@@ -41,8 +41,8 @@ pre = @delivery_log.body
 p.actions
   = link_to "メーラーを開く", @mailto_url, class: "button"
   - if @delivery_log.draft?
-    = button_to "送付済みにする", document_delivery_log_path(@delivery_log), method: :patch, params: { decision: "mark_sent" }, class: "button secondary"
-    = button_to "送付失敗として記録", document_delivery_log_path(@delivery_log), method: :patch, params: { decision: "mark_failed" }, class: "button secondary"
+    = button_to "送付済みにする", document_delivery_log_path(@delivery_log), method: :patch, params: { decision: "mark_sent", return_to: @return_to_path }, class: "button secondary"
+    = button_to "送付失敗として記録", document_delivery_log_path(@delivery_log), method: :patch, params: { decision: "mark_failed", return_to: @return_to_path }, class: "button secondary"
   - if @delivery_log.document.present?
     = link_to "対象の文書へ戻る", project_document_path(@delivery_log.project, @delivery_log.document.slug), class: "button secondary"
   - elsif @delivery_log.document_set.present?
