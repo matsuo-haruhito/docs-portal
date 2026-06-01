@@ -119,4 +119,23 @@ RSpec.describe "Admin access log pagination", type: :request do
     expect(log_target_names.last).to eq("bounded-entry-5")
     expect(page_links).to include(["次の200件", admin_access_logs_path(page: 2)])
   end
+
+  it "treats pages above the fixed page bound as a first page request" do
+    base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
+
+    205.times do |index|
+      create_access_log!(target_name: "max-page-entry-#{index}", accessed_at: base_time + index.seconds)
+    end
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(page: "999999")
+
+    expect(response).to have_http_status(:ok)
+    expect(log_target_names.size).to eq(200)
+    expect(log_target_names.first).to eq("max-page-entry-204")
+    expect(log_target_names.last).to eq("max-page-entry-5")
+    expect(page_text).not_to include("999999ページ目")
+    expect(page_links).to include(["次の200件", admin_access_logs_path(page: 2)])
+  end
 end
