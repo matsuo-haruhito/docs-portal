@@ -39,7 +39,7 @@ RSpec.describe "Admin documents", type: :request do
   end
 
   def bulk_edit_candidate_link
-    parsed_html.at_css(%(a[href*="#{new_admin_bulk_edit_dry_run_path}"]))
+    parsed_html.at_css(%(a[href*="source=admin_documents"]))
   end
 
   def row_column_texts(column_key)
