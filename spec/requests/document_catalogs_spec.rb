@@ -21,7 +21,11 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("文書カタログ")
     expect(response.body).to include("Customer Pack")
+    expect(response.body).to include("顧客向け")
+    expect(response.body).to include("限定公開")
+    expect(response.body).to include("表示可能件数")
     expect(response.body).not_to include("Internal Pack")
+    expect(response.body).not_to include("restricted_external")
     expect(response.body).to include(project_document_catalog_path(project, visible))
   end
 
@@ -32,7 +36,7 @@ RSpec.describe "Document catalogs", type: :request do
     visible_document.update!(latest_version: visible_version)
     create(:document_permission, document: visible_document, company:, access_level: :view)
 
-    catalog = create(:document_catalog, project:, name: "Customer Pack", visibility_policy: :restricted_external)
+    catalog = create(:document_catalog, project:, name: "Customer Pack", audience_type: :delivery, visibility_policy: :restricted_external)
     create(:document_catalog_item, document_catalog: catalog, document: hidden_document, sort_order: 1, note: "internal")
     create(:document_catalog_item, document_catalog: catalog, document: visible_document, sort_order: 2, note: "read first")
 
@@ -42,10 +46,16 @@ RSpec.describe "Document catalogs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Customer Pack")
+    expect(response.body).to include("納品向け")
+    expect(response.body).to include("限定公開")
+    expect(response.body).to include("表示可能:")
+    expect(response.body).to include("1件 / 登録:")
+    expect(response.body).to include("2件")
     expect(response.body).to include("Visible Manual")
     expect(response.body).to include("read first")
     expect(response.body).not_to include("Internal Manual")
     expect(response.body).not_to include("internal")
+    expect(response.body).not_to include("restricted_external")
   end
 
   it "forbids external users from internal-only catalogs" do
