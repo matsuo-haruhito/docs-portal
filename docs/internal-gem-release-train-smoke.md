@@ -32,6 +32,39 @@
 - ただし current CI、mergeability、`#789` の human gate、representative smoke の状態で実行可否を再判断する
 - この snapshot 更新だけでは `Gemfile` / `Gemfile.lock` を変更しない
 
+## dependency bump human handoff
+
+`#1300` / `#1301` / `#789` のような dependency bump lane は、作業直前の upstream 状態と lockfile 再生成結果を正本にします。エージェント環境で checkout、Bundler、代表 smoke を安全に実行できない場合は、`Gemfile.lock` の SHA 行だけを connector 手編集して完了扱いにしません。
+
+人間が実行する最小手順:
+
+1. 対象 gem を 1 つだけ選び、対応する child issue と current pin を確認する。
+2. upstream `main`、candidate PR、CI、release notes / README を作業直前に再確認し、target SHA を決める。
+3. `Gemfile` と `Gemfile.lock` を Bundler で更新する。`Gemfile.lock` は `bundle install` / `bundle lock` などの生成結果を正とし、SHA 行だけの手編集で代替しない。
+4. この文書の representative smoke を対象 gem だけ実行し、未確認 surface があれば未確認として明記する。
+5. PR 本文または issue comment に `from`、`to`、representative smoke、result、rollback target を 1 箇所へ記録する。
+
+PR に混ぜないもの:
+
+- 複数 gem の ref 更新
+- upstream gem 側の public API / setup policy 変更
+- host app の画面 redesign や business spec 変更
+- known-good revision 判断が残る `#789` の先取り
+
+エージェントが止める条件:
+
+- GitHub checkout / fetch、Bundler、または representative smoke を実行できず、lockfile と smoke 結果を正本として確認できない
+- target SHA の選定に upstream issue / PR / CI の人間判断が必要
+- smoke failure の原因が business spec、認可、DB schema、外部 API、UI redesign に広がる
+- `#1552` の current queue sync と矛盾する target、または未解決の release train human gate を上書きする必要がある
+
+止める場合は、対象 child issue に次を短く残します。
+
+- どの gem / child issue で止めたか
+- 最後に確認した current pin と candidate target
+- 実行できなかった作業（checkout、Bundler、smoke など）
+- 再開条件（人間が target SHA、Bundler lockfile、代表 smoke、rollback target を確認すること）
+
 ## tree_view representative smoke
 
 `tree_view` の更新では、文書ツリーの見た目だけでなく route context と persisted state を確認します。
@@ -138,3 +171,4 @@
 - smoke failure が app helper、partial、route、Turbo Stream、field param に閉じる場合は `docs-portal` 側 issue として扱う
 - public API、setup docs、Stimulus 登録例、Vite alias 前提の不足は upstream 側 issue / docs を先に確認する
 - business spec、認可、DB schema、外部 API、UI redesign が必要になった場合は `needs-human` として止める
+- checkout、Bundler、representative smoke のいずれかを実行できない環境では、`Gemfile.lock` の connector 手編集だけで bump PR を作らず、対象 issue に停止理由と再開条件を残す
