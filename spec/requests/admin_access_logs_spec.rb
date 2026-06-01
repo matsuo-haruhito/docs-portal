@@ -150,6 +150,111 @@ RSpec.describe "Admin access logs", type: :request do
     expect(log_target_names).to eq(["mode=full"])
   end
 
+  it "filters AI context export access logs by mode" do
+    create_access_log!(
+      action_type: :download,
+      target_type: "ai_context",
+      target_name: "mode=compact;scope=selected;selected_count=2;exported_count=2"
+    )
+    create_access_log!(
+      action_type: :download,
+      target_type: "ai_context",
+      target_name: "mode=full;scope=selected;selected_count=2;exported_count=2"
+    )
+    create_access_log!(
+      action_type: :download,
+      target_type: "page",
+      target_name: "mode=compact;scope=selected;selected_count=2;exported_count=2"
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(target_type: "ai_context", ai_context_mode: "compact")
+
+    expect(response).to have_http_status(:ok)
+    expect(log_target_names).to eq(["mode=compact;scope=selected;selected_count=2;exported_count=2"])
+    expect(parsed_html.at_css('select[name="ai_context_mode"] option[value="compact"][selected]').text).to eq("compact")
+    expect(page_text).to include("AI context mode: compact")
+  end
+
+  it "filters AI context export access logs by scope with existing filters" do
+    create_access_log!(
+      action_type: :download,
+      target_type: "ai_context",
+      target_name: "mode=full;scope=selected;selected_count=2;exported_count=2"
+    )
+    create_access_log!(
+      action_type: :view,
+      target_type: "ai_context",
+      target_name: "mode=compact;scope=selected;selected_count=1;exported_count=1"
+    )
+    create_access_log!(
+      action_type: :download,
+      target_type: "ai_context",
+      target_name: "mode=full;scope=all;selected_count=0;exported_count=9"
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(target_type: "ai_context", ai_context_scope: "selected", action_type: "download")
+
+    expect(response).to have_http_status(:ok)
+    expect(log_target_names).to eq(["mode=full;scope=selected;selected_count=2;exported_count=2"])
+    expect(parsed_html.at_css('select[name="ai_context_scope"] option[value="selected"][selected]').text).to eq("選択")
+    expect(page_text).to include("AI context scope: 選択")
+  end
+
+  it "ignores invalid AI context mode and scope filters" do
+    create_access_log!(
+      action_type: :download,
+      target_type: "ai_context",
+      target_name: "mode=compact;scope=selected;selected_count=2;exported_count=2"
+    )
+    create_access_log!(
+      action_type: :download,
+      target_type: "ai_context",
+      target_name: "mode=full;scope=all;selected_count=0;exported_count=9"
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(target_type: "ai_context", ai_context_mode: "expanded", ai_context_scope: "partial")
+
+    expect(response).to have_http_status(:ok)
+    expect(log_target_names).to contain_exactly(
+      "mode=compact;scope=selected;selected_count=2;exported_count=2",
+      "mode=full;scope=all;selected_count=0;exported_count=9"
+    )
+    expect(parsed_html.at_css('select[name="ai_context_mode"] option[value="expanded"][selected]')).to be_nil
+    expect(parsed_html.at_css('select[name="ai_context_scope"] option[value="partial"][selected]')).to be_nil
+    expect(page_text).not_to include("AI context mode:")
+    expect(page_text).not_to include("AI context scope:")
+  end
+
+  it "does not apply AI context filters to other target types" do
+    create_access_log!(
+      action_type: :download,
+      target_type: "zip",
+      target_name: "mode=compact;scope=selected;selected_count=2;exported_count=2"
+    )
+    create_access_log!(
+      action_type: :download,
+      target_type: "ai_context",
+      target_name: "mode=compact;scope=selected;selected_count=2;exported_count=2"
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(target_type: "zip", ai_context_mode: "compact", ai_context_scope: "selected")
+
+    expect(response).to have_http_status(:ok)
+    expect(log_target_names).to eq(["mode=compact;scope=selected;selected_count=2;exported_count=2"])
+    expect(parsed_html.at_css('select[name="ai_context_mode"] option[value="compact"][selected]')).to be_nil
+    expect(parsed_html.at_css('select[name="ai_context_scope"] option[value="selected"][selected]')).to be_nil
+    expect(page_text).not_to include("AI context mode:")
+    expect(page_text).not_to include("AI context scope:")
+  end
+
   it "filters access logs by project, company, and user" do
     matching_project = create(:project, code: "FILTER", name: "Filter Project")
     matching_company = create(:company, domain: "filter.example.com", name: "Filter Co")

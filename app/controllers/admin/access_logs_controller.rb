@@ -1,4 +1,7 @@
 class Admin::AccessLogsController < Admin::BaseController
+  AI_CONTEXT_MODE_FILTERS = %w[compact full].freeze
+  AI_CONTEXT_SCOPE_FILTERS = %w[all selected].freeze
+
   before_action :require_admin_only!
 
   def index
@@ -18,11 +21,28 @@ class Admin::AccessLogsController < Admin::BaseController
     scope = AccessLog.all
     scope = scope.where(action_type: @filters[:action_type]) if @filters[:action_type].present? && AccessLog.action_types.key?(@filters[:action_type])
     scope = scope.where(target_type: @filters[:target_type]) if @filters[:target_type].present?
+    scope = apply_ai_context_filters(scope)
     scope = scope.where(project_id: @filters[:project_id]) if @filters[:project_id].present?
     scope = scope.where(company_id: @filters[:company_id]) if @filters[:company_id].present?
     scope = scope.where(user_id: @filters[:user_id]) if @filters[:user_id].present?
     scope = scope.where(document_id: document_scope.select(:id)) if @filters[:document_q].present?
     scope = apply_accessed_at_filters(scope)
+    scope
+  end
+
+  def apply_ai_context_filters(scope)
+    return scope unless @filters[:target_type].to_s == "ai_context"
+
+    if @filters[:ai_context_mode].present?
+      mode = ActiveRecord::Base.sanitize_sql_like(@filters[:ai_context_mode].to_s)
+      scope = scope.where("target_name LIKE ?", "%mode=#{mode};%")
+    end
+
+    if @filters[:ai_context_scope].present?
+      export_scope = ActiveRecord::Base.sanitize_sql_like(@filters[:ai_context_scope].to_s)
+      scope = scope.where("target_name LIKE ?", "%scope=#{export_scope};%")
+    end
+
     scope
   end
 
@@ -49,12 +69,28 @@ class Admin::AccessLogsController < Admin::BaseController
   end
 
   def filter_params
-    permitted = params.permit(:action_type, :target_type, :project_id, :company_id, :user_id, :document_q, :from, :to)
+    permitted = params.permit(:action_type, :target_type, :project_id, :company_id, :user_id, :document_q, :from, :to, :ai_context_mode, :ai_context_scope)
     permitted[:target_type] = nil if unknown_target_type_filter?(permitted[:target_type])
+    permitted[:ai_context_mode] = nil if unknown_ai_context_mode_filter?(permitted[:ai_context_mode])
+    permitted[:ai_context_scope] = nil if unknown_ai_context_scope_filter?(permitted[:ai_context_scope])
+
+    if permitted[:target_type].to_s != "ai_context"
+      permitted[:ai_context_mode] = nil
+      permitted[:ai_context_scope] = nil
+    end
+
     permitted
   end
 
   def unknown_target_type_filter?(target_type)
     target_type.present? && AccessLog::TARGET_TYPE_FILTERS.exclude?(target_type)
+  end
+
+  def unknown_ai_context_mode_filter?(mode)
+    mode.present? && AI_CONTEXT_MODE_FILTERS.exclude?(mode)
+  end
+
+  def unknown_ai_context_scope_filter?(scope)
+    scope.present? && AI_CONTEXT_SCOPE_FILTERS.exclude?(scope)
   end
 end

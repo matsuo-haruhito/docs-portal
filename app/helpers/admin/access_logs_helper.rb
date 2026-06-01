@@ -2,6 +2,11 @@
 
 module Admin::AccessLogsHelper
   AI_CONTEXT_TARGET_KEYS = %w[mode scope selected_count exported_count].freeze
+  AI_CONTEXT_MODE_FILTER_OPTIONS = %w[compact full].freeze
+  AI_CONTEXT_SCOPE_FILTER_LABELS = {
+    "all" => "全件",
+    "selected" => "選択"
+  }.freeze
 
   def access_log_table_columns
     [
@@ -19,6 +24,14 @@ module Admin::AccessLogsHelper
 
   def access_log_target_type_filter_options
     enum_options_for("access_logs.target_type", AccessLog::TARGET_TYPE_FILTERS)
+  end
+
+  def access_log_ai_context_mode_filter_options
+    AI_CONTEXT_MODE_FILTER_OPTIONS.map { [_1, _1] }
+  end
+
+  def access_log_ai_context_scope_filter_options
+    AI_CONTEXT_SCOPE_FILTER_LABELS.map { |value, label| [label, value] }
   end
 
   def access_log_filter_select_html_options(placeholder:)
@@ -58,6 +71,8 @@ module Admin::AccessLogsHelper
     [
       access_log_enum_filter_summary("操作", filters[:action_type], "access_logs.action_type", AccessLog.action_types.keys),
       access_log_enum_filter_summary("対象種別", filters[:target_type], "access_logs.target_type", AccessLog::TARGET_TYPE_FILTERS),
+      access_log_ai_context_mode_filter_summary(filters[:ai_context_mode]),
+      access_log_ai_context_scope_filter_summary(filters[:ai_context_scope]),
       access_log_record_filter_summary("案件", filters[:project_id], projects) { access_log_project_filter_label(_1) },
       access_log_record_filter_summary("会社", filters[:company_id], companies) { access_log_company_filter_label(_1) },
       access_log_record_filter_summary("ユーザー", filters[:user_id], users) { access_log_user_filter_label(_1) },
@@ -132,6 +147,21 @@ module Admin::AccessLogsHelper
 
     display = known_values.include?(value.to_s) ? localized_label(scope, value) : "指定あり"
     "#{label}: #{display}"
+  end
+
+  def access_log_ai_context_mode_filter_summary(value)
+    return if value.blank? || AI_CONTEXT_MODE_FILTER_OPTIONS.exclude?(value.to_s)
+
+    "AI context mode: #{value}"
+  end
+
+  def access_log_ai_context_scope_filter_summary(value)
+    return if value.blank?
+
+    label = AI_CONTEXT_SCOPE_FILTER_LABELS[value.to_s]
+    return unless label
+
+    "AI context scope: #{label}"
   end
 
   def access_log_record_filter_summary(label, value, records)
