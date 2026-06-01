@@ -14,7 +14,9 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboard#show", as: :dashboard
   get "documents", to: "accessible_documents#index", as: :documents
   resources :consents, only: %i[index new create], param: :public_id
-  resources :document_approval_requests, only: %i[index show update], param: :public_id
+  resources :document_approval_requests, only: %i[index show update], param: :public_id do
+    post :cancel, on: :member
+  end
   resources :document_delivery_logs, only: %i[index show update], param: :public_id
   resource :session, only: %i[new create destroy]
   resources :document_bookmarks, only: %i[index create destroy], param: :public_id do
