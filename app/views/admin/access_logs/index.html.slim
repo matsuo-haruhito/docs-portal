@@ -93,7 +93,15 @@ section.card
           td data-rails-table-preferences-column-key="action_type" = access_log_action_type_label(log)
           td data-rails-table-preferences-column-key="target"
             = access_log_target_type_label(log)
-            - if log.target_name.present?
+            - ai_context_target = access_log_ai_context_target_details(log)
+            - if ai_context_target
+              br
+              - ai_context_target[:segments].each do |segment|
+                = " "
+                span.badge title=ai_context_target[:raw] = "#{segment[:label]}: #{segment[:value]}"
+              br
+              code.muted = ai_context_target[:raw]
+            - elsif log.target_name.present?
               br
               code = log.target_name
           td data-rails-table-preferences-column-key="user" = log.user ? "#{log.user.display_name} / #{log.user.email_address}" : "-"
