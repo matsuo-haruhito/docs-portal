@@ -139,7 +139,6 @@ module Admin::AccessLogsHelper
 
     record = records.find { _1.id.to_s == value.to_s }
     display = record ? yield(record) : "指定あり"
-  
     "#{label}: #{display}"
   end
 
