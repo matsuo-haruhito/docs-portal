@@ -35,7 +35,8 @@ RSpec.describe "Admin document usage report CSV", type: :request do
 
     export_link = parsed_html.css("a").find { _1.text.squish == "CSV出力" }
     expect(export_link).to be_present
-    expect(export_link["href"]).to include("/admin/document_usage_reports.csv")
+    expect(export_link["href"]).to include("/admin/document_usage_reports")
+    expect(export_link["href"]).to include("format=csv")
     expect(export_link["href"]).to include("project_id=#{project.id}")
     expect(export_link["href"]).to include("usage_filter=used")
     expect(export_link["href"]).to include("sort_order=last_accessed_desc")
