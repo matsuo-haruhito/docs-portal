@@ -1,13 +1,22 @@
 module ConsentsHelper
-  def consent_target_display(consent)
-    return "全体" unless consent.target.present?
+  def consent_scope_label(term)
+    t("labels.consent_terms.consent_scope.#{term.consent_scope}", default: term.consent_scope.to_s)
+  end
 
-    type_label = t("labels.consents.target_type.#{consent.target_type.underscore}", default: consent.target_type)
-    target_label = consent.target.try(:name) ||
-      consent.target.try(:title) ||
-      consent.target.try(:file_name) ||
-      consent.target.try(:version_label) ||
-      consent.target.to_param
+  def consent_target_display(consent)
+    consent_target_label(consent.target, fallback_type: consent.target_type)
+  end
+
+  def consent_target_label(target, fallback_type: nil)
+    return "全体" unless target.present?
+
+    type_name = fallback_type.presence || target.class.name
+    type_label = t("labels.consents.target_type.#{type_name.underscore}", default: type_name)
+    target_label = target.try(:name) ||
+      target.try(:title) ||
+      target.try(:file_name) ||
+      target.try(:version_label) ||
+      target.to_param
 
     [type_label, target_label].compact.join(" / ")
   end
