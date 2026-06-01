@@ -142,8 +142,10 @@ RSpec.describe "Document approval requests", type: :request do
     expect(response.body).not_to include(other_request.title)
 
     expected_return_to = project_document_document_approval_requests_path(project, document, status: :pending, q: "契約")
-    detail_link = parsed_html.at_css(%(a[href="#{document_approval_request_path(nested_request, return_to: expected_return_to)}"]))
+    detail_link = parsed_html.at_css(%(a[href^="#{document_approval_request_path(nested_request)}"]), text: nested_request.title)
     expect(detail_link).to be_present
+    detail_params = Rack::Utils.parse_nested_query(URI.parse(detail_link["href"]).query)
+    expect(detail_params["return_to"]).to eq(expected_return_to)
   end
 
   it "shows detail to internal users and supports OK / Cancel" do
