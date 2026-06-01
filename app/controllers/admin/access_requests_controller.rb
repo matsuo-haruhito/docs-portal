@@ -31,6 +31,8 @@ class Admin::AccessRequestsController < Admin::BaseController
   def filtered_access_request_scope
     scope = AccessRequest.recent_first.includes(:requester, :approver, :requestable)
     scope = scope.where(status: @filters[:status]) if @filters[:status].present?
+    scope = scope.where(requested_access_level: @filters[:requested_access_level]) if @filters[:requested_access_level].present?
+    scope = scope.where(requestable_type: @filters[:requestable_type]) if @filters[:requestable_type].present?
     scope
   end
 
@@ -141,12 +143,16 @@ class Admin::AccessRequestsController < Admin::BaseController
   end
 
   def filter_params
-    permitted = params.permit(:status, :q).to_h.symbolize_keys
+    permitted = params.permit(:status, :q, :requested_access_level, :requestable_type).to_h.symbolize_keys
     status = permitted[:status].to_s
+    requested_access_level = permitted[:requested_access_level].to_s
+    requestable_type = permitted[:requestable_type].to_s
 
     {
       status: AccessRequest.statuses.key?(status) ? status : nil,
-      q: permitted[:q].to_s.strip.presence
+      q: permitted[:q].to_s.strip.presence,
+      requested_access_level: AccessRequest.requested_access_levels.key?(requested_access_level) ? requested_access_level : nil,
+      requestable_type: AccessRequest::SUPPORTED_REQUESTABLE_TYPES.include?(requestable_type) ? requestable_type : nil
     }
   end
 end
