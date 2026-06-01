@@ -27,9 +27,9 @@
 
 | gem | current docs-portal ref | downstream current adoption | update lane |
 | --- | --- | --- | --- |
-| `tree_view` | `9c538f9ee7946fa5af24f15c99402a0431677303` | current `application.js` では controller import / register 未採用。helper / partial integration と sidebar / detail tree smoke が中心 | `#858` / `#903` 系の release train child issue |
-| `rails_table_preferences` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `RailsTablePreferencesController` を package root から import し、`rails-table-preferences` として register | `#858` / `#904` 系の release train child issue |
-| `rails_fields_kit` | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | `TomSelectController` を package root から import し、`rails-fields-kit--tom-select` として register | `#858` / `#921` 系の release train child issue |
+| `tree_view` | `9c538f9ee7946fa5af24f15c99402a0431677303` | current `application.js` では controller import / register 未採用。helper / partial integration と sidebar / detail tree smoke が中心 | `#858` parent / `#1301` release train child |
+| `rails_table_preferences` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `RailsTablePreferencesController` を package root から import し、`rails-table-preferences` として register | `#858` parent / `#789` known-good revision human gate 後に扱う lane |
+| `rails_fields_kit` | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | `TomSelectController` を package root から import し、`rails-fields-kit--tom-select` として register | `#858` parent / `#1300` release train child |
 
 ## Public surface / verification boundary
 
@@ -78,10 +78,13 @@ TypeScript declaration が関連する場合:
 
 ## 関連 issue / signal
 
-- `#1500`: release train current snapshot
-- `#858`: internal UI gem pinned ref 更新 train
+- `#1509`: この matrix の追加元で、完了済みの public surface / package verification 整理
+- `#858`: internal UI gem pinned ref 更新 train の parent / hub
+- `#1300`: `rails_fields_kit` release train child
+- `#1301`: `tree_view` release train child
+- `#789`: `rails_table_preferences` known-good revision の human gate
 - `#607`: 管理画面の internal UI gem 展開共通パターン
-- `#1470`: internal UI gem state cue inventory
+- `#1470`: internal UI gem state cue inventory。dependency bump とは別の parallel design lane
 - `tree_view-rails#981`: `config/public_api_manifest.yml` の配布境界と package verification 対象の整理
 - `rails_table_preferences#540`: package entrypoint の TypeScript declaration 同梱 signal
 
