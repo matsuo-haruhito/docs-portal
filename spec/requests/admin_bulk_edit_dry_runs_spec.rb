@@ -17,6 +17,13 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("文書一括編集")
     expect(response.body).to include("Target Doc")
+    expect(response.body).to include("0件選択中")
+    expect(response.body).to include("1件表示中")
+    expect(response.body).to include("対象を検索")
+    expect(response.body).to include("選択済みだけ表示")
+    expect(response.body).to include("実行は次の確認画面で行います")
+    expect(response.body).to include("data-controller=\"bulk-edit-selection\"")
+    expect(response.body).to include("data-bulk-edit-selection-search-text")
 
     expect do
       post admin_bulk_edit_dry_runs_path, params: {
