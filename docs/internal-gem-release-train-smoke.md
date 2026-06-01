@@ -14,6 +14,24 @@
 
 `rails_table_preferences` の known-good revision 判断は `#789` に残します。`#789` は human gate が明記されているため、この smoke note では target revision を決めません。
 
+## current snapshot (2026-06-01)
+
+この snapshot は dependency bump の target SHA を決めるものではありません。PR 実行時点で `docs-portal` の current pin から upstream `main` までを再計測し、差分数や representative signal が古くなっていないかを確認します。
+
+| 優先順 | gem | current pin | upstream target | current distance | representative upstream signal | downstream source | rollback note |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | `rails_fields_kit` | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | `matsuo-haruhito/rails_fields_kit@main` | `main` is 203 commits ahead, 0 behind | `rails_fields_kit#525` merged: package exports smoke と public API docs drift guard | bump issue `#1300`; smoke lane `#991` | rollback target は current pin。`tree_view` / `rails_table_preferences` bump を混ぜない |
+| 2 | `tree_view` | `9c538f9ee7946fa5af24f15c99402a0431677303` | `matsuo-haruhito/tree_view-rails@main` | `main` is 359 commits ahead, 0 behind | `tree_view-rails#987` merged: direction-sensitive CSS guard | bump issue `#1301`; smoke lane `#903` | rollback target は current pin。sidebar tree / detail tree smoke を記録する |
+| human-gated | `rails_table_preferences` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `matsuo-haruhito/rails_table_preferences@main` | `main` is 451 commits ahead, 0 behind | `rails_table_preferences#581` open: resource table row hook; `docs-portal#1499` merged: smoke note | human-gated bump issue `#789`; smoke lane `#904` | rollback target は current pin。`#789` の known-good revision 判断を先取りしない |
+
+再計測時の確認:
+
+- `Gemfile` と `Gemfile.lock` の current pin がこの表と一致するかを先に確認する
+- upstream `main` の ahead count は絶対値として扱わず、PR 作成直前の compare 結果で置き換える
+- release train の優先順は `rails_fields_kit` -> `tree_view` -> `rails_table_preferences` を基本にする
+- ただし current CI、mergeability、`#789` の human gate、representative smoke の状態で実行可否を再判断する
+- この snapshot 更新だけでは `Gemfile` / `Gemfile.lock` を変更しない
+
 ## tree_view representative smoke
 
 `tree_view` の更新では、文書ツリーの見た目だけでなく route context と persisted state を確認します。
