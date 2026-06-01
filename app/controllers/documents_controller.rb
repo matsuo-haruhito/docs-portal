@@ -67,8 +67,12 @@ class DocumentsController < BaseController
     ).crumbs
     @related_document_groups = RelatedDocumentFinder.new(document: @document, user: current_user).grouped_results
     visible_comments = @document.document_review_comments.visible_to(current_user)
-    @question_threads = visible_comments.where(internal_only: false, comment_type: :question).roots.includes(:author, :resolved_by, :document_version, replies: [:author, :resolved_by]).order(:created_at, :id)
-    @review_comments = visible_comments.where(internal_only: true).includes(:author, :resolved_by, :document_version).roots.order(:created_at, :id)
+    comment_search = DocumentCommentWorkspaceSearch.new(user: current_user, query: params[:comment_q])
+    question_threads = visible_comments.where(internal_only: false, comment_type: :question).roots.includes(:author, :resolved_by, :document_version, replies: [:author, :resolved_by]).order(:created_at, :id)
+    review_comments = visible_comments.where(internal_only: true).includes(:author, :resolved_by, :document_version).roots.order(:created_at, :id)
+    @question_threads = comment_search.filter_questions(question_threads)
+    @review_comments = comment_search.filter_reviews(review_comments)
+    @comment_search_query = comment_search.query
     @export_preview_file = export_preview_files.first
     @export_watermark_text =
       if @export_preview_file.present?
