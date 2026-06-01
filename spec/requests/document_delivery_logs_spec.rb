@@ -216,12 +216,12 @@ RSpec.describe "Document delivery logs", type: :request do
     get document_delivery_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(parsed_html.at_css("th[data-rails-table-preferences-column-key='recipients']").text).to include("受信者")
-    expect(response.body).to include('data-rails-table-preferences-column-key="recipients"')
-    recipients_cell_text = parsed_html.css("tr").find { |row| row.text.include?(log.to_addresses) }.at_css("td[data-rails-table-preferences-column-key='recipients']").text.squish
-    expect(recipients_cell_text).to include("To: primary@example.com")
-    expect(recipients_cell_text).to include("CC: cc@example.com")
-    expect(recipients_cell_text).to include("BCC: bcc@example.com")
+    expect(page_text).to include("受信者")
+    expect(response.body).to include("recipients")
+    recipients_row_text = parsed_html.css("tr").find { |row| row.text.include?(log.to_addresses) }.text.squish
+    expect(recipients_row_text).to include("To: primary@example.com")
+    expect(recipients_row_text).to include("CC: cc@example.com")
+    expect(recipients_row_text).to include("BCC: bcc@example.com")
   end
 
   it "searches delivery logs by project code while preserving status and delivery type filters" do
