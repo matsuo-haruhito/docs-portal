@@ -7,10 +7,24 @@ h1 文書一括編集
   h2 事前確認の作成
   p.muted 対象文書と変更内容を指定して、まず事前確認を作成します。実行は確認画面から行います。
 
-  = form_with url: admin_bulk_edit_dry_runs_path, scope: :bulk_edit do |form|
+  = form_with url: admin_bulk_edit_dry_runs_path, scope: :bulk_edit, data: { controller: "bulk-edit-selection" } do |form|
     h3 対象文書
     p.muted 複数の文書を選択できます。権限外・変更不能な対象は事前確認で確認します。
-    table
+
+    .bulk-edit-selection__summary aria-live="polite"
+      strong data-bulk-edit-selection-target="count" 0件選択中
+      span data-bulk-edit-selection-target="visibleCount" = "#{@documents.size}件表示中"
+      span.muted 実行は次の確認画面で行います。対象が多い場合は検索や選択済み表示で見直してください。
+
+    .bulk-edit-selection__tools
+      label.bulk-edit-selection__search-label for="bulk_edit_document_filter"
+        | 対象を検索
+        input#bulk_edit_document_filter.bulk-edit-selection__search type="search" placeholder="案件名・文書名・状態で検索" data-bulk-edit-selection-target="query" data-action="input->bulk-edit-selection#refresh"
+      label.bulk-edit-selection__selected-only
+        = check_box_tag :bulk_edit_selected_only, "1", false, data: { bulk_edit_selection_target: "selectedOnly", action: "bulk-edit-selection#refresh" }
+        | 選択済みだけ表示
+
+    table.bulk-edit-selection__table
       thead
         tr
           th 選択
@@ -22,8 +36,10 @@ h1 文書一括編集
           th 状態
       tbody
         - @documents.each do |document|
-          tr
-            td = check_box_tag "bulk_edit[document_ids][]", document.id, false, id: "bulk_edit_document_#{document.id}"
+          - status_label = document.archived? ? "アーカイブ済み" : "有効"
+          - search_text = [document.project.name, document.title, document_category_label(document), document_kind_label(document), document_visibility_policy_label(document), status_label].join(" ")
+          tr data-bulk-edit-selection-target="row" data-bulk-edit-selection-search-text=search_text
+            td = check_box_tag "bulk_edit[document_ids][]", document.id, false, id: "bulk_edit_document_#{document.id}", data: { bulk_edit_selection_target: "checkbox", action: "bulk-edit-selection#refresh" }
             td = document.project.name
             td
               label for="bulk_edit_document_#{document.id}"
@@ -31,7 +47,7 @@ h1 文書一括編集
             td = document_category_label(document)
             td = document_kind_label(document)
             td = document_visibility_policy_label(document)
-            td = document.archived? ? "アーカイブ済み" : "有効"
+            td = status_label
 
     h3 変更内容
     p.muted 空欄の項目は変更しません。タグはカンマ・読点・改行区切りで入力できます。
