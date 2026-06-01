@@ -69,6 +69,32 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedule_path(target, return_to: list_path)}"]))).to be_present
   end
 
+  it "shows a filtered empty state when search and previous status match no schedules" do
+    sign_in_as(admin_user)
+    create_schedule!(job_key: "invoice_digest", job_class: "InvoiceDigestJob", last_status: "completed")
+    create_schedule!(job_key: "billing_worker", job_class: "BillingWorkerJob", last_status: "failed")
+
+    get admin_recurring_job_schedules_path(status: "failed", q: "invoice")
+
+    expect(response).to have_http_status(:ok)
+    expect(listed_schedule_keys).to be_empty
+    expect(response.body).to include("表示中: 0件")
+    expect(response.body).to include("条件に一致する定期ジョブはありません。")
+    expect(response.body).to include("絞り込み解除")
+  end
+
+  it "shows an unregistered empty state when no schedules exist" do
+    sign_in_as(admin_user)
+
+    get admin_recurring_job_schedules_path
+
+    expect(response).to have_http_status(:ok)
+    expect(listed_schedule_keys).to be_empty
+    expect(response.body).to include("表示中: 0件")
+    expect(response.body).to include("登録済みの定期ジョブはありません。定義を同期すると、dispatcher 定義に基づいて登録されます。")
+    expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedules_path(sync_definitions: 1)}"]))).to be_present
+  end
+
   it "treats blank schedule search as an empty condition" do
     sign_in_as(admin_user)
     create_schedule!(job_key: "alpha_job")
