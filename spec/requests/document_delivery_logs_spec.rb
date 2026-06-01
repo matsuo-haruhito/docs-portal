@@ -198,6 +198,32 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(page_text).not_to include(own_sent.to_addresses)
   end
 
+  it "shows To, CC, and BCC separately in the recipients column" do
+    log = create(
+      :document_delivery_log,
+      project:,
+      document:,
+      sender: external_user,
+      status: :draft,
+      delivery_type: :portal_link,
+      to_addresses: "primary@example.com",
+      cc_addresses: "cc@example.com",
+      bcc_addresses: "bcc@example.com"
+    )
+
+    sign_in_as(external_user)
+
+    get document_delivery_logs_path
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_html.at_css("th[data-rails-table-preferences-column-key='recipients']").text).to include("受信者")
+    expect(response.body).to include('data-rails-table-preferences-column-key="recipients"')
+    recipients_cell_text = parsed_html.css("tr").find { |row| row.text.include?(log.to_addresses) }.at_css("td[data-rails-table-preferences-column-key='recipients']").text.squish
+    expect(recipients_cell_text).to include("To: primary@example.com")
+    expect(recipients_cell_text).to include("CC: cc@example.com")
+    expect(recipients_cell_text).to include("BCC: bcc@example.com")
+  end
+
   it "searches delivery logs by project code while preserving status and delivery type filters" do
     other_project = create(:project, code: "ARCH", name: "Archive Project")
     other_document = create(:document, project: other_project, title: "Archive Manual")
