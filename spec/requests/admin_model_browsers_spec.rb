@@ -4,7 +4,7 @@ RSpec.describe "Admin model browsers", type: :request do
   let(:admin_user) { create(:user, :internal) }
   let(:company_master_admin) { create(:user, :company_master_admin) }
 
-  it "shows the model browser index to admins" do
+  it "shows the model browser index to admins grouped by catalog area" do
     create(:project)
     create(:document)
 
@@ -13,8 +13,24 @@ RSpec.describe "Admin model browsers", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("モデルブラウザ")
+    expect(response.body).to include("基本マスタ")
+    expect(response.body).to include("文書・権限")
+    expect(response.body).to include("import / sync")
+    expect(response.body).to include("外部連携")
+    expect(response.body).to include("運用")
     expect(response.body).to include("案件")
     expect(response.body).to include("文書")
+    expect(response.body).to include(admin_model_browser_model_path("projects"))
+    expect(response.body).to include(admin_projects_path)
+  end
+
+  it "keeps every catalog entry in a known group without changing dashboard ordering" do
+    entries = Admin::ModelBrowserCatalog.entries
+    grouped_entries = Admin::ModelBrowserCatalog.grouped_entries(entries)
+
+    expect(grouped_entries.map(&:first)).to eq(%i[basic_master document_permission import_sync external_integration operations])
+    expect(entries.first(8).map(&:key)).to eq(%w[companies users projects project_memberships documents document_versions document_files document_permissions])
+    expect(entries.map(&:group)).to all(satisfy { Admin::ModelBrowserCatalog::GROUP_LABELS.key?(_1) })
   end
 
   it "shows a model-specific browser page to admins" do

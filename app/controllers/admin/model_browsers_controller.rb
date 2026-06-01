@@ -5,6 +5,7 @@ class Admin::ModelBrowsersController < Admin::BaseController
 
   def index
     @entries = Admin::ModelBrowserCatalog.entries
+    @entry_groups = Admin::ModelBrowserCatalog.grouped_entries(@entries)
     @entry_summaries = @entries.index_with { build_summary(_1) }
   end
 
