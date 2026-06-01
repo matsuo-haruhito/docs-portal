@@ -1,4 +1,5 @@
 - page_title "文書一括編集"
+- candidate_document_ids = @bulk_edit_candidate_document_ids || []
 
 h1 文書一括編集
 = render "admin/nav"
@@ -6,6 +7,22 @@ h1 文書一括編集
 .card
   h2 事前確認の作成
   p.muted 対象文書と変更内容を指定して、まず事前確認を作成します。実行は確認画面から行います。
+
+  - if @bulk_edit_candidate_source
+    p
+      strong = "文書マスタ一覧から引き継いだ候補: #{@documents.size}件"
+    - if @bulk_edit_candidate_filter_summaries.any?
+      p.muted
+        | 代表条件:
+        - @bulk_edit_candidate_filter_summaries.each do |summary|
+          = " "
+          span.badge = summary
+    - else
+      p.muted 代表条件: 条件指定なし
+    - if @documents.empty?
+      p.muted 有効な候補文書がありません。文書マスタで条件を見直してから一括編集候補を開いてください。
+    - else
+      p.muted 候補文書は選択済みです。dry-run 作成前に不要な文書のチェックを外せます。
 
   = form_with url: admin_bulk_edit_dry_runs_path, scope: :bulk_edit do |form|
     h3 対象文書
@@ -23,7 +40,7 @@ h1 文書一括編集
       tbody
         - @documents.each do |document|
           tr
-            td = check_box_tag "bulk_edit[document_ids][]", document.id, false, id: "bulk_edit_document_#{document.id}"
+            td = check_box_tag "bulk_edit[document_ids][]", document.id, candidate_document_ids.include?(document.id), id: "bulk_edit_document_#{document.id}"
             td = document.project.name
             td
               label for="bulk_edit_document_#{document.id}"
