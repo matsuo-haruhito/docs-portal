@@ -185,8 +185,8 @@ RSpec.describe "Admin access requests", type: :request do
     expect(page_text).to include("Need Manual access")
     expect(page_text).to include("要求権限: すべて")
     expect(page_text).to include("対象種別: すべて")
-    expect(filter_form.at_css("select[name='requested_access_level'] option[selected]")["value"]).to be_blank
-    expect(filter_form.at_css("select[name='requestable_type'] option[selected]")["value"]).to be_blank
+    expect(filter_form.at_css("select[name='requested_access_level'] option[value='owner']")).to be_nil
+    expect(filter_form.at_css("select[name='requestable_type'] option[value='User']")).to be_nil
   end
 
   it "filters requests by requester or target search terms" do
