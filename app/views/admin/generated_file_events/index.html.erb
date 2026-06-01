@@ -1,6 +1,9 @@
 <%
   detail_path_params = { return_to: request.fullpath }
   status_filter_params = request.query_parameters.except(:page, :per_page).compact_blank
+  table_key = :admin_generated_file_events
+  table_columns = generated_file_event_table_columns
+  table_settings = rails_table_preference_settings(table_key: table_key)
 %>
 
 <div class="space-y-6">
@@ -70,7 +73,7 @@
       <div>
         <%= form.label :path, "パスを含む", class: "block text-sm font-semibold" %>
         <%= form.text_field :path, value: @filters[:path], class: "mt-1 w-full rounded border px-2 py-1" %>
-        <p class="mt-1 text-xs text-gray-500">Windowsの区切り文字 \ は / として検索します。</p>
+        <p class="mt-1 text-xs text-gray-500">Windowsの区切り文字 \\ は / として検索します。</p>
       </div>
       <div>
         <%= form.label :scheduled_from, "実行予定日(開始)", class: "block text-sm font-semibold" %>
@@ -93,38 +96,44 @@
     total_pages: @total_pages,
     path: ->(target_page) { admin_generated_file_events_path(request.query_parameters.merge(page: target_page, per_page: @per_page)) } %>
 
+  <% if @generated_file_events.any? %>
+    <div class="rounded-lg border bg-white p-4">
+      <%= table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "生成ファイルイベント一覧の表示設定") %>
+    </div>
+  <% end %>
+
   <div class="overflow-x-auto rounded-lg border bg-white">
-    <table class="min-w-full divide-y divide-gray-200 text-sm">
+    <%= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do %>
       <thead class="bg-gray-50">
         <tr>
-          <th class="px-4 py-3 text-left font-semibold">イベントID</th>
-          <th class="px-4 py-3 text-left font-semibold">状態</th>
-          <th class="px-4 py-3 text-left font-semibold">パス</th>
-          <th class="px-4 py-3 text-left font-semibold">操作種別</th>
-          <th class="px-4 py-3 text-left font-semibold">発生元</th>
-          <th class="px-4 py-3 text-left font-semibold">エラー</th>
-          <th class="px-4 py-3 text-left font-semibold">回数</th>
-          <th class="px-4 py-3 text-left font-semibold">実行予定</th>
-          <th class="px-4 py-3 text-left font-semibold">処理完了</th>
-          <th class="px-4 py-3 text-left font-semibold">操作</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="public_id">イベントID</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="status">状態</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="path">パス</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="operation">操作種別</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="event_source">発生元</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="error_message">エラー</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="occurrences_count">回数</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="scheduled_at">実行予定</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="processed_at">処理完了</th>
+          <th class="px-4 py-3 text-left font-semibold" data-rails-table-preferences-column-key="actions">操作</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
         <% if @generated_file_events.any? %>
           <% @generated_file_events.each do |event| %>
             <tr>
-              <td class="px-4 py-3 font-mono">
+              <td class="px-4 py-3 font-mono" data-rails-table-preferences-column-key="public_id">
                 <%= link_to event.public_id, admin_generated_file_event_path(event.public_id, detail_path_params), class: "text-blue-600 underline" %>
               </td>
-              <td class="px-4 py-3"><%= generated_file_event_status_label(event.status) %></td>
-              <td class="px-4 py-3 font-mono"><%= event.path %></td>
-              <td class="px-4 py-3"><%= generated_file_operation_label(event.operation) %></td>
-              <td class="px-4 py-3"><%= generated_file_source_label(event.event_source) %></td>
-              <td class="max-w-xs truncate px-4 py-3 text-gray-700" title="<%= event.error_message %>"><%= event.error_message.presence || "-" %></td>
-              <td class="px-4 py-3"><%= event.occurrences_count %></td>
-              <td class="px-4 py-3"><%= l(event.scheduled_at, format: :long) if event.scheduled_at %></td>
-              <td class="px-4 py-3"><%= l(event.processed_at, format: :long) if event.processed_at %></td>
-              <td class="px-4 py-3">
+              <td class="px-4 py-3" data-rails-table-preferences-column-key="status"><%= generated_file_event_status_label(event.status) %></td>
+              <td class="px-4 py-3 font-mono" data-rails-table-preferences-column-key="path"><%= event.path %></td>
+              <td class="px-4 py-3" data-rails-table-preferences-column-key="operation"><%= generated_file_operation_label(event.operation) %></td>
+              <td class="px-4 py-3" data-rails-table-preferences-column-key="event_source"><%= generated_file_source_label(event.event_source) %></td>
+              <td class="max-w-xs truncate px-4 py-3 text-gray-700" data-rails-table-preferences-column-key="error_message" title="<%= event.error_message %>"><%= event.error_message.presence || "-" %></td>
+              <td class="px-4 py-3" data-rails-table-preferences-column-key="occurrences_count"><%= event.occurrences_count %></td>
+              <td class="px-4 py-3" data-rails-table-preferences-column-key="scheduled_at"><%= l(event.scheduled_at, format: :long) if event.scheduled_at %></td>
+              <td class="px-4 py-3" data-rails-table-preferences-column-key="processed_at"><%= l(event.processed_at, format: :long) if event.processed_at %></td>
+              <td class="px-4 py-3" data-rails-table-preferences-column-key="actions">
                 <div class="flex gap-2">
                   <%= link_to "詳細", admin_generated_file_event_path(event.public_id, detail_path_params), class: "rounded border px-2 py-1 text-xs" %>
                   <%= button_to "再dispatch", retry_dispatch_admin_generated_file_event_path(event.public_id), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white" %>
@@ -134,10 +143,10 @@
           <% end %>
         <% else %>
           <tr>
-            <td colspan="10" class="px-4 py-8 text-center text-gray-500">条件に一致する生成ファイルイベントはありません。</td>
+            <td colspan="<%= table_columns.size %>" class="px-4 py-8 text-center text-gray-500">条件に一致する生成ファイルイベントはありません。</td>
           </tr>
         <% end %>
       </tbody>
-    </table>
+    <% end %>
   </div>
 </div>
