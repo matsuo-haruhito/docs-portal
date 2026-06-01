@@ -52,6 +52,52 @@ RSpec.describe "Admin zip imports", type: :request do
     zip_file&.tempfile&.close!
   end
 
+  it "shows warnings, errors, and source metadata on the dry-run details" do
+    sign_in_as(admin_user)
+    dry_run = create_zip_dry_run(
+      result_json: {
+        "zip_import_preview" => {
+          "source_repo" => "matsuo-haruhito/docs-portal",
+          "source_branch" => "import/main",
+          "source_commit_hash" => "abc123def456",
+          "version_label" => "zip-ui-v2",
+          "source_name" => "manual-import.zip"
+        }
+      },
+      warnings_json: ["docs/old.md は更新候補です"],
+      errors_json: ["docs/broken.md を読み込めません"]
+    )
+
+    get admin_zip_import_path(dry_run)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("取り込み前の確認")
+    expect(response.body).to include("docs/broken.md を読み込めません")
+    expect(response.body).to include("docs/old.md は更新候補です")
+    expect(response.body).to include("取り込み元情報")
+    expect(response.body).to include("matsuo-haruhito/docs-portal")
+    expect(response.body).to include("import/main")
+    expect(response.body).to include("abc123def456")
+    expect(response.body).to include("zip-ui-v2")
+    expect(response.body).to include("manual-import.zip")
+    expect(response.body).to include("TreeViewプレビュー")
+    expect(response.body).to include("この内容で取り込む")
+  end
+
+  it "shows empty review copy when warnings and source metadata are absent" do
+    sign_in_as(admin_user)
+    dry_run = create_zip_dry_run(result_json: {}, status: :confirmed)
+
+    get admin_zip_import_path(dry_run)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("エラーはありません。")
+    expect(response.body).to include("警告はありません。")
+    expect(response.body).to include("取り込み元metadataは保存されていません。")
+    expect(response.body).to include("TreeViewプレビュー")
+    expect(response.body).not_to include("この内容で取り込む")
+  end
+
   it "rerenders the upload screen when the zip file is missing" do
     sign_in_as(admin_user)
     project
@@ -132,7 +178,7 @@ RSpec.describe "Admin zip imports", type: :request do
     Rack::Test::UploadedFile.new(tempfile.path, "application/zip", original_filename: "sample.zip")
   end
 
-  def create_zip_dry_run(result_json:, status: :analyzed)
+  def create_zip_dry_run(result_json:, status: :analyzed, warnings_json: [], errors_json: [])
     ImportDryRun.create!(
       import_mode: :zip,
       status:,
@@ -140,8 +186,8 @@ RSpec.describe "Admin zip imports", type: :request do
       created_by: admin_user,
       summary_json: { "documents" => 1 },
       result_json: result_json,
-      warnings_json: [],
-      errors_json: []
+      warnings_json: warnings_json,
+      errors_json: errors_json
     )
   end
 end
