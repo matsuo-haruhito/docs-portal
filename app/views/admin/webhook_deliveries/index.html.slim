@@ -1,0 +1,71 @@
+- page_title "Webhook送信履歴検索"
+- delivery_table_key = :admin_webhook_delivery_search
+- delivery_table_columns = webhook_delivery_table_columns
+- delivery_table_settings = rails_table_preference_settings(table_key: delivery_table_key)
+- webhook_deliveries_total_count = @webhook_deliveries_total_count.to_i
+- webhook_deliveries_limit = @webhook_deliveries_limit.to_i
+- webhook_deliveries_display_count = @webhook_deliveries.size
+- delivery_return_to = request.fullpath
+
+h1 Webhook送信履歴検索
+= render "admin/nav"
+
+p.actions
+  = link_to "Webhook設定へ戻る", admin_webhook_endpoints_path
+
+.card
+  h2 検索条件
+  = form_with url: admin_webhook_deliveries_path, method: :get, local: true do |form|
+    .field
+      = form.label :endpoint_id, "Webhook設定"
+      = form.select :endpoint_id, options_for_select([["すべて", ""]] + @webhook_endpoints.map { |endpoint| [endpoint.name, endpoint.public_id] }, @filters[:endpoint_id])
+    .field
+      = form.label :event_type, "イベント"
+      = form.select :event_type, options_for_select([["すべて", ""]] + @event_type_options.map { |event_type| [webhook_event_type_label(event_type), event_type] }, @filters[:event_type])
+    .field
+      = form.label :status, "ステータス"
+      = form.select :status, options_for_select(webhook_delivery_status_filter_options, @filters[:status].presence || "all")
+    .field
+      = form.label :created_from, "作成日 From"
+      = form.date_field :created_from, value: @filters[:created_from]
+    .field
+      = form.label :created_to, "作成日 To"
+      = form.date_field :created_to, value: @filters[:created_to]
+    .actions
+      = form.submit "検索", class: "button"
+      = link_to "リセット", admin_webhook_deliveries_path
+
+.card
+  h2 送信履歴
+  p.muted = "表示範囲: 条件に一致する#{webhook_deliveries_total_count}件中#{webhook_deliveries_display_count}件を新しい順に表示しています。#{webhook_deliveries_total_count > webhook_deliveries_limit ? "上限外の履歴は条件を追加して絞り込んでください。" : ""}"
+  p.muted この検索一覧は50件外の履歴を探すための導線です。まとめて再送は従来どおり Webhook 設定画面の「失敗」表示中の最大50件に限定しています。
+  = table_preferences_editor(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns, title: "Webhook送信履歴検索の表示設定")
+  - if @webhook_deliveries.empty?
+    p.muted 条件に一致するWebhook送信履歴はありません。
+  - else
+    = table_preferences_table_tag(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns) do
+      thead
+        tr
+          th data-rails-table-preferences-column-key="created_at" 作成日時
+          th data-rails-table-preferences-column-key="endpoint" 設定
+          th data-rails-table-preferences-column-key="event_type" イベント
+          th data-rails-table-preferences-column-key="status" ステータス
+          th data-rails-table-preferences-column-key="response_status" HTTP
+          th data-rails-table-preferences-column-key="error_message" エラー
+          th data-rails-table-preferences-column-key="actions"
+      tbody
+        - @webhook_deliveries.each do |delivery|
+          tr
+            td data-rails-table-preferences-column-key="created_at" = l(delivery.created_at, format: :short)
+            td data-rails-table-preferences-column-key="endpoint" = delivery.webhook_endpoint.name
+            td data-rails-table-preferences-column-key="event_type" = webhook_event_type_label(delivery)
+            td data-rails-table-preferences-column-key="status"
+              span.badge = webhook_delivery_status_label(delivery)
+            td data-rails-table-preferences-column-key="response_status" = delivery.response_status || "-"
+            td data-rails-table-preferences-column-key="error_message" = delivery.error_message.presence || "-"
+            td.actions data-rails-table-preferences-column-key="actions"
+              = link_to "詳細", admin_webhook_delivery_path(delivery.public_id, return_to: delivery_return_to)
+              - if delivery.retryable?
+                = button_to "再送", retry_dispatch_admin_webhook_delivery_path(delivery.public_id, return_to: delivery_return_to), method: :post, class: "button secondary", form: { data: { turbo_confirm: "このWebhook送信を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。" } }
+              - else
+                span.muted 再送不可
