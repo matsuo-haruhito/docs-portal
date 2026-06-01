@@ -62,10 +62,10 @@ class DocumentDeliveryLogsController < BaseController
     case params[:decision]
     when "mark_sent"
       @delivery_log.update!(status: :sent, sent_at: Time.current, error_message: nil)
-      redirect_to document_delivery_log_path(@delivery_log), notice: "送付済みにしました。"
+      redirect_to delivery_log_redirect_path, notice: "送付済みにしました。"
     when "mark_failed"
       @delivery_log.update!(status: :failed, error_message: params[:error_message].to_s.presence || "manual mark")
-      redirect_to document_delivery_log_path(@delivery_log), notice: "送付失敗として記録しました。"
+      redirect_to delivery_log_redirect_path, notice: "送付失敗として記録しました。"
     else
       raise ApplicationError::BadRequest, "unsupported decision"
     end
@@ -173,6 +173,12 @@ class DocumentDeliveryLogsController < BaseController
       "LOWER(projects.name) LIKE :query OR LOWER(projects.code) LIKE :query OR LOWER(document_delivery_logs.to_addresses) LIKE :query",
       query:
     )
+  end
+
+  def delivery_log_redirect_path
+    return document_delivery_log_path(@delivery_log) unless params.key?(:return_to)
+
+    document_delivery_log_path(@delivery_log, return_to: safe_return_to_path(document_delivery_logs_path))
   end
 
   def safe_return_to_path(fallback)
