@@ -55,7 +55,6 @@ RSpec.describe "Admin access requests", type: :request do
     get admin_access_requests_path, params: { status: "pending" }
 
     expect(response).to have_http_status(:ok)
-
     rows = parsed_html.css("tbody tr")
     manage_row = rows.find { |row| row.text.include?("Need project management") }
     download_row = rows.find { |row| row.text.include?("Need manual download") }
@@ -186,8 +185,8 @@ RSpec.describe "Admin access requests", type: :request do
     expect(page_text).to include("Need Manual access")
     expect(page_text).to include("要求権限: すべて")
     expect(page_text).to include("対象種別: すべて")
-    expect(page_text).not_to include("owner")
-    expect(page_text).not_to include("User")
+    expect(filter_form.at_css("select[name='requested_access_level'] option[selected]")["value"]).to be_blank
+    expect(filter_form.at_css("select[name='requestable_type'] option[selected]")["value"]).to be_blank
   end
 
   it "filters requests by requester or target search terms" do
