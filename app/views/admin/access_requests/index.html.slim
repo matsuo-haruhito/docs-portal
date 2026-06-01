@@ -97,19 +97,14 @@ section.card
               span.muted -
 - else
   - if @filters[:status].present? || @filters[:requested_access_level].present? || @filters[:requestable_type].present? || @filters[:q].present?
+    - active_filter_labels = []
+    - active_filter_labels << "状態: #{admin_access_request_status_filter_label(@filters[:status])}" if @filters[:status].present?
+    - active_filter_labels << "要求権限: #{admin_access_request_access_level_filter_label(@filters[:requested_access_level])}" if @filters[:requested_access_level].present?
+    - active_filter_labels << "対象種別: #{admin_access_request_requestable_type_filter_label(@filters[:requestable_type])}" if @filters[:requestable_type].present?
+    - active_filter_labels << "検索: #{@filters[:q]}" if @filters[:q].present?
     p.muted
       | 条件に一致する申請はありません。
-      - if @filters[:status].present?
-        |  状態:
-        strong = " #{admin_access_request_status_filter_label(@filters[:status])}"
-      - if @filters[:requested_access_level].present?
-        |  / 要求権限:
-        strong = " #{admin_access_request_access_level_filter_label(@filters[:requested_access_level])}"
-      - if @filters[:requestable_type].present?
-        |  / 対象種別:
-        strong = " #{admin_access_request_requestable_type_filter_label(@filters[:requestable_type])}"
-      - if @filters[:q].present?
-        |  / 検索:
-        strong = " #{@filters[:q]}"
+      |  条件:
+      strong = " #{active_filter_labels.join(" / ")}"
   - else
     p.muted 申請はありません。
