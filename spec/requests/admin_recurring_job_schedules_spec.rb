@@ -18,7 +18,11 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(response).to have_http_status(:ok)
     expect(listed_schedule_keys).to eq(["failed_job"])
     expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedules_path(sync_definitions: 1)}"]))).to be_present
-    expect(response.body).to include("Triage対象: 失敗: 1件 / 実行中: 0件 / キュー待ち: 0件")
+    expect(response.body).to include("前回状態 filter は直近実行結果で絞り込みます。")
+    expect(response.body).to include("定義の有効/無効は「定義状態」列で確認してください。")
+    expect(response.body).to include("Triage対象（前回状態ベース）: 失敗: 1件 / 実行中: 0件 / キュー待ち: 0件")
+    expect(parsed_html.at_css(%(th[data-rails-table-preferences-column-key="status"])).text).to eq("定義状態")
+    expect(parsed_html.at_css(%(th[data-rails-table-preferences-column-key="last_status"])).text).to eq("前回状態")
   end
 
   it "ignores invalid schedule status filters" do
