@@ -36,15 +36,25 @@ current 実装の前提:
 
 current 実装の前提:
 
-- index では各 model の `件数` と `最終更新` を並べる
+- index では各 model の `件数` と `最終更新` を、`基本マスタ` `文書・権限` `import / sync` `外部連携` `運用` の領域別 group に分けて並べる
+- group は `Admin::ModelBrowserCatalog::GROUP_LABELS` と各 entry の `group` metadata が正本で、画面側だけで分類を作らない
 - show では model ごとに最近 20 件の record を、catalog が持つ `summary_fields` で表示する
 - `既存画面へ` がある model は、そのまま管理画面の一覧へ戻れる
 - `DocumentVersion` `DocumentFile` など既存の専用 index がないものも、ここでは最新 record の代表値を見返せる
+
+領域別 group の読み方:
+
+- `基本マスタ`: 会社・ユーザー・案件のように、他の管理対象の起点になる master data を見る
+- `文書・権限`: 文書、版、ファイル、文書権限、同意、アクセス申請、監査ログなど、公開・閲覧・download 条件に近い model を見る
+- `import / sync`: Git 取り込み、外部フォルダ同期、一括編集 dry-run など、取り込みや同期の実行・事前確認に関わる model を見る
+- `外部連携`: Webhook、外部フォルダ同期購読、外部 viewer preview upload など、外部 service との接点を持つ model を見る
+- `運用`: 定期ジョブや実行履歴など、日常運用の状態確認に使う model を見る
 
 使い分け:
 
 - まず変化の有無をざっと見たい: `ダッシュボード`
 - model 全体の件数や最終更新を横断で比較したい: `モデルブラウザ` index
+- 領域別に近い model をまとめて見たい: `モデルブラウザ` index の group 見出し
 - 最近の record の shape や値を短く確認したい: `モデルブラウザ` show
 - 編集や登録をしたい: `モデルブラウザ` ではなく `既存画面へ` から元の管理画面へ戻る
 
@@ -58,6 +68,14 @@ current 実装の前提:
 - 既存の専用管理画面があっても、dashboard や model browser から全体変化を見たい model は catalog に残す
 - 中間テーブルや履歴 model は、障害調査やデータ整合確認で最近の record を見る意味がある場合だけ載せる
 - UI や workflow の新規仕様を catalog だけで表現しない。編集・再実行・承認などの操作は既存管理画面や専用 runbook の正本へ戻す
+
+`group` の選び方:
+
+- まず既存の `GROUP_LABELS` から、運用者が最初に探す領域に最も近い group を選ぶ
+- master data や所属の起点なら `basic_master`、文書公開・権限・同意・アクセス履歴に関わるなら `document_permission` を優先する
+- import、sync、dry-run、外部フォルダの実行履歴は `import_sync`、Webhook や外部 viewer upload など外部 service との接点は `external_integration` に寄せる
+- 定期ジョブや運用状態確認の model は `operations` に寄せる
+- group を増やす判断は、この runbook だけではなく catalog entry 全体の分類と index 見出しの読みやすさを見て Issue / PR で扱う
 
 `summary_fields` の選び方:
 
@@ -75,8 +93,8 @@ current 実装の前提:
 Dashboard との関係:
 
 - dashboard の `モデル観測` は `entries.first(8)` の主要 model だけを見せる概要であり、catalog 全体の網羅表ではない
+- index の領域別 group は model browser で横断しやすくするための見出しであり、dashboard の先頭 8 件表示順を置き換えるものではない
 - 先頭 8 件の順序を変えると dashboard の見え方も変わるため、catalog の並び替えは dashboard で最初に見せたい model の優先度も含めて確認する
-- current main の catalog entry には group metadata はない。領域別 group を追加する実装が入った場合は、group 名と分類基準をこの runbook に追従させる
 
 ## 2. アプリ設定診断
 
@@ -130,6 +148,7 @@ current 実装の前提:
 ## 日常確認ポイント
 
 - model 数や最終更新に急な変化がないか
+- model browser index の group 見出しで、近い領域の model がまとめて確認できているか
 - `警告` `エラー` が、sample 値の流用なのか実運用に影響する不足なのか
 - 欠落ファイルが単発なのか、storage 全体の問題に見えるのか
 - dashboard だけで完結させず、必要な既存管理画面や仕様 docs にすぐ戻れているか
@@ -138,6 +157,7 @@ current 実装の前提:
 
 - まず全体の変化や異常の有無を見たい: `ダッシュボード`
 - 特定 model の件数や最近の record を見たい: `モデルブラウザ`
+- 近い領域の model をまとめて確認したい: `モデルブラウザ` index の group 見出し
 - `.env` や compose の設定不足を見たい: `アプリ設定診断`
 - 実体ファイルが見えない原因を切り分けたい: `文書ファイル健全性`
 - 個別のアクセス履歴や利用傾向を追いたい: [監査ログ運用runbook](./監査ログ運用runbook.md) や [文書利用状況運用runbook](./文書利用状況運用runbook.md) に戻る
