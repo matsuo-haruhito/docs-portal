@@ -19,6 +19,22 @@ section.card
 section.card
   h2 アプリ設定診断
 
+  .configuration-runbook-links
+    p.muted 診断結果を確認した後は、原因別に既存 runbook へ戻って設定前提を確認できます。
+    ul
+      li
+        = link_to "環境変数・compose", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/ローカルセットアップと環境変数.md", target: "_blank", rel: "noopener"
+        span.muted = " .env.example と compose の前提"
+      li
+        = link_to "Docusaurus / Kroki", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/notes/docusaurus-build-runtime.md", target: "_blank", rel: "noopener"
+        span.muted = " docs build workspace と Kroki runtime"
+      li
+        = link_to "storage 運用方針", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/ファイル配信・storage運用方針.md", target: "_blank", rel: "noopener"
+        span.muted = " ACTIVE_STORAGE_SERVICE と storage/document_files"
+      li
+        = link_to "管理ダッシュボード runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/管理ダッシュボード・モデルブラウザ運用runbook.md", target: "_blank", rel: "noopener"
+        span.muted = " 診断結果の読み方と戻り先"
+
   p
     | OK: 
     strong = @configuration_diagnostic.ok_count

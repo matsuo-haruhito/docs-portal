@@ -24,6 +24,23 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("spec/admin-dashboard/missing.txt")
   end
 
+  it "links configuration diagnostics to the relevant runbooks" do
+    sign_in_as(admin_user)
+
+    get admin_root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("アプリ設定診断")
+    expect(response.body).to include("環境変数・compose")
+    expect(response.body).to include("ローカルセットアップと環境変数.md")
+    expect(response.body).to include("Docusaurus / Kroki")
+    expect(response.body).to include("docs/notes/docusaurus-build-runtime.md")
+    expect(response.body).to include("storage 運用方針")
+    expect(response.body).to include("ファイル配信・storage運用方針.md")
+    expect(response.body).to include("管理ダッシュボード runbook")
+    expect(response.body).to include("管理ダッシュボード・モデルブラウザ運用runbook.md")
+  end
+
   it "explains that document file health details are limited when more files are missing" do
     21.times do |index|
       create(
