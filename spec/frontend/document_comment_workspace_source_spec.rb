@@ -25,6 +25,7 @@ RSpec.describe "document comment workspace source" do
       expect(workspace_stylesheet).to include(".document-comment-workspace__status{display:inline-block;margin-top:4px;white-space:normal}")
       expect(workspace_stylesheet).to include(".document-comment-workspace__panel{pointer-events:auto;display:none;position:absolute;right:0;bottom:0;box-sizing:border-box")
       expect(workspace_stylesheet).to include(".document-comment-workspace__summary-item{box-sizing:border-box")
+      expect(workspace_stylesheet).to include(".comment-mode-switch__input,.document-comment-tabs__input{position:absolute;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}")
     end
   end
 
