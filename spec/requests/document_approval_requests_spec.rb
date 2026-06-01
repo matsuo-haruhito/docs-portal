@@ -117,6 +117,52 @@ RSpec.describe "Document approval requests", type: :request do
     expect(response.body).to include("Cancel済み")
   end
 
+  it "lets requesters view and cancel only their own pending requests" do
+    own_request = create(:document_approval_request, document:, requester:, title: "自分の確認依頼")
+    peer_user = create(:user, :external, company:)
+    create(:project_membership, project:, user: peer_user)
+    other_request = create(:document_approval_request, document:, requester: peer_user, title: "別ユーザーの確認依頼")
+
+    sign_in_as(requester)
+
+    get document_approval_request_path(own_request)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(own_request.title)
+
+    post cancel_document_approval_request_path(own_request)
+    expect(response).to redirect_to(document_approval_request_path(own_request, return_to: project_document_path(project, document.slug)))
+    expect(own_request.reload).to be_cancelled
+    expect(own_request.acted_by).to eq(requester)
+
+    get document_approval_request_path(other_request)
+    expect(response).to have_http_status(:forbidden)
+
+    expect do
+      post cancel_document_approval_request_path(other_request)
+    end.not_to change { other_request.reload.status }
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it "forbids users without document access from viewing or acting on requests" do
+    approval_request = create(:document_approval_request, document:, requester:, title: "確認お願いします")
+    outsider = create(:user, :external, company: create(:company))
+
+    sign_in_as(outsider)
+
+    get document_approval_request_path(approval_request)
+    expect(response).to have_http_status(:forbidden)
+
+    expect do
+      patch document_approval_request_path(approval_request)
+    end.not_to change { approval_request.reload.status }
+    expect(response).to have_http_status(:forbidden)
+
+    expect do
+      post cancel_document_approval_request_path(approval_request)
+    end.not_to change { approval_request.reload.status }
+    expect(response).to have_http_status(:forbidden)
+  end
+
   it "falls back to document detail for requester users without a safe return_to" do
     approval_request = create(:document_approval_request, document:, requester:, title: "確認お願いします")
     document_detail_path = project_document_path(project, document.slug)
