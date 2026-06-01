@@ -4,7 +4,7 @@ RSpec.describe "Admin file upload dry runs", type: :request do
   let(:admin_user) { create(:user, :internal) }
   let(:project) { create(:project, code: "FILEUI", name: "File UI Project") }
 
-  it "shows a manual upload dry-run with file metadata and preview" do
+  it "shows a manual upload dry-run with file metadata and preview without exposing raw source path" do
     sign_in_as(admin_user)
     dry_run = create_file_upload_dry_run(
       warnings_json: ["hash warning"],
@@ -19,7 +19,10 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     expect(response.body).to include(dry_run.public_id)
     expect(response.body).to include("local-folder-sync")
     expect(response.body).to include("docs/README.md")
-    expect(response.body).to include("C:/work/customer-docs/docs/README.md")
+    expect(response.body).to include("raw source path は画面に表示しません")
+    expect(response.body).to include("relative path と content hash")
+    expect(response.body).not_to include("C:/work/customer-docs/docs/README.md")
+    expect(response.body).not_to include("customer-docs")
     expect(response.body).to include("abc123contenthash")
     expect(response.body).to include("file-v1")
     expect(response.body).to include("hash warning")
