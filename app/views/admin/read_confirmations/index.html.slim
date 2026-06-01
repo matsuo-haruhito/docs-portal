@@ -18,6 +18,14 @@ section.card
       div
         = form.label :document_slug, "文書URL識別子"
         = form.search_field :document_slug, value: @document_slug
+      = form.rfk_select :user_id,
+        collection: @read_confirmation_users.map { [[_1.display_name, _1.email_address, _1.company&.display_name].compact_blank.join(" / "), _1.id] },
+        wrapper: true,
+        label: "確認者",
+        placeholder: "確認者を選択",
+        include_blank: "すべて",
+        allow_clear: true,
+        selected: @selected_user&.id
     p.actions
       = form.submit "表示"
       = link_to "条件をクリア", admin_read_confirmations_path
@@ -42,6 +50,14 @@ section.card
         p.muted 指定した文書はこの案件に見つかりません。文書利用状況の文書名リンクから slug を確認してください。
     - else
       p.muted 文書URL識別子を指定しない場合は、案件内の既読確認を新しい順に表示します。
+    - if @selected_user
+      p
+        | 確認者:
+        strong = " #{@selected_user.display_name} / #{@selected_user.email_address}"
+        |  / 会社:
+        strong = " #{@selected_user.company&.display_name || '-'}"
+    - elsif @selected_user_id.present?
+      p.muted 指定した確認者はこの案件の既読確認候補に見つかりません。
     p
       = link_to "文書利用状況へ", admin_document_usage_reports_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
     p.muted
@@ -72,6 +88,8 @@ section.card
       h2 既読確認はありません
       - if @document_slug.present? && @selected_document.blank?
         p.muted 指定した文書URL識別子に一致する文書がないため、既読確認は表示されません。
+      - elsif @selected_user_id.present? && @selected_user.blank?
+        p.muted 指定した確認者はこの案件の既読確認候補に見つからないため、既読確認は表示されません。
       - else
         p.muted 選択した条件に一致する既読確認はありません。
 - else
