@@ -34,6 +34,7 @@ Rails.application.routes.draw do
     end
     get "model_browser", to: "model_browsers#index", as: :model_browser
     get "model_browser/:model_key", to: "model_browsers#show", as: :model_browser_model
+    resource :missing_document_files, only: [:show]
 
     resources :companies, except: %i[show new], param: :public_id
     resources :users, except: %i[show new], param: :public_id
