@@ -170,7 +170,15 @@ class DocumentDeliveryLogsController < BaseController
 
     query = "%#{ActiveRecord::Base.sanitize_sql_like(@query.downcase)}%"
     scope.joins(:project).where(
-      "LOWER(projects.name) LIKE :query OR LOWER(projects.code) LIKE :query OR LOWER(document_delivery_logs.to_addresses) LIKE :query",
+      <<~SQL.squish,
+        LOWER(projects.name) LIKE :query
+          OR LOWER(projects.code) LIKE :query
+          OR LOWER(document_delivery_logs.to_addresses) LIKE :query
+          OR LOWER(COALESCE(document_delivery_logs.cc_addresses, '')) LIKE :query
+          OR LOWER(COALESCE(document_delivery_logs.bcc_addresses, '')) LIKE :query
+          OR LOWER(COALESCE(document_delivery_logs.subject, '')) LIKE :query
+          OR LOWER(COALESCE(document_delivery_logs.error_message, '')) LIKE :query
+      SQL
       query:
     )
   end
