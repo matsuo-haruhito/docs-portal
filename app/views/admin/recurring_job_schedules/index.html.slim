@@ -1,4 +1,7 @@
 - page_title "定期ジョブ"
+- table_key = :admin_recurring_job_schedules
+- table_columns = admin_recurring_job_schedule_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
 - current_list_path = request.fullpath
 - triage_counts = ["失敗: #{@triage_status_counts.fetch('failed', 0)}件", "実行中: #{@triage_status_counts.fetch('running', 0)}件", "キュー待ち: #{@triage_status_counts.fetch('enqueued', 0)}件"].join(" / ")
 
@@ -17,31 +20,32 @@ p.actions
       = link_to "絞り込み解除", admin_recurring_job_schedules_path, class: "button secondary"
   p.muted = "Triage対象: #{triage_counts}"
   p.muted = "表示中: #{@schedules.size}件"
+  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "定期ジョブ一覧の表示設定")
 
-  = table_tag do
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
       tr
-        th ジョブキー
-        th 状態
-        th 間隔
-        th 次回実行
-        th 前回enqueue
-        th 前回開始
-        th 前回終了
-        th 前回状態
-        th
+        th data-rails-table-preferences-column-key="job_key" ジョブキー
+        th data-rails-table-preferences-column-key="status" 状態
+        th data-rails-table-preferences-column-key="interval" 間隔
+        th data-rails-table-preferences-column-key="next_run_at" 次回実行
+        th data-rails-table-preferences-column-key="last_enqueued_at" 前回enqueue
+        th data-rails-table-preferences-column-key="last_started_at" 前回開始
+        th data-rails-table-preferences-column-key="last_finished_at" 前回終了
+        th data-rails-table-preferences-column-key="last_status" 前回状態
+        th data-rails-table-preferences-column-key="actions"
     tbody
       - @schedules.each do |schedule|
         tr
-          td
+          td data-rails-table-preferences-column-key="job_key"
             = link_to schedule.job_key, admin_recurring_job_schedule_path(schedule, return_to: current_list_path)
             br
             code = schedule.job_class
-          td = schedule.enabled? ? "有効" : "無効"
-          td = distance_of_time_in_words(schedule.interval_seconds)
-          td = schedule.next_run_at ? l(schedule.next_run_at) : "-"
-          td = schedule.last_enqueued_at ? l(schedule.last_enqueued_at) : "-"
-          td = schedule.last_started_at ? l(schedule.last_started_at) : "-"
-          td = schedule.last_finished_at ? l(schedule.last_finished_at) : "-"
-          td = recurring_job_status_badge(schedule.last_status)
-          td = link_to "詳細", admin_recurring_job_schedule_path(schedule, return_to: current_list_path), class: "button secondary"
+          td data-rails-table-preferences-column-key="status" = schedule.enabled? ? "有効" : "無効"
+          td data-rails-table-preferences-column-key="interval" = distance_of_time_in_words(schedule.interval_seconds)
+          td data-rails-table-preferences-column-key="next_run_at" = schedule.next_run_at ? l(schedule.next_run_at) : "-"
+          td data-rails-table-preferences-column-key="last_enqueued_at" = schedule.last_enqueued_at ? l(schedule.last_enqueued_at) : "-"
+          td data-rails-table-preferences-column-key="last_started_at" = schedule.last_started_at ? l(schedule.last_started_at) : "-"
+          td data-rails-table-preferences-column-key="last_finished_at" = schedule.last_finished_at ? l(schedule.last_finished_at) : "-"
+          td data-rails-table-preferences-column-key="last_status" = recurring_job_status_badge(schedule.last_status)
+          td data-rails-table-preferences-column-key="actions" = link_to "詳細", admin_recurring_job_schedule_path(schedule, return_to: current_list_path), class: "button secondary"
