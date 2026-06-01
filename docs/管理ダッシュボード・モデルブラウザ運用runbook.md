@@ -20,6 +20,7 @@ current 実装の前提:
 - `モデル観測` は `Admin::ModelBrowserCatalog.entries.first(8)` を並べ、主要な model だけを最初に見せる
 - `アプリ設定診断` は `ApplicationConfigurationDiagnostic` の check を `OK / 警告 / エラー` 件数つきで出す
 - `文書ファイル健全性` は `DocumentFileHealthCheck` で総件数と実体欠落件数を出し、欠落ファイルは最大 20 件まで一覧表示する
+- 欠落ファイルがある場合、`欠落ファイル詳細` で先頭 100 件まで read-only に確認できる
 - 画面下部の `基本マスタ` `関連設定` は、日常確認後に既存の管理画面へ戻る近道として置かれている
 
 ## 1. モデル観測とモデルブラウザ
@@ -32,7 +33,7 @@ current 実装の前提:
 
 ### モデルブラウザ側で見ること
 
-`admin/model_browser` は catalog に載っている model を一覧し、各 model の件数・最終更新・最近の record を read-only に確認する画面。
+`admin/model_browser` は catalog に載っている model を一覧し、各 model の件数・最終更新・最近の record を、catalog が持つ `summary_fields` で表示する画面。
 
 current 実装の前提:
 
@@ -110,21 +111,23 @@ current 実装の前提:
 
 - `登録ファイル数` は `DocumentFile` 総数
 - `実体欠落` は `DocumentFile#absolute_path` に実ファイルが存在しなかった件数
-- 欠落一覧は最大 20 件までで、`案件` `文書` `版` `ファイル名` `Storage key` を表示する
+- dashboard の欠落一覧は最大 20 件までで、`案件` `文書` `版` `ファイル名` `Storage key` を表示する
+- 欠落ファイルがある場合は `欠落ファイル詳細` へ進むと、先頭 100 件まで `Expected path` を含めて確認できる
 - 一覧の `文書` は公開側の project/document detail、`版` は document version detail へ戻れる
-- dashboard 表示時点の current 実装は `DocumentFile` を `find_each` で走査する。cache / async 化や detail 画面化はこの runbook ではなく、ファイル数が増えたときの別 Issue で判断する
+- dashboard 表示時点の current 実装は `DocumentFile` を `find_each` で走査する。cache / async 化はこの runbook ではなく、ファイル数がさらに増えたときの別 Issue で判断する
 
 読み方:
 
-- `実体欠落` が 0 でないときは、まず欠落が特定案件だけか、複数案件へ広がっているかを見る
-- `Storage key` は storage 配下の期待位置を見直す手がかりとして使う
+- `実体欠落` が 0 でないときは、まず dashboard の先頭 20 件で欠落が特定案件だけか、複数案件へ広がっているかを見る
+- 欠落が 20 件を超える、または expected path まで含めて確認したい場合は `欠落ファイル詳細` へ進む
+- `Storage key` と `Expected path` は storage 配下の期待位置を見直す手がかりとして使う
 - `文書` や `版` へ戻り、対象が current 版か添付・原本か、import 直後の版かを確認する
-- `実体欠落` が表示件数より多い場合、dashboard の一覧は先頭 20 件のサンプルとして扱い、全件確認は storage 側や database 側の調査へ切り替える
+- `実体欠落` が詳細一覧の表示件数より多い場合、詳細一覧も先頭 100 件の bounded list として扱い、続きを見るには storage 側や database 側の調査へ切り替える
 
 注意点:
 
 - この check は app が参照する filesystem 上で `File.file?` を見る current 実装であり、外部ストレージ API の疎通確認まではしない
-- 欠落ファイルの詳細は最大 20 件までなので、全件洗い出し画面ではない
+- 欠落ファイル詳細は read-only であり、自動修復、削除、archive、再import、CSV export は扱わない
 - 権限不足や公開条件の問題を診断する画面ではなく、まず「物理ファイルが見えるか」を切り分けるための入口として使う
 
 ## 日常確認ポイント
@@ -146,6 +149,8 @@ current 実装の前提:
 
 - `app/controllers/admin/dashboard_controller.rb`
 - `app/views/admin/dashboard/index.html.slim`
+- `app/controllers/admin/missing_document_files_controller.rb`
+- `app/views/admin/missing_document_files/show.html.slim`
 - `app/controllers/admin/model_browsers_controller.rb`
 - `app/views/admin/model_browsers/index.html.slim`
 - `app/views/admin/model_browsers/show.html.slim`
