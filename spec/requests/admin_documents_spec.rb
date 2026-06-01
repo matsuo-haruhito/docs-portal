@@ -38,6 +38,10 @@ RSpec.describe "Admin documents", type: :request do
     parsed_html.css("a[href], form[action]").filter_map { |node| node["href"] || node["action"] }
   end
 
+  def bulk_edit_candidate_link
+    parsed_html.at_css(%(a[href*="#{new_admin_bulk_edit_dry_run_path}"]))
+  end
+
   def row_column_texts(column_key)
     document_rows.map do |row|
       cell = row.at_css(%(td[data-rails-table-preferences-column-key="#{column_key}"]))
@@ -100,6 +104,53 @@ RSpec.describe "Admin documents", type: :request do
     expect(title_targets).to include(project_document_path(matching_project, matching_document.slug))
     expect(title_targets).not_to include(project_document_path(similar_project, other_document.slug))
     expect(row_column_texts("project")).to eq(["Operations Portal DOCS-001"])
+  end
+
+  it "links filtered results to bulk edit candidates when the result set is within the handoff limit" do
+    matching_project = create(:project, code: "BULK-001", name: "Bulk Source")
+    other_project = create(:project, code: "BULK-002", name: "Bulk Other")
+    first_document = create(:document, project: matching_project, title: "Bulk Candidate A", slug: "bulk-candidate-a")
+    second_document = create(:document, project: matching_project, title: "Bulk Candidate B", slug: "bulk-candidate-b")
+    other_document = create(:document, project: other_project, title: "Other Bulk Document", slug: "other-bulk-document")
+
+    sign_in_as(admin_user)
+
+    get admin_documents_path, params: { q: "BULK-001" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 2件")
+    expect(page_text).to include("現在の検索結果2件を、文書一括編集dry-runの候補として引き継ぎます")
+
+    link = bulk_edit_candidate_link
+    expect(link&.text&.squish).to eq("一括編集候補として開く")
+    expect(link["href"]).to include("source=admin_documents")
+    expect(link["href"]).to include("candidate_document_ids%5B%5D=#{first_document.id}")
+    expect(link["href"]).to include("candidate_document_ids%5B%5D=#{second_document.id}")
+    expect(link["href"]).not_to include("candidate_document_ids%5B%5D=#{other_document.id}")
+    expect(link["href"]).to include("source_filter_summaries%5B%5D=%E3%82%AD%E3%83%BC%E3%83%AF%E3%83%BC%E3%83%89")
+  end
+
+  it "does not link zero or oversized document results to bulk edit candidates" do
+    sign_in_as(admin_user)
+
+    get admin_documents_path, params: { q: "no-such-document" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 0件")
+    expect(page_text).to include("文書マスタの検索結果が0件のため、一括編集候補へは進めません")
+    expect(bulk_edit_candidate_link).to be_nil
+
+    project = create(:project, code: "BULK-LIMIT", name: "Bulk Limit")
+    51.times do |index|
+      create(:document, project:, title: "Bulk Limit #{index}", slug: "bulk-limit-#{index}")
+    end
+
+    get admin_documents_path, params: { q: "BULK-LIMIT" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 51件")
+    expect(page_text).to include("50件以下まで絞り込んでください")
+    expect(bulk_edit_candidate_link).to be_nil
   end
 
   it "shows lifecycle filter guidance only when retention or discard filters are active" do
