@@ -23,7 +23,8 @@ p.actions
     = submit_tag "検索", class: "button secondary"
     - if @selected_status.present? || @selected_query.present?
       = link_to "絞り込み解除", admin_recurring_job_schedules_path, class: "button secondary"
-  p.muted = "Triage対象: #{triage_counts}"
+  p.muted 前回状態 filter は直近実行結果で絞り込みます。定義の有効/無効は「定義状態」列で確認してください。
+  p.muted = "Triage対象（前回状態ベース）: #{triage_counts}"
   p.muted = "表示中: #{@schedules.size}件"
   = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "定期ジョブ一覧の表示設定")
 
@@ -31,7 +32,7 @@ p.actions
     thead
       tr
         th data-rails-table-preferences-column-key="job_key" ジョブキー
-        th data-rails-table-preferences-column-key="status" 状態
+        th data-rails-table-preferences-column-key="status" 定義状態
         th data-rails-table-preferences-column-key="interval" 間隔
         th data-rails-table-preferences-column-key="next_run_at" 次回実行
         th data-rails-table-preferences-column-key="last_enqueued_at" 前回enqueue
