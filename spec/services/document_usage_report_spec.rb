@@ -49,6 +49,54 @@ RSpec.describe DocumentUsageReport do
     expect(result.total_read_confirmations).to eq(1)
   end
 
+  it "marks documents as used from each usage source without counting read confirmations as last access" do
+    viewed = create_document(title: "Viewed", slug: "viewed")
+    downloaded = create_document(title: "Downloaded", slug: "downloaded")
+    read_confirmed = create_document(title: "Read confirmed", slug: "read-confirmed")
+    unused = create_document(title: "Unused", slug: "unused")
+
+    create(:access_log, project:, document: viewed, user:, company:, action_type: :view, accessed_at: Time.zone.local(2026, 5, 1, 10, 0, 0))
+    create(:access_log, project:, document: downloaded, user:, company:, action_type: :download, accessed_at: Time.zone.local(2026, 5, 1, 11, 0, 0))
+    create(:read_confirmation, document: read_confirmed, user:, confirmed_at: Time.zone.local(2026, 5, 1, 12, 0, 0))
+
+    result = described_class.new(project:).call
+    rows_by_slug = result.rows.index_by { |row| row.document.slug }
+
+    expect(rows_by_slug["viewed"]).to have_attributes(
+      view_count: 1,
+      download_count: 0,
+      read_confirmation_count: 0,
+      last_accessed_at: Time.zone.local(2026, 5, 1, 10, 0, 0)
+    )
+    expect(rows_by_slug["viewed"]).to be_used
+
+    expect(rows_by_slug["downloaded"]).to have_attributes(
+      view_count: 0,
+      download_count: 1,
+      read_confirmation_count: 0,
+      last_accessed_at: Time.zone.local(2026, 5, 1, 11, 0, 0)
+    )
+    expect(rows_by_slug["downloaded"]).to be_used
+
+    expect(rows_by_slug["read-confirmed"]).to have_attributes(
+      view_count: 0,
+      download_count: 0,
+      read_confirmation_count: 1,
+      last_accessed_at: nil
+    )
+    expect(rows_by_slug["read-confirmed"]).to be_used
+
+    expect(rows_by_slug["unused"]).to have_attributes(
+      view_count: 0,
+      download_count: 0,
+      read_confirmation_count: 0,
+      last_accessed_at: nil
+    )
+    expect(rows_by_slug["unused"]).not_to be_used
+    expect(result.used_documents).to eq([downloaded, read_confirmed, viewed])
+    expect(result.unused_documents).to eq([unused])
+  end
+
   it "filters usage by time range" do
     document = create_document(title: "Manual", slug: "manual")
     create(:access_log, project:, document:, user:, company:, action_type: :view, accessed_at: Time.zone.local(2026, 4, 30, 23, 59, 0))
