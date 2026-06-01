@@ -36,19 +36,26 @@ section.card
     thead
       tr
         th 状態
+        th カテゴリ
         th 項目
         th 内容
         th 補足
     tbody
       - @configuration_diagnostic.checks.each do |check|
         tr
-          td = check.status.to_s.upcase
-          td = check.key
+          td
+            span class=configuration_diagnostic_status_badge_class(check.status)
+              = configuration_diagnostic_status_label(check.status)
+          td
+            span class="text-sm font-semibold text-gray-700"
+              = configuration_diagnostic_category_label(check)
+          td
+            code = check.key
           td
             strong = check.label
             br
             span.muted = check.message
-          td
+          td class="max-w-xl break-words"
             - if check.detail.present?
               code = check.detail
             - else
