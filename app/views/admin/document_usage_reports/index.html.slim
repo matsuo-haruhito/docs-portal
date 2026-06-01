@@ -66,6 +66,8 @@ section.card
       = link_to "案件の監査ログへ", admin_access_logs_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
       |  / 
       = link_to "案件の既読確認内訳へ", admin_read_confirmations_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
+      |  / 
+      = link_to "CSV出力", admin_document_usage_reports_path(request.query_parameters.merge(format: :csv)), data: { turbo_frame: "_top" }
     p
       | 表示中:
       strong = " #{@report_hash[:documents].size}件"
