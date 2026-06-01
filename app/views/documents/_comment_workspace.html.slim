@@ -6,6 +6,7 @@
 - has_question_threads = @question_threads.any?
 - unresolved_question_count = @question_threads.count(&:open?)
 - unresolved_review_count = current_user.internal? ? @review_comments.count { !_1.resolved? } : 0
+- unresolved_total_count = unresolved_question_count + unresolved_review_count
 - has_unresolved_questions = unresolved_question_count.positive?
 - has_unresolved_reviews = unresolved_review_count.positive?
 
@@ -35,6 +36,20 @@ details class=wrapper_classes.join(" ") open=(!floating)
           | 未解決: Q&A 
           = unresolved_question_count
           | 件
+
+    .document-comment-workspace__summary aria-label="文書コメントの件数"
+      .document-comment-workspace__summary-item
+        span.document-comment-workspace__summary-label Q&A
+        strong.document-comment-workspace__summary-value = @question_threads.size
+        span.document-comment-workspace__summary-note = "未解決 #{unresolved_question_count}件"
+      - if current_user.internal?
+        .document-comment-workspace__summary-item.document-comment-workspace__summary-item--internal
+          span.document-comment-workspace__summary-label 確認事項
+          strong.document-comment-workspace__summary-value = @review_comments.size
+          span.document-comment-workspace__summary-note = "未解決 #{unresolved_review_count}件"
+        p.document-comment-workspace__summary-help.muted 未解決タブには、未解決のQ&Aと内部向け確認事項をまとめて表示します。通知・期限・SLAを示すものではありません。
+      - else
+        p.document-comment-workspace__summary-help.muted 未解決タブには、まだ回答やクローズがされていないQ&Aを表示します。
 
     .document-comment-workspace__mode.card
       h3 追加する内容
@@ -90,18 +105,26 @@ details class=wrapper_classes.join(" ") open=(!floating)
       input#document-comment-tab-all.document-comment-tabs__input type="radio" name="document_comment_tab" checked=true
       label.document-comment-tabs__label for="document-comment-tab-all" すべて
       input#document-comment-tab-qa.document-comment-tabs__input type="radio" name="document_comment_tab"
-      label.document-comment-tabs__label for="document-comment-tab-qa" Q&A
-      input#document-comment-tab-review.document-comment-tabs__input type="radio" name="document_comment_tab"
-      label.document-comment-tabs__label for="document-comment-tab-review" 確認事項
+      label.document-comment-tabs__label for="document-comment-tab-qa"
+        | Q&A
+        span.muted = " (未解決 #{unresolved_question_count})"
+      - if current_user.internal?
+        input#document-comment-tab-review.document-comment-tabs__input type="radio" name="document_comment_tab"
+        label.document-comment-tabs__label for="document-comment-tab-review"
+          | 確認事項
+          span.muted = " (未解決 #{unresolved_review_count})"
       input#document-comment-tab-unresolved.document-comment-tabs__input type="radio" name="document_comment_tab"
-      label.document-comment-tabs__label for="document-comment-tab-unresolved" 未解決
+      label.document-comment-tabs__label for="document-comment-tab-unresolved"
+        | 未解決
+        span.muted = " (#{current_user.internal? ? unresolved_total_count : unresolved_question_count})"
 
       .document-comment-tabs__panel.document-comment-tabs__panel--all
         = render "documents/comment_workspace_threads", show_questions: true, show_reviews: current_user.internal?, only_unresolved: false
       .document-comment-tabs__panel.document-comment-tabs__panel--qa
         = render "documents/comment_workspace_threads", show_questions: true, show_reviews: false, only_unresolved: false
-      .document-comment-tabs__panel.document-comment-tabs__panel--review
-        = render "documents/comment_workspace_threads", show_questions: false, show_reviews: current_user.internal?, only_unresolved: false
+      - if current_user.internal?
+        .document-comment-tabs__panel.document-comment-tabs__panel--review
+          = render "documents/comment_workspace_threads", show_questions: false, show_reviews: true, only_unresolved: false
       .document-comment-tabs__panel.document-comment-tabs__panel--unresolved
         - if has_unresolved_questions || has_unresolved_reviews
           = render "documents/comment_workspace_threads", show_questions: true, show_reviews: current_user.internal?, only_unresolved: true
