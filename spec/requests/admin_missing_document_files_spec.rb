@@ -71,8 +71,8 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(response.body).to include("missing-detail-0.txt")
     expect(response.body).to include("missing-detail-99.txt")
     expect(response.body).not_to include("missing-detail-100.txt")
-    expect(response.body).not_to include("削除")
-    expect(response.body).not_to include("修復")
-    expect(response.body).not_to include("CSV export")
+    expect(response.body).not_to include("削除する")
+    expect(response.body).not_to include("再importを実行")
+    expect(response.body).not_to include("CSVを出力")
   end
 end
