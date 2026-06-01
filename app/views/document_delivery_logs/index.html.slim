@@ -27,7 +27,7 @@ p.muted
   - if @delivery_type_filter.present?
     = hidden_field_tag :delivery_type, @delivery_type_filter
   p.actions
-    = form.search_field :q, value: @query, placeholder: "案件名・案件コード・宛先で検索"
+    = form.search_field :q, value: @query, placeholder: "案件名・案件コード・宛先・CC/BCC・件名・失敗理由で検索"
     = form.submit "検索", class: "button"
     - if @query.present?
       = link_to "検索をクリア", document_delivery_logs_path(status: @status_filter.presence, delivery_type: @delivery_type_filter.presence), class: "button secondary"
