@@ -86,7 +86,7 @@ RSpec.describe "Admin webhook deliveries", type: :request do
     expect(page_text).to include("Target Hook")
     expect(page_text).to include("Q&A回答")
     expect(page_text).to include("target timeout")
-    expect(page_text).not_to include("Other Hook")
+    expect(page_text).not_to include("wrong endpoint")
     expect(page_text).not_to include("wrong event")
     expect(page_text).not_to include("wrong status")
     expect(page_text).not_to include("too old")
