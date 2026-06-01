@@ -2,9 +2,28 @@
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: nil
 
 - page_title @project.name, "文書カタログ"
+- audience_options = [["すべて", ""]] + DocumentCatalog.audience_types.keys.map { |value| [value, value] }
+- visibility_options = [["すべて", ""]] + DocumentCatalog.visibility_policies.keys.map { |value| [value, value] }
+- has_filters = @catalog_query.present? || @audience_type_filter.present? || @visibility_policy_filter.present?
+
 h1
   = @project.name
   |  / 文書カタログ
+
+= form_with url: project_document_catalogs_path(@project), method: :get, local: true do
+  .field
+    = label_tag :q, "名称・説明"
+    = search_field_tag :q, @catalog_query, placeholder: "カタログ名または説明"
+  .field
+    = label_tag :audience_type, "対象"
+    = select_tag :audience_type, options_for_select(audience_options, @audience_type_filter)
+  .field
+    = label_tag :visibility_policy, "公開範囲"
+    = select_tag :visibility_policy, options_for_select(visibility_options, @visibility_policy_filter)
+  p.actions
+    = submit_tag "絞り込み", class: "button"
+    - if has_filters
+      = link_to "絞り込み解除", project_document_catalogs_path(@project), class: "button secondary"
 
 - if @catalogs.any?
   = table_tag do
@@ -24,6 +43,9 @@ h1
           td = catalog.visible_items_for(current_user).size
           td = link_to "詳細", project_document_catalog_path(@project, catalog)
 - else
-  p.muted 利用可能な文書カタログはありません。
+  - if has_filters
+    p.muted 条件に一致する文書カタログはありません。
+  - else
+    p.muted 利用可能な文書カタログはありません。
 
 p = link_to "案件トップへ戻る", project_path(@project)
