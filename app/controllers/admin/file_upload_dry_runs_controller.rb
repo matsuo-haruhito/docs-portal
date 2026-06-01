@@ -1,6 +1,18 @@
 class Admin::FileUploadDryRunsController < Admin::BaseController
   before_action :require_admin_only!
-  before_action :set_import_dry_run
+  before_action :set_import_dry_run, only: %i[show update]
+
+  def index
+    @status_options = status_options
+    @project_options = project_options
+    @selected_status = status_param
+    @selected_project_id = project_id_param
+    @selected_dry_run_id = dry_run_id_param
+    @dry_runs = ImportDryRun.where(import_mode: :manual_upload).includes(:project).order(created_at: :desc, id: :desc)
+    @dry_runs = @dry_runs.where(status: @selected_status) if @selected_status.present?
+    @dry_runs = @dry_runs.where(project_id: @selected_project_id) if @selected_project_id.present?
+    @dry_runs = @dry_runs.where(public_id: @selected_dry_run_id) if @selected_dry_run_id.present?
+  end
 
   def show
     load_dry_run_payload
@@ -31,6 +43,38 @@ class Admin::FileUploadDryRunsController < Admin::BaseController
 
   def set_import_dry_run
     @import_dry_run = ImportDryRun.find_by!(public_id: params[:public_id] || params[:id], import_mode: :manual_upload)
+  end
+
+  def status_options
+    [["すべて", ""]] + ImportDryRun.statuses.keys.map do |status|
+      [import_dry_run_status_label_value(status), status]
+    end
+  end
+
+  def project_options
+    [["すべて", ""]] + Project.order(:code).map do |project|
+      ["#{project.code} / #{project.name}", project.id]
+    end
+  end
+
+  def status_param
+    status = params[:status].to_s
+    ImportDryRun.statuses.key?(status) ? status : nil
+  end
+
+  def project_id_param
+    project_id = params[:project_id].to_s
+    return nil if project_id.blank?
+
+    Project.exists?(id: project_id) ? project_id : nil
+  end
+
+  def dry_run_id_param
+    params[:dry_run_id].to_s.strip.presence
+  end
+
+  def import_dry_run_status_label_value(status)
+    I18n.t("labels.import_dry_runs.status.#{status}", default: status)
   end
 
   def load_dry_run_payload
