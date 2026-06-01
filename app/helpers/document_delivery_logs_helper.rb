@@ -1,0 +1,13 @@
+module DocumentDeliveryLogsHelper
+  def document_delivery_log_table_columns
+    [
+      table_preferences_column(:created_at, label: "作成日時", default_width: 180, pinned: true, sortable: true),
+      table_preferences_column(:project, label: "案件", default_width: 180, overflow: :ellipsis),
+      table_preferences_column(:target, label: "文書名/文書セット名", default_width: 260, overflow: :ellipsis),
+      table_preferences_column(:recipients, label: "宛先", default_width: 240, overflow: :ellipsis),
+      table_preferences_column(:delivery_type, label: "方式", default_width: 140),
+      table_preferences_column(:status, label: "状態", default_width: 120, pinned: true),
+      table_preferences_column(:failure_reason, label: "失敗理由", default_width: 280, overflow: :ellipsis)
+    ]
+  end
+end

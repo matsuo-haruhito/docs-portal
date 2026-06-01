@@ -12,6 +12,9 @@
 - delivery_logs_total_count = @delivery_logs_total_count.to_i
 - delivery_logs_limit = @delivery_logs_limit.to_i
 - delivery_logs_display_count = @delivery_logs.size
+- table_key = :document_delivery_logs
+- table_columns = document_delivery_log_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
 
 h1 送付履歴
 
@@ -43,34 +46,39 @@ p.actions
 
 - if @delivery_logs.any?
   p.muted = "表示範囲: #{delivery_logs_total_count}件中#{delivery_logs_display_count}件を表示しています。#{delivery_logs_total_count > delivery_logs_limit ? "さらに絞り込む場合は検索・状態・方式フィルタを使ってください。" : ""}"
-  table
+  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "送付履歴一覧の表示設定")
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
       tr
-        th 作成日時
-        th 案件
-        th 文書名/文書セット名
-        th 宛先
-        th 方式
-        th 状態
+        th data={ rails_table_preferences_column_key: "created_at" } 作成日時
+        th data={ rails_table_preferences_column_key: "project" } 案件
+        th data={ rails_table_preferences_column_key: "target" } 文書名/文書セット名
+        th data={ rails_table_preferences_column_key: "recipients" } 宛先
+        th data={ rails_table_preferences_column_key: "delivery_type" } 方式
+        th data={ rails_table_preferences_column_key: "status" } 状態
+        th data={ rails_table_preferences_column_key: "failure_reason" } 失敗理由
     tbody
       - @delivery_logs.each do |log|
         tr
-          td = l(log.created_at)
-          td = log.project.name
-          td
+          td data={ rails_table_preferences_column_key: "created_at" } = l(log.created_at)
+          td data={ rails_table_preferences_column_key: "project" } = log.project.name
+          td data={ rails_table_preferences_column_key: "target" }
             - if log.document.present?
               = link_to log.document.title, project_document_path(log.project, log.document.slug)
             - elsif log.document_set.present?
               = link_to log.document_set.name, project_document_set_path(log.project, log.document_set)
             - else
               span.muted "-"
-          td = log.to_addresses
-          td = document_delivery_log_delivery_type_label(log)
-          td
+          td data={ rails_table_preferences_column_key: "recipients" } = log.to_addresses
+          td data={ rails_table_preferences_column_key: "delivery_type" } = document_delivery_log_delivery_type_label(log)
+          td data={ rails_table_preferences_column_key: "status" }
             = link_to document_delivery_log_status_label(log), document_delivery_log_path(log, return_to: current_delivery_logs_path)
+          td data={ rails_table_preferences_column_key: "failure_reason" }
             - if log.failed?
               - failure_summary = log.error_message.presence || "詳細で失敗内容を確認してください。"
-              div.muted = "失敗理由: #{truncate(failure_summary, length: 60)}"
+              span.muted = truncate(failure_summary, length: 60)
+            - else
+              span.muted "-"
 - elsif has_active_filters
   - if @query.present?
     p.muted 検索条件に一致する送付履歴はありません。
