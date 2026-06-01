@@ -23,6 +23,8 @@ RSpec.describe "document comment workspace source" do
       expect(workspace_stylesheet).to include("@media (max-width:720px)")
       expect(workspace_stylesheet).to include(".document-comment-workspace__summary{grid-template-columns:1fr}")
       expect(workspace_stylesheet).to include(".document-comment-workspace__status{display:inline-block;margin-top:4px;white-space:normal}")
+      expect(workspace_stylesheet).to include(".document-comment-workspace__panel{pointer-events:auto;display:none;position:absolute;right:0;bottom:0;box-sizing:border-box")
+      expect(workspace_stylesheet).to include(".document-comment-workspace__summary-item{box-sizing:border-box")
     end
   end
 
