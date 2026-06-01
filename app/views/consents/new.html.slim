@@ -15,10 +15,13 @@ p.muted このポータルで閲覧・ダウンロードする情報の取り扱
       section.card
         h2 = term.title
         p.muted
-          | 版: 
+          | 対象: 
+          strong = consent_target_label(term.global? ? nil : @result.target)
+        p.muted
+          | 種別: 
+          strong = consent_scope_label(term)
+          |  / 版: 
           strong = term.version_label
-          |  / 種別: 
-          strong = term.consent_scope
         = simple_format(term.body)
 
     p.actions
