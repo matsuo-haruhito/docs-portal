@@ -7,9 +7,11 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
 
     @schedule_status_options = recurring_job_status_options
     @selected_status = schedule_status_param
+    @selected_query = schedule_query_param
     @triage_status_counts = RecurringJobSchedule.group(:last_status).count
     @schedules = RecurringJobSchedule.order(:job_key)
     @schedules = filter_schedules_by_status(@schedules, @selected_status) if @selected_status.present?
+    @schedules = filter_schedules_by_query(@schedules, @selected_query) if @selected_query.present?
   end
 
   def show
@@ -60,6 +62,10 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     recurring_job_status_values.include?(status) ? status : nil
   end
 
+  def schedule_query_param
+    params[:q].to_s.strip.presence
+  end
+
   def run_status_param
     status = params[:run_status].to_s
     RecurringJobRun.statuses.key?(status) ? status : nil
@@ -69,6 +75,14 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     return scope.where(last_status: [nil, ""]) if status == "not_run"
 
     scope.where(last_status: status)
+  end
+
+  def filter_schedules_by_query(scope, query)
+    like_query = "%#{ActiveRecord::Base.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(job_key) LIKE :query OR LOWER(job_class) LIKE :query OR LOWER(queue_name) LIKE :query OR LOWER(COALESCE(last_error_message, '')) LIKE :query",
+      query: like_query
+    )
   end
 
   def safe_return_to_path(fallback)
