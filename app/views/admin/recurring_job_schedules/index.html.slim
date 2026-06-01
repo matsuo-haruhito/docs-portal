@@ -4,6 +4,10 @@
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - current_list_path = request.fullpath
 - triage_counts = ["失敗: #{@triage_status_counts.fetch('failed', 0)}件", "実行中: #{@triage_status_counts.fetch('running', 0)}件", "キュー待ち: #{@triage_status_counts.fetch('enqueued', 0)}件"].join(" / ")
+- empty_message = if @selected_status.present? || @selected_query.present?
+  - "条件に一致する定期ジョブはありません。"
+- else
+  - "登録済みの定期ジョブはありません。定義を同期すると、dispatcher 定義に基づいて登録されます。"
 
 h1 定期ジョブ
 p.muted recurring_job_schedules に登録された定期実行ジョブの状態を確認します。未登録の定義は dispatcher 実行時に自動登録されます。
@@ -38,6 +42,9 @@ p.actions
         th data-rails-table-preferences-column-key="last_status" 前回状態
         th data-rails-table-preferences-column-key="actions"
     tbody
+      - if @schedules.empty?
+        tr
+          td.muted colspan=table_columns.size = empty_message
       - @schedules.each do |schedule|
         tr
           td data-rails-table-preferences-column-key="job_key"
