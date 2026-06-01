@@ -213,19 +213,50 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(page_text).to include(matching_log.to_addresses)
     expect(page_text).not_to include(non_matching_log.to_addresses)
     expect(page_text).not_to include(wrong_status_log.to_addresses)
+    expect(response.body).to include("案件名・案件コード・宛先・CC/BCC・件名・失敗理由で検索")
     expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(q: "dlv1", status: :draft, delivery_type: :portal_link))
     expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(q: "dlv1", status: :failed))
     expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(status: :failed, delivery_type: :portal_link))
   end
 
+  it "searches delivery logs by cc, bcc, subject, and failure reason while preserving filters" do
+    cc_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "to-cc@example.com", cc_addresses: "cc-reviewer@example.com")
+    bcc_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "to-bcc@example.com", bcc_addresses: "hidden-audit@example.com")
+    subject_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :sent, delivery_type: :attachment, to_addresses: "to-subject@example.com", subject: "Invoice Appendix Review")
+    failure_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :failed, delivery_type: :zip_attachment, to_addresses: "to-failure@example.com", error_message: "SMTP quota exceeded")
+    unrelated_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :failed, delivery_type: :zip_attachment, to_addresses: "unrelated@example.com", error_message: "network timeout")
+
+    sign_in_as(internal_user)
+
+    get document_delivery_logs_path, params: { q: "cc-reviewer" }
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(cc_log.to_addresses)
+    expect(page_text).not_to include(bcc_log.to_addresses)
+
+    get document_delivery_logs_path, params: { q: "hidden-audit" }
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(bcc_log.to_addresses)
+    expect(page_text).not_to include(cc_log.to_addresses)
+
+    get document_delivery_logs_path, params: { q: "appendix", status: :sent, delivery_type: :attachment }
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(subject_log.to_addresses)
+    expect(page_text).not_to include(failure_log.to_addresses)
+
+    get document_delivery_logs_path, params: { q: "quota", status: :failed, delivery_type: :zip_attachment }
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(failure_log.to_addresses)
+    expect(page_text).not_to include(unrelated_log.to_addresses)
+  end
+
   it "keeps external delivery log search limited to the current sender" do
     other_external_user = create(:user, :external, company:)
-    own_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "client@example.com")
-    other_log = create(:document_delivery_log, project:, document:, sender: other_external_user, status: :draft, delivery_type: :portal_link, to_addresses: "client-secret@example.com")
+    own_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "client@example.com", cc_addresses: "shared-cc@example.com")
+    other_log = create(:document_delivery_log, project:, document:, sender: other_external_user, status: :draft, delivery_type: :portal_link, to_addresses: "client-secret@example.com", cc_addresses: "shared-cc@example.com")
 
     sign_in_as(external_user)
 
-    get document_delivery_logs_path, params: { q: "client" }
+    get document_delivery_logs_path, params: { q: "shared-cc" }
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include(own_log.to_addresses)
