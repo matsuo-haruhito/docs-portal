@@ -11,6 +11,12 @@ section.card
         = form.label :status, "状態"
         = form.select :status, options_for_select(admin_access_request_status_filter_options, @filters[:status])
       div
+        = form.label :requested_access_level, "要求権限"
+        = form.select :requested_access_level, options_for_select(admin_access_request_access_level_filter_options, @filters[:requested_access_level])
+      div
+        = form.label :requestable_type, "対象種別"
+        = form.select :requestable_type, options_for_select(admin_access_request_requestable_type_filter_options, @filters[:requestable_type])
+      div
         = form.label :q, "申請者・対象"
         = form.search_field :q, value: @filters[:q], placeholder: "名前、メール、対象名で検索"
 
@@ -24,6 +30,10 @@ section.card
     strong = " #{@access_requests.size}件"
     |  / 状態:
     strong = " #{admin_access_request_status_filter_label(@filters[:status])}"
+    |  / 要求権限:
+    strong = " #{admin_access_request_access_level_filter_label(@filters[:requested_access_level])}"
+    |  / 対象種別:
+    strong = " #{admin_access_request_requestable_type_filter_label(@filters[:requestable_type])}"
     - if @filters[:q].present?
       |  / 検索:
       strong = " #{@filters[:q]}"
@@ -84,14 +94,27 @@ section.card
             - else
               span.muted -
 - else
-  - if @filters[:status].present? || @filters[:q].present?
+  - active_filter = @filters[:status].present? || @filters[:q].present? || @filters[:requested_access_level].present? || @filters[:requestable_type].present?
+  - if active_filter
     p.muted
       | 条件に一致する申請はありません。
       - if @filters[:status].present?
         |  状態:
         strong = " #{admin_access_request_status_filter_label(@filters[:status])}"
-      - if @filters[:q].present?
+      - if @filters[:requested_access_level].present?
         - if @filters[:status].present?
+          |  / 要求権限:
+        - else
+          |  要求権限:
+        strong = " #{admin_access_request_access_level_filter_label(@filters[:requested_access_level])}"
+      - if @filters[:requestable_type].present?
+        - if @filters[:status].present? || @filters[:requested_access_level].present?
+          |  / 対象種別:
+        - else
+          |  対象種別:
+        strong = " #{admin_access_request_requestable_type_filter_label(@filters[:requestable_type])}"
+      - if @filters[:q].present?
+        - if @filters[:status].present? || @filters[:requested_access_level].present? || @filters[:requestable_type].present?
           |  / 検索:
         - else
           |  検索:
