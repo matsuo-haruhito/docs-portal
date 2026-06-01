@@ -81,7 +81,7 @@ Rails.application.routes.draw do
     resources :document_sets, except: %i[show new], param: :public_id
     resources :document_permissions, except: %i[show new], param: :public_id
     resources :webhook_endpoints, except: %i[show new], param: :public_id
-    resources :webhook_deliveries, only: [:show], param: :public_id do
+    resources :webhook_deliveries, only: %i[index show], param: :public_id do
       post :retry_dispatch, on: :member
       post :retry_failed, on: :collection
     end
