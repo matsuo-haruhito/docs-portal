@@ -2,7 +2,7 @@ module Admin::RecurringJobSchedulesHelper
   def admin_recurring_job_schedule_table_columns
     [
       table_preferences_column(:job_key, label: "ジョブキー", default_width: 260, overflow: :ellipsis, pinned: true),
-      table_preferences_column(:status, label: "状態", default_width: 100),
+      table_preferences_column(:status, label: "定義状態", default_width: 100),
       table_preferences_column(:interval, label: "間隔", default_width: 120),
       table_preferences_column(:next_run_at, label: "次回実行", default_width: 180),
       table_preferences_column(:last_enqueued_at, label: "前回enqueue", default_width: 180),
