@@ -86,7 +86,7 @@ RSpec.describe "Admin zip imports", type: :request do
 
   it "shows empty review copy when warnings and source metadata are absent" do
     sign_in_as(admin_user)
-    dry_run = create_zip_dry_run(result_json: {}, status: :confirmed)
+    dry_run = create_zip_dry_run(result_json: { "zip_import_preview" => {} }, status: :expired)
 
     get admin_zip_import_path(dry_run)
 
