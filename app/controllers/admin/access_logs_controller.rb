@@ -2,6 +2,7 @@ class Admin::AccessLogsController < Admin::BaseController
   AI_CONTEXT_MODE_FILTERS = %w[compact full].freeze
   AI_CONTEXT_SCOPE_FILTERS = %w[all selected].freeze
   ACCESS_LOGS_PER_PAGE = 200
+  ACCESS_LOGS_MAX_PAGE = 50
 
   before_action :require_admin_only!
 
@@ -96,7 +97,7 @@ class Admin::AccessLogsController < Admin::BaseController
 
   def page_param
     page = params[:page].to_i
-    page.positive? ? page : 1
+    page.between?(1, ACCESS_LOGS_MAX_PAGE) ? page : 1
   end
 
   def pagination_params
