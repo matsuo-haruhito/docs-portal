@@ -19,7 +19,7 @@ RSpec.describe "admin recurring job schedules status presentation" do
 
   it "renders recurring job statuses through helper badges" do
     aggregate_failures do
-      expect(index_view).to include("td = recurring_job_status_badge(schedule.last_status)")
+      expect(index_view).to include('td data-rails-table-preferences-column-key="last_status" = recurring_job_status_badge(schedule.last_status)')
       expect(show_view).to include("dd = recurring_job_status_badge(@schedule.last_status)")
       expect(show_view).to include("td = recurring_job_status_badge(run.status)")
       expect(index_view).not_to include('td = schedule.last_status.presence || "-"')
