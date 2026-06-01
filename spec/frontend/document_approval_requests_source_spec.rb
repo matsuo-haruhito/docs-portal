@@ -31,7 +31,7 @@ RSpec.describe "document approval requests source" do
 
   it "keeps status tabs, section grouping, and return_to behavior in the same view" do
     aggregate_failures do
-      expect(index_source).to include("対応待ち #{@pending_count}件 / OK済み #{@approved_count}件 / Cancel済み #{@cancelled_count}件")
+      expect(index_source).to include('対応待ち #{@pending_count}件 / OK済み #{@approved_count}件 / Cancel済み #{@cancelled_count}件')
       expect(index_source).to include("list_path.call(status: :pending)")
       expect(index_source).to include("@document_approval_request_sections.each")
       expect(index_source).to include("document_approval_request_path(request, return_to: current_list_path)")
