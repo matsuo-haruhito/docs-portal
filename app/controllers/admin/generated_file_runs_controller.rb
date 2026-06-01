@@ -92,7 +92,9 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
       "LOWER(public_id) LIKE :pattern OR " \
       "LOWER(CAST(source_paths AS text)) LIKE :pattern OR " \
       "LOWER(CAST(changed_files AS text)) LIKE :pattern OR " \
-      "LOWER(CAST(generated_paths AS text)) LIKE :pattern",
+      "LOWER(CAST(generated_paths AS text)) LIKE :pattern OR " \
+      "LOWER(error_message) LIKE :pattern OR " \
+      "LOWER(CAST(metadata AS text)) LIKE :pattern",
       pattern:
     )
   end

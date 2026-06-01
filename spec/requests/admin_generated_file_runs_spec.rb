@@ -51,7 +51,8 @@ RSpec.describe "Admin generated file runs", type: :request do
         output_writer: "document_version",
         event_source: "manual_document_upload",
         created_from: "2026-05-10",
-        created_to: "2026-05-11"
+        created_to: "2026-05-11",
+        q: "timeout"
       }
 
       get admin_generated_file_runs_path(filters)
@@ -122,6 +123,89 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).not_to include(unmatched_date.public_id)
     end
 
+    it "filters by run id, paths, error message, retry parent, and related event fragments with q" do
+      sign_in_as(admin_user)
+      related_event = create_event!(path: "docs/related.yml")
+      original_run = create_run!(job_id: "original_retry_parent")
+      id_run = create_run!(job_id: "id_match")
+      source_run = create_run!(job_id: "source_path_match", source_paths: ["docs/source-target.yml"], changed_files: ["docs/other.yml"], generated_paths: ["generated/other.md"])
+      changed_run = create_run!(job_id: "changed_path_match", source_paths: ["docs/other.yml"], changed_files: ["docs/changed-target.yml"], generated_paths: ["generated/other.md"])
+      generated_run = create_run!(job_id: "generated_path_match", source_paths: ["docs/other.yml"], changed_files: ["docs/other.yml"], generated_paths: ["generated/target.md"])
+      error_run = create_run!(job_id: "error_match", status: :failed, error_message: "Renderer timeout while building manual")
+      retry_run = create_run!(job_id: "retry_match", metadata: {"retry_of_generated_file_run_public_id" => original_run.public_id})
+      event_run = create_run!(job_id: "event_match", metadata: {"generated_file_event_public_ids" => [related_event.public_id]})
+      unmatched_run = create_run!(job_id: "unmatched", source_paths: ["docs/unmatched.yml"], error_message: "completed")
+
+      get admin_generated_file_runs_path(q: id_run.public_id.last(8))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(id_run.public_id)
+      expect(response.body).not_to include(unmatched_run.public_id)
+
+      get admin_generated_file_runs_path(q: "source-target")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(source_run.public_id)
+      expect(response.body).not_to include(unmatched_run.public_id)
+
+      get admin_generated_file_runs_path(q: "changed-target")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(changed_run.public_id)
+      expect(response.body).not_to include(unmatched_run.public_id)
+
+      get admin_generated_file_runs_path(q: "generated/target")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(generated_run.public_id)
+      expect(response.body).not_to include(unmatched_run.public_id)
+
+      get admin_generated_file_runs_path(q: "renderer timeout")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(error_run.public_id)
+      expect(response.body).not_to include(unmatched_run.public_id)
+
+      get admin_generated_file_runs_path(q: original_run.public_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(retry_run.public_id)
+      expect(response.body).not_to include(unmatched_run.public_id)
+
+      get admin_generated_file_runs_path(q: related_event.public_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(event_run.public_id)
+      expect(response.body).not_to include(unmatched_run.public_id)
+    end
+
+    it "combines q with existing filters" do
+      sign_in_as(admin_user)
+      matched = create_run!(
+        job_id: "matched_job",
+        generator: "ai_usecase_decision_flow",
+        status: :failed,
+        event_source: "manual_document_upload",
+        error_message: "Retry timeout while rendering"
+      )
+      unmatched_status = create_run!(job_id: "completed_job", generator: "ai_usecase_decision_flow", status: :completed, event_source: "manual_document_upload", error_message: "Retry timeout while rendering")
+      unmatched_generator = create_run!(job_id: "other_generator_job", generator: "other_generator", status: :failed, event_source: "manual_document_upload", error_message: "Retry timeout while rendering")
+      unmatched_query = create_run!(job_id: "other_error_job", generator: "ai_usecase_decision_flow", status: :failed, event_source: "manual_document_upload", error_message: "Other failure")
+
+      get admin_generated_file_runs_path(
+        status: "failed",
+        generator: "ai_usecase_decision_flow",
+        event_source: "manual_document_upload",
+        q: "retry timeout"
+      )
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(matched.public_id)
+      expect(response.body).not_to include(unmatched_status.public_id)
+      expect(response.body).not_to include(unmatched_generator.public_id)
+      expect(response.body).not_to include(unmatched_query.public_id)
+    end
+
     it "preserves the current filters in the bulk retry form action" do
       sign_in_as(admin_user)
       create_run!(status: :failed)
@@ -131,7 +215,8 @@ RSpec.describe "Admin generated file runs", type: :request do
         output_writer: "document_version",
         event_source: "manual_document_upload",
         created_from: "2026-05-10",
-        created_to: "2026-05-11"
+        created_to: "2026-05-11",
+        q: "timeout"
       }
 
       get admin_generated_file_runs_path(filters)
