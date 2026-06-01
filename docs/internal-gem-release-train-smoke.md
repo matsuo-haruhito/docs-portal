@@ -32,6 +32,28 @@
 - ただし current CI、mergeability、`#789` の human gate、representative smoke の状態で実行可否を再判断する
 - この snapshot 更新だけでは `Gemfile` / `Gemfile.lock` を変更しない
 
+## dependency bump human handoff
+
+internal UI gem の pinned ref を動かす PR は、実行直前の upstream 状態と Bundler が解決した lockfile を正本にします。エージェント環境で checkout、Bundler、representative smoke のいずれかを安全に実行できない場合は、`Gemfile.lock` の SHA 行を connector で手編集して完了扱いにせず、Issue を `needs-human` に戻します。
+
+人間が実行するときの最小手順:
+
+1. 対象 gem を 1 つだけ選び、`Gemfile` と `Gemfile.lock` の current pin / resolved revision を控える
+2. upstream `main`、candidate PR、最新 CI、README / docs を作業直前に再確認し、target SHA または tag を決める
+3. `Gemfile` / `Gemfile.lock` は Bundler (`bundle install` / `bundle lock` など) が生成した差分を正とし、他 gem の ref 更新を混ぜない
+4. この文書の representative smoke から対象 gem の最小 surface を確認し、通した画面、request spec、または CI job を PR 本文か issue comment に残す
+5. rollback target は通常 from revision と同じにし、hotfix や別 branch を挟む場合だけ実際に戻す revision を明記する
+
+エージェントが止める条件:
+
+- GitHub checkout / fetch ができず、upstream target SHA を作業直前に再計測できない
+- Bundler を実行できず、`Gemfile.lock` を正しく再生成できない
+- representative smoke を実行または確認できず、PR 本文に確認結果を残せない
+- `rails_table_preferences` のように known-good target SHA の人間判断 gate (`#789`) が残っている
+- 複数 gem の同時 bump、UI redesign、DB / auth / external API 変更、business spec 判断が必要になる
+
+この handoff は `#1300`、`#1301`、`#789` から共通利用するための停止基準です。`docs/関連gem連携調査runbook.md` の current queue 同期 (`#1552`) とは競合せず、queue の issue 番号や active lane 表示はそちらで更新します。
+
 ## tree_view representative smoke
 
 `tree_view` の更新では、文書ツリーの見た目だけでなく route context と persisted state を確認します。
