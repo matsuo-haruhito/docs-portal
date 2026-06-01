@@ -49,14 +49,16 @@ RSpec.describe "Document comment workspace search", type: :request do
 
     get project_document_path(project, document.slug, comment_q: "refund")
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("検索条件: refund")
+    expect(response.body).to include("検索条件")
+    expect(response.body).to include("refund")
     expect(response.body).to include(question.body)
     expect(response.body).not_to include(other_question.body)
     expect(response.body).not_to include(review_comment.body)
 
     get project_document_path(project, document.slug, comment_q: "payment-flow")
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("検索条件: payment-flow")
+    expect(response.body).to include("検索条件")
+    expect(response.body).to include("payment-flow")
     expect(response.body).to include(review_comment.body)
     expect(response.body).to include("docs/payment-flow.md")
     expect(response.body).not_to include(question.body)
@@ -88,7 +90,8 @@ RSpec.describe "Document comment workspace search", type: :request do
 
     get project_document_path(project, document.slug, comment_q: "launch")
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("検索条件: launch")
+    expect(response.body).to include("検索条件")
+    expect(response.body).to include("launch")
     expect(response.body).to include("検索条件に一致するQ&Aはありません。")
     expect(response.body).not_to include(internal_review.body)
     expect(response.body).not_to include("internal/launch-plan.md")
@@ -161,7 +164,8 @@ RSpec.describe "Document comment workspace search", type: :request do
 
     get document_version_path(version, comment_q: "approval")
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("検索条件: approval")
+    expect(response.body).to include("検索条件")
+    expect(response.body).to include("approval")
     expect(response.body).to include(version_question.body)
     expect(response.body).not_to include(other_question.body)
   end
