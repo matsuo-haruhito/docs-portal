@@ -19,7 +19,11 @@ RSpec.describe "Admin read confirmations", type: :request do
   end
 
   def read_confirmation_rows
-    parsed_html.css("table tbody tr")
+    parsed_html.css("table tbody tr").map { _1.text.squish }
+  end
+
+  def user_filter_options
+    parsed_html.css("select[name='user_id'] option").map { _1.text.squish }
   end
 
   it "shows project read confirmation details to internal admins" do
@@ -71,6 +75,65 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(read_confirmation_rows.size).to eq(1)
   end
 
+  it "filters read confirmations by user within the selected project" do
+    other_document = create(:document, project:, title: "Policy", slug: "policy")
+    outside_document = create(:document, project: other_project, title: "Outside", slug: "outside")
+    other_viewer = create(:user, :external, name: "Reader Two", email_address: "reader-two@example.com")
+    outside_viewer = create(:user, :external, name: "Outside Reader", email_address: "outside@example.com")
+    create(:read_confirmation, document:, user: viewer, confirmed_at: Time.zone.local(2026, 5, 1, 12, 0, 0))
+    create(:read_confirmation, document: other_document, user: other_viewer, confirmed_at: Time.zone.local(2026, 5, 2, 12, 0, 0))
+    create(:read_confirmation, document: outside_document, user: outside_viewer, confirmed_at: Time.zone.local(2026, 5, 3, 12, 0, 0))
+
+    sign_in_as(admin_user)
+
+    get admin_read_confirmations_path(project_id: project.id, user_id: viewer.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("確認者: Reader One / reader@example.com / 会社: Client A")
+    expect(page_text).to include("表示中: 1件")
+    expect(read_confirmation_rows).to contain_exactly(a_string_including("Manual", "Reader One / reader@example.com"))
+    expect(read_confirmation_rows.join).not_to include("Policy")
+    expect(read_confirmation_rows.join).not_to include("Reader Two")
+    expect(read_confirmation_rows.join).not_to include("Outside")
+    expect(user_filter_options).to include("Reader One / reader@example.com / Client A")
+    expect(user_filter_options).to include(a_string_including("Reader Two / reader-two@example.com"))
+    expect(user_filter_options).not_to include(a_string_including("Outside Reader / outside@example.com"))
+  end
+
+  it "combines document slug and user filters" do
+    other_document = create(:document, project:, title: "Policy", slug: "policy")
+    other_viewer = create(:user, :external, name: "Reader Two", email_address: "reader-two@example.com")
+    create(:read_confirmation, document:, user: viewer, confirmed_at: Time.zone.local(2026, 5, 1, 12, 0, 0))
+    create(:read_confirmation, document: other_document, user: other_viewer, confirmed_at: Time.zone.local(2026, 5, 2, 12, 0, 0))
+
+    sign_in_as(admin_user)
+
+    get admin_read_confirmations_path(project_id: project.id, document_slug: document.slug, user_id: other_viewer.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("文書URL識別子: manual / 文書名: Manual")
+    expect(page_text).to include("確認者: Reader Two / reader-two@example.com")
+    expect(page_text).to include("表示中: 0件")
+    expect(page_text).to include("選択した条件に一致する既読確認はありません。")
+    expect(read_confirmation_rows).to be_empty
+  end
+
+  it "does not accept a user filter from another project" do
+    outside_document = create(:document, project: other_project, title: "Outside", slug: "outside")
+    outside_viewer = create(:user, :external, name: "Outside Reader", email_address: "outside@example.com")
+    create(:read_confirmation, document: outside_document, user: outside_viewer)
+
+    sign_in_as(admin_user)
+
+    get admin_read_confirmations_path(project_id: project.id, user_id: outside_viewer.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("指定した確認者はこの案件の既読確認候補に見つかりません。")
+    expect(page_text).to include("表示中: 0件")
+    expect(read_confirmation_rows).to be_empty
+    expect(user_filter_options).not_to include(a_string_including("Outside Reader / outside@example.com"))
+  end
+
   it "shows an empty state when the document slug does not belong to the project" do
     create(:read_confirmation, document:, user: viewer, confirmed_at: Time.zone.local(2026, 5, 1, 12, 0, 0))
     sign_in_as(admin_user)
@@ -98,6 +161,8 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(page_text).not_to include("Reader One / reader@example.com")
     expect(parsed_html.at_css("select[name='project_id']")).to be_present
     expect(parsed_html.at_css("input[name='document_slug']")).to be_present
+    expect(parsed_html.at_css("select[name='user_id']")).to be_present
+    expect(user_filter_options).not_to include(a_string_including("Reader One"))
     expect(read_confirmation_rows).to be_empty
   end
 
