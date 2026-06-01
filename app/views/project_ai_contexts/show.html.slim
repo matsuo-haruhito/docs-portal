@@ -3,11 +3,16 @@
 - current_mode_description = current_mode_name == "full" ? "本文まで含めて出力します。" : "summary と文書メタデータ中心で出力します。"
 - exported_document_count = @hash.dig(:summary, :document_count).to_i
 - selectable_document_count = @selectable_document_count
+- selectable_document_total_count = @selectable_document_total_count || selectable_document_count
 - selectable_document_preview_count = @selectable_documents_preview.size
+- document_query_present = @document_query.present?
 - selected_document_count = @requested_document_ids.empty? ? selectable_document_count : @requested_document_ids.size
 - scope_summary = @requested_document_ids.empty? ? "現在は閲覧可能な文書全体（#{exported_document_count}件）を export 対象にしています。" : "明示選択: #{selected_document_count}件 / export対象: #{exported_document_count}件"
 - scope_help = @requested_document_ids.empty? ? "個別に絞り込む場合は、対象にしたい文書だけを残して preview してください。" : "選択文書のうち閲覧可能な文書だけが preview / export に含まれます。"
-- document_filter_legend = @requested_document_ids.empty? ? "Export候補（表示中#{selectable_document_preview_count} / 全#{selectable_document_count}件）" : "Export候補（#{selected_document_count} / #{selectable_document_count}件選択中、表示中#{selectable_document_preview_count}件）"
+- document_filter_legend = if document_query_present
+  - @requested_document_ids.empty? ? "Export候補（検索結果#{selectable_document_count} / 閲覧可能#{selectable_document_total_count}件、表示中#{selectable_document_preview_count}件）" : "Export候補（#{selected_document_count}件選択中、検索結果#{selectable_document_count} / 閲覧可能#{selectable_document_total_count}件、表示中#{selectable_document_preview_count}件）"
+- else
+  - @requested_document_ids.empty? ? "Export候補（表示中#{selectable_document_preview_count} / 全#{selectable_document_count}件）" : "Export候補（#{selected_document_count} / #{selectable_document_count}件選択中、表示中#{selectable_document_preview_count}件）"
 - included_omitted_count = @plan.included_items.size - @plan_included_items_preview.size
 - excluded_omitted_count = @plan.excluded_items.size - @plan_excluded_items_preview.size
 - content_for :left_content do
@@ -53,11 +58,20 @@ p
     strong = scope_summary
   p.muted = scope_help
   p.muted
-    | 表示中の候補: 
-    = selectable_document_preview_count
-    | 件 / 閲覧可能: 
-    = selectable_document_count
-    | 件
+    - if document_query_present
+      | 表示中の候補: 
+      = selectable_document_preview_count
+      | 件 / 検索結果: 
+      = selectable_document_count
+      | 件 / 閲覧可能: 
+      = selectable_document_total_count
+      | 件
+    - else
+      | 表示中の候補: 
+      = selectable_document_preview_count
+      | 件 / 閲覧可能: 
+      = selectable_document_count
+      | 件
   - if @selectable_documents_truncated
     p.muted
       | 文書が多いため、checkbox候補は
@@ -65,9 +79,19 @@ p
       | 件まで表示しています。未選択のまま JSON / Markdown を出力する場合は閲覧可能な
       = exported_document_count
       | 件すべてが対象です。
+  - if document_query_present
+    p.muted
+      | 検索条件: 
+      strong = @document_query
+      | 。検索は checkbox 候補の絞り込みで、JSON / Markdown export は「選択した文書でpreview」を押すまで現在の対象範囲を維持します。
   - if @selectable_documents_preview.any?
     = form_with url: project_ai_context_path(@project), method: :get, local: true do
       = hidden_field_tag :mode, @mode
+      .form-grid
+        label
+          | 文書名 / slug で検索
+          = text_field_tag :document_q, @document_query, placeholder: "例: setup-guide"
+      p.muted 検索後も、明示選択済みの文書は候補に残します。
       fieldset.filter-fieldset
         legend = document_filter_legend
         - @selectable_documents_preview.each do |document|
@@ -83,6 +107,15 @@ p
         = submit_tag "選択した文書でpreview", class: "button"
         = link_to "すべての文書に戻す", project_ai_context_path(@project, mode: @mode), class: "button secondary"
   - else
+    = form_with url: project_ai_context_path(@project), method: :get, local: true do
+      = hidden_field_tag :mode, @mode
+      .form-grid
+        label
+          | 文書名 / slug で検索
+          = text_field_tag :document_q, @document_query, placeholder: "例: setup-guide"
+      p.actions.form-actions
+        = submit_tag "候補を検索", class: "button secondary"
+        = link_to "すべての文書に戻す", project_ai_context_path(@project, mode: @mode), class: "button secondary"
     p.muted 選択できる閲覧可能な文書はありません。
 
 .card
