@@ -1,5 +1,20 @@
+require "csv"
+
 class Admin::DocumentUsageReportsController < Admin::BaseController
   before_action :require_admin_only!
+
+  CSV_HEADERS = [
+    "文書名",
+    "slug",
+    "カテゴリ",
+    "種別",
+    "公開範囲",
+    "利用",
+    "閲覧",
+    "ダウンロード",
+    "既読確認",
+    "最終アクセス"
+  ].freeze
 
   def index
     @projects = Project.order(:name, :id)
@@ -9,6 +24,19 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
     @from_date = date_param(:from)
     @to_date = date_param(:to)
     @report_hash = build_report_hash(@selected_project) if @selected_project
+
+    respond_to do |format|
+      format.html
+      format.csv do
+        if @report_hash
+          send_data document_usage_report_csv,
+                    filename: document_usage_report_csv_filename,
+                    type: "text/csv; charset=utf-8"
+        else
+          redirect_to admin_document_usage_reports_path, alert: "CSV出力には案件選択が必要です。"
+        end
+      end
+    end
   end
 
   private
@@ -91,5 +119,36 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
 
   def rows_without_last_accessed(rows)
     rows.reject { _1[:last_accessed_at].present? }
+  end
+
+  def document_usage_report_csv
+    CSV.generate(headers: true) do |csv|
+      csv << CSV_HEADERS
+
+      @report_hash[:documents].each do |row|
+        csv << document_usage_report_csv_row(row)
+      end
+    end
+  end
+
+  def document_usage_report_csv_row(row)
+    [
+      row[:title],
+      row[:slug],
+      helpers.document_category_label(row[:category]),
+      helpers.document_kind_label(row[:document_kind]),
+      helpers.document_visibility_policy_label(row[:visibility_policy]),
+      helpers.document_usage_report_usage_badge_label(row),
+      row[:view_count],
+      row[:download_count],
+      row[:read_confirmation_count],
+      row[:last_accessed_at].presence.to_s
+    ]
+  end
+
+  def document_usage_report_csv_filename
+    project_token = @report_hash.dig(:project, :code).presence || @report_hash.dig(:project, :public_id)
+
+    "document-usage-report-#{project_token}-#{Date.current.iso8601}.csv"
   end
 end
