@@ -1,4 +1,18 @@
 module Admin::RecurringJobSchedulesHelper
+  def admin_recurring_job_schedule_table_columns
+    [
+      table_preferences_column(:job_key, label: "ジョブキー", default_width: 260, overflow: :ellipsis, pinned: true),
+      table_preferences_column(:status, label: "状態", default_width: 100),
+      table_preferences_column(:interval, label: "間隔", default_width: 120),
+      table_preferences_column(:next_run_at, label: "次回実行", default_width: 180),
+      table_preferences_column(:last_enqueued_at, label: "前回enqueue", default_width: 180),
+      table_preferences_column(:last_started_at, label: "前回開始", default_width: 180),
+      table_preferences_column(:last_finished_at, label: "前回終了", default_width: 180),
+      table_preferences_column(:last_status, label: "前回状態", default_width: 120),
+      table_preferences_column(:actions, label: "操作", default_width: 120, pinned: true)
+    ]
+  end
+
   def recurring_job_status_badge(status_or_value)
     value = recurring_job_status_value(status_or_value)
 
