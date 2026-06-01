@@ -14,7 +14,7 @@ RSpec.describe "admin/read_confirmations/index source" do
 
   it "keeps stable column keys on headers and cells" do
     %w[confirmed_at document user company document_slug].each do |column_key|
-      expect(view_source.scan(%(data-rails-table-preferences-column-key=\"#{column_key}\")).size).to eq(2)
+      expect(view_source.scan(%(data-rails-table-preferences-column-key="#{column_key}")).size).to eq(2)
     end
   end
 
