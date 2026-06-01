@@ -30,6 +30,7 @@ class Admin::ReadConfirmationsController < Admin::BaseController
 
   def read_confirmation_users
     return User.none unless @selected_project
+    return User.none if @document_slug.present? && @selected_document.blank?
 
     User
       .joins(read_confirmations: :document)
