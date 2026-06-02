@@ -25,6 +25,8 @@ RSpec.describe "Document bookmarks", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("文書ショートカット")
+    expect(response.body).to include("保存済みショートカットの絞り込み")
+    expect(response.body).to include("すべての案件")
     expect(response.body).to include("Manual")
     expect(response.body).to include("Checklist")
     expect(response.body).to include("Guide")
@@ -41,6 +43,75 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response.body).to include("最近見た文書")
     expect(response.body.scan("解除").size).to eq(2)
     expect(response.body.scan("お気に入りへ移す").size).to eq(1)
+  end
+
+  it "filters favorite and read-later bookmarks by project without filtering recent documents" do
+    other_project = create(:project, name: "Other Project", code: "OTHER")
+    later_document = create(:document, project:, title: "Checklist", slug: "checklist", visibility_policy: :restricted_external)
+    other_favorite_document = create(:document, project: other_project, title: "Other Manual", slug: "other-manual", visibility_policy: :restricted_external)
+    other_later_document = create(:document, project: other_project, title: "Other Checklist", slug: "other-checklist", visibility_policy: :restricted_external)
+    recent_document = create(:document, project: other_project, title: "Recent Other Guide", slug: "recent-other-guide", visibility_policy: :restricted_external)
+
+    create(:project_membership, project: other_project, user:)
+    [later_document, other_favorite_document, other_later_document, recent_document].each do |readable_document|
+      create(:document_permission, document: readable_document, company:, access_level: :view)
+    end
+    create(:document_bookmark, user:, document:, bookmark_type: :favorite)
+    create(:document_bookmark, user:, document: later_document, bookmark_type: :read_later)
+    create(:document_bookmark, user:, document: other_favorite_document, bookmark_type: :favorite)
+    create(:document_bookmark, user:, document: other_later_document, bookmark_type: :read_later)
+    create(:access_log, user:, company:, project: other_project, document: recent_document, action_type: :view, target_type: "document", accessed_at: Time.current)
+    sign_in_as(user)
+
+    get document_bookmarks_path(project_code: project.code)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("案件「Visible Project」でお気に入りと後で読むを絞り込んでいます。")
+    expect(response.body).to include("Manual")
+    expect(response.body).to include("Checklist")
+    expect(response.body).not_to include("Other Manual")
+    expect(response.body).not_to include("Other Checklist")
+    expect(response.body).to include("Recent Other Guide")
+    expect(response.body.scan("1件").size).to eq(3)
+    expect(response.body).to include("解除")
+    expect(response.body).to include("お気に入りへ移す")
+  end
+
+  it "does not expose unreadable bookmarked projects as filter options or results" do
+    hidden_project = create(:project, name: "Hidden Project", code: "HIDDEN")
+    hidden_document = create(:document, project: hidden_project, title: "Hidden Manual", slug: "hidden-manual", visibility_policy: :restricted_external)
+    create(:document_bookmark, user:, document:, bookmark_type: :favorite)
+    create(:document_bookmark, user:, document: hidden_document, bookmark_type: :favorite)
+    sign_in_as(user)
+
+    get document_bookmarks_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Visible Project")
+    expect(response.body).to include("Manual")
+    expect(response.body).not_to include("Hidden Project")
+    expect(response.body).not_to include("Hidden Manual")
+
+    get document_bookmarks_path(project_code: hidden_project.code)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include("Hidden Project")
+    expect(response.body).not_to include("Hidden Manual")
+    expect(response.body).to include("案件「選択した案件」でお気に入りと後で読むを絞り込んでいます。")
+    expect(response.body).to include("案件「選択した案件」に一致するお気に入りはありません。")
+  end
+
+  it "handles stale project filter params without raising" do
+    create(:document_bookmark, user:, document:, bookmark_type: :favorite)
+    sign_in_as(user)
+
+    get document_bookmarks_path(project_code: "STALE")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("案件「選択した案件」でお気に入りと後で読むを絞り込んでいます。")
+    expect(response.body).to include("案件「選択した案件」に一致するお気に入りはありません。")
+    expect(response.body).to include("案件「選択した案件」に一致する後で読む文書はありません。")
+    expect(response.body).not_to include("Manual")
   end
 
   it "shows actionable empty states with zero counts" do
