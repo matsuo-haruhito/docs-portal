@@ -30,6 +30,8 @@
 
 `README.md` 自体にも Mermaid ブロック、PlantUML 記法サンプル、添付ファイルリンクが含まれています。1 つの文書で Markdown 本文と添付導線の両方を見たいときは、このページが最短の確認入口です。
 
+PlantUML 記法サンプルは seed showcase の代表コンテンツです。Kroki plugin の mock smoke は `docusaurus/plugins/remark-kroki-diagrams.smoke.test.mjs` が担当し、実 Kroki service なしで変換・生成先・画像 URL の契約を確認します。
+
 ## どの確認に使うか
 
 | 観点 | 最初に見るファイル | 補足 |
@@ -46,5 +48,5 @@
 
 - 標準 showcase サンプルは `db:seed` のたびに再生成されるため、直接編集しても次回 seed で上書きされます。
 - 任意サンプルを追加したい場合は、README にある一般ルールどおり `storage/document_files/external_samples/<sample-set>/<site-dir>/...` 配下へ配置します。
-- PlantUML / D2 を含む Markdown を seed して描画確認したい場合は、Kroki 設定も必要です。runtime 前提は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) を参照してください。
+- PlantUML / D2 を含む Markdown を seed して描画確認したい場合は、Kroki 設定も必要です。runtime 前提と mock smoke の実行入口は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) を参照してください。
 - Office preview の接続条件を確認したい場合は [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md) を参照してください.
