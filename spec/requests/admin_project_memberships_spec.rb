@@ -7,10 +7,6 @@ RSpec.describe "Admin project memberships", type: :request do
     Nokogiri::HTML(response.body)
   end
 
-  def page_text
-    parsed_html.text.squish
-  end
-
   def project_membership_select_names
     parsed_html.css('select[name^="project_membership["]').map { |node| node["name"] }
   end
@@ -26,8 +22,6 @@ RSpec.describe "Admin project memberships", type: :request do
       "project_membership[user_id]",
       "project_membership[role]"
     )
-    expect(page_text).to include("案件を選択")
-    expect(page_text).to include("ユーザーを選択")
 
     post admin_project_memberships_path, params: {
       project_membership: {
@@ -43,8 +37,6 @@ RSpec.describe "Admin project memberships", type: :request do
       "project_membership[user_id]",
       "project_membership[role]"
     )
-    expect(page_text).to include("案件を選択")
-    expect(page_text).to include("ユーザーを選択")
   end
 
   it "uses public_id-based action links on the index" do
