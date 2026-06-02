@@ -4,6 +4,24 @@ RSpec.describe "Admin file upload dry runs", type: :request do
   let(:admin_user) { create(:user, :internal) }
   let(:project) { create(:project, code: "FILEUI", name: "File UI Project") }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def page_text
+    parsed_html.text.squish
+  end
+
+  def heading_texts
+    parsed_html.css("h1, h2, h3").map { _1.text.squish }.reject(&:empty?)
+  end
+
+  def submit_button_texts(action)
+    parsed_html.css(%(form[action="#{action}"] button, form[action="#{action}"] input[type="submit"])).map do |node|
+      node["value"].presence || node.text.squish
+    end
+  end
+
   it "shows a manual upload dry-run with file metadata and preview" do
     sign_in_as(admin_user)
     dry_run = create_file_upload_dry_run(
@@ -14,18 +32,17 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     get admin_file_upload_dry_run_path(dry_run)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("単体ファイルアップロードdry-run")
-    expect(response.body).to include("FILEUI / File UI Project")
-    expect(response.body).to include(dry_run.public_id)
-    expect(response.body).to include("local-folder-sync")
-    expect(response.body).to include("docs/README.md")
-    expect(response.body).to include("C:/work/customer-docs/docs/README.md")
-    expect(response.body).to include("abc123contenthash")
-    expect(response.body).to include("file-v1")
-    expect(response.body).to include("hash warning")
-    expect(response.body).to include("manifest error")
-    expect(response.body).to include("この内容で取り込む")
-    expect(response.body).to include("TreeViewプレビュー")
+    expect(heading_texts).to include("単体ファイルアップロードdry-run", "取り込み概要", "TreeViewプレビュー")
+    expect(page_text).to include("FILEUI / File UI Project")
+    expect(page_text).to include(dry_run.public_id)
+    expect(page_text).to include("local-folder-sync")
+    expect(page_text).to include("docs/README.md")
+    expect(page_text).to include("C:/work/customer-docs/docs/README.md")
+    expect(page_text).to include("abc123contenthash")
+    expect(page_text).to include("file-v1")
+    expect(page_text).to include("hash warning")
+    expect(page_text).to include("manifest error")
+    expect(submit_button_texts(admin_file_upload_dry_run_path(dry_run))).to include("この内容で取り込む")
   end
 
   it "confirms an analyzed dry-run and dispatches the importer" do
