@@ -8,7 +8,9 @@ class DocumentFileArchiveEntriesController < BaseController
     record_file_view_access_log(@document_file)
     assign_context
 
-    @entry_preview = DocumentFileArchiveEntryPreview.new(file: @document_file, entry_path: params[:entry_path]).call
+    entry_lookup = DocumentFileArchiveEntryLookup.new(file: @document_file, entry_path: params[:entry_path]).call
+    @entry_preview = DocumentFileArchiveEntryPreview.new(file: @document_file, entry_path: params[:entry_path], lookup: entry_lookup).call
+    @entry_downloadable = archive_entry_downloadable?(entry_lookup)
 
     render :preview, status: @entry_preview.previewable? ? :ok : :unprocessable_entity
   end
@@ -41,5 +43,9 @@ class DocumentFileArchiveEntriesController < BaseController
     @document_version = @document_file.document_version
     @document = @document_version.document
     @project = @document.project
+  end
+
+  def archive_entry_downloadable?(entry_lookup)
+    entry_lookup.downloadable? && !File.extname(entry_lookup.entry_path.to_s).downcase.in?(DocumentFileArchiveEntryDownload::BLOCKED_ARCHIVE_EXTENSIONS)
   end
 end
