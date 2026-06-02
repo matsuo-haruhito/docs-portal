@@ -12,10 +12,10 @@
       wrapper: true,
       label: "ユーザー",
       placeholder: "ユーザーを選択" %>
-    <label>
-      権限
-      <%= form.select :role, enum_options_for("project_memberships.role", ProjectMembership.roles.keys) %>
-    </label>
+    <%= form.rfk_select :role,
+      collection: enum_options_for("project_memberships.role", ProjectMembership.roles.keys),
+      wrapper: true,
+      label: "権限" %>
   </div>
   <p class="actions" style="margin-top:16px;">
     <%= form.submit "保存", class: "button" %>
