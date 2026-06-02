@@ -4,21 +4,42 @@
 
 `docs-portal` の internal UI gem 更新は `#858` を parent / hub として扱います。実際の dependency bump は、ここにある current child issue と `docs/internal-gem-release-train-smoke.md` の代表 smoke / rollback note を合わせて確認します。
 
-## current queue (2026-06-02 JST)
+## current queue (2026-06-03 JST)
 
 | 順序 | gem | current docs-portal ref | current child / gate | 扱い |
 | --- | --- | --- | --- | --- |
-| 1 | `rails_fields_kit` | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | `#1300` | 最初に見る release train child。checkout、Bundler lockfile regeneration、representative smoke ができる環境でだけ bump PR に進める |
-| 2 | `tree_view` | `9c538f9ee7946fa5af24f15c99402a0431677303` | `#1301` | `#1300` の扱いを確認した後に進める child。sidebar tree / detail tree / persisted state smoke を分けて記録する |
-| human-gated | `rails_table_preferences` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `#789` | known-good target revision の人間判断待ち。human gate 前に broad bump や downstream canary を混ぜない |
+| 1 | `rails_fields_kit` | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | `#1300` | 先行 bump 候補。setup doctor、package-root helper export、JS smoke inventory、public API docs guard の upstream evidence を確認し、Planner が target SHA / merge 済み PR / representative smoke を確定してから bump PR に進める |
+| 2 | `tree_view` | `9c538f9ee7946fa5af24f15c99402a0431677303` | `#1301` | manifest-backed public surface の進行状況を確認し、sidebar tree / detail tree / persisted state smoke と upstream manifest / release evidence を分けて記録する |
+| human-gated | `rails_table_preferences` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `#789` | known-good target revision の人間判断待ち。package entrypoint、copied controller 差分、release checklist、compatibility matrix、demo / manual QA の upstream evidence は読むが、human gate 前に broad bump や downstream canary を混ぜない |
+
+## 横断 evidence の現在地
+
+- `rails_fields_kit` は、3 gem の中で `docs-portal#1300` の単独 bump 候補として最初に見る。target SHA はこの文書で決めず、Planner / 実行 PR 側で merge 済み upstream PR と representative smoke を再確認する。
+- `rails_table_preferences` は、`docs-portal#789` の known-good revision 判断が gate のまま。upstream docs / package evidence が増えていても、human decision 前に current support として broad bump 予定を書かない。
+- `tree_view` は、manifest-backed public surface と docs-portal 側の sidebar / detail tree smoke を分けて扱う。upstream manifest / public API の進行中 PR や proposal を current support として先取りしない。
+- 3 gem 共通で、upstream evidence と downstream smoke は同じ PR body に混ぜてよいが、責務は分けて記録する。upstream docs の完了は host app smoke の成功を意味しない。
 
 ## 関連 issue の読み分け
 
 - `#858`: release train の parent / hub。実装や docs 更新の最小単位ではない。
+- `#1801`: この current queue と横断 evidence docs の優先順位を、open proposal を current support にしない範囲で更新する docs-sync issue。
 - `#1509`: 完了済み。`docs/internal-ui-gem-public-surface-package-verification-matrix.md` を追加した matrix issue として参照する。
 - `#1470`: state cue inventory の parallel design lane。dependency bump、target SHA、Gemfile / lockfile 更新とは混ぜない。
 - `#1552`: この current queue を `docs/関連gem連携調査runbook.md` から誤読しないための docs sync issue。
 - `#1616`: release train 前に見る upstream PR readiness snapshot。target SHA の最終決定ではなく、open / merged upstream PR を docs-only、public API / helper、UI behavior、stacked PR に分ける入口として読む。
+
+## update log で分ける項目
+
+PR body、issue comment、review follow-up comment のいずれか 1 箇所に、次の 2 系統を分けて残します。
+
+```text
+- upstream evidence:
+  - merged PR / docs path / package guard / manifest / release checklist
+- downstream docs-portal smoke:
+  - host app surface / request or system spec / manual evidence / rollback target
+```
+
+`upstream evidence` に open PR や proposal が含まれる場合は、`current support` ではなく `確認待ち` または `merge 後に再確認` として書きます。
 
 ## historical / old child numbers
 
@@ -29,6 +50,8 @@
 - GitHub checkout / fetch ができず、target SHA を作業直前に再計測できない
 - Bundler を実行できず、`Gemfile.lock` を正しく再生成できない
 - representative smoke を実行または確認できず、PR 本文に結果を残せない
+- `#789` のような human gate が残っている revision を、人間判断なしに target として扱う必要がある
+- open upstream PR / proposal を current support として書く必要がある
 - 複数 gem の同時 bump、UI redesign、DB / auth / external API、business spec 判断が必要になる
 
 この条件に当たる場合、Docs Sync Agent / Fixer は `Gemfile` や `Gemfile.lock` を connector で手編集せず、対象 issue に停止理由と再開条件を残します。
@@ -38,4 +61,6 @@
 - `docs/internal-ui-gem-upstream-readiness-snapshot.md`: release train 前に確認する upstream open / recently merged PR の時点 snapshot。target SHA 決定ではなく、再確認対象と human gate を分ける入口
 - `docs/internal-gem-release-train-smoke.md`: human handoff、representative smoke、rollback target、update log template
 - `docs/internal-ui-gem-public-surface-package-verification-matrix.md`: package-root export、direct entrypoint、manifest / package verification の境界
+- `docs/internal-ui-gem-adoption-evidence-map.md`: docs-portal 側 representative smoke、upstream evidence、確認順、rollback note
+- `docs/internal-ui-gem-public-surface-guard-playbook.md`: public surface、docs drift guard、package evidence、downstream smoke の比較入口
 - `docs/関連gem連携調査runbook.md`: host app 採用パターン、screen-by-screen adoption、upstream docs 入口
