@@ -1,4 +1,5 @@
 - page_title "モデルブラウザ", @entry.label
+- index_path = entry_index_path(@entry)
 
 p.muted
   = link_to "モデルブラウザ", admin_model_browser_path
@@ -10,8 +11,10 @@ p.muted = @entry.description
 
 p.actions
   = link_to "モデル一覧へ戻る", admin_model_browser_path, class: "button secondary"
-  - if (index_path = entry_index_path(@entry))
-    = link_to "既存画面へ", index_path, class: "button"
+  - if index_path
+    = link_to "既存画面で詳しく確認", index_path, class: "button"
+- if index_path
+  p.muted この画面は最近の代表データを確認するための read-only 表示です。続きの検索や詳細確認は既存管理画面で行えます。
 
 .stats-grid
   .card.metric-card
@@ -23,13 +26,17 @@ p.actions
 
 section.card
   h2 最近のデータ
-  table
-    thead
-      tr
-        - @entry.summary_fields.each do |field|
-          th = summary_field_label(@entry, field)
-    tbody
-      - @records.each do |record|
+  p.muted 最新の代表データを最大20件まで表示します。この画面では編集や削除はできません。
+  - if @records.any?
+    table
+      thead
         tr
           - @entry.summary_fields.each do |field|
-            td = record_summary_value(record, field)
+            th = summary_field_label(@entry, field)
+      tbody
+        - @records.each do |record|
+          tr
+            - @entry.summary_fields.each do |field|
+              td = record_summary_value(record, field)
+  - else
+    p.muted 最近のデータはまだありません。対象モデルに表示できるデータが登録されると、ここに代表データが表示されます。
