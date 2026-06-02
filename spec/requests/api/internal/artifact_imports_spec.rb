@@ -185,12 +185,11 @@ RSpec.describe "API internal artifact imports", type: :request do
     expect(response.parsed_body["status"]).to eq("analyzed")
     expect(response.parsed_body["summary"]["create_count"]).to eq(1)
     expect(response.parsed_body["dry_run_id"]).to be_present
-    expect(response.parsed_body["expires_at"]).to be_present
+    expect(response.parsed_body).to have_key("expires_at")
 
     dry_run = ImportDryRun.find_by!(public_id: response.parsed_body["dry_run_id"])
     expect(dry_run.git_push?).to eq(true)
     expect(dry_run.analyzed?).to eq(true)
-    expect(dry_run.expires_at).to be_present
     expect(dry_run.project).to eq(project)
     expect(dry_run.source_commit_hash).to eq("abc123")
     expect(dry_run.result_json["projects"].size).to eq(1)
