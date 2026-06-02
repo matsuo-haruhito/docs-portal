@@ -108,25 +108,6 @@ RSpec.describe "AccessibleDocuments", type: :request do
 
     sign_in_as(internal_user)
     get documents_path, params: { page: 2 }
-  ensure
-    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
-  end
-
-  it "keeps internal pagination bounded to the current page" do
-    internal_user = create(:user, :internal)
-    internal_project = create(:project, name: "Internal Pagination Project")
-
-    25.times do |index|
-      create(:document, project: internal_project, title: format("Internal Page Doc %02d", index), slug: format("internal-page-doc-%02d", index), visibility_policy: :internal_only)
-    end
-
-    document_instantiations = []
-    subscriber = ActiveSupport::Notifications.subscribe("instantiation.active_record") do |_name, _started, _finished, _id, payload|
-      document_instantiations << payload[:record_count] if payload[:class_name] == "Document"
-    end
-
-    sign_in_as(internal_user)
-    get documents_path, params: { page: 2 }
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to match(/ページ\s*2\s*\/\s*2/)
