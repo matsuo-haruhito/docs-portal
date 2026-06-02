@@ -65,6 +65,24 @@ RSpec.describe "AccessibleDocuments", type: :request do
     expect(response.body).to match(/ページ\s*2\s*\/\s*2/)
   end
 
+  it "keeps active filter params on pagination links" do
+    21.times do |index|
+      create_viewable_document(
+        project: project_a,
+        title: format("Spec Reference %02d", index + 1),
+        slug: format("spec-reference-%02d", index + 1)
+      )
+    end
+
+    sign_in_as(user)
+    get documents_path, params: { category: "spec" }
+
+    expect(response).to have_http_status(:ok)
+    next_page_href = parsed_html.css("nav.pagination a").find { |link| link.text.squish == "次へ" }["href"]
+    expect(next_page_href).to include("category=spec")
+    expect(next_page_href).to include("page=2")
+  end
+
   it "applies practical checkbox filters from request params" do
     with_files = create_viewable_document(project: project_a, title: "Attached Manual", slug: "attached-manual")
     without_files = create_viewable_document(project: project_b, title: "Plain Handbook", slug: "plain-handbook")
