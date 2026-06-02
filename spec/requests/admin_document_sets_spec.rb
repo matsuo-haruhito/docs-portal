@@ -47,6 +47,10 @@ RSpec.describe "Admin document sets", type: :request do
     parsed_html.text.squish
   end
 
+  def json_body
+    JSON.parse(response.body)
+  end
+
   def document_set_select_names
     parsed_html.css('select[name^="document_set["]').map { |node| node["name"] }
   end
@@ -183,6 +187,45 @@ RSpec.describe "Admin document sets", type: :request do
     expect(listed_document_set_names).to eq(["既存セット"])
     expect(page_text).to include("種別: 送付用")
     expect(page_text).to include("公開範囲: 限定公開")
+  end
+
+  it "returns project-scoped document search results by title and slug" do
+    other_project = create(:project, name: "Other Project")
+    create(:document, project: other_project, title: "概要仕様 外部", slug: "outside-overview")
+    document_a.update!(latest_version: version_a2)
+
+    sign_in_as(admin)
+
+    get document_search_admin_document_sets_path, params: { project_id: project.id, q: "概要" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("documents")).to contain_exactly(
+      a_hash_including(
+        "id" => document_a.id,
+        "title" => "概要仕様",
+        "slug" => "overview",
+        "latest_version_label" => "v2.0.0"
+      )
+    )
+
+    get document_search_admin_document_sets_path, params: { project_id: project.id, q: "internal" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("documents")).to contain_exactly(
+      a_hash_including("id" => document_b.id, "title" => "社内メモ", "slug" => "internal-memo")
+    )
+  end
+
+  it "keeps document search empty for no-hit queries without leaking other projects" do
+    other_project = create(:project, name: "Search Boundary Project")
+    create(:document, project: other_project, title: "秘密仕様", slug: "secret-spec")
+
+    sign_in_as(admin)
+
+    get document_search_admin_document_sets_path, params: { project_id: project.id, q: "秘密" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("documents")).to eq([])
   end
 
   it "keeps the current filter context on invalid create rerender" do
