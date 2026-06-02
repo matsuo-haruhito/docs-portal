@@ -52,6 +52,22 @@ RSpec.describe "Admin documents", type: :request do
     cell&.xpath(".//text()")&.map { |node| node.text.squish }&.reject(&:empty?)&.join(" ")
   end
 
+  def table_preference_surfaces
+    parsed_html.css(%([data-rails-table-preferences-table-key-value="admin_documents"]))
+  end
+
+  def table_preference_settings_for(surface)
+    JSON.parse(surface["data-rails-table-preferences-settings-value"])
+  end
+
+  def table_preference_columns_for(surface)
+    JSON.parse(surface["data-rails-table-preferences-columns-value"])
+  end
+
+  def table_preference_table
+    parsed_html.at_css(%(table[data-rails-table-preferences-table-key-value="admin_documents"]))
+  end
+
   it "uses public_id-based admin action links while keeping the public document link on the index" do
     active_document = create(:document, title: "Active Document")
     archived_document = create(:document, title: "Archived Document")
@@ -100,6 +116,69 @@ RSpec.describe "Admin documents", type: :request do
     expect(title_targets).to include(project_document_path(matching_project, matching_document.slug))
     expect(title_targets).not_to include(project_document_path(similar_project, other_document.slug))
     expect(row_column_texts("project")).to eq(["Operations Portal DOCS-001"])
+  end
+
+  it "restores saved table preference settings while keeping document filters usable" do
+    project = create(:project, code: "DOCS-TP", name: "Preference Project")
+    document = create(:document, project:, title: "Preference Handbook", slug: "preference-handbook")
+    create(:document, title: "Other Document")
+    RailsTablePreferences::Preference.create!(
+      user: admin_user,
+      table_key: "admin_documents",
+      name: "default",
+      settings: {
+        "columns" => [
+          { "key" => "title", "visible" => true, "width" => 320, "order" => 1 },
+          { "key" => "project", "visible" => false, "width" => 180, "order" => 2 },
+          { "key" => "not_a_document_column", "visible" => false }
+        ],
+        "filters" => {
+          "title" => { "operator" => "contains", "value" => "Handbook" },
+          "not_a_document_column" => { "operator" => "contains", "value" => "Ignored" }
+        },
+        "sorts" => [
+          { "key" => "title", "direction" => "desc" },
+          { "key" => "not_a_document_column", "direction" => "asc" }
+        ]
+      }
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_documents_path, params: { q: "DOCS-TP", retention: "missing" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 1件")
+    expect(page_text).to include("キーワード: DOCS-TP", "保管期限: 保管期限なし")
+    expect(title_targets).to contain_exactly(project_document_path(project, document.slug))
+
+    settings = table_preference_surfaces.map { |surface| table_preference_settings_for(surface) }
+    expect(settings).to all(include(
+      "columns" => contain_exactly(
+        include("key" => "title", "visible" => true, "width" => 320, "order" => 1),
+        include("key" => "project", "visible" => false, "width" => 180, "order" => 2)
+      ),
+      "filters" => { "title" => include("operator" => "contains", "value" => "Handbook") },
+      "sorts" => [include("key" => "title", "direction" => "desc")]
+    ))
+  end
+
+  it "keeps the table preferences editor and wrapper available for empty filtered results" do
+    create(:document, title: "Existing Document")
+
+    sign_in_as(admin_user)
+
+    get admin_documents_path, params: { q: "No matching document" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 0件")
+    expect(page_text).to include("文書マスタ一覧の表示設定")
+    expect(table_preference_surfaces.size).to eq(2)
+    expect(table_preference_table).to be_present
+    expect(document_rows).to be_empty
+
+    columns = table_preference_columns_for(table_preference_table)
+    expect(columns.map { |column| column["key"] }).to include("project", "title", "actions")
   end
 
   it "shows lifecycle filter guidance only when retention or discard filters are active" do
