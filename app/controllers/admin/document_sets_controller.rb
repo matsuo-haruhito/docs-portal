@@ -39,6 +39,21 @@ class Admin::DocumentSetsController < Admin::BaseController
     redirect_to admin_document_sets_path, notice: "文書セットを削除しました。"
   end
 
+  def document_search
+    project = Project.find(params[:project_id])
+    documents = project.documents.includes(:latest_version).recommended_first
+    query = params[:q].to_s.strip
+
+    if query.present?
+      pattern = "%#{Document.sanitize_sql_like(query.downcase)}%"
+      documents = documents.where("LOWER(title) LIKE :pattern OR LOWER(slug) LIKE :pattern", pattern: pattern)
+    end
+
+    render json: {
+      documents: documents.limit(20).map { |document| document_search_payload(document) }
+    }
+  end
+
   private
 
   def set_document_set
@@ -129,6 +144,15 @@ class Admin::DocumentSetsController < Admin::BaseController
   rescue ActiveRecord::RecordInvalid => e
     document_set.errors.add(:base, e.record.errors.full_messages.join(", "))
     raise
+  end
+
+  def document_search_payload(document)
+    {
+      id: document.id,
+      title: document.title,
+      slug: document.slug,
+      latest_version_label: document.latest_version&.version_label
+    }
   end
 
   def apply_enum_filter(scope, key, enum_values)
