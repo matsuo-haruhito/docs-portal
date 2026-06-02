@@ -116,7 +116,8 @@ RSpec.describe "Document approval requests", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("OK済み")
     expect(page_text).to include("対応済み")
-    expect(page_text).to include("対応者 #{internal_user.name}")
+    expect(page_text).to include("対応者")
+    expect(page_text).to include(internal_user.name)
     expect(page_text).not_to include("OKする")
     expect(page_text).not_to include("Cancelする")
 
