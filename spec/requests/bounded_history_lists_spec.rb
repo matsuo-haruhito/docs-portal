@@ -77,7 +77,7 @@ RSpec.describe "Bounded history lists", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("直近の送信履歴に失敗が51件あります")
     expect(page_text).to include("表示範囲: 失敗のみ 51件中50件を表示しています")
-    expect(page_text).to include("50件外の履歴は詳細条件を決めて後続 slice で探索導線を追加します")
+    expect(page_text).to include("50件外の履歴は Webhook送信履歴検索で endpoint / event / 日付を指定して探してください")
     expect(page_text).to include(failed_deliveries.last.error_message)
     expect(page_text).not_to include(failed_deliveries.first.error_message)
     expect(page_text).not_to include(succeeded_delivery.error_message)

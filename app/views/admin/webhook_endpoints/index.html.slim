@@ -65,6 +65,7 @@ h1 Webhook
           span.badge = label
         - else
           = link_to label, value == "all" ? admin_webhook_endpoints_path : admin_webhook_endpoints_path(delivery_status: value)
+    p.muted = link_to "50件外や endpoint / event / 日付で探す場合は Webhook送信履歴検索を開く", admin_webhook_deliveries_path
     - if @delivery_status_filter == "failed"
       - if bulk_retryable_deliveries.any?
         - endpoint_names = bulk_retryable_deliveries.map { |delivery| delivery.webhook_endpoint.name }.uniq
@@ -77,7 +78,7 @@ h1 Webhook
     - if @recent_deliveries.empty?
       p.muted = "#{webhook_delivery_status_filter_label(@delivery_status_filter)}の送信履歴はありません。表示を「すべて」に戻すと直近の送信履歴を確認できます。"
     - else
-      p.muted = "表示範囲: #{webhook_delivery_status_filter_label(@delivery_status_filter)} #{recent_deliveries_total_count}件中#{recent_deliveries_display_count}件を表示しています。#{recent_deliveries_total_count > recent_deliveries_limit ? "50件外の履歴は詳細条件を決めて後続 slice で探索導線を追加します。" : ""}"
+      p.muted = "表示範囲: #{webhook_delivery_status_filter_label(@delivery_status_filter)} #{recent_deliveries_total_count}件中#{recent_deliveries_display_count}件を表示しています。#{recent_deliveries_total_count > recent_deliveries_limit ? "50件外の履歴は Webhook送信履歴検索で endpoint / event / 日付を指定して探してください。" : ""}"
   - else
     p.muted まだ送信履歴はありません。
     p.muted Webhookを保存して通知対象イベントが発生すると、成功/失敗やHTTPステータスをここで確認できます。

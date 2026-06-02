@@ -1,14 +1,14 @@
 - page_title "Webhook送信履歴詳細"
 - delivery = @webhook_delivery
 - endpoint = delivery.webhook_endpoint
-- delivery_return_path = @return_delivery_status == "all" ? admin_webhook_endpoints_path : admin_webhook_endpoints_path(delivery_status: @return_delivery_status)
-- delivery_return_params = @return_delivery_status == "all" ? {} : { return_delivery_status: @return_delivery_status }
+- delivery_return_path = @return_to.presence || (@return_delivery_status == "all" ? admin_webhook_endpoints_path : admin_webhook_endpoints_path(delivery_status: @return_delivery_status))
+- delivery_return_params = @return_to.present? ? { return_to: @return_to } : (@return_delivery_status == "all" ? {} : { return_delivery_status: @return_delivery_status })
 
 h1 Webhook送信履歴詳細
 = render "admin/nav"
 
 p.actions
-  = link_to "Webhook一覧へ戻る", delivery_return_path
+  = link_to "Webhook送信履歴へ戻る", delivery_return_path
 
 .card
   h2 概要
