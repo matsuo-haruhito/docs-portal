@@ -31,11 +31,16 @@
   - if @project_documents.any?
     h2 対象文書
     p.muted チェックした文書だけセットに含めます。版固定しない場合は最新版を使います。
+    p.muted 検索中も選択済み文書を見失わないよう、件数と選択済みのみ表示を使えます。
     section.document-set-document-filter data-controller="document-set-document-filter"
       .document-set-document-filter__bar
         label.document-set-document-filter__label for="document-set-document-filter-query" 対象文書を検索
         input#document-set-document-filter-query.document-set-document-filter__input type="search" placeholder="文書名またはURL識別子" autocomplete="off" data-document-set-document-filter-target="query" data-action="input->document-set-document-filter#filter"
+        label.document-set-document-filter__selected-only
+          input type="checkbox" data-document-set-document-filter-target="selectedOnly" data-action="change->document-set-document-filter#filter"
+          span 選択済みのみ表示
         span.document-set-document-filter__status.muted data-document-set-document-filter-target="status"
+      p.document-set-document-filter__empty.muted hidden=true data-document-set-document-filter-target="empty"
       table
         thead
           tr
@@ -47,10 +52,11 @@
         tbody
           - @project_documents.each_with_index do |document, index|
             - item = selected_items[document.id]
-            tr data-document-set-document-filter-target="row" data-document-set-document-filter-search-text="#{document.title} #{document.slug}"
+            - row_class = ["document-set-document-filter__row", ("is-selected" if item.present?)].compact.join(" ")
+            tr class=row_class data-document-set-document-filter-target="row" data-document-set-document-filter-search-text="#{document.title} #{document.slug}"
               td
                 = hidden_field_tag "document_set_items[#{index}][document_id]", document.id
-                = check_box_tag "document_set_items[#{index}][selected]", "1", item.present?
+                = check_box_tag "document_set_items[#{index}][selected]", "1", item.present?, class: "document-set-document-filter__checkbox", data: { document_set_document_filter_target: "checkbox", action: "change->document-set-document-filter#filter" }
               td
                 strong = link_to document.title, project_document_path(document.project, document.slug)
                 br
