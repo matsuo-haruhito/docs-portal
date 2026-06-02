@@ -4,6 +4,24 @@
 <p class="muted">お気に入り、後で読む、最近見た文書を最低限の一覧で表示します。</p>
 
 <section class="card">
+  <h2>保存済みショートカットの絞り込み</h2>
+  <%= form_with url: document_bookmarks_path, method: :get, local: true, class: "filter-bar" do |form| %>
+    <div>
+      <%= form.label :project_code, "案件" %>
+      <%= form.select :project_code,
+        options_for_select([["すべての案件", ""]] + @bookmark_project_options.map { |project| [project.name, project.code] }, params[:project_code].to_s) %>
+    </div>
+    <%= form.submit "絞り込む", class: "button" %>
+    <% if @bookmark_project_filter_active %>
+      <%= link_to "解除", document_bookmarks_path, class: "button secondary" %>
+    <% end %>
+  <% end %>
+  <% if @bookmark_project_filter_active %>
+    <p class="muted">案件「<%= @bookmark_project_filter_label %>」でお気に入りと後で読むを絞り込んでいます。最近見た文書は閲覧履歴として別に表示します。</p>
+  <% end %>
+</section>
+
+<section class="card">
   <h2>お気に入り <span class="muted"><%= @favorite_bookmarks.size %>件</span></h2>
   <p class="muted">よく開く文書をここからすぐ確認できます。</p>
   <% if @favorite_bookmarks.any? %>
@@ -23,6 +41,8 @@
         </li>
       <% end %>
     </ul>
+  <% elsif @bookmark_project_filter_active %>
+    <p class="muted">案件「<%= @bookmark_project_filter_label %>」に一致するお気に入りはありません。</p>
   <% else %>
     <p class="muted">文書画面でお気に入りに追加すると、ここに表示されます。</p>
   <% end %>
@@ -49,6 +69,8 @@
         </li>
       <% end %>
     </ul>
+  <% elsif @bookmark_project_filter_active %>
+    <p class="muted">案件「<%= @bookmark_project_filter_label %>」に一致する後で読む文書はありません。</p>
   <% else %>
     <p class="muted">文書画面で後で読むに追加すると、ここに表示されます。</p>
   <% end %>
