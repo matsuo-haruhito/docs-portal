@@ -87,7 +87,7 @@ RSpec.describe "External folder sync webhook event sanitization", type: :request
         }.to_json,
         headers: { "CONTENT_TYPE" => "application/json" }
 
-      client_state_fingerprint = "client_state:#{Digest::SHA256.hexdigest("raw-client-state")}"
+      client_state_fingerprint = "client_state:#{Digest::SHA256.hexdigest('raw-client-state')}"
       event = ExternalFolderSyncWebhookEvent.find_by!(
         event_key: "sub-secret:drives/drive-id/root:updated:#{client_state_fingerprint}:123"
       )
