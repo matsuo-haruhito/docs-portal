@@ -4,7 +4,7 @@
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - current_list_path = request.fullpath
 - triage_counts = ["失敗: #{@triage_status_counts.fetch('failed', 0)}件", "実行中: #{@triage_status_counts.fetch('running', 0)}件", "キュー待ち: #{@triage_status_counts.fetch('enqueued', 0)}件"].join(" / ")
-- has_filters = @selected_status.present? || @selected_query.present?
+- has_filters = @selected_status.present? || @selected_enabled.present? || @selected_query.present?
 - empty_message = has_filters ? "条件に一致する定期ジョブはありません。" : "登録済みの定期ジョブはありません。定義を同期すると、dispatcher 定義に基づいて登録されます。"
 
 h1 定期ジョブ
@@ -18,12 +18,14 @@ p.actions
   = form_with url: admin_recurring_job_schedules_path, method: :get, local: true, class: "filters" do
     = label_tag :status, "前回状態"
     = select_tag :status, options_for_select(@schedule_status_options, @selected_status), onchange: "this.form.requestSubmit()"
+    = label_tag :enabled, "有効状態"
+    = select_tag :enabled, options_for_select(@schedule_enabled_options, @selected_enabled), onchange: "this.form.requestSubmit()"
     = label_tag :q, "検索"
     = search_field_tag :q, @selected_query, placeholder: "ジョブキー / class / queue / 前回エラー"
     = submit_tag "検索", class: "button secondary"
-    - if @selected_status.present? || @selected_query.present?
+    - if has_filters
       = link_to "絞り込み解除", admin_recurring_job_schedules_path, class: "button secondary"
-  p.muted 前回状態 filter は直近実行結果で絞り込みます。定義の有効/無効は「定義状態」列で確認してください。
+  p.muted 前回状態 filter は直近実行結果で絞り込みます。定義の有効/無効は「定義状態」列または有効状態 filter で確認してください。
   p.muted = "Triage対象（前回状態ベース）: #{triage_counts}"
   p.muted = "表示中: #{@schedules.size}件"
   = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "定期ジョブ一覧の表示設定")
