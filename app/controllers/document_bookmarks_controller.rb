@@ -1,5 +1,9 @@
 class DocumentBookmarksController < BaseController
   def index
+    @bookmark_project_code = params[:project_code].to_s.strip.presence
+    @bookmark_project_options = bookmark_project_options
+    @selected_bookmark_project = selected_bookmark_project
+    @bookmark_project_filter_active = @bookmark_project_code.present?
     @favorite_bookmarks = bookmarks_for(:favorite)
     @read_later_bookmarks = bookmarks_for(:read_later)
     @recent_documents = RecentDocumentsQuery.new(user: current_user, limit: 20).call
@@ -42,11 +46,33 @@ class DocumentBookmarksController < BaseController
   private
 
   def bookmarks_for(type)
-    current_user.document_bookmarks
+    bookmarks = current_user.document_bookmarks
       .public_send(type)
       .includes(document: [:project, :latest_version])
       .readable_by(current_user)
-      .order(created_at: :desc)
+
+    if @bookmark_project_filter_active
+      return bookmarks.none unless @selected_bookmark_project
+
+      bookmarks = bookmarks.where(documents: { project_id: @selected_bookmark_project.id })
+    end
+
+    bookmarks.order(created_at: :desc)
+  end
+
+  def bookmark_project_options
+    project_ids = current_user.document_bookmarks
+      .readable_by(current_user)
+      .distinct
+      .pluck("documents.project_id")
+
+    Project.where(id: project_ids).order(:name, :code)
+  end
+
+  def selected_bookmark_project
+    return unless @bookmark_project_code
+
+    @bookmark_project_options.find { |project| project.code == @bookmark_project_code }
   end
 
   def bookmark_params
