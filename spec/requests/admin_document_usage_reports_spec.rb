@@ -1,4 +1,5 @@
 require "rails_helper"
+require "csv"
 
 RSpec.describe "Admin document usage reports", type: :request do
   let(:admin_user) { create(:user, :internal) }
@@ -33,6 +34,31 @@ RSpec.describe "Admin document usage reports", type: :request do
     parsed_html.css("tbody td[data-rails-table-preferences-column-key='title']").map do |cell|
       cell.css("a").first.text.squish
     end
+  end
+
+  def row_column_text(title, column_key)
+    row = parsed_html.css("table tbody tr").find do |candidate|
+      candidate.at_css("td[data-rails-table-preferences-column-key='title'] a")&.text&.squish == title
+    end
+    cell = row&.at_css("td[data-rails-table-preferences-column-key='#{column_key}']")
+
+    cell&.xpath(".//text()")&.map { |node| node.text.squish }&.reject(&:empty?)&.join(" ")
+  end
+
+  def table_preference_surfaces
+    parsed_html.css(%([data-rails-table-preferences-table-key-value="admin_document_usage_reports"]))
+  end
+
+  def table_preference_table
+    parsed_html.at_css(%(table[data-rails-table-preferences-table-key-value="admin_document_usage_reports"]))
+  end
+
+  def table_preference_columns_for(surface)
+    JSON.parse(surface["data-rails-table-preferences-columns-value"])
+  end
+
+  def csv_rows
+    CSV.parse(response.body, headers: true)
   end
 
   def audit_log_link(slug)
@@ -141,6 +167,39 @@ RSpec.describe "Admin document usage reports", type: :request do
 
     expect(clear_link).to be_present
     expect(clear_link.text).to include("条件をクリア")
+
+    expect(table_preference_surfaces.size).to eq(2)
+    column_keys = table_preference_columns_for(table_preference_table).map { _1.fetch("key") }
+    expect(column_keys).to include("title", "used", "read_confirmation_count", "last_accessed_at")
+  end
+
+  it "exports the selected project report as CSV and redirects CSV requests without a project" do
+    create(:access_log, project:, document:, user: viewer, company:, action_type: :view, accessed_at: Time.zone.local(2026, 5, 1, 10, 0, 0))
+    create(:access_log, project:, document:, user: viewer, company:, action_type: :download, accessed_at: Time.zone.local(2026, 5, 1, 11, 0, 0))
+    create(:read_confirmation, document:, user: viewer, confirmed_at: Time.zone.local(2026, 5, 1, 12, 0, 0))
+
+    sign_in_as(admin_user)
+
+    get admin_document_usage_reports_path(project_id: project.id, format: :csv)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("text/csv")
+    expect(response.headers["Content-Disposition"]).to include("document-usage-report-USAGE-")
+    expect(csv_rows.headers).to eq(Admin::DocumentUsageReportsController::CSV_HEADERS)
+    expect(csv_rows.size).to eq(1)
+    expect(csv_rows.first.to_h).to include(
+      "文書名" => "Manual",
+      "slug" => "manual",
+      "利用" => "利用あり",
+      "閲覧" => "1",
+      "ダウンロード" => "1",
+      "既読確認" => "1"
+    )
+
+    get admin_document_usage_reports_path(format: :csv)
+
+    expect(response).to redirect_to(admin_document_usage_reports_path)
+    expect(flash[:alert]).to eq("CSV出力には案件選択が必要です。")
   end
 
   it "filters rows by usage status and sorts last_accessed rows before nil values" do
@@ -163,6 +222,7 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(page_text).to include("既読確認件数の「内訳へ」から確認者と確認時刻を追えます。")
     expect(row_titles).to eq(["Guide", "Manual", "Policy"])
     expect(row_titles).not_to include("Checklist")
+    expect(row_column_text("Policy", "used")).to include("既読のみ", "既読確認の内訳を確認")
     expect(summary_audit_log_link).to be_present
     expect(summary_read_confirmation_link).to be_present
     expect(audit_log_link(newest_document.slug)).to be_present
