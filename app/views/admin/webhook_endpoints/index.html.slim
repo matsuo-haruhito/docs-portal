@@ -40,7 +40,7 @@ h1 Webhook
       - @webhook_endpoints.each do |endpoint|
         tr
           td data-rails-table-preferences-column-key="name" = endpoint.name
-          td data-rails-table-preferences-column-key="target_url" = endpoint.target_url
+          td data-rails-table-preferences-column-key="target_url" = webhook_endpoint_display_target_url(endpoint.target_url)
           td data-rails-table-preferences-column-key="event_types"
             - endpoint.normalized_event_types.each do |event_type|
               span.badge = webhook_event_type_label(event_type)
