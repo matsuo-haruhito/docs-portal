@@ -207,6 +207,142 @@ RSpec.describe "Admin document sets", type: :request do
     expect(document_set_form_action).to eq(admin_document_sets_path(set_type: "delivery", visibility_policy: "internal_only"))
   end
 
+  it "persists selected project documents while ignoring out-of-scope and unselected item rows" do
+    other_project = create(:project, name: "Other Project")
+    other_document = create(:document, project: other_project, title: "外部文書", slug: "external-doc")
+    other_version = create(:document_version, document: other_document, version_label: "outside")
+
+    sign_in_as(admin)
+
+    expect do
+      post admin_document_sets_path, params: {
+        document_set: {
+          project_id: project.id,
+          name: "境界固定セット",
+          description: "contract spec",
+          set_type: "delivery",
+          visibility_policy: "restricted_external",
+          sort_order: 5
+        },
+        document_set_items: {
+          "0" => {
+            selected: "1",
+            document_id: document_a.id,
+            document_version_id: version_a2.id,
+            sort_order: "7",
+            note: "version pinned"
+          },
+          "1" => {
+            selected: "1",
+            document_id: document_b.id,
+            document_version_id: version_a1.id,
+            sort_order: "8",
+            note: "mismatched version"
+          },
+          "2" => {
+            selected: "1",
+            document_id: other_document.id,
+            document_version_id: other_version.id,
+            sort_order: "9",
+            note: "other project"
+          },
+          "3" => {
+            selected: "0",
+            document_id: document_a.id,
+            document_version_id: version_a1.id,
+            sort_order: "10",
+            note: "not selected"
+          },
+          "4" => {
+            selected: "1",
+            document_id: "",
+            document_version_id: "",
+            sort_order: "11",
+            note: "blank document"
+          }
+        }
+      }
+    end.to change(DocumentSet, :count).by(1).and change(DocumentSetItem, :count).by(2)
+
+    expect(response).to redirect_to(admin_document_sets_path)
+
+    document_set = DocumentSet.find_by!(name: "境界固定セット")
+    items = document_set.document_set_items.includes(:document, :document_version).order(:sort_order)
+
+    expect(items.map(&:document)).to eq([document_a, document_b])
+    expect(items.first).to have_attributes(
+      document_version: version_a2,
+      sort_order: 7,
+      note: "version pinned"
+    )
+    expect(items.second).to have_attributes(
+      document_version: nil,
+      sort_order: 8,
+      note: "mismatched version"
+    )
+  end
+
+  it "rebuilds existing document set items from selected in-project rows on update" do
+    create(
+      :document_set_item,
+      document_set: existing_document_set,
+      document: document_a,
+      document_version: version_a1,
+      sort_order: 1,
+      note: "old item"
+    )
+    other_project = create(:project, name: "Update Other Project")
+    other_document = create(:document, project: other_project, title: "更新外文書", slug: "update-external-doc")
+
+    sign_in_as(admin)
+
+    patch admin_document_set_path(existing_document_set), params: {
+      document_set: {
+        project_id: project.id,
+        name: "既存セット更新",
+        description: existing_document_set.description,
+        set_type: "delivery",
+        visibility_policy: "restricted_external",
+        sort_order: 1
+      },
+      document_set_items: {
+        "0" => {
+          selected: "1",
+          document_id: document_b.id,
+          document_version_id: "",
+          sort_order: "4",
+          note: "replacement item"
+        },
+        "1" => {
+          selected: "1",
+          document_id: other_document.id,
+          document_version_id: "",
+          sort_order: "5",
+          note: "other project ignored"
+        },
+        "2" => {
+          selected: "0",
+          document_id: document_a.id,
+          document_version_id: version_a1.id,
+          sort_order: "6",
+          note: "unselected ignored"
+        }
+      }
+    }
+
+    expect(response).to redirect_to(admin_document_sets_path)
+
+    items = existing_document_set.reload.document_set_items.includes(:document, :document_version)
+    expect(items).to contain_exactly(
+      have_attributes(
+        document: document_b,
+        document_version: nil,
+        sort_order: 4,
+        note: "replacement item"
+      )
+    )
+  end
+
   it "renders rails_table_preferences editor and stable column keys on the index page" do
     sign_in_as(admin)
 
