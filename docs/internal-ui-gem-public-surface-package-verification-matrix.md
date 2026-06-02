@@ -50,6 +50,19 @@
 | package verification をどう読むか | upstream package contents / gemspec / CI package-sensitive 判定の結果 | docs-portal 側で upstream verifier の責務を肩代わりすること |
 | release train smoke をどう残すか | issue / PR body の from / to SHA、representative smoke、rollback target | package policy の最終判断や broad dependency bump |
 
+## 最新 upstream signal の読み分け
+
+2026-06-02 JST 時点の関連 issue / PR signal は、current durable contract と未確定 signal を分けて読む。
+
+| signal | matrix での読み方 | 先取りしないこと |
+| --- | --- | --- |
+| `rails_table_preferences#678` | current main には既に `spec/javascript/rails_table_preferences_entrypoint_spec.rb` があり、package-root named export と direct controller entrypoint の一致は already satisfied / disposition needed として扱う | 重複する smoke や manifest を docs-portal 側の採用条件として追加しない |
+| `tree_view-rails#1092` | event detail keys を package-root public export にするかの feature proposal。`status:needs-human` / `risk:medium` の上流判断待ち signal として扱う | `TreeViewEventDetailKeys` のような未確定 export 名や object shape を durable contract として書かない |
+| `rails_fields_kit#745` | ROADMAP と public docs の current surface を同期する docs signal。RFK 側の docs が着地した後に public API docs を確認する入口として扱う | docs-portal 側で RFK の新しい public API、helper 名、ROADMAP 方針を確定しない |
+| `#858` | internal UI gem pinned ref 更新 train の parent / hub。target SHA、representative smoke、rollback target は child issue / PR に残す | release train 全体をこの matrix で実装・完了扱いにしない |
+| `#1470` | state cue inventory の parallel design lane。public surface / package verification とは別の design inventory として読む | dependency bump、package export、runtime adoption の根拠にしない |
+| `#607` | host app adoption pattern の整理。screen ごとの採用・smoke の書き方を確認する入口 | upstream package policy や package verification schema を決める場所にしない |
+
 ## Issue / PR に残す 1 行メモ
 
 package-root export を根拠にした場合:
@@ -86,6 +99,9 @@ TypeScript declaration が関連する場合:
 - `#607`: 管理画面の internal UI gem 展開共通パターン
 - `#1470`: internal UI gem state cue inventory。dependency bump とは別の parallel design lane
 - `tree_view-rails#981`: `config/public_api_manifest.yml` の配布境界と package verification 対象の整理
+- `tree_view-rails#1092`: event detail keys の package-root public export 化を検討する feature proposal。current durable contract ではない
 - `rails_table_preferences#540`: package entrypoint の TypeScript declaration 同梱 signal
+- `rails_table_preferences#678`: package-root JavaScript export guard の追加候補だったが、current main では already satisfied / disposition needed として扱う
+- `rails_fields_kit#745`: ROADMAP / public docs の current surface 同期 signal。docs-portal 側で RFK public API を先取りしない
 
 この matrix は、3 gem の package policy を docs-portal 側で最終決定する場ではありません。target SHA、representative smoke、rollback target は各 child issue / PR の update log に残し、upstream 実装や package verifier の変更は各 upstream repo の issue / PR へ切り分けます。
