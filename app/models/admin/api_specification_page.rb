@@ -54,6 +54,17 @@ class Admin::ApiSpecificationPage
     build_freshness_guard.enqueue_if_stale!
   end
 
+  def enqueue_manual_build!
+    return false if build_requested?
+
+    build_freshness_guard.request_build!
+    ApiSpecificationBuildJob.perform_later
+    true
+  rescue
+    clear_build_request!
+    raise
+  end
+
   def clear_build_request!
     build_freshness_guard.clear_build_request!
   end
