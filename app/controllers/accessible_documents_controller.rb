@@ -22,7 +22,7 @@ class AccessibleDocumentsController < BaseController
     @per_page = DOCUMENTS_PER_PAGE
 
     if current_user.internal?
-      @documents_count = documents_scope.count
+      @documents_count = documents_scope.except(:order).count
       assign_current_page
       @documents = documents_display_scope
         .limit(@per_page)
