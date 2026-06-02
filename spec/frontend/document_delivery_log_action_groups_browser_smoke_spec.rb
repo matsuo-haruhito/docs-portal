@@ -104,6 +104,7 @@ RSpec.describe "document delivery log action groups browser smoke", type: :reque
 
   def browser_checks_script(variant)
     <<~JS
+      const variant = #{variant.to_json};
       const failures = [];
       const viewport = window.innerWidth;
       const documentWidth = document.documentElement.scrollWidth;
