@@ -1,3 +1,5 @@
+import { Controller } from "@hotwired/stimulus"
+
 const TAB_DEFINITIONS = [
   { id: "version-diff", label: "差分" },
   { id: "side-by-side-file-review", label: "左右確認" },
@@ -52,6 +54,24 @@ function wrapPanel(tabId, elements) {
   })
 
   return wrapper
+}
+
+function existingPanelMap() {
+  const diffPanel = document.getElementById("version-diff")
+  const sideBySidePanel = document.getElementById("side-by-side-file-review")
+  const versionInfoPanel = document.getElementById("version-info")
+  const versionFilesPanel = document.getElementById("version-files")
+
+  if (!diffPanel || !sideBySidePanel || !versionInfoPanel || !versionFilesPanel) {
+    return null
+  }
+
+  return {
+    "version-diff": diffPanel,
+    "side-by-side-file-review": sideBySidePanel,
+    "version-info": versionInfoPanel,
+    "version-files": versionFilesPanel
+  }
 }
 
 function buildPanelMap() {
@@ -219,28 +239,33 @@ function handleTabKeydown(event, nav, panelMap, currentTab) {
   }
 }
 
-function enhanceVersionTabs(nav) {
-  if (nav.dataset.versionTabsEnhanced === "true") {
-    return
+export default class DocumentVersionTabsController extends Controller {
+  connect() {
+    const enhanced = this.element.dataset.versionTabsEnhanced === "true"
+    this.panelMap = enhanced ? existingPanelMap() : buildPanelMap()
+
+    if (!this.panelMap) {
+      return
+    }
+
+    setPanelAccessibility(this.panelMap)
+
+    if (!enhanced) {
+      this.element.dataset.versionTabsEnhanced = "true"
+      renderTabs(this.element, this.panelMap)
+    }
+
+    activateTab(this.element, this.panelMap)
+    this.hashChangeHandler = () => activateTab(this.element, this.panelMap)
+    window.addEventListener("hashchange", this.hashChangeHandler)
   }
 
-  const panelMap = buildPanelMap()
+  disconnect() {
+    if (!this.hashChangeHandler) {
+      return
+    }
 
-  if (!panelMap) {
-    return
+    window.removeEventListener("hashchange", this.hashChangeHandler)
+    this.hashChangeHandler = null
   }
-
-  nav.dataset.versionTabsEnhanced = "true"
-  setPanelAccessibility(panelMap)
-  renderTabs(nav, panelMap)
-  activateTab(nav, panelMap)
-
-  window.addEventListener("hashchange", () => activateTab(nav, panelMap))
 }
-
-function setupDocumentVersionTabs() {
-  document.querySelectorAll('nav.markdown-mode-tabs[aria-label="版詳細ナビゲーション"]').forEach(enhanceVersionTabs)
-}
-
-document.addEventListener("turbo:load", setupDocumentVersionTabs)
-document.addEventListener("DOMContentLoaded", setupDocumentVersionTabs)

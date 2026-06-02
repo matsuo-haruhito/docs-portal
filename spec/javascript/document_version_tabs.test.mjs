@@ -288,6 +288,11 @@ test('document version tabs preserve hash routing, keyboard movement, and ARIA s
     eventListeners: new Map(),
     addEventListener(type, callback) {
       this.eventListeners.set(type, callback)
+    },
+    removeEventListener(type, callback) {
+      if (this.eventListeners.get(type) === callback) {
+        this.eventListeners.delete(type)
+      }
     }
   }
   globalThis.history = {
@@ -296,8 +301,9 @@ test('document version tabs preserve hash routing, keyboard movement, and ARIA s
     }
   }
 
-  await import(new URL('../../app/frontend/controllers/document_version_tabs.js', import.meta.url))
-  document.dispatchEvent({ type: 'DOMContentLoaded' })
+  const { default: DocumentVersionTabsController } = await import(new URL('../../app/frontend/controllers/document_version_tabs.js', import.meta.url))
+  const controller = new DocumentVersionTabsController({ scope: { element: nav } })
+  controller.connect()
 
   const tabs = nav.querySelectorAll('[data-version-tab]')
   assert.equal(tabs.length, 4)
@@ -313,6 +319,9 @@ test('document version tabs preserve hash routing, keyboard movement, and ARIA s
   const infoTab = tabs.find((tab) => tab.dataset.versionTab === 'version-info')
   const diffPanel = document.getElementById('version-diff')
   const filesPanel = document.getElementById('version-files')
+  const infoPanel = document.getElementById('version-info')
+  const filesPanelChildren = [...filesPanel.children]
+  const infoPanelChildren = [...infoPanel.children]
 
   assert.equal(filesTab.getAttribute('aria-selected'), 'true')
   assert.equal(filesPanel.hidden, false)
@@ -340,4 +349,18 @@ test('document version tabs preserve hash routing, keyboard movement, and ARIA s
   const diffTab = tabs.find((tab) => tab.dataset.versionTab === 'version-diff')
   assert.equal(diffTab.getAttribute('aria-selected'), 'true')
   assert.equal(diffPanel.hidden, false)
+
+  controller.disconnect()
+  assert.equal(globalThis.window.eventListeners.has('hashchange'), false)
+
+  controller.connect()
+  assert.equal(document.getElementById('version-files'), filesPanel)
+  assert.deepEqual([...filesPanel.children], filesPanelChildren)
+  assert.equal(document.getElementById('version-info'), infoPanel)
+  assert.deepEqual([...infoPanel.children], infoPanelChildren)
+  assert.equal(nav.querySelectorAll('[data-version-tab]').length, 4)
+  assert.equal(globalThis.window.eventListeners.has('hashchange'), true)
+
+  controller.disconnect()
+  assert.equal(globalThis.window.eventListeners.has('hashchange'), false)
 })
