@@ -31,6 +31,19 @@ RSpec.describe "Document file archive entries", type: :request do
     archive_file.update!(file_size: File.size(archive_file.absolute_path))
   end
 
+  def grant_external_access(external_user, access_level: :view)
+    create(:project_membership, project:, user: external_user)
+    create(:document_permission, document:, company: external_user.company, access_level:)
+  end
+
+  def preview_entry_path(entry_path = "docs/readme.txt")
+    archive_entry_preview_document_file_path(archive_file, entry_path:)
+  end
+
+  def download_entry_path(entry_path = "docs/readme.txt")
+    archive_entry_download_document_file_path(archive_file, entry_path:)
+  end
+
   after do
     FileUtils.rm_f(archive_file.absolute_path)
   end
@@ -40,7 +53,7 @@ RSpec.describe "Document file archive entries", type: :request do
     sign_in_as(user)
 
     expect do
-      get archive_entry_preview_document_file_path(archive_file, entry_path: "docs/readme.txt")
+      get preview_entry_path
     end.to change(AccessLog.where(action_type: :view), :count).by(1)
 
     expect(response).to have_http_status(:ok)
@@ -59,7 +72,7 @@ RSpec.describe "Document file archive entries", type: :request do
     write_zip("docs/readme.txt" => "hello")
     sign_in_as(user)
 
-    get archive_entry_preview_document_file_path(archive_file, entry_path: "../secret.txt")
+    get preview_entry_path("../secret.txt")
 
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("プレビューできません")
@@ -70,7 +83,7 @@ RSpec.describe "Document file archive entries", type: :request do
     write_zip("images/logo.png" => "png")
     sign_in_as(user)
 
-    get archive_entry_preview_document_file_path(archive_file, entry_path: "images/logo.png")
+    get preview_entry_path("images/logo.png")
 
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("プレビューできません")
@@ -82,7 +95,7 @@ RSpec.describe "Document file archive entries", type: :request do
     sign_in_as(user)
 
     expect do
-      get archive_entry_download_document_file_path(archive_file, entry_path: "docs/readme.txt")
+      get download_entry_path
     end.to change(AccessLog.where(action_type: :download), :count).by(1)
 
     expect(response).to have_http_status(:ok)
@@ -97,7 +110,7 @@ RSpec.describe "Document file archive entries", type: :request do
     sign_in_as(user)
 
     expect do
-      get archive_entry_download_document_file_path(archive_file, entry_path: "../secret.txt")
+      get download_entry_path("../secret.txt")
     end.not_to change(AccessLog.where(action_type: :download), :count)
 
     expect(response).to have_http_status(:unprocessable_content)
@@ -108,9 +121,87 @@ RSpec.describe "Document file archive entries", type: :request do
     write_zip("nested/archive.zip" => "zip")
     sign_in_as(user)
 
-    get archive_entry_download_document_file_path(archive_file, entry_path: "nested/archive.zip")
+    get download_entry_path("nested/archive.zip")
 
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("nested archive")
+  end
+
+  it "forbids archive entry downloads for external users who only have view permission" do
+    external_user = create(:user, :external)
+    grant_external_access(external_user, access_level: :view)
+    write_zip("docs/readme.txt" => "hello")
+    sign_in_as(external_user)
+
+    expect do
+      get download_entry_path
+    end.not_to change(AccessLog.where(action_type: :download), :count)
+
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it "forbids external archive entry preview and download while scan is not clean" do
+    external_user = create(:user, :external)
+    grant_external_access(external_user, access_level: :download)
+    write_zip("docs/readme.txt" => "hello")
+    sign_in_as(external_user)
+
+    %i[scan_pending scan_failed].each do |scan_status|
+      archive_file.update!(scan_status:)
+
+      expect do
+        get preview_entry_path
+      end.not_to change(AccessLog.where(action_type: :view), :count)
+      expect(response).to have_http_status(:forbidden)
+
+      expect do
+        get download_entry_path
+      end.not_to change(AccessLog.where(action_type: :download), :count)
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
+
+  it "redirects archive entry preview to first-view consent and does not log before consent" do
+    external_user = create(:user, :external)
+    grant_external_access(external_user, access_level: :view)
+    term = create(:consent_term, title: "Preview Terms", consent_scope: :project, version_label: "v1")
+    create(:project_consent_setting, project:, consent_term: term, required_on: :first_access)
+    write_zip("docs/readme.txt" => "hello")
+    sign_in_as(external_user)
+
+    expect do
+      get preview_entry_path
+    end.not_to change(AccessLog.where(action_type: :view), :count)
+
+    expect(response).to redirect_to(
+      new_consent_path(
+        target_type: "Project",
+        target_public_id: project.public_id,
+        timing: :first_view,
+        return_to: preview_entry_path
+      )
+    )
+  end
+
+  it "redirects archive entry download to download consent and does not log before consent" do
+    external_user = create(:user, :external)
+    grant_external_access(external_user, access_level: :download)
+    term = create(:consent_term, title: "Download Terms", consent_scope: :download, version_label: "v1")
+    create(:project_consent_setting, project:, consent_term: term, required_on: :download)
+    write_zip("docs/readme.txt" => "hello")
+    sign_in_as(external_user)
+
+    expect do
+      get download_entry_path
+    end.not_to change(AccessLog.where(action_type: :download), :count)
+
+    expect(response).to redirect_to(
+      new_consent_path(
+        target_type: "Project",
+        target_public_id: project.public_id,
+        timing: :download,
+        return_to: download_entry_path
+      )
+    )
   end
 end
