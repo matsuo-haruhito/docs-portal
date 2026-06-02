@@ -142,7 +142,7 @@ RSpec.describe "Admin generated file events", type: :request do
       25.times do |i|
         create_event!(path: "docs/newer-#{i}.yml", status: :failed)
       end
-      return_to_path = admin_generated_file_events_path(status: "failed", path: "docs", q: "source", page: 2, per_page: 25)
+      return_to_path = admin_generated_file_events_path(status: "failed", path: "docs", page: 2, per_page: 25)
 
       get return_to_path
 
