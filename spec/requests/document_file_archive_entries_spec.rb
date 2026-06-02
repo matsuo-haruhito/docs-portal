@@ -45,6 +45,9 @@ RSpec.describe "Document file archive entries", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("ZIP項目プレビュー")
+    expect(response.body).to include("ZIP内ファイル一覧へ戻る")
+    expect(response.body).to include("個別ダウンロード")
+    expect(response.body).to include("archive_entries/download")
     expect(response.body).to include("項目パス")
     expect(response.body).to include("ファイル名")
     expect(response.body).to include("コンテンツタイプ")
@@ -62,6 +65,8 @@ RSpec.describe "Document file archive entries", type: :request do
     get archive_entry_preview_document_file_path(archive_file, entry_path: "../secret.txt")
 
     expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("ZIP内ファイル一覧へ戻る")
+    expect(response.body).not_to include("archive_entries/download")
     expect(response.body).to include("プレビューできません")
     expect(response.body).to include("unsafe path")
   end
