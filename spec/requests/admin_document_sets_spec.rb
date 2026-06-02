@@ -192,6 +192,7 @@ RSpec.describe "Admin document sets", type: :request do
   it "returns project-scoped document search results by title and slug" do
     other_project = create(:project, name: "Other Project")
     create(:document, project: other_project, title: "概要仕様 外部", slug: "outside-overview")
+    document_a.update!(latest_version: version_a2)
 
     sign_in_as(admin)
 
