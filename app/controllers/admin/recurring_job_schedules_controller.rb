@@ -6,10 +6,13 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     RecurringJobDispatcherJob.perform_now if params[:sync_definitions].present?
 
     @schedule_status_options = recurring_job_status_options
+    @schedule_enabled_options = recurring_job_enabled_options
     @selected_status = schedule_status_param
+    @selected_enabled = schedule_enabled_param
     @selected_query = schedule_query_param
     @triage_status_counts = RecurringJobSchedule.group(:last_status).count
     @schedules = RecurringJobSchedule.order(:job_key)
+    @schedules = filter_schedules_by_enabled(@schedules, @selected_enabled) if @selected_enabled.present?
     @schedules = filter_schedules_by_status(@schedules, @selected_status) if @selected_status.present?
     @schedules = filter_schedules_by_query(@schedules, @selected_query) if @selected_query.present?
   end
@@ -43,6 +46,10 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     end
   end
 
+  def recurring_job_enabled_options
+    [["すべて", ""], ["有効", "true"], ["無効", "false"]]
+  end
+
   def recurring_job_run_status_options
     [["すべて", ""]] + RecurringJobRun.statuses.keys.map do |status|
       [recurring_job_status_label(status), status]
@@ -62,6 +69,11 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     recurring_job_status_values.include?(status) ? status : nil
   end
 
+  def schedule_enabled_param
+    enabled = params[:enabled].to_s
+    %w[true false].include?(enabled) ? enabled : nil
+  end
+
   def schedule_query_param
     params[:q].to_s.strip.presence
   end
@@ -69,6 +81,10 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
   def run_status_param
     status = params[:run_status].to_s
     RecurringJobRun.statuses.key?(status) ? status : nil
+  end
+
+  def filter_schedules_by_enabled(scope, enabled)
+    scope.where(enabled: enabled == "true")
   end
 
   def filter_schedules_by_status(scope, status)
