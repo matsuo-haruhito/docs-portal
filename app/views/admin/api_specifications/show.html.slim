@@ -44,6 +44,12 @@ section.card
         li = link_to "API仕様ページとdocs-src更新確認runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/API仕様ページとdocs-src更新確認runbook.md"
         li = link_to "build-docs workflow確認runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/build-docs%20workflow確認runbook.md"
       p.muted 主要 source: docs-src/api-specification.md、docs-src/client-file-upload-api.md、docs-src/office-preview.md、docs-src/external-folder-sync-webhooks.md
+  - if %i[failed stale].include?(build_status.state)
+    .notice
+      h3 手動 build 再実行
+      p.muted API仕様ページ専用の Docusaurus build だけを再実行します。実行中 marker がある場合は二重起動せず、完了後に再読み込みしてください。
+      p.muted failure の場合は source、runtime、job / CI logs の順で確認し、画面には短いサニタイズ済み理由だけを表示します。
+      = button_to "API仕様ページの build を再実行", retry_build_admin_api_specification_path, method: :post
 
 section.card
   h2 主要ページとsource
