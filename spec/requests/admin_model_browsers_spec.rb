@@ -43,8 +43,22 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include("件数")
     expect(response.body).to include("最終更新")
     expect(response.body).to include("最近のデータ")
+    expect(response.body).to include("最新の代表データを最大20件まで表示します。この画面では編集や削除はできません。")
+    expect(response.body).to include("既存画面で詳しく確認")
+    expect(response.body).to include("続きの検索や詳細確認は既存管理画面で行えます。")
+    expect(response.body).to include(admin_projects_path)
     expect(response.body).to include(project.code)
     expect(response.body).to include(project.name)
+  end
+
+  it "shows an empty state when the model page has no recent records" do
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("documents")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("最近のデータ")
+    expect(response.body).to include("最近のデータはまだありません。")
+    expect(response.body).to include("対象モデルに表示できるデータが登録されると、ここに代表データが表示されます。")
   end
 
   it "localizes summary field labels and boolean values on model pages" do
