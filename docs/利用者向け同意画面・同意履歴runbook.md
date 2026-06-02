@@ -20,6 +20,7 @@
 - 下段の `自分の同意履歴` では、同意した順に `同意日時 / 文面 / 版 / 対象` を確認できる
 - `対象` が `全体` の行は、案件や文書にひも付かない global な同意を表す
 - `対象` に `Project` `Document` `DocumentFile` `DocumentVersion` が出ている行は、その対象に対して記録された同意を表す
+- 同意履歴は current user がどの文面のどの版へ同意したかを残す個人ユーザー単位の確認履歴であり、会社間契約、法務承認、契約締結状況の代替としては扱わない
 
 empty state の見方:
 
@@ -57,8 +58,11 @@ current `main` での戻り方:
 ## 管理画面側へ戻す論点
 
 - どの文面を active にするか
-- `first_view` や `download` などの必須タイミングをどう使い分けるか
+- global 文面の `requirement_timing` として `first_view` / `every_version_change` / `every_download` をどう使い分けるか
+- 案件同意設定の `required_on` として `first_access` / `download` をどう使い分けるか
+- `shared_link_access` / `shared_link_download` は共有リンク実装時の拡張用として扱い、current support の同意導線として読まない
 - 法務文面の妥当性や版上げの判断
+- 通知、期限、再同意催促、法務承認 workflow の要否
 
 これらは利用者向け runbook では決めず、管理画面側の runbook と仕様 docs を正本にする。
 
