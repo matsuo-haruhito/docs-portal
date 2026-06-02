@@ -1,5 +1,4 @@
 require "rails_helper"
-require "cgi"
 
 RSpec.describe "Document delivery logs", type: :request do
   let(:company) { create(:company) }
@@ -46,6 +45,10 @@ RSpec.describe "Document delivery logs", type: :request do
   def href_for_row_containing(row_text, link_text)
     row = parsed_html.css("tr").find { |node| node.text.include?(row_text) }
     row&.css("a[href]")&.find { |node| node.text.strip == link_text }&.[]("href")
+  end
+
+  def row_text_containing(text)
+    parsed_html.css("tr").find { |node| node.text.include?(text) }&.text&.squish
   end
 
   before do
@@ -155,47 +158,44 @@ RSpec.describe "Document delivery logs", type: :request do
 
     get document_delivery_logs_path
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("すべて (3)")
-    expect(response.body).to include("#{localized_status_label(:draft)} (1)")
-    expect(response.body).to include("#{localized_status_label(:sent)} (1)")
-    expect(response.body).to include("#{localized_status_label(:failed)} (1)")
-    expect(response.body).to include("#{localized_delivery_type_label(:portal_link)} (1)")
-    expect(response.body).to include("#{localized_delivery_type_label(:attachment)} (1)")
-    expect(response.body).to include("#{localized_delivery_type_label(:zip_attachment)} (1)")
-    expect(response.body).to include("#{localized_delivery_type_label(:shared_link)} (0)")
-    expect(response.body).to include(own_draft.to_addresses)
-    expect(response.body).to include(own_sent.to_addresses)
-    expect(response.body).to include(own_failed.to_addresses)
-    expect(response.body).not_to include(other_failed.to_addresses)
+    expect(page_text).to include("すべて (3)")
+    expect(page_text).to include("#{localized_status_label(:draft)} (1)")
+    expect(page_text).to include("#{localized_status_label(:sent)} (1)")
+    expect(page_text).to include("#{localized_status_label(:failed)} (1)")
+    expect(page_text).to include("#{localized_delivery_type_label(:portal_link)} (1)")
+    expect(page_text).to include("#{localized_delivery_type_label(:attachment)} (1)")
+    expect(page_text).to include("#{localized_delivery_type_label(:zip_attachment)} (1)")
+    expect(page_text).to include("#{localized_delivery_type_label(:shared_link)} (0)")
+    expect(page_text).to include(own_draft.to_addresses)
+    expect(page_text).to include(own_sent.to_addresses)
+    expect(page_text).to include(own_failed.to_addresses)
+    expect(page_text).not_to include(other_failed.to_addresses)
 
     get document_delivery_logs_path, params: { delivery_type: :portal_link }
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(own_draft.to_addresses)
-    expect(response.body).not_to include(own_sent.to_addresses)
-    expect(response.body).not_to include(own_failed.to_addresses)
-    expect(response.body).not_to include(other_failed.to_addresses)
-    expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(status: :draft, delivery_type: :portal_link))
-    expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(status: :failed, delivery_type: :portal_link))
+    expect(page_text).to include(own_draft.to_addresses)
+    expect(page_text).not_to include(own_sent.to_addresses)
+    expect(page_text).not_to include(own_failed.to_addresses)
+    expect(page_text).not_to include(other_failed.to_addresses)
+    expect(action_targets).to include(document_delivery_logs_path(status: :draft, delivery_type: :portal_link))
+    expect(action_targets).to include(document_delivery_logs_path(status: :failed, delivery_type: :portal_link))
 
     get document_delivery_logs_path, params: { status: :failed, delivery_type: :zip_attachment }
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(own_failed.to_addresses)
-    expect(response.body).not_to include(own_draft.to_addresses)
-    expect(response.body).not_to include(own_sent.to_addresses)
-    expect(response.body).not_to include(other_failed.to_addresses)
-    expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(status: :failed))
+    expect(page_text).to include(own_failed.to_addresses)
+    expect(page_text).not_to include(own_draft.to_addresses)
+    expect(page_text).not_to include(own_sent.to_addresses)
+    expect(page_text).not_to include(other_failed.to_addresses)
+    expect(action_targets).to include(document_delivery_logs_path(status: :failed))
 
     sign_in_as(internal_user)
 
     get document_delivery_logs_path, params: { delivery_type: :shared_link }
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(other_failed.to_addresses)
-    expect(response.body).not_to include(own_draft.to_addresses)
-    expect(response.body).not_to include(own_sent.to_addresses)
-    expect(response.body).not_to include(own_failed.to_addresses)
     expect(page_text).to include(other_failed.to_addresses)
     expect(page_text).not_to include(own_draft.to_addresses)
     expect(page_text).not_to include(own_sent.to_addresses)
+    expect(page_text).not_to include(own_failed.to_addresses)
   end
 
   it "shows To, CC, and BCC separately in the recipients column" do
@@ -217,8 +217,7 @@ RSpec.describe "Document delivery logs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("受信者")
-    expect(response.body).to include("recipients")
-    recipients_row_text = parsed_html.css("tr").find { |row| row.text.include?(log.to_addresses) }.text.squish
+    recipients_row_text = row_text_containing(log.to_addresses)
     expect(recipients_row_text).to include("To: primary@example.com")
     expect(recipients_row_text).to include("CC: cc@example.com")
     expect(recipients_row_text).to include("BCC: bcc@example.com")
@@ -239,9 +238,9 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(page_text).to include(matching_log.to_addresses)
     expect(page_text).not_to include(non_matching_log.to_addresses)
     expect(page_text).not_to include(wrong_status_log.to_addresses)
-    expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(q: "dlv1", status: :draft, delivery_type: :portal_link))
-    expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(q: "dlv1", status: :failed))
-    expect(CGI.unescapeHTML(response.body)).to include(document_delivery_logs_path(status: :failed, delivery_type: :portal_link))
+    expect(action_targets).to include(document_delivery_logs_path(q: "dlv1", status: :draft, delivery_type: :portal_link))
+    expect(action_targets).to include(document_delivery_logs_path(q: "dlv1", status: :failed))
+    expect(action_targets).to include(document_delivery_logs_path(status: :failed, delivery_type: :portal_link))
   end
 
   it "keeps external delivery log search limited to the current sender" do
@@ -277,8 +276,8 @@ RSpec.describe "Document delivery logs", type: :request do
     get return_to
     expect(response).to have_http_status(:ok)
     expect(href_for_row_containing(own_draft.to_addresses, localized_status_label(:draft))).to eq(document_delivery_log_path(own_draft, return_to: return_to))
-    expect(response.body).to include(own_draft.to_addresses)
-    expect(response.body).not_to include(own_sent.to_addresses)
+    expect(page_text).to include(own_draft.to_addresses)
+    expect(page_text).not_to include(own_sent.to_addresses)
 
     get document_delivery_log_path(own_draft), params: { return_to: return_to }
     expect(response).to have_http_status(:ok)

@@ -19,6 +19,24 @@ RSpec.describe "Consents", type: :request do
     )
   end
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def page_text
+    parsed_html.text.squish
+  end
+
+  def link_hrefs(text)
+    parsed_html.css("a").filter_map do |link|
+      link["href"] if link.text.squish == text
+    end
+  end
+
+  def hidden_return_to_values
+    parsed_html.css('input[name="return_to"]').map { _1["value"] }
+  end
+
   before do
     create(:project_membership, project:, user:)
     create(:document_permission, document:, company:, access_level: :download)
@@ -36,7 +54,11 @@ RSpec.describe "Consents", type: :request do
     expect(response).to redirect_to(new_consent_path(target_type: "Project", target_public_id: project.public_id, timing: :first_view, return_to: project_path(project)))
 
     follow_redirect!
-    expect(response.body).to include("Project Terms")
+    expect(page_text).to include("Project Terms")
+    expect(page_text).to include("対象:")
+    expect(page_text).to include("案件 / Consent Project")
+    expect(page_text).to include("種別:")
+    expect(page_text).to include("案件")
 
     expect do
       post consents_path, params: { target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to: project_path(project) }
@@ -46,7 +68,7 @@ RSpec.describe "Consents", type: :request do
 
     get project_path(project)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Consent Document")
+    expect(page_text).to include("Consent Document")
   end
 
   it "uses the current return_to for the back link when it is safe" do
@@ -58,7 +80,8 @@ RSpec.describe "Consents", type: :request do
     get new_consent_path(target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to: document_file_path(file))
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(%(href="#{document_file_path(file)}"))
+    expect(link_hrefs("同意せず戻る")).to include(document_file_path(file))
+    expect(hidden_return_to_values).to include(document_file_path(file))
   end
 
   it "falls back to projects_path for the back link when return_to is unsafe" do
@@ -70,8 +93,9 @@ RSpec.describe "Consents", type: :request do
     get new_consent_path(target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to: "https://example.com/outside")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(%(href="#{projects_path}"))
-    expect(response.body).not_to include("https://example.com/outside")
+    expect(link_hrefs("同意せず戻る")).to include(projects_path)
+    expect(hidden_return_to_values).to include(projects_path)
+    expect(hidden_return_to_values).not_to include("https://example.com/outside")
   end
 
   it "redirects file downloads to download consent and does not log before consent" do
@@ -101,9 +125,9 @@ RSpec.describe "Consents", type: :request do
     FileUtils.rm_rf(Rails.root.join("storage", "document_files", "spec", "consents"))
   end
 
-  it "shows active terms and the user's consent history with localized target labels" do
+  it "shows active terms and the user's consent history with localized target and scope labels" do
     file = create(:document_file, document_version: version, file_name: "history.pdf")
-    term = create(:consent_term, title: "Visible Terms", body: "Handle carefully", version_label: "v1")
+    term = create(:consent_term, title: "Visible Terms", body: "Handle carefully", version_label: "v1", consent_scope: :download)
 
     create(:user_consent, user:, consent_term: term, target: nil, consent_term_version_label: "v1")
     create(:user_consent, user:, consent_term: term, target: project, consent_term_version_label: "v1")
@@ -115,17 +139,20 @@ RSpec.describe "Consents", type: :request do
     get consents_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Visible Terms")
-    expect(response.body).to include("Handle carefully")
-    expect(response.body).to include("v1")
-    expect(response.body).to include("全体")
-    expect(response.body).to include("案件 / Consent Project")
-    expect(response.body).to include("文書 / Consent Document")
-    expect(response.body).to include("ファイル / history.pdf")
-    expect(response.body).to include("文書版 / v1.0.0")
-    expect(response.body).not_to include("Project / Consent Project")
-    expect(response.body).not_to include("Document / Consent Document")
-    expect(response.body).not_to include("DocumentFile / history.pdf")
-    expect(response.body).not_to include("DocumentVersion / v1.0.0")
+    expect(page_text).to include("Visible Terms")
+    expect(page_text).to include("Handle carefully")
+    expect(page_text).to include("種別")
+    expect(page_text).to include("ダウンロード")
+    expect(page_text).to include("v1")
+    expect(page_text).to include("全体")
+    expect(page_text).to include("案件 / Consent Project")
+    expect(page_text).to include("文書 / Consent Document")
+    expect(page_text).to include("ファイル / history.pdf")
+    expect(page_text).to include("文書版 / v1.0.0")
+    expect(page_text).not_to include("Project / Consent Project")
+    expect(page_text).not_to include("Document / Consent Document")
+    expect(page_text).not_to include("DocumentFile / history.pdf")
+    expect(page_text).not_to include("DocumentVersion / v1.0.0")
+    expect(page_text).not_to include(">download<")
   end
 end

@@ -106,8 +106,9 @@ section.card
                 = " "
                 span.badge title=ai_context_target[:raw]
                   = "#{segment[:label]}: #{segment[:value]}"
-              br
-              code.muted = ai_context_target[:raw]
+              details
+                summary.muted 監査用 raw target_name
+                code.muted = ai_context_target[:raw]
             - elsif log.target_name.present?
               br
               code = log.target_name

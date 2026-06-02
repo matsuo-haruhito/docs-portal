@@ -4,6 +4,16 @@ RSpec.describe "Admin model browsers", type: :request do
   let(:admin_user) { create(:user, :internal) }
   let(:company_master_admin) { create(:user, :company_master_admin) }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  it "redirects unauthenticated users to the login page" do
+    get admin_model_browser_path
+
+    expect(response).to redirect_to(new_session_path)
+  end
+
   it "shows the model browser index to admins grouped by catalog area" do
     create(:project)
     create(:document)
@@ -43,8 +53,57 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include("件数")
     expect(response.body).to include("最終更新")
     expect(response.body).to include("最近のデータ")
+    expect(response.body).to include("最新の代表データを最大20件まで表示します。この画面では編集や削除はできません。")
+    expect(response.body).to include("既存画面で詳しく確認")
+    expect(response.body).to include("続きの検索や詳細確認は既存管理画面で行えます。")
+    expect(response.body).to include(admin_projects_path)
     expect(response.body).to include(project.code)
     expect(response.body).to include(project.name)
+  end
+
+  it "redirects unauthenticated users from model-specific browser pages" do
+    get admin_model_browser_model_path("companies")
+
+    expect(response).to redirect_to(new_session_path)
+  end
+
+  it "bounds recent model rows to 20 and orders updated records by updated_at then id descending" do
+    admin_user.company.update!(updated_at: 2.years.ago)
+    timestamp = Time.zone.local(2026, 5, 1, 12, 0, 0)
+    companies = 21.times.map do |index|
+      create(:company, name: format("Browser Company %02d", index), updated_at: timestamp)
+    end
+
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("companies")
+
+    expect(response).to have_http_status(:ok)
+
+    row_texts = parsed_html.css("tbody tr").map { _1.text.squish }
+
+    expect(row_texts.size).to eq(20)
+    expect(row_texts.first).to include("Browser Company 20")
+    expect(row_texts.second).to include("Browser Company 19")
+    expect(row_texts.any? { _1.include?(companies.first.name) }).to be(false)
+  end
+
+  it "shows an empty state when the model page has no recent records" do
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("documents")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("最近のデータ")
+    expect(response.body).to include("最近のデータはまだありません。")
+    expect(response.body).to include("対象モデルに表示できるデータが登録されると、ここに代表データが表示されます。")
+  end
+
+  it "renders a not found response for an invalid model key" do
+    sign_in_as(admin_user)
+
+    get admin_model_browser_model_path("missing_model")
+
+    expect(response).to have_http_status(:not_found)
+    expect(response.body).to include("見つかりません")
   end
 
   it "localizes summary field labels and boolean values on model pages" do
@@ -67,6 +126,13 @@ RSpec.describe "Admin model browsers", type: :request do
   it "forbids company master admins from the model browser" do
     sign_in_as(company_master_admin)
     get admin_model_browser_path
+
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it "forbids company master admins from model-specific browser pages" do
+    sign_in_as(company_master_admin)
+    get admin_model_browser_model_path("companies")
 
     expect(response).to have_http_status(:forbidden)
   end
