@@ -11,6 +11,10 @@ RSpec.describe "Document approval requests", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def page_text
+    parsed_html.text.gsub(/[[:space:]]+/, " ").strip
+  end
+
   before do
     create(:project_membership, project:, user: requester)
     create(:document_permission, document:, company:, access_level: :view)
@@ -94,6 +98,11 @@ RSpec.describe "Document approval requests", type: :request do
 
     get document_approval_request_path(approval_request, return_to: return_to_path)
     expect(response).to have_http_status(:ok)
+    expect(page_text).to include("OKする")
+    expect(page_text).to include("内容を確認済みにし、この確認依頼を OK済みにします。")
+    expect(page_text).to include("Cancelする")
+    expect(page_text).to include("この確認依頼を取り下げます。理由入力や通知の追加はここでは行いません。")
+    expect(page_text).to include("一覧の絞り込みや戻り先を保ったまま戻ります。")
     expect(response.body).to include("OK")
     expect(response.body).to include("対応待ち")
     expect(parsed_html.at_css(%(a[href="#{return_to_path}"]))).to be_present
@@ -105,7 +114,12 @@ RSpec.describe "Document approval requests", type: :request do
 
     get document_approval_request_path(approval_request, return_to: return_to_path)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("OK済み")
+    expect(page_text).to include("OK済み")
+    expect(page_text).to include("対応済み")
+    expect(page_text).to include("対応者")
+    expect(page_text).to include(internal_user.name)
+    expect(page_text).not_to include("OKする")
+    expect(page_text).not_to include("Cancelする")
 
     another_request = create(:document_approval_request, document:, requester:, title: "今回は進めない")
     post cancel_document_approval_request_path(another_request, return_to: return_to_path)
@@ -114,7 +128,10 @@ RSpec.describe "Document approval requests", type: :request do
 
     get document_approval_request_path(another_request, return_to: return_to_path)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Cancel済み")
+    expect(page_text).to include("Cancel済み")
+    expect(page_text).to include("対応済み")
+    expect(page_text).not_to include("OKする")
+    expect(page_text).not_to include("Cancelする")
   end
 
   it "forbids OK and Cancel for processed requests without changing their status" do
@@ -172,7 +189,10 @@ RSpec.describe "Document approval requests", type: :request do
 
     get document_approval_request_path(own_request)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(own_request.title)
+    expect(page_text).to include(own_request.title)
+    expect(page_text).to include("Cancelする")
+    expect(page_text).to include("この確認依頼を取り下げます。理由入力や通知の追加はここでは行いません。")
+    expect(page_text).not_to include("OKする")
 
     post cancel_document_approval_request_path(own_request)
     expect(response).to redirect_to(document_approval_request_path(own_request, return_to: project_document_path(project, document.slug)))
