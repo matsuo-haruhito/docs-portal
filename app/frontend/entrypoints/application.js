@@ -12,6 +12,7 @@ import "tom-select/dist/css/tom-select.css"
 import AutoHeightFrameController from "../controllers/auto_height_frame_controller"
 import BulkEditSelectionController from "../controllers/bulk_edit_selection_controller"
 import DocumentFileBrowserController from "../controllers/document_file_browser_controller"
+import DocumentPermissionErrorSurfaceController from "../controllers/document_permission_error_surface_controller"
 import DocumentSetDocumentFilterController from "../controllers/document_set_document_filter_controller"
 import DocumentZipSelectionController from "../controllers/document_zip_selection_controller"
 import NavDropdownsController from "../controllers/nav_dropdowns_controller"
@@ -29,6 +30,7 @@ application.register("rails-fields-kit--tom-select", TomSelectController)
 application.register("auto-height-frame", AutoHeightFrameController)
 application.register("bulk-edit-selection", BulkEditSelectionController)
 application.register("document-file-browser", DocumentFileBrowserController)
+application.register("document-permission-error-surface", DocumentPermissionErrorSurfaceController)
 application.register("document-set-document-filter", DocumentSetDocumentFilterController)
 application.register("document-zip-selection", DocumentZipSelectionController)
 application.register("nav-dropdowns", NavDropdownsController)
