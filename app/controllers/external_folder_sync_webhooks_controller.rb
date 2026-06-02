@@ -140,9 +140,9 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
   end
 
   def filtered_payload(provider:, payload:)
-    return payload.presence || {} unless provider.to_s == "sharepoint"
-
     payload = payload.presence || {}
+    return payload unless provider.to_s == "sharepoint" && payload.key?("clientState")
+
     payload.merge("clientState" => FILTERED_SECRET_VALUE)
   end
 
