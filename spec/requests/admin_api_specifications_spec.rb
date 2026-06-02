@@ -49,6 +49,7 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response.body).to include("最新 build 成功")
     expect(response.body).to include("最終成功")
     expect(response.body).not_to include("失敗調査の入口")
+    expect(response.body).not_to include("手動 build 再実行")
   end
 
   it "notifies the admin when a stale API specification build is enqueued" do
@@ -93,6 +94,9 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response.body).to include("docs-src/client-file-upload-api.md")
     expect(response.body).to include("docs-src/office-preview.md")
     expect(response.body).to include("docs-src/external-folder-sync-webhooks.md")
+    expect(response.body).to include("手動 build 再実行")
+    expect(response.body).to include("API仕様ページの build を再実行")
+    expect(response.body).to include("source、runtime、job / CI logs")
     expect(response.body).not_to include(raw_failure)
     expect(response.body).not_to include("raw-secret")
     expect(response.body).not_to include("/app/tmp/build.log")
@@ -110,6 +114,7 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("HTML未生成または stale")
     expect(response.body).to include("Markdownより古い状態")
+    expect(response.body).to include("手動 build 再実行")
     expect(response.body).not_to include("失敗調査の入口")
   end
 
@@ -125,6 +130,46 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("HTML未生成または stale")
     expect(response.body).to include("Docusaurus build が必要です")
+  end
+
+  it "enqueues a manual API specification build from a failed state" do
+    write_failed_build_marker("failed at [path] token=[FILTERED]")
+    expect(ApiSpecificationBuildJob).to receive(:perform_later).once
+
+    sign_in_as(admin_user)
+
+    post retry_build_admin_api_specification_path
+
+    expect(response).to redirect_to(admin_api_specification_path)
+    expect(build_request_marker_path.exist?).to eq(true)
+    follow_redirect!
+    expect(response.body).to include("API仕様ページの Docusaurus build を再実行します")
+  end
+
+  it "does not enqueue a duplicate manual API specification build while one is requested" do
+    write_failed_build_marker("failed at [path] token=[FILTERED]")
+    write_build_request_marker
+    expect(ApiSpecificationBuildJob).not_to receive(:perform_later)
+
+    sign_in_as(admin_user)
+
+    post retry_build_admin_api_specification_path
+
+    expect(response).to redirect_to(admin_api_specification_path)
+    follow_redirect!
+    expect(response.body).to include("すでに実行中です")
+  end
+
+  it "keeps the manual API specification build retry limited to internal admins" do
+    write_failed_build_marker("failed at [path] token=[FILTERED]")
+    expect(ApiSpecificationBuildJob).not_to receive(:perform_later)
+
+    sign_in_as(create(:user, :company_master_admin))
+
+    post retry_build_admin_api_specification_path
+
+    expect(response).to have_http_status(:forbidden)
+    expect(build_request_marker_path.exist?).to eq(false)
   end
 
   it "renders the built API specification HTML through the admin site route" do
