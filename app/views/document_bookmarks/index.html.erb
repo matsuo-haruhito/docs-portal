@@ -1,7 +1,37 @@
 <% page_title "文書ショートカット" %>
+<% bookmark_project_filter_label = @selected_bookmark_project&.name || @bookmark_project_code %>
 
 <h1>文書ショートカット</h1>
 <p class="muted">お気に入り、後で読む、最近見た文書を最低限の一覧で表示します。</p>
+
+<section class="card">
+  <h2>保存済みショートカットの絞り込み</h2>
+  <%= form_with url: document_bookmarks_path, method: :get, local: true do |form| %>
+    <div class="form-grid">
+      <div class="field">
+        <%= form.label :project_code, "案件" %>
+        <%= form.select :project_code,
+              options_for_select(@bookmark_project_options.map { |project| [project.name, project.code] }, @bookmark_project_code),
+              { include_blank: "すべての案件" } %>
+      </div>
+      <div class="form-actions">
+        <%= form.submit "絞り込む", class: "button" %>
+        <% if @bookmark_project_filter_active %>
+          <%= link_to "解除", document_bookmarks_path, class: "button secondary" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+  <% if @bookmark_project_filter_active %>
+    <% if @selected_bookmark_project %>
+      <p class="muted">案件「<%= @selected_bookmark_project.name %>」でお気に入りと後で読むを絞り込んでいます。最近見た文書は絞り込み対象外です。</p>
+    <% else %>
+      <p class="muted">指定した案件では保存済みショートカットが見つかりません。最近見た文書は絞り込み対象外です。</p>
+    <% end %>
+  <% else %>
+    <p class="muted">明示的に保存したお気に入りと後で読むだけを案件で絞り込めます。</p>
+  <% end %>
+</section>
 
 <section class="card">
   <h2>お気に入り <span class="muted"><%= @favorite_bookmarks.size %>件</span></h2>
@@ -24,7 +54,11 @@
       <% end %>
     </ul>
   <% else %>
-    <p class="muted">文書画面でお気に入りに追加すると、ここに表示されます。</p>
+    <% if @bookmark_project_filter_active %>
+      <p class="muted">案件「<%= bookmark_project_filter_label %>」ではお気に入りが見つかりません。</p>
+    <% else %>
+      <p class="muted">文書画面でお気に入りに追加すると、ここに表示されます。</p>
+    <% end %>
   <% end %>
 </section>
 
@@ -50,7 +84,11 @@
       <% end %>
     </ul>
   <% else %>
-    <p class="muted">文書画面で後で読むに追加すると、ここに表示されます。</p>
+    <% if @bookmark_project_filter_active %>
+      <p class="muted">案件「<%= bookmark_project_filter_label %>」では後で読む文書が見つかりません。</p>
+    <% else %>
+      <p class="muted">文書画面で後で読むに追加すると、ここに表示されます。</p>
+    <% end %>
   <% end %>
 </section>
 
