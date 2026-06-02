@@ -1,5 +1,9 @@
 class DocumentBookmarksController < BaseController
   def index
+    @bookmark_project_options = bookmark_project_options
+    @selected_bookmark_project = selected_bookmark_project
+    @bookmark_project_filter_active = selected_bookmark_project_code.present?
+    @bookmark_project_filter_label = @selected_bookmark_project&.name || "選択した案件"
     @favorite_bookmarks = bookmarks_for(:favorite)
     @read_later_bookmarks = bookmarks_for(:read_later)
     @recent_documents = RecentDocumentsQuery.new(user: current_user, limit: 20).call
@@ -42,11 +46,33 @@ class DocumentBookmarksController < BaseController
   private
 
   def bookmarks_for(type)
-    current_user.document_bookmarks
+    scope = current_user.document_bookmarks
       .public_send(type)
       .includes(document: [:project, :latest_version])
       .readable_by(current_user)
-      .order(created_at: :desc)
+
+    scope = scope.joins(document: :project).where(projects: { code: selected_bookmark_project_code }) if @bookmark_project_filter_active
+
+    scope.order(created_at: :desc)
+  end
+
+  def bookmark_project_options
+    current_user.document_bookmarks
+      .includes(document: :project)
+      .readable_by(current_user)
+      .map { _1.document.project }
+      .uniq(&:id)
+      .sort_by { _1.name.to_s }
+  end
+
+  def selected_bookmark_project
+    return if selected_bookmark_project_code.blank?
+
+    @bookmark_project_options.find { _1.code == selected_bookmark_project_code }
+  end
+
+  def selected_bookmark_project_code
+    params[:project_code].to_s
   end
 
   def bookmark_params
