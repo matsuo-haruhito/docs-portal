@@ -117,6 +117,51 @@ RSpec.describe "Document approval requests", type: :request do
     expect(response.body).to include("Cancel済み")
   end
 
+  it "forbids OK and Cancel for processed requests without changing their status" do
+    approved_request = create(
+      :document_approval_request,
+      document:,
+      requester:,
+      title: "確認完了",
+      status: :approved,
+      acted_by: internal_user,
+      approved_at: 1.hour.ago,
+      cancelled_at: nil
+    )
+    cancelled_request = create(
+      :document_approval_request,
+      document:,
+      requester:,
+      title: "今回は進めない",
+      status: :cancelled,
+      acted_by: requester,
+      cancelled_at: 30.minutes.ago,
+      approved_at: nil
+    )
+
+    sign_in_as(internal_user)
+
+    expect do
+      patch document_approval_request_path(approved_request)
+    end.not_to change { approved_request.reload.status }
+    expect(response).to have_http_status(:forbidden)
+
+    expect do
+      patch document_approval_request_path(cancelled_request)
+    end.not_to change { cancelled_request.reload.status }
+    expect(response).to have_http_status(:forbidden)
+
+    expect do
+      post cancel_document_approval_request_path(approved_request)
+    end.not_to change { approved_request.reload.status }
+    expect(response).to have_http_status(:forbidden)
+
+    expect do
+      post cancel_document_approval_request_path(cancelled_request)
+    end.not_to change { cancelled_request.reload.status }
+    expect(response).to have_http_status(:forbidden)
+  end
+
   it "lets requesters view and cancel only their own pending requests" do
     own_request = create(:document_approval_request, document:, requester:, title: "自分の確認依頼")
     peer_user = create(:user, :external, company:)
