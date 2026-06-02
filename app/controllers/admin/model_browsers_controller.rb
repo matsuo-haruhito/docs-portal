@@ -1,6 +1,9 @@
 class Admin::ModelBrowsersController < Admin::BaseController
   before_action :require_admin_only!
 
+  MODEL_BROWSER_QUERY_MAX_LENGTH = 100
+  TEXT_SEARCH_COLUMN_TYPES = %i[string text].freeze
+
   helper_method :entry_index_path, :record_summary_value, :summary_field_label
 
   def index
@@ -11,7 +14,9 @@ class Admin::ModelBrowsersController < Admin::BaseController
 
   def show
     @entry = Admin::ModelBrowserCatalog.fetch!(params[:model_key])
-    @records = recent_scope(@entry).limit(20)
+    @query = normalized_model_browser_query
+    @searchable_field_labels = searchable_fields(@entry).index_with { summary_field_label(@entry, _1) }
+    @records = model_browser_records(@entry, @query)
     @summary = build_summary(@entry)
   end
 
@@ -24,6 +29,55 @@ class Admin::ModelBrowsersController < Admin::BaseController
       total_count: scope.count,
       latest_updated_at: latest_updated_at_for(scope)
     }
+  end
+
+  def model_browser_records(entry, query)
+    scope = recent_scope(entry)
+    return scope.limit(20) if query.blank?
+
+    predicates = search_predicates(entry, query)
+    return scope.none if predicates.blank?
+
+    scope.where(predicates.reduce { |combined, predicate| combined.or(predicate) }).limit(20)
+  end
+
+  def search_predicates(entry, query)
+    table = entry.model_class.arel_table
+    predicates = []
+
+    if query.match?(/\A\d+\z/) && entry.model_class.column_names.include?("id")
+      predicates << table[:id].eq(query.to_i)
+    end
+
+    like_query = "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
+    searchable_fields(entry).each do |field|
+      predicates << table[field].matches(like_query)
+    end
+
+    predicates
+  end
+
+  def searchable_fields(entry)
+    entry.summary_fields.select do |field|
+      searchable_text_column?(entry.model_class, field)
+    end
+  end
+
+  def searchable_text_column?(model_class, field)
+    column = model_class.columns_hash[field.to_s]
+    return false unless column
+    return false if association_id_field?(field)
+
+    TEXT_SEARCH_COLUMN_TYPES.include?(column.type)
+  end
+
+  def association_id_field?(field)
+    field_name = field.to_s
+    field_name.end_with?("_id") && field_name != "public_id"
+  end
+
+  def normalized_model_browser_query
+    params[:q].to_s.strip.presence&.slice(0, MODEL_BROWSER_QUERY_MAX_LENGTH)
   end
 
   def recent_scope(entry)
