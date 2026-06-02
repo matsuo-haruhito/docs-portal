@@ -13,22 +13,20 @@ class AccessibleDocumentsController < BaseController
       .ordered
       .distinct
 
-    documents_scope = filtered_documents(accessible_scope)
+    documents_scope = filtered_documents(Document.visible_in_portal_for(current_user))
       .recommended_first
-      .includes(:project, :latest_version, :document_tags, :document_keywords, document_versions: :document_files)
       .order(updated_at: :desc)
-    visible_documents = if current_user.internal?
-      documents_scope.to_a
-    else
-      documents_scope.to_a.select { |document| document.visible_in_portal_for?(current_user) }
-    end
 
-    @documents_count = visible_documents.size
+    @documents_count = documents_scope.count
     @current_page = normalized_page
     @per_page = DOCUMENTS_PER_PAGE
     @total_pages = [(@documents_count.to_f / @per_page).ceil, 1].max
     @current_page = @total_pages if @current_page > @total_pages
-    @documents = visible_documents.slice((@current_page - 1) * @per_page, @per_page) || []
+    @documents = documents_scope
+      .includes(:project, :latest_version, :document_tags, :document_keywords, document_versions: :document_files)
+      .offset((@current_page - 1) * @per_page)
+      .limit(@per_page)
+      .to_a
   end
 
   private
