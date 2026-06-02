@@ -44,6 +44,8 @@
 - current の manifest 生成手順と `build-docs` workflow の確認順は [build-docs workflow確認runbook](./build-docs%20workflow確認runbook.md) を正本とし、ここでは未完了論点だけを残す
 - artifact の永続保存方式と再取り込み replay 方針の first slice は #1039 で completed。後続で実装する場合は、保存期間・アクセス制御・replay 対象の確定範囲を個別 issue に切る
 - `latest_version` の明示切り替えや別ルール更新を入れる場合は、現行の created_at 基準との差分を `#1112` の latest_version 明示切り替え contract と合わせて扱う
+- `artifact_imports` / `zip_uploads` / `file_uploads` の dry-run 作成と apply の見分け方は [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md) を正本にする。manual upload dry-run の管理画面確認が変わった場合は #1607 の docs sync で追従する
+- manual upload dry-run の後続判断は、広い確認導線 issue #1604 を再利用して要件を重複させず、raw `source_path` 表示は #1613、後から探せる一覧入口は #1614 のように concrete issue で扱う
 
 ## Docusaurus / seed
 
@@ -53,9 +55,9 @@
 
 ## Data Classification
 
-- `visibility_policy` と `data_classification_tags` の責務境界は [文書ライフサイクルと公開](./specs/文書ライフサイクルと公開.md) を正本にする
-- DocumentVersion / DocumentFile / DocumentSet / Catalog 単位へ広げる場合も、親 Document の分類タグを継承して表示・警告に使う first slice を優先し、権限判定や公開可否には混ぜない
-- 後続実装 issue は DocumentFile 表示補助、DocumentVersion quality warning、import/upload 確認、ZIP/download/送付履歴など 1 model または 1 screen/surface に分けて扱う
+- `visibility_policy` と分類タグ候補の責務境界は [文書ライフサイクルと公開](./specs/文書ライフサイクルと公開.md) を入口にする。ただし `data_classification_tags` を current 実装として扱うか future/proposal 表現へ戻すかは #1246 の人間判断待ちであり、ToDo 側では正誤を断定しない
+- DocumentVersion / DocumentFile / DocumentSet / Catalog 単位へ広げる後続論点は、#1246 で親 Document の分類タグ contract が整理された後に、1 model または 1 screen/surface の concrete issue として扱う
+- 分類タグは権限判定や公開可否ではなく取り扱い補助として扱う方針候補に留める。DLP / 法務判定 / 承認 workflow / 既存文書の一括分類移行は、外部合意や中核仕様判断が必要になった時点で別 issue に切る
 
 ## 多言語 / localization
 
@@ -98,6 +100,7 @@
   - import 補助
   - admin SQL viewer
   - 型生成
+- internal UI gem の release train は [internal UI gem release train current queue](./internal-ui-gem-release-train-current-queue.md) を正本にし、`rails_fields_kit` pinned ref 更新は #1300、関連 follow-up は同 docs の queue に沿って扱う。ToDo には upstream API や representative smoke の要件を重複して残さない
 - 新しい gem を入れる時は、Rails 標準や既存依存で代替できない理由、運用コスト、導入範囲を一緒に記録する
 - 現時点で導入済みの `rparam` / `rtypes` 以外は、必要機能が出たタイミングで個別 issue から判断する
 
