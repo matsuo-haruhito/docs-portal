@@ -60,4 +60,4 @@
 - `matsuo-haruhito/rails_fields_kit`
   - 検索可能 select や入力補助などの form UI 基盤
 
-これらの詳細 API や導入前提は各 repo の README / docs を参照し、`docs-portal` 側では組み込み方と運用上の確認点を正本にします.
+これらの詳細 API や導入前提は各 repo の README / docs を参照し、`docs-portal` 側では組み込み方と運用上の確認点を正本にします。`docs-portal` 側で代表画面の smoke、pinned ref 更新、rollback target、host app と上流 gem の責務境界を確認する場合は、[internal UI gem adoption evidence map](./docs/internal-ui-gem-adoption-evidence-map.md)、[internal UI gem 責務境界 matrix](./docs/internal-ui-gem責務境界matrix.md)、[internal UI gem packaging gate runbook](./docs/internal-ui-gem-packaging-gates.md)、[関連 gem 連携調査 runbook](./docs/関連gem連携調査runbook.md) を入口にします。
