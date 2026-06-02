@@ -25,7 +25,7 @@ RSpec.describe "Admin access request table preferences", type: :request do
     expect(response).to have_http_status(:ok)
     expect(parsed_html.text.squish).to include("アクセス申請一覧の表示設定")
 
-    table = parsed_html.at_css("table[data-rails-table-preferences-table-key='admin_access_requests']")
+    table = parsed_html.at_css("th[data-rails-table-preferences-column-key='created_at']")&.ancestors("table")&.first
     expect(table).to be_present
 
     column_keys = table.css("thead th").map { |node| node["data-rails-table-preferences-column-key"] }
@@ -52,7 +52,7 @@ RSpec.describe "Admin access request table preferences", type: :request do
     get admin_access_requests_path
 
     expect(response).to have_http_status(:ok)
-    expect(parsed_html.at_css("table[data-rails-table-preferences-table-key='admin_access_requests']")).to be_nil
+    expect(parsed_html.at_css("th[data-rails-table-preferences-column-key='created_at']")).to be_nil
     expect(parsed_html.text.squish).not_to include("アクセス申請一覧の表示設定")
   end
 end
