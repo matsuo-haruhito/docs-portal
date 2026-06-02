@@ -8,17 +8,17 @@ p.muted
   | 案件:
   = @project.name
   |  / 対象:
-  = @catalog_hash.dig(:catalog, :audience_type)
+  = localized_label("document_catalogs.audience_type", @catalog_hash.dig(:catalog, :audience_type))
   |  / 公開範囲:
-  = @catalog_hash.dig(:catalog, :visibility_policy)
+  = localized_label("document_catalogs.visibility_policy", @catalog_hash.dig(:catalog, :visibility_policy))
 
 - if @catalog_hash.dig(:catalog, :description).present?
   p = @catalog_hash.dig(:catalog, :description)
 
 p.muted
-  | 表示中:
+  | 表示可能:
   = @catalog_hash.dig(:summary, :visible_items)
-  | 件 / 総数:
+  | 件 / 登録:
   = @catalog_hash.dig(:summary, :total_items)
   | 件
 
@@ -38,8 +38,8 @@ p.muted
             td = item[:sort_order]
             td = link_to document[:title], project_document_path(@project, document[:slug])
             td = item[:note].presence || "-"
-            td = document[:document_kind]
-            td = document[:visibility_policy]
+            td = localized_label("documents.document_kind", document[:document_kind])
+            td = localized_label("documents.visibility_policy", document[:visibility_policy])
 - else
   p.muted このカタログで表示できる文書はありません。
 
