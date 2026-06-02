@@ -19,7 +19,7 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(listed_schedule_keys).to eq(["failed_job"])
     expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedules_path(sync_definitions: 1)}"]))).to be_present
     expect(response.body).to include("前回状態 filter は直近実行結果で絞り込みます。")
-    expect(response.body).to include("定義の有効/無効は「定義状態」列で確認してください。")
+    expect(response.body).to include("定義の有効/無効は「定義状態」列または有効状態 filter で確認してください。")
     expect(response.body).to include("Triage対象（前回状態ベース）: 失敗: 1件 / 実行中: 0件 / キュー待ち: 0件")
     expect(parsed_html.at_css(%(th[data-rails-table-preferences-column-key="status"])).text).to eq("定義状態")
     expect(parsed_html.at_css(%(th[data-rails-table-preferences-column-key="last_status"])).text).to eq("前回状態")
@@ -35,6 +35,36 @@ RSpec.describe "Admin recurring job schedules", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(listed_schedule_keys).to eq(["completed_job", "failed_job", "not_run_job"])
+  end
+
+  it "filters schedules by enabled state" do
+    sign_in_as(admin_user)
+    create_schedule!(job_key: "enabled_digest", enabled: true)
+    create_schedule!(job_key: "disabled_cleanup", enabled: false)
+
+    get admin_recurring_job_schedules_path(enabled: "true")
+
+    expect(response).to have_http_status(:ok)
+    expect(listed_schedule_keys).to eq(["enabled_digest"])
+    expect(response.body).to include("有効状態")
+    expect(parsed_html.at_css(%(select[name="enabled"] option[value="true"][selected]))).to be_present
+
+    get admin_recurring_job_schedules_path(enabled: "false")
+
+    expect(response).to have_http_status(:ok)
+    expect(listed_schedule_keys).to eq(["disabled_cleanup"])
+    expect(parsed_html.at_css(%(select[name="enabled"] option[value="false"][selected]))).to be_present
+  end
+
+  it "ignores invalid enabled filters" do
+    sign_in_as(admin_user)
+    create_schedule!(job_key: "enabled_digest", enabled: true)
+    create_schedule!(job_key: "disabled_cleanup", enabled: false)
+
+    get admin_recurring_job_schedules_path(enabled: "archived")
+
+    expect(response).to have_http_status(:ok)
+    expect(listed_schedule_keys).to eq(["disabled_cleanup", "enabled_digest"])
   end
 
   it "filters schedules by job key, job class, queue, and previous error fragments" do
@@ -57,28 +87,30 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(listed_schedule_keys).to eq(["daily_report_export"])
   end
 
-  it "combines schedule search with previous status and keeps the list return path" do
+  it "combines schedule search with previous status and enabled state while keeping the list return path" do
     sign_in_as(admin_user)
-    target = create_schedule!(job_key: "invoice_digest", job_class: "InvoiceDigestJob", last_status: "failed")
-    create_schedule!(job_key: "invoice_completed", job_class: "InvoiceDigestJob", last_status: "completed")
-    create_schedule!(job_key: "billing_worker", job_class: "BillingWorkerJob", last_status: "failed")
+    target = create_schedule!(job_key: "invoice_digest", job_class: "InvoiceDigestJob", last_status: "failed", enabled: false)
+    create_schedule!(job_key: "invoice_enabled", job_class: "InvoiceDigestJob", last_status: "failed", enabled: true)
+    create_schedule!(job_key: "invoice_completed", job_class: "InvoiceDigestJob", last_status: "completed", enabled: false)
+    create_schedule!(job_key: "billing_worker", job_class: "BillingWorkerJob", last_status: "failed", enabled: false)
 
-    list_path = admin_recurring_job_schedules_path(status: "failed", q: "invoice")
+    list_path = admin_recurring_job_schedules_path(status: "failed", enabled: "false", q: "invoice")
     get list_path
 
     expect(response).to have_http_status(:ok)
     expect(listed_schedule_keys).to eq(["invoice_digest"])
     expect(response.body).to include("表示中: 1件")
     expect(parsed_html.at_css(%(input[name="q"][value="invoice"]))).to be_present
+    expect(parsed_html.at_css(%(select[name="enabled"] option[value="false"][selected]))).to be_present
     expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedule_path(target, return_to: list_path)}"]))).to be_present
   end
 
-  it "shows a filtered empty state when search and previous status match no schedules" do
+  it "shows a filtered empty state when enabled state, search, and previous status match no schedules" do
     sign_in_as(admin_user)
-    create_schedule!(job_key: "invoice_digest", job_class: "InvoiceDigestJob", last_status: "completed")
-    create_schedule!(job_key: "billing_worker", job_class: "BillingWorkerJob", last_status: "failed")
+    create_schedule!(job_key: "invoice_digest", job_class: "InvoiceDigestJob", last_status: "completed", enabled: false)
+    create_schedule!(job_key: "billing_worker", job_class: "BillingWorkerJob", last_status: "failed", enabled: true)
 
-    get admin_recurring_job_schedules_path(status: "failed", q: "invoice")
+    get admin_recurring_job_schedules_path(status: "failed", enabled: "false", q: "invoice")
 
     expect(response).to have_http_status(:ok)
     expect(listed_schedule_keys).to be_empty
@@ -144,7 +176,7 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     create_run!(schedule, status: "failed", active_job_id: "failed-run", error_message: "boom")
     allow(RecurringJobDispatcherJob).to receive(:perform_later)
 
-    get admin_recurring_job_schedule_path(schedule, run_status: "failed", return_to: admin_recurring_job_schedules_path(status: "failed"))
+    get admin_recurring_job_schedule_path(schedule, run_status: "failed", return_to: admin_recurring_job_schedules_path(status: "failed", enabled: "false"))
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("failed-run")
@@ -153,10 +185,10 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(response.body).to include("Triage対象: 失敗: 1件 / 実行中: 0件 / キュー待ち: 0件")
 
     expect do
-      post request_run_admin_recurring_job_schedule_path(schedule, return_to: admin_recurring_job_schedules_path(status: "failed"))
+      post request_run_admin_recurring_job_schedule_path(schedule, return_to: admin_recurring_job_schedules_path(status: "failed", enabled: "false"))
     end.to change { schedule.reload.run_requested_at }.from(nil)
 
-    expect(response).to redirect_to(admin_recurring_job_schedule_path(schedule, return_to: admin_recurring_job_schedules_path(status: "failed")))
+    expect(response).to redirect_to(admin_recurring_job_schedule_path(schedule, return_to: admin_recurring_job_schedules_path(status: "failed", enabled: "false")))
     expect(RecurringJobDispatcherJob).to have_received(:perform_later)
   end
 
@@ -176,7 +208,7 @@ RSpec.describe "Admin recurring job schedules", type: :request do
   it "keeps safe return_to values on the detail page and request action" do
     sign_in_as(admin_user)
     schedule = create_schedule!
-    return_to = admin_recurring_job_schedules_path(status: "failed")
+    return_to = admin_recurring_job_schedules_path(status: "failed", enabled: "false")
     allow(RecurringJobDispatcherJob).to receive(:perform_later)
 
     get admin_recurring_job_schedule_path(schedule, return_to:)
