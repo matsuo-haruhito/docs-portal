@@ -61,9 +61,11 @@ class DocumentDeliveryLogsController < BaseController
 
     case params[:decision]
     when "mark_sent"
+      require_draft_delivery_log!
       @delivery_log.update!(status: :sent, sent_at: Time.current, error_message: nil)
       redirect_to delivery_log_redirect_path, notice: "送付済みにしました。"
     when "mark_failed"
+      require_draft_delivery_log!
       @delivery_log.update!(status: :failed, error_message: params[:error_message].to_s.presence || "manual mark")
       redirect_to delivery_log_redirect_path, notice: "送付失敗として記録しました。"
     else
@@ -141,6 +143,10 @@ class DocumentDeliveryLogsController < BaseController
 
   def visible_log?(log)
     current_user.internal? || log.sender == current_user
+  end
+
+  def require_draft_delivery_log!
+    raise ApplicationError::BadRequest, "manual update is allowed only for draft delivery logs" unless @delivery_log.draft?
   end
 
   def build_mailto_url(log)
