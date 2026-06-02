@@ -26,6 +26,7 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include("生成ファイルイベント")
       expect(response.body).to include(event.public_id)
       expect(response.body).to include("docs/source.yml")
+      expect(response.body).to include("イベントID / パス / エラー")
       expect(response.body).to include("再dispatch")
       expect(response.body).to include("失敗分を一括再dispatch")
       expect(response.body).to include("現在の条件で再dispatch対象: 0 件")
@@ -46,14 +47,15 @@ RSpec.describe "Admin generated file events", type: :request do
 
     it "keeps current filters on the bulk retry form" do
       sign_in_as(admin_user)
-      create_event!(path: "storage/document_files/source.yml", status: :failed, event_source: "manual_document_upload")
+      create_event!(path: "storage/document_files/source.yml", status: :failed, event_source: "manual_document_upload", error_message: "source failed")
       filters = {
         status: "failed",
         operation: "update",
         event_source: "manual_document_upload",
         path: "document_files",
         scheduled_from: "2026-05-10",
-        scheduled_to: "2026-05-11"
+        scheduled_to: "2026-05-11",
+        q: "source"
       }
 
       get admin_generated_file_events_path(filters)
@@ -64,16 +66,18 @@ RSpec.describe "Admin generated file events", type: :request do
 
     it "shows a filtered bulk retry target count and keeps the action enabled" do
       sign_in_as(admin_user)
-      matched = create_event!(path: "storage/document_files/source.yml", status: :failed, event_source: "manual_document_upload", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
-      create_event!(path: "storage/document_files/processed.yml", status: :processed, event_source: "manual_document_upload", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
-      create_event!(path: "storage/other/source.yml", status: :failed, event_source: "manual_document_upload", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
-      create_event!(path: "storage/document_files/other-source.yml", status: :failed, event_source: "artifact_import", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
+      matched = create_event!(path: "storage/document_files/source.yml", status: :failed, event_source: "manual_document_upload", error_message: "source failed", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
+      create_event!(path: "storage/document_files/processed.yml", status: :processed, event_source: "manual_document_upload", error_message: "source failed", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
+      create_event!(path: "storage/other/source.yml", status: :failed, event_source: "manual_document_upload", error_message: "source failed", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
+      create_event!(path: "storage/document_files/other-source.yml", status: :failed, event_source: "artifact_import", error_message: "source failed", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
+      create_event!(path: "storage/document_files/other.yml", status: :failed, event_source: "manual_document_upload", error_message: "other failed", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))
       filters = {
         status: "failed",
         event_source: "manual_document_upload",
         path: "document_files",
         scheduled_from: "2026-05-10",
-        scheduled_to: "2026-05-10"
+        scheduled_to: "2026-05-10",
+        q: "source"
       }
 
       get admin_generated_file_events_path(filters)
@@ -120,7 +124,8 @@ RSpec.describe "Admin generated file events", type: :request do
         event_source: "manual_document_upload",
         path: "document_files",
         scheduled_from: "2026-05-10",
-        scheduled_to: "2026-05-11"
+        scheduled_to: "2026-05-11",
+        q: "source"
       }
 
       get admin_generated_file_events_path(filters)
@@ -137,7 +142,7 @@ RSpec.describe "Admin generated file events", type: :request do
       25.times do |i|
         create_event!(path: "docs/newer-#{i}.yml", status: :failed)
       end
-      return_to_path = admin_generated_file_events_path(status: "failed", path: "docs", page: 2, per_page: 25)
+      return_to_path = admin_generated_file_events_path(status: "failed", path: "docs", q: "source", page: 2, per_page: 25)
 
       get return_to_path
 
@@ -219,6 +224,57 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).not_to include(unmatched_source.public_id)
       expect(response.body).not_to include(unmatched_path.public_id)
       expect(response.body).not_to include(unmatched_date.public_id)
+    end
+
+    it "filters by event id, path, and error fragments with q" do
+      sign_in_as(admin_user)
+      id_event = create_event!(path: "docs/id-target.yml", status: :pending)
+      path_event = create_event!(path: "docs/source.yml", status: :pending)
+      error_event = create_event!(path: "docs/error.yml", status: :failed, error_message: "Missing token in payload")
+      unmatched_event = create_event!(path: "docs/unmatched.yml", status: :processed, error_message: "completed")
+
+      get admin_generated_file_events_path(q: id_event.public_id.last(8))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(id_event.public_id)
+      expect(response.body).not_to include(path_event.public_id)
+      expect(response.body).not_to include(error_event.public_id)
+      expect(response.body).not_to include(unmatched_event.public_id)
+
+      get admin_generated_file_events_path(q: "docs\\source.yml")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(path_event.public_id)
+      expect(response.body).not_to include(id_event.public_id)
+      expect(response.body).not_to include(error_event.public_id)
+      expect(response.body).not_to include(unmatched_event.public_id)
+
+      get admin_generated_file_events_path(q: "Missing token")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(error_event.public_id)
+      expect(response.body).not_to include(id_event.public_id)
+      expect(response.body).not_to include(path_event.public_id)
+      expect(response.body).not_to include(unmatched_event.public_id)
+    end
+
+    it "combines q with existing filters" do
+      sign_in_as(admin_user)
+      matched = create_event!(path: "docs/search-target.yml", status: :failed, operation: "update", event_source: "manual_document_upload", error_message: "Retry timeout")
+      unmatched_status = create_event!(path: "docs/search-target.yml", status: :pending, operation: "update", event_source: "manual_document_upload", error_message: "Retry timeout")
+      unmatched_source = create_event!(path: "docs/search-target.yml", status: :failed, operation: "update", event_source: "artifact_import", error_message: "Retry timeout")
+
+      get admin_generated_file_events_path(
+        status: "failed",
+        operation: "update",
+        event_source: "manual_document_upload",
+        q: "timeout"
+      )
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(matched.public_id)
+      expect(response.body).not_to include(unmatched_status.public_id)
+      expect(response.body).not_to include(unmatched_source.public_id)
     end
 
     it "ignores invalid scheduled date filters" do
@@ -362,19 +418,21 @@ RSpec.describe "Admin generated file events", type: :request do
     it "bulk retries only failed events matching filters" do
       sign_in_as(admin_user)
       matched = create_event!(path: "docs/matched.yml", status: :failed, event_source: "manual_document_upload", error_message: "boom")
-      completed = create_event!(path: "docs/completed.yml", status: :processed, event_source: "manual_document_upload")
+      completed = create_event!(path: "docs/completed.yml", status: :processed, event_source: "manual_document_upload", error_message: "boom")
       other_source = create_event!(path: "docs/other-source.yml", status: :failed, event_source: "artifact_import", error_message: "boom")
+      other_query = create_event!(path: "docs/other-query.yml", status: :failed, event_source: "manual_document_upload", error_message: "other")
       allow(GeneratedFileEventDispatchJob).to receive(:perform_later)
 
-      post retry_failed_admin_generated_file_events_path(event_source: "manual_document_upload")
+      post retry_failed_admin_generated_file_events_path(event_source: "manual_document_upload", q: "boom")
 
-      expect(response).to redirect_to(admin_generated_file_events_path(event_source: "manual_document_upload"))
+      expect(response).to redirect_to(admin_generated_file_events_path(event_source: "manual_document_upload", q: "boom"))
       expect(flash[:notice]).to eq("失敗した生成ファイルイベント 1 件の再dispatchをキューに投入しました。")
       expect(matched.reload).to be_pending
       expect(matched.error_message).to be_nil
       expect(matched.processed_at).to be_nil
       expect(completed.reload).to be_processed
       expect(other_source.reload).to be_failed
+      expect(other_query.reload).to be_failed
       expect(GeneratedFileEventDispatchJob).to have_received(:perform_later).once
     end
 
