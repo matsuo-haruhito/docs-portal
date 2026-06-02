@@ -13,6 +13,9 @@
       wrapper: true,
       label: "文書名",
       placeholder: "文書を選択",
+      error_surface: true,
+      error_surface_html: { class: "notice alert" },
+      html: { data: { controller: "document-permission-error-surface", action: "rails-fields-kit--tom-select:selected-load-error->document-permission-error-surface#selectedLoadError rails-fields-kit--tom-select:selected-load->document-permission-error-surface#clear rails-fields-kit--tom-select:change->document-permission-error-surface#clear rails-fields-kit--tom-select:clear->document-permission-error-surface#clear" } },
       wrapper_html: { style: "grid-column: 1 / -1;" }
     .form-section style="grid-column: 1 / -1;"
       h3 style="margin-bottom: 0.25rem;" 適用対象
