@@ -4,6 +4,33 @@
 
 ここでは target SHA を決めません。`Gemfile` / `Gemfile.lock` も変更しません。dependency bump を実行する PR では、作業直前に upstream `main`、candidate PR、CI、mergeability、`docs/internal-gem-release-train-smoke.md` の representative smoke を再確認します。
 
+## latest addendum (2026-06-02 14:48 JST)
+
+- 判定分類: `docs-stale` / `docs-sync`
+- 対応 Issue: `#1699`
+- この追補は 2026-06-02 05:00 JST の snapshot を削除せず、release train 前に見る latest state として読む。
+- release train queue は引き続き `#1300` (`rails_fields_kit`) -> `#1301` (`tree_view`) -> `#789` (`rails_table_preferences`, human-gated)。この追補では target SHA、`Gemfile` / `Gemfile.lock`、upstream PR の review / merge 判断を決めない。
+
+### docs-portal side addendum
+
+| item | 2026-06-02 14:48 JST status | release train での扱い |
+| --- | --- | --- |
+| `docs-portal#1671` | merged | release evidence matrix は main に入っている。target SHA 判断前に見る evidence entrypoint として参照できる |
+| `docs-portal#1637` | merged | この upstream readiness snapshot は main に入っている。下の 05:00 JST snapshot は時点メモとして残し、最新状態はこの追補を優先して読む |
+| `docs-portal#1510` | closed, not merged | state cue inventory の parallel design lane は dependency bump と別 lane。関連 Issue `#1470` は completed だが、target SHA や pinned ref の根拠にはしない |
+| `docs-portal#1470` | completed | host app 側の state cue inventory 完了状態。`#1300` / `#1301` / `#789` の bump gate を置き換えない |
+
+### upstream readiness addendum
+
+| upstream PR | 2026-06-02 14:48 JST status | target SHA 判断での読み方 |
+| --- | --- | --- |
+| `tree_view-rails#1114` | open / mergeable true | remote-state state values の package-root export を追加する public surface PR。docs-only PR と同じ扱いにせず、`#1301` の target に含める場合は package-root export / manifest / representative smoke を再確認する |
+| `tree_view-rails#1116` | open / mergeable true | selection hidden input docs / mockup boundary の replacement docs-only PR。merge 済みなら docs diff として含めてよいが、public API target の必須 blocker にはしない |
+| `rails_fields_kit#782` | open / mergeable true | generated setup notes / support boundary の docs drift guard PR。`#1300` の target SHA 必須 blocker ではなく、merge 済みなら repository-local guard / development docs diff として読む |
+| `rails_table_preferences#664` | open / mergeable true, base is `quality/601-flat-empty-colspan` | `empty_message:` option の stacked PR。`#789` の human gate 解消前に main 直載せの known-good target と断定しない |
+
+この追補では、docs-only / docs drift guard、public API / helper surface、UI / accessibility、stacked PR を分けて読む。open / mergeable true は「そのまま target に含める」意味ではなく、bump 実行直前に upstream main、candidate PR、CI、mergeability、representative smoke を再確認する対象を示す。
+
 ## snapshot
 
 - 確認日時: 2026-06-02 05:00 JST scheduled run
