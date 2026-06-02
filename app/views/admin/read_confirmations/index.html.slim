@@ -1,4 +1,7 @@
 - page_title "既読確認内訳"
+- table_key = :admin_read_confirmations
+- table_columns = read_confirmation_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
 
 h1 既読確認内訳
 = render "admin/nav"
@@ -62,22 +65,25 @@ section.card
       |  / 最新200件までを表示
 
   - if @read_confirmations.any?
-    table
+    .card
+      = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "既読確認内訳の表示設定")
+
+    = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
       thead
         tr
-          th 確認日時
-          th 文書
-          th 確認者
-          th 会社
-          th 文書URL識別子
+          th data-rails-table-preferences-column-key="confirmed_at" 確認日時
+          th data-rails-table-preferences-column-key="document" 文書
+          th data-rails-table-preferences-column-key="user" 確認者
+          th data-rails-table-preferences-column-key="company" 会社
+          th data-rails-table-preferences-column-key="document_slug" 文書URL識別子
       tbody
         - @read_confirmations.each do |confirmation|
           tr
-            td = confirmation.confirmed_at.strftime("%Y-%m-%d %H:%M:%S")
-            td = link_to confirmation.document.title, project_document_path(confirmation.document.project, confirmation.document.slug), data: { turbo_frame: "_top" }
-            td = "#{confirmation.user.display_name} / #{confirmation.user.email_address}"
-            td = confirmation.user.company&.display_name || "-"
-            td
+            td data-rails-table-preferences-column-key="confirmed_at" = confirmation.confirmed_at.strftime("%Y-%m-%d %H:%M:%S")
+            td data-rails-table-preferences-column-key="document" = link_to confirmation.document.title, project_document_path(confirmation.document.project, confirmation.document.slug), data: { turbo_frame: "_top" }
+            td data-rails-table-preferences-column-key="user" = "#{confirmation.user.display_name} / #{confirmation.user.email_address}"
+            td data-rails-table-preferences-column-key="company" = confirmation.user.company&.display_name || "-"
+            td data-rails-table-preferences-column-key="document_slug"
               code = confirmation.document.slug
   - else
     section.card
