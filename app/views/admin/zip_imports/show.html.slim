@@ -26,6 +26,35 @@ h1 ZIPインポートdry-run
       p.muted 警告
       p.metric-number = @summary["warning_count"].to_i
 
+  - preview_metadata = [["取り込み元リポジトリ", @zip_import_preview["source_repo"]], ["ブランチ", @zip_import_preview["source_branch"]], ["コミット", @zip_import_preview["source_commit_hash"]], ["版ラベル", @zip_import_preview["version_label"]], ["ZIPファイル", @zip_import_preview["source_name"]]].select { |_, value| value.present? }
+
+  section
+    h2 取り込み前の確認
+    - if @errors.any?
+      h3 エラー
+      ul
+        - @errors.each do |message|
+          li = message
+    - else
+      p.muted エラーはありません。
+    - if @warnings.any?
+      h3 警告
+      ul
+        - @warnings.each do |message|
+          li = message
+    - else
+      p.muted 警告はありません。
+
+  section
+    h2 取り込み元情報
+    - if preview_metadata.any?
+      dl.definition-list
+        - preview_metadata.each do |label, value|
+          dt = label
+          dd = value
+    - else
+      p.muted 取り込み元metadataは保存されていません。
+
   p.actions
     - if @import_dry_run.analyzed?
       = button_to "この内容で取り込む", admin_zip_import_path(@import_dry_run), method: :patch, class: "button"

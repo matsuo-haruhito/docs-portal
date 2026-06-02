@@ -70,8 +70,8 @@ RSpec.describe Admin::AccessLogsHelper, type: :helper do
         segments: [
           { label: "mode", value: "compact" },
           { label: "scope", value: "選択" },
-          { label: "選択", value: "3件" },
-          { label: "出力", value: "2件" }
+          { label: "選択数", value: "3件" },
+          { label: "出力数", value: "2件" }
         ]
       )
     end
@@ -87,8 +87,8 @@ RSpec.describe Admin::AccessLogsHelper, type: :helper do
       expect(details[:segments]).to include(
         { label: "mode", value: "full" },
         { label: "scope", value: "全件" },
-        { label: "選択", value: "0件" },
-        { label: "出力", value: "12件" }
+        { label: "選択数", value: "0件" },
+        { label: "出力数", value: "12件" }
       )
     end
 

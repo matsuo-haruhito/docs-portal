@@ -96,8 +96,8 @@ module Admin::AccessLogsHelper
       segments: [
         { label: "mode", value: values.fetch("mode") },
         { label: "scope", value: ai_context_scope_label(values.fetch("scope")) },
-        { label: "選択", value: "#{values.fetch('selected_count')}件" },
-        { label: "出力", value: "#{values.fetch('exported_count')}件" }
+        { label: "選択数", value: "#{values.fetch('selected_count')}件" },
+        { label: "出力数", value: "#{values.fetch('exported_count')}件" }
       ]
     }
   end
