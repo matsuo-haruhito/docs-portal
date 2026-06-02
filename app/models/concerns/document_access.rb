@@ -21,6 +21,26 @@ module DocumentAccess
         )
         .distinct
     }
+
+    scope :visible_in_portal_for, lambda { |user, at = Time.current|
+      return none unless user&.active?
+      return active_only if user.internal?
+
+      active_version_sql = <<~SQL.squish
+        document_versions.status = :published_status
+        AND (document_versions.published_from IS NULL OR document_versions.published_from <= :at)
+        AND (document_versions.published_until IS NULL OR document_versions.published_until >= :at)
+      SQL
+
+      accessible_to(user)
+        .left_outer_joins(:document_versions)
+        .where(
+          "document_versions.id IS NULL OR (#{active_version_sql})",
+          published_status: DocumentVersion.statuses[:published],
+          at:
+        )
+        .distinct
+    }
   end
 
   def viewable_by?(user)
