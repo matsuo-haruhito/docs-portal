@@ -126,7 +126,7 @@ Rails.application.routes.draw do
   end
 
   resources :document_files, only: [:show], param: :public_id do
-    get "archive_entries/preview", to: "document_file_archive_entries#preview", as: :member
+    get "archive_entries/preview", to: "document_file_archive_entries#preview", as: :archive_entry_preview, on: :member
     get "archive_entries/download", to: "document_file_archive_entries#download", as: :archive_entry_download, on: :member
     get "assets/*asset_path", to: "document_files#asset", as: :asset, on: :member, format: false
   end
