@@ -16,7 +16,7 @@ h1 単体ファイルアップロードdry-run
     dt 取り込み先 relative path
     dd = @file_upload_preview["relative_path"].presence || "-"
     dt クライアント source path
-    dd = @file_upload_preview["source_path"].presence || "-"
+    dd = file_upload_source_path_preview(@file_upload_preview["source_path"])
     dt ファイルサイズ
     dd = @file_upload_preview["file_size"].present? ? number_to_human_size(@file_upload_preview["file_size"].to_i) : "-"
     dt content hash
