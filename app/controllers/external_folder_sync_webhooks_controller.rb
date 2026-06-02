@@ -1,4 +1,7 @@
 class ExternalFolderSyncWebhooksController < ActionController::Base
+  FILTERED_VALUE = "[FILTERED]".freeze
+  SENSITIVE_HEADER_KEYS = %w[HTTP_X_GOOG_CHANNEL_TOKEN HTTP_CLIENT_STATE].freeze
+
   skip_forgery_protection
 
   def google_drive
@@ -44,7 +47,7 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
       event.status = source.present? && verified ? :received : :ignored
       event.received_at = Time.current
       event.headers_json = filtered_headers
-      event.payload_json = payload.presence || {}
+      event.payload_json = sanitized_payload(provider:, payload:)
       event.error_message = event_error_message(source:, verified:)
     end
   end
@@ -103,7 +106,7 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
         payload["subscriptionId"],
         payload["resource"],
         payload["changeType"],
-        payload["clientState"],
+        token_fingerprint(payload["clientState"]),
         payload["sequenceNumber"]
       ].compact_blank.join(":").presence || fallback_event_key(provider)
     else
@@ -132,8 +135,24 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
   def filtered_headers
     request.headers.env.each_with_object({}) do |(key, value), result|
       next unless key.start_with?("HTTP_X_GOOG_") || key.in?(%w[HTTP_CLIENT_STATE HTTP_USER_AGENT CONTENT_TYPE])
+      next if SENSITIVE_HEADER_KEYS.include?(key)
 
       result[key.sub(/\AHTTP_/, "")] = value.to_s
     end
+  end
+
+  def sanitized_payload(provider:, payload:)
+    payload = payload.presence || {}
+    return payload unless provider.to_s == "sharepoint" && payload.is_a?(Hash)
+    return payload unless payload.key?("clientState")
+
+    payload.merge("clientState" => FILTERED_VALUE)
+  end
+
+  def token_fingerprint(token)
+    token = token.to_s
+    return if token.blank?
+
+    "client_state:#{Digest::SHA256.hexdigest(token)}"
   end
 end
