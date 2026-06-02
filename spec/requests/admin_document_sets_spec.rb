@@ -5,7 +5,7 @@ RSpec.describe "Admin document sets", type: :request do
   let(:project) { create(:project, name: "Delivery Project") }
   let(:empty_project) { create(:project, name: "Empty Project") }
   let(:document_a) { create(:document, project:, title: "概要仕様", slug: "overview") }
-  let(:document_b) { create(:document, project:, title: "社内メモ", slug: "internal-memo") }
+  let!(:document_b) { create(:document, project:, title: "社内メモ", slug: "internal-memo") }
   let!(:version_a1) { create(:document_version, document: document_a, version_label: "v1.0.0") }
   let!(:version_a2) { create(:document_version, document: document_a, version_label: "v2.0.0") }
   let!(:existing_document_set) do
