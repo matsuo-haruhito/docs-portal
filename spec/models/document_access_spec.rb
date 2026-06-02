@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe DocumentAccess, type: :model do
+RSpec.describe Document, type: :model do
   include ActiveSupport::Testing::TimeHelpers
 
   after { travel_back }
@@ -29,13 +29,13 @@ RSpec.describe DocumentAccess, type: :model do
         create(:document_version, document: expired_document, published_until: 1.day.ago)
         create(:document_permission, :company_scoped, document: inaccessible_document, company: create(:company))
 
-        expected_documents = Document.accessible_to(external_user).to_a.select do |document|
+        expected_documents = described_class.accessible_to(external_user).to_a.select do |document|
           document.visible_in_portal_for?(external_user)
         end
 
-        expect(Document.visible_in_portal_for(external_user)).to match_array(expected_documents)
-        expect(Document.visible_in_portal_for(external_user)).to include(no_version_document, active_document)
-        expect(Document.visible_in_portal_for(external_user)).not_to include(
+        expect(described_class.visible_in_portal_for(external_user)).to match_array(expected_documents)
+        expect(described_class.visible_in_portal_for(external_user)).to include(no_version_document, active_document)
+        expect(described_class.visible_in_portal_for(external_user)).not_to include(
           draft_document,
           future_document,
           expired_document,
