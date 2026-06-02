@@ -70,6 +70,13 @@ module Admin::DocumentPermissionsHelper
     user.email_address
   end
 
+  def document_permission_target_error_messages(document_permission)
+    document_permission.errors
+      .select { |error| error.attribute == :base && DOCUMENT_PERMISSION_FORM_BASE_ERROR_MESSAGES.key?(error.message) }
+      .map { |error| DOCUMENT_PERMISSION_FORM_BASE_ERROR_MESSAGES.fetch(error.message) }
+      .uniq
+  end
+
   def document_permission_form_error_messages(document_permission)
     document_permission.errors.map do |error|
       if error.attribute == :base
