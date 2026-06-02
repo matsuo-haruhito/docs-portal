@@ -113,9 +113,10 @@
                 th ダウンロード候補
                 th 操作
             tbody data-archive-preview-entries="true"
-              - @archive_preview.entries.each do |entry|
+              - @archive_preview.entries.each_with_index do |entry, entry_index|
                 - entry_type = entry.directory? ? "folder" : "file"
-                tr data-archive-preview-entry="true" data-archive-preview-entry-directory=entry.parent_directory data-archive-preview-entry-download-candidate=(entry.download_candidate? ? "true" : "false") data-archive-preview-entry-safe=(entry.safe_path? ? "true" : "false") data-archive-preview-entry-text-preview-candidate=(entry.text_preview_candidate? ? "true" : "false") data-archive-preview-entry-type=entry_type data-archive-preview-entry-size=entry.size
+                - archive_entry_anchor = "archive-entry-#{entry_index + 1}"
+                tr id=archive_entry_anchor data-archive-preview-entry="true" data-archive-preview-entry-directory=entry.parent_directory data-archive-preview-entry-download-candidate=(entry.download_candidate? ? "true" : "false") data-archive-preview-entry-safe=(entry.safe_path? ? "true" : "false") data-archive-preview-entry-text-preview-candidate=(entry.text_preview_candidate? ? "true" : "false") data-archive-preview-entry-type=entry_type data-archive-preview-entry-size=entry.size
                   td = entry.directory? ? "フォルダ" : "ファイル"
                   td
                     code data-archive-preview-entry-name="true" = entry.name
@@ -137,7 +138,7 @@
                       span.muted = entry.action_unavailable_reason || "-"
                   td
                     - if entry.text_preview_candidate?
-                      = link_to "プレビュー", archive_entry_preview_document_file_path(@document_file, entry_path: entry.name), class: "button secondary"
+                      = link_to "プレビュー", archive_entry_preview_document_file_path(@document_file, entry_path: entry.name, return_anchor: archive_entry_anchor), class: "button secondary"
                     - if entry.download_candidate?
                       = link_to "個別ダウンロード", archive_entry_download_document_file_path(@document_file, entry_path: entry.name), class: "button secondary"
                     button.button.secondary type="button" data-archive-preview-copy-entry="true" パスをコピー
