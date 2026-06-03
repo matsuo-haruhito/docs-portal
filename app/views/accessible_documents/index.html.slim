@@ -1,4 +1,8 @@
 - page_title "閲覧可能文書"
+- table_key = :accessible_documents
+- table_columns = accessible_document_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
+
 h1 閲覧可能文書
 
 p.muted
@@ -101,60 +105,62 @@ p.muted
       span.button.secondary.disabled 次へ
 
 - if @documents_count.positive?
-  section.card
-    table
-      thead
+  .card
+    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "閲覧可能文書一覧の表示設定")
+
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+    thead
+      tr
+        th data-rails-table-preferences-column-key="project" 案件
+        th data-rails-table-preferences-column-key="document" 文書名
+        th data-rails-table-preferences-column-key="match_reason" ヒット理由
+        th data-rails-table-preferences-column-key="tags" タグ
+        th data-rails-table-preferences-column-key="category" カテゴリ
+        th data-rails-table-preferences-column-key="document_kind" ファイル種
+        th data-rails-table-preferences-column-key="importance_level" 重要度
+        th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
+        th data-rails-table-preferences-column-key="latest_version" 最新版
+        th data-rails-table-preferences-column-key="html" HTML
+        th data-rails-table-preferences-column-key="files" 添付
+        th data-rails-table-preferences-column-key="updated_at" 最終更新
+    tbody
+      - @documents.each do |document|
+        - latest_version = document.latest_version
+        - files = document.document_versions.flat_map(&:document_files)
+        - match_summaries = document_search_match_summaries(document, @filters[:q])
         tr
-          th 案件
-          th 文書名
-          th ヒット理由
-          th タグ
-          th カテゴリ
-          th ファイル種
-          th 重要度
-          th 公開範囲
-          th 最新版
-          th HTML
-          th 添付
-          th 最終更新
-      tbody
-        - @documents.each do |document|
-          - latest_version = document.latest_version
-          - files = document.document_versions.flat_map(&:document_files)
-          - match_summaries = document_search_match_summaries(document, @filters[:q])
-          tr
-            td
-              = link_to document.project.name, project_path(document.project), data: { turbo_frame: "_top" }
-              - if document.project.code.present?
-                br
-                code = document.project.code
-            td = link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" }
-            td
-              - if match_summaries.any?
-                ul.compact-list
-                  - match_summaries.each do |summary|
-                    li
-                      span.badge = summary.label
-                      |  
-                      code = summary.value
-              - else
-                span.muted -
-            td
-              - if document.document_tags.any?
-                - document.document_tags.sort_by(&:normalized_name).each do |tag|
-                  = link_to tag.name, documents_path(tag: tag.normalized_name), class: "badge"
-              - else
-                span.muted なし
-            td
-              span.badge = document_category_label(document)
-            td = document_kind_label(document)
-            td
-              span.badge = document_importance_level_label(document)
-            td = document_visibility_policy_label(document)
-            td = latest_version ? document_version_label(latest_version) : "-"
-            td = latest_version&.site_build_path.present? ? "あり" : "なし"
-            td = files.any? ? "#{files.size}件" : "なし"
-            td = document.updated_at.strftime("%Y-%m-%d %H:%M")
+          td data-rails-table-preferences-column-key="project"
+            = link_to document.project.name, project_path(document.project), data: { turbo_frame: "_top" }
+            - if document.project.code.present?
+              br
+              code = document.project.code
+          td data-rails-table-preferences-column-key="document" = link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" }
+          td data-rails-table-preferences-column-key="match_reason"
+            - if match_summaries.any?
+              ul.compact-list
+                - match_summaries.each do |summary|
+                  li
+                    span.badge = summary.label
+                    |  
+                    code = summary.value
+            - else
+              span.muted -
+          td data-rails-table-preferences-column-key="tags"
+            - if document.document_tags.any?
+              - document.document_tags.sort_by(&:normalized_name).each do |tag|
+                = link_to tag.name, documents_path(tag: tag.normalized_name), class: "badge"
+            - else
+              span.muted なし
+          td data-rails-table-preferences-column-key="category"
+            span.badge = document_category_label(document)
+          td data-rails-table-preferences-column-key="document_kind" = document_kind_label(document)
+          td data-rails-table-preferences-column-key="importance_level"
+            span.badge = document_importance_level_label(document)
+          td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(document)
+          td data-rails-table-preferences-column-key="latest_version" = latest_version ? document_version_label(latest_version) : "-"
+          td data-rails-table-preferences-column-key="html" = latest_version&.site_build_path.present? ? "あり" : "なし"
+          td data-rails-table-preferences-column-key="files" = files.any? ? "#{files.size}件" : "なし"
+          td data-rails-table-preferences-column-key="updated_at" = document.updated_at.strftime("%Y-%m-%d %H:%M")
 
 p.actions
   = link_to "ダッシュボードへ戻る", dashboard_path, class: "button secondary"

@@ -6,6 +6,18 @@ RSpec.describe "Document catalogs", type: :request do
   let(:internal_user) { create(:user, :internal) }
   let(:external_user) { create(:user, :external, company:) }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def catalog_table_text
+    parsed_html.css("table").map(&:text).join("\n")
+  end
+
+  def main_text
+    parsed_html.at("main")&.text.to_s
+  end
+
   before do
     create(:project_membership, project:, user: external_user)
   end
@@ -21,8 +33,69 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("文書カタログ")
     expect(response.body).to include("Customer Pack")
+    expect(response.body).to include("顧客向け")
+    expect(response.body).to include("限定公開")
+    expect(response.body).to include("表示可能件数")
     expect(response.body).not_to include("Internal Pack")
+    expect(catalog_table_text).not_to include("restricted_external")
     expect(response.body).to include(project_document_catalog_path(project, visible))
+  end
+
+  it "searches catalogs by name and description" do
+    create(:document_catalog, project:, name: "Customer Onboarding", description: "Initial customer documents")
+    create(:document_catalog, project:, name: "Operations Pack", description: "Runbook for incident response", audience_type: :operations)
+    create(:document_catalog, project:, name: "Developer Guide", description: "SDK reference", audience_type: :developer)
+
+    sign_in_as(external_user)
+
+    get project_document_catalogs_path(project, q: "runbook")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Operations Pack")
+    expect(response.body).not_to include("Customer Onboarding")
+    expect(response.body).not_to include("Developer Guide")
+  end
+
+  it "combines audience and visibility filters" do
+    create(:document_catalog, project:, name: "Customer Private", audience_type: :customer, visibility_policy: :restricted_external)
+    create(:document_catalog, project:, name: "Customer Login", audience_type: :customer, visibility_policy: :public_with_login)
+    create(:document_catalog, project:, name: "Operations Login", audience_type: :operations, visibility_policy: :public_with_login)
+
+    sign_in_as(external_user)
+
+    get project_document_catalogs_path(project, audience_type: "customer", visibility_policy: "public_with_login")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Customer Login")
+    expect(response.body).not_to include("Customer Private")
+    expect(response.body).not_to include("Operations Login")
+  end
+
+  it "does not expose catalogs outside the viewer boundary through filters" do
+    create(:document_catalog, project:, name: "External Runbook", description: "Shared operations", audience_type: :operations, visibility_policy: :restricted_external)
+    create(:document_catalog, project:, name: "Internal Runbook", description: "Secret operations", audience_type: :operations, visibility_policy: :internal_only)
+
+    sign_in_as(external_user)
+
+    get project_document_catalogs_path(project, q: "runbook", audience_type: "operations", visibility_policy: "internal_only")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("条件に一致する文書カタログはありません。")
+    expect(response.body).not_to include("Internal Runbook")
+    expect(response.body).not_to include("External Runbook")
+  end
+
+  it "ignores unsupported filters without raising an error" do
+    create(:document_catalog, project:, name: "Customer Pack", audience_type: :customer, visibility_policy: :restricted_external)
+    create(:document_catalog, project:, name: "Developer Pack", audience_type: :developer, visibility_policy: :public_with_login)
+
+    sign_in_as(external_user)
+
+    get project_document_catalogs_path(project, audience_type: "unknown", visibility_policy: "archived")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Customer Pack")
+    expect(response.body).to include("Developer Pack")
   end
 
   it "shows only visible items in a catalog" do
@@ -32,7 +105,7 @@ RSpec.describe "Document catalogs", type: :request do
     visible_document.update!(latest_version: visible_version)
     create(:document_permission, document: visible_document, company:, access_level: :view)
 
-    catalog = create(:document_catalog, project:, name: "Customer Pack", visibility_policy: :restricted_external)
+    catalog = create(:document_catalog, project:, name: "Customer Pack", audience_type: :delivery, visibility_policy: :restricted_external)
     create(:document_catalog_item, document_catalog: catalog, document: hidden_document, sort_order: 1, note: "internal")
     create(:document_catalog_item, document_catalog: catalog, document: visible_document, sort_order: 2, note: "read first")
 
@@ -42,10 +115,16 @@ RSpec.describe "Document catalogs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Customer Pack")
+    expect(response.body).to include("納品向け")
+    expect(response.body).to include("限定公開")
+    expect(response.body).to include("表示可能:")
+    expect(response.body).to include("1件 / 登録:")
+    expect(response.body).to include("2件")
     expect(response.body).to include("Visible Manual")
     expect(response.body).to include("read first")
     expect(response.body).not_to include("Internal Manual")
     expect(response.body).not_to include("internal")
+    expect(main_text).not_to include("restricted_external")
   end
 
   it "forbids external users from internal-only catalogs" do

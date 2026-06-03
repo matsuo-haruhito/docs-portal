@@ -1,4 +1,5 @@
 - error_messages = document_permission_form_error_messages(document_permission)
+- target_error_messages = document_permission_target_error_messages(document_permission)
 - if error_messages.any?
   .error-messages
     strong 入力内容を確認してください。
@@ -13,23 +14,36 @@
       wrapper: true,
       label: "文書名",
       placeholder: "文書を選択",
+      error_surface: true,
+      error_surface_html: { class: "notice alert" },
+      html: { data: { controller: "document-permission-error-surface", action: "rails-fields-kit--tom-select:selected-load-error->document-permission-error-surface#selectedLoadError rails-fields-kit--tom-select:selected-load->document-permission-error-surface#clear rails-fields-kit--tom-select:change->document-permission-error-surface#clear rails-fields-kit--tom-select:clear->document-permission-error-surface#clear" } },
       wrapper_html: { style: "grid-column: 1 / -1;" }
     .form-section style="grid-column: 1 / -1;"
       h3 style="margin-bottom: 0.25rem;" 適用対象
-      p.muted style="margin-top: 0; margin-bottom: 0.75rem;" 会社向けかユーザー向けのどちらか一方を選びます。会社全体に付与するときは「会社」、個人に付与するときは「ユーザー」を指定してください。2つ同時には選択しません。
+      p.muted style="margin-top: 0; margin-bottom: 0.75rem;" 会社全体に付与するか、特定ユーザー1名に付与するかを選びます。会社とユーザーはどちらか一方だけを指定してください。
+      - if target_error_messages.any?
+        .notice.alert style="margin-top: 0; margin-bottom: 0.75rem;"
+          strong 適用対象の選択を確認してください。
+          ul
+            - target_error_messages.each do |message|
+              li = message
       .form-grid
-        = form.rfk_select :company_id,
-          collection: document_permission_form_company_options(@companies),
-          wrapper: true,
-          label: "会社",
-          allow_clear: true,
-          placeholder: "会社向けに付与する場合に選択"
-        = form.rfk_select :user_id,
-          collection: document_permission_form_user_options(@users),
-          wrapper: true,
-          label: "ユーザー",
-          allow_clear: true,
-          placeholder: "ユーザー向けに付与する場合に選択"
+        div style="min-width: 0;"
+          = form.rfk_select :company_id,
+            collection: document_permission_form_company_options(@companies),
+            wrapper: true,
+            label: "会社",
+            allow_clear: true,
+            placeholder: "会社向けに付与する場合に選択"
+          p.muted style="margin-top: 0.35rem;" 会社全体に同じ権限を付与する場合だけ選択します。個人ユーザーへ付与する場合は空にします。
+        div style="min-width: 0;"
+          = form.rfk_select :user_id,
+            collection: document_permission_form_user_options(@users),
+            wrapper: true,
+            label: "ユーザー",
+            allow_clear: true,
+            placeholder: "ユーザー向けに付与する場合に選択"
+          p.muted style="margin-top: 0.35rem;" 特定の1名にだけ権限を付与する場合だけ選択します。会社全体へ付与する場合は空にします。
     = form.rfk_select :access_level,
       collection: enum_options_for("document_permissions.access_level", DocumentPermission.access_levels.keys),
       wrapper: true,

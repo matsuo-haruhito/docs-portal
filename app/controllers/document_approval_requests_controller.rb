@@ -38,7 +38,7 @@ class DocumentApprovalRequestsController < BaseController
   end
 
   def update
-    raise ApplicationError::Forbidden unless current_user.internal?
+    raise ApplicationError::Forbidden unless approvable_request?
 
     @document_approval_request.approve!(actor: current_user)
     redirect_to document_approval_request_path(@document_approval_request, return_to: @return_to_path), notice: "確認依頼を OK にしました。"
@@ -74,6 +74,10 @@ class DocumentApprovalRequestsController < BaseController
 
   def showable_request?
     current_user.internal? || current_user == @document_approval_request.requester
+  end
+
+  def approvable_request?
+    @document_approval_request.pending? && current_user.internal?
   end
 
   def cancelable_request?

@@ -12,7 +12,9 @@ import "tom-select/dist/css/tom-select.css"
 import AutoHeightFrameController from "../controllers/auto_height_frame_controller"
 import BulkEditSelectionController from "../controllers/bulk_edit_selection_controller"
 import DocumentFileBrowserController from "../controllers/document_file_browser_controller"
+import DocumentPermissionErrorSurfaceController from "../controllers/document_permission_error_surface_controller"
 import DocumentSetDocumentFilterController from "../controllers/document_set_document_filter_controller"
+import DocumentVersionTabsController from "../controllers/document_version_tabs"
 import DocumentZipSelectionController from "../controllers/document_zip_selection_controller"
 import NavDropdownsController from "../controllers/nav_dropdowns_controller"
 import DocumentTreeNavigationController from "../controllers/document_tree_navigation_controller"
@@ -21,7 +23,6 @@ import ManualDocumentUploadController from "../controllers/manual_document_uploa
 import PreviewTableResizerController from "../controllers/preview_table_resizer_controller"
 import PreviewToolsController from "../controllers/preview_tools_controller"
 import SidebarController from "../controllers/sidebar_controller"
-import "../controllers/document_version_tabs"
 
 const application = Application.start()
 application.register("rails-table-preferences", RailsTablePreferencesController)
@@ -29,7 +30,9 @@ application.register("rails-fields-kit--tom-select", TomSelectController)
 application.register("auto-height-frame", AutoHeightFrameController)
 application.register("bulk-edit-selection", BulkEditSelectionController)
 application.register("document-file-browser", DocumentFileBrowserController)
+application.register("document-permission-error-surface", DocumentPermissionErrorSurfaceController)
 application.register("document-set-document-filter", DocumentSetDocumentFilterController)
+application.register("document-version-tabs", DocumentVersionTabsController)
 application.register("document-zip-selection", DocumentZipSelectionController)
 application.register("nav-dropdowns", NavDropdownsController)
 application.register("document-tree-navigation", DocumentTreeNavigationController)

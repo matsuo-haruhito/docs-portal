@@ -1,5 +1,7 @@
 - page_title @document_approval_request.title
 - return_to_path = @return_to_path || document_approval_requests_path
+- status_label = document_approval_request_status_label(@document_approval_request)
+- acted_at = @document_approval_request.approved_at || @document_approval_request.cancelled_at
 
 h1 = @document_approval_request.title
 p.muted
@@ -11,7 +13,7 @@ table
   tbody
     tr
       th 状態
-      td = document_approval_request_status_label(@document_approval_request)
+      td = status_label
     tr
       th 依頼者
       td = @document_approval_request.requester.name
@@ -28,13 +30,44 @@ table
       th Cancel日時
       td = @document_approval_request.cancelled_at ? l(@document_approval_request.cancelled_at) : "-"
 
+- unless @document_approval_request.pending?
+  section.approval-request-summary
+    h2 対応済み
+    p.muted
+      = status_label
+      |  として記録されています。対応者と日時を確認してください。
+    table
+      tbody
+        tr
+          th 対応者
+          td = @document_approval_request.acted_by&.name || "-"
+        tr
+          th 対応日時
+          td = acted_at ? l(acted_at) : "-"
+
 - if @document_approval_request.body.present?
   h2 内容
   p = simple_format(@document_approval_request.body)
 
-p.actions
+section.approval-request-actions
+  h2 操作
+
   - if current_user.internal? && @document_approval_request.pending?
-    = button_to "OK", document_approval_request_path(@document_approval_request, return_to: return_to_path), method: :patch, class: "button"
+    .approval-request-actions__group
+      h3 OKする
+      p.muted 内容を確認済みにし、この確認依頼を OK済みにします。
+      p.actions
+        = button_to "OK", document_approval_request_path(@document_approval_request, return_to: return_to_path), method: :patch, class: "button"
+
   - if @document_approval_request.pending? && (current_user.internal? || current_user == @document_approval_request.requester)
-    = button_to "Cancel", cancel_document_approval_request_path(@document_approval_request, return_to: return_to_path), method: :post, class: "button secondary"
-  = link_to "一覧へ戻る", return_to_path, class: "button secondary"
+    .approval-request-actions__group
+      h3 Cancelする
+      p.muted この確認依頼を取り下げます。理由入力や通知の追加はここでは行いません。
+      p.actions
+        = button_to "Cancel", cancel_document_approval_request_path(@document_approval_request, return_to: return_to_path), method: :post, class: "button secondary"
+
+  .approval-request-actions__group
+    h3 一覧へ戻る
+    p.muted 一覧の絞り込みや戻り先を保ったまま戻ります。
+    p.actions
+      = link_to "一覧へ戻る", return_to_path, class: "button secondary"

@@ -3,6 +3,42 @@ require "rails_helper"
 RSpec.describe "Admin project memberships", type: :request do
   let(:admin_user) { create(:user, :internal) }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def project_membership_select_names
+    parsed_html.css('select[name^="project_membership["]').map { |node| node["name"] }
+  end
+
+  it "renders the project membership select fields on initial load and invalid rerender" do
+    sign_in_as(admin_user)
+
+    get admin_project_memberships_path
+
+    expect(response).to have_http_status(:ok)
+    expect(project_membership_select_names).to include(
+      "project_membership[project_id]",
+      "project_membership[user_id]",
+      "project_membership[role]"
+    )
+
+    post admin_project_memberships_path, params: {
+      project_membership: {
+        project_id: "",
+        user_id: "",
+        role: "viewer"
+      }
+    }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(project_membership_select_names).to include(
+      "project_membership[project_id]",
+      "project_membership[user_id]",
+      "project_membership[role]"
+    )
+  end
+
   it "uses public_id-based action links on the index" do
     membership = create(:project_membership)
 

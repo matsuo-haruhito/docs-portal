@@ -30,6 +30,7 @@ Rails.application.routes.draw do
   namespace :admin do
     root "dashboard#index"
     resource :api_specification, only: [:show] do
+      post "retry_build", to: "api_specifications#retry_build", as: :retry_build
       get "site(/*site_path)", to: "api_specifications#site", as: :site, format: false
     end
     get "model_browser", to: "model_browsers#index", as: :model_browser

@@ -137,7 +137,7 @@ p.muted
         = link_to "ZIPダウンロード", document_version_archive_path(@version), class: "button secondary"
       - else
         = button_to "ダウンロード権限を申請", access_requests_path, params: { requestable_type: "Document", requestable_public_id: @document.public_id, requested_access_level: "download" }, class: "button secondary"
-  nav.markdown-mode-tabs aria-label="版詳細ナビゲーション"
+  nav.markdown-mode-tabs data-controller="document-version-tabs" aria-label="版詳細ナビゲーション"
     - if @version.rendered_site_available?
       = link_to "プレビュー", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path)
     - else

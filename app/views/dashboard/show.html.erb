@@ -67,9 +67,11 @@
           <% request_hash = AccessRequestHash.new(access_request).call %>
           <% requestable = request_hash[:requestable] %>
           <% requestable_name = requestable[:name] || requestable[:title] || requestable[:file_name] || requestable[:public_id] %>
-          <li>
-            <strong><%= requestable_name %></strong>
-            <span class="muted"><%= requestable[:type_label] %> / <%= request_hash[:requested_access_level_label] %> / <%= request_hash[:status_label] %> / <%= l(access_request.created_at, format: :short) %></span>
+          <li class="resource-list__item">
+            <div class="resource-list__content">
+              <strong><%= requestable_name %></strong>
+              <span class="muted resource-list__meta"><%= requestable[:type_label] %> / <%= request_hash[:requested_access_level_label] %> / <%= request_hash[:status_label] %> / <%= l(access_request.created_at, format: :short) %></span>
+            </div>
           </li>
         <% end %>
       </ul>
@@ -86,9 +88,11 @@
     <% if @projects.any? %>
       <ul class="resource-list">
         <% @projects.each do |project| %>
-          <li>
-            <strong><%= link_to project.name, project_path(project), data: { turbo_frame: "_top" } %></strong>
-            <span class="muted"><%= project.code %></span>
+          <li class="resource-list__item">
+            <div class="resource-list__content">
+              <strong><%= link_to project.name, project_path(project), data: { turbo_frame: "_top" } %></strong>
+              <span class="muted resource-list__meta"><%= project.code %></span>
+            </div>
           </li>
         <% end %>
       </ul>
@@ -103,9 +107,11 @@
     <% if @favorite_bookmarks.any? %>
       <ul class="resource-list">
         <% @favorite_bookmarks.each do |bookmark| %>
-          <li>
-            <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug), data: { turbo_frame: "_top" } %></strong>
-            <span class="muted"><%= bookmark.document.project.name %></span>
+          <li class="resource-list__item">
+            <div class="resource-list__content">
+              <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug), data: { turbo_frame: "_top" } %></strong>
+              <span class="muted resource-list__meta"><%= bookmark.document.project.name %></span>
+            </div>
           </li>
         <% end %>
       </ul>
@@ -120,9 +126,11 @@
     <% if @read_later_bookmarks.any? %>
       <ul class="resource-list">
         <% @read_later_bookmarks.each do |bookmark| %>
-          <li>
-            <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug), data: { turbo_frame: "_top" } %></strong>
-            <span class="muted"><%= bookmark.document.project.name %></span>
+          <li class="resource-list__item">
+            <div class="resource-list__content">
+              <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug), data: { turbo_frame: "_top" } %></strong>
+              <span class="muted resource-list__meta"><%= bookmark.document.project.name %></span>
+            </div>
           </li>
         <% end %>
       </ul>
@@ -138,9 +146,11 @@
       <p class="muted">あなたの閲覧履歴から表示しています。</p>
       <ul class="resource-list">
         <% @recent_documents.each do |document| %>
-          <li>
-            <strong><%= link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" } %></strong>
-            <span class="muted"><%= document.project.name %> / あなたが最近閲覧</span>
+          <li class="resource-list__item">
+            <div class="resource-list__content">
+              <strong><%= link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" } %></strong>
+              <span class="muted resource-list__meta"><%= document.project.name %> / あなたが最近閲覧</span>
+            </div>
           </li>
         <% end %>
       </ul>
@@ -156,9 +166,11 @@
       <p class="muted">閲覧可能な文書を更新日時の新しい順に表示しています。</p>
       <ul class="resource-list">
         <% @recently_updated_documents.each do |document| %>
-          <li>
-            <strong><%= link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" } %></strong>
-            <span class="muted"><%= document.project.name %> / 更新日時 <%= l(document.updated_at, format: :short) %></span>
+          <li class="resource-list__item">
+            <div class="resource-list__content">
+              <strong><%= link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" } %></strong>
+              <span class="muted resource-list__meta"><%= document.project.name %> / 更新日時 <%= l(document.updated_at, format: :short) %></span>
+            </div>
           </li>
         <% end %>
       </ul>
@@ -172,10 +184,16 @@
     <article class="card">
       <h2>社内向け導線</h2>
       <ul class="resource-list">
-        <li><%= link_to "確認依頼一覧", document_approval_requests_path %></li>
-        <li><%= link_to "外部送付履歴", document_delivery_logs_path %></li>
+        <li class="resource-list__item">
+          <div class="resource-list__content"><%= link_to "確認依頼一覧", document_approval_requests_path %></div>
+        </li>
+        <li class="resource-list__item">
+          <div class="resource-list__content"><%= link_to "外部送付履歴", document_delivery_logs_path %></div>
+        </li>
         <% if admin_user? %>
-          <li><%= link_to "管理ダッシュボード", admin_root_path %></li>
+          <li class="resource-list__item">
+            <div class="resource-list__content"><%= link_to "管理ダッシュボード", admin_root_path %></div>
+          </li>
         <% end %>
       </ul>
     </article>

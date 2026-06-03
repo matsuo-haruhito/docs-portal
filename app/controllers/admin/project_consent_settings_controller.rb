@@ -4,7 +4,15 @@ class Admin::ProjectConsentSettingsController < Admin::BaseController
   before_action :load_form_collections, only: %i[index create edit update]
 
   def index
+    @selected_project_id = project_filter_param
+    @selected_consent_term_id = consent_term_filter_param
+    @selected_enabled = enabled_filter_param
+
     @project_consent_settings = project_consent_settings_scope
+    @project_consent_settings_exist = @project_consent_settings.exists?
+    @project_consent_settings = @project_consent_settings.where(project_id: @selected_project_id) if @selected_project_id.present?
+    @project_consent_settings = @project_consent_settings.where(consent_term_id: @selected_consent_term_id) if @selected_consent_term_id.present?
+    @project_consent_settings = @project_consent_settings.where(enabled: @selected_enabled == "true") if @selected_enabled.present?
     @project_consent_setting = ProjectConsentSetting.new(enabled: true, required_on: :first_access)
   end
 
@@ -15,6 +23,7 @@ class Admin::ProjectConsentSettingsController < Admin::BaseController
       redirect_to admin_project_consent_settings_path, notice: "案件同意設定を登録しました。"
     else
       @project_consent_settings = project_consent_settings_scope
+      @project_consent_settings_exist = @project_consent_settings.exists?
       render :index, status: :unprocessable_entity
     end
   end
@@ -50,6 +59,26 @@ class Admin::ProjectConsentSettingsController < Admin::BaseController
 
   def project_consent_settings_scope
     ProjectConsentSetting.joins(:project).includes(:project, :consent_term).order("projects.code", :required_on)
+  end
+
+  def project_filter_param
+    filter_id_param(:project_id, @projects)
+  end
+
+  def consent_term_filter_param
+    filter_id_param(:consent_term_id, @consent_terms)
+  end
+
+  def enabled_filter_param
+    enabled = params[:enabled].to_s
+    %w[true false].include?(enabled) ? enabled : nil
+  end
+
+  def filter_id_param(key, collection)
+    id = params[key].to_s
+    return nil if id.blank?
+
+    collection.any? { |record| record.id.to_s == id } ? id : nil
   end
 
   def project_consent_setting_params

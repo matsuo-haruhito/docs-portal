@@ -1,4 +1,5 @@
 - page_title "API仕様"
+- primary_source_paths = @api_specification_page.primary_source_paths
 
 h1 API仕様
 p.muted ドキュメント更新用 internal import API、Office preview、外部フォルダ同期 Webhook、外部連携設定の仕様を確認できます。
@@ -43,23 +44,21 @@ section.card
       ul
         li = link_to "API仕様ページとdocs-src更新確認runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/API仕様ページとdocs-src更新確認runbook.md"
         li = link_to "build-docs workflow確認runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/build-docs%20workflow確認runbook.md"
-      p.muted 主要 source: docs-src/api-specification.md、docs-src/client-file-upload-api.md、docs-src/office-preview.md、docs-src/external-folder-sync-webhooks.md
+      p.muted = "主要 source: #{primary_source_paths.join('、')}"
+  - if %i[failed stale].include?(build_status.state)
+    .notice
+      h3 手動 build 再実行
+      p.muted API仕様ページ専用の Docusaurus build だけを再実行します。実行中 marker がある場合は二重起動せず、完了後に再読み込みしてください。
+      p.muted failure の場合は source、runtime、job / CI logs の順で確認し、画面には短いサニタイズ済み理由だけを表示します。
+      = button_to "API仕様ページの build を再実行", retry_build_admin_api_specification_path, method: :post
 
 section.card
   h2 主要ページとsource
   ul
-    li
-      = link_to "API仕様・連携設定", site_admin_api_specification_path(site_path: "api-specification")
-      span.muted  - docs-src/api-specification.md
-    li
-      = link_to "単体ファイルアップロードAPI", site_admin_api_specification_path(site_path: "client-file-upload-api")
-      span.muted  - docs-src/client-file-upload-api.md
-    li
-      = link_to "Office preview", site_admin_api_specification_path(site_path: "office-preview")
-      span.muted  - docs-src/office-preview.md
-    li
-      = link_to "外部フォルダ同期 Webhook 受信仕様", site_admin_api_specification_path(site_path: "external-folder-sync-webhooks")
-      span.muted  - docs-src/external-folder-sync-webhooks.md
+    - @api_specification_page.primary_source_pages.each do |source_page|
+      li
+        = link_to source_page.label, site_admin_api_specification_path(site_path: source_page.site_path)
+        span.muted = " - #{source_page.source_path}"
 
 section.card
   - if @api_specification_page.available?
@@ -67,6 +66,6 @@ section.card
       iframe.site-viewer-frame src=@api_specification_page.iframe_src title="API仕様"
   - else
     h2 Docusaurus build が必要です
-    p.muted API仕様のMarkdownは docs-src/api-specification.md、docs-src/client-file-upload-api.md、docs-src/office-preview.md、docs-src/external-folder-sync-webhooks.md にあります。Docusaurus build を開始している場合は、完了後に再読み込みするとHTMLレンダリング結果を表示します。
+    p.muted = "API仕様のMarkdownは #{primary_source_paths.join('、')} にあります。Docusaurus build を開始している場合は、完了後に再読み込みするとHTMLレンダリング結果を表示します。"
     p
       code docs-src/api-specification.md

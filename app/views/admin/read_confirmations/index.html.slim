@@ -18,6 +18,13 @@ section.card
       div
         = form.label :document_slug, "文書URL識別子"
         = form.search_field :document_slug, value: @document_slug
+      div
+        = form.label :from, "既読確認日時（開始日）"
+        = form.date_field :from, value: params[:from].to_s.strip
+      div
+        = form.label :to, "既読確認日時（終了日）"
+        = form.date_field :to, value: params[:to].to_s.strip
+    p.muted 期間は既読確認日時（confirmed_at）を対象にします。文書利用状況の閲覧・ダウンロード集計期間とは別の条件です。
     p.actions
       = form.submit "表示"
       = link_to "条件をクリア", admin_read_confirmations_path
@@ -42,6 +49,11 @@ section.card
         p.muted 指定した文書はこの案件に見つかりません。文書利用状況の文書名リンクから slug を確認してください。
     - else
       p.muted 文書URL識別子を指定しない場合は、案件内の既読確認を新しい順に表示します。
+    - if @confirmed_from || @confirmed_to
+      p
+        | 既読確認日時の期間:
+        strong = " #{@confirmed_from&.strftime("%Y-%m-%d") || "指定なし"} から #{@confirmed_to&.strftime("%Y-%m-%d") || "指定なし"} まで"
+      p.muted この期間は既読確認日時だけに適用され、文書利用状況の閲覧・ダウンロード集計期間は変更しません。
     p
       = link_to "文書利用状況へ", admin_document_usage_reports_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
     p.muted

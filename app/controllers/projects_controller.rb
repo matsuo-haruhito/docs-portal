@@ -2,10 +2,14 @@ require "digest"
 
 class ProjectsController < BaseController
   def index
-    @projects = Project.accessible_to(current_user)
-      .includes(:company, documents: :latest_version)
-      .order(:code)
-    @projects = @projects.select { project_list_visible_for_portal?(_1) } unless current_user.internal?
+    projects = Project.accessible_to(current_user).order(:code)
+    @projects = if current_user.internal?
+      projects.includes(:company, documents: :latest_version)
+    else
+      projects
+        .without_documents_or_with_portal_visible_documents_for(current_user)
+        .includes(:company, documents: :latest_version)
+    end
   end
 
   def show
@@ -244,12 +248,13 @@ class ProjectsController < BaseController
   end
 
   def portal_tree_projects(include_project: nil)
-    projects = Project.accessible_to(current_user)
-      .includes(:company, documents: :latest_version)
-      .order(:code)
-    return projects if current_user.internal?
+    projects = Project.accessible_to(current_user).order(:code)
+    return projects.includes(:company, documents: :latest_version) if current_user.internal?
 
-    visible_projects = projects.select { portal_documents_for(_1).any? }
+    visible_projects = projects
+      .with_portal_visible_documents_for(current_user)
+      .includes(:company, documents: [:latest_version, :document_versions])
+      .select { portal_documents_for(_1).any? }
     visible_projects << include_project if include_project.present? && visible_projects.exclude?(include_project)
     visible_projects
   end

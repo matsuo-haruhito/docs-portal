@@ -15,6 +15,14 @@ RSpec.describe "Admin document permissions", type: :request do
     parsed_html.at_css(%(select[name="#{field_name}"]))&.[]("placeholder")
   end
 
+  def document_select
+    parsed_html.at_css('select[name="document_permission[document_id]"]')
+  end
+
+  def document_error_surface
+    parsed_html.at_css("#document_permission_document_id_error_surface")
+  end
+
   def heading_texts
     parsed_html.css("h1, h2, h3").map { _1.text.squish }.reject(&:empty?)
   end
@@ -46,13 +54,47 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(page_text).to include("まだ権限は登録されていません。最初の 1 件を登録すると、文書ごとの権限数と閲覧/ダウンロード内訳をここで確認できます。")
     expect(page_text).to include("まずは上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して 1 件登録してください。")
     expect(page_text).to include("登録後は、会社別・ユーザー別の対象主体や権限内容をこの一覧で確認、編集できます。")
-    expect(page_text).to include("会社向けかユーザー向けのどちらか一方を選びます。会社全体に付与するときは「会社」、個人に付与するときは「ユーザー」を指定してください。2つ同時には選択しません。")
+    expect(page_text).to include("会社全体に付与するか、特定ユーザー1名に付与するかを選びます。")
+    expect(page_text).to include("会社全体に同じ権限を付与する場合だけ選択します。")
+    expect(page_text).to include("特定の1名にだけ権限を付与する場合だけ選択します。")
     expect(select_placeholder("document_permission[company_id]")).to eq("会社向けに付与する場合に選択")
     expect(select_placeholder("document_permission[user_id]")).to eq("ユーザー向けに付与する場合に選択")
     expect(page_text).not_to include("会社単位かユーザー単位のどちらか一方を指定してください。")
     expect(page_text).not_to include("権限概要の表示設定")
     expect(page_text).not_to include("権限一覧の表示設定")
     expect(table_preference_column_keys).to be_empty
+  end
+
+  it "renders the document field as the rails_fields_kit error-surface canary" do
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path
+
+    expect(response).to have_http_status(:ok)
+    expect(document_select["data-controller"]).to include("document-permission-error-surface")
+    expect(document_select["data-action"]).to include("rails-fields-kit--tom-select:selected-load-error->document-permission-error-surface#selectedLoadError")
+    expect(document_select["data-action"]).to include("rails-fields-kit--tom-select:selected-load->document-permission-error-surface#clear")
+    expect(document_select["data-action"]).to include("rails-fields-kit--tom-select:change->document-permission-error-surface#clear")
+    expect(document_select["aria-describedby"].to_s.split).to include("document_permission_document_id_error_surface")
+    expect(document_select["data-rails-fields-kit--tom-select-error-surface-id-value"]).to eq("document_permission_document_id_error_surface")
+    expect(document_error_surface["role"]).to eq("status")
+    expect(document_error_surface["aria-live"]).to eq("polite")
+    expect(document_error_surface["hidden"]).to eq("hidden")
+    expect(document_error_surface["class"]).to include("notice", "alert", "rfk-tom-select-error-surface")
+  end
+
+  it "keeps company and user fields out of the error-surface canary" do
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path
+
+    company_select = parsed_html.at_css('select[name="document_permission[company_id]"]')
+    user_select = parsed_html.at_css('select[name="document_permission[user_id]"]')
+
+    expect(company_select["data-controller"]).not_to include("document-permission-error-surface")
+    expect(user_select["data-controller"]).not_to include("document-permission-error-surface")
+    expect(company_select["data-rails-fields-kit--tom-select-error-surface-id-value"]).to be_nil
+    expect(user_select["data-rails-fields-kit--tom-select-error-surface-id-value"]).to be_nil
   end
 
   it "shows owner-scope guidance again when both company and user are submitted" do
@@ -73,8 +115,9 @@ RSpec.describe "Admin document permissions", type: :request do
 
     expect(response).to have_http_status(:unprocessable_content)
     expect(page_text).to include("入力内容を確認してください。")
+    expect(page_text).to include("適用対象の選択を確認してください。")
     expect(page_text).to include("適用対象は会社かユーザーのどちらか一方だけを指定してください。")
-    expect(page_text).to include("会社向けかユーザー向けのどちらか一方を選びます。会社全体に付与するときは「会社」、個人に付与するときは「ユーザー」を指定してください。2つ同時には選択しません。")
+    expect(page_text).to include("会社全体に付与するか、特定ユーザー1名に付与するかを選びます。")
     expect(page_text).not_to include("company_id and user_id cannot both be set")
     expect(select_placeholder("document_permission[company_id]")).to eq("会社向けに付与する場合に選択")
     expect(select_placeholder("document_permission[user_id]")).to eq("ユーザー向けに付与する場合に選択")

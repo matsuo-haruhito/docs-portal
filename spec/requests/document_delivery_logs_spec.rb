@@ -310,6 +310,26 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(href_for("送付履歴一覧へ戻る")).to eq(return_to)
   end
 
+  it "rejects manual delivery log updates after the draft status has ended" do
+    sent_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :sent, delivery_type: :portal_link, to_addresses: "sent@example.com", sent_at: 1.day.ago, error_message: nil)
+    failed_log = create(:document_delivery_log, project:, document:, sender: external_user, status: :failed, delivery_type: :portal_link, to_addresses: "failed@example.com", error_message: "delivery failed")
+
+    sign_in_as(external_user)
+
+    patch document_delivery_log_path(sent_log), params: { decision: "mark_failed", error_message: "overwrite failure" }
+
+    expect(response).to have_http_status(:bad_request)
+    expect(sent_log.reload.status).to eq("sent")
+    expect(sent_log.error_message).to be_nil
+
+    patch document_delivery_log_path(failed_log), params: { decision: "mark_sent" }
+
+    expect(response).to have_http_status(:bad_request)
+    expect(failed_log.reload.status).to eq("failed")
+    expect(failed_log.error_message).to eq("delivery failed")
+    expect(failed_log.sent_at).to be_nil
+  end
+
   it "falls back to the delivery logs list when manual update return_to is unsafe" do
     own_draft = create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "draft@example.com")
 
