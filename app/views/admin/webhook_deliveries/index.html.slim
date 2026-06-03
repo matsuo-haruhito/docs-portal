@@ -1,0 +1,72 @@
+- page_title "Webhook送信履歴検索"
+- delivery_table_key = :admin_webhook_delivery_search
+- delivery_table_columns = webhook_delivery_table_columns
+- delivery_table_settings = rails_table_preference_settings(table_key: delivery_table_key)
+- delivery_status_options = webhook_delivery_status_filter_options.map { |value, label| [label, value] }
+- event_type_options = WebhookEndpoint::EVENT_TYPES.map { |event_type| [webhook_event_type_label(event_type), event_type] }
+
+h1 Webhook送信履歴検索
+= render "admin/nav"
+
+p.actions
+  = link_to "Webhook一覧へ戻る", admin_webhook_endpoints_path, class: "button secondary"
+
+.card
+  h2 検索条件
+  = form_with url: admin_webhook_deliveries_path, method: :get, local: true do
+    .form-grid
+      label
+        | Webhook設定
+        = select_tag :webhook_endpoint_id,
+          options_from_collection_for_select(@webhook_endpoints, :id, :name, @delivery_filters[:webhook_endpoint_id]),
+          include_blank: "すべて"
+      label
+        | イベント
+        = select_tag :event_type, options_for_select([["すべて", ""]] + event_type_options, @delivery_filters[:event_type])
+      label
+        | ステータス
+        = select_tag :status, options_for_select([["すべて", ""]] + delivery_status_options.reject { |(_label, value)| value == "all" }, @delivery_filters[:status])
+      label
+        | 作成日From
+        = date_field_tag :created_from, @delivery_filters[:created_from]
+      label
+        | 作成日To
+        = date_field_tag :created_to, @delivery_filters[:created_to]
+    p.actions style="margin-top:16px;"
+      = submit_tag "検索", class: "button"
+      - if @delivery_filters_applied
+        = link_to "条件をリセット", admin_webhook_deliveries_path, class: "button secondary"
+
+.card
+  h2 検索結果
+  p.muted = "表示範囲: #{@webhook_deliveries_total_count}件中#{@webhook_deliveries.size}件を新しい順で表示しています。#{@webhook_deliveries_total_count > @webhook_deliveries_limit ? "さらに古い履歴を探す場合は endpoint / event / status / 作成日で絞り込んでください。" : ""}"
+  p.muted この一覧は履歴を探して詳細へ進むための read-only 検索です。まとめて再送は既存の Webhook 一覧で「失敗のみ」表示中の最近50件に閉じています。
+
+  - if @webhook_deliveries.any?
+    = table_preferences_editor(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns, title: "Webhook送信履歴検索結果の表示設定")
+    = table_preferences_table_tag(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns) do
+      thead
+        tr
+          th data-rails-table-preferences-column-key="created_at" 作成日時
+          th data-rails-table-preferences-column-key="endpoint" 設定
+          th data-rails-table-preferences-column-key="event_type" イベント
+          th data-rails-table-preferences-column-key="status" ステータス
+          th data-rails-table-preferences-column-key="response_status" HTTP
+          th data-rails-table-preferences-column-key="error_message" エラー
+          th data-rails-table-preferences-column-key="actions"
+      tbody
+        - @webhook_deliveries.each do |delivery|
+          tr
+            td data-rails-table-preferences-column-key="created_at" = l(delivery.created_at, format: :short)
+            td data-rails-table-preferences-column-key="endpoint" = delivery.webhook_endpoint.name
+            td data-rails-table-preferences-column-key="event_type" = webhook_event_type_label(delivery)
+            td data-rails-table-preferences-column-key="status"
+              span.badge = webhook_delivery_status_label(delivery)
+            td data-rails-table-preferences-column-key="response_status" = delivery.response_status || "-"
+            td data-rails-table-preferences-column-key="error_message" = delivery.error_message.presence || "-"
+            td.actions data-rails-table-preferences-column-key="actions"
+              = link_to "詳細", admin_webhook_delivery_path(delivery.public_id, @delivery_return_params)
+  - elsif @delivery_filters_applied
+    p.muted 条件に一致するWebhook送信履歴はありません。endpoint、event、status、作成日の条件を見直してください。
+  - else
+    p.muted まだWebhook送信履歴はありません。
