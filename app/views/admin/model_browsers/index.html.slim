@@ -1,25 +1,43 @@
 - page_title "モデルブラウザ"
+- has_query = @query.present?
 
 h1 モデルブラウザ
 p.muted 主要な管理対象の件数と最近のデータを横断確認できます。既存の管理画面への入口と、実データ確認用の参照画面をまとめています。
 
 = render "admin/nav"
 
-- @entry_groups.each do |_group, group_label, entries|
-  section.model-browser-group
-    h2 = group_label
-    .dashboard-grid
-      - entries.each do |entry|
-        - summary = @entry_summaries.fetch(entry)
-        section.card.metric-card
-          h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
-          p.muted = entry.description
-          dl.definition-list
-            dt 件数
-            dd = summary[:total_count]
-            dt 最終更新
-            dd = summary[:latest_updated_at] ? l(summary[:latest_updated_at], format: :short) : "-"
-          p.actions
-            = link_to "詳細を見る", admin_model_browser_model_path(entry.key), class: "button"
-            - if (index_path = entry_index_path(entry))
-              = link_to "既存画面へ", index_path, class: "button secondary"
+.card
+  = form_with url: admin_model_browser_path, method: :get, local: true, class: "filters" do
+    = label_tag :q, "モデル検索"
+    = search_field_tag :q, @query, placeholder: "モデル名 / key / 説明 / group"
+    = submit_tag "検索", class: "button secondary"
+    - if has_query
+      = link_to "検索解除", admin_model_browser_path, class: "button secondary"
+  p.muted catalog entry のモデル名、key、説明、group から探せます。最近の record 検索や編集操作は各 model の詳細または既存画面で確認してください。
+  - if has_query
+    p.muted = "検索条件: #{@query} / 表示中: #{@entries.size}件"
+
+- if @entries.any?
+  - @entry_groups.each do |_group, group_label, entries|
+    section.model-browser-group
+      h2 = group_label
+      .dashboard-grid
+        - entries.each do |entry|
+          - summary = @entry_summaries.fetch(entry)
+          section.card.metric-card
+            h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
+            p.muted = entry.description
+            dl.definition-list
+              dt 件数
+              dd = summary[:total_count]
+              dt 最終更新
+              dd = summary[:latest_updated_at] ? l(summary[:latest_updated_at], format: :short) : "-"
+            p.actions
+              = link_to "詳細を見る", admin_model_browser_model_path(entry.key), class: "button"
+              - if (index_path = entry_index_path(entry))
+                = link_to "既存画面へ", index_path, class: "button secondary"
+- else
+  section.card
+    h2 検索条件に一致するモデルはありません。
+    p.muted モデル名、key、説明、group の表記を変えて再検索してください。
+    p.actions = link_to "検索解除", admin_model_browser_path, class: "button secondary"
