@@ -102,26 +102,36 @@ RSpec.describe "Document review comments", type: :request do
     get project_document_path(project, document.slug)
     expect(response).to have_http_status(:ok)
     admin_html = Nokogiri::HTML(response.body)
+    admin_text = admin_html.text
     unresolved_tab_label = admin_html.at_css("label[for='document-comment-tab-unresolved']").text.squish
 
-    expect(response.body).to include("未解決: Q&A 1件 / 確認事項 1件")
+    expect(admin_text).to include("未解決: Q&A 1件 / 確認事項 1件")
     expect(unresolved_tab_label).to include("未解決 (Q&A 1 / 確認事項 1)")
-    expect(response.body).to include("外部公開Q&A")
-    expect(response.body).to include("公開範囲: 外部/利用者にも表示")
-    expect(response.body).to include("内部限定")
-    expect(response.body).to include("公開範囲: 内部のみ")
+    expect(admin_text).to include("外部公開Q&A")
+    expect(admin_text).to include("Q&A状態: 受付中")
+    expect(admin_text).to include("外部/利用者にも表示される公開Q&Aです")
+    expect(admin_text).to include("公開範囲: 外部/利用者にも表示")
+    expect(admin_text).to include("内部限定")
+    expect(admin_text).to include("確認事項状態: 未対応")
+    expect(admin_text).to include("内部ユーザーだけに見える確認事項です")
+    expect(admin_text).to include("公開範囲: 内部のみ")
 
     sign_in_as(external_user)
 
     get project_document_path(project, document.slug)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("未解決: Q&A 1件")
-    expect(response.body).to include("未解決Q&A")
-    expect(response.body).to include("外部公開Q&A")
-    expect(response.body).not_to include("確認事項")
-    expect(response.body).not_to include("内部限定")
+    external_html = Nokogiri::HTML(response.body)
+    external_text = external_html.text
+    expect(external_text).to include("未解決: Q&A 1件")
+    expect(external_text).to include("未解決Q&A")
+    expect(external_text).to include("外部公開Q&A")
+    expect(external_text).to include("Q&A状態: 受付中")
+    expect(external_text).to include("このスレッドは文書のQ&Aとして表示されます")
+    expect(external_text).not_to include("確認事項")
+    expect(external_text).not_to include("内部限定")
+    expect(external_text).not_to include("内部向け確認事項")
     expect(response.body).not_to include("Internal visibility check")
-    expect(response.body).not_to include("回答済みは回答・対応が終わった質問")
+    expect(external_text).not_to include("回答済みは回答・対応が終わった質問")
   end
 
   it "counts and filters unresolved Q&A threads by open status" do
@@ -173,11 +183,12 @@ RSpec.describe "Document review comments", type: :request do
 
     expect(response).to have_http_status(:ok)
     html = Nokogiri::HTML(response.body)
+    page_text = html.text
     unresolved_tab_label = html.at_css("label[for='document-comment-tab-unresolved']").text.squish
     qa_panel_text = html.at_css(".document-comment-tabs__panel--qa").text
     unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
 
-    expect(response.body).to include("未解決: Q&A 1件 / 確認事項 1件")
+    expect(page_text).to include("未解決: Q&A 1件 / 確認事項 1件")
     expect(unresolved_tab_label).to include("未解決 (Q&A 1 / 確認事項 1)")
 
     expect(qa_panel_text).to include(open_question.body)
@@ -185,6 +196,9 @@ RSpec.describe "Document review comments", type: :request do
     expect(qa_panel_text).to include(closed_question.body)
     expect(qa_panel_text).to include("回答済み")
     expect(qa_panel_text).to include("クローズ")
+    expect(qa_panel_text).to include("Q&A状態: 受付中")
+    expect(qa_panel_text).to include("Q&A状態: 回答済み")
+    expect(qa_panel_text).to include("Q&A状態: クローズ")
 
     expect(unresolved_panel_text).to include("未解決Q&A")
     expect(unresolved_panel_text).to include("未解決確認事項（社内レビューコメント）")
@@ -192,6 +206,7 @@ RSpec.describe "Document review comments", type: :request do
     expect(unresolved_panel_text).not_to include(answered_question.body)
     expect(unresolved_panel_text).not_to include(closed_question.body)
     expect(unresolved_panel_text).to include(rejected_review.body)
+    expect(unresolved_panel_text).to include("確認事項状態: 却下")
   end
 
   it "allows external users to create public Q&A threads and internal users to reply" do
