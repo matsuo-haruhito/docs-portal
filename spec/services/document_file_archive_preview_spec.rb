@@ -167,20 +167,33 @@ RSpec.describe DocumentFileArchivePreview do
     expect(summaries["docs/images/"].total_file_size).to eq(3)
   end
 
-  it "truncates entries over the limit" do
+  it "truncates entries over the limit and summarizes only visible entries" do
     storage_key = "spec/archive-preview/large.zip"
     write_zip(storage_key, {
-      "one.txt" => "1",
-      "two.txt" => "2",
-      "three.txt" => "3"
+      "docs/one.txt" => "1",
+      "docs/two.txt" => "22",
+      "docs/hidden.txt" => "333",
+      "hidden/" => :directory
     })
     file = create(:document_file, document_version: version, file_name: "large.zip", content_type: "application/zip", storage_key:)
 
     preview = described_class.new(file:, limit: 2).call
 
-    expect(preview.entries.size).to eq(2)
     expect(preview).to be_truncated
     expect(preview.limit).to eq(2)
+    expect(preview.entries.map(&:name)).to contain_exactly("docs/one.txt", "docs/two.txt")
+    expect(preview.entries.map(&:name)).not_to include("docs/hidden.txt", "hidden/")
+    expect(preview.file_count).to eq(2)
+    expect(preview.folder_count).to eq(0)
+    expect(preview.total_file_size).to eq(3)
+    expect(preview.text_preview_candidate_entries.map(&:name)).to contain_exactly("docs/one.txt", "docs/two.txt")
+    expect(preview.download_candidate_entries.map(&:name)).to contain_exactly("docs/one.txt", "docs/two.txt")
+
+    summaries = preview.directory_summaries.index_by(&:path)
+    expect(summaries.keys).to contain_exactly("docs/")
+    expect(summaries["docs/"].file_count).to eq(2)
+    expect(summaries["docs/"].folder_count).to eq(0)
+    expect(summaries["docs/"].total_file_size).to eq(3)
   end
 
   it "returns an error result for broken zip" do
