@@ -101,8 +101,11 @@ RSpec.describe "Document review comments", type: :request do
 
     get project_document_path(project, document.slug)
     expect(response).to have_http_status(:ok)
+    admin_html = Nokogiri::HTML(response.body)
+    unresolved_tab_label = admin_html.at_css("label[for='document-comment-tab-unresolved']").text.squish
+
     expect(response.body).to include("未解決: Q&A 1件 / 確認事項 1件")
-    expect(response.body).to include("未解決 (Q&A 1 / 確認事項 1)")
+    expect(unresolved_tab_label).to include("未解決 (Q&A 1 / 確認事項 1)")
     expect(response.body).to include("外部公開Q&A")
     expect(response.body).to include("公開範囲: 外部/利用者にも表示")
     expect(response.body).to include("内部限定")
@@ -169,12 +172,13 @@ RSpec.describe "Document review comments", type: :request do
     get project_document_path(project, document.slug)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("未解決: Q&A 1件 / 確認事項 1件")
-    expect(response.body).to include("未解決 (Q&A 1 / 確認事項 1)")
-
     html = Nokogiri::HTML(response.body)
+    unresolved_tab_label = html.at_css("label[for='document-comment-tab-unresolved']").text.squish
     qa_panel_text = html.at_css(".document-comment-tabs__panel--qa").text
     unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
+
+    expect(response.body).to include("未解決: Q&A 1件 / 確認事項 1件")
+    expect(unresolved_tab_label).to include("未解決 (Q&A 1 / 確認事項 1)")
 
     expect(qa_panel_text).to include(open_question.body)
     expect(qa_panel_text).to include(answered_question.body)
