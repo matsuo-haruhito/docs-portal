@@ -11,6 +11,7 @@ RSpec.describe "Admin API specifications", type: :request do
   let(:runtime_js_path) { build_root.join("assets", "js", "runtime~main.api-spec-fixture.js") }
   let(:build_status_marker_path) { Rails.root.join("tmp", "api_specification_build.status.json") }
   let(:build_request_marker_path) { Rails.root.join("tmp", "api_specification_build.requested") }
+  let(:primary_source_pages) { Admin::ApiSpecificationPage::PRIMARY_SOURCE_PAGES }
 
   before do
     @original_api_specification_site_index = site_index_path.exist? ? site_index_path.read : nil
@@ -32,11 +33,12 @@ RSpec.describe "Admin API specifications", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("API仕様")
-    expect(response.body).to include("docs-src/api-specification.md")
-    expect(response.body).to include("単体ファイルアップロードAPI")
-    expect(response.body).to include("client-file-upload-api")
     expect(response.body).to include("主要ページとsource")
-    expect(response.body).to include("docs-src/client-file-upload-api.md")
+    primary_source_pages.each do |source_page|
+      expect(response.body).to include(source_page.label)
+      expect(response.body).to include(source_page.source_path)
+      expect(response.body).to include(site_admin_api_specification_path(site_path: source_page.site_path))
+    end
   end
 
   it "shows the current successful build status" do
@@ -90,10 +92,9 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response.body).to include("失敗調査の入口")
     expect(response.body).to include("API仕様ページとdocs-src更新確認runbook")
     expect(response.body).to include("build-docs workflow確認runbook")
-    expect(response.body).to include("docs-src/api-specification.md")
-    expect(response.body).to include("docs-src/client-file-upload-api.md")
-    expect(response.body).to include("docs-src/office-preview.md")
-    expect(response.body).to include("docs-src/external-folder-sync-webhooks.md")
+    primary_source_pages.each do |source_page|
+      expect(response.body).to include(source_page.source_path)
+    end
     expect(response.body).to include("手動 build 再実行")
     expect(response.body).to include("API仕様ページの build を再実行")
     expect(response.body).to include("source、runtime、job / CI logs")
