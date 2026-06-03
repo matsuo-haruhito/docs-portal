@@ -1,0 +1,49 @@
+- page_title "単体ファイルアップロードdry-run一覧"
+- has_filters = @selected_status.present? || @selected_project_id.present? || @selected_dry_run_id.present?
+- empty_message = has_filters ? "条件に一致する単体ファイルアップロードdry-runはありません。" : "単体ファイルアップロードdry-runはありません。"
+
+h1 単体ファイルアップロードdry-run一覧
+p.muted API から作成された manual_upload dry-run を後から確認するための一覧です。ZIP / Git import dry-run は表示しません。
+= render "admin/nav"
+
+.card
+  = form_with url: admin_file_upload_dry_runs_path, method: :get, local: true, class: "filters" do
+    = label_tag :dry_run_id, "dry-run ID"
+    = search_field_tag :dry_run_id, @selected_dry_run_id, placeholder: "idry..."
+    = label_tag :project_id, "案件"
+    = select_tag :project_id, options_for_select(@project_options, @selected_project_id), onchange: "this.form.requestSubmit()"
+    = label_tag :status, "状態"
+    = select_tag :status, options_for_select(@status_options, @selected_status), onchange: "this.form.requestSubmit()"
+    = submit_tag "検索", class: "button secondary"
+    - if has_filters
+      = link_to "絞り込み解除", admin_file_upload_dry_runs_path, class: "button secondary"
+  p.muted 一覧には同期元名、取り込み先 relative path、content hash だけを表示します。クライアント source path は詳細確認時だけ扱います。
+  p.muted = "表示中: #{@dry_runs.size}件"
+
+  table
+    thead
+      tr
+        th 作成日時
+        th dry-run ID
+        th 案件
+        th 状態
+        th 同期元名
+        th 取り込み先 relative path
+        th content hash
+        th
+    tbody
+      - if @dry_runs.empty?
+        tr
+          td.muted colspan="8" = empty_message
+      - @dry_runs.each do |dry_run|
+        - preview = dry_run.result_json.dig("file_upload_preview") || {}
+        tr
+          td = dry_run.created_at ? l(dry_run.created_at) : "-"
+          td
+            code = dry_run.public_id
+          td = dry_run.project ? "#{dry_run.project.code} / #{dry_run.project.name}" : "-"
+          td = import_dry_run_status_label(dry_run)
+          td = preview["source_name"].presence || "-"
+          td = preview["relative_path"].presence || "-"
+          td = preview["content_hash"].presence || "-"
+          td = link_to "詳細", admin_file_upload_dry_run_path(dry_run), class: "button secondary"
