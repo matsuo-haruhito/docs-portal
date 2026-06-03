@@ -21,12 +21,17 @@ details class=wrapper_classes.join(" ") open=(!floating)
       div
         p.document-comment-workspace__eyebrow 文書を見ながら書く
         h2 文書コメント
-        p.muted Q&A と内部向けの確認事項をここにまとめます。
+        - if current_user.internal?
+          p.muted Q&A と内部向けの確認事項をここにまとめます。
+        - else
+          p.muted 文書に関するQ&Aをここにまとめます。
       span.document-comment-workspace__status
         = @question_threads.size
-        | 件のQ&A / 
-        = current_user.internal? ? @review_comments.size : 0
-        | 件の確認事項
+        | 件のQ&A
+        - if current_user.internal?
+          |  / 
+          = @review_comments.size
+          | 件の確認事項
         br
         - if current_user.internal?
           | 未解決: Q&A 
@@ -121,7 +126,10 @@ details class=wrapper_classes.join(" ") open=(!floating)
         p.muted
           | 検索条件: 
           strong = comment_search_query
-          | 。検索は、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます。
+          - if current_user.internal?
+            | 。検索は、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます。
+          - else
+            | 。検索は、すべて / Q&A / 未解決Q&A の各タブに先に適用されます。
 
     .document-comment-tabs.card
       input#document-comment-tab-all.document-comment-tabs__input type="radio" name="document_comment_tab" checked=true
