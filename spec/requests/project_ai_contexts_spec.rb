@@ -271,4 +271,22 @@ RSpec.describe "Project AI contexts", type: :request do
       "mode=full;scope=selected;selected_count=2;exported_count=2"
     ])
   end
+
+  it "keeps export responses available when access log creation fails" do
+    visible = create_exportable_document(title: "Visible Manual", slug: "visible", body: "Visible body text.")
+    allow(AccessLog).to receive(:create!).and_raise(ActiveRecord::StatementInvalid, "audit unavailable")
+    allow(Rails.logger).to receive(:error)
+
+    sign_in_as(external_user)
+
+    get project_ai_context_path(project, format: :json, mode: :compact)
+
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    expect(json.dig("summary", "document_count")).to eq(1)
+    expect(json.fetch("documents").map { _1.fetch("public_id") }).to eq([visible.public_id])
+    expect(AccessLog).to have_received(:create!).once
+    expect(Rails.logger).to have_received(:error).with(include("AI context AccessLog skipped: ActiveRecord::StatementInvalid: audit unavailable"))
+    expect(AccessLog.where(target_type: "ai_context")).to be_empty
+  end
 end

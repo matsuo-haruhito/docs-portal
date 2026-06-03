@@ -2,6 +2,11 @@
 - table_key = :admin_project_consent_settings
 - table_columns = project_consent_setting_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- project_filter_options = [["すべて", ""]] + @projects.map { |project| ["#{project.name} (#{project.code})", project.id] }
+- consent_term_filter_options = [["すべて", ""]] + @consent_terms.map { |term| [project_consent_term_option_label(term), term.id] }
+- enabled_filter_options = [["すべて", ""], ["有効", "true"], ["無効", "false"]]
+- has_filters = @selected_project_id.present? || @selected_consent_term_id.present? || @selected_enabled.present?
+- empty_message = has_filters ? "条件に一致する案件同意設定はありません。" : "まだ案件同意設定はありません。"
 
 h1 案件同意設定
 = render "admin/nav"
@@ -10,7 +15,21 @@ h1 案件同意設定
   h2 新規登録
   = render "form", project_consent_setting: @project_consent_setting
 
-- if @project_consent_settings.any?
+.card
+  = form_with url: admin_project_consent_settings_path, method: :get, local: true, class: "filters" do
+    = label_tag :project_id, "案件"
+    = select_tag :project_id, options_for_select(project_filter_options, @selected_project_id), onchange: "this.form.requestSubmit()"
+    = label_tag :consent_term_id, "同意文面"
+    = select_tag :consent_term_id, options_for_select(consent_term_filter_options, @selected_consent_term_id), onchange: "this.form.requestSubmit()"
+    = label_tag :enabled, "状態"
+    = select_tag :enabled, options_for_select(enabled_filter_options, @selected_enabled), onchange: "this.form.requestSubmit()"
+    = submit_tag "絞り込み", class: "button secondary"
+    - if has_filters
+      = link_to "絞り込み解除", admin_project_consent_settings_path, class: "button secondary"
+  p.muted 案件・同意文面・状態で一覧を絞り込めます。列の表示設定は下の table preferences で調整してください。
+  p.muted = "表示中: #{@project_consent_settings.size}件"
+
+- if @project_consent_settings.any? || has_filters
   .card
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件同意設定一覧の表示設定")
 
@@ -24,6 +43,9 @@ h1 案件同意設定
         th data-rails-table-preferences-column-key="enabled" 状態
         th data-rails-table-preferences-column-key="actions"
     tbody
+      - if @project_consent_settings.empty?
+        tr
+          td.muted colspan=table_columns.size = empty_message
       - @project_consent_settings.each do |setting|
         tr
           td data-rails-table-preferences-column-key="project"

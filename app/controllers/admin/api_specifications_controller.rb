@@ -7,6 +7,24 @@ class Admin::ApiSpecificationsController < Admin::BaseController
     @api_specification_build_enqueued = @api_specification_page.enqueue_build_if_stale!
   end
 
+  def retry_build
+    page = Admin::ApiSpecificationPage.new(view_context:)
+
+    if page.build_requested?
+      redirect_to admin_api_specification_path, notice: "API仕様ページの Docusaurus build はすでに実行中です。完了後に再読み込みしてください。"
+      return
+    end
+
+    build_status = page.build_status
+    unless %i[failed stale].include?(build_status.state)
+      redirect_to admin_api_specification_path, alert: "現在の状態では API仕様ページの手動 build 再実行は不要です。"
+      return
+    end
+
+    page.enqueue_manual_build!
+    redirect_to admin_api_specification_path, notice: "API仕様ページの Docusaurus build を再実行します。完了後に再読み込みしてください。"
+  end
+
   def site
     page = Admin::ApiSpecificationPage.new(view_context:)
     page.enqueue_build_if_stale!

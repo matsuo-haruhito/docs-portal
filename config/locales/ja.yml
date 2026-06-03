@@ -51,6 +51,18 @@ ja:
         normal: "通常"
         reference: "参考"
         deprecated: "非推奨"
+    document_catalogs:
+      audience_type:
+        customer: "顧客向け"
+        internal: "社内向け"
+        developer: "開発者向け"
+        delivery: "納品向け"
+        operations: "運用向け"
+        other: "その他"
+      visibility_policy:
+        internal_only: "社内のみ"
+        restricted_external: "限定公開"
+        public_with_login: "ログインユーザー公開"
     document_versions:
       status:
         draft: "下書き"
