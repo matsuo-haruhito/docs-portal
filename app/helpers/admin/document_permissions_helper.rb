@@ -6,6 +6,11 @@ module Admin::DocumentPermissionsHelper
     "company_id and user_id cannot both be set" => "適用対象は会社かユーザーのどちらか一方だけを指定してください。"
   }.freeze
 
+  DOCUMENT_PERMISSION_TARGET_TYPE_OPTIONS = [
+    ["会社単位", "company"],
+    ["ユーザー単位", "user"]
+  ].freeze
+
   def document_permission_overview_table_columns
     [
       table_preferences_column(:document, label: "文書名", default_width: 260, pinned: true, overflow: :ellipsis, sortable: true),
@@ -30,6 +35,22 @@ module Admin::DocumentPermissionsHelper
 
   def document_permission_form_document_options(documents)
     documents.map { ["#{_1.title} / #{_1.project.name}", _1.id] }
+  end
+
+  def document_permission_filter_project_options(projects)
+    [["すべて", ""]] + projects.map { [_1.name, _1.id] }
+  end
+
+  def document_permission_filter_access_level_options
+    [["すべて", ""]] + enum_options_for("document_permissions.access_level", DocumentPermission.access_levels.keys)
+  end
+
+  def document_permission_filter_target_type_options
+    [["すべて", ""]] + DOCUMENT_PERMISSION_TARGET_TYPE_OPTIONS
+  end
+
+  def document_permission_target_type_label(value)
+    DOCUMENT_PERMISSION_TARGET_TYPE_OPTIONS.to_h.invert.fetch(value, value)
   end
 
   def document_permission_form_company_options(companies)
