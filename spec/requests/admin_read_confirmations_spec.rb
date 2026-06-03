@@ -150,11 +150,11 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(page_text).to include("既読確認日時の期間: 2026-05-01 から 2026-05-03 まで")
     expect(page_text).to include("文書利用状況の閲覧・ダウンロード集計期間とは別の条件です")
     expect(page_text).to include("表示中: 2件")
-    expect(page_text).to include("Manual Start")
-    expect(page_text).to include("Manual End")
-    expect(page_text).not_to include("Manual Before")
-    expect(page_text).not_to include("Manual After")
-    expect(page_text).not_to include("Policy In Range")
+    expect(read_confirmation_rows.join).to include("Manual Start")
+    expect(read_confirmation_rows.join).to include("Manual End")
+    expect(read_confirmation_rows.join).not_to include("Manual Before")
+    expect(read_confirmation_rows.join).not_to include("Manual After")
+    expect(read_confirmation_rows.join).not_to include("Policy In Range")
     expect(parsed_html.at_css("input[name='from']")["value"]).to eq("2026-05-01")
     expect(parsed_html.at_css("input[name='to']")["value"]).to eq("2026-05-03")
   end
@@ -169,23 +169,23 @@ RSpec.describe "Admin read confirmations", type: :request do
     get admin_read_confirmations_path(project_id: project.id, from: "2026-05-02")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("Boundary Reader")
-    expect(page_text).to include("Later Reader")
-    expect(page_text).not_to include("Earlier Reader")
+    expect(read_confirmation_rows.join).to include("Boundary Reader")
+    expect(read_confirmation_rows.join).to include("Later Reader")
+    expect(read_confirmation_rows.join).not_to include("Earlier Reader")
 
     get admin_read_confirmations_path(project_id: project.id, to: "2026-05-02")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("Earlier Reader")
-    expect(page_text).to include("Boundary Reader")
-    expect(page_text).not_to include("Later Reader")
+    expect(read_confirmation_rows.join).to include("Earlier Reader")
+    expect(read_confirmation_rows.join).to include("Boundary Reader")
+    expect(read_confirmation_rows.join).not_to include("Later Reader")
 
     get admin_read_confirmations_path(project_id: project.id, from: "not-a-date", to: "2026-05-02")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("Earlier Reader")
-    expect(page_text).to include("Boundary Reader")
-    expect(page_text).not_to include("Later Reader")
+    expect(read_confirmation_rows.join).to include("Earlier Reader")
+    expect(read_confirmation_rows.join).to include("Boundary Reader")
+    expect(read_confirmation_rows.join).not_to include("Later Reader")
   end
 
   it "shows an empty state when the document slug does not belong to the project" do
