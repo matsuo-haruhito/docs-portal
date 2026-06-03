@@ -18,8 +18,8 @@
 
 | 領域 | 現在地 | 代表 issue / PR | 次に見る境界 |
 | --- | --- | --- | --- |
-| `rails_table_preferences` 一覧 | 実装済み代表画面あり | `admin/documents`, `admin/projects`, `admin/users`, `admin/external_folder_sync_sources`, `admin/document_sets` | 新しい一覧へ広げる前に、既存画面の column metadata、filter / preset、empty state、保存済み設定 smoke を確認する |
-| `rails_fields_kit` フォーム | `admin/document_sets` が host app 側の実装済み代表例 | #1348 / PR #1366 で `document_set_items` の対象文書 local filter と fixed version selector の wiring を追加済み | remote search endpoint、table replacement、他フォームへの横展開は別 issue に分ける |
+| `rails_table_preferences` 一覧 | 実装済み代表画面あり | `admin/documents`, `admin/projects`, `admin/users`, `admin/external_folder_sync_sources`, `admin/document_sets`, `admin/consent_terms`, `admin/document_usage_reports` | 新しい一覧へ広げる前に、既存画面の column metadata、filter / preset、empty state、保存済み設定 smoke を確認する |
+| `rails_fields_kit` フォーム | `admin/document_sets` が host app 側の実装済み代表例。`admin/document_usage_reports` と `admin/read_confirmations` では案件選択の `rfk_select` を利用済み | #1348 / PR #1366 で `document_set_items` の対象文書 local filter と fixed version selector の wiring を追加済み | remote search endpoint、table replacement、他フォームへの横展開は別 issue に分ける。案件選択の `rfk_select` と document / version remote search は同じ current support として混ぜない |
 | `tree_view` 連携 | 候補整理段階 | 文書ツリーの展開状態、選択状態、表示列状態の保存候補 | ツリー UX と table state の責務境界が決まるまでは、実装済み current support として書かない |
 
 `docs-portal` 側 issue では、画面固有の view、helper、route、params、Stimulus wiring、request / system spec を扱う。gem の public API、import path、controller registration、Vite alias 前提、導入手順の不足が論点になる場合は、upstream gem 側の issue / docs と分けて確認する。
@@ -37,6 +37,8 @@
 - `admin/users`
 - `admin/external_folder_sync_sources`
 - `admin/document_sets`
+- `admin/consent_terms`
+- `admin/document_usage_reports`
 
 これらは新規展開候補ではなく、current main の実装済み代表画面として扱う。次の作業では、新しい一覧へ広げる前に、既存画面の column metadata、filter / preset、empty state、保存済み設定の代表 smoke を確認し、実装済み guard と未展開候補を issue 上で分ける。
 
@@ -44,7 +46,7 @@
 
 既存の select / text field / textarea を、必要に応じて `rails_fields_kit` helper へ置き換える。
 
-特に件数が増えやすい選択欄は、Tom Select と remote search を前提に UX を改善する。
+特に件数が増えやすい選択欄は、Tom Select と remote search を前提に UX を改善する。current main では `admin/document_sets` の対象文書 local filter / fixed version selector に加えて、`admin/document_usage_reports` と `admin/read_confirmations` の案件選択で `rfk_select` を使う。これらは案件選択の表示補助であり、document / document_version の remote search first slice とは分けて扱う。
 
 候補:
 
