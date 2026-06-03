@@ -17,6 +17,22 @@ section.card
     = link_to "モデルブラウザを開く", admin_model_browser_path, class: "button"
 
 section.card
+  h2 運用失敗サマリー
+  p.muted 保存済みの代表状態から、最初に確認する運用画面へ移動できます。件数は各カードに記載した範囲の確認入口です。
+  .dashboard-grid data-testid="operation-failure-summary"
+    - @operation_failure_summaries.each do |summary|
+      article.card.metric-card
+        h3 = link_to summary.fetch(:title), summary.fetch(:path)
+        p
+          strong = summary.fetch(:count)
+          |  件
+          span.muted = " / #{summary.fetch(:count_label)}"
+        p.muted = summary.fetch(:scope_label)
+        p.muted = summary.fetch(:description)
+        - if summary.fetch(:count).zero?
+          p.muted 確認対象なし
+
+section.card
   h2 アプリ設定診断
 
   .configuration-runbook-links
