@@ -51,7 +51,8 @@ RSpec.describe "document comment workspace source" do
     aggregate_failures do
       expect(workspace_source).to include("未解決タブには、未解決のQ&Aと内部向け確認事項をまとめて表示します。通知・期限・SLAを示すものではありません。")
       expect(workspace_source).to include("未解決タブには、まだ回答やクローズがされていないQ&Aを表示します。")
-      expect(workspace_source).to include('span.muted = " (#{current_user.internal? ? unresolved_total_count : unresolved_question_count})"')
+      expect(workspace_source).to include('span.muted = " (Q&A #{unresolved_question_count} / 確認事項 #{unresolved_review_count})"')
+      expect(workspace_source).to include("| 未解決Q&A")
     end
   end
 end

@@ -9,7 +9,7 @@
 
 - if question_threads.any?
   section.document-comment-thread-group
-    h3 Q&A
+    h3 = only_unresolved ? "未解決Q&A" : "Q&A"
     - question_threads.each do |thread|
       article.document-comment-card
         header.document-comment-card__header
@@ -54,7 +54,7 @@
 
 - if review_comments.any?
   section.document-comment-thread-group
-    h3 確認事項（社内レビューコメント）
+    h3 = only_unresolved ? "未解決確認事項（社内レビューコメント）" : "確認事項（社内レビューコメント）"
     - review_comments.each do |comment|
       article.document-comment-card.document-comment-card--internal
         header.document-comment-card__header
@@ -85,8 +85,12 @@
       | 検索条件に一致するQ&Aはありません。
     - elsif comment_search_active
       | 検索条件に一致する確認事項はありません。
+    - elsif only_unresolved && show_questions && show_reviews
+      | 未解決のQ&Aと確認事項はありません。
+    - elsif only_unresolved && show_questions
+      | 未解決のQ&Aはありません。
     - elsif only_unresolved
-      | 未解決のコメントはありません。
+      | 未解決の確認事項はありません。
     - elsif show_questions && show_reviews
       | まだ文書コメントはありません。
     - elsif show_questions
