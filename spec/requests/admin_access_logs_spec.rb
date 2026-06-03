@@ -1,4 +1,5 @@
 require "rails_helper"
+require "uri"
 
 RSpec.describe "Admin access logs", type: :request do
   let(:admin_company) { create(:company, domain: "audit.example.com", name: "Audit Company") }
@@ -34,6 +35,17 @@ RSpec.describe "Admin access logs", type: :request do
     log_rows.filter_map do |row|
       row.at_css("td:nth-child(3) code")&.text&.squish
     end
+  end
+
+  def pagination_link(label)
+    parsed_html.css("nav.pagination a").find { |link| link.text.squish == label }
+  end
+
+  def pagination_query(label)
+    link = pagination_link(label)
+    return {} unless link
+
+    Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)
   end
 
   def row_column_texts(column_key)
@@ -503,6 +515,95 @@ RSpec.describe "Admin access logs", type: :request do
     expect(log_target_names.first).to eq("entry-204")
     expect(log_target_names.last).to eq("entry-5")
     expect(log_target_names).not_to include("entry-4", "entry-3", "entry-2", "entry-1", "entry-0")
+    expect(pagination_link("前の200件")).to be_nil
+    expect(pagination_query("次の200件")).to include("page" => "2")
+  end
+
+  it "shows older access logs on the second page" do
+    base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
+
+    205.times do |index|
+      create_access_log!(
+        action_type: :view,
+        target_type: "page",
+        target_name: "entry-#{index}",
+        accessed_at: base_time + index.seconds
+      )
+    end
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(page: 2)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 5件 / 最新200件までを表示 / 2ページ目")
+    expect(log_target_names).to eq(["entry-4", "entry-3", "entry-2", "entry-1", "entry-0"])
+    expect(pagination_query("前の200件")).to include("page" => "1")
+    expect(pagination_link("次の200件")).to be_nil
+  end
+
+  it "keeps active filters in pagination links" do
+    base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
+    pagination_project = create(:project, code: "PAGE", name: "Pagination Project")
+    pagination_document = create(:document, project: pagination_project, title: "Pagination Evidence", slug: "pagination-evidence")
+    pagination_version = create(:document_version, document: pagination_document, version_label: "v1.0.1")
+
+    201.times do |index|
+      create_access_log!(
+        action_type: :view,
+        target_type: "page",
+        target_name: "filtered-entry-#{index}",
+        project: pagination_project,
+        document: pagination_document,
+        document_version: pagination_version,
+        accessed_at: base_time + index.minutes
+      )
+    end
+    create_access_log!(
+      action_type: :view,
+      target_type: "page",
+      target_name: "outside-filter.html",
+      accessed_at: base_time + 1.day
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(
+      project_id: pagination_project.id,
+      document_q: "Pagination Evidence",
+      from: "2026-05-01",
+      to: "2026-05-02"
+    )
+
+    expect(response).to have_http_status(:ok)
+    expect(log_target_names.size).to eq(200)
+    expect(log_target_names.first).to eq("filtered-entry-200")
+    expect(log_target_names.last).to eq("filtered-entry-1")
+    expect(log_target_names).not_to include("filtered-entry-0", "outside-filter.html")
+    expect(pagination_query("次の200件")).to include(
+      "project_id" => pagination_project.id.to_s,
+      "document_q" => "Pagination Evidence",
+      "from" => "2026-05-01",
+      "to" => "2026-05-02",
+      "page" => "2"
+    )
+  end
+
+  it "falls back to the first page for invalid page parameters" do
+    base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
+    create_access_log!(action_type: :view, target_type: "page", target_name: "entry-old", accessed_at: base_time)
+    create_access_log!(action_type: :view, target_type: "page", target_name: "entry-new", accessed_at: base_time + 1.second)
+
+    sign_in_as(admin_user)
+
+    ["0", "51", "not-a-number"].each do |page|
+      get admin_access_logs_path(page:)
+
+      expect(response).to have_http_status(:ok)
+      expect(page_text).to include("表示中: 2件 / 最新200件までを表示")
+      expect(log_target_names).to eq(["entry-new", "entry-old"])
+      expect(page_text).not_to include("2ページ目")
+    end
   end
 
   it "forbids external users" do
