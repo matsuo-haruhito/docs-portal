@@ -5,6 +5,7 @@
 - permissions_table_key = :admin_document_permissions
 - permissions_table_columns = document_permissions_table_columns
 - permissions_table_settings = rails_table_preference_settings(table_key: permissions_table_key)
+- filters_active = @filters.values.any?(&:present?)
 
 h1 文書権限
 = render "admin/nav"
@@ -12,6 +13,45 @@ h1 文書権限
 .card
   h2 新規登録
   = render "form", document_permission: @document_permission
+
+section.card
+  h2 検索・絞り込み
+  = form_with url: admin_document_permissions_path, method: :get, local: true, class: "document-filter-form" do |form|
+    .form-grid.form-grid--compact
+      label.form-field
+        span 案件
+        = form.select :project_id, options_for_select(document_permission_filter_project_options(@projects), @filters[:project_id])
+      label.form-field
+        span 文書名・slug
+        = form.search_field :q, value: @filters[:q], placeholder: "例: 運用手順 / operation-manual"
+      label.form-field
+        span 権限
+        = form.select :access_level, options_for_select(document_permission_filter_access_level_options, @filters[:access_level])
+      label.form-field
+        span 付与先
+        = form.select :target_type, options_for_select(document_permission_filter_target_type_options, @filters[:target_type])
+    p.actions.form-actions
+      = form.submit "検索", class: "button"
+      = link_to "条件をクリア", admin_document_permissions_path, class: "button secondary"
+  p.muted
+    | 表示中:
+    strong = " #{@document_permissions.size}件"
+    |  / 条件に一致する文書権限を表示
+  - if filters_active
+    p.muted
+      | 有効な条件:
+      - if @filters[:project_id].present?
+        = " "
+        span.badge = "案件: #{@projects.find { _1.id.to_s == @filters[:project_id].to_s }&.name}"
+      - if @filters[:q].present?
+        = " "
+        span.badge = "文書: #{@filters[:q]}"
+      - if @filters[:access_level].present?
+        = " "
+        span.badge = "権限: #{document_permission_access_level_label(@filters[:access_level])}"
+      - if @filters[:target_type].present?
+        = " "
+        span.badge = "付与先: #{document_permission_target_type_label(@filters[:target_type])}"
 
 section.card
   h2 文書別の権限概要
@@ -43,6 +83,8 @@ section.card
             td data-rails-table-preferences-column-key="user_permissions" = row.user_permissions.size
             td data-rails-table-preferences-column-key="view_allowed" = row.view_allowed_count
             td data-rails-table-preferences-column-key="download_allowed" = row.download_allowed_count
+  - elsif filters_active
+    p.muted 条件に一致する文書権限概要はありません。案件、文書名・slug、権限、付与先の条件を見直してください。
   - else
     p.muted まだ権限は登録されていません。最初の 1 件を登録すると、文書ごとの権限数と閲覧/ダウンロード内訳をここで確認できます。
 
@@ -93,6 +135,8 @@ section.card
             td.actions data-rails-table-preferences-column-key="actions"
               = edit_link_to "編集", edit_admin_document_permission_path(permission)
               = delete_link_to "削除", admin_document_permission_path(permission), confirm: "この文書権限を削除しますか？対象ユーザー/会社の閲覧範囲が変わります。"
+  - elsif filters_active
+    p.muted 条件に一致する文書権限はありません。案件、文書名・slug、権限、付与先の条件を見直してください。
   - else
     p.muted まだ権限は登録されていません。まずは上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して 1 件登録してください。
     p.muted 登録後は、会社別・ユーザー別の対象主体や権限内容をこの一覧で確認、編集できます。
