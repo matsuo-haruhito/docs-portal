@@ -10,6 +10,16 @@ class DocumentDeliveryLogsController < BaseController
     "failed" => "失敗"
   }.freeze
 
+  DELIVERY_LOG_SEARCH_COLUMNS = %w[
+    projects.name
+    projects.code
+    document_delivery_logs.to_addresses
+    document_delivery_logs.cc_addresses
+    document_delivery_logs.bcc_addresses
+    document_delivery_logs.subject
+    document_delivery_logs.error_message
+  ].freeze
+
   def index
     base_scope = current_user.internal? ? DocumentDeliveryLog.all : DocumentDeliveryLog.where(sender: current_user)
 
@@ -175,10 +185,8 @@ class DocumentDeliveryLogsController < BaseController
     return scope if @query.blank?
 
     query = "%#{ActiveRecord::Base.sanitize_sql_like(@query.downcase)}%"
-    scope.joins(:project).where(
-      "LOWER(projects.name) LIKE :query OR LOWER(projects.code) LIKE :query OR LOWER(document_delivery_logs.to_addresses) LIKE :query",
-      query:
-    )
+    conditions = DELIVERY_LOG_SEARCH_COLUMNS.map { |column| "LOWER(#{column}) LIKE :query" }.join(" OR ")
+    scope.joins(:project).where(conditions, query:)
   end
 
   def delivery_log_redirect_path
