@@ -76,6 +76,7 @@ module Admin::AccessLogsHelper
       access_log_record_filter_summary("案件", filters[:project_id], projects) { access_log_project_filter_label(_1) },
       access_log_record_filter_summary("会社", filters[:company_id], companies) { access_log_company_filter_label(_1) },
       access_log_record_filter_summary("ユーザー", filters[:user_id], users) { access_log_user_filter_label(_1) },
+      access_log_text_filter_summary("対象名・IPアドレス", filters[:q]),
       access_log_text_filter_summary("文書名・URL識別子", filters[:document_q]),
       access_log_date_filter_summary("開始日", filters[:from]),
       access_log_date_filter_summary("終了日", filters[:to])
