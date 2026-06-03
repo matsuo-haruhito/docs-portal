@@ -102,6 +102,7 @@ RSpec.describe "Document review comments", type: :request do
     get project_document_path(project, document.slug)
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("未解決: Q&A 1件 / 確認事項 1件")
+    expect(response.body).to include("未解決 (Q&A 1 / 確認事項 1)")
     expect(response.body).to include("外部公開Q&A")
     expect(response.body).to include("公開範囲: 外部/利用者にも表示")
     expect(response.body).to include("内部限定")
@@ -112,8 +113,9 @@ RSpec.describe "Document review comments", type: :request do
     get project_document_path(project, document.slug)
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("未解決: Q&A 1件")
+    expect(response.body).to include("未解決Q&A")
     expect(response.body).to include("外部公開Q&A")
-    expect(response.body).not_to include("確認事項 1件")
+    expect(response.body).not_to include("確認事項")
     expect(response.body).not_to include("内部限定")
     expect(response.body).not_to include("Internal visibility check")
     expect(response.body).not_to include("回答済みは回答・対応が終わった質問")
@@ -168,6 +170,7 @@ RSpec.describe "Document review comments", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("未解決: Q&A 1件 / 確認事項 1件")
+    expect(response.body).to include("未解決 (Q&A 1 / 確認事項 1)")
 
     html = Nokogiri::HTML(response.body)
     qa_panel_text = html.at_css(".document-comment-tabs__panel--qa").text
@@ -179,6 +182,8 @@ RSpec.describe "Document review comments", type: :request do
     expect(qa_panel_text).to include("回答済み")
     expect(qa_panel_text).to include("クローズ")
 
+    expect(unresolved_panel_text).to include("未解決Q&A")
+    expect(unresolved_panel_text).to include("未解決確認事項（社内レビューコメント）")
     expect(unresolved_panel_text).to include(open_question.body)
     expect(unresolved_panel_text).not_to include(answered_question.body)
     expect(unresolved_panel_text).not_to include(closed_question.body)
