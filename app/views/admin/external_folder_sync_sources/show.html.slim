@@ -19,6 +19,7 @@ h1 外部フォルダ同期設定詳細
   - if microsoft_graph_source
     p.muted SharePoint / OneDrive の共有URLからフォルダ metadata を保存しました。差分同期本体と変更通知は後続 issue で対応予定です。必要に応じて Microsoft Graph 接続と保存済み metadata を確認してください。
     p.actions
+      = link_to "保存済み metadata を再確認", recheck_metadata_admin_external_folder_sync_source_path(@external_folder_sync_source, return_to: return_to), data: { turbo_method: :post }, class: "button"
       = link_to "Microsoft Graph接続を確認", admin_microsoft_graph_connections_path(return_to: detail_return_to), class: "button secondary"
       = edit_link_to "設定を編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source, return_to: return_to)
   - elsif @external_folder_sync_source.oauth_user? && !@external_folder_sync_source.oauth_connected?
@@ -118,6 +119,7 @@ h1 外部フォルダ同期設定詳細
     ol
       li = "#{provider_label} 側の接続情報と共有設定を確認する"
       li 共有URLから Drive ID / folder item ID / folder path / site ID を保存できていることを確認する
+      li 保存済み metadata を再確認して、現在の Microsoft Graph 解決結果と一致するかを見る
       li 差分同期、変更通知、Webhook 受信は後続 issue で provider ごとに拡張する
       li 実際に同期できる操作範囲は、対応する provider 実装と docs を確認する
   p.muted 公式サービス側の画面は変わりやすいため、ここでは操作の目的と確認ポイントを案内します。
@@ -135,8 +137,9 @@ h1 外部フォルダ同期設定詳細
           = link_to "OAuth接続を解除", admin_external_folder_sync_source_external_folder_sync_oauth_connection_path(@external_folder_sync_source, return_to: return_to), data: { turbo_method: :delete, turbo_confirm: "Google Drive OAuth接続を解除しますか？" }, class: "button secondary"
     - else
       summary 保存済み metadata と今後の拡張
-      p.muted = "#{provider_label} の差分同期、変更通知、保存後の追加操作は後続 issue で provider ごとに拡張予定です。現時点では、接続情報の確認と設定の見直しを優先してください。"
+      p.muted = "#{provider_label} の差分同期、変更通知、保存後の追加操作は後続 issue で provider ごとに拡張予定です。保存済み metadata の再確認は、同期本体を実行せず現在の Microsoft Graph 解決結果との差分だけを確認します。"
       p.actions
+        = link_to "保存済み metadata を再確認", recheck_metadata_admin_external_folder_sync_source_path(@external_folder_sync_source, return_to: return_to), data: { turbo_method: :post }, class: "button"
         = link_to "Microsoft Graph接続を確認", admin_microsoft_graph_connections_path(return_to: detail_return_to), class: "button secondary"
         = edit_link_to "設定を編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source, return_to: return_to)
 
