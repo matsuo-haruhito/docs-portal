@@ -31,7 +31,7 @@ RSpec.describe "admin consent terms source" do
       expect(helper_source).to include("table_preferences_column(:status")
       expect(helper_source).to include("table_preferences_column(:actions")
       expect(helper_source).to include("def consent_term_status_label(term)")
-      expect(helper_source).to include('term.active? ? "有効" : "無効"')
+      expect(helper_source).to include('term.active? ? "利用中" : "無効化済み"')
     end
   end
 end
