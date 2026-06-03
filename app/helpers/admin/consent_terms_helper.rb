@@ -13,6 +13,6 @@ module Admin::ConsentTermsHelper
   end
 
   def consent_term_status_label(term)
-    term.active? ? "有効" : "無効"
+    term.active? ? "利用中" : "無効化済み"
   end
 end
