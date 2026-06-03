@@ -2,9 +2,13 @@
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: nil
 
 - page_title @project.name, "文書カタログ"
-- audience_options = [["すべて", ""]] + DocumentCatalog.audience_types.keys.map { |value| [value, value] }
-- visibility_options = [["すべて", ""]] + DocumentCatalog.visibility_policies.keys.map { |value| [value, value] }
+- audience_options = [["すべて", ""]] + DocumentCatalog.audience_types.keys.map { |value| [localized_label("document_catalogs.audience_type", value), value] }
+- visibility_options = [["すべて", ""]] + DocumentCatalog.visibility_policies.keys.map { |value| [localized_label("document_catalogs.visibility_policy", value), value] }
 - has_filters = @catalog_query.present? || @audience_type_filter.present? || @visibility_policy_filter.present?
+- active_filter_labels = []
+- active_filter_labels << "名称・説明: #{@catalog_query}" if @catalog_query.present?
+- active_filter_labels << "対象: #{localized_label("document_catalogs.audience_type", @audience_type_filter)}" if @audience_type_filter.present?
+- active_filter_labels << "公開範囲: #{localized_label("document_catalogs.visibility_policy", @visibility_policy_filter)}" if @visibility_policy_filter.present?
 
 h1
   = @project.name
@@ -25,6 +29,14 @@ h1
     - if has_filters
       = link_to "絞り込み解除", project_document_catalogs_path(@project), class: "button secondary"
 
+- if has_filters
+  section.card
+    h2 現在の絞り込み
+    ul
+      - active_filter_labels.each do |filter_label|
+        li = filter_label
+    p.muted 表示可能件数は、現在の利用者が閲覧できる文書だけを数えます。
+
 - if @catalogs.any?
   = table_tag do
     thead
@@ -32,7 +44,10 @@ h1
         th 名称
         th 対象
         th 公開範囲
-        th 表示可能件数
+        th
+          | 表示可能件数
+          br
+          small.muted 閲覧できる文書
         th
     tbody
       - @catalogs.each do |catalog|
@@ -45,7 +60,7 @@ h1
           td = link_to "詳細", project_document_catalog_path(@project, catalog)
 - else
   - if has_filters
-    p.muted 条件に一致する文書カタログはありません。
+    p.muted 条件に一致する文書カタログはありません。検索語・対象・公開範囲を確認するか、絞り込みを解除してください。
   - else
     p.muted 利用可能な文書カタログはありません。
 
