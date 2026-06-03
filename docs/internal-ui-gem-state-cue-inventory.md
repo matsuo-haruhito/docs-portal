@@ -15,13 +15,13 @@
 
 | state cue | 表示目的 | source gem | docs-portal の代表画面 / 候補 | host app override | 関連 docs / issue | この issue で決めないこと |
 | --- | --- | --- | --- | --- | --- | --- |
-| current row | いま本文側で開いている文書・行を tree 内で追跡できるようにする | `tree_view` | sidebar 文書ツリー、文書詳細 tree | current 判定は host app の route / selected document が正本。見た目の密度や周辺説明は画面側で補える | `docs-portal#607`, `docs-portal#858`, `tree_view-rails#967` | current 判定 API、CSS token 名、keyboard focus との統合仕様 |
+| current row | いま本文側で開いている文書・行を tree 内で追跡できるようにする | `tree_view` | sidebar 文書ツリー、文書詳細 tree | current 判定は host app の route / selected document が正本。docs-portal の文書ツリーでは `current-node` 判定から link に `aria-current="page"` と `data-tree-current="true"` を付け、隣に `表示中` badge を出す。badge の文言・密度・周辺説明は host app 側の表示補助であり、gem API や token 名として扱わない | `docs-portal#607`, `docs-portal#858`, `docs-portal#1781`, `tree_view-rails#967`, `spec/frontend/document_tree_current_selection_source_spec.rb` | current 判定 API、CSS token 名、keyboard focus / selected / expanded state との統合仕様、visual diff CI |
 | selected | 複数操作や一時選択がある場合に、current とは別の選択状態を示す | `tree_view` | 手動アップロード差異確認、文書ツリー操作候補 | 選択の業務意味は host app 側で説明する。gem 側 state と同じ意味に見えるかだけ確認する | `docs/手動アップロード差異確認runbook.md`, `docs-portal#607` | bulk action 導線、権限条件、selection persistence |
 | collapsed / expanded | 階層を閉じているのか、子要素がないのかを誤読しない | `tree_view` | sidebar 文書ツリー、文書詳細 tree | 空 branch の説明や fallback 文言は host app 側で補える | `spec/requests/document_tree_regressions_spec.rb`, `docs/internal-ui-gem-visual-evidence-runbook.md` | 開閉状態の保存方式、localStorage / server 保存の採用判断 |
 | loading | Turbo refresh や非同期更新中であることを伝える | `tree_view` / host app integration | 文書ツリー refresh 候補 | 画面側の待機文言や skeleton の有無は host app 判断。gem runtime の loading class 新設はしない | `ROADMAP.md`, `docs-portal#607` | loading event API、visual regression baseline |
 | error | tree 更新や読み込みに失敗した状態を通常の空状態と分ける | `tree_view` / host app integration | 文書ツリー refresh failure 候補 | 復旧案内文、再試行ボタンの有無は host app の画面 issue で扱う | `docs/internal-ui-gem-visual-evidence-runbook.md`, `docs-portal#607` | retry policy、error event 名、server-side fallback |
 | drop target | drag / drop 操作時に反映先を誤らないようにする | `tree_view` / host app drag surface | 手動アップロード差異確認、TreeView drop 候補 | upload / import の安全文言は host app 側。drop state の基本表現は upstream との境界を確認する | `docs/手動アップロード差異確認runbook.md`, `tree_view-rails#941` | upload contract、dry-run apply、drop event API |
-| focus-visible | keyboard 操作時に現在の操作位置を明確にする | `tree_view` | sidebar 文書ツリー、文書詳細 tree | 周辺 layout の contrast と見切れ防止は host app 側で確認できる | `tree_view-rails#967`, `docs/internal-ui-gem-visual-evidence-runbook.md` | focus style token、keyboard navigation spec の upstream 決定 |
+| focus-visible | keyboard 操作時に現在の操作位置を明確にする | `tree_view` | sidebar 文書ツリー、文書詳細 tree | 周辺 layout の contrast と見切れ防止は host app 側で確認できる | `tree_view-rails#967`, `docs/internal-ui-gem-visual-evidence-runbook.md`, `spec/frontend/document_tree_current_selection_source_spec.rb` | focus style token、keyboard navigation spec の upstream 決定 |
 
 ## Rails Table Preferences
 
