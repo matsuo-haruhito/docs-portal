@@ -36,6 +36,7 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response.body).to include("顧客向け")
     expect(response.body).to include("限定公開")
     expect(response.body).to include("表示可能件数")
+    expect(response.body).to include("閲覧できる文書")
     expect(response.body).not_to include("Internal Pack")
     expect(catalog_table_text).not_to include("restricted_external")
     expect(response.body).to include(project_document_catalog_path(project, visible))
@@ -54,6 +55,9 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response.body).to include("Operations Pack")
     expect(response.body).not_to include("Customer Onboarding")
     expect(response.body).not_to include("Developer Guide")
+    expect(main_text).to include("現在の絞り込み")
+    expect(main_text).to include("名称・説明: runbook")
+    expect(main_text).to include("表示可能件数は、現在の利用者が閲覧できる文書だけを数えます。")
   end
 
   it "combines audience and visibility filters" do
@@ -69,6 +73,9 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response.body).to include("Customer Login")
     expect(response.body).not_to include("Customer Private")
     expect(response.body).not_to include("Operations Login")
+    expect(main_text).to include("対象: 顧客向け")
+    expect(main_text).to include("公開範囲: ログインユーザー公開")
+    expect(main_text).not_to include("public_with_login")
   end
 
   it "does not expose catalogs outside the viewer boundary through filters" do
@@ -80,7 +87,11 @@ RSpec.describe "Document catalogs", type: :request do
     get project_document_catalogs_path(project, q: "runbook", audience_type: "operations", visibility_policy: "internal_only")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("条件に一致する文書カタログはありません。")
+    expect(response.body).to include("条件に一致する文書カタログはありません。検索語・対象・公開範囲を確認するか、絞り込みを解除してください。")
+    expect(main_text).to include("名称・説明: runbook")
+    expect(main_text).to include("対象: 運用向け")
+    expect(main_text).to include("公開範囲: 社内のみ")
+    expect(main_text).not_to include("internal_only")
     expect(response.body).not_to include("Internal Runbook")
     expect(response.body).not_to include("External Runbook")
   end
@@ -96,6 +107,7 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Customer Pack")
     expect(response.body).to include("Developer Pack")
+    expect(main_text).not_to include("現在の絞り込み")
   end
 
   it "shows only visible items in a catalog" do
