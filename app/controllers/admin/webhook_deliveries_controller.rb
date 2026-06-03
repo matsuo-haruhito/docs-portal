@@ -1,27 +1,41 @@
 class Admin::WebhookDeliveriesController < Admin::BaseController
   FAILED_DELIVERY_RETRY_LIMIT = Admin::WebhookEndpointsController::RECENT_DELIVERY_DISPLAY_LIMIT
-  RETURN_DELIVERY_STATUS_FILTERS = (["all"] + Admin::WebhookEndpointsController::DELIVERY_STATUS_FILTERS).freeze
+  INDEX_DELIVERY_DISPLAY_LIMIT = 100
+  DELIVERY_STATUS_FILTERS = Admin::WebhookEndpointsController::DELIVERY_STATUS_FILTERS
+  RETURN_DELIVERY_STATUS_FILTERS = (["all"] + DELIVERY_STATUS_FILTERS).freeze
 
   before_action :require_admin_only!
   before_action :set_webhook_delivery, only: %i[show retry_dispatch]
-  before_action :set_return_delivery_status, only: %i[show retry_dispatch]
+  before_action :set_delivery_return, only: %i[show retry_dispatch]
+
+  def index
+    @webhook_endpoints = WebhookEndpoint.order(:name)
+    @delivery_filters = delivery_search_filter_params
+    @delivery_filters_applied = @delivery_filters.values.any?(&:present?)
+    filtered_deliveries = filtered_index_delivery_scope
+
+    @webhook_deliveries_total_count = filtered_deliveries.count
+    @webhook_deliveries_limit = INDEX_DELIVERY_DISPLAY_LIMIT
+    @webhook_deliveries = filtered_deliveries.recent.limit(@webhook_deliveries_limit)
+    @delivery_return_params = @delivery_filters.merge(return_context: "deliveries_index")
+  end
 
   def show
   end
 
   def retry_dispatch
     unless @webhook_delivery.failed?
-      redirect_to webhook_delivery_return_path, alert: "失敗していないWebhook送信履歴は再送できません。"
+      redirect_to @delivery_return_path, alert: "失敗していないWebhook送信履歴は再送できません。"
       return
     end
 
     unless @webhook_delivery.webhook_endpoint.active?
-      redirect_to webhook_delivery_return_path, alert: "停止中のWebhook設定には再送できません。"
+      redirect_to @delivery_return_path, alert: "停止中のWebhook設定には再送できません。"
       return
     end
 
     WebhookDeliveryDispatcher.new.redeliver!(@webhook_delivery)
-    redirect_to webhook_delivery_return_path, notice: "Webhookを再送しました。結果は送信履歴で確認してください。"
+    redirect_to @delivery_return_path, notice: "Webhookを再送しました。結果は送信履歴で確認してください。"
   end
 
   def retry_failed
@@ -51,15 +65,77 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
     @webhook_delivery = WebhookDelivery.includes(:webhook_endpoint, :notification_event).find_by!(public_id: params[:public_id])
   end
 
+  def set_delivery_return
+    if params[:return_context].to_s == "deliveries_index"
+      @delivery_return_filters = delivery_search_filter_params
+      @delivery_return_params = @delivery_return_filters.merge(return_context: "deliveries_index")
+      @delivery_return_path = admin_webhook_deliveries_path(@delivery_return_filters)
+      @return_delivery_status = "all"
+      @delivery_return_context = :deliveries_index
+    else
+      set_return_delivery_status
+      @delivery_return_path = webhook_delivery_status_return_path
+      @delivery_return_params = @return_delivery_status == "all" ? {} : { return_delivery_status: @return_delivery_status }
+      @delivery_return_context = :webhook_endpoints
+    end
+  end
+
   def set_return_delivery_status
     requested_status = params[:return_delivery_status].to_s
     @return_delivery_status = RETURN_DELIVERY_STATUS_FILTERS.include?(requested_status) ? requested_status : "all"
   end
 
-  def webhook_delivery_return_path
+  def webhook_delivery_status_return_path
     return admin_webhook_endpoints_path if @return_delivery_status == "all"
 
     admin_webhook_endpoints_path(delivery_status: @return_delivery_status)
+  end
+
+  def filtered_index_delivery_scope
+    scope = WebhookDelivery.includes(:webhook_endpoint, :notification_event)
+    scope = scope.where(webhook_endpoint_id: @delivery_filters[:webhook_endpoint_id]) if @delivery_filters[:webhook_endpoint_id].present?
+    scope = scope.where(event_type: @delivery_filters[:event_type]) if @delivery_filters[:event_type].present?
+    scope = scope.public_send(@delivery_filters[:status]) if @delivery_filters[:status].present?
+    scope = apply_created_at_filters(scope)
+    scope
+  end
+
+  def apply_created_at_filters(scope)
+    from_date = parsed_filter_date(@delivery_filters[:created_from])
+    to_date = parsed_filter_date(@delivery_filters[:created_to])
+    scope = scope.where("webhook_deliveries.created_at >= ?", from_date.beginning_of_day) if from_date
+    scope = scope.where("webhook_deliveries.created_at <= ?", to_date.end_of_day) if to_date
+    scope
+  end
+
+  def delivery_search_filter_params
+    permitted = params.permit(:webhook_endpoint_id, :event_type, :status, :created_from, :created_to).to_h.symbolize_keys
+    filters = {}
+
+    endpoint_id = permitted[:webhook_endpoint_id].to_s
+    filters[:webhook_endpoint_id] = endpoint_id if endpoint_id.match?(/\A\d+\z/)
+
+    event_type = permitted[:event_type].to_s
+    filters[:event_type] = event_type if WebhookEndpoint::EVENT_TYPES.include?(event_type)
+
+    status = permitted[:status].to_s
+    filters[:status] = status if DELIVERY_STATUS_FILTERS.include?(status)
+
+    created_from = permitted[:created_from].to_s
+    filters[:created_from] = created_from if parsed_filter_date(created_from)
+
+    created_to = permitted[:created_to].to_s
+    filters[:created_to] = created_to if parsed_filter_date(created_to)
+
+    filters
+  end
+
+  def parsed_filter_date(value)
+    return if value.blank?
+
+    Date.iso8601(value)
+  rescue ArgumentError
+    nil
   end
 
   def current_failed_delivery_scope
