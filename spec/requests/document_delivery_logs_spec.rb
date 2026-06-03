@@ -1,4 +1,5 @@
 require "rails_helper"
+require "cgi"
 
 RSpec.describe "Document delivery logs", type: :request do
   let(:company) { create(:company) }
@@ -33,6 +34,17 @@ RSpec.describe "Document delivery logs", type: :request do
 
   def href_for(text)
     parsed_html.css("a[href]").find { |node| node.text.strip == text }&.[]("href")
+  end
+
+  def parse_mailto_href(href)
+    expect(href).to start_with("mailto:")
+
+    recipients, query = href.delete_prefix("mailto:").split("?", 2)
+
+    {
+      recipients: CGI.unescape(recipients.to_s),
+      query: Rack::Utils.parse_nested_query(query.to_s)
+    }
   end
 
   def form_param_for_submit(submit_value, param_name)
@@ -120,12 +132,14 @@ RSpec.describe "Document delivery logs", type: :request do
 
     get document_delivery_log_path(log)
 
-    mailto = href_for("メーラーを開く")
-    expect(mailto).to start_with("mailto:client%40example.com%2Csecond%40example.com?")
-    expect(mailto).to include("cc=cc%40example.com")
-    expect(mailto).to include("bcc=bcc%40example.com")
-    expect(mailto).to include("subject=Please+review+%26+confirm")
-    expect(mailto).to include("body=Portal+link%0AThanks")
+    mailto = parse_mailto_href(href_for("メーラーを開く"))
+    expect(mailto[:recipients]).to eq("client@example.com,second@example.com")
+    expect(mailto[:query]).to include(
+      "cc" => "cc@example.com",
+      "bcc" => "bcc@example.com",
+      "subject" => "Please review & confirm",
+      "body" => "Portal link\nThanks"
+    )
   end
 
   it "creates a portal-link delivery draft for a document set" do
