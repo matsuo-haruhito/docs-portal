@@ -4,7 +4,8 @@ class Admin::ModelBrowsersController < Admin::BaseController
   helper_method :entry_index_path, :record_summary_value, :summary_field_label
 
   def index
-    @entries = Admin::ModelBrowserCatalog.entries
+    @query = normalized_model_browser_query
+    @entries = filter_entries(Admin::ModelBrowserCatalog.entries, @query)
     @entry_groups = Admin::ModelBrowserCatalog.grouped_entries(@entries)
     @entry_summaries = @entries.index_with { build_summary(_1) }
   end
@@ -16,6 +17,26 @@ class Admin::ModelBrowsersController < Admin::BaseController
   end
 
   private
+
+  def normalized_model_browser_query
+    params[:q].to_s.strip
+  end
+
+  def filter_entries(entries, query)
+    return entries if query.blank?
+
+    normalized_query = query.downcase
+    entries.select { model_browser_entry_search_text(_1).include?(normalized_query) }
+  end
+
+  def model_browser_entry_search_text(entry)
+    [
+      entry.label,
+      entry.key,
+      entry.description,
+      Admin::ModelBrowserCatalog.group_label(entry.group)
+    ].join(" ").downcase
+  end
 
   def build_summary(entry)
     scope = entry.model_class.all
