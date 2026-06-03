@@ -18,6 +18,9 @@ section.card
         include_blank: "選択してください",
         allow_clear: true,
         selected: @selected_project&.id
+      = label_tag :q do
+        | 文書名 / slug
+        = search_field_tag :q, @query, placeholder: "文書名またはslugの断片"
       = label_tag :usage_filter do
         | 利用状況
         = select_tag :usage_filter, options_for_select(document_usage_report_filter_options, @usage_filter)
@@ -75,6 +78,10 @@ section.card
       strong = " #{document_usage_report_filter_label(@usage_filter)}"
       |  / 並び順:
       strong = " #{document_usage_report_sort_label(@sort_order)}"
+    - if @query.present?
+      p
+        | 文書検索:
+        strong = " #{@query}"
     p.muted
       | 行内の「監査ログへ」は閲覧またはダウンロードがある文書だけに表示されます。既読確認だけで利用ありの文書は、既読確認件数の「内訳へ」から確認者と確認時刻を追えます。
 
@@ -132,6 +139,11 @@ section.card
         | 」、並び順は「
         strong = document_usage_report_sort_label(@sort_order)
         | 」です。条件を変えるか、クリアして案件全体を確認してください。
+      - if @query.present?
+        p.muted
+          | 文書検索「
+          strong = @query
+          | 」に一致する文書名またはslugはありません。
       p.actions
         = link_to "条件をクリア", admin_document_usage_reports_path(project_id: @selected_project.id)
 - else
