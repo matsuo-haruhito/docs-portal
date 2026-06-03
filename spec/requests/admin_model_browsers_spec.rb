@@ -38,7 +38,7 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include("運用")
     expect(response.body).to include("案件")
     expect(response.body).to include("文書")
-    expect(response.body).to include("key: projects / group: 文書・権限")
+    expect(response.body).to include("key: projects / group: 基本マスタ")
     expect(response.body).to include("key: documents / group: 文書・権限")
     expect(response.body).to include(admin_model_browser_model_path("projects"))
     expect(response.body).to include(admin_projects_path)
