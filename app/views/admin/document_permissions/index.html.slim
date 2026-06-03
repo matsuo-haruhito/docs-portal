@@ -15,9 +15,10 @@ h1 文書権限
 
 section.card
   h2 文書別の権限概要
-  p.muted 文書ごとの会社単位・ユーザー単位の権限数と、閲覧/ダウンロードの内訳を確認できます。件数は下段の「権限一覧」にある個別付与行を文書単位で集計したものです。
+  p.muted 文書ごとの会社単位・ユーザー単位の権限数と、閲覧/ダウンロードの内訳を確認できます。
 
   - if @permission_overview_rows.any?
+    p.muted 件数は下段の「権限一覧」にある個別付与行を文書単位で集計したものです。
     = table_preferences_editor(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns, title: "権限概要の表示設定")
 
     = table_preferences_table_tag(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns) do
