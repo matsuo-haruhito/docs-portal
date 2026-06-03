@@ -18,6 +18,15 @@ class Admin::ApiSpecificationPage
     keyword_init: true
   )
 
+  PrimarySourcePage = Struct.new(:label, :site_path, :source_path, keyword_init: true)
+
+  PRIMARY_SOURCE_PAGES = [
+    { label: "API仕様・連携設定", site_path: SITE_PATH, source_path: "docs-src/api-specification.md" },
+    { label: "単体ファイルアップロードAPI", site_path: "client-file-upload-api", source_path: "docs-src/client-file-upload-api.md" },
+    { label: "Office preview", site_path: "office-preview", source_path: "docs-src/office-preview.md" },
+    { label: "外部フォルダ同期 Webhook 受信仕様", site_path: "external-folder-sync-webhooks", source_path: "docs-src/external-folder-sync-webhooks.md" }
+  ].map { |attributes| PrimarySourcePage.new(**attributes).freeze }.freeze
+
   def initialize(view_context: nil)
     @view_context = view_context
   end
@@ -32,6 +41,14 @@ class Admin::ApiSpecificationPage
 
   def source_path
     Rails.root.join("docs-src", "api-specification.md")
+  end
+
+  def primary_source_pages
+    PRIMARY_SOURCE_PAGES
+  end
+
+  def primary_source_paths
+    primary_source_pages.map(&:source_path)
   end
 
   def source_paths
