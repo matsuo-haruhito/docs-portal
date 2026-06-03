@@ -71,6 +71,7 @@ Rails.application.routes.draw do
       post :force_apply, on: :member
       post :enqueue, on: :member
       post :subscribe, on: :member
+      post :recheck_metadata, on: :member
       delete :unsubscribe, on: :member
       resource :external_folder_sync_oauth_connection, only: %i[new destroy]
     end
