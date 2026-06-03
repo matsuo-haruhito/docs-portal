@@ -27,6 +27,8 @@ section.card
         = form.label :ai_context_scope, "AI context scope"
         = form.select :ai_context_scope, options_for_select([["すべて", ""]] + access_log_ai_context_scope_filter_options, @filters[:ai_context_scope])
       div
+        p.muted AI context mode / scope は対象種別が AI context export のときだけ有効です。page / file / zip では送信されても有効条件から外れます。
+      div
         = form.label :project_id, "案件"
         = select_tag :project_id,
           options_for_select([["すべて", ""]] + access_log_project_filter_options(@projects), @filters[:project_id]),
