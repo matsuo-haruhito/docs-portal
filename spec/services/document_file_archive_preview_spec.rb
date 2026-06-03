@@ -227,7 +227,8 @@ RSpec.describe DocumentFileArchivePreview do
 
     preview = described_class.new(file:, limit: 1, path_query: "nested").call
 
-    nested_entry = preview.entries.sole
+    expect(preview.entries.size).to eq(1)
+    nested_entry = preview.entries.first
     expect(nested_entry.name).to eq("deep/nested.zip")
     expect(nested_entry).not_to be_download_candidate
     expect(nested_entry.action_unavailable_reason).to eq("nested archive entry はdownload対象外です")
