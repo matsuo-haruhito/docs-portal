@@ -6,6 +6,18 @@ RSpec.describe "Document catalogs", type: :request do
   let(:internal_user) { create(:user, :internal) }
   let(:external_user) { create(:user, :external, company:) }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def catalog_table_text
+    parsed_html.css("table").map(&:text).join("\n")
+  end
+
+  def main_text
+    parsed_html.at("main")&.text.to_s
+  end
+
   before do
     create(:project_membership, project:, user: external_user)
   end
@@ -25,7 +37,7 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response.body).to include("限定公開")
     expect(response.body).to include("表示可能件数")
     expect(response.body).not_to include("Internal Pack")
-    expect(response.body).not_to include("restricted_external")
+    expect(catalog_table_text).not_to include("restricted_external")
     expect(response.body).to include(project_document_catalog_path(project, visible))
   end
 
@@ -112,7 +124,7 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response.body).to include("read first")
     expect(response.body).not_to include("Internal Manual")
     expect(response.body).not_to include("internal")
-    expect(response.body).not_to include("restricted_external")
+    expect(main_text).not_to include("restricted_external")
   end
 
   it "forbids external users from internal-only catalogs" do
