@@ -109,6 +109,7 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("件数")
     expect(response.body).to include("最終更新")
+    expect(response.body).to include("代表フィールド検索")
     expect(response.body).to include("最近のデータ")
     expect(response.body).to include("最新の代表データを最大20件まで表示します。この画面では編集や削除はできません。")
     expect(response.body).to include("既存画面で詳しく確認")
@@ -116,6 +117,60 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include(admin_projects_path)
     expect(response.body).to include(project.code)
     expect(response.body).to include(project.name)
+  end
+
+  it "filters model pages by whitelisted text summary fields" do
+    matching_project = create(:project, code: "SEARCH1674", name: "Needle Project")
+    other_project = create(:project, code: "OTHER1674", name: "Other Project")
+
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("projects"), params: { q: "Needle" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("検索結果")
+    expect(response.body).to include("検索語: Needle / 表示上限: 20件")
+    expect(response.body).to include("検索対象:")
+    expect(response.body).to include("コード")
+    expect(response.body).to include(matching_project.code)
+    expect(response.body).to include(matching_project.name)
+    expect(response.body).not_to include(other_project.code)
+    expect(response.body).not_to include(other_project.name)
+  end
+
+  it "matches numeric queries against id without adding write actions" do
+    matching_project = create(:project, code: "IDMATCH1674", name: "ID Match Project")
+    other_project = create(:project, code: "IDOTHER1674", name: "ID Other Project")
+
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("projects"), params: { q: matching_project.id.to_s }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(matching_project.code)
+    expect(response.body).not_to include(other_project.code)
+    expect(response.body).not_to include("削除")
+  end
+
+  it "shows an empty state for searches with no matching records" do
+    project = create(:project, code: "MISS1674", name: "Miss Project")
+
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("projects"), params: { q: "NO_MATCH_1674" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("検索結果")
+    expect(response.body).to include("該当するデータはありません")
+    expect(response.body).not_to include(project.code)
+  end
+
+  it "handles overlong symbol queries without raising an error" do
+    create(:project, code: "SYMBOL1674", name: "Symbol Project")
+
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("projects"), params: { q: "!'" * 120 }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("検索結果")
+    expect(response.body).to include("該当するデータはありません")
   end
 
   it "redirects unauthenticated users from model-specific browser pages" do
