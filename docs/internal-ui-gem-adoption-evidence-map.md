@@ -12,6 +12,45 @@
 4. `update train での確認順` に沿って package / wiring / host screen の順に確認する。
 5. PR body、issue comment、review follow-up comment のいずれか 1 箇所に `rollback note に残す観点` を記録する。
 
+## Adoption readiness baseline
+
+`#858` の child lane や `#1941` のような横断整理では、次の段階を分けて記録します。CI success、mergeability、merged、docs synced、public surface guard ready を同じ readiness として扱いません。
+
+| 段階 | 採用候補としての読み方 | 記録する最小 evidence |
+| --- | --- | --- |
+| upstream PR green | upstream 側の候補 PR が CI を通っただけ。docs-portal の target SHA や current support にはしない | upstream PR number、head SHA、CI run、まだ open なら `merge 後に再確認` |
+| upstream PR mergeable | conflict がない候補。merge 済み behavior ではないため、docs-portal 側 docs では `確認待ち` として扱う | mergeable true/false、branch freshness、review / human gate の有無 |
+| upstream merged | upstream `main` に入った候補。次に package / docs / release guard と docs-portal representative smoke を確認できる | merge commit / upstream docs path / package guard / manifest or public API docs |
+| public surface guard ready | package-root export、public API table、manifest、smoke guard のいずれかが merged docs / code で確認できる状態 | source of truth docs、guard spec / verifier、守っている surface、守っていない host app 責務 |
+| downstream smoke ready | docs-portal 側の代表画面・request spec・manual evidence・rollback target が揃った状態。ここで初めて bump PR の evidence に使える | screen、from SHA、to SHA、通した smoke、result、rollback target、docs追従要否 |
+
+## Common adoption evidence template
+
+release train、docs-only sync、review follow-up のどれでも、次の形式で upstream evidence と downstream smoke を分けて残します。gem 固有の route、schema、権限、field params、table key、business copy は docs-portal 側 evidence に閉じ、upstream gem の public contract として書きません。
+
+```text
+- gem: <tree_view | rails_table_preferences | rails_fields_kit>
+- readiness stage:
+  - <upstream PR green | upstream PR mergeable | upstream merged | public surface guard ready | downstream smoke ready>
+- upstream evidence:
+  - PR / issue / commit:
+  - public surface source of truth:
+  - package / manifest / smoke guard:
+  - current support boundary:
+- downstream docs-portal evidence:
+  - screen / helper / view / spec:
+  - from SHA:
+  - to SHA:
+  - representative smoke:
+  - result:
+  - rollback target:
+  - docs follow-up:
+- unresolved gates:
+  - <human gate / manual evidence pending / merge after re-check / host app smoke missing>
+```
+
+3 gem 共通で、open PR や proposal は `current support` として書きません。target SHA、`Gemfile` / `Gemfile.lock` 更新、3 gem 同時 bump、upstream PR の review / merge 判断は、この template ではなく各 child issue / PR の人間判断に戻します。
+
 ## Representative smoke / evidence map
 
 | gem | docs-portal representative smoke | upstream evidence | update train での確認順 | rollback note に残す観点 |
