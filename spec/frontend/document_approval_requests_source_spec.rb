@@ -33,6 +33,7 @@ RSpec.describe "document approval requests source" do
     aggregate_failures do
       expect(index_source).to include('対応待ち #{@pending_count}件 / OK済み #{@approved_count}件 / Cancel済み #{@cancelled_count}件')
       expect(index_source).to include("query_path_params = @query.present? ? { q: @query } : {}")
+      expect(index_source).to include("clear_search_params = @status_filter.present? ? { status: @status_filter } : {}")
       expect(index_source).to include("list_path.call(query_path_params.merge(status: :pending))")
       expect(index_source).to include("@document_approval_request_sections.each")
       expect(index_source).to include("document_approval_request_path(request, return_to: current_list_path)")
