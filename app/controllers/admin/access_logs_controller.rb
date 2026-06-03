@@ -65,7 +65,7 @@ class Admin::AccessLogsController < Admin::BaseController
     return scope if value.blank?
 
     query = "%#{ActiveRecord::Base.sanitize_sql_like(value)}%"
-    scope.where("target_name LIKE :query OR ip_address LIKE :query", query:)
+    scope.where("(target_name LIKE :query OR ip_address LIKE :query)", query:)
   end
 
   def apply_accessed_at_filters(scope)
