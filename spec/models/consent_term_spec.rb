@@ -18,6 +18,21 @@ RSpec.describe ConsentTerm, type: :model do
     expect(duplicate.errors[:version_label]).to be_present
   end
 
+  it "allows the same version label for different titles" do
+    create(:consent_term, title: "Project Terms", version_label: "v1")
+    term = build(:consent_term, title: "Download Terms", version_label: "v1")
+
+    expect(term).to be_valid
+  end
+
+  it "returns only active terms from active_only" do
+    active_term = create(:consent_term, title: "Active Terms", active: true)
+    inactive_term = create(:consent_term, title: "Inactive Terms", active: false)
+
+    expect(described_class.active_only).to contain_exactly(active_term)
+    expect(described_class.active_only).not_to include(inactive_term)
+  end
+
   it "uses public_id for routes" do
     term = create(:consent_term)
 
