@@ -145,11 +145,11 @@ class DocumentFileArchivePreview
 
   def search_entries
     entries = []
-    normalized_query = path_query.downcase
+    normalized_query = normalize_path(path_query).downcase
 
     Zip::File.open(file.absolute_path) do |zip_file|
       zip_file.each do |entry|
-        next unless entry.name.to_s.downcase.include?(normalized_query)
+        next unless normalize_path(entry.name).downcase.include?(normalized_query)
 
         entries << build_entry(entry)
         return Result.new(entries:, truncated: true, limit:, error: nil) if entries.size >= limit
@@ -165,6 +165,10 @@ class DocumentFileArchivePreview
 
   def search?
     path_query.present?
+  end
+
+  def normalize_path(path)
+    path.to_s.tr("\\", "/")
   end
 
   def zip?
