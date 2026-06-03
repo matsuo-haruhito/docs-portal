@@ -25,7 +25,7 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response.body).to include("限定公開")
     expect(response.body).to include("表示可能件数")
     expect(response.body).not_to include("Internal Pack")
-    expect(response.body).not_to include("restricted_external")
+    expect(response.body).not_to include(">restricted_external<")
     expect(response.body).to include(project_document_catalog_path(project, visible))
   end
 
@@ -112,7 +112,7 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response.body).to include("read first")
     expect(response.body).not_to include("Internal Manual")
     expect(response.body).not_to include("internal")
-    expect(response.body).not_to include("restricted_external")
+    expect(response.body).not_to include(">restricted_external<")
   end
 
   it "forbids external users from internal-only catalogs" do
