@@ -11,6 +11,27 @@ h1 同意文面管理
   p.muted 改訂するときは既存の文面を上書きせず、新しい版ラベルで登録してください。
   = render "form", consent_term: @consent_term
 
+.card
+  h2 一覧の絞り込み
+  = form_with url: admin_consent_terms_path, method: :get, local: true do
+    .form-grid
+      label
+        | タイトル・版ラベル
+        = text_field_tag :q, @consent_term_filters[:q], placeholder: "タイトルまたは版ラベル"
+      label
+        | 状態
+        = select_tag :active, options_for_select([["すべて", ""], ["有効", "true"], ["無効", "false"]], @consent_term_filters[:active])
+      label
+        | 種別
+        = select_tag :consent_scope, options_for_select([["すべて", ""]] + enum_options_for("consent_terms.consent_scope", ConsentTerm.consent_scopes.keys), @consent_term_filters[:consent_scope])
+      label
+        | 再同意方針
+        = select_tag :requirement_timing, options_for_select([["すべて", ""]] + enum_options_for("consent_terms.requirement_timing", ConsentTerm.requirement_timings.keys), @consent_term_filters[:requirement_timing])
+    p.actions style="margin-top:16px;"
+      = submit_tag "絞り込む", class: "button"
+      - if @consent_term_filters_applied
+        = link_to "条件をリセット", admin_consent_terms_path, class: "button secondary"
+
 - if @consent_terms.any?
   .card
     h2 同意文面一覧の読み方
@@ -46,6 +67,10 @@ h1 同意文面管理
             = edit_link_to "編集", edit_admin_consent_term_path(term)
             = delete_link_to "削除", admin_consent_term_path(term), confirm: "同意文面「#{term.title} #{term.version_label}」を削除しますか？履歴がある場合は削除できません。"
             p.muted 履歴がある文面は削除せず、編集で無効化してください。
+- elsif @consent_terms_exist && @consent_term_filters_applied
+  .card
+    p.muted 条件に一致する同意文面はありません。
+    p.muted タイトル・版ラベル、状態、種別、再同意方針の条件を見直してください。
 - else
   .card
     p.muted まだ同意文面はありません。
