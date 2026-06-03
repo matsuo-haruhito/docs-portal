@@ -14,6 +14,18 @@ RSpec.describe Admin::ApiSpecificationPage do
     FileUtils.rm_f(build_entry_path)
   end
 
+  describe "#primary_source_pages" do
+    it "keeps the admin source list labels, site paths, and source paths together" do
+      expect(page.primary_source_pages.map { |source_page| [source_page.label, source_page.site_path, source_page.source_path] }).to eq([
+        ["API仕様・連携設定", "api-specification", "docs-src/api-specification.md"],
+        ["単体ファイルアップロードAPI", "client-file-upload-api", "docs-src/client-file-upload-api.md"],
+        ["Office preview", "office-preview", "docs-src/office-preview.md"],
+        ["外部フォルダ同期 Webhook 受信仕様", "external-folder-sync-webhooks", "docs-src/external-folder-sync-webhooks.md"]
+      ])
+      expect(page.primary_source_paths).to eq(page.primary_source_pages.map(&:source_path))
+    end
+  end
+
   describe "#source_paths" do
     it "includes all docs-src markdown files" do
       expect(page.source_paths).to include(Rails.root.join("docs-src", "api-specification.md"))
