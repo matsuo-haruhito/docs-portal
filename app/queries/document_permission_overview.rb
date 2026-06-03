@@ -1,8 +1,9 @@
 class DocumentPermissionOverview
   Row = Data.define(:document, :company_permissions, :user_permissions, :download_allowed_count, :view_allowed_count)
 
-  def initialize(scope = Document.all)
+  def initialize(scope = Document.all, permission_scope: DocumentPermission.all)
     @scope = scope
+    @permission_scope = permission_scope
   end
 
   def rows
@@ -20,14 +21,14 @@ class DocumentPermissionOverview
 
   private
 
-  attr_reader :scope
+  attr_reader :scope, :permission_scope
 
   def documents
     @documents ||= scope.includes(:project).order(:title).to_a
   end
 
   def permissions_by_document_id
-    @permissions_by_document_id ||= DocumentPermission
+    @permissions_by_document_id ||= permission_scope
       .includes(:company, :user)
       .where(document_id: documents.map(&:id))
       .order(:document_id, :access_level, :company_id, :user_id)
