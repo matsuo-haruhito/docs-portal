@@ -39,6 +39,10 @@ RSpec.describe "Admin document permissions", type: :request do
     end
   end
 
+  def link_texts
+    parsed_html.css("a[href]").map { _1.text.squish }
+  end
+
   def node_ids
     parsed_html.css("[id]").map { _1["id"] }
   end
@@ -60,6 +64,9 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(select_placeholder("document_permission[company_id]")).to eq("会社向けに付与する場合に選択")
     expect(select_placeholder("document_permission[user_id]")).to eq("ユーザー向けに付与する場合に選択")
     expect(page_text).not_to include("会社単位かユーザー単位のどちらか一方を指定してください。")
+    expect(page_text).not_to include("下段の「権限一覧」にある個別付与行")
+    expect(page_text).not_to include("下段の個別権限を見る")
+    expect(page_text).not_to include("この文書の個別付与行")
     expect(page_text).not_to include("権限概要の表示設定")
     expect(page_text).not_to include("権限一覧の表示設定")
     expect(table_preference_column_keys).to be_empty
@@ -140,6 +147,9 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(heading_texts).to include("文書別の権限概要", "権限一覧")
     expect(page_text).to include("権限概要の表示設定")
     expect(page_text).to include("権限一覧の表示設定")
+    expect(page_text).to include("件数は下段の「権限一覧」にある個別付与行を文書単位で集計したものです。")
+    expect(link_texts).to include("下段の個別権限を見る")
+    expect(page_text).to include("この文書の個別付与行（会社単位・ユーザー単位）")
     expect(table_preference_column_keys).to include("document", "company", "access_level")
     expect(page_text).to include("Permission Target")
     expect(page_text).to include("限定公開")
