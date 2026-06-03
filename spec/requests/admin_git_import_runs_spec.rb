@@ -60,6 +60,9 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(response.body).to include("Git Import Project")
     expect(response.body).to include(git_import_source.repository_full_name)
     expect(page_text).to include("表示中: 1件 / 最新100件までを表示")
+    expect(page_text).to include("表示中の最新100件内の状態: 取込済み: 1件")
+    expect(page_text).not_to include("エラー列を確認してください")
+    expect(page_text).not_to include("実行結果の理由を確認してください")
     expect(response.body).to include("Git同期履歴の表示設定")
     expect(run_rows.size).to eq(1)
   end
@@ -93,6 +96,9 @@ RSpec.describe "Admin git import runs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("provider、pull/push、status、summary_json、削除候補を追跡します")
+    expect(page_text).to include("表示中の最新100件内の状態: 失敗: 1件 / スキップ: 1件 / 取込済み: 1件")
+    expect(page_text).to include("失敗 1件はエラー列を確認してください。")
+    expect(page_text).to include("スキップ 1件は実行結果の理由を確認してください。")
     expect(page_text).to include("取り込み文書: 3")
     expect(page_text).to include("添付: 5")
     expect(page_text).to include("取込元パス: docs")
