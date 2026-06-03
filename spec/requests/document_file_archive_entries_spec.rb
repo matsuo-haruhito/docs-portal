@@ -48,13 +48,14 @@ RSpec.describe "Document file archive entries", type: :request do
     FileUtils.rm_f(archive_file.absolute_path)
   end
 
-  it "previews a text archive entry and records a view access log" do
+  it "previews a text archive entry and records only a view access log" do
     write_zip("docs/readme.txt" => "one\ntwo\n")
     sign_in_as(user)
 
     expect do
       get preview_entry_path
     end.to change(AccessLog.where(action_type: :view), :count).by(1)
+      .and change(AccessLog.where(action_type: :download), :count).by(0)
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("ZIP項目プレビュー")
@@ -95,13 +96,14 @@ RSpec.describe "Document file archive entries", type: :request do
     expect(response.body).to include("text preview")
   end
 
-  it "downloads an archive entry and records a download access log" do
+  it "downloads an archive entry and records only a download access log" do
     write_zip("docs/readme.txt" => "hello")
     sign_in_as(user)
 
     expect do
       get download_entry_path
     end.to change(AccessLog.where(action_type: :download), :count).by(1)
+      .and change(AccessLog.where(action_type: :view), :count).by(0)
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to eq("hello")
@@ -126,10 +128,24 @@ RSpec.describe "Document file archive entries", type: :request do
     write_zip("nested/archive.zip" => "zip")
     sign_in_as(user)
 
-    get download_entry_path("nested/archive.zip")
+    expect do
+      get download_entry_path("nested/archive.zip")
+    end.not_to change(AccessLog.where(action_type: :download), :count)
 
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("nested archive")
+  end
+
+  it "does not download directory archive entries" do
+    write_zip("docs/" => :directory)
+    sign_in_as(user)
+
+    expect do
+      get download_entry_path("docs/")
+    end.not_to change(AccessLog.where(action_type: :download), :count)
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("directory entry")
   end
 
   it "forbids archive entry downloads for external users who only have view permission" do
