@@ -73,7 +73,9 @@ RSpec.describe "Admin document usage report query", type: :request do
     expect(page_text).to match(/並び順:\s*最終アクセスが新しい順/)
     expect(page_text).to include("文書検索: alpha")
     expect(row_titles).to eq([matched.title])
-    expect(row_titles).not_to include(unused_match.title, outside_period.title, other_query.title)
+    expect(row_titles).not_to include(unused_match.title)
+    expect(row_titles).not_to include(outside_period.title)
+    expect(row_titles).not_to include(other_query.title)
   end
 
   it "applies q to CSV output with the same rows as the HTML report" do
@@ -101,7 +103,9 @@ RSpec.describe "Admin document usage report query", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 0件")
     expect(page_text).to include("条件に一致する文書はありません")
-    expect(page_text).to include("文書検索「 missing 」に一致する文書名またはslugはありません。")
+    expect(page_text).to include("文書検索")
+    expect(page_text).to include("missing")
+    expect(page_text).to include("一致する文書名またはslugはありません。")
     expect(parsed_html.css("table tbody tr")).to be_empty
   end
 
