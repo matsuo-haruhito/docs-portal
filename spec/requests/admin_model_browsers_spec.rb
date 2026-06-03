@@ -8,6 +8,10 @@ RSpec.describe "Admin model browsers", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def model_browser_card_links
+    parsed_html.css(".model-browser-group .metric-card h3 a")
+  end
+
   it "redirects unauthenticated users to the login page" do
     get admin_model_browser_path
 
@@ -32,6 +36,59 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include("文書")
     expect(response.body).to include(admin_model_browser_model_path("projects"))
     expect(response.body).to include(admin_projects_path)
+  end
+
+  it "filters the model browser index by catalog label and keeps grouped cards" do
+    sign_in_as(admin_user)
+    get admin_model_browser_path, params: { q: "文書" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("検索条件: 文書")
+    expect(response.body).to include("文書・権限")
+
+    card_labels = model_browser_card_links.map { _1.text.squish }
+    card_hrefs = model_browser_card_links.map { _1["href"] }
+
+    expect(card_labels).to include("文書")
+    expect(card_hrefs).to include(admin_model_browser_model_path("documents"))
+    expect(card_hrefs).not_to include(admin_model_browser_model_path("companies"))
+  end
+
+  it "filters the model browser index by key while normalizing spaces and case" do
+    sign_in_as(admin_user)
+    get admin_model_browser_path, params: { q: "  DOCUMENT_FILES  " }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("検索条件: DOCUMENT_FILES")
+
+    card_labels = model_browser_card_links.map { _1.text.squish }
+    card_hrefs = model_browser_card_links.map { _1["href"] }
+
+    expect(card_labels).to eq(["文書ファイル"])
+    expect(card_hrefs).to eq([admin_model_browser_model_path("document_files")])
+  end
+
+  it "filters the model browser index by description and group label" do
+    sign_in_as(admin_user)
+
+    get admin_model_browser_path, params: { q: "公開単位" }
+    expect(response).to have_http_status(:ok)
+    expect(model_browser_card_links.map { _1["href"] }).to include(admin_model_browser_model_path("projects"))
+
+    get admin_model_browser_path, params: { q: "import / sync" }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("import / sync")
+    expect(model_browser_card_links.map { _1["href"] }).to include(admin_model_browser_model_path("git_import_sources"))
+  end
+
+  it "shows a search empty state on the model browser index" do
+    sign_in_as(admin_user)
+    get admin_model_browser_path, params: { q: "missing catalog entry" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("検索条件に一致するモデルはありません。")
+    expect(response.body).to include("モデル名、key、説明、group の表記を変えて再検索してください。")
+    expect(model_browser_card_links).to be_empty
   end
 
   it "keeps every catalog entry in a known group without changing dashboard ordering" do
