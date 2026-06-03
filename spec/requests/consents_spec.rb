@@ -71,6 +71,25 @@ RSpec.describe "Consents", type: :request do
     expect(page_text).to include("Consent Document")
   end
 
+  it "does not create duplicate consent records when the same missing term is posted twice" do
+    term = create(:consent_term, title: "Project Terms", consent_scope: :project, version_label: "v1")
+    create(:project_consent_setting, project:, consent_term: term, required_on: :first_access)
+
+    sign_in_as(user)
+
+    params = { target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to: project_path(project) }
+
+    expect do
+      post consents_path, params:
+    end.to change(UserConsent, :count).by(1)
+
+    expect do
+      post consents_path, params:
+    end.not_to change(UserConsent, :count)
+
+    expect(UserConsent.where(user:, consent_term: term, target: project)).to contain_exactly(UserConsent.last)
+  end
+
   it "uses the current return_to for the back link when it is safe" do
     term = create(:consent_term, title: "Project Terms", consent_scope: :project, version_label: "v1")
     create(:project_consent_setting, project:, consent_term: term, required_on: :first_access)
@@ -90,12 +109,27 @@ RSpec.describe "Consents", type: :request do
 
     sign_in_as(user)
 
-    get new_consent_path(target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to: "https://example.com/outside")
+    ["", "//example.com/outside", "https://example.com/outside", "http://example.com/outside"].each do |return_to|
+      get new_consent_path(target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to:)
 
-    expect(response).to have_http_status(:ok)
-    expect(link_hrefs("同意せず戻る")).to include(projects_path)
-    expect(hidden_return_to_values).to include(projects_path)
-    expect(hidden_return_to_values).not_to include("https://example.com/outside")
+      expect(response).to have_http_status(:ok)
+      expect(link_hrefs("同意せず戻る")).to include(projects_path)
+      expect(hidden_return_to_values).to include(projects_path)
+      expect(hidden_return_to_values).not_to include(return_to) if return_to.present?
+    end
+  end
+
+  it "falls back to projects_path after consent when return_to is unsafe" do
+    term = create(:consent_term, title: "Project Terms", consent_scope: :project, version_label: "v1")
+    create(:project_consent_setting, project:, consent_term: term, required_on: :first_access)
+
+    sign_in_as(user)
+
+    ["", "//example.com/outside", "https://example.com/outside", "http://example.com/outside"].each do |return_to|
+      post consents_path, params: { target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to: }
+
+      expect(response).to redirect_to(projects_path)
+    end
   end
 
   it "redirects file downloads to download consent and does not log before consent" do
