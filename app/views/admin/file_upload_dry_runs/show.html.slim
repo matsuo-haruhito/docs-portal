@@ -16,7 +16,7 @@ h1 単体ファイルアップロードdry-run
     dt 取り込み先 relative path
     dd = @file_upload_preview["relative_path"].presence || "-"
     dt クライアント source path
-    dd = @file_upload_preview["source_path"].presence || "-"
+    dd.muted raw source path は画面に表示しません。照合には relative path と content hash を使用してください。
     dt ファイルサイズ
     dd = @file_upload_preview["file_size"].present? ? number_to_human_size(@file_upload_preview["file_size"].to_i) : "-"
     dt content hash
