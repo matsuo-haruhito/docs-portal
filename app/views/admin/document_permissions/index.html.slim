@@ -15,7 +15,7 @@ h1 文書権限
 
 section.card
   h2 文書別の権限概要
-  p.muted 文書ごとの会社単位・ユーザー単位の権限数と、閲覧/ダウンロードの内訳を確認できます。
+  p.muted 文書ごとの会社単位・ユーザー単位の権限数と、閲覧/ダウンロードの内訳を確認できます。件数は下段の「権限一覧」にある個別付与行を文書単位で集計したものです。
 
   - if @permission_overview_rows.any?
     = table_preferences_editor(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns, title: "権限概要の表示設定")
@@ -35,7 +35,7 @@ section.card
           tr
             td data-rails-table-preferences-column-key="document"
               div = link_to row.document.title, project_document_path(row.document.project, row.document.slug), data: { turbo_frame: "_top" }
-              div = link_to "権限一覧へ", "#document-permissions-for-#{row.document.id}", class: "muted"
+              div = link_to "下段の個別権限を見る", "#document-permissions-for-#{row.document.id}", class: "muted"
             td data-rails-table-preferences-column-key="project" = row.document.project.name
             td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(row.document)
             td data-rails-table-preferences-column-key="company_permissions" = row.company_permissions.size
@@ -69,7 +69,10 @@ section.card
           - row_anchor_id = anchored_document_ids[permission.document_id] ? nil : "document-permissions-for-#{permission.document_id}"
           - anchored_document_ids[permission.document_id] = true
           tr id=row_anchor_id
-            td data-rails-table-preferences-column-key="document" = link_to permission.document.title, project_document_path(permission.document.project, permission.document.slug), data: { turbo_frame: "_top" }
+            td data-rails-table-preferences-column-key="document"
+              div = link_to permission.document.title, project_document_path(permission.document.project, permission.document.slug), data: { turbo_frame: "_top" }
+              - if row_anchor_id.present?
+                div.muted この文書の個別付与行（会社単位・ユーザー単位）
             td data-rails-table-preferences-column-key="company"
               - if company_primary_label.present?
                 div = company_primary_label
