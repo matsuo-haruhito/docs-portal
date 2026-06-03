@@ -2,7 +2,7 @@ require "rails_helper"
 require "fileutils"
 require "tmpdir"
 
-require Rails.root.join("db/seeds/support/seed_sample_document_generator")
+require Rails.root.join("db/seeds/support/seed_sample_document_generator").to_s
 
 RSpec.describe SeedSupport::SeedSampleDocumentGenerator do
   around do |example|
