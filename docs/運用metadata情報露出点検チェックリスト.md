@@ -1,0 +1,61 @@
+# 運用 metadata 情報露出点検チェックリスト
+
+この checklist は、admin / integration 運用画面で扱う sensitive metadata の表示境界を点検する入口です。
+
+社外ユーザーが権限外文書を見られないことの点検は [社外ユーザー向け情報露出点検チェックリスト](./社外ユーザー向け情報露出点検チェックリスト.md) を正本にします。この文書では、管理者や運用者に見える raw path、payload、外部サービス識別子、webhook header などが、調査に必要な範囲を超えて表示されていないかを確認します。
+
+## 点検対象
+
+次のような値は、外部ユーザー向けの閲覧権限とは別に、admin / integration metadata として点検する。
+
+- client / local folder 由来の `source_path`
+- Webhook の request body / response body / error message
+- 外部フォルダ同期の webhook headers / payload
+- Microsoft Graph の `drive_id` / `folder_item_id` / `folder_path` / `site_id`
+- Google Drive の channel id / resource id / message number
+- import / dry-run / sync の raw JSON に含まれる path、外部 ID、token-like value
+
+## 現在の入口
+
+| 対象 | 最初に見る docs / 画面 | current behavior と点検観点 | 関連 issue |
+| --- | --- | --- | --- |
+| manual upload dry-run の `source_path` | [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)、`admin/file_upload_dry_runs/:public_id` | `source_name` / `relative_path` / `content_hash` は照合に使う。raw `source_path` の表示範囲は security-adjacent な UI 判断として扱い、保存値や apply 条件の変更と混ぜない。 | `#1613` |
+| Webhook 送信履歴 detail の request body | [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md)、`admin/webhook_deliveries/:public_id` | current `main` は `WebhookRequestBodyPreview` で request body をマスク済み preview として表示する。secret、token、authorization、個人情報らしい key の値、長大本文が raw 表示されていないかを点検する。 | `#1434` / PR `#1447` |
+| Webhook 送信履歴 detail の response body / error message / target URL | [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md)、`admin/webhook_deliveries/:public_id` | response body / error message / target URL は失敗調査に必要な情報だが、raw secret や token-like value を表示しない境界が必要なら別 issue として扱う。request body preview の mask 方針を response 側へ自動拡張したとは読まない。 | `#1434` |
+| Google Drive 変更通知の headers / payload | [外部フォルダ同期dry-run・apply運用runbook](./外部フォルダ同期dry-run・apply運用runbook.md)、`外部フォルダ同期設定詳細` | 受信イベントでは channel id、resource id、message number、event key、関連 run を確認する。検証 token や webhook header の raw 値を運用確認用 metadata として扱わない。 | `#1752` / `#1751` |
+| SharePoint / OneDrive の Graph metadata | [外部フォルダ同期dry-run・apply運用runbook](./外部フォルダ同期dry-run・apply運用runbook.md)、[Microsoft Graph接続管理runbook](./Microsoft%20Graph接続管理runbook.md) | `drive_id` / `folder_item_id` / `folder_path` / `site_id` は共有 URL から保存できた metadata の確認用。同期本体、Graph subscription 作成、変更通知運用が current support になったとは読まない。 | `#1030` 以降 |
+
+## 点検手順
+
+1. 対象画面が外部ユーザー向け導線か、admin / integration 運用導線かを先に分ける。
+2. 画面で raw JSON、raw path、raw payload、外部 ID、header を表示している箇所を探す。
+3. 調査に必要な非秘密識別子と、表示しないほうがよい secret / token / private path / PII を分ける。
+4. current behavior が mask / truncation / preview を持つ場合は、raw value が HTML response に残らないことを spec や review で確認する。
+5. current behavior が raw 表示の場合は、docs だけで安全化したことにせず、表示変更や保存方針が必要かを別 issue に戻す。
+6. 画面表示だけでなく、JSON / Markdown / ZIP / Webhook payload など出力物に同じ raw value が入っていないかを必要に応じて確認する。
+
+## 合格基準
+
+- admin / integration metadata の点検入口が、社外ユーザー向けの権限外情報露出 checklist と混線していない
+- raw path、raw payload、token-like value、PII-like value を current support として表示しているか、mask / truncation 済み preview なのかが分かる
+- `source_path`、Webhook request body、Graph provider metadata、webhook headers の代表観点をそれぞれ別に確認できる
+- 実装済み current behavior と、issue 化済みの改善候補を同じ文として断定していない
+- runtime code、DB schema、認可、security policy の最終判断をこの checklist で新規に決めていない
+
+## 停止条件
+
+次の場合は docs だけで完了させず、人間判断または runtime issue に戻す。
+
+- raw value を表示してよいか、業務上の許容範囲が判断できない
+- 保存済み metadata の削除、暗号化、retention、audit policy が必要になる
+- mask すべき key や PII 判定を新しく決める必要がある
+- 外部 API、Webhook 署名、Graph subscription、同期本体の仕様変更が必要になる
+- 社外ユーザー向け権限境界と admin-only 運用 metadata のどちらを正本にするか判断が割れる
+
+## 関連 docs
+
+- [社外ユーザー向け情報露出点検チェックリスト](./社外ユーザー向け情報露出点検チェックリスト.md)
+- [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md)
+- [外部フォルダ同期dry-run・apply運用runbook](./外部フォルダ同期dry-run・apply運用runbook.md)
+- [Microsoft Graph接続管理runbook](./Microsoft%20Graph接続管理runbook.md)
+- [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)
