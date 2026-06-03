@@ -15,6 +15,8 @@
   end %>
 <% tooltip = tree_item_tooltip(item) %>
 <% upload_project = item.is_a?(Project) ? item : item.respond_to?(:project) ? item.project : nil %>
+<% item_classes = tree_item_css_class(item) %>
+<% tree_item_current = Array(item_classes).include?("current-node") %>
 <% upload_data = {
   turbo_frame: "main_panel",
   turbo_action: "advance",
@@ -22,6 +24,7 @@
   tree_open_url: tree_open_path,
   tree_refresh_url: tree_refresh_path
 } %>
+<% upload_data[:tree_current] = "true" if tree_item_current %>
 <% if upload_project && current_user.internal? %>
   <% upload_data[:action] = "dragenter->manual-document-upload#dragenter dragover->manual-document-upload#dragover dragleave->manual-document-upload#dragleave drop->manual-document-upload#drop" %>
   <% upload_data[:manual_document_upload_url] = project_document_uploads_path(upload_project) %>
@@ -29,12 +32,17 @@
   <% upload_data[:manual_document_upload_target_document_id] = item.public_id if item.is_a?(Document) %>
 <% end %>
 
-<td class="<%= tree_item_css_class(item) %>">
+<td class="<%= item_classes %>">
   <%= link_to tree_item_label(item),
     tree_item_path(item),
     class: ["tree-item-label", tree_item_label_size_class(item), ("manual-document-upload-target" if upload_project && current_user.internal?)].compact,
     title: tooltip,
+    aria: { current: ("page" if tree_item_current) },
     data: upload_data %>
+
+  <% if tree_item_current %>
+    <span class="tree-item-current-badge">表示中</span>
+  <% end %>
 
   <% tree_item_status_icons(item).each do |status_icon| %>
     <span id="<%= status_icon[:id] %>" class="tree-item-status-icon <%= status_icon[:class] %>" title="<%= status_icon[:title] %>" aria-label="<%= status_icon[:title] %>"><%= status_icon[:text] %></span>
