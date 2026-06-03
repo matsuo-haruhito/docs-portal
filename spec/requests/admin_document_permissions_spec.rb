@@ -47,6 +47,22 @@ RSpec.describe "Admin document permissions", type: :request do
     parsed_html.css("[id]").map { _1["id"] }
   end
 
+  def section_text(heading)
+    section = parsed_html.css("section.card").find do |candidate|
+      candidate.at_css("h2")&.text&.squish == heading
+    end
+
+    section&.text&.squish.to_s
+  end
+
+  def overview_section_text
+    section_text("文書別の権限概要")
+  end
+
+  def permissions_section_text
+    section_text("権限一覧")
+  end
+
   it "shows empty-state guidance when no document permissions exist" do
     sign_in_as(admin_user)
 
@@ -164,6 +180,110 @@ RSpec.describe "Admin document permissions", type: :request do
     )
     expect(node_ids.count("document-permissions-for-#{document.id}")).to eq(1)
     expect(node_ids.count("document-permissions-for-#{other_document.id}")).to eq(1)
+  end
+
+  it "filters overview and permission rows by project" do
+    target_project = create(:project, name: "Target Project")
+    other_project = create(:project, name: "Other Project")
+    target_document = create(:document, project: target_project, title: "Target Project Guide")
+    other_document = create(:document, project: other_project, title: "Other Project Guide")
+    create(:document_permission, document: target_document, company: create(:company, name: "Target Company"))
+    create(:document_permission, document: other_document, company: create(:company, name: "Other Company"))
+
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path(project_id: target_project.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("有効な条件: 案件: Target Project")
+    expect(overview_section_text).to include("Target Project Guide")
+    expect(overview_section_text).not_to include("Other Project Guide")
+    expect(permissions_section_text).to include("Target Project Guide")
+    expect(permissions_section_text).to include("Target Company")
+    expect(permissions_section_text).not_to include("Other Project Guide")
+    expect(permissions_section_text).not_to include("Other Company")
+    expect(action_targets).to include(project_document_path(target_project, target_document.slug))
+    expect(action_targets).not_to include(project_document_path(other_project, other_document.slug))
+  end
+
+  it "filters overview and permission rows by document title or slug" do
+    title_document = create(:document, title: "Alpha Operations", slug: "alpha-ops")
+    slug_document = create(:document, title: "Beta Manual", slug: "beta-visible-slug")
+    other_document = create(:document, title: "Gamma Manual", slug: "gamma")
+    create(:document_permission, document: title_document, company: create(:company, name: "Alpha Company"))
+    create(:document_permission, document: slug_document, company: create(:company, name: "Beta Company"))
+    create(:document_permission, document: other_document, company: create(:company, name: "Gamma Company"))
+
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path(q: "alpha")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("文書: alpha")
+    expect(overview_section_text).to include("Alpha Operations")
+    expect(overview_section_text).not_to include("Beta Manual")
+    expect(permissions_section_text).to include("Alpha Company")
+    expect(permissions_section_text).not_to include("Beta Company")
+
+    get admin_document_permissions_path(q: "visible-slug")
+
+    expect(response).to have_http_status(:ok)
+    expect(overview_section_text).to include("Beta Manual")
+    expect(overview_section_text).not_to include("Alpha Operations")
+    expect(permissions_section_text).to include("Beta Company")
+    expect(permissions_section_text).not_to include("Gamma Company")
+  end
+
+  it "filters overview counts and permission rows by access level and target type" do
+    document = create(:document, title: "Scoped Permission Guide")
+    company = create(:company, name: "Company Scope")
+    user = create(:user, :external, name: "User Scope", email_address: "user-scope@example.com")
+    create(:document_permission, document:, company:, access_level: :view)
+    create(:document_permission, document:, user:, access_level: :download)
+
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path(access_level: "download", target_type: "user")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("権限: ダウンロード")
+    expect(page_text).to include("付与先: ユーザー単位")
+    expect(overview_section_text).to include("Scoped Permission Guide")
+    expect(permissions_section_text).to include("Scoped Permission Guide")
+    expect(permissions_section_text).to include("User Scope")
+    expect(permissions_section_text).to include("ダウンロード")
+    expect(permissions_section_text).not_to include("Company Scope")
+  end
+
+  it "shows a filtered empty state without mixing it with the unregistered state" do
+    document = create(:document, title: "Existing Permission Guide")
+    create(:document_permission, document:, company: create(:company, name: "Existing Company"))
+
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path(q: "missing")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 0件 / 条件に一致する文書権限を表示")
+    expect(overview_section_text).to include("条件に一致する文書権限概要はありません。")
+    expect(permissions_section_text).to include("条件に一致する文書権限はありません。")
+    expect(response.body).to include("条件をクリア")
+    expect(overview_section_text).not_to include("まだ権限は登録されていません。")
+    expect(permissions_section_text).not_to include("まずは上の「新規登録」")
+  end
+
+  it "ignores invalid filters without returning an error" do
+    document = create(:document, title: "Invalid Filter Fallback")
+    create(:document_permission, document:, company: create(:company, name: "Fallback Company"))
+
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path(project_id: "999999", access_level: "owner", target_type: "team")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).not_to include("有効な条件:")
+    expect(overview_section_text).to include("Invalid Filter Fallback")
+    expect(permissions_section_text).to include("Fallback Company")
   end
 
   it "uses public_id-based action links on the index" do
