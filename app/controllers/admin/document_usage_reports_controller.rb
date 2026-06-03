@@ -21,6 +21,7 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
     @selected_project = selected_project
     @usage_filter = usage_filter_param
     @sort_order = sort_order_param
+    @query = query_param
     @from_date = date_param(:from)
     @to_date = date_param(:to)
     @report_hash = build_report_hash(@selected_project) if @selected_project
@@ -55,6 +56,10 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
     normalized_enum_param(params[:sort_order], allowed: %w[title last_accessed_desc last_accessed_asc], default: "title")
   end
 
+  def query_param
+    Array.wrap(params[:q]).compact_blank.first.to_s.strip
+  end
+
   def date_param(name)
     candidate = Array.wrap(params[name]).compact_blank.first
     return if candidate.blank?
@@ -73,8 +78,10 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
   def build_report_hash(project)
     result = DocumentUsageReport.new(project:, from: report_from, to: report_to).call
     report_hash = DocumentUsageReportHash.new(result).call
+    filtered_rows = filter_rows(report_hash[:documents])
+    filtered_rows = filter_rows_by_query(filtered_rows)
 
-    report_hash.merge(documents: sort_rows(filter_rows(report_hash[:documents])))
+    report_hash.merge(documents: sort_rows(filtered_rows))
   end
 
   def report_from
@@ -93,6 +100,16 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
       rows.reject { _1[:used] }
     else
       rows
+    end
+  end
+
+  def filter_rows_by_query(rows)
+    return rows if @query.blank?
+
+    normalized_query = @query.downcase
+
+    rows.select do |row|
+      [row[:title], row[:slug]].any? { _1.to_s.downcase.include?(normalized_query) }
     end
   end
 
