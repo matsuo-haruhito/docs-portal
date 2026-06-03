@@ -39,6 +39,7 @@ class Admin::AccessLogsController < Admin::BaseController
     scope = scope.where(company_id: @filters[:company_id]) if @filters[:company_id].present?
     scope = scope.where(user_id: @filters[:user_id]) if @filters[:user_id].present?
     scope = scope.where(document_id: document_scope.select(:id)) if @filters[:document_q].present?
+    scope = apply_target_or_ip_filter(scope)
     scope = apply_accessed_at_filters(scope)
     scope
   end
@@ -57,6 +58,14 @@ class Admin::AccessLogsController < Admin::BaseController
     end
 
     scope
+  end
+
+  def apply_target_or_ip_filter(scope)
+    value = @filters[:q].to_s.strip
+    return scope if value.blank?
+
+    query = "%#{ActiveRecord::Base.sanitize_sql_like(value)}%"
+    scope.where("target_name LIKE :query OR ip_address LIKE :query", query:)
   end
 
   def apply_accessed_at_filters(scope)
@@ -82,7 +91,7 @@ class Admin::AccessLogsController < Admin::BaseController
   end
 
   def filter_params
-    permitted = params.permit(:action_type, :target_type, :project_id, :company_id, :user_id, :document_q, :from, :to, :ai_context_mode, :ai_context_scope)
+    permitted = params.permit(:action_type, :target_type, :project_id, :company_id, :user_id, :q, :document_q, :from, :to, :ai_context_mode, :ai_context_scope)
     permitted[:target_type] = nil if unknown_target_type_filter?(permitted[:target_type])
     permitted[:ai_context_mode] = nil if unknown_ai_context_mode_filter?(permitted[:ai_context_mode])
     permitted[:ai_context_scope] = nil if unknown_ai_context_scope_filter?(permitted[:ai_context_scope])
