@@ -187,7 +187,8 @@ class DocumentFilesController < BaseController
 
   def prepare_archive_preview!(file, disposition:)
     prepare_inline_preview!(file, disposition:)
-    @archive_preview = DocumentFileArchivePreview.new(file:).call
+    @archive_preview_path_query = params[:q].to_s.strip.presence
+    @archive_preview = DocumentFileArchivePreview.new(file:, path_query: @archive_preview_path_query).call
   end
 
   def prepare_text_preview!(file, disposition:)
