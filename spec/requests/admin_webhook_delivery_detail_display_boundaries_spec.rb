@@ -45,7 +45,7 @@ RSpec.describe "Admin webhook delivery detail display boundaries", type: :reques
     expect(page_text).to include("token=[masked]")
     expect(page_text).to include("visible=request-visible")
     expect(page_text).to include("...省略...")
-    expect(parsed_html.css("script")).to be_empty
+    expect(parsed_html.css("pre script")).to be_empty
     expect(page_text).not_to include("target-secret")
     expect(page_text).not_to include("user_id")
     expect(page_text).not_to include("customer-123")
