@@ -112,7 +112,8 @@ module DocumentsHelper
       case state.to_sym
       when :expanded, :show
         "show"
-      when :collapsed, :hide"
+      when :collapsed, :hide
+        "hide"
       end
     return unless tree_action
 
