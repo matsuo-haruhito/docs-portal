@@ -56,7 +56,7 @@ RSpec.describe "Admin access log display limit guidance", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示上限の200件に達しています。")
-    expect(page_text).to include("古い証跡を探す場合は、案件・会社・ユーザー・文書名などの条件を追加してください。")
+    expect(page_text).to include("古い証跡を探す場合は、案件・会社・ユーザー・対象名・文書名などの条件を追加してください。")
   end
 
   it "shows filtered guidance when the display limit is reached with filters" do
@@ -77,6 +77,6 @@ RSpec.describe "Admin access log display limit guidance", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示上限の200件に達しています。")
-    expect(page_text).to include("目的の証跡が見つからない場合は、期間・案件・会社・ユーザー・文書名などの条件を追加してさらに絞り込んでください。")
+    expect(page_text).to include("目的の証跡が見つからない場合は、期間・案件・会社・ユーザー・対象名・文書名などの条件を追加してさらに絞り込んでください。")
   end
 end
