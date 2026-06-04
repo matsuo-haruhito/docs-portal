@@ -66,7 +66,7 @@ RSpec.describe Admin::AccessLogsHelper, type: :helper do
       details = helper.access_log_ai_context_target_details(log)
 
       expect(details).to eq(
-        raw: "mode=compact;scope=selected;selected_count=3;exported_count=2",
+        preview: "mode=compact;scope=selected;selected_count=3;exported_count=2",
         segments: [
           { label: "mode", value: "compact" },
           { label: "scope", value: "選択" },
@@ -92,15 +92,29 @@ RSpec.describe Admin::AccessLogsHelper, type: :helper do
       )
     end
 
-    it "falls back to raw display for malformed ai_context target names" do
+    it "returns a safe preview for malformed ai_context target names" do
       malformed_log = build_log(target_type: "ai_context", target_name: "mode=compact;scope=selected")
       non_numeric_log = build_log(
         target_type: "ai_context",
         target_name: "mode=compact;scope=selected;selected_count=many;exported_count=2"
       )
+      sensitive_log = build_log(
+        target_type: "ai_context",
+        target_name: "authorization=Bearer raw-token-123;secret=raw-secret-456;/home/alice/private.txt"
+      )
 
-      expect(helper.access_log_ai_context_target_details(malformed_log)).to be_nil
-      expect(helper.access_log_ai_context_target_details(non_numeric_log)).to be_nil
+      expect(helper.access_log_ai_context_target_details(malformed_log)).to eq(
+        preview: "mode=compact;scope=selected",
+        segments: []
+      )
+      expect(helper.access_log_ai_context_target_details(non_numeric_log)).to eq(
+        preview: "mode=compact;scope=selected;selected_count=many;exported_count=2",
+        segments: []
+      )
+      expect(helper.access_log_ai_context_target_details(sensitive_log)).to eq(
+        preview: "authorization=[FILTERED] [FILTERED];secret=[FILTERED];[path hidden]",
+        segments: []
+      )
     end
 
     it "does not change other target types" do
