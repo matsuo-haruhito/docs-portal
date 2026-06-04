@@ -3,6 +3,7 @@
 module Admin::ExternalFolderSyncSourcesHelper
   LATEST_ERROR_PREVIEW_MAX_LENGTH = 120
   PRIVATE_PATH_PATTERN = %r{(?:(?<![A-Za-z])[A-Za-z]:[/\\]|/(?:Users|home|var|tmp|mnt|Volumes|workspace)/)[^\s;,]+}.freeze
+  AUTHORIZATION_BEARER_PATTERN = /(\bauthorization\b\s*[:=]\s*)Bearer\s+[^\s&;,]+/i.freeze
   SENSITIVE_VALUE_PATTERN = /(\b(?:authorization|token|secret|password|client_secret|access_token|refresh_token)\b\s*[:=]\s*)([^\s&;,]+)/i.freeze
   SENSITIVE_QUERY_PATTERN = /([?&](?:token|secret|password|client_secret|access_token|refresh_token)=)([^&\s]+)/i.freeze
 
@@ -79,6 +80,7 @@ module Admin::ExternalFolderSyncSourcesHelper
 
   def external_folder_sync_sanitized_error_message(message)
     message.to_s.squish
+      .gsub(AUTHORIZATION_BEARER_PATTERN, "\\1[masked]")
       .gsub(SENSITIVE_VALUE_PATTERN, "\\1[masked]")
       .gsub(SENSITIVE_QUERY_PATTERN, "\\1[masked]")
       .gsub(PRIVATE_PATH_PATTERN, "[path hidden]")
