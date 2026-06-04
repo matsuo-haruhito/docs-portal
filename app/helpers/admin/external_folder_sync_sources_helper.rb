@@ -2,7 +2,7 @@
 
 module Admin::ExternalFolderSyncSourcesHelper
   LATEST_ERROR_PREVIEW_MAX_LENGTH = 120
-  PRIVATE_PATH_PATTERN = %r{(?:[A-Za-z]:[/\\]|/(?:Users|home|var|tmp|mnt|Volumes|workspace)/)[^\s;,]+}.freeze
+  PRIVATE_PATH_PATTERN = %r{(?:(?<![A-Za-z])[A-Za-z]:[/\\]|/(?:Users|home|var|tmp|mnt|Volumes|workspace)/)[^\s;,]+}.freeze
   SENSITIVE_VALUE_PATTERN = /(\b(?:authorization|token|secret|password|client_secret|access_token|refresh_token)\b\s*[:=]\s*)([^\s&;,]+)/i.freeze
   SENSITIVE_QUERY_PATTERN = /([?&](?:token|secret|password|client_secret|access_token|refresh_token)=)([^&\s]+)/i.freeze
 
