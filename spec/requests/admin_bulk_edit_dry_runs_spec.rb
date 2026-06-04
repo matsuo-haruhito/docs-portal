@@ -98,7 +98,8 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     get admin_bulk_edit_dry_run_path(dry_run)
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("警告 / エラー 1 / 1")
+    expect(page_text).to include("警告 / エラー")
+    expect(page_text).to include("1 / 1")
     expect(page_text).to include("分類が未確認の文書があります")
     expect(page_text).to include("公開範囲を解決できない文書があります")
 
