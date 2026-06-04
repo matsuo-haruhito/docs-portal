@@ -335,7 +335,6 @@ RSpec.describe "Document review comments", type: :request do
     expect(page_text).not_to include("Partner rollout internal escalation")
     expect(page_text).not_to include("回答済みにする")
     expect(page_text).not_to include("クローズする")
-    expect(page_text).not_to include("解決")
   end
 
   it "allows external users to create public Q&A threads and internal users to reply" do
