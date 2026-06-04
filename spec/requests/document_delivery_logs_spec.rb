@@ -63,6 +63,23 @@ RSpec.describe "Document delivery logs", type: :request do
     parsed_html.css("tr").find { |node| node.text.include?(text) }&.text&.squish
   end
 
+  def create_delivery_log_at(created_at, attributes = {})
+    create(
+      :document_delivery_log,
+      {
+        project:,
+        document:,
+        sender: external_user,
+        status: :draft,
+        delivery_type: :portal_link,
+        to_addresses: "recipient@example.com",
+        subject: "Delivery notice"
+      }.merge(attributes)
+    ).tap do |log|
+      log.update_columns(created_at:, updated_at: created_at)
+    end
+  end
+
   before do
     document.update!(latest_version: version)
     create(:project_membership, project:, user: external_user)
@@ -210,6 +227,93 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(page_text).not_to include(own_draft.to_addresses)
     expect(page_text).not_to include(own_sent.to_addresses)
     expect(page_text).not_to include(own_failed.to_addresses)
+  end
+
+  it "filters delivery logs by created date while preserving existing filters and sender scope" do
+    other_external_user = create(:user, :external, company:)
+    matching_log = create_delivery_log_at(
+      Time.zone.local(2026, 1, 15, 12, 0, 0),
+      status: :failed,
+      delivery_type: :portal_link,
+      to_addresses: "date-hit@example.com",
+      subject: "Date needle"
+    )
+    outside_date_log = create_delivery_log_at(
+      Time.zone.local(2026, 1, 9, 12, 0, 0),
+      status: :failed,
+      delivery_type: :portal_link,
+      to_addresses: "outside-date@example.com",
+      subject: "Date needle"
+    )
+    wrong_status_log = create_delivery_log_at(
+      Time.zone.local(2026, 1, 15, 12, 0, 0),
+      status: :draft,
+      delivery_type: :portal_link,
+      to_addresses: "wrong-status@example.com",
+      subject: "Date needle"
+    )
+    wrong_type_log = create_delivery_log_at(
+      Time.zone.local(2026, 1, 15, 12, 0, 0),
+      status: :failed,
+      delivery_type: :attachment,
+      to_addresses: "wrong-type@example.com",
+      subject: "Date needle"
+    )
+    other_sender_log = create_delivery_log_at(
+      Time.zone.local(2026, 1, 15, 12, 0, 0),
+      sender: other_external_user,
+      status: :failed,
+      delivery_type: :portal_link,
+      to_addresses: "other-sender-date@example.com",
+      subject: "Date needle"
+    )
+
+    sign_in_as(external_user)
+
+    get document_delivery_logs_path, params: {
+      q: "Date needle",
+      status: :failed,
+      delivery_type: :portal_link,
+      created_from: "2026-01-10",
+      created_to: "2026-01-20"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(matching_log.to_addresses)
+    expect(page_text).not_to include(outside_date_log.to_addresses)
+    expect(page_text).not_to include(wrong_status_log.to_addresses)
+    expect(page_text).not_to include(wrong_type_log.to_addresses)
+    expect(page_text).not_to include(other_sender_log.to_addresses)
+    expect(page_text).to include("表示範囲: 1件中1件を表示しています。")
+    expect(action_targets).to include(document_delivery_logs_path(q: "Date needle", created_from: "2026-01-10", created_to: "2026-01-20", status: :failed))
+    expect(action_targets).to include(document_delivery_logs_path(q: "Date needle", created_from: "2026-01-10", created_to: "2026-01-20", status: :draft, delivery_type: :portal_link))
+    expect(href_for("検索をクリア")).to eq(document_delivery_logs_path(status: :failed, delivery_type: :portal_link, created_from: "2026-01-10", created_to: "2026-01-20"))
+    expect(href_for("作成日をクリア")).to eq(document_delivery_logs_path(q: "Date needle", status: :failed, delivery_type: :portal_link))
+    expect(href_for_row_containing(matching_log.to_addresses, localized_status_label(:failed))).to include("created_from=2026-01-10", "created_to=2026-01-20")
+  end
+
+  it "supports open-ended created date filters and ignores invalid dates safely" do
+    old_log = create_delivery_log_at(Time.zone.local(2026, 1, 5, 12, 0, 0), to_addresses: "old-date@example.com")
+    middle_log = create_delivery_log_at(Time.zone.local(2026, 1, 15, 12, 0, 0), to_addresses: "middle-date@example.com")
+    future_log = create_delivery_log_at(Time.zone.local(2026, 1, 25, 12, 0, 0), to_addresses: "future-date@example.com")
+
+    sign_in_as(external_user)
+
+    get document_delivery_logs_path, params: { created_from: "2026-01-10" }
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(middle_log.to_addresses, future_log.to_addresses)
+    expect(page_text).not_to include(old_log.to_addresses)
+
+    get document_delivery_logs_path, params: { created_to: "2026-01-20" }
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(old_log.to_addresses, middle_log.to_addresses)
+    expect(page_text).not_to include(future_log.to_addresses)
+
+    get document_delivery_logs_path, params: { created_from: "not-a-date", created_to: "2026-01-20" }
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("作成日は YYYY-MM-DD 形式で指定してください。無効な日付は絞り込みに使いません。")
+    expect(page_text).to include(old_log.to_addresses, middle_log.to_addresses)
+    expect(page_text).not_to include(future_log.to_addresses)
   end
 
   it "shows To, CC, and BCC separately in the recipients column" do

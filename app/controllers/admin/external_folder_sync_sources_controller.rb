@@ -1,6 +1,13 @@
 class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
+  METADATA_RECHECK_FIELDS = {
+    "drive_id" => "Drive ID",
+    "folder_item_id" => "Folder item ID",
+    "folder_path" => "Folder path",
+    "site_id" => "Site ID"
+  }.freeze
+
   before_action :require_admin_only!
-  before_action :set_external_folder_sync_source, only: %i[show edit update destroy dry_run apply force_apply enqueue subscribe unsubscribe]
+  before_action :set_external_folder_sync_source, only: %i[show edit update destroy dry_run apply force_apply enqueue subscribe unsubscribe recheck_metadata]
   before_action :load_form_collections, only: %i[index create edit update]
   before_action :ensure_google_drive_runtime_supported!, only: %i[dry_run apply force_apply enqueue subscribe unsubscribe]
 
@@ -125,6 +132,18 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     redirect_to sync_source_path_with_return_to, notice: "Google Driveの変更通知の購読を停止しました。"
   rescue ExternalFolderSync::GoogleDriveSubscriptionManager::Error => e
     redirect_to sync_source_path_with_return_to, alert: e.message
+  end
+
+  def recheck_metadata
+    unless @external_folder_sync_source.microsoft_graph?
+      redirect_to sync_source_path_with_return_to, alert: "保存済み metadata の再確認は SharePoint / OneDrive の metadata-only source で利用できます。"
+      return
+    end
+
+    resolved = ExternalFolderSync::MicrosoftGraphFolderResolver.new(source: @external_folder_sync_source).resolve
+    redirect_to sync_source_path_with_return_to, notice: metadata_recheck_notice(resolved)
+  rescue ExternalFolderSync::MicrosoftGraphFolderResolver::Error => e
+    redirect_to sync_source_path_with_return_to, alert: "保存済み metadata を再確認できませんでした。Microsoft Graph接続・共有URL・権限を確認してください。#{e.message}"
   end
 
   private
@@ -275,6 +294,42 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
   def manual_enqueue_blocked_message
     "直近の同期プレビューに競合・重複警告があります。警告を確認してから同期してください。"
+  end
+
+  def metadata_recheck_notice(resolved)
+    changed_labels = metadata_recheck_comparisons(resolved).filter_map do |comparison|
+      comparison[:label] unless comparison[:matched]
+    end
+
+    if changed_labels.empty?
+      "保存済み metadata を再確認しました。Drive ID / Folder item ID / Folder path / Site ID は現在の Microsoft Graph 解決結果と一致しています。"
+    else
+      "保存済み metadata を再確認しました。差分があります: #{changed_labels.join(' / ')}。保存済み値は変更していません。必要なら設定を編集して保存し直してください。"
+    end
+  end
+
+  def metadata_recheck_comparisons(resolved)
+    METADATA_RECHECK_FIELDS.map do |key, label|
+      {
+        label:,
+        matched: metadata_recheck_current_value(key) == resolved[key.to_sym].to_s
+      }
+    end
+  end
+
+  def metadata_recheck_current_value(key)
+    metadata = @external_folder_sync_source.provider_metadata || {}
+
+    value = case key
+            when "folder_item_id"
+              @external_folder_sync_source.external_folder_id.presence || metadata[key]
+            when "folder_path"
+              @external_folder_sync_source.external_folder_path.presence || metadata[key]
+            else
+              metadata[key]
+            end
+
+    value.to_s
   end
 
   def normalized_external_folder_sync_source_params

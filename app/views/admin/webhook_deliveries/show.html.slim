@@ -28,17 +28,18 @@ p.actions
     dt 作成日時
     dd = l(delivery.created_at, format: :long)
     dt 送信先URL
-    dd = delivery.target_url
+    dd = WebhookDeliveryTargetUrlDisplay.new(delivery.target_url).to_s
 
 .card
   h2 失敗調査
+  p.muted 送信先URL、レスポンス本文、エラーは調査用の短縮表示です。query、secret、token、authorization らしい値は表示せず、長大な本文は省略します。
   dl.definition-list
     dt エラー
-    dd = delivery.error_message.presence || "-"
+    dd = WebhookDeliveryDiagnosticPreview.new(delivery.error_message).to_s
     dt レスポンス本文
     dd
       - if delivery.response_body.present?
-        pre = delivery.response_body
+        pre = WebhookDeliveryDiagnosticPreview.new(delivery.response_body).to_s
       - else
         span.muted "-"
     dt リクエスト本文

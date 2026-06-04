@@ -27,6 +27,7 @@ h1 ZIPインポートdry-run
       p.metric-number = @summary["warning_count"].to_i
 
   - preview_metadata = [["取り込み元リポジトリ", @zip_import_preview["source_repo"]], ["ブランチ", @zip_import_preview["source_branch"]], ["コミット", @zip_import_preview["source_commit_hash"]], ["版ラベル", @zip_import_preview["version_label"]], ["ZIPファイル", @zip_import_preview["source_name"]]].select { |_, value| value.present? }
+  - classification_preview_items = zip_import_classification_preview_items(@result)
 
   section
     h2 取り込み前の確認
@@ -54,6 +55,31 @@ h1 ZIPインポートdry-run
           dd = value
     - else
       p.muted 取り込み元metadataは保存されていません。
+
+  section
+    h2 分類推定結果
+    p.muted ZIP import dry-run の確認用表示です。visibility / download / access permission はここでは変更しません。
+    - if classification_preview_items.any?
+      table.table
+        thead
+          tr
+            th 文書
+            th カテゴリ
+            th 文書種別
+            th 公開ポリシー
+            th スナップショット種別
+            th 分類タグ
+            th 推定根拠
+        tbody
+          - classification_preview_items.each do |item|
+            tr
+              td = item[:title]
+              - item[:fields].each do |_, value|
+                td = value
+              td = item[:data_classification_tags].present? ? item[:data_classification_tags].join(", ") : "未設定 / 継承元なし"
+              td = item[:matched_rules].present? ? item[:matched_rules].join(", ") : "-"
+    - else
+      p.muted 分類推定metadataは保存されていません。
 
   p.actions
     - if @import_dry_run.analyzed?

@@ -1,6 +1,9 @@
 class ExternalFolderSyncWebhooksController < ActionController::Base
   skip_forgery_protection
 
+  FILTERED_SECRET_VALUE = "[FILTERED]".freeze
+  SECRET_HEADER_KEYS = %w[X_GOOG_CHANNEL_TOKEN CLIENT_STATE].freeze
+
   def google_drive
     event = record_event!(provider: :google_drive)
     enqueue_event_if_needed(event)
@@ -44,7 +47,7 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
       event.status = source.present? && verified ? :received : :ignored
       event.received_at = Time.current
       event.headers_json = filtered_headers
-      event.payload_json = payload.presence || {}
+      event.payload_json = filtered_payload(provider:, payload:)
       event.error_message = event_error_message(source:, verified:)
     end
   end
@@ -103,12 +106,19 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
         payload["subscriptionId"],
         payload["resource"],
         payload["changeType"],
-        payload["clientState"],
+        client_state_fingerprint(payload["clientState"]),
         payload["sequenceNumber"]
       ].compact_blank.join(":").presence || fallback_event_key(provider)
     else
       [provider, subscription&.id, SecureRandom.uuid].compact.join(":")
     end
+  end
+
+  def client_state_fingerprint(client_state)
+    client_state = client_state.to_s
+    return if client_state.blank?
+
+    "client_state:#{Digest::SHA256.hexdigest(client_state)}"
   end
 
   def fallback_event_key(provider)
@@ -129,11 +139,21 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
     Array(payload["value"] || payload)
   end
 
+  def filtered_payload(provider:, payload:)
+    payload = payload.presence || {}
+    return payload unless provider.to_s == "sharepoint" && payload.key?("clientState")
+
+    payload.merge("clientState" => FILTERED_SECRET_VALUE)
+  end
+
   def filtered_headers
     request.headers.env.each_with_object({}) do |(key, value), result|
       next unless key.start_with?("HTTP_X_GOOG_") || key.in?(%w[HTTP_CLIENT_STATE HTTP_USER_AGENT CONTENT_TYPE])
 
-      result[key.sub(/\AHTTP_/, "")] = value.to_s
+      header_key = key.sub(/\AHTTP_/, "")
+      next if SECRET_HEADER_KEYS.include?(header_key)
+
+      result[header_key] = value.to_s
     end
   end
 end
