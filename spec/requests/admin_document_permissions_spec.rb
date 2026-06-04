@@ -7,6 +7,10 @@ RSpec.describe "Admin document permissions", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def parsed_json
+    JSON.parse(response.body)
+  end
+
   def page_text
     parsed_html.text.squish
   end
@@ -17,6 +21,10 @@ RSpec.describe "Admin document permissions", type: :request do
 
   def document_select
     parsed_html.at_css('select[name="document_permission[document_id]"]')
+  end
+
+  def selected_document_option
+    document_select.at_css("option[selected]")
   end
 
   def document_error_surface
@@ -95,6 +103,14 @@ RSpec.describe "Admin document permissions", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(document_select["data-controller"]).to include("document-permission-error-surface")
+    expect(document_select["data-controller"]).to include("rails-fields-kit--tom-select")
+    expect(document_select["data-rails-fields-kit--tom-select-kind-value"]).to eq("combobox")
+    expect(document_select["data-rails-fields-kit--tom-select-url-value"]).to eq(document_search_admin_document_permissions_path(format: :json))
+    expect(document_select["data-rails-fields-kit--tom-select-selected-url-value"]).to eq(selected_document_admin_document_permissions_path(format: :json))
+    expect(document_select["data-rails-fields-kit--tom-select-min-length-value"]).to eq("1")
+    expect(document_select["data-rails-fields-kit--tom-select-max-options-value"]).to eq("20")
+    expect(document_select["placeholder"]).to eq("文書名・URL識別子・案件名で検索")
+    expect(document_select.css("option")).to be_empty
     expect(document_select["data-action"]).to include("rails-fields-kit--tom-select:selected-load-error->document-permission-error-surface#selectedLoadError")
     expect(document_select["data-action"]).to include("rails-fields-kit--tom-select:selected-load->document-permission-error-surface#clear")
     expect(document_select["data-action"]).to include("rails-fields-kit--tom-select:change->document-permission-error-surface#clear")
@@ -118,6 +134,69 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(user_select["data-controller"]).not_to include("document-permission-error-surface")
     expect(company_select["data-rails-fields-kit--tom-select-error-surface-id-value"]).to be_nil
     expect(user_select["data-rails-fields-kit--tom-select-error-surface-id-value"]).to be_nil
+  end
+
+  it "returns document search options for the remote document field" do
+    project = create(:project, name: "Alpha Project")
+    matching_document = create(:document, title: "Operations Runbook", slug: "ops-runbook", project:)
+    project_match = create(:document, title: "Portal Guide", slug: "portal-guide", project:)
+    create(:document, title: "Another Document", slug: "another-document", project: create(:project, name: "Beta Project"))
+
+    sign_in_as(admin_user)
+
+    get document_search_admin_document_permissions_path(format: :json), params: { q: "alpha" }
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_json["options"]).to contain_exactly(
+      { "value" => matching_document.id, "text" => "Operations Runbook / Alpha Project" },
+      { "value" => project_match.id, "text" => "Portal Guide / Alpha Project" }
+    )
+
+    get document_search_admin_document_permissions_path(format: :json), params: { q: "ops-run" }
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_json["options"]).to eq([
+      { "value" => matching_document.id, "text" => "Operations Runbook / Alpha Project" }
+    ])
+  end
+
+  it "loads the selected document option for edit and validation redisplay" do
+    project = create(:project, name: "Selected Project")
+    document = create(:document, title: "Selected Manual", project:)
+    company = create(:company, name: "Customer Company")
+    permission = create(:document_permission, document:, company:, access_level: :view)
+
+    sign_in_as(admin_user)
+
+    get selected_document_admin_document_permissions_path(format: :json), params: { id: document.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_json["option"]).to eq({ "value" => document.id, "text" => "Selected Manual / Selected Project" })
+
+    get selected_document_admin_document_permissions_path(format: :json), params: { id: "999999" }
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_json["option"]).to be_nil
+
+    get edit_admin_document_permission_path(permission.public_id)
+
+    expect(response).to have_http_status(:ok)
+    expect(selected_document_option["value"]).to eq(document.id.to_s)
+    expect(selected_document_option.text).to eq("Selected Manual / Selected Project")
+  end
+
+  it "keeps document search endpoints admin-only" do
+    external_user = create(:user, :external)
+
+    sign_in_as(external_user)
+
+    get document_search_admin_document_permissions_path(format: :json), params: { q: "manual" }
+
+    expect(response).to have_http_status(:forbidden)
+
+    get selected_document_admin_document_permissions_path(format: :json), params: { id: 1 }
+
+    expect(response).to have_http_status(:forbidden)
   end
 
   it "shows owner-scope guidance again when both company and user are submitted" do
@@ -144,6 +223,8 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(page_text).not_to include("company_id and user_id cannot both be set")
     expect(select_placeholder("document_permission[company_id]")).to eq("会社向けに付与する場合に選択")
     expect(select_placeholder("document_permission[user_id]")).to eq("ユーザー向けに付与する場合に選択")
+    expect(selected_document_option["value"]).to eq(document.id.to_s)
+    expect(selected_document_option.text).to eq("Permission Target / #{document.project.name}")
   end
 
   it "shows document permission overview" do
