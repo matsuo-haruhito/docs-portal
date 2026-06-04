@@ -185,9 +185,11 @@ RSpec.describe "API internal artifact imports", type: :request do
     expect(response.parsed_body["status"]).to eq("analyzed")
     expect(response.parsed_body["summary"]["create_count"]).to eq(1)
     expect(response.parsed_body["dry_run_id"]).to be_present
+    expect(response.parsed_body).to have_key("expires_at")
 
     dry_run = ImportDryRun.find_by!(public_id: response.parsed_body["dry_run_id"])
     expect(dry_run.git_push?).to eq(true)
+    expect(dry_run.analyzed?).to eq(true)
     expect(dry_run.project).to eq(project)
     expect(dry_run.source_commit_hash).to eq("abc123")
     expect(dry_run.result_json["projects"].size).to eq(1)
@@ -238,6 +240,46 @@ RSpec.describe "API internal artifact imports", type: :request do
     expect(dry_run.confirmed?).to eq(true)
     expect(dry_run.confirmed_by.email_address).to eq("importer@example.com")
     expect(dry_run.confirmed_at).to be_present
+  end
+
+  it "rejects non git-push dry-run ids for artifact apply" do
+    project = create(:project, code: "PJMODE", name: "Mode Dry Run Project")
+    actor = User.find_by!(email_address: "importer@example.com")
+    File.write(
+      manifest_path,
+      {
+        source_repo: "repo",
+        source_branch: "main",
+        source_commit_hash: "commit-1",
+        documents: []
+      }.to_json
+    )
+
+    %i[zip manual_upload].each do |import_mode|
+      dry_run = ImportDryRun.create!(
+        import_mode: import_mode,
+        status: :analyzed,
+        project: project,
+        created_by: actor,
+        source_commit_hash: "commit-1",
+        summary_json: { create_count: 0, update_count: 0, unchanged_count: 0, error_count: 0 },
+        result_json: { projects: [] },
+        warnings_json: [],
+        errors_json: []
+      )
+
+      expect do
+        post endpoint, params: {
+          artifact_root: artifact_root.to_s,
+          manifest_path: manifest_path.to_s,
+          import_dry_run_id: dry_run.public_id
+        }, headers: headers
+      end.not_to change(PublishJob, :count)
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.parsed_body["error"]).to include("git_push")
+      expect(dry_run.reload.analyzed?).to eq(true)
+    end
   end
 
   it "rejects a confirmed dry-run when the manifest commit changed" do
