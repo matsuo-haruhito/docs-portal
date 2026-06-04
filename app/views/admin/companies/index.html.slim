@@ -3,6 +3,7 @@
 - table_key = :admin_companies
 - table_columns = admin_company_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- selected_active_filter = @company_filter_params["active"]
 
 h1 会社マスタ
 = render "admin/nav"
@@ -10,6 +11,20 @@ h1 会社マスタ
 .card
   h2 = company_form_title
   = render "form", company: @company
+
+.card
+  h2 会社を探す
+  = form_with url: admin_companies_path, method: :get, local: true do
+    .form-grid
+      label
+        | キーワード
+        = text_field_tag :q, @company_filter_params["q"], placeholder: "ドメイン・会社名・表示名"
+      label
+        | 状態
+        = select_tag :active, options_for_select([["すべて", ""], ["有効", "true"], ["無効", "false"]], selected_active_filter)
+    p.actions
+      = submit_tag "絞り込む", class: "button"
+      = link_to "条件をクリア", admin_companies_path, class: "button secondary"
 
 - if @companies.any?
   .card
@@ -37,8 +52,12 @@ h1 会社マスタ
 - else
   section.card
     h2 会社一覧
-    p.muted まだ会社は登録されていません。
-    - if admin_user?
-      p.muted 上の「新規登録」でドメインと会社名を入力して、最初の会社を登録してください。
+    - if @companies_total_count.to_i.zero?
+      p.muted まだ会社は登録されていません。
+      - if admin_user?
+        p.muted 上の「新規登録」でドメインと会社名を入力して、最初の会社を登録してください。
+      - else
+        p.muted 表示できる自社会社情報がありません。必要な場合は internal admin に確認してください。
     - else
-      p.muted 表示できる自社会社情報がありません。必要な場合は internal admin に確認してください。
+      p.muted 検索条件に一致する会社はありません。
+      p.muted キーワードや状態の条件を変更するか、条件をクリアしてください。
