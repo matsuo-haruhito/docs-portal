@@ -84,7 +84,10 @@ Rails.application.routes.draw do
     resources :document_sets, except: %i[show new], param: :public_id do
       get :document_search, on: :collection
     end
-    resources :document_permissions, except: %i[show new], param: :public_id
+    resources :document_permissions, except: %i[show new], param: :public_id do
+      get :document_search, on: :collection
+      get :selected_document, on: :collection
+    end
     resources :webhook_endpoints, except: %i[show new], param: :public_id
     resources :webhook_deliveries, only: %i[index show], param: :public_id do
       post :retry_dispatch, on: :member
@@ -120,7 +123,6 @@ Rails.application.routes.draw do
     resource :archive, only: [:show], controller: "document_version_archives"
     resource :quality_check, only: [:show], controller: "document_version_quality_checks"
     resource :rollback, only: [:create], controller: "document_version_rollbacks"
-    resource :upload_review, only: [:create], controller: "document_version_upload_reviews"
     resources :document_review_comments, only: %i[create update], param: :public_id
 
     member do
