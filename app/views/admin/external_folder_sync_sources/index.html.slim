@@ -148,7 +148,7 @@ h1 外部フォルダ同期設定
             span class=external_folder_sync_run_safety_class(latest_run)
               = external_folder_sync_run_safety_label(latest_run)
           td data-rails-table-preferences-column-key="warning_count" = warnings_count || "-"
-          td data-rails-table-preferences-column-key="latest_error" = latest_error_message || "-"
+          td data-rails-table-preferences-column-key="latest_error" = external_folder_sync_latest_error_preview(latest_error_message)
           td.actions data-rails-table-preferences-column-key="actions"
             = link_to "設定詳細", admin_external_folder_sync_source_path(source, return_to: current_return_to), class: "button secondary"
             = edit_link_to "編集", edit_admin_external_folder_sync_source_path(source, return_to: current_return_to)
