@@ -95,7 +95,13 @@ section.card
           td.actions data-rails-table-preferences-column-key="actions"
             - if access_request.pending?
               = button_to "承認", admin_access_request_path(access_request), method: :patch, params: action_filter_params.merge(decision: "approve"), class: "button"
-              = button_to "却下", admin_access_request_path(access_request), method: :patch, params: action_filter_params.merge(decision: "reject", rejection_reason: admin_access_request_default_rejection_reason), class: "button secondary"
+              = form_with url: admin_access_request_path(access_request), method: :patch, local: true do
+                - action_filter_params.each do |key, value|
+                  = hidden_field_tag key, value
+                = hidden_field_tag :decision, "reject"
+                = label_tag "rejection_reason_#{access_request.public_id}", "却下理由"
+                = text_area_tag :rejection_reason, admin_access_request_default_rejection_reason, id: "rejection_reason_#{access_request.public_id}", rows: 2
+                = submit_tag "却下", class: "button secondary"
             - else
               span.muted -
 - else
