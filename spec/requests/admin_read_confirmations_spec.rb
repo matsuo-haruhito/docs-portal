@@ -36,7 +36,8 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("既読確認内訳")
     expect(page_text).to include("Usage Project")
-    expect(page_text).to include("表示中: 2件")
+    expect(page_text).to include("この画面は既読確認だけの内訳です。閲覧・ダウンロードの集計は文書利用状況で確認してください。")
+    expect(page_text).to include("表示中: 2件 / 条件に一致した既読確認を新しい順に最新200件まで表示")
     expect(page_text).to include("Manual")
     expect(page_text).to include("Policy")
     expect(page_text).to include("Reader One / reader@example.com")
@@ -46,7 +47,42 @@ RSpec.describe "Admin read confirmations", type: :request do
 
     usage_report_link = parsed_html.at_css("a[href='#{admin_document_usage_reports_path(project_id: project.id)}']")
     expect(usage_report_link).to be_present
-    expect(usage_report_link.text).to eq("文書利用状況へ")
+    expect(usage_report_link.text).to eq("文書利用状況へ戻る")
+  end
+
+  it "keeps long read confirmation row values readable" do
+    long_company = create(:company, name: "International Operations and Compliance Review Company", domain: "long-client.example")
+    long_user = create(
+      :user,
+      :external,
+      company: long_company,
+      name: "Reader With A Very Long Display Name For Audit Review",
+      email_address: "reader.with.a.very.long.email.address.for.audit.review@example-client-domain.example"
+    )
+    long_document = create(
+      :document,
+      project:,
+      title: "Very Long Compliance Manual Title For Regional Audit Confirmation Review",
+      slug: "very-long-compliance-manual-title-for-regional-audit-confirmation-review"
+    )
+    create(:read_confirmation, document: long_document, user: long_user, confirmed_at: Time.zone.local(2026, 5, 1, 12, 0, 0))
+
+    sign_in_as(admin_user)
+
+    get admin_read_confirmations_path(project_id: project.id)
+
+    row = read_confirmation_rows.first
+
+    expect(response).to have_http_status(:ok)
+    expect(row.at_css(%(td[data-rails-table-preferences-column-key="document"]))["style"]).to include("overflow-wrap:anywhere")
+    expect(row.at_css(%(td[data-rails-table-preferences-column-key="document"] a))["style"]).to include("word-break:break-word")
+    expect(row.at_css(%(td[data-rails-table-preferences-column-key="user"]))["style"]).to include("overflow-wrap:anywhere")
+    expect(row.at_css(%(td[data-rails-table-preferences-column-key="company"]))["style"]).to include("overflow-wrap:anywhere")
+    expect(row.at_css(%(td[data-rails-table-preferences-column-key="document_slug"] code))["style"]).to include("white-space:normal")
+    expect(page_text).to include(long_document.title)
+    expect(page_text).to include(long_user.email_address)
+    expect(page_text).to include(long_company.display_name)
+    expect(page_text).to include(long_document.slug)
   end
 
   it "filters read confirmations by document slug within the selected project" do
