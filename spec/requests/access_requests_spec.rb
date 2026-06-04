@@ -116,6 +116,10 @@ RSpec.describe "Access requests", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("申請中 1件 / 承認済み 1件 / 却下 1件 / 取消済み 1件")
     expect(page_text).to include(pending_request.reason)
+    expect(page_text).to include("取消前に対象・要求権限・理由を確認してください。")
+    expect(page_text).to include("取消後はこの一覧で取消済みとして確認できます。")
+    expect(response.body).to include("data-turbo-confirm")
+    expect(response.body).to include("このアクセス申請を取り消します。対象・要求権限・理由を確認しましたか？")
     expect(page_text).not_to include(approved_request.reason)
     expect(page_text).not_to include(rejected_request.reason)
     expect(page_text).not_to include(cancelled_request.reason)
@@ -129,6 +133,7 @@ RSpec.describe "Access requests", type: :request do
     expect(page_text).to include(approved_request.reason)
     expect(page_text).not_to include(rejected_request.reason)
     expect(page_text).not_to include(cancelled_request.reason)
+    expect(page_text).not_to include("取消前に対象・要求権限・理由を確認してください。")
     expect(response.body).not_to include(">取消<")
 
     get access_requests_path(status: :invalid)
