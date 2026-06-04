@@ -78,14 +78,15 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
       },
       summary_json: {
         preview: {
-          total_count: 3,
-          changed_count: 1
+          total_count: 4,
+          changed_count: 2
         }
       },
       result_json: {
         preview_items: [
           preview_item("Warning Doc", changed_fields: ["category"], warnings: ["分類が未確認です"]),
           preview_item("Error Doc", changed_fields: ["visibility_policy"], errors: ["公開範囲を解決できません"]),
+          preview_item("Changed Doc", changed_fields: ["importance_level"]),
           preview_item("Clean Doc", changed_fields: [])
         ]
       },
@@ -100,13 +101,21 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("警告 / エラー")
     expect(page_text).to include("1 / 1")
+    expect(page_text).to include("警告・エラーのある行を先に確認")
+    expect(page_text).to include("確認目安")
+    expect(page_text).to include("確認目安は表示補助です")
     expect(page_text).to include("分類が未確認の文書があります")
     expect(page_text).to include("公開範囲を解決できない文書があります")
+    expect(response.body).to include("bulk-edit-review-row--warning")
+    expect(response.body).to include("bulk-edit-review-row--error")
+    expect(response.body).to include("bulk-edit-review-row--changed")
+    expect(response.body).to include("bulk-edit-review-row--unchanged")
 
-    warning_row, error_row, clean_row = preview_rows
-    expect(warning_row).to include("Warning Doc", "分類", "分類が未確認です", "-")
-    expect(error_row).to include("Error Doc", "公開範囲", "-", "公開範囲を解決できません")
-    expect(clean_row).to include("Clean Doc", "-", "-", "-")
+    warning_row, error_row, changed_row, clean_row = preview_rows
+    expect(warning_row).to include("Warning Doc", "警告あり", "分類", "分類が未確認です", "-")
+    expect(error_row).to include("Error Doc", "エラーあり", "公開範囲", "-", "公開範囲を解決できません")
+    expect(changed_row).to include("Changed Doc", "変更予定")
+    expect(clean_row).to include("Clean Doc", "変更なし", "-", "-", "-")
   end
 
   it "shows success, failure, skipped, and fallback values on execution results" do
@@ -230,7 +239,7 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
           category: changed_fields.include?("category") ? "manual" : "spec",
           document_kind: "markdown",
           visibility_policy: changed_fields.include?("visibility_policy") ? "public_with_login" : "restricted_external",
-          importance_level: "normal",
+          importance_level: changed_fields.include?("importance_level") ? "critical" : "normal",
           archived: false
         },
         latest_version: {
