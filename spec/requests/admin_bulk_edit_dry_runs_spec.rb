@@ -71,7 +71,11 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
       created_by: admin,
       operation_type: :document_metadata,
       target_document_ids: [document.id],
-      params_json: {},
+      params_json: {
+        document_attributes: {
+          category: "manual"
+        }
+      },
       summary_json: {
         preview: {
           total_count: 3,
@@ -111,7 +115,11 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
       created_by: admin,
       operation_type: :document_metadata,
       target_document_ids: [document.id],
-      params_json: {},
+      params_json: {
+        document_attributes: {
+          category: "manual"
+        }
+      },
       summary_json: {
         preview: {
           total_count: 3,
