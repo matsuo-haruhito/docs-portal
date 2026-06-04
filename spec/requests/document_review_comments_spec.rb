@@ -209,6 +209,134 @@ RSpec.describe "Document review comments", type: :request do
     expect(unresolved_panel_text).to include("確認事項状態: 却下")
   end
 
+  it "applies comment search before internal workspace tabs and empty states" do
+    qa_hit = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Delivery window question should match"
+    )
+    qa_miss = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Archive retention question should not match"
+    )
+    review_hit = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: internal_user,
+      comment_type: :request_change,
+      internal_only: true,
+      body: "Confirm the migration handoff note",
+      source_path: "docs/migration-handoff.md"
+    )
+    review_miss = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: internal_user,
+      comment_type: :issue,
+      internal_only: true,
+      body: "Review the glossary wording",
+      source_path: "docs/glossary.md"
+    )
+
+    sign_in_as(admin_user)
+
+    get project_document_path(project, document.slug, comment_q: "delivery window")
+
+    expect(response).to have_http_status(:ok)
+    html = Nokogiri::HTML(response.body)
+    page_text = html.text.squish
+    qa_panel_text = html.at_css(".document-comment-tabs__panel--qa").text
+    review_panel_text = html.at_css(".document-comment-tabs__panel--review").text
+    unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
+
+    expect(page_text).to include("検索条件: delivery window")
+    expect(page_text).to include("検索は、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます")
+    expect(qa_panel_text).to include(qa_hit.body)
+    expect(qa_panel_text).not_to include(qa_miss.body)
+    expect(review_panel_text).to include("検索条件に一致する確認事項はありません")
+    expect(unresolved_panel_text).to include(qa_hit.body)
+    expect(unresolved_panel_text).not_to include(qa_miss.body)
+
+    get project_document_path(project, document.slug, comment_q: "migration-handoff")
+
+    html = Nokogiri::HTML(response.body)
+    qa_panel_text = html.at_css(".document-comment-tabs__panel--qa").text
+    review_panel_text = html.at_css(".document-comment-tabs__panel--review").text
+    unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
+
+    expect(response).to have_http_status(:ok)
+    expect(qa_panel_text).to include("検索条件に一致するQ&Aはありません")
+    expect(review_panel_text).to include(review_hit.body)
+    expect(review_panel_text).to include("位置:")
+    expect(review_panel_text).to include("docs/migration-handoff.md")
+    expect(review_panel_text).not_to include(review_miss.body)
+    expect(unresolved_panel_text).to include(review_hit.body)
+    expect(unresolved_panel_text).not_to include(review_miss.body)
+  end
+
+  it "keeps external comment search scoped to public Q&A and hides admin actions" do
+    public_question = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Partner rollout question is public"
+    )
+    create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: internal_user,
+      comment_type: :request_change,
+      internal_only: true,
+      body: "Partner rollout internal escalation",
+      source_path: "docs/private-partner-rollout.md"
+    )
+
+    sign_in_as(external_user)
+
+    get project_document_path(project, document.slug, comment_q: "internal escalation")
+
+    expect(response).to have_http_status(:ok)
+    html = Nokogiri::HTML(response.body)
+    page_text = html.text.squish
+    all_panel_text = html.at_css(".document-comment-tabs__panel--all").text
+    unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
+
+    expect(page_text).to include("検索条件: internal escalation")
+    expect(page_text).to include("検索は、すべて / Q&A / 未解決Q&A の各タブに先に適用されます")
+    expect(page_text).not_to include("Partner rollout internal escalation")
+    expect(page_text).not_to include("docs/private-partner-rollout.md")
+    expect(page_text).not_to include("確認事項")
+    expect(all_panel_text).to include("検索条件に一致するQ&Aはありません")
+    expect(unresolved_panel_text).to include("検索条件に一致する未解決のコメントはありません")
+
+    get project_document_path(project, document.slug, comment_q: "partner rollout question")
+
+    html = Nokogiri::HTML(response.body)
+    page_text = html.text
+    qa_panel_text = html.at_css(".document-comment-tabs__panel--qa").text
+
+    expect(response).to have_http_status(:ok)
+    expect(qa_panel_text).to include(public_question.body)
+    expect(page_text).not_to include("Partner rollout internal escalation")
+    expect(page_text).not_to include("回答済みにする")
+    expect(page_text).not_to include("クローズする")
+  end
+
   it "allows external users to create public Q&A threads and internal users to reply" do
     sign_in_as(external_user)
 
