@@ -35,6 +35,16 @@ class Admin::DocumentPermissionsController < Admin::BaseController
     redirect_to admin_document_permissions_path, notice: "文書権限を削除しました。"
   end
 
+  def document_search
+    render json: { options: document_permission_document_options(searchable_documents) }
+  end
+
+  def selected_document
+    document = Document.includes(:project).find_by(id: params[:id])
+
+    render json: { option: document ? document_permission_document_option(document) : nil }
+  end
+
   private
 
   def set_document_permission
@@ -96,7 +106,6 @@ class Admin::DocumentPermissionsController < Admin::BaseController
   end
 
   def load_master_options
-    @documents = Document.includes(:project).order(:title)
     @companies = Company.order(:domain)
     @users = User.order(:email_address)
     @projects = Project.order(:name)
@@ -107,5 +116,25 @@ class Admin::DocumentPermissionsController < Admin::BaseController
     permitted[:company_id] = nil if permitted[:company_id].blank?
     permitted[:user_id] = nil if permitted[:user_id].blank?
     permitted
+  end
+
+  def searchable_documents
+    scope = Document.joins(:project).includes(:project).order("documents.title ASC", "documents.id ASC")
+    query = params[:q].to_s.strip
+    return scope.limit(20) if query.blank?
+
+    term = "%#{ActiveRecord::Base.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(documents.title) LIKE :term OR LOWER(documents.slug) LIKE :term OR LOWER(projects.name) LIKE :term",
+      term:
+    ).limit(20)
+  end
+
+  def document_permission_document_options(documents)
+    documents.map { |document| document_permission_document_option(document) }
+  end
+
+  def document_permission_document_option(document)
+    { value: document.id, text: "#{document.title} / #{document.project.name}" }
   end
 end
