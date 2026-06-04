@@ -20,6 +20,8 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("文書ファイル健全性")
     expect(response.body).to include("モデルブラウザ")
+    expect(response.body).to include("欠落ファイル詳細を開く")
+    expect(response.body).to include(admin_missing_document_files_path)
     expect(response.body).to include("missing.txt")
     expect(response.body).to include("spec/admin-dashboard/missing.txt")
   end
@@ -59,6 +61,7 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("登録ファイル数")
     expect(response.body).to include("実体欠落")
     expect(response.body).to include("欠落一覧は先頭20件のみ表示しています。")
+    expect(response.body).to include("全件確認は詳細一覧または storage 側の調査で行ってください。")
     expect(response.body).to include("missing-0.txt")
     expect(response.body).to include("missing-19.txt")
     expect(response.body).not_to include("missing-20.txt")

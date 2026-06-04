@@ -9,11 +9,19 @@
 
 = form_with model: [:admin, document_permission] do |form|
   .form-grid
-    = form.rfk_select :document_id,
-      collection: document_permission_form_document_options(@documents),
+    = form.rfk_combobox :document_id,
+      collection: [],
+      selected: document_permission_form_document_selected_option(document_permission.document),
+      url: document_search_admin_document_permissions_path(format: :json),
+      selected_url: selected_document_admin_document_permissions_path(format: :json),
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 1,
+      max_options: 20,
       wrapper: true,
       label: "文書名",
-      placeholder: "文書を選択",
+      placeholder: "文書名・URL識別子・案件名で検索",
       error_surface: true,
       error_surface_html: { class: "notice alert" },
       html: { data: { controller: "document-permission-error-surface", action: "rails-fields-kit--tom-select:selected-load-error->document-permission-error-surface#selectedLoadError rails-fields-kit--tom-select:selected-load->document-permission-error-surface#clear rails-fields-kit--tom-select:change->document-permission-error-surface#clear rails-fields-kit--tom-select:clear->document-permission-error-surface#clear" } },

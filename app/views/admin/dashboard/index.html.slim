@@ -90,8 +90,10 @@ section.card
     p.muted 実体ファイルの欠落は検出されていません。
   - else
     p.muted storage/document_files 配下に実体が存在しないファイルがあります。
+    p.actions
+      = link_to "欠落ファイル詳細を開く", admin_missing_document_files_path, class: "button"
     - if @document_file_health.missing_count > @document_file_health.missing_files.size
-      p.muted = "欠落一覧は先頭#{@document_file_health.missing_files.size}件のみ表示しています。全件確認は storage 側の調査で行ってください。"
+      p.muted = "欠落一覧は先頭#{@document_file_health.missing_files.size}件のみ表示しています。全件確認は詳細一覧または storage 側の調査で行ってください。"
 
     table
       thead

@@ -192,17 +192,63 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(RecurringJobDispatcherJob).to have_received(:perform_later)
   end
 
+  it "filters run history by active job id, error fragments, and status together" do
+    sign_in_as(admin_user)
+    schedule = create_schedule!(job_key: "run_query_job", last_status: "failed")
+    create_run!(schedule, status: "failed", active_job_id: "failed-run-match-1967", error_message: "retry timeout")
+    create_run!(schedule, status: "failed", active_job_id: "failed-run-other-1967", error_message: "other failure")
+    create_run!(schedule, status: "completed", active_job_id: "completed-run-match-1967", error_message: "retry timeout")
+
+    get admin_recurring_job_schedule_path(schedule, run_status: "failed", q: "MATCH-1967", return_to: admin_recurring_job_schedules_path(status: "failed"))
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("failed-run-match-1967")
+    expect(response.body).not_to include("completed-run-match-1967")
+    expect(response.body).not_to include("failed-run-other-1967")
+    expect(parsed_html.at_css(%(select[name="run_status"] option[value="failed"][selected]))).to be_present
+    expect(parsed_html.at_css(%(input[name="q"][value="MATCH-1967"]))).to be_present
+    expect(response.body).to include("検索対象: ActiveJob ID またはエラー断片（MATCH-1967）")
+    expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedule_path(schedule, return_to: admin_recurring_job_schedules_path(status: "failed"))}"]))).to be_present
+
+    get admin_recurring_job_schedule_path(schedule, q: "timeout")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("failed-run-match-1967", "completed-run-match-1967")
+    expect(response.body).not_to include("failed-run-other-1967")
+  end
+
+  it "shows an empty state and treats blank run search as no condition on the detail page" do
+    sign_in_as(admin_user)
+    schedule = create_schedule!(job_key: "blank_run_query_job", last_status: "completed")
+    create_run!(schedule, status: "completed", active_job_id: "completed-run")
+    create_run!(schedule, status: "failed", active_job_id: "failed-run", error_message: "boom")
+
+    get admin_recurring_job_schedule_path(schedule, q: "missing-run")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("表示中: 0件（最新50件まで）")
+    expect(response.body).to include("条件に一致する実行履歴はありません。")
+    expect(parsed_html.at_css(%(input[name="q"][value="missing-run"]))).to be_present
+
+    get admin_recurring_job_schedule_path(schedule, q: "   ")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("completed-run", "failed-run")
+    expect(response.body).not_to include("条件に一致する実行履歴はありません。")
+  end
+
   it "ignores invalid run status filters on the detail page" do
     sign_in_as(admin_user)
     schedule = create_schedule!(job_key: "invalid_run_filter_job", last_status: "failed")
     create_run!(schedule, status: "completed", active_job_id: "completed-run")
     create_run!(schedule, status: "failed", active_job_id: "failed-run")
 
-    get admin_recurring_job_schedule_path(schedule, run_status: "archived")
+    get admin_recurring_job_schedule_path(schedule, run_status: "archived", q: "run")
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("completed-run")
     expect(response.body).to include("failed-run")
+    expect(parsed_html.at_css(%(select[name="run_status"] option[value="archived"][selected]))).to be_blank
   end
 
   it "keeps safe return_to values on the detail page and request action" do

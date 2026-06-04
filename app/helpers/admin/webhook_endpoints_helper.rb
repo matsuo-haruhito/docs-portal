@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module Admin::WebhookEndpointsHelper
+  WEBHOOK_ENDPOINT_TARGET_URL_DISPLAY_LIMIT = 120
+
   def webhook_endpoint_table_columns
     [
       table_preferences_column(:name, label: "名称", default_width: 180, pinned: true, sortable: true),
@@ -21,6 +23,19 @@ module Admin::WebhookEndpointsHelper
       table_preferences_column(:error_message, label: "エラー", default_width: 340, overflow: :ellipsis),
       table_preferences_column(:actions, label: "操作", default_width: 170, pinned: true)
     ]
+  end
+
+  def webhook_endpoint_display_target_url(target_url)
+    raw_url = target_url.to_s.strip
+    return "-" if raw_url.blank?
+
+    uri = URI.parse(raw_url)
+    return masked_webhook_endpoint_target_url(raw_url) if uri.scheme.blank? || uri.host.blank?
+
+    display_url = "#{uri.scheme}://#{webhook_endpoint_url_authority(uri)}#{uri.path.presence || '/'}"
+    uri.query.present? ? "#{display_url}?..." : display_url
+  rescue URI::InvalidURIError
+    masked_webhook_endpoint_target_url(raw_url)
   end
 
   def webhook_endpoint_status_label(endpoint)
@@ -61,5 +76,21 @@ module Admin::WebhookEndpointsHelper
   def webhook_event_type_label(event_or_value)
     value = event_or_value.respond_to?(:event_type) ? event_or_value.event_type : event_or_value
     localized_label("webhook_events.event_type", value)
+  end
+
+  private
+
+  def webhook_endpoint_url_authority(uri)
+    host = uri.host.to_s
+    host = "[#{host}]" if host.include?(":") && !host.start_with?("[")
+
+    default_port = { "http" => 80, "https" => 443 }.fetch(uri.scheme, nil)
+    uri.port.present? && uri.port != default_port ? "#{host}:#{uri.port}" : host
+  end
+
+  def masked_webhook_endpoint_target_url(raw_url)
+    base_url = raw_url.split(/[?#]/, 2).first.presence || "-"
+    display_base = base_url.length > WEBHOOK_ENDPOINT_TARGET_URL_DISPLAY_LIMIT ? "#{base_url.first(WEBHOOK_ENDPOINT_TARGET_URL_DISPLAY_LIMIT - 3)}..." : base_url
+    raw_url.include?("?") ? "#{display_base}?..." : display_base
   end
 end

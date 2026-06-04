@@ -9,7 +9,7 @@
 
 - if question_threads.any?
   section.document-comment-thread-group
-    h3 Q&A
+    h3 = only_unresolved ? "未解決Q&A" : "Q&A"
     - question_threads.each do |thread|
       article.document-comment-card
         header.document-comment-card__header
@@ -20,6 +20,12 @@
             - if thread.document_version.present?
               span.muted = " / #{document_version_label(thread.document_version)}"
           span.badge 外部公開Q&A
+          span.badge = "Q&A状態: #{thread.qa_status_label}"
+        p.document-comment-card__visibility-note.muted
+          - if current_user.internal?
+            | 外部/利用者にも表示される公開Q&Aです。内部向け確認事項とは分けて扱います。
+          - else
+            | このスレッドは文書のQ&Aとして表示されます。
         = simple_format(thread.body)
         - if current_user&.admin? && thread.open?
           p.document-comment-card__action-note.muted
@@ -54,7 +60,7 @@
 
 - if review_comments.any?
   section.document-comment-thread-group
-    h3 確認事項（社内レビューコメント）
+    h3 = only_unresolved ? "未解決確認事項（社内レビューコメント）" : "確認事項（社内レビューコメント）"
     - review_comments.each do |comment|
       article.document-comment-card.document-comment-card--internal
         header.document-comment-card__header
@@ -66,6 +72,8 @@
               span.muted = " / #{document_version_label(comment.document_version)}"
           span.badge 内部限定
           span.badge = document_review_comment_type_label(comment)
+          span.badge = "確認事項状態: #{document_review_comment_status_label(comment)}"
+        p.document-comment-card__visibility-note.muted 内部ユーザーだけに見える確認事項です。外部公開Q&Aの回答状況とは別に扱います。
         - if comment.location_label.present?
           p.document-comment-card__location
             strong 位置: 
@@ -85,8 +93,12 @@
       | 検索条件に一致するQ&Aはありません。
     - elsif comment_search_active
       | 検索条件に一致する確認事項はありません。
+    - elsif only_unresolved && show_questions && show_reviews
+      | 未解決のQ&Aと確認事項はありません。
+    - elsif only_unresolved && show_questions
+      | 未解決のQ&Aはありません。
     - elsif only_unresolved
-      | 未解決のコメントはありません。
+      | 未解決の確認事項はありません。
     - elsif show_questions && show_reviews
       | まだ文書コメントはありません。
     - elsif show_questions

@@ -53,6 +53,8 @@ RSpec.describe "Admin management", type: :request do
       expect(page_text).to include("internal admin へ依頼するときの確認項目")
       expect(page_text).to include("自社会社名と、依頼の対象になるユーザー名・メールアドレス")
       expect(page_text).to include("必要な案件所属、文書権限、アクセス申請などの目的")
+      expect(page_text).to include("期限や背景がある場合は、その理由と希望時期")
+      expect(page_text).to include("会社管理者の権限や文書閲覧範囲を広げるものではありません")
       expect(page_text).to include("依頼先や連絡手段は組織の運用に従い")
       expect(page_text).to include("0 件のときもユーザー画面上部の新規登録から開始できます")
       expect(action_targets).to include(admin_companies_path, admin_users_path)
@@ -64,6 +66,7 @@ RSpec.describe "Admin management", type: :request do
         admin_access_logs_path,
         admin_document_usage_reports_path
       )
+      expect(action_targets).not_to include(a_string_starting_with("mailto:"))
       expect(page_text).not_to include("モデル観測")
       expect(page_text).not_to include("アプリ設定診断")
     end

@@ -182,7 +182,7 @@ RSpec.describe "External folder sync webhooks", type: :request do
       )
 
       expect(response).to have_http_status(:accepted)
-      event = ExternalFolderSyncWebhookEvent.find_by!(event_key: "sub-1:drives/drive-id/root:updated:client-state:99")
+      event = ExternalFolderSyncWebhookEvent.find_by!(event_key: sharepoint_event_key("sub-1", "client-state", "99"))
       expect(event).to be_received
       expect(event.external_folder_sync_subscription).to eq(subscription)
       expect(event.external_folder_sync_source).to eq(subscription.external_folder_sync_source)
@@ -206,7 +206,7 @@ RSpec.describe "External folder sync webhooks", type: :request do
       )
 
       expect(response).to have_http_status(:accepted)
-      event = ExternalFolderSyncWebhookEvent.find_by!(event_key: "sub-secure:drives/drive-id/root:updated:expected-client-state:100")
+      event = ExternalFolderSyncWebhookEvent.find_by!(event_key: sharepoint_event_key("sub-secure", "expected-client-state", "100"))
       expect(event).to be_received
       expect(event.external_folder_sync_subscription).to eq(subscription)
       expect(event.error_message).to be_nil
@@ -229,7 +229,7 @@ RSpec.describe "External folder sync webhooks", type: :request do
       )
 
       expect(response).to have_http_status(:accepted)
-      event = ExternalFolderSyncWebhookEvent.find_by!(event_key: "sub-secure:drives/drive-id/root:updated:wrong-client-state:101")
+      event = ExternalFolderSyncWebhookEvent.find_by!(event_key: sharepoint_event_key("sub-secure", "wrong-client-state", "101"))
       expect(event).to be_ignored
       expect(event.external_folder_sync_source).to be_present
       expect(event.error_message).to eq("Webhook verification token did not match")
@@ -264,8 +264,8 @@ RSpec.describe "External folder sync webhooks", type: :request do
       ])
 
       expect(response).to have_http_status(:accepted)
-      received_event = ExternalFolderSyncWebhookEvent.find_by!(event_key: "sub-received:drives/drive-id/root:updated:client-state:102")
-      ignored_event = ExternalFolderSyncWebhookEvent.find_by!(event_key: "sub-ignored:drives/drive-id/root:updated:wrong-client-state:103")
+      received_event = ExternalFolderSyncWebhookEvent.find_by!(event_key: sharepoint_event_key("sub-received", "client-state", "102"))
+      ignored_event = ExternalFolderSyncWebhookEvent.find_by!(event_key: sharepoint_event_key("sub-ignored", "wrong-client-state", "103"))
       expect(received_event).to be_received
       expect(received_event.external_folder_sync_subscription).to eq(received_subscription)
       expect(ignored_event).to be_ignored
@@ -274,6 +274,12 @@ RSpec.describe "External folder sync webhooks", type: :request do
       expect(ExternalFolderSyncWebhookEventJob).to have_received(:perform_later).with(received_event.id).once
       expect(ExternalFolderSyncWebhookEventJob).not_to have_received(:perform_later).with(ignored_event.id)
     end
+  end
+
+  def sharepoint_event_key(subscription_id, client_state, sequence_number)
+    client_state_fingerprint = "client_state:#{Digest::SHA256.hexdigest(client_state)}"
+
+    "#{subscription_id}:drives/drive-id/root:updated:#{client_state_fingerprint}:#{sequence_number}"
   end
 
   def post_sharepoint_notification(subscription_id:, client_state:, sequence_number:)

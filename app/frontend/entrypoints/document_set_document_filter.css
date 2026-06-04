@@ -15,6 +15,27 @@
   flex: 1 1 18rem;
 }
 
+.document-set-document-filter__selected-only {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  white-space: nowrap;
+}
+
 .document-set-document-filter__status {
   white-space: nowrap;
+}
+
+.document-set-document-filter__empty {
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+tr.document-set-document-filter__row.is-selected {
+  background: #f0f7ff;
+  box-shadow: inset 3px 0 0 #4f7dd9;
 }

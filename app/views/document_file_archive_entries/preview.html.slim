@@ -10,7 +10,7 @@
     p.muted
       | ZIP内の小さいテキスト項目だけをプレビューしています。周辺項目を確認する場合は一覧へ戻り、同じ項目を取得できる場合は個別ダウンロードを利用できます。
     p.actions
-      = link_to "ZIP内ファイル一覧へ戻る", document_file_path(@document_file), class: "button secondary"
+      = link_to "ZIP内ファイル一覧へ戻る", document_file_path(@document_file, disposition: "inline", anchor: @archive_preview_return_anchor), class: "button secondary"
       - if @entry_downloadable
         = link_to "個別ダウンロード", archive_entry_download_document_file_path(@document_file, entry_path: @entry_preview.entry_path), class: "button"
     dl.details-list
