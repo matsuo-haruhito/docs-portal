@@ -7,19 +7,53 @@ p.actions
   = link_to "管理ダッシュボードへ戻る", admin_root_path, class: "button secondary"
 
 section.card
+  h2 絞り込み
+  = form_with url: admin_missing_document_files_path, method: :get, local: true do |form|
+    .form-grid
+      .field
+        = form.label :project_id, "案件"
+        = form.collection_select :project_id, @projects, :id, :name, { include_blank: "すべて", selected: @missing_document_file_filters[:project_id] }
+      .field
+        = form.label :document_q, "文書名 / slug"
+        = form.search_field :document_q, value: @missing_document_file_filters[:document_q], placeholder: "例: runbook"
+      .field
+        = form.label :file_q, "Storage key / ファイル名"
+        = form.search_field :file_q, value: @missing_document_file_filters[:file_q], placeholder: "例: imports/manual.pdf"
+    p.actions
+      = form.submit "絞り込む", class: "button"
+      = link_to "条件をクリア", admin_missing_document_files_path, class: "button secondary"
+
+section.card
   h2 欠落状況
   p
     | 登録ファイル数: 
     strong = @document_file_health.total_count
-    |  / 実体欠落: 
+    |  / 全体の実体欠落: 
     strong = @document_file_health.missing_count
+    - if @document_file_health.filtered?
+      |  / 条件一致欠落: 
+      strong = @document_file_health.filtered_missing_count
+    |  / 表示中: 
+    strong = @document_file_health.missing_files.size
+
+  - if @document_file_health.filtered?
+    p.muted
+      | 条件: 
+      - filter_labels = []
+      - filter_labels << "案件=#{@selected_project ? @selected_project.name : @missing_document_file_filters[:project_id]}" if @missing_document_file_filters[:project_id].present?
+      - filter_labels << "文書=#{@missing_document_file_filters[:document_q]}" if @missing_document_file_filters[:document_q].present?
+      - filter_labels << "ファイル=#{@missing_document_file_filters[:file_q]}" if @missing_document_file_filters[:file_q].present?
+      = filter_labels.join(" / ")
 
   - if @document_file_health.healthy?
     p.muted 実体ファイルの欠落は検出されていません。
-  - else
+  - elsif @document_file_health.filtered? && @document_file_health.filtered_missing_count.zero?
+    p.muted = "条件に一致する欠落ファイルはありません。全体では#{@document_file_health.missing_count}件の実体欠落があります。"
     p.muted = "この詳細一覧は先頭#{@display_limit}件まで表示します。自動修復、削除、再import、CSV export は行いません。"
-    - if @document_file_health.missing_count > @document_file_health.missing_files.size
-      p.muted = "欠落件数が#{@document_file_health.missing_files.size}件を超えています。続きを確認する場合は storage 側または database 側の調査へ切り替えてください。"
+  - else
+    p.muted = "この詳細一覧は条件一致分の先頭#{@display_limit}件まで表示します。自動修復、削除、再import、CSV export は行いません。"
+    - if @document_file_health.filtered_missing_count > @document_file_health.missing_files.size
+      p.muted = "条件一致欠落件数が#{@document_file_health.missing_files.size}件を超えています。続きを確認する場合は storage 側または database 側の調査へ切り替えてください。"
 
     table
       thead
