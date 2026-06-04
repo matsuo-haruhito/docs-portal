@@ -63,6 +63,15 @@ h1 文書マスタ
     p.muted
       | 保管期限・廃棄候補の絞り込み中です。状態、保管期限、廃棄候補、公開側文書を確認し、必要な場合だけ行単位で編集・アーカイブ・復元してください。0件の場合は現在の条件に合う対象がない状態です。
 
+  .actions.form-actions
+    - if @bulk_edit_candidate_count.zero?
+      span.muted 文書マスタの検索結果が0件のため、一括編集候補へは進めません。条件を見直してから再度検索してください。
+    - elsif @bulk_edit_candidate_count > @bulk_edit_candidate_limit
+      span.muted = "検索結果が#{@bulk_edit_candidate_count}件のため、一括編集候補へ進む前に#{@bulk_edit_candidate_limit}件以下まで絞り込んでください。"
+    - else
+      = link_to "一括編集候補として開く", new_admin_bulk_edit_dry_run_path(source: "admin_documents", candidate_document_ids: @bulk_edit_candidate_ids, source_filter_summaries: active_filter_summaries), class: "button secondary"
+      span.muted = "現在の検索結果#{@bulk_edit_candidate_count}件を、文書一括編集dry-runの候補として引き継ぎます。"
+
 .card
   = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定")
 
