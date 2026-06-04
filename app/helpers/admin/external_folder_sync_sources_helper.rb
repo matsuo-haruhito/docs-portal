@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 module Admin::ExternalFolderSyncSourcesHelper
+  LATEST_ERROR_PREVIEW_MAX_LENGTH = 120
+  PRIVATE_PATH_PATTERN = %r{(?:(?<![A-Za-z])[A-Za-z]:[/\\]|/(?:Users|home|var|tmp|mnt|Volumes|workspace)/)[^\s;,]+}.freeze
+  AUTHORIZATION_BEARER_PATTERN = /(\bauthorization\b\s*[:=]\s*)Bearer\s+[^\s&;,]+/i.freeze
+  SENSITIVE_VALUE_PATTERN = /(\b(?:authorization|token|secret|password|client_secret|access_token|refresh_token)\b\s*[:=]\s*)([^\s&;,]+)/i.freeze
+  SENSITIVE_QUERY_PATTERN = /([?&](?:token|secret|password|client_secret|access_token|refresh_token)=)([^&\s]+)/i.freeze
+
   def external_folder_sync_source_table_columns
     [
       table_preferences_column(:project, label: "対象案件", default_width: 220, pinned: true, overflow: :ellipsis),
@@ -14,6 +20,17 @@ module Admin::ExternalFolderSyncSourcesHelper
       table_preferences_column(:latest_error, label: "最新エラー", default_width: 280, overflow: :ellipsis),
       table_preferences_column(:actions, label: "操作", default_width: 230, pinned: true)
     ]
+  end
+
+  def external_folder_sync_latest_error_preview(message)
+    preview = external_folder_sync_sanitized_error_message(message)
+    return "-" if preview.blank?
+
+    if preview.length > LATEST_ERROR_PREVIEW_MAX_LENGTH
+      "#{preview.first(LATEST_ERROR_PREVIEW_MAX_LENGTH)}..."
+    else
+      preview
+    end
   end
 
   def external_folder_sync_webhook_event_status_label(event_or_value)
@@ -60,6 +77,14 @@ module Admin::ExternalFolderSyncSourcesHelper
   end
 
   private
+
+  def external_folder_sync_sanitized_error_message(message)
+    message.to_s.squish
+      .gsub(AUTHORIZATION_BEARER_PATTERN, "\\1[masked]")
+      .gsub(SENSITIVE_VALUE_PATTERN, "\\1[masked]")
+      .gsub(SENSITIVE_QUERY_PATTERN, "\\1[masked]")
+      .gsub(PRIVATE_PATH_PATTERN, "[path hidden]")
+  end
 
   def sanitize_external_folder_sync_webhook_value(value)
     case value
