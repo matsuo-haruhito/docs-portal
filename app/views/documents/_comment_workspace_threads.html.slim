@@ -27,13 +27,6 @@
           - else
             | このスレッドは文書のQ&Aとして表示されます。
         = simple_format(thread.body)
-        - if current_user&.admin? && thread.open?
-          p.document-comment-card__action-note.muted
-            | 回答済みは回答・対応が終わった質問、クローズは対応しない・受付を閉じる質問に使います。どちらも通知やSLAを示す操作ではありません。
-          p.actions
-            - status_action_path = thread.document_version.present? ? document_version_document_review_comment_path(thread.document_version, thread) : project_document_document_review_comment_path(@project, @document, thread)
-            = button_to "回答済みにする", status_action_path, method: :patch, params: { decision: "resolve" }, class: "button secondary"
-            = button_to "クローズする", status_action_path, method: :patch, params: { decision: "reject" }, class: "button secondary"
         - if thread.replies.visible_to(current_user).any?
           .document-comment-card__replies
             h4 返信
@@ -44,19 +37,31 @@
                   - if reply.resolved?
                     span.muted = " / 回答"
                 = simple_format(reply.body)
-        details.document-comment-reply-form
-          summary 返信を追加
-          = form_with model: [@project, @document, DocumentReviewComment.new], local: true do |form|
-            = form.hidden_field :comment_type, value: "question"
-            = form.hidden_field :internal_only, value: false
-            = form.hidden_field :parent_id, value: thread.id
-            - if thread.document_version.present?
-              = form.hidden_field :document_version_id, value: thread.document_version_id
-            div
-              = form.label :body, "返信内容"
-              = form.text_area :body, rows: 3
+        .document-comment-card__reply-actions
+          h4 Q&Aへの返信
+          p.document-comment-card__action-note.muted 返信はこのQ&Aスレッドに追加され、質問の状態は変更しません。
+          details.document-comment-reply-form
+            summary 返信を追加
+            = form_with model: [@project, @document, DocumentReviewComment.new], local: true do |form|
+              = form.hidden_field :comment_type, value: "question"
+              = form.hidden_field :internal_only, value: false
+              = form.hidden_field :parent_id, value: thread.id
+              - if thread.document_version.present?
+                = form.hidden_field :document_version_id, value: thread.document_version_id
+              div
+                = form.label :body, "返信内容"
+                = form.text_area :body, rows: 3
+              p.actions
+                = form.submit "返信する", class: "button secondary"
+        - if current_user&.admin? && thread.open?
+          .document-comment-card__status-actions
+            h4 Q&Aの状態を更新
+            p.document-comment-card__action-note.muted
+              | 回答済みは回答・対応が終わった質問、クローズは対応しない・受付を閉じる質問に使います。どちらも通知やSLAを示す操作ではありません。
             p.actions
-              = form.submit "返信する", class: "button secondary"
+              - status_action_path = thread.document_version.present? ? document_version_document_review_comment_path(thread.document_version, thread) : project_document_document_review_comment_path(@project, @document, thread)
+              = button_to "回答済みにする", status_action_path, method: :patch, params: { decision: "resolve" }, class: "button secondary"
+              = button_to "クローズする", status_action_path, method: :patch, params: { decision: "reject" }, class: "button secondary"
 
 - if review_comments.any?
   section.document-comment-thread-group
@@ -80,8 +85,11 @@
             = comment.location_label
         = simple_format(comment.body)
         - if current_user.admin? && !comment.resolved?
-          p.actions
-            = button_to "解決", document_version_document_review_comment_path(comment.document_version || @version, comment), method: :patch, params: { decision: "resolve" }, class: "button secondary"
+          .document-comment-card__status-actions
+            h4 確認事項の状態を更新
+            p.document-comment-card__action-note.muted 解決は内部レビューコメントの対応完了を示します。Q&Aの回答状態とは別に扱います。
+            p.actions
+              = button_to "解決", document_version_document_review_comment_path(comment.document_version || @version, comment), method: :patch, params: { decision: "resolve" }, class: "button secondary"
 
 - if question_threads.empty? && review_comments.empty?
   p.muted
