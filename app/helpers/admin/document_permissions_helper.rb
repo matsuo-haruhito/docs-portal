@@ -34,7 +34,17 @@ module Admin::DocumentPermissionsHelper
   end
 
   def document_permission_form_document_options(documents)
-    documents.map { ["#{_1.title} / #{_1.project.name}", _1.id] }
+    documents.map { [document_permission_form_document_label(_1), _1.id] }
+  end
+
+  def document_permission_form_document_selected_option(document)
+    return if document.blank?
+
+    { value: document.id, text: document_permission_form_document_label(document) }
+  end
+
+  def document_permission_form_document_label(document)
+    "#{document.title} / #{document.project.name}"
   end
 
   def document_permission_filter_project_options(projects)
