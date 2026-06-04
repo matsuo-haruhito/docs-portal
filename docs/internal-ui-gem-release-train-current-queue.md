@@ -7,10 +7,39 @@
 ## current queue (2026-06-03 JST)
 
 | 順序 | gem | current docs-portal ref | current child / gate | 扱い |
-| --- | --- | --- | --- | --- |
+| --- | --- | --- | --- |
 | 1 | `rails_fields_kit` | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | `#1300` | 先行 bump 候補。setup doctor、package-root helper export、JS smoke inventory、public API docs guard の upstream evidence を確認し、Planner が target SHA / merge 済み PR / representative smoke を確定してから bump PR に進める |
 | 2 | `tree_view` | `9c538f9ee7946fa5af24f15c99402a0431677303` | `#1301` | manifest-backed public surface の進行状況を確認し、sidebar tree / detail tree / persisted state smoke と upstream manifest / release evidence を分けて記録する |
 | human-gated | `rails_table_preferences` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `#789` | known-good target revision の人間判断待ち。package entrypoint、copied controller 差分、release checklist、compatibility matrix、demo / manual QA の upstream evidence は読むが、human gate 前に broad bump や downstream canary を混ぜない |
+
+## 2026-06-04 evidence family intake
+
+`#1960` では、2026-06-04 15:55 JST 時点の upstream evidence を、bump target 決定ではなく release train 前に読む gate family として整理します。upstream 正本は各 gem repo の PR / docs を参照し、この文書では `merged`、`open green`、`needs-human`、`ready-for-agent` の読み分けだけを残します。
+
+| gem | evidence family | 2026-06-04 時点の読み方 | `docs-portal` release train での使い方 |
+| --- | --- | --- | --- |
+| `rails_fields_kit` | README Docs map / package contents guard (`rails_fields_kit#983`) | merged upstream evidence。README 入口と packaged maintained docs の drift guard として読める | `#1300` の target SHA 判断前に、package contents / docs reachability guard が upstream main に入っているか再確認する |
+| `rails_fields_kit` | setup doctor (`rails_fields_kit#810`) | open green / mergeable。host app setup verification surface の候補だが current support ではない | merge 後に `doc/setup.md` / generated setup note / package inventory を再確認する。open の間は `manual evidence pending` または `merge 後に再確認` と記録する |
+| `rails_fields_kit` | Tom Select request contract reader (`rails_fields_kit#980`) | open green / needs-human evidence。public package-root helper 追加を含む | host app bump evidence に含める場合は public helper/API と `admin/document_sets` smoke を分け、open PR を current support として書かない |
+| `tree_view` | installation docs / package guard / CSS・importmap signal (`tree_view-rails#1280`) | merged upstream evidence。package / installation drift guard として読める | `#1301` の target SHA 判断前に、packaged CSS / JavaScript / importmap pin signal と docs drift guard が upstream main に入っているか再確認する |
+| `tree_view` | PathTreeBuilder node-shape manifest (`tree_view-rails#1282`) | open green / needs-human evidence。public contract を強める候補 | manifest-backed surface と docs-portal sidebar / detail tree smoke を分け、merge 前に current support として書かない |
+| `rails_table_preferences` | data-controller merge contract (`rails_table_preferences#917`) | merged upstream evidence。host app controller token と gem controller token の coexistence guard として読める | table helper adoption や copied controller 差分を確認するときの upstream guard として参照し、host app route / table key / business column は downstream evidence に分ける |
+| `rails_table_preferences` | Turbo reconnect smoke matrix (`rails_table_preferences#915`) | merged upstream docs evidence。Turbo navigation / Frame replacement 後の editor + table contract の QA gate として読める | downstream canary ではなく upstream manual QA boundary として扱う。docs-portal 側で Turbo reconnect を確認したかは別途 smoke に残す |
+| `rails_table_preferences` | resize handle keyboard auto-fit boundary (`rails_table_preferences#922`) | open green / needs-human evidence。package entrypoint の accessibility boundary を docs / QA に同期する候補 | open の間は review/merge input として扱う。full keyboard resizing や copied controller behavior を docs-portal current support として先取りしない |
+| `rails_table_preferences` | RFK 連携向け renderer registry docs (`rails_table_preferences#910`) | ready-for-agent evidence。screen-by-screen 重複削減に効く docs example 候補 | merged までは docs-portal の current support として書かず、`#607` の adoption pattern では upstream ready lane として参照する |
+
+## 横断優先度 scorecard (2026-06-04 JST)
+
+`#1996` では、4 repo 横断で「次にどの evidence を見ると downstream に効くか」を比較します。この scorecard は target SHA、Gemfile bump、PR merge 判断を決める場所ではありません。`docs-portal` 側の release train reviewer が、上流正本 docs を重複転載せずに次の確認順をそろえるための小さな索引です。
+
+| 優先 | repo / lane | downstream への波及度 | public surface guard の成熟度 | docs / visual evidence の再利用性 | host app representative smoke | 残り gate / risk | 次に見るもの |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | `docs-portal` release train docs / representative smoke | 高。3 gem の採用 hub で、以後の bump / smoke / rollback note の読み方を決める | 中。`docs/internal-ui-gem-adoption-evidence-map.md` とこの current queue が正本 | 高。ROADMAP、evidence map、current queue、smoke runbook を同じ粒度で参照できる | あり。`admin/document_sets`、sidebar tree / detail tree、RTP representative screens | 低。docs-only だが open PR を current support として書かない | `#1987` / PR `#1994`、`#1986` / PR `#1995`、この scorecard |
+| 2 | `rails_fields_kit` public API / field metadata helper family | 高。form helper / Tom Select wiring が host app の入力補助に直結する | 高。`doc/public_api.md`、package export smoke、visual reference、README docs map が揃いつつある | 高。setup docs、field/controller helper docs、visual reference を host app smoke に転用しやすい | あり。`admin/document_sets` form、invalid rerender、selected value | 中。open green / needs-human の helper PR は merge 後に再確認 | `#1300`、`#1985`、upstream public API / package contents guard |
+| 3 | `tree_view-rails` manifest-backed JS export / declaration follow-up | 高。docs-portal の文書ツリー UX に直接効く | 中-高。installation / package guard は merged、manifest-backed node-shape は open green / needs-human | 中。README / docs / mockup gallery は強いが manifest proposal は merge 前に先取りしない | あり。sidebar tree / detail tree / persisted state / window offset | 中。public manifest や selection contract の human gate を current support にしない | `#1301`、upstream installation / package guard、manifest-backed public surface PR |
+| 4 | `rails_table_preferences` public surface / representative smoke | 高。一覧・embedded table・saved state に広く波及する | 中。data-controller merge contract と Turbo reconnect docs は merged、renderer registry docs は ready lane | 中-高。manual QA docs / demo / matrix はあるが host app table key は downstream 責務 | あり。`admin/document_sets`、`admin/documents` など代表一覧 | 高。`#789` の known-good revision human gate と public surface 方針確認が残る | `#789`、`#1860`、`#1986`、upstream registry / accessibility evidence |
+
+優先順位は「先に merge すべき PR」ではなく、release train 上で先に読み合わせる evidence の順番です。特に `rails_table_preferences` は波及度が高い一方で human gate が残るため、representative smoke と public surface 方針を確認してから bump / host app 展開へ進めます。
 
 ## 横断 evidence の現在地
 

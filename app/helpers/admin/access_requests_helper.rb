@@ -12,6 +12,19 @@ module Admin::AccessRequestsHelper
   }.freeze
   DEFAULT_ACCESS_REQUEST_REJECTION_REASON = "承認条件を満たしていないため却下しました".freeze
 
+  def admin_access_request_table_columns
+    [
+      table_preferences_column(:created_at, label: "日時", default_width: 160, pinned: true, sortable: true),
+      table_preferences_column(:requester, label: "申請者", default_width: 260, pinned: true, overflow: :ellipsis),
+      table_preferences_column(:target, label: "対象", default_width: 280, pinned: true, overflow: :ellipsis),
+      table_preferences_column(:requested_access_level, label: "要求権限", default_width: 160),
+      table_preferences_column(:status, label: "状態", default_width: 120, pinned: true),
+      table_preferences_column(:reason, label: "理由", default_width: 280, overflow: :ellipsis),
+      table_preferences_column(:approver, label: "承認者", default_width: 220, overflow: :ellipsis),
+      table_preferences_column(:actions, label: "操作", default_width: 160, pinned: true)
+    ]
+  end
+
   def admin_access_request_status_filter_options
     [["すべて", nil]] + AccessRequest.statuses.keys.map do |status|
       [admin_access_request_status_label(status), status]

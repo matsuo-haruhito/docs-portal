@@ -167,20 +167,71 @@ RSpec.describe DocumentFileArchivePreview do
     expect(summaries["docs/images/"].total_file_size).to eq(3)
   end
 
-  it "truncates entries over the limit" do
+  it "truncates entries over the limit and summarizes only visible entries" do
     storage_key = "spec/archive-preview/large.zip"
     write_zip(storage_key, {
-      "one.txt" => "1",
-      "two.txt" => "2",
-      "three.txt" => "3"
+      "docs/one.txt" => "1",
+      "docs/two.txt" => "22",
+      "docs/hidden.txt" => "333",
+      "hidden/" => :directory
     })
     file = create(:document_file, document_version: version, file_name: "large.zip", content_type: "application/zip", storage_key:)
 
     preview = described_class.new(file:, limit: 2).call
 
-    expect(preview.entries.size).to eq(2)
     expect(preview).to be_truncated
     expect(preview.limit).to eq(2)
+    expect(preview.entries.map(&:name)).to contain_exactly("docs/one.txt", "docs/two.txt")
+    expect(preview.entries.map(&:name)).not_to include("docs/hidden.txt", "hidden/")
+    expect(preview.file_count).to eq(2)
+    expect(preview.folder_count).to eq(0)
+    expect(preview.total_file_size).to eq(3)
+    expect(preview.text_preview_candidate_entries.map(&:name)).to contain_exactly("docs/one.txt", "docs/two.txt")
+    expect(preview.download_candidate_entries.map(&:name)).to contain_exactly("docs/one.txt", "docs/two.txt")
+
+    summaries = preview.directory_summaries.index_by(&:path)
+    expect(summaries.keys).to contain_exactly("docs/")
+    expect(summaries["docs/"].file_count).to eq(2)
+    expect(summaries["docs/"].folder_count).to eq(0)
+    expect(summaries["docs/"].total_file_size).to eq(3)
+  end
+
+  it "searches matching paths beyond the default visible limit" do
+    storage_key = "spec/archive-preview/search-large.zip"
+    write_zip(storage_key, {
+      "docs/one.txt" => "1",
+      "docs/two.txt" => "2",
+      "deep/target.txt" => "target",
+      "deep/nested.zip" => "zip",
+      "../target-secret.txt" => "unsafe"
+    })
+    file = create(:document_file, document_version: version, file_name: "search-large.zip", content_type: "application/zip", storage_key:)
+
+    preview_without_query = described_class.new(file:, limit: 2).call
+    preview_with_query = described_class.new(file:, limit: 2, path_query: "target").call
+
+    expect(preview_without_query.entries.map(&:name)).to contain_exactly("docs/one.txt", "docs/two.txt")
+    expect(preview_without_query.entries.map(&:name)).not_to include("deep/target.txt")
+    expect(preview_with_query.entries.map(&:name)).to contain_exactly("deep/target.txt", "../target-secret.txt")
+    expect(preview_with_query.entries.find { _1.name == "deep/target.txt" }).to be_text_preview_candidate
+    expect(preview_with_query.entries.find { _1.name == "../target-secret.txt" }).not_to be_download_candidate
+  end
+
+  it "keeps nested archive entries unavailable when path search finds them" do
+    storage_key = "spec/archive-preview/search-nested.zip"
+    write_zip(storage_key, {
+      "docs/one.txt" => "1",
+      "deep/nested.zip" => "zip"
+    })
+    file = create(:document_file, document_version: version, file_name: "search-nested.zip", content_type: "application/zip", storage_key:)
+
+    preview = described_class.new(file:, limit: 1, path_query: "nested").call
+
+    expect(preview.entries.size).to eq(1)
+    nested_entry = preview.entries.first
+    expect(nested_entry.name).to eq("deep/nested.zip")
+    expect(nested_entry).not_to be_download_candidate
+    expect(nested_entry.action_unavailable_reason).to eq("nested archive entry はdownload対象外です")
   end
 
   it "returns an error result for broken zip" do

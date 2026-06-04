@@ -10,24 +10,41 @@ class DocumentDeliveryLogsController < BaseController
     "failed" => "失敗"
   }.freeze
 
+  DELIVERY_LOG_SEARCH_COLUMNS = %w[
+    projects.name
+    projects.code
+    document_delivery_logs.to_addresses
+    document_delivery_logs.cc_addresses
+    document_delivery_logs.bcc_addresses
+    document_delivery_logs.subject
+    document_delivery_logs.error_message
+  ].freeze
+
   def index
     base_scope = current_user.internal? ? DocumentDeliveryLog.all : DocumentDeliveryLog.where(sender: current_user)
 
     @status_filter = normalized_status_filter
     @delivery_type_filter = normalized_delivery_type_filter
     @query = normalized_query
-    searchable_scope = filter_by_query(base_scope)
-    @status_summary_counts = STATUS_FILTER_LABELS.keys.index_with { |status| searchable_scope.public_send(status).count }
+    @created_from_filter = normalized_created_date_filter(:created_from)
+    @created_to_filter = normalized_created_date_filter(:created_to)
+    @created_from_date = parse_delivery_log_date_filter(@created_from_filter)
+    @created_to_date = parse_delivery_log_date_filter(@created_to_filter)
+    @created_date_filter_invalid = (@created_from_filter.present? && @created_from_date.blank?) || (@created_to_filter.present? && @created_to_date.blank?)
 
-    status_filter_scope = @delivery_type_filter.present? ? searchable_scope.public_send(@delivery_type_filter) : searchable_scope
+    searchable_scope = filter_by_query(base_scope)
+    date_filtered_scope = filter_by_created_at(searchable_scope)
+    @status_summary_counts = STATUS_FILTER_LABELS.keys.index_with { |status| date_filtered_scope.public_send(status).count }
+
+    status_filter_scope = @delivery_type_filter.present? ? date_filtered_scope.public_send(@delivery_type_filter) : date_filtered_scope
     @status_filter_counts = STATUS_FILTER_LABELS.keys.index_with { |status| status_filter_scope.public_send(status).count }
 
-    delivery_type_filter_scope = @status_filter.present? ? searchable_scope.public_send(@status_filter) : searchable_scope
+    delivery_type_filter_scope = @status_filter.present? ? date_filtered_scope.public_send(@status_filter) : date_filtered_scope
     @delivery_type_counts = DocumentDeliveryLog.delivery_types.keys.index_with do |delivery_type|
       delivery_type_filter_scope.public_send(delivery_type).count
     end
 
-    scoped_scope = searchable_scope
+    scoped_scope = date_filtered_scope
     scoped_scope = scoped_scope.public_send(@status_filter) if @status_filter.present?
     scoped_scope = scoped_scope.public_send(@delivery_type_filter) if @delivery_type_filter.present?
     @delivery_logs_total_count = scoped_scope.count
@@ -171,14 +188,31 @@ class DocumentDeliveryLogsController < BaseController
     params[:q].to_s.strip.presence
   end
 
+  def normalized_created_date_filter(param_name)
+    params[param_name].to_s.strip.presence
+  end
+
+  def parse_delivery_log_date_filter(value)
+    return if value.blank?
+
+    Date.iso8601(value)
+  rescue ArgumentError
+    nil
+  end
+
   def filter_by_query(scope)
     return scope if @query.blank?
 
     query = "%#{ActiveRecord::Base.sanitize_sql_like(@query.downcase)}%"
-    scope.joins(:project).where(
-      "LOWER(projects.name) LIKE :query OR LOWER(projects.code) LIKE :query OR LOWER(document_delivery_logs.to_addresses) LIKE :query",
-      query:
-    )
+    conditions = DELIVERY_LOG_SEARCH_COLUMNS.map { |column| "LOWER(#{column}) LIKE :query" }.join(" OR ")
+    scope.joins(:project).where(conditions, query:)
+  end
+
+  def filter_by_created_at(scope)
+    scoped = scope
+    scoped = scoped.where("document_delivery_logs.created_at >= ?", @created_from_date.beginning_of_day) if @created_from_date.present?
+    scoped = scoped.where("document_delivery_logs.created_at <= ?", @created_to_date.end_of_day) if @created_to_date.present?
+    scoped
   end
 
   def delivery_log_redirect_path

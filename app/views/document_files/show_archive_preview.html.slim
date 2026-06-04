@@ -5,14 +5,35 @@
     document_version: @document_version,
     document_file: @document_file
 
+  - archive_path_search = @archive_preview_path_query.present?
+
   - if @archive_preview.error?
     = render "preview_error_card", title: "ZIPプレビューを表示できません", message: @archive_preview.error
   - else
-    - if @archive_preview.truncated?
+    - if archive_path_search
+      .card
+        h2 ZIP全体path検索
+        p.muted = "`#{@archive_preview_path_query}` をZIP全体のpathから検索しています。検索結果だけを下の一覧に表示します。"
+        p.muted ZIP内サマリー、ディレクトリサマリー、表示中検索、各種フィルタ、並び替え、コピー操作は、下に表示された検索結果だけが対象です。
+        - if @archive_preview.truncated?
+          p.muted = "一致項目が多いため、先頭 #{@archive_preview.limit} 件を表示しています。条件を絞り込むか、ZIP全体をダウンロードして確認してください。"
+    - elsif @archive_preview.truncated?
       .card
         h2 先頭 #{@archive_preview.limit} 件を表示しています
         p.muted 大きいZIPファイルのため、プレビューでは先頭の項目だけを表示しています。サマリー、ディレクトリサマリー、検索、並び替え、コピー操作も表示中の先頭項目だけが対象です。
         p.muted すべての項目を確認する場合はファイルをダウンロードしてください。
+
+    .card
+      h2 ZIP全体path検索
+      = form_with url: document_file_path(@document_file), method: :get, local: true, class: "document-filter" do |form|
+        = hidden_field_tag :disposition, "inline"
+        label
+          | path検索
+          = form.search_field :q, value: @archive_preview_path_query, placeholder: "例: docs/target.txt"
+        button.button.secondary type="submit" ZIP全体から検索
+        - if archive_path_search
+          = link_to "検索を解除", document_file_path(@document_file, disposition: "inline"), class: "button secondary"
+      p.muted path検索だけはZIP全体を対象にします。ディレクトリ / 安全性 / 候補 filter と並び替えは、下に表示された項目だけを対象にします。
 
     - if @archive_preview.entries.any?
       .card
@@ -62,13 +83,13 @@
         .document-viewer__header
           div
             h2 ZIP内ファイル一覧
-            p.muted `/` で検索欄に移動できます。ディレクトリ / 種別 / 安全性 / 候補 / キーワードで絞り込み、見出しボタンで並び替えできます。テキスト確認候補は個別プレビューを開けます。ダウンロード候補は項目ごとにダウンロードできます。
+            p.muted `/` で表示中検索欄に移動できます。ディレクトリ / 種別 / 安全性 / 候補 / キーワードで絞り込み、見出しボタンで並び替えできます。テキスト確認候補は個別プレビューを開けます。ダウンロード候補は項目ごとにダウンロードできます。
           p.actions
             button.button.secondary type="button" data-archive-preview-copy-visible="true" 表示中のパスをコピー
         .document-filter
           label
-            | 検索
-            input type="search" placeholder="パスで検索" data-archive-preview-search-input="true"
+            | 表示中検索
+            input type="search" placeholder="表示中のパスで検索" data-archive-preview-search-input="true"
           label
             | ディレクトリ
             select data-archive-preview-directory-filter="true"
@@ -113,9 +134,10 @@
                 th ダウンロード候補
                 th 操作
             tbody data-archive-preview-entries="true"
-              - @archive_preview.entries.each do |entry|
+              - @archive_preview.entries.each_with_index do |entry, entry_index|
                 - entry_type = entry.directory? ? "folder" : "file"
-                tr data-archive-preview-entry="true" data-archive-preview-entry-directory=entry.parent_directory data-archive-preview-entry-download-candidate=(entry.download_candidate? ? "true" : "false") data-archive-preview-entry-safe=(entry.safe_path? ? "true" : "false") data-archive-preview-entry-text-preview-candidate=(entry.text_preview_candidate? ? "true" : "false") data-archive-preview-entry-type=entry_type data-archive-preview-entry-size=entry.size
+                - archive_entry_anchor = "archive-entry-#{entry_index + 1}"
+                tr id=archive_entry_anchor data-archive-preview-entry="true" data-archive-preview-entry-directory=entry.parent_directory data-archive-preview-entry-download-candidate=(entry.download_candidate? ? "true" : "false") data-archive-preview-entry-safe=(entry.safe_path? ? "true" : "false") data-archive-preview-entry-text-preview-candidate=(entry.text_preview_candidate? ? "true" : "false") data-archive-preview-entry-type=entry_type data-archive-preview-entry-size=entry.size
                   td = entry.directory? ? "フォルダ" : "ファイル"
                   td
                     code data-archive-preview-entry-name="true" = entry.name
@@ -137,9 +159,11 @@
                       span.muted = entry.action_unavailable_reason || "-"
                   td
                     - if entry.text_preview_candidate?
-                      = link_to "プレビュー", archive_entry_preview_document_file_path(@document_file, entry_path: entry.name), class: "button secondary"
+                      = link_to "プレビュー", archive_entry_preview_document_file_path(@document_file, entry_path: entry.name, return_anchor: archive_entry_anchor), class: "button secondary"
                     - if entry.download_candidate?
                       = link_to "個別ダウンロード", archive_entry_download_document_file_path(@document_file, entry_path: entry.name), class: "button secondary"
                     button.button.secondary type="button" data-archive-preview-copy-entry="true" パスをコピー
+    - elsif archive_path_search
+      = render "preview_empty_card", title: "一致するZIP項目がありません", message: "ZIP全体path検索に一致する項目がありません。条件を見直すか、ZIP全体をダウンロードして確認してください。"
     - else
       = render "preview_empty_card", title: "空のZIPファイルです", message: "表示できる項目がありません。必要に応じてファイルをダウンロードしてください。"

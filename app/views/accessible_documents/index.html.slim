@@ -2,6 +2,7 @@
 - table_key = :accessible_documents
 - table_columns = accessible_document_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- active_filter_labels = accessible_document_active_filter_labels(@filters, available_tags: @available_tags)
 
 h1 閲覧可能文書
 
@@ -69,14 +70,24 @@ p.muted
     = @total_pages
     | ページ）
 
+- if active_filter_labels.any?
+  p.muted
+    | 現在の条件:
+    - active_filter_labels.each do |filter_label|
+      |  
+      span.badge = filter_label
+    |  
+    = link_to "条件をクリア", documents_path
+
 - if @documents_count.zero?
   section.card.empty-state
     h2 条件に一致する文書はありません
-    - if @filters[:q].present?
-      p
-        | キーワード「
-        code = @filters[:q]
-        | 」に一致する閲覧可能な文書がありませんでした。
+    - if active_filter_labels.any?
+      p 現在の絞り込み条件に一致する閲覧可能な文書がありませんでした。
+      ul.compact-list
+        - active_filter_labels.each do |filter_label|
+          li = filter_label
+        li = link_to "条件をクリア", documents_path
     - else
       p 絞り込み条件に一致する閲覧可能な文書がありませんでした。
     ul.compact-list

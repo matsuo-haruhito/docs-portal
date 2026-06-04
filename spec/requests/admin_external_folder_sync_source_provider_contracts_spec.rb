@@ -62,7 +62,7 @@ RSpec.describe "Admin external folder sync source provider contracts", type: :re
   end
 
   describe "GET /admin/external_folder_sync_sources/:public_id" do
-    it "keeps Google Drive operation surfaces separate from Microsoft Graph metadata-only surfaces" do
+    it "keeps Google Drive operation surfaces separate from Microsoft Graph event visibility" do
       sign_in_as(admin_user)
       graph_source = create_microsoft_graph_source
       google_source = create_google_drive_source
@@ -73,9 +73,10 @@ RSpec.describe "Admin external folder sync source provider contracts", type: :re
       expect(response.body).to include("Drive ID")
       expect(response.body).to include("Folder item ID")
       expect(response.body).to include("保存済み metadata と今後の拡張")
-      expect(response.body).to include("差分同期本体と変更通知は後続 issue で対応予定")
+      expect(response.body).to include("SharePoint / OneDrive 変更通知の受信イベント")
+      expect(response.body).to include("差分同期本体、変更通知購読の作成・更新・停止")
       expect(response.body).not_to include("同期プレビュー")
-      expect(response.body).not_to include("変更通知の購読")
+      expect(response.body).not_to include("変更通知の購読を開始")
 
       get admin_external_folder_sync_source_path(google_source)
 

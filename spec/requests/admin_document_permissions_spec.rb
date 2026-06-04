@@ -7,6 +7,10 @@ RSpec.describe "Admin document permissions", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def parsed_json
+    JSON.parse(response.body)
+  end
+
   def page_text
     parsed_html.text.squish
   end
@@ -17,6 +21,10 @@ RSpec.describe "Admin document permissions", type: :request do
 
   def document_select
     parsed_html.at_css('select[name="document_permission[document_id]"]')
+  end
+
+  def selected_document_option
+    document_select.at_css("option[selected]")
   end
 
   def document_error_surface
@@ -39,8 +47,28 @@ RSpec.describe "Admin document permissions", type: :request do
     end
   end
 
+  def link_texts
+    parsed_html.css("a[href]").map { _1.text.squish }
+  end
+
   def node_ids
     parsed_html.css("[id]").map { _1["id"] }
+  end
+
+  def section_text(heading)
+    section = parsed_html.css("section.card").find do |candidate|
+      candidate.at_css("h2")&.text&.squish == heading
+    end
+
+    section&.text&.squish.to_s
+  end
+
+  def overview_section_text
+    section_text("文書別の権限概要")
+  end
+
+  def permissions_section_text
+    section_text("権限一覧")
   end
 
   it "shows empty-state guidance when no document permissions exist" do
@@ -60,6 +88,9 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(select_placeholder("document_permission[company_id]")).to eq("会社向けに付与する場合に選択")
     expect(select_placeholder("document_permission[user_id]")).to eq("ユーザー向けに付与する場合に選択")
     expect(page_text).not_to include("会社単位かユーザー単位のどちらか一方を指定してください。")
+    expect(page_text).not_to include("下段の「権限一覧」にある個別付与行")
+    expect(page_text).not_to include("下段の個別権限を見る")
+    expect(page_text).not_to include("この文書の個別付与行")
     expect(page_text).not_to include("権限概要の表示設定")
     expect(page_text).not_to include("権限一覧の表示設定")
     expect(table_preference_column_keys).to be_empty
@@ -72,6 +103,14 @@ RSpec.describe "Admin document permissions", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(document_select["data-controller"]).to include("document-permission-error-surface")
+    expect(document_select["data-controller"]).to include("rails-fields-kit--tom-select")
+    expect(document_select["data-rails-fields-kit--tom-select-kind-value"]).to eq("combobox")
+    expect(document_select["data-rails-fields-kit--tom-select-url-value"]).to eq(document_search_admin_document_permissions_path(format: :json))
+    expect(document_select["data-rails-fields-kit--tom-select-selected-url-value"]).to eq(selected_document_admin_document_permissions_path(format: :json))
+    expect(document_select["data-rails-fields-kit--tom-select-min-length-value"]).to eq("1")
+    expect(document_select["data-rails-fields-kit--tom-select-max-options-value"]).to eq("20")
+    expect(document_select["placeholder"]).to eq("文書名・URL識別子・案件名で検索")
+    expect(document_select.css("option")).to be_empty
     expect(document_select["data-action"]).to include("rails-fields-kit--tom-select:selected-load-error->document-permission-error-surface#selectedLoadError")
     expect(document_select["data-action"]).to include("rails-fields-kit--tom-select:selected-load->document-permission-error-surface#clear")
     expect(document_select["data-action"]).to include("rails-fields-kit--tom-select:change->document-permission-error-surface#clear")
@@ -95,6 +134,69 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(user_select["data-controller"]).not_to include("document-permission-error-surface")
     expect(company_select["data-rails-fields-kit--tom-select-error-surface-id-value"]).to be_nil
     expect(user_select["data-rails-fields-kit--tom-select-error-surface-id-value"]).to be_nil
+  end
+
+  it "returns document search options for the remote document field" do
+    project = create(:project, name: "Alpha Project")
+    matching_document = create(:document, title: "Operations Runbook", slug: "ops-runbook", project:)
+    project_match = create(:document, title: "Portal Guide", slug: "portal-guide", project:)
+    create(:document, title: "Another Document", slug: "another-document", project: create(:project, name: "Beta Project"))
+
+    sign_in_as(admin_user)
+
+    get document_search_admin_document_permissions_path(format: :json), params: { q: "alpha" }
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_json["options"]).to contain_exactly(
+      { "value" => matching_document.id, "text" => "Operations Runbook / Alpha Project" },
+      { "value" => project_match.id, "text" => "Portal Guide / Alpha Project" }
+    )
+
+    get document_search_admin_document_permissions_path(format: :json), params: { q: "ops-run" }
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_json["options"]).to eq([
+      { "value" => matching_document.id, "text" => "Operations Runbook / Alpha Project" }
+    ])
+  end
+
+  it "loads the selected document option for edit and validation redisplay" do
+    project = create(:project, name: "Selected Project")
+    document = create(:document, title: "Selected Manual", project:)
+    company = create(:company, name: "Customer Company")
+    permission = create(:document_permission, document:, company:, access_level: :view)
+
+    sign_in_as(admin_user)
+
+    get selected_document_admin_document_permissions_path(format: :json), params: { id: document.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_json["option"]).to eq({ "value" => document.id, "text" => "Selected Manual / Selected Project" })
+
+    get selected_document_admin_document_permissions_path(format: :json), params: { id: "999999" }
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_json["option"]).to be_nil
+
+    get edit_admin_document_permission_path(permission.public_id)
+
+    expect(response).to have_http_status(:ok)
+    expect(selected_document_option["value"]).to eq(document.id.to_s)
+    expect(selected_document_option.text).to eq("Selected Manual / Selected Project")
+  end
+
+  it "keeps document search endpoints admin-only" do
+    external_user = create(:user, :external)
+
+    sign_in_as(external_user)
+
+    get document_search_admin_document_permissions_path(format: :json), params: { q: "manual" }
+
+    expect(response).to have_http_status(:forbidden)
+
+    get selected_document_admin_document_permissions_path(format: :json), params: { id: 1 }
+
+    expect(response).to have_http_status(:forbidden)
   end
 
   it "shows owner-scope guidance again when both company and user are submitted" do
@@ -121,6 +223,8 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(page_text).not_to include("company_id and user_id cannot both be set")
     expect(select_placeholder("document_permission[company_id]")).to eq("会社向けに付与する場合に選択")
     expect(select_placeholder("document_permission[user_id]")).to eq("ユーザー向けに付与する場合に選択")
+    expect(selected_document_option["value"]).to eq(document.id.to_s)
+    expect(selected_document_option.text).to eq("Permission Target / #{document.project.name}")
   end
 
   it "shows document permission overview" do
@@ -140,6 +244,9 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(heading_texts).to include("文書別の権限概要", "権限一覧")
     expect(page_text).to include("権限概要の表示設定")
     expect(page_text).to include("権限一覧の表示設定")
+    expect(page_text).to include("件数は下段の「権限一覧」にある個別付与行を文書単位で集計したものです。")
+    expect(link_texts).to include("下段の個別権限を見る")
+    expect(page_text).to include("この文書の個別付与行（会社単位・ユーザー単位）")
     expect(table_preference_column_keys).to include("document", "company", "access_level")
     expect(page_text).to include("Permission Target")
     expect(page_text).to include("限定公開")
@@ -154,6 +261,110 @@ RSpec.describe "Admin document permissions", type: :request do
     )
     expect(node_ids.count("document-permissions-for-#{document.id}")).to eq(1)
     expect(node_ids.count("document-permissions-for-#{other_document.id}")).to eq(1)
+  end
+
+  it "filters overview and permission rows by project" do
+    target_project = create(:project, name: "Target Project")
+    other_project = create(:project, name: "Other Project")
+    target_document = create(:document, project: target_project, title: "Target Project Guide")
+    other_document = create(:document, project: other_project, title: "Other Project Guide")
+    create(:document_permission, document: target_document, company: create(:company, name: "Target Company"))
+    create(:document_permission, document: other_document, company: create(:company, name: "Other Company"))
+
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path(project_id: target_project.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("有効な条件: 案件: Target Project")
+    expect(overview_section_text).to include("Target Project Guide")
+    expect(overview_section_text).not_to include("Other Project Guide")
+    expect(permissions_section_text).to include("Target Project Guide")
+    expect(permissions_section_text).to include("Target Company")
+    expect(permissions_section_text).not_to include("Other Project Guide")
+    expect(permissions_section_text).not_to include("Other Company")
+    expect(action_targets).to include(project_document_path(target_project, target_document.slug))
+    expect(action_targets).not_to include(project_document_path(other_project, other_document.slug))
+  end
+
+  it "filters overview and permission rows by document title or slug" do
+    title_document = create(:document, title: "Alpha Operations", slug: "alpha-ops")
+    slug_document = create(:document, title: "Beta Manual", slug: "beta-visible-slug")
+    other_document = create(:document, title: "Gamma Manual", slug: "gamma")
+    create(:document_permission, document: title_document, company: create(:company, name: "Alpha Company"))
+    create(:document_permission, document: slug_document, company: create(:company, name: "Beta Company"))
+    create(:document_permission, document: other_document, company: create(:company, name: "Gamma Company"))
+
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path(q: "alpha")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("文書: alpha")
+    expect(overview_section_text).to include("Alpha Operations")
+    expect(overview_section_text).not_to include("Beta Manual")
+    expect(permissions_section_text).to include("Alpha Company")
+    expect(permissions_section_text).not_to include("Beta Company")
+
+    get admin_document_permissions_path(q: "visible-slug")
+
+    expect(response).to have_http_status(:ok)
+    expect(overview_section_text).to include("Beta Manual")
+    expect(overview_section_text).not_to include("Alpha Operations")
+    expect(permissions_section_text).to include("Beta Company")
+    expect(permissions_section_text).not_to include("Gamma Company")
+  end
+
+  it "filters overview counts and permission rows by access level and target type" do
+    document = create(:document, title: "Scoped Permission Guide")
+    company = create(:company, name: "Company Scope")
+    user = create(:user, :external, name: "User Scope", email_address: "user-scope@example.com")
+    create(:document_permission, document:, company:, access_level: :view)
+    create(:document_permission, document:, user:, access_level: :download)
+
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path(access_level: "download", target_type: "user")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("権限: ダウンロード")
+    expect(page_text).to include("付与先: ユーザー単位")
+    expect(overview_section_text).to include("Scoped Permission Guide")
+    expect(permissions_section_text).to include("Scoped Permission Guide")
+    expect(permissions_section_text).to include("User Scope")
+    expect(permissions_section_text).to include("ダウンロード")
+    expect(permissions_section_text).not_to include("Company Scope")
+  end
+
+  it "shows a filtered empty state without mixing it with the unregistered state" do
+    document = create(:document, title: "Existing Permission Guide")
+    create(:document_permission, document:, company: create(:company, name: "Existing Company"))
+
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path(q: "missing")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 0件 / 条件に一致する文書権限を表示")
+    expect(overview_section_text).to include("条件に一致する文書権限概要はありません。")
+    expect(permissions_section_text).to include("条件に一致する文書権限はありません。")
+    expect(response.body).to include("条件をクリア")
+    expect(overview_section_text).not_to include("まだ権限は登録されていません。")
+    expect(permissions_section_text).not_to include("まずは上の「新規登録」")
+  end
+
+  it "ignores invalid filters without returning an error" do
+    document = create(:document, title: "Invalid Filter Fallback")
+    create(:document_permission, document:, company: create(:company, name: "Fallback Company"))
+
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path(project_id: "999999", access_level: "owner", target_type: "team")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).not_to include("有効な条件:")
+    expect(overview_section_text).to include("Invalid Filter Fallback")
+    expect(permissions_section_text).to include("Fallback Company")
   end
 
   it "uses public_id-based action links on the index" do

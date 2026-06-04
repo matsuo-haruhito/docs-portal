@@ -25,8 +25,24 @@ p.actions
     p.metric-number.metric-number--small = @summary[:latest_updated_at] ? l(@summary[:latest_updated_at], format: :short) : "-"
 
 section.card
-  h2 最近のデータ
-  p.muted 最新の代表データを最大20件まで表示します。この画面では編集や削除はできません。
+  h2 代表フィールド検索
+  = form_with url: admin_model_browser_model_path(@entry.key), method: :get, local: true do |form|
+    .form-field
+      = form.label :q, "検索語"
+      = form.search_field :q, value: @query, maxlength: Admin::ModelBrowsersController::MODEL_BROWSER_QUERY_MAX_LENGTH, placeholder: "公開ID、名前、コードなど"
+    p.muted
+      | 検索対象:
+      span = @searchable_field_labels.values.presence&.join(" / ") || "ID"
+    p.actions
+      = form.submit "検索", class: "button"
+      = link_to "検索を解除", admin_model_browser_model_path(@entry.key), class: "button secondary"
+
+section.card
+  h2 = @query.present? ? "検索結果" : "最近のデータ"
+  - if @query.present?
+    p.muted = "検索語: #{@query} / 表示上限: 20件"
+  - else
+    p.muted 最新の代表データを最大20件まで表示します。この画面では編集や削除はできません。
   - if @records.any?
     table
       thead
@@ -38,5 +54,7 @@ section.card
           tr
             - @entry.summary_fields.each do |field|
               td = record_summary_value(record, field)
+  - elsif @query.present?
+    p.muted 該当するデータはありません
   - else
     p.muted 最近のデータはまだありません。対象モデルに表示できるデータが登録されると、ここに代表データが表示されます。

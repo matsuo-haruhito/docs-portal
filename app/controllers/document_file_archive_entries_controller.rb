@@ -8,6 +8,7 @@ class DocumentFileArchiveEntriesController < BaseController
     record_file_view_access_log(@document_file)
     assign_context
 
+    @archive_preview_return_anchor = archive_preview_return_anchor_param
     entry_lookup = DocumentFileArchiveEntryLookup.new(file: @document_file, entry_path: params[:entry_path]).call
     @entry_preview = DocumentFileArchiveEntryPreview.new(file: @document_file, entry_path: params[:entry_path], lookup: entry_lookup).call
     @entry_downloadable = archive_entry_downloadable?(entry_lookup)
@@ -43,6 +44,13 @@ class DocumentFileArchiveEntriesController < BaseController
     @document_version = @document_file.document_version
     @document = @document_version.document
     @project = @document.project
+  end
+
+  def archive_preview_return_anchor_param
+    anchor = params[:return_anchor].to_s
+    return unless anchor.match?(/\Aarchive-entry-\d{1,5}\z/)
+
+    anchor
   end
 
   def archive_entry_downloadable?(entry_lookup)

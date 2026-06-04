@@ -63,7 +63,7 @@ RSpec.describe "Document files", type: :request do
     document_file
   end
 
-  def create_zip_preview_file
+  def create_zip_preview_file(entries: { "docs/readme.txt" => "hello from zip\n" })
     zip_file = create_preview_file(
       file_name: "bundle.zip",
       content_type: "application/zip",
@@ -74,10 +74,13 @@ RSpec.describe "Document files", type: :request do
     )
 
     Zip::OutputStream.open(zip_file.absolute_path.to_s) do |zip|
-      zip.put_next_entry("docs/readme.txt")
-      zip.write("hello from zip\n")
+      entries.each do |entry_name, content|
+        zip.put_next_entry(entry_name)
+        zip.write(content) unless content == :directory
+      end
     end
 
+    zip_file.update!(file_size: File.size(zip_file.absolute_path))
     zip_file
   end
 
@@ -313,6 +316,23 @@ RSpec.describe "Document files", type: :request do
     expect(response.body).to include("ZIP preview")
     expect(response.body).to include("ZIP内サマリー")
     expect(response.body).to include("docs/readme.txt")
+  end
+
+  it "explains that truncated ZIP preview controls operate on visible entries" do
+    entries = (1..(DocumentFileArchivePreview::DEFAULT_LIMIT + 1)).to_h do |entry_number|
+      [format("docs/file-%03d.txt", entry_number), "file #{entry_number}\n"]
+    end
+    zip_file = create_zip_preview_file(entries:)
+    sign_in_as(user)
+
+    get document_file_path(zip_file, disposition: "inline")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("先頭 #{DocumentFileArchivePreview::DEFAULT_LIMIT} 件を表示しています")
+    expect(response.body).to include("表示中の先頭項目だけが対象です")
+    expect(response.body).to include("すべての項目を確認する場合はファイルをダウンロードしてください")
+    expect(response.body).to include("docs/file-300.txt")
+    expect(response.body).not_to include("docs/file-301.txt")
   end
 
   it "falls back to attachment for unsupported archive files" do

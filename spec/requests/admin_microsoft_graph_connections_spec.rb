@@ -127,6 +127,44 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
       expect(input_value("q")).to eq("apollo")
     end
 
+    it "groups long Graph identifiers into prioritized readable cells" do
+      sign_in_as(admin_user)
+      long_tenant_id = "tenant-#{'northwind-' * 8}primary"
+      long_client_id = "client-#{'application-' * 8}id"
+      long_drive_id = "b!#{'driveIdentifierSegment' * 5}"
+      long_site_id = "contoso.sharepoint.com,#{'site-id-' * 6}web-id"
+      long_folder_path = "Shared Documents/#{'Department Folder/' * 5}Office Preview"
+      connection = create(
+        :microsoft_graph_connection,
+        project:,
+        name: "Long identifiers",
+        tenant_id: long_tenant_id,
+        client_id: long_client_id,
+        site_id: long_site_id,
+        drive_id: long_drive_id,
+        preview_folder_path: long_folder_path,
+        enabled: true
+      )
+
+      get admin_microsoft_graph_connections_path
+
+      row = parsed_html.css("tbody tr").find { |node| node.text.include?(connection.name) }
+
+      expect(response).to have_http_status(:ok)
+      expect(row).to be_present
+      expect(row.at_css(%([data-graph-connection-field="drive"] code.graph-connection-value)).text).to eq(long_drive_id)
+      expect(row.at_css(%([data-graph-connection-field="preview-folder"] code.graph-connection-value)).text).to eq(long_folder_path)
+      expect(row.at_css(%([data-graph-connection-field="tenant"] code.graph-connection-value)).text).to eq(long_tenant_id)
+      expect(row.at_css(%([data-graph-connection-field="client"] code.graph-connection-value)).text).to eq(long_client_id)
+      expect(row.at_css(%([data-graph-connection-field="site"] code.graph-connection-value)).text).to eq(long_site_id)
+      expect(row.text.squish).to include("主確認: Drive ID")
+      expect(row.text.squish).to include("主確認: プレビュー用フォルダ")
+      expect(row.text.squish).to include("補助: Tenant ID")
+      expect(row.text.squish).to include("補助: Client ID")
+      expect(row.text.squish).to include("補助: Site ID")
+      expect(row.at_css(%(a[href="#{edit_admin_microsoft_graph_connection_path(connection)}"])).text).to include("編集")
+    end
+
     it "keeps the search query while applying preview usage filters" do
       sign_in_as(admin_user)
       active = create(:microsoft_graph_connection, project:, name: "Archive primary", enabled: true)
