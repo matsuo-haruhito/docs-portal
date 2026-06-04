@@ -80,8 +80,59 @@ RSpec.describe "Admin zip imports", type: :request do
     expect(response.body).to include("abc123def456")
     expect(response.body).to include("zip-ui-v2")
     expect(response.body).to include("manual-import.zip")
+    expect(response.body).to include("分類推定metadataは保存されていません。")
     expect(response.body).to include("TreeViewプレビュー")
     expect(response.body).to include("この内容で取り込む")
+  end
+
+  it "shows classification preview values without changing permission boundaries" do
+    sign_in_as(admin_user)
+    dry_run = create_zip_dry_run(
+      result_json: {
+        "items" => [
+          {
+            "title" => "Security Guide",
+            "attributes" => {
+              "category" => "policy",
+              "document_kind" => "guide",
+              "visibility_policy" => "internal",
+              "snapshot_kind" => "html",
+              "data_classification_tags" => ["confidential", "customer-data"]
+            },
+            "matched_rules" => ["security-folder", "md-extension"]
+          },
+          {
+            "title" => "Release Notes",
+            "attributes" => {
+              "category" => "release",
+              "document_kind" => "notice",
+              "visibility_policy" => "external",
+              "snapshot_kind" => "pdf"
+            },
+            "matched_rules" => []
+          }
+        ]
+      }
+    )
+
+    get admin_zip_import_path(dry_run)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("分類推定結果")
+    expect(response.body).to include("ZIP import dry-run の確認用表示です。visibility / download / access permission はここでは変更しません。")
+    expect(response.body).to include("Security Guide")
+    expect(response.body).to include("policy")
+    expect(response.body).to include("guide")
+    expect(response.body).to include("internal")
+    expect(response.body).to include("html")
+    expect(response.body).to include("confidential, customer-data")
+    expect(response.body).to include("security-folder, md-extension")
+    expect(response.body).to include("Release Notes")
+    expect(response.body).to include("release")
+    expect(response.body).to include("notice")
+    expect(response.body).to include("external")
+    expect(response.body).to include("pdf")
+    expect(response.body).to include("未設定 / 継承元なし")
   end
 
   it "shows empty review copy when warnings and source metadata are absent" do
@@ -94,6 +145,7 @@ RSpec.describe "Admin zip imports", type: :request do
     expect(response.body).to include("エラーはありません。")
     expect(response.body).to include("警告はありません。")
     expect(response.body).to include("取り込み元metadataは保存されていません。")
+    expect(response.body).to include("分類推定metadataは保存されていません。")
     expect(response.body).to include("TreeViewプレビュー")
     expect(response.body).not_to include("この内容で取り込む")
   end
