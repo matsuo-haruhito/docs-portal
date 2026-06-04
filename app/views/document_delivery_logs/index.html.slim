@@ -57,7 +57,7 @@ p.actions
     = link_to "#{label} (#{delivery_type_counts.fetch(delivery_type, 0)})", document_delivery_logs_path(current_query_and_date_params.merge(status: @status_filter.presence, delivery_type:).compact), class: @delivery_type_filter == delivery_type ? "button" : "button secondary"
 
 - if @delivery_logs.any?
-  p.muted = "表示範囲: #{delivery_logs_total_count}件中#{delivery_logs_display_count}件を表示しています。#{delivery_logs_total_count > delivery_logs_limit ? "さらに絞り込む場合は検索・状態・方式・作成日フィルタを使ってください。" : ""}"
+  p.muted = "表示範囲: #{delivery_logs_total_count}件中#{delivery_logs_display_count}件を表示しています。#{delivery_logs_total_count > delivery_logs_limit ? "さらに絞り込む場合は検索・状態・方式フィルタを使ってください。" : ""}"
   = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "送付履歴一覧の表示設定")
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
@@ -71,6 +71,7 @@ p.actions
         th data={ rails_table_preferences_column_key: "failure_reason" } 失敗理由
     tbody
       - @delivery_logs.each do |log|
+        - detail_params = { return_to: current_delivery_logs_path }.merge(current_date_filter_params)
         tr
           td data={ rails_table_preferences_column_key: "created_at" } = l(log.created_at)
           td data={ rails_table_preferences_column_key: "project" } = log.project.name
@@ -88,7 +89,7 @@ p.actions
                 = " #{truncate(addresses, length: 72)}"
           td data={ rails_table_preferences_column_key: "delivery_type" } = document_delivery_log_delivery_type_label(log)
           td data={ rails_table_preferences_column_key: "status" }
-            = link_to document_delivery_log_status_label(log), document_delivery_log_path(log, return_to: current_delivery_logs_path)
+            = link_to document_delivery_log_status_label(log), document_delivery_log_path(log, detail_params)
           td data={ rails_table_preferences_column_key: "failure_reason" }
             - if log.failed?
               - failure_summary = log.error_message.presence || "詳細で失敗内容を確認してください。"
@@ -100,7 +101,7 @@ p.actions
     p.muted 検索条件に一致する送付履歴はありません。
   - else
     p.muted 条件に一致する送付履歴はありません。
-  p.muted 検索語・状態・方式・作成日を見直すか、「すべての送付履歴を見る」で条件を解除してください。
+  p.muted 検索語・状態・方式を見直すか、「すべての送付履歴を見る」で条件を解除してください。
   p.actions
     = link_to "すべての送付履歴を見る", document_delivery_logs_path, class: "button secondary"
 - else
