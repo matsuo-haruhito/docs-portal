@@ -38,11 +38,17 @@ p = @delivery_log.subject
 h2 本文
 pre = @delivery_log.body
 
-p.actions
+.actions
   = link_to "メーラーを開く", @mailto_url, class: "button"
   - if @delivery_log.draft?
     = button_to "送付済みにする", document_delivery_log_path(@delivery_log), method: :patch, params: { decision: "mark_sent", return_to: @return_to_path }, class: "button secondary"
-    = button_to "送付失敗として記録", document_delivery_log_path(@delivery_log), method: :patch, params: { decision: "mark_failed", return_to: @return_to_path }, class: "button secondary"
+    = form_with url: document_delivery_log_path(@delivery_log), method: :patch, local: true, class: "inline-form" do
+      = hidden_field_tag :decision, "mark_failed"
+      = hidden_field_tag :return_to, @return_to_path
+      .field
+        = label_tag :error_message, "失敗理由"
+        = text_field_tag :error_message, nil, maxlength: 200, placeholder: "例: 宛先確認待ち、添付容量超過など"
+      = submit_tag "送付失敗として記録", class: "button secondary"
   - if @delivery_log.document.present?
     = link_to "対象の文書へ戻る", project_document_path(@delivery_log.project, @delivery_log.document.slug), class: "button secondary"
   - elsif @delivery_log.document_set.present?
