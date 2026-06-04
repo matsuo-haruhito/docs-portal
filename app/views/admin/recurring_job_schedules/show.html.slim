@@ -62,8 +62,7 @@ h1 定期ジョブ詳細
     p.muted = "検索対象: ActiveJob ID またはエラー断片（#{@selected_run_query}）"
 
   - if @runs.empty?
-    .card
-      p.muted 条件に一致する実行履歴はありません。
+    p.muted 条件に一致する実行履歴はありません。
   - else
     = table_tag do
       thead
