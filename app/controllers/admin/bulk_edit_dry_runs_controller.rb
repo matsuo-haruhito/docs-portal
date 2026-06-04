@@ -1,9 +1,12 @@
 class Admin::BulkEditDryRunsController < Admin::BaseController
+  BULK_EDIT_CANDIDATE_LIMIT = 50
+
   before_action :require_admin_only!
   before_action :set_bulk_edit_dry_run, only: %i[show update]
 
   def new
     @bulk_edit_dry_run = BulkEditDryRun.new(operation_type: :document_metadata)
+    load_candidate_context
     load_documents
   end
 
@@ -18,11 +21,13 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
     redirect_to admin_bulk_edit_dry_run_path(result.bulk_edit_dry_run), notice: "一括編集dry-runを作成しました。"
   rescue ApplicationError::BadRequest => e
     @bulk_edit_dry_run = BulkEditDryRun.new(operation_type: :document_metadata)
+    load_candidate_context
     load_documents
     flash.now[:alert] = e.message
     render :new, status: :unprocessable_entity
   rescue ActiveRecord::RecordInvalid => e
     @bulk_edit_dry_run = e.record
+    load_candidate_context
     load_documents
     flash.now[:alert] = "一括編集dry-runを作成できませんでした。"
     render :new, status: :unprocessable_entity
@@ -48,8 +53,35 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
     @bulk_edit_dry_run = BulkEditDryRun.find_by!(public_id: params[:public_id] || params[:id])
   end
 
+  def load_candidate_context
+    @bulk_edit_candidate_source = params[:source].to_s == "admin_documents"
+    @bulk_edit_candidate_limit = BULK_EDIT_CANDIDATE_LIMIT
+    @bulk_edit_candidate_ids = permitted_candidate_document_ids
+    @bulk_edit_candidate_filter_summaries = permitted_candidate_filter_summaries
+    @bulk_edit_candidate_document_ids = []
+  end
+
   def load_documents
-    @documents = Document.joins(:project).includes(:project, :latest_version, :document_tags, :archived_by_user).order("projects.code", :title)
+    scope = Document.joins(:project).includes(:project, :latest_version, :document_tags, :archived_by_user).order("projects.code", :title)
+    @documents = @bulk_edit_candidate_source ? scope.where(id: @bulk_edit_candidate_ids) : scope
+    @bulk_edit_candidate_document_ids = @bulk_edit_candidate_source ? @documents.map(&:id) : []
+  end
+
+  def permitted_candidate_document_ids
+    Array(params[:candidate_document_ids]).filter_map do |value|
+      Integer(value)
+    rescue ArgumentError, TypeError
+      nil
+    end.uniq.first(BULK_EDIT_CANDIDATE_LIMIT)
+  end
+
+  def permitted_candidate_filter_summaries
+    Array(params[:source_filter_summaries]).filter_map do |value|
+      value = value.to_s.strip
+      next if value.blank?
+
+      value.length > 80 ? "#{value.first(77)}..." : value
+    end.first(7)
   end
 
   def selected_documents
