@@ -20,10 +20,12 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
   def show
     @run_status_options = recurring_job_run_status_options
     @selected_run_status = run_status_param
+    @selected_run_query = run_query_param
 
     runs_scope = @schedule.recurring_job_runs
     @run_status_counts = runs_scope.group(:status).count
     runs_scope = runs_scope.where(status: @selected_run_status) if @selected_run_status.present?
+    runs_scope = filter_runs_by_query(runs_scope, @selected_run_query) if @selected_run_query.present?
     @runs = runs_scope.order(scheduled_at: :desc, id: :desc).limit(50)
   end
 
@@ -83,6 +85,10 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     RecurringJobRun.statuses.key?(status) ? status : nil
   end
 
+  def run_query_param
+    params[:q].to_s.strip.presence
+  end
+
   def filter_schedules_by_enabled(scope, enabled)
     scope.where(enabled: enabled == "true")
   end
@@ -97,6 +103,14 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     like_query = "%#{ActiveRecord::Base.sanitize_sql_like(query.downcase)}%"
     scope.where(
       "LOWER(job_key) LIKE :query OR LOWER(job_class) LIKE :query OR LOWER(queue_name) LIKE :query OR LOWER(COALESCE(last_error_message, '')) LIKE :query",
+      query: like_query
+    )
+  end
+
+  def filter_runs_by_query(scope, query)
+    like_query = "%#{ActiveRecord::Base.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(COALESCE(active_job_id, '')) LIKE :query OR LOWER(COALESCE(error_message, '')) LIKE :query",
       query: like_query
     )
   end
