@@ -53,8 +53,7 @@ RSpec.describe "admin document permissions source" do
       expect(helper_source).to include("def document_permission_form_document_options(documents)")
       expect(helper_source).to include("def document_permission_form_document_selected_option(document)")
       expect(helper_source).to include("def document_permission_form_company_options(companies)")
-      expect(helper_source).to include("def document_permission_form_user_options(users)
-")
+      expect(helper_source).to include("def document_permission_form_user_options(users)")
     end
   end
 end
