@@ -6,14 +6,18 @@ RSpec.describe "AccessibleDocuments", type: :request do
   let(:project_b) { create(:project, name: "Beta Project", code: "BETA") }
   let(:user) { create(:user, :external, company:) }
 
-  def create_viewable_document(project:, title:, slug:)
-    document = create(:document, project:, title:, slug:, visibility_policy: :restricted_external)
+  def create_viewable_document(project:, title:, slug:, **attributes)
+    document = create(:document, { project:, title:, slug:, visibility_policy: :restricted_external }.merge(attributes))
     create(:document_permission, document:, company:, access_level: :view)
     document
   end
 
   def parsed_html
     Nokogiri::HTML(response.body)
+  end
+
+  def page_text
+    parsed_html.text.squish
   end
 
   def project_column_texts
@@ -42,6 +46,7 @@ RSpec.describe "AccessibleDocuments", type: :request do
     expect(response.body).to include("閲覧可能文書")
     expect(response.body).to include(alpha.title, beta.title)
     expect(project_column_texts).to include("Alpha Project ALPHA", "Beta Project BETA")
+    expect(page_text).not_to include("現在の条件:")
     expect(response.body).not_to include(hidden.title)
   end
 
@@ -63,6 +68,56 @@ RSpec.describe "AccessibleDocuments", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to match(/ページ\s*2\s*\/\s*2/)
+  end
+
+  it "shows active filter summary near results" do
+    target = create_viewable_document(
+      project: project_a,
+      title: "Quarterly Contract PDF",
+      slug: "quarterly-contract-pdf",
+      category: :contract,
+      document_kind: :pdf,
+      visibility_policy: :restricted_external
+    )
+    other = create_viewable_document(project: project_b, title: "Quarterly Manual", slug: "quarterly-manual", category: :manual)
+    tag = DocumentTag.create!(name: "契約レビュー")
+    DocumentTagging.create!(document: target, document_tag: tag)
+
+    sign_in_as(user)
+    get documents_path, params: {
+      q: "Quarterly",
+      tag: tag.normalized_name,
+      category: "contract",
+      document_kind: "pdf",
+      visibility_policy: "restricted_external",
+      has_pdf: "1"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(target.title)
+    expect(response.body).not_to include(other.title)
+    expect(page_text).to include("現在の条件:")
+    expect(page_text).to include("キーワード: Quarterly")
+    expect(page_text).to include("タグ: 契約レビュー")
+    expect(page_text).to include("カテゴリ: 契約")
+    expect(page_text).to include("ファイル種: PDF")
+    expect(page_text).to include("公開範囲: 限定公開")
+    expect(page_text).to include("PDFあり")
+    expect(parsed_html.css("a").map { _1.text.squish }).to include("条件をクリア")
+  end
+
+  it "shows active filters in the empty state" do
+    create_viewable_document(project: project_a, title: "Published Manual", slug: "published-manual", category: :manual)
+
+    sign_in_as(user)
+    get documents_path, params: { category: "contract", has_diagram: "1" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("条件に一致する文書はありません")
+    expect(page_text).to include("現在の絞り込み条件に一致する閲覧可能な文書がありませんでした")
+    expect(page_text).to include("カテゴリ: 契約")
+    expect(page_text).to include("図あり")
+    expect(parsed_html.css(".empty-state a").map { _1.text.squish }).to include("条件をクリア")
   end
 
   it "keeps active filter params on pagination links" do
