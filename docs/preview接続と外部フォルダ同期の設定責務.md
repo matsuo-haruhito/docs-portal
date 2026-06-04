@@ -55,6 +55,8 @@ Office preview 用の接続です。管理画面の `admin/microsoft_graph_conne
 
 現行 docs と current code で stable に説明できる provider は `google_drive` に加えて、`microsoft_graph` の metadata 保存 first slice です。どちらも同期方向は `external_to_portal` 前提ですが、`dry_run` / `apply` / `enqueue` / 変更通知の購読まで進められるのは Google Drive のみです。
 
+一覧の `一覧の絞り込み` は、設定責務を変えるものではなく daily review の入口です。まず `warning あり` / `error あり` / `無効` で要確認の source を拾い、必要に応じて `Google Drive` と `SharePoint / OneDrive` の provider filter で同期本体の運用対象と metadata-only source を分けます。検索欄は同期設定名、案件名 / code、外部フォルダ ID / path の確認補助であり、provider support を広げる条件ではありません。
+
 ### 3. `.env` に置く値
 
 外部連携まわりで `.env` に置く現行の runtime 前提は、基本的に Google Drive 系です。
@@ -102,6 +104,7 @@ Office preview 用の接続です。管理画面の `admin/microsoft_graph_conne
 - 外部フォルダ同期: 対応済み
 - OAuth user / service account: 対応済み
 - upload preview fallback: 対応済み
+- 一覧では `Google Drive` filter で同期本体の運用対象だけに絞り、`warning あり` / `error あり` / `無効` や検索と組み合わせて確認します
 
 ### Microsoft Graph
 
@@ -113,6 +116,7 @@ Office preview 用の接続です。管理画面の `admin/microsoft_graph_conne
 
 - 共有 URL から `drive_id` / `folder_item_id` / `folder_path` / `site_id` を保存する: current `main` で対応済み
 - provider-aware な同期元作成 UI と保存済み metadata の確認: current `main` で対応済み
+- 一覧では `SharePoint / OneDrive` filter で metadata-only source だけに絞り、保存済み `drive_id` / `folder_path` の確認や無効 source の棚卸しに使う
 - Graph -> Portal の手動同期、`enqueue`、変更通知: `#503` など後続 issue の対象
 
 現時点では、SharePoint / OneDrive を「すでに Google Drive と同じ同期元として使える」と読まないでください。current docs から安全に言えるのは、共有 URL から同期元 metadata を保存できる一方、同期本体や変更通知はまだ未対応という段階までです。
@@ -129,9 +133,13 @@ Office preview 用の接続です。管理画面の `admin/microsoft_graph_conne
 
 最初に見るのは `外部フォルダ同期` です。`Microsoft Graph接続` は不要です。
 
+一覧で既存 source を見直すときは、`Google Drive` filter で同期本体の対象だけに寄せます。warning / error / disabled filter は運用確認の優先順位を付ける入口であり、同期仕様そのものを変えるものではありません。
+
 ### SharePoint / OneDrive の共有 URL を貼って同期したい
 
 current `main` では、共有 URL から metadata を保存するところまでは進められます。保存後は `drive_id` / `folder_item_id` / `folder_path` / `site_id` が取得できているかを確認してください。
+
+一覧で既存 source を見直すときは、`SharePoint / OneDrive` filter で metadata-only source に絞ります。`warning あり` / `error あり` / `無効` は保存済み metadata や設定状態の棚卸しに使う入口であり、Graph subscription 作成や同期本体が current support になったことを意味しません。
 
 ただし、`dry_run` / `apply` / `enqueue` / 変更通知はまだ未対応です。同期本体まで進めたい場合は `#503` などの後続 issue と [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md) を合わせて確認してください。
 
