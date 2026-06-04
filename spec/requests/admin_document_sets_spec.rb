@@ -280,7 +280,7 @@ RSpec.describe "Admin document sets", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索結果: 0件")
     expect(page_text).to include("種別: 送付用")
-    expect(page_text).to include("公開範囲: ログイン公開")
+    expect(page_text).to include("公開範囲: ログインユーザー公開")
     expect(page_text).to include("条件に一致する文書セットはありません。")
     expect(clear_filter_targets).to include(admin_document_sets_path)
     expect(document_set_rows).to be_empty
