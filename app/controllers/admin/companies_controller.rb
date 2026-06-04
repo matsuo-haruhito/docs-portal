@@ -4,7 +4,7 @@ class Admin::CompaniesController < Admin::BaseController
   before_action :require_admin_only!, only: %i[create destroy]
 
   def index
-    @companies = company_scope.order(:domain)
+    @companies = filtered_companies
     @company = admin_user? ? Company.new(active: true) : current_user.company
   end
 
@@ -14,7 +14,7 @@ class Admin::CompaniesController < Admin::BaseController
     if @company.save
       redirect_to admin_companies_path, notice: "会社を登録しました。"
     else
-      @companies = company_scope.order(:domain)
+      @companies = filtered_companies
       render :index, status: :unprocessable_entity
     end
   end
@@ -40,6 +40,44 @@ class Admin::CompaniesController < Admin::BaseController
   end
 
   private
+
+  def filtered_companies
+    @company_filter_params = company_filter_params
+    @companies_total_count = company_scope.count
+
+    company_scope.then { |scope| apply_company_filters(scope) }.order(:domain)
+  end
+
+  def apply_company_filters(scope)
+    scope = filter_companies_by_keyword(scope)
+    filter_companies_by_active(scope)
+  end
+
+  def filter_companies_by_keyword(scope)
+    keyword = @company_filter_params["q"].to_s.strip
+    return scope if keyword.blank?
+
+    pattern = "%#{Company.sanitize_sql_like(keyword.downcase)}%"
+    scope.where(
+      "LOWER(companies.domain) LIKE :keyword OR LOWER(companies.name) LIKE :keyword",
+      keyword: pattern
+    )
+  end
+
+  def filter_companies_by_active(scope)
+    case @company_filter_params["active"]
+    when "true"
+      scope.where(active: true)
+    when "false"
+      scope.where(active: false)
+    else
+      scope
+    end
+  end
+
+  def company_filter_params
+    params.permit(:q, :active).to_h
+  end
 
   def set_company
     @company = company_scope.find_by!(public_id: params[:public_id])
