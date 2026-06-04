@@ -1,6 +1,7 @@
 - page_title "定期ジョブ詳細"
 - return_to_path = @return_to_path || admin_recurring_job_schedules_path
 - run_triage_counts = ["失敗: #{@run_status_counts.fetch('failed', 0)}件", "実行中: #{@run_status_counts.fetch('running', 0)}件", "キュー待ち: #{@run_status_counts.fetch('enqueued', 0)}件"].join(" / ")
+- run_filter_active = @selected_run_status.present? || @selected_run_query.present?
 
 h1 定期ジョブ詳細
 = render "admin/nav"
@@ -50,29 +51,37 @@ h1 定期ジョブ詳細
     = hidden_field_tag :return_to, return_to_path
     = label_tag :run_status, "状態"
     = select_tag :run_status, options_for_select(@run_status_options, @selected_run_status), onchange: "this.form.requestSubmit()"
-    - if @selected_run_status.present?
+    = label_tag :q, "ActiveJob ID / エラー"
+    = text_field_tag :q, @selected_run_query, placeholder: "ActiveJob ID またはエラー断片"
+    = submit_tag "絞り込む", class: "button secondary"
+    - if run_filter_active
       = link_to "絞り込み解除", admin_recurring_job_schedule_path(@schedule, return_to: return_to_path), class: "button secondary"
   p.muted = "Triage対象: #{run_triage_counts}"
   p.muted = "表示中: #{@runs.size}件（最新50件まで）"
+  - if @selected_run_query.present?
+    p.muted = "検索対象: ActiveJob ID またはエラー断片（#{@selected_run_query}）"
 
-  = table_tag do
-    thead
-      tr
-        th 予定時刻
-        th 状態
-        th enqueue
-        th 開始
-        th 終了
-        th ActiveJob ID
-        th エラー
-    tbody
-      - @runs.each do |run|
+  - if @runs.empty?
+    p.muted 条件に一致する実行履歴はありません。
+  - else
+    = table_tag do
+      thead
         tr
-          td = run.scheduled_at ? l(run.scheduled_at) : "-"
-          td = recurring_job_status_badge(run.status)
-          td = run.enqueued_at ? l(run.enqueued_at) : "-"
-          td = run.started_at ? l(run.started_at) : "-"
-          td = run.finished_at ? l(run.finished_at) : "-"
-          td
-            code = run.active_job_id.presence || "-"
-          td = run.error_message.presence || "-"
+          th 予定時刻
+          th 状態
+          th enqueue
+          th 開始
+          th 終了
+          th ActiveJob ID
+          th エラー
+      tbody
+        - @runs.each do |run|
+          tr
+            td = run.scheduled_at ? l(run.scheduled_at) : "-"
+            td = recurring_job_status_badge(run.status)
+            td = run.enqueued_at ? l(run.enqueued_at) : "-"
+            td = run.started_at ? l(run.started_at) : "-"
+            td = run.finished_at ? l(run.finished_at) : "-"
+            td
+              code = run.active_job_id.presence || "-"
+            td = run.error_message.presence || "-"
