@@ -3,6 +3,9 @@
 h1 文書一括編集 事前確認
 = render "admin/nav"
 
+- warning_count = @bulk_edit_dry_run.warnings_json.size
+- error_count = @bulk_edit_dry_run.errors_json.size
+
 .card
   h2 概要
   dl
@@ -18,10 +21,13 @@ h1 文書一括編集 事前確認
     dt 変更予定件数
     dd = @preview_summary["changed_count"] || @preview_summary[:changed_count] || 0
     dt 警告 / エラー
-    dd = "#{@bulk_edit_dry_run.warnings_json.size} / #{@bulk_edit_dry_run.errors_json.size}"
+    dd = "#{warning_count} / #{error_count}"
     - if @bulk_edit_dry_run.expires_at.present?
       dt 有効期限
       dd = @bulk_edit_dry_run.expires_at.to_fs(:db)
+
+  - if warning_count.positive? || error_count.positive?
+    p.muted 警告・エラーのある行を先に確認し、明細の確認目安で文書ごとの状態を読み分けてください。
 
   - if @bulk_edit_dry_run.analyzed?
     p.actions
@@ -47,10 +53,12 @@ h1 文書一括編集 事前確認
 
 section.card
   h2 事前確認明細
+  p.muted 確認目安は表示補助です。警告・エラーの意味や実行可否は既存の事前確認結果に従います。
   table
     thead
       tr
         th 文書名
+        th 確認目安
         th 変更フィールド
         th 変更前
         th 変更後
@@ -76,9 +84,16 @@ section.card
         - after_archived = after_doc["archived"] || after_doc[:archived]
         - before_snapshot_kind = before_version && (before_version["snapshot_kind"] || before_version[:snapshot_kind])
         - after_snapshot_kind = after_version && (after_version["snapshot_kind"] || after_version[:snapshot_kind])
-        tr
+        - item_changed_fields = Array(item["changed_fields"] || item[:changed_fields])
+        - item_warnings = Array(item["warnings"] || item[:warnings])
+        - item_errors = Array(item["errors"] || item[:errors])
+        - review_priority = item_errors.any? ? "error" : item_warnings.any? ? "warning" : item_changed_fields.any? ? "changed" : "unchanged"
+        - review_label = item_errors.any? ? "エラーあり" : item_warnings.any? ? "警告あり" : item_changed_fields.any? ? "変更予定" : "変更なし"
+        tr class="bulk-edit-review-row bulk-edit-review-row--#{review_priority}"
           td = before_doc["title"] || before_doc[:title] || item["document_public_id"] || item[:document_public_id]
-          td = Array(item["changed_fields"] || item[:changed_fields]).map { |field| bulk_edit_field_label(field) }.join(", ").presence || "-"
+          td
+            span.badge = review_label
+          td = item_changed_fields.map { |field| bulk_edit_field_label(field) }.join(", ").presence || "-"
           td
             ul
               li = "#{bulk_edit_field_label("category")}: #{before_category.present? ? document_category_label(before_category) : '-'}"
@@ -101,8 +116,8 @@ section.card
               li = "#{bulk_edit_field_label("published_from")}: #{after_version && (after_version["published_from"] || after_version[:published_from])}"
               li = "#{bulk_edit_field_label("published_until")}: #{after_version && (after_version["published_until"] || after_version[:published_until])}"
               li = "#{bulk_edit_field_label("tags")}: #{Array(after_tags).join(', ')}"
-          td = Array(item["warnings"] || item[:warnings]).join(" / ").presence || "-"
-          td = Array(item["errors"] || item[:errors]).join(" / ").presence || "-"
+          td = item_warnings.join(" / ").presence || "-"
+          td = item_errors.join(" / ").presence || "-"
 
 - if @execution_items.any?
   section.card
