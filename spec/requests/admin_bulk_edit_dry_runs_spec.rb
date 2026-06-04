@@ -64,6 +64,56 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(dry_run.reload).to be_confirmed
   end
 
+  it "shows review cues for warning, error, changed, and unchanged preview rows" do
+    sign_in_as(admin)
+    dry_run = BulkEditDryRun.create!(
+      project:,
+      created_by: admin,
+      operation_type: :document_metadata,
+      target_document_ids: [document.id],
+      params_json: {
+        document_attributes: {
+          category: "manual"
+        }
+      },
+      summary_json: {
+        preview: {
+          total_count: 4,
+          changed_count: 2
+        }
+      },
+      result_json: {
+        preview_items: [
+          preview_item("Error Doc", changed_fields: ["visibility_policy"], errors: ["公開範囲を解決できません"]),
+          preview_item("Warning Doc", changed_fields: ["category"], warnings: ["分類が未確認です"]),
+          preview_item("Changed Doc", changed_fields: ["importance_level"]),
+          preview_item("Clean Doc", changed_fields: [])
+        ]
+      },
+      warnings_json: ["分類が未確認の文書があります"],
+      errors_json: ["公開範囲を解決できない文書があります"],
+      status: :analyzed,
+      expires_at: 1.day.from_now
+    )
+
+    get admin_bulk_edit_dry_run_path(dry_run)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("警告・エラーのある行を先に確認")
+    expect(response.body).to include("確認目安")
+    expect(response.body).to include("確認目安は表示補助です")
+    expect(response.body).to include("エラーあり")
+    expect(response.body).to include("警告あり")
+    expect(response.body).to include("変更予定")
+    expect(response.body).to include("変更なし")
+    expect(response.body).to include("bulk-edit-review-row--error")
+    expect(response.body).to include("bulk-edit-review-row--warning")
+    expect(response.body).to include("bulk-edit-review-row--changed")
+    expect(response.body).to include("bulk-edit-review-row--unchanged")
+    expect(response.body).to include("公開範囲を解決できません")
+    expect(response.body).to include("分類が未確認です")
+  end
+
   it "rejects dry-run creation without selected documents" do
     sign_in_as(admin)
 
@@ -83,5 +133,43 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     get new_admin_bulk_edit_dry_run_path
 
     expect(response).to have_http_status(:forbidden)
+  end
+
+  def preview_item(title, changed_fields:, warnings: [], errors: [])
+    {
+      document_id: document.id,
+      document_public_id: document.public_id,
+      before: {
+        document: {
+          title:,
+          category: "spec",
+          document_kind: "markdown",
+          visibility_policy: "restricted_external",
+          importance_level: "normal",
+          archived: false
+        },
+        latest_version: {
+          snapshot_kind: "current"
+        },
+        tag_names: []
+      },
+      after: {
+        document: {
+          title:,
+          category: changed_fields.include?("category") ? "manual" : "spec",
+          document_kind: "markdown",
+          visibility_policy: changed_fields.include?("visibility_policy") ? "public_with_login" : "restricted_external",
+          importance_level: changed_fields.include?("importance_level") ? "critical" : "normal",
+          archived: false
+        },
+        latest_version: {
+          snapshot_kind: "current"
+        },
+        tag_names: []
+      },
+      changed_fields:,
+      warnings:,
+      errors:
+    }
   end
 end
