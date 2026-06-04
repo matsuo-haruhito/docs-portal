@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 module AccessibleDocumentsHelper
+  ACCESSIBLE_DOCUMENT_BOOLEAN_FILTER_LABELS = {
+    has_html: "HTML生成済み",
+    has_files: "添付あり",
+    has_pdf: "PDFあり",
+    has_diagram: "図あり"
+  }.freeze
+
   def accessible_document_table_columns
     [
       table_preferences_column(:project, label: "案件", default_width: 180, pinned: true, overflow: :ellipsis),
@@ -16,5 +23,49 @@ module AccessibleDocumentsHelper
       table_preferences_column(:files, label: "添付", default_width: 100),
       table_preferences_column(:updated_at, label: "最終更新", default_width: 160, sortable: true)
     ]
+  end
+
+  def accessible_document_active_filter_labels(filters, available_tags: [])
+    labels = []
+    normalized_filters = filters.to_h.symbolize_keys
+
+    keyword = normalized_filters[:q].to_s.squish
+    labels << "キーワード: #{keyword}" if keyword.present?
+
+    tag_label = accessible_document_tag_filter_label(normalized_filters[:tag], available_tags)
+    labels << "タグ: #{tag_label}" if tag_label.present?
+
+    labels.concat(accessible_document_enum_filter_labels(normalized_filters))
+
+    ACCESSIBLE_DOCUMENT_BOOLEAN_FILTER_LABELS.each do |key, label|
+      labels << label if ActiveModel::Type::Boolean.new.cast(normalized_filters[key])
+    end
+
+    labels
+  end
+
+  private
+
+  def accessible_document_tag_filter_label(value, available_tags)
+    normalized_tag = DocumentTag.normalize(value)
+    return if normalized_tag.blank?
+
+    tag = available_tags.find { |candidate| candidate.normalized_name == normalized_tag }
+    tag&.name || value.to_s.strip
+  end
+
+  def accessible_document_enum_filter_labels(filters)
+    [
+      accessible_document_enum_filter_label(filters, :category, "カテゴリ", Document.categories, "documents.category"),
+      accessible_document_enum_filter_label(filters, :document_kind, "ファイル種", Document.document_kinds, "documents.document_kind"),
+      accessible_document_enum_filter_label(filters, :visibility_policy, "公開範囲", Document.visibility_policies, "documents.visibility_policy")
+    ].compact
+  end
+
+  def accessible_document_enum_filter_label(filters, key, label, values, scope)
+    value = filters[key].to_s
+    return if value.blank? || !values.key?(value)
+
+    "#{label}: #{localized_label(scope, value)}"
   end
 end
