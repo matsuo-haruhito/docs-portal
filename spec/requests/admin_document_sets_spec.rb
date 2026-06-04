@@ -89,6 +89,14 @@ RSpec.describe "Admin document sets", type: :request do
     parsed_html.css("table tbody tr")
   end
 
+  def document_set_row_for(document)
+    parsed_html.at_css(%(tr[data-document-set-document-filter-document-id="#{document.id}"]))
+  end
+
+  def remote_document_picker
+    parsed_html.at_css('select[name="document_set_remote_document_id"]')
+  end
+
   def table_preference_surfaces
     parsed_html.css(%([data-rails-table-preferences-table-key-value="admin_document_sets"]))
   end
@@ -174,6 +182,44 @@ RSpec.describe "Admin document sets", type: :request do
       new_admin_zip_import_path
     )
     expect(page_text).not_to include("案件を選ぶと対象文書を設定できます。")
+  end
+
+  it "renders the RFK remote document picker without changing selected row inputs" do
+    sign_in_as(admin)
+
+    post admin_document_sets_path, params: {
+      document_set: {
+        project_id: project.id,
+        name: "",
+        description: "remote picker render",
+        set_type: "delivery",
+        visibility_policy: "restricted_external",
+        sort_order: 0
+      },
+      document_set_items: {}
+    }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(page_text).to include("文書名 / URL識別子で探す")
+    expect(page_text).to include("表示中の対象文書を絞り込み")
+
+    picker = remote_document_picker
+    expect(picker).to be_present
+    expect(picker["data-controller"]).to include("rails-fields-kit--tom-select")
+    expect(picker["data-rails-fields-kit--tom-select-kind-value"]).to eq("combobox")
+    expect(picker["data-rails-fields-kit--tom-select-url-value"]).to eq(document_search_admin_document_sets_path(project_id: project.id))
+    expect(picker["data-rails-fields-kit--tom-select-query-param-value"]).to eq("q")
+    expect(picker["data-rails-fields-kit--tom-select-value-field-value"]).to eq("id")
+    expect(picker["data-rails-fields-kit--tom-select-label-field-value"]).to eq("title")
+    expect(picker["data-rails-fields-kit--tom-select-option-description-field-value"]).to eq("slug")
+    expect(picker["data-rails-fields-kit--tom-select-min-length-value"]).to eq("1")
+    expect(picker["data-rails-fields-kit--tom-select-max-options-value"]).to eq("20")
+    expect(picker["data-action"]).to include("rails-fields-kit--tom-select:change->document-set-document-filter#pickRemoteDocument")
+
+    row = document_set_row_for(document_a)
+    expect(row).to be_present
+    expect(row["data-document-set-document-filter-slug"]).to eq("overview")
+    expect(row.at_css(%(input[name^="document_set_items"][value="#{document_a.id}"]))).to be_present
   end
 
   it "renders and applies document set filters by set_type and visibility_policy" do
@@ -302,16 +348,19 @@ RSpec.describe "Admin document sets", type: :request do
         "id" => document_a.id,
         "title" => "概要仕様",
         "slug" => "overview",
+        "text" => "概要仕様 (overview)",
         "latest_version_label" => "v2.0.0"
       )
     )
+    expect(json_body.fetch("options")).to eq(json_body.fetch("documents"))
 
     get document_search_admin_document_sets_path, params: { project_id: project.id, q: "internal" }
 
     expect(response).to have_http_status(:ok)
     expect(json_body.fetch("documents")).to contain_exactly(
-      a_hash_including("id" => document_b.id, "title" => "社内メモ", "slug" => "internal-memo")
+      a_hash_including("id" => document_b.id, "title" => "社内メモ", "slug" => "internal-memo", "text" => "社内メモ (internal-memo)")
     )
+    expect(json_body.fetch("options")).to eq(json_body.fetch("documents"))
   end
 
   it "keeps document search empty for no-hit queries without leaking other projects" do
@@ -324,6 +373,7 @@ RSpec.describe "Admin document sets", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(json_body.fetch("documents")).to eq([])
+    expect(json_body.fetch("options")).to eq([])
   end
 
   it "keeps the current filter context on invalid create rerender" do
@@ -346,6 +396,40 @@ RSpec.describe "Admin document sets", type: :request do
     expect(page_text).to include("種別: 送付用")
     expect(page_text).to include("公開範囲: 社内のみ")
     expect(document_set_form_action).to eq(admin_document_sets_path(set_type: "delivery", visibility_policy: "internal_only"))
+  end
+
+  it "keeps selected document rows and fixed versions on invalid create rerender" do
+    sign_in_as(admin)
+
+    post admin_document_sets_path, params: {
+      document_set: {
+        project_id: project.id,
+        name: "",
+        description: "selected row retention",
+        set_type: "delivery",
+        visibility_policy: "restricted_external",
+        sort_order: 4
+      },
+      document_set_items: {
+        "0" => {
+          selected: "1",
+          document_id: document_a.id,
+          document_version_id: version_a2.id,
+          sort_order: "7",
+          note: "keep me"
+        }
+      }
+    }
+
+    expect(response).to have_http_status(:unprocessable_content)
+
+    row = document_set_row_for(document_a)
+    expect(row).to be_present
+    expect(row["class"]).to include("is-selected")
+    expect(row.at_css('input[type="checkbox"][checked]')).to be_present
+    expect(row.at_css(%(select option[value="#{version_a2.id}"][selected]))).to be_present
+    expect(row.at_css('input[name$="[note]"]')["value"]).to eq("keep me")
+    expect(remote_document_picker["data-rails-fields-kit--tom-select-url-value"]).to eq(document_search_admin_document_sets_path(project_id: project.id))
   end
 
   it "persists selected project documents while ignoring out-of-scope and unselected item rows" do

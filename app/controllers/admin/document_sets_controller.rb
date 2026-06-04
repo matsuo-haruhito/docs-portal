@@ -49,8 +49,11 @@ class Admin::DocumentSetsController < Admin::BaseController
       documents = documents.where("LOWER(title) LIKE :pattern OR LOWER(slug) LIKE :pattern", pattern: pattern)
     end
 
+    payloads = documents.limit(20).map { |document| document_search_payload(document) }
+
     render json: {
-      documents: documents.limit(20).map { |document| document_search_payload(document) }
+      documents: payloads,
+      options: payloads
     }
   end
 
@@ -151,6 +154,7 @@ class Admin::DocumentSetsController < Admin::BaseController
       id: document.id,
       title: document.title,
       slug: document.slug,
+      text: "#{document.title} (#{document.slug})",
       latest_version_label: document.latest_version&.version_label
     }
   end
