@@ -489,15 +489,18 @@ module DocumentsHelper
     collapsed_keys = []
     expanded_keys << node_key(current_project) if current_project
 
+    current_document_ancestor_paths = document_tree_folder_ancestor_paths(document_tree_source_directory(current_document))
     opened_source_path = expanded_source_path.presence || collapsed_source_path.presence || document_tree_source_directory(current_document)
-    document_tree_folder_ancestor_paths(opened_source_path).each do |path|
-      next if collapsed_source_path.present? && path == collapsed_source_path
+    opened_ancestor_paths = document_tree_folder_ancestor_paths(opened_source_path)
+
+    (opened_ancestor_paths | current_document_ancestor_paths).each do |path|
+      next if collapsed_source_path.present? && path == collapsed_source_path && !current_document_ancestor_paths.include?(path)
 
       folder_node = document_tree_folder_node_for(current_project || current_document&.project, path)
       expanded_keys << node_key(folder_node) if folder_node
     end
 
-    if collapsed_source_path.present?
+    if collapsed_source_path.present? && !current_document_ancestor_paths.include?(collapsed_source_path)
       folder_node = document_tree_folder_node_for(current_project || current_document&.project, collapsed_source_path)
       collapsed_keys << node_key(folder_node) if folder_node
     end
