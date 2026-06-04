@@ -30,6 +30,18 @@ production UI の実装、runtime JavaScript、CI workflow への screenshot job
 
 static visual reference / mockup は「表示対象が非空で、主要見出し・リンク・sample region が崩れていないこと」を軽量に守ります。generated demo や host-app integration のように実操作が意味を持つものは、browser / system smoke で代表導線を守ります。downstream smoke は upstream artifact の代替ではなく、pinned ref 更新時に docs-portal の代表画面が壊れていないことを示す acceptance evidence です。
 
+## downstream 採用判断への読み替え
+
+upstream の static visual reference や mockup は、UI state と責務境界を読むための first-look evidence です。それだけで docs-portal 側の採用完了、known-good revision、Gemfile pin 更新可否を判断しません。docs-portal の child issue / PR では、upstream evidence を見た後に、対象 gem ごとの downstream smoke を別 evidence として残します。
+
+| gem | 最初に見る upstream evidence | docs-portal で追加して残す downstream smoke | 採用完了として扱わないもの |
+| --- | --- | --- | --- |
+| `rails_fields_kit` | visual reference family、`doc/visual_reference_index.html`、package / public API docs | `admin/document_sets` form の selected value、placeholder、validation rerender。remote search を触る場合だけ endpoint と selected value retention | static HTML が表示できたこと、upstream PR が green なこと、helper export proposal |
+| `tree_view-rails` | mockup gallery、default tree / row status / persisted state pages、upstream browser smoke | docs-portal の sidebar tree と detail tree。必要に応じて persisted state、window offset、Turbo refresh 後の action carry-over | mockup screenshot だけ、public hook inventory の未merge proposal、selection API の upstream 方針判断 |
+| `rails_table_preferences` | visual overview、generated demo、manual QA checklist、editor / table mockup | `admin/document_sets` など代表 admin 一覧の editor / filter / preset / mounted engine save。embedded table は current main に seam がある場合だけ追加 | generated demo だけ、`#789` の known-good revision human gate、全 table への一括採用判断 |
+
+`#858` / `#607` / `#1300` 系の PR では、PR body か issue comment に「参照した upstream evidence」と「docs-portal 側で通した downstream smoke」を分けて書きます。target SHA、rollback target、host app smoke 結果は各 child issue / PR の記録に残し、この runbook へ固定値として追記しません。
+
 ## design / dependency issue からの読み替え早見表
 
 | issue lane | 先に読む evidence | docs-portal 側で残すもの | 境界 |
