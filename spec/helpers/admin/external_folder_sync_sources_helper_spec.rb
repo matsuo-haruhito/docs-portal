@@ -17,6 +17,7 @@ RSpec.describe Admin::ExternalFolderSyncSourcesHelper, type: :helper do
       expect(preview).to include("secret=[masked]")
       expect(preview).to include("[path hidden]")
       expect(preview).not_to include("Bearer abc123")
+      expect(preview).not_to include("abc123")
       expect(preview).not_to include("raw-token")
       expect(preview).not_to include("raw-secret")
       expect(preview).not_to include("C:/Users/alice/customer-docs/policies/secret.pdf")
