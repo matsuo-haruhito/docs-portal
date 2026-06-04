@@ -10,9 +10,14 @@ class ProjectAiContextsController < BaseController
     @requested_document_ids = requested_document_ids
     @scope = requested_scope
     @document_query = params[:document_q].to_s.strip
+    @candidate_view = requested_candidate_view
     selectable_documents_all = selectable_documents
     @selectable_document_total_count = selectable_documents_all.size
-    @selectable_documents = filtered_selectable_documents(selectable_documents_all)
+    @matching_selectable_documents = filtered_selectable_documents(selectable_documents_all)
+    @matching_selectable_document_count = @matching_selectable_documents.size
+    @selected_selectable_documents = selected_selectable_documents(selectable_documents_all)
+    @selected_selectable_document_count = @selected_selectable_documents.size
+    @selectable_documents = candidate_view_selected? ? @selected_selectable_documents : @matching_selectable_documents
     @selectable_document_count = @selectable_documents.size
     @preview_document_limit = PREVIEW_DOCUMENT_LIMIT
     @selectable_documents_preview = preview_documents(@selectable_documents)
@@ -72,6 +77,16 @@ class ProjectAiContextsController < BaseController
     @project.documents.where(id: @requested_document_ids)
   end
 
+  def requested_candidate_view
+    return "selected" if params[:candidate_view].to_s == "selected" && @requested_document_ids.any?
+
+    "all"
+  end
+
+  def candidate_view_selected?
+    @candidate_view == "selected"
+  end
+
   def selectable_documents
     Document.accessible_to(current_user)
       .where(project: @project)
@@ -87,14 +102,18 @@ class ProjectAiContextsController < BaseController
     filtered = documents.select do |document|
       [document.title, document.slug].any? { _1.to_s.downcase.include?(normalized_query) }
     end
-    selected = documents.select { @requested_document_ids.include?(_1.id) }
+    selected = selected_selectable_documents(documents)
 
     (filtered + selected).uniq
   end
 
+  def selected_selectable_documents(documents)
+    documents.select { @requested_document_ids.include?(_1.id) }
+  end
+
   def preview_documents(documents)
     visible_preview = documents.first(PREVIEW_DOCUMENT_LIMIT)
-    return visible_preview if @requested_document_ids.empty?
+    return visible_preview if @requested_document_ids.empty? || candidate_view_selected?
 
     selected_documents = documents.select { @requested_document_ids.include?(_1.id) }
     (visible_preview + selected_documents).uniq
