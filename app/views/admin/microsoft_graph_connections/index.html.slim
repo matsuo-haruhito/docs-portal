@@ -113,26 +113,26 @@ h1 Microsoft Graph接続
             code = connection.project.code
           td = connection.name
           td.graph-connection-identifiers
-            .graph-connection-field data={ graph_connection_field: "tenant" }
+            .graph-connection-field data-graph-connection-field="tenant"
               span.muted 補助: Tenant ID
               br
               code.graph-connection-value style="overflow-wrap:anywhere;word-break:break-word;white-space:normal" = connection.tenant_id
-            .graph-connection-field data={ graph_connection_field: "client" }
+            .graph-connection-field data-graph-connection-field="client"
               span.muted 補助: Client ID
               br
               code.graph-connection-value style="overflow-wrap:anywhere;word-break:break-word;white-space:normal" = connection.client_id
           td.graph-connection-identifiers
-            .graph-connection-field.graph-connection-field-primary data={ graph_connection_field: "drive" }
+            .graph-connection-field.graph-connection-field-primary data-graph-connection-field="drive"
               span.muted 主確認: Drive ID
               br
               code.graph-connection-value style="overflow-wrap:anywhere;word-break:break-word;white-space:normal" = connection.drive_id
             - if connection.site_id.present?
-              .graph-connection-field data={ graph_connection_field: "site" }
+              .graph-connection-field data-graph-connection-field="site"
                 span.muted 補助: Site ID
                 br
                 code.graph-connection-value style="overflow-wrap:anywhere;word-break:break-word;white-space:normal" = connection.site_id
           td.graph-connection-identifiers
-            .graph-connection-field.graph-connection-field-primary data={ graph_connection_field: "preview-folder" }
+            .graph-connection-field.graph-connection-field-primary data-graph-connection-field="preview-folder"
               span.muted 主確認: プレビュー用フォルダ
               br
               code.graph-connection-value style="overflow-wrap:anywhere;word-break:break-word;white-space:normal" = connection.preview_folder_path
