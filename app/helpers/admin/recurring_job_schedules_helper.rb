@@ -1,4 +1,11 @@
 module Admin::RecurringJobSchedulesHelper
+  SENSITIVE_KEY_PATTERN = /(?:\b(?:access|api|auth|bearer|client|id|refresh|secret|session)?[_-]?(?:key|password|secret|token)\b|authorization|credential)/i
+  SECRET_ASSIGNMENT_PATTERN = /\b(?:access[_-]?token|api[_-]?key|auth[_-]?token|bearer|client[_-]?secret|credential|password|refresh[_-]?token|secret|session[_-]?token|token)\b\s*[:=]\s*[^\s&,;]+/i
+  BEARER_TOKEN_PATTERN = /\bBearer\s+[^\s&,;]+/i
+  UNIX_PATH_PATTERN = %r{(?:\A|(?<=\s))/(?:Users|home|var|tmp|private|srv|opt|app|workspace|mnt)/[^\s,;:]+}i
+  WINDOWS_PATH_PATTERN = %r{\b[A-Z]:[\\/](?:Users|Temp|Windows|ProgramData|workspace|tmp)[\\/][^\s,;]+}i
+  FILTERED_PLACEHOLDER = "[FILTERED]"
+
   def admin_recurring_job_schedule_table_columns
     [
       table_preferences_column(:job_key, label: "ジョブキー", default_width: 260, overflow: :ellipsis, pinned: true),
@@ -26,6 +33,14 @@ module Admin::RecurringJobSchedulesHelper
   def recurring_job_status_label(status_or_value)
     value = recurring_job_status_value(status_or_value)
     localized_label("recurring_jobs.status", value)
+  end
+
+  def recurring_job_diagnostic_preview(value)
+    mask_diagnostic_value(value).presence || "-"
+  end
+
+  def recurring_job_args_preview(value)
+    JSON.pretty_generate(mask_recurring_job_args(value || []))
   end
 
   private
@@ -63,5 +78,33 @@ module Admin::RecurringJobSchedulesHelper
     end
 
     "#{base}#{tone}"
+  end
+
+  def mask_recurring_job_args(value)
+    case value
+    when Array
+      value.map { |item| mask_recurring_job_args(item) }
+    when Hash
+      value.transform_values.with_index do |nested_value, index|
+        key = value.keys[index]
+        if key.to_s.match?(SENSITIVE_KEY_PATTERN)
+          FILTERED_PLACEHOLDER
+        else
+          mask_recurring_job_args(nested_value)
+        end
+      end
+    when String
+      mask_diagnostic_value(value)
+    else
+      value
+    end
+  end
+
+  def mask_diagnostic_value(value)
+    value.to_s
+         .gsub(BEARER_TOKEN_PATTERN, "Bearer #{FILTERED_PLACEHOLDER}")
+         .gsub(SECRET_ASSIGNMENT_PATTERN) { |match| match.sub(/[:=]\s*[^\s&,;]+\z/, "=#{FILTERED_PLACEHOLDER}") }
+         .gsub(UNIX_PATH_PATTERN, FILTERED_PLACEHOLDER)
+         .gsub(WINDOWS_PATH_PATTERN, FILTERED_PLACEHOLDER)
   end
 end
