@@ -68,6 +68,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
     scope = scope.where(operation: filters[:operation]) if filters[:operation].present?
     scope = scope.where(event_source: filters[:event_source]) if filters[:event_source].present?
     scope = scope.where("path LIKE ?", "%#{ActiveRecord::Base.sanitize_sql_like(normalized_path_filter(filters[:path]))}%") if filters[:path].present?
+    scope = apply_query_filter(scope, filters[:q]) if filters[:q].present?
 
     scheduled_from = parsed_time(filters[:scheduled_from], label: "実行予定日(開始)", beginning: true)
     scheduled_to = parsed_time(filters[:scheduled_to], label: "実行予定日(終了)", end_of_day: true)
@@ -76,8 +77,19 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
     scope
   end
 
+  def apply_query_filter(scope, query)
+    escaped_query = ActiveRecord::Base.sanitize_sql_like(query.to_s.strip)
+    escaped_path_query = ActiveRecord::Base.sanitize_sql_like(normalized_path_filter(query))
+
+    scope.where(
+      "public_id LIKE :query OR path LIKE :path_query OR error_message LIKE :query",
+      query: "%#{escaped_query}%",
+      path_query: "%#{escaped_path_query}%"
+    )
+  end
+
   def event_filter_params
-    params.permit(:status, :operation, :event_source, :path, :scheduled_from, :scheduled_to).to_h.symbolize_keys
+    params.permit(:status, :operation, :event_source, :path, :scheduled_from, :scheduled_to, :q).to_h.symbolize_keys
   end
 
   def normalized_path_filter(value)

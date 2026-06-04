@@ -21,12 +21,17 @@ details class=wrapper_classes.join(" ") open=(!floating)
       div
         p.document-comment-workspace__eyebrow 文書を見ながら書く
         h2 文書コメント
-        p.muted Q&A と内部向けの確認事項をここにまとめます。
+        - if current_user.internal?
+          p.muted Q&A と内部向けの確認事項をここにまとめます。
+        - else
+          p.muted 文書に関するQ&Aをここにまとめます。
       span.document-comment-workspace__status
         = @question_threads.size
-        | 件のQ&A / 
-        = current_user.internal? ? @review_comments.size : 0
-        | 件の確認事項
+        | 件のQ&A
+        - if current_user.internal?
+          |  / 
+          = @review_comments.size
+          | 件の確認事項
         br
         - if current_user.internal?
           | 未解決: Q&A 
@@ -121,7 +126,10 @@ details class=wrapper_classes.join(" ") open=(!floating)
         p.muted
           | 検索条件: 
           strong = comment_search_query
-          | 。検索は、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます。
+          - if current_user.internal?
+            | 。検索は、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます。
+          - else
+            | 。検索は、すべて / Q&A / 未解決Q&A の各タブに先に適用されます。
 
     .document-comment-tabs.card
       input#document-comment-tab-all.document-comment-tabs__input type="radio" name="document_comment_tab" checked=true
@@ -137,8 +145,12 @@ details class=wrapper_classes.join(" ") open=(!floating)
           span.muted = " (未解決 #{unresolved_review_count})"
       input#document-comment-tab-unresolved.document-comment-tabs__input type="radio" name="document_comment_tab"
       label.document-comment-tabs__label for="document-comment-tab-unresolved"
-        | 未解決
-        span.muted = " (#{current_user.internal? ? unresolved_total_count : unresolved_question_count})"
+        - if current_user.internal?
+          | 未解決
+          span.muted = " (Q&A #{unresolved_question_count} / 確認事項 #{unresolved_review_count})"
+        - else
+          | 未解決Q&A
+          span.muted = " (#{unresolved_question_count})"
 
       .document-comment-tabs__panel.document-comment-tabs__panel--all
         = render "documents/comment_workspace_threads", show_questions: true, show_reviews: current_user.internal?, only_unresolved: false
@@ -155,6 +167,6 @@ details class=wrapper_classes.join(" ") open=(!floating)
             - if comment_search_active
               | 検索条件に一致する未解決のコメントはありません。
             - elsif current_user.internal?
-              | 未解決のQ&A/確認事項はありません。
+              | 未解決のQ&Aと確認事項はありません。
             - else
               | 未解決のQ&Aはありません。

@@ -37,4 +37,40 @@ module Admin::ExternalFolderSyncSourcesHelper
       "無視（要確認）"
     end
   end
+
+  def external_folder_sync_graph_notification(event)
+    Array(event.payload_json&.fetch("value", nil)).first || {}
+  end
+
+  def external_folder_sync_graph_notification_value(event, key)
+    external_folder_sync_graph_notification(event).fetch(key.to_s, nil).presence || "-"
+  end
+
+  def external_folder_sync_sanitized_webhook_payload(event)
+    sanitize_external_folder_sync_webhook_value(event.payload_json || {})
+  end
+
+  def external_folder_sync_display_event_key(event)
+    event_key = event.event_key.presence
+    return "-" if event_key.blank?
+    return event_key unless event.sharepoint?
+
+    client_state = external_folder_sync_graph_notification_value(event, "clientState")
+    client_state == "-" ? event_key : event_key.gsub(client_state, "[masked]")
+  end
+
+  private
+
+  def sanitize_external_folder_sync_webhook_value(value)
+    case value
+    when Hash
+      value.each_with_object({}) do |(key, nested_value), sanitized|
+        sanitized[key] = key.to_s == "clientState" ? "[masked]" : sanitize_external_folder_sync_webhook_value(nested_value)
+      end
+    when Array
+      value.map { |nested_value| sanitize_external_folder_sync_webhook_value(nested_value) }
+    else
+      value
+    end
+  end
 end

@@ -72,6 +72,42 @@ RSpec.describe "Document file archive entries", type: :request do
     expect(response.body).not_to include("entry path")
   end
 
+  it "adds archive row anchors to entry preview links" do
+    write_zip("docs/readme.txt" => "one\ntwo\n")
+    sign_in_as(user)
+
+    get document_file_path(archive_file, disposition: "inline")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include('id="archive-entry-1"')
+    expect(response.body).to include("return_anchor=archive-entry-1")
+    expect(response.body).to include("docs%2Freadme.txt")
+  end
+
+  it "links back to the archive preview row for valid return anchors" do
+    write_zip("docs/readme.txt" => "one\ntwo\n")
+    sign_in_as(user)
+
+    get archive_entry_preview_document_file_path(archive_file, entry_path: "docs/readme.txt", return_anchor: "archive-entry-1")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("ZIP内ファイル一覧へ戻る")
+    expect(response.body).to include(document_file_path(archive_file, disposition: "inline", anchor: "archive-entry-1"))
+  end
+
+  it "does not use unsafe return anchors for archive preview links" do
+    write_zip("docs/readme.txt" => "one\ntwo\n")
+    sign_in_as(user)
+
+    get archive_entry_preview_document_file_path(archive_file, entry_path: "docs/readme.txt", return_anchor: "https://example.com/archive-entry-1")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("ZIP内ファイル一覧へ戻る")
+    expect(response.body).to include(document_file_path(archive_file, disposition: "inline"))
+    expect(response.body).not_to include(document_file_path(archive_file, disposition: "inline", anchor: "https://example.com/archive-entry-1"))
+    expect(response.body).not_to include('href="https://example.com')
+  end
+
   it "rejects unsafe archive entry paths" do
     write_zip("docs/readme.txt" => "hello")
     sign_in_as(user)

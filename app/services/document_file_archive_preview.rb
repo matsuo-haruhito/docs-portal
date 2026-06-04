@@ -111,32 +111,65 @@ class DocumentFileArchivePreview
     end
   end
 
-  def initialize(file:, limit: DEFAULT_LIMIT)
+  def initialize(file:, limit: DEFAULT_LIMIT, path_query: nil)
     @file = file
     @limit = limit
+    @path_query = path_query.to_s.strip
   end
 
   def call
     return unsupported_result unless zip?
 
-    entries = []
-
-    Zip::File.open(file.absolute_path) do |zip_file|
-      zip_file.each.with_index do |entry, index|
-        return Result.new(entries:, truncated: true, limit:, error: nil) if index >= limit
-
-        entries << Entry.new(name: entry.name.to_s, directory: entry.directory?, size: entry.size.to_i)
-      end
-    end
-
-    Result.new(entries:, truncated: false, limit:, error: nil)
+    search? ? search_entries : limited_entries
   rescue Zip::Error, Encoding::InvalidByteSequenceError, Encoding::UndefinedConversionError => e
     Result.new(entries: [], truncated: false, limit:, error: e.message)
   end
 
   private
 
-  attr_reader :file, :limit
+  attr_reader :file, :limit, :path_query
+
+  def limited_entries
+    entries = []
+
+    Zip::File.open(file.absolute_path) do |zip_file|
+      zip_file.each.with_index do |entry, index|
+        return Result.new(entries:, truncated: true, limit:, error: nil) if index >= limit
+
+        entries << build_entry(entry)
+      end
+    end
+
+    Result.new(entries:, truncated: false, limit:, error: nil)
+  end
+
+  def search_entries
+    entries = []
+    normalized_query = normalize_path(path_query).downcase
+
+    Zip::File.open(file.absolute_path) do |zip_file|
+      zip_file.each do |entry|
+        next unless normalize_path(entry.name).downcase.include?(normalized_query)
+
+        entries << build_entry(entry)
+        return Result.new(entries:, truncated: true, limit:, error: nil) if entries.size >= limit
+      end
+    end
+
+    Result.new(entries:, truncated: false, limit:, error: nil)
+  end
+
+  def build_entry(entry)
+    Entry.new(name: entry.name.to_s, directory: entry.directory?, size: entry.size.to_i)
+  end
+
+  def search?
+    path_query.present?
+  end
+
+  def normalize_path(path)
+    path.to_s.tr("\\", "/")
+  end
 
   def zip?
     File.extname(file.file_name.to_s).downcase == ".zip" || file.effective_content_type == "application/zip"

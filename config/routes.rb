@@ -35,6 +35,7 @@ Rails.application.routes.draw do
     end
     get "model_browser", to: "model_browsers#index", as: :model_browser
     get "model_browser/:model_key", to: "model_browsers#show", as: :model_browser_model
+    resource :missing_document_files, only: [:show]
 
     resources :companies, except: %i[show new], param: :public_id
     resources :users, except: %i[show new], param: :public_id
@@ -71,6 +72,7 @@ Rails.application.routes.draw do
       post :force_apply, on: :member
       post :enqueue, on: :member
       post :subscribe, on: :member
+      post :recheck_metadata, on: :member
       delete :unsubscribe, on: :member
       resource :external_folder_sync_oauth_connection, only: %i[new destroy]
     end
@@ -79,8 +81,13 @@ Rails.application.routes.draw do
       patch :restore, on: :member
     end
     resources :bulk_edit_dry_runs, only: %i[new create show update], param: :public_id
-    resources :document_sets, except: %i[show new], param: :public_id
-    resources :document_permissions, except: %i[show new], param: :public_id
+    resources :document_sets, except: %i[show new], param: :public_id do
+      get :document_search, on: :collection
+    end
+    resources :document_permissions, except: %i[show new], param: :public_id do
+      get :document_search, on: :collection
+      get :selected_document, on: :collection
+    end
     resources :webhook_endpoints, except: %i[show new], param: :public_id
     resources :webhook_deliveries, only: %i[index show], param: :public_id do
       post :retry_dispatch, on: :member

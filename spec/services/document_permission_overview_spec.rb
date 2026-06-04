@@ -16,4 +16,23 @@ RSpec.describe DocumentPermissionOverview do
     expect(row.view_allowed_count).to eq(1)
     expect(row.download_allowed_count).to eq(1)
   end
+
+  it "summarizes only permissions from the provided permission scope" do
+    document = create(:document, title: "Filtered Permission Target")
+    create(:document_permission, document:, company: create(:company), access_level: :view)
+    user_permission = create(:document_permission, document:, user: create(:user, :external), access_level: :download)
+
+    rows = described_class.new(
+      Document.where(id: document.id),
+      permission_scope: DocumentPermission.where(access_level: :download)
+    ).rows
+
+    expect(rows.size).to eq(1)
+    row = rows.first
+    expect(row.document).to eq(document)
+    expect(row.company_permissions).to be_empty
+    expect(row.user_permissions).to eq([user_permission])
+    expect(row.view_allowed_count).to eq(0)
+    expect(row.download_allowed_count).to eq(1)
+  end
 end

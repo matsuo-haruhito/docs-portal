@@ -1,4 +1,7 @@
 - page_title "アクセス申請"
+- access_request_table_key = :admin_access_requests
+- access_request_table_columns = admin_access_request_table_columns
+- access_request_table_settings = rails_table_preference_settings(table_key: access_request_table_key)
 
 h1 アクセス申請
 = render "admin/nav"
@@ -49,17 +52,19 @@ section.card
       |  / 取消済み:
       strong = " #{@status_counts["cancelled"]}"
 
-  table
+  = table_preferences_editor(table_key: access_request_table_key, settings: access_request_table_settings, columns: access_request_table_columns, title: "アクセス申請一覧の表示設定")
+
+  = table_preferences_table_tag(table_key: access_request_table_key, settings: access_request_table_settings, columns: access_request_table_columns) do
     thead
       tr
-        th 日時
-        th 申請者
-        th 対象
-        th 要求権限
-        th 状態
-        th 理由
-        th 承認者
-        th
+        th data-rails-table-preferences-column-key="created_at" 日時
+        th data-rails-table-preferences-column-key="requester" 申請者
+        th data-rails-table-preferences-column-key="target" 対象
+        th data-rails-table-preferences-column-key="requested_access_level" 要求権限
+        th data-rails-table-preferences-column-key="status" 状態
+        th data-rails-table-preferences-column-key="reason" 理由
+        th data-rails-table-preferences-column-key="approver" 承認者
+        th data-rails-table-preferences-column-key="actions"
     tbody
       - @access_requests.each do |access_request|
         - request_hash = AccessRequestHash.new(access_request).call
@@ -68,29 +73,35 @@ section.card
         - secondary_label = admin_access_request_secondary_target_label(requestable)
         - action_filter_params = @filters.compact
         tr
-          td = access_request.created_at.strftime("%Y-%m-%d %H:%M")
-          td = "#{access_request.requester.name} / #{access_request.requester.email_address}"
-          td
+          td data-rails-table-preferences-column-key="created_at" = access_request.created_at.strftime("%Y-%m-%d %H:%M")
+          td data-rails-table-preferences-column-key="requester" = "#{access_request.requester.name} / #{access_request.requester.email_address}"
+          td data-rails-table-preferences-column-key="target"
             = requestable[:type]
             br
             = primary_label
             - if secondary_label.present?
               br
               span.muted = secondary_label
-          td
+          td data-rails-table-preferences-column-key="requested_access_level"
             = document_permission_access_level_label(access_request.requested_access_level)
             - if access_request.requested_access_level.to_s == "manage"
               br
               span.status-warning 管理権限申請
               br
               span.muted 現行の承認処理では管理者 role を付与しません
-          td = admin_access_request_status_label(access_request)
-          td = access_request.reason
-          td = access_request.approver&.email_address || "-"
-          td.actions
+          td data-rails-table-preferences-column-key="status" = admin_access_request_status_label(access_request)
+          td data-rails-table-preferences-column-key="reason" = access_request.reason
+          td data-rails-table-preferences-column-key="approver" = access_request.approver&.email_address || "-"
+          td.actions data-rails-table-preferences-column-key="actions"
             - if access_request.pending?
               = button_to "承認", admin_access_request_path(access_request), method: :patch, params: action_filter_params.merge(decision: "approve"), class: "button"
-              = button_to "却下", admin_access_request_path(access_request), method: :patch, params: action_filter_params.merge(decision: "reject", rejection_reason: admin_access_request_default_rejection_reason), class: "button secondary"
+              = form_with url: admin_access_request_path(access_request), method: :patch, local: true do
+                - action_filter_params.each do |key, value|
+                  = hidden_field_tag key, value
+                = hidden_field_tag :decision, "reject"
+                = label_tag "rejection_reason_#{access_request.public_id}", "却下理由"
+                = text_area_tag :rejection_reason, admin_access_request_default_rejection_reason, id: "rejection_reason_#{access_request.public_id}", rows: 2
+                = submit_tag "却下", class: "button secondary"
             - else
               span.muted -
 - else

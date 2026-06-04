@@ -70,7 +70,10 @@ class Api::Internal::ArtifactImportsController < Api::BaseController
     public_id = params[:import_dry_run_id].to_s
     @confirmed_dry_run =
       if public_id.present?
-        ImportDryRun.find_by!(public_id:, status: :analyzed)
+        dry_run = ImportDryRun.find_by!(public_id:, status: :analyzed)
+        raise ApplicationError::BadRequest, "import_dry_run_id must reference an analyzed git_push dry-run" unless dry_run.git_push?
+
+        dry_run
       end
   end
 

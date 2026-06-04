@@ -38,16 +38,38 @@ p = @delivery_log.subject
 h2 本文
 pre = @delivery_log.body
 
-p.actions
-  = link_to "メーラーを開く", @mailto_url, class: "button"
+section.delivery-log-actions
+  h2 操作
+
+  .delivery-log-actions__group
+    h3 メール作成
+    p.muted 宛先・件名・本文をメーラーへ渡します。送付記録の状態はここでは変わりません。
+    p.actions
+      = link_to "メーラーを開く", @mailto_url, class: "button"
+
   - if @delivery_log.draft?
-    = button_to "送付済みにする", document_delivery_log_path(@delivery_log), method: :patch, params: { decision: "mark_sent", return_to: @return_to_path }, class: "button secondary"
-    = button_to "送付失敗として記録", document_delivery_log_path(@delivery_log), method: :patch, params: { decision: "mark_failed", return_to: @return_to_path }, class: "button secondary"
-  - if @delivery_log.document.present?
-    = link_to "対象の文書へ戻る", project_document_path(@delivery_log.project, @delivery_log.document.slug), class: "button secondary"
-  - elsif @delivery_log.document_set.present?
-    = link_to "対象の文書セットへ戻る", project_document_set_path(@delivery_log.project, @delivery_log.document_set), class: "button secondary"
-  - else
-    = link_to "対象の案件へ戻る", project_path(@delivery_log.project), class: "button secondary"
+    .delivery-log-actions__group
+      h3 手動状態更新
+      p.muted 外部メーラーで送付した結果を、この送付履歴に記録します。
+      p.actions
+        = button_to "送付済みにする", document_delivery_log_path(@delivery_log), method: :patch, params: { decision: "mark_sent", return_to: @return_to_path }, class: "button secondary"
+        = form_with url: document_delivery_log_path(@delivery_log), method: :patch, local: true, class: "inline-form" do
+          = hidden_field_tag :decision, "mark_failed"
+          = hidden_field_tag :return_to, @return_to_path
+          .field
+            = label_tag :error_message, "失敗理由"
+            = text_field_tag :error_message, nil, maxlength: 200, placeholder: "例: 宛先確認待ち、添付容量超過など"
+          = submit_tag "送付失敗として記録", class: "button secondary"
+
+  .delivery-log-actions__group
+    h3 対象へ戻る
+    p.muted 送付対象の文書・文書セット・案件を確認します。
+    p.actions
+      - if @delivery_log.document.present?
+        = link_to "対象の文書へ戻る", project_document_path(@delivery_log.project, @delivery_log.document.slug), class: "button secondary"
+      - elsif @delivery_log.document_set.present?
+        = link_to "対象の文書セットへ戻る", project_document_set_path(@delivery_log.project, @delivery_log.document_set), class: "button secondary"
+      - else
+        = link_to "対象の案件へ戻る", project_path(@delivery_log.project), class: "button secondary"
 
 p = link_to "送付履歴一覧へ戻る", @return_to_path
