@@ -39,6 +39,52 @@ module Admin::DocumentSetsHelper
     admin_document_set_filter_labels(filters).any?
   end
 
+  def document_set_selected_items(document_set, item_params = params[:document_set_items])
+    persisted_items = document_set.document_set_items.index_by(&:document_id)
+    return persisted_items if item_params.blank? || document_set.project.blank?
+
+    item_rows = item_params.respond_to?(:to_unsafe_h) ? item_params.to_unsafe_h.values : item_params.to_h.values
+
+    item_rows.filter_map do |row|
+      next unless ActiveModel::Type::Boolean.new.cast(row[:selected] || row["selected"])
+
+      document_id = row[:document_id] || row["document_id"]
+      document = document_set.project.documents.find_by(id: document_id)
+      next if document.blank?
+
+      version_id = row[:document_version_id] || row["document_version_id"]
+      version = document.document_versions.find_by(id: version_id) if version_id.present?
+      item = DocumentSetItem.new(
+        document: document,
+        document_version: version,
+        sort_order: (row[:sort_order] || row["sort_order"]).presence || 0,
+        note: (row[:note] || row["note"]).to_s
+      )
+
+      [document.id, item]
+    end.to_h
+  end
+
+  def document_set_remote_document_picker_html_options(project_id)
+    {
+      id: "document-set-remote-document-picker",
+      include_blank: true,
+      data: {
+        controller: "rails-fields-kit--tom-select",
+        rails_fields_kit__tom_select_kind_value: "combobox",
+        rails_fields_kit__tom_select_url_value: document_search_admin_document_sets_path(project_id: project_id),
+        rails_fields_kit__tom_select_query_param_value: "q",
+        rails_fields_kit__tom_select_value_field_value: "id",
+        rails_fields_kit__tom_select_label_field_value: "title",
+        rails_fields_kit__tom_select_option_description_field_value: "slug",
+        rails_fields_kit__tom_select_placeholder_value: "文書名またはURL識別子で検索",
+        rails_fields_kit__tom_select_min_length_value: 1,
+        rails_fields_kit__tom_select_max_options_value: 20,
+        action: "change->document-set-document-filter#pickRemoteDocument rails-fields-kit--tom-select:change->document-set-document-filter#pickRemoteDocument"
+      }
+    }
+  end
+
   def document_set_version_select_html_options(placeholder: "固定する版を検索")
     {
       data: {
