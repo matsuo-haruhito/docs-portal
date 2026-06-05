@@ -26,6 +26,50 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("spec/admin-dashboard/missing.txt")
   end
 
+  it "shows a read-only storage usage summary" do
+    summary = StorageUsageSummary::Result.new(
+      areas: [
+        StorageUsageSummary::Area.new(
+          key: :document_files,
+          label: "DocumentFile 実体",
+          relative_path: "storage/document_files",
+          description: "アップロード、ZIP/Git/外部同期で取り込まれた文書添付の正本",
+          bytes: 1024,
+          file_count: 2
+        ),
+        StorageUsageSummary::Area.new(
+          key: :docs_sites,
+          label: "Docs site build",
+          relative_path: "storage/docs_sites",
+          description: "Docusaurus などで生成した文書表示用 site artifact",
+          bytes: 2048,
+          file_count: 3
+        ),
+        StorageUsageSummary::Area.new(
+          key: :imports,
+          label: "Import staging",
+          relative_path: "storage/imports",
+          description: "ZIP / manual upload dry-run などの一時確認 artifact",
+          bytes: 512,
+          file_count: 1
+        )
+      ]
+    )
+    allow(StorageUsageSummary).to receive(:new).and_return(instance_double(StorageUsageSummary, call: summary))
+
+    sign_in_as(admin_user)
+
+    get admin_root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Storage使用量")
+    expect(response.body).to include("read-only")
+    expect(response.body).to include("storage/document_files")
+    expect(response.body).to include("storage/docs_sites")
+    expect(response.body).to include("storage/imports")
+    expect(response.body).to include("削除、archive、cleanup、retention policy 決定、GCS API 連携はここでは行いません")
+  end
+
   it "links configuration diagnostics to the relevant runbooks" do
     sign_in_as(admin_user)
 
