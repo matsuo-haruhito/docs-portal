@@ -169,6 +169,53 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(response.body).not_to include("oldest-run")
   end
 
+  it "masks detail diagnostics while preserving operational context" do
+    sign_in_as(admin_user)
+    schedule = create_schedule!(
+      job_key: "masked_detail_job",
+      job_class: "MaskedDetailJob",
+      queue_name: "critical",
+      last_status: "failed",
+      last_error_message: "Authorization: Bearer last-error-token-1968 failed token=last-secret-1968 at /Users/alice/jobs/source.yml",
+      args_json: [
+        {
+          "job_id" => "visible-job-id-1968",
+          "authorization" => "Bearer arg-secret-1968",
+          "nested" => {
+            "client_secret" => "client-secret-1968",
+            "source_path" => "/home/alice/source.csv",
+            "note" => "retry current project"
+          }
+        }
+      ]
+    )
+    create_run!(
+      schedule,
+      status: "failed",
+      active_job_id: "active-job-1968",
+      error_message: "password=run-secret-1968 while reading C:/Users/alice/tmp.log"
+    )
+
+    get admin_recurring_job_schedule_path(schedule)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("masked_detail_job")
+    expect(response.body).to include("MaskedDetailJob")
+    expect(response.body).to include("critical")
+    expect(response.body).to include("visible-job-id-1968")
+    expect(response.body).to include("retry current project")
+    expect(response.body).to include("active-job-1968")
+    expect(response.body).to include("[FILTERED]")
+    expect(response.body).not_to include("last-error-token-1968")
+    expect(response.body).not_to include("last-secret-1968")
+    expect(response.body).not_to include("arg-secret-1968")
+    expect(response.body).not_to include("client-secret-1968")
+    expect(response.body).not_to include("run-secret-1968")
+    expect(response.body).not_to include("/Users/alice/jobs/source.yml")
+    expect(response.body).not_to include("/home/alice/source.csv")
+    expect(response.body).not_to include("C:/Users/alice/tmp.log")
+  end
+
   it "filters recent runs on the detail page without changing the request action" do
     sign_in_as(admin_user)
     schedule = create_schedule!(job_key: "history_job", last_status: "failed")

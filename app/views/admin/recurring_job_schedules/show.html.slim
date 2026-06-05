@@ -34,10 +34,10 @@ h1 定期ジョブ詳細
     dd = recurring_job_status_badge(@schedule.last_status)
     - if @schedule.last_error_message.present?
       dt 前回エラー
-      dd = @schedule.last_error_message
+      dd = recurring_job_diagnostic_preview(@schedule.last_error_message)
     dt 引数
     dd
-      pre = JSON.pretty_generate(@schedule.args_json)
+      pre = recurring_job_args_preview(@schedule.args_json)
     - if @schedule.description.present?
       dt 説明
       dd = @schedule.description
@@ -84,4 +84,4 @@ h1 定期ジョブ詳細
             td = run.finished_at ? l(run.finished_at) : "-"
             td
               code = run.active_job_id.presence || "-"
-            td = run.error_message.presence || "-"
+            td = recurring_job_diagnostic_preview(run.error_message)
