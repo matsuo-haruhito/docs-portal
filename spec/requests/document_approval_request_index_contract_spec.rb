@@ -150,6 +150,9 @@ RSpec.describe "Document approval request index contract", type: :request do
     expect(detail_link).to be_present
 
     query = Rack::Utils.parse_nested_query(URI.parse(detail_link["href"]).query)
-    expect(query["return_to"]).to eq("#{document_approval_requests_path}?q=%E5%A5%91%E7%B4%84&status=pending")
+    return_to = URI.parse(query.fetch("return_to"))
+    return_to_params = Rack::Utils.parse_nested_query(return_to.query)
+    expect(return_to.path).to eq(document_approval_requests_path)
+    expect(return_to_params).to include("status" => "pending", "q" => "契約")
   end
 end
