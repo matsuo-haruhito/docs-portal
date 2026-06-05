@@ -65,6 +65,25 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
       expect(duplicate_project_link.text).to include(project.name)
     end
 
+    it "filters the table to preview-selected connections" do
+      sign_in_as(admin_user)
+      active = create(:microsoft_graph_connection, project:, name: "Primary connection", enabled: true)
+      duplicate = create(:microsoft_graph_connection, project:, name: "Duplicate connection", enabled: false)
+      duplicate.update_column(:enabled, true)
+      disabled = create(:microsoft_graph_connection, project:, name: "Disabled connection", enabled: false)
+      other_active = create(:microsoft_graph_connection, project: create(:project, code: "GRAPH002", name: "Other Project"), name: "Other active", enabled: true)
+
+      get admin_microsoft_graph_connections_path, params: { preview_usage: "preview_selected" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(active.name)
+      expect(response.body).to include(other_active.name)
+      expect(response.body).not_to include(duplicate.name)
+      expect(response.body).not_to include(disabled.name)
+      expect(response.body).to include("現在の絞り込み: previewで使用中")
+      expect(response.body).to include("2 / 4 件を表示しています。")
+    end
+
     it "filters the table to enabled but unused connections" do
       sign_in_as(admin_user)
       active = create(:microsoft_graph_connection, project:, name: "Primary connection", enabled: true)
@@ -82,6 +101,22 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
       expect(response.body).not_to include(other_active.name)
       expect(response.body).to include("現在の絞り込み")
       expect(response.body).to include("1 / 4 件を表示しています。")
+    end
+
+    it "filters the table to disabled connections" do
+      sign_in_as(admin_user)
+      active = create(:microsoft_graph_connection, project:, name: "Primary connection", enabled: true)
+      disabled = create(:microsoft_graph_connection, project:, name: "Disabled connection", enabled: false)
+      other_disabled = create(:microsoft_graph_connection, project: create(:project, code: "GRAPH002", name: "Other Project"), name: "Other disabled", enabled: false)
+
+      get admin_microsoft_graph_connections_path, params: { preview_usage: "disabled" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(disabled.name)
+      expect(response.body).to include(other_disabled.name)
+      expect(response.body).not_to include(active.name)
+      expect(response.body).to include("現在の絞り込み: 無効 / previewでは未使用")
+      expect(response.body).to include("2 / 3 件を表示しています。")
     end
 
     it "filters the table to duplicate projects only" do
@@ -125,6 +160,26 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
       expect(response.body).to include("検索: apollo")
       expect(response.body).to include("1 / 2 件を表示しています。")
       expect(input_value("q")).to eq("apollo")
+    end
+
+    it "searches connections by site and preview folder metadata" do
+      sign_in_as(admin_user)
+      target = create(
+        :microsoft_graph_connection,
+        project:,
+        name: "Metadata preview",
+        site_id: "contoso.sharepoint.com,site-alpha,web-alpha",
+        preview_folder_path: "Shared Documents/Launch Reviews"
+      )
+      other = create(:microsoft_graph_connection, project: create(:project, code: "GRAPH002", name: "Other Project"), name: "Other preview", site_id: "contoso.sharepoint.com,site-beta,web-beta")
+
+      get admin_microsoft_graph_connections_path, params: { q: "site-alpha" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(target.name)
+      expect(response.body).not_to include(other.name)
+      expect(response.body).to include("検索: site-alpha")
+      expect(response.body).to include("1 / 2 件を表示しています。")
     end
 
     it "groups long Graph identifiers into prioritized readable cells" do
@@ -224,6 +279,31 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
       expect(response.body).to include(connection.name)
       expect(response.body).not_to include("検索:")
       expect(response.body).to include("1 / 1 件を表示しています。")
+    end
+
+    it "ignores unsupported filter values without keeping active filter labels" do
+      sign_in_as(admin_user)
+      connection = create(:microsoft_graph_connection, project:, name: "Primary connection")
+
+      get admin_microsoft_graph_connections_path, params: { preview_usage: "archived", duplicate_only: "true", q: "   " }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(connection.name)
+      expect(response.body).to include("1 / 1 件を表示しています。")
+      expect(response.body).not_to include("現在の絞り込み")
+      expect(response.body).not_to include("archived")
+    end
+
+    it "shows an unregistered empty state when no connections exist" do
+      sign_in_as(admin_user)
+
+      get admin_microsoft_graph_connections_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("まだMicrosoft Graph接続は登録されていません。")
+      expect(response.body).to include("上の「新規登録」で案件、接続名、Tenant ID、Client ID、Drive ID、プレビュー用フォルダを設定して最初の接続を保存してください。")
+      expect(response.body).not_to include("現在の絞り込みに一致する Microsoft Graph接続はありません。")
+      expect(response.body).not_to include("一覧の絞り込み")
     end
   end
 
