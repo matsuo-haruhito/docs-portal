@@ -19,6 +19,8 @@ RSpec.describe "Admin project consent settings", type: :request do
     get admin_project_consent_settings_path(project_id: alpha_project.id, consent_term_id: portal_terms.id, enabled: "true")
 
     expect(response).to have_http_status(:ok)
+    expect(response.body).to include("必須タイミングは、閲覧前・ダウンロード前が現在の必須化対象です。")
+    expect(response.body).to include("共有リンク系の（予約）は将来拡張用")
     expect(listed_rows).to contain_exactly(a_string_including("Alpha Project", "Portal Terms", "有効"))
     expect(listed_rows.join).not_to include("Beta Project")
     expect(listed_rows.join).not_to include("Security NDA")

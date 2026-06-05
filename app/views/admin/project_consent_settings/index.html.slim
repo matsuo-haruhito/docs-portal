@@ -27,6 +27,7 @@ h1 案件同意設定
     - if has_filters
       = link_to "絞り込み解除", admin_project_consent_settings_path, class: "button secondary"
   p.muted 案件・同意文面・状態で一覧を絞り込めます。列の表示設定は下の table preferences で調整してください。
+  p.muted 必須タイミングは、閲覧前・ダウンロード前が現在の必須化対象です。共有リンク系の（予約）は将来拡張用で、現時点の共有リンク同意 enforcement を意味しません。
   p.muted = "表示中: #{@project_consent_settings.size}件"
 
 - if @project_consent_settings.any? || has_filters
