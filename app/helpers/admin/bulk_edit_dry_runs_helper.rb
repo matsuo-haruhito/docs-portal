@@ -26,8 +26,8 @@ module Admin::BulkEditDryRunsHelper
     text
       .gsub(/Authorization:\s*Bearer\s+[^\s,;]+/i, "Authorization: [masked]")
       .gsub(/\bBearer\s+[^\s,;]+/i, "Bearer [masked]")
-      .gsub(/\b(#{BULK_EDIT_DRY_RUN_SENSITIVE_KEY_PATTERN.source})\b\s*[:=]\s*[^\s,;&]+/i) { "#{$1}=[masked]" }
-      .gsub(/([?&])(#{BULK_EDIT_DRY_RUN_SENSITIVE_KEY_PATTERN.source})=[^\s&#]+/i) { "#{$1}#{$2}=[masked]" }
+      .gsub(/\b(#{BULK_EDIT_DRY_RUN_SENSITIVE_KEY_PATTERN.source})\b\s*[:=]\s*(?!\[masked\])[^\s,;&]+/i) { "#{$1}=[masked]" }
+      .gsub(/([?&])(#{BULK_EDIT_DRY_RUN_SENSITIVE_KEY_PATTERN.source})=(?!\[masked\])[^\s&#]+/i) { "#{$1}#{$2}=[masked]" }
       .gsub(BULK_EDIT_DRY_RUN_PRIVATE_PATH_PATTERN, "[path hidden]")
   end
 
