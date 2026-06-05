@@ -247,7 +247,7 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(response.body).not_to include("/home/alice/docs")
     expect(response.body).not_to include("C:/Users/Alice")
 
-    expect(preview_rows.first.join(" ")).to include("警告あり", "[masked]", "[path hidden]")
+    expect(preview_rows.first.join(" ")).to include("エラーあり", "[masked]", "[path hidden]")
     expect(execution_rows.first.join(" ")).to include("Failed Sensitive Doc", "[masked]")
   end
 
