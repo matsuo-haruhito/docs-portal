@@ -12,10 +12,10 @@
 - 送信履歴は `WebhookDelivery.recent.limit(50)` の範囲で、選択した表示条件ごとに最大 50 件を新しい順に確認します。
 - 画面には `表示範囲: ...  N件中M件を表示しています` が出るため、status filter 後の総件数と表示件数を分けて確認します。
 - 送信履歴は `すべて` / `送信待ち` / `成功` / `失敗` で表示を絞り込めます。
-- 50 件外の履歴や、特定 endpoint / event type / status / 作成日の履歴を探す場合は `送信履歴検索へ` から `admin/webhook_deliveries` を開きます。
+- 50 件外の履歴や、特定 endpoint / event type / status / HTTP status / error message 断片 / 作成日の履歴を探す場合は `送信履歴検索へ` から `admin/webhook_deliveries` を開きます。
 - 送信履歴検索は最大 100 件までの read-only 検索一覧です。検索結果全体への bulk retry はありません。
 - 送信履歴の `詳細` と行ごとの `再送` は、現在の status filter または送信履歴検索の条件を安全な戻り先として引き継ぎます。`失敗` 表示や検索一覧から詳細へ入った場合、戻り先と 1 件再送後の戻り先は元の一覧です。
-- 不正な戻り先 filter や任意 URL は引き継がず、通常の Webhook 一覧へ戻します。検索一覧の戻り先は `endpoint`、`event_type`、`status`、`created_from`、`created_to` の許可済み条件だけを組み立てます。
+- 不正な戻り先 filter や任意 URL は引き継がず、通常の Webhook 一覧へ戻します。検索一覧の戻り先は `endpoint`、`event_type`、`status`、`response_status`、`error_q`、`created_from`、`created_to` の許可済み条件だけを組み立てます。
 - `失敗` 表示中のまとめて再送は、表示中の最大 50 件のうち failed かつ endpoint が有効な delivery だけを対象にします。送信履歴検索の 100 件一覧は bulk retry 対象ではありません。
 
 ## 新規登録・編集で見る項目
@@ -61,12 +61,14 @@ current `WebhookEndpoint::EVENT_TYPES` は次の 7 種類です。
 - `Webhook設定`: endpoint 単位で絞り込む
 - `イベント`: `WebhookEndpoint::EVENT_TYPES` の event type で絞り込む
 - `ステータス`: `送信待ち` / `成功` / `失敗` で絞り込む
+- `HTTP status`: `100` から `599` までの HTTP status 完全一致で絞り込む。不正値は検索条件として採用しません。
+- `エラー断片`: 保存済み `error_message` に対する部分一致検索で絞り込む。raw error を追加表示するための条件ではありません。
 - `作成日From` / `作成日To`: delivery record の `created_at` 日付範囲で絞り込む
 
 読み方:
 
 - 検索結果は `created_at desc, id desc` の新しい順で最大 100 件まで表示します。
-- 100 件を超える場合は、endpoint、event type、status、作成日を足して範囲を狭めます。無制限一覧や任意の表示件数指定は current support ではありません。
+- 100 件を超える場合は、endpoint、event type、status、HTTP status、error message 断片、作成日を足して範囲を狭めます。無制限一覧や任意の表示件数指定は current support ではありません。
 - 検索結果から `詳細` に入った場合、`送信履歴検索へ戻る` と 1 件再送後の戻り先は元の検索条件です。
 - 送信履歴検索には bulk retry を置きません。まとめて再送は従来どおり `Webhook` 画面の `失敗` 表示中、最近 50 件のうち再送可能な delivery に限定します。
 - payload edit、payload replay、自動 retry、retention policy 判断は扱いません。
@@ -74,7 +76,7 @@ current `WebhookEndpoint::EVENT_TYPES` は次の 7 種類です。
 ## 失敗時の確認順
 
 1. `Webhook設定` で endpoint が `有効` になっているか、対象 event type が選ばれているかを確認します。
-2. `送信履歴` を `失敗` に絞り込み、表示範囲の総件数と表示件数を確認します。50 件外まで調べる必要がある場合は、`送信履歴検索へ` から endpoint / event type / status / 作成日で探します。
+2. `送信履歴` を `失敗` に絞り込み、表示範囲の総件数と表示件数を確認します。50 件外まで調べる必要がある場合は、`送信履歴検索へ` から endpoint / event type / status / HTTP status / error message 断片 / 作成日で探します。
 3. 失敗行の `詳細` を開きます。`Webhook一覧へ戻る` または `送信履歴検索へ戻る` は元の一覧へ戻るため、複数件を順に確認する場合も同じ条件から再開できます。
 4. `送信先URL` が現在の受信先 URL と一致しているか、受信先側で route / token / IP allowlist などが変わっていないかを確認します。
 5. `HTTP` が 4xx の場合は、受信先の認証・署名検証・payload validation を先に見ます。
