@@ -11,6 +11,13 @@ module Admin::AccessRequestsHelper
     "DocumentFile" => "添付ファイル"
   }.freeze
   DEFAULT_ACCESS_REQUEST_REJECTION_REASON = "承認条件を満たしていないため却下しました".freeze
+  ACCESS_REQUEST_REJECTION_REASON_PRESET_OPTIONS = [
+    ["権限不足", "permission_shortage"],
+    ["対象誤り", "wrong_target"],
+    ["情報不足", "insufficient_information"],
+    ["承認条件不一致", "approval_mismatch"]
+  ].freeze
+  DEFAULT_ACCESS_REQUEST_REJECTION_REASON_PRESET = "approval_mismatch".freeze
 
   def admin_access_request_table_columns
     [
@@ -41,6 +48,14 @@ module Admin::AccessRequestsHelper
     [["すべて", nil]] + AccessRequest::SUPPORTED_REQUESTABLE_TYPES.map do |requestable_type|
       [admin_access_request_requestable_type_label(requestable_type), requestable_type]
     end
+  end
+
+  def admin_access_request_rejection_reason_preset_options
+    ACCESS_REQUEST_REJECTION_REASON_PRESET_OPTIONS
+  end
+
+  def admin_access_request_default_rejection_reason_preset
+    DEFAULT_ACCESS_REQUEST_REJECTION_REASON_PRESET
   end
 
   def admin_access_request_status_label(access_request_or_value)
