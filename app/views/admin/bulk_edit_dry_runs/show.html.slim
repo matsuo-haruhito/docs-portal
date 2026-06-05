@@ -42,14 +42,14 @@ h1 文書一括編集 事前確認
     h2 警告
     ul
       - @bulk_edit_dry_run.warnings_json.each do |warning|
-        li = warning
+        li = bulk_edit_dry_run_diagnostic_preview(warning)
 
 - if @bulk_edit_dry_run.errors_json.any?
   section.card
     h2 エラー
     ul
       - @bulk_edit_dry_run.errors_json.each do |error|
-        li = error
+        li = bulk_edit_dry_run_diagnostic_preview(error)
 
 section.card
   h2 事前確認明細
@@ -116,8 +116,8 @@ section.card
               li = "#{bulk_edit_field_label("published_from")}: #{after_version && (after_version["published_from"] || after_version[:published_from])}"
               li = "#{bulk_edit_field_label("published_until")}: #{after_version && (after_version["published_until"] || after_version[:published_until])}"
               li = "#{bulk_edit_field_label("tags")}: #{Array(after_tags).join(', ')}"
-          td = item_warnings.join(" / ").presence || "-"
-          td = item_errors.join(" / ").presence || "-"
+          td = bulk_edit_dry_run_diagnostic_list_preview(item_warnings)
+          td = bulk_edit_dry_run_diagnostic_list_preview(item_errors)
 
 - if @execution_items.any?
   section.card
@@ -138,5 +138,5 @@ section.card
             td
               span.badge = localized_label("bulk_edit_dry_runs.status", item["status"] || item[:status])
             td = Array(item["changed_fields"] || item[:changed_fields]).map { |field| bulk_edit_field_label(field) }.join(", ").presence || "-"
-            td = Array(item["warnings"] || item[:warnings]).join(" / ").presence || "-"
-            td = Array(item["errors"] || item[:errors]).join(" / ").presence || "-"
+            td = bulk_edit_dry_run_diagnostic_list_preview(item["warnings"] || item[:warnings])
+            td = bulk_edit_dry_run_diagnostic_list_preview(item["errors"] || item[:errors])
