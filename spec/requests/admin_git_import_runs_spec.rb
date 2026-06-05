@@ -178,10 +178,18 @@ RSpec.describe "Admin git import runs", type: :request do
   it "shows the newest 100 runs after filters are applied" do
     limited_source = create(:git_import_source, project:, repository_full_name: "matsuo-haruhito/limited-history")
     101.times do |index|
+      error_message = if index.zero?
+        "oldest filtered boundary"
+      elsif index == 100
+        "newest filtered boundary"
+      else
+        "middle filtered boundary #{index}"
+      end
+
       create_git_import_run!(
         git_import_source: limited_source,
         status: :failed,
-        error_message: "limited run #{index + 1}",
+        error_message:,
         created_at: Time.zone.parse("2026-05-01 00:00:00 UTC") + index.minutes
       )
     end
@@ -195,8 +203,8 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 100件 / 絞り込み後の最新100件までを表示")
     expect(run_rows.size).to eq(100)
-    expect(page_text).to include("limited run 101")
-    expect(page_text).not_to include("limited run 1")
+    expect(page_text).to include("newest filtered boundary")
+    expect(page_text).not_to include("oldest filtered boundary")
     expect(page_text).not_to include("other repository failure")
   end
 
