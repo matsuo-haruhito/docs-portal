@@ -2,73 +2,96 @@
 - table_key = :admin_git_import_runs
 - table_columns = git_import_run_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- status_filter_options = [["すべて", ""]] + enum_options_for("git_import_runs.status", GitImportRun.statuses.keys)
 
 h1 Git同期履歴
 = render "admin/nav"
 
-- if @git_import_runs.any?
+- if @has_git_import_runs || @git_import_run_filters_active
   p.muted
     | 表示中:
     strong = " #{@git_import_runs.size}件"
-    |  / 最新100件までを表示
+    - if @git_import_run_filters_active
+      |  / 絞り込み後の最新100件までを表示
+    - else
+      |  / 最新100件までを表示
   p.muted Git同期履歴は外部同期共通の run 境界として、provider、pull/push、status、summary_json、削除候補を追跡します。repository / branch / path / commit は Git 専用の入力と revision です。
 
   .card
-    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "Git同期履歴の表示設定")
+    = form_with url: admin_git_import_runs_path, method: :get, local: true do
+      .form-grid
+        .field
+          = label_tag :status, "状態"
+          = select_tag :status, options_for_select(status_filter_options, @status_filter)
+        .field
+          = label_tag :repository, "リポジトリ"
+          = text_field_tag :repository, @repository_filter, placeholder: "owner/repo の一部"
+      .actions
+        = submit_tag "絞り込み"
+        - if @git_import_run_filters_active
+          = link_to "絞り込み解除", admin_git_import_runs_path, class: "button secondary"
 
-  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
-    thead
-      tr
-        th data-rails-table-preferences-column-key="created_at" 実行日時
-        th data-rails-table-preferences-column-key="project" 案件
-        th data-rails-table-preferences-column-key="repository" リポジトリ
-        th data-rails-table-preferences-column-key="branch_path" ブランチ/パス
-        th data-rails-table-preferences-column-key="commit_sha" コミット
-        th data-rails-table-preferences-column-key="status" 状態
-        th data-rails-table-preferences-column-key="summary" 実行結果
-        th data-rails-table-preferences-column-key="error_message" エラー
-    tbody
-      - @git_import_runs.each do |run|
-        - project = run.git_import_source&.project
+  - if @git_import_runs.any?
+    .card
+      = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "Git同期履歴の表示設定")
+
+    = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+      thead
         tr
-          td data-rails-table-preferences-column-key="created_at" = l(run.created_at)
-          td data-rails-table-preferences-column-key="project"
-            - if project.present?
-              = project.name
-              - if project.code.present?
-                br
-                code = project.code
-            - else
-              span.muted 不明
-          td data-rails-table-preferences-column-key="repository" = run.repository_full_name
-          td data-rails-table-preferences-column-key="branch_path"
-            code = run.branch
-            br
-            code = run.source_path
-          td data-rails-table-preferences-column-key="commit_sha"
-            - if run.commit_sha.present?
-              code = run.commit_sha.first(12)
-            - else
-              span.muted 未取得
-          td data-rails-table-preferences-column-key="status"
-            span.badge = git_import_run_status_label(run)
-          td data-rails-table-preferences-column-key="summary"
-            - if run.summary_json.present?
-              - summary_lines = git_import_run_summary_lines(run)
-              - if summary_lines.any?
-                ul
-                  - summary_lines.each do |line|
-                    li = line
-              details
-                summary raw summary_json
-                pre = JSON.pretty_generate(run.summary_json)
-            - else
-              span.muted なし
-          td data-rails-table-preferences-column-key="error_message"
-            - if run.error_message.present?
-              pre = run.error_message
-            - else
-              span.muted なし
+          th data-rails-table-preferences-column-key="created_at" 実行日時
+          th data-rails-table-preferences-column-key="project" 案件
+          th data-rails-table-preferences-column-key="repository" リポジトリ
+          th data-rails-table-preferences-column-key="branch_path" ブランチ/パス
+          th data-rails-table-preferences-column-key="commit_sha" コミット
+          th data-rails-table-preferences-column-key="status" 状態
+          th data-rails-table-preferences-column-key="summary" 実行結果
+          th data-rails-table-preferences-column-key="error_message" エラー
+      tbody
+        - @git_import_runs.each do |run|
+          - project = run.git_import_source&.project
+          tr
+            td data-rails-table-preferences-column-key="created_at" = l(run.created_at)
+            td data-rails-table-preferences-column-key="project"
+              - if project.present?
+                = project.name
+                - if project.code.present?
+                  br
+                  code = project.code
+              - else
+                span.muted 不明
+            td data-rails-table-preferences-column-key="repository" = run.repository_full_name
+            td data-rails-table-preferences-column-key="branch_path"
+              code = run.branch
+              br
+              code = run.source_path
+            td data-rails-table-preferences-column-key="commit_sha"
+              - if run.commit_sha.present?
+                code = run.commit_sha.first(12)
+              - else
+                span.muted 未取得
+            td data-rails-table-preferences-column-key="status"
+              span.badge = git_import_run_status_label(run)
+            td data-rails-table-preferences-column-key="summary"
+              - if run.summary_json.present?
+                - summary_lines = git_import_run_summary_lines(run)
+                - if summary_lines.any?
+                  ul
+                    - summary_lines.each do |line|
+                      li = line
+                details
+                  summary raw summary_json
+                  pre = JSON.pretty_generate(run.summary_json)
+              - else
+                span.muted なし
+            td data-rails-table-preferences-column-key="error_message"
+              - if run.error_message.present?
+                pre = run.error_message
+              - else
+                span.muted なし
+  - else
+    .card
+      p.muted 条件に一致するGit同期履歴はありません。
+      p.muted = link_to "絞り込み解除", admin_git_import_runs_path
 - else
   .card
     p.muted まだGit同期履歴はありません。
