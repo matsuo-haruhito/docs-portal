@@ -1,23 +1,54 @@
+require "csv"
+
 class Admin::AccessLogsController < Admin::BaseController
   AI_CONTEXT_MODE_FILTERS = %w[compact full].freeze
   AI_CONTEXT_SCOPE_FILTERS = %w[all selected].freeze
   ACCESS_LOGS_PER_PAGE = 200
   ACCESS_LOGS_MAX_PAGE = 50
+  CSV_HEADERS = [
+    "日時",
+    "操作",
+    "対象種別",
+    "対象名",
+    "AI context mode",
+    "AI context scope",
+    "AI context selected_count",
+    "AI context exported_count",
+    "ユーザー名",
+    "ユーザーEmail",
+    "会社",
+    "案件コード",
+    "案件名",
+    "文書名",
+    "文書URL識別子",
+    "版",
+    "IPアドレス"
+  ].freeze
 
   before_action :require_admin_only!
 
   def index
     @filters = filter_params
-    @page = page_param
-    @projects = Project.order(:code)
-    @companies = Company.order(:domain)
-    @users = User.order(:email_address)
-    @access_logs = paginated_access_logs
-    @has_previous_page = @page > 1
-    @has_next_page = @access_logs.size > ACCESS_LOGS_PER_PAGE
-    @access_logs = @access_logs.first(ACCESS_LOGS_PER_PAGE)
-    @reached_display_limit = @access_logs.size >= ACCESS_LOGS_PER_PAGE
-    @pagination_params = pagination_params
+
+    respond_to do |format|
+      format.html do
+        @page = page_param
+        @projects = Project.order(:code)
+        @companies = Company.order(:domain)
+        @users = User.order(:email_address)
+        @access_logs = paginated_access_logs
+        @has_previous_page = @page > 1
+        @has_next_page = @access_logs.size > ACCESS_LOGS_PER_PAGE
+        @access_logs = @access_logs.first(ACCESS_LOGS_PER_PAGE)
+        @reached_display_limit = @access_logs.size >= ACCESS_LOGS_PER_PAGE
+        @pagination_params = pagination_params
+      end
+      format.csv do
+        send_data access_logs_csv,
+                  filename: access_logs_csv_filename,
+                  type: "text/csv; charset=utf-8"
+      end
+    end
   end
 
   private
@@ -28,6 +59,13 @@ class Admin::AccessLogsController < Admin::BaseController
       .order(accessed_at: :desc, id: :desc)
       .offset((@page - 1) * ACCESS_LOGS_PER_PAGE)
       .limit(ACCESS_LOGS_PER_PAGE + 1)
+  end
+
+  def csv_access_logs
+    filtered_access_logs
+      .includes(:user, :company, :project, :document, :document_version)
+      .order(accessed_at: :desc, id: :desc)
+      .limit(ACCESS_LOGS_PER_PAGE)
   end
 
   def filtered_access_logs
@@ -88,6 +126,63 @@ class Admin::AccessLogsController < Admin::BaseController
   def document_scope
     query = "%#{ActiveRecord::Base.sanitize_sql_like(@filters[:document_q].to_s.strip)}%"
     Document.where("title LIKE :query OR slug LIKE :query", query:)
+  end
+
+  def access_logs_csv
+    CSV.generate(headers: true) do |csv|
+      csv << CSV_HEADERS
+
+      csv_access_logs.each do |log|
+        csv << access_logs_csv_row(log)
+      end
+    end
+  end
+
+  def access_logs_csv_row(log)
+    ai_context_values = access_log_csv_ai_context_values(log)
+
+    [
+      log.accessed_at.strftime("%Y-%m-%d %H:%M:%S"),
+      log.action_type,
+      log.target_type,
+      log.target_name,
+      ai_context_values.fetch("mode", ""),
+      ai_context_values.fetch("scope", ""),
+      ai_context_values.fetch("selected_count", ""),
+      ai_context_values.fetch("exported_count", ""),
+      log.user&.display_name,
+      log.user&.email_address,
+      log.company&.display_name,
+      log.project&.code,
+      log.project&.name,
+      log.document&.title,
+      log.document&.slug,
+      log.document_version&.version_label,
+      log.ip_address
+    ]
+  end
+
+  def access_log_csv_ai_context_values(log)
+    return {} unless log.target_type.to_s == "ai_context"
+
+    raw_target_name = log.target_name.to_s.strip
+    return {} if raw_target_name.blank?
+
+    pairs = raw_target_name.split(";").each_with_object({}) do |part, values|
+      key, value = part.split("=", 2).map { _1.to_s.strip }
+      return {} if key.blank? || value.blank?
+
+      values[key] = value
+    end
+
+    return {} unless %w[mode scope selected_count exported_count].all? { pairs[_1].present? }
+    return {} unless pairs["selected_count"].match?(/\A\d+\z/) && pairs["exported_count"].match?(/\A\d+\z/)
+
+    pairs.slice("mode", "scope", "selected_count", "exported_count")
+  end
+
+  def access_logs_csv_filename
+    "access-logs-#{Date.current.iso8601}.csv"
   end
 
   def filter_params
