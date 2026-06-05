@@ -10,6 +10,18 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     document.update!(latest_version: version)
   end
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def page_text
+    parsed_html.text.squish
+  end
+
+  def checked_document_ids
+    parsed_html.css(%(input[name="bulk_edit[document_ids][]"][checked])).map { |input| input["value"].to_i }
+  end
+
   it "creates a dry-run and then executes the confirmed bulk edit" do
     sign_in_as(admin)
 
@@ -62,6 +74,46 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(document.latest_version.reload.snapshot_kind).to eq("submitted")
     expect(document.document_tags.pluck(:name)).to contain_exactly("重要", "社外")
     expect(dry_run.reload).to be_confirmed
+  end
+
+  it "preselects valid document candidates passed from the document master list" do
+    other_document = create(:document, project:, title: "Other Doc")
+
+    sign_in_as(admin)
+
+    get new_admin_bulk_edit_dry_run_path, params: {
+      source: "admin_documents",
+      candidate_document_ids: [document.id, 999_999, "invalid"],
+      source_filter_summaries: ["キーワード: Alpha Project"]
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("文書マスタ一覧から引き継いだ候補: 1件")
+    expect(page_text).to include("代表条件: キーワード: Alpha Project")
+    expect(page_text).to include("候補文書は選択済みです")
+    expect(page_text).to include("1件選択中")
+    expect(page_text).to include("1件表示中")
+    expect(page_text).to include("Target Doc")
+    expect(page_text).not_to include("Other Doc")
+    expect(checked_document_ids).to eq([document.id])
+    expect(other_document).to be_persisted
+  end
+
+  it "handles empty or invalid document candidates without broadening the bulk edit list" do
+    sign_in_as(admin)
+
+    get new_admin_bulk_edit_dry_run_path, params: {
+      source: "admin_documents",
+      candidate_document_ids: ["missing"]
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("文書マスタ一覧から引き継いだ候補: 0件")
+    expect(page_text).to include("有効な候補文書がありません")
+    expect(page_text).to include("0件選択中")
+    expect(page_text).to include("0件表示中")
+    expect(page_text).not_to include("Target Doc")
+    expect(checked_document_ids).to be_empty
   end
 
   it "shows warning, error, and fallback values on the dry-run preview" do
@@ -189,14 +241,6 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     get new_admin_bulk_edit_dry_run_path
 
     expect(response).to have_http_status(:forbidden)
-  end
-
-  def parsed_html
-    Nokogiri::HTML(response.body)
-  end
-
-  def page_text
-    parsed_html.text.squish
   end
 
   def preview_rows

@@ -1,4 +1,6 @@
 class Admin::DocumentsController < Admin::BaseController
+  BULK_EDIT_CANDIDATE_LIMIT = 50
+
   before_action :require_admin_only!
   before_action :set_document, only: %i[edit update destroy archive restore]
   before_action :load_projects, only: %i[index create edit update]
@@ -6,6 +8,7 @@ class Admin::DocumentsController < Admin::BaseController
   def index
     @filters = document_filter_params
     @documents = filtered_documents.includes(:project, :latest_version, :archived_by_user, :document_versions).order("projects.code", :title)
+    load_bulk_edit_candidate_state
     @document = Document.new(category: :spec, document_kind: :markdown, visibility_policy: :internal_only)
   end
 
@@ -17,6 +20,7 @@ class Admin::DocumentsController < Admin::BaseController
     else
       @filters = document_filter_params
       @documents = filtered_documents.includes(:project, :latest_version, :archived_by_user, :document_versions).order("projects.code", :title)
+      load_bulk_edit_candidate_state
       render :index, status: :unprocessable_entity
     end
   end
@@ -71,6 +75,15 @@ class Admin::DocumentsController < Admin::BaseController
 
   def document_filter_params
     params.to_unsafe_h.symbolize_keys.slice(:q, :category, :document_kind, :visibility_policy, :archived, :retention, :discard)
+  end
+
+  def load_bulk_edit_candidate_state
+    @bulk_edit_candidate_limit = BULK_EDIT_CANDIDATE_LIMIT
+    @bulk_edit_candidate_count = @documents.size
+    @bulk_edit_candidate_ids = []
+    return if @bulk_edit_candidate_count.zero? || @bulk_edit_candidate_count > @bulk_edit_candidate_limit
+
+    @bulk_edit_candidate_ids = @documents.to_a.map(&:id)
   end
 
   def filtered_documents
