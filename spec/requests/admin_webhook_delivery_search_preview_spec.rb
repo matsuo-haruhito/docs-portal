@@ -27,7 +27,7 @@ RSpec.describe "Admin webhook delivery search preview", type: :request do
       webhook_endpoint:,
       status: :failed,
       response_status: 500,
-      error_message: "Authorization: Bearer raw-secret-token token=abc123 failed at C:/Users/alice/customer/docs.yml"
+      error_message: "Authorization: Bearer raw-secret-token\ntoken=abc123 failed at C:/Users/alice/customer/docs.yml"
     )
 
     get admin_webhook_deliveries_path(status: "failed")
