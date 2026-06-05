@@ -12,6 +12,10 @@ module Admin::ProjectConsentSettingsHelper
     ]
   end
 
+  def project_consent_setting_project_option_label(project)
+    "#{project.name} (#{project.code})"
+  end
+
   def project_consent_term_option_label(term)
     "#{term.title} / #{term.version_label}"
   end
