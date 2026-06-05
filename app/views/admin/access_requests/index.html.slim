@@ -76,7 +76,7 @@ section.card
           td data-rails-table-preferences-column-key="created_at" = access_request.created_at.strftime("%Y-%m-%d %H:%M")
           td data-rails-table-preferences-column-key="requester" = "#{access_request.requester.name} / #{access_request.requester.email_address}"
           td data-rails-table-preferences-column-key="target"
-            = requestable[:type]
+            = admin_access_request_requestable_type_label(requestable[:type])
             br
             = primary_label
             - if secondary_label.present?
