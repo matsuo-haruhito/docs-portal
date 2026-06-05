@@ -60,6 +60,23 @@ RSpec.describe "Document catalogs", type: :request do
     expect(main_text).to include("表示可能件数は、現在の利用者が閲覧できる文書だけを数えます。")
   end
 
+  it "does not match document or catalog item text with the index search" do
+    document = create(:document, project:, title: "Needle Handbook", slug: "needle-handbook", visibility_policy: :restricted_external)
+    catalog = create(:document_catalog, project:, name: "Customer Pack", description: "Portal package")
+    create(:document_catalog_item, document_catalog: catalog, document:, note: "Needle note")
+
+    sign_in_as(external_user)
+
+    get project_document_catalogs_path(project, q: "needle")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("条件に一致する文書カタログはありません。検索語・対象・公開範囲を確認するか、絞り込みを解除してください。")
+    expect(response.body).not_to include("Customer Pack")
+    expect(response.body).not_to include("Needle Handbook")
+    expect(response.body).not_to include("Needle note")
+    expect(main_text).to include("名称・説明: needle")
+  end
+
   it "combines audience and visibility filters" do
     create(:document_catalog, project:, name: "Customer Private", audience_type: :customer, visibility_policy: :restricted_external)
     create(:document_catalog, project:, name: "Customer Login", audience_type: :customer, visibility_policy: :public_with_login)
@@ -107,6 +124,17 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Customer Pack")
     expect(response.body).to include("Developer Pack")
+    expect(main_text).not_to include("現在の絞り込み")
+  end
+
+  it "shows an unregistered empty state separately from a filtered empty state" do
+    sign_in_as(external_user)
+
+    get project_document_catalogs_path(project)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("利用可能な文書カタログはありません。")
+    expect(response.body).not_to include("条件に一致する文書カタログはありません。")
     expect(main_text).not_to include("現在の絞り込み")
   end
 
