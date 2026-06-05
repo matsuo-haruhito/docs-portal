@@ -38,6 +38,7 @@ h1
     p.muted 表示可能件数は、現在の利用者が閲覧できる文書だけを数えます。
 
 - if @catalogs.any?
+  p.muted 文書カタログは、対象・公開範囲・現在の利用者に見える文書数で確認できます。
   = table_tag do
     thead
       tr
@@ -47,16 +48,22 @@ h1
         th
           | 表示可能件数
           br
-          small.muted 閲覧できる文書
+          small.muted 現在の利用者に見える文書
         th
     tbody
       - @catalogs.each do |catalog|
         - visible_items_count = catalog.visible_items_for(current_user).size
         tr
-          td = catalog.name
+          td
+            div = catalog.name
+            - if catalog.description.present?
+              p.muted = truncate(catalog.description, length: 90)
           td = localized_label("document_catalogs.audience_type", catalog.audience_type)
           td = localized_label("document_catalogs.visibility_policy", catalog.visibility_policy)
-          td = "#{visible_items_count}件"
+          td
+            = "#{visible_items_count}件"
+            br
+            small.muted 現在の利用者に表示
           td = link_to "詳細", project_document_catalog_path(@project, catalog)
 - else
   - if has_filters
