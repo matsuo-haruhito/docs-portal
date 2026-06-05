@@ -1,6 +1,13 @@
 class Admin::AccessRequestsController < Admin::BaseController
   before_action :require_admin_only!
 
+  REJECTION_REASON_PRESETS = {
+    "permission_shortage" => "権限不足",
+    "wrong_target" => "対象誤り",
+    "insufficient_information" => "情報不足",
+    "approval_mismatch" => "承認条件不一致"
+  }.freeze
+
   def index
     @filters = filter_params
     scope = filtered_access_request_scope
@@ -132,7 +139,12 @@ class Admin::AccessRequestsController < Admin::BaseController
   end
 
   def rejection_reason_param
-    reason = params[:rejection_reason].to_s.strip
+    direct_reason = params[:rejection_reason].to_s.strip
+    return direct_reason if direct_reason.present?
+
+    preset_reason = REJECTION_REASON_PRESETS[params[:rejection_reason_preset].to_s]
+    note = params[:rejection_reason_note].to_s.strip
+    reason = [preset_reason, note.presence].compact.join("：")
     raise ApplicationError::BadRequest, "rejection_reason is required" if reason.blank?
 
     reason
