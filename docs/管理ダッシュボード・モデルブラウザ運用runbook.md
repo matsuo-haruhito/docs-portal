@@ -39,10 +39,15 @@ current 実装の前提:
 current 実装の前提:
 
 - index では各 model の `件数` と `最終更新` を、`基本マスタ` `文書・権限` `import / sync` `外部連携` `運用` の領域別 group に分けて並べる
+- index の `モデル検索` は、catalog entry のモデル名、key、説明、group の表記から model を探すための入口であり、最近の record 自体を検索する欄ではない
 - group は `Admin::ModelBrowserCatalog::GROUP_LABELS` と各 entry の `group` metadata が正本で、画面側だけで分類を作らない
 - show では model ごとに最近 20 件の record を、catalog が持つ `summary_fields` で表示する
+- show の `代表フィールド検索` は、各 model の `summary_fields` のうち実カラムの string / text field と、数字だけの検索語では `id` exact match を対象にする
+- association 表示用の `*_id` field は代表フィールド検索の対象外だが、`public_id` は識別用の代表 field として検索対象に残る
+- 検索語は最大 100 文字に切り詰められ、検索結果も最大 20 件までの read-only sample として表示される
 - `既存画面へ` がある model は、そのまま管理画面の一覧へ戻れる
 - `DocumentVersion` `DocumentFile` など既存の専用 index がないものも、ここでは最新 record の代表値を見返せる
+- モデルブラウザには編集、削除、bulk action、CSV export、pagination、saved search はない。続きの検索や操作が必要な model は `既存画面へ` から専用管理画面へ戻る
 
 領域別 group の読み方:
 
@@ -57,7 +62,9 @@ current 実装の前提:
 - まず変化の有無をざっと見たい: `ダッシュボード`
 - model 全体の件数や最終更新を横断で比較したい: `モデルブラウザ` index
 - 領域別に近い model をまとめて見たい: `モデルブラウザ` index の group 見出し
+- catalog に載っている model を名前、key、説明、group から探したい: `モデルブラウザ` index の `モデル検索`
 - 最近の record の shape や値を短く確認したい: `モデルブラウザ` show
+- 最近の record のうち public ID、名称、code など代表フィールドに心当たりがある値だけを探したい: `モデルブラウザ` show の `代表フィールド検索`
 - 編集や登録をしたい: `モデルブラウザ` ではなく `既存画面へ` から元の管理画面へ戻る
 
 ### Catalog を追加・見直すとき
@@ -85,6 +92,7 @@ current 実装の前提:
 - `secret`、token、authorization、raw payload、request / response body、長大 text、個人情報の本文相当は入れない
 - ファイル本文、Webhook request body、外部 API の raw response などは、model browser ではなく専用のマスク済み preview や詳細画面の方針に従う
 - association は `*_id` のような短い参照値に留め、名前や本文をたどる必要がある場合は既存画面や関連 runbook への導線で補う
+- 代表フィールド検索は string / text の `summary_fields` と numeric `id` の補助検索に限られるため、検索させたい値を増やす目的だけで長大 text や secret 相当の field を `summary_fields` に追加しない
 
 `index_path_helper` の考え方:
 
@@ -186,6 +194,7 @@ current 実装の前提:
 
 - model 数や最終更新に急な変化がないか
 - model browser index の group 見出しで、近い領域の model がまとめて確認できているか
+- `モデル検索` と `代表フィールド検索` を使い分け、catalog entry を探すのか最近の record sample を絞るのかを混同していないか
 - `警告` `エラー` が、sample 値の流用なのか実運用に影響する不足なのか
 - 欠落ファイルが単発なのか、storage 全体の問題に見えるのか
 - `Storage使用量` が local directory の概算容量として読めており、cleanup や retention 判断を先取りしていないか
@@ -196,6 +205,8 @@ current 実装の前提:
 - まず全体の変化や異常の有無を見たい: `ダッシュボード`
 - 特定 model の件数や最近の record を見たい: `モデルブラウザ`
 - 近い領域の model をまとめて確認したい: `モデルブラウザ` index の group 見出し
+- model browser に載っている対象 model を探したい: `モデルブラウザ` index の `モデル検索`
+- model 詳細内の最近の record sample から識別値を探したい: `モデルブラウザ` show の `代表フィールド検索`
 - `.env` や compose の設定不足を見たい: `アプリ設定診断`
 - 実体ファイルが見えない原因を切り分けたい: `文書ファイル健全性`
 - local storage の領域別使用量を read-only に確認したい: `Storage使用量`
