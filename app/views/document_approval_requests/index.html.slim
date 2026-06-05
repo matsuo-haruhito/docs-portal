@@ -2,6 +2,8 @@
 - list_path = @document.present? ? ->(path_params = {}) { project_document_document_approval_requests_path(@project, @document, path_params) } : ->(path_params = {}) { document_approval_requests_path(path_params) }
 - total_count = @pending_count + @approved_count + @cancelled_count
 - current_list_path = request.fullpath
+- query_path_params = @query.present? ? { q: @query } : {}
+- clear_search_params = @status_filter.present? ? { status: @status_filter } : {}
 - table_key = :document_approval_requests
 - table_columns = document_approval_request_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
@@ -18,10 +20,23 @@ p.muted
   | 対応待ち #{@pending_count}件 / OK済み #{@approved_count}件 / Cancel済み #{@cancelled_count}件
 
 p.actions
-  = link_to "すべて (#{total_count})", list_path.call, class: @status_filter.blank? ? "button" : "button secondary"
-  = link_to "対応待ち (#{@pending_count})", list_path.call(status: :pending), class: @status_filter == "pending" ? "button" : "button secondary"
-  = link_to "OK済み (#{@approved_count})", list_path.call(status: :approved), class: @status_filter == "approved" ? "button" : "button secondary"
-  = link_to "Cancel済み (#{@cancelled_count})", list_path.call(status: :cancelled), class: @status_filter == "cancelled" ? "button" : "button secondary"
+  = link_to "すべて (#{total_count})", list_path.call(query_path_params), class: @status_filter.blank? ? "button" : "button secondary"
+  = link_to "対応待ち (#{@pending_count})", list_path.call(query_path_params.merge(status: :pending)), class: @status_filter == "pending" ? "button" : "button secondary"
+  = link_to "OK済み (#{@approved_count})", list_path.call(query_path_params.merge(status: :approved)), class: @status_filter == "approved" ? "button" : "button secondary"
+  = link_to "Cancel済み (#{@cancelled_count})", list_path.call(query_path_params.merge(status: :cancelled)), class: @status_filter == "cancelled" ? "button" : "button secondary"
+
+= form_with url: list_path.call, method: :get, local: true do
+  - if @status_filter.present?
+    = hidden_field_tag :status, @status_filter
+  p
+    = label_tag :q, "依頼を検索"
+    = search_field_tag :q, @query, placeholder: "依頼名・本文・文書名・slug・関係者名"
+    = submit_tag "検索", class: "button"
+    - if @query.present?
+      = link_to "検索を解除", list_path.call(clear_search_params), class: "button secondary"
+
+- if @query.present?
+  p.muted = "検索条件: #{@query} / 表示 #{@document_approval_requests.size}件"
 
 - if @document_approval_requests.any?
   .card
