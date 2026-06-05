@@ -79,13 +79,13 @@ h1 Git同期履歴
                     - summary_lines.each do |line|
                       li = line
                 details
-                  summary raw summary_json
-                  pre = JSON.pretty_generate(run.summary_json)
+                  summary safe summary_json preview
+                  pre = git_import_run_summary_preview_json(run)
               - else
                 span.muted なし
             td data-rails-table-preferences-column-key="error_message"
               - if run.error_message.present?
-                pre = run.error_message
+                pre = git_import_run_error_preview(run)
               - else
                 span.muted なし
   - else
