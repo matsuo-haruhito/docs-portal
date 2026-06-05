@@ -23,7 +23,7 @@ RSpec.describe "Document catalogs", type: :request do
   end
 
   it "lists viewable catalogs for the project" do
-    visible = create(:document_catalog, project:, name: "Customer Pack", audience_type: :customer, visibility_policy: :restricted_external)
+    visible = create(:document_catalog, project:, name: "Customer Pack", description: "契約前に共有する導入資料をまとめたカタログです", audience_type: :customer, visibility_policy: :restricted_external)
     create(:document_catalog, project:, name: "Internal Pack", visibility_policy: :internal_only)
 
     sign_in_as(external_user)
@@ -33,10 +33,12 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("文書カタログ")
     expect(response.body).to include("Customer Pack")
+    expect(response.body).to include("契約前に共有する導入資料をまとめたカタログです")
     expect(response.body).to include("顧客向け")
     expect(response.body).to include("限定公開")
     expect(response.body).to include("表示可能件数")
-    expect(response.body).to include("閲覧できる文書")
+    expect(response.body).to include("現在の利用者に見える文書")
+    expect(response.body).to include("現在の利用者に表示")
     expect(response.body).not_to include("Internal Pack")
     expect(catalog_table_text).not_to include("restricted_external")
     expect(response.body).to include(project_document_catalog_path(project, visible))
