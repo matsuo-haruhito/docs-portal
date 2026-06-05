@@ -96,6 +96,8 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
     scope = scope.where(webhook_endpoint_id: @delivery_filters[:webhook_endpoint_id]) if @delivery_filters[:webhook_endpoint_id].present?
     scope = scope.where(event_type: @delivery_filters[:event_type]) if @delivery_filters[:event_type].present?
     scope = scope.public_send(@delivery_filters[:status]) if @delivery_filters[:status].present?
+    scope = scope.where(response_status: @delivery_filters[:response_status]) if @delivery_filters[:response_status].present?
+    scope = apply_error_query_filter(scope)
     scope = apply_created_at_filters(scope)
     scope
   end
@@ -108,8 +110,15 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
     scope
   end
 
+  def apply_error_query_filter(scope)
+    return scope if @delivery_filters[:error_q].blank?
+
+    escaped_query = ActiveRecord::Base.sanitize_sql_like(@delivery_filters[:error_q].downcase)
+    scope.where("LOWER(webhook_deliveries.error_message) LIKE ?", "%#{escaped_query}%")
+  end
+
   def delivery_search_filter_params
-    permitted = params.permit(:webhook_endpoint_id, :event_type, :status, :created_from, :created_to).to_h.symbolize_keys
+    permitted = params.permit(:webhook_endpoint_id, :event_type, :status, :created_from, :created_to, :response_status, :error_q).to_h.symbolize_keys
     filters = {}
 
     endpoint_id = permitted[:webhook_endpoint_id].to_s
@@ -120,6 +129,14 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
 
     status = permitted[:status].to_s
     filters[:status] = status if DELIVERY_STATUS_FILTERS.include?(status)
+
+    response_status = permitted[:response_status].to_s
+    if response_status.match?(/\A\d+\z/) && response_status.to_i.between?(100, 599)
+      filters[:response_status] = response_status
+    end
+
+    error_q = permitted[:error_q].to_s.strip
+    filters[:error_q] = error_q if error_q.present?
 
     created_from = permitted[:created_from].to_s
     filters[:created_from] = created_from if parsed_filter_date(created_from)
