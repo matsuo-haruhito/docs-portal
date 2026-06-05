@@ -134,7 +134,7 @@
               <td class="px-4 py-3 font-mono" data-rails-table-preferences-column-key="path"><%= event.path %></td>
               <td class="px-4 py-3" data-rails-table-preferences-column-key="operation"><%= generated_file_operation_label(event.operation) %></td>
               <td class="px-4 py-3" data-rails-table-preferences-column-key="event_source"><%= generated_file_source_label(event.event_source) %></td>
-              <td class="max-w-xs truncate px-4 py-3 text-gray-700" data-rails-table-preferences-column-key="error_message" title="<%= event.error_message %>"><%= event.error_message.presence || "-" %></td>
+              <td class="max-w-xs truncate px-4 py-3 text-gray-700" data-rails-table-preferences-column-key="error_message"><%= generated_file_event_error_preview(event.error_message) %></td>
               <td class="px-4 py-3" data-rails-table-preferences-column-key="occurrences_count"><%= event.occurrences_count %></td>
               <td class="px-4 py-3" data-rails-table-preferences-column-key="scheduled_at"><%= l(event.scheduled_at, format: :long) if event.scheduled_at %></td>
               <td class="px-4 py-3" data-rails-table-preferences-column-key="processed_at"><%= l(event.processed_at, format: :long) if event.processed_at %></td>
