@@ -18,8 +18,12 @@ RSpec.describe "Admin read confirmations", type: :request do
     parsed_html.text.squish
   end
 
+  def read_confirmation_row_nodes
+    parsed_html.css("table tbody tr")
+  end
+
   def read_confirmation_rows
-    parsed_html.css("table tbody tr").map { _1.text.squish }
+    read_confirmation_row_nodes.map { _1.text.squish }
   end
 
   def user_filter_options
@@ -75,7 +79,7 @@ RSpec.describe "Admin read confirmations", type: :request do
 
     get admin_read_confirmations_path(project_id: project.id)
 
-    row = read_confirmation_rows.first
+    row = read_confirmation_row_nodes.first
 
     expect(response).to have_http_status(:ok)
     expect(row.at_css(%(td[data-rails-table-preferences-column-key="document"]))["style"]).to include("overflow-wrap:anywhere")
