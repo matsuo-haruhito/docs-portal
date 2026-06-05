@@ -95,6 +95,23 @@
 <section class="card">
   <h2>最近見た文書 <span class="muted"><%= @recent_documents.size %>件</span></h2>
   <p class="muted">閲覧履歴から自動で表示されます。お気に入りや後で読むとは別の一覧です。</p>
+
+  <%= form_with url: document_bookmarks_path, method: :get, local: true, class: "filter-form" do |form| %>
+    <% if @bookmark_project_code.present? %>
+      <%= form.hidden_field :project_code, value: @bookmark_project_code %>
+    <% end %>
+    <div class="form-field">
+      <%= form.label :recent_q, "最近見た文書を検索" %>
+      <%= form.search_field :recent_q, value: @recent_documents_query, placeholder: "文書名・案件名で検索", autocomplete: "off" %>
+    </div>
+    <div class="form-actions">
+      <%= form.submit "絞り込む", class: "button" %>
+      <% if @recent_documents_query.present? %>
+        <%= link_to "条件をクリア", document_bookmarks_path(project_code: @bookmark_project_code), class: "button secondary" %>
+      <% end %>
+    </div>
+  <% end %>
+
   <% if @recent_documents.any? %>
     <ul class="resource-list">
       <% @recent_documents.each do |document| %>
@@ -109,6 +126,8 @@
         </li>
       <% end %>
     </ul>
+  <% elsif @all_recent_documents.any? %>
+    <p class="muted">条件に一致する最近見た文書はありません。検索語を変えて探してください。</p>
   <% else %>
     <p class="muted">文書を開くと、最近見た文書としてここに表示されます。</p>
   <% end %>
