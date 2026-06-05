@@ -9,6 +9,7 @@ class Admin::DashboardController < Admin::BaseController
 
     @configuration_diagnostic = ApplicationConfigurationDiagnostic.new.call
     @document_file_health = DocumentFileHealthCheck.new.call
+    @storage_usage_summary = StorageUsageSummary.new.call
     @model_browser_entries = Admin::ModelBrowserCatalog.entries.first(8)
   end
 

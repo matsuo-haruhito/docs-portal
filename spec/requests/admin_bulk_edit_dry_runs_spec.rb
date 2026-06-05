@@ -64,6 +64,112 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(dry_run.reload).to be_confirmed
   end
 
+  it "shows warning, error, and fallback values on the dry-run preview" do
+    sign_in_as(admin)
+    dry_run = BulkEditDryRun.create!(
+      project:,
+      created_by: admin,
+      operation_type: :document_metadata,
+      target_document_ids: [document.id],
+      params_json: {
+        document_attributes: {
+          category: "manual"
+        }
+      },
+      summary_json: {
+        preview: {
+          total_count: 4,
+          changed_count: 2
+        }
+      },
+      result_json: {
+        preview_items: [
+          preview_item("Warning Doc", changed_fields: ["category"], warnings: ["分類が未確認です"]),
+          preview_item("Error Doc", changed_fields: ["visibility_policy"], errors: ["公開範囲を解決できません"]),
+          preview_item("Changed Doc", changed_fields: ["importance_level"]),
+          preview_item("Clean Doc", changed_fields: [])
+        ]
+      },
+      warnings_json: ["分類が未確認の文書があります"],
+      errors_json: ["公開範囲を解決できない文書があります"],
+      status: :analyzed,
+      expires_at: 1.day.from_now
+    )
+
+    get admin_bulk_edit_dry_run_path(dry_run)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("警告 / エラー")
+    expect(page_text).to include("1 / 1")
+    expect(page_text).to include("警告・エラーのある行を先に確認")
+    expect(page_text).to include("確認目安")
+    expect(page_text).to include("確認目安は表示補助です")
+    expect(page_text).to include("分類が未確認の文書があります")
+    expect(page_text).to include("公開範囲を解決できない文書があります")
+    expect(response.body).to include("bulk-edit-review-row--warning")
+    expect(response.body).to include("bulk-edit-review-row--error")
+    expect(response.body).to include("bulk-edit-review-row--changed")
+    expect(response.body).to include("bulk-edit-review-row--unchanged")
+
+    warning_row, error_row, changed_row, clean_row = preview_rows
+    expect(warning_row).to include("Warning Doc", "警告あり", "分類", "分類が未確認です", "-")
+    expect(error_row).to include("Error Doc", "エラーあり", "公開範囲", "-", "公開範囲を解決できません")
+    expect(changed_row).to include("Changed Doc", "変更予定")
+    expect(clean_row).to include("Clean Doc", "変更なし", "-", "-", "-")
+  end
+
+  it "shows success, failure, skipped, and fallback values on execution results" do
+    sign_in_as(admin)
+    dry_run = BulkEditDryRun.create!(
+      project:,
+      created_by: admin,
+      operation_type: :document_metadata,
+      target_document_ids: [document.id],
+      params_json: {
+        document_attributes: {
+          category: "manual"
+        }
+      },
+      summary_json: {
+        preview: {
+          total_count: 3,
+          changed_count: 1
+        },
+        execution: {
+          total_count: 3,
+          success_count: 1,
+          failure_count: 1,
+          skipped_count: 1
+        }
+      },
+      result_json: {
+        preview_items: [],
+        execution_items: [
+          execution_item("Success Doc", status: "success", changed_fields: ["category"]),
+          execution_item("Failed Doc", status: "failed", changed_fields: ["visibility_policy"], errors: ["保存に失敗しました"]),
+          execution_item("Skipped Doc", status: "skipped", changed_fields: [], warnings: ["変更なしのためスキップ"])
+        ]
+      },
+      warnings_json: [],
+      errors_json: [],
+      status: :confirmed,
+      confirmed_by: admin,
+      confirmed_at: Time.current,
+      expires_at: 1.day.from_now
+    )
+
+    get admin_bulk_edit_dry_run_path(dry_run)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("実行結果")
+    expect(page_text).to include("個別文書ごとの成功/失敗を表示します。")
+
+    success_row, failed_row, skipped_row = execution_rows
+    expect(success_row).to include("Success Doc", "分類", "-", "-")
+    expect(failed_row).to include("Failed Doc", "公開範囲", "-", "保存に失敗しました")
+    expect(skipped_row).to include("Skipped Doc", "-", "変更なしのためスキップ", "-")
+  end
+
   it "rejects dry-run creation without selected documents" do
     sign_in_as(admin)
 
@@ -83,5 +189,79 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     get new_admin_bulk_edit_dry_run_path
 
     expect(response).to have_http_status(:forbidden)
+  end
+
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def page_text
+    parsed_html.text.squish
+  end
+
+  def preview_rows
+    rows_for_section("事前確認明細")
+  end
+
+  def execution_rows
+    rows_for_section("実行結果")
+  end
+
+  def rows_for_section(title)
+    section = parsed_html.at_xpath("//section[contains(concat(' ', normalize-space(@class), ' '), ' card ')][.//h2[normalize-space()='#{title}']]")
+    expect(section).to be_present
+
+    section.css("tbody tr").map do |row|
+      row.css("td").map { |cell| cell.text.squish }
+    end
+  end
+
+  def preview_item(title, changed_fields:, warnings: [], errors: [])
+    {
+      document_id: document.id,
+      document_public_id: document.public_id,
+      before: {
+        document: {
+          title:,
+          category: "spec",
+          document_kind: "markdown",
+          visibility_policy: "restricted_external",
+          importance_level: "normal",
+          archived: false
+        },
+        latest_version: {
+          snapshot_kind: "current"
+        },
+        tag_names: []
+      },
+      after: {
+        document: {
+          category: changed_fields.include?("category") ? "manual" : "spec",
+          document_kind: "markdown",
+          visibility_policy: changed_fields.include?("visibility_policy") ? "public_with_login" : "restricted_external",
+          importance_level: changed_fields.include?("importance_level") ? "critical" : "normal",
+          archived: false
+        },
+        latest_version: {
+          snapshot_kind: "current"
+        },
+        tag_names: []
+      },
+      changed_fields:,
+      warnings:,
+      errors:
+    }
+  end
+
+  def execution_item(title, status:, changed_fields:, warnings: [], errors: [])
+    {
+      document_id: document.id,
+      document_public_id: document.public_id,
+      title:,
+      status:,
+      changed_fields:,
+      warnings:,
+      errors:
+    }
   end
 end

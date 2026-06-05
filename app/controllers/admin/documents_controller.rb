@@ -5,7 +5,7 @@ class Admin::DocumentsController < Admin::BaseController
 
   def index
     @filters = document_filter_params
-    @documents = filtered_documents.includes(:project, :latest_version, :archived_by_user).order("projects.code", :title)
+    @documents = filtered_documents.includes(:project, :latest_version, :archived_by_user, :document_versions).order("projects.code", :title)
     @document = Document.new(category: :spec, document_kind: :markdown, visibility_policy: :internal_only)
   end
 
@@ -16,7 +16,7 @@ class Admin::DocumentsController < Admin::BaseController
       redirect_to admin_documents_path, notice: "文書を登録しました。"
     else
       @filters = document_filter_params
-      @documents = filtered_documents.includes(:project, :latest_version, :archived_by_user).order("projects.code", :title)
+      @documents = filtered_documents.includes(:project, :latest_version, :archived_by_user, :document_versions).order("projects.code", :title)
       render :index, status: :unprocessable_entity
     end
   end

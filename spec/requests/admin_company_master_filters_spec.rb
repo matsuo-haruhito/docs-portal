@@ -1,0 +1,90 @@
+require "rails_helper"
+
+RSpec.describe "Admin company master filters", type: :request do
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def page_text
+    parsed_html.text.squish
+  end
+
+  def input_value(name)
+    parsed_html.at_css(%(input[name="#{name}"]))&.[]("value")
+  end
+
+  def selected_option_value(name)
+    parsed_html.at_css(%(select[name="#{name}"] option[selected]))&.[]("value")
+  end
+
+  let!(:company) { create(:company, domain: "alpha.example.com", name: "Alpha Company", active: true) }
+  let!(:other_company) { create(:company, domain: "omega.example.com", name: "Omega Holdings", active: true) }
+  let!(:inactive_company) { create(:company, domain: "dormant.example.com", name: "Dormant Partner", active: false) }
+
+  it "filters companies by keyword while preserving table preferences" do
+    sign_in_as(create(:user, :internal))
+
+    get admin_companies_path, params: { q: "OMEGA" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("会社を探す")
+    expect(page_text).to include("Omega Holdings")
+    expect(page_text).not_to include("Alpha Company")
+    expect(page_text).not_to include("Dormant Partner")
+    expect(input_value("q")).to eq("OMEGA")
+    expect(page_text).to include("会社一覧の表示設定")
+    expect(response.body).to include('data-rails-table-preferences-column-key="domain"')
+  end
+
+  it "filters companies by active state and ignores unsupported state values" do
+    sign_in_as(create(:user, :internal))
+
+    get admin_companies_path, params: { active: "false" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("Dormant Partner")
+    expect(page_text).not_to include("Alpha Company")
+    expect(page_text).not_to include("Omega Holdings")
+    expect(selected_option_value("active")).to eq("false")
+
+    get admin_companies_path, params: { q: "alpha", active: "unsupported" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("Alpha Company")
+    expect(page_text).not_to include("Omega Holdings")
+    expect(selected_option_value("active")).to be_nil
+  end
+
+  it "shows a filtered empty state separately from the unregistered empty state" do
+    sign_in_as(create(:user, :internal))
+
+    get admin_companies_path, params: { q: "missing-company" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索条件に一致する会社はありません。")
+    expect(page_text).to include("キーワードや状態の条件を変更するか、条件をクリアしてください。")
+    expect(page_text).not_to include("まだ会社は登録されていません。")
+    expect(input_value("q")).to eq("missing-company")
+  end
+
+  it "keeps company_master_admin searches inside the current company scope" do
+    manager = create(:user, :external, :company_master_admin, company:)
+    sign_in_as(manager)
+
+    get admin_companies_path, params: { q: "omega" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索条件に一致する会社はありません。")
+    expect(page_text).not_to include("Omega Holdings")
+    expect(page_text).not_to include("Dormant Partner")
+
+    get admin_companies_path, params: { q: "alpha", active: "true" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("Alpha Company")
+    expect(page_text).not_to include("Omega Holdings")
+    expect(page_text).not_to include("Dormant Partner")
+    expect(input_value("q")).to eq("alpha")
+    expect(selected_option_value("active")).to eq("true")
+  end
+end
