@@ -26,6 +26,7 @@ p.muted 主要な管理対象の件数と最近のデータを横断確認でき
           - summary = @entry_summaries.fetch(entry)
           section.card.metric-card
             h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
+            p.muted = "key: #{entry.key} / group: #{group_label}"
             p.muted = entry.description
             dl.definition-list
               dt 件数
