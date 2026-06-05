@@ -16,7 +16,7 @@
 | --- | --- | --- | --- |
 | [`rails_fields_kit#500`](https://github.com/matsuo-haruhito/rails_fields_kit/pull/500) | built `.gem` artifact から packaged `package.json` と `exports["."]` / `exports["./tom_select_controller"]` の target files を確認する CI gate | package-root import と direct Tom Select controller entrypoint が packaged artifact に入ること | `admin/document_sets` form の selected value / placeholder / validation rerender、`application.js` / `vite.config.ts` / initializer の wiring |
 | [`tree_view-rails#825`](https://github.com/matsuo-haruhito/tree_view-rails/issues/825) | built gem に JavaScript / CSS / importmap entrypoint が入ることを確認する release safety lane | host app が必要とする tree_view JavaScript / asset / importmap entrypoint が packaging 対象から落ちにくいこと | sidebar tree、detail tree、persisted state、route context、`documents_helper` / `projects_helper` の app-side row 文脈 |
-| [`rails_table_preferences#428`](https://github.com/matsuo-haruhito/rails_table_preferences/issues/428) | built gem から `package.json` exports と package-root / direct controller JavaScript entrypoints を確認する quality gate | `rails_table_preferences` package root と `rails_table_preferences/controller` の packaged entrypoint が残ること | `admin/document_sets` の editor / filter / preset / mounted engine save、Markdown preview table fallback と混ぜていないこと |
+| [`rails_table_preferences#428`](https://github.com/matsuo-haruhito/rails_table_preferences/issues/428) | built gem から `package.json` exports と package-root / direct controller JavaScript entrypoints を確認する quality gate。`rails_table_preferences#798` の planned 方針では `README.md`、`docs/index.md` family、`docs/javascript_entrypoints.md`、release checklist、package verifier を source-of-truth family として読む | `rails_table_preferences` package root と `rails_table_preferences/controller` の packaged entrypoint が残ること。package-root named export、direct controller import、packaged copied/package controller files の確認先を upstream docs / verifier で分けて読めること | `admin/document_sets` の editor / filter / preset / mounted engine save、Markdown preview table fallback と混ぜていないこと。table key、stable column key、filter / sort mapping、preset behavior、rollback target は docs-portal 側の representative smoke として別に残すこと |
 
 ## docs-portal release train での読み方
 
@@ -34,7 +34,7 @@ current `main` の `Gemfile.lock` では、次の revision が解決されてい
 | --- | --- | --- |
 | `rails_fields_kit` | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | baseline child `#783` 後の前提 revision。次の target SHA は child issue 側で決める |
 | `tree_view` | `9c538f9ee7946fa5af24f15c99402a0431677303` | `#903` の update log で target SHA、sidebar / detail tree smoke、rollback target を残す |
-| `rails_table_preferences` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `#904` の update log で target SHA と admin/document_sets smoke を残す。known-good 判断は `#789` と分ける |
+| `rails_table_preferences` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `#904` の update log で target SHA と admin/document_sets smoke を残す。known-good 判断は `#789` と分け、upstream evidence family と downstream smoke を別項目で記録する |
 
 ## 非目標
 
