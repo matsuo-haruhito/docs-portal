@@ -9,6 +9,10 @@
 - active_filter_labels << "名称・説明: #{@catalog_query}" if @catalog_query.present?
 - active_filter_labels << "対象: #{localized_label("document_catalogs.audience_type", @audience_type_filter)}" if @audience_type_filter.present?
 - active_filter_labels << "公開範囲: #{localized_label("document_catalogs.visibility_policy", @visibility_policy_filter)}" if @visibility_policy_filter.present?
+- reusable_filter_params = {}
+- reusable_filter_params[:q] = @catalog_query if @catalog_query.present?
+- reusable_filter_params[:audience_type] = @audience_type_filter if @audience_type_filter.present?
+- reusable_filter_params[:visibility_policy] = @visibility_policy_filter if @visibility_policy_filter.present?
 
 h1
   = @project.name
@@ -36,6 +40,8 @@ h1
       - active_filter_labels.each do |filter_label|
         li = filter_label
     p.muted 表示可能件数は、現在の利用者が閲覧できる文書だけを数えます。
+    p.muted 現在の条件だけを含むURLです。開いても閲覧権限は現在の利用者で再確認されます。
+    p = link_to "現在の条件のURLを開く", project_document_catalogs_path(@project, reusable_filter_params), class: "button secondary"
 
 - if @catalogs.any?
   p.muted 文書カタログは、対象・公開範囲・現在の利用者に見える文書数で確認できます。
