@@ -2,7 +2,7 @@
 
 この runbook は、管理画面の `ダッシュボード` と `モデルブラウザ` を日常運用で見返すときの入口をまとめる。
 
-新しい診断ルールや監視基準はここでは定義しない。current 実装を前提に、`モデル観測` `アプリ設定診断` `文書ファイル健全性` をどう使い分け、必要に応じてどこへ戻るかを整理する。
+新しい診断ルールや監視基準はここでは定義しない。current 実装を前提に、`モデル観測` `アプリ設定診断` `文書ファイル健全性` `Storage使用量` をどう使い分け、必要に応じてどこへ戻るかを整理する。
 
 ## 先に見るもの
 
@@ -13,7 +13,7 @@
 
 ## 画面の役割
 
-`admin/dashboard` は internal admin だけが使える運用確認の入口で、`モデル観測` `アプリ設定診断` `文書ファイル健全性` を 1 画面で見比べる。
+`admin/dashboard` は internal admin だけが使える運用確認の入口で、`モデル観測` `アプリ設定診断` `文書ファイル健全性` `Storage使用量` を 1 画面で見比べる。
 
 current 実装の前提:
 
@@ -21,6 +21,7 @@ current 実装の前提:
 - `アプリ設定診断` は `ApplicationConfigurationDiagnostic` の check を `OK / 警告 / エラー` 件数つきで出す
 - `文書ファイル健全性` は `DocumentFileHealthCheck` で総件数と実体欠落件数を出し、欠落ファイルは最大 20 件まで一覧表示する
 - 欠落ファイルがある場合、`欠落ファイル詳細` で案件、文書名 / slug、Storage key / ファイル名の断片から絞り込みながら、先頭 100 件まで read-only に確認できる
+- `Storage使用量` は `StorageUsageSummary` で local `storage/document_files` / `storage/docs_sites` / `storage/imports` の file count と概算使用量を read-only に出す
 - 画面下部の `基本マスタ` `関連設定` は、日常確認後に既存の管理画面へ戻る近道として置かれている
 
 ## 1. モデル観測とモデルブラウザ
@@ -154,12 +155,40 @@ current 実装の前提:
 - filter は表示対象を絞るだけで、retention policy、cleanup、復元期限、GCS / object storage 連携の判断は行わない
 - 権限不足や公開条件の問題を診断する画面ではなく、まず「物理ファイルが見えるか」を切り分けるための入口として使う
 
+## 4. Storage使用量
+
+`Storage使用量` は、local `Rails.root/storage` 配下の領域別 file count と概算使用量を read-only に確認する。
+
+current 実装の前提:
+
+- `DocumentFile 実体` は `storage/document_files` を測り、アップロード、ZIP/Git/外部同期で取り込まれた文書添付の正本を読む
+- `Docs site build` は `storage/docs_sites` を測り、Docusaurus などで生成した文書表示用 site artifact を読む
+- `Import staging` は `storage/imports` を測り、ZIP / manual upload dry-run などの一時確認 artifact を読む
+- 各領域は `StorageUsageSummary` が directory 内の file を走査して、file count と `number_to_human_size` の概算使用量にする
+- directory が存在しない場合は 0 file / 0 byte として扱う
+- `合計` はこの 3 領域の合算で、Project / Document / customer 単位の内訳ではない
+
+読み方:
+
+- 容量の増減をざっと見たいときは、まず `合計` と各領域の file count / 概算使用量を見る
+- 添付や原本が増えている疑いがある場合は `storage/document_files`、build artifact が増えている疑いがある場合は `storage/docs_sites`、dry-run や import staging が残っている疑いがある場合は `storage/imports` を見る
+- `文書ファイル健全性` は登録済み `DocumentFile` の実体欠落を確認する入口で、`Storage使用量` は local storage 領域別の容量を確認する入口として分ける
+- 欠落ファイルの実体調査は `欠落ファイル詳細`、容量や保存先方針の確認は [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md) へ戻る
+
+注意点:
+
+- `Storage使用量` は read-only であり、削除、archive、cleanup、retention policy 決定、GCS API 連携は行わない
+- 大きい値が出ても、その画面だけで不要ファイルや削除対象を断定しない
+- 外部 object storage の bucket 使用量、signed URL、public access policy、Project / Document 単位の課金・容量レポートは current support 外として扱う
+- alert rule や通知 channel は current repo では具体実装ではない。監視観点は [監視・アラート設計](./監視・アラート設計.md) に戻す
+
 ## 日常確認ポイント
 
 - model 数や最終更新に急な変化がないか
 - model browser index の group 見出しで、近い領域の model がまとめて確認できているか
 - `警告` `エラー` が、sample 値の流用なのか実運用に影響する不足なのか
 - 欠落ファイルが単発なのか、storage 全体の問題に見えるのか
+- `Storage使用量` が local directory の概算容量として読めており、cleanup や retention 判断を先取りしていないか
 - dashboard だけで完結させず、必要な既存管理画面や仕様 docs にすぐ戻れているか
 
 ## 迷ったときの切り分け
@@ -169,6 +198,8 @@ current 実装の前提:
 - 近い領域の model をまとめて確認したい: `モデルブラウザ` index の group 見出し
 - `.env` や compose の設定不足を見たい: `アプリ設定診断`
 - 実体ファイルが見えない原因を切り分けたい: `文書ファイル健全性`
+- local storage の領域別使用量を read-only に確認したい: `Storage使用量`
+- storage の保存先、配信、cleanup 境界を見直したい: [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md)
 - 個別のアクセス履歴や利用傾向を追いたい: [監査ログ運用runbook](./監査ログ運用runbook.md) や [文書利用状況運用runbook](./文書利用状況運用runbook.md) に戻る
 
 ## 関連画面
@@ -181,5 +212,6 @@ current 実装の前提:
 - `app/views/admin/model_browsers/index.html.slim`
 - `app/views/admin/model_browsers/show.html.slim`
 - `app/services/admin/model_browser_catalog.rb`
+- `app/services/storage_usage_summary.rb`
 - `app/checks/application_configuration_diagnostic.rb`
 - `app/checks/document_file_health_check.rb`
