@@ -104,6 +104,116 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(page_text).to include("raw summary_json")
   end
 
+  it "filters runs by status" do
+    create_git_import_run!(status: :failed, error_message: "repository not found")
+    create_git_import_run!(
+      status: :imported,
+      summary_json: { "reason" => "imported documents" },
+      created_at: Time.zone.parse("2026-05-02 00:00:00 UTC")
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_git_import_runs_path, params: { status: "failed" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 1件 / 絞り込み後の最新100件までを表示")
+    expect(page_text).to include("repository not found")
+    expect(page_text).to include("絞り込み解除")
+    expect(response.body).to include("Git同期履歴の表示設定")
+    expect(response.body).to include('data-rails-table-preferences-column-key="status"')
+    expect(page_text).not_to include("imported documents")
+    expect(run_rows.size).to eq(1)
+  end
+
+  it "filters runs by repository fragment" do
+    docs_source = create(:git_import_source, project:, repository_full_name: "matsuo-haruhito/docs-portal")
+    work_source = create(:git_import_source, project:, repository_full_name: "matsuo-haruhito/work-codex")
+    create_git_import_run!(git_import_source: docs_source, summary_json: { "reason" => "docs hit" })
+    create_git_import_run!(git_import_source: work_source, summary_json: { "reason" => "work miss" })
+
+    sign_in_as(admin_user)
+
+    get admin_git_import_runs_path, params: { repository: "DOCS-PORTAL" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 1件 / 絞り込み後の最新100件までを表示")
+    expect(page_text).to include("matsuo-haruhito/docs-portal")
+    expect(page_text).to include("docs hit")
+    expect(page_text).not_to include("matsuo-haruhito/work-codex")
+    expect(page_text).not_to include("work miss")
+    expect(response.body).to include('value="DOCS-PORTAL"')
+  end
+
+  it "combines status and repository filters" do
+    docs_source = create(:git_import_source, project:, repository_full_name: "matsuo-haruhito/docs-portal")
+    other_source = create(:git_import_source, project:, repository_full_name: "matsuo-haruhito/docs-app")
+    create_git_import_run!(git_import_source: docs_source, status: :failed, error_message: "target failure")
+    create_git_import_run!(git_import_source: docs_source, status: :imported, summary_json: { "reason" => "same repo imported" })
+    create_git_import_run!(git_import_source: other_source, status: :failed, error_message: "other failure")
+
+    sign_in_as(admin_user)
+
+    get admin_git_import_runs_path, params: { status: "failed", repository: "docs-portal" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("target failure")
+    expect(page_text).not_to include("same repo imported")
+    expect(page_text).not_to include("other failure")
+    expect(run_rows.size).to eq(1)
+  end
+
+  it "does not fail on unsupported status values" do
+    create_git_import_run!(summary_json: { "reason" => "visible run" })
+
+    sign_in_as(admin_user)
+
+    get admin_git_import_runs_path, params: { status: "archived" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("visible run")
+    expect(page_text).to include("表示中: 1件 / 最新100件までを表示")
+  end
+
+  it "shows the newest 100 runs after filters are applied" do
+    limited_source = create(:git_import_source, project:, repository_full_name: "matsuo-haruhito/limited-history")
+    101.times do |index|
+      create_git_import_run!(
+        git_import_source: limited_source,
+        status: :failed,
+        error_message: "limited run #{index + 1}",
+        created_at: Time.zone.parse("2026-05-01 00:00:00 UTC") + index.minutes
+      )
+    end
+    other_source = create(:git_import_source, project:, repository_full_name: "matsuo-haruhito/other-history")
+    create_git_import_run!(git_import_source: other_source, status: :failed, error_message: "other repository failure")
+
+    sign_in_as(admin_user)
+
+    get admin_git_import_runs_path, params: { status: "failed", repository: "limited-history" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 100件 / 絞り込み後の最新100件までを表示")
+    expect(run_rows.size).to eq(100)
+    expect(page_text).to include("limited run 101")
+    expect(page_text).not_to include("limited run 1")
+    expect(page_text).not_to include("other repository failure")
+  end
+
+  it "shows a filtered empty state with a clear link" do
+    create_git_import_run!(status: :imported, summary_json: { "reason" => "not failed" })
+
+    sign_in_as(admin_user)
+
+    get admin_git_import_runs_path, params: { status: "failed", repository: "missing-repo" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 0件 / 絞り込み後の最新100件までを表示")
+    expect(page_text).to include("条件に一致するGit同期履歴はありません。")
+    expect(page_text).to include("絞り込み解除")
+    expect(response.body).not_to include("Git同期履歴の表示設定")
+  end
+
   it "forbids external users" do
     sign_in_as(external_user)
 
