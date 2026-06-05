@@ -41,9 +41,31 @@ h1 定期ジョブ詳細
     - if @schedule.description.present?
       dt 説明
       dd = @schedule.description
+
+.card
+  h2 即時実行要求
+  p.muted この操作は定期設定を待たずに、この定義を一度早めに dispatcher へ渡す実行系 action です。
+  dl.definition-list
+    dt 対象 job key
+    dd
+      code = @schedule.job_key
+    dt キュー
+    dd = @schedule.queue_name
+    dt 重複実行
+    dd = @schedule.allow_overlap? ? "許可" : "禁止"
+    dt 前回状態
+    dd = recurring_job_status_badge(@schedule.last_status)
+    dt 要求状況
+    dd = @schedule.run_requested_at ? "要求済み（#{l(@schedule.run_requested_at)}）" : "未要求"
+  - if @schedule.run_requested_at.present?
+    p.muted 要求済みです。dispatcher enqueue 後の結果は下の実行履歴で確認してください。
+  - else
+    p.muted 実行履歴には dispatcher enqueue 後の結果が最新50件まで表示されます。
   p.actions
     = link_to "即時実行を要求", request_run_admin_recurring_job_schedule_path(@schedule, return_to: return_to_path), data: { turbo_method: :post }, class: "button"
-    = link_to "一覧へ戻る", return_to_path, class: "button secondary"
+
+p.actions
+  = link_to "一覧へ戻る", return_to_path, class: "button secondary"
 
 .card
   h2 実行履歴
