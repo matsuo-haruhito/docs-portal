@@ -27,6 +27,12 @@ p.actions
         | ステータス
         = select_tag :status, options_for_select([["すべて", ""]] + delivery_status_options.reject { |(_label, value)| value == "all" }, @delivery_filters[:status])
       label
+        | HTTP status
+        = number_field_tag :response_status, @delivery_filters[:response_status], min: 100, max: 599, placeholder: "例: 500"
+      label
+        | エラー断片
+        = search_field_tag :error_q, @delivery_filters[:error_q], placeholder: "例: timeout"
+      label
         | 作成日From
         = date_field_tag :created_from, @delivery_filters[:created_from]
       label
@@ -39,7 +45,7 @@ p.actions
 
 .card
   h2 検索結果
-  p.muted = "表示範囲: #{@webhook_deliveries_total_count}件中#{@webhook_deliveries.size}件を新しい順で表示しています。#{@webhook_deliveries_total_count > @webhook_deliveries_limit ? "さらに古い履歴を探す場合は endpoint / event / status / 作成日で絞り込んでください。" : ""}"
+  p.muted = "表示範囲: #{@webhook_deliveries_total_count}件中#{@webhook_deliveries.size}件を新しい順で表示しています。#{@webhook_deliveries_total_count > @webhook_deliveries_limit ? "さらに古い履歴を探す場合は endpoint / event / status / HTTP status / エラー断片 / 作成日で絞り込んでください。" : ""}"
   p.muted この一覧は履歴を探して詳細へ進むための read-only 検索です。まとめて再送は既存の Webhook 一覧で「失敗のみ」表示中の最近50件に閉じています。
 
   - if @webhook_deliveries.any?
@@ -67,6 +73,6 @@ p.actions
             td.actions data-rails-table-preferences-column-key="actions"
               = link_to "詳細", admin_webhook_delivery_path(delivery.public_id, @delivery_return_params)
   - elsif @delivery_filters_applied
-    p.muted 条件に一致するWebhook送信履歴はありません。endpoint、event、status、作成日の条件を見直してください。
+    p.muted 条件に一致するWebhook送信履歴はありません。endpoint、event、status、HTTP status、エラー断片、作成日の条件を見直してください。
   - else
     p.muted まだWebhook送信履歴はありません。
