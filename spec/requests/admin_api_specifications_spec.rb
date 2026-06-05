@@ -35,9 +35,13 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("API仕様")
     expect(response.body).to include("主要ページとsource")
+    expect(response.body).to include("表示状態はAPI仕様ページ全体のbuild結果です。")
+    expect(response.body).to include("HTML確認先")
+    expect(response.body).to include("Source")
     primary_source_pages.each do |source_page|
       expect(response.body).to include(source_page.label)
       expect(response.body).to include(source_page.source_path)
+      expect(response.body).to include(source_page.site_path)
       expect(response.body).to include(site_admin_api_specification_path(site_path: source_page.site_path))
     end
   end
