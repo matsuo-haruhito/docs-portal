@@ -8,7 +8,7 @@
 
 | 種類 | 配置 | 役割 |
 | --- | --- | --- |
-| 標準 showcase サンプル | `storage/document_files/external_samples/seed-showcase/docs-portal-demo/` | Markdown / Mermaid / PDF / Excel / CSV / 複数版の代表導線を少ない文書数で確認する |
+| 標準 showcase サンプル | `storage/document_files/external_samples/seed-showcase/docs-portal-demo/` | Markdown / Mermaid / PDF / Excel / CSV / ZIP / 複数版の代表導線を少ない文書数で確認する |
 | 用途特化サンプル | `storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/` | AI 活用手順や判断フローのような、手順書系コンテンツの seed 例として使う |
 | 任意の外部サンプル | `storage/document_files/external_samples/<sample-set>/<site-dir>/...` | 利用者や開発者が独自に持ち込む確認用コンテンツ |
 
@@ -26,6 +26,7 @@
 | `runbook.csv` | CSV | CSV プレビューやダウンロード導線 |
 | `README.pdf` | PDF | PDF プレビューまたはダウンロード導線 |
 | `README.xlsx` | Excel | Office / Excel 系ファイルの導線 |
+| `sample-archive.zip` | ZIP | ZIP preview、ZIP 内項目 preview、個別 download 導線 |
 | `提出済/README.md` | 旧版 Markdown | current と旧版の切り替え、版比較の前提確認 |
 
 `README.md` 自体にも Mermaid ブロック、PlantUML 記法サンプル、添付ファイルリンクが含まれています。1 つの文書で Markdown 本文と添付導線の両方を見たいときは、このページが最短の確認入口です。
@@ -41,12 +42,14 @@ PlantUML 記法サンプルは seed showcase の代表コンテンツです。Kr
 | PDF 導線 | `README.pdf` | プレビューできない環境でもダウンロード導線は確認しやすい |
 | Excel 導線 | `README.xlsx` | Office preview や添付導線の確認に使う |
 | CSV 導線 | `runbook.csv` | CSV 系プレビューの確認に使う |
+| ZIP 導線 | `sample-archive.zip` | ZIP preview、ZIP 内の Markdown / CSV / nested entry preview、個別 download の代表確認に使う |
 | 複数版 | `README.md` と `提出済/README.md` | current / 旧版の切り替えや比較前提を確認する |
 | 手順書系の実運用寄りコンテンツ | `ai-usecases/AI活用手順ポータル/` | showcase より業務コンテンツ寄りのサンプルを見たい場合に使う |
 
 ## 運用メモ
 
 - 標準 showcase サンプルは `db:seed` のたびに再生成されるため、直接編集しても次回 seed で上書きされます。
+- `sample-archive.zip` は ZIP preview の代表導線を確認するための小さい deterministic archive です。unsafe path、nested archive、巨大 ZIP、bulk download の境界確認には使いません。
 - 任意サンプルを追加したい場合は、README にある一般ルールどおり `storage/document_files/external_samples/<sample-set>/<site-dir>/...` 配下へ配置します。
 - PlantUML / D2 を含む Markdown を seed して描画確認したい場合は、Kroki 設定も必要です。runtime 前提と mock smoke の実行入口は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) を参照してください。
 - Office preview の接続条件を確認したい場合は [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md) を参照してください.
