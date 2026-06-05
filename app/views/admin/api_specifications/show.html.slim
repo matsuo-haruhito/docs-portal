@@ -17,6 +17,7 @@ p.muted
     | API仕様MarkdownがHTMLより新しい状態です。Docusaurus build の完了後に再読み込みしてください。
 
 - build_status = @api_specification_page.build_status
+- build_history = @api_specification_page.build_history
 section.card
   h2 表示状態
   p
@@ -37,6 +38,33 @@ section.card
       dt HTML更新時刻
       dd = l(build_status.build_entry_mtime, format: :long)
   p.muted build 状態は API仕様ページ専用の直近結果だけを案内します。build queue や iframe 配信条件は変更していません。
+  - if build_history.any?
+    h3 直近build履歴
+    p.muted API仕様ページ専用 build の直近結果だけを read-only に表示します。raw stdout / stderr は表示しません。
+    table
+      thead
+        tr
+          th 状態
+          th 記録時刻
+          th 補足
+      tbody
+        - build_history.each do |entry|
+          tr
+            td = entry.label
+            td
+              - if entry.recorded_at
+                = l(entry.recorded_at, format: :long)
+              - elsif entry.requested_at
+                = l(entry.requested_at, format: :long)
+              - else
+                | -
+            td
+              - details = []
+              - details << "成功: #{l(entry.success_at, format: :long)}" if entry.success_at
+              - details << "要求: #{l(entry.requested_at, format: :long)}" if entry.requested_at
+              - details << "HTML更新: #{l(entry.build_entry_mtime, format: :long)}" if entry.build_entry_mtime
+              - details << entry.message if entry.message.present?
+              = details.presence&.join(" / ") || "-"
   - if build_status.state == :failed
     .notice.alert
       h3 失敗調査の入口
