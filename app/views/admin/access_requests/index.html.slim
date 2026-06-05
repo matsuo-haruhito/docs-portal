@@ -126,7 +126,7 @@ section.card
           |  / 対象種別:
         - else
           |  対象種別:
-        strong = " #{admin_access_request_requestable_type_label(@filters[:requestable_type])}"
+        strong = " #{admin_access_request_requestable_type_filter_label(@filters[:requestable_type])}"
       - if @filters[:q].present?
         - if @filters[:status].present? || @filters[:requested_access_level].present? || @filters[:requestable_type].present?
           |  / 検索:
