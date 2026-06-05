@@ -140,7 +140,8 @@ RSpec.describe "Document file archive entries", type: :request do
 
     expect do
       get preview_entry_path("../evil.txt")
-    end.not_to change(AccessLog.where(action_type: :view), :count)
+    end.to change(AccessLog.where(action_type: :view), :count).by(1)
+      .and change(AccessLog.where(action_type: :download), :count).by(0)
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("unsafe path")
     expect(response.body).not_to include("archive_entries/download")
