@@ -54,11 +54,17 @@ section.card
 
 section.card
   h2 主要ページとsource
+  p.muted 表示状態はAPI仕様ページ全体のbuild結果です。個別ページを確認するときは、各行のSourceを直してからHTML確認先を開いてください。
   ul
     - @api_specification_page.primary_source_pages.each do |source_page|
       li
-        = link_to source_page.label, site_admin_api_specification_path(site_path: source_page.site_path)
-        span.muted = " - #{source_page.source_path}"
+        strong = source_page.label
+        br
+        span.muted HTML確認先: 
+        = link_to source_page.site_path, site_admin_api_specification_path(site_path: source_page.site_path)
+        br
+        span.muted Source: 
+        code = source_page.source_path
 
 section.card
   - if @api_specification_page.available?

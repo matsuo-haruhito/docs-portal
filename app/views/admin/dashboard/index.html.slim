@@ -17,6 +17,25 @@ section.card
     = link_to "モデルブラウザを開く", admin_model_browser_path, class: "button"
 
 section.card
+  h2 運用失敗入口
+  p.muted 保存済み履歴から代表的な失敗状態を横断確認します。全履歴統計ではなく、各運用画面で調査を始めるための入口です。
+  .dashboard-grid
+    - @operational_failure_summary.each do |item|
+      article.card.metric-card
+        h3 = item[:label]
+        p
+          strong = item[:count]
+          |  件
+        p.muted = item[:scope]
+        ul
+          - item[:details].each do |detail|
+            li = detail
+        p.actions
+          = link_to item[:primary_link].first, item[:primary_link].last, class: "button"
+          - if item[:secondary_link]
+            = link_to item[:secondary_link].first, item[:secondary_link].last, class: "button secondary"
+
+section.card
   h2 アプリ設定診断
 
   .configuration-runbook-links
@@ -115,6 +134,34 @@ section.card
             td = file.file_name
             td
               code = file.storage_key
+
+section.card
+  h2 Storage使用量
+  p.muted local storage 配下の概算使用量を read-only で確認します。削除、archive、cleanup、retention policy 決定、GCS API 連携はここでは行いません。
+  p
+    | 合計: 
+    strong = @storage_usage_summary.human_total_size
+    |  / ファイル数: 
+    strong = @storage_usage_summary.total_file_count
+
+  table
+    thead
+      tr
+        th 領域
+        th 対象
+        th ファイル数
+        th 概算使用量
+        th 読み方
+    tbody
+      - @storage_usage_summary.areas.each do |area|
+        tr
+          td = area.label
+          td
+            code = area.relative_path
+          td = area.file_count
+          td = area.human_size
+          td
+            span.muted = area.description
 
 .form-grid
   .card

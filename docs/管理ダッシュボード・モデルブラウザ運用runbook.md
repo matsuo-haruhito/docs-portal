@@ -2,7 +2,7 @@
 
 この runbook は、管理画面の `ダッシュボード` と `モデルブラウザ` を日常運用で見返すときの入口をまとめる。
 
-新しい診断ルールや監視基準はここでは定義しない。current 実装を前提に、`モデル観測` `アプリ設定診断` `文書ファイル健全性` をどう使い分け、必要に応じてどこへ戻るかを整理する。
+新しい診断ルールや監視基準はここでは定義しない。current 実装を前提に、`モデル観測` `アプリ設定診断` `文書ファイル健全性` `Storage使用量` をどう使い分け、必要に応じてどこへ戻るかを整理する。
 
 ## 先に見るもの
 
@@ -13,14 +13,15 @@
 
 ## 画面の役割
 
-`admin/dashboard` は internal admin だけが使える運用確認の入口で、`モデル観測` `アプリ設定診断` `文書ファイル健全性` を 1 画面で見比べる。
+`admin/dashboard` は internal admin だけが使える運用確認の入口で、`モデル観測` `アプリ設定診断` `文書ファイル健全性` `Storage使用量` を 1 画面で見比べる。
 
 current 実装の前提:
 
 - `モデル観測` は `Admin::ModelBrowserCatalog.entries.first(8)` を並べ、主要な model だけを最初に見せる
 - `アプリ設定診断` は `ApplicationConfigurationDiagnostic` の check を `OK / 警告 / エラー` 件数つきで出す
 - `文書ファイル健全性` は `DocumentFileHealthCheck` で総件数と実体欠落件数を出し、欠落ファイルは最大 20 件まで一覧表示する
-- 欠落ファイルがある場合、`欠落ファイル詳細` で先頭 100 件まで read-only に確認できる
+- 欠落ファイルがある場合、`欠落ファイル詳細` で案件、文書名 / slug、Storage key / ファイル名の断片から絞り込みながら、先頭 100 件まで read-only に確認できる
+- `Storage使用量` は `StorageUsageSummary` で local `storage/document_files` / `storage/docs_sites` / `storage/imports` の file count と概算使用量を read-only に出す
 - 画面下部の `基本マスタ` `関連設定` は、日常確認後に既存の管理画面へ戻る近道として置かれている
 
 ## 1. モデル観測とモデルブラウザ
@@ -38,10 +39,15 @@ current 実装の前提:
 current 実装の前提:
 
 - index では各 model の `件数` と `最終更新` を、`基本マスタ` `文書・権限` `import / sync` `外部連携` `運用` の領域別 group に分けて並べる
+- index の `モデル検索` は、catalog entry のモデル名、key、説明、group の表記から model を探すための入口であり、最近の record 自体を検索する欄ではない
 - group は `Admin::ModelBrowserCatalog::GROUP_LABELS` と各 entry の `group` metadata が正本で、画面側だけで分類を作らない
 - show では model ごとに最近 20 件の record を、catalog が持つ `summary_fields` で表示する
+- show の `代表フィールド検索` は、各 model の `summary_fields` のうち実カラムの string / text field と、数字だけの検索語では `id` exact match を対象にする
+- association 表示用の `*_id` field は代表フィールド検索の対象外だが、`public_id` は識別用の代表 field として検索対象に残る
+- 検索語は最大 100 文字に切り詰められ、検索結果も最大 20 件までの read-only sample として表示される
 - `既存画面へ` がある model は、そのまま管理画面の一覧へ戻れる
 - `DocumentVersion` `DocumentFile` など既存の専用 index がないものも、ここでは最新 record の代表値を見返せる
+- モデルブラウザには編集、削除、bulk action、CSV export、pagination、saved search はない。続きの検索や操作が必要な model は `既存画面へ` から専用管理画面へ戻る
 
 領域別 group の読み方:
 
@@ -56,7 +62,9 @@ current 実装の前提:
 - まず変化の有無をざっと見たい: `ダッシュボード`
 - model 全体の件数や最終更新を横断で比較したい: `モデルブラウザ` index
 - 領域別に近い model をまとめて見たい: `モデルブラウザ` index の group 見出し
+- catalog に載っている model を名前、key、説明、group から探したい: `モデルブラウザ` index の `モデル検索`
 - 最近の record の shape や値を短く確認したい: `モデルブラウザ` show
+- 最近の record のうち public ID、名称、code など代表フィールドに心当たりがある値だけを探したい: `モデルブラウザ` show の `代表フィールド検索`
 - 編集や登録をしたい: `モデルブラウザ` ではなく `既存画面へ` から元の管理画面へ戻る
 
 ### Catalog を追加・見直すとき
@@ -84,6 +92,7 @@ current 実装の前提:
 - `secret`、token、authorization、raw payload、request / response body、長大 text、個人情報の本文相当は入れない
 - ファイル本文、Webhook request body、外部 API の raw response などは、model browser ではなく専用のマスク済み preview や詳細画面の方針に従う
 - association は `*_id` のような短い参照値に留め、名前や本文をたどる必要がある場合は既存画面や関連 runbook への導線で補う
+- 代表フィールド検索は string / text の `summary_fields` と numeric `id` の補助検索に限られるため、検索させたい値を増やす目的だけで長大 text や secret 相当の field を `summary_fields` に追加しない
 
 `index_path_helper` の考え方:
 
@@ -131,6 +140,8 @@ current 実装の前提:
 - `実体欠落` は `DocumentFile#absolute_path` に実ファイルが存在しなかった件数
 - dashboard の欠落一覧は最大 20 件までで、`案件` `文書` `版` `ファイル名` `Storage key` を表示する
 - 欠落ファイルがある場合は `欠落ファイル詳細` へ進むと、先頭 100 件まで `Expected path` を含めて確認できる
+- 欠落ファイル詳細では `案件`、`文書名 / slug`、`Storage key / ファイル名` で絞り込める。これらは欠落ファイルだけを対象にした read-only filter であり、修復対象や削除対象を確定する操作ではない
+- 欠落状況では `登録ファイル数`、`全体の実体欠落`、filter 中の `条件一致欠落`、`表示中` を分けて読む
 - 一覧の `文書` は公開側の project/document detail、`版` は document version detail へ戻れる
 - dashboard 表示時点の current 実装は `DocumentFile` を `find_each` で走査する。cache / async 化はこの runbook ではなく、ファイル数がさらに増えたときの別 Issue で判断する
 
@@ -138,6 +149,9 @@ current 実装の前提:
 
 - `実体欠落` が 0 でないときは、まず dashboard の先頭 20 件で欠落が特定案件だけか、複数案件へ広がっているかを見る
 - 欠落が 20 件を超える、または expected path まで含めて確認したい場合は `欠落ファイル詳細` へ進む
+- 特定案件だけを確認したい場合は `案件` filter、文書名や slug の心当たりがある場合は `文書名 / slug`、storage key や file name の断片がある場合は `Storage key / ファイル名` を使う
+- filter 中の `条件一致欠落: 0` は「全体に欠落がない」ではなく、現在の条件に一致する欠落がない状態として読む。全体の有無は `全体の実体欠落` を見る
+- `条件一致欠落` が `表示中` より多い場合、詳細一覧は条件一致分の先頭 100 件だけを表示している。続きを見るには条件を絞るか、storage 側または database 側の調査へ切り替える
 - `Storage key` と `Expected path` は storage 配下の期待位置を見直す手がかりとして使う
 - `文書` や `版` へ戻り、対象が current 版か添付・原本か、import 直後の版かを確認する
 - `実体欠落` が詳細一覧の表示件数より多い場合、詳細一覧も先頭 100 件の bounded list として扱い、続きを見るには storage 側や database 側の調査へ切り替える
@@ -146,14 +160,44 @@ current 実装の前提:
 
 - この check は app が参照する filesystem 上で `File.file?` を見る current 実装であり、外部ストレージ API の疎通確認まではしない
 - 欠落ファイル詳細は read-only であり、自動修復、削除、archive、再import、CSV export は扱わない
+- filter は表示対象を絞るだけで、retention policy、cleanup、復元期限、GCS / object storage 連携の判断は行わない
 - 権限不足や公開条件の問題を診断する画面ではなく、まず「物理ファイルが見えるか」を切り分けるための入口として使う
+
+## 4. Storage使用量
+
+`Storage使用量` は、local `Rails.root/storage` 配下の領域別 file count と概算使用量を read-only に確認する。
+
+current 実装の前提:
+
+- `DocumentFile 実体` は `storage/document_files` を測り、アップロード、ZIP/Git/外部同期で取り込まれた文書添付の正本を読む
+- `Docs site build` は `storage/docs_sites` を測り、Docusaurus などで生成した文書表示用 site artifact を読む
+- `Import staging` は `storage/imports` を測り、ZIP / manual upload dry-run などの一時確認 artifact を読む
+- 各領域は `StorageUsageSummary` が directory 内の file を走査して、file count と `number_to_human_size` の概算使用量にする
+- directory が存在しない場合は 0 file / 0 byte として扱う
+- `合計` はこの 3 領域の合算で、Project / Document / customer 単位の内訳ではない
+
+読み方:
+
+- 容量の増減をざっと見たいときは、まず `合計` と各領域の file count / 概算使用量を見る
+- 添付や原本が増えている疑いがある場合は `storage/document_files`、build artifact が増えている疑いがある場合は `storage/docs_sites`、dry-run や import staging が残っている疑いがある場合は `storage/imports` を見る
+- `文書ファイル健全性` は登録済み `DocumentFile` の実体欠落を確認する入口で、`Storage使用量` は local storage 領域別の容量を確認する入口として分ける
+- 欠落ファイルの実体調査は `欠落ファイル詳細`、容量や保存先方針の確認は [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md) へ戻る
+
+注意点:
+
+- `Storage使用量` は read-only であり、削除、archive、cleanup、retention policy 決定、GCS API 連携は行わない
+- 大きい値が出ても、その画面だけで不要ファイルや削除対象を断定しない
+- 外部 object storage の bucket 使用量、signed URL、public access policy、Project / Document 単位の課金・容量レポートは current support 外として扱う
+- alert rule や通知 channel は current repo では具体実装ではない。監視観点は [監視・アラート設計](./監視・アラート設計.md) に戻す
 
 ## 日常確認ポイント
 
 - model 数や最終更新に急な変化がないか
 - model browser index の group 見出しで、近い領域の model がまとめて確認できているか
+- `モデル検索` と `代表フィールド検索` を使い分け、catalog entry を探すのか最近の record sample を絞るのかを混同していないか
 - `警告` `エラー` が、sample 値の流用なのか実運用に影響する不足なのか
 - 欠落ファイルが単発なのか、storage 全体の問題に見えるのか
+- `Storage使用量` が local directory の概算容量として読めており、cleanup や retention 判断を先取りしていないか
 - dashboard だけで完結させず、必要な既存管理画面や仕様 docs にすぐ戻れているか
 
 ## 迷ったときの切り分け
@@ -161,8 +205,12 @@ current 実装の前提:
 - まず全体の変化や異常の有無を見たい: `ダッシュボード`
 - 特定 model の件数や最近の record を見たい: `モデルブラウザ`
 - 近い領域の model をまとめて確認したい: `モデルブラウザ` index の group 見出し
+- model browser に載っている対象 model を探したい: `モデルブラウザ` index の `モデル検索`
+- model 詳細内の最近の record sample から識別値を探したい: `モデルブラウザ` show の `代表フィールド検索`
 - `.env` や compose の設定不足を見たい: `アプリ設定診断`
 - 実体ファイルが見えない原因を切り分けたい: `文書ファイル健全性`
+- local storage の領域別使用量を read-only に確認したい: `Storage使用量`
+- storage の保存先、配信、cleanup 境界を見直したい: [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md)
 - 個別のアクセス履歴や利用傾向を追いたい: [監査ログ運用runbook](./監査ログ運用runbook.md) や [文書利用状況運用runbook](./文書利用状況運用runbook.md) に戻る
 
 ## 関連画面
@@ -175,5 +223,6 @@ current 実装の前提:
 - `app/views/admin/model_browsers/index.html.slim`
 - `app/views/admin/model_browsers/show.html.slim`
 - `app/services/admin/model_browser_catalog.rb`
+- `app/services/storage_usage_summary.rb`
 - `app/checks/application_configuration_diagnostic.rb`
-- `app/checks/document_file_health_check.rb
+- `app/checks/document_file_health_check.rb`

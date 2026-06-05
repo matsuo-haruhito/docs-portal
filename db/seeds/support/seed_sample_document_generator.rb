@@ -33,6 +33,7 @@ module SeedSupport
       write_text(current_root.join("runbook.csv"), csv)
       write_binary(current_root.join("README.pdf"), pdf)
       write_binary(current_root.join("README.xlsx"), xlsx)
+      write_binary(current_root.join("sample-archive.zip"), sample_archive)
     end
 
     def write_previous
@@ -64,6 +65,7 @@ module SeedSupport
         | PDF | `README.pdf` | PDF プレビューまたはダウンロードを確認できる |
         | Excel | `README.xlsx` | Office/Excel 系ファイルの導線を確認できる |
         | CSV | `runbook.csv` | CSV プレビューを確認できる |
+        | ZIP | `sample-archive.zip` | ZIP preview、項目 preview、個別 download の代表導線を確認できる |
         | 複数版 | `提出済` スナップショット | 旧版と current の切り替えを確認できる |
 
         ```mermaid
@@ -82,7 +84,7 @@ module SeedSupport
         database "DocumentFile" as File
         利用者 -> Portal: 文書を開く
         Portal -> File: 添付ファイル一覧を取得
-        File --> Portal: PDF / Excel / CSV
+        File --> Portal: PDF / Excel / CSV / ZIP
         Portal --> 利用者: プレビューまたはダウンロード
         @enduml
         ```
@@ -92,6 +94,7 @@ module SeedSupport
         - [サンプルPDF](./README.pdf)
         - [サンプルExcel](./README.xlsx)
         - [運用CSV](./runbook.csv)
+        - [サンプルZIP](./sample-archive.zip)
       MD
     end
 
@@ -102,6 +105,7 @@ module SeedSupport
         - 文書ツリーに標準セットとこの Runbook が表示される
         - `current` と `提出済` の複数版を切り替えられる
         - PDF / Excel / CSV がそれぞれ異なるファイル種別として扱われる
+        - ZIP 添付の preview、項目 preview、個別 download 導線を確認できる
       MD
     end
 
@@ -114,7 +118,7 @@ module SeedSupport
         | 版 | 状態 | 備考 |
         | --- | --- | --- |
         | 提出済 | published | 旧版表示の確認用 |
-        | current | published | PDF 1 件、Excel 1 件、CSV 1 件を含む |
+        | current | published | PDF 1 件、Excel 1 件、CSV 1 件、ZIP 1 件を含む |
       MD
     end
 
@@ -124,7 +128,7 @@ module SeedSupport
           seed[db:seed] --> generate[サンプル生成]
           generate --> import[外部サンプル取り込み]
           import --> versions[複数版文書]
-          import --> files[PDF / Excel / CSV]
+          import --> files[PDF / Excel / CSV / ZIP]
           versions --> portal[ポータル確認]
           files --> portal
       MMD
@@ -168,6 +172,22 @@ module SeedSupport
         "xl/workbook.xml" => "<?xml version=\"1.0\" encoding=\"UTF-8\"?><workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><sheets><sheet name=\"SeedSample\" sheetId=\"1\" r:id=\"rId1\"/></sheets></workbook>",
         "xl/_rels/workbook.xml.rels" => "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet1.xml\"/></Relationships>",
         "xl/worksheets/sheet1.xml" => "<?xml version=\"1.0\" encoding=\"UTF-8\"?><worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><sheetData><row r=\"1\"><c r=\"A1\" t=\"inlineStr\"><is><t>確認項目</t></is></c><c r=\"B1\" t=\"inlineStr\"><is><t>ファイル</t></is></c><c r=\"C1\" t=\"inlineStr\"><is><t>期待結果</t></is></c></row><row r=\"2\"><c r=\"A2\" t=\"inlineStr\"><is><t>PDF</t></is></c><c r=\"B2\" t=\"inlineStr\"><is><t>README.pdf</t></is></c><c r=\"C2\" t=\"inlineStr\"><is><t>PDF として認識</t></is></c></row></sheetData></worksheet>"
+      )
+    end
+
+    def sample_archive
+      ZipStore.build(
+        "archive-readme.md" => <<~MD,
+          # ZIP preview sample
+
+          標準 seed showcase の ZIP preview / 項目 preview / 個別 download 確認用ファイルです。
+        MD
+        "data/preview.csv" => <<~CSV,
+          key,value
+          sample,zip-preview
+          nested-directory,true
+        CSV
+        "notes/nested-entry.txt" => "nested directory entry for individual preview checks\n"
       )
     end
   end

@@ -1,6 +1,7 @@
 require "rails_helper"
 require "fileutils"
 require "json"
+require "yaml"
 
 RSpec.describe "Admin API specifications", type: :request do
   let(:admin_user) { create(:user, :internal) }
@@ -34,10 +35,27 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("API仕様")
     expect(response.body).to include("主要ページとsource")
+    expect(response.body).to include("表示状態はAPI仕様ページ全体のbuild結果です。")
+    expect(response.body).to include("HTML確認先")
+    expect(response.body).to include("Source")
     primary_source_pages.each do |source_page|
       expect(response.body).to include(source_page.label)
       expect(response.body).to include(source_page.source_path)
+      expect(response.body).to include(source_page.site_path)
       expect(response.body).to include(site_admin_api_specification_path(site_path: source_page.site_path))
+    end
+  end
+
+  it "keeps primary source page paths aligned with docs-src front matter slugs" do
+    primary_source_pages.each do |source_page|
+      source_path = Rails.root.join(source_page.source_path)
+      expect(source_path).to exist, "#{source_page.source_path} is missing"
+
+      front_matter = source_path.read.match(/\A---\n(?<yaml>.*?)\n---\n/m)
+      expect(front_matter).to be_present, "#{source_page.source_path} is missing front matter"
+
+      metadata = YAML.safe_load(front_matter[:yaml])
+      expect(metadata.fetch("slug")).to eq("/#{source_page.site_path}")
     end
   end
 

@@ -26,6 +26,50 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("spec/admin-dashboard/missing.txt")
   end
 
+  it "shows a read-only storage usage summary" do
+    summary = StorageUsageSummary::Result.new(
+      areas: [
+        StorageUsageSummary::Area.new(
+          key: :document_files,
+          label: "DocumentFile 実体",
+          relative_path: "storage/document_files",
+          description: "アップロード、ZIP/Git/外部同期で取り込まれた文書添付の正本",
+          bytes: 1024,
+          file_count: 2
+        ),
+        StorageUsageSummary::Area.new(
+          key: :docs_sites,
+          label: "Docs site build",
+          relative_path: "storage/docs_sites",
+          description: "Docusaurus などで生成した文書表示用 site artifact",
+          bytes: 2048,
+          file_count: 3
+        ),
+        StorageUsageSummary::Area.new(
+          key: :imports,
+          label: "Import staging",
+          relative_path: "storage/imports",
+          description: "ZIP / manual upload dry-run などの一時確認 artifact",
+          bytes: 512,
+          file_count: 1
+        )
+      ]
+    )
+    allow(StorageUsageSummary).to receive(:new).and_return(instance_double(StorageUsageSummary, call: summary))
+
+    sign_in_as(admin_user)
+
+    get admin_root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Storage使用量")
+    expect(response.body).to include("read-only")
+    expect(response.body).to include("storage/document_files")
+    expect(response.body).to include("storage/docs_sites")
+    expect(response.body).to include("storage/imports")
+    expect(response.body).to include("削除、archive、cleanup、retention policy 決定、GCS API 連携はここでは行いません")
+  end
+
   it "links configuration diagnostics to the relevant runbooks" do
     sign_in_as(admin_user)
 
@@ -41,6 +85,106 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("ファイル配信・storage運用方針.md")
     expect(response.body).to include("管理ダッシュボード runbook")
     expect(response.body).to include("管理ダッシュボード・モデルブラウザ運用runbook.md")
+  end
+
+  it "shows operational failure entry summary without changing existing dashboard sections" do
+    project = create(:project)
+    source = GitImportSource.create!(
+      project: project,
+      created_by: admin_user,
+      provider: :github,
+      repository_full_name: "example/private-docs",
+      branch: "main",
+      source_path: "docs",
+      auth_type: :github_app,
+      enabled: true
+    )
+    GitImportRun.create!(
+      git_import_source: source,
+      provider: :github,
+      import_mode: :pull,
+      status: :failed,
+      repository_full_name: "example/private-docs",
+      branch: "main",
+      source_path: "docs"
+    )
+    GitImportRun.create!(
+      git_import_source: source,
+      provider: :github,
+      import_mode: :pull,
+      status: :skipped,
+      repository_full_name: "example/private-docs",
+      branch: "main",
+      source_path: "docs"
+    )
+    GeneratedFileRun.create!(job_id: "docs-build", status: :failed)
+    GeneratedFileEvent.create!(
+      event_key: "docs/runbook.md:update:spec",
+      path: "docs/runbook.md",
+      operation: "update",
+      status: :failed,
+      scheduled_at: 1.hour.ago,
+      last_seen_at: Time.current
+    )
+    create(:webhook_delivery, status: :failed)
+    sync_source = ExternalFolderSyncSource.create!(
+      project: project,
+      created_by: admin_user,
+      provider: :google_drive,
+      auth_type: :oauth_user,
+      name: "Drive source",
+      folder_url: "https://drive.google.com/drive/folders/spec-folder",
+      external_folder_id: "spec-folder",
+      sync_direction: :external_to_portal,
+      conflict_policy: :manual,
+      auth_config: "{}",
+      enabled: true
+    )
+    ExternalFolderSyncRun.create!(
+      external_folder_sync_source: sync_source,
+      status: :partial,
+      mode: :dry_run,
+      started_at: Time.current
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("運用失敗入口")
+    expect(response.body).to include("全履歴統計ではなく、各運用画面で調査を始めるための入口です。")
+    expect(response.body).to include("Git同期")
+    expect(response.body).to include("failed: 1")
+    expect(response.body).to include("skipped: 1")
+    expect(response.body).to include(admin_git_import_runs_path)
+    expect(response.body).to include("生成ファイル")
+    expect(response.body).to include("実行履歴 failed: 1")
+    expect(response.body).to include("イベント failed: 1")
+    expect(response.body).to include(admin_generated_file_runs_path(status: "failed"))
+    expect(response.body).to include(admin_generated_file_events_path(status: "failed"))
+    expect(response.body).to include("Webhook送信")
+    expect(response.body).to include(admin_webhook_deliveries_path(status: "failed"))
+    expect(response.body).to include("外部フォルダ同期")
+    expect(response.body).to include("partial: 1")
+    expect(response.body).to include(admin_external_folder_sync_sources_path(review: "errors"))
+    expect(response.body).to include("アプリ設定診断")
+    expect(response.body).to include("文書ファイル健全性")
+  end
+
+  it "shows zero-count operational failure entries when there is no saved failure data" do
+    sign_in_as(admin_user)
+
+    get admin_root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("運用失敗入口")
+    expect(response.body).to include("Git同期")
+    expect(response.body).to include("failed: 0")
+    expect(response.body).to include("skipped: 0")
+    expect(response.body).to include("実行履歴 failed: 0")
+    expect(response.body).to include("イベント failed: 0")
+    expect(response.body).to include("partial: 0")
   end
 
   it "explains that document file health details are limited when more files are missing" do

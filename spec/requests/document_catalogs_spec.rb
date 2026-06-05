@@ -18,12 +18,20 @@ RSpec.describe "Document catalogs", type: :request do
     parsed_html.at("main")&.text.to_s
   end
 
+  def reusable_filter_link
+    parsed_html.css("a").find { |link| link.text.squish == "現在の条件のURLを開く" }
+  end
+
+  def reusable_filter_query
+    Rack::Utils.parse_nested_query(URI.parse(reusable_filter_link["href"]).query)
+  end
+
   before do
     create(:project_membership, project:, user: external_user)
   end
 
   it "lists viewable catalogs for the project" do
-    visible = create(:document_catalog, project:, name: "Customer Pack", audience_type: :customer, visibility_policy: :restricted_external)
+    visible = create(:document_catalog, project:, name: "Customer Pack", description: "契約前に共有する導入資料をまとめたカタログです", audience_type: :customer, visibility_policy: :restricted_external)
     create(:document_catalog, project:, name: "Internal Pack", visibility_policy: :internal_only)
 
     sign_in_as(external_user)
@@ -33,10 +41,12 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("文書カタログ")
     expect(response.body).to include("Customer Pack")
+    expect(response.body).to include("契約前に共有する導入資料をまとめたカタログです")
     expect(response.body).to include("顧客向け")
     expect(response.body).to include("限定公開")
     expect(response.body).to include("表示可能件数")
-    expect(response.body).to include("閲覧できる文書")
+    expect(response.body).to include("現在の利用者に見える文書")
+    expect(response.body).to include("現在の利用者に表示")
     expect(response.body).not_to include("Internal Pack")
     expect(catalog_table_text).not_to include("restricted_external")
     expect(response.body).to include(project_document_catalog_path(project, visible))
@@ -60,6 +70,23 @@ RSpec.describe "Document catalogs", type: :request do
     expect(main_text).to include("表示可能件数は、現在の利用者が閲覧できる文書だけを数えます。")
   end
 
+  it "does not match document or catalog item text with the index search" do
+    document = create(:document, project:, title: "Needle Handbook", slug: "needle-handbook", visibility_policy: :restricted_external)
+    catalog = create(:document_catalog, project:, name: "Customer Pack", description: "Portal package")
+    create(:document_catalog_item, document_catalog: catalog, document:, note: "Needle note")
+
+    sign_in_as(external_user)
+
+    get project_document_catalogs_path(project, q: "needle")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("条件に一致する文書カタログはありません。検索語・対象・公開範囲を確認するか、絞り込みを解除してください。")
+    expect(response.body).not_to include("Customer Pack")
+    expect(response.body).not_to include("Needle Handbook")
+    expect(response.body).not_to include("Needle note")
+    expect(main_text).to include("名称・説明: needle")
+  end
+
   it "combines audience and visibility filters" do
     create(:document_catalog, project:, name: "Customer Private", audience_type: :customer, visibility_policy: :restricted_external)
     create(:document_catalog, project:, name: "Customer Login", audience_type: :customer, visibility_policy: :public_with_login)
@@ -67,15 +94,33 @@ RSpec.describe "Document catalogs", type: :request do
 
     sign_in_as(external_user)
 
-    get project_document_catalogs_path(project, audience_type: "customer", visibility_policy: "public_with_login")
+    get project_document_catalogs_path(
+      project,
+      q: "login",
+      audience_type: "customer",
+      visibility_policy: "public_with_login",
+      saved_filter_id: "should-not-be-kept",
+      preset_id: "shared-preset"
+    )
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Customer Login")
     expect(response.body).not_to include("Customer Private")
     expect(response.body).not_to include("Operations Login")
+    expect(main_text).to include("名称・説明: login")
     expect(main_text).to include("対象: 顧客向け")
     expect(main_text).to include("公開範囲: ログインユーザー公開")
+    expect(main_text).to include("現在の条件だけを含むURLです。開いても閲覧権限は現在の利用者で再確認されます。")
     expect(main_text).not_to include("public_with_login")
+
+    expect(reusable_filter_link["href"]).to start_with(project_document_catalogs_path(project))
+    expect(reusable_filter_query).to eq(
+      "q" => "login",
+      "audience_type" => "customer",
+      "visibility_policy" => "public_with_login"
+    )
+    expect(reusable_filter_link["href"]).not_to include("saved_filter_id")
+    expect(reusable_filter_link["href"]).not_to include("preset_id")
   end
 
   it "does not expose catalogs outside the viewer boundary through filters" do
@@ -94,6 +139,11 @@ RSpec.describe "Document catalogs", type: :request do
     expect(main_text).not_to include("internal_only")
     expect(response.body).not_to include("Internal Runbook")
     expect(response.body).not_to include("External Runbook")
+    expect(reusable_filter_query).to eq(
+      "q" => "runbook",
+      "audience_type" => "operations",
+      "visibility_policy" => "internal_only"
+    )
   end
 
   it "ignores unsupported filters without raising an error" do
@@ -107,6 +157,20 @@ RSpec.describe "Document catalogs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Customer Pack")
     expect(response.body).to include("Developer Pack")
+    expect(main_text).not_to include("現在の絞り込み")
+    expect(main_text).not_to include("unknown")
+    expect(main_text).not_to include("archived")
+    expect(reusable_filter_link).to be_nil
+  end
+
+  it "shows an unregistered empty state separately from a filtered empty state" do
+    sign_in_as(external_user)
+
+    get project_document_catalogs_path(project)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("利用可能な文書カタログはありません。")
+    expect(response.body).not_to include("条件に一致する文書カタログはありません。")
     expect(main_text).not_to include("現在の絞り込み")
   end
 

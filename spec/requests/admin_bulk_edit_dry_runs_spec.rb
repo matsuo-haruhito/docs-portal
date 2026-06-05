@@ -10,6 +10,18 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     document.update!(latest_version: version)
   end
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def page_text
+    parsed_html.text.squish
+  end
+
+  def checked_document_ids
+    parsed_html.css(%(input[name="bulk_edit[document_ids][]"][checked])).map { |input| input["value"].to_i }
+  end
+
   it "creates a dry-run and then executes the confirmed bulk edit" do
     sign_in_as(admin)
 
@@ -64,6 +76,152 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(dry_run.reload).to be_confirmed
   end
 
+  it "preselects valid document candidates passed from the document master list" do
+    other_document = create(:document, project:, title: "Other Doc")
+
+    sign_in_as(admin)
+
+    get new_admin_bulk_edit_dry_run_path, params: {
+      source: "admin_documents",
+      candidate_document_ids: [document.id, 999_999, "invalid"],
+      source_filter_summaries: ["キーワード: Alpha Project"]
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("文書マスタ一覧から引き継いだ候補: 1件")
+    expect(page_text).to include("代表条件: キーワード: Alpha Project")
+    expect(page_text).to include("候補文書は選択済みです")
+    expect(page_text).to include("1件選択中")
+    expect(page_text).to include("1件表示中")
+    expect(page_text).to include("Target Doc")
+    expect(page_text).not_to include("Other Doc")
+    expect(checked_document_ids).to eq([document.id])
+    expect(other_document).to be_persisted
+  end
+
+  it "handles empty or invalid document candidates without broadening the bulk edit list" do
+    sign_in_as(admin)
+
+    get new_admin_bulk_edit_dry_run_path, params: {
+      source: "admin_documents",
+      candidate_document_ids: ["missing"]
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("文書マスタ一覧から引き継いだ候補: 0件")
+    expect(page_text).to include("有効な候補文書がありません")
+    expect(page_text).to include("0件選択中")
+    expect(page_text).to include("0件表示中")
+    expect(page_text).not_to include("Target Doc")
+    expect(checked_document_ids).to be_empty
+  end
+
+  it "shows warning, error, and fallback values on the dry-run preview" do
+    sign_in_as(admin)
+    dry_run = BulkEditDryRun.create!(
+      project:,
+      created_by: admin,
+      operation_type: :document_metadata,
+      target_document_ids: [document.id],
+      params_json: {
+        document_attributes: {
+          category: "manual"
+        }
+      },
+      summary_json: {
+        preview: {
+          total_count: 4,
+          changed_count: 2
+        }
+      },
+      result_json: {
+        preview_items: [
+          preview_item("Warning Doc", changed_fields: ["category"], warnings: ["分類が未確認です"]),
+          preview_item("Error Doc", changed_fields: ["visibility_policy"], errors: ["公開範囲を解決できません"]),
+          preview_item("Changed Doc", changed_fields: ["importance_level"]),
+          preview_item("Clean Doc", changed_fields: [])
+        ]
+      },
+      warnings_json: ["分類が未確認の文書があります"],
+      errors_json: ["公開範囲を解決できない文書があります"],
+      status: :analyzed,
+      expires_at: 1.day.from_now
+    )
+
+    get admin_bulk_edit_dry_run_path(dry_run)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("警告 / エラー")
+    expect(page_text).to include("1 / 1")
+    expect(page_text).to include("警告・エラーのある行を先に確認")
+    expect(page_text).to include("確認目安")
+    expect(page_text).to include("確認目安は表示補助です")
+    expect(page_text).to include("分類が未確認の文書があります")
+    expect(page_text).to include("公開範囲を解決できない文書があります")
+    expect(response.body).to include("bulk-edit-review-row--warning")
+    expect(response.body).to include("bulk-edit-review-row--error")
+    expect(response.body).to include("bulk-edit-review-row--changed")
+    expect(response.body).to include("bulk-edit-review-row--unchanged")
+
+    warning_row, error_row, changed_row, clean_row = preview_rows
+    expect(warning_row).to include("Warning Doc", "警告あり", "分類", "分類が未確認です", "-")
+    expect(error_row).to include("Error Doc", "エラーあり", "公開範囲", "-", "公開範囲を解決できません")
+    expect(changed_row).to include("Changed Doc", "変更予定")
+    expect(clean_row).to include("Clean Doc", "変更なし", "-", "-", "-")
+  end
+
+  it "shows success, failure, skipped, and fallback values on execution results" do
+    sign_in_as(admin)
+    dry_run = BulkEditDryRun.create!(
+      project:,
+      created_by: admin,
+      operation_type: :document_metadata,
+      target_document_ids: [document.id],
+      params_json: {
+        document_attributes: {
+          category: "manual"
+        }
+      },
+      summary_json: {
+        preview: {
+          total_count: 3,
+          changed_count: 1
+        },
+        execution: {
+          total_count: 3,
+          success_count: 1,
+          failure_count: 1,
+          skipped_count: 1
+        }
+      },
+      result_json: {
+        preview_items: [],
+        execution_items: [
+          execution_item("Success Doc", status: "success", changed_fields: ["category"]),
+          execution_item("Failed Doc", status: "failed", changed_fields: ["visibility_policy"], errors: ["保存に失敗しました"]),
+          execution_item("Skipped Doc", status: "skipped", changed_fields: [], warnings: ["変更なしのためスキップ"])
+        ]
+      },
+      warnings_json: [],
+      errors_json: [],
+      status: :confirmed,
+      confirmed_by: admin,
+      confirmed_at: Time.current,
+      expires_at: 1.day.from_now
+    )
+
+    get admin_bulk_edit_dry_run_path(dry_run)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("実行結果")
+    expect(page_text).to include("個別文書ごとの成功/失敗を表示します。")
+
+    success_row, failed_row, skipped_row = execution_rows
+    expect(success_row).to include("Success Doc", "分類", "-", "-")
+    expect(failed_row).to include("Failed Doc", "公開範囲", "-", "保存に失敗しました")
+    expect(skipped_row).to include("Skipped Doc", "-", "変更なしのためスキップ", "-")
+  end
+
   it "rejects dry-run creation without selected documents" do
     sign_in_as(admin)
 
@@ -83,5 +241,71 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     get new_admin_bulk_edit_dry_run_path
 
     expect(response).to have_http_status(:forbidden)
+  end
+
+  def preview_rows
+    rows_for_section("事前確認明細")
+  end
+
+  def execution_rows
+    rows_for_section("実行結果")
+  end
+
+  def rows_for_section(title)
+    section = parsed_html.at_xpath("//section[contains(concat(' ', normalize-space(@class), ' '), ' card ')][.//h2[normalize-space()='#{title}']]")
+    expect(section).to be_present
+
+    section.css("tbody tr").map do |row|
+      row.css("td").map { |cell| cell.text.squish }
+    end
+  end
+
+  def preview_item(title, changed_fields:, warnings: [], errors: [])
+    {
+      document_id: document.id,
+      document_public_id: document.public_id,
+      before: {
+        document: {
+          title:,
+          category: "spec",
+          document_kind: "markdown",
+          visibility_policy: "restricted_external",
+          importance_level: "normal",
+          archived: false
+        },
+        latest_version: {
+          snapshot_kind: "current"
+        },
+        tag_names: []
+      },
+      after: {
+        document: {
+          category: changed_fields.include?("category") ? "manual" : "spec",
+          document_kind: "markdown",
+          visibility_policy: changed_fields.include?("visibility_policy") ? "public_with_login" : "restricted_external",
+          importance_level: changed_fields.include?("importance_level") ? "critical" : "normal",
+          archived: false
+        },
+        latest_version: {
+          snapshot_kind: "current"
+        },
+        tag_names: []
+      },
+      changed_fields:,
+      warnings:,
+      errors:
+    }
+  end
+
+  def execution_item(title, status:, changed_fields:, warnings: [], errors: [])
+    {
+      document_id: document.id,
+      document_public_id: document.public_id,
+      title:,
+      status:,
+      changed_fields:,
+      warnings:,
+      errors:
+    }
   end
 end

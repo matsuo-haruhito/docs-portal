@@ -27,6 +27,14 @@ section.card
       div
         = form.label :to, "既読確認日時（終了日）"
         = form.date_field :to, value: params[:to].to_s.strip
+      = form.rfk_select :user_id,
+        collection: @read_confirmation_users.map { [[_1.display_name, _1.email_address, _1.company&.display_name].compact_blank.join(" / "), _1.id] },
+        wrapper: true,
+        label: "確認者",
+        placeholder: "確認者を選択",
+        include_blank: "すべて",
+        allow_clear: true,
+        selected: @selected_user&.id
     p.muted 期間は既読確認日時（confirmed_at）を対象にします。文書利用状況の閲覧・ダウンロード集計期間とは別の条件です。
     p.actions
       = form.submit "表示"
@@ -34,7 +42,8 @@ section.card
 
 - if @selected_project
   section.card
-    h2 対象
+    h2 対象条件
+    p.muted この画面は既読確認だけの内訳です。閲覧・ダウンロードの集計は文書利用状況で確認してください。
     p
       | 案件:
       strong = " #{@selected_project.name}"
@@ -57,12 +66,20 @@ section.card
         | 既読確認日時の期間:
         strong = " #{@confirmed_from&.strftime("%Y-%m-%d") || "指定なし"} から #{@confirmed_to&.strftime("%Y-%m-%d") || "指定なし"} まで"
       p.muted この期間は既読確認日時だけに適用され、文書利用状況の閲覧・ダウンロード集計期間は変更しません。
+    - if @selected_user
+      p
+        | 確認者:
+        strong = " #{@selected_user.display_name} / #{@selected_user.email_address}"
+        |  / 会社:
+        strong = " #{@selected_user.company&.display_name || '-'}"
+    - elsif @selected_user_id.present?
+      p.muted 指定した確認者はこの案件の既読確認候補に見つかりません。
     p
-      = link_to "文書利用状況へ", admin_document_usage_reports_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
+      = link_to "文書利用状況へ戻る", admin_document_usage_reports_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
     p.muted
       | 表示中:
       strong = " #{@read_confirmations.size}件"
-      |  / 最新200件までを表示
+      |  / 条件に一致した既読確認を新しい順に最新200件まで表示
 
   - if @read_confirmations.any?
     section.card
@@ -81,16 +98,19 @@ section.card
         - @read_confirmations.each do |confirmation|
           tr
             td data-rails-table-preferences-column-key="confirmed_at" = confirmation.confirmed_at.strftime("%Y-%m-%d %H:%M:%S")
-            td data-rails-table-preferences-column-key="document" = link_to confirmation.document.title, project_document_path(confirmation.document.project, confirmation.document.slug), data: { turbo_frame: "_top" }
-            td data-rails-table-preferences-column-key="user" = "#{confirmation.user.display_name} / #{confirmation.user.email_address}"
-            td data-rails-table-preferences-column-key="company" = confirmation.user.company&.display_name || "-"
+            td data-rails-table-preferences-column-key="document" style="overflow-wrap:anywhere;word-break:break-word"
+              = link_to confirmation.document.title, project_document_path(confirmation.document.project, confirmation.document.slug), data: { turbo_frame: "_top" }, style: "overflow-wrap:anywhere;word-break:break-word"
+            td data-rails-table-preferences-column-key="user" style="overflow-wrap:anywhere;word-break:break-word" = "#{confirmation.user.display_name} / #{confirmation.user.email_address}"
+            td data-rails-table-preferences-column-key="company" style="overflow-wrap:anywhere;word-break:break-word" = confirmation.user.company&.display_name || "-"
             td data-rails-table-preferences-column-key="document_slug"
-              code = confirmation.document.slug
+              code style="overflow-wrap:anywhere;word-break:break-word;white-space:normal" = confirmation.document.slug
   - else
     section.card
       h2 既読確認はありません
       - if @document_slug.present? && @selected_document.blank?
         p.muted 指定した文書URL識別子に一致する文書がないため、既読確認は表示されません。
+      - elsif @selected_user_id.present? && @selected_user.blank?
+        p.muted 指定した確認者はこの案件の既読確認候補に見つからないため、既読確認は表示されません。
       - else
         p.muted 選択した条件に一致する既読確認はありません。
 - else

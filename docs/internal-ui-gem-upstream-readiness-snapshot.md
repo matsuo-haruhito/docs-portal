@@ -4,6 +4,35 @@
 
 ここでは target SHA を決めません。`Gemfile` / `Gemfile.lock` も変更しません。dependency bump を実行する PR では、作業直前に upstream `main`、candidate PR、CI、mergeability、`docs/internal-gem-release-train-smoke.md` の representative smoke を再確認します。
 
+## latest addendum (2026-06-04 02:00 JST)
+
+- 判定分類: `docs-sync` / `docs-stale`
+- 対応 Issue: `#1886`
+- この追補は 2026-06-02 の snapshot / addendum を削除せず、2026-06-04 02:00 JST 時点で確認した横断 PR の状態差だけを上書き確認する。
+- release train queue は引き続き `#1300` (`rails_fields_kit`) -> `#1301` (`tree_view`) -> `#789` (`rails_table_preferences`, human-gated)。この追補では target SHA、`Gemfile` / `Gemfile.lock`、upstream PR の review / merge 判断を決めない。
+
+### docs-portal side addendum
+
+| item | 2026-06-04 02:00 JST status | release train での扱い |
+| --- | --- | --- |
+| `docs-portal#1883` | merged | `docs/internal-ui-gem-public-surface-guard-comparison.md` が main に入った。3 gem の guard 方針比較として参照できるが、target SHA や upstream contract の最終判断にはしない |
+| `docs-portal#858` | open / `status:too-large` parent hub | parent hub のまま維持する。target SHA 決定、Gemfile bump、representative smoke は child issue / PR 側で分ける |
+| `docs-portal#1300` | child lane | `rails_fields_kit` bump 候補。checkout / lockfile regeneration / representative smoke ができる環境でだけ進める |
+| `docs-portal#1301` | child lane | `tree_view` bump 候補。upstream manifest / package-root export / sidebar tree / detail tree smoke を再確認してから扱う |
+| `docs-portal#789` | human-gated | `rails_table_preferences` の known-good target revision は自動で決めない。upstream evidence と docs-portal smoke を別項目で残す |
+
+### upstream readiness addendum
+
+| upstream PR | 2026-06-04 02:00 JST status | target SHA 判断での読み方 |
+| --- | --- | --- |
+| `rails_table_preferences#860` | open / mergeable true / CI success | `#798` を close する public surface source-of-truth docs PR。README / docs family / package verifier の役割分担を整理する lane だが、merge 前の head SHA を `#789` の known-good target 前提にしない |
+| `tree_view-rails#1222` | open / CI success / mergeable false | selection data hook の package-root export、manifest、docs、smoke をそろえる lane。CI success と mergeability は分けて読み、branch freshness / conflict 解消後に upstream `main` で再確認する |
+| `rails_table_preferences#847` | open / CI success / mergeable false | package entrypoint TypeScript declaration、package verifier、docs の lane。conflict / branch freshness / human review 解消前に `#789` の known-good target 前提にしない |
+| `rails_fields_kit#913` | open / mergeable true / CI success | JavaScript smoke inventory guard の lane。RFK の package-root smoke / script inventory pattern として参考にできるが、merge 後に upstream `main` で再確認するまで bump evidence として固定しない |
+| `tree_view-rails#1242` | open / mergeable true / CI success | StateStore failure boundary の test-only guard。TreeView の release train evidence としては、public API / manifest ではなく failure boundary regression の補助 evidence として分けて読む |
+
+この追補では、`CI success`、`mergeable true/false`、`merged` を同じ readiness として扱わない。open PR は release train 前に見る候補であり、merge 済み behavior や current support ではない。merge 済みの `docs-portal#1883` も guard 比較 docs の入口であって、3 gem の public API 方針や dependency target を決めるものではない。
+
 ## latest addendum (2026-06-02 14:48 JST)
 
 - 判定分類: `docs-stale` / `docs-sync`

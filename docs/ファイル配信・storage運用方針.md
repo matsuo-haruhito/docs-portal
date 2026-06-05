@@ -29,6 +29,7 @@
 - `Rails.root/storage/...` を直接参照する
 - `send_file` で配信する
 - file existence を同期的に確認できる
+- 管理ダッシュボードの `Storage使用量` で local storage 配下の概算使用量と file count を read-only に確認できる
 
 ### GCS 等のオブジェクトストレージ
 
@@ -41,6 +42,7 @@
 - path / prefix 設計はローカル path 構造を踏襲する
 - public access は禁止する
 - 配信可否の判定はアプリ側に残す
+- `Storage使用量` は local directory scan の結果であり、GCS / object storage API の疎通確認や課金レポートとして扱わない
 
 ## 4. MIME type / charset 方針
 
@@ -119,16 +121,28 @@ Docusaurus site は `DocusaurusSiteRenderer` と `ProjectSitesController` / `Doc
 - `storage/document_files` と `storage/docs_sites` は正本または復旧対象として扱う
 - `storage/imports` は長期保管前提にしない
 - cleanup の自動化は、誤削除防止のため retention 付きで設計する
+- `Storage使用量` に数字が出ても、それだけで削除、archive、cleanup、retention policy 決定へ進まない
 
 ## 9. storage 使用量の考え方
 
-将来的な可視化対象:
+管理ダッシュボードの `Storage使用量` は、local `Rails.root/storage` 配下の概算使用量を read-only に確認する入口です。
 
-- Project 単位の使用量
-- Document 単位の使用量
-- `document_files` / `docs_sites` / `imports` ごとの使用量
+current support の対象:
 
-現時点では画面化されていないため、運用上はストレージメトリクスやバックアップサイズから把握します。
+- `storage/document_files`: アップロード、ZIP/Git/外部同期で取り込まれた文書添付の正本
+- `storage/docs_sites`: Docusaurus などで生成した文書表示用 site artifact
+- `storage/imports`: ZIP / manual upload dry-run などの一時確認 artifact
+
+画面では、各領域の file count と概算 byte size、3 領域の合計を確認できます。これは Project 単位、Document 単位、顧客単位の内訳ではなく、local directory ごとの容量確認です。
+
+`文書ファイル健全性` / `欠落ファイル詳細` は、登録済み `DocumentFile` の実体が見えるかを確認する入口です。一方、`Storage使用量` は local storage 領域別の概算容量を確認する入口です。欠落ファイルの修復対象や削除対象を決める画面ではありません。
+
+current support 外:
+
+- Project / Document 単位の容量内訳
+- CSV export / 定期レポート
+- cleanup、archive、自動削除、retention policy 決定
+- GCS bucket、signed URL、public access policy、object storage API の確認
 
 ## 10. 監視との接続
 
@@ -140,6 +154,8 @@ Docusaurus site は `DocusaurusSiteRenderer` と `ProjectSitesController` / `Doc
 - import attachment copy 失敗
 - site build 欠落
 
+current repo では、storage 使用量は管理ダッシュボードの `Storage使用量` で read-only に確認できます。通知 channel、alert rule、外部監視サービス連携はまだ具体実装ではないため、画面で見える概算使用量と監視 alert 実装を混同しないでください。
+
 詳細は [監視・アラート設計](./監視・アラート設計.md) を参照します。
 
 ## 11. 現時点の運用ルール
@@ -148,4 +164,5 @@ Docusaurus site は `DocusaurusSiteRenderer` と `ProjectSitesController` / `Doc
 - object storage 利用時も public access は許可しない
 - missing file は 404 に統一し、原因は運用ログで追う
 - MIME type / charset は `DocumentFile#effective_content_type` を正本として扱う
+- 管理ダッシュボードの `Storage使用量` は read-only な容量確認入口として扱い、削除・archive・cleanup・retention policy 判断の実行入口にしない
 - cleanup 自動化は retention と restore 手順を先に決めてから導入する

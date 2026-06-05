@@ -22,6 +22,63 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     end
   end
 
+  it "lists only manual upload dry-runs with detail links and safe preview columns" do
+    sign_in_as(admin_user)
+    dry_run = create_file_upload_dry_run
+    zip_dry_run = create_file_upload_dry_run(
+      import_mode: :zip,
+      result_json: {
+        "file_upload_preview" => {
+          "source_name" => "zip-source",
+          "relative_path" => "zip/README.md",
+          "source_path" => "C:/work/zip-source-path/README.md",
+          "content_hash" => "ziphash"
+        }
+      }
+    )
+
+    get admin_file_upload_dry_runs_path
+
+    expect(response).to have_http_status(:ok)
+    expect(heading_texts).to include("単体ファイルアップロードdry-run一覧")
+    expect(page_text).to include("API から作成された manual_upload dry-run を後から確認するための一覧です。ZIP / Git import dry-run は表示しません。")
+    expect(page_text).to include(dry_run.public_id)
+    expect(response.body).to include(admin_file_upload_dry_run_path(dry_run))
+    expect(page_text).to include("FILEUI / File UI Project")
+    expect(page_text).to include("local-folder-sync")
+    expect(page_text).to include("docs/README.md")
+    expect(page_text).to include("abc123contenthash")
+    expect(page_text).not_to include("C:/work/customer-docs/docs/README.md")
+    expect(page_text).not_to include(zip_dry_run.public_id)
+    expect(page_text).not_to include("zip-source")
+  end
+
+  it "filters manual upload dry-runs by id, project, and status" do
+    sign_in_as(admin_user)
+    other_project = create(:project, code: "OTHER", name: "Other Project")
+    target = create_file_upload_dry_run(
+      status: :failed,
+      project_override: other_project,
+      result_json: {
+        "file_upload_preview" => {
+          "source_name" => "target-sync",
+          "relative_path" => "docs/target.md",
+          "content_hash" => "targethash"
+        }
+      }
+    )
+    create_file_upload_dry_run(status: :failed)
+    create_file_upload_dry_run(status: :analyzed, project_override: other_project)
+
+    get admin_file_upload_dry_runs_path, params: { dry_run_id: target.public_id, project_id: other_project.id, status: "failed" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(target.public_id)
+    expect(page_text).to include("target-sync")
+    expect(page_text).to include("絞り込み解除")
+    expect(page_text).not_to include("local-folder-sync")
+  end
+
   it "shows a manual upload dry-run with file metadata and preview without exposing raw source path" do
     sign_in_as(admin_user)
     dry_run = create_file_upload_dry_run(
@@ -122,21 +179,25 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     dry_run = create_file_upload_dry_run
 
     sign_in_as(create(:user, :company_master_admin))
+    get admin_file_upload_dry_runs_path
+    expect(response).to have_http_status(:forbidden)
     get admin_file_upload_dry_run_path(dry_run)
     expect(response).to have_http_status(:forbidden)
 
     sign_in_as(create(:user, :external))
+    get admin_file_upload_dry_runs_path
+    expect(response).to have_http_status(:forbidden)
     get admin_file_upload_dry_run_path(dry_run)
     expect(response).to have_http_status(:forbidden)
   end
 
   private
 
-  def create_file_upload_dry_run(import_mode: :manual_upload, status: :analyzed, result_json: {}, warnings_json: [], errors_json: [])
+  def create_file_upload_dry_run(import_mode: :manual_upload, status: :analyzed, project_override: nil, result_json: {}, warnings_json: [], errors_json: [])
     ImportDryRun.create!(
       import_mode:,
       status:,
-      project:,
+      project: project_override || project,
       created_by: admin_user,
       source_commit_hash: "abc123sourcecommit",
       summary_json: { "total" => 1, "create_count" => 1, "update_count" => 0, "warning_count" => warnings_json.size },

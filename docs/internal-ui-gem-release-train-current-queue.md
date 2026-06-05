@@ -10,7 +10,7 @@
 | --- | --- | --- | --- |
 | 1 | `rails_fields_kit` | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | `#1300` | 先行 bump 候補。setup doctor、package-root helper export、JS smoke inventory、public API docs guard の upstream evidence を確認し、Planner が target SHA / merge 済み PR / representative smoke を確定してから bump PR に進める |
 | 2 | `tree_view` | `9c538f9ee7946fa5af24f15c99402a0431677303` | `#1301` | manifest-backed public surface の進行状況を確認し、sidebar tree / detail tree / persisted state smoke と upstream manifest / release evidence を分けて記録する |
-| human-gated | `rails_table_preferences` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `#789` | known-good target revision の人間判断待ち。package entrypoint、copied controller 差分、release checklist、compatibility matrix、demo / manual QA の upstream evidence は読むが、human gate 前に broad bump や downstream canary を混ぜない |
+| human-gated | `rails_table_preferences` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `#789` | known-good target revision の人間判断待ち。README / `docs/index.md` family、`docs/javascript_entrypoints.md`、release checklist、package verifier、manual QA の upstream evidence を読むが、package entrypoint / copied controller / public JS surface / helper option surface の結論を docs-portal 側で決めない。`#1860` で更新した evidence map に沿って、table key / stable column key / filter-sort mapping / preset behavior / rollback target は downstream smoke として別に残す |
 
 ## 2026-06-04 evidence family intake
 
@@ -44,7 +44,7 @@
 ## 横断 evidence の現在地
 
 - `rails_fields_kit` は、3 gem の中で `docs-portal#1300` の単独 bump 候補として最初に見る。target SHA はこの文書で決めず、Planner / 実行 PR 側で merge 済み upstream PR と representative smoke を再確認する。
-- `rails_table_preferences` は、`docs-portal#789` の known-good revision 判断が gate のまま。upstream docs / package evidence が増えていても、human decision 前に current support として broad bump 予定を書かない。
+- `rails_table_preferences` は、`docs-portal#789` の known-good revision 判断が gate のまま。`rails_table_preferences#798` は README / docs family + package verifier を source-of-truth family として明文化する planned 方針だが、human decision 前に current support として broad bump 予定を書かない。
 - `tree_view` は、manifest-backed public surface と docs-portal 側の sidebar / detail tree smoke を分けて扱う。upstream manifest / public API の進行中 PR や proposal を current support として先取りしない。
 - 3 gem 共通で、upstream evidence と downstream smoke は同じ PR body に混ぜてよいが、責務は分けて記録する。upstream docs の完了は host app smoke の成功を意味しない。
 

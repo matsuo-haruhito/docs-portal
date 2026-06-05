@@ -23,7 +23,7 @@ RSpec.describe "Admin company master visibility", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("新規登録")
-    expect(parsed_html.at_css("form[action='#{admin_companies_path}']")).to be_present
+    expect(parsed_html.at_css("form[action='#{admin_companies_path}'][method='post']")).to be_present
     expect(company_row(company).text).to include("削除")
     expect(company_row(other_company).text).to include("削除")
   end
@@ -44,6 +44,6 @@ RSpec.describe "Admin company master visibility", type: :request do
     expect(row.text).to include("編集")
     expect(row.text).not_to include("削除")
     expect(parsed_html.at_css("form[action='#{admin_company_path(company.public_id)}']")).to be_present
-    expect(parsed_html.at_css("form[action='#{admin_companies_path}']")).to be_nil
+    expect(parsed_html.at_css("form[action='#{admin_companies_path}'][method='post']")).to be_nil
   end
 end

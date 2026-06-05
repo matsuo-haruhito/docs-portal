@@ -11,6 +11,7 @@ module Admin::DocumentsHelper
       table_preferences_column(:visibility_policy, label: "公開範囲", default_width: 140),
       table_preferences_column(:status, label: "状態", default_width: 170),
       table_preferences_column(:latest_version, label: "最新版/HTML", default_width: 190),
+      table_preferences_column(:legacy_versions, label: "古い版候補", default_width: 260),
       table_preferences_column(:retention_until, label: "保管期限", default_width: 120),
       table_preferences_column(:discard_candidate_at, label: "廃棄候補", default_width: 120),
       table_preferences_column(:actions, label: "操作", default_width: 180, pinned: true)
@@ -81,6 +82,23 @@ module Admin::DocumentsHelper
     else
       "公開期間中"
     end
+  end
+
+  def admin_document_legacy_versions(document)
+    document.document_versions.to_a
+      .reject { |version| version.id == document.latest_version_id }
+      .sort_by { |version| [version.updated_at || Time.zone.at(0), version.id || 0] }
+      .reverse
+  end
+
+  def admin_document_legacy_version_source_label(version)
+    labels = []
+    labels << "manual upload由来の可能性" if version.version_label.to_s.start_with?("manual-")
+
+    source_path = version.source_relative_path.presence || [version.source_directory, version.source_file_name].compact_blank.join("/").presence
+    labels << "source: #{source_path}" if source_path.present?
+
+    labels.presence&.join(" / ") || "source未設定"
   end
 
   private

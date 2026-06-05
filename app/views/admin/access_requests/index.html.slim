@@ -76,7 +76,7 @@ section.card
           td data-rails-table-preferences-column-key="created_at" = access_request.created_at.strftime("%Y-%m-%d %H:%M")
           td data-rails-table-preferences-column-key="requester" = "#{access_request.requester.name} / #{access_request.requester.email_address}"
           td data-rails-table-preferences-column-key="target"
-            = requestable[:type]
+            = admin_access_request_requestable_type_label(requestable[:type])
             br
             = primary_label
             - if secondary_label.present?
@@ -99,8 +99,11 @@ section.card
                 - action_filter_params.each do |key, value|
                   = hidden_field_tag key, value
                 = hidden_field_tag :decision, "reject"
-                = label_tag "rejection_reason_#{access_request.public_id}", "却下理由"
-                = text_area_tag :rejection_reason, admin_access_request_default_rejection_reason, id: "rejection_reason_#{access_request.public_id}", rows: 2
+                = label_tag "rejection_reason_preset_#{access_request.public_id}", "却下理由の定型候補"
+                = select_tag :rejection_reason_preset, options_for_select(admin_access_request_rejection_reason_preset_options, admin_access_request_default_rejection_reason_preset), id: "rejection_reason_preset_#{access_request.public_id}"
+                p.muted 定型候補は入力補助です。承認基準や権限付与仕様はここでは変更しません。
+                = label_tag "rejection_reason_note_#{access_request.public_id}", "補足（任意）"
+                = text_area_tag :rejection_reason_note, nil, id: "rejection_reason_note_#{access_request.public_id}", rows: 2, placeholder: "必要に応じて申請者へ伝える補足を入力"
                 = submit_tag "却下", class: "button secondary"
             - else
               span.muted -
