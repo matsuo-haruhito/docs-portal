@@ -26,17 +26,28 @@ RSpec.describe "Admin recurring job schedule action grouping", type: :request do
     action_card = parsed_html.css(".card").find { |card| card.at_css("h2")&.text&.squish == "即時実行要求" }
 
     expect(action_card).to be_present
+    action_context = definition_values(action_card)
+
     expect(action_card.text.squish).to include("実行系 action")
-    expect(action_card.text.squish).to include("対象 job key request_grouping_job")
-    expect(action_card.text.squish).to include("キュー critical")
-    expect(action_card.text.squish).to include("重複実行 禁止")
-    expect(action_card.text.squish).to include("前回状態 失敗")
-    expect(action_card.text.squish).to include("要求状況 要求済み")
+    expect(action_context).to include(
+      "対象 job key" => "request_grouping_job",
+      "キュー" => "critical",
+      "重複実行" => "禁止",
+      "前回状態" => "失敗"
+    )
+    expect(action_context.fetch("要求状況")).to include("要求済み")
     expect(action_card.text.squish).to include("結果は下の実行履歴で確認してください")
     expect(action_card.at_css(%(a[href="#{request_run_admin_recurring_job_schedule_path(schedule, return_to:)}"]))).to be_present
     expect(parsed_html.at_css(%(a[href="#{return_to}"])).text.squish).to eq("一覧へ戻る")
     expect(response.body).to include("failed-run-2119")
     expect(response.body).to include("表示中: 1件（最新50件まで）")
+  end
+
+  def definition_values(card)
+    labels = card.css("dt").map { |node| node.text.squish }
+    values = card.css("dd").map { |node| node.text.squish }
+
+    labels.zip(values).to_h
   end
 
   def create_schedule!(attributes = {})
