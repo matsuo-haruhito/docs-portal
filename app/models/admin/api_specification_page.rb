@@ -6,8 +6,20 @@ require Rails.root.join("db/seeds/support/docusaurus_runtime_checker")
 class Admin::ApiSpecificationPage
   SITE_PATH = "api-specification".freeze
   FAILURE_MESSAGE_MAX_LENGTH = 160
+  BUILD_HISTORY_LIMIT = 5
 
   BuildStatus = Struct.new(
+    :state,
+    :label,
+    :message,
+    :recorded_at,
+    :success_at,
+    :requested_at,
+    :build_entry_mtime,
+    keyword_init: true
+  )
+
+  BuildHistoryEntry = Struct.new(
     :state,
     :label,
     :message,
@@ -68,7 +80,9 @@ class Admin::ApiSpecificationPage
   end
 
   def enqueue_build_if_stale!
-    build_freshness_guard.enqueue_if_stale!
+    enqueued = build_freshness_guard.enqueue_if_stale!
+    record_build_requested! if enqueued
+    enqueued
   end
 
   def enqueue_manual_build!
@@ -76,6 +90,7 @@ class Admin::ApiSpecificationPage
 
     build_freshness_guard.request_build!
     ApiSpecificationBuildJob.perform_later
+    record_build_requested!
     true
   rescue
     clear_build_request!
@@ -100,6 +115,13 @@ class Admin::ApiSpecificationPage
     else
       stale_or_missing_build_status
     end
+  end
+
+  def build_history
+    entries = build_history_marker.filter_map { |payload| build_history_entry(payload) }
+    requested_entry = current_requested_history_entry
+    entries = [requested_entry, *entries] if requested_entry && entries.none? { |entry| entry.state == :requested && entry.requested_at == requested_entry.requested_at }
+    entries.first(BUILD_HISTORY_LIMIT)
   end
 
   def build!
@@ -181,19 +203,33 @@ class Admin::ApiSpecificationPage
   end
 
   def record_build_success!
-    write_build_status_marker(
+    now = Time.current
+    payload = {
       status: "success",
-      recorded_at: Time.current.iso8601,
-      success_at: Time.current.iso8601,
+      recorded_at: now.iso8601,
+      success_at: now.iso8601,
       build_entry_mtime: build_entry_path.mtime.iso8601
-    )
+    }
+    write_build_status_marker(payload)
+    append_build_history!(payload)
   end
 
   def record_build_failure!(message)
-    write_build_status_marker(
+    payload = {
       status: "failed",
       recorded_at: Time.current.iso8601,
       message: sanitize_failure_message(message)
+    }
+    write_build_status_marker(payload)
+    append_build_history!(payload)
+  end
+
+  def record_build_requested!
+    requested_at = build_request_marker_mtime || Time.current
+    append_build_history!(
+      status: "requested",
+      recorded_at: Time.current.iso8601,
+      requested_at: requested_at.iso8601
     )
   end
 
@@ -202,12 +238,77 @@ class Admin::ApiSpecificationPage
     File.write(build_status_marker_path, JSON.pretty_generate(payload))
   end
 
+  def append_build_history!(payload)
+    FileUtils.mkdir_p(build_history_marker_path.dirname)
+    history = [payload.stringify_keys, *build_history_marker].first(BUILD_HISTORY_LIMIT)
+    File.write(build_history_marker_path, JSON.pretty_generate(history))
+  end
+
   def build_status_marker
     return {} unless build_status_marker_path.exist?
 
     JSON.parse(build_status_marker_path.read)
   rescue JSON::ParserError
     {}
+  end
+
+  def build_history_marker
+    return [] unless build_history_marker_path.exist?
+
+    payload = JSON.parse(build_history_marker_path.read)
+    payload.is_a?(Array) ? payload : []
+  rescue JSON::ParserError
+    []
+  end
+
+  def build_history_entry(payload)
+    status = payload["status"].to_s
+    state = build_history_state(status)
+    return unless state
+
+    BuildHistoryEntry.new(
+      state:,
+      label: build_history_label(state),
+      message: payload["message"].presence,
+      recorded_at: parse_marker_time(payload["recorded_at"]),
+      success_at: parse_marker_time(payload["success_at"]),
+      requested_at: parse_marker_time(payload["requested_at"]),
+      build_entry_mtime: parse_marker_time(payload["build_entry_mtime"])
+    )
+  end
+
+  def current_requested_history_entry
+    return unless build_requested?
+
+    requested_at = build_request_marker_mtime
+    BuildHistoryEntry.new(
+      state: :requested,
+      label: build_history_label(:requested),
+      recorded_at: requested_at,
+      requested_at:
+    )
+  end
+
+  def build_history_state(status)
+    case status
+    when "success"
+      :available
+    when "failed"
+      :failed
+    when "requested"
+      :requested
+    end
+  end
+
+  def build_history_label(state)
+    case state
+    when :available
+      "最新 build 成功"
+    when :failed
+      "build 失敗"
+    when :requested
+      "build 待ち/実行中"
+    end
   end
 
   def sanitize_failure_message(message)
@@ -249,6 +350,10 @@ class Admin::ApiSpecificationPage
 
   def build_status_marker_path
     Rails.root.join("tmp", "api_specification_build.status.json")
+  end
+
+  def build_history_marker_path
+    Rails.root.join("tmp", "api_specification_build.history.json")
   end
 
   def build_freshness_guard
