@@ -19,13 +19,17 @@
 - entry HTML は `docusaurus/build/api-specification/index.html` です
 - source が HTML より新しい場合、画面表示時に build が enqueue されることがあります
 - 直近 build 結果は API仕様ページ専用の status marker で表示されます。build queue 全体や Docusaurus build 履歴の一覧ではありません
+- `表示状態` は API仕様ページ全体の build 結果です。`主要ページとsource` の各行は、個別ページごとの編集元と HTML 確認先を見分けるための cue として読みます
+- 各行の `Source` は直す Markdown file、`HTML確認先` は build 後に開く generated page です。Source を直しただけでは HTML が更新済みとは限らないため、build 成功後に HTML確認先まで開きます
 
 現時点で API仕様ページの `主要ページとsource` から辿れる主な HTML と source は次の 4 つです。
 
-- `API仕様・連携設定`: `docs-src/api-specification.md`
-- `単体ファイルアップロードAPI`: `docs-src/client-file-upload-api.md`
-- `Office preview`: `docs-src/office-preview.md`
-- `外部フォルダ同期 Webhook 受信仕様`: `docs-src/external-folder-sync-webhooks.md`
+- `API仕様・連携設定`: `docs-src/api-specification.md` -> `/api-specification`
+- `単体ファイルアップロードAPI`: `docs-src/client-file-upload-api.md` -> `/client-file-upload-api`
+- `Office preview`: `docs-src/office-preview.md` -> `/office-preview`
+- `外部フォルダ同期 Webhook 受信仕様`: `docs-src/external-folder-sync-webhooks.md` -> `/external-folder-sync-webhooks`
+
+`Admin::ApiSpecificationPage::PRIMARY_SOURCE_PAGES` と `docs-src/*.md` の front matter `slug` は request spec で対応を固定しています。source rename や slug 変更を行う場合は、`source_path`、front matter `slug`、`site_path`、主要ページの表示 label を同じ変更として確認します。
 
 ## 日常の確認手順
 
@@ -33,7 +37,7 @@
 2. 管理画面の `API仕様` を開きます。
 3. 上部 notice と `表示状態` を見て、build が開始されたか、HTML が最新か、直近 build が失敗していないかを確認します。
 4. `build 待ち/実行中` または `HTML未生成または stale` の場合は、少し待って再読み込みします。
-5. `最新 build 成功` になったら iframe と `主要ページとsource` のリンクを順に開き、更新した説明が HTML 側にも反映されていることを確認します。
+5. `最新 build 成功` になったら、iframe で entry HTML を確認し、`主要ページとsource` の更新対象行で `Source` と `HTML確認先` を照合します。直した source file に対応する HTML確認先を開き、更新した説明が HTML 側にも反映されていることを確認します。
 6. `build 失敗` の場合は、画面の短い失敗理由だけで断定せず、下の `build 失敗時の切り分け` へ進みます。
 
 ## 表示状態の見方
@@ -86,9 +90,11 @@ API仕様ページ上部の `表示状態` は、notice よりも現在の確認
 ## HTML がまだ出ないとき
 
 1. `docs-src/api-specification.md` と関連ページの source file が存在するか確認します。
-2. `docs-src/client-file-upload-api.md`、`docs-src/office-preview.md`、`docs-src/external-folder-sync-webhooks.md` の更新対象が想定どおりか確認します。
-3. Docusaurus runtime の前提が崩れていないか、[docs/notes/docusaurus-build-runtime.md](./notes/docusaurus-build-runtime.md) を確認します。
-4. build 完了後も古い HTML のままなら、対象ページを再読み込みして `主要ページとsource` から入り直します。
+2. `主要ページとsource` の各行で、更新した source file と開くべき `HTML確認先` が対応しているか確認します。
+3. `docs-src/client-file-upload-api.md`、`docs-src/office-preview.md`、`docs-src/external-folder-sync-webhooks.md` の更新対象が想定どおりか確認します。
+4. source rename や slug 変更をした場合は、`PRIMARY_SOURCE_PAGES` の `source_path` と `site_path`、Markdown front matter `slug` が同じ対応になっているか確認します。
+5. Docusaurus runtime の前提が崩れていないか、[docs/notes/docusaurus-build-runtime.md](./notes/docusaurus-build-runtime.md) を確認します。
+6. build 完了後も古い HTML のままなら、対象ページを再読み込みして `主要ページとsource` から入り直します。
 
 API仕様ページは source を直接編集する画面ではありません。表示に違和感があるときは、まず `docs-src/` 側を正本として見直します。
 
