@@ -32,6 +32,16 @@ h1 Git同期履歴
           = link_to "絞り込み解除", admin_git_import_runs_path, class: "button secondary"
 
   - if @git_import_runs.any?
+    - status_summary_items = git_import_run_status_summary_items(@git_import_runs)
+    - attention_cues = git_import_run_attention_cues(@git_import_runs)
+    p.muted
+      | 表示中の最新100件内の状態:
+      strong = " #{status_summary_items.join(' / ')}"
+    - if attention_cues.any?
+      ul
+        - attention_cues.each do |cue|
+          li = cue
+
     .card
       = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "Git同期履歴の表示設定")
 

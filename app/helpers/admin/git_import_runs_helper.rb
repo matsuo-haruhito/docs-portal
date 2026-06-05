@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module Admin::GitImportRunsHelper
+  STATUS_SUMMARY_ORDER = %w[failed skipped imported running pending].freeze
+
   def git_import_run_table_columns
     [
       table_preferences_column(:created_at, label: "実行日時", default_width: 180, pinned: true, sortable: true),
@@ -12,6 +14,32 @@ module Admin::GitImportRunsHelper
       table_preferences_column(:summary, label: "実行結果", default_width: 340),
       table_preferences_column(:error_message, label: "エラー", default_width: 340)
     ]
+  end
+
+  def git_import_run_status_summary_items(runs)
+    status_counts = git_import_run_status_counts(runs)
+
+    STATUS_SUMMARY_ORDER.filter_map do |status|
+      count = status_counts[status]
+      next unless count.positive?
+
+      "#{git_import_run_status_label(status)}: #{count}件"
+    end
+  end
+
+  def git_import_run_attention_cues(runs)
+    status_counts = git_import_run_status_counts(runs)
+    cues = []
+
+    if status_counts["failed"].positive?
+      cues << "失敗 #{status_counts['failed']}件はエラー列を確認してください。"
+    end
+
+    if status_counts["skipped"].positive?
+      cues << "スキップ #{status_counts['skipped']}件は実行結果の理由を確認してください。"
+    end
+
+    cues
   end
 
   def git_import_run_summary_lines(run)
@@ -40,5 +68,11 @@ module Admin::GitImportRunsHelper
 
   def git_import_summary_value(summary, key)
     summary[key.to_s] || summary[key.to_sym]
+  end
+
+  def git_import_run_status_counts(runs)
+    runs.each_with_object(Hash.new(0)) do |run, counts|
+      counts[run.status.to_s] += 1
+    end
   end
 end
