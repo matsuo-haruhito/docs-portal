@@ -31,6 +31,22 @@ export default class extends Controller {
     this.updateEmptyState({ visibleCount, selectedCount, query, selectedOnly })
   }
 
+  pickRemoteDocument(event) {
+    const documentId = this.remoteDocumentValue(event)
+
+    if (documentId === "") {
+      this.queryTarget.value = ""
+      this.filter()
+      return
+    }
+
+    const row = this.rowTargets.find((candidate) => candidate.dataset.documentSetDocumentFilterDocumentId === documentId)
+    if (!row) return
+
+    this.queryTarget.value = row.dataset.documentSetDocumentFilterSlug || row.dataset.documentSetDocumentFilterSearchText || ""
+    this.filter()
+  }
+
   updateStatus({ totalCount, visibleCount, selectedCount, query, selectedOnly }) {
     const scopeLabel = selectedOnly ? "選択済みのみ" : "全候補"
     const searchLabel = query === "" ? "検索なし" : "検索中"
@@ -60,6 +76,11 @@ export default class extends Controller {
     } else {
       this.emptyTarget.textContent = "表示できる対象文書はありません。"
     }
+  }
+
+  remoteDocumentValue(event) {
+    const value = event.detail && event.detail.value !== undefined ? event.detail.value : event.target.value
+    return Array.isArray(value) ? this.normalize(value[0] || "") : this.normalize(value || "")
   }
 
   normalize(value) {
