@@ -104,7 +104,10 @@ RSpec.describe "Admin access requests", type: :request do
     expect(action_forms.size).to eq(2)
     expect(page_text).to include("承認")
     expect(page_text).to include("却下")
-    expect(reject_form.at_css("textarea[name='rejection_reason']").text).to include("承認条件を満たしていないため却下しました")
+    expect(reject_form.at_css("select[name='rejection_reason_preset'] option[selected]")["value"]).to eq("approval_mismatch")
+    expect(reject_form.at_css("select[name='rejection_reason_preset']").text.squish).to include("権限不足 対象誤り 情報不足 承認条件不一致")
+    expect(reject_form.at_css("textarea[name='rejection_reason_note']")).to be_present
+    expect(reject_form.text.squish).to include("定型候補は入力補助です")
     expect(reject_form.to_html).not_to include("Not approved")
   end
 
@@ -332,6 +335,34 @@ RSpec.describe "Admin access requests", type: :request do
     expect(access_request.rejection_reason).to eq(custom_reason)
   end
 
+  it "rejects a pending request with a preset reason" do
+    access_request = create(:access_request, requester:, requestable: project, requested_access_level: :view)
+
+    sign_in_as(admin_user)
+
+    patch admin_access_request_path(access_request), params: { decision: "reject", rejection_reason_preset: "permission_shortage" }
+
+    expect(response).to redirect_to(admin_access_requests_path)
+    expect(access_request.reload).to be_rejected
+    expect(access_request.rejection_reason).to eq("権限不足")
+  end
+
+  it "rejects a pending request with a preset reason and note" do
+    access_request = create(:access_request, requester:, requestable: project, requested_access_level: :view)
+
+    sign_in_as(admin_user)
+
+    patch admin_access_request_path(access_request), params: {
+      decision: "reject",
+      rejection_reason_preset: "insufficient_information",
+      rejection_reason_note: "申請対象の案件を確認してください"
+    }
+
+    expect(response).to redirect_to(admin_access_requests_path)
+    expect(access_request.reload).to be_rejected
+    expect(access_request.rejection_reason).to eq("情報不足：申請対象の案件を確認してください")
+  end
+
   it "keeps permitted filters after rejection" do
     access_request = create(:access_request, requester:, requestable: project, requested_access_level: :view)
 
@@ -339,7 +370,7 @@ RSpec.describe "Admin access requests", type: :request do
 
     patch admin_access_request_path(access_request), params: {
       decision: "reject",
-      rejection_reason: "承認条件を満たしていないため却下しました",
+      rejection_reason_preset: "approval_mismatch",
       status: "pending",
       q: "Client User",
       requested_access_level: "view",
@@ -353,7 +384,7 @@ RSpec.describe "Admin access requests", type: :request do
       requestable_type: "Project"
     ))
     expect(access_request.reload).to be_rejected
-    expect(access_request.rejection_reason).to eq("承認条件を満たしていないため却下しました")
+    expect(access_request.rejection_reason).to eq("承認条件不一致")
   end
 
   it "does not carry invalid filters or blank query after actions" do
@@ -380,6 +411,22 @@ RSpec.describe "Admin access requests", type: :request do
     sign_in_as(admin_user)
 
     patch admin_access_request_path(access_request), params: { decision: "reject", rejection_reason: "  " }
+
+    expect(response).to have_http_status(:bad_request)
+    expect(access_request.reload).to be_pending
+    expect(access_request.rejection_reason).to be_blank
+  end
+
+  it "returns bad request when rejection preset is unsupported and note is blank" do
+    access_request = create(:access_request, requester:, requestable: project, requested_access_level: :view)
+
+    sign_in_as(admin_user)
+
+    patch admin_access_request_path(access_request), params: {
+      decision: "reject",
+      rejection_reason_preset: "policy_specific",
+      rejection_reason_note: "  "
+    }
 
     expect(response).to have_http_status(:bad_request)
     expect(access_request.reload).to be_pending

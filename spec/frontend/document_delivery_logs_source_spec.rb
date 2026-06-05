@@ -11,7 +11,8 @@ RSpec.describe "document delivery logs source" do
       expect(index_source).to include("table_preferences_editor")
       expect(index_source).to include("table_preferences_table_tag")
       expect(index_source).to include('title: "送付履歴一覧の表示設定"')
-      expect(index_source).to include("document_delivery_log_path(log, return_to: current_delivery_logs_path)")
+      expect(index_source).to include("detail_params = { return_to: current_delivery_logs_path }.merge(current_date_filter_params)")
+      expect(index_source).to include("document_delivery_log_path(log, detail_params)")
     end
   end
 
@@ -35,6 +36,9 @@ RSpec.describe "document delivery logs source" do
       expect(index_source).to include("form.search_field :q")
       expect(index_source).to include("@status_filter")
       expect(index_source).to include("@delivery_type_filter")
+      expect(index_source).to include("form.date_field :created_from")
+      expect(index_source).to include("form.date_field :created_to")
+      expect(index_source).to include("current_date_filter_params")
       expect(index_source).to include("delivery_logs_limit")
       expect(index_source).to include("failure_summary = log.error_message.presence")
       expect(index_source).to include('span.muted "-"')

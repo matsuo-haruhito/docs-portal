@@ -85,6 +85,26 @@ RSpec.describe "Admin document sets", type: :request do
     end
   end
 
+  def document_set_rows
+    parsed_html.css("table tbody tr")
+  end
+
+  def table_preference_surfaces
+    parsed_html.css(%([data-rails-table-preferences-table-key-value="admin_document_sets"]))
+  end
+
+  def table_preference_settings_for(surface)
+    JSON.parse(surface["data-rails-table-preferences-settings-value"])
+  end
+
+  def table_preference_columns_for(surface)
+    JSON.parse(surface["data-rails-table-preferences-columns-value"])
+  end
+
+  def table_preference_table
+    parsed_html.at_css(%(table[data-rails-table-preferences-table-key-value="admin_document_sets"]))
+  end
+
   def document_set_form_action
     parsed_html.css("form[action]").find do |node|
       node.at_css('input[name="document_set[name]"]')
@@ -187,6 +207,84 @@ RSpec.describe "Admin document sets", type: :request do
     expect(listed_document_set_names).to eq(["既存セット"])
     expect(page_text).to include("種別: 送付用")
     expect(page_text).to include("公開範囲: 限定公開")
+  end
+
+  it "restores saved table preference settings while keeping document set filters usable" do
+    RailsTablePreferences::Preference.create!(
+      user: admin,
+      table_key: "admin_document_sets",
+      name: "default",
+      settings: {
+        "columns" => [
+          { "key" => "project", "visible" => true, "width" => 260, "order" => 1 },
+          { "key" => "name", "visible" => true, "width" => 300, "order" => 2 },
+          { "key" => "actions", "visible" => false, "width" => 140, "order" => 3 },
+          { "key" => "not_a_document_set_column", "visible" => false }
+        ],
+        "filters" => {
+          "set_type" => { "operator" => "eq", "value" => "delivery" },
+          "not_a_document_set_column" => { "operator" => "contains", "value" => "Ignored" }
+        },
+        "sorts" => [
+          { "key" => "name", "direction" => "asc" },
+          { "key" => "not_a_document_set_column", "direction" => "desc" }
+        ]
+      }
+    )
+
+    sign_in_as(admin)
+
+    get admin_document_sets_path, params: { set_type: "delivery" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 2件")
+    expect(page_text).to include("種別: 送付用")
+    expect(listed_document_set_names).to eq(["既存セット", "配送社内セット"])
+
+    settings = table_preference_surfaces.map { |surface| table_preference_settings_for(surface) }
+    expect(settings).to all(include(
+      "columns" => contain_exactly(
+        include("key" => "project", "visible" => true, "width" => 260, "order" => 1),
+        include("key" => "name", "visible" => true, "width" => 300, "order" => 2),
+        include("key" => "actions", "visible" => false, "width" => 140, "order" => 3)
+      ),
+      "filters" => { "set_type" => include("operator" => "eq", "value" => "delivery") },
+      "sorts" => [include("key" => "name", "direction" => "asc")]
+    ))
+  end
+
+  it "exposes stable table preference column metadata for the representative document set screen" do
+    sign_in_as(admin)
+
+    get admin_document_sets_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("文書セット一覧の表示設定")
+
+    columns = table_preference_columns_for(table_preference_table)
+    expect(columns.map { |column| column["key"] }).to eq(%w[project name set_type visibility_policy documents_count actions])
+    expect(columns.select { |column| column["pinned"] }.map { |column| column["key"] }).to eq(%w[project actions])
+    expect(columns.find { |column| column["key"] == "set_type" }).to include(
+      "filter" => include("type" => "select", "param" => "set_type")
+    )
+    expect(columns.find { |column| column["key"] == "visibility_policy" }).to include(
+      "filter" => include("type" => "select", "param" => "visibility_policy")
+    )
+  end
+
+  it "keeps empty filtered results outside table preference surfaces" do
+    sign_in_as(admin)
+
+    get admin_document_sets_path, params: { set_type: "delivery", visibility_policy: "public_with_login" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 0件")
+    expect(page_text).to include("種別: 送付用")
+    expect(page_text).to include("公開範囲: ログインユーザー公開")
+    expect(page_text).to include("条件に一致する文書セットはありません。")
+    expect(clear_filter_targets).to include(admin_document_sets_path)
+    expect(document_set_rows).to be_empty
+    expect(table_preference_surfaces).to be_empty
   end
 
   it "returns project-scoped document search results by title and slug" do

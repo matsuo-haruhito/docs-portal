@@ -1,4 +1,5 @@
 - page_title "文書一括編集"
+- candidate_document_ids = @bulk_edit_candidate_document_ids || []
 
 h1 文書一括編集
 = render "admin/nav"
@@ -7,13 +8,36 @@ h1 文書一括編集
   h2 事前確認の作成
   p.muted 対象文書と変更内容を指定して、まず事前確認を作成します。実行は確認画面から行います。
 
+  - if @bulk_edit_candidate_source
+    p
+      strong = "文書マスタ一覧から引き継いだ候補: #{@documents.size}件"
+    - if @bulk_edit_candidate_filter_summaries.any?
+      p.muted
+        | 代表条件:
+        - @bulk_edit_candidate_filter_summaries.each do |summary|
+          = " "
+          span.badge = summary
+    - else
+      p.muted 代表条件: 条件指定なし
+    - if @documents.empty?
+      p.muted 有効な候補文書がありません。文書マスタで条件を見直してから一括編集候補を開いてください。
+    - else
+      p.muted 候補文書は選択済みです。dry-run 作成前に不要な文書のチェックを外せます。
+
   = form_with url: admin_bulk_edit_dry_runs_path, scope: :bulk_edit, data: { controller: "bulk-edit-selection" } do |form|
+    - if @bulk_edit_candidate_source
+      = hidden_field_tag :source, "admin_documents"
+      - @bulk_edit_candidate_ids.each do |document_id|
+        = hidden_field_tag "candidate_document_ids[]", document_id
+      - @bulk_edit_candidate_filter_summaries.each do |summary|
+        = hidden_field_tag "source_filter_summaries[]", summary
+
     h3 対象文書
     p.muted 複数の文書を選択できます。権限外・変更不能な対象は事前確認で確認します。
 
     .bulk-edit-selection__summary aria-live="polite"
       strong data-bulk-edit-selection-target="count"
-        | 0件選択中
+        = "#{candidate_document_ids.size}件選択中"
       span data-bulk-edit-selection-target="visibleCount"
         = "#{@documents.size}件表示中"
       span.muted
@@ -42,7 +66,7 @@ h1 文書一括編集
           - status_label = document.archived? ? "アーカイブ済み" : "有効"
           - search_text = [document.project.name, document.title, document_category_label(document), document_kind_label(document), document_visibility_policy_label(document), status_label].join(" ")
           tr data-bulk-edit-selection-target="row" data-bulk-edit-selection-search-text=search_text
-            td = check_box_tag "bulk_edit[document_ids][]", document.id, false, id: "bulk_edit_document_#{document.id}", data: { bulk_edit_selection_target: "checkbox", action: "bulk-edit-selection#refresh" }
+            td = check_box_tag "bulk_edit[document_ids][]", document.id, candidate_document_ids.include?(document.id), id: "bulk_edit_document_#{document.id}", data: { bulk_edit_selection_target: "checkbox", action: "bulk-edit-selection#refresh" }
             td = document.project.name
             td
               label for="bulk_edit_document_#{document.id}"

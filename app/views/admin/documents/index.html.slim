@@ -63,6 +63,15 @@ h1 文書マスタ
     p.muted
       | 保管期限・廃棄候補の絞り込み中です。状態、保管期限、廃棄候補、公開側文書を確認し、必要な場合だけ行単位で編集・アーカイブ・復元してください。0件の場合は現在の条件に合う対象がない状態です。
 
+  .actions.form-actions
+    - if @bulk_edit_candidate_count.zero?
+      span.muted 文書マスタの検索結果が0件のため、一括編集候補へは進めません。条件を見直してから再度検索してください。
+    - elsif @bulk_edit_candidate_count > @bulk_edit_candidate_limit
+      span.muted = "検索結果が#{@bulk_edit_candidate_count}件のため、一括編集候補へ進む前に#{@bulk_edit_candidate_limit}件以下まで絞り込んでください。"
+    - else
+      = link_to "一括編集候補として開く", new_admin_bulk_edit_dry_run_path(source: "admin_documents", candidate_document_ids: @bulk_edit_candidate_ids, source_filter_summaries: active_filter_summaries), class: "button secondary"
+      span.muted = "現在の検索結果#{@bulk_edit_candidate_count}件を、文書一括編集dry-runの候補として引き継ぎます。"
+
 .card
   = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定")
 
@@ -77,12 +86,14 @@ h1 文書マスタ
       th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
       th data-rails-table-preferences-column-key="status" 状態
       th data-rails-table-preferences-column-key="latest_version" 最新版/HTML
+      th data-rails-table-preferences-column-key="legacy_versions" 古い版候補
       th data-rails-table-preferences-column-key="retention_until" 保管期限
       th data-rails-table-preferences-column-key="discard_candidate_at" 廃棄候補
       th data-rails-table-preferences-column-key="actions"
   tbody
     - @documents.each do |document|
       - latest_version = document.latest_version
+      - legacy_versions = admin_document_legacy_versions(document)
       tr
         td data-rails-table-preferences-column-key="project"
           div = document.project.name
@@ -114,6 +125,25 @@ h1 文書マスタ
             span.muted 最新版なし
             br
             span.muted 公開版がまだ選択されていません
+        td data-rails-table-preferences-column-key="legacy_versions"
+          - if legacy_versions.any?
+            span.badge = "#{legacy_versions.size}件"
+            br
+            span.muted latest以外のread-only候補です。削除・archive判断はしません。
+            - legacy_versions.first(3).each do |version|
+              div
+                span = document_version_label(version)
+                span.muted = " / #{document_version_status_label(version)}"
+                br
+                span.muted = admin_document_legacy_version_source_label(version)
+                br
+                span.muted = "更新: #{l(version.updated_at)}"
+            - if legacy_versions.size > 3
+              div.muted = "ほか#{legacy_versions.size - 3}件"
+          - else
+            span.muted 候補なし
+            br
+            span.muted latest以外の版はありません
         td data-rails-table-preferences-column-key="retention_until" = document.retention_until ? l(document.retention_until) : "-"
         td data-rails-table-preferences-column-key="discard_candidate_at" = document.discard_candidate_at ? l(document.discard_candidate_at) : "-"
         td.actions data-rails-table-preferences-column-key="actions"

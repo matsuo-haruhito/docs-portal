@@ -12,6 +12,10 @@ RSpec.describe "Admin model browsers", type: :request do
     parsed_html.css(".model-browser-group .metric-card h3 a")
   end
 
+  def model_browser_cards
+    parsed_html.css(".model-browser-group .metric-card")
+  end
+
   it "redirects unauthenticated users to the login page" do
     get admin_model_browser_path
 
@@ -34,6 +38,8 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include("運用")
     expect(response.body).to include("案件")
     expect(response.body).to include("文書")
+    expect(response.body).to include("key: projects / group: 基本マスタ")
+    expect(response.body).to include("key: documents / group: 文書・権限")
     expect(response.body).to include(admin_model_browser_model_path("projects"))
     expect(response.body).to include(admin_projects_path)
   end
@@ -63,9 +69,11 @@ RSpec.describe "Admin model browsers", type: :request do
 
     card_labels = model_browser_card_links.map { _1.text.squish }
     card_hrefs = model_browser_card_links.map { _1["href"] }
+    card_texts = model_browser_cards.map { _1.text.squish }
 
     expect(card_labels).to eq(["文書ファイル"])
     expect(card_hrefs).to eq([admin_model_browser_model_path("document_files")])
+    expect(card_texts).to contain_exactly(include("key: document_files / group: 文書・権限"))
   end
 
   it "filters the model browser index by description and group label" do
