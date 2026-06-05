@@ -24,9 +24,13 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(listed_rows).to contain_exactly(a_string_including("Alpha Project", "Portal Terms", "有効"))
     expect(listed_rows.join).not_to include("Beta Project")
     expect(listed_rows.join).not_to include("Security NDA")
-    expect(parsed_html.at_css(%(select[name="project_id"]))).to be_present
-    expect(parsed_html.at_css(%(select[name="consent_term_id"]))).to be_present
+    expect(project_filter).to be_present
+    expect(consent_term_filter).to be_present
     expect(parsed_html.at_css(%(select[name="enabled"]))).to be_present
+    expect(selected_value(project_filter)).to eq(alpha_project.id.to_s)
+    expect(selected_value(consent_term_filter)).to eq(portal_terms.id.to_s)
+    expect(project_filter.text.squish).to include("Alpha Project (ALPHA)", "Beta Project (BETA)")
+    expect(consent_term_filter.text.squish).to include("Portal Terms / v1", "Security NDA / v2")
   end
 
   it "filters disabled settings and ignores unsupported filter values safely" do
@@ -47,6 +51,8 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(response).to have_http_status(:ok)
     expect(listed_rows.size).to eq(2)
     expect(response.body).not_to include("絞り込み解除")
+    expect(selected_value(project_filter)).to be_nil
+    expect(selected_value(consent_term_filter)).to be_nil
   end
 
   it "shows a filtered empty state separately from the unregistered empty state" do
@@ -62,6 +68,7 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(response.body).to include("条件に一致する案件同意設定はありません。")
     expect(response.body).to include("絞り込み解除")
     expect(response.body).not_to include("先に「同意文面管理」で有効な文面を用意")
+    expect(selected_value(project_filter)).to eq(beta_project.id.to_s)
   end
 
   it "keeps the existing unregistered empty state when no filters or settings exist" do
@@ -79,5 +86,17 @@ RSpec.describe "Admin project consent settings", type: :request do
 
   def listed_rows
     parsed_html.css("tbody tr").map { |row| row.text.squish }
+  end
+
+  def project_filter
+    parsed_html.at_css(%(select[name="project_id"]))
+  end
+
+  def consent_term_filter
+    parsed_html.at_css(%(select[name="consent_term_id"]))
+  end
+
+  def selected_value(select_node)
+    select_node&.at_css("option[selected]")&.[]("value")
   end
 end
