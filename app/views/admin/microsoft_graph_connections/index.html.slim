@@ -22,6 +22,7 @@ h1 Microsoft Graph接続
     p.muted 対象案件の「previewで使用中」行を最初に確認し、Drive ID、プレビュー用フォルダ、Tenant / Client の順に見直してください。
     p.muted 一覧の識別子は短縮表示です。raw 値の照合や修正が必要な場合は、対象行の「編集」で確認してください。
     p.muted 同一案件に複数の有効接続がある場合は、current preview が最小 DB id の接続に寄る可能性があります。どの接続を残すかは案件担当者の確認後に判断してください。
+    p.muted SharePoint / OneDrive の外部フォルダ同期は metadata 確認のみです。dry-run / apply は外部フォルダ同期設定側でも未対応です。
     ul
       li = link_to "previewで使用中だけを見る", admin_microsoft_graph_connections_path(preview_usage: :preview_selected, q: @search_query.presence)
       li = link_to "要整理案件だけを見る", admin_microsoft_graph_connections_path(duplicate_only: 1, q: @search_query.presence)
@@ -152,6 +153,10 @@ h1 Microsoft Graph接続
             - else
               span.muted previewでは未使用
           td.actions
+            = link_to "外部フォルダ同期設定を確認", admin_external_folder_sync_sources_path(review: :microsoft_graph, q: connection.project.code), class: "button secondary"
+            br
+            span.muted SharePoint / OneDrive metadata 設定へ移動
+            br
             = edit_link_to "編集", edit_admin_microsoft_graph_connection_path(connection)
             = delete_link_to "削除", admin_microsoft_graph_connection_path(connection), confirm: "Microsoft Graph接続設定を削除しますか？"
 - elsif @preview_usage_counts[:all].positive?
