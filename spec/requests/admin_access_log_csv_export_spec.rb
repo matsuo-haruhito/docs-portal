@@ -142,7 +142,7 @@ RSpec.describe "Admin access log CSV export", type: :request do
     expect(response).to have_http_status(:ok)
     expect(csv_rows.size).to eq(200)
     expect(csv_rows.first["対象名"]).to eq("entry-200")
-    expect(csv_rows.last["対象名"]).to eq("entry-1")
+    expect(csv_rows[-1]["対象名"]).to eq("entry-1")
     expect(csv_rows.map { _1["対象名"] }).not_to include("entry-0")
   end
 
