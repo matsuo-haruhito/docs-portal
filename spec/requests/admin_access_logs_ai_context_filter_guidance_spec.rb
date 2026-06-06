@@ -39,8 +39,8 @@ RSpec.describe "Admin access log AI context filter guidance", type: :request do
     get admin_access_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("AI context mode / scope は対象種別が AI context export のときだけ有効です。")
-    expect(page_text).to include("page / file / zip では送信されても有効条件から外れます。")
+    expect(page_text).to include("AI出力モード・範囲は、対象種別が AI context export の証跡にだけ適用されます。")
+    expect(page_text).to include("page / file / zip の証跡では条件から外れます。")
   end
 
   it "keeps AI context mode and scope out of active conditions for non AI targets" do
