@@ -11,6 +11,14 @@
 - status_filter_labels = { "pending" => "申請中", "approved" => "承認済み", "rejected" => "却下", "cancelled" => "取消済み" }
 - requested_access_level_options = [["すべての権限", ""], ["閲覧", "view"], ["ダウンロード", "download"], ["管理", "manage"]]
 - requestable_type_options = [["すべての対象", ""], ["案件", "Project"], ["文書", "Document"], ["ファイル", "DocumentFile"]]
+- requested_access_level_filter_labels = requested_access_level_options.to_h.invert
+- requestable_type_filter_labels = requestable_type_options.to_h.invert
+- active_filter_parts = []
+- active_filter_parts << "状態: #{status_filter_labels.fetch(@status_filter, @status_filter)}" if @status_filter.present?
+- active_filter_parts << "検索: #{current_query}" if current_query.present?
+- active_filter_parts << "要求権限: #{requested_access_level_filter_labels.fetch(current_requested_access_level, current_requested_access_level)}" if current_requested_access_level.present?
+- active_filter_parts << "対象種別: #{requestable_type_filter_labels.fetch(current_requestable_type, current_requestable_type)}" if current_requestable_type.present?
+- active_filter_summary = active_filter_parts.join(" / ")
 - has_filter = @query.present? || @status_filter.present? || @requested_access_level_filter.present? || @requestable_type_filter.present?
 
 h1 アクセス申請
@@ -18,6 +26,9 @@ p.muted 自分が送信した申請の状態を確認できます。
 
 p.muted
   | 申請中 #{pending_count}件 / 承認済み #{approved_count}件 / 却下 #{rejected_count}件 / 取消済み #{cancelled_count}件
+
+- if active_filter_summary.present?
+  p.muted = "表示中条件: #{active_filter_summary}"
 
 = form_with url: access_requests_path, method: :get, local: true do |form|
   - if @status_filter.present?
@@ -69,16 +80,15 @@ p.actions
           td = request_hash.dig(:approver, :email_address) || "-"
           td
             - if access_request.pending?
-              p.muted 取消前に対象・要求権限・理由を確認してください。
+              p.muted この行の対象・要求権限・理由を確認してから取消してください。
               = button_to "取消", cancel_access_request_path(access_request), method: :post, class: "button secondary", data: { turbo_confirm: "このアクセス申請を取り消します。対象・要求権限・理由を確認しましたか？" }
-              p.muted 取消後はこの一覧で取消済みとして確認できます。
+              p.muted 取消後はフィルタなしのアクセス申請一覧で取消済みとして確認できます。
             - else
               span.muted -
 - else
-  - if @query.present? || @requested_access_level_filter.present? || @requestable_type_filter.present?
-    p.muted 検索条件に一致するアクセス申請はありません。
-  - elsif @status_filter.present?
-    p.muted = "#{status_filter_labels.fetch(@status_filter, @status_filter)}のアクセス申請はありません。"
+  - if active_filter_summary.present?
+    p.muted = "#{active_filter_summary} に一致するアクセス申請はありません。"
+    p.muted 条件を外すと、送信済み申請全体を確認できます。
     p.actions
       = link_to "すべての申請を見る", access_requests_path, class: "button secondary"
   - else
