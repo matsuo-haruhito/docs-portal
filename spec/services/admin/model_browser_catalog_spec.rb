@@ -25,13 +25,25 @@ RSpec.describe Admin::ModelBrowserCatalog do
       expect(groups).to all(satisfy { |group| described_class::GROUP_LABELS.key?(group) })
     end
 
-    it "does not expose secret-like or raw payload fields in summary metadata" do
-      sensitive_field_patterns = [/secret/i, /token/i, /password/i, /payload/i, /headers/i, /body/i, /raw/i]
+    it "does not expose secret-like or raw diagnostic fields in summary metadata" do
+      unsafe_field_patterns = [
+        /(?:^|_)(?:secret|token|password)(?:_|$)/i,
+        /(?:^|_)(?:authorization|headers?)(?:_|$)/i,
+        /(?:^|_)(?:payload|body|raw)(?:_|$)/i,
+        /(?:^|_)(?:request|response)(?:_|$)/i
+      ]
+      allowed_unsafe_looking_fields = {
+        "webhook_deliveries.response_status" => "HTTP status code only; it does not expose response body, headers, or payload data."
+      }
       exposed_fields = described_class.entries.flat_map do |entry|
         entry.summary_fields.map { |field| "#{entry.key}.#{field}" }
       end
+      unsafe_fields = exposed_fields
+        .select { |field| unsafe_field_patterns.any? { |pattern| field.match?(pattern) } }
+        .reject { |field| allowed_unsafe_looking_fields.key?(field) }
 
-      expect(exposed_fields).not_to include(a_string_matching(Regexp.union(sensitive_field_patterns)))
+      expect(exposed_fields).to include(*allowed_unsafe_looking_fields.keys)
+      expect(unsafe_fields).to be_empty, "unsafe summary_fields: #{unsafe_fields.join(', ')}"
     end
   end
 end
