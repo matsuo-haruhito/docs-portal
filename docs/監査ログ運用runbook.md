@@ -21,6 +21,7 @@ current 実装の前提:
 - `page` は current controller の上限内だけを採用し、`limit` param では表示件数や取得上限を広げない
 - `現在の条件でCSV export（最新200件）` は、現在の filter 条件に一致する証跡を新しい順に最新 200 件まで固定列で出力する。page 移動中でも export は現在 page ではなく条件一致の最新 200 件を対象にする
 - 絞り込みは `action_type` `target_type` `project_id` `company_id` `user_id` `q` `document_q` `from` `to` `ai_context_mode` `ai_context_scope` を受け付ける
+- 画面上の `AI出力モード` / `AI出力範囲` filter は、それぞれ `ai_context_mode` / `ai_context_scope` を使う
 - AI context の `mode` / `scope` filter は `target_type=ai_context` のときだけ有効になり、他の `target_type` では無視される
 - `q` は一覧に表示される `target_name` と `ip_address` に対して部分一致で絞り込む
 - `document_q` は文書タイトルと `slug` の両方に対して部分一致で絞り込む
@@ -44,14 +45,14 @@ current 実装の前提:
 - AI context export は HTML preview と JSON / Markdown download の証跡を `target_type: ai_context` として残す
 - 一覧の `対象` 列には対象種別に加えて `target_name` が出るので、同じ種別の中でもどのファイルやページ、または AI context export の mode だったかを見分けやすい
 
-### 3. AI context mode / scope
+### 3. AI出力モード / AI出力範囲
 
-- `AI context mode` は `compact` / `full` のどちらかで AI context export の証跡を絞り込む
-- `AI context scope` は `全件` / `選択` のどちらかで AI context export の証跡を絞り込む。内部値は `all` / `selected` として扱われる
-- どちらも `対象種別` が `ai_context` のときだけ有効になる。`page` `file` `zip` では mode / scope を選んでも条件から外れる
+- `AI出力モード` は `compact` / `full` のどちらかで AI context export の証跡を絞り込む。内部 param は `ai_context_mode`
+- `AI出力範囲` は `全件` / `選択` のどちらかで AI context export の証跡を絞り込む。内部値は `all` / `selected`、内部 param は `ai_context_scope`
+- どちらも `対象種別` が `ai_context` のときだけ有効になる。`page` `file` `zip` では `AI出力モード` / `AI出力範囲` を選んでも条件から外れる
 - 不正な mode / scope 値は無視されるため、意図した条件になっているかは `有効な条件` の badge で確認する
 - 一覧の `対象` 列では、AI context export の `mode`、`scope`、選択件数、出力件数が badge として表示される
-- 保存された値そのものを監査用に照合したいときは、`対象` 列の `監査用 raw target_name` を開く
+- 保存された値の監査用 preview を照合したいときは、`対象` 列の `監査用 target_name preview` を開く。token / authorization / private-looking path 風の値は preview 表示に寄るため、raw 値の全文確認場所として扱わない
 
 ### 4. 案件 / 会社 / ユーザー
 
@@ -63,7 +64,8 @@ current 実装の前提:
 ### 5. 対象名・IPアドレス
 
 - `q` は一覧に表示される `target_name` と `ip_address` に効く
-- ZIP 名、添付ファイル名、page path、AI context の raw target、IP アドレス断片を first touch で探したいときに使う
+- ZIP 名、添付ファイル名、page path、AI context export の記録、IP アドレス断片を first touch で探したいときに使う
+- 画面 placeholder は `ZIP名・ファイル名・AI context export の記録・IP` で、保存値の内部表現そのものを操作名として読ませるものではない
 - `document_q` とは別の検索欄なので、文書 title / slug を探したい場合は `文書名・URL識別子` を使う
 - `q` と `document_q` を同時に入れると、対象名または IP に一致し、かつ文書 title / slug にも一致するログだけを表示する
 - `%` や `_` を含む入力は LIKE wildcard として広げず、文字列として扱う
@@ -72,13 +74,13 @@ current 実装の前提:
 
 - `document_q` は文書タイトルと `slug` の両方に効く
 - 管理画面や公開 URL で覚えている文字列が title か slug か分からないときでも、同じ入力欄で探せる
-- target file name、ZIP 名、AI context raw target、IP アドレスを探す欄ではない。これらは `対象名・IPアドレス` の `q` を使う
+- target file name、ZIP 名、AI context export の記録、IP アドレスを探す欄ではない。これらは `対象名・IPアドレス` の `q` を使う
 
 ### 7. 開始日 / 終了日
 
 - `from` は指定日の 00:00:00 以降、`to` は指定日の 23:59:59 までの `accessed_at` に効く
 - 「先週の送付後」「特定日の問い合わせ前後」のように、時期を主語に確認したいときに使う
-- 案件・会社・ユーザー・対象名・文書名・AI context mode / scope などの既存 filter と併用できる
+- 案件・会社・ユーザー・対象名・文書名・AI出力モード / AI出力範囲などの既存 filter と併用できる
 - 期間指定後も、表示は `accessed_at desc, id desc` の新しい順で 1 ページ 200 件までに留まる。200 件を超える場合は、次ページへ進むか、期間を短くするか、他の条件を足して絞り込む
 - 日付として解釈できない入力は落とさず無視されるため、意図した期間になっているか画面の件数と条件を見直す
 
@@ -91,7 +93,7 @@ current 実装の前提:
 - `page` は内部的なページ番号であり、`limit` を渡して表示件数を増やす操作ではない
 - 目的の証跡が古い場合でも、まず案件・会社・ユーザー・対象名・文書名・期間で絞り、必要に応じて page 移動する
 
-AI context mode / scope、日付、案件、会社、ユーザー、対象名、文書名の filter は page link に引き継がれる。page 移動後に条件が外れていないかは、`有効な条件` の badge と表示件数で確認する。
+AI出力モード / AI出力範囲、日付、案件、会社、ユーザー、対象名、文書名の filter は page link に引き継がれる。page 移動後に条件が外れていないかは、`有効な条件` の badge と表示件数で確認する。
 
 ## CSV export の読み方
 
@@ -142,9 +144,9 @@ AI context の読み方:
 
 - 想定した案件や利用者に対して、閲覧とダウンロードのどちらが起きているか
 - ZIP 配布や添付ダウンロードが特定案件だけに偏っていないか
-- ZIP 名、添付ファイル名、AI context raw target、IP アドレス断片から `対象名・IPアドレス` で目的の証跡を探せているか
+- ZIP 名、添付ファイル名、AI context export の記録、IP アドレス断片から `対象名・IPアドレス` で目的の証跡を探せているか
 - AI context export の HTML preview / JSON / Markdown download が想定した案件や利用者で発生しているか
-- AI context export を見るとき、`compact` / `full` と `全件` / `選択` のどちらで出力された証跡なのかを絞り込みと `対象` 列で確認できているか
+- AI context export を見るとき、`compact` / `full` と `全件` / `選択` のどちらで出力された証跡なのかを `AI出力モード` / `AI出力範囲` と `対象` 列で確認できているか
 - 条件に一致する最新 200 件を共有・保管したいとき、CSV export の固定列と画面の表示設定を混同していないか
 - 日付起点で問い合わせや送付後の利用を見たいとき、開始日 / 終了日で対象期間を狭めてから案件・会社・ユーザーを足せているか
 - 文書・版・利用者のどれを主語にして見たいのかに合わせて、表示設定で不要な列を外せているか
@@ -158,8 +160,8 @@ AI context の読み方:
 - CSV export の固定列は画面表示設定とは独立している。表示列を減らしても CSV の監査用固定列は変わらない
 - `q` は `target_name` / `ip_address` の補助検索であり、user_agent 検索や全文検索 index ではない
 - `document_q` は title / slug の検索であり、target file name や IP アドレス検索ではない
-- AI context mode / scope filter は `target_type=ai_context` の `target_name` に保存された `mode=<value>;` / `scope=<value>;` を使う補助 filter であり、任意の `target_name` 全文検索ではない
-- AI context raw target を文字列断片で探したいときは `q` を使う。ただし mode / scope の structured filter は従来どおり `target_type=ai_context` のときだけ有効にする
+- AI出力モード / AI出力範囲 filter は `target_type=ai_context` の `target_name` に保存された `mode=<value>;` / `scope=<value>;` を使う補助 filter であり、任意の `target_name` 全文検索ではない
+- AI context export の保存値を文字列断片で探したいときは `q` を使う。ただし mode / scope の structured filter は従来どおり `target_type=ai_context` のときだけ有効にする
 - `監査ログ一覧の表示設定` は一覧の表示列を切り替えるだけで、記録対象や絞り込み結果そのものは変えない
 - company master admin や external user は使えない画面なので、社外利用者向け運用手順としては扱わない
 
@@ -172,10 +174,10 @@ AI context の読み方:
 ## 迷ったときの切り分け
 
 - まず利用が起きたかどうかを見たい: `操作` と `対象種別` で絞る
-- AI context export の出力形態だけを狭めたい: `対象種別` を `ai_context` にしてから `AI context mode` / `AI context scope` を足す
+- AI context export の出力形態だけを狭めたい: `対象種別` を `ai_context` にしてから `AI出力モード` / `AI出力範囲` を足す
 - どの案件や会社の話かを狭めたい: `案件` `会社` `ユーザー` を足す
 - 特定日の前後だけを見たい: `開始日` / `終了日` を入れて、必要なら他の条件を足す
-- ZIP 名、添付ファイル名、AI context raw target、IP アドレスから探したい: `対象名・IPアドレス` に断片を入れる
+- ZIP 名、添付ファイル名、AI context export の記録、IP アドレスから探したい: `対象名・IPアドレス` に断片を入れる
 - 文書 detail から利用傾向を振り返りたい: `document_q` で title / slug を入れて戻る
 - 一覧が広くて読みづらい: 表示設定で必要な列だけを残す
 - 条件に一致する最新 200 件を持ち出して確認したい: `現在の条件でCSV export（最新200件）` を使い、固定列と表示設定の違いを確認する
