@@ -45,6 +45,8 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(response.body).to include(file.file_name)
     expect(response.body).to include(file.storage_key)
     expect(response.body).to include("storage/document_files/spec/admin-missing-document-files/missing-detail.txt")
+    expect(response.body).not_to include(file.absolute_path.to_s)
+    expect(response.body).not_to include(Rails.root.to_s)
   end
 
   it "keeps the details page admin-only" do
