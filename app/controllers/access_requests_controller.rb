@@ -2,6 +2,8 @@ class AccessRequestsController < BaseController
   def index
     @status_filter = normalized_status_filter
     @query = normalized_query
+    @requested_access_level_filter = normalized_requested_access_level_filter
+    @requestable_type_filter = normalized_requestable_type_filter
 
     scope = AccessRequest.where(requester: current_user).recent_first.includes(:approver, :requestable)
     @access_requests = filtered_access_requests(scope)
@@ -35,10 +37,16 @@ class AccessRequestsController < BaseController
   private
 
   def filtered_access_requests(scope)
-    requests = scope.to_a
+    requests = filtered_access_request_scope(scope).to_a
     return requests if @query.blank?
 
     requests.select { |access_request| access_request_matches_query?(access_request, @query) }
+  end
+
+  def filtered_access_request_scope(scope)
+    scope = scope.where(requested_access_level: @requested_access_level_filter) if @requested_access_level_filter.present?
+    scope = scope.where(requestable_type: @requestable_type_filter) if @requestable_type_filter.present?
+    scope
   end
 
   def access_request_matches_query?(access_request, query)
@@ -62,12 +70,16 @@ class AccessRequestsController < BaseController
   end
 
   def access_request_status_counts(scope, access_requests)
-    return access_request_status_counts_from_loaded(access_requests) if @query.present?
+    return access_request_status_counts_from_loaded(access_requests) if filtered_status_count?
 
     counts = scope.unscope(:order).group(:status).count
     AccessRequest.statuses.keys.to_h do |status|
       [status, counts[status].to_i]
     end
+  end
+
+  def filtered_status_count?
+    @query.present? || @requested_access_level_filter.present? || @requestable_type_filter.present?
   end
 
   def access_request_status_counts_from_loaded(access_requests)
@@ -80,6 +92,22 @@ class AccessRequestsController < BaseController
     status = params[:status].to_s
     return if status.blank?
     return status if AccessRequest.statuses.key?(status)
+
+    nil
+  end
+
+  def normalized_requested_access_level_filter
+    requested_access_level = params[:requested_access_level].to_s
+    return if requested_access_level.blank?
+    return requested_access_level if AccessRequest.requested_access_levels.key?(requested_access_level)
+
+    nil
+  end
+
+  def normalized_requestable_type_filter
+    requestable_type = params[:requestable_type].to_s
+    return if requestable_type.blank?
+    return requestable_type if AccessRequest::SUPPORTED_REQUESTABLE_TYPES.include?(requestable_type)
 
     nil
   end
