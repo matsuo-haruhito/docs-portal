@@ -22,6 +22,7 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
     @usage_filter = usage_filter_param
     @sort_order = sort_order_param
     @query = query_param
+    @ignored_date_filters = []
     @from_date = date_param(:from)
     @to_date = date_param(:to)
     @report_hash = build_report_hash(@selected_project) if @selected_project
@@ -66,6 +67,7 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
 
     Date.iso8601(candidate)
   rescue ArgumentError
+    @ignored_date_filters << name
     nil
   end
 
