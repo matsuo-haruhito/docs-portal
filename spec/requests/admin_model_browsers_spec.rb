@@ -122,6 +122,7 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include("最新の代表データを最大20件まで表示します。この画面では編集や削除はできません。")
     expect(response.body).to include("既存画面で詳しく確認")
     expect(response.body).to include("続きの検索や詳細確認は既存管理画面で行えます。")
+    expect(response.body).not_to include("検索語「")
     expect(response.body).to include(admin_projects_path)
     expect(response.body).to include(project.code)
     expect(response.body).to include(project.name)
@@ -137,12 +138,26 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果")
     expect(response.body).to include("検索語: Needle / 表示上限: 20件")
+    expect(response.body).to include("既存画面で続けて確認する場合は、検索語「Needle」をコピーして")
+    expect(response.body).to include("対象画面の検索欄や絞り込みで再確認してください。")
+    expect(response.body).to include(admin_projects_path)
     expect(response.body).to include("検索対象:")
     expect(response.body).to include("コード")
     expect(response.body).to include(matching_project.code)
     expect(response.body).to include(matching_project.name)
     expect(response.body).not_to include(other_project.code)
     expect(response.body).not_to include(other_project.name)
+  end
+
+  it "does not show existing screen search guidance when the model has no index path" do
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("document_versions"), params: { q: "release-note" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("検索結果")
+    expect(response.body).to include("検索語: release-note / 表示上限: 20件")
+    expect(response.body).not_to include("既存画面で詳しく確認")
+    expect(response.body).not_to include("既存画面で続けて確認する場合")
   end
 
   it "matches numeric queries against id without adding write actions" do
@@ -154,6 +169,7 @@ RSpec.describe "Admin model browsers", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(matching_project.code)
+    expect(response.body).to include("数値だけの検索語はこの read-only 画面の ID 照合にも使われる")
     expect(response.body).not_to include(other_project.code)
     expect(response.body).not_to include("削除")
   end
