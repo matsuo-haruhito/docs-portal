@@ -118,7 +118,7 @@ RSpec.describe "Admin consent term filters", type: :request do
   end
 
   def reset_link_texts
-    parsed_html.css(%(a[href="#{admin_consent_terms_path}"])).map { |link| link.text.squish }
+    parsed_html.css("a").map { |link| link.text.squish }.select { |text| text == "条件をリセット" }
   end
 
   def create_consent_term!(attributes = {})
