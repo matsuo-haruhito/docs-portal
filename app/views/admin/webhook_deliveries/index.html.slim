@@ -63,7 +63,7 @@ p.actions
             td data-rails-table-preferences-column-key="status"
               span.badge = webhook_delivery_status_label(delivery)
             td data-rails-table-preferences-column-key="response_status" = delivery.response_status || "-"
-            td data-rails-table-preferences-column-key="error_message" = delivery.error_message.presence || "-"
+            td data-rails-table-preferences-column-key="error_message" = WebhookDeliveryDiagnosticPreview.new(delivery.error_message).to_s
             td.actions data-rails-table-preferences-column-key="actions"
               = link_to "詳細", admin_webhook_delivery_path(delivery.public_id, @delivery_return_params)
   - elsif @delivery_filters_applied
