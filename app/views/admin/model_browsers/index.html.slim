@@ -19,16 +19,21 @@ p.muted 主要な管理対象の件数と最近のデータを横断確認でき
 
 - if @entries.any?
   - @entry_groups.each do |_group, group_label, entries|
+    - group_summaries = entries.map { |entry| @entry_summaries.fetch(entry) }
+    - group_total_count = group_summaries.sum { |summary| summary[:total_count].to_i }
+    - group_latest_updated_at = group_summaries.filter_map { |summary| summary[:latest_updated_at] }.max
+    - group_latest_label = group_latest_updated_at ? l(group_latest_updated_at, format: :short) : "-"
     section.model-browser-group
       h2 = group_label
+      p.muted.model-browser-group-summary = "#{entries.size}モデル / 合計#{number_with_delimiter(group_total_count)}件 / 最終更新 #{group_latest_label}"
       .dashboard-grid
         - entries.each do |entry|
           - summary = @entry_summaries.fetch(entry)
           section.card.metric-card
             h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
             p.muted = "key: #{entry.key} / group: #{group_label}"
-            p.muted = entry.description
-            dl.definition-list
+            p.muted.model-browser-card-description = entry.description
+            dl.definition-list.model-browser-card-metrics
               dt 件数
               dd = summary[:total_count]
               dt 最終更新
