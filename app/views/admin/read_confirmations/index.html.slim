@@ -90,10 +90,13 @@ section.card
       p.muted 指定した確認者はこの案件の既読確認候補に見つかりません。
     p
       = link_to "文書利用状況へ戻る", admin_document_usage_reports_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
+      |  / 
+      = link_to "CSV出力", admin_read_confirmations_path(request.query_parameters.merge(format: :csv)), data: { turbo_frame: "_top" }
     p.muted
       | 表示中:
       strong = " #{@read_confirmations.size}件"
       |  / 条件に一致した既読確認を新しい順に最新200件まで表示
+    p.muted CSV出力にも同じ絞り込み条件と最新200件の上限を反映します。表示設定はCSVの列や条件には影響しません。
 
   - if @read_confirmations.any?
     section.card
