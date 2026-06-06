@@ -7,6 +7,9 @@ module Admin::AccessLogsHelper
     "all" => "全件",
     "selected" => "選択"
   }.freeze
+  SENSITIVE_TARGET_KEY_PATTERN = /\b(authorization|token|secret|password|client_secret|access_token|refresh_token)=([^;&\s]+)/i
+  SENSITIVE_TARGET_QUERY_PATTERN = /([?&](?:authorization|token|secret|password|client_secret|access_token|refresh_token)=)([^&#\s]+)/i
+  PRIVATE_PATH_PATTERN = %r{(?:[A-Za-z]:[\\/]|/(?:Users|home)/)[^;\s]+}
 
   def access_log_table_columns
     [
@@ -90,16 +93,20 @@ module Admin::AccessLogsHelper
     return if raw_target_name.blank?
 
     values = parse_ai_context_target_name(raw_target_name)
-    return unless values
+    segments = []
 
-    {
-      raw: raw_target_name,
-      segments: [
+    if values
+      segments = [
         { label: "mode", value: values.fetch("mode") },
         { label: "scope", value: ai_context_scope_label(values.fetch("scope")) },
         { label: "選択数", value: "#{values.fetch('selected_count')}件" },
         { label: "出力数", value: "#{values.fetch('exported_count')}件" }
       ]
+    end
+
+    {
+      preview: safe_access_log_target_name_preview(raw_target_name),
+      segments:
     }
   end
 
@@ -130,6 +137,16 @@ module Admin::AccessLogsHelper
     return unless pairs["selected_count"].match?(/\A\d+\z/) && pairs["exported_count"].match?(/\A\d+\z/)
 
     pairs.slice(*AI_CONTEXT_TARGET_KEYS)
+  end
+
+  def safe_access_log_target_name_preview(raw_target_name)
+    raw_target_name.to_s.strip
+      .gsub(/Authorization:\s*Bearer\s+[^;\s]+/i, "Authorization: [FILTERED]")
+      .gsub(/Bearer\s+[^;\s]+/i, "Bearer [FILTERED]")
+      .gsub(SENSITIVE_TARGET_KEY_PATTERN) { "#{Regexp.last_match(1)}=[FILTERED]" }
+      .gsub(SENSITIVE_TARGET_QUERY_PATTERN) { "#{Regexp.last_match(1)}[FILTERED]" }
+      .gsub(PRIVATE_PATH_PATTERN, "[path hidden]")
+      .truncate(180)
   end
 
   def ai_context_scope_label(scope)
