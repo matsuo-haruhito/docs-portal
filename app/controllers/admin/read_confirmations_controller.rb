@@ -1,7 +1,17 @@
+require "csv"
+
 class Admin::ReadConfirmationsController < Admin::BaseController
   before_action :require_admin_only!
 
   DISPLAY_LIMIT = 200
+  CSV_HEADERS = [
+    "確認日時",
+    "文書名",
+    "document slug",
+    "確認者",
+    "email",
+    "会社"
+  ].freeze
 
   def index
     @projects = Project.order(:name, :id)
@@ -17,6 +27,19 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     @read_confirmation_users = read_confirmation_users
     @selected_user = selected_user
     @read_confirmations = filtered_read_confirmations
+
+    respond_to do |format|
+      format.html
+      format.csv do
+        if @selected_project
+          send_data read_confirmations_csv,
+                    filename: read_confirmations_csv_filename,
+                    type: "text/csv; charset=utf-8"
+        else
+          redirect_to admin_read_confirmations_path, alert: "CSV出力には案件選択が必要です。"
+        end
+      end
+    end
   end
 
   private
@@ -97,5 +120,32 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     scope.includes(user: :company, document: :project)
       .order(confirmed_at: :desc, id: :desc)
       .limit(DISPLAY_LIMIT)
+  end
+
+  def read_confirmations_csv
+    CSV.generate(headers: true) do |csv|
+      csv << CSV_HEADERS
+
+      @read_confirmations.each do |confirmation|
+        csv << read_confirmation_csv_row(confirmation)
+      end
+    end
+  end
+
+  def read_confirmation_csv_row(confirmation)
+    [
+      confirmation.confirmed_at.strftime("%Y-%m-%d %H:%M:%S"),
+      confirmation.document.title,
+      confirmation.document.slug,
+      confirmation.user.display_name,
+      confirmation.user.email_address,
+      confirmation.user.company&.display_name || "-"
+    ]
+  end
+
+  def read_confirmations_csv_filename
+    project_token = @selected_project.code.presence || @selected_project.public_id
+
+    "read-confirmations-#{project_token}-#{Date.current.iso8601}.csv"
   end
 end
