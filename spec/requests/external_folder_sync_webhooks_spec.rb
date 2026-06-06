@@ -164,6 +164,19 @@ RSpec.describe "External folder sync webhooks", type: :request do
       expect(response.media_type).to eq("text/plain")
       expect(response.body).to eq("validation-token")
     end
+
+    it "does not record or enqueue events for Microsoft Graph validationToken checks" do
+      allow(ExternalFolderSyncWebhookEventJob).to receive(:perform_later)
+
+      expect {
+        get "/external_folder_sync_webhooks/sharepoint", params: { validationToken: "validation-token" }
+      }.not_to change(ExternalFolderSyncWebhookEvent, :count)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("text/plain")
+      expect(response.body).to eq("validation-token")
+      expect(ExternalFolderSyncWebhookEventJob).not_to have_received(:perform_later)
+    end
   end
 
   describe "POST /external_folder_sync_webhooks/sharepoint" do
@@ -188,6 +201,24 @@ RSpec.describe "External folder sync webhooks", type: :request do
       expect(event.external_folder_sync_source).to eq(subscription.external_folder_sync_source)
       expect(event.payload_json).to include("subscriptionId" => "sub-1")
       expect(ExternalFolderSyncWebhookEventJob).to have_received(:perform_later).with(event.id).once
+    end
+
+    it "records unmatched SharePoint notifications as ignored without enqueueing" do
+      allow(ExternalFolderSyncWebhookEventJob).to receive(:perform_later)
+
+      post_sharepoint_notification(
+        subscription_id: "unknown-subscription",
+        client_state: "client-state",
+        sequence_number: "98"
+      )
+
+      expect(response).to have_http_status(:accepted)
+      event = ExternalFolderSyncWebhookEvent.find_by!(event_key: sharepoint_event_key("unknown-subscription", "client-state", "98"))
+      expect(event).to be_ignored
+      expect(event.external_folder_sync_subscription).to be_nil
+      expect(event.external_folder_sync_source).to be_nil
+      expect(event.error_message).to eq("Matching external folder sync source was not found")
+      expect(ExternalFolderSyncWebhookEventJob).not_to have_received(:perform_later)
     end
 
     it "accepts SharePoint notifications when clientState matches the stored digest" do
