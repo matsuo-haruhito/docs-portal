@@ -26,7 +26,10 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(listed_rows.join).not_to include("Security NDA")
     expect(project_filter).to be_present
     expect(consent_term_filter).to be_present
-    expect(parsed_html.at_css(%(select[name="enabled"]))).to be_present
+    expect(enabled_filter).to be_present
+    expect(enabled_filter_field).to be_present
+    expect(enabled_filter_field.at_css("label")&.text&.squish).to eq("状態")
+    expect(enabled_filter_field.at_css(%(select[name="enabled"]))).to eq(enabled_filter)
     expect(selected_value(project_filter)).to eq(alpha_project.id.to_s)
     expect(selected_value(consent_term_filter)).to eq(portal_terms.id.to_s)
     expect(project_filter.text.squish).to include("Alpha Project (ALPHA)", "Beta Project (BETA)")
@@ -94,6 +97,14 @@ RSpec.describe "Admin project consent settings", type: :request do
 
   def consent_term_filter
     parsed_html.at_css(%(select[name="consent_term_id"]))
+  end
+
+  def enabled_filter
+    parsed_html.at_css(%(select[name="enabled"]))
+  end
+
+  def enabled_filter_field
+    enabled_filter&.ancestors&.find { |node| node["class"].to_s.split.include?("field") }
   end
 
   def selected_value(select_node)
