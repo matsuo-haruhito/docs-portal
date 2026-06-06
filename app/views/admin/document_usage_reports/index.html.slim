@@ -36,6 +36,11 @@ section.card
     p.actions
       = form.submit "集計"
       = link_to "条件をクリア", admin_document_usage_reports_path
+    - if @ignored_date_filters.present?
+      p.muted
+        | 無効な日付条件は集計から除外しました: 
+        strong = document_usage_report_ignored_date_filter_label(@ignored_date_filters)
+        | 。有効な日付条件だけで集計しています。
 
 - if @report_hash
   - csv_params = request.query_parameters.merge("format" => :csv)
@@ -43,6 +48,14 @@ section.card
     - csv_params["q"] = @query
   - else
     - csv_params.delete("q")
+  - if @from_date.present?
+    - csv_params["from"] = @from_date.iso8601
+  - else
+    - csv_params.delete("from")
+  - if @to_date.present?
+    - csv_params["to"] = @to_date.iso8601
+  - else
+    - csv_params.delete("to")
   section.card
     h2 集計サマリ
     p
