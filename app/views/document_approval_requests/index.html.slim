@@ -11,7 +11,7 @@
 - clear_user_filter_params = {}
 - clear_user_filter_params[:status] = @status_filter if @status_filter.present?
 - clear_user_filter_params[:q] = @query if @query.present?
-- has_status_or_query_filter = @status_filter.present? || @query.present?
+- has_active_filter = @status_filter.present? || @query.present? || @requester_filter_id.present? || @approver_filter_id.present?
 - table_key = :document_approval_requests
 - table_columns = document_approval_request_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
@@ -80,7 +80,7 @@ p.actions
             td data-rails-table-preferences-column-key="approver" = request.approver&.name || "-"
             td data-rails-table-preferences-column-key="status" = document_approval_request_status_label(request)
 - else
-  - if has_status_or_query_filter
-    p.muted 条件に一致する確認依頼はありません。検索語や状態を見直してください。
+  - if has_active_filter
+    p.muted 条件に一致する確認依頼はありません。検索語や状態を見直してください。担当者条件を指定している場合は担当者絞り込みも見直してください。
   - else
     p.muted 確認依頼はありません。
