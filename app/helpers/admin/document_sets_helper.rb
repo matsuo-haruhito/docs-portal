@@ -92,7 +92,7 @@ module Admin::DocumentSetsHelper
         rails_fields_kit__tom_select_placeholder_value: "文書名またはURL識別子で検索",
         rails_fields_kit__tom_select_min_length_value: 1,
         rails_fields_kit__tom_select_max_options_value: 20,
-        action: "change->document-set-document-filter#pickRemoteDocument rails-fields-kit--tom-select:change->document-filter#pickRemoteDocument"
+        action: "change->document-set-document-filter#pickRemoteDocument rails-fields-kit--tom-select:change->document-set-document-filter#pickRemoteDocument"
       }
     }
   end
