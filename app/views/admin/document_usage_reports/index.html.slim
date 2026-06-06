@@ -38,11 +38,11 @@ section.card
       = link_to "条件をクリア", admin_document_usage_reports_path
 
 - if @report_hash
-  - csv_params = request.query_parameters.merge(format: :csv)
+  - csv_params = request.query_parameters.merge("format" => :csv)
   - if @query.present?
-    - csv_params[:q] = @query
+    - csv_params["q"] = @query
   - else
-    - csv_params.delete(:q)
+    - csv_params.delete("q")
   section.card
     h2 集計サマリ
     p
