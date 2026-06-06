@@ -106,6 +106,41 @@ RSpec.describe "Access requests", type: :request do
     expect(own_request.reload).to be_cancelled
   end
 
+  it "preserves only supported filters when cancelling from a filtered list" do
+    own_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "Need manual file")
+    create(:access_request, requester: user, requestable: document, requested_access_level: :download, reason: "Need manual document")
+
+    sign_in_as(user)
+
+    get access_requests_path, params: {
+      q: "manual",
+      status: :pending,
+      requested_access_level: :download,
+      requestable_type: "DocumentFile"
+    }
+
+    expect(response).to have_http_status(:ok)
+    cancel_form = parsed_html.at_css(%(form[action="#{cancel_access_request_path(own_request)}"]))
+    expect(cancel_form).to be_present
+    expect(cancel_form.at_css('input[name="q"]')["value"]).to eq("manual")
+    expect(cancel_form.at_css('input[name="status"]')["value"]).to eq("pending")
+    expect(cancel_form.at_css('input[name="requested_access_level"]')["value"]).to eq("download")
+    expect(cancel_form.at_css('input[name="requestable_type"]')["value"]).to eq("DocumentFile")
+    expect(page_text).to include("取消後は現在の条件のままアクセス申請一覧へ戻ります。")
+
+    post cancel_access_request_path(own_request), params: {
+      q: " manual ",
+      status: "pending",
+      requested_access_level: "download",
+      requestable_type: "DocumentFile",
+      return_to: "https://example.invalid/access_requests",
+      unsupported: "keep-me-out"
+    }
+
+    expect(response).to redirect_to(access_requests_path(q: "manual", status: "pending", requested_access_level: "download", requestable_type: "DocumentFile"))
+    expect(own_request.reload).to be_cancelled
+  end
+
   it "filters the current user's requests by status" do
     approver = create(:user, :internal)
     pending_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "Pending reason")
@@ -122,7 +157,7 @@ RSpec.describe "Access requests", type: :request do
     expect(page_text).to include("申請中 1件 / 承認済み 1件 / 却下 1件 / 取消済み 1件")
     expect(page_text).to include(pending_request.reason)
     expect(page_text).to include("この行の対象・要求権限・理由を確認してから取消してください。")
-    expect(page_text).to include("取消後はフィルタなしのアクセス申請一覧で取消済みとして確認できます。")
+    expect(page_text).to include("取消後は現在の条件のままアクセス申請一覧へ戻ります。")
     expect(response.body).to include("data-turbo-confirm")
     expect(response.body).to include("このアクセス申請を取り消します。対象・要求権限・理由を確認しましたか？")
     expect(page_text).not_to include(approved_request.reason)
@@ -299,7 +334,11 @@ RSpec.describe "Access requests", type: :request do
     expect(response.body).to include("申請")
   end
 
+  def parsed_html
+    Nokogiri::HTML.parse(response.body)
+  end
+
   def page_text
-    Nokogiri::HTML.parse(response.body).text.squish
+    parsed_html.text.squish
   end
 end
