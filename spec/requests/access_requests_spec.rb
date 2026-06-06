@@ -95,9 +95,9 @@ RSpec.describe "Access requests", type: :request do
     expect(response.body).to include("manual.pdf")
     expect(response.body).not_to include(other_request.reason)
 
-    expect do
-      post cancel_access_request_path(other_request)
-    end.to raise_error(ActiveRecord::RecordNotFound)
+    post cancel_access_request_path(other_request)
+
+    expect(response).to have_http_status(:not_found)
     expect(other_request.reload).to be_pending
 
     post cancel_access_request_path(own_request)
