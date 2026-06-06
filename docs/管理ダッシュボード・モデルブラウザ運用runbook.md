@@ -94,6 +94,14 @@ current 実装の前提:
 - association は `*_id` のような短い参照値に留め、名前や本文をたどる必要がある場合は既存画面や関連 runbook への導線で補う
 - 代表フィールド検索は string / text の `summary_fields` と numeric `id` の補助検索に限られるため、検索させたい値を増やす目的だけで長大 text や secret 相当の field を `summary_fields` に追加しない
 
+`summary_fields` 追加時の guard の読み方:
+
+- `spec/services/admin/model_browser_catalog_spec.rb` の `does not expose secret-like or raw diagnostic fields in summary metadata` が、catalog の安全境界を固定している current guard
+- guard は `secret` / `token` / `password`、`authorization` / `header`、`payload` / `body` / `raw`、`request` / `response` 風の field 名が `summary_fields` に混ざらないことを見る
+- guard に引っかかった場合の first response は、mask helper を model browser に足すことではなく、その field を catalog から外すか、`public_id`、status、短い ID、時刻などの識別用 field に置き換えること
+- current allowlist は `webhook_deliveries.response_status` だけで、HTTP status code の短い値であり response body、header、payload ではない理由が spec に残っている
+- allowlist を増やす必要がある場合は、この runbook だけで判断せず、spec 側に「なぜ raw diagnostic ではないか」を残し、model browser が raw payload 調査画面ではない境界を維持する
+
 `index_path_helper` の考え方:
 
 - 既存の一覧管理画面で編集・絞り込み・再実行などを扱う model は `index_path_helper` を持たせ、model browser から `既存画面へ` で戻れるようにする
