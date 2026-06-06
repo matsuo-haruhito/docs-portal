@@ -178,10 +178,11 @@ RSpec.describe "Access requests", type: :request do
   end
 
   it "normalizes oversized search queries before filtering and rendering links" do
+    approver = create(:user, :internal)
     truncated_query = "review-" + ("x" * (AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH - "review-".length))
     long_query = "  #{truncated_query}ignored-tail  "
     matching_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "#{truncated_query} matched reason")
-    create(:access_request, requester: user, requestable: document, requested_access_level: :download, status: :approved, reason: "ignored-tail only")
+    create(:access_request, requester: user, requestable: document, requested_access_level: :download, status: :approved, approver:, approved_at: Time.current, reason: "ignored-tail only")
 
     sign_in_as(user)
 
