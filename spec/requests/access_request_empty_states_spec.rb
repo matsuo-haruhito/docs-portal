@@ -36,7 +36,8 @@ RSpec.describe "Access request empty states", type: :request do
     get access_requests_path(status: :pending)
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("申請中のアクセス申請はありません。")
+    expect(page_text).to include("表示中条件: 状態: 申請中")
+    expect(page_text).to include("状態: 申請中 に一致するアクセス申請はありません。")
     expect(page_text).not_to include("送信済みのアクセス申請はありません。")
     expect(page_text).not_to include("検索条件に一致するアクセス申請はありません。")
     expect(link_labels).to include("すべて (1)", "申請中 (0)", "承認済み (1)", "すべての申請を見る")
