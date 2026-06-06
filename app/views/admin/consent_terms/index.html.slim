@@ -35,6 +35,7 @@ h1 同意文面管理
 - if @consent_terms.any?
   .card
     h2 同意文面一覧の読み方
+    p.muted = consent_term_filter_summary(@consent_term_filters, result_count: @consent_terms.size)
     p.muted 状態の「利用中」は同意要求の候補に残る文面、「無効化済み」は履歴確認用に残す文面です。
     p.muted 改訂時は既存版を上書きせず、新しい版ラベルの文面を追加します。
     p.muted 履歴がある文面は削除できないため、通常は編集で無効化して運用します。

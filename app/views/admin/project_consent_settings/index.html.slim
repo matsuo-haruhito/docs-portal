@@ -34,8 +34,9 @@ h1 案件同意設定
         include_blank: "すべて",
         allow_clear: true,
         selected: @selected_consent_term_id
-      = label_tag :enabled, "状態"
-      = select_tag :enabled, options_for_select(enabled_filter_options, @selected_enabled), onchange: "this.form.requestSubmit()"
+      .field
+        = label_tag :enabled, "状態"
+        = select_tag :enabled, options_for_select(enabled_filter_options, @selected_enabled), onchange: "this.form.requestSubmit()"
     = submit_tag "絞り込み", class: "button secondary"
     - if has_filters
       = link_to "絞り込み解除", admin_project_consent_settings_path, class: "button secondary"
