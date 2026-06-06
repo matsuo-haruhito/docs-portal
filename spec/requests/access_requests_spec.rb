@@ -177,6 +177,31 @@ RSpec.describe "Access requests", type: :request do
     expect(page_text).not_to include("送信済みのアクセス申請はありません。")
   end
 
+  it "normalizes oversized search queries before filtering and rendering links" do
+    truncated_query = "review-" + ("x" * (AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH - "review-".length))
+    long_query = "  #{truncated_query}ignored-tail  "
+    matching_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "#{truncated_query} matched reason")
+    create(:access_request, requester: user, requestable: document, requested_access_level: :download, status: :approved, reason: "ignored-tail only")
+
+    sign_in_as(user)
+
+    get access_requests_path, params: {
+      q: long_query,
+      status: :pending,
+      requested_access_level: :download,
+      requestable_type: "DocumentFile"
+    }
+
+    expect(response).to have_http_status(:ok)
+    query_field = Nokogiri::HTML.parse(response.body).at_css('input[name="q"]')
+    expect(query_field["value"]).to eq(truncated_query)
+    expect(query_field["maxlength"]).to eq(AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH.to_s)
+    expect(page_text).to include("表示中条件: 状態: 申請中 / 検索: #{truncated_query} / 要求権限: ダウンロード / 対象種別: ファイル")
+    expect(page_text).to include(matching_request.reason)
+    expect(page_text).not_to include("ignored-tail only")
+    expect(CGI.unescapeHTML(response.body)).to include(access_requests_path(q: truncated_query, requested_access_level: "download", requestable_type: "DocumentFile", status: :approved))
+  end
+
   it "filters the current user's requests by access level and requestable type" do
     approver = create(:user, :internal)
     pending_file_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "Need manual file")
