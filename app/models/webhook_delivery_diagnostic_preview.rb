@@ -3,8 +3,10 @@
 class WebhookDeliveryDiagnosticPreview
   MAX_LENGTH = 600
   MASK = "[masked]"
+  PATH_MASK = "[path hidden]"
   AUTHORIZATION_PATTERN = /((?:authorization)\s*[=:]\s*)[^\n\r]+/i
   SENSITIVE_TEXT_PATTERN = /((?:secret|token|password|email|name|phone|address|client_secret|access_token)\s*[=:]\s*)[^\s&]+/i
+  PRIVATE_PATH_PATTERN = %r{(?:[A-Za-z]:[\\/]|/)(?:Users|home)[\\/][^\s&]+}
 
   def initialize(value)
     @value = value.to_s
@@ -22,6 +24,7 @@ class WebhookDeliveryDiagnosticPreview
     text
       .gsub(AUTHORIZATION_PATTERN) { "#{Regexp.last_match(1)}#{MASK}" }
       .gsub(SENSITIVE_TEXT_PATTERN) { "#{Regexp.last_match(1)}#{MASK}" }
+      .gsub(PRIVATE_PATH_PATTERN, PATH_MASK)
   end
 
   def truncate(text)
