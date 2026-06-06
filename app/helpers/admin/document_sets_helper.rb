@@ -23,6 +23,8 @@ module Admin::DocumentSetsHelper
   def admin_document_set_filter_labels(filters)
     filters = filters.to_h.symbolize_keys
     labels = []
+    query = filters[:q].to_s.strip
+    labels << "検索: #{query}" if query.present?
 
     if DocumentSet.set_types.key?(filters[:set_type].to_s)
       labels << "種別: #{document_set_type_label(filters[:set_type])}"
