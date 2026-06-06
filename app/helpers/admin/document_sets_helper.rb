@@ -41,6 +41,16 @@ module Admin::DocumentSetsHelper
     admin_document_set_filter_labels(filters).any?
   end
 
+  def document_set_version_usage_label(document_set)
+    items = document_set.document_set_items
+    fixed_count = items.count { _1.document_version_id.present? }
+
+    return "文書なし" if items.empty?
+    return "固定版あり（#{fixed_count}件）" if fixed_count.positive?
+
+    "最新版のみ"
+  end
+
   def document_set_selected_items(document_set, item_params = params[:document_set_items])
     persisted_items = document_set.document_set_items.index_by(&:document_id)
     return persisted_items if item_params.blank? || document_set.project.blank?
@@ -82,7 +92,7 @@ module Admin::DocumentSetsHelper
         rails_fields_kit__tom_select_placeholder_value: "文書名またはURL識別子で検索",
         rails_fields_kit__tom_select_min_length_value: 1,
         rails_fields_kit__tom_select_max_options_value: 20,
-        action: "change->document-set-document-filter#pickRemoteDocument rails-fields-kit--tom-select:change->document-set-document-filter#pickRemoteDocument"
+        action: "change->document-set-document-filter#pickRemoteDocument rails-fields-kit--tom-select:change->document-filter#pickRemoteDocument"
       }
     }
   end
