@@ -19,6 +19,7 @@ current 実装の前提:
 - 一覧は `accessed_at desc, id desc` の順で、1 ページあたり 200 件まで表示する
 - 200 件を超える場合は `次の200件` / `前の200件` で page 移動でき、page link は既存 filter 条件を維持する
 - `page` は current controller の上限内だけを採用し、`limit` param では表示件数や取得上限を広げない
+- `現在の条件でCSV export（最新200件）` は、現在の filter 条件に一致する証跡を新しい順に最新 200 件まで固定列で出力する。page 移動中でも export は現在 page ではなく条件一致の最新 200 件を対象にする
 - 絞り込みは `action_type` `target_type` `project_id` `company_id` `user_id` `q` `document_q` `from` `to` `ai_context_mode` `ai_context_scope` を受け付ける
 - AI context の `mode` / `scope` filter は `target_type=ai_context` のときだけ有効になり、他の `target_type` では無視される
 - `q` は一覧に表示される `target_name` と `ip_address` に対して部分一致で絞り込む
@@ -92,6 +93,30 @@ current 実装の前提:
 
 AI context mode / scope、日付、案件、会社、ユーザー、対象名、文書名の filter は page link に引き継がれる。page 移動後に条件が外れていないかは、`有効な条件` の badge と表示件数で確認する。
 
+## CSV export の読み方
+
+`現在の条件でCSV export（最新200件）` は、画面に入っている filter 条件を保ったまま、条件一致の最新 200 件を監査用途の固定列で出力する。HTML 一覧の page 移動とは独立しており、2 ページ目を見ている途中でも CSV は current filter の最新 200 件から作られる。
+
+CSV の固定列は次の役割で読む。
+
+- `日時` `操作` `対象種別` `対象名` は、一覧と同じ監査証跡の主語を読む列
+- `AI context mode` `AI context scope` `AI context selected_count` `AI context exported_count` は、`target_type=ai_context` かつ `target_name` が `mode=...;scope=...;selected_count=...;exported_count=...` として解釈できる場合だけ埋まる
+- `ユーザー名` `ユーザーEmail` `会社` `案件コード` `案件名` は、誰がどの案件文脈で操作したかを読む列
+- `文書名` `文書URL識別子` `版` は、文書 detail / version detail へ戻るための確認列
+- `IPアドレス` は、問い合わせや運用メモと突き合わせる補助列
+
+表示設定との違い:
+
+- `監査ログ一覧の表示設定` は HTML 一覧で見たい列を切り替えるだけ
+- CSV columns は監査用途の固定列で、表示設定で非表示にした列も CSV では固定列として出る
+- CSV export は無制限全件取得ではなく、任意 `limit` や scheduled report、retention policy 変更も current support ではない
+
+AI context の読み方:
+
+- parse できる AI context target は、`対象名` に保存値を残したまま、mode / scope / selected_count / exported_count を専用列でも読める
+- parse できない `target_name` や `target_type=ai_context` 以外の行では、AI context 専用列は空のままになる
+- HTML preview / JSON / Markdown download のどの証跡かを調べるときは、まず `対象種別` と AI context 専用列を見て、必要なら `対象名` の保存値と `q` filter の条件に戻る
+
 ## 監査ログ一覧の表示設定
 
 `監査ログ一覧の表示設定` は、絞り込み後の一覧で見たい列だけを残して証跡を読みやすくするための editor である。
@@ -101,6 +126,7 @@ AI context mode / scope、日付、案件、会社、ユーザー、対象名、
 - 絞り込み条件
 - 1 ページ 200 件までという表示上限
 - page 移動時の filter 維持
+- CSV export の固定列と最新 200 件上限
 - ログの並び順
 - `文書` / `版` から戻れる current detail 導線
 
@@ -119,6 +145,7 @@ AI context mode / scope、日付、案件、会社、ユーザー、対象名、
 - ZIP 名、添付ファイル名、AI context raw target、IP アドレス断片から `対象名・IPアドレス` で目的の証跡を探せているか
 - AI context export の HTML preview / JSON / Markdown download が想定した案件や利用者で発生しているか
 - AI context export を見るとき、`compact` / `full` と `全件` / `選択` のどちらで出力された証跡なのかを絞り込みと `対象` 列で確認できているか
+- 条件に一致する最新 200 件を共有・保管したいとき、CSV export の固定列と画面の表示設定を混同していないか
 - 日付起点で問い合わせや送付後の利用を見たいとき、開始日 / 終了日で対象期間を狭めてから案件・会社・ユーザーを足せているか
 - 文書・版・利用者のどれを主語にして見たいのかに合わせて、表示設定で不要な列を外せているか
 - 文書 detail や版 detail へ戻って、対象文書や公開状態をその場で見直す必要があるか
@@ -127,7 +154,8 @@ AI context mode / scope、日付、案件、会社、ユーザー、対象名、
 ## 変更時の注意
 
 - 期間指定と page 移動は一覧の絞り込み・表示補助であり、監査ログ保存期間や retention policy は変えない
-- current UI は 200 件単位の page 移動だけを持つ。CSV export、無制限全件取得、任意の `limit` 指定は current support として扱わない
+- current UI は 200 件単位の page 移動と、現在の filter 条件に一致する最新 200 件の CSV export を持つ。無制限全件取得、任意の `limit` 指定、scheduled report は current support として扱わない
+- CSV export の固定列は画面表示設定とは独立している。表示列を減らしても CSV の監査用固定列は変わらない
 - `q` は `target_name` / `ip_address` の補助検索であり、user_agent 検索や全文検索 index ではない
 - `document_q` は title / slug の検索であり、target file name や IP アドレス検索ではない
 - AI context mode / scope filter は `target_type=ai_context` の `target_name` に保存された `mode=<value>;` / `scope=<value>;` を使う補助 filter であり、任意の `target_name` 全文検索ではない
@@ -150,5 +178,6 @@ AI context mode / scope、日付、案件、会社、ユーザー、対象名、
 - ZIP 名、添付ファイル名、AI context raw target、IP アドレスから探したい: `対象名・IPアドレス` に断片を入れる
 - 文書 detail から利用傾向を振り返りたい: `document_q` で title / slug を入れて戻る
 - 一覧が広くて読みづらい: 表示設定で必要な列だけを残す
-- 200 件より古い証跡を追いたい: まず filter を維持したまま `次の200件` へ進み、広すぎる場合は期間や対象条件を足す
+- 条件に一致する最新 200 件を持ち出して確認したい: `現在の条件でCSV export（最新200件）` を使い、固定列と表示設定の違いを確認する
+- 200 件より古い証跡を追いたい: まず filter を維持したまま `次の200件` へ進み、広すぎる場合は期間や対象条件を足す。CSV は current page ではなく最新 200 件の export なので、古い page の証跡を出したい場合は条件をさらに狭める
 - 件数傾向や未利用文書を見たい: この画面ではなく `文書利用状況` へ移る
