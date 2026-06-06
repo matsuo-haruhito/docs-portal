@@ -14,7 +14,9 @@
 
 current `main` では internal user だけが、案件配下の `文書一覧` で `ファイルをアップロード` panel を使える。
 
-- `文書一覧` の upload panel に drop すると、選択中フォルダ (`upload_source_path`) 直下の追加候補として扱う
+- 選択なしの upload panel に drop すると、案件直下の追加候補として扱う
+- 左の TreeView でフォルダや文書を選んでいる場合、upload panel の `アップロード先` に選択中の末尾名と full path が表示される。長い path では末尾名を見出しとして読み、full path は同じ destination 表示の path text / title で確認する
+- 選択中 destination がある upload panel に drop すると、その path 直下の追加候補として扱う。`data-manual-document-upload-source-path-value` と drop target の保存契約は表示が compact になっても変わらない
 - 左の TreeView のフォルダや文書行に直接 drop した場合も、同じ manual upload flow に入る
 - upload 後は必ず `document_version_path(result.version, upload_review: "1")` へ遷移し、notice で `差異を確認してOK/NGを選択してください。` と案内される
 
@@ -125,6 +127,7 @@ current behavior:
 
 ## 迷ったときの切り分け
 
+- upload panel の `アップロード先` に表示された末尾名と full path が合っているかを確認したい: 文書一覧へ戻り、左の TreeView で選択中のフォルダや文書を見直す
 - どのフォルダ直下へ drop した扱いかを見直したい: [文書一覧の検索・実用フィルタ・ZIP出力 runbook](./文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
 - 差分、HTML、添付、品質チェックのどこを読むか迷う: [版詳細プレビュー・差分・添付確認 runbook](./版詳細プレビュー・差分・添付確認runbook.md)
 - 既存文書更新か新規文書候補かを見分けたい: `Document` が増えているか、`latest_version` がまだ空か、source file 名が一致していたかを見る
@@ -134,6 +137,7 @@ current behavior:
 ## current support の境界
 
 - この runbook は current manual upload review flow だけを扱う
+- upload panel の destination 表示は、選択中 path を読みやすく確認するための UI であり、ManualDocumentUpload の保存契約、version 作成、上書き判断を変えるものではない
 - drag & drop 実装の不具合修正、複数ファイル一括 upload UX、承認ポリシーの新設は含めない
 - `OK` / `NG` / rollback の current runtime behavior を説明するが、新しい公開判断基準は定義しない
 - 文書一覧 runbook や版詳細 runbook の内容を全面複製せず、upload review の入口だけを橋渡しする
