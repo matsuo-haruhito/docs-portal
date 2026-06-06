@@ -55,6 +55,10 @@ RSpec.describe "Admin document set version usage cue", type: :request do
     document_set_row(name).at_css(%(td[data-rails-table-preferences-column-key="documents_count"]))
   end
 
+  def clear_filter_links
+    parsed_html.css('a[href]').select { _1.text.squish == "条件をクリア" }
+  end
+
   before do
     create(:document_set_item, document_set: fixed_set, document: document_a, document_version: version_a1, sort_order: 1)
     create(:document_set_item, document_set: fixed_set, document: document_b, sort_order: 2)
@@ -67,7 +71,10 @@ RSpec.describe "Admin document set version usage cue", type: :request do
     get admin_document_sets_path(set_type: "delivery")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("種別: 送付用")
+    expect(page_text).to include("適用中の絞り込み: 種別: 送付用")
+    expect(page_text).to include("検索結果: 3件。条件を外すには")
+    expect(page_text).to include("表示設定は列の表示・幅だけを調整します。")
+    expect(clear_filter_links.map { _1["href"] }).to include(admin_document_sets_path)
 
     expect(documents_count_cell_for("固定版ありセット").text.squish).to eq("2固定版あり（1件）")
     expect(documents_count_cell_for("最新版のみセット").text.squish).to eq("1最新版のみ")
