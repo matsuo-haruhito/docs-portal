@@ -3,14 +3,21 @@
 - current_mode_description = current_mode_name == "full" ? "本文まで含めて出力します。" : "summary と文書メタデータ中心で出力します。"
 - exported_document_count = @hash.dig(:summary, :document_count).to_i
 - selectable_document_count = @selectable_document_count
+- matching_selectable_document_count = @matching_selectable_document_count || selectable_document_count
 - selectable_document_total_count = @selectable_document_total_count || selectable_document_count
+- selected_selectable_document_count = @selected_selectable_document_count || 0
 - selectable_document_preview_count = @selectable_documents_preview.size
 - document_query_present = @document_query.present?
+- candidate_view_selected = @candidate_view == "selected"
 - selected_document_count = @requested_document_ids.empty? ? selectable_document_count : @requested_document_ids.size
+- candidate_view_params = @scoped_link_params.merge(mode: @mode)
+- candidate_view_params = candidate_view_params.merge(document_q: @document_query) if document_query_present
 - scope_summary = @requested_document_ids.empty? ? "現在は閲覧可能な文書全体（#{exported_document_count}件）を export 対象にしています。" : "明示選択: #{selected_document_count}件 / export対象: #{exported_document_count}件"
 - scope_help = @requested_document_ids.empty? ? "個別に絞り込む場合は、対象にしたい文書だけを残して preview してください。" : "選択文書のうち閲覧可能な文書だけが preview / export に含まれます。"
-- if document_query_present
-  - document_filter_legend = @requested_document_ids.empty? ? "Export候補（検索結果#{selectable_document_count} / 閲覧可能#{selectable_document_total_count}件、表示中#{selectable_document_preview_count}件）" : "Export候補（#{selected_document_count}件選択中、検索結果#{selectable_document_count} / 閲覧可能#{selectable_document_total_count}件、表示中#{selectable_document_preview_count}件）"
+- if candidate_view_selected
+  - document_filter_legend = "選択済み文書（表示中#{selectable_document_preview_count}件 / 選択済み候補#{selected_selectable_document_count}件）"
+- elsif document_query_present
+  - document_filter_legend = @requested_document_ids.empty? ? "Export候補（検索結果#{matching_selectable_document_count} / 閲覧可能#{selectable_document_total_count}件、表示中#{selectable_document_preview_count}件）" : "Export候補（#{selected_document_count}件選択中、検索結果#{matching_selectable_document_count} / 閲覧可能#{selectable_document_total_count}件、表示中#{selectable_document_preview_count}件）"
 - else
   - document_filter_legend = @requested_document_ids.empty? ? "Export候補（表示中#{selectable_document_preview_count} / 全#{selectable_document_count}件）" : "Export候補（#{selected_document_count} / #{selectable_document_count}件選択中、表示中#{selectable_document_preview_count}件）"
 - included_omitted_count = @plan.included_items.size - @plan_included_items_preview.size
@@ -58,11 +65,19 @@ p
     strong = scope_summary
   p.muted = scope_help
   p.muted
-    - if document_query_present
+    - if candidate_view_selected
+      | 候補表示: 選択済みのみ / 表示中: 
+      = selectable_document_preview_count
+      | 件 / 選択済み候補: 
+      = selected_selectable_document_count
+      | 件 / 閲覧可能: 
+      = selectable_document_total_count
+      | 件
+    - elsif document_query_present
       | 表示中の候補: 
       = selectable_document_preview_count
       | 件 / 検索結果: 
-      = selectable_document_count
+      = matching_selectable_document_count
       | 件 / 閲覧可能: 
       = selectable_document_total_count
       | 件
@@ -72,6 +87,16 @@ p
       | 件 / 閲覧可能: 
       = selectable_document_count
       | 件
+  - if @requested_document_ids.any?
+    p.muted
+      | 選択済み確認: 
+      = selected_selectable_document_count
+      | 件の閲覧可能な選択文書を保持しています。候補表示を切り替えても JSON / Markdown の対象は変わりません。
+    p.actions
+      - if candidate_view_selected
+        = link_to "検索候補へ戻る", project_ai_context_path(@project, candidate_view_params), class: "button secondary"
+      - else
+        = link_to "選択済みだけ表示", project_ai_context_path(@project, candidate_view_params.merge(candidate_view: :selected)), class: "button secondary"
   - if @selectable_documents_truncated
     p.muted
       | 文書が多いため、checkbox候補は
@@ -84,6 +109,8 @@ p
       | 検索条件: 
       strong = @document_query
       | 。検索は checkbox 候補の絞り込みで、JSON / Markdown export は「選択した文書でpreview」を押すまで現在の対象範囲を維持します。
+  - if candidate_view_selected
+    p.muted 選択済みのみ表示中です。検索条件に一致しない選択済み文書も、現在の export 対象として確認できます。
   - if @selectable_documents_preview.any?
     = form_with url: project_ai_context_path(@project), method: :get, local: true do
       = hidden_field_tag :mode, @mode

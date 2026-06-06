@@ -177,12 +177,14 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(page_text).to include("export対象:1 件")
     expect(page_text).to include("明示選択: 1件 / export対象: 1件")
     expect(page_text).to include("選択文書のうち閲覧可能な文書だけが preview / export に含まれます。")
+    expect(page_text).to include("選択済み確認: 1件の閲覧可能な選択文書を保持しています。")
     expect(page_text).to include("Export候補（1 / 2件選択中、表示中2件）")
     expect(page_text).to include("Selected Manual", "Other Manual")
     expect(ai_context_link_href("compact に切り替え")).to include("document_ids%5B%5D=#{selected.id}")
     expect(ai_context_link_href("full に切り替え")).to include("document_ids%5B%5D=#{selected.id}")
     expect(ai_context_link_href("JSON を出力")).to include("mode=full", "document_ids%5B%5D=#{selected.id}")
     expect(ai_context_link_href("Markdown を出力")).to include("mode=full", "document_ids%5B%5D=#{selected.id}")
+    expect(ai_context_link_href("選択済みだけ表示")).to include("mode=full", "document_ids%5B%5D=#{selected.id}", "candidate_view=selected")
 
     get project_ai_context_path(project, format: :json, mode: :compact, document_ids: [selected.id, internal.id])
     expect(response).to have_http_status(:ok)
@@ -248,6 +250,20 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(page_text).to include("明示選択: 1件 / export対象: 1件")
     expect(page_text).to include("Export候補（1件選択中、検索結果2 / 閲覧可能55件、表示中2件）")
     expect(document_choice_labels).to include(a_string_including("Bulk Manual 000"), a_string_including("Bulk Manual 054"))
+
+    get project_ai_context_path(project, document_q: "bulk-000", document_ids: [documents.last.id], candidate_view: "selected")
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("候補表示: 選択済みのみ / 表示中: 1件 / 選択済み候補: 1件 / 閲覧可能: 55件")
+    expect(page_text).to include("選択済み文書（表示中1件 / 選択済み候補1件）")
+    expect(page_text).to include("選択済みのみ表示中です。検索条件に一致しない選択済み文書も、現在の export 対象として確認できます。")
+    expect(document_choice_labels).to contain_exactly(a_string_including("Bulk Manual 054"))
+    expect(ai_context_link_href("検索候補へ戻る")).to include("document_q=bulk-000", "document_ids%5B%5D=#{documents.last.id}")
+
+    get project_ai_context_path(project, format: :json, mode: :compact, document_q: "bulk-000", document_ids: [documents.last.id], candidate_view: "selected")
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    expect(json.dig("summary", "document_count")).to eq(1)
+    expect(json.fetch("documents").map { _1.fetch("public_id") }).to eq([documents.last.public_id])
   end
 
   it "records access logs for html and export responses with scope metadata" do
