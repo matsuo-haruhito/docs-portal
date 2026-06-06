@@ -75,6 +75,7 @@ class Admin::DocumentSetsController < Admin::BaseController
     scope = DocumentSet.includes(:project, document_set_items: %i[document document_version])
     scope = apply_enum_filter(scope, :set_type, DocumentSet.set_types)
     scope = apply_enum_filter(scope, :visibility_policy, DocumentSet.visibility_policies)
+    scope = apply_query_filter(scope)
     @document_sets = scope.ordered
   end
 
@@ -95,7 +96,9 @@ class Admin::DocumentSetsController < Admin::BaseController
   end
 
   def document_set_filter_params
-    params.to_unsafe_h.symbolize_keys.slice(:set_type, :visibility_policy)
+    params.to_unsafe_h.symbolize_keys.slice(:set_type, :visibility_policy, :q).tap do |filters|
+      filters[:q] = filters[:q].to_s.strip if filters.key?(:q)
+    end
   end
 
   def document_set_params
@@ -164,5 +167,16 @@ class Admin::DocumentSetsController < Admin::BaseController
     return scope if value.blank? || !enum_values.key?(value)
 
     scope.where(key => value)
+  end
+
+  def apply_query_filter(scope)
+    query = @filters[:q].to_s
+    return scope if query.blank?
+
+    pattern = "%#{DocumentSet.sanitize_sql_like(query.downcase)}%"
+    scope.joins(:project).where(
+      "LOWER(document_sets.name) LIKE :pattern OR LOWER(projects.name) LIKE :pattern OR LOWER(projects.code) LIKE :pattern",
+      pattern: pattern
+    )
   end
 end
