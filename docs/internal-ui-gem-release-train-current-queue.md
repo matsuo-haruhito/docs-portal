@@ -48,6 +48,20 @@
 - `tree_view` は、manifest-backed public surface と docs-portal 側の sidebar / detail tree smoke を分けて扱う。upstream manifest / public API の進行中 PR や proposal を current support として先取りしない。
 - 3 gem 共通で、upstream evidence と downstream smoke は同じ PR body に混ぜてよいが、責務は分けて記録する。upstream docs の完了は host app smoke の成功を意味しない。
 
+## release train PR preflight (2026-06-06 JST)
+
+`#2114` では、release train / upstream evidence snapshot / replacement PR を作る前に、4 repo 横断で同じ Issue や同じ file family を重複して扱っていないかを軽く確認します。これは target SHA、Gemfile bump、PR merge / close を決める手順ではありません。
+
+| 観点 | 確認すること | release train での扱い |
+| --- | --- | --- |
+| close intent | open PR の `Closes #...`、`Refs #...`、`Supersedes #...` が同じ issue を指していないか見る | 同じ issue を close する候補が複数ある場合は、新規 replacement を作る前に current 候補へ一本化できるか確認する |
+| changed files overlap | `docs-portal` の release train docs、上流 gem docs、package / manifest / smoke files が既存 open PR と重なっていないか見る | 同じ file family を触る場合は、古い branch content で latest main や sibling PR の docs を巻き戻さない |
+| base freshness / mergeability | open PR が current `main` から behind / diverged か、`mergeable:false` か、CI success 後に main が進んでいないか見る | stale replacement を作る前に、既存 PR の latest head / compare / changed files を取り直す |
+| latest CI evidence | `docs-quality`、`ci`、上流 repo の CI が latest head の結果か確認する | 古い green run を readiness として使わない。baseline failure は PR 個別差分と分けて issue / comment に残す |
+| current support boundary | open PR、proposal、closed not merged PR を current support として書いていないか見る | open PR は `merge 後に再確認`、`branch refresh attention`、`human review` として扱う |
+
+repo-local の棚卸しは `tree_view-rails#1401` や `rails_table_preferences#807` に戻します。この節では 4 repo の全 PR を詳細レビューせず、docs-portal の release train 入口で重複 close intent、file overlap、stale replacement、latest CI、current support の誤読だけを先に見ます。
+
 ## 関連 issue の読み分け
 
 - `#858`: release train の parent / hub。実装や docs 更新の最小単位ではない。

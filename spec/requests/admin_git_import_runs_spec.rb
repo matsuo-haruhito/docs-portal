@@ -60,6 +60,9 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(response.body).to include("Git Import Project")
     expect(response.body).to include(git_import_source.repository_full_name)
     expect(page_text).to include("表示中: 1件 / 最新100件までを表示")
+    expect(page_text).to include("表示中の最新100件内の状態: 取込済み: 1件")
+    expect(page_text).not_to include("エラー列を確認してください")
+    expect(page_text).not_to include("実行結果の理由を確認してください")
     expect(response.body).to include("Git同期履歴の表示設定")
     expect(run_rows.size).to eq(1)
   end
@@ -93,6 +96,9 @@ RSpec.describe "Admin git import runs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("provider、pull/push、status、summary_json、削除候補を追跡します")
+    expect(page_text).to include("表示中の最新100件内の状態: 失敗: 1件 / スキップ: 1件 / 取込済み: 1件")
+    expect(page_text).to include("失敗 1件はエラー列を確認してください。")
+    expect(page_text).to include("スキップ 1件は実行結果の理由を確認してください。")
     expect(page_text).to include("取り込み文書: 3")
     expect(page_text).to include("添付: 5")
     expect(page_text).to include("取込元パス: docs")
@@ -118,6 +124,8 @@ RSpec.describe "Admin git import runs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 1件 / 絞り込み後の最新100件までを表示")
+    expect(page_text).to include("表示中の最新100件内の状態: 失敗: 1件")
+    expect(page_text).to include("失敗 1件はエラー列を確認してください。")
     expect(page_text).to include("repository not found")
     expect(page_text).to include("絞り込み解除")
     expect(response.body).to include("Git同期履歴の表示設定")
@@ -138,6 +146,7 @@ RSpec.describe "Admin git import runs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 1件 / 絞り込み後の最新100件までを表示")
+    expect(page_text).to include("表示中の最新100件内の状態: 取込済み: 1件")
     expect(page_text).to include("matsuo-haruhito/docs-portal")
     expect(page_text).to include("docs hit")
     expect(page_text).not_to include("matsuo-haruhito/work-codex")
@@ -157,6 +166,7 @@ RSpec.describe "Admin git import runs", type: :request do
     get admin_git_import_runs_path, params: { status: "failed", repository: "docs-portal" }
 
     expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中の最新100件内の状態: 失敗: 1件")
     expect(page_text).to include("target failure")
     expect(page_text).not_to include("same repo imported")
     expect(page_text).not_to include("other failure")
@@ -173,6 +183,7 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("visible run")
     expect(page_text).to include("表示中: 1件 / 最新100件までを表示")
+    expect(page_text).to include("表示中の最新100件内の状態: 取込済み: 1件")
   end
 
   it "shows the newest 100 runs after filters are applied" do
@@ -202,6 +213,7 @@ RSpec.describe "Admin git import runs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 100件 / 絞り込み後の最新100件までを表示")
+    expect(page_text).to include("表示中の最新100件内の状態: 失敗: 100件")
     expect(run_rows.size).to eq(100)
     expect(page_text).to include("newest filtered boundary")
     expect(page_text).not_to include("oldest filtered boundary")
@@ -219,6 +231,7 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(page_text).to include("表示中: 0件 / 絞り込み後の最新100件までを表示")
     expect(page_text).to include("条件に一致するGit同期履歴はありません。")
     expect(page_text).to include("絞り込み解除")
+    expect(page_text).not_to include("表示中の最新100件内の状態")
     expect(response.body).not_to include("Git同期履歴の表示設定")
   end
 
