@@ -62,7 +62,10 @@ h1 文書セット
           td data-rails-table-preferences-column-key="name" = document_set.name
           td data-rails-table-preferences-column-key="set_type" = document_set_type_label(document_set)
           td data-rails-table-preferences-column-key="visibility_policy" = document_set_visibility_policy_label(document_set)
-          td data-rails-table-preferences-column-key="documents_count" = document_set.document_set_items.size
+          td data-rails-table-preferences-column-key="documents_count"
+            = document_set.document_set_items.size
+            br
+            span.badge = document_set_version_usage_label(document_set)
           td.actions data-rails-table-preferences-column-key="actions"
             = edit_link_to "編集", edit_admin_document_set_path(document_set)
             = delete_link_to "削除", admin_document_set_path(document_set), confirm: "文書セット「#{document_set.name}」を削除しますか？登録済み文書 #{document_set.document_set_items.size} 件との対応も失われます。"
