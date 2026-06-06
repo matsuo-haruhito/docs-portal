@@ -60,6 +60,10 @@ section.card
       = form.submit "検索"
       = link_to "条件をクリア", admin_access_logs_path
 
+  p.actions
+    = link_to "現在の条件でCSV export（最新200件）", admin_access_logs_path(@pagination_params.merge(format: :csv)), class: "button secondary"
+  p.muted CSV export は現在の絞り込み条件に一致する最新200件を、監査用途の固定列で出力します。画面の表示列設定とは独立しています。
+
 - if @access_logs.any?
   p.muted
     | 表示中:
