@@ -12,7 +12,43 @@ module Admin::ConsentTermsHelper
     ]
   end
 
+  def consent_term_filter_summary(filters, result_count:)
+    conditions = consent_term_filter_summary_conditions(filters)
+    count_label = "表示中: #{result_count}件"
+
+    return count_label if conditions.blank?
+
+    "#{count_label}（#{conditions.join(' / ')}）"
+  end
+
   def consent_term_status_label(term)
     term.active? ? "利用中" : "無効化済み"
+  end
+
+  private
+
+  def consent_term_filter_summary_conditions(filters)
+    filters = filters.to_h.symbolize_keys
+    conditions = []
+
+    query = filters[:q].to_s.strip
+    conditions << "検索: #{query}" if query.present?
+
+    case filters[:active]
+    when "true"
+      conditions << "状態: 有効"
+    when "false"
+      conditions << "状態: 無効"
+    end
+
+    if ConsentTerm.consent_scopes.key?(filters[:consent_scope])
+      conditions << "種別: #{consent_scope_label(filters[:consent_scope])}"
+    end
+
+    if ConsentTerm.requirement_timings.key?(filters[:requirement_timing])
+      conditions << "再同意方針: #{consent_requirement_timing_label(filters[:requirement_timing])}"
+    end
+
+    conditions
   end
 end
