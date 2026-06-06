@@ -1,4 +1,8 @@
 class AccessRequestsController < BaseController
+  ACCESS_REQUEST_QUERY_MAX_LENGTH = 100
+
+  helper_method :access_request_query_max_length
+
   def index
     @status_filter = normalized_status_filter
     @query = normalized_query
@@ -113,7 +117,11 @@ class AccessRequestsController < BaseController
   end
 
   def normalized_query
-    params[:q].to_s.strip.presence
+    params[:q].to_s.strip.presence&.slice(0, ACCESS_REQUEST_QUERY_MAX_LENGTH)
+  end
+
+  def access_request_query_max_length
+    ACCESS_REQUEST_QUERY_MAX_LENGTH
   end
 
   def find_requestable
