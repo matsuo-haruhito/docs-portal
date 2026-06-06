@@ -251,6 +251,41 @@ RSpec.describe "Document approval requests", type: :request do
     expect(page_text).to include("確認依頼はありません。")
   end
 
+  it "distinguishes unregistered and filtered empty states without changing clear search links" do
+    sign_in_as(internal_user)
+
+    get document_approval_requests_path
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("確認依頼はありません。")
+    expect(page_text).not_to include("条件に一致する確認依頼はありません。検索語や状態を見直してください。")
+
+    approved_request = create(
+      :document_approval_request,
+      document:,
+      requester:,
+      title: "承認済みの確認依頼",
+      status: :approved,
+      acted_by: internal_user,
+      approved_at: 1.hour.ago,
+      cancelled_at: nil
+    )
+
+    get document_approval_requests_path, params: { status: :pending }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include(approved_request.title)
+    expect(page_text).to include("条件に一致する確認依頼はありません。検索語や状態を見直してください。")
+    expect(parsed_html.at_css(%(a[href="#{document_approval_requests_path(status: :approved)}"]))).to be_present
+
+    get document_approval_requests_path, params: { q: "該当なし" }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include(approved_request.title)
+    expect(page_text).to include("検索条件: 該当なし / 表示 0件")
+    expect(page_text).to include("条件に一致する確認依頼はありません。検索語や状態を見直してください。")
+    clear_search_link = parsed_html.css("a[href]").find { |link| link.text.squish == "検索を解除" }
+    expect(clear_search_link).to be_present
+    expect(clear_search_link["href"]).to eq(document_approval_requests_path)
+  end
+
   it "searches within the nested document scope and preserves query in return_to" do
     approver = create(:user, :internal, name: "確認担当")
     nested_request = create(:document_approval_request, document:, requester:, approver:, title: "契約対象内レビュー")
