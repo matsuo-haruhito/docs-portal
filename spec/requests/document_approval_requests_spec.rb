@@ -252,20 +252,8 @@ RSpec.describe "Document approval requests", type: :request do
   end
 
   it "distinguishes unregistered and filtered empty states without changing clear search links" do
-    approved_request = create(
-      :document_approval_request,
-      document:,
-      requester:,
-      title: "承認済みの確認依頼",
-      status: :approved,
-      acted_by: internal_user,
-      approved_at: 1.hour.ago,
-      cancelled_at: nil
-    )
-
     sign_in_as(internal_user)
 
-    DocumentApprovalRequest.delete_all
     get document_approval_requests_path
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("確認依頼はありません。")
