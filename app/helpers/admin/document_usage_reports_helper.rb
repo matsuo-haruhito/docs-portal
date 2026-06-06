@@ -48,6 +48,12 @@ module Admin::DocumentUsageReportsHelper
     end
   end
 
+  def document_usage_report_ignored_date_filter_label(names)
+    labels = { from: "開始日", to: "終了日" }
+
+    Array(names).map { labels.fetch(_1, _1.to_s) }.join(" / ")
+  end
+
   def document_usage_report_usage_state(row)
     return :unused unless row[:used]
 
