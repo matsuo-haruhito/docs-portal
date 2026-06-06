@@ -35,7 +35,7 @@ RSpec.describe "Access request filter context", type: :request do
     expect(page_text).not_to include("送信済みのアクセス申請はありません。")
   end
 
-  it "keeps pending cancel guidance focused on the row and current redirect behavior" do
+  it "keeps pending cancel guidance focused on the row and current filters" do
     create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "Need file approval")
 
     sign_in_as(user)
@@ -45,7 +45,7 @@ RSpec.describe "Access request filter context", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中条件: 状態: 申請中 / 要求権限: ダウンロード / 対象種別: ファイル")
     expect(page_text).to include("この行の対象・要求権限・理由を確認してから取消してください。")
-    expect(page_text).to include("取消後はフィルタなしのアクセス申請一覧で取消済みとして確認できます。")
+    expect(page_text).to include("取消後は現在の条件のままアクセス申請一覧へ戻ります。")
     expect(response.body).to include("data-turbo-confirm")
     expect(response.body).to include("このアクセス申請を取り消します。対象・要求権限・理由を確認しましたか？")
   end
