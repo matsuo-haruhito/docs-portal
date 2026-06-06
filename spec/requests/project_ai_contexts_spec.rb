@@ -204,6 +204,34 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(json.fetch("documents").map { _1.fetch("public_id") }).to contain_exactly(selected.public_id, other_visible.public_id)
   end
 
+  it "normalizes oversized document queries before filtering and rendering candidate links" do
+    truncated_query = "manual-" + ("x" * (ProjectAiContextsController::DOCUMENT_QUERY_MAX_LENGTH - "manual-".length))
+    long_query = "  #{truncated_query}ignored-tail  "
+    matching = create_exportable_document(title: truncated_query, slug: "bounded-query", body: "Matched body text.")
+    selected = create_exportable_document(title: "Selected Manual", slug: "selected-manual", body: "Selected body text.")
+    create_exportable_document(title: "Ignored Tail Manual", slug: "ignored-tail", body: "Ignored body text.")
+
+    sign_in_as(external_user)
+
+    get project_ai_context_path(project, document_q: long_query, document_ids: [selected.id])
+
+    expect(response).to have_http_status(:ok)
+    query_field = parsed_html.at_css('input[name="document_q"]')
+    expect(query_field["value"]).to eq(truncated_query)
+    expect(query_field["maxlength"]).to eq(ProjectAiContextsController::DOCUMENT_QUERY_MAX_LENGTH.to_s)
+    expect(page_text).to include("検索条件: #{truncated_query}")
+    expect(page_text).to include("Export候補（1件選択中、検索結果2 / 閲覧可能3件、表示中2件）")
+    expect(document_choice_labels).to include(a_string_including(matching.title), a_string_including(selected.title))
+    expect(document_choice_labels).not_to include(a_string_including("Ignored Tail Manual"))
+    expect(ai_context_link_href("選択済みだけ表示")).to include("document_q=#{truncated_query}", "document_ids%5B%5D=#{selected.id}")
+
+    get project_ai_context_path(project, format: :json, mode: :compact, document_q: long_query, document_ids: [selected.id])
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    expect(json.dig("summary", "document_count")).to eq(1)
+    expect(json.fetch("documents").map { _1.fetch("public_id") }).to eq([selected.public_id])
+  end
+
   it "bounds large HTML previews without changing all-scope export semantics" do
     documents = 55.times.map do |index|
       suffix = format("%03d", index)
