@@ -2,8 +2,14 @@
 - list_path = @document.present? ? ->(path_params = {}) { project_document_document_approval_requests_path(@project, @document, path_params) } : ->(path_params = {}) { document_approval_requests_path(path_params) }
 - total_count = @pending_count + @approved_count + @cancelled_count
 - current_list_path = request.fullpath
-- query_path_params = @query.present? ? { q: @query } : {}
-- clear_search_params = @status_filter.present? ? { status: @status_filter } : {}
+- user_filter_params = {}
+- user_filter_params[:requester_id] = @requester_filter_id if @requester_filter_id.present?
+- user_filter_params[:approver_id] = @approver_filter_id if @approver_filter_id.present?
+- query_path_params = user_filter_params.merge(@query.present? ? { q: @query } : {})
+- clear_search_params = user_filter_params.merge(@status_filter.present? ? { status: @status_filter } : {})
+- clear_user_filter_params = {}
+- clear_user_filter_params[:status] = @status_filter if @status_filter.present?
+- clear_user_filter_params[:q] = @query if @query.present?
 - table_key = :document_approval_requests
 - table_columns = document_approval_request_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
@@ -31,12 +37,19 @@ p.actions
   p
     = label_tag :q, "依頼を検索"
     = search_field_tag :q, @query, placeholder: "依頼名・本文・文書名・slug・関係者名"
+  p
+    = label_tag :requester_id, "依頼者"
+    = select_tag :requester_id, options_for_select([["依頼者すべて", ""]] + @requester_filter_options.map { |user| [user.name, user.id] }, @requester_filter_id)
+    = label_tag :approver_id, "確認相手"
+    = select_tag :approver_id, options_for_select([["確認相手すべて", ""]] + @approver_filter_options.map { |user| [user.name, user.id] }, @approver_filter_id)
     = submit_tag "検索", class: "button"
     - if @query.present?
       = link_to "検索を解除", list_path.call(clear_search_params), class: "button secondary"
+    - if @requester_filter_id.present? || @approver_filter_id.present?
+      = link_to "担当者絞り込みを解除", list_path.call(clear_user_filter_params), class: "button secondary"
 
-- if @query.present?
-  p.muted = "検索条件: #{@query} / 表示 #{@document_approval_requests.size}件"
+- if @query.present? || @requester_filter_id.present? || @approver_filter_id.present?
+  p.muted = "検索条件: #{[@query.presence, (@requester_filter_id.present? ? "依頼者指定" : nil), (@approver_filter_id.present? ? "確認相手指定" : nil)].compact.join(" / ")} / 表示 #{@document_approval_requests.size}件"
 
 - if @document_approval_requests.any?
   .card
