@@ -13,6 +13,13 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
     parsed_html.at_css(%(input[name="#{name}"]))&.[]("value")
   end
 
+  def safe_identifier_preview(value)
+    normalized = value.to_s.squish
+    return normalized if normalized.length <= 28
+
+    "#{normalized.first(10)}...#{normalized.last(8)}"
+  end
+
   describe "GET /admin/microsoft_graph_connections" do
     it "shows which enabled connection is currently used for preview" do
       sign_in_as(admin_user)
@@ -207,11 +214,16 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(row).to be_present
-      expect(row.at_css(%([data-graph-connection-field="drive"] code.graph-connection-value)).text).to eq(long_drive_id)
-      expect(row.at_css(%([data-graph-connection-field="preview-folder"] code.graph-connection-value)).text).to eq(long_folder_path)
-      expect(row.at_css(%([data-graph-connection-field="tenant"] code.graph-connection-value)).text).to eq(long_tenant_id)
-      expect(row.at_css(%([data-graph-connection-field="client"] code.graph-connection-value)).text).to eq(long_client_id)
-      expect(row.at_css(%([data-graph-connection-field="site"] code.graph-connection-value)).text).to eq(long_site_id)
+      expect(row.at_css(%([data-graph-connection-field="drive"] code.graph-connection-value)).text).to eq(safe_identifier_preview(long_drive_id))
+      expect(row.at_css(%([data-graph-connection-field="preview-folder"] code.graph-connection-value)).text).to eq(safe_identifier_preview(long_folder_path))
+      expect(row.at_css(%([data-graph-connection-field="tenant"] code.graph-connection-value)).text).to eq(safe_identifier_preview(long_tenant_id))
+      expect(row.at_css(%([data-graph-connection-field="client"] code.graph-connection-value)).text).to eq(safe_identifier_preview(long_client_id))
+      expect(row.at_css(%([data-graph-connection-field="site"] code.graph-connection-value)).text).to eq(safe_identifier_preview(long_site_id))
+      expect(response.body).not_to include(long_drive_id)
+      expect(response.body).not_to include(long_folder_path)
+      expect(response.body).not_to include(long_tenant_id)
+      expect(response.body).not_to include(long_client_id)
+      expect(response.body).not_to include(long_site_id)
       expect(row.text.squish).to include("主確認: Drive ID")
       expect(row.text.squish).to include("主確認: プレビュー用フォルダ")
       expect(row.text.squish).to include("補助: Tenant ID")
