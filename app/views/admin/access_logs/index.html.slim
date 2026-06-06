@@ -125,11 +125,10 @@ section.card
               br
               - ai_context_target[:segments].each do |segment|
                 = " "
-                span.badge title=ai_context_target[:raw]
-                  = "#{segment[:label]}: #{segment[:value]}"
+                span.badge = "#{segment[:label]}: #{segment[:value]}"
               details
-                summary.muted 監査用 raw target_name
-                code.muted = ai_context_target[:raw]
+                summary.muted 監査用 target_name preview
+                code.muted = ai_context_target[:preview]
             - elsif log.target_name.present?
               br
               code = log.target_name
