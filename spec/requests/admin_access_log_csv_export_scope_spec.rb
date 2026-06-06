@@ -17,8 +17,12 @@ RSpec.describe "Admin access log CSV export scope", type: :request do
     parsed_html.css("a").find { |link| link.text.squish == "現在の条件でCSV export（最新200件）" }
   end
 
+  def csv_export_uri
+    URI.parse(csv_export_link["href"])
+  end
+
   def csv_export_query
-    Rack::Utils.parse_nested_query(URI.parse(csv_export_link["href"]).query)
+    Rack::Utils.parse_nested_query(csv_export_uri.query)
   end
 
   def create_access_log!(target_name:, accessed_at: Time.current)
@@ -48,8 +52,8 @@ RSpec.describe "Admin access log CSV export scope", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 5件 / 最新200件までを表示 / 2ページ目 / 絞り込み中")
     expect(page_text).to include("ページ移動中でも、CSV export は表示中ページではなく条件一致の最新200件が対象です。")
+    expect(csv_export_uri.path).to end_with(".csv")
     expect(csv_export_query).to include("q" => "filtered-entry")
-    expect(csv_export_query).to include("format" => "csv")
     expect(csv_export_query).not_to include("page")
   end
 end
