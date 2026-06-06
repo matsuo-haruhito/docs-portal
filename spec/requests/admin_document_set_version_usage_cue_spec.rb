@@ -78,6 +78,6 @@ RSpec.describe "Admin document set version usage cue", type: :request do
       "文書なし"
     )
     expect(response.body).to include('data-rails-table-preferences-column-key="documents_count"')
-    expect(response.body).to include('input name="q"')
+    expect(parsed_html.at_css('form.document-set-filter-form input[name="q"]')).to be_present
   end
 end
