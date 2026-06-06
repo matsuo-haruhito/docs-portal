@@ -18,7 +18,7 @@ h1 文書セット
     .form-grid.form-grid--compact
       label.form-field
         span 検索
-        = form.search_field :q, value: @filters[:q], placeholder: "案件名・案件コード・文書セット名", autocomplete: "off"
+        = form.search_field :q, value: @filters[:q], placeholder: "案件名・案件コード・文書セット名", autocomplete: "off", maxlength: Admin::DocumentSetsController::DOCUMENT_SET_QUERY_MAX_LENGTH
 
       label.form-field
         span 種別
