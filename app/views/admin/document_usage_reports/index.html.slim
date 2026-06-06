@@ -38,6 +38,11 @@ section.card
       = link_to "条件をクリア", admin_document_usage_reports_path
 
 - if @report_hash
+  - csv_params = request.query_parameters.merge(format: :csv)
+  - if @query.present?
+    - csv_params[:q] = @query
+  - else
+    - csv_params.delete(:q)
   section.card
     h2 集計サマリ
     p
@@ -70,7 +75,7 @@ section.card
       |  / 
       = link_to "案件の既読確認内訳へ", admin_read_confirmations_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
       |  / 
-      = link_to "CSV出力", admin_document_usage_reports_path(request.query_parameters.merge(format: :csv)), data: { turbo_frame: "_top" }
+      = link_to "CSV出力", admin_document_usage_reports_path(csv_params), data: { turbo_frame: "_top" }
     p
       | 表示中:
       strong = " #{@report_hash[:documents].size}件"
