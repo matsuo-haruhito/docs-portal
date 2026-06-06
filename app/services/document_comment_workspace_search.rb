@@ -1,9 +1,11 @@
 class DocumentCommentWorkspaceSearch
+  COMMENT_QUERY_MAX_LENGTH = 100
+
   attr_reader :query
 
   def initialize(user:, query:)
     @user = user
-    @query = query.to_s.strip
+    @query = query.to_s.strip.slice(0, COMMENT_QUERY_MAX_LENGTH)
     @normalized_query = @query.downcase
   end
 

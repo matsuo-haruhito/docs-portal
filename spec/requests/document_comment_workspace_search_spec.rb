@@ -169,4 +169,40 @@ RSpec.describe "Document comment workspace search", type: :request do
     expect(response.body).to include(version_question.body)
     expect(response.body).not_to include(other_question.body)
   end
+
+  it "renders oversized comment search queries with the server-side slice" do
+    normalized_query = "a" * DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH
+    raw_tail = "raw-tail-should-not-render"
+    oversized_query = "  #{normalized_query}#{raw_tail}  "
+    public_question = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "#{normalized_query} public question"
+    )
+    internal_review = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: internal_user,
+      comment_type: :request_change,
+      internal_only: true,
+      body: "#{normalized_query} internal note"
+    )
+
+    sign_in_as(external_user)
+
+    get document_version_path(version, comment_q: oversized_query)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(%(maxlength="#{DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH}"))
+    expect(response.body).to include(%(value="#{normalized_query}"))
+    expect(response.body).to include("検索条件:")
+    expect(response.body).to include(public_question.body)
+    expect(response.body).not_to include(raw_tail)
+    expect(response.body).not_to include(internal_review.body)
+  end
 end
