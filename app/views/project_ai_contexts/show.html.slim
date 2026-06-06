@@ -117,7 +117,7 @@ p
       .form-grid
         label
           | 文書名 / slug で検索
-          = text_field_tag :document_q, @document_query, placeholder: "例: setup-guide"
+          = text_field_tag :document_q, @document_query, placeholder: "例: setup-guide", maxlength: document_query_max_length
       p.muted 検索後も、明示選択済みの文書は候補に残します。
       fieldset.filter-fieldset
         legend = document_filter_legend
@@ -139,7 +139,7 @@ p
       .form-grid
         label
           | 文書名 / slug で検索
-          = text_field_tag :document_q, @document_query, placeholder: "例: setup-guide"
+          = text_field_tag :document_q, @document_query, placeholder: "例: setup-guide", maxlength: document_query_max_length
       p.actions.form-actions
         = submit_tag "候補を検索", class: "button secondary"
         = link_to "すべての文書に戻す", project_ai_context_path(@project, mode: @mode), class: "button secondary"
