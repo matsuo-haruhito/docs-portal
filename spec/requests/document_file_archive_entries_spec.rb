@@ -108,6 +108,57 @@ RSpec.describe "Document file archive entries", type: :request do
     expect(response.body).not_to include('href="https://example.com')
   end
 
+  it "keeps unsafe and nested archive entries out of preview and download candidates" do
+    write_zip(
+      "docs/readme.txt" => "hello",
+      "downloads/report.csv" => "id,name\n1,Archive\n",
+      "../evil.txt" => "secret",
+      "nested/archive.zip" => "zip"
+    )
+    sign_in_as(user)
+
+    archive_preview = DocumentFileArchivePreview.new(file: archive_file).call
+    safe_text_entry = archive_preview.entries.find { _1.name == "docs/readme.txt" }
+    safe_download_entry = archive_preview.entries.find { _1.name == "downloads/report.csv" }
+    unsafe_entry = archive_preview.entries.find { _1.name == "../evil.txt" }
+    nested_archive_entry = archive_preview.entries.find { _1.name == "nested/archive.zip" }
+
+    expect(safe_text_entry).to be_text_preview_candidate
+    expect(safe_download_entry).to be_download_candidate
+    expect(unsafe_entry).not_to be_actionable
+    expect(unsafe_entry.action_unavailable_reason).to include("unsafe path")
+    expect(nested_archive_entry).not_to be_actionable
+    expect(nested_archive_entry.action_unavailable_reason).to include("nested archive")
+
+    get preview_entry_path("docs/readme.txt")
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("hello")
+
+    get download_entry_path("downloads/report.csv")
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Archive")
+
+    expect do
+      get preview_entry_path("../evil.txt")
+    end.to change(AccessLog.where(action_type: :view), :count).by(1)
+      .and change(AccessLog.where(action_type: :download), :count).by(0)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("unsafe path")
+    expect(response.body).not_to include("archive_entries/download")
+
+    expect do
+      get download_entry_path("../evil.txt")
+    end.not_to change(AccessLog.where(action_type: :download), :count)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("unsafe path")
+
+    expect do
+      get download_entry_path("nested/archive.zip")
+    end.not_to change(AccessLog.where(action_type: :download), :count)
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("nested archive")
+  end
+
   it "rejects unsafe archive entry paths" do
     write_zip("docs/readme.txt" => "hello")
     sign_in_as(user)
