@@ -94,7 +94,9 @@ RSpec.describe "Admin document usage reports", type: :request do
     form = parsed_html.at_css("form[action='#{admin_document_usage_reports_path}']")
     expect(form).to be_present
     expect(form.at_css("select[name='project_id']")).to be_present
-    expect(form.at_css("input[name='q'][type='search']")).to be_present
+    q_input = form.at_css("input[name='q'][type='search']")
+    expect(q_input).to be_present
+    expect(q_input["maxlength"]).to eq(Admin::DocumentUsageReportsController::DOCUMENT_USAGE_QUERY_MAX_LENGTH.to_s)
     expect(form.at_css("select[name='usage_filter']")).to be_present
     expect(form.at_css("select[name='sort_order']")).to be_present
     expect(form.at_css("input[name='from'][type='date']")).to be_present
@@ -242,6 +244,35 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(csv_rows.size).to eq(1)
     expect(csv_rows.first.to_h).to include("文書名" => "Onboarding Checklist", "slug" => title_match.slug)
     expect(csv_rows.map { _1["slug"] }).not_to include(slug_match.slug, "release-notes")
+  end
+
+  it "normalizes oversized q for display, filtering, and CSV links" do
+    normalized_query = "alpha" * 20
+    oversized_query = "#{normalized_query}should-not-leak"
+    matching_document = create(:document, project:, title: "#{normalized_query} Guide", slug: "normalized-guide")
+    create(:document, project:, title: "Release Notes", slug: "release-notes")
+
+    sign_in_as(admin_user)
+
+    get admin_document_usage_reports_path(project_id: project.id, q: oversized_query)
+
+    expect(response).to have_http_status(:ok)
+    expect(normalized_query.length).to eq(Admin::DocumentUsageReportsController::DOCUMENT_USAGE_QUERY_MAX_LENGTH)
+    expect(row_titles).to eq([matching_document.title])
+    expect(page_text).to match(/検索:\s*#{normalized_query}/)
+    expect(page_text).not_to include("should-not-leak")
+    expect(parsed_html.at_css("input[name='q'][type='search']")["value"]).to eq(normalized_query)
+    expect(parsed_html.at_css("input[name='q'][type='search']")["maxlength"]).to eq(Admin::DocumentUsageReportsController::DOCUMENT_USAGE_QUERY_MAX_LENGTH.to_s)
+    expect(csv_export_link["href"]).to include("q=#{normalized_query}")
+    expect(csv_export_link["href"]).not_to include("should-not-leak")
+
+    get admin_document_usage_reports_path(project_id: project.id, q: oversized_query, format: :csv)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("text/csv")
+    expect(csv_rows.size).to eq(1)
+    expect(csv_rows.first.to_h).to include("文書名" => matching_document.title, "slug" => matching_document.slug)
+    expect(csv_rows.map { _1["slug"] }).not_to include("release-notes")
   end
 
   it "combines q with usage status, date range, and sorting as AND conditions" do
