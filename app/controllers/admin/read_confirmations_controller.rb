@@ -19,8 +19,11 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     @document_slug = params[:document_slug].to_s.strip
     @selected_user_id = params[:user_id].to_s.strip
     @selected_company_id = params[:company_id].to_s.strip
+    @invalid_confirmed_date_params = []
     @confirmed_from = parsed_date_param(:from)
     @confirmed_to = parsed_date_param(:to)
+    @invalid_confirmed_date_labels = @invalid_confirmed_date_params.map { confirmed_date_filter_label(_1) }
+    @read_confirmations_csv_query = read_confirmations_csv_query
     @selected_document = selected_document if @selected_project
     @read_confirmation_companies = read_confirmation_companies
     @selected_company = selected_company
@@ -62,7 +65,25 @@ class Admin::ReadConfirmationsController < Admin::BaseController
 
     Date.iso8601(value)
   rescue ArgumentError
+    @invalid_confirmed_date_params << name
     nil
+  end
+
+  def confirmed_date_filter_label(name)
+    case name.to_sym
+    when :from
+      "開始日"
+    when :to
+      "終了日"
+    else
+      name.to_s
+    end
+  end
+
+  def read_confirmations_csv_query
+    query = request.query_parameters.to_h
+    @invalid_confirmed_date_params.each { |name| query.delete(name.to_s) }
+    query.merge(format: :csv)
   end
 
   def read_confirmation_companies
