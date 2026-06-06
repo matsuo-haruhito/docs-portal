@@ -97,7 +97,7 @@
   <% if @generated_file_run.error_message.present? %>
     <div class="rounded-lg border border-red-200 bg-red-50 p-4">
       <h2 class="mb-2 text-lg font-semibold text-red-700">エラー</h2>
-      <pre class="whitespace-pre-wrap text-sm"><%= @generated_file_run.error_message %></pre>
+      <pre class="whitespace-pre-wrap text-sm"><%= generated_file_run_diagnostic_preview(@generated_file_run.error_message) %></pre>
     </div>
   <% end %>
 
@@ -116,7 +116,7 @@
     </div>
     <div class="rounded-lg border bg-white p-4">
       <h2 class="mb-2 text-lg font-semibold">メタデータ</h2>
-      <pre class="whitespace-pre-wrap text-sm"><%= JSON.pretty_generate(@generated_file_run.metadata || {}) %></pre>
+      <pre class="whitespace-pre-wrap text-sm"><%= generated_file_run_metadata_preview(@generated_file_run.metadata) %></pre>
     </div>
   </div>
 </div>
