@@ -14,12 +14,18 @@ class DocumentApprovalRequestsController < BaseController
 
     @status_filter = normalized_status_filter
     @query = normalized_query
+    @requester_filter_id = normalized_user_filter_id(:requester_id)
+    @approver_filter_id = normalized_user_filter_id(:approver_id)
+    @requester_filter_options = filter_users_for(base_relation, :requester_id)
+    @approver_filter_options = filter_users_for(base_relation, :approver_id)
     @pending_count = base_relation.pending.count
     @approved_count = base_relation.approved.count
     @cancelled_count = base_relation.cancelled.count
 
     scoped_relation = @status_filter.present? ? base_relation.where(status: @status_filter) : base_relation
     scoped_relation = apply_query_filter(scoped_relation) if @query.present?
+    scoped_relation = apply_user_filter(scoped_relation, :requester_id, @requester_filter_id)
+    scoped_relation = apply_user_filter(scoped_relation, :approver_id, @approver_filter_id)
     @document_approval_requests = scoped_relation.recent_first
     @document_approval_request_sections = build_sections(@document_approval_requests)
   end
@@ -92,6 +98,22 @@ class DocumentApprovalRequestsController < BaseController
 
   def normalized_query
     params[:q].to_s.strip.presence
+  end
+
+  def normalized_user_filter_id(param_name)
+    value = params[param_name].to_s.strip
+    value.match?(/\A\d+\z/) ? value : nil
+  end
+
+  def filter_users_for(relation, foreign_key)
+    user_ids = relation.reselect(foreign_key).where.not(foreign_key => nil).distinct
+    User.where(id: user_ids).order(:name, :id)
+  end
+
+  def apply_user_filter(relation, foreign_key, user_id)
+    return relation if user_id.blank?
+
+    relation.where(foreign_key => user_id)
   end
 
   def apply_query_filter(relation)

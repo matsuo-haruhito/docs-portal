@@ -132,24 +132,151 @@ RSpec.describe "Document approval requests", type: :request do
     expect(response.body).to include(non_matching_request.title)
   end
 
-  it "searches within the nested document scope and preserves query in return_to" do
-    nested_request = create(:document_approval_request, document:, requester:, title: "契約対象内レビュー")
-    other_document = create(:document, project:, title: "契約対象外資料", slug: "other-approval-doc", visibility_policy: :restricted_external)
-    create(:document_permission, document: other_document, company:, access_level: :view)
-    other_request = create(:document_approval_request, document: other_document, requester:, title: "契約対象外レビュー")
+  it "filters the global index by requester and approver while keeping query, status, and return_to" do
+    other_requester = create(:user, :external, company:, name: "別の依頼者")
+    matching_approver = create(:user, :internal, name: "確認 花子")
+    other_approver = create(:user, :internal, name: "別の確認者")
+    create(:project_membership, project:, user: other_requester)
+
+    matching_request = create(
+      :document_approval_request,
+      document:,
+      requester:,
+      approver: matching_approver,
+      title: "契約レビュー依頼",
+      body: "契約条項を確認してください"
+    )
+    other_requester_request = create(
+      :document_approval_request,
+      document:,
+      requester: other_requester,
+      approver: matching_approver,
+      title: "契約レビュー 別依頼者",
+      body: "契約条項を確認してください"
+    )
+    other_approver_request = create(
+      :document_approval_request,
+      document:,
+      requester:,
+      approver: other_approver,
+      title: "契約レビュー 別確認者",
+      body: "契約条項を確認してください"
+    )
+    approved_match = create(
+      :document_approval_request,
+      document:,
+      requester:,
+      approver: matching_approver,
+      title: "契約レビュー OK済み",
+      body: "契約条項を確認してください",
+      status: :approved,
+      acted_by: matching_approver,
+      approved_at: 1.hour.ago,
+      cancelled_at: nil
+    )
 
     sign_in_as(internal_user)
 
-    get project_document_document_approval_requests_path(project, document), params: { status: :pending, q: "契約" }
+    get document_approval_requests_path, params: { requester_id: requester.id }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(matching_request.title)
+    expect(response.body).to include(other_approver_request.title)
+    expect(response.body).to include(approved_match.title)
+    expect(response.body).not_to include(other_requester_request.title)
+    expect(parsed_html.at_css(%(select[name="requester_id"] option[value="#{requester.id}"][selected]))).to be_present
+
+    get document_approval_requests_path, params: { approver_id: matching_approver.id }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(matching_request.title)
+    expect(response.body).to include(other_requester_request.title)
+    expect(response.body).to include(approved_match.title)
+    expect(response.body).not_to include(other_approver_request.title)
+    expect(parsed_html.at_css(%(select[name="approver_id"] option[value="#{matching_approver.id}"][selected]))).to be_present
+
+    get document_approval_requests_path, params: {
+      status: :pending,
+      q: "契約",
+      requester_id: requester.id,
+      approver_id: matching_approver.id
+    }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(matching_request.title)
+    expect(response.body).not_to include(other_requester_request.title)
+    expect(response.body).not_to include(other_approver_request.title)
+    expect(response.body).not_to include(approved_match.title)
+    expect(page_text).to include("検索条件: 契約 / 依頼者指定 / 確認相手指定 / 表示 1件")
+
+    status_link = parsed_html.css("a[href]").find { |link| link.text.squish.start_with?("OK済み") }
+    expect(status_link).to be_present
+    status_params = Rack::Utils.parse_nested_query(URI.parse(status_link["href"]).query)
+    expect(status_params).to include(
+      "q" => "契約",
+      "requester_id" => requester.id.to_s,
+      "approver_id" => matching_approver.id.to_s,
+      "status" => "approved"
+    )
+
+    detail_link = parsed_html.css(%(a[href^="#{document_approval_request_path(matching_request)}"])).find { |link| link.text == matching_request.title }
+    expect(detail_link).to be_present
+    detail_params = Rack::Utils.parse_nested_query(URI.parse(detail_link["href"]).query)
+    return_to = URI.parse(detail_params.fetch("return_to"))
+    return_to_params = Rack::Utils.parse_nested_query(return_to.query)
+    expect(return_to.path).to eq(document_approval_requests_path)
+    expect(return_to_params).to include(
+      "status" => "pending",
+      "q" => "契約",
+      "requester_id" => requester.id.to_s,
+      "approver_id" => matching_approver.id.to_s
+    )
+
+    patch document_approval_request_path(matching_request, return_to: detail_params.fetch("return_to"))
+    expect(response).to redirect_to(document_approval_request_path(matching_request, return_to: detail_params.fetch("return_to")))
+  end
+
+  it "handles invalid requester and approver filters without failing" do
+    approval_request = create(:document_approval_request, document:, requester:, title: "通常の確認依頼")
+    missing_user_id = User.maximum(:id).to_i + 10_000
+
+    sign_in_as(internal_user)
+
+    get document_approval_requests_path, params: { requester_id: "not-a-user", approver_id: "also-invalid" }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(approval_request.title)
+    expect(response.body).not_to include("not-a-user")
+    expect(response.body).not_to include("also-invalid")
+
+    get document_approval_requests_path, params: { requester_id: missing_user_id }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include(approval_request.title)
+    expect(page_text).to include("確認依頼はありません。")
+  end
+
+  it "searches within the nested document scope and preserves query in return_to" do
+    approver = create(:user, :internal, name: "確認担当")
+    nested_request = create(:document_approval_request, document:, requester:, approver:, title: "契約対象内レビュー")
+    other_document = create(:document, project:, title: "契約対象外資料", slug: "other-approval-doc", visibility_policy: :restricted_external)
+    create(:document_permission, document: other_document, company:, access_level: :view)
+    other_request = create(:document_approval_request, document: other_document, requester:, approver:, title: "契約対象外レビュー")
+
+    sign_in_as(internal_user)
+
+    get project_document_document_approval_requests_path(project, document), params: { status: :pending, q: "契約", requester_id: requester.id, approver_id: approver.id }
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(nested_request.title)
     expect(response.body).not_to include(other_request.title)
 
-    expected_return_to = request.fullpath
     detail_link = parsed_html.css(%(a[href^="#{document_approval_request_path(nested_request)}"])).find { |link| link.text == nested_request.title }
     expect(detail_link).to be_present
     detail_params = Rack::Utils.parse_nested_query(URI.parse(detail_link["href"]).query)
-    expect(detail_params["return_to"]).to eq(expected_return_to)
+    return_to = URI.parse(detail_params.fetch("return_to"))
+    return_to_params = Rack::Utils.parse_nested_query(return_to.query)
+    expect(return_to.path).to eq(project_document_document_approval_requests_path(project, document))
+    expect(return_to_params).to include(
+      "status" => "pending",
+      "q" => "契約",
+      "requester_id" => requester.id.to_s,
+      "approver_id" => approver.id.to_s
+    )
   end
 
   it "shows detail to internal users and supports OK / Cancel" do
