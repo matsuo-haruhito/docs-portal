@@ -170,6 +170,87 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(clean_row).to include("Clean Doc", "変更なし", "-", "-", "-")
   end
 
+  it "previews dry-run diagnostics without exposing sensitive raw fragments" do
+    sign_in_as(admin)
+    long_suffix = "x" * 160
+    dry_run = BulkEditDryRun.create!(
+      project:,
+      created_by: admin,
+      operation_type: :document_metadata,
+      target_document_ids: [document.id],
+      params_json: {
+        document_attributes: {
+          category: "manual"
+        }
+      },
+      summary_json: {
+        preview: {
+          total_count: 1,
+          changed_count: 1
+        },
+        execution: {
+          total_count: 1,
+          success_count: 0,
+          failure_count: 1,
+          skipped_count: 0
+        }
+      },
+      result_json: {
+        preview_items: [
+          preview_item(
+            "Sensitive Doc",
+            changed_fields: ["category"],
+            warnings: ["refresh_token=preview-refresh-token path /home/alice/docs/#{long_suffix}"],
+            errors: ["password=preview-password-value path C:/Users/Alice/private/#{long_suffix}"]
+          )
+        ],
+        execution_items: [
+          execution_item(
+            "Failed Sensitive Doc",
+            status: "failed",
+            changed_fields: ["category"],
+            warnings: ["token=execution-token-value #{long_suffix}"],
+            errors: ["Bearer execution-bearer-token #{long_suffix}"]
+          )
+        ]
+      },
+      warnings_json: ["Authorization: Bearer bulk-edit-token-12345 failed at /Users/alice/customer/#{long_suffix}"],
+      errors_json: ["client_secret=bulk-client-secret-value failed at C:/Users/Alice/customer/#{long_suffix}"],
+      status: :confirmed,
+      confirmed_by: admin,
+      confirmed_at: Time.current,
+      expires_at: 1.day.from_now
+    )
+
+    get admin_bulk_edit_dry_run_path(dry_run)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("1 / 1")
+    expect(page_text).to include("Sensitive Doc")
+    expect(page_text).to include("Failed Sensitive Doc")
+    expect(page_text).to include("Authorization: [masked]")
+    expect(page_text).to include("client_secret=[masked]")
+    expect(page_text).to include("refresh_token=[masked]")
+    expect(page_text).to include("password=[masked]")
+    expect(page_text).to include("token=[masked]")
+    expect(page_text).to include("Bearer [masked]")
+    expect(page_text).to include("[path hidden]")
+    expect(page_text).to include("...")
+
+    expect(response.body).not_to include("bulk-edit-token-12345")
+    expect(response.body).not_to include("bulk-client-secret-value")
+    expect(response.body).not_to include("preview-refresh-token")
+    expect(response.body).not_to include("preview-password-value")
+    expect(response.body).not_to include("execution-token-value")
+    expect(response.body).not_to include("execution-bearer-token")
+    expect(response.body).not_to include("/Users/alice/customer")
+    expect(response.body).not_to include("/home/alice/docs")
+    expect(response.body).not_to include("C:/Users/Alice")
+
+    expect(preview_rows.first.join(" ")).to include("エラーあり", "[masked]", "[path hidden]")
+    expect(execution_rows.first.join(" ")).to include("Failed Sensitive Doc", "[masked]")
+  end
+
   it "shows success, failure, skipped, and fallback values on execution results" do
     sign_in_as(admin)
     dry_run = BulkEditDryRun.create!(
