@@ -69,9 +69,9 @@ RSpec.describe "Admin document set version usage cue", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("種別: 送付用")
 
-    expect(documents_count_cell_for("固定版ありセット").text.squish).to eq("2 固定版あり（1件）")
-    expect(documents_count_cell_for("最新版のみセット").text.squish).to eq("1 最新版のみ")
-    expect(documents_count_cell_for("未設定セット").text.squish).to eq("0 文書なし")
+    expect(documents_count_cell_for("固定版ありセット").text.squish).to eq("2固定版あり（1件）")
+    expect(documents_count_cell_for("最新版のみセット").text.squish).to eq("1最新版のみ")
+    expect(documents_count_cell_for("未設定セット").text.squish).to eq("0文書なし")
     expect(parsed_html.css(%(td[data-rails-table-preferences-column-key="documents_count"] .badge)).map { _1.text.squish }).to contain_exactly(
       "固定版あり（1件）",
       "最新版のみ",
