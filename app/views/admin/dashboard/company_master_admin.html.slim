@@ -7,22 +7,35 @@ p.muted 自社の会社情報とユーザーだけを管理できます。案件
 
 section.card
   h2 使える管理画面
-  p.muted 会社管理者として操作できる範囲は次の 2 画面に限定されています。
-  ul
-    li
-      = link_to "会社", admin_companies_path
-      |  - 自社の会社名、ドメイン、状態を確認・更新します。他社の会社は表示されません。
-    li
-      = link_to "ユーザー", admin_users_path
-      |  - 自社ユーザーの追加、編集、有効化・無効化を行います。0 件のときもユーザー画面上部の新規登録から開始できます。
+  p.muted ここから直接移動できるのは、会社管理者として操作できる次の 2 画面だけです。
+  .form-grid
+    .field
+      h3 会社
+      p.muted 自社の会社名、ドメイン、状態を確認・更新します。他社の会社は表示されません。
+      p.actions
+        = link_to "会社を管理", admin_companies_path, class: "button"
+    .field
+      h3 ユーザー
+      p.muted 自社ユーザーの追加、編集、有効化・無効化を行います。0 件のときもユーザー画面上部の新規登録から開始できます。
+      p.actions
+        = link_to "ユーザーを管理", admin_users_path, class: "button"
 
 section.card
   h2 internal admin へ戻す範囲
-  p.muted 次の管理はこの role では扱いません。必要な場合は internal admin に依頼してください。
+  p.muted 次の項目は依頼前の確認リストです。この画面からは移動できず、必要な場合は internal admin に引き継いでください。
   ul
-    li 案件、案件所属、文書、文書権限
-    li 監査ログ、利用状況、アクセス申請
-    li ユーザー種別の internal 化、他社ユーザーや他社会社の調整
+    li
+      strong 案件・案件所属
+      |  - 案件の作成、所属追加、担当者の付け替え
+    li
+      strong 文書・文書権限
+      |  - 文書管理、閲覧範囲、文書公開権限の調整
+    li
+      strong 運用確認
+      |  - 監査ログ、利用状況、アクセス申請の確認
+    li
+      strong 管理者判断
+      |  - ユーザー種別の internal 化、他社ユーザーや他社会社の調整
 
 section.card
   h2 internal admin へ依頼するときの確認項目
