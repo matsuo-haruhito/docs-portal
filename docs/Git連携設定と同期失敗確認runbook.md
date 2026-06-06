@@ -78,9 +78,9 @@ current validation では `fine_grained_pat` のときだけ `credential_secret`
 - `コミット`: 取り込み対象 commit。未取得なら `未取得`
 - `状態`: sync の到達状態
 - `実行結果`: `summary_json` の要約。取り込み文書、添付、取込元パス、commit、skip reason、PublishJob、削除候補数を見る
-- `エラー`: failure 時の例外や validation エラーを確認する
+- `エラー`: failure 時の例外や validation エラーの safe preview を確認する
 
-この画面は run 単位の履歴なので、同じ設定を何度同期したか、どの commit で `skipped` になったかも追えます。raw `summary_json` は詳細表示で残しておき、要約で読み違えたときに確認します。
+この画面は run 単位の履歴なので、同じ設定を何度同期したか、どの commit で `skipped` になったかも追えます。`実行結果` の詳細は `safe summary_json preview` として表示され、token / secret / authorization、private-looking path 風の値は raw のまま読む前提ではありません。repository、branch、取込元 path、commit、status、skip reason など一次切り分けに必要な情報を先に見て、preview だけで足りない場合は保存値や同期処理をこの画面で再定義せず、対象 repository / branch / path と実行ログの文脈へ戻します。
 
 ## 5. status の読み方
 
@@ -90,7 +90,7 @@ current validation では `fine_grained_pat` のときだけ `credential_secret`
 - `running`: fetch / manifest build / import の途中
 - `imported`: 取り込み完了。`GitImportSource` の `last_synced_commit_sha` と `last_synced_at` も更新される
 - `skipped`: すでに同期済みの commit、または対象文書なしなどで、新しい取り込みを作らなかった状態
-- `failed`: 同期処理が失敗した状態。`エラー` を見る
+- `failed`: 同期処理が失敗した状態。`エラー` の safe preview と、repository / branch / 取込元パスの入力を合わせて見る
 
 ## 6. よくある見直しポイント
 
@@ -104,7 +104,7 @@ current implementation では、同じ commit SHA が既に同期済みなら `s
 
 ### `failed` で止まった
 
-`Git同期履歴` の `エラー` を先に確認します。認証方式、repository 名、branch、取込元パスの入力ミスや credential 不足は、この画面の失敗理由から追うのが最短です。
+`Git同期履歴` の `エラー` を先に確認します。`エラー` は調査入口の safe preview であり、token-like value、authorization header、secret key、private-looking path 風の断片は mask / truncation されます。認証方式、repository 名、branch、取込元パスの入力ミスや credential 不足は、この preview と `Git連携` の設定値を突き合わせて追うのが最短です。
 
 ### `summary_json` に削除候補が出た
 
@@ -115,6 +115,7 @@ current implementation では、同じ commit SHA が既に同期済みなら `s
 - current provider は `github` のみです
 - current flow は `pull` 型の手動同期が中心です
 - GitHub App は本命認証、Fine-grained PAT は検証用、`no_auth` は公開 repository 用です
+- `summary_json` と `error_message` の保存値や Git import pipeline は、この runbook の safe preview 説明では変更しません
 - Webhook 自動同期、定期同期、repository 一覧取得、branch / path picker、Git 側削除の自動 archive / delete は、既存仕様でも未対応のままです
 - Google Drive / SharePoint / OneDrive の同期本体は、この Git 連携 runbook では扱いません
 
