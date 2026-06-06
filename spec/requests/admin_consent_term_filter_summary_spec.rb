@@ -33,7 +33,7 @@ RSpec.describe "Admin consent term filter summary", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("表示中: 1件（検索: 利用規約 / 状態: 有効 / 種別: 案件 / 再同意方針: 初回表示時）")
-    expect(parsed_html.at_css(%(a[href="#{admin_consent_terms_path}"])).text.squish).to eq("条件をリセット")
+    expect(reset_link_texts).to include("条件をリセット")
     expect(response.body).not_to include("条件に一致する同意文面はありません。")
     expect(parsed_html.at_css(%(th[data-rails-table-preferences-column-key="title"]))).to be_present
     expect(parsed_html.at_css(%(td[data-rails-table-preferences-column-key="consent_scope"])).text.squish).to include("案件")
@@ -48,8 +48,12 @@ RSpec.describe "Admin consent term filter summary", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("条件に一致する同意文面はありません。")
     expect(response.body).to include("タイトル・版ラベル、状態、種別、再同意方針の条件を見直してください。")
-    expect(parsed_html.at_css(%(a[href="#{admin_consent_terms_path}"])).text.squish).to eq("条件をリセット")
+    expect(reset_link_texts).to include("条件をリセット")
     expect(response.body).not_to include("表示中: 0件")
+  end
+
+  def reset_link_texts
+    parsed_html.css(%(a[href="#{admin_consent_terms_path}"])).map { |link| link.text.squish }
   end
 
   def create_consent_term!(attributes = {})
