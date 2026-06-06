@@ -162,14 +162,56 @@ RSpec.describe "Access requests", type: :request do
     expect(page_text).not_to include(pending_request.reason)
     expect(page_text).not_to include(cancelled_request.reason)
     expect(page_text).not_to include("Policy review needed from other user")
+    expect(page_text).to include("条件をクリア")
     expect(CGI.unescapeHTML(response.body)).to include(access_requests_path(q: "policy", status: :pending))
-    expect(CGI.unescapeHTML(response.body)).to include(access_requests_path(status: :approved))
 
     get access_requests_path, params: { q: "missing target" }
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索条件に一致するアクセス申請はありません。")
     expect(page_text).not_to include("送信済みのアクセス申請はありません。")
+  end
+
+  it "filters the current user's requests by access level and requestable type" do
+    approver = create(:user, :internal)
+    pending_file_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "Need manual file")
+    approved_document_request = create(:access_request, requester: user, requestable: document, requested_access_level: :download, status: :approved, approver:, approved_at: Time.current, reason: "Manual policy review")
+    manage_project_request = create(:access_request, requester: user, requestable: project, requested_access_level: :manage, reason: "Manage project request")
+    view_file_request = create(:access_request, requester: user, requestable: file, requested_access_level: :view, reason: "View file request")
+    create(:access_request, requester: other_user, requestable: file, requested_access_level: :download, reason: "Other user manual file")
+
+    sign_in_as(user)
+
+    get access_requests_path, params: {
+      q: "manual",
+      status: :pending,
+      requested_access_level: :download,
+      requestable_type: "DocumentFile"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("申請中 1件 / 承認済み 0件 / 却下 0件 / 取消済み 0件")
+    expect(page_text).to include(pending_file_request.reason)
+    expect(page_text).not_to include(approved_document_request.reason)
+    expect(page_text).not_to include(manage_project_request.reason)
+    expect(page_text).not_to include(view_file_request.reason)
+    expect(page_text).not_to include("Other user manual file")
+    expect(CGI.unescapeHTML(response.body)).to include(access_requests_path(q: "manual", requested_access_level: "download", requestable_type: "DocumentFile", status: :approved))
+    expect(page_text).to include("条件をクリア")
+
+    get access_requests_path, params: {
+      requested_access_level: :invalid,
+      requestable_type: "Secret",
+      status: :invalid
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("申請中 3件 / 承認済み 1件 / 却下 0件 / 取消済み 0件")
+    expect(page_text).to include(pending_file_request.reason)
+    expect(page_text).to include(approved_document_request.reason)
+    expect(page_text).to include(manage_project_request.reason)
+    expect(page_text).to include(view_file_request.reason)
+    expect(page_text).not_to include("Other user manual file")
   end
 
   it "shows localized labels for requestable type, access level, and status on the index" do
