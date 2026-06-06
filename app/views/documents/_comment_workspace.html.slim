@@ -3,6 +3,7 @@
 - wrapper_classes << (floating ? "document-comment-workspace--floating" : "document-comment-workspace--inline")
 - comment_target_version = local_assigns.fetch(:comment_target_version) { @viewer_version || @latest_viewable_version }
 - comment_search_query = @comment_search_query.to_s
+- comment_search_maxlength = DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH
 - comment_search_active = comment_search_query.present?
 - has_review_comments = current_user.internal? && @review_comments.any?
 - has_question_threads = @question_threads.any?
@@ -117,7 +118,7 @@ details class=wrapper_classes.join(" ") open=(!floating)
         .form-grid.form-grid--compact
           label.form-field--full
             | コメント本文 / 位置メモ
-            = search_field_tag :comment_q, comment_search_query, placeholder: current_user.internal? ? "例: 修正依頼 / docs/spec.md" : "例: 質問内容"
+            = search_field_tag :comment_q, comment_search_query, maxlength: comment_search_maxlength, placeholder: current_user.internal? ? "例: 修正依頼 / docs/spec.md" : "例: 質問内容"
         p.actions.form-actions
           = submit_tag "コメントを検索", class: "button secondary"
           - if comment_search_active
