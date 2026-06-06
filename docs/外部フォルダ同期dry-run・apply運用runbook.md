@@ -52,7 +52,7 @@ README からこの runbook へ入ったときは、まず次の表で provider 
 - `最終同期日時`: 直近の同期時刻
 - `最新安全判定`: 直近 run の安全判定
 - `競合・重複警告`: 直近 run に残っている warning 件数
-- `最新エラー`: 直近 run または source に残る error
+- `最新エラー`: 直近 run または source に残る error の一覧向け preview
 
 `一覧の絞り込み` は、同期元が増えたときに daily review の入口になります。
 
@@ -66,6 +66,8 @@ README からこの runbook へ入ったときは、まず次の表で provider 
 検索条件は review/provider filter と併用できます。filter link は検索条件を保持し、`検索を解除` は review/provider filter を残します。詳細・編集画面へ進む link も検索条件を含む `return_to` を保持するため、確認後に同じ一覧条件へ戻れます。検索 / 絞り込み結果が 0 件の場合は、未登録の empty state ではなく「現在の検索 / 絞り込みに一致しない」状態として扱います。
 
 `最新安全判定` と `競合・重複警告` は、詳細画面の `同期履歴` に出る直近 run と同じ文脈で見ます。件数や判定が気になる同期元は、一覧から `設定詳細` へ入って確認します。
+
+`最新エラー` は一覧で異常の有無を素早く見つけるための safe preview です。token / secret / password / authorization 風の値や private-looking path は一覧上で raw 表示されず、長い message も短く省略されます。全文調査や path ごとの判定を確認したい場合は、`error あり` で対象を絞ったあと `設定詳細` へ入り、`同期履歴` と `結果詳細` を見ます。一覧の preview だけで provider API、retry、apply、storage schema の原因を断定しないでください。
 
 まだ同期元が 0 件のときは table は表示されず、一覧の代わりに empty state が出ます。この状態では上部の `外部フォルダ同期設定を追加` card が最初の入口です。`対象案件`、`同期設定名`、`同期元プロバイダ`、`外部フォルダURL` を埋めて最初の 1 件を保存し、SharePoint / OneDrive を選ぶ場合は先に `Microsoft Graph接続` を用意してから戻ります。
 
