@@ -8,6 +8,7 @@
 - current_requested_access_level = @requested_access_level_filter.presence
 - current_requestable_type = @requestable_type_filter.presence
 - current_filter_params = { q: current_query, requested_access_level: current_requested_access_level, requestable_type: current_requestable_type }.compact
+- current_cancel_filter_params = current_filter_params.merge(status: @status_filter.presence).compact
 - status_filter_labels = { "pending" => "申請中", "approved" => "承認済み", "rejected" => "却下", "cancelled" => "取消済み" }
 - requested_access_level_options = [["すべての権限", ""], ["閲覧", "view"], ["ダウンロード", "download"], ["管理", "manage"]]
 - requestable_type_options = [["すべての対象", ""], ["案件", "Project"], ["文書", "Document"], ["ファイル", "DocumentFile"]]
@@ -81,8 +82,8 @@ p.actions
           td
             - if access_request.pending?
               p.muted この行の対象・要求権限・理由を確認してから取消してください。
-              = button_to "取消", cancel_access_request_path(access_request), method: :post, class: "button secondary", data: { turbo_confirm: "このアクセス申請を取り消します。対象・要求権限・理由を確認しましたか？" }
-              p.muted 取消後はフィルタなしのアクセス申請一覧で取消済みとして確認できます。
+              = button_to "取消", cancel_access_request_path(access_request), method: :post, params: current_cancel_filter_params, class: "button secondary", data: { turbo_confirm: "このアクセス申請を取り消します。対象・要求権限・理由を確認しましたか？" }
+              p.muted 取消後は現在の条件のままアクセス申請一覧へ戻ります。
             - else
               span.muted -
 - else
