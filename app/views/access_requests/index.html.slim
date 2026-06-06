@@ -34,7 +34,7 @@ p.muted
   - if @status_filter.present?
     = hidden_field_tag :status, @status_filter
   p.actions
-    = form.search_field :q, value: @query, placeholder: "対象名・理由で検索"
+    = form.search_field :q, value: @query, placeholder: "対象名・理由で検索", maxlength: access_request_query_max_length
     = form.select :requested_access_level, options_for_select(requested_access_level_options, @requested_access_level_filter)
     = form.select :requestable_type, options_for_select(requestable_type_options, @requestable_type_filter)
     = form.submit "検索", class: "button"
