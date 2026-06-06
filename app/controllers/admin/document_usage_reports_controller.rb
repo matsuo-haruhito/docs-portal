@@ -3,6 +3,8 @@ require "csv"
 class Admin::DocumentUsageReportsController < Admin::BaseController
   before_action :require_admin_only!
 
+  DOCUMENT_USAGE_QUERY_MAX_LENGTH = 100
+
   CSV_HEADERS = [
     "文書名",
     "slug",
@@ -57,7 +59,9 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
   end
 
   def query_param
-    Array.wrap(params[:q]).compact_blank.first.to_s.squish.presence
+    query = Array.wrap(params[:q]).compact_blank.first.to_s.squish.presence
+
+    query&.slice(0, DOCUMENT_USAGE_QUERY_MAX_LENGTH)
   end
 
   def date_param(name)
