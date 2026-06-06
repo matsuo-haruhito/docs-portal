@@ -35,7 +35,7 @@ class AccessRequestsController < BaseController
     access_request = AccessRequest.find_by!(public_id: params[:public_id], requester: current_user)
     AccessRequestResolver.new(access_request:, approver: nil).cancel!
 
-    redirect_to access_requests_path, notice: "アクセス申請を取り消しました。"
+    redirect_to access_requests_path(cancel_return_filter_params), notice: "アクセス申請を取り消しました。"
   end
 
   private
@@ -90,6 +90,15 @@ class AccessRequestsController < BaseController
     AccessRequest.statuses.keys.to_h do |status|
       [status, access_requests.count { |access_request| access_request.status == status }]
     end
+  end
+
+  def cancel_return_filter_params
+    {
+      q: normalized_query,
+      status: normalized_status_filter,
+      requested_access_level: normalized_requested_access_level_filter,
+      requestable_type: normalized_requestable_type_filter
+    }.compact
   end
 
   def normalized_status_filter
