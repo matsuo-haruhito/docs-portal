@@ -1,6 +1,8 @@
 - page_title "#{@project.name} AI context"
 - current_mode_name = @mode.to_s
-- current_mode_description = current_mode_name == "full" ? "本文まで含めて出力します。" : "summary と文書メタデータ中心で出力します。"
+- mode_label_by_name = { "compact" => "概要中心", "full" => "本文込み" }
+- current_mode_label = mode_label_by_name.fetch(current_mode_name, current_mode_name)
+- current_mode_description = current_mode_name == "full" ? "本文テキストまで含めた文脈を出力します。" : "summary と文書メタデータ中心の軽い概要を出力します。"
 - exported_document_count = @hash.dig(:summary, :document_count).to_i
 - selectable_document_count = @selectable_document_count
 - matching_selectable_document_count = @matching_selectable_document_count || selectable_document_count
@@ -12,14 +14,14 @@
 - selected_document_count = @requested_document_ids.empty? ? selectable_document_count : @requested_document_ids.size
 - candidate_view_params = @scoped_link_params.merge(mode: @mode)
 - candidate_view_params = candidate_view_params.merge(document_q: @document_query) if document_query_present
-- scope_summary = @requested_document_ids.empty? ? "現在は閲覧可能な文書全体（#{exported_document_count}件）を export 対象にしています。" : "明示選択: #{selected_document_count}件 / export対象: #{exported_document_count}件"
-- scope_help = @requested_document_ids.empty? ? "個別に絞り込む場合は、対象にしたい文書だけを残して preview してください。" : "選択文書のうち閲覧可能な文書だけが preview / export に含まれます。"
+- scope_summary = @requested_document_ids.empty? ? "現在は閲覧可能な文書全体（#{exported_document_count}件）を出力対象にしています。" : "明示選択: #{selected_document_count}件 / 出力対象: #{exported_document_count}件"
+- scope_help = @requested_document_ids.empty? ? "個別に絞り込む場合は、対象にしたい文書だけを残して preview してください。" : "選択文書のうち閲覧可能な文書だけが preview / 出力に含まれます。"
 - if candidate_view_selected
   - document_filter_legend = "選択済み文書（表示中#{selectable_document_preview_count}件 / 選択済み候補#{selected_selectable_document_count}件）"
 - elsif document_query_present
-  - document_filter_legend = @requested_document_ids.empty? ? "Export候補（検索結果#{matching_selectable_document_count} / 閲覧可能#{selectable_document_total_count}件、表示中#{selectable_document_preview_count}件）" : "Export候補（#{selected_document_count}件選択中、検索結果#{matching_selectable_document_count} / 閲覧可能#{selectable_document_total_count}件、表示中#{selectable_document_preview_count}件）"
+  - document_filter_legend = @requested_document_ids.empty? ? "出力候補（検索結果#{matching_selectable_document_count} / 閲覧可能#{selectable_document_total_count}件、表示中#{selectable_document_preview_count}件）" : "出力候補（#{selected_document_count}件選択中、検索結果#{matching_selectable_document_count} / 閲覧可能#{selectable_document_total_count}件、表示中#{selectable_document_preview_count}件）"
 - else
-  - document_filter_legend = @requested_document_ids.empty? ? "Export候補（表示中#{selectable_document_preview_count} / 全#{selectable_document_count}件）" : "Export候補（#{selected_document_count} / #{selectable_document_count}件選択中、表示中#{selectable_document_preview_count}件）"
+  - document_filter_legend = @requested_document_ids.empty? ? "出力候補（表示中#{selectable_document_preview_count} / 全#{selectable_document_count}件）" : "出力候補（#{selected_document_count} / #{selectable_document_count}件選択中、表示中#{selectable_document_preview_count}件）"
 - included_omitted_count = @plan.included_items.size - @plan_included_items_preview.size
 - excluded_omitted_count = @plan.excluded_items.size - @plan_excluded_items_preview.size
 - content_for :left_content do
@@ -31,27 +33,32 @@ p.muted
 h1 AI向けコンテキスト
 
 p
-  | export対象:
+  | 出力対象:
   = exported_document_count
   |  件
 
 .card
   h2 出力モード
   p
-    | 現在の mode:
-    strong = " #{current_mode_name}"
+    | 現在の出力モード:
+    strong = " #{current_mode_label}"
+  p.muted
+    | mode: 
+    = current_mode_name
   p.muted = current_mode_description
   ul
-    li compact: summary と文書メタデータ中心で、AI に渡す概要を軽く確認できます。
-    li full: compact の内容に加えて本文テキストを含め、詳細な文脈を渡せます。
+    li 概要中心: summary と文書メタデータ中心で、AI に渡す概要を軽く確認できます。
+    li 本文込み: 概要中心の内容に加えて本文テキストを含め、詳細な文脈を渡せます。
   p.actions
-    = link_to "compact に切り替え", project_ai_context_path(@project, @scoped_link_params.merge(mode: :compact)), class: "button secondary"
-    = link_to "full に切り替え", project_ai_context_path(@project, @scoped_link_params.merge(mode: :full)), class: "button secondary"
+    = link_to "概要中心に切り替え", project_ai_context_path(@project, @scoped_link_params.merge(mode: :compact)), class: "button secondary"
+    = link_to "本文込みに切り替え", project_ai_context_path(@project, @scoped_link_params.merge(mode: :full)), class: "button secondary"
 
 .card
-  h2 Export
+  h2 出力
   p.muted
-    | JSON / Markdown は現在の mode（
+    | JSON / Markdown は現在の出力モード（
+    = current_mode_label
+    |  / mode: 
     = current_mode_name
     | ）で出力します。文書スコープと権限フィルタは画面下の一覧と同じです。
   p.actions
@@ -60,7 +67,7 @@ p
 
 .card
   h2 対象文書を絞り込む
-  p.muted 選択した文書だけで preview と export を更新します。未選択の状態では閲覧可能な文書全体を対象にします。
+  p.muted 選択した文書だけで preview と出力を更新します。未選択の状態では閲覧可能な文書全体を対象にします。
   p
     strong = scope_summary
   p.muted = scope_help
@@ -108,9 +115,9 @@ p
     p.muted
       | 検索条件: 
       strong = @document_query
-      | 。検索は checkbox 候補の絞り込みで、JSON / Markdown export は「選択した文書でpreview」を押すまで現在の対象範囲を維持します。
+      | 。検索は checkbox 候補の絞り込みで、JSON / Markdown 出力は「選択した文書でpreview」を押すまで現在の対象範囲を維持します。
   - if candidate_view_selected
-    p.muted 選択済みのみ表示中です。検索条件に一致しない選択済み文書も、現在の export 対象として確認できます。
+    p.muted 選択済みのみ表示中です。検索条件に一致しない選択済み文書も、現在の出力対象として確認できます。
   - if @selectable_documents_preview.any?
     = form_with url: project_ai_context_path(@project), method: :get, local: true do
       = hidden_field_tag :mode, @mode
@@ -146,8 +153,8 @@ p
     p.muted 選択できる閲覧可能な文書はありません。
 
 .card
-  h2 含まれる文書（export対象）
-  p.muted export 対象になる文書と理由を確認できます。文書が多い場合は表示件数を省略します。
+  h2 含まれる文書（出力対象）
+  p.muted 出力対象になる文書と理由を確認できます。文書が多い場合は表示件数を省略します。
   - if @plan.included_items.any?
     = table_tag do
       thead
@@ -169,15 +176,15 @@ p
         = @plan_included_items_preview.size
         | 件だけ表示しています（全
         = @plan.included_items.size
-        | 件）。JSON / Markdown export には全
+        | 件）。JSON / Markdown 出力には全
         = exported_document_count
         | 件が含まれます。
   - else
-    p.muted 現在の権限で export 対象になる文書はありません。
+    p.muted 現在の権限で出力対象になる文書はありません。
 
 .card
   h2 除外された文書（権限・公開状態の確認）
-  p.muted export から外れた文書と理由を確認できます。権限フィルタ自体はこの画面では変更できません。
+  p.muted 出力から外れた文書と理由を確認できます。権限フィルタ自体はこの画面では変更できません。
   - if @plan.excluded_items.any?
     = table_tag do
       thead
