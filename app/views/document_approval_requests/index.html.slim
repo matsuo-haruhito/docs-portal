@@ -1,11 +1,12 @@
 - page_title "確認依頼"
 - list_path = @document.present? ? ->(path_params = {}) { project_document_document_approval_requests_path(@project, @document, path_params) } : ->(path_params = {}) { document_approval_requests_path(path_params) }
 - total_count = @pending_count + @approved_count + @cancelled_count
-- current_list_path = request.fullpath
 - user_filter_params = {}
 - user_filter_params[:requester_id] = @requester_filter_id if @requester_filter_id.present?
 - user_filter_params[:approver_id] = @approver_filter_id if @approver_filter_id.present?
 - query_path_params = user_filter_params.merge(@query.present? ? { q: @query } : {})
+- current_list_params = query_path_params.merge(@status_filter.present? ? { status: @status_filter } : {})
+- current_list_path = list_path.call(current_list_params)
 - clear_search_params = user_filter_params.merge(@status_filter.present? ? { status: @status_filter } : {})
 - clear_user_filter_params = {}
 - clear_user_filter_params[:status] = @status_filter if @status_filter.present?
