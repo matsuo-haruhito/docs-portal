@@ -66,12 +66,16 @@ section.card
 - if current_user.internal?
   section.card.manual-document-upload-panel data-controller="manual-document-upload" data-manual-document-upload-dragging-class="is-dragging" data-manual-document-upload-url-value=project_document_uploads_path(@project) data-manual-document-upload-source-path-value=@selected_source_path
     h2 ファイルをアップロード
-    p.muted
-      - if @selected_source_path.present?
-        | ここにドロップすると「
-        code = @selected_source_path
-        | 」直下の追加候補としてアップロードします。
-      - else
+    - if @selected_source_path.present?
+      - upload_destination_label = @selected_source_path.to_s.split("/").reject(&:blank?).last || @selected_source_path
+      .manual-document-upload-panel__destination aria-label="現在のアップロード先"
+        span.badge アップロード先
+        span.manual-document-upload-panel__destination-name title=@selected_source_path = upload_destination_label
+        span.manual-document-upload-panel__destination-path title=@selected_source_path = @selected_source_path
+      p.muted.manual-document-upload-panel__destination-copy
+        | ここにドロップすると、上記パス直下の追加候補としてアップロードします。
+    - else
+      p.muted
         | ここにドロップすると案件直下の追加候補としてアップロードします。左のTreeViewのフォルダや文書にも直接ドロップできます。
     .manual-document-upload-panel__drop role="status" aria-live="polite" data-action="dragenter->manual-document-upload#dragenter dragover->manual-document-upload#dragover dragleave->manual-document-upload#dragleave drop->manual-document-upload#drop"
       strong ファイルをドラッグ＆ドロップ
