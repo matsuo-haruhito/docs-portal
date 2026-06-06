@@ -5,11 +5,13 @@ require "json"
 RSpec.describe Admin::ApiSpecificationPage do
   let(:page) { described_class.new }
   let(:build_status_marker_path) { Rails.root.join("tmp", "api_specification_build.status.json") }
+  let(:build_history_marker_path) { Rails.root.join("tmp", "api_specification_build.history.json") }
   let(:build_request_marker_path) { Rails.root.join("tmp", "api_specification_build.requested") }
   let(:build_entry_path) { page.build_entry_path }
 
   after do
     FileUtils.rm_f(build_status_marker_path)
+    FileUtils.rm_f(build_history_marker_path)
     FileUtils.rm_f(build_request_marker_path)
     FileUtils.rm_f(build_entry_path)
   end
@@ -54,6 +56,8 @@ RSpec.describe Admin::ApiSpecificationPage do
       expect(marker["status"]).to eq("success")
       expect(page.build_status.label).to eq("最新 build 成功")
       expect(page.build_status.message).not_to include("old failure")
+      expect(page.build_history.first.label).to eq("最新 build 成功")
+      expect(page.build_history.first.success_at).to be_present
     end
 
     it "records a sanitized failure message without exposing long stderr, tokens, or absolute paths" do
@@ -70,6 +74,9 @@ RSpec.describe Admin::ApiSpecificationPage do
       expect(marker["message"]).not_to include("secret-value")
       expect(marker["message"].length).to be <= Admin::ApiSpecificationPage::FAILURE_MESSAGE_MAX_LENGTH
       expect(page.build_status.label).to eq("build 失敗")
+      expect(page.build_history.first.label).to eq("build 失敗")
+      expect(page.build_history.first.message).to include("token=[FILTERED]")
+      expect(page.build_history.first.message).not_to include("secret-value")
     end
   end
 
@@ -83,6 +90,39 @@ RSpec.describe Admin::ApiSpecificationPage do
 
       expect(status.label).to eq("build 待ち/実行中")
       expect(status.message).to include("完了後に再読み込み")
+    end
+  end
+
+  describe "#build_history" do
+    it "keeps the newest API specification build history entries within the limit" do
+      FileUtils.mkdir_p(build_history_marker_path.dirname)
+      history = 6.times.map do |index|
+        {
+          status: "failed",
+          recorded_at: (Time.zone.local(2026, 6, 1, 9, 0, 0) + index.minutes).iso8601,
+          message: "failure #{index}"
+        }
+      end
+      File.write(build_history_marker_path, JSON.pretty_generate(history))
+
+      entries = page.build_history
+
+      expect(entries.size).to eq(Admin::ApiSpecificationPage::BUILD_HISTORY_LIMIT)
+      expect(entries.map(&:message)).to eq(["failure 0", "failure 1", "failure 2", "failure 3", "failure 4"])
+    end
+
+    it "adds the current requested marker to the read-only history without changing build status precedence" do
+      FileUtils.mkdir_p(build_request_marker_path.dirname)
+      File.write(build_request_marker_path, Time.current.iso8601)
+      File.write(build_history_marker_path, JSON.pretty_generate([
+        { status: "failed", recorded_at: 1.hour.ago.iso8601, message: "previous failure" }
+      ]))
+
+      entries = page.build_history
+
+      expect(entries.first.label).to eq("build 待ち/実行中")
+      expect(entries.first.requested_at).to be_present
+      expect(entries.second.label).to eq("build 失敗")
     end
   end
 end

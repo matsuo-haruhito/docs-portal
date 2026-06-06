@@ -11,6 +11,7 @@ RSpec.describe "Admin API specifications", type: :request do
   let(:asset_css_path) { build_root.join("assets", "css", "api-spec-site-fixture.css") }
   let(:runtime_js_path) { build_root.join("assets", "js", "runtime~main.api-spec-fixture.js") }
   let(:build_status_marker_path) { Rails.root.join("tmp", "api_specification_build.status.json") }
+  let(:build_history_marker_path) { Rails.root.join("tmp", "api_specification_build.history.json") }
   let(:build_request_marker_path) { Rails.root.join("tmp", "api_specification_build.requested") }
   let(:primary_source_pages) { Admin::ApiSpecificationPage::PRIMARY_SOURCE_PAGES }
 
@@ -24,6 +25,7 @@ RSpec.describe "Admin API specifications", type: :request do
     FileUtils.rm_f(asset_css_path)
     FileUtils.rm_f(runtime_js_path)
     FileUtils.rm_f(build_status_marker_path)
+    FileUtils.rm_f(build_history_marker_path)
     FileUtils.rm_f(build_request_marker_path)
   end
 
@@ -99,6 +101,43 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response.body).to include("failed at [path] token=[FILTERED]")
   end
 
+  it "shows a sanitized read-only build history" do
+    raw_failure = "failed at /app/tmp/build.log token=raw-secret stderr=#{"x" * 220}"
+    write_build_history_marker([
+      {
+        status: "failed",
+        recorded_at: Time.current.iso8601,
+        message: "failed at [path] token=[FILTERED]"
+      },
+      {
+        status: "success",
+        recorded_at: 10.minutes.ago.iso8601,
+        success_at: 10.minutes.ago.iso8601,
+        build_entry_mtime: 10.minutes.ago.iso8601
+      },
+      {
+        status: "requested",
+        recorded_at: 20.minutes.ago.iso8601,
+        requested_at: 20.minutes.ago.iso8601
+      }
+    ])
+
+    sign_in_as(admin_user)
+
+    get admin_api_specification_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("直近build履歴")
+    expect(response.body).to include("API仕様ページ専用 build の直近結果だけを read-only に表示します")
+    expect(response.body).to include("build 失敗")
+    expect(response.body).to include("最新 build 成功")
+    expect(response.body).to include("build 待ち/実行中")
+    expect(response.body).to include("failed at [path] token=[FILTERED]")
+    expect(response.body).not_to include(raw_failure)
+    expect(response.body).not_to include("raw-secret")
+    expect(response.body).not_to include("/app/tmp/build.log")
+  end
+
   it "shows safe runbook guidance for failed API specification builds" do
     raw_failure = "failed at /app/tmp/build.log token=raw-secret stderr=#{"x" * 220}"
     write_failed_build_marker("failed at [path] token=[FILTERED]")
@@ -161,6 +200,7 @@ RSpec.describe "Admin API specifications", type: :request do
 
     expect(response).to redirect_to(admin_api_specification_path)
     expect(build_request_marker_path.exist?).to eq(true)
+    expect(JSON.parse(build_history_marker_path.read).first["status"]).to eq("requested")
     follow_redirect!
     expect(response.body).to include("API仕様ページの Docusaurus build を再実行します")
   end
@@ -281,6 +321,11 @@ RSpec.describe "Admin API specifications", type: :request do
       build_status_marker_path,
       JSON.generate(status: "failed", recorded_at: Time.current.iso8601, message:)
     )
+  end
+
+  def write_build_history_marker(payload)
+    FileUtils.mkdir_p(build_history_marker_path.dirname)
+    File.write(build_history_marker_path, JSON.pretty_generate(payload))
   end
 
   def write_build_request_marker
