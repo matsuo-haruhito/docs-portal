@@ -2,6 +2,9 @@ class ProjectAiContextsController < BaseController
   before_action :set_project
 
   PREVIEW_DOCUMENT_LIMIT = 50
+  DOCUMENT_QUERY_MAX_LENGTH = AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH
+
+  helper_method :document_query_max_length
 
   def show
     @mode = requested_mode
@@ -9,7 +12,7 @@ class ProjectAiContextsController < BaseController
 
     @requested_document_ids = requested_document_ids
     @scope = requested_scope
-    @document_query = params[:document_q].to_s.strip
+    @document_query = normalized_document_query
     @candidate_view = requested_candidate_view
     selectable_documents_all = selectable_documents
     @selectable_document_total_count = selectable_documents_all.size
@@ -123,6 +126,14 @@ class ProjectAiContextsController < BaseController
     return {} if @requested_document_ids.empty?
 
     { document_ids: @requested_document_ids }
+  end
+
+  def normalized_document_query
+    params[:document_q].to_s.strip.slice(0, DOCUMENT_QUERY_MAX_LENGTH)
+  end
+
+  def document_query_max_length
+    DOCUMENT_QUERY_MAX_LENGTH
   end
 
   def record_ai_context_access_log!(action_type)
