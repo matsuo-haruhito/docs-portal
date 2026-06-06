@@ -39,6 +39,16 @@ module Admin::DocumentSetsHelper
     admin_document_set_filter_labels(filters).any?
   end
 
+  def document_set_version_usage_label(document_set)
+    items = document_set.document_set_items
+    fixed_count = items.count { _1.document_version_id.present? }
+
+    return "文書なし" if items.empty?
+    return "固定版あり（#{fixed_count}件）" if fixed_count.positive?
+
+    "最新版のみ"
+  end
+
   def document_set_selected_items(document_set, item_params = params[:document_set_items])
     persisted_items = document_set.document_set_items.index_by(&:document_id)
     return persisted_items if item_params.blank? || document_set.project.blank?
