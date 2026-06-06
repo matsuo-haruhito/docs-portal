@@ -6,6 +6,8 @@ class Admin::DocumentSetsController < Admin::BaseController
   before_action :load_document_sets, only: %i[index create]
   before_action :load_project_documents, only: %i[index create edit update]
 
+  DOCUMENT_SET_QUERY_MAX_LENGTH = 100
+
   def index
     @document_set = DocumentSet.new(set_type: :delivery, visibility_policy: :restricted_external)
   end
@@ -97,8 +99,12 @@ class Admin::DocumentSetsController < Admin::BaseController
 
   def document_set_filter_params
     params.to_unsafe_h.symbolize_keys.slice(:set_type, :visibility_policy, :q).tap do |filters|
-      filters[:q] = filters[:q].to_s.strip if filters.key?(:q)
+      filters[:q] = normalize_document_set_query(filters[:q]) if filters.key?(:q)
     end
+  end
+
+  def normalize_document_set_query(query)
+    query.to_s.strip.first(DOCUMENT_SET_QUERY_MAX_LENGTH)
   end
 
   def document_set_params
