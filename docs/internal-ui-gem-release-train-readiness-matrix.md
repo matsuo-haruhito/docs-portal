@@ -36,6 +36,23 @@
 | `rails_table_preferences` | docs-portal current main は package root `rails_table_preferences` を default として使う | `rails_table_preferences/controller` は documented fallback / migration note。default contract に昇格させない | current `vite.config.ts` は package root と direct controller alias を持つ。host app resolver policy は docs-portal 側の責務 | importmap route より bundler / Vite adoption が中心。upstream docs / package verification を確認材料にする | `rails_table_preferences#678` が package-root export docs / smoke guard の ready lane。TypeScript declaration や package verifier は upstream gate | `admin/document_sets` editor、stable column key、mounted save、filter / preset smoke。RTP human gate では table key / rollback target を別に残す | `rails_table_preferences#678` を先に読む。`#789` known-good revision / smoke scope の human gate を越えるまで broad bump をしない |
 | `rails_fields_kit` | docs-portal current main は package root `rails_fields_kit` を default として使う | `rails_fields_kit/tom_select_controller` は documented fallback。new helper / controller helper は README or `doc/public_api.md` で public export 確認後に扱う | current `vite.config.ts` は package root と direct controller alias を持つ。bundler alias は host app responsibility | `rails_fields_kit#734` は importmap pins / package exports guard、`rails_fields_kit#1097` は setup doctor bundler alias visibility gate | `rails_fields_kit#1078` は package-root actual exports と docs table の双方向 guard。helper final shape を docs-portal 側で固定しない | `admin/document_sets` form の selected value保持、placeholder、invalid rerender、Tom Select wiring / RFK remote picker | `#1078` は needs-human、`#734` も needs-human。`#1097` は feature gate として ready だが、host app bundler policy を gem 側へ寄せすぎない |
 
+## Representative signal map
+
+この表は `#2217` の docs-only companion として、future bump PR が from / to SHA と downstream smoke だけでなく、bump 前に見る upstream readiness signal を短く参照するための入口です。個別の signal の正本は各 upstream repo と関連 docs に残し、この matrix では確認順と責務境界だけをそろえます。
+
+| gem | bump 前に見る代表 upstream signal | docs-portal 側で見る representative smoke | 関連 issue / queue の役割 | docs-portal 側で決めないこと |
+| --- | --- | --- | --- | --- |
+| `tree_view` | public API manifest、package-root export docs、large / remote / windowed tree docs、mockup / browser smoke、package verification signal | sidebar tree、detail tree、persisted state、route context、window offset、lazy / pagination cue | `#1301` は release train child、`tree_view-rails#1400` / `#1422` は docs signal、`#607` は host-app adoption pattern | manifest schema、未 merge export 名、TreeView の event / node shape policy、docs-portal 固有 route / permission を upstream contract にすること |
+| `rails_table_preferences` | package-root `RailsTablePreferencesController` export、documented direct entrypoint、release checklist、Product Profile / CHANGELOG / README sync、visual overview / package verifier | `admin/document_sets` table preferences editor、stable column key、filter / preset、mounted save、async failure / busy recovery | `#789` は known-good revision human gate、`rails_table_preferences#678` は package-root export guard signal、`#607` は screen adoption pattern | known-good SHA、TypeScript declaration adoption、Markdown preview table の RTP 化、host app 固有の table key / label policy |
+| `rails_fields_kit` | package-root `TomSelectController` export、public API docs、setup doctor / importmap pins、final release checklist、visual reference / sample app evidence | `admin/document_sets` form、selected value、placeholder、invalid rerender、Tom Select wiring、RFK remote picker event surface | `#1300` は release train child、`rails_fields_kit#1078` / `#734` は human gate signal、`#1097` は setup diagnostics feature gate | helper final shape、endpoint policy、visible feedback copy、host app validation、future direct entrypoint / declaration 名 |
+
+共通の読み方:
+
+- `#858` は release train parent / hub であり、3 gem bump の完了判定そのものではありません。
+- `#607` は host-app adoption pattern の入口であり、upstream package policy や public API manifest schema を決める場所ではありません。
+- `#1300` / `#1301` / `#789` の child lane では、actual bump PR の body に from / to SHA、representative smoke、rollback target、未解決 upstream gate を残します。
+- open upstream PR / proposal は `current support` として書かず、`merge 後に再確認` / `human gate` / `ready docs sync` のいずれかで扱います。
+
 ## Upstream queue の読み分け
 
 | queue | 状態 | release train 前の扱い |
