@@ -2,6 +2,9 @@
 
 module Admin::GitImportRunsHelper
   STATUS_SUMMARY_ORDER = %w[failed skipped imported running pending].freeze
+  DIAGNOSTIC_PREVIEW_MAX_LENGTH = 240
+  SECRET_KEY_PATTERN = /(authorization|token|secret|password|client_secret|access_token|refresh_token|api_key|private_key)/i
+  PRIVATE_PATH_PATTERN = %r{(?:[A-Za-z]:[\\/]|/Users/|/home/)[^\s"'<>]+}
 
   def git_import_run_table_columns
     [
@@ -57,6 +60,14 @@ module Admin::GitImportRunsHelper
     ].compact
   end
 
+  def git_import_run_summary_preview_json(run)
+    JSON.pretty_generate(sanitize_git_import_run_diagnostic_value(run.summary_json || {}))
+  end
+
+  def git_import_run_error_preview(run)
+    git_import_run_diagnostic_preview(run.error_message)
+  end
+
   private
 
   def git_import_summary_line(summary, key, label)
@@ -74,5 +85,49 @@ module Admin::GitImportRunsHelper
     runs.each_with_object(Hash.new(0)) do |run, counts|
       counts[run.status.to_s] += 1
     end
+  end
+
+  def sanitize_git_import_run_diagnostic_value(value)
+    case value
+    when Hash
+      value.each_with_object({}) do |(key, nested_value), sanitized|
+        sanitized[key] = if git_import_run_secret_key?(key)
+          "[masked]"
+        else
+          sanitize_git_import_run_diagnostic_value(nested_value)
+        end
+      end
+    when Array
+      value.map { |nested_value| sanitize_git_import_run_diagnostic_value(nested_value) }
+    when String
+      git_import_run_diagnostic_preview(value)
+    else
+      value
+    end
+  end
+
+  def git_import_run_secret_key?(key)
+    key.to_s.match?(SECRET_KEY_PATTERN)
+  end
+
+  def git_import_run_diagnostic_preview(value)
+    sanitized = value.to_s
+    sanitized = sanitized.gsub(/\bAuthorization:\s*Bearer\s+[^\s,;]+/i, "Authorization: [masked]")
+    sanitized = sanitized.gsub(/\bBearer\s+[^\s,;]+/i, "Bearer [masked]")
+    sanitized = sanitized.gsub(/(\b(?:authorization|token|secret|password|client_secret|access_token|refresh_token|api_key|private_key)\b\s*[:=]\s*)(?:"[^"]*"|'[^']*'|[^\s,;]+)/i) do
+      "#{Regexp.last_match(1)}[masked]"
+    end
+    sanitized = sanitized.gsub(/([?&][^=\s&]*(?:token|secret|password|key)[^=\s&]*=)[^&\s]+/i) do
+      "#{Regexp.last_match(1)}[masked]"
+    end
+    sanitized = sanitized.gsub(PRIVATE_PATH_PATTERN, "[path hidden]")
+
+    truncate_git_import_run_diagnostic(sanitized)
+  end
+
+  def truncate_git_import_run_diagnostic(text)
+    return text if text.length <= DIAGNOSTIC_PREVIEW_MAX_LENGTH
+
+    "#{text.first(DIAGNOSTIC_PREVIEW_MAX_LENGTH - 3)}..."
   end
 end

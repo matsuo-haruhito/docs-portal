@@ -107,7 +107,47 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(page_text).to include("PublishJob: pub_123")
     expect(page_text).to include("理由: already_synced")
     expect(page_text).to include("repository not found")
-    expect(page_text).to include("raw summary_json")
+    expect(page_text).to include("safe summary_json preview")
+  end
+
+  it "masks raw summary and error diagnostics while preserving operational context" do
+    summary_token = "ghp_summary_sensitive_token"
+    error_token = "ghp_error_sensitive_token"
+    error_bearer = "error-bearer-token"
+    private_windows_path = "C:/Users/alice/customer-docs/secrets.md"
+    private_home_path = "/home/alice/.ssh/id_rsa"
+    long_error_tail = "x" * 260
+
+    create_git_import_run!(
+      status: :failed,
+      summary_json: {
+        "documents" => 2,
+        "source_path" => "docs",
+        "commit_sha" => "abcdef1234567890",
+        "provider_error" => "Authorization: Bearer #{summary_token}",
+        "workspace_path" => private_windows_path,
+        "credentials" => { "access_token" => "summary-access-token" }
+      },
+      error_message: "fatal token=#{error_token} Authorization: Bearer #{error_bearer} failed at #{private_home_path} #{long_error_tail}"
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_git_import_runs_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("取込元パス: docs")
+    expect(page_text).to include("commit: abcdef1234567890")
+    expect(page_text).to include("safe summary_json preview")
+    expect(response.body).to include("[masked]")
+    expect(response.body).to include("[path hidden]")
+    expect(response.body).not_to include(summary_token)
+    expect(response.body).not_to include("summary-access-token")
+    expect(response.body).not_to include(error_token)
+    expect(response.body).not_to include(error_bearer)
+    expect(response.body).not_to include(private_windows_path)
+    expect(response.body).not_to include(private_home_path)
+    expect(response.body).not_to include(long_error_tail)
   end
 
   it "filters runs by status" do
