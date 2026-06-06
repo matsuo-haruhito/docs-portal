@@ -2,7 +2,7 @@
 
 この文書は、`#858` の release train で `tree_view` / `rails_table_preferences` / `rails_fields_kit` を bump する前に、package-root JavaScript surface、Vite / bundler alias、importmap / setup diagnostics、public API docs guard の readiness を同じ粒度で読むための matrix です。
 
-`docs/internal-ui-gem-release-train-current-queue.md` は release train の queue / gate / evidence template、`docs/internal-ui-gem-public-surface-package-verification-matrix.md` は public surface と package verification の責務境界、`docs/internal-ui-gem-js-resolver-matrix.md` は import / resolver 境界を扱います。この文書は、それらを release train 前の確認順に並べる入口です。
+`docs/internal-ui-gem-release-train-current-queue.md` は release train の queue / gate / evidence template、`docs/internal-ui-gem-public-surface-package-verification-matrix.md` は public surface と package verification の責務境界、`docs/internal-ui-gem-js-resolver-matrix.md` は import / resolver 境界を扱います。この文書は、それらを release train 前の確認順に並べ、3 gem 共通の release evidence family と重複起票を避ける判断基準をそろえる入口です。
 
 ## 使い方
 
@@ -27,6 +27,42 @@
 | `rails_fields_kit` | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | snapshot `ahead_by: 429` / `behind_by: 0` | `TomSelectController` を package root `rails_fields_kit` から import。`vite.config.ts` は package root と `rails_fields_kit/tom_select_controller` の alias を持つ | package-root helper export、setup doctor、importmap pins、bundler alias route を upstream evidence として読み、host app smoke は `admin/document_sets` form に閉じる |
 
 この表の distance は 2026-06-06 12:00 JST 時点の snapshot です。bump PR の target SHA や blocker 判断には、上記数値をそのまま使わず、作業直前の compare 結果を PR body / comment に残します。
+
+## 共通 release evidence family
+
+3 gem で名称や正本が違っていても、release train では次の family にそろえて読みます。各 family は「upstream が守る public surface」と「docs-portal が守る representative smoke」を分けるための分類であり、3 gem の仕組みを統一実装へ作り替える指示ではありません。
+
+| family | 何を確認するか | source of truth | docs-portal 側の使い方 |
+| --- | --- | --- | --- |
+| public Ruby / helper surface | Ruby helper、view helper、controller helper、rendered-field helper など adopter-visible な呼び出し口 | upstream README / public API docs / manifest / helper spec | helper 名や option の最終形を docs-portal で決めず、merge 済み docs / guard だけを bump 前 evidence にする |
+| package-root JavaScript export / contract reader surface | package root import、documented direct entrypoint、Stimulus identifier、event/detail key、contract reader helper | upstream package docs、package contents guard、public API manifest、entrypoint smoke | current `application.js` / `vite.config.ts` と照合し、未merge export 名や proposal を current support として書かない |
+| docs entrypoint / docs signal smoke | README、setup docs、release checklist、docs index、known-good smoke note が同じ surface を指しているか | upstream docs、docs-only guard、release checklist、docs index | target SHA ではなく「どの docs を読むか」を記録し、docs drift guard と runtime adoption を混同しない |
+| static visual reference / demo evidence | mockup、review gallery、visual reference、demo page、sample app で代表 state が見えるか | upstream visual reference docs / demo / sample app evidence | docs-portal の UI 仕様に転記せず、manual smoke の期待対象と未確認 surface を書き分ける |
+| downstream representative smoke / rollback note | host app の代表画面、request spec、manual smoke、from / to SHA、rollback target | docs-portal child issue / PR body / issue comment | `#1300` / `#1301` / `#789` の実行 PR でだけ target SHA と結果を残し、この matrix へ固定値として追記しない |
+
+## Bump 前 upstream evidence checklist
+
+`#858` 配下の child issue で pinned ref を動かす前に、対象 gem だけについて次を確認します。ここで複数 gem を同時に進めたり、未着地の upstream PR を known-good SHA として採用したりしません。
+
+| checklist | 確認内容 | 止める条件 |
+| --- | --- | --- |
+| current pin | `Gemfile` / `Gemfile.lock` の対象 gem ref がこの文書の snapshot から drift していないか | current pin が違う、または lockfile を Bundler で再生成できない |
+| upstream freshness | target candidate と upstream `main` の compare、CI、mergeability、review / human gate | target SHA が未確定、CI が古い、`mergeable:false`、human gate が残る |
+| public surface evidence | package-root export、direct entrypoint、manifest、public API docs、setup docs のどれを根拠にするか | proposal / open PR の名称を current durable contract として使う必要がある |
+| downstream smoke | host app の representative smoke surface と automated / manual evidence | smoke を実行または明記できない、failure が business spec / auth / DB / UI redesign に広がる |
+| rollback note | rollback target、未確認 surface、docs follow-up、別 gem への影響 | rollback target を current pin として説明できない、複数 gem bump が必要になる |
+
+## Issue 起票先の判断基準
+
+同じ検証を別名で重複起票しないため、見つけた gap は次の基準で issue 化します。迷った場合は、target SHA や host app smoke の実行結果を決める issue ではなく、source of truth を持つ repo に小さく戻します。
+
+| gap の種類 | 起票先 | 理由 |
+| --- | --- | --- |
+| package-root export、direct entrypoint、package contents、TypeScript declaration、manifest schema が不明 | upstream gem repo | public surface と package verification は upstream が守る。docs-portal 側で export 名や manifest schema を決めない |
+| README / public API docs / setup docs / release checklist が current upstream code と drift している | upstream gem repo | source of truth docs が upstream にあり、docs-portal は merge 済み evidence を参照するだけにする |
+| docs-portal の `application.js`、`vite.config.ts`、initializer、request spec、representative screen が current pin と drift している | `docs-portal` | downstream adoption と host app smoke は docs-portal の責務。business spec や UI redesign に広げない |
+| known-good revision、merge order、human gate、target SHA selection が必要 | 対象 child issue / human review | Quality Fixer が推測しない。`#1300` / `#1301` / `#789` の PR body / comment に evidence を残す |
+| 3 gem 共通の読み方、release train queue、rollback note template が散らばっている | `docs-portal` docs-only | 横断運用メモとして整理する。ただし各 gem の runtime / public API contract は変更しない |
 
 ## Readiness matrix
 
