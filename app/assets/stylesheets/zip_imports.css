@@ -55,6 +55,39 @@
   margin-top: 8px;
 }
 
+.manual-document-upload-panel__destination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin: 6px 0 8px;
+  min-width: 0;
+}
+
+.manual-document-upload-panel__destination-name {
+  min-width: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.manual-document-upload-panel__destination-path {
+  flex-basis: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid rgba(15, 98, 254, 0.14);
+  border-radius: 8px;
+  background: #f8fbff;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.manual-document-upload-panel__destination-copy {
+  margin-top: 0;
+}
+
 .manual-document-upload-panel__drop {
   display: grid;
   gap: 6px;
