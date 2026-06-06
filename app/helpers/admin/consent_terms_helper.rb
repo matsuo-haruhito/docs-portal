@@ -42,11 +42,11 @@ module Admin::ConsentTermsHelper
     end
 
     if ConsentTerm.consent_scopes.key?(filters[:consent_scope])
-      conditions << "種別: #{consent_scope_label(filters[:consent_scope])}"
+      conditions << "種別: #{localized_label('consent_terms.consent_scope', filters[:consent_scope])}"
     end
 
     if ConsentTerm.requirement_timings.key?(filters[:requirement_timing])
-      conditions << "再同意方針: #{consent_requirement_timing_label(filters[:requirement_timing])}"
+      conditions << "再同意方針: #{localized_label('consent_terms.requirement_timing', filters[:requirement_timing])}"
     end
 
     conditions
