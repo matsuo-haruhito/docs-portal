@@ -1,3 +1,5 @@
+require "csv"
+
 class Admin::DocumentSetsController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_document_set, only: %i[edit update destroy]
@@ -7,9 +9,27 @@ class Admin::DocumentSetsController < Admin::BaseController
   before_action :load_project_documents, only: %i[index create edit update]
 
   DOCUMENT_SET_QUERY_MAX_LENGTH = 100
+  CSV_HEADERS = [
+    "案件コード",
+    "案件名",
+    "文書セット名",
+    "種別",
+    "公開範囲",
+    "文書数",
+    "public_id"
+  ].freeze
 
   def index
     @document_set = DocumentSet.new(set_type: :delivery, visibility_policy: :restricted_external)
+
+    respond_to do |format|
+      format.html
+      format.csv do
+        send_data document_sets_csv,
+                  filename: document_sets_csv_filename,
+                  type: "text/csv; charset=utf-8"
+      end
+    end
   end
 
   def create
@@ -184,5 +204,31 @@ class Admin::DocumentSetsController < Admin::BaseController
       "LOWER(document_sets.name) LIKE :pattern OR LOWER(projects.name) LIKE :pattern OR LOWER(projects.code) LIKE :pattern",
       pattern: pattern
     )
+  end
+
+  def document_sets_csv
+    CSV.generate(headers: true) do |csv|
+      csv << CSV_HEADERS
+
+      @document_sets.each do |document_set|
+        csv << document_set_csv_row(document_set)
+      end
+    end
+  end
+
+  def document_set_csv_row(document_set)
+    [
+      document_set.project.code,
+      document_set.project.name,
+      document_set.name,
+      helpers.document_set_type_label(document_set),
+      helpers.document_set_visibility_policy_label(document_set),
+      document_set.document_set_items.size,
+      document_set.public_id
+    ]
+  end
+
+  def document_sets_csv_filename
+    "document-sets-#{Date.current.iso8601}.csv"
   end
 end
