@@ -12,6 +12,14 @@
 - clear_user_filter_params[:status] = @status_filter if @status_filter.present?
 - clear_user_filter_params[:q] = @query if @query.present?
 - has_active_filter = @status_filter.present? || @query.present? || @requester_filter_id.present? || @approver_filter_id.present?
+- status_filter_label = @status_filter.present? ? document_approval_request_status_label(@status_filter) : nil
+- requester_filter_label = @requester_filter_options.find { |user| user.id.to_s == @requester_filter_id.to_s }&.name
+- approver_filter_label = @approver_filter_options.find { |user| user.id.to_s == @approver_filter_id.to_s }&.name
+- active_filter_labels = []
+- active_filter_labels << "状態: #{status_filter_label}" if status_filter_label.present?
+- active_filter_labels << "検索語: #{@query}" if @query.present?
+- active_filter_labels << "依頼者: #{requester_filter_label || "指定あり"}" if @requester_filter_id.present?
+- active_filter_labels << "確認相手: #{approver_filter_label || "指定あり"}" if @approver_filter_id.present?
 - table_key = :document_approval_requests
 - table_columns = document_approval_request_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
@@ -50,11 +58,20 @@ p.actions
     - if @requester_filter_id.present? || @approver_filter_id.present?
       = link_to "担当者絞り込みを解除", list_path.call(clear_user_filter_params), class: "button secondary"
 
+- if has_active_filter
+  p.muted = "表示中条件: #{active_filter_labels.join(" / ")}"
+  p.muted
+    | 状態ボタンの件数は一覧全体の件数です。下の表示件数と各セクション件数は、選択中の状態・検索語・担当者条件を反映しています。
+  - if @query.present? || @requester_filter_id.present? || @approver_filter_id.present?
+    p.muted
+      | 検索を解除は検索語だけを外し、担当者絞り込みを解除は依頼者・確認相手だけを外します。状態タブが選択されている場合は維持されます。
+
 - if @query.present? || @requester_filter_id.present? || @approver_filter_id.present?
   p.muted = "検索条件: #{[@query.presence, (@requester_filter_id.present? ? "依頼者指定" : nil), (@approver_filter_id.present? ? "確認相手指定" : nil)].compact.join(" / ")} / 表示 #{@document_approval_requests.size}件"
 
 - if @document_approval_requests.any?
   .card
+    p.muted 表示設定は列の見せ方だけを変えます。検索条件や状態別件数を変える場合は、上の検索フォームと状態ボタンを使ってください。
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "確認依頼一覧の表示設定")
 
   - @document_approval_request_sections.each do |section_title, requests|
