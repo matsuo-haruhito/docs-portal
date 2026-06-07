@@ -43,7 +43,7 @@ RSpec.describe "Admin document set CSV export", type: :request do
   end
 
   def csv_export_href
-    parsed_html.css("a[href]").find { |node| node.text.squish == "CSV出力" }.fetch("href")
+    parsed_html.css("a[href]").find { |node| node.text.squish == "CSV出力" }["href"]
   end
 
   def csv_export_query
