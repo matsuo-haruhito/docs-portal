@@ -37,28 +37,40 @@ class DocumentCommentWorkspaceSearch
   def question_search_fields(thread)
     [
       thread.body,
-      thread.author&.name,
-      thread.document_version&.version_label
+      author_name(thread),
+      document_version_label(thread)
     ]
   end
 
   def question_reply_search_fields(reply)
     [
       reply.body,
-      reply.author&.name
+      author_name(reply)
     ]
   end
 
   def review_search_fields(comment)
     [
       comment.body,
-      comment.author&.name,
-      comment.document_version&.version_label,
+      author_name(comment),
+      document_version_label(comment),
       comment.source_path,
       comment.text_anchor_path,
       comment.text_anchor_label,
       comment.location_label
     ]
+  end
+
+  def author_name(record)
+    return unless record.respond_to?(:author)
+
+    record.author&.name
+  end
+
+  def document_version_label(record)
+    return unless record.respond_to?(:document_version)
+
+    record.document_version&.version_label
   end
 
   def matches_text?(value)
