@@ -74,6 +74,8 @@ section.card
         | 既読確認日時の期間:
         strong = " #{@confirmed_from&.strftime("%Y-%m-%d") || "指定なし"} から #{@confirmed_to&.strftime("%Y-%m-%d") || "指定なし"} まで"
       p.muted この期間は既読確認日時だけに適用され、文書利用状況の閲覧・ダウンロード集計期間は変更しません。
+    - if @invalid_confirmed_date_labels.present?
+      p.muted = "日付として読み取れない#{@invalid_confirmed_date_labels.join("・")}は条件から外しています。入力欄の値は確認用に残しています。"
     - if @selected_company
       p
         | 会社:
@@ -91,7 +93,7 @@ section.card
     p
       = link_to "文書利用状況へ戻る", admin_document_usage_reports_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
       |  / 
-      = link_to "CSV出力", admin_read_confirmations_path(request.query_parameters.merge(format: :csv)), data: { turbo_frame: "_top" }
+      = link_to "CSV出力", admin_read_confirmations_path(@read_confirmations_csv_query), data: { turbo_frame: "_top" }
     p.muted
       | 表示中:
       strong = " #{@read_confirmations.size}件"
