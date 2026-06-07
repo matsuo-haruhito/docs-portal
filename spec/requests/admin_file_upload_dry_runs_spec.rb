@@ -12,6 +12,10 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     parsed_html.text.squish
   end
 
+  def listed_dry_run_ids
+    parsed_html.css("table tbody tr td:nth-child(2) code").map { _1.text.squish }
+  end
+
   def heading_texts
     parsed_html.css("h1, h2, h3").map { _1.text.squish }.reject(&:empty?)
   end
@@ -67,7 +71,7 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     expect(page_text).to include("manual_upload dry-runはまだ作成されていません。")
     expect(page_text).to include("file_uploads APIで作成されたdry-runは、ここから後追い確認できます。")
     expect(page_text).to include("ZIP / Git import dry-runとartifact import dry-runはこの一覧には表示されません。")
-    expect(page_text).not_to include("dry-run ID、案件、状態の条件を見直すか")
+    expect(page_text).not_to include("dry-run ID、案件、状態、同期元・path・hashの条件を見直すか")
   end
 
   it "explains filtered zero results and keeps the reset link close to the empty state" do
@@ -79,13 +83,87 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 0件")
     expect(page_text).to include("条件に一致するmanual_upload dry-runはありません。")
-    expect(page_text).to include("dry-run ID、案件、状態の条件を見直すか、絞り込み解除で一覧に戻してください。")
+    expect(page_text).to include("dry-run ID、案件、状態、同期元・path・hashの条件を見直すか、絞り込み解除で一覧に戻してください。")
     expect(page_text).to include("ZIP / Git import dry-runとartifact import dry-runはこの一覧には表示されません。")
     expect(link_href("絞り込み解除")).to eq(admin_file_upload_dry_runs_path)
     expect(page_text).not_to include("local-folder-sync")
   end
 
-  it "filters manual upload dry-runs by id, project, and status" do
+  it "filters manual upload dry-runs by safe source metadata" do
+    sign_in_as(admin_user)
+    source_match = create_file_upload_dry_run(
+      result_json: {
+        "file_upload_preview" => {
+          "source_name" => "quarterly-source",
+          "relative_path" => "docs/source.md",
+          "source_path" => "C:/private/source-only/source.md",
+          "content_hash" => "sourcehash"
+        }
+      }
+    )
+    path_match = create_file_upload_dry_run(
+      result_json: {
+        "file_upload_preview" => {
+          "source_name" => "path-sync",
+          "relative_path" => "guides/manual-upload/search-target.md",
+          "source_path" => "C:/private/path-only/search-target.md",
+          "content_hash" => "pathhash"
+        }
+      }
+    )
+    hash_match = create_file_upload_dry_run(
+      result_json: {
+        "file_upload_preview" => {
+          "source_name" => "hash-sync",
+          "relative_path" => "docs/hash.md",
+          "source_path" => "C:/private/hash-only/hash.md",
+          "content_hash" => "abc-hash-target-999"
+        }
+      }
+    )
+    raw_source_path_only = create_file_upload_dry_run(
+      result_json: {
+        "file_upload_preview" => {
+          "source_name" => "raw-hidden-sync",
+          "relative_path" => "docs/raw-hidden.md",
+          "source_path" => "C:/private/raw-source-only/secret.md",
+          "content_hash" => "rawhiddenhash"
+        }
+      }
+    )
+    create_file_upload_dry_run(
+      import_mode: :zip,
+      result_json: {
+        "file_upload_preview" => {
+          "source_name" => "quarterly-source",
+          "relative_path" => "guides/manual-upload/search-target.md",
+          "source_path" => "C:/private/zip/search-target.md",
+          "content_hash" => "abc-hash-target-999"
+        }
+      }
+    )
+
+    get admin_file_upload_dry_runs_path, params: { q: "quarterly" }
+    expect(response).to have_http_status(:ok)
+    expect(listed_dry_run_ids).to eq([source_match.public_id])
+    expect(page_text).to include("同期元・path・hash 検索は表示中の safe metadata だけを対象にし、クライアント source path は検索対象に含めません。")
+
+    get admin_file_upload_dry_runs_path, params: { q: "manual-upload/search" }
+    expect(response).to have_http_status(:ok)
+    expect(listed_dry_run_ids).to eq([path_match.public_id])
+
+    get admin_file_upload_dry_runs_path, params: { q: "HASH-TARGET" }
+    expect(response).to have_http_status(:ok)
+    expect(listed_dry_run_ids).to eq([hash_match.public_id])
+
+    get admin_file_upload_dry_runs_path, params: { q: "raw-source-only" }
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("条件に一致するmanual_upload dry-runはありません。")
+    expect(listed_dry_run_ids).to be_empty
+    expect(page_text).not_to include(raw_source_path_only.public_id)
+  end
+
+  it "filters manual upload dry-runs by id, project, status, and safe metadata query together" do
     sign_in_as(admin_user)
     other_project = create(:project, code: "OTHER", name: "Other Project")
     target = create_file_upload_dry_run(
@@ -102,7 +180,7 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     create_file_upload_dry_run(status: :failed)
     create_file_upload_dry_run(status: :analyzed, project_override: other_project)
 
-    get admin_file_upload_dry_runs_path, params: { dry_run_id: target.public_id, project_id: other_project.id, status: "failed" }
+    get admin_file_upload_dry_runs_path, params: { dry_run_id: target.public_id, project_id: other_project.id, status: "failed", q: "target" }
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include(target.public_id)
