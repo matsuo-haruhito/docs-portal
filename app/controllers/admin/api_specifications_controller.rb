@@ -33,6 +33,7 @@ class Admin::ApiSpecificationsController < Admin::BaseController
     site_path = params[:site_path].presence || page.site_path
     renderer = page.renderer
     file_path = renderer.file_response_path(site_path)
+    raise ActiveRecord::RecordNotFound unless site_file_response_allowed?(file_path)
 
     if asset_path?(site_path) || !html_file?(file_path)
       send_site_file(file_path, cacheable: asset_path?(site_path))
@@ -49,6 +50,13 @@ class Admin::ApiSpecificationsController < Admin::BaseController
 
   def html_file?(file_path)
     file_path.extname == ".html"
+  end
+
+  def site_file_response_allowed?(file_path)
+    absolute_file_path = file_path.expand_path
+    build_root = Rails.root.join("docusaurus", "build").expand_path
+
+    absolute_file_path.to_s.start_with?("#{build_root}/") && absolute_file_path.file?
   end
 
   def send_site_file(file_path, cacheable: false)
