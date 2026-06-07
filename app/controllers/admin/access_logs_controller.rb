@@ -5,6 +5,7 @@ class Admin::AccessLogsController < Admin::BaseController
   AI_CONTEXT_SCOPE_FILTERS = %w[all selected].freeze
   ACCESS_LOGS_PER_PAGE = 200
   ACCESS_LOGS_MAX_PAGE = 50
+  FILTER_CANDIDATE_LIMIT = 50
   CSV_HEADERS = [
     "日時",
     "操作",
@@ -33,9 +34,9 @@ class Admin::AccessLogsController < Admin::BaseController
     respond_to do |format|
       format.html do
         @page = page_param
-        @projects = Project.order(:code)
-        @companies = Company.order(:domain)
-        @users = User.order(:email_address)
+        @projects = access_log_filter_candidates(Project.order(:code), @filters[:project_id])
+        @companies = access_log_filter_candidates(Company.order(:domain), @filters[:company_id])
+        @users = access_log_filter_candidates(User.order(:email_address), @filters[:user_id])
         @access_logs = paginated_access_logs
         @has_previous_page = @page > 1
         @has_next_page = @access_logs.size > ACCESS_LOGS_PER_PAGE
@@ -208,6 +209,14 @@ class Admin::AccessLogsController < Admin::BaseController
     @filters.to_h.each_with_object({}) do |(key, value), params_hash|
       params_hash[key] = value if value.present?
     end
+  end
+
+  def access_log_filter_candidates(scope, selected_id)
+    records = scope.limit(FILTER_CANDIDATE_LIMIT).to_a
+    return records if selected_id.blank? || records.any? { _1.id.to_s == selected_id.to_s }
+
+    selected_record = scope.unscope(:order).find_by(id: selected_id)
+    selected_record ? records + [selected_record] : records
   end
 
   def unknown_target_type_filter?(target_type)
