@@ -26,7 +26,7 @@ RSpec.describe "Project AI context empty document candidates", type: :request do
   end
 
   def link_href(label)
-    parsed_html.css("a").find { _1.text.squish == label }&.fetch("href")
+    parsed_html.css("a").find { _1.text.squish == label }&.[]("href")
   end
 
   it "distinguishes a document search with no matching visible candidates" do
