@@ -1,5 +1,5 @@
 - page_title "モデルブラウザ", @entry.label
-- index_path = entry_index_path(@entry)
+- index_path = entry_index_path(@entry, query: @query)
 
 p.muted
   = link_to "モデルブラウザ", admin_model_browser_path
@@ -17,7 +17,10 @@ p.actions
   p.muted この画面は最近の代表データを確認するための read-only 表示です。続きの検索や詳細確認は既存管理画面で行えます。
   - if @query.present?
     p.muted.model-browser-existing-screen-context
-      | 既存画面で続けて確認する場合は、検索語「#{@query}」をコピーして、対象画面の検索欄や絞り込みで再確認してください。
+      - if @existing_screen_query_handoff_param
+        | 「既存画面で詳しく確認」は検索語「#{@query}」を既存画面の検索条件に引き継ぎます。
+      - else
+        | 既存画面で続けて確認する場合は、検索語「#{@query}」をコピーして、対象画面の検索欄や絞り込みで再確認してください。
       - if @query.match?(/\A\d+\z/)
         | 数値だけの検索語はこの read-only 画面の ID 照合にも使われるため、既存画面では公開IDやコードなど画面で確認できる値も合わせて確認してください。
 
