@@ -5,6 +5,10 @@
 - comment_search_query = @comment_search_query.to_s
 - comment_search_maxlength = DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH
 - comment_search_active = comment_search_query.present?
+- comment_workspace_tab = @comment_workspace_tab.presence || DocumentCommentWorkspaceTab::DEFAULT_TAB
+- comment_tab_base_params = request.query_parameters.except("comment_tab").merge(only_path: true)
+- comment_tab_url = ->(tab) { url_for(comment_tab_base_params.merge(comment_tab: tab)) }
+- comment_search_params = request.query_parameters.except("comment_q", "comment_tab").merge("comment_tab" => comment_workspace_tab)
 - has_review_comments = current_user.internal? && @review_comments.any?
 - has_question_threads = @question_threads.any?
 - unresolved_question_count = @question_threads.count(&:open?)
@@ -114,7 +118,7 @@ details class=wrapper_classes.join(" ") open=(!floating)
     .document-comment-search.card
       h3 コメントを検索
       = form_with url: request.path, method: :get, local: true do
-        - request.query_parameters.except("comment_q").each do |key, value|
+        - comment_search_params.each do |key, value|
           - Array(value).each do |item|
             = hidden_field_tag key, item
         .form-grid.form-grid--compact
@@ -124,7 +128,7 @@ details class=wrapper_classes.join(" ") open=(!floating)
         p.actions.form-actions
           = submit_tag "コメントを検索", class: "button secondary"
           - if comment_search_active
-            = link_to "検索を解除", url_for(request.query_parameters.except("comment_q").merge(only_path: true)), class: "button secondary"
+            = link_to "検索を解除", url_for(comment_search_params.merge(only_path: true)), class: "button secondary"
       - if comment_search_active
         p.muted
           | 検索条件: 
@@ -135,24 +139,25 @@ details class=wrapper_classes.join(" ") open=(!floating)
             | 。検索は、すべて / Q&A / 未解決Q&A の各タブに先に適用されます。
 
     .document-comment-tabs.card
-      input#document-comment-tab-all.document-comment-tabs__input type="radio" name="document_comment_tab" checked=true
-      label.document-comment-tabs__label for="document-comment-tab-all" すべて
-      input#document-comment-tab-qa.document-comment-tabs__input type="radio" name="document_comment_tab"
+      input#document-comment-tab-all.document-comment-tabs__input type="radio" name="document_comment_tab" checked=(comment_workspace_tab == "all")
+      label.document-comment-tabs__label for="document-comment-tab-all"
+        = link_to "すべて", comment_tab_url.call("all"), class: "document-comment-tabs__tab-link"
+      input#document-comment-tab-qa.document-comment-tabs__input type="radio" name="document_comment_tab" checked=(comment_workspace_tab == "qa")
       label.document-comment-tabs__label for="document-comment-tab-qa"
-        | Q&A
+        = link_to "Q&A", comment_tab_url.call("qa"), class: "document-comment-tabs__tab-link"
         span.muted = " (未解決 #{unresolved_question_count})"
       - if current_user.internal?
-        input#document-comment-tab-review.document-comment-tabs__input type="radio" name="document_comment_tab"
+        input#document-comment-tab-review.document-comment-tabs__input type="radio" name="document_comment_tab" checked=(comment_workspace_tab == "review")
         label.document-comment-tabs__label for="document-comment-tab-review"
-          | 確認事項
+          = link_to "確認事項", comment_tab_url.call("review"), class: "document-comment-tabs__tab-link"
           span.muted = " (未解決 #{unresolved_review_count})"
-      input#document-comment-tab-unresolved.document-comment-tabs__input type="radio" name="document_comment_tab"
+      input#document-comment-tab-unresolved.document-comment-tabs__input type="radio" name="document_comment_tab" checked=(comment_workspace_tab == "unresolved")
       label.document-comment-tabs__label for="document-comment-tab-unresolved"
         - if current_user.internal?
-          | 未解決
+          = link_to "未解決", comment_tab_url.call("unresolved"), class: "document-comment-tabs__tab-link"
           span.muted = " (Q&A #{unresolved_question_count} / 確認事項 #{unresolved_review_count})"
         - else
-          | 未解決Q&A
+          = link_to "未解決Q&A", comment_tab_url.call("unresolved"), class: "document-comment-tabs__tab-link"
           span.muted = " (#{unresolved_question_count})"
 
       .document-comment-tabs__panel.document-comment-tabs__panel--all
