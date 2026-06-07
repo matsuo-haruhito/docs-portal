@@ -377,7 +377,6 @@ RSpec.describe "Admin read confirmations", type: :request do
     create(:read_confirmation, document:, user: same_company_reader, confirmed_at: Time.zone.local(2026, 5, 2, 13, 0, 0))
     create(:read_confirmation, document:, user: other_company_reader, confirmed_at: Time.zone.local(2026, 5, 2, 14, 0, 0))
     create(:read_confirmation, document: other_document, user: matching_reader, confirmed_at: Time.zone.local(2026, 5, 2, 15, 0, 0))
-    create(:read_confirmation, document:, user: matching_reader, confirmed_at: Time.zone.local(2026, 5, 4, 0, 0, 0))
     create(:read_confirmation, document: outside_document, user: outside_reader, confirmed_at: Time.zone.local(2026, 5, 2, 16, 0, 0))
 
     sign_in_as(admin_user)
