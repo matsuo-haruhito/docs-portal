@@ -6,7 +6,9 @@
 - comment_search_maxlength = DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH
 - comment_search_active = comment_search_query.present?
 - comment_workspace_tab = @comment_workspace_tab.presence || DocumentCommentWorkspaceTab::DEFAULT_TAB
-- comment_tab_base_params = request.query_parameters.except("comment_tab").merge(only_path: true)
+- comment_tab_base_params = request.query_parameters.except("comment_tab", "comment_q")
+- comment_tab_base_params = comment_tab_base_params.merge("comment_q" => comment_search_query) if comment_search_active
+- comment_tab_base_params = comment_tab_base_params.merge(only_path: true)
 - comment_tab_url = ->(tab) { url_for(comment_tab_base_params.merge(comment_tab: tab)) }
 - comment_search_params = request.query_parameters.except("comment_q", "comment_tab").merge("comment_tab" => comment_workspace_tab)
 - has_review_comments = current_user.internal? && @review_comments.any?
