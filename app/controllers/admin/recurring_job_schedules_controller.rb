@@ -21,11 +21,19 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     @run_status_options = recurring_job_run_status_options
     @selected_run_status = run_status_param
     @selected_run_query = run_query_param
+    @selected_scheduled_from = scheduled_from_param
+    @selected_scheduled_to = scheduled_to_param
+    @run_filter_warnings = []
+
+    scheduled_from = parsed_run_time(@selected_scheduled_from, label: "予定時刻(開始)", beginning: true)
+    scheduled_to = parsed_run_time(@selected_scheduled_to, label: "予定時刻(終了)", end_of_day: true)
 
     runs_scope = @schedule.recurring_job_runs
     @run_status_counts = runs_scope.group(:status).count
     runs_scope = runs_scope.where(status: @selected_run_status) if @selected_run_status.present?
     runs_scope = filter_runs_by_query(runs_scope, @selected_run_query) if @selected_run_query.present?
+    runs_scope = runs_scope.where("scheduled_at >= ?", scheduled_from) if scheduled_from
+    runs_scope = runs_scope.where("scheduled_at <= ?", scheduled_to) if scheduled_to
     @runs = runs_scope.order(scheduled_at: :desc, id: :desc).limit(50)
   end
 
@@ -89,6 +97,14 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     params[:q].to_s.strip.presence
   end
 
+  def scheduled_from_param
+    params[:scheduled_from].to_s.strip.presence
+  end
+
+  def scheduled_to_param
+    params[:scheduled_to].to_s.strip.presence
+  end
+
   def filter_schedules_by_enabled(scope, enabled)
     scope.where(enabled: enabled == "true")
   end
@@ -113,6 +129,28 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
       "LOWER(COALESCE(active_job_id, '')) LIKE :query OR LOWER(COALESCE(error_message, '')) LIKE :query",
       query: like_query
     )
+  end
+
+  def parsed_run_time(value, label:, beginning: false, end_of_day: false)
+    return if value.blank?
+
+    raw_value = value.to_s.strip
+    return invalid_run_time_filter(label, value) unless raw_value.match?(/\d/)
+
+    time = Time.zone.parse(raw_value)
+    return invalid_run_time_filter(label, value) unless time
+    return time.beginning_of_day if beginning && raw_value.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+    return time.end_of_day if end_of_day && raw_value.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+
+    time
+  rescue ArgumentError, TypeError
+    invalid_run_time_filter(label, value)
+  end
+
+  def invalid_run_time_filter(label, value)
+    @run_filter_warnings ||= []
+    @run_filter_warnings << "#{label}「#{value}」は日時として解釈できないため、この条件は適用していません。"
+    nil
   end
 
   def safe_return_to_path(fallback)

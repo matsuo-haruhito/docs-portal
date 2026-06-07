@@ -1,7 +1,8 @@
 - page_title "定期ジョブ詳細"
 - return_to_path = @return_to_path || admin_recurring_job_schedules_path
 - run_triage_counts = ["失敗: #{@run_status_counts.fetch('failed', 0)}件", "実行中: #{@run_status_counts.fetch('running', 0)}件", "キュー待ち: #{@run_status_counts.fetch('enqueued', 0)}件"].join(" / ")
-- run_filter_active = @selected_run_status.present? || @selected_run_query.present?
+- scheduled_filter_active = @selected_scheduled_from.present? || @selected_scheduled_to.present?
+- run_filter_active = @selected_run_status.present? || @selected_run_query.present? || scheduled_filter_active
 
 h1 定期ジョブ詳細
 = render "admin/nav"
@@ -75,18 +76,31 @@ p.actions
     = select_tag :run_status, options_for_select(@run_status_options, @selected_run_status), onchange: "this.form.requestSubmit()"
     = label_tag :q, "ActiveJob ID / エラー"
     = text_field_tag :q, @selected_run_query, placeholder: "ActiveJob ID またはエラー断片"
+    = label_tag :scheduled_from, "予定時刻(開始)"
+    = text_field_tag :scheduled_from, @selected_scheduled_from, placeholder: "YYYY-MM-DD または日時"
+    = label_tag :scheduled_to, "予定時刻(終了)"
+    = text_field_tag :scheduled_to, @selected_scheduled_to, placeholder: "YYYY-MM-DD または日時"
     = submit_tag "絞り込む", class: "button secondary"
     - if run_filter_active
       = link_to "絞り込み解除", admin_recurring_job_schedule_path(@schedule, return_to: return_to_path), class: "button secondary"
   p.muted = "Triage対象: #{run_triage_counts}"
   p.muted = "表示中: #{@runs.size}件（最新50件まで）"
+  - Array(@run_filter_warnings).each do |warning|
+    p.muted = warning
   - if @selected_run_query.present?
     p.muted = "検索対象: ActiveJob ID またはエラー断片（#{@selected_run_query}）"
+  - if scheduled_filter_active
+    - scheduled_from_label = @selected_scheduled_from.presence || "指定なし"
+    - scheduled_to_label = @selected_scheduled_to.presence || "指定なし"
+    p.muted = "予定時刻: #{scheduled_from_label} から #{scheduled_to_label} まで"
 
   - if @runs.empty?
     - if run_filter_active
       p.muted 条件に一致する実行履歴はありません。
-      p.muted 状態や検索語を見直すか、絞り込み解除で最新50件の履歴に戻してください。
+      - if scheduled_filter_active
+        p.muted 状態・検索語・予定時刻を見直すか、絞り込み解除で最新50件の履歴に戻してください。
+      - else
+        p.muted 状態や検索語を見直すか、絞り込み解除で最新50件の履歴に戻してください。
     - else
       p.muted まだ実行履歴はありません。即時実行要求または次回 dispatcher enqueue 後に、結果がここへ最新50件まで表示されます。
   - else
