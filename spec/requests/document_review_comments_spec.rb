@@ -337,6 +337,78 @@ RSpec.describe "Document review comments", type: :request do
     expect(page_text).not_to include("クローズする")
   end
 
+  it "keeps external search from leaking internal-only locations while matching visible replies and normalizing long queries" do
+    public_question = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Release checklist question is public"
+    )
+    visible_reply = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      parent: public_question,
+      author: internal_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Visible reply confirms release evidence"
+    )
+    internal_review = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: internal_user,
+      comment_type: :request_change,
+      internal_only: true,
+      body: "Hidden release evidence escalation",
+      source_path: "docs/internal-release-evidence.md"
+    )
+
+    sign_in_as(external_user)
+
+    get project_document_path(project, document.slug, comment_q: "internal-release-evidence")
+
+    expect(response).to have_http_status(:ok)
+    html = Nokogiri::HTML(response.body)
+    page_text = html.text.squish
+    all_panel_text = html.at_css(".document-comment-tabs__panel--all").text
+
+    expect(page_text).to include("検索条件: internal-release-evidence")
+    expect(page_text).not_to include(internal_review.body)
+    expect(page_text).not_to include("docs/internal-release-evidence.md")
+    expect(page_text).not_to include("確認事項")
+    expect(all_panel_text).to include("検索条件に一致するQ&Aはありません")
+
+    get project_document_path(project, document.slug, comment_q: "visible reply confirms")
+
+    expect(response).to have_http_status(:ok)
+    html = Nokogiri::HTML(response.body)
+    qa_panel_text = html.at_css(".document-comment-tabs__panel--qa").text
+    page_text = html.text
+
+    expect(qa_panel_text).to include(public_question.body)
+    expect(qa_panel_text).to include(visible_reply.body)
+    expect(page_text).not_to include(internal_review.body)
+    expect(page_text).not_to include("docs/internal-release-evidence.md")
+
+    long_query = "x" * (DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH + 5)
+    normalized_query = "x" * DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH
+
+    get project_document_path(project, document.slug, comment_q: long_query)
+
+    expect(response).to have_http_status(:ok)
+    html = Nokogiri::HTML(response.body)
+    search_input = html.at_css(%(input[name="comment_q"]))
+
+    expect(search_input["value"]).to eq(normalized_query)
+    expect(html.text.squish).to include("検索条件: #{normalized_query}")
+    expect(html.text.squish).not_to include(long_query)
+  end
+
   it "allows external users to create public Q&A threads and internal users to reply" do
     sign_in_as(external_user)
 
