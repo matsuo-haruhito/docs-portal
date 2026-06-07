@@ -16,6 +16,7 @@ class Admin::ModelBrowsersController < Admin::BaseController
   def show
     @entry = Admin::ModelBrowserCatalog.fetch!(params[:model_key])
     @query = normalized_model_browser_query(max_length: MODEL_BROWSER_QUERY_MAX_LENGTH)
+    @existing_screen_query_handoff_param = model_browser_query_handoff_param(@entry, @query)
     @searchable_field_labels = searchable_fields(@entry).index_with { summary_field_label(@entry, _1) }
     @records = model_browser_records(@entry, @query)
     @summary = build_summary(@entry)
@@ -113,10 +114,22 @@ class Admin::ModelBrowsersController < Admin::BaseController
     scope.maximum(:updated_at)
   end
 
-  def entry_index_path(entry)
+  def entry_index_path(entry, query: nil)
     return if entry.index_path_helper.blank?
 
-    view_context.public_send(entry.index_path_helper)
+    handoff_param = model_browser_query_handoff_param(entry, query)
+    if handoff_param
+      view_context.public_send(entry.index_path_helper, handoff_param => query)
+    else
+      view_context.public_send(entry.index_path_helper)
+    end
+  end
+
+  def model_browser_query_handoff_param(entry, query)
+    return if query.blank?
+    return if query.match?(/\A\d+\z/)
+
+    Admin::ModelBrowserCatalog.query_handoff_param_for(entry)
   end
 
   def summary_field_label(entry, field)
