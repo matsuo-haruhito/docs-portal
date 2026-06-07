@@ -58,6 +58,8 @@ details class=wrapper_classes.join(" ") open=(!floating)
         p.document-comment-workspace__summary-help.muted 未解決タブには、未解決のQ&Aと内部向け確認事項をまとめて表示します。通知・期限・SLAを示すものではありません。
       - else
         p.document-comment-workspace__summary-help.muted 未解決タブには、まだ回答やクローズがされていないQ&Aを表示します。
+      - if comment_search_active
+        p.document-comment-workspace__summary-help.muted 表示中の件数とタブの未解決件数は、検索条件に一致したコメントだけを基準にしています。
 
     .document-comment-workspace__mode.card
       h3 追加する内容
