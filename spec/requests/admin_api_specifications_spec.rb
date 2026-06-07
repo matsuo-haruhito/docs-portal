@@ -73,9 +73,9 @@ RSpec.describe "Admin API specifications", type: :request do
     stale_source_path = Rails.root.join(stale_source_page.source_path)
     current_html_path = build_root.join(current_source_page.site_path, "index.html")
     stale_html_path = build_root.join(stale_source_page.site_path, "index.html")
-    current_time = Time.zone.local(2026, 1, 1, 10, 0, 0)
-    stale_html_time = Time.zone.local(2026, 1, 1, 9, 0, 0)
-    stale_source_time = Time.zone.local(2026, 1, 1, 11, 0, 0)
+    current_time = Time.zone.local(2026, 1, 1, 10, 0, 0).to_time
+    stale_html_time = Time.zone.local(2026, 1, 1, 9, 0, 0).to_time
+    stale_source_time = Time.zone.local(2026, 1, 1, 11, 0, 0).to_time
 
     touch_api_specification_source_path(current_source_path, time: current_time)
     File.utime(current_time + 1.hour, current_time + 1.hour, current_html_path)
