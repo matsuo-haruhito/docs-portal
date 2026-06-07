@@ -25,8 +25,9 @@ RSpec.describe "Admin API specification source rows", type: :request do
     primary_source_pages.each do |source_page|
       row = source_rows.find { |node| node.text.include?(source_page.label) }
       expect(row).to be_present
-      expect(row.text.gsub(/[[:space:]]+/, " ").strip).to include("編集元Markdown: #{source_page.source_path}")
-      expect(row.text.gsub(/[[:space:]]+/, " ").strip).to include("確認HTML（build後）: #{source_page.site_path}")
+      row_text = row.text.gsub(/[[:space:]]+/, " ").strip
+      expect(row_text).to include("編集元Markdown: #{source_page.source_path}")
+      expect(row_text).to include("HTML確認先（build後）: #{source_page.site_path}")
 
       html_link = row.css("a[href]").find { |link| link.text.squish == source_page.site_path }
       expect(html_link).to be_present
