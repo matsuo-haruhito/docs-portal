@@ -32,6 +32,16 @@ class Admin::ApiSpecificationPage
 
   PrimarySourcePage = Struct.new(:label, :site_path, :source_path, keyword_init: true)
 
+  SourceFreshness = Struct.new(
+    :source_page,
+    :state,
+    :label,
+    :message,
+    :source_mtime,
+    :site_mtime,
+    keyword_init: true
+  )
+
   PRIMARY_SOURCE_PAGES = [
     { label: "API仕様・連携設定", site_path: SITE_PATH, source_path: "docs-src/api-specification.md" },
     { label: "単体ファイルアップロードAPI", site_path: "client-file-upload-api", source_path: "docs-src/client-file-upload-api.md" },
@@ -61,6 +71,23 @@ class Admin::ApiSpecificationPage
 
   def primary_source_paths
     primary_source_pages.map(&:source_path)
+  end
+
+  def primary_source_page_freshness(source_page)
+    source_file_path = Rails.root.join(source_page.source_path)
+    site_file_path = build_root.join(source_page.site_path, "index.html")
+    source_mtime = source_file_path.mtime if source_file_path.exist?
+    site_mtime = site_file_path.mtime if site_file_path.exist?
+    state = source_freshness_state(source_mtime:, site_mtime:)
+
+    SourceFreshness.new(
+      source_page:,
+      state:,
+      label: source_freshness_label(state),
+      message: source_freshness_message(state),
+      source_mtime:,
+      site_mtime:
+    )
   end
 
   def source_paths
@@ -308,6 +335,44 @@ class Admin::ApiSpecificationPage
       "build 失敗"
     when :requested
       "build 待ち/実行中"
+    end
+  end
+
+  def source_freshness_state(source_mtime:, site_mtime:)
+    if source_mtime.nil?
+      :missing
+    elsif site_mtime.nil?
+      :html_missing
+    elsif source_mtime > site_mtime
+      :stale
+    else
+      :current
+    end
+  end
+
+  def source_freshness_label(state)
+    case state
+    when :missing
+      "Source missing"
+    when :html_missing
+      "HTML未生成"
+    when :stale
+      "Source更新あり"
+    when :current
+      "HTML追従済み"
+    end
+  end
+
+  def source_freshness_message(state)
+    case state
+    when :missing
+      "Source file が見つかりません。全体 build 状態とは別に source path を確認してください。"
+    when :html_missing
+      "生成HTMLが未確認です。build 完了後にHTML確認先を開いてください。"
+    when :stale
+      "Source がHTMLより新しい可能性があります。build 後にHTML確認先を確認してください。"
+    when :current
+      "Source と生成HTMLの更新時刻に大きな差はありません。"
     end
   end
 
