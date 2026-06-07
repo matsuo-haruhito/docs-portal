@@ -3,6 +3,8 @@ require "csv"
 class Admin::DocumentUsageReportsController < Admin::BaseController
   before_action :require_admin_only!
 
+  include Admin::BoundedProjectOptions
+
   DOCUMENT_USAGE_QUERY_MAX_LENGTH = 100
 
   CSV_HEADERS = [
@@ -19,8 +21,8 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
   ].freeze
 
   def index
-    @projects = Project.order(:name, :id)
     @selected_project = selected_project
+    @projects = bounded_project_options(@selected_project)
     @usage_filter = usage_filter_param
     @sort_order = sort_order_param
     @query = query_param
@@ -48,7 +50,7 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
   def selected_project
     return if params[:project_id].blank?
 
-    @projects.find_by(id: params[:project_id])
+    Project.find_by(id: params[:project_id])
   end
 
   def usage_filter_param
