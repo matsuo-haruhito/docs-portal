@@ -39,12 +39,13 @@ p.muted
   - if @status_filter.present?
     = hidden_field_tag :status, @status_filter
   p.actions
-    = form.search_field :q, value: @query, placeholder: "対象名・理由で検索", maxlength: access_request_query_max_length
+    = form.search_field :q, value: @query, placeholder: "対象名・案件コード・ID・ファイル名・理由で検索", maxlength: access_request_query_max_length
     = form.select :requested_access_level, options_for_select(requested_access_level_options, @requested_access_level_filter)
     = form.select :requestable_type, options_for_select(requestable_type_options, @requestable_type_filter)
     = form.submit "検索", class: "button"
     - if has_filter
       = link_to "条件をクリア", access_requests_path, class: "button secondary"
+  p.muted 案件コード・対象ID・ファイル名・理由で検索できます。
 
 p.actions
   = link_to "すべて (#{total_count})", access_requests_path(current_filter_params), class: @status_filter.blank? ? "button" : "button secondary"
