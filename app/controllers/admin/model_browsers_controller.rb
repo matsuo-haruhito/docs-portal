@@ -7,7 +7,7 @@ class Admin::ModelBrowsersController < Admin::BaseController
   helper_method :entry_index_path, :record_summary_value, :summary_field_label
 
   def index
-    @query = normalized_model_browser_query
+    @query = normalized_model_browser_query(max_length: MODEL_BROWSER_QUERY_MAX_LENGTH)
     @entries = filter_entries(Admin::ModelBrowserCatalog.entries, @query)
     @entry_groups = Admin::ModelBrowserCatalog.grouped_entries(@entries)
     @entry_summaries = @entries.index_with { build_summary(_1) }
