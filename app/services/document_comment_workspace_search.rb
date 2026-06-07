@@ -18,7 +18,8 @@ class DocumentCommentWorkspaceSearch
     return records unless active?
 
     records.select do |thread|
-      matches_text?(thread.body) || thread.replies.visible_to(@user).any? { |reply| matches_text?(reply.body) }
+      question_search_fields(thread).any? { |value| matches_text?(value) } ||
+        thread.replies.visible_to(@user).any? { |reply| question_reply_search_fields(reply).any? { |value| matches_text?(value) } }
     end
   end
 
@@ -33,9 +34,26 @@ class DocumentCommentWorkspaceSearch
 
   private
 
+  def question_search_fields(thread)
+    [
+      thread.body,
+      thread.author&.name,
+      thread.document_version&.version_label
+    ]
+  end
+
+  def question_reply_search_fields(reply)
+    [
+      reply.body,
+      reply.author&.name
+    ]
+  end
+
   def review_search_fields(comment)
     [
       comment.body,
+      comment.author&.name,
+      comment.document_version&.version_label,
       comment.source_path,
       comment.text_anchor_path,
       comment.text_anchor_label,
