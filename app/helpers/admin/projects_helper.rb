@@ -11,4 +11,28 @@ module Admin::ProjectsHelper
       table_preferences_column(:actions, label: "操作", default_width: 180, pinned: true)
     ]
   end
+
+  def admin_project_filter_labels(filters, companies)
+    filters = filters.to_h
+    labels = []
+    query = filters["q"].to_s.strip
+    labels << "検索: #{query}" if query.present?
+
+    case filters["active"].to_s
+    when "true"
+      labels << "状態: 有効"
+    when "false"
+      labels << "状態: 無効"
+    end
+
+    company_id = filters["company_id"].to_s
+    if company_id == "none"
+      labels << "企業: 企業未設定"
+    elsif company_id.match?(/\A\d+\z/)
+      company = companies.find { |candidate| candidate.id.to_s == company_id }
+      labels << "企業: #{company.display_name}" if company.present?
+    end
+
+    labels
+  end
 end
