@@ -16,6 +16,10 @@ RSpec.describe "Admin model browsers", type: :request do
     parsed_html.css(".model-browser-group .metric-card")
   end
 
+  def page_hrefs
+    parsed_html.css("a[href]").map { _1["href"] }
+  end
+
   it "redirects unauthenticated users to the login page" do
     get admin_model_browser_path
 
@@ -128,7 +132,7 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include(project.name)
   end
 
-  it "filters model pages by whitelisted text summary fields" do
+  it "filters model pages by whitelisted text summary fields and hands the query to compatible admin indexes" do
     matching_project = create(:project, code: "SEARCH1674", name: "Needle Project")
     other_project = create(:project, code: "OTHER1674", name: "Other Project")
 
@@ -138,9 +142,8 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果")
     expect(response.body).to include("検索語: Needle / 表示上限: 20件")
-    expect(response.body).to include("既存画面で続けて確認する場合は、検索語「Needle」をコピーして")
-    expect(response.body).to include("対象画面の検索欄や絞り込みで再確認してください。")
-    expect(response.body).to include(admin_projects_path)
+    expect(response.body).to include("「既存画面で詳しく確認」は検索語「Needle」を既存画面の検索条件に引き継ぎます。")
+    expect(page_hrefs).to include(admin_projects_path(q: "Needle"))
     expect(response.body).to include("検索対象:")
     expect(response.body).to include("コード")
     expect(response.body).to include(matching_project.code)
@@ -160,7 +163,18 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).not_to include("既存画面で続けて確認する場合")
   end
 
-  it "matches numeric queries against id without adding write actions" do
+  it "keeps unsupported existing screen links without query handoff" do
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("document_permissions"), params: { q: "download" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("既存画面で詳しく確認")
+    expect(response.body).to include("既存画面で続けて確認する場合は、検索語「download」をコピーして")
+    expect(page_hrefs).to include(admin_document_permissions_path)
+    expect(page_hrefs).not_to include(admin_document_permissions_path(q: "download"))
+  end
+
+  it "matches numeric queries against id without adding write actions or query handoff" do
     matching_project = create(:project, code: "IDMATCH1674", name: "ID Match Project")
     other_project = create(:project, code: "IDOTHER1674", name: "ID Other Project")
 
@@ -170,6 +184,8 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(matching_project.code)
     expect(response.body).to include("数値だけの検索語はこの read-only 画面の ID 照合にも使われる")
+    expect(page_hrefs).to include(admin_projects_path)
+    expect(page_hrefs).not_to include(admin_projects_path(q: matching_project.id.to_s))
     expect(response.body).not_to include(other_project.code)
     expect(response.body).not_to include("削除")
   end
