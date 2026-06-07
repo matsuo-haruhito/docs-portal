@@ -12,6 +12,15 @@
 
 UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロントエンド操作の方針](../doc/frontend_interaction_policy.md) も先に確認してください。実画面への internal UI gem 展開候補は [ROADMAP](../ROADMAP.md) を入口にし、screen-by-screen adoption、release train、representative smoke の読み分けは [関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) で確認します。
 
+## タスク別入口
+
+- 利用者画面 / viewer: [ダッシュボードと文書ショートカット・確認依頼の使い分け](./ダッシュボードと文書ショートカット・確認依頼の使い分け.md) から入り、文書詳細・版詳細・ZIP・アクセス申請は日常 UI / viewer の runbook を辿ります。
+- admin 運用: [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md) を入口にし、アクセス申請、文書マスタ、文書セット、監査ログ、文書利用状況は admin 運用の各 runbook を確認します。
+- import / build / sync: [build-docs workflow確認runbook](./build-docs%20workflow%E7%A2%BA%E8%AA%8Drunbook.md) と [手動アップロード差異確認runbook](./手動アップロード差異確認runbook.md) から、Git連携、ZIP、internal upload API、外部フォルダ同期へ進みます。
+- 外部連携 / preview: [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md) と [Microsoft Graph接続管理runbook](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E7%AE%A1%E7%90%86runbook.md) を起点に、preview 接続や外部フォルダ同期の境界を確認します。
+- 監視 / インフラ: [監視・アラート設計](./監視・アラート設計.md)、[リリース・デプロイ・rollback手順](./リリース・デプロイ・rollback手順.md)、[バックアップ・リストア手順](./バックアップ・リストア手順.md) を先に見ます。
+- internal UI gem: [internal UI gem adoption evidence map](./internal-ui-gem-adoption-evidence-map.md) と [関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) で upstream evidence、downstream smoke、release train の役割を切り分けます。
+
 ## 仕様
 
 - [アプリケーション仕様](./アプリケーション仕様.md)
