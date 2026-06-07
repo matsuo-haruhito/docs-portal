@@ -84,8 +84,10 @@ section.card
   h2 主要ページとsource
   p.muted 表示状態はAPI仕様ページ全体のbuild結果です。個別ページは、編集元Markdownを直してからDocusaurus build後の確認HTMLを開いて確認してください。
   p.muted Source path はリポジトリ内の編集元Markdownです。確認HTMLは build 後に生成される admin-only の表示先です。
+  p.muted 行別Freshness cueはSourceと生成HTMLの更新時刻だけを比べ、build queueやiframe配信条件は変更しません。
   ul
     - @api_specification_page.primary_source_pages.each do |source_page|
+      - freshness = @api_specification_page.primary_source_page_freshness(source_page)
       li
         strong = source_page.label
         br
@@ -94,6 +96,21 @@ section.card
         br
         span.muted HTML確認先（build後）: 
         = link_to source_page.site_path, site_admin_api_specification_path(site_path: source_page.site_path)
+        br
+        span.muted Freshness: 
+        strong = freshness.label
+        span.muted = " - #{freshness.message}"
+        br
+        span.muted Source更新: 
+        - if freshness.source_mtime
+          = l(freshness.source_mtime, format: :long)
+        - else
+          | -
+        span.muted = " / HTML更新: "
+        - if freshness.site_mtime
+          = l(freshness.site_mtime, format: :long)
+        - else
+          | -
 
 section.card
   - if @api_specification_page.available?
