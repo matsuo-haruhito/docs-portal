@@ -17,11 +17,15 @@ RSpec.describe "Admin API specifications", type: :request do
 
   before do
     @original_api_specification_site_index = site_index_path.exist? ? site_index_path.read : nil
+    @api_specification_site_fixture_paths = []
+    @api_specification_source_mtimes = {}
     allow_any_instance_of(Admin::ApiSpecificationPage).to receive(:enqueue_build_if_stale!).and_return(false)
   end
 
   after do
     restore_api_specification_site_index
+    cleanup_primary_source_site_fixtures
+    restore_api_specification_source_mtimes
     FileUtils.rm_f(asset_css_path)
     FileUtils.rm_f(runtime_js_path)
     FileUtils.rm_f(build_status_marker_path)
@@ -40,12 +44,57 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response.body).to include("表示状態はAPI仕様ページ全体のbuild結果です。")
     expect(response.body).to include("HTML確認先")
     expect(response.body).to include("Source")
+    expect(response.body).to include("Freshness")
+    expect(response.body).to include("Source更新")
+    expect(response.body).to include("HTML更新")
     primary_source_pages.each do |source_page|
       expect(response.body).to include(source_page.label)
       expect(response.body).to include(source_page.source_path)
       expect(response.body).to include(source_page.site_path)
       expect(response.body).to include(site_admin_api_specification_path(site_path: source_page.site_path))
     end
+  end
+
+  it "shows row-level freshness cues for current, stale, and missing primary sources" do
+    current_source_page = primary_source_pages.first
+    stale_source_page = primary_source_pages.second
+    missing_source_page = Admin::ApiSpecificationPage::PrimarySourcePage.new(
+      label: "Missing source fixture",
+      site_path: "missing-source-fixture",
+      source_path: "docs-src/missing-source-fixture.md"
+    )
+    allow_any_instance_of(Admin::ApiSpecificationPage).to receive(:primary_source_pages).and_return(
+      [current_source_page, stale_source_page, missing_source_page]
+    )
+    write_api_specification_site_fixture
+    write_primary_source_site_fixture(stale_source_page)
+
+    current_source_path = Rails.root.join(current_source_page.source_path)
+    stale_source_path = Rails.root.join(stale_source_page.source_path)
+    current_html_path = build_root.join(current_source_page.site_path, "index.html")
+    stale_html_path = build_root.join(stale_source_page.site_path, "index.html")
+    current_time = Time.zone.local(2026, 1, 1, 10, 0, 0)
+    stale_html_time = Time.zone.local(2026, 1, 1, 9, 0, 0)
+    stale_source_time = Time.zone.local(2026, 1, 1, 11, 0, 0)
+
+    touch_api_specification_source_path(current_source_path, time: current_time)
+    File.utime(current_time + 1.hour, current_time + 1.hour, current_html_path)
+    touch_api_specification_source_path(stale_source_path, time: stale_source_time)
+    File.utime(stale_html_time, stale_html_time, stale_html_path)
+
+    sign_in_as(admin_user)
+
+    get admin_api_specification_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("行別cueはSourceと生成HTMLの更新時刻だけを比べ")
+    expect(response.body).to include("HTML追従済み")
+    expect(response.body).to include("Source と生成HTMLの更新時刻に大きな差はありません。")
+    expect(response.body).to include("Source更新あり")
+    expect(response.body).to include("Source がHTMLより新しい可能性があります。")
+    expect(response.body).to include("Source missing")
+    expect(response.body).to include("Source file が見つかりません。")
+    expect(response.body).to include("Missing source fixture")
   end
 
   it "keeps primary source page paths aligned with docs-src front matter slugs" do
@@ -315,6 +364,18 @@ RSpec.describe "Admin API specifications", type: :request do
     File.write(runtime_js_path, '(()=>{f.p="/";var d=f.p+f.u(r);return d;})();')
   end
 
+  def write_primary_source_site_fixture(source_page)
+    path = build_root.join(source_page.site_path, "index.html")
+    FileUtils.mkdir_p(path.dirname)
+    File.write(path, "<html><body>#{source_page.label}</body></html>")
+    @api_specification_site_fixture_paths << path unless path == site_index_path
+  end
+
+  def touch_api_specification_source_path(path, time:)
+    @api_specification_source_mtimes[path.to_s] ||= { atime: path.atime, mtime: path.mtime }
+    File.utime(time, time, path)
+  end
+
   def write_failed_build_marker(message)
     FileUtils.mkdir_p(build_status_marker_path.dirname)
     File.write(
@@ -340,6 +401,19 @@ RSpec.describe "Admin API specifications", type: :request do
     else
       FileUtils.rm_f(site_index_path)
       FileUtils.rmdir(site_root) if site_root.exist? && site_root.children.empty?
+    end
+  end
+
+  def cleanup_primary_source_site_fixtures
+    @api_specification_site_fixture_paths.reverse_each do |path|
+      FileUtils.rm_f(path)
+      FileUtils.rmdir(path.dirname) if path.dirname.exist? && path.dirname.children.empty?
+    end
+  end
+
+  def restore_api_specification_source_mtimes
+    @api_specification_source_mtimes.each do |path, timestamps|
+      File.utime(timestamps[:atime], timestamps[:mtime], path) if File.exist?(path)
     end
   end
 end
