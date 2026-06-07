@@ -278,6 +278,37 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response).to have_http_status(:not_found)
   end
 
+  it "does not serve files outside the API specification build root" do
+    write_api_specification_site_fixture
+    write_failed_build_marker("private build marker token=raw-secret")
+    sign_in_as(admin_user)
+
+    get site_admin_api_specification_path(site_path: "../../tmp/api_specification_build.status.json")
+
+    expect(response).to have_http_status(:not_found)
+    expect(response.body).not_to include("private build marker")
+    expect(response.body).not_to include("raw-secret")
+  end
+
+  it "does not serve source Markdown through the admin site route" do
+    write_api_specification_site_fixture
+    sign_in_as(admin_user)
+
+    get site_admin_api_specification_path(site_path: "docs-src/api-specification.md")
+
+    expect(response).to have_http_status(:not_found)
+    expect(response.body).not_to include("slug: /api-specification")
+  end
+
+  it "returns not found for missing API specification assets" do
+    write_api_specification_site_fixture
+    sign_in_as(admin_user)
+
+    get site_admin_api_specification_path(site_path: "assets/css/missing-api-specification.css")
+
+    expect(response).to have_http_status(:not_found)
+  end
+
   it "keeps the admin site route limited to internal admins" do
     write_api_specification_site_fixture
 
