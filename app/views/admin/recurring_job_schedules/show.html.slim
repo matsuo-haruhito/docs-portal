@@ -84,7 +84,11 @@ p.actions
     p.muted = "検索対象: ActiveJob ID またはエラー断片（#{@selected_run_query}）"
 
   - if @runs.empty?
-    p.muted 条件に一致する実行履歴はありません。
+    - if run_filter_active
+      p.muted 条件に一致する実行履歴はありません。
+      p.muted 状態や検索語を見直すか、絞り込み解除で最新50件の履歴に戻してください。
+    - else
+      p.muted まだ実行履歴はありません。即時実行要求または次回 dispatcher enqueue 後に、結果がここへ最新50件まで表示されます。
   - else
     = table_tag do
       thead
