@@ -45,7 +45,7 @@
 - artifact の永続保存方式と再取り込み replay 方針の first slice は #1039 で completed。後続で実装する場合は、保存期間・アクセス制御・replay 対象の確定範囲を個別 issue に切る
 - `latest_version` の明示切り替えや別ルール更新を入れる場合は、現行の created_at 基準との差分を `#1112` の latest_version 明示切り替え contract と合わせて扱う
 - `artifact_imports` / `zip_uploads` / `file_uploads` の dry-run 作成と apply の見分け方は [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md) を正本にする。manual upload dry-run の管理画面確認が変わった場合は #1607 の docs sync で追従する
-- manual upload dry-run の後続判断は、広い確認導線 issue #1604 を再利用して要件を重複させず、raw `source_path` 表示は #1613、後から探せる一覧入口は #1614 のように concrete issue で扱う
+- manual upload dry-run の後続判断は、広い確認導線 issue #1604 を再利用して要件を重複させず、raw `source_path` 表示は #1613、後から探せる一覧入口は #1614、詳細画面から internal upload runbook へ戻る導線は #2224 のように concrete issue で扱う。#1607 の docs sync は completed のため、ToDo には runbook 要件を重複して残さない
 
 ## Docusaurus / seed
 
