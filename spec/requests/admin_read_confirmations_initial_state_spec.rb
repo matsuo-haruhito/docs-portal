@@ -22,7 +22,7 @@ RSpec.describe "Admin read confirmations initial state", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("案件を選択してください")
-    expect(page_text).to include("既読確認内訳は、まず案件を選ぶと表示されます。")
+    expect(page_text).to include("案件を選択すると既読確認の内訳を表示します。")
     expect(page_text).to include("文書URL識別子、期間、会社、確認者は、案件を選択した後に既読確認の明細を絞り込む条件です。")
     expect(page_text).to include("CSV出力と表示設定は、案件選択後の内訳表示で利用できます。")
     expect(page_text).not_to include("Manual")
