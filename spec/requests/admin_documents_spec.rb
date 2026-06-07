@@ -51,8 +51,12 @@ RSpec.describe "Admin documents", type: :request do
     end
   end
 
+  def row_column_cell(title, column_key)
+    document_row_for(title)&.at_css(%(td[data-rails-table-preferences-column-key="#{column_key}"]))
+  end
+
   def row_column_text(title, column_key)
-    cell = document_row_for(title)&.at_css(%(td[data-rails-table-preferences-column-key="#{column_key}"]))
+    cell = row_column_cell(title, column_key)
     cell&.xpath(".//text()")&.map { |node| node.text.squish }&.reject(&:empty?)&.join(" ")
   end
 
@@ -288,6 +292,64 @@ RSpec.describe "Admin documents", type: :request do
     expect(row_column_text("Failed Preview Document", "latest_version")).to include("v2.0", "公開期間中", "プレビュー失敗")
     expect(row_column_text("No Latest Document", "latest_version")).to include("最新版なし", "公開版がまだ選択されていません")
     expect(row_column_text("Archived Document", "status")).to include("アーカイブ済み")
+  end
+
+  it "shows only non-latest document versions as read-only legacy candidates" do
+    document = create(:document, title: "Legacy Version Document", slug: "legacy-version")
+    create(
+      :document_version,
+      document:,
+      version_label: "v1.0",
+      source_relative_path: "docs/legacy.md",
+      updated_at: 3.days.ago
+    )
+    create(
+      :document_version,
+      document:,
+      status: :draft,
+      version_label: "manual-draft",
+      source_relative_path: "manual/uploads/draft.md",
+      updated_at: 2.days.ago
+    )
+    create(
+      :document_version,
+      document:,
+      status: :archived,
+      version_label: "v0.8",
+      updated_at: 1.day.ago
+    )
+    latest_version = create(
+      :document_version,
+      document:,
+      version_label: "v2.0",
+      source_relative_path: "docs/latest.md",
+      updated_at: Time.current
+    )
+    document.update!(latest_version: latest_version)
+
+    no_legacy_document = create(:document, title: "No Legacy Version Document", slug: "no-legacy-version")
+    create(:document_version, document: no_legacy_document, version_label: "v1.0", source_relative_path: "docs/only.md")
+
+    sign_in_as(admin_user)
+
+    get admin_documents_path
+
+    expect(response).to have_http_status(:ok)
+
+    legacy_cell = row_column_cell("Legacy Version Document", "legacy_versions")
+    legacy_text = legacy_cell.text.squish
+
+    expect(legacy_text).to include("3件")
+    expect(legacy_text).to include("latest以外のread-only候補です。削除・archive判断はしません。")
+    expect(legacy_text).to include("v1.0", "公開中", "source: docs/legacy.md")
+    expect(legacy_text).to include("manual-draft", "下書き", "manual upload由来の可能性", "source: manual/uploads/draft.md")
+    expect(legacy_text).to include("v0.8", "アーカイブ済み", "source未設定")
+    expect(legacy_text).not_to include("v2.0", "source: docs/latest.md")
+    expect(legacy_cell.css("a[href], form[action]")).to be_empty
+
+    no_legacy_cell = row_column_cell("No Legacy Version Document", "legacy_versions")
+    expect(no_legacy_cell.text.squish).to include("候補なし", "latest以外の版はありません")
+    expect(no_legacy_cell.css("a[href], form[action]")).to be_empty
   end
 
   it "finds the edit page by public_id and rejects numeric ids and slugs" do
