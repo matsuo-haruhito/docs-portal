@@ -1,7 +1,8 @@
 class AccessRequestsController < BaseController
   ACCESS_REQUEST_QUERY_MAX_LENGTH = 100
+  ACCESS_REQUEST_LIST_LIMIT = 100
 
-  helper_method :access_request_query_max_length
+  helper_method :access_request_query_max_length, :access_request_list_limit
 
   def index
     @status_filter = normalized_status_filter
@@ -10,9 +11,12 @@ class AccessRequestsController < BaseController
     @requestable_type_filter = normalized_requestable_type_filter
 
     scope = AccessRequest.where(requester: current_user).recent_first.includes(:approver, :requestable)
-    @access_requests = filtered_access_requests(scope)
-    @status_counts = access_request_status_counts(scope, @access_requests)
-    @access_requests = @access_requests.select { |access_request| access_request.status == @status_filter } if @status_filter.present?
+    filtered_scope = filtered_access_request_scope(scope)
+    @status_counts = access_request_status_counts(filtered_scope)
+    filtered_scope = filtered_scope.where(status: @status_filter) if @status_filter.present?
+    @access_request_total_count = filtered_scope.unscope(:order).count
+    @access_requests = filtered_scope.limit(ACCESS_REQUEST_LIST_LIMIT).to_a
+    @access_requests_truncated = @access_request_total_count > @access_requests.size
   end
 
   def create
@@ -40,55 +44,62 @@ class AccessRequestsController < BaseController
 
   private
 
-  def filtered_access_requests(scope)
-    requests = filtered_access_request_scope(scope).to_a
-    return requests if @query.blank?
-
-    requests.select { |access_request| access_request_matches_query?(access_request, @query) }
-  end
-
   def filtered_access_request_scope(scope)
     scope = scope.where(requested_access_level: @requested_access_level_filter) if @requested_access_level_filter.present?
     scope = scope.where(requestable_type: @requestable_type_filter) if @requestable_type_filter.present?
+    scope = scope.where(access_request_query_sql, access_request_query_bindings) if @query.present?
     scope
   end
 
-  def access_request_matches_query?(access_request, query)
-    access_request_search_text(access_request).include?(query.downcase)
+  def access_request_query_sql
+    <<~SQL.squish
+      LOWER(access_requests.reason) LIKE :query OR
+      EXISTS (
+        SELECT 1 FROM projects
+        WHERE access_requests.requestable_type = 'Project'
+          AND projects.id = access_requests.requestable_id
+          AND (
+            LOWER(projects.code) LIKE :query OR
+            LOWER(projects.name) LIKE :query OR
+            LOWER(projects.public_id) LIKE :query
+          )
+      ) OR
+      EXISTS (
+        SELECT 1 FROM documents
+        LEFT JOIN projects ON projects.id = documents.project_id
+        WHERE access_requests.requestable_type = 'Document'
+          AND documents.id = access_requests.requestable_id
+          AND (
+            LOWER(documents.title) LIKE :query OR
+            LOWER(documents.public_id) LIKE :query OR
+            LOWER(projects.code) LIKE :query
+          )
+      ) OR
+      EXISTS (
+        SELECT 1 FROM document_files
+        INNER JOIN document_versions ON document_versions.id = document_files.document_version_id
+        INNER JOIN documents ON documents.id = document_versions.document_id
+        LEFT JOIN projects ON projects.id = documents.project_id
+        WHERE access_requests.requestable_type = 'DocumentFile'
+          AND document_files.id = access_requests.requestable_id
+          AND (
+            LOWER(document_files.file_name) LIKE :query OR
+            LOWER(document_files.public_id) LIKE :query OR
+            LOWER(documents.title) LIKE :query OR
+            LOWER(projects.code) LIKE :query
+          )
+      )
+    SQL
   end
 
-  def access_request_search_text(access_request)
-    request_hash = AccessRequestHash.new(access_request).call
-    requestable = request_hash[:requestable] || {}
-
-    [
-      request_hash[:reason],
-      requestable[:code],
-      requestable[:name],
-      requestable[:project_code],
-      requestable[:title],
-      requestable[:document_title],
-      requestable[:file_name],
-      requestable[:public_id]
-    ].compact.join(" ").downcase
+  def access_request_query_bindings
+    { query: "%#{ActiveRecord::Base.sanitize_sql_like(@query.downcase)}%" }
   end
 
-  def access_request_status_counts(scope, access_requests)
-    return access_request_status_counts_from_loaded(access_requests) if filtered_status_count?
-
+  def access_request_status_counts(scope)
     counts = scope.unscope(:order).group(:status).count
     AccessRequest.statuses.keys.to_h do |status|
       [status, counts[status].to_i]
-    end
-  end
-
-  def filtered_status_count?
-    @query.present? || @requested_access_level_filter.present? || @requestable_type_filter.present?
-  end
-
-  def access_request_status_counts_from_loaded(access_requests)
-    AccessRequest.statuses.keys.to_h do |status|
-      [status, access_requests.count { |access_request| access_request.status == status }]
     end
   end
 
@@ -131,6 +142,10 @@ class AccessRequestsController < BaseController
 
   def access_request_query_max_length
     ACCESS_REQUEST_QUERY_MAX_LENGTH
+  end
+
+  def access_request_list_limit
+    ACCESS_REQUEST_LIST_LIMIT
   end
 
   def find_requestable
