@@ -8,10 +8,12 @@ class Admin::FileUploadDryRunsController < Admin::BaseController
     @selected_status = status_param
     @selected_project_id = project_id_param
     @selected_dry_run_id = dry_run_id_param
+    @selected_query = query_param
     @dry_runs = ImportDryRun.where(import_mode: :manual_upload).includes(:project).order(created_at: :desc, id: :desc)
     @dry_runs = @dry_runs.where(status: @selected_status) if @selected_status.present?
     @dry_runs = @dry_runs.where(project_id: @selected_project_id) if @selected_project_id.present?
     @dry_runs = @dry_runs.where(public_id: @selected_dry_run_id) if @selected_dry_run_id.present?
+    @dry_runs = apply_preview_metadata_query(@dry_runs) if @selected_query.present?
   end
 
   def show
@@ -71,6 +73,22 @@ class Admin::FileUploadDryRunsController < Admin::BaseController
 
   def dry_run_id_param
     params[:dry_run_id].to_s.strip.presence
+  end
+
+  def query_param
+    params[:q].to_s.strip.presence
+  end
+
+  def apply_preview_metadata_query(scope)
+    pattern = "%#{ActiveRecord::Base.sanitize_sql_like(@selected_query)}%"
+    scope.where(
+      <<~SQL.squish,
+        COALESCE(import_dry_runs.result_json #>> '{file_upload_preview,source_name}', '') ILIKE :query
+        OR COALESCE(import_dry_runs.result_json #>> '{file_upload_preview,relative_path}', '') ILIKE :query
+        OR COALESCE(import_dry_runs.result_json #>> '{file_upload_preview,content_hash}', '') ILIKE :query
+      SQL
+      query: pattern
+    )
   end
 
   def import_dry_run_status_label_value(status)
