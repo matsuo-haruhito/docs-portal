@@ -281,6 +281,37 @@ RSpec.describe "Access requests", type: :request do
     expect(page_text).not_to include("Other user manual file")
   end
 
+  it "bounds query result rows while keeping filtered status counts readable" do
+    sign_in_as(user)
+
+    101.times do |index|
+      create(
+        :access_request,
+        requester: user,
+        requestable: file,
+        requested_access_level: :download,
+        status: :cancelled,
+        cancelled_at: Time.current,
+        reason: format("bounded request %03d", index + 1)
+      )
+    end
+
+    get access_requests_path, params: {
+      q: "bounded",
+      status: :cancelled,
+      requested_access_level: :download,
+      requestable_type: "DocumentFile"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("申請中 0件 / 承認済み 0件 / 却下 0件 / 取消済み 101件")
+    expect(page_text).to include("表示件数: 101件中100件を新しい順で表示しています。")
+    expect(page_text).to include("条件を追加すると目的の申請を探しやすくなります。")
+    expect(parsed_html.css("tbody tr").size).to eq(AccessRequestsController::ACCESS_REQUEST_LIST_LIMIT)
+    expect(page_text).to include("bounded request 101")
+    expect(page_text).not_to include("bounded request 001")
+  end
+
   it "shows localized labels for requestable type, access level, and status on the index" do
     localized_project = create(:project, code: "LOC", name: "案件A")
     localized_document = create(:document, project: localized_project, title: "利用規約", slug: "terms", visibility_policy: :restricted_external)
