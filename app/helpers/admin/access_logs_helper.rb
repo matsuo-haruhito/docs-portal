@@ -7,6 +7,10 @@ module Admin::AccessLogsHelper
     "all" => "全件",
     "selected" => "選択"
   }.freeze
+  ACCESS_LOG_DATE_FILTER_LABELS = {
+    from: "開始日",
+    to: "終了日"
+  }.freeze
   SENSITIVE_TARGET_KEY_PATTERN = /\b(authorization|token|secret|password|client_secret|access_token|refresh_token)=([^;&\s]+)/i
   SENSITIVE_TARGET_QUERY_PATTERN = /([?&](?:authorization|token|secret|password|client_secret|access_token|refresh_token)=)([^&#\s]+)/i
   PRIVATE_PATH_PATTERN = %r{(?:[A-Za-z]:[\\/]|/(?:Users|home)/)[^;\s]+}
@@ -35,6 +39,12 @@ module Admin::AccessLogsHelper
 
   def access_log_ai_context_scope_filter_options
     AI_CONTEXT_SCOPE_FILTER_LABELS.map { |value, label| [label, value] }
+  end
+
+  def access_log_ignored_date_filter_label(filters)
+    Array(filters).map do |filter|
+      ACCESS_LOG_DATE_FILTER_LABELS.fetch(filter.to_sym, filter.to_s)
+    end.join("、")
   end
 
   def access_log_filter_select_html_options(placeholder:)

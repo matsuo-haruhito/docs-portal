@@ -30,6 +30,7 @@ class Admin::AccessLogsController < Admin::BaseController
 
   def index
     @filters = filter_params
+    @ignored_date_filters = []
 
     respond_to do |format|
       format.html do
@@ -108,19 +109,20 @@ class Admin::AccessLogsController < Admin::BaseController
   end
 
   def apply_accessed_at_filters(scope)
-    from_date = parse_filter_date(@filters[:from])
-    to_date = parse_filter_date(@filters[:to])
+    from_date = parse_filter_date(@filters[:from], :from)
+    to_date = parse_filter_date(@filters[:to], :to)
 
     scope = scope.where("accessed_at >= ?", from_date.beginning_of_day) if from_date
     scope = scope.where("accessed_at <= ?", to_date.end_of_day) if to_date
     scope
   end
 
-  def parse_filter_date(value)
+  def parse_filter_date(value, filter_name = nil)
     return if value.blank?
 
     Date.iso8601(value.to_s)
   rescue ArgumentError
+    @ignored_date_filters << filter_name if filter_name && !@ignored_date_filters.include?(filter_name)
     nil
   end
 

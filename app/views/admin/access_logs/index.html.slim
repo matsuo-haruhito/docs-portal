@@ -64,6 +64,11 @@ section.card
     p.actions
       = form.submit "検索"
       = link_to "条件をクリア", admin_access_logs_path
+    - if @ignored_date_filters.present?
+      p.muted
+        | 無効な日付条件は検索から除外しました: 
+        strong = access_log_ignored_date_filter_label(@ignored_date_filters)
+        | 。有効な日付条件だけで監査ログを絞り込んでいます。
 
   p.actions
     = link_to "現在の条件でCSV export（最新200件）", admin_access_logs_path(@pagination_params.merge(format: :csv)), class: "button secondary"
