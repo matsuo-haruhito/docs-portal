@@ -20,7 +20,8 @@
 - source が HTML より新しい場合、画面表示時に build が enqueue されることがあります
 - 直近 build 結果は API仕様ページ専用の status marker で表示されます。build queue 全体や Docusaurus build 履歴の一覧ではありません
 - `表示状態` は API仕様ページ全体の build 結果です。`主要ページとsource` の各行は、個別ページごとの編集元と HTML 確認先を見分けるための cue として読みます
-- 各行の `Source` は直す Markdown file、`HTML確認先` は build 後に開く generated page です。Source を直しただけでは HTML が更新済みとは限らないため、build 成功後に HTML確認先まで開きます
+- 各行の `編集元Markdown` は直す Markdown file、`HTML確認先（build後）` は build 後に開く generated page です。Source を直しただけでは HTML が更新済みとは限らないため、build 成功後に HTML確認先まで開きます
+- 各行の `Freshness` は、その行の source mtime と generated HTML mtime の比較だけを示します。build queue、iframe 配信可否、site route の安全境界、直近 build 履歴を代表するものではありません
 
 現時点で API仕様ページの `主要ページとsource` から辿れる主な HTML と source は次の 4 つです。
 
@@ -37,8 +38,9 @@
 2. 管理画面の `API仕様` を開きます。
 3. 上部 notice と `表示状態` を見て、build が開始されたか、HTML が最新か、直近 build が失敗していないかを確認します。
 4. `build 待ち/実行中` または `HTML未生成または stale` の場合は、少し待って再読み込みします。
-5. `最新 build 成功` になったら、iframe で entry HTML を確認し、`主要ページとsource` の更新対象行で `Source` と `HTML確認先` を照合します。直した source file に対応する HTML確認先を開き、更新した説明が HTML 側にも反映されていることを確認します。
-6. `build 失敗` の場合は、画面の短い失敗理由だけで断定せず、下の `build 失敗時の切り分け` へ進みます。
+5. `最新 build 成功` になったら、iframe で entry HTML を確認し、`主要ページとsource` の更新対象行で `編集元Markdown`、`HTML確認先（build後）`、`Freshness` を照合します。直した source file に対応する HTML確認先を開き、更新した説明が HTML 側にも反映されていることを確認します。
+6. 行別 `Freshness` が `Source更新あり`、`HTML未生成`、`Source missing` の場合は、全体の `表示状態` が成功でも対象行だけを見直します。build 後に HTML確認先を開くか、source path / slug / site path の対応を確認します。
+7. `build 失敗` の場合は、画面の短い失敗理由だけで断定せず、下の `build 失敗時の切り分け` へ進みます。
 
 ## 表示状態の見方
 
@@ -68,6 +70,30 @@ API仕様ページ上部の `表示状態` は、notice よりも現在の確認
 - 画面には短く sanitize された失敗理由だけが表示されます。token、絶対 path、長い stderr をそのまま正本にしません
 - `最終記録` の時刻を見て、source、runtime、job / CI logs の順で切り分けます
 
+## 行別 Freshness cue の見方
+
+`主要ページとsource` の `Freshness` は、対象行ごとに source file と generated HTML の更新時刻を比べる read-only cue です。上部の `表示状態` が API仕様ページ全体の build 結果を示すのに対し、行別 `Freshness` は「どの source 行から確認を始めるか」を決める補助として使います。
+
+### `HTML追従済み`
+
+- source と generated HTML の更新時刻に大きな差がない状態です
+- 最終確認では、対応する `HTML確認先（build後）` を開いて、実際の文言やリンクが意図どおりかを見ます
+
+### `Source更新あり`
+
+- source が generated HTML より新しい可能性があります
+- build enqueue / build success の全体状態だけで完了扱いにせず、build 後にその行の HTML確認先を開き直します
+
+### `HTML未生成`
+
+- source はありますが、対応する generated HTML が見つからない状態です
+- `site_path`、front matter `slug`、Docusaurus build 結果の対応を確認します
+
+### `Source missing`
+
+- `PRIMARY_SOURCE_PAGES` が指す source file が見つからない状態です
+- source rename、削除、front matter `slug` 変更の途中でないかを確認し、HTML確認先だけを根拠に正しいと判断しません
+
 ## notice の見方
 
 ### `Docusaurus build を開始しました`
@@ -90,11 +116,12 @@ API仕様ページ上部の `表示状態` は、notice よりも現在の確認
 ## HTML がまだ出ないとき
 
 1. `docs-src/api-specification.md` と関連ページの source file が存在するか確認します。
-2. `主要ページとsource` の各行で、更新した source file と開くべき `HTML確認先` が対応しているか確認します。
-3. `docs-src/client-file-upload-api.md`、`docs-src/office-preview.md`、`docs-src/external-folder-sync-webhooks.md` の更新対象が想定どおりか確認します。
-4. source rename や slug 変更をした場合は、`PRIMARY_SOURCE_PAGES` の `source_path` と `site_path`、Markdown front matter `slug` が同じ対応になっているか確認します。
-5. Docusaurus runtime の前提が崩れていないか、[docs/notes/docusaurus-build-runtime.md](./notes/docusaurus-build-runtime.md) を確認します。
-6. build 完了後も古い HTML のままなら、対象ページを再読み込みして `主要ページとsource` から入り直します。
+2. `主要ページとsource` の各行で、更新した source file と開くべき `HTML確認先（build後）` が対応しているか確認します。
+3. `HTML確認先（build後）` は Docusaurus build 後の generated HTML を admin-only site route で開く入口です。raw source Markdown、`tmp/api_specification_build.*` marker、build root 外 file を読む入口として扱いません。
+4. `docs-src/client-file-upload-api.md`、`docs-src/office-preview.md`、`docs-src/external-folder-sync-webhooks.md` の更新対象が想定どおりか確認します。
+5. source rename や slug 変更をした場合は、`PRIMARY_SOURCE_PAGES` の `source_path` と `site_path`、Markdown front matter `slug` が同じ対応になっているか確認します。
+6. Docusaurus runtime の前提が崩れていないか、[docs/notes/docusaurus-build-runtime.md](./notes/docusaurus-build-runtime.md) を確認します。
+7. build 完了後も古い HTML のままなら、対象ページを再読み込みして `主要ページとsource` から入り直します。
 
 API仕様ページは source を直接編集する画面ではありません。表示に違和感があるときは、まず `docs-src/` 側を正本として見直します。
 
