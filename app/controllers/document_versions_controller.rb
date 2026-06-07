@@ -125,6 +125,6 @@ class DocumentVersionsController < BaseController
   end
 
   def file_diff_status_order(status)
-    { changed: 0, removed: 2, added: 1 }.fetch(status)
+    { changed: 0, added: 1, removed: 2 }.fetch(status)
   end
 end
