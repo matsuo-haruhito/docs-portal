@@ -3,6 +3,8 @@ require "csv"
 class Admin::ReadConfirmationsController < Admin::BaseController
   before_action :require_admin_only!
 
+  include Admin::BoundedProjectOptions
+
   DISPLAY_LIMIT = 200
   CSV_HEADERS = [
     "確認日時",
@@ -14,8 +16,8 @@ class Admin::ReadConfirmationsController < Admin::BaseController
   ].freeze
 
   def index
-    @projects = Project.order(:name, :id)
     @selected_project = selected_project
+    @projects = bounded_project_options(@selected_project)
     @document_slug = params[:document_slug].to_s.strip
     @selected_user_id = params[:user_id].to_s.strip
     @selected_company_id = params[:company_id].to_s.strip
@@ -51,7 +53,7 @@ class Admin::ReadConfirmationsController < Admin::BaseController
   def selected_project
     return if params[:project_id].blank?
 
-    @projects.find_by(id: params[:project_id])
+    Project.find_by(id: params[:project_id])
   end
 
   def matching_documents
