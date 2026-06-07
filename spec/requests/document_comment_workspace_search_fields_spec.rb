@@ -78,7 +78,7 @@ RSpec.describe "Document comment workspace search fields", type: :request do
   it "keeps external search limited to visible Q&A author, visible reply author, and visible version label" do
     public_author = create(:user, :external, company:, name: "Partner Visible Author")
     visible_reply_author = create(:user, :internal, name: "Support Visible Author")
-    hidden_reply_author = create(:user, :internal, name: "Hidden Reply Author")
+    hidden_question_author = create(:user, :internal, name: "Hidden Question Author")
     hidden_review_author = create(:user, :internal, name: "Hidden Review Author")
     public_question = create(
       :document_review_comment,
@@ -99,15 +99,14 @@ RSpec.describe "Document comment workspace search fields", type: :request do
       internal_only: false,
       body: "Visible reply body without author keywords"
     )
-    hidden_reply = create(
+    hidden_question = create(
       :document_review_comment,
       document:,
       document_version: version,
-      parent: public_question,
-      author: hidden_reply_author,
+      author: hidden_question_author,
       comment_type: :question,
       internal_only: true,
-      body: "Hidden reply body should stay private"
+      body: "Hidden question body should stay private"
     )
     hidden_review = create(
       :document_review_comment,
@@ -135,8 +134,8 @@ RSpec.describe "Document comment workspace search fields", type: :request do
     expect(qa_panel_text).to include(public_question.body)
     expect(qa_panel_text).to include(visible_reply.body)
     expect(qa_panel_text).to include("Support Visible Author")
-    expect(qa_panel_text).not_to include(hidden_reply.body)
-    expect(qa_panel_text).not_to include("Hidden Reply Author")
+    expect(qa_panel_text).not_to include(hidden_question.body)
+    expect(qa_panel_text).not_to include("Hidden Question Author")
 
     get project_document_path(project, document.slug, comment_q: "Hidden Review Author")
 
@@ -147,12 +146,12 @@ RSpec.describe "Document comment workspace search fields", type: :request do
     expect(all_panel_text).not_to include("docs/hidden-review.md")
     expect(all_panel_text).not_to include("確認事項")
 
-    get project_document_path(project, document.slug, comment_q: "Hidden Reply Author")
+    get project_document_path(project, document.slug, comment_q: "Hidden Question Author")
 
     expect(response).to have_http_status(:ok)
     expect(all_panel_text).to include("検索条件に一致するQ&Aはありません")
-    expect(all_panel_text).not_to include(hidden_reply.body)
-    expect(all_panel_text).not_to include("Hidden Reply Author")
+    expect(all_panel_text).not_to include(hidden_question.body)
+    expect(all_panel_text).not_to include("Hidden Question Author")
 
     get project_document_path(project, document.slug, comment_q: "v9.4-search")
 
@@ -160,8 +159,8 @@ RSpec.describe "Document comment workspace search fields", type: :request do
     expect(qa_panel_text).to include(public_question.body)
     expect(qa_panel_text).to include("v9.4-search")
     expect(qa_panel_text).not_to include(hidden_review.body)
-    expect(qa_panel_text).not_to include(hidden_reply.body)
+    expect(qa_panel_text).not_to include(hidden_question.body)
     expect(visible_reply).to be_present
-    expect(hidden_reply).to be_present
+    expect(hidden_question).to be_present
   end
 end
