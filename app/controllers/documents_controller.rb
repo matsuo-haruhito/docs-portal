@@ -73,6 +73,7 @@ class DocumentsController < BaseController
     @question_threads = comment_search.filter_questions(question_threads)
     @review_comments = comment_search.filter_reviews(review_comments)
     @comment_search_query = comment_search.query
+    @comment_workspace_tab = DocumentCommentWorkspaceTab.new(user: current_user, tab: params[:comment_tab]).value
     @export_preview_file = export_preview_files.first
     @export_watermark_text =
       if @export_preview_file.present?
