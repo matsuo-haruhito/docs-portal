@@ -45,7 +45,7 @@ RSpec.describe "Document comment workspace tabs", type: :request do
     search_tab_input = html.at_css(".document-comment-search input[type='hidden'][name='comment_tab']")
     clear_link = html.css(".document-comment-search a[href]").find { |link| link.text.squish == "検索を解除" }
 
-    expect(unresolved_input["checked"]).to be_present
+    expect(unresolved_input.attribute("checked")).to be_present
     expect(qa_link["href"]).to include("comment_tab=qa")
     expect(qa_link["href"]).to include("comment_q=Release+scope")
     expect(search_tab_input["value"]).to eq("unresolved")
@@ -70,7 +70,7 @@ RSpec.describe "Document comment workspace tabs", type: :request do
 
     expect(response).to have_http_status(:ok)
     html = Nokogiri::HTML(response.body)
-    expect(html.at_css("#document-comment-tab-qa")["checked"]).to be_present
+    expect(html.at_css("#document-comment-tab-qa").attribute("checked")).to be_present
     expect(html.at_css("label[for='document-comment-tab-unresolved'] a")["href"]).to include("comment_tab=unresolved")
   end
 
@@ -94,7 +94,7 @@ RSpec.describe "Document comment workspace tabs", type: :request do
     page_text = html.text
     search_tab_input = html.at_css(".document-comment-search input[type='hidden'][name='comment_tab']")
 
-    expect(html.at_css("#document-comment-tab-all")["checked"]).to be_present
+    expect(html.at_css("#document-comment-tab-all").attribute("checked")).to be_present
     expect(html.at_css("#document-comment-tab-review")).to be_nil
     expect(search_tab_input["value"]).to eq("all")
     expect(page_text).not_to include("確認事項")
