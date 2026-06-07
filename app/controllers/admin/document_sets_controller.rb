@@ -88,7 +88,7 @@ class Admin::DocumentSetsController < Admin::BaseController
 
     if query.present?
       pattern = "%#{DocumentVersion.sanitize_sql_like(query.downcase)}%"
-      versions = versions.where("LOWER(version_label) LIKE :pattern OR LOWER(status) LIKE :pattern", pattern: pattern)
+      versions = versions.where("LOWER(version_label) LIKE :pattern", pattern: pattern)
     end
 
     payloads = versions.limit(DOCUMENT_VERSION_SEARCH_LIMIT).map { |version| document_version_search_payload(version) }
