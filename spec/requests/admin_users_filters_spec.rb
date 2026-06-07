@@ -9,6 +9,10 @@ RSpec.describe "Admin users filters", type: :request do
     parsed_html.text.squish
   end
 
+  def result_table_text
+    parsed_html.css("tbody").text.squish
+  end
+
   def table_column_keys
     parsed_html.css("[data-rails-table-preferences-column-key]").map { |node| node["data-rails-table-preferences-column-key"] }.uniq
   end
@@ -28,6 +32,9 @@ RSpec.describe "Admin users filters", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("alpha-member@example.com")
     expect(page_text).not_to include("omega-member@example.com")
+    expect(page_text).to include("適用中: キーワード「alpha」")
+    expect(page_text).to include("検索結果: 1件")
+    expect(page_text).to include("列の表示設定は下の「ユーザー一覧の表示設定」で調整できます")
     expect(table_column_keys).to include(
       "name",
       "email_address",
@@ -56,12 +63,17 @@ RSpec.describe "Admin users filters", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include(inactive_user.email_address)
     expect(page_text).not_to include(active_user.email_address)
+    expect(page_text).to include("適用中: キーワード「match target」 / 状態: 無効")
+    expect(page_text).to include("検索結果: 1件")
 
     get admin_users_path, params: { q: "missing-user" }
 
     expect(response).to have_http_status(:ok)
+    expect(page_text).to include("適用中: キーワード「missing-user」")
+    expect(page_text).to include("検索結果: 0件")
     expect(page_text).to include("検索条件に一致するユーザーはありません。")
     expect(page_text).to include("キーワードや状態の条件を変更するか、条件をクリアしてください。")
+    expect(parsed_html.css('section.card a[href="/admin/users"]').map(&:text).join).to include("条件をクリア")
     expect(page_text).not_to include("まだ表示中の範囲にユーザーは登録されていません。")
   end
 
@@ -77,13 +89,14 @@ RSpec.describe "Admin users filters", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include(active_same_company_user.email_address)
-    expect(page_text).not_to include("same-inactive@example.com")
-    expect(page_text).not_to include("other-active@example.com")
+    expect(result_table_text).not_to include("same-inactive@example.com")
+    expect(result_table_text).not_to include("other-active@example.com")
+    expect(page_text).to include("適用中: キーワード「shared」 / 状態: 有効")
 
     get admin_users_path, params: { q: "other-active@example.com" }
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索条件に一致するユーザーはありません。")
-    expect(page_text).not_to include("other-active@example.com")
+    expect(result_table_text).not_to include("other-active@example.com")
   end
 end

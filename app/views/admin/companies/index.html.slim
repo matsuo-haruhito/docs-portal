@@ -4,6 +4,12 @@
 - table_columns = admin_company_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - selected_active_filter = @company_filter_params["active"]
+- company_filter_keyword = @company_filter_params["q"].to_s.strip
+- company_active_filter_label = { "true" => "有効", "false" => "無効" }[selected_active_filter]
+- company_filter_summaries = []
+- company_filter_summaries << "キーワード「#{company_filter_keyword}」" if company_filter_keyword.present?
+- company_filter_summaries << "状態: #{company_active_filter_label}" if company_active_filter_label.present?
+- company_filters_applied = company_filter_summaries.any?
 
 h1 会社マスタ
 = render "admin/nav"
@@ -25,6 +31,9 @@ h1 会社マスタ
     p.actions
       = submit_tag "絞り込む", class: "button"
       = link_to "条件をクリア", admin_companies_path, class: "button secondary"
+  - if company_filters_applied
+    p.muted = "適用中: #{company_filter_summaries.join(' / ')}"
+    p.muted = "検索結果: #{@companies.size}件（列の表示設定は下の「会社一覧の表示設定」で調整できます）"
 
 - if @companies.any?
   .card
@@ -61,3 +70,6 @@ h1 会社マスタ
     - else
       p.muted 検索条件に一致する会社はありません。
       p.muted キーワードや状態の条件を変更するか、条件をクリアしてください。
+      - if company_filters_applied
+        p.actions
+          = link_to "条件をクリア", admin_companies_path, class: "button secondary"
