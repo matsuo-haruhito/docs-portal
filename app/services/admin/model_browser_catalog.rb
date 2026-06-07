@@ -9,6 +9,14 @@ class Admin::ModelBrowserCatalog
     operations: "運用"
   }.freeze
 
+  EXISTING_SCREEN_QUERY_HANDOFF_PARAMS = {
+    "companies" => :q,
+    "users" => :q,
+    "projects" => :q,
+    "documents" => :q,
+    "document_sets" => :q
+  }.freeze
+
   ENTRIES = [
     Entry.new("companies", :basic_master, "会社", "会社マスタと所属の起点です。", Company, %i[public_id name updated_at], :admin_companies_path),
     Entry.new("users", :basic_master, "ユーザー", "利用者種別と会社所属を確認します。", User, %i[public_id name email_address user_type active updated_at], :admin_users_path),
@@ -60,6 +68,10 @@ class Admin::ModelBrowserCatalog
 
     def fetch!(key)
       entries.find { _1.key == key.to_s } || raise(ActiveRecord::RecordNotFound, "Model browser entry not found: #{key}")
+    end
+
+    def query_handoff_param_for(entry)
+      EXISTING_SCREEN_QUERY_HANDOFF_PARAMS[entry.key]
     end
   end
 end
