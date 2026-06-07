@@ -38,4 +38,16 @@ RSpec.describe "admin companies source" do
       expect(helper_source).to include("pinned: true")
     end
   end
+
+  it "summarizes applied filters without changing table preference wiring" do
+    aggregate_failures do
+      expect(index_source).to include("company_filter_summaries")
+      expect(index_source).to include("適用中:")
+      expect(index_source).to include("検索結果:")
+      expect(index_source).to include("列の表示設定は下の「会社一覧の表示設定」で調整できます")
+      expect(index_source).to include("link_to \"条件をクリア\", admin_companies_path")
+      expect(index_source).to include("table_preferences_editor")
+      expect(index_source).to include("table_preferences_table_tag")
+    end
+  end
 end
