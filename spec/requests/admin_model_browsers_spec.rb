@@ -80,6 +80,35 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(card_texts).to contain_exactly(include("key: document_files / group: 文書・権限"))
   end
 
+  it "treats blank model browser index queries as no-op filters" do
+    sign_in_as(admin_user)
+    get admin_model_browser_path, params: { q: "   " }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include("検索条件:")
+    expect(response.body).not_to include("検索条件に一致するモデルはありません。")
+    expect(response.body).not_to include("検索解除")
+
+    card_hrefs = model_browser_card_links.map { _1["href"] }
+    expect(card_hrefs).to include(admin_model_browser_model_path("companies"))
+    expect(card_hrefs).to include(admin_model_browser_model_path("documents"))
+  end
+
+  it "bounds overlong model browser index queries before display and filtering" do
+    overlong_query = "x" * 120
+    bounded_query = "x" * Admin::ModelBrowsersController::MODEL_BROWSER_QUERY_MAX_LENGTH
+
+    sign_in_as(admin_user)
+    get admin_model_browser_path, params: { q: overlong_query }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("検索条件: #{bounded_query} / 表示中: 0件")
+    expect(response.body).not_to include(overlong_query)
+    expect(response.body).to include("検索条件に一致するモデルはありません。")
+    expect(page_hrefs).to include(admin_model_browser_path)
+    expect(model_browser_card_links).to be_empty
+  end
+
   it "filters the model browser index by description and group label" do
     sign_in_as(admin_user)
 
@@ -100,6 +129,7 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索条件に一致するモデルはありません。")
     expect(response.body).to include("モデル名、key、説明、group の表記を変えて再検索してください。")
+    expect(page_hrefs).to include(admin_model_browser_path)
     expect(model_browser_card_links).to be_empty
   end
 
