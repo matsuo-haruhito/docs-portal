@@ -30,7 +30,7 @@
 
 - `version_label` は semantic version として解釈・sort せず、任意の表示用ラベルとして扱う。`2026-Q2` / `review-2026-05` / `client-a-draft` のような label を importer から受けても opaque label として保存する current contract は #1050 で整理済み。sort や latest 判定の扱いを変える場合は #1112 または別の具体 Issue に切る
 - `latest_version` は current では published version の作成・更新時に promoted される。管理画面/API/import manifest で明示指定できるようにするかは `#1112` で扱う。ToDo 側では手動切り替えの権限・監査・UI 要件を #1112 の判断論点として参照する
-- 採番ルールを変更した場合に、古い DocumentVersion を整理・削除・archive する運用を検討する。未起票で残す理由: retention 方針と復元要件の判断が必要
+- 古い DocumentVersion の read-only な整理候補表示と読み方は #2344 と [文書マスタ運用runbook](./文書マスタ運用runbook.md) を正本にする。削除・archive・latest 切り替え・retention policy の最終判断は current support として扱わず、必要になった時点で復元要件や不可逆操作の承認要件を分けて concrete issue に切る
 - importer は latest version 上書き、手動アップロードは `manual-*` draft 候補を追加して review で `latest_version` を切り替える current 差分を、どこまで統一するか再判断する。手動アップロード契約の first slice は `#758` で扱う
 
 ## archived / 復元
