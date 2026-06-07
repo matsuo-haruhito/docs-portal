@@ -150,7 +150,13 @@ p
       p.actions.form-actions
         = submit_tag "候補を検索", class: "button secondary"
         = link_to "すべての文書に戻す", project_ai_context_path(@project, mode: @mode), class: "button secondary"
-    p.muted 選択できる閲覧可能な文書はありません。
+    - if document_query_present
+      p.muted 検索条件に一致する閲覧可能な文書はありません。検索語を見直すか、すべての文書に戻してください。
+    - elsif candidate_view_selected
+      p.muted 選択済み表示で確認できる閲覧可能な文書はありません。選択した文書が権限または公開状態の変更で出力対象から外れた可能性があります。
+      p.muted 検索候補へ戻るか、すべての文書に戻して対象範囲を確認してください。
+    - else
+      p.muted この案件で現在閲覧可能な文書はありません。文書の登録、公開状態、または閲覧権限を確認してください。
 
 .card
   h2 含まれる文書（出力対象）
