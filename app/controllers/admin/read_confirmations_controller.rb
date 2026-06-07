@@ -24,7 +24,8 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     @confirmed_to = parsed_date_param(:to)
     @invalid_confirmed_date_labels = @invalid_confirmed_date_params.map { confirmed_date_filter_label(_1) }
     @read_confirmations_csv_query = read_confirmations_csv_query
-    @selected_document = selected_document if @selected_project
+    @matching_documents = matching_documents if @selected_project
+    @selected_document = @matching_documents.first if @matching_documents&.one?
     @read_confirmation_companies = read_confirmation_companies
     @selected_company = selected_company
     @read_confirmation_users = read_confirmation_users
@@ -53,10 +54,24 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     @projects.find_by(id: params[:project_id])
   end
 
-  def selected_document
-    return if @document_slug.blank?
+  def matching_documents
+    return Document.none unless @selected_project
+    return Document.none if @document_slug.blank?
 
-    @selected_project.documents.find_by(slug: @document_slug)
+    query = "%#{ActiveRecord::Base.sanitize_sql_like(@document_slug)}%"
+
+    @selected_project
+      .documents
+      .where("documents.title LIKE :query OR documents.slug LIKE :query", query:)
+      .order(:title, :slug, :id)
+  end
+
+  def document_filter_applied?
+    @document_slug.present?
+  end
+
+  def document_filter_unmatched?
+    document_filter_applied? && @matching_documents.blank?
   end
 
   def parsed_date_param(name)
@@ -88,7 +103,7 @@ class Admin::ReadConfirmationsController < Admin::BaseController
 
   def read_confirmation_companies
     return Company.none unless @selected_project
-    return Company.none if @document_slug.present? && @selected_document.blank?
+    return Company.none if document_filter_unmatched?
 
     Company
       .joins(users: { read_confirmations: :document })
@@ -105,7 +120,7 @@ class Admin::ReadConfirmationsController < Admin::BaseController
 
   def read_confirmation_users
     return User.none unless @selected_project
-    return User.none if @document_slug.present? && @selected_document.blank?
+    return User.none if document_filter_unmatched?
     return User.none if @selected_company_id.present? && @selected_company.blank?
 
     scope = User
@@ -126,14 +141,14 @@ class Admin::ReadConfirmationsController < Admin::BaseController
 
   def filtered_read_confirmations
     return ReadConfirmation.none unless @selected_project
-    return ReadConfirmation.none if @document_slug.present? && @selected_document.blank?
+    return ReadConfirmation.none if document_filter_unmatched?
     return ReadConfirmation.none if @selected_company_id.present? && @selected_company.blank?
     return ReadConfirmation.none if @selected_user_id.present? && @selected_user.blank?
 
     scope = ReadConfirmation
       .joins(:document)
       .where(documents: { project_id: @selected_project.id })
-    scope = scope.where(document: @selected_document) if @selected_document
+    scope = scope.where(documents: { id: @matching_documents.select(:id) }) if document_filter_applied?
     scope = scope.joins(user: :company).where(users: { company_id: @selected_company.id }) if @selected_company
     scope = scope.where(user: @selected_user) if @selected_user
     scope = scope.where("read_confirmations.confirmed_at >= ?", @confirmed_from.beginning_of_day) if @confirmed_from
