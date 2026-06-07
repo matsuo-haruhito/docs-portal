@@ -19,7 +19,7 @@ section.card
         allow_clear: true,
         selected: @selected_project&.id
       div
-        = form.label :document_slug, "文書URL識別子"
+        = form.label :document_slug, "文書名またはURL識別子"
         = form.search_field :document_slug, value: @document_slug
       div
         = form.label :from, "既読確認日時（開始日）"
@@ -65,10 +65,14 @@ section.card
         - if @selected_document
           |  / 文書名:
           strong = " #{@selected_document.title}"
-      - unless @selected_document
+        - elsif @matching_documents.present?
+          |  / 一致文書:
+          strong = " #{@matching_documents.size}件"
+      p.muted 文書名またはURL識別子の一部に一致する、選択案件内の文書で絞り込みます。
+      - unless @matching_documents.present?
         p.muted 指定した文書はこの案件に見つかりません。文書利用状況の文書名リンクから slug を確認してください。
     - else
-      p.muted 文書URL識別子を指定しない場合は、案件内の既読確認を新しい順に表示します。
+      p.muted 文書名またはURL識別子を指定しない場合は、案件内の既読確認を新しい順に表示します。
     - if @confirmed_from || @confirmed_to
       p
         | 既読確認日時の期間:
@@ -126,7 +130,7 @@ section.card
   - else
     section.card
       h2 既読確認はありません
-      - if @document_slug.present? && @selected_document.blank?
+      - if @document_slug.present? && !@matching_documents.present?
         p.muted 指定した文書URL識別子に一致する文書がないため、既読確認は表示されません。
       - elsif @selected_company_id.present? && @selected_company.blank?
         p.muted 指定した会社はこの案件の既読確認候補に見つからないため、既読確認は表示されません。
