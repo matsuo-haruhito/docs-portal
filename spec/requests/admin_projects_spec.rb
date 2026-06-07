@@ -29,7 +29,7 @@ RSpec.describe "Admin projects", type: :request do
     expect(project_names).to contain_exactly("Code Match", "Needle Name", "Description Match")
     expect(page_text).to include("適用中:")
     expect(page_text).to include("検索: needle")
-    expect(page_text).to include("検索結果: 3 件")
+    expect(page_text).to include("検索結果: 3件")
   end
 
   it "combines active and company filters" do
@@ -48,7 +48,7 @@ RSpec.describe "Admin projects", type: :request do
     expect(project_names).to eq(["Inactive Same Company"])
     expect(page_text).to include("状態: 無効")
     expect(page_text).to include("企業: Filter Company")
-    expect(page_text).to include("検索結果: 1 件")
+    expect(page_text).to include("検索結果: 1件")
     expect(page_text).to include("表示設定は列の表示・幅を調整し、絞り込みは一覧に出す案件を切り替えます。")
   end
 
