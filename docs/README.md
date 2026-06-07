@@ -12,6 +12,17 @@
 
 UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロントエンド操作の方針](../doc/frontend_interaction_policy.md) も先に確認してください。実画面への internal UI gem 展開候補は [ROADMAP](../ROADMAP.md) を入口にし、screen-by-screen adoption、release train、representative smoke の読み分けは [関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) で確認します。
 
+## タスク別の最初の参照先
+
+既存一覧を探す前に、目的が近い入口から読み始めてください。ここでは最初の当たり先だけを示し、詳細な仕様や runbook 本文は後続の各セクションを正本にします。
+
+- 利用者導線・日常 UI: [ダッシュボードと文書ショートカット・確認依頼の使い分け](./ダッシュボードと文書ショートカット・確認依頼の使い分け.md)、[利用者向けアクセス申請runbook](./利用者向けアクセス申請runbook.md)、[外部送付履歴運用runbook](./外部送付履歴運用runbook.md)
+- admin 画面・運用確認: [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md)、[company_master_admin会社・ユーザー管理runbook](./company_master_admin会社・ユーザー管理runbook.md)、[文書マスタ運用runbook](./文書マスタ運用runbook.md)
+- import / build / sync: [build-docs workflow確認runbook](./build-docs%20workflow確認runbook.md)、[Git連携設定と同期失敗確認runbook](./Git連携設定と同期失敗確認runbook.md)、[internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)
+- 外部連携・preview: [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md)、[外部フォルダ同期dry-run・apply運用runbook](./外部フォルダ同期dry-run・apply運用runbook.md)、[Microsoft Graph接続管理runbook](./Microsoft%20Graph接続管理runbook.md)
+- 監視・障害一次対応: [監視・アラート設計](./監視・アラート設計.md)、[生成ファイル再試行と定期ジョブ管理 runbook](./生成ファイル再試行と定期ジョブ管理runbook.md)、[API仕様ページとdocs-src更新確認runbook](./API仕様ページとdocs-src更新確認runbook.md)
+- internal UI gem / フロントエンド: [ROADMAP](../ROADMAP.md)、[関連 gem 連携調査 runbook](./関連gem連携調査runbook.md)、[internal UI gem adoption evidence map](./internal-ui-gem-adoption-evidence-map.md)
+
 ## 仕様
 
 - [アプリケーション仕様](./アプリケーション仕様.md)
