@@ -1,6 +1,8 @@
 - page_title "単体ファイルアップロードdry-run一覧"
 - has_filters = @selected_status.present? || @selected_project_id.present? || @selected_dry_run_id.present?
-- empty_message = has_filters ? "条件に一致する単体ファイルアップロードdry-runはありません。" : "単体ファイルアップロードdry-runはありません。"
+- empty_message = has_filters ? "条件に一致するmanual_upload dry-runはありません。" : "manual_upload dry-runはまだ作成されていません。"
+- empty_detail = has_filters ? "dry-run ID、案件、状態の条件を見直すか、絞り込み解除で一覧に戻してください。" : "file_uploads APIで作成されたdry-runは、ここから後追い確認できます。"
+- empty_boundary = "ZIP / Git import dry-runとartifact import dry-runはこの一覧には表示されません。"
 
 h1 単体ファイルアップロードdry-run一覧
 p.muted API から作成された manual_upload dry-run を後から確認するための一覧です。ZIP / Git import dry-run は表示しません。
@@ -34,7 +36,13 @@ p.muted API から作成された manual_upload dry-run を後から確認する
     tbody
       - if @dry_runs.empty?
         tr
-          td.muted colspan="8" = empty_message
+          td.muted colspan="8"
+            p = empty_message
+            p = empty_detail
+            p = empty_boundary
+            - if has_filters
+              p.actions
+                = link_to "絞り込み解除", admin_file_upload_dry_runs_path, class: "button secondary"
       - @dry_runs.each do |dry_run|
         - preview = dry_run.result_json.dig("file_upload_preview") || {}
         tr
