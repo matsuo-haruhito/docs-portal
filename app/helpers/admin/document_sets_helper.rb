@@ -97,14 +97,31 @@ module Admin::DocumentSetsHelper
     }
   end
 
-  def document_set_version_select_html_options(placeholder: "固定する版を検索")
+  def document_set_version_options(item)
+    selected_version = item&.document_version
+    options = [["最新版を使う", ""]]
+    options << [document_set_fixed_version_option_label(selected_version), selected_version.id] if selected_version.present?
+    options
+  end
+
+  def document_set_version_select_html_options(document, placeholder: "固定する版を検索")
     {
       data: {
         controller: "rails-fields-kit--tom-select",
         rails_fields_kit__tom_select_kind_value: "select",
+        rails_fields_kit__tom_select_url_value: document_version_search_admin_document_sets_path(project_id: document.project_id, document_id: document.id),
+        rails_fields_kit__tom_select_query_param_value: "q",
+        rails_fields_kit__tom_select_value_field_value: "id",
+        rails_fields_kit__tom_select_label_field_value: "text",
         rails_fields_kit__tom_select_placeholder_value: placeholder,
+        rails_fields_kit__tom_select_min_length_value: 1,
+        rails_fields_kit__tom_select_max_options_value: Admin::DocumentSetsController::DOCUMENT_VERSION_SEARCH_LIMIT,
         rails_fields_kit__tom_select_plugins_value: ["clear_button"]
       }
     }
+  end
+
+  def document_set_fixed_version_option_label(version)
+    "#{document_version_label(version)} (#{document_version_status_label(version)})"
   end
 end

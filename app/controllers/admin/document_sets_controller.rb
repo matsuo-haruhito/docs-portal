@@ -9,6 +9,7 @@ class Admin::DocumentSetsController < Admin::BaseController
   before_action :load_project_documents, only: %i[index create edit update]
 
   DOCUMENT_SET_QUERY_MAX_LENGTH = 100
+  DOCUMENT_VERSION_SEARCH_LIMIT = 20
   CSV_HEADERS = [
     "案件コード",
     "案件名",
@@ -79,6 +80,25 @@ class Admin::DocumentSetsController < Admin::BaseController
     }
   end
 
+  def document_version_search
+    project = Project.find(params[:project_id])
+    document = project.documents.find(params[:document_id])
+    versions = document.document_versions.order(created_at: :desc, id: :desc)
+    query = params[:q].to_s.strip
+
+    if query.present?
+      pattern = "%#{DocumentVersion.sanitize_sql_like(query.downcase)}%"
+      versions = versions.where("LOWER(version_label) LIKE :pattern", pattern: pattern)
+    end
+
+    payloads = versions.limit(DOCUMENT_VERSION_SEARCH_LIMIT).map { |version| document_version_search_payload(version) }
+
+    render json: {
+      versions: payloads,
+      options: payloads
+    }
+  end
+
   private
 
   def set_document_set
@@ -105,9 +125,9 @@ class Admin::DocumentSetsController < Admin::BaseController
     project_id = document_set_project_id
     @project_documents =
       if project_id.present?
-        Document.where(project_id: project_id).includes(:latest_version, :document_versions).recommended_first
+        Document.where(project_id: project_id).includes(:latest_version).recommended_first
       elsif @document_set&.project_id.present?
-        @document_set.project.documents.includes(:latest_version, :document_versions).recommended_first
+        @document_set.project.documents.includes(:latest_version).recommended_first
       else
         Document.none
       end
@@ -185,6 +205,18 @@ class Admin::DocumentSetsController < Admin::BaseController
       slug: document.slug,
       text: "#{document.title} (#{document.slug})",
       latest_version_label: document.latest_version&.version_label
+    }
+  end
+
+  def document_version_search_payload(version)
+    label = helpers.document_version_label(version)
+    status_label = helpers.document_version_status_label(version)
+
+    {
+      id: version.id,
+      version_label: version.version_label,
+      status: version.status,
+      text: "#{label} (#{status_label})"
     }
   end
 

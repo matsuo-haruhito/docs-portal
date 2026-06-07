@@ -31,6 +31,7 @@
   - if @project_documents.any?
     h2 対象文書
     p.muted チェックした文書だけセットに含めます。版固定しない場合は最新版を使います。
+    p.muted 固定版候補は文書ごとに検索して選びます。保存済みまたは入力中の固定版だけを初期表示します。
     p.muted 検索中も選択済み文書を見失わないよう、件数と選択済みのみ表示を使えます。
     section.document-set-document-filter data-controller="document-set-document-filter"
       .document-set-document-filter__bar
@@ -65,8 +66,7 @@
                 br
                 span.muted = "URL識別子: #{document.slug}"
               td
-                - version_options = [["最新版を使う", ""]] + document.document_versions.sort_by(&:created_at).reverse.map { |version| ["#{document_version_label(version)} (#{document_version_status_label(version)})", version.id] }
-                = select_tag("document_set_items[#{index}][document_version_id]", options_for_select(version_options, item&.document_version_id), document_set_version_select_html_options)
+                = select_tag("document_set_items[#{index}][document_version_id]", options_for_select(document_set_version_options(item), item&.document_version_id), document_set_version_select_html_options(document))
               td
                 = number_field_tag "document_set_items[#{index}][sort_order]", item&.sort_order || index, min: 0
               td
