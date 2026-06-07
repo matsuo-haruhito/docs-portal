@@ -1,4 +1,3 @@
-require "csv"
 require "rails_helper"
 
 RSpec.describe "Admin bounded project selects", type: :request do
@@ -77,10 +76,11 @@ RSpec.describe "Admin bounded project selects", type: :request do
   end
 
   it "keeps invalid project_id CSV requests from exporting cross-project data" do
+    company = create(:company)
     selected_project = create(:project, code: "SAFE", name: "Safe Project")
     document = create(:document, project: selected_project, title: "Safe Manual", slug: "safe-manual")
-    viewer = create(:user, :external)
-    create(:access_log, project: selected_project, document:, user: viewer, action_type: :view)
+    viewer = create(:user, :external, company:)
+    create(:access_log, project: selected_project, document:, user: viewer, company:, action_type: :view)
     create(:read_confirmation, document:, user: viewer)
 
     sign_in_as(admin_user)
