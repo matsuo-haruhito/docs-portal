@@ -1,3 +1,4 @@
+require "csv"
 require "rails_helper"
 
 RSpec.describe "Admin read confirmations", type: :request do
@@ -345,6 +346,69 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(company_filter_options).not_to include("Client A")
     expect(user_filter_options).not_to include(a_string_including("Reader One"))
     expect(read_confirmation_rows).to be_empty
+  end
+
+  it "redirects CSV requests without a selected project instead of exporting all confirmations" do
+    create(:read_confirmation, document:, user: viewer, confirmed_at: Time.zone.local(2026, 5, 1, 12, 0, 0))
+    sign_in_as(admin_user)
+
+    get admin_read_confirmations_path(format: :csv)
+
+    expect(response).to redirect_to(admin_read_confirmations_path)
+
+    follow_redirect!
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("CSV出力には案件選択が必要です。")
+    expect(page_text).not_to include("Manual")
+    expect(page_text).not_to include("Reader One / reader@example.com")
+  end
+
+  it "exports CSV with the selected project, document, company, user, and date filters" do
+    matching_reader = create(:user, :external, company:, name: "CSV Reader", email_address: "csv-reader@example.com")
+    same_company_reader = create(:user, :external, company:, name: "Same Company Reader", email_address: "same-company-csv@example.com")
+    other_company = create(:company, name: "Client B", domain: "client-b.example")
+    other_company_reader = create(:user, :external, company: other_company, name: "Other Company Reader", email_address: "other-company-csv@example.com")
+    other_document = create(:document, project:, title: "Policy", slug: "policy")
+    outside_document = create(:document, project: other_project, title: "Outside", slug: "outside")
+    outside_reader = create(:user, :external, name: "Outside CSV Reader", email_address: "outside-csv@example.com")
+
+    create(:read_confirmation, document:, user: matching_reader, confirmed_at: Time.zone.local(2026, 5, 2, 12, 0, 0))
+    create(:read_confirmation, document:, user: same_company_reader, confirmed_at: Time.zone.local(2026, 5, 2, 13, 0, 0))
+    create(:read_confirmation, document:, user: other_company_reader, confirmed_at: Time.zone.local(2026, 5, 2, 14, 0, 0))
+    create(:read_confirmation, document: other_document, user: matching_reader, confirmed_at: Time.zone.local(2026, 5, 2, 15, 0, 0))
+    create(:read_confirmation, document:, user: matching_reader, confirmed_at: Time.zone.local(2026, 5, 4, 0, 0, 0))
+    create(:read_confirmation, document: outside_document, user: outside_reader, confirmed_at: Time.zone.local(2026, 5, 2, 16, 0, 0))
+
+    sign_in_as(admin_user)
+
+    get admin_read_confirmations_path(
+      format: :csv,
+      project_id: project.id,
+      document_slug: document.slug,
+      company_id: company.id,
+      user_id: matching_reader.id,
+      from: "2026-05-01",
+      to: "2026-05-03"
+    )
+
+    csv = CSV.parse(response.body, headers: true)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("text/csv")
+    expect(csv.headers).to eq(["確認日時", "文書名", "document slug", "確認者", "email", "会社"])
+    expect(csv.size).to eq(1)
+    expect(csv.first.to_h).to include(
+      "文書名" => "Manual",
+      "document slug" => "manual",
+      "確認者" => "CSV Reader",
+      "email" => "csv-reader@example.com",
+      "会社" => "Client A"
+    )
+    expect(response.body).not_to include("Same Company Reader")
+    expect(response.body).not_to include("Other Company Reader")
+    expect(response.body).not_to include("Policy")
+    expect(response.body).not_to include("Outside")
   end
 
   it "limits the selected project results to the latest 200 confirmations" do
