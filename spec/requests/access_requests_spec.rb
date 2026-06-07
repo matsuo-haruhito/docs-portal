@@ -1,234 +1,375 @@
-# frozen_string_literal: true
-
 require "rails_helper"
+require "cgi"
 
 RSpec.describe "Access requests", type: :request do
-  let(:user) { create(:user) }
-  let(:other_user) { create(:user, email: "other@example.com") }
-  let(:project) { create(:project, code: "req-project", name: "Request Project") }
-  let(:document) { create(:document, project: project, title: "Request Document") }
-  let(:file) { create(:document_file, document: document, file_name: "request.pdf") }
+  let(:company) { create(:company) }
+  let(:user) { create(:user, :external, company:) }
+  let(:other_user) { create(:user, :external, company:) }
+  let(:project) { create(:project, code: "REQ", name: "Request Project") }
+  let(:document) { create(:document, project:, title: "Manual", slug: "manual", visibility_policy: :restricted_external) }
+  let(:version) { create(:document_version, document:, version_label: "v1.0.0", status: :published) }
+  let(:file) { create(:document_file, document_version: version, file_name: "manual.pdf", content_type: "application/pdf", file_size: 10) }
+
+  before do
+    document.update!(latest_version: version)
+    create(:project_membership, project:, user:)
+    create(:project_membership, project:, user: other_user)
+    create(:document_permission, document:, company:, access_level: :view)
+  end
+
+  it "creates a download access request for a visible document file" do
+    sign_in_as(user)
+
+    expect do
+      post access_requests_path, params: {
+        requestable_type: "DocumentFile",
+        requestable_public_id: file.public_id,
+        requested_access_level: "download"
+      }
+    end.to change(AccessRequest, :count).by(1)
+
+    expect(response).to redirect_to(access_requests_path)
+    request = AccessRequest.order(:id).last
+    expect(request.requester).to eq(user)
+    expect(request.requestable).to eq(file)
+    expect(request).to be_pending
+    expect(request.reason).to include("manual.pdf")
+  end
+
+  it "stores and displays japanese default reasons for project, document, and file requests" do
+    sign_in_as(user)
+
+    post access_requests_path, params: {
+      requestable_type: "Project",
+      requestable_public_id: project.code,
+      requested_access_level: "manage"
+    }
+    expect(AccessRequest.order(:id).last.reason).to eq("案件「Request Project」に管理権限が必要です。")
+
+    post access_requests_path, params: {
+      requestable_type: "Document",
+      requestable_public_id: document.public_id,
+      requested_access_level: "download"
+    }
+    expect(AccessRequest.order(:id).last.reason).to eq("文書「Manual」にダウンロード権限が必要です。")
+
+    post access_requests_path, params: {
+      requestable_type: "DocumentFile",
+      requestable_public_id: file.public_id,
+      requested_access_level: "download"
+    }
+    expect(AccessRequest.order(:id).last.reason).to eq("ファイル「manual.pdf」にダウンロード権限が必要です。")
+
+    get access_requests_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("案件「Request Project」に管理権限が必要です。")
+    expect(response.body).to include("文書「Manual」にダウンロード権限が必要です。")
+    expect(response.body).to include("ファイル「manual.pdf」にダウンロード権限が必要です。")
+    expect(response.body).not_to include("Need ")
+  end
+
+  it "does not duplicate the same pending request" do
+    sign_in_as(user)
+    create(:access_request, requester: user, requestable: file, requested_access_level: :download)
+
+    expect do
+      post access_requests_path, params: {
+        requestable_type: "DocumentFile",
+        requestable_public_id: file.public_id,
+        requested_access_level: "download"
+      }
+    end.not_to change(AccessRequest, :count)
+
+    expect(response).to redirect_to(access_requests_path)
+  end
+
+  it "lists and cancels only the current user's requests" do
+    own_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download)
+    other_request = create(:access_request, requester: other_user, requestable: document, requested_access_level: :download, reason: "Other user request")
+
+    sign_in_as(user)
+
+    get access_requests_path
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("manual.pdf")
+    expect(response.body).not_to include(other_request.reason)
+
+    post cancel_access_request_path(other_request)
+
+    expect(response).to have_http_status(:not_found)
+    expect(other_request.reload).to be_pending
+
+    post cancel_access_request_path(own_request)
+
+    expect(response).to redirect_to(access_requests_path)
+    expect(own_request.reload).to be_cancelled
+  end
+
+  it "preserves only supported filters when cancelling from a filtered list" do
+    own_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "Need manual file")
+    create(:access_request, requester: user, requestable: document, requested_access_level: :download, reason: "Need manual document")
+
+    sign_in_as(user)
+
+    get access_requests_path, params: {
+      q: "manual",
+      status: :pending,
+      requested_access_level: :download,
+      requestable_type: "DocumentFile"
+    }
+
+    expect(response).to have_http_status(:ok)
+    cancel_form = parsed_html.at_css(%(form[action="#{cancel_access_request_path(own_request)}"]))
+    expect(cancel_form).to be_present
+    expect(cancel_form.at_css('input[name="q"]')["value"]).to eq("manual")
+    expect(cancel_form.at_css('input[name="status"]')["value"]).to eq("pending")
+    expect(cancel_form.at_css('input[name="requested_access_level"]')["value"]).to eq("download")
+    expect(cancel_form.at_css('input[name="requestable_type"]')["value"]).to eq("DocumentFile")
+    expect(page_text).to include("取消後は現在の条件のままアクセス申請一覧へ戻ります。")
+
+    post cancel_access_request_path(own_request), params: {
+      q: " manual ",
+      status: "pending",
+      requested_access_level: "download",
+      requestable_type: "DocumentFile",
+      return_to: "https://example.invalid/access_requests",
+      unsupported: "keep-me-out"
+    }
+
+    expect(response).to redirect_to(access_requests_path(q: "manual", status: "pending", requested_access_level: "download", requestable_type: "DocumentFile"))
+    expect(own_request.reload).to be_cancelled
+  end
+
+  it "filters the current user's requests by status" do
+    approver = create(:user, :internal)
+    pending_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "Pending reason")
+    approved_request = create(:access_request, requester: user, requestable: document, requested_access_level: :download, status: :approved, approver:, approved_at: Time.current, reason: "Approved reason")
+    rejected_request = create(:access_request, requester: user, requestable: project, requested_access_level: :manage, status: :rejected, approver:, rejected_at: Time.current, rejection_reason: "NG", reason: "Rejected reason")
+    cancelled_request = create(:access_request, requester: user, requestable: file, requested_access_level: :view, status: :cancelled, cancelled_at: Time.current, reason: "Cancelled reason")
+    create(:access_request, requester: other_user, requestable: file, requested_access_level: :download, status: :approved, approver:, approved_at: Time.current, reason: "Other user approved reason")
+
+    sign_in_as(user)
+
+    get access_requests_path(status: :pending)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("申請中 1件 / 承認済み 1件 / 却下 1件 / 取消済み 1件")
+    expect(page_text).to include(pending_request.reason)
+    expect(page_text).to include("この行の対象・要求権限・理由を確認してから取消してください。")
+    expect(page_text).to include("取消後は現在の条件のままアクセス申請一覧へ戻ります。")
+    expect(response.body).to include("data-turbo-confirm")
+    expect(response.body).to include("このアクセス申請を取り消します。対象・要求権限・理由を確認しましたか？")
+    expect(page_text).not_to include(approved_request.reason)
+    expect(page_text).not_to include(rejected_request.reason)
+    expect(page_text).not_to include(cancelled_request.reason)
+    expect(page_text).not_to include("Other user approved reason")
+    expect(response.body).to include(">取消<")
+
+    get access_requests_path(status: :approved)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).not_to include(pending_request.reason)
+    expect(page_text).to include(approved_request.reason)
+    expect(page_text).not_to include(rejected_request.reason)
+    expect(page_text).not_to include(cancelled_request.reason)
+    expect(page_text).not_to include("この行の対象・要求権限・理由を確認してから取消してください。")
+    expect(response.body).not_to include(">取消<")
+
+    get access_requests_path(status: :invalid)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(pending_request.reason)
+    expect(page_text).to include(approved_request.reason)
+    expect(page_text).to include(rejected_request.reason)
+    expect(page_text).to include(cancelled_request.reason)
+  end
+
+  it "searches the current user's requests by target text and reason with status filters" do
+    approver = create(:user, :internal)
+    pending_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "Need file approval")
+    approved_request = create(:access_request, requester: user, requestable: document, requested_access_level: :download, status: :approved, approver:, approved_at: Time.current, reason: "Policy review needed")
+    cancelled_request = create(:access_request, requester: user, requestable: project, requested_access_level: :manage, status: :cancelled, cancelled_at: Time.current, reason: "Old project request")
+    create(:access_request, requester: other_user, requestable: document, requested_access_level: :download, status: :approved, approver:, approved_at: Time.current, reason: "Policy review needed from other user")
+
+    sign_in_as(user)
+
+    get access_requests_path, params: { q: "policy", status: :approved }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("申請中 0件 / 承認済み 1件 / 却下 0件 / 取消済み 0件")
+    expect(page_text).to include(approved_request.reason)
+    expect(page_text).not_to include(pending_request.reason)
+    expect(page_text).not_to include(cancelled_request.reason)
+    expect(page_text).not_to include("Policy review needed from other user")
+    expect(page_text).to include("条件をクリア")
+    expect(CGI.unescapeHTML(response.body)).to include(access_requests_path(q: "policy", status: :pending))
+
+    get access_requests_path, params: { q: "missing target" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索: missing target に一致するアクセス申請はありません。")
+    expect(page_text).not_to include("送信済みのアクセス申請はありません。")
+  end
+
+  it "normalizes oversized search queries before filtering and rendering links" do
+    approver = create(:user, :internal)
+    truncated_query = "review-" + ("x" * (AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH - "review-".length))
+    long_query = "  #{truncated_query}ignored-tail  "
+    matching_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "#{truncated_query} matched reason")
+    create(:access_request, requester: user, requestable: document, requested_access_level: :download, status: :approved, approver:, approved_at: Time.current, reason: "ignored-tail only")
+
+    sign_in_as(user)
+
+    get access_requests_path, params: {
+      q: long_query,
+      status: :pending,
+      requested_access_level: :download,
+      requestable_type: "DocumentFile"
+    }
+
+    expect(response).to have_http_status(:ok)
+    query_field = Nokogiri::HTML.parse(response.body).at_css('input[name="q"]')
+    expect(query_field["value"]).to eq(truncated_query)
+    expect(query_field["maxlength"]).to eq(AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH.to_s)
+    expect(page_text).to include("表示中条件: 状態: 申請中 / 検索: #{truncated_query} / 要求権限: ダウンロード / 対象種別: ファイル")
+    expect(page_text).to include(matching_request.reason)
+    expect(page_text).not_to include("ignored-tail only")
+    expect(CGI.unescapeHTML(response.body)).to include(access_requests_path(q: truncated_query, requested_access_level: "download", requestable_type: "DocumentFile", status: :approved))
+  end
+
+  it "filters the current user's requests by access level and requestable type" do
+    approver = create(:user, :internal)
+    pending_file_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "Need manual file")
+    approved_document_request = create(:access_request, requester: user, requestable: document, requested_access_level: :download, status: :approved, approver:, approved_at: Time.current, reason: "Manual policy review")
+    manage_project_request = create(:access_request, requester: user, requestable: project, requested_access_level: :manage, reason: "Manage project request")
+    view_file_request = create(:access_request, requester: user, requestable: file, requested_access_level: :view, reason: "View file request")
+    create(:access_request, requester: other_user, requestable: file, requested_access_level: :download, reason: "Other user manual file")
+
+    sign_in_as(user)
+
+    get access_requests_path, params: {
+      q: "manual",
+      status: :pending,
+      requested_access_level: :download,
+      requestable_type: "DocumentFile"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("申請中 1件 / 承認済み 0件 / 却下 0件 / 取消済み 0件")
+    expect(page_text).to include("表示中条件: 状態: 申請中 / 検索: manual / 要求権限: ダウンロード / 対象種別: ファイル")
+    expect(page_text).to include(pending_file_request.reason)
+    expect(page_text).not_to include(approved_document_request.reason)
+    expect(page_text).not_to include(manage_project_request.reason)
+    expect(page_text).not_to include(view_file_request.reason)
+    expect(page_text).not_to include("Other user manual file")
+    expect(CGI.unescapeHTML(response.body)).to include(access_requests_path(q: "manual", requested_access_level: "download", requestable_type: "DocumentFile", status: :approved))
+    expect(page_text).to include("条件をクリア")
+
+    get access_requests_path, params: {
+      requested_access_level: :invalid,
+      requestable_type: "Secret",
+      status: :invalid
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("申請中 3件 / 承認済み 1件 / 却下 0件 / 取消済み 0件")
+    expect(page_text).to include(pending_file_request.reason)
+    expect(page_text).to include(approved_document_request.reason)
+    expect(page_text).to include(manage_project_request.reason)
+    expect(page_text).to include(view_file_request.reason)
+    expect(page_text).not_to include("Other user manual file")
+  end
+
+  it "bounds query result rows while keeping filtered status counts readable" do
+    sign_in_as(user)
+
+    101.times do |index|
+      create(
+        :access_request,
+        requester: user,
+        requestable: file,
+        requested_access_level: :download,
+        status: :cancelled,
+        cancelled_at: Time.current,
+        reason: format("bounded request %03d", index + 1)
+      )
+    end
+
+    get access_requests_path, params: {
+      q: "bounded",
+      status: :cancelled,
+      requested_access_level: :download,
+      requestable_type: "DocumentFile"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("申請中 0件 / 承認済み 0件 / 却下 0件 / 取消済み 101件")
+    expect(page_text).to include("表示件数: 101件中100件を新しい順で表示しています。")
+    expect(page_text).to include("条件を追加すると目的の申請を探しやすくなります。")
+    expect(parsed_html.css("tbody tr").size).to eq(AccessRequestsController::ACCESS_REQUEST_LIST_LIMIT)
+    expect(page_text).to include("bounded request 101")
+    expect(page_text).not_to include("bounded request 001")
+  end
+
+  it "shows localized labels for requestable type, access level, and status on the index" do
+    localized_project = create(:project, code: "LOC", name: "案件A")
+    localized_document = create(:document, project: localized_project, title: "利用規約", slug: "terms", visibility_policy: :restricted_external)
+    localized_version = create(:document_version, document: localized_document, version_label: "v1.0.0", status: :published)
+    localized_file = create(:document_file, document_version: localized_version, file_name: "案内.pdf", content_type: "application/pdf", file_size: 10)
+    approver = create(:user, :internal)
+
+    localized_document.update!(latest_version: localized_version)
+    create(:project_membership, project: localized_project, user:)
+    create(:document_permission, document: localized_document, company:, access_level: :view)
+
+    create(:access_request, requester: user, requestable: localized_project, requested_access_level: :manage, reason: "案件の管理が必要です。")
+    create(:access_request, requester: user, requestable: localized_document, requested_access_level: :download, status: :approved, approver:, approved_at: Time.current, reason: "文書確認のためです。")
+    create(:access_request, requester: user, requestable: localized_file, requested_access_level: :view, status: :rejected, approver:, rejected_at: Time.current, rejection_reason: "対象外です。", reason: "内容確認のためです。")
+    create(:access_request, requester: user, requestable: file, requested_access_level: :download, status: :cancelled, cancelled_at: Time.current, reason: "取り下げました。")
+
+    sign_in_as(user)
+
+    get access_requests_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("案件")
+    expect(page_text).to include("文書")
+    expect(page_text).to include("ファイル")
+    expect(page_text).to include("管理")
+    expect(page_text).to include("ダウンロード")
+    expect(page_text).to include("閲覧")
+    expect(page_text).to include("申請中")
+    expect(page_text).to include("承認済み")
+    expect(page_text).to include("却下")
+    expect(page_text).to include("取消済み")
+    expect(page_text).to include("取消")
+    expect(page_text).not_to include("Project")
+    expect(page_text).not_to include("Document")
+    expect(page_text).not_to include("DocumentFile")
+    expect(page_text).not_to include("manage")
+    expect(page_text).not_to include("download")
+    expect(page_text).not_to include("pending")
+    expect(page_text).not_to include("approved")
+    expect(page_text).not_to include("rejected")
+    expect(page_text).not_to include("cancelled")
+  end
+
+  it "shows request buttons on the version page when download is not allowed" do
+    sign_in_as(user)
+
+    get document_version_path(version)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("ダウンロード権限を申請")
+    expect(response.body).to include("申請")
+  end
 
   def parsed_html
-    Capybara.string(response.body)
+    Nokogiri::HTML.parse(response.body)
   end
 
   def page_text
-    parsed_html.text
-  end
-
-  describe "POST /access_requests" do
-    it "creates a pending access request for a document file" do
-      sign_in_as(user)
-
-      expect do
-        post access_requests_path, params: {
-          access_request: {
-            requestable_gid: file.to_global_id.to_s,
-            requested_access_level: "download",
-            reason: "Need this file for the release review."
-          }
-        }
-      end.to change(AccessRequest, :count).by(1)
-
-      access_request = AccessRequest.last
-      expect(access_request.requester).to eq(user)
-      expect(access_request.requestable).to eq(file)
-      expect(access_request.requested_access_level).to eq("download")
-      expect(access_request.reason).to eq("Need this file for the release review.")
-      expect(response).to redirect_to(access_requests_path)
-      follow_redirect!
-      expect(response.body).to include("アクセス申請を送信しました。")
-    end
-
-    it "accepts Japanese access request reasons" do
-      sign_in_as(user)
-
-      expect do
-        post access_requests_path, params: {
-          access_request: {
-            requestable_gid: file.to_global_id.to_s,
-            requested_access_level: "download",
-            reason: "リリース確認のため資料を確認したいです。"
-          }
-        }
-      end.to change(AccessRequest, :count).by(1)
-
-      access_request = AccessRequest.last
-      expect(access_request.reason).to eq("リリース確認のため資料を確認したいです。")
-      expect(response).to redirect_to(access_requests_path)
-      follow_redirect!
-      expect(response.body).to include("アクセス申請を送信しました。")
-    end
-
-    it "keeps access requests scoped to the signed in user" do
-      sign_in_as(user)
-
-      post access_requests_path, params: {
-        access_request: {
-          requestable_gid: file.to_global_id.to_s,
-          requested_access_level: "download",
-          reason: "Need this file for the release review."
-        }
-      }
-
-      expect(AccessRequest.last.requester).to eq(user)
-    end
-
-    it "rejects duplicate pending requests" do
-      create(:access_request, requester: user, requestable: file, requested_access_level: :download)
-      sign_in_as(user)
-
-      expect do
-        post access_requests_path, params: {
-          access_request: {
-            requestable_gid: file.to_global_id.to_s,
-            requested_access_level: "download",
-            reason: "Need this file for the release review."
-          }
-        }
-      end.not_to change(AccessRequest, :count)
-
-      expect(response.body).to include("この対象への同じ権限レベルの申請はすでに保留中です。")
-    end
-  end
-
-  describe "GET /access_requests" do
-    it "shows the current user's requests" do
-      create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "mine")
-      create(:access_request, requester: other_user, requestable: file, requested_access_level: :download, reason: "other")
-      sign_in_as(user)
-
-      get access_requests_path
-
-      expect(response).to have_http_status(:ok)
-      expect(page_text).to include("mine")
-      expect(page_text).not_to include("other")
-    end
-
-    it "lets the requester cancel a pending request" do
-      access_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download)
-      sign_in_as(user)
-
-      expect do
-        patch cancel_access_request_path(access_request)
-      end.to change { access_request.reload.status }.from("pending").to("cancelled")
-
-      expect(response).to redirect_to(access_requests_path)
-    end
-
-    it "preserves current list filters after cancellation" do
-      access_request = create(:access_request, requester: user, requestable: file, requested_access_level: :download)
-      sign_in_as(user)
-
-      patch cancel_access_request_path(access_request), params: {
-        q: "request",
-        status: "pending",
-        requested_access_level: "download",
-        requestable_type: "DocumentFile"
-      }
-
-      expect(response).to redirect_to(access_requests_path(q: "request", status: "pending", requested_access_level: "download", requestable_type: "DocumentFile"))
-    end
-
-    it "filters the current user's requests by status and query" do
-      create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "needle review")
-      create(:access_request, requester: user, requestable: document, requested_access_level: :read, reason: "needle approved", status: :approved)
-      create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "other pending")
-      sign_in_as(user)
-
-      get access_requests_path, params: { q: "needle", status: "pending" }
-
-      expect(response).to have_http_status(:ok)
-      expect(page_text).to include("needle review")
-      expect(page_text).not_to include("needle approved")
-      expect(page_text).not_to include("other pending")
-      expect(page_text).to include("申請中 1件 / 承認済み 1件 / 却下 0件 / 取消済み 0件")
-    end
-
-    it "normalizes oversized queries and ignores invalid filters" do
-      create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "bounded")
-      sign_in_as(user)
-
-      get access_requests_path, params: {
-        q: "bounded" + ("x" * 200),
-        status: "unknown",
-        requested_access_level: "all",
-        requestable_type: "invalid"
-      }
-
-      expect(response).to have_http_status(:ok)
-      expect(page_text).to include("bounded")
-      expect(page_text).to include("申請中 1件 / 承認済み 0件 / 却下 0件 / 取消済み 0件")
-    end
-
-    it "filters the current user's requests by access level and requestable type" do
-      create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "file download")
-      create(:access_request, requester: user, requestable: document, requested_access_level: :read, reason: "document read")
-      sign_in_as(user)
-
-      get access_requests_path, params: { requested_access_level: "download", requestable_type: "DocumentFile" }
-
-      expect(response).to have_http_status(:ok)
-      expect(page_text).to include("file download")
-      expect(page_text).not_to include("document read")
-    end
-
-    it "bounds query result rows while keeping filtered status counts readable" do
-      sign_in_as(user)
-
-      101.times do |index|
-        create(
-          :access_request,
-          requester: user,
-          requestable: file,
-          requested_access_level: :download,
-          status: :cancelled,
-          cancelled_at: Time.current,
-          reason: format("bounded request %03d", index + 1)
-        )
-      end
-
-      get access_requests_path, params: {
-        q: "bounded",
-        status: :cancelled,
-        requested_access_level: :download,
-        requestable_type: "DocumentFile"
-      }
-
-      expect(response).to have_http_status(:ok)
-      expect(page_text).to include("申請中 0件 / 承認済み 0件 / 却下 0件 / 取消済み 101件")
-      expect(page_text).to include("表示件数: 101件中100件を新しい順で表示しています。")
-      expect(page_text).to include("条件を追加すると目的の申請を探しやすくなります。")
-      expect(parsed_html.css("tbody tr").size).to eq(AccessRequestsController::ACCESS_REQUEST_LIST_LIMIT)
-      expect(page_text).to include("bounded request 101")
-      expect(page_text).not_to include("bounded request 001")
-    end
-
-    it "shows localized filter labels for active request filters" do
-      create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "localized")
-      sign_in_as(user)
-
-      get access_requests_path, params: { status: "pending", requested_access_level: "download", requestable_type: "DocumentFile" }
-
-      expect(response).to have_http_status(:ok)
-      expect(page_text).to include("表示中: ステータス: 申請中 / 権限: ダウンロード / 対象: ファイル")
-      expect(page_text).not_to include("DocumentFile")
-    end
-
-    it "shows request buttons only for resources without a pending request" do
-      pending_file = create(:document_file, document: document, file_name: "pending.pdf")
-      available_file = create(:document_file, document: document, file_name: "available.pdf")
-      create(:access_request, requester: user, requestable: pending_file, requested_access_level: :download)
-      sign_in_as(user)
-
-      get project_document_path(project, document)
-
-      expect(response).to have_http_status(:ok)
-      expect(parsed_html).to have_button("申請中", disabled: true)
-      expect(parsed_html).to have_button("アクセス申請")
-      expect(response.body).to include(available_file.to_global_id.to_s)
-      expect(response.body).not_to include(pending_file.to_global_id.to_s)
-    end
+    parsed_html.text.squish
   end
 end
