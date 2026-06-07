@@ -20,6 +20,10 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     parsed_html.css("h1, h2, h3").map { _1.text.squish }.reject(&:empty?)
   end
 
+  def link_href(label)
+    parsed_html.css("a").find { _1.text.squish == label }&.[]("href")
+  end
+
   def submit_button_texts(action)
     parsed_html.css(%(form[action="#{action}"] button, form[action="#{action}"] input[type="submit"])).map do |node|
       node["value"].presence || node.text.squish
@@ -55,6 +59,34 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     expect(page_text).not_to include("C:/work/customer-docs/docs/README.md")
     expect(page_text).not_to include(zip_dry_run.public_id)
     expect(page_text).not_to include("zip-source")
+  end
+
+  it "explains the initial empty manual upload dry-run list" do
+    sign_in_as(admin_user)
+
+    get admin_file_upload_dry_runs_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 0件")
+    expect(page_text).to include("manual_upload dry-runはまだ作成されていません。")
+    expect(page_text).to include("file_uploads APIで作成されたdry-runは、ここから後追い確認できます。")
+    expect(page_text).to include("ZIP / Git import dry-runとartifact import dry-runはこの一覧には表示されません。")
+    expect(page_text).not_to include("dry-run ID、同期元・path・hash、案件、状態の条件を見直すか")
+  end
+
+  it "explains filtered zero results and keeps the reset link close to the empty state" do
+    sign_in_as(admin_user)
+    create_file_upload_dry_run
+
+    get admin_file_upload_dry_runs_path, params: { dry_run_id: "idry-missing", q: "missing-source", status: "failed" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 0件")
+    expect(page_text).to include("条件に一致するmanual_upload dry-runはありません。")
+    expect(page_text).to include("dry-run ID、同期元・path・hash、案件、状態の条件を見直すか、絞り込み解除で一覧に戻してください。")
+    expect(page_text).to include("ZIP / Git import dry-runとartifact import dry-runはこの一覧には表示されません。")
+    expect(link_href("絞り込み解除")).to eq(admin_file_upload_dry_runs_path)
+    expect(page_text).not_to include("local-folder-sync")
   end
 
   it "filters manual upload dry-runs by safe source metadata" do
@@ -126,7 +158,8 @@ RSpec.describe "Admin file upload dry runs", type: :request do
 
     get admin_file_upload_dry_runs_path, params: { q: "raw-source-only" }
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("条件に一致する単体ファイルアップロードdry-runはありません。")
+    expect(page_text).to include("条件に一致するmanual_upload dry-runはありません。")
+    expect(page_text).to include("dry-run ID、同期元・path・hash、案件、状態の条件を見直すか")
     expect(listed_dry_run_ids).to be_empty
     expect(page_text).not_to include(raw_source_path_only.public_id)
   end
