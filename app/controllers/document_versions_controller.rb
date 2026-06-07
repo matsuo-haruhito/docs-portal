@@ -27,8 +27,8 @@ class DocumentVersionsController < BaseController
     ).call
     visible_comments = @version.document_review_comments.visible_to(current_user)
     comment_search = DocumentCommentWorkspaceSearch.new(user: current_user, query: params[:comment_q])
-    question_threads = visible_comments.where(internal_only: false, comment_type: :question).roots.includes(:author, :resolved_by, replies: [:author, :resolved_by]).order(:created_at, :id)
-    review_comments = visible_comments.where(internal_only: true).includes(:author, :resolved_by).order(:created_at, :id)
+    question_threads = visible_comments.where(internal_only: false, comment_type: :question).roots.includes(:author, :resolved_by, :document_version, replies: [:author, :resolved_by]).order(:created_at, :id)
+    review_comments = visible_comments.where(internal_only: true).includes(:author, :resolved_by, :document_version).order(:created_at, :id)
     @question_threads = comment_search.filter_questions(question_threads)
     @review_comments = comment_search.filter_reviews(review_comments)
     @comment_search_query = comment_search.query
