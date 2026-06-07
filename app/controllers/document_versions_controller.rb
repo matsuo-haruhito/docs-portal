@@ -32,6 +32,7 @@ class DocumentVersionsController < BaseController
     @question_threads = comment_search.filter_questions(question_threads)
     @review_comments = comment_search.filter_reviews(review_comments)
     @comment_search_query = comment_search.query
+    @comment_workspace_tab = DocumentCommentWorkspaceTab.new(user: current_user, tab: params[:comment_tab]).value
     @export_preview_file = @version.document_files.select { |file| file.downloadable_by?(current_user) }.find do |file|
       file.effective_content_type.start_with?("application/pdf") || file.file_name.to_s.downcase.end_with?(".pdf")
     end
