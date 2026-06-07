@@ -168,4 +168,8 @@ section.card
       p.actions
         = link_to "条件をクリア", admin_document_usage_reports_path(project_id: @selected_project.id)
 - else
-  p.muted 案件を選択すると集計結果を表示します。
+  section.card
+    h2 案件を選択してください
+    p.muted 案件を選択すると集計結果を表示します。
+    p.muted 文書名 / slug、利用状況、並び順、期間は、案件を選択した後の集計結果を絞り込む条件です。
+    p.muted CSV出力、表示設定、結果の概要は集計結果の表示後に利用できます。
