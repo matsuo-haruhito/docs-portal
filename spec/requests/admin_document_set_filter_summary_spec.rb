@@ -35,7 +35,7 @@ RSpec.describe "Admin document set filter summary", type: :request do
       :document_set,
       project:,
       name: "社内共有セット",
-      set_type: :internal_reference,
+      set_type: :requirement,
       visibility_policy: :internal_only,
       sort_order: 2
     )
