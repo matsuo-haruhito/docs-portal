@@ -21,7 +21,7 @@ RSpec.describe "Admin read confirmation empty state", type: :request do
   end
 
   def link_href(label)
-    parsed_html.css("a").find { _1.text.squish == label }&.fetch("href")
+    parsed_html.css("a").find { _1.text.squish == label }&.[]("href")
   end
 
   it "shows condition-review copy and a project-only reset link for a valid zero-result combination" do
