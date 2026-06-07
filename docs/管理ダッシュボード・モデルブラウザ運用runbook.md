@@ -21,6 +21,7 @@ current 実装の前提:
 - `アプリ設定診断` は `ApplicationConfigurationDiagnostic` の check を `OK / 警告 / エラー` 件数つきで出す
 - `文書ファイル健全性` は `DocumentFileHealthCheck` で総件数と実体欠落件数を出し、欠落ファイルは最大 20 件まで一覧表示する
 - 欠落ファイルがある場合、`欠落ファイル詳細` で案件、文書名 / slug、Storage key / ファイル名の断片から絞り込みながら、先頭 100 件まで read-only に確認できる
+- 欠落ファイル詳細の `Expected path` は raw absolute path ではなく、`storage/document_files/...` 形式の safe preview として表示される
 - `Storage使用量` は `StorageUsageSummary` で local `storage/document_files` / `storage/docs_sites` / `storage/imports` の file count と概算使用量を read-only に出す
 - 画面下部の `基本マスタ` `関連設定` は、日常確認後に既存の管理画面へ戻る近道として置かれている
 
@@ -147,7 +148,7 @@ current 実装の前提:
 - `登録ファイル数` は `DocumentFile` 総数
 - `実体欠落` は `DocumentFile#absolute_path` に実ファイルが存在しなかった件数
 - dashboard の欠落一覧は最大 20 件までで、`案件` `文書` `版` `ファイル名` `Storage key` を表示する
-- 欠落ファイルがある場合は `欠落ファイル詳細` へ進むと、先頭 100 件まで `Expected path` を含めて確認できる
+- 欠落ファイルがある場合は `欠落ファイル詳細` へ進むと、先頭 100 件まで `Expected path` preview を含めて確認できる
 - 欠落ファイル詳細では `案件`、`文書名 / slug`、`Storage key / ファイル名` で絞り込める。これらは欠落ファイルだけを対象にした read-only filter であり、修復対象や削除対象を確定する操作ではない
 - 欠落状況では `登録ファイル数`、`全体の実体欠落`、filter 中の `条件一致欠落`、`表示中` を分けて読む
 - 一覧の `文書` は公開側の project/document detail、`版` は document version detail へ戻れる
@@ -156,11 +157,12 @@ current 実装の前提:
 読み方:
 
 - `実体欠落` が 0 でないときは、まず dashboard の先頭 20 件で欠落が特定案件だけか、複数案件へ広がっているかを見る
-- 欠落が 20 件を超える、または expected path まで含めて確認したい場合は `欠落ファイル詳細` へ進む
+- 欠落が 20 件を超える、または path preview まで含めて確認したい場合は `欠落ファイル詳細` へ進む
 - 特定案件だけを確認したい場合は `案件` filter、文書名や slug の心当たりがある場合は `文書名 / slug`、storage key や file name の断片がある場合は `Storage key / ファイル名` を使う
 - filter 中の `条件一致欠落: 0` は「全体に欠落がない」ではなく、現在の条件に一致する欠落がない状態として読む。全体の有無は `全体の実体欠落` を見る
 - `条件一致欠落` が `表示中` より多い場合、詳細一覧は条件一致分の先頭 100 件だけを表示している。続きを見るには条件を絞るか、storage 側または database 側の調査へ切り替える
-- `Storage key` と `Expected path` は storage 配下の期待位置を見直す手がかりとして使う
+- `Storage key` は登録済み `DocumentFile` が持つ保存先 key、`Expected path` preview はその key から組み立てた `storage/document_files/...` 形式の確認用表示として読む
+- `Expected path` preview は root directory や raw absolute path を通常 UI に出さないため、preview だけで不足する場合は `Storage key`、文書・版リンク、storage 側または database 側の調査を組み合わせる
 - `文書` や `版` へ戻り、対象が current 版か添付・原本か、import 直後の版かを確認する
 - `実体欠落` が詳細一覧の表示件数より多い場合、詳細一覧も先頭 100 件の bounded list として扱い、続きを見るには storage 側や database 側の調査へ切り替える
 
@@ -205,6 +207,7 @@ current 実装の前提:
 - `モデル検索` と `代表フィールド検索` を使い分け、catalog entry を探すのか最近の record sample を絞るのかを混同していないか
 - `警告` `エラー` が、sample 値の流用なのか実運用に影響する不足なのか
 - 欠落ファイルが単発なのか、storage 全体の問題に見えるのか
+- `Storage key` と `Expected path` preview の役割を分け、raw absolute path が通常 UI に出ない前提で切り分けているか
 - `Storage使用量` が local directory の概算容量として読めており、cleanup や retention 判断を先取りしていないか
 - dashboard だけで完結させず、必要な既存管理画面や仕様 docs にすぐ戻れているか
 
