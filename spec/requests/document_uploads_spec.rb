@@ -53,6 +53,32 @@ RSpec.describe "Document uploads", type: :request do
     expect(response).to redirect_to(document_version_path(version, upload_review: "1"))
   end
 
+  it "redirects missing project_code upload errors to the projects list" do
+    sign_in_as(user)
+
+    expect do
+      post "/projects/%20/document_uploads", params: {
+        file: uploaded_file("overview.md", "# Overview")
+      }
+    end.not_to change(Document, :count)
+
+    expect(response).to redirect_to(projects_path)
+    expect(flash[:alert]).to include("project_code")
+  end
+
+  it "keeps missing file upload errors scoped to the project documents list" do
+    sign_in_as(user)
+
+    expect do
+      post project_document_uploads_path(project), params: {
+        source_path: "docs/specs"
+      }
+    end.not_to change(Document, :count)
+
+    expect(response).to redirect_to(project_documents_path(project))
+    expect(flash[:alert]).to include("file")
+  end
+
   it "rejects unsafe upload target folders" do
     sign_in_as(user)
 
