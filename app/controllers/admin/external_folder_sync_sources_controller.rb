@@ -5,6 +5,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     "folder_path" => "Folder path",
     "site_id" => "Site ID"
   }.freeze
+  EXTERNAL_FOLDER_SYNC_SOURCE_SEARCH_QUERY_MAX_LENGTH = 100
 
   before_action :require_admin_only!
   before_action :set_external_folder_sync_source, only: %i[show edit update destroy dry_run apply force_apply enqueue subscribe unsubscribe recheck_metadata]
@@ -199,7 +200,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def normalize_search_query(value)
-    value.to_s.squish.presence
+    value.to_s.squish.first(EXTERNAL_FOLDER_SYNC_SOURCE_SEARCH_QUERY_MAX_LENGTH).presence
   end
 
   def review_filter_matches?(source, selected_review_filter)
