@@ -75,7 +75,7 @@ section.card
           - @matching_documents.first(5).each do |matching_document|
             li
               = matching_document.title
-              |  / 
+              |  
               code style="overflow-wrap:anywhere;word-break:break-word;white-space:normal" = matching_document.slug
       - unless @matching_documents.present?
         p.muted 指定した文書はこの案件に見つかりません。文書利用状況の文書名リンクから slug を確認してください。
