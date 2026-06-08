@@ -40,7 +40,7 @@ RSpec.describe "Admin recurring job schedule action grouping", type: :request do
     expect(action_card.at_css(%(a[href="#{request_run_admin_recurring_job_schedule_path(schedule, return_to:)}"]))).to be_present
     expect(parsed_html.at_css(%(a[href="#{return_to}"])).text.squish).to eq("一覧へ戻る")
     expect(response.body).to include("failed-run-2119")
-    expect(response.body).to include("表示中: 1件（最新50件まで）")
+    expect(response.body).to include("表示中: 1-1件 / 全1件（50件ずつ、1/1ページ）")
   end
 
   def definition_values(card)
