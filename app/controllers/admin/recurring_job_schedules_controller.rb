@@ -2,6 +2,8 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_schedule, only: %i[show request_run]
 
+  SCHEDULE_QUERY_MAX_LENGTH = 100
+
   def index
     RecurringJobDispatcherJob.perform_now if params[:sync_definitions].present?
 
@@ -85,7 +87,7 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
   end
 
   def schedule_query_param
-    params[:q].to_s.strip.presence
+    params[:q].to_s.strip.presence&.slice(0, SCHEDULE_QUERY_MAX_LENGTH)
   end
 
   def run_status_param
