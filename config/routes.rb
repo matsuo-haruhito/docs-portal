@@ -84,6 +84,8 @@ Rails.application.routes.draw do
     end
     resources :bulk_edit_dry_runs, only: %i[new create show update], param: :public_id
     resources :document_sets, except: %i[show new], param: :public_id do
+      get :project_search, on: :collection
+      get :selected_project, on: :collection
       get :document_search, on: :collection
       get :document_version_search, on: :collection
     end

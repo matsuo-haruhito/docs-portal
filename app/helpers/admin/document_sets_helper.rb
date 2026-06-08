@@ -41,6 +41,16 @@ module Admin::DocumentSetsHelper
     admin_document_set_filter_labels(filters).any?
   end
 
+  def document_set_project_option_label(project)
+    [project.code, project.name].compact_blank.join(" / ")
+  end
+
+  def document_set_project_selected_option(project)
+    return nil if project.blank?
+
+    { value: project.id, text: document_set_project_option_label(project) }
+  end
+
   def document_set_version_usage_label(document_set)
     items = document_set.document_set_items
     fixed_count = items.count { _1.document_version_id.present? }
