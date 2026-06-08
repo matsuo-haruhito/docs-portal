@@ -41,12 +41,16 @@ current 実装の前提:
 
 - index では各 model の `件数` と `最終更新` を、`基本マスタ` `文書・権限` `import / sync` `外部連携` `運用` の領域別 group に分けて並べる
 - index の `モデル検索` は、catalog entry のモデル名、key、説明、group の表記から model を探すための入口であり、最近の record 自体を検索する欄ではない
+- index の検索語は前後空白を除いて最大 100 文字まで使う。空白だけの入力は検索条件なしとして扱い、filter 済み状態や 0 件 state にしない
+- index の検索 0 件 state では、`モデル検索` が catalog entry 検索であることを読み、record 名、public_id、code を探したい場合は対象 model の詳細に進んで `代表フィールド検索` を使うか、既存管理画面で確認する
 - group は `Admin::ModelBrowserCatalog::GROUP_LABELS` と各 entry の `group` metadata が正本で、画面側だけで分類を作らない
 - show では model ごとに最近 20 件の record を、catalog が持つ `summary_fields` で表示する
 - show の `代表フィールド検索` は、各 model の `summary_fields` のうち実カラムの string / text field と、数字だけの検索語では `id` exact match を対象にする
 - association 表示用の `*_id` field は代表フィールド検索の対象外だが、`public_id` は識別用の代表 field として検索対象に残る
 - 検索語は最大 100 文字に切り詰められ、検索結果も最大 20 件までの read-only sample として表示される
+- index の検索結果から詳細へ入った場合、detail の `モデル一覧へ戻る` と breadcrumb は index 側の検索語を保持したモデル一覧へ戻る。detail 内の `代表フィールド検索` を解除しても、元の index 検索文脈は残る
 - `既存画面へ` がある model は、そのまま管理画面の一覧へ戻れる
+- show の `既存画面で詳しく確認` は、対象 model が query handoff allowlist に入っており、検索語が数値だけではない場合だけ、代表フィールド検索の語を既存画面の検索条件に引き継ぐ。それ以外は検索語をコピーして対象画面で再確認する
 - `DocumentVersion` `DocumentFile` など既存の専用 index がないものも、ここでは最新 record の代表値を見返せる
 - モデルブラウザには編集、削除、bulk action、CSV export、pagination、saved search はない。続きの検索や操作が必要な model は `既存画面へ` から専用管理画面へ戻る
 
@@ -64,8 +68,11 @@ current 実装の前提:
 - model 全体の件数や最終更新を横断で比較したい: `モデルブラウザ` index
 - 領域別に近い model をまとめて見たい: `モデルブラウザ` index の group 見出し
 - catalog に載っている model を名前、key、説明、group から探したい: `モデルブラウザ` index の `モデル検索`
+- `モデル検索` が 0 件のとき: model 名、key、説明、group の表記を変えて再検索し、record 名や public_id を探している場合は対象 model の詳細または既存画面へ切り替える
+- index の検索結果から detail へ入ったあと元の model 一覧へ戻りたい: detail の `モデル一覧へ戻る` または breadcrumb から、検索済みの index へ戻る
 - 最近の record の shape や値を短く確認したい: `モデルブラウザ` show
 - 最近の record のうち public ID、名称、code など代表フィールドに心当たりがある値だけを探したい: `モデルブラウザ` show の `代表フィールド検索`
+- detail の代表フィールド検索から既存画面で続けたい: `既存画面で詳しく確認` が検索語を引き継ぐ場合はそのまま確認し、引き継がない場合や数値だけの検索語では公開ID・code など画面で確認できる値を使って既存画面で再確認する
 - 編集や登録をしたい: `モデルブラウザ` ではなく `既存画面へ` から元の管理画面へ戻る
 
 ### Catalog を追加・見直すとき
@@ -205,6 +212,8 @@ current 実装の前提:
 - model 数や最終更新に急な変化がないか
 - model browser index の group 見出しで、近い領域の model がまとめて確認できているか
 - `モデル検索` と `代表フィールド検索` を使い分け、catalog entry を探すのか最近の record sample を絞るのかを混同していないか
+- index 検索から detail に入った場合、`モデル一覧へ戻る` が検索済み index へ戻る導線であり、detail 内の `代表フィールド検索` とは別文脈だと分けて読めているか
+- `既存画面で詳しく確認` が検索語を引き継ぐ場合と、コピーして既存画面で再確認する場合を混同していないか
 - `警告` `エラー` が、sample 値の流用なのか実運用に影響する不足なのか
 - 欠落ファイルが単発なのか、storage 全体の問題に見えるのか
 - `Storage key` と `Expected path` preview の役割を分け、raw absolute path が通常 UI に出ない前提で切り分けているか
@@ -217,7 +226,10 @@ current 実装の前提:
 - 特定 model の件数や最近の record を見たい: `モデルブラウザ`
 - 近い領域の model をまとめて確認したい: `モデルブラウザ` index の group 見出し
 - model browser に載っている対象 model を探したい: `モデルブラウザ` index の `モデル検索`
+- model browser index で検索結果が 0 件になる: record 名や public_id ではなく、model 名、key、説明、group の表記を変えて探す
+- 検索済みの model 一覧から detail に入って戻りたい: detail の `モデル一覧へ戻る` または breadcrumb で元の検索済み index へ戻る
 - model 詳細内の最近の record sample から識別値を探したい: `モデルブラウザ` show の `代表フィールド検索`
+- detail から既存画面で続けて調べたい: `既存画面で詳しく確認` を使い、検索語引き継ぎの有無に応じて既存画面側で再確認する
 - `.env` や compose の設定不足を見たい: `アプリ設定診断`
 - 実体ファイルが見えない原因を切り分けたい: `文書ファイル健全性`
 - local storage の領域別使用量を read-only に確認したい: `Storage使用量`
