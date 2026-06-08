@@ -84,7 +84,7 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果")
     expect(response.body).to include("検索語: Return / 表示上限: 20件")
-    expect(response.body).to include("name=\"model_browser_q\" value=\"文書\"")
+    expect(parsed_html.css("input[name='model_browser_q'][value='文書']")).to be_present
     expect(page_hrefs).to include(admin_model_browser_path(q: "文書"))
     expect(page_hrefs).to include(admin_projects_path(q: "Return"))
     expect(page_hrefs).not_to include(admin_model_browser_path(q: "Return"))
