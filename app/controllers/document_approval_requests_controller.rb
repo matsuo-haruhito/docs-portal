@@ -1,4 +1,6 @@
 class DocumentApprovalRequestsController < BaseController
+  QUERY_MAX_LENGTH = 100
+
   before_action :set_document_from_nested_route, only: %i[create]
   before_action :set_document_approval_request, only: %i[show update cancel]
 
@@ -97,7 +99,7 @@ class DocumentApprovalRequestsController < BaseController
   end
 
   def normalized_query
-    params[:q].to_s.strip.presence
+    params[:q].to_s.strip.presence&.slice(0, QUERY_MAX_LENGTH)
   end
 
   def normalized_user_filter_id(param_name)
