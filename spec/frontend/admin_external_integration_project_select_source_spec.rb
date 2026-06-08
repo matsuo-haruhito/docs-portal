@@ -17,12 +17,14 @@ RSpec.describe "admin external integration project selectors source" do
     Rails.root.join("app/views/admin/microsoft_graph_connections/_form.html.slim").read
   end
 
-  it "uses rails fields kit for the external folder sync source project selector" do
+  it "uses rails fields kit remote search for the external folder sync source project selector" do
     aggregate_failures do
-      expect(external_folder_sync_source_form).to include("= form.rfk_select :project_id,")
-      expect(external_folder_sync_source_form).to include("collection: @projects")
-      expect(external_folder_sync_source_form).to include("collection_value_method: :id")
-      expect(external_folder_sync_source_form).to include("collection_label_method: :name")
+      expect(external_folder_sync_source_form).to include("= form.rfk_combobox :project_id,")
+      expect(external_folder_sync_source_form).to include("collection: []")
+      expect(external_folder_sync_source_form).to include("selected: external_folder_sync_source_project_selected_option(external_folder_sync_source.project)")
+      expect(external_folder_sync_source_form).to include("project_search_admin_external_folder_sync_sources_path")
+      expect(external_folder_sync_source_form).to include("selected_project_admin_external_folder_sync_sources_path")
+      expect(external_folder_sync_source_form).to include("max_options: Admin::ExternalFolderSyncSourcesController::PROJECT_SEARCH_LIMIT")
       expect(external_folder_sync_source_form).to include('label: "対象案件"')
       expect(external_folder_sync_source_form).not_to include("collection_select :project_id")
     end
