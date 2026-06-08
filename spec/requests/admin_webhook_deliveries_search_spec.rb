@@ -105,6 +105,58 @@ RSpec.describe "Admin webhook delivery search", type: :request do
     expect(delivery_status_labels).to eq(["失敗"])
   end
 
+  it "shows invalid created date warnings while preserving valid filters" do
+    sign_in_as(admin_user)
+
+    endpoint = create(:webhook_endpoint, name: "Error Hook", event_types: %w[document_updated])
+    event = create(:notification_event, event_type: :document_updated)
+    matched = create(
+      :webhook_delivery,
+      webhook_endpoint: endpoint,
+      notification_event: event,
+      event_type: "document_updated",
+      status: :failed,
+      response_status: 500,
+      error_message: "timeout while sending",
+      created_at: Time.zone.local(2026, 6, 2, 10, 0, 0)
+    )
+    create(
+      :webhook_delivery,
+      webhook_endpoint: create(:webhook_endpoint, name: "Success Hook", event_types: %w[document_updated]),
+      notification_event: event,
+      event_type: "document_updated",
+      status: :succeeded,
+      response_status: 200,
+      error_message: "timeout while sending",
+      created_at: Time.zone.local(2026, 6, 2, 11, 0, 0)
+    )
+
+    get admin_webhook_deliveries_path(
+      created_from: "not-a-date",
+      created_to: "2026-06-30",
+      status: "failed",
+      response_status: "500",
+      error_q: "timeout"
+    )
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("作成日Fromの値が日付として解釈できないため、この条件は適用していません。")
+    expect(page_text).to include("Error Hook")
+    expect(page_text).to include("timeout while sending")
+    expect(page_text).to include("500")
+    expect(delivery_endpoint_names).not_to include("Success Hook")
+    expect(action_targets).to include(
+      admin_webhook_delivery_path(
+        matched.public_id,
+        return_context: "deliveries_index",
+        status: "failed",
+        response_status: "500",
+        error_q: "timeout",
+        created_to: "2026-06-30"
+      )
+    )
+  end
+
   it "shows unfiltered deliveries newest first with a bounded result list" do
     sign_in_as(admin_user)
 
