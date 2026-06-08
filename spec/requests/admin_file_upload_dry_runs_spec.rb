@@ -203,6 +203,8 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     expect(heading_texts).to include("単体ファイルアップロードdry-run", "取り込み概要", "TreeViewプレビュー")
     expect(page_text).to include("FILEUI / File UI Project")
     expect(page_text).to include(dry_run.public_id)
+    expect(page_text).to include("apply 前の確認順や API 入口の見分け方")
+    expect(link_href("internal upload API dry-run / apply runbook")).to eq("https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/internal%20upload%20API%20dry-run・apply運用runbook.md")
     expect(page_text).to include("local-folder-sync")
     expect(page_text).to include("docs/README.md")
     expect(page_text).to include("raw source path は画面に表示しません")

@@ -4,6 +4,10 @@ h1 単体ファイルアップロードdry-run
 
 .card
   h2 取り込み概要
+  p.muted
+    | apply 前の確認順や API 入口の見分け方は
+    = link_to "internal upload API dry-run / apply runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/internal%20upload%20API%20dry-run・apply運用runbook.md"
+    | を確認してください。
   dl.definition-list
     dt 案件
     dd = @import_dry_run.project ? "#{@import_dry_run.project.code} / #{@import_dry_run.project.name}" : "-"
