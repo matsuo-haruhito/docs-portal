@@ -441,7 +441,7 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     defaults = {
       recurring_job_schedule: schedule,
       job_key: schedule.job_key,
-      job_class: schedule.job_key,
+      job_class: schedule.job_class,
       queue_name: schedule.queue_name,
       status: "enqueued",
       scheduled_at: Time.current,
