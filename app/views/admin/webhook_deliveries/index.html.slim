@@ -34,10 +34,14 @@ p.actions
         = search_field_tag :error_q, @delivery_filters[:error_q], placeholder: "例: timeout"
       label
         | 作成日From
-        = date_field_tag :created_from, @delivery_filters[:created_from]
+        = date_field_tag :created_from, @delivery_filter_inputs[:created_from]
       label
         | 作成日To
-        = date_field_tag :created_to, @delivery_filters[:created_to]
+        = date_field_tag :created_to, @delivery_filter_inputs[:created_to]
+    - if @delivery_filter_warnings.any?
+      .filter-warnings
+        - @delivery_filter_warnings.each do |warning|
+          p.muted = warning
     p.actions style="margin-top:16px;"
       = submit_tag "検索", class: "button"
       - if @delivery_filters_applied
