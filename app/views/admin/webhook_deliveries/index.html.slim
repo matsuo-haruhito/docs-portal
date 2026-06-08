@@ -4,6 +4,9 @@
 - delivery_table_settings = rails_table_preference_settings(table_key: delivery_table_key)
 - delivery_status_options = webhook_delivery_status_filter_options.map { |value, label| [label, value] }
 - event_type_options = WebhookEndpoint::EVENT_TYPES.map { |event_type| [webhook_event_type_label(event_type), event_type] }
+- delivery_page_start = @webhook_deliveries_total_count.zero? ? 0 : @webhook_deliveries_offset + 1
+- delivery_page_end = @webhook_deliveries_offset + @webhook_deliveries.size
+- delivery_pagination_params = @delivery_filters.merge(page: @webhook_deliveries_page)
 
 h1 Webhook送信履歴検索
 = render "admin/nav"
@@ -49,7 +52,7 @@ p.actions
 
 .card
   h2 検索結果
-  p.muted = "表示範囲: #{@webhook_deliveries_total_count}件中#{@webhook_deliveries.size}件を新しい順で表示しています。#{@webhook_deliveries_total_count > @webhook_deliveries_limit ? "さらに古い履歴を探す場合は endpoint / event / status / HTTP status / エラー断片 / 作成日で絞り込んでください。" : ""}"
+  p.muted = "表示範囲: #{@webhook_deliveries_total_count}件中#{delivery_page_start}-#{delivery_page_end}件を新しい順で表示しています（#{@webhook_deliveries_limit}件ずつ、#{@webhook_deliveries_page}/#{@webhook_deliveries_total_pages}ページ）。"
   p.muted この一覧は履歴を探して詳細へ進むための read-only 検索です。まとめて再送は既存の Webhook 一覧で「失敗のみ」表示中の最近50件に閉じています。
 
   - if @webhook_deliveries.any?
@@ -76,6 +79,12 @@ p.actions
             td data-rails-table-preferences-column-key="error_message" = WebhookDeliveryDiagnosticPreview.new(delivery.error_message).to_s
             td.actions data-rails-table-preferences-column-key="actions"
               = link_to "詳細", admin_webhook_delivery_path(delivery.public_id, @delivery_return_params)
+    - if @webhook_deliveries_total_pages > 1
+      p.actions
+        - if @webhook_deliveries_page > 1
+          = link_to "前のページ", admin_webhook_deliveries_path(delivery_pagination_params.merge(page: @webhook_deliveries_page - 1)), class: "button secondary"
+        - if @webhook_deliveries_page < @webhook_deliveries_total_pages
+          = link_to "次のページ", admin_webhook_deliveries_path(delivery_pagination_params.merge(page: @webhook_deliveries_page + 1)), class: "button secondary"
   - elsif @delivery_filters_applied
     p.muted 条件に一致するWebhook送信履歴はありません。endpoint、event、status、HTTP status、エラー断片、作成日の条件を見直してください。
   - else

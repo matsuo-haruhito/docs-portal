@@ -34,7 +34,7 @@ RSpec.describe "Admin webhook delivery search preview", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("Webhook送信履歴検索")
-    expect(page_text).to include("表示範囲: 1件中1件を新しい順で表示しています。")
+    expect(page_text).to include("表示範囲: 1件中1-1件を新しい順で表示しています")
     expect(page_text).to include("Authorization: [masked]")
     expect(page_text).to include("token=[masked]")
     expect(page_text).to include("[path hidden]")
