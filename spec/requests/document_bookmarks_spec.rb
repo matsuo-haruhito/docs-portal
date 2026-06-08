@@ -26,7 +26,9 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("文書ショートカット")
     expect(response.body).to include("保存済みショートカットの絞り込み")
-    expect(response.body).to include("明示的に保存したお気に入りと後で読むだけを案件で絞り込めます。")
+    expect(response.body).to include("明示的に保存したお気に入りと後で読むだけを、案件や文書名・案件名で絞り込めます。")
+    expect(response.body).to include("保存済みショートカットを検索")
+    expect(response.body).to include("文書名・案件名・案件コード")
     expect(response.body).to include("Manual")
     expect(response.body).to include("Checklist")
     expect(response.body).to include("Guide")
@@ -71,6 +73,85 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response.body).not_to include("お気に入りへ移す")
     expect(response.body.scan("1件").size).to eq(2)
     expect(response.body.scan("0件").size).to eq(1)
+  end
+
+  it "filters saved favorite and read-later bookmarks by bookmark query without filtering recent documents" do
+    later_document = create(:document, project:, title: "Release Checklist", slug: "release-checklist", visibility_policy: :restricted_external)
+    recent_document = create(:document, project:, title: "Recent Guide", slug: "recent-guide", visibility_policy: :restricted_external)
+    create(:document_permission, document: later_document, company:, access_level: :view)
+    create(:document_permission, document: recent_document, company:, access_level: :view)
+    create(:document_bookmark, user:, document:, bookmark_type: :favorite)
+    create(:document_bookmark, user:, document: later_document, bookmark_type: :read_later)
+    create(:access_log, user:, company:, project:, document: recent_document, action_type: :view, target_type: "document", accessed_at: Time.current)
+    sign_in_as(user)
+
+    get document_bookmarks_path, params: { bookmark_q: "manual" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("検索語「manual」でお気に入りと後で読むを絞り込んでいます。最近見た文書は絞り込み対象外です。")
+    expect(response.body).to include("Manual")
+    expect(response.body).not_to include("Release Checklist")
+    expect(response.body).to include("Recent Guide")
+    expect(response.body).to include("保存済みショートカット検索「manual」に一致する後で読む文書はありません。")
+  end
+
+  it "filters saved bookmarks by project name and code across favorite and read-later sections" do
+    searchable_project = create(:project, name: "Alpha Workspace", code: "ALPHA2397")
+    favorite_document = create(:document, project: searchable_project, title: "Launch Manual", slug: "launch-manual", visibility_policy: :restricted_external)
+    later_document = create(:document, project: searchable_project, title: "Launch Checklist", slug: "launch-checklist", visibility_policy: :restricted_external)
+    create(:project_membership, project: searchable_project, user:)
+    create(:document_permission, document: favorite_document, company:, access_level: :view)
+    create(:document_permission, document: later_document, company:, access_level: :view)
+    create(:document_bookmark, user:, document: favorite_document, bookmark_type: :favorite)
+    create(:document_bookmark, user:, document: later_document, bookmark_type: :read_later)
+    sign_in_as(user)
+
+    get document_bookmarks_path, params: { bookmark_q: "alpha2397" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Launch Manual")
+    expect(response.body).to include("Launch Checklist")
+    expect(response.body.scan("1件").size).to eq(2)
+  end
+
+  it "combines project bookmark filtering with saved bookmark query" do
+    other_project = create(:project, name: "Other Project")
+    matching_document = create(:document, project:, title: "Project Manual", slug: "project-manual", visibility_policy: :restricted_external)
+    project_miss_document = create(:document, project:, title: "Project Checklist", slug: "project-checklist", visibility_policy: :restricted_external)
+    other_document = create(:document, project: other_project, title: "Other Manual", slug: "other-manual", visibility_policy: :restricted_external)
+    create(:project_membership, project: other_project, user:)
+    [matching_document, project_miss_document, other_document].each do |bookmark_document|
+      create(:document_permission, document: bookmark_document, company:, access_level: :view)
+    end
+    create(:document_bookmark, user:, document: matching_document, bookmark_type: :favorite)
+    create(:document_bookmark, user:, document: project_miss_document, bookmark_type: :read_later)
+    create(:document_bookmark, user:, document: other_document, bookmark_type: :favorite)
+    sign_in_as(user)
+
+    get document_bookmarks_path, params: { project_code: project.code, bookmark_q: "manual" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("案件「Visible Project」と検索語「manual」でお気に入りと後で読むを絞り込んでいます。最近見た文書は絞り込み対象外です。")
+    expect(response.body).to include("Project Manual")
+    expect(response.body).not_to include("Project Checklist")
+    expect(response.body).not_to include("Other Manual")
+    expect(response.body).to include("保存済みショートカット検索「manual」に一致する後で読む文書はありません。")
+  end
+
+  it "shows saved bookmark search empty states separately from unregistered states" do
+    later_document = create(:document, project:, title: "Checklist", slug: "checklist", visibility_policy: :restricted_external)
+    create(:document_permission, document: later_document, company:, access_level: :view)
+    create(:document_bookmark, user:, document:, bookmark_type: :favorite)
+    create(:document_bookmark, user:, document: later_document, bookmark_type: :read_later)
+    sign_in_as(user)
+
+    get document_bookmarks_path, params: { bookmark_q: "zzz" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("保存済みショートカット検索「zzz」に一致するお気に入りはありません。")
+    expect(response.body).to include("保存済みショートカット検索「zzz」に一致する後で読む文書はありません。")
+    expect(response.body).not_to include("文書画面でお気に入りに追加すると、ここに表示されます。")
+    expect(response.body).not_to include("文書画面で後で読むに追加すると、ここに表示されます。")
   end
 
   it "filters recent documents by query without filtering saved shortcuts" do
@@ -124,10 +205,29 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response.body).to include("条件をクリア")
   end
 
+  it "keeps saved bookmark filtering active while filtering recent documents" do
+    later_document = create(:document, project:, title: "Checklist", slug: "checklist", visibility_policy: :restricted_external)
+    recent_document = create(:document, project:, title: "Manual Recent Guide", slug: "manual-recent-guide", visibility_policy: :restricted_external)
+    create(:document_permission, document: later_document, company:, access_level: :view)
+    create(:document_permission, document: recent_document, company:, access_level: :view)
+    create(:document_bookmark, user:, document:, bookmark_type: :favorite)
+    create(:document_bookmark, user:, document: later_document, bookmark_type: :read_later)
+    create(:access_log, user:, company:, project:, document: recent_document, action_type: :view, target_type: "document", accessed_at: Time.current)
+    sign_in_as(user)
+
+    get document_bookmarks_path, params: { bookmark_q: "manual", recent_q: "recent" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Manual")
+    expect(response.body).not_to include("Checklist")
+    expect(response.body).to include("Manual Recent Guide")
+    expect(response.body).to include("条件をクリア")
+  end
+
   it "shows a recent document no-match empty state for unsupported query text" do
     recent_document = create(:document, project:, title: "Guide", slug: "guide", visibility_policy: :restricted_external)
     create(:document_permission, document: recent_document, company:, access_level: :view)
-    create(:access_log, user:, company:, project:, document: recent_document, action_type: :view, target_type: "document", accessed_at: Time.current)
+    create(:access_log, user:, company:, project:, document: recent_document, action_type: "view", target_type: "document", accessed_at: Time.current)
     sign_in_as(user)
 
     get document_bookmarks_path, params: { recent_q: "zzz" }
