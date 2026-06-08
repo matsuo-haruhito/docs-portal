@@ -114,10 +114,36 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(page_text).to include("表示中: 1件")
     expect(page_text).to include("Manual")
     expect(page_text).to include("Reader One")
+    expect(page_text).not_to include("部分一致で複数の文書が対象です。")
     expect(page_text).not_to include("Policy")
     expect(page_text).not_to include("Outside Manual")
     expect(page_text).not_to include("Outside Reader")
     expect(read_confirmation_rows.size).to eq(1)
+  end
+
+  it "shows candidate cues when a document slug filter matches multiple documents" do
+    appendix_document = create(:document, project:, title: "Manual Appendix", slug: "manual-appendix")
+    policy_document = create(:document, project:, title: "Policy Manual", slug: "policy-manual")
+    create(:read_confirmation, document:, user: viewer, confirmed_at: Time.zone.local(2026, 5, 1, 12, 0, 0))
+    create(:read_confirmation, document: appendix_document, user: create(:user, :external, name: "Appendix Reader"), confirmed_at: Time.zone.local(2026, 5, 2, 12, 0, 0))
+    create(:read_confirmation, document: policy_document, user: create(:user, :external, name: "Policy Reader"), confirmed_at: Time.zone.local(2026, 5, 3, 12, 0, 0))
+
+    sign_in_as(admin_user)
+
+    get admin_read_confirmations_path(project_id: project.id, document_slug: "manual")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("文書URL識別子: manual / 一致文書: 3件")
+    expect(page_text).to include("部分一致で複数の文書が対象です。候補を確認し、1件に絞る場合は文書名またはURL識別子を追加してください。")
+    expect(page_text).to include("Manual manual")
+    expect(page_text).to include("Manual Appendix manual-appendix")
+    expect(page_text).to include("Policy Manual policy-manual")
+    expect(page_text).to include("表示中: 3件")
+    expect(read_confirmation_rows).to contain_exactly(
+      a_string_including("Manual", "Reader One"),
+      a_string_including("Manual Appendix", "Appendix Reader"),
+      a_string_including("Policy Manual", "Policy Reader")
+    )
   end
 
   it "filters read confirmations by company within the selected project" do
@@ -321,6 +347,7 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(page_text).to include("既読確認はありません")
     expect(page_text).to include("表示中: 0件")
     expect(page_text).to include("指定した文書URL識別子に一致する文書がないため、既読確認は表示されません。")
+    expect(page_text).not_to include("部分一致で複数の文書が対象です。")
     expect(page_text).not_to include("Reader One / reader@example.com")
     expect(company_filter_options).not_to include("Client A")
     expect(user_filter_options).not_to include(a_string_including("Reader One"))
