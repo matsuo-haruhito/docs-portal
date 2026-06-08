@@ -35,6 +35,10 @@ RSpec.describe "Admin read confirmations", type: :request do
     parsed_html.css("select[name='user_id'] option").map { _1.text.squish }
   end
 
+  def csv_export_link
+    parsed_html.css("a").find { |link| link.text.squish == "CSV出力" }
+  end
+
   it "shows project read confirmation details to internal admins" do
     other_document = create(:document, project:, title: "Policy", slug: "policy")
     outside_document = create(:document, project: other_project, title: "Outside", slug: "outside")
@@ -118,6 +122,44 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(page_text).not_to include("Outside Manual")
     expect(page_text).not_to include("Outside Reader")
     expect(read_confirmation_rows.size).to eq(1)
+  end
+
+  it "normalizes oversized and blank document slug filters for display, filtering, and CSV links" do
+    normalized_query = "alpha" * 20
+    oversized_query = "#{normalized_query}should-not-leak"
+    matching_document = create(:document, project:, title: "#{normalized_query} Guide", slug: "normalized-guide")
+    create(:read_confirmation, document: matching_document, user: viewer, confirmed_at: Time.zone.local(2026, 5, 1, 12, 0, 0))
+    create(:read_confirmation, document:, user: viewer, confirmed_at: Time.zone.local(2026, 5, 2, 12, 0, 0))
+
+    sign_in_as(admin_user)
+
+    get admin_read_confirmations_path(project_id: project.id, document_slug: oversized_query)
+
+    expect(response).to have_http_status(:ok)
+    expect(normalized_query.length).to eq(Admin::ReadConfirmationsController::DOCUMENT_QUERY_MAX_LENGTH)
+    expect(page_text).to include("文書URL識別子: #{normalized_query}")
+    expect(page_text).not_to include("should-not-leak")
+    expect(read_confirmation_rows).to contain_exactly(a_string_including(matching_document.title, "Reader One"))
+    expect(parsed_html.at_css("input[name='document_slug'][type='search']")["value"]).to eq(normalized_query)
+    expect(parsed_html.at_css("input[name='document_slug'][type='search']")["maxlength"]).to eq(Admin::ReadConfirmationsController::DOCUMENT_QUERY_MAX_LENGTH.to_s)
+    expect(csv_export_link["href"]).to include("document_slug=#{normalized_query}")
+    expect(csv_export_link["href"]).not_to include("should-not-leak")
+
+    get admin_read_confirmations_path(project_id: project.id, document_slug: oversized_query, format: :csv)
+
+    csv = CSV.parse(response.body, headers: true)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("text/csv")
+    expect(csv.size).to eq(1)
+    expect(csv.first.to_h).to include("文書名" => matching_document.title, "document slug" => matching_document.slug)
+
+    get admin_read_confirmations_path(project_id: project.id, document_slug: "   ")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("文書名またはURL識別子を指定しない場合は、案件内の既読確認を新しい順に表示します。")
+    expect(parsed_html.at_css("input[name='document_slug'][type='search']")["value"]).to be_blank
+    expect(csv_export_link["href"]).not_to include("document_slug")
   end
 
   it "filters read confirmations by company within the selected project" do
@@ -338,7 +380,9 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(page_text).not_to include("Manual")
     expect(page_text).not_to include("Reader One / reader@example.com")
     expect(parsed_html.at_css("select[name='project_id']")).to be_present
-    expect(parsed_html.at_css("input[name='document_slug']")).to be_present
+    document_slug_input = parsed_html.at_css("input[name='document_slug'][type='search']")
+    expect(document_slug_input).to be_present
+    expect(document_slug_input["maxlength"]).to eq(Admin::ReadConfirmationsController::DOCUMENT_QUERY_MAX_LENGTH.to_s)
     expect(parsed_html.at_css("input[name='from'][type='date']")).to be_present
     expect(parsed_html.at_css("input[name='to'][type='date']")).to be_present
     expect(parsed_html.at_css("select[name='company_id']")).to be_present
