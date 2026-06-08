@@ -9,11 +9,11 @@ p.muted 主要な管理対象の件数と最近のデータを横断確認でき
 .card
   = form_with url: admin_model_browser_path, method: :get, local: true, class: "filters" do
     = label_tag :q, "モデル検索"
-    = search_field_tag :q, @query, placeholder: "モデル名 / key / 説明 / group"
+    = search_field_tag :q, @query, placeholder: "モデル名 / key / 説明 / group", maxlength: Admin::ModelBrowsersController::MODEL_BROWSER_QUERY_MAX_LENGTH
     = submit_tag "検索", class: "button secondary"
     - if has_query
       = link_to "検索解除", admin_model_browser_path, class: "button secondary"
-  p.muted catalog entry のモデル名、key、説明、group から探せます。最近の record 検索や編集操作は各 model の詳細または既存画面で確認してください。
+  p.muted = "catalog entry のモデル名、key、説明、group から探せます。検索語は最大#{Admin::ModelBrowsersController::MODEL_BROWSER_QUERY_MAX_LENGTH}文字です。最近の record 検索や編集操作は各 model の詳細または既存画面で確認してください。"
   - if has_query
     p.muted = "検索条件: #{@query} / 表示中: #{@entries.size}件"
 
