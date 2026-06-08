@@ -152,9 +152,4 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     @run_filter_warnings << "#{label}「#{value}」は日時として解釈できないため、この条件は適用していません。"
     nil
   end
-
-  def safe_return_to_path(fallback)
-    return_to = params[:return_to].to_s
-    return_to.start_with?("/") && !return_to.start_with?("//") ? return_to : fallback
-  end
 end
