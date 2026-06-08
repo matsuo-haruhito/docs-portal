@@ -55,7 +55,7 @@ RSpec.describe "admin git import admin UI source" do
       expect(runs_index_source).to include('data-rails-table-preferences-column-key="error_message"')
       expect(runs_index_source).to include("run.git_import_source&.project")
       expect(runs_index_source).to include("git_import_run_summary_lines(run)")
-      expect(runs_index_source).to include("safe summary_json preview")
+      expect(runs_index_source).to include("マスク済み実行結果の詳細")
       expect(runs_index_source).to include("git_import_run_summary_preview_json(run)")
       expect(runs_index_source).to include("git_import_run_error_preview(run)")
       expect(runs_index_source).not_to include("raw summary_json")
