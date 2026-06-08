@@ -164,9 +164,4 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
       "bulk_retry" => bulk
     ).compact
   end
-
-  def safe_return_to_path(fallback)
-    return_to = params[:return_to].to_s
-    return_to.start_with?("/") && !return_to.start_with?("//") ? return_to : fallback
-  end
 end
