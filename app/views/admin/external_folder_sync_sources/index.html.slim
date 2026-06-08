@@ -40,10 +40,11 @@ h1 外部フォルダ同期設定
       = form_with url: admin_external_folder_sync_sources_path, method: :get, local: true, html: { style: "display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;margin:0;" } do
         - if @selected_review_filter.present?
           = hidden_field_tag :review, @selected_review_filter
-        = search_field_tag :q, @search_query, placeholder: "同期設定名・案件・外部フォルダ", style: "min-width:18rem;max-width:100%;padding:0.4rem 0.55rem;border:1px solid #d8dee4;border-radius:6px;"
+        = search_field_tag :q, @search_query, placeholder: "同期設定名・案件・外部フォルダ", maxlength: Admin::ExternalFolderSyncSourcesController::EXTERNAL_FOLDER_SYNC_SOURCE_SEARCH_QUERY_MAX_LENGTH, style: "min-width:18rem;max-width:100%;padding:0.4rem 0.55rem;border:1px solid #d8dee4;border-radius:6px;"
         = submit_tag "検索", class: "button secondary"
         - if @search_query.present?
           = link_to "検索を解除", admin_external_folder_sync_sources_path(selected_review_params), class: "button secondary"
+      p.muted style="margin:0.4rem 0 0;" = "検索語は最大#{Admin::ExternalFolderSyncSourcesController::EXTERNAL_FOLDER_SYNC_SOURCE_SEARCH_QUERY_MAX_LENGTH}文字です。長いフォルダURLは特徴的なIDやpathの断片で探してください。"
     .external-sync-filter-section style="margin-top:0.75rem;"
       strong レビュー優先
       p.muted style="margin:0.25rem 0 0.5rem;" 日常確認で先に見る同期元です。
