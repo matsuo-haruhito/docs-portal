@@ -3,12 +3,13 @@ require "csv"
 class Admin::DocumentSetsController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_document_set, only: %i[edit update destroy]
-  before_action :load_projects, only: %i[index create edit update]
   before_action :load_filters, only: %i[index create]
   before_action :load_document_sets, only: %i[index create]
   before_action :load_project_documents, only: %i[index create edit update]
 
   DOCUMENT_SET_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_LIMIT = 20
   DOCUMENT_SEARCH_QUERY_MAX_LENGTH = 100
   DOCUMENT_SEARCH_LIMIT = 20
   DOCUMENT_VERSION_SEARCH_QUERY_MAX_LENGTH = 100
@@ -65,6 +66,16 @@ class Admin::DocumentSetsController < Admin::BaseController
     redirect_to admin_document_sets_path, notice: "文書セットを削除しました。"
   end
 
+  def project_search
+    render json: { options: project_options(searchable_projects) }
+  end
+
+  def selected_project
+    project = Project.find_by(id: params[:id])
+
+    render json: { option: project ? project_option(project) : nil }
+  end
+
   def document_search
     project = Project.find(params[:project_id])
     documents = project.documents.includes(:latest_version).recommended_first
@@ -108,10 +119,6 @@ class Admin::DocumentSetsController < Admin::BaseController
     @document_set = DocumentSet.find_by!(public_id: params[:public_id])
   end
 
-  def load_projects
-    @projects = Project.order(:code)
-  end
-
   def load_filters
     @filters = document_set_filter_params
   end
@@ -146,8 +153,24 @@ class Admin::DocumentSetsController < Admin::BaseController
     end
   end
 
+  def searchable_projects
+    scope = Project.order(:code, :id)
+    query = normalize_project_search_query(params[:q])
+    return scope.limit(PROJECT_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{Project.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(projects.code) LIKE :pattern OR LOWER(projects.name) LIKE :pattern",
+      pattern:
+    ).limit(PROJECT_SEARCH_LIMIT)
+  end
+
   def normalize_document_set_query(query)
     query.to_s.strip.first(DOCUMENT_SET_QUERY_MAX_LENGTH)
+  end
+
+  def normalize_project_search_query(query)
+    query.to_s.strip.first(PROJECT_SEARCH_QUERY_MAX_LENGTH)
   end
 
   def normalize_document_search_query(query)
@@ -156,6 +179,14 @@ class Admin::DocumentSetsController < Admin::BaseController
 
   def normalize_document_version_search_query(query)
     query.to_s.strip.first(DOCUMENT_VERSION_SEARCH_QUERY_MAX_LENGTH)
+  end
+
+  def project_options(projects)
+    projects.map { |project| project_option(project) }
+  end
+
+  def project_option(project)
+    { value: project.id, text: helpers.document_set_project_option_label(project) }
   end
 
   def document_set_params
