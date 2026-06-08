@@ -132,6 +132,35 @@ RSpec.describe "Document approval requests", type: :request do
     expect(response.body).to include(non_matching_request.title)
   end
 
+  it "bounds overlong queries without changing global or nested search targets" do
+    bounded_query = "q" * DocumentApprovalRequestsController::QUERY_MAX_LENGTH
+    too_long_query = "  #{bounded_query}ignored  "
+    matching_request = create(:document_approval_request, document:, requester:, title: "#{bounded_query} global")
+    non_matching_request = create(:document_approval_request, document:, requester:, title: "ignored-only request")
+    other_document = create(:document, project:, title: "Other approval", slug: "other-approval-doc", visibility_policy: :restricted_external)
+    create(:document_permission, document: other_document, company:, access_level: :view)
+    nested_request = create(:document_approval_request, document:, requester:, title: "#{bounded_query} nested")
+    other_document_request = create(:document_approval_request, document: other_document, requester:, title: "#{bounded_query} other document")
+
+    sign_in_as(internal_user)
+
+    get document_approval_requests_path, params: { q: too_long_query }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(matching_request.title)
+    expect(response.body).to include(nested_request.title)
+    expect(response.body).to include(other_document_request.title)
+    expect(response.body).not_to include(non_matching_request.title)
+    expect(page_text).to include("検索条件: #{bounded_query}")
+
+    get project_document_document_approval_requests_path(project, document), params: { q: too_long_query }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(matching_request.title)
+    expect(response.body).to include(nested_request.title)
+    expect(response.body).not_to include(other_document_request.title)
+    expect(response.body).not_to include(non_matching_request.title)
+    expect(page_text).to include("検索条件: #{bounded_query}")
+  end
+
   it "filters the global index by requester and approver while keeping query, status, and return_to" do
     other_requester = create(:user, :external, company:, name: "別の依頼者")
     matching_approver = create(:user, :internal, name: "確認 花子")
