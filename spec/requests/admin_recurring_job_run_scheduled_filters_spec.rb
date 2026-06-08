@@ -28,7 +28,7 @@ RSpec.describe "Admin recurring job run scheduled filters", type: :request do
     expect(parsed_html.at_css(%(input[name="scheduled_from"][value="2026-01-10"]))).to be_present
     expect(parsed_html.at_css(%(input[name="scheduled_to"][value="2026-01-10"]))).to be_present
     expect(response.body).to include("予定時刻: 2026-01-10 から 2026-01-10 まで")
-    expect(response.body).to include("表示中: 2件（最新50件まで）")
+    expect(response.body).to include("表示中: 1-2件 / 全2件（50件ずつ、1/1ページ）")
   end
 
   it "combines status, query, and scheduled time filters" do
@@ -108,9 +108,9 @@ RSpec.describe "Admin recurring job run scheduled filters", type: :request do
     get admin_recurring_job_schedule_path(schedule, scheduled_from: "2026-04-02", scheduled_to: "2026-04-02")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("表示中: 0件（最新50件まで）")
+    expect(response.body).to include("表示中: 0-0件 / 全0件（50件ずつ、1/1ページ）")
     expect(response.body).to include("条件に一致する実行履歴はありません。")
-    expect(response.body).to include("状態・検索語・予定時刻を見直すか、絞り込み解除で最新50件の履歴に戻してください。")
+    expect(response.body).to include("状態・検索語・予定時刻を見直すか、絞り込み解除で履歴の先頭ページに戻してください。")
     expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedule_path(schedule, return_to: admin_recurring_job_schedules_path)}"]))).to be_present
   end
 
