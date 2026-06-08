@@ -15,7 +15,7 @@ section.card
         h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
         p.muted = entry.description
   p.actions
-    = link_to "モデルブラウザで全#{model_browser_total_count}件を見る", admin_model_browser_path, class: "button"
+    = link_to "モデルブラウザを開く（全#{model_browser_total_count}件）", admin_model_browser_path, class: "button"
 
 section.card
   h2 運用失敗入口
