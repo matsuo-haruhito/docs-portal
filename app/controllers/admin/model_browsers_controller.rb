@@ -4,7 +4,7 @@ class Admin::ModelBrowsersController < Admin::BaseController
   MODEL_BROWSER_QUERY_MAX_LENGTH = 100
   TEXT_SEARCH_COLUMN_TYPES = %i[string text].freeze
 
-  helper_method :entry_index_path, :record_summary_value, :summary_field_label
+  helper_method :entry_index_path, :model_browser_index_return_path, :record_summary_value, :summary_field_label
 
   def index
     @query = normalized_model_browser_query(max_length: MODEL_BROWSER_QUERY_MAX_LENGTH)
@@ -16,6 +16,7 @@ class Admin::ModelBrowsersController < Admin::BaseController
   def show
     @entry = Admin::ModelBrowserCatalog.fetch!(params[:model_key])
     @query = normalized_model_browser_query(max_length: MODEL_BROWSER_QUERY_MAX_LENGTH)
+    @model_browser_index_query = normalized_model_browser_index_return_query
     @existing_screen_query_handoff_param = model_browser_query_handoff_param(@entry, @query)
     @searchable_field_labels = searchable_fields(@entry).index_with { summary_field_label(@entry, _1) }
     @records = model_browser_records(@entry, @query)
@@ -29,6 +30,20 @@ class Admin::ModelBrowsersController < Admin::BaseController
     return query if max_length.blank?
 
     query.presence&.slice(0, max_length)
+  end
+
+  def normalized_model_browser_index_return_query
+    query = params[:model_browser_q].to_s.strip.presence&.slice(0, MODEL_BROWSER_QUERY_MAX_LENGTH)
+    return if query.blank?
+    return if query.match?(/\A(?:https?:\/\/|\/\/|\/)/i)
+
+    query
+  end
+
+  def model_browser_index_return_path
+    return admin_model_browser_path if @model_browser_index_query.blank?
+
+    admin_model_browser_path(q: @model_browser_index_query)
   end
 
   def filter_entries(entries, query)
