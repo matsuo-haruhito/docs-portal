@@ -20,7 +20,7 @@ section.card
         selected: @selected_project&.id
       div
         = form.label :document_slug, "文書名またはURL識別子"
-        = form.search_field :document_slug, value: @document_slug
+        = form.search_field :document_slug, value: @document_slug, maxlength: Admin::ReadConfirmationsController::DOCUMENT_QUERY_MAX_LENGTH
       div
         = form.label :from, "既読確認日時（開始日）"
         = form.date_field :from, value: params[:from].to_s.strip
