@@ -7,6 +7,7 @@ RSpec.describe "preview tools source" do
 
   let(:controller_source) { read_source("app/frontend/controllers/preview_tools_controller.js") }
   let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.js") }
+  let(:inventory_source) { read_source("doc/frontend_initialization_inventory.md") }
 
   let(:expected_helpers) do
     {
@@ -23,10 +24,37 @@ RSpec.describe "preview tools source" do
     }
   end
 
+  let(:expected_helper_classifications) do
+    {
+      "setupSiteViewerIframeHeightSync" => "Docusaurus / site viewer iframe",
+      "setupMarkdownPreviewDocumentSearch" => "Markdown preview document search",
+      "setupMarkdownPreviewTableTools" => "Markdown preview table",
+      "setupMarkdownPreviewCodeblockTools" => "Markdown preview codeblock",
+      "setupDocumentFileListSearch" => "document file list search",
+      "setupCsvPreviewTableTools" => "CSV preview table",
+      "setupStructuredPreviewTools" => "structured data preview",
+      "setupArchivePreviewTools" => "archive preview",
+      "setupImagePreviewTools" => "image preview",
+      "setupPdfPreviewTools" => "PDF preview"
+    }
+  end
+
   it "imports the current preview helper bridge set" do
     aggregate_failures do
       expected_helpers.each do |helper_name, import_path|
         expect(controller_source).to include(%(import { #{helper_name} } from "#{import_path}"))
+      end
+    end
+  end
+
+  it "keeps the inventory classification table aligned with the helper bridge set" do
+    aggregate_failures do
+      expect(inventory_source).to include("## Preview-tools helper bridge 分類")
+      expect(inventory_source).to include("helper 呼び出し順や runtime behavior は変更しません")
+      expect(inventory_source).to include("helper 名が docs の分類表・controller import・`refresh()` 呼び出しに揃っている")
+
+      expected_helper_classifications.each do |helper_name, preview_kind|
+        expect(inventory_source).to include("| `#{helper_name}` | #{preview_kind} |")
       end
     end
   end
