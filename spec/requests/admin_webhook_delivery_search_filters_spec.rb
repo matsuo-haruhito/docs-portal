@@ -81,7 +81,7 @@ RSpec.describe "Admin webhook delivery search filters", type: :request do
     )
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示範囲: 1件中1件を新しい順で表示しています。")
+    expect(page_text).to include("表示範囲: 1件中1-1件を新しい順で表示しています")
     expect(result_endpoint_names).to eq(["Target Hook"])
     expect(result_response_statuses).to eq(["500"])
     expect(result_error_messages).to eq(["Upstream TIMEOUT while posting payload"])
