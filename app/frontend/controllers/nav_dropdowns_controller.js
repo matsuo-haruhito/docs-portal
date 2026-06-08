@@ -21,27 +21,29 @@ export default class extends Controller {
     const dropdown = event.target.closest?.("[data-nav-dropdown]")
     if (!dropdown || !dropdown.open) return
 
-    this.closeOthers(dropdown)
+    this.closeOpenDropdowns(dropdown)
   }
 
   onClick(event) {
-    const clickedDropdown = event.target.closest("[data-nav-dropdown]")
-    document.querySelectorAll("[data-nav-dropdown][open]").forEach((dropdown) => {
-      if (dropdown !== clickedDropdown) dropdown.open = false
-    })
+    const clickedDropdown = event.target.closest?.("[data-nav-dropdown]")
+    if (clickedDropdown) return
+
+    this.closeOpenDropdowns()
   }
 
   onKeydown(event) {
     if (event.key !== "Escape") return
 
-    document.querySelectorAll("[data-nav-dropdown][open]").forEach((dropdown) => {
-      dropdown.open = false
+    this.closeOpenDropdowns()
+  }
+
+  closeOpenDropdowns(exceptDropdown = null) {
+    this.openDropdowns.forEach((dropdown) => {
+      if (dropdown !== exceptDropdown) dropdown.open = false
     })
   }
 
-  closeOthers(currentDropdown) {
-    document.querySelectorAll("[data-nav-dropdown][open]").forEach((dropdown) => {
-      if (dropdown !== currentDropdown) dropdown.open = false
-    })
+  get openDropdowns() {
+    return this.element.querySelectorAll("[data-nav-dropdown][open]")
   }
 }
