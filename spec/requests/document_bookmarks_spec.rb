@@ -70,7 +70,7 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response.body).to include("解除")
     expect(response.body).not_to include("お気に入りへ移す")
     expect(response.body.scan("1件").size).to eq(2)
-    expect(response.body.scan("0件").size).to eq(1)
+    expect(response.body.scan(/>0件</).size).to eq(1)
   end
 
   it "filters recent documents by query without filtering saved shortcuts" do
@@ -185,7 +185,7 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response.body).to include("案件「missing-project」ではお気に入りが見つかりません。")
     expect(response.body).to include("案件「missing-project」では後で読む文書が見つかりません。")
     expect(response.body).not_to include("Manual")
-    expect(response.body.scan("0件").size).to eq(3)
+    expect(response.body.scan(/>0件</).size).to eq(3)
   end
 
   it "shows actionable empty states with zero counts" do
@@ -194,7 +194,7 @@ RSpec.describe "Document bookmarks", type: :request do
     get document_bookmarks_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body.scan("0件").size).to eq(3)
+    expect(response.body.scan(/>0件</).size).to eq(3)
     expect(response.body).to include("文書画面でお気に入りに追加すると、ここに表示されます。")
     expect(response.body).to include("文書画面で後で読むに追加すると、ここに表示されます。")
     expect(response.body).to include("文書を開くと、最近見た文書としてここに表示されます。")
