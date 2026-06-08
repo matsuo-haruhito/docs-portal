@@ -4,7 +4,7 @@ RSpec.describe "Tom Select integration source" do
   it "keeps document set form selects on rails fields kit helpers" do
     form_source = Rails.root.join("app/views/admin/document_sets/_form.html.slim").read
 
-    expect(form_source).to include("= form.rfk_select :project_id,")
+    expect(form_source).to include("= form.rfk_combobox :project_id,")
     expect(form_source).to include("= form.rfk_select :set_type,")
     expect(form_source).to include("= form.rfk_select :visibility_policy,")
   end
@@ -33,7 +33,7 @@ RSpec.describe "Admin document sets Tom Select", type: :system do
   end
 
   let!(:admin) { create(:user, :admin, email_address: "admin-system@example.com") }
-  let!(:project) { create(:project, name: "Delivery Project") }
+  let!(:project) { create(:project, code: "DELIVERY-001", name: "Delivery Project") }
   let!(:existing_document_set) { create(:document_set, project:, name: "既存セット") }
 
   def sign_in_via_browser(user)
@@ -64,7 +64,8 @@ RSpec.describe "Admin document sets Tom Select", type: :system do
 
     within("form[action='#{admin_document_sets_path}']") do
       find("select#document_set_project_id + .ts-wrapper .ts-control", visible: :all).click
-      find(".ts-dropdown .option", text: project.name).click
+      find("select#document_set_project_id + .ts-wrapper input", visible: :all).set(project.code)
+      find(".ts-dropdown .option", text: "#{project.code} / #{project.name}").click
       fill_in "名称", with: existing_document_set.name
       find("input[type='submit'][value='保存']", match: :first).click
     end
