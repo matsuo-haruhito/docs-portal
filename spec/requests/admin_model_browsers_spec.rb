@@ -60,8 +60,46 @@ RSpec.describe "Admin model browsers", type: :request do
     card_hrefs = model_browser_card_links.map { _1["href"] }
 
     expect(card_labels).to include("文書")
-    expect(card_hrefs).to include(admin_model_browser_model_path("documents"))
-    expect(card_hrefs).not_to include(admin_model_browser_model_path("companies"))
+    expect(card_hrefs).to include(admin_model_browser_model_path("documents", model_browser_q: "文書"))
+    expect(card_hrefs).not_to include(admin_model_browser_model_path("companies", model_browser_q: "文書"))
+  end
+
+  it "returns from a searched model detail to the original model browser index query" do
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("documents"), params: { model_browser_q: "文書" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_hrefs).to include(admin_model_browser_path(q: "文書"))
+    expect(page_hrefs).to include(admin_model_browser_model_path("documents", model_browser_q: "文書"))
+    expect(page_hrefs).not_to include(admin_model_browser_path(q: "documents"))
+  end
+
+  it "keeps model browser index return context separate from model record searches" do
+    matching_project = create(:project, code: "RETURN2389", name: "Return Context Project")
+    other_project = create(:project, code: "OTHER2389", name: "Other Project")
+
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("projects"), params: { model_browser_q: "文書", q: "Return" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("検索結果")
+    expect(response.body).to include("検索語: Return / 表示上限: 20件")
+    expect(response.body).to include("name=\"model_browser_q\" value=\"文書\"")
+    expect(page_hrefs).to include(admin_model_browser_path(q: "文書"))
+    expect(page_hrefs).to include(admin_projects_path(q: "Return"))
+    expect(page_hrefs).not_to include(admin_model_browser_path(q: "Return"))
+    expect(response.body).to include(matching_project.code)
+    expect(response.body).not_to include(other_project.code)
+  end
+
+  it "falls back to the model browser index for unsafe return context values" do
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("documents"), params: { model_browser_q: "https://example.com/admin", q: "doc" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_hrefs).to include(admin_model_browser_path)
+    expect(page_hrefs).not_to include(admin_model_browser_path(q: "https://example.com/admin"))
+    expect(response.body).not_to include("https://example.com/admin")
   end
 
   it "filters the model browser index by key while normalizing spaces and case" do
@@ -76,7 +114,7 @@ RSpec.describe "Admin model browsers", type: :request do
     card_texts = model_browser_cards.map { _1.text.squish }
 
     expect(card_labels).to eq(["文書ファイル"])
-    expect(card_hrefs).to eq([admin_model_browser_model_path("document_files")])
+    expect(card_hrefs).to eq([admin_model_browser_model_path("document_files", model_browser_q: "DOCUMENT_FILES")])
     expect(card_texts).to contain_exactly(include("key: document_files / group: 文書・権限"))
   end
 
@@ -85,12 +123,12 @@ RSpec.describe "Admin model browsers", type: :request do
 
     get admin_model_browser_path, params: { q: "公開単位" }
     expect(response).to have_http_status(:ok)
-    expect(model_browser_card_links.map { _1["href"] }).to include(admin_model_browser_model_path("projects"))
+    expect(model_browser_card_links.map { _1["href"] }).to include(admin_model_browser_model_path("projects", model_browser_q: "公開単位"))
 
     get admin_model_browser_path, params: { q: "import / sync" }
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("import / sync")
-    expect(model_browser_card_links.map { _1["href"] }).to include(admin_model_browser_model_path("git_import_sources"))
+    expect(model_browser_card_links.map { _1["href"] }).to include(admin_model_browser_model_path("git_import_sources", model_browser_q: "import / sync"))
   end
 
   it "shows a search empty state on the model browser index" do
