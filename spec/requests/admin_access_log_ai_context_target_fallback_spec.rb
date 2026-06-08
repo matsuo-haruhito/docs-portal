@@ -81,7 +81,7 @@ RSpec.describe "Admin access log AI context target fallback", type: :request do
   it "exports AI context CSV columns only for parseable AI context targets" do
     valid_target = "mode=full;scope=all;selected_count=0;exported_count=8"
     malformed_target = "mode=full;scope=all;selected_count=none;exported_count=8"
-    non_ai_target = "mode=full;scope=all;selected_count=0;exported_count=8"
+    non_ai_target = "non-ai page target"
     create_access_log!(
       target_type: "ai_context",
       target_name: valid_target,
