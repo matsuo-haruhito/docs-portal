@@ -69,6 +69,14 @@ section.card
           |  / 一致文書:
           strong = " #{@matching_documents.size}件"
       p.muted 文書名またはURL識別子の一部に一致する、選択案件内の文書で絞り込みます。
+      - if @matching_documents.many?
+        p.muted 部分一致で複数の文書が対象です。候補を確認し、1件に絞る場合は文書名またはURL識別子を追加してください。
+        ul
+          - @matching_documents.first(5).each do |matching_document|
+            li
+              = matching_document.title
+              |  / 
+              code style="overflow-wrap:anywhere;word-break:break-word;white-space:normal" = matching_document.slug
       - unless @matching_documents.present?
         p.muted 指定した文書はこの案件に見つかりません。文書利用状況の文書名リンクから slug を確認してください。
     - else
