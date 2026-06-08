@@ -108,23 +108,14 @@ RSpec.describe "Admin access log AI context target fallback", type: :request do
     malformed_row = rows.find { _1["対象名"] == malformed_target }
     non_ai_row = rows.find { _1["対象名"] == non_ai_target }
 
-    expect(valid_row).to include(
-      "AI context mode" => "full",
-      "AI context scope" => "all",
-      "AI context selected_count" => "0",
-      "AI context exported_count" => "8"
-    )
-    expect(malformed_row).to include(
-      "AI context mode" => nil,
-      "AI context scope" => nil,
-      "AI context selected_count" => nil,
-      "AI context exported_count" => nil
-    )
-    expect(non_ai_row).to include(
-      "AI context mode" => nil,
-      "AI context scope" => nil,
-      "AI context selected_count" => nil,
-      "AI context exported_count" => nil
-    )
+    expect(valid_row["AI context mode"]).to eq("full")
+    expect(valid_row["AI context scope"]).to eq("all")
+    expect(valid_row["AI context selected_count"]).to eq("0")
+    expect(valid_row["AI context exported_count"]).to eq("8")
+
+    %w[AI\ context\ mode AI\ context\ scope AI\ context\ selected_count AI\ context\ exported_count].each do |header|
+      expect(malformed_row[header]).to be_nil
+      expect(non_ai_row[header]).to be_nil
+    end
   end
 end
