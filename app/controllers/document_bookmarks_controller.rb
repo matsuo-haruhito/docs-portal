@@ -1,9 +1,14 @@
 class DocumentBookmarksController < BaseController
+  BOOKMARK_QUERY_MAX_LENGTH = 100
+
   def index
     @bookmark_project_code = params[:project_code].to_s.strip.presence
+    @bookmark_query = bookmark_query
     @bookmark_project_options = bookmark_project_options
     @selected_bookmark_project = selected_bookmark_project
     @bookmark_project_filter_active = @bookmark_project_code.present?
+    @bookmark_search_active = @bookmark_query.present?
+    @saved_bookmark_filter_active = @bookmark_project_filter_active || @bookmark_search_active
     @recent_documents_query = recent_documents_query
     @favorite_bookmarks = bookmarks_for(:favorite)
     @read_later_bookmarks = bookmarks_for(:read_later)
@@ -50,6 +55,7 @@ class DocumentBookmarksController < BaseController
   def bookmarks_for(type)
     bookmarks = current_user.document_bookmarks
       .public_send(type)
+      .joins(document: :project)
       .includes(document: [:project, :latest_version])
       .readable_by(current_user)
 
@@ -59,7 +65,18 @@ class DocumentBookmarksController < BaseController
       bookmarks = bookmarks.where(documents: { project_id: @selected_bookmark_project.id })
     end
 
+    bookmarks = filter_bookmarks_by_query(bookmarks) if @bookmark_search_active
+
     bookmarks.order(created_at: :desc)
+  end
+
+  def filter_bookmarks_by_query(bookmarks)
+    query = "%#{ActiveRecord::Base.sanitize_sql_like(@bookmark_query.downcase)}%"
+
+    bookmarks.where(
+      "LOWER(documents.title) LIKE :query OR LOWER(projects.name) LIKE :query OR LOWER(projects.code) LIKE :query",
+      query:
+    )
   end
 
   def bookmark_project_options
@@ -84,6 +101,10 @@ class DocumentBookmarksController < BaseController
     documents.select do |document|
       [document.title, document.project.name].any? { _1.to_s.downcase.include?(query) }
     end
+  end
+
+  def bookmark_query
+    @bookmark_query ||= params[:bookmark_q].to_s.strip.slice(0, BOOKMARK_QUERY_MAX_LENGTH)
   end
 
   def recent_documents_query
