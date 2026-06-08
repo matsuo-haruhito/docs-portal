@@ -1,5 +1,6 @@
 <% page_title "文書ショートカット" %>
 <% bookmark_project_filter_label = @selected_bookmark_project&.name || @bookmark_project_code %>
+<% recent_clear_params = { project_code: @bookmark_project_code, bookmark_q: @bookmark_query.presence }.compact %>
 
 <h1>文書ショートカット</h1>
 <p class="muted">お気に入り、後で読む、最近見た文書を最低限の一覧で表示します。</p>
@@ -7,6 +8,9 @@
 <section class="card">
   <h2>保存済みショートカットの絞り込み</h2>
   <%= form_with url: document_bookmarks_path, method: :get, local: true do |form| %>
+    <% if @recent_documents_query.present? %>
+      <%= form.hidden_field :recent_q, value: @recent_documents_query %>
+    <% end %>
     <div class="form-grid">
       <div class="field">
         <%= form.label :project_code, "案件" %>
@@ -14,22 +18,30 @@
               options_for_select(@bookmark_project_options.map { |project| [project.name, project.code] }, @bookmark_project_code),
               { include_blank: "すべての案件" } %>
       </div>
+      <div class="field">
+        <%= form.label :bookmark_q, "保存済みショートカットを検索" %>
+        <%= form.search_field :bookmark_q, value: @bookmark_query, maxlength: DocumentBookmarksController::BOOKMARK_QUERY_MAX_LENGTH, placeholder: "文書名・案件名・案件コード", autocomplete: "off" %>
+      </div>
       <div class="form-actions">
         <%= form.submit "絞り込む", class: "button" %>
-        <% if @bookmark_project_filter_active %>
-          <%= link_to "解除", document_bookmarks_path, class: "button secondary" %>
+        <% if @saved_bookmark_filter_active %>
+          <%= link_to "解除", document_bookmarks_path(recent_q: @recent_documents_query.presence), class: "button secondary" %>
         <% end %>
       </div>
     </div>
   <% end %>
-  <% if @bookmark_project_filter_active %>
-    <% if @selected_bookmark_project %>
+  <% if @saved_bookmark_filter_active %>
+    <% if @bookmark_project_filter_active && @selected_bookmark_project && @bookmark_search_active %>
+      <p class="muted">案件「<%= @selected_bookmark_project.name %>」と検索語「<%= @bookmark_query %>」でお気に入りと後で読むを絞り込んでいます。最近見た文書は絞り込み対象外です。</p>
+    <% elsif @bookmark_project_filter_active && @selected_bookmark_project %>
       <p class="muted">案件「<%= @selected_bookmark_project.name %>」でお気に入りと後で読むを絞り込んでいます。最近見た文書は絞り込み対象外です。</p>
-    <% else %>
+    <% elsif @bookmark_project_filter_active %>
       <p class="muted">指定した案件では保存済みショートカットが見つかりません。最近見た文書は絞り込み対象外です。</p>
+    <% elsif @bookmark_search_active %>
+      <p class="muted">検索語「<%= @bookmark_query %>」でお気に入りと後で読むを絞り込んでいます。最近見た文書は絞り込み対象外です。</p>
     <% end %>
   <% else %>
-    <p class="muted">明示的に保存したお気に入りと後で読むだけを案件で絞り込めます。</p>
+    <p class="muted">明示的に保存したお気に入りと後で読むだけを、案件や文書名・案件名で絞り込めます。</p>
   <% end %>
 </section>
 
@@ -54,7 +66,9 @@
       <% end %>
     </ul>
   <% else %>
-    <% if @bookmark_project_filter_active %>
+    <% if @bookmark_search_active %>
+      <p class="muted">保存済みショートカット検索「<%= @bookmark_query %>」に一致するお気に入りはありません。</p>
+    <% elsif @bookmark_project_filter_active %>
       <p class="muted">案件「<%= bookmark_project_filter_label %>」ではお気に入りが見つかりません。</p>
     <% else %>
       <p class="muted">文書画面でお気に入りに追加すると、ここに表示されます。</p>
@@ -84,7 +98,9 @@
       <% end %>
     </ul>
   <% else %>
-    <% if @bookmark_project_filter_active %>
+    <% if @bookmark_search_active %>
+      <p class="muted">保存済みショートカット検索「<%= @bookmark_query %>」に一致する後で読む文書はありません。</p>
+    <% elsif @bookmark_project_filter_active %>
       <p class="muted">案件「<%= bookmark_project_filter_label %>」では後で読む文書が見つかりません。</p>
     <% else %>
       <p class="muted">文書画面で後で読むに追加すると、ここに表示されます。</p>
@@ -100,6 +116,9 @@
     <% if @bookmark_project_code.present? %>
       <%= form.hidden_field :project_code, value: @bookmark_project_code %>
     <% end %>
+    <% if @bookmark_query.present? %>
+      <%= form.hidden_field :bookmark_q, value: @bookmark_query %>
+    <% end %>
     <div class="form-field">
       <%= form.label :recent_q, "最近見た文書を検索" %>
       <%= form.search_field :recent_q, value: @recent_documents_query, placeholder: "文書名・案件名で検索", autocomplete: "off" %>
@@ -107,7 +126,7 @@
     <div class="form-actions">
       <%= form.submit "絞り込む", class: "button" %>
       <% if @recent_documents_query.present? %>
-        <%= link_to "条件をクリア", document_bookmarks_path(project_code: @bookmark_project_code), class: "button secondary" %>
+        <%= link_to "条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary" %>
       <% end %>
     </div>
   <% end %>
