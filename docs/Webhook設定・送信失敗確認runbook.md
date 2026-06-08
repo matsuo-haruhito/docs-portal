@@ -45,8 +45,10 @@ current `WebhookEndpoint::EVENT_TYPES` は次の 7 種類です。
 - `イベント`: delivery の `event_type` です。
 - `ステータス`: `送信待ち` / `成功` / `失敗` を表示します。
 - `HTTP`: 受信先から返った HTTP status です。通信例外など response がない失敗では空になります。
-- `エラー`: 例外時の error message です。HTTP non-2xx の場合は `HTTP` と保存済み response body を手掛かりにします。
+- `エラー`: 失敗原因を短く読むための preview です。token-like value、authorization 断片、private-looking path などは一覧上で raw 表示せず、長い message も調査入口として読める範囲に短縮されます。HTTP non-2xx の場合は `HTTP` と detail の保存済み response body を手掛かりにします。
 - `操作`: `詳細` から delivery の response body / sent_at / target URL などを確認できます。failed かつ endpoint が有効な delivery には `再送` ボタンも表示されます。それ以外は `再送不可` と表示されます。
+
+Webhook 一覧トップの `最近の送信履歴` は、直近 50 件の中で失敗有無、HTTP status、短い error preview、再送可否を素早く確認する入口です。raw error 全文、secret-like value、private-looking path を一覧で直接読む場所ではありません。詳しい調査が必要な場合は `詳細` に進み、50 件外や条件を絞った探索が必要な場合は `送信履歴検索へ` を使います。
 
 送信履歴の表示設定を絞る場合も、状態確認では `ステータス` と `操作`、失敗調査では `HTTP` と `エラー` を残してください。`詳細` へ入ったあとの戻り先は status filter または送信履歴検索の許可済み条件だけを保持するため、表示設定で列を隠しても delivery の詳細情報や再送条件そのものは変わりません。
 
@@ -69,6 +71,7 @@ current `WebhookEndpoint::EVENT_TYPES` は次の 7 種類です。
 
 - 検索結果は `created_at desc, id desc` の新しい順で最大 100 件まで表示します。
 - 100 件を超える場合は、endpoint、event type、status、HTTP status、error message 断片、作成日を足して範囲を狭めます。無制限一覧や任意の表示件数指定は current support ではありません。
+- 検索結果の `エラー` 列も、Webhook 一覧トップと同じく短い preview です。検索条件の `エラー断片` は保存済み `error_message` を絞り込むための入力であり、一覧に raw error 全文を展開する指定ではありません。
 - 検索結果から `詳細` に入った場合、`送信履歴検索へ戻る` と 1 件再送後の戻り先は元の検索条件です。
 - 送信履歴検索には bulk retry を置きません。まとめて再送は従来どおり `Webhook` 画面の `失敗` 表示中、最近 50 件のうち再送可能な delivery に限定します。
 - payload edit、payload replay、自動 retry、retention policy 判断は扱いません。
@@ -81,7 +84,7 @@ current `WebhookEndpoint::EVENT_TYPES` は次の 7 種類です。
 4. `送信先URL` が現在の受信先 URL と一致しているか、受信先側で route / token / IP allowlist などが変わっていないかを確認します。
 5. `HTTP` が 4xx の場合は、受信先の認証・署名検証・payload validation を先に見ます。
 6. `HTTP` が 5xx の場合は、受信先サービスの障害・timeout・一時的な処理失敗を先に見ます。
-7. `エラー` に timeout や接続例外が出ている場合は、ネットワーク疎通、DNS、TLS、受信先の稼働状態を確認します。
+7. `エラー` に timeout や接続例外が出ている場合は、一覧の preview で分類の手掛かりを読み、必要なら `詳細` で response body や送信先 URL と合わせてネットワーク疎通、DNS、TLS、受信先の稼働状態を確認します。
 8. `mail / webhook の継続失敗` として監視側で拾われている場合は、[監視・アラート設計](./監視・アラート設計.md) の外部依存確認と合わせて見ます。
 
 ## 手動再送の扱い
