@@ -21,7 +21,7 @@ section.card
         = form.select :requestable_type, options_for_select(admin_access_request_requestable_type_filter_options, @filters[:requestable_type])
       div
         = form.label :q, "申請者・対象"
-        = form.search_field :q, value: @filters[:q], placeholder: "名前、メール、対象名で検索"
+        = form.search_field :q, value: @filters[:q], maxlength: admin_access_request_query_max_length, placeholder: "名前、メール、対象名で検索"
 
     p.actions
       = form.submit "検索"
