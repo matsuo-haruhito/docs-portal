@@ -62,6 +62,9 @@ RSpec.describe "Admin external folder sync source search", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(search_input["value"]).to eq(bounded_query)
+    expect(search_input["maxlength"]).to eq(Admin::ExternalFolderSyncSourcesController::EXTERNAL_FOLDER_SYNC_SOURCE_SEARCH_QUERY_MAX_LENGTH.to_s)
+    expect(page_text).to include("検索語は最大#{Admin::ExternalFolderSyncSourcesController::EXTERNAL_FOLDER_SYNC_SOURCE_SEARCH_QUERY_MAX_LENGTH}文字です。")
+    expect(page_text).to include("長いフォルダURLは特徴的なIDやpathの断片で探してください。")
     expect(page_text).to include("Target Sync")
     expect(page_text).not_to include("Other Sync")
 
@@ -92,6 +95,8 @@ RSpec.describe "Admin external folder sync source search", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(search_input["value"].to_s).to eq("")
+    expect(search_input["maxlength"]).to eq(Admin::ExternalFolderSyncSourcesController::EXTERNAL_FOLDER_SYNC_SOURCE_SEARCH_QUERY_MAX_LENGTH.to_s)
+    expect(page_text).to include("検索語は最大#{Admin::ExternalFolderSyncSourcesController::EXTERNAL_FOLDER_SYNC_SOURCE_SEARCH_QUERY_MAX_LENGTH}文字です。")
     expect(page_text).to include("First Sync", "Second Sync")
     expect(action_targets).to include(
       admin_external_folder_sync_source_path(first_source, return_to: admin_external_folder_sync_sources_path)
