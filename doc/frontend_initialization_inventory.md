@@ -37,12 +37,12 @@
 | `document-set-document-filter` | 文書セット対象文書候補 | local filter、selected-only、remote picker からの候補反映 | RFK remote picker との host-app 補助として維持 |
 | `document-version-tabs` | 版詳細 tab | DOM 構造の panel 化、hashchange、keyboard tab 操作 | 既存 source spec があり、app 側 Stimulus として維持 |
 | `document-zip-selection` | ZIP 出力対象選択 | page / matching / explicit scope の count 表示 | app 側 Stimulus として維持 |
-| `nav-dropdowns` | header details dropdown | native `details` の開閉に、同時 open 抑止 / outside click close / Escape close だけを lifecycle 内 listener で補う | CSS / native details だけでは current contract を満たせないため、小さな app 側 controller として維持 |
+| `nav-dropdowns` | header details dropdown | native `details` の開閉に、同時 open 抑止 / outside click close / Escape close だけを lifecycle 内 listener で補う | `spec/frontend/nav_dropdowns_contract_spec.rb` で current contract を guard 済み。CSS / native details だけへの置換はここでは先取りしない |
 | `document-tree-navigation` | tree link click 後の Turbo Stream refresh | document click listener、`fetch(... Accept: text/vnd.turbo-stream.html)` | Turbo Stream 補助として維持。TreeView gem API へ押し戻さない |
 | `file-dropzone` | form 内 file dropzone | dragenter / dragover / drop と filename 表示 | app 側 Stimulus として維持 |
-| `manual-document-upload` | preview / tree 周辺の manual upload drop | window / iframe document drag listener、hidden form submit | app 固有 upload flow として維持。複数 file や API 変更は別 issue |
+| `manual-document-upload` | preview / tree 周辺の manual upload drop | window / iframe document drag listener、hidden multipart form submit | `spec/frontend/manual_document_upload_controller_source_spec.rb` で listener lifecycle と single-file submit flow を guard 済み。複数 file や API 変更は別 issue |
 | `preview-table-resizer` | Markdown preview table | iframe 内 table wrapping、localStorage、column resize、`turbo:load` / `turbo:render` refresh | current fallback path として維持。RTP 統合判断は #475 に残す |
-| `preview-tools` | preview 内 search / table / code / CSV / image / PDF 補助 | `setupXxx()` library を Stimulus controller から refresh する bridge | 維持する bridge。個別 `setupXxx()` の Stimulus 化は別 issue |
+| `preview-tools` | preview 内 search / table / code / CSV / image / PDF 補助 | `setupXxx()` library を Stimulus controller から refresh する bridge | `spec/frontend/preview_tools_source_spec.rb` で helper bridge / Turbo lifecycle / entrypoint registration を guard 済み。個別 `setupXxx()` の Stimulus 化は別 issue |
 | `sidebar` | 文書ツリー sidebar width / collapsed state | localStorage、pointer / keyboard resize | app 側 Stimulus として維持 |
 
 ## 素の JavaScript / listener の棚卸し
@@ -56,11 +56,19 @@
 次の listener は controller lifecycle 内に閉じているため、現時点では許容される app 側 Stimulus 初期化です。
 
 - `document-tree-navigation`: document click を拾って tree refresh 用 Turbo Stream を取得する。
-- `nav-dropdowns`: native `details` dropdown の同時 open / outside click close / Escape close を同期する。click での開閉そのものは native `details` に任せる。
-- `manual-document-upload`: window と iframe document の drag event を拾い、既存 upload form flow へ渡す。
+- `nav-dropdowns`: native `details` dropdown の同時 open / outside click close / Escape close を同期する。click での開閉そのものは native `details` に任せる。`spec/frontend/nav_dropdowns_contract_spec.rb` が document listener の登録 / cleanup と one-open / outside-click / Escape の代表 signal を固定している。
+- `manual-document-upload`: window と iframe document の drag event を拾い、既存 upload form flow へ渡す。`spec/frontend/manual_document_upload_controller_source_spec.rb` が listener の登録 / 解除、inaccessible iframe の no-op、single file hidden multipart form submit、複数 file 未対応の境界を固定している。
 - `preview-table-resizer`: iframe preview table を Turbo 再描画後にも再探索する。
-- `preview-tools`: preview helper library の `setupXxx()` を Turbo 再描画後にも再実行する。
+- `preview-tools`: preview helper library の `setupXxx()` を Turbo 再描画後にも再実行する。`spec/frontend/preview_tools_source_spec.rb` が import する helper set、refresh 呼び出し順、Turbo listener の登録 / 解除、entrypoint に直接 DOM setup を置かない境界を固定している。
 - `document-version-tabs`: hashchange に追従して tab panel を切り替える。
+
+## Source-level guard 済みの controller
+
+| controller | guard file | guard している境界 | guard していないこと |
+| --- | --- | --- | --- |
+| `preview-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper bridge set、`refresh()` の呼び出し順、Turbo 再描画後の再実行、entrypoint 直書き DOM setup 回避 | helper 群の Stimulus 分割、preview UI redesign、#475 の Markdown table 方針 |
+| `nav-dropdowns` | `spec/frontend/nav_dropdowns_contract_spec.rb` | controller registration、`details` markup、document listener cleanup、同時 open 抑止 / outside click / Escape close | controller 削除、navbar 情報設計、menu item / role 導線変更 |
+| `manual-document-upload` | `spec/frontend/manual_document_upload_controller_source_spec.rb` | window / iframe document listener lifecycle、missing / inaccessible iframe no-op、single-file hidden form submit、複数 file 未対応 | 複数 file upload、upload API 化、manual upload review / apply contract、iframe preview redesign |
 
 ## 維持する fallback path
 
@@ -76,9 +84,9 @@
 
 ## 後続 issue に分ける候補
 
-- `preview-tools` が呼ぶ `setupXxx()` library 群を、preview 種別ごとに Stimulus controller へ分けるか検討する。
-- `nav-dropdowns` は native `details` の開閉を活かしつつ、同時 open / outside click close / Escape close の current contract を app 側 controller で維持する。
-- `manual-document-upload` の iframe drag listener と upload submit flow を、behavior を変えずに source-level guard で固定する。
+- `preview-tools` が呼ぶ `setupXxx()` library 群を、preview 種別ごとに Stimulus controller へ分けるか検討する。現時点では bridge helper set が source-level guard 済みであり、分割を current support として書かない。
+- `nav-dropdowns` は native `details` の開閉を活かしつつ、同時 open / outside click close / Escape close の current contract を app 側 controller で維持する。CSS / native details だけへ寄せる判断は、current contract を落とさない代替案が出たときに別 issue で扱う。
+- `manual-document-upload` の複数 file upload、upload API 化、iframe preview UI redesign は、source guard 済みの single-file hidden form submit flow とは分けて扱う。
 - Markdown preview table を `rails_table_preferences` へ寄せる判断は #475 に残し、この inventory では実装しない。
 - internal UI gem pinned ref bump は #858 child issue 群に残し、この inventory では実装しない。
 
