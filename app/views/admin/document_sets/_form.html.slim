@@ -5,14 +5,19 @@
 
 = form_with model: [:admin, document_set], url: form_url do |form|
   .form-grid
-    = form.rfk_select :project_id,
-      collection: @projects,
-      collection_value_method: :id,
-      collection_label_method: :name,
+    = form.rfk_combobox :project_id,
+      collection: [],
+      selected: document_set_project_selected_option(document_set.project),
+      url: project_search_admin_document_sets_path(format: :json),
+      selected_url: selected_project_admin_document_sets_path(format: :json),
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 1,
+      max_options: Admin::DocumentSetsController::PROJECT_SEARCH_LIMIT,
       wrapper: true,
       label: "案件",
-      allow_clear: true,
-      placeholder: "案件を選択"
+      placeholder: "案件コード・案件名で検索"
     = form.rfk_text_field :name, wrapper: true, label: "名称"
     = form.rfk_select :set_type,
       collection: enum_options_for("document_sets.set_type", DocumentSet.set_types.keys),
