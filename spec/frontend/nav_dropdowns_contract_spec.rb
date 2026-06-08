@@ -31,12 +31,14 @@ RSpec.describe "Nav dropdown contract" do
   it "keeps one-open-dropdown, outside-click, and Escape contracts readable" do
     expect(controller_source).to include('const dropdown = event.target.closest?.("[data-nav-dropdown]")')
     expect(controller_source).to include("if (!dropdown || !dropdown.open) return")
-    expect(controller_source).to include("this.closeOthers(dropdown)")
+    expect(controller_source).to include("this.closeOpenDropdowns(dropdown)")
 
-    expect(controller_source).to include('const clickedDropdown = event.target.closest("[data-nav-dropdown]")')
-    expect(controller_source).to include("if (dropdown !== clickedDropdown) dropdown.open = false")
+    expect(controller_source).to include('const clickedDropdown = event.target.closest?.("[data-nav-dropdown]")')
+    expect(controller_source).to include("if (clickedDropdown) return")
+    expect(controller_source).to include("this.closeOpenDropdowns()")
 
     expect(controller_source).to include('if (event.key !== "Escape") return')
-    expect(controller_source).to include('document.querySelectorAll("[data-nav-dropdown][open]").forEach')
+    expect(controller_source).to include("closeOpenDropdowns(exceptDropdown = null)")
+    expect(controller_source).to include('this.element.querySelectorAll("[data-nav-dropdown][open]")')
   end
 end
