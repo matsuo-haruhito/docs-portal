@@ -39,7 +39,8 @@
       collection_label_method: :name,
       wrapper: true,
       label: "対象案件",
-      placeholder: "案件を選択"
+      placeholder: "案件名または案件コードで検索",
+      html_options: external_folder_sync_project_select_html_options
     label
       | 同期設定名
       = form.text_field :name, placeholder: "外部フォルダ同期"
