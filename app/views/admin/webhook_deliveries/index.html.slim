@@ -52,10 +52,10 @@ p.actions
 
 .card
   h2 検索結果
-  p.muted = "表示範囲: #{@webhook_deliveries_total_count}件中#{delivery_page_start}-#{delivery_page_end}件を新しい順で表示しています（#{@webhook_deliveries_limit}件ずつ、#{@webhook_deliveries_page}/#{@webhook_deliveries_total_pages}ページ）。"
   p.muted この一覧は履歴を探して詳細へ進むための read-only 検索です。まとめて再送は既存の Webhook 一覧で「失敗のみ」表示中の最近50件に閉じています。
 
   - if @webhook_deliveries.any?
+    p.muted = "表示範囲: #{@webhook_deliveries_total_count}件中#{delivery_page_start}-#{delivery_page_end}件を新しい順で表示しています（#{@webhook_deliveries_limit}件ずつ、#{@webhook_deliveries_page}/#{@webhook_deliveries_total_pages}ページ）。"
     = table_preferences_editor(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns, title: "Webhook送信履歴検索結果の表示設定")
     = table_preferences_table_tag(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns) do
       thead
