@@ -31,6 +31,7 @@ RSpec.describe "Admin access request table preferences", type: :request do
     column_keys = table.css("thead th").map { |node| node["data-rails-table-preferences-column-key"] }
     expect(column_keys).to eq(%w[
       created_at
+      processed_at
       requester
       target
       requested_access_level
