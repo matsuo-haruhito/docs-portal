@@ -49,6 +49,8 @@ section.card
       = link_to "条件をクリア", admin_read_confirmations_path
 
 - if @selected_project
+  - usage_report_params = { project_id: @selected_project.id }
+  - usage_report_params[:q] = @document_slug if @document_slug.present?
   section.card
     h2 対象条件
     p.muted この画面は既読確認だけの内訳です。閲覧・ダウンロードの集計は文書利用状況で確認してください。
@@ -95,7 +97,7 @@ section.card
     - elsif @selected_user_id.present?
       p.muted 指定した確認者はこの案件の既読確認候補に見つかりません。
     p
-      = link_to "文書利用状況へ戻る", admin_document_usage_reports_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
+      = link_to "文書利用状況へ戻る", admin_document_usage_reports_path(usage_report_params), data: { turbo_frame: "_top" }
       |  / 
       = link_to "CSV出力", admin_read_confirmations_path(@read_confirmations_csv_query), data: { turbo_frame: "_top" }
     p.muted
