@@ -376,6 +376,36 @@ RSpec.describe "Admin document sets", type: :request do
     expect(json_body.fetch("options")).to eq([])
   end
 
+  it "bounds document search queries while preserving project scope, limit, and payload shape" do
+    max_length = Admin::DocumentSetsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH
+    bounded_query = "remote-" + ("a" * (max_length - "remote-".length))
+    matching_document = create(:document, project:, title: "Target #{bounded_query}", slug: "bounded-target")
+    suffix_only_document = create(:document, project:, title: "Suffix only needle", slug: "suffix-only-needle")
+    other_project = create(:project, name: "Other Project")
+    create(:document, project: other_project, title: "Other #{bounded_query}", slug: "other-bounded-target")
+    21.times do |index|
+      create(:document, project:, title: format("Limit %02d", index), slug: format("limit-doc-%02d", index))
+    end
+
+    sign_in_as(admin)
+
+    get document_search_admin_document_sets_path, params: { project_id: project.id, q: "  #{bounded_query}   needle  " }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("documents")).to contain_exactly(
+      a_hash_including("id" => matching_document.id, "title" => matching_document.title, "slug" => matching_document.slug)
+    )
+    expect(json_body.fetch("options")).to eq(json_body.fetch("documents"))
+    expect(json_body.fetch("documents")).not_to include(a_hash_including("id" => suffix_only_document.id))
+
+    get document_search_admin_document_sets_path, params: { project_id: project.id, q: "limit-doc" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("documents").size).to eq(Admin::DocumentSetsController::DOCUMENT_SEARCH_LIMIT)
+    expect(json_body.fetch("options")).to eq(json_body.fetch("documents"))
+    expect(json_body.fetch("documents").map { |document| document.fetch("slug") }).to all(start_with("limit-doc-"))
+  end
+
   it "keeps the current filter context on invalid create rerender" do
     sign_in_as(admin)
 
