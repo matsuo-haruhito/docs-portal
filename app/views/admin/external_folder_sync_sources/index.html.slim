@@ -1,11 +1,12 @@
 - page_title "外部フォルダ同期設定"
-- current_return_to = request.fullpath
+- search_params = { q: @search_query.presence }.compact
+- selected_review_params = { review: @selected_review_filter.presence }.compact
+- current_return_query = Rack::Utils.build_nested_query(selected_review_params.merge(search_params))
+- current_return_to = current_return_query.present? ? "#{admin_external_folder_sync_sources_path}?#{current_return_query}" : admin_external_folder_sync_sources_path
 - table_key = :admin_external_folder_sync_sources
 - table_columns = external_folder_sync_source_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - selected_filter_labels = []
-- search_params = { q: @search_query.presence }.compact
-- selected_review_params = { review: @selected_review_filter.presence }.compact
 - filter_base_style = "display:inline-flex;align-items:center;gap:0.35rem;padding:0.35rem 0.7rem;border-radius:999px;border:1px solid #d8dee4;line-height:1.2;text-decoration:none;white-space:nowrap;"
 - filter_selected_style = "#{filter_base_style}background:#eaf3ff;border-color:#9ec5fe;color:#1f5aa6;font-weight:700;"
 - filter_link_style = "#{filter_base_style}background:#fff;color:#24292f;"
