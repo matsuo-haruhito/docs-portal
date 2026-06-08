@@ -1,8 +1,9 @@
 - page_title "モデルブラウザ", @entry.label
 - index_path = entry_index_path(@entry, query: @query)
+- model_browser_reset_path = @model_browser_index_query.present? ? admin_model_browser_model_path(@entry.key, model_browser_q: @model_browser_index_query) : admin_model_browser_model_path(@entry.key)
 
 p.muted
-  = link_to "モデルブラウザ", admin_model_browser_path
+  = link_to "モデルブラウザ", model_browser_index_return_path
   |  /
   span = @entry.label
 
@@ -10,7 +11,7 @@ h1 = @entry.label
 p.muted = @entry.description
 
 p.actions
-  = link_to "モデル一覧へ戻る", admin_model_browser_path, class: "button secondary"
+  = link_to "モデル一覧へ戻る", model_browser_index_return_path, class: "button secondary"
   - if index_path
     = link_to "既存画面で詳しく確認", index_path, class: "button"
 - if index_path
@@ -35,6 +36,8 @@ p.actions
 section.card
   h2 代表フィールド検索
   = form_with url: admin_model_browser_model_path(@entry.key), method: :get, local: true do |form|
+    - if @model_browser_index_query.present?
+      = hidden_field_tag :model_browser_q, @model_browser_index_query
     .form-field
       = form.label :q, "検索語"
       = form.search_field :q, value: @query, maxlength: Admin::ModelBrowsersController::MODEL_BROWSER_QUERY_MAX_LENGTH, placeholder: "公開ID、名前、コードなど"
@@ -43,7 +46,7 @@ section.card
       span = @searchable_field_labels.values.presence&.join(" / ") || "ID"
     p.actions
       = form.submit "検索", class: "button"
-      = link_to "検索を解除", admin_model_browser_model_path(@entry.key), class: "button secondary"
+      = link_to "検索を解除", model_browser_reset_path, class: "button secondary"
 
 section.card
   h2 = @query.present? ? "検索結果" : "最近のデータ"
