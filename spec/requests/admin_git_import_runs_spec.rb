@@ -107,7 +107,7 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(page_text).to include("PublishJob: pub_123")
     expect(page_text).to include("理由: already_synced")
     expect(page_text).to include("repository not found")
-    expect(page_text).to include("safe summary_json preview")
+    expect(page_text).to include("マスク済み実行結果の詳細")
   end
 
   it "masks raw summary and error diagnostics while preserving operational context" do
@@ -138,7 +138,7 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("取込元パス: docs")
     expect(page_text).to include("commit: abcdef1234567890")
-    expect(page_text).to include("safe summary_json preview")
+    expect(page_text).to include("マスク済み実行結果の詳細")
     expect(response.body).to include("[masked]")
     expect(response.body).to include("[path hidden]")
     expect(response.body).not_to include(summary_token)
