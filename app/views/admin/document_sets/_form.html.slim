@@ -38,6 +38,8 @@
         .document-set-document-filter__remote
           = label_tag "document-set-remote-document-picker", "文書名 / URL識別子で探す", class: "document-set-document-filter__label"
           = select_tag "document_set_remote_document_id", options_for_select([]), document_set_remote_document_picker_html_options(document_set.project_id)
+          p.document-set-document-filter__hint.muted
+            | 検索語は最大#{Admin::DocumentSetsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH}文字、候補は最大#{Admin::DocumentSetsController::DOCUMENT_SEARCH_LIMIT}件です。下の絞り込み欄は表示中の対象文書だけを絞ります。
         label.document-set-document-filter__label for="document-set-document-filter-query" 表示中の対象文書を絞り込み
         input#document-set-document-filter-query.document-set-document-filter__input type="search" placeholder="文書名またはURL識別子" autocomplete="off" data-document-set-document-filter-target="query" data-action="input->document-set-document-filter#filter"
         label.document-set-document-filter__selected-only
