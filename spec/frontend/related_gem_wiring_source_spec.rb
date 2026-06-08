@@ -22,7 +22,7 @@ RSpec.describe "Related gem wiring source" do
       table_preferences_helper = read_source("app/helpers/admin/document_sets_helper.rb")
 
       expect(fields_kit_initializer).to include('config.controller_name = "rails-fields-kit--tom-select"')
-      expect(document_sets_form).to include("= form.rfk_select :project_id,")
+      expect(document_sets_form).to include("= form.rfk_combobox :project_id,")
       expect(document_sets_form).to include("= form.rfk_select :set_type,")
       expect(document_sets_form).to include("= form.rfk_select :visibility_policy,")
       expect(table_preferences_helper).to include('table_preferences_column(:project')
