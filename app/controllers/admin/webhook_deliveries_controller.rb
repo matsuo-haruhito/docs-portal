@@ -16,8 +16,11 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
 
     @webhook_deliveries_total_count = filtered_deliveries.count
     @webhook_deliveries_limit = INDEX_DELIVERY_DISPLAY_LIMIT
-    @webhook_deliveries = filtered_deliveries.recent.limit(@webhook_deliveries_limit)
-    @delivery_return_params = @delivery_filters.merge(return_context: "deliveries_index")
+    @webhook_deliveries_total_pages = [(@webhook_deliveries_total_count.to_f / @webhook_deliveries_limit).ceil, 1].max
+    @webhook_deliveries_page = [delivery_history_page_param, @webhook_deliveries_total_pages].min
+    @webhook_deliveries_offset = (@webhook_deliveries_page - 1) * @webhook_deliveries_limit
+    @webhook_deliveries = filtered_deliveries.recent.offset(@webhook_deliveries_offset).limit(@webhook_deliveries_limit)
+    @delivery_return_params = delivery_index_return_params(@delivery_filters, @webhook_deliveries_page)
   end
 
   def show
@@ -68,8 +71,9 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
   def set_delivery_return
     if params[:return_context].to_s == "deliveries_index"
       @delivery_return_filters = delivery_search_filter_params
-      @delivery_return_params = @delivery_return_filters.merge(return_context: "deliveries_index")
-      @delivery_return_path = admin_webhook_deliveries_path(@delivery_return_filters)
+      @delivery_return_page = delivery_history_page_param
+      @delivery_return_params = delivery_index_return_params(@delivery_return_filters, @delivery_return_page)
+      @delivery_return_path = admin_webhook_deliveries_path(@delivery_return_params.except(:return_context))
       @return_delivery_status = "all"
       @delivery_return_context = :deliveries_index
     else
@@ -145,6 +149,15 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
     filters[:created_to] = created_to if parsed_filter_date(created_to)
 
     filters
+  end
+
+  def delivery_history_page_param
+    requested_page = params[:page].to_i
+    requested_page.positive? ? requested_page : 1
+  end
+
+  def delivery_index_return_params(filters, page)
+    filters.merge(return_context: "deliveries_index", page: page > 1 ? page : nil).compact
   end
 
   def parsed_filter_date(value)
