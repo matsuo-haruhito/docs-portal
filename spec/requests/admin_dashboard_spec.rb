@@ -26,7 +26,7 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("spec/admin-dashboard/missing.txt")
   end
 
-  it "shows a read-only storage usage summary" do
+  it "shows a read-only storage usage summary with follow-up cues" do
     summary = StorageUsageSummary::Result.new(
       areas: [
         StorageUsageSummary::Area.new(
@@ -68,6 +68,17 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("storage/docs_sites")
     expect(response.body).to include("storage/imports")
     expect(response.body).to include("削除、archive、cleanup、retention policy 決定、GCS API 連携はここでは行いません")
+    expect(response.body).to include("次の確認先")
+    expect(response.body).to include("欠落ファイル詳細")
+    expect(response.body).to include(admin_missing_document_files_path)
+    expect(response.body).to include("storage 運用方針")
+    expect(response.body).to include("ファイル配信・storage運用方針.md")
+    expect(response.body).to include("Docusaurus build runtime")
+    expect(response.body).to include("docs/notes/docusaurus-build-runtime.md")
+    expect(response.body).to include("manual upload dry-run")
+    expect(response.body).to include(admin_file_upload_dry_runs_path)
+    expect(response.body).to include("ZIP import")
+    expect(response.body).to include(new_admin_zip_import_path)
   end
 
   it "links configuration diagnostics to the relevant runbooks" do

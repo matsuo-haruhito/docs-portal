@@ -152,8 +152,18 @@ section.card
         th ファイル数
         th 概算使用量
         th 読み方
+        th 次の確認先
     tbody
       - @storage_usage_summary.areas.each do |area|
+        - follow_up_links = case area.key
+        - when :document_files
+          - [["欠落ファイル詳細", admin_missing_document_files_path], ["storage 運用方針", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/ファイル配信・storage運用方針.md"]]
+        - when :docs_sites
+          - [["Docusaurus build runtime", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/notes/docusaurus-build-runtime.md"]]
+        - when :imports
+          - [["manual upload dry-run", admin_file_upload_dry_runs_path], ["ZIP import", new_admin_zip_import_path]]
+        - else
+          - []
         tr
           td = area.label
           td
@@ -162,6 +172,10 @@ section.card
           td = area.human_size
           td
             span.muted = area.description
+          td
+            ul
+              - follow_up_links.each do |label, path|
+                li = link_to label, path, target: (path.to_s.start_with?("http") ? "_blank" : nil), rel: (path.to_s.start_with?("http") ? "noopener" : nil)
 
 .form-grid
   .card
