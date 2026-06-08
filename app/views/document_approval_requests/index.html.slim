@@ -46,7 +46,8 @@ p.actions
     = hidden_field_tag :status, @status_filter
   p
     = label_tag :q, "依頼を検索"
-    = search_field_tag :q, @query, placeholder: "依頼名・本文・文書名・slug・関係者名"
+    = search_field_tag :q, @query, placeholder: "依頼名・本文・文書名・slug・関係者名", maxlength: DocumentApprovalRequestsController::QUERY_MAX_LENGTH
+  p.muted = "検索語は最大#{DocumentApprovalRequestsController::QUERY_MAX_LENGTH}文字です。依頼名・本文・文書名・slug・関係者名の断片で探せます。"
   p
     = label_tag :requester_id, "依頼者"
     = select_tag :requester_id, options_for_select([["依頼者すべて", ""]] + @requester_filter_options.map { |user| [user.name, user.id] }, @requester_filter_id)
