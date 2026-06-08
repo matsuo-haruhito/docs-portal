@@ -4,6 +4,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
 
   DEFAULT_PER_PAGE = 50
   MAX_PER_PAGE = 100
+  QUERY_MAX_LENGTH = 100
 
   def index
     @filters = run_filter_params
@@ -84,7 +85,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   def apply_search(scope, query)
-    escaped_query = ActiveRecord::Base.sanitize_sql_like(query.to_s.strip.downcase)
+    escaped_query = ActiveRecord::Base.sanitize_sql_like(query.to_s.downcase)
     return scope if escaped_query.blank?
 
     pattern = "%#{escaped_query}%"
@@ -100,7 +101,15 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   def run_filter_params
-    params.permit(:status, :job_id, :generator, :output_writer, :event_source, :created_from, :created_to, :q).to_h.symbolize_keys
+    params
+      .permit(:status, :job_id, :generator, :output_writer, :event_source, :created_from, :created_to, :q)
+      .to_h
+      .symbolize_keys
+      .tap { |filters| filters[:q] = normalized_query(filters[:q]) }
+  end
+
+  def normalized_query(value)
+    value.to_s.squish.first(QUERY_MAX_LENGTH).presence
   end
 
   def page_param
