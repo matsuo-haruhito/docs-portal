@@ -11,7 +11,7 @@ RSpec.describe "Admin recurring job run empty states", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("表示中: 0-0件 / 全0件（50件ずつ、1/1ページ）")
-    expect(response.body).to include("まだ実行履歴はありません。即時実行要求または次回 dispatcher enqueue 後に、結果がここへ最新50件まで表示されます。")
+    expect(response.body).to include("まだ実行履歴はありません。即時実行要求または次回 dispatcher enqueue 後に、結果がここへ50件ずつ表示されます。")
     expect(response.body).not_to include("条件に一致する実行履歴はありません。")
   end
 
