@@ -3,6 +3,9 @@
 - run_triage_counts = ["失敗: #{@run_status_counts.fetch('failed', 0)}件", "実行中: #{@run_status_counts.fetch('running', 0)}件", "キュー待ち: #{@run_status_counts.fetch('enqueued', 0)}件"].join(" / ")
 - scheduled_filter_active = @selected_scheduled_from.present? || @selected_scheduled_to.present?
 - run_filter_active = @selected_run_status.present? || @selected_run_query.present? || scheduled_filter_active
+- run_page_start = @runs_total_count.zero? ? 0 : @run_offset + 1
+- run_page_end = @run_offset + @runs.size
+- run_pagination_params = { return_to: return_to_path, run_status: @selected_run_status, q: @selected_run_query, scheduled_from: @selected_scheduled_from, scheduled_to: @selected_scheduled_to, per_page: @run_per_page }.compact
 
 h1 定期ジョブ詳細
 = render "admin/nav"
@@ -61,7 +64,7 @@ h1 定期ジョブ詳細
   - if @schedule.run_requested_at.present?
     p.muted 要求済みです。dispatcher enqueue 後の結果は下の実行履歴で確認してください。
   - else
-    p.muted 実行履歴には dispatcher enqueue 後の結果が最新50件まで表示されます。
+    p.muted 実行履歴には dispatcher enqueue 後の結果が50件ずつ表示され、過去ページへ辿れます。
   p.actions
     = link_to "即時実行を要求", request_run_admin_recurring_job_schedule_path(@schedule, return_to: return_to_path), data: { turbo_method: :post }, class: "button"
 
@@ -80,11 +83,13 @@ p.actions
     = text_field_tag :scheduled_from, @selected_scheduled_from, placeholder: "YYYY-MM-DD または日時"
     = label_tag :scheduled_to, "予定時刻(終了)"
     = text_field_tag :scheduled_to, @selected_scheduled_to, placeholder: "YYYY-MM-DD または日時"
+    = label_tag :per_page, "表示件数"
+    = select_tag :per_page, options_for_select([["50件", 50], ["100件", 100]], @run_per_page), onchange: "this.form.requestSubmit()"
     = submit_tag "絞り込む", class: "button secondary"
     - if run_filter_active
       = link_to "絞り込み解除", admin_recurring_job_schedule_path(@schedule, return_to: return_to_path), class: "button secondary"
   p.muted = "Triage対象: #{run_triage_counts}"
-  p.muted = "表示中: #{@runs.size}件（最新50件まで）"
+  p.muted = "表示中: #{run_page_start}-#{run_page_end}件 / 全#{@runs_total_count}件（#{@run_per_page}件ずつ、#{@run_page}/#{@runs_total_pages}ページ）"
   - Array(@run_filter_warnings).each do |warning|
     p.muted = warning
   - if @selected_run_query.present?
@@ -98,11 +103,11 @@ p.actions
     - if run_filter_active
       p.muted 条件に一致する実行履歴はありません。
       - if scheduled_filter_active
-        p.muted 状態・検索語・予定時刻を見直すか、絞り込み解除で最新50件の履歴に戻してください。
+        p.muted 状態・検索語・予定時刻を見直すか、絞り込み解除で履歴の先頭ページに戻してください。
       - else
-        p.muted 状態や検索語を見直すか、絞り込み解除で最新50件の履歴に戻してください。
+        p.muted 状態や検索語を見直すか、絞り込み解除で履歴の先頭ページに戻してください。
     - else
-      p.muted まだ実行履歴はありません。即時実行要求または次回 dispatcher enqueue 後に、結果がここへ最新50件まで表示されます。
+      p.muted まだ実行履歴はありません。即時実行要求または次回 dispatcher enqueue 後に、結果がここへ50件ずつ表示されます。
   - else
     = table_tag do
       thead
@@ -125,3 +130,9 @@ p.actions
             td
               code = run.active_job_id.presence || "-"
             td = recurring_job_diagnostic_preview(run.error_message)
+    - if @runs_total_pages > 1
+      p.actions
+        - if @run_page > 1
+          = link_to "前のページ", admin_recurring_job_schedule_path(@schedule, run_pagination_params.merge(page: @run_page - 1)), class: "button secondary"
+        - if @run_page < @runs_total_pages
+          = link_to "次のページ", admin_recurring_job_schedule_path(@schedule, run_pagination_params.merge(page: @run_page + 1)), class: "button secondary"
