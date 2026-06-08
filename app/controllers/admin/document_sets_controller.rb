@@ -9,6 +9,8 @@ class Admin::DocumentSetsController < Admin::BaseController
   before_action :load_project_documents, only: %i[index create edit update]
 
   DOCUMENT_SET_QUERY_MAX_LENGTH = 100
+  DOCUMENT_SEARCH_QUERY_MAX_LENGTH = 100
+  DOCUMENT_SEARCH_LIMIT = 20
   DOCUMENT_VERSION_SEARCH_QUERY_MAX_LENGTH = 100
   DOCUMENT_VERSION_SEARCH_LIMIT = 20
   CSV_HEADERS = [
@@ -66,14 +68,14 @@ class Admin::DocumentSetsController < Admin::BaseController
   def document_search
     project = Project.find(params[:project_id])
     documents = project.documents.includes(:latest_version).recommended_first
-    query = params[:q].to_s.strip
+    query = normalize_document_search_query(params[:q])
 
     if query.present?
       pattern = "%#{Document.sanitize_sql_like(query.downcase)}%"
       documents = documents.where("LOWER(title) LIKE :pattern OR LOWER(slug) LIKE :pattern", pattern: pattern)
     end
 
-    payloads = documents.limit(20).map { |document| document_search_payload(document) }
+    payloads = documents.limit(DOCUMENT_SEARCH_LIMIT).map { |document| document_search_payload(document) }
 
     render json: {
       documents: payloads,
@@ -146,6 +148,10 @@ class Admin::DocumentSetsController < Admin::BaseController
 
   def normalize_document_set_query(query)
     query.to_s.strip.first(DOCUMENT_SET_QUERY_MAX_LENGTH)
+  end
+
+  def normalize_document_search_query(query)
+    query.to_s.strip.first(DOCUMENT_SEARCH_QUERY_MAX_LENGTH)
   end
 
   def normalize_document_version_search_query(query)
