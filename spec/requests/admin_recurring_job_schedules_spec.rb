@@ -105,6 +105,24 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedule_path(target, return_to: list_path)}"]))).to be_present
   end
 
+  it "shows the schedule search boundary and truncates long search fragments" do
+    sign_in_as(admin_user)
+    bounded_fragment = "a" * Admin::RecurringJobSchedulesController::SCHEDULE_QUERY_MAX_LENGTH
+    long_fragment = "  #{bounded_fragment}extra-error-log-tail  "
+    create_schedule!(job_key: "bounded_error_job", last_error_message: bounded_fragment)
+
+    get admin_recurring_job_schedules_path(q: long_fragment)
+
+    expect(response).to have_http_status(:ok)
+    search_input = parsed_html.at_css(%(input[name="q"]))
+    expect(search_input).to be_present
+    expect(search_input["maxlength"]).to eq(Admin::RecurringJobSchedulesController::SCHEDULE_QUERY_MAX_LENGTH.to_s)
+    expect(search_input["value"]).to eq(bounded_fragment)
+    expect(response.body).to include("検索はジョブキー / class / queue / 前回エラーの断片を最大#{Admin::RecurringJobSchedulesController::SCHEDULE_QUERY_MAX_LENGTH}文字で指定できます。")
+    expect(response.body).to include("長い error log は全文ではなく特徴的な一部で探してください。")
+    expect(listed_schedule_keys).to eq(["bounded_error_job"])
+  end
+
   it "shows a filtered empty state when enabled state, search, and previous status match no schedules" do
     sign_in_as(admin_user)
     create_schedule!(job_key: "invoice_digest", job_class: "InvoiceDigestJob", last_status: "completed", enabled: false)
