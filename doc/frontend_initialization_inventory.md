@@ -37,7 +37,7 @@
 | `document-set-document-filter` | 文書セット対象文書候補 | local filter、selected-only、remote picker からの候補反映 | RFK remote picker との host-app 補助として維持 |
 | `document-version-tabs` | 版詳細 tab | DOM 構造の panel 化、hashchange、keyboard tab 操作 | 既存 source spec があり、app 側 Stimulus として維持 |
 | `document-zip-selection` | ZIP 出力対象選択 | page / matching / explicit scope の count 表示 | app 側 Stimulus として維持 |
-| `nav-dropdowns` | header details dropdown | document click / keydown / toggle listener で開閉同期 | 小さな app 側 controller として維持。将来は CSS / native details だけで足りるかを別 issue で検討可能 |
+| `nav-dropdowns` | header details dropdown | native `details` の開閉に、同時 open 抑止 / outside click close / Escape close だけを lifecycle 内 listener で補う | CSS / native details だけでは current contract を満たせないため、小さな app 側 controller として維持 |
 | `document-tree-navigation` | tree link click 後の Turbo Stream refresh | document click listener、`fetch(... Accept: text/vnd.turbo-stream.html)` | Turbo Stream 補助として維持。TreeView gem API へ押し戻さない |
 | `file-dropzone` | form 内 file dropzone | dragenter / dragover / drop と filename 表示 | app 側 Stimulus として維持 |
 | `manual-document-upload` | preview / tree 周辺の manual upload drop | window / iframe document drag listener、hidden form submit | app 固有 upload flow として維持。複数 file や API 変更は別 issue |
@@ -56,7 +56,7 @@
 次の listener は controller lifecycle 内に閉じているため、現時点では許容される app 側 Stimulus 初期化です。
 
 - `document-tree-navigation`: document click を拾って tree refresh 用 Turbo Stream を取得する。
-- `nav-dropdowns`: native `details` dropdown の同時 open / Escape close を同期する。
+- `nav-dropdowns`: native `details` dropdown の同時 open / outside click close / Escape close を同期する。click での開閉そのものは native `details` に任せる。
 - `manual-document-upload`: window と iframe document の drag event を拾い、既存 upload form flow へ渡す。
 - `preview-table-resizer`: iframe preview table を Turbo 再描画後にも再探索する。
 - `preview-tools`: preview helper library の `setupXxx()` を Turbo 再描画後にも再実行する。
@@ -77,7 +77,7 @@
 ## 後続 issue に分ける候補
 
 - `preview-tools` が呼ぶ `setupXxx()` library 群を、preview 種別ごとに Stimulus controller へ分けるか検討する。
-- `nav-dropdowns` が native details + CSS だけで足りるか、現在の keyboard / outside click contract を壊さず確認する。
+- `nav-dropdowns` は native `details` の開閉を活かしつつ、同時 open / outside click close / Escape close の current contract を app 側 controller で維持する。
 - `manual-document-upload` の iframe drag listener と upload submit flow を、behavior を変えずに source-level guard で固定する。
 - Markdown preview table を `rails_table_preferences` へ寄せる判断は #475 に残し、この inventory では実装しない。
 - internal UI gem pinned ref bump は #858 child issue 群に残し、この inventory では実装しない。
