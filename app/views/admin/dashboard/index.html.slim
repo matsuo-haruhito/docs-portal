@@ -1,4 +1,5 @@
 - page_title "管理ダッシュボード"
+- model_browser_total_count = Admin::ModelBrowserCatalog.entries.size
 
 h1 管理画面
 p.muted 内部ユーザーのみが各種マスタを管理できます。
@@ -7,14 +8,14 @@ p.muted 内部ユーザーのみが各種マスタを管理できます。
 
 section.card
   h2 モデル観測
-  p.muted 主要 model の件数と最近の record を横断確認できます。仕様整理や運用確認の入口として使います。
+  p.muted = "主要 model #{@model_browser_entries.size}件を抜粋して、件数と最近の record を横断確認できます。catalog 全体 #{model_browser_total_count}件はモデルブラウザで group 別に確認できます。"
   .dashboard-grid
     - @model_browser_entries.each do |entry|
       article.card.metric-card
         h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
         p.muted = entry.description
   p.actions
-    = link_to "モデルブラウザを開く", admin_model_browser_path, class: "button"
+    = link_to "モデルブラウザを開く（全#{model_browser_total_count}件）", admin_model_browser_path, class: "button"
 
 section.card
   h2 運用失敗入口
