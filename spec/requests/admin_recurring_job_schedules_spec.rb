@@ -171,9 +171,9 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(listed_schedule_keys).to eq(["not_run_job"])
   end
 
-  it "limits recent runs on the detail page to the latest 50 entries" do
+  it "paginates detail run history beyond the first 50 entries" do
     sign_in_as(admin_user)
-    schedule = create_schedule!(job_key: "history_limit_job", last_status: "completed")
+    schedule = create_schedule!(job_key: "history_pagination_job", last_status: "completed")
     create_run!(schedule, status: "completed", active_job_id: "oldest-run", scheduled_at: 2.days.ago)
     50.times do |index|
       create_run!(schedule, status: "completed", active_job_id: "recent-run-#{index}", scheduled_at: index.minutes.ago)
@@ -185,6 +185,74 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(response.body).to include("recent-run-0")
     expect(response.body).to include("recent-run-49")
     expect(response.body).not_to include("oldest-run")
+    expect(response.body).to include("表示中: 1-50件 / 全51件（50件ずつ、1/2ページ）")
+    expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedule_path(schedule, return_to: admin_recurring_job_schedules_path, per_page: 50, page: 2)}"]))).to be_present
+
+    get admin_recurring_job_schedule_path(schedule, page: 2)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("oldest-run")
+    expect(response.body).not_to include("recent-run-49")
+    expect(response.body).to include("表示中: 51-51件 / 全51件（50件ずつ、2/2ページ）")
+  end
+
+  it "keeps run filters and return_to on pagination links" do
+    sign_in_as(admin_user)
+    schedule = create_schedule!(job_key: "filtered_history_page_job", last_status: "failed")
+    scheduled_from = 3.days.ago.to_date.to_s
+    scheduled_to = Time.zone.today.to_s
+    list_path = admin_recurring_job_schedules_path(status: "failed", enabled: "false")
+    51.times do |index|
+      create_run!(schedule, status: "failed", active_job_id: format("matching-run-%03d", index), scheduled_at: index.minutes.ago)
+    end
+    create_run!(schedule, status: "completed", active_job_id: "completed-run", scheduled_at: 1.minute.ago)
+
+    get admin_recurring_job_schedule_path(
+      schedule,
+      run_status: "failed",
+      q: "matching",
+      scheduled_from:,
+      scheduled_to:,
+      return_to: list_path
+    )
+
+    expect(response).to have_http_status(:ok)
+    expected_next_path = admin_recurring_job_schedule_path(
+      schedule,
+      return_to: list_path,
+      run_status: "failed",
+      q: "matching",
+      scheduled_from:,
+      scheduled_to:,
+      per_page: 50,
+      page: 2
+    )
+    expect(parsed_html.at_css(%(a[href="#{expected_next_path}"]))).to be_present
+    expect(parsed_html.at_css(%(input[name="return_to"][value="#{list_path}"]))).to be_present
+
+    get expected_next_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("matching-run-050")
+    expect(response.body).not_to include("completed-run")
+    expect(response.body).to include("予定時刻: #{scheduled_from} から #{scheduled_to} まで")
+  end
+
+  it "bounds invalid run history page and oversized per_page values" do
+    sign_in_as(admin_user)
+    schedule = create_schedule!(job_key: "bounded_history_job", last_status: "completed")
+    120.times do |index|
+      create_run!(schedule, status: "completed", active_job_id: format("bounded-run-%03d", index), scheduled_at: index.minutes.ago)
+    end
+
+    get admin_recurring_job_schedule_path(schedule, page: "invalid", per_page: "999")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("bounded-run-000")
+    expect(response.body).to include("bounded-run-099")
+    expect(response.body).not_to include("bounded-run-100")
+    expect(response.body).to include("表示中: 1-100件 / 全120件（100件ずつ、1/2ページ）")
+    expect(parsed_html.at_css(%(select[name="per_page"] option[value="100"][selected]))).to be_present
   end
 
   it "masks detail diagnostics while preserving operational context" do
@@ -291,7 +359,7 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     get admin_recurring_job_schedule_path(schedule, q: "missing-run")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("表示中: 0件（最新50件まで）")
+    expect(response.body).to include("表示中: 0-0件 / 全0件（50件ずつ、1/1ページ）")
     expect(response.body).to include("条件に一致する実行履歴はありません。")
     expect(parsed_html.at_css(%(input[name="q"][value="missing-run"]))).to be_present
 
