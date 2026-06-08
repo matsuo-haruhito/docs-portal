@@ -39,7 +39,7 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response.body.scan("1件").size).to eq(3)
     expect(response.body).to include("よく開く文書をここからすぐ確認できます。")
     expect(response.body).to include("あとで確認したい文書を一時的に集めておけます。")
-    expect(response.body).to include("閲覧履歴から自動で表示されます。お気に入りや後で読むとは別の一覧です。")
+    expect(response.body).to include("閲覧履歴から最大 20 件を自動で表示します。この検索は表示中の最近見た文書だけを文書名・案件名で絞り込みます。お気に入りや後で読むとは別の一覧です。")
     expect(response.body).to include("最近見た文書を検索")
     expect(response.body).to include("文書名・案件名で検索")
     expect(response.body).to include("よく開く文書")
@@ -233,9 +233,29 @@ RSpec.describe "Document bookmarks", type: :request do
     get document_bookmarks_path, params: { recent_q: "zzz" }
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("条件に一致する最近見た文書はありません。検索語を変えて探してください。")
+    expect(response.body).to include("最近表示された最大 20 件内に条件と一致する文書はありません。検索語を変えるか、案件一覧から文書を探してください。")
     expect(response.body).not_to include("Guide")
     expect(response.body).not_to include("文書を開くと、最近見た文書としてここに表示されます。")
+  end
+
+  it "keeps recent document search scoped to the latest twenty displayed documents" do
+    older_matching_document = create(:document, project:, title: "Archived Policy", slug: "archived-policy", visibility_policy: :restricted_external)
+    create(:document_permission, document: older_matching_document, company:, access_level: :view)
+    create(:access_log, user:, company:, project:, document: older_matching_document, action_type: :view, target_type: "document", accessed_at: 30.minutes.ago)
+
+    20.times do |index|
+      recent_document = create(:document, project:, title: "Recent Guide #{index + 1}", slug: "recent-guide-#{index + 1}", visibility_policy: :restricted_external)
+      create(:document_permission, document: recent_document, company:, access_level: :view)
+      create(:access_log, user:, company:, project:, document: recent_document, action_type: :view, target_type: "document", accessed_at: index.minutes.ago)
+    end
+    sign_in_as(user)
+
+    get document_bookmarks_path, params: { recent_q: "archived" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("最近表示された最大 20 件内に条件と一致する文書はありません。")
+    expect(response.body).not_to include("Archived Policy")
+    expect(response.body).not_to include("Recent Guide 1")
   end
 
   it "keeps unreadable bookmarked projects out of filter options and results" do

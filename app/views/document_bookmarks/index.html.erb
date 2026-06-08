@@ -110,7 +110,7 @@
 
 <section class="card">
   <h2>最近見た文書 <span class="muted"><%= @recent_documents.size %>件</span></h2>
-  <p class="muted">閲覧履歴から自動で表示されます。お気に入りや後で読むとは別の一覧です。</p>
+  <p class="muted">閲覧履歴から最大 20 件を自動で表示します。この検索は表示中の最近見た文書だけを文書名・案件名で絞り込みます。お気に入りや後で読むとは別の一覧です。</p>
 
   <%= form_with url: document_bookmarks_path, method: :get, local: true, class: "filter-form" do |form| %>
     <% if @bookmark_project_code.present? %>
@@ -146,7 +146,7 @@
       <% end %>
     </ul>
   <% elsif @all_recent_documents.any? %>
-    <p class="muted">条件に一致する最近見た文書はありません。検索語を変えて探してください。</p>
+    <p class="muted">最近表示された最大 20 件内に条件と一致する文書はありません。検索語を変えるか、案件一覧から文書を探してください。</p>
   <% else %>
     <p class="muted">文書を開くと、最近見た文書としてここに表示されます。</p>
   <% end %>
