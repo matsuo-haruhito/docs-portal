@@ -113,9 +113,9 @@ RSpec.describe "Admin access log AI context target fallback", type: :request do
     expect(valid_row["AI context selected_count"]).to eq("0")
     expect(valid_row["AI context exported_count"]).to eq("8")
 
-    %w[AI\ context\ mode AI\ context\ scope AI\ context\ selected_count AI\ context\ exported_count].each do |header|
-      expect(malformed_row[header]).to be_nil
-      expect(non_ai_row[header]).to be_nil
+    ["AI context mode", "AI context scope", "AI context selected_count", "AI context exported_count"].each do |header|
+      expect(malformed_row[header]).to eq("")
+      expect(non_ai_row[header]).to eq("")
     end
   end
 end
