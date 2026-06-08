@@ -43,7 +43,9 @@ RSpec.describe "Admin access requests", type: :request do
     expect(filter_form.at_css("select[name='status']")).to be_present
     expect(filter_form.at_css("select[name='requested_access_level']")).to be_present
     expect(filter_form.at_css("select[name='requestable_type']")).to be_present
-    expect(filter_form.at_css("input[name='q']")).to be_present
+    query_input = filter_form.at_css("input[name='q']")
+    expect(query_input).to be_present
+    expect(query_input["maxlength"]).to eq(Admin::AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH.to_s)
   end
 
   it "marks pending manage requests without changing pending actions" do
@@ -213,6 +215,37 @@ RSpec.describe "Admin access requests", type: :request do
     expect(filter_form.at_css("input[name='q']")["value"]).to eq("manual")
   end
 
+  it "normalizes long query filters before rendering input and empty state" do
+    create(:access_request, requester:, requestable: document, requested_access_level: :download)
+    long_query = "manual" + ("x" * 120)
+    normalized_query = long_query.slice(0, Admin::AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH)
+
+    sign_in_as(admin_user)
+
+    get admin_access_requests_path, params: { q: "  #{long_query}  " }
+
+    expect(response).to have_http_status(:ok)
+    query_input = filter_form.at_css("input[name='q']")
+    expect(query_input["value"]).to eq(normalized_query)
+    expect(query_input["maxlength"]).to eq(Admin::AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH.to_s)
+    expect(page_text).to include("条件に一致する申請はありません。")
+    expect(page_text).to include("検索: #{normalized_query}")
+    expect(page_text).not_to include(long_query)
+  end
+
+  it "treats whitespace-only query as unset" do
+    create(:access_request, requester:, requestable: document, requested_access_level: :download, reason: "Visible request")
+
+    sign_in_as(admin_user)
+
+    get admin_access_requests_path, params: { q: "   " }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("Visible request")
+    expect(page_text).not_to include("検索: ")
+    expect(filter_form.at_css("input[name='q']")["value"]).to be_nil
+  end
+
   it "combines status and query search before loading access requests" do
     pending_match = create(:access_request,
       requester:,
@@ -320,6 +353,48 @@ RSpec.describe "Admin access requests", type: :request do
       requestable_type: "Document"
     ))
     expect(access_request.reload).to be_approved
+  end
+
+  it "normalizes long query filters after approval and rejection" do
+    approval_request = create(:access_request, requester:, requestable: document, requested_access_level: :download)
+    rejection_request = create(:access_request, requester:, requestable: project, requested_access_level: :view)
+    long_query = "Client User" + ("x" * 120)
+    normalized_query = long_query.slice(0, Admin::AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH)
+
+    sign_in_as(admin_user)
+
+    patch admin_access_request_path(approval_request), params: {
+      decision: "approve",
+      status: "pending",
+      q: "  #{long_query}  ",
+      requested_access_level: "download",
+      requestable_type: "Document"
+    }
+
+    expect(response).to redirect_to(admin_access_requests_path(
+      status: "pending",
+      q: normalized_query,
+      requested_access_level: "download",
+      requestable_type: "Document"
+    ))
+    expect(approval_request.reload).to be_approved
+
+    patch admin_access_request_path(rejection_request), params: {
+      decision: "reject",
+      rejection_reason_preset: "approval_mismatch",
+      status: "pending",
+      q: long_query,
+      requested_access_level: "view",
+      requestable_type: "Project"
+    }
+
+    expect(response).to redirect_to(admin_access_requests_path(
+      status: "pending",
+      q: normalized_query,
+      requested_access_level: "view",
+      requestable_type: "Project"
+    ))
+    expect(rejection_request.reload).to be_rejected
   end
 
   it "rejects a pending request with a custom reason" do

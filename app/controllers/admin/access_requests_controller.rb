@@ -1,12 +1,16 @@
 class Admin::AccessRequestsController < Admin::BaseController
   before_action :require_admin_only!
 
+  ACCESS_REQUEST_QUERY_MAX_LENGTH = AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH
+
   REJECTION_REASON_PRESETS = {
     "permission_shortage" => "権限不足",
     "wrong_target" => "対象誤り",
     "insufficient_information" => "情報不足",
     "approval_mismatch" => "承認条件不一致"
   }.freeze
+
+  helper_method :admin_access_request_query_max_length
 
   def index
     @filters = filter_params
@@ -162,9 +166,17 @@ class Admin::AccessRequestsController < Admin::BaseController
 
     {
       status: AccessRequest.statuses.key?(status) ? status : nil,
-      q: permitted[:q].to_s.strip.presence,
+      q: normalized_query(permitted[:q]),
       requested_access_level: AccessRequest.requested_access_levels.key?(requested_access_level) ? requested_access_level : nil,
       requestable_type: AccessRequest::SUPPORTED_REQUESTABLE_TYPES.include?(requestable_type) ? requestable_type : nil
     }
+  end
+
+  def normalized_query(query)
+    query.to_s.strip.presence&.slice(0, ACCESS_REQUEST_QUERY_MAX_LENGTH)
+  end
+
+  def admin_access_request_query_max_length
+    ACCESS_REQUEST_QUERY_MAX_LENGTH
   end
 end
