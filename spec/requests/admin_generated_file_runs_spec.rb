@@ -206,6 +206,53 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).not_to include(unmatched_query.public_id)
     end
 
+    it "normalizes and bounds q before applying existing filters and pagination" do
+      sign_in_as(admin_user)
+      bounded_query = "bounded-" + ("a" * (Admin::GeneratedFileRunsController::QUERY_MAX_LENGTH - "bounded-".length))
+      newer_match = create_run!(
+        job_id: "newer_match",
+        status: :failed,
+        error_message: "Retry timeout #{bounded_query}",
+        created_at: Time.zone.parse("2026-05-11 12:00:00")
+      )
+      older_match = create_run!(
+        job_id: "older_match",
+        status: :failed,
+        error_message: "Metadata fragment #{bounded_query}",
+        created_at: Time.zone.parse("2026-05-10 12:00:00")
+      )
+      unmatched_suffix = create_run!(job_id: "unmatched_suffix", status: :failed, error_message: "needle-only")
+      unmatched_status = create_run!(job_id: "unmatched_status", status: :completed, error_message: "Metadata fragment #{bounded_query}")
+
+      get admin_generated_file_runs_path(
+        status: "failed",
+        created_from: "2026-05-10",
+        q: "  #{bounded_query}   needle  ",
+        page: 2,
+        per_page: 1
+      )
+
+      expect(response).to have_http_status(:ok)
+      expect(parsed_html.at_css('input[name="q"]')["value"]).to eq(bounded_query)
+      expect(response.body).to include(older_match.public_id)
+      expect(response.body).not_to include(newer_match.public_id)
+      expect(response.body).not_to include(unmatched_suffix.public_id)
+      expect(response.body).not_to include(unmatched_status.public_id)
+      expect(response.body).to include("全 2 件 / 2 / 2 ページ")
+    end
+
+    it "does not apply q when normalization leaves it blank" do
+      sign_in_as(admin_user)
+      first_run = create_run!(job_id: "first_blank_query_match", error_message: "first")
+      second_run = create_run!(job_id: "second_blank_query_match", error_message: "second")
+
+      get admin_generated_file_runs_path(q: "  \t  ")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(first_run.public_id)
+      expect(response.body).to include(second_run.public_id)
+    end
+
     it "preserves the current filters in the bulk retry form action" do
       sign_in_as(admin_user)
       create_run!(status: :failed)
