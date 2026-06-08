@@ -3,6 +3,10 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
   INDEX_DELIVERY_DISPLAY_LIMIT = 100
   DELIVERY_STATUS_FILTERS = Admin::WebhookEndpointsController::DELIVERY_STATUS_FILTERS
   RETURN_DELIVERY_STATUS_FILTERS = (["all"] + DELIVERY_STATUS_FILTERS).freeze
+  DATE_FILTER_LABELS = {
+    created_from: "作成日From",
+    created_to: "作成日To"
+  }.freeze
 
   before_action :require_admin_only!
   before_action :set_webhook_delivery, only: %i[show retry_dispatch]
@@ -11,7 +15,9 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
   def index
     @webhook_endpoints = WebhookEndpoint.order(:name)
     @delivery_filters = delivery_search_filter_params
-    @delivery_filters_applied = @delivery_filters.values.any?(&:present?)
+    @delivery_filter_warnings = delivery_filter_warnings
+    @delivery_filter_inputs = @delivery_filters.merge(invalid_delivery_date_filter_values)
+    @delivery_filters_applied = @delivery_filters.values.any?(&:present?) || @delivery_filter_warnings.any?
     filtered_deliveries = filtered_index_delivery_scope
 
     @webhook_deliveries_total_count = filtered_deliveries.count
@@ -145,6 +151,21 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
     filters[:created_to] = created_to if parsed_filter_date(created_to)
 
     filters
+  end
+
+  def delivery_filter_warnings
+    invalid_delivery_date_filter_values.map do |key, _value|
+      "#{DATE_FILTER_LABELS.fetch(key)}の値が日付として解釈できないため、この条件は適用していません。"
+    end
+  end
+
+  def invalid_delivery_date_filter_values
+    permitted = params.permit(:created_from, :created_to).to_h.symbolize_keys
+
+    DATE_FILTER_LABELS.keys.each_with_object({}) do |key, invalid_values|
+      value = permitted[key].to_s
+      invalid_values[key] = value if value.present? && parsed_filter_date(value).nil?
+    end
   end
 
   def parsed_filter_date(value)
