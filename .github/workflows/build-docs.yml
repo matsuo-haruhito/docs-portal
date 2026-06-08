@@ -283,7 +283,7 @@ jobs:
         working-directory: ./docusaurus
         run: |
           npm config set registry https://registry.npmjs.org/
-          npm ci
+          npm install
 
       - name: Audit Docusaurus dependencies
         if: ${{ steps.audit-scope.outputs.docusaurus == 'true' }}
@@ -317,7 +317,7 @@ jobs:
         working-directory: ./docusaurus
         run: |
           npm config set registry https://registry.npmjs.org/
-          npm ci
+          npm install
 
       - name: Build Docusaurus site
         working-directory: ./docusaurus
