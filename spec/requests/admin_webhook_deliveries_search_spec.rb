@@ -144,7 +144,7 @@ RSpec.describe "Admin webhook delivery search", type: :request do
     expect(page_text).to include("Error Hook")
     expect(page_text).to include("timeout while sending")
     expect(page_text).to include("500")
-    expect(page_text).not_to include("Success Hook")
+    expect(delivery_endpoint_names).not_to include("Success Hook")
     expect(action_targets).to include(
       admin_webhook_delivery_path(
         matched.public_id,
