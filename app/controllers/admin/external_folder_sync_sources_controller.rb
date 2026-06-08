@@ -6,6 +6,8 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     "site_id" => "Site ID"
   }.freeze
   EXTERNAL_FOLDER_SYNC_SOURCE_SEARCH_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_LIMIT = 20
 
   before_action :require_admin_only!
   before_action :set_external_folder_sync_source, only: %i[show edit update destroy dry_run apply force_apply enqueue subscribe unsubscribe recheck_metadata]
@@ -147,6 +149,22 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     redirect_to sync_source_path_with_return_to, alert: "保存済み metadata を再確認できませんでした。Microsoft Graph接続・共有URL・権限を確認してください。#{e.message}"
   end
 
+  def project_search
+    projects = searchable_projects
+    payloads = projects.limit(PROJECT_SEARCH_LIMIT).map { |project| project_search_payload(project) }
+
+    render json: {
+      projects: payloads,
+      options: payloads
+    }
+  end
+
+  def selected_project
+    project = Project.find_by(id: params[:id])
+
+    render json: { option: project ? project_search_payload(project) : nil }
+  end
+
   private
 
   def set_external_folder_sync_source
@@ -154,7 +172,12 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def load_form_collections
-    @projects = Project.order(:code)
+    selected_project_id = form_project_id
+    @projects = selected_project_id.present? ? Project.where(id: selected_project_id).order(:code) : Project.none
+  end
+
+  def form_project_id
+    params.dig(:external_folder_sync_source, :project_id).presence || @external_folder_sync_source&.project_id
   end
 
   def load_index_state
@@ -203,6 +226,10 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     value.to_s.squish.first(EXTERNAL_FOLDER_SYNC_SOURCE_SEARCH_QUERY_MAX_LENGTH).presence
   end
 
+  def normalize_project_search_query(value)
+    value.to_s.squish.first(PROJECT_SEARCH_QUERY_MAX_LENGTH).presence
+  end
+
   def review_filter_matches?(source, selected_review_filter)
     case selected_review_filter
     when "warnings"
@@ -237,6 +264,27 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
       source.external_folder_id,
       source.external_folder_path
     ]
+  end
+
+  def searchable_projects
+    projects = Project.order(:code, :id)
+    query = normalize_project_search_query(params[:q])
+    return projects if query.blank?
+
+    pattern = "%#{Project.sanitize_sql_like(query.downcase)}%"
+    projects.where("LOWER(code) LIKE :pattern OR LOWER(name) LIKE :pattern", pattern:)
+  end
+
+  def project_search_payload(project)
+    text = "#{project.code} / #{project.name}"
+
+    {
+      id: project.id,
+      value: project.id,
+      text:,
+      code: project.code,
+      name: project.name
+    }
   end
 
   def latest_runs_by_source_id(sources)
