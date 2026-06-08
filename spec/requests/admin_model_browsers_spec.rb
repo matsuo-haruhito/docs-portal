@@ -129,6 +129,8 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索条件に一致するモデルはありません。")
     expect(response.body).to include("モデル名、key、説明、group の表記を変えて再検索してください。")
+    expect(response.body).to include("この検索は model catalog entry の検索です。")
+    expect(response.body).to include("record 名、public_id、code を探す場合は、対象 model の詳細に進んで「代表フィールド検索」を使うか、既存管理画面で確認してください。")
     expect(page_hrefs).to include(admin_model_browser_path)
     expect(model_browser_card_links).to be_empty
   end
