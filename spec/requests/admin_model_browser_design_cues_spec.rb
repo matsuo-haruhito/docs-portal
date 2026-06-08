@@ -32,7 +32,9 @@ RSpec.describe "Admin model browser design cues", type: :request do
     expect(response.body).to include("主要 model 8件を抜粋")
     expect(response.body).to include("catalog 全体 #{total_count}件")
 
-    model_browser_link = parsed_html.at_css("a[href='#{admin_model_browser_path}']")
+    model_browser_link = parsed_html.css("a[href='#{admin_model_browser_path}']").find do |link|
+      link.text.squish.include?("全#{total_count}件")
+    end
 
     expect(model_browser_link).to be_present
     expect(model_browser_link.text.squish).to eq("モデルブラウザを開く（全#{total_count}件）")
