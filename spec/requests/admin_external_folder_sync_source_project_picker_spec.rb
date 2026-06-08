@@ -18,7 +18,7 @@ RSpec.describe "Admin external folder sync source project picker", type: :reques
 
   it "returns bounded project search results by code and name" do
     code_match = create(:project, code: "EXT-100", name: "External Folder")
-    name_match = create(:project, code: "OPS-200", name: "Remote Source")
+    name_match = create(:project, code: "OPS-200", name: "Needle Workspace")
 
     max_length = Admin::ExternalFolderSyncSourcesController::PROJECT_SEARCH_QUERY_MAX_LENGTH
     bounded_query = "remote-" + ("a" * (max_length - "remote-".length))
@@ -37,11 +37,11 @@ RSpec.describe "Admin external folder sync source project picker", type: :reques
       a_hash_including("value" => code_match.id, "text" => "EXT-100 / External Folder")
     )
 
-    get project_search_admin_external_folder_sync_sources_path, params: { q: "source" }
+    get project_search_admin_external_folder_sync_sources_path, params: { q: "needle" }
 
     expect(response).to have_http_status(:ok)
-    expect(json_body.fetch("options")).to include(
-      a_hash_including("value" => name_match.id, "text" => "OPS-200 / Remote Source")
+    expect(json_body.fetch("options")).to contain_exactly(
+      a_hash_including("value" => name_match.id, "text" => "OPS-200 / Needle Workspace")
     )
 
     get project_search_admin_external_folder_sync_sources_path, params: { q: "  #{bounded_query}   suffix  " }
