@@ -6,6 +6,7 @@ class Admin::ReadConfirmationsController < Admin::BaseController
   include Admin::BoundedProjectOptions
 
   DISPLAY_LIMIT = 200
+  DOCUMENT_QUERY_MAX_LENGTH = 100
   CSV_HEADERS = [
     "確認日時",
     "文書名",
@@ -18,7 +19,7 @@ class Admin::ReadConfirmationsController < Admin::BaseController
   def index
     @selected_project = selected_project
     @projects = bounded_project_options(@selected_project)
-    @document_slug = params[:document_slug].to_s.strip
+    @document_slug = document_slug_param
     @selected_user_id = params[:user_id].to_s.strip
     @selected_company_id = params[:company_id].to_s.strip
     @invalid_confirmed_date_params = []
@@ -54,6 +55,10 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     return if params[:project_id].blank?
 
     Project.find_by(id: params[:project_id])
+  end
+
+  def document_slug_param
+    params[:document_slug].to_s.strip.presence&.slice(0, DOCUMENT_QUERY_MAX_LENGTH)
   end
 
   def matching_documents
@@ -100,6 +105,11 @@ class Admin::ReadConfirmationsController < Admin::BaseController
   def read_confirmations_csv_query
     query = request.query_parameters.to_h
     @invalid_confirmed_date_params.each { |name| query.delete(name.to_s) }
+    if @document_slug.present?
+      query["document_slug"] = @document_slug
+    else
+      query.delete("document_slug")
+    end
     query.merge(format: :csv)
   end
 
