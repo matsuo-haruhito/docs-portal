@@ -7,12 +7,15 @@ RSpec.describe "admin git import admin UI source" do
   let(:sources_helper_source) { Rails.root.join("app/helpers/admin/git_import_sources_helper.rb").read }
   let(:runs_helper_source) { Rails.root.join("app/helpers/admin/git_import_runs_helper.rb").read }
 
-  it "uses rails fields kit for git import source project selection" do
+  it "uses rails fields kit remote search for git import source project selection" do
     aggregate_failures do
-      expect(form_source).to include("form.rfk_select :project_id,")
-      expect(form_source).to include("git_import_source_project_option_label")
+      expect(form_source).to include("form.rfk_combobox :project_id,")
+      expect(form_source).to include("selected: git_import_source_project_selected_option(git_import_source.project)")
+      expect(form_source).to include("url: project_search_admin_git_import_sources_path(format: :json)")
+      expect(form_source).to include("selected_url: selected_project_admin_git_import_sources_path(format: :json)")
       expect(form_source).to include('label: "案件"')
-      expect(form_source).to include('placeholder: "案件を選択"')
+      expect(form_source).to include('placeholder: "案件コード・案件名で検索"')
+      expect(form_source).not_to include("form.rfk_select :project_id")
       expect(form_source).not_to include("form.collection_select :project_id")
     end
   end
@@ -71,6 +74,7 @@ RSpec.describe "admin git import admin UI source" do
       expect(sources_helper_source).to include("table_preferences_column(:repository")
       expect(sources_helper_source).to include("table_preferences_column(:last_synced")
       expect(sources_helper_source).to include("def git_import_source_project_option_label(project)")
+      expect(sources_helper_source).to include("def git_import_source_project_selected_option(project)")
       expect(sources_helper_source).to include('compact_blank.join(" / ")')
       expect(runs_helper_source).to include("def git_import_run_table_columns")
       expect(runs_helper_source).to include("table_preferences_column(:project")
