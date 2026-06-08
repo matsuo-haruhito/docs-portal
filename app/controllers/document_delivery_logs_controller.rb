@@ -3,6 +3,7 @@ class DocumentDeliveryLogsController < BaseController
   before_action :set_delivery_log, only: %i[show update]
 
   DELIVERY_LOG_DISPLAY_LIMIT = 50
+  DELIVERY_LOG_QUERY_MAX_LENGTH = 100
 
   STATUS_FILTER_LABELS = {
     "draft" => "下書き",
@@ -185,7 +186,7 @@ class DocumentDeliveryLogsController < BaseController
   end
 
   def normalized_query
-    params[:q].to_s.strip.presence
+    params[:q].to_s.strip.presence&.slice(0, DELIVERY_LOG_QUERY_MAX_LENGTH)
   end
 
   def normalized_created_date_filter(param_name)
