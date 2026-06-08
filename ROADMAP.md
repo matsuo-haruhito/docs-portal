@@ -75,6 +75,14 @@ Tom Select 自体は積極的に使う。ただし、アプリ側で `new TomSel
 
 既存の素の JavaScript 実装は、触るタイミングで Stimulus controller へ移す。
 
+現状確認と後続判断の入口は [フロントエンド初期化 inventory](./doc/frontend_initialization_inventory.md) です。inventory で `current support` として整理済みの controller / fallback path は、実装済みの挙動として維持し、後続候補は proposal として別 issue に分けます。
+
+現在の読み分け:
+
+- `preview-tools` は `setupXxx()` helper 群を Stimulus controller から refresh する bridge として維持する。helper 群を preview 種別ごとの controller へ分けるかどうかは proposal として扱い、current support として書かない。
+- `preview-table-resizer` は Markdown preview table の fallback path として維持する。Markdown table を `rails_table_preferences` へ寄せる判断は #475 の親論点に残す。
+- `document-tree-navigation` は tree link click 後の Turbo Stream refresh を補助する app 側 controller として維持する。TreeView gem API、loading / error event 名、retry policy はこの ROADMAP で決めない。
+
 方針:
 
 - Turbo で済むものは Turbo で実装する。
