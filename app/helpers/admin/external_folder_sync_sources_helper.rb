@@ -22,6 +22,24 @@ module Admin::ExternalFolderSyncSourcesHelper
     ]
   end
 
+  def external_folder_sync_project_select_html_options
+    {
+      data: {
+        controller: "rails-fields-kit--tom-select",
+        rails_fields_kit__tom_select_kind_value: "select",
+        rails_fields_kit__tom_select_url_value: project_search_admin_external_folder_sync_sources_path,
+        rails_fields_kit__tom_select_query_param_value: "q",
+        rails_fields_kit__tom_select_value_field_value: "id",
+        rails_fields_kit__tom_select_label_field_value: "text",
+        rails_fields_kit__tom_select_option_description_field_value: "code",
+        rails_fields_kit__tom_select_placeholder_value: "案件名または案件コードで検索",
+        rails_fields_kit__tom_select_min_length_value: 1,
+        rails_fields_kit__tom_select_max_options_value: Admin::ExternalFolderSyncSourcesController::PROJECT_SEARCH_LIMIT,
+        rails_fields_kit__tom_select_plugins_value: ["clear_button"]
+      }
+    }
+  end
+
   def external_folder_sync_latest_error_preview(message)
     preview = external_folder_sync_sanitized_error_message(message)
     return "-" if preview.blank?
