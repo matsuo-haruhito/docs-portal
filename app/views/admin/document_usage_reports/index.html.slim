@@ -21,6 +21,8 @@ section.card
       = label_tag :q do
         | 文書名 / slug
         = search_field_tag :q, @query, placeholder: "文書名またはslugで検索", maxlength: Admin::DocumentUsageReportsController::DOCUMENT_USAGE_QUERY_MAX_LENGTH
+        br
+        span.muted = "検索語は最大#{Admin::DocumentUsageReportsController::DOCUMENT_USAGE_QUERY_MAX_LENGTH}文字です。文書名や slug の特徴的な断片で探してください。"
       = label_tag :usage_filter do
         | 利用状況
         = select_tag :usage_filter, options_for_select(document_usage_report_filter_options, @usage_filter)
