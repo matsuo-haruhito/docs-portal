@@ -98,7 +98,10 @@ RSpec.describe "Document delivery log query normalization", type: :request do
     expect(response).to have_http_status(:ok)
     search_input = parsed_html.at_css("input[name='q']")
     expect(search_input).to be_present
+    expect(search_input["maxlength"]).to eq(max_length.to_s)
     expect(search_input["value"]).to eq(bounded_fragment)
+    expect(page_text).to include("検索語は最大#{max_length}文字です。")
+    expect(page_text).to include("案件名・案件コード・宛先/CC/BCC・件名・失敗理由の断片で探せます。")
     expect(page_text).to include(matching_log.to_addresses)
     expect(page_text).not_to include(outside_date_log.to_addresses)
     expect(page_text).not_to include(other_sender_log.to_addresses)
