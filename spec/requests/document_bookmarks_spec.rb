@@ -168,7 +168,7 @@ RSpec.describe "Document bookmarks", type: :request do
     create(:document_bookmark, user:, document: later_document, bookmark_type: :read_later)
     create(:access_log, user:, company:, project: beta_project, document: beta_document, action_type: :view, target_type: "document", accessed_at: 2.minutes.ago)
     create(:access_log, user:, company:, project:, document: other_recent_document, action_type: :view, target_type: "document", accessed_at: 1.minute.ago)
-    create(:access_log, user:, company: beta_project.company, project: beta_project, document: hidden_document, action_type: :view, target_type: "document", accessed_at: Time.current)
+    create(:access_log, user:, company:, project: beta_project, document: hidden_document, action_type: :view, target_type: "document", accessed_at: Time.current)
     sign_in_as(user)
 
     get document_bookmarks_path, params: { recent_q: "beta" }
