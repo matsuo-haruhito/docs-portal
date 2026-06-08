@@ -65,7 +65,7 @@ RSpec.describe "Admin external folder sync source search", type: :request do
     expect(page_text).to include("Target Sync")
     expect(page_text).not_to include("Other Sync")
 
-    normalized_return_to = admin_external_folder_sync_sources_path(q: bounded_query, review: "errors")
+    normalized_return_to = "#{admin_external_folder_sync_sources_path}?#{Rack::Utils.build_nested_query(review: "errors", q: bounded_query)}"
     expect(action_targets).to include(
       admin_external_folder_sync_source_path(matching_source, return_to: normalized_return_to)
     )
