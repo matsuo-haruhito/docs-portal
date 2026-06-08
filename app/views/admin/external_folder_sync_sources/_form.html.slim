@@ -40,7 +40,16 @@
       wrapper: true,
       label: "対象案件",
       placeholder: "案件名または案件コードで検索",
-      html_options: external_folder_sync_project_select_html_options
+      url: project_search_admin_external_folder_sync_sources_path,
+      selected_url: selected_project_admin_external_folder_sync_sources_path,
+      query_param: "q",
+      selected_param: "id",
+      value_field: "id",
+      label_field: "text",
+      option_description_field: "code",
+      min_length: 1,
+      max_options: Admin::ExternalFolderSyncSourcesController::PROJECT_SEARCH_LIMIT,
+      allow_clear: true
     label
       | 同期設定名
       = form.text_field :name, placeholder: "外部フォルダ同期"
