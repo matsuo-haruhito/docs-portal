@@ -1,7 +1,7 @@
 - page_title "外部フォルダ同期設定"
 - search_params = { q: @search_query.presence }.compact
 - selected_review_params = { review: @selected_review_filter.presence }.compact
-- current_return_to = admin_external_folder_sync_sources_path(search_params.merge(selected_review_params))
+- current_return_to = admin_external_folder_sync_sources_path(selected_review_params.merge(search_params))
 - table_key = :admin_external_folder_sync_sources
 - table_columns = external_folder_sync_source_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
