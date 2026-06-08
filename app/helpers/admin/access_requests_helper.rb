@@ -21,7 +21,8 @@ module Admin::AccessRequestsHelper
 
   def admin_access_request_table_columns
     [
-      table_preferences_column(:created_at, label: "日時", default_width: 160, pinned: true, sortable: true),
+      table_preferences_column(:created_at, label: "申請日時", default_width: 160, pinned: true, sortable: true),
+      table_preferences_column(:processed_at, label: "処理日時", default_width: 180),
       table_preferences_column(:requester, label: "申請者", default_width: 260, pinned: true, overflow: :ellipsis),
       table_preferences_column(:target, label: "対象", default_width: 280, pinned: true, overflow: :ellipsis),
       table_preferences_column(:requested_access_level, label: "要求権限", default_width: 160),
@@ -95,6 +96,28 @@ module Admin::AccessRequestsHelper
     return requestable[:document_title] if requestable[:document_title].present?
 
     nil
+  end
+
+  def admin_access_request_processed_at_label(access_request)
+    case access_request.status
+    when "approved"
+      "承認日時"
+    when "rejected"
+      "却下日時"
+    when "cancelled"
+      "取消日時"
+    end
+  end
+
+  def admin_access_request_processed_at(access_request)
+    case access_request.status
+    when "approved"
+      access_request.approved_at
+    when "rejected"
+      access_request.rejected_at
+    when "cancelled"
+      access_request.cancelled_at
+    end
   end
 
   def admin_access_request_default_rejection_reason

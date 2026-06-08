@@ -57,7 +57,8 @@ section.card
   = table_preferences_table_tag(table_key: access_request_table_key, settings: access_request_table_settings, columns: access_request_table_columns) do
     thead
       tr
-        th data-rails-table-preferences-column-key="created_at" 日時
+        th data-rails-table-preferences-column-key="created_at" 申請日時
+        th data-rails-table-preferences-column-key="processed_at" 処理日時
         th data-rails-table-preferences-column-key="requester" 申請者
         th data-rails-table-preferences-column-key="target" 対象
         th data-rails-table-preferences-column-key="requested_access_level" 要求権限
@@ -71,9 +72,18 @@ section.card
         - requestable = request_hash[:requestable]
         - primary_label = admin_access_request_primary_target_label(requestable)
         - secondary_label = admin_access_request_secondary_target_label(requestable)
+        - processed_at_label = admin_access_request_processed_at_label(access_request)
+        - processed_at = admin_access_request_processed_at(access_request)
         - action_filter_params = @filters.compact
         tr
           td data-rails-table-preferences-column-key="created_at" = access_request.created_at.strftime("%Y-%m-%d %H:%M")
+          td data-rails-table-preferences-column-key="processed_at"
+            - if processed_at.present?
+              span = processed_at_label
+              br
+              = processed_at.strftime("%Y-%m-%d %H:%M")
+            - else
+              span.muted -
           td data-rails-table-preferences-column-key="requester" = "#{access_request.requester.name} / #{access_request.requester.email_address}"
           td data-rails-table-preferences-column-key="target"
             = admin_access_request_requestable_type_label(requestable[:type])
