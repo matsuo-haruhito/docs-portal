@@ -18,6 +18,18 @@ RSpec.describe "Consents", type: :request do
       scan_status: :scan_clean
     )
   end
+  let(:unsafe_return_to_values) do
+    [
+      "",
+      "//example.com/outside",
+      "https://example.com/outside",
+      "http://example.com/outside",
+      "javascript:alert(1)",
+      "evil/path",
+      "/projects#section",
+      "/projects/\u0000outside"
+    ]
+  end
 
   def parsed_html
     Nokogiri::HTML(response.body)
@@ -90,17 +102,18 @@ RSpec.describe "Consents", type: :request do
     expect(UserConsent.where(user:, consent_term: term, target: project)).to contain_exactly(UserConsent.last)
   end
 
-  it "uses the current return_to for the back link when it is safe" do
+  it "uses the current return_to for the back link when it is a path-only internal URL" do
     term = create(:consent_term, title: "Project Terms", consent_scope: :project, version_label: "v1")
     create(:project_consent_setting, project:, consent_term: term, required_on: :first_access)
 
     sign_in_as(user)
 
-    get new_consent_path(target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to: document_file_path(file))
+    return_to = "#{document_file_path(file)}?source_path=manuals"
+    get new_consent_path(target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to:)
 
     expect(response).to have_http_status(:ok)
-    expect(link_hrefs("同意せず戻る")).to include(document_file_path(file))
-    expect(hidden_return_to_values).to include(document_file_path(file))
+    expect(link_hrefs("同意せず戻る")).to include(return_to)
+    expect(hidden_return_to_values).to include(return_to)
   end
 
   it "falls back to projects_path for the back link when return_to is unsafe" do
@@ -109,7 +122,7 @@ RSpec.describe "Consents", type: :request do
 
     sign_in_as(user)
 
-    ["", "//example.com/outside", "https://example.com/outside", "http://example.com/outside"].each do |return_to|
+    unsafe_return_to_values.each do |return_to|
       get new_consent_path(target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to:)
 
       expect(response).to have_http_status(:ok)
@@ -119,13 +132,31 @@ RSpec.describe "Consents", type: :request do
     end
   end
 
+  it "redirects immediately using the safe return_to rule when no terms are missing" do
+    term = create(:consent_term, title: "Project Terms", consent_scope: :project, version_label: "v1")
+    create(:project_consent_setting, project:, consent_term: term, required_on: :first_access)
+    create(:user_consent, user:, consent_term: term, target: project, consent_term_version_label: "v1")
+
+    sign_in_as(user)
+
+    safe_return_to = "#{project_documents_path(project)}?q=manual"
+    get new_consent_path(target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to: safe_return_to)
+    expect(response).to redirect_to(safe_return_to)
+
+    unsafe_return_to_values.each do |return_to|
+      get new_consent_path(target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to:)
+
+      expect(response).to redirect_to(projects_path)
+    end
+  end
+
   it "falls back to projects_path after consent when return_to is unsafe" do
     term = create(:consent_term, title: "Project Terms", consent_scope: :project, version_label: "v1")
     create(:project_consent_setting, project:, consent_term: term, required_on: :first_access)
 
     sign_in_as(user)
 
-    ["", "//example.com/outside", "https://example.com/outside", "http://example.com/outside"].each do |return_to|
+    unsafe_return_to_values.each do |return_to|
       post consents_path, params: { target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to: }
 
       expect(response).to redirect_to(projects_path)

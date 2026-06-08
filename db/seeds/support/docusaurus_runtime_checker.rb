@@ -4,7 +4,7 @@ module SeedSupport
   class DocusaurusRuntimeChecker
     BUILD_ROOT = Rails.root.join("docusaurus")
     LOCAL_CLI_PATH = BUILD_ROOT.join("node_modules/.bin/docusaurus")
-    INSTALL_COMMAND = %w[npm ci --no-fund --no-audit].freeze
+    INSTALL_COMMAND = %w[npm install --no-fund --no-audit].freeze
     NPM_MESSAGE = "Docusaurus build requires npm. Please prepare Node.js and npm before running the build."
 
     def self.ensure_runtime!

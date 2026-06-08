@@ -62,7 +62,9 @@ class ConsentsController < BaseController
 
   def safe_return_to
     path = params[:return_to].to_s
-    return projects_path if path.blank? || path.start_with?("//") || path.match?(%r{\Ahttps?://})
+    return projects_path if path.blank?
+    return projects_path unless path.start_with?("/") && !path.start_with?("//")
+    return projects_path if path.match?(/[[:cntrl:]]/) || path.include?("#")
 
     path
   end
