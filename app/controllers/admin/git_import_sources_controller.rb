@@ -1,7 +1,9 @@
 class Admin::GitImportSourcesController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_git_import_source, only: %i[edit update destroy sync]
-  before_action :load_form_collections, only: %i[index create edit update]
+
+  PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_LIMIT = 20
 
   def index
     @git_import_sources = git_import_sources_scope
@@ -46,18 +48,48 @@ class Admin::GitImportSourcesController < Admin::BaseController
     redirect_to admin_git_import_sources_path, alert: "Git同期に失敗しました: #{e.message}"
   end
 
+  def project_search
+    render json: { options: project_options(searchable_projects) }
+  end
+
+  def selected_project
+    project = Project.find_by(id: params[:id])
+
+    render json: { option: project ? project_option(project) : nil }
+  end
+
   private
 
   def set_git_import_source
     @git_import_source = GitImportSource.find_by!(public_id: params[:public_id])
   end
 
-  def load_form_collections
-    @projects = Project.order(:code)
-  end
-
   def git_import_sources_scope
     GitImportSource.includes(:project, :created_by).order(:repository_full_name, :branch, :source_path)
+  end
+
+  def searchable_projects
+    scope = Project.order(:code, :id)
+    query = normalize_project_search_query(params[:q])
+    return scope.limit(PROJECT_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{Project.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(projects.code) LIKE :pattern OR LOWER(projects.name) LIKE :pattern",
+      pattern:
+    ).limit(PROJECT_SEARCH_LIMIT)
+  end
+
+  def normalize_project_search_query(query)
+    query.to_s.strip.first(PROJECT_SEARCH_QUERY_MAX_LENGTH)
+  end
+
+  def project_options(projects)
+    projects.map { |project| project_option(project) }
+  end
+
+  def project_option(project)
+    { value: project.id, text: helpers.git_import_source_project_option_label(project) }
   end
 
   def git_import_source_params
