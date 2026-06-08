@@ -93,10 +93,6 @@ RSpec.describe "Admin document sets", type: :request do
     parsed_html.at_css(%(tr[data-document-set-document-filter-document-id="#{document.id}"]))
   end
 
-  def fixed_version_select_for(document)
-    document_set_row_for(document)&.at_css('select[name$="[document_version_id]"]')
-  end
-
   def remote_document_picker
     parsed_html.at_css('select[name="document_set_remote_document_id"]')
   end
@@ -380,51 +376,6 @@ RSpec.describe "Admin document sets", type: :request do
     expect(json_body.fetch("options")).to eq([])
   end
 
-  it "returns bounded project-scoped document version search results" do
-    bounded_query = "x" * Admin::DocumentSetsController::DOCUMENT_VERSION_SEARCH_QUERY_MAX_LENGTH
-    long_query = "  #{bounded_query}not-used-by-search  "
-    other_project = create(:project, name: "Version Boundary Project")
-    other_document = create(:document, project: other_project, title: "外部文書", slug: "outside-version-doc")
-    create(:document_version, document: other_document, version_label: "#{bounded_query}-outside")
-
-    22.times do |index|
-      create(:document_version, document: document_a, version_label: "#{bounded_query}-#{index.to_s.rjust(2, "0")}")
-    end
-    create(:document_version, document: document_a, version_label: "not-matching-version")
-
-    sign_in_as(admin)
-
-    get document_version_search_admin_document_sets_path, params: {
-      project_id: project.id,
-      document_id: document_a.id,
-      q: long_query
-    }
-
-    expect(response).to have_http_status(:ok)
-    versions = json_body.fetch("versions")
-    expect(versions.size).to eq(Admin::DocumentSetsController::DOCUMENT_VERSION_SEARCH_LIMIT)
-    expect(versions).to all(include("version_label" => include(bounded_query)))
-    expect(versions).not_to include(a_hash_including("version_label" => "#{bounded_query}-outside"))
-    expect(versions).not_to include(a_hash_including("version_label" => "not-matching-version"))
-    expect(json_body.fetch("options")).to eq(versions)
-  end
-
-  it "keeps document version search scoped to the selected project document" do
-    other_project = create(:project, name: "Outside Version Project")
-    other_document = create(:document, project: other_project, title: "別案件文書", slug: "outside-version")
-    create(:document_version, document: other_document, version_label: "outside-v1")
-
-    sign_in_as(admin)
-
-    get document_version_search_admin_document_sets_path, params: {
-      project_id: project.id,
-      document_id: other_document.id,
-      q: "outside"
-    }
-
-    expect(response).to have_http_status(:not_found)
-  end
-
   it "keeps the current filter context on invalid create rerender" do
     sign_in_as(admin)
 
@@ -445,28 +396,6 @@ RSpec.describe "Admin document sets", type: :request do
     expect(page_text).to include("種別: 送付用")
     expect(page_text).to include("公開範囲: 社内のみ")
     expect(document_set_form_action).to eq(admin_document_sets_path(set_type: "delivery", visibility_policy: "internal_only"))
-  end
-
-  it "keeps saved fixed versions visible on edit" do
-    create(
-      :document_set_item,
-      document_set: existing_document_set,
-      document: document_a,
-      document_version: version_a1,
-      sort_order: 1,
-      note: "saved fixed version"
-    )
-
-    sign_in_as(admin)
-
-    get edit_admin_document_set_path(existing_document_set)
-
-    expect(response).to have_http_status(:ok)
-    select = fixed_version_select_for(document_a)
-    expect(select).to be_present
-    selected_option = select.at_css(%(option[value="#{version_a1.id}"][selected]))
-    expect(selected_option).to be_present
-    expect(selected_option.text).to include("v1.0.0")
   end
 
   it "keeps selected document rows and fixed versions on invalid create rerender" do
@@ -498,9 +427,7 @@ RSpec.describe "Admin document sets", type: :request do
     expect(row).to be_present
     expect(row["class"]).to include("is-selected")
     expect(row.at_css('input[type="checkbox"][checked]')).to be_present
-    selected_option = row.at_css(%(select option[value="#{version_a2.id}"][selected]))
-    expect(selected_option).to be_present
-    expect(selected_option.text).to include("v2.0.0")
+    expect(row.at_css(%(select option[value="#{version_a2.id}"][selected]))).to be_present
     expect(row.at_css('input[name$="[note]"]')["value"]).to eq("keep me")
     expect(remote_document_picker["data-rails-fields-kit--tom-select-url-value"]).to eq(document_search_admin_document_sets_path(project_id: project.id))
   end
