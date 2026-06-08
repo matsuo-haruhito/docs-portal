@@ -1,8 +1,10 @@
 class Admin::RecurringJobSchedulesController < Admin::BaseController
+  DEFAULT_RUN_HISTORY_PER_PAGE = 50
+  MAX_RUN_HISTORY_PER_PAGE = 100
+  SCHEDULE_QUERY_MAX_LENGTH = 100
+
   before_action :require_admin_only!
   before_action :set_schedule, only: %i[show request_run]
-
-  SCHEDULE_QUERY_MAX_LENGTH = 100
 
   def index
     RecurringJobDispatcherJob.perform_now if params[:sync_definitions].present?
@@ -25,6 +27,8 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     @selected_run_query = run_query_param
     @selected_scheduled_from = scheduled_from_param
     @selected_scheduled_to = scheduled_to_param
+    @run_page = run_history_page_param
+    @run_per_page = run_history_per_page_param
     @run_filter_warnings = []
 
     scheduled_from = parsed_run_time(@selected_scheduled_from, label: "予定時刻(開始)", beginning: true)
@@ -36,7 +40,12 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     runs_scope = filter_runs_by_query(runs_scope, @selected_run_query) if @selected_run_query.present?
     runs_scope = runs_scope.where("scheduled_at >= ?", scheduled_from) if scheduled_from
     runs_scope = runs_scope.where("scheduled_at <= ?", scheduled_to) if scheduled_to
-    @runs = runs_scope.order(scheduled_at: :desc, id: :desc).limit(50)
+
+    @runs_total_count = runs_scope.count
+    @runs_total_pages = [(@runs_total_count.to_f / @run_per_page).ceil, 1].max
+    @run_page = @runs_total_pages if @run_page > @runs_total_pages
+    @run_offset = (@run_page - 1) * @run_per_page
+    @runs = runs_scope.order(scheduled_at: :desc, id: :desc).offset(@run_offset).limit(@run_per_page)
   end
 
   def request_run
@@ -105,6 +114,18 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
 
   def scheduled_to_param
     params[:scheduled_to].to_s.strip.presence
+  end
+
+  def run_history_page_param
+    value = params[:page].to_i
+    value.positive? ? value : 1
+  end
+
+  def run_history_per_page_param
+    value = params[:per_page].to_i
+    return DEFAULT_RUN_HISTORY_PER_PAGE unless value.positive?
+
+    [value, MAX_RUN_HISTORY_PER_PAGE].min
   end
 
   def filter_schedules_by_enabled(scope, enabled)
