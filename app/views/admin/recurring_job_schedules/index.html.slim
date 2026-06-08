@@ -21,11 +21,12 @@ p.actions
     = label_tag :enabled, "有効状態"
     = select_tag :enabled, options_for_select(@schedule_enabled_options, @selected_enabled), onchange: "this.form.requestSubmit()"
     = label_tag :q, "検索"
-    = search_field_tag :q, @selected_query, placeholder: "ジョブキー / class / queue / 前回エラー"
+    = search_field_tag :q, @selected_query, placeholder: "ジョブキー / class / queue / 前回エラー", maxlength: Admin::RecurringJobSchedulesController::SCHEDULE_QUERY_MAX_LENGTH
     = submit_tag "検索", class: "button secondary"
     - if has_filters
       = link_to "絞り込み解除", admin_recurring_job_schedules_path, class: "button secondary"
   p.muted 前回状態 filter は直近実行結果で絞り込みます。定義の有効/無効は「定義状態」列または有効状態 filter で確認してください。
+  p.muted = "検索はジョブキー / class / queue / 前回エラーの断片を最大#{Admin::RecurringJobSchedulesController::SCHEDULE_QUERY_MAX_LENGTH}文字で指定できます。長い error log は全文ではなく特徴的な一部で探してください。"
   p.muted = "Triage対象（前回状態ベース）: #{triage_counts}"
   p.muted = "表示中: #{@schedules.size}件"
 
