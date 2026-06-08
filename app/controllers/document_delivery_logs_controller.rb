@@ -27,14 +27,19 @@ class DocumentDeliveryLogsController < BaseController
     @status_filter = normalized_status_filter
     @delivery_type_filter = normalized_delivery_type_filter
     @query = normalized_query
-    @created_from_filter = normalized_created_date_filter(:created_from)
-    @created_to_filter = normalized_created_date_filter(:created_to)
+    @created_from_filter = normalized_delivery_log_date_filter(:created_from)
+    @created_to_filter = normalized_delivery_log_date_filter(:created_to)
+    @sent_from_filter = normalized_delivery_log_date_filter(:sent_from)
+    @sent_to_filter = normalized_delivery_log_date_filter(:sent_to)
     @created_from_date = parse_delivery_log_date_filter(@created_from_filter)
     @created_to_date = parse_delivery_log_date_filter(@created_to_filter)
+    @sent_from_date = parse_delivery_log_date_filter(@sent_from_filter)
+    @sent_to_date = parse_delivery_log_date_filter(@sent_to_filter)
     @created_date_filter_invalid = (@created_from_filter.present? && @created_from_date.blank?) || (@created_to_filter.present? && @created_to_date.blank?)
+    @sent_date_filter_invalid = (@sent_from_filter.present? && @sent_from_date.blank?) || (@sent_to_filter.present? && @sent_to_date.blank?)
 
     searchable_scope = filter_by_query(base_scope)
-    date_filtered_scope = filter_by_created_at(searchable_scope)
+    date_filtered_scope = filter_by_sent_at(filter_by_created_at(searchable_scope))
     @status_summary_counts = STATUS_FILTER_LABELS.keys.index_with { |status| date_filtered_scope.public_send(status).count }
 
     status_filter_scope = @delivery_type_filter.present? ? date_filtered_scope.public_send(@delivery_type_filter) : date_filtered_scope
@@ -189,7 +194,7 @@ class DocumentDeliveryLogsController < BaseController
     params[:q].to_s.strip.presence&.slice(0, DELIVERY_LOG_QUERY_MAX_LENGTH)
   end
 
-  def normalized_created_date_filter(param_name)
+  def normalized_delivery_log_date_filter(param_name)
     params[param_name].to_s.strip.presence
   end
 
@@ -213,6 +218,13 @@ class DocumentDeliveryLogsController < BaseController
     scoped = scope
     scoped = scoped.where("document_delivery_logs.created_at >= ?", @created_from_date.beginning_of_day) if @created_from_date.present?
     scoped = scoped.where("document_delivery_logs.created_at <= ?", @created_to_date.end_of_day) if @created_to_date.present?
+    scoped
+  end
+
+  def filter_by_sent_at(scope)
+    scoped = scope
+    scoped = scoped.where("document_delivery_logs.sent_at >= ?", @sent_from_date.beginning_of_day) if @sent_from_date.present?
+    scoped = scoped.where("document_delivery_logs.sent_at <= ?", @sent_to_date.end_of_day) if @sent_to_date.present?
     scoped
   end
 
