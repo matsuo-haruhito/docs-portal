@@ -29,8 +29,9 @@ p.muted 主要な管理対象の件数と最近のデータを横断確認でき
       .dashboard-grid
         - entries.each do |entry|
           - summary = @entry_summaries.fetch(entry)
+          - detail_path = has_query ? admin_model_browser_model_path(entry.key, model_browser_q: @query) : admin_model_browser_model_path(entry.key)
           section.card.metric-card
-            h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
+            h3 = link_to entry.label, detail_path
             p.muted = "key: #{entry.key} / group: #{group_label}"
             p.muted.model-browser-card-description = entry.description
             dl.definition-list.model-browser-card-metrics
@@ -39,7 +40,7 @@ p.muted 主要な管理対象の件数と最近のデータを横断確認でき
               dt 最終更新
               dd = summary[:latest_updated_at] ? l(summary[:latest_updated_at], format: :short) : "-"
             p.actions
-              = link_to "詳細を見る", admin_model_browser_model_path(entry.key), class: "button"
+              = link_to "詳細を見る", detail_path, class: "button"
               - if (index_path = entry_index_path(entry))
                 = link_to "既存画面へ", index_path, class: "button secondary"
 - else
