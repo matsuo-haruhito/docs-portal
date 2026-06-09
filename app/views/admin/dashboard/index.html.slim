@@ -34,6 +34,13 @@ section.card
           strong = item[:count]
           |  件
         p.muted = item[:scope]
+        - if item[:latest_at]
+          p.muted
+            | 最新の対象履歴: 
+            time datetime=item[:latest_at].iso8601 = l(item[:latest_at], format: :short)
+            - if item[:stale]
+              br
+              span 古い失敗のみ
         ul
           - item[:details].each do |detail|
             li = detail

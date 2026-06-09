@@ -132,7 +132,7 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("管理ダッシュボード・モデルブラウザ運用runbook.md")
   end
 
-  it "shows operational failure entry summary without changing existing dashboard sections" do
+  it "shows operational failure entry summary with latest history cues" do
     project = create(:project)
     source = GitImportSource.create!(
       project: project,
@@ -144,7 +144,7 @@ RSpec.describe "Admin dashboard", type: :request do
       auth_type: :github_app,
       enabled: true
     )
-    GitImportRun.create!(
+    failed_git_run = GitImportRun.create!(
       git_import_source: source,
       provider: :github,
       import_mode: :pull,
@@ -153,7 +153,7 @@ RSpec.describe "Admin dashboard", type: :request do
       branch: "main",
       source_path: "docs"
     )
-    GitImportRun.create!(
+    skipped_git_run = GitImportRun.create!(
       git_import_source: source,
       provider: :github,
       import_mode: :pull,
@@ -162,8 +162,8 @@ RSpec.describe "Admin dashboard", type: :request do
       branch: "main",
       source_path: "docs"
     )
-    GeneratedFileRun.create!(job_id: "docs-build", status: :failed)
-    GeneratedFileEvent.create!(
+    generated_run = GeneratedFileRun.create!(job_id: "docs-build", status: :failed)
+    generated_event = GeneratedFileEvent.create!(
       event_key: "docs/runbook.md:update:spec",
       path: "docs/runbook.md",
       operation: "update",
@@ -171,7 +171,7 @@ RSpec.describe "Admin dashboard", type: :request do
       scheduled_at: 1.hour.ago,
       last_seen_at: Time.current
     )
-    create(:webhook_delivery, status: :failed)
+    webhook_delivery = create(:webhook_delivery, status: :failed)
     sync_source = ExternalFolderSyncSource.create!(
       project: project,
       created_by: admin_user,
@@ -185,12 +185,19 @@ RSpec.describe "Admin dashboard", type: :request do
       auth_config: "{}",
       enabled: true
     )
-    ExternalFolderSyncRun.create!(
+    external_sync_run = ExternalFolderSyncRun.create!(
       external_folder_sync_source: sync_source,
       status: :partial,
       mode: :dry_run,
       started_at: Time.current
     )
+    latest_failure_at = 2.hours.ago
+    failed_git_run.update!(updated_at: 3.hours.ago)
+    skipped_git_run.update!(updated_at: latest_failure_at)
+    generated_run.update!(updated_at: 4.hours.ago)
+    generated_event.update!(updated_at: latest_failure_at)
+    webhook_delivery.update!(updated_at: latest_failure_at)
+    external_sync_run.update!(updated_at: latest_failure_at)
 
     sign_in_as(admin_user)
 
@@ -213,11 +220,48 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("外部フォルダ同期")
     expect(response.body).to include("partial: 1")
     expect(response.body).to include(admin_external_folder_sync_sources_path(review: "errors"))
+    expect(response.body).to include("最新の対象履歴")
+    expect(response.body).to include(I18n.l(latest_failure_at, format: :short))
+    expect(response.body).not_to include("古い失敗のみ")
     expect(response.body).to include("アプリ設定診断")
     expect(response.body).to include("文書ファイル健全性")
   end
 
-  it "shows zero-count operational failure entries when there is no saved failure data" do
+  it "marks operational failure entries as stale when only old failures remain" do
+    project = create(:project)
+    source = GitImportSource.create!(
+      project: project,
+      created_by: admin_user,
+      provider: :github,
+      repository_full_name: "example/private-docs",
+      branch: "main",
+      source_path: "docs",
+      auth_type: :github_app,
+      enabled: true
+    )
+    old_failure_at = 8.days.ago
+    git_run = GitImportRun.create!(
+      git_import_source: source,
+      provider: :github,
+      import_mode: :pull,
+      status: :failed,
+      repository_full_name: "example/private-docs",
+      branch: "main",
+      source_path: "docs"
+    )
+    git_run.update!(updated_at: old_failure_at)
+
+    sign_in_as(admin_user)
+
+    get admin_root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("最新の対象履歴")
+    expect(response.body).to include(I18n.l(old_failure_at, format: :short))
+    expect(response.body).to include("古い失敗のみ")
+  end
+
+  it "shows zero-count operational failure entries without freshness cues when there is no saved failure data" do
     sign_in_as(admin_user)
 
     get admin_root_path
@@ -230,6 +274,8 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("実行履歴 failed: 0")
     expect(response.body).to include("イベント failed: 0")
     expect(response.body).to include("partial: 0")
+    expect(response.body).not_to include("最新の対象履歴")
+    expect(response.body).not_to include("古い失敗のみ")
   end
 
   it "explains that document file health details are limited when more files are missing" do
