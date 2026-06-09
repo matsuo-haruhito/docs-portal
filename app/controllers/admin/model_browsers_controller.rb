@@ -63,12 +63,7 @@ class Admin::ModelBrowsersController < Admin::BaseController
   end
 
   def build_summary(entry)
-    scope = entry.model_class.all
-
-    {
-      total_count: scope.count,
-      latest_updated_at: latest_updated_at_for(scope)
-    }
+    Admin::ModelBrowserSummary.for(entry)
   end
 
   def model_browser_records(entry, query)
@@ -121,12 +116,6 @@ class Admin::ModelBrowsersController < Admin::BaseController
     return scope.order(updated_at: :desc, id: :desc) if entry.model_class.column_names.include?("updated_at")
 
     scope.order(id: :desc)
-  end
-
-  def latest_updated_at_for(scope)
-    return unless scope.model.column_names.include?("updated_at")
-
-    scope.maximum(:updated_at)
   end
 
   def entry_index_path(entry, query: nil)
