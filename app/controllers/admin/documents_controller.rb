@@ -1,5 +1,6 @@
 class Admin::DocumentsController < Admin::BaseController
   BULK_EDIT_CANDIDATE_LIMIT = 50
+  DOCUMENT_SEARCH_QUERY_MAX_LENGTH = 100
 
   before_action :require_admin_only!
   before_action :set_document, only: %i[edit update destroy archive restore]
@@ -74,7 +75,13 @@ class Admin::DocumentsController < Admin::BaseController
   end
 
   def document_filter_params
-    params.to_unsafe_h.symbolize_keys.slice(:q, :category, :document_kind, :visibility_policy, :archived, :retention, :discard)
+    params.to_unsafe_h.symbolize_keys.slice(:q, :category, :document_kind, :visibility_policy, :archived, :retention, :discard).tap do |filters|
+      filters[:q] = normalize_document_search_query(filters[:q])
+    end
+  end
+
+  def normalize_document_search_query(value)
+    value.to_s.strip.first(DOCUMENT_SEARCH_QUERY_MAX_LENGTH)
   end
 
   def load_bulk_edit_candidate_state
@@ -99,7 +106,7 @@ class Admin::DocumentsController < Admin::BaseController
   end
 
   def apply_keyword_filter(scope)
-    keyword = @filters[:q].to_s.strip
+    keyword = @filters[:q].to_s
     return scope if keyword.blank?
 
     pattern = "%#{ActiveRecord::Base.sanitize_sql_like(keyword)}%"

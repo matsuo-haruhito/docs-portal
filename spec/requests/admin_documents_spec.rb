@@ -42,6 +42,10 @@ RSpec.describe "Admin documents", type: :request do
     parsed_html.at_css(%(a[href*="source=admin_documents"]))
   end
 
+  def filter_input_value(name)
+    parsed_html.at_css(%(input[name="#{name}"]))&.[]("value")
+  end
+
   def row_column_texts(column_key)
     document_rows.map do |row|
       cell = row.at_css(%(td[data-rails-table-preferences-column-key="#{column_key}"]))
@@ -124,6 +128,37 @@ RSpec.describe "Admin documents", type: :request do
     expect(title_targets).to include(project_document_path(matching_project, matching_document.slug))
     expect(title_targets).not_to include(project_document_path(similar_project, other_document.slug))
     expect(row_column_texts("project")).to eq(["Operations Portal DOCS-001"])
+  end
+
+  it "trims and truncates long keyword searches before filtering and handoff summaries" do
+    search_term = "A" * 100
+    long_query = "  #{search_term}ignored-suffix  "
+    matching_project = create(:project, code: "BOUND-001", name: "Bounded Search")
+    excluded_project = create(:project, code: "BOUND-002", name: "Bounded Search")
+    matching_document = create(:document, project: matching_project, title: search_term, slug: "bounded-search-match")
+    excluded_document = create(
+      :document,
+      project: excluded_project,
+      title: search_term,
+      slug: "bounded-search-excluded",
+      retention_until: 1.month.from_now
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_documents_path, params: { q: long_query, retention: "missing" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 1件")
+    expect(filter_input_value("q")).to eq(search_term)
+    expect(title_targets).to contain_exactly(project_document_path(matching_project, matching_document.slug))
+    expect(title_targets).not_to include(project_document_path(excluded_project, excluded_document.slug))
+    expect(page_text).to include("キーワード: #{search_term}", "保管期限: 保管期限なし")
+    expect(page_text).not_to include("ignored-suffix")
+
+    query = Rack::Utils.parse_nested_query(URI.parse(bulk_edit_candidate_link["href"]).query)
+    expect(query.fetch("source_filter_summaries")).to include("キーワード: #{search_term}")
+    expect(query.fetch("source_filter_summaries")).not_to include("ignored-suffix")
   end
 
   it "links filtered results to bulk edit candidates when the result set is within the handoff limit" do
