@@ -11,9 +11,15 @@ section.card
   p.muted = "主要 model #{@model_browser_entries.size}件を抜粋して、件数と最近の record を横断確認できます。catalog 全体 #{model_browser_total_count}件はモデルブラウザで group 別に確認できます。"
   .dashboard-grid
     - @model_browser_entries.each do |entry|
+      - summary = @model_browser_entry_summaries.fetch(entry)
       article.card.metric-card
         h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
         p.muted = entry.description
+        dl.definition-list.model-browser-card-metrics
+          dt 件数
+          dd = summary[:total_count]
+          dt 最終更新
+          dd = summary[:latest_updated_at] ? l(summary[:latest_updated_at], format: :short) : "-"
   p.actions
     = link_to "モデルブラウザを開く（全#{model_browser_total_count}件）", admin_model_browser_path, class: "button"
 
