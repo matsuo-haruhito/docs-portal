@@ -6,6 +6,7 @@ RSpec.describe "preview tools source" do
   end
 
   let(:controller_source) { read_source("app/frontend/controllers/preview_tools_controller.js") }
+  let(:site_viewer_iframe_height_source) { read_source("app/frontend/lib/site_viewer_iframe_height.js") }
   let(:file_list_controller_source) { read_source("app/frontend/controllers/document_file_list_search_controller.js") }
   let(:file_list_search_source) { read_source("app/frontend/lib/document_file_list_search.js") }
   let(:codeblock_controller_source) { read_source("app/frontend/controllers/markdown_preview_codeblock_tools_controller.js") }
@@ -92,6 +93,27 @@ RSpec.describe "preview tools source" do
       "setupStructuredPreviewTools",
       "setupArchivePreviewTools"
     ])
+  end
+
+  it "guards site viewer iframe height sync message, target, and listener boundaries" do
+    aggregate_failures do
+      expect(site_viewer_iframe_height_source).to include('const HEIGHT_MESSAGE_TYPE = "docs-portal:site-viewer-height"')
+      expect(site_viewer_iframe_height_source).to include("const MIN_FRAME_HEIGHT = 320")
+      expect(site_viewer_iframe_height_source).to include("Math.max(Math.ceil(numericValue), MIN_FRAME_HEIGHT)")
+      expect(site_viewer_iframe_height_source).to include("if (event.origin !== window.location.origin) return")
+      expect(site_viewer_iframe_height_source).to include("if (event.data?.type !== HEIGHT_MESSAGE_TYPE) return")
+      expect(site_viewer_iframe_height_source).to include(%(document.querySelectorAll("iframe.site-viewer-frame[data-docs-portal-auto-height='true']")))
+      expect(site_viewer_iframe_height_source).to include("if (frame.contentWindow !== event.source) return")
+      expect(site_viewer_iframe_height_source).to include('frame.dataset.docsPortalAutoHeightApplied = "true"')
+      expect(site_viewer_iframe_height_source).to include("let messageListenerReady = false")
+      expect(site_viewer_iframe_height_source).to include("if (!messageListenerReady)")
+      expect(site_viewer_iframe_height_source).to include('window.addEventListener("message", handleViewerHeightMessage)')
+      expect(site_viewer_iframe_height_source).to include("messageListenerReady = true")
+      expect(site_viewer_iframe_height_source).to include('frame.dataset.docsPortalAutoHeightReady !== "true"')
+      expect(site_viewer_iframe_height_source).to include('frame.dataset.docsPortalAutoHeightReady = "true"')
+      expect(site_viewer_iframe_height_source).to include('frame.addEventListener("load", () => {')
+      expect(site_viewer_iframe_height_source).to include("window.requestAnimationFrame(() => syncFrameHeight(frame))")
+    end
   end
 
   it "re-runs refresh after Turbo page changes and removes those listeners on disconnect" do
