@@ -17,6 +17,7 @@ import DocumentPermissionErrorSurfaceController from "../controllers/document_pe
 import DocumentSetDocumentFilterController from "../controllers/document_set_document_filter_controller"
 import DocumentVersionTabsController from "../controllers/document_version_tabs"
 import DocumentZipSelectionController from "../controllers/document_zip_selection_controller"
+import ImagePreviewToolsController from "../controllers/image_preview_tools_controller"
 import NavDropdownsController from "../controllers/nav_dropdowns_controller"
 import DocumentTreeNavigationController from "../controllers/document_tree_navigation_controller"
 import FileDropzoneController from "../controllers/file_dropzone_controller"
@@ -37,6 +38,7 @@ application.register("document-permission-error-surface", DocumentPermissionErro
 application.register("document-set-document-filter", DocumentSetDocumentFilterController)
 application.register("document-version-tabs", DocumentVersionTabsController)
 application.register("document-zip-selection", DocumentZipSelectionController)
+application.register("image-preview-tools", ImagePreviewToolsController)
 application.register("nav-dropdowns", NavDropdownsController)
 application.register("document-tree-navigation", DocumentTreeNavigationController)
 application.register("file-dropzone", FileDropzoneController)
