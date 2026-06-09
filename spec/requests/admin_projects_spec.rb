@@ -15,6 +15,50 @@ RSpec.describe "Admin projects", type: :request do
     parsed_html.css("tbody td[data-rails-table-preferences-column-key='name']").map { |cell| cell.text.squish }
   end
 
+  def route_targets
+    parsed_html.css("a[href], form[action]").filter_map { |node| node["href"] || node["action"] }
+  end
+
+  it "uses project codes for admin member links and rejects numeric ids" do
+    project = create(:project, code: "CODE-001", name: "Code Routed Project")
+
+    sign_in_as(admin_user)
+
+    get admin_projects_path
+
+    expect(response).to have_http_status(:ok)
+    expect(route_targets).to include(
+      edit_admin_project_path(project.code),
+      admin_project_path(project.code)
+    )
+    expect(route_targets).not_to include(
+      edit_admin_project_path(project.id),
+      admin_project_path(project.id)
+    )
+
+    get edit_admin_project_path(project.code)
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("案件マスタ編集")
+
+    get edit_admin_project_path(project.id)
+    expect(response).to have_http_status(:not_found)
+
+    patch admin_project_path(project.id), params: {
+      project: {
+        code: "NUMERIC-UPDATE",
+        name: "Numeric Update",
+        description: project.description,
+        active: project.active
+      }
+    }
+    expect(response).to have_http_status(:not_found)
+    expect(project.reload.code).to eq("CODE-001")
+
+    delete admin_project_path(project.id)
+    expect(response).to have_http_status(:not_found)
+    expect(Project.exists?(project.id)).to be(true)
+  end
+
   it "filters projects by keyword across code, name, and description" do
     create(:project, code: "NEEDLE-001", name: "Code Match", description: "Plain text")
     create(:project, code: "NAME-001", name: "Needle Name", description: "Plain text")
