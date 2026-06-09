@@ -9,7 +9,7 @@ RSpec.describe Admin::GeneratedFileRunsHelper, type: :helper do
         "and C:/Users/alice/AppData/Local/token.txt"
       )
 
-      expect(preview).to include("Authorization: Bearer [FILTERED]")
+      expect(preview).to include("Authorization=[FILTERED]")
       expect(preview).to include("client_secret=[FILTERED]")
       expect(preview).to include("access_token=[FILTERED]")
       expect(preview).to include("failed at [FILTERED]")
