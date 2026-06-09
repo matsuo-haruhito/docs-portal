@@ -15,9 +15,9 @@ RSpec.describe "admin company selectors source" do
       expect(project_form).to include("collection: @companies")
       expect(project_form).to include("collection_value_method: :id")
       expect(project_form).to include("collection_label_method: :display_name")
-      expect(project_form).to include('label: "企業"')
+      expect(project_form).to include('label: "会社"')
       expect(project_form).to include("allow_clear: true")
-      expect(project_form).to include('placeholder: "企業を選択（未設定可）"')
+      expect(project_form).to include('placeholder: "会社を選択（未設定可）"')
       expect(project_form).not_to include("collection_select :company_id")
     end
   end
