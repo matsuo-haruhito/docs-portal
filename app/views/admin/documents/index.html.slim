@@ -19,7 +19,8 @@ h1 文書マスタ
     .form-grid.form-grid--compact
       label.form-field
         span キーワード
-        = form.search_field :q, value: @filters[:q], placeholder: "案件名・案件コード・文書名・URL識別子"
+        = form.search_field :q, value: @filters[:q], placeholder: "案件名・案件コード・文書名・URL識別子", maxlength: Admin::DocumentsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH
+        span.muted = "案件名・案件コード・文書名・URL識別子の断片で検索できます。最大#{Admin::DocumentsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH}文字。"
 
       label.form-field
         span カテゴリ
