@@ -48,6 +48,13 @@ RSpec.describe "Admin access logs", type: :request do
     Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)
   end
 
+  def csv_export_query
+    link = parsed_html.css("a[href]").find { |node| node.text.squish.include?("CSV export") }
+    return {} unless link
+
+    Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)
+  end
+
   def row_column_texts(column_key)
     log_rows.map do |row|
       cell = row.at_css(%(td[data-rails-table-preferences-column-key="#{column_key}"]))
@@ -60,7 +67,7 @@ RSpec.describe "Admin access logs", type: :request do
     end
   end
 
-  def create_access_log!(action_type:, target_type:, target_name:, user: admin_user, company: admin_user.company, project: self.project, document: self.document, document_version: version, accessed_at: Time.current)
+  def create_access_log!(action_type:, target_type:, target_name:, user: admin_user, company: admin_user.company, project: self.project, document: self.document, document_version: version, accessed_at: Time.current, ip_address: "127.0.0.1")
     AccessLog.create!(
       user:,
       company:,
@@ -70,7 +77,7 @@ RSpec.describe "Admin access logs", type: :request do
       action_type:,
       target_type:,
       target_name:,
-      ip_address: "127.0.0.1",
+      ip_address:,
       user_agent: "RSpec",
       accessed_at:
     )
@@ -434,6 +441,107 @@ RSpec.describe "Admin access logs", type: :request do
       "Plain Project PLAIN",
       "Audit Project AUDIT"
     ])
+  end
+
+  it "normalizes target and IP query filters before filtering and building links" do
+    normalized_query = "x" * Admin::AccessLogsController::ACCESS_LOG_QUERY_MAX_LENGTH
+    long_query = "  #{normalized_query}ignored-suffix  "
+    base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
+
+    201.times do |index|
+      create_access_log!(
+        action_type: :view,
+        target_type: "page",
+        target_name: "target-#{index}-#{normalized_query}",
+        accessed_at: base_time + index.seconds
+      )
+    end
+    create_access_log!(
+      action_type: :view,
+      target_type: "page",
+      target_name: "ip-only-match",
+      ip_address: "source-#{normalized_query}",
+      accessed_at: base_time + 202.seconds
+    )
+    create_access_log!(
+      action_type: :view,
+      target_type: "page",
+      target_name: "outside-query",
+      accessed_at: base_time + 203.seconds
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(q: long_query)
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_html.at_css(%(input[name="q"]))["value"]).to eq(normalized_query)
+    expect(log_target_names).to include("ip-only-match")
+    expect(log_target_names).not_to include("outside-query")
+    expect(page_text).to include("対象名・IPアドレス: #{normalized_query}")
+    expect(page_text).not_to include("ignored-suffix")
+    expect(pagination_query("次の200件")).to include("q" => normalized_query, "page" => "2")
+    expect(csv_export_query).to include("q" => normalized_query)
+  end
+
+  it "normalizes document query filters before filtering and building links" do
+    normalized_query = "audit" * 20
+    long_query = "  #{normalized_query}ignored-suffix  "
+    base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
+    title_match_document = create(:document, project:, title: "Quarterly #{normalized_query}", slug: "quarterly-audit")
+    slug_match_document = create(:document, project:, title: "Operations Note", slug: "#{normalized_query}-slug")
+    other_document = create(:document, project:, title: "Quarterly #{normalized_query[0, 99]}z", slug: "outside-document")
+
+    create_access_log!(
+      action_type: :view,
+      target_type: "page",
+      target_name: "title-document-match",
+      document: title_match_document,
+      document_version: create(:document_version, document: title_match_document, version_label: "v2.0.0"),
+      accessed_at: base_time + 3.seconds
+    )
+    create_access_log!(
+      action_type: :view,
+      target_type: "page",
+      target_name: "slug-document-match",
+      document: slug_match_document,
+      document_version: create(:document_version, document: slug_match_document, version_label: "v3.0.0"),
+      accessed_at: base_time + 2.seconds
+    )
+    create_access_log!(
+      action_type: :view,
+      target_type: "page",
+      target_name: "document-miss",
+      document: other_document,
+      document_version: create(:document_version, document: other_document, version_label: "v4.0.0"),
+      accessed_at: base_time + 1.second
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(document_q: long_query)
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_html.at_css(%(input[name="document_q"]))["value"]).to eq(normalized_query)
+    expect(log_target_names).to eq(["title-document-match", "slug-document-match"])
+    expect(page_text).to include("文書名・URL識別子: #{normalized_query}")
+    expect(page_text).not_to include("ignored-suffix")
+    expect(csv_export_query).to include("document_q" => normalized_query)
+  end
+
+  it "drops blank search query filters before applying active filter summaries" do
+    create_access_log!(action_type: :view, target_type: "page", target_name: "blank-query-target")
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(q: "   ", document_q: "   ")
+
+    expect(response).to have_http_status(:ok)
+    expect(log_target_names).to eq(["blank-query-target"])
+    expect(parsed_html.at_css(%(input[name="q"]))["value"]).to be_nil
+    expect(parsed_html.at_css(%(input[name="document_q"]))["value"]).to be_nil
+    expect(page_text).not_to include("絞り込み中")
+    expect(page_text).not_to include("有効な条件:")
   end
 
   it "filters access logs by document title" do

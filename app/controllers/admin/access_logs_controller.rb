@@ -5,6 +5,7 @@ class Admin::AccessLogsController < Admin::BaseController
   AI_CONTEXT_SCOPE_FILTERS = %w[all selected].freeze
   ACCESS_LOGS_PER_PAGE = 200
   ACCESS_LOGS_MAX_PAGE = 50
+  ACCESS_LOG_QUERY_MAX_LENGTH = 100
   FILTER_CANDIDATE_LIMIT = 50
   CSV_HEADERS = [
     "日時",
@@ -101,7 +102,7 @@ class Admin::AccessLogsController < Admin::BaseController
   end
 
   def apply_target_or_ip_filter(scope)
-    value = @filters[:q].to_s.strip
+    value = @filters[:q].to_s
     return scope if value.blank?
 
     query = "%#{ActiveRecord::Base.sanitize_sql_like(value)}%"
@@ -127,7 +128,7 @@ class Admin::AccessLogsController < Admin::BaseController
   end
 
   def document_scope
-    query = "%#{ActiveRecord::Base.sanitize_sql_like(@filters[:document_q].to_s.strip)}%"
+    query = "%#{ActiveRecord::Base.sanitize_sql_like(@filters[:document_q].to_s)}%"
     Document.where("title LIKE :query OR slug LIKE :query", query:)
   end
 
@@ -193,6 +194,8 @@ class Admin::AccessLogsController < Admin::BaseController
     permitted[:target_type] = nil if unknown_target_type_filter?(permitted[:target_type])
     permitted[:ai_context_mode] = nil if unknown_ai_context_mode_filter?(permitted[:ai_context_mode])
     permitted[:ai_context_scope] = nil if unknown_ai_context_scope_filter?(permitted[:ai_context_scope])
+    permitted[:q] = normalized_access_log_query(permitted[:q]).presence
+    permitted[:document_q] = normalized_access_log_query(permitted[:document_q]).presence
 
     if permitted[:target_type].to_s != "ai_context"
       permitted[:ai_context_mode] = nil
@@ -200,6 +203,10 @@ class Admin::AccessLogsController < Admin::BaseController
     end
 
     permitted
+  end
+
+  def normalized_access_log_query(value)
+    value.to_s.strip.first(ACCESS_LOG_QUERY_MAX_LENGTH)
   end
 
   def page_param
