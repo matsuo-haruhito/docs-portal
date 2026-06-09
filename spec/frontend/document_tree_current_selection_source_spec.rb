@@ -28,4 +28,36 @@ RSpec.describe "document tree current selection source" do
     expect(controller_source).to include("event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0")
     expect(controller_source).to include("window.Turbo?.renderStreamMessage(html)")
   end
+
+  it "shows loading and error cues for sidebar tree refresh without changing tree-view APIs" do
+    aggregate_failures do
+      expect(controller_source).to include("this.showRefreshCue(\"loading\", \"文書ツリーを更新しています。\")")
+      expect(controller_source).to include("文書ツリーを更新できませんでした。ページを再読み込みするか、本文側の表示を確認してください。")
+      expect(controller_source).to include("cue.dataset.documentTreeRefreshCue = state")
+      expect(controller_source).to include('cue.setAttribute("role", state === "error" ? "alert" : "status")')
+      expect(controller_source).to include('cue.setAttribute("aria-live", state === "error" ? "assertive" : "polite")')
+      expect(controller_source).to include('this.element.querySelector("[data-sidebar-content]") || document.querySelector("[data-sidebar-content]")')
+      expect(controller_source).to include('container.insertBefore(cue, treePanel)')
+      expect(controller_source).not_to include("treeViewLoading")
+      expect(controller_source).not_to include("treeViewError")
+    end
+  end
+
+  it "clears refresh cues through the same sidebar fallback container" do
+    aggregate_failures do
+      expect(controller_source).to include("clearRefreshCue(requestId)")
+      expect(controller_source).to include("const container = this.refreshCueContainer()")
+      expect(controller_source).to include('const cue = container?.querySelector("[data-document-tree-refresh-cue]")')
+      expect(controller_source).not_to include('const cue = this.element.querySelector("[data-document-tree-refresh-cue]")')
+    end
+  end
+
+  it "keeps refresh cues compact in the document tree partial" do
+    aggregate_failures do
+      expect(tree_source).to include(".document-tree-refresh-cue { margin: 0 0 8px")
+      expect(tree_source).to include("border-radius: 8px")
+      expect(tree_source).to include(".document-tree-refresh-cue--error")
+      expect(tree_source).to include("#991b1b")
+    end
+  end
 end
