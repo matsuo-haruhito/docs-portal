@@ -32,7 +32,7 @@ README からこの runbook へ入ったときは、まず次の表で provider 
 
 1. 対象の同期元が既にあるか、新規登録から始めるかを一覧で確認する
 2. 必要に応じて `一覧の絞り込み` で `warning あり` `error あり` `無効` `Google Drive` `SharePoint / OneDrive` を切り替え、今日確認したい対象だけに寄せる
-3. 同期元が増えている場合は、検索欄で同期設定名、案件名 / code、外部フォルダ ID / path を指定し、review/provider filter と併用して対象を絞る
+3. 同期元が増えている場合は、検索欄で同期設定名、案件名 / code、外部フォルダ ID / path を指定し、review/provider filter と併用して対象を絞る。検索語は空白を整えた最大100文字で扱われるため、長いフォルダ URL や error 断片は特徴的な一部で探す
 4. 新規登録する場合は、対象案件を案件コード / 案件名で検索し、先頭 card の `Google Drive から始める` と `SharePoint / OneDrive を準備する` のどちらに当たるかを先に切り分ける
 5. Google Drive の既存同期元で `Google OAuthが未接続` の案内が出ているなら、まず接続を済ませる
 6. SharePoint / OneDrive source を新規保存した場合は、詳細画面で `drive_id` / `folder_item_id` / `folder_path` / `site_id` が取れているかを先に確認する
@@ -56,14 +56,14 @@ README からこの runbook へ入ったときは、まず次の表で provider 
 
 `一覧の絞り込み` は、同期元が増えたときに daily review の入口になります。
 
-- 検索欄: 同期設定名、案件名 / code、外部フォルダ ID、保存済み `external_folder_path` から部分一致で探す
+- 検索欄: 同期設定名、案件名 / code、外部フォルダ ID、保存済み `external_folder_path` から部分一致で探す。検索語は前後空白と連続空白を整えたうえで最大100文字まで使われ、検索欄にも同じ上限 cue が表示されます。長い folder URL や error message は、特徴的な path / id / name 断片に短くして探します
 - `warning あり`: 直近 run に `競合・重複警告` が残っている同期元だけを見る
 - `error あり`: 直近 run または source に `最新エラー` が残っている同期元だけを見る
 - `無効`: いま同期に使っていない設定だけを見直す
 - `Google Drive`: 同期本体の運用対象だけに絞る
 - `SharePoint / OneDrive`: metadata-only source だけに絞り、保存済み `drive_id` や `folder_path` の確認へ寄る
 
-検索条件は review/provider filter と併用できます。filter link は検索条件を保持し、`検索を解除` は review/provider filter を残します。詳細・編集画面へ進む link も検索条件を含む `return_to` を保持するため、確認後に同じ一覧条件へ戻れます。検索 / 絞り込み結果が 0 件の場合は、未登録の empty state ではなく「現在の検索 / 絞り込みに一致しない」状態として扱います。
+検索条件は review/provider filter と併用できます。filter link は検索条件を保持し、`検索を解除` は review/provider filter を残します。詳細・編集画面へ進む link も、整えた検索語と review/provider filter を含む `return_to` を保持するため、確認後に同じ一覧条件へ戻れます。空白だけの検索語は検索なしとして扱われます。検索 / 絞り込み結果が 0 件の場合は、未登録の empty state ではなく「現在の検索 / 絞り込みに一致しない」状態として扱います。
 
 `最新安全判定` と `競合・重複警告` は、詳細画面の `同期履歴` に出る直近 run と同じ文脈で見ます。件数や判定が気になる同期元は、一覧から `設定詳細` へ入って確認します。
 
@@ -193,6 +193,7 @@ current code には `external_folder_sync_webhooks/sharepoint` の GET / POST ro
 ## 9. current support の境界
 
 - 新規登録 UI と一覧見出しは provider-aware で、current `main` では `google_drive` は保存から `dry_run` / `apply` / `enqueue` / 変更通知まで、`microsoft_graph` は共有 URL から metadata 保存と保存済み metadata の確認まで進められます
+- 一覧検索は同期設定名、案件名 / code、外部フォルダ ID、保存済み `external_folder_path` の部分一致です。検索語は空白を整えて最大100文字に丸められ、review/provider filter や詳細 / 編集から戻る `return_to` でも同じ検索条件として保持されます
 - 新規登録 / 編集フォームの `対象案件` は案件コード / 案件名の remote search で選びます。検索語は最大100文字、候補は最大20件で、保存済み案件は edit / validation rerender で selected option として復元されます
 - current sync direction は `external_to_portal` のみです
 - current conflict policy は `manual` 前提です
