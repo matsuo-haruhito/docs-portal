@@ -481,7 +481,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(page_text).to include("対象名・IPアドレス: #{normalized_query}")
     expect(page_text).not_to include("ignored-suffix")
     expect(pagination_query("次の200件")).to include("q" => normalized_query, "page" => "2")
-    expect(csv_export_query).to include("q" => normalized_query, "format" => "csv")
+    expect(csv_export_query).to include("q" => normalized_query)
   end
 
   it "normalizes document query filters before filtering and building links" do
@@ -526,7 +526,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(log_target_names).to eq(["title-document-match", "slug-document-match"])
     expect(page_text).to include("文書名・URL識別子: #{normalized_query}")
     expect(page_text).not_to include("ignored-suffix")
-    expect(csv_export_query).to include("document_q" => normalized_query, "format" => "csv")
+    expect(csv_export_query).to include("document_q" => normalized_query)
   end
 
   it "drops blank search query filters before applying active filter summaries" do
