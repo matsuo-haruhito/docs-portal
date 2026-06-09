@@ -5,8 +5,9 @@
     .markdown-workspace__header
       div
         h2 PDF preview
-        p.muted ブラウザのPDF viewerで inline preview します。ショートカット: h で表示高さ切り替え。
+        p.muted ブラウザのPDF viewerで inline preview します。
       .actions
         span.muted data-pdf-preview-status="true"
+        span.muted data-pdf-preview-shortcut-cue="true" Hで高さ切替
         button.button.secondary type="button" data-pdf-preview-height-toggle="true" aria-pressed="false" 大きく表示
     iframe.site-viewer-frame data-pdf-preview-frame="true" src=document_file_path(@document_file, disposition: "inline", embedded: true) title=@document_file.file_name style="width: 100%; min-height: 75vh; border: 1px solid var(--doc-border, #e5e7eb); border-radius: 12px; background: #fff;"
