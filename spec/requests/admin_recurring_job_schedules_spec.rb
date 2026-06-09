@@ -350,6 +350,40 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(response.body).not_to include("failed-run-other-1967")
   end
 
+  it "shows and preserves the run history search boundary" do
+    sign_in_as(admin_user)
+    bounded_fragment = "a" * Admin::RecurringJobSchedulesController::RUN_QUERY_MAX_LENGTH
+    long_fragment = "  #{bounded_fragment}extra-error-log-tail  "
+    schedule = create_schedule!(job_key: "bounded_run_query_job", last_status: "failed")
+    list_path = admin_recurring_job_schedules_path(status: "failed")
+    51.times do |index|
+      create_run!(schedule, status: "failed", active_job_id: format("bounded-query-run-%03d", index), error_message: bounded_fragment, scheduled_at: index.minutes.ago)
+    end
+    create_run!(schedule, status: "failed", active_job_id: "tail-only-run", error_message: "extra-error-log-tail")
+
+    get admin_recurring_job_schedule_path(schedule, run_status: "failed", q: long_fragment, return_to: list_path)
+
+    expect(response).to have_http_status(:ok)
+    search_input = parsed_html.at_css(%(input[name="q"]))
+    expect(search_input).to be_present
+    expect(search_input["maxlength"]).to eq(Admin::RecurringJobSchedulesController::RUN_QUERY_MAX_LENGTH.to_s)
+    expect(search_input["value"]).to eq(bounded_fragment)
+    expect(response.body).to include("実行履歴検索はActiveJob ID / エラー断片を最大#{Admin::RecurringJobSchedulesController::RUN_QUERY_MAX_LENGTH}文字で指定できます。")
+    expect(response.body).to include("検索対象: ActiveJob ID またはエラー断片（#{bounded_fragment}）")
+    expect(response.body).to include("bounded-query-run-000")
+    expect(response.body).not_to include("tail-only-run")
+
+    expected_next_path = admin_recurring_job_schedule_path(
+      schedule,
+      return_to: list_path,
+      run_status: "failed",
+      q: bounded_fragment,
+      per_page: 50,
+      page: 2
+    )
+    expect(parsed_html.at_css(%(a[href="#{expected_next_path}"]))).to be_present
+  end
+
   it "shows an empty state and treats blank run search as no condition on the detail page" do
     sign_in_as(admin_user)
     schedule = create_schedule!(job_key: "blank_run_query_job", last_status: "completed")

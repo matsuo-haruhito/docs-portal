@@ -111,8 +111,29 @@ section.card
     p.muted
       | 表示中:
       strong = " #{@read_confirmations.size}件"
-      |  / 条件に一致した既読確認を新しい順に最新200件まで表示
-    p.muted CSV出力にも同じ絞り込み条件と最新200件の上限を反映します。表示設定はCSVの列や条件には影響しません。
+      - if @read_confirmations_page == 1
+        |  / 条件に一致した既読確認を新しい順に最新200件まで表示
+      - else
+        |  / 条件に一致した既読確認を新しい順に1ページ200件まで表示
+    p.muted
+      | 表示範囲:
+      strong = " #{@read_confirmations_page_start}-#{@read_confirmations_page_end}件目"
+      |  / 条件一致
+      strong = " #{@read_confirmations_total_count}件"
+      |  / Page #{@read_confirmations_page} / #{@read_confirmations_total_pages}
+    - if @read_confirmations_total_pages > 1
+      p.actions
+        - if @read_confirmations_previous_page_query
+          = link_to "前へ", admin_read_confirmations_path(@read_confirmations_previous_page_query), class: "button secondary"
+        - else
+          span.button.secondary aria-disabled="true"
+            | 前へ
+        - if @read_confirmations_next_page_query
+          = link_to "次へ", admin_read_confirmations_path(@read_confirmations_next_page_query), class: "button secondary"
+        - else
+          span.button.secondary aria-disabled="true"
+            | 次へ
+    p.muted CSV出力にも同じ絞り込み条件と現在のページ範囲を反映します。表示設定はCSVの列や条件には影響しません。
 
   - if @read_confirmations.any?
     section.card

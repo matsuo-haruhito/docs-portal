@@ -45,10 +45,10 @@ RSpec.describe "document tree current selection source" do
 
   it "clears refresh cues through the same sidebar fallback container" do
     aggregate_failures do
+      expect(controller_source).to include("clearRefreshCue(requestId)")
       expect(controller_source).to include("const container = this.refreshCueContainer()")
       expect(controller_source).to include('const cue = container?.querySelector("[data-document-tree-refresh-cue]")')
-      expect(controller_source).to include("cue?.remove()")
-      expect(controller_source).not_to include('this.element.querySelector("[data-document-tree-refresh-cue]")')
+      expect(controller_source).not_to include('const cue = this.element.querySelector("[data-document-tree-refresh-cue]")')
     end
   end
 
