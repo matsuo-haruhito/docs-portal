@@ -8,6 +8,7 @@ RSpec.describe "preview tools source" do
   let(:controller_source) { read_source("app/frontend/controllers/preview_tools_controller.js") }
   let(:search_controller_source) { read_source("app/frontend/controllers/markdown_preview_document_search_controller.js") }
   let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.js") }
+  let(:layout_source) { read_source("app/views/layouts/application.html.slim") }
   let(:inventory_source) { read_source("doc/frontend_initialization_inventory.md") }
 
   let(:expected_helpers) do
@@ -103,12 +104,13 @@ RSpec.describe "preview tools source" do
     end
   end
 
-  it "keeps preview controllers registered through the frontend entrypoint without direct DOM setup there" do
+  it "keeps preview controllers registered and attached without direct DOM setup in the entrypoint" do
     aggregate_failures do
       expect(entrypoint_source).to include('import MarkdownPreviewDocumentSearchController from "../controllers/markdown_preview_document_search_controller"')
       expect(entrypoint_source).to include('import PreviewToolsController from "../controllers/preview_tools_controller"')
       expect(entrypoint_source).to include('application.register("markdown-preview-document-search", MarkdownPreviewDocumentSearchController)')
       expect(entrypoint_source).to include('application.register("preview-tools", PreviewToolsController)')
+      expect(layout_source).to include('data-controller="nav-dropdowns document-tree-navigation manual-document-upload markdown-preview-document-search preview-table-resizer preview-tools"')
       expect(entrypoint_source).not_to include("querySelectorAll")
       expect(entrypoint_source).not_to include("addEventListener")
       expect(entrypoint_source).not_to include("new TomSelect")
