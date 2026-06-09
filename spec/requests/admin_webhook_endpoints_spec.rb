@@ -107,6 +107,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
       notification_event: event,
       event_type: "document_updated",
       status: :failed,
+      response_status: 500,
       error_message: "prefix #{normalized_query} suffix"
     )
     create(
@@ -115,6 +116,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
       notification_event: event,
       event_type: "document_updated",
       status: :failed,
+      response_status: 500,
       error_message: "prefix #{'x' * 99}y suffix"
     )
     create(
@@ -123,10 +125,11 @@ RSpec.describe "Admin webhook endpoints", type: :request do
       notification_event: event,
       event_type: "document_updated",
       status: :succeeded,
+      response_status: 500,
       error_message: "prefix #{normalized_query} suffix"
     )
 
-    get admin_webhook_deliveries_path(status: "failed", error_q: long_query)
+    get admin_webhook_deliveries_path(status: "failed", response_status: "500", error_q: long_query)
 
     expect(response).to have_http_status(:ok)
     expect(parsed_html.at_css(%(input[name="error_q"]))["value"]).to eq(normalized_query)
@@ -137,6 +140,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
       admin_webhook_delivery_path(
         matching_delivery.public_id,
         status: "failed",
+        response_status: "500",
         error_q: normalized_query,
         return_context: "deliveries_index"
       )
@@ -444,7 +448,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     event = create(:notification_event, event_type: :document_updated)
     retryable_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :failed)
     another_retryable_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :failed)
-    succeeded_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, status: :succeeded)
+    succeeded_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :succeeded)
     pending_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, status: :pending)
     inactive_delivery = create(:webhook_delivery, webhook_endpoint: inactive_endpoint, status: :failed)
     dispatcher = instance_double(WebhookDeliveryDispatcher)
