@@ -110,7 +110,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
       response_status: 500,
       error_message: "prefix #{normalized_query} suffix"
     )
-    create(
+    other_delivery = create(
       :webhook_delivery,
       webhook_endpoint: other_endpoint,
       notification_event: event,
@@ -119,7 +119,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
       response_status: 500,
       error_message: "prefix #{'x' * 99}y suffix"
     )
-    create(
+    succeeded_delivery = create(
       :webhook_delivery,
       webhook_endpoint: succeeded_endpoint,
       notification_event: event,
@@ -133,12 +133,27 @@ RSpec.describe "Admin webhook endpoints", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(parsed_html.at_css(%(input[name="error_q"]))["value"]).to eq(normalized_query)
-    expect(page_text).to include("Long Error Hook")
-    expect(page_text).not_to include("Other Error Hook")
-    expect(page_text).not_to include("Succeeded Hook")
     expect(action_targets).to include(
       admin_webhook_delivery_path(
         matching_delivery.public_id,
+        status: "failed",
+        response_status: "500",
+        error_q: normalized_query,
+        return_context: "deliveries_index"
+      )
+    )
+    expect(action_targets).not_to include(
+      admin_webhook_delivery_path(
+        other_delivery.public_id,
+        status: "failed",
+        response_status: "500",
+        error_q: normalized_query,
+        return_context: "deliveries_index"
+      )
+    )
+    expect(action_targets).not_to include(
+      admin_webhook_delivery_path(
+        succeeded_delivery.public_id,
         status: "failed",
         response_status: "500",
         error_q: normalized_query,
@@ -149,9 +164,9 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     get admin_webhook_deliveries_path(error_q: "   ")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("Long Error Hook")
-    expect(page_text).to include("Other Error Hook")
-    expect(page_text).to include("Succeeded Hook")
+    expect(action_targets).to include(admin_webhook_delivery_path(matching_delivery.public_id, return_context: "deliveries_index"))
+    expect(action_targets).to include(admin_webhook_delivery_path(other_delivery.public_id, return_context: "deliveries_index"))
+    expect(action_targets).to include(admin_webhook_delivery_path(succeeded_delivery.public_id, return_context: "deliveries_index"))
     expect(parsed_html.at_css(%(input[name="error_q"]))["value"]).to be_nil
   end
 
