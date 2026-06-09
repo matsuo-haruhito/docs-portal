@@ -74,7 +74,8 @@ export default class extends Controller {
   clearRefreshCue(requestId) {
     if (!this.isCurrentRefresh(requestId)) return
 
-    const cue = this.element.querySelector("[data-document-tree-refresh-cue]")
+    const container = this.refreshCueContainer()
+    const cue = container?.querySelector("[data-document-tree-refresh-cue]")
     cue?.remove()
   }
 
