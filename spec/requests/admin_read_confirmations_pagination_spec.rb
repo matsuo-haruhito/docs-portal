@@ -70,11 +70,11 @@ RSpec.describe "Admin read confirmations pagination", type: :request do
 
   it "keeps document, company, user, and valid date filters in pagination and CSV links" do
     base_time = Time.zone.local(2026, 5, 1, 9, 0, 0)
-    document = create(:document, project:, title: "Filtered Manual", slug: "filtered-manual")
-    outside_document = create(:document, project: other_project, title: "Outside Manual", slug: "filtered-manual")
+    outside_document = create(:document, project: other_project, title: "Outside Manual", slug: "filtered-manual-outside")
     outside_reader = create(:user, :external, name: "Outside Reader", email_address: "outside@example.com")
 
     201.times do |index|
+      document = create(:document, project:, title: "Filtered Manual #{index}", slug: "filtered-manual-#{index}")
       create(:read_confirmation, document:, user: viewer, confirmed_at: base_time + index.minutes)
     end
     create(:read_confirmation, document: outside_document, user: outside_reader, confirmed_at: base_time + 202.minutes)
@@ -83,7 +83,7 @@ RSpec.describe "Admin read confirmations pagination", type: :request do
 
     get admin_read_confirmations_path(
       project_id: project.id,
-      document_slug: document.slug,
+      document_slug: "filtered-manual",
       company_id: company.id,
       user_id: viewer.id,
       from: "not-a-date",
@@ -92,11 +92,11 @@ RSpec.describe "Admin read confirmations pagination", type: :request do
     )
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("文書URL識別子: filtered-manual / 文書名: Filtered Manual")
+    expect(page_text).to include("文書URL識別子: filtered-manual / 一致文書: 201件")
     expect(page_text).to include("会社: Paged Client")
     expect(page_text).to include("確認者: Paged Reader / paged-reader@example.com")
     expect(page_text).to include("表示範囲: 201-201件目 / 条件一致 201件 / Page 2 / 2")
-    expect(read_confirmation_rows).to contain_exactly(a_string_including("Filtered Manual", "Paged Reader / paged-reader@example.com", "Paged Client"))
+    expect(read_confirmation_rows).to contain_exactly(a_string_including("Filtered Manual 0", "Paged Reader / paged-reader@example.com", "Paged Client"))
     expect(page_text).not_to include("Outside Reader")
 
     previous_link = link_by_text("前へ")
