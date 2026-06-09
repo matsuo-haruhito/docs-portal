@@ -22,6 +22,7 @@ import NavDropdownsController from "../controllers/nav_dropdowns_controller"
 import DocumentTreeNavigationController from "../controllers/document_tree_navigation_controller"
 import FileDropzoneController from "../controllers/file_dropzone_controller"
 import ManualDocumentUploadController from "../controllers/manual_document_upload_controller"
+import MarkdownPreviewCodeblockToolsController from "../controllers/markdown_preview_codeblock_tools_controller"
 import MarkdownPreviewDocumentSearchController from "../controllers/markdown_preview_document_search_controller"
 import PdfPreviewToolsController from "../controllers/pdf_preview_tools_controller"
 import PreviewTableResizerController from "../controllers/preview_table_resizer_controller"
@@ -44,6 +45,7 @@ application.register("nav-dropdowns", NavDropdownsController)
 application.register("document-tree-navigation", DocumentTreeNavigationController)
 application.register("file-dropzone", FileDropzoneController)
 application.register("manual-document-upload", ManualDocumentUploadController)
+application.register("markdown-preview-codeblock-tools", MarkdownPreviewCodeblockToolsController)
 application.register("markdown-preview-document-search", MarkdownPreviewDocumentSearchController)
 application.register("pdf-preview-tools", PdfPreviewToolsController)
 application.register("preview-table-resizer", PreviewTableResizerController)
