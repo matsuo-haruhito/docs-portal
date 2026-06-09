@@ -35,7 +35,7 @@
           <dt class="font-semibold">再実行元</dt>
           <dd class="font-mono">
             <% if @retry_of_generated_file_run %>
-              <%= link_to @retry_of_generated_file_run_public_id, admin_generated_file_run_path(@retry_of_generated_file_run_public_id), class: "text-blue-600 underline" %>
+              <%= link_to @retry_of_generated_file_run_public_id, admin_generated_file_run_path(@retry_of_generated_file_run_public_id, return_to: return_to_path), class: "text-blue-600 underline" %>
             <% else %>
               <%= @retry_of_generated_file_run_public_id %>
             <% end %>
@@ -61,7 +61,7 @@
               <% event = @related_generated_file_events_by_public_id[public_id] %>
               <li>
                 <% if event %>
-                  <%= link_to public_id, admin_generated_file_event_path(public_id), class: "font-mono text-blue-600 underline" %>
+                  <%= link_to public_id, admin_generated_file_event_path(public_id, return_to: return_to_path), class: "font-mono text-blue-600 underline" %>
                   <span class="muted"><%= generated_file_event_status_label(event.status) %></span>
                 <% else %>
                   <span class="font-mono"><%= public_id %></span>
@@ -79,7 +79,7 @@
           <ul class="space-y-1 text-sm">
             <% @retry_child_runs.each do |run| %>
               <li>
-                <%= link_to run.public_id, admin_generated_file_run_path(run.public_id), class: "font-mono text-blue-600 underline" %>
+                <%= link_to run.public_id, admin_generated_file_run_path(run.public_id, return_to: return_to_path), class: "font-mono text-blue-600 underline" %>
                 <span class="muted"><%= generated_file_run_status_label(run.status) %></span>
                 <% if run.event_source == "generated_file_run_retry" %>
                   <span class="badge">再実行</span>
