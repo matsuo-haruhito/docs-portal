@@ -109,14 +109,14 @@ RSpec.describe "Admin read confirmations pagination", type: :request do
     )
     expect(previous_link["href"]).not_to include("from=not-a-date")
 
+    expect(csv_export_link["href"]).to include("/admin/read_confirmations.csv")
     expect(csv_export_link["href"]).to include(
       "project_id=#{project.id}",
       "document_slug=filtered-manual",
       "company_id=#{company.id}",
       "user_id=#{viewer.id}",
       "to=2026-05-01",
-      "page=2",
-      "format=csv"
+      "page=2"
     )
     expect(csv_export_link["href"]).not_to include("from=not-a-date")
   end
