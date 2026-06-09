@@ -11,10 +11,30 @@
   <%= render "form", project_membership: @project_membership %>
 </div>
 
-<% if @project_memberships.any? %>
+<% if @project_memberships_total_count.positive? %>
   <div class="card">
     <%= table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件所属一覧の表示設定") %>
   </div>
+
+  <p class="muted">
+    <% start_index = ((@project_memberships_page - 1) * @project_memberships_per_page) + 1 %>
+    <% end_index = [start_index + @project_memberships.size - 1, @project_memberships_total_count].min %>
+    表示中: <%= start_index %>-<%= end_index %>件 / 全<%= @project_memberships_total_count %>件
+  </p>
+
+  <p class="actions">
+    <% if @project_memberships_page > 1 %>
+      <%= link_to "前へ", admin_project_memberships_path(page: @project_memberships_page - 1, per_page: @project_memberships_per_page), class: "button secondary" %>
+    <% else %>
+      <span class="button secondary" aria-disabled="true">前へ</span>
+    <% end %>
+    <span class="muted">Page <%= @project_memberships_page %> / <%= @project_memberships_total_pages %></span>
+    <% if @project_memberships_page < @project_memberships_total_pages %>
+      <%= link_to "次へ", admin_project_memberships_path(page: @project_memberships_page + 1, per_page: @project_memberships_per_page), class: "button secondary" %>
+    <% else %>
+      <span class="button secondary" aria-disabled="true">次へ</span>
+    <% end %>
+  </p>
 
   <%= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do %>
     <thead>
