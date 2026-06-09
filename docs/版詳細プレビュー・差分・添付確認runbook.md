@@ -89,6 +89,24 @@ hash と deep link の読み方:
 
 `HTML本文を開く` から入る standalone viewer では、Markdown table の first slice として real HTML `<table>` ごとに stable key と wrapper metadata が付いています。これは後続の table UX 拡張へつなぐ seam であり、現時点では full `rails_table_preferences` UI、保存済み幅調整、sticky row / column、`embedded=1` body 側の同等 metadata までは前提にしません。broad な follow-up は issue `#475` を正本として見てください。
 
+### Markdown codeblock toolbar の使い方
+
+`HTML本文を開く` から Markdown preview を standalone viewer で開くと、codeblock の右上に補助 toolbar が出ることがあります。
+
+- language badge: `json` など、codeblock class から読み取れる言語を確認する。判定できない場合は `code` と表示される
+- `コピー`: 表示中の codeblock 本文を clipboard にコピーする。行番号 anchor が付いている場合でも、コピー対象はコード本文です
+- `JSON整形コピー`: `json` と判定された codeblock だけに出る。JSON として parse できる場合は 2 space indent に整形してコピーする
+- `JSON検証`: `json` と判定された codeblock だけに出る。parse できれば `JSON OK`、できなければ error message を status に出す
+- `機密注意`: `secret`、`token`、`password`、`authorization`、`api key` などの keyword を含む codeblock で出る補助 cue。権限判定、公開可否、security scan、DLP、secret redaction の結果ではない
+- 行番号: 複数行の codeblock では行番号から `#codeblock-N-LM` の deep link を作れる。レビューや問い合わせで行を指す補助として使い、正式な承認 workflow や監査ログとしては扱わない
+
+使いどころ:
+
+- Markdown preview 内の JSON 設定例や metadata 断片を、整形して確認・共有したいとき
+- JSON の構文だけを軽く確認し、parse error の位置や内容を切り分けたいとき
+- 機密らしい keyword が含まれる codeblock を、公開範囲や権限判断とは別に人手確認へ回したいとき
+- レビューコメントや問い合わせで、本文 preview の codeblock 行を短い deep link として指したいとき
+
 ## 5. `プレビュー状態` の読み方
 
 `プレビュー状態` card では、本文確認をどこから始めるべきかを決めます。
@@ -240,6 +258,7 @@ hash と deep link の読み方:
 - `app/services/manual_document_upload_review.rb`
 - `app/services/document_version_rollback.rb`
 - `app/frontend/controllers/document_version_tabs.js`
+- `app/frontend/lib/markdown_preview_codeblock_tools.js`
 - `app/views/document_files/show_pdf_preview.html.slim`
 - `app/views/document_files/show_image_preview.html.slim`
 - `app/views/document_files/show_csv_preview.html.slim`
