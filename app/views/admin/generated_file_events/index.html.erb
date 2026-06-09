@@ -4,6 +4,7 @@
   table_key = :admin_generated_file_events
   table_columns = generated_file_event_table_columns
   table_settings = rails_table_preference_settings(table_key: table_key)
+  query_max_length = Admin::GeneratedFileEventsController::QUERY_MAX_LENGTH
 %>
 
 <div class="space-y-6">
@@ -69,8 +70,8 @@
     <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
       <div>
         <%= form.label :q, "イベントID / パス / エラー", class: "block text-sm font-semibold" %>
-        <%= form.search_field :q, value: @filters[:q], class: "mt-1 w-full rounded border px-2 py-1" %>
-        <p class="mt-1 text-xs text-gray-500">ログ断片から探します。パス内の \\ は / として検索します。</p>
+        <%= form.search_field :q, value: @filters[:q], maxlength: query_max_length, class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">最大100文字。イベントID、パス、エラーの短い断片で探します。パス内の \\ は / として検索します。</p>
       </div>
       <div>
         <%= form.label :status, "状態", class: "block text-sm font-semibold" %>
@@ -86,8 +87,8 @@
       </div>
       <div>
         <%= form.label :path, "パスを含む", class: "block text-sm font-semibold" %>
-        <%= form.text_field :path, value: @filters[:path], class: "mt-1 w-full rounded border px-2 py-1" %>
-        <p class="mt-1 text-xs text-gray-500">Windowsの区切り文字 \\ は / として検索します。</p>
+        <%= form.text_field :path, value: @filters[:path], maxlength: query_max_length, class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">最大100文字。Windowsの区切り文字 \\ は / として検索します。</p>
       </div>
       <div>
         <%= form.label :scheduled_from, "実行予定日(開始)", class: "block text-sm font-semibold" %>
