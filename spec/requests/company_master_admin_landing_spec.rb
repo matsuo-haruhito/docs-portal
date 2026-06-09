@@ -28,6 +28,11 @@ RSpec.describe "Company master admin landing", type: :request do
     expect(page_text).to include("文書・文書権限")
     expect(page_text).to include("運用確認")
     expect(page_text).to include("管理者判断")
+    expect(page_text).to include("依頼テンプレート")
+    expect(page_text).to include("【会社】Alpha")
+    expect(page_text).to include("【対象ユーザー】名前 / メールアドレス")
+    expect(page_text).to include("【分類】案件・案件所属 / 文書・文書権限 / 運用確認 / 管理者判断")
+    expect(page_text).to include("【user type 変更相談】あり / なし")
     expect(page_text).to include("会社管理者の権限や文書閲覧範囲を広げるものではありません")
 
     expect(action_targets).to include(admin_companies_path, admin_users_path)

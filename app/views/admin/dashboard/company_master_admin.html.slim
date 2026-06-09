@@ -1,4 +1,14 @@
 - page_title "会社・ユーザー管理"
+- handoff_company_name = current_user&.company&.name.presence || "自社会社名"
+- handoff_requester = [current_user&.name, current_user&.email_address].compact_blank.join(" / ").presence || "依頼者名・連絡先"
+- handoff_template_lines = []
+- handoff_template_lines << "【会社】#{handoff_company_name}"
+- handoff_template_lines << "【依頼者】#{handoff_requester}"
+- handoff_template_lines << "【対象ユーザー】名前 / メールアドレス"
+- handoff_template_lines << "【分類】案件・案件所属 / 文書・文書権限 / 運用確認 / 管理者判断"
+- handoff_template_lines << "【依頼内容】必要な案件所属、文書権限、アクセス申請など"
+- handoff_template_lines << "【user type 変更相談】あり / なし"
+- handoff_template_lines << "【期限・背景】理由と希望時期"
 
 h1 会社・ユーザー管理
 p.muted 自社の会社情報とユーザーだけを管理できます。案件、文書、文書権限、監査ログ、利用状況は internal admin へ引き継いでください。
@@ -45,6 +55,9 @@ section.card
     li 必要な案件所属、文書権限、アクセス申請などの目的
     li ユーザー種別の変更や他社会社・他社ユーザーの調整が必要か
     li 期限や背景がある場合は、その理由と希望時期
+  h3 依頼テンプレート
+  p.muted 必要な行だけ調整して ticket や chat に貼り付けてください。連絡先や forbidden admin surface への direct link はここでは固定しません。
+  pre.company-master-admin-handoff-template = handoff_template_lines.join("\n")
   p.muted この確認項目は依頼内容を整理するためのものであり、会社管理者の権限や文書閲覧範囲を広げるものではありません。
 
 p = link_to "案件一覧へ戻る", projects_path
