@@ -4,6 +4,18 @@ RSpec.describe "Admin dashboard", type: :request do
   let(:admin_user) { create(:user, :internal) }
   let(:version) { create(:document_version) }
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def dashboard_section(title)
+    parsed_html.css("section.card").find { |section| section.at_css("h2")&.text&.squish == title }
+  end
+
+  def dashboard_model_observation_card(label)
+    dashboard_section("モデル観測").css(".metric-card").find { |card| card.at_css("h3")&.text&.squish == label }
+  end
+
   it "shows document file health summary to internal admins" do
     DocumentFile.create!(
       document_version: version,
@@ -24,6 +36,28 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include(admin_missing_document_files_path)
     expect(response.body).to include("missing.txt")
     expect(response.body).to include("spec/admin-dashboard/missing.txt")
+  end
+
+  it "shows model observation counts and latest update cues for dashboard entries" do
+    timestamp = Time.zone.local(2026, 6, 9, 10, 30, 0)
+    project = create(:project, code: "DASH2594", name: "Dashboard Observation", updated_at: timestamp)
+
+    sign_in_as(admin_user)
+
+    get admin_root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("モデル観測")
+    expect(response.body).to include("モデルブラウザを開く（全#{Admin::ModelBrowserCatalog.entries.size}件）")
+
+    project_card_text = dashboard_model_observation_card("案件").text.squish
+    permission_card_text = dashboard_model_observation_card("文書権限").text.squish
+
+    expect(project_card_text).to include("公開単位となる案件の一覧です。")
+    expect(project_card_text).to include("件数 1")
+    expect(project_card_text).to include("最終更新 #{I18n.l(project.reload.updated_at, format: :short)}")
+    expect(permission_card_text).to include("件数 0")
+    expect(permission_card_text).to include("最終更新 -")
   end
 
   it "shows a read-only storage usage summary with follow-up cues" do
