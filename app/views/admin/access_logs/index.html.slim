@@ -6,6 +6,7 @@
 - has_date_filters = @filters[:from].present? || @filters[:to].present?
 - active_filter_summaries = access_log_active_filter_summaries(@filters, projects: @projects, companies: @companies, users: @users)
 - reached_display_limit = @reached_display_limit
+- query_max_length = Admin::AccessLogsController::ACCESS_LOG_QUERY_MAX_LENGTH
 
 h1 監査ログ
 = render "admin/nav"
@@ -50,10 +51,12 @@ section.card
           access_log_filter_select_html_options(placeholder: "ユーザーで絞り込み")
       div
         = form.label :q, "対象名・IPアドレス"
-        = form.search_field :q, value: @filters[:q], placeholder: "ZIP名・ファイル名・AI context export の記録・IP"
+        = form.search_field :q, value: @filters[:q], placeholder: "ZIP名・ファイル名・AI context export の記録・IP", maxlength: query_max_length
+        p.muted = "対象名やIPアドレスの断片で検索できます。最大#{query_max_length}文字。"
       div
         = form.label :document_q, "文書名・URL識別子"
-        = form.search_field :document_q, value: @filters[:document_q]
+        = form.search_field :document_q, value: @filters[:document_q], maxlength: query_max_length
+        p.muted = "文書名やURL識別子の断片で検索できます。最大#{query_max_length}文字。"
       div
         = form.label :from, "開始日"
         = form.date_field :from, value: @filters[:from]
