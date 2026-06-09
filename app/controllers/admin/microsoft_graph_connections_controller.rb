@@ -1,4 +1,7 @@
 class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
+  MAX_SEARCH_QUERY_LENGTH = 100
+  INDEX_RESULT_LIMIT = 50
+
   before_action :require_admin_only!
   before_action :set_microsoft_graph_connection, only: %i[edit update destroy]
   before_action :load_form_collections, only: %i[index create edit update]
@@ -64,39 +67,41 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
   end
 
   def load_index_state
-    base_connections = microsoft_graph_connections_scope.to_a
-    project_ids = base_connections.map(&:project_id)
+    base_scope = microsoft_graph_connections_scope
+    project_ids = base_scope.distinct.pluck(:project_id)
     @preview_connection_ids_by_project = MicrosoftGraphConnection.preview_selected_ids_by_project(project_ids)
     @duplicate_enabled_project_ids = MicrosoftGraphConnection.enabled_only.where(project_id: project_ids)
       .group(:project_id)
       .having("COUNT(*) > 1")
       .count
       .keys
-    @duplicate_projects = base_connections.select { |connection| @duplicate_enabled_project_ids.include?(connection.project_id) }.map(&:project).uniq
-    @preview_usage_counts = preview_usage_counts(base_connections)
+    @duplicate_projects = Project.where(id: @duplicate_enabled_project_ids).order(:code, :id)
+    @preview_usage_counts = preview_usage_counts(base_scope)
     @selected_preview_usage = normalize_preview_usage(params[:preview_usage])
     @duplicate_only = params[:duplicate_only] == "1"
     @search_query = normalize_search_query(params[:q])
-    @microsoft_graph_connections = filter_connections(base_connections)
+    @microsoft_graph_connections = filter_connections(base_scope).limit(INDEX_RESULT_LIMIT).to_a
   end
 
   def microsoft_graph_connections_scope
     MicrosoftGraphConnection.includes(:project, :created_by).order(:name, :id)
   end
 
-  def filter_connections(connections)
-    filtered = connections.select { |connection| preview_usage_matches?(connection, @selected_preview_usage) }
-    filtered = filtered.select { |connection| @duplicate_enabled_project_ids.include?(connection.project_id) } if @duplicate_only
-    filtered = filtered.select { |connection| connection_search_matches?(connection, @search_query) } if @search_query.present?
+  def filter_connections(scope)
+    filtered = filter_by_preview_usage(scope, @selected_preview_usage)
+    filtered = filtered.where(project_id: @duplicate_enabled_project_ids) if @duplicate_only
+    filtered = filter_by_search_query(filtered, @search_query) if @search_query.present?
     filtered
   end
 
-  def preview_usage_counts(connections)
+  def preview_usage_counts(scope)
+    preview_selected_ids = @preview_connection_ids_by_project.values
+
     {
-      all: connections.size,
-      preview_selected: connections.count { |connection| preview_selected_connection?(connection) },
-      enabled_unused: connections.count { |connection| connection.enabled? && !preview_selected_connection?(connection) },
-      disabled: connections.count { |connection| !connection.enabled? }
+      all: scope.count,
+      preview_selected: scope.where(id: preview_selected_ids).count,
+      enabled_unused: scope.where(enabled: true).where.not(id: preview_selected_ids).count,
+      disabled: scope.where(enabled: false).count
     }
   end
 
@@ -107,42 +112,43 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
   end
 
   def normalize_search_query(value)
-    value.to_s.squish.presence
+    normalized = value.to_s.squish
+    return if normalized.blank?
+
+    normalized.first(MAX_SEARCH_QUERY_LENGTH)
   end
 
-  def preview_usage_matches?(connection, selected_preview_usage)
+  def filter_by_preview_usage(scope, selected_preview_usage)
+    preview_selected_ids = @preview_connection_ids_by_project.values
+
     case selected_preview_usage
     when "preview_selected"
-      preview_selected_connection?(connection)
+      scope.where(id: preview_selected_ids)
     when "enabled_unused"
-      connection.enabled? && !preview_selected_connection?(connection)
+      scope.where(enabled: true).where.not(id: preview_selected_ids)
     when "disabled"
-      !connection.enabled?
+      scope.where(enabled: false)
     else
-      true
+      scope
     end
   end
 
-  def connection_search_matches?(connection, search_query)
-    query = search_query.downcase
-    searchable_connection_fields(connection).any? { |value| value.to_s.downcase.include?(query) }
-  end
+  def filter_by_search_query(scope, search_query)
+    query = "%#{ActiveRecord::Base.sanitize_sql_like(search_query.downcase)}%"
 
-  def searchable_connection_fields(connection)
-    [
-      connection.project&.name,
-      connection.project&.code,
-      connection.name,
-      connection.tenant_id,
-      connection.client_id,
-      connection.drive_id,
-      connection.site_id,
-      connection.preview_folder_path
-    ]
-  end
-
-  def preview_selected_connection?(connection)
-    connection.enabled? && @preview_connection_ids_by_project[connection.project_id] == connection.id
+    scope.left_joins(:project).where(
+      <<~SQL.squish,
+        LOWER(projects.name) LIKE :query OR
+        LOWER(projects.code) LIKE :query OR
+        LOWER(microsoft_graph_connections.name) LIKE :query OR
+        LOWER(microsoft_graph_connections.tenant_id) LIKE :query OR
+        LOWER(microsoft_graph_connections.client_id) LIKE :query OR
+        LOWER(microsoft_graph_connections.drive_id) LIKE :query OR
+        LOWER(microsoft_graph_connections.site_id) LIKE :query OR
+        LOWER(microsoft_graph_connections.preview_folder_path) LIKE :query
+      SQL
+      query:
+    )
   end
 
   def resolve_share_url_request?
