@@ -1,6 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
 import { setupMarkdownPreviewTableTools } from "../lib/markdown_preview_table_tools"
-import { setupMarkdownPreviewCodeblockTools } from "../lib/markdown_preview_codeblock_tools"
 import { setupDocumentFileListSearch } from "../lib/document_file_list_search"
 import { setupStructuredPreviewTools } from "../lib/structured_preview_tools"
 import { setupArchivePreviewTools } from "../lib/archive_preview_tools"
@@ -22,7 +21,6 @@ export default class extends Controller {
   refresh() {
     setupSiteViewerIframeHeightSync()
     setupMarkdownPreviewTableTools()
-    setupMarkdownPreviewCodeblockTools()
     setupDocumentFileListSearch()
     setupStructuredPreviewTools()
     setupArchivePreviewTools()
