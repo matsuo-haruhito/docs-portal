@@ -1,6 +1,7 @@
 class Admin::WebhookDeliveriesController < Admin::BaseController
   FAILED_DELIVERY_RETRY_LIMIT = Admin::WebhookEndpointsController::RECENT_DELIVERY_DISPLAY_LIMIT
   INDEX_DELIVERY_DISPLAY_LIMIT = 100
+  ERROR_QUERY_MAX_LENGTH = 100
   DELIVERY_STATUS_FILTERS = Admin::WebhookEndpointsController::DELIVERY_STATUS_FILTERS
   RETURN_DELIVERY_STATUS_FILTERS = (["all"] + DELIVERY_STATUS_FILTERS).freeze
   DATE_FILTER_LABELS = {
@@ -145,7 +146,7 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
       filters[:response_status] = response_status
     end
 
-    error_q = permitted[:error_q].to_s.strip
+    error_q = normalized_error_query(permitted[:error_q])
     filters[:error_q] = error_q if error_q.present?
 
     created_from = permitted[:created_from].to_s
@@ -155,6 +156,10 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
     filters[:created_to] = created_to if parsed_filter_date(created_to)
 
     filters
+  end
+
+  def normalized_error_query(value)
+    value.to_s.strip.first(ERROR_QUERY_MAX_LENGTH)
   end
 
   def delivery_history_page_param

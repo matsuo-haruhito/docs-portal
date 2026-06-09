@@ -92,6 +92,84 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(action_targets).to include(admin_webhook_delivery_path(delivery.public_id))
   end
 
+  it "normalizes delivery error query before filtering and return links" do
+    sign_in_as(admin_user)
+
+    event = create(:notification_event, event_type: :document_updated)
+    matching_endpoint = create(:webhook_endpoint, name: "Long Error Hook")
+    other_endpoint = create(:webhook_endpoint, name: "Other Error Hook")
+    succeeded_endpoint = create(:webhook_endpoint, name: "Succeeded Hook")
+    normalized_query = "x" * Admin::WebhookDeliveriesController::ERROR_QUERY_MAX_LENGTH
+    long_query = "  #{normalized_query}ignored-suffix  "
+    matching_delivery = create(
+      :webhook_delivery,
+      webhook_endpoint: matching_endpoint,
+      notification_event: event,
+      event_type: "document_updated",
+      status: :failed,
+      response_status: 500,
+      error_message: "prefix #{normalized_query} suffix"
+    )
+    other_delivery = create(
+      :webhook_delivery,
+      webhook_endpoint: other_endpoint,
+      notification_event: event,
+      event_type: "document_updated",
+      status: :failed,
+      response_status: 500,
+      error_message: "prefix #{'x' * 99}y suffix"
+    )
+    succeeded_delivery = create(
+      :webhook_delivery,
+      webhook_endpoint: succeeded_endpoint,
+      notification_event: event,
+      event_type: "document_updated",
+      status: :succeeded,
+      response_status: 500,
+      error_message: "prefix #{normalized_query} suffix"
+    )
+
+    get admin_webhook_deliveries_path(status: "failed", response_status: "500", error_q: long_query)
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_html.at_css(%(input[name="error_q"]))["value"]).to eq(normalized_query)
+    expect(action_targets).to include(
+      admin_webhook_delivery_path(
+        matching_delivery.public_id,
+        status: "failed",
+        response_status: "500",
+        error_q: normalized_query,
+        return_context: "deliveries_index"
+      )
+    )
+    expect(action_targets).not_to include(
+      admin_webhook_delivery_path(
+        other_delivery.public_id,
+        status: "failed",
+        response_status: "500",
+        error_q: normalized_query,
+        return_context: "deliveries_index"
+      )
+    )
+    expect(action_targets).not_to include(
+      admin_webhook_delivery_path(
+        succeeded_delivery.public_id,
+        status: "failed",
+        response_status: "500",
+        error_q: normalized_query,
+        return_context: "deliveries_index"
+      )
+    )
+
+    get admin_webhook_deliveries_path(error_q: "   ")
+
+    expect(response).to have_http_status(:ok)
+    expect(action_targets).to include(admin_webhook_delivery_path(matching_delivery.public_id, return_context: "deliveries_index"))
+    expect(action_targets).to include(admin_webhook_delivery_path(other_delivery.public_id, return_context: "deliveries_index"))
+    expect(action_targets).to include(admin_webhook_delivery_path(succeeded_delivery.public_id, return_context: "deliveries_index"))
+    expect(parsed_html.at_css(%(input[name="error_q"]))["value"]).to be_nil
+  end
+
   it "preserves the failed delivery filter through detail and row redelivery" do
     sign_in_as(admin_user)
 
