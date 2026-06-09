@@ -384,6 +384,20 @@ header .button.secondary {
   color: var(--muted);
 }
 
+.company-master-admin-handoff-template {
+  margin: 12px 0 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8fafc;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .badge {
   display: inline-block;
   padding: 2px 8px;
