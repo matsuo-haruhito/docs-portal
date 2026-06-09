@@ -102,7 +102,7 @@ RSpec.describe "preview tools source" do
       expect(site_viewer_iframe_height_source).to include("Math.max(Math.ceil(numericValue), MIN_FRAME_HEIGHT)")
       expect(site_viewer_iframe_height_source).to include("if (event.origin !== window.location.origin) return")
       expect(site_viewer_iframe_height_source).to include("if (event.data?.type !== HEIGHT_MESSAGE_TYPE) return")
-      expect(site_viewer_iframe_height_source).to include(%(document.querySelectorAll("iframe.site-viewer-frame[data-docs-portal-auto-height='true']"))
+      expect(site_viewer_iframe_height_source).to include(%(document.querySelectorAll("iframe.site-viewer-frame[data-docs-portal-auto-height='true']")))
       expect(site_viewer_iframe_height_source).to include("if (frame.contentWindow !== event.source) return")
       expect(site_viewer_iframe_height_source).to include('frame.dataset.docsPortalAutoHeightApplied = "true"')
       expect(site_viewer_iframe_height_source).to include("let messageListenerReady = false")
