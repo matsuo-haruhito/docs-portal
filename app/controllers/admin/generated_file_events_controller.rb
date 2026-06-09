@@ -4,6 +4,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
 
   DEFAULT_PER_PAGE = 50
   MAX_PER_PAGE = 100
+  QUERY_MAX_LENGTH = 100
 
   def index
     @filters = event_filter_params
@@ -78,8 +79,9 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
   end
 
   def apply_query_filter(scope, query)
-    escaped_query = ActiveRecord::Base.sanitize_sql_like(query.to_s.strip)
-    escaped_path_query = ActiveRecord::Base.sanitize_sql_like(normalized_path_filter(query))
+    normalized_query = normalized_text_filter(query)
+    escaped_query = ActiveRecord::Base.sanitize_sql_like(normalized_query.to_s)
+    escaped_path_query = ActiveRecord::Base.sanitize_sql_like(normalized_path_filter(normalized_query))
 
     scope.where(
       "public_id LIKE :query OR path LIKE :path_query OR error_message LIKE :query",
@@ -89,11 +91,18 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
   end
 
   def event_filter_params
-    params.permit(:status, :operation, :event_source, :path, :scheduled_from, :scheduled_to, :q).to_h.symbolize_keys
+    filters = params.permit(:status, :operation, :event_source, :path, :scheduled_from, :scheduled_to, :q).to_h.symbolize_keys
+    filters[:q] = normalized_text_filter(filters[:q])
+    filters[:path] = normalized_text_filter(filters[:path])
+    filters.compact_blank
+  end
+
+  def normalized_text_filter(value)
+    value.to_s.squish.first(QUERY_MAX_LENGTH).presence
   end
 
   def normalized_path_filter(value)
-    value.to_s.tr("\\", "/")
+    normalized_text_filter(value).to_s.tr("\\", "/")
   end
 
   def page_param
