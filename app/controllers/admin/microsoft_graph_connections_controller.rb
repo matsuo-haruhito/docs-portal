@@ -68,7 +68,7 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
 
   def load_index_state
     base_scope = microsoft_graph_connections_scope
-    project_ids = base_scope.distinct.pluck(:project_id)
+    project_ids = base_scope.unscope(:order).distinct.pluck(:project_id)
     @preview_connection_ids_by_project = MicrosoftGraphConnection.preview_selected_ids_by_project(project_ids)
     @duplicate_enabled_project_ids = MicrosoftGraphConnection.enabled_only.where(project_id: project_ids)
       .group(:project_id)
