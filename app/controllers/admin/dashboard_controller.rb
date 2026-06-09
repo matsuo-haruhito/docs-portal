@@ -11,6 +11,7 @@ class Admin::DashboardController < Admin::BaseController
     @document_file_health = DocumentFileHealthCheck.new.call
     @storage_usage_summary = StorageUsageSummary.new.call
     @model_browser_entries = Admin::ModelBrowserCatalog.entries.first(8)
+    @model_browser_entry_summaries = @model_browser_entries.index_with { Admin::ModelBrowserSummary.for(_1) }
     @operational_failure_summary = operational_failure_summary
   end
 
