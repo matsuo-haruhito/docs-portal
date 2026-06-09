@@ -2,7 +2,7 @@
 
 この文書は、`doc/frontend_interaction_policy.md` の「Turbo -> Stimulus -> 素の JavaScript」の優先順位に沿って、current `main` の browser-side 初期化を棚卸しするための maintainer note です。
 
-この first slice では Markdown preview codeblock helper を専用 Stimulus controller へ分離し、copy / JSON整形 copy / JSON検証 / 機密注意 / line anchor / iframe style injection の runtime behavior、Vite entrypoint の直接 DOM setup 回避、gem pinned ref は変更しません。後続 issue を切るときに、どの初期化を維持し、どれを Stimulus / Turbo へ寄せるかを判断する入口として使います。
+この first slice では document file list search helper を専用 Stimulus controller へ分離し、query / clear / count / match highlight / parent context row 表示の runtime behavior、`document-file-browser` controller の kind / query filter / empty state、Vite entrypoint の直接 DOM setup 回避、gem pinned ref は変更しません。後続 issue を切るときに、どの初期化を維持し、どれを Stimulus / Turbo へ寄せるかを判断する入口として使います。
 
 ## 確認した入口
 
@@ -34,6 +34,7 @@
 | `bulk-edit-selection` | 文書一括編集候補の選択数・表示件数 | data-target 内の filter / count 更新 | app 側 Stimulus として維持 |
 | `csv-preview-tools` | CSV preview table | `setupCsvPreviewTableTools()` を専用 controller から refresh する | `preview-tools` bridge から分離済み。CSV preview の table behavior / export contract は helper 側で維持 |
 | `document-file-browser` | 版詳細の添付・元ファイル browser | kind / query filter と empty state | app 側 Stimulus として維持 |
+| `document-file-list-search` | 添付・元ファイル list search | `setupDocumentFileListSearch()` を専用 controller から refresh する | `preview-tools` bridge から分離済み。query / clear / count / match highlight / parent context row 表示は helper 側で維持 |
 | `document-permission-error-surface` | RFK remote picker の error surface | RFK controller からの event / detail を表示面へ反映 | RFK gem controller との接続面として維持 |
 | `document-set-document-filter` | 文書セット対象文書候補 | local filter、selected-only、remote picker からの候補反映 | RFK remote picker との host-app 補助として維持 |
 | `document-version-tabs` | 版詳細 tab | DOM 構造の panel 化、hashchange、keyboard tab 操作 | 既存 source spec があり、app 側 Stimulus として維持 |
@@ -47,7 +48,7 @@
 | `image-preview-tools` | image preview | `setupImagePreviewTools()` を専用 controller から refresh し、再描画時に button / keydown listener を cleanup する | `preview-tools` bridge から分離済み。fit / zoom / rotate / status / localStorage contract は変更しない |
 | `pdf-preview-tools` | PDF preview | `setupPdfPreviewTools()` を専用 controller から refresh し、再描画 / disconnect 時に button / keydown listener を cleanup する | `preview-tools` bridge から分離済み。height toggle / status / `aria-pressed` / localStorage / keyboard shortcut contract は変更しない |
 | `preview-table-resizer` | Markdown preview table | iframe 内 table wrapping、localStorage、column resize、`turbo:load` / `turbo:render` refresh | current fallback path として維持。RTP 統合判断は #475 に残す |
-| `preview-tools` | preview 内 table / document file list / structured / archive 補助 | Markdown codeblock / PDF / image / CSV 以外の `setupXxx()` library を Stimulus controller から refresh する bridge | `spec/frontend/preview_tools_source_spec.rb` で helper bridge / Turbo lifecycle / entrypoint registration を guard 済み。document search、Markdown codeblock、CSV preview table、image preview、PDF preview は専用 controller へ分離済み。その他の個別 `setupXxx()` の Stimulus 化は別 issue |
+| `preview-tools` | preview 内 table / structured / archive 補助 | Markdown codeblock / document file list / PDF / image / CSV 以外の `setupXxx()` library を Stimulus controller から refresh する bridge | `spec/frontend/preview_tools_source_spec.rb` で helper bridge / Turbo lifecycle / entrypoint registration を guard 済み。document search、Markdown codeblock、document file list search、CSV preview table、image preview、PDF preview は専用 controller へ分離済み。その他の個別 `setupXxx()` の Stimulus 化は別 issue |
 | `sidebar` | 文書ツリー sidebar width / collapsed state | localStorage、pointer / keyboard resize | app 側 Stimulus として維持 |
 
 ## 素の JavaScript / listener の棚卸し
@@ -63,24 +64,24 @@
 - `document-tree-navigation`: document click を拾って tree refresh 用 Turbo Stream を取得する。
 - `nav-dropdowns`: native `details` dropdown の同時 open / outside click close / Escape close を同期する。click での開閉そのものは native `details` に任せる。`spec/frontend/nav_dropdowns_contract_spec.rb` が document listener の登録 / cleanup と one-open / outside-click / Escape の代表 signal を固定している。
 - `manual-document-upload`: window と iframe document の drag event を拾い、既存 upload form flow へ渡す。`spec/frontend/manual_document_upload_controller_source_spec.rb` が listener の登録 / 解除、inaccessible iframe の no-op、single file hidden multipart form submit、複数 file 未対応の境界を固定している。
+- `document-file-list-search`: 添付・元ファイル list search を Turbo 再描画後にも再探索する。既存 `setupDocumentFileListSearch()` helper を専用 controller から呼ぶだけで、query / clear / count / match highlight / parent context row 表示は変更しない。
 - `markdown-preview-document-search`: preview iframe 内 document search を Turbo 再描画後にも再探索する。既存 `setupMarkdownPreviewDocumentSearch()` helper を専用 controller から呼ぶだけで、検索 UI の copy / keyboard / empty state は変更しない。
 - `markdown-preview-codeblock-tools`: preview iframe 内 codeblock 補助を Turbo 再描画後にも再探索する。既存 `setupMarkdownPreviewCodeblockTools()` helper を専用 controller から呼ぶだけで、copy / JSON整形 copy / JSON検証 / 機密注意 / line anchor / iframe style injection は変更しない。
 - `csv-preview-tools`: CSV preview table helper を Turbo 再描画後にも再探索する。既存 `setupCsvPreviewTableTools()` helper を専用 controller から呼ぶだけで、CSV table UI、copy、sticky state、column resize、export contract は変更しない。
 - `image-preview-tools`: image preview helper を Turbo 再描画後にも再探索する。既存 `setupImagePreviewTools()` helper を専用 controller から呼び、再描画 / disconnect 時に button listener と document keydown listener を cleanup する。fit / zoom / rotate / status / localStorage contract は変更しない。
 - `pdf-preview-tools`: PDF preview helper を Turbo 再描画後にも再探索する。既存 `setupPdfPreviewTools()` helper を専用 controller から呼び、再描画 / disconnect 時に height toggle click listener と document keydown listener を cleanup する。height toggle / status / `aria-pressed` / localStorage / `h` shortcut contract は変更しない。
 - `preview-table-resizer`: iframe preview table を Turbo 再描画後にも再探索する。
-- `preview-tools`: Markdown codeblock / PDF / image / CSV 以外の preview helper library の `setupXxx()` を Turbo 再描画後にも再実行する。document search、Markdown codeblock、CSV preview table、image preview、PDF preview は専用 controller へ分離済みで、`spec/frontend/preview_tools_source_spec.rb` が import する helper set、refresh 呼び出し順、Turbo listener の登録 / 解除、entrypoint に直接 DOM setup を置かない境界を固定している。
+- `preview-tools`: Markdown codeblock / document file list / PDF / image / CSV 以外の preview helper library の `setupXxx()` を Turbo 再描画後にも再実行する。document search、Markdown codeblock、document file list search、CSV preview table、image preview、PDF preview は専用 controller へ分離済みで、`spec/frontend/preview_tools_source_spec.rb` が import する helper set、refresh 呼び出し順、Turbo listener の登録 / 解除、entrypoint に直接 DOM setup を置かない境界を固定している。
 - `document-version-tabs`: hashchange に追従して tab panel を切り替える。
 
 ## Preview-tools helper bridge 分類
 
-`preview-tools` は、preview iframe や生成済み preview DOM の補助 UI をまとめて再実行する bridge です。今回の分類は次の実装 issue を切るための棚卸しであり、helper 呼び出し順や runtime behavior は変更しません。document search は専用 `markdown-preview-document-search` controller へ分離済みです。Markdown preview codeblock は専用 `markdown-preview-codeblock-tools` controller へ分離済みです。CSV preview table は専用 `csv-preview-tools` controller へ分離済みです。image preview は専用 `image-preview-tools` controller へ分離済みです。PDF preview は専用 `pdf-preview-tools` controller へ分離済みです。
+`preview-tools` は、preview iframe や生成済み preview DOM の補助 UI をまとめて再実行する bridge です。今回の分類は次の実装 issue を切るための棚卸しであり、helper 呼び出し順や runtime behavior は変更しません。document search は専用 `markdown-preview-document-search` controller へ分離済みです。Markdown preview codeblock は専用 `markdown-preview-codeblock-tools` controller へ分離済みです。document file list search は専用 `document-file-list-search` controller へ分離済みです。CSV preview table は専用 `csv-preview-tools` controller へ分離済みです。image preview は専用 `image-preview-tools` controller へ分離済みです。PDF preview は専用 `pdf-preview-tools` controller へ分離済みです。
 
 | helper | preview 種別 | 主な DOM / Turbo 依存 | 分割判断 | 追加 guard 候補 |
 | --- | --- | --- | --- | --- |
 | `setupSiteViewerIframeHeightSync` | Docusaurus / site viewer iframe | iframe load / postMessage 系の高さ同期。Turbo 再描画後に iframe を再探索する | bridge 維持。preview 種別横断の iframe 補助で、個別 preview controller へ寄せない | iframe helper が refresh 先頭で走ること |
 | `setupMarkdownPreviewTableTools` | Markdown preview table | preview table DOM、table 操作、既存 `preview-table-resizer` fallback path との境界 | bridge 維持。#475 / RTP 統合判断前に分割しない | Markdown table helper が bridge に残ること |
-| `setupDocumentFileListSearch` | document file list search | 添付・元ファイル list の query / empty state DOM | 分割候補。`document-file-browser` との責務重複を確認してから切る | file-list search helper が独立 import のまま残ること |
 | `setupStructuredPreviewTools` | structured data preview | JSON / structured preview DOM の展開や補助 | bridge 維持。preview 種別が広く、実装前に対象 DOM の棚卸しが必要 | structured helper が archive helper と別 import であること |
 | `setupArchivePreviewTools` | archive preview | ZIP / archive entry list の DOM 補助 | bridge 維持。download / unsafe path 境界と近いため UI redesign と混ぜない | archive helper が unsafe-path policy を先取りしないこと |
 
@@ -91,11 +92,12 @@ Source-level guard では、上の helper 名が docs の分類表・controller 
 | controller | guard file | guard している境界 | guard していないこと |
 | --- | --- | --- | --- |
 | `csv-preview-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、preview-tools bridge からの分離 | CSV preview UI の redesign、table behavior / export contract の変更 |
+| `document-file-list-search` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、preview-tools bridge からの分離、count / parent context row guard の維持 | document file list search UI の redesign、`document-file-browser` 統合、query / clear / count / match highlight / parent context row behavior の変更 |
 | `image-preview-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、preview-tools bridge からの分離、listener cleanup 呼び出し | image preview UI の redesign、fit / zoom / rotate / status / localStorage contract の変更 |
 | `pdf-preview-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、preview-tools bridge からの分離、listener cleanup 呼び出し | PDF preview UI の redesign、height toggle / status / `aria-pressed` / localStorage / keyboard shortcut contract の変更 |
 | `markdown-preview-codeblock-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、preview-tools bridge からの分離、iframe style / toolbar / warning / line anchor guard の維持 | codeblock toolbar redesign、JSON / copy / warning / line anchor behavior の変更 |
 | `markdown-preview-document-search` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、preview-tools bridge からの分離 | document search UI の redesign、検索 copy / keyboard / empty state の変更 |
-| `preview-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper bridge set、docs 上の helper 分類表、`refresh()` の呼び出し順、Turbo 再描画後の再実行、entrypoint 直書き DOM setup 回避 | document search / Markdown codeblock / CSV / image / PDF 以外の helper 群の Stimulus 分割、preview UI redesign、#475 の Markdown table 方針 |
+| `preview-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper bridge set、docs 上の helper 分類表、`refresh()` の呼び出し順、Turbo 再描画後の再実行、entrypoint 直書き DOM setup 回避 | document search / Markdown codeblock / document file list / CSV / image / PDF 以外の helper 群の Stimulus 分割、preview UI redesign、#475 の Markdown table 方針 |
 | `nav-dropdowns` | `spec/frontend/nav_dropdowns_contract_spec.rb` | controller registration、`details` markup、document listener cleanup、同時 open 抑止 / outside click / Escape close | controller 削除、navbar 情報設計、menu item / role 導線変更 |
 | `manual-document-upload` | `spec/frontend/manual_document_upload_controller_source_spec.rb` | window / iframe document listener lifecycle、missing / inaccessible iframe no-op、single-file hidden form submit、複数 file 未対応 | 複数 file upload、upload API 化、manual upload review / apply contract、iframe preview redesign |
 
@@ -113,7 +115,7 @@ Source-level guard では、上の helper 名が docs の分類表・controller 
 
 ## 後続 issue に分ける候補
 
-- `preview-tools` が呼ぶ `setupXxx()` library 群を、preview 種別ごとに Stimulus controller へ分けるか検討する。現時点では document search、Markdown codeblock、CSV preview table、image preview、PDF preview が専用 controller へ分離済みで、その他の bridge helper set と docs 分類表は source-level guard 済みです。
+- `preview-tools` が呼ぶ `setupXxx()` library 群を、preview 種別ごとに Stimulus controller へ分けるか検討する。現時点では document search、Markdown codeblock、document file list search、CSV preview table、image preview、PDF preview が専用 controller へ分離済みで、その他の bridge helper set と docs 分類表は source-level guard 済みです。
 - `nav-dropdowns` は native `details` の開閉を活かしつつ、同時 open / outside click close / Escape close の current contract を app 側 controller で維持する。CSS / native details だけへ寄せる判断は、current contract を落とさない代替案が出たときに別 issue で扱う。
 - `manual-document-upload` の複数 file upload、upload API 化、iframe preview UI redesign は、source guard 済みの single-file hidden form submit flow とは分けて扱う。
 - Markdown preview table を `rails_table_preferences` へ寄せる判断は #475 に残し、この inventory では実装しない。
@@ -121,6 +123,8 @@ Source-level guard では、上の helper 名が docs の分類表・controller 
 
 ## この inventory の境界
 
+- document file list search の query / clear / count / match highlight / parent context row 表示 behavior は変更しない。
+- `document-file-browser` controller の kind / query filter / empty state とは統合しない。
 - Markdown preview codeblock の copy / JSON整形 copy / JSON検証 / 機密注意 / line anchor / iframe style injection behavior は変更しない。
 - PDF preview の height toggle / status / `aria-pressed` / localStorage / keyboard shortcut behavior は変更しない。
 - image preview の fit / zoom / rotate / status / localStorage behavior は変更しない。
