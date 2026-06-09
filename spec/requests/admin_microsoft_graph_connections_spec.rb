@@ -293,6 +293,28 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
       expect(response.body).to include("1 / 1 件を表示しています。")
     end
 
+    it "truncates long search queries before filtering and rendering" do
+      sign_in_as(admin_user)
+      bounded_query = "a" * 100
+      long_query = " #{'A' * 120} "
+      target = create(
+        :microsoft_graph_connection,
+        project:,
+        name: "Long query boundary",
+        preview_folder_path: "Shared Documents/#{bounded_query}/Office Preview"
+      )
+      other = create(:microsoft_graph_connection, project: create(:project, code: "GRAPH002", name: "Other Project"), name: "Other preview", preview_folder_path: "Shared Documents/Other")
+
+      get admin_microsoft_graph_connections_path, params: { q: long_query }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(target.name)
+      expect(response.body).not_to include(other.name)
+      expect(response.body).to include("検索: #{bounded_query.upcase}")
+      expect(input_value("q")).to eq(bounded_query.upcase)
+      expect(response.body).to include("1 / 2 件を表示しています。")
+    end
+
     it "ignores unsupported filter values without keeping active filter labels" do
       sign_in_as(admin_user)
       connection = create(:microsoft_graph_connection, project:, name: "Primary connection")
@@ -304,6 +326,22 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
       expect(response.body).to include("1 / 1 件を表示しています。")
       expect(response.body).not_to include("現在の絞り込み")
       expect(response.body).not_to include("archived")
+    end
+
+    it "limits the rendered connection rows while keeping aggregate counts" do
+      sign_in_as(admin_user)
+      (1..51).each do |number|
+        bounded_project = create(:project, code: format("MG%03d", number), name: "Microsoft Graph Project #{number}")
+        create(:microsoft_graph_connection, project: bounded_project, name: format("Bounded %03d", number))
+      end
+
+      get admin_microsoft_graph_connections_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Bounded 050")
+      expect(response.body).not_to include("Bounded 051")
+      expect(response.body).to include("50 / 51 件を表示しています。")
+      expect(response.body).to include("すべて (51)")
     end
 
     it "shows an unregistered empty state when no connections exist" do
