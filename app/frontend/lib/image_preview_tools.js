@@ -3,7 +3,7 @@ function isEditableTarget(target) {
 }
 
 function setupImagePreview(container) {
-  if (container.dataset.imagePreviewToolsReady === "true") return
+  if (container.dataset.imagePreviewToolsReady === "true") return null
   container.dataset.imagePreviewToolsReady = "true"
 
   const image = container.querySelector("[data-image-preview-image]")
@@ -15,7 +15,10 @@ function setupImagePreview(container) {
   const rotateResetButton = container.querySelector("[data-image-preview-rotate-reset]")
   const rotateRightButton = container.querySelector("[data-image-preview-rotate-right]")
   const status = container.querySelector("[data-image-preview-status]")
-  if (!image || !fitToggle || !zoomOutButton || !zoomResetButton || !zoomInButton || !rotateLeftButton || !rotateResetButton || !rotateRightButton || !status) return
+  if (!image || !fitToggle || !zoomOutButton || !zoomResetButton || !zoomInButton || !rotateLeftButton || !rotateResetButton || !rotateRightButton || !status) {
+    delete container.dataset.imagePreviewToolsReady
+    return null
+  }
 
   const storageKey = `docsPortal.imagePreview:${container.dataset.imagePreviewStorageKey || window.location.pathname}`
   const readState = () => {
@@ -70,15 +73,13 @@ function setupImagePreview(container) {
     applyState()
   }
 
-  fitToggle.addEventListener("click", toggleFit)
-  zoomOutButton.addEventListener("click", () => setZoom((Number(state.zoom) || 1) - 0.25))
-  zoomResetButton.addEventListener("click", () => setZoom(1))
-  zoomInButton.addEventListener("click", () => setZoom((Number(state.zoom) || 1) + 0.25))
-  rotateLeftButton.addEventListener("click", () => setRotation((Number(state.rotation) || 0) - 90))
-  rotateResetButton.addEventListener("click", () => setRotation(0))
-  rotateRightButton.addEventListener("click", () => setRotation((Number(state.rotation) || 0) + 90))
-
-  document.addEventListener("keydown", (event) => {
+  const handleZoomOut = () => setZoom((Number(state.zoom) || 1) - 0.25)
+  const handleZoomReset = () => setZoom(1)
+  const handleZoomIn = () => setZoom((Number(state.zoom) || 1) + 0.25)
+  const handleRotateLeft = () => setRotation((Number(state.rotation) || 0) - 90)
+  const handleRotateReset = () => setRotation(0)
+  const handleRotateRight = () => setRotation((Number(state.rotation) || 0) + 90)
+  const handleKeydown = (event) => {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey || isEditableTarget(event.target)) return
 
     if (["+", "=", "-", "_", "0", "f", "F", "[", "]"].includes(event.key)) {
@@ -110,11 +111,34 @@ function setupImagePreview(container) {
       default:
         break
     }
-  })
+  }
+
+  fitToggle.addEventListener("click", toggleFit)
+  zoomOutButton.addEventListener("click", handleZoomOut)
+  zoomResetButton.addEventListener("click", handleZoomReset)
+  zoomInButton.addEventListener("click", handleZoomIn)
+  rotateLeftButton.addEventListener("click", handleRotateLeft)
+  rotateResetButton.addEventListener("click", handleRotateReset)
+  rotateRightButton.addEventListener("click", handleRotateRight)
+  document.addEventListener("keydown", handleKeydown)
 
   applyState()
+
+  return () => {
+    fitToggle.removeEventListener("click", toggleFit)
+    zoomOutButton.removeEventListener("click", handleZoomOut)
+    zoomResetButton.removeEventListener("click", handleZoomReset)
+    zoomInButton.removeEventListener("click", handleZoomIn)
+    rotateLeftButton.removeEventListener("click", handleRotateLeft)
+    rotateResetButton.removeEventListener("click", handleRotateReset)
+    rotateRightButton.removeEventListener("click", handleRotateRight)
+    document.removeEventListener("keydown", handleKeydown)
+    delete container.dataset.imagePreviewToolsReady
+  }
 }
 
 export function setupImagePreviewTools() {
-  document.querySelectorAll("[data-image-preview-tools]").forEach(setupImagePreview)
+  return Array.from(document.querySelectorAll("[data-image-preview-tools]"))
+    .map(setupImagePreview)
+    .filter(Boolean)
 }
