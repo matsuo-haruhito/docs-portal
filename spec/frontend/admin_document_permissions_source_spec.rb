@@ -26,6 +26,24 @@ RSpec.describe "admin document permissions source" do
     end
   end
 
+  it "keeps access level guidance near the permission selector" do
+    aggregate_failures do
+      expect(form_source).to include("= form.rfk_select :access_level")
+      expect(form_source).to include('label: "権限"')
+      expect(form_source).to include("閲覧はportal上で文書を確認する権限です。")
+      expect(form_source).to include("ダウンロードは閲覧に加えて添付・ファイル取得を許可するため、必要な場合だけ選択してください。")
+      expect(form_source).to include('p.muted style="margin-top: 0.35rem;" 閲覧はportal上で文書を確認する権限です。')
+    end
+  end
+
+  it "keeps target guidance separate from access level guidance" do
+    aggregate_failures do
+      expect(form_source).to include("会社全体に付与するか、特定ユーザー1名に付与するかを選びます。会社とユーザーはどちらか一方だけを指定してください。")
+      expect(form_source).to include("会社全体に同じ権限を付与する場合だけ選択します。個人ユーザーへ付与する場合は空にします。")
+      expect(form_source).to include("特定の1名にだけ権限を付与する場合だけ選択します。会社全体へ付与する場合は空にします。")
+    end
+  end
+
   it "wires both admin document permission tables through rails table preferences" do
     aggregate_failures do
       expect(index_source).to include("overview_table_key = :admin_document_permission_overview")
