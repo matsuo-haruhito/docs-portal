@@ -2,6 +2,7 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
   DEFAULT_RUN_HISTORY_PER_PAGE = 50
   MAX_RUN_HISTORY_PER_PAGE = 100
   SCHEDULE_QUERY_MAX_LENGTH = 100
+  RUN_QUERY_MAX_LENGTH = SCHEDULE_QUERY_MAX_LENGTH
 
   before_action :require_admin_only!
   before_action :set_schedule, only: %i[show request_run]
@@ -105,7 +106,7 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
   end
 
   def run_query_param
-    params[:q].to_s.strip.presence
+    params[:q].to_s.strip.presence&.slice(0, RUN_QUERY_MAX_LENGTH)
   end
 
   def scheduled_from_param
