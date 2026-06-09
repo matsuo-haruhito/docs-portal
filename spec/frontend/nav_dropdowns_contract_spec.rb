@@ -41,4 +41,12 @@ RSpec.describe "Nav dropdown contract" do
     expect(controller_source).to include("closeOpenDropdowns(exceptDropdown = null)")
     expect(controller_source).to include('this.element.querySelectorAll("[data-nav-dropdown][open]")')
   end
+
+  it "restores focus to the closed dropdown summary only on Escape" do
+    expect(controller_source).to include('const dropdownToRestoreFocus = event.target.closest?.("[data-nav-dropdown][open]") || this.openDropdowns[0]')
+    expect(controller_source).to include("this.restoreDropdownSummaryFocus(dropdownToRestoreFocus)")
+    expect(controller_source).to include("restoreDropdownSummaryFocus(dropdown)")
+    expect(controller_source).to include('dropdown?.querySelector?.("summary.nav-dropdown__summary")')
+    expect(controller_source).to include("summary?.focus?.()")
+  end
 end
