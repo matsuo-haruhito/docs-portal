@@ -13,6 +13,7 @@ import AutoHeightFrameController from "../controllers/auto_height_frame_controll
 import BulkEditSelectionController from "../controllers/bulk_edit_selection_controller"
 import CsvPreviewToolsController from "../controllers/csv_preview_tools_controller"
 import DocumentFileBrowserController from "../controllers/document_file_browser_controller"
+import DocumentFileListSearchController from "../controllers/document_file_list_search_controller"
 import DocumentPermissionErrorSurfaceController from "../controllers/document_permission_error_surface_controller"
 import DocumentSetDocumentFilterController from "../controllers/document_set_document_filter_controller"
 import DocumentVersionTabsController from "../controllers/document_version_tabs"
@@ -36,6 +37,7 @@ application.register("auto-height-frame", AutoHeightFrameController)
 application.register("bulk-edit-selection", BulkEditSelectionController)
 application.register("csv-preview-tools", CsvPreviewToolsController)
 application.register("document-file-browser", DocumentFileBrowserController)
+application.register("document-file-list-search", DocumentFileListSearchController)
 application.register("document-permission-error-surface", DocumentPermissionErrorSurfaceController)
 application.register("document-set-document-filter", DocumentSetDocumentFilterController)
 application.register("document-version-tabs", DocumentVersionTabsController)
