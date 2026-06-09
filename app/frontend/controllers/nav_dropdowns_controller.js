@@ -34,13 +34,20 @@ export default class extends Controller {
   onKeydown(event) {
     if (event.key !== "Escape") return
 
+    const dropdownToRestoreFocus = event.target.closest?.("[data-nav-dropdown][open]") || this.openDropdowns[0]
     this.closeOpenDropdowns()
+    this.restoreDropdownSummaryFocus(dropdownToRestoreFocus)
   }
 
   closeOpenDropdowns(exceptDropdown = null) {
     this.openDropdowns.forEach((dropdown) => {
       if (dropdown !== exceptDropdown) dropdown.open = false
     })
+  }
+
+  restoreDropdownSummaryFocus(dropdown) {
+    const summary = dropdown?.querySelector?.("summary.nav-dropdown__summary")
+    summary?.focus?.()
   }
 
   get openDropdowns() {
