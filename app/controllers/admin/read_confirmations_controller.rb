@@ -26,14 +26,22 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     @confirmed_from = parsed_date_param(:from)
     @confirmed_to = parsed_date_param(:to)
     @invalid_confirmed_date_labels = @invalid_confirmed_date_params.map { confirmed_date_filter_label(_1) }
-    @read_confirmations_csv_query = read_confirmations_csv_query
     @matching_documents = matching_documents if @selected_project
     @selected_document = @matching_documents.first if @matching_documents&.one?
     @read_confirmation_companies = read_confirmation_companies
     @selected_company = selected_company
     @read_confirmation_users = read_confirmation_users
     @selected_user = selected_user
-    @read_confirmations = filtered_read_confirmations
+    @read_confirmations_scope = filtered_read_confirmations_scope
+    @read_confirmations_total_count = @read_confirmations_scope.count
+    @read_confirmations_total_pages = read_confirmations_total_pages
+    @read_confirmations_page = read_confirmations_page_param
+    @read_confirmations = paginated_read_confirmations
+    @read_confirmations_page_start = read_confirmations_page_start
+    @read_confirmations_page_end = read_confirmations_page_end
+    @read_confirmations_csv_query = read_confirmations_csv_query
+    @read_confirmations_previous_page_query = read_confirmations_page_query(@read_confirmations_page - 1) if @read_confirmations_page > 1
+    @read_confirmations_next_page_query = read_confirmations_page_query(@read_confirmations_page + 1) if @read_confirmations_page < @read_confirmations_total_pages
 
     respond_to do |format|
       format.html
@@ -102,15 +110,30 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     end
   end
 
-  def read_confirmations_csv_query
+  def normalized_read_confirmations_query
     query = request.query_parameters.to_h
+    query.delete("format")
     @invalid_confirmed_date_params.each { |name| query.delete(name.to_s) }
     if @document_slug.present?
       query["document_slug"] = @document_slug
     else
       query.delete("document_slug")
     end
-    query.merge(format: :csv)
+    query
+  end
+
+  def read_confirmations_csv_query
+    read_confirmations_page_query(@read_confirmations_page).merge(format: :csv)
+  end
+
+  def read_confirmations_page_query(page)
+    query = normalized_read_confirmations_query
+    if page.to_i > 1
+      query["page"] = page.to_i
+    else
+      query.delete("page")
+    end
+    query
   end
 
   def read_confirmation_companies
@@ -151,7 +174,7 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     @read_confirmation_users.find { |user| user.id.to_s == @selected_user_id }
   end
 
-  def filtered_read_confirmations
+  def filtered_read_confirmations_scope
     return ReadConfirmation.none unless @selected_project
     return ReadConfirmation.none if document_filter_unmatched?
     return ReadConfirmation.none if @selected_company_id.present? && @selected_company.blank?
@@ -167,7 +190,34 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     scope = scope.where("read_confirmations.confirmed_at <= ?", @confirmed_to.end_of_day) if @confirmed_to
     scope.includes(user: :company, document: :project)
       .order(confirmed_at: :desc, id: :desc)
+  end
+
+  def read_confirmations_total_pages
+    [(@read_confirmations_total_count.to_f / DISPLAY_LIMIT).ceil, 1].max
+  end
+
+  def read_confirmations_page_param
+    page = Integer(params[:page].to_s, exception: false)
+    page = 1 if page.blank? || page <= 0
+    [page, @read_confirmations_total_pages].min
+  end
+
+  def paginated_read_confirmations
+    @read_confirmations_scope
+      .offset((@read_confirmations_page - 1) * DISPLAY_LIMIT)
       .limit(DISPLAY_LIMIT)
+  end
+
+  def read_confirmations_page_start
+    return 0 if @read_confirmations_total_count.zero?
+
+    ((@read_confirmations_page - 1) * DISPLAY_LIMIT) + 1
+  end
+
+  def read_confirmations_page_end
+    return 0 if @read_confirmations_total_count.zero?
+
+    @read_confirmations_page_start + @read_confirmations.size - 1
   end
 
   def read_confirmations_csv
