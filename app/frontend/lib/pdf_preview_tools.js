@@ -3,13 +3,13 @@ function isEditableTarget(target) {
 }
 
 function setupPdfPreview(container) {
-  if (container.dataset.pdfPreviewToolsReady === "true") return
+  if (container.dataset.pdfPreviewToolsReady === "true") return null
   container.dataset.pdfPreviewToolsReady = "true"
 
   const frame = container.querySelector("[data-pdf-preview-frame]")
   const toggle = container.querySelector("[data-pdf-preview-height-toggle]")
   const status = container.querySelector("[data-pdf-preview-status]")
-  if (!frame || !toggle || !status) return
+  if (!frame || !toggle || !status) return null
 
   const storageKey = `docsPortal.pdfPreviewHeight:${container.dataset.pdfPreviewStorageKey || window.location.pathname}`
   const readLarge = () => window.localStorage.getItem(storageKey) === "large"
@@ -27,19 +27,28 @@ function setupPdfPreview(container) {
     applyHeight(toggle.getAttribute("aria-pressed") !== "true")
   }
 
-  toggle.addEventListener("click", toggleHeight)
-
-  document.addEventListener("keydown", (event) => {
+  const handleKeydown = (event) => {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey || isEditableTarget(event.target)) return
     if (event.key !== "h" && event.key !== "H") return
 
     event.preventDefault()
     toggleHeight()
-  })
+  }
+
+  toggle.addEventListener("click", toggleHeight)
+  document.addEventListener("keydown", handleKeydown)
 
   applyHeight(readLarge())
+
+  return () => {
+    toggle.removeEventListener("click", toggleHeight)
+    document.removeEventListener("keydown", handleKeydown)
+    delete container.dataset.pdfPreviewToolsReady
+  }
 }
 
 export function setupPdfPreviewTools() {
-  document.querySelectorAll("[data-pdf-preview-tools]").forEach(setupPdfPreview)
+  return Array.from(document.querySelectorAll("[data-pdf-preview-tools]"))
+    .map((container) => setupPdfPreview(container))
+    .filter(Boolean)
 }
