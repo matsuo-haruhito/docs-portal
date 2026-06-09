@@ -1,4 +1,5 @@
 - page_title "Microsoft Graph接続"
+- search_query_maxlength = Admin::MicrosoftGraphConnectionsController::MAX_SEARCH_QUERY_LENGTH
 - selected_filter_labels = []
 - if @selected_preview_usage == "preview_selected"
   - selected_filter_labels << "previewで使用中"
@@ -50,8 +51,9 @@ h1 Microsoft Graph接続
       p
         = label_tag :q, "検索"
         br
-        = text_field_tag :q, @search_query, placeholder: "案件名・code・接続名・Drive ID・Site ID・フォルダ"
+        = text_field_tag :q, @search_query, placeholder: "案件名・code・接続名・Drive ID・Site ID・フォルダ", maxlength: search_query_maxlength
         = submit_tag "検索"
+      p.muted = "検索対象: 案件名・code・接続名・Tenant / Client / Drive / Site ID・プレビュー用フォルダ（最大#{search_query_maxlength}文字）"
       - if @search_query.present?
         p.muted = link_to "検索を解除", admin_microsoft_graph_connections_path(preview_usage: @selected_preview_usage, duplicate_only: (@duplicate_only ? "1" : nil))
     ul
