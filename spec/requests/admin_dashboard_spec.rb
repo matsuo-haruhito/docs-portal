@@ -54,10 +54,10 @@ RSpec.describe "Admin dashboard", type: :request do
     permission_card_text = dashboard_model_observation_card("文書権限").text.squish
 
     expect(project_card_text).to include("公開単位となる案件の一覧です。")
-    expect(project_card_text).to include("件数 1")
-    expect(project_card_text).to include("最終更新 #{I18n.l(project.reload.updated_at, format: :short)}")
-    expect(permission_card_text).to include("件数 0")
-    expect(permission_card_text).to include("最終更新 -")
+    expect(project_card_text).to include("件数1")
+    expect(project_card_text).to include("最終更新#{I18n.l(project.reload.updated_at, format: :short)}")
+    expect(permission_card_text).to include("件数0")
+    expect(permission_card_text).to include("最終更新-")
   end
 
   it "shows a read-only storage usage summary with follow-up cues" do
