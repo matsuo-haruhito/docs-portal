@@ -15,7 +15,6 @@ import CsvPreviewToolsController from "../controllers/csv_preview_tools_controll
 import DocumentFileBrowserController from "../controllers/document_file_browser_controller"
 import DocumentPermissionErrorSurfaceController from "../controllers/document_permission_error_surface_controller"
 import DocumentSetDocumentFilterController from "../controllers/document_set_document_filter_controller"
-import DocumentVersionTabsController from "../controllers/document_set_document_filter_controller"
 import DocumentVersionTabsController from "../controllers/document_version_tabs"
 import DocumentZipSelectionController from "../controllers/document_zip_selection_controller"
 import ImagePreviewToolsController from "../controllers/image_preview_tools_controller"
