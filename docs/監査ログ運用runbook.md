@@ -25,6 +25,8 @@ current 実装の前提:
 - AI context の `mode` / `scope` filter は `target_type=ai_context` のときだけ有効になり、他の `target_type` では無視される
 - `q` は一覧に表示される `target_name` と `ip_address` に対して部分一致で絞り込む
 - `document_q` は文書タイトルと `slug` の両方に対して部分一致で絞り込む
+- `q` / `document_q` は前後空白を除いた最大 100 文字までが検索条件になり、空白だけの入力は条件に採用されない
+- `q` / `document_q` の入力欄には `最大100文字` の cue があり、検索対象の短い断片で探す前提になっている
 - `q` と `document_q` は OR ではなく AND で併用されるため、target / IP と文書条件の両方に合うログだけが残る
 - `from` / `to` は `accessed_at` の日付範囲で絞り込み、指定後も一覧の並び順と 1 ページ 200 件表示は変わらない
 - 不正な日付入力は 500 にせず、その日付条件だけを無視する。画面には除外された条件が `開始日` / `終了日` として warning 表示される
@@ -66,6 +68,8 @@ current 実装の前提:
 - `q` は一覧に表示される `target_name` と `ip_address` に効く
 - ZIP 名、添付ファイル名、page path、AI context export の記録、IP アドレス断片を first touch で探したいときに使う
 - 画面 placeholder は `ZIP名・ファイル名・AI context export の記録・IP` で、保存値の内部表現そのものを操作名として読ませるものではない
+- 入力欄の cue は、対象名や IP アドレスの断片検索であることと最大 100 文字までの境界を示す
+- 入力は前後空白を除いて最大 100 文字までが条件になる。空白だけの入力は条件に採用されないため、長い AI context export の target_name やファイル名を全文で貼るより、特徴的な短い断片で探す
 - `document_q` とは別の検索欄なので、文書 title / slug を探したい場合は `文書名・URL識別子` を使う
 - `q` と `document_q` を同時に入れると、対象名または IP に一致し、かつ文書 title / slug にも一致するログだけを表示する
 - `%` や `_` を含む入力は LIKE wildcard として広げず、文字列として扱う
@@ -74,6 +78,8 @@ current 実装の前提:
 
 - `document_q` は文書タイトルと `slug` の両方に効く
 - 管理画面や公開 URL で覚えている文字列が title か slug か分からないときでも、同じ入力欄で探せる
+- 入力欄の cue は、文書名や URL 識別子の断片検索であることと最大 100 文字までの境界を示す
+- 入力は前後空白を除いて最大 100 文字までが条件になる。空白だけの入力は条件に採用されないため、長い title や slug は特徴的な短い断片へ絞る
 - target file name、ZIP 名、AI context export の記録、IP アドレスを探す欄ではない。これらは `対象名・IPアドレス` の `q` を使う
 
 ### 7. 開始日 / 終了日
@@ -148,6 +154,7 @@ AI context の読み方:
 - 想定した案件や利用者に対して、閲覧とダウンロードのどちらが起きているか
 - ZIP 配布や添付ダウンロードが特定案件だけに偏っていないか
 - ZIP 名、添付ファイル名、AI context export の記録、IP アドレス断片から `対象名・IPアドレス` で目的の証跡を探せているか
+- 長い target_name、AI context export の記録、文書 slug を探すとき、全文を貼らず最大 100 文字内の特徴的な断片へ絞れているか
 - AI context export の HTML preview / JSON / Markdown download が想定した案件や利用者で発生しているか
 - AI context export を見るとき、`compact` / `full` と `全件` / `選択` のどちらで出力された証跡なのかを `AI出力モード` / `AI出力範囲` と `対象` 列で確認できているか
 - 条件に一致する最新 200 件を共有・保管したいとき、CSV export の固定列と画面の表示設定を混同していないか
@@ -164,7 +171,9 @@ AI context の読み方:
 - CSV export の固定列は画面表示設定とは独立している。表示列を減らしても CSV の監査用固定列は変わらない
 - 無効な開始日 / 終了日は warning 表示のうえで除外される。docs や運用メモでは、warning がある状態を「指定期間がそのまま適用された」と読まない
 - `q` は `target_name` / `ip_address` の補助検索であり、user_agent 検索や全文検索 index ではない
+- `q` は前後空白を除いた最大 100 文字までが条件になり、空白だけの入力は条件に採用されない。長い保存値は特徴的な短い断片で探す
 - `document_q` は title / slug の検索であり、target file name や IP アドレス検索ではない
+- `document_q` も前後空白を除いた最大 100 文字までが条件になり、空白だけの入力は条件に採用されない
 - AI出力モード / AI出力範囲 filter は `target_type=ai_context` の `target_name` に保存された `mode=<value>;` / `scope=<value>;` を使う補助 filter であり、任意の `target_name` 全文検索ではない
 - AI context export の保存値を文字列断片で探したいときは `q` を使う。ただし mode / scope の structured filter は従来どおり `target_type=ai_context` のときだけ有効にする
 - `監査ログ一覧の表示設定` は一覧の表示列を切り替えるだけで、記録対象や絞り込み結果そのものは変えない
@@ -182,8 +191,8 @@ AI context の読み方:
 - AI context export の出力形態だけを狭めたい: `対象種別` を `ai_context` にしてから `AI出力モード` / `AI出力範囲` を足す
 - どの案件や会社の話かを狭めたい: `案件` `会社` `ユーザー` を足す
 - 特定日の前後だけを見たい: `開始日` / `終了日` を入れて、必要なら他の条件を足す。warning が出た場合は、除外された日付条件を直してから結果を読む
-- ZIP 名、添付ファイル名、AI context export の記録、IP アドレスから探したい: `対象名・IPアドレス` に断片を入れる
-- 文書 detail から利用傾向を振り返りたい: `document_q` で title / slug を入れて戻る
+- ZIP 名、添付ファイル名、AI context export の記録、IP アドレスから探したい: `対象名・IPアドレス` に最大 100 文字内の断片を入れる
+- 文書 detail から利用傾向を振り返りたい: `document_q` で title / slug の最大 100 文字内の断片を入れて戻る
 - 一覧が広くて読みづらい: 表示設定で必要な列だけを残す
 - 条件に一致する最新 200 件を持ち出して確認したい: `現在の条件でCSV export（最新200件）` を使い、固定列と表示設定の違いを確認する
 - 200 件より古い証跡を追いたい: まず filter を維持したまま `次の200件` へ進み、広すぎる場合は期間や対象条件を足す。CSV は current page ではなく最新 200 件の export なので、古い page の証跡を出したい場合は条件をさらに狭める
