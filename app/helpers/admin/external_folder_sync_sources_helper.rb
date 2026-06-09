@@ -22,6 +22,16 @@ module Admin::ExternalFolderSyncSourcesHelper
     ]
   end
 
+  def external_folder_sync_source_project_option_label(project)
+    [project.code, project.name].compact_blank.join(" / ")
+  end
+
+  def external_folder_sync_source_project_selected_option(project)
+    return nil if project.blank?
+
+    { value: project.id, text: external_folder_sync_source_project_option_label(project) }
+  end
+
   def external_folder_sync_latest_error_preview(message)
     preview = external_folder_sync_sanitized_error_message(message)
     return "-" if preview.blank?
