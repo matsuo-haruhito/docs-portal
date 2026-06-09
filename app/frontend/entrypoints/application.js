@@ -11,6 +11,7 @@ import { TomSelectController } from "rails_fields_kit"
 import "tom-select/dist/css/tom-select.css"
 import AutoHeightFrameController from "../controllers/auto_height_frame_controller"
 import BulkEditSelectionController from "../controllers/bulk_edit_selection_controller"
+import CsvPreviewToolsController from "../controllers/csv_preview_tools_controller"
 import DocumentFileBrowserController from "../controllers/document_file_browser_controller"
 import DocumentPermissionErrorSurfaceController from "../controllers/document_permission_error_surface_controller"
 import DocumentSetDocumentFilterController from "../controllers/document_set_document_filter_controller"
@@ -30,6 +31,7 @@ application.register("rails-table-preferences", RailsTablePreferencesController)
 application.register("rails-fields-kit--tom-select", TomSelectController)
 application.register("auto-height-frame", AutoHeightFrameController)
 application.register("bulk-edit-selection", BulkEditSelectionController)
+application.register("csv-preview-tools", CsvPreviewToolsController)
 application.register("document-file-browser", DocumentFileBrowserController)
 application.register("document-permission-error-surface", DocumentPermissionErrorSurfaceController)
 application.register("document-set-document-filter", DocumentSetDocumentFilterController)
