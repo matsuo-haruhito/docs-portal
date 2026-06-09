@@ -241,6 +241,7 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response.media_type).to eq("text/html")
     expect(response.body).to include("API specification site fixture")
     expect(response.body).to include(site_admin_api_specification_path(site_path: "assets/css/api-spec-site-fixture.css"))
+    expect(response.headers["Cache-Control"].to_s.split(/,\s*/)).not_to include("immutable")
   end
 
   it "serves built API specification assets with private immutable cache headers" do
@@ -267,6 +268,7 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response.media_type).to end_with("javascript")
     expect(response.body).to include("f.p=#{proxied_site_root.dump}")
     expect(response.body).to include("f.p+f.u(r)")
+    expect(response.headers["Cache-Control"].split(/,\s*/)).to include("private", "max-age=31536000", "immutable")
   end
 
   it "returns not found when the API specification build entry is missing" do
@@ -302,11 +304,14 @@ RSpec.describe "Admin API specifications", type: :request do
 
   it "returns not found for missing API specification assets" do
     write_api_specification_site_fixture
+    write_failed_build_marker("private build marker token=raw-secret")
     sign_in_as(admin_user)
 
     get site_admin_api_specification_path(site_path: "assets/css/missing-api-specification.css")
 
     expect(response).to have_http_status(:not_found)
+    expect(response.body).not_to include("private build marker")
+    expect(response.body).not_to include("raw-secret")
   end
 
   it "keeps the admin site route limited to internal admins" do
