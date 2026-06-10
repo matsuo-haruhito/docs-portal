@@ -33,7 +33,7 @@ RSpec.describe "Document delivery log empty states", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("条件に一致する送付履歴はありません。")
-    expect(page_text).to include("検索語・状態・方式を見直すか、「すべての送付履歴を見る」で条件を解除してください。")
+    expect(page_text).to include("検索語・状態・方式・日付条件を見直すか、「すべての送付履歴を見る」で条件を解除してください。")
     expect(href_for("すべての送付履歴を見る")).to eq(document_delivery_logs_path)
   end
 
@@ -46,7 +46,7 @@ RSpec.describe "Document delivery log empty states", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("条件に一致する送付履歴はありません。")
-    expect(page_text).to include("検索語・状態・方式を見直すか、「すべての送付履歴を見る」で条件を解除してください。")
+    expect(page_text).to include("検索語・状態・方式・日付条件を見直すか、「すべての送付履歴を見る」で条件を解除してください。")
     expect(href_for("すべての送付履歴を見る")).to eq(document_delivery_logs_path)
   end
 end
