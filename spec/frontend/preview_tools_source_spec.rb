@@ -254,6 +254,29 @@ RSpec.describe "preview tools source" do
     end
   end
 
+  it "guards markdown codeblock sensitive keyword cue without masking copied code" do
+    sensitive_keyword_pattern = codeblock_tools_source.match(%r{return /\\b\((?<pattern>.*?)\)\\b/i\.test\(text\)})[:pattern]
+
+    aggregate_failures do
+      %w[secret token password passwd authorization bearer].each do |keyword|
+        expect(sensitive_keyword_pattern).to include(keyword)
+      end
+
+      expect(sensitive_keyword_pattern).to include("api[_-]?key")
+      expect(sensitive_keyword_pattern).to include("access[_-]?key")
+      expect(sensitive_keyword_pattern).to include("client[_-]?secret")
+      expect(codeblock_tools_source).to include('warning.className = "portal-codeblock-warning"')
+      expect(codeblock_tools_source).to include('warning.textContent = "機密注意"')
+      expect(codeblock_tools_source).to include('warning.hidden = !includesSensitiveKeyword(codeElement.textContent || "")')
+      expect(codeblock_tools_source).to include("async function copyCodeText(codeElement, status)")
+      expect(codeblock_tools_source).to include("await copyText(codeText(codeElement), status)")
+      expect(codeblock_tools_source).to include("async function copyFormattedJsonCode(codeElement, status)")
+      expect(codeblock_tools_source).to include("const parsed = JSON.parse(codeText(codeElement))")
+      expect(codeblock_tools_source).to include('await copyText(JSON.stringify(parsed, null, 2), status, "整形コピーしました")')
+      expect(codeblock_tools_source).not_to match(/mask|redact|redaction/i)
+    end
+  end
+
   it "keeps document file list search in a dedicated controller with the same Turbo lifecycle" do
     aggregate_failures do
       expect(file_list_controller_source).to include('import { setupDocumentFileListSearch } from "../lib/document_file_list_search"')
