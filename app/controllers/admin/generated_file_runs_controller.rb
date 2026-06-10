@@ -62,10 +62,9 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
 
     GeneratedFileRun
       .where.not(id: @generated_file_run.id)
+      .where("metadata ->> 'retry_of_generated_file_run_public_id' IN (?)", related_retry_parent_public_ids)
       .order(created_at: :desc, id: :desc)
-      .limit(200)
-      .select { |run| related_retry_parent_public_ids.include?(run.metadata&.dig("retry_of_generated_file_run_public_id")) }
-      .first(10)
+      .limit(10)
   end
 
   def apply_filters(scope)
