@@ -61,6 +61,32 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     expect(page_text).not_to include("zip-source")
   end
 
+  it "keeps filter labels and safe metadata guidance close to their controls" do
+    sign_in_as(admin_user)
+
+    get admin_file_upload_dry_runs_path
+
+    expect(response).to have_http_status(:ok)
+    filter_form = parsed_html.at_css("form.filters")
+    expect(filter_form).to be_present
+
+    aggregate_failures do
+      expect(filter_form.css(".field").map { _1.text.squish }).to include(
+        include("dry-run ID"),
+        include("同期元・path・hash"),
+        include("案件"),
+        include("状態")
+      )
+      expect(filter_form.at_css("input[name='dry_run_id']")&.[]("placeholder")).to eq("idry...")
+      expect(filter_form.at_css("input[name='q']")&.[]("placeholder")).to eq("source name / relative path / content hash")
+
+      query_group = filter_form.css(".field").find { _1.at_css("input[name='q']") }
+      expect(query_group.text.squish).to include("検索対象: source name / relative path / content hash")
+      expect(query_group.text.squish).to include("クライアント source path は検索対象外です。")
+      expect(page_text).to include("同期元・path・hash 検索は表示中の safe metadata だけを対象にし、クライアント source path は検索対象に含めません。")
+    end
+  end
+
   it "explains the initial empty manual upload dry-run list" do
     sign_in_as(admin_user)
 
