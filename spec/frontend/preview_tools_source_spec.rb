@@ -6,6 +6,7 @@ RSpec.describe "preview tools source" do
   end
 
   let(:controller_source) { read_source("app/frontend/controllers/preview_tools_controller.js") }
+  let(:table_tools_source) { read_source("app/frontend/lib/markdown_preview_table_tools.js") }
   let(:site_viewer_iframe_height_source) { read_source("app/frontend/lib/site_viewer_iframe_height.js") }
   let(:archive_tools_source) { read_source("app/frontend/lib/archive_preview_tools.js") }
   let(:file_list_controller_source) { read_source("app/frontend/controllers/document_file_list_search_controller.js") }
@@ -97,6 +98,30 @@ RSpec.describe "preview tools source" do
       "setupMarkdownPreviewTableTools",
       "setupArchivePreviewTools"
     ])
+  end
+
+  it "guards markdown table preference persistence source boundaries" do
+    aggregate_failures do
+      expect(table_tools_source).to include('const TABLE_PREFERENCE_COLLECTION_PATH = "/rails_table_preferences/preferences"')
+      expect(table_tools_source).to include("function preferenceCollectionUrl(tableKey)")
+      expect(table_tools_source).to include("return `${TABLE_PREFERENCE_COLLECTION_PATH}/${encodeURIComponent(tableKey)}`")
+      expect(table_tools_source).to include('function preferencePresetUrl(tableKey, name = "default")')
+      expect(table_tools_source).to include("return `${preferenceCollectionUrl(tableKey)}/${encodeURIComponent(name)}`")
+      expect(table_tools_source).to include("function csrfToken()")
+      expect(table_tools_source).to include(%(document.querySelector("meta[name='csrf-token']")?.content || ""))
+      expect(table_tools_source).to include('"X-CSRF-Token": csrfToken()')
+      expect(table_tools_source).to include('method: "PATCH"')
+      expect(table_tools_source).to include("if (patchResponse.status !== 404) throw new Error(`Failed to save table preferences: ${patchResponse.status}`)")
+      expect(table_tools_source).to include('method: "POST"')
+      expect(table_tools_source).to include('body: JSON.stringify({ name: "default", settings })')
+      expect(table_tools_source).to include("if (response.status === 404) return null")
+      expect(table_tools_source).to include("if (!payload) return")
+      expect(table_tools_source).to include("const tableKey = table.dataset.railsTablePreferencesTableKey")
+      expect(table_tools_source).to include("if (!tableKey) return")
+      expect(table_tools_source).to include('if (wrapper.dataset.tableSearchReady === "true") return')
+      expect(table_tools_source).to include('wrapper.dataset.tableSearchReady = "true"')
+      expect(table_tools_source).to include("installPreferencePanel(frameDocument, table, displayGroup, copyStatus)")
+    end
   end
 
   it "guards archive preview safety, candidate, and visible row source boundaries" do
