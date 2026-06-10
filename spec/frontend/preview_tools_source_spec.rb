@@ -17,6 +17,8 @@ RSpec.describe "preview tools source" do
   let(:pdf_controller_source) { read_source("app/frontend/controllers/pdf_preview_tools_controller.js") }
   let(:pdf_tools_source) { read_source("app/frontend/lib/pdf_preview_tools.js") }
   let(:search_controller_source) { read_source("app/frontend/controllers/markdown_preview_document_search_controller.js") }
+  let(:structured_controller_source) { read_source("app/frontend/controllers/structured_preview_tools_controller.js") }
+  let(:structured_tools_source) { read_source("app/frontend/lib/structured_preview_tools.js") }
   let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.js") }
   let(:layout_source) { read_source("app/views/layouts/application.html.slim") }
   let(:inventory_source) { read_source("doc/frontend_initialization_inventory.md") }
@@ -24,7 +26,6 @@ RSpec.describe "preview tools source" do
   let(:expected_helpers) do
     {
       "setupMarkdownPreviewTableTools" => "../lib/markdown_preview_table_tools",
-      "setupStructuredPreviewTools" => "../lib/structured_preview_tools",
       "setupArchivePreviewTools" => "../lib/archive_preview_tools",
       "setupSiteViewerIframeHeightSync" => "../lib/site_viewer_iframe_height"
     }
@@ -34,12 +35,11 @@ RSpec.describe "preview tools source" do
     {
       "setupSiteViewerIframeHeightSync" => "Docusaurus / site viewer iframe",
       "setupMarkdownPreviewTableTools" => "Markdown preview table",
-      "setupStructuredPreviewTools" => "structured data preview",
       "setupArchivePreviewTools" => "archive preview"
     }
   end
 
-  it "imports the current preview helper bridge set without document search, codeblock, file list search, CSV preview, image preview, or PDF preview" do
+  it "imports the current preview helper bridge set without document search, codeblock, file list search, structured preview, CSV preview, image preview, or PDF preview" do
     aggregate_failures do
       expected_helpers.each do |helper_name, import_path|
         expect(controller_source).to include(%(import { #{helper_name} } from "#{import_path}"))
@@ -51,6 +51,8 @@ RSpec.describe "preview tools source" do
       expect(controller_source).not_to include("../lib/markdown_preview_codeblock_tools")
       expect(controller_source).not_to include("setupDocumentFileListSearch")
       expect(controller_source).not_to include("../lib/document_file_list_search")
+      expect(controller_source).not_to include("setupStructuredPreviewTools")
+      expect(controller_source).not_to include("../lib/structured_preview_tools")
       expect(controller_source).not_to include("setupCsvPreviewTableTools")
       expect(controller_source).not_to include("../lib/csv_preview_table_tools")
       expect(controller_source).not_to include("setupImagePreviewTools")
@@ -67,6 +69,7 @@ RSpec.describe "preview tools source" do
       expect(inventory_source).to include("document search は専用 `markdown-preview-document-search` controller へ分離済み")
       expect(inventory_source).to include("Markdown preview codeblock は専用 `markdown-preview-codeblock-tools` controller へ分離済み")
       expect(inventory_source).to include("document file list search は専用 `document-file-list-search` controller へ分離済み")
+      expect(inventory_source).to include("structured / text preview は専用 `structured-preview-tools` controller へ分離済み")
       expect(inventory_source).to include("CSV preview table は専用 `csv-preview-tools` controller へ分離済み")
       expect(inventory_source).to include("image preview は専用 `image-preview-tools` controller へ分離済み")
       expect(inventory_source).to include("PDF preview は専用 `pdf-preview-tools` controller へ分離済み")
@@ -78,6 +81,7 @@ RSpec.describe "preview tools source" do
 
       expect(inventory_source).not_to include("| `setupMarkdownPreviewCodeblockTools` | Markdown preview codeblock |")
       expect(inventory_source).not_to include("| `setupDocumentFileListSearch` | document file list search |")
+      expect(inventory_source).not_to include("| `setupStructuredPreviewTools` | structured data preview |")
       expect(inventory_source).not_to include("| `setupCsvPreviewTableTools` | CSV preview table |")
       expect(inventory_source).not_to include("| `setupImagePreviewTools` | image preview |")
       expect(inventory_source).not_to include("| `setupPdfPreviewTools` | PDF preview |")
@@ -91,7 +95,6 @@ RSpec.describe "preview tools source" do
     expect(refresh_calls).to eq([
       "setupSiteViewerIframeHeightSync",
       "setupMarkdownPreviewTableTools",
-      "setupStructuredPreviewTools",
       "setupArchivePreviewTools"
     ])
   end
@@ -244,6 +247,30 @@ RSpec.describe "preview tools source" do
     end
   end
 
+  it "keeps structured and text preview tools in a dedicated controller with Turbo lifecycle cleanup" do
+    aggregate_failures do
+      expect(structured_controller_source).to include('import { setupStructuredPreviewTools } from "../lib/structured_preview_tools"')
+      expect(structured_controller_source.scan("setupStructuredPreviewTools()").size).to eq(1)
+      expect(structured_controller_source).to include("this.cleanups = []")
+      expect(structured_controller_source).to include("this.refresh = this.refresh.bind(this)")
+      expect(structured_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
+      expect(structured_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
+      expect(structured_controller_source).to include("this.refresh()")
+      expect(structured_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
+      expect(structured_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
+      expect(structured_controller_source).to include("this.clearStructuredPreviews()")
+      expect(structured_tools_source).to include('document.querySelectorAll("[data-structured-preview-tools]")')
+      expect(structured_tools_source).to include('document.querySelectorAll("[data-text-preview-tools]")')
+      expect(structured_tools_source).to include('document.addEventListener("keydown", handleKeydown)')
+      expect(structured_tools_source).to include('document.removeEventListener("keydown", handleKeydown)')
+      expect(structured_tools_source).to include('window.addEventListener("hashchange", updateAnchorTarget)')
+      expect(structured_tools_source).to include('window.removeEventListener("hashchange", updateAnchorTarget)')
+      expect(structured_tools_source).to include("delete container.dataset.structuredPreviewToolsReady")
+      expect(structured_tools_source).to include("delete container.dataset.textPreviewToolsReady")
+      expect(structured_tools_source).to include("return cleanups")
+    end
+  end
+
   it "keeps preview controllers registered and attached without direct DOM setup in the entrypoint" do
     aggregate_failures do
       expect(entrypoint_source).to include('import CsvPreviewToolsController from "../controllers/csv_preview_tools_controller"')
@@ -253,6 +280,7 @@ RSpec.describe "preview tools source" do
       expect(entrypoint_source).to include('import MarkdownPreviewDocumentSearchController from "../controllers/markdown_preview_document_search_controller"')
       expect(entrypoint_source).to include('import PdfPreviewToolsController from "../controllers/pdf_preview_tools_controller"')
       expect(entrypoint_source).to include('import PreviewToolsController from "../controllers/preview_tools_controller"')
+      expect(entrypoint_source).to include('import StructuredPreviewToolsController from "../controllers/structured_preview_tools_controller"')
       expect(entrypoint_source).to include('application.register("csv-preview-tools", CsvPreviewToolsController)')
       expect(entrypoint_source).to include('application.register("document-file-list-search", DocumentFileListSearchController)')
       expect(entrypoint_source).to include('application.register("image-preview-tools", ImagePreviewToolsController)')
@@ -260,7 +288,8 @@ RSpec.describe "preview tools source" do
       expect(entrypoint_source).to include('application.register("markdown-preview-document-search", MarkdownPreviewDocumentSearchController)')
       expect(entrypoint_source).to include('application.register("pdf-preview-tools", PdfPreviewToolsController)')
       expect(entrypoint_source).to include('application.register("preview-tools", PreviewToolsController)')
-      expect(layout_source).to include('data-controller="nav-dropdowns document-tree-navigation manual-document-upload document-file-list-search markdown-preview-document-search markdown-preview-codeblock-tools csv-preview-tools image-preview-tools pdf-preview-tools preview-table-resizer preview-tools"')
+      expect(entrypoint_source).to include('application.register("structured-preview-tools", StructuredPreviewToolsController)')
+      expect(layout_source).to include('data-controller="nav-dropdowns document-tree-navigation manual-document-upload document-file-list-search markdown-preview-document-search markdown-preview-codeblock-tools csv-preview-tools image-preview-tools pdf-preview-tools structured-preview-tools preview-table-resizer preview-tools"')
       expect(entrypoint_source).not_to include("querySelectorAll")
       expect(entrypoint_source).not_to include("addEventListener")
       expect(entrypoint_source).not_to include("new TomSelect")
