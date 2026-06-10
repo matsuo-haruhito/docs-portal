@@ -36,6 +36,7 @@ h1 外部表示プレビュー
       label
         | 会社
         = form.select :company_id, options_from_collection_for_select(@preview_companies, :id, :display_name, @selected_company&.id), include_blank: "選択してください"
+    p.muted 会社を選ぶと、その会社に所属する有効な外部ユーザーの表示可否をまとめて確認します。
     p.actions
       = form.submit "この会社でプレビュー", class: "button"
 
