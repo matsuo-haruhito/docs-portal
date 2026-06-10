@@ -27,9 +27,9 @@ RSpec.describe "markdown preview table fallback boundary" do
     aggregate_failures do
       expect(table_tools_source).to include('const TABLE_PREFERENCE_COLLECTION_PATH = "/rails_table_preferences/preferences"')
       expect(table_tools_source).to include("const tableKey = table.dataset.railsTablePreferencesTableKey")
-      expect(table_tools_source).to include("installTableSearch(frameDocument, wrapper, table)")
-      expect(table_tools_source).to include("copyTableCsv")
-      expect(table_tools_source).to include("copyTableMarkdown")
+      expect(table_tools_source).to include("function updateTableSearch(table, input, count)")
+      expect(table_tools_source).to include("copyText(tableToCsv(table), copyStatus)")
+      expect(table_tools_source).to include("copyText(tableToMarkdown(table), copyStatus)")
       expect(table_tools_source).to include("installPreferencePanel(frameDocument, table, displayGroup, copyStatus)")
 
       expect(table_resizer_source).to include("const TABLE_WIDTH_STORAGE_PREFIX")
