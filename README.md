@@ -1,6 +1,6 @@
-# Rails Portal Full Sample
+# docs-portal
 
-Rails + Docusaurus を前提にした「社外秘ドキュメント配布ポータル」の雛形です。
+`docs-portal` は、案件ごとの社外秘ドキュメント配布を Rails + Docusaurus で運用するポータルアプリです。文書公開、版管理、閲覧制御、添付配布、import / preview / build / 外部連携の運用導線をこの repo で扱います。
 
 ## 利用者向け概要
 
