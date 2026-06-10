@@ -7,6 +7,7 @@ RSpec.describe "preview tools source" do
 
   let(:controller_source) { read_source("app/frontend/controllers/preview_tools_controller.js") }
   let(:site_viewer_iframe_height_source) { read_source("app/frontend/lib/site_viewer_iframe_height.js") }
+  let(:archive_tools_source) { read_source("app/frontend/lib/archive_preview_tools.js") }
   let(:file_list_controller_source) { read_source("app/frontend/controllers/document_file_list_search_controller.js") }
   let(:file_list_search_source) { read_source("app/frontend/lib/document_file_list_search.js") }
   let(:codeblock_controller_source) { read_source("app/frontend/controllers/markdown_preview_codeblock_tools_controller.js") }
@@ -93,6 +94,28 @@ RSpec.describe "preview tools source" do
       "setupStructuredPreviewTools",
       "setupArchivePreviewTools"
     ])
+  end
+
+  it "guards archive preview safety, candidate, and visible row source boundaries" do
+    aggregate_failures do
+      expect(archive_tools_source).to include("function archiveEntryDownloadCandidate(row)")
+      expect(archive_tools_source).to include('row.dataset.archivePreviewEntryDownloadCandidate === "true"')
+      expect(archive_tools_source).to include("function archiveEntrySafe(row)")
+      expect(archive_tools_source).to include('row.dataset.archivePreviewEntrySafe === "true"')
+      expect(archive_tools_source).to include('if (candidateFilter === "download") return archiveEntryDownloadCandidate(row)')
+      expect(archive_tools_source).to include('if (candidateFilter === "unavailable") return !archiveEntryDownloadCandidate(row)')
+      expect(archive_tools_source).to include('if (safetyFilter === "safe") return archiveEntrySafe(row)')
+      expect(archive_tools_source).to include('if (safetyFilter === "unsafe") return !archiveEntrySafe(row)')
+      expect(archive_tools_source).to include("renderActiveFilterChips(activeFilters, filterDescriptors(input, candidateFilter, directoryFilter, safetyFilter, typeFilter), clearFilter)")
+      expect(archive_tools_source).to include("count.textContent = query.length === 0 ?")
+      expect(archive_tools_source).to include("sort((left, right) => compareRows(left, right, sortKey, sortDirection))")
+      expect(archive_tools_source).to include("const visibleEntryRows = visibleRows(rows)")
+      expect(archive_tools_source).to include("const entryNames = visibleEntryRows.map(archiveEntryName).filter(Boolean)")
+      expect(archive_tools_source).to include("const unsafeCount = visibleEntryRows.filter((row) => !archiveEntrySafe(row)).length")
+      expect(archive_tools_source).to include("const unsafeNote = unsafeCount > 0 ? ` unsafe ${unsafeCount}件を含みます。` : \"\"")
+      expect(archive_tools_source).to include("const filterNote = activeFilterStatus(candidateFilter, directoryFilter, safetyFilter, typeFilter)")
+      expect(archive_tools_source).to include("const unsafeNote = row && !archiveEntrySafe(row) ? \"（unsafe path）\" : \"\"")
+    end
   end
 
   it "guards site viewer iframe height sync message, target, and listener boundaries" do
