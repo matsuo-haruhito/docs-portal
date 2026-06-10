@@ -5,6 +5,13 @@ h1 文書一括編集 事前確認
 
 - warning_count = @bulk_edit_dry_run.warnings_json.size
 - error_count = @bulk_edit_dry_run.errors_json.size
+- review_counts = { error: 0, warning: 0, changed: 0, unchanged: 0 }
+- @preview_items.each do |item|
+  - item_changed_fields = Array(item["changed_fields"] || item[:changed_fields])
+  - item_warnings = Array(item["warnings"] || item[:warnings])
+  - item_errors = Array(item["errors"] || item[:errors])
+  - review_priority = item_errors.any? ? :error : item_warnings.any? ? :warning : item_changed_fields.any? ? :changed : :unchanged
+  - review_counts[review_priority] += 1
 
 .card
   h2 概要
@@ -28,6 +35,8 @@ h1 文書一括編集 事前確認
 
   - if warning_count.positive? || error_count.positive?
     p.muted 警告・エラーのある行を先に確認し、明細の確認目安で文書ごとの状態を読み分けてください。
+    p.actions
+      = link_to "事前確認明細の確認優先行へ移動", "#bulk-edit-review-details", class: "button secondary"
 
   - if @bulk_edit_dry_run.analyzed?
     p.actions
@@ -51,9 +60,10 @@ h1 文書一括編集 事前確認
       - @bulk_edit_dry_run.errors_json.each do |error|
         li = bulk_edit_dry_run_diagnostic_preview(error)
 
-section.card
+section.card#bulk-edit-review-details
   h2 事前確認明細
   p.muted 確認目安は表示補助です。警告・エラーの意味や実行可否は既存の事前確認結果に従います。
+  p.muted = "確認優先サマリ: エラーあり: #{review_counts[:error]}件 / 警告あり: #{review_counts[:warning]}件 / 変更予定: #{review_counts[:changed]}件 / 変更なし: #{review_counts[:unchanged]}件"
   table
     thead
       tr
