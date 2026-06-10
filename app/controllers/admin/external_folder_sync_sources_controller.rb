@@ -165,12 +165,15 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def load_index_state
-    base_sources = external_folder_sync_sources_scope.to_a
-    @latest_runs_by_source_id = latest_runs_by_source_id(base_sources)
-    @review_filter_counts = review_filter_counts(base_sources)
     @selected_review_filter = normalize_review_filter(params[:review])
     @search_query = normalize_search_query(params[:q])
-    @external_folder_sync_sources = filter_external_folder_sync_sources(base_sources)
+
+    base_scope = external_folder_sync_sources_scope
+    @review_filter_counts = review_filter_counts(base_scope)
+
+    scoped_sources = filter_external_folder_sync_sources_scope(base_scope).to_a
+    @latest_runs_by_source_id = latest_runs_by_source_id(scoped_sources)
+    @external_folder_sync_sources = filter_external_folder_sync_sources_by_latest_run(scoped_sources)
   end
 
   def ensure_google_drive_runtime_supported!
@@ -183,20 +186,54 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     ExternalFolderSyncSource.includes(:project, :created_by).order(:provider, :name, :id)
   end
 
-  def filter_external_folder_sync_sources(sources)
-    sources.select do |source|
-      review_filter_matches?(source, @selected_review_filter) && search_query_matches?(source, @search_query)
+  def filter_external_folder_sync_sources_scope(scope)
+    scope = apply_external_folder_sync_source_search(scope)
+
+    case @selected_review_filter
+    when "disabled"
+      scope.where(enabled: false)
+    when "google_drive"
+      scope.google_drive
+    when "microsoft_graph"
+      scope.microsoft_graph
+    else
+      scope
     end
   end
 
-  def review_filter_counts(sources)
+  def apply_external_folder_sync_source_search(scope)
+    return scope if @search_query.blank?
+
+    pattern = "%#{ActiveRecord::Base.sanitize_sql_like(@search_query.downcase)}%"
+    scope.left_joins(:project).where(
+      <<~SQL.squish,
+        LOWER(external_folder_sync_sources.name) LIKE :pattern OR
+        LOWER(projects.name) LIKE :pattern OR
+        LOWER(projects.code) LIKE :pattern OR
+        LOWER(external_folder_sync_sources.external_folder_id) LIKE :pattern OR
+        LOWER(external_folder_sync_sources.external_folder_path) LIKE :pattern
+      SQL
+      pattern:
+    )
+  end
+
+  def filter_external_folder_sync_sources_by_latest_run(sources)
+    return sources unless %w[warnings errors].include?(@selected_review_filter)
+
+    sources.select { |source| review_filter_matches_latest_run?(source, @selected_review_filter) }
+  end
+
+  def review_filter_counts(scope)
+    sources = scope.to_a
+    latest_runs_by_source_id = latest_runs_by_source_id(sources)
+
     {
-      all: sources.size,
-      warnings: sources.count { |source| conflict_warnings_count(source).positive? },
-      errors: sources.count { |source| latest_error_message(source).present? },
-      disabled: sources.count { |source| !source.enabled? },
-      google_drive: sources.count(&:google_drive?),
-      microsoft_graph: sources.count(&:microsoft_graph?)
+      all: scope.count,
+      warnings: sources.count { |source| conflict_warnings_count(source, latest_runs_by_source_id).positive? },
+      errors: sources.count { |source| latest_error_message(source, latest_runs_by_source_id).present? },
+      disabled: scope.where(enabled: false).count,
+      google_drive: scope.google_drive.count,
+      microsoft_graph: scope.microsoft_graph.count
     }
   end
 
@@ -234,40 +271,15 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     { value: project.id, text: helpers.external_folder_sync_source_project_option_label(project) }
   end
 
-  def review_filter_matches?(source, selected_review_filter)
+  def review_filter_matches_latest_run?(source, selected_review_filter)
     case selected_review_filter
     when "warnings"
       conflict_warnings_count(source).positive?
     when "errors"
       latest_error_message(source).present?
-    when "disabled"
-      !source.enabled?
-    when "google_drive"
-      source.google_drive?
-    when "microsoft_graph"
-      source.microsoft_graph?
     else
       true
     end
-  end
-
-  def search_query_matches?(source, search_query)
-    return true if search_query.blank?
-
-    normalized_search_query = search_query.downcase
-    searchable_external_folder_sync_source_values(source).any? do |value|
-      value.to_s.downcase.include?(normalized_search_query)
-    end
-  end
-
-  def searchable_external_folder_sync_source_values(source)
-    [
-      source.name,
-      source.project&.name,
-      source.project&.code,
-      source.external_folder_id,
-      source.external_folder_path
-    ]
   end
 
   def latest_runs_by_source_id(sources)
@@ -279,16 +291,16 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
       .transform_values(&:first)
   end
 
-  def latest_run_for(source)
-    @latest_runs_by_source_id[source.id]
+  def latest_run_for(source, latest_runs_by_source_id = @latest_runs_by_source_id)
+    latest_runs_by_source_id[source.id]
   end
 
-  def conflict_warnings_count(source)
-    latest_run_for(source)&.summary_json&.fetch("conflict_warnings_count", 0).to_i
+  def conflict_warnings_count(source, latest_runs_by_source_id = @latest_runs_by_source_id)
+    latest_run_for(source, latest_runs_by_source_id)&.summary_json&.fetch("conflict_warnings_count", 0).to_i
   end
 
-  def latest_error_message(source)
-    latest_run_for(source)&.error_message.presence || source.last_error_message.presence
+  def latest_error_message(source, latest_runs_by_source_id = @latest_runs_by_source_id)
+    latest_run_for(source, latest_runs_by_source_id)&.error_message.presence || source.last_error_message.presence
   end
 
   def latest_run
