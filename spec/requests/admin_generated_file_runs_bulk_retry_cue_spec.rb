@@ -18,7 +18,7 @@ RSpec.describe "Admin generated file runs bulk retry cue", type: :request do
     expect(response).to have_http_status(:ok)
     bulk_retry_form = parsed_html.at_css(%(form[action="#{retry_failed_admin_generated_file_runs_path(status: "failed")}"]))
     expect(bulk_retry_form).to be_present
-    action_panel_text = bulk_retry_form.ancestor("div").text.squish
+    action_panel_text = bulk_retry_form.ancestors("div").first.text.squish
     expect(action_panel_text).to include("失敗分を一括再実行")
     expect(action_panel_text).to include("現在の条件で再実行対象: 2 件")
     expect(action_panel_text).to include("一括再実行は現在条件に一致する古い失敗分から最大100件です。")
