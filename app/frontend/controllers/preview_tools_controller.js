@@ -1,7 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
 import { setupMarkdownPreviewTableTools } from "../lib/markdown_preview_table_tools"
-import { setupArchivePreviewTools } from "../lib/archive_preview_tools"
-import { setupSiteViewerIframeHeightSync } from "../lib/site_viewer_iframe_height"
 
 export default class extends Controller {
   connect() {
@@ -17,8 +15,6 @@ export default class extends Controller {
   }
 
   refresh() {
-    setupSiteViewerIframeHeightSync()
     setupMarkdownPreviewTableTools()
-    setupArchivePreviewTools()
   }
 }
