@@ -376,6 +376,72 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).to include("再実行")
       expect(response.body).to include("一括再実行")
     end
+
+    it "shows retry child runs outside the latest 200 unrelated runs" do
+      sign_in_as(admin_user)
+      parent_run = create_run!(job_id: "ai_usecase_decision_flow", status: :failed, created_at: 30.days.ago)
+      retry_child_run = create_run!(
+        job_id: "old_retry_child",
+        status: :completed,
+        event_source: "generated_file_run_retry",
+        metadata: {"retry_of_generated_file_run_public_id" => parent_run.public_id},
+        created_at: 29.days.ago
+      )
+      205.times do |i|
+        create_run!(job_id: "newer_unrelated_#{i}", created_at: i.minutes.ago)
+      end
+
+      get admin_generated_file_run_path(parent_run.public_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("この実行から派生した再実行")
+      expect(response.body).to include(admin_generated_file_run_path(retry_child_run.public_id))
+      expect(response.body).not_to include("newer_unrelated_204")
+    end
+
+    it "keeps retry child runs bounded and includes sibling retries for child details" do
+      sign_in_as(admin_user)
+      parent_run = create_run!(job_id: "ai_usecase_decision_flow", status: :failed)
+      current_child_run = create_run!(
+        job_id: "current_retry_child",
+        status: :failed,
+        event_source: "generated_file_run_retry",
+        metadata: {"retry_of_generated_file_run_public_id" => parent_run.public_id},
+        created_at: Time.zone.parse("2026-05-10 12:00:00")
+      )
+      visible_sibling = create_run!(
+        job_id: "visible_retry_sibling",
+        status: :completed,
+        event_source: "generated_file_run_retry",
+        metadata: {"retry_of_generated_file_run_public_id" => parent_run.public_id},
+        created_at: Time.zone.parse("2026-05-11 12:00:00")
+      )
+      hidden_sibling = create_run!(
+        job_id: "hidden_retry_sibling",
+        status: :completed,
+        event_source: "generated_file_run_retry",
+        metadata: {"retry_of_generated_file_run_public_id" => parent_run.public_id},
+        created_at: Time.zone.parse("2026-04-01 12:00:00")
+      )
+      9.times do |i|
+        create_run!(
+          job_id: "newer_retry_sibling_#{i}",
+          status: :completed,
+          event_source: "generated_file_run_retry",
+          metadata: {"retry_of_generated_file_run_public_id" => parent_run.public_id},
+          created_at: Time.zone.parse("2026-05-12 12:00:00") + i.minutes
+        )
+      end
+
+      get admin_generated_file_run_path(current_child_run.public_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(admin_generated_file_run_path(parent_run.public_id))
+      expect(response.body).to include(admin_generated_file_run_path(visible_sibling.public_id))
+      expect(response.body).not_to include(admin_generated_file_run_path(current_child_run.public_id))
+      expect(response.body).not_to include(admin_generated_file_run_path(hidden_sibling.public_id))
+      expect(parsed_html.css(%(a[href^="#{admin_generated_file_runs_path}/"])).count { |link| link.text.start_with?("gfr_") }).to eq(10)
+    end
   end
 
   describe "POST /admin/generated_file_runs/:public_id/retry_run" do
