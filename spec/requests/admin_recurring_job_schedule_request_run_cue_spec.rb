@@ -28,7 +28,7 @@ RSpec.describe "Admin recurring job schedule request run cue", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("すでに即時実行を要求済みです")
     expect(response.body).to include("再度要求すると要求時刻を更新し、dispatcher enqueue を再依頼します。")
-    expect(response.body).to include("enqueue / 開始 / 終了は下の実行履歴で確認してください。")
+    expect(response.body).to include("結果は下の実行履歴で確認してください。enqueue / 開始 / 終了の順に追えます。")
     expect(response.body).to include("重複実行の許可/禁止は同じ schedule の同時実行可否です。即時実行要求済みかどうかとは別に判定されます。")
     re_request_link = parsed_html.at_css(%(a[href="#{request_run_admin_recurring_job_schedule_path(requested_schedule, return_to: admin_recurring_job_schedules_path)}"]))
     expect(re_request_link).to be_present
