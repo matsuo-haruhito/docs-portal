@@ -193,7 +193,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(log_target_names).to eq(["mode=compact;scope=selected;selected_count=2;exported_count=2"])
     expect(parsed_html.at_css('select[name="ai_context_mode"] option[value="compact"][selected]').text).to eq("compact")
-    expect(page_text).to include("AI context mode: compact")
+    expect(page_text).to include("AI出力モード: compact")
   end
 
   it "filters AI context export access logs by scope with existing filters" do
@@ -220,7 +220,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(log_target_names).to eq(["mode=full;scope=selected;selected_count=2;exported_count=2"])
     expect(parsed_html.at_css('select[name="ai_context_scope"] option[value="selected"][selected]').text).to eq("選択")
-    expect(page_text).to include("AI context scope: 選択")
+    expect(page_text).to include("AI出力範囲: 選択")
   end
 
   it "ignores invalid AI context mode and scope filters" do
@@ -248,6 +248,8 @@ RSpec.describe "Admin access logs", type: :request do
     expect(parsed_html.at_css('select[name="ai_context_scope"] option[value="partial"][selected]')).to be_nil
     expect(page_text).not_to include("AI context mode:")
     expect(page_text).not_to include("AI context scope:")
+    expect(page_text).not_to include("AI出力モード:")
+    expect(page_text).not_to include("AI出力範囲:")
   end
 
   it "does not apply AI context filters to other target types" do
@@ -272,6 +274,8 @@ RSpec.describe "Admin access logs", type: :request do
     expect(parsed_html.at_css('select[name="ai_context_scope"] option[value="selected"][selected]')).to be_nil
     expect(page_text).not_to include("AI context mode:")
     expect(page_text).not_to include("AI context scope:")
+    expect(page_text).not_to include("AI出力モード:")
+    expect(page_text).not_to include("AI出力範囲:")
   end
 
   it "filters access logs by project, company, and user" do

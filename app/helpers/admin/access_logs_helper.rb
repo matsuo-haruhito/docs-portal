@@ -180,7 +180,7 @@ module Admin::AccessLogsHelper
   def access_log_ai_context_mode_filter_summary(value)
     return if value.blank? || AI_CONTEXT_MODE_FILTER_OPTIONS.exclude?(value.to_s)
 
-    "AI context mode: #{value}"
+    "AI出力モード: #{value}"
   end
 
   def access_log_ai_context_scope_filter_summary(value)
@@ -189,7 +189,7 @@ module Admin::AccessLogsHelper
     label = AI_CONTEXT_SCOPE_FILTER_LABELS[value.to_s]
     return unless label
 
-    "AI context scope: #{label}"
+    "AI出力範囲: #{label}"
   end
 
   def access_log_record_filter_summary(label, value, records)
