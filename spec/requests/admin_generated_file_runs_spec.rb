@@ -438,7 +438,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(admin_generated_file_run_path(parent_run.public_id))
       expect(response.body).to include(admin_generated_file_run_path(visible_sibling.public_id))
-      expect(response.body).not_to include(admin_generated_file_run_path(current_child_run.public_id))
+      expect(link_hrefs).not_to include(admin_generated_file_run_path(current_child_run.public_id))
       expect(response.body).not_to include(admin_generated_file_run_path(hidden_sibling.public_id))
       expect(parsed_html.css(%(a[href^="#{admin_generated_file_runs_path}/"])).count { |link| link.text.start_with?("gfr_") }).to eq(11)
     end
