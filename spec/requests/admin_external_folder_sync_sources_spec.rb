@@ -177,6 +177,80 @@ RSpec.describe "Admin external folder sync sources", type: :request do
       expect(response.body).not_to include(graph_source.name)
     end
 
+    it "combines provider and disabled review filters with search" do
+      sign_in_as(admin_user)
+      finance_drive = create_google_drive_source(project:, name: "Finance drive")
+      finance_disabled = create_google_drive_source(project:, name: "Finance disabled", enabled: false)
+      graph_project = create(:project, code: "SYNC002", name: "Finance Graph Project")
+      finance_graph = create_microsoft_graph_source(project: graph_project, name: "SharePoint finance")
+      create_google_drive_source(project:, name: "Security drive")
+
+      get admin_external_folder_sync_sources_path, params: { review: "microsoft_graph", q: "finance" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(finance_graph.name)
+      expect(response.body).not_to include(finance_drive.name)
+      expect(response.body).not_to include(finance_disabled.name)
+      expect(response.body).not_to include("Security drive")
+      expect(response.body).to include("現在の絞り込み: SharePoint / OneDrive / 検索: finance")
+      expect(response.body).to include("1 / 4 件を表示しています。")
+
+      get admin_external_folder_sync_sources_path, params: { review: "disabled", q: "finance" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(finance_disabled.name)
+      expect(response.body).not_to include(finance_drive.name)
+      expect(response.body).not_to include(finance_graph.name)
+      expect(response.body).not_to include("Security drive")
+      expect(response.body).to include("現在の絞り込み: 無効 / 検索: finance")
+      expect(response.body).to include("1 / 4 件を表示しています。")
+    end
+
+    it "uses the latest run when filtering warning sources with search" do
+      sign_in_as(admin_user)
+      stale_warning_source = create_google_drive_source(project:, name: "Finance stale warning")
+      current_warning_source = create_google_drive_source(project:, name: "Finance current warning")
+      create_google_drive_source(project:, name: "Security current warning")
+
+      ExternalFolderSyncRun.create!(
+        external_folder_sync_source: stale_warning_source,
+        status: :completed,
+        mode: :dry_run,
+        started_at: 2.hours.ago,
+        summary_json: { "conflict_warnings_count" => 3 }
+      )
+      ExternalFolderSyncRun.create!(
+        external_folder_sync_source: stale_warning_source,
+        status: :completed,
+        mode: :dry_run,
+        started_at: 1.hour.ago,
+        summary_json: { "conflict_warnings_count" => 0 }
+      )
+      ExternalFolderSyncRun.create!(
+        external_folder_sync_source: current_warning_source,
+        status: :completed,
+        mode: :dry_run,
+        started_at: 2.hours.ago,
+        summary_json: { "conflict_warnings_count" => 0 }
+      )
+      ExternalFolderSyncRun.create!(
+        external_folder_sync_source: current_warning_source,
+        status: :completed,
+        mode: :dry_run,
+        started_at: 1.hour.ago,
+        summary_json: { "conflict_warnings_count" => 2 }
+      )
+
+      get admin_external_folder_sync_sources_path, params: { review: "warnings", q: "finance" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(current_warning_source.name)
+      expect(response.body).not_to include(stale_warning_source.name)
+      expect(response.body).not_to include("Security current warning")
+      expect(response.body).to include("warning あり (1)")
+      expect(response.body).to include("1 / 3 件を表示しています。")
+    end
+
     it "combines review filters with search and preserves query links" do
       sign_in_as(admin_user)
       warning_source = create_google_drive_source(project:, name: "Finance warnings")
