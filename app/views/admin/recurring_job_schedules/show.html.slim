@@ -1,5 +1,6 @@
 - page_title "定期ジョブ詳細"
 - return_to_path = @return_to_path || admin_recurring_job_schedules_path
+- run_request_button_label = @schedule.run_requested_at.present? ? "即時実行を再要求" : "即時実行を要求"
 - run_triage_counts = ["失敗: #{@run_status_counts.fetch('failed', 0)}件", "実行中: #{@run_status_counts.fetch('running', 0)}件", "キュー待ち: #{@run_status_counts.fetch('enqueued', 0)}件"].join(" / ")
 - scheduled_filter_active = @selected_scheduled_from.present? || @selected_scheduled_to.present?
 - run_filter_active = @selected_run_status.present? || @selected_run_query.present? || scheduled_filter_active
@@ -61,12 +62,15 @@ h1 定期ジョブ詳細
     dd = recurring_job_status_badge(@schedule.last_status)
     dt 要求状況
     dd = @schedule.run_requested_at ? "要求済み（#{l(@schedule.run_requested_at)}）" : "未要求"
+  p.muted 重複実行の許可/禁止は同じ schedule の同時実行可否です。即時実行要求済みかどうかとは別に判定されます。
   - if @schedule.run_requested_at.present?
-    p.muted 要求済みです。dispatcher enqueue 後の結果は下の実行履歴で確認してください。
+    p.muted = "すでに即時実行を要求済みです（#{l(@schedule.run_requested_at)}）。再度要求すると要求時刻を更新し、dispatcher enqueue を再依頼します。"
+    p.muted 結果は下の実行履歴で確認してください。enqueue / 開始 / 終了の順に追えます。
   - else
+    p.muted まだ即時実行要求はありません。要求するとこの schedule を dispatcher へ渡し、結果は下の実行履歴で確認できます。
     p.muted 実行履歴には dispatcher enqueue 後の結果が50件ずつ表示され、過去ページへ辿れます。
   p.actions
-    = link_to "即時実行を要求", request_run_admin_recurring_job_schedule_path(@schedule, return_to: return_to_path), data: { turbo_method: :post }, class: "button"
+    = link_to run_request_button_label, request_run_admin_recurring_job_schedule_path(@schedule, return_to: return_to_path), data: { turbo_method: :post }, class: "button"
 
 p.actions
   = link_to "一覧へ戻る", return_to_path, class: "button secondary"
