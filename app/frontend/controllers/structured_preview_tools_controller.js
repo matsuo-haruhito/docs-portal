@@ -1,10 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
-import { setupMarkdownPreviewTableTools } from "../lib/markdown_preview_table_tools"
-import { setupArchivePreviewTools } from "../lib/archive_preview_tools"
-import { setupSiteViewerIframeHeightSync } from "../lib/site_viewer_iframe_height"
+import { setupStructuredPreviewTools } from "../lib/structured_preview_tools"
 
 export default class extends Controller {
   connect() {
+    this.cleanups = []
     this.refresh = this.refresh.bind(this)
     document.addEventListener("turbo:load", this.refresh)
     document.addEventListener("turbo:render", this.refresh)
@@ -14,11 +13,16 @@ export default class extends Controller {
   disconnect() {
     document.removeEventListener("turbo:load", this.refresh)
     document.removeEventListener("turbo:render", this.refresh)
+    this.clearStructuredPreviews()
   }
 
   refresh() {
-    setupSiteViewerIframeHeightSync()
-    setupMarkdownPreviewTableTools()
-    setupArchivePreviewTools()
+    this.clearStructuredPreviews()
+    this.cleanups = setupStructuredPreviewTools()
+  }
+
+  clearStructuredPreviews() {
+    this.cleanups.forEach((cleanup) => cleanup())
+    this.cleanups = []
   }
 }

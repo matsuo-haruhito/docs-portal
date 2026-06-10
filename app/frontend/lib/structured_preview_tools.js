@@ -56,7 +56,7 @@ function prepareCodeLines(code) {
 }
 
 function setupStructuredPreview(container) {
-  if (container.dataset.structuredPreviewToolsReady === "true") return
+  if (container.dataset.structuredPreviewToolsReady === "true") return null
   container.dataset.structuredPreviewToolsReady = "true"
   injectStructuredPreviewStyle()
 
@@ -67,7 +67,8 @@ function setupStructuredPreview(container) {
   const count = container.querySelector("[data-structured-preview-count]")
   const status = container.querySelector("[data-structured-preview-status]")
   const code = container.querySelector("[data-structured-preview-code]")
-  if (!input || !clearButton || !filterButton || !copyButton || !count || !status || !code) return
+  const cleanupReadyFlag = () => delete container.dataset.structuredPreviewToolsReady
+  if (!input || !clearButton || !filterButton || !copyButton || !count || !status || !code) return cleanupReadyFlag
 
   const lines = prepareCodeLines(code)
   let filterMatches = false
@@ -101,20 +102,18 @@ function setupStructuredPreview(container) {
     updateSearch()
   }
 
-  input.addEventListener("input", updateSearch)
-  input.addEventListener("search", updateSearch)
-  clearButton.addEventListener("click", () => {
+  const handleClearClick = () => {
     clearSearch()
     input.focus()
-  })
+  }
 
-  filterButton.addEventListener("click", () => {
+  const handleFilterClick = () => {
     filterMatches = !filterMatches
     updateFilterButton()
     updateSearch()
-  })
+  }
 
-  copyButton.addEventListener("click", async () => {
+  const handleCopyClick = async () => {
     try {
       await navigator.clipboard.writeText(lines.map((line) => line.textContent || "").join("\n"))
       status.textContent = "コピーしました"
@@ -125,9 +124,9 @@ function setupStructuredPreview(container) {
     window.setTimeout(() => {
       status.textContent = ""
     }, 1800)
-  })
+  }
 
-  document.addEventListener("keydown", (event) => {
+  const handleKeydown = (event) => {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
 
     if (event.key === "/" && !isEditableTarget(event.target)) {
@@ -142,14 +141,31 @@ function setupStructuredPreview(container) {
       clearSearch()
       input.blur()
     }
-  })
+  }
+
+  input.addEventListener("input", updateSearch)
+  input.addEventListener("search", updateSearch)
+  clearButton.addEventListener("click", handleClearClick)
+  filterButton.addEventListener("click", handleFilterClick)
+  copyButton.addEventListener("click", handleCopyClick)
+  document.addEventListener("keydown", handleKeydown)
 
   updateFilterButton()
   updateSearch()
+
+  return () => {
+    input.removeEventListener("input", updateSearch)
+    input.removeEventListener("search", updateSearch)
+    clearButton.removeEventListener("click", handleClearClick)
+    filterButton.removeEventListener("click", handleFilterClick)
+    copyButton.removeEventListener("click", handleCopyClick)
+    document.removeEventListener("keydown", handleKeydown)
+    cleanupReadyFlag()
+  }
 }
 
 function setupTextPreview(container) {
-  if (container.dataset.textPreviewToolsReady === "true") return
+  if (container.dataset.textPreviewToolsReady === "true") return null
   container.dataset.textPreviewToolsReady = "true"
   injectStructuredPreviewStyle()
 
@@ -160,7 +176,8 @@ function setupTextPreview(container) {
   const count = container.querySelector("[data-text-preview-count]")
   const status = container.querySelector("[data-text-preview-status]")
   const rows = Array.from(container.querySelectorAll("[data-text-preview-line]"))
-  if (!input || !clearButton || !filterButton || !copyButton || !count || !status || rows.length === 0) return
+  const cleanupReadyFlag = () => delete container.dataset.textPreviewToolsReady
+  if (!input || !clearButton || !filterButton || !copyButton || !count || !status || rows.length === 0) return cleanupReadyFlag
 
   let filterMatches = false
 
@@ -200,20 +217,18 @@ function setupTextPreview(container) {
     updateSearch()
   }
 
-  input.addEventListener("input", updateSearch)
-  input.addEventListener("search", updateSearch)
-  clearButton.addEventListener("click", () => {
+  const handleClearClick = () => {
     clearSearch()
     input.focus()
-  })
+  }
 
-  filterButton.addEventListener("click", () => {
+  const handleFilterClick = () => {
     filterMatches = !filterMatches
     updateFilterButton()
     updateSearch()
-  })
+  }
 
-  copyButton.addEventListener("click", async () => {
+  const handleCopyClick = async () => {
     try {
       const text = rows.map((row) => row.querySelector(".line-preview__code")?.textContent || "").join("\n")
       await navigator.clipboard.writeText(text)
@@ -225,9 +240,9 @@ function setupTextPreview(container) {
     window.setTimeout(() => {
       status.textContent = ""
     }, 1800)
-  })
+  }
 
-  document.addEventListener("keydown", (event) => {
+  const handleKeydown = (event) => {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
 
     if (event.key === "/" && !isEditableTarget(event.target)) {
@@ -242,16 +257,41 @@ function setupTextPreview(container) {
       clearSearch()
       input.blur()
     }
-  })
+  }
 
+  input.addEventListener("input", updateSearch)
+  input.addEventListener("search", updateSearch)
+  clearButton.addEventListener("click", handleClearClick)
+  filterButton.addEventListener("click", handleFilterClick)
+  copyButton.addEventListener("click", handleCopyClick)
+  document.addEventListener("keydown", handleKeydown)
   window.addEventListener("hashchange", updateAnchorTarget)
 
   updateFilterButton()
   updateSearch()
   updateAnchorTarget()
+
+  return () => {
+    input.removeEventListener("input", updateSearch)
+    input.removeEventListener("search", updateSearch)
+    clearButton.removeEventListener("click", handleClearClick)
+    filterButton.removeEventListener("click", handleFilterClick)
+    copyButton.removeEventListener("click", handleCopyClick)
+    document.removeEventListener("keydown", handleKeydown)
+    window.removeEventListener("hashchange", updateAnchorTarget)
+    cleanupReadyFlag()
+  }
 }
 
 export function setupStructuredPreviewTools() {
-  document.querySelectorAll("[data-structured-preview-tools]").forEach(setupStructuredPreview)
-  document.querySelectorAll("[data-text-preview-tools]").forEach(setupTextPreview)
+  const cleanups = []
+  document.querySelectorAll("[data-structured-preview-tools]").forEach((container) => {
+    const cleanup = setupStructuredPreview(container)
+    if (cleanup) cleanups.push(cleanup)
+  })
+  document.querySelectorAll("[data-text-preview-tools]").forEach((container) => {
+    const cleanup = setupTextPreview(container)
+    if (cleanup) cleanups.push(cleanup)
+  })
+  return cleanups
 }

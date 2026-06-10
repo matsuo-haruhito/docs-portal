@@ -12,7 +12,7 @@ html
     = stylesheet_link_tag "zip_imports", media: "all"
     = vite_client_tag
     = vite_javascript_tag "application"
-  body data-controller="nav-dropdowns document-tree-navigation manual-document-upload document-file-list-search markdown-preview-document-search markdown-preview-codeblock-tools csv-preview-tools image-preview-tools pdf-preview-tools preview-table-resizer preview-tools"
+  body data-controller="nav-dropdowns document-tree-navigation manual-document-upload document-file-list-search markdown-preview-document-search markdown-preview-codeblock-tools csv-preview-tools image-preview-tools pdf-preview-tools structured-preview-tools preview-table-resizer preview-tools"
     header
       = render "shared/navbar"
     - if content_for?(:left_content)
