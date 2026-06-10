@@ -48,7 +48,7 @@
 | `image-preview-tools` | image preview | `setupImagePreviewTools()` を専用 controller から refresh し、再描画時に button / keydown listener を cleanup する | `preview-tools` bridge から分離済み。fit / zoom / rotate / status / localStorage contract は変更しない |
 | `pdf-preview-tools` | PDF preview | `setupPdfPreviewTools()` を専用 controller から refresh し、再描画 / disconnect 時に button / keydown listener を cleanup する | `preview-tools` bridge から分離済み。height toggle / status / `aria-pressed` / localStorage / keyboard shortcut contract は変更しない |
 | `structured-preview-tools` | structured / text preview | `setupStructuredPreviewTools()` を専用 controller から refresh し、再描画 / disconnect 時に input / button / document keydown / hashchange listener を cleanup する | `preview-tools` bridge から分離済み。検索、clear、一致行のみ表示、copy、line anchor highlight、`/` / `Escape` shortcut は変更しない |
-| `preview-table-resizer` | Markdown preview table | iframe 内 table wrapping、localStorage、column resize、`turbo:load` / `turbo:render` refresh | current fallback path として維持。RTP 統合判断は #475 に残す |
+| `preview-table-resizer` | Markdown preview table | iframe 内 table wrapping、localStorage、column resize、`turbo:load` / `turbo:render` refresh | current fallback path として維持。列幅、列幅の保存、ヘッダー固定、先頭列固定に閉じ、RTP 統合判断は #475 に残す |
 | `preview-tools` | preview 内 table / archive / iframe 補助 | Markdown codeblock / document file list / structured / PDF / image / CSV 以外の `setupXxx()` library を Stimulus controller から refresh する bridge | `spec/frontend/preview_tools_source_spec.rb` で helper bridge / Turbo lifecycle / entrypoint registration を guard 済み。document search、Markdown codeblock、document file list search、structured / text preview、CSV preview table、image preview、PDF preview は専用 controller へ分離済み。その他の個別 `setupXxx()` の Stimulus 化は別 issue |
 | `sidebar` | 文書ツリー sidebar width / collapsed state | localStorage、pointer / keyboard resize | app 側 Stimulus として維持 |
 
@@ -83,7 +83,7 @@
 | helper | preview 種別 | 主な DOM / Turbo 依存 | 分割判断 | 追加 guard 候補 |
 | --- | --- | --- | --- | --- |
 | `setupSiteViewerIframeHeightSync` | Docusaurus / site viewer iframe | iframe load / postMessage 系の高さ同期。Turbo 再描画後に iframe を再探索する | bridge 維持。preview 種別横断の iframe 補助で、個別 preview controller へ寄せない | iframe helper が refresh 先頭で走ること |
-| `setupMarkdownPreviewTableTools` | Markdown preview table | preview table DOM、table 操作、既存 `preview-table-resizer` fallback path との境界 | bridge 維持。#475 / RTP 統合判断前に分割しない | Markdown table helper が bridge に残ること |
+| `setupMarkdownPreviewTableTools` | Markdown preview table | preview table DOM、table search、copy / export、既存 preference path と `preview-table-resizer` fallback path との境界 | bridge 維持。#475 / RTP 統合判断前に分割せず、current fallback support を過大に書かない | Markdown table helper が bridge に残ること。RTP full integration を実装済みとして書かないこと |
 | `setupArchivePreviewTools` | archive preview | ZIP / archive entry list の DOM 補助 | bridge 維持。download / unsafe path 境界と近いため UI redesign と混ぜない | archive helper が unsafe-path policy を先取りしないこと |
 
 Source-level guard では、上の helper 名が docs の分類表・controller import・`refresh()` 呼び出しに揃っていることだけを固定します。分類表は candidate 判断の入口であり、追加の個別 Stimulus controller 実装、helper 削除、Docusaurus renderer / Markdown table 方針変更は別 issue で扱います。
@@ -107,7 +107,21 @@ Source-level guard では、上の helper 名が docs の分類表・controller 
 
 ### Markdown preview table
 
-`preview_table_resizer_controller.js` は、Docusaurus 生成 HTML table を Rails helper 経由で `rails_table_preferences` に接続していない current support の fallback path です。
+`preview_table_resizer_controller.js` と `setupMarkdownPreviewTableTools` は、Docusaurus 生成 HTML table を Rails helper 経由で `rails_table_preferences` に接続していない current support の fallback path です。
+
+current fallback support として提供していること:
+
+- iframe 内の Markdown table wrapping、横スクロール、列幅調整、ヘッダー固定、先頭列固定。
+- table search、copy、CSV / Markdown export、表示設定の reset。
+- 既存の `/rails_table_preferences/preferences` path と `railsTablePreferencesTableKey` を使う default preference 補助。
+- preview context key と table index に基づく localStorage の幅・sticky 表示補助。
+
+#475 に残すこと:
+
+- Markdown 由来 table を通常の `rails-table-preferences` controller に full 接続するかどうかの判断。
+- column visibility / preset UI の本格統合、host app policy と埋め込み preview policy の整理。
+- Docusaurus renderer や Markdown table DOM rewrite、preference schema / key の再設計。
+- gem pinned ref、upstream gem API、Rails helper 側の table contract 変更。
 
 維持する理由:
 
@@ -129,6 +143,7 @@ Source-level guard では、上の helper 名が docs の分類表・controller 
 - document file list search の query / clear / count / match highlight / parent context row 表示 behavior は変更しない。
 - `document-file-browser` controller の kind / query filter / empty state とは統合しない。
 - Markdown preview codeblock の copy / JSON整形 copy / JSON検証 / 機密注意 / line anchor / iframe style injection behavior は変更しない。
+- Markdown preview table の full `rails_table_preferences` 統合、column visibility / preset UI、Docusaurus renderer、DOM rewrite、preference schema / key 再設計は変更しない。
 - PDF preview の height toggle / status / `aria-pressed` / localStorage / keyboard shortcut behavior は変更しない。
 - image preview の fit / zoom / rotate / status / localStorage behavior は変更しない。
 - `application.js` の直接 DOM setup は追加しない。
