@@ -9,6 +9,7 @@ import { Application } from "@hotwired/stimulus"
 import { RailsTablePreferencesController } from "rails_table_preferences"
 import { TomSelectController } from "rails_fields_kit"
 import "tom-select/dist/css/tom-select.css"
+import ArchivePreviewToolsController from "../controllers/archive_preview_tools_controller"
 import AutoHeightFrameController from "../controllers/auto_height_frame_controller"
 import BulkEditSelectionController from "../controllers/bulk_edit_selection_controller"
 import CsvPreviewToolsController from "../controllers/csv_preview_tools_controller"
@@ -29,11 +30,13 @@ import PdfPreviewToolsController from "../controllers/pdf_preview_tools_controll
 import PreviewTableResizerController from "../controllers/preview_table_resizer_controller"
 import PreviewToolsController from "../controllers/preview_tools_controller"
 import SidebarController from "../controllers/sidebar_controller"
+import SiteViewerIframeHeightController from "../controllers/site_viewer_iframe_height_controller"
 import StructuredPreviewToolsController from "../controllers/structured_preview_tools_controller"
 
 const application = Application.start()
 application.register("rails-table-preferences", RailsTablePreferencesController)
 application.register("rails-fields-kit--tom-select", TomSelectController)
+application.register("archive-preview-tools", ArchivePreviewToolsController)
 application.register("auto-height-frame", AutoHeightFrameController)
 application.register("bulk-edit-selection", BulkEditSelectionController)
 application.register("csv-preview-tools", CsvPreviewToolsController)
@@ -54,4 +57,5 @@ application.register("pdf-preview-tools", PdfPreviewToolsController)
 application.register("preview-table-resizer", PreviewTableResizerController)
 application.register("preview-tools", PreviewToolsController)
 application.register("sidebar", SidebarController)
+application.register("site-viewer-iframe-height", SiteViewerIframeHeightController)
 application.register("structured-preview-tools", StructuredPreviewToolsController)

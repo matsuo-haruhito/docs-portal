@@ -9,6 +9,8 @@ RSpec.describe "preview tools source" do
   let(:table_tools_source) { read_source("app/frontend/lib/markdown_preview_table_tools.js") }
   let(:site_viewer_iframe_height_source) { read_source("app/frontend/lib/site_viewer_iframe_height.js") }
   let(:archive_tools_source) { read_source("app/frontend/lib/archive_preview_tools.js") }
+  let(:archive_controller_source) { read_source("app/frontend/controllers/archive_preview_tools_controller.js") }
+  let(:site_viewer_iframe_height_controller_source) { read_source("app/frontend/controllers/site_viewer_iframe_height_controller.js") }
   let(:file_list_controller_source) { read_source("app/frontend/controllers/document_file_list_search_controller.js") }
   let(:file_list_search_source) { read_source("app/frontend/lib/document_file_list_search.js") }
   let(:codeblock_controller_source) { read_source("app/frontend/controllers/markdown_preview_codeblock_tools_controller.js") }
@@ -26,21 +28,17 @@ RSpec.describe "preview tools source" do
 
   let(:expected_helpers) do
     {
-      "setupMarkdownPreviewTableTools" => "../lib/markdown_preview_table_tools",
-      "setupArchivePreviewTools" => "../lib/archive_preview_tools",
-      "setupSiteViewerIframeHeightSync" => "../lib/site_viewer_iframe_height"
+      "setupMarkdownPreviewTableTools" => "../lib/markdown_preview_table_tools"
     }
   end
 
   let(:expected_helper_classifications) do
     {
-      "setupSiteViewerIframeHeightSync" => "Docusaurus / site viewer iframe",
-      "setupMarkdownPreviewTableTools" => "Markdown preview table",
-      "setupArchivePreviewTools" => "archive preview"
+      "setupMarkdownPreviewTableTools" => "Markdown preview table"
     }
   end
 
-  it "imports the current preview helper bridge set without document search, codeblock, file list search, structured preview, CSV preview, image preview, or PDF preview" do
+  it "imports the current preview helper bridge set without document search, codeblock, file list search, structured preview, CSV preview, image preview, PDF preview, archive preview, or site viewer iframe height sync" do
     aggregate_failures do
       expected_helpers.each do |helper_name, import_path|
         expect(controller_source).to include(%(import { #{helper_name} } from "#{import_path}"))
@@ -60,6 +58,10 @@ RSpec.describe "preview tools source" do
       expect(controller_source).not_to include("../lib/image_preview_tools")
       expect(controller_source).not_to include("setupPdfPreviewTools")
       expect(controller_source).not_to include("../lib/pdf_preview_tools")
+      expect(controller_source).not_to include("setupArchivePreviewTools")
+      expect(controller_source).not_to include("../lib/archive_preview_tools")
+      expect(controller_source).not_to include("setupSiteViewerIframeHeightSync")
+      expect(controller_source).not_to include("../lib/site_viewer_iframe_height")
     end
   end
 
@@ -74,6 +76,8 @@ RSpec.describe "preview tools source" do
       expect(inventory_source).to include("CSV preview table は専用 `csv-preview-tools` controller へ分離済み")
       expect(inventory_source).to include("image preview は専用 `image-preview-tools` controller へ分離済み")
       expect(inventory_source).to include("PDF preview は専用 `pdf-preview-tools` controller へ分離済み")
+      expect(inventory_source).to include("archive preview は専用 `archive-preview-tools` controller へ分離済み")
+      expect(inventory_source).to include("site viewer iframe height sync は専用 `site-viewer-iframe-height` controller へ分離済み")
       expect(inventory_source).to include("helper 名が docs の分類表・controller import・`refresh()` 呼び出しに揃っている")
 
       expected_helper_classifications.each do |helper_name, preview_kind|
@@ -86,6 +90,8 @@ RSpec.describe "preview tools source" do
       expect(inventory_source).not_to include("| `setupCsvPreviewTableTools` | CSV preview table |")
       expect(inventory_source).not_to include("| `setupImagePreviewTools` | image preview |")
       expect(inventory_source).not_to include("| `setupPdfPreviewTools` | PDF preview |")
+      expect(inventory_source).not_to include("| `setupArchivePreviewTools` | archive preview |")
+      expect(inventory_source).not_to include("| `setupSiteViewerIframeHeightSync` | Docusaurus / site viewer iframe |")
     end
   end
 
@@ -94,9 +100,7 @@ RSpec.describe "preview tools source" do
     refresh_calls = refresh_body.scan(/^    (setup[A-Za-z0-9]+)\(\)$/).flatten
 
     expect(refresh_calls).to eq([
-      "setupSiteViewerIframeHeightSync",
-      "setupMarkdownPreviewTableTools",
-      "setupArchivePreviewTools"
+      "setupMarkdownPreviewTableTools"
     ])
   end
 
@@ -175,6 +179,32 @@ RSpec.describe "preview tools source" do
       expect(controller_source).to include("this.refresh()")
       expect(controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
       expect(controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
+    end
+  end
+
+  it "keeps archive preview tools in a dedicated controller with the same Turbo lifecycle" do
+    aggregate_failures do
+      expect(archive_controller_source).to include('import { setupArchivePreviewTools } from "../lib/archive_preview_tools"')
+      expect(archive_controller_source.scan("setupArchivePreviewTools()").size).to eq(1)
+      expect(archive_controller_source).to include("this.refresh = this.refresh.bind(this)")
+      expect(archive_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
+      expect(archive_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
+      expect(archive_controller_source).to include("this.refresh()")
+      expect(archive_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
+      expect(archive_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
+    end
+  end
+
+  it "keeps site viewer iframe height sync in a dedicated controller with the same Turbo lifecycle" do
+    aggregate_failures do
+      expect(site_viewer_iframe_height_controller_source).to include('import { setupSiteViewerIframeHeightSync } from "../lib/site_viewer_iframe_height"')
+      expect(site_viewer_iframe_height_controller_source.scan("setupSiteViewerIframeHeightSync()").size).to eq(1)
+      expect(site_viewer_iframe_height_controller_source).to include("this.refresh = this.refresh.bind(this)")
+      expect(site_viewer_iframe_height_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
+      expect(site_viewer_iframe_height_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
+      expect(site_viewer_iframe_height_controller_source).to include("this.refresh()")
+      expect(site_viewer_iframe_height_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
+      expect(site_viewer_iframe_height_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
     end
   end
 
@@ -321,6 +351,7 @@ RSpec.describe "preview tools source" do
 
   it "keeps preview controllers registered and attached without direct DOM setup in the entrypoint" do
     aggregate_failures do
+      expect(entrypoint_source).to include('import ArchivePreviewToolsController from "../controllers/archive_preview_tools_controller"')
       expect(entrypoint_source).to include('import CsvPreviewToolsController from "../controllers/csv_preview_tools_controller"')
       expect(entrypoint_source).to include('import DocumentFileListSearchController from "../controllers/document_file_list_search_controller"')
       expect(entrypoint_source).to include('import ImagePreviewToolsController from "../controllers/image_preview_tools_controller"')
@@ -328,7 +359,9 @@ RSpec.describe "preview tools source" do
       expect(entrypoint_source).to include('import MarkdownPreviewDocumentSearchController from "../controllers/markdown_preview_document_search_controller"')
       expect(entrypoint_source).to include('import PdfPreviewToolsController from "../controllers/pdf_preview_tools_controller"')
       expect(entrypoint_source).to include('import PreviewToolsController from "../controllers/preview_tools_controller"')
+      expect(entrypoint_source).to include('import SiteViewerIframeHeightController from "../controllers/site_viewer_iframe_height_controller"')
       expect(entrypoint_source).to include('import StructuredPreviewToolsController from "../controllers/structured_preview_tools_controller"')
+      expect(entrypoint_source).to include('application.register("archive-preview-tools", ArchivePreviewToolsController)')
       expect(entrypoint_source).to include('application.register("csv-preview-tools", CsvPreviewToolsController)')
       expect(entrypoint_source).to include('application.register("document-file-list-search", DocumentFileListSearchController)')
       expect(entrypoint_source).to include('application.register("image-preview-tools", ImagePreviewToolsController)')
@@ -336,8 +369,9 @@ RSpec.describe "preview tools source" do
       expect(entrypoint_source).to include('application.register("markdown-preview-document-search", MarkdownPreviewDocumentSearchController)')
       expect(entrypoint_source).to include('application.register("pdf-preview-tools", PdfPreviewToolsController)')
       expect(entrypoint_source).to include('application.register("preview-tools", PreviewToolsController)')
+      expect(entrypoint_source).to include('application.register("site-viewer-iframe-height", SiteViewerIframeHeightController)')
       expect(entrypoint_source).to include('application.register("structured-preview-tools", StructuredPreviewToolsController)')
-      expect(layout_source).to include('data-controller="nav-dropdowns document-tree-navigation manual-document-upload document-file-list-search markdown-preview-document-search markdown-preview-codeblock-tools csv-preview-tools image-preview-tools pdf-preview-tools structured-preview-tools preview-table-resizer preview-tools"')
+      expect(layout_source).to include('data-controller="nav-dropdowns document-tree-navigation manual-document-upload document-file-list-search markdown-preview-document-search markdown-preview-codeblock-tools csv-preview-tools image-preview-tools pdf-preview-tools structured-preview-tools preview-table-resizer archive-preview-tools site-viewer-iframe-height preview-tools"')
       expect(entrypoint_source).not_to include("querySelectorAll")
       expect(entrypoint_source).not_to include("addEventListener")
       expect(entrypoint_source).not_to include("new TomSelect")
