@@ -19,10 +19,11 @@ RSpec.describe "admin project external preview selectors source" do
     end
   end
 
-  it "keeps the company selector on the existing basic select path" do
+  it "keeps the company selector on the existing basic select path with target cue copy" do
     aggregate_failures do
       expect(view_source).to include("form.select :company_id")
       expect(view_source).to include("options_from_collection_for_select(@preview_companies, :id, :display_name, @selected_company&.id)")
+      expect(view_source).to include("会社を選ぶと、その会社に所属する有効な外部ユーザーの表示可否をまとめて確認します。")
       expect(view_source).not_to include("= form.rfk_select :company_id,")
     end
   end
