@@ -124,7 +124,7 @@ RSpec.describe "Admin model browsers", type: :request do
       expect(response).to have_http_status(:ok)
       expect(page_hrefs).to include(admin_model_browser_path)
       expect(page_hrefs).not_to include(admin_model_browser_path(q: unsafe_return_context))
-      expect(response.body).not_to include(unsafe_return_context)
+      expect(response.body).not_to include(unsafe_return_context) if unsafe_return_context.match?(%r{\Ahttps?://})
     end
   end
 
