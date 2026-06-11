@@ -3,7 +3,6 @@ require "rails_helper"
 RSpec.describe "site viewer iframe height source" do
   let(:view_source) { Rails.root.join("app/views/shared/site_viewer.html.slim").read }
   let(:layout_source) { Rails.root.join("app/views/layouts/application.html.slim").read }
-  let(:preview_tools_source) { Rails.root.join("app/frontend/controllers/preview_tools_controller.js").read }
   let(:site_viewer_iframe_height_controller_source) { Rails.root.join("app/frontend/controllers/site_viewer_iframe_height_controller.js").read }
   let(:helper_source) { Rails.root.join("app/frontend/lib/site_viewer_iframe_height.js").read }
   let(:document_controller_source) { Rails.root.join("app/controllers/document_sites_controller.rb").read }
@@ -18,7 +17,7 @@ RSpec.describe "site viewer iframe height source" do
       expect(layout_source).to include("site-viewer-iframe-height")
       expect(site_viewer_iframe_height_controller_source).to include('import { setupSiteViewerIframeHeightSync } from "../lib/site_viewer_iframe_height"')
       expect(site_viewer_iframe_height_controller_source).to include("setupSiteViewerIframeHeightSync()")
-      expect(preview_tools_source).not_to include("setupSiteViewerIframeHeightSync")
+      expect(Rails.root.join("app/frontend/controllers/preview_tools_controller.js")).not_to exist
     end
   end
 
