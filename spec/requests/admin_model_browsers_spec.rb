@@ -74,6 +74,22 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(page_hrefs).not_to include(admin_model_browser_path(q: "documents"))
   end
 
+  it "normalizes and bounds model browser index return context independently from record searches" do
+    overlong_return_context = "  文書" + ("x" * 120)
+    bounded_return_context = overlong_return_context.strip.slice(0, Admin::ModelBrowsersController::MODEL_BROWSER_QUERY_MAX_LENGTH)
+
+    sign_in_as(admin_user)
+    get admin_model_browser_model_path("documents"), params: { model_browser_q: overlong_return_context, q: "release-note" }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("検索語: release-note / 表示上限: 20件")
+    expect(parsed_html.css("input[name='model_browser_q'][value='#{bounded_return_context}']")).to be_present
+    expect(page_hrefs).to include(admin_model_browser_path(q: bounded_return_context))
+    expect(page_hrefs).to include(admin_model_browser_model_path("documents", model_browser_q: bounded_return_context))
+    expect(page_hrefs).not_to include(admin_model_browser_path(q: "release-note"))
+    expect(response.body).not_to include(overlong_return_context.strip)
+  end
+
   it "keeps model browser index return context separate from model record searches" do
     matching_project = create(:project, code: "RETURN2389", name: "Return Context Project")
     other_project = create(:project, code: "OTHER2389", name: "Other Project")
@@ -93,13 +109,23 @@ RSpec.describe "Admin model browsers", type: :request do
   end
 
   it "falls back to the model browser index for unsafe return context values" do
-    sign_in_as(admin_user)
-    get admin_model_browser_model_path("documents"), params: { model_browser_q: "https://example.com/admin", q: "doc" }
+    unsafe_return_contexts = [
+      "http://example.com/admin",
+      "https://example.com/admin",
+      "//example.com/admin",
+      "/admin/projects"
+    ]
 
-    expect(response).to have_http_status(:ok)
-    expect(page_hrefs).to include(admin_model_browser_path)
-    expect(page_hrefs).not_to include(admin_model_browser_path(q: "https://example.com/admin"))
-    expect(response.body).not_to include("https://example.com/admin")
+    sign_in_as(admin_user)
+
+    unsafe_return_contexts.each do |unsafe_return_context|
+      get admin_model_browser_model_path("documents"), params: { model_browser_q: unsafe_return_context, q: "doc" }
+
+      expect(response).to have_http_status(:ok)
+      expect(page_hrefs).to include(admin_model_browser_path)
+      expect(page_hrefs).not_to include(admin_model_browser_path(q: unsafe_return_context))
+      expect(response.body).not_to include(unsafe_return_context) if unsafe_return_context.match?(%r{\Ahttps?://})
+    end
   end
 
   it "filters the model browser index by key while normalizing spaces and case" do
