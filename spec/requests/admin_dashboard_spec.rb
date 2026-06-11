@@ -232,6 +232,21 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("文書ファイル健全性")
   end
 
+  it "calls generated run alert candidates with a bounded dashboard query window" do
+    alert_candidate_service = instance_double(GeneratedFiles::RunFailureAlertCandidates, call: [])
+    expect(GeneratedFiles::RunFailureAlertCandidates).to receive(:new).with(
+      limit: Admin::DashboardController::GENERATED_FILE_ALERT_CANDIDATE_LIMIT,
+      lookback_limit: Admin::DashboardController::GENERATED_FILE_ALERT_CANDIDATE_LOOKBACK_LIMIT
+    ).and_return(alert_candidate_service)
+
+    sign_in_as(admin_user)
+
+    get admin_root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("継続失敗候補: 0 件")
+  end
+
   it "shows generated file consecutive failure alert candidates without showing resolved streaks" do
     latest_failure_at = 30.minutes.ago.change(usec: 0)
     [latest_failure_at, 45.minutes.ago, 1.hour.ago].each_with_index do |started_at, index|
