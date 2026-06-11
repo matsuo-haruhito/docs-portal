@@ -20,6 +20,7 @@
 - source が HTML より新しい場合、画面表示時に build が enqueue されることがあります
 - 直近 build 結果は API仕様ページ専用の status marker で表示されます。build queue 全体や Docusaurus build 履歴の一覧ではありません
 - `表示状態` は API仕様ページ全体の build 結果です。`主要ページとsource` の各行は、個別ページごとの編集元と HTML 確認先を見分けるための cue として読みます
+- `Build manifest` は `admin_api_spec` profile の build 成功時に残る観測用 metadata です。profile、validation、Docusaurus version、source path / mtime を確認する入口であり、iframe 配信条件や閲覧権限の判定には使いません
 - 各行の `編集元Markdown` は直す Markdown file、`HTML確認先（build後）` は build 後に開く generated page です。Source を直しただけでは HTML が更新済みとは限らないため、build 成功後に HTML確認先まで開きます
 - 各行の `Freshness` は、その行の source mtime と generated HTML mtime の比較だけを示します。build queue、iframe 配信可否、site route の安全境界、直近 build 履歴を代表するものではありません
 
@@ -38,9 +39,10 @@
 2. 管理画面の `API仕様` を開きます。
 3. 上部 notice と `表示状態` を見て、build が開始されたか、HTML が最新か、直近 build が失敗していないかを確認します。
 4. `build 待ち/実行中` または `HTML未生成または stale` の場合は、少し待って再読み込みします。
-5. `最新 build 成功` になったら、iframe で entry HTML を確認し、`主要ページとsource` の更新対象行で `編集元Markdown`、`HTML確認先（build後）`、`Freshness` を照合します。直した source file に対応する HTML確認先を開き、更新した説明が HTML 側にも反映されていることを確認します。
-6. 行別 `Freshness` が `Source更新あり`、`HTML未生成`、`Source missing` の場合は、全体の `表示状態` が成功でも対象行だけを見直します。build 後に HTML確認先を開くか、source path / slug / site path の対応を確認します。
-7. `build 失敗` の場合は、画面の短い失敗理由だけで断定せず、下の `build 失敗時の切り分け` へ進みます。
+5. `最新 build 成功` になったら、`Build manifest` で `Profile` が `admin_api_spec`、`Validation` が `success`、`Source` が `docs-src/api-specification.md` になっているかを確認します。manifest 欠落や warning が出ていても、表示自体は継続するため、まず下の `Build manifest の見方` で原因を分けます。
+6. iframe で entry HTML を確認し、`主要ページとsource` の更新対象行で `編集元Markdown`、`HTML確認先（build後）`、`Freshness` を照合します。直した source file に対応する HTML確認先を開き、更新した説明が HTML 側にも反映されていることを確認します。
+7. 行別 `Freshness` が `Source更新あり`、`HTML未生成`、`Source missing` の場合は、全体の `表示状態` が成功でも対象行だけを見直します。build 後に HTML確認先を開くか、source path / slug / site path の対応を確認します。
+8. `build 失敗` の場合は、画面の短い失敗理由だけで断定せず、下の `build 失敗時の切り分け` へ進みます。
 
 ## 表示状態の見方
 
@@ -51,6 +53,7 @@ API仕様ページ上部の `表示状態` は、notice よりも現在の確認
 - Docusaurus build 済み HTML が最新と見なせる状態です
 - 必要に応じて再読み込みし、iframe と `主要ページとsource` の link 先を確認します
 - `最終成功`、`最終記録`、`HTML更新時刻` が表示される場合は、docs-src の更新時刻と照合します
+- `Build manifest` が `build manifest 確認済み` なら、同じ build 成功に対応する profile / validation / Docusaurus version / source metadata も観測できる状態です
 
 ### `build 待ち/実行中`
 
@@ -69,6 +72,35 @@ API仕様ページ上部の `表示状態` は、notice よりも現在の確認
 - 直近の API仕様 Docusaurus build が失敗した状態です
 - 画面には短く sanitize された失敗理由だけが表示されます。token、絶対 path、長い stderr をそのまま正本にしません
 - `最終記録` の時刻を見て、source、runtime、job / CI logs の順で切り分けます
+
+## Build manifest の見方
+
+`Build manifest` は、API仕様ページ専用 build が成功したときに `docusaurus/build/api-specification/build-manifest.json` として記録される read-only metadata です。HTML 本文の正しさを保証するものではなく、どの build profile / source / runtime metadata で成功したかを後から確認する補助として使います。
+
+### `build manifest 確認済み`
+
+- `Profile` が `admin_api_spec` と一致している状態です
+- `Validation` は build 成功時の記録値です。現時点では `success` を期待します
+- `Docusaurus version` は `docusaurus/package.json` の `@docusaurus/core` から取れる場合に表示され、取れない場合は `unknown` になります
+- `Source` と `Source更新` は entry source の `docs-src/api-specification.md` とその mtime です。関連ページ単位の確認は `主要ページとsource` の各行で続けます
+
+### `build manifest 未記録`
+
+- 既存 HTML は表示できても、manifest がまだ存在しない状態です
+- 次回の API仕様 build 成功後に記録されます
+- manifest 未記録だけで iframe 配信不可、権限不足、HTML不一致とは判断しません
+
+### `build manifest 読み取り不可`
+
+- manifest JSON が壊れている、または Hash として読めない状態です
+- HTML 表示は継続するため、まず manifest file の JSON と build 成功時の書き込みを確認します
+- raw stdout / stderr や token-like value を画面上の manifest から探す入口ではありません
+
+### `build manifest profile 不一致`
+
+- manifest の `profile` が `admin_api_spec` ではない状態です
+- 表示は warning に留まり、iframe 配信条件や閲覧権限は変えません
+- 別 profile の build artifact を見ていないか、build root / profile / source path の対応を確認します
 
 ## 行別 Freshness cue の見方
 
