@@ -9,9 +9,7 @@ class Admin::DocumentsController < Admin::BaseController
   helper_method :document_return_to_path
 
   def index
-    @filters = document_filter_params
-    @documents = filtered_documents.includes(:project, :latest_version, :archived_by_user, :document_versions).order("projects.code", :title)
-    load_bulk_edit_candidate_state
+    load_document_index_state
     @document = Document.new(category: :spec, document_kind: :markdown, visibility_policy: :internal_only)
   end
 
@@ -21,9 +19,7 @@ class Admin::DocumentsController < Admin::BaseController
     if @document.save
       redirect_to admin_documents_path, notice: "文書を登録しました。"
     else
-      @filters = document_filter_params
-      @documents = filtered_documents.includes(:project, :latest_version, :archived_by_user, :document_versions).order("projects.code", :title)
-      load_bulk_edit_candidate_state
+      load_document_index_state
       render :index, status: :unprocessable_entity
     end
   end
@@ -76,6 +72,16 @@ class Admin::DocumentsController < Admin::BaseController
     safe_return_to_path(admin_documents_path)
   end
 
+  def load_document_index_state
+    @filters = document_filter_params
+    document_scope = filtered_documents
+    @documents_filtered_count = document_scope.count
+    ordered_documents = document_scope.includes(:project, :latest_version, :archived_by_user, :document_versions).order("projects.code", :title)
+    @documents, @documents_pagination = paginate_admin_list(ordered_documents, @documents_filtered_count)
+    @document_page_params = document_page_params
+    load_bulk_edit_candidate_state(document_scope)
+  end
+
   def document_params
     params.require(:document).permit(:project_id, :title, :slug, :category, :document_kind, :visibility_policy, :retention_until, :discard_candidate_at)
   end
@@ -86,17 +92,23 @@ class Admin::DocumentsController < Admin::BaseController
     end
   end
 
+  def document_page_params
+    page_params = @filters.transform_keys(&:to_s)
+    page_params["per_page"] = @documents_pagination[:per_page] if params[:per_page].present?
+    page_params.reject { |_key, value| value.blank? }
+  end
+
   def normalize_document_search_query(value)
     value.to_s.strip.first(DOCUMENT_SEARCH_QUERY_MAX_LENGTH)
   end
 
-  def load_bulk_edit_candidate_state
+  def load_bulk_edit_candidate_state(document_scope)
     @bulk_edit_candidate_limit = BULK_EDIT_CANDIDATE_LIMIT
-    @bulk_edit_candidate_count = @documents.size
+    @bulk_edit_candidate_count = @documents_filtered_count
     @bulk_edit_candidate_ids = []
     return if @bulk_edit_candidate_count.zero? || @bulk_edit_candidate_count > @bulk_edit_candidate_limit
 
-    @bulk_edit_candidate_ids = @documents.to_a.map(&:id)
+    @bulk_edit_candidate_ids = document_scope.includes(:project).order("projects.code", :title).to_a.map(&:id)
   end
 
   def filtered_documents
