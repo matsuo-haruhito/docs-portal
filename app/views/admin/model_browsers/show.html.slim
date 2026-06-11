@@ -47,7 +47,8 @@ section.card
       span = search_field_label_text
     p.actions
       = form.submit "検索", class: "button"
-      = link_to "検索を解除", model_browser_reset_path, class: "button secondary"
+      - if @query.present?
+        = link_to "検索を解除", model_browser_reset_path, class: "button secondary"
 
 section.card
   h2 = @query.present? ? "検索結果" : "最近のデータ"
