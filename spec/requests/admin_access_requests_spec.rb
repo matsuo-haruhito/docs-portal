@@ -192,9 +192,14 @@ RSpec.describe "Admin access requests", type: :request do
 
   it "paginates filtered access requests while preserving filters in page links and actions" do
     matching_requests = Array.new(3) do |index|
+      paged_document = create(:document,
+        project:,
+        title: "Paged Manual #{index}",
+        slug: "paged-manual-#{index}",
+        visibility_policy: :restricted_external)
       create(:access_request,
         requester:,
-        requestable: document,
+        requestable: paged_document,
         requested_access_level: :download,
         reason: "Paged access request #{index}",
         created_at: Time.zone.local(2026, 5, 1, 12, index, 0))
