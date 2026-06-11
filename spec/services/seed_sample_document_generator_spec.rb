@@ -63,6 +63,27 @@ RSpec.describe SeedSupport::SeedSampleDocumentGenerator do
     end
   end
 
+  it "recreates only the standard showcase site and leaves sibling external samples intact" do
+    stale_showcase_file = site_root.join("stale.txt")
+    ai_usecase_file = root.join("ai-usecases", "customer-support", "README.md")
+    optional_sample_file = root.join("optional-samples", "partner-demo", "README.md")
+
+    [stale_showcase_file, ai_usecase_file, optional_sample_file].each do |path|
+      FileUtils.mkdir_p(path.dirname)
+      path.write("keep this file")
+    end
+
+    generator.run
+
+    aggregate_failures "external sample deletion boundary" do
+      expect(stale_showcase_file.exist?).to be(false)
+      expect(ai_usecase_file.exist?).to be(true)
+      expect(ai_usecase_file.read).to eq("keep this file")
+      expect(optional_sample_file.exist?).to be(true)
+      expect(optional_sample_file.read).to eq("keep this file")
+    end
+  end
+
   it "generates non-empty PDF, XLSX, and CSV artifacts with lightweight format markers" do
     generator.run
 
