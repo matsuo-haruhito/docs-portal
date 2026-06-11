@@ -5,106 +5,66 @@ RSpec.describe "preview tools source" do
     Rails.root.join(path).read
   end
 
-  let(:controller_source) { read_source("app/frontend/controllers/preview_tools_controller.js") }
+  let(:markdown_table_controller_source) { read_source("app/frontend/controllers/markdown_preview_table_tools_controller.js") }
   let(:table_tools_source) { read_source("app/frontend/lib/markdown_preview_table_tools.js") }
-  let(:site_viewer_iframe_height_source) { read_source("app/frontend/lib/site_viewer_iframe_height.js") }
-  let(:archive_tools_source) { read_source("app/frontend/lib/archive_preview_tools.js") }
-  let(:archive_controller_source) { read_source("app/frontend/controllers/archive_preview_tools_controller.js") }
-  let(:site_viewer_iframe_height_controller_source) { read_source("app/frontend/controllers/site_viewer_iframe_height_controller.js") }
-  let(:file_list_controller_source) { read_source("app/frontend/controllers/document_file_list_search_controller.js") }
-  let(:file_list_search_source) { read_source("app/frontend/lib/document_file_list_search.js") }
-  let(:codeblock_controller_source) { read_source("app/frontend/controllers/markdown_preview_codeblock_tools_controller.js") }
-  let(:codeblock_tools_source) { read_source("app/frontend/lib/markdown_preview_codeblock_tools.js") }
-  let(:csv_controller_source) { read_source("app/frontend/controllers/csv_preview_tools_controller.js") }
-  let(:image_controller_source) { read_source("app/frontend/controllers/image_preview_tools_controller.js") }
-  let(:pdf_controller_source) { read_source("app/frontend/controllers/pdf_preview_tools_controller.js") }
-  let(:pdf_tools_source) { read_source("app/frontend/lib/pdf_preview_tools.js") }
-  let(:search_controller_source) { read_source("app/frontend/controllers/markdown_preview_document_search_controller.js") }
-  let(:structured_controller_source) { read_source("app/frontend/controllers/structured_preview_tools_controller.js") }
-  let(:structured_tools_source) { read_source("app/frontend/lib/structured_preview_tools.js") }
   let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.js") }
   let(:layout_source) { read_source("app/views/layouts/application.html.slim") }
   let(:inventory_source) { read_source("doc/frontend_initialization_inventory.md") }
 
-  let(:expected_helpers) do
+  let(:dedicated_preview_controllers) do
     {
-      "setupMarkdownPreviewTableTools" => "../lib/markdown_preview_table_tools"
+      "archive-preview-tools" => ["ArchivePreviewToolsController", "archive_preview_tools_controller"],
+      "csv-preview-tools" => ["CsvPreviewToolsController", "csv_preview_tools_controller"],
+      "document-file-list-search" => ["DocumentFileListSearchController", "document_file_list_search_controller"],
+      "image-preview-tools" => ["ImagePreviewToolsController", "image_preview_tools_controller"],
+      "markdown-preview-codeblock-tools" => ["MarkdownPreviewCodeblockToolsController", "markdown_preview_codeblock_tools_controller"],
+      "markdown-preview-document-search" => ["MarkdownPreviewDocumentSearchController", "markdown_preview_document_search_controller"],
+      "markdown-preview-table-tools" => ["MarkdownPreviewTableToolsController", "markdown_preview_table_tools_controller"],
+      "pdf-preview-tools" => ["PdfPreviewToolsController", "pdf_preview_tools_controller"],
+      "site-viewer-iframe-height" => ["SiteViewerIframeHeightController", "site_viewer_iframe_height_controller"],
+      "structured-preview-tools" => ["StructuredPreviewToolsController", "structured_preview_tools_controller"]
     }
   end
 
-  let(:expected_helper_classifications) do
-    {
-      "setupMarkdownPreviewTableTools" => "Markdown preview table"
-    }
-  end
-
-  it "imports the current preview helper bridge set without document search, codeblock, file list search, structured preview, CSV preview, image preview, PDF preview, archive preview, or site viewer iframe height sync" do
+  it "moves the markdown preview table helper to a dedicated controller with the existing Turbo lifecycle" do
     aggregate_failures do
-      expected_helpers.each do |helper_name, import_path|
-        expect(controller_source).to include(%(import { #{helper_name} } from "#{import_path}"))
-      end
-
-      expect(controller_source).not_to include("setupMarkdownPreviewDocumentSearch")
-      expect(controller_source).not_to include("../lib/markdown_preview_document_search")
-      expect(controller_source).not_to include("setupMarkdownPreviewCodeblockTools")
-      expect(controller_source).not_to include("../lib/markdown_preview_codeblock_tools")
-      expect(controller_source).not_to include("setupDocumentFileListSearch")
-      expect(controller_source).not_to include("../lib/document_file_list_search")
-      expect(controller_source).not_to include("setupStructuredPreviewTools")
-      expect(controller_source).not_to include("../lib/structured_preview_tools")
-      expect(controller_source).not_to include("setupCsvPreviewTableTools")
-      expect(controller_source).not_to include("../lib/csv_preview_table_tools")
-      expect(controller_source).not_to include("setupImagePreviewTools")
-      expect(controller_source).not_to include("../lib/image_preview_tools")
-      expect(controller_source).not_to include("setupPdfPreviewTools")
-      expect(controller_source).not_to include("../lib/pdf_preview_tools")
-      expect(controller_source).not_to include("setupArchivePreviewTools")
-      expect(controller_source).not_to include("../lib/archive_preview_tools")
-      expect(controller_source).not_to include("setupSiteViewerIframeHeightSync")
-      expect(controller_source).not_to include("../lib/site_viewer_iframe_height")
+      expect(markdown_table_controller_source).to include('import { setupMarkdownPreviewTableTools } from "../lib/markdown_preview_table_tools"')
+      expect(markdown_table_controller_source.scan("setupMarkdownPreviewTableTools()").size).to eq(1)
+      expect(markdown_table_controller_source).to include("this.refresh = this.refresh.bind(this)")
+      expect(markdown_table_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
+      expect(markdown_table_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
+      expect(markdown_table_controller_source).to include("this.refresh()")
+      expect(markdown_table_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
+      expect(markdown_table_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
     end
   end
 
-  it "keeps the inventory classification table aligned with the helper bridge set" do
+  it "removes the old preview-tools bridge from the registered and attached controller set" do
     aggregate_failures do
-      expect(inventory_source).to include("## Preview-tools helper bridge 分類")
-      expect(inventory_source).to include("helper 呼び出し順や runtime behavior は変更しません")
-      expect(inventory_source).to include("document search は専用 `markdown-preview-document-search` controller へ分離済み")
-      expect(inventory_source).to include("Markdown preview codeblock は専用 `markdown-preview-codeblock-tools` controller へ分離済み")
-      expect(inventory_source).to include("document file list search は専用 `document-file-list-search` controller へ分離済み")
-      expect(inventory_source).to include("structured / text preview は専用 `structured-preview-tools` controller へ分離済み")
-      expect(inventory_source).to include("CSV preview table は専用 `csv-preview-tools` controller へ分離済み")
-      expect(inventory_source).to include("image preview は専用 `image-preview-tools` controller へ分離済み")
-      expect(inventory_source).to include("PDF preview は専用 `pdf-preview-tools` controller へ分離済み")
-      expect(inventory_source).to include("archive preview は専用 `archive-preview-tools` controller へ分離済み")
-      expect(inventory_source).to include("site viewer iframe height sync は専用 `site-viewer-iframe-height` controller へ分離済み")
-      expect(inventory_source).to include("helper 名が docs の分類表・controller import・`refresh()` 呼び出しに揃っている")
-
-      expected_helper_classifications.each do |helper_name, preview_kind|
-        expect(inventory_source).to include("| `#{helper_name}` | #{preview_kind} |")
-      end
-
-      expect(inventory_source).not_to include("| `setupMarkdownPreviewCodeblockTools` | Markdown preview codeblock |")
-      expect(inventory_source).not_to include("| `setupDocumentFileListSearch` | document file list search |")
-      expect(inventory_source).not_to include("| `setupStructuredPreviewTools` | structured data preview |")
-      expect(inventory_source).not_to include("| `setupCsvPreviewTableTools` | CSV preview table |")
-      expect(inventory_source).not_to include("| `setupImagePreviewTools` | image preview |")
-      expect(inventory_source).not_to include("| `setupPdfPreviewTools` | PDF preview |")
-      expect(inventory_source).not_to include("| `setupArchivePreviewTools` | archive preview |")
-      expect(inventory_source).not_to include("| `setupSiteViewerIframeHeightSync` | Docusaurus / site viewer iframe |")
+      expect(Rails.root.join("app/frontend/controllers/preview_tools_controller.js")).not_to exist
+      expect(entrypoint_source).not_to include("PreviewToolsController")
+      expect(entrypoint_source).not_to include("preview_tools_controller")
+      expect(entrypoint_source).not_to include('application.register("preview-tools"')
+      expect(layout_source).not_to include(" preview-tools")
+      expect(layout_source).not_to include('data-controller="preview-tools')
     end
   end
 
-  it "refreshes the bridge helpers in the controller lifecycle" do
-    refresh_body = controller_source.match(/  refresh\(\) \{\n(?<body>.*?)\n  \}/m)[:body]
-    refresh_calls = refresh_body.scan(/^    (setup[A-Za-z0-9]+)\(\)$/).flatten
+  it "keeps preview controllers registered and attached without direct DOM setup in the entrypoint" do
+    aggregate_failures do
+      dedicated_preview_controllers.each do |identifier, (constant_name, source_name)|
+        expect(entrypoint_source).to include(%(import #{constant_name} from "../controllers/#{source_name}"))
+        expect(entrypoint_source).to include(%(application.register("#{identifier}", #{constant_name})))
+        expect(layout_source).to include(identifier)
+      end
 
-    expect(refresh_calls).to eq([
-      "setupMarkdownPreviewTableTools"
-    ])
+      expect(entrypoint_source).not_to include("querySelectorAll")
+      expect(entrypoint_source).not_to include("addEventListener")
+      expect(entrypoint_source).not_to include("new TomSelect")
+    end
   end
 
-  it "guards markdown table preference persistence source boundaries" do
+  it "keeps markdown table preference persistence source boundaries unchanged" do
     aggregate_failures do
       expect(table_tools_source).to include('const TABLE_PREFERENCE_COLLECTION_PATH = "/rails_table_preferences/preferences"')
       expect(table_tools_source).to include("function preferenceCollectionUrl(tableKey)")
@@ -128,253 +88,13 @@ RSpec.describe "preview tools source" do
     end
   end
 
-  it "guards archive preview safety, candidate, and visible row source boundaries" do
+  it "keeps inventory aligned with the dedicated markdown table controller boundary" do
     aggregate_failures do
-      expect(archive_tools_source).to include("function archiveEntryDownloadCandidate(row)")
-      expect(archive_tools_source).to include('row.dataset.archivePreviewEntryDownloadCandidate === "true"')
-      expect(archive_tools_source).to include("function archiveEntrySafe(row)")
-      expect(archive_tools_source).to include('row.dataset.archivePreviewEntrySafe === "true"')
-      expect(archive_tools_source).to include('if (candidateFilter === "download") return archiveEntryDownloadCandidate(row)')
-      expect(archive_tools_source).to include('if (candidateFilter === "unavailable") return !archiveEntryDownloadCandidate(row)')
-      expect(archive_tools_source).to include('if (safetyFilter === "safe") return archiveEntrySafe(row)')
-      expect(archive_tools_source).to include('if (safetyFilter === "unsafe") return !archiveEntrySafe(row)')
-      expect(archive_tools_source).to include("renderActiveFilterChips(activeFilters, filterDescriptors(input, candidateFilter, directoryFilter, safetyFilter, typeFilter), clearFilter)")
-      expect(archive_tools_source).to include("count.textContent = query.length === 0 ?")
-      expect(archive_tools_source).to include("sort((left, right) => compareRows(left, right, sortKey, sortDirection))")
-      expect(archive_tools_source).to include("const visibleEntryRows = visibleRows(rows)")
-      expect(archive_tools_source).to include("const entryNames = visibleEntryRows.map(archiveEntryName).filter(Boolean)")
-      expect(archive_tools_source).to include("const unsafeCount = visibleEntryRows.filter((row) => !archiveEntrySafe(row)).length")
-      expect(archive_tools_source).to include("const unsafeNote = unsafeCount > 0 ? ` unsafe ${unsafeCount}件を含みます。` : \"\"")
-      expect(archive_tools_source).to include("const filterNote = activeFilterStatus(candidateFilter, directoryFilter, safetyFilter, typeFilter)")
-      expect(archive_tools_source).to include("const unsafeNote = row && !archiveEntrySafe(row) ? \"（unsafe path）\" : \"\"")
-    end
-  end
-
-  it "guards site viewer iframe height sync message, target, and listener boundaries" do
-    aggregate_failures do
-      expect(site_viewer_iframe_height_source).to include('const HEIGHT_MESSAGE_TYPE = "docs-portal:site-viewer-height"')
-      expect(site_viewer_iframe_height_source).to include("const MIN_FRAME_HEIGHT = 320")
-      expect(site_viewer_iframe_height_source).to include("Math.max(Math.ceil(numericValue), MIN_FRAME_HEIGHT)")
-      expect(site_viewer_iframe_height_source).to include("if (event.origin !== window.location.origin) return")
-      expect(site_viewer_iframe_height_source).to include("if (event.data?.type !== HEIGHT_MESSAGE_TYPE) return")
-      expect(site_viewer_iframe_height_source).to include(%(document.querySelectorAll("iframe.site-viewer-frame[data-docs-portal-auto-height='true']")))
-      expect(site_viewer_iframe_height_source).to include("if (frame.contentWindow !== event.source) return")
-      expect(site_viewer_iframe_height_source).to include('frame.dataset.docsPortalAutoHeightApplied = "true"')
-      expect(site_viewer_iframe_height_source).to include("let messageListenerReady = false")
-      expect(site_viewer_iframe_height_source).to include("if (!messageListenerReady)")
-      expect(site_viewer_iframe_height_source).to include('window.addEventListener("message", handleViewerHeightMessage)')
-      expect(site_viewer_iframe_height_source).to include("messageListenerReady = true")
-      expect(site_viewer_iframe_height_source).to include('frame.dataset.docsPortalAutoHeightReady !== "true"')
-      expect(site_viewer_iframe_height_source).to include('frame.dataset.docsPortalAutoHeightReady = "true"')
-      expect(site_viewer_iframe_height_source).to include('frame.addEventListener("load", () => {')
-      expect(site_viewer_iframe_height_source).to include("window.requestAnimationFrame(() => syncFrameHeight(frame))")
-    end
-  end
-
-  it "re-runs refresh after Turbo page changes and removes those listeners on disconnect" do
-    aggregate_failures do
-      expect(controller_source).to include("this.refresh = this.refresh.bind(this)")
-      expect(controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
-      expect(controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
-      expect(controller_source).to include("this.refresh()")
-      expect(controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
-      expect(controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
-    end
-  end
-
-  it "keeps archive preview tools in a dedicated controller with the same Turbo lifecycle" do
-    aggregate_failures do
-      expect(archive_controller_source).to include('import { setupArchivePreviewTools } from "../lib/archive_preview_tools"')
-      expect(archive_controller_source.scan("setupArchivePreviewTools()").size).to eq(1)
-      expect(archive_controller_source).to include("this.refresh = this.refresh.bind(this)")
-      expect(archive_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
-      expect(archive_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
-      expect(archive_controller_source).to include("this.refresh()")
-      expect(archive_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
-      expect(archive_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
-    end
-  end
-
-  it "keeps site viewer iframe height sync in a dedicated controller with the same Turbo lifecycle" do
-    aggregate_failures do
-      expect(site_viewer_iframe_height_controller_source).to include('import { setupSiteViewerIframeHeightSync } from "../lib/site_viewer_iframe_height"')
-      expect(site_viewer_iframe_height_controller_source.scan("setupSiteViewerIframeHeightSync()").size).to eq(1)
-      expect(site_viewer_iframe_height_controller_source).to include("this.refresh = this.refresh.bind(this)")
-      expect(site_viewer_iframe_height_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
-      expect(site_viewer_iframe_height_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
-      expect(site_viewer_iframe_height_controller_source).to include("this.refresh()")
-      expect(site_viewer_iframe_height_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
-      expect(site_viewer_iframe_height_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
-    end
-  end
-
-  it "keeps CSV preview tools in a dedicated controller with the same Turbo lifecycle" do
-    aggregate_failures do
-      expect(csv_controller_source).to include('import { setupCsvPreviewTableTools } from "../lib/csv_preview_table_tools"')
-      expect(csv_controller_source.scan("setupCsvPreviewTableTools()").size).to eq(1)
-      expect(csv_controller_source).to include("this.refresh = this.refresh.bind(this)")
-      expect(csv_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
-      expect(csv_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
-      expect(csv_controller_source).to include("this.refresh()")
-      expect(csv_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
-      expect(csv_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
-    end
-  end
-
-  it "keeps image preview tools in a dedicated controller with Turbo lifecycle cleanup" do
-    aggregate_failures do
-      expect(image_controller_source).to include('import { setupImagePreviewTools } from "../lib/image_preview_tools"')
-      expect(image_controller_source.scan("setupImagePreviewTools()").size).to eq(1)
-      expect(image_controller_source).to include("this.cleanups = []")
-      expect(image_controller_source).to include("this.refresh = this.refresh.bind(this)")
-      expect(image_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
-      expect(image_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
-      expect(image_controller_source).to include("this.refresh()")
-      expect(image_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
-      expect(image_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
-      expect(image_controller_source).to include("this.clearImagePreviews()")
-    end
-  end
-
-  it "keeps PDF preview tools in a dedicated controller with Turbo lifecycle cleanup" do
-    aggregate_failures do
-      expect(pdf_controller_source).to include('import { setupPdfPreviewTools } from "../lib/pdf_preview_tools"')
-      expect(pdf_controller_source.scan("setupPdfPreviewTools()").size).to eq(1)
-      expect(pdf_controller_source).to include("this.cleanups = []")
-      expect(pdf_controller_source).to include("this.refresh = this.refresh.bind(this)")
-      expect(pdf_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
-      expect(pdf_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
-      expect(pdf_controller_source).to include("this.refresh()")
-      expect(pdf_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
-      expect(pdf_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
-      expect(pdf_controller_source).to include("this.clearPdfPreviews()")
-      expect(pdf_tools_source).to include('document.addEventListener("keydown", handleKeydown)')
-      expect(pdf_tools_source).to include('document.removeEventListener("keydown", handleKeydown)')
-      expect(pdf_tools_source).to include("delete container.dataset.pdfPreviewToolsReady")
-    end
-  end
-
-  it "keeps document search in a dedicated controller with the same Turbo lifecycle" do
-    aggregate_failures do
-      expect(search_controller_source).to include('import { setupMarkdownPreviewDocumentSearch } from "../lib/markdown_preview_document_search"')
-      expect(search_controller_source.scan("setupMarkdownPreviewDocumentSearch()").size).to eq(1)
-      expect(search_controller_source).to include("this.refresh = this.refresh.bind(this)")
-      expect(search_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
-      expect(search_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
-      expect(search_controller_source).to include("this.refresh()")
-      expect(search_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
-      expect(search_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
-    end
-  end
-
-  it "keeps markdown codeblock tools in a dedicated controller with the same Turbo lifecycle" do
-    aggregate_failures do
-      expect(codeblock_controller_source).to include('import { setupMarkdownPreviewCodeblockTools } from "../lib/markdown_preview_codeblock_tools"')
-      expect(codeblock_controller_source.scan("setupMarkdownPreviewCodeblockTools()").size).to eq(1)
-      expect(codeblock_controller_source).to include("this.refresh = this.refresh.bind(this)")
-      expect(codeblock_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
-      expect(codeblock_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
-      expect(codeblock_controller_source).to include("this.refresh()")
-      expect(codeblock_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
-      expect(codeblock_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
-      expect(codeblock_tools_source).to include('style[data-docs-portal-codeblock-tools]')
-      expect(codeblock_tools_source).to include('frame.dataset.codeblockToolsListenerReady !== "true"')
-      expect(codeblock_tools_source).to include("portal-codeblock-warning")
-      expect(codeblock_tools_source).to include("addLineAnchors(frameDocument, codeElement, blockId)")
-    end
-  end
-
-  it "guards markdown codeblock sensitive keyword cue without masking copied code" do
-    sensitive_keyword_pattern = codeblock_tools_source.match(%r{return /\\b\((?<pattern>.*?)\)\\b/i\.test\(text\)})[:pattern]
-
-    aggregate_failures do
-      %w[secret token password passwd authorization bearer].each do |keyword|
-        expect(sensitive_keyword_pattern).to include(keyword)
-      end
-
-      expect(sensitive_keyword_pattern).to include("api[_-]?key")
-      expect(sensitive_keyword_pattern).to include("access[_-]?key")
-      expect(sensitive_keyword_pattern).to include("client[_-]?secret")
-      expect(codeblock_tools_source).to include('warning.className = "portal-codeblock-warning"')
-      expect(codeblock_tools_source).to include('warning.textContent = "機密注意"')
-      expect(codeblock_tools_source).to include('warning.hidden = !includesSensitiveKeyword(codeElement.textContent || "")')
-      expect(codeblock_tools_source).to include("async function copyCodeText(codeElement, status)")
-      expect(codeblock_tools_source).to include("await copyText(codeText(codeElement), status)")
-      expect(codeblock_tools_source).to include("async function copyFormattedJsonCode(codeElement, status)")
-      expect(codeblock_tools_source).to include("const parsed = JSON.parse(codeText(codeElement))")
-      expect(codeblock_tools_source).to include('await copyText(JSON.stringify(parsed, null, 2), status, "整形コピーしました")')
-      expect(codeblock_tools_source).not_to match(/mask|redact|redaction/i)
-    end
-  end
-
-  it "keeps document file list search in a dedicated controller with the same Turbo lifecycle" do
-    aggregate_failures do
-      expect(file_list_controller_source).to include('import { setupDocumentFileListSearch } from "../lib/document_file_list_search"')
-      expect(file_list_controller_source.scan("setupDocumentFileListSearch()").size).to eq(1)
-      expect(file_list_controller_source).to include("this.refresh = this.refresh.bind(this)")
-      expect(file_list_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
-      expect(file_list_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
-      expect(file_list_controller_source).to include("this.refresh()")
-      expect(file_list_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
-      expect(file_list_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
-      expect(file_list_search_source).to include('document.querySelectorAll("[data-document-file-search]")')
-      expect(file_list_search_source).to include('container.dataset.fileListSearchReady === "true"')
-      expect(file_list_search_source).to include('const count = container.querySelector("[data-document-file-search-count]")')
-      expect(file_list_search_source).to include("parentRowKey(row)")
-      expect(file_list_search_source).to include('row.classList.toggle("is-document-file-search-context"')
-    end
-  end
-
-  it "keeps structured and text preview tools in a dedicated controller with Turbo lifecycle cleanup" do
-    aggregate_failures do
-      expect(structured_controller_source).to include('import { setupStructuredPreviewTools } from "../lib/structured_preview_tools"')
-      expect(structured_controller_source.scan("setupStructuredPreviewTools()").size).to eq(1)
-      expect(structured_controller_source).to include("this.cleanups = []")
-      expect(structured_controller_source).to include("this.refresh = this.refresh.bind(this)")
-      expect(structured_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
-      expect(structured_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
-      expect(structured_controller_source).to include("this.refresh()")
-      expect(structured_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
-      expect(structured_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
-      expect(structured_controller_source).to include("this.clearStructuredPreviews()")
-      expect(structured_tools_source).to include('document.querySelectorAll("[data-structured-preview-tools]")')
-      expect(structured_tools_source).to include('document.querySelectorAll("[data-text-preview-tools]")')
-      expect(structured_tools_source).to include('document.addEventListener("keydown", handleKeydown)')
-      expect(structured_tools_source).to include('document.removeEventListener("keydown", handleKeydown)')
-      expect(structured_tools_source).to include('window.addEventListener("hashchange", updateAnchorTarget)')
-      expect(structured_tools_source).to include('window.removeEventListener("hashchange", updateAnchorTarget)')
-      expect(structured_tools_source).to include("delete container.dataset.structuredPreviewToolsReady")
-      expect(structured_tools_source).to include("delete container.dataset.textPreviewToolsReady")
-      expect(structured_tools_source).to include("return cleanups")
-    end
-  end
-
-  it "keeps preview controllers registered and attached without direct DOM setup in the entrypoint" do
-    aggregate_failures do
-      expect(entrypoint_source).to include('import ArchivePreviewToolsController from "../controllers/archive_preview_tools_controller"')
-      expect(entrypoint_source).to include('import CsvPreviewToolsController from "../controllers/csv_preview_tools_controller"')
-      expect(entrypoint_source).to include('import DocumentFileListSearchController from "../controllers/document_file_list_search_controller"')
-      expect(entrypoint_source).to include('import ImagePreviewToolsController from "../controllers/image_preview_tools_controller"')
-      expect(entrypoint_source).to include('import MarkdownPreviewCodeblockToolsController from "../controllers/markdown_preview_codeblock_tools_controller"')
-      expect(entrypoint_source).to include('import MarkdownPreviewDocumentSearchController from "../controllers/markdown_preview_document_search_controller"')
-      expect(entrypoint_source).to include('import PdfPreviewToolsController from "../controllers/pdf_preview_tools_controller"')
-      expect(entrypoint_source).to include('import PreviewToolsController from "../controllers/preview_tools_controller"')
-      expect(entrypoint_source).to include('import SiteViewerIframeHeightController from "../controllers/site_viewer_iframe_height_controller"')
-      expect(entrypoint_source).to include('import StructuredPreviewToolsController from "../controllers/structured_preview_tools_controller"')
-      expect(entrypoint_source).to include('application.register("archive-preview-tools", ArchivePreviewToolsController)')
-      expect(entrypoint_source).to include('application.register("csv-preview-tools", CsvPreviewToolsController)')
-      expect(entrypoint_source).to include('application.register("document-file-list-search", DocumentFileListSearchController)')
-      expect(entrypoint_source).to include('application.register("image-preview-tools", ImagePreviewToolsController)')
-      expect(entrypoint_source).to include('application.register("markdown-preview-codeblock-tools", MarkdownPreviewCodeblockToolsController)')
-      expect(entrypoint_source).to include('application.register("markdown-preview-document-search", MarkdownPreviewDocumentSearchController)')
-      expect(entrypoint_source).to include('application.register("pdf-preview-tools", PdfPreviewToolsController)')
-      expect(entrypoint_source).to include('application.register("preview-tools", PreviewToolsController)')
-      expect(entrypoint_source).to include('application.register("site-viewer-iframe-height", SiteViewerIframeHeightController)')
-      expect(entrypoint_source).to include('application.register("structured-preview-tools", StructuredPreviewToolsController)')
-      expect(layout_source).to include('data-controller="nav-dropdowns document-tree-navigation manual-document-upload document-file-list-search markdown-preview-document-search markdown-preview-codeblock-tools csv-preview-tools image-preview-tools pdf-preview-tools structured-preview-tools preview-table-resizer archive-preview-tools site-viewer-iframe-height preview-tools"')
-      expect(entrypoint_source).not_to include("querySelectorAll")
-      expect(entrypoint_source).not_to include("addEventListener")
-      expect(entrypoint_source).not_to include("new TomSelect")
+      expect(inventory_source).to include("`markdown-preview-table-tools`")
+      expect(inventory_source).to include("`setupMarkdownPreviewTableTools()` を専用 controller から refresh")
+      expect(inventory_source).to include("`preview-tools` bridge は空 bridge を残さず退役")
+      expect(inventory_source).to include("#475 の full `rails_table_preferences` 統合")
+      expect(inventory_source).to include("Markdown preview table の full `rails_table_preferences` 統合、column visibility / preset UI、Docusaurus renderer、DOM rewrite、preference schema / key 再設計は変更しない")
     end
   end
 end
