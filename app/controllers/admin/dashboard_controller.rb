@@ -1,6 +1,7 @@
 class Admin::DashboardController < Admin::BaseController
   OPERATIONAL_FAILURE_STALE_THRESHOLD = 7.days
   GENERATED_FILE_ALERT_CANDIDATE_LIMIT = 5
+  GENERATED_FILE_ALERT_CANDIDATE_LOOKBACK_LIMIT = 200
 
   before_action :require_internal_admin_for_dashboard!, only: :index
 
@@ -79,7 +80,10 @@ class Admin::DashboardController < Admin::BaseController
   end
 
   def generated_file_run_failure_alert_candidates
-    GeneratedFiles::RunFailureAlertCandidates.new(limit: GENERATED_FILE_ALERT_CANDIDATE_LIMIT).call
+    GeneratedFiles::RunFailureAlertCandidates.new(
+      limit: GENERATED_FILE_ALERT_CANDIDATE_LIMIT,
+      lookback_limit: GENERATED_FILE_ALERT_CANDIDATE_LOOKBACK_LIMIT
+    ).call
   end
 
   def latest_operational_failure_at(*relations)
