@@ -1,6 +1,7 @@
 = render "shared/error_messages", record: document
 
-- form_url = document.persisted? ? admin_document_path(document.public_id) : admin_documents_path
+- return_to = params[:return_to].present? ? document_return_to_path : nil
+- form_url = document.persisted? ? admin_document_path(document.public_id, return_to: return_to) : admin_documents_path
 = form_with model: [:admin, document], url: form_url do |form|
   .form-grid
     = form.rfk_select :project_id,
@@ -34,4 +35,4 @@
   p.actions style="margin-top:16px;"
     = form.submit "保存", class: "button"
     - if document.persisted?
-      = link_to "一覧へ戻る", admin_documents_path, class: "button secondary"
+      = link_to "一覧へ戻る", return_to || admin_documents_path, class: "button secondary"
