@@ -6,6 +6,8 @@ class Admin::DocumentsController < Admin::BaseController
   before_action :set_document, only: %i[edit update destroy archive restore]
   before_action :load_projects, only: %i[index create edit update]
 
+  helper_method :document_return_to_path
+
   def index
     @filters = document_filter_params
     @documents = filtered_documents.includes(:project, :latest_version, :archived_by_user, :document_versions).order("projects.code", :title)
@@ -31,7 +33,7 @@ class Admin::DocumentsController < Admin::BaseController
 
   def update
     if @document.update(document_params)
-      redirect_to admin_documents_path, notice: "文書を更新しました。"
+      redirect_to document_return_to_path, notice: "文書を更新しました。"
     else
       render :edit, status: :unprocessable_entity
     end
@@ -39,11 +41,11 @@ class Admin::DocumentsController < Admin::BaseController
 
   def destroy
     @document.destroy!
-    redirect_to admin_documents_path, notice: "文書を削除しました。"
+    redirect_to document_return_to_path, notice: "文書を削除しました。"
   rescue ActiveRecord::DeleteRestrictionError
-    redirect_to admin_documents_path, alert: "関連データがあるため削除できません。"
+    redirect_to document_return_to_path, alert: "関連データがあるため削除できません。"
   rescue ActiveRecord::InvalidForeignKey
-    redirect_to admin_documents_path, alert: "関連データがあるため削除できません。"
+    redirect_to document_return_to_path, alert: "関連データがあるため削除できません。"
   end
 
   def archive
@@ -52,12 +54,12 @@ class Admin::DocumentsController < Admin::BaseController
       retention_until: params[:retention_until],
       discard_candidate_at: params[:discard_candidate_at]
     )
-    redirect_to admin_documents_path, notice: "文書をアーカイブしました。"
+    redirect_to document_return_to_path, notice: "文書をアーカイブしました。"
   end
 
   def restore
     @document.restore!(actor: current_user)
-    redirect_to admin_documents_path, notice: "文書を復元しました。"
+    redirect_to document_return_to_path, notice: "文書を復元しました。"
   end
 
   private
@@ -68,6 +70,10 @@ class Admin::DocumentsController < Admin::BaseController
 
   def load_projects
     @projects = Project.order(:code)
+  end
+
+  def document_return_to_path
+    safe_return_to_path(admin_documents_path)
   end
 
   def document_params
