@@ -112,13 +112,13 @@ RSpec.describe "Admin webhook deliveries", type: :request do
       error_message: "timeout but succeeded",
       created_at: Time.zone.local(2026, 6, 10, 9, 0, 0)
     )
-    old_failed_delivery = create_delivery(
+    future_failed_delivery = create_delivery(
       endpoint: endpoint,
       event: event,
       status: :failed,
       response_status: 500,
-      error_message: "old timeout",
-      created_at: Time.zone.local(2026, 6, 1, 9, 0, 0)
+      error_message: "future timeout",
+      created_at: Time.zone.local(2026, 6, 11, 9, 0, 0)
     )
 
     get admin_webhook_deliveries_path(
@@ -151,7 +151,7 @@ RSpec.describe "Admin webhook deliveries", type: :request do
     )
     expect(action_targets).not_to include(
       admin_webhook_delivery_path(
-        old_failed_delivery.public_id,
+        future_failed_delivery.public_id,
         status: "failed",
         error_q: "timeout",
         created_to: "2026-06-10",
