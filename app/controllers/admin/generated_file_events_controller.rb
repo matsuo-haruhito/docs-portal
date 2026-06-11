@@ -52,11 +52,12 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
   end
 
   def recent_runs_related_to(public_id)
+    metadata_filter = {generated_file_event_public_ids: [public_id]}.to_json
+
     GeneratedFileRun
+      .where("metadata::jsonb @> ?::jsonb", metadata_filter)
       .order(created_at: :desc, id: :desc)
-      .limit(200)
-      .select { |run| Array(run.metadata&.dig("generated_file_event_public_ids")).include?(public_id) }
-      .first(10)
+      .limit(10)
   end
 
   def bulk_retry_target_scope

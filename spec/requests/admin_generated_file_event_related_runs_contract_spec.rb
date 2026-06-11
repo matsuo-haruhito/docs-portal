@@ -3,12 +3,12 @@ require "rails_helper"
 RSpec.describe "Admin generated file event related run contract", type: :request do
   let(:admin_user) { create(:user, :internal) }
 
-  it "shows up to ten related runs from the latest 200 generated file runs" do
+  it "shows up to ten related runs from metadata matches" do
     sign_in_as(admin_user)
     event = create_event!(path: "docs/source.yml")
     base_time = Time.zone.parse("2026-05-10 00:00:00")
-    outside_scan = create_run!(
-      job_id: "outside-scan-job",
+    older_related_run = create_run!(
+      job_id: "older-related-job",
       created_at: base_time,
       metadata: {"generated_file_event_public_ids" => [event.public_id]}
     )
@@ -32,14 +32,15 @@ RSpec.describe "Admin generated file event related run contract", type: :request
     get admin_generated_file_event_path(event.public_id)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("最新200件の実行履歴から、このイベントに関連する最大10件を表示します。")
+    expect(response.body).to include("このイベントを参照する実行履歴から、関連する最大10件を新しい順に表示します。")
+    expect(response.body).not_to include("最新200件")
     related_runs.last(10).reverse_each do |run|
       expect(response.body).to include(admin_generated_file_run_path(run.public_id))
     end
     related_runs.first(2).each do |run|
       expect(response.body).not_to include(admin_generated_file_run_path(run.public_id))
     end
-    expect(response.body).not_to include(admin_generated_file_run_path(outside_scan.public_id))
+    expect(response.body).not_to include(admin_generated_file_run_path(older_related_run.public_id))
   end
 
   def create_event!(attributes = {})

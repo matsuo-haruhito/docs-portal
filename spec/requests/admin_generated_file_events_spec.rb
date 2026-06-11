@@ -357,14 +357,29 @@ RSpec.describe "Admin generated file events", type: :request do
         job_id: "unrelated_job",
         metadata: {"generated_file_event_public_ids" => ["gf_evt_other"]}
       )
+      missing_key_run = create_run!(job_id: "missing_key_job", metadata: {})
+      empty_event_ids_run = create_run!(
+        job_id: "empty_event_ids_job",
+        metadata: {"generated_file_event_public_ids" => []}
+      )
+      201.times do |i|
+        create_run!(
+          job_id: "newer_unrelated_job_#{i}",
+          metadata: {"generated_file_event_public_ids" => ["gf_evt_other_#{i}"]}
+        )
+      end
 
       get admin_generated_file_event_path(event.public_id)
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("関連実行")
+      expect(response.body).to include("このイベントを参照する実行履歴から、関連する最大10件を新しい順に表示します。")
+      expect(response.body).not_to include("最新200件")
       expect(response.body).to include(admin_generated_file_run_path(retry_run.public_id))
       expect(response.body).to include(admin_generated_file_run_path(bulk_retry_run.public_id))
       expect(response.body).not_to include(unrelated_run.public_id)
+      expect(response.body).not_to include(missing_key_run.public_id)
+      expect(response.body).not_to include(empty_event_ids_run.public_id)
       expect(response.body).to include("完了")
       expect(response.body).to include("再実行")
       expect(response.body).to include("一括再実行")
