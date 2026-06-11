@@ -154,6 +154,9 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(page_text).to include("警告 / エラー")
     expect(page_text).to include("1 / 1")
     expect(page_text).to include("警告・エラーのある行を先に確認")
+    expect(parsed_html.at_css('a[href="#bulk-edit-review-details"]')&.text).to include("事前確認明細へ移動")
+    expect(parsed_html.at_css("#bulk-edit-review-details")).to be_present
+    expect(page_text).to include("確認優先サマリ: エラーあり: 1件 / 警告あり: 1件 / 変更予定: 1件 / 変更なし: 1件")
     expect(page_text).to include("確認目安")
     expect(page_text).to include("確認目安は表示補助です")
     expect(page_text).to include("分類が未確認の文書があります")
