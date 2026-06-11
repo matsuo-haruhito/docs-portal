@@ -138,5 +138,11 @@ RSpec.describe "Admin users filters", type: :request do
     expect(result_table_text).to include(same_company_users.third.email_address)
     expect(result_table_text).not_to include(same_company_users.first.email_address)
     expect(result_table_text).not_to include("shared-page-other@example.com")
+
+    get admin_users_path, params: { q: "shared page", active: "true", per_page: 2, page: 0 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 1-2件 / 3件")
+    expect(result_table_text).to include(same_company_users.first.email_address)
   end
 end
