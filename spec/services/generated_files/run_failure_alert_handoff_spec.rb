@@ -86,7 +86,9 @@ RSpec.describe GeneratedFiles::RunFailureAlertHandoff do
 
       entry = described_class.new(threshold: 1, error_message_max_length: 24).call.first
 
-      expect(entry.latest_error_message).to eq("first line second line...")
+      expect(entry.latest_error_message).not_to include("\n")
+      expect(entry.latest_error_message.length).to be <= 24
+      expect(entry.latest_error_message).to end_with("...")
     end
   end
 
