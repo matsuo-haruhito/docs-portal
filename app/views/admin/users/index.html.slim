@@ -32,11 +32,13 @@ h1 ユーザーマスタ
       = link_to "条件をクリア", admin_users_path, class: "button secondary"
   - if user_filters_applied
     p.muted = "適用中: #{user_filter_summaries.join(' / ')}"
-    p.muted = "検索結果: #{@users.size}件（列の表示設定は下の「ユーザー一覧の表示設定」で調整できます）"
+    p.muted = "検索結果: #{@users_filtered_count}件（列の表示設定は下の「ユーザー一覧の表示設定」で調整できます）"
 
 - if @users.any?
   .card
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "ユーザー一覧の表示設定")
+
+  p.muted = "表示中: #{@users_pagination[:from]}-#{@users_pagination[:to]}件 / #{@users_filtered_count}件"
 
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
@@ -61,6 +63,15 @@ h1 ユーザーマスタ
           td.actions data-rails-table-preferences-column-key="actions"
             = edit_link_to "編集", edit_admin_user_path(user)
             = delete_link_to "削除", admin_user_path(user), confirm: "ユーザー「#{user.display_name}」を削除しますか？アクセス履歴や所属情報との関係を確認してください。"
+
+  - if @users_pagination[:total_pages] > 1
+    nav.pagination aria-label="ユーザー一覧ページ"
+      p.actions
+        - if @users_pagination[:prev_page]
+          = link_to "前へ", admin_users_path(@user_page_params.merge(page: @users_pagination[:prev_page])), class: "button secondary"
+        span.muted = "#{@users_pagination[:page]} / #{@users_pagination[:total_pages]}ページ"
+        - if @users_pagination[:next_page]
+          = link_to "次へ", admin_users_path(@user_page_params.merge(page: @users_pagination[:next_page])), class: "button secondary"
 - else
   section.card
     h2 ユーザー一覧

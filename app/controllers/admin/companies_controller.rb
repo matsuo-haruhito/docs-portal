@@ -45,7 +45,12 @@ class Admin::CompaniesController < Admin::BaseController
     @company_filter_params = company_filter_params
     @companies_total_count = company_scope.count
 
-    company_scope.then { |scope| apply_company_filters(scope) }.order(:domain)
+    filtered_scope = company_scope.then { |scope| apply_company_filters(scope) }
+    @companies_filtered_count = filtered_scope.count
+    companies, @companies_pagination = paginate_admin_list(filtered_scope.order(:domain), @companies_filtered_count)
+    @company_page_params = company_page_params
+
+    companies
   end
 
   def apply_company_filters(scope)
@@ -77,6 +82,12 @@ class Admin::CompaniesController < Admin::BaseController
 
   def company_filter_params
     params.permit(:q, :active).to_h
+  end
+
+  def company_page_params
+    page_params = @company_filter_params.dup
+    page_params["per_page"] = @companies_pagination[:per_page] if params[:per_page].present?
+    page_params.reject { |_key, value| value.blank? }
   end
 
   def set_company

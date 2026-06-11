@@ -45,7 +45,12 @@ class Admin::UsersController < Admin::BaseController
     @user_filter_params = user_filter_params
     @users_total_count = user_scope.count
 
-    user_scope.includes(:company).then { |scope| apply_user_filters(scope) }.order(:email_address)
+    filtered_scope = user_scope.includes(:company).then { |scope| apply_user_filters(scope) }
+    @users_filtered_count = filtered_scope.count
+    users, @users_pagination = paginate_admin_list(filtered_scope.order(:email_address), @users_filtered_count)
+    @user_page_params = user_page_params
+
+    users
   end
 
   def apply_user_filters(scope)
@@ -77,6 +82,12 @@ class Admin::UsersController < Admin::BaseController
 
   def user_filter_params
     params.permit(:q, :active).to_h
+  end
+
+  def user_page_params
+    page_params = @user_filter_params.dup
+    page_params["per_page"] = @users_pagination[:per_page] if params[:per_page].present?
+    page_params.reject { |_key, value| value.blank? }
   end
 
   def set_user
