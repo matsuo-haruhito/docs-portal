@@ -7,12 +7,26 @@ RSpec.describe "Admin generated file runs", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def page_text
+    parsed_html.text.squish
+  end
+
   def link_hrefs
     parsed_html.css("a[href]").map { _1["href"] }
   end
 
+  def link_texts
+    parsed_html.css("a[href]").map { _1.text.squish }
+  end
+
   def query_params_for(path)
     Rack::Utils.parse_nested_query(URI.parse(path).query)
+  end
+
+  def generated_file_run_row(public_id)
+    parsed_html.css("tbody tr").find do |row|
+      row.at_css(%(a[href*="#{admin_generated_file_runs_path}/#{public_id}"]))
+    end
   end
 
   describe "GET /admin/generated_file_runs" do
@@ -23,11 +37,13 @@ RSpec.describe "Admin generated file runs", type: :request do
       get admin_generated_file_runs_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("生成ファイル実行履歴")
-      expect(response.body).to include(run.public_id)
-      expect(response.body).to include("ai_usecase_decision_flow")
-      expect(response.body).to include("再実行")
-      expect(response.body).to include("失敗分を一括再実行")
+      expect(page_text).to include("生成ファイル実行履歴")
+      run_row = generated_file_run_row(run.public_id)
+      expect(run_row).to be_present
+      expect(run_row.text).to include("ai_usecase_decision_flow")
+      expect(run_row.at_css(%(a[href="#{admin_generated_file_run_path(run.public_id, return_to: admin_generated_file_runs_path)}"]))).to be_present
+      expect(run_row.css("form[action]").any? { |form| form["action"].include?(retry_run_admin_generated_file_run_path(run.public_id)) && form.at_css("button")&.text&.include?("この行を再実行") }).to be(true)
+      expect(parsed_html.at_css(%(form[action="#{retry_failed_admin_generated_file_runs_path}"] button))&.text).to include("失敗分を一括再実行")
     end
 
     it "shows status summary counts" do
@@ -90,12 +106,11 @@ RSpec.describe "Admin generated file runs", type: :request do
       get admin_generated_file_runs_path(page: 2, per_page: 1)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(middle.public_id)
-      expect(response.body).not_to include(newest.public_id)
-      expect(response.body).not_to include(oldest.public_id)
-      expect(response.body).to include("全 3 件 / 2 / 3 ページ")
-      expect(response.body).to include("前へ")
-      expect(response.body).to include("次へ")
+      expect(generated_file_run_row(middle.public_id)).to be_present
+      expect(generated_file_run_row(newest.public_id)).to be_nil
+      expect(generated_file_run_row(oldest.public_id)).to be_nil
+      expect(page_text).to include("全 3 件 / 2 / 3 ページ")
+      expect(link_texts).to include("前へ", "次へ")
     end
 
     it "bounds per_page to the supported range for oversized, zero, and nonnumeric values" do
@@ -107,24 +122,24 @@ RSpec.describe "Admin generated file runs", type: :request do
       get admin_generated_file_runs_path(per_page: 500)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("全 101 件 / 1 / 2 ページ")
-      expect(response.body).to include(runs[0].public_id)
-      expect(response.body).to include(runs[99].public_id)
-      expect(response.body).not_to include(runs[100].public_id)
+      expect(page_text).to include("全 101 件 / 1 / 2 ページ")
+      expect(generated_file_run_row(runs[0].public_id)).to be_present
+      expect(generated_file_run_row(runs[99].public_id)).to be_present
+      expect(generated_file_run_row(runs[100].public_id)).to be_nil
 
       get admin_generated_file_runs_path(page: 2, per_page: 0)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("全 101 件 / 2 / 101 ページ")
-      expect(response.body).to include(runs[1].public_id)
-      expect(response.body).not_to include(runs[0].public_id)
+      expect(page_text).to include("全 101 件 / 2 / 101 ページ")
+      expect(generated_file_run_row(runs[1].public_id)).to be_present
+      expect(generated_file_run_row(runs[0].public_id)).to be_nil
 
       get admin_generated_file_runs_path(page: 2, per_page: "invalid")
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("全 101 件 / 2 / 101 ページ")
-      expect(response.body).to include(runs[1].public_id)
-      expect(response.body).not_to include(runs[0].public_id)
+      expect(page_text).to include("全 101 件 / 2 / 101 ページ")
+      expect(generated_file_run_row(runs[1].public_id)).to be_present
+      expect(generated_file_run_row(runs[0].public_id)).to be_nil
     end
 
     it "keeps all active filters and per_page on pagination links" do
@@ -192,10 +207,10 @@ RSpec.describe "Admin generated file runs", type: :request do
       )
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(matched.public_id)
-      expect(response.body).not_to include(unmatched_status.public_id)
-      expect(response.body).not_to include(unmatched_job.public_id)
-      expect(response.body).not_to include(unmatched_date.public_id)
+      expect(generated_file_run_row(matched.public_id)).to be_present
+      expect(generated_file_run_row(unmatched_status.public_id)).to be_nil
+      expect(generated_file_run_row(unmatched_job.public_id)).to be_nil
+      expect(generated_file_run_row(unmatched_date.public_id)).to be_nil
     end
 
     it "filters by run id, paths, error message, retry parent, and related event fragments with q" do
@@ -275,10 +290,10 @@ RSpec.describe "Admin generated file runs", type: :request do
       )
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(matched.public_id)
-      expect(response.body).not_to include(unmatched_status.public_id)
-      expect(response.body).not_to include(unmatched_generator.public_id)
-      expect(response.body).not_to include(unmatched_query.public_id)
+      expect(generated_file_run_row(matched.public_id)).to be_present
+      expect(generated_file_run_row(unmatched_status.public_id)).to be_nil
+      expect(generated_file_run_row(unmatched_generator.public_id)).to be_nil
+      expect(generated_file_run_row(unmatched_query.public_id)).to be_nil
     end
 
     it "normalizes and bounds q before applying existing filters and pagination" do
@@ -309,11 +324,11 @@ RSpec.describe "Admin generated file runs", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(parsed_html.at_css('input[name="q"]')["value"]).to eq(bounded_query)
-      expect(response.body).to include(older_match.public_id)
-      expect(response.body).not_to include(newer_match.public_id)
-      expect(response.body).not_to include(unmatched_suffix.public_id)
-      expect(response.body).not_to include(unmatched_status.public_id)
-      expect(response.body).to include("全 2 件 / 2 / 2 ページ")
+      expect(generated_file_run_row(older_match.public_id)).to be_present
+      expect(generated_file_run_row(newer_match.public_id)).to be_nil
+      expect(generated_file_run_row(unmatched_suffix.public_id)).to be_nil
+      expect(generated_file_run_row(unmatched_status.public_id)).to be_nil
+      expect(page_text).to include("全 2 件 / 2 / 2 ページ")
     end
 
     it "does not apply q when normalization leaves it blank" do
@@ -324,8 +339,8 @@ RSpec.describe "Admin generated file runs", type: :request do
       get admin_generated_file_runs_path(q: "  \t  ")
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(first_run.public_id)
-      expect(response.body).to include(second_run.public_id)
+      expect(generated_file_run_row(first_run.public_id)).to be_present
+      expect(generated_file_run_row(second_run.public_id)).to be_present
     end
 
     it "shows confirmation and preserves the current filters in the bulk retry form" do
@@ -339,7 +354,7 @@ RSpec.describe "Admin generated file runs", type: :request do
         created_to: "2026-05-11",
         q: "timeout"
       }
-      create_run!(
+      run = create_run!(
         status: :failed,
         generator: "ai_usecase_decision_flow",
         output_writer: "document_version",
@@ -356,8 +371,10 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(bulk_retry_form["data-turbo-confirm"]).to include("現在の条件に一致する失敗履歴 1 件")
       expect(bulk_retry_form["data-turbo-confirm"]).to include("古い順に最大100件")
       expect(bulk_retry_form.at_css("button")&.text).to include("失敗分を一括再実行")
-      expect(response.body).to include("このボタンは現在の絞り込み条件に一致する失敗履歴だけを対象にします。")
-      expect(response.body).to include("この行を再実行")
+      expect(page_text).to include("このボタンは現在の絞り込み条件に一致する失敗履歴だけを対象にします。")
+      run_row = generated_file_run_row(run.public_id)
+      expect(run_row).to be_present
+      expect(run_row.css("form[action]").any? { |form| form["action"].include?(retry_run_admin_generated_file_run_path(run.public_id)) && form.at_css("button")&.text&.include?("この行を再実行") }).to be(true)
     end
 
     it "keeps bulk retry disabled when there are no matching failed runs" do
@@ -370,7 +387,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       bulk_retry_form = parsed_html.at_css(%(form[action="#{retry_failed_admin_generated_file_runs_path(status: "failed")}"]))
       expect(bulk_retry_form).to be_present
       expect(bulk_retry_form.at_css("button[disabled]")&.text).to include("失敗分を一括再実行")
-      expect(response.body).to include("対象がないため一括再実行できません。")
+      expect(page_text).to include("対象がないため一括再実行できません。")
     end
 
     it "ignores invalid date filters" do
@@ -380,7 +397,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       get admin_generated_file_runs_path(created_from: "invalid", created_to: "also-invalid")
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(run.public_id)
+      expect(generated_file_run_row(run.public_id)).to be_present
     end
 
     it "shows invalid date warnings while applying valid date filters" do
@@ -392,19 +409,19 @@ RSpec.describe "Admin generated file runs", type: :request do
       get admin_generated_file_runs_path(created_from: "invalid", created_to: "2026-05-10")
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("日時フィルタを確認してください。")
-      expect(response.body).to include("作成日(開始)「invalid」は日時として解釈できないため、この条件は適用していません。")
-      expect(response.body).to include(before_range.public_id)
-      expect(response.body).to include(inside_range.public_id)
-      expect(response.body).not_to include(after_range.public_id)
+      expect(page_text).to include("日時フィルタを確認してください。")
+      expect(page_text).to include("作成日(開始)「invalid」は日時として解釈できないため、この条件は適用していません。")
+      expect(generated_file_run_row(before_range.public_id)).to be_present
+      expect(generated_file_run_row(inside_range.public_id)).to be_present
+      expect(generated_file_run_row(after_range.public_id)).to be_nil
 
       get admin_generated_file_runs_path(created_from: "2026-05-10", created_to: "also-invalid")
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("作成日(終了)「also-invalid」は日時として解釈できないため、この条件は適用していません。")
-      expect(response.body).not_to include(before_range.public_id)
-      expect(response.body).to include(inside_range.public_id)
-      expect(response.body).to include(after_range.public_id)
+      expect(page_text).to include("作成日(終了)「also-invalid」は日時として解釈できないため、この条件は適用していません。")
+      expect(generated_file_run_row(before_range.public_id)).to be_nil
+      expect(generated_file_run_row(inside_range.public_id)).to be_present
+      expect(generated_file_run_row(after_range.public_id)).to be_present
     end
 
     it "forbids external users" do
