@@ -120,5 +120,11 @@ RSpec.describe "Admin company master filters", type: :request do
     expect(page_text).to include("表示中: 3-3件 / 3件")
     expect(result_table_text).to include(matching_companies.third.domain)
     expect(result_table_text).not_to include(matching_companies.first.domain)
+
+    get admin_companies_path, params: { q: "tenant page", active: "true", per_page: 2, page: 99 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 3-3件 / 3件")
+    expect(result_table_text).to include(matching_companies.third.domain)
   end
 end
