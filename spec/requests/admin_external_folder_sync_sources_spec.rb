@@ -17,6 +17,18 @@ RSpec.describe "Admin external folder sync sources", type: :request do
     parsed_html.at_css(%(input[name="#{name}"]))&.[]("value")
   end
 
+  def unsafe_return_to_values
+    [
+      "",
+      "//evil.example/path",
+      "https://evil.example/path",
+      "http://evil.example/path",
+      "javascript:alert(1)",
+      "#section",
+      "/admin/external_folder_sync_sources\nSet-Cookie: bad=1"
+    ]
+  end
+
   def table_preference_column_keys
     parsed_html.css("[data-rails-table-preferences-column-key]").map { |node| node["data-rails-table-preferences-column-key"] }.uniq
   end
@@ -485,6 +497,27 @@ RSpec.describe "Admin external folder sync sources", type: :request do
       expect(href_for("詳細へ戻る")).to eq(admin_external_folder_sync_source_path(source, return_to: return_to))
     end
 
+    it "falls back for unsafe return_to values in detail and edit links" do
+      sign_in_as(admin_user)
+      graph_project = create(:project, code: "SYNC002", name: "Graph Project")
+      source = create_microsoft_graph_source(project: graph_project, name: "SharePoint source")
+      fallback = admin_external_folder_sync_sources_path
+
+      unsafe_return_to_values.each do |return_to|
+        get admin_external_folder_sync_source_path(source), params: { return_to: return_to }
+
+        expect(response).to have_http_status(:ok)
+        expect(href_for("一覧へ戻る")).to eq(fallback)
+        expect(href_for("編集")).to eq(edit_admin_external_folder_sync_source_path(source, return_to: fallback))
+
+        get edit_admin_external_folder_sync_source_path(source), params: { return_to: return_to }
+
+        expect(response).to have_http_status(:ok)
+        expect(hidden_field_value("return_to")).to eq(fallback)
+        expect(href_for("詳細へ戻る")).to eq(admin_external_folder_sync_source_path(source, return_to: fallback))
+      end
+    end
+
     it "shows force apply warning count and examples near the approval action" do
       sign_in_as(admin_user)
       source = create_google_drive_source(project:, name: "Warning source", auth_type: :service_account)
@@ -556,6 +589,33 @@ RSpec.describe "Admin external folder sync sources", type: :request do
     end
   end
 
+  describe "DELETE /admin/external_folder_sync_sources/:public_id" do
+    it "keeps safe internal return_to paths with query strings" do
+      sign_in_as(admin_user)
+      source = create_google_drive_source(project:, name: "Drive source")
+      return_to = admin_external_folder_sync_sources_path(review: "warnings", q: "finance")
+
+      delete admin_external_folder_sync_source_path(source), params: { return_to: return_to }
+
+      expect(response).to redirect_to(return_to)
+      expect(ExternalFolderSyncSource.exists?(source.id)).to be(false)
+    end
+
+    it "falls back for unsafe return_to values" do
+      sign_in_as(admin_user)
+      fallback = admin_external_folder_sync_sources_path
+
+      unsafe_return_to_values.each_with_index do |return_to, index|
+        source = create_google_drive_source(project:, name: "Unsafe return source #{index}")
+
+        delete admin_external_folder_sync_source_path(source), params: { return_to: return_to }
+
+        expect(response).to redirect_to(fallback)
+        expect(ExternalFolderSyncSource.exists?(source.id)).to be(false)
+      end
+    end
+  end
+
   describe "POST /admin/external_folder_sync_sources/:public_id/dry_run" do
     let!(:graph_connection) { create(:microsoft_graph_connection, project:, enabled: true) }
     let(:source) do
@@ -603,6 +663,21 @@ RSpec.describe "Admin external folder sync sources", type: :request do
       post dry_run_admin_external_folder_sync_source_path(google_source), params: { return_to: return_to }
 
       expect(response).to redirect_to(admin_external_folder_sync_source_path(google_source, return_to: return_to))
+    end
+
+    it "falls back for unsafe return_to values after a Google Drive dry run" do
+      sign_in_as(admin_user)
+      google_source = create_google_drive_source(project:, name: "Drive source", auth_type: :service_account)
+      fallback = admin_external_folder_sync_sources_path
+      run = instance_double(ExternalFolderSyncRun, items_scanned_count: 3)
+      runner = instance_double(ExternalFolderSync::Runner, call: run)
+      allow(ExternalFolderSync::Runner).to receive(:new).and_return(runner)
+
+      unsafe_return_to_values.each do |return_to|
+        post dry_run_admin_external_folder_sync_source_path(google_source), params: { return_to: return_to }
+
+        expect(response).to redirect_to(admin_external_folder_sync_source_path(google_source, return_to: fallback))
+      end
     end
 
     it "returns 404 for numeric ids" do
