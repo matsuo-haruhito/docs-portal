@@ -1,3 +1,4 @@
+require "csv"
 require "rails_helper"
 require "uri"
 
@@ -699,6 +700,48 @@ RSpec.describe "Admin access logs", type: :request do
       "to" => "2026-05-02",
       "page" => "2"
     )
+  end
+
+  it "exports the latest 200 CSV rows using active filters independently from the current page" do
+    base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
+    csv_project = create(:project, code: "CSV", name: "CSV Project")
+    csv_document = create(:document, project: csv_project, title: "CSV Evidence", slug: "csv-evidence")
+    csv_version = create(:document_version, document: csv_document, version_label: "v1.0.2")
+
+    201.times do |index|
+      create_access_log!(
+        action_type: :view,
+        target_type: "page",
+        target_name: "csv-entry-#{index}",
+        project: csv_project,
+        document: csv_document,
+        document_version: csv_version,
+        accessed_at: base_time + index.minutes
+      )
+    end
+    create_access_log!(
+      action_type: :view,
+      target_type: "page",
+      target_name: "csv-outside-filter.html",
+      accessed_at: base_time + 1.day
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(format: :csv, project_id: csv_project.id, document_q: "CSV Evidence", page: 2)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("text/csv")
+
+    rows = CSV.parse(response.body, headers: true)
+    target_names = rows.map { _1.fetch("対象名") }
+
+    expect(rows.size).to eq(200)
+    expect(target_names.first).to eq("csv-entry-200")
+    expect(target_names.last).to eq("csv-entry-1")
+    expect(target_names).not_to include("csv-entry-0", "csv-outside-filter.html")
+    expect(rows.map { _1.fetch("案件コード") }.uniq).to eq(["CSV"])
+    expect(rows.map { _1.fetch("文書名") }.uniq).to eq(["CSV Evidence"])
   end
 
   it "falls back to the first page for invalid page parameters" do
