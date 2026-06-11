@@ -32,6 +32,7 @@ p.actions
       label
         | HTTP status
         = number_field_tag :response_status, @delivery_filters[:response_status], min: 100, max: 599, placeholder: "例: 500"
+        span.muted HTTP statusは100〜599の整数で絞り込みます。範囲外や数字以外は条件に使われません。
       label
         | エラー断片
         = search_field_tag :error_q, @delivery_filters[:error_q], placeholder: "例: timeout"
