@@ -106,8 +106,7 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(option_texts).to include("選択してください", "すべて", "利用あり", "未利用", "タイトル順")
     expect(option_texts.any? { |text| text.include?("Usage Project") }).to be(true)
 
-    expect(clear_link).to be_present
-    expect(clear_link.text).to include("条件をクリア")
+    expect(clear_link).to be_nil
   end
 
   it "shows usage summary, selected project state, and document links for the selected project" do
