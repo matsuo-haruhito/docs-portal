@@ -21,7 +21,8 @@ RSpec.describe "Admin generated file runs bulk retry cue", type: :request do
     action_panel_text = bulk_retry_form.ancestors("div").first.text.squish
     expect(action_panel_text).to include("失敗分を一括再実行")
     expect(action_panel_text).to include("現在の条件で再実行対象: 2 件")
-    expect(action_panel_text).to include("一括再実行は現在条件に一致する古い失敗分から最大100件です。")
+    expect(action_panel_text).to include("このボタンは現在の絞り込み条件に一致する失敗履歴だけを対象にします。")
+    expect(action_panel_text).to include("古い順に最大100件です。")
   end
 
   it "keeps the no-target cue visible alongside invalid date warnings" do

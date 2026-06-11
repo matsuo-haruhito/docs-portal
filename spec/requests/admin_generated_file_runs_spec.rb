@@ -328,9 +328,8 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).to include(second_run.public_id)
     end
 
-    it "preserves the current filters in the bulk retry form action" do
+    it "shows confirmation and preserves the current filters in the bulk retry form" do
       sign_in_as(admin_user)
-      create_run!(status: :failed)
       filters = {
         status: "failed",
         generator: "ai_usecase_decision_flow",
@@ -340,13 +339,38 @@ RSpec.describe "Admin generated file runs", type: :request do
         created_to: "2026-05-11",
         q: "timeout"
       }
+      create_run!(
+        status: :failed,
+        generator: "ai_usecase_decision_flow",
+        output_writer: "document_version",
+        event_source: "manual_document_upload",
+        error_message: "timeout while rendering",
+        created_at: Time.zone.parse("2026-05-10 12:00:00")
+      )
 
       get admin_generated_file_runs_path(filters)
 
       expect(response).to have_http_status(:ok)
       bulk_retry_form = parsed_html.at_css(%(form[action="#{retry_failed_admin_generated_file_runs_path(filters)}"]))
       expect(bulk_retry_form).to be_present
+      expect(bulk_retry_form["data-turbo-confirm"]).to include("現在の条件に一致する失敗履歴 1 件")
+      expect(bulk_retry_form["data-turbo-confirm"]).to include("古い順に最大100件")
       expect(bulk_retry_form.at_css("button")&.text).to include("失敗分を一括再実行")
+      expect(response.body).to include("このボタンは現在の絞り込み条件に一致する失敗履歴だけを対象にします。")
+      expect(response.body).to include("この行を再実行")
+    end
+
+    it "keeps bulk retry disabled when there are no matching failed runs" do
+      sign_in_as(admin_user)
+      create_run!(status: :completed)
+
+      get admin_generated_file_runs_path(status: "failed")
+
+      expect(response).to have_http_status(:ok)
+      bulk_retry_form = parsed_html.at_css(%(form[action="#{retry_failed_admin_generated_file_runs_path(status: "failed")}"]))
+      expect(bulk_retry_form).to be_present
+      expect(bulk_retry_form.at_css("button[disabled]")&.text).to include("失敗分を一括再実行")
+      expect(response.body).to include("対象がないため一括再実行できません。")
     end
 
     it "ignores invalid date filters" do
