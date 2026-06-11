@@ -102,7 +102,7 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("build manifest 未記録")
     expect(response.body).to include("次回 build 成功後に記録されます")
-    expect(response.body).to include("API specification site fixture")
+    expect(response.body).to include("site-viewer-frame")
   end
 
   it "shows a safe warning when the build manifest cannot be parsed" do
@@ -115,7 +115,7 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("build manifest 読み取り不可")
     expect(response.body).to include("manifest JSON を確認してください")
-    expect(response.body).to include("API specification site fixture")
+    expect(response.body).to include("site-viewer-frame")
   end
 
   it "shows a safe warning when the build manifest profile differs" do
@@ -129,7 +129,7 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response.body).to include("build manifest profile 不一致")
     expect(response.body).to include("portal_embedded")
     expect(response.body).to include("3.7.0")
-    expect(response.body).to include("API specification site fixture")
+    expect(response.body).to include("site-viewer-frame")
   end
 
   it "notifies the admin when a stale API specification build is enqueued" do
