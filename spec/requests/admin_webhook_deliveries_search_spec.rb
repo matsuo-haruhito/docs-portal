@@ -26,6 +26,19 @@ RSpec.describe "Admin webhook delivery search", type: :request do
     parsed_html.css("tbody td[data-rails-table-preferences-column-key='status']").map { |node| node.text.squish }
   end
 
+  it "shows response status range guidance near the filter input" do
+    sign_in_as(admin_user)
+
+    get admin_webhook_deliveries_path
+
+    response_status_input = parsed_html.at_css("input[name='response_status']")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("HTTP statusは100〜599の整数で絞り込みます。範囲外や数字以外は条件に使われません。")
+    expect(response_status_input["min"]).to eq("100")
+    expect(response_status_input["max"]).to eq("599")
+  end
+
   it "filters deliveries by endpoint, event type, status, and created date range" do
     sign_in_as(admin_user)
 
