@@ -1,5 +1,6 @@
 class Admin::DashboardController < Admin::BaseController
   OPERATIONAL_FAILURE_STALE_THRESHOLD = 7.days
+  GENERATED_FILE_ALERT_CANDIDATE_LIMIT = 5
 
   before_action :require_internal_admin_for_dashboard!, only: :index
 
@@ -14,6 +15,7 @@ class Admin::DashboardController < Admin::BaseController
     @storage_usage_summary = StorageUsageSummary.new.call
     @model_browser_entries = Admin::ModelBrowserCatalog.entries.first(8)
     @model_browser_entry_summaries = @model_browser_entries.index_with { Admin::ModelBrowserSummary.for(_1) }
+    @generated_file_run_failure_alert_candidates = generated_file_run_failure_alert_candidates
     @operational_failure_summary = operational_failure_summary
   end
 
@@ -52,7 +54,8 @@ class Admin::DashboardController < Admin::BaseController
         details: ["実行履歴 failed: #{generated_run_failed_count}", "イベント failed: #{generated_event_failed_count}"],
         latest_at: latest_operational_failure_at(generated_failed_runs, generated_failed_events),
         primary_link: ["生成実行履歴を確認", admin_generated_file_runs_path(status: "failed")],
-        secondary_link: ["生成イベント履歴", admin_generated_file_events_path(status: "failed")]
+        secondary_link: ["生成イベント履歴", admin_generated_file_events_path(status: "failed")],
+        alert_candidates: @generated_file_run_failure_alert_candidates
       },
       {
         label: "Webhook送信",
@@ -73,6 +76,10 @@ class Admin::DashboardController < Admin::BaseController
     ].map do |item|
       item.merge(stale: operational_failure_stale?(item[:latest_at]))
     end
+  end
+
+  def generated_file_run_failure_alert_candidates
+    GeneratedFiles::RunFailureAlertCandidates.new(limit: GENERATED_FILE_ALERT_CANDIDATE_LIMIT).call
   end
 
   def latest_operational_failure_at(*relations)
