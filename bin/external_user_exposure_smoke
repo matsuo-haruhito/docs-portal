@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+SPEC_FILES = [
+  "spec/requests/external_document_access_spec.rb",
+  "spec/requests/document_search_spec.rb",
+  "spec/requests/project_site_security_spec.rb",
+  "spec/requests/document_files_spec.rb",
+  "spec/requests/document_sites_spec.rb",
+  "spec/requests/document_review_comments_spec.rb",
+  "spec/requests/project_ai_contexts_spec.rb",
+  "spec/requests/document_delivery_logs_spec.rb",
+  "spec/requests/document_bookmarks_spec.rb"
+].freeze
+
+missing_files = SPEC_FILES.reject { |path| File.file?(path) }
+abort "Missing external user exposure smoke specs: #{missing_files.join(', ')}" if missing_files.any?
+
+exec "bundle", "exec", "rspec", *SPEC_FILES, *ARGV
