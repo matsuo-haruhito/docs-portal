@@ -11,6 +11,7 @@ nav
         summary.nav-dropdown__summary class=("is-active" if document_nav_active)
           | 文書
           - if document_nav_active
+            = " "
             span.badge 現在
         .nav-dropdown__menu
           small.nav-dropdown__section-label.muted
@@ -28,6 +29,7 @@ nav
         summary.nav-dropdown__summary class=("is-active" if history_nav_active)
           | 履歴照会
           - if history_nav_active
+            = " "
             span.badge 現在
         .nav-dropdown__menu
           small.nav-dropdown__section-label.muted
@@ -46,6 +48,7 @@ nav
           summary.nav-dropdown__summary class=("is-active" if admin_nav_active)
             | 管理メニュー
             - if admin_nav_active
+              = " "
               span.badge 現在
           .nav-dropdown__menu
             small.nav-dropdown__section-label.muted
@@ -76,6 +79,7 @@ nav
           summary.nav-dropdown__summary class=("is-active" if integration_nav_active)
             | 連携メニュー
             - if integration_nav_active
+              = " "
               span.badge 現在
           .nav-dropdown__menu
             small.nav-dropdown__section-label.muted
