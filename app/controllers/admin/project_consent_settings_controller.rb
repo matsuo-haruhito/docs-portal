@@ -4,15 +4,7 @@ class Admin::ProjectConsentSettingsController < Admin::BaseController
   before_action :load_form_collections, only: %i[index create edit update]
 
   def index
-    @selected_project_id = project_filter_param
-    @selected_consent_term_id = consent_term_filter_param
-    @selected_enabled = enabled_filter_param
-
-    @project_consent_settings = project_consent_settings_scope
-    @project_consent_settings_exist = @project_consent_settings.exists?
-    @project_consent_settings = @project_consent_settings.where(project_id: @selected_project_id) if @selected_project_id.present?
-    @project_consent_settings = @project_consent_settings.where(consent_term_id: @selected_consent_term_id) if @selected_consent_term_id.present?
-    @project_consent_settings = @project_consent_settings.where(enabled: @selected_enabled == "true") if @selected_enabled.present?
+    @project_consent_settings = filtered_project_consent_settings
     @project_consent_setting = ProjectConsentSetting.new(enabled: true, required_on: :first_access)
   end
 
@@ -22,8 +14,7 @@ class Admin::ProjectConsentSettingsController < Admin::BaseController
     if @project_consent_setting.save
       redirect_to admin_project_consent_settings_path, notice: "案件同意設定を登録しました。"
     else
-      @project_consent_settings = project_consent_settings_scope
-      @project_consent_settings_exist = @project_consent_settings.exists?
+      @project_consent_settings = filtered_project_consent_settings
       render :index, status: :unprocessable_entity
     end
   end
@@ -47,6 +38,42 @@ class Admin::ProjectConsentSettingsController < Admin::BaseController
   end
 
   private
+
+  def filtered_project_consent_settings
+    @selected_project_id = project_filter_param
+    @selected_consent_term_id = consent_term_filter_param
+    @selected_enabled = enabled_filter_param
+
+    base_scope = project_consent_settings_scope
+    @project_consent_settings_total_count = base_scope.count
+    filtered_scope = apply_project_consent_setting_filters(base_scope)
+    @project_consent_settings_filtered_count = filtered_scope.count
+    settings, @project_consent_settings_pagination = paginate_admin_list(
+      filtered_scope,
+      @project_consent_settings_filtered_count
+    )
+    @project_consent_setting_page_params = project_consent_setting_page_params
+    @project_consent_settings_exist = @project_consent_settings_total_count.positive?
+
+    settings
+  end
+
+  def apply_project_consent_setting_filters(scope)
+    scope = scope.where(project_id: @selected_project_id) if @selected_project_id.present?
+    scope = scope.where(consent_term_id: @selected_consent_term_id) if @selected_consent_term_id.present?
+    scope = scope.where(enabled: @selected_enabled == "true") if @selected_enabled.present?
+    scope
+  end
+
+  def project_consent_setting_page_params
+    page_params = {
+      project_id: @selected_project_id,
+      consent_term_id: @selected_consent_term_id,
+      enabled: @selected_enabled
+    }
+    page_params[:per_page] = @project_consent_settings_pagination[:per_page] if params[:per_page].present?
+    page_params.reject { |_key, value| value.blank? }
+  end
 
   def set_project_consent_setting
     @project_consent_setting = ProjectConsentSetting.find_by!(public_id: params[:public_id])
