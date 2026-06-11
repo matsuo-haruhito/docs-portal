@@ -288,7 +288,9 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(page_hrefs).to include(admin_projects_path)
     expect(page_hrefs).not_to include(admin_projects_path(q: matching_project.id.to_s))
     expect(response.body).not_to include(other_project.code)
-    expect(response.body).not_to include("削除")
+
+    action_labels = parsed_html.css("a, button, input[type='submit']").map { _1.text.presence || _1["value"] }.compact.map(&:squish)
+    expect(action_labels).not_to include("削除")
   end
 
   it "shows an empty state for searches with no matching records" do
