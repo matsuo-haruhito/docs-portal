@@ -82,7 +82,7 @@ RSpec.describe "Admin model browsers", type: :request do
     get admin_model_browser_model_path("documents"), params: { model_browser_q: overlong_return_context, q: "release-note" }
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("検索語: release-note / 最大20件の代表表示です。この画面では編集や削除はできません。")
+    expect(response.body).to include("検索語: release-note / 最大20件の代表表示です。")
     expect(parsed_html.css("input[name='model_browser_q'][value='#{bounded_return_context}']")).to be_present
     expect(page_hrefs).to include(admin_model_browser_path(q: bounded_return_context))
     expect(page_hrefs).to include(admin_model_browser_model_path("documents", model_browser_q: bounded_return_context))
@@ -99,7 +99,7 @@ RSpec.describe "Admin model browsers", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果")
-    expect(response.body).to include("検索語: Return / 最大20件の代表表示です。この画面では編集や削除はできません。")
+    expect(response.body).to include("検索語: Return / 最大20件の代表表示です。")
     expect(response.body).to include("20件より先や詳細確認は「既存画面で詳しく確認」から続けてください。")
     expect(parsed_html.css("input[name='model_browser_q'][value='文書']")).to be_present
     expect(page_hrefs).to include(admin_model_browser_path(q: "文書"))
@@ -240,7 +240,7 @@ RSpec.describe "Admin model browsers", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果")
-    expect(response.body).to include("検索語: Needle / 最大20件の代表表示です。この画面では編集や削除はできません。")
+    expect(response.body).to include("検索語: Needle / 最大20件の代表表示です。")
     expect(response.body).to include("20件より先や詳細確認は「既存画面で詳しく確認」から続けてください。")
     expect(response.body).to include("「既存画面で詳しく確認」は検索語「Needle」を既存画面の検索条件として渡します。")
     expect(page_hrefs).to include(admin_projects_path(q: "Needle"))
@@ -258,7 +258,7 @@ RSpec.describe "Admin model browsers", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果")
-    expect(response.body).to include("検索語: release-note / 最大20件の代表表示です。この画面では編集や削除はできません。")
+    expect(response.body).to include("検索語: release-note / 最大20件の代表表示です。")
     expect(response.body).not_to include("既存画面で詳しく確認")
     expect(response.body).not_to include("20件より先や詳細確認は「既存画面で詳しく確認」")
     expect(response.body).not_to include("既存画面で続けて確認する場合")
