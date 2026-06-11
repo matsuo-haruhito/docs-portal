@@ -361,23 +361,26 @@ RSpec.describe "Admin generated file runs", type: :request do
 
     it "shows invalid date warnings while applying valid date filters" do
       sign_in_as(admin_user)
+      before_range = create_run!(job_id: "before_range", created_at: Time.zone.parse("2026-05-09 12:00:00"))
       inside_range = create_run!(job_id: "inside_range", created_at: Time.zone.parse("2026-05-10 12:00:00"))
-      outside_range = create_run!(job_id: "outside_range", created_at: Time.zone.parse("2026-05-12 12:00:00"))
+      after_range = create_run!(job_id: "after_range", created_at: Time.zone.parse("2026-05-12 12:00:00"))
 
       get admin_generated_file_runs_path(created_from: "invalid", created_to: "2026-05-10")
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("日時フィルタを確認してください。")
       expect(response.body).to include("作成日(開始)「invalid」は日時として解釈できないため、この条件は適用していません。")
+      expect(response.body).to include(before_range.public_id)
       expect(response.body).to include(inside_range.public_id)
-      expect(response.body).not_to include(outside_range.public_id)
+      expect(response.body).not_to include(after_range.public_id)
 
       get admin_generated_file_runs_path(created_from: "2026-05-10", created_to: "also-invalid")
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("作成日(終了)「also-invalid」は日時として解釈できないため、この条件は適用していません。")
+      expect(response.body).not_to include(before_range.public_id)
       expect(response.body).to include(inside_range.public_id)
-      expect(response.body).not_to include(outside_range.public_id)
+      expect(response.body).to include(after_range.public_id)
     end
 
     it "forbids external users" do
