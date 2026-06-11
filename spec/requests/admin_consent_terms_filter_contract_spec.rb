@@ -41,11 +41,31 @@ RSpec.describe "Admin consent term filters", type: :request do
     expect(listed_rows).to contain_exactly(a_string_including(matching_term.title, matching_term.version_label, "案件", "初回表示時", "利用中"))
     expect(listed_rows.join).not_to include("共有リンク利用規約", "2026-C")
     expect(search_filter["value"]).to eq("2026-A")
+    expect(search_filter["maxlength"]).to eq(Admin::ConsentTermsController::CONSENT_TERM_QUERY_MAX_LENGTH.to_s)
+    expect(page_text).to include("タイトルまたは版ラベルの部分一致で探せます。")
+    expect(page_text).to include("検索語は最大#{Admin::ConsentTermsController::CONSENT_TERM_QUERY_MAX_LENGTH}文字です。")
     expect(selected_value(active_filter)).to eq("true")
     expect(selected_value(scope_filter)).to eq("project")
     expect(selected_value(timing_filter)).to eq("first_view")
     expect(reset_link_texts).to include("条件をリセット")
     expect(table_column_keys).to include("title", "version_label", "consent_scope", "requirement_timing", "status", "actions")
+  end
+
+  it "normalizes long query text without widening search beyond title and version label" do
+    max_length = Admin::ConsentTermsController::CONSENT_TERM_QUERY_MAX_LENGTH
+    normalized_query = "a" * max_length
+    long_query = "  #{normalized_query}extra-tail  "
+    matching_term = create_consent_term!(title: normalized_query, version_label: "2026-A", body: "本文")
+    create_consent_term!(title: "本文だけ一致", version_label: "2026-B", body: normalized_query)
+    create_consent_term!(title: "長文末尾一致", version_label: "extra-tail", body: "本文")
+
+    get admin_consent_terms_path(q: long_query)
+
+    expect(response).to have_http_status(:ok)
+    expect(search_filter["value"]).to eq(normalized_query)
+    expect(page_text).to include("検索: #{normalized_query}")
+    expect(page_text).not_to include("extra-tail")
+    expect(listed_rows).to contain_exactly(a_string_including(matching_term.title, matching_term.version_label))
   end
 
   it "ignores unsupported filter values without changing the result set" do
@@ -87,6 +107,10 @@ RSpec.describe "Admin consent term filters", type: :request do
 
   def parsed_html
     Nokogiri::HTML(response.body)
+  end
+
+  def page_text
+    parsed_html.text.squish
   end
 
   def listed_rows
