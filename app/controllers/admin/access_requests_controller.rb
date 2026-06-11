@@ -15,8 +15,10 @@ class Admin::AccessRequestsController < Admin::BaseController
   def index
     @filters = filter_params
     scope = filtered_access_request_scope
-    @access_requests = filtered_access_requests(scope)
-    @status_counts = access_request_status_counts(scope, @access_requests)
+    @access_requests_filtered_count = scope.unscope(:order).count
+    @access_requests, @access_requests_pagination = paginate_admin_list(scope, @access_requests_filtered_count)
+    @access_request_page_params = access_request_page_params
+    @status_counts = access_request_status_counts(scope)
   end
 
   def update
@@ -44,18 +46,12 @@ class Admin::AccessRequestsController < Admin::BaseController
     scope = scope.where(status: @filters[:status]) if @filters[:status].present?
     scope = scope.where(requested_access_level: @filters[:requested_access_level]) if @filters[:requested_access_level].present?
     scope = scope.where(requestable_type: @filters[:requestable_type]) if @filters[:requestable_type].present?
-    scope
-  end
+    return scope if @filters[:q].blank?
 
-  def filtered_access_requests(scope)
-    if @filters[:q].present?
-      scope = scope.where(
-        access_request_search_condition,
-        query: access_request_query_pattern(@filters[:q])
-      )
-    end
-
-    scope.to_a
+    scope.where(
+      access_request_search_condition,
+      query: access_request_query_pattern(@filters[:q])
+    )
   end
 
   def access_request_query_pattern(query)
@@ -127,18 +123,10 @@ class Admin::AccessRequestsController < Admin::BaseController
     SQL
   end
 
-  def access_request_status_counts(scope, access_requests)
-    return access_request_status_counts_from_loaded(access_requests) if @filters[:q].present?
-
+  def access_request_status_counts(scope)
     counts = scope.unscope(:order).group(:status).count
     AccessRequest.statuses.keys.to_h do |status|
       [status, counts[status].to_i]
-    end
-  end
-
-  def access_request_status_counts_from_loaded(access_requests)
-    AccessRequest.statuses.keys.to_h do |status|
-      [status, access_requests.count { |access_request| access_request.status == status }]
     end
   end
 
@@ -155,7 +143,20 @@ class Admin::AccessRequestsController < Admin::BaseController
   end
 
   def redirect_filter_params
-    filter_params.compact
+    page_params = filter_params.compact
+    page = params[:page].to_i
+    per_page = params[:per_page].to_i
+
+    page_params[:page] = page if page.positive?
+    page_params[:per_page] = [per_page, MAX_ADMIN_LIST_PER_PAGE].min if per_page.positive?
+    page_params
+  end
+
+  def access_request_page_params
+    page_params = @filters.transform_keys(&:to_s)
+    page_params["page"] = @access_requests_pagination[:page] if params[:page].present?
+    page_params["per_page"] = @access_requests_pagination[:per_page] if params[:per_page].present?
+    page_params.reject { |_key, value| value.blank? }
   end
 
   def filter_params
