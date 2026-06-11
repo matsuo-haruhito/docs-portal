@@ -1,9 +1,15 @@
 - page_title "Microsoft Graph接続"
 - search_query_maxlength = Admin::MicrosoftGraphConnectionsController::MAX_SEARCH_QUERY_LENGTH
+- search_params = { q: @search_query.presence }.compact
+- preview_usage_params = { preview_usage: @selected_preview_usage.presence }.compact
+- duplicate_filter_params = @duplicate_only ? { duplicate_only: "1" } : {}
 - table_key = :admin_microsoft_graph_connections
 - table_columns = microsoft_graph_connection_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - selected_filter_labels = []
+- filter_base_style = "display:inline-flex;align-items:center;gap:0.35rem;padding:0.35rem 0.7rem;border-radius:999px;border:1px solid #d8dee4;line-height:1.2;text-decoration:none;white-space:nowrap;"
+- filter_selected_style = "#{filter_base_style}background:#eaf3ff;border-color:#9ec5fe;color:#1f5aa6;font-weight:700;"
+- filter_link_style = "#{filter_base_style}background:#fff;color:#24292f;"
 - if @selected_preview_usage == "preview_selected"
   - selected_filter_labels << "previewで使用中"
 - elsif @selected_preview_usage == "enabled_unused"
@@ -46,47 +52,54 @@ h1 Microsoft Graph接続
   .card
     h2 一覧の絞り込み
     p.muted preview利用の状態、要整理案件、案件・接続名・Drive情報で絞って確認できます。
-    = form_with url: admin_microsoft_graph_connections_path, method: :get, local: true do
-      - if @selected_preview_usage.present?
-        = hidden_field_tag :preview_usage, @selected_preview_usage
-      - if @duplicate_only
-        = hidden_field_tag :duplicate_only, "1"
-      p
-        = label_tag :q, "検索"
-        br
-        = text_field_tag :q, @search_query, placeholder: "案件名・code・接続名・Drive ID・Site ID・フォルダ", maxlength: search_query_maxlength
-        = submit_tag "検索"
-      p.muted = "検索対象: 案件名・code・接続名・Tenant / Client / Drive / Site ID・プレビュー用フォルダ（最大#{search_query_maxlength}文字）"
-      - if @search_query.present?
-        p.muted = link_to "検索を解除", admin_microsoft_graph_connections_path(preview_usage: @selected_preview_usage, duplicate_only: (@duplicate_only ? "1" : nil))
-    ul
-      li
-        - if @selected_preview_usage.blank? && !@duplicate_only
-          strong = "すべて (#{@preview_usage_counts[:all]})"
-        - else
-          = link_to "すべて (#{@preview_usage_counts[:all]})", admin_microsoft_graph_connections_path(q: @search_query.presence)
-      li
-        - if @selected_preview_usage == "preview_selected"
-          strong = "previewで使用中 (#{@preview_usage_counts[:preview_selected]})"
-        - else
-          = link_to "previewで使用中 (#{@preview_usage_counts[:preview_selected]})", admin_microsoft_graph_connections_path(preview_usage: :preview_selected, q: @search_query.presence)
-      li
-        - if @selected_preview_usage == "enabled_unused"
-          strong = "有効だが未使用 (#{@preview_usage_counts[:enabled_unused]})"
-        - else
-          = link_to "有効だが未使用 (#{@preview_usage_counts[:enabled_unused]})", admin_microsoft_graph_connections_path(preview_usage: :enabled_unused, q: @search_query.presence)
-      li
-        - if @selected_preview_usage == "disabled"
-          strong = "無効 / previewでは未使用 (#{@preview_usage_counts[:disabled]})"
-        - else
-          = link_to "無効 / previewでは未使用 (#{@preview_usage_counts[:disabled]})", admin_microsoft_graph_connections_path(preview_usage: :disabled, q: @search_query.presence)
-      li
+    .microsoft-graph-filter-section style="margin-top:0.75rem;"
+      strong 検索
+      p.muted style="margin:0.25rem 0 0.5rem;" 案件名・code・接続名・Tenant / Client / Drive / Site ID・プレビュー用フォルダから探せます。
+      = form_with url: admin_microsoft_graph_connections_path, method: :get, local: true, html: { style: "display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;margin:0;" } do
+        - if @selected_preview_usage.present?
+          = hidden_field_tag :preview_usage, @selected_preview_usage
         - if @duplicate_only
-          strong = "要整理案件のみ (#{@duplicate_projects.size}案件)"
+          = hidden_field_tag :duplicate_only, "1"
+        = text_field_tag :q, @search_query, placeholder: "案件名・code・接続名・Drive ID・Site ID・フォルダ", maxlength: search_query_maxlength, style: "min-width:18rem;max-width:100%;padding:0.4rem 0.55rem;border:1px solid #d8dee4;border-radius:6px;"
+        = submit_tag "検索", class: "button secondary"
+        - if @search_query.present?
+          = link_to "検索を解除", admin_microsoft_graph_connections_path(preview_usage_params.merge(duplicate_filter_params)), class: "button secondary"
+      p.muted style="margin:0.4rem 0 0;" = "検索対象: 案件名・code・接続名・Tenant / Client / Drive / Site ID・プレビュー用フォルダ（最大#{search_query_maxlength}文字）"
+    .microsoft-graph-filter-section style="margin-top:0.75rem;"
+      strong preview利用状態
+      p.muted style="margin:0.25rem 0 0.5rem;" Office preview が参照する接続と、未使用・無効の接続を分けて確認します。
+      p.actions style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0;"
+        - if @selected_preview_usage.blank? && !@duplicate_only
+          strong style=filter_selected_style
+            = "すべて (#{@preview_usage_counts[:all]})"
         - else
-          = link_to "要整理案件のみ (#{@duplicate_projects.size}案件)", admin_microsoft_graph_connections_path(duplicate_only: 1, q: @search_query.presence)
+          = link_to "すべて (#{@preview_usage_counts[:all]})", admin_microsoft_graph_connections_path(search_params), style: filter_link_style
+        - if @selected_preview_usage == "preview_selected"
+          strong style=filter_selected_style
+            = "previewで使用中 (#{@preview_usage_counts[:preview_selected]})"
+        - else
+          = link_to "previewで使用中 (#{@preview_usage_counts[:preview_selected]})", admin_microsoft_graph_connections_path({ preview_usage: :preview_selected }.merge(search_params)), style: filter_link_style
+        - if @selected_preview_usage == "enabled_unused"
+          strong style=filter_selected_style
+            = "有効だが未使用 (#{@preview_usage_counts[:enabled_unused]})"
+        - else
+          = link_to "有効だが未使用 (#{@preview_usage_counts[:enabled_unused]})", admin_microsoft_graph_connections_path({ preview_usage: :enabled_unused }.merge(search_params)), style: filter_link_style
+        - if @selected_preview_usage == "disabled"
+          strong style=filter_selected_style
+            = "無効 / previewでは未使用 (#{@preview_usage_counts[:disabled]})"
+        - else
+          = link_to "無効 / previewでは未使用 (#{@preview_usage_counts[:disabled]})", admin_microsoft_graph_connections_path({ preview_usage: :disabled }.merge(search_params)), style: filter_link_style
+    .microsoft-graph-filter-section style="margin-top:1rem;"
+      strong 要整理案件
+      p.muted style="margin:0.25rem 0 0.5rem;" 同一案件に複数の有効接続が残っているものだけを確認します。
+      p.actions style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0;"
+        - if @duplicate_only
+          strong style=filter_selected_style
+            = "要整理案件のみ (#{@duplicate_projects.size}案件)"
+        - else
+          = link_to "要整理案件のみ (#{@duplicate_projects.size}案件)", admin_microsoft_graph_connections_path({ duplicate_only: 1 }.merge(search_params)), style: filter_link_style
     - if selected_filter_labels.any?
-      p.muted
+      p.muted style="margin-top:1rem;"
         = "現在の絞り込み: #{selected_filter_labels.join(' / ')}"
         br
         = link_to "絞り込みを解除", admin_microsoft_graph_connections_path
