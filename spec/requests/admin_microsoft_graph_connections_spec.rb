@@ -13,6 +13,14 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
     parsed_html.at_css(%(input[name="#{name}"]))&.[]("value")
   end
 
+  def filter_section_text(label)
+    parsed_html.css(".microsoft-graph-filter-section").find { |section| section.at_css("strong")&.text&.squish == label }&.text&.squish
+  end
+
+  def link_href(text)
+    parsed_html.css("a").find { |link| link.text.squish == text }&.[]("href")
+  end
+
   def safe_identifier_preview(value)
     normalized = value.to_s.squish
     return normalized if normalized.length <= 28
@@ -65,6 +73,10 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
       expect(response.body).to include("有効だが未使用 (1)")
       expect(response.body).to include("無効 / previewでは未使用 (1)")
       expect(response.body).to include("要整理案件のみ (1案件)")
+      expect(parsed_html.css(".microsoft-graph-filter-section").size).to eq(3)
+      expect(filter_section_text("検索")).to include("案件名・code・接続名")
+      expect(filter_section_text("preview利用状態")).to include("Office preview が参照する接続")
+      expect(filter_section_text("要整理案件")).to include("同一案件に複数の有効接続")
 
       duplicate_project_link = parsed_html.at_css(%(a[href="#{admin_microsoft_graph_connections_path(duplicate_only: 1)}#microsoft-graph-project-#{project.id}"]))
 
@@ -246,6 +258,9 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
       expect(response.body).to include("現在の絞り込み: 無効 / previewでは未使用 / 検索: Archive")
       expect(parsed_html.at_css(%(a[href="#{admin_microsoft_graph_connections_path(preview_usage: :enabled_unused, q: "Archive")}"]))).to be_present
       expect(parsed_html.at_css(%(a[href="#{admin_microsoft_graph_connections_path(preview_usage: "disabled")}"])).text).to include("検索を解除")
+      expect(filter_section_text("検索")).to include("検索対象:")
+      expect(filter_section_text("preview利用状態")).to include("無効 / previewでは未使用")
+      expect(link_href("検索を解除")).to eq(admin_microsoft_graph_connections_path(preview_usage: "disabled"))
     end
 
     it "combines duplicate cleanup filtering with the search query" do
@@ -266,6 +281,9 @@ RSpec.describe "Admin Microsoft Graph connections", type: :request do
       expect(response.body).not_to include(other_duplicate.name)
       expect(response.body).to include("現在の絞り込み: 要整理案件のみ / 検索: standby")
       expect(response.body).to include("1 / 4 件を表示しています。")
+      expect(filter_section_text("要整理案件")).to include("要整理案件のみ")
+      expect(filter_section_text("要整理案件")).to include("同一案件に複数の有効接続")
+      expect(link_href("検索を解除")).to eq(admin_microsoft_graph_connections_path(duplicate_only: "1"))
     end
 
     it "shows filtered empty state separately from an unregistered empty state" do
