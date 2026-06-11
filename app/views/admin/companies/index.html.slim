@@ -33,11 +33,13 @@ h1 会社マスタ
       = link_to "条件をクリア", admin_companies_path, class: "button secondary"
   - if company_filters_applied
     p.muted = "適用中: #{company_filter_summaries.join(' / ')}"
-    p.muted = "検索結果: #{@companies.size}件（列の表示設定は下の「会社一覧の表示設定」で調整できます）"
+    p.muted = "検索結果: #{@companies_filtered_count}件（列の表示設定は下の「会社一覧の表示設定」で調整できます）"
 
 - if @companies.any?
   .card
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "会社一覧の表示設定")
+
+  p.muted = "表示中: #{@companies_pagination[:from]}-#{@companies_pagination[:to]}件 / #{@companies_filtered_count}件"
 
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
@@ -58,6 +60,15 @@ h1 会社マスタ
             = edit_link_to "編集", edit_admin_company_path(company)
             - if admin_user?
               = delete_link_to "削除", admin_company_path(company), confirm: "会社「#{company.display_name}」を削除しますか？所属ユーザーや文書権限への影響を確認してください。"
+
+  - if @companies_pagination[:total_pages] > 1
+    nav.pagination aria-label="会社一覧ページ"
+      p.actions
+        - if @companies_pagination[:prev_page]
+          = link_to "前へ", admin_companies_path(@company_page_params.merge(page: @companies_pagination[:prev_page])), class: "button secondary"
+        span.muted = "#{@companies_pagination[:page]} / #{@companies_pagination[:total_pages]}ページ"
+        - if @companies_pagination[:next_page]
+          = link_to "次へ", admin_companies_path(@company_page_params.merge(page: @companies_pagination[:next_page])), class: "button secondary"
 - else
   section.card
     h2 会社一覧
