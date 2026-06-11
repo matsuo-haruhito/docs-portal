@@ -3,6 +3,7 @@
 - return_to = params[:return_to].present? ? document_return_to_path : nil
 - form_url = document.persisted? ? admin_document_path(document.public_id, return_to: return_to) : admin_documents_path
 = form_with model: [:admin, document], url: form_url do |form|
+  = hidden_field_tag :return_to, return_to if return_to.present?
   .form-grid
     = form.rfk_select :project_id,
       collection: @projects,
