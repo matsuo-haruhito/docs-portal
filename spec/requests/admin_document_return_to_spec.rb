@@ -27,6 +27,10 @@ RSpec.describe "Admin document return_to", type: :request do
     Rack::Utils.parse_nested_query(URI.parse(url).query)
   end
 
+  def hidden_field_value(name)
+    parsed_html.at_css(%(input[name="#{name}"]))&.[]("value")
+  end
+
   def document_update_params(document, title: document.title)
     {
       document: {
@@ -74,8 +78,7 @@ RSpec.describe "Admin document return_to", type: :request do
     get edit_admin_document_path(document.public_id), params: { return_to: return_to }
 
     expect(response).to have_http_status(:ok)
-    form_action = parsed_html.at_css("form[action]")["action"]
-    expect(query_params(form_action).fetch("return_to")).to eq(return_to)
+    expect(hidden_field_value("return_to")).to eq(return_to)
     expect(parsed_html.css("a").find { |node| node.text.squish == "一覧へ戻る" }["href"]).to eq(return_to)
 
     patch admin_document_path(document.public_id), params: document_update_params(document, title: "Safe Return Updated").merge(return_to: return_to)
