@@ -41,7 +41,7 @@ RSpec.describe "Frontend initialization inventory" do
   it "keeps gem controllers outside the App side controller table" do
     expect(inventory_app_controllers & GEM_CONTROLLER_IDENTIFIERS).to be_empty
     GEM_CONTROLLER_IDENTIFIERS.each do |identifier|
-      expect(entrypoint_source).to include(%(application.register("#{identifier}"))
+      expect(entrypoint_source).to include(%(application.register("#{identifier}")))
       expect(inventory_source).to include(%(`#{identifier}`))
     end
   end
