@@ -9,12 +9,20 @@ RSpec.describe "Admin company master filters", type: :request do
     parsed_html.text.squish
   end
 
+  def result_table_text
+    parsed_html.css("tbody").text.squish
+  end
+
   def input_value(name)
     parsed_html.at_css(%(input[name="#{name}"]))&.[]("value")
   end
 
   def selected_option_value(name)
     parsed_html.at_css(%(select[name="#{name}"] option[selected]))&.[]("value")
+  end
+
+  def link_href(text)
+    parsed_html.css("a").find { |link| link.text.squish == text }&.[]("href")
   end
 
   let!(:company) { create(:company, domain: "alpha.example.com", name: "Alpha Company", active: true) }
@@ -86,5 +94,31 @@ RSpec.describe "Admin company master filters", type: :request do
     expect(page_text).not_to include("Dormant Partner")
     expect(input_value("q")).to eq("alpha")
     expect(selected_option_value("active")).to eq("true")
+  end
+
+  it "paginates filtered companies while preserving filters in page links" do
+    matching_companies = Array.new(3) do |index|
+      create(:company, domain: "tenant-#{index}.example.com", name: "Tenant Page #{index}", active: true)
+    end
+    create(:company, domain: "tenant-inactive.example.com", name: "Tenant Page Inactive", active: false)
+
+    sign_in_as(create(:user, :internal))
+
+    get admin_companies_path, params: { q: "tenant page", active: "true", per_page: 2 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 3件")
+    expect(page_text).to include("表示中: 1-2件 / 3件")
+    expect(result_table_text).to include(matching_companies.first.domain)
+    expect(result_table_text).to include(matching_companies.second.domain)
+    expect(result_table_text).not_to include(matching_companies.third.domain)
+    expect(link_href("次へ")).to include("q=tenant+page", "active=true", "per_page=2", "page=2")
+
+    get admin_companies_path, params: { q: "tenant page", active: "true", per_page: 2, page: 2 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 3-3件 / 3件")
+    expect(result_table_text).to include(matching_companies.third.domain)
+    expect(result_table_text).not_to include(matching_companies.first.domain)
   end
 end
