@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe "Admin Microsoft Graph connection table preferences", type: :request do
-  TABLE_COLUMN_KEYS = %w[
+  MICROSOFT_GRAPH_CONNECTION_COLUMN_KEYS = %w[
     project
     name
     graph_identifiers
@@ -47,7 +47,7 @@ RSpec.describe "Admin Microsoft Graph connection table preferences", type: :requ
     expect(response.body).to include("previewで使用中")
     expect(response.body).to include("外部フォルダ同期設定を確認")
 
-    TABLE_COLUMN_KEYS.each do |column_key|
+    MICROSOFT_GRAPH_CONNECTION_COLUMN_KEYS.each do |column_key|
       expect(response.body.scan(%(data-rails-table-preferences-column-key="#{column_key}")).size).to be >= 2
     end
   end
@@ -63,7 +63,7 @@ RSpec.describe "Admin Microsoft Graph connection table preferences", type: :requ
     expect(view_source).to include("table_preferences_editor(table_key: table_key")
     expect(view_source).to include("table_preferences_table_tag(table_key: table_key")
 
-    TABLE_COLUMN_KEYS.each do |column_key|
+    MICROSOFT_GRAPH_CONNECTION_COLUMN_KEYS.each do |column_key|
       expect(helper_source).to include("table_preferences_column(:#{column_key}")
       expect(view_source).to include(%(data-rails-table-preferences-column-key="#{column_key}"))
     end
