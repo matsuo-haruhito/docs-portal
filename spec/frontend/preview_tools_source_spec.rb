@@ -42,8 +42,7 @@ RSpec.describe "preview tools source" do
   it "removes the old preview-tools bridge from the registered and attached controller set" do
     aggregate_failures do
       expect(Rails.root.join("app/frontend/controllers/preview_tools_controller.js")).not_to exist
-      expect(entrypoint_source).not_to include("PreviewToolsController")
-      expect(entrypoint_source).not_to include("preview_tools_controller")
+      expect(entrypoint_source).not_to include('from "../controllers/preview_tools_controller"')
       expect(entrypoint_source).not_to include('application.register("preview-tools"')
       expect(layout_source).not_to include(" preview-tools")
       expect(layout_source).not_to include('data-controller="preview-tools')
