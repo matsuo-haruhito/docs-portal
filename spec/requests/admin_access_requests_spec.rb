@@ -20,6 +20,14 @@ RSpec.describe "Admin access requests", type: :request do
     parsed_html.at_css("form[action='#{admin_access_requests_path}']")
   end
 
+  def result_table_text
+    parsed_html.css("tbody").text.squish
+  end
+
+  def link_href(text)
+    parsed_html.css("a[href]").find { |link| link.text.squish == text }&.[]("href")
+  end
+
   before do
     create(:project_membership, project:, user: requester)
   end
@@ -35,10 +43,11 @@ RSpec.describe "Admin access requests", type: :request do
     expect(page_text).to include("アクセス申請")
     expect(page_text).to include(access_request.reason)
     expect(page_text).to include("Manual")
-    expect(page_text).to include("表示中: 1件")
+    expect(page_text).to include("検索結果: 1件")
+    expect(page_text).to include("表示中: 1-1件")
     expect(page_text).to include("要求権限: すべて")
     expect(page_text).to include("対象種別: すべて")
-    expect(page_text).to include("表示中内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
+    expect(page_text).to include("検索結果内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
     expect(filter_form).to be_present
     expect(filter_form.at_css("select[name='status']")).to be_present
     expect(filter_form.at_css("select[name='requested_access_level']")).to be_present
@@ -97,7 +106,7 @@ RSpec.describe "Admin access requests", type: :request do
     expect(page_text).to include("Pending review")
     expect(page_text).not_to include("Approved already")
     expect(page_text).not_to include("Rejected already")
-    expect(page_text).to include("表示中内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
+    expect(page_text).to include("検索結果内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
     expect(parsed_html.css("tbody tr").size).to eq(1)
 
     action_forms = parsed_html.css("form[action='#{admin_access_request_path(pending_request)}']")
@@ -176,9 +185,54 @@ RSpec.describe "Admin access requests", type: :request do
     expect(page_text).not_to include("Pending manual view")
     expect(page_text).not_to include("Pending manual document")
     expect(page_text).not_to include("Approved manual file")
-    expect(page_text).to include("表示中内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
+    expect(page_text).to include("検索結果内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
     expect(parsed_html.css("tbody tr").size).to eq(1)
     expect(parsed_html.css("form[action='#{admin_access_request_path(matching_request)}']").size).to eq(2)
+  end
+
+  it "paginates filtered access requests while preserving filters in page links and actions" do
+    matching_requests = Array.new(3) do |index|
+      paged_document = create(:document,
+        project:,
+        title: "Paged Manual #{index}",
+        slug: "paged-manual-#{index}",
+        visibility_policy: :restricted_external)
+      create(:access_request,
+        requester:,
+        requestable: paged_document,
+        requested_access_level: :download,
+        reason: "Paged access request #{index}",
+        created_at: Time.zone.local(2026, 5, 1, 12, index, 0))
+    end
+    create(:access_request, requester:, requestable: project, requested_access_level: :view, reason: "Other access request")
+
+    sign_in_as(admin_user)
+
+    get admin_access_requests_path, params: { q: "paged access", requested_access_level: "download", per_page: 2 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 3件")
+    expect(page_text).to include("表示中: 1-2件")
+    expect(page_text).to include("検索結果内訳: 承認待ち: 3 / 承認済み: 0 / 却下: 0")
+    expect(result_table_text).to include("Paged access request 2", "Paged access request 1")
+    expect(result_table_text).not_to include("Paged access request 0", "Other access request")
+    expect(link_href("次へ")).to include("q=paged+access", "requested_access_level=download", "per_page=2", "page=2")
+
+    get admin_access_requests_path, params: { q: "paged access", requested_access_level: "download", per_page: 2, page: 2 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 3-3件")
+    expect(result_table_text).to include("Paged access request 0")
+    expect(result_table_text).not_to include("Paged access request 1")
+    expect(link_href("前へ")).to include("q=paged+access", "requested_access_level=download", "per_page=2", "page=1")
+    reject_form = parsed_html.css("form[action='#{admin_access_request_path(matching_requests.first)}']").last
+    expect(reject_form.at_css("input[name='page']")["value"]).to eq("2")
+    expect(reject_form.at_css("input[name='per_page']")["value"]).to eq("2")
+
+    get admin_access_requests_path, params: { q: "paged access", requested_access_level: "download", per_page: 0, page: -1 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 1-3件")
   end
 
   it "ignores unsupported requested access level and requestable type filters" do
@@ -210,7 +264,7 @@ RSpec.describe "Admin access requests", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("Need Manual access")
     expect(page_text).not_to include("Ops access")
-    expect(page_text).to include("表示中内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
+    expect(page_text).to include("検索結果内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
     expect(parsed_html.css("tbody tr").size).to eq(1)
     expect(filter_form.at_css("input[name='q']")["value"]).to eq("manual")
   end
@@ -272,7 +326,7 @@ RSpec.describe "Admin access requests", type: :request do
     expect(page_text).to include("Pending manual access")
     expect(page_text).not_to include("Approved manual access")
     expect(page_text).not_to include("Pending ops access")
-    expect(page_text).to include("表示中内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
+    expect(page_text).to include("検索結果内訳: 承認待ち: 1 / 承認済み: 0 / 却下: 0")
     expect(parsed_html.css("tbody tr").size).to eq(1)
     expect(parsed_html.css("form[action='#{admin_access_request_path(pending_match)}']").size).to eq(2)
   end
@@ -330,7 +384,7 @@ RSpec.describe "Admin access requests", type: :request do
     expect(access_request.approver).to eq(admin_user)
   end
 
-  it "keeps permitted filters after approval and drops unsupported return params" do
+  it "keeps permitted filters and page context after approval while dropping unsupported return params" do
     access_request = create(:access_request, requester:, requestable: document, requested_access_level: :download)
 
     sign_in_as(admin_user)
@@ -341,6 +395,7 @@ RSpec.describe "Admin access requests", type: :request do
         status: "pending",
         q: " Manual ",
         page: "2",
+        per_page: "2",
         requested_access_level: "download",
         requestable_type: "Document"
       }
@@ -350,7 +405,9 @@ RSpec.describe "Admin access requests", type: :request do
       status: "pending",
       q: "Manual",
       requested_access_level: "download",
-      requestable_type: "Document"
+      requestable_type: "Document",
+      page: 2,
+      per_page: 2
     ))
     expect(access_request.reload).to be_approved
   end
@@ -462,7 +519,7 @@ RSpec.describe "Admin access requests", type: :request do
     expect(access_request.rejection_reason).to eq("承認条件不一致")
   end
 
-  it "does not carry invalid filters or blank query after actions" do
+  it "does not carry invalid filters, page params, or blank query after actions" do
     access_request = create(:access_request, requester:, requestable: document, requested_access_level: :download)
 
     sign_in_as(admin_user)
@@ -471,7 +528,8 @@ RSpec.describe "Admin access requests", type: :request do
       decision: "approve",
       status: "all",
       q: "   ",
-      page: "2",
+      page: "-1",
+      per_page: "0",
       requested_access_level: "owner",
       requestable_type: "User"
     }

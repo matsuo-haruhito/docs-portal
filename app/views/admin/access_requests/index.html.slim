@@ -29,8 +29,10 @@ section.card
 
 - if @access_requests.any?
   p.muted
-    | 表示中:
-    strong = " #{@access_requests.size}件"
+    | 検索結果:
+    strong = " #{@access_requests_filtered_count}件"
+    |  / 表示中:
+    strong = " #{@access_requests_pagination[:from]}-#{@access_requests_pagination[:to]}件"
     |  / 状態:
     strong = " #{admin_access_request_status_filter_label(@filters[:status])}"
     |  / 要求権限:
@@ -41,7 +43,7 @@ section.card
       |  / 検索:
       strong = " #{@filters[:q]}"
   p.muted
-    | 表示中内訳:
+    | 検索結果内訳:
     |  承認待ち:
     strong = " #{@status_counts["pending"]}"
     |  / 承認済み:
@@ -74,7 +76,7 @@ section.card
         - secondary_label = admin_access_request_secondary_target_label(requestable)
         - processed_at_label = admin_access_request_processed_at_label(access_request)
         - processed_at = admin_access_request_processed_at(access_request)
-        - action_filter_params = @filters.compact
+        - action_filter_params = @access_request_page_params
         tr
           td data-rails-table-preferences-column-key="created_at" = access_request.created_at.strftime("%Y-%m-%d %H:%M")
           td data-rails-table-preferences-column-key="processed_at"
@@ -120,6 +122,15 @@ section.card
                 = submit_tag "却下", class: "button secondary"
             - else
               span.muted -
+
+  - if @access_requests_pagination[:total_pages] > 1
+    nav.pagination aria-label="アクセス申請一覧ページ"
+      p.actions
+        - if @access_requests_pagination[:prev_page]
+          = link_to "前へ", admin_access_requests_path(@access_request_page_params.merge(page: @access_requests_pagination[:prev_page])), class: "button secondary"
+        span.muted = "#{@access_requests_pagination[:page]} / #{@access_requests_pagination[:total_pages]}ページ"
+        - if @access_requests_pagination[:next_page]
+          = link_to "次へ", admin_access_requests_path(@access_request_page_params.merge(page: @access_requests_pagination[:next_page])), class: "button secondary"
 - else
   - active_filter = @filters[:status].present? || @filters[:q].present? || @filters[:requested_access_level].present? || @filters[:requestable_type].present?
   - if active_filter
