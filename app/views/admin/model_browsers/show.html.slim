@@ -1,6 +1,7 @@
 - page_title "モデルブラウザ", @entry.label
 - index_path = entry_index_path(@entry, query: @query)
 - model_browser_reset_path = @model_browser_index_query.present? ? admin_model_browser_model_path(@entry.key, model_browser_q: @model_browser_index_query) : admin_model_browser_model_path(@entry.key)
+- search_field_label_text = @searchable_field_labels.values.presence&.join(" / ") || "ID"
 
 p.muted
   = link_to "モデルブラウザ", model_browser_index_return_path
@@ -15,11 +16,11 @@ p.actions
   - if index_path
     = link_to "既存画面で詳しく確認", index_path, class: "button"
 - if index_path
-  p.muted この画面は最近の代表データを確認するための read-only 表示です。続きの検索や詳細確認は既存管理画面で行えます。
+  p.muted この画面は最近の代表データや検索結果を最大20件だけ確認するための read-only 表示です。20件より先の確認や詳細確認は既存管理画面で行えます。
   - if @query.present?
     p.muted.model-browser-existing-screen-context
       - if @existing_screen_query_handoff_param
-        | 「既存画面で詳しく確認」は検索語「#{@query}」を既存画面の検索条件に引き継ぎます。
+        | 「既存画面で詳しく確認」は検索語「#{@query}」を既存画面の検索条件として渡します。
       - else
         | 既存画面で続けて確認する場合は、検索語「#{@query}」をコピーして、対象画面の検索欄や絞り込みで再確認してください。
       - if @query.match?(/\A\d+\z/)
@@ -43,7 +44,7 @@ section.card
       = form.search_field :q, value: @query, maxlength: Admin::ModelBrowsersController::MODEL_BROWSER_QUERY_MAX_LENGTH, placeholder: "公開ID、名前、コードなど"
     p.muted
       | 検索対象:
-      span = @searchable_field_labels.values.presence&.join(" / ") || "ID"
+      span = search_field_label_text
     p.actions
       = form.submit "検索", class: "button"
       = link_to "検索を解除", model_browser_reset_path, class: "button secondary"
@@ -51,9 +52,13 @@ section.card
 section.card
   h2 = @query.present? ? "検索結果" : "最近のデータ"
   - if @query.present?
-    p.muted = "検索語: #{@query} / 表示上限: 20件"
+    p.muted = "検索語: #{@query} / 最大20件の代表表示です。"
+    - if index_path
+      p.muted 20件より先や詳細確認は「既存画面で詳しく確認」から続けてください。
   - else
     p.muted 最新の代表データを最大20件まで表示します。この画面では編集や削除はできません。
+    - if index_path
+      p.muted 20件より先や詳細確認は「既存画面で詳しく確認」から続けてください。
   - if @records.any?
     table
       thead
@@ -66,6 +71,15 @@ section.card
             - @entry.summary_fields.each do |field|
               td = record_summary_value(record, field)
   - elsif @query.present?
-    p.muted 該当するデータはありません
+    p.muted
+      | 該当するデータはありません。検索対象は
+      span = search_field_label_text
+      | です。
+    - if index_path
+      p.muted
+        - if @existing_screen_query_handoff_param
+          | 既存画面でも同じ検索語で確認できます。20件より先や別条件の確認は「既存画面で詳しく確認」から続けてください。
+        - else
+          | 既存画面で再確認する場合は、検索語「#{@query}」をコピーして、対象画面の検索欄や絞り込みで確認してください。
   - else
     p.muted 最近のデータはまだありません。対象モデルに表示できるデータが登録されると、ここに代表データが表示されます。
