@@ -2,6 +2,7 @@
 - table_key = :admin_document_usage_reports
 - table_columns = document_usage_report_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- show_document_usage_clear_link = @selected_project.present? || @query.present? || @from_date.present? || @to_date.present? || @ignored_date_filters.present? || @usage_filter != "all" || @sort_order != "title"
 
 h1 文書利用状況
 = render "admin/nav"
@@ -37,7 +38,8 @@ section.card
         = date_field_tag :to, @to_date&.iso8601
     p.actions
       = form.submit "集計"
-      = link_to "条件をクリア", admin_document_usage_reports_path
+      - if show_document_usage_clear_link
+        = link_to "条件をクリア", admin_document_usage_reports_path
     - if @ignored_date_filters.present?
       p.muted
         | 無効な日付条件は集計から除外しました: 
