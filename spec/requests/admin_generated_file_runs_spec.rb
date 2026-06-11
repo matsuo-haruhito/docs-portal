@@ -11,6 +11,10 @@ RSpec.describe "Admin generated file runs", type: :request do
     parsed_html.css("a[href]").map { _1["href"] }
   end
 
+  def query_params_for(path)
+    Rack::Utils.parse_nested_query(URI.parse(path).query)
+  end
+
   describe "GET /admin/generated_file_runs" do
     it "shows generated file run history for admin users" do
       sign_in_as(admin_user)
@@ -92,6 +96,77 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).to include("全 3 件 / 2 / 3 ページ")
       expect(response.body).to include("前へ")
       expect(response.body).to include("次へ")
+    end
+
+    it "bounds per_page to the supported range for oversized, zero, and nonnumeric values" do
+      sign_in_as(admin_user)
+      runs = 101.times.map do |i|
+        create_run!(job_id: "bounded_per_page_#{i}", created_at: Time.zone.parse("2026-05-12 12:00:00") - i.minutes)
+      end
+
+      get admin_generated_file_runs_path(per_page: 500)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("全 101 件 / 1 / 2 ページ")
+      expect(response.body).to include(runs[0].public_id)
+      expect(response.body).to include(runs[99].public_id)
+      expect(response.body).not_to include(runs[100].public_id)
+
+      get admin_generated_file_runs_path(page: 2, per_page: 0)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("全 101 件 / 2 / 101 ページ")
+      expect(response.body).to include(runs[1].public_id)
+      expect(response.body).not_to include(runs[0].public_id)
+
+      get admin_generated_file_runs_path(page: 2, per_page: "invalid")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("全 101 件 / 2 / 101 ページ")
+      expect(response.body).to include(runs[1].public_id)
+      expect(response.body).not_to include(runs[0].public_id)
+    end
+
+    it "keeps all active filters and per_page on pagination links" do
+      sign_in_as(admin_user)
+      filters = {
+        status: "failed",
+        generator: "ai_usecase_decision_flow",
+        output_writer: "document_version",
+        event_source: "manual_document_upload",
+        created_from: "2026-05-10",
+        created_to: "2026-05-11",
+        q: "timeout",
+        per_page: 1
+      }
+      2.times do |i|
+        create_run!(
+          job_id: "pagination_filter_match_#{i}",
+          generator: "ai_usecase_decision_flow",
+          output_writer: "document_version",
+          event_source: "manual_document_upload",
+          status: :failed,
+          error_message: "timeout",
+          created_at: Time.zone.parse("2026-05-10 12:00:00") + i.minutes
+        )
+      end
+
+      get admin_generated_file_runs_path(filters)
+
+      expect(response).to have_http_status(:ok)
+      next_link = parsed_html.css("a[href]").find { |link| link.text.squish == "次へ" }
+      expect(next_link).to be_present
+      expect(query_params_for(next_link["href"])).to include(
+        "status" => "failed",
+        "generator" => "ai_usecase_decision_flow",
+        "output_writer" => "document_version",
+        "event_source" => "manual_document_upload",
+        "created_from" => "2026-05-10",
+        "created_to" => "2026-05-11",
+        "q" => "timeout",
+        "per_page" => "1",
+        "page" => "2"
+      )
     end
 
     it "filters by status, job id, output writer, event source, and date range" do
@@ -282,6 +357,27 @@ RSpec.describe "Admin generated file runs", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(run.public_id)
+    end
+
+    it "shows invalid date warnings while applying valid date filters" do
+      sign_in_as(admin_user)
+      inside_range = create_run!(job_id: "inside_range", created_at: Time.zone.parse("2026-05-10 12:00:00"))
+      outside_range = create_run!(job_id: "outside_range", created_at: Time.zone.parse("2026-05-12 12:00:00"))
+
+      get admin_generated_file_runs_path(created_from: "invalid", created_to: "2026-05-10")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("日時フィルタを確認してください。")
+      expect(response.body).to include("作成日(開始)「invalid」は日時として解釈できないため、この条件は適用していません。")
+      expect(response.body).to include(inside_range.public_id)
+      expect(response.body).not_to include(outside_range.public_id)
+
+      get admin_generated_file_runs_path(created_from: "2026-05-10", created_to: "also-invalid")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("作成日(終了)「also-invalid」は日時として解釈できないため、この条件は適用していません。")
+      expect(response.body).to include(inside_range.public_id)
+      expect(response.body).not_to include(outside_range.public_id)
     end
 
     it "forbids external users" do
@@ -552,6 +648,53 @@ RSpec.describe "Admin generated file runs", type: :request do
           "retry_requested_by_user_id" => admin_user.id,
           "bulk_retry" => true
         )
+      )
+    end
+
+    it "bulk retries at most the oldest 100 failed runs matching the current filters" do
+      sign_in_as(admin_user)
+      matched_runs = 101.times.map do |i|
+        create_run!(
+          job_id: "bulk_retry_match_#{i}",
+          generator: "ai_usecase_decision_flow",
+          status: :failed,
+          changed_files: ["matched_#{i}.yml"],
+          created_at: Time.zone.parse("2026-05-10 00:00:00") + i.minutes
+        )
+      end
+      create_run!(job_id: "bulk_retry_completed", generator: "ai_usecase_decision_flow", status: :completed)
+      create_run!(job_id: "bulk_retry_other_generator", generator: "other_generator", status: :failed)
+      allow(GeneratedFileJob).to receive(:perform_later)
+
+      post retry_failed_admin_generated_file_runs_path(status: "failed", generator: "ai_usecase_decision_flow")
+
+      expect(response).to redirect_to(admin_generated_file_runs_path(status: "failed", generator: "ai_usecase_decision_flow"))
+      expect(GeneratedFileJob).to have_received(:perform_later).exactly(100).times
+      expect(GeneratedFileJob).to have_received(:perform_later).with(
+        changed_files: ["matched_0.yml"],
+        job_ids: ["bulk_retry_match_0"],
+        event_source: "generated_file_run_bulk_retry",
+        metadata: hash_including(
+          "retry_of_generated_file_run_public_id" => matched_runs.first.public_id,
+          "retry_requested_by_user_id" => admin_user.id,
+          "bulk_retry" => true
+        )
+      )
+      expect(GeneratedFileJob).to have_received(:perform_later).with(
+        changed_files: ["matched_99.yml"],
+        job_ids: ["bulk_retry_match_99"],
+        event_source: "generated_file_run_bulk_retry",
+        metadata: hash_including(
+          "retry_of_generated_file_run_public_id" => matched_runs[99].public_id,
+          "retry_requested_by_user_id" => admin_user.id,
+          "bulk_retry" => true
+        )
+      )
+      expect(GeneratedFileJob).not_to have_received(:perform_later).with(
+        changed_files: ["matched_100.yml"],
+        job_ids: ["bulk_retry_match_100"],
+        event_source: "generated_file_run_bulk_retry",
+        metadata: anything
       )
     end
 
