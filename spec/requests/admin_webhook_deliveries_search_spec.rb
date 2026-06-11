@@ -39,6 +39,19 @@ RSpec.describe "Admin webhook delivery search", type: :request do
     expect(response_status_input["max"]).to eq("599")
   end
 
+  it "shows error fragment search guidance and bounds the input length" do
+    sign_in_as(admin_user)
+
+    get admin_webhook_deliveries_path
+
+    error_query_input = parsed_html.at_css("input[name='error_q']")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("保存済みエラーメッセージの断片で絞り込みます。エラー全文の表示欄ではありません。最大100文字まで指定できます。")
+    expect(error_query_input["maxlength"]).to eq(Admin::WebhookDeliveriesController::ERROR_QUERY_MAX_LENGTH.to_s)
+    expect(error_query_input["placeholder"]).to eq("例: timeout")
+  end
+
   it "filters deliveries by endpoint, event type, status, and created date range" do
     sign_in_as(admin_user)
 
