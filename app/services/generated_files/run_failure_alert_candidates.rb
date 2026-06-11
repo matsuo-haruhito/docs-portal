@@ -16,10 +16,11 @@ module GeneratedFiles
       def event_source = identity[:event_source]
     end
 
-    def initialize(relation: GeneratedFileRun.all, threshold: DEFAULT_THRESHOLD, limit: DEFAULT_LIMIT)
+    def initialize(relation: GeneratedFileRun.all, threshold: DEFAULT_THRESHOLD, limit: DEFAULT_LIMIT, lookback_limit: nil)
       @relation = relation
       @threshold = threshold
       @limit = limit
+      @lookback_limit = lookback_limit
     end
 
     def call
@@ -30,12 +31,17 @@ module GeneratedFiles
 
     private
 
-    attr_reader :relation, :threshold, :limit
+    attr_reader :relation, :threshold, :limit, :lookback_limit
 
     def grouped_latest_runs
-      relation.order(started_at: :desc, created_at: :desc, id: :desc).group_by do |run|
+      ordered_runs.group_by do |run|
         identity_for(run)
       end
+    end
+
+    def ordered_runs
+      scope = relation.order(started_at: :desc, created_at: :desc, id: :desc)
+      lookback_limit ? scope.limit(lookback_limit) : scope
     end
 
     def candidate_for(identity, runs)
