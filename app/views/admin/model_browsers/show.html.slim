@@ -52,7 +52,7 @@ section.card
 section.card
   h2 = @query.present? ? "検索結果" : "最近のデータ"
   - if @query.present?
-    p.muted = "検索語: #{@query} / 最大20件の代表表示です。この画面では編集や削除はできません。"
+    p.muted = "検索語: #{@query} / 最大20件の代表表示です。"
     - if index_path
       p.muted 20件より先や詳細確認は「既存画面で詳しく確認」から続けてください。
   - else
