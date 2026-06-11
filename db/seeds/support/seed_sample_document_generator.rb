@@ -56,6 +56,7 @@ module SeedSupport
 
         主要な閲覧・検索・ダウンロード機能を少ない文書数で確認するための seed サンプルです。
         PDF と Excel は各 1 件に絞り、Markdown 内に表、Mermaid、PlantUML 記法、添付ファイルリンクを含めています。
+        これは代表導線の smoke 用サンプルです。`sample-archive.zip` は ZIP preview の基本導線だけを確認し、unsafe path / nested archive / huge ZIP / bulk download の境界確認には使いません。PlantUML は記法サンプルで、Kroki 実 service の疎通確認は別 runbook で行います。
 
         | 観点 | サンプル | 期待する確認 |
         | --- | --- | --- |

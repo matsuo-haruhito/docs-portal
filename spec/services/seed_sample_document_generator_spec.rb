@@ -45,6 +45,9 @@ RSpec.describe SeedSupport::SeedSampleDocumentGenerator do
     readme = site_root.join("README.md").read
     aggregate_failures "README content and attachment links" do
       expect(readme).to include("# サンプル文書ポータル標準セット")
+      expect(readme).to include("代表導線の smoke 用サンプル")
+      expect(readme).to include("unsafe path / nested archive / huge ZIP / bulk download")
+      expect(readme).to include("Kroki 実 service の疎通確認")
       expect(readme).to include("[サンプルPDF](./README.pdf)")
       expect(readme).to include("[サンプルExcel](./README.xlsx)")
       expect(readme).to include("[運用CSV](./runbook.csv)")
