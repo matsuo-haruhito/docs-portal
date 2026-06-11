@@ -224,13 +224,14 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def review_filter_counts(scope)
-    sources = scope.to_a
-    latest_runs_by_source_id = latest_runs_by_source_id(sources)
+    latest_error_messages_by_source_id = scope.reorder(nil).pluck(:id, :last_error_message).to_h
+    source_ids = latest_error_messages_by_source_id.keys
+    latest_runs_by_source_id = latest_runs_by_source_ids(source_ids)
 
     {
       all: scope.count,
-      warnings: sources.count { |source| conflict_warnings_count(source, latest_runs_by_source_id).positive? },
-      errors: sources.count { |source| latest_error_message(source, latest_runs_by_source_id).present? },
+      warnings: source_ids.count { |source_id| conflict_warnings_count_from_run(latest_runs_by_source_id[source_id]).positive? },
+      errors: source_ids.count { |source_id| latest_error_message_from_run(latest_runs_by_source_id[source_id], latest_error_messages_by_source_id[source_id]).present? },
       disabled: scope.where(enabled: false).count,
       google_drive: scope.google_drive.count,
       microsoft_graph: scope.microsoft_graph.count
@@ -283,12 +284,18 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def latest_runs_by_source_id(sources)
-    source_ids = sources.map(&:id)
+    latest_runs_by_source_ids(sources.map(&:id))
+  end
+
+  def latest_runs_by_source_ids(source_ids)
+    compact_source_ids = source_ids.compact
+    return {} if compact_source_ids.empty?
+
     ExternalFolderSyncRun
-      .where(external_folder_sync_source_id: source_ids)
-      .order(started_at: :desc, id: :desc)
-      .group_by(&:external_folder_sync_source_id)
-      .transform_values(&:first)
+      .select("DISTINCT ON (external_folder_sync_runs.external_folder_sync_source_id) external_folder_sync_runs.*")
+      .where(external_folder_sync_source_id: compact_source_ids)
+      .order(Arel.sql("external_folder_sync_runs.external_folder_sync_source_id, external_folder_sync_runs.started_at DESC, external_folder_sync_runs.id DESC"))
+      .index_by(&:external_folder_sync_source_id)
   end
 
   def latest_run_for(source, latest_runs_by_source_id = @latest_runs_by_source_id)
@@ -296,11 +303,19 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def conflict_warnings_count(source, latest_runs_by_source_id = @latest_runs_by_source_id)
-    latest_run_for(source, latest_runs_by_source_id)&.summary_json&.fetch("conflict_warnings_count", 0).to_i
+    conflict_warnings_count_from_run(latest_run_for(source, latest_runs_by_source_id))
+  end
+
+  def conflict_warnings_count_from_run(run)
+    run&.summary_json&.fetch("conflict_warnings_count", 0).to_i
   end
 
   def latest_error_message(source, latest_runs_by_source_id = @latest_runs_by_source_id)
-    latest_run_for(source, latest_runs_by_source_id)&.error_message.presence || source.last_error_message.presence
+    latest_error_message_from_run(latest_run_for(source, latest_runs_by_source_id), source.last_error_message)
+  end
+
+  def latest_error_message_from_run(run, source_last_error_message)
+    run&.error_message.presence || source_last_error_message.presence
   end
 
   def latest_run
