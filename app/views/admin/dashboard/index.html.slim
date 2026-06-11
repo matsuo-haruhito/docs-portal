@@ -44,6 +44,33 @@ section.card
         ul
           - item[:details].each do |detail|
             li = detail
+        - if item[:alert_candidates]
+          - alert_candidates = item[:alert_candidates]
+          .operational-alert-candidates
+            p.muted
+              | 継続失敗候補: 
+              strong = alert_candidates.size
+              |  件（保存済み failed 件数とは別に、最新 run が同じ identity で連続 failed のもの）
+            - if alert_candidates.any?
+              ul
+                - alert_candidates.each do |candidate|
+                  li
+                    code = candidate.job_id.presence || "-"
+                    - identity_parts = [candidate.generator, candidate.output_writer, candidate.event_source].compact_blank
+                    - if identity_parts.any?
+                      span.muted = " / #{identity_parts.join(' / ')}"
+                    br
+                    | 連続失敗: #{candidate.failure_count} 件
+                    - if candidate.last_failed_at
+                      |  / 最終失敗: 
+                      time datetime=candidate.last_failed_at.iso8601 = l(candidate.last_failed_at, format: :short)
+                    - if candidate.latest_error_message.present?
+                      br
+                      span.muted = truncate(candidate.latest_error_message, length: 80)
+              p.actions
+                = link_to "継続失敗候補の failed 実行履歴", admin_generated_file_runs_path(status: "failed"), class: "button secondary"
+            - else
+              p.muted 最新 run が連続失敗している候補はありません。
         p.actions
           = link_to item[:primary_link].first, item[:primary_link].last, class: "button"
           - if item[:secondary_link]

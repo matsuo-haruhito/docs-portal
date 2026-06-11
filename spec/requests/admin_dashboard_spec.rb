@@ -8,6 +8,10 @@ RSpec.describe "Admin dashboard", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def page_text
+    parsed_html.text.squish
+  end
+
   def dashboard_section(title)
     parsed_html.css("section.card").find { |section| section.at_css("h2")&.text&.squish == title }
   end
@@ -213,6 +217,7 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("生成ファイル")
     expect(response.body).to include("実行履歴 failed: 1")
     expect(response.body).to include("イベント failed: 1")
+    expect(page_text).to include("継続失敗候補: 0 件")
     expect(response.body).to include(admin_generated_file_runs_path(status: "failed"))
     expect(response.body).to include(admin_generated_file_events_path(status: "failed"))
     expect(response.body).to include("Webhook送信")
@@ -225,6 +230,83 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).not_to include("古い失敗のみ")
     expect(response.body).to include("アプリ設定診断")
     expect(response.body).to include("文書ファイル健全性")
+  end
+
+  it "calls generated run alert candidates with a bounded dashboard query window" do
+    alert_candidate_service = instance_double(GeneratedFiles::RunFailureAlertCandidates, call: [])
+    expect(GeneratedFiles::RunFailureAlertCandidates).to receive(:new).with(
+      limit: Admin::DashboardController::GENERATED_FILE_ALERT_CANDIDATE_LIMIT,
+      lookback_limit: Admin::DashboardController::GENERATED_FILE_ALERT_CANDIDATE_LOOKBACK_LIMIT
+    ).and_return(alert_candidate_service)
+
+    sign_in_as(admin_user)
+
+    get admin_root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("継続失敗候補: 0 件")
+  end
+
+  it "shows generated file consecutive failure alert candidates without showing resolved streaks" do
+    latest_failure_at = 30.minutes.ago.change(usec: 0)
+    [latest_failure_at, 45.minutes.ago, 1.hour.ago].each_with_index do |started_at, index|
+      GeneratedFileRun.create!(
+        job_id: "docs-build",
+        generator: "docusaurus",
+        output_writer: "filesystem",
+        event_source: "schedule",
+        status: :failed,
+        started_at: started_at,
+        finished_at: started_at + 1.minute,
+        error_message: index.zero? ? "latest docusaurus timeout while building a very long generated file batch" : "older failure"
+      )
+    end
+    GeneratedFileRun.create!(
+      job_id: "docs-build",
+      generator: "docusaurus",
+      output_writer: "filesystem",
+      event_source: "schedule",
+      status: :completed,
+      started_at: 2.hours.ago,
+      finished_at: 2.hours.ago + 1.minute
+    )
+    GeneratedFileRun.create!(
+      job_id: "fixed-job",
+      generator: "docusaurus",
+      output_writer: "filesystem",
+      event_source: "schedule",
+      status: :completed,
+      started_at: 5.minutes.ago,
+      finished_at: 4.minutes.ago
+    )
+    3.times do |index|
+      GeneratedFileRun.create!(
+        job_id: "fixed-job",
+        generator: "docusaurus",
+        output_writer: "filesystem",
+        event_source: "schedule",
+        status: :failed,
+        started_at: 2.hours.ago - index.minutes,
+        finished_at: 2.hours.ago - index.minutes + 1.minute,
+        error_message: "resolved failure"
+      )
+    end
+
+    sign_in_as(admin_user)
+
+    get admin_root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("継続失敗候補: 1 件")
+    expect(page_text).to include("保存済み failed 件数とは別に")
+    expect(page_text).to include("docs-build")
+    expect(page_text).to include("docusaurus / filesystem / schedule")
+    expect(page_text).to include("連続失敗: 3 件")
+    expect(response.body).to include(I18n.l(latest_failure_at + 1.minute, format: :short))
+    expect(page_text).to include("latest docusaurus timeout")
+    expect(response.body).to include(admin_generated_file_runs_path(status: "failed"))
+    expect(page_text).not_to include("fixed-job")
+    expect(page_text).not_to include("resolved failure")
   end
 
   it "marks operational failure entries as stale when only old failures remain" do
@@ -273,6 +355,8 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("skipped: 0")
     expect(response.body).to include("実行履歴 failed: 0")
     expect(response.body).to include("イベント failed: 0")
+    expect(page_text).to include("継続失敗候補: 0 件")
+    expect(response.body).to include("最新 run が連続失敗している候補はありません。")
     expect(response.body).to include("partial: 0")
     expect(response.body).not_to include("最新の対象履歴")
     expect(response.body).not_to include("古い失敗のみ")
