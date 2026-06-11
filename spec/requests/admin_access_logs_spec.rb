@@ -734,14 +734,14 @@ RSpec.describe "Admin access logs", type: :request do
     expect(response.media_type).to eq("text/csv")
 
     rows = CSV.parse(response.body, headers: true)
-    target_names = rows.map { _1.fetch("対象名") }
+    target_names = rows.map { _1["対象名"] }
 
     expect(rows.size).to eq(200)
     expect(target_names.first).to eq("csv-entry-200")
     expect(target_names.last).to eq("csv-entry-1")
     expect(target_names).not_to include("csv-entry-0", "csv-outside-filter.html")
-    expect(rows.map { _1.fetch("案件コード") }.uniq).to eq(["CSV"])
-    expect(rows.map { _1.fetch("文書名") }.uniq).to eq(["CSV Evidence"])
+    expect(rows.map { _1["案件コード"] }.uniq).to eq(["CSV"])
+    expect(rows.map { _1["文書名"] }.uniq).to eq(["CSV Evidence"])
   end
 
   it "falls back to the first page for invalid page parameters" do
