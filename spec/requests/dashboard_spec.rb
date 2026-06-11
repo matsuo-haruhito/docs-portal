@@ -187,7 +187,7 @@ RSpec.describe "Dashboard", type: :request do
       "document-tree-navigation",
       "manual-document-upload",
       "preview-table-resizer",
-      "preview-tools"
+      "markdown-preview-table-tools"
     )
   end
 
