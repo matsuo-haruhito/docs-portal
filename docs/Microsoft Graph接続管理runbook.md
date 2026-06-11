@@ -5,9 +5,10 @@
 ## まず見る画面
 
 - 管理画面のメニューから `Microsoft Graph接続` を開きます。
-- 一覧では `案件 / 接続名 / Tenant / Client / Drive / プレビュー用フォルダ / 状態 / preview利用` をまとめて見返せます。
-- `Drive` 列では `主確認: Drive ID` と、値がある場合の `補助: Site ID` を同じ cell で読み分けます。
-- `Tenant / Client` 列の `Tenant ID` / `Client ID` は補助値、`プレビュー用フォルダ` 列の `プレビュー用フォルダ` は preview 不達時の主確認値として読みます。
+- 一覧では `案件 / 接続名 / Tenant / Client / Site / Drive / プレビュー用フォルダ / 状態 / preview利用 / 操作` をまとめて見返せます。
+- 一覧の手前には `Microsoft Graph接続一覧の表示設定` があり、列の表示や幅をこの一覧専用の table preferences として調整できます。
+- `Drive` 列では `主確認: Drive ID` を読みます。`Site ID` は `Tenant / Client / Site` 列の補助値として、Drive ID の取得元を追跡したいときに見ます。
+- `Tenant / Client / Site` 列の `Tenant ID` / `Client ID` / `Site ID` は補助値、`プレビュー用フォルダ` 列の `プレビュー用フォルダ` は preview 不達時の主確認値として読みます。
 - 同じ画面の下側で新規登録、各行の `編集` から既存設定の更新、`削除` から不要設定の除去を行います。
 - 同一案件に複数の有効接続が残っている場合は、一覧上部に `preview 利用中の接続を要整理の案件` card が出ます。
 - 一覧上部の `一覧の絞り込み` では、`previewで使用中` `有効だが未使用` `無効 / previewでは未使用` `要整理案件のみ` に切り替えて確認できます。
@@ -21,11 +22,12 @@
 
 1. 一覧上部に `preview 利用中の接続を要整理の案件` card が出ていないか確認する
 2. 対象が多いときは `一覧の絞り込み` で `previewで使用中` `有効だが未使用` `無効 / previewでは未使用` `要整理案件のみ` を切り替え、必要なら検索欄で案件名・code・接続名・Drive 情報を絞る
-3. 対象案件に対して、`preview利用` 列で `previewで使用中` の行がどれかを見る
-4. `状態` が `有効` になっているかを見る
-5. `Drive` 列の `主確認: Drive ID` と、`プレビュー用フォルダ` 列の `主確認: プレビュー用フォルダ` が想定どおりか確認する
-6. 必要に応じて `Tenant / Client` 列の補助値や、`Drive` 列内の `補助: Site ID` を見て、別テナント・別アプリ・別 site の値が混ざっていないか確認する
-7. Office preview が開かないときは、この文書の `preview 不達時の戻り先` へ進む
+3. 日常 triage で列が見づらいときは `Microsoft Graph接続一覧の表示設定` で列幅や表示列を調整し、`案件` と `操作` が固定列として残ることを確認する
+4. 対象案件に対して、`preview利用` 列で `previewで使用中` の行がどれかを見る
+5. `状態` が `有効` になっているかを見る
+6. `Drive` 列の `主確認: Drive ID` と、`プレビュー用フォルダ` 列の `主確認: プレビュー用フォルダ` が想定どおりか確認する
+7. 必要に応じて `Tenant / Client / Site` 列の補助値を見て、別テナント・別アプリ・別 site の値が混ざっていないか確認する
+8. Office preview が開かないときは、この文書の `preview 不達時の戻り先` へ進む
 
 ## 検索と絞り込みの併用
 
@@ -40,6 +42,15 @@
 - 一覧 0 件は、未登録とは限りません。登録済み接続がある状態で 0 件なら、検索語や filter が強すぎないかを先に見直します。
 - `Drive ID` や `プレビュー用フォルダ` の typo、旧接続名、別テナントの `Tenant / Client` が疑わしいときは、検索で該当値を直接探してから `編集` で詳細を確認します。
 - この検索は current UI の一覧切り分け用です。Office preview runtime、接続の自動選択、SharePoint / OneDrive 同期本体の仕様は変更しません。
+
+## 表示設定と列の読み方
+
+- `Microsoft Graph接続一覧の表示設定` は、この一覧の列表示を Rails Table Preferences の既存 pattern で調整するための入口です。列の表示 / 非表示や幅を変えても、接続の保存値、preview 利用判定、検索対象、filter count は変わりません。
+- current 列 key は `案件`、`接続名`、`Tenant / Client / Site`、`Drive`、`プレビュー用フォルダ`、`状態`、`preview利用`、`操作` です。
+- `案件` と `操作` は固定列です。対象案件と `編集` / `削除` / `外部フォルダ同期設定を確認` への戻り先を失わないため、日常 triage でも最後に見える状態を保ちます。
+- `Tenant / Client / Site` は補助 identifier をまとめた列、`Drive` と `プレビュー用フォルダ` は preview 不達時の主確認列です。Drive ID と preview folder を一時的に隠したまま運用判断を完了しないでください。
+- 一覧の identifier は短縮・mask 済みの確認値です。raw 値の照合や修正が必要な場合は、対象行の `編集` で確認します。
+- 表示設定は一覧を見やすくするための補助であり、Microsoft Graph 接続の選択ロジック、共有 URL 解決、外部フォルダ同期 dry-run / apply、SharePoint / OneDrive 同期本体を変更するものではありません。
 
 ## 接続が 0 件のとき
 
@@ -83,7 +94,7 @@ legacy duplicate が残っている案件では、current preview 正本は `pre
 ## `Drive ID` の見直しポイント
 
 - `Drive` 列には preview 用一時アップロード先の `主確認: Drive ID` が出ます
-- `site_id` がある接続では、同じ `Drive` 列の中に `補助: Site ID` も表示されます。Drive ID の取得元を追跡したいときの補助情報として読みます
+- `site_id` がある接続では、`Tenant / Client / Site` 列の中に `補助: Site ID` も表示されます。Drive ID の取得元を追跡したいときの補助情報として読みます
 - 案件をまたいで同じ値を使うこと自体は current code 上で禁止されていませんが、運用上はどの案件の preview 用保存先かを追えるようにしておく方が安全です
 - SharePoint / OneDrive の共有フォルダ URL が正しい場合は、`共有URLからDrive情報を解決` で Graph から `drive_id` と `site_id` の候補を戻せます
 - preview 先を切り替えた直後は、古い `drive_id` のまま残っていないかを最初に確認します
@@ -126,6 +137,7 @@ legacy duplicate が残っている案件では、current preview 正本は `pre
 - preview URL の選択ロジック変更
 - model validation や query helper の実装詳細
 - SharePoint / OneDrive 同期機能の後続仕様
+- 表示設定による接続選択、filter、外部フォルダ同期 workflow の変更
 
 ## 関連ドキュメント
 
