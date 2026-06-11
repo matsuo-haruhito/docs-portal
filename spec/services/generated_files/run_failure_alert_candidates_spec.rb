@@ -56,6 +56,26 @@ RSpec.describe GeneratedFiles::RunFailureAlertCandidates do
       expect(candidates.first.event_source).to eq("schedule")
     end
 
+    it "applies a lookback limit to the ordered relation before grouping" do
+      matching = create_run(status: :failed, started_at: 1.hour.ago)
+      relation = instance_double(ActiveRecord::Relation)
+      ordered_relation = instance_double(ActiveRecord::Relation)
+
+      allow(relation).to receive(:order)
+        .with(started_at: :desc, created_at: :desc, id: :desc)
+        .and_return(ordered_relation)
+      allow(ordered_relation).to receive(:limit).with(1).and_return([matching])
+
+      candidates = described_class.new(
+        relation: relation,
+        threshold: 1,
+        lookback_limit: 1
+      ).call
+
+      expect(ordered_relation).to have_received(:limit).with(1)
+      expect(candidates.map(&:job_id)).to eq(["docs-build"])
+    end
+
     it "orders candidates by latest failure time and applies the limit" do
       newest = create_failure_streak(job_id: "newest", started_at: 10.minutes.ago)
       create_failure_streak(job_id: "middle", started_at: 20.minutes.ago)
