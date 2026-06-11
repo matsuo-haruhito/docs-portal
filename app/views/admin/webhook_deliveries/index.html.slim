@@ -35,7 +35,8 @@ p.actions
         span.muted HTTP statusは100〜599の整数で絞り込みます。範囲外や数字以外は条件に使われません。
       label
         | エラー断片
-        = search_field_tag :error_q, @delivery_filters[:error_q], placeholder: "例: timeout"
+        = search_field_tag :error_q, @delivery_filters[:error_q], maxlength: Admin::WebhookDeliveriesController::ERROR_QUERY_MAX_LENGTH, placeholder: "例: timeout"
+        span.muted = "保存済みエラーメッセージの断片で絞り込みます。エラー全文の表示欄ではありません。最大#{Admin::WebhookDeliveriesController::ERROR_QUERY_MAX_LENGTH}文字まで指定できます。"
       label
         | 作成日From
         = date_field_tag :created_from, @delivery_filter_inputs[:created_from]
