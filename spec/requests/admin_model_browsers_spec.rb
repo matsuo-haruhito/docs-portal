@@ -83,7 +83,8 @@ RSpec.describe "Admin model browsers", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果")
-    expect(response.body).to include("検索語: Return / 表示上限: 20件")
+    expect(response.body).to include("検索語: Return / 最大20件の代表表示です。この画面では編集や削除はできません。")
+    expect(response.body).to include("20件より先や詳細確認は「既存画面で詳しく確認」から続けてください。")
     expect(parsed_html.css("input[name='model_browser_q'][value='文書']")).to be_present
     expect(page_hrefs).to include(admin_model_browser_path(q: "文書"))
     expect(page_hrefs).to include(admin_projects_path(q: "Return"))
@@ -194,8 +195,10 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include("代表フィールド検索")
     expect(response.body).to include("最近のデータ")
     expect(response.body).to include("最新の代表データを最大20件まで表示します。この画面では編集や削除はできません。")
+    expect(response.body).to include("この画面は最近の代表データや検索結果を最大20件だけ確認するための read-only 表示です。")
+    expect(response.body).to include("20件より先の確認や詳細確認は既存管理画面で行えます。")
     expect(response.body).to include("既存画面で詳しく確認")
-    expect(response.body).to include("続きの検索や詳細確認は既存管理画面で行えます。")
+    expect(response.body).to include("20件より先や詳細確認は「既存画面で詳しく確認」から続けてください。")
     expect(response.body).not_to include("検索語「")
     expect(response.body).to include(admin_projects_path)
     expect(response.body).to include(project.code)
@@ -211,8 +214,9 @@ RSpec.describe "Admin model browsers", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果")
-    expect(response.body).to include("検索語: Needle / 表示上限: 20件")
-    expect(response.body).to include("「既存画面で詳しく確認」は検索語「Needle」を既存画面の検索条件に引き継ぎます。")
+    expect(response.body).to include("検索語: Needle / 最大20件の代表表示です。この画面では編集や削除はできません。")
+    expect(response.body).to include("20件より先や詳細確認は「既存画面で詳しく確認」から続けてください。")
+    expect(response.body).to include("「既存画面で詳しく確認」は検索語「Needle」を既存画面の検索条件として渡します。")
     expect(page_hrefs).to include(admin_projects_path(q: "Needle"))
     expect(response.body).to include("検索対象:")
     expect(response.body).to include("コード")
@@ -228,8 +232,9 @@ RSpec.describe "Admin model browsers", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果")
-    expect(response.body).to include("検索語: release-note / 表示上限: 20件")
+    expect(response.body).to include("検索語: release-note / 最大20件の代表表示です。この画面では編集や削除はできません。")
     expect(response.body).not_to include("既存画面で詳しく確認")
+    expect(response.body).not_to include("20件より先や詳細確認は「既存画面で詳しく確認」")
     expect(response.body).not_to include("既存画面で続けて確認する場合")
   end
 
@@ -268,7 +273,12 @@ RSpec.describe "Admin model browsers", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果")
-    expect(response.body).to include("該当するデータはありません")
+    expect(response.body).to include("該当するデータはありません。")
+    expect(response.body).to include("検索対象は")
+    expect(response.body).to include("コード")
+    expect(response.body).to include("既存画面でも同じ検索語で確認できます。")
+    expect(response.body).to include("20件より先や別条件の確認は「既存画面で詳しく確認」から続けてください。")
+    expect(page_hrefs).to include(admin_projects_path(q: "NO_MATCH_1674"))
     expect(response.body).not_to include(project.code)
   end
 
@@ -280,7 +290,7 @@ RSpec.describe "Admin model browsers", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果")
-    expect(response.body).to include("該当するデータはありません")
+    expect(response.body).to include("該当するデータはありません。")
   end
 
   it "redirects unauthenticated users from model-specific browser pages" do
