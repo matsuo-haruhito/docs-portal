@@ -5,6 +5,7 @@
   bulk_retry_target_count = @bulk_retry_target_count.to_i
   bulk_retry_available = bulk_retry_target_count.positive?
   bulk_retry_button_classes = bulk_retry_available ? "rounded bg-blue-600 px-3 py-2 text-sm text-white" : "rounded bg-gray-300 px-3 py-2 text-sm text-gray-600 cursor-not-allowed"
+  bulk_retry_confirm_message = "現在の条件に一致する失敗履歴 #{bulk_retry_target_count} 件のうち、古い順に最大100件を一括再実行します。実行しますか？"
   table_key = :admin_generated_file_runs
   table_columns = generated_file_run_table_columns
   table_settings = rails_table_preference_settings(table_key: table_key)
@@ -17,10 +18,10 @@
       <p class="text-sm text-gray-600">ファイルCRUDイベントから起動された生成Jobの履歴です。</p>
     </div>
     <div class="text-right">
-      <%= button_to "失敗分を一括再実行", retry_failed_admin_generated_file_runs_path(@filters.compact_blank), method: :post, disabled: !bulk_retry_available, class: bulk_retry_button_classes %>
+      <%= button_to "失敗分を一括再実行", retry_failed_admin_generated_file_runs_path(@filters.compact_blank), method: :post, disabled: !bulk_retry_available, class: bulk_retry_button_classes, form: { data: { turbo_confirm: bulk_retry_confirm_message } } %>
       <p class="mt-1 text-xs text-gray-500">現在の条件で再実行対象: <strong><%= bulk_retry_target_count %> 件</strong></p>
       <% if bulk_retry_available %>
-        <p class="mt-1 text-xs text-gray-500">一括再実行は現在条件に一致する古い失敗分から最大100件です。</p>
+        <p class="mt-1 text-xs text-gray-500">このボタンは現在の絞り込み条件に一致する失敗履歴だけを対象にします。古い順に最大100件です。</p>
       <% else %>
         <p class="mt-1 text-xs text-gray-500">対象がないため一括再実行できません。</p>
       <% end %>
@@ -133,7 +134,7 @@
               <td class="px-4 py-3" data-rails-table-preferences-column-key="actions">
                 <div class="flex gap-2">
                   <%= link_to "詳細", admin_generated_file_run_path(run.public_id, detail_path_params), class: "rounded border px-2 py-1 text-xs" %>
-                  <%= button_to "再実行", retry_run_admin_generated_file_run_path(run.public_id, detail_path_params), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white" %>
+                  <%= button_to "この行を再実行", retry_run_admin_generated_file_run_path(run.public_id, detail_path_params), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white" %>
                 </div>
               </td>
             </tr>
