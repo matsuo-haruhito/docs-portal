@@ -53,8 +53,10 @@ h1 文書マスタ
 
   p.muted
     | 検索結果: 
-    = @documents.size
+    = @documents_filtered_count
     | 件
+  - if @documents_filtered_count.positive?
+    p.muted = "表示中: #{@documents_pagination[:from]}-#{@documents_pagination[:to]}件 / #{@documents_filtered_count}件"
   - if active_filter_summaries.any?
     p.muted
       | 有効な条件:
@@ -155,3 +157,12 @@ h1 文書マスタ
           - else
             = button_to "アーカイブ", archive_admin_document_path(document.public_id, return_to: current_return_to), method: :patch, params: { retention_until: document.retention_until, discard_candidate_at: document.discard_candidate_at }, class: "button secondary", form: { data: { turbo_confirm: "文書「#{document.title}」をアーカイブしますか？通常一覧・社外導線から非表示になります。復元は管理画面から実行できます。" } }
           = delete_link_to "削除", admin_document_path(document.public_id, return_to: current_return_to), confirm: "文書「#{document.title}」を削除しますか？関連する版・添付・コメントも削除される可能性があります。"
+
+- if @documents_pagination[:total_pages] > 1
+  nav.pagination aria-label="文書マスタ一覧ページ"
+    p.actions
+      - if @documents_pagination[:prev_page]
+        = link_to "前へ", admin_documents_path(@document_page_params.merge(page: @documents_pagination[:prev_page])), class: "button secondary"
+      span.muted = "#{@documents_pagination[:page]} / #{@documents_pagination[:total_pages]}ページ"
+      - if @documents_pagination[:next_page]
+        = link_to "次へ", admin_documents_path(@document_page_params.merge(page: @documents_pagination[:next_page])), class: "button secondary"

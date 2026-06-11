@@ -27,6 +27,14 @@ RSpec.describe "Admin documents", type: :request do
     end
   end
 
+  def table_text
+    parsed_html.css("tbody").text.squish
+  end
+
+  def link_href(text)
+    parsed_html.css("a[href]").find { |link| link.text.squish == text }&.[]("href")
+  end
+
   def action_targets_for(title)
     action_cell = document_row_for(title)&.at_css(%(td[data-rails-table-preferences-column-key="actions"]))
     return [] unless action_cell
@@ -40,6 +48,13 @@ RSpec.describe "Admin documents", type: :request do
 
   def bulk_edit_candidate_link
     parsed_html.at_css(%(a[href*="source=admin_documents"]))
+  end
+
+  def bulk_edit_candidate_ids
+    link = bulk_edit_candidate_link
+    return [] unless link
+
+    Rack::Utils.parse_nested_query(URI.parse(link["href"]).query).fetch("candidate_document_ids").map(&:to_i)
   end
 
   def filter_input_value(name)
@@ -150,6 +165,7 @@ RSpec.describe "Admin documents", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索結果: 1件")
+    expect(page_text).to include("表示中: 1-1件 / 1件")
     expect(filter_input_value("q")).to eq(search_term)
     expect(title_targets).to contain_exactly(project_document_path(matching_project, matching_document.slug))
     expect(title_targets).not_to include(project_document_path(excluded_project, excluded_document.slug))
@@ -174,6 +190,7 @@ RSpec.describe "Admin documents", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索結果: 2件")
+    expect(page_text).to include("表示中: 1-2件 / 2件")
     expect(page_text).to include("現在の検索結果2件を、文書一括編集dry-runの候補として引き継ぎます")
 
     link = bulk_edit_candidate_link
@@ -184,6 +201,41 @@ RSpec.describe "Admin documents", type: :request do
     expect(query.fetch("candidate_document_ids").map(&:to_i)).to contain_exactly(first_document.id, second_document.id)
     expect(query.fetch("candidate_document_ids").map(&:to_i)).not_to include(other_document.id)
     expect(query.fetch("source_filter_summaries")).to include("キーワード: BULK-001")
+  end
+
+  it "paginates filtered documents while keeping page links and bulk candidate handoff on the filtered result set" do
+    project = create(:project, code: "PAGE-DOC", name: "Paged Documents")
+    matching_documents = Array.new(3) do |index|
+      create(:document, project:, title: "Paged Document #{index}", slug: "paged-document-#{index}")
+    end
+    other_document = create(:document, title: "Other Paged Document", slug: "other-paged-document")
+
+    sign_in_as(admin_user)
+
+    get admin_documents_path, params: { q: "PAGE-DOC", per_page: 2 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 3件")
+    expect(page_text).to include("表示中: 1-2件 / 3件")
+    expect(table_text).to include("Paged Document 0", "Paged Document 1")
+    expect(table_text).not_to include("Paged Document 2", "Other Paged Document")
+    expect(link_href("次へ")).to include("q=PAGE-DOC", "per_page=2", "page=2")
+    expect(bulk_edit_candidate_ids).to contain_exactly(*matching_documents.map(&:id))
+    expect(bulk_edit_candidate_ids).not_to include(other_document.id)
+
+    get admin_documents_path, params: { q: "PAGE-DOC", per_page: 2, page: 2 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 3-3件 / 3件")
+    expect(table_text).to include("Paged Document 2")
+    expect(table_text).not_to include("Paged Document 0")
+    expect(link_href("前へ")).to include("q=PAGE-DOC", "per_page=2", "page=1")
+    expect(bulk_edit_candidate_ids).to contain_exactly(*matching_documents.map(&:id))
+
+    get admin_documents_path, params: { q: "PAGE-DOC", per_page: 0, page: -1 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 1-3件 / 3件")
   end
 
   it "does not link zero or oversized document results to bulk edit candidates" do
@@ -205,7 +257,9 @@ RSpec.describe "Admin documents", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索結果: 51件")
+    expect(page_text).to include("表示中: 1-25件 / 51件")
     expect(page_text).to include("50件以下まで絞り込んでください")
+    expect(document_rows.size).to eq(25)
     expect(bulk_edit_candidate_link).to be_nil
   end
 
@@ -240,6 +294,7 @@ RSpec.describe "Admin documents", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索結果: 1件")
+    expect(page_text).to include("表示中: 1-1件 / 1件")
     expect(page_text).to include("キーワード: DOCS-TP", "保管期限: 保管期限なし")
     expect(title_targets).to contain_exactly(project_document_path(project, document.slug))
 
