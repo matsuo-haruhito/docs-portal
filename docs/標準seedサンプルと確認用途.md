@@ -46,6 +46,20 @@ PlantUML 記法サンプルは seed showcase の代表コンテンツです。Kr
 | 複数版 | `README.md` と `提出済/README.md` | current / 旧版の切り替えや比較前提を確認する |
 | 手順書系の実運用寄りコンテンツ | `ai-usecases/AI活用手順ポータル/` | showcase より業務コンテンツ寄りのサンプルを見たい場合に使う |
 
+## 任意 external sample の追加手順
+
+任意サンプルは、標準 showcase とは別の `<sample-set>` 配下に置きます。`db:seed` 前に入力ファイルをそろえ、seed 後は portal 上の Project / Document / DocumentFile と生成 HTML を確認します。
+
+1. `bin/setup_external_sample_data_links` を実行し、`storage/document_files/external_samples` が存在する状態にします。この script は root directory を用意するだけで、サンプルの検証、cleanup、retention 判断は行いません。
+2. `storage/document_files/external_samples/<sample-set>/<site-dir>/...` にサンプルを配置します。`site-dir` ごとに 1 Project として取り込まれ、Markdown は 1 ファイルまたは 1 ディレクトリを 1 Document として扱います。
+3. 旧版や提出済み snapshot を持たせたい場合は、`提出済`、`提出済み`、`編集正本` などの snapshot directory を `site-dir` 配下に置きます。snapshot directory 以外の current 側からは、これらの directory は除外して読み取られます。
+4. `rails db:seed` を実行し、対象 sample set の Project、Document、DocumentVersion、添付 DocumentFile が作られることを確認します。添付ファイルは seed 時に `external_sample_seed_files/...` の storage key へ materialize されます。
+5. Docusaurus build が必要な Markdown は、Document 詳細の HTML 表示と添付導線を確認します。PlantUML / D2 など Kroki 前提の記法を含む場合は、Kroki runtime 前提も別途確認してください。
+
+不要になった任意サンプルは、次回 seed の入力から外すために `external_samples` 配下の対象 directory を削除または退避します。ただし、既に取り込まれた DB row、storage file、retention、production data の cleanup 方針はこの手順では決まりません。cleanup や validation command が必要な場合は、seed / storage 運用の別 issue として扱ってください。
+
+標準 showcase は `db:seed` のたびに再生成されます。標準 showcase の文面や添付を変更したい場合は `seed-showcase/docs-portal-demo` を直接編集せず、`db/seeds/support/seed_sample_document_generator.rb` とこの docs の確認用途を合わせて見直します。`ai-usecases` は手順書系の用途特化サンプルですが、取り込みは任意 external sample と同じ一般ルールです。
+
 ## 運用メモ
 
 - 標準 showcase サンプルは `db:seed` のたびに再生成されるため、直接編集しても次回 seed で上書きされます。
