@@ -42,7 +42,12 @@ h1 案件同意設定
       = link_to "絞り込み解除", admin_project_consent_settings_path, class: "button secondary"
   p.muted 案件・同意文面・状態で一覧を絞り込めます。列の表示設定は下の table preferences で調整してください。
   p.muted 必須タイミングは、閲覧前・ダウンロード前が現在の必須化対象です。共有リンク系の（予約）は将来拡張用で、現時点の共有リンク同意 enforcement を意味しません。
-  p.muted = "表示中: #{@project_consent_settings.size}件"
+  - if has_filters
+    p.muted = "検索結果: #{@project_consent_settings_filtered_count}件"
+  - if @project_consent_settings_filtered_count.to_i.positive?
+    p.muted = "表示中: #{@project_consent_settings_pagination[:from]}-#{@project_consent_settings_pagination[:to]}件 / #{@project_consent_settings_filtered_count}件"
+  - else
+    p.muted 表示中: 0件
 
 - if @project_consent_settings.any? || has_filters
   .card
@@ -75,6 +80,15 @@ h1 案件同意設定
           td.actions data-rails-table-preferences-column-key="actions"
             = edit_link_to "編集", edit_admin_project_consent_setting_path(setting)
             = delete_link_to "削除", admin_project_consent_setting_path(setting), confirm: "案件同意設定を削除しますか？"
+
+  - if @project_consent_settings_pagination[:total_pages] > 1
+    nav.pagination aria-label="案件同意設定一覧ページ"
+      p.actions
+        - if @project_consent_settings_pagination[:prev_page]
+          = link_to "前へ", admin_project_consent_settings_path(@project_consent_setting_page_params.merge(page: @project_consent_settings_pagination[:prev_page])), class: "button secondary"
+        span.muted = "#{@project_consent_settings_pagination[:page]} / #{@project_consent_settings_pagination[:total_pages]}ページ"
+        - if @project_consent_settings_pagination[:next_page]
+          = link_to "次へ", admin_project_consent_settings_path(@project_consent_setting_page_params.merge(page: @project_consent_settings_pagination[:next_page])), class: "button secondary"
 - else
   .card
     p.muted まだ案件同意設定はありません。
