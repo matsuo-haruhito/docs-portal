@@ -73,10 +73,10 @@ RSpec.describe SeedSupport::SeedSampleDocumentGenerator do
     generator.run
 
     aggregate_failures "external sample deletion boundary" do
-      expect(stale_showcase_file).not_to exist
-      expect(ai_usecase_file).to exist
+      expect(stale_showcase_file.exist?).to be(false)
+      expect(ai_usecase_file.exist?).to be(true)
       expect(ai_usecase_file.read).to eq("keep this file")
-      expect(optional_sample_file).to exist
+      expect(optional_sample_file.exist?).to be(true)
       expect(optional_sample_file.read).to eq("keep this file")
     end
   end
