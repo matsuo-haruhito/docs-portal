@@ -17,6 +17,10 @@ RSpec.describe "Admin users filters", type: :request do
     parsed_html.css("[data-rails-table-preferences-column-key]").map { |node| node["data-rails-table-preferences-column-key"] }.uniq
   end
 
+  def link_href(text)
+    parsed_html.css("a").find { |link| link.text.squish == text }&.[]("href")
+  end
+
   let(:internal_user) { create(:user, :internal) }
   let!(:company) { create(:company, domain: "tenant.example.com", name: "Tenant") }
   let!(:other_company) { create(:company, domain: "other.example.com", name: "Other") }
@@ -98,5 +102,47 @@ RSpec.describe "Admin users filters", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索条件に一致するユーザーはありません。")
     expect(result_table_text).not_to include("other-active@example.com")
+  end
+
+  it "paginates company_master_admin users without leaving the same-company scope" do
+    manager = create(:user, :external, :company_master_admin, company:, email_address: "manager-page@example.com")
+    same_company_users = Array.new(3) do |index|
+      create(
+        :user,
+        :external,
+        company:,
+        name: "Shared Page",
+        email_address: "shared-page-#{index}@example.com",
+        active: true
+      )
+    end
+    create(:user, :external, company: other_company, name: "Shared Page", email_address: "shared-page-other@example.com", active: true)
+
+    sign_in_as(manager)
+
+    get admin_users_path, params: { q: "shared page", active: "true", per_page: 2 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 3件")
+    expect(page_text).to include("表示中: 1-2件 / 3件")
+    expect(result_table_text).to include(same_company_users.first.email_address)
+    expect(result_table_text).to include(same_company_users.second.email_address)
+    expect(result_table_text).not_to include(same_company_users.third.email_address)
+    expect(result_table_text).not_to include("shared-page-other@example.com")
+    expect(link_href("次へ")).to include("q=shared+page", "active=true", "per_page=2", "page=2")
+
+    get admin_users_path, params: { q: "shared page", active: "true", per_page: 2, page: 2 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 3-3件 / 3件")
+    expect(result_table_text).to include(same_company_users.third.email_address)
+    expect(result_table_text).not_to include(same_company_users.first.email_address)
+    expect(result_table_text).not_to include("shared-page-other@example.com")
+
+    get admin_users_path, params: { q: "shared page", active: "true", per_page: 2, page: 0 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 1-2件 / 3件")
+    expect(result_table_text).to include(same_company_users.first.email_address)
   end
 end

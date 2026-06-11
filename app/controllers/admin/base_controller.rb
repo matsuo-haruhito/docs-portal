@@ -1,4 +1,7 @@
 class Admin::BaseController < BaseController
+  DEFAULT_ADMIN_LIST_PER_PAGE = 25
+  MAX_ADMIN_LIST_PER_PAGE = 100
+
   before_action :require_admin_area_access!
 
   private
@@ -19,5 +22,42 @@ class Admin::BaseController < BaseController
     return fallback if return_to.match?(/[[:cntrl:]]/)
 
     return_to
+  end
+
+  def paginate_admin_list(scope, total_count)
+    pagination = admin_list_pagination(total_count)
+
+    [scope.limit(pagination[:per_page]).offset(pagination[:offset]), pagination]
+  end
+
+  def admin_list_pagination(total_count)
+    per_page = bounded_admin_list_per_page
+    total_pages = [(total_count.to_f / per_page).ceil, 1].max
+    page = bounded_admin_list_page(total_pages)
+    offset = (page - 1) * per_page
+
+    {
+      page: page,
+      per_page: per_page,
+      total_count: total_count,
+      total_pages: total_pages,
+      offset: offset,
+      from: total_count.zero? ? 0 : offset + 1,
+      to: [offset + per_page, total_count].min,
+      prev_page: page > 1 ? page - 1 : nil,
+      next_page: page < total_pages ? page + 1 : nil
+    }
+  end
+
+  def bounded_admin_list_page(total_pages)
+    page = params[:page].to_i
+    page = 1 if page < 1
+    [page, total_pages].min
+  end
+
+  def bounded_admin_list_per_page
+    per_page = params[:per_page].to_i
+    per_page = DEFAULT_ADMIN_LIST_PER_PAGE if per_page < 1
+    [per_page, MAX_ADMIN_LIST_PER_PAGE].min
   end
 end
