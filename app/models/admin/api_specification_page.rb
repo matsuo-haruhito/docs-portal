@@ -5,6 +5,8 @@ require Rails.root.join("db/seeds/support/docusaurus_runtime_checker")
 
 class Admin::ApiSpecificationPage
   SITE_PATH = "api-specification".freeze
+  BUILD_PROFILE = "admin_api_spec".freeze
+  BUILD_MANIFEST_FILENAME = "build-manifest.json".freeze
   FAILURE_MESSAGE_MAX_LENGTH = 160
   BUILD_HISTORY_LIMIT = 5
 
@@ -27,6 +29,19 @@ class Admin::ApiSpecificationPage
     :success_at,
     :requested_at,
     :build_entry_mtime,
+    keyword_init: true
+  )
+
+  BuildManifest = Struct.new(
+    :state,
+    :label,
+    :message,
+    :profile,
+    :built_at,
+    :docusaurus_version,
+    :validation_result,
+    :source_path,
+    :source_mtime,
     keyword_init: true
   )
 
@@ -98,6 +113,10 @@ class Admin::ApiSpecificationPage
     build_root.join(SITE_PATH, "index.html")
   end
 
+  def build_manifest_path
+    build_root.join(SITE_PATH, BUILD_MANIFEST_FILENAME)
+  end
+
   def available?
     build_entry_path.exist?
   end
@@ -142,6 +161,17 @@ class Admin::ApiSpecificationPage
     else
       stale_or_missing_build_status
     end
+  end
+
+  def build_manifest
+    return missing_build_manifest unless build_manifest_path.exist?
+
+    payload = JSON.parse(build_manifest_path.read)
+    return invalid_build_manifest unless payload.is_a?(Hash)
+
+    build_manifest_from_payload(payload)
+  rescue JSON::ParserError
+    invalid_build_manifest
   end
 
   def build_history
@@ -231,6 +261,7 @@ class Admin::ApiSpecificationPage
 
   def record_build_success!
     now = Time.current
+    write_build_manifest!(built_at: now)
     payload = {
       status: "success",
       recorded_at: now.iso8601,
@@ -265,6 +296,22 @@ class Admin::ApiSpecificationPage
     File.write(build_status_marker_path, JSON.pretty_generate(payload))
   end
 
+  def write_build_manifest!(built_at:)
+    FileUtils.mkdir_p(build_manifest_path.dirname)
+    File.write(
+      build_manifest_path,
+      JSON.pretty_generate(
+        profile: BUILD_PROFILE,
+        built_at: built_at.iso8601,
+        docusaurus_version: docusaurus_package_version,
+        validation_result: "success",
+        source_path: source_path.relative_path_from(Rails.root).to_s,
+        source_mtime: source_path.mtime.iso8601,
+        build_entry_mtime: build_entry_path.mtime.iso8601
+      )
+    )
+  end
+
   def append_build_history!(payload)
     FileUtils.mkdir_p(build_history_marker_path.dirname)
     history = [payload.stringify_keys, *build_history_marker].first(BUILD_HISTORY_LIMIT)
@@ -277,6 +324,45 @@ class Admin::ApiSpecificationPage
     JSON.parse(build_status_marker_path.read)
   rescue JSON::ParserError
     {}
+  end
+
+  def build_manifest_from_payload(payload)
+    profile = payload["profile"].presence
+    profile_matches = profile == BUILD_PROFILE
+
+    BuildManifest.new(
+      state: profile_matches ? :available : :warning,
+      label: profile_matches ? "build manifest 確認済み" : "build manifest profile 不一致",
+      message: profile_matches ? "admin_api_spec profile の build manifest を確認できます。" : "build manifest の profile が admin_api_spec と一致しません。表示は継続し、build 出力を確認してください。",
+      profile: profile.presence || "未記録",
+      built_at: parse_marker_time(payload["built_at"]),
+      docusaurus_version: payload["docusaurus_version"].presence || "unknown",
+      validation_result: payload["validation_result"].presence || "unknown",
+      source_path: payload["source_path"].presence,
+      source_mtime: parse_marker_time(payload["source_mtime"])
+    )
+  end
+
+  def missing_build_manifest
+    BuildManifest.new(
+      state: :missing,
+      label: "build manifest 未記録",
+      message: "API仕様 build manifest はまだ記録されていません。HTML表示は継続し、次回 build 成功後に記録されます。",
+      profile: "未記録",
+      docusaurus_version: "unknown",
+      validation_result: "unknown"
+    )
+  end
+
+  def invalid_build_manifest
+    BuildManifest.new(
+      state: :warning,
+      label: "build manifest 読み取り不可",
+      message: "API仕様 build manifest を読み取れません。HTML表示は継続し、manifest JSON を確認してください。",
+      profile: "読み取り不可",
+      docusaurus_version: "unknown",
+      validation_result: "unknown"
+    )
   end
 
   def build_history_marker
@@ -419,6 +505,18 @@ class Admin::ApiSpecificationPage
 
   def build_history_marker_path
     Rails.root.join("tmp", "api_specification_build.history.json")
+  end
+
+  def docusaurus_package_version
+    package_json_path = docusaurus_root.join("package.json")
+    return "unknown" unless package_json_path.exist?
+
+    package_json = JSON.parse(package_json_path.read)
+    package_json.dig("dependencies", "@docusaurus/core").presence ||
+      package_json.dig("devDependencies", "@docusaurus/core").presence ||
+      "unknown"
+  rescue JSON::ParserError
+    "unknown"
   end
 
   def build_freshness_guard

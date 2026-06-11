@@ -17,6 +17,7 @@ p.muted
     | API仕様MarkdownがHTMLより新しい状態です。Docusaurus build の完了後に再読み込みしてください。
 
 - build_status = @api_specification_page.build_status
+- build_manifest = @api_specification_page.build_manifest
 - build_history = @api_specification_page.build_history
 section.card
   h2 表示状態
@@ -38,6 +39,32 @@ section.card
       dt HTML更新時刻
       dd = l(build_status.build_entry_mtime, format: :long)
   p.muted build 状態は API仕様ページ専用の直近結果だけを案内します。build queue や iframe 配信条件は変更していません。
+  h3 Build manifest
+  p
+    strong = build_manifest.label
+    | :
+    = " #{build_manifest.message}"
+  dl
+    dt Profile
+    dd = build_manifest.profile
+    dt Validation
+    dd = build_manifest.validation_result
+    dt Docusaurus version
+    dd = build_manifest.docusaurus_version
+    - if build_manifest.built_at
+      dt build 記録時刻
+      dd = l(build_manifest.built_at, format: :long)
+    - if build_manifest.source_path
+      dt Source
+      dd
+        code = build_manifest.source_path
+    - if build_manifest.source_mtime
+      dt Source更新
+      dd = l(build_manifest.source_mtime, format: :long)
+  p.muted build manifest は admin_api_spec profile の観測用 metadata です。欠落や profile 不一致は warning に留め、iframe 配信条件や閲覧権限は変更しません。
+  - if build_manifest.state != :available
+    .notice.alert
+      = build_manifest.message
   - if build_history.any?
     h3 直近build履歴
     p.muted API仕様ページ専用 build の直近結果だけを read-only に表示します。raw stdout / stderr は表示しません。

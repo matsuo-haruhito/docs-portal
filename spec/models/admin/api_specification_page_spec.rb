@@ -8,12 +8,14 @@ RSpec.describe Admin::ApiSpecificationPage do
   let(:build_history_marker_path) { Rails.root.join("tmp", "api_specification_build.history.json") }
   let(:build_request_marker_path) { Rails.root.join("tmp", "api_specification_build.requested") }
   let(:build_entry_path) { page.build_entry_path }
+  let(:build_manifest_path) { page.build_manifest_path }
 
   after do
     FileUtils.rm_f(build_status_marker_path)
     FileUtils.rm_f(build_history_marker_path)
     FileUtils.rm_f(build_request_marker_path)
     FileUtils.rm_f(build_entry_path)
+    FileUtils.rm_f(build_manifest_path)
   end
 
   describe "#primary_source_pages" do
@@ -53,9 +55,20 @@ RSpec.describe Admin::ApiSpecificationPage do
       page.build!
 
       marker = JSON.parse(build_status_marker_path.read)
+      manifest = JSON.parse(build_manifest_path.read)
       expect(marker["status"]).to eq("success")
+      expect(manifest).to include(
+        "profile" => Admin::ApiSpecificationPage::BUILD_PROFILE,
+        "validation_result" => "success",
+        "source_path" => "docs-src/api-specification.md"
+      )
+      expect(manifest["built_at"]).to be_present
+      expect(manifest["docusaurus_version"]).to be_present
       expect(page.build_status.label).to eq("最新 build 成功")
       expect(page.build_status.message).not_to include("old failure")
+      expect(page.build_manifest.label).to eq("build manifest 確認済み")
+      expect(page.build_manifest.profile).to eq(Admin::ApiSpecificationPage::BUILD_PROFILE)
+      expect(page.build_manifest.docusaurus_version).to be_present
       expect(page.build_history.first.label).to eq("最新 build 成功")
       expect(page.build_history.first.success_at).to be_present
     end
@@ -73,6 +86,7 @@ RSpec.describe Admin::ApiSpecificationPage do
       expect(marker["message"]).not_to include(Rails.root.to_s)
       expect(marker["message"]).not_to include("secret-value")
       expect(marker["message"].length).to be <= Admin::ApiSpecificationPage::FAILURE_MESSAGE_MAX_LENGTH
+      expect(build_manifest_path).not_to exist
       expect(page.build_status.label).to eq("build 失敗")
       expect(page.build_history.first.label).to eq("build 失敗")
       expect(page.build_history.first.message).to include("token=[FILTERED]")
@@ -90,6 +104,49 @@ RSpec.describe Admin::ApiSpecificationPage do
 
       expect(status.label).to eq("build 待ち/実行中")
       expect(status.message).to include("完了後に再読み込み")
+    end
+  end
+
+  describe "#build_manifest" do
+    it "falls back safely when the manifest is missing" do
+      manifest = page.build_manifest
+
+      expect(manifest.label).to eq("build manifest 未記録")
+      expect(manifest.state).to eq(:missing)
+      expect(manifest.profile).to eq("未記録")
+    end
+
+    it "falls back safely when the manifest JSON is invalid" do
+      FileUtils.mkdir_p(build_manifest_path.dirname)
+      File.write(build_manifest_path, "{invalid")
+
+      manifest = page.build_manifest
+
+      expect(manifest.label).to eq("build manifest 読み取り不可")
+      expect(manifest.state).to eq(:warning)
+      expect(manifest.profile).to eq("読み取り不可")
+    end
+
+    it "warns without blocking when the manifest profile does not match admin_api_spec" do
+      FileUtils.mkdir_p(build_manifest_path.dirname)
+      File.write(
+        build_manifest_path,
+        JSON.generate(
+          profile: "portal_embedded",
+          built_at: Time.current.iso8601,
+          docusaurus_version: "3.7.0",
+          validation_result: "success",
+          source_path: "docs-src/api-specification.md"
+        )
+      )
+
+      manifest = page.build_manifest
+
+      expect(manifest.label).to eq("build manifest profile 不一致")
+      expect(manifest.state).to eq(:warning)
+      expect(manifest.profile).to eq("portal_embedded")
+      expect(manifest.docusaurus_version).to eq("3.7.0")
+      expect(manifest.validation_result).to eq("success")
     end
   end
 

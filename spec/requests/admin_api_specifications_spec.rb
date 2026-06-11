@@ -8,6 +8,7 @@ RSpec.describe "Admin API specifications", type: :request do
   let(:build_root) { Rails.root.join("docusaurus", "build") }
   let(:site_root) { build_root.join(Admin::ApiSpecificationPage::SITE_PATH) }
   let(:site_index_path) { site_root.join("index.html") }
+  let(:build_manifest_path) { site_root.join(Admin::ApiSpecificationPage::BUILD_MANIFEST_FILENAME) }
   let(:asset_css_path) { build_root.join("assets", "css", "api-spec-site-fixture.css") }
   let(:runtime_js_path) { build_root.join("assets", "js", "runtime~main.api-spec-fixture.js") }
   let(:build_status_marker_path) { Rails.root.join("tmp", "api_specification_build.status.json") }
@@ -24,6 +25,7 @@ RSpec.describe "Admin API specifications", type: :request do
     restore_api_specification_site_index
     FileUtils.rm_f(asset_css_path)
     FileUtils.rm_f(runtime_js_path)
+    FileUtils.rm_f(build_manifest_path)
     FileUtils.rm_f(build_status_marker_path)
     FileUtils.rm_f(build_history_marker_path)
     FileUtils.rm_f(build_request_marker_path)
@@ -38,6 +40,7 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response.body).to include("API仕様")
     expect(response.body).to include("主要ページとsource")
     expect(response.body).to include("表示状態はAPI仕様ページ全体のbuild結果です。")
+    expect(response.body).to include("Build manifest")
     expect(response.body).to include("HTML確認先")
     expect(response.body).to include("Source")
     primary_source_pages.each do |source_page|
@@ -72,6 +75,61 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response.body).to include("最終成功")
     expect(response.body).not_to include("失敗調査の入口")
     expect(response.body).not_to include("手動 build 再実行")
+  end
+
+  it "shows an admin_api_spec build manifest when it is present" do
+    write_api_specification_site_fixture
+    write_build_manifest(profile: Admin::ApiSpecificationPage::BUILD_PROFILE, docusaurus_version: "3.7.0")
+    sign_in_as(admin_user)
+
+    get admin_api_specification_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("build manifest 確認済み")
+    expect(response.body).to include("admin_api_spec")
+    expect(response.body).to include("success")
+    expect(response.body).to include("3.7.0")
+    expect(response.body).to include("build manifest は admin_api_spec profile の観測用 metadata")
+    expect(response.body).not_to include("build manifest profile 不一致")
+  end
+
+  it "shows a safe warning when the build manifest is missing" do
+    write_api_specification_site_fixture
+    sign_in_as(admin_user)
+
+    get admin_api_specification_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("build manifest 未記録")
+    expect(response.body).to include("次回 build 成功後に記録されます")
+    expect(response.body).to include("site-viewer-frame")
+  end
+
+  it "shows a safe warning when the build manifest cannot be parsed" do
+    write_api_specification_site_fixture
+    File.write(build_manifest_path, "{invalid")
+    sign_in_as(admin_user)
+
+    get admin_api_specification_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("build manifest 読み取り不可")
+    expect(response.body).to include("manifest JSON を確認してください")
+    expect(response.body).to include("site-viewer-frame")
+  end
+
+  it "shows a safe warning when the build manifest profile differs" do
+    write_api_specification_site_fixture
+    write_build_manifest(profile: "portal_embedded", docusaurus_version: "3.7.0")
+    sign_in_as(admin_user)
+
+    get admin_api_specification_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("build manifest profile 不一致")
+    expect(response.body).to include("portal_embedded")
+    expect(response.body).to include("3.7.0")
+    expect(response.body).to include("site-viewer-frame")
   end
 
   it "notifies the admin when a stale API specification build is enqueued" do
@@ -356,6 +414,21 @@ RSpec.describe "Admin API specifications", type: :request do
     File.write(
       build_status_marker_path,
       JSON.generate(status: "failed", recorded_at: Time.current.iso8601, message:)
+    )
+  end
+
+  def write_build_manifest(profile:, docusaurus_version: "unknown")
+    FileUtils.mkdir_p(build_manifest_path.dirname)
+    File.write(
+      build_manifest_path,
+      JSON.generate(
+        profile:,
+        built_at: Time.current.iso8601,
+        docusaurus_version:,
+        validation_result: "success",
+        source_path: "docs-src/api-specification.md",
+        source_mtime: Time.current.iso8601
+      )
     )
   end
 
