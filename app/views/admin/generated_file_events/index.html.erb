@@ -1,6 +1,7 @@
 <%
   detail_path_params = { return_to: request.fullpath }
   status_filter_params = request.query_parameters.except(:page, :per_page).compact_blank
+  has_active_filters = @filters.compact_blank.any?
   table_key = :admin_generated_file_events
   table_columns = generated_file_event_table_columns
   table_settings = rails_table_preference_settings(table_key: table_key)
@@ -158,7 +159,13 @@
           <% end %>
         <% else %>
           <tr>
-            <td colspan="<%= table_columns.size %>" class="px-4 py-8 text-center text-gray-500">条件に一致する生成ファイルイベントはありません。</td>
+            <td colspan="<%= table_columns.size %>" class="px-4 py-8 text-center text-gray-500">
+              <% if has_active_filters %>
+                条件に一致する生成ファイルイベントはありません。条件を見直すか、クリアしてください。
+              <% else %>
+                生成ファイルイベントはまだありません。
+              <% end %>
+            </td>
           </tr>
         <% end %>
       </tbody>
