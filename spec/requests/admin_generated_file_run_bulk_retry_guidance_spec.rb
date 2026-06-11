@@ -19,7 +19,8 @@ RSpec.describe "Admin generated file run bulk retry guidance", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(parsed_html.text).to include("現在の条件で再実行対象: 2 件")
-      expect(parsed_html.text).to include("一括再実行は現在条件に一致する古い失敗分から最大100件です。")
+      expect(parsed_html.text).to include("このボタンは現在の絞り込み条件に一致する失敗履歴だけを対象にします。")
+      expect(parsed_html.text).to include("古い順に最大100件です。")
       button = parsed_html.at_css(%(form[action="#{retry_failed_admin_generated_file_runs_path(generator: "target_generator")}"] button))
       expect(button).to be_present
       expect(button["disabled"]).to be_nil
