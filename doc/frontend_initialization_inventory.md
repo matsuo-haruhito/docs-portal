@@ -37,6 +37,7 @@
 | `archive-preview-tools` | archive preview | `setupArchivePreviewTools()` を専用 controller から refresh する | `preview-tools` bridge から分離済み。download candidate、safe/unsafe path、visible rows、filter chips、copy status、sort/count behavior は helper 側で維持 |
 | `auto-height-frame` | embedded iframe の高さ同期 | iframe load、postMessage、ResizeObserver / MutationObserver | iframe 補助として維持。Turbo 化候補ではない |
 | `bulk-edit-selection` | 文書一括編集候補の選択数・表示件数 | data-target 内の filter / count 更新 | app 側 Stimulus として維持 |
+| `company-master-admin-handoff` | company_master_admin landing の依頼テンプレート | clipboard copy button と status feedback | 権限、依頼先 URL、ticket/chat/mail 連携は増やさず、manual selection fallback を残す |
 | `csv-preview-tools` | CSV preview table | `setupCsvPreviewTableTools()` を専用 controller から refresh する | `preview-tools` bridge から分離済み。CSV preview の table behavior / export contract は helper 側で維持 |
 | `document-file-browser` | 版詳細の添付・元ファイル browser | kind / query filter と empty state | app 側 Stimulus として維持 |
 | `document-file-list-search` | 添付・元ファイル list search | `setupDocumentFileListSearch()` を専用 controller から refresh する | `preview-tools` bridge から分離済み。query / clear / count / match highlight / parent context row 表示は helper 側で維持 |
