@@ -2,6 +2,8 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
   FAILED_DELIVERY_RETRY_LIMIT = Admin::WebhookEndpointsController::RECENT_DELIVERY_DISPLAY_LIMIT
   INDEX_DELIVERY_DISPLAY_LIMIT = 100
   ERROR_QUERY_MAX_LENGTH = 100
+  WEBHOOK_ENDPOINT_SEARCH_QUERY_MAX_LENGTH = 100
+  WEBHOOK_ENDPOINT_SEARCH_LIMIT = 20
   DELIVERY_STATUS_FILTERS = Admin::WebhookEndpointsController::DELIVERY_STATUS_FILTERS
   RETURN_DELIVERY_STATUS_FILTERS = (["all"] + DELIVERY_STATUS_FILTERS).freeze
   DATE_FILTER_LABELS = {
@@ -14,8 +16,8 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
   before_action :set_delivery_return, only: %i[show retry_dispatch]
 
   def index
-    @webhook_endpoints = WebhookEndpoint.order(:name)
     @delivery_filters = delivery_search_filter_params
+    @selected_webhook_endpoint = selected_webhook_endpoint_for_filter
     @delivery_filter_warnings = delivery_filter_warnings
     @delivery_filter_inputs = @delivery_filters.merge(invalid_delivery_date_filter_values)
     @delivery_filters_applied = @delivery_filters.values.any?(&:present?) || @delivery_filter_warnings.any?
@@ -67,6 +69,16 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
     end
 
     redirect_to admin_webhook_endpoints_path(delivery_status: "failed"), notice: "Webhookを#{retryable_deliveries.size}件まとめて再送しました。結果は送信履歴で確認してください。"
+  end
+
+  def webhook_endpoint_search
+    render json: { options: webhook_endpoint_options(searchable_webhook_endpoints) }
+  end
+
+  def selected_webhook_endpoint
+    endpoint = WebhookEndpoint.find_by(id: params[:id])
+
+    render json: { option: endpoint ? webhook_endpoint_option(endpoint) : nil }
   end
 
   private
@@ -156,6 +168,36 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
     filters[:created_to] = created_to if parsed_filter_date(created_to)
 
     filters
+  end
+
+  def selected_webhook_endpoint_for_filter
+    return if @delivery_filters[:webhook_endpoint_id].blank?
+
+    WebhookEndpoint.find_by(id: @delivery_filters[:webhook_endpoint_id])
+  end
+
+  def searchable_webhook_endpoints
+    scope = WebhookEndpoint.order(:name, :id)
+    query = normalize_webhook_endpoint_search_query(params[:q])
+    return scope.limit(WEBHOOK_ENDPOINT_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{WebhookEndpoint.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(webhook_endpoints.name) LIKE :pattern OR LOWER(webhook_endpoints.target_url) LIKE :pattern",
+      pattern:
+    ).limit(WEBHOOK_ENDPOINT_SEARCH_LIMIT)
+  end
+
+  def normalize_webhook_endpoint_search_query(value)
+    value.to_s.strip.first(WEBHOOK_ENDPOINT_SEARCH_QUERY_MAX_LENGTH)
+  end
+
+  def webhook_endpoint_options(endpoints)
+    endpoints.map { |endpoint| webhook_endpoint_option(endpoint) }
+  end
+
+  def webhook_endpoint_option(endpoint)
+    { value: endpoint.id, text: helpers.webhook_delivery_endpoint_option_label(endpoint) }
   end
 
   def normalized_error_query(value)
