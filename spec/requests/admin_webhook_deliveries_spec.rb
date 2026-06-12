@@ -21,6 +21,14 @@ RSpec.describe "Admin webhook deliveries", type: :request do
     parsed_html.at_css(%(input[name="#{name}"]))&.[]("value")
   end
 
+  def endpoint_filter
+    parsed_html.at_css(%(input[name="webhook_endpoint_id"])) || parsed_html.at_css(%(select[name="webhook_endpoint_id"]))
+  end
+
+  def selected_value(node)
+    node&.[]("value").presence || node&.at_css("option[selected]")&.[]("value")
+  end
+
   def create_delivery(endpoint:, event:, created_at:, **attributes)
     create(
       :webhook_delivery,
@@ -89,6 +97,63 @@ RSpec.describe "Admin webhook deliveries", type: :request do
       )
       expect(input_value("response_status")).to be_nil
     end
+  end
+
+  it "renders the webhook endpoint filter as bounded remote search with selected values" do
+    sign_in_as(admin_user)
+
+    endpoint = create(:webhook_endpoint, name: "Selected Hook", target_url: "https://hooks.example.com/selected")
+    event = create(:notification_event, event_type: :document_updated)
+    create_delivery(endpoint: endpoint, event: event, status: :failed, created_at: Time.zone.local(2026, 6, 10, 10, 0, 0))
+
+    get admin_webhook_deliveries_path(webhook_endpoint_id: endpoint.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(endpoint_filter).to be_present
+    expect(selected_value(endpoint_filter)).to eq(endpoint.id.to_s)
+    expect(response.body).to include("設定名・送信先URLで検索")
+    expect(response.body).to include(webhook_endpoint_search_admin_webhook_deliveries_path(format: :json))
+    expect(response.body).to include(selected_webhook_endpoint_admin_webhook_deliveries_path(format: :json))
+  end
+
+  it "returns bounded remote endpoint search options and selected endpoint labels" do
+    sign_in_as(admin_user)
+
+    matching_endpoint = create(:webhook_endpoint, name: "Audit Hook", target_url: "https://hooks.example.com/audit")
+    create(:webhook_endpoint, name: "Billing Hook", target_url: "https://hooks.example.com/billing")
+
+    get webhook_endpoint_search_admin_webhook_deliveries_path(format: :json), params: { q: "audit" }
+
+    expect(response).to have_http_status(:ok)
+    endpoint_options = JSON.parse(response.body).fetch("options")
+    expect(endpoint_options).to contain_exactly(
+      include("value" => matching_endpoint.id, "text" => "Audit Hook / https://hooks.example.com/audit")
+    )
+
+    get selected_webhook_endpoint_admin_webhook_deliveries_path(format: :json), params: { id: matching_endpoint.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(JSON.parse(response.body).fetch("option")).to include(
+      "value" => matching_endpoint.id,
+      "text" => "Audit Hook / https://hooks.example.com/audit"
+    )
+  end
+
+  it "bounds remote endpoint search result counts" do
+    sign_in_as(admin_user)
+
+    22.times do |index|
+      create(
+        :webhook_endpoint,
+        name: "Searchable Hook #{index}",
+        target_url: "https://hooks.example.com/searchable/#{index}"
+      )
+    end
+
+    get webhook_endpoint_search_admin_webhook_deliveries_path(format: :json), params: { q: "Searchable Hook" }
+
+    expect(response).to have_http_status(:ok)
+    expect(JSON.parse(response.body).fetch("options").size).to eq(Admin::WebhookDeliveriesController::WEBHOOK_ENDPOINT_SEARCH_LIMIT)
   end
 
   it "shows invalid date warnings without dropping other valid filters" do
@@ -210,6 +275,7 @@ RSpec.describe "Admin webhook deliveries", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("100件ずつ、1/2ページ")
+    expect(selected_value(endpoint_filter)).to eq(endpoint.id.to_s)
     expect(action_targets).to include(admin_webhook_deliveries_path(filters.merge(page: 2)))
     expect(action_targets).to include(
       admin_webhook_delivery_path(deliveries.first.public_id, filters.merge(return_context: "deliveries_index"))
@@ -222,6 +288,7 @@ RSpec.describe "Admin webhook deliveries", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("100件ずつ、2/2ページ")
+    expect(selected_value(endpoint_filter)).to eq(endpoint.id.to_s)
     expect(action_targets).to include(admin_webhook_deliveries_path(filters.merge(page: 1)))
     expect(action_targets).to include(
       admin_webhook_delivery_path(deliveries.last.public_id, filters.merge(return_context: "deliveries_index", page: 2))
