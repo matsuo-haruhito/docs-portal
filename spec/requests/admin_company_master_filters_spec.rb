@@ -25,9 +25,30 @@ RSpec.describe "Admin company master filters", type: :request do
     parsed_html.css("a").find { |link| link.text.squish == text }&.[]("href")
   end
 
+  def form_link_texts(action_path)
+    parsed_html.css(%(form[action="#{action_path}"] a)).map { |link| link.text.squish }
+  end
+
   let!(:company) { create(:company, domain: "alpha.example.com", name: "Alpha Company", active: true) }
   let!(:other_company) { create(:company, domain: "omega.example.com", name: "Omega Holdings", active: true) }
   let!(:inactive_company) { create(:company, domain: "dormant.example.com", name: "Dormant Partner", active: false) }
+
+  it "hides the form clear action until company filters are active" do
+    sign_in_as(create(:user, :internal))
+
+    get admin_companies_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("会社を探す")
+    expect(form_link_texts(admin_companies_path)).not_to include("条件をクリア")
+
+    get admin_companies_path, params: { active: "true" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("適用中: 状態: 有効")
+    expect(form_link_texts(admin_companies_path)).to include("条件をクリア")
+    expect(link_href("条件をクリア")).to eq(admin_companies_path)
+  end
 
   it "filters companies by keyword while preserving table preferences" do
     sign_in_as(create(:user, :internal))
@@ -71,6 +92,7 @@ RSpec.describe "Admin company master filters", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索条件に一致する会社はありません。")
     expect(page_text).to include("キーワードや状態の条件を変更するか、条件をクリアしてください。")
+    expect(parsed_html.css('section.card a[href="/admin/companies"]').map(&:text).join).to include("条件をクリア")
     expect(page_text).not_to include("まだ会社は登録されていません。")
     expect(input_value("q")).to eq("missing-company")
   end
