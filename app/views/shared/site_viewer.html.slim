@@ -23,9 +23,15 @@
     .actions
       = link_to "前版との差分", document_version_path(@site_viewer_version, anchor: "version-diff"), class: "button secondary"
       = link_to "添付・元ファイル", document_version_path(@site_viewer_version, anchor: "version-files"), class: "button secondary"
+  .site-viewer-outline data-docs-portal-heading-outline="true" aria-live="polite"
+    .site-viewer-outline__header
+      strong 見出し
+      span.muted data-docs-portal-heading-outline-summary="true" 見出しを読み込み中です
+    .site-viewer-outline__list data-docs-portal-heading-outline-list="true" role="list"
   iframe.site-viewer-frame(
     src=@site_viewer_iframe_src
     title="#{@site_viewer_document.title} #{@site_viewer_version.version_label}"
     loading="lazy"
     data-docs-portal-auto-height="true"
+    data-docs-portal-heading-outline="true"
   )
