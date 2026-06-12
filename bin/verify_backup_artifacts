@@ -82,9 +82,10 @@ class BackupArtifactVerifier
   end
 
   def verify_metadata
-    sources = [db_dump, storage_archive, manifest].compact
-    sources << File.read(manifest) if manifest && File.file?(manifest)
-    metadata_text = sources.join("\n")
+    artifact_names = [db_dump, storage_archive].compact.map { |path| File.basename(path) }
+    manifest_inputs = [manifest].compact
+    manifest_inputs << File.read(manifest) if manifest && File.file?(manifest)
+    metadata_text = (artifact_names + manifest_inputs).join("\n")
 
     metadata_checks = {
       "environment name" => ENVIRONMENT_PATTERN,
