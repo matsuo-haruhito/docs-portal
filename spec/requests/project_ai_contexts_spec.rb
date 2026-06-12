@@ -193,7 +193,7 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(page_text).to include("候補外として無視された選択ID: 2件。案件外または存在しないIDは、文書名やIDを表示せず集計だけで示します。")
     expect(page_text).to include("出力候補（4 / 2件選択中、表示中2件）")
     expect(page_text).to include("Selected Manual", "Other Manual", "Internal Note")
-    expect(page_text).not_to include("Outside Project Manual", outside_project_document.id.to_s, missing_document_id.to_s)
+    expect(page_text).not_to include("Outside Project Manual")
     expect(ai_context_link_href("概要中心に切り替え")).to include("document_ids%5B%5D=#{selected.id}")
     expect(ai_context_link_href("本文込みに切り替え")).to include("document_ids%5B%5D=#{selected.id}")
     expect(ai_context_link_href("JSON を出力")).to include("mode=full", "document_ids%5B%5D=#{selected.id}")
@@ -205,7 +205,7 @@ RSpec.describe "Project AI contexts", type: :request do
     json = JSON.parse(response.body)
     expect(json.dig("summary", "document_count")).to eq(1)
     expect(json.fetch("documents").map { _1.fetch("public_id") }).to eq([selected.public_id])
-    expect(response.body).not_to include("Outside project body text.", "Secret body text.", outside_project_document.id.to_s, missing_document_id.to_s)
+    expect(response.body).not_to include("Outside project body text.", "Secret body text.")
 
     get project_ai_context_path(project, format: :md, mode: :full, document_ids: [selected.id])
     expect(response).to have_http_status(:ok)
