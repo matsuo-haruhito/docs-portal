@@ -21,6 +21,8 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("必須タイミングは、閲覧前・ダウンロード前が現在の必須化対象です。")
     expect(response.body).to include("共有リンク系の（予約）は将来拡張用")
+    expect(response.body).to include("検索結果: 1件")
+    expect(response.body).to include("表示中: 1-1件 / 1件")
     expect(listed_rows).to contain_exactly(a_string_including("Alpha Project", "Portal Terms", "有効"))
     expect(listed_rows.join).not_to include("Beta Project")
     expect(listed_rows.join).not_to include("Security NDA")
@@ -59,6 +61,50 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(selected_value(consent_term_filter)).to be_nil
   end
 
+  it "paginates settings with the default admin page size" do
+    create_project_consent_settings(26)
+
+    get admin_project_consent_settings_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("表示中: 1-25件 / 26件")
+    expect(listed_rows.size).to eq(25)
+    expect(listed_rows.join).to include("Project 00", "Project 24")
+    expect(listed_rows.join).not_to include("Project 25")
+    expect(pagination_label).to eq("1 / 2ページ")
+    expect(pagination_link("次へ")["href"]).to include("page=2")
+  end
+
+  it "keeps filters and bounded per-page values in pagination links" do
+    create_project_consent_settings(27, enabled: true)
+
+    get admin_project_consent_settings_path(enabled: "true", page: 2)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("検索結果: 27件")
+    expect(response.body).to include("表示中: 26-27件 / 27件")
+    expect(listed_rows).to contain_exactly(
+      a_string_including("Project 25", "有効"),
+      a_string_including("Project 26", "有効")
+    )
+    expect(selected_value(enabled_filter)).to eq("true")
+    expect(pagination_label).to eq("2 / 2ページ")
+    expect(pagination_link("前へ")["href"]).to include("enabled=true", "page=1")
+  end
+
+  it "bounds invalid page values with the shared admin pagination rules" do
+    create_project_consent_settings(26, enabled: true)
+
+    get admin_project_consent_settings_path(enabled: "true", page: 999, per_page: 10)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("表示中: 21-26件 / 26件")
+    expect(listed_rows.size).to eq(6)
+    expect(pagination_label).to eq("3 / 3ページ")
+    expect(pagination_link("前へ")["href"]).to include("enabled=true", "per_page=10", "page=2")
+    expect(pagination_link("次へ")).to be_nil
+  end
+
   it "shows a filtered empty state separately from the unregistered empty state" do
     alpha_project = create(:project, code: "ALPHA", name: "Alpha Project")
     beta_project = create(:project, code: "BETA", name: "Beta Project")
@@ -68,6 +114,7 @@ RSpec.describe "Admin project consent settings", type: :request do
     get admin_project_consent_settings_path(project_id: beta_project.id, enabled: "true")
 
     expect(response).to have_http_status(:ok)
+    expect(response.body).to include("検索結果: 0件")
     expect(response.body).to include("表示中: 0件")
     expect(response.body).to include("条件に一致する案件同意設定はありません。")
     expect(response.body).to include("絞り込み解除")
@@ -114,5 +161,21 @@ RSpec.describe "Admin project consent settings", type: :request do
 
   def selected_value(select_node)
     select_node&.at_css("option[selected]")&.[]("value")
+  end
+
+  def pagination_label
+    parsed_html.at_css("nav.pagination span.muted")&.text&.squish
+  end
+
+  def pagination_link(label)
+    parsed_html.css("nav.pagination a").find { |link| link.text.squish == label }
+  end
+
+  def create_project_consent_settings(count, enabled: true)
+    consent_term = create(:consent_term, title: "Paged Terms", version_label: "v1", consent_scope: :project)
+    count.times do |index|
+      project = create(:project, code: format("P%02d", index), name: format("Project %02d", index))
+      create(:project_consent_setting, project:, consent_term:, enabled:)
+    end
   end
 end
