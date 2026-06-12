@@ -65,6 +65,7 @@ RSpec.describe "Document bookmarks", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("案件「Visible Project」でお気に入りと後で読むを絞り込んでいます。最近見た文書は絞り込み対象外です。")
+    expect(response.body).to include("保存済み条件を解除")
     expect(response.body).to include("Manual")
     expect(response.body).not_to include("Other Checklist")
     expect(response.body).to include("Other Guide")
@@ -89,6 +90,7 @@ RSpec.describe "Document bookmarks", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索語「manual」でお気に入りと後で読むを絞り込んでいます。最近見た文書は絞り込み対象外です。")
+    expect(response.body).to include("保存済み条件を解除")
     expect(response.body).to include("Manual")
     expect(response.body).not_to include("Release Checklist")
     expect(response.body).to include("Recent Guide")
@@ -178,7 +180,8 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response.body).to include("Checklist")
     expect(response.body).to include("Quarterly Plan")
     expect(response.body).to include("Beta Project")
-    expect(response.body).to include("条件をクリア")
+    expect(response.body).to include("最近見た条件をクリア")
+    expect(response.body).to include("最近見た文書検索「beta」は、表示中の最大 20 件だけを絞り込んでいます。保存済みショートカットの条件は維持されます。")
     expect(response.body).not_to include("Operations Guide")
     expect(response.body).not_to include("Beta Hidden Notes")
   end
@@ -202,7 +205,8 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response.body).to include("Manual")
     expect(response.body).not_to include("Other Checklist")
     expect(response.body).to include("Other Guide")
-    expect(response.body).to include("条件をクリア")
+    expect(response.body).to include("最近見た条件をクリア")
+    expect(response.body).to include("最近見た文書検索「other」は、表示中の最大 20 件だけを絞り込んでいます。保存済みショートカットの条件は維持されます。")
   end
 
   it "keeps saved bookmark filtering active while filtering recent documents" do
@@ -221,7 +225,8 @@ RSpec.describe "Document bookmarks", type: :request do
     expect(response.body).to include("Manual")
     expect(response.body).not_to include("Checklist")
     expect(response.body).to include("Manual Recent Guide")
-    expect(response.body).to include("条件をクリア")
+    expect(response.body).to include("最近見た条件をクリア")
+    expect(response.body).to include("最近見た文書検索「recent」は、表示中の最大 20 件だけを絞り込んでいます。保存済みショートカットの条件は維持されます。")
   end
 
   it "shows a recent document no-match empty state for unsupported query text" do
@@ -233,7 +238,7 @@ RSpec.describe "Document bookmarks", type: :request do
     get document_bookmarks_path, params: { recent_q: "zzz" }
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("最近表示された最大 20 件内に条件と一致する文書はありません。検索語を変えるか、案件一覧から文書を探してください。")
+    expect(response.body).to include("最近見た文書検索「zzz」に一致する文書は、最近表示された最大 20 件内にありません。検索語を変えるか、案件一覧から文書を探してください。")
     expect(response.body).not_to include("Guide")
     expect(response.body).not_to include("文書を開くと、最近見た文書としてここに表示されます。")
   end
@@ -253,7 +258,7 @@ RSpec.describe "Document bookmarks", type: :request do
     get document_bookmarks_path, params: { recent_q: "archived" }
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("最近表示された最大 20 件内に条件と一致する文書はありません。")
+    expect(response.body).to include("最近見た文書検索「archived」に一致する文書は、最近表示された最大 20 件内にありません。")
     expect(response.body).not_to include("Archived Policy")
     expect(response.body).not_to include("Recent Guide 1")
   end

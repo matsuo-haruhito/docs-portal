@@ -25,7 +25,7 @@
       <div class="form-actions">
         <%= form.submit "絞り込む", class: "button" %>
         <% if @saved_bookmark_filter_active %>
-          <%= link_to "解除", document_bookmarks_path(recent_q: @recent_documents_query.presence), class: "button secondary" %>
+          <%= link_to "保存済み条件を解除", document_bookmarks_path(recent_q: @recent_documents_query.presence), class: "button secondary" %>
         <% end %>
       </div>
     </div>
@@ -126,9 +126,13 @@
     <div class="form-actions">
       <%= form.submit "絞り込む", class: "button" %>
       <% if @recent_documents_query.present? %>
-        <%= link_to "条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary" %>
+        <%= link_to "最近見た条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary" %>
       <% end %>
     </div>
+  <% end %>
+
+  <% if @recent_documents_query.present? %>
+    <p class="muted">最近見た文書検索「<%= @recent_documents_query %>」は、表示中の最大 20 件だけを絞り込んでいます。保存済みショートカットの条件は維持されます。</p>
   <% end %>
 
   <% if @recent_documents.any? %>
@@ -146,7 +150,11 @@
       <% end %>
     </ul>
   <% elsif @all_recent_documents.any? %>
-    <p class="muted">最近表示された最大 20 件内に条件と一致する文書はありません。検索語を変えるか、案件一覧から文書を探してください。</p>
+    <% if @recent_documents_query.present? %>
+      <p class="muted">最近見た文書検索「<%= @recent_documents_query %>」に一致する文書は、最近表示された最大 20 件内にありません。検索語を変えるか、案件一覧から文書を探してください。</p>
+    <% else %>
+      <p class="muted">最近表示された最大 20 件内に条件と一致する文書はありません。検索語を変えるか、案件一覧から文書を探してください。</p>
+    <% end %>
   <% else %>
     <p class="muted">文書を開くと、最近見た文書としてここに表示されます。</p>
   <% end %>
