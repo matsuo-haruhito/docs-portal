@@ -12,6 +12,8 @@ class ProjectAiContextsController < BaseController
 
     @requested_document_ids = requested_document_ids
     @scope = requested_scope
+    @scoped_document_count = scoped_document_count
+    @unscoped_document_count = @requested_document_ids.size - @scoped_document_count
     @document_query = normalized_document_query
     @candidate_view = requested_candidate_view
     selectable_documents_all = selectable_documents
@@ -78,6 +80,10 @@ class ProjectAiContextsController < BaseController
     return nil if @requested_document_ids.empty?
 
     @project.documents.where(id: @requested_document_ids)
+  end
+
+  def scoped_document_count
+    @scope&.count || 0
   end
 
   def requested_candidate_view
@@ -157,6 +163,7 @@ class ProjectAiContextsController < BaseController
       "mode=#{@mode}",
       "scope=#{@requested_document_ids.empty? ? "all" : "selected"}",
       "selected_count=#{@requested_document_ids.size}",
+      "scoped_count=#{@scoped_document_count}",
       "exported_count=#{ai_context_exported_document_count}"
     ].join(";")
   end

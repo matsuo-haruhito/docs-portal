@@ -9,7 +9,7 @@ RSpec.describe "Project AI contexts", type: :request do
     create(:project_membership, project:, user: external_user)
   end
 
-  def create_exportable_document(title:, slug:, body:, visibility_policy: :restricted_external, access_level: :view)
+  def create_exportable_document(title:, slug:, body:, visibility_policy: :restricted_external, access_level: :view, project: self.project)
     document = create(:document, project:, title:, slug:, visibility_policy:)
     version = create(:document_version, document:, version_label: "v1", source_relative_path: "docs/#{slug}.md", search_body_text: body)
     document.update!(latest_version: version)
@@ -171,30 +171,41 @@ RSpec.describe "Project AI contexts", type: :request do
     selected = create_exportable_document(title: "Selected Manual", slug: "selected", body: "Selected body text.")
     other_visible = create_exportable_document(title: "Other Manual", slug: "other", body: "Other body text.")
     internal = create_exportable_document(title: "Internal Note", slug: "internal", body: "Secret body text.", visibility_policy: :internal_only)
+    other_project = create(:project, code: "OTHERCTX", name: "Other Context Project")
+    outside_project_document = create_exportable_document(
+      title: "Outside Project Manual",
+      slug: "outside-project",
+      body: "Outside project body text.",
+      project: other_project
+    )
+    missing_document_id = Document.maximum(:id) + 100
 
     sign_in_as(external_user)
 
-    get project_ai_context_path(project, mode: :full, document_ids: [selected.id])
+    get project_ai_context_path(project, mode: :full, document_ids: [selected.id, internal.id, outside_project_document.id, missing_document_id])
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("出力対象:1 件")
     expect(page_text).to include("現在の出力モード: 本文込み")
     expect(page_text).to include("mode: full")
-    expect(page_text).to include("明示選択: 1件 / 出力対象: 1件")
-    expect(page_text).to include("選択文書のうち閲覧可能な文書だけが preview / 出力に含まれます。")
+    expect(page_text).to include("明示選択: 4件 / 案件内候補: 2件 / 出力対象: 1件")
+    expect(page_text).to include("選択文書のうち閲覧可能な文書だけが preview / 出力に含まれます。案件外または存在しないIDは候補外として数だけ表示します。")
     expect(page_text).to include("選択済み確認: 1件の閲覧可能な選択文書を保持しています。")
-    expect(page_text).to include("出力候補（1 / 2件選択中、表示中2件）")
-    expect(page_text).to include("Selected Manual", "Other Manual")
+    expect(page_text).to include("候補外として無視された選択ID: 2件。案件外または存在しないIDは、文書名やIDを表示せず集計だけで示します。")
+    expect(page_text).to include("出力候補（4 / 2件選択中、表示中2件）")
+    expect(page_text).to include("Selected Manual", "Other Manual", "Internal Note")
+    expect(page_text).not_to include("Outside Project Manual")
     expect(ai_context_link_href("概要中心に切り替え")).to include("document_ids%5B%5D=#{selected.id}")
     expect(ai_context_link_href("本文込みに切り替え")).to include("document_ids%5B%5D=#{selected.id}")
     expect(ai_context_link_href("JSON を出力")).to include("mode=full", "document_ids%5B%5D=#{selected.id}")
     expect(ai_context_link_href("Markdown を出力")).to include("mode=full", "document_ids%5B%5D=#{selected.id}")
     expect(ai_context_link_href("選択済みだけ表示")).to include("mode=full", "document_ids%5B%5D=#{selected.id}", "candidate_view=selected")
 
-    get project_ai_context_path(project, format: :json, mode: :compact, document_ids: [selected.id, internal.id])
+    get project_ai_context_path(project, format: :json, mode: :compact, document_ids: [selected.id, internal.id, outside_project_document.id, missing_document_id])
     expect(response).to have_http_status(:ok)
     json = JSON.parse(response.body)
     expect(json.dig("summary", "document_count")).to eq(1)
     expect(json.fetch("documents").map { _1.fetch("public_id") }).to eq([selected.public_id])
+    expect(response.body).not_to include("Outside project body text.", "Secret body text.")
 
     get project_ai_context_path(project, format: :md, mode: :full, document_ids: [selected.id])
     expect(response).to have_http_status(:ok)
@@ -261,7 +272,7 @@ RSpec.describe "Project AI contexts", type: :request do
 
     get project_ai_context_path(project, document_ids: [documents.last.id])
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("明示選択: 1件 / 出力対象: 1件")
+    expect(page_text).to include("明示選択: 1件 / 案件内候補: 1件 / 出力対象: 1件")
     expect(document_choice_labels.size).to eq(51)
     expect(document_choice_labels.last).to include("Bulk Manual 054")
 
@@ -279,7 +290,7 @@ RSpec.describe "Project AI contexts", type: :request do
 
     get project_ai_context_path(project, document_q: "bulk-000", document_ids: [documents.last.id])
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("明示選択: 1件 / 出力対象: 1件")
+    expect(page_text).to include("明示選択: 1件 / 案件内候補: 1件 / 出力対象: 1件")
     expect(page_text).to include("出力候補（1件選択中、検索結果2 / 閲覧可能55件、表示中2件）")
     expect(document_choice_labels).to include(a_string_including("Bulk Manual 000"), a_string_including("Bulk Manual 054"))
 
@@ -314,9 +325,9 @@ RSpec.describe "Project AI contexts", type: :request do
     logs = AccessLog.where(target_type: "ai_context").order(:id).last(3)
     expect(logs.map(&:action_type)).to eq(%w[view download download])
     expect(logs.map(&:target_name)).to eq([
-      "mode=compact;scope=all;selected_count=0;exported_count=2",
-      "mode=compact;scope=selected;selected_count=2;exported_count=1",
-      "mode=full;scope=selected;selected_count=2;exported_count=2"
+      "mode=compact;scope=all;selected_count=0;scoped_count=0;exported_count=2",
+      "mode=compact;scope=selected;selected_count=2;scoped_count=2;exported_count=1",
+      "mode=full;scope=selected;selected_count=2;scoped_count=2;exported_count=2"
     ])
   end
 
