@@ -35,8 +35,9 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(enabled_filter_in_field&.[]("onchange")).to eq("this.form.requestSubmit()")
     expect(selected_value(project_filter)).to eq(alpha_project.id.to_s)
     expect(selected_value(consent_term_filter)).to eq(portal_terms.id.to_s)
-    expect(project_filter.text.squish).to include("Alpha Project (ALPHA)", "Beta Project (BETA)")
-    expect(consent_term_filter.text.squish).to include("Portal Terms / v1", "Security NDA / v2")
+    expect(response.body).to include("案件コード・案件名で検索", "同意文面名・版で検索")
+    expect(response.body).to include(project_search_admin_project_consent_settings_path(format: :json))
+    expect(response.body).to include(consent_term_search_admin_project_consent_settings_path(format: :json))
   end
 
   it "filters disabled settings and ignores unsupported filter values safely" do
@@ -59,6 +60,56 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(response.body).not_to include("絞り込み解除")
     expect(selected_value(project_filter)).to be_nil
     expect(selected_value(consent_term_filter)).to be_nil
+  end
+
+  it "returns bounded remote search options for projects and active consent terms" do
+    alpha_project = create(:project, code: "ALPHA", name: "Alpha Project")
+    beta_project = create(:project, code: "BETA", name: "Beta Project")
+    portal_terms = create(:consent_term, title: "Portal Terms", version_label: "v1", consent_scope: :project)
+    security_terms = create(:consent_term, title: "Security NDA", version_label: "v2", consent_scope: :project)
+    inactive_terms = create(:consent_term, title: "Archived Portal Terms", version_label: "old", consent_scope: :project, active: false)
+
+    get project_search_admin_project_consent_settings_path(format: :json), params: { q: "alp" }
+
+    expect(response).to have_http_status(:ok)
+    project_options = JSON.parse(response.body).fetch("options")
+    expect(project_options).to contain_exactly(
+      include("value" => alpha_project.id, "text" => "Alpha Project (ALPHA)")
+    )
+    expect(project_options.map { _1.fetch("text") }).not_to include("Beta Project (BETA)")
+
+    get selected_project_admin_project_consent_settings_path(format: :json), params: { id: beta_project.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(JSON.parse(response.body).fetch("option")).to include("value" => beta_project.id, "text" => "Beta Project (BETA)")
+
+    get consent_term_search_admin_project_consent_settings_path(format: :json), params: { q: "terms" }
+
+    expect(response).to have_http_status(:ok)
+    consent_term_options = JSON.parse(response.body).fetch("options")
+    expect(consent_term_options).to contain_exactly(
+      include("value" => portal_terms.id, "text" => "Portal Terms / v1")
+    )
+    expect(consent_term_options.map { _1.fetch("value") }).not_to include(inactive_terms.id)
+
+    get selected_consent_term_admin_project_consent_settings_path(format: :json), params: { id: security_terms.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(JSON.parse(response.body).fetch("option")).to include("value" => security_terms.id, "text" => "Security NDA / v2")
+  end
+
+  it "bounds remote search results and query lengths" do
+    22.times do |index|
+      create(:project, code: format("PRJ%02d", index), name: "Searchable Project #{index}")
+      create(:consent_term, title: "Searchable Terms #{index}", version_label: format("v%02d", index), consent_scope: :project)
+    end
+
+    get project_search_admin_project_consent_settings_path(format: :json), params: { q: "Searchable Project" }
+    expect(JSON.parse(response.body).fetch("options").size).to eq(Admin::ProjectConsentSettingsController::PROJECT_SEARCH_LIMIT)
+
+    long_query = "Searchable Terms" + ("x" * 200)
+    get consent_term_search_admin_project_consent_settings_path(format: :json), params: { q: long_query }
+    expect(JSON.parse(response.body).fetch("options")).to eq([])
   end
 
   it "paginates settings with the default admin page size" do
@@ -140,11 +191,11 @@ RSpec.describe "Admin project consent settings", type: :request do
   end
 
   def project_filter
-    parsed_html.at_css(%(select[name="project_id"]))
+    parsed_html.at_css(%(input[name="project_id"])) || parsed_html.at_css(%(select[name="project_id"]))
   end
 
   def consent_term_filter
-    parsed_html.at_css(%(select[name="consent_term_id"]))
+    parsed_html.at_css(%(input[name="consent_term_id"])) || parsed_html.at_css(%(select[name="consent_term_id"]))
   end
 
   def enabled_filter
@@ -159,8 +210,8 @@ RSpec.describe "Admin project consent settings", type: :request do
     enabled_filter_field&.at_css(%(select[name="enabled"]))
   end
 
-  def selected_value(select_node)
-    select_node&.at_css("option[selected]")&.[]("value")
+  def selected_value(node)
+    node&.[]("value").presence || node&.at_css("option[selected]")&.[]("value")
   end
 
   def pagination_label

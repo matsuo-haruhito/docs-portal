@@ -2,8 +2,6 @@
 - table_key = :admin_project_consent_settings
 - table_columns = project_consent_setting_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
-- project_filter_options = @projects.map { |project| [project_consent_setting_project_option_label(project), project.id] }
-- consent_term_filter_options = @consent_terms.map { |term| [project_consent_term_option_label(term), term.id] }
 - enabled_filter_options = [["すべて", ""], ["有効", "true"], ["無効", "false"]]
 - has_filters = @selected_project_id.present? || @selected_consent_term_id.present? || @selected_enabled.present?
 - empty_message = has_filters ? "条件に一致する案件同意設定はありません。" : "まだ案件同意設定はありません。"
@@ -18,22 +16,34 @@ h1 案件同意設定
 .card
   = form_with url: admin_project_consent_settings_path, method: :get, local: true, class: "filters" do |form|
     .form-grid
-      = form.rfk_select :project_id,
-        collection: project_filter_options,
+      = form.rfk_combobox :project_id,
+        collection: [],
+        selected: project_consent_setting_project_selected_option(@selected_project),
+        url: project_search_admin_project_consent_settings_path(format: :json),
+        selected_url: selected_project_admin_project_consent_settings_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: Admin::ProjectConsentSettingsController::PROJECT_SEARCH_LIMIT,
         wrapper: true,
         label: "案件",
-        placeholder: "案件を選択",
-        include_blank: "すべて",
-        allow_clear: true,
-        selected: @selected_project_id
-      = form.rfk_select :consent_term_id,
-        collection: consent_term_filter_options,
+        placeholder: "案件コード・案件名で検索",
+        allow_clear: true
+      = form.rfk_combobox :consent_term_id,
+        collection: [],
+        selected: project_consent_term_selected_option(@selected_consent_term),
+        url: consent_term_search_admin_project_consent_settings_path(format: :json),
+        selected_url: selected_consent_term_admin_project_consent_settings_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: Admin::ProjectConsentSettingsController::CONSENT_TERM_SEARCH_LIMIT,
         wrapper: true,
         label: "同意文面",
-        placeholder: "同意文面を選択",
-        include_blank: "すべて",
-        allow_clear: true,
-        selected: @selected_consent_term_id
+        placeholder: "同意文面名・版で検索",
+        allow_clear: true
       .field
         = label_tag :enabled, "状態"
         = select_tag :enabled, options_for_select(enabled_filter_options, @selected_enabled), onchange: "this.form.requestSubmit()"
