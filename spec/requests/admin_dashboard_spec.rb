@@ -209,7 +209,7 @@ RSpec.describe "Admin dashboard", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("運用失敗入口")
-    expect(response.body).to include("全履歴統計ではなく、各運用画面で調査を始めるための入口です。")
+    expect(response.body).to include("保存済み履歴の failed / skipped / partial 件数と、生成ファイルの継続失敗候補を分けて確認できます。")
     expect(response.body).to include("Git同期")
     expect(response.body).to include("failed: 1")
     expect(response.body).to include("skipped: 1")
@@ -218,6 +218,7 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("実行履歴 failed: 1")
     expect(response.body).to include("イベント failed: 1")
     expect(page_text).to include("継続失敗候補: 0 件")
+    expect(page_text).to include("保存済み failed 件数とは別の read-only 調査入口です。")
     expect(response.body).to include(admin_generated_file_runs_path(status: "failed"))
     expect(response.body).to include(admin_generated_file_events_path(status: "failed"))
     expect(response.body).to include("Webhook送信")
@@ -225,7 +226,8 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("外部フォルダ同期")
     expect(response.body).to include("partial: 1")
     expect(response.body).to include(admin_external_folder_sync_sources_path(review: "errors"))
-    expect(response.body).to include("最新の対象履歴")
+    expect(response.body).to include("対象履歴の最終更新")
+    expect(response.body).to include("発生時刻や alert 発火時刻ではありません。")
     expect(response.body).to include(I18n.l(latest_failure_at, format: :short))
     expect(response.body).not_to include("古い失敗のみ")
     expect(response.body).to include("アプリ設定診断")
@@ -298,7 +300,8 @@ RSpec.describe "Admin dashboard", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("継続失敗候補: 1 件")
-    expect(page_text).to include("保存済み failed 件数とは別に")
+    expect(page_text).to include("保存済み failed 件数とは別の read-only 調査入口です。")
+    expect(page_text).to include("最新 run が同じ identity で連続 failed のものだけを表示します。")
     expect(page_text).to include("docs-build")
     expect(page_text).to include("docusaurus / filesystem / schedule")
     expect(page_text).to include("連続失敗: 3 件")
@@ -338,9 +341,10 @@ RSpec.describe "Admin dashboard", type: :request do
     get admin_root_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("最新の対象履歴")
+    expect(response.body).to include("対象履歴の最終更新")
     expect(response.body).to include(I18n.l(old_failure_at, format: :short))
     expect(response.body).to include("古い失敗のみ")
+    expect(response.body).to include("7日より古い対象履歴だけが残っています")
   end
 
   it "shows zero-count operational failure entries without freshness cues when there is no saved failure data" do
@@ -356,9 +360,10 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("実行履歴 failed: 0")
     expect(response.body).to include("イベント failed: 0")
     expect(page_text).to include("継続失敗候補: 0 件")
+    expect(page_text).to include("保存済み failed 件数とは別の read-only 調査入口です。")
     expect(response.body).to include("最新 run が連続失敗している候補はありません。")
     expect(response.body).to include("partial: 0")
-    expect(response.body).not_to include("最新の対象履歴")
+    expect(response.body).not_to include("対象履歴の最終更新")
     expect(response.body).not_to include("古い失敗のみ")
   end
 

@@ -25,7 +25,7 @@ section.card
 
 section.card
   h2 運用失敗入口
-  p.muted 保存済み履歴から代表的な失敗状態を横断確認します。全履歴統計ではなく、各運用画面で調査を始めるための入口です。
+  p.muted 保存済み履歴の failed / skipped / partial 件数と、生成ファイルの継続失敗候補を分けて確認できます。各運用画面で調査を始めるための入口です。
   .dashboard-grid
     - @operational_failure_summary.each do |item|
       article.card.metric-card
@@ -36,11 +36,14 @@ section.card
         p.muted = item[:scope]
         - if item[:latest_at]
           p.muted
-            | 最新の対象履歴: 
+            | 対象履歴の最終更新: 
             time datetime=item[:latest_at].iso8601 = l(item[:latest_at], format: :short)
+            br
+            span 発生時刻や alert 発火時刻ではありません。
             - if item[:stale]
               br
-              span 古い失敗のみ
+              strong 古い失敗のみ
+              span  （7日より古い対象履歴だけが残っています）
         ul
           - item[:details].each do |detail|
             li = detail
@@ -50,7 +53,9 @@ section.card
             p.muted
               | 継続失敗候補: 
               strong = alert_candidates.size
-              |  件（保存済み failed 件数とは別に、最新 run が同じ identity で連続 failed のもの）
+              |  件
+              br
+              span 保存済み failed 件数とは別の read-only 調査入口です。最新 run が同じ identity で連続 failed のものだけを表示します。
             - if alert_candidates.any?
               ul
                 - alert_candidates.each do |candidate|
