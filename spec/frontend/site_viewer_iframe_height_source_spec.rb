@@ -5,6 +5,8 @@ RSpec.describe "site viewer iframe height source" do
   let(:layout_source) { Rails.root.join("app/views/layouts/application.html.slim").read }
   let(:site_viewer_iframe_height_controller_source) { Rails.root.join("app/frontend/controllers/site_viewer_iframe_height_controller.js").read }
   let(:helper_source) { Rails.root.join("app/frontend/lib/site_viewer_iframe_height.js").read }
+  let(:heading_outline_source) { Rails.root.join("app/frontend/lib/site_viewer_heading_outline.js").read }
+  let(:stylesheet_source) { Rails.root.join("app/frontend/entrypoints/application.css").read }
   let(:document_controller_source) { Rails.root.join("app/controllers/document_sites_controller.rb").read }
   let(:project_controller_source) { Rails.root.join("app/controllers/project_sites_controller.rb").read }
 
@@ -18,6 +20,34 @@ RSpec.describe "site viewer iframe height source" do
       expect(site_viewer_iframe_height_controller_source).to include('import { setupSiteViewerIframeHeightSync } from "../lib/site_viewer_iframe_height"')
       expect(site_viewer_iframe_height_controller_source).to include("setupSiteViewerIframeHeightSync()")
       expect(Rails.root.join("app/frontend/controllers/preview_tools_controller.js")).not_to exist
+    end
+  end
+
+  it "adds a same-origin heading outline without adding full text search" do
+    aggregate_failures do
+      expect(view_source).to include("data-docs-portal-heading-outline=\"true\"")
+      expect(view_source).to include("data-docs-portal-heading-outline-summary=\"true\"")
+      expect(view_source).to include("data-docs-portal-heading-outline-list=\"true\"")
+      expect(view_source).to include("見出しを読み込み中です")
+      expect(site_viewer_iframe_height_controller_source).to include('import { setupSiteViewerHeadingOutline } from "../lib/site_viewer_heading_outline"')
+      expect(site_viewer_iframe_height_controller_source).to include("setupSiteViewerHeadingOutline()")
+      expect(heading_outline_source).to include('const HEADING_SELECTOR = "h1, h2, h3"')
+      expect(heading_outline_source).to include("frame.contentDocument || frame.contentWindow?.document")
+      expect(heading_outline_source).to include("見出しを取得できませんでした")
+      expect(heading_outline_source).to include("見出しはありません")
+      expect(heading_outline_source).to include("heading.scrollIntoView")
+      expect(heading_outline_source).not_to include("fetch(")
+      expect(heading_outline_source).not_to include("localStorage")
+    end
+  end
+
+  it "keeps the heading outline responsive inside the viewer shell" do
+    aggregate_failures do
+      expect(stylesheet_source).to include(".site-viewer-outline")
+      expect(stylesheet_source).to include(".site-viewer-outline__list")
+      expect(stylesheet_source).to include(".site-viewer-outline__item")
+      expect(stylesheet_source).to include("@media (max-width: 960px)")
+      expect(stylesheet_source).to include(".site-viewer-outline__item.is-level-2")
     end
   end
 
