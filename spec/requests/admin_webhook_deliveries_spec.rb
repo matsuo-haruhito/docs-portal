@@ -160,6 +160,26 @@ RSpec.describe "Admin webhook deliveries", type: :request do
     )
   end
 
+  it "shows a result-side reset action only for filtered empty states" do
+    sign_in_as(admin_user)
+
+    get admin_webhook_deliveries_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("まだWebhook送信履歴はありません。")
+    expect(page_text).not_to include("すべてのWebhook送信履歴を見る")
+
+    get admin_webhook_deliveries_path(status: "failed")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("条件に一致するWebhook送信履歴はありません。")
+    expect(page_text).to include("すべてのWebhook送信履歴を見る")
+    expect(parsed_html.css(%(a[href="#{admin_webhook_deliveries_path}"])).map { |link| link.text.squish }).to include(
+      "条件をリセット",
+      "すべてのWebhook送信履歴を見る"
+    )
+  end
+
   it "keeps filters while paginating and clamps oversized page numbers" do
     sign_in_as(admin_user)
 
