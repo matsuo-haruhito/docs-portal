@@ -83,6 +83,14 @@
 
 `会社` と `ユーザー` を両方入れる運用や、どちらも空のまま保存する運用は current contract に反するため、入力前に対象の切り分けを決めてから登録する。
 
+#### 文書名 select と適用対象 select
+
+`文書名` は `rails_fields_kit` の combobox として、文書名、URL 識別子、案件名で remote search します。1 文字以上入力すると最大 20 件の候補を表示し、選択済み文書は edit や validation error 後の再表示でも `選択済み文書 / 案件名` として復元されます。候補が見つからない場合は、文書名や slug の断片を短くして検索し直します。
+
+`会社` と `ユーザー` は current 実装では remote search ではなく、画面に読み込まれた候補から選ぶ通常の `rfk_select` です。会社は表示名と domain、ユーザーは表示名と email を見て選びます。会社・ユーザーの remote search、候補 0 件時の server-side search、bulk grant は current support として扱いません。
+
+文書名 select の検索や選択復元は、文書を探しやすくする表示補助です。`会社` と `ユーザー` の排他制約、`閲覧 / ダウンロード` の access level、`DocumentPermission` の作成・更新・削除の意味は変えません。
+
 #### 会社単位とユーザー単位の選び分け
 
 - 同じ会社に属する複数ユーザーへ、同じ文書を同じ条件で見せたいときは `会社` を使う
