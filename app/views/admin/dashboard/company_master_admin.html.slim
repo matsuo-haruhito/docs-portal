@@ -47,7 +47,7 @@ section.card
       strong 管理者判断
       |  - ユーザー種別の internal 化、他社ユーザーや他社会社の調整
 
-section.card
+section.card data-controller="company-master-admin-handoff"
   h2 internal admin へ依頼するときの確認項目
   p.muted 依頼先や連絡手段は組織の運用に従い、次の情報を添えて引き継いでください。
   ul
@@ -57,7 +57,11 @@ section.card
     li 期限や背景がある場合は、その理由と希望時期
   h3 依頼テンプレート
   p.muted 必要な行だけ調整して ticket や chat に貼り付けてください。連絡先や forbidden admin surface への direct link はここでは固定しません。
-  pre.company-master-admin-handoff-template = handoff_template_lines.join("\n")
+  p.actions
+    button.button.secondary type="button" data-action="company-master-admin-handoff#copy" aria-describedby="company-master-admin-handoff-status"
+      | 依頼テンプレートをコピー
+    span#company-master-admin-handoff-status.muted role="status" aria-live="polite" hidden=true data-company-master-admin-handoff-target="status"
+  pre.company-master-admin-handoff-template data-company-master-admin-handoff-target="template" tabindex="0" = handoff_template_lines.join("\n")
   p.muted この確認項目は依頼内容を整理するためのものであり、会社管理者の権限や文書閲覧範囲を広げるものではありません。
 
 p = link_to "案件一覧へ戻る", projects_path
