@@ -66,7 +66,8 @@ section.card
 
     p.actions
       = form.submit "検索"
-      = link_to "条件をクリア", admin_access_logs_path
+      - if has_active_filters
+        = link_to "条件をクリア", admin_access_logs_path
     - if @ignored_date_filters.present?
       p.muted
         | 無効な日付条件は検索から除外しました: 
