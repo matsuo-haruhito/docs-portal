@@ -64,7 +64,7 @@ RSpec.describe SeedSupport::MasterDataImporter do
     guide_version = guide_document.document_versions.find_by!(version_label: "current")
 
     expect(current_home_version.markdown_entry_path).to end_with("/current")
-    expect(submitted_home_version.markdown_entry_path).to end_with("/ti-chu-ji")
+    expect(submitted_home_version.markdown_entry_path).to match(%r{\Aexternal_samples/representative-set-product-handbook/sample-[0-9a-f]{8}\z})
     expect(guide_version.markdown_entry_path).to end_with("/current/guide")
     expect(guide_version.source_relative_path).to eq("guide.md")
 
