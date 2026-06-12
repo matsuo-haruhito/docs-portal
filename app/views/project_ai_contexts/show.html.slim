@@ -8,14 +8,16 @@
 - matching_selectable_document_count = @matching_selectable_document_count || selectable_document_count
 - selectable_document_total_count = @selectable_document_total_count || selectable_document_count
 - selected_selectable_document_count = @selected_selectable_document_count || 0
+- scoped_document_count = @scoped_document_count || 0
+- unscoped_document_count = @unscoped_document_count || 0
 - selectable_document_preview_count = @selectable_documents_preview.size
 - document_query_present = @document_query.present?
 - candidate_view_selected = @candidate_view == "selected"
 - selected_document_count = @requested_document_ids.empty? ? selectable_document_count : @requested_document_ids.size
 - candidate_view_params = @scoped_link_params.merge(mode: @mode)
 - candidate_view_params = candidate_view_params.merge(document_q: @document_query) if document_query_present
-- scope_summary = @requested_document_ids.empty? ? "現在は閲覧可能な文書全体（#{exported_document_count}件）を出力対象にしています。" : "明示選択: #{selected_document_count}件 / 出力対象: #{exported_document_count}件"
-- scope_help = @requested_document_ids.empty? ? "個別に絞り込む場合は、対象にしたい文書だけを残して preview してください。" : "選択文書のうち閲覧可能な文書だけが preview / 出力に含まれます。"
+- scope_summary = @requested_document_ids.empty? ? "現在は閲覧可能な文書全体（#{exported_document_count}件）を出力対象にしています。" : "明示選択: #{selected_document_count}件 / 案件内候補: #{scoped_document_count}件 / 出力対象: #{exported_document_count}件"
+- scope_help = @requested_document_ids.empty? ? "個別に絞り込む場合は、対象にしたい文書だけを残して preview してください。" : "選択文書のうち閲覧可能な文書だけが preview / 出力に含まれます。案件外または存在しないIDは候補外として数だけ表示します。"
 - if candidate_view_selected
   - document_filter_legend = "選択済み文書（表示中#{selectable_document_preview_count}件 / 選択済み候補#{selected_selectable_document_count}件）"
 - elsif document_query_present
@@ -99,6 +101,11 @@ p
       | 選択済み確認: 
       = selected_selectable_document_count
       | 件の閲覧可能な選択文書を保持しています。候補表示を切り替えても JSON / Markdown の対象は変わりません。
+    - if unscoped_document_count.positive?
+      p.muted
+        | 候補外として無視された選択ID: 
+        = unscoped_document_count
+        | 件。案件外または存在しないIDは、文書名やIDを表示せず集計だけで示します。
     p.actions
       - if candidate_view_selected
         = link_to "検索候補へ戻る", project_ai_context_path(@project, candidate_view_params), class: "button secondary"
