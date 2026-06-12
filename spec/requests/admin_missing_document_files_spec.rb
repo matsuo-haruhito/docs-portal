@@ -164,6 +164,41 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(page_text).not_to include("Safety Runbook")
   end
 
+  it "applies project, document, and file filters together as an AND condition" do
+    matching_document = create(:document, project:, title: "Safety Runbook", slug: "safety-runbook")
+    same_project_wrong_file = create(:document, project:, title: "Safety Checklist", slug: "safety-checklist")
+    wrong_project_document = create(:document, project: other_project, title: "Safety Runbook", slug: "safety-runbook-other-project")
+    wrong_document = create(:document, project:, title: "Release Checklist", slug: "release-checklist")
+    missing_file_for(matching_document, file_name: "handoff.pdf", storage_key: "manuals/safety/handoff.pdf")
+    missing_file_for(same_project_wrong_file, file_name: "safety-notes.pdf", storage_key: "manuals/safety/notes.pdf")
+    missing_file_for(wrong_project_document, file_name: "handoff.pdf", storage_key: "manuals/safety/handoff-copy.pdf")
+    missing_file_for(wrong_document, file_name: "handoff.pdf", storage_key: "manuals/release/handoff.pdf")
+
+    sign_in_as(admin_user)
+
+    get admin_missing_document_files_path(project_id: project.id, document_q: "safety", file_q: "handoff")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("登録ファイル数: 4")
+    expect(page_text).to include("全体の実体欠落: 4")
+    expect(page_text).to include("条件一致欠落: 1")
+    expect(page_text).to include("表示中: 1")
+    expect(page_text).to include("条件: 案件=Missing Project / 文書=safety / ファイル=handoff")
+
+    table_text = parsed_html.at_css("table").text.squish
+    expect(table_text).to include("Missing Project")
+    expect(table_text).to include("Safety Runbook")
+    expect(table_text).to include("handoff.pdf")
+    expect(table_text).not_to include("Safety Checklist")
+    expect(table_text).not_to include("Other Project")
+    expect(table_text).not_to include("Release Checklist")
+
+    form = parsed_html.at_css("form[action='#{admin_missing_document_files_path}']")
+    expect(form.at_css("select[name='project_id'] option[selected]")["value"]).to eq(project.id.to_s)
+    expect(form.at_css("input[name='document_q']")["value"]).to eq("safety")
+    expect(form.at_css("input[name='file_q']")["value"]).to eq("handoff")
+  end
+
   it "distinguishes no missing files from no matching filtered results" do
     document = create(:document, project:, title: "Visible Manual", slug: "visible-manual")
     missing_file_for(document, file_name: "visible.pdf", storage_key: "visible.pdf")
