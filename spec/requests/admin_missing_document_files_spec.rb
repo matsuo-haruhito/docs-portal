@@ -19,6 +19,14 @@ RSpec.describe "Admin missing document files", type: :request do
     create(:document_file, document_version: version, file_name:, storage_key:)
   end
 
+  def project_filter
+    parsed_html.at_css(%(input[name="project_id"])) || parsed_html.at_css(%(select[name="project_id"]))
+  end
+
+  def selected_value(node)
+    node&.[]("value").presence || node&.at_css("option[selected]")&.[]("value")
+  end
+
   it "lets admins open missing file details from the dashboard" do
     file = create(
       :document_file,
@@ -123,11 +131,48 @@ RSpec.describe "Admin missing document files", type: :request do
 
     form = parsed_html.at_css("form[action='#{admin_missing_document_files_path}']")
     expect(form).to be_present
-    expect(form.at_css("select[name='project_id'] option[selected]")["value"]).to eq(project.id.to_s)
+    expect(project_filter).to be_present
+    expect(selected_value(project_filter)).to eq(project.id.to_s)
+    expect(response.body).to include("案件コード・案件名で検索")
+    expect(response.body).to include(project_search_admin_missing_document_files_path(format: :json))
+    expect(response.body).to include(selected_project_admin_missing_document_files_path(format: :json))
     expect(form.at_css("input[name='document_q']")["value"]).to be_blank
     expect(form.at_css("input[name='file_q']")["value"]).to be_blank
     expect(parsed_html.at_css("a[href='#{admin_missing_document_files_path}']").text).to include("条件をクリア")
     expect(parsed_html.css("table tbody tr").size).to eq(100)
+  end
+
+  it "returns bounded remote project search options and selected project labels" do
+    sign_in_as(admin_user)
+
+    matching_project = create(:project, code: "OPS", name: "Operations Search")
+    create(:project, code: "FIN", name: "Finance Search")
+
+    get project_search_admin_missing_document_files_path(format: :json), params: { q: "ops" }
+
+    expect(response).to have_http_status(:ok)
+    project_options = JSON.parse(response.body).fetch("options")
+    expect(project_options).to contain_exactly(
+      include("value" => matching_project.id, "text" => "OPS / Operations Search")
+    )
+
+    get selected_project_admin_missing_document_files_path(format: :json), params: { id: project.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(JSON.parse(response.body).fetch("option")).to include("value" => project.id, "text" => "MISS / Missing Project")
+  end
+
+  it "bounds missing file project search result counts" do
+    sign_in_as(admin_user)
+
+    22.times do |index|
+      create(:project, code: format("MISS%02d", index), name: "Missing Search #{index}")
+    end
+
+    get project_search_admin_missing_document_files_path(format: :json), params: { q: "Missing Search" }
+
+    expect(response).to have_http_status(:ok)
+    expect(JSON.parse(response.body).fetch("options").size).to eq(Admin::MissingDocumentFilesController::PROJECT_SEARCH_LIMIT)
   end
 
   it "filters missing files by document title, slug, storage key, and file name fragments" do
@@ -194,7 +239,7 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(table_text).not_to include("Release Checklist")
 
     form = parsed_html.at_css("form[action='#{admin_missing_document_files_path}']")
-    expect(form.at_css("select[name='project_id'] option[selected]")["value"]).to eq(project.id.to_s)
+    expect(selected_value(project_filter)).to eq(project.id.to_s)
     expect(form.at_css("input[name='document_q']")["value"]).to eq("safety")
     expect(form.at_css("input[name='file_q']")["value"]).to eq("handoff")
   end

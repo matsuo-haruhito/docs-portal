@@ -9,4 +9,14 @@ module Admin::MissingDocumentFilesHelper
 
     File.join("storage", "document_files", relative_path)
   end
+
+  def missing_document_file_project_option_label(project)
+    [project.code, project.name].compact_blank.join(" / ")
+  end
+
+  def missing_document_file_project_selected_option(project)
+    return nil if project.blank?
+
+    { value: project.id, text: missing_document_file_project_option_label(project) }
+  end
 end
