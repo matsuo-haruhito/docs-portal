@@ -10,9 +10,20 @@ section.card
   h2 絞り込み
   = form_with url: admin_missing_document_files_path, method: :get, local: true do |form|
     .form-grid
-      .field
-        = form.label :project_id, "案件"
-        = form.collection_select :project_id, @projects, :id, :name, { include_blank: "すべて", selected: @missing_document_file_filters[:project_id] }
+      = form.rfk_combobox :project_id,
+        collection: [],
+        selected: missing_document_file_project_selected_option(@selected_project),
+        url: project_search_admin_missing_document_files_path(format: :json),
+        selected_url: selected_project_admin_missing_document_files_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: Admin::MissingDocumentFilesController::PROJECT_SEARCH_LIMIT,
+        wrapper: true,
+        label: "案件",
+        placeholder: "案件コード・案件名で検索",
+        allow_clear: true
       .field
         = form.label :document_q, "文書名 / slug"
         = form.search_field :document_q, value: @missing_document_file_filters[:document_q], placeholder: "例: runbook"
