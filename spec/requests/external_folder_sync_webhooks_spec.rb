@@ -199,7 +199,10 @@ RSpec.describe "External folder sync webhooks", type: :request do
       expect(event).to be_received
       expect(event.external_folder_sync_subscription).to eq(subscription)
       expect(event.external_folder_sync_source).to eq(subscription.external_folder_sync_source)
-      expect(event.payload_json).to include("subscriptionId" => "sub-1")
+      expect(event.payload_json).to include("subscriptionId" => "sub-1", "clientState" => "[FILTERED]")
+      expect(event.payload_json.to_s).not_to include("client-state")
+      expect(event.event_key).to include("client_state:#{Digest::SHA256.hexdigest("client-state")}")
+      expect(event.event_key).not_to include(":client-state:")
       expect(ExternalFolderSyncWebhookEventJob).to have_received(:perform_later).with(event.id).once
     end
 
