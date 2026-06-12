@@ -35,7 +35,10 @@ Rails.application.routes.draw do
     end
     get "model_browser", to: "model_browsers#index", as: :model_browser
     get "model_browser/:model_key", to: "model_browsers#show", as: :model_browser_model
-    resource :missing_document_files, only: [:show]
+    resource :missing_document_files, only: [:show] do
+      get :project_search
+      get :selected_project
+    end
 
     resources :companies, except: %i[show new], param: :public_id
     resources :users, except: %i[show new], param: :public_id
@@ -102,6 +105,8 @@ Rails.application.routes.draw do
     end
     resources :webhook_endpoints, except: %i[show new], param: :public_id
     resources :webhook_deliveries, only: %i[index show], param: :public_id do
+      get :webhook_endpoint_search, on: :collection
+      get :selected_webhook_endpoint, on: :collection
       post :retry_dispatch, on: :member
       post :retry_failed, on: :collection
     end
