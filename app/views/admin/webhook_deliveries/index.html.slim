@@ -40,9 +40,11 @@ p.actions
       label
         | 作成日From
         = date_field_tag :created_from, @delivery_filter_inputs[:created_from]
+        span.muted Fromは指定日の00:00以降を含めて検索します。
       label
         | 作成日To
         = date_field_tag :created_to, @delivery_filter_inputs[:created_to]
+        span.muted Toは指定日の23:59までを含めて検索します。
     - if @delivery_filter_warnings.any?
       .filter-warnings
         - @delivery_filter_warnings.each do |warning|

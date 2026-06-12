@@ -54,6 +54,7 @@ section.card
             - if alert_candidates.any?
               ul
                 - alert_candidates.each do |candidate|
+                  - candidate_failed_run_params = { status: "failed", job_id: candidate.job_id.presence, generator: candidate.generator.presence, output_writer: candidate.output_writer.presence, event_source: candidate.event_source.presence }.compact
                   li
                     code = candidate.job_id.presence || "-"
                     - identity_parts = [candidate.generator, candidate.output_writer, candidate.event_source].compact_blank
@@ -67,8 +68,10 @@ section.card
                     - if candidate.latest_error_message.present?
                       br
                       span.muted = truncate(candidate.latest_error_message, length: 80)
+                    br
+                    = link_to "この候補の failed 実行履歴", admin_generated_file_runs_path(candidate_failed_run_params)
               p.actions
-                = link_to "継続失敗候補の failed 実行履歴", admin_generated_file_runs_path(status: "failed"), class: "button secondary"
+                = link_to "継続失敗候補の failed 実行履歴をすべて見る", admin_generated_file_runs_path(status: "failed"), class: "button secondary"
             - else
               p.muted 最新 run が連続失敗している候補はありません。
         p.actions
