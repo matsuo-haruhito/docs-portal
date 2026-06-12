@@ -21,9 +21,31 @@ RSpec.describe "Admin users filters", type: :request do
     parsed_html.css("a").find { |link| link.text.squish == text }&.[]("href")
   end
 
+  def form_link_texts(action_path)
+    parsed_html.css(%(form[action="#{action_path}"] a)).map { |link| link.text.squish }
+  end
+
   let(:internal_user) { create(:user, :internal) }
   let!(:company) { create(:company, domain: "tenant.example.com", name: "Tenant") }
   let!(:other_company) { create(:company, domain: "other.example.com", name: "Other") }
+
+  it "hides the form clear action until user filters are active" do
+    create(:user, :external, company:, name: "Clear Target", email_address: "clear-target@example.com")
+    sign_in_as(internal_user)
+
+    get admin_users_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("ユーザーを探す")
+    expect(form_link_texts(admin_users_path)).not_to include("条件をクリア")
+
+    get admin_users_path, params: { q: "clear target" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("適用中: キーワード「clear target」")
+    expect(form_link_texts(admin_users_path)).to include("条件をクリア")
+    expect(link_href("条件をクリア")).to eq(admin_users_path)
+  end
 
   it "allows internal admins to search users across companies without changing table preferences" do
     create(:user, :external, company:, name: "Alpha Member", email_address: "alpha-member@example.com")
