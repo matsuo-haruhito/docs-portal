@@ -100,14 +100,15 @@ RSpec.describe "Admin generated file events", type: :request do
         path: "storage\\document_files",
         q: "#{query_prefix}ignored suffix"
       }
+      normalized_filters = filters.merge(q: query_prefix)
 
       get admin_generated_file_events_path(filters)
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(matched.public_id)
       expect(response.body).to include("現在の条件で再dispatch対象: 1 件")
-      expect(bulk_retry_button(filters)).to be_present
-      expect(bulk_retry_button(filters)["disabled"]).to be_nil
+      expect(bulk_retry_button(normalized_filters)).to be_present
+      expect(bulk_retry_button(normalized_filters)["disabled"]).to be_nil
     end
 
     it "disables bulk retry when the current filters have no failed targets" do
@@ -528,7 +529,7 @@ RSpec.describe "Admin generated file events", type: :request do
         q: "#{query_prefix}ignored suffix"
       )
 
-      expect(response).to redirect_to(admin_generated_file_events_path(status: "failed", path: "storage\\document_files", q: "#{query_prefix}ignored suffix"))
+      expect(response).to redirect_to(admin_generated_file_events_path(status: "failed", path: "storage\\document_files", q: query_prefix))
       expect(flash[:notice]).to eq("失敗した生成ファイルイベント 1 件の再dispatchをキューに投入しました。")
       expect(matched.reload).to be_pending
       expect(unmatched_path.reload).to be_failed
