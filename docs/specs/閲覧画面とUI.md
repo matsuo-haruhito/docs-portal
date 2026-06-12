@@ -59,6 +59,9 @@
 - iframe 側で rewrite される内部 link / asset URL も `embedded=1` を維持する
 - viewer shell は same-origin iframe の本文高さに追従し、初期表示後や画像・遅延コンテンツ読込後に本文が伸びても二重スクロールを常態化させない
 - embedded HTML 側は親 viewer へ本文高さを通知し、viewer shell 側は同一 origin の iframe にだけその高さ更新を反映する
+- viewer shell は same-origin iframe 内の `h1` から `h3` までを収集し、最大 24 件の見出し移動ボタンとして表示できる
+- 見出しがない場合、または iframe document を読めない場合でも viewer 表示は壊さず、見出しなし / 取得不可の状態表示に留める
+- 見出し導線は本文内移動の補助であり、browser native search、table toolbar、codeblock toolbar、全文検索 index、server-side search とは別の機能として扱う
 - viewer shell の hero、toolbar、aria label は portal 全体の表示言語に合わせ、利用者向け文言へそろえる
 - viewer shell では、版詳細、差分、添付・元ファイル、品質などの戻り先を action / link として明示し、静的な疑似タブだけを残さない
 - viewer shell の現在地表示をタブ風に見せる場合も、非アクティブ項目は link にするか plain な current-state 表示に留め、押下不能な control に見せない
