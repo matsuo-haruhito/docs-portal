@@ -56,12 +56,12 @@ RSpec.describe SeedSupport::MasterDataImporter do
 
     expect(project.description).to eq("external_samples/representative-set 配下のサンプル文書サイト")
     expect(project.code).to start_with("EXT_REPRESENTATI_")
-    expect(home_document.versions.pluck(:version_label)).to contain_exactly("current", "提出済")
+    expect(home_document.document_versions.pluck(:version_label)).to contain_exactly("current", "提出済")
     expect(home_document.latest_version.version_label).to eq("current")
 
-    current_home_version = home_document.versions.find_by!(version_label: "current")
-    submitted_home_version = home_document.versions.find_by!(version_label: "提出済")
-    guide_version = guide_document.versions.find_by!(version_label: "current")
+    current_home_version = home_document.document_versions.find_by!(version_label: "current")
+    submitted_home_version = home_document.document_versions.find_by!(version_label: "提出済")
+    guide_version = guide_document.document_versions.find_by!(version_label: "current")
 
     expect(current_home_version.markdown_entry_path).to end_with("/current")
     expect(submitted_home_version.markdown_entry_path).to end_with("/ti-chu-ji")
@@ -73,6 +73,6 @@ RSpec.describe SeedSupport::MasterDataImporter do
     expect(guide_version.document_files.find_by!(file_name: "assets/guide.png").content_type).to eq("image/png")
 
     external_company_ids = Company.where(domain: ["client-a.example.com", "client-b.example.com"]).pluck(:id)
-    expect(home_document.permissions.where(company_id: external_company_ids).pluck(:access_level)).to contain_exactly("download", "download")
+    expect(home_document.document_permissions.where(company_id: external_company_ids).pluck(:access_level)).to contain_exactly("download", "download")
   end
 end
