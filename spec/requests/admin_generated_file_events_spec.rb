@@ -89,6 +89,27 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(bulk_retry_button(filters)["disabled"]).to be_nil
     end
 
+    it "uses normalized path and truncated q filters for the bulk retry target count" do
+      sign_in_as(admin_user)
+      query_prefix = "bulk-target-#{'x' * 88}"
+      matched = create_event!(path: "storage/document_files/source.yml", status: :failed, error_message: query_prefix)
+      create_event!(path: "storage/other/source.yml", status: :failed, error_message: query_prefix)
+      create_event!(path: "storage/document_files/other.yml", status: :failed, error_message: "different error")
+      filters = {
+        status: "failed",
+        path: "storage\\document_files",
+        q: "#{query_prefix}ignored suffix"
+      }
+
+      get admin_generated_file_events_path(filters)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(matched.public_id)
+      expect(response.body).to include("現在の条件で再dispatch対象: 1 件")
+      expect(bulk_retry_button(filters)).to be_present
+      expect(bulk_retry_button(filters)["disabled"]).to be_nil
+    end
+
     it "disables bulk retry when the current filters have no failed targets" do
       sign_in_as(admin_user)
       create_event!(path: "docs/processed.yml", status: :processed)
@@ -277,14 +298,19 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).not_to include(unmatched_source.public_id)
     end
 
-    it "ignores invalid scheduled date filters" do
+    it "warns for invalid scheduled date filters without dropping other bulk retry filters" do
       sign_in_as(admin_user)
-      event = create_event!(path: "docs/source.yml", status: :pending)
+      pending_event = create_event!(path: "docs/source.yml", status: :pending)
+      failed_event = create_event!(path: "docs/failed.yml", status: :failed)
 
       get admin_generated_file_events_path(scheduled_from: "invalid", scheduled_to: "also-invalid")
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(event.public_id)
+      expect(response.body).to include(pending_event.public_id)
+      expect(response.body).to include(failed_event.public_id)
+      expect(response.body).to include("実行予定日(開始)「invalid」は日時として解釈できないため、この条件は適用していません。")
+      expect(response.body).to include("実行予定日(終了)「also-invalid」は日時として解釈できないため、この条件は適用していません。")
+      expect(response.body).to include("現在の条件で再dispatch対象: 1 件")
     end
 
     it "forbids external users" do
@@ -448,6 +474,65 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(completed.reload).to be_processed
       expect(other_source.reload).to be_failed
       expect(other_query.reload).to be_failed
+      expect(GeneratedFileEventDispatchJob).to have_received(:perform_later).once
+    end
+
+    it "does not bulk retry when a non-failed status filter is active" do
+      sign_in_as(admin_user)
+      failed = create_event!(path: "docs/failed.yml", status: :failed, error_message: "boom")
+      processed = create_event!(path: "docs/processed.yml", status: :processed, error_message: "boom")
+      allow(GeneratedFileEventDispatchJob).to receive(:perform_later)
+
+      post retry_failed_admin_generated_file_events_path(status: "processed", q: "boom")
+
+      expect(response).to redirect_to(admin_generated_file_events_path(status: "processed", q: "boom"))
+      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 0 件の再dispatchをキューに投入しました。")
+      expect(failed.reload).to be_failed
+      expect(processed.reload).to be_processed
+      expect(GeneratedFileEventDispatchJob).not_to have_received(:perform_later)
+    end
+
+    it "bulk retries only the oldest failed events up to the dispatch limit" do
+      sign_in_as(admin_user)
+      events = 101.times.map do |i|
+        create_event!(
+          path: "docs/limited-#{i}.yml",
+          status: :failed,
+          created_at: Time.zone.parse("2026-05-10 12:00:00") + i.minutes,
+          scheduled_at: Time.zone.parse("2026-05-10 12:00:00") + i.minutes,
+          error_message: "limited retry"
+        )
+      end
+      allow(GeneratedFileEventDispatchJob).to receive(:perform_later)
+
+      post retry_failed_admin_generated_file_events_path(status: "failed", q: "limited retry")
+
+      expect(response).to redirect_to(admin_generated_file_events_path(status: "failed", q: "limited retry"))
+      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 100 件の再dispatchをキューに投入しました。")
+      expect(events.first(100).map { _1.reload.status }.uniq).to eq(["pending"])
+      expect(events.last.reload).to be_failed
+      expect(GeneratedFileEventDispatchJob).to have_received(:perform_later).once
+    end
+
+    it "uses normalized path and truncated q filters when bulk retrying" do
+      sign_in_as(admin_user)
+      query_prefix = "bulk-target-#{'x' * 88}"
+      matched = create_event!(path: "storage/document_files/source.yml", status: :failed, error_message: query_prefix)
+      unmatched_path = create_event!(path: "storage/other/source.yml", status: :failed, error_message: query_prefix)
+      unmatched_query = create_event!(path: "storage/document_files/other.yml", status: :failed, error_message: "different error")
+      allow(GeneratedFileEventDispatchJob).to receive(:perform_later)
+
+      post retry_failed_admin_generated_file_events_path(
+        status: "failed",
+        path: "storage\\document_files",
+        q: "#{query_prefix}ignored suffix"
+      )
+
+      expect(response).to redirect_to(admin_generated_file_events_path(status: "failed", path: "storage\\document_files", q: "#{query_prefix}ignored suffix"))
+      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 1 件の再dispatchをキューに投入しました。")
+      expect(matched.reload).to be_pending
+      expect(unmatched_path.reload).to be_failed
+      expect(unmatched_query.reload).to be_failed
       expect(GeneratedFileEventDispatchJob).to have_received(:perform_later).once
     end
 
