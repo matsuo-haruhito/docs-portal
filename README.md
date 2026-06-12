@@ -44,9 +44,9 @@
 
 ## サンプルログイン情報
 
-以下は `rails db:seed` 後のローカル開発 / demo 用アカウントです。本番 credential や認証 policy の例ではありません。seed 実行手順と `.env.example` の既定値の読み方は [docs/ローカルセットアップと環境変数.md](./docs/ローカルセットアップと環境変数.md) を参照してください。
+以下は `rails db:seed` が `db/seeds/data/users.csv` から作成するローカル開発 / demo 専用アカウントです。共有環境や本番へ転用する credential ではなく、本番 credential や認証 policy の例でもありません。seed 実行手順と `.env.example` の既定値の読み方は [docs/ローカルセットアップと環境変数.md](./docs/ローカルセットアップと環境変数.md) を参照してください。
 
 - admin@example.com / password123!
 - staff@example.com / password123!
-- client-a@example.com / password123!
-- client-b@example.com / password123!
+- client-a@client-a.example.com / password123!
+- client-b@client-b.example.com / password123!
