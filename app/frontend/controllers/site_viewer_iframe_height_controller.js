@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { setupSiteViewerIframeHeightSync } from "../lib/site_viewer_iframe_height"
+import { setupSiteViewerHeadingOutline } from "../lib/site_viewer_heading_outline"
 
 export default class extends Controller {
   connect() {
@@ -16,5 +17,6 @@ export default class extends Controller {
 
   refresh() {
     setupSiteViewerIframeHeightSync()
+    setupSiteViewerHeadingOutline()
   }
 }
