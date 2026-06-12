@@ -167,7 +167,7 @@ RSpec.describe "Admin missing document files", type: :request do
   it "applies project, document, and file filters together as an AND condition" do
     matching_document = create(:document, project:, title: "Safety Runbook", slug: "safety-runbook")
     same_project_wrong_file = create(:document, project:, title: "Safety Checklist", slug: "safety-checklist")
-    wrong_project_document = create(:document, project: other_project, title: "Safety Runbook", slug: "safety-runbook-copy")
+    wrong_project_document = create(:document, project: other_project, title: "Safety Runbook", slug: "safety-runbook-other-project")
     wrong_document = create(:document, project:, title: "Release Checklist", slug: "release-checklist")
     missing_file_for(matching_document, file_name: "handoff.pdf", storage_key: "manuals/safety/handoff.pdf")
     missing_file_for(same_project_wrong_file, file_name: "safety-notes.pdf", storage_key: "manuals/safety/notes.pdf")
