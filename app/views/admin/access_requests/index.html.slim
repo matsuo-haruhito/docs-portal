@@ -9,7 +9,7 @@ h1 アクセス申請
 section.card
   h2 絞り込み
   = form_with url: admin_access_requests_path, method: :get, local: true do |form|
-    .form-grid
+    .form-grid.access-request-filter-grid
       div
         = form.label :status, "状態"
         = form.select :status, options_for_select(admin_access_request_status_filter_options, @filters[:status])
@@ -19,7 +19,7 @@ section.card
       div
         = form.label :requestable_type, "対象種別"
         = form.select :requestable_type, options_for_select(admin_access_request_requestable_type_filter_options, @filters[:requestable_type])
-      div
+      div.access-request-filter-grid__search
         = form.label :q, "申請者・対象"
         = form.search_field :q, value: @filters[:q], maxlength: admin_access_request_query_max_length, placeholder: "名前、メール、対象名で検索"
 
