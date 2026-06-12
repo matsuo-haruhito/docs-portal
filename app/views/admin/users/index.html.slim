@@ -29,7 +29,8 @@ h1 ユーザーマスタ
         = select_tag :active, options_for_select([["すべて", ""], ["有効", "true"], ["無効", "false"]], selected_active_filter)
     p.actions
       = submit_tag "絞り込む", class: "button"
-      = link_to "条件をクリア", admin_users_path, class: "button secondary"
+      - if user_filters_applied
+        = link_to "条件をクリア", admin_users_path, class: "button secondary"
   - if user_filters_applied
     p.muted = "適用中: #{user_filter_summaries.join(' / ')}"
     p.muted = "検索結果: #{@users_filtered_count}件（列の表示設定は下の「ユーザー一覧の表示設定」で調整できます）"
