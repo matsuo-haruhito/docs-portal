@@ -113,22 +113,24 @@ class BackupArtifactVerifier
   end
 end
 
-options = {
-  db_dump: nil,
-  storage_archive: nil,
-  manifest: nil,
-  strict_metadata: false
-}
+if $PROGRAM_NAME == __FILE__
+  options = {
+    db_dump: nil,
+    storage_archive: nil,
+    manifest: nil,
+    strict_metadata: false
+  }
 
-parser = OptionParser.new do |opts|
-  opts.banner = "Usage: bundle exec ruby bin/verify_backup_artifacts [options]"
-  opts.on("--db-dump PATH", "PostgreSQL custom dump to check with pg_restore --list") { |path| options[:db_dump] = path }
-  opts.on("--storage-archive PATH", "storage archive to list and verify") { |path| options[:storage_archive] = path }
-  opts.on("--manifest PATH", "optional text or JSON manifest containing environment, timestamp, and release id") { |path| options[:manifest] = path }
-  opts.on("--strict-metadata", "fail instead of warning when naming metadata is incomplete") { options[:strict_metadata] = true }
+  parser = OptionParser.new do |opts|
+    opts.banner = "Usage: bundle exec ruby bin/verify_backup_artifacts [options]"
+    opts.on("--db-dump PATH", "PostgreSQL custom dump to check with pg_restore --list") { |path| options[:db_dump] = path }
+    opts.on("--storage-archive PATH", "storage archive to list and verify") { |path| options[:storage_archive] = path }
+    opts.on("--manifest PATH", "optional text or JSON manifest containing environment, timestamp, and release id") { |path| options[:manifest] = path }
+    opts.on("--strict-metadata", "fail instead of warning when naming metadata is incomplete") { options[:strict_metadata] = true }
+  end
+
+  parser.parse!(ARGV)
+
+  result = BackupArtifactVerifier.new(**options).call
+  exit(result.ok ? 0 : 1)
 end
-
-parser.parse!(ARGV)
-
-result = BackupArtifactVerifier.new(**options).call
-exit(result.ok ? 0 : 1)
