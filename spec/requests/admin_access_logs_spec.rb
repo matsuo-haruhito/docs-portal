@@ -732,16 +732,99 @@ RSpec.describe "Admin access logs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("text/csv")
+    expect(response.headers["Content-Disposition"]).to include("access-logs-#{Date.current.iso8601}.csv")
 
     rows = CSV.parse(response.body, headers: true)
     target_names = rows.map { _1["対象名"] }
 
+    expect(rows.headers).to eq(Admin::AccessLogsController::CSV_HEADERS)
     expect(rows.size).to eq(200)
     expect(target_names.first).to eq("csv-entry-200")
     expect(target_names.last).to eq("csv-entry-1")
     expect(target_names).not_to include("csv-entry-0", "csv-outside-filter.html")
     expect(rows.map { _1["案件コード"] }.uniq).to eq(["CSV"])
     expect(rows.map { _1["文書名"] }.uniq).to eq(["CSV Evidence"])
+  end
+
+  it "exports representative CSV filters with blank AI context columns for malformed target names" do
+    base_time = Time.zone.parse("2026-05-10 12:00:00 UTC")
+    csv_company = create(:company, domain: "csv-filter.example.com", name: "CSV Filter Co")
+    csv_user = create(:user, :internal, company: csv_company, email_address: "csv-filter-user@example.com")
+
+    create_access_log!(
+      action_type: :download,
+      target_type: "ai_context",
+      target_name: "broken-ai-context-target",
+      company: csv_company,
+      user: csv_user,
+      accessed_at: base_time,
+      ip_address: "203.0.113.10"
+    )
+    create_access_log!(
+      action_type: :view,
+      target_type: "ai_context",
+      target_name: "broken-ai-context-action-miss",
+      company: csv_company,
+      user: csv_user,
+      accessed_at: base_time
+    )
+    create_access_log!(
+      action_type: :download,
+      target_type: "page",
+      target_name: "broken-ai-context-target-type-miss",
+      company: csv_company,
+      user: csv_user,
+      accessed_at: base_time
+    )
+    create_access_log!(
+      action_type: :download,
+      target_type: "ai_context",
+      target_name: "outside-filter-target",
+      company: csv_company,
+      user: csv_user,
+      accessed_at: base_time
+    )
+    create_access_log!(
+      action_type: :download,
+      target_type: "ai_context",
+      target_name: "broken-ai-context-date-miss",
+      company: csv_company,
+      user: csv_user,
+      accessed_at: base_time - 2.days
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(
+      format: :csv,
+      action_type: "download",
+      target_type: "ai_context",
+      company_id: csv_company.id,
+      user_id: csv_user.id,
+      q: "broken-ai-context",
+      from: "2026-05-10",
+      to: "2026-05-10"
+    )
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("text/csv")
+
+    rows = CSV.parse(response.body, headers: true)
+
+    expect(rows.size).to eq(1)
+    row = rows.first
+    expect(row["操作"]).to eq("download")
+    expect(row["対象種別"]).to eq("ai_context")
+    expect(row["対象名"]).to eq("broken-ai-context-target")
+    expect(row["ユーザーEmail"]).to eq("csv-filter-user@example.com")
+    expect(row["会社"]).to eq("CSV Filter Co csv-filter.example.com")
+    expect(row["IPアドレス"]).to eq("203.0.113.10")
+    expect(row.values_at(
+      "AI context mode",
+      "AI context scope",
+      "AI context selected_count",
+      "AI context exported_count"
+    )).to all(be_blank)
   end
 
   it "falls back to the first page for invalid page parameters" do
