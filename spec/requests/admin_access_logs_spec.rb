@@ -817,7 +817,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(row["対象種別"]).to eq("ai_context")
     expect(row["対象名"]).to eq("broken-ai-context-target")
     expect(row["ユーザーEmail"]).to eq("csv-filter-user@example.com")
-    expect(row["会社"]).to eq("CSV Filter Co csv-filter.example.com")
+    expect(row["会社"]).to eq("CSV Filter Co")
     expect(row["IPアドレス"]).to eq("203.0.113.10")
     expect(row.values_at(
       "AI context mode",
