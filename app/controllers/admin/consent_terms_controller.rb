@@ -1,4 +1,6 @@
 class Admin::ConsentTermsController < Admin::BaseController
+  CONSENT_TERM_QUERY_MAX_LENGTH = 100
+
   before_action :require_admin_only!
   before_action :set_consent_term, only: %i[edit update destroy]
 
@@ -55,7 +57,7 @@ class Admin::ConsentTermsController < Admin::BaseController
   end
 
   def apply_query_filter(scope)
-    query = @consent_term_filters[:q].to_s.strip
+    query = @consent_term_filters[:q].to_s
     return scope if query.blank?
 
     pattern = "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
@@ -81,7 +83,15 @@ class Admin::ConsentTermsController < Admin::BaseController
   end
 
   def consent_term_filter_params
-    params.permit(:q, :active, :consent_scope, :requirement_timing).to_h.symbolize_keys
+    filters = params.permit(:q, :active, :consent_scope, :requirement_timing).to_h.symbolize_keys
+    filters[:q] = normalized_consent_term_query(filters[:q])
+    filters
+  end
+
+  def normalized_consent_term_query(value)
+    query = value.to_s.squish.presence
+
+    query&.slice(0, CONSENT_TERM_QUERY_MAX_LENGTH)
   end
 
   def set_consent_term
