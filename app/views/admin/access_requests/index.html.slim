@@ -6,6 +6,22 @@
 h1 アクセス申請
 = render "admin/nav"
 
+css:
+  .access-request-filter-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    align-items: end;
+  }
+
+  .access-request-filter-grid__search {
+    grid-column: span 2;
+  }
+
+  @media (max-width: 720px) {
+    .access-request-filter-grid__search {
+      grid-column: auto;
+    }
+  }
+
 section.card
   h2 絞り込み
   = form_with url: admin_access_requests_path, method: :get, local: true do |form|
