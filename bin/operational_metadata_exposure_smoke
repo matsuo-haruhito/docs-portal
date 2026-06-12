@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+SPEC_FILES = [
+  "spec/requests/admin_file_upload_dry_runs_spec.rb",
+  "spec/requests/admin_missing_document_files_spec.rb",
+  "spec/requests/admin_webhook_deliveries_spec.rb",
+  "spec/requests/admin_external_folder_sync_sources_spec.rb",
+  "spec/requests/admin_microsoft_graph_connections_spec.rb"
+].freeze
+
+missing_files = SPEC_FILES.reject { |path| File.file?(path) }
+abort "Missing operational metadata exposure smoke specs: #{missing_files.join(', ')}" if missing_files.any?
+
+exec "bundle", "exec", "rspec", *SPEC_FILES, *ARGV
