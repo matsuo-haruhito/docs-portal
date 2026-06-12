@@ -12,6 +12,7 @@ import "tom-select/dist/css/tom-select.css"
 import ArchivePreviewToolsController from "../controllers/archive_preview_tools_controller"
 import AutoHeightFrameController from "../controllers/auto_height_frame_controller"
 import BulkEditSelectionController from "../controllers/bulk_edit_selection_controller"
+import CompanyMasterAdminHandoffController from "../controllers/company_master_admin_handoff_controller"
 import CsvPreviewToolsController from "../controllers/csv_preview_tools_controller"
 import DocumentFileBrowserController from "../controllers/document_file_browser_controller"
 import DocumentFileListSearchController from "../controllers/document_file_list_search_controller"
@@ -39,6 +40,7 @@ application.register("rails-fields-kit--tom-select", TomSelectController)
 application.register("archive-preview-tools", ArchivePreviewToolsController)
 application.register("auto-height-frame", AutoHeightFrameController)
 application.register("bulk-edit-selection", BulkEditSelectionController)
+application.register("company-master-admin-handoff", CompanyMasterAdminHandoffController)
 application.register("csv-preview-tools", CsvPreviewToolsController)
 application.register("document-file-browser", DocumentFileBrowserController)
 application.register("document-file-list-search", DocumentFileListSearchController)
