@@ -1,0 +1,133 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "optparse"
+require "open3"
+
+class BackupArtifactVerifier
+  REQUIRED_STORAGE_PREFIXES = [
+    "storage/document_files",
+    "storage/docs_sites"
+  ].freeze
+
+  ENVIRONMENT_PATTERN = /\b(prod(?:uction)?|stag(?:e|ing)?|dev(?:elopment)?|test)\b/i
+  TIMESTAMP_PATTERN = /\b(?:20\d{2}[-]?\d{2}[-]?\d{2}(?:[T_-]?\d{2}[-:]?\d{2}(?:[-:]?\d{2})?Z?)?)\b/
+  RELEASE_IDENTIFIER_PATTERN = /\b(?:[0-9a-f]{7,40}|v?\d+\.\d+(?:\.\d+)?(?:[-+][0-9A-Za-z.-]+)?|release[-_][0-9A-Za-z._-]+)\b/i
+
+  Result = Struct.new(:ok, :warnings, keyword_init: true)
+
+  def initialize(db_dump:, storage_archive:, manifest:, strict_metadata:, pg_restore: "pg_restore", tar: "tar", stdout: $stdout, stderr: $stderr)
+    @db_dump = db_dump
+    @storage_archive = storage_archive
+    @manifest = manifest
+    @strict_metadata = strict_metadata
+    @pg_restore = pg_restore
+    @tar = tar
+    @stdout = stdout
+    @stderr = stderr
+    @warnings = []
+  end
+
+  def call
+    raise VerificationError, "Provide --db-dump or --storage-archive" unless db_dump || storage_archive
+
+    verify_db_dump if db_dump
+    verify_storage_archive if storage_archive
+    verify_metadata
+
+    stdout.puts "Backup artifact verification completed#{warnings.empty? ? '' : ' with warnings'}."
+    warnings.each { |warning| stdout.puts "WARNING: #{warning}" }
+    stdout.puts "See docs/バックアップ・リストア手順.md for restore rehearsal smoke checks."
+    Result.new(ok: true, warnings:)
+  rescue VerificationError => error
+    stderr.puts "Backup artifact verification failed: #{error.message}"
+    stderr.puts "See docs/バックアップ・リストア手順.md before attempting restore."
+    Result.new(ok: false, warnings:)
+  end
+
+  private
+
+  attr_reader :db_dump, :storage_archive, :manifest, :strict_metadata, :pg_restore, :tar, :stdout, :stderr, :warnings
+
+  VerificationError = Class.new(StandardError)
+
+  def verify_db_dump
+    require_file!(db_dump, "DB dump")
+
+    stdout.puts "Checking DB dump with pg_restore --list: #{db_dump}"
+    output, status = Open3.capture2e(pg_restore, "--list", db_dump)
+    raise VerificationError, "pg_restore --list failed for #{db_dump}: #{output.strip}" unless status.success?
+
+    stdout.puts "DB dump list is readable."
+  rescue Errno::ENOENT
+    raise VerificationError, "pg_restore executable not found; install PostgreSQL client tools or run on a host that has pg_restore"
+  end
+
+  def verify_storage_archive
+    require_file!(storage_archive, "storage archive")
+
+    stdout.puts "Checking storage archive listing: #{storage_archive}"
+    output, status = Open3.capture2e(tar, "-tf", storage_archive)
+    raise VerificationError, "storage archive is not readable: #{output.strip}" unless status.success?
+
+    entries = output.lines.map { |line| normalize_entry(line) }.reject(&:empty?)
+    missing_prefixes = REQUIRED_STORAGE_PREFIXES.reject do |prefix|
+      entries.any? { |entry| entry == prefix || entry.start_with?("#{prefix}/") }
+    end
+    raise VerificationError, "storage archive is missing required paths: #{missing_prefixes.join(', ')}" if missing_prefixes.any?
+
+    stdout.puts "Storage archive includes #{REQUIRED_STORAGE_PREFIXES.join(' and ')}."
+  rescue Errno::ENOENT
+    raise VerificationError, "tar executable not found; install tar or run on a host that can list the archive"
+  end
+
+  def verify_metadata
+    sources = [db_dump, storage_archive, manifest].compact
+    sources << File.read(manifest) if manifest && File.file?(manifest)
+    metadata_text = sources.join("\n")
+
+    metadata_checks = {
+      "environment name" => ENVIRONMENT_PATTERN,
+      "timestamp" => TIMESTAMP_PATTERN,
+      "commit SHA or release identifier" => RELEASE_IDENTIFIER_PATTERN
+    }
+
+    missing = metadata_checks.filter_map do |label, pattern|
+      label unless metadata_text.match?(pattern)
+    end
+    return if missing.empty?
+
+    message = "metadata naming is missing #{missing.join(', ')}"
+    raise VerificationError, message if strict_metadata
+
+    warnings << "#{message}; include these in artifact names or --manifest"
+  end
+
+  def normalize_entry(entry)
+    entry.strip.sub(/\A\.\//, "").sub(%r{/\z}, "")
+  end
+
+  def require_file!(path, label)
+    raise VerificationError, "#{label} does not exist: #{path}" unless File.file?(path)
+  end
+end
+
+options = {
+  db_dump: nil,
+  storage_archive: nil,
+  manifest: nil,
+  strict_metadata: false
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: bundle exec ruby bin/verify_backup_artifacts [options]"
+  opts.on("--db-dump PATH", "PostgreSQL custom dump to check with pg_restore --list") { |path| options[:db_dump] = path }
+  opts.on("--storage-archive PATH", "storage archive to list and verify") { |path| options[:storage_archive] = path }
+  opts.on("--manifest PATH", "optional text or JSON manifest containing environment, timestamp, and release id") { |path| options[:manifest] = path }
+  opts.on("--strict-metadata", "fail instead of warning when naming metadata is incomplete") { options[:strict_metadata] = true }
+end
+
+parser.parse!(ARGV)
+
+result = BackupArtifactVerifier.new(**options).call
+exit(result.ok ? 0 : 1)
