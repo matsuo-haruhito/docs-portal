@@ -19,6 +19,11 @@ RSpec.describe "Company master admin landing", type: :request do
 
     get admin_root_path
 
+    handoff_section = parsed_html.css("section.card[data-controller='company-master-admin-handoff']").first
+    copy_button = handoff_section.at_css("button[data-action='company-master-admin-handoff#copy']")
+    copy_status = handoff_section.at_css("#company-master-admin-handoff-status[role='status'][aria-live='polite']")
+    handoff_template = handoff_section.at_css("pre.company-master-admin-handoff-template[data-company-master-admin-handoff-target='template']")
+
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("ここから直接移動できるのは、会社管理者として操作できる次の 2 画面だけです")
     expect(page_text).to include("会社を管理")
@@ -29,11 +34,18 @@ RSpec.describe "Company master admin landing", type: :request do
     expect(page_text).to include("運用確認")
     expect(page_text).to include("管理者判断")
     expect(page_text).to include("依頼テンプレート")
+    expect(page_text).to include("依頼テンプレートをコピー")
     expect(page_text).to include("【会社】Alpha")
     expect(page_text).to include("【対象ユーザー】名前 / メールアドレス")
     expect(page_text).to include("【分類】案件・案件所属 / 文書・文書権限 / 運用確認 / 管理者判断")
     expect(page_text).to include("【user type 変更相談】あり / なし")
     expect(page_text).to include("会社管理者の権限や文書閲覧範囲を広げるものではありません")
+
+    expect(copy_button["type"]).to eq("button")
+    expect(copy_button["aria-describedby"]).to eq("company-master-admin-handoff-status")
+    expect(copy_status.attribute("hidden")).to be_present
+    expect(handoff_template["tabindex"]).to eq("0")
+    expect(handoff_template.text).to include("【依頼内容】必要な案件所属、文書権限、アクセス申請など")
 
     expect(action_targets).to include(admin_companies_path, admin_users_path)
     expect(action_targets).not_to include(
