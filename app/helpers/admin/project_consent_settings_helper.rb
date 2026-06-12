@@ -16,8 +16,20 @@ module Admin::ProjectConsentSettingsHelper
     "#{project.name} (#{project.code})"
   end
 
+  def project_consent_setting_project_selected_option(project)
+    return nil if project.blank?
+
+    { value: project.id, text: project_consent_setting_project_option_label(project) }
+  end
+
   def project_consent_term_option_label(term)
     "#{term.title} / #{term.version_label}"
+  end
+
+  def project_consent_term_selected_option(term)
+    return nil if term.blank?
+
+    { value: term.id, text: project_consent_term_option_label(term) }
   end
 
   def project_consent_setting_required_on_label(required_on)

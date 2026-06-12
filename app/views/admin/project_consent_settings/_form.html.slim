@@ -2,18 +2,32 @@
 
 = form_with model: [:admin, project_consent_setting] do |form|
   .form-grid
-    = form.rfk_select :project_id,
-      collection: @projects,
-      collection_value_method: :id,
-      collection_label_method: :name,
+    = form.rfk_combobox :project_id,
+      collection: [],
+      selected: project_consent_setting_project_selected_option(project_consent_setting.project || @selected_project),
+      url: project_search_admin_project_consent_settings_path(format: :json),
+      selected_url: selected_project_admin_project_consent_settings_path(format: :json),
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 1,
+      max_options: Admin::ProjectConsentSettingsController::PROJECT_SEARCH_LIMIT,
       wrapper: true,
       label: "案件",
-      placeholder: "案件を選択"
-    = form.rfk_select :consent_term_id,
-      collection: @consent_terms.map { [project_consent_term_option_label(_1), _1.id] },
+      placeholder: "案件コード・案件名で検索"
+    = form.rfk_combobox :consent_term_id,
+      collection: [],
+      selected: project_consent_term_selected_option(project_consent_setting.consent_term || @selected_consent_term),
+      url: consent_term_search_admin_project_consent_settings_path(format: :json),
+      selected_url: selected_consent_term_admin_project_consent_settings_path(format: :json),
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 1,
+      max_options: Admin::ProjectConsentSettingsController::CONSENT_TERM_SEARCH_LIMIT,
       wrapper: true,
       label: "同意文面",
-      placeholder: "同意文面を選択"
+      placeholder: "同意文面名・版で検索"
     label
       | 必須タイミング
       = form.select :required_on, project_consent_setting_required_on_options
