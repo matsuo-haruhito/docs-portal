@@ -223,3 +223,8 @@ current request spec で `company_master_admin` が forbidden として固定さ
 - `spec/frontend/company_master_admin_handoff_source_spec.rb`
 - `spec/frontend/admin_companies_source_spec.rb`
 - `spec/requests/admin_company_master_admin_boundary_spec.rb`
+- `spec/requests/admin_company_master_filters_spec.rb`
+- `spec/requests/admin_company_master_visibility_spec.rb`
+- `spec/requests/admin_management_spec.rb`
+- `spec/requests/admin_users_filters_spec.rb`
+- `spec/requests/company_master_admin_landing_spec.rb`
