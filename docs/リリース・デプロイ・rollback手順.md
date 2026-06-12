@@ -171,6 +171,46 @@ rollback は「コードだけ戻す rollback」と「データも戻す restore
 - 取得したバックアップ識別子
 - rollback 要否の判断結果
 
+### リリース記録テンプレート
+
+リリースごとに、次の template を release record や運用メモへコピーして残します。バックアップ識別子は [バックアップ・リストア手順](./バックアップ・リストア手順.md) の命名方針に合わせ、環境名・日時・commit SHA または release 識別子が分かる値にします。
+
+```markdown
+## Release record
+
+- リリース日時:
+- 環境:
+- 反映 commit SHA:
+- 関連 PR / Issue:
+- 実行前 CI:
+- デプロイ前バックアップ:
+  - DB:
+  - storage:
+- migration:
+  - なし / あり:
+  - 実行内容:
+  - 破壊的変更の有無:
+- seed / import / build:
+  - seed: なし / あり:
+  - import: なし / あり:
+  - Docusaurus build: なし / あり:
+- リリース後 smoke:
+  - ログイン:
+  - 案件一覧:
+  - 文書詳細 / HTML 表示:
+  - 添付ダウンロード:
+  - 変更対象画面:
+- rollback 判断:
+  - rollback 実施: なし / あり:
+  - 実施しなかった理由:
+  - コード rollback だけで戻せるか:
+  - DB / storage restore が必要か:
+  - 使用する rollback target / backup id:
+- 追加メモ:
+```
+
+破壊的 migration、`storage/` の移動・削除、大量 import / 一括削除を含む場合は、通常の記録に加えて「影響範囲」「復旧に使う backup id」「restore 検証の有無」を同じ record に追記します。GitHub Release、外部監視、deployment automation の利用有無は、この template では前提にしません。
+
 ## 12. 現時点の運用ルール
 
 - PR CI が通っていない変更はリリースしない
