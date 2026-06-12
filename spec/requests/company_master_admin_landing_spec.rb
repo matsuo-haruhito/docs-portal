@@ -43,7 +43,7 @@ RSpec.describe "Company master admin landing", type: :request do
 
     expect(copy_button["type"]).to eq("button")
     expect(copy_button["aria-describedby"]).to eq("company-master-admin-handoff-status")
-    expect(copy_status["hidden"]).to be_present
+    expect(copy_status.attribute("hidden")).to be_present
     expect(handoff_template["tabindex"]).to eq("0")
     expect(handoff_template.text).to include("【依頼内容】必要な案件所属、文書権限、アクセス申請など")
 
