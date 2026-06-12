@@ -2,6 +2,7 @@
 - table_key = :admin_read_confirmations
 - table_columns = read_confirmation_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- show_read_confirmations_clear_link = @selected_project.present? || @document_slug.present? || @confirmed_from.present? || @confirmed_to.present? || @invalid_confirmed_date_labels.present? || @selected_company_id.present? || @selected_user_id.present? || params[:page].present?
 
 h1 既読確認内訳
 = render "admin/nav"
@@ -46,7 +47,8 @@ section.card
     p.muted 期間は既読確認日時（confirmed_at）を対象にします。文書利用状況の閲覧・ダウンロード集計期間とは別の条件です。
     p.actions
       = form.submit "表示"
-      = link_to "条件をクリア", admin_read_confirmations_path
+      - if show_read_confirmations_clear_link
+        = link_to "条件をクリア", admin_read_confirmations_path
 
 - if @selected_project
   - usage_report_params = { project_id: @selected_project.id }
