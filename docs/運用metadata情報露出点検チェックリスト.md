@@ -18,6 +18,24 @@
 
 ## 現在の入口
 
+代表 request spec をまとめて再実行したい場合は、次の smoke command を使います。
+
+```bash
+bundle exec ruby bin/operational_metadata_exposure_smoke
+```
+
+この command は、既存の current behavior guard を束ねる read-only 入口です。`bin/external_user_exposure_smoke` は社外ユーザー向けの権限外情報露出を確認する入口であり、この command は admin / integration metadata の表示境界を確認する入口として分けて扱います。追加引数はそのまま `rspec` へ渡せます。
+
+first slice で束ねる spec subset は次です。
+
+- `spec/requests/admin_file_upload_dry_runs_spec.rb`
+- `spec/requests/admin_missing_document_files_spec.rb`
+- `spec/requests/admin_webhook_deliveries_spec.rb`
+- `spec/requests/admin_external_folder_sync_sources_spec.rb`
+- `spec/requests/admin_microsoft_graph_connections_spec.rb`
+
+この subset は、manual upload dry-run、欠落文書ファイル expected path、Webhook delivery preview / search、外部フォルダ同期 metadata、Microsoft Graph provider metadata の代表 guard に限定します。Webhook / Graph / import / dry-run の runtime 表示仕様、secret / token / PII 判定、保存方針、CI 必須化はこの smoke command では決めません。
+
 | 対象 | 最初に見る docs / 画面 | current behavior と点検観点 | 関連 issue |
 | --- | --- | --- | --- |
 | manual upload dry-run の `source_path` | [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)、`admin/file_upload_dry_runs/:public_id` | `source_name` / `relative_path` / `content_hash` は照合に使う。raw `source_path` の表示範囲は security-adjacent な UI 判断として扱い、保存値や apply 条件の変更と混ぜない。 | `#1613` |
@@ -39,6 +57,7 @@
 
 ## 合格基準
 
+- `bin/operational_metadata_exposure_smoke` で admin / integration metadata の代表 request spec をまとめて再実行できる
 - admin / integration metadata の点検入口が、社外ユーザー向けの権限外情報露出 checklist と混線していない
 - raw path、raw payload、token-like value、PII-like value を current support として表示しているか、mask / truncation / safe preview 済みなのかが分かる
 - `source_path`、欠落文書ファイルの `Expected path`、Webhook request body、Webhook error preview、Graph provider metadata、webhook headers の代表観点をそれぞれ別に確認できる
