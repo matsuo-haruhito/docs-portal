@@ -61,7 +61,7 @@ RSpec.describe BackupArtifactVerifier do
   it "passes when the storage archive contains the required prefixes and metadata" do
     result = verify
 
-    expect(result).to be_ok
+    expect(result.ok).to be(true)
     expect(result.warnings).to be_empty
     expect(stdout.string).to include("Storage archive includes storage/document_files and storage/docs_sites.")
     expect(stderr.string).to be_empty
@@ -72,7 +72,7 @@ RSpec.describe BackupArtifactVerifier do
 
     result = verify(tar: missing_docs_sites_tar)
 
-    expect(result).not_to be_ok
+    expect(result.ok).to be(false)
     expect(stderr.string).to include("storage archive is missing required paths: storage/docs_sites")
   end
 
@@ -81,7 +81,7 @@ RSpec.describe BackupArtifactVerifier do
 
     result = verify(storage_archive: archive_without_metadata)
 
-    expect(result).to be_ok
+    expect(result.ok).to be(true)
     expect(result.warnings).to contain_exactly(
       "metadata naming is missing environment name, timestamp, commit SHA or release identifier; include these in artifact names or --manifest"
     )
@@ -94,7 +94,7 @@ RSpec.describe BackupArtifactVerifier do
 
     result = verify(storage_archive: archive_without_metadata, strict_metadata: true)
 
-    expect(result).not_to be_ok
+    expect(result.ok).to be(false)
     expect(stderr.string).to include("metadata naming is missing environment name, timestamp, commit SHA or release identifier")
   end
 end
