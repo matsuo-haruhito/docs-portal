@@ -97,16 +97,15 @@ RSpec.describe "Company master admin handoff visual evidence", type: :system do
 
   def expect_handoff_to_fit_viewport
     fits_viewport = page.evaluate_script(<<~JS)
-      const section = document.querySelector('section[data-controller="company-master-admin-handoff"]');
-      const checkedNodes = [
-        section,
-        ...section.querySelectorAll('fieldset label, input, textarea, button, [role="status"]')
-      ];
+      (function() {
+        var section = document.querySelector('section[data-controller="company-master-admin-handoff"]');
+        var checkedNodes = [section].concat(Array.prototype.slice.call(section.querySelectorAll('fieldset label, input, textarea, button, [role="status"]')));
 
-      document.documentElement.scrollWidth <= window.innerWidth && checkedNodes.every((node) => {
-        const rect = node.getBoundingClientRect();
-        return rect.left >= 0 && rect.right <= window.innerWidth + 1;
-      });
+        return document.documentElement.scrollWidth <= window.innerWidth && checkedNodes.every(function(node) {
+          var rect = node.getBoundingClientRect();
+          return rect.left >= 0 && rect.right <= window.innerWidth + 1;
+        });
+      })();
     JS
 
     expect(fits_viewport).to eq(true)
