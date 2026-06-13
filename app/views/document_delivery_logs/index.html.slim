@@ -55,6 +55,8 @@ p.muted
     - if current_sent_date_filter_params.any?
       = link_to "送信日時をクリア", document_delivery_logs_path({ q: current_query, status: @status_filter.presence, delivery_type: @delivery_type_filter.presence }.merge(current_created_date_filter_params).compact), class: "button secondary"
 p.muted = "検索語は最大#{DocumentDeliveryLogsController::DELIVERY_LOG_QUERY_MAX_LENGTH}文字です。案件名・案件コード・宛先/CC/BCC・件名・失敗理由の断片で探せます。"
+p.muted 作成日は履歴を作成した日、送信日時は送付済みとして記録された日です。日付範囲は日単位で、開始日はその日の始まりから、終了日はその日の終わりまで含みます。
+p.muted 送信日時を指定すると、送信日時が未記録の下書きは対象外です。
 - if @created_date_filter_invalid
   p.muted 作成日は YYYY-MM-DD 形式で指定してください。無効な日付は絞り込みに使いません。
 - if @sent_date_filter_invalid
