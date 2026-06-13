@@ -21,6 +21,7 @@ current 実装の前提:
 - `アプリ設定診断` は `ApplicationConfigurationDiagnostic` の check を `OK / 警告 / エラー` 件数つきで出す
 - `文書ファイル健全性` は `DocumentFileHealthCheck` で総件数と実体欠落件数を出し、欠落ファイルは最大 20 件まで一覧表示する
 - 欠落ファイルがある場合、`欠落ファイル詳細` で案件、文書名 / slug、Storage key / ファイル名の断片から絞り込みながら、先頭 100 件まで read-only に確認できる
+- 欠落ファイル詳細の案件 filter は、案件コード / 案件名で検索する remote search として表示され、候補は最大 20 件まで返る。選択済み案件は候補上限外でも form / summary に復元される
 - 欠落ファイル詳細の `Expected path` は raw absolute path ではなく、`storage/document_files/...` 形式の safe preview として表示される
 - `Storage使用量` は `StorageUsageSummary` で local `storage/document_files` / `storage/docs_sites` / `storage/imports` の file count と概算使用量を read-only に出す
 - `Storage使用量` の `次の確認先` は、各領域から既存確認画面や既存 docs へ戻るための link cue であり、削除、cleanup、retention 対象を確定する操作ではない
@@ -157,7 +158,7 @@ current 実装の前提:
 - `実体欠落` は `DocumentFile#absolute_path` に実ファイルが存在しなかった件数
 - dashboard の欠落一覧は最大 20 件までで、`案件` `文書` `版` `ファイル名` `Storage key` を表示する
 - 欠落ファイルがある場合は `欠落ファイル詳細` へ進むと、先頭 100 件まで `Expected path` preview を含めて確認できる
-- 欠落ファイル詳細では `案件`、`文書名 / slug`、`Storage key / ファイル名` で絞り込める。これらは欠落ファイルだけを対象にした read-only filter であり、修復対象や削除対象を確定する操作ではない
+- 欠落ファイル詳細では `案件`、`文書名 / slug`、`Storage key / ファイル名` で絞り込める。案件は案件コード / 案件名の remote search で候補を探し、候補は最大 20 件まで表示される。これらは欠落ファイルだけを対象にした read-only filter であり、修復対象や削除対象を確定する操作ではない
 - 欠落状況では `登録ファイル数`、`全体の実体欠落`、filter 中の `条件一致欠落`、`表示中` を分けて読む
 - 一覧の `文書` は公開側の project/document detail、`版` は document version detail へ戻れる
 - dashboard 表示時点の current 実装は `DocumentFile` を `find_each` で走査する。cache / async 化はこの runbook ではなく、ファイル数がさらに増えたときの別 Issue で判断する
@@ -166,7 +167,8 @@ current 実装の前提:
 
 - `実体欠落` が 0 でないときは、まず dashboard の先頭 20 件で欠落が特定案件だけか、複数案件へ広がっているかを見る
 - 欠落が 20 件を超える、または path preview まで含めて確認したい場合は `欠落ファイル詳細` へ進む
-- 特定案件だけを確認したい場合は `案件` filter、文書名や slug の心当たりがある場合は `文書名 / slug`、storage key や file name の断片がある場合は `Storage key / ファイル名` を使う
+- 特定案件だけを確認したい場合は `案件` filter を使う。案件 filter は案件コード / 案件名の断片で候補を探し、候補は最大 20 件まで表示されるため、候補に出ない場合は検索語を具体化する。URL や戻り導線で選択済み案件が指定されている場合は、候補上限外でも selected project として復元される
+- 文書名や slug の心当たりがある場合は `文書名 / slug`、storage key や file name の断片がある場合は `Storage key / ファイル名` を使う
 - filter 中の `条件一致欠落: 0` は「全体に欠落がない」ではなく、現在の条件に一致する欠落がない状態として読む。全体の有無は `全体の実体欠落` を見る
 - `条件一致欠落` が `表示中` より多い場合、詳細一覧は条件一致分の先頭 100 件だけを表示している。続きを見るには条件を絞るか、storage 側または database 側の調査へ切り替える
 - `Storage key` は登録済み `DocumentFile` が持つ保存先 key、`Expected path` preview はその key から組み立てた `storage/document_files/...` 形式の確認用表示として読む
@@ -222,6 +224,7 @@ current 実装の前提:
 - `既存画面で詳しく確認` が検索語を引き継ぐ場合と、コピーして既存画面で再確認する場合を混同していないか
 - `警告` `エラー` が、sample 値の流用なのか実運用に影響する不足なのか
 - 欠落ファイルが単発なのか、storage 全体の問題に見えるのか
+- 欠落ファイル詳細の案件 filter が案件コード / 案件名で候補を探す remote search であり、候補上限外の selected project も復元される前提で読めているか
 - `Storage key` と `Expected path` preview の役割を分け、raw absolute path が通常 UI に出ない前提で切り分けているか
 - `Storage使用量` が local directory の概算容量として読めており、`次の確認先` を cleanup や retention 判断の実行入口と混同していないか
 - dashboard だけで完結させず、必要な既存管理画面や仕様 docs にすぐ戻れているか
@@ -238,6 +241,7 @@ current 実装の前提:
 - detail から既存画面で続けて調べたい: `既存画面で詳しく確認` を使い、検索語引き継ぎの有無に応じて既存画面側で再確認する
 - `.env` や compose の設定不足を見たい: `アプリ設定診断`
 - 実体ファイルが見えない原因を切り分けたい: `文書ファイル健全性`
+- 欠落ファイル詳細で特定案件だけを見たい: 案件コード / 案件名の remote search で案件を選び、文書名 / slug や Storage key / ファイル名の断片と組み合わせて先頭 100 件の read-only 一覧を絞る
 - local storage の領域別使用量を read-only に確認したい: `Storage使用量`
 - `Storage使用量` の `DocumentFile 実体` が増えている: `欠落ファイル詳細` と [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md) で登録済み file と保存方針を確認する
 - `Storage使用量` の `Docs site build` が増えている: [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) で build artifact と runtime 前提を確認する
