@@ -4,6 +4,7 @@ RSpec.describe "Company master admin handoff source" do
   let(:controller_source) { Rails.root.join("app/frontend/controllers/company_master_admin_handoff_controller.js").read }
   let(:application_source) { Rails.root.join("app/frontend/entrypoints/application.js").read }
   let(:view_source) { Rails.root.join("app/views/admin/dashboard/company_master_admin.html.slim").read }
+  let(:visual_check_note) { Rails.root.join("docs/qa/company_master_admin_handoff_visual_check.md").read }
 
   it "registers the handoff controller without adding entrypoint DOM setup" do
     aggregate_failures do
@@ -70,6 +71,22 @@ RSpec.describe "Company master admin handoff source" do
       expect(controller_source).to include('`【分類】${this.selectedCategoryLabel}`')
       expect(controller_source).to include('`【対象ユーザー】${this.fieldValue("targetUser", "名前 / メールアドレス")}`')
       expect(controller_source).to include('`【確認項目】${this.fieldValue("checklist", "internal admin に確認してほしい項目")}`')
+    end
+  end
+
+  it "keeps the QA checklist scoped as browser smoke guidance, not evidence by itself" do
+    aggregate_failures do
+      expect(visual_check_note).to include("company_master_admin 依頼テンプレート UI visual check")
+      expect(visual_check_note).to include("Desktop viewport")
+      expect(visual_check_note).to include("Narrow viewport")
+      expect(visual_check_note).to include("4 分類")
+      expect(visual_check_note).to include("copy status")
+      expect(visual_check_note).to include("manual selection fallback")
+      expect(visual_check_note).to include("clipboard success")
+      expect(visual_check_note).to include("clipboard unsupported / failure")
+      expect(visual_check_note).to include("実レンダリング結果の証跡は request spec で固定")
+      expect(visual_check_note).to include("権限、保存 contract、依頼先連携、forbidden admin surface への direct link は変更しません")
+      expect(visual_check_note).not_to include("mailto:")
     end
   end
 end
