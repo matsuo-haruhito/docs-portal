@@ -23,7 +23,7 @@ RSpec.describe DocumentDeliveryLogs::FailureAlertHandoff do
       expect(entry.last_failed_at.to_i).to eq(failures.first.updated_at.to_i)
       expect(entry.latest_error_message).to eq("third failure")
       expect(entry.failed_delivery_logs_path).to eq("/document_delivery_logs?delivery_type=portal_link&q=Document+delivery&status=failed")
-      expect(entry.runbook_path).to eq("docs/外部送付履歴運用runbook.md")
+      expect(entry.runbook_path).to eq("docs/外部送付履歴継続失敗候補runbook.md")
       expect(entry.to_h).to include(
         identity: {
           project_id: project.id,
