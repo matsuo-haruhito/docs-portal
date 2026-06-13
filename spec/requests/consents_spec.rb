@@ -199,6 +199,19 @@ RSpec.describe "Consents", type: :request do
     FileUtils.rm_rf(Rails.root.join("storage", "document_files", "spec", "consents"))
   end
 
+  it "shows empty state copy as a non-error state when active terms and history are absent" do
+    sign_in_as(user)
+    get consents_path
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures do
+      expect(section_text("現在有効な注意事項")).to include("ここには今提示されている active な文面だけを表示します")
+      expect(section_text("現在有効な注意事項")).to include("今提示する文面がない状態で、エラーや権限不足ではありません")
+      expect(section_text("自分の同意履歴")).to include("ここには自分が同意した文面と版の記録を表示します")
+      expect(section_text("自分の同意履歴")).to include("自分の同意記録が0件の状態で、利用不可や権限不足を示すものではありません")
+    end
+  end
+
   it "shows only the current user's consent history in consented_at and id descending order" do
     other_user = create(:user, :external, company:)
     active_term = create(:consent_term, title: "Current Active Terms", body: "Visible active body", version_label: "v-active", consent_scope: :project)
@@ -221,6 +234,8 @@ RSpec.describe "Consents", type: :request do
     aggregate_failures do
       expect(section_text("現在有効な注意事項")).to include("Current Active Terms")
       expect(section_text("現在有効な注意事項")).to include("Visible active body")
+      expect(section_text("現在有効な注意事項")).to include("今提示されている active な文面だけ")
+      expect(section_text("自分の同意履歴")).to include("自分が同意した文面と版の記録")
       expect(page_text).not_to include("Inactive Hidden Terms")
       expect(page_text).not_to include("Inactive hidden body")
       expect(page_text).not_to include("Other User History Terms")
@@ -252,6 +267,9 @@ RSpec.describe "Consents", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("Visible Terms")
     expect(page_text).to include("Handle carefully")
+    expect(page_text).to include("会社間契約や法務承認の代替ではありません")
+    expect(page_text).to include("対象が「全体」の行は案件や文書にひも付かない同意です")
+    expect(page_text).to include("案件 / 文書 / ファイル / 文書版が出ている行は、その対象に対する同意です")
     expect(page_text).to include("種別")
     expect(page_text).to include("ダウンロード")
     expect(page_text).to include("v1")
