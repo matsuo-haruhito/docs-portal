@@ -47,7 +47,7 @@
 
 <section class="card">
   <h2>お気に入り <span class="muted"><%= @favorite_bookmarks.size %>件</span></h2>
-  <p class="muted">よく開く文書をここからすぐ確認できます。</p>
+  <p class="muted">よく開く文書をここからすぐ確認できます。後で読むにも同じ文書を残して、一時保留と継続参照を分けられます。</p>
   <% if @favorite_bookmarks.any? %>
     <ul class="resource-list">
       <% @favorite_bookmarks.each do |bookmark| %>
@@ -78,19 +78,27 @@
 
 <section class="card">
   <h2>後で読む <span class="muted"><%= @read_later_bookmarks.size %>件</span></h2>
-  <p class="muted">あとで確認したい文書を一時的に集めておけます。</p>
+  <p class="muted">あとで確認したい文書を一時的に集めておけます。お気に入りへ移すと、この一覧からは外れます。</p>
   <% if @read_later_bookmarks.any? %>
     <ul class="resource-list">
       <% @read_later_bookmarks.each do |bookmark| %>
+        <% also_favorite = @favorite_bookmark_document_ids.include?(bookmark.document_id) %>
         <li class="resource-list__item">
           <div class="resource-list__content">
             <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %></strong>
             <div class="resource-list__meta">
               <span class="muted"><%= bookmark.document.project.name %></span>
               <span class="badge">あとで確認</span>
+              <% if also_favorite %>
+                <span class="badge">お気に入りにも保存中</span>
+                <span class="muted">継続参照はお気に入りに残し、後で読むだけ整理できます。</span>
+              <% end %>
             </div>
           </div>
           <div class="resource-list__actions">
+            <% if also_favorite %>
+              <p class="muted">移すと後で読むから外れ、お気に入りだけに残ります。</p>
+            <% end %>
             <%= button_to "お気に入りへ移す", move_to_favorite_document_bookmark_path(bookmark), method: :post, class: "button" %>
             <%= button_to "解除", document_bookmark_path(bookmark), method: :delete, class: "button secondary" %>
           </div>
