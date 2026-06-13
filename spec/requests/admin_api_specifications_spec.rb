@@ -263,6 +263,36 @@ RSpec.describe "Admin API specifications", type: :request do
     expect(response.body).to include("API仕様ページの Docusaurus build を再実行します")
   end
 
+  it "enqueues a manual API specification build from a stale state" do
+    allow_any_instance_of(Admin::ApiSpecificationPage).to receive(:available?).and_return(true)
+    allow_any_instance_of(Admin::ApiSpecificationPage).to receive(:stale?).and_return(true)
+    expect(ApiSpecificationBuildJob).to receive(:perform_later).once
+
+    sign_in_as(admin_user)
+
+    post retry_build_admin_api_specification_path
+
+    expect(response).to redirect_to(admin_api_specification_path)
+    expect(build_request_marker_path.exist?).to eq(true)
+    expect(JSON.parse(build_history_marker_path.read).first["status"]).to eq("requested")
+    follow_redirect!
+    expect(response.body).to include("API仕様ページの Docusaurus build を再実行します")
+  end
+
+  it "does not enqueue a manual API specification build when the current build is available" do
+    write_api_specification_site_fixture
+    expect(ApiSpecificationBuildJob).not_to receive(:perform_later)
+
+    sign_in_as(admin_user)
+
+    post retry_build_admin_api_specification_path
+
+    expect(response).to redirect_to(admin_api_specification_path)
+    expect(build_request_marker_path.exist?).to eq(false)
+    follow_redirect!
+    expect(response.body).to include("現在の状態では API仕様ページの手動 build 再実行は不要です。")
+  end
+
   it "does not enqueue a duplicate manual API specification build while one is requested" do
     write_failed_build_marker("failed at [path] token=[FILTERED]")
     write_build_request_marker
