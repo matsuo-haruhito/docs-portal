@@ -159,7 +159,8 @@ section.card
     section.card
       h2 = document_usage_report_empty_state_heading(report_hash: @report_hash, usage_filter: @usage_filter, query: @query)
       p.muted
-        | 条件に一致する文書はありません。
+        - if @report_hash.dig(:summary, :document_count).to_i.positive?
+          | 条件に一致する文書はありません。
         = document_usage_report_empty_state_body(report_hash: @report_hash, usage_filter: @usage_filter, query: @query)
       p.muted
         | 現在の利用状況は「
