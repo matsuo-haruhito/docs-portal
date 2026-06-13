@@ -33,8 +33,8 @@ GIT
 
 GIT
   remote: https://github.com/matsuo-haruhito/tree_view-rails.git
-  revision: 9c538f9ee7946fa5af24f15c99402a0431677303
-  ref: 9c538f9ee7946fa5af24f15c99402a0431677303
+  revision: e129cb3ce2835a483e87fc71a50cc9fee07e3da5
+  ref: e129cb3ce2835a483e87fc71a50cc9fee07e3da5
   specs:
     tree_view (0.1.0)
       railties (>= 7.0)
@@ -138,7 +138,7 @@ GEM
       mini_mime (>= 0.1.3)
       nokogiri (~> 1.11)
       rack (>= 1.6.0)
-      rack-test (>= 0.6.3)
+      rack-test (>= 0.6.0)
       regexp_parser (>= 1.5, < 3.0)
       xpath (~> 3.2)
     concurrent-ruby (1.3.6)
@@ -207,7 +207,7 @@ GEM
       rb-inotify (~> 0.9, >= 0.9.10)
     logger (1.7.0)
     loofah (2.25.1)
-      crass (~> 1.0.2)
+      crass (~> 2.0.2)
       nokogiri (>= 1.12.0)
     mail (2.9.0)
       logger
@@ -357,8 +357,6 @@ GEM
       rainbow (>= 2.2.2, < 4.0)
       regexp_parser (>= 2.9.3, < 3.0)
       rubocop-ast (>= 1.49.0, < 2.0)
-      ruby-progressbar (~> 1.7)
-      unicode-display_width (>= 2.4.0, < 4.0)
     rubocop-ast (1.49.1)
       parser (>= 3.3.7.2)
       prism (~> 1.7)
@@ -408,7 +406,7 @@ GEM
       base64
       logger
       net-scp (>= 1.1.2)
-      net-sftp (>= 2.1.2)
+      net-sftp (>= 2.1)
       net-ssh (>= 2.8.0)
       ostruct
     stimulus-rails (1.3.4)
