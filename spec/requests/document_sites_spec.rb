@@ -63,6 +63,23 @@ RSpec.describe "Document sites", type: :request do
     expect(response.body).to include(site_document_version_path(version, site_path: site_build_path, embedded: "1").gsub("&", "&amp;"))
   end
 
+  it "renders the heading outline contract for the document version viewer shell" do
+    sign_in_as(user)
+
+    get site_document_version_path(version, site_path: site_build_path)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include('class="site-viewer-outline"')
+    expect(response.body).to include('data-docs-portal-heading-outline="true"')
+    expect(response.body).to include('data-docs-portal-heading-outline-summary="true"')
+    expect(response.body).to include('data-docs-portal-heading-outline-list="true"')
+    expect(response.body).to include('role="list"')
+    expect(response.body).to include("見出しを読み込み中です")
+    expect(response.body).to include('iframe class="site-viewer-frame"')
+    expect(response.body).to include('data-docs-portal-auto-height="true"')
+    expect(response.body).to include('data-docs-portal-heading-outline="true"')
+  end
+
   it "uses Japanese labels and truthful links in the site viewer shell" do
     sign_in_as(user)
 
