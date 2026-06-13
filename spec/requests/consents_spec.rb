@@ -49,6 +49,15 @@ RSpec.describe "Consents", type: :request do
     parsed_html.css('input[name="return_to"]').map { _1["value"] }
   end
 
+  def section_text(heading)
+    parsed_html.css("section.card").find { |section| section.at_css("h2")&.text&.squish == heading }&.text&.squish
+  end
+
+  def consent_history_titles
+    history = parsed_html.css("section.card").find { |section| section.at_css("h2")&.text&.squish == "自分の同意履歴" }
+    history.css("tbody tr").map { |row| row.css("td")[1].text.squish }
+  end
+
   before do
     create(:project_membership, project:, user:)
     create(:document_permission, document:, company:, access_level: :download)
@@ -188,6 +197,43 @@ RSpec.describe "Consents", type: :request do
     expect(response).to have_http_status(:ok)
   ensure
     FileUtils.rm_rf(Rails.root.join("storage", "document_files", "spec", "consents"))
+  end
+
+  it "shows only the current user's consent history in consented_at and id descending order" do
+    other_user = create(:user, :external, company:)
+    active_term = create(:consent_term, title: "Current Active Terms", body: "Visible active body", version_label: "v-active", consent_scope: :project)
+    older_term = create(:consent_term, title: "Older History Terms", body: "Older history body", version_label: "v-old", consent_scope: :download)
+    same_time_first_term = create(:consent_term, title: "Same Timestamp First", body: "First same-time body", version_label: "v-same-1", consent_scope: :global)
+    same_time_second_term = create(:consent_term, title: "Same Timestamp Second", body: "Second same-time body", version_label: "v-same-2", consent_scope: :global)
+    inactive_term = create(:consent_term, title: "Inactive Hidden Terms", body: "Inactive hidden body", version_label: "v-hidden", active: false)
+    other_history_term = create(:consent_term, title: "Other User History Terms", body: "Other user body", version_label: "v-other", active: false)
+    same_time = Time.zone.parse("2026-01-03 09:00")
+
+    create(:user_consent, user:, consent_term: older_term, target: project, consent_term_version_label: "v-old", consented_at: Time.zone.parse("2026-01-01 09:00"))
+    create(:user_consent, user:, consent_term: same_time_first_term, target: nil, consent_term_version_label: "v-same-1", consented_at: same_time)
+    create(:user_consent, user:, consent_term: same_time_second_term, target: document, consent_term_version_label: "v-same-2", consented_at: same_time)
+    create(:user_consent, user: other_user, consent_term: other_history_term, target: project, consent_term_version_label: "v-other", consented_at: Time.zone.parse("2026-01-04 09:00"))
+
+    sign_in_as(user)
+    get consents_path
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures do
+      expect(section_text("現在有効な注意事項")).to include("Current Active Terms")
+      expect(section_text("現在有効な注意事項")).to include("Visible active body")
+      expect(page_text).not_to include("Inactive Hidden Terms")
+      expect(page_text).not_to include("Inactive hidden body")
+      expect(page_text).not_to include("Other User History Terms")
+      expect(page_text).not_to include("Other user body")
+      expect(consent_history_titles).to eq([
+        "Same Timestamp Second",
+        "Same Timestamp First",
+        "Older History Terms"
+      ])
+    end
+
+    expect(active_term).to be_persisted
+    expect(inactive_term).to be_persisted
   end
 
   it "shows active terms and the user's consent history with localized target and scope labels" do
