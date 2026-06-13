@@ -25,7 +25,7 @@ current default は次のとおりです。
 
 `DocumentDeliveryLogs::FailureAlertHandoff` は、同じ候補を通知前の handoff payload として取り出すための read-only service です。候補の identity、案件 code/name、送付方式、受信者 preview、件名 preview、連続失敗数、最終失敗時刻、短い error message preview、確認用 path、runbook path を返します。
 
-確認用 path は `status=failed`、候補の `delivery_type`、件名を使った `q` を付けた `/document_delivery_logs` です。本文、添付、CC/BCC の full text、外部シークレットは payload に含めません。
+確認用 path は `status=failed`、候補の `delivery_type`、件名を使った `q` を付けた `/document_delivery_logs` です。本文、添付、CC/BCC の full text、外部シークレットは payload に含めません。preview と確認用 path の `q` は `Bearer` / `Basic` credential、`token=`、`secret=` などの secret-like value を `[FILTERED]` に置換してから返します。
 
 ## 読み分け
 

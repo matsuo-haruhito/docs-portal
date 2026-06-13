@@ -5,6 +5,10 @@ module DocumentDeliveryLogs
     DELIVERY_LOG_QUERY_MAX_LENGTH = 100
     DEFAULT_PREVIEW_MAX_LENGTH = 80
     DEFAULT_ERROR_MESSAGE_MAX_LENGTH = 160
+    FILTERED_VALUE = "[FILTERED]"
+    SECRET_LIKE_KEY_PATTERN = /\b(token|access_token|refresh_token|secret|client_secret|api_key|password)\b\s*([=:])\s*([^&\s,;]+)/i
+    AUTHORIZATION_VALUE_PATTERN = /\b(Authorization)\s*:\s*(Bearer|Basic)\s+[^,\s;]+/i
+    AUTH_SCHEME_VALUE_PATTERN = /\b(Bearer|Basic)\s+[^,\s;]+/i
 
     Entry = Data.define(
       :identity,
@@ -93,7 +97,7 @@ module DocumentDeliveryLogs
       query = {
         status: "failed",
         delivery_type: candidate.delivery_type,
-        q: candidate.subject.to_s.truncate(DELIVERY_LOG_QUERY_MAX_LENGTH, omission: "")
+        q: delivery_log_query(candidate.subject)
       }.compact_blank
 
       "#{FAILED_DELIVERY_LOGS_PATH}?#{query.to_query}"
@@ -102,13 +106,24 @@ module DocumentDeliveryLogs
     def preview(value)
       return if value.blank?
 
-      value.to_s.squish.truncate(preview_max_length, omission: "...")
+      mask_secret_like_values(value).squish.truncate(preview_max_length, omission: "...")
     end
 
     def error_message_preview(message)
       return if message.blank?
 
-      message.to_s.squish.truncate(error_message_max_length, omission: "...")
+      mask_secret_like_values(message).squish.truncate(error_message_max_length, omission: "...")
+    end
+
+    def delivery_log_query(value)
+      mask_secret_like_values(value).squish.truncate(DELIVERY_LOG_QUERY_MAX_LENGTH, omission: "")
+    end
+
+    def mask_secret_like_values(value)
+      value.to_s
+        .gsub(AUTHORIZATION_VALUE_PATTERN) { "#{$1}: #{$2} #{FILTERED_VALUE}" }
+        .gsub(AUTH_SCHEME_VALUE_PATTERN) { "#{$1} #{FILTERED_VALUE}" }
+        .gsub(SECRET_LIKE_KEY_PATTERN) { "#{$1}#{$2}#{FILTERED_VALUE}" }
     end
   end
 end

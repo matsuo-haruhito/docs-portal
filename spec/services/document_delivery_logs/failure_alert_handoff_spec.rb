@@ -101,6 +101,31 @@ RSpec.describe DocumentDeliveryLogs::FailureAlertHandoff do
       expect(entry.subject_preview).to end_with("...")
       expect(entry.latest_error_message).to end_with("...")
     end
+
+    it "masks secret-like values before returning preview payloads" do
+      create_delivery_log(
+        status: :failed,
+        to_addresses: "client@example.com token=recipient-raw",
+        subject: "Document delivery secret=subject-raw",
+        error_message: "Authorization: Bearer bearer-raw token=token-raw secret=secret-raw",
+        created_at: 1.hour.ago
+      )
+
+      entry = described_class.new(threshold: 1).call.first
+
+      expect(entry.recipient_preview).to include("token=[FILTERED]")
+      expect(entry.recipient_preview).not_to include("recipient-raw")
+      expect(entry.subject_preview).to include("secret=[FILTERED]")
+      expect(entry.subject_preview).not_to include("subject-raw")
+      expect(entry.latest_error_message).to include("Authorization: Bearer [FILTERED]")
+      expect(entry.latest_error_message).to include("token=[FILTERED]")
+      expect(entry.latest_error_message).to include("secret=[FILTERED]")
+      expect(entry.latest_error_message).not_to include("bearer-raw")
+      expect(entry.latest_error_message).not_to include("token-raw")
+      expect(entry.latest_error_message).not_to include("secret-raw")
+      expect(entry.failed_delivery_logs_path).to include("%5BFILTERED%5D")
+      expect(entry.failed_delivery_logs_path).not_to include("subject-raw")
+    end
   end
 
   let(:project) { create(:project, code: "DLV1", name: "Delivery Project") }

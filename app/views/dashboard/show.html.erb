@@ -143,7 +143,7 @@
   <article class="card">
     <h2>最近見た文書</h2>
     <% if @recent_documents.any? %>
-      <p class="muted">あなたの閲覧履歴から表示しています。</p>
+      <p class="muted">あなたの閲覧履歴から表示しています。更新通知ではなく、作業再開用の個人履歴です。</p>
       <ul class="resource-list">
         <% @recent_documents.each do |document| %>
           <li class="resource-list__item">
@@ -155,7 +155,7 @@
         <% end %>
       </ul>
     <% else %>
-      <p class="muted">このアカウントでは最近見た文書がまだありません。文書一覧から読み始めると、直近の閲覧履歴がここに表示されます。</p>
+      <p class="muted">このアカウントでは最近見た文書がまだありません。文書一覧から読み始めると、直近の閲覧履歴がここに表示されます。権限不足やエラーではなく、まだ閲覧履歴がない状態です。</p>
       <p><%= link_to "文書一覧へ", documents_path, class: "metric-card__cta", data: { turbo_frame: "_top" } %></p>
     <% end %>
   </article>
@@ -163,7 +163,7 @@
   <article class="card">
     <h2>最近更新された文書</h2>
     <% if @recently_updated_documents.any? %>
-      <p class="muted">閲覧可能な文書を更新日時の新しい順に表示しています。</p>
+      <p class="muted">閲覧可能な文書を更新日時の新しい順に表示しています。未読通知ではなく、更新候補を確認する入口です。</p>
       <ul class="resource-list">
         <% @recently_updated_documents.each do |document| %>
           <li class="resource-list__item">
@@ -175,7 +175,7 @@
         <% end %>
       </ul>
     <% else %>
-      <p class="muted">最近更新された文書はありません。閲覧可能な文書は文書一覧から確認できます。</p>
+      <p class="muted">最近更新された文書はありません。閲覧可能な文書は文書一覧から確認できます。権限エラーではなく、閲覧可能な範囲に更新候補がない状態です。</p>
       <p><%= link_to "文書一覧へ", documents_path, class: "metric-card__cta", data: { turbo_frame: "_top" } %></p>
     <% end %>
   </article>
