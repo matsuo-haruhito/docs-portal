@@ -55,15 +55,14 @@ p.actions
       tbody
         - if @schedules.empty?
           tr
-            td.muted colspan=table_columns.size
-              - if has_filters
+            - if has_filters
+              td.muted colspan=(table_columns.size - 1)
                 .space-y-2
                   p = empty_message
                   p 条件を見直すか、すべての定期ジョブを表示してください。
-                  p.actions
-                    = link_to "すべての定期ジョブを見る", admin_recurring_job_schedules_path, class: "button secondary"
-              - else
-                = empty_message
+              td data-rails-table-preferences-column-key="actions" = link_to "すべての定期ジョブを見る", admin_recurring_job_schedules_path, class: "button secondary"
+            - else
+              td.muted colspan=table_columns.size = empty_message
         - @schedules.each do |schedule|
           tr
             td data-rails-table-preferences-column-key="job_key"
