@@ -29,6 +29,10 @@ RSpec.describe "AccessibleDocuments", type: :request do
     end
   end
 
+  def filter_form_action_links
+    parsed_html.css("form.document-filter-form .form-actions a").map { _1.text.squish }
+  end
+
   before do
     create(:project_membership, project: project_a, user:)
     create(:project_membership, project: project_b, user:)
@@ -47,6 +51,7 @@ RSpec.describe "AccessibleDocuments", type: :request do
     expect(response.body).to include(alpha.title, beta.title)
     expect(project_column_texts).to include("Alpha Project ALPHA", "Beta Project BETA")
     expect(page_text).not_to include("現在の条件:")
+    expect(filter_form_action_links).not_to include("条件をクリア")
     expect(response.body).not_to include(hidden.title)
   end
 
@@ -68,6 +73,32 @@ RSpec.describe "AccessibleDocuments", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to match(/ページ\s*2\s*\/\s*2/)
+  end
+
+  it "shows the form clear action only when filters are active" do
+    document = create_viewable_document(project: project_a, title: "Tagged Manual", slug: "tagged-manual", category: :manual)
+    tag = DocumentTag.create!(name: "設計資料")
+    DocumentTagging.create!(document:, document_tag: tag)
+
+    sign_in_as(user)
+    get documents_path
+
+    expect(response).to have_http_status(:ok)
+    expect(filter_form_action_links).not_to include("条件をクリア")
+
+    [
+      { q: "Tagged" },
+      { tag: tag.normalized_name },
+      { category: "manual" },
+      { document_kind: "pdf" },
+      { visibility_policy: "restricted_external" },
+      { has_files: "1" }
+    ].each do |params|
+      get documents_path, params: params
+
+      expect(response).to have_http_status(:ok)
+      expect(filter_form_action_links).to include("条件をクリア")
+    end
   end
 
   it "shows active filter summary near results" do
@@ -103,6 +134,7 @@ RSpec.describe "AccessibleDocuments", type: :request do
     expect(page_text).to include("ファイル種: PDF")
     expect(page_text).to include("公開範囲: 限定公開")
     expect(page_text).to include("PDFあり")
+    expect(filter_form_action_links).to include("条件をクリア")
     expect(parsed_html.css("a").map { _1.text.squish }).to include("条件をクリア")
   end
 
@@ -151,6 +183,7 @@ RSpec.describe "AccessibleDocuments", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(with_files.title)
     expect(response.body).not_to include(without_files.title)
+    expect(filter_form_action_links).to include("条件をクリア")
   end
 
   it "keeps internal-only documents available to internal users" do
