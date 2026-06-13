@@ -93,9 +93,9 @@ module Admin::DocumentUsageReportsHelper
   def document_usage_report_usage_hint(row)
     case document_usage_report_usage_state(row)
     when :unused
-      "期間内の閲覧・DL・既読確認なし"
+      "期間内の閲覧・DL・既読確認なし（期間外の実績は含みません）"
     when :read_confirmation_only
-      "既読確認の内訳を確認"
+      "閲覧・DLはなく、既読確認の内訳を確認"
     end
   end
 end
