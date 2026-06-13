@@ -298,6 +298,57 @@ RSpec.describe "Admin webhook deliveries", type: :request do
     )
   end
 
+  it "masks diagnostic values on the delivery detail page" do
+    sign_in_as(admin_user)
+
+    event = create(:notification_event, event_type: :document_updated)
+    endpoint = create(
+      :webhook_endpoint,
+      name: "Masked Hook",
+      target_url: "https://hooks.example.test/webhooks/docs-portal?secret=query-secret-token&token=query-token"
+    )
+    response_tail = "tail-token-should-not-appear"
+    response_body = [
+      "authorization: Bearer response-token",
+      "email=response-user@example.test",
+      "path=/Users/alice/private/report.pdf",
+      ("safe diagnostic body " * 40),
+      response_tail
+    ].join("\n")
+    delivery = create_delivery(
+      endpoint: endpoint,
+      event: event,
+      status: :failed,
+      response_status: 500,
+      error_message: "Authorization: Bearer error-token token=error-token email=owner@example.test path=/home/alice/secret.txt",
+      response_body: response_body,
+      created_at: Time.zone.local(2026, 6, 10, 10, 0, 0)
+    )
+
+    get admin_webhook_delivery_path(delivery.public_id)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("https://hooks.example.test/webhooks/docs-portal?...")
+    expect(page_text).to include("Authorization: [masked]")
+    expect(page_text).to include("authorization: [masked]")
+    expect(page_text).to include("[path hidden]")
+    expect(page_text).to include("...省略...")
+
+    aggregate_failures do
+      expect(response.body).not_to include("query-secret-token")
+      expect(response.body).not_to include("query-token")
+      expect(response.body).not_to include("Bearer error-token")
+      expect(response.body).not_to include("Bearer response-token")
+      expect(response.body).not_to include("error-token")
+      expect(response.body).not_to include("response-token")
+      expect(response.body).not_to include("owner@example.test")
+      expect(response.body).not_to include("response-user@example.test")
+      expect(response.body).not_to include("/home/alice/secret.txt")
+      expect(response.body).not_to include("/Users/alice/private/report.pdf")
+      expect(response.body).not_to include(response_tail)
+    end
+  end
+
   it "preserves delivery search context through detail and redelivery" do
     sign_in_as(admin_user)
 
