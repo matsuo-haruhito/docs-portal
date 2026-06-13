@@ -1,7 +1,8 @@
 module DocumentDeliveryLogs
   class FailureAlertHandoff
     FAILED_DELIVERY_LOGS_PATH = "/document_delivery_logs"
-    RUNBOOK_PATH = "docs/外部送付履歴運用runbook.md"
+    RUNBOOK_PATH = "docs/外部送付履歴継続失敗候補runbook.md"
+    DELIVERY_LOG_QUERY_MAX_LENGTH = 100
     DEFAULT_PREVIEW_MAX_LENGTH = 80
     DEFAULT_ERROR_MESSAGE_MAX_LENGTH = 160
 
@@ -92,7 +93,7 @@ module DocumentDeliveryLogs
       query = {
         status: "failed",
         delivery_type: candidate.delivery_type,
-        q: candidate.subject.to_s.truncate(DocumentDeliveryLogsController::DELIVERY_LOG_QUERY_MAX_LENGTH, omission: "")
+        q: candidate.subject.to_s.truncate(DELIVERY_LOG_QUERY_MAX_LENGTH, omission: "")
       }.compact_blank
 
       "#{FAILED_DELIVERY_LOGS_PATH}?#{query.to_query}"
