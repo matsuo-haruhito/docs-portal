@@ -316,6 +316,25 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(page_text).not_to include(future_log.to_addresses)
   end
 
+  it "explains date filter boundaries without changing filter input contracts" do
+    sign_in_as(internal_user)
+
+    get document_delivery_logs_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("作成日は履歴を作成した日、送信日時は送付済みとして記録された日です。")
+    expect(page_text).to include("日付範囲は日単位で、開始日はその日の始まりから、終了日はその日の終わりまで含みます。")
+    expect(page_text).to include("送信日時を指定すると、送信日時が未記録の下書きは対象外です。")
+    expect(page_text).to include("検索語は最大#{DocumentDeliveryLogsController::DELIVERY_LOG_QUERY_MAX_LENGTH}文字です。")
+
+    filter_form = parsed_html.at_css("form[action='#{document_delivery_logs_path}']")
+    expect(filter_form.at_css("input[name='q'][maxlength='#{DocumentDeliveryLogsController::DELIVERY_LOG_QUERY_MAX_LENGTH}']")).not_to be_nil
+    expect(filter_form.at_css("input[name='created_from'][type='date']")).not_to be_nil
+    expect(filter_form.at_css("input[name='created_to'][type='date']")).not_to be_nil
+    expect(filter_form.at_css("input[name='sent_from'][type='date']")).not_to be_nil
+    expect(filter_form.at_css("input[name='sent_to'][type='date']")).not_to be_nil
+  end
+
   it "shows To, CC, and BCC separately in the recipients column" do
     log = create(
       :document_delivery_log,
