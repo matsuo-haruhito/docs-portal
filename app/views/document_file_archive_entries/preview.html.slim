@@ -13,6 +13,8 @@
       = link_to "ZIP内ファイル一覧へ戻る", document_file_path(@document_file, disposition: "inline", anchor: @archive_preview_return_anchor), class: "button secondary"
       - if @entry_downloadable
         = link_to "個別ダウンロード", archive_entry_download_document_file_path(@document_file, entry_path: @entry_preview.entry_path), class: "button"
+    p.muted
+      | 戻る link は一覧の対象行へ移動します。表示中検索、ディレクトリ filter、種別 filter、候補 filter、並び替えは保存されないため、戻った後に必要な条件を再確認してください。
     dl.details-list
       dt 項目パス
       dd
