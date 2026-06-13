@@ -11,6 +11,12 @@ RSpec.describe "Admin generated file event empty state copy", type: :request do
     parsed_html.text.squish
   end
 
+  def clear_results_link
+    parsed_html.css(%(a[href="#{admin_generated_file_events_path}"])).find do |link|
+      link.text.squish == "すべての生成ファイルイベントを見る"
+    end
+  end
+
   it "shows scheduled date boundary cues without changing filter behavior" do
     sign_in_as(admin_user)
 
@@ -29,7 +35,7 @@ RSpec.describe "Admin generated file event empty state copy", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("生成ファイルイベントはまだありません。")
     expect(page_text).not_to include("検索条件に一致する生成ファイルイベントはありません。")
-    expect(parsed_html.at_css(%(a[href="#{admin_generated_file_events_path}"]), text: "すべての生成ファイルイベントを見る")).to be_nil
+    expect(clear_results_link).to be_nil
   end
 
   it "adds a clear path inside filtered empty results" do
@@ -42,7 +48,7 @@ RSpec.describe "Admin generated file event empty state copy", type: :request do
     expect(page_text).to include("検索条件に一致する生成ファイルイベントはありません。")
     expect(page_text).to include("これは表示フィルタの結果です。")
     expect(page_text).to include("一括再dispatch対象の有無とは別に")
-    expect(parsed_html.at_css(%(a[href="#{admin_generated_file_events_path}"]), text: "すべての生成ファイルイベントを見る")).to be_present
+    expect(clear_results_link).to be_present
   end
 
   private
