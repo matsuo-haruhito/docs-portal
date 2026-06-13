@@ -108,13 +108,13 @@ section.card
         strong = @query
         | 」を含む行だけを表示しています。CSV出力にも同じ検索条件を反映します。
     p.muted
-      | 行内の「監査ログへ」は閲覧またはダウンロードがある文書だけに表示されます。既読確認だけで利用ありの文書は、既読確認件数の「内訳へ」から確認者と確認時刻を追えます。
+      | 上の案件リンクは案件全体の調査入口です。行内の「監査ログへ」は閲覧またはダウンロードがある文書だけに表示され、文書単位の実績へ進みます。既読確認だけで利用ありの文書は、既読確認件数の「内訳へ」から確認者と確認時刻を追えます。
 
   - if @report_hash[:documents].any?
     section.card
       = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書利用一覧の表示設定")
       p.muted
-        | 利用列のラベルは現在の集計期間に対する補助表示です。未利用は期間内の閲覧・ダウンロード・既読確認がない文書、既読のみは閲覧・ダウンロードなしで既読確認だけがある文書を示します。
+        | 利用列のラベルは現在の集計期間に対する補助表示です。未利用は期間内の閲覧・ダウンロード・既読確認がない文書、既読のみは閲覧・ダウンロードなしで既読確認だけがある文書を示します。各行のリンクは、その文書で確認できる実績がある場合だけ表示されます。
 
     = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
       thead
