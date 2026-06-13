@@ -60,6 +60,8 @@ RSpec.describe "Document file archive entries", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("ZIP項目プレビュー")
     expect(response.body).to include("ZIP内ファイル一覧へ戻る")
+    expect(response.body).to include("戻る link は一覧の対象行へ移動します")
+    expect(response.body).to include("表示中検索、ディレクトリ filter、種別 filter、候補 filter、並び替えは保存されない")
     expect(response.body).to include("個別ダウンロード")
     expect(response.body).to include("archive_entries/download")
     expect(response.body).to include("項目パス")
@@ -92,6 +94,7 @@ RSpec.describe "Document file archive entries", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("ZIP内ファイル一覧へ戻る")
+    expect(response.body).to include("戻る link は一覧の対象行へ移動します")
     expect(response.body).to include(document_file_path(archive_file, disposition: "inline", anchor: "archive-entry-1"))
   end
 
@@ -103,6 +106,7 @@ RSpec.describe "Document file archive entries", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("ZIP内ファイル一覧へ戻る")
+    expect(response.body).to include("表示中検索、ディレクトリ filter、種別 filter、候補 filter、並び替えは保存されない")
     expect(response.body).to include(document_file_path(archive_file, disposition: "inline"))
     expect(response.body).not_to include(document_file_path(archive_file, disposition: "inline", anchor: "https://example.com/archive-entry-1"))
     expect(response.body).not_to include('href="https://example.com')
