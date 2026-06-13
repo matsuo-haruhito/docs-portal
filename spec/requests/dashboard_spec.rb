@@ -39,8 +39,16 @@ RSpec.describe "Dashboard", type: :request do
     dashboard_section(title).css("a")
   end
 
-  def create_viewable_document(title:, slug:)
-    document = create(:document, project:, title:, slug:, visibility_policy: :restricted_external)
+  def dashboard_section_text(title)
+    dashboard_section(title).text.squish
+  end
+
+  def resource_items_for(title)
+    dashboard_section(title).css("li.resource-list__item").map { _1.text.squish }
+  end
+
+  def create_viewable_document(title:, slug:, updated_at: Time.current)
+    document = create(:document, project:, title:, slug:, visibility_policy: :restricted_external, updated_at:)
     create(:document_permission, document:, company:, access_level: :view)
     document
   end
@@ -204,6 +212,108 @@ RSpec.describe "Dashboard", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("Visible Manual")
     expect(page_text).not_to include("Hidden Manual")
+  end
+
+  it "bounds external dashboard short lists without showing unreadable personal documents" do
+    fixed_time = Time.zone.local(2026, 1, 1, 12, 0, 0)
+    10.times do |index|
+      extra_project = create(:project, code: format("DASH%02d", index + 1), name: format("Visible Project %02d", index + 1))
+      create(:project_membership, project: extra_project, user:)
+    end
+    create(:project, code: "DASH99", name: "Hidden Project")
+
+    favorite_documents = 9.times.map do |index|
+      create_viewable_document(
+        title: format("Favorite Document %02d", index + 1),
+        slug: format("favorite-document-%02d", index + 1),
+        updated_at: fixed_time - (100 + index).minutes
+      )
+    end
+    favorite_documents.each_with_index do |document, index|
+      create(:document_bookmark, user:, document:, bookmark_type: :favorite, created_at: fixed_time - index.minutes)
+    end
+
+    read_later_documents = 9.times.map do |index|
+      create_viewable_document(
+        title: format("Read Later Document %02d", index + 1),
+        slug: format("read-later-document-%02d", index + 1),
+        updated_at: fixed_time - (200 + index).minutes
+      )
+    end
+    read_later_documents.each_with_index do |document, index|
+      create(:document_bookmark, user:, document:, bookmark_type: :read_later, created_at: fixed_time - index.minutes)
+    end
+
+    recent_documents = 11.times.map do |index|
+      create_viewable_document(
+        title: format("Recent Document %02d", index + 1),
+        slug: format("recent-document-%02d", index + 1),
+        updated_at: fixed_time - (300 + index).minutes
+      )
+    end
+    recent_documents.each_with_index do |document, index|
+      create(:access_log, user:, company:, project:, document:, action_type: :view, target_type: "document", accessed_at: fixed_time - index.minutes)
+    end
+
+    hidden_document = create(:document, project:, title: "Hidden Favorite Document", slug: "hidden-favorite", visibility_policy: :internal_only)
+    create(:document_bookmark, user:, document: hidden_document, bookmark_type: :favorite, created_at: fixed_time + 1.minute)
+    create(:access_log, user:, company:, project:, document: hidden_document, action_type: :view, target_type: "document", accessed_at: fixed_time + 1.minute)
+
+    4.times do |index|
+      request_project = create(:project, code: format("REQ%02d", index + 1), name: format("Pending Request Project %02d", index + 1))
+      create(:access_request, requester: user, requestable: request_project, requested_access_level: :view, created_at: fixed_time - index.minutes)
+    end
+    create(:access_request, requester: create(:user, :external, company:), requestable: project, requested_access_level: :view, reason: "Other user request")
+
+    sign_in_as(user)
+    get dashboard_path
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures do
+      expect(resource_items_for("案件").size).to eq(10)
+      expect(resource_items_for("お気に入り").size).to eq(8)
+      expect(resource_items_for("後で読む").size).to eq(8)
+      expect(resource_items_for("最近見た文書").size).to eq(10)
+      expect(resource_items_for("保留中のアクセス申請").size).to eq(3)
+
+      expect(page_text).not_to include("Hidden Project")
+      expect(dashboard_section_text("お気に入り")).to include("Favorite Document 01")
+      expect(dashboard_section_text("お気に入り")).not_to include("Favorite Document 09")
+      expect(page_text).not_to include("Hidden Favorite Document")
+      expect(dashboard_section_text("後で読む")).to include("Read Later Document 01")
+      expect(dashboard_section_text("後で読む")).not_to include("Read Later Document 09")
+      expect(dashboard_section_text("最近見た文書")).to include("Recent Document 01")
+      expect(dashboard_section_text("最近見た文書")).not_to include("Recent Document 11")
+      expect(dashboard_section_text("保留中のアクセス申請")).to include("Pending Request Project 01")
+      expect(dashboard_section_text("保留中のアクセス申請")).not_to include("Pending Request Project 04")
+      expect(page_text).not_to include("Other user request")
+      expect(page_text).not_to include("保留中の確認依頼")
+      expect(page_text).not_to include("社内向け導線")
+    end
+  end
+
+  it "bounds recently updated documents to accessible documents" do
+    fixed_time = Time.zone.local(2026, 1, 2, 12, 0, 0)
+
+    11.times do |index|
+      create_viewable_document(
+        title: format("Updated Document %02d", index + 1),
+        slug: format("updated-document-%02d", index + 1),
+        updated_at: fixed_time - index.minutes
+      )
+    end
+    create(:document, project:, title: "Hidden Updated Document", slug: "hidden-updated", visibility_policy: :internal_only, updated_at: fixed_time + 1.minute)
+
+    sign_in_as(user)
+    get dashboard_path
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures do
+      expect(resource_items_for("最近更新された文書").size).to eq(10)
+      expect(dashboard_section_text("最近更新された文書")).to include("Updated Document 01")
+      expect(dashboard_section_text("最近更新された文書")).not_to include("Updated Document 11")
+      expect(page_text).not_to include("Hidden Updated Document")
+    end
   end
 
   it "shows pending approval summary for internal users while keeping the hero action separate" do
