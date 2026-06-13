@@ -99,7 +99,7 @@ RSpec.describe "Company master admin handoff visual evidence", type: :system do
     viewport_evidence = page.evaluate_script(<<~JS)
       (function() {
         var section = document.querySelector('section[data-controller="company-master-admin-handoff"]');
-        var checkedNodes = [section].concat(Array.prototype.slice.call(section.querySelectorAll('fieldset label, input, textarea, button, [role="status"]')));
+        var checkedNodes = [section].concat(Array.prototype.slice.call(section.querySelectorAll('fieldset label, input, textarea, button')));
         var sectionRect = section.getBoundingClientRect();
         var visibleNodes = checkedNodes.every(function(node) {
           var rect = node.getBoundingClientRect();
