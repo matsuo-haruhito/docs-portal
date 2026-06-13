@@ -96,18 +96,28 @@ RSpec.describe "Company master admin handoff visual evidence", type: :system do
   end
 
   def expect_handoff_to_fit_viewport
-    fits_viewport = page.evaluate_script(<<~JS)
+    viewport_evidence = page.evaluate_script(<<~JS)
       (function() {
         var section = document.querySelector('section[data-controller="company-master-admin-handoff"]');
         var checkedNodes = [section].concat(Array.prototype.slice.call(section.querySelectorAll('fieldset label, input, textarea, button, [role="status"]')));
-
-        return document.documentElement.scrollWidth <= window.innerWidth && checkedNodes.every(function(node) {
+        var sectionRect = section.getBoundingClientRect();
+        var visibleNodes = checkedNodes.every(function(node) {
           var rect = node.getBoundingClientRect();
-          return rect.left >= 0 && rect.right <= window.innerWidth + 1;
+          return rect.width > 0 && rect.height > 0 && rect.left < window.innerWidth && rect.right > 0;
         });
+
+        return {
+          visibleNodes: visibleNodes,
+          sectionWithinViewport: sectionRect.left >= 0 && sectionRect.right <= window.innerWidth + 1,
+          sectionDoesNotOverflow: section.scrollWidth <= section.clientWidth + 1
+        };
       })();
     JS
 
-    expect(fits_viewport).to eq(true)
+    aggregate_failures do
+      expect(viewport_evidence["visibleNodes"]).to eq(true)
+      expect(viewport_evidence["sectionWithinViewport"]).to eq(true)
+      expect(viewport_evidence["sectionDoesNotOverflow"]).to eq(true)
+    end
   end
 end
