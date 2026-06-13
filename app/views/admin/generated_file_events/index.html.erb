@@ -94,10 +94,12 @@
       <div>
         <%= form.label :scheduled_from, "実行予定日(開始)", class: "block text-sm font-semibold" %>
         <%= form.text_field :scheduled_from, value: @filters[:scheduled_from], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">日付だけ指定すると、その日の00:00以降を含みます。</p>
       </div>
       <div>
         <%= form.label :scheduled_to, "実行予定日(終了)", class: "block text-sm font-semibold" %>
         <%= form.text_field :scheduled_to, value: @filters[:scheduled_to], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">日付だけ指定すると、その日の23:59までを含みます。</p>
       </div>
       <div class="flex items-end gap-2">
         <%= form.submit "絞り込み", class: "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
@@ -163,7 +165,11 @@
           <tr>
             <td colspan="<%= table_columns.size %>" class="px-4 py-8 text-center text-gray-500">
               <% if has_active_filters %>
-                条件に一致する生成ファイルイベントはありません。条件を見直すか、クリアしてください。
+                <div class="space-y-2">
+                  <p>検索条件に一致する生成ファイルイベントはありません。</p>
+                  <p class="text-sm">これは表示フィルタの結果です。一括再dispatch対象の有無とは別に、条件を見直すか、すべての生成ファイルイベントを表示してください。</p>
+                  <p><%= link_to "すべての生成ファイルイベントを見る", admin_generated_file_events_path, class: "text-blue-600 underline" %></p>
+                </div>
               <% else %>
                 生成ファイルイベントはまだありません。
               <% end %>
