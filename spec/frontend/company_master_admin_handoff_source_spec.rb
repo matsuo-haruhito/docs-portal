@@ -20,21 +20,56 @@ RSpec.describe "Company master admin handoff source" do
       expect(view_source).to include('section.card data-controller="company-master-admin-handoff"')
       expect(view_source).to include('button.button.secondary type="button" data-action="company-master-admin-handoff#copy"')
       expect(view_source).to include('span#company-master-admin-handoff-status.muted role="status" aria-live="polite" hidden=true data-company-master-admin-handoff-target="status"')
-      expect(view_source).to include('pre.company-master-admin-handoff-template data-company-master-admin-handoff-target="template" tabindex="0"')
+      expect(view_source).to include('textarea.company-master-admin-handoff-template rows="8" data-company-master-admin-handoff-target="template" tabindex="0"')
       expect(view_source).to include("連絡先や forbidden admin surface への direct link はここでは固定しません")
+    end
+  end
+
+  it "limits the handoff categories to the planned four classifications" do
+    aggregate_failures do
+      expect(view_source).to include('key: "project_membership", label: "案件・案件所属"')
+      expect(view_source).to include('key: "document_permission", label: "文書・文書権限"')
+      expect(view_source).to include('key: "operations", label: "運用確認"')
+      expect(view_source).to include('key: "admin_decision", label: "管理者判断"')
+      expect(view_source.scan("category_label:").size).to eq(1)
+      expect(view_source).to include('action: "company-master-admin-handoff#selectCategory"')
+    end
+  end
+
+  it "keeps editable fields tied to the generated copy target" do
+    aggregate_failures do
+      expect(view_source).to include('data-company-master-admin-handoff-target="targetUser"')
+      expect(view_source).to include('data-company-master-admin-handoff-target="requestDetail"')
+      expect(view_source).to include('data-company-master-admin-handoff-target="checklist"')
+      expect(view_source).to include('data-company-master-admin-handoff-target="userType"')
+      expect(view_source).to include('data-company-master-admin-handoff-target="timeline"')
+      expect(view_source.scan('data-action="input->company-master-admin-handoff#updateTemplate"').size).to eq(5)
+      expect(view_source).to include("この確認項目は依頼内容を整理するためのものであり、会社管理者の権限や文書閲覧範囲を広げるものではありません")
     end
   end
 
   it "keeps clipboard success, failure, and unsupported states explicit" do
     aggregate_failures do
-      expect(controller_source).to include('static targets = ["template", "status"]')
+      expect(controller_source).to include('static targets = ["template", "status", "category", "targetUser", "requestDetail", "checklist", "userType", "timeline"]')
       expect(controller_source).to include("event.preventDefault()")
       expect(controller_source).to include("navigator.clipboard?.writeText")
       expect(controller_source).to include("依頼テンプレートをコピーしました。")
       expect(controller_source).to include("コピー機能を使えません。テンプレートを選択してコピーしてください。")
       expect(controller_source).to include("コピーできませんでした。テンプレートを選択してコピーしてください。")
       expect(controller_source).to include("this.statusTarget.hidden = false")
-      expect(controller_source).to include("this.templateTarget.textContent.trim()")
+      expect(controller_source).to include("this.templateTarget.value.trim()")
+    end
+  end
+
+  it "generates template text from the selected category and editable fields" do
+    aggregate_failures do
+      expect(controller_source).to include("connect()")
+      expect(controller_source).to include("selectCategory(event)")
+      expect(controller_source).to include("applyCategoryHints(category)")
+      expect(controller_source).to include("updateTemplate()")
+      expect(controller_source).to include('`【分類】${this.selectedCategoryLabel}`')
+      expect(controller_source).to include('`【対象ユーザー】${this.fieldValue("targetUser", "名前 / メールアドレス")}`')
+      expect(controller_source).to include('`【確認項目】${this.fieldValue("checklist", "internal admin に確認してほしい項目")}`')
     end
   end
 end
