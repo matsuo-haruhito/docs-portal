@@ -103,15 +103,24 @@ RSpec.describe DocumentDeliveryLogs::FailureAlertHandoff do
     end
 
     it "masks secret-like values before returning preview payloads" do
-      create_delivery_log(
-        status: :failed,
+      candidate = instance_double(
+        DocumentDeliveryLogs::FailureAlertCandidates::Candidate,
+        identity: {
+          project_id: project.id,
+          delivery_type: "portal_link",
+          to_addresses: "client@example.com token=recipient-raw",
+          subject: "Document delivery secret=subject-raw"
+        },
+        project: project,
+        delivery_type: "portal_link",
         to_addresses: "client@example.com token=recipient-raw",
         subject: "Document delivery secret=subject-raw",
-        error_message: "Authorization: Bearer bearer-raw token=token-raw secret=secret-raw",
-        created_at: 1.hour.ago
+        failure_count: 3,
+        last_failed_at: Time.current,
+        latest_error_message: "Authorization: Bearer bearer-raw token=token-raw secret=secret-raw"
       )
 
-      entry = described_class.new(threshold: 1).call.first
+      entry = described_class.new(candidates: [candidate]).call.first
 
       expect(entry.recipient_preview).to include("token=[FILTERED]")
       expect(entry.recipient_preview).not_to include("recipient-raw")
