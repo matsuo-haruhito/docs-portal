@@ -129,8 +129,10 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(page_text).to include("既読確認: 1")
     expect(page_text).to include("表示中: 1件")
     expect(page_text).to match(/検索:\s*なし/)
-    expect(page_text).to include("行内の「監査ログへ」は閲覧またはダウンロードがある文書だけに表示されます。")
-    expect(page_text).to include("既読確認件数の「内訳へ」から確認者と確認時刻を追えます。")
+    expect(page_text).to include("上の案件リンクは案件全体の調査入口です。")
+    expect(page_text).to include("行内の「監査ログへ」は閲覧またはダウンロードがある文書だけに表示され、文書単位の実績へ進みます。")
+    expect(page_text).to include("既読確認だけで利用ありの文書は、既読確認件数の「内訳へ」から確認者と確認時刻を追えます。")
+    expect(page_text).to include("各行のリンクは、その文書で確認できる実績がある場合だけ表示されます。")
     expect(page_text).to include("文書利用一覧の表示設定")
 
     selected_option = parsed_html.at_css("select[name='project_id'] option[selected]")
@@ -327,10 +329,10 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(page_text).to include("表示中: 3件")
     expect(page_text).to match(/利用状況:\s*利用あり/)
     expect(page_text).to match(/並び順:\s*最終アクセスが新しい順/)
-    expect(page_text).to include("既読確認件数の「内訳へ」から確認者と確認時刻を追えます。")
+    expect(page_text).to include("既読確認だけで利用ありの文書は、既読確認件数の「内訳へ」から確認者と確認時刻を追えます。")
     expect(row_titles).to eq(["Guide", "Manual", "Policy"])
     expect(row_titles).not_to include("Checklist")
-    expect(row_column_text("Policy", "used")).to include("既読のみ", "既読確認の内訳を確認")
+    expect(row_column_text("Policy", "used")).to include("既読のみ", "閲覧・DLはなく、既読確認の内訳を確認")
     expect(summary_audit_log_link).to be_present
     expect(summary_read_confirmation_link).to be_present
     expect(audit_log_link(newest_document.slug)).to be_present
@@ -401,6 +403,7 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(page_text).to include("期間: 2026-05-01 から 2026-05-02 まで")
     expect(page_text).to include("表示中: 1件")
     expect(row_titles).to eq(["Checklist"])
+    expect(row_column_text("Checklist", "used")).to include("未利用", "期間内の閲覧・DL・既読確認なし（期間外の実績は含みません）")
     expect(audit_log_link(outside_document.slug)).not_to be_present
   end
 
