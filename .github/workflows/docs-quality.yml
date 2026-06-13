@@ -6,6 +6,11 @@ on:
     paths:
       - README.md
       - docs/**/*.md
+      - docusaurus/docusaurus.config.ts
+      - docusaurus/package.json
+      - docusaurus/package-lock.json
+      - docusaurus/plugins/remark-kroki-diagrams.mjs
+      - docusaurus/plugins/remark-kroki-diagrams.smoke.test.mjs
       - .github/workflows/docs-quality.yml
       - .github/scripts/check_markdown_links.rb
       - .markdownlint-cli2.yaml
@@ -13,6 +18,11 @@ on:
     paths:
       - README.md
       - docs/**/*.md
+      - docusaurus/docusaurus.config.ts
+      - docusaurus/package.json
+      - docusaurus/package-lock.json
+      - docusaurus/plugins/remark-kroki-diagrams.mjs
+      - docusaurus/plugins/remark-kroki-diagrams.smoke.test.mjs
       - .github/workflows/docs-quality.yml
       - .github/scripts/check_markdown_links.rb
       - .markdownlint-cli2.yaml
@@ -28,6 +38,10 @@ jobs:
         with:
           ruby-version: .ruby-version
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
       - name: Run markdown lint
         uses: DavidAnson/markdownlint-cli2-action@v23
         with:
@@ -37,3 +51,7 @@ jobs:
 
       - name: Check relative markdown links
         run: ruby .github/scripts/check_markdown_links.rb
+
+      - name: Run Kroki diagram mock smoke
+        working-directory: ./docusaurus
+        run: node --test plugins/remark-kroki-diagrams.smoke.test.mjs
