@@ -1,13 +1,21 @@
 - page_title "会社・ユーザー管理"
 - handoff_company_name = current_user&.company&.name.presence || "自社会社名"
 - handoff_requester = [current_user&.name, current_user&.email_address].compact_blank.join(" / ").presence || "依頼者名・連絡先"
+- handoff_categories = [
+-   { key: "project_membership", label: "案件・案件所属", request_hint: "案件の作成、所属追加、担当者の付け替えなど", checklist_hint: "案件名、対象ユーザー、必要な役割、担当者変更の有無", user_type_hint: "なし" },
+-   { key: "document_permission", label: "文書・文書権限", request_hint: "文書管理、閲覧範囲、文書公開権限の調整など", checklist_hint: "文書名、必要な閲覧範囲、公開権限、対象ユーザー", user_type_hint: "なし" },
+-   { key: "operations", label: "運用確認", request_hint: "監査ログ、利用状況、アクセス申請の確認など", checklist_hint: "確認したい期間、対象操作、アクセス申請の状態", user_type_hint: "なし" },
+-   { key: "admin_decision", label: "管理者判断", request_hint: "ユーザー種別の internal 化、他社ユーザーや他社会社の調整など", checklist_hint: "判断してほしい内容、関係する会社・ユーザー、業務背景", user_type_hint: "あり" }
+- ]
+- selected_handoff_category = handoff_categories.first
 - handoff_template_lines = []
 - handoff_template_lines << "【会社】#{handoff_company_name}"
 - handoff_template_lines << "【依頼者】#{handoff_requester}"
+- handoff_template_lines << "【分類】#{selected_handoff_category[:label]}"
 - handoff_template_lines << "【対象ユーザー】名前 / メールアドレス"
-- handoff_template_lines << "【分類】案件・案件所属 / 文書・文書権限 / 運用確認 / 管理者判断"
-- handoff_template_lines << "【依頼内容】必要な案件所属、文書権限、アクセス申請など"
-- handoff_template_lines << "【user type 変更相談】あり / なし"
+- handoff_template_lines << "【依頼内容】#{selected_handoff_category[:request_hint]}"
+- handoff_template_lines << "【確認項目】#{selected_handoff_category[:checklist_hint]}"
+- handoff_template_lines << "【user type 変更相談】#{selected_handoff_category[:user_type_hint]}"
 - handoff_template_lines << "【期限・背景】理由と希望時期"
 
 h1 会社・ユーザー管理
@@ -47,7 +55,7 @@ section.card
       strong 管理者判断
       |  - ユーザー種別の internal 化、他社ユーザーや他社会社の調整
 
-section.card data-controller="company-master-admin-handoff"
+section.card data-controller="company-master-admin-handoff" data-company-master-admin-handoff-company-name-value=handoff_company_name data-company-master-admin-handoff-requester-value=handoff_requester
   h2 internal admin へ依頼するときの確認項目
   p.muted 依頼先や連絡手段は組織の運用に従い、次の情報を添えて引き継いでください。
   ul
@@ -56,12 +64,38 @@ section.card data-controller="company-master-admin-handoff"
     li ユーザー種別の変更や他社会社・他社ユーザーの調整が必要か
     li 期限や背景がある場合は、その理由と希望時期
   h3 依頼テンプレート
-  p.muted 必要な行だけ調整して ticket や chat に貼り付けてください。連絡先や forbidden admin surface への direct link はここでは固定しません。
+  p.muted 分類を選ぶと必要な確認項目が切り替わります。入力欄を調整してから ticket や chat に貼り付けてください。
+  fieldset
+    legend 依頼分類
+    .form-grid
+      - handoff_categories.each do |category|
+        label
+          = radio_button_tag "company_master_admin_handoff_category", category[:key], category == selected_handoff_category, data: { company_master_admin_handoff_target: "category", action: "company-master-admin-handoff#selectCategory", category_label: category[:label], request_hint: category[:request_hint], checklist_hint: category[:checklist_hint], user_type_hint: category[:user_type_hint] }
+          strong = category[:label]
+          br
+          span.muted = category[:request_hint]
+  .form-grid
+    label
+      | 対象ユーザー
+      input type="text" value="名前 / メールアドレス" data-company-master-admin-handoff-target="targetUser" data-action="input->company-master-admin-handoff#updateTemplate"
+    label
+      | user type 変更相談
+      input type="text" value=selected_handoff_category[:user_type_hint] data-company-master-admin-handoff-target="userType" data-action="input->company-master-admin-handoff#updateTemplate"
+    label
+      | 依頼内容
+      textarea rows="3" data-company-master-admin-handoff-target="requestDetail" data-action="input->company-master-admin-handoff#updateTemplate" = selected_handoff_category[:request_hint]
+    label
+      | 確認項目
+      textarea rows="3" data-company-master-admin-handoff-target="checklist" data-action="input->company-master-admin-handoff#updateTemplate" = selected_handoff_category[:checklist_hint]
+    label
+      | 期限・背景
+      input type="text" value="理由と希望時期" data-company-master-admin-handoff-target="timeline" data-action="input->company-master-admin-handoff#updateTemplate"
+  p.muted 連絡先や forbidden admin surface への direct link はここでは固定しません。
   p.actions
     button.button.secondary type="button" data-action="company-master-admin-handoff#copy" aria-describedby="company-master-admin-handoff-status"
       | 依頼テンプレートをコピー
     span#company-master-admin-handoff-status.muted role="status" aria-live="polite" hidden=true data-company-master-admin-handoff-target="status"
-  pre.company-master-admin-handoff-template data-company-master-admin-handoff-target="template" tabindex="0" = handoff_template_lines.join("\n")
+  textarea.company-master-admin-handoff-template rows="8" data-company-master-admin-handoff-target="template" tabindex="0" = handoff_template_lines.join("\n")
   p.muted この確認項目は依頼内容を整理するためのものであり、会社管理者の権限や文書閲覧範囲を広げるものではありません。
 
 p = link_to "案件一覧へ戻る", projects_path
