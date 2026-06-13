@@ -33,6 +33,14 @@ RSpec.describe "AccessibleDocuments", type: :request do
     parsed_html.css("form.document-filter-form .form-actions a").map { _1.text.squish }
   end
 
+  def document_title_texts
+    parsed_html.css("table tbody tr td[data-rails-table-preferences-column-key='document']").map { _1.text.squish }
+  end
+
+  def pagination_href(text)
+    parsed_html.css("nav.pagination a").find { |link| link.text.squish == text }&.[]("href")
+  end
+
   before do
     create(:project_membership, project: project_a, user:)
     create(:project_membership, project: project_b, user:)
@@ -153,37 +161,147 @@ RSpec.describe "AccessibleDocuments", type: :request do
   end
 
   it "keeps active filter params on pagination links" do
+    tag = DocumentTag.create!(name: "検索タグ")
     21.times do |index|
-      create_viewable_document(
+      document = create_viewable_document(
         project: project_a,
         title: format("Spec Reference %02d", index + 1),
-        slug: format("spec-reference-%02d", index + 1)
+        slug: format("spec-reference-%02d", index + 1),
+        category: :spec,
+        document_kind: :markdown,
+        visibility_policy: :restricted_external
       )
+      DocumentTagging.create!(document:, document_tag: tag)
+      version = create(:document_version, document:, site_build_path: "spec-reference-#{index + 1}")
+      document.update!(latest_version: version)
+      create(:document_file, document_version: version, file_name: "spec-reference-#{index + 1}.pdf")
     end
 
     sign_in_as(user)
-    get documents_path, params: { category: "spec" }
+    get documents_path, params: {
+      q: "Spec",
+      tag: tag.normalized_name,
+      category: "spec",
+      document_kind: "markdown",
+      visibility_policy: "restricted_external",
+      has_html: "1",
+      has_files: "1",
+      has_pdf: "1"
+    }
 
     expect(response).to have_http_status(:ok)
-    next_page_href = parsed_html.css("nav.pagination a").find { |link| link.text.squish == "次へ" }["href"]
+    next_page_href = pagination_href("次へ")
+    expect(next_page_href).to include("q=Spec")
+    expect(next_page_href).to include("tag=#{CGI.escape(tag.normalized_name)}")
     expect(next_page_href).to include("category=spec")
+    expect(next_page_href).to include("document_kind=markdown")
+    expect(next_page_href).to include("visibility_policy=restricted_external")
+    expect(next_page_href).to include("has_html=1")
+    expect(next_page_href).to include("has_files=1")
+    expect(next_page_href).to include("has_pdf=1")
     expect(next_page_href).to include("page=2")
   end
 
   it "applies practical checkbox filters from request params" do
-    with_files = create_viewable_document(project: project_a, title: "Attached Manual", slug: "attached-manual")
-    without_files = create_viewable_document(project: project_b, title: "Plain Handbook", slug: "plain-handbook")
+    html_document = create_viewable_document(project: project_a, title: "HTML Manual", slug: "html-manual")
+    attached_document = create_viewable_document(project: project_a, title: "Attached Manual", slug: "attached-manual")
+    pdf_kind_document = create_viewable_document(project: project_b, title: "PDF Kind Handbook", slug: "pdf-kind-handbook", document_kind: :pdf)
+    diagram_document = create_viewable_document(project: project_b, title: "Diagram Source", slug: "diagram-source")
+    plain_document = create_viewable_document(project: project_b, title: "Plain Handbook", slug: "plain-handbook")
 
-    version = create(:document_version, document: with_files)
-    create(:document_file, document_version: version, file_name: "attached-manual.pdf")
+    html_version = create(:document_version, document: html_document, site_build_path: "html-manual")
+    html_document.update!(latest_version: html_version)
+    attached_version = create(:document_version, document: attached_document)
+    create(:document_file, document_version: attached_version, file_name: "attached-manual.txt")
+    create(:document_version, document: pdf_kind_document)
+    create(:document_version, document: diagram_document, source_extension: "puml")
+    create(:document_version, document: plain_document)
 
     sign_in_as(user)
+
+    get documents_path, params: { has_html: "1" }
+    expect(response).to have_http_status(:ok)
+    expect(document_title_texts).to eq([html_document.title])
+    expect(page_text).to include("HTML生成済み")
+
     get documents_path, params: { has_files: "1" }
+    expect(response).to have_http_status(:ok)
+    expect(document_title_texts).to eq([attached_document.title])
+    expect(page_text).to include("添付あり")
+
+    get documents_path, params: { has_pdf: "1" }
+    expect(response).to have_http_status(:ok)
+    expect(document_title_texts).to eq([pdf_kind_document.title])
+    expect(page_text).to include("PDFあり")
+
+    get documents_path, params: { has_diagram: "1" }
+    expect(response).to have_http_status(:ok)
+    expect(document_title_texts).to eq([diagram_document.title])
+    expect(page_text).to include("図あり")
+  end
+
+  it "does not duplicate documents when PDF and diagram filters join multiple files" do
+    pdf_document = create_viewable_document(project: project_a, title: "PDF Attachment Manual", slug: "pdf-attachment-manual")
+    pdf_version = create(:document_version, document: pdf_document)
+    create(:document_file, document_version: pdf_version, file_name: "manual.pdf")
+    create(:document_file, document_version: pdf_version, file_name: "appendix.pdf")
+
+    diagram_document = create_viewable_document(project: project_b, title: "Diagram Attachment Manual", slug: "diagram-attachment-manual")
+    diagram_version = create(:document_version, document: diagram_document, source_extension: "puml")
+    create(:document_file, document_version: diagram_version, file_name: "flow.mmd")
+    create(:document_file, document_version: diagram_version, file_name: "sequence.d2")
+
+    sign_in_as(user)
+
+    get documents_path, params: { has_pdf: "1" }
+    expect(response).to have_http_status(:ok)
+    expect(document_title_texts.count(pdf_document.title)).to eq(1)
+
+    get documents_path, params: { has_diagram: "1" }
+    expect(response).to have_http_status(:ok)
+    expect(document_title_texts.count(diagram_document.title)).to eq(1)
+  end
+
+  it "ignores unsupported enum filters instead of failing the request" do
+    spec_document = create_viewable_document(project: project_a, title: "Spec Manual", slug: "spec-manual", category: :spec)
+    manual_document = create_viewable_document(project: project_b, title: "Regular Manual", slug: "regular-manual", category: :manual)
+
+    sign_in_as(user)
+    get documents_path, params: {
+      category: "unknown-category",
+      document_kind: "unknown-kind",
+      visibility_policy: "unknown-visibility"
+    }
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include(with_files.title)
-    expect(response.body).not_to include(without_files.title)
-    expect(filter_form_action_links).to include("条件をクリア")
+    expect(document_title_texts).to include(spec_document.title, manual_document.title)
+    expect(page_text).not_to include("カテゴリ:")
+    expect(page_text).not_to include("ファイル種:")
+    expect(page_text).not_to include("公開範囲:")
+  end
+
+  it "rounds invalid page params to the current pagination bounds" do
+    21.times do |index|
+      create_viewable_document(
+        project: project_a,
+        title: format("Paged Manual %02d", index + 1),
+        slug: format("paged-manual-%02d", index + 1)
+      )
+    end
+
+    sign_in_as(user)
+
+    get documents_path, params: { page: 0 }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to match(/ページ\s*1\s*\/\s*2/)
+
+    get documents_path, params: { page: -3 }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to match(/ページ\s*1\s*\/\s*2/)
+
+    get documents_path, params: { page: 999 }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to match(/ページ\s*2\s*\/\s*2/)
   end
 
   it "keeps internal-only documents available to internal users" do
