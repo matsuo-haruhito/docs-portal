@@ -9,6 +9,7 @@
 - `spec/services/document_delivery_logs/failure_alert_candidates_spec.rb`
 - `spec/services/document_delivery_logs/failure_alert_handoff_spec.rb`
 - `docs/外部送付履歴運用runbook.md`
+- `docs/監視・アラート設計.md`
 
 ## Current support
 
@@ -26,6 +27,13 @@ current default は次のとおりです。
 `DocumentDeliveryLogs::FailureAlertHandoff` は、同じ候補を通知前の handoff payload として取り出すための read-only service です。候補の identity、案件 code/name、送付方式、受信者 preview、件名 preview、連続失敗数、最終失敗時刻、短い error message preview、確認用 path、runbook path を返します。
 
 確認用 path は `status=failed`、候補の `delivery_type`、件名を使った `q` を付けた `/document_delivery_logs` です。本文、添付、CC/BCC の full text、外部シークレットは payload に含めません。preview と確認用 path の `q` は `Bearer` / `Basic` credential、`token=`、`secret=` などの secret-like value を `[FILTERED]` に置換してから返します。
+
+## 既存 runbook との接続
+
+- 監視観点から見る場合は、[監視・アラート設計](./監視・アラート設計.md) の `外部依存監視` と `Runbook との接続` を入口にします。この候補は `mail / webhook の継続失敗` のうち、外部送付履歴側を read-only payload として切り出すための内部補助です。
+- 画面で実際に確認する場合は、[外部送付履歴運用runbook](./外部送付履歴運用runbook.md) の検索、状態 filter、方式 filter、詳細確認、手動状態更新の読み方に戻ります。
+- 候補 payload、一覧検索、手動状態更新、通知 channel は別のものです。候補 payload は調査入口であり、送付状態の変更や本番 alert 発火を意味しません。
+- generated file の継続失敗候補とは identity と確認 path が異なります。生成ファイル側の候補や dashboard 表示を読み返す場合は [生成ファイル継続失敗候補runbook](./生成ファイル継続失敗候補runbook.md) を参照します。
 
 ## 読み分け
 
@@ -55,5 +63,6 @@ current default は次のとおりです。
 ## 関連
 
 - Closes #2990
+- Refs #2991
 - [外部送付履歴運用runbook](./外部送付履歴運用runbook.md)
 - [監視・アラート設計](./監視・アラート設計.md)
