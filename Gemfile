@@ -24,7 +24,7 @@ gem "pundit"
 gem "slim", "~> 5.2", ">= 5.2.1"
 gem "rparam", git: "https://github.com/kmdtmyk/rparam", ref: "3a4e94706999ff794b15aaebba0ee4eb25be38d3"
 gem "rtypes", git: "https://github.com/kmdtmyk/rtypes", ref: "b4a177a933261019825a3a5bfd727ad8e493ae45"
-gem "tree_view", git: "https://github.com/matsuo-haruhito/tree_view-rails.git", ref: "9c538f9ee7946fa5af24f15c99402a0431677303"
+gem "tree_view", git: "https://github.com/matsuo-haruhito/tree_view-rails.git", ref: "e129cb3ce2835a483e87fc71a50cc9fee07e3da5"
 gem "rails_table_preferences", git: "https://github.com/matsuo-haruhito/rails_table_preferences.git", ref: "b3f1a9d6eb46aefe568c637396fab63151aef322"
 gem "rails_fields_kit", git: "https://github.com/matsuo-haruhito/rails_fields_kit.git", ref: "0c29bb935a1df3e61add860a966a2fc7ea586b1a"
 
