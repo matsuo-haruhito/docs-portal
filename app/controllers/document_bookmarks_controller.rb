@@ -12,6 +12,7 @@ class DocumentBookmarksController < BaseController
     @recent_documents_query = recent_documents_query
     @favorite_bookmarks = bookmarks_for(:favorite)
     @read_later_bookmarks = bookmarks_for(:read_later)
+    @favorite_bookmark_document_ids = @favorite_bookmarks.map(&:document_id)
     @all_recent_documents = RecentDocumentsQuery.new(user: current_user, limit: 20).call
     @recent_documents = filter_recent_documents(@all_recent_documents)
   end
