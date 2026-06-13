@@ -157,18 +157,12 @@ section.card
             td data-rails-table-preferences-column-key="last_accessed_at" = row[:last_accessed_at].presence || "-"
   - else
     section.card
-      h2 条件に一致する文書はありません
+      h2 = document_usage_report_empty_state_heading(report_hash: @report_hash, usage_filter: @usage_filter, query: @query)
+      p.muted = document_usage_report_empty_state_body(report_hash: @report_hash, usage_filter: @usage_filter, query: @query)
       p.muted
-        | 現在の利用状況は「
-        strong = document_usage_report_filter_label(@usage_filter)
-        | 」、並び順は「
-        strong = document_usage_report_sort_label(@sort_order)
-        | 」
-        - if @query.present?
-          | 、検索語は「
-          strong = @query
-          | 」
-        | です。条件を変えるか、クリアして案件全体を確認してください。
+        | 現在の条件: 
+        strong = document_usage_report_empty_state_condition_label(usage_filter: @usage_filter, sort_order: @sort_order, query: @query, from_date: @from_date, to_date: @to_date)
+        | 。条件を変えるか、クリアして案件全体を確認してください。
       p.actions
         = link_to "条件をクリア", admin_document_usage_reports_path(project_id: @selected_project.id)
 - else
