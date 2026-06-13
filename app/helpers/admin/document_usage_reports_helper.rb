@@ -80,15 +80,6 @@ module Admin::DocumentUsageReportsHelper
     end
   end
 
-  def document_usage_report_empty_state_condition_label(usage_filter:, sort_order:, query:, from_date:, to_date:)
-    [
-      "利用状況「#{document_usage_report_filter_label(usage_filter)}」",
-      "並び順「#{document_usage_report_sort_label(sort_order)}」",
-      query.present? ? "検索語「#{query}」" : "検索語なし",
-      "期間「#{document_usage_report_period_label(from_date, to_date)}」"
-    ].join(" / ")
-  end
-
   def document_usage_report_usage_state(row)
     return :unused unless row[:used]
 
