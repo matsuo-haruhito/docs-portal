@@ -51,6 +51,10 @@ RSpec.describe "Admin document permissions", type: :request do
     parsed_html.css("a[href]").map { _1.text.squish }
   end
 
+  def clear_filter_link
+    parsed_html.css("a[href]").find { _1.text.squish == "条件をクリア" }
+  end
+
   def node_ids
     parsed_html.css("[id]").map { _1["id"] }
   end
@@ -87,6 +91,7 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(page_text).to include("特定の1名にだけ権限を付与する場合だけ選択します。")
     expect(select_placeholder("document_permission[company_id]")).to eq("会社向けに付与する場合に選択")
     expect(select_placeholder("document_permission[user_id]")).to eq("ユーザー向けに付与する場合に選択")
+    expect(link_texts).not_to include("条件をクリア")
     expect(page_text).not_to include("会社単位かユーザー単位のどちらか一方を指定してください。")
     expect(page_text).not_to include("下段の「権限一覧」にある個別付与行")
     expect(page_text).not_to include("下段の個別権限を見る")
@@ -336,6 +341,24 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(permissions_section_text).not_to include("Company Scope")
   end
 
+  it "shows the clear action for each active filter type" do
+    target_project = create(:project, name: "Clear Link Project")
+
+    sign_in_as(admin_user)
+
+    [
+      { q: "manual" },
+      { project_id: target_project.id },
+      { access_level: "view" },
+      { target_type: "company" }
+    ].each do |params|
+      get admin_document_permissions_path(params)
+
+      expect(response).to have_http_status(:ok)
+      expect(clear_filter_link["href"]).to eq(admin_document_permissions_path)
+    end
+  end
+
   it "shows a filtered empty state without mixing it with the unregistered state" do
     document = create(:document, title: "Existing Permission Guide")
     create(:document_permission, document:, company: create(:company, name: "Existing Company"))
@@ -348,7 +371,7 @@ RSpec.describe "Admin document permissions", type: :request do
     expect(page_text).to include("表示中: 0件 / 条件に一致する文書権限を表示")
     expect(overview_section_text).to include("条件に一致する文書権限概要はありません。")
     expect(permissions_section_text).to include("条件に一致する文書権限はありません。")
-    expect(response.body).to include("条件をクリア")
+    expect(clear_filter_link["href"]).to eq(admin_document_permissions_path)
     expect(overview_section_text).not_to include("まだ権限は登録されていません。")
     expect(permissions_section_text).not_to include("まずは上の「新規登録」")
   end
