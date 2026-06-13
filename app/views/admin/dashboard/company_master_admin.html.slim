@@ -1,12 +1,7 @@
 - page_title "会社・ユーザー管理"
 - handoff_company_name = current_user&.company&.name.presence || "自社会社名"
 - handoff_requester = [current_user&.name, current_user&.email_address].compact_blank.join(" / ").presence || "依頼者名・連絡先"
-- handoff_categories = [
--   { key: "project_membership", label: "案件・案件所属", request_hint: "案件の作成、所属追加、担当者の付け替えなど", checklist_hint: "案件名、対象ユーザー、必要な役割、担当者変更の有無", user_type_hint: "なし" },
--   { key: "document_permission", label: "文書・文書権限", request_hint: "文書管理、閲覧範囲、文書公開権限の調整など", checklist_hint: "文書名、必要な閲覧範囲、公開権限、対象ユーザー", user_type_hint: "なし" },
--   { key: "operations", label: "運用確認", request_hint: "監査ログ、利用状況、アクセス申請の確認など", checklist_hint: "確認したい期間、対象操作、アクセス申請の状態", user_type_hint: "なし" },
--   { key: "admin_decision", label: "管理者判断", request_hint: "ユーザー種別の internal 化、他社ユーザーや他社会社の調整など", checklist_hint: "判断してほしい内容、関係する会社・ユーザー、業務背景", user_type_hint: "あり" }
-- ]
+- handoff_categories = [{ key: "project_membership", label: "案件・案件所属", request_hint: "案件の作成、所属追加、担当者の付け替えなど", checklist_hint: "案件名、対象ユーザー、必要な役割、担当者変更の有無", user_type_hint: "なし" }, { key: "document_permission", label: "文書・文書権限", request_hint: "文書管理、閲覧範囲、文書公開権限の調整など", checklist_hint: "文書名、必要な閲覧範囲、公開権限、対象ユーザー", user_type_hint: "なし" }, { key: "operations", label: "運用確認", request_hint: "監査ログ、利用状況、アクセス申請の確認など", checklist_hint: "確認したい期間、対象操作、アクセス申請の状態", user_type_hint: "なし" }, { key: "admin_decision", label: "管理者判断", request_hint: "ユーザー種別の internal 化、他社ユーザーや他社会社の調整など", checklist_hint: "判断してほしい内容、関係する会社・ユーザー、業務背景", user_type_hint: "あり" }]
 - selected_handoff_category = handoff_categories.first
 - handoff_template_lines = []
 - handoff_template_lines << "【会社】#{handoff_company_name}"
