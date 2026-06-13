@@ -152,7 +152,7 @@ active filter がある状態で 0 件になった場合は、未登録状態で
 
 長い metadata JSON や error log 全文をそのまま貼るのではなく、`gfr...` の一部、入力パスや生成パスの特徴語、エラー文の短い断片、metadata に残る event public ID など、100 文字以内の手掛かりで探します。検索対象を変えたい場合も、status / job_id / generator / output_writer / event_source / created date filter は残したまま、短い断片を差し替えて再検索します。
 
-検索条件は status / job_id / generator / output_writer / event_source / created date filter と併用できます。検索 0 件の場合は、通常の未登録状態ではなく「条件に一致する生成ファイル実行履歴はありません。」と表示されます。
+検索条件は status / job_id / generator / output_writer / event_source / created date filter と併用できます。検索 0 件の場合は、通常の未登録状態ではなく「条件に一致する生成ファイル実行履歴はありません。」と表示されます。画面下部の 0 件表示に出る `すべての生成ファイル実行履歴を見る` は、現在の filter を外して全件表示へ戻る導線です。bulk retry の対象がないことを証明するものではないため、status、job_id、generator、output_writer、event_source、q、作成日の条件と warning を見直し、必要なら全体表示に戻ってから対象 run を探します。filter なしで 0 件の場合は、まだ生成ファイル実行履歴が蓄積されていない状態です。
 
 詳細画面では次を確認できます。
 
