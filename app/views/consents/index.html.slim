@@ -2,10 +2,11 @@
 
 h1 同意済み文面・注意事項
 
-p.muted 現在有効な注意事項と、自分が同意した履歴を確認できます。
+p.muted 現在提示されている注意事項と、自分が同意した記録を確認できます。
 
 section.card
   h2 現在有効な注意事項
+  p.muted ここには今提示されている active な文面だけを表示します。過去に同意した記録は下の履歴で確認できます。
   - if @active_terms.any?
     - @active_terms.each do |term|
       .card
@@ -17,11 +18,13 @@ section.card
           strong = term.version_label
         = simple_format(term.body)
   - else
-    p.muted 現在有効な注意事項はありません。
+    p.muted 現在有効な注意事項はありません。今提示する文面がない状態で、エラーや権限不足ではありません。
 
 section.card
   h2 自分の同意履歴
+  p.muted ここには自分が同意した文面と版の記録を表示します。会社間契約や法務承認の代替ではありません。
   - if @user_consents.any?
+    p.muted 対象が「全体」の行は案件や文書にひも付かない同意です。案件 / 文書 / ファイル / 文書版が出ている行は、その対象に対する同意です。
     table
       thead
         tr
@@ -39,4 +42,4 @@ section.card
             td = consent.consent_term_version_label
             td = consent_target_display(consent)
   - else
-    p.muted まだ同意履歴はありません。
+    p.muted まだ同意履歴はありません。自分の同意記録が0件の状態で、利用不可や権限不足を示すものではありません。
