@@ -14,18 +14,30 @@ class BackupArtifactVerifier
   TIMESTAMP_PATTERN = /\b(?:20\d{2}[-]?\d{2}[-]?\d{2}(?:[T_-]?\d{2}[-:]?\d{2}(?:[-:]?\d{2})?Z?)?)\b/
   RELEASE_IDENTIFIER_PATTERN = /\b(?:[0-9a-f]{7,40}|v?\d+\.\d+(?:\.\d+)?(?:[-+][0-9A-Za-z.-]+)?|release[-_][0-9A-Za-z._-]+)\b/i
 
-  Result = Struct.new(:ok, :warnings, keyword_init: true)
+  Result = Struct.new(:ok, :warnings, :summary, keyword_init: true)
 
-  def initialize(db_dump:, storage_archive:, manifest:, strict_metadata:, pg_restore: "pg_restore", tar: "tar", stdout: $stdout, stderr: $stderr)
+  def initialize(db_dump:, storage_archive:, manifest:, strict_metadata:, format: :text, pg_restore: "pg_restore", tar: "tar", stdout: $stdout, stderr: $stderr)
     @db_dump = db_dump
     @storage_archive = storage_archive
     @manifest = manifest
     @strict_metadata = strict_metadata
+    @format = format.to_sym
     @pg_restore = pg_restore
     @tar = tar
     @stdout = stdout
     @stderr = stderr
     @warnings = []
+    @summary = {
+      db_dump: db_dump || "not provided",
+      db_dump_status: db_dump ? "not checked" : "not provided",
+      storage_archive: storage_archive || "not provided",
+      storage_archive_status: storage_archive ? "not checked" : "not provided",
+      required_storage_prefixes: REQUIRED_STORAGE_PREFIXES.join(", "),
+      required_storage_prefixes_status: storage_archive ? "not checked" : "not provided",
+      manifest: manifest || "not provided",
+      metadata_status: "not checked",
+      overall_result: "not checked"
+    }
   end
 
   def call
@@ -35,19 +47,24 @@ class BackupArtifactVerifier
     verify_storage_archive if storage_archive
     verify_metadata
 
+    summary[:overall_result] = warnings.empty? ? "ok" : "warning"
     stdout.puts "Backup artifact verification completed#{warnings.empty? ? '' : ' with warnings'}."
     warnings.each { |warning| stdout.puts "WARNING: #{warning}" }
     stdout.puts "See docs/バックアップ・リストア手順.md for restore rehearsal smoke checks."
-    Result.new(ok: true, warnings:)
+    write_markdown_summary(stdout) if markdown_format?
+    Result.new(ok: true, warnings:, summary:)
   rescue VerificationError => error
+    summary[:overall_result] = "failed"
+    summary[:failure] = error.message
     stderr.puts "Backup artifact verification failed: #{error.message}"
     stderr.puts "See docs/バックアップ・リストア手順.md before attempting restore."
-    Result.new(ok: false, warnings:)
+    write_markdown_summary(stdout) if markdown_format?
+    Result.new(ok: false, warnings:, summary:)
   end
 
   private
 
-  attr_reader :db_dump, :storage_archive, :manifest, :strict_metadata, :pg_restore, :tar, :stdout, :stderr, :warnings
+  attr_reader :db_dump, :storage_archive, :manifest, :strict_metadata, :format, :pg_restore, :tar, :stdout, :stderr, :warnings, :summary
 
   VerificationError = Class.new(StandardError)
 
@@ -56,10 +73,15 @@ class BackupArtifactVerifier
 
     stdout.puts "Checking DB dump with pg_restore --list: #{db_dump}"
     output, status = Open3.capture2e(pg_restore, "--list", db_dump)
-    raise VerificationError, "pg_restore --list failed for #{db_dump}: #{output.strip}" unless status.success?
+    unless status.success?
+      summary[:db_dump_status] = "failed"
+      raise VerificationError, "pg_restore --list failed for #{db_dump}: #{output.strip}"
+    end
 
+    summary[:db_dump_status] = "readable"
     stdout.puts "DB dump list is readable."
   rescue Errno::ENOENT
+    summary[:db_dump_status] = "failed"
     raise VerificationError, "pg_restore executable not found; install PostgreSQL client tools or run on a host that has pg_restore"
   end
 
@@ -68,16 +90,25 @@ class BackupArtifactVerifier
 
     stdout.puts "Checking storage archive listing: #{storage_archive}"
     output, status = Open3.capture2e(tar, "-tf", storage_archive)
-    raise VerificationError, "storage archive is not readable: #{output.strip}" unless status.success?
+    unless status.success?
+      summary[:storage_archive_status] = "failed"
+      raise VerificationError, "storage archive is not readable: #{output.strip}"
+    end
 
+    summary[:storage_archive_status] = "readable"
     entries = output.lines.map { |line| normalize_entry(line) }.reject(&:empty?)
     missing_prefixes = REQUIRED_STORAGE_PREFIXES.reject do |prefix|
       entries.any? { |entry| entry == prefix || entry.start_with?("#{prefix}/") }
     end
-    raise VerificationError, "storage archive is missing required paths: #{missing_prefixes.join(', ')}" if missing_prefixes.any?
+    if missing_prefixes.any?
+      summary[:required_storage_prefixes_status] = "missing #{missing_prefixes.join(', ')}"
+      raise VerificationError, "storage archive is missing required paths: #{missing_prefixes.join(', ')}"
+    end
 
+    summary[:required_storage_prefixes_status] = "present"
     stdout.puts "Storage archive includes #{REQUIRED_STORAGE_PREFIXES.join(' and ')}."
   rescue Errno::ENOENT
+    summary[:storage_archive_status] = "failed"
     raise VerificationError, "tar executable not found; install tar or run on a host that can list the archive"
   end
 
@@ -96,12 +127,36 @@ class BackupArtifactVerifier
     missing = metadata_checks.filter_map do |label, pattern|
       label unless metadata_text.match?(pattern)
     end
-    return if missing.empty?
+    if missing.empty?
+      summary[:metadata_status] = "ok"
+      return
+    end
 
     message = "metadata naming is missing #{missing.join(', ')}"
+    summary[:metadata_status] = strict_metadata ? "failed: #{missing.join(', ')}" : "warning: #{missing.join(', ')}"
     raise VerificationError, message if strict_metadata
 
     warnings << "#{message}; include these in artifact names or --manifest"
+  end
+
+  def markdown_format?
+    format == :markdown
+  end
+
+  def write_markdown_summary(io)
+    io.puts
+    io.puts "### Backup artifact verification summary"
+    io.puts
+    io.puts "- DB dump: #{summary[:db_dump]}"
+    io.puts "- DB dump read: #{summary[:db_dump_status]}"
+    io.puts "- storage archive: #{summary[:storage_archive]}"
+    io.puts "- storage archive read: #{summary[:storage_archive_status]}"
+    io.puts "- required storage prefixes (#{summary[:required_storage_prefixes]}): #{summary[:required_storage_prefixes_status]}"
+    io.puts "- manifest: #{summary[:manifest]}"
+    io.puts "- metadata: #{summary[:metadata_status]}"
+    io.puts "- warnings: #{warnings.empty? ? 'none' : warnings.join('; ')}"
+    io.puts "- overall result: #{summary[:overall_result]}"
+    io.puts "- failure: #{summary[:failure]}" if summary[:failure]
   end
 
   def normalize_entry(entry)
@@ -118,7 +173,8 @@ if $PROGRAM_NAME == __FILE__
     db_dump: nil,
     storage_archive: nil,
     manifest: nil,
-    strict_metadata: false
+    strict_metadata: false,
+    format: :text
   }
 
   parser = OptionParser.new do |opts|
@@ -127,6 +183,7 @@ if $PROGRAM_NAME == __FILE__
     opts.on("--storage-archive PATH", "storage archive to list and verify") { |path| options[:storage_archive] = path }
     opts.on("--manifest PATH", "optional text or JSON manifest containing environment, timestamp, and release id") { |path| options[:manifest] = path }
     opts.on("--strict-metadata", "fail instead of warning when naming metadata is incomplete") { options[:strict_metadata] = true }
+    opts.on("--format FORMAT", %w[text markdown], "output format for the release-record summary (text or markdown)") { |format| options[:format] = format.to_sym }
   end
 
   parser.parse!(ARGV)
