@@ -42,6 +42,7 @@ class DocumentVersion < ApplicationRecord
     pdf_generated
     submitted
     attachment
+    git_import
   ].freeze
 
   def to_param
