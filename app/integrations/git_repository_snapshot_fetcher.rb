@@ -42,7 +42,10 @@ class GitRepositorySnapshotFetcher
   end
 
   def git!(*args, chdir: nil)
-    stdout, stderr, status = Open3.capture3("git", *args, chdir: chdir)
+    options = {}
+    options[:chdir] = chdir if chdir
+
+    stdout, stderr, status = Open3.capture3("git", *args, **options)
     return stdout if status.success?
 
     sanitized = stderr.to_s.gsub(%r{https://[^\s@]+@github\.com}, "https://[FILTERED]@github.com")
