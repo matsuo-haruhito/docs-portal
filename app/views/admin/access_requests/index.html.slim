@@ -43,6 +43,10 @@ section.card
       div.access-request-filter-grid__search
         = form.label :q, "申請者・対象"
         = form.search_field :q, value: @filters[:q], maxlength: admin_access_request_query_max_length, placeholder: "名前、メール、対象名で検索"
+        p.muted
+          | 申請者名 / email、申請ID / 理由、対象名 / code / slug / ファイル名を検索します（最大
+          = admin_access_request_query_max_length
+          | 文字）。状態・要求権限・対象種別と組み合わせて絞り込みます。
 
     p.actions
       = form.submit "検索"
