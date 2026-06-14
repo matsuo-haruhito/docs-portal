@@ -170,6 +170,16 @@ class DocumentApprovalRequestsController < BaseController
 
   def safe_return_to_path(fallback)
     return_to = params[:return_to].to_s
-    return_to.start_with?("/") && !return_to.start_with?("//") ? return_to : fallback
+    return safe_internal_return_to_path?(return_to) ? return_to : fallback
+  end
+
+  def safe_internal_return_to_path?(path)
+    return false if path.blank? || path.match?(/[[:cntrl:]]/)
+    return false unless path.start_with?("/") && !path.start_with?("//")
+
+    uri = URI.parse(path)
+    uri.scheme.blank? && uri.host.blank? && uri.path.start_with?("/")
+  rescue URI::InvalidURIError
+    false
   end
 end
