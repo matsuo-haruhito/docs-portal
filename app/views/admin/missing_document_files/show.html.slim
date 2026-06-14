@@ -8,6 +8,7 @@ p.actions
 
 section.card
   h2 絞り込み
+  - has_active_missing_document_file_filters = @missing_document_file_filters.values.any?(&:present?)
   = form_with url: admin_missing_document_files_path, method: :get, local: true do |form|
     .form-grid
       = form.rfk_combobox :project_id,
@@ -32,7 +33,8 @@ section.card
         = form.search_field :file_q, value: @missing_document_file_filters[:file_q], placeholder: "例: imports/manual.pdf"
     p.actions
       = form.submit "絞り込む", class: "button"
-      = link_to "条件をクリア", admin_missing_document_files_path, class: "button secondary"
+      - if has_active_missing_document_file_filters
+        = link_to "条件をクリア", admin_missing_document_files_path, class: "button secondary"
 
 section.card
   h2 欠落状況
