@@ -121,3 +121,25 @@ The smoke keeps Kroki optional by passing a mocked fetch implementation. It veri
 When `KROKI_ENDPOINT` is not set, the expected behavior is a renderer failure that names the missing endpoint and source file. The normal Rails/RSpec suite should still pass without a running Kroki service because the smoke does not contact Kroki.
 
 For a manual local smoke with the optional compose service, use the renderer and Kroki environment shown above, then run a preview/build with Markdown that includes the same PlantUML block. The generated build artifact should contain `generated/kroki/plantuml-*.svg`, and the rendered page should reference `/generated/kroki/plantuml-*.svg`. Do not commit the generated SVG.
+
+## Mermaid / ELK visual evidence
+
+Mermaid and ELK layout updates are Docusaurus renderer dependency changes, not Kroki plugin changes. Kroki coverage proves that external diagram code blocks are converted into generated SVG assets; it does not prove that Mermaid's in-browser rendering, ELK edge routing, or Mermaid layout defaults still look acceptable after a dependency bump.
+
+For Dependabot or manual Docusaurus dependency updates that mention Mermaid rendering, ELK layout, edge routing, diagram shapes, label placement, or renderer defaults, keep the first gate as manual visual evidence unless the issue explicitly asks for CI automation. Add the evidence to the PR conversation as a screenshot or short confirmation note, and include the dependency name/version, fixture used, viewport or browser, and whether the rendered edge routing and labels were readable.
+
+Use this representative Markdown fixture when ELK routing is in scope:
+
+```mermaid
+%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
+flowchart LR
+  source[Draft Markdown] --> build{Docusaurus build}
+  build -->|ELK layout| preview[Generated preview]
+  build -->|needs review| evidence[Manual evidence note]
+  preview --> reviewer[Reviewer checks routing]
+  evidence --> reviewer
+```
+
+This fixture is intentionally small. It should make routed edges, branch labels, and node spacing visible without turning the check into a full visual regression suite. If a dependency release specifically mentions mindmap layout or another Mermaid diagram type, add one temporary local fixture for that release note while keeping the PR evidence to one or two representative diagrams.
+
+Do not commit generated screenshots, generated SVGs, or rendered HTML artifacts for this check. If a future issue moves this into `docs-quality`, keep it lightweight: a build-or-render smoke for the representative fixture is acceptable, but pixel diffs, browser screenshot infrastructure, all-page visual scans, and Docusaurus build profile redesign belong in separate issues.
