@@ -112,6 +112,8 @@ RSpec.describe "Admin webhook deliveries", type: :request do
     expect(endpoint_filter).to be_present
     expect(selected_value(endpoint_filter)).to eq(endpoint.id.to_s)
     expect(response.body).to include("設定名・送信先URLで検索")
+    expect(page_text).to include("設定名または送信先URLの一部で検索できます。候補は最大#{Admin::WebhookDeliveriesController::WEBHOOK_ENDPOINT_SEARCH_LIMIT}件まで表示され")
+    expect(page_text).to include("選択済みの設定は候補上限外でも復元されます。")
     expect(response.body).to include(webhook_endpoint_search_admin_webhook_deliveries_path(format: :json))
     expect(response.body).to include(selected_webhook_endpoint_admin_webhook_deliveries_path(format: :json))
   end

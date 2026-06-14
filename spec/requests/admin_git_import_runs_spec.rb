@@ -270,6 +270,8 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 0件 / 絞り込み後の最新100件までを表示")
     expect(page_text).to include("条件に一致するGit同期履歴はありません。")
+    expect(page_text).to include("適用中の状態: 失敗。状態を「すべて」に戻すと、他の状態の履歴も確認できます。")
+    expect(page_text).to include("適用中のリポジトリ: missing-repo。owner/repo の一部など、検索語を短くすると見つかることがあります。")
     expect(page_text).to include("絞り込み解除")
     expect(page_text).not_to include("表示中の最新100件内の状態")
     expect(response.body).not_to include("Git同期履歴の表示設定")

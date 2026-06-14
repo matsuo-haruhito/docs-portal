@@ -3,6 +3,7 @@
 - table_columns = git_import_run_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - status_filter_options = [["すべて", ""]] + enum_options_for("git_import_runs.status", GitImportRun.statuses.keys)
+- selected_status_label = status_filter_options.find { |(_label, value)| value == @status_filter }&.first
 
 h1 Git同期履歴
 = render "admin/nav"
@@ -101,6 +102,10 @@ h1 Git同期履歴
   - else
     .card
       p.muted 条件に一致するGit同期履歴はありません。
+      - if @status_filter.present?
+        p.muted = "適用中の状態: #{selected_status_label || @status_filter}。状態を「すべて」に戻すと、他の状態の履歴も確認できます。"
+      - if @repository_filter.present?
+        p.muted = "適用中のリポジトリ: #{@repository_filter}。owner/repo の一部など、検索語を短くすると見つかることがあります。"
       p.muted = link_to "絞り込み解除", admin_git_import_runs_path
 - else
   .card
