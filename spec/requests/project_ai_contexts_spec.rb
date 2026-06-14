@@ -217,6 +217,15 @@ RSpec.describe "Project AI contexts", type: :request do
     json = JSON.parse(response.body)
     expect(json.dig("summary", "document_count")).to eq(2)
     expect(json.fetch("documents").map { _1.fetch("public_id") }).to contain_exactly(selected.public_id, other_visible.public_id)
+
+    get project_ai_context_path(project, mode: :full, document_ids: [internal.id], candidate_view: :selected)
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("候補表示: 選択済みのみ / 表示中: 0件 / 選択済み候補: 0件 / 閲覧可能: 2件")
+    expect(page_text).to include("選択済み表示で確認できる閲覧可能な文書はありません。")
+    expect(page_text).to include("検索候補へ戻るか、すべての文書に戻して対象範囲を確認してください。")
+    expect(ai_context_link_href("検索候補へ戻る")).to include("mode=full", "document_ids%5B%5D=#{internal.id}")
+    expect(ai_context_link_href("検索候補へ戻る")).not_to include("candidate_view=selected")
+    expect(ai_context_link_href("すべての文書に戻す")).to include("mode=full")
   end
 
   it "keeps document_q as a candidate filter until document_ids are submitted" do
