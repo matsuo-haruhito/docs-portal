@@ -93,15 +93,15 @@ RSpec.describe "Document file archive entries", type: :request do
 
     get document_file_path(archive_file, disposition: "inline", q: "docs")
 
-    expect(response).to have_http_status(:ok)
-    expect(response.body).to include(
-      archive_entry_preview_document_file_path(
-        archive_file,
-        entry_path: "docs/readme.txt",
-        return_anchor: "archive-entry-1",
-        q: "docs"
-      )
+    expected_path = archive_entry_preview_document_file_path(
+      archive_file,
+      entry_path: "docs/readme.txt",
+      return_anchor: "archive-entry-1",
+      q: "docs"
     )
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(ERB::Util.html_escape(expected_path))
   end
 
   it "links back to the archive preview row for valid return anchors" do
@@ -127,9 +127,11 @@ RSpec.describe "Document file archive entries", type: :request do
       q: "docs/readme"
     )
 
+    expected_path = document_file_path(archive_file, disposition: "inline", q: "docs/readme", anchor: "archive-entry-1")
+
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("ZIP全体path検索から開いた場合は、その検索語も戻り先に反映します")
-    expect(response.body).to include(document_file_path(archive_file, disposition: "inline", q: "docs/readme", anchor: "archive-entry-1"))
+    expect(response.body).to include(ERB::Util.html_escape(expected_path))
   end
 
   it "does not use unsafe return anchors for archive preview links" do
