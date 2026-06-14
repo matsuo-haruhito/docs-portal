@@ -337,10 +337,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
   end
 
   def safe_return_to(fallback = admin_external_folder_sync_sources_path)
-    path = params[:return_to].to_s
-    return fallback if path.blank? || path.start_with?("//") || path.match?(%r{\Ahttps?://})
-
-    path
+    safe_return_to_path(fallback)
   end
 
   def sync_source_path_with_return_to
