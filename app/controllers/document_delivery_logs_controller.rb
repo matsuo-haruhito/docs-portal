@@ -236,6 +236,11 @@ class DocumentDeliveryLogsController < BaseController
 
   def safe_return_to_path(fallback)
     return_to = params[:return_to].to_s
-    return_to.start_with?("/") && !return_to.start_with?("//") ? return_to : fallback
+    return fallback if return_to.blank?
+    return fallback unless return_to.start_with?("/")
+    return fallback if return_to.start_with?("//")
+    return fallback if return_to.match?(/[[:cntrl:]]/)
+
+    return_to
   end
 end
