@@ -10,7 +10,7 @@
 - company_filter_summaries << "キーワード「#{company_filter_keyword}」" if company_filter_keyword.present?
 - company_filter_summaries << "状態: #{company_active_filter_label}" if company_active_filter_label.present?
 - company_filters_applied = company_filter_summaries.any?
-- company_return_to = request.fullpath
+- company_return_to = request.query_parameters.present? ? request.fullpath : nil
 
 h1 会社マスタ
 = render "admin/nav"
