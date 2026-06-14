@@ -75,7 +75,14 @@ h1 案件同意設定
     tbody
       - if @project_consent_settings.empty?
         tr
-          td.muted colspan=table_columns.size = empty_message
+          td.muted colspan=table_columns.size
+            - if has_filters
+              p = empty_message
+              p 条件を見直すか、すべての案件同意設定を表示してください。
+              p.actions
+                = link_to "すべての案件同意設定を見る", admin_project_consent_settings_path, class: "button secondary"
+            - else
+              = empty_message
       - @project_consent_settings.each do |setting|
         tr
           td data-rails-table-preferences-column-key="project"
