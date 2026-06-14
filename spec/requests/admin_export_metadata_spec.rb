@@ -28,6 +28,8 @@ RSpec.describe "Admin export metadata", type: :request do
     it "exposes normalized current-filter metadata without changing CSV rows" do
       create(
         :access_log,
+        user: admin_user,
+        company: admin_user.company,
         project:,
         document:,
         action_type: :download,
@@ -163,7 +165,9 @@ RSpec.describe "Admin export metadata", type: :request do
         "period_label" => "2026-05-01 から 2026-05-03 まで"
       )
       expect(metadata["filters"].dig("project", "code")).to eq("USGMETA")
-      expect(metadata["summary"]).to include("Usage Metadata Project", "利用あり", "metadata")
+      expect(metadata["summary"]).to include("Usage Metadata Project")
+      expect(metadata["summary"]).to include("利用あり")
+      expect(metadata["summary"]).to include("metadata")
 
       get admin_document_usage_reports_path(format: :csv, project_id: project.id, q: "metadata", usage_filter: "used")
 
