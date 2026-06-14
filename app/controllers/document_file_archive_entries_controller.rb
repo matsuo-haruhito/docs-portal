@@ -9,6 +9,8 @@ class DocumentFileArchiveEntriesController < BaseController
     assign_context
 
     @archive_preview_return_anchor = archive_preview_return_anchor_param
+    @archive_preview_return_query = archive_preview_return_query_param
+    @archive_preview_return_params = archive_preview_return_params
     entry_lookup = DocumentFileArchiveEntryLookup.new(file: @document_file, entry_path: params[:entry_path]).call
     @entry_preview = DocumentFileArchiveEntryPreview.new(file: @document_file, entry_path: params[:entry_path], lookup: entry_lookup).call
     @entry_downloadable = archive_entry_downloadable?(entry_lookup)
@@ -51,6 +53,20 @@ class DocumentFileArchiveEntriesController < BaseController
     return unless anchor.match?(/\Aarchive-entry-\d{1,5}\z/)
 
     anchor
+  end
+
+  def archive_preview_return_query_param
+    query = params[:q].to_s.strip
+    return if query.blank? || query.match?(/[[:cntrl:]]/)
+
+    query
+  end
+
+  def archive_preview_return_params
+    return_params = { disposition: "inline" }
+    return_params[:q] = @archive_preview_return_query if @archive_preview_return_query.present?
+    return_params[:anchor] = @archive_preview_return_anchor if @archive_preview_return_anchor.present?
+    return_params
   end
 
   def archive_entry_downloadable?(entry_lookup)

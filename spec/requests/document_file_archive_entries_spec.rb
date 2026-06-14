@@ -61,6 +61,7 @@ RSpec.describe "Document file archive entries", type: :request do
     expect(response.body).to include("ZIP項目プレビュー")
     expect(response.body).to include("ZIP内ファイル一覧へ戻る")
     expect(response.body).to include("戻る link は一覧の対象行へ移動します")
+    expect(response.body).to include("ZIP全体path検索から開いた場合は、その検索語も戻り先に反映します")
     expect(response.body).to include("表示中検索、ディレクトリ filter、種別 filter、候補 filter、並び替えは保存されない")
     expect(response.body).to include("個別ダウンロード")
     expect(response.body).to include("archive_entries/download")
@@ -86,6 +87,23 @@ RSpec.describe "Document file archive entries", type: :request do
     expect(response.body).to include("docs%2Freadme.txt")
   end
 
+  it "adds archive path query to entry preview links" do
+    write_zip("docs/readme.txt" => "one\ntwo\n", "images/logo.png" => "png")
+    sign_in_as(user)
+
+    get document_file_path(archive_file, disposition: "inline", q: "docs")
+
+    expected_path = archive_entry_preview_document_file_path(
+      archive_file,
+      entry_path: "docs/readme.txt",
+      return_anchor: "archive-entry-1",
+      q: "docs"
+    )
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(ERB::Util.html_escape(expected_path))
+  end
+
   it "links back to the archive preview row for valid return anchors" do
     write_zip("docs/readme.txt" => "one\ntwo\n")
     sign_in_as(user)
@@ -96,6 +114,24 @@ RSpec.describe "Document file archive entries", type: :request do
     expect(response.body).to include("ZIP内ファイル一覧へ戻る")
     expect(response.body).to include("戻る link は一覧の対象行へ移動します")
     expect(response.body).to include(document_file_path(archive_file, disposition: "inline", anchor: "archive-entry-1"))
+  end
+
+  it "links back to the archive preview row with the selected archive path query" do
+    write_zip("docs/readme.txt" => "one\ntwo\n")
+    sign_in_as(user)
+
+    get archive_entry_preview_document_file_path(
+      archive_file,
+      entry_path: "docs/readme.txt",
+      return_anchor: "archive-entry-1",
+      q: "docs/readme"
+    )
+
+    expected_path = document_file_path(archive_file, disposition: "inline", q: "docs/readme", anchor: "archive-entry-1")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("ZIP全体path検索から開いた場合は、その検索語も戻り先に反映します")
+    expect(response.body).to include(ERB::Util.html_escape(expected_path))
   end
 
   it "does not use unsafe return anchors for archive preview links" do
@@ -110,6 +146,22 @@ RSpec.describe "Document file archive entries", type: :request do
     expect(response.body).to include(document_file_path(archive_file, disposition: "inline"))
     expect(response.body).not_to include(document_file_path(archive_file, disposition: "inline", anchor: "https://example.com/archive-entry-1"))
     expect(response.body).not_to include('href="https://example.com')
+  end
+
+  it "does not use unsafe archive path query values for return links" do
+    write_zip("docs/readme.txt" => "one\ntwo\n")
+    sign_in_as(user)
+
+    get archive_entry_preview_document_file_path(
+      archive_file,
+      entry_path: "docs/readme.txt",
+      return_anchor: "archive-entry-1",
+      q: "docs\nreadme"
+    )
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(document_file_path(archive_file, disposition: "inline", anchor: "archive-entry-1"))
+    expect(response.body).not_to include("docs%0Areadme")
   end
 
   it "keeps unsafe and nested archive entries out of preview and download candidates" do
