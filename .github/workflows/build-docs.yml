@@ -35,17 +35,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
-            if git merge-base "origin/${{ github.base_ref }}" HEAD >/dev/null 2>&1; then
-              changed_files=$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD)
-            else
-              echo "merge base unavailable for origin/${{ github.base_ref }}...HEAD; falling back to tree diff against the pull request merge commit" >&2
-              changed_files=$(git diff --name-only "origin/${{ github.base_ref }}" HEAD)
-            fi
-          else
-            changed_files=$(git diff --name-only HEAD^ HEAD)
-          fi
+          changed_files=$(bash scripts/ci_changed_files.sh "${{ github.event_name }}" "${{ github.base_ref }}")
 
           if echo "$changed_files" | grep -Eq '^(package.json|package-lock.json|app/javascript/|config/vite|vite.config\.|postcss.config\.|tailwind.config\.)'; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -214,13 +204,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
-            if git merge-base "origin/${{ github.base_ref }}" HEAD >/dev/null 2>&1; then
-              changed_files=$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD)
-            else
-              echo "merge base unavailable for origin/${{ github.base_ref }}...HEAD; falling back to tree diff against the pull request merge commit" >&2
-              changed_files=$(git diff --name-only "origin/${{ github.base_ref }}" HEAD)
-            fi
+            changed_files=$(bash scripts/ci_changed_files.sh "${{ github.event_name }}" "${{ github.base_ref }}")
 
             if echo "$changed_files" | grep -Eq '^(Gemfile|Gemfile.lock)$'; then
               ruby=true
