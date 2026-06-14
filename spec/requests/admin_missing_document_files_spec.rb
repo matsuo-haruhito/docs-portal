@@ -27,6 +27,12 @@ RSpec.describe "Admin missing document files", type: :request do
     node&.[]("value").presence || node&.at_css("option[selected]")&.[]("value")
   end
 
+  def clear_filter_links
+    parsed_html.css(%(form[action="#{admin_missing_document_files_path}"] a[href="#{admin_missing_document_files_path}"])).select do |link|
+      link.text.squish == "条件をクリア"
+    end
+  end
+
   it "lets admins open missing file details from the dashboard" do
     file = create(
       :document_file,
@@ -75,6 +81,18 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("実体ファイルの欠落は検出されていません。")
     expect(response.body).not_to include("Expected path")
+    expect(clear_filter_links).to be_empty
+  end
+
+  it "does not show the clear link for blank query filters" do
+    sign_in_as(admin_user)
+
+    get admin_missing_document_files_path(document_q: "  ", file_q: "\t")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("実体ファイルの欠落は検出されていません。")
+    expect(clear_filter_links).to be_empty
+    expect(page_text).not_to include("条件一致欠落")
   end
 
   it "bounds the detail list and does not expose destructive actions" do
@@ -138,7 +156,7 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(response.body).to include(selected_project_admin_missing_document_files_path(format: :json))
     expect(form.at_css("input[name='document_q']")["value"]).to be_blank
     expect(form.at_css("input[name='file_q']")["value"]).to be_blank
-    expect(parsed_html.at_css("a[href='#{admin_missing_document_files_path}']").text).to include("条件をクリア")
+    expect(clear_filter_links.size).to eq(1)
     expect(parsed_html.css("table tbody tr").size).to eq(100)
   end
 
@@ -189,24 +207,28 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(page_text).to include("Safety Runbook")
     expect(page_text).not_to include("Release Checklist")
     expect(page_text).to include("条件一致欠落: 1")
+    expect(clear_filter_links.size).to eq(1)
 
     get admin_missing_document_files_path(document_q: "release-checklist")
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("Release Checklist")
     expect(page_text).not_to include("Safety Runbook")
+    expect(clear_filter_links.size).to eq(1)
 
     get admin_missing_document_files_path(file_q: "manuals/safety")
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("Safety Runbook")
     expect(page_text).not_to include("Release Checklist")
+    expect(clear_filter_links.size).to eq(1)
 
     get admin_missing_document_files_path(file_q: "release.csv")
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("Release Checklist")
     expect(page_text).not_to include("Safety Runbook")
+    expect(clear_filter_links.size).to eq(1)
   end
 
   it "applies project, document, and file filters together as an AND condition" do
@@ -242,6 +264,7 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(selected_value(project_filter)).to eq(project.id.to_s)
     expect(form.at_css("input[name='document_q']")["value"]).to eq("safety")
     expect(form.at_css("input[name='file_q']")["value"]).to eq("handoff")
+    expect(clear_filter_links.size).to eq(1)
   end
 
   it "distinguishes no missing files from no matching filtered results" do
@@ -257,6 +280,7 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(page_text).to include("条件一致欠落: 0")
     expect(page_text).to include("条件に一致する欠落ファイルはありません。全体では1件の実体欠落があります。")
     expect(page_text).not_to include("実体ファイルの欠落は検出されていません。")
+    expect(clear_filter_links.size).to eq(1)
 
     DocumentFile.delete_all
 
@@ -264,6 +288,7 @@ RSpec.describe "Admin missing document files", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("全体の実体欠落: 0")
-    expect(page_text).to include("実体ファイルの欠落は検出されていません。")
+    expect(response.body).to include("実体ファイルの欠落は検出されていません。")
+    expect(clear_filter_links).to be_empty
   end
 end
