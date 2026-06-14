@@ -26,7 +26,6 @@ class GitImportSourceSyncer
 
       if manifest_result.manifest.fetch(:documents).blank?
         run.finish!(status: :skipped, summary: manifest_result.summary.merge(reason: "no_documents"))
-        @source.mark_synced!(snapshot.commit_sha)
         return run
       end
 
