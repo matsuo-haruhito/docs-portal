@@ -32,6 +32,7 @@ p.actions
         label: "Webhook設定",
         placeholder: "設定名・送信先URLで検索",
         allow_clear: true
+      span.muted = "設定名または送信先URLの一部で検索できます。候補は最大#{Admin::WebhookDeliveriesController::WEBHOOK_ENDPOINT_SEARCH_LIMIT}件まで表示され、選択済みの設定は候補上限外でも復元されます。"
       label
         | イベント
         = select_tag :event_type, options_for_select([["すべて", ""]] + event_type_options, @delivery_filters[:event_type])
