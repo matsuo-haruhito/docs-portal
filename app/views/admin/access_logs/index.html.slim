@@ -76,6 +76,7 @@ section.card
 
   p.actions
     = link_to "現在の条件でCSV export（最新200件）", admin_access_logs_path(@pagination_params.merge(format: :csv)), class: "button secondary"
+    = link_to "CSV条件metadata JSON", admin_access_logs_path(@pagination_params.merge(format: :json)), class: "button secondary"
   p.muted CSV export は現在の絞り込み条件に一致する最新200件を、監査用途の固定列で出力します。画面の表示列設定とは独立しています。
   p.muted ページ移動中でも、CSV export は表示中ページではなく条件一致の最新200件が対象です。
 

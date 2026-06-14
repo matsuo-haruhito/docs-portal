@@ -51,6 +51,9 @@ class Admin::AccessLogsController < Admin::BaseController
                   filename: access_logs_csv_filename,
                   type: "text/csv; charset=utf-8"
       end
+      format.json do
+        render json: access_logs_export_metadata
+      end
     end
   end
 
@@ -187,6 +190,72 @@ class Admin::AccessLogsController < Admin::BaseController
 
   def access_logs_csv_filename
     "access-logs-#{Date.current.iso8601}.csv"
+  end
+
+  def access_logs_export_metadata
+    filters = access_logs_export_filters
+
+    {
+      exported_at: Time.current.iso8601,
+      report_type: "access_logs",
+      row_limit: ACCESS_LOGS_PER_PAGE,
+      export_scope: "current_filter_latest_rows",
+      description: "CSV export は表示中ページではなく、現在の絞り込み条件に一致する最新#{ACCESS_LOGS_PER_PAGE}件を出力します。",
+      filters:,
+      ignored_filters: @ignored_date_filters.map(&:to_s),
+      summary: access_logs_export_summary(filters)
+    }
+  end
+
+  def access_logs_export_filters
+    from_date = parse_filter_date(@filters[:from], :from)
+    to_date = parse_filter_date(@filters[:to], :to)
+
+    {
+      action_type: @filters[:action_type].presence,
+      target_type: @filters[:target_type].presence,
+      project_id: @filters[:project_id].presence,
+      project: access_log_project_metadata(@filters[:project_id]),
+      company_id: @filters[:company_id].presence,
+      company: access_log_company_metadata(@filters[:company_id]),
+      user_id: @filters[:user_id].presence,
+      user: access_log_user_metadata(@filters[:user_id]),
+      q: @filters[:q].presence,
+      document_q: @filters[:document_q].presence,
+      from: from_date&.iso8601,
+      to: to_date&.iso8601,
+      ai_context_mode: @filters[:ai_context_mode].presence,
+      ai_context_scope: @filters[:ai_context_scope].presence
+    }.compact
+  end
+
+  def access_log_project_metadata(project_id)
+    project = Project.find_by(id: project_id) if project_id.present?
+    return unless project
+
+    { code: project.code, name: project.name }
+  end
+
+  def access_log_company_metadata(company_id)
+    company = Company.find_by(id: company_id) if company_id.present?
+    return unless company
+
+    { name: company.display_name, domain: company.domain }
+  end
+
+  def access_log_user_metadata(user_id)
+    user = User.find_by(id: user_id) if user_id.present?
+    return unless user
+
+    { name: user.display_name, email: user.email_address }
+  end
+
+  def access_logs_export_summary(filters)
+    summary_parts = ["監査ログ", "最新#{ACCESS_LOGS_PER_PAGE}件", "表示中ページではなく現在の絞り込み条件"]
+    filter_keys = filters.except(:project, :company, :user).keys
+    summary_parts << "条件: #{filter_keys.join(', ')}" if filter_keys.any?
+    summary_parts << "無効な日付条件を除外: #{@ignored_date_filters.map(&:to_s).join(', ')}" if @ignored_date_filters.any?
+    summary_parts.join(" / ")
   end
 
   def filter_params

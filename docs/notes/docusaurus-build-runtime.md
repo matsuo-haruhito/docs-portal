@@ -126,6 +126,8 @@ For a manual local smoke with the optional compose service, use the renderer and
 
 Mermaid and ELK layout updates are Docusaurus renderer dependency changes, not Kroki plugin changes. Kroki coverage proves that external diagram code blocks are converted into generated SVG assets; it does not prove that Mermaid's in-browser rendering, ELK edge routing, or Mermaid layout defaults still look acceptable after a dependency bump.
 
+When a Docusaurus Dependabot PR also includes `Maintainer changes` or `Install script changes`, first use [Docusaurus Dependabot review gate](./docusaurus-dependabot-review-gate.md) for the package metadata and install script manual evidence. Then use this section only for the rendering-impact side, such as Mermaid / ELK layout changes, routed edges, labels, or diagram defaults.
+
 For Dependabot or manual Docusaurus dependency updates that mention Mermaid rendering, ELK layout, edge routing, diagram shapes, label placement, or renderer defaults, keep the first gate as manual visual evidence unless the issue explicitly asks for CI automation. Add the evidence to the PR conversation as a screenshot or short confirmation note, and include the dependency name/version, fixture used, viewport or browser, and whether the rendered edge routing and labels were readable.
 
 Use this representative Markdown fixture when ELK routing is in scope:
