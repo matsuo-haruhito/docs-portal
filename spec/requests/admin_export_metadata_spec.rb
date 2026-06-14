@@ -13,6 +13,10 @@ RSpec.describe "Admin export metadata", type: :request do
     parsed_html.css("a[href]").find { _1.text.squish == "CSV条件metadata JSON" }
   end
 
+  def metadata_link_href
+    metadata_link["href"]
+  end
+
   def link_query(link)
     Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)
   end
@@ -46,13 +50,13 @@ RSpec.describe "Admin export metadata", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(metadata_link).to be_present
+      expect(metadata_link_href).to match(/(\.json|format=json)/)
       expect(link_query(metadata_link)).to include(
         "project_id" => project.id.to_s,
         "document_q" => "Metadata Document",
         "q" => "metadata-target",
         "from" => "2026-05-10",
-        "to" => "bad-date",
-        "format" => "json"
+        "to" => "bad-date"
       )
       expect(link_query(metadata_link)).not_to include("page")
 
@@ -118,14 +122,14 @@ RSpec.describe "Admin export metadata", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(metadata_link).to be_present
+      expect(metadata_link_href).to match(/(\.json|format=json)/)
       expect(link_query(metadata_link)).to include(
         "project_id" => project.id.to_s,
         "q" => "metadata",
         "usage_filter" => "used",
         "sort_order" => "last_accessed_desc",
         "from" => "2026-05-01",
-        "to" => "2026-05-03",
-        "format" => "json"
+        "to" => "2026-05-03"
       )
 
       get admin_document_usage_reports_path(
