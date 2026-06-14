@@ -9,6 +9,27 @@ module Admin::GeneratedFileRunsHelper
   GENERATED_FILE_RUN_BEARER_TOKEN_PATTERN = /\bBearer\s+[A-Za-z0-9._~+\/-]+=*/i
   GENERATED_FILE_RUN_PRIVATE_PATH_PATTERN = %r{\b[A-Za-z]:[\\/][^\s<>"']+|/(?:Users|home|var|tmp|private|srv|app|workspace)/[^\s<>"']+}
 
+  def generated_file_run_bulk_retry_scope_copy(filters)
+    return "すべての失敗履歴から古い順に最大100件を対象にします。" if filters.compact_blank.blank?
+
+    "現在の絞り込み条件に一致する失敗履歴から古い順に最大100件を対象にします。"
+  end
+
+  def generated_file_run_bulk_retry_filter_summary(filters)
+    normalized_filters = filters.compact_blank
+    return [] if normalized_filters.blank?
+
+    [
+      generated_file_run_filter_summary_item("状態", generated_file_run_status_summary_value(normalized_filters[:status])),
+      generated_file_run_filter_summary_item("ジョブID", normalized_filters[:job_id]),
+      generated_file_run_filter_summary_item("ジェネレーター", normalized_filters[:generator]),
+      generated_file_run_filter_summary_item("出力先", normalized_filters[:output_writer]),
+      generated_file_run_filter_summary_item("イベント発生元", generated_file_source_label(normalized_filters[:event_source])),
+      generated_file_run_filter_summary_item("作成日", generated_file_run_date_filter_summary(normalized_filters)),
+      generated_file_run_filter_summary_item("検索語", normalized_filters[:q])
+    ].compact
+  end
+
   def generated_file_run_diagnostic_preview(value)
     text = mask_generated_file_run_diagnostic_value(value.to_s)
     return "-" if text.blank?
@@ -21,6 +42,29 @@ module Admin::GeneratedFileRunsHelper
   end
 
   private
+
+  def generated_file_run_filter_summary_item(label, value)
+    text = value.to_s.squish
+    return if text.blank? || text == "-"
+
+    "#{label}: #{text}"
+  end
+
+  def generated_file_run_status_summary_value(status)
+    return if status.blank?
+
+    generated_file_run_status_label(status)
+  end
+
+  def generated_file_run_date_filter_summary(filters)
+    from = filters[:created_from].presence
+    to = filters[:created_to].presence
+    return if from.blank? && to.blank?
+    return "#{from}以降" if to.blank?
+    return "#{to}まで" if from.blank?
+
+    "#{from}〜#{to}"
+  end
 
   def mask_generated_file_run_metadata(value, key: nil)
     if key.to_s.match?(GENERATED_FILE_RUN_SENSITIVE_KEY_PATTERN)
