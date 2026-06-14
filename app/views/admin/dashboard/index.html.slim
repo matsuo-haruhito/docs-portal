@@ -33,6 +33,7 @@ section.card
         p
           strong = item[:count]
           |  件
+        p.muted 保存済み履歴の件数です。継続失敗候補や通知状態とは別に確認します。
         p.muted = item[:scope]
         - if item[:latest_at]
           p.muted
@@ -43,19 +44,20 @@ section.card
             - if item[:stale]
               br
               strong 古い失敗のみ
-              span  （7日より古い対象履歴だけが残っています）
+              span  （7日より古い対象履歴だけが残っています。緊急度や通知状態を示す表示ではありません）
         ul
           - item[:details].each do |detail|
             li = detail
         - if item[:alert_candidates]
           - alert_candidates = item[:alert_candidates]
           .operational-alert-candidates
+            h4 継続失敗候補
             p.muted
               | 継続失敗候補: 
               strong = alert_candidates.size
               |  件
               br
-              span 保存済み failed 件数とは別の read-only 調査入口です。最新 run が同じ identity で連続 failed のものだけを表示します。
+              span 保存済み failed 件数とは別の read-only 調査入口です。最新 run が同じ identity で連続 failed の候補だけを表示し、候補 0 件は正常保証ではありません。
             - if alert_candidates.any?
               ul
                 - alert_candidates.each do |candidate|
@@ -78,7 +80,7 @@ section.card
               p.actions
                 = link_to "継続失敗候補の failed 実行履歴をすべて見る", admin_generated_file_runs_path(status: "failed"), class: "button secondary"
             - else
-              p.muted 最新 run が連続失敗している候補はありません。
+              p.muted 最新 run が同じ identity で連続 failed の候補はありません。保存済み failed 件数が 0 件であることや正常状態を保証する表示ではありません。
         p.actions
           = link_to item[:primary_link].first, item[:primary_link].last, class: "button"
           - if item[:secondary_link]
