@@ -56,6 +56,8 @@ class DocumentImporter
       document.save!
 
       version = build_document_version(document, payload)
+      return unless version
+
       existing_document_files = version.persisted? ? version.document_files.to_a : []
 
       version.assign_attributes(
@@ -87,9 +89,7 @@ class DocumentImporter
   end
 
   def build_versioned_document_version(document, version_label)
-    if document.document_versions.exists?(version_label: version_label)
-      raise ArgumentError, "Document version already exists: #{document.slug} #{version_label}"
-    end
+    return if document.document_versions.exists?(version_label: version_label)
 
     document.document_versions.build(version_label: version_label)
   end
