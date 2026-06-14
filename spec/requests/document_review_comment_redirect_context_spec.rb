@@ -56,6 +56,49 @@ RSpec.describe "Document review comment redirect context", type: :request do
     expect(redirect_query).to eq("comment_q" => "partner question")
   end
 
+  it "renders the current workspace context on create, reply, and status forms" do
+    create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Visibility question for the workspace"
+    )
+    create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: internal_user,
+      comment_type: :request_change,
+      internal_only: true,
+      body: "Visibility review note"
+    )
+
+    sign_in_as(admin_user)
+
+    get project_document_path(project, document.slug, comment_tab: "unresolved", comment_q: "visibility")
+
+    expect(response).to have_http_status(:ok)
+    page = Nokogiri::HTML(response.body)
+
+    [
+      "質問を投稿",
+      "確認事項を追加",
+      "返信する",
+      "回答済みにする",
+      "クローズする",
+      "解決"
+    ].each do |submit_label|
+      form = form_with_submit_label(page, submit_label)
+
+      expect(form).to be_present
+      expect(form_input_values(form, "comment_tab")).to include("unresolved")
+      expect(form_input_values(form, "comment_q")).to include("visibility")
+    end
+  end
+
   it "keeps version-level update context bounded to valid tabs and normalized search text" do
     question = create(
       :document_review_comment,
@@ -121,5 +164,19 @@ RSpec.describe "Document review comment redirect context", type: :request do
 
   def redirect_query
     Rack::Utils.parse_nested_query(redirect_uri.query.to_s)
+  end
+
+  def form_with_submit_label(page, label)
+    page.css("form").find do |form|
+      submit_labels = form.css("input[type='submit'], button").map do |node|
+        node["value"].presence || node.text.squish
+      end
+
+      submit_labels.include?(label)
+    end
+  end
+
+  def form_input_values(form, name)
+    form.css(%(input[name="#{name}"])).map { _1["value"] }
   end
 end
