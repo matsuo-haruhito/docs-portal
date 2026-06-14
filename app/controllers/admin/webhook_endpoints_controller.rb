@@ -63,6 +63,7 @@ class Admin::WebhookEndpointsController < Admin::BaseController
   def webhook_endpoint_params
     permitted = params.require(:webhook_endpoint).permit(:name, :target_url, :secret_token, :active, event_types: [])
     permitted[:event_types] = Array(permitted[:event_types]).reject(&:blank?)
+    permitted.delete(:secret_token) if action_name == "update" && permitted[:secret_token].blank?
     permitted
   end
 
