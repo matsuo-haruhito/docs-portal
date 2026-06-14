@@ -172,6 +172,7 @@ section.card
       - else
         p.muted 選択した条件に一致する既読確認はありません。
         p.muted 文書・期間・会社・確認者の組み合わせを見直すか、案件だけを残して条件を解除してください。
+        p.muted CSV出力は現在の絞り込み条件とページ範囲を反映します。この状態で出力すると、ヘッダーのみの空のCSVになります。
         p.actions
           = link_to "案件だけ残して条件を解除", admin_read_confirmations_path(project_id: @selected_project.id), class: "button secondary"
 - else
