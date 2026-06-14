@@ -5,7 +5,9 @@
   bulk_retry_target_count = @bulk_retry_target_count.to_i
   bulk_retry_available = bulk_retry_target_count.positive?
   bulk_retry_button_classes = bulk_retry_available ? "rounded bg-blue-600 px-3 py-2 text-sm text-white" : "rounded bg-gray-300 px-3 py-2 text-sm text-gray-600 cursor-not-allowed"
-  bulk_retry_confirm_message = "現在の条件に一致する失敗履歴 #{bulk_retry_target_count} 件のうち、古い順に最大100件を一括再実行します。実行しますか？"
+  bulk_retry_confirm_message = "現在の条件に一致する失敗履歴 #{bulk_retry_target_count} 件のうち、古い順に最大100件を一括再実行します。現在の条件を確認してから実行してください。実行しますか？"
+  bulk_retry_scope_copy = generated_file_run_bulk_retry_scope_copy(@filters)
+  bulk_retry_filter_summary = generated_file_run_bulk_retry_filter_summary(@filters)
   table_key = :admin_generated_file_runs
   table_columns = generated_file_run_table_columns
   table_settings = rails_table_preference_settings(table_key: table_key)
@@ -20,6 +22,17 @@
     <div class="text-right">
       <%= button_to "失敗分を一括再実行", retry_failed_admin_generated_file_runs_path(@filters.compact_blank), method: :post, disabled: !bulk_retry_available, class: bulk_retry_button_classes, form: { data: { turbo_confirm: bulk_retry_confirm_message } } %>
       <p class="mt-1 text-xs text-gray-500">現在の条件で再実行対象: <strong><%= bulk_retry_target_count %> 件</strong></p>
+      <div class="mt-2 rounded border border-blue-100 bg-blue-50 px-3 py-2 text-left text-xs text-blue-900">
+        <p class="font-semibold">一括再実行の対象条件</p>
+        <p class="mt-1"><%= bulk_retry_scope_copy %></p>
+        <% if bulk_retry_filter_summary.any? %>
+          <ul class="mt-1 list-disc pl-4">
+            <% bulk_retry_filter_summary.each do |summary_item| %>
+              <li><%= summary_item %></li>
+            <% end %>
+          </ul>
+        <% end %>
+      </div>
       <% if bulk_retry_available %>
         <p class="mt-1 text-xs text-gray-500">このボタンは現在の絞り込み条件に一致する失敗履歴だけを対象にします。古い順に最大100件です。</p>
       <% else %>
@@ -144,7 +157,15 @@
         <% else %>
           <tr>
             <td colspan="<%= table_columns.size %>" class="px-4 py-8 text-center text-gray-500">
-              <%= has_active_filters ? "条件に一致する生成ファイル実行履歴はありません。" : "生成ファイル実行履歴はまだありません。" %>
+              <% if has_active_filters %>
+                <div class="space-y-2">
+                  <p>条件に一致する生成ファイル実行履歴はありません。</p>
+                  <p class="text-sm">これは表示フィルタの結果です。条件を見直すか、すべての生成ファイル実行履歴を表示してください。</p>
+                  <p><%= link_to "すべての生成ファイル実行履歴を見る", admin_generated_file_runs_path, class: "text-blue-600 underline" %></p>
+                </div>
+              <% else %>
+                生成ファイル実行履歴はまだありません。
+              <% end %>
             </td>
           </tr>
         <% end %>

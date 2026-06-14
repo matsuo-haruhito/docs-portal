@@ -217,6 +217,82 @@ RSpec.describe "Project AI contexts", type: :request do
     json = JSON.parse(response.body)
     expect(json.dig("summary", "document_count")).to eq(2)
     expect(json.fetch("documents").map { _1.fetch("public_id") }).to contain_exactly(selected.public_id, other_visible.public_id)
+
+    get project_ai_context_path(project, mode: :full, document_ids: [internal.id], candidate_view: :selected)
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("候補表示: 選択済みのみ / 表示中: 0件 / 選択済み候補: 0件 / 閲覧可能: 2件")
+    expect(page_text).to include("選択済み表示で確認できる閲覧可能な文書はありません。")
+    expect(page_text).to include("検索候補へ戻るか、すべての文書に戻して対象範囲を確認してください。")
+    expect(ai_context_link_href("検索候補へ戻る")).to include("mode=full", "document_ids%5B%5D=#{internal.id}")
+    expect(ai_context_link_href("検索候補へ戻る")).not_to include("candidate_view=selected")
+    expect(ai_context_link_href("すべての文書に戻す")).to include("mode=full")
+  end
+
+  it "keeps document_q as a candidate filter until document_ids are submitted" do
+    matching = create_exportable_document(title: "Setup Guide", slug: "setup-guide", body: "Setup guide body text.")
+    non_matching = create_exportable_document(title: "Operations Manual", slug: "operations", body: "Operations body text.")
+
+    sign_in_as(external_user)
+
+    get project_ai_context_path(project, document_q: "setup")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索条件: setup")
+    expect(page_text).to include("出力候補（検索結果1 / 閲覧可能2件、表示中1件）")
+    expect(page_text).to include("検索は checkbox 候補の絞り込みで、JSON / Markdown 出力は「選択した文書でpreview」を押すまで現在の対象範囲を維持します。")
+    expect(document_choice_labels).to contain_exactly(a_string_including("Setup Guide"))
+
+    get project_ai_context_path(project, format: :json, mode: :compact, document_q: "setup")
+    expect(response).to have_http_status(:ok)
+    json = JSON.parse(response.body)
+    expect(json.dig("summary", "document_count")).to eq(2)
+    expect(json.fetch("documents").map { _1.fetch("public_id") }).to contain_exactly(matching.public_id, non_matching.public_id)
+
+    get project_ai_context_path(project, format: :md, mode: :full, document_q: "setup")
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Setup guide body text.", "Operations body text.")
+  end
+
+  it "deduplicates selected ids and falls back from selected view when no valid ids are submitted" do
+    selected = create_exportable_document(title: "Selected Manual", slug: "selected", body: "Selected body text.")
+    create_exportable_document(title: "Other Manual", slug: "other", body: "Other body text.")
+    internal = create_exportable_document(title: "Internal Note", slug: "internal", body: "Secret body text.", visibility_policy: :internal_only)
+    other_project = create(:project, code: "OTHERCTX", name: "Other Context Project")
+    outside_project_document = create_exportable_document(
+      title: "Outside Project Manual",
+      slug: "outside-project",
+      body: "Outside project body text.",
+      project: other_project
+    )
+    missing_document_id = Document.maximum(:id) + 100
+    mixed_document_ids = [selected.id, selected.id.to_s, internal.id, outside_project_document.id, missing_document_id, "0", "-1", "not-a-number"]
+
+    sign_in_as(external_user)
+
+    get project_ai_context_path(project, candidate_view: :selected, document_ids: mixed_document_ids)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("明示選択: 4件 / 案件内候補: 2件 / 出力対象: 1件")
+    expect(page_text).to include("候補表示: 選択済みのみ / 表示中: 1件 / 選択済み候補: 1件 / 閲覧可能: 2件")
+    expect(page_text).to include("候補外として無視された選択ID: 2件。案件外または存在しないIDは、文書名やIDを表示せず集計だけで示します。")
+    expect(document_choice_labels).to contain_exactly(a_string_including("Selected Manual"))
+    expect(page_text).not_to include("Outside Project Manual", missing_document_id.to_s)
+
+    expect do
+      get project_ai_context_path(project, format: :json, mode: :compact, document_ids: mixed_document_ids)
+    end.to change(AccessLog.where(target_type: "ai_context"), :count).by(1)
+    json = JSON.parse(response.body)
+    expect(json.dig("summary", "document_count")).to eq(1)
+    expect(json.fetch("documents").map { _1.fetch("public_id") }).to eq([selected.public_id])
+    expect(AccessLog.where(target_type: "ai_context").last.target_name).to eq("mode=compact;scope=selected;selected_count=4;scoped_count=2;exported_count=1")
+
+    get project_ai_context_path(project, candidate_view: :selected, document_ids: ["0", "-1", "not-a-number"])
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("現在は閲覧可能な文書全体（2件）を出力対象にしています。")
+    expect(page_text).to include("出力候補（表示中2 / 全2件）")
+    expect(page_text).not_to include("候補表示: 選択済みのみ")
+    expect(document_choice_labels).to include(a_string_including("Selected Manual"), a_string_including("Other Manual"))
   end
 
   it "normalizes oversized document queries before filtering and rendering candidate links" do

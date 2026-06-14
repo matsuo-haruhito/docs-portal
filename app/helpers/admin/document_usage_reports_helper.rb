@@ -54,6 +54,32 @@ module Admin::DocumentUsageReportsHelper
     Array(names).map { labels.fetch(_1, _1.to_s) }.join(" / ")
   end
 
+  def document_usage_report_empty_state_heading(report_hash:, usage_filter:, query:)
+    return "この案件には文書がありません" if report_hash.dig(:summary, :document_count).to_i.zero?
+    return "期間内に未利用候補はありません" if usage_filter == "unused"
+    return "利用ありの文書はありません" if usage_filter == "used"
+    return "検索語に一致する文書はありません" if query.present?
+
+    "条件に一致する文書はありません"
+  end
+
+  def document_usage_report_empty_state_body(report_hash:, usage_filter:, query:)
+    return "案件に文書が追加されると、利用状況、既読確認、監査ログへの入口をここで確認できます。" if report_hash.dig(:summary, :document_count).to_i.zero?
+
+    case usage_filter
+    when "unused"
+      "現在の条件では、期間内に閲覧・DL・既読確認がない文書はありません。未利用は削除・archive確定ではなく、現在条件でsignalがない候補です。"
+    when "used"
+      "現在の条件では、閲覧・DL・既読確認のいずれかがある文書はありません。検索語、期間、利用状況filterを見直してください。"
+    else
+      if query.present?
+        "文書名または slug が検索語に一致する文書はありません。検索語を短くするか、条件をクリアして案件全体を確認してください。"
+      else
+        "検索語、期間、利用状況filterを変えるか、条件をクリアして案件全体を確認してください。"
+      end
+    end
+  end
+
   def document_usage_report_usage_state(row)
     return :unused unless row[:used]
 
@@ -93,9 +119,9 @@ module Admin::DocumentUsageReportsHelper
   def document_usage_report_usage_hint(row)
     case document_usage_report_usage_state(row)
     when :unused
-      "期間内の閲覧・DL・既読確認なし（期間外の実績は含みません）"
+      "期間内の閲覧・DL・既読確認なし（期間外の実績は含みません） / 削除・archive確定ではありません"
     when :read_confirmation_only
-      "閲覧・DLはなく、既読確認の内訳を確認"
+      "閲覧・DLはなく、既読確認の内訳を確認（閲覧・downloadはありません）"
     end
   end
 end

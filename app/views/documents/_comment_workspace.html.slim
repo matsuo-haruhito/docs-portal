@@ -6,6 +6,8 @@
 - comment_search_maxlength = DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH
 - comment_search_active = comment_search_query.present?
 - comment_workspace_tab = @comment_workspace_tab.presence || DocumentCommentWorkspaceTab::DEFAULT_TAB
+- comment_context_params = { "comment_tab" => comment_workspace_tab }
+- comment_context_params["comment_q"] = comment_search_query if comment_search_active
 - comment_tab_base_params = request.query_parameters.except("comment_tab", "comment_q")
 - comment_tab_base_params = comment_tab_base_params.merge("comment_q" => comment_search_query) if comment_search_active
 - comment_tab_base_params = comment_tab_base_params.merge(only_path: true)
@@ -82,6 +84,8 @@ details class=wrapper_classes.join(" ") open=(!floating)
 
         .comment-mode-switch__panel.comment-mode-switch__panel--question
           = form_with model: [@project, @document, DocumentReviewComment.new], local: true do |form|
+            - comment_context_params.each do |key, value|
+              = hidden_field_tag key, value
             = form.hidden_field :comment_type, value: "question"
             = form.hidden_field :internal_only, value: false
             - if comment_target_version
@@ -94,6 +98,8 @@ details class=wrapper_classes.join(" ") open=(!floating)
         - if current_user.internal?
           .comment-mode-switch__panel.comment-mode-switch__panel--review
             = form_with model: [@project, @document, DocumentReviewComment.new], local: true do |form|
+              - comment_context_params.each do |key, value|
+                = hidden_field_tag key, value
               = form.hidden_field :comment_type, value: "request_change"
               = form.hidden_field :internal_only, value: true
               - if comment_target_version

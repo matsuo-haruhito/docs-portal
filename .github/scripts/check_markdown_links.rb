@@ -5,7 +5,7 @@ require "cgi"
 require "pathname"
 
 REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
-MARKDOWN_FILES = Dir.glob(["README.md", "docs/**/*.md"], base: REPO_ROOT.to_s).sort.freeze
+MARKDOWN_FILES = Dir.glob(["README.md", "ROADMAP.md", "Product Profile.md", "doc/**/*.md", "docs/**/*.md"], base: REPO_ROOT.to_s).sort.freeze
 LINK_PATTERN = /!?\[[^\]]*\]\(([^)]+)\)/.freeze
 SKIPPED_SCHEMES = /\A(?:https?:|mailto:|tel:|data:)/i.freeze
 

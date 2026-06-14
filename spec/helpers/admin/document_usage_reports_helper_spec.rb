@@ -10,11 +10,11 @@ RSpec.describe Admin::DocumentUsageReportsHelper do
       aggregate_failures do
         expect(helper.document_usage_report_usage_state(unused)).to eq(:unused)
         expect(helper.document_usage_report_usage_badge_label(unused)).to eq("未利用")
-        expect(helper.document_usage_report_usage_hint(unused)).to eq("期間内の閲覧・DL・既読確認なし（期間外の実績は含みません）")
+        expect(helper.document_usage_report_usage_hint(unused)).to eq("期間内の閲覧・DL・既読確認なし（期間外の実績は含みません） / 削除・archive確定ではありません")
 
         expect(helper.document_usage_report_usage_state(read_confirmation_only)).to eq(:read_confirmation_only)
         expect(helper.document_usage_report_usage_badge_label(read_confirmation_only)).to eq("既読のみ")
-        expect(helper.document_usage_report_usage_hint(read_confirmation_only)).to eq("閲覧・DLはなく、既読確認の内訳を確認")
+        expect(helper.document_usage_report_usage_hint(read_confirmation_only)).to eq("閲覧・DLはなく、既読確認の内訳を確認（閲覧・downloadはありません）")
 
         expect(helper.document_usage_report_usage_state(used)).to eq(:used)
         expect(helper.document_usage_report_usage_badge_label(used)).to eq("利用あり")

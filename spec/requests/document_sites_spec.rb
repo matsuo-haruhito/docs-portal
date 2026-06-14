@@ -23,6 +23,10 @@ RSpec.describe "Document sites", type: :request do
     )
   end
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
   before do
     FileUtils.mkdir_p(version.site_root_absolute_path.join(site_build_path))
     File.write(
@@ -61,6 +65,26 @@ RSpec.describe "Document sites", type: :request do
     expect(response.body).to include("site-viewer-hero")
     expect(response.body).to include("site-viewer-frame")
     expect(response.body).to include(site_document_version_path(version, site_path: site_build_path, embedded: "1").gsub("&", "&amp;"))
+  end
+
+  it "renders the heading outline contract for the document version viewer shell" do
+    sign_in_as(user)
+
+    get site_document_version_path(version, site_path: site_build_path)
+
+    outline = parsed_html.at_css('.site-viewer-outline[data-docs-portal-heading-outline="true"]')
+    summary = outline&.at_css('[data-docs-portal-heading-outline-summary="true"]')
+    list = outline&.at_css('[data-docs-portal-heading-outline-list="true"][role="list"]')
+    frame = parsed_html.at_css('iframe.site-viewer-frame[data-docs-portal-auto-height="true"][data-docs-portal-heading-outline="true"]')
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures do
+      expect(outline).to be_present
+      expect(summary&.text).to include("見出しを読み込み中です")
+      expect(list).to be_present
+      expect(frame).to be_present
+      expect(frame["src"]).to include(site_document_version_path(version, site_path: site_build_path, embedded: "1"))
+    end
   end
 
   it "uses Japanese labels and truthful links in the site viewer shell" do

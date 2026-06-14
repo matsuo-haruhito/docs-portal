@@ -60,6 +60,7 @@ section.card
     - csv_params["to"] = @to_date.iso8601
   - else
     - csv_params.delete("to")
+  - metadata_params = csv_params.merge("format" => :json)
   section.card
     h2 集計サマリ
     p
@@ -93,6 +94,8 @@ section.card
       = link_to "案件の既読確認内訳へ", admin_read_confirmations_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
       |  / 
       = link_to "CSV出力", admin_document_usage_reports_path(csv_params), data: { turbo_frame: "_top" }
+      |  / 
+      = link_to "CSV条件metadata JSON", admin_document_usage_reports_path(metadata_params), data: { turbo_frame: "_top" }
     p
       | 表示中:
       strong = " #{@report_hash[:documents].size}件"
@@ -157,7 +160,11 @@ section.card
             td data-rails-table-preferences-column-key="last_accessed_at" = row[:last_accessed_at].presence || "-"
   - else
     section.card
-      h2 条件に一致する文書はありません
+      h2 = document_usage_report_empty_state_heading(report_hash: @report_hash, usage_filter: @usage_filter, query: @query)
+      p.muted
+        - if @report_hash.dig(:summary, :document_count).to_i.positive?
+          | 条件に一致する文書はありません。
+        = document_usage_report_empty_state_body(report_hash: @report_hash, usage_filter: @usage_filter, query: @query)
       p.muted
         | 現在の利用状況は「
         strong = document_usage_report_filter_label(@usage_filter)
@@ -168,7 +175,10 @@ section.card
           | 、検索語は「
           strong = @query
           | 」
-        | です。条件を変えるか、クリアして案件全体を確認してください。
+        | です。
+        | 期間は「
+        strong = document_usage_report_period_label(@from_date, @to_date)
+        | 」です。条件を変えるか、クリアして案件全体を確認してください。
       p.actions
         = link_to "条件をクリア", admin_document_usage_reports_path(project_id: @selected_project.id)
 - else

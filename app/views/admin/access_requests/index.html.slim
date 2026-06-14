@@ -2,6 +2,7 @@
 - access_request_table_key = :admin_access_requests
 - access_request_table_columns = admin_access_request_table_columns
 - access_request_table_settings = rails_table_preference_settings(table_key: access_request_table_key)
+- active_filter = @filters[:status].present? || @filters[:q].present? || @filters[:requested_access_level].present? || @filters[:requestable_type].present?
 
 h1 アクセス申請
 = render "admin/nav"
@@ -42,10 +43,15 @@ section.card
       div.access-request-filter-grid__search
         = form.label :q, "申請者・対象"
         = form.search_field :q, value: @filters[:q], maxlength: admin_access_request_query_max_length, placeholder: "名前、メール、対象名で検索"
+        p.muted
+          | 申請者名 / email、申請ID / 理由、対象名 / code / slug / ファイル名を検索します（最大
+          = admin_access_request_query_max_length
+          | 文字）。状態・要求権限・対象種別と組み合わせて絞り込みます。
 
     p.actions
       = form.submit "検索"
-      = link_to "条件をクリア", admin_access_requests_path
+      - if active_filter
+        = link_to "条件をクリア", admin_access_requests_path
 
 - if @access_requests.any?
   p.muted
@@ -152,7 +158,6 @@ section.card
         - if @access_requests_pagination[:next_page]
           = link_to "次へ", admin_access_requests_path(@access_request_page_params.merge(page: @access_requests_pagination[:next_page])), class: "button secondary"
 - else
-  - active_filter = @filters[:status].present? || @filters[:q].present? || @filters[:requested_access_level].present? || @filters[:requestable_type].present?
   - if active_filter
     p.muted
       | 条件に一致する申請はありません。
@@ -177,5 +182,7 @@ section.card
         - else
           |  検索:
         strong = " #{@filters[:q]}"
+    p.actions
+      = link_to "すべての申請を見る", admin_access_requests_path, class: "button secondary"
   - else
     p.muted 申請はありません。
