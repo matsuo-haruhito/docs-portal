@@ -1,3 +1,4 @@
+require "digest"
 require "fileutils"
 
 class GitImportManifestBuilder
@@ -69,7 +70,7 @@ class GitImportManifestBuilder
       source_relative_path: source_relative_path,
       snapshot_kind: classification.attributes[:snapshot_kind] || "git_import",
       changelog_summary: "Imported from #{@source.repository_full_name}@#{@commit_sha.first(12)}",
-      files: attachment_paths_for(candidate).each_with_index.map { |path, index| copy_attachment(path, attachments_root, index) }
+      files: attachment_paths_for(candidate).each_with_index.map { |path, index| copy_attachment(candidate, path, attachments_root, index) }
     }.compact
   end
 
@@ -84,10 +85,10 @@ class GitImportManifestBuilder
     (paths + sibling_paths).uniq.sort_by(&:to_s)
   end
 
-  def copy_attachment(path, attachments_root, index)
+  def copy_attachment(candidate, path, attachments_root, index)
     source_path = Pathname(path)
     relative_path = source_path.relative_path_from(@worktree_path).to_s.tr("\\", "/")
-    storage_key = File.join("git_imports", @source.public_id, @commit_sha, relative_path)
+    storage_key = File.join("git_imports", @source.public_id, @commit_sha, document_storage_scope(candidate), relative_path)
     destination = attachments_root.join(storage_key)
     FileUtils.mkdir_p(destination.dirname)
     FileUtils.cp(source_path, destination)
@@ -113,6 +114,10 @@ class GitImportManifestBuilder
     imported_paths = documents.map { _1.fetch(:source_relative_path) }
     existing_paths = project.documents.includes(:latest_version).filter_map { _1.latest_version&.source_relative_path }
     existing_paths.grep(%r{\A#{Regexp.escape(@source.normalized_source_path)}/}).sort - imported_paths.sort
+  end
+
+  def document_storage_scope(candidate)
+    Digest::SHA256.hexdigest(candidate.logical_path.to_s)[0, 16]
   end
 
   def version_label
