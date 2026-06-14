@@ -1,4 +1,7 @@
 class DocumentReviewCommentsController < BaseController
+  COMMENT_CONTEXT_TABS = %w[all qa review unresolved].freeze
+  EXTERNAL_COMMENT_CONTEXT_TABS = %w[all qa unresolved].freeze
+
   before_action :set_targets
 
   def create
@@ -52,7 +55,24 @@ class DocumentReviewCommentsController < BaseController
   end
 
   def redirect_path
-    @version.present? && params[:document_version_public_id].present? ? document_version_path(@version) : project_document_path(@project, @document.slug)
+    path = @version.present? && params[:document_version_public_id].present? ? document_version_path(@version) : project_document_path(@project, @document.slug)
+    context = safe_comment_redirect_context
+
+    context.present? ? "#{path}?#{context.to_query}" : path
+  end
+
+  def safe_comment_redirect_context
+    context = {}
+    tab = params[:comment_tab].to_s.strip
+    query = params[:comment_q].to_s.strip
+    allowed_tabs = current_user&.internal? ? COMMENT_CONTEXT_TABS : EXTERNAL_COMMENT_CONTEXT_TABS
+
+    context[:comment_tab] = tab if allowed_tabs.include?(tab)
+    if query.present?
+      context[:comment_q] = query.first(DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH)
+    end
+
+    context
   end
 
   def apply_visibility_rules!(comment)
