@@ -107,9 +107,9 @@ p
         = unscoped_document_count
         | 件。案件外または存在しないIDは、文書名やIDを表示せず集計だけで示します。
     p.actions
-      - if candidate_view_selected
+      - if candidate_view_selected && @selectable_documents_preview.any?
         = link_to "検索候補へ戻る", project_ai_context_path(@project, candidate_view_params), class: "button secondary"
-      - else
+      - elsif !candidate_view_selected
         = link_to "選択済みだけ表示", project_ai_context_path(@project, candidate_view_params.merge(candidate_view: :selected)), class: "button secondary"
   - if @selectable_documents_truncated
     p.muted
