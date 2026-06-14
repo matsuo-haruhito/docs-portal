@@ -12,6 +12,7 @@
 - unscoped_document_count = @unscoped_document_count || 0
 - selectable_document_preview_count = @selectable_documents_preview.size
 - document_query_present = @document_query.present?
+- document_query_help = "文書名 / slug の一部一致で候補を絞り込みます。最大#{document_query_max_length}文字まで。検索だけでは JSON / Markdown の対象範囲は変わらず、「選択した文書でpreview」後に反映されます。"
 - candidate_view_selected = @candidate_view == "selected"
 - selected_document_count = @requested_document_ids.empty? ? selectable_document_count : @requested_document_ids.size
 - candidate_view_params = @scoped_link_params.merge(mode: @mode)
@@ -132,6 +133,7 @@ p
         label
           | 文書名 / slug で検索
           = text_field_tag :document_q, @document_query, placeholder: "例: setup-guide", maxlength: document_query_max_length
+      p.muted = document_query_help
       p.muted 検索後も、明示選択済みの文書は候補に残します。
       fieldset.filter-fieldset
         legend = document_filter_legend
@@ -154,6 +156,7 @@ p
         label
           | 文書名 / slug で検索
           = text_field_tag :document_q, @document_query, placeholder: "例: setup-guide", maxlength: document_query_max_length
+      p.muted = document_query_help
       p.actions.form-actions
         = submit_tag "候補を検索", class: "button secondary"
         - if candidate_view_selected
