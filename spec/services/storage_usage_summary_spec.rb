@@ -20,6 +20,7 @@ RSpec.describe StorageUsageSummary do
     write_storage_file("docs_sites/123/index.html", "site")
     write_storage_file("imports/dry-run/manifest.json", "{}")
     write_storage_file("imports/dry-run/files/source.md", "markdown")
+    write_storage_file("tmp/cache.bin", "ignored")
 
     result = described_class.new(storage_root:).call
 
@@ -40,7 +41,9 @@ RSpec.describe StorageUsageSummary do
     expect(imports_area.bytes).to eq("{}markdown".bytesize)
   end
 
-  it "returns zero usage for missing storage directories" do
+  it "returns zero usage for missing storage directories and ignores empty directories" do
+    FileUtils.mkdir_p(storage_root.join("document_files/empty/nested"))
+
     result = described_class.new(storage_root:).call
 
     expect(result.total_file_count).to eq(0)
