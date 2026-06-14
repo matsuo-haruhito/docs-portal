@@ -5,7 +5,11 @@
 - review_comments = show_reviews ? @review_comments.to_a : []
 - question_threads = question_threads.select(&:open?) if only_unresolved
 - review_comments = review_comments.reject(&:resolved?) if only_unresolved
-- comment_search_active = @comment_search_query.to_s.present?
+- comment_search_query = @comment_search_query.to_s
+- comment_search_active = comment_search_query.present?
+- comment_workspace_tab = @comment_workspace_tab.presence || DocumentCommentWorkspaceTab::DEFAULT_TAB
+- comment_context_params = { comment_tab: comment_workspace_tab }
+- comment_context_params[:comment_q] = comment_search_query if comment_search_active
 
 - if question_threads.any?
   section.document-comment-thread-group
@@ -43,6 +47,8 @@
           details.document-comment-reply-form
             summary 返信を追加
             = form_with model: [@project, @document, DocumentReviewComment.new], local: true do |form|
+              - comment_context_params.each do |key, value|
+                = hidden_field_tag key, value
               = form.hidden_field :comment_type, value: "question"
               = form.hidden_field :internal_only, value: false
               = form.hidden_field :parent_id, value: thread.id
@@ -60,8 +66,8 @@
               | 回答済みは回答・対応が終わった質問、クローズは対応しない・受付を閉じる質問に使います。どちらも通知やSLAを示す操作ではありません。
             p.actions
               - status_action_path = thread.document_version.present? ? document_version_document_review_comment_path(thread.document_version, thread) : project_document_document_review_comment_path(@project, @document, thread)
-              = button_to "回答済みにする", status_action_path, method: :patch, params: { decision: "resolve" }, class: "button secondary"
-              = button_to "クローズする", status_action_path, method: :patch, params: { decision: "reject" }, class: "button secondary"
+              = button_to "回答済みにする", status_action_path, method: :patch, params: comment_context_params.merge(decision: "resolve"), class: "button secondary"
+              = button_to "クローズする", status_action_path, method: :patch, params: comment_context_params.merge(decision: "reject"), class: "button secondary"
 
 - if review_comments.any?
   section.document-comment-thread-group
@@ -89,7 +95,7 @@
             h4 確認事項の状態を更新
             p.document-comment-card__action-note.muted 解決は内部レビューコメントの対応完了を示します。Q&Aの回答状態とは別に扱います。
             p.actions
-              = button_to "解決", document_version_document_review_comment_path(comment.document_version || @version, comment), method: :patch, params: { decision: "resolve" }, class: "button secondary"
+              = button_to "解決", document_version_document_review_comment_path(comment.document_version || @version, comment), method: :patch, params: comment_context_params.merge(decision: "resolve"), class: "button secondary"
 
 - if question_threads.empty? && review_comments.empty?
   p.muted
