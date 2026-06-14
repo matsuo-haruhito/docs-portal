@@ -484,6 +484,15 @@ RSpec.describe "Document approval requests", type: :request do
   it "falls back to document detail for requester users without a safe return_to" do
     approval_request = create(:document_approval_request, document:, requester:, title: "確認お願いします")
     document_detail_path = project_document_path(project, document.slug)
+    unsafe_return_to_values = [
+      "",
+      "//example.com",
+      "https://example.com/outside",
+      "http://example.com/outside",
+      "javascript:alert(1)",
+      "#approval",
+      "/documents\nSet-Cookie: bad=1"
+    ]
 
     sign_in_as(requester)
 
@@ -492,27 +501,61 @@ RSpec.describe "Document approval requests", type: :request do
     expect(parsed_html.at_css(%(a[href="#{document_detail_path}"]))).to be_present
     expect(parsed_html.at_css(%(a[href="#{document_approval_requests_path}"]))).to be_nil
 
-    another_request = create(:document_approval_request, document:, requester:, title: "今回は進めない")
-    post cancel_document_approval_request_path(another_request, return_to: "//example.com")
-    expect(response).to redirect_to(document_approval_request_path(another_request, return_to: document_detail_path))
-    expect(another_request.reload).to be_cancelled
+    unsafe_return_to_values.each do |return_to|
+      another_request = create(:document_approval_request, document:, requester:, title: "今回は進めない")
+
+      post cancel_document_approval_request_path(another_request, return_to:)
+      expect(response).to redirect_to(document_approval_request_path(another_request, return_to: document_detail_path))
+      expect(another_request.reload).to be_cancelled
+    end
   end
 
-  it "falls back to the index path for protocol-relative return_to values" do
+  it "keeps safe internal return_to paths with query strings for links and actions" do
     approval_request = create(:document_approval_request, document:, requester:, title: "確認お願いします")
-    invalid_return_to = "//example.com"
+    safe_return_to = document_approval_requests_path(status: :pending, q: "契約")
 
     sign_in_as(internal_user)
 
-    get document_approval_request_path(approval_request, return_to: invalid_return_to)
+    get document_approval_request_path(approval_request, return_to: safe_return_to)
     expect(response).to have_http_status(:ok)
-    expect(parsed_html.at_css(%(a[href="#{document_approval_requests_path}"]))).to be_present
+    expect(parsed_html.at_css(%(a[href="#{safe_return_to}"]))).to be_present
 
-    patch document_approval_request_path(approval_request, return_to: invalid_return_to)
-    expect(response).to redirect_to(document_approval_request_path(approval_request, return_to: document_approval_requests_path))
+    patch document_approval_request_path(approval_request, return_to: safe_return_to)
+    expect(response).to redirect_to(document_approval_request_path(approval_request, return_to: safe_return_to))
 
     another_request = create(:document_approval_request, document:, requester:, title: "今回は進めない")
-    post cancel_document_approval_request_path(another_request, return_to: invalid_return_to)
-    expect(response).to redirect_to(document_approval_request_path(another_request, return_to: document_approval_requests_path))
+    post cancel_document_approval_request_path(another_request, return_to: safe_return_to)
+    expect(response).to redirect_to(document_approval_request_path(another_request, return_to: safe_return_to))
+  end
+
+  it "falls back to the index path for unsafe internal-user return_to values" do
+    unsafe_return_to_values = [
+      "",
+      "//example.com",
+      "https://example.com/outside",
+      "http://example.com/outside",
+      "javascript:alert(1)",
+      "#approval",
+      "/documents\nSet-Cookie: bad=1"
+    ]
+
+    sign_in_as(internal_user)
+
+    unsafe_return_to_values.each do |return_to|
+      approval_request = create(:document_approval_request, document:, requester:, title: "確認お願いします")
+
+      get document_approval_request_path(approval_request, return_to:)
+      expect(response).to have_http_status(:ok)
+      expect(parsed_html.at_css(%(a[href="#{document_approval_requests_path}"]))).to be_present
+
+      patch document_approval_request_path(approval_request, return_to:)
+      expect(response).to redirect_to(document_approval_request_path(approval_request, return_to: document_approval_requests_path))
+      expect(approval_request.reload).to be_approved
+
+      another_request = create(:document_approval_request, document:, requester:, title: "今回は進めない")
+      post cancel_document_approval_request_path(another_request, return_to:)
+      expect(response).to redirect_to(document_approval_request_path(another_request, return_to: document_approval_requests_path))
+      expect(another_request.reload).to be_cancelled
+    end
   end
 end
