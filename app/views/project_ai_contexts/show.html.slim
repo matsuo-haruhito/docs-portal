@@ -156,6 +156,8 @@ p
           = text_field_tag :document_q, @document_query, placeholder: "例: setup-guide", maxlength: document_query_max_length
       p.actions.form-actions
         = submit_tag "候補を検索", class: "button secondary"
+        - if candidate_view_selected
+          = link_to "検索候補へ戻る", project_ai_context_path(@project, candidate_view_params), class: "button secondary"
         = link_to "すべての文書に戻す", project_ai_context_path(@project, mode: @mode), class: "button secondary"
     - if document_query_present
       p.muted 検索条件に一致する閲覧可能な文書はありません。検索語を見直すか、すべての文書に戻してください。
