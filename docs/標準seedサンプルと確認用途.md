@@ -46,6 +46,21 @@ PlantUML 記法サンプルは seed showcase の代表コンテンツです。Kr
 | 複数版 | `README.md` と `提出済/README.md` | current / 旧版の切り替えや比較前提を確認する |
 | 手順書系の実運用寄りコンテンツ | `ai-usecases/AI活用手順ポータル/` | showcase より業務コンテンツ寄りのサンプルを見たい場合に使う |
 
+## PR review 用 smoke checklist
+
+viewer / preview / download まわりの PR では、変更した導線に合わせて標準 showcase の代表ファイルを最小限確認します。ここでの checklist は review 用の手動 smoke であり、browser visual regression、full system spec、seed generator の変更を必須化するものではありません。
+
+| 変更対象 | 必須確認 | 任意または条件付き確認 |
+| --- | --- | --- |
+| Markdown viewer / 文書本文 | `README.md` の見出し、表、コードブロック、添付ファイルリンクが開けること | Docusaurus build や manual preview renderer を触る PR では HTML 表示も確認する |
+| Mermaid / diagram 表示 | `README.md` 内 Mermaid と `process.mmd` が補助ファイルとして辿れること | PlantUML / D2 / Kroki 変換を触る PR では Kroki mock smoke を確認し、実 Kroki service 疎通は runtime 設定変更時だけ見る |
+| CSV preview / download | `runbook.csv` の preview または download 導線が期待どおりであること | CSV parser や table 表示を触る PR では列見出しと行表示を合わせて見る |
+| PDF / Excel 添付 | `README.pdf` と `README.xlsx` の download 導線が壊れていないこと | Office preview 接続や Graph 連携を触る PR では preview 表示を条件付きで確認する |
+| ZIP preview / 個別 download | `sample-archive.zip` の ZIP preview、entry preview、individual download を見ること | unsafe path、nested archive、巨大 ZIP、bulk download の境界はこの showcase ではなく専用 issue / test で扱う |
+| 複数版 / 版詳細 | current の `README.md` と旧版 `提出済/README.md` を切り替えられること | diff / comparison UI を触る PR では current / old の表示ラベルと戻り先も見る |
+
+`db:seed` を実行した環境で UI を触る PR では、標準 showcase が再生成される前提で確認します。docs-only PR や runbook の表現整理だけなら、この checklist を確認観点として参照し、seed data や generator の変更までは求めません。
+
 ## 任意 external sample の追加手順
 
 任意サンプルは、標準 showcase とは別の `<sample-set>` 配下に置きます。`db:seed` 前に入力ファイルをそろえ、seed 後は portal 上の Project / Document / DocumentFile と生成 HTML を確認します。
