@@ -9,6 +9,7 @@
 - user_filter_summaries << "キーワード「#{user_filter_keyword}」" if user_filter_keyword.present?
 - user_filter_summaries << "状態: #{user_active_filter_label}" if user_active_filter_label.present?
 - user_filters_applied = user_filter_summaries.any?
+- user_return_to = request.fullpath
 
 h1 ユーザーマスタ
 = render "admin/nav"
@@ -62,8 +63,8 @@ h1 ユーザーマスタ
           td data-rails-table-preferences-column-key="company" = user.company&.display_name || "-"
           td data-rails-table-preferences-column-key="status" = user.active? ? "有効" : "無効"
           td.actions data-rails-table-preferences-column-key="actions"
-            = edit_link_to "編集", edit_admin_user_path(user)
-            = delete_link_to "削除", admin_user_path(user), confirm: "ユーザー「#{user.display_name}」を削除しますか？アクセス履歴や所属情報との関係を確認してください。"
+            = edit_link_to "編集", edit_admin_user_path(user, return_to: user_return_to)
+            = delete_link_to "削除", admin_user_path(user, return_to: user_return_to), confirm: "ユーザー「#{user.display_name}」を削除しますか？アクセス履歴や所属情報との関係を確認してください。"
 
   - if @users_pagination[:total_pages] > 1
     nav.pagination aria-label="ユーザー一覧ページ"
