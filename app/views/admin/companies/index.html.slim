@@ -10,6 +10,7 @@
 - company_filter_summaries << "キーワード「#{company_filter_keyword}」" if company_filter_keyword.present?
 - company_filter_summaries << "状態: #{company_active_filter_label}" if company_active_filter_label.present?
 - company_filters_applied = company_filter_summaries.any?
+- company_return_to = request.fullpath
 
 h1 会社マスタ
 = render "admin/nav"
@@ -58,9 +59,9 @@ h1 会社マスタ
           td data-rails-table-preferences-column-key="display_name" = company.display_name
           td data-rails-table-preferences-column-key="status" = company.active? ? "有効" : "無効"
           td.actions data-rails-table-preferences-column-key="actions"
-            = edit_link_to "編集", edit_admin_company_path(company)
+            = edit_link_to "編集", edit_admin_company_path(company, return_to: company_return_to)
             - if admin_user?
-              = delete_link_to "削除", admin_company_path(company), confirm: "会社「#{company.display_name}」を削除しますか？所属ユーザーや文書権限への影響を確認してください。"
+              = delete_link_to "削除", admin_company_path(company, return_to: company_return_to), confirm: "会社「#{company.display_name}」を削除しますか？所属ユーザーや文書権限への影響を確認してください。"
 
   - if @companies_pagination[:total_pages] > 1
     nav.pagination aria-label="会社一覧ページ"
