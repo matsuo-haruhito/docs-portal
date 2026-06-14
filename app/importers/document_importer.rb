@@ -3,6 +3,7 @@ require "securerandom"
 
 class DocumentImporter
   IMPORT_ROOT = Rails.root.join("storage", "imports")
+  MARKDOWN_EXTENSIONS = %w[.md .markdown .mdx].freeze
 
   attr_reader :artifact_root, :manifest_path, :manifest
 
@@ -44,7 +45,7 @@ class DocumentImporter
   def import_document!(payload)
     project = Project.find_by!(code: payload.fetch("project_code"))
 
-    Document.transaction do
+    imported_version = Document.transaction do
       document = resolve_document(project, payload)
       operation = document.new_record? ? "create" : "update"
       document.assign_attributes(
@@ -56,6 +57,8 @@ class DocumentImporter
       document.save!
 
       version = build_document_version(document, payload)
+      return unless version
+
       existing_document_files = version.persisted? ? version.document_files.to_a : []
 
       version.assign_attributes(
@@ -76,7 +79,10 @@ class DocumentImporter
 
       document.update!(latest_version: version) if version.published?
       record_generated_file_event!(source_path_for(payload), operation)
+      version
     end
+
+    enqueue_preview_build!(imported_version) if imported_version && markdown_version?(imported_version)
   end
 
   def build_document_version(document, payload)
@@ -87,9 +93,7 @@ class DocumentImporter
   end
 
   def build_versioned_document_version(document, version_label)
-    if document.document_versions.exists?(version_label: version_label)
-      raise ArgumentError, "Document version already exists: #{document.slug} #{version_label}"
-    end
+    return if document.document_versions.exists?(version_label: version_label)
 
     document.document_versions.build(version_label: version_label)
   end
@@ -205,6 +209,15 @@ class DocumentImporter
     FileUtils.mkdir_p(destination.parent)
     FileUtils.cp(source, destination)
     normalized_storage_key
+  end
+
+  def enqueue_preview_build!(version)
+    version.mark_preview_build_queued!
+    DocusaurusPreviewBuildJob.perform_later(version.id)
+  end
+
+  def markdown_version?(version)
+    File.extname(version.source_relative_path.to_s).downcase.in?(MARKDOWN_EXTENSIONS)
   end
 
   def dispatch_generated_file_change_event!(publish_job)
