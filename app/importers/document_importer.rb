@@ -93,7 +93,9 @@ class DocumentImporter
   end
 
   def build_versioned_document_version(document, version_label)
-    return if document.document_versions.exists?(version_label: version_label)
+    if document.document_versions.exists?(version_label: version_label)
+      raise ArgumentError, "Document version already exists: #{document.slug} #{version_label}"
+    end
 
     document.document_versions.build(version_label: version_label)
   end
