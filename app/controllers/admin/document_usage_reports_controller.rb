@@ -42,6 +42,13 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
           redirect_to admin_document_usage_reports_path, alert: "CSV出力には案件選択が必要です。"
         end
       end
+      format.json do
+        if @report_hash
+          render json: document_usage_report_metadata
+        else
+          redirect_to admin_document_usage_reports_path, alert: "CSV出力には案件選択が必要です。"
+        end
+      end
     end
   end
 
@@ -179,5 +186,51 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
     project_token = @report_hash.dig(:project, :code).presence || @report_hash.dig(:project, :public_id)
 
     "document-usage-report-#{project_token}-#{Date.current.iso8601}.csv"
+  end
+
+  def document_usage_report_metadata
+    filters = document_usage_report_export_filters
+
+    {
+      exported_at: Time.current.iso8601,
+      report_type: "document_usage_report",
+      export_scope: "current_project_usage_report",
+      description: "CSV export と同じ案件・期間・利用状況・検索・並び順で集計した文書利用状況です。",
+      filters:,
+      ignored_filters: @ignored_date_filters.map(&:to_s),
+      row_count: @report_hash[:documents].size,
+      summary: document_usage_report_export_summary(filters)
+    }
+  end
+
+  def document_usage_report_export_filters
+    {
+      project_id: @selected_project.id,
+      project: {
+        code: @report_hash.dig(:project, :code),
+        name: @report_hash.dig(:project, :name),
+        public_id: @report_hash.dig(:project, :public_id)
+      },
+      q: @query.presence,
+      usage_filter: @usage_filter,
+      usage_filter_label: helpers.document_usage_report_filter_label(@usage_filter),
+      sort_order: @sort_order,
+      sort_order_label: helpers.document_usage_report_sort_label(@sort_order),
+      from: @from_date&.iso8601,
+      to: @to_date&.iso8601,
+      period_label: helpers.document_usage_report_period_label(@from_date, @to_date)
+    }.compact
+  end
+
+  def document_usage_report_export_summary(filters)
+    [
+      "文書利用状況",
+      "案件: #{filters.dig(:project, :code)} / #{filters.dig(:project, :name)}",
+      "期間: #{filters[:period_label]}",
+      "利用状況: #{filters[:usage_filter_label]}",
+      "並び順: #{filters[:sort_order_label]}",
+      "検索: #{filters[:q].presence || 'なし'}",
+      "行数: #{@report_hash[:documents].size}件"
+    ].join(" / ")
   end
 end
