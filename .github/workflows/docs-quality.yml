@@ -5,6 +5,9 @@ on:
     branches: [dev, main]
     paths:
       - README.md
+      - ROADMAP.md
+      - Product Profile.md
+      - doc/**/*.md
       - docs/**/*.md
       - docusaurus/docusaurus.config.ts
       - docusaurus/package.json
@@ -17,6 +20,9 @@ on:
   pull_request:
     paths:
       - README.md
+      - ROADMAP.md
+      - Product Profile.md
+      - doc/**/*.md
       - docs/**/*.md
       - docusaurus/docusaurus.config.ts
       - docusaurus/package.json
@@ -47,6 +53,9 @@ jobs:
         with:
           globs: |
             README.md
+            ROADMAP.md
+            Product Profile.md
+            doc/**/*.md
             docs/**/*.md
 
       - name: Check relative markdown links
