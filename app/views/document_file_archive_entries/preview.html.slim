@@ -10,11 +10,11 @@
     p.muted
       | ZIP内の小さいテキスト項目だけをプレビューしています。周辺項目を確認する場合は一覧へ戻り、同じ項目を取得できる場合は個別ダウンロードを利用できます。
     p.actions
-      = link_to "ZIP内ファイル一覧へ戻る", document_file_path(@document_file, disposition: "inline", anchor: @archive_preview_return_anchor), class: "button secondary"
+      = link_to "ZIP内ファイル一覧へ戻る", document_file_path(@document_file, @archive_preview_return_params), class: "button secondary"
       - if @entry_downloadable
         = link_to "個別ダウンロード", archive_entry_download_document_file_path(@document_file, entry_path: @entry_preview.entry_path), class: "button"
     p.muted
-      | 戻る link は一覧の対象行へ移動します。表示中検索、ディレクトリ filter、種別 filter、候補 filter、並び替えは保存されないため、戻った後に必要な条件を再確認してください。
+      | 戻る link は一覧の対象行へ移動します。ZIP全体path検索から開いた場合は、その検索語も戻り先に反映します。表示中検索、ディレクトリ filter、種別 filter、候補 filter、並び替えは保存されないため、戻った後に必要な条件を再確認してください。
     dl.details-list
       dt 項目パス
       dd
