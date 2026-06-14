@@ -9,7 +9,7 @@
 - user_filter_summaries << "キーワード「#{user_filter_keyword}」" if user_filter_keyword.present?
 - user_filter_summaries << "状態: #{user_active_filter_label}" if user_active_filter_label.present?
 - user_filters_applied = user_filter_summaries.any?
-- user_return_to = request.fullpath
+- user_return_to = request.query_parameters.present? ? request.fullpath : nil
 
 h1 ユーザーマスタ
 = render "admin/nav"
