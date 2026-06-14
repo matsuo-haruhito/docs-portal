@@ -24,6 +24,9 @@
 - `名称`: 送信先を識別する運用名です。
 - `送信先URL`: `http` / `https` の URL が必須です。外部送信では HTTPS を標準にしてください。
 - `署名シークレット`: 入力すると送信時に `X-Docs-Portal-Signature-256: sha256=<hex digest>` が付与されます。受信側で request body の HMAC-SHA256 検証に使います。
+  - 既存 endpoint の編集画面では、保存済み secret の raw value は再表示されません。secret がある場合は `設定済み（変更する場合だけ入力）`、ない場合は `未設定` の状態表示として読みます。
+  - secret を変更したい場合だけ新しい値を入力します。既存 endpoint の編集で空欄のまま保存した場合は、既存 secret を維持します。
+  - この画面は secret の削除、rotation 手順、受信先への配布 workflow までは定義しません。削除や入れ替え運用が必要な場合は、受信先の検証設定と合わせて別途確認してください。
 - `有効`: off の endpoint は `WebhookEndpoint.subscribed_to` の対象外になり、送信されません。失敗 delivery の手動再送も、endpoint が停止中なら実行できません。
 - `通知対象イベント`: endpoint ごとに購読する event type を選びます。保存時に未対応値は validation error になります。
 

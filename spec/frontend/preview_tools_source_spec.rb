@@ -63,6 +63,21 @@ RSpec.describe "preview tools source" do
     end
   end
 
+  it "keeps the inventory aligned with the registered preview controller set" do
+    aggregate_failures do
+      dedicated_preview_controllers.each_key do |identifier|
+        expect(inventory_source).to include("`#{identifier}`")
+      end
+
+      expect(inventory_source).to include("`preview-tools` bridge は空 bridge を残さず退役")
+      expect(inventory_source).to include("`app/frontend/entrypoints/application.js` は `preview-tools` を登録しない")
+      expect(inventory_source).to include("`app/views/layouts/application.html.slim` は `preview-tools` を attach しない")
+      expect(inventory_source).to include("Source-level guard は `spec/frontend/preview_tools_source_spec.rb`")
+      expect(inventory_source).to include("`application.js` の直接 DOM setup は追加しない")
+      expect(inventory_source).to include("app 側 `new TomSelect(...)` は追加しない")
+    end
+  end
+
   it "keeps markdown table preference persistence source boundaries unchanged" do
     aggregate_failures do
       expect(table_tools_source).to include('const TABLE_PREFERENCE_COLLECTION_PATH = "/rails_table_preferences/preferences"')
