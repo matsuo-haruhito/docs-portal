@@ -373,6 +373,7 @@ RSpec.describe "Document review comments", type: :request do
     unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
 
     expect(page_text).to include("検索条件: internal escalation")
+    expect(page_text).to include("検索は、すべて / Q&A / 未解決Q&A の各タブに先に適用されます")
     expect(page_text).not_to include("Partner rollout internal escalation")
     expect(page_text).not_to include("docs/private-partner-rollout.md")
     expect(page_text).not_to include("確認事項")
