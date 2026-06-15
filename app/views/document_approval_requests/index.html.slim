@@ -100,5 +100,11 @@ p.actions
 - else
   - if has_active_filter
     p.muted 条件に一致する確認依頼はありません。検索語や状態を見直してください。担当者条件を指定している場合は担当者絞り込みも見直してください。
+    p.actions
+      = link_to "すべての確認依頼を見る", list_path.call, class: "button secondary"
+      - if @query.present?
+        = link_to "検索を解除", list_path.call(clear_search_params), class: "button secondary"
+      - if @requester_filter_id.present? || @approver_filter_id.present?
+        = link_to "担当者絞り込みを解除", list_path.call(clear_user_filter_params), class: "button secondary"
   - else
     p.muted 確認依頼はありません。
