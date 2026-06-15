@@ -17,7 +17,9 @@ Rails.application.routes.draw do
   resources :document_approval_requests, only: %i[index show update], param: :public_id do
     post :cancel, on: :member
   end
-  resources :document_delivery_logs, only: %i[index show update], param: :public_id
+  resources :document_delivery_logs, only: %i[index show update], param: :public_id do
+    get :failure_alert_handoff, on: :collection
+  end
   resource :session, only: %i[new create destroy]
   resources :document_bookmarks, only: %i[index create destroy], param: :public_id do
     post :move_to_favorite, on: :member
