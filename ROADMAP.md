@@ -20,7 +20,7 @@
 | --- | --- | --- | --- |
 | `rails_table_preferences` 一覧 | 実装済み代表画面あり | `admin/documents`, `admin/projects`, `admin/users`, `admin/external_folder_sync_sources`, `admin/document_sets`, `admin/consent_terms`, `admin/document_usage_reports`, `admin/read_confirmations`。代表 smoke 固定候補は #1986 | 新しい一覧へ広げる前に、既存画面の column metadata、filter / preset、empty state、保存済み設定 smoke を確認する。これは pinned ref bump ではなく、実装済み画面を守る guard として扱う |
 | `rails_fields_kit` フォーム | `admin/document_sets` が host app 側の実装済み代表例。案件選択は案件コード / 案件名の RFK remote search、対象文書は title / slug の RFK remote picker、既存 table row への移動・絞り込み、固定版 selector を current support として持つ。`admin/document_usage_reports` と `admin/read_confirmations` では案件選択の `rfk_select` を利用済み | #1348 / PR #1366 は document set の local filter / fixed version selector。#1985 の文書 remote picker first slice は PR #2079 で clean branch から merge 済み。#2514 は文書セット案件選択 remote search の docs 同期 | 文書権限の company / user selection、他フォームへの横展開は別 issue に分ける。文書セットの案件 remote search、対象文書 remote picker、fixed version selector は current support として扱うが、他画面の project / company / user remote search と混ぜない |
-| `tree_view` 連携 | 候補整理段階 | 文書ツリーの展開状態 / 選択状態を host app 側で保存する first slice は #1984 | #1301 の pinned ref bump や upstream `tree_view` API 判断とは分ける。ツリー UX と table state の責務境界が決まるまでは、実装済み current support として書かない |
+| `tree_view` 連携 | 文書ツリー sidebar の current cue / 展開状態 first slice は実装済み。ツリー + table state 連携は候補整理段階 | #1984 / PR #2105 は merged。左ペインの current document ancestor 展開、表示中 badge、server-side 展開状態保存は current support | #1301 の pinned ref bump や upstream `tree_view` API 判断とは分ける。次はツリー + 詳細一覧の列幅 / 表示状態など table state 連携を proposal として切り分ける |
 
 `docs-portal` 側 issue では、画面固有の view、helper、route、params、Stimulus wiring、request / system spec を扱う。gem の public API、import path、controller registration、Vite alias 前提、導入手順の不足が論点になる場合は、upstream gem 側の issue / docs と分けて確認する。
 
@@ -65,11 +65,11 @@ Tom Select 自体は積極的に使う。ただし、アプリ側で `new TomSel
 
 候補:
 
-- 文書ツリーの展開状態、選択状態、表示列状態の保存
+- 実装済みの左ペイン文書ツリー展開状態 / current row cue を前提にした、ツリー + 詳細一覧の列幅や表示状態の保存
 - ツリー + 詳細一覧の列幅や表示状態の保存
 - `ResourceTableRenderState` 系の更新を docs-portal 側の文書閲覧 UX に反映
 
-#1984 は、文書ツリーの展開状態または選択状態を host app 側で小さく扱う proposal として読む。保存先、保存範囲、Turbo refresh 後の current cue は Planner / 実装 PR の判断対象であり、#1301 の pinned ref bump や upstream `tree_view` public API 変更とは混ぜない。
+#1984 / PR #2105 は merged 済みの current support として読む。左ペインの文書ツリーでは、user ごとの server-side preference による展開 / 折りたたみ保存、current document ancestor の展開、表示中 badge / `aria-current` による現在位置 cue を扱う。次の proposal は、これを前提にツリー + 詳細一覧の table state 連携を切り出し、#1301 の pinned ref bump や upstream `tree_view` public API 変更とは混ぜない。
 
 #### Stimulus 化の継続
 
