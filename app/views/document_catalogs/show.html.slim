@@ -15,11 +15,14 @@ p.muted
 - if @catalog_hash.dig(:catalog, :description).present?
   p = @catalog_hash.dig(:catalog, :description)
 
+- visible_items_count = @catalog_hash.dig(:summary, :visible_items).to_i
+- total_items_count = @catalog_hash.dig(:summary, :total_items).to_i
+
 p.muted
   | 表示可能:
-  = @catalog_hash.dig(:summary, :visible_items)
+  = visible_items_count
   | 件 / 登録:
-  = @catalog_hash.dig(:summary, :total_items)
+  = total_items_count
   | 件
 
 - if @catalog_hash[:items].any?
@@ -41,6 +44,9 @@ p.muted
             td = localized_label("documents.document_kind", document[:document_kind])
             td = localized_label("documents.visibility_policy", document[:visibility_policy])
 - else
-  p.muted このカタログで表示できる文書はありません。
+  - if total_items_count.zero?
+    p.muted このカタログにはまだ文書が登録されていません。
+  - else
+    p.muted 登録済みの文書はありますが、現在の利用者に表示できる文書はありません。
 
 p = link_to "文書カタログ一覧へ", project_document_catalogs_path(@project)
