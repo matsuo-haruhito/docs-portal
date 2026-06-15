@@ -22,7 +22,6 @@ RSpec.describe "Admin access log date filter hint", type: :request do
   end
 
   it "keeps the guidance visible with invalid date warnings" do
-    create(:access_log, user: admin_user, company: admin_company, accessed_at: Time.zone.parse("2026-05-10 10:00:00 UTC"))
     sign_in_as(admin_user)
 
     get admin_access_logs_path(from: "not-a-date", to: "2026-99-99")
