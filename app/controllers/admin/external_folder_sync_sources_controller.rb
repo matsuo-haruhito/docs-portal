@@ -143,7 +143,10 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     end
 
     resolved = ExternalFolderSync::MicrosoftGraphFolderResolver.new(source: @external_folder_sync_source).resolve
-    redirect_to sync_source_path_with_return_to, notice: metadata_recheck_notice(resolved)
+    summary = metadata_recheck_summary(metadata_recheck_comparisons(resolved))
+    redirect_to sync_source_path_with_return_to,
+                notice: summary["notice"],
+                flash: { metadata_recheck_summary: summary }
   rescue ExternalFolderSync::MicrosoftGraphFolderResolver::Error => e
     redirect_to sync_source_path_with_return_to, alert: "保存済み metadata を再確認できませんでした。Microsoft Graph接続・共有URL・権限を確認してください。#{e.message}"
   end
@@ -352,11 +355,19 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     "直近の同期プレビューに競合・重複警告があります。警告を確認してから同期してください。"
   end
 
-  def metadata_recheck_notice(resolved)
-    changed_labels = metadata_recheck_comparisons(resolved).filter_map do |comparison|
-      comparison[:label] unless comparison[:matched]
-    end
+  def metadata_recheck_summary(comparisons)
+    changed_labels = comparisons.filter_map { |comparison| comparison[:label] unless comparison[:matched] }
+    matched_labels = comparisons.filter_map { |comparison| comparison[:label] if comparison[:matched] }
 
+    {
+      "status" => changed_labels.empty? ? "matched" : "changed",
+      "matched_labels" => matched_labels,
+      "changed_labels" => changed_labels,
+      "notice" => metadata_recheck_notice(changed_labels)
+    }
+  end
+
+  def metadata_recheck_notice(changed_labels)
     if changed_labels.empty?
       "保存済み metadata を再確認しました。Drive ID / Folder item ID / Folder path / Site ID は現在の Microsoft Graph 解決結果と一致しています。"
     else
