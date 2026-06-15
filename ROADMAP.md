@@ -65,8 +65,8 @@ Tom Select 自体は積極的に使う。ただし、アプリ側で `new TomSel
 
 候補:
 
-- 実装済みの左ペイン文書ツリー展開状態 / current row cue を前提にした、ツリー + 詳細一覧の列幅や表示状態の保存
-- ツリー + 詳細一覧の列幅や表示状態の保存
+- 実装済みの左ペイン文書ツリー展開状態 / current row cue を前提にした、詳細一覧側の列幅や表示状態の保存
+- 文書ツリーの current cue と詳細一覧 filter / preset の責務境界整理
 - `ResourceTableRenderState` 系の更新を docs-portal 側の文書閲覧 UX に反映
 
 #1984 / PR #2105 は merged 済みの current support として読む。左ペインの文書ツリーでは、user ごとの server-side preference による展開 / 折りたたみ保存、current document ancestor の展開、表示中 badge / `aria-current` による現在位置 cue を扱う。次の proposal は、これを前提にツリー + 詳細一覧の table state 連携を切り出し、#1301 の pinned ref bump や upstream `tree_view` public API 変更とは混ぜない。
