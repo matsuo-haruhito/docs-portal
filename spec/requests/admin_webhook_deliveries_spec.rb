@@ -99,6 +99,63 @@ RSpec.describe "Admin webhook deliveries", type: :request do
     end
   end
 
+  it "drops unsupported event and status filters while normalizing error query return params" do
+    sign_in_as(admin_user)
+
+    event = create(:notification_event, event_type: :document_updated)
+    endpoint = create(:webhook_endpoint, name: "Normalized Filter Hook")
+    normalized_query = "x" * Admin::WebhookDeliveriesController::ERROR_QUERY_MAX_LENGTH
+    long_query = "  #{normalized_query}ignored-suffix  "
+    matching_delivery = create_delivery(
+      endpoint: endpoint,
+      event: event,
+      status: :failed,
+      response_status: 500,
+      error_message: "prefix #{normalized_query} suffix",
+      created_at: Time.zone.local(2026, 6, 10, 10, 0, 0)
+    )
+    other_delivery = create_delivery(
+      endpoint: endpoint,
+      event: event,
+      status: :failed,
+      response_status: 500,
+      error_message: "prefix #{'x' * 99}y suffix",
+      created_at: Time.zone.local(2026, 6, 10, 9, 0, 0)
+    )
+
+    get admin_webhook_deliveries_path(
+      event_type: "unknown_event",
+      status: "archived",
+      error_q: long_query
+    )
+
+    expect(response).to have_http_status(:ok)
+    expect(input_value("error_q")).to eq(normalized_query)
+    expect(action_targets).to include(
+      admin_webhook_delivery_path(
+        matching_delivery.public_id,
+        error_q: normalized_query,
+        return_context: "deliveries_index"
+      )
+    )
+    expect(action_targets).not_to include(
+      admin_webhook_delivery_path(
+        matching_delivery.public_id,
+        event_type: "unknown_event",
+        status: "archived",
+        error_q: normalized_query,
+        return_context: "deliveries_index"
+      )
+    )
+    expect(action_targets).not_to include(
+      admin_webhook_delivery_path(
+        other_delivery.public_id,
+        error_q: normalized_query,
+        return_context: "deliveries_index"
+      )
+    )
+  end
+
   it "renders the webhook endpoint filter as bounded remote search with selected values" do
     sign_in_as(admin_user)
 
