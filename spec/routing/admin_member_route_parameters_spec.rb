@@ -25,6 +25,26 @@ RSpec.describe "admin member route parameters", type: :routing do
     "zip_imports" => "public_id"
   }.freeze
 
+  DIRECT_ADMIN_MEMBER_ACTIONS = %w[
+    apply
+    apply_template
+    archive
+    dry_run
+    edit
+    enqueue
+    external_preview
+    force_apply
+    permission_preview
+    recheck_metadata
+    request_run
+    restore
+    retry_dispatch
+    retry_run
+    subscribe
+    sync
+    unsubscribe
+  ].freeze
+
   INDEX_ONLY_ADMIN_RESOURCES = %w[
     access_logs
     document_usage_reports
@@ -33,7 +53,8 @@ RSpec.describe "admin member route parameters", type: :routing do
   ].freeze
 
   def admin_member_route_paths(resource)
-    route_prefix = %r{\A/admin/#{Regexp.escape(resource)}/:[^/()]+(?:/[^/()]+)?(?:\(\.:format\))?\z}
+    member_action_pattern = DIRECT_ADMIN_MEMBER_ACTIONS.map { |action| Regexp.escape(action) }.join("|")
+    route_prefix = %r{\A/admin/#{Regexp.escape(resource)}/:[^/()]+(?:/(?:#{member_action_pattern}))?(?:\(\.:format\))?\z}
 
     Rails.application.routes.routes.filter_map do |route|
       path = route.path.spec.to_s
