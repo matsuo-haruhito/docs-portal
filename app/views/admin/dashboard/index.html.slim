@@ -202,6 +202,7 @@ section.card
         th 対象
         th ファイル数
         th 概算使用量
+        th 大きい内訳
         th 読み方
         th 次の確認先
     tbody
@@ -221,6 +222,16 @@ section.card
             code = area.relative_path
           td = area.file_count
           td = area.human_size
+          td
+            - if area.breakdown_entries.present?
+              ul
+                - area.breakdown_entries.each do |entry|
+                  li
+                    code = entry.relative_path
+                    br
+                    span.muted = "#{entry.file_count} file / #{entry.human_size}"
+            - else
+              span.muted 内訳なし（現在の条件で表示できる直下項目はありません）
           td
             span.muted = area.description
           td
