@@ -15,6 +15,14 @@ RSpec.describe "Document review comments", type: :request do
     create(:document_permission, document:, company:, access_level: :view)
   end
 
+  def redirect_path
+    URI.parse(response.location).path
+  end
+
+  def redirect_query
+    Rack::Utils.parse_nested_query(URI.parse(response.location).query)
+  end
+
   it "allows internal users to create review comments on a version" do
     sign_in_as(internal_user)
 
@@ -75,6 +83,54 @@ RSpec.describe "Document review comments", type: :request do
     expect(response).to redirect_to(document_version_path(version))
     expect(comment.reload).to be_resolved
     expect(comment.resolved_by).to eq(admin_user)
+  end
+
+  it "keeps review comment decision notices and comment redirect context" do
+    resolve_comment = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: internal_user,
+      comment_type: :request_change,
+      internal_only: true,
+      body: "Resolve this review item"
+    )
+    reject_comment = create(
+      :document_review_comment,
+      document:,
+      author: internal_user,
+      comment_type: :issue,
+      internal_only: true,
+      body: "Reject this review item"
+    )
+    long_query = "x" * (DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH + 5)
+    normalized_query = "x" * DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH
+
+    sign_in_as(admin_user)
+
+    patch document_version_document_review_comment_path(version, resolve_comment), params: {
+      decision: "resolve",
+      comment_tab: "review",
+      comment_q: "handoff"
+    }
+
+    expect(redirect_path).to eq(document_version_path(version))
+    expect(redirect_query).to eq("comment_tab" => "review", "comment_q" => "handoff")
+    expect(resolve_comment.reload).to be_resolved
+    expect(flash[:notice]).to eq("レビューコメントを解決済みにしました。")
+
+    patch project_document_document_review_comment_path(project, document, reject_comment), params: {
+      decision: "reject",
+      comment_tab: "unsupported",
+      comment_q: long_query
+    }
+
+    expect(redirect_path).to eq(project_document_path(project, document.slug))
+    expect(redirect_query).to eq("comment_q" => normalized_query)
+    expect(reject_comment.reload).to be_rejected
+    expect(reject_comment.resolved_by).to be_nil
+    expect(reject_comment.resolved_at).to be_nil
+    expect(flash[:notice]).to eq("レビューコメントを却下扱いにしました。")
   end
 
   it "labels unresolved counts, question visibility, and internal-only review comments" do
@@ -317,7 +373,6 @@ RSpec.describe "Document review comments", type: :request do
     unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
 
     expect(page_text).to include("検索条件: internal escalation")
-    expect(page_text).to include("検索は、すべて / Q&A / 未解決Q&A の各タブに先に適用されます")
     expect(page_text).not_to include("Partner rollout internal escalation")
     expect(page_text).not_to include("docs/private-partner-rollout.md")
     expect(page_text).not_to include("確認事項")
@@ -570,6 +625,53 @@ RSpec.describe "Document review comments", type: :request do
     expect(response.body).to include("回答済み")
     expect(response.body).to include("Yes. The current published version is valid.")
     expect(response.body).not_to include("回答済みにする")
+  end
+
+  it "keeps Q&A decision notices and safe redirect context across document and version routes" do
+    document_question = create(
+      :document_review_comment,
+      document:,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Can this document be reused?"
+    )
+    version_question = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Should this version stay visible?"
+    )
+
+    sign_in_as(admin_user)
+
+    patch project_document_document_review_comment_path(project, document, document_question), params: {
+      decision: "resolve",
+      comment_tab: "qa",
+      comment_q: "reuse"
+    }
+
+    expect(redirect_path).to eq(project_document_path(project, document.slug))
+    expect(redirect_query).to eq("comment_tab" => "qa", "comment_q" => "reuse")
+    expect(document_question.reload).to be_resolved
+    expect(document_question.resolved_by).to eq(admin_user)
+    expect(flash[:notice]).to eq("Q&A を回答済みにしました。")
+
+    patch document_version_document_review_comment_path(version, version_question), params: {
+      decision: "reject",
+      comment_tab: "qa",
+      comment_q: "visible"
+    }
+
+    expect(redirect_path).to eq(document_version_path(version))
+    expect(redirect_query).to eq("comment_tab" => "qa", "comment_q" => "visible")
+    expect(version_question.reload).to be_rejected
+    expect(version_question.resolved_by).to be_nil
+    expect(version_question.resolved_at).to be_nil
+    expect(flash[:notice]).to eq("Q&A をクローズしました。")
   end
 
   it "allows admins to close version-level Q&A threads" do
