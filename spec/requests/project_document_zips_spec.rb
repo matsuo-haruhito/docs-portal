@@ -6,9 +6,9 @@ RSpec.describe "Project document zips", type: :request do
   let(:user) { create(:user, :internal) }
   let(:project) { create(:project, code: "ZIP#{SecureRandom.hex(3)}", name: "Zip Project") }
 
-  def create_document_with_file(title:, slug:, file_name:, content:)
+  def create_document_with_file(title:, slug:, file_name:, content:, source_relative_path: nil)
     document = create(:document, project:, title:, slug:)
-    version = create(:document_version, document:, version_label: "v1.0.0")
+    version = create(:document_version, document:, version_label: "v1.0.0", source_relative_path:)
     document.update!(latest_version: version)
 
     storage_key = "spec/project-document-zips/#{SecureRandom.hex(8)}/#{file_name}"
@@ -196,6 +196,69 @@ RSpec.describe "Project document zips", type: :request do
     source_path_field = zip_form.at_css('input[name="source_path"]')
 
     expect(source_path_field["value"]).to eq("guides/folder-doc")
+  end
+
+  it "falls back to document-title paths and default file options for invalid zip option params" do
+    document = create_document_with_file(
+      title: "Fallback Spec",
+      slug: "fallback-spec",
+      file_name: "README.md",
+      content: "fallback",
+      source_relative_path: "deliverables/fallback-spec/README.md"
+    )
+
+    sign_in_as(user)
+
+    post project_document_zip_path(project), params: {
+      document_ids: [document.id],
+      zip_path_mode: "unexpected"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("fallback-spec/v1.0.0/README.md")
+    expect(response.body).not_to include("deliverables/fallback-spec/README.md")
+    expect(response.body).to include("zip_path_mode=document_title")
+    expect(response.body).to include("include_markdown_sources=true")
+    expect(response.body).to include("include_attachments=true")
+    expect(response.body).to include("pdf_only=false")
+  end
+
+  it "normalizes source_path and limits matching selection to that upload source folder" do
+    folder_document = create_document_with_file(
+      title: "Folder Guide",
+      slug: "folder-guide",
+      file_name: "README.md",
+      content: "folder",
+      source_relative_path: "guides/folder/README.md"
+    )
+    nested_document = create_document_with_file(
+      title: "Nested Guide",
+      slug: "nested-guide",
+      file_name: "notes.txt",
+      content: "nested",
+      source_relative_path: "guides/folder/nested/notes.txt"
+    )
+    other_document = create_document_with_file(
+      title: "Other Guide",
+      slug: "other-guide",
+      file_name: "README.md",
+      content: "other",
+      source_relative_path: "guides/other/README.md"
+    )
+
+    sign_in_as(user)
+
+    post project_document_zip_path(project), params: {
+      selection_scope: "matching",
+      source_path: "\\guides//folder/"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.headers["content-disposition"]).to include("-folder-documents.zip")
+    expect(response.body).to include("folder-guide/v1.0.0/README.md")
+    expect(response.body).to include("nested-guide/v1.0.0/notes.txt")
+    expect(response.body).not_to include("other-guide/v1.0.0/README.md")
+    expect(response.body).not_to include(other_document.slug)
   end
 
   it "supports zip path and file type options" do
