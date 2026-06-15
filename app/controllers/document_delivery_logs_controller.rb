@@ -4,6 +4,8 @@ class DocumentDeliveryLogsController < BaseController
 
   DELIVERY_LOG_DISPLAY_LIMIT = 50
   DELIVERY_LOG_QUERY_MAX_LENGTH = 100
+  FAILURE_ALERT_HANDOFF_PRESENT_NOTE = "read-only handoff payloadです。通知送信、ack、自動 retry、送付状態変更は行いません。".freeze
+  FAILURE_ALERT_HANDOFF_EMPTY_NOTE = "current 条件で handoff 対象なし。これは正常保証、外部監視 green、通知正常を意味しません。".freeze
 
   STATUS_FILTER_LABELS = {
     "draft" => "下書き",
@@ -56,6 +58,20 @@ class DocumentDeliveryLogsController < BaseController
     @delivery_logs_total_count = scoped_scope.count
     @delivery_logs_limit = DELIVERY_LOG_DISPLAY_LIMIT
     @delivery_logs = scoped_scope.includes(:project, :document, :document_set, :sender).recent_first.limit(@delivery_logs_limit)
+  end
+
+  def failure_alert_handoff
+    raise ApplicationError::Forbidden unless current_user.internal?
+
+    entries = DocumentDeliveryLogs::FailureAlertHandoff.new.call.map(&:to_h)
+
+    render json: {
+      generated_at: Time.current.iso8601,
+      count: entries.size,
+      note: entries.any? ? FAILURE_ALERT_HANDOFF_PRESENT_NOTE : FAILURE_ALERT_HANDOFF_EMPTY_NOTE,
+      runbook_path: DocumentDeliveryLogs::FailureAlertHandoff::RUNBOOK_PATH,
+      entries: entries
+    }
   end
 
   def show
