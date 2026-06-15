@@ -1,8 +1,11 @@
 = render "shared/error_messages", record: user
 
 - fixed_company_name = user.company&.display_name || @fixed_company_for_form&.display_name || "-"
+- return_to = params[:return_to].present? ? user_return_to_path : nil
+- form_url = user.persisted? ? admin_user_path(user.public_id, return_to: return_to) : admin_users_path
 
-= form_with model: [:admin, user] do |form|
+= form_with model: [:admin, user], url: form_url do |form|
+  = hidden_field_tag :return_to, return_to if return_to.present?
   .form-grid
     label
       | ユーザー名（表示用）
@@ -46,4 +49,4 @@
   p.actions
     = form.submit "保存", class: "button"
     - if user.persisted?
-      = link_to "一覧へ戻る", admin_users_path, class: "button secondary"
+      = link_to "一覧へ戻る", return_to || admin_users_path, class: "button secondary"
