@@ -13,11 +13,13 @@ p.muted
 
 p.actions
   = link_to "外部送付を準備", new_project_document_set_document_delivery_log_path(@project, @document_set), class: "button secondary"
+p.muted 現在の利用者に表示できる文書を対象に、外部送付の下書きを準備します。
 
 - if @document_set.description.present?
   p = simple_format(@document_set.description)
 
 - if @items.any?
+  p.muted 文書ごとの使用版を確認してください。「利用可能な版なし」の行は、送付前に文書の版を確認してください。
   table
     thead
       tr
@@ -43,5 +45,6 @@ p.actions
           td = item.note.presence || "-"
 - else
   p.muted 表示できる文書はありません。
+  p.muted このセットには現在の利用者に表示できる文書がありません。外部送付を準備する前に、文書の公開範囲や版の状態を確認してください。
 
 p = link_to "文書セット一覧へ戻る", project_document_sets_path(@project)
