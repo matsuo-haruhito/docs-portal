@@ -91,19 +91,23 @@ current enum:
 - `対象`
 - `公開範囲`
 - catalog description
-- `表示中: n 件 / 総数: m 件`
+- `表示可能: n 件 / 登録: m 件`
 - item の `順序` / `文書` / `メモ` / `種別` / `公開範囲`
 
-`表示中` と `総数` がずれる場合は、catalog には item が登録されているが、current user に見えない文書が含まれている状態として読む。これは catalog の不具合とは限らない。
+`表示可能` と `登録` がずれる場合は、catalog には item が登録されているが、current user に見えない文書が含まれている状態として読む。これは catalog の不具合とは限らない。
 
 item の `文書` link は、同じ案件配下の文書詳細へ戻る。current 実装では catalog item は同じ Project の document だけを持てるため、catalog 詳細から別案件の document へ直接飛ばす用途ではない。
 
-詳細に表示できる item が 0 件の場合、`このカタログで表示できる文書はありません。` と表示される。この場合も catalog 自体は見えているため、次の順で確認する。
+詳細に表示できる item が 0 件の場合、表示文言は登録済み item の有無で分かれる。
 
-1. catalog item がまだ登録されていないか
-2. 登録済み item の document が current user に見えない状態か
-3. Project membership または DocumentPermission が intended か
-4. 対象文書の公開状態や visibility が intended か
+- `登録: 0 件` の場合は `このカタログにはまだ文書が登録されていません。` と表示される。catalog item がまだ登録されていない状態として読む。
+- `登録: 1 件以上` かつ `表示可能: 0 件` の場合は `登録済みの文書はありますが、現在の利用者に表示できる文書はありません。` と表示される。catalog には item があるが、current user には文書ごとの閲覧権限や公開状態の都合で表示されない状態として読む。
+
+後者の場合も catalog 自体は見えているため、次の順で確認する。
+
+1. 登録済み item の document が current user に見えない状態か
+2. Project membership または DocumentPermission が intended か
+3. 対象文書の公開状態や visibility が intended か
 
 ## 文書セット・ショートカット・文書一覧との違い
 

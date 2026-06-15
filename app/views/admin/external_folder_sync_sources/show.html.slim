@@ -11,6 +11,9 @@ h1 外部フォルダ同期設定詳細
 - google_drive_source = @external_folder_sync_source.google_drive?
 - microsoft_graph_source = @external_folder_sync_source.microsoft_graph?
 - provider_metadata = @external_folder_sync_source.provider_metadata || {}
+- metadata_recheck_summary = (flash[:metadata_recheck_summary] || flash["metadata_recheck_summary"] || {}).with_indifferent_access
+- metadata_recheck_changed_labels = Array(metadata_recheck_summary[:changed_labels])
+- metadata_recheck_matched_labels = Array(metadata_recheck_summary[:matched_labels])
 - apply_confirm_message = "#{provider_label} からドキュメントポータルへ同期します。競合・重複警告がある場合は自動停止します。よろしいですか？"
 
 .card
@@ -23,6 +26,17 @@ h1 外部フォルダ同期設定詳細
       = link_to "保存済み metadata を再確認", recheck_metadata_admin_external_folder_sync_source_path(@external_folder_sync_source, return_to: return_to), data: { turbo_method: :post }, class: "button"
       = link_to "Microsoft Graph接続を確認", admin_microsoft_graph_connections_path(return_to: detail_return_to), class: "button secondary"
       = edit_link_to "設定を編集", edit_admin_external_folder_sync_source_path(@external_folder_sync_source, return_to: return_to)
+    - if metadata_recheck_summary.present?
+      .notice
+        p.eyebrow 保存済み metadata 再確認結果
+        - if metadata_recheck_changed_labels.any?
+          p.status-warning = "差分あり: #{metadata_recheck_changed_labels.join(' / ')}"
+          - if metadata_recheck_matched_labels.any?
+            p.muted = "一致: #{metadata_recheck_matched_labels.join(' / ')}"
+          p.muted 保存済み値は変更していません。必要なら設定を編集して保存し直してください。
+        - else
+          p.muted = "一致: #{metadata_recheck_matched_labels.join(' / ')}"
+          p.muted 保存済み metadata は現在の Microsoft Graph 解決結果と一致しています。
   - elsif @external_folder_sync_source.oauth_user? && !@external_folder_sync_source.oauth_connected?
     p.muted Google Drive OAuthが未接続です。まずGoogleアカウントで許可してから、同期プレビューで読み取れるファイルを確認してください。
     p.actions

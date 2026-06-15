@@ -65,8 +65,8 @@ section.card
   - if build_manifest.state != :available
     .notice.alert
       = build_manifest.message
+  h3 直近build履歴
   - if build_history.any?
-    h3 直近build履歴
     p.muted API仕様ページ専用 build の直近結果だけを read-only に表示します。raw stdout / stderr は表示しません。
     table
       thead
@@ -92,6 +92,10 @@ section.card
               - details << "HTML更新: #{l(entry.build_entry_mtime, format: :long)}" if entry.build_entry_mtime
               - details << entry.message if entry.message.present?
               = details.presence&.join(" / ") || "-"
+  - else
+    .notice
+      p.muted 直近build履歴はまだ記録されていません。これは build 成功、失敗なし、CI green を意味しません。
+      p.muted 表示状態、Build manifest、主要ページとsource を確認し、必要に応じて source / workflow の状況を追ってください。
   - if build_status.state == :failed
     .notice.alert
       h3 失敗調査の入口
