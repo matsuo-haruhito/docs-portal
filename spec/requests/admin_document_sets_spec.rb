@@ -69,6 +69,18 @@ RSpec.describe "Admin document sets", type: :request do
     parsed_html.css('a[href]').select { |node| node.text.squish == "条件をクリア" }.map { |node| node["href"] }
   end
 
+  def form_clear_filter_targets
+    parsed_html.css("form.document-set-filter-form .form-actions a[href]").select do |node|
+      node.text.squish == "条件をクリア"
+    end.map { |node| node["href"] }
+  end
+
+  def empty_state_clear_filter_targets
+    parsed_html.css(".card p.muted a[href]").reject do |node|
+      node.ancestors("form.document-set-filter-form").any?
+    end.select { |node| node.text.squish == "条件をクリア" }.map { |node| node["href"] }
+  end
+
   def action_targets
     parsed_html.css("a[href], form[action]").map do |node|
       node["href"] || node["action"]
@@ -232,12 +244,14 @@ RSpec.describe "Admin document sets", type: :request do
     expect(document_set_filter_options("set_type")).to include(["すべて", ""], ["送付用", "delivery"], ["設計", "design"])
     expect(document_set_filter_options("visibility_policy")).to include(["すべて", ""], ["限定公開", "restricted_external"], ["社内のみ", "internal_only"])
     expect(page_text).to include("表示設定は列の表示・幅を調整します")
+    expect(form_clear_filter_targets).to be_empty
 
     get admin_document_sets_path, params: { set_type: "delivery" }
 
     expect(response).to have_http_status(:ok)
     expect(listed_document_set_names).to eq(["既存セット", "配送社内セット"])
     expect(page_text).to include("種別: 送付用")
+    expect(form_clear_filter_targets).to include(admin_document_sets_path)
     expect(clear_filter_targets).to include(admin_document_sets_path)
 
     get admin_document_sets_path, params: { visibility_policy: "internal_only" }
@@ -245,6 +259,7 @@ RSpec.describe "Admin document sets", type: :request do
     expect(response).to have_http_status(:ok)
     expect(listed_document_set_names).to eq(["配送社内セット"])
     expect(page_text).to include("公開範囲: 社内のみ")
+    expect(form_clear_filter_targets).to include(admin_document_sets_path)
     expect(clear_filter_targets).to include(admin_document_sets_path)
 
     get admin_document_sets_path, params: { set_type: "delivery", visibility_policy: "restricted_external" }
@@ -328,7 +343,9 @@ RSpec.describe "Admin document sets", type: :request do
     expect(page_text).to include("種別: 送付用")
     expect(page_text).to include("公開範囲: ログインユーザー公開")
     expect(page_text).to include("条件に一致する文書セットはありません。")
-    expect(clear_filter_targets).to include(admin_document_sets_path)
+    expect(form_clear_filter_targets).to include(admin_document_sets_path)
+    expect(empty_state_clear_filter_targets).to include(admin_document_sets_path)
+    expect(clear_filter_targets.count(admin_document_sets_path)).to eq(2)
     expect(document_set_rows).to be_empty
     expect(table_preference_surfaces).to be_empty
   end
