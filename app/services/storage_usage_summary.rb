@@ -1,7 +1,15 @@
 require "find"
 
 class StorageUsageSummary
-  Area = Struct.new(:key, :label, :relative_path, :description, :bytes, :file_count, keyword_init: true) do
+  TOP_BREAKDOWN_LIMIT = 5
+
+  BreakdownEntry = Struct.new(:relative_path, :bytes, :file_count, keyword_init: true) do
+    def human_size
+      ActiveSupport::NumberHelper.number_to_human_size(bytes)
+    end
+  end
+
+  Area = Struct.new(:key, :label, :relative_path, :description, :bytes, :file_count, :breakdown_entries, keyword_init: true) do
     def human_size
       ActiveSupport::NumberHelper.number_to_human_size(bytes)
     end
@@ -64,8 +72,42 @@ class StorageUsageSummary
       relative_path: Pathname("storage").join(definition.fetch(:directory)).to_s,
       description: definition.fetch(:description),
       bytes:,
-      file_count:
+      file_count:,
+      breakdown_entries: breakdown_entries_for(definition, path)
     )
+  end
+
+  def breakdown_entries_for(definition, path)
+    child_paths(path).filter_map do |child_path|
+      bytes, file_count = entry_stats(child_path)
+      next if file_count.zero?
+
+      BreakdownEntry.new(
+        relative_path: Pathname("storage").join(definition.fetch(:directory), child_path.basename.to_s).to_s,
+        bytes:,
+        file_count:
+      )
+    end.sort_by { |entry| [-entry.bytes, -entry.file_count, entry.relative_path] }.first(TOP_BREAKDOWN_LIMIT)
+  end
+
+  def child_paths(path)
+    return [] unless path.directory?
+
+    path.children
+  rescue Errno::ENOENT, Errno::EACCES
+    []
+  end
+
+  def entry_stats(path)
+    if File.file?(path.to_s)
+      [File.size(path.to_s), 1]
+    elsif File.directory?(path.to_s)
+      directory_stats(path)
+    else
+      [0, 0]
+    end
+  rescue Errno::ENOENT, Errno::EACCES
+    [0, 0]
   end
 
   def directory_stats(path)
