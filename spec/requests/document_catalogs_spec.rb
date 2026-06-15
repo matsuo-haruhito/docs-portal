@@ -174,6 +174,46 @@ RSpec.describe "Document catalogs", type: :request do
     expect(main_text).not_to include("現在の絞り込み")
   end
 
+  it "explains catalog details with no registered items" do
+    catalog = create(:document_catalog, project:, name: "Empty Customer Pack", audience_type: :customer, visibility_policy: :restricted_external)
+
+    sign_in_as(external_user)
+
+    get project_document_catalog_path(project, catalog)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Empty Customer Pack")
+    expect(response.body).to include("表示可能:")
+    expect(response.body).to include("0件 / 登録:")
+    expect(response.body).to include("0件")
+    expect(main_text).to include("このカタログにはまだ文書が登録されていません。")
+    expect(main_text).not_to include("登録済みの文書はあります")
+    expect(response.body).to include(project_document_catalogs_path(project))
+  end
+
+  it "explains catalog details with registered items that are not visible to the current user" do
+    hidden_document = create(:document, project:, title: "Internal Manual", slug: "internal-manual", visibility_policy: :internal_only)
+    create(:document_version, document: hidden_document, version_label: "v1.0.0", status: :published)
+    catalog = create(:document_catalog, project:, name: "Hidden Customer Pack", audience_type: :delivery, visibility_policy: :restricted_external)
+    create(:document_catalog_item, document_catalog: catalog, document: hidden_document, sort_order: 1, note: "internal note")
+
+    sign_in_as(external_user)
+
+    get project_document_catalog_path(project, catalog)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Hidden Customer Pack")
+    expect(response.body).to include("表示可能:")
+    expect(response.body).to include("0件 / 登録:")
+    expect(response.body).to include("1件")
+    expect(main_text).to include("登録済みの文書はありますが、現在の利用者に表示できる文書はありません。")
+    expect(main_text).not_to include("このカタログにはまだ文書が登録されていません。")
+    expect(response.body).not_to include("Internal Manual")
+    expect(response.body).not_to include("internal note")
+    expect(main_text).not_to include("internal_only")
+    expect(response.body).to include(project_document_catalogs_path(project))
+  end
+
   it "shows only visible items in a catalog" do
     visible_document = create(:document, project:, title: "Visible Manual", slug: "visible-manual", visibility_policy: :restricted_external)
     hidden_document = create(:document, project:, title: "Internal Manual", slug: "internal-manual", visibility_policy: :internal_only)

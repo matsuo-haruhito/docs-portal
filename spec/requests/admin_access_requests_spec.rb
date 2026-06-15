@@ -235,19 +235,32 @@ RSpec.describe "Admin access requests", type: :request do
     expect(page_text).to include("表示中: 1-3件")
   end
 
-  it "ignores unsupported requested access level and requestable type filters" do
-    create(:access_request, requester:, requestable: document, requested_access_level: :download, reason: "Need Manual access")
+  it "ignores unsupported status, requested access level, and requestable type filters" do
+    pending_request = create(:access_request, requester:, requestable: document, requested_access_level: :download, reason: "Need Manual access")
+    approved_request = create(:access_request,
+      requester:,
+      requestable: project,
+      requested_access_level: :view,
+      status: :approved,
+      approver: admin_user,
+      approved_at: Time.zone.local(2026, 5, 1, 12, 0, 0),
+      reason: "Approved project access")
 
     sign_in_as(admin_user)
 
-    get admin_access_requests_path, params: { requested_access_level: "owner", requestable_type: "User" }
+    get admin_access_requests_path, params: { status: "all", requested_access_level: "owner", requestable_type: "User" }
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("Need Manual access")
+    expect(page_text).to include("Approved project access")
+    expect(page_text).to include("状態: すべて")
     expect(page_text).to include("要求権限: すべて")
     expect(page_text).to include("対象種別: すべて")
+    expect(filter_form.at_css("select[name='status'] option[value='all']")).to be_nil
     expect(filter_form.at_css("select[name='requested_access_level'] option[value='owner']")).to be_nil
     expect(filter_form.at_css("select[name='requestable_type'] option[value='User']")).to be_nil
+    expect(parsed_html.css("form[action='#{admin_access_request_path(pending_request)}']").last.to_html).not_to include("status")
+    expect(parsed_html.css("form[action='#{admin_access_request_path(approved_request)}']")).to be_empty
   end
 
   it "filters requests by requester or target search terms" do
@@ -460,7 +473,12 @@ RSpec.describe "Admin access requests", type: :request do
 
     sign_in_as(admin_user)
 
-    patch admin_access_request_path(access_request), params: { decision: "reject", rejection_reason: custom_reason }
+    patch admin_access_request_path(access_request), params: {
+      decision: "reject",
+      rejection_reason: custom_reason,
+      rejection_reason_preset: "permission_shortage",
+      rejection_reason_note: "preset note should not be stored"
+    }
 
     expect(response).to redirect_to(admin_access_requests_path)
     expect(access_request.reload).to be_rejected

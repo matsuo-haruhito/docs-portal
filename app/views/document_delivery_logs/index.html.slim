@@ -18,6 +18,14 @@
 - current_filter_params = { status: @status_filter.presence, delivery_type: @delivery_type_filter.presence }.merge(current_query_and_date_params).compact
 - current_delivery_logs_path = document_delivery_logs_path(current_filter_params)
 - has_active_filters = @query.present? || @status_filter.present? || @delivery_type_filter.present? || current_created_from.present? || current_created_to.present? || current_sent_from.present? || current_sent_to.present?
+- active_filter_summary_items = []
+- active_filter_summary_items << "検索語: #{current_query}" if current_query.present?
+- if current_created_from.present? || current_created_to.present?
+  - active_filter_summary_items << "作成日: #{current_created_from.presence || "指定なし"} から #{current_created_to.presence || "指定なし"} まで"
+- if current_sent_from.present? || current_sent_to.present?
+  - active_filter_summary_items << "送信日時: #{current_sent_from.presence || "指定なし"} から #{current_sent_to.presence || "指定なし"} まで"
+- active_filter_summary_items << "状態: #{status_labels.fetch(@status_filter)}" if @status_filter.present?
+- active_filter_summary_items << "方式: #{delivery_type_labels.fetch(@delivery_type_filter)}" if @delivery_type_filter.present?
 - delivery_logs_total_count = @delivery_logs_total_count.to_i
 - delivery_logs_limit = @delivery_logs_limit.to_i
 - delivery_logs_display_count = @delivery_logs.size
@@ -73,6 +81,11 @@ p.actions
   = link_to "すべて (#{delivery_type_total_count})", document_delivery_logs_path(current_query_and_date_params.merge(status: @status_filter.presence).compact), class: @delivery_type_filter.blank? ? "button" : "button secondary"
   - delivery_type_labels.each do |delivery_type, label|
     = link_to "#{label} (#{delivery_type_counts.fetch(delivery_type, 0)})", document_delivery_logs_path(current_query_and_date_params.merge(status: @status_filter.presence, delivery_type:).compact), class: @delivery_type_filter == delivery_type ? "button" : "button secondary"
+
+- if active_filter_summary_items.any?
+  section.delivery-log-active-filters aria-label="現在の絞り込み条件"
+    p.muted = "現在の絞り込み条件: #{active_filter_summary_items.join(" / ")}"
+    p.muted 表示件数はこの条件に一致した履歴のうち、先頭から表示している件数です。
 
 - if @delivery_logs.any?
   p.muted = "表示範囲: #{delivery_logs_total_count}件中#{delivery_logs_display_count}件を表示しています。#{delivery_logs_total_count > delivery_logs_limit ? "さらに絞り込む場合は検索・状態・方式フィルタを使ってください。" : ""}"

@@ -102,6 +102,9 @@ SharePoint / OneDrive source では、共有 URL からフォルダ metadata を
 
 - `Microsoft Graph接続を確認` で対象案件の接続を見直す
 - `Drive ID`、`Folder item ID`、`Folder path`、必要なら `Site ID` を確認する
+- `保存済み metadata を再確認` は同期本体を実行せず、保存済み Drive ID / Folder item ID / Folder path / Site ID と、現在の Microsoft Graph 解決結果を read-only に比較する
+- 再確認後は、画面内の `保存済み metadata 再確認結果` で `一致` または `差分あり` の field label を読む。ここに出るのは field label だけで、解決後の raw 値、secret-like value、長い Graph error を確認する場所ではない
+- `差分あり` の場合でも保存済み metadata は自動更新されない。必要なら `設定を編集` から共有 URL や接続を見直し、保存し直す
 - 詳細画面の案内どおり、差分同期本体と変更通知は後続 issue 範囲として切り分ける
 
 ### Google OAuth 未接続
@@ -200,6 +203,7 @@ current code には `external_folder_sync_webhooks/sharepoint` の GET / POST ro
 - SharePoint / OneDrive を同期元として `dry_run` / `apply` / `enqueue` / 変更通知の購読運用まで進めることは未対応です
 - SharePoint webhook route は validation token 応答と notification payload 記録の受け口として存在しますが、Graph subscription 作成や通知起点の同期運用ができる状態ではありません
 - SharePoint / OneDrive source で見える `Drive ID` / `Folder item ID` / `Folder path` / `Site ID` は、共有 URL から解決して保存できた metadata を確認するためのものです
+- `保存済み metadata を再確認` は、保存済み metadata と現在の Microsoft Graph 解決結果を比較する read-only action です。差分があっても保存済み値は自動更新せず、差分 field label と一致 field label の summary を読み返してから編集保存へ回します
 
 この runbook は current `main` の Google Drive 運用を正本にしつつ、SharePoint / OneDrive では何が `今できること` かを maintainer が誤読しないよう補っています。
 

@@ -63,6 +63,8 @@ section.card
       div
         = form.label :to, "終了日"
         = form.date_field :to, value: @filters[:to]
+      div
+        p.muted 開始日はその日の0:00以降、終了日はその日の23:59までを含みます。片方だけでも指定できます。
 
     p.actions
       = form.submit "検索"
