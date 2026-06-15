@@ -71,6 +71,7 @@ RSpec.describe "Admin external folder sync source metadata recheck", type: :requ
         recheck_metadata_admin_external_folder_sync_source_path(graph_source, return_to: admin_external_folder_sync_sources_path)
       ])
       expect(response.body).to include("同期本体を実行せず現在の Microsoft Graph 解決結果との差分だけを確認します")
+      expect(response.body).not_to include("保存済み metadata 再確認結果")
 
       get admin_external_folder_sync_source_path(google_source)
 
@@ -96,6 +97,9 @@ RSpec.describe "Admin external folder sync source metadata recheck", type: :requ
       follow_redirect!
       expect(response.body).to include("保存済み metadata を再確認しました")
       expect(response.body).to include("現在の Microsoft Graph 解決結果と一致しています")
+      expect(response.body).to include("保存済み metadata 再確認結果")
+      expect(response.body).to include("一致: Drive ID / Folder item ID / Folder path / Site ID")
+      expect(response.body).not_to include("差分あり:")
     end
 
     it "reports metadata differences without saving the resolved values" do
@@ -124,6 +128,12 @@ RSpec.describe "Admin external folder sync source metadata recheck", type: :requ
       expect(response.body).to include("差分があります: Drive ID / Folder item ID / Folder path")
       expect(response.body).to include("保存済み値は変更していません")
       expect(response.body).to include("設定を編集して保存し直してください")
+      expect(response.body).to include("保存済み metadata 再確認結果")
+      expect(response.body).to include("差分あり: Drive ID / Folder item ID / Folder path")
+      expect(response.body).to include("一致: Site ID")
+      expect(response.body).not_to include("drive-999")
+      expect(response.body).not_to include("item-999")
+      expect(response.body).not_to include("Shared Documents/Renamed Policies")
     end
 
     it "shows resolver errors with connection, URL, and permission guidance" do
@@ -143,6 +153,7 @@ RSpec.describe "Admin external folder sync source metadata recheck", type: :requ
       expect(response.body).to include("保存済み metadata を再確認できませんでした")
       expect(response.body).to include("Microsoft Graph接続・共有URL・権限を確認してください")
       expect(response.body).to include("共有URLからフォルダ情報を解決できませんでした")
+      expect(response.body).not_to include("保存済み metadata 再確認結果")
     end
 
     it "rejects recheck for Google Drive sources without enabling Microsoft Graph runtime operations" do
@@ -156,6 +167,7 @@ RSpec.describe "Admin external folder sync source metadata recheck", type: :requ
       expect(response.body).to include("SharePoint / OneDrive の metadata-only source で利用できます")
       expect(response.body).to include("同期プレビュー")
       expect(response.body).not_to include("SharePoint / OneDrive の差分同期と変更通知は後続 issue")
+      expect(response.body).not_to include("保存済み metadata 再確認結果")
     end
   end
 end
