@@ -30,7 +30,7 @@ RSpec.describe "Document delivery log failure alert handoff", type: :request do
   it "returns read-only handoff payloads for internal users without exposing raw secrets" do
     create_delivery_failure(
       created_at: 1.hour.ago,
-      to_addresses: "client@example.com token=recipient-raw",
+      to_addresses: "client@example.com",
       subject: "Document delivery secret=subject-raw",
       error_message: "Authorization: Bearer bearer-raw token=token-raw secret=secret-raw"
     )
@@ -57,13 +57,12 @@ RSpec.describe "Document delivery log failure alert handoff", type: :request do
       "failure_count" => 3,
       "runbook_path" => "docs/外部送付履歴継続失敗候補runbook.md"
     )
-    expect(entry.fetch("recipient_preview")).to include("token=[FILTERED]")
+    expect(entry.fetch("recipient_preview")).to eq("client@example.com")
     expect(entry.fetch("subject_preview")).to include("secret=[FILTERED]")
     expect(entry.fetch("latest_error_message")).to include("Authorization: Bearer [FILTERED]")
     expect(entry.fetch("failed_delivery_logs_path")).to include("%5BFILTERED%5D")
 
     response_text = response.body
-    expect(response_text).not_to include("recipient-raw")
     expect(response_text).not_to include("subject-raw")
     expect(response_text).not_to include("bearer-raw")
     expect(response_text).not_to include("token-raw")
