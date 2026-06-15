@@ -46,7 +46,7 @@ RSpec.describe BackupArtifactVerifier do
     path.to_s
   end
 
-  def verify_db_dump(db_dump: self.db_dump, pg_restore: pg_restore_command)
+  def verify_db_dump(db_dump: self.db_dump, format: :text, pg_restore: pg_restore_command)
     touch(db_dump)
 
     described_class.new(
@@ -54,13 +54,14 @@ RSpec.describe BackupArtifactVerifier do
       storage_archive: nil,
       manifest: nil,
       strict_metadata: false,
+      format:,
       pg_restore:,
       stdout:,
       stderr:
     ).call
   end
 
-  def verify(storage_archive: self.storage_archive, strict_metadata: false, tar: tar_command)
+  def verify(storage_archive: self.storage_archive, strict_metadata: false, format: :text, tar: tar_command)
     touch(storage_archive)
 
     described_class.new(
@@ -68,6 +69,7 @@ RSpec.describe BackupArtifactVerifier do
       storage_archive: storage_archive.to_s,
       manifest: nil,
       strict_metadata:,
+      format:,
       tar:,
       stdout:,
       stderr:
@@ -142,5 +144,54 @@ RSpec.describe BackupArtifactVerifier do
 
     expect(result.ok).to be(false)
     expect(stderr.string).to include("metadata naming is missing environment name, timestamp, commit SHA or release identifier")
+  end
+
+  it "prints a markdown release-record summary when requested" do
+    result = verify(format: :markdown)
+
+    expect(result.ok).to be(true)
+    expect(result.summary).to include(
+      storage_archive: storage_archive.to_s,
+      storage_archive_status: "readable",
+      required_storage_prefixes_status: "present",
+      metadata_status: "ok",
+      overall_result: "ok"
+    )
+    expect(stdout.string).to include("### Backup artifact verification summary")
+    expect(stdout.string).to include("- storage archive: #{storage_archive}")
+    expect(stdout.string).to include("- required storage prefixes (storage/document_files, storage/docs_sites): present")
+    expect(stdout.string).to include("- metadata: ok")
+    expect(stdout.string).to include("- warnings: none")
+    expect(stdout.string).to include("- overall result: ok")
+  end
+
+  it "includes metadata warnings in the markdown summary without changing warning semantics" do
+    archive_without_metadata = tmpdir.join("backup.tar")
+
+    result = verify(storage_archive: archive_without_metadata, format: :markdown)
+
+    expect(result.ok).to be(true)
+    expect(result.warnings).to contain_exactly(
+      "metadata naming is missing environment name, timestamp, commit SHA or release identifier; include these in artifact names or --manifest"
+    )
+    expect(stdout.string).to include("- metadata: warning: environment name, timestamp, commit SHA or release identifier")
+    expect(stdout.string).to include("- warnings: metadata naming is missing environment name, timestamp, commit SHA or release identifier; include these in artifact names or --manifest")
+    expect(stdout.string).to include("- overall result: warning")
+  end
+
+  it "prints a markdown failure summary when requested" do
+    failing_pg_restore = fake_command("pg-restore-failure", "pg_restore: error: input file does not appear to be a valid archive\n", exit_status: 1)
+
+    result = verify_db_dump(format: :markdown, pg_restore: failing_pg_restore)
+
+    expect(result.ok).to be(false)
+    expect(result.summary).to include(
+      db_dump_status: "failed",
+      overall_result: "failed"
+    )
+    expect(stdout.string).to include("### Backup artifact verification summary")
+    expect(stdout.string).to include("- DB dump read: failed")
+    expect(stdout.string).to include("- overall result: failed")
+    expect(stdout.string).to include("- failure: pg_restore --list failed for #{db_dump}: pg_restore: error: input file does not appear to be a valid archive")
   end
 end
