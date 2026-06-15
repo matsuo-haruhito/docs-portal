@@ -163,6 +163,8 @@ p.muted
         label
           = check_box_tag :pdf_only, "1", false
           |  PDFだけ出力
+      p.muted
+        | PDFだけ出力を選ぶと、Markdown原本や添付ファイルの追加指定よりもPDFのみの出力を優先します。ZIP内パスの選択はPDFの配置にも適用されます。
     p.muted
       | ZIP対象: 検索結果全体 
       = @selectable_documents_count
