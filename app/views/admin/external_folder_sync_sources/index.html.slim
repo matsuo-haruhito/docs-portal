@@ -160,6 +160,14 @@ h1 外部フォルダ同期設定
     p.muted 現在の検索 / 絞り込みに一致する外部フォルダ同期設定はありません。
     - if selected_filter_labels.any?
       p.muted = "現在の絞り込み: #{selected_filter_labels.join(' / ')}"
+    - if ["warnings", "errors", "disabled"].include?(@selected_review_filter)
+      p.muted warning / error / disabled のいずれかで 0 件の場合は、別のレビュー優先 filter または「すべて」に戻して確認してください。
+    - elsif @selected_review_filter == "google_drive"
+      p.muted Google Drive は dry-run / apply の実行対象です。0件のときは SharePoint / OneDrive 側の metadata-only 設定も切り替えて確認してください。
+    - elsif @selected_review_filter == "microsoft_graph"
+      p.muted SharePoint / OneDrive は metadata-only として drive_id / folder_path など保存情報を確認します。同期実行対象を探すときは Google Drive 側も確認してください。
+    - if @search_query.present?
+      p.muted 検索語は同期設定名、案件名 / code、外部フォルダ ID / path の断片で短くして確認してください。
     p.muted = link_to "すべて解除", admin_external_folder_sync_sources_path
 - else
   .card
