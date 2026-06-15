@@ -3,6 +3,8 @@ class Admin::UsersController < Admin::BaseController
   before_action :load_companies, only: %i[index create edit update]
   before_action :prepare_form_context, only: %i[index create edit update]
 
+  helper_method :user_return_to_path
+
   def index
     @users = filtered_users
     @user = User.new(active: true, user_type: default_user_type_for_form, company: default_company_for_form)
@@ -24,7 +26,7 @@ class Admin::UsersController < Admin::BaseController
 
   def update
     if @user.update(user_params)
-      redirect_to admin_users_path, notice: "ユーザーを更新しました。"
+      redirect_to user_return_to_path, notice: "ユーザーを更新しました。"
     else
       render :edit, status: :unprocessable_entity
     end
@@ -32,11 +34,11 @@ class Admin::UsersController < Admin::BaseController
 
   def destroy
     @user.destroy!
-    redirect_to admin_users_path, notice: "ユーザーを削除しました。"
+    redirect_to user_return_to_path, notice: "ユーザーを削除しました。"
   rescue ActiveRecord::DeleteRestrictionError
-    redirect_to admin_users_path, alert: "関連データがあるため削除できません。"
+    redirect_to user_return_to_path, alert: "関連データがあるため削除できません。"
   rescue ActiveRecord::InvalidForeignKey
-    redirect_to admin_users_path, alert: "関連データがあるため削除できません。"
+    redirect_to user_return_to_path, alert: "関連データがあるため削除できません。"
   end
 
   private
@@ -92,6 +94,10 @@ class Admin::UsersController < Admin::BaseController
 
   def set_user
     @user = user_scope.find_by!(public_id: params[:public_id])
+  end
+
+  def user_return_to_path
+    safe_return_to_path(admin_users_path)
   end
 
   def load_companies
