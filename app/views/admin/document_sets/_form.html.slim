@@ -50,8 +50,8 @@
         label.document-set-document-filter__selected-only
           input type="checkbox" data-document-set-document-filter-target="selectedOnly" data-action="change->document-set-document-filter#filter"
           span 選択済みのみ表示
-        span.document-set-document-filter__status.muted data-document-set-document-filter-target="status"
-      p.document-set-document-filter__empty.muted hidden=true data-document-set-document-filter-target="empty"
+        span.document-set-document-filter__status.muted role="status" aria-live="polite" aria-atomic="true" data-document-set-document-filter-target="status"
+      p.document-set-document-filter__empty.muted hidden=true aria-live="polite" aria-atomic="true" data-document-set-document-filter-target="empty"
       table
         thead
           tr
