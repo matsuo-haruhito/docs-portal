@@ -30,7 +30,8 @@ h1 文書セット
 
     p.actions.form-actions
       = form.submit "絞り込み", class: "button"
-      = link_to "条件をクリア", admin_document_sets_path, class: "button secondary"
+      - if admin_document_set_filters_active?(@filters)
+        = link_to "条件をクリア", admin_document_sets_path, class: "button secondary"
       = link_to "CSV出力", admin_document_sets_path(@filters.compact_blank.merge(format: :csv)), class: "button secondary"
 
   - if active_filter_labels.any?
