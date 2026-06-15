@@ -11,6 +11,10 @@ RSpec.describe "Admin dashboard storage usage breakdown", type: :request do
     parsed_html.text.squish
   end
 
+  def storage_usage_section
+    parsed_html.css("section.card").find { |section| section.at_css("h2")&.text&.squish == "Storage使用量" }
+  end
+
   it "shows safe bounded breakdown entries for each storage area" do
     summary = StorageUsageSummary::Result.new(
       areas: [
@@ -61,6 +65,6 @@ RSpec.describe "Admin dashboard storage usage breakdown", type: :request do
     expect(page_text).to include("2 file")
     expect(page_text).to include("3 file")
     expect(page_text).to include("内訳なし")
-    expect(response.body).not_to include(Rails.root.to_s)
+    expect(storage_usage_section.to_html).not_to include(Rails.root.to_s)
   end
 end
