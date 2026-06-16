@@ -328,11 +328,11 @@ RSpec.describe "Document delivery logs", type: :request do
     expect(page_text).to include("検索語は最大#{DocumentDeliveryLogsController::DELIVERY_LOG_QUERY_MAX_LENGTH}文字です。")
 
     filter_form = parsed_html.at_css("form[action='#{document_delivery_logs_path}']")
-    expect(filter_form.at_css("input[name='q'][maxlength='#{DocumentDeliveryLogsController::DELIVERY_LOG_QUERY_MAX_LENGTH}']")).not_to be_nil
-    expect(filter_form.at_css("input[name='created_from'][type='date']")).not_to be_nil
-    expect(filter_form.at_css("input[name='created_to'][type='date']")).not_to be_nil
-    expect(filter_form.at_css("input[name='sent_from'][type='date']")).not_to be_nil
-    expect(filter_form.at_css("input[name='sent_to'][type='date']")).not_to be_nil
+    expect(filter_form.at_css("input[name='q'][maxlength='#{DocumentDeliveryLogsController::DELIVERY_LOG_QUERY_MAX_LENGTH}'][aria-label='送付履歴を検索']")).not_to be_nil
+    expect(filter_form.at_css("input[name='created_from'][type='date'][aria-label='作成日（開始）']")).not_to be_nil
+    expect(filter_form.at_css("input[name='created_to'][type='date'][aria-label='作成日（終了）']")).not_to be_nil
+    expect(filter_form.at_css("input[name='sent_from'][type='date'][aria-label='送信日時（開始）']")).not_to be_nil
+    expect(filter_form.at_css("input[name='sent_to'][type='date'][aria-label='送信日時（終了）']")).not_to be_nil
   end
 
   it "shows To, CC, and BCC separately in the recipients column" do
