@@ -17,6 +17,8 @@ class Admin::ModelBrowserCatalog
     "document_sets" => :q
   }.freeze
 
+  TEXT_SEARCH_COLUMN_TYPES = %i[string text].freeze
+
   ENTRIES = [
     Entry.new("companies", :basic_master, "会社", "会社マスタと所属の起点です。", Company, %i[public_id name updated_at], :admin_companies_path),
     Entry.new("users", :basic_master, "ユーザー", "利用者種別と会社所属を確認します。", User, %i[public_id name email_address user_type active updated_at], :admin_users_path),
@@ -72,6 +74,27 @@ class Admin::ModelBrowserCatalog
 
     def query_handoff_param_for(entry)
       EXISTING_SCREEN_QUERY_HANDOFF_PARAMS[entry.key]
+    end
+
+    def searchable_summary_fields(entry)
+      entry.summary_fields.select do |field|
+        searchable_text_column?(entry.model_class, field)
+      end
+    end
+
+    private
+
+    def searchable_text_column?(model_class, field)
+      column = model_class.columns_hash[field.to_s]
+      return false unless column
+      return false if association_id_field?(field)
+
+      TEXT_SEARCH_COLUMN_TYPES.include?(column.type)
+    end
+
+    def association_id_field?(field)
+      field_name = field.to_s
+      field_name.end_with?("_id") && field_name != "public_id"
     end
   end
 end
