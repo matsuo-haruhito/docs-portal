@@ -412,30 +412,17 @@ RSpec.describe "Admin document sets", type: :request do
     expect(preference.settings.fetch("sorts")).to contain_exactly(include("key" => "name", "direction" => "asc"))
   end
 
-  it "keeps direct external table preference saves owner-scoped and away from admin surfaces" do
+  it "forbids external users from writing admin document set table preference settings" do
     sign_in_as(external_user)
 
-    patch table_preference_endpoint, params: {
-      settings: representative_table_preference_settings.merge(
-        columns: [{ key: "actions", visible: false, width: 10, order: 1 }]
-      ),
-      default: "true"
-    }
+    expect do
+      patch table_preference_endpoint, params: {
+        settings: representative_table_preference_settings,
+        default: "true"
+      }
+    end.not_to change(RailsTablePreferences::Preference, :count)
 
-    expect(response).to have_http_status(:ok)
-    external_preference = RailsTablePreferences::Preference.find_by!(
-      user: external_user,
-      table_key: "admin_document_sets",
-      name: "default"
-    )
-    expect(external_preference).to have_attributes(scope_type: "owner", scope_key: "", default_flag: true)
-
-    sign_in_as(admin)
-    get admin_document_sets_path
-
-    expect(response).to have_http_status(:ok)
-    settings = table_preference_surfaces.map { |surface| table_preference_settings_for(surface) }
-    expect(settings).to all(include("columns" => []))
+    expect(response).to have_http_status(:forbidden)
   end
 
   it "returns project-scoped document search results by title and slug" do
