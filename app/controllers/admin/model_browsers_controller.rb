@@ -2,7 +2,6 @@ class Admin::ModelBrowsersController < Admin::BaseController
   before_action :require_admin_only!
 
   MODEL_BROWSER_QUERY_MAX_LENGTH = 100
-  TEXT_SEARCH_COLUMN_TYPES = %i[string text].freeze
 
   helper_method :entry_index_path, :model_browser_index_return_path, :record_summary_value, :summary_field_label
 
@@ -93,22 +92,7 @@ class Admin::ModelBrowsersController < Admin::BaseController
   end
 
   def searchable_fields(entry)
-    entry.summary_fields.select do |field|
-      searchable_text_column?(entry.model_class, field)
-    end
-  end
-
-  def searchable_text_column?(model_class, field)
-    column = model_class.columns_hash[field.to_s]
-    return false unless column
-    return false if association_id_field?(field)
-
-    TEXT_SEARCH_COLUMN_TYPES.include?(column.type)
-  end
-
-  def association_id_field?(field)
-    field_name = field.to_s
-    field_name.end_with?("_id") && field_name != "public_id"
+    Admin::ModelBrowserCatalog.searchable_summary_fields(entry)
   end
 
   def recent_scope(entry)
