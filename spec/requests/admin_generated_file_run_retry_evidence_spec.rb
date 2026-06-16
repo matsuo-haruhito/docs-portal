@@ -65,8 +65,8 @@ RSpec.describe "Admin generated file run retry evidence", type: :request do
     section_text = retry_evidence_section.text.squish
     expect(section_text).to include("再実行履歴", "再実行")
     expect(section_text).to include("再実行元 -")
-    expect(section_text).to include("再実行依頼者 -")
-    expect(section_text).to include("再実行依頼時刻 -")
+    expect(section_text).to include("再実行依頼者-")
+    expect(section_text).to include("再実行依頼時刻-")
     expect(section_text).to include("docs/生成ファイル再試行と定期ジョブ管理runbook.md")
   end
 
