@@ -68,18 +68,33 @@ p.actions
       - @access_requests.each do |access_request|
         - request_hash = AccessRequestHash.new(access_request).call
         - requestable = request_hash[:requestable]
+        - target_primary = requestable[:name].presence || requestable[:title].presence || requestable[:file_name].presence || requestable[:public_id]
+        - target_cues = []
+        - if requestable[:type] == "Project"
+          - target_cues << ["案件コード", requestable[:code]] if requestable[:code].present?
+          - target_cues << ["対象ID", requestable[:public_id]] if requestable[:public_id].present?
+        - elsif requestable[:type] == "Document"
+          - target_cues << ["文書ID", requestable[:public_id]] if requestable[:public_id].present?
+          - target_cues << ["案件コード", requestable[:project_code]] if requestable[:project_code].present?
+        - elsif requestable[:type] == "DocumentFile"
+          - target_cues << ["ファイルID", requestable[:public_id]] if requestable[:public_id].present?
+          - target_cues << ["文書", requestable[:document_title]] if requestable[:document_title].present?
+          - target_cues << ["案件コード", requestable[:project_code]] if requestable[:project_code].present?
         tr
           td
             = requestable[:type_label]
             br
-            - if requestable[:name].present?
-              = requestable[:name]
-            - elsif requestable[:title].present?
-              = requestable[:title]
-            - elsif requestable[:file_name].present?
-              = requestable[:file_name]
-            - else
-              = requestable[:public_id]
+            = target_primary
+            - if target_cues.any?
+              p.muted
+                - target_cues.each_with_index do |target_cue, index|
+                  - cue_label, cue_value = target_cue
+                  - if index.positive?
+                    = " / "
+                  span
+                    = "#{cue_label}: "
+                    code style="overflow-wrap: anywhere; word-break: break-word;"
+                      = cue_value
           td = request_hash[:requested_access_level_label]
           td = request_hash[:status_label]
           td = request_hash[:reason]
