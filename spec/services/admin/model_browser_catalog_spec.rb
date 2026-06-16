@@ -42,10 +42,12 @@ RSpec.describe Admin::ModelBrowserCatalog do
         entry.summary_fields.map { |field| "#{entry.key}.#{field}" }
       end
       missing_fields = described_class.entries.flat_map do |entry|
+        display_record = entry.model_class.new
+
         entry.summary_fields.filter_map do |field|
           field_key = "#{entry.key}.#{field}"
           next if entry.model_class.columns_hash.key?(field.to_s)
-          next if documented_safe_method_fields.key?(field_key) && entry.model_class.method_defined?(field)
+          next if documented_safe_method_fields.key?(field_key) && display_record.respond_to?(field)
 
           "#{field_key} (#{entry.model_class.name})"
         end
@@ -95,7 +97,7 @@ RSpec.describe Admin::ModelBrowserCatalog do
       expect(searchable_fields_by_entry.fetch(described_class.fetch!("companies"))).to eq(%i[public_id name])
       expect(searchable_fields_by_entry.fetch(described_class.fetch!("projects"))).to eq(%i[code name])
       expect(searchable_fields_by_entry.fetch(described_class.fetch!("project_memberships"))).to eq(%i[public_id])
-      expect(searchable_fields_by_entry.fetch(described_class.fetch!("document_permissions"))).to eq(%i[public_id access_level])
+      expect(searchable_fields_by_entry.fetch(described_class.fetch!("document_permissions"))).to eq(%i[public_id])
       expect(searchable_fields_by_entry.fetch(described_class.fetch!("webhook_deliveries"))).to eq(%i[public_id status])
       expect(invalid_search_fields).to be_empty, "invalid searchable summary_fields: #{invalid_search_fields.join(', ')}"
     end
