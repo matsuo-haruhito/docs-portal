@@ -25,6 +25,27 @@ RSpec.describe Admin::ModelBrowserCatalog do
       expect(groups).to all(satisfy { |group| described_class::GROUP_LABELS.key?(group) })
     end
 
+    it "keeps summary fields backed by model columns or documented safe methods" do
+      documented_safe_method_fields = {
+        # "entry_key.field_name" => "Reason this non-column method is safe to render in the read-only browser."
+      }
+      exposed_fields = described_class.entries.flat_map do |entry|
+        entry.summary_fields.map { |field| "#{entry.key}.#{field}" }
+      end
+      missing_fields = described_class.entries.flat_map do |entry|
+        entry.summary_fields.filter_map do |field|
+          field_key = "#{entry.key}.#{field}"
+          next if entry.model_class.columns_hash.key?(field.to_s)
+          next if documented_safe_method_fields.key?(field_key) && entry.model_class.method_defined?(field)
+
+          "#{field_key} (#{entry.model_class.name})"
+        end
+      end
+
+      expect(documented_safe_method_fields.keys - exposed_fields).to be_empty
+      expect(missing_fields).to be_empty, "missing summary_fields: #{missing_fields.join(', ')}"
+    end
+
     it "does not expose secret-like or raw diagnostic fields in summary metadata" do
       unsafe_field_patterns = [
         /(?:^|_)(?:secret|token|password)(?:_|$)/i,
@@ -44,6 +65,30 @@ RSpec.describe Admin::ModelBrowserCatalog do
 
       expect(exposed_fields).to include(*allowed_unsafe_looking_fields.keys)
       expect(unsafe_fields).to be_empty, "unsafe summary_fields: #{unsafe_fields.join(', ')}"
+    end
+  end
+
+  describe ".searchable_summary_fields" do
+    it "keeps representative search bounded to text columns and numeric id lookup" do
+      searchable_fields_by_entry = described_class.entries.index_with do |entry|
+        described_class.searchable_summary_fields(entry)
+      end
+      invalid_search_fields = described_class.entries.flat_map do |entry|
+        searchable_fields_by_entry.fetch(entry).filter_map do |field|
+          column = entry.model_class.columns_hash[field.to_s]
+          association_id_field = field.to_s.end_with?("_id") && field != :public_id
+          next if column && described_class::TEXT_SEARCH_COLUMN_TYPES.include?(column.type) && !association_id_field
+
+          "#{entry.key}.#{field}"
+        end
+      end
+
+      expect(searchable_fields_by_entry.fetch(described_class.fetch!("companies"))).to eq(%i[public_id name])
+      expect(searchable_fields_by_entry.fetch(described_class.fetch!("projects"))).to eq(%i[code name])
+      expect(searchable_fields_by_entry.fetch(described_class.fetch!("project_memberships"))).to eq(%i[public_id role])
+      expect(searchable_fields_by_entry.fetch(described_class.fetch!("document_permissions"))).to eq(%i[public_id access_level])
+      expect(searchable_fields_by_entry.fetch(described_class.fetch!("webhook_deliveries"))).to eq(%i[public_id status])
+      expect(invalid_search_fields).to be_empty, "invalid searchable summary_fields: #{invalid_search_fields.join(', ')}"
     end
   end
 end
