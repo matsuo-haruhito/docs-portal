@@ -91,10 +91,12 @@
       <div>
         <%= form.label :created_from, "作成日(開始)", class: "block text-sm font-semibold" %>
         <%= form.text_field :created_from, value: @filters[:created_from], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">日付だけ指定すると、その日の00:00以降を含みます。</p>
       </div>
       <div>
         <%= form.label :created_to, "作成日(終了)", class: "block text-sm font-semibold" %>
         <%= form.text_field :created_to, value: @filters[:created_to], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">日付だけ指定すると、その日の23:59までを含みます。</p>
       </div>
       <div class="flex items-end gap-2">
         <%= form.submit "絞り込み", class: "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
