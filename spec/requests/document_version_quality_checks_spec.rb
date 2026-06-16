@@ -3,7 +3,15 @@ require "rails_helper"
 RSpec.describe "Document version quality checks", type: :request do
   let(:project) { create(:project) }
   let(:document) { create(:document, project:, title: "Manual", slug: "manual", visibility_policy: :restricted_external) }
-  let(:version) { create(:document_version, document:, version_label: "v1.0.0", status: :published, search_body_text: "internal_only") }
+  let(:version) do
+    create(
+      :document_version,
+      document:,
+      version_label: "v1.0.0",
+      status: :published,
+      search_body_text: "internal_only token=super-secret /Users/alice/private/manual.md attachment-full-metadata"
+    )
+  end
   let(:internal_user) { create(:user, :internal) }
   let(:external_user) { create(:user, :external, company: create(:company)) }
 
@@ -59,6 +67,9 @@ RSpec.describe "Document version quality checks", type: :request do
         "message" => "Document contains internal-only wording"
       )
     )
+    expect(response.body).not_to include("token=super-secret")
+    expect(response.body).not_to include("/Users/alice/private/manual.md")
+    expect(response.body).not_to include("attachment-full-metadata")
 
     get document_version_quality_check_path(version, format: :md)
     expect(response).to have_http_status(:ok)
@@ -68,6 +79,9 @@ RSpec.describe "Document version quality checks", type: :request do
     expect(response.body).to include("- result: pass")
     expect(response.body).to include("- warnings: 2")
     expect(response.body).to include("- **Warning** `document_files`: No document files are attached")
+    expect(response.body).not_to include("token=super-secret")
+    expect(response.body).not_to include("/Users/alice/private/manual.md")
+    expect(response.body).not_to include("attachment-full-metadata")
   end
 
   it "highlights preview quality checks in html" do
@@ -98,6 +112,18 @@ RSpec.describe "Document version quality checks", type: :request do
       get path
 
       expect(response).to have_http_status(:forbidden)
+    end
+  end
+
+  it "redirects unauthenticated users before exposing html/json/markdown exports" do
+    [
+      document_version_quality_check_path(version),
+      document_version_quality_check_path(version, format: :json),
+      document_version_quality_check_path(version, format: :md)
+    ].each do |path|
+      get path
+
+      expect(response).to redirect_to(new_session_path)
     end
   end
 end
