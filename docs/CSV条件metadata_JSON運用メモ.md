@@ -1,10 +1,10 @@
 # CSV条件metadata JSON 運用メモ
 
-このメモは、監査ログと文書利用状況の `CSV条件metadata JSON` を、CSV 本体とは別の companion metadata として読むための補助です。current code では PR #3079 で追加された `format: :json` response が対象で、CSV header / row contract、表示設定、集計定義、export 対象の境界は変えません。
+このメモは、監査ログの `CSV条件metadata JSON` と文書利用状況の `CSV条件をJSONで確認` を、CSV 本体とは別の companion metadata として読むための補助です。current code では PR #3079 で追加された `format: :json` response が対象で、CSV header / row contract、表示設定、集計定義、export 対象の境界は変えません。
 
 ## 位置づけ
 
-`CSV条件metadata JSON` は、CSV を開く前に「どの条件で出した CSV か」を短く確認するための JSON です。CSV 本体へ metadata row、pre-header、footer を足すものではありません。
+`CSV条件metadata JSON` / `CSV条件をJSONで確認` は、CSV を開く前に「どの条件で出した CSV か」を短く確認するための JSON です。CSV 本体へ metadata row、pre-header、footer を足すものではありません。
 
 - CSV 本体: 既存の固定列 / 行を出す成果物
 - metadata JSON: 同じ条件、正規化済み filter、summary、無効日付の除外などを確認する companion
@@ -34,7 +34,7 @@
 
 ## 文書利用状況
 
-`admin/document_usage_reports` では、案件を選択して集計が表示されたときに `CSV出力` の隣に `CSV条件metadata JSON` が出ます。
+`admin/document_usage_reports` では、案件を選択して集計が表示されたときに `CSV出力` の隣に `CSV条件をJSONで確認` が出ます。
 
 文書利用状況の metadata JSON は、同じ案件、文書名 / slug 検索、利用状況、並び順、期間条件で出す CSV の companion として読みます。案件未選択や invalid `project_id` の場合は、CSV と同じく全件 export へ広げず、案件選択を促す挙動に戻します。
 
