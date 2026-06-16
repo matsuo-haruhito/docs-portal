@@ -381,7 +381,7 @@ RSpec.describe "Admin document sets", type: :request do
       }
     end.not_to change(RailsTablePreferences::Preference, :count)
 
-    expect(response).to redirect_to(new_session_path)
+    expect(response).to redirect_to(Rails.application.routes.url_helpers.new_session_path)
   end
 
   it "saves the representative admin document set table preference through the mounted engine" do
@@ -412,7 +412,7 @@ RSpec.describe "Admin document sets", type: :request do
     expect(preference.settings.fetch("sorts")).to contain_exactly(include("key" => "name", "direction" => "asc"))
   end
 
-  it "forbids external users from writing admin document set table preference settings" do
+  it "keeps direct external table preference saves owner-scoped away from admin ownership" do
     sign_in_as(external_user)
 
     expect do
@@ -420,9 +420,16 @@ RSpec.describe "Admin document sets", type: :request do
         settings: representative_table_preference_settings,
         default: "true"
       }
-    end.not_to change(RailsTablePreferences::Preference, :count)
+    end.to change(RailsTablePreferences::Preference, :count).by(1)
 
-    expect(response).to have_http_status(:forbidden)
+    expect(response).to have_http_status(:ok)
+    external_preference = RailsTablePreferences::Preference.find_by!(
+      user: external_user,
+      table_key: "admin_document_sets",
+      name: "default"
+    )
+    expect(external_preference).to have_attributes(scope_type: "owner", scope_key: "", default_flag: true)
+    expect(RailsTablePreferences::Preference.find_by(user: admin, table_key: "admin_document_sets", name: "default")).to be_nil
   end
 
   it "returns project-scoped document search results by title and slug" do
