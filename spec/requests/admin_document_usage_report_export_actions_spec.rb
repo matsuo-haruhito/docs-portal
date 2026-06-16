@@ -18,7 +18,7 @@ RSpec.describe "Admin document usage report export actions", type: :request do
   end
 
   def query_params_for(link)
-    Rack::Utils.parse_nested_query(URI.parse(link.fetch("href")).query)
+    Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)
   end
 
   it "separates investigation links from CSV and JSON metadata export links" do
