@@ -37,10 +37,18 @@ RSpec.describe "admin route param contract", type: :routing do
     end.uniq
   end
 
+  def expected_public_id_route_param?(resource, path)
+    path.include?("/:public_id") || path.include?("/:#{resource.singularize}_public_id")
+  end
+
+  def expected_code_route_param?(resource, path)
+    path.include?("/:code") || path.include?("/:#{resource.singularize}_code")
+  end
+
   it "keeps the primary admin member resources on public_id" do
     failures = PUBLIC_ID_ADMIN_RESOURCES.filter_map do |resource|
       member_paths = admin_member_paths_for(resource)
-      unexpected_paths = member_paths.reject { |path| path.include?("/:public_id") }
+      unexpected_paths = member_paths.reject { |path| expected_public_id_route_param?(resource, path) }
       next if member_paths.any? && unexpected_paths.empty?
 
       "#{resource}: #{member_paths.presence || 'no member routes'}"
@@ -52,7 +60,7 @@ RSpec.describe "admin route param contract", type: :routing do
   it "keeps admin projects on code" do
     failures = CODE_ADMIN_RESOURCES.filter_map do |resource|
       member_paths = admin_member_paths_for(resource)
-      unexpected_paths = member_paths.reject { |path| path.include?("/:code") }
+      unexpected_paths = member_paths.reject { |path| expected_code_route_param?(resource, path) }
       next if member_paths.any? && unexpected_paths.empty?
 
       "#{resource}: #{member_paths.presence || 'no member routes'}"
