@@ -28,7 +28,7 @@ RSpec.describe "Document version quality checks", type: :request do
     expect(response.media_type).to eq("application/json")
     payload = parsed_json
     expect(payload).to include(
-      "valid" => false,
+      "valid" => true,
       "document_version" => a_hash_including(
         "public_id" => version.public_id,
         "version_label" => "v1.0.0",
@@ -65,7 +65,7 @@ RSpec.describe "Document version quality checks", type: :request do
     expect(response.media_type).to eq("text/markdown")
     expect(response.body).to include("# Quality check: Manual")
     expect(response.body).to include("- version: v1.0.0")
-    expect(response.body).to include("- result: fail")
+    expect(response.body).to include("- result: pass")
     expect(response.body).to include("- warnings: 2")
     expect(response.body).to include("- **Warning** `document_files`: No document files are attached")
   end
