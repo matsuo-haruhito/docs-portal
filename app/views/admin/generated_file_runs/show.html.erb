@@ -30,24 +30,36 @@
       </div>
       <div><dt class="font-semibold">開始</dt><dd><%= l(@generated_file_run.started_at, format: :long) if @generated_file_run.started_at %></dd></div>
       <div><dt class="font-semibold">完了</dt><dd><%= l(@generated_file_run.finished_at, format: :long) if @generated_file_run.finished_at %></dd></div>
-      <% if @retry_of_generated_file_run_public_id.present? %>
+    </dl>
+  </div>
+
+  <% if @retry_evidence_visible %>
+    <div class="rounded-lg border bg-white p-4">
+      <h2 class="mb-3 text-lg font-semibold">再実行履歴</h2>
+      <dl class="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
+        <div><dt class="font-semibold">種別</dt><dd><%= generated_file_run_retry_kind_label(@generated_file_run) %></dd></div>
         <div>
           <dt class="font-semibold">再実行元</dt>
           <dd class="font-mono">
-            <% if @retry_of_generated_file_run %>
-              <%= link_to @retry_of_generated_file_run_public_id, admin_generated_file_run_path(@retry_of_generated_file_run_public_id, return_to: return_to_path), class: "text-blue-600 underline" %>
+            <% if @retry_of_generated_file_run_public_id.present? %>
+              <% if @retry_of_generated_file_run %>
+                <%= link_to @retry_of_generated_file_run_public_id, admin_generated_file_run_path(@retry_of_generated_file_run_public_id, return_to: return_to_path), class: "text-blue-600 underline" %>
+              <% else %>
+                <%= @retry_of_generated_file_run_public_id %>
+              <% end %>
             <% else %>
-              <%= @retry_of_generated_file_run_public_id %>
+              -
             <% end %>
           </dd>
         </div>
-        <div>
-          <dt class="font-semibold">再実行依頼時刻</dt>
-          <dd><%= @generated_file_run.metadata["retry_requested_at"].presence || "-" %></dd>
-        </div>
-      <% end %>
-    </dl>
-  </div>
+        <div><dt class="font-semibold">再実行依頼者</dt><dd><%= generated_file_run_retry_requester_label(@retry_requested_by_user_id, @retry_requested_by_user) %></dd></div>
+        <div><dt class="font-semibold">再実行依頼時刻</dt><dd><%= @generated_file_run.metadata&.dig("retry_requested_at").presence || "-" %></dd></div>
+        <div><dt class="font-semibold">確認先</dt><dd><%= link_to @generated_file_run.public_id, admin_generated_file_run_path(@generated_file_run.public_id, return_to: return_to_path), class: "font-mono text-blue-600 underline" %></dd></div>
+        <div><dt class="font-semibold">運用runbook</dt><dd class="font-mono">docs/生成ファイル再試行と定期ジョブ管理runbook.md</dd></div>
+      </dl>
+      <p class="mt-3 text-xs text-gray-600">既存の再実行 metadata から読める範囲だけを表示します。raw command、長い log、credential は表示対象にしません。</p>
+    </div>
+  <% end %>
 
   <% if @related_generated_file_event_public_ids.any? || @retry_child_runs.any? %>
     <div class="rounded-lg border bg-white p-4">
