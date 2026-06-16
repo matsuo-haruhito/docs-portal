@@ -46,7 +46,11 @@
 
 以下は `rails db:seed` が `db/seeds/data/users.csv` から作成するローカル開発 / demo 専用アカウントです。共有環境や本番へ転用する credential ではなく、本番 credential や認証 policy の例でもありません。seed 実行手順と `.env.example` の既定値の読み方は [docs/ローカルセットアップと環境変数.md](./docs/ローカルセットアップと環境変数.md) を参照してください。
 
-- admin@example.com / password123!
-- staff@example.com / password123!
-- client-a@client-a.example.com / password123!
-- client-b@client-b.example.com / password123!
+| アカウント | seed 上の名前 / 種別 | 最初に見る代表導線 |
+| --- | --- | --- |
+| `admin@example.com` / `password123!` | 社内管理者 / internal | `/admin` から管理 dashboard と model browser を確認する |
+| `staff@example.com` / `password123!` | 社内閲覧者 / internal | `/dashboard` から文書詳細、確認依頼、社内向け導線を確認する |
+| `client-a@client-a.example.com` / `password123!` | A商事 担当者 / external | `/dashboard` から閲覧可能文書、アクセス申請、同意画面を確認する |
+| `client-b@client-b.example.com` / `password123!` | B物流 担当者 / external | `/dashboard` から閲覧可能文書、アクセス申請、同意画面を確認する |
+
+各導線の詳しい読み方は [docs/管理ダッシュボード・モデルブラウザ運用runbook.md](./docs/管理ダッシュボード・モデルブラウザ運用runbook.md) と [docs/ダッシュボードと文書ショートカット・確認依頼の使い分け.md](./docs/ダッシュボードと文書ショートカット・確認依頼の使い分け.md) を参照してください。
