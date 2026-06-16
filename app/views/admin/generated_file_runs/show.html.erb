@@ -54,7 +54,7 @@
         </div>
         <div><dt class="font-semibold">再実行依頼者</dt><dd><%= generated_file_run_retry_requester_label(@retry_requested_by_user_id, @retry_requested_by_user) %></dd></div>
         <div><dt class="font-semibold">再実行依頼時刻</dt><dd><%= @generated_file_run.metadata&.dig("retry_requested_at").presence || "-" %></dd></div>
-        <div><dt class="font-semibold">確認先</dt><dd><%= link_to @generated_file_run.public_id, admin_generated_file_run_path(@generated_file_run.public_id, return_to: return_to_path), class: "font-mono text-blue-600 underline" %></dd></div>
+        <div><dt class="font-semibold">確認先</dt><dd class="font-mono"><%= @generated_file_run.public_id %></dd></div>
         <div><dt class="font-semibold">運用runbook</dt><dd class="font-mono">docs/生成ファイル再試行と定期ジョブ管理runbook.md</dd></div>
       </dl>
       <p class="mt-3 text-xs text-gray-600">既存の再実行 metadata から読める範囲だけを表示します。raw command、長い log、credential は表示対象にしません。</p>
