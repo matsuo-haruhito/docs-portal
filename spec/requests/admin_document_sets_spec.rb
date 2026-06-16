@@ -409,7 +409,7 @@ RSpec.describe "Admin document sets", type: :request do
       "set_type" => include("operator" => "eq", "value" => "delivery"),
       "visibility_policy" => include("operator" => "eq", "value" => "restricted_external")
     )
-    expect(preference.settings.fetch("sorts")).to eq([a_hash_including("key" => "name", "direction" => "asc")])
+    expect(preference.settings.fetch("sorts")).to contain_exactly(include("key" => "name", "direction" => "asc"))
   end
 
   it "keeps direct external table preference saves owner-scoped and away from admin surfaces" do
