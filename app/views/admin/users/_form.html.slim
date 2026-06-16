@@ -22,6 +22,7 @@
         | 会社
         = form.hidden_field :company_id, value: user.company_id || @fixed_company_for_form&.id
         = text_field_tag :company_display, fixed_company_name, readonly: true, disabled: true
+        span.muted この会社で固定され、会社欄は変更できません。ユーザー種別も自動で固定されます。
     - else
       label
         | ユーザー種別
@@ -34,6 +35,7 @@
         label: "会社",
         allow_clear: true,
         placeholder: "会社を選択（未所属可）"
+      p.muted 会社を選択しない場合は未所属として保存されます。会社を外す場合は選択をクリアしてください。
     label
       | 有効
       = form.select :active, [["有効", true], ["無効", false]]
@@ -44,8 +46,6 @@
       | パスワード確認
       = form.password_field :password_confirmation
   p.muted ユーザー名が空の場合はメールアドレスを表示名として使用します。編集時にパスワードを変えない場合は空欄のまま保存できます。
-  - if @company_admin_user_form
-    p.muted 会社管理者から登録するユーザーは、所属会社とユーザー種別が自動で固定されます。
   p.actions
     = form.submit "保存", class: "button"
     - if user.persisted?
