@@ -25,7 +25,7 @@ RSpec.describe "Admin read confirmations CSV pagination", type: :request do
   end
 
   def csv_export_query
-    Rack::Utils.parse_nested_query(URI.parse(csv_export_link.fetch("href")).query)
+    Rack::Utils.parse_nested_query(URI.parse(csv_export_link["href"]).query)
   end
 
   it "exports only the current page while preserving read confirmation filters" do
