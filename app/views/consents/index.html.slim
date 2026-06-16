@@ -8,6 +8,10 @@ section.card
   h2 現在有効な注意事項
   p.muted ここには今提示されている active な文面だけを表示します。過去に同意した記録は下の履歴で確認できます。
   - if @active_terms.any?
+    p.muted
+      | 現在有効な注意事項が
+      strong = @active_terms.size
+      | 件あります。各文面の種別・版を確認し、本文は文面ごとに読み分けてください。
     ul.consent-term-list
       - @active_terms.each do |term|
         li.consent-term-item
@@ -17,7 +21,9 @@ section.card
             strong = consent_scope_label(term)
             |  / 版: 
             strong = term.version_label
-          = simple_format(term.body)
+          p.muted この文面の本文
+          .consent-term-body
+            = simple_format(term.body)
   - else
     p.muted 現在有効な注意事項はありません。今提示する文面がない状態で、エラーや権限不足ではありません。
 
