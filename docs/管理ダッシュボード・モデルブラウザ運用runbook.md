@@ -24,6 +24,7 @@ current 実装の前提:
 - 欠落ファイル詳細の案件 filter は、案件コード / 案件名で検索する remote search として表示され、候補は最大 20 件まで返る。選択済み案件は候補上限外でも form / summary に復元される
 - 欠落ファイル詳細の `Expected path` は raw absolute path ではなく、`storage/document_files/...` 形式の safe preview として表示される
 - `Storage使用量` は `StorageUsageSummary` で local `storage/document_files` / `storage/docs_sites` / `storage/imports` の file count と概算使用量を read-only に出す
+- `Storage使用量` の `DocumentFile 実体の Project / Document 上位` は、`storage/document_files` に紐づく `DocumentFile` 実体だけを Project / Document 単位で概算集計し、上位 5 件を read-only preview として表示する
 - `Storage使用量` の `次の確認先` は、各領域から既存確認画面や既存 docs へ戻るための link cue であり、削除、cleanup、retention 対象を確定する操作ではない
 - 画面下部の `基本マスタ` `関連設定` は、日常確認後に既存の管理画面へ戻る近道として置かれている
 
@@ -196,24 +197,28 @@ current 実装の前提:
 - `Import staging` は `storage/imports` を測り、ZIP / manual upload dry-run などの一時確認 artifact を読む
 - 各領域は `StorageUsageSummary` が directory 内の file を走査して、file count と `number_to_human_size` の概算使用量にする
 - directory が存在しない場合は 0 file / 0 byte として扱う
-- `合計` はこの 3 領域の合算で、Project / Document / customer 単位の内訳ではない
+- `合計` はこの 3 領域の合算として読み、Project / Document 単位の内訳は別枠の `DocumentFile 実体の Project / Document 上位` で見る
+- `DocumentFile 実体の Project / Document 上位` は、`storage/document_files` に紐づく `DocumentFile` 実体だけを Project / Document 単位で概算集計する。表示は上位 5 件に限定され、Project code/name、Document title/slug、file count、実体欠落件数、概算使用量、最終更新を読むための read-only preview として扱う
+- 実体が存在しない file は `実体欠落` 件数に入り、raw absolute path は表示されない。欠落の詳細調査は `文書ファイル健全性` / `欠落ファイル詳細` へ戻す
 - `次の確認先` は、各領域の数値を見たあとに既存の詳細画面や運用 docs へ戻るための入口であり、dashboard 上で削除、archive、cleanup、retention policy 決定へ進める操作ではない
 
 読み方:
 
 - 容量の増減をざっと見たいときは、まず `合計` と各領域の file count / 概算使用量を見る
 - 添付や原本が増えている疑いがある場合は `storage/document_files`、build artifact が増えている疑いがある場合は `storage/docs_sites`、dry-run や import staging が残っている疑いがある場合は `storage/imports` を見る
+- `DocumentFile 実体の Project / Document 上位` では、容量増加の当たりを付けたい Project / Document を上位 5 件だけ確認する。大きい行があっても、その場で削除対象や retention 対象とは断定しない
+- `実体欠落` が 0 でない行は、容量 breakdown だけで完結させず、`欠落ファイル詳細` で対象の `Storage key` / safe `Expected path` preview を確認する
 - `DocumentFile 実体` の `次の確認先` は、登録済み file の実体欠落を調べる `欠落ファイル詳細` と、保存先・配信・cleanup 境界を読み直す [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md)
 - `Docs site build` の `次の確認先` は、Docusaurus build workspace や Kroki runtime、site artifact の前提を確認する [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md)
 - `Import staging` の `次の確認先` は、manual upload dry-run の既存確認画面と ZIP import の既存入口。どちらも staging artifact の読み方に戻るための導線であり、古い artifact をその場で削除する操作ではない
-- `文書ファイル健全性` は登録済み `DocumentFile` の実体欠落を確認する入口で、`Storage使用量` は local storage 領域別の容量を確認する入口として分ける
+- `文書ファイル健全性` は登録済み `DocumentFile` の実体欠落を確認する入口で、`Storage使用量` は local storage 領域別の容量と DocumentFile 実体の上位 preview を確認する入口として分ける
 - 欠落ファイルの実体調査は `欠落ファイル詳細`、容量や保存先方針の確認は [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md) へ戻る
 
 注意点:
 
 - `Storage使用量` は read-only であり、削除、archive、cleanup、retention policy 決定、GCS API 連携は行わない
 - 大きい値が出ても、その画面だけで不要ファイルや削除対象を断定しない
-- `次の確認先` は既存確認先への link cue であり、Project / Document / customer 単位の容量 breakdown や外部 bucket 集計を追加したものではない
+- Project / Document breakdown は `DocumentFile` 実体だけの上位 preview であり、`storage/docs_sites` / `storage/imports`、外部 bucket、customer 単位の課金・容量レポートを追加したものではない
 - 外部 object storage の bucket 使用量、signed URL、public access policy、Project / Document 単位の課金・容量レポートは current support 外として扱う
 - alert rule や通知 channel は current repo では具体実装ではない。監視観点は [監視・アラート設計](./監視・アラート設計.md) に戻す
 
@@ -229,7 +234,7 @@ current 実装の前提:
 - 欠落ファイル詳細の案件 filter が案件コード / 案件名で候補を探す remote search であり、候補上限外の selected project も復元される前提で読めているか
 - 欠落ファイル詳細の `条件をクリア` が、有効な案件 / 文書 / ファイル filter があるときだけ出る状態解除導線だと読めているか
 - `Storage key` と `Expected path` preview の役割を分け、raw absolute path が通常 UI に出ない前提で切り分けているか
-- `Storage使用量` が local directory の概算容量として読めており、`次の確認先` を cleanup や retention 判断の実行入口と混同していないか
+- `Storage使用量` が local directory の概算容量として読めており、`DocumentFile 実体の Project / Document 上位` を削除や retention 判断の実行入口と混同していないか
 - dashboard だけで完結させず、必要な既存管理画面や仕様 docs にすぐ戻れているか
 
 ## 迷ったときの切り分け
@@ -247,6 +252,7 @@ current 実装の前提:
 - 欠落ファイル詳細で特定案件だけを見たい: 案件コード / 案件名の remote search で案件を選び、文書名 / slug や Storage key / ファイル名の断片と組み合わせて先頭 100 件の read-only 一覧を絞る
 - 欠落ファイル詳細で `条件をクリア` が出ていない: 有効な filter はない状態として読み、空白だけの検索語が残っているとは扱わない
 - local storage の領域別使用量を read-only に確認したい: `Storage使用量`
+- `Storage使用量` の `DocumentFile 実体の Project / Document 上位` に大きい行がある: 容量増加の当たりを付ける preview として読み、対象文書や保存方針は [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md) と対象文書の詳細で確認する
 - `Storage使用量` の `DocumentFile 実体` が増えている: `欠落ファイル詳細` と [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md) で登録済み file と保存方針を確認する
 - `Storage使用量` の `Docs site build` が増えている: [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) で build artifact と runtime 前提を確認する
 - `Storage使用量` の `Import staging` が増えている: manual upload dry-run や ZIP import の既存入口で staging artifact の文脈を確認する
