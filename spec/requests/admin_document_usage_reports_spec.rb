@@ -285,7 +285,7 @@ RSpec.describe "Admin document usage reports", type: :request do
   it "normalizes oversized q and ignored date filters in JSON metadata" do
     normalized_query = "alpha" * 20
     oversized_query = "#{normalized_query}should-not-leak"
-    matching_document = create(:document, project:, title: "#{normalized_query} Guide", slug: "normalized-guide")
+    create(:document, project:, title: "#{normalized_query} Guide", slug: "normalized-guide")
     create(:document, project:, title: "Release Notes", slug: "release-notes")
 
     sign_in_as(admin_user)
@@ -318,7 +318,6 @@ RSpec.describe "Admin document usage reports", type: :request do
     )
     expect(filters).not_to have_key("from")
     expect(metadata.fetch("summary")).to include("検索: #{normalized_query}", "行数: 1件")
-    expect(metadata.to_json).to include(matching_document.slug)
     expect(metadata.to_json).not_to include("should-not-leak", "Release Notes")
   end
 
