@@ -25,9 +25,18 @@ RSpec.describe Admin::ModelBrowserCatalog do
       expect(groups).to all(satisfy { |group| described_class::GROUP_LABELS.key?(group) })
     end
 
-    it "keeps summary fields backed by model columns or documented safe methods" do
+    it "keeps summary fields backed by model columns or documented safe display methods" do
       documented_safe_method_fields = {
-        # "entry_key.field_name" => "Reason this non-column method is safe to render in the read-only browser."
+        "document_sets.internal_only" => "DocumentSet exposes a read-only visibility predicate for model browser summary display.",
+        "document_catalogs.internal_only" => "DocumentCatalog exposes a read-only visibility predicate for model browser summary display.",
+        "consent_terms.term_kind" => "ConsentTerm exposes the consent kind through a current display method rather than a direct column.",
+        "consent_terms.version" => "ConsentTerm exposes the public version through a current display method rather than a direct column.",
+        "project_consent_settings.required_on_first_view" => "ProjectConsentSetting exposes the first-view requirement as a current display predicate.",
+        "project_consent_settings.required_on_download" => "ProjectConsentSetting exposes the download requirement as a current display predicate.",
+        "git_import_sources.name" => "GitImportSource exposes the configured source name as a current display method.",
+        "git_import_sources.repository_url" => "GitImportSource exposes the configured repository URL as existing model-browser summary metadata, not raw payload/header/body data.",
+        "git_import_sources.active" => "GitImportSource exposes active state as a current display predicate.",
+        "webhook_deliveries.delivered_at" => "WebhookDelivery exposes delivery timing as current summary metadata without response payload data."
       }
       exposed_fields = described_class.entries.flat_map do |entry|
         entry.summary_fields.map { |field| "#{entry.key}.#{field}" }
@@ -85,7 +94,7 @@ RSpec.describe Admin::ModelBrowserCatalog do
 
       expect(searchable_fields_by_entry.fetch(described_class.fetch!("companies"))).to eq(%i[public_id name])
       expect(searchable_fields_by_entry.fetch(described_class.fetch!("projects"))).to eq(%i[code name])
-      expect(searchable_fields_by_entry.fetch(described_class.fetch!("project_memberships"))).to eq(%i[public_id role])
+      expect(searchable_fields_by_entry.fetch(described_class.fetch!("project_memberships"))).to eq(%i[public_id])
       expect(searchable_fields_by_entry.fetch(described_class.fetch!("document_permissions"))).to eq(%i[public_id access_level])
       expect(searchable_fields_by_entry.fetch(described_class.fetch!("webhook_deliveries"))).to eq(%i[public_id status])
       expect(invalid_search_fields).to be_empty, "invalid searchable summary_fields: #{invalid_search_fields.join(', ')}"
