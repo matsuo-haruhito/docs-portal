@@ -4,6 +4,7 @@
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - has_lifecycle_filter = @filters.values_at(:retention, :discard).any?(&:present?)
 - active_filter_summaries = admin_document_active_filter_summaries(@filters)
+- filters_active = active_filter_summaries.any?
 - current_return_to = request.query_string.present? ? request.fullpath : nil
 
 h1 文書マスタ
@@ -49,7 +50,8 @@ h1 文書マスタ
 
     p.actions.form-actions
       = form.submit "検索", class: "button"
-      = link_to "条件をクリア", admin_documents_path, class: "button secondary"
+      - if filters_active
+        = link_to "条件をクリア", admin_documents_path, class: "button secondary"
 
   p.muted
     | 検索結果: 
@@ -63,6 +65,11 @@ h1 文書マスタ
       - active_filter_summaries.each do |summary|
         = " "
         span.badge = summary
+  - if filters_active && @documents_filtered_count.zero?
+    p.muted.document-filter-empty-state
+      | 条件に一致する文書はありません。
+      = link_to "条件をクリア", admin_documents_path
+      | すると文書マスタ全体に戻れます。
   - if has_lifecycle_filter
     p.muted
       | 保管期限・廃棄候補の絞り込み中です。状態、保管期限、廃棄候補、公開側文書を確認し、必要な場合だけ行単位で編集・アーカイブ・復元してください。0件の場合は現在の条件に合う対象がない状態です。
