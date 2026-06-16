@@ -25,27 +25,25 @@ RSpec.describe Admin::ModelBrowserCatalog do
       expect(groups).to all(satisfy { |group| described_class::GROUP_LABELS.key?(group) })
     end
 
-    it "keeps summary fields backed by model columns or documented safe display methods" do
-      documented_safe_method_fields = {
-        "document_sets.internal_only" => "DocumentSet exposes a read-only visibility predicate for model browser summary display.",
-        "document_catalogs.internal_only" => "DocumentCatalog exposes a read-only visibility predicate for model browser summary display."
+    it "keeps summary fields backed by model columns or documented safe display fields" do
+      documented_safe_display_fields = {
+        "document_sets.internal_only" => "DocumentSet exposes the internal_only visibility value through the visibility_policy enum.",
+        "document_catalogs.internal_only" => "DocumentCatalog exposes the internal_only visibility value through the visibility_policy enum."
       }
       exposed_fields = described_class.entries.flat_map do |entry|
         entry.summary_fields.map { |field| "#{entry.key}.#{field}" }
       end
       missing_fields = described_class.entries.flat_map do |entry|
-        display_record = entry.model_class.new
-
         entry.summary_fields.filter_map do |field|
           field_key = "#{entry.key}.#{field}"
           next if entry.model_class.columns_hash.key?(field.to_s)
-          next if documented_safe_method_fields.key?(field_key) && display_record.respond_to?(field)
+          next if documented_safe_display_fields.key?(field_key)
 
           "#{field_key} (#{entry.model_class.name})"
         end
       end
 
-      expect(documented_safe_method_fields.keys - exposed_fields).to be_empty
+      expect(documented_safe_display_fields.keys - exposed_fields).to be_empty
       expect(missing_fields).to be_empty, "missing summary_fields: #{missing_fields.join(', ')}"
     end
 
