@@ -37,7 +37,8 @@
 
 - Document 単位 archive / restore は admin 管理画面で実装済み
 - 保管期限 / 廃棄候補の current 文書マスタ filter・一覧列・手動 archive / restore 判断は [文書マスタ運用runbook](./文書マスタ運用runbook.md) を正本にする。#1054 の first slice は completed のため、ここには current support 外の後続判断だけを残す
-- bulk archive / bulk restore / discard candidate marking、自動通知、自動削除、非可逆 discard、期限間近の新閾値定義は後続判断として残す。未起票で残す理由: retention policy、通知先、復元期限、不可逆操作の承認要件を分けて判断する必要がある
+- bulk archive / bulk restore 候補を実行ではなく read-only に引き継ぐ first slice は #3268 で扱う。ToDo 側には候補要件を重複して残さず、正本 docs と #3268 の判断論点だけを参照する
+- discard candidate marking、自動通知、自動削除、非可逆 discard、期限間近の新閾値定義は後続判断として残す。未起票で残す理由: retention policy、通知先、復元期限、不可逆操作の承認要件を分けて判断する必要がある
 
 ## Import / GitHub Actions
 
@@ -71,7 +72,7 @@
 - 長時間処理の自動リトライは初期実装で入れない。必要になった場合も、対象処理ごとに separate issue を切り、手動再実行で十分かを先に判断する
 - import / build の job 化は、同期 import/build 導線を本当に置き換える時点で再評価する
 - mail / webhook の job 化は、送信機能本体と delivery 契約が先に固まってから再評価する
-- 再生成 rails task / job 履歴は、検索再生成や build 再生成の実需要が出た時点で具体対象ごとに起票する
+- 生成ファイル run の再実行履歴と retry metadata の current 読み方は #3269 と [生成ファイル再試行と定期ジョブ管理 runbook](./生成ファイル再試行と定期ジョブ管理runbook.md) を正本にする。Docusaurus site build、検索 index、import / build の統合履歴へ広げる場合は、代表対象と保存境界が具体化した時点で別 issue に切る
 
 ## 品質・運用改善の扱い
 
