@@ -9,13 +9,29 @@ class StorageUsageSummary
     end
   end
 
+  DocumentFileBreakdownEntry = Struct.new(
+    :project_code,
+    :project_name,
+    :document_title,
+    :document_slug,
+    :bytes,
+    :file_count,
+    :missing_file_count,
+    :latest_updated_at,
+    keyword_init: true
+  ) do
+    def human_size
+      ActiveSupport::NumberHelper.number_to_human_size(bytes)
+    end
+  end
+
   Area = Struct.new(:key, :label, :relative_path, :description, :bytes, :file_count, :breakdown_entries, keyword_init: true) do
     def human_size
       ActiveSupport::NumberHelper.number_to_human_size(bytes)
     end
   end
 
-  Result = Struct.new(:areas, keyword_init: true) do
+  Result = Struct.new(:areas, :document_file_breakdown_entries, keyword_init: true) do
     def total_bytes
       areas.sum(&:bytes)
     end
@@ -26,6 +42,10 @@ class StorageUsageSummary
 
     def human_total_size
       ActiveSupport::NumberHelper.number_to_human_size(total_bytes)
+    end
+
+    def document_file_breakdown_entries
+      self[:document_file_breakdown_entries] || []
     end
   end
 
@@ -55,7 +75,10 @@ class StorageUsageSummary
   end
 
   def call
-    Result.new(areas: AREA_DEFINITIONS.map { |definition| area_for(definition) })
+    Result.new(
+      areas: AREA_DEFINITIONS.map { |definition| area_for(definition) },
+      document_file_breakdown_entries: document_file_breakdown_entries
+    )
   end
 
   private
@@ -88,6 +111,53 @@ class StorageUsageSummary
         file_count:
       )
     end.sort_by { |entry| [-entry.bytes, -entry.file_count, entry.relative_path] }.first(TOP_BREAKDOWN_LIMIT)
+  end
+
+  def document_file_breakdown_entries
+    groups = {}
+
+    DocumentFile.includes(document_version: { document: :project }).find_each do |file|
+      version = file.document_version
+      document = version.document
+      project = document.project
+      key = [project.id, document.id]
+      group = groups[key] ||= {
+        project:,
+        document:,
+        bytes: 0,
+        file_count: 0,
+        missing_file_count: 0,
+        latest_updated_at: nil
+      }
+
+      group[:file_count] += 1
+      group[:latest_updated_at] = [group[:latest_updated_at], file.updated_at, version.updated_at, document.updated_at].compact.max
+
+      path = file.absolute_path
+      if File.file?(path.to_s)
+        group[:bytes] += File.size(path.to_s)
+      else
+        group[:missing_file_count] += 1
+      end
+    rescue ActiveRecord::RecordNotFound, Errno::ENOENT, Errno::EACCES
+      group[:missing_file_count] += 1 if group
+    end
+
+    groups.values.map do |group|
+      project = group.fetch(:project)
+      document = group.fetch(:document)
+
+      DocumentFileBreakdownEntry.new(
+        project_code: project.code,
+        project_name: project.name,
+        document_title: document.title,
+        document_slug: document.slug,
+        bytes: group.fetch(:bytes),
+        file_count: group.fetch(:file_count),
+        missing_file_count: group.fetch(:missing_file_count),
+        latest_updated_at: group.fetch(:latest_updated_at)
+      )
+    end.sort_by { |entry| [-entry.bytes, -entry.file_count, entry.project_code.to_s, entry.document_title.to_s] }.first(TOP_BREAKDOWN_LIMIT)
   end
 
   def child_paths(path)
