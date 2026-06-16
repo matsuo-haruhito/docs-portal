@@ -154,6 +154,8 @@ active filter がある状態で 0 件になった場合は、未登録状態で
 
 検索条件は status / job_id / generator / output_writer / event_source / created date filter と併用できます。検索 0 件の場合は、通常の未登録状態ではなく「条件に一致する生成ファイル実行履歴はありません。」と表示されます。画面下部の 0 件表示に出る `すべての生成ファイル実行履歴を見る` は、現在の filter を外して全件表示へ戻る導線です。bulk retry の対象がないことを証明するものではないため、status、job_id、generator、output_writer、event_source、q、作成日の条件と warning を見直し、必要なら全体表示に戻ってから対象 run を探します。filter なしで 0 件の場合は、まだ生成ファイル実行履歴が蓄積されていない状態です。
 
+`作成日(開始)` / `作成日(終了)` は run の `created_at` を絞る条件です。日付だけを入れた場合、開始側はその日の 00:00 以降、終了側はその日の 23:59 までを含めます。これは生成ファイルイベント側の `実行予定日` filter ではなく、生成ファイル実行履歴側の `作成日` filter の cue として読みます。日時まで指定した場合は、その日時を境界として扱います。
+
 詳細画面では次を確認できます。
 
 - 関連する `generated_file_event_public_ids`
