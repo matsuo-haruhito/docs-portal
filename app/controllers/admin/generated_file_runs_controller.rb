@@ -24,6 +24,9 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
     @related_generated_file_events_by_public_id = GeneratedFileEvent.where(public_id: @related_generated_file_event_public_ids).index_by(&:public_id)
     @retry_of_generated_file_run_public_id = @generated_file_run.metadata&.dig("retry_of_generated_file_run_public_id").presence
     @retry_of_generated_file_run = GeneratedFileRun.find_by(public_id: @retry_of_generated_file_run_public_id) if @retry_of_generated_file_run_public_id
+    @retry_requested_by_user_id = @generated_file_run.metadata&.dig("retry_requested_by_user_id").presence
+    @retry_requested_by_user = User.find_by(id: @retry_requested_by_user_id) if @retry_requested_by_user_id
+    @retry_evidence_visible = generated_file_run_retry_evidence_visible?
     @retry_child_runs = recent_runs_related_to(@generated_file_run.public_id)
   end
 
@@ -65,6 +68,16 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
       .where("metadata ->> 'retry_of_generated_file_run_public_id' IN (?)", related_retry_parent_public_ids)
       .order(created_at: :desc, id: :desc)
       .limit(10)
+  end
+
+  def generated_file_run_retry_evidence_visible?
+    metadata = @generated_file_run.metadata || {}
+
+    @retry_of_generated_file_run_public_id.present? ||
+      metadata.key?("retry_requested_at") ||
+      metadata.key?("retry_requested_by_user_id") ||
+      metadata.key?("bulk_retry") ||
+      @generated_file_run.event_source.in?(%w[generated_file_run_retry generated_file_run_bulk_retry])
   end
 
   def apply_filters(scope)
