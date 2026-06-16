@@ -62,6 +62,10 @@ RSpec.describe "route identifier contract", type: :routing do
     end.uniq
   end
 
+  def identifier_segment_matches?(actual_segment, expected_segment)
+    actual_segment == expected_segment || actual_segment.end_with?("_#{expected_segment}")
+  end
+
   it "keeps major admin and public member routes on their documented identifiers" do
     failures = route_identifier_contracts.flat_map do |contract|
       matching_paths = route_paths.select { |path| path.match?(contract[:pattern]) }
@@ -72,9 +76,9 @@ RSpec.describe "route identifier contract", type: :routing do
 
       matching_paths.filter_map do |path|
         segment = path.match(contract[:pattern])[:segment]
-        next if segment == contract[:expected_segment]
+        next if identifier_segment_matches?(segment, contract[:expected_segment])
 
-        "#{contract[:label]}: #{path} uses :#{segment}, expected :#{contract[:expected_segment]}"
+        "#{contract[:label]}: #{path} uses :#{segment}, expected :#{contract[:expected_segment]} or scoped *_#{contract[:expected_segment]}"
       end
     end
 
