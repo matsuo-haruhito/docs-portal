@@ -55,7 +55,7 @@ module AccessRequestPresentation
         base.merge(title: target.title, slug: target.slug, project_code: target.project.code)
       when DocumentFile
         document = target.document_version.document
-        base.merge(file_name: target.file_name, document_id: document.public_id, document_title: document.title)
+        base.merge(file_name: target.file_name, document_id: document.public_id, document_title: document.title, project_code: document.project.code)
       else
         base
       end
