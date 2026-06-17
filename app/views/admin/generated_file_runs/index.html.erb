@@ -160,10 +160,10 @@
           <tr>
             <td colspan="<%= table_columns.size %>" class="px-4 py-8 text-center text-gray-500">
               <% if has_active_filters %>
-                <div class="space-y-2">
+                <div class="generated-file-run-filter-empty-state space-y-2">
                   <p>条件に一致する生成ファイル実行履歴はありません。</p>
                   <p class="text-sm">これは表示フィルタの結果です。条件を見直すか、すべての生成ファイル実行履歴を表示してください。</p>
-                  <p><%= link_to "すべての生成ファイル実行履歴を見る", admin_generated_file_runs_path, class: "text-blue-600 underline" %></p>
+                  <p class="actions mt-3"><%= link_to "すべての生成ファイル実行履歴を見る", admin_generated_file_runs_path, class: "rounded border px-3 py-2 text-sm" %></p>
                 </div>
               <% else %>
                 生成ファイル実行履歴はまだありません。
