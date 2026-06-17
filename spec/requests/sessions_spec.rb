@@ -42,9 +42,9 @@ RSpec.describe "Sessions", type: :request do
 
   describe "GET /capture_login" do
     it "is not routed in the test environment" do
-      expect do
-        get "/capture_login"
-      end.to raise_error(ActionController::RoutingError)
+      get "/capture_login"
+
+      expect(response).to have_http_status(:not_found)
     end
 
     context "when the development-only route is drawn" do
@@ -78,10 +78,9 @@ RSpec.describe "Sessions", type: :request do
         previous_login_at = 2.days.ago
         user = create(:user, active: false, last_login_at: previous_login_at)
 
-        expect do
-          get "/capture_login", params: { email: user.email_address, redirect: "/dashboard" }
-        end.to raise_error(ActiveRecord::RecordNotFound, "Inactive user")
+        get "/capture_login", params: { email: user.email_address, redirect: "/dashboard" }
 
+        expect(response).to have_http_status(:not_found)
         expect(user.reload.last_login_at.to_i).to eq(previous_login_at.to_i)
       end
 
@@ -89,10 +88,9 @@ RSpec.describe "Sessions", type: :request do
         previous_login_at = 2.days.ago
         user = create(:user, last_login_at: previous_login_at)
 
-        expect do
-          get "/capture_login", params: { email: "missing@example.com", redirect: "/dashboard" }
-        end.to raise_error(ActiveRecord::RecordNotFound)
+        get "/capture_login", params: { email: "missing@example.com", redirect: "/dashboard" }
 
+        expect(response).to have_http_status(:not_found)
         expect(user.reload.last_login_at.to_i).to eq(previous_login_at.to_i)
       end
 
@@ -106,9 +104,9 @@ RSpec.describe "Sessions", type: :request do
         unsafe_redirects.each do |redirect|
           user = create(:user)
 
-          expect do
-            get "/capture_login", params: { email: user.email_address, redirect: redirect }
-          end.to raise_error(ActionController::RoutingError, "Invalid redirect")
+          get "/capture_login", params: { email: user.email_address, redirect: redirect }
+
+          expect(response).to have_http_status(:not_found)
         end
       end
 
@@ -116,10 +114,9 @@ RSpec.describe "Sessions", type: :request do
         allow(Rails.env).to receive(:development?).and_return(false)
         user = create(:user)
 
-        expect do
-          get "/capture_login", params: { email: user.email_address, redirect: "/dashboard" }
-        end.to raise_error(ActionController::RoutingError, "Not Found")
+        get "/capture_login", params: { email: user.email_address, redirect: "/dashboard" }
 
+        expect(response).to have_http_status(:not_found)
         expect(user.reload.last_login_at).to be_nil
       end
     end
