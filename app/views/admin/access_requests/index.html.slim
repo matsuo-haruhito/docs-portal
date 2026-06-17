@@ -133,7 +133,7 @@ section.card
           td.actions data-rails-table-preferences-column-key="actions"
             - if access_request.pending?
               p.muted 判断前に対象・要求権限・理由を確認してください。
-              p.muted 承認: 現行の付与先に要求権限を反映します。
+              p.muted 承認: 要求権限を付与します。現行の付与先に反映します。
               - if access_request.requested_access_level.to_s == "manage"
                 p.muted
                   span.status-warning 管理権限申請の承認注意:
@@ -146,7 +146,7 @@ section.card
                 = hidden_field_tag :decision, "reject"
                 = label_tag "rejection_reason_preset_#{access_request.public_id}", "却下理由の定型候補"
                 = select_tag :rejection_reason_preset, options_for_select(admin_access_request_rejection_reason_preset_options, admin_access_request_default_rejection_reason_preset), id: "rejection_reason_preset_#{access_request.public_id}"
-                p.muted 定型候補と補足は却下理由の入力補助です。承認基準や権限付与仕様はここでは変更しません。
+                p.muted 定型候補は入力補助です。補足も却下理由の入力補助です。承認基準や権限付与仕様はここでは変更しません。
                 = label_tag "rejection_reason_note_#{access_request.public_id}", "補足（任意）"
                 = text_area_tag :rejection_reason_note, nil, id: "rejection_reason_note_#{access_request.public_id}", rows: 2, placeholder: "必要に応じて申請者へ伝える補足を入力"
                 = submit_tag "却下", class: "button secondary"
