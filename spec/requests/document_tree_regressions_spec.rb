@@ -96,6 +96,11 @@ RSpec.describe "Document tree regressions", type: :request do
     expect(parsed_html.at_css(".tree-icon--csv")).to be_present
     expect(parsed_html.at_css(%(a[href="#{project_document_path(project, pdf_document.slug)}"]))).to be_present
     expect(parsed_html.at_css(%(a[href="#{project_document_path(project, csv_document.slug)}"]))).to be_present
+
+    current_link = parsed_html.at_css(%(a[aria-current="page"][href="#{project_document_path(project, markdown_document.slug)}"] ))
+
+    expect(current_link).to be_present
+    expect(current_link.parent.text.squish).to include("表示中")
   end
 
   it "removes archived documents from the tree until they are restored" do
