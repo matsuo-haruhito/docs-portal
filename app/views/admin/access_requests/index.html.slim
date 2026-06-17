@@ -139,7 +139,7 @@ section.card
                   span.status-warning 管理権限申請の承認注意:
                   |  管理者 role / manage grant は付与しません。
               = button_to "承認", admin_access_request_path(access_request), method: :patch, params: action_filter_params.merge(decision: "approve"), class: "button"
-              p.muted 却下: 権限は変更せず、理由を残して申請を閉じます。
+              p.muted 却下: 理由を残して申請を閉じます。権限は変更しません。
               = form_with url: admin_access_request_path(access_request), method: :patch, local: true do
                 - action_filter_params.each do |key, value|
                   = hidden_field_tag key, value
