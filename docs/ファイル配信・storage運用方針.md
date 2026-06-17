@@ -29,7 +29,7 @@
 - `Rails.root/storage/...` を直接参照する
 - `send_file` で配信する
 - file existence を同期的に確認できる
-- 管理ダッシュボードの `Storage使用量` で local storage 配下の概算使用量、file count、直下項目ごとの大きい内訳を read-only に確認できる
+- 管理ダッシュボードの `Storage使用量` で local storage 配下の概算使用量、file count、直下項目ごとの大きい内訳、`DocumentFile` 実体の Project / Document 上位 breakdown を read-only に確認できる
 
 ### GCS 等のオブジェクトストレージ
 
@@ -42,7 +42,7 @@
 - path / prefix 設計はローカル path 構造を踏襲する
 - public access は禁止する
 - 配信可否の判定はアプリ側に残す
-- `Storage使用量` は local directory scan の結果であり、GCS / object storage API の疎通確認や課金レポートとして扱わない
+- `Storage使用量` は local directory scan と `DocumentFile` metadata に基づく read-only preview であり、GCS / object storage API の疎通確認や課金レポートとして扱わない
 
 ## 4. MIME type / charset 方針
 
@@ -135,16 +135,18 @@ current support の対象:
 
 画面では、各領域の file count と概算 byte size、3 領域の合計を確認できます。さらに各領域の `大きい内訳` として、直下項目ごとの file count と概算使用量を大きい順に最大 5 件まで表示します。内訳の path は `storage/<area>/<child>` 形式の relative path で、raw absolute path は通常 UI に出しません。
 
-`大きい内訳` は、どの直下ディレクトリや直下ファイルが容量の目立つ入口になっているかを短く切り分けるための補助表示です。これは Project 単位、Document 単位、顧客単位の容量レポートではなく、`DocumentFile` metadata と照合した所有者別集計でもありません。
+`DocumentFile 実体の Project / Document 上位` は、`storage/document_files` に紐づく `DocumentFile` metadata と実体 file size を照合し、Project / Document 単位の概算上位 5 件を read-only に表示します。表示項目は Project code/name、Document title/slug、file count、実体欠落件数、概算使用量、最終更新に閉じます。実体が欠落している file は欠落件数だけに入り、raw absolute path は表示しません。
 
-`内訳なし` は、現在の条件で表示できる直下項目がない状態を表します。正常保証、cleanup 完了、retention 対象なし、外部 storage 側の容量 0 を意味しません。
+`大きい内訳` は local storage の直下ディレクトリや直下ファイルが容量の目立つ入口になっているかを見る補助表示です。`DocumentFile 実体の Project / Document 上位` は DocumentFile metadata と照合した所有者別 preview です。どちらも削除対象、archive 対象、cleanup 対象、retention policy 対象を確定する画面ではありません。
 
-`文書ファイル健全性` / `欠落ファイル詳細` は、登録済み `DocumentFile` の実体が見えるかを確認する入口です。一方、`Storage使用量` は local storage 領域別の概算容量と直下内訳を確認する入口です。欠落ファイルの修復対象や削除対象を決める画面ではありません。
+`内訳なし` は、現在の条件で表示できる直下項目または DocumentFile breakdown がない状態を表します。正常保証、cleanup 完了、retention 対象なし、外部 storage 側の容量 0 を意味しません。
+
+`文書ファイル健全性` / `欠落ファイル詳細` は、登録済み `DocumentFile` の実体が見えるかを確認する入口です。一方、`Storage使用量` は local storage 領域別の概算容量、直下内訳、DocumentFile 実体の Project / Document 上位 preview を確認する入口です。欠落ファイルの修復対象や削除対象を決める画面ではありません。
 
 current support 外:
 
-- Project / Document / 顧客単位の容量内訳
-- `DocumentFile` metadata と照合した所有者別集計
+- `storage/docs_sites` / `storage/imports` の Project / Document / 顧客単位の容量内訳
+- 顧客単位の容量レポート
 - CSV export / 定期レポート
 - cleanup、archive、自動削除、retention policy 決定
 - GCS bucket、signed URL、public access policy、object storage API の確認
@@ -170,5 +172,6 @@ current repo では、storage 使用量は管理ダッシュボードの `Storag
 - missing file は 404 に統一し、原因は運用ログで追う
 - MIME type / charset は `DocumentFile#effective_content_type` を正本として扱う
 - 管理ダッシュボードの `Storage使用量` は read-only な容量確認入口として扱い、削除・archive・cleanup・retention policy 判断の実行入口にしない
-- `大きい内訳` は local storage の直下項目 top 5 の補助表示として読み、Project / Document / 顧客単位の容量レポートや cleanup 候補一覧として扱わない
+- `大きい内訳` は local storage の直下項目 top 5 の補助表示として読み、cleanup 候補一覧として扱わない
+- `DocumentFile 実体の Project / Document 上位` は、DocumentFile 実体に閉じた所有者別 preview として読み、課金レポート、顧客別容量レポート、削除・retention 判断として扱わない
 - cleanup 自動化は retention と restore 手順を先に決めてから導入する
