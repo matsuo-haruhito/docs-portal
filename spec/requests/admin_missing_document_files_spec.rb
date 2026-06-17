@@ -114,7 +114,8 @@ RSpec.describe "Admin missing document files", type: :request do
     get admin_missing_document_files_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("この詳細一覧は先頭100件まで表示します。")
+    expect(response.body).to include("この詳細一覧は全体の実体欠落の先頭100件までを表示します。")
+    expect(response.body).to include("全体の実体欠落は101件ありますが、表示中は先頭100件までです。")
     expect(response.body).to include("missing-detail-0.txt")
     expect(response.body).to include("missing-detail-99.txt")
     expect(response.body).not_to include("missing-detail-100.txt")
@@ -144,7 +145,9 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(page_text).to include("全体の実体欠落: 102")
     expect(page_text).to include("条件一致欠落: 101")
     expect(page_text).to include("表示中: 100")
-    expect(page_text).to include("条件一致欠落件数が100件を超えています")
+    expect(page_text).to include("条件一致欠落は現在の絞り込みに合う全件数、表示中は詳細一覧に出している先頭100件までの件数です。")
+    expect(page_text).to include("この詳細一覧は条件一致欠落の先頭100件までを表示します。")
+    expect(page_text).to include("条件一致欠落は101件ありますが、表示中は先頭100件までです。")
     expect(page_text).to include("自動修復、削除、再import、CSV export は行いません")
 
     table_text = parsed_html.at_css("table").text.squish
@@ -300,6 +303,7 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(page_text).to include("条件一致欠落: 1")
     expect(page_text).to include("表示中: 1")
     expect(page_text).to include("条件: 案件=Missing Project / 文書=safety / ファイル=handoff")
+    expect(page_text).to include("条件一致欠落は現在の絞り込みに合う全件数、表示中は詳細一覧に出している先頭100件までの件数です。")
     expect(page_text).to include("自動修復、削除、再import、CSV export は行いません")
     expect(response.body).not_to include("削除する")
     expect(response.body).not_to include("再importを実行")
@@ -332,6 +336,7 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(page_text).to include("全体の実体欠落: 1")
     expect(page_text).to include("条件一致欠落: 0")
     expect(page_text).to include("条件に一致する欠落ファイルはありません。全体では1件の実体欠落があります。")
+    expect(page_text).to include("表示中は0件で、全体欠落が解消されたわけではありません。")
     expect(response.body).not_to include("削除する")
     expect(response.body).not_to include("再importを実行")
     expect(response.body).not_to include("CSVを出力")
@@ -350,6 +355,7 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(page_text).to include("全体の実体欠落: 1")
     expect(page_text).to include("条件一致欠落: 0")
     expect(page_text).to include("条件に一致する欠落ファイルはありません。全体では1件の実体欠落があります。")
+    expect(page_text).to include("表示中は0件で、全体欠落が解消されたわけではありません。")
     expect(page_text).not_to include("実体ファイルの欠落は検出されていません。")
     expect(clear_filter_links.size).to eq(1)
 
