@@ -107,7 +107,7 @@ h1 Git同期履歴
         p.muted = "適用中の状態: #{selected_status_label || @status_filter}。状態を「すべて」に戻すと、他の状態の履歴も確認できます。"
       - if @repository_filter.present?
         p.muted = "適用中のリポジトリ: #{@repository_filter}。owner/repo の一部など、検索語を短くすると見つかることがあります。"
-      p.muted = link_to "絞り込み解除", admin_git_import_runs_path
+      p.actions = link_to "絞り込み解除", admin_git_import_runs_path, class: "button secondary"
 - else
   .card
     p.muted まだGit同期履歴はありません。
