@@ -20,6 +20,7 @@
 - active_filter_labels << "検索語: #{@query}" if @query.present?
 - active_filter_labels << "依頼者: #{requester_filter_label || "指定あり"}" if @requester_filter_id.present?
 - active_filter_labels << "確認相手: #{approver_filter_label || "指定あり"}" if @approver_filter_id.present?
+- section_count_scope = has_active_filter ? "表示中条件内" : "一覧全体"
 - table_key = :document_approval_requests
 - table_columns = document_approval_request_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
@@ -78,7 +79,7 @@ p.actions
   - @document_approval_request_sections.each do |section_title, requests|
     - next if requests.empty?
     h2 = section_title
-    p.muted = "#{requests.size}件"
+    p.muted = "#{requests.size}件（#{section_count_scope}）"
     = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
       thead
         tr
