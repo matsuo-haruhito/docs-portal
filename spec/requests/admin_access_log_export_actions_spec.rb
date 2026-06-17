@@ -16,8 +16,12 @@ RSpec.describe "Admin access log export actions", type: :request do
     parsed_html.text.squish
   end
 
+  def export_link(label)
+    parsed_html.css("section.card a[href]").find { |node| node.text.squish == label }
+  end
+
   def export_link_query(label)
-    link = parsed_html.css("section.card a[href]").find { |node| node.text.squish == label }
+    link = export_link(label)
     return {} unless link
 
     Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)
@@ -55,6 +59,8 @@ RSpec.describe "Admin access log export actions", type: :request do
     expect(page_text).to include("CSV条件metadata JSON は監査ログ行データではなく、同じ条件・除外日付・上限・summary を確認する補助出力です。")
     expect(page_text).to include("ページ移動中でも、CSV export は表示中ページではなく条件一致の最新200件が対象です。")
 
+    csv_link = export_link("現在の条件でCSV export（最新200件）")
+    metadata_link = export_link("CSV条件metadata JSON")
     csv_query = export_link_query("現在の条件でCSV export（最新200件）")
     metadata_query = export_link_query("CSV条件metadata JSON")
 
@@ -67,8 +73,10 @@ RSpec.describe "Admin access log export actions", type: :request do
       "to" => "2026-05-10"
     }
 
-    expect(csv_query).to include(expected_filters.merge("format" => "csv"))
-    expect(metadata_query).to include(expected_filters.merge("format" => "json"))
+    expect(URI.parse(csv_link["href"]).path).to end_with(".csv")
+    expect(URI.parse(metadata_link["href"]).path).to end_with(".json")
+    expect(csv_query).to include(expected_filters)
+    expect(metadata_query).to include(expected_filters)
     expect(csv_query).not_to have_key("page")
     expect(metadata_query).not_to have_key("page")
   end
