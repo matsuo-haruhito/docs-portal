@@ -33,6 +33,7 @@ RSpec.describe "Admin route identifier contract", type: :routing do
 
   EXPECTED_DYNAMIC_SEGMENTS_BY_CONTROLLER = PUBLIC_ID_CONTROLLERS.to_h { |controller| [controller, [:public_id]] }.merge(
     "admin/api_specifications" => [:site_path],
+    "admin/external_folder_sync_oauth_connections" => [:external_folder_sync_source_public_id],
     "admin/model_browsers" => [:model_key],
     "admin/projects" => [:code]
   ).freeze
