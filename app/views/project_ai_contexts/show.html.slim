@@ -19,6 +19,8 @@
 - candidate_view_params = candidate_view_params.merge(document_q: @document_query) if document_query_present
 - scope_summary = @requested_document_ids.empty? ? "現在は閲覧可能な文書全体（#{exported_document_count}件）を出力対象にしています。" : "明示選択: #{selected_document_count}件 / 案件内候補: #{scoped_document_count}件 / 出力対象: #{exported_document_count}件"
 - scope_help = @requested_document_ids.empty? ? "個別に絞り込む場合は、対象にしたい文書だけを残して preview してください。" : "選択文書のうち閲覧可能な文書だけが preview / 出力に含まれます。案件外または存在しないIDは候補外として数だけ表示します。"
+- export_scope_cue = @requested_document_ids.empty? ? "現在の対象: 全件 / 出力対象: #{exported_document_count}件" : "現在の対象: 選択中 / 選択ID: #{selected_document_count}件 / 出力対象: #{exported_document_count}件"
+- export_scope_help = document_query_present ? "検索は候補の絞り込みです。JSON / Markdown は現在の対象範囲を出力します。" : nil
 - if candidate_view_selected
   - document_filter_legend = "選択済み文書（表示中#{selectable_document_preview_count}件 / 選択済み候補#{selected_selectable_document_count}件）"
 - elsif document_query_present
@@ -64,6 +66,10 @@ p
     |  / mode: 
     = current_mode_name
     | ）で出力します。文書スコープと権限フィルタは画面下の一覧と同じです。
+  p
+    strong = export_scope_cue
+  - if export_scope_help.present?
+    p.muted = export_scope_help
   p.actions
     = link_to "JSON を出力", project_ai_context_path(@project, @scoped_link_params.merge(mode: @mode, format: :json)), class: "button secondary"
     = link_to "Markdown を出力", project_ai_context_path(@project, @scoped_link_params.merge(mode: @mode, format: :md)), class: "button secondary"
