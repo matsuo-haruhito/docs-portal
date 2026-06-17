@@ -22,6 +22,18 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     parsed_html.css(%(input[name="bulk_edit[document_ids][]"][checked])).map { |input| input["value"].to_i }
   end
 
+  def hidden_candidate_document_ids
+    parsed_html.css(%(input[type="hidden"][name="candidate_document_ids[]"])).map { |input| input["value"].to_i }
+  end
+
+  def hidden_source_filter_summaries
+    parsed_html.css(%(input[type="hidden"][name="source_filter_summaries[]"])).map { |input| input["value"] }
+  end
+
+  def source_filter_badges
+    parsed_html.css("span.badge").map { |badge| badge.text.squish }
+  end
+
   it "creates a dry-run and then executes the confirmed bulk edit" do
     sign_in_as(admin)
 
@@ -97,6 +109,47 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(page_text).not_to include("Other Doc")
     expect(checked_document_ids).to eq([document.id])
     expect(other_document).to be_persisted
+  end
+
+  it "limits and normalizes document candidates passed from the document master list" do
+    candidate_documents = create_list(:document, 49, project:) do |candidate, index|
+      candidate.update!(title: format("Candidate %02d", index + 1))
+    end
+    overflow_document = create(:document, project:, title: "Overflow Candidate")
+    all_candidate_ids = [document.id, document.id, "invalid", *candidate_documents.map(&:id), overflow_document.id]
+    expected_candidate_ids = [document.id, *candidate_documents.map(&:id)]
+    long_summary = "X" * 81
+    truncated_summary = "#{'X' * 77}..."
+    visible_summaries = [
+      truncated_summary,
+      "分類: 仕様",
+      "種別: Markdown",
+      "公開範囲: 内部",
+      "状態: 有効",
+      "期限: 未設定",
+      "廃棄: 未設定"
+    ]
+
+    sign_in_as(admin)
+
+    get new_admin_bulk_edit_dry_run_path, params: {
+      source: "admin_documents",
+      candidate_document_ids: all_candidate_ids,
+      source_filter_summaries: [" ", long_summary, *visible_summaries.drop(1), "8件目: 表示しない"]
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("文書マスタ一覧から引き継いだ候補: 50件")
+    expect(page_text).to include("50件選択中")
+    expect(page_text).to include("50件表示中")
+    expect(checked_document_ids).to contain_exactly(*expected_candidate_ids)
+    expect(hidden_candidate_document_ids).to eq(expected_candidate_ids)
+    expect(source_filter_badges).to eq(visible_summaries)
+    expect(hidden_source_filter_summaries).to eq(visible_summaries)
+    expect(page_text).not_to include("Overflow Candidate")
+    expect(response.body).not_to include(%(value="#{overflow_document.id}"))
+    expect(response.body).not_to include(long_summary)
+    expect(response.body).not_to include("8件目: 表示しない")
   end
 
   it "handles empty or invalid document candidates without broadening the bulk edit list" do
