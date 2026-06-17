@@ -82,7 +82,7 @@ h1 文書セット
     - if admin_document_set_filters_active?(@filters)
       .document-set-filter-empty-state
         p.muted 条件に一致する文書セットはありません。
-        p.actions.form-actions
+        p.actions.form-actions.muted
           = link_to "条件をクリア", admin_document_sets_path, class: "button secondary"
     - else
       p.muted まだ文書セットは登録されていません。
