@@ -11,6 +11,10 @@ RSpec.describe "Document approval request section count cues", type: :request do
     Nokogiri::HTML(response.body).text.squish
   end
 
+  def page_html
+    Nokogiri::HTML(response.body)
+  end
+
   before do
     create(:project_membership, project:, user: requester)
     create(:document_permission, document:, company:, access_level: :view)
@@ -42,7 +46,8 @@ RSpec.describe "Document approval request section count cues", type: :request do
     expect(response).to have_http_status(:ok)
     aggregate_failures do
       expect(page_text).to include("状態ボタンの件数は一覧全体の件数です")
-      expect(page_text).to include("対応待ち 1件（表示中条件内）")
+      expect(page_html.at_css("h2")&.text&.squish).to eq("対応待ち")
+      expect(page_html.at_css("h2 + p.muted")&.text&.squish).to eq("1件（表示中条件内）")
       expect(response.body).to include(matching_request.title)
       expect(response.body).not_to include(approved_request.title)
     end
