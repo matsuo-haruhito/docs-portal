@@ -21,8 +21,7 @@ RSpec.describe "Admin git import source sync confirm", type: :request do
 
     get admin_git_import_sources_path
 
-    sync_form = parsed_html.at_css(%(form[action="#{sync_admin_git_import_source_path(source)}"] [data-turbo-confirm]))&.ancestors("form")&.first ||
-      parsed_html.at_css(%(form[action="#{sync_admin_git_import_source_path(source)}"] ))
+    sync_form = parsed_html.at_css(%(form[action="#{sync_admin_git_import_source_path(source)}"][data-turbo-confirm]))
 
     expect(response).to have_http_status(:ok)
     expect(sync_form).to be_present
