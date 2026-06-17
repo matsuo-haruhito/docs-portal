@@ -22,7 +22,7 @@ RSpec.describe "admin git import admin UI source" do
 
   it "keeps git import auth and external sync boundary copy explicit" do
     aggregate_failures do
-      expect(form_source).to include("GitHub App は本命、Fine-grained PAT は検証用、認証なしは公開リポジトリ用です。")
+      expect(form_source).to include("通常運用は GitHub App。Fine-grained PAT は開発・検証用、認証なしは公開リポジトリ限定です。")
       expect(form_source).to include("同期元設定、run履歴、manifest化、削除候補")
       expect(form_source).to include("Google Drive / SharePoint 本体や自動同期はこの画面では追加しません。")
       expect(form_source).to include("認証なしは公開リポジトリの clone に限定して使います。")
