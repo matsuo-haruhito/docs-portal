@@ -85,14 +85,15 @@ RSpec.describe "Sessions", type: :request do
         expect(user.reload.last_login_at.to_i).to eq(previous_login_at.to_i)
       end
 
-      it "rejects unknown email addresses before creating a login session" do
-        user = create(:user, last_login_at: 2.days.ago)
+      it "rejects unknown email addresses before touching existing users" do
+        previous_login_at = 2.days.ago
+        user = create(:user, last_login_at: previous_login_at)
 
         expect do
           get "/capture_login", params: { email: "missing@example.com", redirect: "/dashboard" }
         end.to raise_error(ActiveRecord::RecordNotFound)
 
-        expect(user.reload.last_login_at.to_i).to eq(2.days.ago.to_i).or be < 1.day.ago.to_i
+        expect(user.reload.last_login_at.to_i).to eq(previous_login_at.to_i)
       end
 
       it "rejects external and invalid redirect values" do
