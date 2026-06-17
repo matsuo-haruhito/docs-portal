@@ -1,0 +1,150 @@
+require "rails_helper"
+
+RSpec.describe "Admin git import sources", type: :request do
+  let(:admin_user) { create(:user, :internal) }
+
+  before do
+    sign_in_as(admin_user)
+  end
+
+  def json_body
+    JSON.parse(response.body)
+  end
+
+  def git_import_source_params(project:, repository_full_name:, auth_type:, credential_secret: nil)
+    {
+      project_id: project.id,
+      provider: "github",
+      organization_name: "example-org",
+      repository_full_name:,
+      branch: "main",
+      source_path: "docs",
+      auth_type:,
+      installation_id: "12345",
+      credential_ref: "git/#{repository_full_name}",
+      credential_secret:,
+      enabled: "1"
+    }
+  end
+
+  it "returns project options by code and name for the remote combobox" do
+    alpha_project = create(:project, code: "GIT001", name: "Alpha Docs")
+    beta_project = create(:project, code: "OPS002", name: "Beta Archive")
+
+    get project_search_admin_git_import_sources_path(format: :json), params: { q: "git001" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("options")).to contain_exactly(
+      include("value" => alpha_project.id, "text" => "GIT001 / Alpha Docs")
+    )
+
+    get project_search_admin_git_import_sources_path(format: :json), params: { q: "beta archive" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("options")).to contain_exactly(
+      include("value" => beta_project.id, "text" => "OPS002 / Beta Archive")
+    )
+  end
+
+  it "bounds project search results and handles long queries without a server error" do
+    22.times do |index|
+      create(:project, code: format("GIT%02d", index), name: "Bounded Project #{index}")
+    end
+
+    get project_search_admin_git_import_sources_path(format: :json), params: { q: "Bounded Project" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("options").size).to eq(Admin::GitImportSourcesController::PROJECT_SEARCH_LIMIT)
+
+    long_query = "Bounded Project" + ("x" * 200)
+    get project_search_admin_git_import_sources_path(format: :json), params: { q: long_query }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("options")).to eq([])
+  end
+
+  it "restores a selected project even when it is outside the search result window" do
+    22.times do |index|
+      create(:project, code: format("AAA%02d", index), name: "Listed Project #{index}")
+    end
+    selected_project = create(:project, code: "ZZZ99", name: "Selected Project")
+
+    get selected_project_admin_git_import_sources_path(format: :json), params: { id: selected_project.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("option")).to include(
+      "value" => selected_project.id,
+      "text" => "ZZZ99 / Selected Project"
+    )
+
+    get selected_project_admin_git_import_sources_path(format: :json), params: { id: "999999" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("option")).to be_nil
+  end
+
+  it "keeps an existing credential secret when the edit form submits a blank secret" do
+    project = create(:project, code: "GITSECRET", name: "Secret Project")
+    source = create(
+      :git_import_source,
+      project:,
+      created_by: admin_user,
+      repository_full_name: "example/secret-docs",
+      auth_type: :fine_grained_pat,
+      credential_secret: "existing-token"
+    )
+
+    patch admin_git_import_source_path(source), params: {
+      git_import_source: git_import_source_params(
+        project:,
+        repository_full_name: source.repository_full_name,
+        auth_type: "fine_grained_pat",
+        credential_secret: ""
+      )
+    }
+
+    expect(response).to redirect_to(admin_git_import_sources_path)
+    expect(source.reload.credential_secret).to eq("existing-token")
+    expect(source.auth_type).to eq("fine_grained_pat")
+  end
+
+  it "preserves the current secret requirement for pull auth types" do
+    project = create(:project, code: "GITAUTH", name: "Auth Project")
+
+    post admin_git_import_sources_path, params: {
+      git_import_source: git_import_source_params(
+        project:,
+        repository_full_name: "example/missing-secret",
+        auth_type: "fine_grained_pat",
+        credential_secret: ""
+      )
+    }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(GitImportSource.exists?(repository_full_name: "example/missing-secret")).to be(false)
+
+    post admin_git_import_sources_path, params: {
+      git_import_source: git_import_source_params(
+        project:,
+        repository_full_name: "example/github-app-docs",
+        auth_type: "github_app",
+        credential_secret: ""
+      )
+    }
+
+    expect(response).to redirect_to(admin_git_import_sources_path)
+    expect(GitImportSource.find_by!(repository_full_name: "example/github-app-docs").credential_secret).to be_blank
+
+    post admin_git_import_sources_path, params: {
+      git_import_source: git_import_source_params(
+        project:,
+        repository_full_name: "example/public-docs",
+        auth_type: "no_auth",
+        credential_secret: ""
+      )
+    }
+
+    expect(response).to redirect_to(admin_git_import_sources_path)
+    expect(GitImportSource.find_by!(repository_full_name: "example/public-docs").credential_secret).to be_blank
+  end
+end
