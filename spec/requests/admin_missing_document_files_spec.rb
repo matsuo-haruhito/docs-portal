@@ -14,6 +14,10 @@ RSpec.describe "Admin missing document files", type: :request do
     parsed_html.text.squish
   end
 
+  def json_body
+    JSON.parse(response.body)
+  end
+
   def missing_file_for(document, file_name:, storage_key:)
     version = create(:document_version, document:)
     create(:document_file, document_version: version, file_name:, storage_key:)
@@ -169,7 +173,7 @@ RSpec.describe "Admin missing document files", type: :request do
     get project_search_admin_missing_document_files_path(format: :json), params: { q: "ops" }
 
     expect(response).to have_http_status(:ok)
-    project_options = JSON.parse(response.body).fetch("options")
+    project_options = json_body.fetch("options")
     expect(project_options).to contain_exactly(
       include("value" => matching_project.id, "text" => "OPS / Operations Search")
     )
@@ -177,7 +181,52 @@ RSpec.describe "Admin missing document files", type: :request do
     get selected_project_admin_missing_document_files_path(format: :json), params: { id: project.id }
 
     expect(response).to have_http_status(:ok)
-    expect(JSON.parse(response.body).fetch("option")).to include("value" => project.id, "text" => "MISS / Missing Project")
+    expect(json_body.fetch("option")).to include("value" => project.id, "text" => "MISS / Missing Project")
+  end
+
+  it "normalizes long project search queries before matching" do
+    sign_in_as(admin_user)
+
+    search_prefix = "A" * Admin::MissingDocumentFilesController::PROJECT_SEARCH_QUERY_MAX_LENGTH
+    matching_project = create(:project, code: "LONG", name: search_prefix)
+    create(:project, code: "TAIL", name: "overflow-only-project")
+
+    get project_search_admin_missing_document_files_path(format: :json), params: { q: "  #{search_prefix}overflow-only-project  " }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("options")).to contain_exactly(
+      include("value" => matching_project.id, "text" => "LONG / #{search_prefix}")
+    )
+  end
+
+  it "restores selected projects outside the search result limit and returns nil for missing ids" do
+    sign_in_as(admin_user)
+
+    22.times do |index|
+      create(:project, code: format("AAA%02d", index), name: "Limited Search #{index}")
+    end
+    project_outside_search_limit = create(:project, code: "ZZZ99", name: "Restored Outside Limit")
+
+    get project_search_admin_missing_document_files_path(format: :json), params: { q: "Limited Search" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("options").size).to eq(Admin::MissingDocumentFilesController::PROJECT_SEARCH_LIMIT)
+    expect(json_body.fetch("options")).not_to include(
+      include("value" => project_outside_search_limit.id)
+    )
+
+    get selected_project_admin_missing_document_files_path(format: :json), params: { id: project_outside_search_limit.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("option")).to include(
+      "value" => project_outside_search_limit.id,
+      "text" => "ZZZ99 / Restored Outside Limit"
+    )
+
+    get selected_project_admin_missing_document_files_path(format: :json), params: { id: Project.maximum(:id).to_i + 1000 }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("option")).to be_nil
   end
 
   it "bounds missing file project search result counts" do
@@ -251,6 +300,10 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(page_text).to include("条件一致欠落: 1")
     expect(page_text).to include("表示中: 1")
     expect(page_text).to include("条件: 案件=Missing Project / 文書=safety / ファイル=handoff")
+    expect(page_text).to include("自動修復、削除、再import、CSV export は行いません")
+    expect(response.body).not_to include("削除する")
+    expect(response.body).not_to include("再importを実行")
+    expect(response.body).not_to include("CSVを出力")
 
     table_text = parsed_html.at_css("table").text.squish
     expect(table_text).to include("Missing Project")
@@ -265,6 +318,24 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(form.at_css("input[name='document_q']")["value"]).to eq("safety")
     expect(form.at_css("input[name='file_q']")["value"]).to eq("handoff")
     expect(clear_filter_links.size).to eq(1)
+  end
+
+  it "keeps missing project ids read-only without broadening to repair or export actions" do
+    document = create(:document, project:, title: "Safety Runbook", slug: "safety-runbook")
+    missing_file_for(document, file_name: "handoff.pdf", storage_key: "manuals/safety/handoff.pdf")
+
+    sign_in_as(admin_user)
+
+    get admin_missing_document_files_path(project_id: Project.maximum(:id).to_i + 1000, document_q: "safety", file_q: "handoff")
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("全体の実体欠落: 1")
+    expect(page_text).to include("条件一致欠落: 0")
+    expect(page_text).to include("条件に一致する欠落ファイルはありません。全体では1件の実体欠落があります。")
+    expect(response.body).not_to include("削除する")
+    expect(response.body).not_to include("再importを実行")
+    expect(response.body).not_to include("CSVを出力")
+    expect(response.body).not_to include("handoff.pdf")
   end
 
   it "distinguishes no missing files from no matching filtered results" do

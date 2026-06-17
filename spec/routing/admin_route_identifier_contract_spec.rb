@@ -1,40 +1,94 @@
 require "rails_helper"
 
 RSpec.describe "Admin route identifier contract", type: :routing do
-  ADMIN_MEMBER_ID_ROUTE_ALLOWLIST = [
-    %r{\A/admin/model_browser/:model_key},
-    %r{\A/admin/api_specification/site/\(\*site_path\)}
+  PUBLIC_ID_CONTROLLERS = %w[
+    admin/access_requests
+    admin/bulk_edit_dry_runs
+    admin/companies
+    admin/consent_terms
+    admin/document_permissions
+    admin/document_sets
+    admin/documents
+    admin/external_folder_sync_sources
+    admin/file_upload_dry_runs
+    admin/generated_file_events
+    admin/generated_file_runs
+    admin/git_import_sources
+    admin/microsoft_graph_connections
+    admin/project_consent_settings
+    admin/project_memberships
+    admin/recurring_job_schedules
+    admin/users
+    admin/webhook_deliveries
+    admin/webhook_endpoints
+    admin/zip_imports
   ].freeze
 
-  def admin_route_paths_with_id_param
-    Rails.application.routes.routes.filter_map do |route|
-      path = route.path.spec.to_s
-      next unless path.start_with?("/admin/")
-      next unless path.match?(%r{/:id(?:[/.]|\()})
-      next if ADMIN_MEMBER_ID_ROUTE_ALLOWLIST.any? { |pattern| path.match?(pattern) }
+  CODE_CONTROLLERS = %w[
+    admin/project_external_previews
+    admin/project_permission_previews
+    admin/project_templates
+    admin/projects
+  ].freeze
 
-      path
+  COLLECTION_ONLY_CONTROLLERS = %w[
+    admin/access_logs
+    admin/document_usage_reports
+    admin/git_import_runs
+    admin/read_confirmations
+  ].freeze
+
+  EXPECTED_DYNAMIC_SEGMENTS_BY_CONTROLLER = PUBLIC_ID_CONTROLLERS.to_h { |controller| [controller, [:public_id]] }.merge(
+    CODE_CONTROLLERS.to_h { |controller| [controller, [:code]] }
+  ).merge(
+    "admin/api_specifications" => [:site_path],
+    "admin/external_folder_sync_oauth_connections" => [:external_folder_sync_source_public_id],
+    "admin/model_browsers" => [:model_key]
+  ).freeze
+
+  def admin_routes
+    Rails.application.routes.routes.select do |route|
+      route.path.spec.to_s.start_with?("/admin") && route.defaults[:controller]&.start_with?("admin/")
     end
   end
 
-  it "does not expose admin member routes with the default id parameter" do
-    expect(admin_route_paths_with_id_param).to be_empty
+  def dynamic_segments_for(route)
+    route.path.spec.to_s.scan(/[:*]([a-z_]+)/).flatten.map(&:to_sym) - [:format]
   end
 
-  it "recognizes project member routes with code instead of id" do
-    expect(get: "/admin/projects/OPS-001/edit").to route_to("admin/projects#edit", code: "OPS-001")
-    expect(patch: "/admin/projects/OPS-001").to route_to("admin/projects#update", code: "OPS-001")
-    expect(get: "/admin/projects/OPS-001/external_preview").to route_to("admin/project_external_previews#show", code: "OPS-001")
-    expect(post: "/admin/projects/OPS-001/apply_template").to route_to("admin/project_templates#create", code: "OPS-001")
+  def dynamic_segments_by_controller
+    admin_routes.each_with_object({}) do |route, segments_by_controller|
+      segments = dynamic_segments_for(route)
+      next if segments.empty?
+
+      controller = route.defaults.fetch(:controller)
+      segments_by_controller[controller] ||= []
+      segments_by_controller[controller] |= segments
+    end
   end
 
-  it "recognizes representative admin member routes with public_id instead of id" do
-    expect(get: "/admin/companies/company-public/edit").to route_to("admin/companies#edit", public_id: "company-public")
-    expect(patch: "/admin/users/user-public").to route_to("admin/users#update", public_id: "user-public")
-    expect(get: "/admin/generated_file_events/event-public").to route_to("admin/generated_file_events#show", public_id: "event-public")
-    expect(post: "/admin/generated_file_events/event-public/retry_dispatch").to route_to("admin/generated_file_events#retry_dispatch", public_id: "event-public")
-    expect(patch: "/admin/documents/document-public/archive").to route_to("admin/documents#archive", public_id: "document-public")
-    expect(post: "/admin/external_folder_sync_sources/source-public/recheck_metadata").to route_to("admin/external_folder_sync_sources#recheck_metadata", public_id: "source-public")
-    expect(patch: "/admin/access_requests/request-public").to route_to("admin/access_requests#update", public_id: "request-public")
+  it "keeps every admin dynamic route identifier intentionally classified" do
+    expect(dynamic_segments_by_controller).to eq(EXPECTED_DYNAMIC_SEGMENTS_BY_CONTROLLER)
+  end
+
+  it "uses public_id for major admin member resources" do
+    PUBLIC_ID_CONTROLLERS.each do |controller|
+      expect(dynamic_segments_by_controller.fetch(controller)).to eq([:public_id])
+    end
+  end
+
+  it "uses code for admin project member routes and project member actions" do
+    CODE_CONTROLLERS.each do |controller|
+      expect(dynamic_segments_by_controller.fetch(controller)).to eq([:code])
+    end
+  end
+
+  it "keeps collection-only admin resources out of the member identifier guard" do
+    COLLECTION_ONLY_CONTROLLERS.each do |controller|
+      matching_routes = admin_routes.select { |route| route.defaults[:controller] == controller }
+
+      expect(matching_routes).not_to be_empty
+      expect(matching_routes.flat_map { |route| dynamic_segments_for(route) }).to be_empty
+    end
   end
 end
