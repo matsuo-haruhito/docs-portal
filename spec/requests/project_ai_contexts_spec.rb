@@ -295,6 +295,61 @@ RSpec.describe "Project AI contexts", type: :request do
     expect(document_choice_labels).to include(a_string_including("Selected Manual"), a_string_including("Other Manual"))
   end
 
+  it "keeps oversized selected scopes distinct from preview limits and audit counts across formats" do
+    visible_documents = 55.times.map do |index|
+      suffix = format("%03d", index)
+      create_exportable_document(title: "Selected Bulk Manual #{suffix}", slug: "selected-bulk-#{suffix}", body: "Selected bulk body #{suffix}.")
+    end
+    internal = create_exportable_document(title: "Internal Bulk Note", slug: "internal-bulk", body: "Hidden body text.", visibility_policy: :internal_only)
+    other_project = create(:project, code: "OTHERCTX", name: "Other Context Project")
+    outside_project_document = create_exportable_document(
+      title: "Outside Bulk Manual",
+      slug: "outside-bulk",
+      body: "Outside bulk body text.",
+      project: other_project
+    )
+    missing_document_id = Document.maximum(:id) + 100
+    oversized_document_ids = visible_documents.map(&:id) + [
+      internal.id,
+      outside_project_document.id,
+      missing_document_id,
+      visible_documents.first.id.to_s,
+      "0",
+      "-1",
+      "not-a-number"
+    ]
+
+    sign_in_as(external_user)
+
+    expect do
+      get project_ai_context_path(project, document_ids: oversized_document_ids)
+      expect(response).to have_http_status(:ok)
+      expect(page_text).to include("明示選択: 58件 / 案件内候補: 56件 / 出力対象: 55件")
+      expect(page_text).to include("候補外として無視された選択ID: 2件。案件外または存在しないIDは、文書名やIDを表示せず集計だけで示します。")
+      expect(page_text).to include("表示中の候補: 55件 / 閲覧可能: 55件")
+      expect(page_text).to include("選択済み確認: 55件の閲覧可能な選択文書を保持しています。")
+      expect(page_text).not_to include("Outside Bulk Manual", missing_document_id.to_s)
+
+      get project_ai_context_path(project, format: :json, mode: :compact, document_ids: oversized_document_ids)
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json.dig("summary", "document_count")).to eq(55)
+      expect(json.fetch("documents").map { _1.fetch("public_id") }).to match_array(visible_documents.map(&:public_id))
+      expect(response.body).not_to include("Outside bulk body text.", "Hidden body text.")
+
+      get project_ai_context_path(project, format: :md, mode: :full, document_ids: oversized_document_ids)
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Selected bulk body 000.", "Selected bulk body 054.")
+      expect(response.body).not_to include("Outside bulk body text.", "Hidden body text.")
+    end.to change(AccessLog.where(target_type: "ai_context"), :count).by(3)
+
+    expect(AccessLog.where(target_type: "ai_context").order(:id).last(3).map(&:target_name)).to eq([
+      "mode=compact;scope=selected;selected_count=58;scoped_count=56;exported_count=55",
+      "mode=compact;scope=selected;selected_count=58;scoped_count=56;exported_count=55",
+      "mode=full;scope=selected;selected_count=58;scoped_count=56;exported_count=55"
+    ])
+  end
+
   it "normalizes oversized document queries before filtering and rendering candidate links" do
     truncated_query = "manual-" + ("x" * (ProjectAiContextsController::DOCUMENT_QUERY_MAX_LENGTH - "manual-".length))
     long_query = "  #{truncated_query}ignored-tail  "
