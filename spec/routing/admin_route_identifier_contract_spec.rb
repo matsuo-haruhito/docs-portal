@@ -24,6 +24,13 @@ RSpec.describe "Admin route identifier contract", type: :routing do
     admin/zip_imports
   ].freeze
 
+  CODE_CONTROLLERS = %w[
+    admin/project_external_previews
+    admin/project_permission_previews
+    admin/project_templates
+    admin/projects
+  ].freeze
+
   COLLECTION_ONLY_CONTROLLERS = %w[
     admin/access_logs
     admin/document_usage_reports
@@ -32,10 +39,11 @@ RSpec.describe "Admin route identifier contract", type: :routing do
   ].freeze
 
   EXPECTED_DYNAMIC_SEGMENTS_BY_CONTROLLER = PUBLIC_ID_CONTROLLERS.to_h { |controller| [controller, [:public_id]] }.merge(
+    CODE_CONTROLLERS.to_h { |controller| [controller, [:code]] }
+  ).merge(
     "admin/api_specifications" => [:site_path],
     "admin/external_folder_sync_oauth_connections" => [:external_folder_sync_source_public_id],
-    "admin/model_browsers" => [:model_key],
-    "admin/projects" => [:code]
+    "admin/model_browsers" => [:model_key]
   ).freeze
 
   def admin_routes
@@ -69,8 +77,10 @@ RSpec.describe "Admin route identifier contract", type: :routing do
     end
   end
 
-  it "uses code for admin project member routes" do
-    expect(dynamic_segments_by_controller.fetch("admin/projects")).to eq([:code])
+  it "uses code for admin project member routes and project member actions" do
+    CODE_CONTROLLERS.each do |controller|
+      expect(dynamic_segments_by_controller.fetch(controller)).to eq([:code])
+    end
   end
 
   it "keeps collection-only admin resources out of the member identifier guard" do
