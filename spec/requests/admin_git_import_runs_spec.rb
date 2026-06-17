@@ -139,6 +139,7 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(page_text).to include("取込元パス: docs")
     expect(page_text).to include("commit: abcdef1234567890")
     expect(page_text).to include("マスク済み実行結果の詳細")
+    expect(page_text).to include("診断表示は secret-like value と private path を伏せた最大240文字程度のマスク済み preview です。完全な raw log ではありません。")
     expect(response.body).to include("[masked]")
     expect(response.body).to include("[path hidden]")
     expect(response.body).not_to include(summary_token)
