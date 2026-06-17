@@ -31,7 +31,7 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
   end
 
   def source_filter_badges
-    parsed_html.css("span.badge").map { |badge| badge.text.squish }
+    parsed_html.xpath("//p[contains(concat(' ', normalize-space(@class), ' '), ' muted ')][contains(normalize-space(.), '代表条件:')]//span[contains(concat(' ', normalize-space(@class), ' '), ' badge ')]").map { |badge| badge.text.squish }
   end
 
   it "creates a dry-run and then executes the confirmed bulk edit" do
