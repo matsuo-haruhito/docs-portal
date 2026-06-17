@@ -34,6 +34,8 @@ h1 文書セット
         = link_to "条件をクリア", admin_document_sets_path, class: "button secondary"
       = link_to "CSV出力", admin_document_sets_path(@filters.compact_blank.merge(format: :csv)), class: "button secondary"
 
+  p.muted CSV出力は現在の絞り込み条件に一致する文書セット集合を、表示設定の列表示・幅とは独立した固定列で出力します。
+
   - if active_filter_labels.any?
     p.muted
       | 適用中: 
