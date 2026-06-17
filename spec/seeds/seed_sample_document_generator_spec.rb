@@ -2,7 +2,7 @@ require "rails_helper"
 require "fileutils"
 require "securerandom"
 
-require Rails.root.join("db/seeds/support/seed_sample_document_generator")
+require Rails.root.join("db/seeds/support/seed_sample_document_generator").to_s
 
 RSpec.describe SeedSupport::SeedSampleDocumentGenerator do
   let(:root) { Rails.root.join("tmp", "seed-sample-document-generator", SecureRandom.hex(8)) }
@@ -26,7 +26,7 @@ RSpec.describe SeedSupport::SeedSampleDocumentGenerator do
       "提出済/README.md"
     ]
 
-    generated_paths = Dir.glob(showcase_root.join("**", "*"))
+    generated_paths = Dir.glob(showcase_root.join("**", "*").to_s)
       .select { |path| File.file?(path) }
       .map { |path| Pathname(path).relative_path_from(showcase_root).to_s }
       .sort
