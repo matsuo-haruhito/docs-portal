@@ -57,6 +57,8 @@ RSpec.describe "Admin documents index", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("文書マスタ一覧の表示設定")
+    expect(page_text).to include("文書マスタ一覧の表示設定と検索条件は、この一覧の列表示・列幅・表示件数にだけ適用されます")
+    expect(page_text).to include("文書詳細の左ペインにある文書ツリーの「表示中」や展開状態とは別の文脈です")
 
     editor = parsed_html.at_css(".rails-table-preferences-editor[data-controller='rails-table-preferences']")
 

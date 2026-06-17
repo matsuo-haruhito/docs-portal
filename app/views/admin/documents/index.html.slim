@@ -85,6 +85,7 @@ h1 文書マスタ
 
 .card
   = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定")
+  p.muted 文書マスタ一覧の表示設定と検索条件は、この一覧の列表示・列幅・表示件数にだけ適用されます。文書詳細の左ペインにある文書ツリーの「表示中」や展開状態とは別の文脈です。
 
 = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
   thead
