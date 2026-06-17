@@ -26,6 +26,7 @@ h1 Git連携
         th data-rails-table-preferences-column-key="actions" 操作
     tbody
       - @git_import_sources.each do |source|
+        - sync_source_path = source.source_path.presence || "/"
         tr
           td data-rails-table-preferences-column-key="project"
             = source.project.name
@@ -52,7 +53,7 @@ h1 Git連携
           td data-rails-table-preferences-column-key="enabled"
             span.badge = source.enabled? ? "有効" : "無効"
           td.actions data-rails-table-preferences-column-key="actions"
-            = button_to "手動同期", sync_admin_git_import_source_path(source), method: :post, class: "button", form: { data: { turbo_confirm: "#{source.repository_full_name} を同期しますか？" } }
+            = button_to "手動同期", sync_admin_git_import_source_path(source), method: :post, class: "button", form: { data: { turbo_confirm: "#{source.repository_full_name} を同期しますか？ ブランチ: #{source.branch} / 取込元パス: #{sync_source_path}" } }
             = edit_link_to "編集", edit_admin_git_import_source_path(source)
             = delete_link_to "削除", admin_git_import_source_path(source), confirm: "Git連携設定を削除しますか？"
 - else
