@@ -70,7 +70,10 @@ Rails.application.routes.draw do
       post :retry_failed, on: :collection
     end
     resources :zip_imports, only: %i[new create show update], param: :public_id
-    resources :file_upload_dry_runs, only: %i[index show update], param: :public_id
+    resources :file_upload_dry_runs, only: %i[index show update], param: :public_id do
+      get :project_search, on: :collection
+      get :selected_project, on: :collection
+    end
     resources :microsoft_graph_connections, except: %i[show new], param: :public_id
     resources :recurring_job_schedules, only: %i[index show], param: :public_id do
       post :request_run, on: :member
@@ -138,28 +141,6 @@ Rails.application.routes.draw do
 
   resources :document_versions, only: [:show], param: :public_id do
     resource :archive, only: [:show], controller: "document_version_archives"
-    resource :quality_check, only: [:show], controller: "document_version_quality_checks"
-    resource :rollback, only: [:create], controller: "document_version_rollbacks"
-    resource :upload_review, only: [:create], controller: "document_version_upload_reviews"
     resources :document_review_comments, only: %i[create update], param: :public_id
-
-    member do
-      get :view, to: "document_views#show"
-      get "site(/*site_path)", to: "document_sites#show", as: :site, format: false
-    end
-  end
-
-  resources :document_files, only: [:show], param: :public_id do
-    get "archive_entries/preview", to: "document_file_archive_entries#preview", as: :archive_entry_preview, on: :member
-    get "archive_entries/download", to: "document_file_archive_entries#download", as: :archive_entry_download, on: :member
-    get "assets/*asset_path", to: "document_files#asset", as: :asset, on: :member, format: false
-  end
-
-  namespace :api do
-    namespace :internal do
-      resources :artifact_imports, only: [:create]
-      resources :file_uploads, only: [:create]
-      resources :zip_uploads, only: [:create]
-    end
   end
 end
