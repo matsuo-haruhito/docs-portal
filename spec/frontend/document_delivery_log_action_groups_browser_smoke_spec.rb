@@ -116,6 +116,7 @@ RSpec.describe "document delivery log action groups browser smoke", type: :reque
       const text = document.body.innerText + " " + inputValues;
       const requiredText = ["操作", "メール作成", "対象へ戻る", "メーラーを開く", "対象の文書へ戻る", "送付履歴一覧へ戻る"];
       if (variant === "draft") requiredText.push("手動状態更新", "送付済みにする", "送付失敗として記録", "失敗理由");
+      if (variant === "sent") requiredText.push("この履歴は下書きではないため、状態を手動で変更する操作は表示されません。");
       requiredText.forEach((value) => { if (!text.includes(value)) failures.push(`missing text ${value}`); });
       if (variant === "sent" && text.includes("手動状態更新")) failures.push("sent state shows manual update group");
 

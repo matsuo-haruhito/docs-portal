@@ -19,6 +19,10 @@ RSpec.describe "Document delivery log action groups", type: :request do
     parsed_html.css("a[href]").find { |node| node.text.strip == text }&.[]("href")
   end
 
+  def action_labels
+    parsed_html.css("a, button, input[type='submit']").map { |node| node["value"].presence || node.text.strip }
+  end
+
   def form_param_for_submit(submit_value, param_name)
     form = parsed_html.css("form").find do |node|
       node.css("input, button").any? { |control| control["value"] == submit_value || control.text.strip == submit_value }
@@ -64,7 +68,7 @@ RSpec.describe "Document delivery log action groups", type: :request do
     expect(form_param_for_submit("送付失敗として記録", "return_to")).to eq(return_to)
   end
 
-  it "keeps manual state updates hidden once the delivery log is no longer a draft" do
+  it "explains why manual state update actions are hidden once the delivery log is no longer a draft" do
     log = create(
       :document_delivery_log,
       project:,
@@ -85,8 +89,8 @@ RSpec.describe "Document delivery log action groups", type: :request do
     expect(page_text).to include("メール作成")
     expect(page_text).to include("対象へ戻る")
     expect(page_text).not_to include("手動状態更新")
-    expect(page_text).not_to include("送付済みにする")
-    expect(page_text).not_to include("送付失敗として記録")
+    expect(page_text).to include("この履歴は下書きではないため、状態を手動で変更する操作は表示されません。")
+    expect(action_labels).not_to include("送付済みにする", "送付失敗として記録")
     expect(href_for("対象の文書へ戻る")).to eq(project_document_path(project, document.slug))
   end
 end
