@@ -29,7 +29,7 @@ class Admin::MissingDocumentFilesController < Admin::BaseController
 
   def missing_document_file_filters
     {
-      project_id: params[:project_id].presence,
+      project_id: project_filter_project&.id,
       document_q: params[:document_q].to_s.strip.presence,
       file_q: params[:file_q].to_s.strip.presence
     }
@@ -38,7 +38,14 @@ class Admin::MissingDocumentFilesController < Admin::BaseController
   def selected_project_for_filter
     return if @missing_document_file_filters[:project_id].blank?
 
-    Project.find_by(id: @missing_document_file_filters[:project_id])
+    project_filter_project
+  end
+
+  def project_filter_project
+    return @project_filter_project if defined?(@project_filter_project)
+
+    project_id = params[:project_id].presence
+    @project_filter_project = project_id.present? ? Project.find_by(id: project_id) : nil
   end
 
   def searchable_projects
