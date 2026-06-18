@@ -311,7 +311,7 @@ RSpec.describe "Admin project consent settings", type: :request do
   end
 
   def enabled_filter
-    parsed_html.at_css(%(select[name="enabled"))
+    parsed_html.at_css(%(select[name="enabled"]))
   end
 
   def enabled_filter_field
