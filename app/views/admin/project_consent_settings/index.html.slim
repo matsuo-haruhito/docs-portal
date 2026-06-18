@@ -61,6 +61,15 @@ h1 案件同意設定
 
 - if @project_consent_settings.any? || has_filters
   .card
+    h2 引き継ぎ用 summary
+    p.muted 現在の filter 条件と表示中ページだけを対象にした read-only summary です。設定変更や同意本文 export は行いません。
+    = text_area_tag :project_consent_settings_handoff_summary,
+      project_consent_settings_handoff_summary(settings: @project_consent_settings, selected_project: @selected_project, selected_consent_term: @selected_consent_term, selected_enabled: @selected_enabled, pagination: @project_consent_settings_pagination, filtered_count: @project_consent_settings_filtered_count),
+      readonly: true,
+      rows: 12,
+      aria: { label: "案件同意設定 handoff summary" }
+
+  .card
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件同意設定一覧の表示設定")
 
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
