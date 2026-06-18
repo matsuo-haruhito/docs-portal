@@ -60,6 +60,10 @@ section.delivery-log-actions
             = label_tag :error_message, "失敗理由"
             = text_field_tag :error_message, nil, maxlength: 200, placeholder: "例: 宛先確認待ち、添付容量超過など"
           = submit_tag "送付失敗として記録", class: "button secondary"
+  - else
+    .delivery-log-actions__group
+      h3 手動状態更新
+      p.muted この履歴は下書きではないため、手動状態更新はできません。送付済み・送付失敗済みの記録は過去記録として確認してください。
 
   .delivery-log-actions__group
     h3 対象へ戻る
