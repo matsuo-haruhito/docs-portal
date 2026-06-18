@@ -19,6 +19,10 @@ RSpec.describe "Admin projects", type: :request do
     parsed_html.css("a[href], form[action]").filter_map { |node| node["href"] || node["action"] }
   end
 
+  def clear_filter_links
+    parsed_html.css("a[href]").select { |node| node.text.squish == "条件をクリア" }
+  end
+
   it "uses project codes for admin member links and rejects numeric ids" do
     project = create(:project, code: "CODE-001", name: "Code Routed Project")
 
@@ -111,6 +115,29 @@ RSpec.describe "Admin projects", type: :request do
     expect(page_text).to include("企業: 企業未設定")
   end
 
+  it "shows the clear action only when project filters are active" do
+    company = create(:company, name: "Clear Company", domain: "clear.example.com")
+    create(:project, code: "CLEAR", name: "Clear Action Project", company:)
+
+    sign_in_as(admin_user)
+
+    get admin_projects_path
+    expect(response).to have_http_status(:ok)
+    expect(clear_filter_links).to be_empty
+
+    [
+      { q: "Clear" },
+      { active: "true" },
+      { company_id: company.id.to_s },
+      { company_id: "none" }
+    ].each do |params|
+      get admin_projects_path(params)
+
+      expect(response).to have_http_status(:ok)
+      expect(clear_filter_links.map { |link| link["href"] }).to include(admin_projects_path)
+    end
+  end
+
   it "ignores unsupported filter values without raising errors" do
     create(:project, code: "ACTIVE", name: "Active Project", active: true)
     create(:project, code: "INACTIVE", name: "Inactive Project", active: false)
@@ -121,6 +148,7 @@ RSpec.describe "Admin projects", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(project_names).to contain_exactly("Active Project", "Inactive Project")
+    expect(clear_filter_links).to be_empty
   end
 
   it "separates no projects from filtered empty results" do
@@ -131,6 +159,7 @@ RSpec.describe "Admin projects", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("まだ案件は登録されていません。")
     expect(page_text).not_to include("検索条件に一致する案件はありません。")
+    expect(clear_filter_links).to be_empty
 
     create(:project, code: "EXISTING", name: "Existing Project")
 
@@ -139,5 +168,6 @@ RSpec.describe "Admin projects", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索条件に一致する案件はありません。")
     expect(page_text).not_to include("まだ案件は登録されていません。")
+    expect(clear_filter_links.map { |link| link["href"] }).to include(admin_projects_path)
   end
 end
