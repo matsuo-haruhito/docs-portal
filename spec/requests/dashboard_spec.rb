@@ -317,18 +317,23 @@ RSpec.describe "Dashboard", type: :request do
     end
   end
 
-  it "keeps internal empty guidance separate from admin-only navigation" do
+  it "keeps internal empty guidance from pointing only to admin navigation" do
     internal_user = create(:user, :internal)
 
     sign_in_as(internal_user)
     get dashboard_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("保留タスクがない場合も、案件や文書の一覧から現在の担当範囲を確認できます。")
+    expect(page_text).to include(
+      "保留タスクがない場合も、案件や文書の一覧から現在の担当範囲を確認できます。",
+      "管理画面への移動は、管理権限がある場合だけ表示されます。"
+    )
     expect(heading_texts).to include("社内向け導線")
-    expect(parsed_html.css(".dashboard-grid a").map { |link| link["href"] }).to include(document_approval_requests_path, document_delivery_logs_path)
-    expect(page_text).not_to include("管理ダッシュボード")
-    expect(parsed_html.css(".dashboard-grid a").map { |link| link["href"] }).not_to include(admin_root_path)
+    expect(parsed_html.css(".dashboard-grid a").map { |link| link["href"] }).to include(
+      document_approval_requests_path,
+      document_delivery_logs_path,
+      admin_root_path
+    )
   end
 
   it "shows pending approval summary for internal users while keeping the hero action separate" do
