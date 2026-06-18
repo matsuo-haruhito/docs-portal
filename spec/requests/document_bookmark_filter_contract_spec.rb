@@ -24,7 +24,7 @@ RSpec.describe "Document bookmark filter contract", type: :request do
   end
 
   def readable_document(title:, slug:, document_project: project)
-    create(:project_membership, project: document_project, user:)
+    create(:project_membership, project: document_project, user:) unless ProjectMembership.exists?(project: document_project, user:)
     create(:document, project: document_project, title:, slug:, visibility_policy: :restricted_external).tap do |document|
       create(:document_permission, document:, company:, access_level: :view)
     end
