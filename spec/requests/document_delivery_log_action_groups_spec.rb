@@ -88,8 +88,8 @@ RSpec.describe "Document delivery log action groups", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("メール作成")
     expect(page_text).to include("対象へ戻る")
-    expect(page_text).to include("手動状態更新")
-    expect(page_text).to include("この履歴は下書きではないため、手動状態更新はできません。")
+    expect(page_text).not_to include("手動状態更新")
+    expect(page_text).to include("この履歴は下書きではないため、状態を手動で変更する操作は表示されません。")
     expect(action_labels).not_to include("送付済みにする", "送付失敗として記録")
     expect(href_for("対象の文書へ戻る")).to eq(project_document_path(project, document.slug))
   end
