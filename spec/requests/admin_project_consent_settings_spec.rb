@@ -114,6 +114,25 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(selected_value(consent_term_field)).to eq(inactive_terms.id.to_s)
   end
 
+  it "marks inactive consent terms separately from the setting enabled state" do
+    active_project = create(:project, code: "ACTIVE", name: "Active Project")
+    archived_project = create(:project, code: "ARCH", name: "Archived Project")
+    active_terms = create(:consent_term, title: "Current Terms", version_label: "v1", consent_scope: :project, active: true)
+    inactive_terms = create(:consent_term, title: "Archived Terms", version_label: "old", consent_scope: :project, active: false)
+    create(:project_consent_setting, project: active_project, consent_term: active_terms, enabled: true)
+    create(:project_consent_setting, project: archived_project, consent_term: inactive_terms, enabled: true)
+
+    get admin_project_consent_settings_path
+
+    expect(response).to have_http_status(:ok)
+    active_cell = consent_term_cells.find { _1.include?("Current Terms") }
+    inactive_cell = consent_term_cells.find { _1.include?("Archived Terms") }
+    expect(active_cell).to be_present
+    expect(active_cell).not_to include("同意文面: 無効化済み")
+    expect(inactive_cell).to include("同意文面: 無効化済み")
+    expect(listed_rows.find { _1.include?("Archived Project") }).to include("有効")
+  end
+
   it "returns bounded remote search options for projects and active consent terms" do
     alpha_project = create(:project, code: "ALPHA", name: "Alpha Project")
     beta_project = create(:project, code: "BETA", name: "Beta Project")
@@ -245,6 +264,10 @@ RSpec.describe "Admin project consent settings", type: :request do
 
   def listed_rows
     parsed_html.css("tbody tr").map { |row| row.text.squish }
+  end
+
+  def consent_term_cells
+    parsed_html.css('td[data-rails-table-preferences-column-key="consent_term"]').map { |cell| cell.text.squish }
   end
 
   def project_filter
