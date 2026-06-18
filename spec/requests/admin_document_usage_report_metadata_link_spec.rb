@@ -17,7 +17,7 @@ RSpec.describe "Admin document usage report metadata link", type: :request do
   end
 
   def metadata_link
-    parsed_html.css("a").find { |link| link.text.squish == "CSV条件をJSONで確認" }
+    parsed_html.css("a").find { |link| link.text.squish == "JSON metadataを確認" }
   end
 
   it "shows a purpose-oriented JSON metadata cue with the same normalized report filters" do
@@ -45,8 +45,8 @@ RSpec.describe "Admin document usage report metadata link", type: :request do
 
     link = metadata_link
     expect(link).to be_present
-    expect(link["title"]).to eq("CSVと同じ条件・行数・集計サマリをJSONで確認")
-    expect(link["aria-label"]).to eq("CSVと同じ条件・行数・集計サマリをJSONで確認")
+    expect(link["title"]).to eq("CSVと同じ条件・行数・集計サマリを確認するJSON metadata")
+    expect(link["aria-label"]).to eq("CSVと同じ条件・行数・集計サマリを確認するJSON metadata")
 
     href = link["href"]
     expect(href).to include("format=json")
