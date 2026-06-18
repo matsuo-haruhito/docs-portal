@@ -7,9 +7,9 @@ h1 = @document_set.name
 p.muted
   = link_to @project.name, project_path(@project)
   |  / 
-  = @document_set.set_type
+  = document_set_type_label(@document_set)
   |  / 
-  = @document_set.visibility_policy
+  = document_set_visibility_policy_label(@document_set)
 
 p.actions
   = link_to "外部送付を準備", new_project_document_set_document_delivery_log_path(@project, @document_set), class: "button secondary"

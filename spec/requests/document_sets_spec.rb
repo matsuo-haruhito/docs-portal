@@ -17,7 +17,7 @@ RSpec.describe "Document sets", type: :request do
   end
 
   it "shows only readable items to external users in a document set detail" do
-    document_set = create(:document_set, project:, name: "顧客共有セット", visibility_policy: :restricted_external)
+    document_set = create(:document_set, project:, name: "顧客共有セット", set_type: :delivery, visibility_policy: :restricted_external)
     create(:document_set_item, document_set:, document: hidden_document, document_version: hidden_version, sort_order: 1)
     create(:document_set_item, document_set:, document: visible_document, document_version: visible_version, sort_order: 2)
     create(:document_set_item, document_set:, document: no_version_document, sort_order: 3)
@@ -27,6 +27,10 @@ RSpec.describe "Document sets", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("顧客共有セット")
+    expect(response.body).to include("送付用")
+    expect(response.body).to include("限定公開")
+    expect(response.body).not_to include(" / delivery")
+    expect(response.body).not_to include(" / restricted_external")
     expect(response.body).to include("公開仕様")
     expect(response.body).to include("版未作成")
     expect(response.body).not_to include("社内限定")
