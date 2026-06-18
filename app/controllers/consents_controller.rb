@@ -5,7 +5,16 @@ class ConsentsController < BaseController
   before_action :set_timing, only: %i[new create]
 
   def index
-    @user_consents = current_user.user_consents.includes(:consent_term, :target).order(consented_at: :desc, id: :desc)
+    @consent_history_q = params[:q].to_s.strip
+    @consent_history_scope = normalized_consent_scope
+    @valid_consent_scopes = ConsentTerm.consent_scopes.keys
+
+    user_consents = current_user.user_consents.includes(:consent_term, :target).order(consented_at: :desc, id: :desc)
+    @user_consents_total_count = user_consents.count
+    user_consents = user_consents.joins(:consent_term).where(consent_terms: { consent_scope: @consent_history_scope }) if @consent_history_scope.present?
+
+    @user_consents = filter_user_consents_by_query(user_consents.to_a)
+    @consent_history_filter_active = @consent_history_q.present? || @consent_history_scope.present?
     @active_terms = ConsentTerm.active_only.order(:title, :version_label)
   end
 
@@ -32,6 +41,44 @@ class ConsentsController < BaseController
   end
 
   private
+
+  def normalized_consent_scope
+    scope = params[:consent_scope].to_s
+    return scope if ConsentTerm.consent_scopes.key?(scope)
+
+    nil
+  end
+
+  def filter_user_consents_by_query(user_consents)
+    return user_consents if @consent_history_q.blank?
+
+    query = @consent_history_q.downcase
+    user_consents.select do |consent|
+      consent_history_search_text(consent).downcase.include?(query)
+    end
+  end
+
+  def consent_history_search_text(consent)
+    [
+      consent.consent_term.title,
+      consent.consent_term_version_label,
+      consent_target_label_for_filter(consent.target, fallback_type: consent.target_type)
+    ].compact.join(" ")
+  end
+
+  def consent_target_label_for_filter(target, fallback_type: nil)
+    return "全体 global" unless target.present?
+
+    type_name = fallback_type.presence || target.class.name
+    type_label = I18n.t("labels.consents.target_type.#{type_name.underscore}", default: type_name)
+    target_label = target.try(:name) ||
+      target.try(:title) ||
+      target.try(:file_name) ||
+      target.try(:version_label) ||
+      target.to_param
+
+    [type_label, target_label].compact.join(" / ")
+  end
 
   def set_target
     @target = find_target(params[:target_type], params[:target_public_id])
