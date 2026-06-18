@@ -113,16 +113,14 @@ RSpec.describe "Admin access log export boundaries", type: :request do
     expect(response.media_type).to eq("text/csv")
 
     rows = CSV.parse(response.body, headers: true)
-    rows_by_target = rows.index_by { _1["対象名"] }
 
-    expect(rows_by_target.keys).to eq([
-      "mode=full;scope=selected;selected_count=2;exported_count=2",
-      "mode=compact;scope=all;selected_count=two;exported_count=9",
-      "mode=full;scope=selected;selected_count=2;exported_count=2"
+    expect(rows.map { [_1["対象種別"], _1["対象名"]] }).to eq([
+      ["ai_context", "mode=full;scope=selected;selected_count=2;exported_count=2"],
+      ["ai_context", "mode=compact;scope=all;selected_count=two;exported_count=9"],
+      ["page", "mode=full;scope=selected;selected_count=2;exported_count=2"]
     ])
 
-    parsed_row = rows_by_target.fetch("mode=full;scope=selected;selected_count=2;exported_count=2")
-    expect(parsed_row["対象種別"]).to eq("ai_context")
+    parsed_row = rows.find { _1["対象種別"] == "ai_context" && _1["対象名"].include?("mode=full") }
     expect(parsed_row.values_at(
       "AI context mode",
       "AI context scope",
@@ -130,8 +128,7 @@ RSpec.describe "Admin access log export boundaries", type: :request do
       "AI context exported_count"
     )).to eq(%w[full selected 2 2])
 
-    malformed_row = rows_by_target.fetch("mode=compact;scope=all;selected_count=two;exported_count=9")
-    expect(malformed_row["対象種別"]).to eq("ai_context")
+    malformed_row = rows.find { _1["対象種別"] == "ai_context" && _1["対象名"].include?("selected_count=two") }
     expect(malformed_row.values_at(
       "AI context mode",
       "AI context scope",
