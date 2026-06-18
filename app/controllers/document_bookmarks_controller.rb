@@ -109,7 +109,7 @@ class DocumentBookmarksController < BaseController
   end
 
   def recent_documents_query
-    @recent_documents_query ||= params[:recent_q].to_s.strip
+    @recent_documents_query ||= params[:recent_q].to_s.strip.slice(0, BOOKMARK_QUERY_MAX_LENGTH)
   end
 
   def bookmark_params
