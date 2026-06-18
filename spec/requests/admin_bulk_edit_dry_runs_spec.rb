@@ -100,7 +100,7 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("文書マスタ一覧から引き継いだ候補: 1件")
+    expect(page_text).to include("文書マスタ一覧から引き継いだ初期候補: 1件")
     expect(page_text).to include("代表条件: キーワード: Alpha Project")
     expect(page_text).to include("候補文書は選択済みです")
     expect(page_text).to include("1件選択中")
@@ -139,7 +139,7 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("文書マスタ一覧から引き継いだ候補: 50件")
+    expect(page_text).to include("文書マスタ一覧から引き継いだ初期候補: 50件")
     expect(page_text).to include("50件選択中")
     expect(page_text).to include("50件表示中")
     expect(checked_document_ids).to contain_exactly(*expected_candidate_ids)
@@ -161,7 +161,7 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("文書マスタ一覧から引き継いだ候補: 0件")
+    expect(page_text).to include("文書マスタ一覧から引き継いだ初期候補: 0件")
     expect(page_text).to include("有効な候補文書がありません")
     expect(page_text).to include("0件選択中")
     expect(page_text).to include("0件表示中")

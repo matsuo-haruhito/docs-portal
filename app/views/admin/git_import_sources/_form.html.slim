@@ -41,13 +41,15 @@
     label
       | 認証方式
       = form.select :auth_type, enum_options_for("git_import_sources.auth_type", GitImportSource.auth_types.keys)
-      span.muted GitHub App は本命、Fine-grained PAT は検証用、認証なしは公開リポジトリ用です。
+      span.muted 通常運用は GitHub App。Fine-grained PAT は開発・検証用、認証なしは公開リポジトリ限定です。
     label
       | 状態
       = form.select :enabled, [["有効", true], ["無効", false]]
 
   details.card
-    summary 詳細設定（管理者・検証向け）
+    summary 詳細設定（通常は開かない管理者・検証向け）
+    p.muted
+      | installation ID や credential ref / secret は、GitHub App 導入前の検証や管理者の調整が必要な場合だけ確認します。
     .form-grid
       label
         | 連携先
@@ -64,6 +66,10 @@
       label
         | 認証シークレット
         = form.password_field :credential_secret, value: nil, autocomplete: "new-password", placeholder: git_import_source.persisted? ? "変更時のみ入力" : "fine-grained PAT"
+        - if git_import_source.persisted?
+          span.muted 保存済みシークレットは表示しません。空欄のまま保存すると既存値を維持し、新しい値を入力したときだけ更新します。
+        - else
+          span.muted Fine-grained PAT を使う場合のみ入力します。GitHub App や公開リポジトリでは空欄のまま保存できます。
     p.muted GitHub App を本命の認証方式として扱います。Fine-grained PAT は開発・検証用で、シークレットは暗号化カラムに保存されます。認証なしは公開リポジトリの clone に限定して使います。
 
   p.actions
