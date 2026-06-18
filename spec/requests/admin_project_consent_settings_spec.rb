@@ -62,6 +62,58 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(selected_value(consent_term_filter)).to be_nil
   end
 
+  it "keeps inactive consent term settings visible while ignoring inactive term filters" do
+    active_project = create(:project, code: "ACTIVE", name: "Active Project")
+    archived_project = create(:project, code: "ARCH", name: "Archived Project")
+    active_terms = create(:consent_term, title: "Active Portal Terms", version_label: "v1", consent_scope: :project)
+    inactive_terms = create(:consent_term, title: "Archived Portal Terms", version_label: "old", consent_scope: :project, active: false)
+    create(:project_consent_setting, project: active_project, consent_term: active_terms, enabled: true)
+    create(:project_consent_setting, project: archived_project, consent_term: inactive_terms, enabled: true)
+
+    get admin_project_consent_settings_path
+
+    expect(response).to have_http_status(:ok)
+    expect(listed_rows).to contain_exactly(
+      a_string_including("Active Project", "Active Portal Terms", "有効"),
+      a_string_including("Archived Project", "Archived Portal Terms", "有効")
+    )
+
+    get admin_project_consent_settings_path(consent_term_id: inactive_terms.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(listed_rows).to contain_exactly(
+      a_string_including("Active Project", "Active Portal Terms", "有効"),
+      a_string_including("Archived Project", "Archived Portal Terms", "有効")
+    )
+    expect(response.body).not_to include("絞り込み解除")
+    expect(selected_value(consent_term_filter)).to be_nil
+  end
+
+  it "keeps inactive consent term labels on existing edit and validation rerender" do
+    project = create(:project, code: "ARCH", name: "Archived Project")
+    inactive_terms = create(:consent_term, title: "Archived Portal Terms", version_label: "old", consent_scope: :project, active: false)
+    setting = create(:project_consent_setting, project:, consent_term: inactive_terms, enabled: true)
+
+    get edit_admin_project_consent_setting_path(setting)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Archived Portal Terms / old")
+    expect(selected_value(consent_term_field)).to eq(inactive_terms.id.to_s)
+
+    post admin_project_consent_settings_path, params: {
+      project_consent_setting: {
+        project_id: project.id,
+        consent_term_id: inactive_terms.id,
+        required_on: "",
+        enabled: true
+      }
+    }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(response.body).to include("Archived Portal Terms / old")
+    expect(selected_value(consent_term_field)).to eq(inactive_terms.id.to_s)
+  end
+
   it "returns bounded remote search options for projects and active consent terms" do
     alpha_project = create(:project, code: "ALPHA", name: "Alpha Project")
     beta_project = create(:project, code: "BETA", name: "Beta Project")
@@ -96,6 +148,11 @@ RSpec.describe "Admin project consent settings", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(JSON.parse(response.body).fetch("option")).to include("value" => security_terms.id, "text" => "Security NDA / v2")
+
+    get selected_consent_term_admin_project_consent_settings_path(format: :json), params: { id: inactive_terms.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(JSON.parse(response.body).fetch("option")).to be_nil
   end
 
   it "bounds remote search results and query lengths" do
@@ -196,6 +253,11 @@ RSpec.describe "Admin project consent settings", type: :request do
 
   def consent_term_filter
     parsed_html.at_css(%(input[name="consent_term_id"])) || parsed_html.at_css(%(select[name="consent_term_id"]))
+  end
+
+  def consent_term_field
+    parsed_html.at_css(%(input[name="project_consent_setting[consent_term_id]"])) ||
+      parsed_html.at_css(%(select[name="project_consent_setting[consent_term_id]"]))
   end
 
   def enabled_filter
