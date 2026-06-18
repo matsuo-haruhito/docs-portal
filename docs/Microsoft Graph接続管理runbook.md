@@ -16,7 +16,7 @@
 - 検索欄の入力上限と直下の補足 copy も同じ最大 100 文字境界を示します。検索対象を迷ったときは、入力欄直下の `検索対象: 案件名・code・接続名・Tenant / Client / Drive / Site ID・プレビュー用フォルダ（最大100文字）` を最初に確認します。
 - 検索語は前後空白を除いて単語間空白を詰めたあと、最大 100 文字までが条件に使われます。長い ID やフォルダ path 全文ではなく、案件 code、接続名、Drive ID、Site ID、フォルダ名の特徴的な短い断片で探します。
 - 一覧 table は最終的に最大 50 行まで表示します。`50 / 51 件を表示しています。` のように左側は表示中の行数、右側と filter link の件数は検索・filter 適用前後の集計として読みます。
-- まだ接続が 0 件のときは一覧 table は表示されず、上部の `新規登録` form と empty state だけが出ます。最初の 1 件を作るときは `案件`、`接続名`、`Tenant ID`、`Client ID`、`Drive ID`、`プレビュー用フォルダ` を埋めます。SharePoint / OneDrive の共有フォルダ URL が分かる場合は、保存前に `共有URLからDrive情報を解決` で `Drive ID` と `プレビュー用フォルダ` の候補をフォームへ戻せます。
+- まだ接続が 0 件のときは一覧 table は表示されず、上部の `新規登録` form と empty state だけが出ます。最初の 1 件を作るときは `案件`、`接続名`、`Tenant ID`、`Client ID`、`Drive ID`、`プレビュー用フォルダ` を埋めます。SharePoint / OneDrive の共有フォルダ URL が分かる場合は、保存前に `共有URLから候補を取得（保存しない）` で `Drive ID` と `プレビュー用フォルダ` の候補をフォームへ戻せます。この取得操作は接続設定を保存しないため、候補を確認してから別途 `保存` を押します。
 
 ## 日常確認の順番
 
@@ -60,12 +60,12 @@
 - この状態では一覧性より初回登録導線が優先されるので、上部 `新規登録` form をそのまま入口にします
 - 検索語や preview 利用 filter を指定した状態で 0 件になり、`検索と絞り込みを解除` が出ている場合は、未登録ではなく filtered 0 件の状態です。条件を外して全体表示へ戻り、登録済み接続の有無を見直します
 - `Tenant ID`、`Client ID`、`Drive ID`、`プレビュー用フォルダ` がそろわない段階では保存を急がず、先に接続前提や案件の保存先方針を確認します
-- SharePoint / OneDrive の共有フォルダ URL を管理者が持っている場合は、先に `共有フォルダURL` を入力し、`共有URLからDrive情報を解決` で入力補助を試します
+- SharePoint / OneDrive の共有フォルダ URL を管理者が持っている場合は、先に `共有フォルダURL` を入力し、`共有URLから候補を取得（保存しない）` で入力補助を試します。候補取得はフォーム反映だけで、接続設定の保存や credential 検証完了を意味しません
 - 同一案件で有効にできる Microsoft Graph 接続は 1 件だけです。切り替えたい場合は、現在の有効接続を先に無効化してから保存します
 
-## 共有フォルダURLからDrive情報を解決する
+## 共有フォルダURLから候補を取得する
 
-`共有URLからDrive情報を解決` は保存処理ではなく、Microsoft Graph の `shares/.../driveItem` からフォーム入力候補を戻すための補助ボタンです。解決に成功すると、フォーム上の `Drive ID`、`Site ID`、`プレビュー用フォルダ` が更新されます。内容を確認してから、別途 `保存` を押して接続設定として登録または更新します。
+`共有URLから候補を取得（保存しない）` は保存処理ではなく、Microsoft Graph の `shares/.../driveItem` からフォーム入力候補を戻すための補助ボタンです。解決に成功すると、フォーム上の `Drive ID`、`Site ID`、`プレビュー用フォルダ` が更新されます。内容を確認してから、別途 `保存` を押して接続設定として登録または更新します。
 
 新規登録では、`Tenant ID`、`Client ID`、`Client secret`、`共有フォルダURL` を入力してから解決します。編集時は、`Client secret` を空欄のままでも保存済み secret を使って解決できます。secret を差し替えたい場合だけ再入力します。
 
@@ -99,7 +99,7 @@ legacy duplicate が残っている案件では、current preview 正本は `pre
 - `Drive` 列には preview 用一時アップロード先の `主確認: Drive ID` が出ます
 - `site_id` がある接続では、`Tenant / Client / Site` 列の中に `補助: Site ID` も表示されます。Drive ID の取得元を追跡したいときの補助情報として読みます
 - 案件をまたいで同じ値を使うこと自体は current code 上で禁止されていませんが、運用上はどの案件の preview 用保存先かを追えるようにしておく方が安全です
-- SharePoint / OneDrive の共有フォルダ URL が正しい場合は、`共有URLからDrive情報を解決` で Graph から `drive_id` と `site_id` の候補を戻せます
+- SharePoint / OneDrive の共有フォルダ URL が正しい場合は、`共有URLから候補を取得（保存しない）` で Graph から `drive_id` と `site_id` の候補を戻せます。候補が戻っただけでは保存されないため、内容を見直してから `保存` します
 - preview 先を切り替えた直後は、古い `drive_id` のまま残っていないかを最初に確認します
 
 ## `プレビュー用フォルダ` の見直しポイント
@@ -107,7 +107,7 @@ legacy duplicate が残っている案件では、current preview 正本は `pre
 - `preview_folder_path` は一覧の `プレビュー用フォルダ` 列で `主確認: プレビュー用フォルダ` として確認できます
 - current validation では、空欄、`/` 始まり、`..` を含む相対パスは保存できません
 - 初期値は `docs-portal-previews` です。案件ごとに preview 用フォルダを分けている場合は、名前だけでどの用途か分かる状態を保ちます
-- `共有URLからDrive情報を解決` に成功した場合は、共有フォルダの `parentReference.path` と folder name から root 相対の候補が入ります。保存前に、preview 用一時アップロード先としてそのフォルダでよいかを確認します
+- `共有URLから候補を取得（保存しない）` に成功した場合は、共有フォルダの `parentReference.path` と folder name から root 相対の候補が入ります。保存前に、preview 用一時アップロード先としてそのフォルダでよいかを確認します
 - Office preview が失敗したときは、`drive_id` だけでなく `preview_folder_path` の typo や、意図しないフォルダ名変更も確認します
 
 ## 編集時に見る項目
@@ -130,7 +130,7 @@ legacy duplicate が残っている案件では、current preview 正本は `pre
 1. まずこの一覧で、対象案件に `previewで使用中` の行があるか確認する
 2. `preview 利用中の接続を要整理の案件` card や `有効だが未使用` 行が出ていないか確認し、重複有効接続がある場合は `最小 DB id` の暫定選択に引きずられていないかを見る
 3. `主確認: Drive ID` と `主確認: プレビュー用フォルダ` が、実際に使いたい接続の値になっているか、切り替え前の値や typo のある値に戻っていないか確認する。接続数が多いときは検索欄で `drive_id` や folder 名を直接探す
-4. 入力値自体が妥当か、`編集` 画面で `Tenant ID` / `Client ID` / `Site ID` も含めて見直す。共有フォルダ URL が分かる場合は、保存前に `共有URLからDrive情報を解決` で候補を取り直す
+4. 入力値自体が妥当か、`編集` 画面で `Tenant ID` / `Client ID` / `Site ID` も含めて見直す。共有フォルダ URL が分かる場合は、保存前に `共有URLから候補を取得（保存しない）` で候補を取り直し、内容を確認してから `保存` する
 5. 接続前提や fallback 条件を確認したい場合は [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md) へ戻る
 6. 外部フォルダ同期や `.env` 側の責務分担を確認したい場合は [preview接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md) へ戻る
 
