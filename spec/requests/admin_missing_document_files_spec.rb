@@ -324,23 +324,28 @@ RSpec.describe "Admin missing document files", type: :request do
     expect(clear_filter_links.size).to eq(1)
   end
 
-  it "keeps missing project ids read-only without broadening to repair or export actions" do
+  it "drops invalid project ids while preserving other filters" do
     document = create(:document, project:, title: "Safety Runbook", slug: "safety-runbook")
     missing_file_for(document, file_name: "handoff.pdf", storage_key: "manuals/safety/handoff.pdf")
+    invalid_project_id = Project.maximum(:id).to_i + 1000
 
     sign_in_as(admin_user)
 
-    get admin_missing_document_files_path(project_id: Project.maximum(:id).to_i + 1000, document_q: "safety", file_q: "handoff")
+    get admin_missing_document_files_path(project_id: invalid_project_id, document_q: "safety", file_q: "handoff")
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("全体の実体欠落: 1")
-    expect(page_text).to include("条件一致欠落: 0")
-    expect(page_text).to include("条件に一致する欠落ファイルはありません。全体では1件の実体欠落があります。")
-    expect(page_text).to include("表示中は0件で、全体欠落が解消されたわけではありません。")
+    expect(page_text).to include("条件一致欠落: 1")
+    expect(page_text).to include("表示中: 1")
+    expect(page_text).to include("条件: 文書=safety / ファイル=handoff")
+    expect(page_text).not_to include("案件=#{invalid_project_id}")
+    expect(page_text).not_to include("案件=")
+    expect(selected_value(project_filter)).to be_blank
+    expect(page_text).to include("Safety Runbook")
+    expect(response.body).to include("handoff.pdf")
     expect(response.body).not_to include("削除する")
     expect(response.body).not_to include("再importを実行")
     expect(response.body).not_to include("CSVを出力")
-    expect(response.body).not_to include("handoff.pdf")
   end
 
   it "distinguishes no missing files from no matching filtered results" do
