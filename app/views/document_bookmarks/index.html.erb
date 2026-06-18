@@ -129,7 +129,7 @@
     <% end %>
     <div class="form-field">
       <%= form.label :recent_q, "最近見た文書を検索" %>
-      <%= form.search_field :recent_q, value: @recent_documents_query, placeholder: "文書名・案件名で検索", autocomplete: "off" %>
+      <%= form.search_field :recent_q, value: @recent_documents_query, maxlength: DocumentBookmarksController::BOOKMARK_QUERY_MAX_LENGTH, placeholder: "文書名・案件名で検索", autocomplete: "off" %>
     </div>
     <div class="form-actions">
       <%= form.submit "絞り込む", class: "button" %>
