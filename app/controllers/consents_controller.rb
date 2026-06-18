@@ -9,7 +9,7 @@ class ConsentsController < BaseController
     @consent_history_scope = normalized_consent_scope
     @valid_consent_scopes = ConsentTerm.consent_scopes.keys
 
-    user_consents = current_user.user_consents.includes(:consent_term, :target).order(consented_at: :desc, id: :desc)
+    user_consents = current_user.user_consents.includes(:consent_term).preload(:target).order(consented_at: :desc, id: :desc)
     @user_consents_total_count = user_consents.count
     user_consents = user_consents.joins(:consent_term).where(consent_terms: { consent_scope: @consent_history_scope }) if @consent_history_scope.present?
 
