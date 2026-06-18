@@ -23,6 +23,18 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(response.body).to include("共有リンク系の（予約）は将来拡張用")
     expect(response.body).to include("検索結果: 1件")
     expect(response.body).to include("表示中: 1-1件 / 1件")
+    expect(handoff_summary).to include(
+      "案件同意設定 handoff summary",
+      "案件: Alpha Project (ALPHA)",
+      "同意文面: Portal Terms / v1",
+      "状態: 有効",
+      "検索結果 1件 / 表示中 1-1件 / 1件",
+      "Alpha Project (ALPHA) / Portal Terms / v1 / 閲覧前 / 有効",
+      "table preferences は表示設定であり、handoff 条件ではありません。",
+      "共有リンク閲覧前（予約）/共有リンクダウンロード前（予約）は将来拡張用",
+      "同意本文、利用者同意履歴、個人情報、CSV一括 export は含みません。"
+    )
+    expect(handoff_summary).not_to include("Beta Project", "Security NDA")
     expect(listed_rows).to contain_exactly(a_string_including("Alpha Project", "Portal Terms", "有効"))
     expect(listed_rows.join).not_to include("Beta Project")
     expect(listed_rows.join).not_to include("Security NDA")
@@ -195,6 +207,9 @@ RSpec.describe "Admin project consent settings", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("表示中: 1-25件 / 26件")
+    expect(handoff_summary).to include("検索結果 26件 / 表示中 1-25件 / 26件")
+    expect(handoff_summary).to include("Project 00", "Project 24")
+    expect(handoff_summary).not_to include("Project 25")
     expect(listed_rows.size).to eq(25)
     expect(listed_rows.join).to include("Project 00", "Project 24")
     expect(listed_rows.join).not_to include("Project 25")
@@ -210,6 +225,11 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果: 27件")
     expect(response.body).to include("表示中: 26-27件 / 27件")
+    expect(handoff_summary).to include("状態: 有効")
+    expect(handoff_summary).to include("検索結果 27件 / 表示中 26-27件 / 27件")
+    expect(handoff_summary).to include("現在の表示ページのみ")
+    expect(handoff_summary).to include("Project 25", "Project 26")
+    expect(handoff_summary).not_to include("Project 24")
     expect(listed_rows).to contain_exactly(
       a_string_including("Project 25", "有効"),
       a_string_including("Project 26", "有効")
@@ -243,6 +263,8 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果: 0件")
     expect(response.body).to include("表示中: 0件")
+    expect(handoff_summary).to include("検索結果 0件 / 表示中 0件")
+    expect(handoff_summary).to include("表示中設定: - なし")
     expect(response.body).to include("条件に一致する案件同意設定はありません。")
     expect(response.body).to include("絞り込み解除")
     expect(response.body).not_to include("先に「同意文面管理」で有効な文面を用意")
@@ -256,6 +278,7 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(response.body).to include("表示中: 0件")
     expect(response.body).to include("まだ案件同意設定はありません。")
     expect(response.body).to include("先に「同意文面管理」で有効な文面を用意")
+    expect(handoff_summary).to be_nil
   end
 
   def parsed_html
@@ -268,6 +291,10 @@ RSpec.describe "Admin project consent settings", type: :request do
 
   def consent_term_cells
     parsed_html.css('td[data-rails-table-preferences-column-key="consent_term"]').map { |cell| cell.text.squish }
+  end
+
+  def handoff_summary
+    parsed_html.at_css(%(textarea[aria-label="案件同意設定 handoff summary"]))&.text&.squish
   end
 
   def project_filter
@@ -284,7 +311,7 @@ RSpec.describe "Admin project consent settings", type: :request do
   end
 
   def enabled_filter
-    parsed_html.at_css(%(select[name="enabled"]))
+    parsed_html.at_css(%(select[name="enabled"))
   end
 
   def enabled_filter_field
