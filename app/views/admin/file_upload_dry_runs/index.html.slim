@@ -9,7 +9,7 @@ p.muted API から作成された manual_upload dry-run を後から確認する
 = render "admin/nav"
 
 .card
-  = form_with url: admin_file_upload_dry_runs_path, method: :get, local: true, class: "filters" do
+  = form_with url: admin_file_upload_dry_runs_path, method: :get, local: true, class: "filters" do |form|
     .field
       = label_tag :dry_run_id, "dry-run ID"
       = search_field_tag :dry_run_id, @selected_dry_run_id, placeholder: "idry..."
@@ -19,8 +19,20 @@ p.muted API から作成された manual_upload dry-run を後から確認する
       = search_field_tag :q, @selected_query, placeholder: "source name / relative path / content hash"
       p.muted 検索対象: source name / relative path / content hash。クライアント source path は検索対象外です。
     .field
-      = label_tag :project_id, "案件"
-      = select_tag :project_id, options_for_select(@project_options, @selected_project_id), onchange: "this.form.requestSubmit()"
+      = form.rfk_combobox :project_id,
+        collection: [],
+        selected: @selected_project_option,
+        url: project_search_admin_file_upload_dry_runs_path(format: :json),
+        selected_url: selected_project_admin_file_upload_dry_runs_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: Admin::FileUploadDryRunsController::PROJECT_SEARCH_LIMIT,
+        wrapper: true,
+        label: "案件",
+        placeholder: "案件コード・案件名で検索"
+      p.muted 案件コード・案件名で検索できます。選択済み案件は候補上限外でも復元します。
     .field
       = label_tag :status, "状態"
       = select_tag :status, options_for_select(@status_options, @selected_status), onchange: "this.form.requestSubmit()"
