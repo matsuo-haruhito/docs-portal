@@ -42,7 +42,7 @@ RSpec.describe "Document delivery log manual update visibility", type: :request 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("手動状態更新")
     expect(action_labels).to include("送付済みにする", "送付失敗として記録")
-    expect(page_text).not_to include("この履歴は下書きではないため、手動状態更新はできません。")
+    expect(page_text).not_to include("この履歴は下書きではないため、状態を手動で変更する操作は表示されません。")
   end
 
   it "explains why manual update actions are hidden after the draft status has ended" do
@@ -71,8 +71,9 @@ RSpec.describe "Document delivery log manual update visibility", type: :request 
       get document_delivery_log_path(delivery_log)
 
       expect(response).to have_http_status(:ok)
-      expect(page_text).to include("この履歴は下書きではないため、手動状態更新はできません。")
+      expect(page_text).to include("この履歴は下書きではないため、状態を手動で変更する操作は表示されません。")
       expect(page_text).to include("送付済み・送付失敗済みの記録は過去記録として確認してください。")
+      expect(page_text).not_to include("手動状態更新")
       expect(action_labels).not_to include("送付済みにする", "送付失敗として記録")
       expect(parsed_html.css("form input[name='decision']")).to be_empty
     end
