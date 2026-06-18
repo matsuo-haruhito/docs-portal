@@ -61,6 +61,10 @@ RSpec.describe "Admin document usage reports", type: :request do
     CSV.parse(response.body, headers: true)
   end
 
+  def json_body
+    JSON.parse(response.body)
+  end
+
   def audit_log_link(slug)
     parsed_html.at_css("a[href='#{admin_access_logs_path(project_id: project.id, document_q: slug)}']")
   end
@@ -208,6 +212,125 @@ RSpec.describe "Admin document usage reports", type: :request do
     )
 
     get admin_document_usage_reports_path(format: :csv)
+
+    expect(response).to redirect_to(admin_document_usage_reports_path)
+    expect(flash[:alert]).to eq("CSV出力には案件選択が必要です。")
+  end
+
+  it "exports JSON metadata with the same normalized filters as the report view and CSV" do
+    in_range_old = create(:document, project:, title: "Report Alpha", slug: "report-alpha")
+    in_range_new = create(:document, project:, title: "Report Beta", slug: "report-beta")
+    out_of_range = create(:document, project:, title: "Report Gamma", slug: "report-gamma")
+    unused_match = create(:document, project:, title: "Report Draft", slug: "report-draft")
+    nonmatching = create(:document, project:, title: "Manual", slug: "manual")
+
+    create(:access_log, project:, document: in_range_old, user: viewer, company:, action_type: :view, accessed_at: Time.zone.local(2026, 5, 1, 10, 0, 0))
+    create(:access_log, project:, document: in_range_new, user: viewer, company:, action_type: :download, accessed_at: Time.zone.local(2026, 5, 2, 10, 0, 0))
+    create(:access_log, project:, document: out_of_range, user: viewer, company:, action_type: :view, accessed_at: Time.zone.local(2026, 5, 3, 10, 0, 0))
+    create(:access_log, project:, document: nonmatching, user: viewer, company:, action_type: :view, accessed_at: Time.zone.local(2026, 5, 2, 11, 0, 0))
+
+    sign_in_as(admin_user)
+
+    get admin_document_usage_reports_path(
+      project_id: project.id,
+      q: "report",
+      usage_filter: "used",
+      sort_order: "last_accessed_desc",
+      from: "2026-05-01",
+      to: "2026-05-02",
+      format: :json
+    )
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("application/json")
+
+    metadata = json_body
+    filters = metadata.fetch("filters")
+
+    expect(metadata).to include(
+      "report_type" => "document_usage_report",
+      "export_scope" => "current_project_usage_report",
+      "ignored_filters" => [],
+      "row_count" => 2
+    )
+    expect(metadata.fetch("exported_at")).to match(/\A\d{4}-\d{2}-\d{2}T/)
+    expect(metadata.fetch("description")).to include("CSV export と同じ案件・期間・利用状況・検索・並び順")
+    expect(metadata.fetch("summary")).to include(
+      "案件: USAGE / Usage Project",
+      "期間: 2026-05-01 から 2026-05-02 まで",
+      "利用状況: 利用あり",
+      "並び順: 最終アクセスが新しい順",
+      "検索: report",
+      "行数: 2件"
+    )
+    expect(filters).to include(
+      "project_id" => project.id,
+      "q" => "report",
+      "usage_filter" => "used",
+      "usage_filter_label" => "利用あり",
+      "sort_order" => "last_accessed_desc",
+      "sort_order_label" => "最終アクセスが新しい順",
+      "from" => "2026-05-01",
+      "to" => "2026-05-02",
+      "period_label" => "2026-05-01 から 2026-05-02 まで"
+    )
+    expect(filters.fetch("project")).to include(
+      "code" => "USAGE",
+      "name" => "Usage Project",
+      "public_id" => project.public_id
+    )
+    expect(metadata.to_json).not_to include(unused_match.slug, out_of_range.slug, nonmatching.slug)
+  end
+
+  it "normalizes oversized q and ignored date filters in JSON metadata" do
+    normalized_query = "alpha" * 20
+    oversized_query = "#{normalized_query}should-not-leak"
+    create(:document, project:, title: "#{normalized_query} Guide", slug: "normalized-guide")
+    create(:document, project:, title: "Release Notes", slug: "release-notes")
+
+    sign_in_as(admin_user)
+
+    get admin_document_usage_reports_path(
+      project_id: project.id,
+      q: oversized_query,
+      from: "not-a-date",
+      to: "2026-05-01",
+      format: :json
+    )
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("application/json")
+
+    metadata = json_body
+    filters = metadata.fetch("filters")
+
+    expect(normalized_query.length).to eq(Admin::DocumentUsageReportsController::DOCUMENT_USAGE_QUERY_MAX_LENGTH)
+    expect(metadata.fetch("row_count")).to eq(1)
+    expect(metadata.fetch("ignored_filters")).to eq(["from"])
+    expect(filters).to include(
+      "q" => normalized_query,
+      "usage_filter" => "all",
+      "usage_filter_label" => "すべて",
+      "sort_order" => "title",
+      "sort_order_label" => "タイトル順",
+      "to" => "2026-05-01",
+      "period_label" => "2026-05-01 まで"
+    )
+    expect(filters).not_to have_key("from")
+    expect(metadata.fetch("summary")).to include("検索: #{normalized_query}", "行数: 1件")
+    expect(metadata.to_json).not_to include("should-not-leak", "Release Notes")
+  end
+
+  it "redirects JSON metadata requests without a readable project" do
+    project
+    sign_in_as(admin_user)
+
+    get admin_document_usage_reports_path(format: :json)
+
+    expect(response).to redirect_to(admin_document_usage_reports_path)
+    expect(flash[:alert]).to eq("CSV出力には案件選択が必要です。")
+
+    get admin_document_usage_reports_path(project_id: "999999", q: "manual", format: :json)
 
     expect(response).to redirect_to(admin_document_usage_reports_path)
     expect(flash[:alert]).to eq("CSV出力には案件選択が必要です。")

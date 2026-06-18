@@ -30,8 +30,11 @@ h1 文書セット
 
     p.actions.form-actions
       = form.submit "絞り込み", class: "button"
-      = link_to "条件をクリア", admin_document_sets_path, class: "button secondary"
+      - if admin_document_set_filters_active?(@filters)
+        = link_to "条件をクリア", admin_document_sets_path, class: "button secondary"
       = link_to "CSV出力", admin_document_sets_path(@filters.compact_blank.merge(format: :csv)), class: "button secondary"
+
+  p.muted CSV出力は現在の絞り込み条件に一致する文書セット集合を、表示設定の列表示・幅とは独立した固定列で出力します。
 
   - if active_filter_labels.any?
     p.muted
@@ -77,8 +80,10 @@ h1 文書セット
 - else
   .card
     - if admin_document_set_filters_active?(@filters)
-      p.muted 条件に一致する文書セットはありません。
-      p.muted = link_to "条件をクリア", admin_document_sets_path
+      .document-set-filter-empty-state
+        p.muted 条件に一致する文書セットはありません。
+        p.actions.form-actions.muted
+          = link_to "条件をクリア", admin_document_sets_path, class: "button secondary"
     - else
       p.muted まだ文書セットは登録されていません。
       p.muted 上の「新規登録」で案件と名称を設定して保存すると、対象文書を選べる文書セットを作成できます。

@@ -1,0 +1,55 @@
+.card
+  h2 Git pull同期の運用状態
+  p.muted 有効なGit連携元と直近のGit同期履歴を確認します。
+  p.actions
+    = link_to "Git連携設定", admin_git_import_sources_path, class: "button secondary"
+    = link_to "Git同期履歴", admin_git_import_runs_path, class: "button secondary"
+  dl.definition-list
+    dt Git連携元
+    dd = "有効 #{@git_import_sources.count(&:enabled?)}件 / 全 #{@git_import_sources.size}件"
+    dt Git import preview build状態
+    dd = @git_import_preview_status_counts.map { |status, count| "#{status}: #{count}件" }.join(" / ").presence || "対象なし"
+
+.card
+  h2 Git連携元
+  - if @git_import_sources.empty?
+    p.muted Git連携元はまだ登録されていません。
+  - else
+    = table_tag do
+      thead
+        tr
+          th 案件
+          th リポジトリ
+          th ブランチ/パス
+          th 状態
+          th 最終同期
+      tbody
+        - @git_import_sources.each do |source|
+          tr
+            td = source.project&.name || "-"
+            td = source.repository_full_name
+            td = "#{source.branch} / #{source.normalized_source_path}"
+            td = source.enabled? ? "有効" : "無効"
+            td = source.last_synced_at ? l(source.last_synced_at) : "-"
+
+.card
+  h2 直近のGit同期履歴
+  - if @recent_git_import_runs.empty?
+    p.muted Git同期履歴はまだありません。
+  - else
+    = table_tag do
+      thead
+        tr
+          th 実行日時
+          th リポジトリ
+          th パス
+          th 状態
+          th エラー
+      tbody
+        - @recent_git_import_runs.each do |run|
+          tr
+            td = l(run.created_at)
+            td = run.repository_full_name
+            td = run.source_path
+            td = run.status
+            td = recurring_job_diagnostic_preview(run.error_message)

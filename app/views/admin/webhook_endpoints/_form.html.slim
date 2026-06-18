@@ -10,7 +10,9 @@
       = form.url_field :target_url, required: true, placeholder: "https://example.com/webhooks/docs-portal"
     label
       | 署名シークレット
-      = form.password_field :secret_token, value: webhook_endpoint.secret_token, autocomplete: "new-password"
+      - if webhook_endpoint.persisted?
+        span.muted = webhook_endpoint.secret_token.present? ? "設定済み（変更する場合だけ入力）" : "未設定"
+      = form.password_field :secret_token, autocomplete: "new-password", placeholder: (webhook_endpoint.persisted? ? "変更する場合だけ入力" : nil)
     label
       | 有効
       = form.check_box :active

@@ -9,6 +9,8 @@ class GitImportSource < ApplicationRecord
 
   encrypts :credential_secret
 
+  before_save :reset_sync_marker_if_import_scope_changed
+
   enum :provider, {
     github: 0
   }
@@ -50,6 +52,14 @@ class GitImportSource < ApplicationRecord
   end
 
   private
+
+  def reset_sync_marker_if_import_scope_changed
+    return unless persisted?
+    return unless will_save_change_to_project_id? || will_save_change_to_repository_full_name? || will_save_change_to_branch? || will_save_change_to_source_path?
+
+    self.last_synced_commit_sha = nil
+    self.last_synced_at = nil
+  end
 
   def source_path_must_be_safe
     value = source_path.to_s

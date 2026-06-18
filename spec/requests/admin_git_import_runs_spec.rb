@@ -18,6 +18,10 @@ RSpec.describe "Admin git import runs", type: :request do
     parsed_html.css("table tbody tr")
   end
 
+  def filtered_empty_state_card
+    parsed_html.xpath("//div[contains(concat(' ', normalize-space(@class), ' '), ' card ')][.//p[contains(normalize-space(.), '条件に一致するGit同期履歴はありません。')]]").first
+  end
+
   def create_git_import_run!(git_import_source: self.git_import_source, created_at: Time.zone.parse("2026-05-01 00:00:00 UTC"), status: :imported, summary_json: { imported: 1 }, error_message: nil)
     GitImportRun.create!(
       git_import_source:,
@@ -46,6 +50,7 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(page_text).to include("この画面では、同期結果やエラー内容をあとから確認できます。")
     expect(response.body).not_to include("Git同期履歴の表示設定")
     expect(response.body).not_to include('data-rails-table-preferences-column-key="created_at"')
+    expect(filtered_empty_state_card).to be_nil
   end
 
   it "shows git import history when runs exist" do
@@ -139,6 +144,7 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(page_text).to include("取込元パス: docs")
     expect(page_text).to include("commit: abcdef1234567890")
     expect(page_text).to include("マスク済み実行結果の詳細")
+    expect(page_text).to include("診断表示は secret-like value と private path を伏せた最大240文字程度のマスク済み preview です。完全な raw log ではありません。")
     expect(response.body).to include("[masked]")
     expect(response.body).to include("[path hidden]")
     expect(response.body).not_to include(summary_token)
@@ -273,6 +279,11 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(page_text).to include("適用中の状態: 失敗。状態を「すべて」に戻すと、他の状態の履歴も確認できます。")
     expect(page_text).to include("適用中のリポジトリ: missing-repo。owner/repo の一部など、検索語を短くすると見つかることがあります。")
     expect(page_text).to include("絞り込み解除")
+
+    clear_filter_link = filtered_empty_state_card.at_css(".actions a.button.secondary")
+    expect(clear_filter_link.text.squish).to eq("絞り込み解除")
+    expect(clear_filter_link["href"]).to eq(admin_git_import_runs_path)
+
     expect(page_text).not_to include("表示中の最新100件内の状態")
     expect(response.body).not_to include("Git同期履歴の表示設定")
   end

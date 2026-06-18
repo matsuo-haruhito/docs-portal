@@ -159,7 +159,9 @@
                       span.muted = entry.action_unavailable_reason || "-"
                   td
                     - if entry.text_preview_candidate?
-                      = link_to "プレビュー", archive_entry_preview_document_file_path(@document_file, entry_path: entry.name, return_anchor: archive_entry_anchor), class: "button secondary"
+                      - archive_entry_preview_params = { entry_path: entry.name, return_anchor: archive_entry_anchor }
+                      - archive_entry_preview_params[:q] = @archive_preview_path_query if @archive_preview_path_query.present?
+                      = link_to "プレビュー", archive_entry_preview_document_file_path(@document_file, archive_entry_preview_params), class: "button secondary"
                     - if entry.download_candidate?
                       = link_to "個別ダウンロード", archive_entry_download_document_file_path(@document_file, entry_path: entry.name), class: "button secondary"
                     button.button.secondary type="button" data-archive-preview-copy-entry="true" パスをコピー

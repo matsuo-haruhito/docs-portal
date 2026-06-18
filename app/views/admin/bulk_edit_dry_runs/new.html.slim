@@ -10,7 +10,8 @@ h1 文書一括編集
 
   - if @bulk_edit_candidate_source
     p
-      strong = "文書マスタ一覧から引き継いだ候補: #{@documents.size}件"
+      strong = "文書マスタ一覧から引き継いだ初期候補: #{@documents.size}件"
+    p.muted 文書マスタの検索結果から最初に選択された候補です。dry-run 作成対象は、この画面で最後にチェックが付いている文書です。
     - if @bulk_edit_candidate_filter_summaries.any?
       p.muted
         | 代表条件:
@@ -41,7 +42,7 @@ h1 文書一括編集
       span data-bulk-edit-selection-target="visibleCount"
         = "#{@documents.size}件表示中"
       span.muted
-        | 実行は次の確認画面で行います。対象が多い場合は検索や選択済み表示で見直してください。
+        | 実行は次の確認画面で行います。画面内検索と選択済みだけ表示は表示補助です。作成対象はチェック状態で決まります。
 
     .bulk-edit-selection__tools
       label.bulk-edit-selection__search-label for="bulk_edit_document_filter"

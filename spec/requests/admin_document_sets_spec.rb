@@ -69,6 +69,18 @@ RSpec.describe "Admin document sets", type: :request do
     parsed_html.css('a[href]').select { |node| node.text.squish == "条件をクリア" }.map { |node| node["href"] }
   end
 
+  def form_clear_filter_targets
+    parsed_html.css("form.document-set-filter-form .form-actions a[href]").select do |node|
+      node.text.squish == "条件をクリア"
+    end.map { |node| node["href"] }
+  end
+
+  def empty_state_clear_filter_targets
+    parsed_html.css(".card p.muted a[href]").reject do |node|
+      node.ancestors("form.document-set-filter-form").any?
+    end.select { |node| node.text.squish == "条件をクリア" }.map { |node| node["href"] }
+  end
+
   def action_targets
     parsed_html.css("a[href], form[action]").map do |node|
       node["href"] || node["action"]
@@ -91,6 +103,14 @@ RSpec.describe "Admin document sets", type: :request do
 
   def document_set_row_for(document)
     parsed_html.at_css(%(tr[data-document-set-document-filter-document-id="#{document.id}"]))
+  end
+
+  def fixed_version_select_for(document)
+    document_set_row_for(document)&.at_css('select[name$="[document_version_id]"]')
+  end
+
+  def fixed_version_option_values_for(document)
+    fixed_version_select_for(document).css("option").map { |node| node["value"] }
   end
 
   def remote_document_picker
@@ -232,12 +252,14 @@ RSpec.describe "Admin document sets", type: :request do
     expect(document_set_filter_options("set_type")).to include(["すべて", ""], ["送付用", "delivery"], ["設計", "design"])
     expect(document_set_filter_options("visibility_policy")).to include(["すべて", ""], ["限定公開", "restricted_external"], ["社内のみ", "internal_only"])
     expect(page_text).to include("表示設定は列の表示・幅を調整します")
+    expect(form_clear_filter_targets).to be_empty
 
     get admin_document_sets_path, params: { set_type: "delivery" }
 
     expect(response).to have_http_status(:ok)
     expect(listed_document_set_names).to eq(["既存セット", "配送社内セット"])
     expect(page_text).to include("種別: 送付用")
+    expect(form_clear_filter_targets).to include(admin_document_sets_path)
     expect(clear_filter_targets).to include(admin_document_sets_path)
 
     get admin_document_sets_path, params: { visibility_policy: "internal_only" }
@@ -245,6 +267,7 @@ RSpec.describe "Admin document sets", type: :request do
     expect(response).to have_http_status(:ok)
     expect(listed_document_set_names).to eq(["配送社内セット"])
     expect(page_text).to include("公開範囲: 社内のみ")
+    expect(form_clear_filter_targets).to include(admin_document_sets_path)
     expect(clear_filter_targets).to include(admin_document_sets_path)
 
     get admin_document_sets_path, params: { set_type: "delivery", visibility_policy: "restricted_external" }
@@ -328,7 +351,9 @@ RSpec.describe "Admin document sets", type: :request do
     expect(page_text).to include("種別: 送付用")
     expect(page_text).to include("公開範囲: ログインユーザー公開")
     expect(page_text).to include("条件に一致する文書セットはありません。")
-    expect(clear_filter_targets).to include(admin_document_sets_path)
+    expect(form_clear_filter_targets).to include(admin_document_sets_path)
+    expect(empty_state_clear_filter_targets).to include(admin_document_sets_path)
+    expect(clear_filter_targets.count(admin_document_sets_path)).to eq(2)
     expect(document_set_rows).to be_empty
     expect(table_preference_surfaces).to be_empty
   end
@@ -406,6 +431,94 @@ RSpec.describe "Admin document sets", type: :request do
     expect(json_body.fetch("documents").map { |document| document.fetch("slug") }).to all(start_with("limit-doc-"))
   end
 
+  it "returns document-scoped version search results while preserving payload shape" do
+    other_document_version = create(:document_version, document: document_b, version_label: "v2.0.0-other-document")
+    other_project = create(:project, name: "Other Version Project")
+    other_project_document = create(:document, project: other_project, title: "外部仕様", slug: "outside-spec")
+    other_project_version = create(:document_version, document: other_project_document, version_label: "v2.0.0-other-project")
+
+    sign_in_as(admin)
+
+    get document_version_search_admin_document_sets_path,
+        params: { project_id: project.id, document_id: document_a.id, q: "v2.0.0" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("versions")).to contain_exactly(
+      a_hash_including(
+        "id" => version_a2.id,
+        "version_label" => "v2.0.0",
+        "status" => version_a2.status
+      )
+    )
+    expect(json_body.fetch("options")).to eq(json_body.fetch("versions"))
+    expect(json_body.fetch("versions")).not_to include(
+      a_hash_including("id" => other_document_version.id),
+      a_hash_including("id" => other_project_version.id)
+    )
+
+    get document_version_search_admin_document_sets_path,
+        params: { project_id: project.id, document_id: document_a.id, q: "" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("versions")).to contain_exactly(
+      a_hash_including("id" => version_a1.id, "version_label" => "v1.0.0"),
+      a_hash_including("id" => version_a2.id, "version_label" => "v2.0.0")
+    )
+    expect(json_body.fetch("options")).to eq(json_body.fetch("versions"))
+  end
+
+  it "bounds document version search queries without leaking suffix-only matches" do
+    max_length = Admin::DocumentSetsController::DOCUMENT_VERSION_SEARCH_QUERY_MAX_LENGTH
+    bounded_query = "fixed-" + ("a" * (max_length - "fixed-".length))
+    matching_version = create(:document_version, document: document_a, version_label: bounded_query)
+    suffix_only_version = create(:document_version, document: document_a, version_label: "Suffix only needle")
+
+    sign_in_as(admin)
+
+    get document_version_search_admin_document_sets_path,
+        params: { project_id: project.id, document_id: document_a.id, q: "  #{bounded_query}   needle  " }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("versions")).to contain_exactly(
+      a_hash_including("id" => matching_version.id, "version_label" => bounded_query)
+    )
+    expect(json_body.fetch("options")).to eq(json_body.fetch("versions"))
+    expect(json_body.fetch("versions")).not_to include(a_hash_including("id" => suffix_only_version.id))
+
+    get document_version_search_admin_document_sets_path,
+        params: { project_id: project.id, document_id: document_a.id, q: "not-found" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("versions")).to eq([])
+    expect(json_body.fetch("options")).to eq([])
+  end
+
+  it "keeps saved fixed version as the only restored fixed-version option on edit" do
+    create(
+      :document_set_item,
+      document_set: existing_document_set,
+      document: document_a,
+      document_version: version_a1,
+      sort_order: 1,
+      note: "saved fixed version"
+    )
+
+    sign_in_as(admin)
+
+    get edit_admin_document_set_path(existing_document_set)
+
+    expect(response).to have_http_status(:ok)
+
+    select = fixed_version_select_for(document_a)
+    expect(select).to be_present
+    expect(fixed_version_option_values_for(document_a)).to eq(["", version_a1.id.to_s])
+    expect(select.at_css(%(option[value="#{version_a1.id}"][selected]))).to be_present
+    expect(select.at_css(%(option[value="#{version_a2.id}"]))).to be_nil
+    expect(select["data-rails-fields-kit--tom-select-url-value"]).to eq(
+      document_version_search_admin_document_sets_path(project_id: project.id, document_id: document_a.id)
+    )
+  end
+
   it "keeps the current filter context on invalid create rerender" do
     sign_in_as(admin)
 
@@ -458,6 +571,8 @@ RSpec.describe "Admin document sets", type: :request do
     expect(row["class"]).to include("is-selected")
     expect(row.at_css('input[type="checkbox"][checked]')).to be_present
     expect(row.at_css(%(select option[value="#{version_a2.id}"][selected]))).to be_present
+    expect(fixed_version_option_values_for(document_a)).to eq(["", version_a2.id.to_s])
+    expect(row.at_css(%(select option[value="#{version_a1.id}"]))).to be_nil
     expect(row.at_css('input[name$="[note]"]')["value"]).to eq("keep me")
     expect(remote_document_picker["data-rails-fields-kit--tom-select-url-value"]).to eq(document_search_admin_document_sets_path(project_id: project.id))
   end

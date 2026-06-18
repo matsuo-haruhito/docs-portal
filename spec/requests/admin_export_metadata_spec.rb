@@ -10,7 +10,9 @@ RSpec.describe "Admin export metadata", type: :request do
   end
 
   def metadata_link
-    parsed_html.css("a[href]").find { _1.text.squish == "CSV条件metadata JSON" }
+    parsed_html.css("a[href]").find do |link|
+      ["CSV条件metadata JSON", "CSV条件をJSONで確認"].include?(link.text.squish)
+    end
   end
 
   def metadata_link_href
@@ -124,6 +126,9 @@ RSpec.describe "Admin export metadata", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(metadata_link).to be_present
+      expect(metadata_link.text.squish).to eq("CSV条件をJSONで確認")
+      expect(metadata_link["title"]).to eq("CSVと同じ条件・行数・集計サマリをJSONで確認")
+      expect(metadata_link["aria-label"]).to eq("CSVと同じ条件・行数・集計サマリをJSONで確認")
       expect(metadata_link_href).to match(/(\.json|format=json)/)
       expect(link_query(metadata_link)).to include(
         "project_id" => project.id.to_s,

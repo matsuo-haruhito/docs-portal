@@ -89,13 +89,19 @@ section.card
       |  / 既読確認:
       strong = " #{@report_hash.dig(:summary, :total_read_confirmations)}"
     p
+      strong 調査導線:
+      |  
       = link_to "案件の監査ログへ", admin_access_logs_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
       |  / 
       = link_to "案件の既読確認内訳へ", admin_read_confirmations_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
-      |  / 
+    p
+      strong 出力:
+      |  
       = link_to "CSV出力", admin_document_usage_reports_path(csv_params), data: { turbo_frame: "_top" }
       |  / 
-      = link_to "CSV条件metadata JSON", admin_document_usage_reports_path(metadata_params), data: { turbo_frame: "_top" }
+      = link_to "CSV条件をJSONで確認", admin_document_usage_reports_path(metadata_params), title: "CSVと同じ条件・行数・集計サマリをJSONで確認", aria: { label: "CSVと同じ条件・行数・集計サマリをJSONで確認" }, data: { turbo_frame: "_top" }
+    p.muted
+      | CSVは表示中の条件で棚卸し用に出力します。JSONはCSV本体ではなく、同じ条件・行数・集計サマリを確認する metadata です。
     p
       | 表示中:
       strong = " #{@report_hash[:documents].size}件"

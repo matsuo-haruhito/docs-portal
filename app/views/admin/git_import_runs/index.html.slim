@@ -17,6 +17,7 @@ h1 Git同期履歴
     - else
       |  / 最新100件までを表示
   p.muted Git同期履歴は外部同期共通の run 境界として、provider、pull/push、status、summary_json、削除候補を追跡します。repository / branch / path / commit は Git 専用の入力と revision です。
+  p.muted 診断表示は secret-like value と private path を伏せた最大240文字程度のマスク済み preview です。完全な raw log ではありません。
 
   .card
     = form_with url: admin_git_import_runs_path, method: :get, local: true do
@@ -106,7 +107,7 @@ h1 Git同期履歴
         p.muted = "適用中の状態: #{selected_status_label || @status_filter}。状態を「すべて」に戻すと、他の状態の履歴も確認できます。"
       - if @repository_filter.present?
         p.muted = "適用中のリポジトリ: #{@repository_filter}。owner/repo の一部など、検索語を短くすると見つかることがあります。"
-      p.muted = link_to "絞り込み解除", admin_git_import_runs_path
+      p.actions = link_to "絞り込み解除", admin_git_import_runs_path, class: "button secondary"
 - else
   .card
     p.muted まだGit同期履歴はありません。

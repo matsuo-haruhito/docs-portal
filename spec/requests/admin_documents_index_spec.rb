@@ -34,6 +34,22 @@ RSpec.describe "Admin documents index", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def page_text
+    parsed_html.text.squish
+  end
+
+  def form_clear_filter_targets
+    parsed_html.css("form.document-filter-form .form-actions a[href]").select do |node|
+      node.text.squish == "条件をクリア"
+    end.map { |node| node["href"] }
+  end
+
+  def empty_state_clear_filter_targets
+    parsed_html.css(".document-filter-empty-state a[href]").select do |node|
+      node.text.squish == "条件をクリア"
+    end.map { |node| node["href"] }
+  end
+
   it "renders the table preferences editor, stable column keys, and existing actions" do
     sign_in_as(admin)
 
@@ -41,6 +57,8 @@ RSpec.describe "Admin documents index", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("文書マスタ一覧の表示設定")
+    expect(page_text).to include("文書マスタ一覧の表示設定と検索条件は、この一覧の列表示・列幅・表示件数にだけ適用されます")
+    expect(page_text).to include("文書詳細の左ペインにある文書ツリーの「表示中」や展開状態とは別の文脈です")
 
     editor = parsed_html.at_css(".rails-table-preferences-editor[data-controller='rails-table-preferences']")
 
@@ -82,5 +100,34 @@ RSpec.describe "Admin documents index", type: :request do
     expect(archived_actions.to_html).to include(edit_admin_document_path(archived_document.public_id))
     expect(archived_actions.to_html).to include(restore_admin_document_path(archived_document.public_id))
     expect(archived_actions.to_html).to include(admin_document_path(archived_document.public_id))
+  end
+
+  it "shows the document clear filter action only when filters are active" do
+    sign_in_as(admin)
+
+    get admin_documents_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).not_to include("条件をクリア")
+    expect(form_clear_filter_targets).to be_empty
+
+    get admin_documents_path, params: { q: "ALPHA" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("有効な条件:", "キーワード: ALPHA")
+    expect(form_clear_filter_targets).to eq([admin_documents_path])
+  end
+
+  it "keeps a clear filter path near empty filtered document results" do
+    sign_in_as(admin)
+
+    get admin_documents_path, params: { q: "no matching document" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索結果: 0件")
+    expect(page_text).to include("条件に一致する文書はありません")
+    expect(page_text).to include("文書マスタ全体に戻れます")
+    expect(form_clear_filter_targets).to eq([admin_documents_path])
+    expect(empty_state_clear_filter_targets).to eq([admin_documents_path])
   end
 end

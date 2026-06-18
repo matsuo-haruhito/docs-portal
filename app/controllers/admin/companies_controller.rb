@@ -3,6 +3,8 @@ class Admin::CompaniesController < Admin::BaseController
   before_action :require_company_master_admin_access!
   before_action :require_admin_only!, only: %i[create destroy]
 
+  helper_method :company_return_to_path
+
   def index
     @companies = filtered_companies
     @company = admin_user? ? Company.new(active: true) : current_user.company
@@ -24,7 +26,7 @@ class Admin::CompaniesController < Admin::BaseController
 
   def update
     if @company.update(company_params)
-      redirect_to admin_companies_path, notice: "会社を更新しました。"
+      redirect_to company_return_to_path, notice: "会社を更新しました。"
     else
       render :edit, status: :unprocessable_entity
     end
@@ -32,11 +34,11 @@ class Admin::CompaniesController < Admin::BaseController
 
   def destroy
     @company.destroy!
-    redirect_to admin_companies_path, notice: "会社を削除しました。"
+    redirect_to company_return_to_path, notice: "会社を削除しました。"
   rescue ActiveRecord::DeleteRestrictionError
-    redirect_to admin_companies_path, alert: "関連データがあるため削除できません。"
+    redirect_to company_return_to_path, alert: "関連データがあるため削除できません。"
   rescue ActiveRecord::InvalidForeignKey
-    redirect_to admin_companies_path, alert: "関連データがあるため削除できません。"
+    redirect_to company_return_to_path, alert: "関連データがあるため削除できません。"
   end
 
   private
@@ -92,6 +94,10 @@ class Admin::CompaniesController < Admin::BaseController
 
   def set_company
     @company = company_scope.find_by!(public_id: params[:public_id])
+  end
+
+  def company_return_to_path
+    safe_return_to_path(admin_companies_path)
   end
 
   def company_params

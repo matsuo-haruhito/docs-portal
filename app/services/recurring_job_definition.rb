@@ -33,6 +33,16 @@ class RecurringJobDefinition
       description: "期限が近いGoogle Drive外部フォルダ同期Webhook購読を更新します。",
       enabled: true,
       allow_overlap: false
+    ),
+    Definition.new(
+      job_key: "sync_git_import_sources",
+      job_class: "GitImportSourcesSyncJob",
+      queue_name: "default",
+      interval_seconds: 15.minutes.to_i,
+      args_json: {},
+      description: "有効なGit pull型インポート元を定期同期します。",
+      enabled: true,
+      allow_overlap: false
     )
   ].freeze
 

@@ -21,19 +21,17 @@ section.card
       div
         = form.label :target_type, "対象種別"
         = form.select :target_type, options_for_select([["すべて", ""]] + access_log_target_type_filter_options, @filters[:target_type])
-      div
-        p.muted
+      div.ai-context-filter-guidance role="group" aria-labelledby="ai-context-filter-guidance-title" data-testid="ai-context-filter-guidance"
+        p.muted id="ai-context-filter-guidance-title"
           strong AI context export 用の追加条件
-          br
-          | 対象種別で AI context export を選んだ場合だけ、下の mode / scope が有効になります。
-      div
-        = form.label :ai_context_mode, "AI出力モード"
-        = form.select :ai_context_mode, options_for_select([["すべて", ""]] + access_log_ai_context_mode_filter_options, @filters[:ai_context_mode])
-      div
-        = form.label :ai_context_scope, "AI出力範囲"
-        = form.select :ai_context_scope, options_for_select([["すべて", ""]] + access_log_ai_context_scope_filter_options, @filters[:ai_context_scope])
-      div
-        p.muted AI出力モード・範囲は page / file / zip / webhook など他の対象種別では条件から外れ、CSV export や有効な条件にも残りません。
+        p.muted 対象種別で AI context export を選んだ場合だけ、AI出力モード・範囲が有効です。
+        div
+          = form.label :ai_context_mode, "AI出力モード"
+          = form.select :ai_context_mode, options_for_select([["すべて", ""]] + access_log_ai_context_mode_filter_options, @filters[:ai_context_mode])
+        div
+          = form.label :ai_context_scope, "AI出力範囲"
+          = form.select :ai_context_scope, options_for_select([["すべて", ""]] + access_log_ai_context_scope_filter_options, @filters[:ai_context_scope])
+        p.muted AI出力モード・範囲は page / file / zip / webhook など他の対象種別では条件から外れます。CSV export や有効な条件にも残りません。
       div
         = form.label :project_id, "案件"
         = select_tag :project_id,
@@ -63,6 +61,8 @@ section.card
       div
         = form.label :to, "終了日"
         = form.date_field :to, value: @filters[:to]
+      div
+        p.muted 開始日はその日の0:00以降、終了日はその日の23:59までを含みます。片方だけでも指定できます。
 
     p.actions
       = form.submit "検索"
@@ -78,6 +78,7 @@ section.card
     = link_to "現在の条件でCSV export（最新200件）", admin_access_logs_path(@pagination_params.merge(format: :csv)), class: "button secondary"
     = link_to "CSV条件metadata JSON", admin_access_logs_path(@pagination_params.merge(format: :json)), class: "button secondary"
   p.muted CSV export は現在の絞り込み条件に一致する最新200件を、監査用途の固定列で出力します。画面の表示列設定とは独立しています。
+  p.muted CSV条件metadata JSON は監査ログ行データではなく、同じ条件・除外日付・上限・summary を確認する補助出力です。
   p.muted ページ移動中でも、CSV export は表示中ページではなく条件一致の最新200件が対象です。
 
 - if @access_logs.any?
@@ -175,14 +176,17 @@ section.card
               | -
           td data-rails-table-preferences-column-key="ip_address" = log.ip_address.presence || "-"
 - elsif has_active_filters
-  p.muted 条件に一致する監査ログはありません。
-  - if active_filter_summaries.any?
-    p.muted
-      | 有効な条件:
-      - active_filter_summaries.each do |summary|
-        = " "
-        span.badge = summary
-  p.muted 絞り込み条件を見直すか、「条件をクリア」で最新200件を確認してください。
+  .access-log-empty-state
+    p.muted 条件に一致する監査ログはありません。
+    - if active_filter_summaries.any?
+      p.muted
+        | 有効な条件:
+        - active_filter_summaries.each do |summary|
+          = " "
+          span.badge = summary
+    p.muted 絞り込み条件を見直すか、「条件をクリア」で最新200件を確認してください。
+    p.actions
+      = link_to "条件をクリア", admin_access_logs_path, class: "button secondary"
 - else
   p.muted まだ監査ログはありません。
   p.muted 操作が記録されると、最新200件をここで確認できます。

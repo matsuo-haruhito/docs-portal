@@ -91,10 +91,12 @@
       <div>
         <%= form.label :created_from, "作成日(開始)", class: "block text-sm font-semibold" %>
         <%= form.text_field :created_from, value: @filters[:created_from], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">日付だけ指定すると、その日の00:00以降を含みます。</p>
       </div>
       <div>
         <%= form.label :created_to, "作成日(終了)", class: "block text-sm font-semibold" %>
         <%= form.text_field :created_to, value: @filters[:created_to], placeholder: "YYYY-MM-DD", class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">日付だけ指定すると、その日の23:59までを含みます。</p>
       </div>
       <div class="flex items-end gap-2">
         <%= form.submit "絞り込み", class: "rounded bg-blue-600 px-3 py-2 text-sm text-white" %>
@@ -158,10 +160,10 @@
           <tr>
             <td colspan="<%= table_columns.size %>" class="px-4 py-8 text-center text-gray-500">
               <% if has_active_filters %>
-                <div class="space-y-2">
+                <div class="generated-file-run-filter-empty-state space-y-2">
                   <p>条件に一致する生成ファイル実行履歴はありません。</p>
                   <p class="text-sm">これは表示フィルタの結果です。条件を見直すか、すべての生成ファイル実行履歴を表示してください。</p>
-                  <p><%= link_to "すべての生成ファイル実行履歴を見る", admin_generated_file_runs_path, class: "text-blue-600 underline" %></p>
+                  <p class="actions mt-3"><%= link_to "すべての生成ファイル実行履歴を見る", admin_generated_file_runs_path, class: "rounded border px-3 py-2 text-sm" %></p>
                 </div>
               <% else %>
                 生成ファイル実行履歴はまだありません。

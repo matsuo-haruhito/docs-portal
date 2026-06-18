@@ -82,20 +82,25 @@ p.muted
 
 - if @documents_count.zero?
   section.card.empty-state
-    h2 条件に一致する文書はありません
     - if active_filter_labels.any?
+      h2 条件に一致する文書はありません
       p 現在の絞り込み条件に一致する閲覧可能な文書がありませんでした。
       ul.compact-list
         - active_filter_labels.each do |filter_label|
           li = filter_label
         li = link_to "条件をクリア", documents_path
+      ul.compact-list
+        li キーワードを短くする、または別名・ファイル名・タグで検索してください。
+        li タグ、カテゴリ、ファイル種、公開範囲、実用フィルタを外して再検索してください。
+        - unless current_user.internal?
+          li 必要な文書が表示されない場合は、担当者へ閲覧権限の確認を依頼してください。
     - else
-      p 絞り込み条件に一致する閲覧可能な文書がありませんでした。
-    ul.compact-list
-      li キーワードを短くする、または別名・ファイル名・タグで検索してください。
-      li タグ、カテゴリ、ファイル種、公開範囲、実用フィルタを外して再検索してください。
-      - unless current_user.internal?
-        li 必要な文書が表示されない場合は、担当者へ閲覧権限の確認を依頼してください。
+      h2 現在閲覧できる文書はありません
+      p 閲覧可能な文書がまだ登録されていないか、現在のアカウントに閲覧権限が付与されていない可能性があります。
+      ul.compact-list
+        li 文書の登録状況や案件への参加状況を確認してください。
+        - unless current_user.internal?
+          li 必要な文書が表示されない場合は、担当者へ閲覧権限の確認を依頼してください。
 
 - pagination_params = @filters.to_h.symbolize_keys.except(:page).compact_blank
 - if @total_pages > 1

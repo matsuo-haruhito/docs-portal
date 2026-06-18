@@ -6,22 +6,31 @@ p.muted 現在提示されている注意事項と、自分が同意した記録
 
 section.card
   h2 現在有効な注意事項
+  p.muted 役割: いま提示されている本文
   p.muted ここには今提示されている active な文面だけを表示します。過去に同意した記録は下の履歴で確認できます。
   - if @active_terms.any?
-    - @active_terms.each do |term|
-      .card
-        h3 = term.title
-        p.muted
-          | 種別: 
-          strong = consent_scope_label(term)
-          |  / 版: 
-          strong = term.version_label
-        = simple_format(term.body)
+    p.muted
+      | 現在有効な注意事項が
+      strong = @active_terms.size
+      | 件あります。各文面の種別・版を確認し、本文は文面ごとに読み分けてください。
+    ul.consent-term-list
+      - @active_terms.each do |term|
+        li.consent-term-item
+          h3 = term.title
+          p.muted
+            | 種別: 
+            strong = consent_scope_label(term)
+            |  / 版: 
+            strong = term.version_label
+          p.muted この文面の本文
+          .consent-term-body
+            = simple_format(term.body)
   - else
     p.muted 現在有効な注意事項はありません。今提示する文面がない状態で、エラーや権限不足ではありません。
 
 section.card
   h2 自分の同意履歴
+  p.muted 役割: 過去に同意した版の記録
   p.muted ここには自分が同意した文面と版の記録を表示します。会社間契約や法務承認の代替ではありません。
   - if @user_consents.any?
     p.muted 対象が「全体」の行は案件や文書にひも付かない同意です。案件 / 文書 / ファイル / 文書版が出ている行は、その対象に対する同意です。

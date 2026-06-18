@@ -41,6 +41,26 @@ module Admin::GeneratedFileRunsHelper
     JSON.pretty_generate(mask_generated_file_run_metadata(metadata || {}))
   end
 
+  def generated_file_run_retry_kind_label(run)
+    metadata = run.metadata || {}
+    bulk_retry = metadata["bulk_retry"]
+
+    if run.event_source == "generated_file_run_bulk_retry" || bulk_retry == true || bulk_retry.to_s == "true"
+      "一括再実行"
+    elsif run.event_source == "generated_file_run_retry" || metadata.key?("retry_of_generated_file_run_public_id")
+      "再実行"
+    else
+      "-"
+    end
+  end
+
+  def generated_file_run_retry_requester_label(user_id, user)
+    return "-" if user_id.blank?
+    return "#{user.name} (#{user.email_address})" if user
+
+    "ユーザーID #{user_id}（未検出）"
+  end
+
   private
 
   def generated_file_run_filter_summary_item(label, value)

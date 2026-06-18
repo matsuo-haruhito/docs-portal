@@ -1,6 +1,9 @@
 = render "shared/error_messages", record: company
 
-= form_with model: [:admin, company] do |form|
+- return_to = params[:return_to].present? ? company_return_to_path : nil
+- form_url = company.persisted? ? admin_company_path(company.public_id, return_to: return_to) : admin_companies_path
+= form_with model: [:admin, company], url: form_url do |form|
+  = hidden_field_tag :return_to, return_to if return_to.present?
   .form-grid
     label
       | ドメイン
@@ -15,4 +18,4 @@
   p.actions style="margin-top:16px;"
     = form.submit "保存", class: "button"
     - if company.persisted?
-      = link_to "一覧へ戻る", admin_companies_path, class: "button secondary"
+      = link_to "一覧へ戻る", return_to || admin_companies_path, class: "button secondary"

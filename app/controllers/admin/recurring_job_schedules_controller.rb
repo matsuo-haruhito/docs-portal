@@ -3,6 +3,7 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
   MAX_RUN_HISTORY_PER_PAGE = 100
   SCHEDULE_QUERY_MAX_LENGTH = 100
   RUN_QUERY_MAX_LENGTH = SCHEDULE_QUERY_MAX_LENGTH
+  GIT_IMPORT_OPERATIONS_LIMIT = 20
 
   before_action :require_admin_only!
   before_action :set_schedule, only: %i[show request_run]
@@ -47,6 +48,8 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     @run_page = @runs_total_pages if @run_page > @runs_total_pages
     @run_offset = (@run_page - 1) * @run_per_page
     @runs = runs_scope.order(scheduled_at: :desc, id: :desc).offset(@run_offset).limit(@run_per_page)
+
+    load_git_import_operations if git_import_schedule?
   end
 
   def request_run
@@ -60,6 +63,29 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
   def set_schedule
     @schedule = RecurringJobSchedule.find_by!(public_id: params[:public_id])
     @return_to_path = safe_return_to_path(admin_recurring_job_schedules_path)
+  end
+
+  def git_import_schedule?
+    @schedule.job_key == "sync_git_import_sources"
+  end
+
+  def load_git_import_operations
+    @git_import_sources = GitImportSource.includes(:project).order(:repository_full_name, :branch, :source_path)
+    @recent_git_import_runs = GitImportRun
+      .includes(git_import_source: :project)
+      .where(import_mode: :pull)
+      .order(created_at: :desc, id: :desc)
+      .limit(GIT_IMPORT_OPERATIONS_LIMIT)
+    @recent_git_import_publish_jobs = PublishJob
+      .where(source_repo: @git_import_sources.map(&:repository_full_name).uniq)
+      .order(created_at: :desc, id: :desc)
+      .limit(GIT_IMPORT_OPERATIONS_LIMIT)
+    @git_import_preview_status_counts = DocumentVersion.where(snapshot_kind: "git_import").group(:preview_build_status).count
+    @recent_git_import_versions = DocumentVersion
+      .includes(:document)
+      .where(snapshot_kind: "git_import")
+      .order(created_at: :desc, id: :desc)
+      .limit(GIT_IMPORT_OPERATIONS_LIMIT)
   end
 
   def recurring_job_status_options
@@ -157,10 +183,8 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
 
   def parsed_run_time(value, label:, beginning: false, end_of_day: false)
     return if value.blank?
-
     raw_value = value.to_s.strip
     return invalid_run_time_filter(label, value) unless raw_value.match?(/\d/)
-
     time = Time.zone.parse(raw_value)
     return invalid_run_time_filter(label, value) unless time
     return time.beginning_of_day if beginning && raw_value.match?(/\A\d{4}-\d{2}-\d{2}\z/)

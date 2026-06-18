@@ -183,7 +183,7 @@ h1 Microsoft Graph接続
 - elsif @preview_usage_counts[:all].positive?
   .card
     p.muted 現在の絞り込みに一致する Microsoft Graph接続はありません。
-    p.muted = link_to "検索と絞り込みを解除", admin_microsoft_graph_connections_path
+    p.actions = link_to "検索と絞り込みを解除", admin_microsoft_graph_connections_path, class: "button secondary"
 - else
   .card
     p.muted まだMicrosoft Graph接続は登録されていません。

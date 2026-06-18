@@ -10,6 +10,7 @@ RSpec.describe "preview tools source" do
   let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.js") }
   let(:layout_source) { read_source("app/views/layouts/application.html.slim") }
   let(:inventory_source) { read_source("doc/frontend_initialization_inventory.md") }
+  let(:roadmap_source) { read_source("ROADMAP.md") }
 
   let(:dedicated_preview_controllers) do
     {
@@ -60,6 +61,33 @@ RSpec.describe "preview tools source" do
       expect(entrypoint_source).not_to include("querySelectorAll")
       expect(entrypoint_source).not_to include("addEventListener")
       expect(entrypoint_source).not_to include("new TomSelect")
+    end
+  end
+
+  it "keeps the inventory aligned with the registered preview controller set" do
+    aggregate_failures do
+      dedicated_preview_controllers.each_key do |identifier|
+        expect(inventory_source).to include("`#{identifier}`")
+      end
+
+      expect(inventory_source).to include("`preview-tools` bridge は空 bridge を残さず退役")
+      expect(inventory_source).to include("`app/frontend/entrypoints/application.js` は `preview-tools` を登録しない")
+      expect(inventory_source).to include("`app/views/layouts/application.html.slim` は `preview-tools` を attach しない")
+      expect(inventory_source).to include("Source-level guard は `spec/frontend/preview_tools_source_spec.rb`")
+      expect(inventory_source).to include("`application.js` の直接 DOM setup は追加しない")
+      expect(inventory_source).to include("app 側 `new TomSelect(...)` は追加しない")
+    end
+  end
+
+  it "keeps ROADMAP aligned with the retired preview-tools bridge boundary" do
+    aggregate_failures do
+      expect(roadmap_source).to include("`preview-tools` bridge は移行用の入口として退役済み")
+      expect(roadmap_source).to include("bridge 再導入や空 controller の維持は current support として扱わない")
+      expect(roadmap_source).to include("専用 controller がそれぞれ helper refresh を担当")
+      expect(roadmap_source).to include("`markdown-preview-table-tools`")
+      expect(roadmap_source).to include("`pdf-preview-tools`")
+      expect(roadmap_source).to include("`application.js` に `querySelectorAll` とイベント登録を直接増やさない")
+      expect(roadmap_source).not_to include("`preview-tools` は `setupXxx()` helper 群を Stimulus controller から refresh する bridge として維持する")
     end
   end
 

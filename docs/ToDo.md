@@ -9,7 +9,7 @@
 ## 権限・管理画面
 
 - `company_master_admin` の current `/admin` redirect と `会社` / `ユーザー` 管理の制約は [company_master_admin会社・ユーザー管理runbook](./company_master_admin会社・ユーザー管理runbook.md) を正本とし、ここには未解決の導線改善だけを残す
-- 管理画面の主要 member route は current `config/routes.rb` では `public_id` または `code` を URL 識別子に使う。`admin/companies`, `admin/users`, `admin/project_memberships`, `admin/consent_terms`, `admin/project_consent_settings`, `admin/git_import_sources`, `admin/generated_file_events`, `admin/generated_file_runs`, `admin/zip_imports`, `admin/microsoft_graph_connections`, `admin/recurring_job_schedules`, `admin/external_folder_sync_sources`, `admin/documents`, `admin/bulk_edit_dry_runs`, `admin/document_sets`, `admin/document_permissions`, `admin/webhook_endpoints`, `admin/webhook_deliveries`, `admin/access_requests` は `param: :public_id`、`admin/projects` は `param: :code` を使う。新たな numeric id 導線を見つけた場合だけ、対象 resource と URL を確認して concrete issue に切る
+- 管理画面の主要 member route は current `config/routes.rb` と `spec/routing/admin_route_identifier_contract_spec.rb` で `public_id` / `code` の URL 識別子 contract を固定している。主要 admin member resource は `param: :public_id`、`admin/projects` と project member action controller は `param: :code`、collection-only resource は member identifier guard の対象外として分類済み。新しい admin member route や未確認の numeric id 導線を見つけた場合は、対象 resource と URL を確認し、同 spec の分類と対応 docs をそろえる concrete issue に切る
 - 正式なレビュー・承認ワークフローを導入するかは、コメント・品質チェック・公開制御・送付運用が固まってから再評価する。未起票で残す理由: ワークフロー仕様の正誤判断が必要
 - 形式的な workflow とは別に、最小確認依頼 / OK・Cancel 機能は独立 issue で扱う。未起票で残す理由: 対象画面と通知要件が具体化してから切る
 
@@ -24,7 +24,7 @@
 
 ## public_id / URL
 
-- 公開側の主要 route は `code` / `slug` / `public_id` へ移行済み。管理画面の主要 member route も `public_id` / `code` を使うため、広い route 移行メモとしては残さない。未確認の numeric id 導線が見つかった場合は、対象 resource と URL を確認できた時点で個別 issue に切る
+- 公開側の主要 route は `code` / `slug` / `public_id` へ移行済み。管理画面の主要 member route も `spec/routing/admin_route_identifier_contract_spec.rb` で `public_id` / `code` を guard しているため、広い route 移行メモとしては残さない。未確認の numeric id 導線が見つかった場合は、対象 resource と URL を確認できた時点で個別 issue に切る
 
 ## latest_version / バージョン管理
 
@@ -37,7 +37,8 @@
 
 - Document 単位 archive / restore は admin 管理画面で実装済み
 - 保管期限 / 廃棄候補の current 文書マスタ filter・一覧列・手動 archive / restore 判断は [文書マスタ運用runbook](./文書マスタ運用runbook.md) を正本にする。#1054 の first slice は completed のため、ここには current support 外の後続判断だけを残す
-- bulk archive / bulk restore / discard candidate marking、自動通知、自動削除、非可逆 discard、期限間近の新閾値定義は後続判断として残す。未起票で残す理由: retention policy、通知先、復元期限、不可逆操作の承認要件を分けて判断する必要がある
+- bulk archive / bulk restore 候補を実行ではなく read-only に引き継ぐ first slice は #3268 で扱う。ToDo 側には候補要件を重複して残さず、正本 docs と #3268 の判断論点だけを参照する
+- discard candidate marking、自動通知、自動削除、非可逆 discard、期限間近の新閾値定義は後続判断として残す。未起票で残す理由: retention policy、通知先、復元期限、不可逆操作の承認要件を分けて判断する必要がある
 
 ## Import / GitHub Actions
 
@@ -71,7 +72,7 @@
 - 長時間処理の自動リトライは初期実装で入れない。必要になった場合も、対象処理ごとに separate issue を切り、手動再実行で十分かを先に判断する
 - import / build の job 化は、同期 import/build 導線を本当に置き換える時点で再評価する
 - mail / webhook の job 化は、送信機能本体と delivery 契約が先に固まってから再評価する
-- 再生成 rails task / job 履歴は、検索再生成や build 再生成の実需要が出た時点で具体対象ごとに起票する
+- 生成ファイル run の再実行履歴と retry metadata の current 読み方は #3269 と [生成ファイル再試行と定期ジョブ管理 runbook](./生成ファイル再試行と定期ジョブ管理runbook.md) を正本にする。Docusaurus site build、検索 index、import / build の統合履歴へ広げる場合は、代表対象と保存境界が具体化した時点で別 issue に切る
 
 ## 品質・運用改善の扱い
 

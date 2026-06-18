@@ -37,6 +37,16 @@ RSpec.describe "Company master admin handoff source" do
     end
   end
 
+  it "keeps category decision cues visible without changing the generated template data contract" do
+    aggregate_failures do
+      expect(view_source.scan("decision_hint:").size).to eq(4)
+      expect(view_source).to include('span.muted = "選ぶ目安: #{category[:decision_hint]}"')
+      expect(view_source).to include("分類選択、入力欄、コピー対象 textarea の順で内容を整えてから")
+      expect(view_source).not_to include("decision_hint: category[:decision_hint]")
+      expect(controller_source).not_to include("decisionHint")
+    end
+  end
+
   it "keeps editable fields tied to the generated copy target" do
     aggregate_failures do
       expect(view_source).to include('data-company-master-admin-handoff-target="targetUser"')

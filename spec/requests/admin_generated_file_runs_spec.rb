@@ -29,6 +29,13 @@ RSpec.describe "Admin generated file runs", type: :request do
     end
   end
 
+  def retry_child_link_texts
+    heading = parsed_html.css("h3").find { _1.text.squish == "この実行から派生した再実行" }
+    return [] unless heading
+
+    heading.xpath("following-sibling::ul[1]//a").map { _1.text.squish }
+  end
+
   describe "GET /admin/generated_file_runs" do
     it "shows generated file run history for admin users" do
       sign_in_as(admin_user)
@@ -475,7 +482,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(parsed_html.at_css(%(a[href="#{return_to_path}"]))).to be_present
     end
 
-    it "shows related event and retry links without crashing on missing records" do
+    it "shows related event and retry links without mixing their lookup boundaries" do
       sign_in_as(admin_user)
       related_event = create_event!(path: "docs/source.yml")
       original_run = create_run!(job_id: "ai_usecase_decision_flow", status: :failed)
@@ -483,10 +490,11 @@ RSpec.describe "Admin generated file runs", type: :request do
         job_id: "ai_usecase_decision_flow",
         status: :completed,
         event_source: "generated_file_run_bulk_retry",
-        metadata: {
-          "retry_of_generated_file_run_public_id" => original_run.public_id,
-          "generated_file_event_public_ids" => [related_event.public_id]
-        }
+        metadata: {"retry_of_generated_file_run_public_id" => original_run.public_id}
+      )
+      event_only_run = create_run!(
+        job_id: "event_only_related_run",
+        metadata: {"generated_file_event_public_ids" => [related_event.public_id]}
       )
       run = create_run!(
         job_id: "ai_usecase_decision_flow",
@@ -508,6 +516,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).to include(admin_generated_file_event_path(related_event.public_id))
       expect(response.body).to include(admin_generated_file_run_path(original_run.public_id))
       expect(response.body).to include(admin_generated_file_run_path(retry_child_run.public_id))
+      expect(response.body).not_to include(admin_generated_file_run_path(event_only_run.public_id))
       expect(response.body).to include("missing-event")
       expect(response.body).to include("未処理")
       expect(response.body).to include("（未検出）")
@@ -539,7 +548,7 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).not_to include("newer_unrelated_204")
     end
 
-    it "keeps retry child runs bounded and includes sibling retries for child details" do
+    it "keeps retry child runs bounded, newest first, and includes sibling retries for child details" do
       sign_in_as(admin_user)
       parent_run = create_run!(job_id: "ai_usecase_decision_flow", status: :failed)
       current_child_run = create_run!(
@@ -563,7 +572,7 @@ RSpec.describe "Admin generated file runs", type: :request do
         metadata: {"retry_of_generated_file_run_public_id" => parent_run.public_id},
         created_at: Time.zone.parse("2026-04-01 12:00:00")
       )
-      9.times do |i|
+      newer_siblings = 9.times.map do |i|
         create_run!(
           job_id: "newer_retry_sibling_#{i}",
           status: :completed,
@@ -580,7 +589,56 @@ RSpec.describe "Admin generated file runs", type: :request do
       expect(response.body).to include(admin_generated_file_run_path(visible_sibling.public_id))
       expect(link_hrefs).not_to include(admin_generated_file_run_path(current_child_run.public_id))
       expect(response.body).not_to include(admin_generated_file_run_path(hidden_sibling.public_id))
+      expect(retry_child_link_texts).to eq(newer_siblings.reverse.map(&:public_id) + [visible_sibling.public_id])
       expect(parsed_html.css(%(a[href^="#{admin_generated_file_runs_path}/"])).count { |link| link.text.start_with?("gfr_") }).to eq(11)
+    end
+
+    it "shows manual, bulk, and auto retry metadata without changing retry policy" do
+      sign_in_as(admin_user)
+      parent_run = create_run!(job_id: "ai_usecase_decision_flow", status: :failed)
+      manual_retry = create_run!(
+        job_id: "manual_retry_child",
+        event_source: "generated_file_run_retry",
+        metadata: {
+          "retry_of_generated_file_run_public_id" => parent_run.public_id,
+          "retry_requested_by_user_id" => admin_user.id,
+          "retry_requested_at" => "2026-05-10T12:00:00Z"
+        }
+      )
+      bulk_retry = create_run!(
+        job_id: "bulk_retry_child",
+        event_source: "generated_file_run_bulk_retry",
+        metadata: {
+          "retry_of_generated_file_run_public_id" => parent_run.public_id,
+          "bulk_retry" => true
+        }
+      )
+      auto_retry = create_run!(
+        job_id: "auto_retry_child",
+        metadata: {
+          "retry_of_generated_file_run_public_id" => parent_run.public_id,
+          "auto_retry" => true
+        }
+      )
+
+      get admin_generated_file_run_path(manual_retry.public_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(page_text).to include("種別 再実行")
+      expect(page_text).to include("再実行依頼者")
+      expect(page_text).to include(admin_user.email_address)
+      expect(page_text).to include("2026-05-10T12:00:00Z")
+
+      get admin_generated_file_run_path(bulk_retry.public_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(page_text).to include("種別 一括再実行")
+
+      get admin_generated_file_run_path(auto_retry.public_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(page_text).to include("種別 再実行")
+      expect(response.body).to include('&quot;auto_retry&quot;: true')
     end
   end
 

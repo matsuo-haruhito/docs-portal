@@ -212,6 +212,42 @@ RSpec.describe "Consents", type: :request do
     end
   end
 
+  it "shows count and body cues for multiple active terms without changing history meaning" do
+    create(
+      :consent_term,
+      title: "Project Long Terms",
+      body: "案件利用時に確認する長めの注意事項です。文面ごとに本文を読み分けます。",
+      version_label: "v-project-2",
+      consent_scope: :project
+    )
+    create(
+      :consent_term,
+      title: "Download Long Terms",
+      body: "ダウンロード前に確認する長めの注意事項です。履歴ではなく現在提示中の本文です。",
+      version_label: "v-download-3",
+      consent_scope: :download
+    )
+
+    sign_in_as(user)
+    get consents_path
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures do
+      active_section = section_text("現在有効な注意事項")
+      history_section = section_text("自分の同意履歴")
+
+      expect(active_section).to include("現在有効な注意事項が2件あります")
+      expect(active_section).to include("各文面の種別・版を確認し、本文は文面ごとに読み分けてください")
+      expect(active_section).to include("Project Long Terms", "案件", "v-project-2")
+      expect(active_section).to include("Download Long Terms", "ダウンロード", "v-download-3")
+      expect(active_section.scan("この文面の本文").size).to eq(2)
+      expect(active_section).to include("案件利用時に確認する長めの注意事項です")
+      expect(active_section).to include("ダウンロード前に確認する長めの注意事項です")
+      expect(history_section).to include("自分が同意した文面と版の記録")
+      expect(history_section).to include("自分の同意記録が0件の状態")
+    end
+  end
+
   it "shows only the current user's consent history in consented_at and id descending order" do
     other_user = create(:user, :external, company:)
     active_term = create(:consent_term, title: "Current Active Terms", body: "Visible active body", version_label: "v-active", consent_scope: :project)

@@ -2,6 +2,10 @@
   detail_path_params = { return_to: request.fullpath }
   status_filter_params = request.query_parameters.except(:page, :per_page).compact_blank
   has_active_filters = @filters.compact_blank.any?
+  bulk_retry_target_count = @bulk_retry_target_count.to_i
+  bulk_retry_available = bulk_retry_target_count.positive?
+  bulk_retry_confirm_message = "現在の条件に一致する失敗イベント #{bulk_retry_target_count} 件のうち、古い順に最大100件を一括再dispatchします。現在の条件を確認してから実行してください。実行しますか？"
+  bulk_retry_form_options = bulk_retry_available ? { data: { turbo_confirm: bulk_retry_confirm_message } } : {}
   table_key = :admin_generated_file_events
   table_columns = generated_file_event_table_columns
   table_settings = rails_table_preference_settings(table_key: table_key)
@@ -15,8 +19,7 @@
       <p class="text-sm text-gray-600">debounce / coalesce 用に蓄積されたファイル変更イベントです。</p>
     </div>
     <div class="flex flex-col gap-3 text-sm md:flex-row md:items-start md:justify-end">
-      <% bulk_retry_disabled = @bulk_retry_target_count.to_i.zero? %>
-      <% bulk_retry_class = if bulk_retry_disabled
+      <% bulk_retry_class = if !bulk_retry_available
            "rounded bg-gray-300 px-3 py-2 text-sm text-gray-600"
          elsif @filters[:status] == "failed"
            "rounded bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow"
@@ -26,12 +29,12 @@
       <div class="rounded border border-red-100 bg-red-50 p-3 text-left">
         <p class="text-xs font-semibold uppercase text-red-700">実行操作</p>
         <div class="mt-2 flex flex-wrap items-center gap-2">
-          <%= button_to "失敗分を一括再dispatch", retry_failed_admin_generated_file_events_path(@filters.compact_blank), method: :post, class: bulk_retry_class, disabled: bulk_retry_disabled %>
+          <%= button_to "失敗分を一括再dispatch", retry_failed_admin_generated_file_events_path(@filters.compact_blank), method: :post, class: bulk_retry_class, disabled: !bulk_retry_available, form: bulk_retry_form_options %>
         </div>
         <p class="mt-2 text-xs text-gray-600">再dispatchは表示フィルタではなく、現在の条件に一致する失敗イベントを再投入する操作です。</p>
         <p class="mt-1 text-xs text-gray-500">現在の条件で再dispatch対象: <%= @bulk_retry_target_count %> 件</p>
         <p class="text-xs text-gray-500">一括再dispatchは古い失敗分から最大100件です。</p>
-        <% if bulk_retry_disabled %>
+        <% unless bulk_retry_available %>
           <p class="text-xs text-gray-500">対象がないため一括再dispatchできません。</p>
         <% end %>
       </div>
@@ -165,10 +168,10 @@
           <tr>
             <td colspan="<%= table_columns.size %>" class="px-4 py-8 text-center text-gray-500">
               <% if has_active_filters %>
-                <div class="space-y-2">
+                <div class="generated-file-event-filter-empty-state space-y-2">
                   <p>検索条件に一致する生成ファイルイベントはありません。</p>
                   <p class="text-sm">これは表示フィルタの結果です。一括再dispatch対象の有無とは別に、条件を見直すか、すべての生成ファイルイベントを表示してください。</p>
-                  <p><%= link_to "すべての生成ファイルイベントを見る", admin_generated_file_events_path, class: "text-blue-600 underline" %></p>
+                  <p class="actions mt-3"><%= link_to "すべての生成ファイルイベントを見る", admin_generated_file_events_path, class: "rounded border px-3 py-2 text-sm" %></p>
                 </div>
               <% else %>
                 生成ファイルイベントはまだありません。
