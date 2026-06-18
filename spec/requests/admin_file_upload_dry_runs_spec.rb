@@ -8,6 +8,10 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def parsed_json
+    JSON.parse(response.body)
+  end
+
   def page_text
     parsed_html.text.squish
   end
@@ -83,8 +87,69 @@ RSpec.describe "Admin file upload dry runs", type: :request do
       query_group = filter_form.css(".field").find { _1.at_css("input[name='q']") }
       expect(query_group.text.squish).to include("検索対象: source name / relative path / content hash")
       expect(query_group.text.squish).to include("クライアント source path は検索対象外です。")
+      expect(page_text).to include("案件コード・案件名で検索できます。選択済み案件は候補上限外でも復元します。")
       expect(page_text).to include("同期元・path・hash 検索は表示中の safe metadata だけを対象にし、クライアント source path は検索対象に含めません。")
     end
+  end
+
+  it "searches project filter options by code and name with a bounded result set" do
+    sign_in_as(admin_user)
+    matching_projects = 25.times.map do |index|
+      create(:project, code: format("REMOTE%02d", index), name: "Remote Search Project #{index}")
+    end
+    create(:project, code: "OTHER", name: "Unrelated Project")
+
+    get project_search_admin_file_upload_dry_runs_path(format: :json), params: { q: "remote search" }
+
+    expect(response).to have_http_status(:ok)
+    options = parsed_json.fetch("options")
+    expect(options.size).to eq(Admin::FileUploadDryRunsController::PROJECT_SEARCH_LIMIT)
+    expect(options.first).to include(
+      "value" => matching_projects.first.id,
+      "text" => "REMOTE00 / Remote Search Project 0"
+    )
+    expect(options.map { _1.fetch("text") }).not_to include("OTHER / Unrelated Project")
+  end
+
+  it "returns a selected project option and nil for a missing project" do
+    sign_in_as(admin_user)
+
+    get selected_project_admin_file_upload_dry_runs_path(format: :json), params: { id: project.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_json.fetch("option")).to include(
+      "value" => project.id,
+      "text" => "FILEUI / File UI Project"
+    )
+
+    get selected_project_admin_file_upload_dry_runs_path(format: :json), params: { id: "missing" }
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_json.fetch("option")).to be_nil
+  end
+
+  it "restores a selected project label even when it is outside the search limit" do
+    sign_in_as(admin_user)
+    25.times { |index| create(:project, code: format("AAA%02d", index), name: "Early Project #{index}") }
+    late_project = create(:project, code: "ZZZ99", name: "Limit Outside Project")
+    create_file_upload_dry_run(project_override: late_project)
+
+    get admin_file_upload_dry_runs_path, params: { project_id: late_project.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("ZZZ99 / Limit Outside Project")
+    expect(listed_dry_run_ids.size).to eq(1)
+  end
+
+  it "keeps invalid project ids unfiltered like the current contract" do
+    sign_in_as(admin_user)
+    dry_run = create_file_upload_dry_run
+
+    get admin_file_upload_dry_runs_path, params: { project_id: "missing" }
+
+    expect(response).to have_http_status(:ok)
+    expect(listed_dry_run_ids).to eq([dry_run.public_id])
+    expect(page_text).not_to include("絞り込み解除")
   end
 
   it "explains the initial empty manual upload dry-run list" do
