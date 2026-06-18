@@ -56,6 +56,52 @@ RSpec.describe GeneratedFiles::AutoRetryPolicy do
     expect(GeneratedFileJob).not_to have_received(:perform_later)
   end
 
+  it "allows one automatic retry when only manual and bulk retry children exist" do
+    run = create_run!(
+      job_id: "ai_usecase_decision_flow",
+      generator: "ai_usecase_decision_flow",
+      output_writer: "filesystem",
+      status: :failed,
+      changed_files: ["source.yml"]
+    )
+    create_run!(
+      job_id: "ai_usecase_decision_flow",
+      generator: "ai_usecase_decision_flow",
+      output_writer: "filesystem",
+      status: :failed,
+      event_source: "generated_file_run_retry",
+      metadata: {
+        "retry_of_generated_file_run_public_id" => run.public_id,
+        "retry_requested_by_user_id" => 123
+      }
+    )
+    create_run!(
+      job_id: "ai_usecase_decision_flow",
+      generator: "ai_usecase_decision_flow",
+      output_writer: "filesystem",
+      status: :failed,
+      event_source: "generated_file_run_bulk_retry",
+      metadata: {
+        "retry_of_generated_file_run_public_id" => run.public_id,
+        "bulk_retry" => true
+      }
+    )
+
+    expect(policy.enqueue_for(run)).to eq(true)
+
+    expect(GeneratedFileJob).to have_received(:perform_later).once.with(
+      changed_files: ["source.yml"],
+      job_ids: ["ai_usecase_decision_flow"],
+      event_source: "generated_file_run_auto_retry",
+      metadata: hash_including(
+        "retry_of_generated_file_run_public_id" => run.public_id,
+        "retry_requested_by_user_id" => nil,
+        "auto_retry" => true,
+        "retry_reason" => "auto_retry_generated_file_run_failed"
+      )
+    )
+  end
+
   it "does not retry retry-runs, non-target writers, non-target jobs, or non-failed runs" do
     parent = create_run!(
       job_id: "ai_usecase_decision_flow",
