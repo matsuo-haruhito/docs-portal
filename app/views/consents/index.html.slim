@@ -32,6 +32,31 @@ section.card
   h2 自分の同意履歴
   p.muted 役割: 過去に同意した版の記録
   p.muted ここには自分が同意した文面と版の記録を表示します。会社間契約や法務承認の代替ではありません。
+
+  = form_with url: consents_path, method: :get, local: true do |form|
+    .filter-row
+      .filter-field
+        = form.label :q, "文面・版・対象"
+        = form.search_field :q, value: @consent_history_q, placeholder: "文面名、版、対象で検索"
+      .filter-field
+        = form.label :consent_scope, "種別"
+        = form.select :consent_scope, options_for_select([["すべて", ""]] + @valid_consent_scopes.map { |scope| [t("labels.consent_terms.consent_scope.#{scope}", default: scope), scope] }, @consent_history_scope)
+      .filter-actions
+        = form.submit "絞り込む"
+        - if @consent_history_filter_active
+          = link_to "絞り込みを解除", consents_path
+
+  - if @consent_history_filter_active
+    p.muted
+      | 絞り込み中: 
+      - if @consent_history_q.present?
+        | 文面・版・対象に「#{@consent_history_q}」を含む
+      - if @consent_history_q.present? && @consent_history_scope.present?
+        |  / 
+      - if @consent_history_scope.present?
+        | 種別「#{t("labels.consent_terms.consent_scope.#{@consent_history_scope}", default: @consent_history_scope)}」
+      |  / 該当 #{@user_consents.size} 件
+
   - if @user_consents.any?
     p.muted 対象が「全体」の行は案件や文書にひも付かない同意です。案件 / 文書 / ファイル / 文書版が出ている行は、その対象に対する同意です。
     table
@@ -50,5 +75,7 @@ section.card
             td = consent_scope_label(consent.consent_term)
             td = consent.consent_term_version_label
             td = consent_target_display(consent)
+  - elsif @consent_history_filter_active && @user_consents_total_count.positive?
+    p.muted 絞り込み条件に一致する同意履歴はありません。条件を変えると、自分の同意済み文面・版・対象を探し直せます。
   - else
     p.muted まだ同意履歴はありません。自分の同意記録が0件の状態で、利用不可や権限不足を示すものではありません。
