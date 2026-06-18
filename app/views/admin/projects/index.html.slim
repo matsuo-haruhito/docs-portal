@@ -29,7 +29,8 @@ h1 案件マスタ
         = select_tag :company_id, options_for_select(company_filter_options, selected_company_filter)
     p.actions
       = submit_tag "絞り込む", class: "button"
-      = link_to "条件をクリア", admin_projects_path, class: "button secondary"
+      - if active_filter_labels.any?
+        = link_to "条件をクリア", admin_projects_path, class: "button secondary"
 
 - if @projects.any?
   .card
@@ -74,4 +75,7 @@ h1 案件マスタ
       p.muted 上の「新規登録」でコードと案件名を入力し、必要に応じて企業を選ぶと最初の案件を登録できます。
     - else
       p.muted 検索条件に一致する案件はありません。
-      p.muted キーワード、状態、企業の条件を変更するか、条件をクリアしてください。
+      - if active_filter_labels.any?
+        p.muted キーワード、状態、企業の条件を変更するか、条件をクリアしてください。
+      - else
+        p.muted キーワード、状態、企業の条件を変更してください。
