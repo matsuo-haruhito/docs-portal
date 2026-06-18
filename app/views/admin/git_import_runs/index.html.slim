@@ -87,19 +87,23 @@ h1 Git同期履歴
               - if run.summary_json.present?
                 - summary_lines = git_import_run_summary_lines(run)
                 - if summary_lines.any?
+                  p.muted summary_json の要約
                   ul
                     - summary_lines.each do |line|
                       li = line
+                - else
+                  p.muted summary_json の要約なし
                 details
-                  summary マスク済み実行結果の詳細
+                  summary summary_json のマスク済み詳細
                   pre = git_import_run_summary_preview_json(run)
               - else
-                span.muted なし
+                span.muted summary_json なし
             td data-rails-table-preferences-column-key="error_message"
               - if run.error_message.present?
+                p.muted error_message のマスク済み preview
                 pre = git_import_run_error_preview(run)
               - else
-                span.muted なし
+                span.muted エラーなし
   - else
     .card
       p.muted 条件に一致するGit同期履歴はありません。
