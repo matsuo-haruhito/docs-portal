@@ -41,6 +41,11 @@
 <section class="page-hero">
   <h1>ダッシュボード</h1>
   <p class="muted">利用中の案件、最近触った文書、保留タスクをひとまとめにして次の操作へつなげます。</p>
+  <% if !current_user.internal? && @projects.empty? && @pending_access_requests.empty? && @favorite_bookmarks.empty? && @read_later_bookmarks.empty? && @recent_documents.empty? && @recently_updated_documents.empty? %>
+    <p class="muted">このダッシュボードは権限不足のエラーではありません。案件一覧・文書一覧から、現在閲覧できる範囲を確認できます。社内の確認依頼は対象になったときだけ担当者側に表示されます。</p>
+  <% elsif current_user.internal? && @pending_access_requests.empty? && @dashboard_stats[:pending_approval_count].to_i.zero? %>
+    <p class="muted">保留タスクがない場合も、案件や文書の一覧から現在の担当範囲を確認できます。管理画面への移動は、管理権限がある場合だけ表示されます。</p>
+  <% end %>
   <p class="actions">
     <%= link_to "案件一覧へ", projects_path, class: "button", data: { turbo_frame: "_top" } %>
     <%= link_to "文書ショートカット一覧", document_bookmarks_path, class: "button secondary" %>

@@ -107,6 +107,7 @@ RSpec.describe "Dashboard", type: :request do
     expect(metric_card_for("保存ショートカット")).to include("0", "ショートカット一覧へ")
     expect(metric_card_for("保留中の申請")).to include("0", "申請一覧へ")
     expect(page_text).to include(
+      "このダッシュボードは権限不足のエラーではありません。案件一覧・文書一覧から、現在閲覧できる範囲を確認できます。",
       "保留中のアクセス申請はありません。過去の申請は申請一覧で確認できます。",
       "参加中の案件は案件一覧で確認できます。",
       "お気に入りはまだ保存されていません。これは閲覧権限がない状態ではなく、個人用ショートカットが未利用の状態です。",
@@ -127,7 +128,7 @@ RSpec.describe "Dashboard", type: :request do
       access_requests_path
     )
     expect(metric_card_texts.any? { _1.include?("保留中の確認依頼") }).to be(false)
-    expect(page_text).not_to include("社内向け導線", "確認依頼一覧")
+    expect(page_text).not_to include("社内向け導線", "確認依頼一覧", "管理ダッシュボード")
     expect(parsed_html.css(".dashboard-grid a").map { |link| link["href"] }).not_to include(document_approval_requests_path)
     expect(metric_cta_links.map { |link| link["href"] }).not_to include(document_approval_requests_path)
   end
@@ -314,6 +315,25 @@ RSpec.describe "Dashboard", type: :request do
       expect(dashboard_section_text("最近更新された文書")).not_to include("Updated Document 11")
       expect(page_text).not_to include("Hidden Updated Document")
     end
+  end
+
+  it "keeps internal empty guidance from pointing only to admin navigation" do
+    internal_user = create(:user, :internal)
+
+    sign_in_as(internal_user)
+    get dashboard_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(
+      "保留タスクがない場合も、案件や文書の一覧から現在の担当範囲を確認できます。",
+      "管理画面への移動は、管理権限がある場合だけ表示されます。"
+    )
+    expect(heading_texts).to include("社内向け導線")
+    expect(parsed_html.css(".dashboard-grid a").map { |link| link["href"] }).to include(
+      document_approval_requests_path,
+      document_delivery_logs_path,
+      admin_root_path
+    )
   end
 
   it "shows pending approval summary for internal users while keeping the hero action separate" do

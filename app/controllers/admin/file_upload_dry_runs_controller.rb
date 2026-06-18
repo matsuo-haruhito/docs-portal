@@ -1,12 +1,16 @@
 class Admin::FileUploadDryRunsController < Admin::BaseController
+  PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_LIMIT = 20
+
   before_action :require_admin_only!
   before_action :set_import_dry_run, only: %i[show update]
 
   def index
     @status_options = status_options
-    @project_options = project_options
     @selected_status = status_param
     @selected_project_id = project_id_param
+    @selected_project = selected_project_for_filter
+    @selected_project_option = project_option(@selected_project) if @selected_project.present?
     @selected_dry_run_id = dry_run_id_param
     @selected_query = query_param
     @dry_runs = ImportDryRun.where(import_mode: :manual_upload).includes(:project).order(created_at: :desc, id: :desc)
@@ -41,6 +45,16 @@ class Admin::FileUploadDryRunsController < Admin::BaseController
     redirect_to admin_file_upload_dry_run_path(@import_dry_run), alert: e.message
   end
 
+  def project_search
+    render json: { options: project_options(searchable_projects) }
+  end
+
+  def selected_project
+    project = Project.find_by(id: params[:id])
+
+    render json: { option: project ? project_option(project) : nil }
+  end
+
   private
 
   def set_import_dry_run
@@ -50,12 +64,6 @@ class Admin::FileUploadDryRunsController < Admin::BaseController
   def status_options
     [["すべて", ""]] + ImportDryRun.statuses.keys.map do |status|
       [import_dry_run_status_label_value(status), status]
-    end
-  end
-
-  def project_options
-    [["すべて", ""]] + Project.order(:code).map do |project|
-      ["#{project.code} / #{project.name}", project.id]
     end
   end
 
@@ -69,6 +77,38 @@ class Admin::FileUploadDryRunsController < Admin::BaseController
     return nil if project_id.blank?
 
     Project.exists?(id: project_id) ? project_id : nil
+  end
+
+  def selected_project_for_filter
+    Project.find_by(id: @selected_project_id) if @selected_project_id.present?
+  end
+
+  def searchable_projects
+    scope = Project.order(:code, :id)
+    query = normalize_project_search_query(params[:q])
+    return scope.limit(PROJECT_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{Project.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(projects.code) LIKE :pattern OR LOWER(projects.name) LIKE :pattern",
+      pattern:
+    ).limit(PROJECT_SEARCH_LIMIT)
+  end
+
+  def normalize_project_search_query(query)
+    query.to_s.strip.first(PROJECT_SEARCH_QUERY_MAX_LENGTH)
+  end
+
+  def project_options(projects)
+    projects.map { |project| project_option(project) }
+  end
+
+  def project_option(project)
+    { value: project.id, text: project_option_label(project) }
+  end
+
+  def project_option_label(project)
+    [project.code, project.name].compact_blank.join(" / ")
   end
 
   def dry_run_id_param

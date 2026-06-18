@@ -94,14 +94,21 @@ section.card
       = link_to "案件の監査ログへ", admin_access_logs_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
       |  / 
       = link_to "案件の既読確認内訳へ", admin_read_confirmations_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
-    p
+    div
       strong 出力:
-      |  
-      = link_to "CSV出力", admin_document_usage_reports_path(csv_params), data: { turbo_frame: "_top" }
-      |  / 
-      = link_to "CSV条件をJSONで確認", admin_document_usage_reports_path(metadata_params), title: "CSVと同じ条件・行数・集計サマリをJSONで確認", aria: { label: "CSVと同じ条件・行数・集計サマリをJSONで確認" }, data: { turbo_frame: "_top" }
+      dl
+        dt CSV本体
+        dd
+          = link_to "CSV出力", admin_document_usage_reports_path(csv_params), data: { turbo_frame: "_top" }
+          br
+          span.muted 棚卸し用ファイル。表示中の条件で文書利用一覧を出力します。
+        dt 条件確認用 metadata
+        dd
+          = link_to "JSON metadataを確認", admin_document_usage_reports_path(metadata_params), title: "CSVと同じ条件・行数・集計サマリを確認するJSON metadata", aria: { label: "CSVと同じ条件・行数・集計サマリを確認するJSON metadata" }, data: { turbo_frame: "_top" }
+          br
+          span.muted CSV本体ではなく、同じ条件・行数・集計サマリを確認する補助情報です。
     p.muted
-      | CSVは表示中の条件で棚卸し用に出力します。JSONはCSV本体ではなく、同じ条件・行数・集計サマリを確認する metadata です。
+      | 表示設定は一覧の列だけを変え、CSV / JSON metadata の対象条件は変えません。
     p
       | 表示中:
       strong = " #{@report_hash[:documents].size}件"

@@ -39,4 +39,86 @@ RSpec.describe "Sessions", type: :request do
       expect(response.body).to include("メールアドレスまたはパスワードが正しくありません。")
     end
   end
+
+  describe "GET /capture_login" do
+    it "is not routed in the test environment" do
+      get "/capture_login"
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    context "when the development-only route is drawn" do
+      around do |example|
+        with_routing do |set|
+          set.draw do
+            root "projects#index"
+            get "capture_login", to: "sessions#capture_login"
+          end
+
+          example.run
+        end
+      end
+
+      before do
+        allow(Rails.env).to receive(:development?).and_return(true)
+      end
+
+      it "signs in an active user and preserves an internal redirect path" do
+        previous_login_at = 2.days.ago
+        user = create(:user, email_address: "Seed.User@example.com", last_login_at: previous_login_at)
+
+        get "/capture_login", params: { email: "seed.user@example.com", redirect: "/dashboard" }
+
+        expect(response).to redirect_to("/dashboard")
+        expect(request.session[:user_id]).to eq(user.id)
+        expect(user.reload.last_login_at).to be > previous_login_at
+      end
+
+      it "rejects inactive users before creating a login session" do
+        previous_login_at = 2.days.ago
+        user = create(:user, active: false, last_login_at: previous_login_at)
+
+        get "/capture_login", params: { email: user.email_address, redirect: "/dashboard" }
+
+        expect(response).to have_http_status(:not_found)
+        expect(user.reload.last_login_at.to_i).to eq(previous_login_at.to_i)
+      end
+
+      it "rejects unknown email addresses before touching existing users" do
+        previous_login_at = 2.days.ago
+        user = create(:user, last_login_at: previous_login_at)
+
+        get "/capture_login", params: { email: "missing@example.com", redirect: "/dashboard" }
+
+        expect(response).to have_http_status(:not_found)
+        expect(user.reload.last_login_at.to_i).to eq(previous_login_at.to_i)
+      end
+
+      it "rejects external and invalid redirect values" do
+        unsafe_redirects = [
+          "https://example.com/dashboard",
+          "//example.com/dashboard",
+          "http://[example"
+        ]
+
+        unsafe_redirects.each do |redirect|
+          user = create(:user)
+
+          get "/capture_login", params: { email: user.email_address, redirect: redirect }
+
+          expect(response).to have_http_status(:not_found)
+        end
+      end
+
+      it "keeps the action guarded when the route is reachable outside development" do
+        allow(Rails.env).to receive(:development?).and_return(false)
+        user = create(:user)
+
+        get "/capture_login", params: { email: user.email_address, redirect: "/dashboard" }
+
+        expect(response).to have_http_status(:not_found)
+        expect(user.reload.last_login_at).to be_nil
+      end
+    end
+  end
 end

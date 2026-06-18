@@ -41,6 +41,9 @@ end %>
           <%= link_to "解除", tree_filter_path, class: "document-tree-action-link", data: { turbo_stream: true } %>
         <% end %>
       <% end %>
+      <% if current_document.present? %>
+        <p class="muted document-tree-scope-cue">表示中バッジは現在開いている文書です。検索欄は左のツリーだけを絞り込み、文書一覧の条件や表示設定とは別に扱います。</p>
+      <% end %>
     </div>
     <div class="document-tree-toolbar__action-row">
       <% if toolbar_actions.present? %>

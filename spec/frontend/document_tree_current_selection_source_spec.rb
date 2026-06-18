@@ -2,6 +2,7 @@ require "rails_helper"
 
 RSpec.describe "document tree current selection source" do
   let(:tree_source) { Rails.root.join("app/views/documents/_tree.html.erb").read }
+  let(:toolbar_source) { Rails.root.join("app/views/documents/_tree_toolbar.html.erb").read }
   let(:columns_source) { Rails.root.join("app/views/documents/_tree_columns.html.erb").read }
   let(:controller_source) { Rails.root.join("app/frontend/controllers/document_tree_navigation_controller.js").read }
 
@@ -20,6 +21,16 @@ RSpec.describe "document tree current selection source" do
     expect(tree_source).to include("font-size: 11px")
     expect(tree_source).to include("line-height: 1.4")
     expect(tree_source).to include("white-space: nowrap")
+  end
+
+  it "explains that current selection and tree filtering are separate from document list state" do
+    aggregate_failures do
+      expect(toolbar_source).to include("current_document.present?")
+      expect(toolbar_source).to include("表示中バッジは現在開いている文書です。")
+      expect(toolbar_source).to include("検索欄は左のツリーだけを絞り込み")
+      expect(toolbar_source).to include("文書一覧の条件や表示設定とは別に扱います。")
+      expect(tree_source).to include(".document-tree-scope-cue")
+    end
   end
 
   it "keeps the progressive tree refresh click boundaries" do

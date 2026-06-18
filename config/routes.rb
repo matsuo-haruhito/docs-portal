@@ -70,7 +70,10 @@ Rails.application.routes.draw do
       post :retry_failed, on: :collection
     end
     resources :zip_imports, only: %i[new create show update], param: :public_id
-    resources :file_upload_dry_runs, only: %i[index show update], param: :public_id
+    resources :file_upload_dry_runs, only: %i[index show update], param: :public_id do
+      get :project_search, on: :collection
+      get :selected_project, on: :collection
+    end
     resources :microsoft_graph_connections, except: %i[show new], param: :public_id
     resources :recurring_job_schedules, only: %i[index show], param: :public_id do
       post :request_run, on: :member
