@@ -44,6 +44,8 @@ section.delivery-log-actions
   .delivery-log-actions__group
     h3 メール作成
     p.muted 宛先・件名・本文をメーラーへ渡します。送付記録の状態はここでは変わりません。
+    - unless @delivery_log.draft?
+      p.muted この履歴は下書きではないため、状態を手動で変更する操作は表示されません。送付済み・送付失敗済みの記録は過去記録として確認してください。
     p.actions
       = link_to "メーラーを開く", @mailto_url, class: "button"
 
