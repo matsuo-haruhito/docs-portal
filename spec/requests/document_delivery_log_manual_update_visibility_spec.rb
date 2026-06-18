@@ -15,6 +15,10 @@ RSpec.describe "Document delivery log manual update visibility", type: :request 
     parsed_html.text.gsub(/[[:space:]]+/, " ").strip
   end
 
+  def action_labels
+    parsed_html.css("a, button, input[type='submit']").map { |node| node["value"].presence || node.text.strip }
+  end
+
   before do
     document.update!(latest_version: version)
     create(:project_membership, project:, user: external_user)
@@ -37,8 +41,7 @@ RSpec.describe "Document delivery log manual update visibility", type: :request 
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("手動状態更新")
-    expect(page_text).to include("送付済みにする")
-    expect(page_text).to include("送付失敗として記録")
+    expect(action_labels).to include("送付済みにする", "送付失敗として記録")
     expect(page_text).not_to include("この履歴は下書きではないため、手動状態更新はできません。")
   end
 
@@ -70,8 +73,7 @@ RSpec.describe "Document delivery log manual update visibility", type: :request 
       expect(response).to have_http_status(:ok)
       expect(page_text).to include("この履歴は下書きではないため、手動状態更新はできません。")
       expect(page_text).to include("送付済み・送付失敗済みの記録は過去記録として確認してください。")
-      expect(page_text).not_to include("送付済みにする")
-      expect(page_text).not_to include("送付失敗として記録")
+      expect(action_labels).not_to include("送付済みにする", "送付失敗として記録")
       expect(parsed_html.css("form input[name='decision']")).to be_empty
     end
   end
