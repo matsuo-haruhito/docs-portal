@@ -53,7 +53,7 @@ RSpec.describe "Admin git import run diagnostic cues", type: :request do
   end
 
   it "uses column-specific empty copy without changing table preference keys" do
-    create_git_import_run!(summary_json: {}, error_message: nil)
+    create_git_import_run!(summary_json: { "provider_error" => "masked context only" }, error_message: nil)
 
     sign_in_as(admin_user)
 
