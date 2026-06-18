@@ -91,6 +91,8 @@ RSpec.describe "Document tree regressions", type: :request do
     expect(page_text).to include("intro-guide.md")
     expect(page_text).to include("operations-manual.pdf")
     expect(page_text).to include("inventory.csv")
+    expect(page_text).to include("表示中バッジは現在開いている文書です。")
+    expect(page_text).to include("検索欄は左のツリーだけを絞り込み、文書一覧の条件や表示設定とは別に扱います。")
     expect(parsed_html.at_css(".tree-icon--md")).to be_present
     expect(parsed_html.at_css(".tree-icon--pdf")).to be_present
     expect(parsed_html.at_css(".tree-icon--csv")).to be_present
@@ -158,6 +160,8 @@ RSpec.describe "Document tree regressions", type: :request do
     expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
     expect(parsed_html.at_css(%(turbo-stream[target="document_tree_panel"]))).to be_present
     expect(parsed_html.at_css("#document_tree_toolbar")).to be_present
+    expect(page_text).to include("表示中バッジは現在開いている文書です。")
+    expect(page_text).to include("検索欄は左のツリーだけを絞り込み、文書一覧の条件や表示設定とは別に扱います。")
     expect(page_text).to include("intro-guide.md")
     expect(page_text).to include("operations-manual.pdf")
     expect(page_text).to include("inventory.csv")
