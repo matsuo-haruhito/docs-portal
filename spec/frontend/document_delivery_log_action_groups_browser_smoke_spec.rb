@@ -116,11 +116,11 @@ RSpec.describe "document delivery log action groups browser smoke", type: :reque
       const text = document.body.innerText + " " + inputValues;
       const requiredText = ["操作", "メール作成", "対象へ戻る", "メーラーを開く", "対象の文書へ戻る", "送付履歴一覧へ戻る"];
       if (variant === "draft") requiredText.push("手動状態更新", "送付済みにする", "送付失敗として記録", "失敗理由");
+      if (variant === "sent") requiredText.push("手動状態更新", "この履歴は下書きではないため、手動状態更新はできません。");
       requiredText.forEach((value) => { if (!text.includes(value)) failures.push(`missing text ${value}`); });
-      if (variant === "sent" && text.includes("手動状態更新")) failures.push("sent state shows manual update group");
 
       const groups = Array.from(document.querySelectorAll(".delivery-log-actions__group"));
-      const expectedGroupCount = variant === "draft" ? 3 : 2;
+      const expectedGroupCount = 3;
       if (groups.length !== expectedGroupCount) failures.push(`group count ${groups.length} !== ${expectedGroupCount}`);
 
       const actionSection = document.querySelector(".delivery-log-actions");
@@ -136,7 +136,8 @@ RSpec.describe "document delivery log action groups browser smoke", type: :reque
         if (rect.width <= 0 || rect.height <= 0) failures.push(`group ${index} not visible`);
         if (rect.left < -1 || rect.right > viewport + 1) failures.push(`group ${index} overflows viewport`);
         const actions = Array.from(group.querySelectorAll("a, button, input[type='submit']"));
-        if (actions.length === 0) failures.push(`group ${index} has no visible action`);
+        const explanatoryOnlyGroup = variant === "sent" && group.innerText.includes("手動状態更新");
+        if (actions.length === 0 && !explanatoryOnlyGroup) failures.push(`group ${index} has no visible action`);
         actions.forEach((action) => {
           const actionRect = action.getBoundingClientRect();
           if (actionRect.width <= 0 || actionRect.height <= 0) failures.push(`hidden action ${action.textContent || action.value}`);
