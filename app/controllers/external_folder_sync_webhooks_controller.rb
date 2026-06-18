@@ -136,7 +136,9 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
 
   def sharepoint_notifications
     payload = request_payload
-    Array(payload["value"] || payload)
+    notifications = payload.key?("value") ? payload["value"] : payload.presence
+
+    Array.wrap(notifications)
   end
 
   def filtered_payload(provider:, payload:)
