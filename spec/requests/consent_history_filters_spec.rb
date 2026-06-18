@@ -34,9 +34,9 @@ RSpec.describe "Consent history filters", type: :request do
 
   it "filters the current user's history by title, agreed version, and target display without hiding active terms" do
     active_term = create(:consent_term, title: "Active Consent Terms", body: "Active body", version_label: "v-active", consent_scope: :global)
-    project_term = create(:consent_term, title: "Project Review Terms", version_label: "release-2026", consent_scope: :project)
-    document_term = create(:consent_term, title: "Document Reading Terms", version_label: "doc-v2", consent_scope: :document)
-    other_term = create(:consent_term, title: "Other User Project Review Terms", version_label: "release-2026", consent_scope: :project)
+    project_term = create(:consent_term, title: "Project Review Terms", version_label: "release-2026", consent_scope: :project, active: false)
+    document_term = create(:consent_term, title: "Document Reading Terms", version_label: "doc-v2", consent_scope: :document, active: false)
+    other_term = create(:consent_term, title: "Other User Project Review Terms", version_label: "release-2026", consent_scope: :project, active: false)
 
     create(:user_consent, user:, consent_term: project_term, target: project, consent_term_version_label: "release-2026")
     create(:user_consent, user:, consent_term: document_term, target: document, consent_term_version_label: "doc-v2")
@@ -61,8 +61,8 @@ RSpec.describe "Consent history filters", type: :request do
   end
 
   it "filters by valid consent_scope and ignores unsupported scope values safely" do
-    project_term = create(:consent_term, title: "Project Terms", version_label: "v-project", consent_scope: :project)
-    download_term = create(:consent_term, title: "Download Terms", version_label: "v-download", consent_scope: :download)
+    project_term = create(:consent_term, title: "Project Terms", version_label: "v-project", consent_scope: :project, active: false)
+    download_term = create(:consent_term, title: "Download Terms", version_label: "v-download", consent_scope: :download, active: false)
 
     create(:user_consent, user:, consent_term: project_term, target: project, consent_term_version_label: "v-project")
     create(:user_consent, user:, consent_term: download_term, target: file, consent_term_version_label: "v-download")
@@ -89,7 +89,7 @@ RSpec.describe "Consent history filters", type: :request do
 
   it "separates filtered empty state from a user with no consent history" do
     active_term = create(:consent_term, title: "Active Only Terms", body: "Active body", version_label: "v-active", consent_scope: :global)
-    history_term = create(:consent_term, title: "Existing History Terms", version_label: "v-history", consent_scope: :project)
+    history_term = create(:consent_term, title: "Existing History Terms", version_label: "v-history", consent_scope: :project, active: false)
     create(:user_consent, user:, consent_term: history_term, target: project, consent_term_version_label: "v-history")
 
     sign_in_as(user)
