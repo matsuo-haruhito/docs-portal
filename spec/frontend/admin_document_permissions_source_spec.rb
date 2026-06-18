@@ -39,8 +39,10 @@ RSpec.describe "admin document permissions source" do
   it "keeps target guidance separate from access level guidance" do
     aggregate_failures do
       expect(form_source).to include("会社全体に付与するか、特定ユーザー1名に付与するかを選びます。会社とユーザーはどちらか一方だけを指定してください。")
-      expect(form_source).to include("会社全体に同じ権限を付与する場合だけ選択します。個人ユーザーへ付与する場合は空にします。")
-      expect(form_source).to include("特定の1名にだけ権限を付与する場合だけ選択します。会社全体へ付与する場合は空にします。")
+      expect(form_source).to include("保存時は、選んだ側だけを残し、もう一方は空にします。")
+      expect(form_source).to include("会社またはユーザーのどちらか一方だけを残してください。")
+      expect(form_source).to include("会社全体に同じ権限を付与する場合だけ選択します。ユーザー個別へ付与する場合、この欄は空にします。")
+      expect(form_source).to include("特定の1名にだけ権限を付与する場合だけ選択します。会社全体へ付与する場合、この欄は空にします。")
     end
   end
 
