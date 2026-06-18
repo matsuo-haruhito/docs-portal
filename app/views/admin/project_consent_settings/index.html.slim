@@ -89,7 +89,11 @@ h1 案件同意設定
             = setting.project.name
             br
             code = setting.project.code
-          td data-rails-table-preferences-column-key="consent_term" = setting.consent_term.title
+          td data-rails-table-preferences-column-key="consent_term"
+            = setting.consent_term.title
+            - unless setting.consent_term.active?
+              br
+              span.muted 同意文面: 無効化済み
           td data-rails-table-preferences-column-key="version_label"
             span.muted = setting.consent_term.version_label
           td data-rails-table-preferences-column-key="required_on" = project_consent_setting_required_on_label(setting.required_on)
