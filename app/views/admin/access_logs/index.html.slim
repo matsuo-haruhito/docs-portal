@@ -7,6 +7,7 @@
 - active_filter_summaries = access_log_active_filter_summaries(@filters, projects: @projects, companies: @companies, users: @users)
 - reached_display_limit = @reached_display_limit
 - query_max_length = Admin::AccessLogsController::ACCESS_LOG_QUERY_MAX_LENGTH
+- filter_search_limit = Admin::AccessLogsController::FILTER_SEARCH_LIMIT
 
 h1 監査ログ
 = render "admin/nav"
@@ -32,21 +33,48 @@ section.card
           = form.label :ai_context_scope, "AI出力範囲"
           = form.select :ai_context_scope, options_for_select([["すべて", ""]] + access_log_ai_context_scope_filter_options, @filters[:ai_context_scope])
         p.muted AI出力モード・範囲は page / file / zip / webhook など他の対象種別では条件から外れます。CSV export や有効な条件にも残りません。
-      div
-        = form.label :project_id, "案件"
-        = select_tag :project_id,
-          options_for_select([["すべて", ""]] + access_log_project_filter_options(@projects), @filters[:project_id]),
-          access_log_filter_select_html_options(placeholder: "案件で絞り込み")
-      div
-        = form.label :company_id, "会社"
-        = select_tag :company_id,
-          options_for_select([["すべて", ""]] + access_log_company_filter_options(@companies), @filters[:company_id]),
-          access_log_filter_select_html_options(placeholder: "会社で絞り込み")
-      div
-        = form.label :user_id, "ユーザー"
-        = select_tag :user_id,
-          options_for_select([["すべて", ""]] + access_log_user_filter_options(@users), @filters[:user_id]),
-          access_log_filter_select_html_options(placeholder: "ユーザーで絞り込み")
+      = form.rfk_combobox :project_id,
+        collection: [],
+        selected: access_log_project_selected_option(@selected_project),
+        url: project_search_admin_access_logs_path(format: :json),
+        selected_url: selected_project_admin_access_logs_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: filter_search_limit,
+        wrapper: true,
+        label: "案件",
+        placeholder: "案件コード・案件名で検索",
+        allow_clear: true
+      = form.rfk_combobox :company_id,
+        collection: [],
+        selected: access_log_company_selected_option(@selected_company),
+        url: company_search_admin_access_logs_path(format: :json),
+        selected_url: selected_company_admin_access_logs_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: filter_search_limit,
+        wrapper: true,
+        label: "会社",
+        placeholder: "会社名・ドメインで検索",
+        allow_clear: true
+      = form.rfk_combobox :user_id,
+        collection: [],
+        selected: access_log_user_selected_option(@selected_user),
+        url: user_search_admin_access_logs_path(format: :json),
+        selected_url: selected_user_admin_access_logs_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: filter_search_limit,
+        wrapper: true,
+        label: "ユーザー",
+        placeholder: "ユーザー名・メールアドレスで検索",
+        allow_clear: true
       div
         = form.label :q, "対象名・IPアドレス"
         = form.search_field :q, value: @filters[:q], placeholder: "ZIP名・ファイル名・AI context export の記録・IP", maxlength: query_max_length
@@ -64,6 +92,7 @@ section.card
       div
         p.muted 開始日はその日の0:00以降、終了日はその日の23:59までを含みます。片方だけでも指定できます。
 
+    p.muted = "案件・会社・ユーザーは検索語最大#{query_max_length}文字、候補最大#{filter_search_limit}件です。URLで指定済みの値は候補上限外でも復元します。"
     p.actions
       = form.submit "検索"
       - if has_active_filters
