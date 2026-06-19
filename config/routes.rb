@@ -113,7 +113,14 @@ Rails.application.routes.draw do
       post :retry_dispatch, on: :member
       post :retry_failed, on: :collection
     end
-    resources :access_logs, only: [:index]
+    resources :access_logs, only: [:index] do
+      get :project_search, on: :collection
+      get :selected_project, on: :collection
+      get :company_search, on: :collection
+      get :selected_company, on: :collection
+      get :user_search, on: :collection
+      get :selected_user, on: :collection
+    end
     resources :access_requests, only: %i[index update], param: :public_id
     resources :document_usage_reports, only: [:index]
     resources :read_confirmations, only: [:index]
