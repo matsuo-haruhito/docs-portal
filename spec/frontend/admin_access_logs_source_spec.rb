@@ -4,20 +4,40 @@ RSpec.describe "admin access logs source" do
   let(:view_source) { Rails.root.join("app/views/admin/access_logs/index.html.slim").read }
   let(:helper_source) { Rails.root.join("app/helpers/admin/access_logs_helper.rb").read }
 
-  it "uses searchable rails fields kit selects for project, company, and user filters" do
+  it "uses remote rails fields kit comboboxes for project, company, and user filters" do
     aggregate_failures do
-      expect(view_source).to include("= select_tag :project_id,")
-      expect(view_source).to include("access_log_project_filter_options(@projects)")
-      expect(view_source).to include('access_log_filter_select_html_options(placeholder: "案件で絞り込み")')
-      expect(view_source).to include("= select_tag :company_id,")
-      expect(view_source).to include("access_log_company_filter_options(@companies)")
-      expect(view_source).to include('access_log_filter_select_html_options(placeholder: "会社で絞り込み")')
-      expect(view_source).to include("= select_tag :user_id,")
-      expect(view_source).to include("access_log_user_filter_options(@users)")
-      expect(view_source).to include('access_log_filter_select_html_options(placeholder: "ユーザーで絞り込み")')
+      expect(view_source).to include("= form.rfk_combobox :project_id,")
+      expect(view_source).to include("selected: access_log_project_selected_option(@selected_project)")
+      expect(view_source).to include("url: project_search_admin_access_logs_path(format: :json)")
+      expect(view_source).to include("selected_url: selected_project_admin_access_logs_path(format: :json)")
+      expect(view_source).to include('placeholder: "案件コード・案件名で検索"')
+      expect(view_source).to include("= form.rfk_combobox :company_id,")
+      expect(view_source).to include("selected: access_log_company_selected_option(@selected_company)")
+      expect(view_source).to include("url: company_search_admin_access_logs_path(format: :json)")
+      expect(view_source).to include("selected_url: selected_company_admin_access_logs_path(format: :json)")
+      expect(view_source).to include('placeholder: "会社名・ドメインで検索"')
+      expect(view_source).to include("= form.rfk_combobox :user_id,")
+      expect(view_source).to include("selected: access_log_user_selected_option(@selected_user)")
+      expect(view_source).to include("url: user_search_admin_access_logs_path(format: :json)")
+      expect(view_source).to include("selected_url: selected_user_admin_access_logs_path(format: :json)")
+      expect(view_source).to include('placeholder: "ユーザー名・メールアドレスで検索"')
+      expect(view_source).not_to include("= select_tag :project_id,")
+      expect(view_source).not_to include("= select_tag :company_id,")
+      expect(view_source).not_to include("= select_tag :user_id,")
       expect(view_source).not_to include("= form.select :project_id")
       expect(view_source).not_to include("= form.select :company_id")
       expect(view_source).not_to include("= form.select :user_id")
+    end
+  end
+
+  it "keeps the ai context guidance state copy beside remote filters" do
+    aggregate_failures do
+      expect(view_source).to include('data-testid="ai-context-filter-guidance"')
+      expect(view_source).to include("- if ai_context_filters_enabled")
+      expect(view_source).to include("span.badge 対象種別: AI context export")
+      expect(view_source).to include("span.badge 対象外")
+      expect(view_source).to include("AI出力モード・範囲は今回の検索条件として有効です")
+      expect(view_source).to include("対象種別が AI context export ではないため、AI出力モード・範囲は今回の有効な条件から外れます")
     end
   end
 
@@ -48,6 +68,9 @@ RSpec.describe "admin access logs source" do
       expect(helper_source).to include('controller: "rails-fields-kit--tom-select"')
       expect(helper_source).to include('rails_fields_kit__tom_select_placeholder_value: placeholder')
       expect(helper_source).to include('rails_fields_kit__tom_select_plugins_value: ["clear_button"]')
+      expect(helper_source).to include("def access_log_project_selected_option(project)")
+      expect(helper_source).to include("def access_log_company_selected_option(company)")
+      expect(helper_source).to include("def access_log_user_selected_option(user)")
     end
   end
 end

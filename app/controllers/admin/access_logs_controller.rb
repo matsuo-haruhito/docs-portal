@@ -7,6 +7,7 @@ class Admin::AccessLogsController < Admin::BaseController
   ACCESS_LOGS_MAX_PAGE = 50
   ACCESS_LOG_QUERY_MAX_LENGTH = 100
   FILTER_CANDIDATE_LIMIT = 50
+  FILTER_SEARCH_LIMIT = 20
   CSV_HEADERS = [
     "日時",
     "操作",
@@ -39,6 +40,9 @@ class Admin::AccessLogsController < Admin::BaseController
         @projects = access_log_filter_candidates(Project.order(:code), @filters[:project_id])
         @companies = access_log_filter_candidates(Company.order(:domain), @filters[:company_id])
         @users = access_log_filter_candidates(User.order(:email_address), @filters[:user_id])
+        @selected_project = access_log_selected_record(@projects, @filters[:project_id])
+        @selected_company = access_log_selected_record(@companies, @filters[:company_id])
+        @selected_user = access_log_selected_record(@users, @filters[:user_id])
         @access_logs = paginated_access_logs
         @has_previous_page = @page > 1
         @has_next_page = @access_logs.size > ACCESS_LOGS_PER_PAGE
@@ -55,6 +59,36 @@ class Admin::AccessLogsController < Admin::BaseController
         render json: access_logs_export_metadata
       end
     end
+  end
+
+  def project_search
+    render json: { options: access_log_project_options(searchable_access_log_projects) }
+  end
+
+  def selected_project
+    project = Project.find_by(id: params[:id])
+
+    render json: { option: project ? access_log_project_option(project) : nil }
+  end
+
+  def company_search
+    render json: { options: access_log_company_options(searchable_access_log_companies) }
+  end
+
+  def selected_company
+    company = Company.find_by(id: params[:id])
+
+    render json: { option: company ? access_log_company_option(company) : nil }
+  end
+
+  def user_search
+    render json: { options: access_log_user_options(searchable_access_log_users) }
+  end
+
+  def selected_user
+    user = User.find_by(id: params[:id])
+
+    render json: { option: user ? access_log_user_option(user) : nil }
   end
 
   private
@@ -295,6 +329,78 @@ class Admin::AccessLogsController < Admin::BaseController
 
     selected_record = scope.unscope(:order).find_by(id: selected_id)
     selected_record ? records + [selected_record] : records
+  end
+
+  def access_log_selected_record(records, selected_id)
+    return if selected_id.blank?
+
+    records.find { _1.id.to_s == selected_id.to_s }
+  end
+
+  def searchable_access_log_projects
+    scope = Project.order(:code, :id)
+    query = normalized_access_log_query(params[:q])
+    return scope.limit(FILTER_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{Project.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(projects.code) LIKE :pattern OR LOWER(projects.name) LIKE :pattern",
+      pattern:
+    ).limit(FILTER_SEARCH_LIMIT)
+  end
+
+  def searchable_access_log_companies
+    scope = Company.order(:domain, :id)
+    query = normalized_access_log_query(params[:q])
+    return scope.limit(FILTER_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{Company.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(companies.name) LIKE :pattern OR LOWER(companies.domain) LIKE :pattern",
+      pattern:
+    ).limit(FILTER_SEARCH_LIMIT)
+  end
+
+  def searchable_access_log_users
+    scope = User.order(:email_address, :id)
+    query = normalized_access_log_query(params[:q])
+    return scope.limit(FILTER_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{User.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(users.name) LIKE :pattern OR LOWER(users.email_address) LIKE :pattern",
+      pattern:
+    ).limit(FILTER_SEARCH_LIMIT)
+  end
+
+  def access_log_project_options(projects)
+    projects.map { access_log_project_option(_1) }
+  end
+
+  def access_log_project_option(project)
+    { value: project.id, text: "#{project.code} / #{project.name}" }
+  end
+
+  def access_log_company_options(companies)
+    companies.map { access_log_company_option(_1) }
+  end
+
+  def access_log_company_option(company)
+    label = company.display_name
+    label = "#{label} / #{company.domain}" if company.domain.present?
+
+    { value: company.id, text: label }
+  end
+
+  def access_log_user_options(users)
+    users.map { access_log_user_option(_1) }
+  end
+
+  def access_log_user_option(user)
+    primary_label = user.display_name.presence || user.email_address
+    label = primary_label == user.email_address ? primary_label : "#{primary_label} / #{user.email_address}"
+
+    { value: user.id, text: label }
   end
 
   def unknown_target_type_filter?(target_type)
