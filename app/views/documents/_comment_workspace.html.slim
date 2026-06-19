@@ -5,14 +5,21 @@
 - comment_search_query = @comment_search_query.to_s
 - comment_search_maxlength = DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH
 - comment_search_active = comment_search_query.present?
+- comment_author_options = @comment_author_options || []
+- comment_author_id = @comment_author_id.to_s
+- comment_selected_author = @comment_selected_author || comment_author_options.find { |author| author.public_id == comment_author_id }
+- comment_author_active = comment_selected_author.present?
+- comment_filter_active = comment_search_active || comment_author_active
 - comment_workspace_tab = @comment_workspace_tab.presence || DocumentCommentWorkspaceTab::DEFAULT_TAB
 - comment_context_params = { "comment_tab" => comment_workspace_tab }
 - comment_context_params["comment_q"] = comment_search_query if comment_search_active
-- comment_tab_base_params = request.query_parameters.except("comment_tab", "comment_q")
+- comment_context_params["comment_author_id"] = comment_author_id if comment_author_active
+- comment_tab_base_params = request.query_parameters.except("comment_tab", "comment_q", "comment_author_id")
 - comment_tab_base_params = comment_tab_base_params.merge("comment_q" => comment_search_query) if comment_search_active
+- comment_tab_base_params = comment_tab_base_params.merge("comment_author_id" => comment_author_id) if comment_author_active
 - comment_tab_base_params = comment_tab_base_params.merge(only_path: true)
 - comment_tab_url = ->(tab) { url_for(comment_tab_base_params.merge(comment_tab: tab)) }
-- comment_search_params = request.query_parameters.except("comment_q", "comment_tab").merge("comment_tab" => comment_workspace_tab)
+- comment_search_params = request.query_parameters.except("comment_q", "comment_author_id", "comment_tab").merge("comment_tab" => comment_workspace_tab)
 - has_review_comments = current_user.internal? && @review_comments.any?
 - has_question_threads = @question_threads.any?
 - unresolved_question_count = @question_threads.count(&:open?)
@@ -66,8 +73,8 @@ details class=wrapper_classes.join(" ") open=(!floating)
         p.document-comment-workspace__summary-help.muted 未解決タブには、未解決のQ&Aと内部向け確認事項をまとめて表示します。Q&Aの受付・回答状態と確認事項の解決状態は別の管理です。通知・期限・SLAを示すものではありません。
       - else
         p.document-comment-workspace__summary-help.muted 未解決タブには、まだ回答やクローズがされていないQ&Aを表示します。
-      - if comment_search_active
-        p.document-comment-workspace__summary-help.muted 表示中の件数とタブの未解決件数は、検索条件に一致したコメントだけを基準にしています。
+      - if comment_filter_active
+        p.document-comment-workspace__summary-help.muted 表示中の件数とタブの未解決件数は、絞り込み条件に一致したコメントだけを基準にしています。
 
     .document-comment-workspace__mode.card
       h3 追加する内容
@@ -130,21 +137,31 @@ details class=wrapper_classes.join(" ") open=(!floating)
           - Array(value).each do |item|
             = hidden_field_tag key, item
         .form-grid.form-grid--compact
+          label
+            | 投稿者
+            = select_tag :comment_author_id, options_for_select([["すべての投稿者", ""]] + comment_author_options.map { |author| [author.display_name, author.public_id] }, comment_author_id)
           label.form-field--full
             | コメント本文 / 位置メモ
             = search_field_tag :comment_q, comment_search_query, maxlength: comment_search_maxlength, placeholder: current_user.internal? ? "例: 修正依頼 / docs/spec.md" : "例: 質問内容"
         p.actions.form-actions
           = submit_tag "コメントを検索", class: "button secondary"
-          - if comment_search_active
+          - if comment_filter_active
             = link_to "検索を解除", url_for(comment_search_params.merge(only_path: true)), class: "button secondary"
-      - if comment_search_active
+      - if comment_filter_active
         p.muted
-          | 検索条件: 
-          strong = comment_search_query
+          | 絞り込み条件: 
+          - if comment_search_active
+            | キーワード 
+            strong = comment_search_query
+          - if comment_search_active && comment_author_active
+            |  / 
+          - if comment_author_active
+            | 投稿者 
+            strong = comment_selected_author.display_name
           - if current_user.internal?
-            | 。検索は、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます。
+            | 。絞り込みは、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます。
           - else
-            | 。検索は、すべて / Q&A / 未解決Q&A の各タブに先に適用されます。
+            | 。絞り込みは、すべて / Q&A / 未解決Q&A の各タブに先に適用されます。
 
     .document-comment-tabs.card
       input#document-comment-tab-all.document-comment-tabs__input type="radio" name="document_comment_tab" checked=(comment_workspace_tab == "all")
@@ -180,12 +197,12 @@ details class=wrapper_classes.join(" ") open=(!floating)
           = render "documents/comment_workspace_threads", show_questions: true, show_reviews: current_user.internal?, only_unresolved: true
         - else
           p.muted
-            - if comment_search_active
-              | 検索条件に一致する未解決のコメントはありません。
+            - if comment_filter_active
+              | 絞り込み条件に一致する未解決のコメントはありません。
             - elsif current_user.internal?
               | 未解決のQ&Aと確認事項はありません。
             - else
               | 未解決のQ&Aはありません。
-          - if comment_search_active
+          - if comment_filter_active
             p.document-comment-empty-actions
               = link_to "検索を解除してすべて表示", url_for(comment_search_params.merge(only_path: true)), class: "button secondary"

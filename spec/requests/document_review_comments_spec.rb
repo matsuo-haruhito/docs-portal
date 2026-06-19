@@ -317,11 +317,11 @@ RSpec.describe "Document review comments", type: :request do
     review_panel_text = html.at_css(".document-comment-tabs__panel--review").text
     unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
 
-    expect(page_text).to include("検索条件: delivery window")
-    expect(page_text).to include("検索は、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます")
+    expect(page_text).to include("絞り込み条件: キーワード delivery window")
+    expect(page_text).to include("絞り込みは、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます")
     expect(qa_panel_text).to include(qa_hit.body)
     expect(qa_panel_text).not_to include(qa_miss.body)
-    expect(review_panel_text).to include("検索条件に一致する確認事項はありません")
+    expect(review_panel_text).to include("絞り込み条件に一致する確認事項はありません")
     expect(unresolved_panel_text).to include(qa_hit.body)
     expect(unresolved_panel_text).not_to include(qa_miss.body)
 
@@ -333,7 +333,7 @@ RSpec.describe "Document review comments", type: :request do
     unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
 
     expect(response).to have_http_status(:ok)
-    expect(qa_panel_text).to include("検索条件に一致するQ&Aはありません")
+    expect(qa_panel_text).to include("絞り込み条件に一致するQ&Aはありません")
     expect(review_panel_text).to include(review_hit.body)
     expect(review_panel_text).to include("位置:")
     expect(review_panel_text).to include("docs/migration-handoff.md")
@@ -373,13 +373,13 @@ RSpec.describe "Document review comments", type: :request do
     all_panel_text = html.at_css(".document-comment-tabs__panel--all").text
     unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
 
-    expect(page_text).to include("検索条件: internal escalation")
-    expect(page_text).to include("検索は、すべて / Q&A / 未解決Q&A の各タブに先に適用されます")
+    expect(page_text).to include("絞り込み条件: キーワード internal escalation")
+    expect(page_text).to include("絞り込みは、すべて / Q&A / 未解決Q&A の各タブに先に適用されます")
     expect(page_text).not_to include("Partner rollout internal escalation")
     expect(page_text).not_to include("docs/private-partner-rollout.md")
     expect(page_text).not_to include("確認事項")
-    expect(all_panel_text).to include("検索条件に一致するQ&Aはありません")
-    expect(unresolved_panel_text).to include("検索条件に一致する未解決のコメントはありません")
+    expect(all_panel_text).to include("絞り込み条件に一致するQ&Aはありません")
+    expect(unresolved_panel_text).to include("絞り込み条件に一致する未解決のコメントはありません")
 
     get project_document_path(project, document.slug, comment_q: "partner rollout question")
 
@@ -434,11 +434,11 @@ RSpec.describe "Document review comments", type: :request do
     page_text = html.text.squish
     all_panel_text = html.at_css(".document-comment-tabs__panel--all").text
 
-    expect(page_text).to include("検索条件: internal-release-evidence")
+    expect(page_text).to include("絞り込み条件: キーワード internal-release-evidence")
     expect(page_text).not_to include(internal_review.body)
     expect(page_text).not_to include("docs/internal-release-evidence.md")
     expect(page_text).not_to include("確認事項")
-    expect(all_panel_text).to include("検索条件に一致するQ&Aはありません")
+    expect(all_panel_text).to include("絞り込み条件に一致するQ&Aはありません")
 
     get project_document_path(project, document.slug, comment_q: "visible reply confirms")
 
@@ -462,7 +462,7 @@ RSpec.describe "Document review comments", type: :request do
     search_input = html.at_css(%(input[name="comment_q"]))
 
     expect(search_input["value"]).to eq(normalized_query)
-    expect(html.text.squish).to include("検索条件: #{normalized_query}")
+    expect(html.text.squish).to include("絞り込み条件: キーワード #{normalized_query}")
     expect(html.text.squish).not_to include(long_query)
   end
 

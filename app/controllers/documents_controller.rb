@@ -67,12 +67,21 @@ class DocumentsController < BaseController
     ).crumbs
     @related_document_groups = RelatedDocumentFinder.new(document: @document, user: current_user).grouped_results
     visible_comments = @document.document_review_comments.visible_to(current_user)
-    comment_search = DocumentCommentWorkspaceSearch.new(user: current_user, query: params[:comment_q])
+    comment_author_candidates = visible_comments.includes(:author).map(&:author)
+    comment_search = DocumentCommentWorkspaceSearch.new(
+      user: current_user,
+      query: params[:comment_q],
+      author_public_id: params[:comment_author_id],
+      author_candidates: comment_author_candidates
+    )
     question_threads = visible_comments.where(internal_only: false, comment_type: :question).roots.includes(:author, :resolved_by, :document_version, replies: [:author, :resolved_by]).order(:created_at, :id)
     review_comments = visible_comments.where(internal_only: true).includes(:author, :resolved_by, :document_version).roots.order(:created_at, :id)
     @question_threads = comment_search.filter_questions(question_threads)
     @review_comments = comment_search.filter_reviews(review_comments)
     @comment_search_query = comment_search.query
+    @comment_author_options = comment_search.author_options
+    @comment_author_id = comment_search.author_public_id
+    @comment_selected_author = comment_search.selected_author
     @comment_workspace_tab = DocumentCommentWorkspaceTab.new(user: current_user, tab: params[:comment_tab]).value
     @export_preview_file = export_preview_files.first
     @export_watermark_text =
