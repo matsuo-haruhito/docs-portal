@@ -31,6 +31,17 @@ function setOutlineState(container, message) {
   if (list) list.replaceChildren()
 }
 
+function activateHeadingButton(button) {
+  const list = button.closest("[data-docs-portal-heading-outline-list]")
+  list?.querySelectorAll(".site-viewer-outline__item.is-active, .site-viewer-outline__item[aria-current='location']").forEach((item) => {
+    item.classList.remove("is-active")
+    item.removeAttribute("aria-current")
+  })
+
+  button.classList.add("is-active")
+  button.setAttribute("aria-current", "location")
+}
+
 function buildHeadingButton(frame, heading) {
   const button = document.createElement("button")
   button.type = "button"
@@ -38,6 +49,8 @@ function buildHeadingButton(frame, heading) {
   button.textContent = headingText(heading)
 
   button.addEventListener("click", () => {
+    activateHeadingButton(button)
+
     try {
       heading.scrollIntoView({ behavior: "smooth", block: "start" })
       frame.contentWindow?.focus()
@@ -58,7 +71,7 @@ function renderHeadingOutline(container) {
 
   const frameDocument = readFrameDocument(frame)
   if (!frameDocument?.body) {
-    setOutlineState(container, "見出しを取得できませんでした")
+    setOutlineState(container, "見出しを取得できませんでした。本文側の通常スクロールで確認してください。")
     return
   }
 
@@ -68,7 +81,7 @@ function renderHeadingOutline(container) {
 
   container.hidden = false
   if (!list || headings.length === 0) {
-    setOutlineState(container, "見出しはありません")
+    setOutlineState(container, "見出しはありません。本文側の通常スクロールで確認してください。")
     return
   }
 
@@ -79,7 +92,7 @@ function renderHeadingOutline(container) {
 
   const omittedCount = Math.max(headings.length - MAX_VISIBLE_HEADINGS, 0)
   if (summary) {
-    summary.textContent = omittedCount > 0 ? `${headings.length}件の見出し（先頭${MAX_VISIBLE_HEADINGS}件を表示）` : `${headings.length}件の見出し`
+    summary.textContent = omittedCount > 0 ? `${headings.length}件の見出し（先頭${MAX_VISIBLE_HEADINGS}件を表示・後続は本文スクロールで確認）` : `${headings.length}件の見出し（クリックで本文位置へ移動）`
   }
 }
 

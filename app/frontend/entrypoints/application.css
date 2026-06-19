@@ -794,6 +794,14 @@ ul {
   color: var(--accent-2);
 }
 
+.site-viewer-outline__item.is-active,
+.site-viewer-outline__item[aria-current="location"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  box-shadow: inset 0 0 0 1px rgba(255, 80, 0, 0.22);
+}
+
 .site-viewer-frame {
   display: block;
   width: 100%;
