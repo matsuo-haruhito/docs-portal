@@ -71,6 +71,11 @@ section.card data-controller="company-master-admin-handoff" data-company-master-
           span.muted = category[:request_hint]
           br
           span.muted = "選ぶ目安: #{category[:decision_hint]}"
+  .company-master-admin-handoff-current-summary
+    p.muted
+      strong 選んだ分類の読み方
+      |  - radio の選択に合わせて入力欄の初期値が切り替わり、下のコピー対象 textarea に反映されます。
+    p.muted user type 変更相談が「あり」の分類は、会社管理者だけで権限や所属会社を判断せず、internal admin / human 判断待ちとして引き継いでください。
   .form-grid
     label
       | 対象ユーザー
@@ -92,6 +97,7 @@ section.card data-controller="company-master-admin-handoff" data-company-master-
     button.button.secondary type="button" data-action="company-master-admin-handoff#copy" aria-describedby="company-master-admin-handoff-status"
       | 依頼テンプレートをコピー
     span#company-master-admin-handoff-status.muted role="status" aria-live="polite" hidden=true data-company-master-admin-handoff-target="status"
+  p.muted コピー対象 textarea は、選択中の分類と上の入力欄から生成されます。貼り付け前に会社名、対象ユーザー、期限・背景を確認してください。
   textarea.company-master-admin-handoff-template rows="8" data-company-master-admin-handoff-target="template" tabindex="0" = handoff_template_lines.join("\n")
   p.muted この確認項目は依頼内容を整理するためのものであり、会社管理者の権限や文書閲覧範囲を広げるものではありません。
 
