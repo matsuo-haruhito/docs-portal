@@ -81,6 +81,7 @@ Tom Select 自体は積極的に使う。ただし、アプリ側で `new TomSel
 
 - `preview-tools` bridge は移行用の入口として退役済み。`archive-preview-tools`, `csv-preview-tools`, `document-file-list-search`, `markdown-preview-document-search`, `markdown-preview-codeblock-tools`, `markdown-preview-table-tools`, `image-preview-tools`, `pdf-preview-tools`, `structured-preview-tools`, `site-viewer-iframe-height` などの専用 controller がそれぞれ helper refresh を担当する。bridge 再導入や空 controller の維持は current support として扱わない。
 - `preview-table-resizer` は Markdown preview table の fallback path として維持する。Markdown table を `rails_table_preferences` へ寄せる判断は #475 の親論点に残す。
+- `DocusaurusSiteRenderer` の table rewrite は current support として、site viewer HTML の `<table>` に `portal-doc-table-preference-wrapper` / `portal-doc-preference-table` と document version / site path / table index / stable table key metadata を付ける。これは後続 design / feature が参照できる DOM 境界であり、column visibility / preset UI / preference schema の最終判断は #475 に残す。
 - `document-tree-navigation` は tree link click 後の Turbo Stream refresh を補助する app 側 controller として維持する。TreeView gem API、loading / error event 名、retry policy はこの ROADMAP で決めない。
 
 方針:
@@ -96,4 +97,4 @@ Tom Select 自体は積極的に使う。ただし、アプリ側で `new TomSel
 - Rails system spec または手動確認で、主要導線の UX が維持されていること。
 - table preference 保存がユーザー単位で期待どおり動くこと。
 - Tom Select / remote search が大量データでも扱いやすいこと。
-- gem 側に不足がある場合は、それぞれの gem リポジトリへ issue を作成する。
+- gem 側に不足がある場合は、それぞれの gemリポジトリへ issue を作成する。
