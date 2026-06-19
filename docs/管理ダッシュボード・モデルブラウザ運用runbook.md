@@ -26,6 +26,9 @@ current 実装の前提:
 - `Storage使用量` は `StorageUsageSummary` で local `storage/document_files` / `storage/docs_sites` / `storage/imports` の file count と概算使用量を read-only に出す
 - `Storage使用量` の `DocumentFile 実体の Project / Document 上位` は、`storage/document_files` に紐づく `DocumentFile` 実体だけを Project / Document 単位で概算集計し、上位 5 件を read-only preview として表示する
 - `Storage使用量` の `次の確認先` は、各領域から既存確認画面や既存 docs へ戻るための link cue であり、削除、cleanup、retention 対象を確定する操作ではない
+- `運用失敗入口` は、生成ファイルや外部送付履歴などの保存済み failed 履歴と、同じ identity の最新 run が連続 failed かを見る `継続失敗候補` を分けて表示する
+- `保存済み履歴` の件数は保存済み failed 履歴の件数であり、継続失敗候補、通知状態、ack 状態、自動復旧状態とは別に読む
+- `古い失敗のみ` は 7 日より古い対象履歴だけが残っている cue であり、緊急度、通知状態、ack 状態を示す表示ではない
 - 画面下部の `基本マスタ` `関連設定` は、日常確認後に既存の管理画面へ戻る近道として置かれている
 
 ## 1. モデル観測とモデルブラウザ
@@ -235,6 +238,8 @@ current 実装の前提:
 - 欠落ファイル詳細の `条件をクリア` が、有効な案件 / 文書 / ファイル filter があるときだけ出る状態解除導線だと読めているか
 - `Storage key` と `Expected path` preview の役割を分け、raw absolute path が通常 UI に出ない前提で切り分けているか
 - `Storage使用量` が local directory の概算容量として読めており、`DocumentFile 実体の Project / Document 上位` を削除や retention 判断の実行入口と混同していないか
+- `運用失敗入口` では `保存済み履歴` と `継続失敗候補` を分け、保存済み failed 件数と最新 run の連続失敗候補を混同していないか
+- `古い失敗のみ` が出ている場合、7 日より古い対象履歴だけが残っている cue として読み、緊急度、通知状態、ack 状態の判断材料にしない
 - dashboard だけで完結させず、必要な既存管理画面や仕様 docs にすぐ戻れているか
 
 ## 迷ったときの切り分け
@@ -248,6 +253,8 @@ current 実装の前提:
 - model 詳細内の最近の record sample から識別値を探したい: `モデルブラウザ` show の `代表フィールド検索`
 - detail から既存画面で続けて調べたい: `既存画面で詳しく確認` を使い、検索語引き継ぎの有無に応じて既存画面側で再確認する
 - `.env` や compose の設定不足を見たい: `アプリ設定診断`
+- 運用失敗入口の数値を読み分けたい: `保存済み履歴` は保存済み failed 件数、`継続失敗候補` は同じ identity の最新 run が連続 failed かを見る read-only 調査入口として分ける
+- `古い失敗のみ` が出ている: 7 日より古い対象履歴だけが残っている状態として読み、緊急度や通知 / ack 状態は対象 runbook と履歴 detail で別途確認する
 - 実体ファイルが見えない原因を切り分けたい: `文書ファイル健全性`
 - 欠落ファイル詳細で特定案件だけを見たい: 案件コード / 案件名の remote search で案件を選び、文書名 / slug や Storage key / ファイル名の断片と組み合わせて先頭 100 件の read-only 一覧を絞る
 - 欠落ファイル詳細で `条件をクリア` が出ていない: 有効な filter はない状態として読み、空白だけの検索語が残っているとは扱わない
