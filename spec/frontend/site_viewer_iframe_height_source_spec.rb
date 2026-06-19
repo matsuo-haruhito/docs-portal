@@ -32,12 +32,27 @@ RSpec.describe "site viewer iframe height source" do
       expect(site_viewer_iframe_height_controller_source).to include('import { setupSiteViewerHeadingOutline } from "../lib/site_viewer_heading_outline"')
       expect(site_viewer_iframe_height_controller_source).to include("setupSiteViewerHeadingOutline()")
       expect(heading_outline_source).to include('const HEADING_SELECTOR = "h1, h2, h3"')
+      expect(heading_outline_source).to include("const MAX_VISIBLE_HEADINGS = 24")
       expect(heading_outline_source).to include("frame.contentDocument || frame.contentWindow?.document")
-      expect(heading_outline_source).to include("見出しを取得できませんでした")
-      expect(heading_outline_source).to include("見出しはありません")
+      expect(heading_outline_source).to include("見出しを取得できませんでした。本文側の通常スクロールで確認してください。")
+      expect(heading_outline_source).to include("見出しはありません。本文側の通常スクロールで確認してください。")
+      expect(heading_outline_source).to include("先頭${MAX_VISIBLE_HEADINGS}件を表示・後続は本文スクロールで確認")
+      expect(heading_outline_source).to include("クリックで本文位置へ移動")
       expect(heading_outline_source).to include("heading.scrollIntoView")
       expect(heading_outline_source).not_to include("fetch(")
       expect(heading_outline_source).not_to include("localStorage")
+    end
+  end
+
+  it "marks the clicked heading outline item as the current location without scroll tracking" do
+    aggregate_failures do
+      expect(heading_outline_source).to include("function activateHeadingButton(button)")
+      expect(heading_outline_source).to include('button.classList.add("is-active")')
+      expect(heading_outline_source).to include('button.setAttribute("aria-current", "location")')
+      expect(heading_outline_source).to include('item.removeAttribute("aria-current")')
+      expect(stylesheet_source).to include(".site-viewer-outline__item.is-active")
+      expect(stylesheet_source).to include('.site-viewer-outline__item[aria-current="location"]')
+      expect(heading_outline_source).not_to include("IntersectionObserver")
     end
   end
 
