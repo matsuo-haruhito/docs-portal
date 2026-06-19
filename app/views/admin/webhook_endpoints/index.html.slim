@@ -47,6 +47,9 @@ h1 Webhook
               span.badge = webhook_event_type_label(event_type)
           td data-rails-table-preferences-column-key="active"
             span.badge = webhook_endpoint_status_label(endpoint)
+            - unless endpoint.active?
+              br
+              span.muted 通常送信・手動再送の対象外
           td.actions data-rails-table-preferences-column-key="actions"
             span.muted 設定操作
             = edit_link_to "編集", edit_admin_webhook_endpoint_path(endpoint)
