@@ -42,6 +42,8 @@ RSpec.describe "Company master admin handoff source" do
       expect(view_source.scan("decision_hint:").size).to eq(4)
       expect(view_source).to include('span.muted = "選ぶ目安: #{category[:decision_hint]}"')
       expect(view_source).to include("分類選択、入力欄、コピー対象 textarea の順で内容を整えてから")
+      expect(view_source).to include("選んだ分類の読み方")
+      expect(view_source).to include("radio の選択に合わせて入力欄の初期値が切り替わり、下のコピー対象 textarea に反映されます")
       expect(view_source).not_to include("decision_hint: category[:decision_hint]")
       expect(controller_source).not_to include("decisionHint")
     end
@@ -55,6 +57,9 @@ RSpec.describe "Company master admin handoff source" do
       expect(view_source).to include('data-company-master-admin-handoff-target="userType"')
       expect(view_source).to include('data-company-master-admin-handoff-target="timeline"')
       expect(view_source.scan('data-action="input->company-master-admin-handoff#updateTemplate"').size).to eq(5)
+      expect(view_source).to include("コピー対象 textarea は、選択中の分類と上の入力欄から生成されます")
+      expect(view_source).to include("user type 変更相談が「あり」の分類は、会社管理者だけで権限や所属会社を判断せず")
+      expect(view_source).to include("internal admin / human 判断待ちとして引き継いでください")
       expect(view_source).to include("この確認項目は依頼内容を整理するためのものであり、会社管理者の権限や文書閲覧範囲を広げるものではありません")
     end
   end
