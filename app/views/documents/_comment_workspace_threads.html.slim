@@ -7,10 +7,14 @@
 - review_comments = review_comments.reject(&:resolved?) if only_unresolved
 - comment_search_query = @comment_search_query.to_s
 - comment_search_active = comment_search_query.present?
+- comment_author_id = @comment_author_id.to_s
+- comment_author_active = comment_author_id.present?
+- comment_filter_active = comment_search_active || comment_author_active
 - comment_workspace_tab = @comment_workspace_tab.presence || DocumentCommentWorkspaceTab::DEFAULT_TAB
 - comment_context_params = { comment_tab: comment_workspace_tab }
 - comment_context_params[:comment_q] = comment_search_query if comment_search_active
-- comment_clear_search_params = request.query_parameters.except("comment_q").merge("comment_tab" => comment_workspace_tab, only_path: true)
+- comment_context_params[:comment_author_id] = comment_author_id if comment_author_active
+- comment_clear_search_params = request.query_parameters.except("comment_q", "comment_author_id").merge("comment_tab" => comment_workspace_tab, only_path: true)
 
 - if question_threads.any?
   section.document-comment-thread-group
@@ -100,14 +104,14 @@
 
 - if question_threads.empty? && review_comments.empty?
   p.muted
-    - if comment_search_active && only_unresolved
-      | 検索条件に一致する未解決のコメントはありません。
-    - elsif comment_search_active && show_questions && show_reviews
-      | 検索条件に一致する文書コメントはありません。
-    - elsif comment_search_active && show_questions
-      | 検索条件に一致するQ&Aはありません。
-    - elsif comment_search_active
-      | 検索条件に一致する確認事項はありません。
+    - if comment_filter_active && only_unresolved
+      | 絞り込み条件に一致する未解決のコメントはありません。
+    - elsif comment_filter_active && show_questions && show_reviews
+      | 絞り込み条件に一致する文書コメントはありません。
+    - elsif comment_filter_active && show_questions
+      | 絞り込み条件に一致するQ&Aはありません。
+    - elsif comment_filter_active
+      | 絞り込み条件に一致する確認事項はありません。
     - elsif only_unresolved && show_questions && show_reviews
       | 未解決のQ&Aと確認事項はありません。
     - elsif only_unresolved && show_questions
@@ -120,6 +124,6 @@
       | まだ質問はありません。
     - else
       | 確認事項はありません。
-  - if comment_search_active
+  - if comment_filter_active
     p.document-comment-empty-actions
       = link_to "検索を解除してすべて表示", url_for(comment_clear_search_params), class: "button secondary"
