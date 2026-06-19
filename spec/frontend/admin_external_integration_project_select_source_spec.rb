@@ -65,13 +65,16 @@ RSpec.describe "admin external integration project selectors source" do
     end
   end
 
-  it "uses rails fields kit for the microsoft graph connection project selector" do
+  it "uses rails fields kit remote search for the microsoft graph connection project selector" do
     aggregate_failures do
-      expect(microsoft_graph_connection_form).to include("= form.rfk_select :project_id,")
-      expect(microsoft_graph_connection_form).to include("collection: @projects")
-      expect(microsoft_graph_connection_form).to include("collection_value_method: :id")
-      expect(microsoft_graph_connection_form).to include("collection_label_method: :name")
+      expect(microsoft_graph_connection_form).to include("= form.rfk_combobox :project_id,")
+      expect(microsoft_graph_connection_form).to include("collection: []")
+      expect(microsoft_graph_connection_form).to include("selected: microsoft_graph_connection_project_selected_option(microsoft_graph_connection.project)")
+      expect(microsoft_graph_connection_form).to include("project_search_admin_microsoft_graph_connections_path")
+      expect(microsoft_graph_connection_form).to include("selected_project_admin_microsoft_graph_connections_path")
+      expect(microsoft_graph_connection_form).to include("max_options: Admin::MicrosoftGraphConnectionsController::PROJECT_SEARCH_LIMIT")
       expect(microsoft_graph_connection_form).to include('label: "案件"')
+      expect(microsoft_graph_connection_form).not_to include("= form.rfk_select :project_id,")
       expect(microsoft_graph_connection_form).not_to include("collection_select :project_id")
     end
   end

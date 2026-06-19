@@ -74,7 +74,10 @@ Rails.application.routes.draw do
       get :project_search, on: :collection
       get :selected_project, on: :collection
     end
-    resources :microsoft_graph_connections, except: %i[show new], param: :public_id
+    resources :microsoft_graph_connections, except: %i[show new], param: :public_id do
+      get :project_search, on: :collection
+      get :selected_project, on: :collection
+    end
     resources :recurring_job_schedules, only: %i[index show], param: :public_id do
       post :request_run, on: :member
     end
