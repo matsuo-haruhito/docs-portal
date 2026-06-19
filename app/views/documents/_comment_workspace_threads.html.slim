@@ -13,7 +13,7 @@
 
 - if question_threads.any?
   section.document-comment-thread-group
-    h3 = only_unresolved ? "未解決Q&A" : "Q&A"
+    h3 = only_unresolved ? "未解決Q&A（外部/利用者にも表示）" : "Q&A（外部/利用者にも表示）"
     - question_threads.each do |thread|
       article.document-comment-card
         header.document-comment-card__header
@@ -71,7 +71,7 @@
 
 - if review_comments.any?
   section.document-comment-thread-group
-    h3 = only_unresolved ? "未解決確認事項（社内レビューコメント）" : "確認事項（社内レビューコメント）"
+    h3 = only_unresolved ? "未解決確認事項（内部のみの社内レビューコメント）" : "確認事項（内部のみの社内レビューコメント）"
     - review_comments.each do |comment|
       article.document-comment-card.document-comment-card--internal
         header.document-comment-card__header
