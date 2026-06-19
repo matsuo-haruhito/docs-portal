@@ -50,6 +50,8 @@ RSpec.describe "site viewer iframe height source" do
       expect(heading_outline_source).to include('button.classList.add("is-active")')
       expect(heading_outline_source).to include('button.setAttribute("aria-current", "location")')
       expect(heading_outline_source).to include('item.removeAttribute("aria-current")')
+      expect(stylesheet_source).to include(".site-viewer-outline__item.is-active")
+      expect(stylesheet_source).to include('.site-viewer-outline__item[aria-current="location"]')
       expect(heading_outline_source).not_to include("IntersectionObserver")
     end
   end

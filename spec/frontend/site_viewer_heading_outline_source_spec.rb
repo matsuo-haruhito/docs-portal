@@ -3,6 +3,7 @@ require "rails_helper"
 RSpec.describe "Site viewer heading outline source" do
   let(:outline_source) { Rails.root.join("app/frontend/lib/site_viewer_heading_outline.js").read }
   let(:controller_source) { Rails.root.join("app/frontend/controllers/site_viewer_iframe_height_controller.js").read }
+  let(:stylesheet_source) { Rails.root.join("app/frontend/entrypoints/application.css").read }
   let(:view_source) { Rails.root.join("app/views/shared/site_viewer.html.slim").read }
 
   it "keeps the outline wired through the shared viewer shell and controller" do
@@ -57,6 +58,9 @@ RSpec.describe "Site viewer heading outline source" do
       expect(outline_source).to include("function activateHeadingButton(button)")
       expect(outline_source).to include('button.classList.add("is-active")')
       expect(outline_source).to include('button.setAttribute("aria-current", "location")')
+      expect(stylesheet_source).to include(".site-viewer-outline__item.is-active")
+      expect(stylesheet_source).to include('.site-viewer-outline__item[aria-current="location"]')
+      expect(stylesheet_source).to include("box-shadow: inset 0 0 0 1px rgba(255, 80, 0, 0.22)")
       expect(outline_source).not_to include("scrollspy")
       expect(outline_source).not_to include("IntersectionObserver")
     end
