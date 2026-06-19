@@ -110,6 +110,7 @@ function injectStyle(frameDocument) {
     .portal-table-width-toolbar > summary::after { content: "▼"; display: inline-flex; align-items: center; justify-content: center; width: 1.35rem; height: 1.25rem; border: 0; border-radius: 4px; background: transparent; color: var(--doc-primary, #2563eb); font-size: 1rem; line-height: 1; padding: 0; }
     .portal-table-width-toolbar[open] > summary::after { content: "▲"; }
     .portal-table-width-toolbar-title { color: var(--doc-text-soft, #334155); font-size: 1rem; font-weight: 800; line-height: 1.15; }
+    .portal-table-width-summary-cue { color: var(--doc-text-muted, #64748b); font-size: .72rem; line-height: 1.2; margin-left: auto; text-align: right; }
     .portal-table-width-toolbar-body { display: flex; gap: .25rem; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 0 .28rem .18rem; }
     .portal-table-width-toolbar label { display: inline-flex; gap: .28rem; align-items: center; margin: 0; white-space: nowrap; }
     .portal-table-width-toolbar input[type="range"] { width: 132px; accent-color: var(--doc-primary, #2563eb); }
@@ -132,6 +133,7 @@ function injectStyle(frameDocument) {
     .portal-table-width-frame.is-column-resizing, .portal-table-width-frame.is-column-resizing * { cursor: col-resize !important; user-select: none; }
     @media (max-width: 720px) {
       .portal-table-width-toolbar > summary, .portal-table-width-toolbar-body { align-items: flex-start; flex-direction: column; }
+      .portal-table-width-summary-cue { margin-left: 0; text-align: left; }
       .portal-table-width-toolbar input[type="range"] { width: 190px; }
     }
   `
@@ -271,7 +273,10 @@ export default class extends Controller {
     const summaryTitle = frameDocument.createElement("span")
     summaryTitle.className = "portal-table-width-toolbar-title"
     summaryTitle.textContent = "表ツール"
-    summary.appendChild(summaryTitle)
+    const summaryCue = frameDocument.createElement("span")
+    summaryCue.className = "portal-table-width-summary-cue"
+    summaryCue.textContent = "横スクロール・列幅調整できます"
+    summary.append(summaryTitle, summaryCue)
 
     const toolbarBody = frameDocument.createElement("div")
     toolbarBody.className = "portal-table-width-toolbar-body"
@@ -305,6 +310,7 @@ export default class extends Controller {
 
     const scroll = frameDocument.createElement("div")
     scroll.className = "portal-table-width-scroll"
+    scroll.setAttribute("aria-label", "表は横スクロールできます")
     table.parentNode.insertBefore(wrapper, table)
     scroll.appendChild(table)
     wrapper.append(toolbar, scroll)
