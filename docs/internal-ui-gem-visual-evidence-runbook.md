@@ -91,6 +91,33 @@ bootstrap visual smoke:
 - follow-up: <none | #1261 comment | new bug issue>
 ```
 
+## docs-portal Markdown preview table cue evidence
+
+Markdown preview table や Docusaurus site viewer iframe の cue / toolbar / affordance を変える PR では、internal UI gem upstream artifact ではなく host app 本体の preview surface として証跡を残します。`preview_table_resizer_controller.js` や `markdown-preview-table-tools` の source-level guard は、text / class / ARIA / helper contract を固定する補助であり、layout / readability の証跡そのものではありません。
+
+代表 surface は、PR が触った導線に合わせて最小限に絞ります。
+
+| surface | 代表導線 | desktop 観点 | narrow viewport 観点 |
+| --- | --- | --- | --- |
+| 通常 Markdown preview | 文書版の HTML / Markdown preview で table を含む文書を開く | table toolbar summary、table 本文、copy / export / resize controls が重ならず読める | toolbar summary cue が折り返しても本文や操作 button を押し出しすぎず、横スクロール領域が分かる |
+| embedded / site viewer iframe | Docusaurus site viewer または embedded preview iframe で同じ table を含む page を開く | iframe 内の table styling と docs-portal 側 toolbar / cue が衝突しない | iframe 幅が狭い状態で cue、toolbar、table 横スクロールが見切れすぎない |
+
+PR comment には、確認した surface、viewport、証跡種別、限界を分けて残します。通常 preview と embedded iframe の両方を確認できない場合は、確認できなかった方を `limits` に明記し、CI green や source spec だけで代替完了扱いにしません。
+
+```text
+markdown table cue visual evidence:
+- surfaces: <normal preview | embedded/site viewer iframe | both>
+- desktop: <confirmed toolbar cue / table body / controls readability>
+- narrow viewport: <confirmed wrapping / overflow / horizontal scroll cue>
+- evidence: <screenshot | browser smoke | manual spot check | source inspection + request smoke>
+- limits: <missing browser evidence, iframe not checked, narrow viewport not checked>
+- follow-up: <none | PR comment | needs-human visual review>
+```
+
+browser evidence が取れない環境では、source inspection / CSS arithmetic / request smoke を代替として残せます。ただし、hover、focus ring、実 font rendering、iframe 内の Docusaurus 標準 table styling、mobile 相当の重なりは限界として扱います。visual cue の acceptance が layout / readability を含む場合、証跡取得可能な環境での確認または human review を停止条件にします。
+
+この節から CI screenshot job、pixel diff、full visual regression suite、Markdown table の full `rails_table_preferences` 統合、Docusaurus renderer / iframe policy の仕様変更は始めません。#475 の親論点や未merge の cue 実装は current support として先取りせず、merge 済みの behavior と PR ごとの acceptance だけに合わせます。
+
 ## PR に残す最低限の証跡
 
 static visual artifact を更新した PR では、PR 本文または review follow-up comment に次を 1 セットで残します。
