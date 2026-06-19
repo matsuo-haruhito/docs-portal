@@ -16,7 +16,7 @@ p.actions
   - if index_path
     = link_to "既存画面で詳しく確認", index_path, class: "button"
 - if index_path
-  p.muted この画面は最近の代表データや検索結果を最大20件だけ確認するための read-only 表示です。20件より先の確認や詳細確認は既存管理画面で行えます。
+  p.muted この画面は最近の代表データや検索結果を最大20件だけ確認するための read-only 表示です。検索対象フィールドに一致した代表データだけを表示し、20件より先の確認や詳細確認は既存管理画面で行えます。
   - if @query.present?
     p.muted.model-browser-existing-screen-context
       - if @existing_screen_query_handoff_param
@@ -45,6 +45,7 @@ section.card
     p.muted
       | 検索対象:
       span = search_field_label_text
+    p.muted 検索結果は検索対象フィールドに一致した代表データを最大20件まで表示します。数値だけの検索語は、この画面では ID 補助照合にも使います。
     p.actions
       = form.submit "検索", class: "button"
       - if @query.present?
@@ -73,9 +74,9 @@ section.card
               td = record_summary_value(record, field)
   - elsif @query.present?
     p.muted
-      | 該当するデータはありません。検索対象は
+      | 該当する代表データはありません。検索対象は
       span = search_field_label_text
-      | です。
+      | で、表示は最大20件の read-only sample です。
     - if index_path
       p.muted
         - if @existing_screen_query_handoff_param
