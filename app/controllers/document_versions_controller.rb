@@ -87,7 +87,7 @@ class DocumentVersionsController < BaseController
     added_paths = current_paths - previous_paths
     removed_paths = previous_paths - current_paths
     changed_paths = (current_paths & previous_paths).select do |path|
-      file_diff_signature(current_by_path.fetch(path)) != file_diff_signature(previous_by_path[path])
+      file_diff_signature(current_by_path.fetch(path)) != file_diff_signature(previous_by_path.fetch(path))
     end
 
     files = []
