@@ -43,7 +43,7 @@ RSpec.describe "Document comment workspace empty search", type: :request do
     review_panel = html.at_css(".document-comment-tabs__panel--review")
     link = clear_search_link(html, ".document-comment-tabs__panel--review")
 
-    expect(review_panel.text).to include("検索条件に一致する確認事項はありません")
+    expect(review_panel.text).to include("絞り込み条件に一致する確認事項はありません")
     expect(link).to be_present
     expect(URI.parse(link["href"]).path).to eq(project_document_path(project, document.slug))
     expect(parsed_query(link["href"])).to eq("page" => "2", "comment_tab" => "review")
@@ -71,7 +71,7 @@ RSpec.describe "Document comment workspace empty search", type: :request do
     unresolved_panel = html.at_css(".document-comment-tabs__panel--unresolved")
     link = clear_search_link(html, ".document-comment-tabs__panel--unresolved")
 
-    expect(unresolved_panel.text).to include("検索条件に一致する未解決のコメントはありません")
+    expect(unresolved_panel.text).to include("絞り込み条件に一致する未解決のコメントはありません")
     expect(link).to be_present
     expect(URI.parse(link["href"]).path).to eq(project_document_path(project, document.slug))
     expect(parsed_query(link["href"])).to eq("comment_tab" => "unresolved")
