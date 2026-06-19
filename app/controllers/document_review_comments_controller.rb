@@ -65,14 +65,29 @@ class DocumentReviewCommentsController < BaseController
     context = {}
     tab = params[:comment_tab].to_s.strip
     query = params[:comment_q].to_s.strip
+    author_public_id = safe_comment_author_public_id
     allowed_tabs = current_user&.internal? ? COMMENT_CONTEXT_TABS : EXTERNAL_COMMENT_CONTEXT_TABS
 
     context[:comment_tab] = tab if allowed_tabs.include?(tab)
     if query.present?
       context[:comment_q] = query.first(DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH)
     end
+    context[:comment_author_id] = author_public_id if author_public_id.present?
 
     context
+  end
+
+  def safe_comment_author_public_id
+    author_public_id = params[:comment_author_id].to_s.strip
+    return if author_public_id.blank?
+
+    visible_author_exists = @document
+      .document_review_comments
+      .visible_to(current_user)
+      .joins(:author)
+      .where(users: { public_id: author_public_id })
+      .exists?
+    author_public_id if visible_author_exists
   end
 
   def apply_visibility_rules!(comment)
