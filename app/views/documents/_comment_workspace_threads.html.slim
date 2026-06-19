@@ -10,6 +10,7 @@
 - comment_workspace_tab = @comment_workspace_tab.presence || DocumentCommentWorkspaceTab::DEFAULT_TAB
 - comment_context_params = { comment_tab: comment_workspace_tab }
 - comment_context_params[:comment_q] = comment_search_query if comment_search_active
+- comment_clear_search_params = request.query_parameters.except("comment_q").merge("comment_tab" => comment_workspace_tab, only_path: true)
 
 - if question_threads.any?
   section.document-comment-thread-group
@@ -119,3 +120,6 @@
       | まだ質問はありません。
     - else
       | 確認事項はありません。
+  - if comment_search_active
+    p.document-comment-empty-actions
+      = link_to "検索を解除してすべて表示", url_for(comment_clear_search_params), class: "button secondary"

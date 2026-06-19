@@ -186,3 +186,6 @@ details class=wrapper_classes.join(" ") open=(!floating)
               | 未解決のQ&Aと確認事項はありません。
             - else
               | 未解決のQ&Aはありません。
+          - if comment_search_active
+            p.document-comment-empty-actions
+              = link_to "検索を解除してすべて表示", url_for(comment_search_params.merge(only_path: true)), class: "button secondary"
