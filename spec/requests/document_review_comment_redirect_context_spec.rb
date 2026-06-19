@@ -37,6 +37,38 @@ RSpec.describe "Document review comment redirect context", type: :request do
     expect(redirect_query).to eq("comment_q" => "migration handoff", "comment_tab" => "review")
   end
 
+  it "preserves visible author context for internal comment creation" do
+    public_question = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Partner-visible author should be restorable"
+    )
+
+    sign_in_as(internal_user)
+
+    post project_document_document_review_comments_path(project, document), params: {
+      comment_tab: "review",
+      comment_q: "  partner author  ",
+      comment_author_id: public_question.author.public_id,
+      document_review_comment: {
+        comment_type: "request_change",
+        body: "Please check this author-filtered context."
+      }
+    }
+
+    expect(response).to have_http_status(:found)
+    expect(redirect_path).to eq(project_document_path(project, document.slug))
+    expect(redirect_query).to eq(
+      "comment_author_id" => external_user.public_id,
+      "comment_q" => "partner author",
+      "comment_tab" => "review"
+    )
+  end
+
   it "does not redirect external users into the internal review tab" do
     sign_in_as(external_user)
 
@@ -54,6 +86,67 @@ RSpec.describe "Document review comment redirect context", type: :request do
     expect(response).to have_http_status(:found)
     expect(redirect_path).to eq(project_document_path(project, document.slug))
     expect(redirect_query).to eq("comment_q" => "partner question")
+  end
+
+  it "keeps external redirect context within public Q&A visibility" do
+    public_question = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "External author can be restored"
+    )
+    hidden_review = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: internal_user,
+      comment_type: :request_change,
+      internal_only: true,
+      body: "Hidden author must not be restored"
+    )
+    long_query = "  #{"partner-" * 30}  "
+    normalized_query = long_query.strip.first(DocumentCommentWorkspaceSearch::COMMENT_QUERY_MAX_LENGTH)
+
+    sign_in_as(external_user)
+
+    post project_document_document_review_comments_path(project, document), params: {
+      comment_tab: "review",
+      comment_q: long_query,
+      comment_author_id: hidden_review.author.public_id,
+      document_review_comment: {
+        comment_type: "question",
+        internal_only: "1",
+        body: "This must stay a public Q&A."
+      }
+    }
+
+    expect(response).to have_http_status(:found)
+    expect(redirect_path).to eq(project_document_path(project, document.slug))
+    expect(redirect_query).to eq("comment_q" => normalized_query)
+
+    created_comment = DocumentReviewComment.order(:id).last
+    expect(created_comment.author).to eq(external_user)
+    expect(created_comment).to be_question
+    expect(created_comment.internal_only).to eq(false)
+
+    post project_document_document_review_comments_path(project, document), params: {
+      comment_tab: "unresolved",
+      comment_author_id: public_question.author.public_id,
+      document_review_comment: {
+        comment_type: "question",
+        body: "This can restore a visible public author."
+      }
+    }
+
+    expect(response).to have_http_status(:found)
+    expect(redirect_path).to eq(project_document_path(project, document.slug))
+    expect(redirect_query).to eq(
+      "comment_author_id" => external_user.public_id,
+      "comment_tab" => "unresolved"
+    )
   end
 
   it "renders the current workspace context on create, reply, and status forms" do
