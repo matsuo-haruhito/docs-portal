@@ -92,6 +92,97 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(action_targets).to include(admin_webhook_delivery_path(delivery.public_id))
   end
 
+  it "keeps the existing secret when editing with a blank secret field" do
+    sign_in_as(admin_user)
+
+    endpoint = create(
+      :webhook_endpoint,
+      name: "Blank Secret Hook",
+      target_url: "https://example.com/webhooks/original",
+      secret_token: "stored-secret",
+      active: true,
+      event_types: %w[document_updated]
+    )
+
+    patch admin_webhook_endpoint_path(endpoint.public_id), params: {
+      webhook_endpoint: {
+        name: "Blank Secret Hook Updated",
+        target_url: "https://example.com/webhooks/updated",
+        secret_token: "",
+        active: "0",
+        event_types: ["", "document_published"]
+      }
+    }
+
+    expect(response).to redirect_to(admin_webhook_endpoints_path)
+    endpoint.reload
+    expect(endpoint).to have_attributes(
+      name: "Blank Secret Hook Updated",
+      target_url: "https://example.com/webhooks/updated",
+      secret_token: "stored-secret",
+      active: false
+    )
+    expect(endpoint.event_types).to eq(%w[document_published])
+  end
+
+  it "updates the secret only when a new secret is submitted" do
+    sign_in_as(admin_user)
+
+    endpoint = create(
+      :webhook_endpoint,
+      secret_token: "stored-secret",
+      event_types: %w[document_updated]
+    )
+
+    patch admin_webhook_endpoint_path(endpoint.public_id), params: {
+      webhook_endpoint: {
+        name: endpoint.name,
+        target_url: endpoint.target_url,
+        secret_token: "rotated-secret",
+        active: "1",
+        event_types: ["document_updated", ""]
+      }
+    }
+
+    expect(response).to redirect_to(admin_webhook_endpoints_path)
+    endpoint.reload
+    expect(endpoint.secret_token).to eq("rotated-secret")
+    expect(endpoint.event_types).to eq(%w[document_updated])
+  end
+
+  it "rejects unsupported event types without changing the saved endpoint" do
+    sign_in_as(admin_user)
+
+    endpoint = create(
+      :webhook_endpoint,
+      name: "Supported Hook",
+      target_url: "https://example.com/webhooks/supported",
+      secret_token: "stored-secret",
+      active: true,
+      event_types: %w[document_updated]
+    )
+
+    patch admin_webhook_endpoint_path(endpoint.public_id), params: {
+      webhook_endpoint: {
+        name: "Unsupported Hook",
+        target_url: "https://example.com/webhooks/unsupported",
+        secret_token: "rotated-secret",
+        active: "0",
+        event_types: ["document_updated", "unsupported_event", ""]
+      }
+    }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    endpoint.reload
+    expect(endpoint).to have_attributes(
+      name: "Supported Hook",
+      target_url: "https://example.com/webhooks/supported",
+      secret_token: "stored-secret",
+      active: true
+    )
+    expect(endpoint.event_types).to eq(%w[document_updated])
+  end
+
   it "normalizes delivery error query before filtering and return links" do
     sign_in_as(admin_user)
 
@@ -273,7 +364,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     base_time = Time.zone.local(2026, 5, 30, 12, 0, 0)
 
     create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :succeeded, created_at: base_time + 4.hours)
-    create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :pending, created_at: base_time + 3.hours)
+    create(:webhook_delivery, webhook_endpoint: active_endpoint, status: :pending, created_at: base_time + 3.hours)
     recent_retryable_deliveries = Array.new(49) do |index|
       create(
         :webhook_delivery,
