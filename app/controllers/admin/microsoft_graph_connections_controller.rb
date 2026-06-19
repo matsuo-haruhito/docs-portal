@@ -1,6 +1,8 @@
 class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
   MAX_SEARCH_QUERY_LENGTH = 100
   INDEX_RESULT_LIMIT = 50
+  PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_LIMIT = 20
 
   before_action :require_admin_only!
   before_action :set_microsoft_graph_connection, only: %i[edit update destroy]
@@ -56,6 +58,16 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
     redirect_to admin_microsoft_graph_connections_path, notice: "Microsoft Graph接続設定を削除しました。"
   end
 
+  def project_search
+    render json: { options: project_options(searchable_projects) }
+  end
+
+  def selected_project
+    project = Project.find_by(id: params[:id])
+
+    render json: { option: project ? project_option(project) : nil }
+  end
+
   private
 
   def set_microsoft_graph_connection
@@ -63,7 +75,6 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
   end
 
   def load_form_collections
-    @projects = Project.order(:code)
   end
 
   def load_index_state
@@ -149,6 +160,30 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
       SQL
       query:
     )
+  end
+
+  def searchable_projects
+    scope = Project.order(:code, :id)
+    query = normalize_project_search_query(params[:q])
+    return scope.limit(PROJECT_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{Project.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(projects.code) LIKE :pattern OR LOWER(projects.name) LIKE :pattern",
+      pattern:
+    ).limit(PROJECT_SEARCH_LIMIT)
+  end
+
+  def normalize_project_search_query(query)
+    query.to_s.strip.first(PROJECT_SEARCH_QUERY_MAX_LENGTH)
+  end
+
+  def project_options(projects)
+    projects.map { |project| project_option(project) }
+  end
+
+  def project_option(project)
+    { value: project.id, text: helpers.microsoft_graph_connection_project_option_label(project) }
   end
 
   def resolve_share_url_request?
