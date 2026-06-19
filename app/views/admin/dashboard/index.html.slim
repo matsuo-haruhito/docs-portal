@@ -30,6 +30,7 @@ section.card
     - @operational_failure_summary.each do |item|
       article.card.metric-card
         h3 = item[:label]
+        h4 保存済み履歴
         p
           strong = item[:count]
           |  件
@@ -44,7 +45,7 @@ section.card
             - if item[:stale]
               br
               strong 古い失敗のみ
-              span  （7日より古い対象履歴だけが残っています。緊急度や通知状態を示す表示ではありません）
+              span  （7日より古い対象履歴だけが残っています。緊急度、通知状態、ack 状態を示す表示ではありません）
         ul
           - item[:details].each do |detail|
             li = detail
@@ -52,6 +53,7 @@ section.card
           - alert_candidates = item[:alert_candidates]
           .operational-alert-candidates
             h4 継続失敗候補
+            p.muted 保存済み履歴とは別に、同じ identity の最新 run が連続 failed かだけを確認します。通知・ack・自動復旧の状態ではありません。
             p.muted
               | 継続失敗候補: 
               strong = alert_candidates.size
