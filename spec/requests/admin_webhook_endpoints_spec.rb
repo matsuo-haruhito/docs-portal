@@ -364,7 +364,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     base_time = Time.zone.local(2026, 5, 30, 12, 0, 0)
 
     create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :succeeded, created_at: base_time + 4.hours)
-    create(:webhook_delivery, webhook_endpoint: active_endpoint, status: :pending, created_at: base_time + 3.hours)
+    create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :pending, created_at: base_time + 3.hours)
     recent_retryable_deliveries = Array.new(49) do |index|
       create(
         :webhook_delivery,
