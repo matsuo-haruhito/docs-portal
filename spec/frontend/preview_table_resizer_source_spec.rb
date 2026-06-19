@@ -26,6 +26,15 @@ RSpec.describe "preview table resizer source" do
     end
   end
 
+  it "keeps the lightweight scroll and resize cue visible from the collapsed table toolbar" do
+    aggregate_failures do
+      expect(resizer_source).to include('summaryCue.className = "portal-table-width-summary-cue"')
+      expect(resizer_source).to include('summaryCue.textContent = "横スクロール・列幅調整できます"')
+      expect(resizer_source).to include('scroll.setAttribute("aria-label", "表は横スクロールできます")')
+      expect(resizer_source).to include(".portal-table-width-summary-cue")
+    end
+  end
+
   it "keeps both embedded site responses on the same preview context marker contract" do
     aggregate_failures do
       expect(document_sites_source).to include('body["data-docs-portal-preview-context-key"] = preview_table_context_key(version:, site_path:)')
