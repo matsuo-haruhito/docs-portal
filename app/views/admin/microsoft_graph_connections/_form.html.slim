@@ -2,13 +2,19 @@
 
 = form_with model: [:admin, microsoft_graph_connection] do |form|
   .form-grid
-    = form.rfk_select :project_id,
-      collection: @projects,
-      collection_value_method: :id,
-      collection_label_method: :name,
+    = form.rfk_combobox :project_id,
+      collection: [],
+      selected: microsoft_graph_connection_project_selected_option(microsoft_graph_connection.project),
+      url: project_search_admin_microsoft_graph_connections_path(format: :json),
+      selected_url: selected_project_admin_microsoft_graph_connections_path(format: :json),
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 1,
+      max_options: Admin::MicrosoftGraphConnectionsController::PROJECT_SEARCH_LIMIT,
       wrapper: true,
       label: "案件",
-      placeholder: "案件を選択"
+      placeholder: "案件コード・案件名で検索"
     label
       | 接続名
       = form.text_field :name, placeholder: "Office preview"
