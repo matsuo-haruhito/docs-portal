@@ -21,6 +21,10 @@ RSpec.describe "Navbar", type: :request do
     parsed_html.css("header .nav-dropdown__summary.is-active")
   end
 
+  def active_nav_current_labels
+    active_nav_summaries.css(".nav-dropdown__current-label").map { |label| label.text.squish }
+  end
+
   it "groups admin navbar links without changing their destinations" do
     sign_in_as(create(:user, :internal))
 
@@ -79,7 +83,8 @@ RSpec.describe "Navbar", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(active_nav_links.map { |link| [link.text.squish, link["href"]] }).to eq([["ダッシュボード 現在", dashboard_path]])
-    expect(active_nav_summaries.map { |summary| summary.text.squish }).to eq(["文書 現在"])
+    expect(active_nav_summaries.map { |summary| summary.text.squish }).to eq(["文書 現在ダッシュボード"])
+    expect(active_nav_current_labels).to eq(["ダッシュボード"])
   end
 
   it "marks an admin menu item without changing role-gated destinations" do
@@ -89,7 +94,8 @@ RSpec.describe "Navbar", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(active_nav_links.map { |link| [link.text.squish, link["href"]] }).to eq([["文書 現在", admin_documents_path]])
-    expect(active_nav_summaries.map { |summary| summary.text.squish }).to eq(["管理メニュー 現在"])
+    expect(active_nav_summaries.map { |summary| summary.text.squish }).to eq(["管理メニュー 現在文書"])
+    expect(active_nav_current_labels).to eq(["文書"])
   end
 
   it "keeps the duplicated Git import history cue on the history dropdown only" do
@@ -100,7 +106,8 @@ RSpec.describe "Navbar", type: :request do
     expect(response).to have_http_status(:ok)
     expect(active_nav_links.map { |link| [link.text.squish, link["href"]] }).to eq([["Git取込履歴 現在", admin_git_import_runs_path]])
     expect(parsed_html.css("header .nav-dropdown__menu a[href='#{admin_git_import_runs_path}']").size).to eq(2)
-    expect(active_nav_summaries.map { |summary| summary.text.squish }).to eq(["履歴照会 現在"])
+    expect(active_nav_summaries.map { |summary| summary.text.squish }).to eq(["履歴照会 現在Git取込履歴"])
+    expect(active_nav_current_labels).to eq(["Git取込履歴"])
   end
 
   it "keeps external users out of internal and admin navbar links" do
@@ -144,6 +151,7 @@ RSpec.describe "Navbar", type: :request do
       admin_webhook_endpoints_path
     )
     expect(active_nav_links.map { |link| link["href"] }).to eq([dashboard_path])
-    expect(active_nav_summaries.map { |summary| summary.text.squish }).to eq(["文書 現在"])
+    expect(active_nav_summaries.map { |summary| summary.text.squish }).to eq(["文書 現在ダッシュボード"])
+    expect(active_nav_current_labels).to eq(["ダッシュボード"])
   end
 end
