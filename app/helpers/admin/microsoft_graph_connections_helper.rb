@@ -22,6 +22,16 @@ module Admin::MicrosoftGraphConnectionsHelper
     ]
   end
 
+  def microsoft_graph_connection_project_option_label(project)
+    [project.code, project.name].compact_blank.join(" / ")
+  end
+
+  def microsoft_graph_connection_project_selected_option(project)
+    return nil if project.blank?
+
+    { value: project.id, text: microsoft_graph_connection_project_option_label(project) }
+  end
+
   def microsoft_graph_connection_identifier_preview(value)
     preview = microsoft_graph_connection_sanitized_identifier(value)
     return "-" if preview.blank?

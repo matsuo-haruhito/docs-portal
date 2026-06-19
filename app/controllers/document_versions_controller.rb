@@ -26,12 +26,21 @@ class DocumentVersionsController < BaseController
       previous_version: @compare_version
     ).call
     visible_comments = @version.document_review_comments.visible_to(current_user)
-    comment_search = DocumentCommentWorkspaceSearch.new(user: current_user, query: params[:comment_q])
+    comment_author_candidates = visible_comments.includes(:author).map(&:author)
+    comment_search = DocumentCommentWorkspaceSearch.new(
+      user: current_user,
+      query: params[:comment_q],
+      author_public_id: params[:comment_author_id],
+      author_candidates: comment_author_candidates
+    )
     question_threads = visible_comments.where(internal_only: false, comment_type: :question).roots.includes(:author, :resolved_by, :document_version, replies: [:author, :resolved_by]).order(:created_at, :id)
     review_comments = visible_comments.where(internal_only: true).includes(:author, :resolved_by, :document_version).order(:created_at, :id)
     @question_threads = comment_search.filter_questions(question_threads)
     @review_comments = comment_search.filter_reviews(review_comments)
     @comment_search_query = comment_search.query
+    @comment_author_options = comment_search.author_options
+    @comment_author_id = comment_search.author_public_id
+    @comment_selected_author = comment_search.selected_author
     @comment_workspace_tab = DocumentCommentWorkspaceTab.new(user: current_user, tab: params[:comment_tab]).value
     @export_preview_file = @version.document_files.select { |file| file.downloadable_by?(current_user) }.find do |file|
       file.effective_content_type.start_with?("application/pdf") || file.file_name.to_s.downcase.end_with?(".pdf")

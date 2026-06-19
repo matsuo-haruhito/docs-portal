@@ -3,6 +3,7 @@ require "rails_helper"
 RSpec.describe "Document review comments", type: :request do
   let(:internal_user) { create(:user, :internal) }
   let(:admin_user) { create(:user, :internal) }
+  let(:company_master_user) { create(:user, :company_master_admin, company:) }
   let(:company) { create(:company) }
   let(:external_user) { create(:user, :external, company:) }
   let(:project) { create(:project, code: "REVIEW", name: "Review Project") }
@@ -316,11 +317,11 @@ RSpec.describe "Document review comments", type: :request do
     review_panel_text = html.at_css(".document-comment-tabs__panel--review").text
     unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
 
-    expect(page_text).to include("検索条件: delivery window")
-    expect(page_text).to include("検索は、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます")
+    expect(page_text).to include("絞り込み条件: キーワード delivery window")
+    expect(page_text).to include("絞り込みは、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます")
     expect(qa_panel_text).to include(qa_hit.body)
     expect(qa_panel_text).not_to include(qa_miss.body)
-    expect(review_panel_text).to include("検索条件に一致する確認事項はありません")
+    expect(review_panel_text).to include("絞り込み条件に一致する確認事項はありません")
     expect(unresolved_panel_text).to include(qa_hit.body)
     expect(unresolved_panel_text).not_to include(qa_miss.body)
 
@@ -332,7 +333,7 @@ RSpec.describe "Document review comments", type: :request do
     unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
 
     expect(response).to have_http_status(:ok)
-    expect(qa_panel_text).to include("検索条件に一致するQ&Aはありません")
+    expect(qa_panel_text).to include("絞り込み条件に一致するQ&Aはありません")
     expect(review_panel_text).to include(review_hit.body)
     expect(review_panel_text).to include("位置:")
     expect(review_panel_text).to include("docs/migration-handoff.md")
@@ -372,13 +373,13 @@ RSpec.describe "Document review comments", type: :request do
     all_panel_text = html.at_css(".document-comment-tabs__panel--all").text
     unresolved_panel_text = html.at_css(".document-comment-tabs__panel--unresolved").text
 
-    expect(page_text).to include("検索条件: internal escalation")
-    expect(page_text).to include("検索は、すべて / Q&A / 未解決Q&A の各タブに先に適用されます")
+    expect(page_text).to include("絞り込み条件: キーワード internal escalation")
+    expect(page_text).to include("絞り込みは、すべて / Q&A / 未解決Q&A の各タブに先に適用されます")
     expect(page_text).not_to include("Partner rollout internal escalation")
     expect(page_text).not_to include("docs/private-partner-rollout.md")
     expect(page_text).not_to include("確認事項")
-    expect(all_panel_text).to include("検索条件に一致するQ&Aはありません")
-    expect(unresolved_panel_text).to include("検索条件に一致する未解決のコメントはありません")
+    expect(all_panel_text).to include("絞り込み条件に一致するQ&Aはありません")
+    expect(unresolved_panel_text).to include("絞り込み条件に一致する未解決のコメントはありません")
 
     get project_document_path(project, document.slug, comment_q: "partner rollout question")
 
@@ -433,11 +434,11 @@ RSpec.describe "Document review comments", type: :request do
     page_text = html.text.squish
     all_panel_text = html.at_css(".document-comment-tabs__panel--all").text
 
-    expect(page_text).to include("検索条件: internal-release-evidence")
+    expect(page_text).to include("絞り込み条件: キーワード internal-release-evidence")
     expect(page_text).not_to include(internal_review.body)
     expect(page_text).not_to include("docs/internal-release-evidence.md")
     expect(page_text).not_to include("確認事項")
-    expect(all_panel_text).to include("検索条件に一致するQ&Aはありません")
+    expect(all_panel_text).to include("絞り込み条件に一致するQ&Aはありません")
 
     get project_document_path(project, document.slug, comment_q: "visible reply confirms")
 
@@ -461,7 +462,7 @@ RSpec.describe "Document review comments", type: :request do
     search_input = html.at_css(%(input[name="comment_q"]))
 
     expect(search_input["value"]).to eq(normalized_query)
-    expect(html.text.squish).to include("検索条件: #{normalized_query}")
+    expect(html.text.squish).to include("絞り込み条件: キーワード #{normalized_query}")
     expect(html.text.squish).not_to include(long_query)
   end
 
@@ -703,6 +704,44 @@ RSpec.describe "Document review comments", type: :request do
     expect(response).to have_http_status(:forbidden)
     expect(question.reload).to be_open
     expect(question.qa_status_label).to eq("受付中")
+  end
+
+  it "keeps non-admin and unsupported decisions from changing comment status" do
+    question = create(
+      :document_review_comment,
+      document:,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Can company admins close this?"
+    )
+    review_comment = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: internal_user,
+      comment_type: :request_change,
+      internal_only: true,
+      body: "Unsupported decisions must not change this"
+    )
+
+    sign_in_as(company_master_user)
+
+    patch project_document_document_review_comment_path(project, document, question), params: { decision: "resolve" }
+
+    expect(response).to have_http_status(:forbidden)
+    expect(question.reload).to be_open
+    expect(question.resolved_by).to be_nil
+    expect(question.resolved_at).to be_nil
+
+    sign_in_as(admin_user)
+
+    patch document_version_document_review_comment_path(version, review_comment), params: { decision: "archive" }
+
+    expect(response).to have_http_status(:bad_request)
+    expect(review_comment.reload).to be_open
+    expect(review_comment.resolved_by).to be_nil
+    expect(review_comment.resolved_at).to be_nil
   end
 
   it "hides review comments from external users and forbids create/update" do

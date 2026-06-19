@@ -3,8 +3,10 @@ require "rails_helper"
 RSpec.describe "Nav dropdown contract" do
   let(:controller_source) { Rails.root.join("app/frontend/controllers/nav_dropdowns_controller.js").read }
   let(:application_source) { Rails.root.join("app/frontend/entrypoints/application.js").read }
+  let(:current_label_css) { Rails.root.join("app/frontend/entrypoints/nav_current_label.css").read }
   let(:layout_source) { Rails.root.join("app/views/layouts/application.html.slim").read }
   let(:navbar_source) { Rails.root.join("app/views/shared/_navbar.html.slim").read }
+  let(:navigation_helper_source) { Rails.root.join("app/helpers/navigation_helper.rb").read }
 
   it "registers the nav-dropdowns controller on the application layout" do
     expect(application_source).to include('import NavDropdownsController from "../controllers/nav_dropdowns_controller"')
@@ -17,6 +19,28 @@ RSpec.describe "Nav dropdown contract" do
     expect(navbar_source).to include("summary.nav-dropdown__summary")
     expect(navbar_source).to include("文書")
     expect(navbar_source).to include("履歴照会")
+  end
+
+  it "keeps current child labels readable from active dropdown summaries" do
+    aggregate_failures do
+      expect(navbar_source).to include("nav_current_child_label")
+      expect(navbar_source).to include("span.nav-dropdown__current-label")
+      expect(navbar_source).to include('["文書セット", admin_document_sets_path]')
+      expect(navbar_source).to include('["Microsoft Graph", admin_microsoft_graph_connections_path]')
+      expect(navbar_source).to include('active_nav_link_to "Git取込履歴", admin_git_import_runs_path, active: false')
+      expect(navigation_helper_source).to include("def nav_current_child_label(*items)")
+      expect(navigation_helper_source).to include("nav_current_child_exact_path?(path)")
+      expect(navigation_helper_source).to include('request.path.start_with?("#{candidate_path}/")')
+    end
+  end
+
+  it "loads responsive styles for the compact current child cue" do
+    aggregate_failures do
+      expect(application_source).to include('import "./nav_current_label.css"')
+      expect(current_label_css).to include(".nav-dropdown__current-label")
+      expect(current_label_css).to include("text-overflow: ellipsis")
+      expect(current_label_css).to include("@media (max-width: 720px)")
+    end
   end
 
   it "keeps document listener registration and cleanup paired" do

@@ -52,9 +52,9 @@ RSpec.describe "Document comment workspace search cue", type: :request do
     get project_document_path(project, document.slug, comment_q: "delivery")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索条件: delivery")
-    expect(page_text).to include("表示中の件数とタブの未解決件数は、検索条件に一致したコメントだけを基準にしています。")
-    expect(page_text).to include("検索は、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます")
+    expect(page_text).to include("絞り込み条件: キーワード delivery")
+    expect(page_text).to include("表示中の件数とタブの未解決件数は、絞り込み条件に一致したコメントだけを基準にしています。")
+    expect(page_text).to include("絞り込みは、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます")
   end
 
   it "keeps the same search-result count cue for external users without exposing internal-only review comments" do
@@ -82,9 +82,9 @@ RSpec.describe "Document comment workspace search cue", type: :request do
     get project_document_path(project, document.slug, comment_q: "internal escalation")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索条件: internal escalation")
-    expect(page_text).to include("表示中の件数とタブの未解決件数は、検索条件に一致したコメントだけを基準にしています。")
-    expect(page_text).to include("検索は、すべて / Q&A / 未解決Q&A の各タブに先に適用されます")
+    expect(page_text).to include("絞り込み条件: キーワード internal escalation")
+    expect(page_text).to include("表示中の件数とタブの未解決件数は、絞り込み条件に一致したコメントだけを基準にしています。")
+    expect(page_text).to include("絞り込みは、すべて / Q&A / 未解決Q&A の各タブに先に適用されます")
     expect(page_text).not_to include("Partner rollout internal escalation")
     expect(page_text).not_to include("確認事項")
   end

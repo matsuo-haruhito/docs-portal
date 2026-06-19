@@ -42,14 +42,14 @@ RSpec.describe "document comment workspace source" do
   it "keeps comment search in the workspace while adding the summary" do
     aggregate_failures do
       expect(workspace_source).to include("document-comment-search")
-      expect(workspace_source).to include("comment_search_active")
-      expect(workspace_source).to include("検索条件に一致する未解決のコメントはありません。")
+      expect(workspace_source).to include("comment_filter_active")
+      expect(workspace_source).to include("絞り込み条件に一致する未解決のコメントはありません。")
     end
   end
 
   it "explains unresolved tabs without implying SLA or workflow changes" do
     aggregate_failures do
-      expect(workspace_source).to include("未解決タブには、未解決のQ&Aと内部向け確認事項をまとめて表示します。通知・期限・SLAを示すものではありません。")
+      expect(workspace_source).to include("未解決タブには、未解決のQ&Aと内部向け確認事項をまとめて表示します。Q&Aの受付・回答状態と確認事項の解決状態は別の管理です。通知・期限・SLAを示すものではありません。")
       expect(workspace_source).to include("未解決タブには、まだ回答やクローズがされていないQ&Aを表示します。")
       expect(workspace_source).to include('span.muted = " (Q&A #{unresolved_question_count} / 確認事項 #{unresolved_review_count})"')
       expect(workspace_source).to include('= link_to "未解決Q&A", comment_tab_url.call("unresolved")')
