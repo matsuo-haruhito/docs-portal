@@ -186,12 +186,19 @@ RSpec.describe DocusaurusSiteRenderer do
 
     wrapper = parsed.at_css(".portal-doc-table-preference-wrapper")
     table = parsed.at_css("table")
+    expected_site_path = DocumentVersion.normalize_site_page_path("#{site_build_path}/index")
+    expected_site_path_key = Base64.urlsafe_encode64(expected_site_path, padding: false)
+    expected_table_key = "document-version:#{version.public_id}:site-path:#{expected_site_path_key}:table:1"
 
     expect(wrapper).to be_present
-    expect(wrapper["data-rails-table-preferences-table-key"]).to eq(
-      table["data-rails-table-preferences-table-key"]
-    )
+    expect(wrapper["data-rails-table-preferences-table-key"]).to eq(expected_table_key)
+    expect(table["data-rails-table-preferences-table-key"]).to eq(expected_table_key)
+    expect(wrapper["data-docs-portal-document-version"]).to eq(version.public_id)
+    expect(table["data-docs-portal-document-version"]).to eq(version.public_id)
+    expect(wrapper["data-docs-portal-site-path"]).to eq(expected_site_path)
+    expect(table["data-docs-portal-site-path"]).to eq(expected_site_path)
     expect(wrapper["data-docs-portal-table-index"]).to eq("1")
+    expect(table["data-docs-portal-table-index"]).to eq("1")
     expect(html).not_to include("portal-site-nav")
     expect(html).not_to include("document-version-switcher")
   end
