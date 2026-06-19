@@ -59,23 +59,37 @@ module Admin::AccessLogsHelper
   end
 
   def access_log_project_filter_options(projects)
-    projects.map { ["#{_1.code} / #{_1.name}", _1.id] }
+    projects.map { [access_log_project_filter_label(_1), _1.id] }
   end
 
   def access_log_company_filter_options(companies)
     companies.map do |company|
-      label = company.display_name
-      label = "#{label} / #{company.domain}" if company.domain.present?
-      [label, company.id]
+      [access_log_company_filter_label(company), company.id]
     end
   end
 
   def access_log_user_filter_options(users)
     users.map do |user|
-      primary_label = user.display_name.presence || user.email_address
-      label = primary_label == user.email_address ? primary_label : "#{primary_label} / #{user.email_address}"
-      [label, user.id]
+      [access_log_user_filter_label(user), user.id]
     end
+  end
+
+  def access_log_project_selected_option(project)
+    return if project.blank?
+
+    { value: project.id, text: access_log_project_filter_label(project) }
+  end
+
+  def access_log_company_selected_option(company)
+    return if company.blank?
+
+    { value: company.id, text: access_log_company_filter_label(company) }
+  end
+
+  def access_log_user_selected_option(user)
+    return if user.blank?
+
+    { value: user.id, text: access_log_user_filter_label(user) }
   end
 
   def access_log_active_filter_summaries(filters, projects:, companies:, users:)

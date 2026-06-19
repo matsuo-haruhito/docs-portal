@@ -28,6 +28,7 @@ h1 Git同期履歴
         .field
           = label_tag :repository, "リポジトリ"
           = text_field_tag :repository, @repository_filter, placeholder: "owner/repo の一部"
+          p.muted リポジトリ名は owner/repo の一部一致で検索します。結果は絞り込み後の最新100件までです。
       .actions
         = submit_tag "絞り込み"
         - if @git_import_run_filters_active
@@ -110,7 +111,7 @@ h1 Git同期履歴
       - if @status_filter.present?
         p.muted = "適用中の状態: #{selected_status_label || @status_filter}。状態を「すべて」に戻すと、他の状態の履歴も確認できます。"
       - if @repository_filter.present?
-        p.muted = "適用中のリポジトリ: #{@repository_filter}。owner/repo の一部など、検索語を短くすると見つかることがあります。"
+        p.muted = "適用中のリポジトリ: #{@repository_filter}。owner/repo の一部一致で探すため、検索語を短くすると見つかることがあります。"
       p.actions = link_to "絞り込み解除", admin_git_import_runs_path, class: "button secondary"
 - else
   .card

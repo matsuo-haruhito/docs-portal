@@ -22,6 +22,7 @@ section.card
       div
         = form.label :document_slug, "文書名またはURL識別子"
         = form.search_field :document_slug, value: @document_slug, maxlength: Admin::ReadConfirmationsController::DOCUMENT_QUERY_MAX_LENGTH
+        p.muted 最大100文字まで。選択した案件内の文書名またはURL識別子の一部一致で探します。
       div
         = form.label :from, "既読確認日時（開始日）"
         = form.date_field :from, value: params[:from].to_s.strip

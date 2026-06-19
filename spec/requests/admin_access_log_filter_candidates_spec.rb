@@ -28,7 +28,7 @@ RSpec.describe "Admin access log filter candidates", type: :request do
     sign_in_as(admin_user)
   end
 
-  it "bounds project, company, and user filter candidates" do
+  it "does not preload project, company, and user filter candidates into the page" do
     projects = 55.times.map { |index| create(:project, code: "CAND#{index.to_s.rjust(3, '0')}", name: "Candidate Project #{index}") }
     companies = 55.times.map { |index| create(:company, domain: "candidate-#{index.to_s.rjust(3, '0')}.example.com", name: "Candidate Company #{index}") }
     users = 55.times.map { |index| create(:user, :internal, company: companies.first, email_address: "candidate-#{index.to_s.rjust(3, '0')}@example.com") }
@@ -36,15 +36,18 @@ RSpec.describe "Admin access log filter candidates", type: :request do
     get admin_access_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(filter_record_option_values("project_id").size).to eq(50)
-    expect(filter_record_option_values("company_id").size).to eq(50)
-    expect(filter_record_option_values("user_id").size).to eq(50)
+    expect(filter_record_option_values("project_id")).to be_empty
+    expect(filter_record_option_values("company_id")).to be_empty
+    expect(filter_record_option_values("user_id")).to be_empty
     expect(filter_option_values("project_id")).not_to include(projects.last.id.to_s)
     expect(filter_option_values("company_id")).not_to include(companies.last.id.to_s)
     expect(filter_option_values("user_id")).not_to include(users.last.id.to_s)
+    expect(response.body).to include(project_search_admin_access_logs_path(format: :json))
+    expect(response.body).to include(company_search_admin_access_logs_path(format: :json))
+    expect(response.body).to include(user_search_admin_access_logs_path(format: :json))
   end
 
-  it "keeps selected records visible when they are outside the bounded candidates" do
+  it "keeps selected records visible when they are outside the bounded remote candidates" do
     55.times do |index|
       create(:project, code: "KEEP#{index.to_s.rjust(3, '0')}", name: "Keep Project #{index}")
       create(:company, domain: "keep-#{index.to_s.rjust(3, '0')}.example.com", name: "Keep Company #{index}")
@@ -61,9 +64,9 @@ RSpec.describe "Admin access log filter candidates", type: :request do
     )
 
     expect(response).to have_http_status(:ok)
-    expect(filter_record_option_values("project_id").size).to eq(51)
-    expect(filter_record_option_values("company_id").size).to eq(51)
-    expect(filter_record_option_values("user_id").size).to eq(51)
+    expect(filter_record_option_values("project_id").size).to eq(1)
+    expect(filter_record_option_values("company_id").size).to eq(1)
+    expect(filter_record_option_values("user_id").size).to eq(1)
     expect(selected_filter_option("project_id", selected_project.id)).to be_present
     expect(selected_filter_option("company_id", selected_company.id)).to be_present
     expect(selected_filter_option("user_id", selected_user.id)).to be_present

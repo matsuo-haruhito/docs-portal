@@ -15,6 +15,9 @@
 - document_query_help = "文書名 / slug の一部一致で候補を絞り込みます。最大#{document_query_max_length}文字まで。検索だけでは JSON / Markdown の対象範囲は変わらず、「選択した文書でpreview」後に反映されます。"
 - candidate_view_selected = @candidate_view == "selected"
 - selected_document_count = @requested_document_ids.empty? ? selectable_document_count : @requested_document_ids.size
+- selected_handoff_documents = @selected_selectable_documents || []
+- selected_handoff_preview = selected_handoff_documents.first(@preview_document_limit)
+- selected_handoff_omitted_count = selected_handoff_documents.size - selected_handoff_preview.size
 - candidate_view_params = @scoped_link_params.merge(mode: @mode)
 - candidate_view_params = candidate_view_params.merge(document_q: @document_query) if document_query_present
 - scope_summary = @requested_document_ids.empty? ? "現在は閲覧可能な文書全体（#{exported_document_count}件）を出力対象にしています。" : "明示選択: #{selected_document_count}件 / 案件内候補: #{scoped_document_count}件 / 出力対象: #{exported_document_count}件"
@@ -70,6 +73,43 @@ p
     strong = export_scope_cue
   - if export_scope_help.present?
     p.muted = export_scope_help
+  - if @requested_document_ids.any?
+    h3 選択 scope handoff
+    p.muted
+      | mode: 
+      = current_mode_label
+      |  / scope: selected / 選択ID: 
+      = selected_document_count
+      | 件 / 案件内候補: 
+      = scoped_document_count
+      | 件 / 出力対象: 
+      = exported_document_count
+      | 件 / 候補外: 
+      = unscoped_document_count
+      | 件
+    p.muted document_q は候補検索のみです。JSON / Markdown の対象範囲は、この selected scope と閲覧権限で決まります。
+    - if selected_handoff_preview.any?
+      = table_tag do
+        thead
+          tr
+            th タイトル
+            th slug
+            th public_id
+        tbody
+          - selected_handoff_preview.each do |document|
+            tr
+              td = document.title
+              td = document.slug
+              td = document.public_id
+      - if selected_handoff_omitted_count.positive?
+        p.muted
+          | 選択文書 summary は 
+          = selected_handoff_preview.size
+          | 件だけ表示しています（全
+          = selected_handoff_documents.size
+          | 件）。JSON / Markdown 出力には閲覧可能な選択文書全件が含まれます。
+    - else
+      p.muted 閲覧可能な選択文書はありません。候補外 ID や閲覧不可文書の raw ID は表示しません。
   p.actions
     = link_to "JSON を出力", project_ai_context_path(@project, @scoped_link_params.merge(mode: @mode, format: :json)), class: "button secondary"
     = link_to "Markdown を出力", project_ai_context_path(@project, @scoped_link_params.merge(mode: @mode, format: :md)), class: "button secondary"

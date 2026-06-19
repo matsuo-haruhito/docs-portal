@@ -192,6 +192,7 @@ RSpec.describe "Admin git import runs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 1件 / 絞り込み後の最新100件までを表示")
+    expect(page_text).to include("リポジトリ名は owner/repo の一部一致で検索します。結果は絞り込み後の最新100件までです。")
     expect(page_text).to include("表示中の最新100件内の状態: 取込済み: 1件")
     expect(page_text).to include("matsuo-haruhito/docs-portal")
     expect(page_text).to include("docs hit")
@@ -259,6 +260,7 @@ RSpec.describe "Admin git import runs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 100件 / 絞り込み後の最新100件までを表示")
+    expect(page_text).to include("リポジトリ名は owner/repo の一部一致で検索します。結果は絞り込み後の最新100件までです。")
     expect(page_text).to include("表示中の最新100件内の状態: 失敗: 100件")
     expect(run_rows.size).to eq(100)
     expect(page_text).to include("newest filtered boundary")
@@ -277,7 +279,7 @@ RSpec.describe "Admin git import runs", type: :request do
     expect(page_text).to include("表示中: 0件 / 絞り込み後の最新100件までを表示")
     expect(page_text).to include("条件に一致するGit同期履歴はありません。")
     expect(page_text).to include("適用中の状態: 失敗。状態を「すべて」に戻すと、他の状態の履歴も確認できます。")
-    expect(page_text).to include("適用中のリポジトリ: missing-repo。owner/repo の一部など、検索語を短くすると見つかることがあります。")
+    expect(page_text).to include("適用中のリポジトリ: missing-repo。owner/repo の一部一致で探すため、検索語を短くすると見つかることがあります。")
     expect(page_text).to include("絞り込み解除")
 
     clear_filter_link = filtered_empty_state_card.at_css(".actions a.button.secondary")

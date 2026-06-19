@@ -11,6 +11,8 @@ p.muted このポータルで閲覧・ダウンロードする情報の取り扱
     = hidden_field_tag :timing, @timing
     = hidden_field_tag :return_to, safe_return_to
 
+    p.muted = "確認が必要な注意事項が#{@result.missing_terms.size}件あります。文面ごとに対象・種別・版を確認してください。"
+
     - @result.missing_terms.each do |term|
       section.card
         h2 = term.title
@@ -24,9 +26,11 @@ p.muted このポータルで閲覧・ダウンロードする情報の取り扱
           strong = term.version_label
         = simple_format(term.body)
 
+    p.muted 同意後は、安全に戻れる画面がある場合はその画面へ進みます。ない場合は案件一覧へ戻ります。
     p.actions
       = form.submit "確認して同意する", class: "button"
       = link_to "同意せず戻る", safe_return_to, class: "button secondary"
+    p.muted 同意しない場合も、安全に戻れる画面がある場合はその画面へ戻ります。ない場合は案件一覧へ戻ります。
 - else
   p 必要な同意は完了しています。
   p = link_to "戻る", safe_return_to, class: "button"

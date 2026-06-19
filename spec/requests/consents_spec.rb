@@ -125,6 +125,29 @@ RSpec.describe "Consents", type: :request do
     expect(hidden_return_to_values).to include(return_to)
   end
 
+  it "shows missing term count and return guidance without changing the safe return_to" do
+    project_term = create(:consent_term, title: "Project Terms", consent_scope: :project, version_label: "v1")
+    second_project_term = create(:consent_term, title: "Second Project Terms", consent_scope: :project, version_label: "v2")
+    create(:project_consent_setting, project:, consent_term: project_term, required_on: :first_access)
+    create(:project_consent_setting, project:, consent_term: second_project_term, required_on: :first_access)
+
+    sign_in_as(user)
+
+    return_to = "#{document_file_path(file)}?source_path=manuals"
+    get new_consent_path(target_type: "Project", target_public_id: project.public_id, timing: "first_view", return_to:)
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures do
+      expect(page_text).to include("確認が必要な注意事項が2件あります")
+      expect(page_text).to include("文面ごとに対象・種別・版を確認してください")
+      expect(page_text).to include("同意後は、安全に戻れる画面がある場合はその画面へ進みます。ない場合は案件一覧へ戻ります")
+      expect(page_text).to include("同意しない場合も、安全に戻れる画面がある場合はその画面へ戻ります。ない場合は案件一覧へ戻ります")
+      expect(page_text).to include("Project Terms", "Second Project Terms")
+      expect(link_hrefs("同意せず戻る")).to include(return_to)
+      expect(hidden_return_to_values).to include(return_to)
+    end
+  end
+
   it "falls back to projects_path for the back link when return_to is unsafe" do
     term = create(:consent_term, title: "Project Terms", consent_scope: :project, version_label: "v1")
     create(:project_consent_setting, project:, consent_term: term, required_on: :first_access)
