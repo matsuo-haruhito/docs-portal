@@ -32,8 +32,8 @@ RSpec.describe "Site viewer heading outline source" do
       expect(outline_source).to include("const MAX_VISIBLE_HEADINGS = 24")
       expect(outline_source).to include("headings.slice(0, MAX_VISIBLE_HEADINGS)")
       expect(outline_source).to include("const omittedCount = Math.max(headings.length - MAX_VISIBLE_HEADINGS, 0)")
-      expect(outline_source).to include('`${headings.length}件の見出し（先頭${MAX_VISIBLE_HEADINGS}件を表示）`')
-      expect(outline_source).to include('`${headings.length}件の見出し`')
+      expect(outline_source).to include('`${headings.length}件の見出し（先頭${MAX_VISIBLE_HEADINGS}件を表示・後続は本文スクロールで確認）`')
+      expect(outline_source).to include('`${headings.length}件の見出し（クリックで本文位置へ移動）`')
     end
   end
 
@@ -41,22 +41,24 @@ RSpec.describe "Site viewer heading outline source" do
     aggregate_failures do
       expect(outline_source).to include("function setOutlineState(container, message)")
       expect(outline_source).to include("container.hidden = false")
-      expect(outline_source).to include('setOutlineState(container, "見出しを取得できませんでした")')
-      expect(outline_source).to include('setOutlineState(container, "見出しはありません")')
+      expect(outline_source).to include('setOutlineState(container, "見出しを取得できませんでした。本文側の通常スクロールで確認してください。")')
+      expect(outline_source).to include('setOutlineState(container, "見出しはありません。本文側の通常スクロールで確認してください。")')
       expect(outline_source).to include("if (!frameDocument?.body)")
       expect(outline_source).to include("if (!list || headings.length === 0)")
     end
   end
 
-  it "keeps click behavior scoped to heading scroll and iframe focus" do
+  it "keeps click behavior scoped to heading scroll, iframe focus, and a lightweight active cue" do
     aggregate_failures do
       expect(outline_source).to include('button.type = "button"')
       expect(outline_source).to include('button.className = `site-viewer-outline__item is-level-${headingLevel(heading)}`')
       expect(outline_source).to include('heading.scrollIntoView({ behavior: "smooth", block: "start" })')
       expect(outline_source).to include("frame.contentWindow?.focus()")
+      expect(outline_source).to include("function activateHeadingButton(button)")
+      expect(outline_source).to include('button.classList.add("is-active")')
+      expect(outline_source).to include('button.setAttribute("aria-current", "location")')
       expect(outline_source).not_to include("scrollspy")
       expect(outline_source).not_to include("IntersectionObserver")
-      expect(outline_source).not_to include("aria-current")
     end
   end
 end
