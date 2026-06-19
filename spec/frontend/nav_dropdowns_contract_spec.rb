@@ -29,7 +29,8 @@ RSpec.describe "Nav dropdown contract" do
       expect(navbar_source).to include('["Microsoft Graph", admin_microsoft_graph_connections_path]')
       expect(navbar_source).to include('active_nav_link_to "Git取込履歴", admin_git_import_runs_path, active: false')
       expect(navigation_helper_source).to include("def nav_current_child_label(*items)")
-      expect(navigation_helper_source).to include('current_path.start_with?("#{candidate_path}/")')
+      expect(navigation_helper_source).to include("nav_current_child_exact_path?(path)")
+      expect(navigation_helper_source).to include('request.path.start_with?("#{candidate_path}/")')
     end
   end
 
