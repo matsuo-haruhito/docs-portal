@@ -1,5 +1,6 @@
 import "./application.css"
 import "./bootstrap_overrides.css"
+import "./nav_current_label.css"
 import "./document_version_diff_display_mode.css"
 import "./document_version_tabs.css"
 import "./document_set_document_filter.css"
