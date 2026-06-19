@@ -97,4 +97,4 @@ Tom Select 自体は積極的に使う。ただし、アプリ側で `new TomSel
 - Rails system spec または手動確認で、主要導線の UX が維持されていること。
 - table preference 保存がユーザー単位で期待どおり動くこと。
 - Tom Select / remote search が大量データでも扱いやすいこと。
-- gem 側に不足がある場合は、それぞれの gemリポジトリへ issue を作成する。
+- gem 側に不足がある場合は、それぞれの gem リポジトリへ issue を作成する。
