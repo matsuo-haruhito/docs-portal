@@ -13,7 +13,7 @@ p.muted 主要な管理対象の件数と最近のデータを横断確認でき
     = submit_tag "検索", class: "button secondary"
     - if has_query
       = link_to "検索解除", admin_model_browser_path, class: "button secondary"
-  p.muted = "catalog entry のモデル名、key、説明、group から探せます。検索語は最大#{Admin::ModelBrowsersController::MODEL_BROWSER_QUERY_MAX_LENGTH}文字です。最近の record 検索や編集操作は各 model の詳細または既存画面で確認してください。"
+  p.muted = "この検索は catalog entry のモデル名、key、説明、group を対象にします。検索語は最大#{Admin::ModelBrowsersController::MODEL_BROWSER_QUERY_MAX_LENGTH}文字です。record 名、public_id、code の確認は各 model の詳細または既存画面で続けてください。"
   - if has_query
     p.muted = "検索条件: #{@query} / 表示中: #{@entries.size}件"
 
@@ -48,4 +48,5 @@ p.muted 主要な管理対象の件数と最近のデータを横断確認でき
     h2 検索条件に一致するモデルはありません。
     p.muted モデル名、key、説明、group の表記を変えて再検索してください。
     p.muted この検索は model catalog entry の検索です。record 名、public_id、code を探す場合は、対象 model の詳細に進んで「代表フィールド検索」を使うか、既存管理画面で確認してください。
+    p.muted 一覧に出る model 自体が見つからない状態であり、record が存在しないことや既存画面で検索できないことを示すものではありません。
     p.actions = link_to "検索解除", admin_model_browser_path, class: "button secondary"
