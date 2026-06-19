@@ -44,6 +44,8 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include("文書")
     expect(response.body).to include("key: projects / group: 基本マスタ")
     expect(response.body).to include("key: documents / group: 文書・権限")
+    expect(response.body).to include("この検索は catalog entry のモデル名、key、説明、group を対象にします。")
+    expect(response.body).to include("record 名、public_id、code の確認は各 model の詳細または既存画面で続けてください。")
     expect(response.body).to include(admin_model_browser_model_path("projects"))
     expect(response.body).to include(admin_projects_path)
   end
@@ -198,6 +200,8 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include("モデル名、key、説明、group の表記を変えて再検索してください。")
     expect(response.body).to include("この検索は model catalog entry の検索です。")
     expect(response.body).to include("record 名、public_id、code を探す場合は、対象 model の詳細に進んで「代表フィールド検索」を使うか、既存管理画面で確認してください。")
+    expect(response.body).to include("一覧に出る model 自体が見つからない状態")
+    expect(response.body).to include("record が存在しないことや既存画面で検索できないことを示すものではありません。")
     expect(page_hrefs).to include(admin_model_browser_path)
     expect(model_browser_card_links).to be_empty
   end
@@ -224,7 +228,9 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include("最近のデータ")
     expect(response.body).to include("最新の代表データを最大20件まで表示します。この画面では編集や削除はできません。")
     expect(response.body).to include("この画面は最近の代表データや検索結果を最大20件だけ確認するための read-only 表示です。")
-    expect(response.body).to include("20件より先の確認や詳細確認は既存管理画面で行えます。")
+    expect(response.body).to include("検索対象フィールドに一致した代表データだけを表示し、20件より先の確認や詳細確認は既存管理画面で行えます。")
+    expect(response.body).to include("検索結果は検索対象フィールドに一致した代表データを最大20件まで表示します。")
+    expect(response.body).to include("数値だけの検索語は、この画面では ID 補助照合にも使います。")
     expect(response.body).to include("既存画面で詳しく確認")
     expect(response.body).to include("20件より先や詳細確認は「既存画面で詳しく確認」から続けてください。")
     expect(response.body).not_to include("検索語「")
@@ -251,6 +257,7 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(page_hrefs).to include(admin_projects_path(q: "Needle"))
     expect(response.body).to include("検索対象:")
     expect(response.body).to include("コード")
+    expect(response.body).to include("検索結果は検索対象フィールドに一致した代表データを最大20件まで表示します。")
     expect(response.body).to include(matching_project.code)
     expect(response.body).to include(matching_project.name)
     expect(response.body).not_to include(other_project.code)
@@ -290,6 +297,7 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(matching_project.code)
     expect(response.body).to include("数値だけの検索語はこの read-only 画面の ID 照合にも使われる")
+    expect(response.body).to include("数値だけの検索語は、この画面では ID 補助照合にも使います。")
     expect(page_hrefs).to include(admin_projects_path)
     expect(page_hrefs).not_to include(admin_projects_path(q: matching_project.id.to_s))
     expect(response.body).not_to include(other_project.code)
@@ -306,9 +314,10 @@ RSpec.describe "Admin model browsers", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果")
-    expect(response.body).to include("該当するデータはありません。")
+    expect(response.body).to include("該当する代表データはありません。")
     expect(response.body).to include("検索対象は")
     expect(response.body).to include("コード")
+    expect(response.body).to include("表示は最大20件の read-only sample です。")
     expect(response.body).to include("既存画面でも同じ検索語で確認できます。")
     expect(response.body).to include("20件より先や別条件の確認は「既存画面で詳しく確認」から続けてください。")
     expect(page_hrefs).to include(admin_projects_path(q: "NO_MATCH_1674"))
@@ -323,7 +332,7 @@ RSpec.describe "Admin model browsers", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索結果")
-    expect(response.body).to include("該当するデータはありません。")
+    expect(response.body).to include("該当する代表データはありません。")
   end
 
   it "redirects unauthenticated users from model-specific browser pages" do
