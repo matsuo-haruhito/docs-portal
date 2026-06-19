@@ -3,6 +3,7 @@ require "rails_helper"
 RSpec.describe "Document review comments", type: :request do
   let(:internal_user) { create(:user, :internal) }
   let(:admin_user) { create(:user, :internal) }
+  let(:company_master_user) { create(:user, :company_master_admin, company:) }
   let(:company) { create(:company) }
   let(:external_user) { create(:user, :external, company:) }
   let(:project) { create(:project, code: "REVIEW", name: "Review Project") }
@@ -703,6 +704,44 @@ RSpec.describe "Document review comments", type: :request do
     expect(response).to have_http_status(:forbidden)
     expect(question.reload).to be_open
     expect(question.qa_status_label).to eq("受付中")
+  end
+
+  it "keeps non-admin and unsupported decisions from changing comment status" do
+    question = create(
+      :document_review_comment,
+      document:,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Can company admins close this?"
+    )
+    review_comment = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: internal_user,
+      comment_type: :request_change,
+      internal_only: true,
+      body: "Unsupported decisions must not change this"
+    )
+
+    sign_in_as(company_master_user)
+
+    patch project_document_document_review_comment_path(project, document, question), params: { decision: "resolve" }
+
+    expect(response).to have_http_status(:forbidden)
+    expect(question.reload).to be_open
+    expect(question.resolved_by).to be_nil
+    expect(question.resolved_at).to be_nil
+
+    sign_in_as(admin_user)
+
+    patch document_version_document_review_comment_path(version, review_comment), params: { decision: "archive" }
+
+    expect(response).to have_http_status(:bad_request)
+    expect(review_comment.reload).to be_open
+    expect(review_comment.resolved_by).to be_nil
+    expect(review_comment.resolved_at).to be_nil
   end
 
   it "hides review comments from external users and forbids create/update" do
