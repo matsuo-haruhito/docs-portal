@@ -35,7 +35,7 @@ RSpec.describe "Document comment workspace search fields", type: :request do
   end
 
   def tab_href(tab_label)
-    parsed_html.css("a.document-comment-tabs__tab-link").find { |link| link.text.squish == tab_label }.fetch("href")
+    parsed_html.css("a.document-comment-tabs__tab-link").find { |link| link.text.squish == tab_label }["href"]
   end
 
   def parsed_query(href)
