@@ -31,7 +31,7 @@ details class=wrapper_classes.join(" ") open=(!floating)
         p.document-comment-workspace__eyebrow 文書を見ながら書く
         h2 文書コメント
         - if current_user.internal?
-          p.muted Q&A と内部向けの確認事項をここにまとめます。
+          p.muted 外部/利用者にも見えるQ&Aと、内部だけで扱う確認事項をここにまとめます。
         - else
           p.muted 文書に関するQ&Aをここにまとめます。
       span.document-comment-workspace__status
@@ -63,7 +63,7 @@ details class=wrapper_classes.join(" ") open=(!floating)
           span.document-comment-workspace__summary-label 確認事項
           strong.document-comment-workspace__summary-value = @review_comments.size
           span.document-comment-workspace__summary-note = "未解決 #{unresolved_review_count}件"
-        p.document-comment-workspace__summary-help.muted 未解決タブには、未解決のQ&Aと内部向け確認事項をまとめて表示します。通知・期限・SLAを示すものではありません。
+        p.document-comment-workspace__summary-help.muted 未解決タブには、未解決のQ&Aと内部向け確認事項をまとめて表示します。Q&Aの受付・回答状態と確認事項の解決状態は別の管理です。通知・期限・SLAを示すものではありません。
       - else
         p.document-comment-workspace__summary-help.muted 未解決タブには、まだ回答やクローズがされていないQ&Aを表示します。
       - if comment_search_active
@@ -80,7 +80,7 @@ details class=wrapper_classes.join(" ") open=(!floating)
           input#comment-mode-review.comment-mode-switch__input type="radio" name="comment_mode"
           label.comment-mode-switch__label for="comment-mode-review"
             strong 確認事項を残す
-            span 内部向けの確認・指摘・修正依頼
+            span 内部だけで解決管理する確認・指摘
 
         .comment-mode-switch__panel.comment-mode-switch__panel--question
           = form_with model: [@project, @document, DocumentReviewComment.new], local: true do |form|
