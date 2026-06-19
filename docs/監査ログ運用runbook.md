@@ -23,6 +23,7 @@ current 実装の前提:
 - 絞り込みは `action_type` `target_type` `project_id` `company_id` `user_id` `q` `document_q` `from` `to` `ai_context_mode` `ai_context_scope` を受け付ける
 - 画面上の `AI出力モード` / `AI出力範囲` filter は、それぞれ `ai_context_mode` / `ai_context_scope` を使う
 - AI context の `mode` / `scope` filter は `target_type=ai_context` のときだけ有効になり、他の `target_type` では無視される
+- `案件` / `会社` / `ユーザー` は remote search の combobox で、検索語は最大 100 文字、候補は最大 20 件まで返る。URL などで指定済みの値は候補上限外でも選択値として復元される
 - `q` は一覧に表示される `target_name` と `ip_address` に対して部分一致で絞り込む
 - `document_q` は文書タイトルと `slug` の両方に対して部分一致で絞り込む
 - `q` / `document_q` は前後空白を除いた最大 100 文字までが検索条件になり、空白だけの入力は条件に採用されない
@@ -59,9 +60,12 @@ current 実装の前提:
 
 ### 4. 案件 / 会社 / ユーザー
 
-- `project_id` は案件単位の追跡に使う
-- `company_id` は社外会社ごとの利用状況を見たいときに使う
-- `user_id` は個別利用者の行動確認に使う
+- `project_id` は案件単位の追跡に使う。combobox は案件コード / 案件名の一部一致で候補を探し、候補 label は `案件コード / 案件名` として表示される
+- `company_id` は社外会社ごとの利用状況を見たいときに使う。combobox は会社名 / ドメインの一部一致で候補を探し、ドメインがある場合は `会社名 / ドメイン` として表示される
+- `user_id` は個別利用者の行動確認に使う。combobox はユーザー名 / メールアドレスの一部一致で候補を探し、表示名とメールアドレスを合わせて表示する
+- 案件・会社・ユーザーの検索語は前後空白を除いて最大 100 文字までが使われ、候補は最大 20 件まで返る。候補が多い場合は、コード、ドメイン、メールアドレスなど識別しやすい短い断片を入れて絞る
+- URL や保存済み filter で指定済みの案件・会社・ユーザーは、通常候補上限の外にあっても selected option と `有効な条件` の badge へ復元される
+- 存在しない ID や候補外の値は selected option として復元されず、`有効な条件` では `指定あり` と読めることがある。誤った ID の可能性がある場合は条件をクリアし、検索し直す
 - 3 つを組み合わせると、対象をかなり狭くして 200 件単位のページ内で追いやすくなる
 
 ### 5. 対象名・IPアドレス
@@ -165,6 +169,7 @@ AI context の読み方:
 - ZIP 配布や添付ダウンロードが特定案件だけに偏っていないか
 - ZIP 名、添付ファイル名、AI context export の記録、IP アドレス断片から `対象名・IPアドレス` で目的の証跡を探せているか
 - 長い target_name、AI context export の記録、文書 slug を探すとき、全文を貼らず最大 100 文字内の特徴的な断片へ絞れているか
+- 案件・会社・ユーザー filter では、コード、ドメイン、メールアドレスなど識別しやすい短い断片で候補を絞り、候補上限外の指定済み値が badge に復元されているかを確認できているか
 - AI context export の HTML preview / JSON / Markdown download が想定した案件や利用者で発生しているか
 - AI context export を見るとき、`compact` / `full` と `全件` / `選択` のどちらで出力された証跡なのかを `AI出力モード` / `AI出力範囲` と `対象` 列で確認できているか
 - 条件に一致する最新 200 件を共有・保管したいとき、CSV export の固定列と画面の表示設定を混同していないか
@@ -185,6 +190,8 @@ AI context の読み方:
 - `q` は前後空白を除いた最大 100 文字までが条件になり、空白だけの入力は条件に採用されない。長い保存値は特徴的な短い断片で探す
 - `document_q` は title / slug の検索であり、target file name や IP アドレス検索ではない
 - `document_q` も前後空白を除いた最大 100 文字までが条件になり、空白だけの入力は条件に採用されない
+- 案件・会社・ユーザーの remote search は候補を最大 20 件まで返す探索補助であり、CSV export 範囲、page 件数、監査ログの記録対象は変えない
+- 指定済みの案件・会社・ユーザーが候補上限外でも selected option として復元される一方、存在しない ID は label へ復元されない。`指定あり` の badge だけが残る場合は、条件をクリアして検索し直す
 - filter あり 0 件状態の `条件をクリア` は query なしの一覧へ戻るだけで、表示設定、CSV 固定列、監査ログ保存条件は変えない
 - AI出力モード / AI出力範囲 filter は `target_type=ai_context` の `target_name` に保存された `mode=<value>;` / `scope=<value>;` を使う補助 filter であり、任意の `target_name` 全文検索ではない
 - AI context export の保存値を文字列断片で探したいときは `q` を使う。ただし mode / scope の structured filter は従来どおり `target_type=ai_context` のときだけ有効にする
@@ -201,7 +208,7 @@ AI context の読み方:
 
 - まず利用が起きたかどうかを見たい: `操作` と `対象種別` で絞る
 - AI context export の出力形態だけを狭めたい: `対象種別` を `ai_context` にしてから `AI出力モード` / `AI出力範囲` を足す
-- どの案件や会社の話かを狭めたい: `案件` `会社` `ユーザー` を足す
+- どの案件や会社の話かを狭めたい: `案件` `会社` `ユーザー` を足す。候補が多い場合は、案件コード、会社ドメイン、ユーザーのメールアドレスなど短い識別子で remote search する
 - 特定日の前後だけを見たい: `開始日` / `終了日` を入れて、必要なら他の条件を足す。warning が出た場合は、除外された日付条件を直してから結果を読む
 - ZIP 名、添付ファイル名、AI context export の記録、IP アドレスから探したい: `対象名・IPアドレス` に最大 100 文字内の断片を入れる
 - 文書 detail から利用傾向を振り返りたい: `document_q` で title / slug の最大 100 文字内の断片を入れて戻る
