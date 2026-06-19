@@ -34,6 +34,8 @@ first slice で束ねる spec subset は次です。
 - `spec/requests/admin_external_folder_sync_sources_spec.rb`
 - `spec/requests/admin_microsoft_graph_connections_spec.rb`
 
+`spec/docs/exposure_smoke_checklist_drift_spec.rb` は、この subset と `bin/operational_metadata_exposure_smoke` の `SPEC_FILES` が一致していることを source-level guard として確認する。代表 spec を追加・削除する場合は、smoke script とこの節を同じ PR で更新し、社外ユーザーの閲覧権限境界を確認する spec は [社外ユーザー向け情報露出点検チェックリスト](./社外ユーザー向け情報露出点検チェックリスト.md) 側へ分ける。
+
 この subset は、manual upload dry-run、欠落文書ファイル expected path、Webhook delivery preview / search、外部フォルダ同期 metadata、Microsoft Graph provider metadata の代表 guard に限定します。Webhook / Graph / import / dry-run の runtime 表示仕様、secret / token / PII 判定、保存方針、CI 必須化はこの smoke command では決めません。
 
 | 対象 | 最初に見る docs / 画面 | current behavior と点検観点 | 関連 issue |
