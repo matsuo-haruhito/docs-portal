@@ -42,8 +42,8 @@ RSpec.describe "document comment workspace source" do
   it "keeps comment search in the workspace while adding the summary" do
     aggregate_failures do
       expect(workspace_source).to include("document-comment-search")
-      expect(workspace_source).to include("comment_search_active")
-      expect(workspace_source).to include("検索条件に一致する未解決のコメントはありません。")
+      expect(workspace_source).to include("comment_filter_active")
+      expect(workspace_source).to include("絞り込み条件に一致する未解決のコメントはありません。")
     end
   end
 
