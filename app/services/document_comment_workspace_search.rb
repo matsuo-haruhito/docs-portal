@@ -1,16 +1,32 @@
 class DocumentCommentWorkspaceSearch
   COMMENT_QUERY_MAX_LENGTH = 100
+  COMMENT_AUTHOR_OPTIONS_LIMIT = 50
 
-  attr_reader :query
+  attr_reader :query, :author_options, :selected_author
 
-  def initialize(user:, query:)
+  def initialize(user:, query:, author_public_id: nil, author_candidates: [])
     @user = user
     @query = query.to_s.strip.slice(0, COMMENT_QUERY_MAX_LENGTH)
     @normalized_query = @query.downcase
+    @author_options = normalize_author_options(author_candidates)
+    @author_public_id = author_public_id.to_s.strip
+    @selected_author = @author_options.find { |author| author.public_id == @author_public_id }
   end
 
   def active?
+    query_active? || author_active?
+  end
+
+  def query_active?
     query.present?
+  end
+
+  def author_active?
+    selected_author.present?
+  end
+
+  def author_public_id
+    selected_author&.public_id.to_s
   end
 
   def filter_questions(threads)
@@ -18,8 +34,7 @@ class DocumentCommentWorkspaceSearch
     return records unless active?
 
     records.select do |thread|
-      question_search_fields(thread).any? { |value| matches_text?(value) } ||
-        thread.replies.visible_to(@user).any? { |reply| question_reply_search_fields(reply).any? { |value| matches_text?(value) } }
+      question_matches_text?(thread) && question_matches_author?(thread)
     end
   end
 
@@ -28,11 +43,48 @@ class DocumentCommentWorkspaceSearch
     return records unless active?
 
     records.select do |comment|
-      review_search_fields(comment).any? { |value| matches_text?(value) }
+      review_matches_text?(comment) && review_matches_author?(comment)
     end
   end
 
   private
+
+  def normalize_author_options(author_candidates)
+    Array(author_candidates)
+      .compact
+      .uniq(&:id)
+      .sort_by { |author| [author.display_name.to_s.downcase, author.public_id.to_s] }
+      .first(COMMENT_AUTHOR_OPTIONS_LIMIT)
+  end
+
+  def question_matches_text?(thread)
+    return true unless query_active?
+
+    question_search_fields(thread).any? { |value| matches_text?(value) } ||
+      visible_replies(thread).any? { |reply| question_reply_search_fields(reply).any? { |value| matches_text?(value) } }
+  end
+
+  def question_matches_author?(thread)
+    return true unless author_active?
+
+    thread.author_id == selected_author.id || visible_replies(thread).any? { |reply| reply.author_id == selected_author.id }
+  end
+
+  def review_matches_text?(comment)
+    return true unless query_active?
+
+    review_search_fields(comment).any? { |value| matches_text?(value) }
+  end
+
+  def review_matches_author?(comment)
+    return true unless author_active?
+
+    comment.author_id == selected_author.id
+  end
+
+  def visible_replies(thread)
+    thread.replies.visible_to(@user)
+  end
 
   def question_search_fields(thread)
     [
