@@ -49,7 +49,7 @@ RSpec.describe "document comment workspace source" do
 
   it "explains unresolved tabs without implying SLA or workflow changes" do
     aggregate_failures do
-      expect(workspace_source).to include("未解決タブには、未解決のQ&Aと内部向け確認事項をまとめて表示します。通知・期限・SLAを示すものではありません。")
+      expect(workspace_source).to include("未解決タブには、未解決のQ&Aと内部向け確認事項をまとめて表示します。Q&Aの受付・回答状態と確認事項の解決状態は別の管理です。通知・期限・SLAを示すものではありません。")
       expect(workspace_source).to include("未解決タブには、まだ回答やクローズがされていないQ&Aを表示します。")
       expect(workspace_source).to include('span.muted = " (Q&A #{unresolved_question_count} / 確認事項 #{unresolved_review_count})"')
       expect(workspace_source).to include('= link_to "未解決Q&A", comment_tab_url.call("unresolved")')
