@@ -30,9 +30,9 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     @invalid_confirmed_date_labels = @invalid_confirmed_date_params.map { confirmed_date_filter_label(_1) }
     @matching_documents = matching_documents if @selected_project
     @selected_document = @matching_documents.first if @matching_documents&.one?
-    @selected_company = selected_company
+    @selected_company = selected_company_filter
     @read_confirmation_companies = read_confirmation_company_candidates
-    @selected_user = selected_user
+    @selected_user = selected_user_filter
     @read_confirmation_users = read_confirmation_user_candidates
     @read_confirmations_scope = filtered_read_confirmations_scope
     @read_confirmations_total_count = @read_confirmations_scope.count
@@ -176,7 +176,7 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     records + [@selected_company]
   end
 
-  def selected_company
+  def selected_company_filter
     return if @selected_company_id.blank?
 
     selected_company_for_project(@selected_company_id)
@@ -195,7 +195,12 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     scope = User
       .joins(read_confirmations: :document)
       .where(documents: { project_id: project.id })
-    scope = scope.where(company_id: selected_company_for_project(params[:company_id])) if params[:company_id].present?
+    if params[:company_id].present?
+      company = selected_company_for_project(params[:company_id])
+      return User.none unless company
+
+      scope = scope.where(company:)
+    end
     scope
       .includes(:company)
       .distinct
@@ -224,7 +229,7 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     records + [@selected_user]
   end
 
-  def selected_user
+  def selected_user_filter
     return if @selected_user_id.blank?
 
     scoped_read_confirmation_user_scope.unscope(:order).find_by(id: @selected_user_id)
