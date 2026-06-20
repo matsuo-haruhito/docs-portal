@@ -28,12 +28,55 @@ RSpec.describe Admin::ApiSpecificationPage do
       ])
       expect(page.primary_source_paths).to eq(page.primary_source_pages.map(&:source_path))
     end
+
+    it "keeps the source list aligned with the runbook primary page guidance" do
+      runbook = Rails.root.join("docs", "API仕様ページとdocs-src更新確認runbook.md").read
+
+      page.primary_source_pages.each do |source_page|
+        expect(runbook).to include("- `#{source_page.label}`: `#{source_page.source_path}` -> `/#{source_page.site_path}`")
+      end
+      expect(runbook).to include("各行の `Freshness` は、その行の source mtime と generated HTML mtime の比較だけ")
+      expect(runbook).to include("build queue、iframe 配信可否")
+    end
   end
 
   describe "#source_paths" do
     it "includes all docs-src markdown files" do
       expect(page.source_paths).to include(Rails.root.join("docs-src", "api-specification.md"))
       expect(page.source_paths).to include(Rails.root.join("docs-src", "client-file-upload-api.md"))
+    end
+  end
+
+  describe "#primary_source_page_freshness" do
+    let(:source_page) { page.primary_source_pages.first }
+    let(:source_file_path) { Rails.root.join(source_page.source_path) }
+
+    it "reports row freshness from source and generated HTML mtimes only" do
+      FileUtils.mkdir_p(build_entry_path.dirname)
+      File.write(build_entry_path, "html")
+
+      FileUtils.touch(build_entry_path, mtime: source_file_path.mtime - 1.minute)
+      freshness = page.primary_source_page_freshness(source_page)
+      expect(freshness.label).to eq("Source更新あり")
+      expect(freshness.message).to include("Source がHTMLより新しい可能性")
+      expect(freshness.source_mtime).to eq(source_file_path.mtime)
+      expect(freshness.site_mtime).to eq(build_entry_path.mtime)
+
+      FileUtils.touch(build_entry_path, mtime: source_file_path.mtime + 1.minute)
+      freshness = page.primary_source_page_freshness(source_page)
+      expect(freshness.label).to eq("HTML追従済み")
+      expect(freshness.message).to include("Source と生成HTMLの更新時刻")
+    end
+
+    it "reports missing generated HTML as a row-level cue" do
+      FileUtils.rm_f(build_entry_path)
+
+      freshness = page.primary_source_page_freshness(source_page)
+
+      expect(freshness.label).to eq("HTML未生成")
+      expect(freshness.message).to include("build 完了後にHTML確認先を開いてください")
+      expect(freshness.source_mtime).to eq(source_file_path.mtime)
+      expect(freshness.site_mtime).to be_nil
     end
   end
 
