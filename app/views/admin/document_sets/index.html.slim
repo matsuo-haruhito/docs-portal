@@ -47,8 +47,10 @@ h1 文書セット
 
   p.muted
     | 検索結果: 
-    = @document_sets.size
+    = @document_sets_filtered_count
     | 件
+  - if @document_sets_filtered_count.positive?
+    p.muted = "表示中: #{@document_sets_pagination[:from]}-#{@document_sets_pagination[:to]}件 / #{@document_sets_filtered_count}件"
 
 - if @document_sets.any?
   .card
@@ -77,6 +79,15 @@ h1 文書セット
           td.actions data-rails-table-preferences-column-key="actions"
             = edit_link_to "編集", edit_admin_document_set_path(document_set)
             = delete_link_to "削除", admin_document_set_path(document_set), confirm: "文書セット「#{document_set.name}」を削除しますか？登録済み文書 #{document_set.document_set_items.size} 件との対応も失われます。"
+
+  - if @document_sets_pagination[:total_pages] > 1
+    nav.pagination aria-label="文書セット一覧ページ"
+      p.actions
+        - if @document_sets_pagination[:prev_page]
+          = link_to "前へ", admin_document_sets_path(@document_set_page_params.merge(page: @document_sets_pagination[:prev_page])), class: "button secondary"
+        span.muted = "#{@document_sets_pagination[:page]} / #{@document_sets_pagination[:total_pages]}ページ"
+        - if @document_sets_pagination[:next_page]
+          = link_to "次へ", admin_document_sets_path(@document_set_page_params.merge(page: @document_sets_pagination[:next_page])), class: "button secondary"
 - else
   .card
     - if admin_document_set_filters_active?(@filters)
