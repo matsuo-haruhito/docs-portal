@@ -19,7 +19,8 @@ RSpec.describe "Admin navigation", type: :request do
 
   def expect_active_nav(section_label:, link_label:)
     expect(response).to have_http_status(:ok)
-    expect(active_nav_section_label).to eq("#{section_label} 現在")
+    expect(active_nav_section_label).to eq(section_label)
+    expect(active_nav_section["class"]).to include("border-start")
     expect(active_nav_section["aria-label"]).to eq("現在の領域: #{section_label}")
     expect(active_nav_link.text.squish).to eq(link_label)
   end
