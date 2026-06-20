@@ -124,11 +124,25 @@ class Admin::DocumentSetsController < Admin::BaseController
   end
 
   def load_document_sets
-    scope = DocumentSet.includes(:project, document_set_items: %i[document document_version])
+    document_scope = filtered_document_sets
+    @document_sets_filtered_count = document_scope.count
+    ordered_document_sets = document_scope.includes(:project, document_set_items: %i[document document_version]).ordered
+    @document_sets, @document_sets_pagination = paginate_admin_list(ordered_document_sets, @document_sets_filtered_count)
+    @document_set_page_params = document_set_page_params
+  end
+
+  def filtered_document_sets
+    scope = DocumentSet.joins(:project)
     scope = apply_enum_filter(scope, :set_type, DocumentSet.set_types)
     scope = apply_enum_filter(scope, :visibility_policy, DocumentSet.visibility_policies)
     scope = apply_query_filter(scope)
-    @document_sets = scope.ordered
+    scope.distinct
+  end
+
+  def document_set_page_params
+    page_params = @filters.transform_keys(&:to_s)
+    page_params["per_page"] = @document_sets_pagination[:per_page] if params[:per_page].present?
+    page_params.reject { |_key, value| value.blank? }
   end
 
   def load_project_documents
@@ -274,7 +288,7 @@ class Admin::DocumentSetsController < Admin::BaseController
     return scope if query.blank?
 
     pattern = "%#{DocumentSet.sanitize_sql_like(query.downcase)}%"
-    scope.joins(:project).where(
+    scope.where(
       "LOWER(document_sets.name) LIKE :pattern OR LOWER(projects.name) LIKE :pattern OR LOWER(projects.code) LIKE :pattern",
       pattern: pattern
     )
@@ -284,7 +298,7 @@ class Admin::DocumentSetsController < Admin::BaseController
     CSV.generate(headers: true) do |csv|
       csv << CSV_HEADERS
 
-      @document_sets.each do |document_set|
+      filtered_document_sets.includes(:project, document_set_items: %i[document document_version]).ordered.each do |document_set|
         csv << document_set_csv_row(document_set)
       end
     end

@@ -2,6 +2,7 @@
 - table_key = :admin_read_confirmations
 - table_columns = read_confirmation_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- filter_search_limit = Admin::ReadConfirmationsController::FILTER_SEARCH_LIMIT
 - show_read_confirmations_clear_link = @selected_project.present? || @document_slug.present? || @confirmed_from.present? || @confirmed_to.present? || @invalid_confirmed_date_labels.present? || @selected_company_id.present? || @selected_user_id.present? || params[:page].present?
 
 h1 既読確認内訳
@@ -29,23 +30,36 @@ section.card
       div
         = form.label :to, "既読確認日時（終了日）"
         = form.date_field :to, value: params[:to].to_s.strip
-      = form.rfk_select :company_id,
+      = form.rfk_combobox :company_id,
         collection: @read_confirmation_companies.map { [_1.display_name, _1.id] },
+        selected: read_confirmation_company_selected_option(@selected_company),
+        url: company_search_admin_read_confirmations_path(format: :json, project_id: @selected_project&.id),
+        selected_url: selected_company_admin_read_confirmations_path(format: :json, project_id: @selected_project&.id),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: filter_search_limit,
         wrapper: true,
         label: "会社",
-        placeholder: "会社を選択",
-        include_blank: "すべて",
-        allow_clear: true,
-        selected: @selected_company&.id
-      = form.rfk_select :user_id,
+        placeholder: "会社名・ドメインで検索",
+        allow_clear: true
+      = form.rfk_combobox :user_id,
         collection: @read_confirmation_users.map { [[_1.display_name, _1.email_address, _1.company&.display_name].compact_blank.join(" / "), _1.id] },
+        selected: read_confirmation_user_selected_option(@selected_user),
+        url: user_search_admin_read_confirmations_path(format: :json, project_id: @selected_project&.id, company_id: @selected_company&.id),
+        selected_url: selected_user_admin_read_confirmations_path(format: :json, project_id: @selected_project&.id, company_id: @selected_company&.id),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: filter_search_limit,
         wrapper: true,
         label: "確認者",
-        placeholder: "確認者を選択",
-        include_blank: "すべて",
-        allow_clear: true,
-        selected: @selected_user&.id
+        placeholder: "確認者名・メール・会社で検索",
+        allow_clear: true
     p.muted 期間は既読確認日時（confirmed_at）を対象にします。文書利用状況の閲覧・ダウンロード集計期間とは別の条件です。
+    p.muted = "会社・確認者は検索語最大#{Admin::ReadConfirmationsController::DOCUMENT_QUERY_MAX_LENGTH}文字、候補最大#{filter_search_limit}件です。URLで指定済みの値は候補上限外でも復元します。"
     p.actions
       = form.submit "表示"
       - if show_read_confirmations_clear_link

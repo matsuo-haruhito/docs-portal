@@ -12,6 +12,13 @@ RSpec.describe "accessible_documents/index source" do
     expect(view_source).to include("table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns)")
   end
 
+  it "keeps the keyword placeholder short and moves searchable targets into visible help" do
+    expect(view_source).to include('placeholder: "文書名・案件名など"')
+    expect(view_source).to include("span.muted\n          | 本文、キーワード、タグ、添付ファイル名、元パスでも検索できます。")
+    expect(view_source).not_to include("p.muted\n          | 本文、キーワード、タグ、添付ファイル名、元パスでも検索できます。")
+    expect(view_source).not_to include('placeholder: "案件名・文書名・URL識別子・元パス・版・本文・キーワード・添付ファイル名/パス"')
+  end
+
   it "keeps stable column keys on headers and cells" do
     %w[
       project document match_reason tags category document_kind importance_level visibility_policy latest_version html files updated_at
