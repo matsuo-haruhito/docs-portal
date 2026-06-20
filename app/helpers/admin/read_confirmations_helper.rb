@@ -10,4 +10,16 @@ module Admin::ReadConfirmationsHelper
       table_preferences_column(:document_slug, label: "文書URL識別子", default_width: 170, overflow: :ellipsis)
     ]
   end
+
+  def read_confirmation_company_selected_option(company)
+    return if company.blank?
+
+    { value: company.id, text: company.display_name }
+  end
+
+  def read_confirmation_user_selected_option(user)
+    return if user.blank?
+
+    { value: user.id, text: [user.display_name, user.email_address, user.company&.display_name].compact_blank.join(" / ") }
+  end
 end
