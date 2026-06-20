@@ -1,3 +1,5 @@
+- enabled_git_import_source_count = @git_import_sources.count(&:enabled?)
+
 .card
   h2 Git pull同期の運用状態
   p.muted 有効なGit連携元と直近のGit同期履歴を確認します。
@@ -6,15 +8,20 @@
     = link_to "Git同期履歴", admin_git_import_runs_path, class: "button secondary"
   dl.definition-list
     dt Git連携元
-    dd = "有効 #{@git_import_sources.count(&:enabled?)}件 / 全 #{@git_import_sources.size}件"
+    dd = "有効 #{enabled_git_import_source_count}件 / 全 #{@git_import_sources.size}件"
     dt Git import preview build状態
     dd = @git_import_preview_status_counts.map { |status, count| "#{status}: #{count}件" }.join(" / ").presence || "対象なし"
 
 .card
   h2 Git連携元
   - if @git_import_sources.empty?
-    p.muted Git連携元はまだ登録されていません。
+    p.muted
+      | Git連携元はまだ登録されていません。
+      = link_to "Git連携設定", admin_git_import_sources_path
+      | で同期元を登録すると、この画面で有効件数と対象状態を確認できます。
   - else
+    - if enabled_git_import_source_count.zero?
+      p.muted 登録済みのGit連携元はありますが、有効な設定がありません。Git連携設定で利用する同期元を有効化してください。
     = table_tag do
       thead
         tr
@@ -35,7 +42,10 @@
 .card
   h2 直近のGit同期履歴
   - if @recent_git_import_runs.empty?
-    p.muted Git同期履歴はまだありません。
+    p.muted
+      | Git同期履歴はまだありません。Git連携元の登録・有効化後に同期が実行されると、結果を
+      = link_to "Git同期履歴", admin_git_import_runs_path
+      | で確認できます。
   - else
     = table_tag do
       thead
