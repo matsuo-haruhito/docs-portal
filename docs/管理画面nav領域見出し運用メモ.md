@@ -12,11 +12,14 @@ internal admin 向け nav は、既存リンクを次の領域見出しで区切
 - `import / sync`: `ZIPインポート`、`単体ファイルdry-run`、`Git連携`、`Git同期履歴`
 - `外部連携`: `Microsoft Graph`、`外部フォルダ同期設定`、`Webhook`
 
+現在開いている画面が internal admin nav のいずれかの領域に属する場合、その領域見出しに `現在` cue を付ける。cue は現在 link の `aria-current="page"` と合わせて読むための小さな補助であり、領域分類や link 先を変えるものではない。
+
 company master admin 向け nav は、従来どおり `会社` と `ユーザー` だけを表示する。領域見出しは internal admin 向け nav の探索 cue であり、role boundary や link 先を変えるものではない。
 
 ## 読み方
 
 - nav の見出しは、管理画面が増えたときに近い領域の入口を探しやすくするための表示補助として読む。
+- `現在` cue は、移動後に今いる画面がどの領域に属するかを短く確認するための補助として読む。
 - `運用` は dashboard、API仕様、model browser、定期ジョブ、生成ファイル関連の状態確認入口をまとめる。
 - `文書・権限` は文書公開、権限、監査、アクセス申請、利用状況、文書一括編集の入口をまとめる。
 - `import / sync` と `外部連携` は、取り込み・同期の実行履歴と外部サービス接点を分けて読む。
