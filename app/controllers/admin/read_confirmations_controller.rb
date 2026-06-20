@@ -170,6 +170,8 @@ class Admin::ReadConfirmationsController < Admin::BaseController
   end
 
   def read_confirmation_company_candidates
+    return Company.none if document_filter_unmatched?
+
     records = read_confirmation_company_scope.limit(FILTER_CANDIDATE_LIMIT).to_a
     return records if @selected_company.blank? || records.any? { _1.id == @selected_company.id }
 
@@ -178,6 +180,7 @@ class Admin::ReadConfirmationsController < Admin::BaseController
 
   def selected_company_filter
     return if @selected_company_id.blank?
+    return if document_filter_unmatched?
 
     selected_company_for_project(@selected_company_id)
   end
