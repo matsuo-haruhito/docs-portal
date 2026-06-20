@@ -64,7 +64,8 @@ RSpec.describe "Admin document set pagination", type: :request do
     expect(page_text).to include("検索結果: 3件")
     expect(page_text).to include("表示中: 1-2件 / 3件")
     expect(listed_document_set_names).to eq(["DSET-PAGE Set 00", "DSET-PAGE Set 01"])
-    expect(table_text).not_to include("DSET-PAGE Set 02", "DSET-OTHER Set 00")
+    expect(table_text).not_to include("DSET-PAGE Set 02")
+    expect(table_text).not_to include("DSET-OTHER Set 00")
     expect(link_href("次へ")).to include(
       "q=DSET-PAGE",
       "set_type=delivery",
