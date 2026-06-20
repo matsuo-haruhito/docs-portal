@@ -27,7 +27,8 @@ export default class extends Controller {
   }
 
   applyFilters() {
-    const query = this.queryTarget.value.trim().toLowerCase()
+    const queryValue = this.queryTarget.value.trim()
+    const query = queryValue.toLowerCase()
     let visibleCount = 0
 
     this.sectionTargets.forEach((section) => {
@@ -59,11 +60,46 @@ export default class extends Controller {
 
     if (this.hasStatusTarget) {
       const kindLabel = kindLabels[this.activeKind] || this.activeKind
-      this.statusTarget.textContent = query.length > 0 ? `${visibleCount}件を表示中 / 検索: ${this.queryTarget.value}` : `${visibleCount}件を表示中 / 分類: ${kindLabel}`
+      this.statusTarget.textContent = this.statusText(visibleCount, queryValue, kindLabel)
     }
 
     if (this.hasEmptyTarget) {
+      this.emptyTarget.textContent = this.emptyMessage(queryValue)
       this.emptyTarget.hidden = visibleCount > 0
     }
+  }
+
+  statusText(visibleCount, queryValue, kindLabel) {
+    const hasQuery = queryValue.length > 0
+    const hasKindFilter = this.activeKind !== "all"
+
+    if (hasQuery && hasKindFilter) {
+      return `${visibleCount}件を表示中 / 検索: ${queryValue} / 分類: ${kindLabel}`
+    }
+
+    if (hasQuery) {
+      return `${visibleCount}件を表示中 / 検索: ${queryValue}`
+    }
+
+    return `${visibleCount}件を表示中 / 分類: ${kindLabel}`
+  }
+
+  emptyMessage(queryValue) {
+    const hasQuery = queryValue.length > 0
+    const hasKindFilter = this.activeKind !== "all"
+
+    if (hasQuery && hasKindFilter) {
+      return "検索条件と分類に一致するファイルはありません。検索語を短くするか、分類を切り替えてください。"
+    }
+
+    if (hasQuery) {
+      return "検索条件に一致するファイルはありません。検索語を短くするか、条件を解除してください。"
+    }
+
+    if (hasKindFilter) {
+      return "選択中の分類に一致するファイルはありません。分類を切り替えてください。"
+    }
+
+    return "一致するファイルはありません。"
   }
 }
