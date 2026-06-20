@@ -128,7 +128,12 @@ Rails.application.routes.draw do
     end
     resources :access_requests, only: %i[index update], param: :public_id
     resources :document_usage_reports, only: [:index]
-    resources :read_confirmations, only: [:index]
+    resources :read_confirmations, only: [:index] do
+      get :company_search, on: :collection
+      get :selected_company, on: :collection
+      get :user_search, on: :collection
+      get :selected_user, on: :collection
+    end
   end
 
   resources :projects, only: [:index, :show], param: :code do
