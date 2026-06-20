@@ -65,7 +65,7 @@ module DocumentDeliveryLogs
     def call
       candidate_source.map do |candidate|
         Entry.new(
-          identity: candidate.identity,
+          identity: handoff_identity(candidate),
           project_code: candidate.project.code,
           project_name: candidate.project.name,
           delivery_type: candidate.delivery_type,
@@ -91,6 +91,13 @@ module DocumentDeliveryLogs
         limit: limit,
         lookback_limit: lookback_limit
       ).call
+    end
+
+    def handoff_identity(candidate)
+      candidate.identity.merge(
+        to_addresses: preview(candidate.to_addresses),
+        subject: preview(candidate.subject)
+      )
     end
 
     def failed_delivery_logs_path(candidate)
