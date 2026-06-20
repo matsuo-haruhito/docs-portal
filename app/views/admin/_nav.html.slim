@@ -1,36 +1,69 @@
 ul.nav-list
   - if admin_user?
-    li.nav-section.mt-2.small.fw-bold.text-muted 運用
-    li = link_to "ダッシュボード", admin_root_path
-    li = link_to "API仕様", admin_api_specification_path
-    li = link_to "モデルブラウザ", admin_model_browser_path
-    li = link_to "定期ジョブ", admin_recurring_job_schedules_path
-    li = link_to "生成ファイルイベント", admin_generated_file_events_path
-    li = link_to "生成ファイル実行履歴", admin_generated_file_runs_path
-    li.nav-section.mt-2.small.fw-bold.text-muted 基本マスタ
-    li = link_to "会社", admin_companies_path
-    li = link_to "ユーザー", admin_users_path
-    li = link_to "案件", admin_projects_path
-    li = link_to "案件所属", admin_project_memberships_path
-    li = link_to "同意文面", admin_consent_terms_path
-    li = link_to "案件同意設定", admin_project_consent_settings_path
-    li.nav-section.mt-2.small.fw-bold.text-muted 文書・権限
-    li = link_to "文書", admin_documents_path
-    li = link_to "文書セット", admin_document_sets_path
-    li = link_to "文書権限", admin_document_permissions_path
-    li = link_to "監査ログ", admin_access_logs_path
-    li = link_to "アクセス申請", admin_access_requests_path
-    li = link_to "利用状況", admin_document_usage_reports_path
-    li = link_to "文書一括編集", new_admin_bulk_edit_dry_run_path
-    li.nav-section.mt-2.small.fw-bold.text-muted import / sync
-    li = link_to "ZIPインポート", new_admin_zip_import_path
-    li = link_to "単体ファイルdry-run", admin_file_upload_dry_runs_path
-    li = link_to "Git連携", admin_git_import_sources_path
-    li = link_to "Git同期履歴", admin_git_import_runs_path
-    li.nav-section.mt-2.small.fw-bold.text-muted 外部連携
-    li = link_to "Microsoft Graph", admin_microsoft_graph_connections_path
-    li = link_to "外部フォルダ同期設定", admin_external_folder_sync_sources_path
-    li = link_to "Webhook", admin_webhook_endpoints_path
+    - admin_nav_current_path = request.path
+    - admin_nav_path_active = ->(path) { admin_nav_current_path == path || (path != admin_root_path && admin_nav_current_path.start_with?("#{path}/")) }
+    - admin_nav_link = ->(label, path) { link_to(label, path, class: ("fw-bold" if admin_nav_path_active.call(path)), aria: ({ current: "page" } if admin_nav_path_active.call(path))) }
+    - operations_paths = [admin_root_path, admin_api_specification_path, admin_model_browser_path, admin_recurring_job_schedules_path, admin_generated_file_events_path, admin_generated_file_runs_path]
+    - basic_master_paths = [admin_companies_path, admin_users_path, admin_projects_path, admin_project_memberships_path, admin_consent_terms_path, admin_project_consent_settings_path]
+    - document_permission_paths = [admin_documents_path, admin_document_sets_path, admin_document_permissions_path, admin_access_logs_path, admin_access_requests_path, admin_document_usage_reports_path, new_admin_bulk_edit_dry_run_path]
+    - import_sync_paths = [new_admin_zip_import_path, admin_file_upload_dry_runs_path, admin_git_import_sources_path, admin_git_import_runs_path]
+    - external_integration_paths = [admin_microsoft_graph_connections_path, admin_external_folder_sync_sources_path, admin_webhook_endpoints_path]
+    - active_admin_nav_section = :operations if operations_paths.any? { |path| admin_nav_path_active.call(path) }
+    - active_admin_nav_section ||= :basic_master if basic_master_paths.any? { |path| admin_nav_path_active.call(path) }
+    - active_admin_nav_section ||= :document_permission if document_permission_paths.any? { |path| admin_nav_path_active.call(path) }
+    - active_admin_nav_section ||= :import_sync if import_sync_paths.any? { |path| admin_nav_path_active.call(path) }
+    - active_admin_nav_section ||= :external_integration if external_integration_paths.any? { |path| admin_nav_path_active.call(path) }
+    - operations_active = active_admin_nav_section == :operations
+    - basic_master_active = active_admin_nav_section == :basic_master
+    - document_permission_active = active_admin_nav_section == :document_permission
+    - import_sync_active = active_admin_nav_section == :import_sync
+    - external_integration_active = active_admin_nav_section == :external_integration
+    li class=["nav-section mt-2 small fw-bold text-muted", ("border-start border-primary ps-2 text-primary" if operations_active)] aria-current=(operations_active ? "location" : nil) aria-label=(operations_active ? "現在の領域: 運用" : nil)
+      | 運用
+      - if operations_active
+        span.ms-1.badge.text-bg-light.border 現在
+    li = admin_nav_link.call("ダッシュボード", admin_root_path)
+    li = admin_nav_link.call("API仕様", admin_api_specification_path)
+    li = admin_nav_link.call("モデルブラウザ", admin_model_browser_path)
+    li = admin_nav_link.call("定期ジョブ", admin_recurring_job_schedules_path)
+    li = admin_nav_link.call("生成ファイルイベント", admin_generated_file_events_path)
+    li = admin_nav_link.call("生成ファイル実行履歴", admin_generated_file_runs_path)
+    li class=["nav-section mt-2 small fw-bold text-muted", ("border-start border-primary ps-2 text-primary" if basic_master_active)] aria-current=(basic_master_active ? "location" : nil) aria-label=(basic_master_active ? "現在の領域: 基本マスタ" : nil)
+      | 基本マスタ
+      - if basic_master_active
+        span.ms-1.badge.text-bg-light.border 現在
+    li = admin_nav_link.call("会社", admin_companies_path)
+    li = admin_nav_link.call("ユーザー", admin_users_path)
+    li = admin_nav_link.call("案件", admin_projects_path)
+    li = admin_nav_link.call("案件所属", admin_project_memberships_path)
+    li = admin_nav_link.call("同意文面", admin_consent_terms_path)
+    li = admin_nav_link.call("案件同意設定", admin_project_consent_settings_path)
+    li class=["nav-section mt-2 small fw-bold text-muted", ("border-start border-primary ps-2 text-primary" if document_permission_active)] aria-current=(document_permission_active ? "location" : nil) aria-label=(document_permission_active ? "現在の領域: 文書・権限" : nil)
+      | 文書・権限
+      - if document_permission_active
+        span.ms-1.badge.text-bg-light.border 現在
+    li = admin_nav_link.call("文書", admin_documents_path)
+    li = admin_nav_link.call("文書セット", admin_document_sets_path)
+    li = admin_nav_link.call("文書権限", admin_document_permissions_path)
+    li = admin_nav_link.call("監査ログ", admin_access_logs_path)
+    li = admin_nav_link.call("アクセス申請", admin_access_requests_path)
+    li = admin_nav_link.call("利用状況", admin_document_usage_reports_path)
+    li = admin_nav_link.call("文書一括編集", new_admin_bulk_edit_dry_run_path)
+    li class=["nav-section mt-2 small fw-bold text-muted", ("border-start border-primary ps-2 text-primary" if import_sync_active)] aria-current=(import_sync_active ? "location" : nil) aria-label=(import_sync_active ? "現在の領域: import / sync" : nil)
+      | import / sync
+      - if import_sync_active
+        span.ms-1.badge.text-bg-light.border 現在
+    li = admin_nav_link.call("ZIPインポート", new_admin_zip_import_path)
+    li = admin_nav_link.call("単体ファイルdry-run", admin_file_upload_dry_runs_path)
+    li = admin_nav_link.call("Git連携", admin_git_import_sources_path)
+    li = admin_nav_link.call("Git同期履歴", admin_git_import_runs_path)
+    li class=["nav-section mt-2 small fw-bold text-muted", ("border-start border-primary ps-2 text-primary" if external_integration_active)] aria-current=(external_integration_active ? "location" : nil) aria-label=(external_integration_active ? "現在の領域: 外部連携" : nil)
+      | 外部連携
+      - if external_integration_active
+        span.ms-1.badge.text-bg-light.border 現在
+    li = admin_nav_link.call("Microsoft Graph", admin_microsoft_graph_connections_path)
+    li = admin_nav_link.call("外部フォルダ同期設定", admin_external_folder_sync_sources_path)
+    li = admin_nav_link.call("Webhook", admin_webhook_endpoints_path)
   - elsif company_master_admin?
     li = link_to "会社", admin_companies_path
     li = link_to "ユーザー", admin_users_path
