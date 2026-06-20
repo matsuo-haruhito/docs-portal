@@ -43,6 +43,18 @@ RSpec.describe "Nav dropdown contract" do
     end
   end
 
+  it "keeps narrow viewport current labels from competing with summary text" do
+    aggregate_failures do
+      expect(navbar_source.scan("span.nav-dropdown__current-label =").size).to eq(4)
+      expect(current_label_css).to include(".nav-dropdown__summary {\n    flex-wrap: wrap;")
+      expect(current_label_css).to include("min-width: 0")
+      expect(current_label_css).to include("overflow: hidden")
+      expect(current_label_css).to include("text-overflow: ellipsis")
+      expect(current_label_css).to include("white-space: nowrap")
+      expect(current_label_css).to include(".nav-dropdown__current-label {\n    max-width: 100%;")
+    end
+  end
+
   it "keeps document listener registration and cleanup paired" do
     expect(controller_source).to include('document.addEventListener("toggle", this.onToggle, true)')
     expect(controller_source).to include('document.removeEventListener("toggle", this.onToggle, true)')
