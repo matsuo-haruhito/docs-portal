@@ -6,8 +6,10 @@
 
 - `app/services/document_delivery_logs/failure_alert_candidates.rb`
 - `app/services/document_delivery_logs/failure_alert_handoff.rb`
+- `app/controllers/document_delivery_logs_controller.rb`
 - `spec/services/document_delivery_logs/failure_alert_candidates_spec.rb`
 - `spec/services/document_delivery_logs/failure_alert_handoff_spec.rb`
+- `spec/requests/document_delivery_log_failure_alert_handoff_spec.rb`
 - `docs/外部送付履歴運用runbook.md`
 - `docs/監視・アラート設計.md`
 
@@ -27,6 +29,22 @@ current default は次のとおりです。
 `DocumentDeliveryLogs::FailureAlertHandoff` は、同じ候補を通知前の handoff payload として取り出すための read-only service です。候補の identity、案件 code/name、送付方式、受信者 preview、件名 preview、連続失敗数、最終失敗時刻、短い error message preview、確認用 path、runbook path を返します。
 
 確認用 path は `status=failed`、候補の `delivery_type`、件名を使った `q` を付けた `/document_delivery_logs` です。本文、添付、CC/BCC の full text、外部シークレットは payload に含めません。preview と確認用 path の `q` は `Bearer` / `Basic` credential、`token=`、`secret=` などの secret-like value を `[FILTERED]` に置換してから返します。
+
+## JSON endpoint の読み方
+
+`GET /document_delivery_logs/failure_alert_handoff.json` は、internal user が現在の handoff payload を read-only に確認する入口です。HTML 画面、通知送信、ack、自動 retry、送付状態変更は行いません。
+
+JSON response は次の形で読む。
+
+- `generated_at`: payload を生成した時刻
+- `count`: current 条件で返された候補数
+- `note`: 候補あり / 候補なしの読み方。候補ありの場合も read-only handoff であり、通知や状態変更は行わない。候補なしの場合も正常保証、外部監視 green、通知正常を意味しない
+- `runbook_path`: この runbook への参照
+- `entries`: `DocumentDeliveryLogs::FailureAlertHandoff` が返す候補 payload の配列
+
+`entries` の各要素は、service payload と同じく identity、案件、送付方式、recipient / subject preview、連続失敗数、最終失敗時刻、error preview、`failed_delivery_logs_path` を持ちます。`recipient_preview`、`subject_preview`、`latest_error_message`、`failed_delivery_logs_path` は secret-like value を mask / truncate した調査入口であり、本文 full text、添付 full metadata、CC/BCC full text、raw token の確認場所として扱いません。
+
+external user はこの endpoint を使えません。candidate が 0 件の JSON は「今の handoff 条件では候補がない」ことだけを示し、送付履歴全体の正常性、外部監視の成功、通知 channel の稼働状態を保証しません。
 
 ## 既存 runbook との接続
 
@@ -54,15 +72,17 @@ current default は次のとおりです。
 
 ## 迷ったときの確認順
 
-1. `DocumentDeliveryLogs::FailureAlertHandoff` の payload で candidate の identity、案件、連続失敗数、最終失敗時刻、error preview を確認する
-2. `failed_delivery_logs_path` から既存の外部送付履歴一覧へ進む
-3. 一覧と詳細で宛先、件名、失敗理由、対象文書または文書セットを確認する
-4. 操作や画面の読み方で迷う場合は `docs/外部送付履歴運用runbook.md` に戻る
-5. retry、通知先、alert rule、ack / escalation が必要になった場合は、この runbook では決めず別 Issue で仕様判断する
+1. 必要なら internal user として `GET /document_delivery_logs/failure_alert_handoff.json` を開き、`count`、`note`、`entries` を read-only に確認する
+2. `DocumentDeliveryLogs::FailureAlertHandoff` の payload で candidate の identity、案件、連続失敗数、最終失敗時刻、error preview を確認する
+3. `failed_delivery_logs_path` から既存の外部送付履歴一覧へ進む
+4. 一覧と詳細で宛先、件名、失敗理由、対象文書または文書セットを確認する
+5. 操作や画面の読み方で迷う場合は `docs/外部送付履歴運用runbook.md` に戻る
+6. retry、通知先、alert rule、ack / escalation が必要になった場合は、この runbook では決めず別 Issue で仕様判断する
 
 ## 関連
 
 - Closes #2990
 - Refs #2991
+- Refs #3227
 - [外部送付履歴運用runbook](./外部送付履歴運用runbook.md)
 - [監視・アラート設計](./監視・アラート設計.md)
