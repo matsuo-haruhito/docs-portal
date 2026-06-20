@@ -19,6 +19,31 @@ Docusaurus / npm 系 Dependabot PR で `Maintainer changes` や `Install script 
 4. `docs-quality`、Docusaurus build、Kroki mock smoke、Mermaid / ELK など docs rendering への影響を分けて確認する。
 5. 確認した内容を PR body または PR comment に `manual evidence` として短く残す。
 
+## rebase 不能時の recreate / replacement 判断
+
+`@dependabot rebase` に対して Dependabot が「Dependabot 以外の編集が入っているため rebase できない」「必要なら `@dependabot recreate`」という趣旨を返した場合は、CI failure や branch freshness とは別の判断として扱います。
+
+1. PR metadata の `head_sha`、compare の `ahead_by` / `behind_by` / `status`、最新 head の workflow run を控える。
+2. PR branch に Dependabot 以外の commit、maintainer による lockfile 手修正、PR body / comment で合意した manual evidence があるか確認する。
+3. 既存編集を破棄してよいと maintainer が判断できる場合だけ、`@dependabot recreate` を候補にする。`recreate` は既存の人手編集を上書きしうるため、自動実行や流れ作業の refresh として扱わない。
+4. 既存編集を残す必要がある場合は、replacement branch / 新 PR に必要差分を逃がすか、checkout 可能な環境で手動 lockfile refresh を行うかを maintainer 判断に戻す。
+5. recreate 後や replacement 後は、過去 head の green CI を流用せず、current head の `docs-quality` / `ci`、必要なら `security-audit` / `build-docs` job、`mergeable`、compare freshness を取り直す。
+6. Mermaid / ELK など rendering impact がある場合は、recreate 後も visual evidence / manual review gate を別項目として残す。
+
+PR comment には次の粒度で十分です。
+
+```markdown
+rebase / recreate evidence:
+- current head: <sha>
+- freshness: ahead_by=<n> / behind_by=<n> / status=<ahead|diverged|behind>
+- Dependabot rebase: 人手編集済みのため不可
+- existing edits: <破棄してよい / 残す必要あり / 判断待ち>
+- next action: <recreate候補 / replacement候補 / manual lockfile refresh候補 / needs-human>
+- current blockers: <fresh CI / security-audit / build-docs / visual evidence / manual review gate>
+```
+
+`security-audit` failure、branch freshness、manual evidence blocker は混同しません。たとえば Docusaurus dependency の audit failure が主因なら dependency tree と audit step を先に分け、Mermaid / ELK の visual evidence が主因なら browser-capable evidence を別に残します。
+
 ## 証跡の書き方
 
 PR comment には次の粒度で十分です。
