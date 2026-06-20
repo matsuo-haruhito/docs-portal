@@ -43,6 +43,19 @@ module Admin::ExternalFolderSyncSourcesHelper
     end
   end
 
+  def external_folder_sync_latest_run_context_label(run)
+    return "直近runなし" if run.blank?
+
+    started_at = run.started_at.present? ? l(run.started_at) : "時刻未記録"
+    "直近run: #{started_at} / #{external_folder_sync_run_mode_label(run)} / #{external_folder_sync_run_status_label(run)}"
+  end
+
+  def external_folder_sync_latest_error_origin_label(run, source_last_error_message)
+    return nil if run&.error_message.blank? && source_last_error_message.blank?
+
+    run&.error_message.present? ? "由来: 直近run" : "由来: 同期元metadata"
+  end
+
   def external_folder_sync_webhook_event_status_label(event_or_value)
     if event_or_value.respond_to?(:ignored_reason) && event_or_value.ignored_reason.present?
       return external_folder_sync_webhook_ignored_reason_label(event_or_value.ignored_reason)
