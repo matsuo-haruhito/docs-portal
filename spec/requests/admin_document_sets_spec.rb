@@ -2,6 +2,7 @@ require "rails_helper"
 
 RSpec.describe "Admin document sets", type: :request do
   let(:admin) { create(:user, :admin) }
+  let(:external_user) { create(:user, :external) }
   let(:project) { create(:project, name: "Delivery Project") }
   let(:empty_project) { create(:project, name: "Empty Project") }
   let(:document_a) { create(:document, project:, title: "概要仕様", slug: "overview") }
@@ -137,6 +138,28 @@ RSpec.describe "Admin document sets", type: :request do
     parsed_html.css("form[action]").find do |node|
       node.at_css('input[name="document_set[name]"]')
     end&.[]("action")
+  end
+
+  def table_preference_endpoint(name = "default")
+    "/rails_table_preferences/preferences/admin_document_sets/#{name}"
+  end
+
+  def representative_table_preference_settings
+    {
+      columns: [
+        { key: "project", visible: true, width: 220, order: 1 },
+        { key: "name", visible: true, width: 240, order: 2 },
+        { key: "set_type", visible: true, width: 140, order: 3 },
+        { key: "visibility_policy", visible: true, width: 160, order: 4 },
+        { key: "documents_count", visible: true, width: 96, order: 5 },
+        { key: "actions", visible: false, width: 150, order: 6 }
+      ],
+      filters: {
+        set_type: { operator: "eq", value: "delivery" },
+        visibility_policy: { operator: "eq", value: "restricted_external" }
+      },
+      sorts: [{ key: "name", direction: "asc" }]
+    }
   end
 
   it "renders the document set select fields on initial load and invalid rerender" do
@@ -356,6 +379,65 @@ RSpec.describe "Admin document sets", type: :request do
     expect(clear_filter_targets.count(admin_document_sets_path)).to eq(2)
     expect(document_set_rows).to be_empty
     expect(table_preference_surfaces).to be_empty
+  end
+
+  it "requires login before writing mounted table preference settings" do
+    expect do
+      patch table_preference_endpoint, params: {
+        settings: representative_table_preference_settings,
+        default: "true"
+      }
+    end.not_to change(RailsTablePreferences::Preference, :count)
+
+    expect(response).to redirect_to(Rails.application.routes.url_helpers.new_session_path)
+  end
+
+  it "saves the representative admin document set table preference through the mounted engine" do
+    sign_in_as(admin)
+
+    expect do
+      patch table_preference_endpoint, params: {
+        settings: representative_table_preference_settings,
+        default: "true"
+      }
+    end.to change(RailsTablePreferences::Preference, :count).by(1)
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body).to include(
+      "table_key" => "admin_document_sets",
+      "name" => "default",
+      "default" => true,
+      "scope_type" => "owner"
+    )
+
+    preference = RailsTablePreferences::Preference.find_by!(user: admin, table_key: "admin_document_sets", name: "default")
+    expect(preference).to have_attributes(scope_type: "owner", scope_key: "", default_flag: true)
+    expect(preference.settings.fetch("columns").map { |column| column.fetch("key") }).to eq(%w[project name set_type visibility_policy documents_count actions])
+    expect(preference.settings.fetch("filters")).to include(
+      "set_type" => include("operator" => "eq", "value" => "delivery"),
+      "visibility_policy" => include("operator" => "eq", "value" => "restricted_external")
+    )
+    expect(preference.settings.fetch("sorts")).to contain_exactly(include("key" => "name", "direction" => "asc"))
+  end
+
+  it "keeps direct external table preference saves owner-scoped away from admin ownership" do
+    sign_in_as(external_user)
+
+    expect do
+      patch table_preference_endpoint, params: {
+        settings: representative_table_preference_settings,
+        default: "true"
+      }
+    end.to change(RailsTablePreferences::Preference, :count).by(1)
+
+    expect(response).to have_http_status(:ok)
+    external_preference = RailsTablePreferences::Preference.find_by!(
+      user: external_user,
+      table_key: "admin_document_sets",
+      name: "default"
+    )
+    expect(external_preference).to have_attributes(scope_type: "owner", scope_key: "", default_flag: true)
+    expect(RailsTablePreferences::Preference.find_by(user: admin, table_key: "admin_document_sets", name: "default")).to be_nil
   end
 
   it "returns project-scoped document search results by title and slug" do

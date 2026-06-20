@@ -122,6 +122,7 @@ h1 外部フォルダ同期設定
         - latest_run = @latest_runs_by_source_id[source.id]
         - warnings_count = latest_run&.summary_json&.fetch("conflict_warnings_count", nil)
         - latest_error_message = latest_run&.error_message.presence || source.last_error_message.presence
+        - latest_error_origin_label = external_folder_sync_latest_error_origin_label(latest_run, source.last_error_message)
         tr
           td data-rails-table-preferences-column-key="project"
             = source.project.name
@@ -149,8 +150,14 @@ h1 外部フォルダ同期設定
           td data-rails-table-preferences-column-key="latest_safety"
             span class=external_folder_sync_run_safety_class(latest_run)
               = external_folder_sync_run_safety_label(latest_run)
+            br
+            span.muted = external_folder_sync_latest_run_context_label(latest_run)
           td data-rails-table-preferences-column-key="warning_count" = warnings_count || "-"
-          td data-rails-table-preferences-column-key="latest_error" = external_folder_sync_latest_error_preview(latest_error_message)
+          td data-rails-table-preferences-column-key="latest_error"
+            = external_folder_sync_latest_error_preview(latest_error_message)
+            - if latest_error_origin_label.present?
+              br
+              span.muted = latest_error_origin_label
           td.actions data-rails-table-preferences-column-key="actions"
             = link_to "設定詳細", admin_external_folder_sync_source_path(source, return_to: current_return_to), class: "button secondary"
             = edit_link_to "編集", edit_admin_external_folder_sync_source_path(source, return_to: current_return_to)

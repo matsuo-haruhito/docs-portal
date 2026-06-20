@@ -11,7 +11,7 @@
 - `company_master_admin` の current `/admin` redirect と `会社` / `ユーザー` 管理の制約は [company_master_admin会社・ユーザー管理runbook](./company_master_admin会社・ユーザー管理runbook.md) を正本とし、ここには未解決の導線改善だけを残す
 - 管理画面の主要 member route は current `config/routes.rb` と `spec/routing/admin_route_identifier_contract_spec.rb` で `public_id` / `code` の URL 識別子 contract を固定している。主要 admin member resource は `param: :public_id`、`admin/projects` と project member action controller は `param: :code`、collection-only resource は member identifier guard の対象外として分類済み。新しい admin member route や未確認の numeric id 導線を見つけた場合は、対象 resource と URL を確認し、同 spec の分類と対応 docs をそろえる concrete issue に切る
 - 正式なレビュー・承認ワークフローを導入するかは、コメント・品質チェック・公開制御・送付運用が固まってから再評価する。未起票で残す理由: ワークフロー仕様の正誤判断が必要
-- 形式的な workflow とは別に、最小確認依頼 / OK・Cancel 機能は独立 issue で扱う。未起票で残す理由: 対象画面と通知要件が具体化してから切る
+- 形式的な workflow とは別に扱う最小確認依頼 / OK・Cancel 機能は、runtime / UI / spec の first slice を #3418、merge 後の利用者向け runbook 追従を #3421 で扱う。正式なレビュー・承認ワークフローとは分け、状態名・通知・SLA・段階承認は current support として先取りしない
 
 ## UI / UX
 
