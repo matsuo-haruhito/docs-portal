@@ -27,7 +27,7 @@ class ApplicationController < ActionController::Base
     reset_session_if_stale!
     return if logged_in?
 
-    redirect_to new_session_path, alert: "ログインしてください。"
+    redirect_to Rails.application.routes.url_helpers.new_session_path, alert: "ログインしてください。"
   end
 
   def admin_user?
