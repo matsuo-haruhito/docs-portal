@@ -34,7 +34,8 @@ RSpec.describe "document-file-browser controller source" do
 
   it "keeps section and item search matching boundaries readable" do
     aggregate_failures do
-      expect(controller_source).to include("const query = this.queryTarget.value.trim().toLowerCase()")
+      expect(controller_source).to include("const queryValue = this.queryTarget.value.trim()")
+      expect(controller_source).to include("const query = queryValue.toLowerCase()")
       expect(controller_source).to include('const sectionKind = section.dataset.sectionKind || "all"')
       expect(controller_source).to include('const matchesKind = this.activeKind === "all" || sectionKind === this.activeKind')
       expect(controller_source).to include('const sectionMatchesQuery = query.length > 0 && (section.dataset.sectionSearch || "").toLowerCase().includes(query)')
@@ -45,12 +46,28 @@ RSpec.describe "document-file-browser controller source" do
     end
   end
 
-  it "keeps status and empty-state text boundaries stable" do
+  it "keeps status text aligned with query and kind filter context" do
     aggregate_failures do
       expect(controller_source).to include("const kindLabel = kindLabels[this.activeKind] || this.activeKind")
-      expect(controller_source).to include('this.statusTarget.textContent = query.length > 0 ? `${visibleCount}件を表示中 / 検索: ${this.queryTarget.value}` : `${visibleCount}件を表示中 / 分類: ${kindLabel}`')
+      expect(controller_source).to include("this.statusTarget.textContent = this.statusText(visibleCount, queryValue, kindLabel)")
+      expect(controller_source).to include("statusText(visibleCount, queryValue, kindLabel) {")
+      expect(controller_source).to include("const hasKindFilter = this.activeKind !== \"all\"")
+      expect(controller_source).to include('return `${visibleCount}件を表示中 / 検索: ${queryValue} / 分類: ${kindLabel}`')
+      expect(controller_source).to include('return `${visibleCount}件を表示中 / 検索: ${queryValue}`')
+      expect(controller_source).to include('return `${visibleCount}件を表示中 / 分類: ${kindLabel}`')
+    end
+  end
+
+  it "keeps empty-state copy specific to query and kind filter misses" do
+    aggregate_failures do
       expect(controller_source).to include("if (this.hasEmptyTarget) {")
+      expect(controller_source).to include("this.emptyTarget.textContent = this.emptyMessage(queryValue)")
       expect(controller_source).to include("this.emptyTarget.hidden = visibleCount > 0")
+      expect(controller_source).to include("emptyMessage(queryValue) {")
+      expect(controller_source).to include("検索条件と分類に一致するファイルはありません。検索語を短くするか、分類を切り替えてください。")
+      expect(controller_source).to include("検索条件に一致するファイルはありません。検索語を短くするか、条件を解除してください。")
+      expect(controller_source).to include("選択中の分類に一致するファイルはありません。分類を切り替えてください。")
+      expect(controller_source).to include("一致するファイルはありません。")
     end
   end
 
