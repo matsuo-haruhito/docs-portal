@@ -29,6 +29,12 @@ RSpec.describe "Document version quality checks", type: :request do
     get document_version_quality_check_path(version)
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("品質チェック")
+    expect(response.body).to include("fail は error がある状態です")
+    expect(response.body).to include("error がある場合は下の一覧の error 行を先に確認してください")
+    expect(response.body).to include("warning は確認が必要な注意、info は参考情報")
+    expect(response.body).to include("自動 fail や通知済み状態ではありません")
+    expect(response.body).to include("JSON / Markdown は handoff や evidence 用の read-only export")
+    expect(response.body).to include("この画面から品質チェック結果、版、公開状態は変更されません")
     expect(response.body).to include("internal_only_text")
 
     get document_version_quality_check_path(version, format: :json)
@@ -93,6 +99,8 @@ RSpec.describe "Document version quality checks", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Preview")
+    expect(response.body).to include("rendered site と build status の warning / error 抜粋です")
+    expect(response.body).to include("全件確認の正本ではないため、すべての check は下の一覧で確認してください")
     expect(response.body).to include("Preview build is queued")
     expect(response.body).to include("Markdown preview site is not built yet")
     expect(response.body).to include("docs/manual.md")
