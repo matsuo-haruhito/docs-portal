@@ -180,6 +180,19 @@ RSpec.describe "External folder sync webhooks", type: :request do
   end
 
   describe "POST /external_folder_sync_webhooks/sharepoint" do
+    it "responds to Microsoft Graph validationToken without recording events" do
+      allow(ExternalFolderSyncWebhookEventJob).to receive(:perform_later)
+
+      expect {
+        post "/external_folder_sync_webhooks/sharepoint", params: { validationToken: "post-validation-token" }
+      }.not_to change(ExternalFolderSyncWebhookEvent, :count)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("text/plain")
+      expect(response.body).to eq("post-validation-token")
+      expect(ExternalFolderSyncWebhookEventJob).not_to have_received(:perform_later)
+    end
+
     it "records SharePoint notifications and enqueues sync processing" do
       subscription = create(
         :external_folder_sync_subscription,
@@ -203,6 +216,41 @@ RSpec.describe "External folder sync webhooks", type: :request do
       expect(event.payload_json.to_s).not_to include("client-state")
       expect(event.event_key).to include("client_state:#{Digest::SHA256.hexdigest("client-state")}")
       expect(event.event_key).not_to include(":client-state:")
+      expect(ExternalFolderSyncWebhookEventJob).to have_received(:perform_later).with(event.id).once
+    end
+
+    it "records a single SharePoint notification payload without storing secret headers" do
+      subscription = create(
+        :external_folder_sync_subscription,
+        provider: :sharepoint,
+        provider_subscription_id: "sub-single"
+      )
+      allow(ExternalFolderSyncWebhookEventJob).to receive(:perform_later)
+
+      post_sharepoint_notification_payload(
+        sharepoint_notification_hash(
+          subscription_id: "sub-single",
+          client_state: "single-client-state",
+          sequence_number: "97"
+        ),
+        headers: {
+          "Client-State" => "header-client-secret",
+          "X-Goog-Channel-Token" => "goog-token-secret",
+          "User-Agent" => "rspec-agent"
+        }
+      )
+
+      expect(response).to have_http_status(:accepted)
+      event = ExternalFolderSyncWebhookEvent.find_by!(event_key: sharepoint_event_key("sub-single", "single-client-state", "97"))
+      expect(event).to be_received
+      expect(event.external_folder_sync_subscription).to eq(subscription)
+      expect(event.payload_json).to include("subscriptionId" => "sub-single", "clientState" => "[FILTERED]")
+      expect(event.payload_json.to_s).not_to include("single-client-state")
+      expect(event.headers_json).to include("USER_AGENT" => "rspec-agent")
+      expect(event.headers_json).not_to have_key("CLIENT_STATE")
+      expect(event.headers_json).not_to have_key("X_GOOG_CHANNEL_TOKEN")
+      expect(event.headers_json.to_s).not_to include("header-client-secret")
+      expect(event.headers_json.to_s).not_to include("goog-token-secret")
       expect(ExternalFolderSyncWebhookEventJob).to have_received(:perform_later).with(event.id).once
     end
 
@@ -327,9 +375,13 @@ RSpec.describe "External folder sync webhooks", type: :request do
   end
 
   def post_sharepoint_notifications(notifications)
+    post_sharepoint_notification_payload({ value: notifications })
+  end
+
+  def post_sharepoint_notification_payload(payload, headers: {})
     post "/external_folder_sync_webhooks/sharepoint",
-      params: { value: notifications }.to_json,
-      headers: { "CONTENT_TYPE" => "application/json" }
+      params: payload.to_json,
+      headers: { "CONTENT_TYPE" => "application/json" }.merge(headers)
   end
 
   def sharepoint_notification_hash(subscription_id:, client_state:, sequence_number:)
