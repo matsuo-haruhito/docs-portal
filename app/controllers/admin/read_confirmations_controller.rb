@@ -7,6 +7,8 @@ class Admin::ReadConfirmationsController < Admin::BaseController
 
   DISPLAY_LIMIT = 200
   DOCUMENT_QUERY_MAX_LENGTH = 100
+  FILTER_CANDIDATE_LIMIT = 50
+  FILTER_SEARCH_LIMIT = 20
   CSV_HEADERS = [
     "確認日時",
     "文書名",
@@ -28,10 +30,10 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     @invalid_confirmed_date_labels = @invalid_confirmed_date_params.map { confirmed_date_filter_label(_1) }
     @matching_documents = matching_documents if @selected_project
     @selected_document = @matching_documents.first if @matching_documents&.one?
-    @read_confirmation_companies = read_confirmation_companies
-    @selected_company = selected_company
-    @read_confirmation_users = read_confirmation_users
-    @selected_user = selected_user
+    @selected_company = selected_company_filter
+    @read_confirmation_companies = read_confirmation_company_candidates
+    @selected_user = selected_user_filter
+    @read_confirmation_users = read_confirmation_user_candidates
     @read_confirmations_scope = filtered_read_confirmations_scope
     @read_confirmations_total_count = @read_confirmations_scope.count
     @read_confirmations_total_pages = read_confirmations_total_pages
@@ -55,6 +57,26 @@ class Admin::ReadConfirmationsController < Admin::BaseController
         end
       end
     end
+  end
+
+  def company_search
+    render json: { options: read_confirmation_company_options(searchable_read_confirmation_companies) }
+  end
+
+  def selected_company
+    company = selected_company_for_project(params[:id])
+
+    render json: { option: company ? read_confirmation_company_option(company) : nil }
+  end
+
+  def user_search
+    render json: { options: read_confirmation_user_options(searchable_read_confirmation_users) }
+  end
+
+  def selected_user
+    user = selected_user_for_project(params[:id])
+
+    render json: { option: user ? read_confirmation_user_option(user) : nil }
   end
 
   private
@@ -136,24 +158,59 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     query
   end
 
-  def read_confirmation_companies
-    return Company.none unless @selected_project
-    return Company.none if document_filter_unmatched?
+  def read_confirmation_company_scope
+    project = @selected_project || Project.find_by(id: params[:project_id])
+    return Company.none unless project
 
     Company
       .joins(users: { read_confirmations: :document })
-      .where(documents: { project_id: @selected_project.id })
+      .where(documents: { project_id: project.id })
       .distinct
       .order(:name, :domain, :id)
   end
 
-  def selected_company
-    return if @selected_company_id.blank?
+  def read_confirmation_company_candidates
+    return Company.none if document_filter_unmatched?
 
-    @read_confirmation_companies.find { |company| company.id.to_s == @selected_company_id }
+    records = read_confirmation_company_scope.limit(FILTER_CANDIDATE_LIMIT).to_a
+    return records if @selected_company.blank? || records.any? { _1.id == @selected_company.id }
+
+    records + [@selected_company]
   end
 
-  def read_confirmation_users
+  def selected_company_filter
+    return if @selected_company_id.blank?
+    return if document_filter_unmatched?
+
+    selected_company_for_project(@selected_company_id)
+  end
+
+  def selected_company_for_project(company_id)
+    return if company_id.blank?
+
+    read_confirmation_company_scope.unscope(:order).find_by(id: company_id)
+  end
+
+  def read_confirmation_user_scope
+    project = @selected_project || Project.find_by(id: params[:project_id])
+    return User.none unless project
+
+    scope = User
+      .joins(read_confirmations: :document)
+      .where(documents: { project_id: project.id })
+    if params[:company_id].present?
+      company = selected_company_for_project(params[:company_id])
+      return User.none unless company
+
+      scope = scope.where(company:)
+    end
+    scope
+      .includes(:company)
+      .distinct
+      .order(:email_address, :id)
+  end
+
+  def scoped_read_confirmation_user_scope
     return User.none unless @selected_project
     return User.none if document_filter_unmatched?
     return User.none if @selected_company_id.present? && @selected_company.blank?
@@ -168,10 +225,70 @@ class Admin::ReadConfirmationsController < Admin::BaseController
       .order(:email_address, :id)
   end
 
-  def selected_user
+  def read_confirmation_user_candidates
+    records = scoped_read_confirmation_user_scope.limit(FILTER_CANDIDATE_LIMIT).to_a
+    return records if @selected_user.blank? || records.any? { _1.id == @selected_user.id }
+
+    records + [@selected_user]
+  end
+
+  def selected_user_filter
     return if @selected_user_id.blank?
 
-    @read_confirmation_users.find { |user| user.id.to_s == @selected_user_id }
+    scoped_read_confirmation_user_scope.unscope(:order).find_by(id: @selected_user_id)
+  end
+
+  def selected_user_for_project(user_id)
+    return if user_id.blank?
+
+    read_confirmation_user_scope.unscope(:order).find_by(id: user_id)
+  end
+
+  def searchable_read_confirmation_companies
+    scope = read_confirmation_company_scope
+    query = normalized_filter_query(params[:q])
+    return scope.limit(FILTER_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{Company.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(companies.name) LIKE :pattern OR LOWER(companies.domain) LIKE :pattern",
+      pattern:
+    ).limit(FILTER_SEARCH_LIMIT)
+  end
+
+  def searchable_read_confirmation_users
+    scope = read_confirmation_user_scope.left_joins(:company)
+    query = normalized_filter_query(params[:q])
+    return scope.limit(FILTER_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{User.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(users.name) LIKE :pattern OR LOWER(users.email_address) LIKE :pattern OR LOWER(companies.name) LIKE :pattern OR LOWER(companies.domain) LIKE :pattern",
+      pattern:
+    ).limit(FILTER_SEARCH_LIMIT)
+  end
+
+  def normalized_filter_query(value)
+    value.to_s.strip.first(DOCUMENT_QUERY_MAX_LENGTH)
+  end
+
+  def read_confirmation_company_options(companies)
+    companies.map { read_confirmation_company_option(_1) }
+  end
+
+  def read_confirmation_company_option(company)
+    label = company.display_name
+    label = "#{label} / #{company.domain}" if company.domain.present?
+
+    { value: company.id, text: label }
+  end
+
+  def read_confirmation_user_options(users)
+    users.map { read_confirmation_user_option(_1) }
+  end
+
+  def read_confirmation_user_option(user)
+    { value: user.id, text: [user.display_name, user.email_address, user.company&.display_name].compact_blank.join(" / ") }
   end
 
   def filtered_read_confirmations_scope
