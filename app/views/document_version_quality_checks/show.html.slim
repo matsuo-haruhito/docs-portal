@@ -30,18 +30,18 @@ p
     |  / info:
     = @quality_check_hash.dig(:summary, :info_count)
   p.muted
-    | fail は error がある状態です。warning は確認が必要な注意、info は参考情報として扱ってください。
+    | fail は error がある状態です。error がある場合は下の一覧の error 行を先に確認してください。warning は確認が必要な注意、info は参考情報で、自動 fail や通知済み状態ではありません。
   p.actions
     = link_to "JSON", document_version_quality_check_path(@version, format: :json), class: "button secondary"
     = link_to "Markdown", document_version_quality_check_path(@version, format: :md), class: "button secondary"
   p.muted
-    | JSON / Markdown は handoff や evidence 用の read-only export です。この画面から品質チェック結果は変更されません。
+    | JSON / Markdown は handoff や evidence 用の read-only export です。この画面から品質チェック結果、版、公開状態は変更されません。
 
 - if preview_checks.any?
   .card
     h2 Preview
     p.muted
-      | rendered site と build status の warning / error 抜粋です。すべての check は下の一覧で確認してください。
+      | rendered site と build status の warning / error 抜粋です。全件確認の正本ではないため、すべての check は下の一覧で確認してください。
     ul
       - preview_checks.each do |check|
         li
