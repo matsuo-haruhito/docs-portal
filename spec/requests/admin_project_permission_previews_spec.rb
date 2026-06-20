@@ -54,6 +54,53 @@ RSpec.describe "Admin project permission previews", type: :request do
     expect(viewer_hash.fetch("gained_documents")).to be_empty
   end
 
+  it "deduplicates user and company viewers while ignoring invalid ids and inactive users" do
+    company_peer = create(:user, :external, company:, email_address: "peer@example.com")
+    direct_user = create(:user, :external, email_address: "direct@example.com")
+    inactive_company_user = create(:user, :external, company:, email_address: "inactive-company@example.com", active: false)
+    inactive_direct_user = create(:user, :external, email_address: "inactive-direct@example.com", active: false)
+
+    sign_in_as(admin_user)
+
+    get permission_preview_admin_project_path(project), params: {
+      company_ids: [company.id, "", "not-a-company"],
+      user_ids: [viewer.id, direct_user.id, inactive_direct_user.id, "", "not-a-user"]
+    }
+
+    expect(response).to have_http_status(:ok)
+
+    body = response.parsed_body
+    viewer_emails = body.fetch("viewers").map { _1.fetch("email_address") }
+
+    expect(body.dig("summary", "total_viewers")).to eq(3)
+    expect(viewer_emails).to contain_exactly("direct@example.com", "peer@example.com", "viewer@example.com")
+    expect(viewer_emails).not_to include(
+      "inactive-company@example.com",
+      "inactive-direct@example.com",
+      "not-a-user",
+      "not-a-company"
+    )
+    expect(inactive_company_user).not_to be_active
+    expect(inactive_direct_user).not_to be_active
+  end
+
+  it "keeps empty and invalid viewer params as an empty preview" do
+    sign_in_as(admin_user)
+
+    get permission_preview_admin_project_path(project), params: {
+      company_ids: ["", "missing-company"],
+      user_ids: ["", "missing-user"]
+    }
+
+    expect(response).to have_http_status(:ok)
+
+    body = response.parsed_body
+    expect(body.dig("summary", "total_viewers")).to eq(0)
+    expect(body.dig("summary", "changed_viewers")).to eq(0)
+    expect(body.fetch("viewers")).to be_empty
+    expect(body.fetch("companies")).to be_empty
+  end
+
   it "forbids external users" do
     sign_in_as(create(:user, :external, company:))
 

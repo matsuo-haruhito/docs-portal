@@ -72,13 +72,20 @@
 - `OK日時`: `OK` 済みの場合の日時。未処理または Cancel の場合は `-`
 - `Cancel日時`: Cancel 済みの場合の日時。未処理または OK の場合は `-`
 - `内容`: 依頼作成時の本文がある場合だけ表示される
+- `対応済み`: `OK済み` または `Cancel済み` の detail だけに出る summary。状態、対応者、対応日時を table より先に読み直す入口として使う
+
+Cancel 理由の入力・保存・表示は current support ではありません。Cancel 済み detail では、理由ではなく `対応者` と `Cancel日時` を確認します。
 
 ## 操作と戻り方
 
-- internal user は pending の detail で `OK` を押せる
-- pending の detail では、internal user または依頼者本人が `Cancel` を押せる
-- `OK` / `Cancel` の実行後は同じ detail へ戻る
-- 一覧の `依頼名` link から detail に入った場合、`一覧へ戻る` は元の一覧 URL へ戻る
+- pending の detail には `操作` セクションがあり、処理 action と戻り action が group ごとに分かれている
+- internal user は `OKする` group の説明を読み、内容を確認済みにする場合だけ `OK` を押す
+- requester 本人には `OKする` group は表示されず、自分が作成した pending 依頼の `Cancelする` group だけを使える
+- pending の detail では、internal user または依頼者本人が `Cancelする` group から `Cancel` を押せる
+- `Cancelする` group の説明どおり、current UI では理由入力や通知の追加は行わない
+- `OK` / `Cancel` の実行後は同じ detail へ戻り、`対応済み` summary と `対応者` / `OK日時` / `Cancel日時` を確認する
+- 処理済み detail には pending action は出ない。再度 `OK` / `Cancel` する導線として読まない
+- 一覧の `依頼名` link から detail に入った場合、`一覧へ戻る` group の `一覧へ戻る` は元の一覧 URL へ戻る
 - `対応待ち` / `OK済み` / `Cancel済み` filter をかけていた場合も、`return_to` により同じ filter 条件へ戻れる
 - `依頼を検索`、`依頼者`、`確認相手` の条件をかけていた場合も、detail への link は current 一覧 URL を `return_to` として渡すため、一覧へ戻ると同じ探索文脈に戻れる。検索語は正規化後の最大 100 文字として戻り先に残ります
 - detail へ直接入った場合の fallback は、internal user なら全体一覧、internal user 以外なら対象文書 detail になる
@@ -93,8 +100,8 @@
 - 絞り込み結果が 0 件になった: いったん全条件を外すなら `すべての確認依頼を見る`、検索語だけを外すなら `検索を解除`、担当者条件だけを外すなら `担当者絞り込みを解除` を 0 件メッセージ近くで使う
 - 状態ボタンの件数と section 件数が違って見える: 状態ボタンは一覧全体、`N件（表示中条件内）` は現在の検索語・担当者条件・status を反映した section 件数として読む
 - 対象文書を見直してから対応したい: 一覧の `文書名` link で文書詳細へ戻る
-- 誰がいつ対応したかを確認したい: detail の `対応者` `OK日時` `Cancel日時` を見る
-- 依頼者本人が依頼を取り下げたい: pending の detail で `Cancel` を使う
+- 誰がいつ対応したかを確認したい: detail の `対応済み` summary または `対応者` `OK日時` `Cancel日時` を見る
+- 依頼者本人が依頼を取り下げたい: pending の detail で `Cancelする` group を使う。current UI では Cancel 理由は残らない
 - 文書詳細へ戻るべきか一覧へ戻るべきか迷う: 一覧から入った detail では `一覧へ戻る`、文書本文を見直したいときは breadcrumb の文書 link を使う
 
 ## 関連コード
@@ -106,3 +113,4 @@
 - `app/views/documents/_detail_sections.html.slim`
 - `spec/requests/document_approval_request_empty_state_links_spec.rb`
 - `spec/requests/document_approval_request_section_count_cues_spec.rb`
+- `spec/requests/document_approval_requests_spec.rb`

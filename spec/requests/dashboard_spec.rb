@@ -70,6 +70,7 @@ RSpec.describe "Dashboard", type: :request do
     expect(heading_texts).to include("ダッシュボード", "最近見た文書", "最近更新された文書")
     expect(metric_card_texts.any? { _1.include?("閲覧可能案件") }).to be(true)
     expect(page_text).to include("Visible Project", "Visible Manual", "お気に入り", "後で読む")
+    expect(metric_card_for("保留中の申請")).to include("あなたが提出したアクセス申請の保留件数です。")
     expect(metric_cta_links.map(&:text)).to include(
       "案件一覧へ",
       "文書一覧へ",
@@ -83,6 +84,7 @@ RSpec.describe "Dashboard", type: :request do
       access_requests_path
     )
     expect(metric_card_texts.any? { _1.include?("保留中の確認依頼") }).to be(false)
+    expect(page_text).not_to include("社内担当者として処理する確認依頼の保留件数です。", "社内運用画面への入口です。")
     expect(metric_cta_links.map { |link| link["href"] }).not_to include(document_approval_requests_path)
   end
 
@@ -105,7 +107,7 @@ RSpec.describe "Dashboard", type: :request do
     expect(metric_card_for("閲覧可能案件")).to include("0", "案件一覧へ")
     expect(metric_card_for("閲覧可能文書")).to include("0", "文書一覧へ")
     expect(metric_card_for("保存ショートカット")).to include("0", "ショートカット一覧へ")
-    expect(metric_card_for("保留中の申請")).to include("0", "申請一覧へ")
+    expect(metric_card_for("保留中の申請")).to include("0", "申請一覧へ", "あなたが提出したアクセス申請の保留件数です。")
     expect(page_text).to include(
       "このダッシュボードは権限不足のエラーではありません。案件一覧・文書一覧から、現在閲覧できる範囲を確認できます。",
       "保留中のアクセス申請はありません。過去の申請は申請一覧で確認できます。",
@@ -129,6 +131,7 @@ RSpec.describe "Dashboard", type: :request do
     )
     expect(metric_card_texts.any? { _1.include?("保留中の確認依頼") }).to be(false)
     expect(page_text).not_to include("社内向け導線", "確認依頼一覧", "管理ダッシュボード")
+    expect(page_text).not_to include("社内担当者として処理する確認依頼の保留件数です。", "社内運用画面への入口です。")
     expect(parsed_html.css(".dashboard-grid a").map { |link| link["href"] }).not_to include(document_approval_requests_path)
     expect(metric_cta_links.map { |link| link["href"] }).not_to include(document_approval_requests_path)
   end
@@ -142,7 +145,7 @@ RSpec.describe "Dashboard", type: :request do
     get dashboard_path
 
     expect(response).to have_http_status(:ok)
-    expect(metric_card_for("保留中の申請")).to include("1", "申請一覧へ")
+    expect(metric_card_for("保留中の申請")).to include("1", "申請一覧へ", "あなたが提出したアクセス申請の保留件数です。")
     expect(metric_cta_links.map { |link| link["href"] }).to include(access_requests_path)
     expect(metric_card_texts.any? { _1.include?("保留中の確認依頼") }).to be(false)
     expect(metric_cta_links.map { |link| link["href"] }).not_to include(document_approval_requests_path)
@@ -290,6 +293,7 @@ RSpec.describe "Dashboard", type: :request do
       expect(page_text).not_to include("Other user request")
       expect(page_text).not_to include("保留中の確認依頼")
       expect(page_text).not_to include("社内向け導線")
+      expect(page_text).not_to include("社内担当者として処理する確認依頼の保留件数です。", "社内運用画面への入口です。")
     end
   end
 
@@ -326,7 +330,10 @@ RSpec.describe "Dashboard", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include(
       "保留タスクがない場合も、案件や文書の一覧から現在の担当範囲を確認できます。",
-      "管理画面への移動は、管理権限がある場合だけ表示されます。"
+      "管理画面への移動は、管理権限がある場合だけ表示されます。",
+      "あなたが提出したアクセス申請の保留件数です。",
+      "社内担当者として処理する確認依頼の保留件数です。",
+      "確認依頼、外部送付履歴、管理画面などの社内運用画面への入口です。"
     )
     expect(heading_texts).to include("社内向け導線")
     expect(parsed_html.css(".dashboard-grid a").map { |link| link["href"] }).to include(
@@ -350,7 +357,9 @@ RSpec.describe "Dashboard", type: :request do
     pending_approval_card = metric_card_texts.find { _1.include?("保留中の確認依頼") }
 
     expect(pending_approval_card).to be_present
-    expect(pending_approval_card).to include("1")
+    expect(pending_approval_card).to include("1", "社内担当者として処理する確認依頼の保留件数です。")
+    expect(metric_card_for("保留中の申請")).to include("あなたが提出したアクセス申請の保留件数です。")
+    expect(page_text).to include("確認依頼、外部送付履歴、管理画面などの社内運用画面への入口です。")
     expect(metric_cta_links.map(&:text)).to include(
       "案件一覧へ",
       "文書一覧へ",

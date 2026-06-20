@@ -24,7 +24,8 @@
       label: "保留中の申請",
       count: @dashboard_stats[:pending_access_request_count],
       path: access_requests_path,
-      cta: "申請一覧へ"
+      cta: "申請一覧へ",
+      description: "あなたが提出したアクセス申請の保留件数です。"
     }
   ]
 
@@ -33,7 +34,8 @@
       label: "保留中の確認依頼",
       count: @dashboard_stats[:pending_approval_count],
       path: document_approval_requests_path,
-      cta: "未処理の確認依頼を見る"
+      cta: "未処理の確認依頼を見る",
+      description: "社内担当者として処理する確認依頼の保留件数です。"
     }
   end
 %>
@@ -57,6 +59,9 @@
     <article class="card metric-card">
       <p class="eyebrow"><%= card[:label] %></p>
       <p class="metric-number"><%= card[:count] %></p>
+      <% if card[:description].present? %>
+        <p class="muted"><%= card[:description] %></p>
+      <% end %>
       <%= link_to card[:cta], card[:path], class: "metric-card__cta", data: { turbo_frame: "_top" } %>
     </article>
   <% end %>
@@ -188,6 +193,7 @@
   <% if current_user.internal? %>
     <article class="card">
       <h2>社内向け導線</h2>
+      <p class="muted">確認依頼、外部送付履歴、管理画面などの社内運用画面への入口です。</p>
       <ul class="resource-list">
         <li class="resource-list__item">
           <div class="resource-list__content"><%= link_to "確認依頼一覧", document_approval_requests_path %></div>

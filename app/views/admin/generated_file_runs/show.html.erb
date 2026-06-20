@@ -109,6 +109,7 @@
   <% if @generated_file_run.error_message.present? %>
     <div class="rounded-lg border border-red-200 bg-red-50 p-4">
       <h2 class="mb-2 text-lg font-semibold text-red-700">エラー</h2>
+      <p class="mb-2 text-xs text-gray-600">エラーは診断用プレビューです。長い本文は省略され、token / secret / private path は伏せています。</p>
       <pre class="whitespace-pre-wrap text-sm"><%= generated_file_run_diagnostic_preview(@generated_file_run.error_message) %></pre>
     </div>
   <% end %>
@@ -116,18 +117,22 @@
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
     <div class="rounded-lg border bg-white p-4">
       <h2 class="mb-2 text-lg font-semibold">入力パス</h2>
+      <p class="mb-2 text-xs text-gray-600">入力パスはジョブ診断用の配列表示です。生成ジョブの入力を再確認する手がかりとして扱います。</p>
       <pre class="whitespace-pre-wrap text-sm"><%= JSON.pretty_generate(@generated_file_run.source_paths || []) %></pre>
     </div>
     <div class="rounded-lg border bg-white p-4">
       <h2 class="mb-2 text-lg font-semibold">変更ファイル</h2>
+      <p class="mb-2 text-xs text-gray-600">変更ファイルはジョブ診断用の配列表示です。生成前後の差分を再確認する手がかりとして扱います。</p>
       <pre class="whitespace-pre-wrap text-sm"><%= JSON.pretty_generate(@generated_file_run.changed_files || []) %></pre>
     </div>
     <div class="rounded-lg border bg-white p-4">
       <h2 class="mb-2 text-lg font-semibold">生成パス</h2>
+      <p class="mb-2 text-xs text-gray-600">生成パスはジョブ診断用の配列表示です。出力先の確認入口として扱います。</p>
       <pre class="whitespace-pre-wrap text-sm"><%= JSON.pretty_generate(@generated_file_run.generated_paths || []) %></pre>
     </div>
     <div class="rounded-lg border bg-white p-4">
       <h2 class="mb-2 text-lg font-semibold">メタデータ</h2>
+      <p class="mb-2 text-xs text-gray-600">メタデータは診断用プレビューです。token / secret / private path は表示前に伏せています。</p>
       <pre class="whitespace-pre-wrap text-sm"><%= generated_file_run_metadata_preview(@generated_file_run.metadata) %></pre>
     </div>
   </div>
