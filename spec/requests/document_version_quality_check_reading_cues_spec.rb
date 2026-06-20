@@ -23,8 +23,9 @@ RSpec.describe "Document version quality check reading cues", type: :request do
     get document_version_quality_check_path(version)
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("fail は error がある状態です。warning は確認が必要な注意、info は参考情報として扱ってください。")
-    expect(page_text).to include("JSON / Markdown は handoff や evidence 用の read-only export です。この画面から品質チェック結果は変更されません。")
+    expect(page_text).to include("fail は error がある状態です。error がある場合は下の一覧の error 行を先に確認してください。")
+    expect(page_text).to include("warning は確認が必要な注意、info は参考情報で、自動 fail や通知済み状態ではありません。")
+    expect(page_text).to include("JSON / Markdown は handoff や evidence 用の read-only export です。この画面から品質チェック結果、版、公開状態は変更されません。")
     expect(parsed_html.css("a[href]").map { _1.text.squish }).to include("JSON", "Markdown")
   end
 
@@ -35,7 +36,7 @@ RSpec.describe "Document version quality check reading cues", type: :request do
     get document_version_quality_check_path(version)
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("rendered site と build status の warning / error 抜粋です。すべての check は下の一覧で確認してください。")
+    expect(page_text).to include("rendered site と build status の warning / error 抜粋です。全件確認の正本ではないため、すべての check は下の一覧で確認してください。")
     expect(page_text).to include("Preview build is queued")
     expect(page_text).to include("Markdown preview site is not built yet")
   end
