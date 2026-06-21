@@ -34,7 +34,8 @@ RSpec.describe "document-file-browser controller source" do
 
   it "keeps section and item search matching boundaries readable" do
     aggregate_failures do
-      expect(controller_source).to include("const query = this.queryTarget.value.trim().toLowerCase()")
+      expect(controller_source).to include("const rawQuery = this.queryTarget.value.trim()")
+      expect(controller_source).to include("const query = rawQuery.toLowerCase()")
       expect(controller_source).to include('const sectionKind = section.dataset.sectionKind || "all"')
       expect(controller_source).to include('const matchesKind = this.activeKind === "all" || sectionKind === this.activeKind')
       expect(controller_source).to include('const sectionMatchesQuery = query.length > 0 && (section.dataset.sectionSearch || "").toLowerCase().includes(query)')
@@ -48,9 +49,21 @@ RSpec.describe "document-file-browser controller source" do
   it "keeps status and empty-state text boundaries stable" do
     aggregate_failures do
       expect(controller_source).to include("const kindLabel = kindLabels[this.activeKind] || this.activeKind")
-      expect(controller_source).to include('this.statusTarget.textContent = query.length > 0 ? `${visibleCount}件を表示中 / 検索: ${this.queryTarget.value}` : `${visibleCount}件を表示中 / 分類: ${kindLabel}`')
+      expect(controller_source).to include('this.statusTarget.textContent = query.length > 0 ? `${visibleCount}件を表示中 / 検索: ${rawQuery}` : `${visibleCount}件を表示中 / 分類: ${kindLabel}`')
       expect(controller_source).to include("if (this.hasEmptyTarget) {")
       expect(controller_source).to include("this.emptyTarget.hidden = visibleCount > 0")
+    end
+  end
+
+  it "keeps empty-state reasons aligned with query and kind filters" do
+    aggregate_failures do
+      expect(controller_source).to include('query: "検索条件に一致するファイルはありません。"')
+      expect(controller_source).to include('kind: "選択した分類に一致するファイルはありません。"')
+      expect(controller_source).to include('queryAndKind: "検索条件と分類の両方に一致するファイルはありません。"')
+      expect(controller_source).to include('const hasQuery = query.length > 0')
+      expect(controller_source).to include('const hasKindFilter = this.activeKind !== "all"')
+      expect(controller_source).to include('const emptyMessageKey = hasQuery && hasKindFilter ? "queryAndKind" : hasQuery ? "query" : hasKindFilter ? "kind" : "default"')
+      expect(controller_source).to include("this.emptyTarget.textContent = emptyMessages[emptyMessageKey]")
     end
   end
 
