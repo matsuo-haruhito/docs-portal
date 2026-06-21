@@ -48,7 +48,7 @@ function buildController(ControllerClass, { query = "", sections = [], buttons =
   controller.hasFilterButtonTarget = buttons.length > 0
   controller.statusTarget = { textContent: "" }
   controller.hasStatusTarget = true
-  controller.emptyTarget = { hidden: true }
+  controller.emptyTarget = { hidden: true, textContent: "" }
   controller.hasEmptyTarget = true
   return controller
 }
@@ -127,7 +127,7 @@ test("section-level search matches every item in that section", async () => {
 
   assert.deepEqual(sectionItemVisibility(matchedSection), [true, true])
   assert.deepEqual(sectionItemVisibility(unmatchedSection), [true])
-  assert.equal(controller.statusTarget.textContent, "3件を表示中 / 検索:  alpha ")
+  assert.equal(controller.statusTarget.textContent, "3件を表示中 / 検索: alpha")
   assert.equal(controller.emptyTarget.hidden, true)
 })
 
@@ -148,7 +148,7 @@ test("item-level search only shows matching items inside otherwise unmatched sec
   assert.equal(controller.emptyTarget.hidden, true)
 })
 
-test("empty state follows the visible item count", async () => {
+test("empty state explains when only search removes every item", async () => {
   const ControllerClass = await loadControllerClass()
   const section = buildSection({
     kind: "debug",
@@ -163,6 +163,37 @@ test("empty state follows the visible item count", async () => {
   assert.equal(section.hidden, true)
   assert.equal(controller.statusTarget.textContent, "0件を表示中 / 検索: missing")
   assert.equal(controller.emptyTarget.hidden, false)
+  assert.equal(controller.emptyTarget.textContent, "検索条件に一致するファイルはありません。")
+})
+
+test("empty state explains when only a kind filter removes every item", async () => {
+  const ControllerClass = await loadControllerClass()
+  const visible = buildSection({ kind: "visible", items: [buildItem("public html")] })
+  const controller = buildController(ControllerClass, { sections: [visible] })
+
+  controller.connect()
+  controller.selectKind({ params: { kind: "debug" } })
+
+  assert.deepEqual(sectionItemVisibility(visible), [false])
+  assert.equal(visible.hidden, true)
+  assert.equal(controller.statusTarget.textContent, "0件を表示中 / 分類: デバッグ")
+  assert.equal(controller.emptyTarget.hidden, false)
+  assert.equal(controller.emptyTarget.textContent, "選択した分類に一致するファイルはありません。")
+})
+
+test("empty state explains when query and kind filters both apply", async () => {
+  const ControllerClass = await loadControllerClass()
+  const visible = buildSection({ kind: "visible", items: [buildItem("public html")] })
+  const controller = buildController(ControllerClass, { query: "missing", sections: [visible] })
+
+  controller.connect()
+  controller.selectKind({ params: { kind: "debug" } })
+
+  assert.deepEqual(sectionItemVisibility(visible), [false])
+  assert.equal(visible.hidden, true)
+  assert.equal(controller.statusTarget.textContent, "0件を表示中 / 検索: missing")
+  assert.equal(controller.emptyTarget.hidden, false)
+  assert.equal(controller.emptyTarget.textContent, "検索条件と分類の両方に一致するファイルはありません。")
 })
 
 test("optional filter button, status, and empty targets can be absent", async () => {

@@ -44,7 +44,8 @@ RSpec.describe "document file browser source" do
       expect(controller_source).to include('item.hidden = !visible')
       expect(controller_source).to include('section.hidden = sectionVisibleCount === 0')
       expect(controller_source).to include('button.setAttribute("aria-pressed", String(pressed))')
-      expect(controller_source).to include('`${visibleCount}件を表示中 / 検索: ${this.queryTarget.value}`')
+      expect(controller_source).to include('`${visibleCount}件を表示中 / 検索: ${rawQuery}`')
+      expect(controller_source).to include('this.emptyTarget.textContent = emptyMessages[emptyMessageKey]')
     end
   end
 end
