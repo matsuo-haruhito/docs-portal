@@ -139,12 +139,18 @@ current 実装の前提:
 - secret 系では `SECRET_KEY_BASE` `RAILS_MASTER_KEY` `DOC_IMPORT_TOKEN` を確認し、sample 値のままなら warning または error にする
 - storage / workspace 系では `config/storage.yml` に `ACTIVE_STORAGE_SERVICE` が存在するか、`storage/document_files` に書き込めるか、`docusaurus/package.json` があるか、`KROKI_ENDPOINT` が前提と合っているかを確認する
 - `補足` 列には問題になっている値や path が出ることがある
+- status filter は `すべて / OK / 警告 / エラー` で表示行だけを絞り込む。診断 rule や全体 summary の集計条件は変えない
+- category filter は `秘密値 / Storage / Workspace / 環境変数` で表示行だけを絞り込む。分類は current diagnostic の既存 category 表示を読むためのもので、新しい診断 rule を足すものではない
 
 見方:
 
 - `OK` は current 前提を満たしている
 - `警告` は今すぐ致命傷ではないが、sample 値の流用や optional service 前提の不足がある
 - `エラー` は起動や build、import、preview に直結する不足で、先に解消したい項目
+- status / category filter は、原因の種類や優先して見る状態を絞り込むために使う。`すべて` に戻すと診断項目全体の一覧へ戻る
+- 上部の `OK / 警告 / エラー` summary は診断全体の件数として読み、`全X件中Y件を表示` は現在の filter 条件に合う表示行数として分けて読む
+- filter 0 件は「現在の絞り込み条件に一致する診断項目がない」状態であり、診断全体が healthy という意味ではない。全体の状態は summary を確認する
+- 無効な status / category param は `すべて` 扱いに戻るため、URL 共有や手入力後に想定外の filter が残っていないかは画面上の選択状態で確認する
 
 戻り先:
 
@@ -233,6 +239,7 @@ current 実装の前提:
 - index 検索から detail に入った場合、`モデル一覧へ戻る` が検索済み index へ戻る導線であり、detail 内の `代表フィールド検索` とは別文脈だと分けて読めているか
 - `既存画面で詳しく確認` が検索語を引き継ぐ場合と、コピーして既存画面で再確認する場合を混同していないか
 - `警告` `エラー` が、sample 値の流用なのか実運用に影響する不足なのか
+- `アプリ設定診断` の status / category filter が表示行だけを絞るもので、filter 0 件を診断全体 healthy と読み替えていないか
 - 欠落ファイルが単発なのか、storage 全体の問題に見えるのか
 - 欠落ファイル詳細の案件 filter が案件コード / 案件名で候補を探す remote search であり、候補上限外の selected project も復元される前提で読めているか
 - 欠落ファイル詳細の `条件をクリア` が、有効な案件 / 文書 / ファイル filter があるときだけ出る状態解除導線だと読めているか
@@ -253,6 +260,8 @@ current 実装の前提:
 - model 詳細内の最近の record sample から識別値を探したい: `モデルブラウザ` show の `代表フィールド検索`
 - detail から既存画面で続けて調べたい: `既存画面で詳しく確認` を使い、検索語引き継ぎの有無に応じて既存画面側で再確認する
 - `.env` や compose の設定不足を見たい: `アプリ設定診断`
+- `アプリ設定診断` で原因の種類や状態を絞って見たい: status / category filter を使い、全体 summary と表示中件数を分けて確認する
+- `アプリ設定診断` の filter 0 件が出ている: 現在条件に一致する行がない状態として読み、`すべて` に戻すか summary で全体の `OK / 警告 / エラー` 件数を確認する
 - 運用失敗入口の数値を読み分けたい: `保存済み履歴` は保存済み failed 件数、`継続失敗候補` は同じ identity の最新 run が連続 failed かを見る read-only 調査入口として分ける
 - `古い失敗のみ` が出ている: 7 日より古い対象履歴だけが残っている状態として読み、緊急度や通知 / ack 状態は対象 runbook と履歴 detail で別途確認する
 - 実体ファイルが見えない原因を切り分けたい: `文書ファイル健全性`

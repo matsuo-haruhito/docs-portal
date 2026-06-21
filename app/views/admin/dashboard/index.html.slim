@@ -120,34 +120,60 @@ section.card
   - else
     p.muted 必須設定に不足または不正な値があります。.env.example と本番設定を確認してください。
 
-  table
-    thead
-      tr
-        th 状態
-        th カテゴリ
-        th 項目
-        th 内容
-        th 補足
-    tbody
-      - @configuration_diagnostic.checks.each do |check|
+  = form_with url: admin_root_path, method: :get, local: true, class: "configuration-diagnostic-filter-form" do |form|
+    .form-grid
+      .field
+        = form.label :configuration_status, "状態"
+        = form.select :configuration_status, [["すべて", ""]] + configuration_diagnostic_status_filter_options, selected: @configuration_status_filter
+      .field
+        = form.label :configuration_category, "カテゴリ"
+        = form.select :configuration_category, [["すべて", ""]] + configuration_diagnostic_category_filter_options, selected: @configuration_category_filter
+    p.actions
+      = form.submit "絞り込む", class: "button secondary"
+      - if @configuration_diagnostic_filters_active
+        = link_to "絞り込み解除", admin_root_path, class: "button secondary"
+
+  - active_configuration_filters = []
+  - if @configuration_status_filter.present?
+    - active_configuration_filters << "状態: #{configuration_diagnostic_status_filter_label(@configuration_status_filter)}"
+  - if @configuration_category_filter.present?
+    - active_configuration_filters << "カテゴリ: #{configuration_diagnostic_category_filter_label(@configuration_category_filter)}"
+  - if @configuration_diagnostic_filters_active
+    p.muted = "絞り込み中（#{active_configuration_filters.join(' / ')}）: 全#{@configuration_diagnostic_total_count}件中 #{@configuration_diagnostic_filter_count}件を表示しています。診断全体の件数は上の summary を確認してください。"
+  - else
+    p.muted = "全#{@configuration_diagnostic_total_count}件を表示しています。状態またはカテゴリで表示行だけを絞り込めます。"
+
+  - if @configuration_diagnostic_checks.any?
+    table
+      thead
         tr
-          td
-            span class=configuration_diagnostic_status_badge_class(check.status)
-              = configuration_diagnostic_status_label(check.status)
-          td
-            span class="text-sm font-semibold text-gray-700"
-              = configuration_diagnostic_category_label(check)
-          td
-            code = check.key
-          td
-            strong = check.label
-            br
-            span.muted = check.message
-          td class="max-w-xl break-words"
-            - if check.detail.present?
-              code = check.detail
-            - else
-              span.muted -
+          th 状態
+          th カテゴリ
+          th 項目
+          th 内容
+          th 補足
+      tbody
+        - @configuration_diagnostic_checks.each do |check|
+          tr
+            td
+              span class=configuration_diagnostic_status_badge_class(check.status)
+                = configuration_diagnostic_status_label(check.status)
+            td
+              span class="text-sm font-semibold text-gray-700"
+                = configuration_diagnostic_category_label(check)
+            td
+              code = check.key
+            td
+              strong = check.label
+              br
+              span.muted = check.message
+            td class="max-w-xl break-words"
+              - if check.detail.present?
+                code = check.detail
+              - else
+                span.muted -
+  - else
+    p.muted 現在の絞り込み条件に一致する診断項目はありません。診断全体が正常という意味ではないため、条件を解除するか上の全体件数を確認してください。
 
 section.card
   h2 文書ファイル健全性

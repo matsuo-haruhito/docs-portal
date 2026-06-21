@@ -1,25 +1,54 @@
 module Admin::DashboardHelper
-  def configuration_diagnostic_category_label(check)
+  CONFIGURATION_DIAGNOSTIC_CATEGORY_LABELS = {
+    secret: "秘密値",
+    storage: "Storage",
+    workspace: "Workspace",
+    environment: "環境変数"
+  }.freeze
+
+  CONFIGURATION_DIAGNOSTIC_STATUS_LABELS = {
+    ok: "OK",
+    warning: "警告",
+    error: "エラー"
+  }.freeze
+
+  def configuration_diagnostic_category_key(check)
     key = check.key.to_s
 
     case key
     when "SECRET_KEY_BASE", "RAILS_MASTER_KEY", "DOC_IMPORT_TOKEN"
-      "秘密値"
+      :secret
     when "ACTIVE_STORAGE_SERVICE", "document_files storage root", /\Astorage\./
-      "Storage"
+      :storage
     when "KROKI_ENDPOINT", /\Adocusaurus\./
-      "Workspace"
+      :workspace
     else
-      "環境変数"
+      :environment
     end
   end
 
+  def configuration_diagnostic_category_label(check)
+    configuration_diagnostic_category_filter_label(configuration_diagnostic_category_key(check))
+  end
+
+  def configuration_diagnostic_category_filter_options
+    CONFIGURATION_DIAGNOSTIC_CATEGORY_LABELS.map { |key, label| [label, key.to_s] }
+  end
+
+  def configuration_diagnostic_category_filter_label(value)
+    CONFIGURATION_DIAGNOSTIC_CATEGORY_LABELS.fetch(value.to_sym, value.to_s)
+  end
+
   def configuration_diagnostic_status_label(status)
-    {
-      ok: "OK",
-      warning: "警告",
-      error: "エラー"
-    }.fetch(status.to_sym, status.to_s.upcase)
+    configuration_diagnostic_status_filter_label(status)
+  end
+
+  def configuration_diagnostic_status_filter_options
+    CONFIGURATION_DIAGNOSTIC_STATUS_LABELS.map { |key, label| [label, key.to_s] }
+  end
+
+  def configuration_diagnostic_status_filter_label(status)
+    CONFIGURATION_DIAGNOSTIC_STATUS_LABELS.fetch(status.to_sym, status.to_s.upcase)
   end
 
   def configuration_diagnostic_status_badge_class(status)
