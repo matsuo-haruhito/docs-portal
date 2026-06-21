@@ -64,8 +64,12 @@ RSpec.describe "Public route identifier contract", type: :routing do
     all_segments = route_entries.flat_map { |entry| entry.fetch(:segments) }.uniq
 
     EXPECTED_DYNAMIC_SEGMENTS_BY_ROLE.transform_values do |allowed_segments|
-      all_segments & allowed_segments
+      (all_segments & allowed_segments).sort_by(&:to_s)
     end
+  end
+
+  def expected_dynamic_segments_by_role
+    EXPECTED_DYNAMIC_SEGMENTS_BY_ROLE.transform_values { |segments| segments.sort_by(&:to_s) }
   end
 
   def unknown_dynamic_segments
@@ -75,7 +79,7 @@ RSpec.describe "Public route identifier contract", type: :routing do
   end
 
   it "keeps every public dynamic segment intentionally classified" do
-    expect(dynamic_segments_by_role).to eq(EXPECTED_DYNAMIC_SEGMENTS_BY_ROLE)
+    expect(dynamic_segments_by_role).to eq(expected_dynamic_segments_by_role)
     expect(unknown_dynamic_segments).to be_empty
   end
 
