@@ -115,16 +115,20 @@ RSpec.describe "Admin external folder sync source metadata recheck", type: :requ
     expect(response.body).not_to include("バックグラウンド同期を登録しました")
   end
 
-  it "shows a bounded resolver error message without changing the saved metadata" do
+  it "shows a bounded resolver error message without exposing raw Graph payloads" do
     sign_in_as(admin_user)
     source = create_microsoft_graph_source
     saved_external_folder_id = source.external_folder_id
     saved_external_folder_path = source.external_folder_path
     saved_provider_metadata = source.provider_metadata.deep_dup
+    unsafe_error_message = <<~MESSAGE.squish
+      Microsoft Graph returned 403 Authorization: Bearer secret-access-token
+      client_secret=super-secret-value {"error":{"message":"rawGraphPayload"}}
+    MESSAGE
     resolver = instance_double(ExternalFolderSync::MicrosoftGraphFolderResolver)
     allow(resolver).to receive(:resolve).and_raise(
       ExternalFolderSync::MicrosoftGraphFolderResolver::Error,
-      "Microsoft Graph へのアクセス権限が不足しています。接続設定と共有権限を確認してください。"
+      unsafe_error_message
     )
     allow(ExternalFolderSync::MicrosoftGraphFolderResolver).to receive(:new).and_return(resolver)
 
@@ -135,7 +139,10 @@ RSpec.describe "Admin external folder sync source metadata recheck", type: :requ
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("保存済み metadata を再確認できませんでした。Microsoft Graph接続・共有URL・権限を確認してください。")
     expect(response.body).not_to include("Authorization: Bearer")
+    expect(response.body).not_to include("secret-access-token")
     expect(response.body).not_to include("client_secret")
+    expect(response.body).not_to include("super-secret-value")
+    expect(response.body).not_to include("rawGraphPayload")
     expect(source.reload.external_folder_id).to eq(saved_external_folder_id)
     expect(source.external_folder_path).to eq(saved_external_folder_path)
     expect(source.provider_metadata).to eq(saved_provider_metadata)
