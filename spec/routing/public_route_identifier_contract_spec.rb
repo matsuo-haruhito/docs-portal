@@ -5,7 +5,6 @@ RSpec.describe "Public route identifier contract", type: :routing do
   DOCUMENT_SLUG_SEGMENTS = %i[slug document_slug].freeze
   PUBLIC_ID_SEGMENTS = %i[
     public_id
-    document_file_public_id
     document_set_public_id
     document_version_public_id
   ].freeze
