@@ -11,6 +11,53 @@
 - issue / PR 本文では、対象 gem の package-root export、direct entrypoint、TypeScript declaration、manifest、package verification のどれを根拠にしたかを 1 行で残します。
 - 未着地の upstream PR や検討中 issue は、current main の durable contract として扱わず、関連 signal として明記します。
 
+## public surface 追加時の共通 checklist
+
+3 gem の public surface / package verification を見るときは、repo ごとの checker 実装を揃える前に、次の順で evidence を分けます。ここでの checklist は `docs-portal` の採用判断を揃えるためのもので、upstream repo の manifest schema、package verifier、release policy をこの repo で決めるものではありません。
+
+1. runtime behavior change
+   - その PR / issue が実行時挙動を変えるのか、read-only helper / docs signal / package guard だけなのかを先に分けます。
+   - runtime behavior が変わる場合は、対象 repo の spec / smoke / visual evidence を正本にし、docs-portal 側では current pin に入るまで current support として書きません。
+2. read-only contract
+   - rendered field reader、controller identifier reader、manifest reader のような read-only API は、host app の状態を変更しない確認 helper として扱います。
+   - helper 名、戻り値 shape、fallback option は upstream public docs / merged code を正本にし、docs-portal 側で名称を先取りしません。
+3. docs signal
+   - README は exhaustive inventory にせず、public API docs、entrypoint docs、release guide、package verification docs のどれが source-of-truth family かを確認します。
+   - docs drift guard がある場合も、guard が守る対象が docs map / release note / setup note / package boundary のどれかを PR body に残します。
+4. declaration / manifest / package contents guard
+   - TypeScript declaration、public API manifest、package contents verifier は、それぞれ adopter-visible contract を支える補助 evidence として読みます。
+   - `tree_view-rails` は public API manifest を強く使い、`rails_table_preferences` は entrypoint docs / package verifier family、`rails_fields_kit` は public API docs / generated setup note / package contents guard を主に見る、という repo 固有の強みを維持します。
+5. downstream smoke
+   - upstream CI / package guard が green でも、docs-portal の representative smoke にはなりません。
+   - release train / bump PR では、from SHA、to SHA、確認した docs-portal 画面または spec、rollback target を別 evidence として残します。
+6. visual evidence / release train boundary
+   - browser-capable visual evidence は、static artifact / UI cue / layout readability を判断する queue です。
+   - release train は Gemfile / Gemfile.lock の pinned ref、representative smoke、rollback note を扱う queue です。visual evidence が green でも、bump 採用や merge 判断の代替にはしません。
+
+### 共通 evidence format
+
+public surface / package verification を根拠にした issue / PR comment では、次の粒度で残します。該当しない項目は `not applicable` とし、未 merge signal は `pending upstream` として current support から外します。
+
+```text
+- target gem: <rails_fields_kit | tree_view | rails_table_preferences>
+- surface type:
+  - <runtime behavior | read-only helper | docs signal | TypeScript declaration | public API manifest | package contents guard | release evidence>
+- upstream source of truth:
+  - docs / manifest / verifier:
+  - PR / issue / commit:
+  - status: <merged | open | pending human | historical>
+- package verification boundary:
+  - guards:
+  - does not guard:
+- docs-portal downstream evidence:
+  - current pin:
+  - adoption surface:
+  - representative smoke:
+  - rollback target:
+- next queue:
+  - <upstream review | docs-portal release train | visual evidence batch | no downstream action>
+```
+
 ## 先に見る正本
 
 - `Gemfile`: docs-portal が取り込んでいる 3 gem の pinned ref
@@ -98,6 +145,7 @@ TypeScript declaration が関連する場合:
 - `#789`: `rails_table_preferences` known-good revision の human gate
 - `#607`: 管理画面の internal UI gem 展開共通パターン
 - `#1470`: internal UI gem state cue inventory。dependency bump とは別の parallel design lane
+- `#3655`: 3 gem 共通の public surface / package verification / release evidence checklist 整理
 - `tree_view-rails#981`: `config/public_api_manifest.yml` の配布境界と package verification 対象の整理
 - `tree_view-rails#1092`: event detail keys の package-root public export 化を検討する feature proposal。current durable contract ではない
 - `rails_table_preferences#540`: package entrypoint の TypeScript declaration 同梱 signal
