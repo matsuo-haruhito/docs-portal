@@ -60,7 +60,19 @@ RSpec.describe "Document delivery log failure alert handoff", type: :request do
     expect(entry.fetch("recipient_preview")).to eq("client@example.com")
     expect(entry.fetch("subject_preview")).to include("secret=[FILTERED]")
     expect(entry.fetch("latest_error_message")).to include("Authorization: Bearer [FILTERED]")
-    expect(entry.fetch("failed_delivery_logs_path")).to include("%5BFILTERED%5D")
+
+    failed_delivery_logs_path = entry.fetch("failed_delivery_logs_path")
+    failed_delivery_logs_uri = URI.parse(failed_delivery_logs_path)
+    failed_delivery_logs_params = Rack::Utils.parse_nested_query(failed_delivery_logs_uri.query)
+
+    expect(failed_delivery_logs_uri.path).to eq("/document_delivery_logs")
+    expect(failed_delivery_logs_params).to include(
+      "status" => "failed",
+      "delivery_type" => "portal_link"
+    )
+    expect(failed_delivery_logs_params.fetch("q")).to include("[FILTERED]")
+    expect(failed_delivery_logs_params.fetch("q").length).to be <= DocumentDeliveryLogs::FailureAlertHandoff::DELIVERY_LOG_QUERY_MAX_LENGTH
+    expect(failed_delivery_logs_path).not_to include("subject-raw")
 
     response_text = response.body
     expect(response_text).not_to include("subject-raw")
