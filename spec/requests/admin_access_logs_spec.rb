@@ -827,6 +827,114 @@ RSpec.describe "Admin access logs", type: :request do
     )).to all(be_blank)
   end
 
+  it "exports access log metadata JSON without row data using active filters" do
+    metadata_project = create(:project, code: "META", name: "Metadata Project")
+    metadata_company = create(:company, domain: "metadata.example.com", name: "Metadata Co")
+    metadata_user = create(:user, :internal, company: metadata_company, email_address: "metadata-user@example.com")
+    metadata_document = create(:document, project: metadata_project, title: "Metadata Document", slug: "metadata-document")
+    metadata_version = create(:document_version, document: metadata_document, version_label: "v5.0.0")
+
+    create_access_log!(
+      action_type: :download,
+      target_type: "ai_context",
+      target_name: "mode=compact;scope=selected;selected_count=2;exported_count=2;metadata-target",
+      user: metadata_user,
+      company: metadata_company,
+      project: metadata_project,
+      document: metadata_document,
+      document_version: metadata_version,
+      accessed_at: Time.zone.parse("2026-05-10 12:00:00 UTC")
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(
+      format: :json,
+      action_type: "download",
+      target_type: "ai_context",
+      project_id: metadata_project.id,
+      company_id: metadata_company.id,
+      user_id: metadata_user.id,
+      q: "metadata-target",
+      document_q: "Metadata Document",
+      from: "2026-05-10",
+      to: "2026-05-10",
+      ai_context_mode: "compact",
+      ai_context_scope: "selected",
+      page: 2
+    )
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("application/json")
+
+    metadata = JSON.parse(response.body)
+    filters = metadata.fetch("filters")
+
+    expect(metadata.keys).to contain_exactly(
+      "exported_at",
+      "report_type",
+      "row_limit",
+      "export_scope",
+      "description",
+      "filters",
+      "ignored_filters",
+      "summary"
+    )
+    expect(metadata).not_to include("rows", "access_logs", "csv")
+    expect(metadata).to include(
+      "report_type" => "access_logs",
+      "row_limit" => Admin::AccessLogsController::ACCESS_LOGS_PER_PAGE,
+      "export_scope" => "current_filter_latest_rows",
+      "ignored_filters" => []
+    )
+    expect(metadata.fetch("description")).to include("表示中ページではなく")
+    expect(metadata.fetch("summary")).to include("条件:")
+
+    expect(filters).to include(
+      "action_type" => "download",
+      "target_type" => "ai_context",
+      "project_id" => metadata_project.id.to_s,
+      "company_id" => metadata_company.id.to_s,
+      "user_id" => metadata_user.id.to_s,
+      "q" => "metadata-target",
+      "document_q" => "Metadata Document",
+      "from" => "2026-05-10",
+      "to" => "2026-05-10",
+      "ai_context_mode" => "compact",
+      "ai_context_scope" => "selected"
+    )
+    expect(filters.fetch("project")).to include("code" => "META", "name" => "Metadata Project")
+    expect(filters.fetch("company")).to include("name" => "Metadata Co", "domain" => "metadata.example.com")
+    expect(filters.fetch("user")).to include("email" => "metadata-user@example.com")
+  end
+
+  it "exports metadata JSON with ignored dates and drops AI filters for non-AI targets" do
+    create_access_log!(action_type: :download, target_type: "zip", target_name: "metadata.zip")
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(
+      format: :json,
+      action_type: "download",
+      target_type: "zip",
+      from: "not-a-date",
+      to: "2026-99-99",
+      ai_context_mode: "compact",
+      ai_context_scope: "selected"
+    )
+
+    expect(response).to have_http_status(:ok)
+
+    metadata = JSON.parse(response.body)
+    filters = metadata.fetch("filters")
+
+    expect(metadata.fetch("ignored_filters")).to contain_exactly("from", "to")
+    expect(metadata.fetch("summary")).to include("無効な日付条件を除外: from, to")
+    expect(filters).to include("action_type" => "download", "target_type" => "zip")
+    expect(filters).not_to include("from", "to", "ai_context_mode", "ai_context_scope")
+    expect(metadata).not_to include("rows", "access_logs", "csv")
+  end
+
   it "falls back to the first page for invalid page parameters" do
     base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
     create_access_log!(action_type: :view, target_type: "page", target_name: "entry-old", accessed_at: base_time)
