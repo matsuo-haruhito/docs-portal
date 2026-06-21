@@ -30,6 +30,19 @@
 | `sample app / downstream smoke` | host app の screen、form、table、tree、selected value、invalid rerender、mounted engine save | sample app evidence、docs-portal request spec、manual smoke、rollback note | `docs-portal` 固有の representative smoke として、from / to SHA、screen、result、rollback target を残す | target SHA、known-good revision、runner-capable manual evidence が未確定の場合 |
 | `visual reference evidence` | layout、state cue、interactive affordance、static artifact、mockup と actual UI のズレ | visual reference gallery、mockup browser smoke、screenshot / artifact path | visual artifact 変更や UI cue drift の補助 evidence として使う。current support の正本は code / merged docs / representative smoke に戻す | 画像だけで仕様判断や accessibility / responsive acceptance を決める必要がある場合 |
 
+## Dependency / security observation lane
+
+Dependency / security observation は、同じ `green` でも意味が違う evidence を混同しないための補助 lane です。`npm audit`、Bundler audit、GitHub security alerts、Dependabot PR、release checklist、CI success はそれぞれ別の信号として読み、1 つが green でもほかの確認を完了扱いにしません。
+
+| repo / surface | primary observation | 補助 evidence | 書いてよいこと | 書かないこと |
+| --- | --- | --- | --- | --- |
+| `tree_view` / `tree_view-rails` | `tree_view-rails#2493` の dependency audit CI guard candidate、Dependabot PR、package-lock / Gemfile.lock drift | package verifier、release checklist、GitHub security alerts の確認結果 | audit CI guard は candidate として扱い、導入判断は `tree_view-rails` 側 issue / PR に戻す | `tree_view-rails#2493` の未確定方針を current support や required check として固定しない |
+| `rails_table_preferences` | package verifier、release checklist、CI、Dependabot PR の読み分け | docs index / README family、manual QA、security-adjacent review comment | package-root export や copied controller file の evidence と dependency freshness を分ける | verifier green だけで security alert / audit remediation 完了と書かない |
+| `rails_fields_kit` | release evidence docs、sample app evidence、package-root helper evidence、CI | package exports smoke、public API docs drift guard、Dependabot PR | helper / package evidence と dependency / security observation を PR body で別項目にする | sample app smoke success を GitHub security alert や npm/Bundler audit success の代替にしない |
+| `docs-portal` | Docusaurus dependency PR、security-audit job、downstream docs build / CI freshness | docs-quality、Docusaurus build、lockfile freshness、Dependabot PR body | PR head SHA と workflow run head SHA をそろえて、dependency PR / audit / docs build のどれを見たかを明記する | stale PR head の CI success、Dependabot metadata、docs-quality success をまとめて security pass と書かない |
+
+Dependency / security の共通化は、PR / issue comment template や release checklist の確認項目までに留めます。repo ごとの CI guard、audit workflow、branch protection、required checks、security alert policy、lockfile refresh、audit failure 修正が必要になった場合は、この playbook では決めず、対象 repo の個別 issue に戻します。
+
 ## Review checklist
 
 1. 対象 gem の public surface 正本を 1 つ決める。
@@ -38,6 +51,7 @@
 4. upstream evidence と docs-portal representative smoke を分けて PR body / issue comment に記録する。
 5. open PR、proposal、未 merge docs、未確定 target SHA を release-facing docs に先取りしない。
 6. upstream の仕組みを統一する必要が出た場合は、この docs issue で決めず、対象 upstream repo の issue に戻す。
+7. dependency / security observation を扱う場合は、audit、security alert、Dependabot、release checklist、CI success を別 evidence として記録する。
 
 ## update log に残す最小項目
 
@@ -49,6 +63,8 @@
   - <guard name or docs path>
 - package evidence checked:
   - <package exports / verifier / .d.ts / built gem gate>
+- dependency / security observation checked:
+  - <npm audit / Bundler audit / GitHub security alert / Dependabot PR / CI job / skipped with reason>
 - docs-portal representative smoke:
   - <host app surface / spec / manual evidence>
 - readiness result:
