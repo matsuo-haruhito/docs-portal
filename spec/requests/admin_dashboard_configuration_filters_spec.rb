@@ -1,14 +1,13 @@
 require "rails_helper"
 
 RSpec.describe "Admin dashboard configuration diagnostic filters", type: :request do
-  DiagnosticCheck = Struct.new(:status, :key, :label, :message, :detail, keyword_init: true)
-
   let(:admin_user) { create(:user, :internal) }
+  let(:diagnostic_check_class) { Struct.new(:status, :key, :label, :message, :detail, keyword_init: true) }
   let(:diagnostic_checks) do
     [
-      DiagnosticCheck.new(status: :ok, key: "SECRET_KEY_BASE", label: "secret ready", message: "secret is configured"),
-      DiagnosticCheck.new(status: :warning, key: "ACTIVE_STORAGE_SERVICE", label: "storage warning", message: "storage needs review"),
-      DiagnosticCheck.new(status: :error, key: "KROKI_ENDPOINT", label: "workspace error", message: "workspace is unavailable")
+      diagnostic_check_class.new(status: :ok, key: "SECRET_KEY_BASE", label: "secret ready", message: "secret is configured"),
+      diagnostic_check_class.new(status: :warning, key: "ACTIVE_STORAGE_SERVICE", label: "storage warning", message: "storage needs review"),
+      diagnostic_check_class.new(status: :error, key: "KROKI_ENDPOINT", label: "workspace error", message: "workspace is unavailable")
     ]
   end
   let(:diagnostic_result) do
