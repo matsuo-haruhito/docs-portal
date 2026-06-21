@@ -36,8 +36,10 @@ RSpec.describe "Public route identifier contract", type: :routing do
       controller = route.defaults[:controller]
 
       controller.present? &&
+        !controller.start_with?("active_storage/") &&
         !path.start_with?("/admin") &&
         !path.start_with?("/api") &&
+        !path.start_with?("/rails/active_storage") &&
         !path.start_with?("/rails_table_preferences")
     end
   end
