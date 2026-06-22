@@ -7,6 +7,7 @@ RSpec.describe "preview tools source" do
 
   let(:markdown_table_controller_source) { read_source("app/frontend/controllers/markdown_preview_table_tools_controller.js") }
   let(:table_tools_source) { read_source("app/frontend/lib/markdown_preview_table_tools.js") }
+  let(:document_search_source) { read_source("app/frontend/lib/markdown_preview_document_search.js") }
   let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.js") }
   let(:layout_source) { read_source("app/views/layouts/application.html.slim") }
   let(:inventory_source) { read_source("doc/frontend_initialization_inventory.md") }
@@ -72,6 +73,31 @@ RSpec.describe "preview tools source" do
       expect(entrypoint_source).not_to include('addEventListener("turbo:load"')
       expect(entrypoint_source).not_to include('addEventListener("turbo:render"')
       expect(entrypoint_source).not_to include("new TomSelect")
+    end
+  end
+
+  it "keeps the markdown document search visible copy and state source boundaries unchanged" do
+    aggregate_failures do
+      expect(document_search_source).to include("portal-document-search-bar")
+      expect(document_search_source).to include("portal-document-search-toggle")
+      expect(document_search_source).to include("portal-document-search-controls")
+      expect(document_search_source).to include("portal-document-search-count")
+      expect(document_search_source).to include('bar.className = "portal-document-search-bar is-collapsed"')
+      expect(document_search_source).to include('bar.classList.remove("is-collapsed")')
+      expect(document_search_source).to include('bar.classList.add("is-collapsed")')
+      expect(document_search_source).to include('toggleButton.textContent = "文書内検索 /"')
+      expect(document_search_source).to include('toggleButton.textContent = "検索を閉じる"')
+      expect(document_search_source).to include('label.textContent = "この文書内を検索"')
+      expect(document_search_source).to include('input.setAttribute("aria-label", "この文書内を検索")')
+      expect(document_search_source).to include('input.placeholder = "キーワード"')
+      expect(document_search_source).to include('count.textContent = query.length > 0 ? "2文字以上" : ""')
+      expect(document_search_source).to include('count.textContent = `${matchCount}件`')
+      expect(document_search_source).to include('count.textContent = `${state.currentIndex + 1}/${marks.length}`')
+      expect(document_search_source).to include('previousButton.textContent = "前へ"')
+      expect(document_search_source).to include('nextButton.textContent = "次へ"')
+      expect(document_search_source).to include('clearButton.textContent = "クリア"')
+      expect(document_search_source).to include('parent.closest("script, style, nav, footer, aside, .portal-document-search-bar")')
+      expect(document_search_source.scan("Cross-origin fallback: keep the viewer usable even if document search cannot be injected.").size).to eq(2)
     end
   end
 
