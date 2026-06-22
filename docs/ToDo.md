@@ -52,7 +52,7 @@
 
 - seed 用 Docusaurus build で id front matter を自動付与する処理の安定化は #1040 で completed。current runtime 前提は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) を正本にする
 - seed 用 Markdown build 失敗時のログ改善は #1022 / PR #1036 で completed。current runtime 前提は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) を正本にする
-- embedded viewer 前提の iframe 高さ追従 first slice は #1020 で completed。本文内検索 UI は、browser native search で足りない痛点が具体化した時点で別 issue に分ける
+- embedded viewer 前提の iframe 高さ追従 first slice は #1020 で completed。Markdown preview iframe 内の `文書内検索 /` は [版詳細プレビュー・差分・添付確認runbook](./版詳細プレビュー・差分・添付確認runbook.md) を正本にし、検索 ranking、全文検索 index、server-side search、table 内検索との統合は、具体的な痛点が出た時点で別 issue に分ける
 
 ## Data Classification
 
