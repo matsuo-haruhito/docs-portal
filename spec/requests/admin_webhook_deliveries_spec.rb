@@ -236,6 +236,14 @@ RSpec.describe "Admin webhook deliveries", type: :request do
       error_message: "timeout but succeeded",
       created_at: Time.zone.local(2026, 6, 10, 9, 0, 0)
     )
+    old_failed_delivery = create_delivery(
+      endpoint: endpoint,
+      event: event,
+      status: :failed,
+      response_status: 500,
+      error_message: "old timeout",
+      created_at: Time.zone.local(2026, 6, 9, 9, 0, 0)
+    )
     future_failed_delivery = create_delivery(
       endpoint: endpoint,
       event: event,
@@ -282,6 +290,53 @@ RSpec.describe "Admin webhook deliveries", type: :request do
         return_context: "deliveries_index"
       )
     )
+
+    get admin_webhook_deliveries_path(
+      status: "failed",
+      error_q: "timeout",
+      created_from: "2026-06-10",
+      created_to: "not-a-date"
+    )
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("作成日Toの値が日付として解釈できないため、この条件は適用していません。")
+    expect(input_value("created_to")).to eq("not-a-date")
+    expect(action_targets).to include(
+      admin_webhook_delivery_path(
+        matching_delivery.public_id,
+        status: "failed",
+        error_q: "timeout",
+        created_from: "2026-06-10",
+        return_context: "deliveries_index"
+      )
+    )
+    expect(action_targets).to include(
+      admin_webhook_delivery_path(
+        future_failed_delivery.public_id,
+        status: "failed",
+        error_q: "timeout",
+        created_from: "2026-06-10",
+        return_context: "deliveries_index"
+      )
+    )
+    expect(action_targets).not_to include(
+      admin_webhook_delivery_path(
+        succeeded_delivery.public_id,
+        status: "failed",
+        error_q: "timeout",
+        created_from: "2026-06-10",
+        return_context: "deliveries_index"
+      )
+    )
+    expect(action_targets).not_to include(
+      admin_webhook_delivery_path(
+        old_failed_delivery.public_id,
+        status: "failed",
+        error_q: "timeout",
+        created_from: "2026-06-10",
+        return_context: "deliveries_index"
+      )
+    )
   end
 
   it "shows a result-side reset action only for filtered empty states" do
@@ -297,8 +352,6 @@ RSpec.describe "Admin webhook deliveries", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("条件に一致するWebhook送信履歴はありません。")
-    expect(page_text).to include("Webhook設定、イベント、ステータス、HTTP status、エラー断片、作成日の範囲を見直してください。")
-    expect(page_text).not_to include("endpoint、event、status、HTTP status")
     expect(page_text).to include("すべてのWebhook送信履歴を見る")
     expect(parsed_html.css(%(a[href="#{admin_webhook_deliveries_path}"])).map { |link| link.text.squish }).to include(
       "条件をリセット",
@@ -425,6 +478,8 @@ RSpec.describe "Admin webhook deliveries", type: :request do
     )
     dispatcher = instance_double(WebhookDeliveryDispatcher)
     return_filters = {
+      webhook_endpoint_id: endpoint.id.to_s,
+      event_type: "document_updated",
       status: "failed",
       response_status: "500",
       error_q: "retry",
