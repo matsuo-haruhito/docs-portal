@@ -1,45 +1,66 @@
 require "rails_helper"
 
 RSpec.describe "Public route identifier contract", type: :routing do
-  PROJECT_CODE_SEGMENTS = %i[code project_code].freeze
-  DOCUMENT_SLUG_SEGMENTS = %i[slug document_slug].freeze
-  PUBLIC_ID_SEGMENTS = %i[
-    public_id
-    document_set_public_id
-    document_version_public_id
-  ].freeze
-  WILDCARD_CONTENT_PATH_SEGMENTS = %i[asset_path site_path].freeze
-
-  EXPECTED_DYNAMIC_SEGMENTS_BY_ROLE = {
-    project_code: PROJECT_CODE_SEGMENTS,
-    document_slug: DOCUMENT_SLUG_SEGMENTS,
-    public_id: PUBLIC_ID_SEGMENTS,
-    wildcard_content_path: WILDCARD_CONTENT_PATH_SEGMENTS
-  }.freeze
-
-  DOCUMENT_SLUG_CONTROLLERS = %w[
+  PUBLIC_ID_CONTROLLERS = %w[
+    access_requests
+    consents
     document_approval_requests
-    document_delivery_logs
-    document_review_comments
-    documents
+    document_bookmarks
+    document_versions
+    read_confirmations
   ].freeze
 
-  WILDCARD_CONTROLLERS = %w[
-    document_files
-    document_sites
-    project_sites
+  CONTEXT_ONLY_CONTROLLERS = %w[
+    document_uploads
+    project_ai_contexts
+    project_document_zips
+    projects
   ].freeze
 
-  def public_app_routes
+  EXPECTED_DYNAMIC_SEGMENTS_BY_CONTROLLER = PUBLIC_ID_CONTROLLERS.to_h { |controller| [controller, [:public_id]] }.merge(
+    CONTEXT_ONLY_CONTROLLERS.to_h { |controller| [controller, [:project_code]] }
+  ).merge(
+    "document_catalogs" => [:project_code, :public_id],
+    "document_delivery_logs" => [:document_set_public_id, :document_slug, :project_code, :public_id],
+    "document_file_archive_entries" => [:document_file_public_id],
+    "document_files" => [:asset_path, :public_id],
+    "document_review_comments" => [:document_slug, :document_version_public_id, :project_code, :public_id],
+    "document_sets" => [:project_code, :public_id],
+    "document_sites" => [:document_version_public_id, :site_path],
+    "document_version_archives" => [:document_version_public_id],
+    "document_version_quality_checks" => [:document_version_public_id],
+    "document_version_rollbacks" => [:document_version_public_id],
+    "document_version_upload_reviews" => [:document_version_public_id],
+    "document_views" => [:document_version_public_id],
+    "documents" => [:project_code, :slug],
+    "project_sites" => [:project_code, :site_path]
+  ).freeze
+
+  COLLECTION_ONLY_CONTROLLERS = %w[
+    accessible_documents
+    dashboard
+    external_folder_sync_webhooks
+    sessions
+  ].freeze
+
+  WILDCARD_SEGMENTS = %i[asset_path site_path].freeze
+  CONTEXT_SEGMENTS = %i[
+    document_file_public_id
+    document_set_public_id
+    document_slug
+    document_version_public_id
+    project_code
+  ].freeze
+  MEMBER_IDENTIFIER_SEGMENTS = %i[public_id slug].freeze
+
+  def public_routes
     Rails.application.routes.routes.select do |route|
       path = route.path.spec.to_s
       controller = route.defaults[:controller]
 
       controller.present? &&
-        !controller.start_with?("active_storage/") &&
         !path.start_with?("/admin") &&
-        !path.start_with?("/api") &&
-        !path.start_with?("/rails/active_storage") &&
+        !path.start_with?("/api/internal") &&
         !path.start_with?("/rails_table_preferences")
     end
   end
@@ -48,81 +69,47 @@ RSpec.describe "Public route identifier contract", type: :routing do
     route.path.spec.to_s.scan(/[:*]([a-z_]+)/).flatten.map(&:to_sym) - [:format]
   end
 
-  def route_entries
-    public_app_routes.filter_map do |route|
+  def dynamic_segments_by_controller
+    public_routes.each_with_object({}) do |route, segments_by_controller|
       segments = dynamic_segments_for(route)
       next if segments.empty?
 
-      {
-        action: route.defaults.fetch(:action),
-        controller: route.defaults.fetch(:controller),
-        path: route.path.spec.to_s,
-        segments: segments
-      }
+      controller = route.defaults.fetch(:controller)
+      segments_by_controller[controller] ||= []
+      segments_by_controller[controller] |= segments
+    end.transform_values(&:sort)
+  end
+
+  it "keeps every public dynamic route identifier intentionally classified" do
+    expect(dynamic_segments_by_controller).to eq(EXPECTED_DYNAMIC_SEGMENTS_BY_CONTROLLER.transform_values(&:sort))
+  end
+
+  it "uses public_id for top-level user-facing member resources" do
+    PUBLIC_ID_CONTROLLERS.each do |controller|
+      expect(dynamic_segments_by_controller.fetch(controller)).to eq([:public_id])
     end
   end
 
-  def dynamic_segments_by_role
-    all_segments = route_entries.flat_map { |entry| entry.fetch(:segments) }.uniq
+  it "uses code and slug for project and project document routes" do
+    expect(dynamic_segments_by_controller.fetch("projects")).to eq([:project_code])
+    expect(dynamic_segments_by_controller.fetch("documents")).to eq([:project_code, :slug])
+  end
 
-    EXPECTED_DYNAMIC_SEGMENTS_BY_ROLE.transform_values do |allowed_segments|
-      (all_segments & allowed_segments).sort_by(&:to_s)
+  it "keeps wildcard and parent context segments separate from member identifiers" do
+    classified_segments = dynamic_segments_by_controller.values.flatten.uniq
+
+    expect(classified_segments).to include(*WILDCARD_SEGMENTS)
+    expect(classified_segments).to include(*CONTEXT_SEGMENTS)
+    expect(classified_segments).to include(*MEMBER_IDENTIFIER_SEGMENTS)
+    expect(classified_segments).not_to include(:id)
+  end
+
+  it "keeps collection-only public controllers out of the member identifier guard" do
+    COLLECTION_ONLY_CONTROLLERS.each do |controller|
+      matching_routes = public_routes.select { |route| route.defaults[:controller] == controller }
+
+      expect(matching_routes).not_to be_empty
+      expect(matching_routes.flat_map { |route| dynamic_segments_for(route) }).to be_empty
     end
-  end
-
-  def expected_dynamic_segments_by_role
-    EXPECTED_DYNAMIC_SEGMENTS_BY_ROLE.transform_values { |segments| segments.sort_by(&:to_s) }
-  end
-
-  def unknown_dynamic_segments
-    allowed_segments = EXPECTED_DYNAMIC_SEGMENTS_BY_ROLE.values.flatten
-
-    route_entries.flat_map { |entry| entry.fetch(:segments) }.uniq - allowed_segments
-  end
-
-  it "keeps every public dynamic segment intentionally classified" do
-    expect(dynamic_segments_by_role).to eq(expected_dynamic_segments_by_role)
-    expect(unknown_dynamic_segments).to be_empty
-  end
-
-  it "keeps numeric id out of public route identifiers" do
-    id_routes = route_entries.select { |entry| entry.fetch(:segments).include?(:id) }
-
-    expect(id_routes).to be_empty
-  end
-
-  it "uses code for project entry and nested project routes" do
-    code_routes = route_entries.select do |entry|
-      (entry.fetch(:segments) & PROJECT_CODE_SEGMENTS).any?
-    end
-
-    expect(code_routes).not_to be_empty
-    expect(code_routes.select { |entry| entry.fetch(:segments).include?(:code) }.map { |entry| entry.fetch(:controller) }.uniq).to eq(["projects"])
-    expect(code_routes.select { |entry| entry.fetch(:segments).include?(:project_code) }).to all(include(path: a_string_starting_with("/projects/:project_code")))
-  end
-
-  it "keeps document slug identifiers on document routes" do
-    slug_routes = route_entries.select do |entry|
-      (entry.fetch(:segments) & DOCUMENT_SLUG_SEGMENTS).any?
-    end
-
-    expect(slug_routes).not_to be_empty
-    expect(slug_routes.map { |entry| entry.fetch(:controller) }.uniq).to match_array(DOCUMENT_SLUG_CONTROLLERS)
-    expect(slug_routes.select { |entry| entry.fetch(:segments).include?(:slug) }.map { |entry| entry.fetch(:controller) }.uniq).to eq(["documents"])
-  end
-
-  it "keeps public_id identifiers separate from content path wildcards" do
-    wildcard_routes = route_entries.select do |entry|
-      (entry.fetch(:segments) & WILDCARD_CONTENT_PATH_SEGMENTS).any?
-    end
-    public_id_routes = route_entries.select do |entry|
-      (entry.fetch(:segments) & PUBLIC_ID_SEGMENTS).any?
-    end
-
-    expect(wildcard_routes).not_to be_empty
-    expect(wildcard_routes.map { |entry| entry.fetch(:controller) }.uniq).to match_array(WILDCARD_CONTROLLERS)
-    expect(wildcard_routes.flat_map { |entry| entry.fetch(:segments) } & WILDCARD_CONTENT_PATH_SEGMENTS).to match_array(WILDCARD_CONTENT_PATH_SEGMENTS)
-    expect(public_id_routes).not_to be_empty
-    expect(public_id_routes.flat_map { |entry| entry.fetch(:segments) }.uniq & PUBLIC_ID_SEGMENTS).to match_array(PUBLIC_ID_SEGMENTS)
   end
 end
