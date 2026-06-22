@@ -82,12 +82,17 @@ RSpec.describe "Admin nav active cue", type: :request do
 
     link_labels = nav_list.css("a[href]").map { |link| link.text.squish }
     link_targets = nav_list.css("a[href]").map { |link| link["href"] }
+    nav_text = nav_list.text.squish
 
     expect(response).to have_http_status(:ok)
     expect(nav_list.css("li.nav-section")).to be_empty
     expect(link_labels).to contain_exactly("会社", "ユーザー")
     expect(link_targets).to contain_exactly(admin_companies_path, admin_users_path)
     expect(nav_list.css("[aria-current]")).to be_empty
-    expect(nav_list.text.squish).not_to include("運用", "基本マスタ", "文書・権限", "import / sync", "外部連携")
+    expect(nav_text).not_to include("運用")
+    expect(nav_text).not_to include("基本マスタ")
+    expect(nav_text).not_to include("文書・権限")
+    expect(nav_text).not_to include("import / sync")
+    expect(nav_text).not_to include("外部連携")
   end
 end
