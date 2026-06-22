@@ -26,6 +26,9 @@ RSpec.describe "Company master admin landing", type: :request do
     handoff_categories = handoff_section.css("input[name='company_master_admin_handoff_category'][data-company-master-admin-handoff-target='category']")
 
     expect(response).to have_http_status(:ok)
+    expect(page_text).to include("company_master_admin が /admin から最初に確認する、会社・ユーザー管理専用の入口です")
+    expect(page_text).to include("自社の会社情報とユーザーだけを管理できます")
+    expect(page_text).to include("案件、文書、文書権限、監査ログ、利用状況は internal admin へ引き継いでください")
     expect(page_text).to include("ここから直接移動できるのは、会社管理者として操作できる次の 2 画面だけです")
     expect(page_text).to include("会社を管理")
     expect(page_text).to include("ユーザーを管理")
