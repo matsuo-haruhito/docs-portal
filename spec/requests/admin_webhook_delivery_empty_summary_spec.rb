@@ -30,7 +30,8 @@ RSpec.describe "Admin webhook delivery empty summary", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("条件に一致するWebhook送信履歴はありません。")
-    expect(page_text).to include("endpoint、event、status、HTTP status、エラー断片、作成日の条件を見直してください。")
+    expect(page_text).to include("Webhook設定、イベント、ステータス、HTTP status、エラー断片、作成日の範囲を見直してください。")
+    expect(page_text).not_to include("endpoint、event、status、HTTP status")
     expect(page_text).not_to include("表示範囲: 0件中0-0件")
     expect(parsed_html.at_css(%(a[href="#{admin_webhook_deliveries_path}"]))).to be_present
   end
