@@ -27,6 +27,26 @@
 | downstream representative smoke | docs-portal の代表画面 / request spec / manual check が from SHA -> to SHA で壊れていないこと | upstream PR の review、3 gem 共通の package policy |
 | rollback note | bump や adoption PR で戻す ref / revert 対象 /未確認 surface が分かること | rollback 実行、release 承認、顧客判断 |
 
+## Public surface change checklist
+
+public surface 変更後の follow-up issue を切るときは、1 Issue に何を含めるかを先に分類します。ここでの分類は Planner / Reviewer / Workflow Manager の判断をそろえるためのもので、3 gem の実装方針、package policy、target SHA、visual approval をこの repo 側で確定するものではありません。
+
+| 分類 | 同じ Issue に含めてよいもの | 分けるもの |
+| --- | --- | --- |
+| runtime public API / helper / export | merge 済み code / docs / manifest / package export に対する read-only evidence、docs drift guard、package contents guard の代表確認 | API 採否、helper 名変更、breaking change、未 merge PR の shape 固定 |
+| docs-only public contract clarification | current main の README / public API docs / release guide / runbook の導線整理、正本 docs へのリンク、Issue / PR comment template の補強 | runtime code、Gemfile / lockfile、workflow、upstream docs の変更 |
+| package contents / release evidence guard | package-root import、direct entrypoint、built gem / npm artifact、release checklist に対する guard や evidence comment | package verifier policy の横断統一、manifest schema redesign、security / audit remediation 全体 |
+| visual evidence / browser evidence | desktop / narrow / iframe など、layout readability や visual artifact の証跡形式、PR comment の最小 template | UI 実装修正、visual approval の最終判断、pixel diff / full visual regression CI 導入 |
+| downstream docs-portal smoke / release train | from SHA、to SHA、代表 screen / request spec / manual smoke、rollback target、未確認 surface の明記 | 3 gem 同時 bump、target SHA の人間判断、upstream package policy や public API 採否 |
+
+### Issue slicing prompts
+
+- `source of truth`: public surface の正本は merged code、public API docs、manifest、package verifier、release checklist のどれか。
+- `evidence family`: 今回の完了条件は docs signal、package guard、visual evidence、downstream smoke のどれか。CI success と visual approval は別欄にする。
+- `same PR scope`: docs-only / spec-only / package verifier / runtime のどれか 1 つを主軸にする。複数必要なら、なぜ同じ根本原因かを書く。
+- `follow-up split`: browser evidence、release train bump、security audit、human adoption decision は、同時に完了できないなら別 Issue に戻す。
+- `current support`: open PR、proposal、未確定 helper 名、未取得 screenshot、古い CI head は current support として書かない。
+
 ## Repo family matrix
 
 | repo | 主 evidence family | comment で残す最小情報 | 戻す先 |
@@ -130,6 +150,7 @@ release / review evidence:
 
 ## 関連
 
+- `#3702`: public surface 変更時の docs / package guard / release evidence checklist 共通化
 - `#3660`: このメモの追加元
 - `#3339`: release train 前の known-good baseline gate
 - `#2555`: package-root / package-entrypoint public surface の採用順
