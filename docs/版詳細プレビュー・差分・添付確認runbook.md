@@ -228,6 +228,17 @@ hash と deep link の読み方:
 | ZIP 以外の archive | download only | `ZIP以外の圧縮ファイル preview は未対応です` の理由表示を確認し、必要なら download で扱う |
 | unknown binary / unsupported | download only | `ブラウザ preview は未対応です` の理由表示と download 可否を確認する |
 
+### PDF / image preview の操作補助
+
+PDF / image の inline preview では、画面上の button 操作に加えて、current helper が次の keyboard shortcut と表示状態保存を持っています。入力欄、textarea、select、contenteditable に focus があるときや、Ctrl / Alt / Meta と組み合わせた key は邪魔しません。
+
+- image preview: `+` / `=` で拡大、`-` / `_` で縮小、`0` で倍率 reset、`f` / `F` で `画面に合わせる` と倍率表示を切り替える、`[` / `]` で左右に 90 度ずつ回転する
+- image preview の状態: `fit` / `zoom` / `rotation` は browser の localStorage に保存されます。端末・browser・対象 preview ごとの補助状態として扱い、共有設定や server 側の表示設定とは読まない
+- PDF preview: `h` / `H` で `大きく表示` と `標準高さに戻す` を切り替える
+- PDF preview の状態: 高さ表示は browser の localStorage に保存されます。次回同じ preview を開いたときの見え方を補助するだけで、PDF file 自体や download 可否は変わりません
+
+この節は current `image_preview_tools.js` / `pdf_preview_tools.js` の既存 support だけを説明します。shortcut cue の UI 追加、source spec の追加、visual regression、PDF / image renderer の変更は別 issue の判断に残します。
+
 ### preview と download の切り分け
 
 - `embedded=1` の file preview は版詳細の閲覧権限と scan 状態を満たす file だけを対象にする
@@ -276,6 +287,8 @@ hash と deep link の読み方:
 - `app/frontend/lib/markdown_preview_codeblock_tools.js`
 - `app/frontend/lib/markdown_preview_document_search.js`
 - `app/frontend/controllers/markdown_preview_document_search_controller.js`
+- `app/frontend/lib/image_preview_tools.js`
+- `app/frontend/lib/pdf_preview_tools.js`
 - `app/views/document_files/show_pdf_preview.html.slim`
 - `app/views/document_files/show_image_preview.html.slim`
 - `app/views/document_files/show_csv_preview.html.slim`
