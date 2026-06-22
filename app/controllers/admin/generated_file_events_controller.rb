@@ -27,7 +27,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
     reset_for_dispatch!(@generated_file_event)
     GeneratedFileEventDispatchJob.perform_later
 
-    redirect_to admin_generated_file_event_path(@generated_file_event.public_id, return_to: @return_to_path), notice: "生成ファイルイベントの再dispatchをキューに投入しました。"
+    redirect_to admin_generated_file_event_path(@generated_file_event.public_id, return_to: @return_to_path), notice: "生成ファイルイベントの再投入をキューに投入しました。"
   end
 
   def retry_failed
@@ -37,7 +37,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
     events.each { reset_for_dispatch!(_1) }
     GeneratedFileEventDispatchJob.perform_later if events.any?
 
-    redirect_to admin_generated_file_events_path(@filters), notice: "失敗した生成ファイルイベント #{events.size} 件の再dispatchをキューに投入しました。"
+    redirect_to admin_generated_file_events_path(@filters), notice: "失敗した生成ファイルイベント #{events.size} 件の再投入をキューに投入しました。"
   end
 
   private
