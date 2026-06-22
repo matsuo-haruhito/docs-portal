@@ -297,6 +297,8 @@ RSpec.describe "Admin webhook deliveries", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("条件に一致するWebhook送信履歴はありません。")
+    expect(page_text).to include("Webhook設定、イベント、ステータス、HTTP status、エラー断片、作成日の範囲を見直してください。")
+    expect(page_text).not_to include("endpoint、event、status、HTTP status")
     expect(page_text).to include("すべてのWebhook送信履歴を見る")
     expect(parsed_html.css(%(a[href="#{admin_webhook_deliveries_path}"])).map { |link| link.text.squish }).to include(
       "条件をリセット",
