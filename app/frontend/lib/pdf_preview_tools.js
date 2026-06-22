@@ -19,6 +19,9 @@ function setupPdfPreview(container) {
     frame.style.minHeight = large ? "90vh" : "75vh"
     toggle.setAttribute("aria-pressed", String(large))
     toggle.textContent = large ? "標準高さに戻す" : "大きく表示"
+    const toggleLabel = large ? "標準高さに戻す" : "大きく表示"
+    toggle.setAttribute("aria-label", `${toggleLabel} (ショートカット: h / H)`)
+    toggle.title = `${toggleLabel} (h / H)`
     status.textContent = large ? "大きく表示しています" : "標準高さで表示しています"
     writeLarge(large)
   }
