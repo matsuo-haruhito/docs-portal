@@ -54,10 +54,21 @@ RSpec.describe "Admin generated file empty states", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("検索条件に一致する生成ファイルイベントはありません。")
     expect(response.body).to include("これは表示フィルタの結果です。")
-    expect(response.body).to include("一括再dispatch対象の有無とは別に")
+
+    retry_panel = parsed_html.at_css("div.rounded.border.border-red-100")
+    expect(retry_panel).to be_present
+    retry_text = retry_panel.text.squish
+    expect(retry_text).to include("失敗分を一括再投入")
+    expect(retry_text).to include("再投入は表示フィルタではなく")
+    expect(retry_text).to include("現在の条件で再投入対象")
+    expect(retry_text).to include("一括再投入は古い失敗分から最大100件です。")
+    expect(retry_text).to include("対象がないため一括再投入できません。")
+    expect(retry_text).not_to include("再dispatch")
 
     empty_state = parsed_html.at_css(".generated-file-event-filter-empty-state")
     expect(empty_state).to be_present
+    expect(empty_state.text.squish).to include("一括再投入対象の有無とは別に")
+    expect(empty_state.text.squish).not_to include("再dispatch")
     clear_action = empty_state.at_css(%(p.actions a.rounded.border[href="#{admin_generated_file_events_path}"]))
     expect(clear_action&.text&.squish).to eq("すべての生成ファイルイベントを見る")
   end

@@ -24,9 +24,9 @@ RSpec.describe "Admin generated file event action grouping", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("実行操作")
     expect(response.body).to include("表示フィルタ")
-    expect(response.body).to include("再dispatchは表示フィルタではなく、現在の条件に一致する失敗イベントを再投入する操作です。")
-    expect(response.body).to include("現在の条件で再dispatch対象: 1 件")
-    expect(response.body).to include("一括再dispatchは古い失敗分から最大100件です。")
+    expect(response.body).to include("再投入は表示フィルタではなく、現在の条件に一致する失敗イベントを再投入する操作です。")
+    expect(response.body).to include("現在の条件で再投入対象: 1 件")
+    expect(response.body).to include("一括再投入は古い失敗分から最大100件です。")
     expect(bulk_retry_button(status: "failed")).to be_present
     expect(bulk_retry_button(status: "failed")["disabled"]).to be_nil
     expect(link_hrefs).to include(admin_generated_file_events_path)
@@ -42,8 +42,8 @@ RSpec.describe "Admin generated file event action grouping", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("実行操作")
-    expect(response.body).to include("現在の条件で再dispatch対象: 0 件")
-    expect(response.body).to include("対象がないため一括再dispatchできません。")
+    expect(response.body).to include("現在の条件で再投入対象: 0 件")
+    expect(response.body).to include("対象がないため一括再投入できません。")
     expect(bulk_retry_button).to be_present
     expect(bulk_retry_button["disabled"]).to eq("disabled")
   end

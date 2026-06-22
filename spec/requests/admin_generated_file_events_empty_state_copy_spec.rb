@@ -47,7 +47,7 @@ RSpec.describe "Admin generated file event empty state copy", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索条件に一致する生成ファイルイベントはありません。")
     expect(page_text).to include("これは表示フィルタの結果です。")
-    expect(page_text).to include("一括再dispatch対象の有無とは別に")
+    expect(page_text).to include("一括再投入対象の有無とは別に")
     expect(clear_results_link).to be_present
   end
 

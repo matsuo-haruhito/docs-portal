@@ -27,10 +27,10 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include(event.public_id)
       expect(response.body).to include("docs/source.yml")
       expect(response.body).to include("イベントID / パス / エラー")
-      expect(response.body).to include("再dispatch")
-      expect(response.body).to include("失敗分を一括再dispatch")
-      expect(response.body).to include("現在の条件で再dispatch対象: 0 件")
-      expect(response.body).to include("一括再dispatchは古い失敗分から最大100件です。")
+      expect(response.body).to include("再投入")
+      expect(response.body).to include("失敗分を一括再投入")
+      expect(response.body).to include("現在の条件で再投入対象: 0 件")
+      expect(response.body).to include("一括再投入は古い失敗分から最大100件です。")
     end
 
     it "shows error messages in the index" do
@@ -84,7 +84,7 @@ RSpec.describe "Admin generated file events", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(matched.public_id)
-      expect(response.body).to include("現在の条件で再dispatch対象: 1 件")
+      expect(response.body).to include("現在の条件で再投入対象: 1 件")
       expect(bulk_retry_button(filters)).to be_present
       expect(bulk_retry_button(filters)["disabled"]).to be_nil
     end
@@ -106,7 +106,7 @@ RSpec.describe "Admin generated file events", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(matched.public_id)
-      expect(response.body).to include("現在の条件で再dispatch対象: 1 件")
+      expect(response.body).to include("現在の条件で再投入対象: 1 件")
       expect(bulk_retry_button(normalized_filters)).to be_present
       expect(bulk_retry_button(normalized_filters)["disabled"]).to be_nil
     end
@@ -118,8 +118,8 @@ RSpec.describe "Admin generated file events", type: :request do
       get admin_generated_file_events_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("現在の条件で再dispatch対象: 0 件")
-      expect(response.body).to include("対象がないため一括再dispatchできません。")
+      expect(response.body).to include("現在の条件で再投入対象: 0 件")
+      expect(response.body).to include("対象がないため一括再投入できません。")
       expect(bulk_retry_button).to be_present
       expect(bulk_retry_button["disabled"]).to eq("disabled")
     end
@@ -133,7 +133,7 @@ RSpec.describe "Admin generated file events", type: :request do
       get admin_generated_file_events_path(status: "failed")
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("現在の条件で再dispatch対象: 100 件")
+      expect(response.body).to include("現在の条件で再投入対象: 100 件")
       expect(bulk_retry_button(status: "failed")["disabled"]).to be_nil
     end
 
@@ -311,7 +311,7 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include(failed_event.public_id)
       expect(response.body).to include("実行予定日(開始)「invalid」は日時として解釈できないため、この条件は適用していません。")
       expect(response.body).to include("実行予定日(終了)「also-invalid」は日時として解釈できないため、この条件は適用していません。")
-      expect(response.body).to include("現在の条件で再dispatch対象: 1 件")
+      expect(response.body).to include("現在の条件で再投入対象: 1 件")
     end
 
     it "forbids external users" do
@@ -446,7 +446,7 @@ RSpec.describe "Admin generated file events", type: :request do
       post retry_dispatch_admin_generated_file_event_path(event.public_id, return_to: return_to_path)
 
       expect(response).to redirect_to(admin_generated_file_event_path(event.public_id, return_to: return_to_path))
-      expect(flash[:notice]).to eq("生成ファイルイベントの再dispatchをキューに投入しました。")
+      expect(flash[:notice]).to eq("生成ファイルイベントの再投入をキューに投入しました。")
       event.reload
       expect(event).to be_pending
       expect(event.scheduled_at).to be_within(5.seconds).of(Time.current)
@@ -468,7 +468,7 @@ RSpec.describe "Admin generated file events", type: :request do
       post retry_failed_admin_generated_file_events_path(event_source: "manual_document_upload", q: "boom")
 
       expect(response).to redirect_to(admin_generated_file_events_path(event_source: "manual_document_upload", q: "boom"))
-      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 1 件の再dispatchをキューに投入しました。")
+      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 1 件の再投入をキューに投入しました。")
       expect(matched.reload).to be_pending
       expect(matched.error_message).to be_nil
       expect(matched.processed_at).to be_nil
@@ -487,7 +487,7 @@ RSpec.describe "Admin generated file events", type: :request do
       post retry_failed_admin_generated_file_events_path(status: "processed", q: "boom")
 
       expect(response).to redirect_to(admin_generated_file_events_path(status: "processed", q: "boom"))
-      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 0 件の再dispatchをキューに投入しました。")
+      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 0 件の再投入をキューに投入しました。")
       expect(failed.reload).to be_failed
       expect(processed.reload).to be_processed
       expect(GeneratedFileEventDispatchJob).not_to have_received(:perform_later)
@@ -509,7 +509,7 @@ RSpec.describe "Admin generated file events", type: :request do
       post retry_failed_admin_generated_file_events_path(status: "failed", q: "limited retry")
 
       expect(response).to redirect_to(admin_generated_file_events_path(status: "failed", q: "limited retry"))
-      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 100 件の再dispatchをキューに投入しました。")
+      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 100 件の再投入をキューに投入しました。")
       expect(events.first(100).map { _1.reload.status }.uniq).to eq(["pending"])
       expect(events.last.reload).to be_failed
       expect(GeneratedFileEventDispatchJob).to have_received(:perform_later).once
@@ -530,7 +530,7 @@ RSpec.describe "Admin generated file events", type: :request do
       )
 
       expect(response).to redirect_to(admin_generated_file_events_path(status: "failed", path: "storage\\document_files", q: query_prefix))
-      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 1 件の再dispatchをキューに投入しました。")
+      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 1 件の再投入をキューに投入しました。")
       expect(matched.reload).to be_pending
       expect(unmatched_path.reload).to be_failed
       expect(unmatched_query.reload).to be_failed
@@ -545,7 +545,7 @@ RSpec.describe "Admin generated file events", type: :request do
       post retry_failed_admin_generated_file_events_path
 
       expect(response).to redirect_to(admin_generated_file_events_path)
-      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 0 件の再dispatchをキューに投入しました。")
+      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 0 件の再投入をキューに投入しました。")
       expect(GeneratedFileEventDispatchJob).not_to have_received(:perform_later)
     end
   end
