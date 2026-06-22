@@ -90,6 +90,14 @@ RSpec.describe "Admin dashboard", type: :request do
           description: "ZIP / manual upload dry-run などの一時確認 artifact",
           bytes: 512,
           file_count: 1
+        ),
+        StorageUsageSummary::Area.new(
+          key: :logs,
+          label: "Log cache",
+          relative_path: "storage/logs",
+          description: "read-only に確認する一時 log cache",
+          bytes: 256,
+          file_count: 1
         )
       ]
     )
@@ -105,6 +113,7 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("storage/document_files")
     expect(response.body).to include("storage/docs_sites")
     expect(response.body).to include("storage/imports")
+    expect(response.body).to include("storage/logs")
     expect(response.body).to include("削除、archive、cleanup、retention policy 決定、GCS API 連携はここでは行いません")
     expect(response.body).to include("次の確認先")
     expect(response.body).to include("欠落ファイル詳細")
@@ -117,6 +126,7 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include(admin_file_upload_dry_runs_path)
     expect(response.body).to include("ZIP import")
     expect(response.body).to include(new_admin_zip_import_path)
+    expect(response.body).to include("この行は read-only 集計です")
   end
 
   it "links configuration diagnostics to the relevant runbooks" do
