@@ -44,6 +44,19 @@ rebase / recreate evidence:
 
 `security-audit` failure、branch freshness、manual evidence blocker は混同しません。たとえば Docusaurus dependency の audit failure が主因なら dependency tree と audit step を先に分け、Mermaid / ELK の visual evidence が主因なら browser-capable evidence を別に残します。
 
+## Current PR mixed evidence examples
+
+2026-06-22 JST 時点の open Docusaurus Dependabot PR を記録する場合は、個別 PR の採否をこの note で確定せず、次のように evidence family を分けて残します。
+
+| PR | workflow evidence | freshness evidence | manual blocker | next action wording |
+| --- | --- | --- | --- | --- |
+| #3057 `@mermaid-js/layout-elk` | `ci` / `docs-quality` success | `ahead_by:1`, `behind_by:1`, `status:diverged` | Mermaid / ELK rendering impact は CI success と別に browser-capable evidence が必要 | fresh CI 取り直し + rendering evidence 待ち。dependency bump 自体の採否はここで決めない |
+| #3365 `dompurify` | `docs-quality` success、`ci` failure | `ahead_by:3`, `behind_by:110`, `status:diverged` | sanitizer dependency の security-adjacent review、failed CI、古い branch を分けて判断する | recreate / replacement / manual lockfile refresh 候補。lockfile 手修正や merge 判断は別 lane に戻す |
+
+combined commit status が空でも workflow run がある場合は、`checks not found` ではなく「combined status は空、workflow run は存在」と書きます。`mergeable:true` は conflict がないことの目安であり、fresh CI、manual evidence、visual evidence、security-adjacent adoption decision の代替にはしません。
+
+この例は `docs/notes/docusaurus-dependabot-review-gate.md` の記録粒度をそろえるためのものです。Dependabot PR の rebase / recreate、`package-lock.json` の再生成、Docusaurus dependency 採用判断、visual regression CI 導入はこの docs note では実行しません。
+
 ## 証跡の書き方
 
 PR comment には次の粒度で十分です。
