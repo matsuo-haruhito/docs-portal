@@ -16,6 +16,7 @@ on:
       - docusaurus/plugins/remark-kroki-diagrams.smoke.test.mjs
       - .github/workflows/docs-quality.yml
       - .github/scripts/check_markdown_links.rb
+      - .github/scripts/check_docs_quality_permissions.rb
       - .markdownlint-cli2.yaml
   pull_request:
     paths:
@@ -31,7 +32,11 @@ on:
       - docusaurus/plugins/remark-kroki-diagrams.smoke.test.mjs
       - .github/workflows/docs-quality.yml
       - .github/scripts/check_markdown_links.rb
+      - .github/scripts/check_docs_quality_permissions.rb
       - .markdownlint-cli2.yaml
+
+permissions:
+  contents: read
 
 jobs:
   docs-quality:
@@ -43,6 +48,9 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
+
+      - name: Check docs-quality workflow permissions
+        run: ruby .github/scripts/check_docs_quality_permissions.rb
 
       - uses: actions/setup-node@v6
         with:
