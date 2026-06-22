@@ -48,7 +48,7 @@ RSpec.describe "structured preview anchor target cue source" do
       expect(target_cue_note).to include("search match")
       expect(target_cue_note).to include("yellow")
       expect(target_cue_note).to include("aria-current=\"location\"")
-      expect(target_cue_note).to include("current behavior remains unchanged")
+      expect(target_cue_note).to include("Current behavior remains unchanged")
     end
   end
 end
