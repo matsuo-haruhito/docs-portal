@@ -1,7 +1,7 @@
 - page_title "単体ファイルアップロードdry-run一覧"
 - has_filters = @selected_status.present? || @selected_project_id.present? || @selected_dry_run_id.present? || @selected_query.present?
 - empty_message = has_filters ? "条件に一致するmanual_upload dry-runはありません。" : "manual_upload dry-runはまだ作成されていません。"
-- empty_detail = has_filters ? "dry-run ID、同期元・path・hash、案件、状態の条件を見直すか、絞り込み解除で一覧に戻してください。" : "file_uploads APIで作成されたdry-runは、ここから後追い確認できます。"
+- empty_detail = has_filters ? "dry-run ID、同期元名・取り込み先path・content hash、案件、状態の条件を見直すか、絞り込み解除で一覧に戻してください。" : "file_uploads APIで作成されたdry-runは、ここから後追い確認できます。"
 - empty_boundary = "ZIP / Git import dry-runとartifact import dry-runはこの一覧には表示されません。"
 
 h1 単体ファイルアップロードdry-run一覧
@@ -12,12 +12,12 @@ p.muted API から作成された manual_upload dry-run を後から確認する
   = form_with url: admin_file_upload_dry_runs_path, method: :get, local: true, class: "filters" do |form|
     .field
       = label_tag :dry_run_id, "dry-run ID"
-      = search_field_tag :dry_run_id, @selected_dry_run_id, placeholder: "idry..."
+      = search_field_tag :dry_run_id, @selected_dry_run_id, placeholder: "公開ID (例: idry...)"
       p.muted dry-run の公開IDで完全一致検索します。
     .field
-      = label_tag :q, "同期元・path・hash"
-      = search_field_tag :q, @selected_query, placeholder: "source name / relative path / content hash"
-      p.muted 検索対象: source name / relative path / content hash。クライアント source path は検索対象外です。
+      = label_tag :q, "同期元名・取り込み先path・content hash"
+      = search_field_tag :q, @selected_query, placeholder: "同期元名・relative path・content hash"
+      p.muted 検索対象: 同期元名、取り込み先 relative path、content hash。クライアント source path は検索対象外です。
     .field
       = form.rfk_combobox :project_id,
         collection: [],
@@ -41,7 +41,7 @@ p.muted API から作成された manual_upload dry-run を後から確認する
       - if has_filters
         = link_to "絞り込み解除", admin_file_upload_dry_runs_path, class: "button secondary"
   p.muted 一覧には同期元名、取り込み先 relative path、content hash だけを表示します。クライアント source path は詳細確認時だけ扱います。
-  p.muted 同期元・path・hash 検索は表示中の safe metadata だけを対象にし、クライアント source path は検索対象に含めません。
+  p.muted 同期元名・取り込み先path・content hash 検索は表示中の safe metadata だけを対象にし、クライアント source path は検索対象に含めません。
   p.muted = "表示中: #{@dry_runs.size}件"
 
   table
