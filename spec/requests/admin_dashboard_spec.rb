@@ -65,6 +65,8 @@ RSpec.describe "Admin dashboard", type: :request do
   end
 
   it "shows a read-only storage usage summary with follow-up cues" do
+    latest_site_update = Time.zone.local(2026, 6, 22, 10, 15, 0)
+    latest_import_update = Time.zone.local(2026, 6, 22, 11, 45, 0)
     summary = StorageUsageSummary::Result.new(
       areas: [
         StorageUsageSummary::Area.new(
@@ -73,7 +75,15 @@ RSpec.describe "Admin dashboard", type: :request do
           relative_path: "storage/document_files",
           description: "アップロード、ZIP/Git/外部同期で取り込まれた文書添付の正本",
           bytes: 1024,
-          file_count: 2
+          file_count: 2,
+          breakdown_entries: [
+            StorageUsageSummary::BreakdownEntry.new(
+              relative_path: "storage/document_files/project-a",
+              bytes: 1024,
+              file_count: 2,
+              latest_updated_at: latest_site_update
+            )
+          ]
         ),
         StorageUsageSummary::Area.new(
           key: :docs_sites,
@@ -81,7 +91,15 @@ RSpec.describe "Admin dashboard", type: :request do
           relative_path: "storage/docs_sites",
           description: "Docusaurus などで生成した文書表示用 site artifact",
           bytes: 2048,
-          file_count: 3
+          file_count: 3,
+          breakdown_entries: [
+            StorageUsageSummary::BreakdownEntry.new(
+              relative_path: "storage/docs_sites/project-alpha-site",
+              bytes: 2048,
+              file_count: 3,
+              latest_updated_at: latest_site_update
+            )
+          ]
         ),
         StorageUsageSummary::Area.new(
           key: :imports,
@@ -89,7 +107,15 @@ RSpec.describe "Admin dashboard", type: :request do
           relative_path: "storage/imports",
           description: "ZIP / manual upload dry-run などの一時確認 artifact",
           bytes: 512,
-          file_count: 1
+          file_count: 1,
+          breakdown_entries: [
+            StorageUsageSummary::BreakdownEntry.new(
+              relative_path: "storage/imports/manual-upload-42",
+              bytes: 512,
+              file_count: 1,
+              latest_updated_at: latest_import_update
+            )
+          ]
         ),
         StorageUsageSummary::Area.new(
           key: :logs,
@@ -97,7 +123,8 @@ RSpec.describe "Admin dashboard", type: :request do
           relative_path: "storage/logs",
           description: "read-only に確認する一時 log cache",
           bytes: 256,
-          file_count: 1
+          file_count: 1,
+          breakdown_entries: []
         )
       ]
     )
@@ -110,10 +137,15 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Storage使用量")
     expect(response.body).to include("read-only")
+    expect(response.body).to include("大きい内訳は各領域の直下項目を上位5件までに閉じた read-only preview")
     expect(response.body).to include("storage/document_files")
     expect(response.body).to include("storage/docs_sites")
     expect(response.body).to include("storage/imports")
     expect(response.body).to include("storage/logs")
+    expect(response.body).to include("storage/docs_sites/project-alpha-site")
+    expect(response.body).to include("storage/imports/manual-upload-42")
+    expect(page_text).to include("最終更新: #{I18n.l(latest_site_update, format: :short)}")
+    expect(page_text).to include("最終更新: #{I18n.l(latest_import_update, format: :short)}")
     expect(response.body).to include("削除、archive、cleanup、retention policy 決定、GCS API 連携はここでは行いません")
     expect(response.body).to include("次の確認先")
     expect(response.body).to include("欠落ファイル詳細")
@@ -127,6 +159,7 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("ZIP import")
     expect(response.body).to include(new_admin_zip_import_path)
     expect(response.body).to include("この行は read-only 集計です")
+    expect(response.body).not_to include(Rails.root.to_s)
   end
 
   it "links configuration diagnostics to the relevant runbooks" do
