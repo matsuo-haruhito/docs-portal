@@ -1,6 +1,11 @@
 require "rails_helper"
 
 RSpec.describe "Admin route identifier contract", type: :routing do
+  # When adding or changing admin member routes, classify the controller in
+  # exactly one group below before updating docs. Most admin member resources
+  # should use public_id; project-owned member routes use code; collection-only
+  # controllers must stay dynamic-segment free. A new numeric :id segment should
+  # fail this spec first and be handled as a concrete route-contract issue.
   PUBLIC_ID_CONTROLLERS = %w[
     admin/access_requests
     admin/bulk_edit_dry_runs
