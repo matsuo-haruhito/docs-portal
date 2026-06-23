@@ -233,11 +233,13 @@ hash と deep link の読み方:
 PDF / image の inline preview では、画面上の button 操作に加えて、current helper が次の keyboard shortcut と表示状態保存を持っています。入力欄、textarea、select、contenteditable に focus があるときや、Ctrl / Alt / Meta と組み合わせた key は邪魔しません。
 
 - image preview: `+` / `=` で拡大、`-` / `_` で縮小、`0` で倍率 reset、`f` / `F` で `画面に合わせる` と倍率表示を切り替える、`[` / `]` で左右に 90 度ずつ回転する
+- image preview の shortcut cue: 拡大・縮小・倍率 reset・画面に合わせる / 倍率表示・左右回転 button は、表示文言を増やさず `title` と `aria-label` に shortcut を含めます。hover や支援技術向けの補助 cue として読み、画面上に `(F)` や `(h)` のような visible label が常時出るとは読まない
 - image preview の状態: `fit` / `zoom` / `rotation` は browser の localStorage に保存されます。端末・browser・対象 preview ごとの補助状態として扱い、共有設定や server 側の表示設定とは読まない
 - PDF preview: `h` / `H` で `大きく表示` と `標準高さに戻す` を切り替える
+- PDF preview の shortcut cue: 高さ切り替え button は、表示文言を `大きく表示` / `標準高さに戻す` のままにし、`title` と `aria-label` に `h / H` を含めます。status は高さ状態を示すだけで、shortcut 一覧や visual regression evidence の代替ではありません
 - PDF preview の状態: 高さ表示は browser の localStorage に保存されます。次回同じ preview を開いたときの見え方を補助するだけで、PDF file 自体や download 可否は変わりません
 
-この節は current `image_preview_tools.js` / `pdf_preview_tools.js` の既存 support だけを説明します。shortcut cue の UI 追加、source spec の追加、visual regression、PDF / image renderer の変更は別 issue の判断に残します。
+この節は current `image_preview_tools.js` / `pdf_preview_tools.js` の既存 support だけを説明します。shortcut の新規追加、visible cue 化、visual regression、PDF / image renderer の変更は別 issue の判断に残します。
 
 ### preview と download の切り分け
 
