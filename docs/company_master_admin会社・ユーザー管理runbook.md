@@ -26,16 +26,20 @@ current `main` では、`/admin` へ入ると `会社・ユーザー管理` の 
 landing は role-aware な入口であり、次だけを表示する。
 
 - 使える管理画面: `会社を管理` / `ユーザーを管理` の primary action から進む `会社` と `ユーザー` の 2 画面
+- 左 nav: `会社・ユーザー管理` の領域見出しと、許可済みの `会社` / `ユーザー` link だけを表示する。現在開いている `会社` / `ユーザー` は太字と `aria-current="page"` で示される
 - internal admin へ戻す範囲: `案件・案件所属`、`文書・文書権限`、`運用確認`、`管理者判断` の確認リスト
 - ユーザーが 0 件のときは `ユーザー` 画面上部の `新規登録` から開始できること
 - internal admin へ依頼するときに添える確認項目と、ticket や chat に貼り付けるための `依頼テンプレート`
+- landing 下部の `通常の案件一覧へ戻る` は、admin surface ではなく通常閲覧側の案件一覧へ戻る導線として読む
 
 landing から forbidden な admin surface への link は出さない。日常運用では次の flow を入口として使う。
 
 - `/admin` から入って `会社・ユーザー管理` landing で範囲を確認する
+- 左 nav の `会社・ユーザー管理` 見出しと `会社` / `ユーザー` の current cue で、いま company master admin 専用の許可済み領域にいることを確認する
 - `会社を管理` または `ユーザーを管理` から、許可済みの `会社` / `ユーザー` 画面へ移動する
 - それ以外の admin surface が必要になったら、確認リストの分類に沿って internal admin へ引き継ぐ
 - internal admin へ引き継ぐときは、`依頼テンプレートをコピー` を使うか、JavaScript / clipboard が使えない場合は template text を手動選択して貼り付ける
+- admin での確認を終えて通常の案件一覧へ戻るときは、landing 下部の `通常の案件一覧へ戻る` を使う
 
 ## internal admin へ引き継ぐときの確認項目
 
@@ -190,7 +194,7 @@ current request spec で `company_master_admin` が forbidden として固定さ
 
 ## 日常運用の見分け方
 
-- `/admin` から入りたい: `会社・ユーザー管理` landing で範囲を確認し、`会社を管理` または `ユーザーを管理` へ進む
+- `/admin` から入りたい: `会社・ユーザー管理` landing で範囲を確認し、左 nav の `会社・ユーザー管理` 見出しと `会社` / `ユーザー` の current cue で company master admin 専用領域にいることを確認してから、`会社を管理` または `ユーザーを管理` へ進む
 - 自社会社情報を直したい: `会社を管理`
 - 会社一覧の列を調整したい: `会社一覧の表示設定` で `ドメイン`、`会社名（表示用）`、`表示名`、`状態`、`操作` の表示状態を見直す
 - 自社会社を探したい: `会社を探す` でドメイン・会社名の断片や有効/無効状態を絞り込む
@@ -207,6 +211,7 @@ current request spec で `company_master_admin` が forbidden として固定さ
 - `ユーザー種別` や `会社` を変えたいように見えるが固定表示になっている: current role の範囲外なので internal admin へ引き継ぐ
 - 案件所属や文書権限を見直したい: internal admin へ引き継ぐ
 - internal admin へ依頼する: `案件・案件所属` / `文書・文書権限` / `運用確認` / `管理者判断` から近い分類を選び、対象ユーザー、依頼内容、確認項目、user type 変更相談、期限・背景を調整してから `依頼テンプレートをコピー` を使う。copy が使えない場合は、textarea の template text を手動選択して貼り付ける
+- admin での確認を終えて通常閲覧へ戻りたい: landing 下部の `通常の案件一覧へ戻る` は、admin surface ではなく通常の案件一覧へ戻る link として使う
 
 ## 補足
 
