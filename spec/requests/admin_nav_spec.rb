@@ -65,14 +65,26 @@ RSpec.describe "Admin navigation", type: :request do
     expect_active_nav(section_label: "外部連携", link_label: "Webhook")
   end
 
-  it "keeps company master admin navigation free of internal section cues" do
+  it "marks company master admin company navigation without exposing internal links" do
     sign_in_as(create(:user, :company_master_admin))
 
     get admin_companies_path
 
-    expect(response).to have_http_status(:ok)
-    expect(parsed_html.css(".nav-list .nav-section")).to be_empty
+    expect_active_nav(section_label: "会社・ユーザー管理", link_label: "会社")
+    expect(parsed_html.css(".nav-list .nav-section").map { |section| section.text.squish }).to eq(["会社・ユーザー管理"])
     expect(parsed_html.css(".nav-list a").map { |link| link.text.squish }).to eq(["会社", "ユーザー"])
-    expect(parsed_html.at_css(".nav-list [aria-current='location']")).to be_nil
+    expect(page_text = parsed_html.text.squish).not_to include("運用")
+    expect(page_text).not_to include("文書・権限")
+    expect(page_text).not_to include("監査ログ")
+  end
+
+  it "marks company master admin user navigation without adding wider admin surfaces" do
+    sign_in_as(create(:user, :company_master_admin))
+
+    get admin_users_path
+
+    expect_active_nav(section_label: "会社・ユーザー管理", link_label: "ユーザー")
+    expect(parsed_html.css(".nav-list a").map { |link| link.text.squish }).to eq(["会社", "ユーザー"])
+    expect(parsed_html.css(".nav-list a").map { |link| link["href"] }).to eq([admin_companies_path, admin_users_path])
   end
 end
