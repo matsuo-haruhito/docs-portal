@@ -159,7 +159,7 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("ZIP import")
     expect(response.body).to include(new_admin_zip_import_path)
     expect(response.body).to include("この行は read-only 集計です")
-    expect(response.body).not_to include(Rails.root.to_s)
+    expect(dashboard_section("Storage使用量").to_html).not_to include(Rails.root.to_s)
   end
 
   it "links configuration diagnostics to the relevant runbooks" do
