@@ -7,6 +7,27 @@ function setShortcutCue(button, label, shortcut) {
   button.title = `${label} (${shortcut})`
 }
 
+function styleShortcutCue(cue) {
+  cue.style.display = "block"
+  cue.style.marginTop = ".25rem"
+  cue.style.fontSize = ".875rem"
+  cue.style.lineHeight = "1.4"
+  cue.style.color = "var(--doc-text-muted, #64748b)"
+}
+
+function ensureShortcutCue(container, status) {
+  let cue = container.querySelector("[data-image-preview-shortcut-cue]")
+  if (!cue) {
+    cue = document.createElement("span")
+    cue.dataset.imagePreviewShortcutCue = "true"
+    cue.className = "preview-shortcut-cue"
+    status.insertAdjacentElement("afterend", cue)
+  }
+  styleShortcutCue(cue)
+  cue.textContent = "ショートカット: + / - 拡大縮小、0 リセット、F 画面幅、[ / ] 回転。表示はこのブラウザに保存されます。"
+  return cue
+}
+
 function setupImagePreview(container) {
   if (container.dataset.imagePreviewToolsReady === "true") return null
   container.dataset.imagePreviewToolsReady = "true"
@@ -32,6 +53,7 @@ function setupImagePreview(container) {
   rotateResetButton.setAttribute("aria-label", "回転をリセット")
   rotateResetButton.title = "回転をリセット"
   setShortcutCue(rotateRightButton, "右に90度回転", "]")
+  ensureShortcutCue(container, status)
 
   const storageKey = `docsPortal.imagePreview:${container.dataset.imagePreviewStorageKey || window.location.pathname}`
   const readState = () => {
