@@ -50,5 +50,9 @@ ul.nav-list
     li = admin_nav_link.call("外部フォルダ同期設定", admin_external_folder_sync_sources_path)
     li = admin_nav_link.call("Webhook", admin_webhook_endpoints_path)
   - elsif company_master_admin?
-    li = link_to "会社", admin_companies_path
-    li = link_to "ユーザー", admin_users_path
+    - company_master_nav_current_path = request.path
+    - company_master_nav_path_active = ->(path) { company_master_nav_current_path == path || company_master_nav_current_path.start_with?("#{path}/") }
+    - company_master_nav_link = ->(label, path) { link_to(label, path, class: ("fw-bold" if company_master_nav_path_active.call(path)), aria: ({ current: "page" } if company_master_nav_path_active.call(path))) }
+    li.nav-section.mt-2.small.fw-bold.text-muted.border-start.border-primary.ps-2.text-primary aria-current="location" aria-label="現在の領域: 会社・ユーザー管理" 会社・ユーザー管理
+    li = company_master_nav_link.call("会社", admin_companies_path)
+    li = company_master_nav_link.call("ユーザー", admin_users_path)
