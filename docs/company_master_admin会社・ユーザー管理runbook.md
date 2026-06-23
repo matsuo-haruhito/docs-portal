@@ -223,3 +223,22 @@ current request spec で `company_master_admin` が forbidden として固定さ
 
 - `docs/specs/基本モデルと権限.md`
 - `app/controllers/admin/base_controller.rb`
+- `app/controllers/admin/dashboard_controller.rb`
+- `app/controllers/admin/companies_controller.rb`
+- `app/controllers/admin/users_controller.rb`
+- `app/helpers/admin/companies_helper.rb`
+- `app/views/admin/dashboard/company_master_admin.html.slim`
+- `app/views/admin/dashboard/index.html.slim`
+- `app/views/admin/_nav.html.slim`
+- `app/views/admin/companies/index.html.slim`
+- `app/views/admin/users/index.html.slim`
+- `app/views/admin/users/_form.html.slim`
+- `app/frontend/controllers/company_master_admin_handoff_controller.js`
+- `spec/frontend/company_master_admin_handoff_source_spec.rb`
+- `spec/frontend/admin_companies_source_spec.rb`
+- `spec/requests/admin_company_master_admin_boundary_spec.rb`
+- `spec/requests/admin_company_master_filters_spec.rb`
+- `spec/requests/admin_company_master_visibility_spec.rb`
+- `spec/requests/admin_management_spec.rb`
+- `spec/requests/admin_users_filters_spec.rb`
+- `spec/requests/company_master_admin_landing_spec.rb`
