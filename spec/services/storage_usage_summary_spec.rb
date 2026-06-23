@@ -59,9 +59,11 @@ RSpec.describe StorageUsageSummary do
     expect(docs_sites_area.file_count).to eq(1)
     expect(docs_sites_area.bytes).to eq("site".bytesize)
     expect(docs_sites_area.breakdown_entries.map(&:relative_path)).to eq(["storage/docs_sites/123"])
+    expect(docs_sites_area.breakdown_entries.first.latest_updated_at).to be_present
     expect(imports_area.file_count).to eq(2)
     expect(imports_area.bytes).to eq("{}markdown".bytesize)
     expect(imports_area.breakdown_entries.map(&:relative_path)).to eq(["storage/imports/dry-run"])
+    expect(imports_area.breakdown_entries.first.latest_updated_at).to be_present
   end
 
   it "returns zero usage for missing storage directories and ignores empty directories" do
@@ -101,6 +103,7 @@ RSpec.describe StorageUsageSummary do
     ])
     expect(document_files_area.breakdown_entries.map(&:bytes)).to eq([62, 50, 40, 30, 20])
     expect(document_files_area.breakdown_entries.first.file_count).to eq(2)
+    expect(document_files_area.breakdown_entries.first.latest_updated_at).to be_present
     expect(document_files_area.breakdown_entries.map(&:relative_path).join).not_to include(storage_root.to_s)
   end
 
