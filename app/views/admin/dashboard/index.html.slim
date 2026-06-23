@@ -217,6 +217,7 @@ section.card
 section.card
   h2 Storage使用量
   p.muted local storage 配下の概算使用量を read-only で確認します。削除、archive、cleanup、retention policy 決定、GCS API 連携はここでは行いません。
+  p.muted 大きい内訳は各領域の直下項目を上位5件までに閉じた read-only preview です。raw absolute path は表示しません。
   p
     | 合計: 
     strong = @storage_usage_summary.human_total_size
@@ -258,6 +259,11 @@ section.card
                     code = entry.relative_path
                     br
                     span.muted = "#{entry.file_count} file / #{entry.human_size}"
+                    - if entry.latest_updated_at
+                      br
+                      span.muted
+                        | 最終更新: 
+                        time datetime=entry.latest_updated_at.iso8601 = l(entry.latest_updated_at, format: :short)
             - else
               span.muted 内訳なし（現在の条件で表示できる直下項目はありません）
           td
