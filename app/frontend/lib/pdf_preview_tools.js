@@ -2,6 +2,27 @@ function isEditableTarget(target) {
   return ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName) || target?.isContentEditable
 }
 
+function styleShortcutCue(cue) {
+  cue.style.display = "block"
+  cue.style.marginTop = ".25rem"
+  cue.style.fontSize = ".875rem"
+  cue.style.lineHeight = "1.4"
+  cue.style.color = "var(--doc-text-muted, #64748b)"
+}
+
+function ensureShortcutCue(container, status) {
+  let cue = container.querySelector("[data-pdf-preview-shortcut-cue]")
+  if (!cue) {
+    cue = document.createElement("span")
+    cue.dataset.pdfPreviewShortcutCue = "true"
+    cue.className = "preview-shortcut-cue"
+    status.insertAdjacentElement("afterend", cue)
+  }
+  styleShortcutCue(cue)
+  cue.textContent = "ショートカット: h / Hで高さ切替。表示高さはこのブラウザに保存されます。"
+  return cue
+}
+
 function setupPdfPreview(container) {
   if (container.dataset.pdfPreviewToolsReady === "true") return null
   container.dataset.pdfPreviewToolsReady = "true"
@@ -10,6 +31,8 @@ function setupPdfPreview(container) {
   const toggle = container.querySelector("[data-pdf-preview-height-toggle]")
   const status = container.querySelector("[data-pdf-preview-status]")
   if (!frame || !toggle || !status) return null
+
+  ensureShortcutCue(container, status)
 
   const storageKey = `docsPortal.pdfPreviewHeight:${container.dataset.pdfPreviewStorageKey || window.location.pathname}`
   const readLarge = () => window.localStorage.getItem(storageKey) === "large"
