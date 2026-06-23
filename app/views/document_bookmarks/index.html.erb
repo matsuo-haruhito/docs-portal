@@ -7,6 +7,7 @@
 
 <section class="card">
   <h2>保存済みショートカットの絞り込み</h2>
+  <p class="muted"><span class="badge">対象: お気に入り・後で読む</span> 最近見た文書は下の検索で絞り込みます。</p>
   <%= form_with url: document_bookmarks_path, method: :get, local: true do |form| %>
     <% if @recent_documents_query.present? %>
       <%= form.hidden_field :recent_q, value: @recent_documents_query %>
@@ -118,6 +119,7 @@
 
 <section class="card">
   <h2>最近見た文書 <span class="muted"><%= @recent_documents.size %>件</span></h2>
+  <p class="muted"><span class="badge">対象: 最近見た文書（表示中最大 20 件）</span> 保存済みショートカットの条件はそのまま維持されます。</p>
   <p class="muted">閲覧履歴から最大 20 件を自動で表示します。この検索は表示中の最近見た文書だけを文書名・案件名で絞り込みます。お気に入りや後で読むとは別の一覧です。</p>
 
   <%= form_with url: document_bookmarks_path, method: :get, local: true, class: "filter-form" do |form| %>
