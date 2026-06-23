@@ -4,6 +4,7 @@ RSpec.describe "Company master admin handoff source" do
   let(:controller_source) { Rails.root.join("app/frontend/controllers/company_master_admin_handoff_controller.js").read }
   let(:application_source) { Rails.root.join("app/frontend/entrypoints/application.js").read }
   let(:view_source) { Rails.root.join("app/views/admin/dashboard/company_master_admin.html.slim").read }
+  let(:nav_source) { Rails.root.join("app/views/admin/_nav.html.slim").read }
   let(:visual_check_note) { Rails.root.join("docs/qa/company_master_admin_handoff_visual_check.md").read }
 
   it "registers the handoff controller without adding entrypoint DOM setup" do
@@ -23,6 +24,17 @@ RSpec.describe "Company master admin handoff source" do
       expect(view_source).to include('span#company-master-admin-handoff-status.muted role="status" aria-live="polite" hidden=true data-company-master-admin-handoff-target="status"')
       expect(view_source).to include('textarea.company-master-admin-handoff-template rows="8" data-company-master-admin-handoff-target="template" tabindex="0"')
       expect(view_source).to include("連絡先や forbidden admin surface への direct link はここでは固定しません")
+    end
+  end
+
+  it "keeps the company master admin navigation cues scoped to company and user management" do
+    aggregate_failures do
+      expect(nav_source).to include('li.nav-section.mt-2.small.fw-bold.text-muted.border-start.border-primary.ps-2.text-primary aria-current="location" aria-label="現在の領域: 会社・ユーザー管理" 会社・ユーザー管理')
+      expect(nav_source).to include('company_master_nav_link.call("会社", admin_companies_path)')
+      expect(nav_source).to include('company_master_nav_link.call("ユーザー", admin_users_path)')
+      expect(view_source).to include('p = link_to "通常の案件一覧へ戻る", projects_path')
+      expect(nav_source).not_to include('company_master_nav_link.call("案件"')
+      expect(nav_source).not_to include('company_master_nav_link.call("監査ログ"')
     end
   end
 
