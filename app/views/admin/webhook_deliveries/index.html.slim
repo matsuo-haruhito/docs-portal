@@ -100,7 +100,7 @@ p.actions
         - if @webhook_deliveries_page < @webhook_deliveries_total_pages
           = link_to "次のページ", admin_webhook_deliveries_path(delivery_pagination_params.merge(page: @webhook_deliveries_page + 1)), class: "button secondary"
   - elsif @delivery_filters_applied
-    p.muted 条件に一致するWebhook送信履歴はありません。endpoint、event、status、HTTP status、エラー断片、作成日の条件を見直してください。
+    p.muted 条件に一致するWebhook送信履歴はありません。Webhook設定、イベント、ステータス、HTTP status、エラー断片、作成日の範囲を見直してください。
     p.actions
       = link_to "すべてのWebhook送信履歴を見る", admin_webhook_deliveries_path, class: "button secondary"
   - else

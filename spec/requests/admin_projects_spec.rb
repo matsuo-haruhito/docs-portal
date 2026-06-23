@@ -168,6 +168,6 @@ RSpec.describe "Admin projects", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索条件に一致する案件はありません。")
     expect(page_text).not_to include("まだ案件は登録されていません。")
-    expect(clear_filter_links.map { |link| link["href"] }).to include(admin_projects_path)
+    expect(clear_filter_links.map { |link| link["href"] }).to eq([admin_projects_path, admin_projects_path])
   end
 end

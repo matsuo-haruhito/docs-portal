@@ -2,6 +2,11 @@ function isEditableTarget(target) {
   return ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName) || target?.isContentEditable
 }
 
+function setShortcutCue(button, label, shortcut) {
+  button.setAttribute("aria-label", `${label} (ショートカット: ${shortcut})`)
+  button.title = `${label} (${shortcut})`
+}
+
 function setupImagePreview(container) {
   if (container.dataset.imagePreviewToolsReady === "true") return null
   container.dataset.imagePreviewToolsReady = "true"
@@ -19,6 +24,14 @@ function setupImagePreview(container) {
     delete container.dataset.imagePreviewToolsReady
     return null
   }
+
+  setShortcutCue(zoomOutButton, "縮小", "- / _")
+  setShortcutCue(zoomResetButton, "倍率をリセット", "0")
+  setShortcutCue(zoomInButton, "拡大", "+ / =")
+  setShortcutCue(rotateLeftButton, "左に90度回転", "[")
+  rotateResetButton.setAttribute("aria-label", "回転をリセット")
+  rotateResetButton.title = "回転をリセット"
+  setShortcutCue(rotateRightButton, "右に90度回転", "]")
 
   const storageKey = `docsPortal.imagePreview:${container.dataset.imagePreviewStorageKey || window.location.pathname}`
   const readState = () => {
@@ -52,6 +65,9 @@ function setupImagePreview(container) {
     image.style.transformOrigin = "center center"
     fitToggle.setAttribute("aria-pressed", String(state.fit))
     fitToggle.textContent = state.fit ? "画面に合わせる" : "倍率表示中"
+    const fitToggleLabel = state.fit ? "倍率表示に切り替え" : "画面幅に合わせる"
+    fitToggle.setAttribute("aria-label", `${fitToggleLabel} (ショートカット: F)`)
+    fitToggle.title = `${fitToggleLabel} (F)`
     const scaleLabel = state.fit ? "画面幅" : `${Math.round(zoom * 100)}%`
     const rotationLabel = rotation === 0 ? "回転なし" : `${rotation}°回転`
     status.textContent = `${scaleLabel} / ${rotationLabel}`

@@ -30,6 +30,60 @@
 | `sample app / downstream smoke` | host app の screen、form、table、tree、selected value、invalid rerender、mounted engine save | sample app evidence、docs-portal request spec、manual smoke、rollback note | `docs-portal` 固有の representative smoke として、from / to SHA、screen、result、rollback target を残す | target SHA、known-good revision、runner-capable manual evidence が未確定の場合 |
 | `visual reference evidence` | layout、state cue、interactive affordance、static artifact、mockup と actual UI のズレ | visual reference gallery、mockup browser smoke、screenshot / artifact path | visual artifact 変更や UI cue drift の補助 evidence として使う。current support の正本は code / merged docs / representative smoke に戻す | 画像だけで仕様判断や accessibility / responsive acceptance を決める必要がある場合 |
 
+## Shared observation wording
+
+共通化してよいのは、PR body、Issue comment、release checklist で使う観測語彙と最小 comment 形式までです。repo ごとの script、manifest、package verifier、CI workflow を docs-portal 側から統一実装しません。
+
+共通語彙として使うもの:
+
+- `workflow run`: workflow 名、run number、head SHA、status / conclusion をセットで書く。combined status が空でも、workflow run が exact head に紐づくなら CI evidence として扱える。
+- `PR head SHA`: PR body や過去コメントの SHA と、最新 PR metadata の `head_sha` を混同しない。follow-up commit 後は古い green run を current-head evidence として使わない。
+- `compare freshness`: `ahead_by` / `behind_by` / `status` は branch freshness の観測であり、`mergeable:true` や CI success の代替ではない。`status:diverged` でも PR metadata が mergeable なら conflict とは分けて読む。
+- `skipped job`: changed-files routing や docs-only PR で job が skipped の場合、skipped した理由と、代わりに見た source-level policy / docs-quality / focused spec を分けて書く。
+- `CI policy signal`: `permissions: contents: read` のような CI policy guard は、policy wording の再利用候補として読む。required check、branch protection、workflow topology の変更判断は対象 repo の Issue に戻す。
+- `visual evidence`: browser screenshot、mockup、gallery、Playwright smoke は layout/readability の証跡であり、CI green や source review の代替ではない。visual evidence が acceptance に含まれる場合は `#3623` / review queue に戻す。
+
+書き分けの最小形:
+
+```text
+- workflow run: <name> #<number> on <head SHA> => <status/conclusion>
+- compare freshness: ahead_by=<n>, behind_by=<n>, status=<ahead|behind|diverged|identical>
+- skipped jobs: <job names and why they were skipped, or none>
+- repo-specific evidence family: <manifest | package verifier | public API docs | sample app/downstream smoke>
+- not substituted by: <CI green does not replace visual evidence / package verifier does not replace host smoke / etc.>
+```
+
+## Repo-specific evidence families to keep separate
+
+各 repo の強い guard family は、その repo の codebase と review history に合わせて育っています。横断 issue では観測語彙だけをそろえ、次の family を同じ仕組みに置き換えません。
+
+- `tree_view`: manifest-backed contract、docs drift guard、package entrypoint smoke を主 family とする。docs-portal は manifest の存在を evidence として読むが、RFK / RTP に manifest 形式を要求しない。
+- `rails_table_preferences`: package verifier、docs source-of-truth、release checklist、manual QA matrix を主 family とする。TreeView 型 manifest や RFK 型 sample app evidence に寄せて置き換えない。
+- `rails_fields_kit`: public API docs family、package exports smoke、sample app / downstream smoke を主 family とする。package-root helper の採否や remote search behavior は merged upstream docs と current app code を確認してから書く。
+- `docs-portal`: representative downstream smoke、rollback note、release train handoff を主 family とする。Gemfile / lockfile bump、host app screen behavior、business route / permission は upstream guard の成功だけで完了扱いにしない。
+
+## Release train handoff boundary
+
+`#3339` / `#2555` / `#3623` / `#858` の判断をこの playbook で確定しません。ここで固定するのは、release train handoff に添える観測メモの shape です。
+
+- `#3339`: known-good baseline gate の順序や採用判断は、対象 PR / Issue の最新 CI と human gate に戻す。
+- `#2555`: package-root public surface の採用順は、merged upstream surface と repo-specific evidence family を読んで判断する。未merge proposal を current support にしない。
+- `#3623`: visual evidence は browser-capable batch / review queue に戻す。source spec、docs-quality、CI success だけで layout/readability を完了扱いにしない。
+- `#858`: 3 gem release train の target SHA、Gemfile / lockfile 更新、representative smoke、rollback target は child issue / PR に残す。この playbook は 3 gem 同時 bump や known-good revision を決めない。
+
+## Dependency / security observation lane
+
+Dependency / security observation は、同じ `green` でも意味が違う evidence を混同しないための補助 lane です。`npm audit`、Bundler audit、GitHub security alerts、Dependabot PR、release checklist、CI success はそれぞれ別の信号として読み、1 つが green でもほかの確認を完了扱いにしません。
+
+| repo / surface | primary observation | 補助 evidence | 書いてよいこと | 書かないこと |
+| --- | --- | --- | --- | --- |
+| `tree_view` / `tree_view-rails` | `tree_view-rails#2493` の dependency audit CI guard candidate、Dependabot PR、package-lock / Gemfile.lock drift | package verifier、release checklist、GitHub security alerts の確認結果 | audit CI guard は candidate として扱い、導入判断は `tree_view-rails` 側 issue / PR に戻す | `tree_view-rails#2493` の未確定方針を current support や required check として固定しない |
+| `rails_table_preferences` | package verifier、release checklist、CI、Dependabot PR の読み分け | docs index / README family、manual QA、security-adjacent review comment | package-root export や copied controller file の evidence と dependency freshness を分ける | verifier green だけで security alert / audit remediation 完了と書かない |
+| `rails_fields_kit` | release evidence docs、sample app evidence、package-root helper evidence、CI | package exports smoke、public API docs drift guard、Dependabot PR | helper / package evidence と dependency / security observation を PR body で別項目にする | sample app smoke success を GitHub security alert や npm/Bundler audit success の代替にしない |
+| `docs-portal` | Docusaurus dependency PR、security-audit job、downstream docs build / CI freshness | docs-quality、Docusaurus build、lockfile freshness、Dependabot PR body | PR head SHA と workflow run head SHA をそろえて、dependency PR / audit / docs build のどれを見たかを明記する | stale PR head の CI success、Dependabot metadata、docs-quality success をまとめて security pass と書かない |
+
+Dependency / security の共通化は、PR / issue comment template や release checklist の確認項目までに留めます。repo ごとの CI guard、audit workflow、branch protection、required checks、security alert policy、lockfile refresh、audit failure 修正が必要になった場合は、この playbook では決めず、対象 repo の個別 issue に戻します。
+
 ## Review checklist
 
 1. 対象 gem の public surface 正本を 1 つ決める。
@@ -38,6 +92,9 @@
 4. upstream evidence と docs-portal representative smoke を分けて PR body / issue comment に記録する。
 5. open PR、proposal、未 merge docs、未確定 target SHA を release-facing docs に先取りしない。
 6. upstream の仕組みを統一する必要が出た場合は、この docs issue で決めず、対象 upstream repo の issue に戻す。
+7. dependency / security observation を扱う場合は、audit、security alert、Dependabot、release checklist、CI success を別 evidence として記録する。
+8. release train handoff では workflow run、head SHA、compare freshness、skipped job、visual evidence の有無を同じ小見出しで書く。
+9. TreeView / RTP / RFK の evidence family を同じ script、manifest、package verifier に寄せる判断が必要になったら止める。
 
 ## update log に残す最小項目
 
@@ -49,6 +106,8 @@
   - <guard name or docs path>
 - package evidence checked:
   - <package exports / verifier / .d.ts / built gem gate>
+- dependency / security observation checked:
+  - <npm audit / Bundler audit / GitHub security alert / Dependabot PR / CI job / skipped with reason>
 - docs-portal representative smoke:
   - <host app surface / spec / manual evidence>
 - readiness result:

@@ -51,7 +51,7 @@ RSpec.describe "Admin generated file event contracts", type: :request do
       post retry_failed_admin_generated_file_events_path(event_source: "manual_document_upload")
 
       expect(response).to redirect_to(admin_generated_file_events_path(event_source: "manual_document_upload"))
-      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 100 件の再dispatchをキューに投入しました。")
+      expect(flash[:notice]).to eq("失敗した生成ファイルイベント 100 件の再投入をキューに投入しました。")
       expect(GeneratedFileEventDispatchJob).to have_received(:perform_later).once
 
       retried_events = matched_events.first(100).map(&:reload)

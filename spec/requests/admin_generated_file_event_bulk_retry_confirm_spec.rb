@@ -50,8 +50,8 @@ RSpec.describe "Admin generated file event bulk retry confirm", type: :request d
     get admin_generated_file_events_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("現在の条件で再dispatch対象: 0 件")
-    expect(response.body).to include("対象がないため一括再dispatchできません。")
+    expect(response.body).to include("現在の条件で再投入対象: 0 件")
+    expect(response.body).to include("対象がないため一括再投入できません。")
     expect(bulk_retry_button["disabled"]).to eq("disabled")
     expect(bulk_retry_form["data-turbo-confirm"]).to be_nil
   end

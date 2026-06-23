@@ -121,7 +121,8 @@ RSpec.describe "Admin document permission table preferences", type: :request do
     get admin_document_permissions_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("まだ権限は登録されていません。最初の 1 件を登録すると、文書ごとの権限数と閲覧/ダウンロード内訳をここで確認できます。")
+    expect(page_text).to include("まだ権限は登録されていません。登録後は、文書ごとの権限数と閲覧/ダウンロード内訳をここで確認できます。")
+    expect(page_text).to include("個別付与行は登録後に表示されます。まずは上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して 1 件登録してください。")
     expect(page_text).to include("登録後は、会社別・ユーザー別の対象主体や権限内容をこの一覧で確認、編集できます。")
     expect(table_preference_surfaces("admin_document_permission_overview")).to be_empty
     expect(table_preference_surfaces("admin_document_permissions")).to be_empty

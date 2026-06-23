@@ -14,6 +14,7 @@
 - 外部フォルダ同期の webhook headers / payload
 - Microsoft Graph の `drive_id` / `folder_item_id` / `folder_path` / `site_id`
 - Google Drive の channel id / resource id / message number
+- 生成ファイル実行履歴 detail の metadata / error preview
 - import / dry-run / sync の raw JSON に含まれる path、外部 ID、token-like value
 
 ## 現在の入口
@@ -33,14 +34,16 @@ first slice で束ねる spec subset は次です。
 - `spec/requests/admin_webhook_deliveries_spec.rb`
 - `spec/requests/admin_external_folder_sync_sources_spec.rb`
 - `spec/requests/admin_microsoft_graph_connections_spec.rb`
+- `spec/requests/admin_generated_file_run_operational_metadata_exposure_spec.rb`
 
 `spec/docs/exposure_smoke_checklist_drift_spec.rb` は、この subset と `bin/operational_metadata_exposure_smoke` の `SPEC_FILES` が一致していることを source-level guard として確認する。代表 spec を追加・削除する場合は、smoke script とこの節を同じ PR で更新し、社外ユーザーの閲覧権限境界を確認する spec は [社外ユーザー向け情報露出点検チェックリスト](./社外ユーザー向け情報露出点検チェックリスト.md) 側へ分ける。
 
-この subset は、manual upload dry-run、欠落文書ファイル expected path、Webhook delivery preview / search、外部フォルダ同期 metadata、Microsoft Graph provider metadata の代表 guard に限定します。Webhook / Graph / import / dry-run の runtime 表示仕様、secret / token / PII 判定、保存方針、CI 必須化はこの smoke command では決めません。
+この subset は、manual upload dry-run、欠落文書ファイル expected path、Webhook delivery preview / search、外部フォルダ同期 metadata、Microsoft Graph provider metadata、生成ファイル実行履歴 detail の metadata / error preview の代表 guard に限定します。Webhook / Graph / import / dry-run / generated file run の runtime 表示仕様、secret / token / PII 判定、保存方針、CI 必須化はこの smoke command では決めません。
 
 | 対象 | 最初に見る docs / 画面 | current behavior と点検観点 | 関連 issue |
 | --- | --- | --- | --- |
 | manual upload dry-run の `source_path` | [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)、`admin/file_upload_dry_runs/:public_id` | `source_name` / `relative_path` / `content_hash` は照合に使う。raw `source_path` の表示範囲は security-adjacent な UI 判断として扱い、保存値や apply 条件の変更と混ぜない。 | `#1613` |
+| 生成ファイル実行履歴 detail の metadata / error preview | [生成ファイル実行履歴 preview 境界メモ](./生成ファイル実行履歴preview境界メモ.md)、`admin/generated_file_runs/:public_id` | `入力パス` / `変更ファイル` / `生成パス` はジョブ診断用の配列 preview として読む。`メタデータ` / `エラー` は `generated_file_run_metadata_preview` / `generated_file_run_diagnostic_preview` を通し、token-like value、authorization 断片、private-looking path が raw 表示されていないかを点検する。 | `#3673` |
 | 欠落文書ファイル詳細の `Expected path` | [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md)、[ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md)、`admin/missing_document_files` | current `main` は `Storage key` を識別子として残しつつ、`Expected path` を `storage/document_files/...` 形式の safe preview で表示する。raw absolute path や `Rails.root` を通常 UI で読む前提にせず、調査には storage key、文書・版リンク、storage / database 側の確認を組み合わせる。 | `#2227` / PR `#2238` |
 | Webhook 送信履歴 detail の request body | [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md)、`admin/webhook_deliveries/:public_id` | current `main` は `WebhookRequestBodyPreview` で request body をマスク済み preview として表示する。secret、token、authorization、個人情報らしい key の値、長大本文が raw 表示されていないかを点検する。 | `#1434` / PR `#1447` |
 | Webhook 一覧トップ / 送信履歴検索の `エラー` preview | [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md)、`admin/webhook_endpoints`、`admin/webhook_deliveries` | current `main` は `WebhookDeliveryDiagnosticPreview` で error message を一覧・検索用の短い preview として表示する。token-like value、authorization 断片、private-looking path、長い message が一覧で raw 表示されていないかを点検し、raw error 全文や詳細調査は detail 側の response body / target URL と分けて読む。 | `#2100` / `#2167` / `#2170` / PR `#2287` / PR `#2430` |
@@ -62,7 +65,7 @@ first slice で束ねる spec subset は次です。
 - `bin/operational_metadata_exposure_smoke` で admin / integration metadata の代表 request spec をまとめて再実行できる
 - admin / integration metadata の点検入口が、社外ユーザー向けの権限外情報露出 checklist と混線していない
 - raw path、raw payload、token-like value、PII-like value を current support として表示しているか、mask / truncation / safe preview 済みなのかが分かる
-- `source_path`、欠落文書ファイルの `Expected path`、Webhook request body、Webhook error / response / target URL preview、Graph provider metadata、webhook headers の代表観点をそれぞれ別に確認できる
+- `source_path`、欠落文書ファイルの `Expected path`、Webhook request body、Webhook error / response / target URL preview、Graph provider metadata、webhook headers、生成ファイル実行履歴 detail の metadata / error preview の代表観点をそれぞれ別に確認できる
 - 実装済み current behavior と、issue 化済みの改善候補を同じ文として断定していない
 - runtime code、DB schema、認可、security policy の最終判断をこの checklist で新規に決めていない
 
@@ -82,6 +85,7 @@ first slice で束ねる spec subset は次です。
 - [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md)
 - [外部フォルダ同期dry-run・apply運用runbook](./外部フォルダ同期dry-run・apply運用runbook.md)
 - [Microsoft Graph接続管理runbook](./Microsoft%20Graph接続管理runbook.md)
+- [生成ファイル実行履歴 preview 境界メモ](./生成ファイル実行履歴preview境界メモ.md)
 - [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)
 - [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md)
 - [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md)

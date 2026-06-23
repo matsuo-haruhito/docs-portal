@@ -36,6 +36,16 @@ function previewRowText(row) {
   return (row.querySelector(".line-preview__code")?.textContent || row.textContent || "").toLowerCase()
 }
 
+function markTextPreviewAnchorTarget(row, active) {
+  row.classList.toggle("is-text-preview-anchor-target", active)
+
+  if (active) {
+    row.setAttribute("aria-current", "location")
+  } else {
+    row.removeAttribute("aria-current")
+  }
+}
+
 function prepareCodeLines(code) {
   if (code.dataset.structuredPreviewLinesReady === "true") {
     return Array.from(code.querySelectorAll(".structured-preview-line"))
@@ -184,7 +194,7 @@ function setupTextPreview(container) {
   const updateAnchorTarget = () => {
     const targetId = decodeURIComponent(window.location.hash.replace(/^#/, ""))
     rows.forEach((row) => {
-      row.classList.toggle("is-text-preview-anchor-target", targetId.length > 0 && row.id === targetId)
+      markTextPreviewAnchorTarget(row, targetId.length > 0 && row.id === targetId)
     })
   }
 
@@ -279,6 +289,7 @@ function setupTextPreview(container) {
     copyButton.removeEventListener("click", handleCopyClick)
     document.removeEventListener("keydown", handleKeydown)
     window.removeEventListener("hashchange", updateAnchorTarget)
+    rows.forEach((row) => markTextPreviewAnchorTarget(row, false))
     cleanupReadyFlag()
   }
 }

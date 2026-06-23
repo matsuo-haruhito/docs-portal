@@ -26,6 +26,7 @@ current 実装の前提:
 - `Storage使用量` は `StorageUsageSummary` で local `storage/document_files` / `storage/docs_sites` / `storage/imports` の file count と概算使用量を read-only に出す
 - `Storage使用量` の `DocumentFile 実体の Project / Document 上位` は、`storage/document_files` に紐づく `DocumentFile` 実体だけを Project / Document 単位で概算集計し、上位 5 件を read-only preview として表示する
 - `Storage使用量` の `次の確認先` は、各領域から既存確認画面や既存 docs へ戻るための link cue であり、削除、cleanup、retention 対象を確定する操作ではない
+- `Storage使用量` の `次の確認先` に `この行は read-only 集計です` と出る行は、追加導線の未設定ではなく、その行の file count / 概算使用量を読むだけの領域として扱う
 - `運用失敗入口` は、生成ファイルや外部送付履歴などの保存済み failed 履歴と、同じ identity の最新 run が連続 failed かを見る `継続失敗候補` を分けて表示する
 - `保存済み履歴` の件数は保存済み failed 履歴の件数であり、継続失敗候補、通知状態、ack 状態、自動復旧状態とは別に読む
 - `古い失敗のみ` は 7 日より古い対象履歴だけが残っている cue であり、緊急度、通知状態、ack 状態を示す表示ではない
@@ -210,6 +211,7 @@ current 実装の前提:
 - `DocumentFile 実体の Project / Document 上位` は、`storage/document_files` に紐づく `DocumentFile` 実体だけを Project / Document 単位で概算集計する。表示は上位 5 件に限定され、Project code/name、Document title/slug、file count、実体欠落件数、概算使用量、最終更新を読むための read-only preview として扱う
 - 実体が存在しない file は `実体欠落` 件数に入り、raw absolute path は表示されない。欠落の詳細調査は `文書ファイル健全性` / `欠落ファイル詳細` へ戻す
 - `次の確認先` は、各領域の数値を見たあとに既存の詳細画面や運用 docs へ戻るための入口であり、dashboard 上で削除、archive、cleanup、retention policy 決定へ進める操作ではない
+- `次の確認先` が `この行は read-only 集計です` の行は、追加の詳細画面や docs へ移動せず、その領域の file count / 概算使用量だけを確認する行として扱う
 
 読み方:
 
@@ -220,6 +222,7 @@ current 実装の前提:
 - `DocumentFile 実体` の `次の確認先` は、登録済み file の実体欠落を調べる `欠落ファイル詳細` と、保存先・配信・cleanup 境界を読み直す [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md)
 - `Docs site build` の `次の確認先` は、Docusaurus build workspace や Kroki runtime、site artifact の前提を確認する [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md)
 - `Import staging` の `次の確認先` は、manual upload dry-run の既存確認画面と ZIP import の既存入口。どちらも staging artifact の読み方に戻るための導線であり、古い artifact をその場で削除する操作ではない
+- `次の確認先` に `この行は read-only 集計です` と出る行は、確認先の設定漏れではなく、その行自体を read-only な概算確認で止める合図として読む
 - `文書ファイル健全性` は登録済み `DocumentFile` の実体欠落を確認する入口で、`Storage使用量` は local storage 領域別の容量と DocumentFile 実体の上位 preview を確認する入口として分ける
 - 欠落ファイルの実体調査は `欠落ファイル詳細`、容量や保存先方針の確認は [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md) へ戻る
 

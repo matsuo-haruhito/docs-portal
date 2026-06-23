@@ -136,23 +136,38 @@ RSpec.describe "Admin external folder sync source metadata recheck", type: :requ
       expect(response.body).not_to include("Shared Documents/Renamed Policies")
     end
 
-    it "shows resolver errors with connection, URL, and permission guidance" do
+    it "shows bounded resolver errors without exposing raw Graph payloads" do
       sign_in_as(admin_user)
       source = create_microsoft_graph_source
+      saved_external_folder_id = source.external_folder_id
+      saved_external_folder_path = source.external_folder_path
+      saved_provider_metadata = source.provider_metadata.deep_dup
+      unsafe_error_message = <<~MESSAGE.squish
+        Microsoft Graph returned 403 Authorization: Bearer secret-access-token
+        client_secret=super-secret-value {"error":{"message":"rawGraphPayload"}}
+      MESSAGE
       resolver = instance_double(ExternalFolderSync::MicrosoftGraphFolderResolver)
       allow(resolver).to receive(:resolve).and_raise(
         ExternalFolderSync::MicrosoftGraphFolderResolver::Error,
-        "共有URLからフォルダ情報を解決できませんでした。共有URLを確認してください。"
+        unsafe_error_message
       )
       allow(ExternalFolderSync::MicrosoftGraphFolderResolver).to receive(:new).and_return(resolver)
 
       post recheck_metadata_admin_external_folder_sync_source_path(source)
 
       expect(response).to redirect_to(admin_external_folder_sync_source_path(source, return_to: admin_external_folder_sync_sources_path))
+      expect(source.reload.external_folder_id).to eq(saved_external_folder_id)
+      expect(source.external_folder_path).to eq(saved_external_folder_path)
+      expect(source.provider_metadata).to eq(saved_provider_metadata)
+
       follow_redirect!
       expect(response.body).to include("保存済み metadata を再確認できませんでした")
       expect(response.body).to include("Microsoft Graph接続・共有URL・権限を確認してください")
-      expect(response.body).to include("共有URLからフォルダ情報を解決できませんでした")
+      expect(response.body).not_to include("Authorization: Bearer")
+      expect(response.body).not_to include("secret-access-token")
+      expect(response.body).not_to include("client_secret")
+      expect(response.body).not_to include("super-secret-value")
+      expect(response.body).not_to include("rawGraphPayload")
       expect(response.body).not_to include("保存済み metadata 再確認結果")
     end
 

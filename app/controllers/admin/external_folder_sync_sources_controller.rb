@@ -147,8 +147,8 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     redirect_to sync_source_path_with_return_to,
                 notice: summary["notice"],
                 flash: { metadata_recheck_summary: summary }
-  rescue ExternalFolderSync::MicrosoftGraphFolderResolver::Error => e
-    redirect_to sync_source_path_with_return_to, alert: "保存済み metadata を再確認できませんでした。Microsoft Graph接続・共有URL・権限を確認してください。#{e.message}"
+  rescue ExternalFolderSync::MicrosoftGraphFolderResolver::Error
+    redirect_to sync_source_path_with_return_to, alert: "保存済み metadata を再確認できませんでした。Microsoft Graph接続・共有URL・権限を確認してください。"
   end
 
   def project_search

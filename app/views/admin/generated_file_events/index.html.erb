@@ -4,7 +4,7 @@
   has_active_filters = @filters.compact_blank.any?
   bulk_retry_target_count = @bulk_retry_target_count.to_i
   bulk_retry_available = bulk_retry_target_count.positive?
-  bulk_retry_confirm_message = "現在の条件に一致する失敗イベント #{bulk_retry_target_count} 件のうち、古い順に最大100件を一括再dispatchします。現在の条件を確認してから実行してください。実行しますか？"
+  bulk_retry_confirm_message = "現在の条件に一致する失敗イベント #{bulk_retry_target_count} 件のうち、古い順に最大100件を一括再投入します。現在の条件を確認してから実行してください。実行しますか？"
   bulk_retry_form_options = bulk_retry_available ? { data: { turbo_confirm: bulk_retry_confirm_message } } : {}
   table_key = :admin_generated_file_events
   table_columns = generated_file_event_table_columns
@@ -29,13 +29,13 @@
       <div class="rounded border border-red-100 bg-red-50 p-3 text-left">
         <p class="text-xs font-semibold uppercase text-red-700">実行操作</p>
         <div class="mt-2 flex flex-wrap items-center gap-2">
-          <%= button_to "失敗分を一括再dispatch", retry_failed_admin_generated_file_events_path(@filters.compact_blank), method: :post, class: bulk_retry_class, disabled: !bulk_retry_available, form: bulk_retry_form_options %>
+          <%= button_to "失敗分を一括再投入", retry_failed_admin_generated_file_events_path(@filters.compact_blank), method: :post, class: bulk_retry_class, disabled: !bulk_retry_available, form: bulk_retry_form_options %>
         </div>
-        <p class="mt-2 text-xs text-gray-600">再dispatchは表示フィルタではなく、現在の条件に一致する失敗イベントを再投入する操作です。</p>
-        <p class="mt-1 text-xs text-gray-500">現在の条件で再dispatch対象: <%= @bulk_retry_target_count %> 件</p>
-        <p class="text-xs text-gray-500">一括再dispatchは古い失敗分から最大100件です。</p>
+        <p class="mt-2 text-xs text-gray-600">再投入は表示フィルタではなく、現在の条件に一致する失敗イベントを再投入する操作です。</p>
+        <p class="mt-1 text-xs text-gray-500">現在の条件で再投入対象: <%= @bulk_retry_target_count %> 件</p>
+        <p class="text-xs text-gray-500">一括再投入は古い失敗分から最大100件です。</p>
         <% unless bulk_retry_available %>
-          <p class="text-xs text-gray-500">対象がないため一括再dispatchできません。</p>
+          <p class="text-xs text-gray-500">対象がないため一括再投入できません。</p>
         <% end %>
       </div>
       <div class="rounded border bg-white p-3 text-left">
@@ -159,7 +159,7 @@
               <td class="px-4 py-3" data-rails-table-preferences-column-key="actions">
                 <div class="flex gap-2">
                   <%= link_to "詳細", admin_generated_file_event_path(event.public_id, detail_path_params), class: "rounded border px-2 py-1 text-xs" %>
-                  <%= button_to "再dispatch", retry_dispatch_admin_generated_file_event_path(event.public_id), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white" %>
+                  <%= button_to "このイベントを再投入", retry_dispatch_admin_generated_file_event_path(event.public_id), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white", title: "#{event.public_id} を再dispatchキューに投入", aria: {label: "#{event.public_id} を再dispatchキューに投入"} %>
                 </div>
               </td>
             </tr>
@@ -170,7 +170,7 @@
               <% if has_active_filters %>
                 <div class="generated-file-event-filter-empty-state space-y-2">
                   <p>検索条件に一致する生成ファイルイベントはありません。</p>
-                  <p class="text-sm">これは表示フィルタの結果です。一括再dispatch対象の有無とは別に、条件を見直すか、すべての生成ファイルイベントを表示してください。</p>
+                  <p class="text-sm">これは表示フィルタの結果です。一括再投入対象の有無とは別に、条件を見直すか、すべての生成ファイルイベントを表示してください。</p>
                   <p class="actions mt-3"><%= link_to "すべての生成ファイルイベントを見る", admin_generated_file_events_path, class: "rounded border px-3 py-2 text-sm" %></p>
                 </div>
               <% else %>
