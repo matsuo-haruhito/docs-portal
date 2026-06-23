@@ -5,6 +5,10 @@ RSpec.describe "Admin navigation", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def page_text
+    parsed_html.text.squish
+  end
+
   def active_nav_section
     parsed_html.at_css(".nav-list .nav-section[aria-current='location']")
   end
@@ -73,7 +77,7 @@ RSpec.describe "Admin navigation", type: :request do
     expect_active_nav(section_label: "会社・ユーザー管理", link_label: "会社")
     expect(parsed_html.css(".nav-list .nav-section").map { |section| section.text.squish }).to eq(["会社・ユーザー管理"])
     expect(parsed_html.css(".nav-list a").map { |link| link.text.squish }).to eq(["会社", "ユーザー"])
-    expect(page_text = parsed_html.text.squish).not_to include("運用")
+    expect(page_text).not_to include("運用")
     expect(page_text).not_to include("文書・権限")
     expect(page_text).not_to include("監査ログ")
   end
