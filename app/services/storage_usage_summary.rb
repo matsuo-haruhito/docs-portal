@@ -3,7 +3,7 @@ require "find"
 class StorageUsageSummary
   TOP_BREAKDOWN_LIMIT = 5
 
-  BreakdownEntry = Struct.new(:relative_path, :bytes, :file_count, keyword_init: true) do
+  BreakdownEntry = Struct.new(:relative_path, :bytes, :file_count, :latest_updated_at, keyword_init: true) do
     def human_size
       ActiveSupport::NumberHelper.number_to_human_size(bytes)
     end
@@ -102,13 +102,14 @@ class StorageUsageSummary
 
   def breakdown_entries_for(definition, path)
     child_paths(path).filter_map do |child_path|
-      bytes, file_count = entry_stats(child_path)
+      bytes, file_count, latest_updated_at = entry_stats(child_path)
       next if file_count.zero?
 
       BreakdownEntry.new(
         relative_path: Pathname("storage").join(definition.fetch(:directory), child_path.basename.to_s).to_s,
         bytes:,
-        file_count:
+        file_count:,
+        latest_updated_at:
       )
     end.sort_by { |entry| [-entry.bytes, -entry.file_count, entry.relative_path] }.first(TOP_BREAKDOWN_LIMIT)
   end
@@ -170,31 +171,34 @@ class StorageUsageSummary
 
   def entry_stats(path)
     if File.file?(path.to_s)
-      [File.size(path.to_s), 1]
+      [File.size(path.to_s), 1, File.mtime(path.to_s)]
     elsif File.directory?(path.to_s)
-      directory_stats(path)
+      directory_stats(path, include_latest_updated_at: true)
     else
-      [0, 0]
+      [0, 0, nil]
     end
   rescue Errno::ENOENT, Errno::EACCES
-    [0, 0]
+    [0, 0, nil]
   end
 
-  def directory_stats(path)
-    return [0, 0] unless path.directory?
+  def directory_stats(path, include_latest_updated_at: false)
+    empty_directory_stats = include_latest_updated_at ? [0, 0, nil] : [0, 0]
+    return empty_directory_stats unless path.directory?
 
     bytes = 0
     file_count = 0
+    latest_updated_at = nil
 
     Find.find(path.to_s) do |entry|
       next unless File.file?(entry)
 
       bytes += File.size(entry)
       file_count += 1
+      latest_updated_at = [latest_updated_at, File.mtime(entry)].compact.max if include_latest_updated_at
     rescue Errno::ENOENT, Errno::EACCES
       next
     end
 
-    [bytes, file_count]
+    include_latest_updated_at ? [bytes, file_count, latest_updated_at] : [bytes, file_count]
   end
 end
