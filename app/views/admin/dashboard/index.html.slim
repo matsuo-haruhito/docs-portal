@@ -25,7 +25,7 @@ section.card
 
 section.card
   h2 運用失敗入口
-  p.muted 保存済み履歴の failed / skipped / partial 件数と、生成ファイルの継続失敗候補を分けて確認できます。各運用画面で調査を始めるための入口です。
+  p.muted 保存済み履歴の failed / skipped / partial 件数と、生成ファイルの継続失敗候補を分けて確認できます。外部送付履歴の継続失敗候補も read-only 調査入口として確認できます。各運用画面で調査を始めるための入口です。
   .dashboard-grid
     - @operational_failure_summary.each do |item|
       article.card.metric-card
@@ -83,6 +83,44 @@ section.card
                 = link_to "継続失敗候補の failed 実行履歴をすべて見る", admin_generated_file_runs_path(status: "failed"), class: "button secondary"
             - else
               p.muted 最新 run が連続失敗している候補はありません。同じ identity で連続 failed の候補がない状態です。保存済み failed 件数が 0 件であることや正常状態を保証する表示ではありません。
+        - if item[:document_delivery_alert_candidates]
+          - delivery_alert_candidates = item[:document_delivery_alert_candidates]
+          .operational-alert-candidates
+            h4 継続失敗候補
+            p.muted 既存の外部送付履歴 handoff payload を使い、同じ宛先・件名・送付方式の最新履歴が連続 failed の候補だけを read-only に表示します。通知・ack・自動 retry の状態ではありません。
+            p.muted
+              | 継続失敗候補: 
+              strong = delivery_alert_candidates.size
+              |  件
+              br
+              span current 条件での handoff 候補です。候補 0 件は mail 全体正常、外部監視 green、通知済みを意味しません。
+            - if delivery_alert_candidates.any?
+              ul
+                - delivery_alert_candidates.each do |candidate|
+                  li
+                    code = candidate.project_code
+                    span.muted = " #{candidate.project_name}"
+                    br
+                    | 送付方式: #{candidate.delivery_type} / 連続失敗: #{candidate.failure_count} 件
+                    - if candidate.last_failed_at
+                      |  / 最終失敗: 
+                      time datetime=candidate.last_failed_at.iso8601 = l(candidate.last_failed_at, format: :short)
+                    - if candidate.recipient_preview.present?
+                      br
+                      span.muted = "宛先: #{candidate.recipient_preview}"
+                    - if candidate.subject_preview.present?
+                      br
+                      span.muted = "件名: #{candidate.subject_preview}"
+                    - if candidate.latest_error_message.present?
+                      br
+                      span.muted = "エラー: #{candidate.latest_error_message}"
+                    br
+                    = link_to "この候補の failed 送付履歴", candidate.failed_delivery_logs_path
+              p.actions
+                = link_to "外部送付履歴の failed 一覧をすべて見る", document_delivery_logs_path(status: "failed"), class: "button secondary"
+                = link_to "継続失敗候補 runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/#{DocumentDeliveryLogs::FailureAlertHandoff::RUNBOOK_PATH}", class: "button secondary", target: "_blank", rel: "noopener"
+            - else
+              p.muted current 条件で外部送付履歴の handoff 候補はありません。これは mail 全体正常、外部監視 green、通知正常を意味しません。
         p.actions
           = link_to item[:primary_link].first, item[:primary_link].last, class: "button"
           - if item[:secondary_link]
