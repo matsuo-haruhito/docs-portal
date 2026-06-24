@@ -18,6 +18,17 @@ RSpec.describe "Document catalogs", type: :request do
     parsed_html.at("main")&.text.to_s
   end
 
+  def catalog_summary_text
+    parsed_html.css("section.document-catalog-summary").map { |section| section.text.squish }.join("\n")
+  end
+
+  def catalog_summary_values
+    parsed_html.css("section.document-catalog-summary dl div").each_with_object({}) do |node, values|
+      label = node.at_css("dt")&.text.to_s.squish
+      values[label] = node.at_css("dd")&.text.to_s.squish
+    end
+  end
+
   def reusable_filter_link
     parsed_html.css("a").find { |link| link.text.squish == "現在の条件のURLを開く" }
   end
@@ -183,9 +194,14 @@ RSpec.describe "Document catalogs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Empty Customer Pack")
-    expect(response.body).to include("表示可能:")
-    expect(response.body).to include("0件 / 登録:")
-    expect(response.body).to include("0件")
+    expect(catalog_summary_text).to include("カタログ概要")
+    expect(catalog_summary_values).to include(
+      "案件" => "Catalog Project",
+      "対象" => "顧客向け",
+      "公開範囲" => "限定公開",
+      "表示可能" => "0件",
+      "登録" => "0件"
+    )
     expect(main_text).to include("このカタログにはまだ文書が登録されていません。")
     expect(main_text).not_to include("登録済みの文書はあります")
     expect(response.body).to include(project_document_catalogs_path(project))
@@ -203,9 +219,12 @@ RSpec.describe "Document catalogs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Hidden Customer Pack")
-    expect(response.body).to include("表示可能:")
-    expect(response.body).to include("0件 / 登録:")
-    expect(response.body).to include("1件")
+    expect(catalog_summary_values).to include(
+      "対象" => "納品向け",
+      "公開範囲" => "限定公開",
+      "表示可能" => "0件",
+      "登録" => "1件"
+    )
     expect(main_text).to include("登録済みの文書はありますが、現在の利用者に表示できる文書はありません。")
     expect(main_text).not_to include("このカタログにはまだ文書が登録されていません。")
     expect(response.body).not_to include("Internal Manual")
@@ -231,11 +250,12 @@ RSpec.describe "Document catalogs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Customer Pack")
-    expect(response.body).to include("納品向け")
-    expect(response.body).to include("限定公開")
-    expect(response.body).to include("表示可能:")
-    expect(response.body).to include("1件 / 登録:")
-    expect(response.body).to include("2件")
+    expect(catalog_summary_values).to include(
+      "対象" => "納品向け",
+      "公開範囲" => "限定公開",
+      "表示可能" => "1件",
+      "登録" => "2件"
+    )
     expect(response.body).to include("Visible Manual")
     expect(response.body).to include("read first")
     expect(response.body).not_to include("Internal Manual")

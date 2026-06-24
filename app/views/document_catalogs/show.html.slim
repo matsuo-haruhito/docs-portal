@@ -4,26 +4,30 @@
 - page_title @catalog_hash.dig(:catalog, :name)
 h1 = @catalog_hash.dig(:catalog, :name)
 
-p.muted
-  | 案件:
-  = @project.name
-  |  / 対象:
-  = localized_label("document_catalogs.audience_type", @catalog_hash.dig(:catalog, :audience_type))
-  |  / 公開範囲:
-  = localized_label("document_catalogs.visibility_policy", @catalog_hash.dig(:catalog, :visibility_policy))
-
-- if @catalog_hash.dig(:catalog, :description).present?
-  p = @catalog_hash.dig(:catalog, :description)
-
 - visible_items_count = @catalog_hash.dig(:summary, :visible_items).to_i
 - total_items_count = @catalog_hash.dig(:summary, :total_items).to_i
 
-p.muted
-  | 表示可能:
-  = visible_items_count
-  | 件 / 登録:
-  = total_items_count
-  | 件
+section.card.document-catalog-summary
+  h2 カタログ概要
+  dl
+    div
+      dt 案件
+      dd = @project.name
+    div
+      dt 対象
+      dd = localized_label("document_catalogs.audience_type", @catalog_hash.dig(:catalog, :audience_type))
+    div
+      dt 公開範囲
+      dd = localized_label("document_catalogs.visibility_policy", @catalog_hash.dig(:catalog, :visibility_policy))
+    div
+      dt 表示可能
+      dd = "#{visible_items_count}件"
+    div
+      dt 登録
+      dd = "#{total_items_count}件"
+
+- if @catalog_hash.dig(:catalog, :description).present?
+  p = @catalog_hash.dig(:catalog, :description)
 
 - if @catalog_hash[:items].any?
   = table_tag do
