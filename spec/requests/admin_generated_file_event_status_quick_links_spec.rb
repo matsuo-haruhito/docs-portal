@@ -2,6 +2,7 @@ require "rails_helper"
 
 RSpec.describe "Admin generated file event status quick links", type: :request do
   let(:admin_user) { create(:user, :internal) }
+  let(:status_quick_link_labels) { ["すべて", "未処理", "処理済み", "失敗"] }
 
   def parsed_html
     Nokogiri::HTML(response.body)
@@ -9,7 +10,7 @@ RSpec.describe "Admin generated file event status quick links", type: :request d
 
   def current_status_quick_links
     parsed_html.css(%(a[aria-current="page"])).select do |link|
-      link.text.squish.in?(["すべて"] + GeneratedFileEvent.statuses.keys.map { generated_file_event_status_label(_1) })
+      link.text.squish.in?(status_quick_link_labels)
     end
   end
 
@@ -32,7 +33,7 @@ RSpec.describe "Admin generated file event status quick links", type: :request d
     get admin_generated_file_events_path(filters)
 
     expect(response).to have_http_status(:ok)
-    expect(current_status_quick_links.map { _1.text.squish }).to eq([generated_file_event_status_label("failed")])
+    expect(current_status_quick_links.map { _1.text.squish }).to eq(["失敗"])
     expect(current_status_quick_links.first["href"]).to eq(admin_generated_file_events_path(filters))
     all_status_link = parsed_html.css(%(a[href="#{admin_generated_file_events_path(filters.except(:status))}"])).find { _1.text.squish == "すべて" }
     expect(all_status_link).to be_present
