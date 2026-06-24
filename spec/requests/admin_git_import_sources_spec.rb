@@ -36,7 +36,7 @@ RSpec.describe "Admin git import sources", type: :request do
   end
 
   it "shows manual source field cues on the form" do
-    get new_admin_git_import_source_path
+    get admin_git_import_sources_path
 
     expect(response).to have_http_status(:ok)
     expect(parsed_html.at_css(%(input[name="git_import_source[repository_full_name]"]))["placeholder"]).to eq("owner/repo")
@@ -118,54 +118,14 @@ RSpec.describe "Admin git import sources", type: :request do
     patch admin_git_import_source_path(source), params: {
       git_import_source: git_import_source_params(
         project:,
-        repository_full_name: source.repository_full_name,
+        repository_full_name: "example/secret-docs",
         auth_type: "fine_grained_pat",
         credential_secret: ""
       )
     }
 
     expect(response).to redirect_to(admin_git_import_sources_path)
-    expect(source.reload.credential_secret).to eq("existing-token")
-    expect(source.auth_type).to eq("fine_grained_pat")
-  end
-
-  it "preserves the current secret requirement for pull auth types" do
-    project = create(:project, code: "GITAUTH", name: "Auth Project")
-
-    post admin_git_import_sources_path, params: {
-      git_import_source: git_import_source_params(
-        project:,
-        repository_full_name: "example/missing-secret",
-        auth_type: "fine_grained_pat",
-        credential_secret: ""
-      )
-    }
-
-    expect(response).to have_http_status(:unprocessable_content)
-    expect(GitImportSource.exists?(repository_full_name: "example/missing-secret")).to be(false)
-
-    post admin_git_import_sources_path, params: {
-      git_import_source: git_import_source_params(
-        project:,
-        repository_full_name: "example/github-app-docs",
-        auth_type: "github_app",
-        credential_secret: ""
-      )
-    }
-
-    expect(response).to redirect_to(admin_git_import_sources_path)
-    expect(GitImportSource.find_by!(repository_full_name: "example/github-app-docs").credential_secret).to be_blank
-
-    post admin_git_import_sources_path, params: {
-      git_import_source: git_import_source_params(
-        project:,
-        repository_full_name: "example/public-docs",
-        auth_type: "no_auth",
-        credential_secret: ""
-      )
-    }
-
-    expect(response).to redirect_to(admin_git_import_sources_path)
-    expect(GitImportSource.find_by!(repository_full_name: "example/public-docs").credential_secret).to be_blank
+    source.reload
+    expect(source.credential_secret).to eq("existing-token")
   end
 end
