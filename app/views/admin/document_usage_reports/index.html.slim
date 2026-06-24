@@ -39,7 +39,7 @@ section.card
     p.actions
       = form.submit "集計"
       - if show_document_usage_clear_link
-        = link_to "条件をクリア", admin_document_usage_reports_path
+        = link_to "すべての条件をクリア", admin_document_usage_reports_path
     - if @ignored_date_filters.present?
       p.muted
         | 無効な日付条件は集計から除外しました: 
@@ -191,9 +191,9 @@ section.card
         | です。
         | 期間は「
         strong = document_usage_report_period_label(@from_date, @to_date)
-        | 」です。条件を変えるか、クリアして案件全体を確認してください。
+        | 」です。条件を変えるか、案件だけ残して文書名 / slug・利用状況・並び順・期間を解除してください。
       p.actions
-        = link_to "条件をクリア", admin_document_usage_reports_path(project_id: @selected_project.id)
+        = link_to "案件だけ残して条件を解除", admin_document_usage_reports_path(project_id: @selected_project.id)
 - else
   section.card
     h2 案件を選択してください
