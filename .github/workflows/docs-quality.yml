@@ -71,4 +71,4 @@ jobs:
 
       - name: Run Kroki diagram mock smoke
         working-directory: ./docusaurus
-        run: node --test plugins/remark-kroki-diagrams.smoke.test.mjs
+        run: npm run smoke:kroki
