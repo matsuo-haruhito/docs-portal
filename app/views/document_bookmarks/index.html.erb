@@ -49,6 +49,9 @@
 <section class="card">
   <h2>お気に入り <span class="muted"><%= @favorite_bookmarks.size %>件</span></h2>
   <p class="muted">よく開く文書をここからすぐ確認できます。後で読むにも同じ文書を残して、一時保留と継続参照を分けられます。</p>
+  <% if @saved_bookmark_filter_active %>
+    <p class="muted"><span class="badge">保存済み条件が適用中</span> この一覧は上の案件・検索語で絞り込んだお気に入りです。最近見た条件はここには効きません。</p>
+  <% end %>
   <% if @favorite_bookmarks.any? %>
     <ul class="resource-list">
       <% @favorite_bookmarks.each do |bookmark| %>
@@ -80,6 +83,9 @@
 <section class="card">
   <h2>後で読む <span class="muted"><%= @read_later_bookmarks.size %>件</span></h2>
   <p class="muted">あとで確認したい文書を一時的に集めておけます。お気に入りに移動すると、この一覧からは外れます。</p>
+  <% if @saved_bookmark_filter_active %>
+    <p class="muted"><span class="badge">保存済み条件が適用中</span> この一覧は上の案件・検索語で絞り込んだ後で読む文書です。最近見た条件はここには効きません。</p>
+  <% end %>
   <% if @read_later_bookmarks.any? %>
     <ul class="resource-list">
       <% @read_later_bookmarks.each do |bookmark| %>
@@ -120,6 +126,9 @@
 <section class="card">
   <h2>最近見た文書 <span class="muted"><%= @recent_documents.size %>件</span></h2>
   <p class="muted"><span class="badge">対象: 最近見た文書（表示中最大 20 件）</span> 保存済みショートカットの条件はそのまま維持されます。</p>
+  <% if @saved_bookmark_filter_active %>
+    <p class="muted"><span class="badge">保存済み条件は維持のみ</span> 上の案件・保存済み検索は最近見た文書を絞り込みません。</p>
+  <% end %>
   <p class="muted">閲覧履歴から最大 20 件を自動で表示します。この検索は表示中の最近見た文書だけを文書名・案件名で絞り込みます。お気に入りや後で読むとは別の一覧です。</p>
 
   <%= form_with url: document_bookmarks_path, method: :get, local: true, class: "filter-form" do |form| %>
@@ -142,7 +151,7 @@
   <% end %>
 
   <% if @recent_documents_query.present? %>
-    <p class="muted">最近見た文書検索「<%= @recent_documents_query %>」は、表示中の最大 20 件だけを絞り込んでいます。保存済みショートカットの条件は維持されます。</p>
+    <p class="muted">最近見た文書検索「<%= @recent_documents_query %>」は、表示中の最大 20 件だけを絞り込んでいます。保存済みショートカットの条件は維持されます。お気に入り・後で読むには効きません。</p>
   <% end %>
 
   <% if @recent_documents.any? %>
