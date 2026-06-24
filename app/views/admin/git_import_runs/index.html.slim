@@ -28,7 +28,19 @@ h1 Git同期履歴
         .field
           = label_tag :repository, "リポジトリ"
           = text_field_tag :repository, @repository_filter, placeholder: "owner/repo の一部"
-          p.muted リポジトリ名は owner/repo の一部一致で検索します。結果は絞り込み後の最新100件までです。
+          p.muted リポジトリ名は owner/repo の一部一致で検索します。
+        .field
+          = label_tag :branch, "ブランチ"
+          = text_field_tag :branch, @branch_filter, placeholder: "main や release の一部"
+          p.muted ブランチ名は一部一致で検索します。
+        .field
+          = label_tag :source_path, "取込元パス"
+          = text_field_tag :source_path, @source_path_filter, placeholder: "docs や content/handbook"
+          p.muted 取込元パスは一部一致で検索します。
+        .field
+          = label_tag :commit_sha, "コミット"
+          = text_field_tag :commit_sha, @commit_sha_filter, placeholder: "先頭12桁など"
+          p.muted commit SHA は前方一致で検索します。結果は絞り込み後の最新100件までです。
       .actions
         = submit_tag "絞り込み"
         - if @git_import_run_filters_active
@@ -112,6 +124,12 @@ h1 Git同期履歴
         p.muted = "適用中の状態: #{selected_status_label || @status_filter}。状態を「すべて」に戻すと、他の状態の履歴も確認できます。"
       - if @repository_filter.present?
         p.muted = "適用中のリポジトリ: #{@repository_filter}。owner/repo の一部一致で探すため、検索語を短くすると見つかることがあります。"
+      - if @branch_filter.present?
+        p.muted = "適用中のブランチ: #{@branch_filter}。ブランチ名の一部で探すため、検索語を短くすると見つかることがあります。"
+      - if @source_path_filter.present?
+        p.muted = "適用中の取込元パス: #{@source_path_filter}。パスの一部で探すため、検索語を短くすると見つかることがあります。"
+      - if @commit_sha_filter.present?
+        p.muted = "適用中のコミット: #{@commit_sha_filter}。commit SHA は前方一致で探すため、先頭から短めに入力すると見つかることがあります。"
       p.actions = link_to "絞り込み解除", admin_git_import_runs_path, class: "button secondary"
 - else
   .card
