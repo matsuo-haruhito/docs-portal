@@ -35,6 +35,8 @@ RSpec.describe "admin recurring job schedules source" do
   it "keeps the operational controls and return links in the same view" do
     aggregate_failures do
       expect(index_source).to include("sync_definitions_admin_recurring_job_schedules_path")
+      expect(index_source).to include("sync_filter_params = { status: @selected_status, enabled: @selected_enabled, q: @selected_query }.compact")
+      expect(index_source).to include("params: sync_filter_params")
       expect(index_source).not_to include("admin_recurring_job_schedules_path(sync_definitions: 1)")
       expect(index_source).to include("@schedule_status_options")
       expect(index_source).to include("@selected_status")
