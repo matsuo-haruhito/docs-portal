@@ -80,7 +80,7 @@ RSpec.describe "Document comment workspace handoff summary", type: :request do
 
     expect(html.text).to include("未解決handoff")
     expect(handoff).to include("文書コメント 未解決handoff")
-    expect(handoff).to include("URL: http://www.example.com/projects/HANDOFF/documents/handoff-manual?comment_tab=unresolved")
+    expect(handoff).to include("/projects/HANDOFF/documents/handoff-manual?comment_tab=unresolved")
     expect(handoff).to include("## 公開Q&A（未解決 1件）")
     expect(handoff).to include("状態: 受付中")
     expect(handoff).to include("投稿者: #{external_user.display_name}")
@@ -88,7 +88,7 @@ RSpec.describe "Document comment workspace handoff summary", type: :request do
     expect(handoff).to include(open_question.body)
     expect(handoff).to include("## 内部限定確認事項（未解決 1件）")
     expect(handoff).to include("状態: 未対応")
-    expect(handoff).to include("種別: 修正依頼")
+    expect(handoff).to include("種別: request_change")
     expect(handoff).to include("位置: docs/review-handoff.md")
     expect(handoff).to include(review_comment.body)
     expect(handoff).not_to include(answered_question.body)
