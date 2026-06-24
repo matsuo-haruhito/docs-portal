@@ -53,6 +53,8 @@ Rails.application.routes.draw do
     resources :consent_terms, except: %i[show new], param: :public_id
     resources :project_consent_settings, except: %i[show new], param: :public_id do
       get :project_search, on: :collection
+      get :selected_project, on: :collection
+      get :consent_term_search, on: :collection
       get :selected_consent_term, on: :collection
     end
     resources :git_import_sources, except: %i[show new], param: :public_id do
