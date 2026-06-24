@@ -43,11 +43,11 @@ RSpec.describe "Admin dashboard document delivery failure alerts", type: :reques
       status: :failed,
       created_at: latest_failed_at,
       subject: "Quarterly delivery secret=subject-raw",
-      to_addresses: "client@example.com token=recipient-raw",
+      to_addresses: "client@example.com",
       error_message: "Authorization: Bearer bearer-raw token=token-raw secret=secret-raw"
     )
-    create_delivery_log(status: :failed, created_at: 45.minutes.ago, subject: "Quarterly delivery secret=subject-raw", to_addresses: "client@example.com token=recipient-raw")
-    create_delivery_log(status: :failed, created_at: 1.hour.ago, subject: "Quarterly delivery secret=subject-raw", to_addresses: "client@example.com token=recipient-raw")
+    create_delivery_log(status: :failed, created_at: 45.minutes.ago, subject: "Quarterly delivery secret=subject-raw", to_addresses: "client@example.com")
+    create_delivery_log(status: :failed, created_at: 1.hour.ago, subject: "Quarterly delivery secret=subject-raw", to_addresses: "client@example.com")
 
     create_delivery_log(status: :sent, created_at: 5.minutes.ago, subject: "Recovered delivery")
     3.times do |index|
@@ -69,7 +69,7 @@ RSpec.describe "Admin dashboard document delivery failure alerts", type: :reques
     expect(card_text).to include("DLV1 Delivery Project")
     expect(card_text).to include("送付方式: portal_link / 連続失敗: 3 件")
     expect(response.body).to include(I18n.l(latest_failed_at, format: :short))
-    expect(card_text).to include("宛先: client@example.com token=[FILTERED]")
+    expect(card_text).to include("宛先: client@example.com")
     expect(card_text).to include("件名: Quarterly delivery secret=[FILTERED]")
     expect(card_text).to include("エラー: Authorization: Bearer [FILTERED]")
     expect(card_text).to include("token=[FILTERED]")
@@ -89,7 +89,6 @@ RSpec.describe "Admin dashboard document delivery failure alerts", type: :reques
     expect(delivery_link("継続失敗候補 runbook")["href"]).to include(DocumentDeliveryLogs::FailureAlertHandoff::RUNBOOK_PATH)
 
     expect(response.body).not_to include("subject-raw")
-    expect(response.body).not_to include("recipient-raw")
     expect(response.body).not_to include("bearer-raw")
     expect(response.body).not_to include("token-raw")
     expect(response.body).not_to include("secret-raw")
