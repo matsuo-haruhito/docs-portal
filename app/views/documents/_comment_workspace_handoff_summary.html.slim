@@ -1,0 +1,43 @@
+- handoff_questions = Array(question_threads).select(&:open?)
+- handoff_reviews = Array(review_comments).reject(&:resolved?)
+- handoff_total = handoff_questions.size + handoff_reviews.size
+- handoff_query_params = request.query_parameters.slice("comment_q", "comment_author_id").reject { |_key, value| value.blank? }
+- workspace_url = url_for(handoff_query_params.merge(comment_tab: "unresolved", only_path: false))
+- handoff_lines = []
+- handoff_lines << "文書コメント 未解決handoff"
+- handoff_lines << "URL: #{workspace_url}"
+- handoff_lines << "文脈: #{comment_filter_active ? "現在の検索/投稿者絞り込み適用中" : "絞り込みなし"}"
+- if handoff_questions.any?
+  - handoff_lines << ""
+  - handoff_lines << "## 公開Q&A（未解決 #{handoff_questions.size}件）"
+  - handoff_questions.each do |thread|
+    - labels = ["状態: #{thread.qa_status_label}", "投稿者: #{thread.author.display_name}"]
+    - labels << "版: #{document_version_label(thread.document_version)}" if thread.document_version.present?
+    - labels << "本文: #{truncate(thread.body.to_s.squish, length: 80)}"
+    - handoff_lines << "- #{labels.join(" / ")}"
+- if handoff_reviews.any?
+  - handoff_lines << ""
+  - handoff_lines << "## 内部限定確認事項（未解決 #{handoff_reviews.size}件）"
+  - handoff_reviews.each do |comment|
+    - labels = ["状態: #{document_review_comment_status_label(comment)}", "種別: #{document_review_comment_type_label(comment)}", "投稿者: #{comment.author.display_name}"]
+    - labels << "版: #{document_version_label(comment.document_version)}" if comment.document_version.present?
+    - labels << "位置: #{comment.location_label}" if comment.location_label.present?
+    - labels << "本文: #{truncate(comment.body.to_s.squish, length: 80)}"
+    - handoff_lines << "- #{labels.join(" / ")}"
+
+section.document-comment-handoff.card aria-label="未解決コメントのhandoff summary"
+  header.document-comment-handoff__header
+    div
+      h3 未解決handoff
+      p.muted 表示中の文書・版・検索文脈に一致する未解決Q&Aと内部限定確認事項だけを、read-onlyで引き継ぐためのコピー用summaryです。
+    span.document-comment-handoff__count = "#{handoff_total}件"
+  - if handoff_total.positive?
+    label.document-comment-handoff__copy-label for="document-comment-handoff-summary"
+      | コピー用summary
+    textarea#document-comment-handoff-summary.document-comment-handoff__copy readonly=true rows=[handoff_lines.size + 1, 8].min
+      = handoff_lines.join("\n")
+    p.document-comment-handoff__note.muted Q&Aは外部/利用者にも見える公開スレッド、確認事項は内部限定として分けています。通知、担当割当、SLA、ackを示すものではありません。
+  - elsif comment_filter_active
+    p.muted 絞り込み条件に一致する未解決handoff対象はありません。
+  - else
+    p.muted 未解決handoff対象のQ&Aと確認事項はありません。
