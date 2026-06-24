@@ -20,13 +20,13 @@ RSpec.describe "Admin document usage reports", type: :request do
 
   def clear_link
     parsed_html.css("a[href='#{admin_document_usage_reports_path}']").find do |link|
-      link.text.include?("条件をクリア")
+      link.text.include?("すべての条件をクリア")
     end
   end
 
   def selected_project_clear_link
     parsed_html.css("a[href='#{admin_document_usage_reports_path(project_id: project.id)}']").find do |link|
-      link.text.include?("条件をクリア")
+      link.text.include?("案件だけ残して条件を解除")
     end
   end
 
@@ -181,7 +181,8 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(confirmation_document_link.text).to eq("内訳へ")
 
     expect(clear_link).to be_present
-    expect(clear_link.text).to include("条件をクリア")
+    expect(clear_link.text).to include("すべての条件をクリア")
+    expect(clear_link["href"]).to eq(admin_document_usage_reports_path)
 
     expect(table_preference_surfaces.size).to eq(2)
     column_keys = table_preference_columns_for(table_preference_table).map { _1.fetch("key") }
@@ -607,11 +608,12 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(page_text).to include("表示中: 0件")
     expect(page_text).to include("条件に一致する文書はありません")
     expect(page_text).to include("現在の利用状況は「利用あり」、並び順は「タイトル順」です。")
-    expect(page_text).to include("条件を変えるか、クリアして案件全体を確認してください。")
+    expect(page_text).to include("条件を変えるか、案件だけ残して文書名 / slug・利用状況・並び順・期間を解除してください。")
     expect(page_text).not_to include("文書利用一覧の表示設定")
     expect(summary_audit_log_link).to be_present
     expect(summary_read_confirmation_link).to be_present
     expect(selected_project_clear_link).to be_present
+    expect(selected_project_clear_link["href"]).to eq(admin_document_usage_reports_path(project_id: project.id))
     expect(parsed_html.css("table tbody tr")).to be_empty
   end
 
@@ -626,8 +628,9 @@ RSpec.describe "Admin document usage reports", type: :request do
     expect(page_text).to include("表示中: 0件")
     expect(page_text).to include("条件に一致する文書はありません")
     expect(page_text).to include("現在の利用状況は「未利用」、並び順は「タイトル順」、検索語は「missing」です。")
-    expect(page_text).to include("条件を変えるか、クリアして案件全体を確認してください。")
+    expect(page_text).to include("条件を変えるか、案件だけ残して文書名 / slug・利用状況・並び順・期間を解除してください。")
     expect(selected_project_clear_link).to be_present
+    expect(selected_project_clear_link["href"]).to eq(admin_document_usage_reports_path(project_id: project.id))
     expect(parsed_html.css("table tbody tr")).to be_empty
   end
 

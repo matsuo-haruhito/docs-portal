@@ -14,7 +14,7 @@ RSpec.describe "Admin document usage report clear action", type: :request do
 
   def top_clear_link
     parsed_html.css("a[href='#{admin_document_usage_reports_path}']").find do |link|
-      link.text.squish == "条件をクリア"
+      link.text.squish == "すべての条件をクリア"
     end
   end
 
