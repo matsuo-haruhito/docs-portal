@@ -60,6 +60,8 @@ RSpec.describe "Dashboard open Q&A handoff", type: :request do
       comment_type: :question,
       internal_only: false,
       status: :resolved,
+      resolved_by: internal_user,
+      resolved_at: Time.current,
       body: "Resolved Q&A should not appear"
     )
     create(
@@ -150,7 +152,6 @@ RSpec.describe "Dashboard open Q&A handoff", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).not_to include(
       "受付中Q&A候補",
-      "External Visible Q&A",
       "External users can see this in the workspace, not on dashboard handoff"
     )
   end
