@@ -7,6 +7,14 @@ RSpec.describe "Admin git import sources", type: :request do
     sign_in_as(admin_user)
   end
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def page_text
+    parsed_html.text.squish
+  end
+
   def json_body
     JSON.parse(response.body)
   end
@@ -25,6 +33,19 @@ RSpec.describe "Admin git import sources", type: :request do
       credential_secret:,
       enabled: "1"
     }
+  end
+
+  it "shows manual source field cues on the form" do
+    get admin_git_import_sources_path
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_html.at_css(%(input[name="git_import_source[repository_full_name]"]))["placeholder"]).to eq("owner/repo")
+    expect(parsed_html.at_css(%(input[name="git_import_source[branch]"]))["placeholder"]).to eq("main")
+    expect(parsed_html.at_css(%(input[name="git_import_source[source_path]"]))["placeholder"]).to eq("docs/source")
+    expect(page_text).to include("既定ブランチ名を入力します。例: main")
+    expect(page_text).to include("リポジトリルートからの相対パスです。例: docs / docs/source")
+    expect(page_text).to include("リポジトリ、ブランチ、取込元パスは同期対象を指定する手入力項目です。")
+    expect(page_text).to include("GitHub App picker は未実装のため、現在は値を直接入力します。")
   end
 
   it "returns project options by code and name for the remote combobox" do

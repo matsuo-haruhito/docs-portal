@@ -34,10 +34,13 @@
       = form.text_field :repository_full_name, placeholder: "owner/repo"
     label
       | ブランチ
-      = form.text_field :branch
+      = form.text_field :branch, placeholder: "main"
+      span.muted 既定ブランチ名を入力します。例: main
     label
       | 取込元パス
-      = form.text_field :source_path, placeholder: "docs"
+      = form.text_field :source_path, placeholder: "docs/source"
+      span.muted リポジトリルートからの相対パスです。例: docs / docs/source
+    p.muted リポジトリ、ブランチ、取込元パスは同期対象を指定する手入力項目です。GitHub App picker は未実装のため、現在は値を直接入力します。
     label
       | 認証方式
       = form.select :auth_type, enum_options_for("git_import_sources.auth_type", GitImportSource.auth_types.keys)
