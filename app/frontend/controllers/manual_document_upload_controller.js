@@ -6,7 +6,7 @@ export default class extends Controller {
     sourcePath: String
   }
   static classes = ["dragging"]
-  static targets = ["frame", "overlay"]
+  static targets = ["frame", "overlay", "multiFilePreview", "multiFileSummary", "multiFileNames", "multiFileOverflow"]
 
   connect() {
     this.boundWindowDragEnter = this.windowDragEnter.bind(this)
@@ -129,11 +129,55 @@ export default class extends Controller {
     const files = Array.from(event.dataTransfer?.files || [])
     if (files.length === 0) return null
     if (files.length > 1) {
-      window.alert("複数ファイルの同時アップロードはまだ未対応です。ZIPにまとめるか、1ファイルずつアップロードしてください。")
+      this.showMultiFilePreview(files)
       return null
     }
 
+    this.clearMultiFilePreview()
     return files[0]
+  }
+
+  showMultiFilePreview(files) {
+    if (!this.hasMultiFilePreviewTarget) return
+
+    const visibleFiles = files.slice(0, this.multiFilePreviewLimit)
+    const overflowCount = files.length - visibleFiles.length
+
+    this.multiFilePreviewTarget.hidden = false
+
+    if (this.hasMultiFileSummaryTarget) {
+      this.multiFileSummaryTarget.textContent = `${files.length}件のファイルが選択されています。1ファイルずつアップロードしてください。`
+    }
+
+    if (this.hasMultiFileNamesTarget) {
+      this.multiFileNamesTarget.replaceChildren()
+      visibleFiles.forEach((file) => {
+        const item = document.createElement("li")
+        item.textContent = file.name || "名称未設定"
+        this.multiFileNamesTarget.appendChild(item)
+      })
+    }
+
+    if (this.hasMultiFileOverflowTarget) {
+      this.multiFileOverflowTarget.hidden = overflowCount <= 0
+      this.multiFileOverflowTarget.textContent = overflowCount > 0 ? `ほか${overflowCount}件は表示していません。` : ""
+    }
+  }
+
+  clearMultiFilePreview() {
+    if (this.hasMultiFilePreviewTarget) {
+      this.multiFilePreviewTarget.hidden = true
+    }
+    if (this.hasMultiFileSummaryTarget) {
+      this.multiFileSummaryTarget.textContent = ""
+    }
+    if (this.hasMultiFileNamesTarget) {
+      this.multiFileNamesTarget.replaceChildren()
+    }
+    if (this.hasMultiFileOverflowTarget) {
+      this.multiFileOverflowTarget.hidden = true
+      this.multiFileOverflowTarget.textContent = ""
+    }
   }
 
   upload(file, target) {
@@ -217,6 +261,10 @@ export default class extends Controller {
 
   hasFileDrag(event) {
     return Array.from(event.dataTransfer?.types || []).includes("Files")
+  }
+
+  get multiFilePreviewLimit() {
+    return 3
   }
 
   get draggingClassName() {
