@@ -23,6 +23,7 @@ RSpec.describe "Document bookmark filter cues", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("対象: お気に入り・後で読む")
     expect(response.body).to include("最近見た文書は下の検索で絞り込みます。")
+    expect(response.body).to include("最近見た文書検索「guide」は、表示中の最大 20 件だけを絞り込んでいます。保存済みショートカットの条件は維持されます。お気に入り・後で読むには効きません。")
 
     saved_filter_form = page.css("section form").first
     recent_query_input = saved_filter_form.at_css('input[type="hidden"][name="recent_q"]')
@@ -40,6 +41,11 @@ RSpec.describe "Document bookmark filter cues", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("対象: 最近見た文書（表示中最大 20 件）")
     expect(response.body).to include("保存済みショートカットの条件はそのまま維持されます。")
+    expect(response.body.scan("保存済み条件が適用中").size).to eq(2)
+    expect(response.body).to include("この一覧は上の案件・検索語で絞り込んだお気に入りです。最近見た条件はここには効きません。")
+    expect(response.body).to include("この一覧は上の案件・検索語で絞り込んだ後で読む文書です。最近見た条件はここには効きません。")
+    expect(response.body).to include("保存済み条件は維持のみ")
+    expect(response.body).to include("上の案件・保存済み検索は最近見た文書を絞り込みません。")
 
     recent_search_form = page.css("section form").last
     project_code_input = recent_search_form.at_css('input[type="hidden"][name="project_code"]')
