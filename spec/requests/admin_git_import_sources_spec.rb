@@ -73,10 +73,10 @@ RSpec.describe "Admin git import sources", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(
-      "Git連携設定を手動同期します。案件: GIT001 / Main Docs / リポジトリ: example/shared-docs / ブランチ: release/main / 取込元パス: docs/current / 状態: 有効"
+      "Git連携設定を手動同期します。案件: GIT001 / Main Docs、リポジトリ: example/shared-docs、ブランチ: release/main、取込元パス: docs/current、状態: 有効"
     )
     expect(response.body).to include(
-      "Git連携設定を手動同期します。案件: GIT002 / Archive Docs / リポジトリ: example/shared-docs / ブランチ: release/archive / 取込元パス: / / 状態: 無効"
+      "Git連携設定を手動同期します。案件: GIT002 / Archive Docs、リポジトリ: example/shared-docs、ブランチ: release/archive、取込元パス: /、状態: 無効"
     )
   end
 
