@@ -11,6 +11,10 @@ RSpec.describe "Admin recurring job schedule definition sync", type: :request do
     parsed_html.css(%(form[action="#{sync_definitions_admin_recurring_job_schedules_path}"][method="post"]))
   end
 
+  def legacy_sync_links
+    parsed_html.css(%(a[href="#{admin_recurring_job_schedules_path(sync_definitions: 1)}"]))
+  end
+
   def create_schedule!(attributes = {})
     defaults = {
       job_key: "sample_recurring_job",
@@ -44,6 +48,7 @@ RSpec.describe "Admin recurring job schedule definition sync", type: :request do
     expect(response).to have_http_status(:ok)
     expect(sync_definition_forms.size).to eq(1)
     expect(sync_definition_forms.first.text).to include("定義を同期")
+    expect(legacy_sync_links).to be_empty
   end
 
   it "uses the same POST sync action in the empty state" do
@@ -54,6 +59,7 @@ RSpec.describe "Admin recurring job schedule definition sync", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("登録済みの定期ジョブはありません")
     expect(sync_definition_forms.size).to eq(2)
+    expect(legacy_sync_links).to be_empty
   end
 
   it "runs definition sync only through the POST action" do
