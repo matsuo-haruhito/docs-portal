@@ -1,4 +1,6 @@
 class DashboardController < BaseController
+  OPEN_QA_HANDOFF_LIMIT = 5
+
   def show
     @projects = accessible_projects.limit(10)
     @favorite_bookmarks = bookmark_scope.favorite.limit(8)
@@ -6,6 +8,7 @@ class DashboardController < BaseController
     @recent_documents = RecentDocumentsQuery.new(user: current_user, limit: 10).call
     @recently_updated_documents = recently_updated_documents
     @pending_access_requests = pending_access_requests
+    @open_question_handoff_threads = open_question_handoff_threads
     @dashboard_stats = {
       project_count: accessible_projects.count,
       document_count: Document.accessible_to(current_user).count,
@@ -42,5 +45,22 @@ class DashboardController < BaseController
       .recent_first
       .includes(:requestable)
       .limit(3)
+  end
+
+  def open_question_handoff_threads
+    return DocumentReviewComment.none unless current_user.internal?
+
+    DocumentReviewComment
+      .joins(:document)
+      .merge(Document.accessible_to(current_user))
+      .where(
+        comment_type: :question,
+        internal_only: false,
+        status: :open,
+        parent_id: nil
+      )
+      .includes(:author, :document_version, document: :project, replies: [:author])
+      .order(updated_at: :desc, id: :desc)
+      .limit(OPEN_QA_HANDOFF_LIMIT)
   end
 end

@@ -192,6 +192,37 @@
 
   <% if current_user.internal? %>
     <article class="card">
+      <h2>受付中Q&amp;A候補</h2>
+      <p class="muted">公開Q&amp;Aのうち受付中の root thread を表示します。通知、SLA、回答期限、担当割当を示すものではありません。</p>
+      <% if @open_question_handoff_threads.any? %>
+        <ul class="resource-list">
+          <% @open_question_handoff_threads.each do |thread| %>
+            <% document = thread.document %>
+            <% latest_activity_at = ([thread.updated_at] + thread.replies.map(&:updated_at)).compact.max %>
+            <% confirmation_path = thread.document_version.present? ? document_version_path(thread.document_version, comment_tab: "qa") : project_document_path(document.project, document.slug, comment_tab: "qa") %>
+            <li class="resource-list__item">
+              <div class="resource-list__content">
+                <strong><%= link_to document.title, confirmation_path, data: { turbo_frame: "_top" } %></strong>
+                <span class="muted resource-list__meta">
+                  <%= document.project.name %>（<%= document.project.code %>）
+                  <% if thread.document_version.present? %>
+                    / 版 <%= thread.document_version.version_label %>
+                  <% end %>
+                  / 投稿者 <%= thread.author.display_name %>
+                  / <%= thread.replies.any? ? "返信あり" : "返信なし" %>
+                  / 最終活動 <%= l(latest_activity_at, format: :short) %>
+                </span>
+                <span class="muted resource-list__meta"><%= truncate(strip_tags(thread.body).squish, length: 120) %></span>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="muted">受付中Q&amp;A候補はありません。この表示は通知 green、SLA 達成、問い合わせが存在しない保証ではありません。必要に応じて各文書のQ&amp;A workspaceを確認してください。</p>
+      <% end %>
+    </article>
+
+    <article class="card">
       <h2>社内向け導線</h2>
       <p class="muted">確認依頼、外部送付履歴、管理画面などの社内運用画面への入口です。</p>
       <ul class="resource-list">
