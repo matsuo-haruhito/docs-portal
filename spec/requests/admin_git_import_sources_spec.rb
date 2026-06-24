@@ -59,14 +59,15 @@ RSpec.describe "Admin git import sources", type: :request do
       source_path: "docs/current",
       enabled: true
     )
-    create(
+    disabled_source = create(
       :git_import_source,
       project: disabled_project,
       repository_full_name: "example/shared-docs",
       branch: "release/archive",
-      source_path: "",
+      source_path: "docs/archive",
       enabled: false
     )
+    disabled_source.update_column(:source_path, "")
 
     get admin_git_import_sources_path
 
