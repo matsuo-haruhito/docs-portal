@@ -113,7 +113,7 @@ Run the mocked smoke from the Docusaurus package directory:
 
 ```bash
 cd docusaurus
-node --test plugins/remark-kroki-diagrams.smoke.test.mjs
+npm run smoke:kroki
 ```
 
 The smoke keeps Kroki optional by passing a mocked fetch implementation. It verifies that a configured endpoint posts to `/plantuml/svg`, writes the returned SVG under `generated/kroki`, and replaces the Markdown code node with an image URL pointing at that generated asset. The command above should pass without a running Kroki service, and it should not create source-controlled SVG artifacts.

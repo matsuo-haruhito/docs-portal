@@ -2,7 +2,8 @@
   "name": "rails-docs-portal-docusaurus",
   "private": true,
   "scripts": {
-    "build": "docusaurus build"
+    "build": "docusaurus build",
+    "smoke:kroki": "node --test plugins/remark-kroki-diagrams.smoke.test.mjs"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.1",
