@@ -9,14 +9,20 @@ class AccessRequestsController < BaseController
     @query = normalized_query
     @requested_access_level_filter = normalized_requested_access_level_filter
     @requestable_type_filter = normalized_requestable_type_filter
+    @page = normalized_page
 
     scope = AccessRequest.where(requester: current_user).recent_first.includes(:approver, :requestable)
     filtered_scope = filtered_access_request_scope(scope)
     @status_counts = access_request_status_counts(filtered_scope)
     filtered_scope = filtered_scope.where(status: @status_filter) if @status_filter.present?
     @access_request_total_count = filtered_scope.unscope(:order).count
-    @access_requests = filtered_scope.limit(ACCESS_REQUEST_LIST_LIMIT).to_a
-    @access_requests_truncated = @access_request_total_count > @access_requests.size
+    @total_pages = [(@access_request_total_count.to_f / ACCESS_REQUEST_LIST_LIMIT).ceil, 1].max
+    @page = [@page, @total_pages].min
+    @access_request_offset = (@page - 1) * ACCESS_REQUEST_LIST_LIMIT
+    @access_requests = filtered_scope.offset(@access_request_offset).limit(ACCESS_REQUEST_LIST_LIMIT).to_a
+    @access_request_start = @access_request_total_count.zero? ? 0 : @access_request_offset + 1
+    @access_request_end = @access_request_offset + @access_requests.size
+    @access_requests_truncated = @total_pages > 1
   end
 
   def create
@@ -108,7 +114,8 @@ class AccessRequestsController < BaseController
       q: normalized_query,
       status: normalized_status_filter,
       requested_access_level: normalized_requested_access_level_filter,
-      requestable_type: normalized_requestable_type_filter
+      requestable_type: normalized_requestable_type_filter,
+      page: normalized_page > 1 ? normalized_page : nil
     }.compact
   end
 
@@ -138,6 +145,11 @@ class AccessRequestsController < BaseController
 
   def normalized_query
     params[:q].to_s.strip.presence&.slice(0, ACCESS_REQUEST_QUERY_MAX_LENGTH)
+  end
+
+  def normalized_page
+    value = params[:page].to_s.strip
+    value.match?(/\A\d+\z/) ? [value.to_i, 1].max : 1
   end
 
   def access_request_query_max_length
