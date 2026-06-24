@@ -76,6 +76,9 @@ details class=wrapper_classes.join(" ") open=(!floating)
       - if comment_filter_active
         p.document-comment-workspace__summary-help.muted 表示中の件数とタブの未解決件数は、絞り込み条件に一致したコメントだけを基準にしています。
 
+    - if current_user.internal?
+      = render "documents/comment_workspace_handoff_summary", question_threads: @question_threads, review_comments: @review_comments, comment_filter_active: comment_filter_active
+
     .document-comment-workspace__mode.card
       h3 追加する内容
       .comment-mode-switch
