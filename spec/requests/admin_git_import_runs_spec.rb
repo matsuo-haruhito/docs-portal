@@ -22,7 +22,7 @@ RSpec.describe "Admin git import runs", type: :request do
     parsed_html.xpath("//div[contains(concat(' ', normalize-space(@class), ' '), ' card ')][.//p[contains(normalize-space(.), '条件に一致するGit同期履歴はありません。')]]").first
   end
 
-  def create_git_import_run!(git_import_source: self.git_import_source, created_at: Time.zone.parse("2026-05-01 00:00:00 UTC"), status: :imported, summary_json: { imported: 1 }, error_message: nil)
+  def create_git_import_run!(git_import_source: self.git_import_source, created_at: Time.zone.parse("2026-05-01 00:00:00 UTC"), status: :imported, summary_json: { imported: 1 }, error_message: nil, commit_sha: "abcdef1234567890")
     GitImportRun.create!(
       git_import_source:,
       repository_full_name: git_import_source.repository_full_name,
@@ -31,7 +31,7 @@ RSpec.describe "Admin git import runs", type: :request do
       provider: :github,
       import_mode: :pull,
       status:,
-      commit_sha: "abcdef1234567890",
+      commit_sha:,
       summary_json:,
       error_message:,
       created_at:,
@@ -192,13 +192,44 @@ RSpec.describe "Admin git import runs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 1件 / 絞り込み後の最新100件までを表示")
-    expect(page_text).to include("リポジトリ名は owner/repo の一部一致で検索します。結果は絞り込み後の最新100件までです。")
+    expect(page_text).to include("リポジトリ名は owner/repo の一部一致で検索します。")
     expect(page_text).to include("表示中の最新100件内の状態: 取込済み: 1件")
     expect(page_text).to include("matsuo-haruhito/docs-portal")
     expect(page_text).to include("docs hit")
     expect(page_text).not_to include("matsuo-haruhito/work-codex")
     expect(page_text).not_to include("work miss")
     expect(response.body).to include('value="DOCS-PORTAL"')
+  end
+
+  it "filters runs by branch, source path, and commit prefix" do
+    target_source = create(:git_import_source, project:, repository_full_name: "matsuo-haruhito/docs-portal", branch: "release/2026", source_path: "docs/product")
+    branch_miss_source = create(:git_import_source, project:, repository_full_name: "matsuo-haruhito/docs-portal", branch: "main", source_path: "docs/product")
+    path_miss_source = create(:git_import_source, project:, repository_full_name: "matsuo-haruhito/docs-portal", branch: "release/2026", source_path: "docs/internal")
+
+    create_git_import_run!(git_import_source: target_source, summary_json: { "reason" => "target revision" }, commit_sha: "abc123def4567890")
+    create_git_import_run!(git_import_source: branch_miss_source, summary_json: { "reason" => "branch miss" }, commit_sha: "abc123def4567890")
+    create_git_import_run!(git_import_source: path_miss_source, summary_json: { "reason" => "path miss" }, commit_sha: "abc123def4567890")
+    create_git_import_run!(git_import_source: target_source, summary_json: { "reason" => "commit miss" }, commit_sha: "fff123def4567890")
+
+    sign_in_as(admin_user)
+
+    get admin_git_import_runs_path, params: { repository: "docs-portal", branch: "RELEASE", source_path: "product", commit: "abc123" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 1件 / 絞り込み後の最新100件までを表示")
+    expect(page_text).to include("ブランチ名は一部一致で検索します。")
+    expect(page_text).to include("取込元パスは一部一致で検索します。")
+    expect(page_text).to include("コミットは SHA prefix match で検索します。結果は絞り込み後の最新100件までです。")
+    expect(page_text).to include("target revision")
+    expect(page_text).to include("release/2026")
+    expect(page_text).to include("docs/product")
+    expect(page_text).to include("abc123def456")
+    expect(page_text).not_to include("branch miss")
+    expect(page_text).not_to include("path miss")
+    expect(page_text).not_to include("commit miss")
+    expect(response.body).to include('value="RELEASE"')
+    expect(response.body).to include('value="product"')
+    expect(response.body).to include('value="abc123"')
   end
 
   it "combines status and repository filters" do
@@ -260,7 +291,7 @@ RSpec.describe "Admin git import runs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 100件 / 絞り込み後の最新100件までを表示")
-    expect(page_text).to include("リポジトリ名は owner/repo の一部一致で検索します。結果は絞り込み後の最新100件までです。")
+    expect(page_text).to include("リポジトリ名は owner/repo の一部一致で検索します。")
     expect(page_text).to include("表示中の最新100件内の状態: 失敗: 100件")
     expect(run_rows.size).to eq(100)
     expect(page_text).to include("newest filtered boundary")
@@ -273,13 +304,22 @@ RSpec.describe "Admin git import runs", type: :request do
 
     sign_in_as(admin_user)
 
-    get admin_git_import_runs_path, params: { status: "failed", repository: "missing-repo" }
+    get admin_git_import_runs_path, params: {
+      status: "failed",
+      repository: "missing-repo",
+      branch: "missing-branch",
+      source_path: "missing-path",
+      commit: "deadbeef"
+    }
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 0件 / 絞り込み後の最新100件までを表示")
     expect(page_text).to include("条件に一致するGit同期履歴はありません。")
     expect(page_text).to include("適用中の状態: 失敗。状態を「すべて」に戻すと、他の状態の履歴も確認できます。")
     expect(page_text).to include("適用中のリポジトリ: missing-repo。owner/repo の一部一致で探すため、検索語を短くすると見つかることがあります。")
+    expect(page_text).to include("適用中のブランチ: missing-branch。ブランチ名の一部一致で探すため、検索語を短くすると見つかることがあります。")
+    expect(page_text).to include("適用中の取込元パス: missing-path。path の一部一致で探すため、検索語を短くすると見つかることがあります。")
+    expect(page_text).to include("適用中のコミット: deadbeef。commit SHA の先頭一致で探すため、prefix を短くすると見つかることがあります。")
     expect(page_text).to include("絞り込み解除")
 
     clear_filter_link = filtered_empty_state_card.at_css(".actions a.button.secondary")
