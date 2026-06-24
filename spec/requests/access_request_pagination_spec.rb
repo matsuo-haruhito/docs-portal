@@ -18,23 +18,25 @@ RSpec.describe "Access request pagination", type: :request do
 
   it "paginates the current user's filtered requests while preserving filter params" do
     requests = Array.new(105) do |index|
+      request_project = create(:project, code: "AREQ#{format("%03d", index + 1)}", name: "Access Request Project #{index + 1}")
       create(
         :access_request,
         requester: user,
-        requestable: file,
-        requested_access_level: :download,
+        requestable: request_project,
+        requested_access_level: :manage,
         reason: "page request #{format("%03d", index + 1)}"
       )
     end
-    create(:access_request, requester: other_user, requestable: file, requested_access_level: :download, reason: "other user page request")
+    other_project = create(:project, code: "AREQOTHER", name: "Other Access Request Project")
+    create(:access_request, requester: other_user, requestable: other_project, requested_access_level: :manage, reason: "other user page request")
 
     sign_in_as(user)
 
     get access_requests_path, params: {
       q: "page request",
       status: :pending,
-      requested_access_level: :download,
-      requestable_type: "DocumentFile"
+      requested_access_level: :manage,
+      requestable_type: "Project"
     }
 
     expect(response).to have_http_status(:ok)
@@ -50,8 +52,8 @@ RSpec.describe "Access request pagination", type: :request do
     expect(next_params).to include(
       "q" => "page request",
       "status" => "pending",
-      "requested_access_level" => "download",
-      "requestable_type" => "DocumentFile",
+      "requested_access_level" => "manage",
+      "requestable_type" => "Project",
       "page" => "2"
     )
 
@@ -69,8 +71,8 @@ RSpec.describe "Access request pagination", type: :request do
     expect(previous_params).to include(
       "q" => "page request",
       "status" => "pending",
-      "requested_access_level" => "download",
-      "requestable_type" => "DocumentFile",
+      "requested_access_level" => "manage",
+      "requestable_type" => "Project",
       "page" => "1"
     )
 
@@ -78,20 +80,20 @@ RSpec.describe "Access request pagination", type: :request do
     expect(cancel_form).to be_present
     expect(cancel_form.at_css('input[name="q"]')["value"]).to eq("page request")
     expect(cancel_form.at_css('input[name="status"]')["value"]).to eq("pending")
-    expect(cancel_form.at_css('input[name="requested_access_level"]')["value"]).to eq("download")
-    expect(cancel_form.at_css('input[name="requestable_type"]')["value"]).to eq("DocumentFile")
+    expect(cancel_form.at_css('input[name="requested_access_level"]')["value"]).to eq("manage")
+    expect(cancel_form.at_css('input[name="requestable_type"]')["value"]).to eq("Project")
     expect(cancel_form.at_css('input[name="page"]')["value"]).to eq("2")
 
     post cancel_access_request_path(requests.first), params: {
       q: " page request ",
       status: "pending",
-      requested_access_level: "download",
-      requestable_type: "DocumentFile",
+      requested_access_level: "manage",
+      requestable_type: "Project",
       page: "2",
       unsupported: "drop-me"
     }
 
-    expect(response).to redirect_to(access_requests_path(q: "page request", status: "pending", requested_access_level: "download", requestable_type: "DocumentFile", page: 2))
+    expect(response).to redirect_to(access_requests_path(q: "page request", status: "pending", requested_access_level: "manage", requestable_type: "Project", page: 2))
     expect(requests.first.reload).to be_cancelled
   end
 
@@ -102,6 +104,8 @@ RSpec.describe "Access request pagination", type: :request do
         requester: user,
         requestable: file,
         requested_access_level: :download,
+        status: :cancelled,
+        cancelled_at: Time.current,
         reason: "normalized page request #{format("%03d", index + 1)}"
       )
     end
