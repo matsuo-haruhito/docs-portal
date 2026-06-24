@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "time"
+
 SPEC_FILES = [
   "spec/requests/external_document_access_spec.rb",
   "spec/requests/document_search_spec.rb",
@@ -13,7 +15,113 @@ SPEC_FILES = [
   "spec/requests/document_bookmarks_spec.rb"
 ].freeze
 
+DIGEST_ROWS = [
+  {
+    spec: "spec/requests/external_document_access_spec.rb",
+    surface: "document viewer access",
+    purpose: "権限外文書の本文・詳細導線が見えないこと",
+    runbook: "docs/社外ユーザー向け情報露出点検チェックリスト.md"
+  },
+  {
+    spec: "spec/requests/document_search_spec.rb",
+    surface: "document search",
+    purpose: "検索候補・検索結果が current user の閲覧範囲に閉じること",
+    runbook: "docs/文書一覧の検索・実用フィルタ・ZIP出力runbook.md"
+  },
+  {
+    spec: "spec/requests/project_site_security_spec.rb",
+    surface: "Docusaurus site delivery",
+    purpose: "site 配信で権限外ページへの導線が増えないこと",
+    runbook: "docs/社外ユーザー向け情報露出点検チェックリスト.md"
+  },
+  {
+    spec: "spec/requests/document_files_spec.rb",
+    surface: "document file delivery",
+    purpose: "添付ファイルの直接配信が current user の権限内に閉じること",
+    runbook: "docs/ファイル配信・storage運用方針.md"
+  },
+  {
+    spec: "spec/requests/document_sites_spec.rb",
+    surface: "document site assets",
+    purpose: "HTML 表示と asset metadata が権限外情報を増やさないこと",
+    runbook: "docs/社外ユーザー向け情報露出点検チェックリスト.md"
+  },
+  {
+    spec: "spec/requests/document_review_comments_spec.rb",
+    surface: "document comments and Q&A",
+    purpose: "public Q&A と internal-only 確認事項が混線しないこと",
+    runbook: "docs/文書コメント・Q&A運用runbook.md"
+  },
+  {
+    spec: "spec/requests/project_ai_contexts_spec.rb",
+    surface: "AI context export",
+    purpose: "preview と JSON / Markdown export が選択済み閲覧範囲に閉じること",
+    runbook: "docs/AI向けコンテキストexport運用runbook.md"
+  },
+  {
+    spec: "spec/requests/document_delivery_logs_spec.rb",
+    surface: "document delivery logs",
+    purpose: "外部送付履歴の一覧・検索・詳細が current user の可視範囲を広げないこと",
+    runbook: "docs/外部送付履歴運用runbook.md"
+  },
+  {
+    spec: "spec/requests/document_bookmarks_spec.rb",
+    surface: "document bookmarks",
+    purpose: "文書ショートカットが current user から readable な文書だけを表示すること",
+    runbook: "docs/文書ショートカット運用runbook.md"
+  }
+].freeze
+
 missing_files = SPEC_FILES.reject { |path| File.file?(path) }
 abort "Missing external user exposure smoke specs: #{missing_files.join(', ')}" if missing_files.any?
 
-exec "bundle", "exec", "rspec", *SPEC_FILES, *ARGV
+markdown_digest, rspec_args = consume_markdown_digest_format(ARGV)
+
+unless markdown_digest
+  exec "bundle", "exec", "rspec", *SPEC_FILES, *rspec_args
+end
+
+success = system("bundle", "exec", "rspec", *SPEC_FILES, *rspec_args)
+write_markdown_digest($stdout, status: success ? "passed" : "failed", rspec_args:)
+exit(success ? 0 : 1)
+
+def consume_markdown_digest_format(argv)
+  markdown_digest = false
+  remaining = []
+  index = 0
+
+  while index < argv.length
+    argument = argv[index]
+
+    if argument == "--format" && argv[index + 1] == "markdown"
+      markdown_digest = true
+      index += 2
+    elsif argument == "--format=markdown"
+      markdown_digest = true
+      index += 1
+    else
+      remaining << argument
+      index += 1
+    end
+  end
+
+  [markdown_digest, remaining]
+end
+
+def write_markdown_digest(io, status:, rspec_args:)
+  io.puts
+  io.puts "### External user exposure smoke digest"
+  io.puts
+  io.puts "- smoke: `bin/external_user_exposure_smoke`"
+  io.puts "- executed at: #{Time.now.utc.iso8601}"
+  io.puts "- result: #{status}"
+  io.puts "- rspec args: #{rspec_args.empty? ? 'none' : rspec_args.join(' ')}"
+  io.puts "- boundary: request-spec results only; do not paste HTML / JSON / ZIP payloads, raw responses, token-like values, document titles, attachment metadata, or unauthorized document names into this digest."
+  io.puts "- operational metadata exposure: use `bin/operational_metadata_exposure_smoke` and `docs/運用metadata情報露出点検チェックリスト.md` instead."
+  io.puts
+  io.puts "| spec | surface | purpose | next runbook |"
+  io.puts "| --- | --- | --- | --- |"
+  DIGEST_ROWS.each do |row|
+    io.puts "| `#{row.fetch(:spec)}` | #{row.fetch(:surface)} | #{row.fetch(:purpose)} | `#{row.fetch(:runbook)}` |"
+  end
+end
