@@ -12,9 +12,6 @@ h1 定期ジョブ
 p.muted recurring_job_schedules に登録された定期実行ジョブの状態を確認します。未登録の定義は dispatcher 実行時に自動登録されます。
 = render "admin/nav"
 
-p.actions
-  = button_to "定義を同期", sync_definitions_admin_recurring_job_schedules_path, method: :post, params: sync_filter_params, class: "button secondary"
-
 .card
   = form_with url: admin_recurring_job_schedules_path, method: :get, local: true, class: "filters" do
     = label_tag :status, "前回状態"
@@ -26,6 +23,8 @@ p.actions
     = submit_tag "検索", class: "button secondary"
     - if has_filters
       = link_to "絞り込み解除", admin_recurring_job_schedules_path, class: "button secondary"
+  p.actions
+    = button_to "定義を同期", sync_definitions_admin_recurring_job_schedules_path, method: :post, params: sync_filter_params, class: "button secondary"
   p.muted 前回状態 filter は直近実行結果で絞り込みます。定義の有効/無効は「定義状態」列または有効状態 filter で確認してください。
   p.muted = "検索はジョブキー / class / queue / 前回エラーの断片を最大#{Admin::RecurringJobSchedulesController::SCHEDULE_QUERY_MAX_LENGTH}文字で指定できます。長い error log は全文ではなく特徴的な一部で探してください。"
   p.muted = "Triage対象（前回状態ベース）: #{triage_counts}"
