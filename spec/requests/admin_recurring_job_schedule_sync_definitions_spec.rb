@@ -15,6 +15,10 @@ RSpec.describe "Admin recurring job schedule definition sync", type: :request do
     parsed_html.css(%(a[href="#{admin_recurring_job_schedules_path(sync_definitions: 1)}"]))
   end
 
+  def hidden_value(form, name)
+    form.at_css(%(input[type="hidden"][name="#{name}"]))&.fetch("value")
+  end
+
   def create_schedule!(attributes = {})
     defaults = {
       job_key: "sample_recurring_job",
@@ -51,6 +55,39 @@ RSpec.describe "Admin recurring job schedule definition sync", type: :request do
     expect(legacy_sync_links).to be_empty
   end
 
+  it "passes the current filters through visible sync controls" do
+    create_schedule!(job_key: "visible_sync_job", enabled: false, last_status: "failed")
+    sign_in_as(admin_user)
+
+    get admin_recurring_job_schedules_path(status: "failed", enabled: "false", q: " visible ")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("visible_sync_job")
+    expect(sync_definition_forms.size).to eq(1)
+    form = sync_definition_forms.first
+    expect(hidden_value(form, "status")).to eq("failed")
+    expect(hidden_value(form, "enabled")).to eq("false")
+    expect(hidden_value(form, "q")).to eq("visible")
+    expect(hidden_value(form, "return_to")).to be_nil
+    expect(legacy_sync_links).to be_empty
+  end
+
+  it "keeps the sync form scoped when filters produce an empty table" do
+    create_schedule!(job_key: "healthy_job", enabled: true, last_status: "completed")
+    sign_in_as(admin_user)
+
+    get admin_recurring_job_schedules_path(status: "failed", enabled: "false", q: "missing")
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_html.text.squish).to include("条件に一致する定期ジョブはありません。")
+    expect(parsed_html.text.squish).to include("表示中: 0件")
+    expect(sync_definition_forms.size).to eq(1)
+    form = sync_definition_forms.first
+    expect(hidden_value(form, "status")).to eq("failed")
+    expect(hidden_value(form, "enabled")).to eq("false")
+    expect(hidden_value(form, "q")).to eq("missing")
+  end
+
   it "uses the same POST sync action in the empty state" do
     sign_in_as(admin_user)
 
@@ -70,6 +107,36 @@ RSpec.describe "Admin recurring job schedule definition sync", type: :request do
 
     expect(response).to redirect_to(admin_recurring_job_schedules_path)
     expect(flash[:notice]).to eq("定期ジョブ定義を同期しました。")
+    expect(RecurringJobDispatcherJob).to have_received(:perform_now).once
+  end
+
+  it "returns to the filtered list using only allowed filter params" do
+    allow(RecurringJobDispatcherJob).to receive(:perform_now)
+    sign_in_as(admin_user)
+
+    post sync_definitions_admin_recurring_job_schedules_path, params: {
+      status: "failed",
+      enabled: "false",
+      q: " queue error ",
+      return_to: "https://example.com/unsafe",
+      token: "secret-value"
+    }
+
+    expect(response).to redirect_to(admin_recurring_job_schedules_path(status: "failed", enabled: "false", q: "queue error"))
+    expect(RecurringJobDispatcherJob).to have_received(:perform_now).once
+  end
+
+  it "drops unsupported filter values after sync" do
+    allow(RecurringJobDispatcherJob).to receive(:perform_now)
+    sign_in_as(admin_user)
+
+    post sync_definitions_admin_recurring_job_schedules_path, params: {
+      status: "unsupported",
+      enabled: "maybe",
+      q: "  "
+    }
+
+    expect(response).to redirect_to(admin_recurring_job_schedules_path)
     expect(RecurringJobDispatcherJob).to have_received(:perform_now).once
   end
 end
