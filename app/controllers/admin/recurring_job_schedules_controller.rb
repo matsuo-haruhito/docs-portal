@@ -9,8 +9,6 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
   before_action :set_schedule, only: %i[show request_run]
 
   def index
-    RecurringJobDispatcherJob.perform_now if params[:sync_definitions].present?
-
     @schedule_status_options = recurring_job_status_options
     @schedule_enabled_options = recurring_job_enabled_options
     @selected_status = schedule_status_param
@@ -21,6 +19,11 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     @schedules = filter_schedules_by_enabled(@schedules, @selected_enabled) if @selected_enabled.present?
     @schedules = filter_schedules_by_status(@schedules, @selected_status) if @selected_status.present?
     @schedules = filter_schedules_by_query(@schedules, @selected_query) if @selected_query.present?
+  end
+
+  def sync_definitions
+    RecurringJobDispatcherJob.perform_now
+    redirect_to admin_recurring_job_schedules_path, notice: "定期ジョブ定義を同期しました。"
   end
 
   def show

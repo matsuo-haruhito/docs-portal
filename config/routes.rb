@@ -81,6 +81,7 @@ Rails.application.routes.draw do
       get :selected_project, on: :collection
     end
     resources :recurring_job_schedules, only: %i[index show], param: :public_id do
+      post :sync_definitions, on: :collection
       post :request_run, on: :member
     end
     get "external_folder_sync_oauth_connections/callback", to: "external_folder_sync_oauth_connections#callback", as: :callback_external_folder_sync_oauth_connections

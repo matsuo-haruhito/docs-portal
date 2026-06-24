@@ -7,6 +7,14 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def sync_definition_forms
+    parsed_html.css(%(form[action="#{sync_definitions_admin_recurring_job_schedules_path}"][method="post"]))
+  end
+
+  def legacy_sync_links
+    parsed_html.css(%(a[href="#{admin_recurring_job_schedules_path(sync_definitions: 1)}"]))
+  end
+
   it "filters schedules by previous status while keeping the sync action available" do
     sign_in_as(admin_user)
     create_schedule!(job_key: "failed_job", last_status: "failed")
@@ -17,7 +25,8 @@ RSpec.describe "Admin recurring job schedules", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(listed_schedule_keys).to eq(["failed_job"])
-    expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedules_path(sync_definitions: 1)}"]))).to be_present
+    expect(sync_definition_forms.size).to eq(1)
+    expect(legacy_sync_links).to be_empty
     expect(response.body).to include("前回状態 filter は直近実行結果で絞り込みます。")
     expect(response.body).to include("定義の有効/無効は「定義状態」列または有効状態 filter で確認してください。")
     expect(response.body).to include("Triage対象（前回状態ベース）: 失敗: 1件 / 実行中: 0件 / キュー待ち: 0件")
@@ -146,7 +155,8 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(listed_schedule_keys).to be_empty
     expect(response.body).to include("表示中: 0件")
     expect(response.body).to include("登録済みの定期ジョブはありません。定義を同期すると、dispatcher 定義に基づいて登録されます。")
-    expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedules_path(sync_definitions: 1)}"]))).to be_present
+    expect(sync_definition_forms.size).to eq(2)
+    expect(legacy_sync_links).to be_empty
   end
 
   it "treats blank schedule search as an empty condition" do
