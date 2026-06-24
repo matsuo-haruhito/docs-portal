@@ -167,4 +167,43 @@ RSpec.describe "Document comment workspace handoff summary", type: :request do
     expect(handoff).not_to include(missing_question.body)
     expect(handoff).not_to include(missing_review.body)
   end
+
+  it "excludes arbitrary request query values from the copyable handoff URL" do
+    matching_question = create(
+      :document_review_comment,
+      document:,
+      document_version: version,
+      author: external_user,
+      comment_type: :question,
+      internal_only: false,
+      body: "Sanitized handoff question should match"
+    )
+
+    sign_in_as(admin_user)
+
+    get project_document_path(
+      project,
+      document.slug,
+      comment_q: "Sanitized",
+      comment_author_id: external_user.public_id,
+      token: "secret-token-value",
+      return_to: "https://example.test/after-review?ticket=secret-return",
+      access_token: "secret-access-token"
+    )
+
+    expect(response).to have_http_status(:ok)
+    html = Nokogiri::HTML(response.body)
+    handoff = html.at_css("#document-comment-handoff-summary").text
+
+    expect(handoff).to include(matching_question.body)
+    expect(handoff).to include("comment_q=Sanitized")
+    expect(handoff).to include("comment_author_id=#{external_user.public_id}")
+    expect(handoff).to include("comment_tab=unresolved")
+    expect(handoff).not_to include("token")
+    expect(handoff).not_to include("return_to")
+    expect(handoff).not_to include("access_token")
+    expect(handoff).not_to include("secret-token-value")
+    expect(handoff).not_to include("secret-return")
+    expect(handoff).not_to include("secret-access-token")
+  end
 end
