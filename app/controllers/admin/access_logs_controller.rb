@@ -8,6 +8,7 @@ class Admin::AccessLogsController < Admin::BaseController
   ACCESS_LOG_QUERY_MAX_LENGTH = 100
   FILTER_CANDIDATE_LIMIT = 50
   FILTER_SEARCH_LIMIT = 20
+  CSV_SCOPE_CURRENT_PAGE = "current_page".freeze
   CSV_HEADERS = [
     "日時",
     "操作",
@@ -102,10 +103,15 @@ class Admin::AccessLogsController < Admin::BaseController
   end
 
   def csv_access_logs
-    filtered_access_logs
+    scope = filtered_access_logs
       .includes(:user, :company, :project, :document, :document_version)
       .order(accessed_at: :desc, id: :desc)
-      .limit(ACCESS_LOGS_PER_PAGE)
+
+    if current_page_csv_scope?
+      scope.offset((page_param - 1) * ACCESS_LOGS_PER_PAGE).limit(ACCESS_LOGS_PER_PAGE)
+    else
+      scope.limit(ACCESS_LOGS_PER_PAGE)
+    end
   end
 
   def filtered_access_logs
@@ -228,17 +234,31 @@ class Admin::AccessLogsController < Admin::BaseController
 
   def access_logs_export_metadata
     filters = access_logs_export_filters
-
-    {
+    metadata = {
       exported_at: Time.current.iso8601,
       report_type: "access_logs",
       row_limit: ACCESS_LOGS_PER_PAGE,
-      export_scope: "current_filter_latest_rows",
-      description: "CSV export は表示中ページではなく、現在の絞り込み条件に一致する最新#{ACCESS_LOGS_PER_PAGE}件を出力します。",
+      export_scope: access_logs_export_scope,
+      description: access_logs_export_description,
       filters:,
       ignored_filters: @ignored_date_filters.map(&:to_s),
       summary: access_logs_export_summary(filters)
     }
+
+    metadata[:page] = page_param if current_page_csv_scope?
+    metadata
+  end
+
+  def access_logs_export_scope
+    current_page_csv_scope? ? "current_filter_current_page_rows" : "current_filter_latest_rows"
+  end
+
+  def access_logs_export_description
+    if current_page_csv_scope?
+      "表示中ページCSV export は、現在の絞り込み条件とページに一致する最大#{ACCESS_LOGS_PER_PAGE}件を出力します。"
+    else
+      "CSV export は表示中ページではなく、現在の絞り込み条件に一致する最新#{ACCESS_LOGS_PER_PAGE}件を出力します。"
+    end
   end
 
   def access_logs_export_filters
@@ -285,11 +305,31 @@ class Admin::AccessLogsController < Admin::BaseController
   end
 
   def access_logs_export_summary(filters)
-    summary_parts = ["監査ログ", "最新#{ACCESS_LOGS_PER_PAGE}件", "表示中ページではなく現在の絞り込み条件"]
+    summary_parts = ["監査ログ", access_logs_export_summary_scope, access_logs_export_summary_target]
     filter_keys = filters.except(:project, :company, :user).keys
     summary_parts << "条件: #{filter_keys.join(', ')}" if filter_keys.any?
     summary_parts << "無効な日付条件を除外: #{@ignored_date_filters.map(&:to_s).join(', ')}" if @ignored_date_filters.any?
     summary_parts.join(" / ")
+  end
+
+  def access_logs_export_summary_scope
+    if current_page_csv_scope?
+      "#{page_param}ページ目の最大#{ACCESS_LOGS_PER_PAGE}件"
+    else
+      "最新#{ACCESS_LOGS_PER_PAGE}件"
+    end
+  end
+
+  def access_logs_export_summary_target
+    if current_page_csv_scope?
+      "現在の絞り込み条件と表示中ページ"
+    else
+      "表示中ページではなく現在の絞り込み条件"
+    end
+  end
+
+  def current_page_csv_scope?
+    params[:csv_scope].to_s == CSV_SCOPE_CURRENT_PAGE
   end
 
   def filter_params
