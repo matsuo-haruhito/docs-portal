@@ -72,19 +72,6 @@ DIGEST_ROWS = [
   }
 ].freeze
 
-missing_files = SPEC_FILES.reject { |path| File.file?(path) }
-abort "Missing external user exposure smoke specs: #{missing_files.join(', ')}" if missing_files.any?
-
-markdown_digest, rspec_args = consume_markdown_digest_format(ARGV)
-
-unless markdown_digest
-  exec "bundle", "exec", "rspec", *SPEC_FILES, *rspec_args
-end
-
-success = system("bundle", "exec", "rspec", *SPEC_FILES, *rspec_args)
-write_markdown_digest($stdout, status: success ? "passed" : "failed", rspec_args:)
-exit(success ? 0 : 1)
-
 def consume_markdown_digest_format(argv)
   markdown_digest = false
   remaining = []
@@ -125,3 +112,16 @@ def write_markdown_digest(io, status:, rspec_args:)
     io.puts "| `#{row.fetch(:spec)}` | #{row.fetch(:surface)} | #{row.fetch(:purpose)} | `#{row.fetch(:runbook)}` |"
   end
 end
+
+missing_files = SPEC_FILES.reject { |path| File.file?(path) }
+abort "Missing external user exposure smoke specs: #{missing_files.join(', ')}" if missing_files.any?
+
+markdown_digest, rspec_args = consume_markdown_digest_format(ARGV)
+
+unless markdown_digest
+  exec "bundle", "exec", "rspec", *SPEC_FILES, *rspec_args
+end
+
+success = system("bundle", "exec", "rspec", *SPEC_FILES, *rspec_args)
+write_markdown_digest($stdout, status: success ? "passed" : "failed", rspec_args: rspec_args)
+exit(success ? 0 : 1)
