@@ -2,6 +2,8 @@ class Admin::DashboardController < Admin::BaseController
   OPERATIONAL_FAILURE_STALE_THRESHOLD = 7.days
   GENERATED_FILE_ALERT_CANDIDATE_LIMIT = 5
   GENERATED_FILE_ALERT_CANDIDATE_LOOKBACK_LIMIT = 200
+  DOCUMENT_DELIVERY_ALERT_CANDIDATE_LIMIT = 5
+  DOCUMENT_DELIVERY_ALERT_CANDIDATE_LOOKBACK_LIMIT = 200
   CONFIGURATION_STATUS_FILTERS = %w[ok warning error].freeze
   CONFIGURATION_CATEGORY_FILTERS = %w[secret storage workspace environment].freeze
 
@@ -20,6 +22,7 @@ class Admin::DashboardController < Admin::BaseController
     @model_browser_entries = Admin::ModelBrowserCatalog.entries.first(8)
     @model_browser_entry_summaries = @model_browser_entries.index_with { Admin::ModelBrowserSummary.for(_1) }
     @generated_file_run_failure_alert_candidates = generated_file_run_failure_alert_candidates
+    @document_delivery_failure_alert_candidates = document_delivery_failure_alert_candidates
     @operational_failure_summary = operational_failure_summary
   end
 
@@ -53,6 +56,7 @@ class Admin::DashboardController < Admin::BaseController
     git_skipped_runs = GitImportRun.skipped
     generated_failed_runs = GeneratedFileRun.failed
     generated_failed_events = GeneratedFileEvent.failed
+    failed_document_delivery_logs = DocumentDeliveryLog.failed
     failed_webhook_deliveries = WebhookDelivery.failed
     failed_external_sync_runs = ExternalFolderSyncRun.failed
     partial_external_sync_runs = ExternalFolderSyncRun.partial
@@ -61,6 +65,7 @@ class Admin::DashboardController < Admin::BaseController
     git_skipped_count = git_skipped_runs.count
     generated_run_failed_count = generated_failed_runs.count
     generated_event_failed_count = generated_failed_events.count
+    document_delivery_failed_count = failed_document_delivery_logs.count
     webhook_failed_count = failed_webhook_deliveries.count
     external_sync_failed_count = failed_external_sync_runs.count
     external_sync_partial_count = partial_external_sync_runs.count
@@ -83,6 +88,15 @@ class Admin::DashboardController < Admin::BaseController
         primary_link: ["生成実行履歴を確認", admin_generated_file_runs_path(status: "failed")],
         secondary_link: ["生成イベント履歴", admin_generated_file_events_path(status: "failed")],
         alert_candidates: @generated_file_run_failure_alert_candidates
+      },
+      {
+        label: "外部送付履歴",
+        count: document_delivery_failed_count,
+        scope: "保存済み送付履歴の failed 件数",
+        details: ["failed: #{document_delivery_failed_count}"],
+        latest_at: latest_operational_failure_at(failed_document_delivery_logs),
+        primary_link: ["外部送付履歴を確認", document_delivery_logs_path(status: "failed")],
+        document_delivery_alert_candidates: @document_delivery_failure_alert_candidates
       },
       {
         label: "Webhook送信",
@@ -109,6 +123,13 @@ class Admin::DashboardController < Admin::BaseController
     GeneratedFiles::RunFailureAlertCandidates.new(
       limit: GENERATED_FILE_ALERT_CANDIDATE_LIMIT,
       lookback_limit: GENERATED_FILE_ALERT_CANDIDATE_LOOKBACK_LIMIT
+    ).call
+  end
+
+  def document_delivery_failure_alert_candidates
+    DocumentDeliveryLogs::FailureAlertHandoff.new(
+      limit: DOCUMENT_DELIVERY_ALERT_CANDIDATE_LIMIT,
+      lookback_limit: DOCUMENT_DELIVERY_ALERT_CANDIDATE_LOOKBACK_LIMIT
     ).call
   end
 
