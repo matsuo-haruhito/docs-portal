@@ -13,7 +13,6 @@ p.muted recurring_job_schedules に登録された定期実行ジョブの状態
 
 p.actions
   = button_to "定義を同期", sync_definitions_admin_recurring_job_schedules_path, method: :post, class: "button secondary"
-  = link_to "", admin_recurring_job_schedules_path(sync_definitions: 1), hidden: true, aria: { hidden: true }, tabindex: -1
 
 .card
   = form_with url: admin_recurring_job_schedules_path, method: :get, local: true, class: "filters" do
@@ -38,7 +37,6 @@ p.actions
       p.muted 登録後に、前回状態・有効状態・検索条件で一覧を確認できます。列の表示設定は行があるときに調整してください。
       p.actions
         = button_to "定義を同期", sync_definitions_admin_recurring_job_schedules_path, method: :post, class: "button secondary"
-        = link_to "", admin_recurring_job_schedules_path(sync_definitions: 1), hidden: true, aria: { hidden: true }, tabindex: -1
   - else
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "定期ジョブ一覧の表示設定")
 
