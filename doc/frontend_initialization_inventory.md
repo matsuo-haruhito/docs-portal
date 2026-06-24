@@ -55,7 +55,7 @@
 | `image-preview-tools` | image preview | `setupImagePreviewTools()` を専用 controller から refresh し、再描画時に button / keydown listener を cleanup する | `preview-tools` bridge から分離済み。fit / zoom / rotate / status / localStorage contract は変更しない |
 | `pdf-preview-tools` | PDF preview | `setupPdfPreviewTools()` を専用 controller から refresh し、再描画 / disconnect 時に button / keydown listener を cleanup する | `preview-tools` bridge から分離済み。height toggle / status / `aria-pressed` / localStorage / keyboard shortcut contract は変更しない |
 | `structured-preview-tools` | structured / text preview | `setupStructuredPreviewTools()` を専用 controller から refresh し、再描画 / disconnect 時に input / button / document keydown / hashchange listener を cleanup する | `preview-tools` bridge から分離済み。検索、clear、一致行のみ表示、copy、line anchor highlight、`/` / `Escape` shortcut は変更しない |
-| `preview-table-resizer` | Markdown preview table | iframe 内 table wrapping、localStorage、column resize、`turbo:load` / `turbo:render` refresh | current fallback path として維持。列幅、列幅の保存、ヘッダー固定、先頭列固定に閉じ、RTP 統合判断は #475 に残す |
+| `preview-table-resizer` | Markdown preview table | iframe 内 table wrapping、localStorage、column resize、`turbo:load` / `turbo:render` refresh | current fallback path として維持。`表ツール` summary の横スクロール・列幅調整 cue、横スクロール領域の `aria-label`、列幅、列幅の保存、ヘッダー固定、先頭列固定に閉じ、RTP 統合判断は #475 に残す |
 | `sidebar` | 文書ツリー sidebar width / collapsed state | localStorage、pointer / keyboard resize | app 側 Stimulus として維持 |
 | `site-viewer-iframe-height` | Docusaurus / site viewer iframe | `setupSiteViewerIframeHeightSync()` を専用 controller から refresh する | `preview-tools` bridge から分離済み。same-origin check、message type、frame source check、minimum height、`data-docs-portal-auto-height` marker は helper 側で維持 |
 
@@ -113,6 +113,7 @@
 | `site-viewer-iframe-height` | `spec/frontend/preview_tools_source_spec.rb`, `spec/frontend/site_viewer_iframe_height_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、same-origin / message type / frame target guard の維持 | Docusaurus renderer、iframe rendering policy、postMessage protocol、auto height UI の redesign |
 | `nav-dropdowns` | `spec/frontend/nav_dropdowns_contract_spec.rb` | controller registration、`details` markup、document listener cleanup、同時 open 抑止 / outside-click / Escape close | controller 削除、navbar 情報設計、menu item / role 導線変更 |
 | `manual-document-upload` | `spec/frontend/manual_document_upload_controller_source_spec.rb` | window / iframe document listener lifecycle、missing / inaccessible iframe no-op、single-file hidden form submit、複数 file 未対応 | 複数 file upload、upload API 化、manual upload review / apply contract、iframe preview redesign |
+| `preview-table-resizer` | `spec/frontend/preview_table_resizer_source_spec.rb` | preview context key、URL fallback、`表ツール` summary の横スクロール・列幅調整 cue、横スクロール領域の `aria-label`、embedded site response の context marker | Markdown table full RTP integration、column visibility / preset UI、Docusaurus renderer、preference schema / key 再設計 |
 
 ## 維持する fallback path
 
@@ -123,6 +124,7 @@
 current fallback support として提供していること:
 
 - iframe 内の Markdown table wrapping、横スクロール、列幅調整、ヘッダー固定、先頭列固定。
+- 折りたたみ状態の `表ツール` summary からも読める `横スクロール・列幅調整できます` cue と、横スクロール領域の `aria-label` による読み取り補助。
 - table search、copy、CSV / Markdown export、表示設定の reset。
 - 既存の `/rails_table_preferences/preferences` path と `railsTablePreferencesTableKey` を使う default preference 補助。
 - preview context key と table index に基づく localStorage の幅・sticky 表示補助。
@@ -137,7 +139,7 @@ current fallback support として提供していること:
 維持する理由:
 
 - `doc/frontend_interaction_policy.md` が app 側 preview tool として明示している。
-- `spec/frontend/preview_table_resizer_source_spec.rb` が stable key と preview context marker を source-level に固定している。
+- `spec/frontend/preview_table_resizer_source_spec.rb` が stable key、preview context marker、軽量な横スクロール・列幅調整 cue を source-level に固定している。
 - #475 は Markdown table を今後どこまで `rails_table_preferences` に寄せるかの親論点で、current support として先取りしない。
 
 ## 後続 issue に分ける候補
