@@ -54,7 +54,7 @@ RSpec.describe "Admin git import operational metadata exposure", type: :request 
     expect(page_text).to include("release/main", "docs/operations")
     expect(page_text).to include("installation ID: 987654321")
     expect(page_text).to include("abcdef123456")
-    expect(response.body).to include("ブランチ: release/main / 取込元パス: docs/operations")
+    expect(response.body).to include("リポジトリ: matsuo-haruhito/private-docs、ブランチ: release/main、取込元パス: docs/operations、状態: 有効")
     expect(response.body).not_to include("raw-source-secret-3830")
     expect(response.body).not_to include("vault/git/source-token-3830")
   end
