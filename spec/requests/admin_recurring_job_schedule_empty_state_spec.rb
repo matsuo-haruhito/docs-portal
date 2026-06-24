@@ -13,7 +13,8 @@ RSpec.describe "Admin recurring job schedule empty state priority", type: :reque
     expect(page_text).to include("列の表示設定は行があるときに調整してください。")
     expect(response.body).not_to include("定期ジョブ一覧の表示設定")
     expect(parsed_html.css("tbody tr")).to be_empty
-    expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedules_path(sync_definitions: 1)}"]))).to be_present
+    expect(sync_definition_forms.size).to eq(2)
+    expect(legacy_sync_links).to be_empty
   end
 
   it "keeps the table context for filtered empty results" do
@@ -34,5 +35,13 @@ RSpec.describe "Admin recurring job schedule empty state priority", type: :reque
 
   def page_text
     parsed_html.text.squish
+  end
+
+  def sync_definition_forms
+    parsed_html.css(%(form[action="#{sync_definitions_admin_recurring_job_schedules_path}"][method="post"]))
+  end
+
+  def legacy_sync_links
+    parsed_html.css(%(a[href="#{admin_recurring_job_schedules_path(sync_definitions: 1)}"]))
   end
 end
