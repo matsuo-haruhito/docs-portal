@@ -9,6 +9,7 @@
 - query_max_length = Admin::AccessLogsController::ACCESS_LOG_QUERY_MAX_LENGTH
 - filter_search_limit = Admin::AccessLogsController::FILTER_SEARCH_LIMIT
 - ai_context_filters_enabled = @filters[:target_type].to_s == "ai_context"
+- current_page_export_params = @pagination_params.merge(page: @page, csv_scope: Admin::AccessLogsController::CSV_SCOPE_CURRENT_PAGE)
 
 h1 監査ログ
 = render "admin/nav"
@@ -114,10 +115,13 @@ section.card
 
   p.actions
     = link_to "現在の条件でCSV export（最新200件）", admin_access_logs_path(@pagination_params.merge(format: :csv)), class: "button secondary"
+    = link_to "表示中ページをCSV export（最大200件）", admin_access_logs_path(current_page_export_params.merge(format: :csv)), class: "button secondary"
     = link_to "CSV条件metadata JSON", admin_access_logs_path(@pagination_params.merge(format: :json)), class: "button secondary"
+    = link_to "表示中ページmetadata JSON", admin_access_logs_path(current_page_export_params.merge(format: :json)), class: "button secondary"
   p.muted CSV export は現在の絞り込み条件に一致する最新200件を、監査用途の固定列で出力します。画面の表示列設定とは独立しています。
+  p.muted 表示中ページCSV export は、同じ絞り込み条件とページ番号で表示中の最大200件だけを出力します。
   p.muted CSV条件metadata JSON は監査ログ行データではなく、同じ条件・除外日付・上限・summary を確認する補助出力です。
-  p.muted ページ移動中でも、CSV export は表示中ページではなく条件一致の最新200件が対象です。
+  p.muted ページ移動中でも、CSV export は表示中ページではなく条件一致の最新200件が対象です。表示中ページが必要な場合は別導線を使ってください。
 
 - if @access_logs.any?
   p.muted
