@@ -16,7 +16,7 @@ RSpec.describe "Admin recurring job schedule definition sync", type: :request do
   end
 
   def hidden_value(form, name)
-    form.at_css(%(input[type="hidden"][name="#{name}"]))&.fetch("value")
+    form.at_css(%(input[type="hidden"][name="#{name}"]))&.[]("value")
   end
 
   def create_schedule!(attributes = {})
