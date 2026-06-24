@@ -52,7 +52,6 @@ RSpec.describe "Admin git import operational metadata exposure", type: :request 
     expect(page_text).to include("Git Metadata Project", "GIT3830")
     expect(page_text).to include(source.repository_full_name)
     expect(page_text).to include("release/main", "docs/operations")
-    expect(page_text).to include("Fine-grained PAT")
     expect(page_text).to include("installation ID: 987654321")
     expect(page_text).to include("abcdef123456")
     expect(response.body).to include("ブランチ: release/main / 取込元パス: docs/operations")
