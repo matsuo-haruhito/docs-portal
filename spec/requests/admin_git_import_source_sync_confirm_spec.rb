@@ -8,7 +8,7 @@ RSpec.describe "Admin git import source sync confirm", type: :request do
     Nokogiri::HTML(response.body)
   end
 
-  it "includes repository, branch, and source path in the manual sync confirmation" do
+  it "includes project, repository, branch, source path, and state in the manual sync confirmation" do
     source = create(
       :git_import_source,
       project:,
@@ -27,8 +27,11 @@ RSpec.describe "Admin git import source sync confirm", type: :request do
     expect(sync_form).to be_present
 
     confirm_copy = sync_form["data-turbo-confirm"]
-    expect(confirm_copy).to include("matsuo-haruhito/docs-portal を同期しますか？")
+    expect(confirm_copy).to include("Git連携設定を手動同期します。")
+    expect(confirm_copy).to include("案件: GIT / Git Import Project")
+    expect(confirm_copy).to include("リポジトリ: matsuo-haruhito/docs-portal")
     expect(confirm_copy).to include("ブランチ: release/docs")
     expect(confirm_copy).to include("取込元パス: handbook")
+    expect(confirm_copy).to include("状態: 有効")
   end
 end
