@@ -1,7 +1,8 @@
 - handoff_questions = Array(question_threads).select(&:open?)
 - handoff_reviews = Array(review_comments).reject(&:resolved?)
 - handoff_total = handoff_questions.size + handoff_reviews.size
-- workspace_url = url_for(request.query_parameters.merge(comment_tab: "unresolved", only_path: false))
+- handoff_query_params = request.query_parameters.slice("comment_q", "comment_author_id").reject { |_key, value| value.blank? }
+- workspace_url = url_for(handoff_query_params.merge(comment_tab: "unresolved", only_path: false))
 - handoff_lines = []
 - handoff_lines << "文書コメント 未解決handoff"
 - handoff_lines << "URL: #{workspace_url}"
