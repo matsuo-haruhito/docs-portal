@@ -35,6 +35,12 @@ RSpec.describe "exposure smoke checklist drift" do
     end
   end
 
+  it "keeps external user digest rows aligned with its smoke spec list" do
+    smoke_path = REPO_ROOT.join("bin/external_user_exposure_smoke")
+
+    expect(extract_digest_spec_files(smoke_path)).to eq(extract_smoke_spec_files(smoke_path))
+  end
+
   it "keeps external-user and operational-metadata smoke responsibilities separate" do
     smoke_specs_by_name = GUARDS.to_h do |guard|
       [guard.fetch(:name), extract_smoke_spec_files(REPO_ROOT.join(guard.fetch(:smoke_path)))]
@@ -52,6 +58,14 @@ RSpec.describe "exposure smoke checklist drift" do
     raise "#{path.relative_path_from(REPO_ROOT)} does not define a frozen SPEC_FILES array" unless spec_files_literal
 
     spec_files_literal.scan(/"(#{SPEC_PATH_PATTERN.source})"/).flatten
+  end
+
+  def extract_digest_spec_files(path)
+    source = path.read
+    digest_rows_literal = source[/DIGEST_ROWS\s*=\s*\[(.*?)\]\.freeze/m, 1]
+    raise "#{path.relative_path_from(REPO_ROOT)} does not define a frozen DIGEST_ROWS array" unless digest_rows_literal
+
+    digest_rows_literal.scan(/spec:\s*"(#{SPEC_PATH_PATTERN.source})"/).flatten
   end
 
   def extract_checklist_spec_files(path, start_marker:, end_marker:)
