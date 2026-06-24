@@ -94,7 +94,7 @@ hash と deep link の読み方:
 - 既存の diff anchor や deep link から入ったときに、どの tab が開くかを誤読したくないとき
 - HTML本文や品質チェックの導線を、版詳細 tabs と同じ種類の切り替えだと誤読したくないとき
 
-`HTML本文を開く` から入る standalone viewer では、Markdown table の first slice ととして real HTML `<table>` ごとに stable key と wrapper metadata が付いています。これは後続の table UX 拡張へつなぐ seam であり、現時点では full `rails_table_preferences` UI、保存済み幅調整、sticky row / column、`embedded=1` body 側の同等 metadata までは前提にしません。broad な follow-up は issue `#475` を正本として見てください。
+`HTML本文を開く` から入る standalone viewer では、Markdown table の first slice として real HTML `<table>` ごとに stable key と wrapper metadata が付いています。これは後続の table UX 拡張へつなぐ seam であり、現時点では full `rails_table_preferences` UI、保存済み幅調整、sticky row / column、`embedded=1` body 側の同等 metadata までは前提にしません。broad な follow-up は issue `#475` を正本として見てください。
 
 広い Markdown table では、折りたたみ状態の `表ツール` summary に `横スクロール・列幅調整できます` cue が表示されます。表本体は横スクロール領域として読めるよう `aria-label` を持ち、必要に応じて table 内検索、列幅調整、ヘッダー固定、先頭列固定を current fallback path の範囲で使います。これは表示中 table を読みやすくする補助であり、column visibility、preset UI、full `rails_table_preferences` controller 接続、Docusaurus renderer rewrite が実装済みという意味ではありません。
 
