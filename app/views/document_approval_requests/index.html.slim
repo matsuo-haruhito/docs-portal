@@ -4,11 +4,14 @@
 - user_filter_params = {}
 - user_filter_params[:requester_id] = @requester_filter_id if @requester_filter_id.present?
 - user_filter_params[:approver_id] = @approver_filter_id if @approver_filter_id.present?
-- query_path_params = user_filter_params.merge(@query.present? ? { q: @query } : {})
-- current_list_params = query_path_params.merge(@status_filter.present? ? { status: @status_filter } : {})
+- per_page_params = @per_page != DocumentApprovalRequestsController::DEFAULT_PER_PAGE ? { per_page: @per_page } : {}
+- page_state_params = per_page_params.merge(@page > 1 ? { page: @page } : {})
+- query_path_params = user_filter_params.merge(@query.present? ? { q: @query } : {}).merge(per_page_params)
+- current_list_params = query_path_params.merge(@status_filter.present? ? { status: @status_filter } : {}).merge(page_state_params)
 - current_list_path = list_path.call(current_list_params)
-- clear_search_params = user_filter_params.merge(@status_filter.present? ? { status: @status_filter } : {})
-- clear_user_filter_params = {}
+- page_link_params = query_path_params.merge(@status_filter.present? ? { status: @status_filter } : {})
+- clear_search_params = user_filter_params.merge(@status_filter.present? ? { status: @status_filter } : {}).merge(per_page_params)
+- clear_user_filter_params = per_page_params.dup
 - clear_user_filter_params[:status] = @status_filter if @status_filter.present?
 - clear_user_filter_params[:q] = @query if @query.present?
 - has_active_filter = @status_filter.present? || @query.present? || @requester_filter_id.present? || @approver_filter_id.present?
@@ -45,6 +48,8 @@ p.actions
 = form_with url: list_path.call, method: :get, local: true do
   - if @status_filter.present?
     = hidden_field_tag :status, @status_filter
+  - if @per_page != DocumentApprovalRequestsController::DEFAULT_PER_PAGE
+    = hidden_field_tag :per_page, @per_page
   p
     = label_tag :q, "依頼を検索"
     = search_field_tag :q, @query, placeholder: "依頼名・本文・文書名・slug・関係者名", maxlength: DocumentApprovalRequestsController::QUERY_MAX_LENGTH
@@ -68,8 +73,18 @@ p.actions
     p.muted
       | 検索を解除は検索語だけを外し、担当者絞り込みを解除は依頼者・確認相手だけを外します。状態タブが選択されている場合は維持されます。
 
+p.muted = "表示 #{@document_approval_request_start}-#{@document_approval_request_end}件 / 条件一致 #{@document_approval_request_total_count}件（Page #{@page} / #{@total_pages}、#{@per_page}件ずつ）"
+
 - if @query.present? || @requester_filter_id.present? || @approver_filter_id.present?
   p.muted = "検索条件: #{[@query.presence, (@requester_filter_id.present? ? "依頼者指定" : nil), (@approver_filter_id.present? ? "確認相手指定" : nil)].compact.join(" / ")} / 表示 #{@document_approval_requests.size}件"
+
+- if @total_pages > 1
+  p.actions
+    - if @page > 1
+      = link_to "前へ", list_path.call(page_link_params.merge(page: @page - 1).merge(@per_page == DocumentApprovalRequestsController::DEFAULT_PER_PAGE ? {} : { per_page: @per_page })), class: "button secondary"
+    span.muted = "Page #{@page} / #{@total_pages}"
+    - if @page < @total_pages
+      = link_to "次へ", list_path.call(page_link_params.merge(page: @page + 1).merge(@per_page == DocumentApprovalRequestsController::DEFAULT_PER_PAGE ? {} : { per_page: @per_page })), class: "button secondary"
 
 - if @document_approval_requests.any?
   .card
@@ -102,7 +117,7 @@ p.actions
   - if has_active_filter
     p.muted 条件に一致する確認依頼はありません。検索語や状態を見直してください。担当者条件を指定している場合は担当者絞り込みも見直してください。
     p.actions
-      = link_to "すべての確認依頼を見る", list_path.call, class: "button secondary"
+      = link_to "すべての確認依頼を見る", list_path.call(per_page_params), class: "button secondary"
       - if @query.present?
         = link_to "検索を解除", list_path.call(clear_search_params), class: "button secondary"
       - if @requester_filter_id.present? || @approver_filter_id.present?

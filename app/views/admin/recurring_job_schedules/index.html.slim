@@ -3,6 +3,7 @@
 - table_columns = admin_recurring_job_schedule_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - current_list_path = request.fullpath
+- sync_filter_params = { status: @selected_status, enabled: @selected_enabled, q: @selected_query }.compact
 - triage_counts = ["失敗: #{@triage_status_counts.fetch('failed', 0)}件", "実行中: #{@triage_status_counts.fetch('running', 0)}件", "キュー待ち: #{@triage_status_counts.fetch('enqueued', 0)}件"].join(" / ")
 - has_filters = @selected_status.present? || @selected_enabled.present? || @selected_query.present?
 - empty_message = has_filters ? "条件に一致する定期ジョブはありません。" : "登録済みの定期ジョブはありません。定義を同期すると、dispatcher 定義に基づいて登録されます。"
@@ -10,9 +11,6 @@
 h1 定期ジョブ
 p.muted recurring_job_schedules に登録された定期実行ジョブの状態を確認します。未登録の定義は dispatcher 実行時に自動登録されます。
 = render "admin/nav"
-
-p.actions
-  = button_to "定義を同期", sync_definitions_admin_recurring_job_schedules_path, method: :post, class: "button secondary"
 
 .card
   = form_with url: admin_recurring_job_schedules_path, method: :get, local: true, class: "filters" do
@@ -25,6 +23,8 @@ p.actions
     = submit_tag "検索", class: "button secondary"
     - if has_filters
       = link_to "絞り込み解除", admin_recurring_job_schedules_path, class: "button secondary"
+  p.actions
+    = button_to "定義を同期", sync_definitions_admin_recurring_job_schedules_path, method: :post, params: sync_filter_params, class: "button secondary"
   p.muted 前回状態 filter は直近実行結果で絞り込みます。定義の有効/無効は「定義状態」列または有効状態 filter で確認してください。
   p.muted = "検索はジョブキー / class / queue / 前回エラーの断片を最大#{Admin::RecurringJobSchedulesController::SCHEDULE_QUERY_MAX_LENGTH}文字で指定できます。長い error log は全文ではなく特徴的な一部で探してください。"
   p.muted = "Triage対象（前回状態ベース）: #{triage_counts}"
@@ -36,7 +36,7 @@ p.actions
       p.muted = empty_message
       p.muted 登録後に、前回状態・有効状態・検索条件で一覧を確認できます。列の表示設定は行があるときに調整してください。
       p.actions
-        = button_to "定義を同期", sync_definitions_admin_recurring_job_schedules_path, method: :post, class: "button secondary"
+        = button_to "定義を同期", sync_definitions_admin_recurring_job_schedules_path, method: :post, params: sync_filter_params, class: "button secondary"
   - else
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "定期ジョブ一覧の表示設定")
 

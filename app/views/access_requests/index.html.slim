@@ -9,7 +9,9 @@
 - current_requested_access_level = @requested_access_level_filter.presence
 - current_requestable_type = @requestable_type_filter.presence
 - current_filter_params = { q: current_query, requested_access_level: current_requested_access_level, requestable_type: current_requestable_type }.compact
-- current_cancel_filter_params = current_filter_params.merge(status: @status_filter.presence).compact
+- current_page_params = @page > 1 ? { page: @page } : {}
+- current_cancel_filter_params = current_filter_params.merge(status: @status_filter.presence).merge(current_page_params).compact
+- page_link_params = current_filter_params.merge(status: @status_filter.presence).compact
 - status_filter_labels = { "pending" => "申請中", "approved" => "承認済み", "rejected" => "却下", "cancelled" => "取消済み" }
 - requested_access_level_options = [["すべての権限", ""], ["閲覧", "view"], ["ダウンロード", "download"], ["管理", "manage"]]
 - requestable_type_options = [["すべての対象", ""], ["案件", "Project"], ["文書", "Document"], ["ファイル", "DocumentFile"]]
@@ -32,8 +34,11 @@ p.muted
 - if active_filter_summary.present?
   p.muted = "表示中条件: #{active_filter_summary}"
 
-- if @access_requests_truncated
-  p.muted = "表示件数: #{@access_request_total_count}件中#{displayed_count}件を新しい順で表示しています。条件を追加すると目的の申請を探しやすくなります。"
+- if @access_requests.any?
+  p.muted = "表示範囲: #{@access_request_start}-#{@access_request_end}件 / 条件一致 #{@access_request_total_count}件（Page #{@page} / #{@total_pages}、#{access_request_list_limit}件ずつ）"
+
+- if @access_requests_truncated && @page == 1
+  p.muted = "表示件数: #{@access_request_total_count}件中#{displayed_count}件を新しい順で表示しています。次ページへ進むか、条件を追加すると目的の申請を探しやすくなります。"
 
 = form_with url: access_requests_path, method: :get, local: true do |form|
   - if @status_filter.present?
@@ -53,6 +58,14 @@ p.actions
   = link_to "承認済み (#{approved_count})", access_requests_path(current_filter_params.merge(status: :approved)), class: @status_filter == "approved" ? "button" : "button secondary"
   = link_to "却下 (#{rejected_count})", access_requests_path(current_filter_params.merge(status: :rejected)), class: @status_filter == "rejected" ? "button" : "button secondary"
   = link_to "取消済み (#{cancelled_count})", access_requests_path(current_filter_params.merge(status: :cancelled)), class: @status_filter == "cancelled" ? "button" : "button secondary"
+
+- if @total_pages > 1
+  p.actions
+    - if @page > 1
+      = link_to "前へ", access_requests_path(page_link_params.merge(page: @page - 1)), class: "button secondary"
+    span.muted = "Page #{@page} / #{@total_pages}"
+    - if @page < @total_pages
+      = link_to "次へ", access_requests_path(page_link_params.merge(page: @page + 1)), class: "button secondary"
 
 - if @access_requests.any?
   table

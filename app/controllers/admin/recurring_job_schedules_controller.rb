@@ -23,7 +23,7 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
 
   def sync_definitions
     RecurringJobDispatcherJob.perform_now
-    redirect_to admin_recurring_job_schedules_path, notice: "定期ジョブ定義を同期しました。"
+    redirect_to admin_recurring_job_schedules_path(schedule_filter_redirect_params), notice: "定期ジョブ定義を同期しました。"
   end
 
   def show
@@ -127,6 +127,14 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
 
   def schedule_query_param
     params[:q].to_s.strip.presence&.slice(0, SCHEDULE_QUERY_MAX_LENGTH)
+  end
+
+  def schedule_filter_redirect_params
+    {
+      status: schedule_status_param,
+      enabled: schedule_enabled_param,
+      q: schedule_query_param
+    }.compact
   end
 
   def run_status_param
