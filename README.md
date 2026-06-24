@@ -12,6 +12,15 @@
 
 まず repo 固有ルールは [AGENTS.md](./AGENTS.md)、docs 全体の索引は [docs/README.md](./docs/README.md)、repo の位置づけと関連 repo 境界は [Product Profile.md](./Product%20Profile.md) を正本にします。タスク種別ごとの最初の参照先は次の通りです。
 
+role 別に current support の入口だけを先に選びたい場合は、次の表から既存 runbook へ進みます。権限 model や導線の正本はリンク先と current code を優先してください。
+
+| role | 最初に見る入口 | 補足 |
+| --- | --- | --- |
+| external user | [ダッシュボードと文書ショートカット・確認依頼の使い分け](./docs/ダッシュボードと文書ショートカット・確認依頼の使い分け.md)、[利用者向けアクセス申請runbook](./docs/利用者向けアクセス申請runbook.md)、[利用者向け同意画面・同意履歴runbook](./docs/利用者向け同意画面・同意履歴runbook.md) | `/dashboard` 起点で閲覧可能文書、アクセス申請、同意画面を確認する |
+| internal user | [ダッシュボードと文書ショートカット・確認依頼の使い分け](./docs/ダッシュボードと文書ショートカット・確認依頼の使い分け.md)、[利用者向け確認依頼runbook](./docs/利用者向け確認依頼runbook.md)、[外部送付履歴運用runbook](./docs/外部送付履歴運用runbook.md) | dashboard の社内向け導線と確認依頼、送付履歴の読み分けを確認する |
+| company_master_admin | [company_master_admin会社・ユーザー管理runbook](./docs/company_master_admin会社・ユーザー管理runbook.md)、[管理画面 nav 領域見出し運用メモ](./docs/管理画面nav領域見出し運用メモ.md) | `会社` / `ユーザー` 管理に閉じる role 境界を確認する |
+| internal admin | [管理ダッシュボード・モデルブラウザ運用runbook](./docs/管理ダッシュボード・モデルブラウザ運用runbook.md)、[アクセス申請・同意管理・Webhook運用runbook](./docs/アクセス申請・同意管理・Webhook運用runbook.md)、[案件・Git連携・文書セット初回セットアップrunbook](./docs/案件・Git連携・文書セット初回セットアップrunbook.md) | `/admin` 起点で管理 dashboard、申請 / 同意 / Webhook、案件初期設定を確認する |
+
 - 基本仕様・権限: [docs/アプリケーション仕様.md](./docs/アプリケーション仕様.md)、[docs/specs/基本モデルと権限.md](./docs/specs/基本モデルと権限.md)、[docs/テスト方針.md](./docs/テスト方針.md)
 - 開発・保守: [docs/開発・保守ガイド.md](./docs/開発・保守ガイド.md)、[docs/ローカルセットアップと環境変数.md](./docs/ローカルセットアップと環境変数.md)、[docs/ローカル編集からポータル更新までの最小運用案.md](./docs/ローカル編集からポータル更新までの最小運用案.md)
 - フロントエンド・関連 gem: 基本方針は [doc/frontend_interaction_policy.md](./doc/frontend_interaction_policy.md)、実画面への gem 展開候補は [ROADMAP.md](./ROADMAP.md)、host app 採用と release train の確認順は [docs/関連gem連携調査runbook.md](./docs/関連gem連携調査runbook.md)、3 gem の representative smoke / upstream evidence / rollback 観点の 1 枚 map は [docs/internal-ui-gem-adoption-evidence-map.md](./docs/internal-ui-gem-adoption-evidence-map.md)、責務境界は [docs/internal-ui-gem責務境界matrix.md](./docs/internal-ui-gem責務境界matrix.md)、JS resolver / package-root import 境界は [docs/internal-ui-gem-js-resolver-matrix.md](./docs/internal-ui-gem-js-resolver-matrix.md)、上流 packaging gate と downstream smoke の境界は [docs/internal-ui-gem-packaging-gates.md](./docs/internal-ui-gem-packaging-gates.md)、static artifact 変更時の visual evidence は [docs/internal-ui-gem-visual-evidence-runbook.md](./docs/internal-ui-gem-visual-evidence-runbook.md)、代表画面別の evidence 探索入口は [docs/internal-ui-gem-visual-evidence-gallery.md](./docs/internal-ui-gem-visual-evidence-gallery.md) を見る。`#607` は screen-by-screen adoption、`#858` child issue は pinned ref / smoke / rollback note の更新管理、`#1333` のような quality issue は実装済み画面の representative smoke 固定として読み分ける
