@@ -1,5 +1,7 @@
 class DocumentApprovalRequestsController < BaseController
   QUERY_MAX_LENGTH = 100
+  DEFAULT_PER_PAGE = 50
+  MAX_PER_PAGE = 100
 
   before_action :set_document_from_nested_route, only: %i[create]
   before_action :set_document_approval_request, only: %i[show update cancel]
@@ -18,6 +20,8 @@ class DocumentApprovalRequestsController < BaseController
     @query = normalized_query
     @requester_filter_id = normalized_user_filter_id(:requester_id)
     @approver_filter_id = normalized_user_filter_id(:approver_id)
+    @page = normalized_page
+    @per_page = normalized_per_page
     @requester_filter_options = filter_users_for(base_relation, :requester_id)
     @approver_filter_options = filter_users_for(base_relation, :approver_id)
     @pending_count = base_relation.pending.count
@@ -28,7 +32,14 @@ class DocumentApprovalRequestsController < BaseController
     scoped_relation = apply_query_filter(scoped_relation) if @query.present?
     scoped_relation = apply_user_filter(scoped_relation, :requester_id, @requester_filter_id)
     scoped_relation = apply_user_filter(scoped_relation, :approver_id, @approver_filter_id)
-    @document_approval_requests = scoped_relation.recent_first
+
+    @document_approval_request_total_count = scoped_relation.count
+    @total_pages = [(@document_approval_request_total_count.to_f / @per_page).ceil, 1].max
+    @page = [@page, @total_pages].min
+    @document_approval_request_offset = (@page - 1) * @per_page
+    @document_approval_requests = scoped_relation.recent_first.offset(@document_approval_request_offset).limit(@per_page).to_a
+    @document_approval_request_start = @document_approval_request_total_count.zero? ? 0 : @document_approval_request_offset + 1
+    @document_approval_request_end = @document_approval_request_offset + @document_approval_requests.size
     @document_approval_request_sections = build_sections(@document_approval_requests)
   end
 
@@ -105,6 +116,18 @@ class DocumentApprovalRequestsController < BaseController
   def normalized_user_filter_id(param_name)
     value = params[param_name].to_s.strip
     value.match?(/\A\d+\z/) ? value : nil
+  end
+
+  def normalized_page
+    value = params[:page].to_s.strip
+    value.match?(/\A\d+\z/) ? [value.to_i, 1].max : 1
+  end
+
+  def normalized_per_page
+    value = params[:per_page].to_s.strip
+    per_page = value.match?(/\A\d+\z/) ? value.to_i : DEFAULT_PER_PAGE
+    per_page = DEFAULT_PER_PAGE if per_page < 1
+    [per_page, MAX_PER_PAGE].min
   end
 
   def filter_users_for(relation, foreign_key)
