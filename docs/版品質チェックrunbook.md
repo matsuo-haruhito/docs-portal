@@ -2,7 +2,7 @@
 
 この文書は、internal user が `DocumentVersion` の品質チェック画面を読むときの運用メモです。`docs/版詳細プレビュー・差分・添付確認runbook.md` の `品質チェック` 導線から入った後、HTML / JSON / Markdown response を read-only evidence として確認する範囲だけを扱います。
 
-新しい品質判定 policy、通知、ack、saved report、品質チェック job 化、JSON / Markdown schema の変更はここでは定義しません。
+新しい品質判定 policy、通知、ack、saved report、品質チェック job 化、JSON / Markdown schema の変更はここでは定義しません。品質チェック結果を公開承認 gate や正式レビュー承認 workflow の状態として読む必要が出た場合は、[正式レビュー承認 workflow 境界メモ](./正式レビュー承認workflow境界メモ.md) に戻し、workflow 採否や承認 policy の人間判断として扱います。
 
 ## 先に見るもの
 
@@ -15,6 +15,7 @@
 - [版詳細プレビュー・差分・添付確認 runbook](./版詳細プレビュー・差分・添付確認runbook.md)
 - [閲覧画面とUI](./specs/閲覧画面とUI.md)
 - [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md)
+- [正式レビュー承認 workflow 境界メモ](./正式レビュー承認workflow境界メモ.md)
 
 ## HTML 画面の読み方
 
@@ -26,7 +27,7 @@
 - `warning`: 表示や運用上の注意。Preview block に抜粋されることがある
 - `info`: 参考情報。単独で品質失敗扱いにしない
 
-`fail` は error count がある状態として読み、warning / info は自動的な差し戻しや通知済み状態とは扱いません。
+`fail` は error count がある状態として読み、warning / info は自動的な差し戻しや通知済み状態とは扱いません。`pass` も承認済みや公開許可済みを意味せず、確認時点の read-only evidence としてだけ扱います。
 
 ## Preview block
 
@@ -70,6 +71,7 @@ JSON / Markdown export の schema 変更、saved report 化、通知連携、ack
 - error / warning / info の全件を確認したい: check table を見る
 - PR や handoff に結果を渡したい: `JSON` または `Markdown` export を使う
 - external user の閲覧可否や添付 download 権限を確認したい: 品質チェックではなく、版詳細 / 文書詳細 / 権限 runbook に戻る
+- 品質チェックを公開承認 gate、通知、ack、差し戻し workflow として使いたい: この runbook では決めず、[正式レビュー承認 workflow 境界メモ](./正式レビュー承認workflow境界メモ.md) に戻して human decision として扱う
 
 ## 非目標
 
@@ -79,3 +81,4 @@ JSON / Markdown export の schema 変更、saved report 化、通知連携、ack
 - 品質チェックの background job 化
 - external user 向け導線化
 - 版詳細 runbook 全体の再編
+- 品質チェック結果を正式レビュー承認 workflow や公開承認 gate として扱うこと

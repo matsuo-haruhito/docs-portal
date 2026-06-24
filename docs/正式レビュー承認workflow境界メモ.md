@@ -23,6 +23,18 @@
 | 公開制御 | DocumentVersion の draft / published / archived、公開 window、latest version、権限判定を個別に確認できる | 承認 workflow の採否、法務判断、顧客合意、公開前承認 route を自動で定義するものではない |
 | 外部送付履歴 | 外部送付の下書き、送付済み、送付失敗を記録し、宛先・方式・失敗理由・戻り先を見返せる | メール運用 rule、送付承認、再送 queue、通知済み状態、顧客承認済み status ではない |
 
+## runbook を更新するときの確認観点
+
+関連 runbook を更新するときは、まずその文書が説明している current flow と、future workflow として残す論点を分けます。
+
+- 文書コメント / Q&A: `回答済み`、`クローズ`、確認事項の `解決` は workspace 内の状態読み分けです。期限、担当割当、通知、承認完了条件を足す場合は `needs-human` に戻します。
+- 版品質チェック: `pass` / `fail`、warning / error / info は read-only evidence です。公開可否の自動 gate、ack、品質 policy、通知を足す場合は `needs-human` に戻します。
+- 利用者向け確認依頼: `対応待ち` / `OK済み` / `Cancel済み` は軽量な確認依頼の current status です。Cancel 理由、承認者 chain、SLA、段階承認を足す場合は `needs-human` に戻します。
+- 公開制御: draft / published / archived、公開 window、latest version は公開状態と閲覧可否の contract です。公開前承認 route、法務・顧客承認、権限変更を足す場合は `needs-human` に戻します。
+- 外部送付履歴: `送付済み` / `送付失敗` は手元の送付結果を記録した状態です。送付承認、顧客受領確認、通知済み status、再送 queue を足す場合は `needs-human` に戻します。
+
+docs-only PR では、上記の境界をリンクや短い注意書きで揃えるだけに留めます。状態名、権限、通知、DB schema、controller、request spec を変更しないと完了できない場合は、このメモを根拠に停止します。
+
 ## 誤読しやすい言葉
 
 | 言葉 | current support での読み方 | human decision 待ちに戻す論点 |
