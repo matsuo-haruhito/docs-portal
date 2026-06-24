@@ -54,9 +54,24 @@ RSpec.describe "manual-document-upload controller source" do
     expect(source).to include("form.submit()")
   end
 
-  it "keeps multiple file upload outside the current contract" do
-    expect(source).to include("if (files.length > 1) {")
-    expect(source).to include("複数ファイルの同時アップロードはまだ未対応です")
-    expect(source).to include("return null")
+  it "keeps multiple file drops as inline preview without browser alert or submit" do
+    expect(source).to include("if (files.length > 1) {\n      this.showMultiFilePreview(files)\n      return null\n    }")
+    expect(source).to include("this.clearMultiFilePreview()")
+    expect(source).to include("static targets = [\"frame\", \"overlay\", \"multiFilePreview\", \"multiFileSummary\", \"multiFileNames\", \"multiFileOverflow\"]")
+    expect(source).to include("const visibleFiles = files.slice(0, this.multiFilePreviewLimit)")
+    expect(source).to include("item.textContent = file.name || \"名称未設定\"")
+    expect(source).to include("ほか${overflowCount}件は表示していません。")
+    expect(source).not_to include("window.alert")
+  end
+
+  it "keeps multi-file preview bounded to names and count only" do
+    preview_source = source[/showMultiFilePreview\(files\) \{(.*?)\n  \}/m, 1]
+
+    expect(preview_source).to include("files.length")
+    expect(preview_source).to include("file.name")
+    expect(preview_source).not_to include("file.size")
+    expect(preview_source).not_to include("file.type")
+    expect(preview_source).not_to include("file.lastModified")
+    expect(preview_source).not_to include("file.webkitRelativePath")
   end
 end
