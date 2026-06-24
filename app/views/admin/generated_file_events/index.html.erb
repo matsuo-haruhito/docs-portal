@@ -1,6 +1,10 @@
 <%
   detail_path_params = { return_to: request.fullpath }
   status_filter_params = request.query_parameters.except(:page, :per_page).compact_blank
+  current_status_filter = @filters[:status].presence
+  status_quick_link_base_class = "rounded border px-3 py-2"
+  status_quick_link_current_class = "#{status_quick_link_base_class} border-blue-600 bg-blue-50 font-semibold text-blue-700 ring-2 ring-blue-100"
+  status_quick_link_default_class = "#{status_quick_link_base_class} text-gray-700 hover:bg-gray-50"
   has_active_filters = @filters.compact_blank.any?
   bulk_retry_target_count = @bulk_retry_target_count.to_i
   bulk_retry_available = bulk_retry_target_count.positive?
@@ -41,9 +45,11 @@
       <div class="rounded border bg-white p-3 text-left">
         <p class="text-xs font-semibold uppercase text-gray-600">表示フィルタ</p>
         <div class="mt-2 flex flex-wrap items-center gap-2">
-          <%= link_to "すべて", admin_generated_file_events_path(status_filter_params.except("status")), class: "rounded border px-3 py-2" %>
+          <% all_status_current = current_status_filter.blank? %>
+          <%= link_to "すべて", admin_generated_file_events_path(status_filter_params.except("status")), class: all_status_current ? status_quick_link_current_class : status_quick_link_default_class, aria: (all_status_current ? { current: "page" } : {}) %>
           <% GeneratedFileEvent.statuses.keys.each do |status| %>
-            <%= link_to generated_file_event_status_label(status), admin_generated_file_events_path(status_filter_params.merge("status" => status)), class: "rounded border px-3 py-2" %>
+            <% status_current = current_status_filter == status %>
+            <%= link_to generated_file_event_status_label(status), admin_generated_file_events_path(status_filter_params.merge("status" => status)), class: status_current ? status_quick_link_current_class : status_quick_link_default_class, aria: (status_current ? { current: "page" } : {}) %>
           <% end %>
         </div>
       </div>
