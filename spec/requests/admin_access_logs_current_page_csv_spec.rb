@@ -49,11 +49,20 @@ RSpec.describe "Admin access log current page CSV export", type: :request do
 
   it "exports the current page rows only when the current page scope is explicit" do
     base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
+    outside_project = create(:project, code: "OUT", name: "Outside Project")
+    outside_document = create(:document, project: outside_project, title: "Outside Evidence", slug: "outside-evidence")
+    outside_version = create(:document_version, document: outside_document, version_label: "v9.0.0")
 
     202.times do |index|
       create_access_log!(target_name: "current-page-entry-#{index}", accessed_at: base_time + index.minutes)
     end
-    create_access_log!(target_name: "outside-filter-entry", project: create(:project), document: nil, document_version: nil, accessed_at: base_time + 1.day)
+    create_access_log!(
+      target_name: "outside-filter-entry",
+      project: outside_project,
+      document: outside_document,
+      document_version: outside_version,
+      accessed_at: base_time + 1.day
+    )
 
     sign_in_as(admin_user)
 
