@@ -28,7 +28,7 @@ RSpec.describe "Document approval request pagination", type: :request do
         document:,
         requester:,
         approver:,
-        title: "ページ対象 #{index + 1}"
+        title: "ページ対象 #{format("%03d", index + 1)}"
       )
     end
 
@@ -85,7 +85,7 @@ RSpec.describe "Document approval request pagination", type: :request do
         document:,
         requester:,
         approver:,
-        title: "対象内ページ #{index + 1}"
+        title: "対象内ページ #{format("%03d", index + 1)}"
       )
     end
     other_document = create(:document, project:, title: "対象外資料", slug: "approval-other-doc", visibility_policy: :restricted_external)
