@@ -1,15 +1,19 @@
 # 外部送付履歴継続失敗候補 runbook
 
-この runbook は、`DocumentDeliveryLogs::FailureAlertCandidates` と `DocumentDeliveryLogs::FailureAlertHandoff` の current behavior を読むための運用メモです。外部送付履歴の通知 channel、alert rule、自動 retry、ack / escalation、dashboard 表示はここでは定義しません。
+この runbook は、`DocumentDeliveryLogs::FailureAlertCandidates` と `DocumentDeliveryLogs::FailureAlertHandoff` の current behavior を読むための運用メモです。外部送付履歴の通知 channel、alert rule、自動 retry、ack / escalation はここでは定義しません。
 
 ## Source of truth
 
 - `app/services/document_delivery_logs/failure_alert_candidates.rb`
 - `app/services/document_delivery_logs/failure_alert_handoff.rb`
+- `app/controllers/admin/dashboard_controller.rb`
+- `app/views/admin/dashboard/index.html.slim`
 - `app/controllers/document_delivery_logs_controller.rb`
 - `spec/services/document_delivery_logs/failure_alert_candidates_spec.rb`
 - `spec/services/document_delivery_logs/failure_alert_handoff_spec.rb`
 - `spec/requests/document_delivery_log_failure_alert_handoff_spec.rb`
+- `spec/requests/admin_dashboard_document_delivery_failure_alert_spec.rb`
+- `docs/管理ダッシュボード・モデルブラウザ運用runbook.md`
 - `docs/外部送付履歴運用runbook.md`
 - `docs/監視・アラート設計.md`
 
@@ -30,6 +34,26 @@ current default は次のとおりです。
 
 確認用 path は `status=failed`、候補の `delivery_type`、件名を使った `q` を付けた `/document_delivery_logs` です。本文、添付、CC/BCC の full text、外部シークレットは payload に含めません。preview と確認用 path の `q` は `Bearer` / `Basic` credential、`token=`、`secret=` などの secret-like value を `[FILTERED]` に置換してから返します。
 
+管理ダッシュボードの `運用失敗入口` では、外部送付履歴 card に保存済み `failed` 件数と継続失敗候補を分けて表示します。dashboard 表示は `DocumentDeliveryLogs::FailureAlertHandoff` の既存 payload を使い、candidate は最大 5 件、lookback window は最新 200 件に bounded されています。
+
+Dashboard の候補表示で読めるのは、案件 code/name、送付方式、連続失敗数、最終失敗時刻、recipient preview、subject preview、error preview、候補別 failed 一覧 link、failed 一覧全体 link、runbook link です。raw 本文、CC/BCC full text、添付 metadata、secret-like value は表示対象にしません。
+
+Dashboard の候補 0 件は「current 条件で外部送付履歴の handoff 候補がない」ことだけを示します。mail 全体正常、外部監視 green、通知正常、ack 済み、自動 retry 済みを意味しません。
+
+## Dashboard 表示の読み方
+
+`admin/dashboard` の `運用失敗入口` は、保存済み履歴の件数と read-only 調査候補を同じ card 内で分けて見せます。
+
+外部送付履歴 card では次を分けて読む。
+
+- `保存済み履歴`: `DocumentDeliveryLog.failed` の保存済み件数。候補数、通知状態、ack 状態、自動復旧状態ではない
+- `継続失敗候補`: 同じ identity の最新履歴が連続 failed のものだけを `FailureAlertHandoff` で抽出した read-only 調査入口
+- `この候補の failed 送付履歴`: 候補の `failed_delivery_logs_path` へ戻る link。送付状態変更や retry 実行ではない
+- `外部送付履歴の failed 一覧をすべて見る`: `status=failed` の一覧へ戻る link。候補 identity に限らない
+- `継続失敗候補 runbook`: この runbook へ戻る link。通知や alert rule の設定画面ではない
+
+Dashboard は first triage の入口です。候補が出た場合も、原因確認は `外部送付履歴運用runbook` に戻り、一覧と詳細で宛先、件名、方式、失敗理由、対象文書または文書セットを確認します。
+
 ## JSON endpoint の読み方
 
 `GET /document_delivery_logs/failure_alert_handoff.json` は、internal user が現在の handoff payload を read-only に確認する入口です。HTML 画面、通知送信、ack、自動 retry、送付状態変更は行いません。
@@ -48,9 +72,10 @@ external user はこの endpoint を使えません。candidate が 0 件の JSO
 
 ## 既存 runbook との接続
 
+- Dashboard で候補を見る場合は、[管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md) の `運用失敗入口` を入口にします。保存済み failed 件数と継続失敗候補を別物として読み、candidate 0 件を正常保証として扱いません。
 - 監視観点から見る場合は、[監視・アラート設計](./監視・アラート設計.md) の `外部依存監視` と `Runbook との接続` を入口にします。この候補は `mail / webhook の継続失敗` のうち、外部送付履歴側を read-only payload として切り出すための内部補助です。
 - 画面で実際に確認する場合は、[外部送付履歴運用runbook](./外部送付履歴運用runbook.md) の検索、状態 filter、方式 filter、詳細確認、手動状態更新の読み方に戻ります。
-- 候補 payload、一覧検索、手動状態更新、通知 channel は別のものです。候補 payload は調査入口であり、送付状態の変更や本番 alert 発火を意味しません。
+- 候補 payload、Dashboard 表示、一覧検索、手動状態更新、通知 channel は別のものです。候補 payload と Dashboard 表示は調査入口であり、送付状態の変更や本番 alert 発火を意味しません。
 - generated file の継続失敗候補とは identity と確認 path が異なります。生成ファイル側の候補や dashboard 表示を読み返す場合は [生成ファイル継続失敗候補runbook](./生成ファイル継続失敗候補runbook.md) を参照します。
 
 ## 読み分け
@@ -64,7 +89,7 @@ external user はこの endpoint を使えません。candidate が 0 件の JSO
 ## Current support として書かないこと
 
 - 通知 channel や外部監視サービスへ自動送信される、とは書かない
-- dashboard に継続失敗候補が表示される、とは書かない
+- dashboard の候補表示が alert rule、通知済み状態、ack 状態、自動 retry 状態を示す、とは書かない
 - alert rule の本番 threshold / limit / lookback_limit が確定した、とは書かない
 - handoff payload が通知済み、ack 済み、再通知抑制済みである、とは書かない
 - 自動 retry、bulk retry、再送 queue がある、とは書かない
@@ -72,17 +97,20 @@ external user はこの endpoint を使えません。candidate が 0 件の JSO
 
 ## 迷ったときの確認順
 
-1. 必要なら internal user として `GET /document_delivery_logs/failure_alert_handoff.json` を開き、`count`、`note`、`entries` を read-only に確認する
-2. `DocumentDeliveryLogs::FailureAlertHandoff` の payload で candidate の identity、案件、連続失敗数、最終失敗時刻、error preview を確認する
-3. `failed_delivery_logs_path` から既存の外部送付履歴一覧へ進む
-4. 一覧と詳細で宛先、件名、失敗理由、対象文書または文書セットを確認する
-5. 操作や画面の読み方で迷う場合は `docs/外部送付履歴運用runbook.md` に戻る
-6. retry、通知先、alert rule、ack / escalation が必要になった場合は、この runbook では決めず別 Issue で仕様判断する
+1. internal admin として管理ダッシュボードの `運用失敗入口` を開き、外部送付履歴 card の保存済み failed 件数と継続失敗候補を分けて確認する
+2. 必要なら internal user として `GET /document_delivery_logs/failure_alert_handoff.json` を開き、`count`、`note`、`entries` を read-only に確認する
+3. `DocumentDeliveryLogs::FailureAlertHandoff` の payload で candidate の identity、案件、連続失敗数、最終失敗時刻、error preview を確認する
+4. `failed_delivery_logs_path` から既存の外部送付履歴一覧へ進む
+5. 一覧と詳細で宛先、件名、失敗理由、対象文書または文書セットを確認する
+6. 操作や画面の読み方で迷う場合は `docs/外部送付履歴運用runbook.md` に戻る
+7. retry、通知先、alert rule、ack / escalation が必要になった場合は、この runbook では決めず別 Issue で仕様判断する
 
 ## 関連
 
 - Closes #2990
 - Refs #2991
 - Refs #3227
+- Refs #3732
+- [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md)
 - [外部送付履歴運用runbook](./外部送付履歴運用runbook.md)
 - [監視・アラート設計](./監視・アラート設計.md)
