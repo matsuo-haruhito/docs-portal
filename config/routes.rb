@@ -53,8 +53,6 @@ Rails.application.routes.draw do
     resources :consent_terms, except: %i[show new], param: :public_id
     resources :project_consent_settings, except: %i[show new], param: :public_id do
       get :project_search, on: :collection
-      get :selected_project, on: :collection
-      get :consent_term_search, on: :collection
       get :selected_consent_term, on: :collection
     end
     resources :git_import_sources, except: %i[show new], param: :public_id do
@@ -81,6 +79,7 @@ Rails.application.routes.draw do
       get :selected_project, on: :collection
     end
     resources :recurring_job_schedules, only: %i[index show], param: :public_id do
+      post :sync_definitions, on: :collection
       post :request_run, on: :member
     end
     get "external_folder_sync_oauth_connections/callback", to: "external_folder_sync_oauth_connections#callback", as: :callback_external_folder_sync_oauth_connections
