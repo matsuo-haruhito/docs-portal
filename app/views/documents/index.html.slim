@@ -80,6 +80,10 @@ section.card
     .manual-document-upload-panel__drop role="status" aria-live="polite" data-action="dragenter->manual-document-upload#dragenter dragover->manual-document-upload#dragover dragleave->manual-document-upload#dragleave drop->manual-document-upload#drop"
       strong ファイルをドラッグ＆ドロップ
       span.muted アップロード後に差分確認画面でOK/NGを選択します。複数ファイルはZIPにまとめるか、1ファイルずつアップロードしてください。
+      .manual-document-upload-panel__multi-file-preview hidden=true data-manual-document-upload-target="multiFilePreview"
+        strong data-manual-document-upload-target="multiFileSummary"
+        ul.compact-list data-manual-document-upload-target="multiFileNames"
+        span.muted data-manual-document-upload-target="multiFileOverflow"
 
 - page_start = @documents_count.zero? ? 0 : ((@current_page - 1) * @per_page) + 1
 - page_end = [@current_page * @per_page, @documents_count].min
