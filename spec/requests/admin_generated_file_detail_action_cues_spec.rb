@@ -21,18 +21,18 @@ RSpec.describe "Admin generated file detail action cues", type: :request do
     expect(retry_button["title"]).to eq("#{run.public_id} を再実行キューに投入")
   end
 
-  it "clarifies that the event detail redispatch action targets the current event" do
+  it "clarifies that the event detail retry action targets the current event" do
     sign_in_as(admin_user)
     event = create_event!(path: "docs/source.yml", status: :failed)
 
     get admin_generated_file_event_path(event.public_id)
 
     expect(response).to have_http_status(:ok)
-    redispatch_button = parsed_html.at_css(%(form[action*="#{retry_dispatch_admin_generated_file_event_path(event.public_id)}"] button[type="submit"]))
-    expect(redispatch_button).to be_present
-    expect(redispatch_button.text.squish).to eq("このイベントを再dispatch")
-    expect(redispatch_button["aria-label"]).to eq("#{event.public_id} を再dispatchキューに投入")
-    expect(redispatch_button["title"]).to eq("#{event.public_id} を再dispatchキューに投入")
+    retry_button = parsed_html.at_css(%(form[action*="#{retry_dispatch_admin_generated_file_event_path(event.public_id)}"] button[type="submit"]))
+    expect(retry_button).to be_present
+    expect(retry_button.text.squish).to eq("このイベントを再投入")
+    expect(retry_button["aria-label"]).to eq("#{event.public_id} を再投入キューに投入")
+    expect(retry_button["title"]).to eq("#{event.public_id} を再投入キューに投入")
   end
 
   def create_run!(attributes = {})
