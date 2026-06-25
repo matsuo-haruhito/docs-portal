@@ -18,7 +18,7 @@
       <div class="field">
         <%= form.label :project_code, "案件" %>
         <%= form.select :project_code,
-              options_for_select(@bookmark_project_options.map { |project| [project.name, project.code] }, @bookmark_project_code),
+              options_for_select(@bookmark_project_options.map { |project| [project.code.present? ? "#{project.name}（#{project.code}）" : project.name, project.code] }, @bookmark_project_code),
               { include_blank: "すべての案件" } %>
       </div>
       <div class="field">
