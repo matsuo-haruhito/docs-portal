@@ -133,6 +133,8 @@ Rails.application.routes.draw do
       get :selected_project, on: :collection
     end
     resources :read_confirmations, only: [:index] do
+      get :project_search, on: :collection
+      get :selected_project, on: :collection
       get :company_search, on: :collection
       get :selected_company, on: :collection
       get :user_search, on: :collection
