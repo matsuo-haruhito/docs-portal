@@ -4,14 +4,20 @@ RSpec.describe "admin document usage reports source" do
   let(:view_source) { Rails.root.join("app/views/admin/document_usage_reports/index.html.slim").read }
   let(:helper_source) { Rails.root.join("app/helpers/admin/document_usage_reports_helper.rb").read }
 
-  it "uses rails fields kit for project selection" do
+  it "uses rails fields kit remote combobox for project selection" do
     aggregate_failures do
-      expect(view_source).to include("form.rfk_select :project_id,")
+      expect(view_source).to include("form.rfk_combobox :project_id,")
       expect(view_source).to include("document_usage_report_project_option_label")
+      expect(view_source).to include("document_usage_report_project_selected_option(@selected_project)")
+      expect(view_source).to include("project_search_admin_document_usage_reports_path(format: :json)")
+      expect(view_source).to include("selected_project_admin_document_usage_reports_path(format: :json)")
+      expect(view_source).to include('value_field: "value"')
+      expect(view_source).to include('label_field: "text"')
+      expect(view_source).to include('search_field: "text"')
+      expect(view_source).to include("max_options: Admin::DocumentUsageReportsController::PROJECT_SEARCH_LIMIT")
       expect(view_source).to include('label: "案件"')
-      expect(view_source).to include('placeholder: "案件を選択"')
+      expect(view_source).to include('placeholder: "案件コード・案件名で検索"')
       expect(view_source).to include('include_blank: "選択してください"')
-      expect(view_source).to include("selected: @selected_project&.id")
       expect(view_source).not_to include("form.select :project_id")
     end
   end
@@ -58,6 +64,7 @@ RSpec.describe "admin document usage reports source" do
       expect(helper_source).to include("table_preferences_column(:read_confirmation_count")
       expect(helper_source).to include("table_preferences_column(:last_accessed_at")
       expect(helper_source).to include("def document_usage_report_project_option_label(project)")
+      expect(helper_source).to include("def document_usage_report_project_selected_option(project)")
       expect(helper_source).to include('compact_blank.join(" / ")')
     end
   end
