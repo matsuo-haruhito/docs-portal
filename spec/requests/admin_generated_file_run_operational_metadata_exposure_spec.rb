@@ -37,6 +37,39 @@ RSpec.describe "Admin generated file run operational metadata exposure", type: :
     expect(response.body).not_to include("/Users/alice/private-input.yml")
   end
 
+  it "keeps index search as a diagnostic lookup without rendering raw operational metadata" do
+    sign_in_as(admin_user)
+    matched_run = create_run!(
+      status: :failed,
+      job_id: "metadata_search_boundary_match",
+      source_paths: ["docs/source-input.yml"],
+      changed_files: ["docs/source-input.yml"],
+      generated_paths: ["generated/output.md"],
+      metadata: {
+        "operation_reference" => "metadata-search-boundary-3891",
+        "access_token" => "raw-index-token-3891",
+        "source_path" => "/home/app/private-index-source.yml"
+      },
+      error_message: "Authorization: Bearer raw-index-bearer-3891 failed at /Users/alice/private-index-input.yml"
+    )
+    unmatched_run = create_run!(
+      status: :failed,
+      job_id: "metadata_search_boundary_unmatched",
+      metadata: {"operation_reference" => "other-reference"}
+    )
+
+    get admin_generated_file_runs_path(q: "metadata-search-boundary-3891")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(matched_run.public_id)
+    expect(response.body).not_to include(unmatched_run.public_id)
+    expect(response.body).to include("ジョブ診断用の短い断片")
+    expect(response.body).not_to include("raw-index-token-3891")
+    expect(response.body).not_to include("raw-index-bearer-3891")
+    expect(response.body).not_to include("/home/app/private-index-source.yml")
+    expect(response.body).not_to include("/Users/alice/private-index-input.yml")
+  end
+
   it "forbids external users from the generated file run detail" do
     sign_in_as(create(:user, :external))
     run = create_run!(metadata: {"access_token" => "external-user-secret-3673"})
