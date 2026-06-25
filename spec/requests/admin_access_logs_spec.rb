@@ -252,8 +252,9 @@ RSpec.describe "Admin access logs", type: :request do
     expect(parsed_html.at_css('select[name="ai_context_scope"] option[value="partial"][selected]')).to be_nil
     expect(page_text).not_to include("AI context mode:")
     expect(page_text).not_to include("AI context scope:")
-    expect(page_text).not_to include("AI出力モード:")
-    expect(page_text).not_to include("AI出力範囲:")
+    active_filter_summary = parsed_html.css("p.muted").find { _1.text.squish.include?("有効な条件:") }.text.squish
+    expect(active_filter_summary).not_to include("AI出力モード:")
+    expect(active_filter_summary).not_to include("AI出力範囲:")
   end
 
   it "does not apply AI context filters to other target types" do
