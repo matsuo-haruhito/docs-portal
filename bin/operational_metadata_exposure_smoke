@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "time"
+
 SPEC_FILES = [
   "spec/requests/admin_file_upload_dry_runs_spec.rb",
   "spec/requests/admin_missing_document_files_spec.rb",
@@ -11,7 +13,101 @@ SPEC_FILES = [
   "spec/requests/admin_git_import_operational_metadata_exposure_spec.rb"
 ].freeze
 
+DIGEST_ROWS = [
+  {
+    spec: "spec/requests/admin_file_upload_dry_runs_spec.rb",
+    surface: "manual upload dry-run",
+    purpose: "source path / imported file metadataが調査範囲を超えて露出しないこと",
+    runbook: "docs/internal upload API dry-run・apply運用runbook.md"
+  },
+  {
+    spec: "spec/requests/admin_missing_document_files_spec.rb",
+    surface: "missing document files",
+    purpose: "expected path previewとstorage keyの表示境界がraw absolute pathへ広がらないこと",
+    runbook: "docs/管理ダッシュボード・モデルブラウザ運用runbook.md"
+  },
+  {
+    spec: "spec/requests/admin_webhook_deliveries_spec.rb",
+    surface: "webhook delivery diagnostics",
+    purpose: "request / response / error previewがtoken-like valueやraw payloadを広げないこと",
+    runbook: "docs/Webhook設定・送信失敗確認runbook.md"
+  },
+  {
+    spec: "spec/requests/admin_external_folder_sync_sources_spec.rb",
+    surface: "external folder sync metadata",
+    purpose: "sync source metadataとprovider payloadの表示境界が調査用previewに閉じること",
+    runbook: "docs/外部フォルダ同期dry-run・apply運用runbook.md"
+  },
+  {
+    spec: "spec/requests/admin_microsoft_graph_connections_spec.rb",
+    surface: "Microsoft Graph connection metadata",
+    purpose: "Graph provider metadataを接続確認用の最小情報として読めること",
+    runbook: "docs/Microsoft Graph接続管理runbook.md"
+  },
+  {
+    spec: "spec/requests/admin_generated_file_run_operational_metadata_exposure_spec.rb",
+    surface: "generated file run diagnostics",
+    purpose: "metadata / error previewがtoken-like valueやprivate-looking pathをraw表示しないこと",
+    runbook: "docs/生成ファイル実行履歴preview境界メモ.md"
+  },
+  {
+    spec: "spec/requests/admin_git_import_operational_metadata_exposure_spec.rb",
+    surface: "Git import diagnostics",
+    purpose: "credential / summary / error previewがsecretやprivate pathをraw表示しないこと",
+    runbook: "docs/Git連携設定と同期失敗確認runbook.md"
+  }
+].freeze
+
+def consume_markdown_digest_format(argv)
+  markdown_digest = false
+  remaining = []
+  index = 0
+
+  while index < argv.length
+    argument = argv[index]
+
+    if argument == "--format" && argv[index + 1] == "markdown"
+      markdown_digest = true
+      index += 2
+    elsif argument == "--format=markdown"
+      markdown_digest = true
+      index += 1
+    else
+      remaining << argument
+      index += 1
+    end
+  end
+
+  [markdown_digest, remaining]
+end
+
+def write_markdown_digest(io, status:, rspec_args:)
+  io.puts
+  io.puts "### Operational metadata exposure smoke digest"
+  io.puts
+  io.puts "- smoke: `bin/operational_metadata_exposure_smoke`"
+  io.puts "- executed at: #{Time.now.utc.iso8601}"
+  io.puts "- result: #{status}"
+  io.puts "- rspec args: #{rspec_args.empty? ? 'none' : rspec_args.join(' ')}"
+  io.puts "- boundary: request-spec results only; do not paste raw paths, raw payloads, token-like values, PII-like values, Webhook / Graph details, external IDs, or provider payloads into this digest."
+  io.puts "- external user exposure: use `bin/external_user_exposure_smoke` and `docs/社外ユーザー向け情報露出点検チェックリスト.md` instead."
+  io.puts
+  io.puts "| spec | surface | purpose | next runbook |"
+  io.puts "| --- | --- | --- | --- |"
+  DIGEST_ROWS.each do |row|
+    io.puts "| `#{row.fetch(:spec)}` | #{row.fetch(:surface)} | #{row.fetch(:purpose)} | `#{row.fetch(:runbook)}` |"
+  end
+end
+
 missing_files = SPEC_FILES.reject { |path| File.file?(path) }
 abort "Missing operational metadata exposure smoke specs: #{missing_files.join(', ')}" if missing_files.any?
 
-exec "bundle", "exec", "rspec", *SPEC_FILES, *ARGV
+markdown_digest, rspec_args = consume_markdown_digest_format(ARGV)
+
+unless markdown_digest
+  exec "bundle", "exec", "rspec", *SPEC_FILES, *rspec_args
+end
+
+success = system("bundle", "exec", "rspec", *SPEC_FILES, *rspec_args)
+write_markdown_digest($stdout, status: success ? "passed" : "failed", rspec_args: rspec_args)
+exit(success ? 0 : 1)
