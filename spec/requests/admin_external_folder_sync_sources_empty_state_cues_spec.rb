@@ -46,8 +46,8 @@ RSpec.describe "Admin external folder sync source filtered empty cues", type: :r
       get admin_external_folder_sync_sources_path, params: { review: "warnings" }
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("現在の絞り込み: warning あり")
-      expect(response.body).to include("warning / error / disabled のいずれかで 0 件の場合は、別のレビュー優先 filter または「すべて」に戻して確認してください。")
+      expect(response.body).to include("現在の絞り込み: 警告あり")
+      expect(response.body).to include("警告・エラー・無効のいずれかで 0 件の場合は、別のレビュー優先 filter または「すべて」に戻して確認してください。")
       expect(parsed_html.css("a").map { |node| node.text.strip }).to include("すべて解除")
     end
 
@@ -59,7 +59,7 @@ RSpec.describe "Admin external folder sync source filtered empty cues", type: :r
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("現在の絞り込み: SharePoint / OneDrive")
-      expect(response.body).to include("SharePoint / OneDrive は metadata-only として drive_id / folder_path など保存情報を確認します。")
+      expect(response.body).to include("SharePoint / OneDrive はメタデータ確認のみとして drive_id / folder_path など保存情報を確認します。")
       expect(response.body).to include("同期実行対象を探すときは Google Drive 側も確認してください。")
       expect(parsed_html.css("a").map { |node| node.text.strip }).to include("すべて解除")
     end
