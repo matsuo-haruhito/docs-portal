@@ -216,6 +216,67 @@ RSpec.describe "Access requests", type: :request do
     expect(page_text).not_to include("送信済みのアクセス申請はありません。")
   end
 
+  it "guards the request search targets described by the index copy" do
+    project_target = create(:project, code: "REQPRJ", name: "Project Search Alpha")
+    document_project = create(:project, code: "REQDOC", name: "Document Search Project")
+    file_project = create(:project, code: "REQFILE", name: "File Search Project")
+    reason_project = create(:project, code: "REQRSN", name: "Reason Search Project")
+    search_document = create(:document, project: document_project, title: "Quarterly Policy Manual", slug: "quarterly-policy-manual", visibility_policy: :restricted_external)
+    file_document = create(:document, project: file_project, title: "Attachment Matrix Guide", slug: "attachment-matrix-guide", visibility_policy: :restricted_external)
+    file_version = create(:document_version, document: file_document, version_label: "v2.0.0", status: :published)
+    search_file = create(:document_file, document_version: file_version, file_name: "approval-matrix.xlsx", content_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", file_size: 20)
+
+    file_document.update!(latest_version: file_version)
+
+    project_request = create(:access_request, requester: user, requestable: project_target, requested_access_level: :manage, reason: "Project target request")
+    document_request = create(:access_request, requester: user, requestable: search_document, requested_access_level: :download, reason: "Document target request")
+    file_request = create(:access_request, requester: user, requestable: search_file, requested_access_level: :download, reason: "File target request")
+    reason_request = create(:access_request, requester: user, requestable: reason_project, requested_access_level: :manage, reason: "Reason phrase target")
+    other_request = create(:access_request, requester: other_user, requestable: project_target, requested_access_level: :manage, reason: "Reason phrase target from other user")
+
+    sign_in_as(user)
+
+    search_examples = {
+      project_target.code.downcase => project_request,
+      "Project Search Alpha" => project_request,
+      project_target.public_id => project_request,
+      "Quarterly Policy Manual" => document_request,
+      search_document.public_id => document_request,
+      document_project.code.downcase => document_request,
+      "approval-matrix.xlsx" => file_request,
+      search_file.public_id => file_request,
+      "Attachment Matrix Guide" => file_request,
+      file_project.code.downcase => file_request,
+      "Reason phrase" => reason_request
+    }
+
+    search_examples.each do |query, expected_request|
+      get access_requests_path, params: { q: query }
+
+      aggregate_failures "query #{query}" do
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("対象名・案件コード・ID・ファイル名・理由で検索")
+        expect(page_text).to include("案件コード・対象ID・ファイル名・理由で検索できます。")
+        expect(page_text).to include("表示中条件: 検索: #{query}")
+        expect(page_text).to include(expected_request.reason)
+        ([project_request, document_request, file_request, reason_request] - [expected_request]).each do |excluded_request|
+          expect(page_text).not_to include(excluded_request.reason)
+        end
+        expect(page_text).not_to include(other_request.reason)
+      end
+    end
+
+    get access_requests_path, params: { q: "not-found-access-request" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("検索: not-found-access-request に一致するアクセス申請はありません。")
+    expect(page_text).to include("条件を外すと、送信済み申請全体を確認できます。")
+    expect(page_text).not_to include(project_request.reason)
+    expect(page_text).not_to include(document_request.reason)
+    expect(page_text).not_to include(file_request.reason)
+    expect(page_text).not_to include(reason_request.reason)
+  end
+
   it "normalizes oversized search queries before filtering and rendering links" do
     approver = create(:user, :internal)
     truncated_query = "review-" + ("x" * (AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH - "review-".length))
