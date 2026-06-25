@@ -320,7 +320,7 @@ section.card
               span.muted この行は read-only 集計です
 
   h3 DocumentFile 実体の Project / Document 上位
-  p.muted storage/document_files に紐づく DocumentFile 実体だけを Project / Document 単位で概算集計します。上位5件の read-only preview で、削除・archive、cleanup・retention policy 決定には使いません。raw absolute path や外部 storage metadata は表示しません。
+  p.muted storage/document_files に紐づく DocumentFile 実体だけを Project / Document 単位で概算集計します。上位5件の read-only preview で、削除・archive・cleanup・retention policy 決定には使いません。raw absolute path や外部 storage metadata は表示しません。
   - document_file_breakdown_entries = @storage_usage_summary.document_file_breakdown_entries
   - if document_file_breakdown_entries.any?
     table
