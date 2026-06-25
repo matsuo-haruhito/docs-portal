@@ -143,6 +143,9 @@ RSpec.describe "Admin external folder sync source project picker", type: :reques
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Google Drive は同期実行まで、SharePoint / OneDrive は metadata 保存までこの画面で扱います。")
+    expect(response.body).to include("Google Drive は同期プレビューと同期実行まで利用できます。SharePoint / OneDrive は共有URLからの metadata 保存まで利用でき、差分同期本体と変更通知はこの画面ではまだ実行できません。")
+    expect(response.body).not_to include("後続 issue")
+    expect(response.body).not_to include("first slice")
     expect(response.body).to include("Google Drive は「OAuthユーザー方式」または「サービスアカウント方式」、SharePoint / OneDrive は「Microsoft Graph接続」を選んでください。")
     expect(parsed_html.at_css('select[name="external_folder_sync_source[provider]"]')).to be_present
     expect(parsed_html.at_css('select[name="external_folder_sync_source[auth_type]"]')).to be_present
