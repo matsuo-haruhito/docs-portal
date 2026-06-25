@@ -28,6 +28,15 @@ bundle exec ruby bin/operational_metadata_exposure_smoke
 
 この command は、既存の current behavior guard を束ねる read-only 入口です。`bin/external_user_exposure_smoke` は社外ユーザー向けの権限外情報露出を確認する入口であり、この command は admin / integration metadata の表示境界を確認する入口として分けて扱います。追加引数はそのまま `rspec` へ渡せます。
 
+PR / release / 運用引き継ぎ用に短い evidence だけ残したい場合は、Markdown digest を使います。
+
+```bash
+bundle exec ruby bin/operational_metadata_exposure_smoke --format markdown
+bundle exec ruby bin/operational_metadata_exposure_smoke --format=markdown
+```
+
+Markdown digest は smoke 名、実行時刻、RSpec 結果、追加で渡した RSpec args、代表 spec、surface、確認目的、次に見る runbook だけを出します。raw path、raw payload、token-like value、PII-like value、Webhook / Graph の詳細本文、外部 ID の生値、provider payload は digest に貼らない。完全な失敗内容は対象 spec / 画面 / runbook へ戻って確認します。
+
 first slice で束ねる spec subset は次です。
 
 - `spec/requests/admin_file_upload_dry_runs_spec.rb`
@@ -38,7 +47,7 @@ first slice で束ねる spec subset は次です。
 - `spec/requests/admin_generated_file_run_operational_metadata_exposure_spec.rb`
 - `spec/requests/admin_git_import_operational_metadata_exposure_spec.rb`
 
-`spec/docs/exposure_smoke_checklist_drift_spec.rb` は、この subset と `bin/operational_metadata_exposure_smoke` の `SPEC_FILES` が一致していることを source-level guard として確認する。代表 spec を追加・削除する場合は、smoke script とこの節を同じ PR で更新し、社外ユーザーの閲覧権限境界を確認する spec は [社外ユーザー向け情報露出点検チェックリスト](./社外ユーザー向け情報露出点検チェックリスト.md) 側へ分ける。
+`spec/docs/exposure_smoke_checklist_drift_spec.rb` は、この subset と `bin/operational_metadata_exposure_smoke` の `SPEC_FILES` / Markdown digest rows が一致していることを source-level guard として確認する。代表 spec を追加・削除する場合は、smoke script とこの節を同じ PR で更新し、社外ユーザーの閲覧権限境界を確認する spec は [社外ユーザー向け情報露出点検チェックリスト](./社外ユーザー向け情報露出点検チェックリスト.md) 側へ分ける。
 
 この subset は、manual upload dry-run、欠落文書ファイル expected path、Webhook delivery preview / search、外部フォルダ同期 metadata、Microsoft Graph provider metadata、生成ファイル実行履歴 detail の metadata / error preview、Git 連携設定 / Git同期履歴の credential / summary / error preview の代表 guard に限定します。Webhook / Graph / import / dry-run / generated file run の runtime 表示仕様、secret / token / PII 判定、保存方針、CI 必須化はこの smoke command では決めません。
 
@@ -68,6 +77,7 @@ first slice で束ねる spec subset は次です。
 - `bin/operational_metadata_exposure_smoke` で admin / integration metadata の代表 request spec をまとめて再実行できる
 - admin / integration metadata の点検入口が、社外ユーザー向けの権限外情報露出 checklist と混線していない
 - raw path、raw payload、token-like value、PII-like value を current support として表示しているか、mask / truncation / safe preview 済みなのかが分かる
+- PR / release / 運用引き継ぎでは `--format markdown` の短い digest を使い、raw values や詳細 payload を貼らずに代表 spec の結果と次に見る runbook だけを残せる
 - `source_path`、欠落文書ファイルの `Expected path`、Webhook request body、Webhook error / response / target URL preview、Graph provider metadata、webhook headers、生成ファイル実行履歴 detail の metadata / error preview、Git 連携設定 / Git同期履歴の credential / summary / error preview の代表観点をそれぞれ別に確認できる
 - 実装済み current behavior と、issue 化済みの改善候補を同じ文として断定していない
 - runtime code、DB schema、認可、security policy の最終判断をこの checklist で新規に決めていない

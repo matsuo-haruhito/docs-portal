@@ -33,12 +33,20 @@ RSpec.describe "exposure smoke checklist drift" do
 
       expect(checklist_specs).to eq(smoke_specs), drift_message(guard, smoke_specs, checklist_specs)
     end
+
+    it "keeps #{guard.fetch(:name)} digest rows aligned with its smoke spec list" do
+      smoke_path = REPO_ROOT.join(guard.fetch(:smoke_path))
+
+      expect(extract_digest_spec_files(smoke_path)).to eq(extract_smoke_spec_files(smoke_path))
+    end
   end
 
-  it "keeps external user digest rows aligned with its smoke spec list" do
-    smoke_path = REPO_ROOT.join("bin/external_user_exposure_smoke")
+  it "keeps operational metadata smoke markdown digest format out of RSpec passthrough" do
+    source = REPO_ROOT.join("bin/operational_metadata_exposure_smoke").read
 
-    expect(extract_digest_spec_files(smoke_path)).to eq(extract_smoke_spec_files(smoke_path))
+    expect(source).to include('argument == "--format" && argv[index + 1] == "markdown"')
+    expect(source).to include('argument == "--format=markdown"')
+    expect(source).to include('remaining << argument')
   end
 
   it "keeps external-user and operational-metadata smoke responsibilities separate" do
