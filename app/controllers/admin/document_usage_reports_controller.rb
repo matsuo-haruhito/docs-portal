@@ -6,6 +6,8 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
   include Admin::BoundedProjectOptions
 
   DOCUMENT_USAGE_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_LIMIT = 20
 
   CSV_HEADERS = [
     "文書名",
@@ -21,7 +23,7 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
   ].freeze
 
   def index
-    @selected_project = selected_project
+    @selected_project = selected_report_project
     @projects = bounded_project_options(@selected_project)
     @usage_filter = usage_filter_param
     @sort_order = sort_order_param
@@ -52,9 +54,19 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
     end
   end
 
-  private
+  def project_search
+    render json: { options: project_options(searchable_projects) }
+  end
 
   def selected_project
+    project = Project.find_by(id: params[:id])
+
+    render json: { option: project ? project_option(project) : nil }
+  end
+
+  private
+
+  def selected_report_project
     return if params[:project_id].blank?
 
     Project.find_by(id: params[:project_id])
@@ -88,6 +100,30 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
     candidate = Array.wrap(value).compact_blank.first
 
     allowed.include?(candidate) ? candidate : default
+  end
+
+  def searchable_projects
+    scope = Project.order(:code, :id)
+    query = normalize_project_search_query(params[:q])
+    return scope.limit(PROJECT_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{Project.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(projects.code) LIKE :pattern OR LOWER(projects.name) LIKE :pattern",
+      pattern:
+    ).limit(PROJECT_SEARCH_LIMIT)
+  end
+
+  def normalize_project_search_query(query)
+    query.to_s.strip.first(PROJECT_SEARCH_QUERY_MAX_LENGTH)
+  end
+
+  def project_options(projects)
+    projects.map { |project| project_option(project) }
+  end
+
+  def project_option(project)
+    { value: project.id, text: helpers.document_usage_report_project_option_label(project) }
   end
 
   def build_report_hash(project)
