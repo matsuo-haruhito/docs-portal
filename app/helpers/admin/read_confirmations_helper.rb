@@ -11,6 +11,16 @@ module Admin::ReadConfirmationsHelper
     ]
   end
 
+  def read_confirmation_project_option_label(project)
+    [project.code, project.name].compact_blank.join(" / ")
+  end
+
+  def read_confirmation_project_selected_option(project)
+    return if project.blank?
+
+    { value: project.id, text: read_confirmation_project_option_label(project) }
+  end
+
   def read_confirmation_company_selected_option(company)
     return if company.blank?
 
