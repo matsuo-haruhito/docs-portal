@@ -5,7 +5,7 @@ module GeneratedFiles
     RUNBOOK_PATH = "docs/生成ファイル継続失敗候補runbook.md"
     DEFAULT_ERROR_MESSAGE_MAX_LENGTH = 160
     FILTERED_VALUE = "[FILTERED]"
-    SECRET_LIKE_KEY_PATTERN = /\b(token|access_token|refresh_token|secret|client_secret|api[_-]?key|authorization|password)\b\s*([=:])\s*([^&\s,;]+)/i
+    SECRET_LIKE_KEY_PATTERN = /\b(token|access_token|refresh_token|secret|client_secret|api[_-]?key|password)\b\s*([=:])\s*([^&\s,;]+)/i
     AUTHORIZATION_VALUE_PATTERN = /\b(Authorization)\s*:\s*(Bearer|Basic)\s+[^,\s;]+/i
     AUTH_SCHEME_VALUE_PATTERN = /\b(Bearer|Basic)\s+[^,\s;]+/i
     PRIVATE_PATH_PATTERN = %r{(?<![A-Za-z0-9])/(?:home|Users|var|tmp|workspace|app|srv|etc)/[^\s,;]+}
