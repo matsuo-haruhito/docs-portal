@@ -125,6 +125,9 @@
           </li>
         <% end %>
       </ul>
+      <p class="actions">
+        <%= link_to "ショートカット一覧でさらに見る", document_bookmarks_path, class: "button secondary", data: { turbo_frame: "_top" } %>
+      </p>
     <% else %>
       <p class="muted">お気に入りはまだ保存されていません。これは閲覧権限がない状態ではなく、個人用ショートカットが未利用の状態です。文書一覧から文書を開き、詳細画面でお気に入りに追加できます。</p>
       <p><%= link_to "文書一覧へ", documents_path, class: "metric-card__cta", data: { turbo_frame: "_top" } %></p>
@@ -144,6 +147,9 @@
           </li>
         <% end %>
       </ul>
+      <p class="actions">
+        <%= link_to "ショートカット一覧でさらに見る", document_bookmarks_path, class: "button secondary", data: { turbo_frame: "_top" } %>
+      </p>
     <% else %>
       <p class="muted">後で読む文書はまだ保存されていません。これは閲覧権限がない状態ではなく、個人用ショートカットが未利用の状態です。あとで確認したい文書は、文書一覧から開いて後で読むに追加できます。</p>
       <p><%= link_to "文書一覧へ", documents_path, class: "metric-card__cta", data: { turbo_frame: "_top" } %></p>
@@ -164,6 +170,9 @@
           </li>
         <% end %>
       </ul>
+      <p class="actions">
+        <%= link_to "文書一覧でさらに探す", documents_path, class: "button secondary", data: { turbo_frame: "_top" } %>
+      </p>
     <% else %>
       <p class="muted">このアカウントでは最近見た文書がまだありません。文書一覧から読み始めると、直近の閲覧履歴がここに表示されます。権限不足やエラーではなく、まだ閲覧履歴がない状態です。</p>
       <p><%= link_to "文書一覧へ", documents_path, class: "metric-card__cta", data: { turbo_frame: "_top" } %></p>
@@ -184,6 +193,9 @@
           </li>
         <% end %>
       </ul>
+      <p class="actions">
+        <%= link_to "文書一覧でさらに探す", documents_path, class: "button secondary", data: { turbo_frame: "_top" } %>
+      </p>
     <% else %>
       <p class="muted">最近更新された文書はありません。閲覧可能な文書は文書一覧から確認できます。権限エラーではなく、閲覧可能な範囲に更新候補がない状態です。</p>
       <p><%= link_to "文書一覧へ", documents_path, class: "metric-card__cta", data: { turbo_frame: "_top" } %></p>
