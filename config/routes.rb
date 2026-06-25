@@ -128,7 +128,10 @@ Rails.application.routes.draw do
       get :selected_user, on: :collection
     end
     resources :access_requests, only: %i[index update], param: :public_id
-    resources :document_usage_reports, only: [:index]
+    resources :document_usage_reports, only: [:index] do
+      get :project_search, on: :collection
+      get :selected_project, on: :collection
+    end
     resources :read_confirmations, only: [:index] do
       get :company_search, on: :collection
       get :selected_company, on: :collection
