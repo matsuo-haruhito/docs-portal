@@ -1,10 +1,12 @@
 # internal UI gem release train current queue
 
-この文書は、`docs/関連gem連携調査runbook.md` の release train 説明を読む前に確認する current queue snapshot です。
+この文書は、`docs/関連gem連携調査runbook.md` の release train 説明を読む前に確認する queue snapshot です。
 
-`docs-portal` の internal UI gem 更新は `#858` を parent / hub として扱います。実際の dependency bump は、ここにある current child issue と `docs/internal-gem-release-train-smoke.md` の代表 smoke / rollback note を合わせて確認します。
+`docs-portal` の internal UI gem 更新は `#858` を parent / hub として扱います。実際の dependency bump は、ここにある child issue と `docs/internal-gem-release-train-smoke.md` の代表 smoke / rollback note を合わせて確認します。
 
-## current queue (2026-06-03 JST)
+2026-06-25 JST 時点の採用順・review gate・known-good baseline は、[internal UI gem release train target matrix](./internal-ui-gem-release-train-target-matrix.md) の `2026-06-25 cross-repo refresh` を優先して確認します。この文書の `2026-06-03 JST` queue は historical snapshot であり、open PR、old child issue、古い green CI を current adoption evidence として固定するものではありません。
+
+## historical queue (2026-06-03 JST)
 
 | 順序 | gem | current docs-portal ref | current child / gate | 扱い |
 | --- | --- | --- | --- |
