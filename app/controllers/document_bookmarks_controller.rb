@@ -50,7 +50,7 @@ class DocumentBookmarksController < BaseController
     @read_later_bookmarks_page = paginate_bookmarks(read_later_bookmark_relation, :read_later_page)
     @favorite_bookmarks = @favorite_bookmarks_page.items
     @read_later_bookmarks = @read_later_bookmarks_page.items
-    @favorite_bookmark_document_ids = favorite_bookmark_relation.pluck(:document_id)
+    @favorite_bookmark_document_ids = favorite_bookmark_relation.reorder(nil).pluck(:document_id)
 
     @all_recent_documents = RecentDocumentsQuery.new(user: current_user, limit: 20).call
     @recent_documents = filter_recent_documents(@all_recent_documents)
