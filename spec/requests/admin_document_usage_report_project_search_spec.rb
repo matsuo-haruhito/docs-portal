@@ -44,7 +44,9 @@ RSpec.describe "Admin document usage report project search", type: :request do
 
     blank_options = json_body.fetch("options")
     expect(blank_options.size).to eq(Admin::DocumentUsageReportsController::PROJECT_SEARCH_LIMIT)
-    expect(blank_options.first).to include("value" => first_project.id, "text" => "P000 / First")
+    expect(blank_options).to include(
+      { "value" => first_project.id, "text" => "P000 / First" }
+    )
 
     get project_search_admin_document_usage_reports_path(
       format: :json,
