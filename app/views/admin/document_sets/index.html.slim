@@ -93,6 +93,7 @@ h1 文書セット
     - if admin_document_set_filters_active?(@filters)
       .document-set-filter-empty-state
         p.muted 条件に一致する文書セットはありません。
+        p.muted CSV出力も現在の絞り込み条件に従います。このまま出力すると0件の結果になります。
         p.actions.form-actions.muted
           = link_to "条件をクリア", admin_document_sets_path, class: "button secondary"
     - else
