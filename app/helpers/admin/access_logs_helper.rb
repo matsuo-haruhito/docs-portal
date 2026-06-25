@@ -11,6 +11,12 @@ module Admin::AccessLogsHelper
     "all" => "全件",
     "selected" => "選択"
   }.freeze
+  AI_CONTEXT_TARGET_DETAIL_LABELS = {
+    "mode" => "AI出力モード",
+    "scope" => "AI出力範囲",
+    "selected_count" => "選択数",
+    "exported_count" => "出力数"
+  }.freeze
   ACCESS_LOG_DATE_FILTER_LABELS = {
     from: "開始日",
     to: "終了日"
@@ -125,10 +131,10 @@ module Admin::AccessLogsHelper
 
     if values
       segments = [
-        { label: "mode", value: values.fetch("mode") },
-        { label: "scope", value: ai_context_scope_label(values.fetch("scope")) },
-        { label: "選択数", value: "#{values.fetch('selected_count')}件" },
-        { label: "出力数", value: "#{values.fetch('exported_count')}件" }
+        { label: AI_CONTEXT_TARGET_DETAIL_LABELS.fetch("mode"), value: access_log_ai_context_mode_filter_label(values.fetch("mode")) },
+        { label: AI_CONTEXT_TARGET_DETAIL_LABELS.fetch("scope"), value: ai_context_scope_label(values.fetch("scope")) },
+        { label: AI_CONTEXT_TARGET_DETAIL_LABELS.fetch("selected_count"), value: "#{values.fetch('selected_count')}件" },
+        { label: AI_CONTEXT_TARGET_DETAIL_LABELS.fetch("exported_count"), value: "#{values.fetch('exported_count')}件" }
       ]
     end
 
