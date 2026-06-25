@@ -48,6 +48,38 @@ RSpec.describe "Admin git import sources", type: :request do
     expect(page_text).to include("GitHub App picker は未実装のため、現在は値を直接入力します。")
   end
 
+  it "shows the target project and sync destination in manual sync confirmations" do
+    active_project = create(:project, code: "GIT001", name: "Main Docs")
+    disabled_project = create(:project, code: "GIT002", name: "Archive Docs")
+    create(
+      :git_import_source,
+      project: active_project,
+      repository_full_name: "example/shared-docs",
+      branch: "release/main",
+      source_path: "docs/current",
+      enabled: true
+    )
+    disabled_source = create(
+      :git_import_source,
+      project: disabled_project,
+      repository_full_name: "example/shared-docs",
+      branch: "release/archive",
+      source_path: "docs/archive",
+      enabled: false
+    )
+    disabled_source.update_column(:source_path, "")
+
+    get admin_git_import_sources_path
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(
+      "Git連携設定を手動同期します。案件: GIT001 / Main Docs、リポジトリ: example/shared-docs、ブランチ: release/main、取込元パス: docs/current、状態: 有効"
+    )
+    expect(response.body).to include(
+      "Git連携設定を手動同期します。案件: GIT002 / Archive Docs、リポジトリ: example/shared-docs、ブランチ: release/archive、取込元パス: /、状態: 無効"
+    )
+  end
+
   it "returns project options by code and name for the remote combobox" do
     alpha_project = create(:project, code: "GIT001", name: "Alpha Docs")
     beta_project = create(:project, code: "OPS002", name: "Beta Archive")
