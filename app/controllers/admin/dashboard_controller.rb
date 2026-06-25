@@ -22,6 +22,7 @@ class Admin::DashboardController < Admin::BaseController
     @model_browser_entries = Admin::ModelBrowserCatalog.entries.first(8)
     @model_browser_entry_summaries = @model_browser_entries.index_with { Admin::ModelBrowserSummary.for(_1) }
     @generated_file_run_failure_alert_candidates = generated_file_run_failure_alert_candidates
+    @generated_file_run_failure_alert_digest_markdown = generated_file_run_failure_alert_digest_markdown
     @document_delivery_failure_alert_candidates = document_delivery_failure_alert_candidates
     @operational_failure_summary = operational_failure_summary
   end
@@ -124,6 +125,14 @@ class Admin::DashboardController < Admin::BaseController
       limit: GENERATED_FILE_ALERT_CANDIDATE_LIMIT,
       lookback_limit: GENERATED_FILE_ALERT_CANDIDATE_LOOKBACK_LIMIT
     ).call
+  end
+
+  def generated_file_run_failure_alert_digest_markdown
+    entries = GeneratedFiles::RunFailureAlertHandoff.new(
+      candidates: @generated_file_run_failure_alert_candidates
+    ).call
+
+    GeneratedFiles::RunFailureAlertHandoff.markdown(entries)
   end
 
   def document_delivery_failure_alert_candidates
