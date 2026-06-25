@@ -64,9 +64,9 @@
   <%= form_with url: admin_generated_file_runs_path, method: :get, local: true, class: "rounded-lg border bg-white p-4" do |form| %>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
       <div class="md:col-span-2">
-        <%= form.label :q, "実行ID / パス / エラー / メタデータ", class: "block text-sm font-semibold" %>
-        <%= form.text_field :q, value: @filters[:q], placeholder: "gfr... / docs/source.yml / timeout / metadata断片", maxlength: Admin::GeneratedFileRunsController::QUERY_MAX_LENGTH, class: "mt-1 w-full rounded border px-2 py-1" %>
-        <p class="mt-1 text-xs text-gray-500">検索語は最大<%= Admin::GeneratedFileRunsController::QUERY_MAX_LENGTH %>文字です。入力パス・変更ファイル・生成パス・エラー文・補助メタデータを検索します。長いメタデータJSONやエラー文は、特徴的な短い断片で探してください。</p>
+        <%= form.label :q, "実行ID / パス / エラー / メタデータ断片", class: "block text-sm font-semibold" %>
+        <%= form.text_field :q, value: @filters[:q], placeholder: "gfr... / docs/source.yml / timeout / event id", maxlength: Admin::GeneratedFileRunsController::QUERY_MAX_LENGTH, class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">検索語は最大<%= Admin::GeneratedFileRunsController::QUERY_MAX_LENGTH %>文字です。入力パス・変更ファイル・生成パス・エラー文・補助メタデータを、ジョブ診断用の短い断片として検索します。長いメタデータJSON、raw payload、エラー全文、token-like value、private path は貼り付けず、gfr...、path の一部、短い error 断片、event public ID などで探してください。</p>
       </div>
       <div>
         <%= form.label :status, "状態", class: "block text-sm font-semibold" %>
