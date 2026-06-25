@@ -80,14 +80,14 @@ class DocumentBookmarksController < BaseController
       bookmark.destroy!
     end
 
-    redirect_to_back fallback_location: document_bookmarks_path(bookmark_navigation_params), notice: "お気に入りへ移しました。"
+    redirect_to_back fallback_location: bookmark_fallback_location, notice: "お気に入りへ移しました。"
   end
 
   def destroy
     bookmark = current_user.document_bookmarks.find_by!(public_id: params[:public_id])
     bookmark.destroy!
 
-    redirect_to_back fallback_location: document_bookmarks_path(bookmark_navigation_params), notice: "文書ショートカットを解除しました。"
+    redirect_to_back fallback_location: bookmark_fallback_location, notice: "文書ショートカットを解除しました。"
   end
 
   private
@@ -130,6 +130,13 @@ class DocumentBookmarksController < BaseController
     return 1 unless value&.positive?
 
     value
+  end
+
+  def bookmark_fallback_location
+    navigation_params = bookmark_navigation_params
+    return root_path if navigation_params.blank?
+
+    document_bookmarks_path(navigation_params)
   end
 
   def bookmark_navigation_params
