@@ -112,13 +112,13 @@ RSpec.describe "Admin read confirmation project search", type: :request do
     csv_link = parsed_html.css("a").find { |link| link.text.squish == "CSV出力" }
     usage_report_link = parsed_html.css("a").find { |link| link.text.squish == "文書利用状況へ戻る" }
 
+    expect(csv_link["href"]).to include("/admin/read_confirmations.csv")
     expect(csv_link["href"]).to include("project_id=#{project.id}")
     expect(csv_link["href"]).to include("document_slug=manual")
     expect(csv_link["href"]).to include("company_id=#{company.id}")
     expect(csv_link["href"]).to include("user_id=#{user.id}")
     expect(csv_link["href"]).to include("from=2026-05-01")
     expect(csv_link["href"]).to include("to=2026-05-03")
-    expect(csv_link["href"]).to include("format=csv")
     expect(usage_report_link["href"]).to include("project_id=#{project.id}")
     expect(usage_report_link["href"]).to include("q=manual")
   end
