@@ -2,6 +2,7 @@
 - table_key = :admin_read_confirmations
 - table_columns = read_confirmation_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- project_search_limit = Admin::ReadConfirmationsController::PROJECT_SEARCH_LIMIT
 - filter_search_limit = Admin::ReadConfirmationsController::FILTER_SEARCH_LIMIT
 - show_read_confirmations_clear_link = @selected_project.present? || @document_slug.present? || @confirmed_from.present? || @confirmed_to.present? || @invalid_confirmed_date_labels.present? || @selected_company_id.present? || @selected_user_id.present? || params[:page].present?
 
@@ -12,14 +13,21 @@ section.card
   h2 絞り込み
   = form_with url: admin_read_confirmations_path, method: :get, local: true do |form|
     .form-grid
-      = form.rfk_select :project_id,
-        collection: @projects.map { [[_1.code, _1.name].compact_blank.join(" / "), _1.id] },
+      = form.rfk_combobox :project_id,
+        collection: @projects.map { [read_confirmation_project_option_label(_1), _1.id] },
+        selected: read_confirmation_project_selected_option(@selected_project),
+        url: project_search_admin_read_confirmations_path(format: :json),
+        selected_url: selected_project_admin_read_confirmations_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: project_search_limit,
         wrapper: true,
         label: "案件",
-        placeholder: "案件を選択",
+        placeholder: "案件コード・案件名で検索",
         include_blank: "選択してください",
-        allow_clear: true,
-        selected: @selected_project&.id
+        allow_clear: true
       div
         = form.label :document_slug, "文書名またはURL識別子"
         = form.search_field :document_slug, value: @document_slug, maxlength: Admin::ReadConfirmationsController::DOCUMENT_QUERY_MAX_LENGTH
@@ -59,7 +67,7 @@ section.card
         placeholder: "確認者名・メール・会社で検索",
         allow_clear: true
     p.muted 期間は既読確認日時（confirmed_at）を対象にします。文書利用状況の閲覧・ダウンロード集計期間とは別の条件です。
-    p.muted = "会社・確認者は検索語最大#{Admin::ReadConfirmationsController::DOCUMENT_QUERY_MAX_LENGTH}文字、候補最大#{filter_search_limit}件です。URLで指定済みの値は候補上限外でも復元します。"
+    p.muted = "案件・会社・確認者は検索語最大#{Admin::ReadConfirmationsController::DOCUMENT_QUERY_MAX_LENGTH}文字、候補最大#{project_search_limit}件です。URLで指定済みの値は候補上限外でも復元します。"
     p.actions
       = form.submit "表示"
       - if show_read_confirmations_clear_link
