@@ -11,6 +11,9 @@
 - recent_deliveries_limit = @recent_deliveries_limit.to_i
 - recent_deliveries_display_count = @recent_deliveries.size
 - delivery_return_params = @delivery_status_filter == "all" ? {} : { return_delivery_status: @delivery_status_filter }
+- endpoint_display_count = @webhook_endpoints.size
+- endpoint_filter_params = @webhook_endpoint_filter_params || {}
+- endpoint_reset_params = @delivery_status_filter == "all" ? {} : { delivery_status: @delivery_status_filter }
 
 h1 Webhook
 = render "admin/nav"
@@ -22,8 +25,44 @@ h1 Webhook
 .card
   h2 Webhook設定
   p.muted Webhook設定そのものの編集・削除です。最近の送信履歴の詳細確認・再送とは別の操作です。
-  - if @webhook_endpoints.any?
-    = table_preferences_editor(table_key: endpoint_table_key, settings: endpoint_table_settings, columns: endpoint_table_columns, title: "Webhook設定一覧の表示設定")
+  = form_with url: admin_webhook_endpoints_path, method: :get, local: true do |form|
+    - if @delivery_status_filter != "all"
+      = hidden_field_tag :delivery_status, @delivery_status_filter
+    p
+      = label_tag :endpoint_q, "設定検索"
+      = text_field_tag :endpoint_q, @webhook_endpoint_q, placeholder: "名称・送信先URL"
+    p
+      = label_tag :endpoint_event, "イベント"
+      = select_tag :endpoint_event, options_for_select([["すべてのイベント", "all"]] + WebhookEndpoint::EVENT_TYPES.map { |event_type| [webhook_event_type_label(event_type), event_type] }, @webhook_endpoint_event_filter)
+    p
+      = label_tag :endpoint_active, "状態"
+      = select_tag :endpoint_active, options_for_select([["すべて", "all"], ["有効", "active"], ["停止", "inactive"]], @webhook_endpoint_active_filter)
+    p
+      = label_tag :endpoint_per_page, "表示件数"
+      = select_tag :endpoint_per_page, options_for_select([["25件", 25], ["50件", 50]], @webhook_endpoints_per_page)
+    p.actions
+      = form.submit "設定一覧を絞り込む", class: "button secondary"
+      - if @webhook_endpoint_filters_active
+        = link_to "条件をリセット", admin_webhook_endpoints_path(endpoint_reset_params), class: "button secondary"
+  - if @webhook_endpoints_any
+    p.muted = "表示範囲: Webhook設定 #{@webhook_endpoints_total_count}件中#{endpoint_display_count}件を表示しています。"
+    - if @webhook_endpoint_filters_active
+      p.muted 設定検索・イベント・状態 filter は Webhook 設定一覧だけに適用されます。最近の送信履歴検索や再送条件は変更しません。
+    - if @webhook_endpoints.any?
+      = table_preferences_editor(table_key: endpoint_table_key, settings: endpoint_table_settings, columns: endpoint_table_columns, title: "Webhook設定一覧の表示設定")
+      - if @webhook_endpoints_total_pages > 1
+        p.muted
+          | ページ:
+          - if @webhook_endpoints_page > 1
+            | 
+            = link_to "前へ", admin_webhook_endpoints_path(endpoint_filter_params.merge(endpoint_page: @webhook_endpoints_page - 1))
+          | 
+          span.badge = "#{@webhook_endpoints_page} / #{@webhook_endpoints_total_pages}"
+          - if @webhook_endpoints_page < @webhook_endpoints_total_pages
+            | 
+            = link_to "次へ", admin_webhook_endpoints_path(endpoint_filter_params.merge(endpoint_page: @webhook_endpoints_page + 1))
+    - else
+      p.muted 条件に一致するWebhook設定はありません。名称・送信先URL、イベント、状態の条件を見直してください。
   - else
     p.muted まだWebhook設定は登録されていません。
     p.muted 上の「新規登録」で名称、送信先URL、通知対象イベントを設定して最初のWebhookを保存してください。
