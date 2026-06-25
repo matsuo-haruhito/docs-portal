@@ -3,6 +3,10 @@
 module Admin::AccessLogsHelper
   AI_CONTEXT_TARGET_KEYS = %w[mode scope selected_count exported_count].freeze
   AI_CONTEXT_MODE_FILTER_OPTIONS = %w[compact full].freeze
+  AI_CONTEXT_MODE_FILTER_LABELS = {
+    "compact" => "コンパクト",
+    "full" => "詳細"
+  }.freeze
   AI_CONTEXT_SCOPE_FILTER_LABELS = {
     "all" => "全件",
     "selected" => "選択"
@@ -34,7 +38,7 @@ module Admin::AccessLogsHelper
   end
 
   def access_log_ai_context_mode_filter_options
-    AI_CONTEXT_MODE_FILTER_OPTIONS.map { [_1, _1] }
+    AI_CONTEXT_MODE_FILTER_OPTIONS.map { |value| [access_log_ai_context_mode_filter_label(value), value] }
   end
 
   def access_log_ai_context_scope_filter_options
@@ -194,7 +198,7 @@ module Admin::AccessLogsHelper
   def access_log_ai_context_mode_filter_summary(value)
     return if value.blank? || AI_CONTEXT_MODE_FILTER_OPTIONS.exclude?(value.to_s)
 
-    "AI出力モード: #{value}"
+    "AI出力モード: #{access_log_ai_context_mode_filter_label(value)}"
   end
 
   def access_log_ai_context_scope_filter_summary(value)
@@ -228,6 +232,10 @@ module Admin::AccessLogsHelper
     "#{label}: #{date.strftime('%Y-%m-%d')}"
   rescue ArgumentError
     "#{label}: 日付を確認"
+  end
+
+  def access_log_ai_context_mode_filter_label(value)
+    AI_CONTEXT_MODE_FILTER_LABELS.fetch(value.to_s, value.to_s)
   end
 
   def access_log_project_filter_label(project)
