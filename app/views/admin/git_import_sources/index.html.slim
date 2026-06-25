@@ -2,6 +2,14 @@
 - table_key = :admin_git_import_sources
 - table_columns = git_import_source_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- enabled_filter_options = [["すべて", ""], ["有効", "true"], ["無効", "false"]]
+- per_page_options = [[50, 50], [100, 100]]
+- enabled_filter_label = { "true" => "有効", "false" => "無効" }
+- active_filter_summary_items = []
+- active_filter_summary_items << "検索語: #{@query}" if @query.present?
+- active_filter_summary_items << "案件: #{git_import_source_project_option_label(@selected_project)}" if @selected_project.present?
+- active_filter_summary_items << "状態: #{enabled_filter_label.fetch(@selected_enabled)}" if @selected_enabled.present?
+- has_active_filters = active_filter_summary_items.any?
 
 h1 Git連携
 = render "admin/nav"
@@ -9,6 +17,56 @@ h1 Git連携
 .card
   h2 新規登録
   = render "form", git_import_source: @git_import_source
+
+- if @git_import_sources_total_count.positive?
+  .card#git-import-source-filters
+    h2 一覧の絞り込み
+
+    = form_with url: admin_git_import_sources_path(anchor: "git-import-source-filters"), method: :get, local: true, class: "filters" do |form|
+      .form-grid
+        label.form-field
+          span 検索
+          = form.search_field :q, value: @query, placeholder: "repository / branch / path", autocomplete: "off", maxlength: Admin::GitImportSourcesController::GIT_IMPORT_SOURCE_QUERY_MAX_LENGTH
+
+        = form.rfk_combobox :project_id,
+          collection: [],
+          selected: git_import_source_project_selected_option(@selected_project),
+          url: project_search_admin_git_import_sources_path(format: :json),
+          selected_url: selected_project_admin_git_import_sources_path(format: :json),
+          value_field: "value",
+          label_field: "text",
+          search_field: "text",
+          min_length: 1,
+          max_options: Admin::GitImportSourcesController::PROJECT_SEARCH_LIMIT,
+          wrapper: true,
+          label: "案件",
+          placeholder: "案件コード・案件名で検索",
+          allow_clear: true
+
+        label.form-field
+          span 状態
+          = form.select :enabled, options_for_select(enabled_filter_options, @selected_enabled)
+
+        label.form-field
+          span 表示件数
+          = form.select :per_page, options_for_select(per_page_options, @git_import_sources_per_page)
+
+      p.actions.form-actions
+        = form.submit "絞り込み", class: "button"
+        - if has_active_filters || @git_import_sources_per_page != Admin::GitImportSourcesController::GIT_IMPORT_SOURCE_PER_PAGE
+          = link_to "条件をクリア", admin_git_import_sources_path, class: "button secondary"
+
+    p.muted = "検索語は最大#{Admin::GitImportSourcesController::GIT_IMPORT_SOURCE_QUERY_MAX_LENGTH}文字です。repository、branch、取込元 path の断片で探せます。"
+    p.muted 案件 filter は既存の案件 remote search と同じ候補境界を使います。表示設定は列の表示・幅だけを変更し、絞り込みやページ範囲には影響しません。
+
+    - if has_active_filters
+      p.muted = "現在の絞り込み: #{active_filter_summary_items.join(' / ')}"
+
+    p.muted = "検索結果: #{@git_import_sources_filtered_count}件"
+    - if @git_import_sources_filtered_count.positive?
+      p.muted = "表示中: #{@git_import_sources_pagination[:from]}-#{@git_import_sources_pagination[:to]}件 / #{@git_import_sources_filtered_count}件"
+    - else
+      p.muted 表示中: 0件
 
 - if @git_import_sources.any?
   .card
@@ -58,6 +116,23 @@ h1 Git連携
             = button_to "手動同期", sync_admin_git_import_source_path(source), method: :post, class: "button", form: { data: { turbo_confirm: "Git連携設定を手動同期します。案件: #{sync_project_label}、リポジトリ: #{source.repository_full_name}、ブランチ: #{source.branch}、取込元パス: #{sync_source_path}、状態: #{sync_state_label}" } }
             = edit_link_to "編集", edit_admin_git_import_source_path(source)
             = delete_link_to "削除", admin_git_import_source_path(source), confirm: "Git連携設定を削除しますか？"
+
+  - if @git_import_sources_pagination[:total_pages] > 1
+    nav.pagination aria-label="Git連携設定一覧ページ"
+      p.actions
+        - if @git_import_sources_pagination[:prev_page]
+          = link_to "前へ", admin_git_import_sources_path(@git_import_source_page_params.merge(page: @git_import_sources_pagination[:prev_page])), class: "button secondary"
+        span.muted = "#{@git_import_sources_pagination[:page]} / #{@git_import_sources_pagination[:total_pages]}ページ"
+        - if @git_import_sources_pagination[:next_page]
+          = link_to "次へ", admin_git_import_sources_path(@git_import_source_page_params.merge(page: @git_import_sources_pagination[:next_page])), class: "button secondary"
+- elsif @git_import_sources_total_count.positive?
+  .card
+    p.muted 条件に一致するGit連携設定はありません。
+    - if has_active_filters
+      p.muted = "現在の絞り込み: #{active_filter_summary_items.join(' / ')}"
+    p.muted repository、branch、取込元 path、案件、状態の条件を見直すか、すべてのGit連携設定を表示してください。
+    p.actions
+      = link_to "すべてのGit連携設定を見る", admin_git_import_sources_path, class: "button secondary"
 - else
   .card
     p.muted まだGit連携は登録されていません。
