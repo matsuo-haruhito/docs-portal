@@ -47,11 +47,13 @@ RSpec.describe "Admin access log AI context target display", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("AI context export")
-    expect(page_text).to include("mode: full")
-    expect(page_text).to include("scope: 選択")
+    expect(page_text).to include("AI出力モード: 詳細")
+    expect(page_text).to include("AI出力範囲: 選択")
     expect(page_text).to include("選択数: 2件")
     expect(page_text).to include("出力数: 2件")
     expect(page_text).to include("監査用 target_name preview")
+    expect(page_text).not_to include("mode: full")
+    expect(page_text).not_to include("scope: 選択")
     expect(target_cells.first.css("span.badge[title]")).to be_empty
     expect(target_cells.first.at_css("details code").text).to eq("mode=full;scope=selected;selected_count=2;exported_count=2")
   end
