@@ -49,6 +49,26 @@ RSpec.describe "Company master admin handoff source" do
     end
   end
 
+  it "keeps category hints wired to editable fields without adding request routing" do
+    aggregate_failures do
+      expect(view_source).to include('request_hint: "案件の作成、所属追加、担当者の付け替えなど"')
+      expect(view_source).to include('checklist_hint: "案件名、対象ユーザー、必要な役割、担当者変更の有無"')
+      expect(view_source).to include('user_type_hint: "なし"')
+      expect(view_source).to include('request_hint: "ユーザー種別の internal 化、他社ユーザーや他社会社の調整など"')
+      expect(view_source).to include('checklist_hint: "判断してほしい内容、関係する会社・ユーザー、業務背景"')
+      expect(view_source).to include('user_type_hint: "あり"')
+      expect(view_source).to include('request_hint: category[:request_hint]')
+      expect(view_source).to include('checklist_hint: category[:checklist_hint]')
+      expect(view_source).to include('user_type_hint: category[:user_type_hint]')
+      expect(controller_source).to include('this.requestDetailTarget.value = category.dataset.requestHint || ""')
+      expect(controller_source).to include('this.checklistTarget.value = category.dataset.checklistHint || ""')
+      expect(controller_source).to include('this.userTypeTarget.value = category.dataset.userTypeHint || "なし"')
+      expect(view_source).not_to include("mailto:")
+      expect(view_source).not_to include("ticket_url")
+      expect(view_source).not_to include("chat_url")
+    end
+  end
+
   it "keeps category decision cues visible without changing the generated template data contract" do
     aggregate_failures do
       expect(view_source.scan("decision_hint:").size).to eq(4)
@@ -95,9 +115,14 @@ RSpec.describe "Company master admin handoff source" do
       expect(controller_source).to include("selectCategory(event)")
       expect(controller_source).to include("applyCategoryHints(category)")
       expect(controller_source).to include("updateTemplate()")
+      expect(controller_source).to include('`【会社】${this.companyNameValue || "自社会社名"}`')
+      expect(controller_source).to include('`【依頼者】${this.requesterValue || "依頼者名・連絡先"}`')
       expect(controller_source).to include('`【分類】${this.selectedCategoryLabel}`')
       expect(controller_source).to include('`【対象ユーザー】${this.fieldValue("targetUser", "名前 / メールアドレス")}`')
+      expect(controller_source).to include('`【依頼内容】${this.fieldValue("requestDetail", "必要な案件所属、文書権限、アクセス申請など")}`')
       expect(controller_source).to include('`【確認項目】${this.fieldValue("checklist", "internal admin に確認してほしい項目")}`')
+      expect(controller_source).to include('`【user type 変更相談】${this.fieldValue("userType", "あり / なし")}`')
+      expect(controller_source).to include('`【期限・背景】${this.fieldValue("timeline", "理由と希望時期")}`')
     end
   end
 
