@@ -1,5 +1,38 @@
 class DocumentBookmarksController < BaseController
   BOOKMARK_QUERY_MAX_LENGTH = 100
+  SAVED_BOOKMARKS_PER_PAGE = 20
+
+  SavedBookmarkPage = Struct.new(:items, :total_count, :page, :total_pages, :per_page, keyword_init: true) do
+    def any?
+      items.any?
+    end
+
+    def summary_label
+      return "#{total_count}件" if total_count <= per_page
+
+      "#{items.size} / #{total_count}件"
+    end
+
+    def range_label
+      return if total_count <= per_page || items.empty?
+
+      first_item = ((page - 1) * per_page) + 1
+      last_item = first_item + items.size - 1
+      "#{first_item}-#{last_item}件目を表示"
+    end
+
+    def multiple_pages?
+      total_pages > 1
+    end
+
+    def previous_page
+      page - 1 if page > 1
+    end
+
+    def next_page
+      page + 1 if page < total_pages
+    end
+  end
 
   def index
     @bookmark_project_code = params[:project_code].to_s.strip.presence
@@ -10,9 +43,15 @@ class DocumentBookmarksController < BaseController
     @bookmark_search_active = @bookmark_query.present?
     @saved_bookmark_filter_active = @bookmark_project_filter_active || @bookmark_search_active
     @recent_documents_query = recent_documents_query
-    @favorite_bookmarks = bookmarks_for(:favorite)
-    @read_later_bookmarks = bookmarks_for(:read_later)
-    @favorite_bookmark_document_ids = @favorite_bookmarks.map(&:document_id)
+
+    favorite_bookmark_relation = bookmarks_for(:favorite)
+    read_later_bookmark_relation = bookmarks_for(:read_later)
+    @favorite_bookmarks_page = paginate_bookmarks(favorite_bookmark_relation, :favorite_page)
+    @read_later_bookmarks_page = paginate_bookmarks(read_later_bookmark_relation, :read_later_page)
+    @favorite_bookmarks = @favorite_bookmarks_page.items
+    @read_later_bookmarks = @read_later_bookmarks_page.items
+    @favorite_bookmark_document_ids = favorite_bookmark_relation.pluck(:document_id)
+
     @all_recent_documents = RecentDocumentsQuery.new(user: current_user, limit: 20).call
     @recent_documents = filter_recent_documents(@all_recent_documents)
   end
@@ -41,14 +80,14 @@ class DocumentBookmarksController < BaseController
       bookmark.destroy!
     end
 
-    redirect_to_back notice: "お気に入りへ移しました。"
+    redirect_to_back fallback_location: document_bookmarks_path(bookmark_navigation_params), notice: "お気に入りへ移しました。"
   end
 
   def destroy
     bookmark = current_user.document_bookmarks.find_by!(public_id: params[:public_id])
     bookmark.destroy!
 
-    redirect_to_back notice: "文書ショートカットを解除しました。"
+    redirect_to_back fallback_location: document_bookmarks_path(bookmark_navigation_params), notice: "文書ショートカットを解除しました。"
   end
 
   private
@@ -69,6 +108,32 @@ class DocumentBookmarksController < BaseController
     bookmarks = filter_bookmarks_by_query(bookmarks) if @bookmark_search_active
 
     bookmarks.order(created_at: :desc)
+  end
+
+  def paginate_bookmarks(bookmarks, param_name)
+    total_count = bookmarks.count
+    total_pages = total_count.zero? ? 1 : (total_count.to_f / SAVED_BOOKMARKS_PER_PAGE).ceil
+    page = [normalized_page_param(param_name), total_pages].min
+    items = bookmarks.limit(SAVED_BOOKMARKS_PER_PAGE).offset((page - 1) * SAVED_BOOKMARKS_PER_PAGE).to_a
+
+    SavedBookmarkPage.new(
+      items:,
+      total_count:,
+      page:,
+      total_pages:,
+      per_page: SAVED_BOOKMARKS_PER_PAGE
+    )
+  end
+
+  def normalized_page_param(param_name)
+    value = Integer(params[param_name], exception: false)
+    return 1 unless value&.positive?
+
+    value
+  end
+
+  def bookmark_navigation_params
+    params.permit(:project_code, :bookmark_q, :recent_q, :favorite_page, :read_later_page).to_h.compact_blank
   end
 
   def filter_bookmarks_by_query(bookmarks)
