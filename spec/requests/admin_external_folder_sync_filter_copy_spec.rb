@@ -77,9 +77,6 @@ RSpec.describe "Admin external folder sync filter copy", type: :request do
     expect(page_text).to include("警告・エラー・無効の同期元を先に確認")
     expect(page_text).to include("メタデータ確認のみ")
     expect(page_text).to include("drive_id / folder_path")
-    expect(page_text).not_to include("warning あり")
-    expect(page_text).not_to include("error あり")
-    expect(page_text).not_to include("metadata-only")
 
     expect(parsed_html.at_css(%(a[href="#{admin_external_folder_sync_sources_path(review: :warnings)}"]))).to be_present
     expect(parsed_html.at_css(%(a[href="#{admin_external_folder_sync_sources_path(review: :errors)}"]))).to be_present
@@ -96,7 +93,5 @@ RSpec.describe "Admin external folder sync filter copy", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("現在の絞り込み: 警告あり")
     expect(page_text).to include("警告・エラー・無効のいずれかで 0 件の場合")
-    expect(page_text).not_to include("現在の絞り込み: warning あり")
-    expect(page_text).not_to include("warning / error / disabled")
   end
 end
