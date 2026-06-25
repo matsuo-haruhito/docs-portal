@@ -134,7 +134,7 @@ active filter がある状態で 0 件になった場合は、未登録状態で
 
 再試行導線は 2 種類あります。
 
-- member の `retry_dispatch`: 対象 event 1 件の `status` を `pending` に戻し、`scheduled_at` を現在時刻へ寄せ、`error_message` と `processed_at` をクリアしたうえで `GeneratedFileEventDispatchJob` を enqueue します。画面上の行 action は `このイベントを再投入` と表示され、button の `title` / `aria-label` には対象 event public ID を含む再dispatch cue が入ります
+- member の `retry_dispatch`: 対象 event 1 件の `status` を `pending` に戻し、`scheduled_at` を現在時刻へ寄せ、`error_message` と `processed_at` をクリアしたうえで `GeneratedFileEventDispatchJob` を enqueue します。画面上の行 action は `このイベントを再投入` と表示され、button の `title` / `aria-label` には対象 event public ID を含む `再投入キューに投入` cue が入ります
 - collection の `retry_failed`: 現在の filter を適用した failed event を古い順に最大 100 件まで同じように `pending` へ戻し、対象が 1 件以上あるときだけ `GeneratedFileEventDispatchJob` を enqueue します。画面上の一括操作は `失敗分を一括再投入` と表示されます
 
 一覧上部の `現在の条件で再投入対象: N 件` は、画面に表示中の行数ではなく、current filter に一致する failed event のうち、古い順で今回 pending に戻せる最大 100 件の数として読みます。`status=processed` や `status=pending` など failed 以外の status filter が残っている場合、一括再投入対象は 0 件になります。`scheduled_from` / `scheduled_to` に不正な日時がある場合は warning が出て、その日時条件は適用されず、残っている有効な条件だけで対象件数が計算されます。warning が意図しない場合は日付を直し、path / q は 100 文字上限と `/` 区切りへの正規化後の条件で対象件数を読み直してから実行します。
