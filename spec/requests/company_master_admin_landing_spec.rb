@@ -24,6 +24,7 @@ RSpec.describe "Company master admin landing", type: :request do
     copy_status = handoff_section.at_css("#company-master-admin-handoff-status[role='status'][aria-live='polite']")
     handoff_template = handoff_section.at_css("textarea.company-master-admin-handoff-template[data-company-master-admin-handoff-target='template']")
     handoff_categories = handoff_section.css("input[name='company_master_admin_handoff_category'][data-company-master-admin-handoff-target='category']")
+    admin_decision_category = handoff_categories.find { |category| category["value"] == "admin_decision" }
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("company_master_admin が /admin から最初に確認する、会社・ユーザー管理専用の入口です")
@@ -62,6 +63,20 @@ RSpec.describe "Company master admin landing", type: :request do
       "運用確認",
       "管理者判断"
     )
+    expect(handoff_categories.map { |category| category["data-request-hint"] }).to include(
+      "案件の作成、所属追加、担当者の付け替えなど",
+      "文書管理、閲覧範囲、文書公開権限の調整など",
+      "監査ログ、利用状況、アクセス申請の確認など",
+      "ユーザー種別の internal 化、他社ユーザーや他社会社の調整など"
+    )
+    expect(handoff_categories.map { |category| category["data-checklist-hint"] }).to include(
+      "案件名、対象ユーザー、必要な役割、担当者変更の有無",
+      "文書名、必要な閲覧範囲、公開権限、対象ユーザー",
+      "確認したい期間、対象操作、アクセス申請の状態",
+      "判断してほしい内容、関係する会社・ユーザー、業務背景"
+    )
+    expect(admin_decision_category["data-user-type-hint"]).to eq("あり")
+    expect(handoff_categories.reject { |category| category == admin_decision_category }.map { |category| category["data-user-type-hint"] }).to all(eq("なし"))
 
     expect(action_targets).to include(admin_companies_path, admin_users_path)
     expect(action_targets).not_to include(
