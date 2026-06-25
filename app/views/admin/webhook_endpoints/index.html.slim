@@ -126,7 +126,7 @@ h1 Webhook
         p.actions
           = link_to "すべての送信履歴へ戻す", admin_webhook_endpoints_path, class: "button secondary"
     - else
-      p.muted = "表示範囲: #{webhook_delivery_status_filter_label(@delivery_status_filter)} #{recent_deliveries_total_count}件中#{recent_deliveries_display_count}件を表示しています。#{recent_deliveries_total_count > recent_deliveries_limit ? "50件外の履歴は詳細条件を決めて後続 slice で探索導線を追加します。送信履歴検索では endpoint / event / status / 作成日を指定して確認できます。" : ""}"
+      p.muted = "表示範囲: #{webhook_delivery_status_filter_label(@delivery_status_filter)} #{recent_deliveries_total_count}件中#{recent_deliveries_display_count}件を表示しています。#{recent_deliveries_total_count > recent_deliveries_limit ? "50件より前の履歴は、送信履歴検索でWebhook設定・イベント・ステータス・作成日を指定して確認できます。" : ""}"
   - else
     p.muted まだ送信履歴はありません。
     p.muted Webhookを保存して通知対象イベントが発生すると、成功/失敗やHTTPステータスをここで確認できます。
