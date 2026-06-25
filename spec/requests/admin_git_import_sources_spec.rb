@@ -48,6 +48,113 @@ RSpec.describe "Admin git import sources", type: :request do
     expect(page_text).to include("GitHub App picker は未実装のため、現在は値を直接入力します。")
   end
 
+  it "filters the source list by repository, branch, and source path fragments" do
+    project = create(:project, code: "GIT001", name: "Main Docs")
+    create(
+      :git_import_source,
+      project:,
+      repository_full_name: "example/alpha-docs",
+      branch: "release/main",
+      source_path: "docs/current"
+    )
+    create(
+      :git_import_source,
+      project:,
+      repository_full_name: "example/beta-docs",
+      branch: "preview",
+      source_path: "archive/content"
+    )
+
+    get admin_git_import_sources_path, params: { q: "ALPHA" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("example/alpha-docs")
+    expect(page_text).not_to include("example/beta-docs")
+    expect(page_text).to include("現在の絞り込み: 検索語: ALPHA")
+    expect(page_text).to include("検索結果: 1件")
+
+    get admin_git_import_sources_path, params: { q: "release/main" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("example/alpha-docs")
+    expect(page_text).not_to include("example/beta-docs")
+
+    get admin_git_import_sources_path, params: { q: "archive/content" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("example/beta-docs")
+    expect(page_text).not_to include("example/alpha-docs")
+  end
+
+  it "filters the source list by project and enabled state" do
+    target_project = create(:project, code: "GIT001", name: "Target Docs")
+    other_project = create(:project, code: "GIT002", name: "Other Docs")
+    create(
+      :git_import_source,
+      project: target_project,
+      repository_full_name: "example/enabled-docs",
+      enabled: true
+    )
+    create(
+      :git_import_source,
+      project: target_project,
+      repository_full_name: "example/disabled-docs",
+      enabled: false
+    )
+    create(
+      :git_import_source,
+      project: other_project,
+      repository_full_name: "example/other-docs",
+      enabled: false
+    )
+
+    get admin_git_import_sources_path, params: { project_id: target_project.id, enabled: "false" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("example/disabled-docs")
+    expect(page_text).not_to include("example/enabled-docs")
+    expect(page_text).not_to include("example/other-docs")
+    expect(page_text).to include("現在の絞り込み: 案件: GIT001 / Target Docs / 状態: 無効")
+    expect(page_text).to include("検索結果: 1件")
+  end
+
+  it "keeps filters while moving between bounded list pages" do
+    project = create(:project, code: "PAGE", name: "Paged Project")
+    55.times do |index|
+      create(
+        :git_import_source,
+        project:,
+        repository_full_name: format("example/page-docs-%02d", index),
+        branch: "main",
+        source_path: "docs",
+        enabled: true
+      )
+    end
+    create(:git_import_source, repository_full_name: "example/other-docs")
+
+    get admin_git_import_sources_path, params: { q: "page-docs", page: 2 }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 51-55件 / 55件")
+    expect(page_text).to include("2 / 2ページ")
+    expect(page_text).to include("example/page-docs-50")
+    expect(page_text).not_to include("example/page-docs-49")
+    expect(page_text).not_to include("example/other-docs")
+    expect(response.body).to include("q=page-docs")
+  end
+
+  it "separates a filtered empty result from the unregistered empty state" do
+    project = create(:project, code: "GIT001", name: "Main Docs")
+    create(:git_import_source, project:, repository_full_name: "example/main-docs")
+
+    get admin_git_import_sources_path, params: { q: "missing-repository" }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("条件に一致するGit連携設定はありません。")
+    expect(page_text).to include("すべてのGit連携設定を見る")
+    expect(page_text).not_to include("まだGit連携は登録されていません。")
+  end
+
   it "shows the target project and sync destination in manual sync confirmations" do
     active_project = create(:project, code: "GIT001", name: "Main Docs")
     disabled_project = create(:project, code: "GIT002", name: "Archive Docs")
