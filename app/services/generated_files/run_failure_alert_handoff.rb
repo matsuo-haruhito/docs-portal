@@ -1,8 +1,11 @@
 module GeneratedFiles
   class RunFailureAlertHandoff
     FAILED_RUNS_PATH = "/admin/generated_file_runs?status=failed"
+    FAILED_RUNS_BASE_PATH = "/admin/generated_file_runs"
     RUNBOOK_PATH = "docs/生成ファイル継続失敗候補runbook.md"
     DEFAULT_ERROR_MESSAGE_MAX_LENGTH = 160
+    TOKEN_LIKE_PATTERN = /\b(token|secret|password|api[_-]?key|authorization)=\S+/i
+    PRIVATE_PATH_PATTERN = %r{(?<![A-Za-z0-9])/(?:home|Users|var|tmp|workspace|app|srv|etc)/[^\s,;]+}
 
     Entry = Data.define(
       :identity,
@@ -16,6 +19,7 @@ module GeneratedFiles
       def generator = identity[:generator]
       def output_writer = identity[:output_writer]
       def event_source = identity[:event_source]
+      def filtered_failed_runs_path = RunFailureAlertHandoff.filtered_failed_runs_path(identity)
 
       def to_h
         {
@@ -27,6 +31,53 @@ module GeneratedFiles
           runbook_path: runbook_path
         }
       end
+    end
+
+    def self.markdown(entries)
+      lines = [
+        "## 生成ファイル継続失敗候補 digest",
+        "",
+        "通知・ack・SLA・自動 retry の状態ではない read-only preview です。",
+        ""
+      ]
+
+      if entries.empty?
+        lines << "候補 0 件です。現在の抽出条件で通知前に渡す対象はありません。正常保証、通知済み、ack 済み、自動 retry 済みを意味しません。"
+      else
+        entries.each do |entry|
+          lines << "- identity: #{identity_label(entry.identity)}"
+          lines << "  - consecutive_failures: #{entry.failure_count}"
+          lines << "  - last_failed_at: #{entry.last_failed_at&.iso8601 || '-'}"
+          lines << "  - error_preview: #{entry.latest_error_message.presence || '-'}"
+          lines << "  - failed_runs_path: #{entry.filtered_failed_runs_path}"
+          lines << "  - runbook_path: #{entry.runbook_path}"
+        end
+      end
+
+      lines << ""
+      lines << "Runbook: #{RUNBOOK_PATH}"
+      lines.join("\n")
+    end
+
+    def self.filtered_failed_runs_path(identity)
+      params = {
+        status: "failed",
+        job_id: identity[:job_id].presence,
+        generator: identity[:generator].presence,
+        output_writer: identity[:output_writer].presence,
+        event_source: identity[:event_source].presence
+      }.compact
+
+      "#{FAILED_RUNS_BASE_PATH}?#{params.to_query}"
+    end
+
+    def self.identity_label(identity)
+      [
+        "job_id=#{identity.fetch(:job_id).presence || '-'}",
+        ("generator=#{identity[:generator]}" if identity[:generator].present?),
+        ("output_writer=#{identity[:output_writer]}" if identity[:output_writer].present?),
+        ("event_source=#{identity[:event_source]}" if identity[:event_source].present?)
+      ].compact.join(" / ")
     end
 
     def initialize(
@@ -74,7 +125,12 @@ module GeneratedFiles
     def error_message_preview(message)
       return if message.blank?
 
-      message.to_s.squish.truncate(error_message_max_length, omission: "...")
+      sanitized_message = message.to_s
+        .squish
+        .gsub(TOKEN_LIKE_PATTERN) { "#{$1}=[FILTERED]" }
+        .gsub(PRIVATE_PATH_PATTERN, "[path omitted]")
+
+      sanitized_message.truncate(error_message_max_length, omission: "...")
     end
   end
 end
