@@ -193,8 +193,11 @@ RSpec.describe "Admin access logs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(log_target_names).to eq(["mode=compact;scope=selected;selected_count=2;exported_count=2"])
-    expect(parsed_html.at_css('select[name="ai_context_mode"] option[value="compact"][selected]').text).to eq("compact")
-    expect(page_text).to include("AI出力モード: compact")
+    selected_option = parsed_html.at_css('select[name="ai_context_mode"] option[value="compact"][selected]')
+    expect(selected_option.text).to eq("コンパクト")
+    expect(selected_option["value"]).to eq("compact")
+    expect(page_text).to include("AI出力モード: コンパクト")
+    expect(page_text).not_to include("AI出力モード: compact")
   end
 
   it "filters AI context export access logs by scope with existing filters" do
