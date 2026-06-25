@@ -19,7 +19,7 @@
     li 対象案件で有効な Microsoft Graph 接続を先に登録する
     li 共有URLを入力し、接続方式で「Microsoft Graph接続」を選ぶ
     li 保存時に Drive ID / folder item ID / folder path / site ID を自動解決する
-    li 差分同期と変更通知は後続 issue で拡張する
+    li 差分同期と変更通知はこの画面ではまだ実行できません
   p.muted
     | 公式画面のスクリーンショットは変わりやすいため、この画面では必要な作業だけを案内します。外部サービス側の画面では、表示された権限内容を確認して許可してください。
   p.actions
@@ -86,7 +86,7 @@
       = form.text_area :auth_config, value: nil, rows: 10, placeholder: external_folder_sync_source.persisted? ? "サービスアカウントJSON変更時のみ入力。OAuthユーザー方式や Microsoft Graph接続 の場合は空で保存してください。" : "サービスアカウント方式を使う場合のみ貼り付け。OAuthユーザー方式や Microsoft Graph接続 の場合は空で保存してください。"
     p.muted サービスアカウント方式は Google Drive でのみ利用します。SharePoint / OneDrive の認証情報は Microsoft Graph 接続側で管理します。
 
-  p.muted Google Drive は同期プレビューと同期実行まで利用できます。SharePoint / OneDrive は first slice として共有URLからの metadata 保存まで利用でき、差分同期本体は後続 issue で拡張します。
+  p.muted Google Drive は同期プレビューと同期実行まで利用できます。SharePoint / OneDrive は共有URLからの metadata 保存まで利用でき、差分同期本体と変更通知はこの画面ではまだ実行できません。
   p.actions
     = form.submit "設定を保存", class: "button"
     - if external_folder_sync_source.persisted?
