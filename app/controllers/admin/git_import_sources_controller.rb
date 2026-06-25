@@ -2,11 +2,14 @@ class Admin::GitImportSourcesController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_git_import_source, only: %i[edit update destroy sync]
 
+  GIT_IMPORT_SOURCE_QUERY_MAX_LENGTH = 100
+  GIT_IMPORT_SOURCE_PER_PAGE = 50
+  GIT_IMPORT_SOURCE_MAX_PER_PAGE = 100
   PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
   PROJECT_SEARCH_LIMIT = 20
 
   def index
-    @git_import_sources = git_import_sources_scope
+    load_index_state
     @git_import_source = GitImportSource.new(branch: "main", source_path: "docs", auth_type: :github_app, enabled: true)
   end
 
@@ -17,7 +20,7 @@ class Admin::GitImportSourcesController < Admin::BaseController
     if @git_import_source.save
       redirect_to admin_git_import_sources_path, notice: "Git連携設定を登録しました。"
     else
-      @git_import_sources = git_import_sources_scope
+      load_index_state
       render :index, status: :unprocessable_entity
     end
   end
@@ -64,8 +67,100 @@ class Admin::GitImportSourcesController < Admin::BaseController
     @git_import_source = GitImportSource.find_by!(public_id: params[:public_id])
   end
 
+  def load_index_state
+    @query = normalize_git_import_source_query(params[:q])
+    @selected_project = selected_filter_project
+    @selected_project_id = @selected_project&.id
+    @selected_enabled = normalize_enabled_filter(params[:enabled])
+    @git_import_sources_per_page = normalize_per_page(params[:per_page])
+    @git_import_source_page_params = {
+      q: @query.presence,
+      project_id: @selected_project_id,
+      enabled: @selected_enabled.presence,
+      per_page: (@git_import_sources_per_page == GIT_IMPORT_SOURCE_PER_PAGE ? nil : @git_import_sources_per_page)
+    }.compact
+
+    base_scope = git_import_sources_scope
+    @git_import_sources_total_count = base_scope.count
+    filtered_scope = filter_git_import_sources_scope(base_scope)
+    @git_import_sources_filtered_count = filtered_scope.count
+    @git_import_sources_page = normalized_page(params[:page], @git_import_sources_filtered_count, @git_import_sources_per_page)
+    @git_import_sources_pagination = pagination_metadata(
+      page: @git_import_sources_page,
+      per_page: @git_import_sources_per_page,
+      filtered_count: @git_import_sources_filtered_count
+    )
+    @git_import_sources = filtered_scope
+      .offset(@git_import_sources_pagination[:offset])
+      .limit(@git_import_sources_per_page)
+  end
+
   def git_import_sources_scope
     GitImportSource.includes(:project, :created_by).order(:repository_full_name, :branch, :source_path)
+  end
+
+  def filter_git_import_sources_scope(scope)
+    filtered = scope
+    filtered = apply_git_import_source_query_filter(filtered)
+    filtered = filtered.where(project_id: @selected_project_id) if @selected_project_id.present?
+    filtered = filtered.where(enabled: @selected_enabled == "true") if @selected_enabled.present?
+    filtered
+  end
+
+  def apply_git_import_source_query_filter(scope)
+    return scope if @query.blank?
+
+    pattern = "%#{ActiveRecord::Base.sanitize_sql_like(@query.downcase)}%"
+    scope.where(
+      <<~SQL.squish,
+        LOWER(git_import_sources.repository_full_name) LIKE :pattern OR
+        LOWER(git_import_sources.branch) LIKE :pattern OR
+        LOWER(git_import_sources.source_path) LIKE :pattern
+      SQL
+      pattern:
+    )
+  end
+
+  def selected_filter_project
+    Project.find_by(id: params[:project_id]) if params[:project_id].present?
+  end
+
+  def normalize_git_import_source_query(query)
+    query.to_s.squish.first(GIT_IMPORT_SOURCE_QUERY_MAX_LENGTH).presence
+  end
+
+  def normalize_enabled_filter(value)
+    value.to_s.presence_in(%w[true false])
+  end
+
+  def normalize_per_page(value)
+    per_page = value.to_i
+    per_page = GIT_IMPORT_SOURCE_PER_PAGE unless per_page.positive?
+    [per_page, GIT_IMPORT_SOURCE_MAX_PER_PAGE].min
+  end
+
+  def normalized_page(value, filtered_count, per_page)
+    page = value.to_i
+    page = 1 unless page.positive?
+    total_pages = [(filtered_count.to_f / per_page).ceil, 1].max
+    [page, total_pages].min
+  end
+
+  def pagination_metadata(page:, per_page:, filtered_count:)
+    total_pages = [(filtered_count.to_f / per_page).ceil, 1].max
+    offset = (page - 1) * per_page
+    displayed_count = [filtered_count - offset, per_page].min.clamp(0, per_page)
+
+    {
+      page:,
+      per_page:,
+      offset:,
+      total_pages:,
+      from: displayed_count.positive? ? offset + 1 : 0,
+      to: displayed_count.positive? ? offset + displayed_count : 0,
+      prev_page: (page > 1 ? page - 1 : nil),
+      next_page: (page < total_pages ? page + 1 : nil)
+    }
   end
 
   def searchable_projects
