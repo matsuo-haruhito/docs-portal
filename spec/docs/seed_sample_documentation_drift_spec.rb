@@ -80,9 +80,9 @@ RSpec.describe "standard seed sample documentation drift" do
 
     aggregate_failures do
       expect(checklist).to include("viewer / preview / download")
-      expect(checklist).to include("current と旧版の切り替え")
+      expect(checklist).to include("current の `README.md` と旧版 `提出済/README.md`")
       expect(checklist).to include("ZIP preview")
-      expect(checklist).to include("Excel preview")
+      expect(checklist).to include("Office preview")
     end
   end
 
