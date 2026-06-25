@@ -18,7 +18,7 @@ RSpec.describe "Admin dashboard generated file failure digest", type: :request d
         status: :failed,
         started_at: started_at,
         finished_at: started_at + 1.minute,
-        error_message: index.zero? ? "token=raw-secret failed at /var/private/generated/output.json" : "older failure"
+        error_message: index.zero? ? "Authorization: Bearer raw-bearer secret: raw-secret api_key=raw-api failed at /var/private/generated/output.json" : "older failure"
       )
     end
 
@@ -39,9 +39,13 @@ RSpec.describe "Admin dashboard generated file failure digest", type: :request d
     expect(digest.text).to include("job_id=docs-build")
     expect(digest.text).to include("event_source=schedule")
     expect(digest.text).not_to include("output_writer=")
-    expect(digest.text).to include("token=[FILTERED]")
+    expect(digest.text).to include("Authorization: Bearer [FILTERED]")
+    expect(digest.text).to include("secret:[FILTERED]")
+    expect(digest.text).to include("api_key=[FILTERED]")
     expect(digest.text).to include("[path omitted]")
+    expect(digest.text).not_to include("raw-bearer")
     expect(digest.text).not_to include("raw-secret")
+    expect(digest.text).not_to include("raw-api")
     expect(digest.text).not_to include("/var/private/generated/output.json")
   end
 end

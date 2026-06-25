@@ -39,17 +39,37 @@ RSpec.describe "Generated file run failure alert handoff markdown" do
   it "does not expose raw token-like values or private paths in the digest" do
     create_run(
       status: :failed,
-      error_message: "token=raw-secret failed at /var/private/generated/output.json",
+      error_message: "Authorization: Bearer raw-bearer secret: raw-secret api_key=raw-api failed at /var/private/generated/output.json",
       started_at: 1.hour.ago
     )
 
     entries = GeneratedFiles::RunFailureAlertHandoff.new(threshold: 1).call
     markdown = GeneratedFiles::RunFailureAlertHandoff.markdown(entries)
 
-    expect(markdown).to include("token=[FILTERED]")
+    expect(markdown).to include("Authorization: Bearer [FILTERED]")
+    expect(markdown).to include("secret:[FILTERED]")
+    expect(markdown).to include("api_key=[FILTERED]")
     expect(markdown).to include("[path omitted]")
+    expect(markdown).not_to include("raw-bearer")
     expect(markdown).not_to include("raw-secret")
+    expect(markdown).not_to include("raw-api")
     expect(markdown).not_to include("/var/private/generated/output.json")
+  end
+
+  it "filters bare authorization scheme values in error previews" do
+    create_run(
+      status: :failed,
+      error_message: "Basic raw-basic-token failed after Bearer raw-bearer-token",
+      started_at: 1.hour.ago
+    )
+
+    entries = GeneratedFiles::RunFailureAlertHandoff.new(threshold: 1).call
+    markdown = GeneratedFiles::RunFailureAlertHandoff.markdown(entries)
+
+    expect(markdown).to include("Basic [FILTERED]")
+    expect(markdown).to include("Bearer [FILTERED]")
+    expect(markdown).not_to include("raw-basic-token")
+    expect(markdown).not_to include("raw-bearer-token")
   end
 
   def create_run(status:, job_id: "docs-build", generator: "docusaurus", output_writer: "filesystem", event_source: "schedule", started_at:, error_message: "boom")

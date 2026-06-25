@@ -4,7 +4,10 @@ module GeneratedFiles
     FAILED_RUNS_BASE_PATH = "/admin/generated_file_runs"
     RUNBOOK_PATH = "docs/生成ファイル継続失敗候補runbook.md"
     DEFAULT_ERROR_MESSAGE_MAX_LENGTH = 160
-    TOKEN_LIKE_PATTERN = /\b(token|secret|password|api[_-]?key|authorization)=\S+/i
+    FILTERED_VALUE = "[FILTERED]"
+    SECRET_LIKE_KEY_PATTERN = /\b(token|access_token|refresh_token|secret|client_secret|api[_-]?key|authorization|password)\b\s*([=:])\s*([^&\s,;]+)/i
+    AUTHORIZATION_VALUE_PATTERN = /\b(Authorization)\s*:\s*(Bearer|Basic)\s+[^,\s;]+/i
+    AUTH_SCHEME_VALUE_PATTERN = /\b(Bearer|Basic)\s+[^,\s;]+/i
     PRIVATE_PATH_PATTERN = %r{(?<![A-Za-z0-9])/(?:home|Users|var|tmp|workspace|app|srv|etc)/[^\s,;]+}
 
     Entry = Data.define(
@@ -125,12 +128,15 @@ module GeneratedFiles
     def error_message_preview(message)
       return if message.blank?
 
-      sanitized_message = message.to_s
-        .squish
-        .gsub(TOKEN_LIKE_PATTERN) { "#{$1}=[FILTERED]" }
-        .gsub(PRIVATE_PATH_PATTERN, "[path omitted]")
+      mask_sensitive_error_message(message).squish.truncate(error_message_max_length, omission: "...")
+    end
 
-      sanitized_message.truncate(error_message_max_length, omission: "...")
+    def mask_sensitive_error_message(message)
+      message.to_s
+        .gsub(AUTHORIZATION_VALUE_PATTERN) { "#{$1}: #{$2} #{FILTERED_VALUE}" }
+        .gsub(AUTH_SCHEME_VALUE_PATTERN) { "#{$1} #{FILTERED_VALUE}" }
+        .gsub(SECRET_LIKE_KEY_PATTERN) { "#{$1}#{$2}#{FILTERED_VALUE}" }
+        .gsub(PRIVATE_PATH_PATTERN, "[path omitted]")
     end
   end
 end
