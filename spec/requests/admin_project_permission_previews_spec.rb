@@ -54,6 +54,37 @@ RSpec.describe "Admin project permission previews", type: :request do
     expect(viewer_hash.fetch("gained_documents")).to be_empty
   end
 
+  it "does not persist membership or document permission changes while previewing" do
+    visible = create(:document, project:, title: "Visible", slug: "visible")
+    downloadable = create(:document, project:, title: "Downloadable", slug: "downloadable")
+    internal_only = create(:document, project:, title: "Internal", slug: "internal", visibility_policy: :internal_only)
+    membership = create(:project_membership, project:, user: viewer)
+    view_permission = create(:document_permission, document: visible, company:, access_level: :view)
+    download_permission = create(:document_permission, document: downloadable, company:, access_level: :download)
+    membership_count = ProjectMembership.count
+    permission_count = DocumentPermission.count
+
+    sign_in_as(admin_user)
+
+    get permission_preview_admin_project_path(project), params: {
+      company_ids: [company.id],
+      grant_document_ids: [internal_only.id],
+      revoke_document_ids: [visible.id],
+      grant_download_document_ids: [internal_only.id],
+      revoke_download_document_ids: [downloadable.id],
+      grant_project_membership: "1",
+      revoke_project_membership: "1"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(ProjectMembership.count).to eq(membership_count)
+    expect(DocumentPermission.count).to eq(permission_count)
+    expect(membership.reload).to be_persisted
+    expect(view_permission.reload).to have_attributes(access_level: "view")
+    expect(download_permission.reload).to have_attributes(access_level: "download")
+    expect(DocumentPermission.exists?(document: internal_only, company:)).to be(false)
+  end
+
   it "deduplicates user and company viewers while ignoring invalid ids and inactive users" do
     company_peer = create(:user, :external, company:, email_address: "peer@example.com")
     direct_user = create(:user, :external, email_address: "direct@example.com")
