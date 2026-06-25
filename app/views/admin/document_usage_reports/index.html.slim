@@ -11,14 +11,21 @@ section.card
   h2 集計条件
   = form_with url: admin_document_usage_reports_path, method: :get, local: true do |form|
     .form-grid
-      = form.rfk_select :project_id,
+      = form.rfk_combobox :project_id,
         collection: @projects.map { [document_usage_report_project_option_label(_1), _1.id] },
+        selected: document_usage_report_project_selected_option(@selected_project),
+        url: project_search_admin_document_usage_reports_path(format: :json),
+        selected_url: selected_project_admin_document_usage_reports_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: Admin::DocumentUsageReportsController::PROJECT_SEARCH_LIMIT,
         wrapper: true,
         label: "案件",
-        placeholder: "案件を選択",
+        placeholder: "案件コード・案件名で検索",
         include_blank: "選択してください",
-        allow_clear: true,
-        selected: @selected_project&.id
+        allow_clear: true
       = label_tag :q do
         | 文書名 / slug
         = search_field_tag :q, @query, placeholder: "文書名またはslugで検索", maxlength: Admin::DocumentUsageReportsController::DOCUMENT_USAGE_QUERY_MAX_LENGTH
