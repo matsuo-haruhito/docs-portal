@@ -1,6 +1,8 @@
 <% page_title "文書ショートカット" %>
 <% bookmark_project_filter_label = @selected_bookmark_project&.name || @bookmark_project_code %>
-<% recent_clear_params = { project_code: @bookmark_project_code, bookmark_q: @bookmark_query.presence }.compact %>
+<% saved_bookmark_params = { project_code: @bookmark_project_code, bookmark_q: @bookmark_query.presence, recent_q: @recent_documents_query.presence }.compact %>
+<% recent_clear_params = saved_bookmark_params.except(:recent_q).merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.page).compact %>
+<% current_bookmark_params = saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.page).compact %>
 
 <h1>文書ショートカット</h1>
 <p class="muted">お気に入り、後で読む、最近見た文書を最低限の一覧で表示します。</p>
@@ -46,13 +48,16 @@
   <% end %>
 </section>
 
-<section class="card">
-  <h2>お気に入り <span class="muted"><%= @favorite_bookmarks.size %>件</span></h2>
+<section class="card" id="favorite-bookmarks">
+  <h2>お気に入り <span class="muted"><%= @favorite_bookmarks_page.summary_label %></span></h2>
   <p class="muted">よく開く文書をここからすぐ確認できます。後で読むにも同じ文書を残して、一時保留と継続参照を分けられます。</p>
+  <% if @favorite_bookmarks_page.range_label %>
+    <p class="muted"><span class="badge"><%= @favorite_bookmarks_page.range_label %></span> 条件一致 <%= @favorite_bookmarks_page.total_count %>件のうち、最大 <%= @favorite_bookmarks_page.per_page %>件ずつ表示します。</p>
+  <% end %>
   <% if @saved_bookmark_filter_active %>
     <p class="muted"><span class="badge">保存済み条件が適用中</span> この一覧は上の案件・検索語で絞り込んだお気に入りです。最近見た条件はここには効きません。</p>
   <% end %>
-  <% if @favorite_bookmarks.any? %>
+  <% if @favorite_bookmarks_page.any? %>
     <ul class="resource-list">
       <% @favorite_bookmarks.each do |bookmark| %>
         <li class="resource-list__item">
@@ -64,11 +69,22 @@
             </div>
           </div>
           <div class="resource-list__actions">
-            <%= button_to "解除", document_bookmark_path(bookmark), method: :delete, class: "button secondary" %>
+            <%= button_to "解除", document_bookmark_path(bookmark, current_bookmark_params), method: :delete, class: "button secondary" %>
           </div>
         </li>
       <% end %>
     </ul>
+    <% if @favorite_bookmarks_page.multiple_pages? %>
+      <nav class="pagination" aria-label="お気に入りのページ移動">
+        <% if @favorite_bookmarks_page.previous_page %>
+          <%= link_to "前へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.previous_page, read_later_page: @read_later_bookmarks_page.page, anchor: "favorite-bookmarks")), class: "button secondary" %>
+        <% end %>
+        <span class="muted">お気に入り <%= @favorite_bookmarks_page.page %> / <%= @favorite_bookmarks_page.total_pages %> ページ</span>
+        <% if @favorite_bookmarks_page.next_page %>
+          <%= link_to "次へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.next_page, read_later_page: @read_later_bookmarks_page.page, anchor: "favorite-bookmarks")), class: "button secondary" %>
+        <% end %>
+      </nav>
+    <% end %>
   <% else %>
     <% if @bookmark_search_active %>
       <p class="muted">保存済みショートカット検索「<%= @bookmark_query %>」に一致するお気に入りはありません。</p>
@@ -80,13 +96,16 @@
   <% end %>
 </section>
 
-<section class="card">
-  <h2>後で読む <span class="muted"><%= @read_later_bookmarks.size %>件</span></h2>
+<section class="card" id="read-later-bookmarks">
+  <h2>後で読む <span class="muted"><%= @read_later_bookmarks_page.summary_label %></span></h2>
   <p class="muted">あとで確認したい文書を一時的に集めておけます。お気に入りに移動すると、この一覧からは外れます。</p>
+  <% if @read_later_bookmarks_page.range_label %>
+    <p class="muted"><span class="badge"><%= @read_later_bookmarks_page.range_label %></span> 条件一致 <%= @read_later_bookmarks_page.total_count %>件のうち、最大 <%= @read_later_bookmarks_page.per_page %>件ずつ表示します。</p>
+  <% end %>
   <% if @saved_bookmark_filter_active %>
     <p class="muted"><span class="badge">保存済み条件が適用中</span> この一覧は上の案件・検索語で絞り込んだ後で読む文書です。最近見た条件はここには効きません。</p>
   <% end %>
-  <% if @read_later_bookmarks.any? %>
+  <% if @read_later_bookmarks_page.any? %>
     <ul class="resource-list">
       <% @read_later_bookmarks.each do |bookmark| %>
         <% also_favorite = @favorite_bookmark_document_ids.include?(bookmark.document_id) %>
@@ -106,12 +125,23 @@
             <% if also_favorite %>
               <p class="muted">移すと後で読むから外れ、お気に入りだけに残ります。</p>
             <% end %>
-            <%= button_to "お気に入りへ移す", move_to_favorite_document_bookmark_path(bookmark), method: :post, class: "button" %>
-            <%= button_to "解除", document_bookmark_path(bookmark), method: :delete, class: "button secondary" %>
+            <%= button_to "お気に入りへ移す", move_to_favorite_document_bookmark_path(bookmark, current_bookmark_params), method: :post, class: "button" %>
+            <%= button_to "解除", document_bookmark_path(bookmark, current_bookmark_params), method: :delete, class: "button secondary" %>
           </div>
         </li>
       <% end %>
     </ul>
+    <% if @read_later_bookmarks_page.multiple_pages? %>
+      <nav class="pagination" aria-label="後で読むのページ移動">
+        <% if @read_later_bookmarks_page.previous_page %>
+          <%= link_to "前へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.previous_page, anchor: "read-later-bookmarks")), class: "button secondary" %>
+        <% end %>
+        <span class="muted">後で読む <%= @read_later_bookmarks_page.page %> / <%= @read_later_bookmarks_page.total_pages %> ページ</span>
+        <% if @read_later_bookmarks_page.next_page %>
+          <%= link_to "次へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.next_page, anchor: "read-later-bookmarks")), class: "button secondary" %>
+        <% end %>
+      </nav>
+    <% end %>
   <% else %>
     <% if @bookmark_search_active %>
       <p class="muted">保存済みショートカット検索「<%= @bookmark_query %>」に一致する後で読む文書はありません。</p>
