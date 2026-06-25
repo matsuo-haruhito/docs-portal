@@ -52,8 +52,9 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     get admin_file_upload_dry_runs_path
 
     expect(response).to have_http_status(:ok)
-    expect(heading_texts).to include("単体ファイルアップロードdry-run一覧")
-    expect(page_text).to include("API から作成された manual_upload dry-run を後から確認するための一覧です。ZIP / Git import dry-run は表示しません。")
+    expect(heading_texts).to include("単体ファイルアップロードの確認履歴")
+    expect(page_text).to include("file_uploads API から作成された単体ファイルアップロード dry-run を後から確認するための一覧です。ZIP / Git連携の dry-run は表示しません。")
+    expect(page_text).to include("取り込み先パス", "内容ハッシュ")
     expect(page_text).to include(dry_run.public_id)
     expect(response.body).to include(admin_file_upload_dry_run_path(dry_run))
     expect(page_text).to include("FILEUI / File UI Project")
@@ -77,21 +78,21 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     aggregate_failures do
       expect(filter_form.css(".field").map { _1.text.squish }).to include(
         include("dry-run ID"),
-        include("同期元名・取り込み先path・content hash"),
+        include("同期元名・取り込み先パス・内容ハッシュ"),
         include("案件"),
         include("状態")
       )
       expect(filter_form.at_css("input[name='dry_run_id']")&.[]("placeholder")).to eq("公開ID (例: idry...)")
-      expect(filter_form.at_css("input[name='q']")&.[]("placeholder")).to eq("同期元名・relative path・content hash")
+      expect(filter_form.at_css("input[name='q']")&.[]("placeholder")).to eq("同期元名・取り込み先パス・内容ハッシュ")
 
       dry_run_id_group = filter_form.css(".field").find { _1.at_css("input[name='dry_run_id']") }
       expect(dry_run_id_group.text.squish).to include("dry-run の公開IDで完全一致検索します。")
 
       query_group = filter_form.css(".field").find { _1.at_css("input[name='q']") }
-      expect(query_group.text.squish).to include("検索対象: 同期元名、取り込み先 relative path、content hash。")
+      expect(query_group.text.squish).to include("検索対象: 同期元名、取り込み先パス (relative_path)、内容ハッシュ (content_hash)。")
       expect(query_group.text.squish).to include("クライアント source path は検索対象外です。")
       expect(page_text).to include("案件コード・案件名で検索できます。選択済み案件は候補上限外でも復元します。")
-      expect(page_text).to include("同期元名・取り込み先path・content hash 検索は表示中の safe metadata だけを対象にし、クライアント source path は検索対象に含めません。")
+      expect(page_text).to include("同期元名・取り込み先パス・内容ハッシュ検索は表示中の safe metadata (source_name / relative_path / content_hash) だけを対象にし、クライアント source path は検索対象に含めません。")
     end
   end
 
@@ -162,10 +163,10 @@ RSpec.describe "Admin file upload dry runs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 0件")
-    expect(page_text).to include("manual_upload dry-runはまだ作成されていません。")
-    expect(page_text).to include("file_uploads APIで作成されたdry-runは、ここから後追い確認できます。")
-    expect(page_text).to include("ZIP / Git import dry-runとartifact import dry-runはこの一覧には表示されません。")
-    expect(page_text).not_to include("dry-run ID、同期元名・取り込み先path・content hash、案件、状態の条件を見直すか")
+    expect(page_text).to include("単体ファイルアップロード確認履歴はまだ作成されていません。")
+    expect(page_text).to include("file_uploads API から作成された dry-run は、ここから後追い確認できます。")
+    expect(page_text).to include("ZIP / Git連携 / artifact import の dry-run はこの一覧には表示されません。")
+    expect(page_text).not_to include("dry-run ID、同期元名・取り込み先パス・内容ハッシュ、案件、状態の条件を見直すか")
   end
 
   it "explains filtered zero results and keeps the reset link close to the empty state" do
@@ -176,9 +177,9 @@ RSpec.describe "Admin file upload dry runs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中: 0件")
-    expect(page_text).to include("条件に一致するmanual_upload dry-runはありません。")
-    expect(page_text).to include("dry-run ID、同期元名・取り込み先path・content hash、案件、状態の条件を見直すか、絞り込み解除で一覧に戻してください。")
-    expect(page_text).to include("ZIP / Git import dry-runとartifact import dry-runはこの一覧には表示されません。")
+    expect(page_text).to include("条件に一致する単体ファイルアップロード確認履歴はありません。")
+    expect(page_text).to include("dry-run ID、同期元名・取り込み先パス・内容ハッシュ、案件、状態の条件を見直すか、絞り込み解除で一覧に戻してください。")
+    expect(page_text).to include("ZIP / Git連携 / artifact import の dry-run はこの一覧には表示されません。")
     expect(link_href("絞り込み解除")).to eq(admin_file_upload_dry_runs_path)
     expect(page_text).not_to include("local-folder-sync")
   end
@@ -240,7 +241,7 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     get admin_file_upload_dry_runs_path, params: { q: "quarterly" }
     expect(response).to have_http_status(:ok)
     expect(listed_dry_run_ids).to eq([source_match.public_id])
-    expect(page_text).to include("同期元名・取り込み先path・content hash 検索は表示中の safe metadata だけを対象にし、クライアント source path は検索対象に含めません。")
+    expect(page_text).to include("同期元名・取り込み先パス・内容ハッシュ検索は表示中の safe metadata (source_name / relative_path / content_hash) だけを対象にし、クライアント source path は検索対象に含めません。")
 
     get admin_file_upload_dry_runs_path, params: { q: "manual-upload/search" }
     expect(response).to have_http_status(:ok)
@@ -252,8 +253,8 @@ RSpec.describe "Admin file upload dry runs", type: :request do
 
     get admin_file_upload_dry_runs_path, params: { q: "raw-source-only" }
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("条件に一致するmanual_upload dry-runはありません。")
-    expect(page_text).to include("dry-run ID、同期元名・取り込み先path・content hash、案件、状態の条件を見直すか")
+    expect(page_text).to include("条件に一致する単体ファイルアップロード確認履歴はありません。")
+    expect(page_text).to include("dry-run ID、同期元名・取り込み先パス・内容ハッシュ、案件、状態の条件を見直すか")
     expect(listed_dry_run_ids).to be_empty
     expect(page_text).not_to include(raw_source_path_only.public_id)
   end
