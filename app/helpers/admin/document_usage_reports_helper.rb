@@ -19,6 +19,12 @@ module Admin::DocumentUsageReportsHelper
     [project.code, project.name].compact_blank.join(" / ")
   end
 
+  def document_usage_report_project_selected_option(project)
+    return nil if project.blank?
+
+    { value: project.id, text: document_usage_report_project_option_label(project) }
+  end
+
   def document_usage_report_filter_options
     [["すべて", "all"], ["利用あり", "used"], ["未利用", "unused"]]
   end

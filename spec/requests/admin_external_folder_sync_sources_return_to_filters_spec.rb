@@ -114,7 +114,7 @@ RSpec.describe "Admin external folder sync source filters and return_to", type: 
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(graph_source.name)
-      expect(response.body).to include("metadata 確認のみ")
+      expect(response.body).to include("メタデータ確認のみ")
       expect(response.body).not_to include(drive_source.name)
     end
   end

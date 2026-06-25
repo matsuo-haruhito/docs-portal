@@ -85,7 +85,7 @@ RSpec.describe "Admin external folder sync source run context cues", type: :requ
     expect(page_text).to include(current_warning_source.name)
     expect(page_text).not_to include(stale_warning_source.name)
     expect(page_text).to include("直近run: #{I18n.l(current_started_at)} / 同期プレビュー / 完了")
-    expect(page_text).to include("warning あり (1)")
+    expect(page_text).to include("警告あり (1)")
   end
 
   it "labels latest error origin without exposing raw secret-like values" do
@@ -114,7 +114,7 @@ RSpec.describe "Admin external folder sync source run context cues", type: :requ
     expect(page_text).to include("由来: 直近run")
     expect(page_text).to include("由来: 同期元metadata")
     expect(page_text).to include("直近run: #{I18n.l(started_at)} / 同期 / 失敗")
-    expect(page_text).to include("metadata 確認のみ")
+    expect(page_text).to include("メタデータ確認のみ")
     expect(response.body).not_to include("run-secret")
     expect(response.body).not_to include("metadata-secret")
   end

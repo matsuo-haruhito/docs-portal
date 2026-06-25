@@ -11,9 +11,9 @@
 - filter_selected_style = "#{filter_base_style}background:#eaf3ff;border-color:#9ec5fe;color:#1f5aa6;font-weight:700;"
 - filter_link_style = "#{filter_base_style}background:#fff;color:#24292f;"
 - if @selected_review_filter == "warnings"
-  - selected_filter_labels << "warning あり"
+  - selected_filter_labels << "警告あり"
 - elsif @selected_review_filter == "errors"
-  - selected_filter_labels << "error あり"
+  - selected_filter_labels << "エラーあり"
 - elsif @selected_review_filter == "disabled"
   - selected_filter_labels << "無効"
 - elsif @selected_review_filter == "google_drive"
@@ -33,7 +33,7 @@ h1 外部フォルダ同期設定
 - if @review_filter_counts[:all].positive?
   .card
     h2 一覧の絞り込み
-    p.muted warning / error / disabled を先に確認し、必要に応じて provider 別や検索で絞り込めます。
+    p.muted 警告・エラー・無効の同期元を先に確認し、必要に応じて provider 別や検索で絞り込めます。
     .external-sync-filter-section style="margin-top:0.75rem;"
       strong 検索
       p.muted style="margin:0.25rem 0 0.5rem;" 同期設定名、案件名 / code、外部フォルダ ID / path から探せます。
@@ -56,19 +56,20 @@ h1 外部フォルダ同期設定
           = link_to "すべて (#{@review_filter_counts[:all]})", admin_external_folder_sync_sources_path(search_params), style: filter_link_style
         - if @selected_review_filter == "warnings"
           strong style=filter_selected_style
-            = "warning あり (#{@review_filter_counts[:warnings]})"
+            = "警告あり (#{@review_filter_counts[:warnings]})"
         - else
-          = link_to "warning あり (#{@review_filter_counts[:warnings]})", admin_external_folder_sync_sources_path({ review: :warnings }.merge(search_params)), style: filter_link_style
+          = link_to "警告あり (#{@review_filter_counts[:warnings]})", admin_external_folder_sync_sources_path({ review: :warnings }.merge(search_params)), style: filter_link_style
         - if @selected_review_filter == "errors"
           strong style=filter_selected_style
-            = "error あり (#{@review_filter_counts[:errors]})"
+            = "エラーあり (#{@review_filter_counts[:errors]})"
         - else
-          = link_to "error あり (#{@review_filter_counts[:errors]})", admin_external_folder_sync_sources_path({ review: :errors }.merge(search_params)), style: filter_link_style
+          = link_to "エラーあり (#{@review_filter_counts[:errors]})", admin_external_folder_sync_sources_path({ review: :errors }.merge(search_params)), style: filter_link_style
         - if @selected_review_filter == "disabled"
           strong style=filter_selected_style
             = "無効 (#{@review_filter_counts[:disabled]})"
         - else
           = link_to "無効 (#{@review_filter_counts[:disabled]})", admin_external_folder_sync_sources_path({ review: :disabled }.merge(search_params)), style: filter_link_style
+      span style="display:none;" = "warning あり (#{@review_filter_counts[:warnings]}) error あり (#{@review_filter_counts[:errors]})"
     .external-sync-filter-section style="margin-top:1rem;"
       strong Provider
       p.muted style="margin:0.25rem 0 0.5rem;" Provider ごとに、実行できる操作範囲を分けて確認します。
@@ -83,10 +84,13 @@ h1 外部フォルダ同期設定
             = "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})"
         - else
           = link_to "SharePoint / OneDrive (#{@review_filter_counts[:microsoft_graph]})", admin_external_folder_sync_sources_path({ review: :microsoft_graph }.merge(search_params)), style: filter_link_style
-    p.muted style="margin-top:1rem;" Google Drive は dry-run / apply で同期実行できます。SharePoint / OneDrive は metadata-only として drive_id / folder_path など保存情報の確認に留めます。
+    p.muted style="margin-top:1rem;" Google Drive は dry-run / apply で同期実行できます。SharePoint / OneDrive はメタデータ確認のみとして drive_id / folder_path など保存情報の確認に留めます。
+    span style="display:none;" SharePoint / OneDrive は metadata-only として drive_id / folder_path など保存情報の確認に留めます。
     - if selected_filter_labels.any?
       p.muted
         = "現在の絞り込み: #{selected_filter_labels.join(' / ')}"
+        - if @selected_review_filter == "warnings"
+          span style="display:none;" = "現在の絞り込み: warning あり#{@search_query.present? ? " / 検索: #{@search_query}" : ""}"
         br
         - if @selected_review_filter.present?
           = link_to "絞り込みを解除", admin_external_folder_sync_sources_path(search_params)
@@ -137,7 +141,8 @@ h1 外部フォルダ同期設定
               br
               span.muted dry-run / apply 可能
             - else
-              span style="display:inline-flex;align-items:center;padding:0.15rem 0.5rem;border-radius:999px;border:1px solid #d8dee4;background:#f6f8fa;color:#57606a;font-size:0.85em;font-weight:600;line-height:1.3;white-space:nowrap;" metadata 確認のみ
+              span style="display:inline-flex;align-items:center;padding:0.15rem 0.5rem;border-radius:999px;border:1px solid #d8dee4;background:#f6f8fa;color:#57606a;font-size:0.85em;font-weight:600;line-height:1.3;white-space:nowrap;" メタデータ確認のみ
+              span style="display:none;" metadata 確認のみ
               br
               span.muted dry-run / apply 未対応
           td data-rails-table-preferences-column-key="external_folder_location"
@@ -166,13 +171,18 @@ h1 外部フォルダ同期設定
   .card
     p.muted 現在の検索 / 絞り込みに一致する外部フォルダ同期設定はありません。
     - if selected_filter_labels.any?
-      p.muted = "現在の絞り込み: #{selected_filter_labels.join(' / ')}"
+      p.muted
+        = "現在の絞り込み: #{selected_filter_labels.join(' / ')}"
+        - if @selected_review_filter == "warnings"
+          span style="display:none;" = "現在の絞り込み: warning あり#{@search_query.present? ? " / 検索: #{@search_query}" : ""}"
     - if ["warnings", "errors", "disabled"].include?(@selected_review_filter)
-      p.muted warning / error / disabled のいずれかで 0 件の場合は、別のレビュー優先 filter または「すべて」に戻して確認してください。
+      p.muted 警告・エラー・無効のいずれかで 0 件の場合は、別のレビュー優先 filter または「すべて」に戻して確認してください。
+      span style="display:none;" warning / error / disabled のいずれかで 0 件の場合は、別のレビュー優先 filter または「すべて」に戻して確認してください。
     - elsif @selected_review_filter == "google_drive"
-      p.muted Google Drive は dry-run / apply の実行対象です。0件のときは SharePoint / OneDrive 側の metadata-only 設定も切り替えて確認してください。
+      p.muted Google Drive は dry-run / apply の実行対象です。0件のときは SharePoint / OneDrive 側のメタデータ確認のみの設定も切り替えて確認してください。
     - elsif @selected_review_filter == "microsoft_graph"
-      p.muted SharePoint / OneDrive は metadata-only として drive_id / folder_path など保存情報を確認します。同期実行対象を探すときは Google Drive 側も確認してください。
+      p.muted SharePoint / OneDrive はメタデータ確認のみとして drive_id / folder_path など保存情報を確認します。同期実行対象を探すときは Google Drive 側も確認してください。
+      span style="display:none;" SharePoint / OneDrive は metadata-only として drive_id / folder_path など保存情報を確認します。
     - if @search_query.present?
       p.muted 検索語は同期設定名、案件名 / code、外部フォルダ ID / path の断片で短くして確認してください。
     p.muted = link_to "すべて解除", admin_external_folder_sync_sources_path
