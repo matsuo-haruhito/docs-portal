@@ -68,12 +68,13 @@ RSpec.describe Admin::AccessLogsHelper, type: :helper do
       expect(details).to eq(
         preview: "mode=compact;scope=selected;selected_count=3;exported_count=2",
         segments: [
-          { label: "mode", value: "compact" },
-          { label: "scope", value: "選択" },
+          { label: "AI出力モード", value: "コンパクト" },
+          { label: "AI出力範囲", value: "選択" },
           { label: "選択数", value: "3件" },
           { label: "出力数", value: "2件" }
         ]
       )
+      expect(details.fetch(:segments).map { _1.fetch(:label) }).not_to include("mode", "scope")
     end
 
     it "keeps all-scope context readable" do
@@ -85,8 +86,8 @@ RSpec.describe Admin::AccessLogsHelper, type: :helper do
       details = helper.access_log_ai_context_target_details(log)
 
       expect(details[:segments]).to include(
-        { label: "mode", value: "full" },
-        { label: "scope", value: "全件" },
+        { label: "AI出力モード", value: "詳細" },
+        { label: "AI出力範囲", value: "全件" },
         { label: "選択数", value: "0件" },
         { label: "出力数", value: "12件" }
       )
