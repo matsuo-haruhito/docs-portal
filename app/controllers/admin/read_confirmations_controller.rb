@@ -7,6 +7,8 @@ class Admin::ReadConfirmationsController < Admin::BaseController
 
   DISPLAY_LIMIT = 200
   DOCUMENT_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_LIMIT = 20
   FILTER_CANDIDATE_LIMIT = 50
   FILTER_SEARCH_LIMIT = 20
   CSV_HEADERS = [
@@ -19,7 +21,7 @@ class Admin::ReadConfirmationsController < Admin::BaseController
   ].freeze
 
   def index
-    @selected_project = selected_project
+    @selected_project = selected_read_confirmation_project
     @projects = bounded_project_options(@selected_project)
     @document_slug = document_slug_param
     @selected_user_id = params[:user_id].to_s.strip
@@ -59,6 +61,16 @@ class Admin::ReadConfirmationsController < Admin::BaseController
     end
   end
 
+  def project_search
+    render json: { options: project_options(searchable_projects) }
+  end
+
+  def selected_project
+    project = Project.find_by(id: params[:id])
+
+    render json: { option: project ? project_option(project) : nil }
+  end
+
   def company_search
     render json: { options: read_confirmation_company_options(searchable_read_confirmation_companies) }
   end
@@ -81,10 +93,34 @@ class Admin::ReadConfirmationsController < Admin::BaseController
 
   private
 
-  def selected_project
+  def selected_read_confirmation_project
     return if params[:project_id].blank?
 
     Project.find_by(id: params[:project_id])
+  end
+
+  def searchable_projects
+    scope = Project.order(:code, :id)
+    query = normalize_project_search_query(params[:q])
+    return scope.limit(PROJECT_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{Project.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(projects.code) LIKE :pattern OR LOWER(projects.name) LIKE :pattern",
+      pattern:
+    ).limit(PROJECT_SEARCH_LIMIT)
+  end
+
+  def normalize_project_search_query(query)
+    query.to_s.strip.first(PROJECT_SEARCH_QUERY_MAX_LENGTH)
+  end
+
+  def project_options(projects)
+    projects.map { |project| project_option(project) }
+  end
+
+  def project_option(project)
+    { value: project.id, text: helpers.read_confirmation_project_option_label(project) }
   end
 
   def document_slug_param
