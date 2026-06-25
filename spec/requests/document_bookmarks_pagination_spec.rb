@@ -11,10 +11,12 @@ RSpec.describe "Document bookmark pagination", type: :request do
 
   it "bounds saved favorites and read-later bookmarks with independent page params" do
     25.times do |index|
-      create_bookmarked_document("Favorite Manual #{index + 1}", "favorite-manual-#{index + 1}", :favorite, index)
+      label = (index + 1).to_s.rjust(2, "0")
+      create_bookmarked_document("Favorite Manual #{label}", "favorite-manual-#{label}", :favorite, index)
     end
     22.times do |index|
-      create_bookmarked_document("Later Checklist #{index + 1}", "later-checklist-#{index + 1}", :read_later, index)
+      label = (index + 1).to_s.rjust(2, "0")
+      create_bookmarked_document("Later Checklist #{label}", "later-checklist-#{label}", :read_later, index)
     end
     recent_document = create_readable_document("Recent Guide", "recent-guide")
     create(:access_log, user:, company:, project:, document: recent_document, action_type: :view, target_type: "document", accessed_at: Time.current)
@@ -29,10 +31,10 @@ RSpec.describe "Document bookmark pagination", type: :request do
     expect(response.body).to include("1-20件目を表示")
     expect(response.body).to include("お気に入り 2 / 2 ページ")
     expect(response.body).to include("後で読む 1 / 2 ページ")
-    expect(response.body).to include("Favorite Manual 1")
+    expect(response.body).to include("Favorite Manual 01")
     expect(response.body).not_to include("Favorite Manual 25")
     expect(response.body).to include("Later Checklist 22")
-    expect(response.body).not_to include("Later Checklist 1")
+    expect(response.body).not_to include("Later Checklist 01")
     expect(response.body).to include("recent_q=recent")
     expect(response.body).to include("favorite_page=1")
     expect(response.body).to include("read_later_page=1")
@@ -40,10 +42,12 @@ RSpec.describe "Document bookmark pagination", type: :request do
 
   it "normalizes invalid and out-of-range saved bookmark pages without raising" do
     25.times do |index|
-      create_bookmarked_document("Favorite Manual #{index + 1}", "favorite-manual-#{index + 1}", :favorite, index)
+      label = (index + 1).to_s.rjust(2, "0")
+      create_bookmarked_document("Favorite Manual #{label}", "favorite-manual-#{label}", :favorite, index)
     end
     22.times do |index|
-      create_bookmarked_document("Later Checklist #{index + 1}", "later-checklist-#{index + 1}", :read_later, index)
+      label = (index + 1).to_s.rjust(2, "0")
+      create_bookmarked_document("Later Checklist #{label}", "later-checklist-#{label}", :read_later, index)
     end
     sign_in_as(user)
 
