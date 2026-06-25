@@ -5,6 +5,7 @@
 - has_lifecycle_filter = @filters.values_at(:retention, :discard).any?(&:present?)
 - active_filter_summaries = admin_document_active_filter_summaries(@filters)
 - filters_active = active_filter_summaries.any?
+- documents_empty = @documents_filtered_count.zero?
 - current_return_to = request.query_string.present? ? request.fullpath : nil
 
 h1 文書マスタ
@@ -65,7 +66,7 @@ h1 文書マスタ
       - active_filter_summaries.each do |summary|
         = " "
         span.badge = summary
-  - if filters_active && @documents_filtered_count.zero?
+  - if filters_active && documents_empty
     p.muted.document-filter-empty-state
       | 条件に一致する文書はありません。
       = link_to "条件をクリア", admin_documents_path
@@ -83,7 +84,19 @@ h1 文書マスタ
       = link_to "一括編集候補として開く", new_admin_bulk_edit_dry_run_path(source: "admin_documents", candidate_document_ids: @bulk_edit_candidate_ids, source_filter_summaries: active_filter_summaries), class: "button secondary"
       span.muted = "現在の検索結果#{@bulk_edit_candidate_count}件を、文書一括編集dry-runの候補として引き継ぎます。"
 
-.card
+- if documents_empty
+  .card.document-list-empty-guidance
+    h2 文書マスタ一覧
+    - if filters_active
+      p.muted 条件に一致する文書がないため、一覧の列設定と空テーブルは畳んでいます。条件を見直すか、文書マスタ全体へ戻って対象を確認してください。
+      p.actions.form-actions
+        = link_to "条件をクリア", admin_documents_path, class: "button secondary"
+    - else
+      p.muted 登録済みの文書がまだありません。上部の新規登録フォームから最初の文書を追加すると、一覧の表示設定と文書テーブルを確認できます。
+  style
+    | table[data-rails-table-preferences-table-key-value="admin_documents"] { display: none; }
+
+.card hidden=(documents_empty ? true : nil)
   = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定")
   p.muted 文書マスタ一覧の表示設定と検索条件は、この一覧の列表示・列幅・表示件数にだけ適用されます。文書詳細の左ペインにある文書ツリーの「表示中」や展開状態とは別の文脈です。
 
