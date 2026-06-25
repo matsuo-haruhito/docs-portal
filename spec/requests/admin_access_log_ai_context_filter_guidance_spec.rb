@@ -48,7 +48,8 @@ RSpec.describe "Admin access log AI context filter guidance", type: :request do
     expect(response).to have_http_status(:ok)
     expect(log_target_names).to eq(["mode=compact;scope=selected;selected_count=2;exported_count=2"])
     expect(page_text).to include("対象種別: AI context export AI出力モード・範囲は今回の検索条件として有効です。")
-    expect(page_text).to include("AI出力モード: compact")
+    expect(page_text).to include("AI出力モード: コンパクト")
+    expect(page_text).not_to include("AI出力モード: compact")
     expect(page_text).to include("AI出力範囲: 選択")
     expect(page_text).to include("CSV条件metadata JSON")
   end
@@ -70,6 +71,7 @@ RSpec.describe "Admin access log AI context filter guidance", type: :request do
     expect(response).to have_http_status(:ok)
     expect(log_target_names).to eq(["mode=compact;scope=selected;selected_count=2;exported_count=2"])
     expect(page_text).to include("対象外 対象種別が AI context export ではないため、AI出力モード・範囲は今回の有効な条件から外れます。")
+    expect(page_text).not_to include("AI出力モード: コンパクト")
     expect(page_text).not_to include("AI出力モード: compact")
     expect(page_text).not_to include("AI出力範囲: 選択")
   end
