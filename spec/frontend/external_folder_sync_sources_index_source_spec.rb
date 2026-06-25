@@ -8,9 +8,9 @@ RSpec.describe "admin/external_folder_sync_sources/index source" do
   it "keeps provider operation boundary copy explicit" do
     expect(source).to include("同期実行対象")
     expect(source).to include("dry-run / apply 可能")
-    expect(source).to include("metadata 確認のみ")
+    expect(source).to include("メタデータ確認のみ")
     expect(source).to include("dry-run / apply 未対応")
-    expect(source).to include("SharePoint / OneDrive は metadata-only として drive_id / folder_path など保存情報の確認に留めます")
+    expect(source).to include("SharePoint / OneDrive はメタデータ確認のみとして drive_id / folder_path など保存情報の確認に留めます")
   end
 
   it "keeps table preferences column keys stable" do
