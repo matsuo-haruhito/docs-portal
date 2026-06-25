@@ -166,6 +166,19 @@
 - 公開範囲や `view / download` の意味は [基本モデルと権限](./specs/基本モデルと権限.md)
 - 利用者からの権限申請経路を追いたいときは [アクセス申請・同意管理・Webhook運用runbook](./アクセス申請・同意管理・Webhook運用runbook.md)
 
+## 案件権限変更 preview JSON の dry-run 境界
+
+`GET /admin/projects/:code/permission_preview` は、案件単位の権限変更候補を保存前に確認するための JSON preview endpoint。`company_ids` や `user_ids` で対象 viewer を選び、`grant_document_ids`、`revoke_document_ids`、`grant_download_document_ids`、`revoke_download_document_ids`、`grant_project_membership`、`revoke_project_membership` を渡すと、変更した場合の見え方の差分だけを返す。
+
+この endpoint は dry-run なので、呼び出しだけでは `ProjectMembership` や `DocumentPermission` を作成・更新・削除しない。preview 結果は、変更前の確認、影響範囲の読み合わせ、申請・運用判断の材料として扱う。
+
+- preview JSON は権限適用そのものではない。実際に保存したい場合は、`案件所属` または `文書権限` の保存導線で対象レコードを確認してから操作する
+- preview JSON は正式承認 workflow、通知、audit log 保存、SLA 判定を追加するものではない
+- `changed_viewers`、`gained_documents`、`lost_documents`、`gained_download_documents`、`lost_download_documents` は、保存した場合の差分を読むための補助情報として扱う
+- company と user の viewer 展開は確認対象を広げるためのもので、会社・ユーザー selector の remote search や bulk grant を current support として定義するものではない
+
+preview で想定外の差分が出た場合は、そのまま適用済みとみなさず、対象 viewer、対象文書、会社単位 / ユーザー単位の切り分けを見直してから、実際の保存導線へ戻る。
+
 ## 迷ったときの切り分け
 
 - まず案件に入れるかを見たい: `案件所属` を確認する
