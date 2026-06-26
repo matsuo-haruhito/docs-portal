@@ -90,9 +90,9 @@ RSpec.describe "Admin file upload dry runs", type: :request do
 
       query_group = filter_form.css(".field").find { _1.at_css("input[name='q']") }
       expect(query_group.text.squish).to include("検索対象: 同期元名、取り込み先パス (relative_path)、内容ハッシュ (content_hash)。")
-      expect(query_group.text.squish).to include("クライアント source path は検索対象外です。")
+      expect(query_group.text.squish).to include("クライアント source path は検索対象外で、詳細確認時だけ扱います。")
       expect(page_text).to include("案件コード・案件名で検索できます。選択済み案件は候補上限外でも復元します。")
-      expect(page_text).to include("同期元名・取り込み先パス・内容ハッシュ検索は表示中の safe metadata (source_name / relative_path / content_hash) だけを対象にし、クライアント source path は検索対象に含めません。")
+      expect(page_text).to include("検索対象: 同期元名、取り込み先パス (relative_path)、内容ハッシュ (content_hash)。クライアント source path は検索対象外で、詳細確認時だけ扱います。")
     end
   end
 
@@ -241,7 +241,7 @@ RSpec.describe "Admin file upload dry runs", type: :request do
     get admin_file_upload_dry_runs_path, params: { q: "quarterly" }
     expect(response).to have_http_status(:ok)
     expect(listed_dry_run_ids).to eq([source_match.public_id])
-    expect(page_text).to include("同期元名・取り込み先パス・内容ハッシュ検索は表示中の safe metadata (source_name / relative_path / content_hash) だけを対象にし、クライアント source path は検索対象に含めません。")
+    expect(page_text).to include("検索対象: 同期元名、取り込み先パス (relative_path)、内容ハッシュ (content_hash)。クライアント source path は検索対象外で、詳細確認時だけ扱います。")
 
     get admin_file_upload_dry_runs_path, params: { q: "manual-upload/search" }
     expect(response).to have_http_status(:ok)
