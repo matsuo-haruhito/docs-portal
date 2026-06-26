@@ -34,6 +34,9 @@ class Admin::DocumentSetsController < Admin::BaseController
                   filename: document_sets_csv_filename,
                   type: "text/csv; charset=utf-8"
       end
+      format.json do
+        render json: document_sets_export_metadata
+      end
     end
   end
 
@@ -314,6 +317,65 @@ class Admin::DocumentSetsController < Admin::BaseController
       document_set.document_set_items.size,
       document_set.public_id
     ]
+  end
+
+  def document_sets_export_metadata
+    {
+      exported_at: Time.current.iso8601,
+      report_type: "document_sets",
+      export_scope: "current_filters",
+      description: "文書セットCSVの条件確認用metadataです。CSV本体の行データではありません。",
+      filters: document_sets_metadata_filters,
+      ignored_filters: document_sets_metadata_ignored_filters,
+      row_count: @document_sets_filtered_count,
+      csv_headers: CSV_HEADERS,
+      summary: {
+        matching_document_sets: @document_sets_filtered_count,
+        filter_labels: helpers.admin_document_set_filter_labels(@filters),
+        csv_filename: document_sets_csv_filename,
+        csv_columns_fixed: true
+      }
+    }
+  end
+
+  def document_sets_metadata_filters
+    filters = {}
+    query = @filters[:q].to_s
+    filters[:q] = { value: query } if query.present?
+
+    set_type = metadata_enum_filter(:set_type, DocumentSet.set_types)
+    filters[:set_type] = set_type if set_type.present?
+
+    visibility_policy = metadata_enum_filter(:visibility_policy, DocumentSet.visibility_policies)
+    filters[:visibility_policy] = visibility_policy if visibility_policy.present?
+
+    filters
+  end
+
+  def metadata_enum_filter(key, enum_values)
+    value = @filters[key].to_s
+    return nil if value.blank? || !enum_values.key?(value)
+
+    label = case key
+    when :set_type
+      helpers.document_set_type_label(value)
+    when :visibility_policy
+      helpers.document_set_visibility_policy_label(value)
+    end
+
+    { value: value, label: label }
+  end
+
+  def document_sets_metadata_ignored_filters
+    ignored_filters = {}
+    ignored_filters[:set_type] = @filters[:set_type].to_s if unsupported_enum_filter?(:set_type, DocumentSet.set_types)
+    ignored_filters[:visibility_policy] = @filters[:visibility_policy].to_s if unsupported_enum_filter?(:visibility_policy, DocumentSet.visibility_policies)
+    ignored_filters
+  end
+
+  def unsupported_enum_filter?(key, enum_values)
+    value = @filters[key].to_s
+    value.present? && !enum_values.key?(value)
   end
 
   def document_sets_csv_filename
