@@ -100,9 +100,9 @@ RSpec.describe "Admin access log target search", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("AI context export")
-    expect(page_text).to include("scope: 選択")
+    expect(page_text).to include("AI出力範囲: 選択")
     expect(page_text).to include("対象名・IPアドレス: scope=selected")
-    expect(page_text).not_to include("scope: 全件")
+    expect(page_text).not_to include("AI出力範囲: 全件")
   end
 
   it "combines q with document_q and existing filters as AND conditions" do
