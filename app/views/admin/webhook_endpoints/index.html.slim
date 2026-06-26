@@ -63,6 +63,10 @@ h1 Webhook
             = link_to "次へ", admin_webhook_endpoints_path(endpoint_filter_params.merge(endpoint_page: @webhook_endpoints_page + 1))
     - else
       p.muted 条件に一致するWebhook設定はありません。名称・送信先URL、イベント、状態の条件を見直してください。
+      - if @webhook_endpoint_filters_active
+        p.muted Webhook設定の条件だけを解除し、最近の送信履歴検索や再送条件は変更しません。
+        p.actions
+          = link_to "Webhook設定の条件をリセット", admin_webhook_endpoints_path(endpoint_reset_params), class: "button secondary"
   - else
     p.muted まだWebhook設定は登録されていません。
     p.muted 上の「新規登録」で名称、送信先URL、通知対象イベントを設定して最初のWebhookを保存してください。
