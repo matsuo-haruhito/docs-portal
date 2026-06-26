@@ -71,9 +71,13 @@ h1 同意文面管理
             = delete_link_to "削除", admin_consent_term_path(term), confirm: "同意文面「#{term.title} #{term.version_label}」を削除しますか？履歴がある場合は削除できません。"
             p.muted 履歴がある文面は削除せず、編集で無効化してください。
 - elsif @consent_terms_exist && @consent_term_filters_applied
-  .card
+  .card.consent-term-filter-empty-state
     p.muted 条件に一致する同意文面はありません。
-    p.muted タイトル・版ラベル、状態、種別、再同意方針の条件を見直してください。
+    p.muted タイトル・版ラベル、状態、種別、再同意方針の条件を見直すか、条件をリセットして一覧全体を確認してください。
+    p.muted 状態を有効または無効に絞っている場合は、状態を「すべて」に戻すと利用中と無効化済みの両方を確認できます。
+    p.muted 新しい版が必要な場合は、上の「新規登録」で既存版を上書きせず登録してください。
+    p.actions
+      = link_to "条件をリセット", admin_consent_terms_path, class: "button secondary"
 - else
   .card
     p.muted まだ同意文面はありません。
