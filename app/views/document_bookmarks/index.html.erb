@@ -1,6 +1,7 @@
 <% page_title "文書ショートカット" %>
 <% bookmark_project_filter_label = @selected_bookmark_project&.name || @bookmark_project_code %>
 <% saved_bookmark_params = { project_code: @bookmark_project_code, bookmark_q: @bookmark_query.presence, recent_q: @recent_documents_query.presence }.compact %>
+<% saved_bookmark_reset_params = { recent_q: @recent_documents_query.presence }.compact %>
 <% recent_clear_params = saved_bookmark_params.except(:recent_q).merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.page).compact %>
 <% current_bookmark_params = saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.page).compact %>
 
@@ -93,6 +94,9 @@
     <% else %>
       <p class="muted">文書画面でお気に入りに追加すると、ここに表示されます。</p>
     <% end %>
+    <% if @saved_bookmark_filter_active %>
+      <p class="actions"><%= link_to "保存済み条件を解除", document_bookmarks_path(saved_bookmark_reset_params.merge(anchor: "favorite-bookmarks")), class: "button secondary" %></p>
+    <% end %>
   <% end %>
 </section>
 
@@ -149,6 +153,9 @@
       <p class="muted">案件「<%= bookmark_project_filter_label %>」では後で読む文書が見つかりません。</p>
     <% else %>
       <p class="muted">文書画面で後で読むに追加すると、ここに表示されます。</p>
+    <% end %>
+    <% if @saved_bookmark_filter_active %>
+      <p class="actions"><%= link_to "保存済み条件を解除", document_bookmarks_path(saved_bookmark_reset_params.merge(anchor: "read-later-bookmarks")), class: "button secondary" %></p>
     <% end %>
   <% end %>
 </section>

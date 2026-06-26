@@ -56,4 +56,41 @@ RSpec.describe "Document bookmark filter cues", type: :request do
     expect(bookmark_query_input).to be_present
     expect(bookmark_query_input["value"]).to eq("manual")
   end
+
+  it "shows section-local reset links for empty saved shortcut sections while preserving recent search" do
+    create(:document_bookmark, user:, document:, bookmark_type: :favorite)
+    create(:document_bookmark, user:, document:, bookmark_type: :read_later)
+    sign_in_as(user)
+
+    get document_bookmarks_path, params: { project_code: "missing", bookmark_q: "manual", recent_q: "guide", favorite_page: 2, read_later_page: 3 }
+
+    expect(response).to have_http_status(:ok)
+
+    favorite_reset_link = page.at_css('section#favorite-bookmarks a[href$="#favorite-bookmarks"]')
+    read_later_reset_link = page.at_css('section#read-later-bookmarks a[href$="#read-later-bookmarks"]')
+
+    expect(favorite_reset_link).to be_present
+    expect(favorite_reset_link.text).to eq("保存済み条件を解除")
+    expect(read_later_reset_link).to be_present
+    expect(read_later_reset_link.text).to eq("保存済み条件を解除")
+
+    [favorite_reset_link["href"], read_later_reset_link["href"]].each do |href|
+      expect(href).to include("recent_q=guide")
+      expect(href).not_to include("project_code")
+      expect(href).not_to include("bookmark_q")
+      expect(href).not_to include("favorite_page")
+      expect(href).not_to include("read_later_page")
+    end
+  end
+
+  it "does not show section-local reset links when empty saved shortcut sections have no active filter" do
+    sign_in_as(user)
+
+    get document_bookmarks_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page.css('section#favorite-bookmarks a[href$="#favorite-bookmarks"]')).to be_empty
+    expect(page.css('section#read-later-bookmarks a[href$="#read-later-bookmarks"]')).to be_empty
+    expect(response.body).not_to include("保存済み条件を解除")
+  end
 end
