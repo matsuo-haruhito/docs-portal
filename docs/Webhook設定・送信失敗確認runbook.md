@@ -13,6 +13,7 @@
 - `Webhook設定` の filter は設定一覧だけに適用されます。最近の送信履歴、送信履歴検索、再送対象、Webhook payload / signature の扱いは変更しません。
 - `Webhook設定` の表示範囲は `Webhook設定 N件中M件を表示しています` として出ます。ページが複数ある場合は `前へ` / `次へ` が現在の設定検索・イベント・状態・表示件数を維持します。
 - 設定が 0 件の場合は `まだWebhook設定は登録されていません` と読み、filter 後に 0 件の場合は `条件に一致するWebhook設定はありません` と読みます。後者は登録済み endpoint が存在しないという意味ではなく、現在の名称 / URL、イベント、状態条件に一致しない状態です。
+- filter 後に 0 件で条件が適用中の場合は、empty state 近くの `Webhook設定の条件をリセット` から Webhook 設定一覧の条件だけを解除できます。この link は最近の送信履歴の `delivery_status` を維持するため、送信履歴側の表示や再送対象は変わりません。初期 0 件状態では解除対象の Webhook 設定条件がないため、この section-local reset は表示されません。
 - unsupported な event / active filter、負の page、不正または過大な表示件数は安全に丸められます。URL や任意の戻り先を設定一覧 filter として採用するものではありません。
 - `Webhook設定` の `状態` 列では、有効 / 停止の badge と、停止中 endpoint に出る `通常送信・手動再送の対象外` の cue を確認します。停止中 endpoint は通常送信にも失敗 delivery の手動再送にも使われません。
 - 送信履歴は `WebhookDelivery.recent.limit(50)` の範囲で、選択した表示条件ごとに最大 50 件を新しい順に確認します。
