@@ -190,4 +190,7 @@ h1 外部フォルダ同期設定
   .card
     p.muted まだ外部フォルダ同期設定は登録されていません。
     p.muted 上の「外部フォルダ同期設定を追加」で対象案件、同期設定名、同期元プロバイダ、外部フォルダURLを設定して最初の同期設定を保存してください。
-    p.muted SharePoint / OneDrive を使うときは、先に Microsoft Graph接続を登録すると設定を始めやすくなります。
+    p.muted
+      = "SharePoint / OneDrive を使うときは、先に "
+      = link_to "Microsoft Graph接続を確認する", admin_microsoft_graph_connections_path
+      = " と、保存前の接続状態を確認できます。Google Drive の dry-run / apply とは別の事前確認入口です。"
