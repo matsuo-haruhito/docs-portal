@@ -44,6 +44,7 @@ first slice で束ねる spec subset は次です。
 - `spec/requests/admin_missing_document_files_spec.rb`
 - `spec/requests/admin_webhook_deliveries_spec.rb`
 - `spec/requests/admin_external_folder_sync_sources_spec.rb`
+- `spec/requests/admin_external_folder_sync_webhook_event_exposure_spec.rb`
 - `spec/requests/admin_microsoft_graph_connections_spec.rb`
 - `spec/requests/admin_generated_file_run_operational_metadata_exposure_spec.rb`
 - `spec/requests/admin_git_import_operational_metadata_exposure_spec.rb`
