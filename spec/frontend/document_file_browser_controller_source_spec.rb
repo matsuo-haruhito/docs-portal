@@ -49,7 +49,11 @@ RSpec.describe "document-file-browser controller source" do
   it "keeps status and empty-state text boundaries stable" do
     aggregate_failures do
       expect(controller_source).to include("const kindLabel = kindLabels[this.activeKind] || this.activeKind")
-      expect(controller_source).to include('this.statusTarget.textContent = query.length > 0 ? `${visibleCount}件を表示中 / 検索: ${rawQuery}` : `${visibleCount}件を表示中 / 分類: ${kindLabel}`')
+      expect(controller_source).to include("const statusParts = [`${visibleCount}件を表示中`]")
+      expect(controller_source).to include("statusParts.push(`検索: ${rawQuery}`)")
+      expect(controller_source).to include("if (!hasQuery || hasKindFilter) {")
+      expect(controller_source).to include("statusParts.push(`分類: ${kindLabel}`)")
+      expect(controller_source).to include('this.statusTarget.textContent = statusParts.join(" / ")')
       expect(controller_source).to include("if (this.hasEmptyTarget) {")
       expect(controller_source).to include("this.emptyTarget.hidden = visibleCount > 0")
     end
