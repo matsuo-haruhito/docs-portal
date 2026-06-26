@@ -33,6 +33,6 @@ RSpec.describe "Admin external folder sync sources empty state", type: :request 
     expect(response.body).to include("現在の検索 / 絞り込みに一致する外部フォルダ同期設定はありません。")
     expect(response.body).not_to include("まだ外部フォルダ同期設定は登録されていません。")
     expect(response.body).not_to include("Microsoft Graph接続を確認する")
-    expect(parsed_html.css(%(a[href="#{admin_microsoft_graph_connections_path}"]))).to be_empty
+    expect(response.body).not_to include("Google Drive の dry-run / apply とは別の事前確認入口です。")
   end
 end
