@@ -46,12 +46,12 @@ rebase / recreate evidence:
 
 ## Current PR mixed evidence examples
 
-2026-06-24 JST 時点の open Docusaurus Dependabot PR を記録する場合は、個別 PR の採否をこの note で確定せず、次のように evidence family を分けて残します。
+open Docusaurus Dependabot PR を記録する場合は、個別 PR の採否をこの note で確定せず、次のように evidence family を分けて残します。
 
 | PR | workflow evidence | freshness evidence | manual blocker | next action wording |
 | --- | --- | --- | --- | --- |
 | #3057 `@mermaid-js/layout-elk` | head `9390316732a8cb8d7fa87669d4e7ed25940420da` の `docs-quality #1612` / `ci #6607` は success | current `main` `5a71613f3393b85f49cb01d7647721333a09ccb7` に対して `ahead_by:1`, `behind_by:5`, `status:diverged`。changed files は `docusaurus/package.json` / `docusaurus/package-lock.json` | Mermaid / ELK rendering impact は CI success と別に browser-capable evidence または human visual review が必要 | latest main への refresh / fresh CI と、edge routing / label readability の代表 visual evidence 待ち。dependency bump 自体の採否はここで決めない |
-| #3365 `dompurify` | head `eed0463077b89edd843f0ed118cf622e9b5bcc10` の `docs-quality #1446` は success、`ci #6274` は failure | current `main` `5a71613f3393b85f49cb01d7647721333a09ccb7` に対して `ahead_by:3`, `behind_by:140`, `status:diverged`。changed files は `docusaurus/package-lock.json` | failed `security-audit` は Ruby dependency audit drift として DOMPurify npm update の採否から分けて扱う。sanitizer dependency の security-adjacent review と古い branch/freshness も別項目にする | recreate / replacement / manual lockfile refresh は人間判断待ち。lockfile 手修正、Ruby audit remediation、merge 判断は別 lane に戻す |
+| #3365 `dompurify` | head `3403f0b895dafd12ba449fb6149d629ec6f4ddc8` の `docs-quality #1657` / `ci #6719` は success。combined status は空だが workflow run は存在 | current `main` `f8b956362ab2c051794e24d47215c572499b32d7` に対して `ahead_by:5`, `behind_by:52`, `status:diverged`。effective changed file は `docusaurus/package-lock.json` | sanitizer dependency の supply-chain / security-adjacent review と、古い branch / fresh CI 待ちは別項目にする。過去の `ci #6274` failure / Ruby audit drift は historical blocker として current head の採否から分ける | latest main への refresh / fresh CI と human review 待ち。recreate / replacement / manual lockfile refresh、lockfile 手修正、merge 判断は人間判断として別 lane に戻す |
 
 combined commit status が空でも workflow run がある場合は、`checks not found` ではなく「combined status は空、workflow run は存在」と書きます。`mergeable:true` は conflict がないことの目安であり、fresh CI、manual evidence、visual evidence、security-adjacent adoption decision の代替にはしません。
 
