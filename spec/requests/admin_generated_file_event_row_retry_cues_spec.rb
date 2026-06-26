@@ -17,8 +17,8 @@ RSpec.describe "Admin generated file event row retry cues", type: :request do
     row_retry_button = parsed_html.at_css(%(form[action*="#{retry_dispatch_admin_generated_file_event_path(event.public_id)}"] button[type="submit"]))
     expect(row_retry_button).to be_present
     expect(row_retry_button.text.squish).to eq("このイベントを再投入")
-    expect(row_retry_button["aria-label"]).to eq("#{event.public_id} を再dispatchキューに投入")
-    expect(row_retry_button["title"]).to eq("#{event.public_id} を再dispatchキューに投入")
+    expect(row_retry_button["aria-label"]).to eq("#{event.public_id} を再投入キューに投入")
+    expect(row_retry_button["title"]).to eq("#{event.public_id} を再投入キューに投入")
   end
 
   def create_event!(attributes = {})
