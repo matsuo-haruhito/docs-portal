@@ -191,7 +191,7 @@ test("empty state explains when query and kind filters both apply", async () => 
 
   assert.deepEqual(sectionItemVisibility(visible), [false])
   assert.equal(visible.hidden, true)
-  assert.equal(controller.statusTarget.textContent, "0件を表示中 / 検索: missing")
+  assert.equal(controller.statusTarget.textContent, "0件を表示中 / 検索: missing / 分類: デバッグ")
   assert.equal(controller.emptyTarget.hidden, false)
   assert.equal(controller.emptyTarget.textContent, "検索条件と分類の両方に一致するファイルはありません。")
 })
