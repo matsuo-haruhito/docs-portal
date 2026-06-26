@@ -30,6 +30,10 @@ RSpec.describe "Document version rollbacks", type: :request do
     post document_version_rollback_path(version)
   end
 
+  def rollback_state(version)
+    [version.reload.status, document.reload.latest_version_id, document.archived?]
+  end
+
   it "rolls back the latest manual upload to the previous published version" do
     previous_version = create_version(
       version_label: "v1.0.0",
@@ -45,11 +49,13 @@ RSpec.describe "Document version rollbacks", type: :request do
       rollback(version)
     end.to change { version.reload.status }.from("published").to("archived")
       .and change { document.reload.latest_version_id }.from(version.id).to(previous_version.id)
-      .and not_change { document.reload.archived? }
 
-    expect(response).to redirect_to(document_version_path(previous_version))
-    expect(flash[:notice]).to eq("直前の版へロールバックしました。")
-    expect(version.reload.changelog_summary).to include("Rolled back manual upload")
+    aggregate_failures do
+      expect(document.reload).not_to be_archived
+      expect(response).to redirect_to(document_version_path(previous_version))
+      expect(flash[:notice]).to eq("直前の版へロールバックしました。")
+      expect(version.reload.changelog_summary).to include("Rolled back manual upload")
+    end
   end
 
   it "archives the document when no previous published version exists" do
@@ -73,16 +79,15 @@ RSpec.describe "Document version rollbacks", type: :request do
     create(:document_permission, :user_scoped, document:, user: external_user, access_level: :view)
     version = create_manual_upload_version(version_label: "v1.0.0", created_at: 1.day.ago)
     document.update!(latest_version: version)
+    before_state = rollback_state(version)
 
     sign_in_as(external_user)
+    rollback(version)
 
-    expect do
-      rollback(version)
-    end.to not_change { version.reload.status }
-      .and not_change { document.reload.latest_version_id }
-      .and not_change { document.reload.archived? }
-
-    expect(response).to have_http_status(:forbidden)
+    aggregate_failures do
+      expect(rollback_state(version)).to eq(before_state)
+      expect(response).to have_http_status(:forbidden)
+    end
   end
 
   it "rejects a manual upload version that is not the latest version" do
@@ -93,17 +98,16 @@ RSpec.describe "Document version rollbacks", type: :request do
       created_at: 1.day.ago
     )
     document.update!(latest_version: latest_version)
+    before_state = rollback_state(version)
 
     sign_in_as(internal_user)
+    rollback(version)
 
-    expect do
-      rollback(version)
-    end.to not_change { version.reload.status }
-      .and not_change { document.reload.latest_version_id }
-      .and not_change { document.reload.archived? }
-
-    expect(response).to redirect_to(document_version_path(version))
-    expect(flash[:alert]).to eq("最新の版だけ取り消せます。")
+    aggregate_failures do
+      expect(rollback_state(version)).to eq(before_state)
+      expect(response).to redirect_to(document_version_path(version))
+      expect(flash[:alert]).to eq("最新の版だけ取り消せます。")
+    end
   end
 
   it "rejects a latest version that did not come from manual upload" do
@@ -113,16 +117,15 @@ RSpec.describe "Document version rollbacks", type: :request do
       created_at: 1.day.ago
     )
     document.update!(latest_version: version)
+    before_state = rollback_state(version)
 
     sign_in_as(internal_user)
+    rollback(version)
 
-    expect do
-      rollback(version)
-    end.to not_change { version.reload.status }
-      .and not_change { document.reload.latest_version_id }
-      .and not_change { document.reload.archived? }
-
-    expect(response).to redirect_to(document_version_path(version))
-    expect(flash[:alert]).to eq("手動アップロード版だけ取り消せます。")
+    aggregate_failures do
+      expect(rollback_state(version)).to eq(before_state)
+      expect(response).to redirect_to(document_version_path(version))
+      expect(flash[:alert]).to eq("手動アップロード版だけ取り消せます。")
+    end
   end
 end
