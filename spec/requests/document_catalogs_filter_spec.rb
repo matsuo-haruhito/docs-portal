@@ -54,7 +54,7 @@ RSpec.describe "Document catalog filters", type: :request do
     expect(parsed_html.text.squish).to include("名称・説明: #{bounded_query}")
     expect(parsed_html.text.squish).not_to include(overlong_query.strip)
 
-    reusable_url = parsed_html.at_css('a', text: "現在の条件のURLを開く")["href"]
+    reusable_url = parsed_html.css("a").find { |link| link.text.squish == "現在の条件のURLを開く" }["href"]
     expect(CGI.unescape(reusable_url)).to include("q=#{bounded_query}")
     expect(CGI.unescape(reusable_url)).not_to include("q=#{overlong_query.strip}")
   end
