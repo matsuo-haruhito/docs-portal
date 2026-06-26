@@ -28,6 +28,10 @@ RSpec.describe "preview tools source" do
     }
   end
 
+  let(:registered_controller_identifiers) do
+    entrypoint_source.scan(/application\.register\("([^"]+)"/).flatten
+  end
+
   it "moves the markdown preview table helper to a dedicated controller with the existing Turbo lifecycle" do
     aggregate_failures do
       expect(markdown_table_controller_source).to include('import { setupMarkdownPreviewTableTools } from "../lib/markdown_preview_table_tools"')
@@ -73,6 +77,24 @@ RSpec.describe "preview tools source" do
       expect(entrypoint_source).not_to include('addEventListener("turbo:load"')
       expect(entrypoint_source).not_to include('addEventListener("turbo:render"')
       expect(entrypoint_source).not_to include("new TomSelect")
+    end
+  end
+
+  it "keeps every registered controller represented in the frontend initialization inventory" do
+    aggregate_failures do
+      expect(registered_controller_identifiers).to include(
+        "rails-table-preferences",
+        "rails-fields-kit--tom-select",
+        "markdown-preview-table-tools"
+      )
+
+      registered_controller_identifiers.each do |identifier|
+        expect(inventory_source).to include("`#{identifier}`")
+      end
+
+      expect(inventory_source).to include("Source-level guard 済みの controller")
+      expect(inventory_source).to include("`application.js` の直接 DOM setup は追加しない")
+      expect(inventory_source).to include("app 側 `new TomSelect(...)` は追加しない")
     end
   end
 
