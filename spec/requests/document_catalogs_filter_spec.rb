@@ -8,8 +8,12 @@ RSpec.describe "Document catalog filters", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def catalog_table
+    parsed_html.css("table").find { |table| table.text.include?("表示可能件数") }
+  end
+
   def catalog_table_text
-    parsed_html.at_css("table tbody")&.text.to_s.squish
+    catalog_table&.at_css("tbody")&.text.to_s.squish
   end
 
   it "keeps name and description as the only catalog query targets" do
