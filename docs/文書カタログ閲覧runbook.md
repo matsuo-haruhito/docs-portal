@@ -51,10 +51,12 @@ current 実装の前提:
 
 一覧上部の filter は、catalog visibility を広げるものではない。先に current user が見える catalog だけに絞られ、その後で次の条件を適用する。
 
-- `名称・説明`: catalog の `name` と `description` を部分一致で探す。文書本文、item の文書名、添付ファイル名は検索対象ではない
+- `名称・説明`: catalog の `name` と `description` を部分一致で探す。入力は前後空白を除き、最大 100 文字までが検索条件・active filter label・現在条件URLに反映される。文書本文、item の文書名、添付ファイル名は検索対象ではない
 - `対象`: `audience_type` の current enum で絞り込む。`customer` / `operations` などの分類であり、単独で閲覧許可を付与しない
 - `公開範囲`: `visibility_policy` の current enum で絞り込む。外部ユーザーが `internal_only` を指定しても、見えない catalog が表示されるわけではない
 - `絞り込み解除`: `q`、`audience_type`、`visibility_policy` を外して、current user に見える catalog 一覧へ戻す
+
+`名称・説明` field 直下の helper copy は、検索対象がカタログ名・説明に限られることと、100 文字まで入力できることを確認する cue として読む。過長入力は controller 側でも 100 文字に丸められ、catalog item、文書本文、添付ファイル検索へ広げる指定にはならない。
 
 条件を入れて 0 件になった場合は `条件に一致する文書カタログはありません。` と表示される。これは「この案件に catalog が存在しない」ではなく、「見える catalog の中に、いまの filter 条件に合うものがない」と読む。
 
