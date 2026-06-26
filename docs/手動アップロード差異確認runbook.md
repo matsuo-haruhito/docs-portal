@@ -146,9 +146,10 @@ current behavior:
 - 最新 manual upload 版だけを rollback 対象にする
 - previous version があれば、その版へ `latest_version` を戻す
 - 取り消した manual upload 版は archived になる
-- redirect 先は戻した先の版詳細画面
+- 戻せる published 版がない場合は、document の `latest_version` を空にし、document も archived にする
+- previous version がある場合の redirect 先は戻した先の版詳細画面。戻せる published 版がない場合は、対象案件の文書一覧へ戻る
 
-つまり、`OK` を押した直後に誤りへ気づいた場合でも、「最新版の manual upload を 1 つだけ戻す」導線は current code にある。
+つまり、`OK` を押した直後に誤りへ気づいた場合でも、「最新版の manual upload を 1 つだけ戻す」導線は current code にある。ただし戻せる published 版がない新規文書では、rollback 後に文書自体も archived になる。
 
 ## 迷ったときの切り分け
 
@@ -158,7 +159,7 @@ current behavior:
 - どのフォルダ直下へ drop した扱いかを見直したい: [文書一覧の検索・実用フィルタ・ZIP出力 runbook](./文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
 - 差分、HTML、添付、品質チェックのどこを読むか迷う: [版詳細プレビュー・差分・添付確認 runbook](./版詳細プレビュー・差分・添付確認runbook.md)
 - 既存文書更新か新規文書候補かを見分けたい: `Document` が増えているか、`latest_version` がまだ空か、source file 名が一致していたかを見る
-- `OK` 済みだが誤りだった: 同じ版詳細の `アップロード後の確認` から rollback を使う
+- `OK` 済みだが誤りだった: 同じ版詳細の `アップロード後の確認` から rollback を使う。戻せる published 版がない場合は、rollback 後に文書一覧で archived 扱いになっていることを確認する
 - drag & drop 自体が動かない: この runbook では直さない。既知の実装課題は issue `#470` を参照する
 
 ## current support の境界
