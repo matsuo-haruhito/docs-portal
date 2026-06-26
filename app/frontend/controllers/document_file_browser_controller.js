@@ -36,6 +36,8 @@ export default class extends Controller {
   applyFilters() {
     const rawQuery = this.queryTarget.value.trim()
     const query = rawQuery.toLowerCase()
+    const hasQuery = query.length > 0
+    const hasKindFilter = this.activeKind !== "all"
     let visibleCount = 0
 
     this.sectionTargets.forEach((section) => {
@@ -67,12 +69,17 @@ export default class extends Controller {
 
     if (this.hasStatusTarget) {
       const kindLabel = kindLabels[this.activeKind] || this.activeKind
-      this.statusTarget.textContent = query.length > 0 ? `${visibleCount}件を表示中 / 検索: ${rawQuery}` : `${visibleCount}件を表示中 / 分類: ${kindLabel}`
+      const statusParts = [`${visibleCount}件を表示中`]
+      if (hasQuery) {
+        statusParts.push(`検索: ${rawQuery}`)
+      }
+      if (!hasQuery || hasKindFilter) {
+        statusParts.push(`分類: ${kindLabel}`)
+      }
+      this.statusTarget.textContent = statusParts.join(" / ")
     }
 
     if (this.hasEmptyTarget) {
-      const hasQuery = query.length > 0
-      const hasKindFilter = this.activeKind !== "all"
       const emptyMessageKey = hasQuery && hasKindFilter ? "queryAndKind" : hasQuery ? "query" : hasKindFilter ? "kind" : "default"
 
       this.emptyTarget.textContent = emptyMessages[emptyMessageKey]
