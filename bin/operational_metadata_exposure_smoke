@@ -8,6 +8,7 @@ SPEC_FILES = [
   "spec/requests/admin_missing_document_files_spec.rb",
   "spec/requests/admin_webhook_deliveries_spec.rb",
   "spec/requests/admin_external_folder_sync_sources_spec.rb",
+  "spec/requests/admin_external_folder_sync_webhook_event_exposure_spec.rb",
   "spec/requests/admin_microsoft_graph_connections_spec.rb",
   "spec/requests/admin_generated_file_run_operational_metadata_exposure_spec.rb",
   "spec/requests/admin_git_import_operational_metadata_exposure_spec.rb"
@@ -37,6 +38,12 @@ DIGEST_ROWS = [
     surface: "external folder sync metadata",
     purpose: "sync source metadataとprovider payloadの表示境界が調査用previewに閉じること",
     runbook: "docs/外部フォルダ同期dry-run・apply運用runbook.md"
+  },
+  {
+    spec: "spec/requests/admin_external_folder_sync_webhook_event_exposure_spec.rb",
+    surface: "external folder sync webhook details",
+    purpose: "webhook headers / payloadのtoken-like valueを保存時filterと表示時sanitizeでraw表示しないこと",
+    runbook: "docs/運用metadata情報露出点検チェックリスト.md"
   },
   {
     spec: "spec/requests/admin_microsoft_graph_connections_spec.rb",
