@@ -89,4 +89,34 @@ RSpec.describe "Company master admin landing", type: :request do
     )
     expect(action_targets).not_to include(a_string_starting_with("mailto:"))
   end
+
+  it "keeps internal admins on the full admin entry instead of the company master admin landing" do
+    sign_in_as(create(:user, :internal))
+
+    get admin_root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include(
+      "管理画面",
+      "モデル観測",
+      "運用失敗入口",
+      "基本マスタ",
+      "関連設定"
+    )
+    expect(page_text).not_to include(
+      "company_master_admin が /admin から最初に確認する、会社・ユーザー管理専用の入口です",
+      "ここから直接移動できるのは、会社管理者として操作できる次の 2 画面だけです",
+      "依頼テンプレートをコピー"
+    )
+
+    expect(action_targets).to include(
+      admin_root_path,
+      admin_projects_path,
+      admin_project_memberships_path,
+      admin_documents_path,
+      admin_document_permissions_path,
+      admin_access_logs_path,
+      admin_document_usage_reports_path
+    )
+  end
 end
