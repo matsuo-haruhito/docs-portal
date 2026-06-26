@@ -63,8 +63,8 @@ RSpec.describe "Admin access log AI context target fallback", type: :request do
     get admin_access_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("mode: compact")
-    expect(page_text).to include("scope: 選択")
+    expect(page_text).to include("AI出力モード: コンパクト")
+    expect(page_text).to include("AI出力範囲: 選択")
     expect(page_text).to include("選択数: 2件")
     expect(page_text).to include("出力数: 2件")
     expect(page_text).to include("監査用 target_name preview")
