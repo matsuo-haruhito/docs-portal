@@ -47,7 +47,7 @@ RSpec.describe "Admin consent term filter summary", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("条件に一致する同意文面はありません。")
-    expect(response.body).to include("タイトル・版ラベル、状態、種別、再同意方針の条件を見直してください。")
+    expect(response.body).to include("タイトル・版ラベル、状態、種別、再同意方針の条件を見直すか、条件をリセットして一覧全体を確認してください。")
     expect(reset_link_texts).to include("条件をリセット")
     expect(response.body).not_to include("表示中: 0件")
   end
