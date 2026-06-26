@@ -1,4 +1,6 @@
 class DocumentCatalogsController < BaseController
+  CATALOG_QUERY_MAX_LENGTH = 100
+
   def index
     @project = Project.find_by!(code: params[:project_code])
     require_project_access!(@project)
@@ -25,7 +27,10 @@ class DocumentCatalogsController < BaseController
   private
 
   def normalized_catalog_query
-    params[:q].to_s.strip.presence
+    query = params[:q].to_s.strip.presence
+    return if query.blank?
+
+    query[0, CATALOG_QUERY_MAX_LENGTH]
   end
 
   def normalized_audience_type_filter
