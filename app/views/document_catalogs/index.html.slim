@@ -2,6 +2,7 @@
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: nil
 
 - page_title @project.name, "文書カタログ"
+- catalog_query_max_length = DocumentCatalogsController::CATALOG_QUERY_MAX_LENGTH
 - audience_options = [["すべて", ""]] + DocumentCatalog.audience_types.keys.map { |value| [localized_label("document_catalogs.audience_type", value), value] }
 - visibility_options = [["すべて", ""]] + DocumentCatalog.visibility_policies.keys.map { |value| [localized_label("document_catalogs.visibility_policy", value), value] }
 - has_filters = @catalog_query.present? || @audience_type_filter.present? || @visibility_policy_filter.present?
@@ -21,7 +22,8 @@ h1
 = form_with url: project_document_catalogs_path(@project), method: :get, local: true do
   .field
     = label_tag :q, "名称・説明"
-    = search_field_tag :q, @catalog_query, placeholder: "カタログ名または説明"
+    = search_field_tag :q, @catalog_query, placeholder: "カタログ名または説明", maxlength: catalog_query_max_length
+    p.muted カタログ名・説明が対象です。文書本文・item文書名・添付ファイル名は対象外です。100文字まで入力できます。
   .field
     = label_tag :audience_type, "対象"
     = select_tag :audience_type, options_for_select(audience_options, @audience_type_filter)
