@@ -13,6 +13,10 @@ RSpec.describe "Admin company master filters", type: :request do
     parsed_html.css("tbody").text.squish
   end
 
+  def keyword_input
+    parsed_html.at_css('input[name="q"]')
+  end
+
   def input_value(name)
     parsed_html.at_css(%(input[name="#{name}"]))&.[]("value")
   end
@@ -40,6 +44,11 @@ RSpec.describe "Admin company master filters", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("会社を探す")
+    expect(keyword_input).to be_present
+    expect(keyword_input["placeholder"]).to eq("ドメイン・会社名")
+    expect(keyword_input["maxlength"]).to eq("100")
+    expect(page_text).to include("ドメイン・会社名の断片で検索できます。最大100文字。")
+    expect(response.body).not_to include("ドメイン・会社名・表示名")
     expect(form_link_texts(admin_companies_path)).not_to include("条件をクリア")
 
     get admin_companies_path, params: { active: "true" }

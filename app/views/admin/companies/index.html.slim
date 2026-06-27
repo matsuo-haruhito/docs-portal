@@ -25,7 +25,8 @@ h1 会社マスタ
     .form-grid
       label
         | キーワード
-        = text_field_tag :q, @company_filter_params["q"], placeholder: "ドメイン・会社名・表示名"
+        = text_field_tag :q, @company_filter_params["q"], placeholder: "ドメイン・会社名", maxlength: 100
+        p.muted ドメイン・会社名の断片で検索できます。最大100文字。
       label
         | 状態
         = select_tag :active, options_for_select([["すべて", ""], ["有効", "true"], ["無効", "false"]], selected_active_filter)
