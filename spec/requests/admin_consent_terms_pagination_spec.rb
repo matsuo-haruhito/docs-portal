@@ -1,4 +1,5 @@
 require "rails_helper"
+require "uri"
 
 RSpec.describe "Admin consent term pagination", type: :request do
   let(:admin_user) { create(:user, :internal) }
