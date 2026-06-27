@@ -145,7 +145,9 @@ RSpec.describe "Admin external folder sync source visual evidence", type: :reque
     expect(response.body).to include(graph_source.name)
     expect(response.body).not_to include(google_source.name)
     expect(response.body).to include("現在の絞り込み: SharePoint / OneDrive")
-    expect(response.body).to include("SharePoint / OneDrive はメタデータ確認のみ")
-    expect(response.body).to include("同期実行対象を探すときは Google Drive 側も確認してください。")
+    graph_row = row_text_for(graph_source.name)
+    expect(graph_row).to include("メタデータ確認のみ")
+    expect(graph_row).to include("dry-run / apply 未対応")
+    expect(graph_row).not_to include("同期実行対象")
   end
 end
