@@ -221,7 +221,7 @@ section.card
               | -
           td data-rails-table-preferences-column-key="document_version"
             - if log.document_version
-              = link_to document_version_label(log.document_version), document_version_path(document_version)
+              = link_to document_version_label(log.document_version), document_version_path(log.document_version)
             - else
               | -
           td data-rails-table-preferences-column-key="ip_address" = log.ip_address.presence || "-"
