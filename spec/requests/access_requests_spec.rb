@@ -216,6 +216,38 @@ RSpec.describe "Access requests", type: :request do
     expect(page_text).not_to include("送信済みのアクセス申請はありません。")
   end
 
+  it "shows filter-specific recovery links for filtered empty results" do
+    create(:access_request, requester: user, requestable: file, requested_access_level: :download, reason: "Existing request")
+
+    sign_in_as(user)
+
+    get access_requests_path, params: {
+      q: "missing target",
+      status: :pending,
+      requested_access_level: :download,
+      requestable_type: "DocumentFile"
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中条件: 状態: 申請中 / 検索: missing target / 要求権限: ダウンロード / 対象種別: ファイル")
+    expect(page_text).to include("状態: 申請中 / 検索: missing target / 要求権限: ダウンロード / 対象種別: ファイル に一致するアクセス申請はありません。")
+    expect(page_text).to include("条件を外すと、送信済み申請全体を確認できます。")
+    expect(page_text).to include("条件を1つずつ外す場合は、下のリンクから選べます。")
+    expect(page_text).to include("検索を解除")
+    expect(page_text).to include("状態をすべてに戻す")
+    expect(page_text).to include("要求権限をすべてに戻す")
+    expect(page_text).to include("対象種別をすべてに戻す")
+    expect(page_text).to include("すべての申請を見る")
+
+    html = CGI.unescapeHTML(response.body)
+    expect(html).to include(access_requests_path(requested_access_level: "download", requestable_type: "DocumentFile", status: "pending"))
+    expect(html).to include(access_requests_path(q: "missing target", requested_access_level: "download", requestable_type: "DocumentFile"))
+    expect(html).to include(access_requests_path(q: "missing target", requestable_type: "DocumentFile", status: "pending"))
+    expect(html).to include(access_requests_path(q: "missing target", requested_access_level: "download", status: "pending"))
+    expect(html).to include(access_requests_path)
+    expect(page_text).not_to include("送信済みのアクセス申請はありません。")
+  end
+
   it "guards the request search targets described by the index copy" do
     project_target = create(:project, code: "REQPRJ", name: "Project Search Alpha")
     document_project = create(:project, code: "REQDOC", name: "Document Search Project")
