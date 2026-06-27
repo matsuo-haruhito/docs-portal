@@ -15,14 +15,18 @@ module Admin::AccessLogsHelper
     "mode" => "AI出力モード",
     "scope" => "AI出力範囲",
     "selected_count" => "選択数",
+    "scoped_count" => "案件内候補",
     "exported_count" => "出力数"
   }.freeze
   ACCESS_LOG_DATE_FILTER_LABELS = {
     from: "開始日",
     to: "終了日"
   }.freeze
-  SENSITIVE_TARGET_KEY_PATTERN = /\b(authorization|token|secret|password|client_secret|access_token|refresh_token)=([^;&\s]+)/i
-  SENSITIVE_TARGET_QUERY_PATTERN = /([?&](?:authorization|token|secret|password|client_secret|access_token|refresh_token)=)([^&#\s]+)/i
+  AUTHORIZATION_TARGET_VALUE_PATTERN = /\bAuthorization:\s*(?:Bearer|Basic)\s+[^;\s]+/i
+  AUTHORIZATION_TARGET_PARAM_PATTERN = /\bauthorization\s*=\s*((?:Bearer|Basic)\s+)?[^;&\s]+/i
+  AUTH_SCHEME_TARGET_VALUE_PATTERN = /\b(Bearer|Basic)\s+[^;\s]+/i
+  SENSITIVE_TARGET_KEY_PATTERN = /\b(token|secret|password|client_secret|access_token|refresh_token|api[_-]?key)\s*([=:])\s*([^;&\s]+)/i
+  SENSITIVE_TARGET_QUERY_PATTERN = /([?&](?:authorization|token|secret|password|client_secret|access_token|refresh_token|api[_-]?key)=)([^&#\s]+)/i
   PRIVATE_PATH_PATTERN = %r{(?:[A-Za-z]:[\\/]|/(?:Users|home)/)[^;\s]+}
 
   def access_log_table_columns
@@ -133,9 +137,12 @@ module Admin::AccessLogsHelper
       segments = [
         { label: AI_CONTEXT_TARGET_DETAIL_LABELS.fetch("mode"), value: access_log_ai_context_mode_filter_label(values.fetch("mode")) },
         { label: AI_CONTEXT_TARGET_DETAIL_LABELS.fetch("scope"), value: ai_context_scope_label(values.fetch("scope")) },
-        { label: AI_CONTEXT_TARGET_DETAIL_LABELS.fetch("selected_count"), value: "#{values.fetch('selected_count')}件" },
-        { label: AI_CONTEXT_TARGET_DETAIL_LABELS.fetch("exported_count"), value: "#{values.fetch('exported_count')}件" }
+        { label: AI_CONTEXT_TARGET_DETAIL_LABELS.fetch("selected_count"), value: "#{values.fetch('selected_count')}件" }
       ]
+      if values["scoped_count"].present?
+        segments << { label: AI_CONTEXT_TARGET_DETAIL_LABELS.fetch("scoped_count"), value: "#{values.fetch('scoped_count')}件" }
+      end
+      segments << { label: AI_CONTEXT_TARGET_DETAIL_LABELS.fetch("exported_count"), value: "#{values.fetch('exported_count')}件" }
     end
 
     {
@@ -169,15 +176,21 @@ module Admin::AccessLogsHelper
 
     return unless AI_CONTEXT_TARGET_KEYS.all? { pairs[_1].present? }
     return unless pairs["selected_count"].match?(/\A\d+\z/) && pairs["exported_count"].match?(/\A\d+\z/)
+    if pairs["scoped_count"].present?
+      return unless pairs["scoped_count"].match?(/\A\d+\z/)
+    end
 
-    pairs.slice(*AI_CONTEXT_TARGET_KEYS)
+    pairs.slice(*(AI_CONTEXT_TARGET_KEYS + %w[scoped_count]))
   end
 
   def safe_access_log_target_name_preview(raw_target_name)
     raw_target_name.to_s.strip
-      .gsub(/Authorization:\s*Bearer\s+[^;\s]+/i, "Authorization: [FILTERED]")
-      .gsub(/Bearer\s+[^;\s]+/i, "Bearer [FILTERED]")
-      .gsub(SENSITIVE_TARGET_KEY_PATTERN) { "#{Regexp.last_match(1)}=[FILTERED]" }
+      .gsub(AUTHORIZATION_TARGET_VALUE_PATTERN, "Authorization: [FILTERED]")
+      .gsub(AUTHORIZATION_TARGET_PARAM_PATTERN) do
+        Regexp.last_match(1).present? ? "authorization=[FILTERED] [FILTERED]" : "authorization=[FILTERED]"
+      end
+      .gsub(AUTH_SCHEME_TARGET_VALUE_PATTERN) { "#{Regexp.last_match(1)} [FILTERED]" }
+      .gsub(SENSITIVE_TARGET_KEY_PATTERN) { "#{Regexp.last_match(1)}#{Regexp.last_match(2)}[FILTERED]" }
       .gsub(SENSITIVE_TARGET_QUERY_PATTERN) { "#{Regexp.last_match(1)}[FILTERED]" }
       .gsub(PRIVATE_PATH_PATTERN, "[path hidden]")
       .truncate(180)
