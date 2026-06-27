@@ -131,7 +131,7 @@ p.actions
 - else
   - if active_filter_summary.present?
     p.muted = "#{active_filter_summary} に一致するアクセス申請はありません。"
-    p.muted 条件を1つずつ外すか、すべての条件を外すと送信済み申請全体を確認できます。
+    p.muted 条件を外すと、送信済み申請全体を確認できます。条件を1つずつ外す場合は、下のリンクから選べます。
     p.actions
       - empty_filter_reset_links.each do |label, path|
         = link_to label, path, class: "button secondary"
