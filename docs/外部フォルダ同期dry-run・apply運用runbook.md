@@ -69,7 +69,7 @@ README からこの runbook へ入ったときは、まず次の表で provider 
 
 `最新エラー` は一覧で異常の有無を素早く見つけるための safe preview です。error が直近 run に残っている場合は `由来: 直近run`、run 側には error がなく source の metadata に残っている場合は `由来: 同期元metadata` と表示されます。この由来 cue は調査入口を分けるための補助であり、error taxonomy、件数計算、retry、metadata 再確認、同期実行の挙動を変えるものではありません。token / secret / password / authorization 風の値や private-looking path は一覧上で raw 表示されず、長い message も短く省略されます。全文調査や path ごとの判定を確認したい場合は、`error あり` で対象を絞ったあと `設定詳細` へ入り、`同期履歴` と `結果詳細` を見ます。一覧の preview だけで provider API、retry、apply、storage schema の原因を断定しないでください。
 
-まだ同期元が 0 件のときは table は表示されず、一覧の代わりに empty state が出ます。この状態では上部の `外部フォルダ同期設定を追加` card が最初の入口です。`対象案件`、`同期設定名`、`同期元プロバイダ`、`外部フォルダURL` を埋めて最初の 1 件を保存し、SharePoint / OneDrive を選ぶ場合は先に `Microsoft Graph接続` を用意してから戻ります。
+まだ同期元が 0 件のときは table は表示されず、一覧の代わりに empty state が出ます。この状態では上部の `外部フォルダ同期設定を追加` card が最初の入口です。`対象案件`、`同期設定名`、`同期元プロバイダ`、`外部フォルダURL` を埋めて最初の 1 件を保存し、SharePoint / OneDrive を選ぶ場合は先に `Microsoft Graph接続` を用意してから戻ります。0 件 empty state に出る `Microsoft Graph接続を確認する` link も、同期実行ではなく SharePoint / OneDrive の接続状態を保存前に見直すための入口として扱います。
 
 ## 4. 新規登録 card の読み方
 
