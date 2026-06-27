@@ -144,4 +144,18 @@ flowchart LR
 
 This fixture is intentionally small. It should make routed edges, branch labels, and node spacing visible without turning the check into a full visual regression suite. If a dependency release specifically mentions mindmap layout or another Mermaid diagram type, add one temporary local fixture for that release note while keeping the PR evidence to one or two representative diagrams.
 
+Use this PR evidence note shape when the dependency update needs manual visual evidence:
+
+```text
+Mermaid / ELK visual evidence:
+- dependency: <package name> <from version> -> <to version>
+- trigger: <release note or diff mentions layout / edge routing / labels / renderer defaults>
+- fixture: docs/notes/docusaurus-build-runtime.md representative ELK fixture
+- viewport/browser: <desktop / narrow / browser name>
+- result: edge routing and labels are readable / follow-up needed
+- not covered: pixel diff, all-page screenshot scan, Kroki smoke, package maintainer review
+```
+
+If the dependency update does not mention Mermaid / ELK layout or renderer defaults and the diff does not touch diagram rendering config, record `Mermaid / ELK visual evidence: not required` rather than inventing a screenshot gate. Keep the evidence note separate from `docs-quality` success, Docusaurus build success, and Kroki mocked smoke success.
+
 Do not commit generated screenshots, generated SVGs, or rendered HTML artifacts for this check. If a future issue moves this into `docs-quality`, keep it lightweight: a build-or-render smoke for the representative fixture is acceptable, but pixel diffs, browser screenshot infrastructure, all-page visual scans, and Docusaurus build profile redesign belong in separate issues.
