@@ -6,6 +6,7 @@
 - selected_active_filter = @company_filter_params["active"]
 - company_filter_keyword = @company_filter_params["q"].to_s.strip
 - company_active_filter_label = { "true" => "有効", "false" => "無効" }[selected_active_filter]
+- company_filters_applied = company_filter_summaries.any?
 - company_filter_summaries = []
 - company_filter_summaries << "キーワード「#{company_filter_keyword}」" if company_filter_keyword.present?
 - company_filter_summaries << "状態: #{company_active_filter_label}" if company_active_filter_label.present?
@@ -25,7 +26,8 @@ h1 会社マスタ
     .form-grid
       label
         | キーワード
-        = text_field_tag :q, @company_filter_params["q"], placeholder: "ドメイン・会社名・表示名"
+        = text_field_tag :q, @company_filter_params["q"], placeholder: "ドメイン・会社名", maxlength: 100
+        p.muted ドメイン・会社名の断片で検索できます。最大100文字。
       label
         | 状態
         = select_tag :active, options_for_select([["すべて", ""], ["有効", "true"], ["無効", "false"]], selected_active_filter)
