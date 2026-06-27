@@ -48,7 +48,7 @@ RSpec.describe "Document comment Q&A runbook references" do
     {
       label: "workspace handoff spec",
       path: "spec/requests/document_comment_workspace_handoff_spec.rb",
-      source_signals: ["Document comment workspace handoff summary", "secret-like query"]
+      source_signals: ["Document comment workspace handoff summary", "excludes arbitrary request query values"]
     },
     {
       label: "redirect context spec",
@@ -77,7 +77,9 @@ RSpec.describe "Document comment Q&A runbook references" do
   it "keeps the main Q&A handoff and search entrypoints discoverable" do
     aggregate_failures do
       DOC_COMMENT_QA_IMPLEMENTATION_REFERENCES.each do |reference|
-        expect(implementation_section).to include("`#{reference.fetch(:label)}`").or include("`#{reference.fetch(:path)}`")
+        has_runbook_reference = implementation_section.include?("`#{reference.fetch(:label)}`") ||
+          implementation_section.include?("`#{reference.fetch(:path)}`")
+        expect(has_runbook_reference).to be(true), "missing #{reference.fetch(:label)} / #{reference.fetch(:path)} in runbook implementation references"
 
         source = DOC_COMMENT_QA_REPO_ROOT.join(reference.fetch(:path)).read
         reference.fetch(:source_signals).each do |signal|
