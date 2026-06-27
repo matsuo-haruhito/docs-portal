@@ -1,5 +1,7 @@
 class Admin::ConsentTermsController < Admin::BaseController
   CONSENT_TERM_QUERY_MAX_LENGTH = 100
+  CONSENT_TERMS_DEFAULT_PER_PAGE = 25
+  CONSENT_TERMS_MAX_PER_PAGE = 100
 
   before_action :require_admin_only!
   before_action :set_consent_term, only: %i[edit update destroy]
@@ -45,7 +47,17 @@ class Admin::ConsentTermsController < Admin::BaseController
     @consent_term_filters_applied = @consent_term_filters.values.any?(&:present?)
     @consent_terms_exist = ConsentTerm.exists?
 
-    @consent_terms = filtered_consent_terms.order(:title, :version_label)
+    ordered_consent_terms = filtered_consent_terms.order(:title, :version_label)
+    @consent_terms_total_count = ordered_consent_terms.count
+    @consent_terms_per_page = normalized_consent_terms_per_page
+    @consent_terms_total_pages = [(@consent_terms_total_count.to_f / @consent_terms_per_page).ceil, 1].max
+    @consent_terms_page = normalized_consent_terms_page(@consent_terms_total_pages)
+    @consent_terms_offset = (@consent_terms_page - 1) * @consent_terms_per_page
+    @consent_terms = ordered_consent_terms.offset(@consent_terms_offset).limit(@consent_terms_per_page).to_a
+    @consent_terms_display_start = @consent_terms_total_count.zero? ? 0 : @consent_terms_offset + 1
+    @consent_terms_display_end = @consent_terms_offset + @consent_terms.size
+    @consent_terms_has_previous_page = @consent_terms_page > 1
+    @consent_terms_has_next_page = @consent_terms_offset + @consent_terms.size < @consent_terms_total_count
   end
 
   def filtered_consent_terms
@@ -92,6 +104,20 @@ class Admin::ConsentTermsController < Admin::BaseController
     query = value.to_s.squish.presence
 
     query&.slice(0, CONSENT_TERM_QUERY_MAX_LENGTH)
+  end
+
+  def normalized_consent_terms_per_page
+    requested_per_page = params[:per_page].to_i
+    per_page = requested_per_page.positive? ? requested_per_page : CONSENT_TERMS_DEFAULT_PER_PAGE
+
+    [per_page, CONSENT_TERMS_MAX_PER_PAGE].min
+  end
+
+  def normalized_consent_terms_page(total_pages)
+    requested_page = params[:page].to_i
+    page = requested_page.positive? ? requested_page : 1
+
+    page > total_pages ? 1 : page
   end
 
   def set_consent_term
