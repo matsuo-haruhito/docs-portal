@@ -34,6 +34,26 @@
 
 `Admin::ApiSpecificationPage::PRIMARY_SOURCE_PAGES` と `docs-src/*.md` の front matter `slug` は request spec で対応を固定しています。source rename や slug 変更を行う場合は、`source_path`、front matter `slug`、`site_path`、主要ページの表示 label を同じ変更として確認します。
 
+## PR evidence の残し方
+
+`docs-src/*.md` を触る PR では、source Markdown の変更確認と generated HTML の確認を別の signal として残します。request / model spec が守るのは source path、front matter `slug`、site path、主要ページ label の contract であり、実際に build 後 HTML を開いたことの代替ではありません。
+
+PR body または evidence comment では、少なくとも次を短く分けます。
+
+```text
+- touched source: docs-src/api-specification.md
+- source-page contract: spec/models/admin/api_specification_page_spec.rb success
+- admin HTML confirmation: /admin/api_specification の主要ページとsourceから /api-specification を確認
+- checked cues: 表示状態=最新 build 成功 / Build manifest=admin_api_spec / Freshness=HTML追従済み
+- not treated as success evidence: build履歴0件、HTML stale、Source missing、combined status空
+```
+
+確認できなかった項目は `not checked` と書きます。たとえば CI が green でも、`HTML確認先（build後）` を開いていない場合は `admin HTML confirmation: not checked` とし、request spec success や combined status 空を generated HTML 確認済みとして扱いません。
+
+複数の `docs-src/*.md` を触る場合は、更新した source path ごとに対応する `HTML確認先（build後）` と行別 `Freshness` を残します。`表示状態` は API仕様ページ全体の build 状態、`Build manifest` は build profile / runtime metadata、行別 `Freshness` は source と generated HTML の時刻比較なので、同じ証跡としてまとめすぎないようにします。
+
+この evidence は review の読み違いを減らすための軽量メモです。Docusaurus build pipeline redesign、slug / route 変更、full visual regression、screenshot 必須化、API docs 内容の全面再編はこの手順に含めません。
+
 ## 日常の確認手順
 
 1. `docs-src/api-specification.md` または関連する `docs-src/*.md` を更新します。
@@ -45,6 +65,7 @@
 7. iframe で entry HTML を確認し、`主要ページとsource` の更新対象行で `編集元Markdown`、`HTML確認先（build後）`、`Freshness` を照合します。直した source file に対応する HTML確認先を開き、更新した説明が HTML 側にも反映されていることを確認します。
 8. 行別 `Freshness` が `Source更新あり`、`HTML未生成`、`Source missing` の場合は、全体の `表示状態` が成功でも対象行だけを見直します。build 後に HTML確認先を開くか、source path / slug / site path の対応を確認します。
 9. `build 失敗` の場合は、画面の短い失敗理由だけで断定せず、下の `build 失敗時の切り分け` へ進みます。
+10. PR body または evidence comment には、上の `PR evidence の残し方` に沿って、source 更新確認と generated HTML 確認を分けて残します。
 
 ## 表示状態の見方
 
