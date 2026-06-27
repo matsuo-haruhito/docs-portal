@@ -9,6 +9,10 @@
 - query_max_length = Admin::AccessLogsController::ACCESS_LOG_QUERY_MAX_LENGTH
 - filter_search_limit = Admin::AccessLogsController::FILTER_SEARCH_LIMIT
 - ai_context_filters_enabled = @filters[:target_type].to_s == "ai_context"
+- ai_context_filter_inactive = !ai_context_filters_enabled
+- ai_context_filter_state_id = "ai-context-filter-state"
+- ai_context_filter_usage_note_id = "ai-context-filter-usage-note"
+- ai_context_filter_description = "#{ai_context_filter_state_id} #{ai_context_filter_usage_note_id}"
 - current_page_export_params = @pagination_params.merge(page: @page, csv_scope: Admin::AccessLogsController::CSV_SCOPE_CURRENT_PAGE)
 
 h1 監査ログ
@@ -28,20 +32,20 @@ section.card
         p.muted id="ai-context-filter-guidance-title"
           strong AI context export 用の追加条件
         - if ai_context_filters_enabled
-          p.muted
+          p.muted id=ai_context_filter_state_id
             span.badge 対象種別: AI context export
             |  AI出力モード・範囲は今回の検索条件として有効です。
         - else
-          p.muted
+          p.muted id=ai_context_filter_state_id
             span.badge 対象外
             |  対象種別が AI context export ではないため、AI出力モード・範囲は今回の有効な条件から外れます。
-        p.muted 対象種別で AI context export を選んだ場合だけ、AI出力モード・範囲が有効です。
-        div
+        p.muted id=ai_context_filter_usage_note_id 対象種別で AI context export を選んだ場合だけ、AI出力モード・範囲が有効です。
+        div.ai-context-filter-control data-testid="ai-context-mode-filter-control" aria-disabled=ai_context_filter_inactive.to_s style=(ai_context_filter_inactive ? "opacity:0.65;" : nil)
           = form.label :ai_context_mode, "AI出力モード"
-          = form.select :ai_context_mode, options_for_select([["すべて", ""]] + access_log_ai_context_mode_filter_options, @filters[:ai_context_mode])
-        div
+          = form.select :ai_context_mode, options_for_select([["すべて", ""]] + access_log_ai_context_mode_filter_options, @filters[:ai_context_mode]), {}, aria: { describedby: ai_context_filter_description, disabled: ai_context_filter_inactive.to_s }, data: { testid: "ai-context-mode-filter" }
+        div.ai-context-filter-control data-testid="ai-context-scope-filter-control" aria-disabled=ai_context_filter_inactive.to_s style=(ai_context_filter_inactive ? "opacity:0.65;" : nil)
           = form.label :ai_context_scope, "AI出力範囲"
-          = form.select :ai_context_scope, options_for_select([["すべて", ""]] + access_log_ai_context_scope_filter_options, @filters[:ai_context_scope])
+          = form.select :ai_context_scope, options_for_select([["すべて", ""]] + access_log_ai_context_scope_filter_options, @filters[:ai_context_scope]), {}, aria: { describedby: ai_context_filter_description, disabled: ai_context_filter_inactive.to_s }, data: { testid: "ai-context-scope-filter" }
         p.muted AI出力モード・範囲は page / file / zip / webhook など他の対象種別では条件から外れます。CSV export や有効な条件にも残りません。
       = form.rfk_combobox :project_id,
         collection: [],
