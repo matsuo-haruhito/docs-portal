@@ -4,25 +4,25 @@ require "tmpdir"
 require Rails.root.join("db/seeds/support/seed_sample_document_generator").to_s
 
 RSpec.describe "standard seed showcase documentation" do
-  REPO_ROOT = Rails.root
-  DOC_PATH = REPO_ROOT.join("docs/標準seedサンプルと確認用途.md")
-  README_PATH = REPO_ROOT.join("README.md")
-  SAMPLE_SET = SeedSupport::SeedSampleDocumentGenerator::SAMPLE_SET
-  SITE = SeedSupport::SeedSampleDocumentGenerator::SITE
+  STANDARD_SEED_REPO_ROOT = Rails.root
+  STANDARD_SEED_DOC_PATH = STANDARD_SEED_REPO_ROOT.join("docs/標準seedサンプルと確認用途.md")
+  STANDARD_SEED_ROOT_README_PATH = STANDARD_SEED_REPO_ROOT.join("README.md")
+  STANDARD_SEED_SAMPLE_SET = SeedSupport::SeedSampleDocumentGenerator::SAMPLE_SET
+  STANDARD_SEED_SITE = SeedSupport::SeedSampleDocumentGenerator::SITE
 
   def docs_source
-    DOC_PATH.read
+    STANDARD_SEED_DOC_PATH.read
   end
 
   def readme_source
-    README_PATH.read
+    STANDARD_SEED_ROOT_README_PATH.read
   end
 
   def generated_showcase_paths
     Dir.mktmpdir("seed-showcase") do |dir|
       root = Pathname(dir)
       SeedSupport::SeedSampleDocumentGenerator.new(root: root).run
-      site_root = root.join(SAMPLE_SET, SITE)
+      site_root = root.join(STANDARD_SEED_SAMPLE_SET, STANDARD_SEED_SITE)
 
       Dir.glob(site_root.join("**/*")).filter_map do |path|
         next unless File.file?(path)
@@ -34,7 +34,7 @@ RSpec.describe "standard seed showcase documentation" do
 
   def documented_showcase_paths
     section = docs_source[/^## 標準 showcase の生成内容\n(.*?)(?=^## |\z)/m, 1]
-    raise "#{DOC_PATH.relative_path_from(REPO_ROOT)} is missing the standard showcase section" unless section
+    raise "#{STANDARD_SEED_DOC_PATH.relative_path_from(STANDARD_SEED_REPO_ROOT)} is missing the standard showcase section" unless section
 
     section.scan(/^\| `([^`]+)` \|/).flatten.sort
   end
