@@ -12,9 +12,13 @@ module Admin::ConsentTermsHelper
     ]
   end
 
-  def consent_term_filter_summary(filters, result_count:)
+  def consent_term_filter_summary(filters, result_count:, display_start: nil, display_end: nil)
     conditions = consent_term_filter_summary_conditions(filters)
-    count_label = "表示中: #{result_count}件"
+    count_label = consent_term_result_count_label(
+      result_count:,
+      display_start:,
+      display_end:
+    )
 
     return count_label if conditions.blank?
 
@@ -26,6 +30,12 @@ module Admin::ConsentTermsHelper
   end
 
   private
+
+  def consent_term_result_count_label(result_count:, display_start:, display_end:)
+    return "表示中: #{result_count}件" if display_start.blank? || display_end.blank?
+
+    "条件に一致する同意文面 #{result_count}件中 #{display_start}-#{display_end}件を表示"
+  end
 
   def consent_term_filter_summary_conditions(filters)
     filters = filters.to_h.symbolize_keys
