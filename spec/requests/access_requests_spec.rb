@@ -231,7 +231,8 @@ RSpec.describe "Access requests", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("表示中条件: 状態: 申請中 / 検索: missing target / 要求権限: ダウンロード / 対象種別: ファイル")
     expect(page_text).to include("状態: 申請中 / 検索: missing target / 要求権限: ダウンロード / 対象種別: ファイル に一致するアクセス申請はありません。")
-    expect(page_text).to include("条件を1つずつ外すか、すべての条件を外すと送信済み申請全体を確認できます。")
+    expect(page_text).to include("条件を外すと、送信済み申請全体を確認できます。")
+    expect(page_text).to include("条件を1つずつ外す場合は、下のリンクから選べます。")
     expect(page_text).to include("検索を解除")
     expect(page_text).to include("状態をすべてに戻す")
     expect(page_text).to include("要求権限をすべてに戻す")
@@ -301,7 +302,7 @@ RSpec.describe "Access requests", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索: not-found-access-request に一致するアクセス申請はありません。")
-    expect(page_text).to include("条件を1つずつ外すか、すべての条件を外すと送信済み申請全体を確認できます。")
+    expect(page_text).to include("条件を外すと、送信済み申請全体を確認できます。")
     expect(page_text).not_to include(project_request.reason)
     expect(page_text).not_to include(document_request.reason)
     expect(page_text).not_to include(file_request.reason)
