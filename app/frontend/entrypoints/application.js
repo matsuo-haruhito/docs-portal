@@ -5,6 +5,7 @@ import "./document_version_diff_display_mode.css"
 import "./document_version_tabs.css"
 import "./document_set_document_filter.css"
 import "./bulk_edit_selection.css"
+import "./text_preview_cues.css"
 import "@hotwired/turbo-rails"
 import { Application } from "@hotwired/stimulus"
 import { RailsTablePreferencesController } from "rails_table_preferences"
@@ -34,6 +35,7 @@ import PreviewTableResizerController from "../controllers/preview_table_resizer_
 import SidebarController from "../controllers/sidebar_controller"
 import SiteViewerIframeHeightController from "../controllers/site_viewer_iframe_height_controller"
 import StructuredPreviewToolsController from "../controllers/structured_preview_tools_controller"
+import TextPreviewToolsController from "../controllers/text_preview_tools_controller"
 
 const application = Application.start()
 application.register("rails-table-preferences", RailsTablePreferencesController)
@@ -62,3 +64,4 @@ application.register("preview-table-resizer", PreviewTableResizerController)
 application.register("sidebar", SidebarController)
 application.register("site-viewer-iframe-height", SiteViewerIframeHeightController)
 application.register("structured-preview-tools", StructuredPreviewToolsController)
+application.register("text-preview-tools", TextPreviewToolsController)

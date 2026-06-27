@@ -1,0 +1,21 @@
+.line-preview__row:target,
+.line-preview__row.is-text-preview-anchor-target {
+  background: #eff6ff;
+  box-shadow: inset 4px 0 0 var(--accent-2);
+}
+
+.line-preview__row:target .line-preview__number,
+.line-preview__row.is-text-preview-anchor-target .line-preview__number {
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.line-preview__row.is-text-preview-match .line-preview__code {
+  background: #fffbeb;
+  box-shadow: inset 4px 0 0 #f59e0b;
+}
+
+.line-preview__row.is-text-preview-anchor-target.is-text-preview-match .line-preview__code {
+  background: linear-gradient(90deg, #eff6ff 0, #fffbeb 1.2rem, #fffbeb 100%);
+}

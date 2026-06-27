@@ -55,6 +55,7 @@
 | `image-preview-tools` | image preview | `setupImagePreviewTools()` を専用 controller から refresh し、再描画時に button / keydown listener を cleanup する | `preview-tools` bridge から分離済み。fit / zoom / rotate / status / localStorage contract は変更しない |
 | `pdf-preview-tools` | PDF preview | `setupPdfPreviewTools()` を専用 controller から refresh し、再描画 / disconnect 時に button / keydown listener を cleanup する | `preview-tools` bridge から分離済み。height toggle / status / `aria-pressed` / localStorage / keyboard shortcut contract は変更しない |
 | `structured-preview-tools` | structured / text preview | `setupStructuredPreviewTools()` を専用 controller から refresh し、再描画 / disconnect 時に input / button / document keydown / hashchange listener を cleanup する | `preview-tools` bridge から分離済み。検索、clear、一致行のみ表示、copy、line anchor highlight、`/` / `Escape` shortcut は変更しない |
+| `text-preview-tools` | text preview | hashchange と初期表示時の line anchor target cue を同期する | target row の `aria-current="location"` と blue cue を source-level に固定し、search match cue、copy、filter、toolbar、hashchange contract は変更しない |
 | `preview-table-resizer` | Markdown preview table | iframe 内 table wrapping、localStorage、column resize、`turbo:load` / `turbo:render` refresh | current fallback path として維持。`表ツール` summary の横スクロール・列幅調整 cue、横スクロール領域の `aria-label`、列幅、列幅の保存、ヘッダー固定、先頭列固定に閉じ、RTP 統合判断は #475 に残す |
 | `sidebar` | 文書ツリー sidebar width / collapsed state | localStorage、pointer / keyboard resize | app 側 Stimulus として維持 |
 | `site-viewer-iframe-height` | Docusaurus / site viewer iframe | `setupSiteViewerIframeHeightSync()` を専用 controller から refresh する | `preview-tools` bridge から分離済み。same-origin check、message type、frame source check、minimum height、`data-docs-portal-auto-height` marker は helper 側で維持 |
@@ -81,6 +82,7 @@
 - `image-preview-tools`: image preview helper を Turbo 再描画後にも再探索する。
 - `pdf-preview-tools`: PDF preview helper を Turbo 再描画後にも再探索する。
 - `structured-preview-tools`: structured / text preview helper を Turbo 再描画後にも再探索する。
+- `text-preview-tools`: text preview の location hash と line row を同期し、target cue と `aria-current="location"` を controller lifecycle 内の hashchange listener で更新する。
 - `preview-table-resizer`: iframe preview table を Turbo 再描画後にも再探索する。
 - `site-viewer-iframe-height`: site viewer iframe height sync を Turbo 再描画後にも再探索する。
 - `document-version-tabs`: hashchange に追従して tab panel を切り替える。
@@ -107,6 +109,7 @@
 | `image-preview-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、listener cleanup 呼び出し | image preview UI の redesign、fit / zoom / rotate / status / localStorage contract の変更 |
 | `pdf-preview-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、listener cleanup 呼び出し | PDF preview UI の redesign、height toggle / status / `aria-pressed` / localStorage / keyboard shortcut の変更 |
 | `structured-preview-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、document keydown / hashchange listener cleanup 呼び出し | structured / text preview UI の redesign、search / filter / copy / line anchor / keyboard shortcut behavior の変更 |
+| `text-preview-tools` | `spec/frontend/text_preview_tools_controller.test.mjs` | line anchor target row の `aria-current="location"`、target cue と search match cue の分離、entrypoint registration、view hook | text preview toolbar redesign、search / filter / copy behavior、line anchor id policy、hashchange contract の変更 |
 | `markdown-preview-codeblock-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、iframe style / toolbar / warning / line anchor guard の維持 | codeblock toolbar redesign、JSON / copy / warning / line anchor behavior の変更 |
 | `markdown-preview-document-search` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration | document search UI の redesign、検索 copy / keyboard / empty state の変更 |
 | `markdown-preview-table-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、旧 `preview-tools` bridge からの分離、preference path / table key guard の維持 | Markdown table helper の挙動変更、preview UI redesign、#475 の Markdown table 方針 |
@@ -154,6 +157,7 @@ current fallback support として提供していること:
 - archive preview の download candidate、safe/unsafe path、visible rows、filter chips、copy status、sort/count behavior は変更しない。
 - site viewer iframe height sync の postMessage protocol、same-origin check、frame source check、minimum height は変更しない。
 - structured / text preview の search / filter / copy / line anchor highlight / `/` focus / `Escape` clear behavior は変更しない。
+- text preview の target cue と search match cue は分離して維持し、toolbar redesign、search / filter / copy behavior、line anchor id policy、hashchange contract は変更しない。
 - document file list search の query / clear / count / match highlight / parent context row 表示 behavior は変更しない。
 - `document-file-browser` controller の kind / query filter / empty state とは統合しない。
 - Markdown preview codeblock の copy / JSON整形 copy / JSON検証 / 機密注意 / line anchor / iframe style injection behavior は変更しない。
