@@ -47,6 +47,16 @@ RSpec.describe DocumentFileEmbeddedAssetResolver do
     expect(resolve("../secret.txt")).to be_nil
   end
 
+  it "rejects backslash traversal paths" do
+    create(:document_file,
+      document_version: version,
+      file_name: "secret.txt",
+      content_type: "text/plain",
+      storage_key: "spec/embedded-assets/secret.txt")
+
+    expect(resolve("..\\secret.txt")).to be_nil
+  end
+
   it "rejects blank and root paths" do
     expect(resolve("")).to be_nil
     expect(resolve("/")).to be_nil

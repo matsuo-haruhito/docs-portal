@@ -15,6 +15,10 @@ RSpec.describe DocumentFileAssetBasePath do
     expect(build_path("docs/guide/index.html")).to eq("/files/asset/docs/guide")
   end
 
+  it "uses the asset file directory when an embedded HTML asset is nested differently from the owner" do
+    expect(build_path("docs/assets/detail/page.html")).to eq("/files/asset/docs/assets/detail")
+  end
+
   it "uses root asset path for top-level files" do
     expect(build_path("index.html")).to eq("/files/asset")
   end
