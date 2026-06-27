@@ -8,6 +8,7 @@ Docusaurus / npm 系 Dependabot PR で `Maintainer changes` や `Install script 
 - PR metadata の `mergeable`: branch freshness や conflict が merge 可能かを示します。
 - Dependabot metadata: maintainer change、install script change、package contents の review 要否を示します。
 - human review: package metadata / install script / docs build impact を確認し、PR body または PR comment に証跡を残す判断です。
+- Mermaid / ELK visual evidence: rendering impact がある dependency update だけで確認する別 gate です。Kroki smoke、Docusaurus build、maintainer / install script review の代替にはしません。
 
 ## 確認する範囲
 
@@ -18,6 +19,8 @@ Docusaurus / npm 系 Dependabot PR で `Maintainer changes` や `Install script 
 3. install script が追加・変更された場合は、対象 package の script 名と実行される内容を確認する。必要に応じて package contents の確認要否を PR comment に残す。
 4. `docs-quality`、Docusaurus build、Kroki mock smoke、Mermaid / ELK など docs rendering への影響を分けて確認する。
 5. 確認した内容を PR body または PR comment に `manual evidence` として短く残す。
+
+Mermaid / ELK visual evidence は、dependency release note、Dependabot body、または PR diff が Mermaid rendering、ELK layout、edge routing、diagram shape、label placement、renderer defaults に触れる場合だけ追加で見ます。該当しない update では `Mermaid / ELK visual evidence: not required` と書き、全ページ screenshot や pixel diff を要求しません。
 
 ## rebase 不能時の recreate / replacement 判断
 
@@ -70,11 +73,27 @@ manual evidence:
 - conclusion: CI success とは別に human review 済み / 追加確認待ち
 ```
 
+Mermaid / ELK rendering impact がある場合は、上の `manual evidence` とは別に [Docusaurus build runtime notes](./docusaurus-build-runtime.md) の代表 fixture を使い、次の最小項目を追加します。
+
+```markdown
+Mermaid / ELK visual evidence:
+- dependency: <package name> <from version> -> <to version>
+- trigger: <release note or diff mentions layout / edge routing / labels / renderer defaults>
+- fixture: docs/notes/docusaurus-build-runtime.md representative ELK fixture
+- viewport/browser: <desktop / narrow / browser name>
+- result: edge routing and labels are readable / follow-up needed
+- not covered: pixel diff, all-page screenshot scan, Kroki smoke, package maintainer review
+```
+
 `docs-quality` や `ci` が success していても、この証跡がない場合は `review:needs-human` として残します。
 
 ## Mermaid / ELK visual evidence gate との分離
 
 Mermaid / ELK など rendering 結果に影響しうる update は、代表 fixture や目視 evidence の要否を別に確認します。この note は maintainer / install script / package metadata の review gate であり、visual evidence gate の内容を置き換えません。
+
+Mermaid / ELK visual evidence の正本は [Docusaurus build runtime notes](./docusaurus-build-runtime.md) の `Mermaid / ELK visual evidence` section です。ここでは、その section をいつ呼び出すかだけを決めます。Kroki mocked smoke は PlantUML / D2 など外部 diagram code block の変換確認、Docusaurus build は build 成否確認、Mermaid / ELK visual evidence は browser rendering の可読性確認として分けます。
+
+この visual evidence は、dependency update が rendering impact を持つ場合の manual gate です。docs-quality に載せる場合も lightweight source/docs guard または representative fixture の build-or-render smoke に閉じ、pixel diff、全ページ screenshot scan、browser screenshot infrastructure、Docusaurus build pipeline redesign は別 Issue で扱います。
 
 ## この note で決めないこと
 
