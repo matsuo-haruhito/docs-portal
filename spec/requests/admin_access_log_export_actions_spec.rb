@@ -105,4 +105,48 @@ RSpec.describe "Admin access log export actions", type: :request do
       )
     )
   end
+
+  it "keeps inactive AI context filters out of CSV and metadata links" do
+    AccessLog.create!(
+      user: admin_user,
+      company: admin_company,
+      project:,
+      document:,
+      document_version: version,
+      action_type: :download,
+      target_type: "zip",
+      target_name: "inactive-ai-filter.zip",
+      ip_address: "127.0.0.1",
+      user_agent: "RSpec",
+      accessed_at: Time.zone.parse("2026-05-10 12:00:00 UTC")
+    )
+
+    sign_in_as(admin_user)
+
+    get admin_access_logs_path(
+      action_type: "download",
+      target_type: "zip",
+      ai_context_mode: "compact",
+      ai_context_scope: "selected",
+      q: "inactive-ai-filter"
+    )
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("対象外")
+    expect(page_text).to include("AI出力モード・範囲は今回の有効な条件から外れます")
+
+    [
+      export_link_query("現在の条件でCSV export（最新200件）"),
+      export_link_query("表示中ページをCSV export（最大200件）"),
+      export_link_query("CSV条件metadata JSON"),
+      export_link_query("表示中ページmetadata JSON")
+    ].each do |query|
+      expect(query).to include(
+        "action_type" => "download",
+        "target_type" => "zip",
+        "q" => "inactive-ai-filter"
+      )
+      expect(query).not_to include("ai_context_mode", "ai_context_scope")
+    end
+  end
 end
