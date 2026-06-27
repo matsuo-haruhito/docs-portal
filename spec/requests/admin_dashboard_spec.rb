@@ -159,6 +159,11 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("ZIP import")
     expect(response.body).to include(new_admin_zip_import_path)
     expect(response.body).to include("この行は read-only 集計です")
+    expect(response.body).to include("DocumentFile 実体の Project / Document 上位")
+    expect(response.body).to include("storage/document_files に紐づく DocumentFile 実体だけを Project / Document 単位で概算集計します。")
+    expect(response.body).to include("上位5件の read-only preview")
+    expect(response.body).to include("削除・archive・cleanup・retention policy 決定には使いません")
+    expect(response.body).to include("raw absolute path や外部 storage metadata は表示しません")
     expect(dashboard_section("Storage使用量").to_html).not_to include(Rails.root.to_s)
   end
 
@@ -256,12 +261,15 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include("Git同期")
     expect(response.body).to include("failed: 1")
     expect(response.body).to include("skipped: 1")
+    expect(response.body).to include("保存済み履歴の件数です。継続失敗候補や通知状態とは別に確認します。")
     expect(response.body).to include(admin_git_import_runs_path)
     expect(response.body).to include("生成ファイル")
     expect(response.body).to include("実行履歴 failed: 1")
     expect(response.body).to include("イベント failed: 1")
     expect(page_text).to include("継続失敗候補: 0 件")
     expect(page_text).to include("保存済み failed 件数とは別の read-only 調査入口です。")
+    expect(page_text).to include("候補 0 件は正常保証ではありません。")
+    expect(page_text).to include("通知・ack・自動復旧の状態ではありません。")
     expect(response.body).to include(admin_generated_file_runs_path(status: "failed"))
     expect(response.body).to include(admin_generated_file_events_path(status: "failed"))
     expect(response.body).to include("Webhook送信")
@@ -388,6 +396,7 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response.body).to include(I18n.l(old_failure_at, format: :short))
     expect(response.body).to include("古い失敗のみ")
     expect(response.body).to include("7日より古い対象履歴だけが残っています")
+    expect(response.body).to include("緊急度、通知状態、ack 状態を示す表示ではありません")
   end
 
   it "shows zero-count operational failure entries without freshness cues when there is no saved failure data" do
@@ -405,6 +414,7 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(page_text).to include("継続失敗候補: 0 件")
     expect(page_text).to include("保存済み failed 件数とは別の read-only 調査入口です。")
     expect(response.body).to include("最新 run が連続失敗している候補はありません。")
+    expect(response.body).to include("候補がない状態です。保存済み failed 件数が 0 件であることや正常状態を保証する表示ではありません。")
     expect(response.body).to include("partial: 0")
     expect(response.body).not_to include("対象履歴の最終更新")
     expect(response.body).not_to include("古い失敗のみ")
