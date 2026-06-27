@@ -83,6 +83,11 @@ section.card
                 = link_to "継続失敗候補の failed 実行履歴をすべて見る", admin_generated_file_runs_path(status: "failed"), class: "button secondary"
             - else
               p.muted 最新 run が連続失敗している候補はありません。同じ identity で連続 failed の候補がない状態です。保存済み failed 件数が 0 件であることや正常状態を保証する表示ではありません。
+            - if @generated_file_run_failure_alert_digest_markdown.present?
+              details.operational-alert-digest
+                summary Markdown digest preview
+                p.muted admin 内で候補を引き継ぐための read-only preview です。通知済み、ack、SLA、自動 retry の状態としては扱いません。
+                = text_area_tag :generated_file_failure_digest_markdown, @generated_file_run_failure_alert_digest_markdown, readonly: true, rows: (alert_candidates.any? ? 12 : 6)
         - if item[:document_delivery_alert_candidates]
           - delivery_alert_candidates = item[:document_delivery_alert_candidates]
           .operational-alert-candidates
