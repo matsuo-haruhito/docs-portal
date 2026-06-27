@@ -48,9 +48,9 @@ RSpec.describe "Project AI context selected scope handoff", type: :request do
     )
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("選択 scope handoff")
-    expect(page_text).to include("mode: 本文込み / scope: selected / 選択ID: 4件 / 案件内候補: 2件 / 出力対象: 1件 / 候補外: 2件")
-    expect(page_text).to include("document_q は候補検索のみです。JSON / Markdown の対象範囲は、この selected scope と閲覧権限で決まります。")
+    expect(page_text).to include("選択範囲の引き継ぎ")
+    expect(page_text).to include("出力モード: 本文込み / 出力モードID / mode: full / 範囲: 選択中 / 選択ID: 4件 / 案件内候補: 2件 / 出力対象: 1件 / 候補外: 2件")
+    expect(page_text).to include("document_q は候補検索のみです。JSON / Markdown の対象範囲は、この選択範囲と閲覧権限で決まります。")
     expect(page_text).to include("Selected Handoff Manual")
     expect(page_text).to include("selected-handoff")
     expect(page_text).to include(selected.public_id)
