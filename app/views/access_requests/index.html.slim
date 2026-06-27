@@ -24,6 +24,15 @@
 - active_filter_parts << "対象種別: #{requestable_type_filter_labels.fetch(current_requestable_type, current_requestable_type)}" if current_requestable_type.present?
 - active_filter_summary = active_filter_parts.join(" / ")
 - has_filter = @query.present? || @status_filter.present? || @requested_access_level_filter.present? || @requestable_type_filter.present?
+- empty_filter_reset_links = []
+- if current_query.present?
+  - empty_filter_reset_links << ["検索を解除", access_requests_path(current_filter_params.except(:q).merge(status: @status_filter.presence).compact)]
+- if @status_filter.present?
+  - empty_filter_reset_links << ["状態をすべてに戻す", access_requests_path(current_filter_params)]
+- if current_requested_access_level.present?
+  - empty_filter_reset_links << ["要求権限をすべてに戻す", access_requests_path(current_filter_params.except(:requested_access_level).merge(status: @status_filter.presence).compact)]
+- if current_requestable_type.present?
+  - empty_filter_reset_links << ["対象種別をすべてに戻す", access_requests_path(current_filter_params.except(:requestable_type).merge(status: @status_filter.presence).compact)]
 
 h1 アクセス申請
 p.muted 自分が送信した申請の状態を確認できます。
@@ -122,8 +131,10 @@ p.actions
 - else
   - if active_filter_summary.present?
     p.muted = "#{active_filter_summary} に一致するアクセス申請はありません。"
-    p.muted 条件を外すと、送信済み申請全体を確認できます。
+    p.muted 条件を1つずつ外すか、すべての条件を外すと送信済み申請全体を確認できます。
     p.actions
+      - empty_filter_reset_links.each do |label, path|
+        = link_to label, path, class: "button secondary"
       = link_to "すべての申請を見る", access_requests_path, class: "button secondary"
   - else
     p.muted 送信済みのアクセス申請はありません。
