@@ -24,7 +24,8 @@ h1 ユーザーマスタ
     .form-grid
       label
         | キーワード
-        = text_field_tag :q, @user_filter_params["q"], placeholder: "ユーザー名・表示名・メールアドレス"
+        = text_field_tag :q, @user_filter_params["q"], placeholder: "ユーザー名・メールアドレス", maxlength: 100
+        p.muted ユーザー名・メールアドレスの断片で検索できます。最大100文字。
       label
         | 状態
         = select_tag :active, options_for_select([["すべて", ""], ["有効", "true"], ["無効", "false"]], selected_active_filter)
