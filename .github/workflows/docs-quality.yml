@@ -14,9 +14,12 @@ on:
       - docusaurus/package-lock.json
       - docusaurus/plugins/remark-kroki-diagrams.mjs
       - docusaurus/plugins/remark-kroki-diagrams.smoke.test.mjs
+      - .env.example
+      - docker-compose.kroki.yml
       - .github/workflows/docs-quality.yml
       - .github/scripts/check_markdown_links.rb
       - .github/scripts/check_docs_quality_permissions.rb
+      - .github/scripts/check_kroki_runtime_docs.rb
       - .markdownlint-cli2.yaml
   pull_request:
     paths:
@@ -30,9 +33,12 @@ on:
       - docusaurus/package-lock.json
       - docusaurus/plugins/remark-kroki-diagrams.mjs
       - docusaurus/plugins/remark-kroki-diagrams.smoke.test.mjs
+      - .env.example
+      - docker-compose.kroki.yml
       - .github/workflows/docs-quality.yml
       - .github/scripts/check_markdown_links.rb
       - .github/scripts/check_docs_quality_permissions.rb
+      - .github/scripts/check_kroki_runtime_docs.rb
       - .markdownlint-cli2.yaml
 
 permissions:
@@ -51,6 +57,9 @@ jobs:
 
       - name: Check docs-quality workflow permissions
         run: ruby .github/scripts/check_docs_quality_permissions.rb
+
+      - name: Check Kroki optional runtime docs
+        run: ruby .github/scripts/check_kroki_runtime_docs.rb
 
       - uses: actions/setup-node@v6
         with:
