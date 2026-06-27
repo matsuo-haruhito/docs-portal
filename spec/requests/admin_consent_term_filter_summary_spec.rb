@@ -32,7 +32,7 @@ RSpec.describe "Admin consent term filter summary", type: :request do
     )
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("表示中: 1件（検索: 利用規約 / 状態: 有効 / 種別: 案件 / 再同意方針: 初回表示時）")
+    expect(response.body).to include("条件に一致する同意文面 1件中 1-1件を表示（検索: 利用規約 / 状態: 有効 / 種別: 案件 / 再同意方針: 初回表示時）")
     expect(reset_link_texts).to include("条件をリセット")
     expect(response.body).not_to include("条件に一致する同意文面はありません。")
     expect(parsed_html.at_css(%(th[data-rails-table-preferences-column-key="title"]))).to be_present
