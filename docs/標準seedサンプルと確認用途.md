@@ -50,6 +50,27 @@ PlantUML 記法サンプルは seed showcase の代表コンテンツです。Kr
 
 viewer / preview / download まわりの PR では、変更した導線に合わせて標準 showcase の代表ファイルを最小限確認します。ここでの checklist は review 用の手動 smoke であり、browser visual regression、full system spec、seed generator の変更を必須化するものではありません。
 
+使い分けは次の粒度で十分です。
+
+| PR 種別 | showcase smoke の扱い | evidence の残し方 |
+| --- | --- | --- |
+| docs-only / runbook 表現整理 | checklist を確認観点として参照するだけでよい | 実ブラウザや `db:seed` を実行していない場合は、そのまま `not checked` と書く |
+| viewer / preview / download の runtime / UI 変更 | 変更対象に対応する代表ファイルだけを選ぶ | 代表ファイル名、確認した導線、結果、未確認の導線を PR body または comment に短く残す |
+| seed generator / sample contents 変更 | generator と docs table の同期を優先する | `bundle exec rspec spec/docs/standard_seed_showcase_drift_spec.rb` の結果と、必要なら `db:seed` / UI 確認を分けて残す |
+
+PR body または evidence comment には、詳細な screenshot や全ファイル一覧ではなく次の最小項目を残します。
+
+```text
+standard showcase smoke:
+- change area: <Markdown viewer / CSV preview / ZIP download / multiple versions / docs-only>
+- representative files: <README.md / runbook.csv / sample-archive.zip / 提出済/README.md>
+- check result: <checked / not checked>
+- evidence scope: <manual smoke / request spec / docs-only reference>
+- not covered: <full visual regression / all files / seed generator changes>
+```
+
+代表ファイル名や配置の drift は `spec/docs/standard_seed_showcase_drift_spec.rb` が守る範囲です。docs-only の evidence 文言整理だけなら、新しい browser check、Playwright screenshot、全ファイル確認、`db:seed` 実行を必須にしません。
+
 | 変更対象 | 必須確認 | 任意または条件付き確認 |
 | --- | --- | --- |
 | Markdown viewer / 文書本文 | `README.md` の見出し、表、コードブロック、添付ファイルリンクが開けること | Docusaurus build や manual preview renderer を触る PR では HTML 表示も確認する |
