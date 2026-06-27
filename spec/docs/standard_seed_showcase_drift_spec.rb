@@ -66,4 +66,15 @@ RSpec.describe "standard seed showcase documentation" do
       expect(docs_source).to include("browser visual regression、full system spec、seed generator の変更を必須化するものではありません")
     end
   end
+
+  it "keeps PR evidence guidance lightweight and scoped to changed routes" do
+    aggregate_failures do
+      expect(docs_source).to include("docs-only / runbook 表現整理")
+      expect(docs_source).to include("viewer / preview / download の runtime / UI 変更")
+      expect(docs_source).to include("代表ファイル名、確認した導線、結果、未確認の導線")
+      expect(docs_source).to include("standard showcase smoke:")
+      expect(docs_source).to include("not covered: <full visual regression / all files / seed generator changes>")
+      expect(docs_source).to include("新しい browser check、Playwright screenshot、全ファイル確認、`db:seed` 実行を必須にしません")
+    end
+  end
 end
