@@ -17,6 +17,10 @@ RSpec.describe "Admin users filters", type: :request do
     parsed_html.css("[data-rails-table-preferences-column-key]").map { |node| node["data-rails-table-preferences-column-key"] }.uniq
   end
 
+  def keyword_input
+    parsed_html.at_css('input[name="q"]')
+  end
+
   def link_href(text)
     parsed_html.css("a").find { |link| link.text.squish == text }&.[]("href")
   end
@@ -37,6 +41,11 @@ RSpec.describe "Admin users filters", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("ユーザーを探す")
+    expect(keyword_input).to be_present
+    expect(keyword_input["placeholder"]).to eq("ユーザー名・メールアドレス")
+    expect(keyword_input["maxlength"]).to eq("100")
+    expect(page_text).to include("ユーザー名・メールアドレスの断片で検索できます。最大100文字。")
+    expect(response.body).not_to include("ユーザー名・表示名・メールアドレス")
     expect(form_link_texts(admin_users_path)).not_to include("条件をクリア")
 
     get admin_users_path, params: { q: "clear target" }
