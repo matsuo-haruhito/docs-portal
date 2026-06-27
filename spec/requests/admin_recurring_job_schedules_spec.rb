@@ -403,7 +403,7 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     get admin_recurring_job_schedule_path(schedule, q: "missing-run")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("表示中: 0-0件 / 全0件（50件ずつ、1/1ページ）")
+    expect(response.body).not_to include("表示中: 0-0件 / 全0件（50件ずつ、1/1ページ）")
     expect(response.body).to include("条件に一致する実行履歴はありません。")
     expect(parsed_html.at_css(%(input[name="q"][value="missing-run"]))).to be_present
 
