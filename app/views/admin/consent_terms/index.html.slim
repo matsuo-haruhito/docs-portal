@@ -3,6 +3,8 @@
 - table_columns = consent_term_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - consent_term_query_max_length = Admin::ConsentTermsController::CONSENT_TERM_QUERY_MAX_LENGTH
+- consent_term_filter_link_params = @consent_term_filters.select { |_key, value| value.present? }
+- consent_term_pagination_params = consent_term_filter_link_params.merge(per_page: @consent_terms_per_page)
 
 h1 同意文面管理
 = render "admin/nav"
@@ -37,7 +39,14 @@ h1 同意文面管理
 - if @consent_terms.any?
   .card
     h2 同意文面一覧の読み方
-    p.muted = consent_term_filter_summary(@consent_term_filters, result_count: @consent_terms.size)
+    p.muted = consent_term_filter_summary(@consent_term_filters, result_count: @consent_terms_total_count, display_start: @consent_terms_display_start, display_end: @consent_terms_display_end)
+    p.muted = "1ページあたり#{@consent_terms_per_page}件まで表示します。per_page は最大#{Admin::ConsentTermsController::CONSENT_TERMS_MAX_PER_PAGE}件です。"
+    - if @consent_terms_has_previous_page || @consent_terms_has_next_page
+      nav.pagination aria-label="同意文面一覧ページ移動"
+        - if @consent_terms_has_previous_page
+          = link_to "前へ", admin_consent_terms_path(consent_term_pagination_params.merge(page: @consent_terms_page - 1)), class: "button secondary"
+        - if @consent_terms_has_next_page
+          = link_to "次へ", admin_consent_terms_path(consent_term_pagination_params.merge(page: @consent_terms_page + 1)), class: "button secondary"
     p.muted 状態の「利用中」は同意要求の候補に残る文面、「無効化済み」は履歴確認用に残す文面です。
     p.muted 改訂時は既存版を上書きせず、新しい版ラベルの文面を追加します。
     p.muted 履歴がある文面は削除できないため、通常は編集で無効化して運用します。
