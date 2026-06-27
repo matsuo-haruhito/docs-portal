@@ -108,7 +108,7 @@ RSpec.describe "Admin recurring job run scheduled filters", type: :request do
     get admin_recurring_job_schedule_path(schedule, scheduled_from: "2026-04-02", scheduled_to: "2026-04-02")
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("表示中: 0-0件 / 全0件（50件ずつ、1/1ページ）")
+    expect(response.body).not_to include("表示中: 0-0件 / 全0件（50件ずつ、1/1ページ）")
     expect(response.body).to include("条件に一致する実行履歴はありません。")
     expect(response.body).to include("状態・検索語・予定時刻を見直すか、絞り込み解除で履歴の先頭ページに戻してください。")
     expect(parsed_html.at_css(%(a[href="#{admin_recurring_job_schedule_path(schedule, return_to: admin_recurring_job_schedules_path)}"]))).to be_present
