@@ -30,6 +30,13 @@ RSpec.describe "Document file embedded asset boundaries", type: :request do
     asset_document_file_path(owner_file, asset_path:)
   end
 
+  def external_viewer
+    external_user = create(:user, :external)
+    create(:project_membership, project:, user: external_user)
+    create(:document_permission, document:, company: external_user.company, access_level: :view)
+    external_user
+  end
+
   after do
     Array(@embedded_files).each { |document_file| FileUtils.rm_f(document_file.absolute_path) }
   end
@@ -67,12 +74,11 @@ RSpec.describe "Document file embedded asset boundaries", type: :request do
       content: "body { color: #111; }"
     )
 
-    sign_in_as(user)
+    sign_in_as(external_viewer)
 
     get embedded_asset_path(owner_file, "site/assets/app.css")
 
-    expect(response).to have_http_status(:not_found)
-    expect(response.body).to eq("File not found")
+    expect(response).to have_http_status(:forbidden)
   end
 
   it "does not serve assets that are not deliverable after scan" do
@@ -88,7 +94,7 @@ RSpec.describe "Document file embedded asset boundaries", type: :request do
       scan_status: :scan_pending
     )
 
-    sign_in_as(user)
+    sign_in_as(external_viewer)
 
     get embedded_asset_path(owner_file, "site/assets/app.css")
 
