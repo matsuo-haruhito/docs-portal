@@ -23,7 +23,7 @@ module Admin::AccessLogsHelper
     to: "終了日"
   }.freeze
   AUTHORIZATION_TARGET_VALUE_PATTERN = /\bAuthorization:\s*(?:Bearer|Basic)\s+[^;\s]+/i
-  AUTHORIZATION_TARGET_PARAM_PATTERN = /\bauthorization\s*=\s*(?:(?:Bearer|Basic)\s+)?[^;&\s]+/i
+  AUTHORIZATION_TARGET_PARAM_PATTERN = /\bauthorization\s*=\s*((?:Bearer|Basic)\s+)?[^;&\s]+/i
   AUTH_SCHEME_TARGET_VALUE_PATTERN = /\b(Bearer|Basic)\s+[^;\s]+/i
   SENSITIVE_TARGET_KEY_PATTERN = /\b(token|secret|password|client_secret|access_token|refresh_token|api[_-]?key)\s*([=:])\s*([^;&\s]+)/i
   SENSITIVE_TARGET_QUERY_PATTERN = /([?&](?:authorization|token|secret|password|client_secret|access_token|refresh_token|api[_-]?key)=)([^&#\s]+)/i
@@ -186,7 +186,9 @@ module Admin::AccessLogsHelper
   def safe_access_log_target_name_preview(raw_target_name)
     raw_target_name.to_s.strip
       .gsub(AUTHORIZATION_TARGET_VALUE_PATTERN, "Authorization: [FILTERED]")
-      .gsub(AUTHORIZATION_TARGET_PARAM_PATTERN, "authorization=[FILTERED]")
+      .gsub(AUTHORIZATION_TARGET_PARAM_PATTERN) do
+        Regexp.last_match(1).present? ? "authorization=[FILTERED] [FILTERED]" : "authorization=[FILTERED]"
+      end
       .gsub(AUTH_SCHEME_TARGET_VALUE_PATTERN) { "#{Regexp.last_match(1)} [FILTERED]" }
       .gsub(SENSITIVE_TARGET_KEY_PATTERN) { "#{Regexp.last_match(1)}#{Regexp.last_match(2)}[FILTERED]" }
       .gsub(SENSITIVE_TARGET_QUERY_PATTERN) { "#{Regexp.last_match(1)}[FILTERED]" }
