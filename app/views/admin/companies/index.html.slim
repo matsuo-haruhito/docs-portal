@@ -6,7 +6,6 @@
 - selected_active_filter = @company_filter_params["active"]
 - company_filter_keyword = @company_filter_params["q"].to_s.strip
 - company_active_filter_label = { "true" => "有効", "false" => "無効" }[selected_active_filter]
-- company_filters_applied = company_filter_summaries.any?
 - company_filter_summaries = []
 - company_filter_summaries << "キーワード「#{company_filter_keyword}」" if company_filter_keyword.present?
 - company_filter_summaries << "状態: #{company_active_filter_label}" if company_active_filter_label.present?
