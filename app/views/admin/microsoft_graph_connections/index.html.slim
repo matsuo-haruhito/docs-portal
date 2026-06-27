@@ -3,10 +3,18 @@
 - search_params = { q: @search_query.presence }.compact
 - preview_usage_params = { preview_usage: @selected_preview_usage.presence }.compact
 - duplicate_filter_params = @duplicate_only ? { duplicate_only: "1" } : {}
+- current_filter_params = search_params.merge(preview_usage_params).merge(duplicate_filter_params)
 - table_key = :admin_microsoft_graph_connections
 - table_columns = microsoft_graph_connection_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - selected_filter_labels = []
+- connection_total_count = @microsoft_graph_connections_total_count.to_i
+- connection_global_count = @preview_usage_counts[:all].to_i
+- connection_display_count = @microsoft_graph_connections.size
+- connection_page = @microsoft_graph_connections_page.to_i
+- connection_limit = @microsoft_graph_connections_limit.to_i
+- connection_display_start = @microsoft_graph_connections_offset.to_i + 1
+- connection_display_end = @microsoft_graph_connections_offset.to_i + connection_display_count
 - filter_base_style = "display:inline-flex;align-items:center;gap:0.35rem;padding:0.35rem 0.7rem;border-radius:999px;border:1px solid #d8dee4;line-height:1.2;text-decoration:none;white-space:nowrap;"
 - filter_selected_style = "#{filter_base_style}background:#eaf3ff;border-color:#9ec5fe;color:#1f5aa6;font-weight:700;"
 - filter_link_style = "#{filter_base_style}background:#fff;color:#24292f;"
@@ -106,7 +114,14 @@ h1 Microsoft Graph接続
 
 - if @microsoft_graph_connections.any?
   .card
-    p.muted = "#{@microsoft_graph_connections.size} / #{@preview_usage_counts[:all]} 件を表示しています。"
+    p.muted = "表示範囲: #{connection_display_start}-#{connection_display_end}件 / 条件一致 #{connection_total_count}件。#{connection_display_count} / #{connection_global_count} 件を表示しています。#{connection_page}ページ目 / #{connection_limit}件上限。"
+    p.muted filter link の件数は全体集計です。ページ移動は現在の検索語、preview利用状態、要整理案件 filter を保ちます。
+    - if @microsoft_graph_connections_has_previous_page || @microsoft_graph_connections_has_next_page
+      nav.pagination aria-label="Microsoft Graph接続ページ移動"
+        - if @microsoft_graph_connections_has_previous_page
+          = link_to "前の#{connection_limit}件", admin_microsoft_graph_connections_path(current_filter_params.merge(page: connection_page - 1)), class: "button secondary"
+        - if @microsoft_graph_connections_has_next_page
+          = link_to "次の#{connection_limit}件", admin_microsoft_graph_connections_path(current_filter_params.merge(page: connection_page + 1)), class: "button secondary"
 
   .card
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "Microsoft Graph接続一覧の表示設定")
