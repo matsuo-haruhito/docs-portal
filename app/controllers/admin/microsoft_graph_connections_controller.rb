@@ -87,7 +87,15 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
     @selected_preview_usage = normalize_preview_usage(params[:preview_usage])
     @duplicate_only = params[:duplicate_only] == "1"
     @search_query = normalize_search_query(params[:q])
-    @microsoft_graph_connections = filter_connections(base_scope).limit(INDEX_RESULT_LIMIT).to_a
+
+    filtered_scope = filter_connections(base_scope)
+    @microsoft_graph_connections_total_count = filtered_scope.count
+    @microsoft_graph_connections_page = normalized_page(@microsoft_graph_connections_total_count)
+    @microsoft_graph_connections_limit = INDEX_RESULT_LIMIT
+    @microsoft_graph_connections_offset = (@microsoft_graph_connections_page - 1) * INDEX_RESULT_LIMIT
+    @microsoft_graph_connections = filtered_scope.offset(@microsoft_graph_connections_offset).limit(INDEX_RESULT_LIMIT).to_a
+    @microsoft_graph_connections_has_previous_page = @microsoft_graph_connections_page > 1
+    @microsoft_graph_connections_has_next_page = @microsoft_graph_connections_offset + @microsoft_graph_connections.size < @microsoft_graph_connections_total_count
   end
 
   def microsoft_graph_connections_scope
@@ -123,6 +131,14 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
     return if normalized.blank?
 
     normalized.first(MAX_SEARCH_QUERY_LENGTH)
+  end
+
+  def normalized_page(total_count)
+    requested_page = params[:page].to_i
+    page = requested_page.positive? ? requested_page : 1
+    max_page = [(total_count.to_f / INDEX_RESULT_LIMIT).ceil, 1].max
+
+    page > max_page ? 1 : page
   end
 
   def filter_by_preview_usage(scope, selected_preview_usage)
