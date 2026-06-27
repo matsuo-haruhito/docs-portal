@@ -97,7 +97,8 @@ p.actions
       = link_to "絞り込み解除", admin_recurring_job_schedule_path(@schedule, return_to: return_to_path), class: "button secondary"
   p.muted = "Triage対象: #{run_triage_counts}"
   p.muted = "実行履歴検索はActiveJob ID / エラー断片を最大#{Admin::RecurringJobSchedulesController::RUN_QUERY_MAX_LENGTH}文字で指定できます。長い error log は全文ではなく特徴的な一部で探してください。"
-  p.muted = "表示中: #{run_page_start}-#{run_page_end}件 / 全#{@runs_total_count}件（#{@run_per_page}件ずつ、#{@run_page}/#{@runs_total_pages}ページ）"
+  - unless @runs.empty?
+    p.muted = "表示中: #{run_page_start}-#{run_page_end}件 / 全#{@runs_total_count}件（#{@run_per_page}件ずつ、#{@run_page}/#{@runs_total_pages}ページ）"
   - Array(@run_filter_warnings).each do |warning|
     p.muted = warning
   - if @selected_run_query.present?
