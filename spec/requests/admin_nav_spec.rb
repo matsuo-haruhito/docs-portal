@@ -69,6 +69,25 @@ RSpec.describe "Admin navigation", type: :request do
     expect_active_nav(section_label: "外部連携", link_label: "Webhook")
   end
 
+  it "shows company master admin landing as a company and user management entrypoint" do
+    sign_in_as(create(:user, :company_master_admin))
+
+    get admin_root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(active_nav_section_label).to eq("会社・ユーザー管理")
+    expect(active_nav_section["aria-label"]).to eq("現在の領域: 会社・ユーザー管理")
+    expect(parsed_html.css(".nav-list a").map { |link| link.text.squish }).to eq(["会社", "ユーザー"])
+    expect(page_text).to include("会社・ユーザー管理専用の入口")
+    expect(page_text).to include("会社を管理")
+    expect(page_text).to include("ユーザーを管理")
+    expect(page_text).to include("internal admin へ戻す範囲")
+    expect(page_text).to include("案件・案件所属")
+    expect(page_text).to include("文書・文書権限")
+    expect(page_text).to include("監査ログ、利用状況、アクセス申請")
+    expect(parsed_html.css(".nav-list a").map { |link| link["href"] }).to eq([admin_companies_path, admin_users_path])
+  end
+
   it "marks company master admin company navigation without exposing internal links" do
     sign_in_as(create(:user, :company_master_admin))
 
