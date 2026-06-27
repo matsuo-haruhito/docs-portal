@@ -1,4 +1,4 @@
-- page_title "#{@project.name} AI context"
+- page_title "#{@project.name} AI向けコンテキスト"
 - current_mode_name = @mode.to_s
 - mode_label_by_name = { "compact" => "概要中心", "full" => "本文込み" }
 - current_mode_label = mode_label_by_name.fetch(current_mode_name, current_mode_name)
@@ -51,7 +51,7 @@ p
     | 現在の出力モード:
     strong = " #{current_mode_label}"
   p.muted
-    | mode: 
+    | 出力モードID / mode: 
     = current_mode_name
   p.muted = current_mode_description
   ul
@@ -66,7 +66,7 @@ p
   p.muted
     | JSON / Markdown は現在の出力モード（
     = current_mode_label
-    |  / mode: 
+    |  / 出力モードID / mode: 
     = current_mode_name
     | ）で出力します。文書スコープと権限フィルタは画面下の一覧と同じです。
   p
@@ -74,11 +74,13 @@ p
   - if export_scope_help.present?
     p.muted = export_scope_help
   - if @requested_document_ids.any?
-    h3 選択 scope handoff
+    h3 選択範囲の引き継ぎ
     p.muted
-      | mode: 
+      | 出力モード: 
       = current_mode_label
-      |  / scope: selected / 選択ID: 
+      |  / 出力モードID / mode: 
+      = current_mode_name
+      |  / 範囲: 選択中 / 選択ID: 
       = selected_document_count
       | 件 / 案件内候補: 
       = scoped_document_count
@@ -87,14 +89,14 @@ p
       | 件 / 候補外: 
       = unscoped_document_count
       | 件
-    p.muted document_q は候補検索のみです。JSON / Markdown の対象範囲は、この selected scope と閲覧権限で決まります。
+    p.muted document_q は候補検索のみです。JSON / Markdown の対象範囲は、この選択範囲と閲覧権限で決まります。
     - if selected_handoff_preview.any?
       = table_tag do
         thead
           tr
             th タイトル
             th slug
-            th public_id
+            th 公開ID
         tbody
           - selected_handoff_preview.each do |document|
             tr
