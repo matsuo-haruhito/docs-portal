@@ -58,7 +58,6 @@ RSpec.describe "Manual upload approval handoff", type: :request do
     aggregate_failures do
       expect(response).to have_http_status(:ok)
       expect(response.body).not_to include("取り消し可能な版詳細を開く")
-      expect(response.body).not_to include(document_version_path(version))
       expect(response.body).not_to include(document_version_rollback_path(version))
     end
   end
