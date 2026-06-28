@@ -76,8 +76,7 @@ module GeneratedFiles
     def metadata_for(safe_artifact:, manifest_count:)
       metadata = {
         "artifact" => safe_artifact,
-        "read_only_evidence" => true,
-        "raw_payload_saved" => false
+        "read_only_evidence" => true
       }
       metadata["manifest_document_count"] = manifest_count if manifest_count
       metadata
