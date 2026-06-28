@@ -107,7 +107,9 @@ Rails.application.routes.draw do
       patch :archive, on: :member
       patch :restore, on: :member
     end
-    resources :bulk_edit_dry_runs, only: %i[new create show update], param: :public_id
+    resources :bulk_edit_dry_runs, only: %i[new create show update], param: :public_id do
+      post :handoff, on: :collection
+    end
     resources :document_sets, except: %i[show new], param: :public_id do
       get :project_search, on: :collection
       get :selected_project, on: :collection
