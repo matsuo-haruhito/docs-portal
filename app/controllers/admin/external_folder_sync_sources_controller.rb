@@ -6,6 +6,8 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     "site_id" => "Site ID"
   }.freeze
   EXTERNAL_FOLDER_SYNC_SOURCE_SEARCH_QUERY_MAX_LENGTH = 100
+  EXTERNAL_FOLDER_SYNC_SOURCE_DEFAULT_PER_PAGE = 10
+  EXTERNAL_FOLDER_SYNC_SOURCE_MAX_PER_PAGE = 50
   PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
   PROJECT_SEARCH_LIMIT = 20
 
@@ -176,7 +178,27 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
     scoped_sources = filter_external_folder_sync_sources_scope(base_scope).to_a
     @latest_runs_by_source_id = latest_runs_by_source_id(scoped_sources)
-    @external_folder_sync_sources = filter_external_folder_sync_sources_by_latest_run(scoped_sources)
+    filtered_sources = filter_external_folder_sync_sources_by_latest_run(scoped_sources)
+    paginate_external_folder_sync_sources(filtered_sources)
+  end
+
+  def paginate_external_folder_sync_sources(sources)
+    @external_folder_sync_sources_total_count = sources.size
+    @external_folder_sync_sources_per_page = normalize_per_page(params[:per_page])
+    @external_folder_sync_sources_total_pages = [(@external_folder_sync_sources_total_count.to_f / @external_folder_sync_sources_per_page).ceil, 1].max
+    @external_folder_sync_sources_page = normalize_page(params[:page], @external_folder_sync_sources_total_pages)
+    @external_folder_sync_sources_offset = (@external_folder_sync_sources_page - 1) * @external_folder_sync_sources_per_page
+    @external_folder_sync_sources = sources.slice(@external_folder_sync_sources_offset, @external_folder_sync_sources_per_page) || []
+  end
+
+  def normalize_page(value, total_pages)
+    page = Integer(value.presence || 1, exception: false) || 1
+    page.clamp(1, total_pages)
+  end
+
+  def normalize_per_page(value)
+    per_page = Integer(value.presence || EXTERNAL_FOLDER_SYNC_SOURCE_DEFAULT_PER_PAGE, exception: false) || EXTERNAL_FOLDER_SYNC_SOURCE_DEFAULT_PER_PAGE
+    per_page.clamp(1, EXTERNAL_FOLDER_SYNC_SOURCE_MAX_PER_PAGE)
   end
 
   def ensure_google_drive_runtime_supported!
@@ -436,7 +458,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
     return unless source.microsoft_graph?
 
-    resolved = ExternalFolderSync::MicrosoftGraphFolderResolver.new(source: source).resolve
+    resolved = ExternalFolderSync::MicrosoftGraphFolderResolver.new(source: @external_folder_sync_source).resolve
     source.external_folder_id = resolved.fetch(:folder_item_id)
     source.external_folder_path = resolved.fetch(:folder_path)
     source.provider_metadata = {
