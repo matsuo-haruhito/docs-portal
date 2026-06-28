@@ -42,7 +42,7 @@ Preview block の detail に build path や source path が出る場合でも、
 
 ## Check table
 
-下の table は、品質チェック結果の全件一覧です。
+下の table は、品質チェック結果を HTML 画面上で確認する一覧です。`severity` と `key` の filter はこの table だけに適用され、Preview block や JSON / Markdown export の内容は絞り込まれません。
 
 | 列 | 読み方 |
 | --- | --- |
@@ -51,7 +51,14 @@ Preview block の detail に build path や source path が出る場合でも、
 | `message` | 人が読む短い説明 |
 | `detail` | 追加情報。空の場合は `-` と表示される |
 
-check table は read-only の結果確認です。この画面で品質チェック結果、版、添付、公開状態を変更する操作は行いません。
+filter の読み方:
+
+- `severity` は `error` / `warning` / `info`、`key` は現在の check 一覧に存在する key だけを使う
+- unsupported な `severity` や `key` は採用されず、該当 filter なしの全件側へ戻る
+- `表示中: X件 / 全Y件` は HTML table の表示件数であり、品質チェック結果全体の件数は `全Y件` と JSON / Markdown export を正本にする
+- `現在の filter に一致する check はありません。` は table 表示だけの 0 件であり、品質チェック結果そのものが空になったことを意味しない
+
+check table と filter は read-only の結果確認です。この画面で品質チェック結果、版、添付、公開状態を変更する操作は行いません。
 
 ## JSON / Markdown export
 
@@ -60,6 +67,7 @@ check table は read-only の結果確認です。この画面で品質チェッ
 - JSON は `valid`、`document_version`、`summary`、`checks` の代表 shape を持つ machine-readable evidence として読む
 - Markdown は PR comment、運用 handoff、調査メモに貼りやすい summary として読む
 - どちらも品質チェック結果を変更しない
+- HTML table filter の `severity` / `key` は export payload には適用されない。filter 中でも export は全件の read-only evidence として扱う
 - external user は HTML / JSON / Markdown のいずれも利用できない internal-only 境界として扱う
 
 JSON / Markdown export の schema 変更、saved report 化、通知連携、ack workflow、品質チェック job 化は current support として書かないでください。
@@ -68,8 +76,8 @@ JSON / Markdown export の schema 変更、saved report 化、通知連携、ack
 
 - 本文 preview の状態を先に見たい: 版詳細画面の `プレビュー状態` を見る
 - build warning / rendered site warning だけ先に拾いたい: 品質チェック画面の `Preview` block を見る
-- error / warning / info の全件を確認したい: check table を見る
-- PR や handoff に結果を渡したい: `JSON` または `Markdown` export を使う
+- error / warning / info の全件を確認したい: check table を見る。HTML 上で見たい行だけに絞る場合は `severity` / `key` filter を使う
+- PR や handoff に結果を渡したい: `JSON` または `Markdown` export を使う。HTML table filter 中でも export は全件 evidence として読む
 - external user の閲覧可否や添付 download 権限を確認したい: 品質チェックではなく、版詳細 / 文書詳細 / 権限 runbook に戻る
 - 品質チェックを公開承認 gate、通知、ack、差し戻し workflow として使いたい: この runbook では決めず、[正式レビュー承認 workflow 境界メモ](./正式レビュー承認workflow境界メモ.md) に戻して human decision として扱う
 
@@ -77,7 +85,7 @@ JSON / Markdown export の schema 変更、saved report 化、通知連携、ack
 
 - `DocumentVersionQualityChecker` の判定ロジック変更
 - JSON / Markdown response schema の再定義
-- saved report、通知、ack、severity filter の追加
+- HTML table のさらなる filter、saved filter、saved report、通知、ack
 - 品質チェックの background job 化
 - external user 向け導線化
 - 版詳細 runbook 全体の再編
