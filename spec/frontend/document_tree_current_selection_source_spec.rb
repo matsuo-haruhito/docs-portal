@@ -4,6 +4,7 @@ RSpec.describe "document tree current selection source" do
   let(:tree_source) { Rails.root.join("app/views/documents/_tree.html.erb").read }
   let(:toolbar_source) { Rails.root.join("app/views/documents/_tree_toolbar.html.erb").read }
   let(:columns_source) { Rails.root.join("app/views/documents/_tree_columns.html.erb").read }
+  let(:detail_sections_source) { Rails.root.join("app/views/documents/_detail_sections.html.slim").read }
   let(:controller_source) { Rails.root.join("app/frontend/controllers/document_tree_navigation_controller.js").read }
 
   it "marks the current tree item for visual and assistive navigation" do
@@ -30,6 +31,16 @@ RSpec.describe "document tree current selection source" do
       expect(toolbar_source).to include("検索欄は左のツリーだけを絞り込み")
       expect(toolbar_source).to include("文書一覧の条件や表示設定とは別に扱います。")
       expect(tree_source).to include(".document-tree-scope-cue")
+    end
+  end
+
+  it "explains document detail state cues separately from tree current and list filters" do
+    aggregate_failures do
+      expect(detail_sections_source).to include(".document-detail-state-cue")
+      expect(detail_sections_source).to include("本文側の「表示中」は現在開いている版や本文 context を示します。")
+      expect(detail_sections_source).to include("左の文書ツリーの表示中バッジは現在文書")
+      expect(detail_sections_source).to include("文書一覧の検索・表示設定は一覧画面だけの条件")
+      expect(detail_sections_source).to include("一覧画面だけの条件として読み分けてください。")
     end
   end
 
