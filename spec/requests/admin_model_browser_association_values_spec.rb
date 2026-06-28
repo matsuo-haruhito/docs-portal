@@ -7,6 +7,10 @@ RSpec.describe "Admin model browser association values", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def table_headers
+    parsed_html.css("thead th").map { _1.text.squish }
+  end
+
   def table_row_including(text)
     parsed_html.css("tbody tr").find { _1.text.squish.include?(text) }
   end
@@ -21,7 +25,7 @@ RSpec.describe "Admin model browser association values", type: :request do
     expect(response).to have_http_status(:ok)
 
     row_text = table_row_including(project.code).text.squish
-    expect(row_text).to include("会社")
+    expect(table_headers).to include("会社")
     expect(row_text).to include("Client Alpha（ID: #{company.id}）")
   end
 
@@ -36,7 +40,7 @@ RSpec.describe "Admin model browser association values", type: :request do
     expect(response).to have_http_status(:ok)
 
     row_text = table_row_including(membership.public_id).text.squish
-    expect(row_text).to include("ユーザー")
+    expect(table_headers).to include("ユーザー")
     expect(row_text).to include("External Reviewer（ID: #{user.id}）")
   end
 end
