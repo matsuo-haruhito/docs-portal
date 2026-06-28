@@ -62,12 +62,18 @@
   <% if @generated_file_event.error_message.present? %>
     <div class="rounded-lg border border-red-200 bg-red-50 p-4">
       <h2 class="mb-2 text-lg font-semibold text-red-700">エラー</h2>
-      <pre class="whitespace-pre-wrap text-sm"><%= @generated_file_event.error_message %></pre>
+      <p class="mb-2 text-xs text-gray-600">エラーは再投入前の状態確認に使う診断用プレビューです。長い本文や raw payload を運用判断の正本にせず、token / secret / private path 相当の値は表示前に伏せています。</p>
+      <pre class="whitespace-pre-wrap text-sm"><%= generated_file_event_diagnostic_preview(@generated_file_event.error_message) %></pre>
     </div>
   <% end %>
 
   <div class="rounded-lg border bg-white p-4">
     <h2 class="mb-2 text-lg font-semibold">メタデータ</h2>
-    <pre class="whitespace-pre-wrap text-sm"><%= JSON.pretty_generate(@generated_file_event.metadata || {}) %></pre>
+    <p class="mb-2 text-xs text-gray-600">メタデータはイベント補助情報の診断用プレビューです。raw payload 調査画面ではなく、token / secret / private path 相当の値は表示前に伏せています。</p>
+    <% if @generated_file_event.metadata.present? %>
+      <pre class="whitespace-pre-wrap text-sm"><%= generated_file_event_metadata_preview(@generated_file_event.metadata) %></pre>
+    <% else %>
+      <p class="text-sm text-gray-500">このイベントに補助メタデータはありません。</p>
+    <% end %>
   </div>
 </div>

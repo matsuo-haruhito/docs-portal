@@ -1,5 +1,6 @@
 class Admin::BulkEditDryRunsController < Admin::BaseController
   BULK_EDIT_CANDIDATE_LIMIT = 50
+  BULK_EDIT_HANDOFF_RUNBOOK_PATH = "docs/文書マスタ運用runbook.md"
 
   before_action :require_admin_only!
   before_action :set_bulk_edit_dry_run, only: %i[show update]
@@ -31,6 +32,14 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
     load_documents
     flash.now[:alert] = "一括編集dry-runを作成できませんでした。"
     render :new, status: :unprocessable_entity
+  end
+
+  def handoff
+    selected_ids = normalized_integer_ids(params.dig(:bulk_edit, :document_ids))
+    bounded_ids = selected_ids.first(BULK_EDIT_CANDIDATE_LIMIT)
+    documents = documents_for_handoff(bounded_ids)
+
+    render json: bulk_edit_handoff_payload(selected_ids:, bounded_ids:, documents:)
   end
 
   def show
@@ -68,11 +77,7 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
   end
 
   def permitted_candidate_document_ids
-    Array(params[:candidate_document_ids]).filter_map do |value|
-      Integer(value)
-    rescue ArgumentError, TypeError
-      nil
-    end.uniq.first(BULK_EDIT_CANDIDATE_LIMIT)
+    normalized_integer_ids(params[:candidate_document_ids], limit: BULK_EDIT_CANDIDATE_LIMIT)
   end
 
   def permitted_candidate_filter_summaries
@@ -82,6 +87,54 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
 
       value.length > 80 ? "#{value.first(77)}..." : value
     end.first(7)
+  end
+
+  def normalized_integer_ids(values, limit: nil)
+    ids = Array(values).filter_map do |value|
+      Integer(value)
+    rescue ArgumentError, TypeError
+      nil
+    end.uniq
+
+    limit ? ids.first(limit) : ids
+  end
+
+  def documents_for_handoff(document_ids)
+    documents_by_id = Document.includes(:project).where(id: document_ids).index_by(&:id)
+    document_ids.filter_map { |document_id| documents_by_id[document_id] }
+  end
+
+  def bulk_edit_handoff_payload(selected_ids:, bounded_ids:, documents:)
+    {
+      source: bulk_edit_handoff_source,
+      runbook_path: BULK_EDIT_HANDOFF_RUNBOOK_PATH,
+      generated_at: Time.current.iso8601,
+      limit: BULK_EDIT_CANDIDATE_LIMIT,
+      candidate_count: permitted_candidate_document_ids.size,
+      requested_selected_count: selected_ids.size,
+      selected_count: documents.size,
+      unresolved_selected_count: bounded_ids.size - documents.size,
+      truncated: selected_ids.size > BULK_EDIT_CANDIDATE_LIMIT,
+      source_filter_summaries: permitted_candidate_filter_summaries,
+      documents: documents.map { |document| document_handoff_summary(document) }
+    }
+  end
+
+  def bulk_edit_handoff_source
+    params[:source].to_s == "admin_documents" ? "admin_documents" : "direct_selection"
+  end
+
+  def document_handoff_summary(document)
+    {
+      id: document.id,
+      public_id: document.public_id,
+      project: {
+        code: document.project.code,
+        name: document.project.name
+      },
+      title: document.title,
+      status: document.archived? ? "archived" : "active"
+    }
   end
 
   def selected_documents
