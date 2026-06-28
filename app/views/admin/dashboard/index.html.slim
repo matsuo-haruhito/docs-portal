@@ -25,7 +25,7 @@ section.card
 
 section.card
   h2 運用失敗入口
-  p.muted 保存済み履歴の failed / skipped / partial 件数と、生成ファイル・外部送付履歴・外部フォルダ同期の継続失敗候補を分けて確認できます。各候補は通知・ack・自動 retry ではなく、read-only 調査入口として扱います。
+  p.muted 保存済み履歴の failed / skipped / partial 件数と、生成ファイルの継続失敗候補を分けて確認できます。外部送付履歴・外部フォルダ同期の継続失敗候補も read-only 調査入口として確認できます。各候補は通知・ack・自動 retry ではなく、read-only 調査入口として扱います。
   .dashboard-grid
     - @operational_failure_summary.each do |item|
       article.card.metric-card
@@ -155,7 +155,7 @@ section.card
                     = link_to "この候補の同期設定", candidate.source_path
               p.actions
                 = link_to "外部フォルダ同期の error 一覧を見る", admin_external_folder_sync_sources_path(review: "errors"), class: "button secondary"
-                = link_to "外部フォルダ同期 runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/外部フォルダ同期dry-run・apply運用runbook.md", class: "button secondary", target: "_blank", rel: "noopener"
+                = link_to "外部フォルダ同期継続失敗候補 runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/外部フォルダ同期継続失敗候補runbook.md", class: "button secondary", target: "_blank", rel: "noopener"
             - else
               p.muted current 条件で外部フォルダ同期の handoff 候補はありません。これは外部 provider 全体正常、通知正常、自動 retry 済みを意味しません。
         p.actions
