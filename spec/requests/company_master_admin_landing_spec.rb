@@ -1,4 +1,5 @@
 require "rails_helper"
+require "csv"
 
 RSpec.describe "Company master admin landing", type: :request do
   def parsed_html
@@ -11,6 +12,59 @@ RSpec.describe "Company master admin landing", type: :request do
 
   def action_targets
     parsed_html.css("a[href], form[action]").map { |node| node["href"] || node["action"] }
+  end
+
+  def company_master_admin_seed_row
+    CSV.read(Rails.root.join("db/seeds/data/users.csv"), headers: true).find do |row|
+      row["email_address"] == "company-admin-a@client-a.example.com"
+    end
+  end
+
+  def company_master_admin_readme_sample
+    "| `company-admin-a@client-a.example.com` / `password123!` | A商事 会社管理者 / company_master_admin | `/admin` から自社会社・自社ユーザー管理の境界を確認する |"
+  end
+
+  it "keeps the representative seed login aligned with the company master admin landing" do
+    seed_row = company_master_admin_seed_row
+
+    expect(seed_row).to be_present
+    expect(seed_row.to_h).to include(
+      "email_address" => "company-admin-a@client-a.example.com",
+      "name" => "A商事 会社管理者",
+      "user_type" => "company_master_admin",
+      "company_domain" => "client-a.example.com",
+      "password" => "password123!",
+      "active" => "true"
+    )
+    expect(Rails.root.join("README.md").read).to include(company_master_admin_readme_sample)
+
+    company = create(:company, name: "A商事", domain: seed_row["company_domain"])
+    sign_in_as(
+      create(
+        :user,
+        :company_master_admin,
+        company: company,
+        email_address: seed_row["email_address"],
+        name: seed_row["name"],
+        active: seed_row["active"] == "true"
+      )
+    )
+
+    get admin_root_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("会社・ユーザー管理")
+    expect(page_text).to include("会社を管理")
+    expect(page_text).to include("ユーザーを管理")
+    expect(action_targets).to include(admin_companies_path, admin_users_path)
+    expect(action_targets).not_to include(
+      admin_projects_path,
+      admin_project_memberships_path,
+      admin_documents_path,
+      admin_document_permissions_path,
+      admin_access_logs_path,
+      admin_document_usage_reports_path
+    )
   end
 
   it "separates allowed company/user actions from internal admin handoff items" do
