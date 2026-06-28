@@ -2,4 +2,5 @@ email_address,name,user_type,company_domain,password,active
 admin@example.com,社内管理者,internal,example.com,password123!,true
 staff@example.com,社内閲覧者,internal,example.com,password123!,true
 client-a@client-a.example.com,A商事 担当者,external,client-a.example.com,password123!,true
+company-admin-a@client-a.example.com,A商事 会社管理者,company_master_admin,client-a.example.com,password123!,true
 client-b@client-b.example.com,B物流 担当者,external,client-b.example.com,password123!,true
