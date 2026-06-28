@@ -94,6 +94,7 @@
       <div>
         <%= form.label :event_source, "イベント発生元", class: "block text-sm font-semibold" %>
         <%= form.text_field :event_source, value: @filters[:event_source], class: "mt-1 w-full rounded border px-2 py-1" %>
+        <p class="mt-1 text-xs text-gray-500">保存値と完全一致する発生元だけに絞り込みます。短い断片で探す場合は「イベントID / パス / エラー」を使ってください。</p>
       </div>
       <div>
         <%= form.label :path, "パスを含む", class: "block text-sm font-semibold" %>
