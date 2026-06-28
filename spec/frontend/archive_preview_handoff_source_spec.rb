@@ -9,10 +9,19 @@ RSpec.describe "archive preview handoff source" do
       expect(view_source).to include('readonly="readonly"')
       expect(view_source).to include('data-archive-preview-handoff-digest="true"')
       expect(view_source).to include("# ZIPプレビュー確認メモ")
-      expect(view_source).to include('path検索: #{@archive_preview_path_query.presence || "なし"}')
+      expect(view_source).to include('archive_preview_query_summary = archive_path_search ? "あり（検索語は引き継ぎ用Markdownに含めません）" : "なし"')
+      expect(view_source).to include('path検索: #{archive_preview_query_summary}')
       expect(view_source).to include('表示範囲: #{archive_preview_scope_note}')
       expect(view_source).to include('表示上限: #{archive_preview_limit_note}')
       expect(view_source).to include("runbook: docs/ZIPプレビューと個別ダウンロード確認runbook.md")
+    end
+  end
+
+  it "keeps raw path search values out of the handoff digest" do
+    aggregate_failures do
+      expect(view_source).not_to include('path検索: #{@archive_preview_path_query')
+      expect(view_source).to include("検索語は引き継ぎ用Markdownに含めません")
+      expect(view_source).to include("secret-like value は含めません")
     end
   end
 

@@ -59,6 +59,7 @@
       - archive_preview_unsafe_count = @archive_preview.entries.count { |entry| !entry.safe_path? }
       - archive_preview_scope_note = archive_path_search ? "ZIP全体path検索の一致項目だけを対象にした表示です。" : "画面に表示されているプレビュー対象だけを対象にした表示です。"
       - archive_preview_limit_note = @archive_preview.truncated? ? "先頭 #{@archive_preview.limit} 件までの表示で、ZIP全件の保証ではありません。" : "この画面で表示中の範囲の要約です。"
+      - archive_preview_query_summary = archive_path_search ? "あり（検索語は引き継ぎ用Markdownに含めません）" : "なし"
       .card
         h2 引き継ぎ用Markdown
         p.muted 現在のZIPプレビュー条件と件数感だけを read-only にまとめています。ZIP entry本文、binary content、unsafe path の再利用、secret-like value は含めません。
@@ -66,7 +67,7 @@
           | # ZIPプレビュー確認メモ
           |
           | - 対象ファイル: #{@document_file.file_name}
-          | - path検索: #{@archive_preview_path_query.presence || "なし"}
+          | - path検索: #{archive_preview_query_summary}
           | - 表示範囲: #{archive_preview_scope_note}
           | - 表示上限: #{archive_preview_limit_note}
           | - 表示対象: ファイル #{number_with_delimiter(@archive_preview.file_count)} 件 / フォルダ #{number_with_delimiter(@archive_preview.folder_count)} 件
