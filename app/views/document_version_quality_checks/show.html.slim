@@ -1,6 +1,8 @@
 - page_title "#{@document.title} #{@version.version_label} 品質チェック"
 - preview_check_keys = %w[rendered_site preview_build_status]
 - preview_checks = @quality_check_hash[:checks].select { |check| preview_check_keys.include?(check[:key].to_s) && %w[error warning].include?(check[:severity].to_s) }
+- severity_options = [["すべて", ""]] + DocumentVersionQualityChecksController::QUALITY_CHECK_SEVERITIES.map { |severity| [severity, severity] }
+- key_options = [["すべて", ""]] + @quality_check_key_options.map { |key| [key, key] }
 - content_for :left_content do
   = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: @document
 
@@ -52,6 +54,33 @@ p
             |  — 
             code = check[:detail]
 
+.card
+  h2 Check table filter
+  p.muted
+    | この filter は下の check table だけに適用されます。Preview と JSON / Markdown export は全件の read-only evidence のままです。
+  = form_with url: document_version_quality_check_path(@version), method: :get, local: true do
+    .field
+      = label_tag :severity, "severity"
+      = select_tag :severity, options_for_select(severity_options, @quality_check_severity_filter)
+    .field
+      = label_tag :key, "key"
+      = select_tag :key, options_for_select(key_options, @quality_check_key_filter)
+    p.actions
+      = button_tag "絞り込む", type: :submit
+      = link_to "解除", document_version_quality_check_path(@version), class: "button secondary"
+  p.muted
+    | 表示中: 
+    = @filtered_quality_checks.size
+    | 件 / 全
+    = @quality_check_hash[:checks].size
+    | 件
+    - if @quality_check_severity_filter.present?
+      |  / severity: 
+      code = @quality_check_severity_filter
+    - if @quality_check_key_filter.present?
+      |  / key: 
+      code = @quality_check_key_filter
+
 = table_tag do
   thead
     tr
@@ -60,11 +89,16 @@ p
       th message
       th detail
   tbody
-    - @quality_check_hash[:checks].each do |check|
+    - if @filtered_quality_checks.any?
+      - @filtered_quality_checks.each do |check|
+        tr
+          td = check[:severity]
+          td = check[:key]
+          td = check[:message]
+          td = check[:detail].presence || "-"
+    - else
       tr
-        td = check[:severity]
-        td = check[:key]
-        td = check[:message]
-        td = check[:detail].presence || "-"
+        td colspan="4"
+          | 現在の filter に一致する check はありません。
 
 p = link_to "バージョン詳細へ戻る", document_version_path(@version)
