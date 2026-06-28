@@ -4,6 +4,8 @@ class Admin::DashboardController < Admin::BaseController
   GENERATED_FILE_ALERT_CANDIDATE_LOOKBACK_LIMIT = 200
   DOCUMENT_DELIVERY_ALERT_CANDIDATE_LIMIT = 5
   DOCUMENT_DELIVERY_ALERT_CANDIDATE_LOOKBACK_LIMIT = 200
+  EXTERNAL_SYNC_ALERT_CANDIDATE_LIMIT = 5
+  EXTERNAL_SYNC_ALERT_CANDIDATE_LOOKBACK_LIMIT = 200
   CONFIGURATION_STATUS_FILTERS = %w[ok warning error].freeze
   CONFIGURATION_CATEGORY_FILTERS = %w[secret storage workspace environment].freeze
 
@@ -24,6 +26,7 @@ class Admin::DashboardController < Admin::BaseController
     @generated_file_run_failure_alert_candidates = generated_file_run_failure_alert_candidates
     @generated_file_run_failure_alert_digest_markdown = generated_file_run_failure_alert_digest_markdown
     @document_delivery_failure_alert_candidates = document_delivery_failure_alert_candidates
+    @external_sync_failure_alert_candidates = external_sync_failure_alert_candidates
     @operational_failure_summary = operational_failure_summary
   end
 
@@ -113,7 +116,8 @@ class Admin::DashboardController < Admin::BaseController
         scope: "保存済み同期履歴の failed / partial 件数",
         details: ["failed: #{external_sync_failed_count}", "partial: #{external_sync_partial_count}"],
         latest_at: latest_operational_failure_at(failed_external_sync_runs, partial_external_sync_runs),
-        primary_link: ["外部フォルダ同期設定を確認", admin_external_folder_sync_sources_path(review: "errors")]
+        primary_link: ["外部フォルダ同期設定を確認", admin_external_folder_sync_sources_path(review: "errors")],
+        external_sync_alert_candidates: @external_sync_failure_alert_candidates
       }
     ].map do |item|
       item.merge(stale: operational_failure_stale?(item[:latest_at]))
@@ -139,6 +143,13 @@ class Admin::DashboardController < Admin::BaseController
     DocumentDeliveryLogs::FailureAlertHandoff.new(
       limit: DOCUMENT_DELIVERY_ALERT_CANDIDATE_LIMIT,
       lookback_limit: DOCUMENT_DELIVERY_ALERT_CANDIDATE_LOOKBACK_LIMIT
+    ).call
+  end
+
+  def external_sync_failure_alert_candidates
+    ExternalFolderSyncRuns::FailureAlertCandidates.new(
+      limit: EXTERNAL_SYNC_ALERT_CANDIDATE_LIMIT,
+      lookback_limit: EXTERNAL_SYNC_ALERT_CANDIDATE_LOOKBACK_LIMIT
     ).call
   end
 
