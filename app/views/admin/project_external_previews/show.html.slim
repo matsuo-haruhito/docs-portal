@@ -18,14 +18,21 @@ h1 外部表示プレビュー
   h2 ユーザー指定プレビュー
   = form_with url: external_preview_admin_project_path(@project), method: :get, local: true do |form|
     .form-grid
-      label
-        | 外部ユーザー
-        = form.rfk_select :user_id,
-          collection: external_preview_user_options(@preview_users),
-          selected: @selected_user&.id,
-          allow_clear: true,
-          placeholder: "外部ユーザーを検索"
-    p.muted ユーザー名、メールアドレス、会社名を手がかりに選べます。
+      = form.rfk_combobox :user_id,
+        collection: [],
+        selected: external_preview_user_selected_option(@selected_user),
+        url: external_preview_user_search_admin_project_path(@project, format: :json),
+        selected_url: selected_external_preview_user_admin_project_path(@project, format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: 20,
+        wrapper: true,
+        label: "外部ユーザー",
+        allow_clear: true,
+        placeholder: "外部ユーザーを検索"
+    p.muted ユーザー名、メールアドレス、会社名を手がかりに選べます。候補は有効な外部ユーザーと会社管理者に限定します。
     p.actions
       = form.submit "このユーザーでプレビュー", class: "button"
 
@@ -33,10 +40,21 @@ h1 外部表示プレビュー
   h2 会社指定プレビュー
   = form_with url: external_preview_admin_project_path(@project), method: :get, local: true do |form|
     .form-grid
-      label
-        | 会社
-        = form.select :company_id, options_from_collection_for_select(@preview_companies, :id, :display_name, @selected_company&.id), include_blank: "選択してください"
-    p.muted 会社を選ぶと、その会社に所属する有効な外部ユーザーの表示可否をまとめて確認します。
+      = form.rfk_combobox :company_id,
+        collection: [],
+        selected: external_preview_company_selected_option(@selected_company),
+        url: external_preview_company_search_admin_project_path(@project, format: :json),
+        selected_url: selected_external_preview_company_admin_project_path(@project, format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: 20,
+        wrapper: true,
+        label: "会社",
+        allow_clear: true,
+        placeholder: "会社を検索"
+    p.muted 会社を選ぶと、その会社に所属する有効な外部ユーザーの表示可否をまとめて確認します。候補は有効な外部ユーザーまたは会社管理者が所属する会社に限定します。
     p.actions
       = form.submit "この会社でプレビュー", class: "button"
 
