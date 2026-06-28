@@ -45,9 +45,15 @@ Rails.application.routes.draw do
     resources :companies, except: %i[show new], param: :public_id
     resources :users, except: %i[show new], param: :public_id
     resources :projects, except: %i[show new], param: :code do
-      get "external_preview", to: "project_external_previews#show", on: :member
-      get "permission_preview", to: "project_permission_previews#show", on: :member
-      post "apply_template", to: "project_templates#create", on: :member
+      member do
+        get "external_preview", to: "project_external_previews#show"
+        get "external_preview/user_search", to: "project_external_previews#user_search", as: :external_preview_user_search
+        get "external_preview/selected_user", to: "project_external_previews#selected_user", as: :selected_external_preview_user
+        get "external_preview/company_search", to: "project_external_previews#company_search", as: :external_preview_company_search
+        get "external_preview/selected_company", to: "project_external_previews#selected_company", as: :selected_external_preview_company
+        get "permission_preview", to: "project_permission_previews#show"
+        post "apply_template", to: "project_templates#create"
+      end
     end
     resources :project_memberships, except: %i[show new], param: :public_id
     resources :consent_terms, except: %i[show new], param: :public_id
