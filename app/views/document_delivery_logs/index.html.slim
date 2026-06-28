@@ -16,7 +16,8 @@
 - current_date_filter_params = current_created_date_filter_params.merge(current_sent_date_filter_params).compact
 - current_query_and_date_params = { q: current_query }.merge(current_date_filter_params).compact
 - current_filter_params = { status: @status_filter.presence, delivery_type: @delivery_type_filter.presence }.merge(current_query_and_date_params).compact
-- current_delivery_logs_path = document_delivery_logs_path(current_filter_params)
+- current_page_params = current_filter_params.merge(@delivery_logs_page.to_i > 1 ? { page: @delivery_logs_page } : {}).compact
+- current_delivery_logs_path = document_delivery_logs_path(current_page_params)
 - has_active_filters = @query.present? || @status_filter.present? || @delivery_type_filter.present? || current_created_from.present? || current_created_to.present? || current_sent_from.present? || current_sent_to.present?
 - active_filter_summary_items = []
 - active_filter_summary_items << "検索語: #{current_query}" if current_query.present?
@@ -28,7 +29,12 @@
 - active_filter_summary_items << "方式: #{delivery_type_labels.fetch(@delivery_type_filter)}" if @delivery_type_filter.present?
 - delivery_logs_total_count = @delivery_logs_total_count.to_i
 - delivery_logs_limit = @delivery_logs_limit.to_i
+- delivery_logs_page = @delivery_logs_page.to_i
+- delivery_logs_total_pages = @delivery_logs_total_pages.to_i
+- delivery_logs_offset = @delivery_logs_offset.to_i
 - delivery_logs_display_count = @delivery_logs.size
+- delivery_logs_visible_start = delivery_logs_offset + 1
+- delivery_logs_visible_end = delivery_logs_offset + delivery_logs_display_count
 - table_key = :document_delivery_logs
 - table_columns = document_delivery_log_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
@@ -85,10 +91,24 @@ p.actions
 - if active_filter_summary_items.any?
   section.delivery-log-active-filters aria-label="現在の絞り込み条件"
     p.muted = "現在の絞り込み条件: #{active_filter_summary_items.join(" / ")}"
-    p.muted 表示件数はこの条件に一致した履歴のうち、先頭から表示している件数です。
+    - if delivery_logs_page > 1
+      p.muted 表示件数はこの条件に一致した履歴のうち、現在のページに表示している件数です。
+    - else
+      p.muted 表示件数はこの条件に一致した履歴のうち、先頭から表示している件数です。
 
 - if @delivery_logs.any?
-  p.muted = "表示範囲: #{delivery_logs_total_count}件中#{delivery_logs_display_count}件を表示しています。#{delivery_logs_total_count > delivery_logs_limit ? "さらに絞り込む場合は検索・状態・方式フィルタを使ってください。" : ""}"
+  - if delivery_logs_total_count <= delivery_logs_limit && delivery_logs_page == 1
+    p.muted = "表示範囲: #{delivery_logs_total_count}件中#{delivery_logs_display_count}件を表示しています。"
+  - else
+    p.muted = "表示範囲: #{delivery_logs_total_count}件中#{delivery_logs_display_count}件を表示しています。現在のページ: #{delivery_logs_visible_start}-#{delivery_logs_visible_end}件。1ページあたり最大#{delivery_logs_limit}件です。"
+    p.muted さらに絞り込む場合は検索・状態・方式フィルタを使ってください。
+  - if delivery_logs_total_pages > 1
+    nav.pagination aria-label="送付履歴一覧のページ移動" style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;margin-top:0.75rem;margin-bottom:0.75rem;"
+      - if delivery_logs_page > 1
+        = link_to "前へ", document_delivery_logs_path(current_filter_params.merge(page: delivery_logs_page - 1)), class: "button secondary", rel: "prev"
+      span.muted = "#{delivery_logs_page} / #{delivery_logs_total_pages}ページ"
+      - if delivery_logs_page < delivery_logs_total_pages
+        = link_to "次へ", document_delivery_logs_path(current_filter_params.merge(page: delivery_logs_page + 1)), class: "button secondary", rel: "next"
   = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "送付履歴一覧の表示設定")
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
