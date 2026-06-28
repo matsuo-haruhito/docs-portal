@@ -18,6 +18,10 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     parsed_html.text.squish
   end
 
+  def parsed_json
+    JSON.parse(response.body)
+  end
+
   def checked_document_ids
     parsed_html.css(%(input[name="bulk_edit[document_ids][]"][checked])).map { |input| input["value"].to_i }
   end
@@ -46,6 +50,7 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(response.body).to include("対象を検索")
     expect(response.body).to include("選択済みだけ表示")
     expect(response.body).to include("実行は次の確認画面で行います")
+    expect(response.body).to include("選択状態JSONを確認")
     expect(response.body).to include("data-controller=\"bulk-edit-selection\"")
     expect(response.body).to include("data-bulk-edit-selection-search-text")
 
@@ -150,6 +155,108 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(response.body).not_to include(%(value="#{overflow_document.id}"))
     expect(response.body).not_to include(long_summary)
     expect(response.body).not_to include("8件目: 表示しない")
+  end
+
+  it "returns selected document state as read-only handoff JSON" do
+    other_document = create(:document, project:, title: "Other Doc")
+    long_summary = "Y" * 81
+    truncated_summary = "#{'Y' * 77}..."
+
+    sign_in_as(admin)
+
+    dry_run_count = BulkEditDryRun.count
+    access_log_count = AccessLog.count
+
+    post handoff_admin_bulk_edit_dry_runs_path, params: {
+      source: "admin_documents",
+      candidate_document_ids: [document.id, other_document.id, 999_999, "invalid"],
+      source_filter_summaries: [long_summary, "状態: 有効"],
+      bulk_edit: {
+        document_ids: [document.id, document.id, other_document.id, 999_999, "invalid"],
+        document_attributes: {
+          category: "manual"
+        }
+      }
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("application/json")
+    expect(BulkEditDryRun.count).to eq(dry_run_count)
+    expect(AccessLog.count).to eq(access_log_count)
+
+    json = parsed_json
+    expect(json).to include(
+      "source" => "admin_documents",
+      "runbook_path" => "docs/文書マスタ運用runbook.md",
+      "limit" => 50,
+      "candidate_count" => 3,
+      "requested_selected_count" => 3,
+      "selected_count" => 2,
+      "unresolved_selected_count" => 1,
+      "truncated" => false,
+      "source_filter_summaries" => [truncated_summary, "状態: 有効"]
+    )
+    expect(json["generated_at"]).to be_present
+    expect(json["documents"].map { |entry| entry["title"] }).to eq(["Target Doc", "Other Doc"])
+    expect(json["documents"].first).to include(
+      "id" => document.id,
+      "public_id" => document.public_id,
+      "project" => { "code" => project.code, "name" => "Alpha Project" },
+      "title" => "Target Doc",
+      "status" => "active"
+    )
+    expect(response.body).not_to include("manual")
+    expect(response.body).not_to include("invalid")
+    expect(response.body).not_to include("999999")
+    expect(response.body).not_to include(long_summary)
+  end
+
+  it "bounds handoff JSON to the candidate limit without broadening selection" do
+    candidate_documents = create_list(:document, 50, project:) do |candidate, index|
+      candidate.update!(title: format("Handoff Candidate %02d", index + 1))
+    end
+    selected_ids = [document.id, *candidate_documents.map(&:id)]
+
+    sign_in_as(admin)
+
+    post handoff_admin_bulk_edit_dry_runs_path, params: {
+      bulk_edit: {
+        document_ids: selected_ids
+      }
+    }
+
+    expect(response).to have_http_status(:ok)
+    json = parsed_json
+    expect(json["source"]).to eq("direct_selection")
+    expect(json["requested_selected_count"]).to eq(51)
+    expect(json["selected_count"]).to eq(50)
+    expect(json["limit"]).to eq(50)
+    expect(json["truncated"]).to eq(true)
+    expect(json["documents"].map { |entry| entry["title"] }).to include("Target Doc", "Handoff Candidate 49")
+    expect(json["documents"].map { |entry| entry["title"] }).not_to include("Handoff Candidate 50")
+  end
+
+  it "returns an empty read-only handoff JSON without creating a dry-run" do
+    sign_in_as(admin)
+
+    expect do
+      post handoff_admin_bulk_edit_dry_runs_path, params: {
+        bulk_edit: {
+          document_ids: []
+        }
+      }
+    end.not_to change(BulkEditDryRun, :count)
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_json).to include(
+      "source" => "direct_selection",
+      "candidate_count" => 0,
+      "requested_selected_count" => 0,
+      "selected_count" => 0,
+      "unresolved_selected_count" => 0,
+      "truncated" => false,
+      "documents" => []
+    )
   end
 
   it "handles empty or invalid document candidates without broadening the bulk edit list" do
@@ -376,6 +483,18 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     sign_in_as(create(:user, :external))
 
     get new_admin_bulk_edit_dry_run_path
+
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it "forbids external users from handoff JSON" do
+    sign_in_as(create(:user, :external))
+
+    post handoff_admin_bulk_edit_dry_runs_path, params: {
+      bulk_edit: {
+        document_ids: [document.id]
+      }
+    }
 
     expect(response).to have_http_status(:forbidden)
   end
