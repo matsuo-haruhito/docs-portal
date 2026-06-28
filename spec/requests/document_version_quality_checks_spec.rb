@@ -35,6 +35,9 @@ RSpec.describe "Document version quality checks", type: :request do
     expect(response.body).to include("自動 fail や通知済み状態ではありません")
     expect(response.body).to include("JSON / Markdown は handoff や evidence 用の read-only export")
     expect(response.body).to include("この画面から品質チェック結果、版、公開状態は変更されません")
+    expect(response.body).to include("Check table filter")
+    expect(response.body).to include("この filter は下の check table だけに適用されます")
+    expect(response.body).to include("Preview と JSON / Markdown export は全件の read-only evidence のままです")
     expect(response.body).to include("internal_only_text")
 
     get document_version_quality_check_path(version, format: :json)
@@ -88,6 +91,49 @@ RSpec.describe "Document version quality checks", type: :request do
     expect(response.body).not_to include("token=super-secret")
     expect(response.body).not_to include("/Users/alice/private/manual.md")
     expect(response.body).not_to include("attachment-full-metadata")
+  end
+
+  it "filters the html check table by severity and key without changing exports" do
+    sign_in_as(internal_user)
+
+    get document_version_quality_check_path(version, severity: "warning")
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("No document files are attached")
+    expect(response.body).to include("Document contains internal-only wording")
+    expect(response.body).to include("severity")
+    expect(response.body).to include("warning")
+    expect(response.body).to include("Preview と JSON / Markdown export は全件の read-only evidence のままです")
+
+    get document_version_quality_check_path(version, key: "internal_only_text")
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Document contains internal-only wording")
+    expect(response.body).not_to include("No document files are attached")
+
+    get document_version_quality_check_path(version, key: "internal_only_text", format: :json)
+    expect(response).to have_http_status(:ok)
+    payload = parsed_json
+    expect(payload.fetch("checks")).to include(
+      a_hash_including(
+        "key" => "document_files",
+        "message" => "No document files are attached"
+      ),
+      a_hash_including(
+        "key" => "internal_only_text",
+        "message" => "Document contains internal-only wording"
+      )
+    )
+  end
+
+  it "falls back safely for unsupported quality check filter values" do
+    sign_in_as(internal_user)
+
+    get document_version_quality_check_path(version, severity: "critical", key: "missing_key")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("No document files are attached")
+    expect(response.body).to include("Document contains internal-only wording")
+    expect(response.body).not_to include("critical")
+    expect(response.body).not_to include("missing_key")
   end
 
   it "highlights preview quality checks in html" do
