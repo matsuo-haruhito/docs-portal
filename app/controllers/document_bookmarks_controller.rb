@@ -172,7 +172,7 @@ class DocumentBookmarksController < BaseController
 
     query = recent_documents_query.downcase
     documents.select do |document|
-      [document.title, document.project.name].any? { _1.to_s.downcase.include?(query) }
+      [document.title, document.project.name, document.project.code].any? { _1.to_s.downcase.include?(query) }
     end
   end
 
