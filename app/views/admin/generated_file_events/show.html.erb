@@ -7,9 +7,12 @@
       <h1 class="text-2xl font-bold">生成ファイルイベント</h1>
       <p class="font-mono text-sm text-gray-600"><%= @generated_file_event.public_id %></p>
     </div>
-    <div class="flex gap-2">
-      <%= link_to "一覧へ戻る", return_to_path, class: "rounded border px-3 py-2 text-sm" %>
-      <%= button_to "このイベントを再投入", retry_dispatch_admin_generated_file_event_path(@generated_file_event.public_id, return_to: return_to_path), method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white", title: "#{@generated_file_event.public_id} を再投入キューに投入", aria: {label: "#{@generated_file_event.public_id} を再投入キューに投入"} %>
+    <div class="flex max-w-md flex-col items-end gap-2 text-right">
+      <div class="flex gap-2">
+        <%= link_to "一覧へ戻る", return_to_path, class: "rounded border px-3 py-2 text-sm" %>
+        <%= button_to "このイベントを再投入", retry_dispatch_admin_generated_file_event_path(@generated_file_event.public_id, return_to: return_to_path), method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white", title: "#{@generated_file_event.public_id} を再投入キューに投入", aria: {label: "#{@generated_file_event.public_id} を再投入キューに投入"} %>
+      </div>
+      <p class="text-xs text-gray-500">このイベント1件だけを再投入キューへ戻します。状態は未処理に戻り、エラーと処理日時は再投入向けにクリアされます。</p>
     </div>
   </div>
 
