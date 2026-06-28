@@ -458,7 +458,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
     return unless source.microsoft_graph?
 
-    resolved = ExternalFolderSync::MicrosoftGraphFolderResolver.new(source: @external_folder_sync_source).resolve
+    resolved = ExternalFolderSync::MicrosoftGraphFolderResolver.new(source: source).resolve
     source.external_folder_id = resolved.fetch(:folder_item_id)
     source.external_folder_path = resolved.fetch(:folder_path)
     source.provider_metadata = {
