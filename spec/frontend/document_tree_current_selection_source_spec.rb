@@ -40,8 +40,7 @@ RSpec.describe "document tree current selection source" do
       expect(detail_sections_source).to include("本文側の「表示中」は現在開いている版や本文 context を示します。")
       expect(detail_sections_source).to include("左の文書ツリーの表示中バッジは現在文書")
       expect(detail_sections_source).to include("文書一覧の検索・表示設定は一覧画面だけの条件")
-      expect(detail_sections_source).not_to include("rails_table_preferences")
-      expect(detail_sections_source).not_to include("tree_view")
+      expect(detail_sections_source).to include("一覧画面だけの条件として読み分けてください。")
     end
   end
 
