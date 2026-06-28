@@ -166,7 +166,7 @@
   <% if @saved_bookmark_filter_active %>
     <p class="muted"><span class="badge">保存済み条件は維持のみ</span> 上の案件・保存済み検索は最近見た文書を絞り込みません。</p>
   <% end %>
-  <p class="muted">閲覧履歴から最大 20 件を自動で表示します。この検索は表示中の最近見た文書だけを文書名・案件名で絞り込みます。お気に入りや後で読むとは別の一覧です。</p>
+  <p class="muted">閲覧履歴から最大 20 件を自動で表示します。この検索は表示中の最近見た文書だけを文書名・案件名で絞り込みます。お気に入りや後で読むとは別の一覧です。案件コードにも一致します。</p>
 
   <%= form_with url: document_bookmarks_path, method: :get, local: true, class: "filter-form" do |form| %>
     <% if @bookmark_project_code.present? %>
@@ -177,7 +177,7 @@
     <% end %>
     <div class="form-field">
       <%= form.label :recent_q, "最近見た文書を検索" %>
-      <%= form.search_field :recent_q, value: @recent_documents_query, maxlength: DocumentBookmarksController::BOOKMARK_QUERY_MAX_LENGTH, placeholder: "文書名・案件名で検索", autocomplete: "off" %>
+      <%= form.search_field :recent_q, value: @recent_documents_query, maxlength: DocumentBookmarksController::BOOKMARK_QUERY_MAX_LENGTH, placeholder: "文書名・案件名で検索・案件コードも可", autocomplete: "off" %>
     </div>
     <div class="form-actions">
       <%= form.submit "絞り込む", class: "button" %>
@@ -188,7 +188,7 @@
   <% end %>
 
   <% if @recent_documents_query.present? %>
-    <p class="muted">最近見た文書検索「<%= @recent_documents_query %>」は、表示中の最大 20 件だけを絞り込んでいます。保存済みショートカットの条件は維持されます。お気に入り・後で読むには効きません。</p>
+    <p class="muted">最近見た文書検索「<%= @recent_documents_query %>」は、表示中の最大 20 件だけを絞り込んでいます。保存済みショートカットの条件は維持されます。お気に入り・後で読むには効きません。文書名・案件名・案件コードに一致します。</p>
   <% end %>
 
   <% if @recent_documents.any? %>
@@ -207,8 +207,12 @@
     </ul>
   <% elsif @all_recent_documents.any? %>
     <% if @recent_documents_query.present? %>
-      <p class="muted">最近見た文書検索「<%= @recent_documents_query %>」に一致する文書は、最近表示された最大 20 件内にありません。検索語を変えるか、案件一覧から文書を探してください。</p>
-      <p class="actions"><%= link_to "最近見た条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary" %></p>
+      <p class="muted">最近見た文書検索「<%= @recent_documents_query %>」に一致する文書は、最近表示された最大 20 件内にありません。検索語を変えるか、案件一覧から文書を探してください。最近見た条件をクリアして表示中の履歴を確認することもできます。</p>
+      <p class="actions">
+        <%= link_to "最近見た条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary" %>
+        <%= link_to "案件一覧から探す", projects_path, class: "button secondary" %>
+        <%= link_to "文書一覧から探す", documents_path, class: "button secondary" %>
+      </p>
     <% else %>
       <p class="muted">最近表示された最大 20 件内に条件と一致する文書はありません。検索語を変えるか、案件一覧から文書を探してください。</p>
     <% end %>
