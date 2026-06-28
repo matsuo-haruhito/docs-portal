@@ -16,6 +16,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
     @bulk_retry_target_count = bulk_retry_target_scope.size
     @total_count = @filtered_generated_file_events.count
     @total_pages = total_pages(@total_count)
+    @page = normalized_page(@page, @total_pages)
     @generated_file_events = @filtered_generated_file_events.offset((@page - 1) * @per_page).limit(@per_page)
   end
 
@@ -108,6 +109,10 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
 
   def page_param
     [params[:page].to_i, 1].max
+  end
+
+  def normalized_page(page, total_pages)
+    page.clamp(1, total_pages)
   end
 
   def per_page_param
