@@ -57,7 +57,14 @@ class DocumentDeliveryLogsController < BaseController
     scoped_scope = scoped_scope.public_send(@delivery_type_filter) if @delivery_type_filter.present?
     @delivery_logs_total_count = scoped_scope.count
     @delivery_logs_limit = DELIVERY_LOG_DISPLAY_LIMIT
-    @delivery_logs = scoped_scope.includes(:project, :document, :document_set, :sender).recent_first.limit(@delivery_logs_limit)
+    @delivery_logs_total_pages = [(@delivery_logs_total_count.to_f / @delivery_logs_limit).ceil, 1].max
+    @delivery_logs_page = normalized_delivery_logs_page(@delivery_logs_total_pages)
+    @delivery_logs_offset = (@delivery_logs_page - 1) * @delivery_logs_limit
+    @delivery_logs = scoped_scope
+      .includes(:project, :document, :document_set, :sender)
+      .recent_first
+      .offset(@delivery_logs_offset)
+      .limit(@delivery_logs_limit)
   end
 
   def failure_alert_handoff
@@ -212,6 +219,13 @@ class DocumentDeliveryLogsController < BaseController
 
   def normalized_delivery_log_date_filter(param_name)
     params[param_name].to_s.strip.presence
+  end
+
+  def normalized_delivery_logs_page(total_pages)
+    page = Integer(params[:page].presence || 1, exception: false)
+    return 1 if page.blank? || page < 1
+
+    page.clamp(1, total_pages)
   end
 
   def parse_delivery_log_date_filter(value)
