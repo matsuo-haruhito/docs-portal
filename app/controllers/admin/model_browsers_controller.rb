@@ -2,6 +2,7 @@ class Admin::ModelBrowsersController < Admin::BaseController
   before_action :require_admin_only!
 
   MODEL_BROWSER_QUERY_MAX_LENGTH = 100
+  ASSOCIATION_SUMMARY_LABEL_METHODS = %i[display_name name title code public_id email_address].freeze
 
   helper_method :entry_index_path, :model_browser_index_return_path, :record_summary_value, :summary_field_label
 
@@ -138,20 +139,53 @@ class Admin::ModelBrowsersController < Admin::BaseController
     when Array
       value.join(", ")
     else
-      value.presence || "-"
+      association_summary_value(record, field, value) || value.presence || "-"
     end
   end
 
-  def association_summary_field_label(entry, field)
+  def association_summary_value(record, field, value)
+    return if value.blank?
+
+    reflection = association_summary_reflection(record.class, field)
+    return unless reflection
+
+    associated_record = record.public_send(reflection.name)
+    label = association_summary_record_label(associated_record)
+    return if label.blank?
+
+    "#{label}（ID: #{value}）"
+  rescue ActiveRecord::RecordNotFound
+    nil
+  end
+
+  def association_summary_record_label(associated_record)
+    return unless associated_record
+
+    ASSOCIATION_SUMMARY_LABEL_METHODS.each do |method_name|
+      next unless associated_record.respond_to?(method_name)
+
+      label = associated_record.public_send(method_name)
+      return label.to_s if label.present?
+    end
+
+    nil
+  end
+
+  def association_summary_reflection(model_class, field)
     field_name = field.to_s
     return unless field_name.end_with?("_id")
 
     association_name = field_name.delete_suffix("_id")
+    model_class.reflect_on_association(association_name.to_sym)
+  end
+
+  def association_summary_field_label(entry, field)
+    reflection = association_summary_reflection(entry.model_class, field)
+    return unless reflection
+
+    association_name = reflection.name
     explicit_label = I18n.t("labels.model_browser_associations.#{association_name}", default: nil)
     return explicit_label if explicit_label.is_a?(String)
-
-    reflection = entry.model_class.reflect_on_association(association_name.to_sym)
-    return unless reflection
 
     human_name = reflection.klass.model_name.human
     return if human_name == reflection.klass.model_name.name.humanize
