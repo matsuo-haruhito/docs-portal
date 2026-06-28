@@ -166,7 +166,11 @@
                   <p class="actions mt-3"><%= link_to "すべての生成ファイル実行履歴を見る", admin_generated_file_runs_path, class: "rounded border px-3 py-2 text-sm" %></p>
                 </div>
               <% else %>
-                生成ファイル実行履歴はまだありません。
+                <div class="generated-file-run-initial-empty-state space-y-2">
+                  <p>生成ファイル実行履歴はまだありません。</p>
+                  <p class="text-sm">生成対象のファイル CRUD イベントが処理されると、ここに Job 単位の履歴が表示されます。履歴 0 件は、生成処理が成功していることやエラーがないことを示すものではありません。</p>
+                  <p class="actions mt-3"><%= link_to "生成ファイルイベント一覧を確認する", admin_generated_file_events_path, class: "rounded border px-3 py-2 text-sm" %></p>
+                </div>
               <% end %>
             </td>
           </tr>
