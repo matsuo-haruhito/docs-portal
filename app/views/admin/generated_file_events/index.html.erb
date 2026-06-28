@@ -181,7 +181,11 @@
                   <p class="actions mt-3"><%= link_to "すべての生成ファイルイベントを見る", admin_generated_file_events_path, class: "rounded border px-3 py-2 text-sm" %></p>
                 </div>
               <% else %>
-                生成ファイルイベントはまだありません。
+                <div class="generated-file-event-initial-empty-state space-y-2">
+                  <p>生成ファイルイベントはまだありません。</p>
+                  <p class="text-sm">生成対象のファイル変更イベントが蓄積されると、ここに debounce / coalesce 後のイベントが表示されます。イベント 0 件は、生成処理が成功していることやエラーがないことを示すものではありません。</p>
+                  <p class="actions mt-3"><%= link_to "生成ファイル実行履歴を確認する", admin_generated_file_runs_path, class: "rounded border px-3 py-2 text-sm" %></p>
+                </div>
               <% end %>
             </td>
           </tr>
