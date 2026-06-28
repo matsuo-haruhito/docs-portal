@@ -80,7 +80,7 @@ class DocumentsController < BaseController
     @review_comments = comment_search.filter_reviews(review_comments)
     @comment_search_query = comment_search.query
     @comment_author_options = comment_search.author_options
-    @comment_author_id = comment_search.public_id
+    @comment_author_id = comment_search.author_public_id
     @comment_selected_author = comment_search.selected_author
     @comment_workspace_tab = DocumentCommentWorkspaceTab.new(user: current_user, tab: params[:comment_tab]).value
     @export_preview_file = export_preview_files.first
