@@ -100,7 +100,7 @@ p.actions
   - if delivery_logs_total_count <= delivery_logs_limit && delivery_logs_page == 1
     p.muted = "表示範囲: #{delivery_logs_total_count}件中#{delivery_logs_display_count}件を表示しています。"
   - else
-    p.muted = "表示範囲: #{delivery_logs_total_count}件中#{delivery_logs_visible_start}-#{delivery_logs_visible_end}件を表示しています。1ページあたり最大#{delivery_logs_limit}件です。"
+    p.muted = "表示範囲: #{delivery_logs_total_count}件中#{delivery_logs_display_count}件を表示しています。現在のページ: #{delivery_logs_visible_start}-#{delivery_logs_visible_end}件。1ページあたり最大#{delivery_logs_limit}件です。"
   - if delivery_logs_total_pages > 1
     nav.pagination aria-label="送付履歴一覧のページ移動" style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;margin-top:0.75rem;margin-bottom:0.75rem;"
       - if delivery_logs_page > 1
