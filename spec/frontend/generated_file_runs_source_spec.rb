@@ -2,6 +2,7 @@ require "rails_helper"
 
 RSpec.describe "admin generated file runs source" do
   let(:index_source) { Rails.root.join("app/views/admin/generated_file_runs/index.html.erb").read }
+  let(:show_source) { Rails.root.join("app/views/admin/generated_file_runs/show.html.erb").read }
   let(:helper_source) { Rails.root.join("app/helpers/admin/generated_file_labels_helper.rb").read }
 
   it "wires the index to rails table preferences columns" do
@@ -60,6 +61,20 @@ RSpec.describe "admin generated file runs source" do
       expect(index_source).to include("generated-file-run-filter-empty-state")
       expect(index_source).to include("すべての生成ファイル実行履歴を見る")
       expect(index_source).to include("admin_generated_file_runs_path")
+    end
+  end
+
+  it "keeps the detail retry action scoped to one run with a visible cue" do
+    aggregate_failures do
+      expect(show_source).to include("flex max-w-md flex-col items-end gap-2 text-right")
+      expect(show_source).to include("retry_run_admin_generated_file_run_path(@generated_file_run.public_id, return_to: return_to_path)")
+      expect(show_source).to include('title: "#{@generated_file_run.public_id} を再実行キューに投入"')
+      expect(show_source).to include('aria: {label: "#{@generated_file_run.public_id} を再実行キューに投入"}')
+      expect(show_source).to include("この実行1件だけを再実行キューへ投入します。")
+      expect(show_source).to include("元の実行履歴は診断用に残り")
+      expect(show_source).to include("新しい実行IDで再実行後の結果を確認します。")
+      expect(show_source).not_to include("現在の絞り込み条件に一致する失敗履歴")
+      expect(show_source).not_to include("古い順に最大100件")
     end
   end
 end
