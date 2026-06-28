@@ -124,6 +124,26 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(bulk_retry_button["disabled"]).to eq("disabled")
     end
 
+    it "separates initial and filtered empty states" do
+      sign_in_as(admin_user)
+
+      get admin_generated_file_events_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("生成ファイルイベントはまだありません。")
+      expect(response.body).to include("生成対象のファイル変更イベントが蓄積されると")
+      expect(response.body).to include("イベント 0 件は、生成処理が成功していることやエラーがないことを示すものではありません。")
+      expect(parsed_html.at_css(%(.generated-file-event-initial-empty-state a[href="#{admin_generated_file_runs_path}"]))).to be_present
+      expect(response.body).not_to include("すべての生成ファイルイベントを見る")
+
+      get admin_generated_file_events_path(status: "failed")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("検索条件に一致する生成ファイルイベントはありません。")
+      expect(parsed_html.at_css(%(.generated-file-event-filter-empty-state a[href="#{admin_generated_file_events_path}"]))).to be_present
+      expect(response.body).not_to include("生成ファイル実行履歴を確認する")
+    end
+
     it "caps the displayed bulk retry target count at the dispatch limit" do
       sign_in_as(admin_user)
       101.times do |i|
