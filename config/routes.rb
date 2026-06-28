@@ -135,7 +135,9 @@ Rails.application.routes.draw do
       get :user_search, on: :collection
       get :selected_user, on: :collection
     end
-    resources :access_requests, only: %i[index update], param: :public_id
+    resources :access_requests, only: %i[index update], param: :public_id do
+      get :pending_handoff, on: :collection
+    end
     resources :document_usage_reports, only: [:index] do
       get :project_search, on: :collection
       get :selected_project, on: :collection
