@@ -51,6 +51,6 @@ p.actions
   h2 操作
   - if delivery.retryable?
     p.muted この送信は現在のWebhook設定で1件だけ手動再送できます。受信先側の重複処理に注意してください。
-    = button_to "再送", retry_dispatch_admin_webhook_delivery_path(delivery.public_id, delivery_return_params), method: :post, class: "button secondary", form: { data: { turbo_confirm: "このWebhook送信を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。" } }
+    = button_to "この履歴を1件再送", retry_dispatch_admin_webhook_delivery_path(delivery.public_id, delivery_return_params), method: :post, class: "button secondary", title: "現在のWebhook設定でこの履歴を1件再送", aria: { label: "現在のWebhook設定でこのWebhook送信履歴を1件再送" }, form: { data: { turbo_confirm: "このWebhook送信履歴1件を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。" } }
   - else
     p.muted この送信履歴は再送できません。再送できるのは失敗した送信で、Webhook設定が有効な場合だけです。

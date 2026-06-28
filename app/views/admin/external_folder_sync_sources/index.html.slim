@@ -1,8 +1,14 @@
 - page_title "外部フォルダ同期設定"
 - search_params = { q: @search_query.presence }.compact
 - selected_review_params = { review: @selected_review_filter.presence }.compact
-- current_return_query = Rack::Utils.build_nested_query(selected_review_params.merge(search_params))
+- base_index_params = selected_review_params.merge(search_params)
+- pagination_return_params = {}
+- pagination_return_params[:page] = @external_folder_sync_sources_page if params[:page].present? && @external_folder_sync_sources_page > 1
+- pagination_return_params[:per_page] = @external_folder_sync_sources_per_page if params[:per_page].present?
+- current_index_params = base_index_params.merge(pagination_return_params)
+- current_return_query = Rack::Utils.build_nested_query(current_index_params)
 - current_return_to = current_return_query.present? ? "#{admin_external_folder_sync_sources_path}?#{current_return_query}" : admin_external_folder_sync_sources_path
+- pagination_link_params = base_index_params.merge(per_page: @external_folder_sync_sources_per_page)
 - table_key = :admin_external_folder_sync_sources
 - table_columns = external_folder_sync_source_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
@@ -102,8 +108,17 @@ h1 外部フォルダ同期設定
           = link_to "すべて解除", admin_external_folder_sync_sources_path
 
 - if @external_folder_sync_sources.any?
+  - visible_start = @external_folder_sync_sources_offset + 1
+  - visible_end = @external_folder_sync_sources_offset + @external_folder_sync_sources.size
   .card
-    p.muted = "#{@external_folder_sync_sources.size} / #{@review_filter_counts[:all]} 件を表示しています。"
+    p.muted = "#{@external_folder_sync_sources.size} / #{@review_filter_counts[:all]} 件を表示しています。条件一致 #{@external_folder_sync_sources_total_count} 件中 #{visible_start}-#{visible_end} 件を表示しています。1ページあたり最大 #{@external_folder_sync_sources_per_page} 件です。"
+    - if @external_folder_sync_sources_total_pages > 1
+      nav.pagination aria-label="外部フォルダ同期設定一覧のページ移動" style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;margin-top:0.75rem;"
+        - if @external_folder_sync_sources_page > 1
+          = link_to "前へ", admin_external_folder_sync_sources_path(pagination_link_params.merge(page: @external_folder_sync_sources_page - 1)), class: "button secondary", rel: "prev"
+        span.muted = "#{@external_folder_sync_sources_page} / #{@external_folder_sync_sources_total_pages}ページ"
+        - if @external_folder_sync_sources_page < @external_folder_sync_sources_total_pages
+          = link_to "次へ", admin_external_folder_sync_sources_path(pagination_link_params.merge(page: @external_folder_sync_sources_page + 1)), class: "button secondary", rel: "next"
 
   .card
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "外部フォルダ同期設定一覧の表示設定")

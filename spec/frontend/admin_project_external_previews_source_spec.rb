@@ -9,32 +9,43 @@ RSpec.describe "admin project external preview selectors source" do
     Rails.root.join("app/helpers/admin/project_external_previews_helper.rb").read
   end
 
-  it "uses rails fields kit for the preview user selector" do
+  it "uses remote rails fields kit combobox for the preview user selector" do
     aggregate_failures do
-      expect(view_source).to include("= form.rfk_select :user_id,")
-      expect(view_source).to include("collection: external_preview_user_options(@preview_users)")
-      expect(view_source).to include("selected: @selected_user&.id")
+      expect(view_source).to include("= form.rfk_combobox :user_id,")
+      expect(view_source).to include("collection: []")
+      expect(view_source).to include("selected: external_preview_user_selected_option(@selected_user)")
+      expect(view_source).to include("url: external_preview_user_search_admin_project_path(@project, format: :json)")
+      expect(view_source).to include("selected_url: selected_external_preview_user_admin_project_path(@project, format: :json)")
+      expect(view_source).to include("max_options: 20")
       expect(view_source).to include('placeholder: "外部ユーザーを検索"')
+      expect(view_source).not_to include("= form.rfk_select :user_id,")
       expect(view_source).not_to include("form.select :user_id")
     end
   end
 
-  it "keeps the company selector on the existing basic select path with target cue copy" do
+  it "uses remote rails fields kit combobox for the company selector with target cue copy" do
     aggregate_failures do
-      expect(view_source).to include("form.select :company_id")
-      expect(view_source).to include("options_from_collection_for_select(@preview_companies, :id, :display_name, @selected_company&.id)")
+      expect(view_source).to include("= form.rfk_combobox :company_id,")
+      expect(view_source).to include("selected: external_preview_company_selected_option(@selected_company)")
+      expect(view_source).to include("url: external_preview_company_search_admin_project_path(@project, format: :json)")
+      expect(view_source).to include("selected_url: selected_external_preview_company_admin_project_path(@project, format: :json)")
       expect(view_source).to include("会社を選ぶと、その会社に所属する有効な外部ユーザーの表示可否をまとめて確認します。")
+      expect(view_source).not_to include("form.select :company_id")
       expect(view_source).not_to include("= form.rfk_select :company_id,")
     end
   end
 
-  it "keeps searchable user option labels scoped to existing admin-visible fields" do
+  it "keeps remote option labels scoped to existing admin-visible fields" do
     aggregate_failures do
       expect(helper_source).to include("def external_preview_user_label(user)")
+      expect(helper_source).to include("def external_preview_user_selected_option(user)")
+      expect(helper_source).to include("def external_preview_company_selected_option(company)")
+      expect(helper_source).to include("def external_preview_company_label(company)")
       expect(helper_source).to include("user.display_name")
       expect(helper_source).to include("user.email_address")
       expect(helper_source).to include("user.company&.display_name")
-      expect(helper_source).not_to include("def external_preview_company_label(company)")
+      expect(helper_source).to include("company.display_name")
+      expect(helper_source).to include("company.domain")
     end
   end
 end
