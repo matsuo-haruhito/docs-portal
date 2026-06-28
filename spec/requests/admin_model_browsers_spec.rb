@@ -37,13 +37,14 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response.body).to include("モデルブラウザ")
     expect(response.body).to include("基本マスタ")
     expect(response.body).to include("文書・権限")
-    expect(response.body).to include("import / sync")
+    expect(response.body).to include("取り込み・同期")
     expect(response.body).to include("外部連携")
     expect(response.body).to include("運用")
     expect(response.body).to include("案件")
     expect(response.body).to include("文書")
     expect(response.body).to include("key: projects / group: 基本マスタ")
     expect(response.body).to include("key: documents / group: 文書・権限")
+    expect(response.body).to include("key: git_import_sources / group: 取り込み・同期")
     expect(response.body).to include("この検索は catalog entry のモデル名、key、説明、group を対象にします。")
     expect(response.body).to include("record 名、public_id、code の確認は各 model の詳細または既存画面で続けてください。")
     expect(response.body).to include(admin_model_browser_model_path("projects"))
@@ -185,10 +186,10 @@ RSpec.describe "Admin model browsers", type: :request do
     expect(response).to have_http_status(:ok)
     expect(model_browser_card_links.map { _1["href"] }).to include(admin_model_browser_model_path("projects", model_browser_q: "公開単位"))
 
-    get admin_model_browser_path, params: { q: "import / sync" }
+    get admin_model_browser_path, params: { q: "取り込み" }
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("import / sync")
-    expect(model_browser_card_links.map { _1["href"] }).to include(admin_model_browser_model_path("git_import_sources", model_browser_q: "import / sync"))
+    expect(response.body).to include("取り込み・同期")
+    expect(model_browser_card_links.map { _1["href"] }).to include(admin_model_browser_model_path("git_import_sources", model_browser_q: "取り込み"))
   end
 
   it "shows a search empty state on the model browser index" do
