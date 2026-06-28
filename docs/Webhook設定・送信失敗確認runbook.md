@@ -16,6 +16,8 @@
 - filter 後に 0 件で条件が適用中の場合は、empty state 近くの `Webhook設定の条件をリセット` から Webhook 設定一覧の条件だけを解除できます。この link は最近の送信履歴の `delivery_status` を維持するため、送信履歴側の表示や再送対象は変わりません。初期 0 件状態では解除対象の Webhook 設定条件がないため、この section-local reset は表示されません。
 - unsupported な event / active filter、負の page、不正または過大な表示件数は安全に丸められます。URL や任意の戻り先を設定一覧 filter として採用するものではありません。
 - `Webhook設定` の `状態` 列では、有効 / 停止の badge と、停止中 endpoint に出る `通常送信・手動再送の対象外` の cue を確認します。停止中 endpoint は通常送信にも失敗 delivery の手動再送にも使われません。
+- `Webhook設定` の `削除` は Webhook 設定そのものの destructive action です。confirm では名称、送信先URL、イベント、状態を確認し、送信履歴の詳細確認、1 件再送、表示中のまとめて再送とは別操作として扱います。送信先URLは一覧と同じ表示用 URL で、query は `?...` に畳まれるため、query token や raw parameter を確認する場所ではありません。
+- 停止中 endpoint の `削除` も destructive action です。`通常送信・手動再送の対象外` は以後の送信や再送に使われない cue であり、設定削除、過去の Webhook delivery、送信履歴検索、payload / signature 仕様を変更する意味ではありません。
 - 送信履歴は `WebhookDelivery.recent.limit(50)` の範囲で、選択した表示条件ごとに最大 50 件を新しい順に確認します。
 - 画面には `表示範囲: ...  N件中M件を表示しています` が出るため、status filter 後の総件数と表示件数を分けて確認します。
 - 送信履歴は `すべて` / `送信待ち` / `成功` / `失敗` で表示を絞り込めます。
