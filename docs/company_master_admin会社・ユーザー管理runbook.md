@@ -23,6 +23,8 @@ current `main` の前提:
 
 current `main` では、`/admin` へ入ると `会社・ユーザー管理` の landing が表示される。
 
+ローカル開発 / demo でこの flow を確認する場合は、README の [サンプルログイン情報](../README.md#サンプルログイン情報) を正本にし、`rails db:seed` 後の代表 account `company-admin-a@client-a.example.com` / `password123!` を使う。この credential は `/admin` landing、`会社` / `ユーザー` 管理、通常閲覧への戻り方を確認するための seed credential であり、共有環境や本番 credential、認証 policy の例として扱わない。
+
 landing は role-aware な入口であり、次だけを表示する。
 
 - 使える管理画面: `会社を管理` / `ユーザーを管理` の primary action から進む `会社` と `ユーザー` の 2 画面
