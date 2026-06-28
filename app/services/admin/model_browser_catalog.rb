@@ -4,7 +4,7 @@ class Admin::ModelBrowserCatalog
   GROUP_LABELS = {
     basic_master: "基本マスタ",
     document_permission: "文書・権限",
-    import_sync: "import / sync",
+    import_sync: "取り込み・同期",
     external_integration: "外部連携",
     operations: "運用"
   }.freeze
