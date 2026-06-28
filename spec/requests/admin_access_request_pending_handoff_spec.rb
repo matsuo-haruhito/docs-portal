@@ -96,9 +96,14 @@ RSpec.describe "Admin access request pending handoff", type: :request do
 
   it "bounds candidates and reports truncation" do
     51.times do |index|
+      bulk_document = create(:document,
+        project:,
+        title: "Bulk Manual #{index}",
+        slug: "bulk-manual-#{index}",
+        visibility_policy: :restricted_external)
       create(:access_request,
         requester:,
-        requestable: document,
+        requestable: bulk_document,
         requested_access_level: :download,
         reason: "Pending bulk handoff #{index}",
         created_at: Time.zone.local(2026, 5, 1, 12, index, 0))
