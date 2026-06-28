@@ -1,5 +1,6 @@
 class Admin::DocumentsController < Admin::BaseController
   BULK_EDIT_CANDIDATE_LIMIT = 50
+  LIFECYCLE_HANDOFF_LIMIT = 50
   DOCUMENT_SEARCH_QUERY_MAX_LENGTH = 100
 
   before_action :require_admin_only!
@@ -11,6 +12,27 @@ class Admin::DocumentsController < Admin::BaseController
   def index
     load_document_index_state
     @document = Document.new(category: :spec, document_kind: :markdown, visibility_policy: :internal_only)
+  end
+
+  def lifecycle_handoff
+    @filters = document_filter_params
+    document_scope = filtered_documents
+    total_count = document_scope.unscope(:order).count
+    candidates = document_scope
+      .includes(:project)
+      .order("projects.code", :title)
+      .limit(LIFECYCLE_HANDOFF_LIMIT)
+      .map { |document| lifecycle_handoff_candidate(document) }
+
+    render json: {
+      current_filter: compact_filters(@filters),
+      total_count:,
+      limit: LIFECYCLE_HANDOFF_LIMIT,
+      truncated: total_count > LIFECYCLE_HANDOFF_LIMIT,
+      note: lifecycle_handoff_note(total_count),
+      runbook_path: "docs/文書マスタ運用runbook.md",
+      candidates:
+    }
   end
 
   def create
@@ -176,5 +198,46 @@ class Admin::DocumentsController < Admin::BaseController
     else
       scope
     end
+  end
+
+  def lifecycle_handoff_candidate(document)
+    {
+      public_id: document.public_id,
+      project_code: document.project.code,
+      project_name: document.project.name,
+      title: document.title,
+      slug: document.slug,
+      status: document.archived? ? "archived" : "active",
+      review_focus: lifecycle_review_focus(document),
+      retention_until: document.retention_until&.iso8601,
+      discard_candidate_at: document.discard_candidate_at&.iso8601,
+      admin_edit_path: edit_admin_document_path(document.public_id),
+      public_document_path: project_document_path(document.project, document.slug),
+      note: lifecycle_candidate_note(document)
+    }
+  end
+
+  def lifecycle_review_focus(document)
+    document.archived? ? "restore_candidate_review" : "archive_candidate_review"
+  end
+
+  def lifecycle_candidate_note(document)
+    if document.archived?
+      "アーカイブ済み文書です。復元検討候補として確認してください。"
+    else
+      "有効な文書です。archive / restore / discard の実行確定ではなく、行単位判断の検討候補として確認してください。"
+    end
+  end
+
+  def lifecycle_handoff_note(total_count)
+    if total_count.zero?
+      "現在条件で lifecycle handoff 対象はありません。正常保証、全期間0件、自動削除不要を意味しません。"
+    else
+      "現在条件に一致する文書マスタの read-only handoff です。archive / restore / discard / delete は実行しません。"
+    end
+  end
+
+  def compact_filters(filters)
+    filters.reject { |_key, value| value.blank? }
   end
 end
