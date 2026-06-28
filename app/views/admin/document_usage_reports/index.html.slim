@@ -125,6 +125,15 @@ section.card
       strong = " #{document_usage_report_sort_label(@sort_order)}"
       |  / 検索:
       strong = @query.present? ? " #{@query}" : " なし"
+    - if @usage_filter == "unused"
+      .field
+        h3 未利用文書 handoff
+        p.muted 現在条件で表示中の未利用文書を次の確認者へ渡すための read-only digest です。未利用は期間内 signal がない候補であり、不要・削除・archive 確定ではありません。
+        = text_area_tag :document_usage_report_unused_handoff_digest,
+          document_usage_report_unused_handoff_digest(report_hash: @report_hash, project: @selected_project, from_date: @from_date, to_date: @to_date, query: @query, sort_order: @sort_order),
+          readonly: true,
+          rows: 16,
+          class: "handoff-digest"
     - if @query.present?
       p.muted
         | 文書名または slug に「
