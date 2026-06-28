@@ -25,7 +25,7 @@ section.card
 
 section.card
   h2 運用失敗入口
-  p.muted 保存済み履歴の failed / skipped / partial 件数と、生成ファイルの継続失敗候補を分けて確認できます。外部送付履歴の継続失敗候補も read-only 調査入口として確認できます。各運用画面で調査を始めるための入口です。
+  p.muted 保存済み履歴の failed / skipped / partial 件数と、生成ファイルの継続失敗候補を分けて確認できます。外部送付履歴・外部フォルダ同期の継続失敗候補も read-only 調査入口として確認できます。各候補は通知・ack・自動 retry ではなく、read-only 調査入口として扱います。
   .dashboard-grid
     - @operational_failure_summary.each do |item|
       article.card.metric-card
@@ -126,6 +126,38 @@ section.card
                 = link_to "継続失敗候補 runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/#{DocumentDeliveryLogs::FailureAlertHandoff::RUNBOOK_PATH}", class: "button secondary", target: "_blank", rel: "noopener"
             - else
               p.muted current 条件で外部送付履歴の handoff 候補はありません。これは mail 全体正常、外部監視 green、通知正常を意味しません。
+        - if item[:external_sync_alert_candidates]
+          - external_sync_alert_candidates = item[:external_sync_alert_candidates]
+          .operational-alert-candidates
+            h4 継続失敗候補
+            p.muted 外部フォルダ同期 source ごとに、最新 run から failed / partial が連続しているものだけを read-only に表示します。通知・ack・自動 retry・provider 正常判定の状態ではありません。
+            p.muted
+              | 継続失敗候補: 
+              strong = external_sync_alert_candidates.size
+              |  件
+              br
+              span current 条件での handoff 候補です。候補 0 件は外部 provider 全体正常、通知済み、自動復旧済みを意味しません。
+            - if external_sync_alert_candidates.any?
+              ul
+                - external_sync_alert_candidates.each do |candidate|
+                  li
+                    code = candidate.source_name
+                    span.muted = " #{candidate.provider} / #{candidate.project_code} #{candidate.project_name}"
+                    br
+                    | 連続 failed / partial: #{candidate.failure_count} 件
+                    - if candidate.last_failed_at
+                      |  / 最終失敗: 
+                      time datetime=candidate.last_failed_at.iso8601 = l(candidate.last_failed_at, format: :short)
+                    - if candidate.latest_error_message.present?
+                      br
+                      span.muted = "エラー: #{candidate.latest_error_message}"
+                    br
+                    = link_to "この候補の同期設定", candidate.source_path
+              p.actions
+                = link_to "外部フォルダ同期の error 一覧を見る", admin_external_folder_sync_sources_path(review: "errors"), class: "button secondary"
+                = link_to "外部フォルダ同期継続失敗候補 runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/外部フォルダ同期継続失敗候補runbook.md", class: "button secondary", target: "_blank", rel: "noopener"
+            - else
+              p.muted current 条件で外部フォルダ同期の handoff 候補はありません。これは外部 provider 全体正常、通知正常、自動 retry 済みを意味しません。
         p.actions
           = link_to item[:primary_link].first, item[:primary_link].last, class: "button"
           - if item[:secondary_link]

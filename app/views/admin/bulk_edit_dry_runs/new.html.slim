@@ -125,4 +125,5 @@ h1 文書一括編集
 
     p.actions style="margin-top:16px;"
       = form.submit "事前確認を作成", class: "button"
+      = button_tag "選択状態JSONを確認", type: "submit", class: "button secondary", formaction: handoff_admin_bulk_edit_dry_runs_path, formmethod: "post"
       = link_to "文書一覧へ戻る", admin_documents_path, class: "button secondary"
