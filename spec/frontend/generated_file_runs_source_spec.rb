@@ -49,4 +49,17 @@ RSpec.describe "admin generated file runs source" do
       expect(index_source).to include("form.label :created_to")
     end
   end
+
+  it "keeps initial and filtered empty states separate" do
+    aggregate_failures do
+      expect(index_source).to include("generated-file-run-initial-empty-state")
+      expect(index_source).to include("生成対象のファイル CRUD イベントが処理されると、ここに Job 単位の履歴が表示されます")
+      expect(index_source).to include("履歴 0 件は、生成処理が成功していることやエラーがないことを示すものではありません")
+      expect(index_source).to include("生成ファイルイベント一覧を確認する")
+      expect(index_source).to include("admin_generated_file_events_path")
+      expect(index_source).to include("generated-file-run-filter-empty-state")
+      expect(index_source).to include("すべての生成ファイル実行履歴を見る")
+      expect(index_source).to include("admin_generated_file_runs_path")
+    end
+  end
 end
