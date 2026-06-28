@@ -74,6 +74,9 @@ h1 文書マスタ
   - if has_lifecycle_filter
     p.muted
       | 保管期限・廃棄候補の絞り込み中です。状態、保管期限、廃棄候補、公開側文書を確認し、必要な場合だけ行単位で編集・アーカイブ・復元してください。0件の場合は現在の条件に合う対象がない状態です。
+    p.actions.form-actions
+      = link_to "read-only handoff JSONを確認", lifecycle_handoff_admin_documents_path(@document_page_params.merge(format: :json)), class: "button secondary"
+      span.muted = "現在の条件に一致する候補を最大#{Admin::DocumentsController::LIFECYCLE_HANDOFF_LIMIT}件まで引き継ぎます。archive / restore / discard / delete は実行しません。"
 
   .actions.form-actions
     - if @bulk_edit_candidate_count.zero?
