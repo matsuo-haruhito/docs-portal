@@ -53,8 +53,9 @@ RSpec.describe "Document bookmark recent search project code", type: :request do
     expect(response.body).to include("Quarterly Plan")
     expect(response.body).to include("Alpha Workspace")
     expect(response.body).not_to include("Operations Guide")
-    expect(response.body).to include("最近見た文書検索「alpha2397」は、表示中の最大 20 件だけを文書名・案件名・案件コードで絞り込んでいます。保存済みショートカットの条件は維持されます。")
-    expect(response.body).to include("文書名・案件名・案件コードで検索")
+    expect(response.body).to include("最近見た文書検索「alpha2397」は、表示中の最大 20 件だけを絞り込んでいます。保存済みショートカットの条件は維持されます。")
+    expect(response.body).to include("文書名・案件名・案件コードに一致します")
+    expect(response.body).to include("文書名・案件名で検索・案件コードも可")
 
     recent_clear_link = link_with_text("最近見た条件をクリア")
     expect(recent_clear_link).to be_present
@@ -73,7 +74,8 @@ RSpec.describe "Document bookmark recent search project code", type: :request do
     get document_bookmarks_path, params: { recent_q: "not-found" }
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("最近見た文書検索「not-found」に一致する文書は、最近表示された最大 20 件内にありません。検索語を変えるか、最近見た条件をクリアして表示中の履歴を確認してください。")
+    expect(response.body).to include("最近見た文書検索「not-found」に一致する文書は、最近表示された最大 20 件内にありません。検索語を変えるか、案件一覧から文書を探してください。")
+    expect(response.body).to include("最近見た条件をクリアして表示中の履歴を確認することもできます。")
     expect(link_with_text("最近見た条件をクリア")).to be_present
     expect(link_with_text("案件一覧から探す")).to be_present
     expect(link_with_text("文書一覧から探す")).to be_present
