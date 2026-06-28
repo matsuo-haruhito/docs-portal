@@ -13,7 +13,7 @@ RSpec.describe "Document bookmark recent search project code", type: :request do
   end
 
   def grant_access(document)
-    create(:project_membership, project: document.project, user:)
+    ProjectMembership.find_or_create_by!(project: document.project, user:)
     create(:document_permission, document:, company:, access_level: :view)
   end
 
