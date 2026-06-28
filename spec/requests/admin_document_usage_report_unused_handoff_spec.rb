@@ -70,7 +70,7 @@ RSpec.describe "Admin document usage report unused handoff", type: :request do
     expect(unused_documents.map(&:slug)).to include("policy-draft-5")
 
     expect(action_labels).to include("集計", "CSV出力", "JSON metadataを確認")
-    expect(action_labels).not_to include("削除", "archive", "アーカイブ")
+    expect(parsed_html.css("form[action*='archive'], form[action*='destroy'], a[href*='archive']")).to be_empty
   end
 
   it "does not show the unused handoff digest for all or used filters" do
