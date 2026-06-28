@@ -9,9 +9,9 @@ RSpec.describe "archive preview handoff source" do
       expect(view_source).to include('readonly="readonly"')
       expect(view_source).to include('data-archive-preview-handoff-digest="true"')
       expect(view_source).to include("# ZIPプレビュー確認メモ")
-      expect(view_source).to include("path検索: #{@archive_preview_path_query.presence || \"なし\"}")
-      expect(view_source).to include("表示範囲: #{archive_preview_scope_note}")
-      expect(view_source).to include("表示上限: #{archive_preview_limit_note}")
+      expect(view_source).to include('path検索: #{@archive_preview_path_query.presence || "なし"}')
+      expect(view_source).to include('表示範囲: #{archive_preview_scope_note}')
+      expect(view_source).to include('表示上限: #{archive_preview_limit_note}')
       expect(view_source).to include("runbook: docs/ZIPプレビューと個別ダウンロード確認runbook.md")
     end
   end
