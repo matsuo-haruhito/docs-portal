@@ -10,6 +10,8 @@ section.document-detail-summary
     = document_kind_label(@document)
     |  / 重要度: 
     = document_importance_level_label(@document)
+  p.muted.document-detail-state-cue
+    | 本文側の「表示中」は現在開いている版や本文 context を示します。左の文書ツリーの表示中バッジは現在文書、文書一覧の検索・表示設定は一覧画面だけの条件として読み分けてください。
 
   .document-action-groups
     .document-action-group
