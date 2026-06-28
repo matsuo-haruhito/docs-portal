@@ -20,7 +20,7 @@
 | --- | --- | --- | --- |
 | `rails_table_preferences` 一覧 | 実装済み代表画面あり | `admin/documents`, `admin/projects`, `admin/users`, `admin/external_folder_sync_sources`, `admin/document_sets`, `admin/consent_terms`, `admin/document_usage_reports`, `admin/read_confirmations`。代表 smoke 固定候補は #1986 | 新しい一覧へ広げる前に、既存画面の column metadata、filter / preset、empty state、保存済み設定 smoke を確認する。これは pinned ref bump ではなく、実装済み画面を守る guard として扱う |
 | `rails_fields_kit` フォーム | `admin/document_sets` が host app 側の実装済み代表例。案件選択は案件コード / 案件名の RFK remote search、対象文書は title / slug の RFK remote picker、既存 table row への移動・絞り込み、固定版 selector を current support として持つ。`admin/external_folder_sync_sources` では外部フォルダ同期設定の対象案件を案件コード / 案件名の RFK remote combobox で選び、保存済み・validation error 後の selected project 復元も扱う。`admin/document_usage_reports` と `admin/read_confirmations` では案件選択の `rfk_select` を利用済み | #1348 / PR #1366 は document set の local filter / fixed version selector。#1985 の文書 remote picker first slice は PR #2079 で clean branch から merge 済み。#2514 は文書セット案件選択 remote search の docs 同期。#3670 は外部フォルダ同期設定の project remote search docs 同期 | 文書権限の company / user selection、外部フォルダ同期設定以外の project selection 横展開は別 issue に分ける。文書セットの案件 remote search、対象文書 remote picker、fixed version selector、外部フォルダ同期設定の対象案件 remote search は current support として扱うが、他画面の project / company / user remote search と混ぜない |
-| `tree_view` 連携 | 文書ツリー sidebar の current cue / 展開状態 first slice は実装済み。ツリー + table state 連携は候補整理段階 | #1984 / PR #2105 は merged。左ペインの current document ancestor 展開、表示中 badge、server-side 展開状態保存は current support | #1301 の pinned ref bump や upstream `tree_view` API 判断とは分ける。次はツリー + 詳細一覧の列幅 / 表示状態など table state 連携を proposal として切り分ける |
+| `tree_view` 連携 | 文書ツリー sidebar の current cue / 展開状態 first slice は実装済み。ツリー + table state 連携は候補整理段階。`ResourceTableRenderState` の文書閲覧 UX 反映は proposal/docs 境界整理段階 | #1984 / PR #2105 は merged。左ペインの current document ancestor 展開、表示中 badge、server-side 展開状態保存は current support。#4071 は `ResourceTableRenderState` 反映候補の surface / cue / evidence boundary 整理 | #1301 の pinned ref bump や upstream `tree_view` API 判断とは分ける。次はツリー + 詳細一覧の列幅 / 表示状態など table state 連携を proposal として切り分ける。#4071 では版詳細 / Docusaurus・Markdown viewer の table preference context cue を候補に置き、tree current cue、詳細一覧 filter / preset / column width、Markdown table full RTP integration とは混ぜない |
 
 `docs-portal` 側 issue では、画面固有の view、helper、route、params、Stimulus wiring、request / system spec を扱う。gem の public API、import path、controller registration、Vite alias 前提、導入手順の不足が論点になる場合は、upstream gem 側の issue / docs と分けて確認する。
 
@@ -67,9 +67,11 @@ Tom Select 自体は積極的に使う。ただし、アプリ側で `new TomSel
 
 - 実装済みの左ペイン文書ツリー展開状態 / current row cue を前提にした、詳細一覧側の列幅や表示状態の保存
 - 文書ツリーの current cue と詳細一覧 filter / preset の責務境界整理
-- `ResourceTableRenderState` 系の更新を docs-portal 側の文書閲覧 UX に反映
+- `ResourceTableRenderState` 系の更新を docs-portal 側の文書閲覧 UX に反映する候補は、まず版詳細 / Docusaurus・Markdown viewer の table preference context cue に絞って確認する。viewer 内 table がどの文書版 / site path / table key / preference context を見ているかを読み返せる補助候補として扱い、tree current cue、詳細一覧 filter / preset / column width 連携、Markdown table full RTP integration とは分ける
 
 #1984 / PR #2105 は merged 済みの current support として読む。左ペインの文書ツリーでは、user ごとの server-side preference による展開 / 折りたたみ保存、current document ancestor の展開、表示中 badge / `aria-current` による現在位置 cue を扱う。次の proposal は、これを前提にツリー + 詳細一覧の table state 連携を切り出し、#1301 の pinned ref bump や upstream `tree_view` public API 変更とは混ぜない。
+
+`ResourceTableRenderState` の viewer 反映候補は #4071 で docs-only に境界を固定する。runtime 実装へ進める場合は、request/source spec か browser evidence のどちらで viewer context cue を guard するかを別 issue で決める。Gemfile / pinned ref、upstream API、viewer shell redesign、保存 schema、table preference persistence contract はこの候補整理には含めない。
 
 #### Stimulus 化の継続
 
