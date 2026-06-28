@@ -33,12 +33,13 @@ README からこの runbook へ入ったときは、まず次の表で provider 
 1. 対象の同期元が既にあるか、新規登録から始めるかを一覧で確認する
 2. 必要に応じて `一覧の絞り込み` で `warning あり` `error あり` `無効` `Google Drive` `SharePoint / OneDrive` を切り替え、今日確認したい対象だけに寄せる
 3. 同期元が増えている場合は、検索欄で同期設定名、案件名 / code、外部フォルダ ID / path を指定し、review/provider filter と併用して対象を絞る。検索語は空白を整えた最大100文字で扱われるため、長いフォルダ URL や error 断片は特徴的な一部で探す
-4. 新規登録する場合は、対象案件を案件コード / 案件名で検索し、先頭 card の `Google Drive から始める` と `SharePoint / OneDrive を準備する` のどちらに当たるかを先に切り分ける
-5. Google Drive の既存同期元で `Google OAuthが未接続` の案内が出ているなら、まず接続を済ませる
-6. SharePoint / OneDrive source を新規保存した場合は、詳細画面で `drive_id` / `folder_item_id` / `folder_path` / `site_id` が取れているかを先に確認する
-7. 初回取り込みや変更確認では、Google Drive source に対して先に `同期プレビュー` を実行する
-8. warning や error が出たら、詳細画面の `同期履歴` と `結果詳細` を見る
-9. 継続運用で自動検知まで使うなら、Google Drive source の `バックグラウンド同期` と `変更通知の購読` を確認する
+4. 条件一致件数が多い場合は、一覧上部の `条件一致 N 件中 X-Y 件` と `前へ` / `次へ` を使って page 移動する。page 移動は検索語、review/provider filter、1ページあたりの上限を保持する
+5. 新規登録する場合は、対象案件を案件コード / 案件名で検索し、先頭 card の `Google Drive から始める` と `SharePoint / OneDrive を準備する` のどちらに当たるかを先に切り分ける
+6. Google Drive の既存同期元で `Google OAuthが未接続` の案内が出ているなら、まず接続を済ませる
+7. SharePoint / OneDrive source を新規保存した場合は、詳細画面で `drive_id` / `folder_item_id` / `folder_path` / `site_id` が取れているかを先に確認する
+8. 初回取り込みや変更確認では、Google Drive source に対して先に `同期プレビュー` を実行する
+9. warning や error が出たら、詳細画面の `同期履歴` と `結果詳細` を見る
+10. 継続運用で自動検知まで使うなら、Google Drive source の `バックグラウンド同期` と `変更通知の購読` を確認する
 
 ## 3. 一覧で見ること
 
@@ -63,7 +64,9 @@ README からこの runbook へ入ったときは、まず次の表で provider 
 - `Google Drive`: 同期本体の運用対象だけに絞る
 - `SharePoint / OneDrive`: metadata-only source だけに絞り、保存済み `drive_id` や `folder_path` の確認へ寄る
 
-検索条件は review/provider filter と併用できます。filter link は検索条件を保持し、`検索を解除` は review/provider filter を残します。詳細・編集画面へ進む link も、整えた検索語と review/provider filter を含む `return_to` を保持するため、確認後に同じ一覧条件へ戻れます。空白だけの検索語は検索なしとして扱われます。検索 / 絞り込み結果が 0 件の場合は、未登録の empty state ではなく「現在の検索 / 絞り込みに一致しない」状態として扱います。
+検索条件は review/provider filter と併用できます。filter link は検索条件を保持し、`検索を解除` は review/provider filter を残します。詳細・編集画面へ進む link も、整えた検索語と review/provider filter を含む `return_to` を保持するため、確認後に同じ一覧条件へ戻れます。page 2 以降から詳細・編集・削除に進む場合は、`return_to` に現在の `page` と、指定されていれば `per_page` も残ります。空白だけの検索語は検索なしとして扱われます。検索 / 絞り込み結果が 0 件の場合は、未登録の empty state ではなく「現在の検索 / 絞り込みに一致しない」状態として扱います。
+
+一覧は条件一致した同期元に対して bounded pagination されます。既定は 1 ページ 10 件で、`per_page` が渡された場合も最大 50 件に丸められます。表示 summary は、現在ページの行数、全同期元件数、条件一致件数、`X-Y件` の表示範囲を分けて読みます。`前へ` / `次へ` は検索語、review/provider filter、`per_page` を維持します。`warnings` / `errors` filter は直近 run や source metadata による判定を先に行い、その後の条件一致結果に対して page が切られるため、DB offset 先行で警告対象が欠ける意味ではありません。無効な `page` は有効範囲に丸められ、削除や filter 不一致とは読みません。
 
 `最新安全判定` と `競合・重複警告` は、詳細画面の `同期履歴` に出る直近 run と同じ文脈で見ます。一覧では安全判定の下に `直近run: 時刻 / 実行種別 / 状態` が出るため、warning filter で見つけた行がどの run の結果かを先に読みます。まだ run がない同期元は `直近runなし` と表示されるので、Google Drive source なら詳細画面で初回 `同期プレビュー` から始めます。
 
@@ -198,7 +201,8 @@ current code には `external_folder_sync_webhooks/sharepoint` の GET / POST ro
 ## 9. current support の境界
 
 - 新規登録 UI と一覧見出しは provider-aware で、current `main` では `google_drive` は保存から `dry_run` / `apply` / `enqueue` / 変更通知まで、`microsoft_graph` は共有 URL から metadata 保存と保存済み metadata の確認まで進められます
-- 一覧検索は同期設定名、案件名 / code、外部フォルダ ID、保存済み `external_folder_path` の部分一致です。検索語は空白を整えて最大100文字に丸められ、review/provider filter や詳細 / 編集から戻る `return_to` でも同じ検索条件として保持されます
+- 一覧検索は同期設定名、案件名 / code、外部フォルダ ID、保存済み `external_folder_path` の部分一致です。検索語は空白を整えて最大100文字に丸められ、review/provider filter、page 移動、詳細 / 編集から戻る `return_to` でも同じ検索条件として保持されます
+- 一覧は条件一致結果を既定 10 件、最大 50 件ずつ表示します。`前へ` / `次へ` は検索語、review/provider filter、`per_page` を維持し、invalid page は有効な page に丸められます。table preferences は列表示だけに作用し、page / filter / visible scope の意味を変えません
 - 一覧の `最新安全判定` は安全判定に加えて `直近run: 時刻 / 実行種別 / 状態` cue を出します。`最新エラー` は safe preview に加えて `由来: 直近run` または `由来: 同期元metadata` を出します。これらは調査入口の文脈 cue であり、warning / error filter、件数計算、同期 runner、metadata recheck の挙動は変えません
 - 新規登録 / 編集フォームの `対象案件` は案件コード / 案件名の remote search で選びます。検索語は最大100文字、候補は最大20件で、保存済み案件は edit / validation rerender で selected option として復元されます
 - current sync direction は `external_to_portal` のみです
