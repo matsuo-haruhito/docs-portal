@@ -2,6 +2,8 @@ class Admin::AccessRequestsController < Admin::BaseController
   before_action :require_admin_only!
 
   ACCESS_REQUEST_QUERY_MAX_LENGTH = AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH
+  PENDING_HANDOFF_LIMIT = 50
+  REASON_PREVIEW_LENGTH = 80
 
   REJECTION_REASON_PRESETS = {
     "permission_shortage" => "権限不足",
@@ -19,6 +21,23 @@ class Admin::AccessRequestsController < Admin::BaseController
     @access_requests, @access_requests_pagination = paginate_admin_list(scope, @access_requests_filtered_count)
     @access_request_page_params = access_request_page_params
     @status_counts = access_request_status_counts(scope)
+  end
+
+  def pending_handoff
+    @filters = filter_params
+    pending_scope = filtered_access_request_scope.pending
+    total_count = pending_scope.unscope(:order).count
+    candidates = pending_scope.limit(PENDING_HANDOFF_LIMIT).map { |access_request| pending_handoff_candidate(access_request) }
+
+    render json: {
+      current_filter: @filters.compact,
+      status: "pending",
+      total_count:,
+      limit: PENDING_HANDOFF_LIMIT,
+      truncated: total_count > PENDING_HANDOFF_LIMIT,
+      note: pending_handoff_note(total_count),
+      candidates:
+    }
   end
 
   def update
@@ -127,6 +146,51 @@ class Admin::AccessRequestsController < Admin::BaseController
     counts = scope.unscope(:order).group(:status).count
     AccessRequest.statuses.keys.to_h do |status|
       [status, counts[status].to_i]
+    end
+  end
+
+  def pending_handoff_candidate(access_request)
+    request_hash = AccessRequestHash.new(access_request).call
+    requestable = request_hash[:requestable]
+
+    {
+      public_id: access_request.public_id,
+      requester: requester_preview(access_request.requester),
+      requestable_type: access_request.requestable_type,
+      requestable_label: primary_target_label(requestable),
+      requestable_context: secondary_target_label(requestable),
+      requested_access_level: access_request.requested_access_level,
+      reason_preview: preview_text(access_request.reason),
+      status: access_request.status,
+      admin_review_path: admin_access_requests_path(status: "pending", q: access_request.public_id)
+    }
+  end
+
+  def requester_preview(requester)
+    [requester.name.presence, requester.email_address.presence].compact.join(" / ")
+  end
+
+  def primary_target_label(requestable)
+    requestable[:name].presence || requestable[:title].presence || requestable[:file_name].presence || requestable[:public_id]
+  end
+
+  def secondary_target_label(requestable)
+    return requestable[:code] if requestable[:code].present?
+    return requestable[:project_code] if requestable[:project_code].present?
+    return requestable[:document_title] if requestable[:document_title].present?
+
+    nil
+  end
+
+  def preview_text(value)
+    value.to_s.squish.truncate(REASON_PREVIEW_LENGTH, omission: "...")
+  end
+
+  def pending_handoff_note(total_count)
+    if total_count.zero?
+      "現在条件で pending handoff 対象はありません。正常保証、通知正常、全期間0件を意味しません。"
+    else
+      "現在条件に一致する pending 申請候補の read-only handoff です。承認・却下・通知・担当割当は実行しません。"
     end
   end
 
