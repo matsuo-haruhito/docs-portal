@@ -56,6 +56,28 @@
             span.stat-card__label 合計サイズ
             strong.stat-card__value = number_to_human_size(@archive_preview.total_file_size)
 
+      - archive_preview_unsafe_count = @archive_preview.entries.count { |entry| !entry.safe_path? }
+      - archive_preview_scope_note = archive_path_search ? "ZIP全体path検索の一致項目だけを対象にした表示です。" : "画面に表示されているプレビュー対象だけを対象にした表示です。"
+      - archive_preview_limit_note = @archive_preview.truncated? ? "先頭 #{@archive_preview.limit} 件までの表示で、ZIP全件の保証ではありません。" : "この画面で表示中の範囲の要約です。"
+      .card
+        h2 引き継ぎ用Markdown
+        p.muted 現在のZIPプレビュー条件と件数感だけを read-only にまとめています。ZIP entry本文、binary content、unsafe path の再利用、secret-like value は含めません。
+        textarea rows="14" readonly="readonly" aria-label="ZIPプレビュー引き継ぎ用Markdown" data-archive-preview-handoff-digest="true"
+          | # ZIPプレビュー確認メモ
+          |
+          | - 対象ファイル: #{@document_file.file_name}
+          | - path検索: #{@archive_preview_path_query.presence || "なし"}
+          | - 表示範囲: #{archive_preview_scope_note}
+          | - 表示上限: #{archive_preview_limit_note}
+          | - 表示対象: ファイル #{number_with_delimiter(@archive_preview.file_count)} 件 / フォルダ #{number_with_delimiter(@archive_preview.folder_count)} 件
+          | - 要注意path: #{number_with_delimiter(archive_preview_unsafe_count)} 件
+          | - テキスト確認候補: #{number_with_delimiter(@archive_preview.text_preview_candidate_entries.count)} 件
+          | - ダウンロード候補: #{number_with_delimiter(@archive_preview.download_candidate_entries.count)} 件
+          | - 表示中filter初期値: ディレクトリ=すべて / 種別=すべて / 安全性=すべて / 候補=すべて
+          | - 注意: 表示中検索やfilterを画面上で変更した場合は、画面上の表示件数と表示中一覧を確認してから引き継いでください。
+          | - runbook: docs/ZIPプレビューと個別ダウンロード確認runbook.md
+        p.muted candidate 0 件は正常保証ではなく、この表示条件で該当候補がない状態として扱ってください。
+
       .card
         h2 ディレクトリサマリー
         p.muted 直下のファイル / フォルダ件数と、直下ファイルの合計サイズを表示しています。必要なディレクトリパスは行ごとにコピーできます。
