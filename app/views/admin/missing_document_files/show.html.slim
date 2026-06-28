@@ -53,12 +53,18 @@ section.card
   - if @document_file_health.filtered?
     p.muted
       | 条件: 
-      - filter_labels = []
-      - filter_labels << "案件=#{@selected_project ? @selected_project.name : @missing_document_file_filters[:project_id]}" if @missing_document_file_filters[:project_id].present?
-      - filter_labels << "文書=#{@missing_document_file_filters[:document_q]}" if @missing_document_file_filters[:document_q].present?
-      - filter_labels << "ファイル=#{@missing_document_file_filters[:file_q]}" if @missing_document_file_filters[:file_q].present?
-      = filter_labels.join(" / ")
+      = missing_document_file_filter_summary_labels(@missing_document_file_filters, @selected_project).join(" / ")
     p.muted = "条件一致欠落は現在の絞り込みに合う全件数、表示中は詳細一覧に出している先頭#{@display_limit}件までの件数です。"
+
+  - if @document_file_health.missing_count.positive?
+    .field
+      h3 引き継ぎ用Markdown digest
+      p.muted = "現在の条件、件数、表示中の代表 missing file だけをまとめた read-only digest です。表示中は先頭#{@display_limit}件までで、自動修復、削除、再import、CSV export は行いません。"
+      = text_area_tag :missing_document_file_handoff_digest,
+        missing_document_file_handoff_digest(health: @document_file_health, filters: @missing_document_file_filters, selected_project: @selected_project, display_limit: @display_limit),
+        readonly: true,
+        rows: 16,
+        class: "handoff-digest"
 
   - if @document_file_health.healthy?
     p.muted 実体ファイルの欠落は検出されていません。
