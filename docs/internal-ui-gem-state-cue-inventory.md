@@ -2,7 +2,7 @@
 
 この文書は、`docs-portal` の admin UI で `tree_view` / `rails_table_preferences` / `rails_fields_kit` を並べて使うときに、状態表示 cue の意味と責務境界を読み合わせるための inventory です。
 
-この inventory は docs-portal 側の見え方・再利用判断のための整理です。CSS custom property 名、dark mode 方針、visual diff CI、runtime CSS / JS、各 gem の public API や token 名はこの文書では決めません。API / ownership の境界は [internal UI gem責務境界matrix](./internal-ui-gem責務境界matrix.md)、screen-by-screen adoption と release train の確認順は [関連gem連携調査 runbook](./関連gem連携調査runbook.md) を正本にしてください。
+この inventory は docs-portal 側の見え方・再利用判断のための整理です。CSS custom property 名、dark mode 方針、visual diff CI、runtime CSS / JS、各 gem の public API や token 名はこの文書では決めません。API / ownership の境界は [internal UI gem責務境界matrix](./internal-ui-gem責務境界matrix.md)、screen-by-screen adoption と release train の確認順は [関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) を正本にしてください。
 
 ## 読み方
 
@@ -17,7 +17,7 @@
 
 | state cue | 表示目的 | source gem | docs-portal の代表画面 / 候補 | host app override | 関連 docs / issue | この issue で決めないこと |
 | --- | --- | --- | --- | --- | --- | --- |
-| current row | いま本文側で開いている文書・行を tree 内で追跡できるようにする | `tree_view` | sidebar 文書ツリー、文書詳細 tree | current 判定は host app の route / selected document が正本。docs-portal の文書ツリーでは `current-node` 判定から link に `aria-current="page"` と `data-tree-current="true"` を付け、隣に `表示中` badge を出す。badge の文言・密度・周辺説明は host app 側の表示補助であり、gem API や token 名として扱わない | `docs-portal#607`, `docs-portal#858`, `docs-portal#1781`, `tree_view-rails#967`, `spec/frontend/document_tree_current_selection_source_spec.rb` | current 判定 API、CSS token 名、keyboard focus / selected / expanded state との統合仕様、visual diff CI |
+| current row | いま本文側で開いている文書・行を tree 内で追跡できるようにする | `tree_view` | sidebar 文書ツリー、文書詳細 tree | current 判定は host app の route / selected document が正本。docs-portal の文書ツリーでは `current-node` 判定から link に `aria-current="page"` と `data-tree-current="true"` を付け、隣に `表示中` badge を出す。badge の文言・密度・周辺説明は host app 側の表示補助であり、gem API や token 名として扱わない。文書詳細本文側の `document-detail-state-cue` は、現在開いている版 / 本文 context を示す host app copy であり、tree の current document cue や文書一覧の filter / 表示設定とは別に読む | `docs-portal#607`, `docs-portal#858`, `docs-portal#1781`, `docs-portal#3783`, `docs-portal#4144`, `tree_view-rails#967`, `spec/frontend/document_tree_current_selection_source_spec.rb` | current 判定 API、CSS token 名、keyboard focus / selected / expanded state との統合仕様、visual diff CI |
 | selected | 複数操作や一時選択がある場合に、current とは別の選択状態を示す | `tree_view` | 手動アップロード差異確認、文書ツリー操作候補 | 選択の業務意味は host app 側で説明する。gem 側 state と同じ意味に見えるかだけ確認する | `docs/手動アップロード差異確認runbook.md`, `docs-portal#607` | bulk action 導線、権限条件、selection persistence |
 | collapsed / expanded | 階層を閉じているのか、子要素がないのかを誤読しない | `tree_view` | sidebar 文書ツリー、文書詳細 tree | 空 branch の説明や fallback 文言は host app 側で補える | `spec/requests/document_tree_regressions_spec.rb`, `docs/internal-ui-gem-visual-evidence-runbook.md` | 開閉状態の保存方式、localStorage / server 保存の採用判断 |
 | loading | Turbo refresh や非同期更新中であることを伝える | `tree_view` / host app integration | 文書ツリー refresh 候補 | 画面側の待機文言や skeleton の有無は host app 判断。gem runtime の loading class 新設はしない | `ROADMAP.md`, `doc/frontend_initialization_inventory.md`, `docs-portal#607` | loading event API、visual regression baseline |
@@ -54,7 +54,7 @@
 
 | 観点 | docs-portal 側で揃えること | upstream / 別 issue に残すこと |
 | --- | --- | --- |
-| 同じ意味の cue | `current`, `selected`, `active filter`, `selected item` のように、似た語でも対象が違うものは画面文脈で読み分ける | gem 共通 vocabulary の public API 化 |
+| 同じ意味の cue | `current`, `selected`, `active filter`, `selected item` のように、似た語でも対象が違うものは画面文脈で読み分ける。文書詳細では、本文側の `表示中` は現在開いている版 / 本文 context、左ペイン文書ツリーの `表示中` badge は現在文書、文書一覧の検索・表示設定は一覧画面側の条件として分けて読む | gem 共通 vocabulary の public API 化 |
 | 周辺文言 | admin UI の業務ラベル、復旧案内、0 件時の次アクションは host app で書く | gem 側の default message や helper option 変更 |
 | 見た目の密度 | 同じ admin 画面に置いたときに過度に目立つ / 埋もれる cue を screen issue で調整する | global token、dark mode、全 gem 共通 CSS |
 | 証跡 | static artifact を触ったら visual evidence runbook、runtime screen adoption は関連 request / helper spec と PR 本文へ残す | visual diff CI や screenshot baseline の導入 |
