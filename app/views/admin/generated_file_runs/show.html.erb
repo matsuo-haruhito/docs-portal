@@ -6,9 +6,12 @@
       <h1 class="text-2xl font-bold">生成ファイル実行履歴</h1>
       <p class="font-mono text-sm text-gray-600"><%= @generated_file_run.public_id %></p>
     </div>
-    <div class="flex gap-2">
-      <%= link_to "一覧へ戻る", return_to_path, class: "rounded border px-3 py-2 text-sm" %>
-      <%= button_to "この実行を再実行", retry_run_admin_generated_file_run_path(@generated_file_run.public_id, return_to: return_to_path), method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white", title: "#{@generated_file_run.public_id} を再実行キューに投入", aria: {label: "#{@generated_file_run.public_id} を再実行キューに投入"} %>
+    <div class="flex max-w-md flex-col items-end gap-2 text-right">
+      <div class="flex gap-2">
+        <%= link_to "一覧へ戻る", return_to_path, class: "rounded border px-3 py-2 text-sm" %>
+        <%= button_to "この実行を再実行", retry_run_admin_generated_file_run_path(@generated_file_run.public_id, return_to: return_to_path), method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white", title: "#{@generated_file_run.public_id} を再実行キューに投入", aria: {label: "#{@generated_file_run.public_id} を再実行キューに投入"} %>
+      </div>
+      <p class="text-xs text-gray-500">この実行1件だけを再実行キューへ投入します。元の実行履歴は診断用に残り、新しい実行IDで再実行後の結果を確認します。</p>
     </div>
   </div>
 
