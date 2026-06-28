@@ -2,7 +2,7 @@
 
 この runbook は、internal user が `文書一覧` の `ファイルをアップロード` panel や TreeView / 文書行への drop から手動アップロード候補を作成したあと、`OK` / `NG` を判断するための current flow をまとめる。
 
-新しい upload policy や承認ルールはここでは定義しない。current `DocumentUploadsController#create`、`ManualDocumentUpload`、`DocumentVersionUploadReviewsController#create`、版詳細画面の review action を前提に、「どこへ遷移するか」「既存文書の版更新候補と新規文書候補をどう見分けるか」「反映後にどこから取り消せるか」だけを整理する。
+新しい upload policy や承認ルールはここでは定義しない。current `DocumentUploadsController#create`、`ManualDocumentUpload`、`DocumentVersionUploadReviewsController#create`、版詳細画面の review action を前提に、「どこへ遷移するか」「既存文書の版更新候補と新規文書候補をどう見分けるか」「反映直後にどの read-only 導線から取り消し可能な版詳細へ戻れるか」「反映後にどこから取り消せるか」だけを整理する。
 
 ## 先に見るもの
 
@@ -114,11 +114,14 @@ current behavior:
 - 対象文書の `latest_version` がその版へ切り替わる
 - redirect 先は対象文書の表示導線 (`project_document_path(..., version_id: uploaded_version.public_id)`) になる
 - notice で `誤りがあればすぐ取り消せます。` と案内される
+- approve 後の文書詳細で、approve した版が表示中の latest manual upload 版と一致し、internal user が見ている場合だけ `手動アップロードを反映しました` の read-only handoff が出る
+- handoff の `取り消し可能な版詳細を開く` は版詳細へ戻る link だけで、この notice や文書詳細から rollback を直接実行しない
 
 確認ポイント:
 
 - 既存文書の版更新候補では、意図した文書の最新版だけが切り替わっているか
 - 新規文書候補では、文書名・source path・添付が想定どおりに作られているか
+- approve 直後の文書詳細 handoff が出ている場合は、その link から版詳細へ戻り、`アップロード後の確認` card と対象版を確認する
 - Markdown 候補では、preview build がまだなら本文ではなく差分や添付を先に見てよい
 
 ## `NG` を押すとどうなるか
@@ -139,17 +142,20 @@ current behavior:
 
 ## 反映後に取り消したいとき
 
-manual upload 版を `OK` で反映したあと、その版が current `latest_version` なら、同じ版詳細画面の `アップロード後の確認` card から `このアップロードを取り消す` を使える。
+manual upload 版を `OK` で反映したあと、その版が current `latest_version` なら、approve 直後の文書詳細に出る `取り消し可能な版詳細を開く` link、または同じ版詳細画面の `アップロード後の確認` card から `このアップロードを取り消す` を使える。
 
 current behavior:
 
+- 文書詳細の handoff は approve 直後の flash、表示中版の public ID、対象文書の latest version、manual upload source が一致する場合だけ出る
+- handoff は internal user 専用で、通常の文書詳細訪問や external user には出ない
+- handoff は版詳細への read-only link であり、rollback の実行 button ではない
 - 最新 manual upload 版だけを rollback 対象にする
 - previous version があれば、その版へ `latest_version` を戻す
 - 取り消した manual upload 版は archived になる
 - 戻せる published 版がない場合は、document の `latest_version` を空にし、document も archived にする
 - previous version がある場合の redirect 先は戻した先の版詳細画面。戻せる published 版がない場合は、対象案件の文書一覧へ戻る
 
-つまり、`OK` を押した直後に誤りへ気づいた場合でも、「最新版の manual upload を 1 つだけ戻す」導線は current code にある。ただし戻せる published 版がない新規文書では、rollback 後に文書自体も archived になる。
+つまり、`OK` を押した直後に誤りへ気づいた場合でも、「取り消し可能な最新版の版詳細へ戻る」read-only handoff と、「最新版の manual upload を 1 つだけ戻す」導線は current code にある。ただし文書詳細や文書一覧から rollback を直接実行する導線ではなく、戻せる published 版がない新規文書では、rollback 後に文書自体も archived になる。
 
 ## 迷ったときの切り分け
 
@@ -159,7 +165,7 @@ current behavior:
 - どのフォルダ直下へ drop した扱いかを見直したい: [文書一覧の検索・実用フィルタ・ZIP出力 runbook](./文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
 - 差分、HTML、添付、品質チェックのどこを読むか迷う: [版詳細プレビュー・差分・添付確認 runbook](./版詳細プレビュー・差分・添付確認runbook.md)
 - 既存文書更新か新規文書候補かを見分けたい: `Document` が増えているか、`latest_version` がまだ空か、source file 名が一致していたかを見る
-- `OK` 済みだが誤りだった: 同じ版詳細の `アップロード後の確認` から rollback を使う。戻せる published 版がない場合は、rollback 後に文書一覧で archived 扱いになっていることを確認する
+- `OK` 済みだが誤りだった: approve 直後の文書詳細に `取り消し可能な版詳細を開く` が出ていればそこから版詳細へ戻る。通常訪問ではその handoff は出ないため、同じ版詳細の `アップロード後の確認` から rollback を使う。戻せる published 版がない場合は、rollback 後に文書一覧で archived 扱いになっていることを確認する
 - drag & drop 自体が動かない: この runbook では直さない。既知の実装課題は issue `#470` を参照する
 
 ## current support の境界
@@ -169,6 +175,7 @@ current behavior:
 - manual upload の drop は current support では単一ファイルだけを review 候補にする。複数ファイルを同時に drop しても候補作成や一括 apply は行わず、inline preview で件数と代表 file name だけを確認して ZIP import または 1 ファイルずつの manual upload に戻す
 - 管理画面の `単体ファイルアップロードの確認履歴` は、単体ファイルアップロード dry-run を後から確認する read-only 一覧であり、ZIP / Git連携 / artifact import dry-run の統合、client source path の検索対象化、dry-run apply / confirm の新設は含めない
 - `project_code` 不足時は案件一覧へ戻り、project が特定できる `file` 不足や unsafe `source_path` では対象案件の文書一覧へ戻る。これは review 候補を作る前の fallback であり、正常 upload 後の `OK` / `NG` flow ではない
+- approve 直後の文書詳細 handoff は、取り消し可能な版詳細へ戻る read-only link だけを出す。文書詳細や文書一覧から rollback を直接実行する導線、常設の rollback cue、承認履歴 model、通知、review workflow は current support として扱わない
 - drag & drop 実装の不具合修正、複数ファイル一括 upload UX、承認ポリシーの新設は含めない
 - `OK` / `NG` / rollback の current runtime behavior を説明するが、新しい公開判断基準は定義しない
 - 文書一覧 runbook や版詳細 runbook の内容を全面複製せず、upload review の入口だけを橋渡しする
