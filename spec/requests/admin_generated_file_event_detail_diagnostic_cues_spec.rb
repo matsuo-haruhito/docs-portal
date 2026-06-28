@@ -47,11 +47,11 @@ RSpec.describe "Admin generated file event detail diagnostic cues", type: :reque
     get admin_generated_file_event_path(event.public_id)
 
     expect(response).to have_http_status(:ok)
+    expect(page_text).to include("概要")
     expect(page_text).to include("メタデータはイベント補助情報の診断用プレビューです。")
     expect(page_text).to include("このイベントに補助メタデータはありません。")
     expect(response.body).to include("このイベントを再投入")
     expect(response.body).to include("このイベント1件だけを再投入キューへ戻します。")
-    expect(response.body).to include("関連実行").or include("概要")
   end
 
   def create_event!(attributes = {})
