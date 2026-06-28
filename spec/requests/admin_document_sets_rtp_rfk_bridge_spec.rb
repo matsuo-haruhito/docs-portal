@@ -38,7 +38,7 @@ RSpec.describe "Admin document sets RTP RFK bridge canary", type: :request do
   end
 
   def remote_document_picker
-    parsed_html.at_css(%(select[name="document_set_remote_document_id"])))
+    parsed_html.at_css(%(select[name="document_set_remote_document_id"]))
   end
 
   it "keeps RTP table metadata and RFK form metadata visible on the canary screen" do
