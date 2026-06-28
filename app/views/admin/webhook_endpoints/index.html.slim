@@ -96,7 +96,7 @@ h1 Webhook
           td.actions data-rails-table-preferences-column-key="actions"
             span.muted 設定操作
             = edit_link_to "編集", edit_admin_webhook_endpoint_path(endpoint)
-            = delete_link_to "削除", admin_webhook_endpoint_path(endpoint), confirm: "Webhook設定「#{endpoint.name}」を削除します。以後この通知先へWebhookは送信されません。削除しますか？"
+            = delete_link_to "削除", admin_webhook_endpoint_path(endpoint), confirm: webhook_endpoint_delete_confirm_message(endpoint)
 
 .card
   h2 最近の送信履歴

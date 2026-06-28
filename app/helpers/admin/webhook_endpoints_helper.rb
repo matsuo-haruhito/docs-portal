@@ -42,6 +42,19 @@ module Admin::WebhookEndpointsHelper
     endpoint.active? ? "有効" : "停止"
   end
 
+  def webhook_endpoint_delete_confirm_message(endpoint)
+    event_labels = endpoint.normalized_event_types.map { |event_type| webhook_event_type_label(event_type) }.join(", ").presence || "-"
+
+    [
+      "Webhook設定を削除します。",
+      "名称: #{endpoint.name}",
+      "送信先URL: #{webhook_endpoint_display_target_url(endpoint.target_url)}",
+      "イベント: #{event_labels}",
+      "状態: #{webhook_endpoint_status_label(endpoint)}",
+      "以後この通知先へWebhookは送信されません。削除しますか？"
+    ].join("\n")
+  end
+
   def webhook_delivery_status_label(delivery)
     case delivery.status.to_s
     when "succeeded"
