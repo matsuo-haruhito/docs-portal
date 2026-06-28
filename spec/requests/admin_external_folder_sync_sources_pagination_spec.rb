@@ -17,9 +17,11 @@ RSpec.describe "Admin external folder sync source pagination", type: :request do
     Rack::Utils.parse_nested_query(URI.parse(href_for(text)).query)
   end
 
-  def create_google_drive_source(name:, project: self.project, enabled: true, last_error_message: nil)
+  def create_google_drive_source(name:, project: nil, enabled: true, last_error_message: nil)
+    target_project = project || self.project
+
     ExternalFolderSyncSource.create!(
-      project:,
+      project: target_project,
       created_by: admin_user,
       provider: :google_drive,
       auth_type: :oauth_user,
