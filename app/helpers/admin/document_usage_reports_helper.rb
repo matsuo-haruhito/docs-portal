@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module Admin::DocumentUsageReportsHelper
+  DOCUMENT_USAGE_REPORT_HANDOFF_LIMIT = 5
+
   def document_usage_report_table_columns
     [
       table_preferences_column(:title, label: "文書名", default_width: 280, pinned: true, overflow: :ellipsis),
@@ -23,6 +25,45 @@ module Admin::DocumentUsageReportsHelper
     return nil if project.blank?
 
     { value: project.id, text: document_usage_report_project_option_label(project) }
+  end
+
+  def document_usage_report_unused_handoff_digest(report_hash:, project:, from_date:, to_date:, query:, sort_order:)
+    rows = report_hash[:documents].first(DOCUMENT_USAGE_REPORT_HANDOFF_LIMIT)
+    lines = [
+      "# 未利用文書 handoff",
+      "",
+      "## 現在条件",
+      "- 案件: #{document_usage_report_project_option_label(project)}",
+      "- 期間: #{document_usage_report_period_label(from_date, to_date)}",
+      "- 利用状況: #{document_usage_report_filter_label('unused')}",
+      "- 並び順: #{document_usage_report_sort_label(sort_order)}",
+      "- 検索: #{query.presence || 'なし'}",
+      "",
+      "## 件数",
+      "- 表示中の未利用文書: #{report_hash[:documents].size}件",
+      "- 案件全体の未利用文書: #{report_hash.dig(:summary, :unused_document_count)}件",
+      "- 代表行: 先頭#{rows.size}件",
+      "",
+      "## 代表文書"
+    ]
+
+    if rows.any?
+      rows.each.with_index(1) do |row, index|
+        lines.concat(document_usage_report_unused_handoff_row_lines(row, index))
+      end
+    else
+      lines << "- なし"
+    end
+
+    lines.concat([
+      "",
+      "## 注意",
+      "- 未利用は現在期間内の閲覧・ダウンロード・既読確認がない候補であり、不要・削除・archive 確定ではありません。",
+      "- この digest は read-only の確認依頼用です。bulk action、retention policy、CSV format、集計定義は変更しません。",
+      "- 代表文書は表示中の先頭#{DOCUMENT_USAGE_REPORT_HANDOFF_LIMIT}件までです。全件 export は既存 CSV を確認してください。"
+    ])
+
+    lines.join("\n")
   end
 
   def document_usage_report_filter_options
@@ -129,5 +170,18 @@ module Admin::DocumentUsageReportsHelper
     when :read_confirmation_only
       "閲覧・DLはなく、既読確認の内訳を確認（閲覧・downloadはありません）"
     end
+  end
+
+  private
+
+  def document_usage_report_unused_handoff_row_lines(row, index)
+    [
+      "#{index}. #{row[:title]}",
+      "   - slug: #{row[:slug]}",
+      "   - カテゴリ: #{document_category_label(row[:category])}",
+      "   - 種別: #{document_kind_label(row[:document_kind])}",
+      "   - 公開範囲: #{document_visibility_policy_label(row[:visibility_policy])}",
+      "   - 最終アクセス: #{row[:last_accessed_at].presence || '-'}"
+    ]
   end
 end
