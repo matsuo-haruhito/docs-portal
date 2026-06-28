@@ -22,11 +22,11 @@ RSpec.describe "Admin webhook endpoint delete confirm context", type: :request d
 
     expect(response).to have_http_status(:ok)
 
-    delete_link = parsed_html.at_css(%(a[href="#{admin_webhook_endpoint_path(endpoint)}"][data-turbo-confirm]))
-    expect(delete_link).to be_present
-    expect(delete_link.text.squish).to eq("削除")
+    delete_form = parsed_html.at_css(%(form[action="#{admin_webhook_endpoint_path(endpoint)}"][data-turbo-confirm]))
+    expect(delete_form).to be_present
+    expect(delete_form.at_css(%(button[type="submit"])).text.squish).to eq("削除")
 
-    confirm_copy = delete_link["data-turbo-confirm"]
+    confirm_copy = delete_form["data-turbo-confirm"]
     expect(confirm_copy).to include("Webhook設定を削除します。")
     expect(confirm_copy).to include("名称: Docs release hook")
     expect(confirm_copy).to include("送信先URL: https://hooks.example.test/incoming/docs-release?...")
