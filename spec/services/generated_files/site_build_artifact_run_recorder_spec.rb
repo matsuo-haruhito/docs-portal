@@ -47,7 +47,6 @@ RSpec.describe GeneratedFiles::SiteBuildArtifactRunRecorder do
         "manifest_path" => "publish/manifest/publish.json"
       },
       "read_only_evidence" => true,
-      "raw_payload_saved" => false,
       "manifest_document_count" => 2
     )
     expect(run.metadata.to_json).not_to include("do-not-save", "raw_payload", "raw_files")
