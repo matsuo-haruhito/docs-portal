@@ -1,7 +1,7 @@
 class DocumentsController < BaseController
   before_action :apply_rparam, only: :index
 
-  helper_method :safe_return_to
+  helper_method :safe_return_to, :approved_upload_handoff_version
 
   DOCUMENTS_PER_PAGE = 20
 
@@ -176,6 +176,16 @@ class DocumentsController < BaseController
     raise ActiveRecord::RecordNotFound, "Document version not found" unless version
 
     version
+  end
+
+  def approved_upload_handoff_version
+    approved_public_id = flash[:approved_upload_version_public_id].presence
+    return unless approved_public_id && current_user.internal?
+    return unless @viewer_version&.public_id == approved_public_id
+    return unless @document.latest_version_id == @viewer_version.id
+    return unless @viewer_version.source_commit_hash == ManualDocumentUploadReview::MANUAL_UPLOAD_SOURCE
+
+    @viewer_version
   end
 
   def export_preview_files

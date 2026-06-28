@@ -37,6 +37,12 @@
             |  ダウンロード
         - if @viewer_popout_src.present?
           = link_to "ポップアウト", @viewer_popout_src, class: "button secondary", target: "_blank", rel: "noopener"
+      - if (handoff_version = approved_upload_handoff_version)
+        .notice.upload-approval-handoff role="status" aria-live="polite"
+          strong 手動アップロードを反映しました
+          p.muted 誤りに気づいた場合は、版詳細で取り消し導線を確認できます。この画面や文書一覧から直接取り消しは実行しません。
+          p.actions
+            = link_to "取り消し可能な版詳細を開く", document_version_path(handoff_version), class: "button secondary"
 
     details.document-context-drawer#document-detail-panels
       summary
@@ -69,6 +75,12 @@
         - if history_status.detail.present?
           |  
           code = history_status.detail
+  - if (handoff_version = approved_upload_handoff_version)
+    .notice.upload-approval-handoff role="status" aria-live="polite"
+      strong 手動アップロードを反映しました
+      p.muted 誤りに気づいた場合は、版詳細で取り消し導線を確認できます。この画面や文書一覧から直接取り消しは実行しません。
+      p.actions
+        = link_to "取り消し可能な版詳細を開く", document_version_path(handoff_version), class: "button secondary"
   - if current_user.internal?
     .card.manual-document-upload-panel data-controller="manual-document-upload" data-manual-document-upload-dragging-class="is-dragging" data-manual-document-upload-url-value=project_document_uploads_path(@project) data-manual-document-upload-target-document-id=@document.public_id data-action=preview_drop_action
       h2 ファイルをアップロード
