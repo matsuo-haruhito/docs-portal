@@ -58,7 +58,7 @@ jobs:
           bundler-cache: false
 
       - name: Cache Ruby dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: vendor/bundle
           key: ${{ runner.os }}-ruby-${{ hashFiles('Gemfile.lock') }}
@@ -168,7 +168,7 @@ jobs:
           bundler-cache: false
 
       - name: Cache Ruby dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: vendor/bundle
           key: ${{ runner.os }}-ruby-${{ hashFiles('Gemfile.lock') }}
