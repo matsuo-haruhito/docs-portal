@@ -73,7 +73,8 @@ RSpec.describe "admin generated file runs source" do
       expect(show_source).to include("この実行1件だけを再実行キューへ投入します。")
       expect(show_source).to include("元の実行履歴は診断用に残り")
       expect(show_source).to include("新しい実行IDで再実行後の結果を確認します。")
-      expect(show_source).to include("retry_failed_admin_generated_file_runs_path").or include("一括再実行")
+      expect(show_source).not_to include("現在の絞り込み条件に一致する失敗履歴")
+      expect(show_source).not_to include("古い順に最大100件")
     end
   end
 end
