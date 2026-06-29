@@ -76,6 +76,20 @@ RSpec.describe "admin document permissions source" do
     end
   end
 
+  it "keeps document permission delete confirmation tied to row context" do
+    aggregate_failures do
+      expect(index_source).to include("confirm: document_permission_delete_confirm(permission)")
+      expect(helper_source).to include("def document_permission_delete_confirm(permission)")
+      expect(helper_source).to include("文書「#{permission.document.title}」")
+      expect(helper_source).to include("document_permission_delete_target_label(permission)")
+      expect(helper_source).to include("document_permission_access_level_label(permission)")
+      expect(helper_source).to include("def document_permission_delete_target_label(permission)")
+      expect(helper_source).to include("document_permission_form_company_label(permission.company)")
+      expect(helper_source).to include("document_permission_form_user_label(permission.user)")
+      expect(helper_source).not_to include("confirm: \"この文書権限を削除しますか？対象ユーザー/会社の閲覧範囲が変わります。\"")
+    end
+  end
+
   it "keeps option builders and column metadata in the helper" do
     aggregate_failures do
       expect(helper_source).to include("def document_permission_overview_table_columns")
