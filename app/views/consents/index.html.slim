@@ -41,21 +41,20 @@ section.card
       .filter-field
         = form.label :consent_scope, "種別"
         = form.select :consent_scope, options_for_select([["すべて", ""]] + @valid_consent_scopes.map { |scope| [t("labels.consent_terms.consent_scope.#{scope}", default: scope), scope] }, @consent_history_scope)
+      .filter-field
+        = form.label :target_type, "対象種別"
+        = form.select :target_type, options_for_select([["すべて", ""]] + @valid_consent_history_target_types.map { |target_type| [consent_history_target_type_label(target_type), target_type] }, @consent_history_target_type)
       .filter-actions
         = form.submit "絞り込む"
         - if @consent_history_filter_active
           = link_to "絞り込みを解除", consents_path
 
   - if @consent_history_filter_active
-    p.muted
-      | 絞り込み中: 
-      - if @consent_history_q.present?
-        | 文面・版・対象に「#{@consent_history_q}」を含む
-      - if @consent_history_q.present? && @consent_history_scope.present?
-        |  / 
-      - if @consent_history_scope.present?
-        | 種別「#{t("labels.consent_terms.consent_scope.#{@consent_history_scope}", default: @consent_history_scope)}」
-      |  / 該当 #{@user_consents.size} 件
+    - active_history_filter_items = []
+    - active_history_filter_items << "文面・版・対象に「#{@consent_history_q}」を含む" if @consent_history_q.present?
+    - active_history_filter_items << "種別「#{t("labels.consent_terms.consent_scope.#{@consent_history_scope}", default: @consent_history_scope)}」" if @consent_history_scope.present?
+    - active_history_filter_items << "対象種別「#{consent_history_target_type_label(@consent_history_target_type)}」" if @consent_history_target_type.present?
+    p.muted = "絞り込み中: #{active_history_filter_items.join(" / ")} / 該当 #{@user_consents.size} 件"
 
   - if @user_consents.any?
     p.muted 対象が「全体」の行は案件や文書にひも付かない同意です。案件 / 文書 / ファイル / 文書版が出ている行は、その対象に対する同意です。

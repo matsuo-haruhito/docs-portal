@@ -20,4 +20,10 @@ module ConsentsHelper
 
     [type_label, target_label].compact.join(" / ")
   end
+
+  def consent_history_target_type_label(target_type)
+    return "全体" if target_type == "global"
+
+    t("labels.consents.target_type.#{target_type.underscore}", default: target_type)
+  end
 end
