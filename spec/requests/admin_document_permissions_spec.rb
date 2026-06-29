@@ -269,8 +269,8 @@ RSpec.describe "Admin document permissions", type: :request do
   end
 
   it "filters overview and permission rows by project" do
-    target_project = create(:project, name: "Target Project")
-    other_project = create(:project, name: "Other Project")
+    target_project = create(:project, code: "TARGET", name: "Target Project")
+    other_project = create(:project, code: "OTHER", name: "Other Project")
     target_document = create(:document, project: target_project, title: "Target Project Guide")
     other_document = create(:document, project: other_project, title: "Other Project Guide")
     create(:document_permission, document: target_document, company: create(:company, name: "Target Company"))
@@ -281,7 +281,7 @@ RSpec.describe "Admin document permissions", type: :request do
     get admin_document_permissions_path(project_id: target_project.id)
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("有効な条件: 案件: Target Project")
+    expect(page_text).to include("有効な条件: 案件: TARGET / Target Project")
     expect(overview_section_text).to include("Target Project Guide")
     expect(overview_section_text).not_to include("Other Project Guide")
     expect(permissions_section_text).to include("Target Project Guide")

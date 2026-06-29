@@ -47,8 +47,14 @@ module Admin::DocumentPermissionsHelper
     "#{document.title} / #{document.project.name}"
   end
 
-  def document_permission_filter_project_options(projects)
-    [["すべて", ""]] + projects.map { [_1.name, _1.id] }
+  def document_permission_filter_project_label(project)
+    [project.code, project.name].compact_blank.join(" / ")
+  end
+
+  def document_permission_filter_project_selected_option(project)
+    return if project.blank?
+
+    { value: project.id, text: document_permission_filter_project_label(project) }
   end
 
   def document_permission_filter_access_level_options

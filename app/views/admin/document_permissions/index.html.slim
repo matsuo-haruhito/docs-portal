@@ -18,9 +18,20 @@ section.card
   h2 検索・絞り込み
   = form_with url: admin_document_permissions_path, method: :get, local: true, class: "document-filter-form" do |form|
     .form-grid.form-grid--compact
-      label.form-field
-        span 案件
-        = form.select :project_id, options_for_select(document_permission_filter_project_options(@projects), @filters[:project_id])
+      = form.rfk_combobox :project_id,
+        collection: [],
+        selected: document_permission_filter_project_selected_option(@selected_project),
+        url: project_search_admin_document_permissions_path(format: :json),
+        selected_url: selected_project_admin_document_permissions_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: Admin::DocumentPermissionsController::PROJECT_SEARCH_LIMIT,
+        wrapper: true,
+        label: "案件",
+        placeholder: "案件コード・案件名で検索",
+        allow_clear: true
       label.form-field
         span 文書名・slug
         = form.search_field :q, value: @filters[:q], placeholder: "例: 運用手順 / operation-manual"
@@ -30,6 +41,7 @@ section.card
       label.form-field
         span 付与先
         = form.select :target_type, options_for_select(document_permission_filter_target_type_options, @filters[:target_type])
+    p.muted = "案件は検索語最大#{Admin::DocumentPermissionsController::PROJECT_SEARCH_QUERY_MAX_LENGTH}文字、候補最大#{Admin::DocumentPermissionsController::PROJECT_SEARCH_LIMIT}件です。URLで指定済みの案件は候補上限外でも復元します。"
     p.actions.form-actions
       = form.submit "検索", class: "button"
       - if filters_active
@@ -41,9 +53,9 @@ section.card
   - if filters_active
     p.muted
       | 有効な条件:
-      - if @filters[:project_id].present?
+      - if @selected_project.present?
         = " "
-        span.badge = "案件: #{@projects.find { _1.id.to_s == @filters[:project_id].to_s }&.name}"
+        span.badge = "案件: #{document_permission_filter_project_label(@selected_project)}"
       - if @filters[:q].present?
         = " "
         span.badge = "文書: #{@filters[:q]}"
