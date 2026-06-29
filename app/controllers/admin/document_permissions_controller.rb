@@ -1,4 +1,7 @@
 class Admin::DocumentPermissionsController < Admin::BaseController
+  PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_LIMIT = 20
+
   before_action :require_admin_only!
   before_action :set_document_permission, only: %i[edit update destroy]
   before_action :load_master_options, only: %i[index create edit update]
@@ -35,6 +38,16 @@ class Admin::DocumentPermissionsController < Admin::BaseController
     redirect_to admin_document_permissions_path, notice: "文書権限を削除しました。"
   end
 
+  def project_search
+    render json: { options: document_permission_project_options(searchable_projects) }
+  end
+
+  def selected_project
+    project = Project.find_by(id: params[:id])
+
+    render json: { option: project ? document_permission_project_option(project) : nil }
+  end
+
   def document_search
     render json: { options: document_permission_document_options(searchable_documents) }
   end
@@ -53,6 +66,7 @@ class Admin::DocumentPermissionsController < Admin::BaseController
 
   def load_index_resources
     @filters = filter_params
+    @selected_project = Project.find_by(id: @filters[:project_id]) if @filters[:project_id].present?
     @document_permissions_exist = DocumentPermission.exists?
 
     document_scope = filtered_document_scope
@@ -108,7 +122,6 @@ class Admin::DocumentPermissionsController < Admin::BaseController
   def load_master_options
     @companies = Company.order(:domain)
     @users = User.order(:email_address)
-    @projects = Project.order(:name)
   end
 
   def document_permission_params
@@ -116,6 +129,30 @@ class Admin::DocumentPermissionsController < Admin::BaseController
     permitted[:company_id] = nil if permitted[:company_id].blank?
     permitted[:user_id] = nil if permitted[:user_id].blank?
     permitted
+  end
+
+  def searchable_projects
+    scope = Project.order(:code, :id)
+    query = normalize_project_search_query(params[:q])
+    return scope.limit(PROJECT_SEARCH_LIMIT) if query.blank?
+
+    term = "%#{Project.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(projects.code) LIKE :term OR LOWER(projects.name) LIKE :term",
+      term:
+    ).limit(PROJECT_SEARCH_LIMIT)
+  end
+
+  def normalize_project_search_query(value)
+    value.to_s.strip.first(PROJECT_SEARCH_QUERY_MAX_LENGTH)
+  end
+
+  def document_permission_project_options(projects)
+    projects.map { |project| document_permission_project_option(project) }
+  end
+
+  def document_permission_project_option(project)
+    { value: project.id, text: helpers.document_permission_filter_project_label(project) }
   end
 
   def searchable_documents
