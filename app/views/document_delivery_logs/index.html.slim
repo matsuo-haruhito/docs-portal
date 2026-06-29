@@ -18,6 +18,7 @@
 - current_filter_params = { status: @status_filter.presence, delivery_type: @delivery_type_filter.presence }.merge(current_query_and_date_params).compact
 - current_page_params = current_filter_params.merge(@delivery_logs_page.to_i > 1 ? { page: @delivery_logs_page } : {}).compact
 - current_delivery_logs_path = document_delivery_logs_path(current_page_params)
+- current_delivery_logs_csv_path = document_delivery_logs_path(current_filter_params.merge(format: :csv))
 - has_active_filters = @query.present? || @status_filter.present? || @delivery_type_filter.present? || current_created_from.present? || current_created_to.present? || current_sent_from.present? || current_sent_to.present?
 - active_filter_summary_items = []
 - active_filter_summary_items << "検索語: #{current_query}" if current_query.present?
@@ -75,6 +76,10 @@ p.muted 送信日時を指定すると、送信日時が未記録の下書きは
   p.muted 作成日は YYYY-MM-DD 形式で指定してください。無効な日付は絞り込みに使いません。
 - if @sent_date_filter_invalid
   p.muted 送信日時は YYYY-MM-DD 形式で指定してください。無効な日付は絞り込みに使いません。
+
+p.actions
+  = link_to "CSV出力", current_delivery_logs_csv_path, class: "button secondary"
+  span.muted = "現在の絞り込み条件に一致する最新#{delivery_logs_limit}件を固定列で出力します。表示設定はCSV列に影響しません。"
 
 p.actions
   span.muted 状態:
