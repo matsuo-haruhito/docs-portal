@@ -23,7 +23,7 @@ RSpec.describe "Consent history target filter", type: :request do
   end
 
   def create_history(title:, scope:, target:, consented_at: Time.zone.parse("2026-01-01 09:00"), actor: user)
-    term = create(:consent_term, title:, consent_scope: scope, version_label: "v-#{title.parameterize}")
+    term = create(:consent_term, title:, consent_scope: scope, version_label: "v-#{title.parameterize}", active: false)
     create(:user_consent, user: actor, consent_term: term, target:, consent_term_version_label: term.version_label, consented_at:)
   end
 
