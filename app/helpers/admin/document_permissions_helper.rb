@@ -122,6 +122,20 @@ module Admin::DocumentPermissionsHelper
     user.email_address
   end
 
+  def document_permission_delete_confirm(permission)
+    "文書「#{permission.document.title}」の#{document_permission_delete_target_label(permission)}向け#{document_permission_access_level_label(permission)}権限を削除しますか？対象ユーザー/会社の閲覧範囲が変わります。"
+  end
+
+  def document_permission_delete_target_label(permission)
+    if permission.company.present?
+      "会社「#{document_permission_form_company_label(permission.company)}」"
+    elsif permission.user.present?
+      "ユーザー「#{document_permission_form_user_label(permission.user)}」"
+    else
+      "付与先未設定"
+    end
+  end
+
   def document_permission_target_error_messages(document_permission)
     document_permission.errors
       .select { |error| error.attribute == :base && DOCUMENT_PERMISSION_FORM_BASE_ERROR_MESSAGES.key?(error.message) }
