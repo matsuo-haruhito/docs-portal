@@ -186,6 +186,14 @@ rollback は「コードだけ戻す rollback」と「データも戻す restore
 - デプロイ前バックアップ:
   - DB:
   - storage:
+  - `bin/verify_backup_artifacts`:
+    - DB dump read:
+    - storage archive read:
+    - required storage prefixes:
+    - metadata / strict metadata:
+    - warnings:
+    - overall result:
+    - Markdown summary: 貼り付け先 / record ID
 - migration:
   - なし / あり:
   - 実行内容:
