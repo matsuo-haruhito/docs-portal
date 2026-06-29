@@ -1,0 +1,83 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "optparse"
+require_relative "../config/environment"
+require Rails.root.join("db/seeds/support/external_sample_validator").to_s
+
+options = {
+  root: SeedSupport::ExternalSampleValidator::DEFAULT_ROOT,
+  format: "text",
+  max_attachment_bytes: SeedSupport::ExternalSampleValidator::DEFAULT_MAX_ATTACHMENT_BYTES
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: bin/validate_external_samples [options]"
+
+  opts.on("--root=PATH", "external_samples root path") do |value|
+    options[:root] = Pathname(value)
+  end
+
+  opts.on("--format=FORMAT", "output format: text or json") do |value|
+    options[:format] = value
+  end
+
+  opts.on("--max-attachment-mb=MB", Integer, "large attachment warning threshold in MiB") do |value|
+    options[:max_attachment_bytes] = value * 1024 * 1024
+  end
+end
+
+parser.parse!(ARGV)
+
+unless %w[text json].include?(options[:format])
+  warn "Unsupported format: #{options[:format]}"
+  warn parser
+  exit 2
+end
+
+result = SeedSupport::ExternalSampleValidator.new(
+  root: options.fetch(:root),
+  max_attachment_bytes: options.fetch(:max_attachment_bytes)
+).call
+
+if options[:format] == "json"
+  puts JSON.pretty_generate(result.to_h)
+else
+  payload = result.to_h
+  summary = payload.fetch(:summary)
+
+  puts "External sample validation dry-run"
+  puts "root: #{payload.fetch(:root)}"
+  puts "valid: #{payload.fetch(:valid)}"
+  puts "projects: #{summary.fetch(:projects)}"
+  puts "documents: #{summary.fetch(:documents)}"
+  puts "document_versions: #{summary.fetch(:document_versions)}"
+  puts "attachments: #{summary.fetch(:attachments)}"
+  puts "note: #{payload.fetch(:note)}"
+
+  unless payload.fetch(:candidates).empty?
+    puts
+    puts "Candidates:"
+    payload.fetch(:candidates).each do |candidate|
+      puts "- #{candidate.fetch(:project_code)} / #{candidate.fetch(:slug)} / #{candidate.fetch(:version_label)}: #{candidate.fetch(:markdown_path)} (attachments: #{candidate.fetch(:attachments)})"
+    end
+  end
+
+  unless payload.fetch(:warnings).empty?
+    puts
+    puts "Warnings:"
+    payload.fetch(:warnings).each do |warning|
+      puts "- [#{warning.fetch(:code)}] #{warning.fetch(:message)}#{warning[:path] ? " (#{warning[:path]})" : nil}"
+    end
+  end
+
+  unless payload.fetch(:errors).empty?
+    puts
+    puts "Errors:"
+    payload.fetch(:errors).each do |error|
+      puts "- [#{error.fetch(:code)}] #{error.fetch(:message)}#{error[:path] ? " (#{error[:path]})" : nil}"
+    end
+  end
+end
+
+exit(result.valid? ? 0 : 1)
