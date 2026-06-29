@@ -114,6 +114,8 @@ Rails.application.routes.draw do
     end
     resources :documents, except: %i[show new], param: :public_id do
       get :lifecycle_handoff, on: :collection
+      get :project_search, on: :collection
+      get :selected_project, on: :collection
       patch :archive, on: :member
       patch :restore, on: :member
     end
