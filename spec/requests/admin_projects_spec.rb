@@ -23,6 +23,10 @@ RSpec.describe "Admin projects", type: :request do
     parsed_html.css("a[href]").select { |node| node.text.squish == "条件をクリア" }
   end
 
+  def keyword_search_input
+    parsed_html.at_css("input[name='q']")
+  end
+
   it "uses project codes for admin member links and rejects numeric ids" do
     project = create(:project, code: "CODE-001", name: "Code Routed Project")
 
@@ -78,6 +82,19 @@ RSpec.describe "Admin projects", type: :request do
     expect(page_text).to include("適用中:")
     expect(page_text).to include("検索: needle")
     expect(page_text).to include("検索結果: 3件")
+  end
+
+  it "shows the keyword search target and form-level length guard" do
+    create(:project, code: "CUE-001", name: "Cue Project", description: "Search cue")
+
+    sign_in_as(admin_user)
+
+    get admin_projects_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("コード・案件名・説明の断片で検索できます。最大100文字。")
+    expect(keyword_search_input["placeholder"]).to eq("コード・案件名・説明")
+    expect(keyword_search_input["maxlength"]).to eq("100")
   end
 
   it "combines active and company filters" do

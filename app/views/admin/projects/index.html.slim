@@ -20,7 +20,8 @@ h1 案件マスタ
     .form-grid
       label
         | キーワード
-        = text_field_tag :q, @project_filter_params["q"], placeholder: "コード・案件名・説明"
+        = text_field_tag :q, @project_filter_params["q"], placeholder: "コード・案件名・説明", maxlength: 100
+        span.muted コード・案件名・説明の断片で検索できます。最大100文字。
       label
         | 状態
         = select_tag :active, options_for_select([["すべて", ""], ["有効", "true"], ["無効", "false"]], selected_active_filter)
