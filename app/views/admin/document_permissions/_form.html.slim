@@ -18,7 +18,7 @@
       label_field: "text",
       search_field: "text",
       min_length: 1,
-      max_options: 20,
+      max_options: Admin::DocumentPermissionsController::DOCUMENT_SEARCH_LIMIT,
       wrapper: true,
       label: "文書名",
       placeholder: "文書名・URL識別子・案件名で検索",
@@ -39,19 +39,33 @@
               li = message
       .form-grid
         div style="min-width: 0;"
-          = form.rfk_select :company_id,
-            collection: document_permission_form_company_options(@companies),
+          = form.rfk_combobox :company_id,
+            collection: [],
+            selected: document_permission_form_company_selected_option(document_permission.company),
+            url: company_search_admin_document_permissions_path(format: :json),
+            selected_url: selected_company_admin_document_permissions_path(format: :json),
+            value_field: "value",
+            label_field: "text",
+            search_field: "text",
+            min_length: 1,
+            max_options: Admin::DocumentPermissionsController::COMPANY_SEARCH_LIMIT,
             wrapper: true,
             label: "会社",
-            allow_clear: true,
             placeholder: "会社向けに付与する場合に選択"
           p.muted style="margin-top: 0.35rem;" 会社全体に同じ権限を付与する場合だけ選択します。ユーザー個別へ付与する場合、この欄は空にします。
         div style="min-width: 0;"
-          = form.rfk_select :user_id,
-            collection: document_permission_form_user_options(@users),
+          = form.rfk_combobox :user_id,
+            collection: [],
+            selected: document_permission_form_user_selected_option(document_permission.user),
+            url: user_search_admin_document_permissions_path(format: :json),
+            selected_url: selected_user_admin_document_permissions_path(format: :json),
+            value_field: "value",
+            label_field: "text",
+            search_field: "text",
+            min_length: 1,
+            max_options: Admin::DocumentPermissionsController::USER_SEARCH_LIMIT,
             wrapper: true,
             label: "ユーザー",
-            allow_clear: true,
             placeholder: "ユーザー向けに付与する場合に選択"
           p.muted style="margin-top: 0.35rem;" 特定の1名にだけ権限を付与する場合だけ選択します。会社全体へ付与する場合、この欄は空にします。
     div style="min-width: 0;"
