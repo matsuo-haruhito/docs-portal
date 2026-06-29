@@ -21,6 +21,7 @@ RSpec.describe "exposure smoke checklist drift" do
   ].freeze
 
   SPEC_PATH_PATTERN = %r{spec/requests/[[:alnum:]_/]+_spec\.rb}
+  EVIDENCE_GUIDE_PATH = "docs/情報露出smoke evidence運用メモ.md"
 
   GUARDS.each do |guard|
     it "keeps #{guard.fetch(:name)} smoke spec list aligned with its checklist" do
@@ -58,6 +59,31 @@ RSpec.describe "exposure smoke checklist drift" do
               smoke_specs_by_name.fetch("operational metadata exposure")
 
     expect(overlap).to be_empty
+  end
+
+  it "keeps PR and release evidence guidance bounded to digest summaries" do
+    guide = REPO_ROOT.join(EVIDENCE_GUIDE_PATH).read
+    external_smoke = REPO_ROOT.join("bin/external_user_exposure_smoke").read
+    operational_smoke = REPO_ROOT.join("bin/operational_metadata_exposure_smoke").read
+
+    aggregate = [guide, external_smoke, operational_smoke].join("\n")
+
+    expect(guide).to include("PR / release evidence template")
+    expect(guide).to include("bin/external_user_exposure_smoke --format markdown")
+    expect(guide).to include("bin/operational_metadata_exposure_smoke --format markdown")
+    expect(guide).to include("対象 spec / surface / runbook へ戻って確認する")
+    expect(guide).to include("docs/社外ユーザー向け情報露出点検チェックリスト.md")
+    expect(guide).to include("docs/運用metadata情報露出点検チェックリスト.md")
+
+    [
+      "raw payload",
+      "raw response",
+      "token-like value",
+      "provider payload",
+      "PII-like value"
+    ].each do |forbidden_detail|
+      expect(aggregate).to include(forbidden_detail)
+    end
   end
 
   def extract_smoke_spec_files(path)
