@@ -12,6 +12,8 @@ Rails.application.routes.draw do
   get "external_folder_sync_webhooks/sharepoint", to: "external_folder_sync_webhooks#sharepoint"
 
   get "dashboard", to: "dashboard#show", as: :dashboard
+  get "documents/project_search", to: "accessible_documents#project_search", as: :project_search_documents
+  get "documents/selected_project", to: "accessible_documents#selected_project", as: :selected_project_documents
   get "documents", to: "accessible_documents#index", as: :documents
   resources :consents, only: %i[index new create], param: :public_id
   resources :document_approval_requests, only: %i[index show update], param: :public_id do
