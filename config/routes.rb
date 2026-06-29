@@ -122,6 +122,7 @@ Rails.application.routes.draw do
     end
     resources :webhook_endpoints, except: %i[show new], param: :public_id
     resources :webhook_deliveries, only: %i[index show], param: :public_id do
+      get :failure_alert_handoff, on: :collection
       get :webhook_endpoint_search, on: :collection
       get :selected_webhook_endpoint, on: :collection
       post :retry_dispatch, on: :member
