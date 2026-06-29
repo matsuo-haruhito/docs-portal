@@ -52,7 +52,7 @@
             wrapper: true,
             label: "会社",
             allow_clear: true,
-            placeholder: "会社名・ドメインで検索"
+            placeholder: "会社向けに付与する場合に選択"
           p.muted style="margin-top: 0.35rem;" 会社全体に同じ権限を付与する場合だけ選択します。ユーザー個別へ付与する場合、この欄は空にします。
         div style="min-width: 0;"
           = form.rfk_combobox :user_id,
@@ -68,7 +68,7 @@
             wrapper: true,
             label: "ユーザー",
             allow_clear: true,
-            placeholder: "ユーザー名・メールアドレスで検索"
+            placeholder: "ユーザー向けに付与する場合に選択"
           p.muted style="margin-top: 0.35rem;" 特定の1名にだけ権限を付与する場合だけ選択します。会社全体へ付与する場合、この欄は空にします。
     div style="min-width: 0;"
       = form.rfk_select :access_level,
