@@ -12,20 +12,20 @@
 
 1. `bin/setup_external_sample_data_links` を実行し、root directory を作ります。
 2. `storage/document_files/external_samples/<sample-set>/<site-dir>/...` に任意サンプルを配置します。
-3. `bin/validate_external_samples` を実行します。
+3. `ruby bin/validate_external_samples` を実行します。
 4. warning / error を確認し、必要ならサンプル配置を直します。
 5. 問題ないことを確認してから `rails db:seed` を実行します。
 
 JSON で確認したい場合は次のように実行します。
 
 ```sh
-bin/validate_external_samples --format=json
+ruby bin/validate_external_samples --format=json
 ```
 
 別 root や添付サイズ warning の閾値を変えたい場合は、次の option を使います。
 
 ```sh
-bin/validate_external_samples --root=storage/document_files/external_samples --max-attachment-mb=20
+ruby bin/validate_external_samples --root=storage/document_files/external_samples --max-attachment-mb=20
 ```
 
 ## 出力の読み方
