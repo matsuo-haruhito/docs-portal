@@ -149,6 +149,7 @@ h1 Webhook
         th data-rails-table-preferences-column-key="actions"
     tbody
       - @recent_deliveries.each do |delivery|
+        - retry_delivery_context = "Webhook設定「#{delivery.webhook_endpoint.name}」 / イベント「#{webhook_event_type_label(delivery)}」 / HTTP #{delivery.response_status || "-"} / delivery #{delivery.public_id}"
         tr
           td data-rails-table-preferences-column-key="created_at" = l(delivery.created_at, format: :short)
           td data-rails-table-preferences-column-key="endpoint" = delivery.webhook_endpoint.name
@@ -160,6 +161,7 @@ h1 Webhook
           td.actions data-rails-table-preferences-column-key="actions"
             = link_to "詳細", admin_webhook_delivery_path(delivery.public_id, delivery_return_params)
             - if delivery.retryable?
-              = button_to "再送", retry_dispatch_admin_webhook_delivery_path(delivery.public_id, delivery_return_params), method: :post, class: "button secondary", form: { data: { turbo_confirm: "このWebhook送信を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。" } }
+              - retry_delivery_label = "#{retry_delivery_context} を再送"
+              = button_to "再送", retry_dispatch_admin_webhook_delivery_path(delivery.public_id, delivery_return_params), method: :post, class: "button secondary", title: retry_delivery_label, aria: { label: retry_delivery_label }, form: { data: { turbo_confirm: "#{retry_delivery_context} を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。" } }
             - else
               span.muted 再送不可

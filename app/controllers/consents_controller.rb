@@ -1,20 +1,25 @@
 class ConsentsController < BaseController
   helper_method :safe_return_to
 
+  CONSENT_HISTORY_TARGET_TYPES = %w[global Project Document DocumentFile DocumentVersion].freeze
+
   before_action :set_target, only: %i[new create]
   before_action :set_timing, only: %i[new create]
 
   def index
     @consent_history_q = params[:q].to_s.strip
     @consent_history_scope = normalized_consent_scope
+    @consent_history_target_type = normalized_consent_history_target_type
     @valid_consent_scopes = ConsentTerm.consent_scopes.keys
+    @valid_consent_history_target_types = CONSENT_HISTORY_TARGET_TYPES
 
     user_consents = current_user.user_consents.includes(:consent_term).preload(:target).order(consented_at: :desc, id: :desc)
     @user_consents_total_count = user_consents.count
     user_consents = user_consents.joins(:consent_term).where(consent_terms: { consent_scope: @consent_history_scope }) if @consent_history_scope.present?
+    user_consents = filter_user_consents_by_target_type(user_consents)
 
     @user_consents = filter_user_consents_by_query(user_consents.to_a)
-    @consent_history_filter_active = @consent_history_q.present? || @consent_history_scope.present?
+    @consent_history_filter_active = @consent_history_q.present? || @consent_history_scope.present? || @consent_history_target_type.present?
     @active_terms = ConsentTerm.active_only.order(:title, :version_label)
   end
 
@@ -49,6 +54,24 @@ class ConsentsController < BaseController
     nil
   end
 
+  def normalized_consent_history_target_type
+    target_type = params[:target_type].to_s
+    return target_type if CONSENT_HISTORY_TARGET_TYPES.include?(target_type)
+
+    nil
+  end
+
+  def filter_user_consents_by_target_type(user_consents)
+    case @consent_history_target_type
+    when "global"
+      user_consents.where(target_type: nil)
+    when *CONSENT_HISTORY_TARGET_TYPES.excluding("global")
+      user_consents.where(target_type: @consent_history_target_type)
+    else
+      user_consents
+    end
+  end
+
   def filter_user_consents_by_query(user_consents)
     return user_consents if @consent_history_q.blank?
 
@@ -77,7 +100,7 @@ class ConsentsController < BaseController
       target.try(:version_label) ||
       target.to_param
 
-    [type_label, target_label].compact.join(" / ")
+    [type_label, target_label].compact.join(" ")
   end
 
   def set_target
