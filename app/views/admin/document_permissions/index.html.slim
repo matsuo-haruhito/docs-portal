@@ -149,7 +149,7 @@ section.card
               span.badge = document_permission_access_level_label(permission)
             td.actions data-rails-table-preferences-column-key="actions"
               = edit_link_to "編集", edit_admin_document_permission_path(permission)
-              = delete_link_to "削除", admin_document_permission_path(permission), confirm: "この文書権限を削除しますか？対象ユーザー/会社の閲覧範囲が変わります。"
+              = delete_link_to "削除", admin_document_permission_path(permission), confirm: document_permission_delete_confirm(permission)
   - elsif filters_active
     p.muted 条件に一致する文書権限はありません。案件、文書名・slug、権限、付与先の条件を見直してください。
     p.actions.form-actions
