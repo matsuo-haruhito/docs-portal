@@ -2,16 +2,32 @@
 
 <%= form_with model: [:admin, project_membership] do |form| %>
   <div class="form-grid">
-    <%= form.rfk_select :project_id,
-      collection: @projects.map { [project_membership_project_option_label(_1), _1.id] },
+    <%= form.rfk_combobox :project_id,
+      collection: [],
+      selected: project_membership_project_selected_option(project_membership.project),
+      url: project_search_admin_project_memberships_path(format: :json),
+      selected_url: selected_project_admin_project_memberships_path(format: :json),
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 1,
+      max_options: Admin::ProjectMembershipsController::PROJECT_SEARCH_LIMIT,
       wrapper: true,
       label: "案件",
-      placeholder: "案件を選択" %>
-    <%= form.rfk_select :user_id,
-      collection: @users.map { [project_membership_user_option_label(_1), _1.id] },
+      placeholder: "案件コード・案件名で検索" %>
+    <%= form.rfk_combobox :user_id,
+      collection: [],
+      selected: project_membership_user_selected_option(project_membership.user),
+      url: user_search_admin_project_memberships_path(format: :json),
+      selected_url: selected_user_admin_project_memberships_path(format: :json),
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 1,
+      max_options: Admin::ProjectMembershipsController::USER_SEARCH_LIMIT,
       wrapper: true,
       label: "ユーザー",
-      placeholder: "ユーザーを選択" %>
+      placeholder: "ユーザー名・メールアドレスで検索" %>
     <%= form.rfk_select :role,
       collection: enum_options_for("project_memberships.role", ProjectMembership.roles.keys),
       wrapper: true,
