@@ -5,13 +5,19 @@
 = form_with model: [:admin, document], url: form_url do |form|
   = hidden_field_tag :return_to, return_to if return_to.present?
   .form-grid
-    = form.rfk_select :project_id,
-      collection: @projects,
-      collection_value_method: :id,
-      collection_label_method: :name,
+    = form.rfk_combobox :project_id,
+      collection: [],
+      selected: admin_document_project_selected_option(document.project),
+      url: project_search_admin_documents_path(format: :json),
+      selected_url: selected_project_admin_documents_path(format: :json),
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 1,
+      max_options: Admin::DocumentsController::PROJECT_SEARCH_LIMIT,
       wrapper: true,
       label: "案件",
-      placeholder: "案件を選択"
+      placeholder: "案件コード・案件名で検索"
     label
       | 文書名
       = form.text_field :title
