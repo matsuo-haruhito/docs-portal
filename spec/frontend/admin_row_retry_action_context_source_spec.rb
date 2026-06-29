@@ -18,7 +18,7 @@ RSpec.describe "admin row retry action context source" do
       expect(row_retry_button_source).to include("title: row_retry_action_label")
       expect(row_retry_button_source).to include("aria: { label: row_retry_action_label }")
       expect(row_retry_button_source).to include("turbo_confirm: row_retry_confirm_message")
-      expect(generated_file_runs_index_source).to include("現在の条件に一致する失敗履歴 #{bulk_retry_target_count} 件")
+      expect(generated_file_runs_index_source).to include('現在の条件に一致する失敗履歴 #{bulk_retry_target_count} 件')
     end
   end
 
@@ -27,9 +27,10 @@ RSpec.describe "admin row retry action context source" do
 
     aggregate_failures do
       expect(webhook_endpoints_index_source).to include('retry_delivery_context = "Webhook設定「#{delivery.webhook_endpoint.name}」 / イベント「#{webhook_event_type_label(delivery)}」 / HTTP #{delivery.response_status || "-"} / delivery #{delivery.public_id}"')
+      expect(webhook_endpoints_index_source).to include('retry_delivery_label = "#{retry_delivery_context} を再送"')
       expect(row_retry_button_source).to include("title: retry_delivery_label")
       expect(row_retry_button_source).to include("aria: { label: retry_delivery_label }")
-      expect(row_retry_button_source).to include("turbo_confirm: \"#{retry_delivery_context} を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。\"")
+      expect(row_retry_button_source).to include('turbo_confirm: "#{retry_delivery_context} を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。"')
       expect(row_retry_button_source).not_to include("target_url")
       expect(row_retry_button_source).not_to include("error_message")
       expect(row_retry_button_source).not_to include("request_body")
