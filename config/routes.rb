@@ -68,7 +68,10 @@ Rails.application.routes.draw do
       get :selected_project, on: :collection
       post :sync, on: :member
     end
-    resources :git_import_runs, only: [:index]
+    resources :git_import_runs, only: [:index] do
+      get :project_search, on: :collection
+      get :selected_project, on: :collection
+    end
     resources :generated_file_events, only: %i[index show], param: :public_id do
       post :retry_dispatch, on: :member
       post :retry_failed, on: :collection

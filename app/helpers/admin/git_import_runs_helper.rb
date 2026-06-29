@@ -19,6 +19,16 @@ module Admin::GitImportRunsHelper
     ]
   end
 
+  def git_import_run_project_option_label(project)
+    [project.code, project.name].compact_blank.join(" / ")
+  end
+
+  def git_import_run_project_selected_option(project)
+    return nil if project.blank?
+
+    { value: project.id, text: git_import_run_project_option_label(project) }
+  end
+
   def git_import_run_status_summary_items(runs)
     status_counts = git_import_run_status_counts(runs)
 

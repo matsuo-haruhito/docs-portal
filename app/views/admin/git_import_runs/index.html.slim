@@ -4,6 +4,7 @@
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - status_filter_options = [["すべて", ""]] + enum_options_for("git_import_runs.status", GitImportRun.statuses.keys)
 - selected_status_label = status_filter_options.find { |(_label, value)| value == @status_filter }&.first
+- selected_project_label = git_import_run_project_option_label(@selected_project) if @selected_project.present?
 
 h1 Git同期履歴
 = render "admin/nav"
@@ -20,11 +21,24 @@ h1 Git同期履歴
   p.muted 診断表示は secret-like value と private path を伏せた最大240文字程度のマスク済み preview です。完全な raw log ではありません。
 
   .card
-    = form_with url: admin_git_import_runs_path, method: :get, local: true do
+    = form_with url: admin_git_import_runs_path, method: :get, local: true do |form|
       .form-grid
         .field
           = label_tag :status, "状態"
           = select_tag :status, options_for_select(status_filter_options, @status_filter)
+        = form.rfk_combobox :project_id,
+          collection: [],
+          selected: git_import_run_project_selected_option(@selected_project),
+          url: project_search_admin_git_import_runs_path(format: :json),
+          selected_url: selected_project_admin_git_import_runs_path(format: :json),
+          value_field: "value",
+          label_field: "text",
+          search_field: "text",
+          min_length: 1,
+          max_options: Admin::GitImportRunsController::PROJECT_SEARCH_LIMIT,
+          wrapper: true,
+          label: "案件",
+          placeholder: "案件コード・案件名で検索"
         .field
           = label_tag :repository, "リポジトリ"
           = text_field_tag :repository, @repository_filter, placeholder: "owner/repo の一部"
@@ -122,6 +136,8 @@ h1 Git同期履歴
       p.muted 条件に一致するGit同期履歴はありません。
       - if @status_filter.present?
         p.muted = "適用中の状態: #{selected_status_label || @status_filter}。状態を「すべて」に戻すと、他の状態の履歴も確認できます。"
+      - if @selected_project.present?
+        p.muted = "適用中の案件: #{selected_project_label}。案件コード・案件名で検索し直すと、別の案件の履歴も確認できます。"
       - if @repository_filter.present?
         p.muted = "適用中のリポジトリ: #{@repository_filter}。owner/repo の一部一致で探すため、検索語を短くすると見つかることがあります。"
       - if @branch_filter.present?
