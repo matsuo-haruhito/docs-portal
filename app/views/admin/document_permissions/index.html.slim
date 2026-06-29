@@ -6,6 +6,7 @@
 - permissions_table_columns = document_permissions_table_columns
 - permissions_table_settings = rails_table_preference_settings(table_key: permissions_table_key)
 - filters_active = @filters.values.any?(&:present?)
+- csv_filter_params = @filters.compact.merge(format: :csv)
 
 h1 文書権限
 = render "admin/nav"
@@ -44,6 +45,7 @@ section.card
     p.muted = "案件は検索語最大#{Admin::DocumentPermissionsController::PROJECT_SEARCH_QUERY_MAX_LENGTH}文字、候補最大#{Admin::DocumentPermissionsController::PROJECT_SEARCH_LIMIT}件です。URLで指定済みの案件は候補上限外でも復元します。"
     p.actions.form-actions
       = form.submit "検索", class: "button"
+      = link_to "CSV出力", admin_document_permissions_path(csv_filter_params), class: "button secondary"
       - if filters_active
         = link_to "条件をクリア", admin_document_permissions_path, class: "button secondary"
   p.muted
