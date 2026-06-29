@@ -1,6 +1,9 @@
 class Admin::WebhookDeliveriesController < Admin::BaseController
   FAILED_DELIVERY_RETRY_LIMIT = Admin::WebhookEndpointsController::RECENT_DELIVERY_DISPLAY_LIMIT
   INDEX_DELIVERY_DISPLAY_LIMIT = 100
+  FAILURE_HANDOFF_LIMIT = 20
+  FAILURE_HANDOFF_THRESHOLD = 3
+  FAILURE_HANDOFF_LOOKBACK_LIMIT = 200
   ERROR_QUERY_MAX_LENGTH = 100
   WEBHOOK_ENDPOINT_SEARCH_QUERY_MAX_LENGTH = 100
   WEBHOOK_ENDPOINT_SEARCH_LIMIT = 20
@@ -69,6 +72,28 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
     end
 
     redirect_to admin_webhook_endpoints_path(delivery_status: "failed"), notice: "Webhookを#{retryable_deliveries.size}件まとめて再送しました。結果は送信履歴で確認してください。"
+  end
+
+  def failure_alert_handoff
+    entries = WebhookDeliveries::FailureAlertHandoff.new(
+      threshold: FAILURE_HANDOFF_THRESHOLD,
+      limit: FAILURE_HANDOFF_LIMIT + 1,
+      lookback_limit: FAILURE_HANDOFF_LOOKBACK_LIMIT
+    ).call
+    visible_entries = entries.first(FAILURE_HANDOFF_LIMIT)
+
+    render json: {
+      current_filter: {
+        threshold: FAILURE_HANDOFF_THRESHOLD,
+        lookback_limit: FAILURE_HANDOFF_LOOKBACK_LIMIT
+      },
+      total_count: entries.size,
+      limit: FAILURE_HANDOFF_LIMIT,
+      truncated: entries.size > FAILURE_HANDOFF_LIMIT,
+      note: failure_handoff_note(visible_entries),
+      runbook_path: WebhookDeliveries::FailureAlertHandoff::RUNBOOK_PATH,
+      candidates: visible_entries.map(&:to_h)
+    }
   end
 
   def webhook_endpoint_search
@@ -238,5 +263,13 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
 
   def current_failed_delivery_scope
     WebhookDelivery.includes(:webhook_endpoint, :notification_event).failed.recent.limit(FAILED_DELIVERY_RETRY_LIMIT)
+  end
+
+  def failure_handoff_note(entries)
+    if entries.empty?
+      "現在条件で Webhook 継続失敗 handoff 対象はありません。Webhook 全体正常、外部監視 green、通知不要を意味しません。"
+    else
+      "Webhook 継続失敗候補の read-only handoff です。通知・ack・自動 retry・再通知抑制は実行しません。"
+    end
   end
 end
