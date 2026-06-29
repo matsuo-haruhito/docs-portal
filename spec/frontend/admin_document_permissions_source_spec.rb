@@ -5,20 +5,33 @@ RSpec.describe "admin document permissions source" do
   let(:index_source) { Rails.root.join("app/views/admin/document_permissions/index.html.slim").read }
   let(:helper_source) { Rails.root.join("app/helpers/admin/document_permissions_helper.rb").read }
 
-  it "uses a remote rails fields kit document combobox and keeps company and user selects" do
+  it "uses remote rails fields kit comboboxes for document, company, and user fields" do
     aggregate_failures do
       expect(form_source).to include("= form.rfk_combobox :document_id,")
       expect(form_source).to include("selected: document_permission_form_document_selected_option(document_permission.document)")
       expect(form_source).to include("url: document_search_admin_document_permissions_path(format: :json)")
       expect(form_source).to include("selected_url: selected_document_admin_document_permissions_path(format: :json)")
       expect(form_source).to include('placeholder: "文書名・URL識別子・案件名で検索"')
-      expect(form_source).to include("= form.rfk_select :company_id,")
-      expect(form_source).to include("document_permission_form_company_options(@companies)")
+
+      expect(form_source).to include("= form.rfk_combobox :company_id,")
+      expect(form_source).to include("selected: document_permission_form_company_selected_option(document_permission.company)")
+      expect(form_source).to include("url: company_search_admin_document_permissions_path(format: :json)")
+      expect(form_source).to include("selected_url: selected_company_admin_document_permissions_path(format: :json)")
+      expect(form_source).to include("max_options: Admin::DocumentPermissionsController::COMPANY_SEARCH_LIMIT")
       expect(form_source).to include('placeholder: "会社向けに付与する場合に選択"')
-      expect(form_source).to include("= form.rfk_select :user_id,")
-      expect(form_source).to include("document_permission_form_user_options(@users)")
+
+      expect(form_source).to include("= form.rfk_combobox :user_id,")
+      expect(form_source).to include("selected: document_permission_form_user_selected_option(document_permission.user)")
+      expect(form_source).to include("url: user_search_admin_document_permissions_path(format: :json)")
+      expect(form_source).to include("selected_url: selected_user_admin_document_permissions_path(format: :json)")
+      expect(form_source).to include("max_options: Admin::DocumentPermissionsController::USER_SEARCH_LIMIT")
       expect(form_source).to include('placeholder: "ユーザー向けに付与する場合に選択"')
       expect(form_source).to include("allow_clear: true")
+
+      expect(form_source).not_to include("= form.rfk_select :company_id,")
+      expect(form_source).not_to include("document_permission_form_company_options(@companies)")
+      expect(form_source).not_to include("= form.rfk_select :user_id,")
+      expect(form_source).not_to include("document_permission_form_user_options(@users)")
       expect(form_source).not_to include("form.collection_select :document_id")
       expect(form_source).not_to include("form.collection_select :company_id")
       expect(form_source).not_to include("form.collection_select :user_id")
@@ -73,7 +86,9 @@ RSpec.describe "admin document permissions source" do
       expect(helper_source).to include("def document_permission_form_document_options(documents)")
       expect(helper_source).to include("def document_permission_form_document_selected_option(document)")
       expect(helper_source).to include("def document_permission_form_company_options(companies)")
+      expect(helper_source).to include("def document_permission_form_company_selected_option(company)")
       expect(helper_source).to include("def document_permission_form_user_options(users)")
+      expect(helper_source).to include("def document_permission_form_user_selected_option(user)")
     end
   end
 end

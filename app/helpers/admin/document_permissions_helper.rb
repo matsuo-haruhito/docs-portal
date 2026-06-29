@@ -64,19 +64,34 @@ module Admin::DocumentPermissionsHelper
   end
 
   def document_permission_form_company_options(companies)
-    companies.map do |company|
-      label = company.display_name
-      label = "#{label} / #{company.domain}" if company.domain.present?
-      [label, company.id]
-    end
+    companies.map { [document_permission_form_company_label(_1), _1.id] }
+  end
+
+  def document_permission_form_company_selected_option(company)
+    return if company.blank?
+
+    { value: company.id, text: document_permission_form_company_label(company) }
+  end
+
+  def document_permission_form_company_label(company)
+    label = company.display_name
+    label = "#{label} / #{company.domain}" if company.domain.present?
+    label
   end
 
   def document_permission_form_user_options(users)
-    users.map do |user|
-      primary_label = user.display_name.presence || user.email_address
-      label = primary_label == user.email_address ? primary_label : "#{primary_label} / #{user.email_address}"
-      [label, user.id]
-    end
+    users.map { [document_permission_form_user_label(_1), _1.id] }
+  end
+
+  def document_permission_form_user_selected_option(user)
+    return if user.blank?
+
+    { value: user.id, text: document_permission_form_user_label(user) }
+  end
+
+  def document_permission_form_user_label(user)
+    primary_label = user.display_name.presence || user.email_address
+    primary_label == user.email_address ? primary_label : "#{primary_label} / #{user.email_address}"
   end
 
   def document_permission_company_primary_label(company)
