@@ -65,7 +65,7 @@ module SeedSupport
     end
 
     def initialize(root: DEFAULT_ROOT, max_attachment_bytes: DEFAULT_MAX_ATTACHMENT_BYTES, context: MasterDataImporter.new)
-      @root = Pathname(root)
+      @root = Pathname(root).expand_path
       @max_attachment_bytes = max_attachment_bytes
       @context = context
     end
@@ -75,12 +75,12 @@ module SeedSupport
       errors = []
 
       unless root.exist?
-        warnings << finding(:warning, :root_missing, "external sample root does not exist; run bin/setup_external_sample_data_links first", root.to_s)
+        warnings << finding(:warning, :root_missing, "external sample root does not exist; run bin/setup_external_sample_data_links first", relative_root)
         return Result.new(root:, documents: [], warnings:, errors:)
       end
 
       unless root.directory?
-        errors << finding(:error, :root_not_directory, "external sample root must be a directory", root.to_s)
+        errors << finding(:error, :root_not_directory, "external sample root must be a directory", relative_root)
         return Result.new(root:, documents: [], warnings:, errors:)
       end
 
@@ -169,10 +169,10 @@ module SeedSupport
       path.children.select(&:directory?).sort_by(&:to_s)
     end
 
-    def relative_root = root.relative_path_from(Rails.root).to_s
+    def relative_root = relative_path(root)
 
     def relative_path(path)
-      Pathname(path).relative_path_from(Rails.root).to_s
+      Pathname(path).expand_path.relative_path_from(Rails.root).to_s
     rescue ArgumentError
       Pathname(path).to_s
     end
