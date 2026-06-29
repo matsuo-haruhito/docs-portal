@@ -1,8 +1,9 @@
 class Admin::DocumentPermissionsController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_document_permission, only: %i[edit update destroy]
-  before_action :load_filter_options, only: %i[index create]
 
+  PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_LIMIT = 20
   DOCUMENT_SEARCH_QUERY_MAX_LENGTH = 100
   DOCUMENT_SEARCH_LIMIT = 20
   COMPANY_SEARCH_QUERY_MAX_LENGTH = 100
@@ -40,6 +41,16 @@ class Admin::DocumentPermissionsController < Admin::BaseController
   def destroy
     @document_permission.destroy!
     redirect_to admin_document_permissions_path, notice: "文書権限を削除しました。"
+  end
+
+  def project_search
+    render json: { options: document_permission_project_options(searchable_projects) }
+  end
+
+  def selected_project
+    project = Project.find_by(id: params[:id])
+
+    render json: { option: project ? document_permission_project_option(project) : nil }
   end
 
   def document_search
@@ -80,6 +91,7 @@ class Admin::DocumentPermissionsController < Admin::BaseController
 
   def load_index_resources
     @filters = filter_params
+    @selected_project = Project.find_by(id: @filters[:project_id]) if @filters[:project_id].present?
     @document_permissions_exist = DocumentPermission.exists?
 
     document_scope = filtered_document_scope
@@ -132,15 +144,23 @@ class Admin::DocumentPermissionsController < Admin::BaseController
     permitted
   end
 
-  def load_filter_options
-    @projects = Project.order(:name)
-  end
-
   def document_permission_params
     permitted = params.require(:document_permission).permit(:document_id, :company_id, :user_id, :access_level)
     permitted[:company_id] = nil if permitted[:company_id].blank?
     permitted[:user_id] = nil if permitted[:user_id].blank?
     permitted
+  end
+
+  def searchable_projects
+    scope = Project.order(:code, :id)
+    query = normalize_search_query(params[:q], PROJECT_SEARCH_QUERY_MAX_LENGTH)
+    return scope.limit(PROJECT_SEARCH_LIMIT) if query.blank?
+
+    term = "%#{Project.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(projects.code) LIKE :term OR LOWER(projects.name) LIKE :term",
+      term:
+    ).limit(PROJECT_SEARCH_LIMIT)
   end
 
   def searchable_documents
@@ -181,6 +201,14 @@ class Admin::DocumentPermissionsController < Admin::BaseController
 
   def normalize_search_query(value, max_length)
     value.to_s.strip.first(max_length)
+  end
+
+  def document_permission_project_options(projects)
+    projects.map { |project| document_permission_project_option(project) }
+  end
+
+  def document_permission_project_option(project)
+    { value: project.id, text: helpers.document_permission_filter_project_label(project) }
   end
 
   def document_permission_document_options(documents)
