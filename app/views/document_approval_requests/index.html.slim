@@ -76,6 +76,8 @@ p.actions
       label: "依頼者",
       placeholder: "依頼者名・メールアドレスで検索",
       allow_clear: true
+    - if @requester_filter_id.present?
+      = select_tag :requester_id, options_for_select([[requester_filter_label || "指定あり", @requester_filter_id]], @requester_filter_id), disabled: true, hidden: true, aria: { hidden: true }
     = form.rfk_combobox :approver_id,
       collection: [],
       selected: approver_selected_option,
@@ -90,6 +92,8 @@ p.actions
       label: "確認相手",
       placeholder: "確認相手名・メールアドレスで検索",
       allow_clear: true
+    - if @approver_filter_id.present?
+      = select_tag :approver_id, options_for_select([[approver_filter_label || "指定あり", @approver_filter_id]], @approver_filter_id), disabled: true, hidden: true, aria: { hidden: true }
   p.muted = "依頼者・確認相手は現在の確認依頼に含まれるユーザーから最大#{user_filter_search_limit}件ずつ検索します。URLで指定済みの値は候補上限外でも復元します。"
   p.actions
     = submit_tag "検索", class: "button"
