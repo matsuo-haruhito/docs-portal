@@ -2,10 +2,11 @@ class Admin::DocumentsController < Admin::BaseController
   BULK_EDIT_CANDIDATE_LIMIT = 50
   LIFECYCLE_HANDOFF_LIMIT = 50
   DOCUMENT_SEARCH_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_LIMIT = 20
 
   before_action :require_admin_only!
   before_action :set_document, only: %i[edit update destroy archive restore]
-  before_action :load_projects, only: %i[index create edit update]
 
   helper_method :document_return_to_path
 
@@ -80,14 +81,20 @@ class Admin::DocumentsController < Admin::BaseController
     redirect_to document_return_to_path, notice: "文書を復元しました。"
   end
 
+  def project_search
+    render json: { options: project_options(searchable_projects) }
+  end
+
+  def selected_project
+    project = Project.find_by(id: params[:id])
+
+    render json: { option: project ? project_option(project) : nil }
+  end
+
   private
 
   def set_document
     @document = Document.find_by!(public_id: params[:public_id])
-  end
-
-  def load_projects
-    @projects = Project.order(:code)
   end
 
   def document_return_to_path
@@ -122,6 +129,30 @@ class Admin::DocumentsController < Admin::BaseController
 
   def normalize_document_search_query(value)
     value.to_s.strip.first(DOCUMENT_SEARCH_QUERY_MAX_LENGTH)
+  end
+
+  def normalize_project_search_query(value)
+    value.to_s.strip.first(PROJECT_SEARCH_QUERY_MAX_LENGTH)
+  end
+
+  def searchable_projects
+    scope = Project.order(:code, :id)
+    query = normalize_project_search_query(params[:q])
+    return scope.limit(PROJECT_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{Project.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(projects.code) LIKE :pattern OR LOWER(projects.name) LIKE :pattern",
+      pattern:
+    ).limit(PROJECT_SEARCH_LIMIT)
+  end
+
+  def project_options(projects)
+    projects.map { |project| project_option(project) }
+  end
+
+  def project_option(project)
+    { value: project.id, text: helpers.admin_document_project_option_label(project) }
   end
 
   def load_bulk_edit_candidate_state(document_scope)
