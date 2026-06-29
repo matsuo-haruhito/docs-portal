@@ -91,9 +91,11 @@ edit や validation error 後の再表示では、保存済みまたは入力中
 
 `文書名` は `rails_fields_kit` の combobox として、文書名、URL 識別子、案件名で remote search します。1 文字以上入力すると最大 20 件の候補を表示し、選択済み文書は edit や validation error 後の再表示でも `選択済み文書 / 案件名` として復元されます。候補が見つからない場合は、文書名や slug の断片を短くして検索し直します。
 
-`会社` と `ユーザー` は current 実装では remote search ではなく、画面に読み込まれた候補から選ぶ通常の `rfk_select` です。会社は表示名と domain、ユーザーは表示名と email を見て選びます。会社側は「会社全体に同じ権限を付与する場合だけ」、ユーザー側は「特定の 1 名にだけ権限を付与する場合だけ」選ぶ欄で、選ばない側は空欄にします。会社・ユーザーの remote search、候補 0 件時の server-side search、bulk grant は current support として扱いません。
+`会社` と `ユーザー` も `rails_fields_kit` の remote search combobox です。`会社` は domain / 表示名、`ユーザー` はメールアドレス / 表示名の短い断片で検索し、検索語は前後空白を除いて最大 100 文字、候補は最大 20 件までに bounded されます。候補 label は `表示名 / domain`、または `表示名 / メールアドレス` として読みます。
 
-文書名 select の検索や選択復元は、文書を探しやすくする表示補助です。`会社` と `ユーザー` の排他制約、`閲覧 / ダウンロード` の access level、`DocumentPermission` の作成・更新・削除の意味は変えません。
+会社全体に同じ権限を付与する場合だけ `会社` を選び、ユーザー個別へ付与する場合は `ユーザー` を選びます。選ばない側は空欄にします。edit や validation error 後の再表示では、保存済みまたは入力中の会社・ユーザーが selected option として復元されるため、通常候補に出ない値でも form に残っているかを確認してから保存し直します。会社・ユーザー lookup endpoint は admin-only 境界内の補助であり、文書権限一覧の `案件` filter remote search、bulk grant、権限申請 workflow、権限 model / policy 変更を current support として追加するものではありません。
+
+文書名 select と適用対象 select の検索や選択復元は、文書・付与先を探しやすくする表示補助です。`会社` と `ユーザー` の排他制約、`閲覧 / ダウンロード` の access level、`DocumentPermission` の作成・更新・削除の意味は変えません。
 
 #### 検索・絞り込みと条件クリア
 
