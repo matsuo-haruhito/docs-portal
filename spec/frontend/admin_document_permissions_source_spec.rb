@@ -80,7 +80,7 @@ RSpec.describe "admin document permissions source" do
     aggregate_failures do
       expect(index_source).to include("confirm: document_permission_delete_confirm(permission)")
       expect(helper_source).to include("def document_permission_delete_confirm(permission)")
-      expect(helper_source).to include("文書「#{permission.document.title}」")
+      expect(helper_source).to include('文書「#{permission.document.title}」')
       expect(helper_source).to include("document_permission_delete_target_label(permission)")
       expect(helper_source).to include("document_permission_access_level_label(permission)")
       expect(helper_source).to include("def document_permission_delete_target_label(permission)")
