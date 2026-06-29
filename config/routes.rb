@@ -61,7 +61,12 @@ Rails.application.routes.draw do
         post "apply_template", to: "project_templates#create"
       end
     end
-    resources :project_memberships, except: %i[show new], param: :public_id
+    resources :project_memberships, except: %i[show new], param: :public_id do
+      get :project_search, on: :collection
+      get :selected_project, on: :collection
+      get :user_search, on: :collection
+      get :selected_user, on: :collection
+    end
     resources :consent_terms, except: %i[show new], param: :public_id
     resources :project_consent_settings, except: %i[show new], param: :public_id do
       get :project_search, on: :collection
