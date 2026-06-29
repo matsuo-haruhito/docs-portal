@@ -1,9 +1,15 @@
+require "csv"
+
 class DocumentDeliveryLogsController < BaseController
   before_action :set_context, only: %i[new create]
   before_action :set_delivery_log, only: %i[show update]
 
   DELIVERY_LOG_DISPLAY_LIMIT = 50
   DELIVERY_LOG_QUERY_MAX_LENGTH = 100
+  DELIVERY_LOG_CSV_PREVIEW_MAX_LENGTH = 120
+  DELIVERY_LOG_CSV_AUTHORIZATION_VALUE_PATTERN = /\b(Authorization)\s*:\s*(Bearer|Basic)\s+[^,\s;]+/i
+  DELIVERY_LOG_CSV_AUTH_SCHEME_VALUE_PATTERN = /\b(Bearer|Basic)\s+[^,\s;]+/i
+  DELIVERY_LOG_CSV_SECRET_LIKE_PATTERN = /\b(?:token|secret|password|api[_-]?key|access[_-]?token)\s*([=:])\s*[^\s,;]+/i
   FAILURE_ALERT_HANDOFF_PRESENT_NOTE = "read-only handoff payloadです。通知送信、ack、自動 retry、送付状態変更は行いません。".freeze
   FAILURE_ALERT_HANDOFF_EMPTY_NOTE = "current 条件で handoff 対象なし。これは正常保証、外部監視 green、通知正常を意味しません。".freeze
 
@@ -21,6 +27,21 @@ class DocumentDeliveryLogsController < BaseController
     document_delivery_logs.bcc_addresses
     document_delivery_logs.subject
     document_delivery_logs.error_message
+  ].freeze
+
+  DELIVERY_LOG_CSV_HEADERS = [
+    "作成日時",
+    "送信日時",
+    "案件コード",
+    "案件名",
+    "対象種別",
+    "対象名",
+    "To",
+    "CC",
+    "BCC",
+    "方式",
+    "状態",
+    "失敗理由"
   ].freeze
 
   def index
@@ -65,6 +86,20 @@ class DocumentDeliveryLogsController < BaseController
       .recent_first
       .offset(@delivery_logs_offset)
       .limit(@delivery_logs_limit)
+
+    respond_to do |format|
+      format.html
+      format.csv do
+        export_logs = scoped_scope
+          .includes(:project, :document, :document_set)
+          .recent_first
+          .limit(DELIVERY_LOG_DISPLAY_LIMIT)
+
+        send_data document_delivery_logs_csv(export_logs),
+          filename: "document-delivery-logs-#{Time.zone.today.iso8601}.csv",
+          type: "text/csv; charset=utf-8"
+      end
+    end
   end
 
   def failure_alert_handoff
@@ -203,6 +238,66 @@ class DocumentDeliveryLogsController < BaseController
       body: log.body
     }.compact.to_query
     "mailto:#{ERB::Util.url_encode(log.recipients.join(","))}?#{query}"
+  end
+
+  def document_delivery_logs_csv(logs)
+    CSV.generate(headers: true) do |csv|
+      csv << DELIVERY_LOG_CSV_HEADERS
+      logs.each do |log|
+        csv << [
+          csv_time(log.created_at),
+          csv_time(log.sent_at),
+          log.project.code,
+          log.project.name,
+          csv_target_type(log),
+          csv_target_name(log),
+          csv_preview(log.to_addresses),
+          csv_preview(log.cc_addresses),
+          csv_preview(log.bcc_addresses),
+          localized_delivery_type(log.delivery_type),
+          localized_status(log.status),
+          log.failed? ? csv_preview(log.error_message, limit: 80) : nil
+        ]
+      end
+    end
+  end
+
+  def csv_time(value)
+    I18n.l(value) if value.present?
+  end
+
+  def csv_target_type(log)
+    return "文書" if log.document.present?
+    return "文書セット" if log.document_set.present?
+
+    "案件"
+  end
+
+  def csv_target_name(log)
+    log.document&.title || log.document_set&.name || log.project.name
+  end
+
+  def localized_delivery_type(delivery_type)
+    I18n.t("labels.document_delivery_logs.delivery_type.#{delivery_type}", default: delivery_type.to_s)
+  end
+
+  def localized_status(status)
+    I18n.t("labels.document_delivery_logs.status.#{status}", default: status.to_s)
+  end
+
+  def csv_preview(value, limit: DELIVERY_LOG_CSV_PREVIEW_MAX_LENGTH)
+    text = mask_csv_preview(value.to_s.squish)
+    return if text.blank?
+    return text if text.length <= limit
+
+    "#{text.first(limit)}..."
+  end
+
+  def mask_csv_preview(text)
+    text
+      .gsub(DELIVERY_LOG_CSV_AUTHORIZATION_VALUE_PATTERN) { "#{$1}: #{$2} [FILTERED]" }
+      .gsub(DELIVERY_LOG_CSV_AUTH_SCHEME_VALUE_PATTERN) { "#{$1} [FILTERED]" }
+      .gsub(DELIVERY_LOG_CSV_SECRET_LIKE_PATTERN) { |match| match.sub(/#{Regexp.escape(Regexp.last_match(1))}[^\s,;]+\z/, "#{Regexp.last_match(1)}[FILTERED]") }
   end
 
   def normalized_status_filter
