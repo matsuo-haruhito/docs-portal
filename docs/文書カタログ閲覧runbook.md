@@ -2,7 +2,7 @@
 
 この runbook は、current `main` の `文書カタログ` 画面を、案件内の文書グルーピング入口として確認するときの読み方をまとめる。
 
-新しい管理 UI、公開ポリシー、保存済み filter はここでは定義しない。current route、controller、model、view を前提に、「どのカタログが見えるか」「一覧 filter をどう読むか」「カタログ内の文書がなぜ欠けて見えることがあるか」「文書セット・文書ショートカット・文書一覧とどう使い分けるか」を整理する。
+管理 UI は current support として扱い、公開ポリシーや保存済み filter の再設計はここでは定義しない。current route、controller、model、view を前提に、「どのカタログが見えるか」「一覧 filter をどう読むか」「カタログ内の文書がなぜ欠けて見えることがあるか」「管理側の項目編集と公開側の表示判定をどう分けるか」「文書セット・文書ショートカット・文書一覧とどう使い分けるか」を整理する。
 
 ## 先に見るもの
 
@@ -15,10 +15,14 @@
 
 公開側の文書カタログは、案件配下の文書を「用途や対象者ごとの入口」としてまとめて見せるための閲覧画面である。
 
+管理側の `文書カタログ管理` は、公開側で使う catalog の基本項目と item 構成を編集する画面である。公開側の catalog visibility と item 文書の visibility は、管理 UI で項目を保存した後も別々に判定される。
+
 current route:
 
-- 一覧: `projects/:project_code/document_catalogs`
-- 詳細: `projects/:project_code/document_catalogs/:public_id`
+- 公開側一覧: `projects/:project_code/document_catalogs`
+- 公開側詳細: `projects/:project_code/document_catalogs/:public_id`
+- 管理側一覧 / 作成: `admin/document_catalogs`
+- 管理側編集: `admin/document_catalogs/:id/edit`
 
 current 実装の前提:
 
@@ -28,6 +32,8 @@ current 実装の前提:
 - 詳細では、catalog 自体が見えない場合は forbidden になる
 - 詳細の item は `visible_items_for(current_user)` を通り、catalog が見えても文書ごとの閲覧権限がない item は表示されない
 - 左側には既存の文書 tree が出るが、catalog の表示可否や item visibility は tree の展開状態とは別に判定される
+- 管理側では catalog の `案件`、`名称`、`説明`、`対象`、`公開範囲`、`表示順` を編集する
+- 管理側の item 管理は、選択した案件内の文書だけを対象にし、チェックした文書、並び順、メモだけを扱う
 
 ## 一覧で見るポイント
 
@@ -111,6 +117,18 @@ item の `文書` link は、同じ案件配下の文書詳細へ戻る。curren
 2. Project membership または DocumentPermission が intended か
 3. 対象文書の公開状態や visibility が intended か
 
+## 管理側で編集できる範囲
+
+管理側の `文書カタログ管理` は、catalog の作成・編集・削除と item 構成の first slice である。
+
+管理側一覧では、案件、名称、対象、公開範囲、文書数、表示順を確認し、新規登録、編集、削除へ進む。description がある場合は、名称の下に短い preview が出る。
+
+管理側フォームでは、catalog 基本項目として案件、名称、説明、対象、公開範囲、表示順を保存する。`カタログ項目` は、選択した案件内の文書だけを候補にし、チェックした文書だけを catalog に含める。各 item で扱う値は文書 ID、並び順、メモに限られる。
+
+管理側で item を登録しても、公開側で必ず見えるとは限らない。公開側では、catalog 自体の `visibility_policy` と、item 文書ごとの閲覧権限・公開状態を二段階で確認する。
+
+この管理 UI は saved filter、drag/drop、一括編集、CSV import、公開範囲 policy の変更を提供するものではない。これらを current support として読まず、必要な場合は別 Issue / 別 runbook で扱う。
+
 ## 文書セット・ショートカット・文書一覧との違い
 
 - 文書カタログ
@@ -134,7 +152,7 @@ item の `文書` link は、同じ案件配下の文書詳細へ戻る。curren
 - `internal_only` catalog を外部ユーザー向けに表示する運用として読まない
 - 一覧の `名称・説明`、`対象`、`公開範囲` filter は current user に見える catalog の中だけを絞り込む
 - `条件に一致する文書カタログはありません。` と `利用可能な文書カタログはありません。` は別の状態として読む
-- 管理 UI、公開範囲 policy、保存済み filter、sort 変更、item 一括編集はこの runbook に含めない
+- 管理 UI は catalog の基本項目と item 選択・並び順・メモを扱う first slice として読む。公開範囲 policy の変更、保存済み filter、drag/drop による sort 変更、item 一括編集、CSV import は current support として先取りしない
 - 文書カタログから見えない文書を、tree や文書一覧で見えるべきとは自動判断しない。案件所属、文書権限、公開状態のどれが正かは既存仕様に戻して確認する
 
 ## 関連文書
