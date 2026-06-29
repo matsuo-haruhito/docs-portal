@@ -8,6 +8,10 @@ h1 文書カタログ管理
   = render "form", document_catalog: @document_catalog
 
 - if @document_catalogs.any?
+  .card
+    h2 登録済み文書カタログ
+    p.muted = "現在#{@document_catalogs.size}件の文書カタログを表示しています。"
+    p.muted 公開側の文書カタログで使う対象、公開範囲、表示順、文書数を確認できます。
   = table_tag do
     thead
       tr
