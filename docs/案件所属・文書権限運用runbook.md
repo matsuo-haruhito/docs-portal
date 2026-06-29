@@ -93,13 +93,15 @@ edit や validation error 後の再表示では、保存済みまたは入力中
 
 `会社` と `ユーザー` も `rails_fields_kit` の remote search combobox です。`会社` は domain / 表示名、`ユーザー` はメールアドレス / 表示名の短い断片で検索し、検索語は前後空白を除いて最大 100 文字、候補は最大 20 件までに bounded されます。候補 label は `表示名 / domain`、または `表示名 / メールアドレス` として読みます。
 
-会社全体に同じ権限を付与する場合だけ `会社` を選び、ユーザー個別へ付与する場合は `ユーザー` を選びます。選ばない側は空欄にします。edit や validation error 後の再表示では、保存済みまたは入力中の会社・ユーザーが selected option として復元されるため、通常候補に出ない値でも form に残っているかを確認してから保存し直します。会社・ユーザー lookup endpoint は admin-only 境界内の補助であり、文書権限一覧の `案件` filter remote search、bulk grant、権限申請 workflow、権限 model / policy 変更を current support として追加するものではありません。
+会社全体に同じ権限を付与する場合だけ `会社` を選び、ユーザー個別へ付与する場合は `ユーザー` を選びます。選ばない側は空欄にします。edit や validation error 後の再表示では、保存済みまたは入力中の会社・ユーザーが selected option として復元されるため、通常候補に出ない値でも form に残っているかを確認してから保存し直します。会社・ユーザー lookup endpoint は admin-only 境界内の補助であり、bulk grant、権限申請 workflow、権限 model / policy 変更を current support として追加するものではありません。
 
 文書名 select と適用対象 select の検索や選択復元は、文書・付与先を探しやすくする表示補助です。`会社` と `ユーザー` の排他制約、`閲覧 / ダウンロード` の access level、`DocumentPermission` の作成・更新・削除の意味は変えません。
 
 #### 検索・絞り込みと条件クリア
 
 `検索・絞り込み` は、登録済みの文書権限を案件、文書名・slug、権限、付与先で見直すための表示補助です。条件は下段の `権限一覧` だけでなく、上段の `文書別の権限概要` も同じ対象に絞り込んで読みます。
+
+`案件` filter は `rails_fields_kit` の remote search combobox です。案件コード・案件名の短い断片で検索し、検索語は前後空白を除いて最大 100 文字、候補は最大 20 件までに bounded されます。URL で指定済みの案件が通常候補の上限外でも selected option として復元され、`有効な条件:` summary では `案件コード / 案件名` として読みます。この filter は概要 table と権限一覧の両方を同じ `project_id` 条件で絞る表示補助であり、案件所属、文書権限の保存内容、付与先選択、権限 model を変更するものではありません。
 
 - 条件未指定の初期状態では解除対象がないため、form action は `検索` だけになり、`条件をクリア` は表示されません
 - `案件`、`文書名・slug`、`権限`、`付与先` のいずれかを指定したときだけ `条件をクリア` が表示され、押すと `admin/document_permissions` の条件なし一覧へ戻ります
