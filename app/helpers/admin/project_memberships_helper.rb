@@ -14,7 +14,19 @@ module Admin::ProjectMembershipsHelper
     [project.code, project.name].compact_blank.join(" / ")
   end
 
+  def project_membership_project_selected_option(project)
+    return nil if project.blank?
+
+    { value: project.id, text: project_membership_project_option_label(project) }
+  end
+
   def project_membership_user_option_label(user)
     [user.display_name, user.email_address].compact_blank.join(" / ")
+  end
+
+  def project_membership_user_selected_option(user)
+    return nil if user.blank?
+
+    { value: user.id, text: project_membership_user_option_label(user) }
   end
 end
