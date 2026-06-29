@@ -104,6 +104,7 @@ Rails.application.routes.draw do
       resource :external_folder_sync_oauth_connection, only: %i[new destroy]
     end
     resources :documents, except: %i[show new], param: :public_id do
+      get :lifecycle_handoff, on: :collection
       patch :archive, on: :member
       patch :restore, on: :member
     end
