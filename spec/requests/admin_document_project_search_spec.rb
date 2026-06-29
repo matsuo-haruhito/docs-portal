@@ -36,8 +36,8 @@ RSpec.describe "Admin document project search", type: :request do
 
   it "returns project options by code and name while bounding query length and result count" do
     max_length = Admin::DocumentsController::PROJECT_SEARCH_QUERY_MAX_LENGTH
-    bounded_query = "REMOTE-" + ("a" * (max_length - "REMOTE-".length))
-    code_match = create(:project, code: bounded_query, name: "Code Match")
+    bounded_query = "remote-" + ("a" * (max_length - "remote-".length))
+    code_match = create(:project, code: "REMOTE-001", name: "Code Match")
     name_match = create(:project, code: "NAME-001", name: "Project #{bounded_query}")
     suffix_only = create(:project, code: "SUFFIX-001", name: "needle only")
     21.times do |index|
@@ -46,11 +46,17 @@ RSpec.describe "Admin document project search", type: :request do
 
     sign_in_as(admin_user)
 
+    get project_search_admin_documents_path(format: :json), params: { q: "REMOTE-001" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("options")).to include(
+      a_hash_including("value" => code_match.id, "text" => "#{code_match.code} / #{code_match.name}")
+    )
+
     get project_search_admin_documents_path(format: :json), params: { q: "  #{bounded_query} needle  " }
 
     expect(response).to have_http_status(:ok)
     expect(json_body.fetch("options")).to contain_exactly(
-      a_hash_including("value" => code_match.id, "text" => "#{code_match.code} / #{code_match.name}"),
       a_hash_including("value" => name_match.id, "text" => "#{name_match.code} / #{name_match.name}")
     )
     expect(json_body.fetch("options")).not_to include(a_hash_including("value" => suffix_only.id))
