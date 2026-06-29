@@ -1,0 +1,39 @@
+- page_title "文書カタログ管理"
+
+h1 文書カタログ管理
+= render "admin/nav"
+
+.card
+  h2 新規登録
+  = render "form", document_catalog: @document_catalog
+
+- if @document_catalogs.any?
+  = table_tag do
+    thead
+      tr
+        th 案件
+        th 名称
+        th 対象
+        th 公開範囲
+        th 文書数
+        th 表示順
+        th
+    tbody
+      - @document_catalogs.each do |document_catalog|
+        tr
+          td = document_catalog.project.name
+          td
+            div = document_catalog.name
+            - if document_catalog.description.present?
+              p.muted = truncate(document_catalog.description, length: 90)
+          td = document_catalog_audience_type_label(document_catalog.audience_type)
+          td = document_catalog_visibility_policy_label(document_catalog.visibility_policy)
+          td = "#{document_catalog.document_catalog_items.size}件"
+          td = document_catalog.sort_order
+          td.actions
+            = edit_link_to "編集", edit_admin_document_catalog_path(document_catalog)
+            = delete_link_to "削除", admin_document_catalog_path(document_catalog), confirm: "文書カタログ「#{document_catalog.name}」を削除しますか？登録済み文書 #{document_catalog.document_catalog_items.size} 件との対応も失われます。"
+- else
+  .card
+    p.muted まだ文書カタログは登録されていません。
+    p.muted 上の「新規登録」で案件と名称を設定して保存すると、公開側の文書カタログで使う項目を管理できます。

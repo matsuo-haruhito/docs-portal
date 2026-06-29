@@ -1,0 +1,61 @@
+= render "shared/error_messages", record: document_catalog
+
+- selected_items = document_catalog_selected_items(document_catalog)
+
+= form_with model: [:admin, document_catalog] do |form|
+  .form-grid
+    = form.rfk_select :project_id,
+      collection: document_catalog_project_options(@projects),
+      wrapper: true,
+      label: "案件"
+    = form.rfk_text_field :name, wrapper: true, label: "名称"
+    = form.rfk_select :audience_type,
+      collection: enum_options_for("document_catalogs.audience_type", DocumentCatalog.audience_types.keys),
+      wrapper: true,
+      label: "対象"
+    = form.rfk_select :visibility_policy,
+      collection: enum_options_for("document_catalogs.visibility_policy", DocumentCatalog.visibility_policies.keys),
+      wrapper: true,
+      label: "公開範囲"
+    = form.rfk_number_field :sort_order, min: 0, wrapper: true, label: "表示順"
+    = form.rfk_text_area :description,
+      wrapper: true,
+      label: "説明",
+      wrapper_html: { style: "grid-column: 1 / -1;" }
+
+  - if @project_documents.any?
+    h2 カタログ項目
+    p.muted チェックした文書だけカタログに含めます。登録できる文書は選択した案件内の文書だけです。
+    table
+      thead
+        tr
+          th 対象
+          th 文書名
+          th 並び順
+          th メモ
+      tbody
+        - @project_documents.each_with_index do |document, index|
+          - item = selected_items[document.id]
+          tr data-document-catalog-document-id=document.id
+            td
+              = hidden_field_tag "document_catalog_items[#{index}][document_id]", document.id
+              = check_box_tag "document_catalog_items[#{index}][selected]", "1", item.present?
+            td
+              strong = link_to document.title, project_document_path(document.project, document.slug)
+              br
+              span.muted = "URL識別子: #{document.slug}"
+              - if document.latest_version.present?
+                br
+                span.muted = "最新版: #{document_version_label(document.latest_version)}"
+            td = number_field_tag "document_catalog_items[#{index}][sort_order]", item&.sort_order || index, min: 0
+            td = text_field_tag "document_catalog_items[#{index}][note]", item&.note
+  - elsif document_catalog.project_id.present?
+    h2 カタログ項目
+    p.muted この案件にはまだ文書がありません。文書を登録すると、ここでカタログ項目として選択できます。
+  - else
+    p.muted 案件を選ぶとカタログ項目に含める文書を設定できます。
+
+  p.actions style="margin-top:16px;"
+    = form.submit "保存", class: "button"
+    - if document_catalog.persisted?
+      = link_to "一覧へ戻る", admin_document_catalogs_path, class: "button secondary"

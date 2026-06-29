@@ -6,6 +6,7 @@ RSpec.describe "Admin member route identifier contract", type: :routing do
     admin/bulk_edit_dry_runs
     admin/companies
     admin/consent_terms
+    admin/document_catalogs
     admin/document_permissions
     admin/document_sets
     admin/documents

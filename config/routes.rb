@@ -126,6 +126,7 @@ Rails.application.routes.draw do
       get :document_search, on: :collection
       get :document_version_search, on: :collection
     end
+    resources :document_catalogs, except: %i[show new], param: :public_id
     resources :document_permissions, except: %i[show new], param: :public_id do
       get :document_search, on: :collection
       get :selected_document, on: :collection
