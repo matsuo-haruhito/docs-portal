@@ -17,6 +17,10 @@ Rails.application.routes.draw do
   get "documents", to: "accessible_documents#index", as: :documents
   resources :consents, only: %i[index new create], param: :public_id
   resources :document_approval_requests, only: %i[index show update], param: :public_id do
+    get :requester_search, on: :collection
+    get :selected_requester, on: :collection
+    get :approver_search, on: :collection
+    get :selected_approver, on: :collection
     post :cancel, on: :member
   end
   resources :document_delivery_logs, only: %i[index show update], param: :public_id do
@@ -170,7 +174,12 @@ Rails.application.routes.draw do
     resources :document_catalogs, only: %i[index show], param: :public_id
     resources :documents, only: [:index, :show], param: :slug do
       resources :document_delivery_logs, only: %i[new create], param: :public_id
-      resources :document_approval_requests, only: %i[index create], param: :public_id
+      resources :document_approval_requests, only: %i[index create], param: :public_id do
+        get :requester_search, on: :collection
+        get :selected_requester, on: :collection
+        get :approver_search, on: :collection
+        get :selected_approver, on: :collection
+      end
       resources :document_review_comments, only: %i[create update], param: :public_id
     end
     resources :document_sets, only: [], param: :public_id do
