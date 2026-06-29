@@ -166,6 +166,7 @@ RSpec.describe "Admin document catalogs", type: :request do
 
   it "keeps the public catalog viewer behavior unchanged" do
     create(:project_membership, project:, user: external_user)
+    create(:document_permission, document: document_a, company: external_user.company, access_level: :view)
     catalog = create(:document_catalog, project:, name: "Customer Viewer", audience_type: :customer, visibility_policy: :restricted_external)
     create(:document_catalog_item, document_catalog: catalog, document: document_a, sort_order: 1, note: "visible note")
 
