@@ -37,7 +37,7 @@ RSpec.describe "Admin document catalogs", type: :request do
   end
 
   def listed_catalog_names
-    parsed_html.css("table tbody tr td:nth-child(2)").map { |node| node.text.squish }
+    parsed_html.css("table tbody tr td:nth-child(2) div").map { |node| node.text.squish }
   end
 
   it "renders the admin catalog form and navigation for admins only" do
