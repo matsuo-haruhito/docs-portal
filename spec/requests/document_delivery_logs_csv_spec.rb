@@ -42,7 +42,7 @@ RSpec.describe "Document delivery logs CSV", type: :request do
       cc_addresses: "cc@example.com",
       bcc_addresses: "bcc@example.com",
       subject: "CSV needle for customer",
-      error_message: "timeout while sending CSV needle with token=secret-value and a long explanation that should be shortened in the export"
+      error_message: "timeout while sending CSV needle Authorization: Bearer bearer-secret Bearer standalone-secret Basic basic-secret token=secret-value"
     )
     outside_status_log = create_delivery_log_at(
       Time.zone.local(2026, 1, 15, 12, 0, 0),
@@ -100,6 +100,9 @@ RSpec.describe "Document delivery logs CSV", type: :request do
     expect(row["失敗理由"]).to include("timeout while sending CSV needle")
     expect(row["失敗理由"]).to include("[FILTERED]")
     expect(row["失敗理由"].length).to be <= 83
+    expect(csv_text).not_to include("bearer-secret")
+    expect(csv_text).not_to include("standalone-secret")
+    expect(csv_text).not_to include("basic-secret")
     expect(csv_text).not_to include("secret-value")
     expect(csv_text).not_to include(outside_status_log.to_addresses)
     expect(csv_text).not_to include(other_sender_log.to_addresses)
