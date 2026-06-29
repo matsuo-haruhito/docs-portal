@@ -1,5 +1,9 @@
 - page_title "確認依頼"
 - list_path = @document.present? ? ->(path_params = {}) { project_document_document_approval_requests_path(@project, @document, path_params) } : ->(path_params = {}) { document_approval_requests_path(path_params) }
+- requester_search_path = @document.present? ? requester_search_project_document_document_approval_requests_path(@project, @document, format: :json) : requester_search_document_approval_requests_path(format: :json)
+- selected_requester_path = @document.present? ? selected_requester_project_document_document_approval_requests_path(@project, @document, format: :json) : selected_requester_document_approval_requests_path(format: :json)
+- approver_search_path = @document.present? ? approver_search_project_document_document_approval_requests_path(@project, @document, format: :json) : approver_search_document_approval_requests_path(format: :json)
+- selected_approver_path = @document.present? ? selected_approver_project_document_document_approval_requests_path(@project, @document, format: :json) : selected_approver_document_approval_requests_path(format: :json)
 - total_count = @pending_count + @approved_count + @cancelled_count
 - user_filter_params = {}
 - user_filter_params[:requester_id] = @requester_filter_id if @requester_filter_id.present?
@@ -16,8 +20,10 @@
 - clear_user_filter_params[:q] = @query if @query.present?
 - has_active_filter = @status_filter.present? || @query.present? || @requester_filter_id.present? || @approver_filter_id.present?
 - status_filter_label = @status_filter.present? ? document_approval_request_status_label(@status_filter) : nil
-- requester_filter_label = @requester_filter_options.find { |user| user.id.to_s == @requester_filter_id.to_s }&.name
-- approver_filter_label = @approver_filter_options.find { |user| user.id.to_s == @approver_filter_id.to_s }&.name
+- requester_filter_label = @selected_requester_filter&.display_name || @requester_filter_options.find { |user| user.id.to_s == @requester_filter_id.to_s }&.display_name
+- approver_filter_label = @selected_approver_filter&.display_name || @approver_filter_options.find { |user| user.id.to_s == @approver_filter_id.to_s }&.display_name
+- requester_selected_option = @selected_requester_filter ? { value: @selected_requester_filter.id, text: [@selected_requester_filter.display_name, @selected_requester_filter.email_address].compact_blank.join(" / ") } : nil
+- approver_selected_option = @selected_approver_filter ? { value: @selected_approver_filter.id, text: [@selected_approver_filter.display_name, @selected_approver_filter.email_address].compact_blank.join(" / ") } : nil
 - active_filter_labels = []
 - active_filter_labels << "状態: #{status_filter_label}" if status_filter_label.present?
 - active_filter_labels << "検索語: #{@query}" if @query.present?
@@ -27,6 +33,7 @@
 - table_key = :document_approval_requests
 - table_columns = document_approval_request_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
+- user_filter_search_limit = DocumentApprovalRequestsController::USER_FILTER_SEARCH_LIMIT
 
 h1 確認依頼
 
@@ -45,7 +52,7 @@ p.actions
   = link_to "OK済み (#{@approved_count})", list_path.call(query_path_params.merge(status: :approved)), class: @status_filter == "approved" ? "button" : "button secondary"
   = link_to "Cancel済み (#{@cancelled_count})", list_path.call(query_path_params.merge(status: :cancelled)), class: @status_filter == "cancelled" ? "button" : "button secondary"
 
-= form_with url: list_path.call, method: :get, local: true do
+= form_with url: list_path.call, method: :get, local: true do |form|
   - if @status_filter.present?
     = hidden_field_tag :status, @status_filter
   - if @per_page != DocumentApprovalRequestsController::DEFAULT_PER_PAGE
@@ -54,11 +61,37 @@ p.actions
     = label_tag :q, "依頼を検索"
     = search_field_tag :q, @query, placeholder: "依頼名・本文・文書名・slug・関係者名", maxlength: DocumentApprovalRequestsController::QUERY_MAX_LENGTH
   p.muted = "検索語は最大#{DocumentApprovalRequestsController::QUERY_MAX_LENGTH}文字です。依頼名・本文・文書名・slug・関係者名の断片で探せます。"
-  p
-    = label_tag :requester_id, "依頼者"
-    = select_tag :requester_id, options_for_select([["依頼者すべて", ""]] + @requester_filter_options.map { |user| [user.name, user.id] }, @requester_filter_id)
-    = label_tag :approver_id, "確認相手"
-    = select_tag :approver_id, options_for_select([["確認相手すべて", ""]] + @approver_filter_options.map { |user| [user.name, user.id] }, @approver_filter_id)
+  .form-grid
+    = form.rfk_combobox :requester_id,
+      collection: [],
+      selected: requester_selected_option,
+      url: requester_search_path,
+      selected_url: selected_requester_path,
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 1,
+      max_options: user_filter_search_limit,
+      wrapper: true,
+      label: "依頼者",
+      placeholder: "依頼者名・メールアドレスで検索",
+      allow_clear: true
+    = form.rfk_combobox :approver_id,
+      collection: [],
+      selected: approver_selected_option,
+      url: approver_search_path,
+      selected_url: selected_approver_path,
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 1,
+      max_options: user_filter_search_limit,
+      wrapper: true,
+      label: "確認相手",
+      placeholder: "確認相手名・メールアドレスで検索",
+      allow_clear: true
+  p.muted = "依頼者・確認相手は現在の確認依頼に含まれるユーザーから最大#{user_filter_search_limit}件ずつ検索します。URLで指定済みの値は候補上限外でも復元します。"
+  p.actions
     = submit_tag "検索", class: "button"
     - if @query.present?
       = link_to "検索を解除", list_path.call(clear_search_params), class: "button secondary"
