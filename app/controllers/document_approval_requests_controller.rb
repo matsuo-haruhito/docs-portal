@@ -1,5 +1,6 @@
 class DocumentApprovalRequestsController < BaseController
   QUERY_MAX_LENGTH = 100
+  USER_FILTER_SEARCH_LIMIT = 20
   DEFAULT_PER_PAGE = 50
   MAX_PER_PAGE = 100
 
@@ -9,12 +10,7 @@ class DocumentApprovalRequestsController < BaseController
   def index
     raise ApplicationError::Forbidden unless current_user.internal?
 
-    base_relation = if params[:project_code].present?
-      set_document_from_nested_route
-      @document.document_approval_requests.includes(:requester, :approver, :acted_by)
-    else
-      DocumentApprovalRequest.includes(:document, :requester, :approver, :acted_by)
-    end
+    base_relation = approval_request_base_relation
 
     @status_filter = normalized_status_filter
     @query = normalized_query
@@ -24,6 +20,8 @@ class DocumentApprovalRequestsController < BaseController
     @per_page = normalized_per_page
     @requester_filter_options = filter_users_for(base_relation, :requester_id)
     @approver_filter_options = filter_users_for(base_relation, :approver_id)
+    @selected_requester_filter = selected_role_user(base_relation, :requester_id, @requester_filter_id)
+    @selected_approver_filter = selected_role_user(base_relation, :approver_id, @approver_filter_id)
     @pending_count = base_relation.pending.count
     @approved_count = base_relation.approved.count
     @cancelled_count = base_relation.cancelled.count
@@ -41,6 +39,30 @@ class DocumentApprovalRequestsController < BaseController
     @document_approval_request_start = @document_approval_request_total_count.zero? ? 0 : @document_approval_request_offset + 1
     @document_approval_request_end = @document_approval_request_offset + @document_approval_requests.size
     @document_approval_request_sections = build_sections(@document_approval_requests)
+  end
+
+  def requester_search
+    raise ApplicationError::Forbidden unless current_user.internal?
+
+    render json: { options: role_user_options(searchable_role_users(approval_request_base_relation, :requester_id)) }
+  end
+
+  def selected_requester
+    raise ApplicationError::Forbidden unless current_user.internal?
+
+    render json: { option: role_user_option(selected_role_user(approval_request_base_relation, :requester_id, params[:id])) }
+  end
+
+  def approver_search
+    raise ApplicationError::Forbidden unless current_user.internal?
+
+    render json: { options: role_user_options(searchable_role_users(approval_request_base_relation, :approver_id)) }
+  end
+
+  def selected_approver
+    raise ApplicationError::Forbidden unless current_user.internal?
+
+    render json: { option: role_user_option(selected_role_user(approval_request_base_relation, :approver_id, params[:id])) }
   end
 
   def show
@@ -73,6 +95,15 @@ class DocumentApprovalRequestsController < BaseController
   end
 
   private
+
+  def approval_request_base_relation
+    if params[:project_code].present?
+      set_document_from_nested_route
+      @document.document_approval_requests.includes(:requester, :approver, :acted_by)
+    else
+      DocumentApprovalRequest.includes(:document, :requester, :approver, :acted_by)
+    end
+  end
 
   def set_document_from_nested_route
     @project = Project.find_by!(code: params[:project_code])
@@ -131,8 +162,49 @@ class DocumentApprovalRequestsController < BaseController
   end
 
   def filter_users_for(relation, foreign_key)
+    role_user_scope(relation, foreign_key)
+  end
+
+  def role_user_scope(relation, foreign_key)
     user_ids = relation.reselect(foreign_key).where.not(foreign_key => nil).distinct
-    User.where(id: user_ids).order(:name, :id)
+    User.where(id: user_ids).order(:name, :email_address, :id)
+  end
+
+  def searchable_role_users(relation, foreign_key)
+    scope = role_user_scope(relation, foreign_key)
+    query = normalized_user_search_query(params[:q])
+    return scope.limit(USER_FILTER_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{User.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(users.name) LIKE :pattern OR LOWER(users.email_address) LIKE :pattern",
+      pattern:
+    ).limit(USER_FILTER_SEARCH_LIMIT)
+  end
+
+  def selected_role_user(relation, foreign_key, user_id)
+    return if user_id.blank?
+
+    role_user_scope(relation, foreign_key).find_by(id: user_id)
+  end
+
+  def normalized_user_search_query(value)
+    value.to_s.strip.first(QUERY_MAX_LENGTH)
+  end
+
+  def role_user_options(users)
+    users.map { role_user_option(_1) }
+  end
+
+  def role_user_option(user)
+    return if user.blank?
+
+    { value: user.id, text: role_user_label(user) }
+  end
+
+  def role_user_label(user)
+    primary_label = user.display_name.presence || user.email_address
+    primary_label == user.email_address ? primary_label : "#{primary_label} / #{user.email_address}"
   end
 
   def apply_user_filter(relation, foreign_key, user_id)
