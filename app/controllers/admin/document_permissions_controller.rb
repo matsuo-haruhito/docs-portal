@@ -1,7 +1,14 @@
 class Admin::DocumentPermissionsController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_document_permission, only: %i[edit update destroy]
-  before_action :load_master_options, only: %i[index create edit update]
+  before_action :load_filter_options, only: %i[index create]
+
+  DOCUMENT_SEARCH_QUERY_MAX_LENGTH = 100
+  DOCUMENT_SEARCH_LIMIT = 20
+  COMPANY_SEARCH_QUERY_MAX_LENGTH = 100
+  COMPANY_SEARCH_LIMIT = 20
+  USER_SEARCH_QUERY_MAX_LENGTH = 100
+  USER_SEARCH_LIMIT = 20
 
   def index
     @document_permission = DocumentPermission.new(access_level: :view)
@@ -43,6 +50,26 @@ class Admin::DocumentPermissionsController < Admin::BaseController
     document = Document.includes(:project).find_by(id: params[:id])
 
     render json: { option: document ? document_permission_document_option(document) : nil }
+  end
+
+  def company_search
+    render json: { options: document_permission_company_options(searchable_companies) }
+  end
+
+  def selected_company
+    company = Company.find_by(id: params[:id])
+
+    render json: { option: company ? document_permission_company_option(company) : nil }
+  end
+
+  def user_search
+    render json: { options: document_permission_user_options(searchable_users) }
+  end
+
+  def selected_user
+    user = User.find_by(id: params[:id])
+
+    render json: { option: user ? document_permission_user_option(user) : nil }
   end
 
   private
@@ -105,9 +132,7 @@ class Admin::DocumentPermissionsController < Admin::BaseController
     permitted
   end
 
-  def load_master_options
-    @companies = Company.order(:domain)
-    @users = User.order(:email_address)
+  def load_filter_options
     @projects = Project.order(:name)
   end
 
@@ -120,14 +145,42 @@ class Admin::DocumentPermissionsController < Admin::BaseController
 
   def searchable_documents
     scope = Document.joins(:project).includes(:project).order("documents.title ASC", "documents.id ASC")
-    query = params[:q].to_s.strip
-    return scope.limit(20) if query.blank?
+    query = normalize_search_query(params[:q], DOCUMENT_SEARCH_QUERY_MAX_LENGTH)
+    return scope.limit(DOCUMENT_SEARCH_LIMIT) if query.blank?
 
     term = "%#{ActiveRecord::Base.sanitize_sql_like(query.downcase)}%"
     scope.where(
       "LOWER(documents.title) LIKE :term OR LOWER(documents.slug) LIKE :term OR LOWER(projects.name) LIKE :term",
       term:
-    ).limit(20)
+    ).limit(DOCUMENT_SEARCH_LIMIT)
+  end
+
+  def searchable_companies
+    scope = Company.order(:domain, :id)
+    query = normalize_search_query(params[:q], COMPANY_SEARCH_QUERY_MAX_LENGTH)
+    return scope.limit(COMPANY_SEARCH_LIMIT) if query.blank?
+
+    term = "%#{Company.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(companies.domain) LIKE :term OR LOWER(companies.name) LIKE :term",
+      term:
+    ).limit(COMPANY_SEARCH_LIMIT)
+  end
+
+  def searchable_users
+    scope = User.order(:email_address, :id)
+    query = normalize_search_query(params[:q], USER_SEARCH_QUERY_MAX_LENGTH)
+    return scope.limit(USER_SEARCH_LIMIT) if query.blank?
+
+    term = "%#{User.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(users.email_address) LIKE :term OR LOWER(users.name) LIKE :term",
+      term:
+    ).limit(USER_SEARCH_LIMIT)
+  end
+
+  def normalize_search_query(value, max_length)
+    value.to_s.strip.first(max_length)
   end
 
   def document_permission_document_options(documents)
@@ -136,5 +189,21 @@ class Admin::DocumentPermissionsController < Admin::BaseController
 
   def document_permission_document_option(document)
     { value: document.id, text: "#{document.title} / #{document.project.name}" }
+  end
+
+  def document_permission_company_options(companies)
+    companies.map { |company| document_permission_company_option(company) }
+  end
+
+  def document_permission_company_option(company)
+    { value: company.id, text: helpers.document_permission_form_company_label(company) }
+  end
+
+  def document_permission_user_options(users)
+    users.map { |user| document_permission_user_option(user) }
+  end
+
+  def document_permission_user_option(user)
+    { value: user.id, text: helpers.document_permission_form_user_label(user) }
   end
 end
