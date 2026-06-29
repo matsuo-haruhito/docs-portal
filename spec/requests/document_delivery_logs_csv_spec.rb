@@ -98,7 +98,9 @@ RSpec.describe "Document delivery logs CSV", type: :request do
     expect(row["方式"]).to eq(I18n.t("labels.document_delivery_logs.delivery_type.portal_link"))
     expect(row["状態"]).to eq(I18n.t("labels.document_delivery_logs.status.failed"))
     expect(row["失敗理由"]).to include("timeout while sending CSV needle")
+    expect(row["失敗理由"]).to include("[FILTERED]")
     expect(row["失敗理由"].length).to be <= 83
+    expect(csv_text).not_to include("secret-value")
     expect(csv_text).not_to include(outside_status_log.to_addresses)
     expect(csv_text).not_to include(other_sender_log.to_addresses)
   end
