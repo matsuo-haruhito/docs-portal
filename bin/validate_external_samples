@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "optparse"
+require "pathname"
 require_relative "../config/environment"
 require Rails.root.join("db/seeds/support/external_sample_validator").to_s
 
