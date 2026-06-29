@@ -19,6 +19,7 @@ h1 文書セット
       label.form-field
         span 検索
         = form.search_field :q, value: @filters[:q], placeholder: "案件名・案件コード・文書セット名", autocomplete: "off", maxlength: Admin::DocumentSetsController::DOCUMENT_SET_QUERY_MAX_LENGTH
+        span.muted = "案件名・案件コード・文書セット名の断片で検索できます。最大#{Admin::DocumentSetsController::DOCUMENT_SET_QUERY_MAX_LENGTH}文字。"
 
       label.form-field
         span 種別
