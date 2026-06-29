@@ -30,7 +30,8 @@ h1 Webhook
       = hidden_field_tag :delivery_status, @delivery_status_filter
     p
       = label_tag :endpoint_q, "設定検索"
-      = text_field_tag :endpoint_q, @webhook_endpoint_q, placeholder: "名称・送信先URL"
+      = text_field_tag :endpoint_q, @webhook_endpoint_q, placeholder: "名称・送信先URL", maxlength: Admin::WebhookEndpointsController::ENDPOINT_Q_MAX_LENGTH
+    p.muted 名称・送信先URLを検索します。100文字まで。
     p
       = label_tag :endpoint_event, "イベント"
       = select_tag :endpoint_event, options_for_select([["すべてのイベント", "all"]] + WebhookEndpoint::EVENT_TYPES.map { |event_type| [webhook_event_type_label(event_type), event_type] }, @webhook_endpoint_event_filter)
