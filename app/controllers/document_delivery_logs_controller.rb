@@ -7,6 +7,7 @@ class DocumentDeliveryLogsController < BaseController
   DELIVERY_LOG_DISPLAY_LIMIT = 50
   DELIVERY_LOG_QUERY_MAX_LENGTH = 100
   DELIVERY_LOG_CSV_PREVIEW_MAX_LENGTH = 120
+  DELIVERY_LOG_CSV_SECRET_LIKE_PATTERN = /\b(?:authorization|bearer|token|secret|password|api[_-]?key|access[_-]?token)\s*[=:]\s*[^\s,;]+/i
   FAILURE_ALERT_HANDOFF_PRESENT_NOTE = "read-only handoff payloadです。通知送信、ack、自動 retry、送付状態変更は行いません。".freeze
   FAILURE_ALERT_HANDOFF_EMPTY_NOTE = "current 条件で handoff 対象なし。これは正常保証、外部監視 green、通知正常を意味しません。".freeze
 
@@ -283,7 +284,7 @@ class DocumentDeliveryLogsController < BaseController
   end
 
   def csv_preview(value, limit: DELIVERY_LOG_CSV_PREVIEW_MAX_LENGTH)
-    text = value.to_s.squish
+    text = value.to_s.squish.gsub(DELIVERY_LOG_CSV_SECRET_LIKE_PATTERN, "[FILTERED]")
     return if text.blank?
     return text if text.length <= limit
 
