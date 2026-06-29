@@ -2,7 +2,7 @@
 - table_key = :accessible_documents
 - table_columns = accessible_document_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
-- active_filter_labels = accessible_document_active_filter_labels(@filters, available_tags: @available_tags)
+- active_filter_labels = accessible_document_active_filter_labels(@filters, available_tags: @available_tags, selected_project: @selected_project)
 
 h1 閲覧可能文書
 
@@ -19,6 +19,20 @@ section.card
         = form.search_field :q, value: @filters[:q], placeholder: "文書名・案件名など"
         span.muted
           | 文書名・案件名・本文・タグ・添付ファイル名・元パスの短い語句で検索できます。
+
+      = form.rfk_combobox :project_id,
+        collection: [],
+        selected: accessible_document_project_selected_option(@selected_project),
+        url: project_search_documents_path(format: :json),
+        selected_url: selected_project_documents_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: AccessibleDocumentsController::PROJECT_SEARCH_LIMIT,
+        wrapper: true,
+        label: "案件",
+        placeholder: "案件コード・案件名で検索"
 
       label.form-field
         span タグ
@@ -93,7 +107,7 @@ p.muted
         li = link_to "条件をクリア", documents_path
       ul.compact-list
         li キーワードを短くする、または別名・ファイル名・タグで検索してください。
-        li タグ、カテゴリ、ファイル種、公開範囲、実用フィルタを外して再検索してください。
+        li 案件、タグ、カテゴリ、ファイル種、公開範囲、実用フィルタを外して再検索してください。
         - unless current_user.internal?
           li 必要な文書が表示されない場合は、担当者へ閲覧権限の確認を依頼してください。
     - else

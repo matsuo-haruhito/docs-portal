@@ -12,12 +12,20 @@ RSpec.describe "AccessibleDocuments", type: :request do
     document
   end
 
+  def add_project_access(project)
+    create(:project_membership, project:, user:)
+  end
+
   def parsed_html
     Nokogiri::HTML(response.body)
   end
 
   def page_text
     parsed_html.text.squish
+  end
+
+  def json_response
+    JSON.parse(response.body)
   end
 
   def project_column_texts
@@ -42,8 +50,8 @@ RSpec.describe "AccessibleDocuments", type: :request do
   end
 
   before do
-    create(:project_membership, project: project_a, user:)
-    create(:project_membership, project: project_b, user:)
+    add_project_access(project_a)
+    add_project_access(project_b)
   end
 
   it "shows readable documents across accessible projects" do
@@ -83,6 +91,120 @@ RSpec.describe "AccessibleDocuments", type: :request do
     expect(response.body).to match(/ページ\s*2\s*\/\s*2/)
   end
 
+  it "returns project filter options only from visible documents" do
+    visible_project = create(:project, code: "DOC001", name: "Visible Documents")
+    hidden_project = create(:project, code: "DOC999", name: "Hidden Documents")
+    add_project_access(visible_project)
+    add_project_access(hidden_project)
+    create_viewable_document(project: visible_project, title: "Visible Search Manual", slug: "visible-search-manual")
+    create(:document, project: hidden_project, title: "Hidden Search Manual", slug: "hidden-search-manual", visibility_policy: :internal_only)
+
+    sign_in_as(user)
+    get project_search_documents_path(format: :json), params: { q: "doc" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("options")).to contain_exactly(
+      include("value" => visible_project.id, "text" => "DOC001 / Visible Documents")
+    )
+  end
+
+  it "bounds project search results and restores selected projects only when visible" do
+    22.times do |index|
+      project = create(:project, code: format("LIST%02d", index), name: "Listed Project #{index}")
+      add_project_access(project)
+      create_viewable_document(project:, title: "Listed Manual #{index}", slug: "listed-manual-#{index}")
+    end
+    selected_project = create(:project, code: "ZZZ99", name: "Selected Project")
+    hidden_project = create(:project, code: "HIDE99", name: "Hidden Project")
+    add_project_access(selected_project)
+    add_project_access(hidden_project)
+    create_viewable_document(project: selected_project, title: "Selected Manual", slug: "selected-manual")
+    create(:document, project: hidden_project, title: "Hidden Manual", slug: "hidden-manual", visibility_policy: :internal_only)
+
+    sign_in_as(user)
+    get project_search_documents_path(format: :json), params: { q: "Listed Project" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("options").size).to eq(AccessibleDocumentsController::PROJECT_SEARCH_LIMIT)
+
+    get selected_project_documents_path(format: :json), params: { id: selected_project.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("option")).to include(
+      "value" => selected_project.id,
+      "text" => "ZZZ99 / Selected Project"
+    )
+
+    get selected_project_documents_path(format: :json), params: { id: hidden_project.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("option")).to be_nil
+
+    get selected_project_documents_path(format: :json), params: { id: "999999" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("option")).to be_nil
+  end
+
+  it "filters documents by project and combines project with existing filters" do
+    target = create_viewable_document(
+      project: project_a,
+      title: "Alpha Contract PDF",
+      slug: "alpha-contract-pdf",
+      category: :contract,
+      document_kind: :pdf,
+      visibility_policy: :restricted_external
+    )
+    same_project_wrong_category = create_viewable_document(project: project_a, title: "Alpha Manual", slug: "alpha-manual", category: :manual)
+    other_project = create_viewable_document(project: project_b, title: "Beta Contract PDF", slug: "beta-contract-pdf", category: :contract, document_kind: :pdf)
+
+    sign_in_as(user)
+    get documents_path, params: { project_id: project_a.id, q: "Alpha", category: "contract", document_kind: "pdf" }
+
+    expect(response).to have_http_status(:ok)
+    expect(document_title_texts).to eq([target.title])
+    expect(page_text).to include("案件: ALPHA / Alpha Project")
+    expect(page_text).to include("キーワード: Alpha")
+    expect(page_text).to include("カテゴリ: 契約")
+    expect(page_text).to include("ファイル種: PDF")
+    expect(page_text).not_to include(same_project_wrong_category.title)
+    expect(page_text).not_to include(other_project.title)
+  end
+
+  it "keeps project filter params on pagination links" do
+    21.times do |index|
+      create_viewable_document(
+        project: project_a,
+        title: format("Alpha Paged Manual %02d", index + 1),
+        slug: format("alpha-paged-manual-%02d", index + 1)
+      )
+    end
+    create_viewable_document(project: project_b, title: "Beta Paged Manual", slug: "beta-paged-manual")
+
+    sign_in_as(user)
+    get documents_path, params: { project_id: project_a.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("案件: ALPHA / Alpha Project")
+    next_page_href = pagination_href("次へ")
+    expect(next_page_href).to include("project_id=#{project_a.id}")
+    expect(next_page_href).to include("page=2")
+  end
+
+  it "ignores inaccessible project filters without widening document visibility" do
+    hidden_project = create(:project, name: "Hidden Project", code: "HIDDEN")
+    hidden_document = create(:document, project: hidden_project, title: "Hidden Manual", slug: "hidden-manual", visibility_policy: :internal_only)
+    visible_document = create_viewable_document(project: project_a, title: "Visible Manual", slug: "visible-manual")
+
+    sign_in_as(user)
+    get documents_path, params: { project_id: hidden_project.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(visible_document.title)
+    expect(response.body).not_to include(hidden_document.title)
+    expect(page_text).not_to include("案件: HIDDEN / Hidden Project")
+  end
+
   it "shows the form clear action only when filters are active" do
     document = create_viewable_document(project: project_a, title: "Tagged Manual", slug: "tagged-manual", category: :manual)
     tag = DocumentTag.create!(name: "設計資料")
@@ -96,6 +218,7 @@ RSpec.describe "AccessibleDocuments", type: :request do
 
     [
       { q: "Tagged" },
+      { project_id: project_a.id },
       { tag: tag.normalized_name },
       { category: "manual" },
       { document_kind: "pdf" },
@@ -125,6 +248,7 @@ RSpec.describe "AccessibleDocuments", type: :request do
     sign_in_as(user)
     get documents_path, params: {
       q: "Quarterly",
+      project_id: project_a.id,
       tag: tag.normalized_name,
       category: "contract",
       document_kind: "pdf",
@@ -137,6 +261,7 @@ RSpec.describe "AccessibleDocuments", type: :request do
     expect(response.body).not_to include(other.title)
     expect(page_text).to include("現在の条件:")
     expect(page_text).to include("キーワード: Quarterly")
+    expect(page_text).to include("案件: ALPHA / Alpha Project")
     expect(page_text).to include("タグ: 契約レビュー")
     expect(page_text).to include("カテゴリ: 契約")
     expect(page_text).to include("ファイル種: PDF")
@@ -150,11 +275,12 @@ RSpec.describe "AccessibleDocuments", type: :request do
     create_viewable_document(project: project_a, title: "Published Manual", slug: "published-manual", category: :manual)
 
     sign_in_as(user)
-    get documents_path, params: { category: "contract", has_diagram: "1" }
+    get documents_path, params: { project_id: project_a.id, category: "contract", has_diagram: "1" }
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("条件に一致する文書はありません")
     expect(page_text).to include("現在の絞り込み条件に一致する閲覧可能な文書がありませんでした")
+    expect(page_text).to include("案件: ALPHA / Alpha Project")
     expect(page_text).to include("カテゴリ: 契約")
     expect(page_text).to include("図あり")
     expect(parsed_html.css(".empty-state a").map { _1.text.squish }).to include("条件をクリア")
@@ -180,6 +306,7 @@ RSpec.describe "AccessibleDocuments", type: :request do
     sign_in_as(user)
     get documents_path, params: {
       q: "Spec",
+      project_id: project_a.id,
       tag: tag.normalized_name,
       category: "spec",
       document_kind: "markdown",
@@ -192,6 +319,7 @@ RSpec.describe "AccessibleDocuments", type: :request do
     expect(response).to have_http_status(:ok)
     next_page_href = pagination_href("次へ")
     expect(next_page_href).to include("q=Spec")
+    expect(next_page_href).to include("project_id=#{project_a.id}")
     expect(next_page_href).to include("tag=#{CGI.escape(tag.normalized_name)}")
     expect(next_page_href).to include("category=spec")
     expect(next_page_href).to include("document_kind=markdown")

@@ -3,9 +3,18 @@ class AccessibleDocumentsController < BaseController
 
   DOCUMENTS_PER_PAGE = 20
   DIAGRAM_EXTENSIONS = %w[puml plantuml d2 mmd mermaid].freeze
+  PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
+  PROJECT_SEARCH_LIMIT = 20
 
   def index
     @filters = document_filter_params
+    @selected_project = selected_filter_project
+    if @selected_project
+      @filters[:project_id] = @selected_project.id
+    else
+      @filters.delete(:project_id)
+    end
+
     accessible_scope = Document.accessible_to(current_user)
     @available_tags = DocumentTag
       .joins(:documents)
@@ -13,7 +22,7 @@ class AccessibleDocumentsController < BaseController
       .ordered
       .distinct
 
-    documents_scope = filtered_documents(Document.portal_visible_to(current_user))
+    documents_scope = filtered_documents(visible_documents_scope)
       .recommended_first
       .order(updated_at: :desc)
 
@@ -29,9 +38,20 @@ class AccessibleDocumentsController < BaseController
       .to_a
   end
 
+  def project_search
+    render json: { options: project_options(searchable_projects) }
+  end
+
+  def selected_project
+    project = accessible_project_scope.find_by(id: params[:id])
+
+    render json: { option: project ? project_option(project) : nil }
+  end
+
   private
 
   def filtered_documents(scope)
+    scope = apply_project_filter(scope)
     scope = apply_keyword_filter(scope)
     scope = apply_tag_filter(scope)
     scope = apply_enum_filter(scope, :category, Document.categories)
@@ -42,11 +62,55 @@ class AccessibleDocumentsController < BaseController
   end
 
   def document_filter_params
-    params.to_unsafe_h.symbolize_keys.slice(*DocumentsParameter::INDEX_FILTERS)
+    params.to_unsafe_h.symbolize_keys.slice(*DocumentsParameter::INDEX_FILTERS, :project_id)
   end
 
   def normalized_page
     @filters[:page].to_i.clamp(1, Float::INFINITY)
+  end
+
+  def visible_documents_scope
+    Document.portal_visible_to(current_user)
+  end
+
+  def accessible_project_scope
+    Project.where(id: visible_documents_scope.select(:project_id)).order(:code, :id)
+  end
+
+  def selected_filter_project
+    return if params[:project_id].blank?
+
+    accessible_project_scope.find_by(id: params[:project_id])
+  end
+
+  def searchable_projects
+    scope = accessible_project_scope
+    query = normalize_project_search_query(params[:q])
+    return scope.limit(PROJECT_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{Project.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(projects.code) LIKE :pattern OR LOWER(projects.name) LIKE :pattern",
+      pattern:
+    ).limit(PROJECT_SEARCH_LIMIT)
+  end
+
+  def normalize_project_search_query(query)
+    query.to_s.strip.first(PROJECT_SEARCH_QUERY_MAX_LENGTH)
+  end
+
+  def project_options(projects)
+    projects.map { |project| project_option(project) }
+  end
+
+  def project_option(project)
+    { value: project.id, text: helpers.accessible_document_project_option_label(project) }
+  end
+
+  def apply_project_filter(scope)
+    return scope if @selected_project.blank?
+
+    scope.where(project_id: @selected_project.id)
   end
 
   def apply_keyword_filter(scope)

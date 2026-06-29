@@ -25,12 +25,26 @@ module AccessibleDocumentsHelper
     ]
   end
 
-  def accessible_document_active_filter_labels(filters, available_tags: [])
+  def accessible_document_project_option_label(project)
+    [project.code, project.name].compact_blank.join(" / ")
+  end
+
+  def accessible_document_project_selected_option(project)
+    return nil if project.blank?
+
+    { value: project.id, text: accessible_document_project_option_label(project) }
+  end
+
+  def accessible_document_active_filter_labels(filters, available_tags: [], selected_project: nil)
     labels = []
     normalized_filters = filters.to_h.symbolize_keys
 
     keyword = normalized_filters[:q].to_s.squish
     labels << "キーワード: #{keyword}" if keyword.present?
+
+    if selected_project.present?
+      labels << "案件: #{accessible_document_project_option_label(selected_project)}"
+    end
 
     tag_label = accessible_document_tag_filter_label(normalized_filters[:tag], available_tags)
     labels << "タグ: #{tag_label}" if tag_label.present?
