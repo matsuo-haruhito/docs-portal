@@ -60,6 +60,16 @@ module Admin::DocumentsHelper
     project.code.presence
   end
 
+  def admin_document_project_option_label(project)
+    [project.code, project.name].compact_blank.join(" / ")
+  end
+
+  def admin_document_project_selected_option(project)
+    return nil if project.blank?
+
+    { value: project.id, text: admin_document_project_option_label(project) }
+  end
+
   def admin_document_latest_version_preview_label(version)
     return "HTML未生成" if version.blank?
     return "HTML表示可" if version.rendered_site_available?
