@@ -107,6 +107,9 @@ SharePoint / OneDrive source では、共有 URL からフォルダ metadata を
 - `Drive ID`、`Folder item ID`、`Folder path`、必要なら `Site ID` を確認する
 - `保存済み metadata を再確認` は同期本体を実行せず、保存済み Drive ID / Folder item ID / Folder path / Site ID と、現在の Microsoft Graph 解決結果を read-only に比較する
 - 再確認後は、画面内の `保存済み metadata 再確認結果` で `一致` または `差分あり` の field label を読む。ここに出るのは field label だけで、解決後の raw 値、secret-like value、長い Graph error を確認する場所ではない
+- 再確認 summary は最新 1 件だけ `last_metadata_recheck` として保存されるため、画面遷移後も詳細画面で直近の `一致` / `差分あり` / `再確認エラー` を読み返せる
+- 保存される summary は対象 source の public ID、確認日時、確認者、status、一致 / 差分 field label、短い error message に閉じる。`notice` / `alert`、raw Graph response、共有 URL、resolved value、permission payload、secret-like value は保存・表示しない
+- resolver error の場合も、詳細画面では generic な接続・共有 URL・権限の見直し message と確認日時 / 確認者だけを読む。raw error 文字列や provider payload の調査場所として扱わない
 - `差分あり` の場合でも保存済み metadata は自動更新されない。必要なら `設定を編集` から共有 URL や接続を見直し、保存し直す
 - 詳細画面の案内どおり、差分同期本体と変更通知はこの画面ではまだ実行できない current support 外として切り分ける
 
@@ -211,7 +214,7 @@ current code には `external_folder_sync_webhooks/sharepoint` の GET / POST ro
 - SharePoint webhook route は validation token 応答と notification payload 記録の受け口として存在します。`value` 配列 payload と単体 notification payload のどちらも受信 event として記録できますが、Graph subscription 作成や通知起点の同期運用ができる状態ではありません
 - SharePoint / OneDrive の `clientState` や secret-like header は raw の運用確認値として保存しません。受信 event を調べるときも payload / headers の raw secret を探すのではなく、verification mismatch や subscription / source の紐づきを確認します
 - SharePoint / OneDrive source で見える `Drive ID` / `Folder item ID` / `Folder path` / `Site ID` は、共有 URL から解決して保存できた metadata を確認するためのものです
-- `保存済み metadata を再確認` は、保存済み metadata と現在の Microsoft Graph 解決結果を比較する read-only action です。差分があっても保存済み値は自動更新せず、差分 field label と一致 field label の summary を読み返してから編集保存へ回します
+- `保存済み metadata を再確認` は、保存済み metadata と現在の Microsoft Graph 解決結果を比較する read-only action です。差分があっても保存済み値は自動更新せず、最新 summary として保存される確認日時 / 確認者 / 一致・差分 field label / 短い error message を読み返してから編集保存へ回します
 
 この runbook は current `main` の Google Drive 運用を正本にしつつ、SharePoint / OneDrive では何が `今できること` かを maintainer が誤読しないよう補っています。
 
