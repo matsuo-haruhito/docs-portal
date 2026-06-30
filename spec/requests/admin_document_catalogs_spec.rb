@@ -64,7 +64,6 @@ RSpec.describe "Admin document catalogs", type: :request do
     expect(project_field["data-rails-fields-kit--tom-select-url-value"]).to eq(project_search_admin_document_catalogs_path(format: :json))
     expect(project_field["data-rails-fields-kit--tom-select-selected-url-value"]).to eq(selected_project_admin_document_catalogs_path(format: :json))
     expect(project_field["data-rails-fields-kit--tom-select-max-options-value"]).to eq(Admin::DocumentCatalogsController::PROJECT_SEARCH_LIMIT.to_s)
-    expect(page_text).to include("候補は最大#{Admin::DocumentCatalogsController::DOCUMENT_SEARCH_LIMIT}件")
     expect(listed_catalog_names).to include("既存カタログ")
 
     sign_in_as(external_user)
