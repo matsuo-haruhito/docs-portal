@@ -13,6 +13,17 @@ class Admin::MissingDocumentFilesController < Admin::BaseController
       limit: DETAIL_LIMIT,
       filters: @missing_document_file_filters
     )
+
+    respond_to do |format|
+      format.html
+      format.csv do
+        send_data(
+          helpers.missing_document_file_handoff_csv(@document_file_health, display_limit: @display_limit),
+          filename: missing_document_files_csv_filename,
+          type: "text/csv; charset=utf-8"
+        )
+      end
+    end
   end
 
   def project_search
@@ -46,6 +57,10 @@ class Admin::MissingDocumentFilesController < Admin::BaseController
 
     project_id = params[:project_id].presence
     @project_filter_project = project_id.present? ? Project.find_by(id: project_id) : nil
+  end
+
+  def missing_document_files_csv_filename
+    "missing-document-files-#{Time.zone.today.iso8601}.csv"
   end
 
   def searchable_projects
