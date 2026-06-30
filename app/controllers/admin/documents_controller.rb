@@ -1,6 +1,7 @@
 class Admin::DocumentsController < Admin::BaseController
   BULK_EDIT_CANDIDATE_LIMIT = 50
   LIFECYCLE_HANDOFF_LIMIT = 50
+  LIFECYCLE_DUE_SOON_WINDOW = 30.days
   DOCUMENT_SEARCH_QUERY_MAX_LENGTH = 100
   PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
   PROJECT_SEARCH_LIMIT = 20
@@ -213,6 +214,8 @@ class Admin::DocumentsController < Admin::BaseController
       scope.where(retention_until: nil)
     when "due"
       scope.where.not(retention_until: nil).where(retention_until: ..Time.current)
+    when "due_soon"
+      apply_due_soon_filter(scope, :retention_until)
     else
       scope
     end
@@ -226,9 +229,16 @@ class Admin::DocumentsController < Admin::BaseController
       scope.where(discard_candidate_at: nil)
     when "due"
       scope.where.not(discard_candidate_at: nil).where(discard_candidate_at: ..Time.current)
+    when "due_soon"
+      apply_due_soon_filter(scope, :discard_candidate_at)
     else
       scope
     end
+  end
+
+  def apply_due_soon_filter(scope, column)
+    now = Time.current
+    scope.where.not(column => nil).where(column => now..LIFECYCLE_DUE_SOON_WINDOW.from_now)
   end
 
   def lifecycle_handoff_candidate(document)
