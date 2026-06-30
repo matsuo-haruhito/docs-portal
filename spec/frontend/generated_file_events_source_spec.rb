@@ -19,9 +19,9 @@ RSpec.describe "admin generated file events source" do
 
   it "keeps the single-event retry label consistent between index and detail" do
     aggregate_failures do
-      expect(index_source).to include('button_to "このイベントを再投入", retry_dispatch_admin_generated_file_event_path')
-      expect(index_source).to include('title: "#{event.public_id} を再投入キューに投入"')
-      expect(index_source).to include('aria: {label: "#{event.public_id} を再投入キューに投入"}')
+      expect(index_source).to include('button_to "この1件を再投入", retry_dispatch_admin_generated_file_event_path')
+      expect(index_source).to include('title: "#{event.public_id} 1件を再投入キューに投入（一括再投入ではありません）"')
+      expect(index_source).to include('aria: {label: "#{event.public_id} 1件を再投入キューに投入（一括再投入ではありません）"}')
       expect(index_source).not_to include("このイベントを再dispatch")
       expect(index_source).not_to include("再dispatchキュー")
       expect(show_source).to include('button_to "このイベントを再投入", retry_dispatch_admin_generated_file_event_path')
