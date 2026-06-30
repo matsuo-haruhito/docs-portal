@@ -57,7 +57,7 @@
             th 文書名
             th 並び順
             th メモ
-        tbody
+        tbody data-document-set-document-filter-target="tableBody"
           - @project_documents.each_with_index do |document, index|
             - item = selected_items[document.id]
             - row_class = ["document-set-document-filter__row", ("is-selected" if item.present?)].compact.join(" ")
