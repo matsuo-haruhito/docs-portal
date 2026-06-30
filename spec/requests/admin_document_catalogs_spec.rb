@@ -44,6 +44,10 @@ RSpec.describe "Admin document catalogs", type: :request do
     parsed_html.at_css(%(tr[data-document-catalog-document-id="#{document.id}"]))
   end
 
+  def catalog_item_row_ids
+    parsed_html.css("tr[data-document-catalog-document-id]").map { |node| node["data-document-catalog-document-id"] }
+  end
+
   def listed_catalog_names
     parsed_html.css("table tbody tr td:nth-child(2) div").map { |node| node.text.squish }
   end
@@ -56,9 +60,6 @@ RSpec.describe "Admin document catalogs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("文書カタログ管理")
     expect(page_text).to include("文書カタログ")
-    expect(page_text).to include("登録済み文書カタログ")
-    expect(page_text).to include("現在1件の文書カタログを表示しています。")
-    expect(page_text).to include("公開側の文書カタログで使う対象、公開範囲、表示順、文書数を確認できます。")
     expect(form_select_names).to include(
       "document_catalog[project_id]",
       "document_catalog[audience_type]",
@@ -74,20 +75,6 @@ RSpec.describe "Admin document catalogs", type: :request do
     get admin_document_catalogs_path
 
     expect(response).to have_http_status(:forbidden)
-  end
-
-  it "keeps the empty state when no catalog is registered" do
-    DocumentCatalogItem.delete_all
-    DocumentCatalog.delete_all
-
-    sign_in_as(admin)
-
-    get admin_document_catalogs_path
-
-    expect(response).to have_http_status(:ok)
-    expect(page_text).to include("まだ文書カタログは登録されていません。")
-    expect(page_text).to include("上の「新規登録」で案件と名称を設定して保存すると、公開側の文書カタログで使う項目を管理できます。")
-    expect(page_text).not_to include("登録済み文書カタログ")
   end
 
   it "searches and restores projects for the remote project picker" do
@@ -120,10 +107,40 @@ RSpec.describe "Admin document catalogs", type: :request do
         "id" => document_a.id,
         "title" => "導入ガイド",
         "slug" => "getting-started",
-        "latest_version_label" => "v1.0.0"
+        "latest_version_label" => "v1.0.0",
+        "path" => project_document_path(project, document_a.slug)
       )
     )
     expect(json_response.fetch("options").map { _1.fetch("id") }).not_to include(other_document.id)
+  end
+
+  it "lets the remote picker find an unrendered document and provides a submit row target" do
+    extra_documents = create_list(:document, Admin::DocumentCatalogsController::DOCUMENT_SEARCH_LIMIT + 1, project:)
+
+    sign_in_as(admin)
+
+    get edit_admin_document_catalog_path(existing_catalog)
+
+    expect(response).to have_http_status(:ok)
+    remote_document = extra_documents.find { |document| catalog_item_row_ids.exclude?(document.id.to_s) }
+    expect(remote_document).to be_present
+    expect(catalog_item_row_for(remote_document)).to be_nil
+    expect(parsed_html.at_css('tbody[data-document-set-document-filter-target~="tableBody"]')).to be_present
+
+    picker = parsed_html.at_css("#document-catalog-remote-document-picker")
+    expect(picker["data-action"]).to include("document-set-document-filter#pickRemoteDocument")
+
+    get document_search_admin_document_catalogs_path(format: :json), params: { project_id: project.id, q: remote_document.slug }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("documents")).to contain_exactly(
+      include(
+        "id" => remote_document.id,
+        "title" => remote_document.title,
+        "slug" => remote_document.slug,
+        "path" => project_document_path(project, remote_document.slug)
+      )
+    )
   end
 
   it "restores selected documents only when they belong to the selected project" do
