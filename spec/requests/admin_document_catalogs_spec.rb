@@ -28,12 +28,24 @@ RSpec.describe "Admin document catalogs", type: :request do
     parsed_html.text.squish
   end
 
+  def json_response
+    JSON.parse(response.body)
+  end
+
   def form_select_names
     parsed_html.css('select[name^="document_catalog["]').map { |node| node["name"] }
   end
 
+  def project_field
+    parsed_html.at_css('[name="document_catalog[project_id]"]')
+  end
+
   def catalog_item_row_for(document)
     parsed_html.at_css(%(tr[data-document-catalog-document-id="#{document.id}"]))
+  end
+
+  def catalog_item_row_ids
+    parsed_html.css("tr[data-document-catalog-document-id]").map { |node| node["data-document-catalog-document-id"] }
   end
 
   def listed_catalog_names
@@ -56,6 +68,9 @@ RSpec.describe "Admin document catalogs", type: :request do
       "document_catalog[audience_type]",
       "document_catalog[visibility_policy]"
     )
+    expect(project_field["data-rails-fields-kit--tom-select-url-value"]).to eq(project_search_admin_document_catalogs_path(format: :json))
+    expect(project_field["data-rails-fields-kit--tom-select-selected-url-value"]).to eq(selected_project_admin_document_catalogs_path(format: :json))
+    expect(project_field["data-rails-fields-kit--tom-select-max-options-value"]).to eq(Admin::DocumentCatalogsController::PROJECT_SEARCH_LIMIT.to_s)
     expect(listed_catalog_names).to include("既存カタログ")
 
     sign_in_as(external_user)
@@ -77,6 +92,116 @@ RSpec.describe "Admin document catalogs", type: :request do
     expect(page_text).to include("まだ文書カタログは登録されていません。")
     expect(page_text).to include("上の「新規登録」で案件と名称を設定して保存すると、公開側の文書カタログで使う項目を管理できます。")
     expect(page_text).not_to include("登録済み文書カタログ")
+  end
+
+  it "searches and restores projects for the remote project picker" do
+    sign_in_as(admin)
+
+    get project_search_admin_document_catalogs_path(format: :json), params: { q: "cat" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("options")).to contain_exactly(
+      include("value" => project.id, "text" => "CAT / Catalog Project")
+    )
+
+    get selected_project_admin_document_catalogs_path(format: :json), params: { id: other_project.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("option")).to include(
+      "value" => other_project.id,
+      "text" => "OTHER / Other Project"
+    )
+  end
+
+  it "searches documents inside the selected project only" do
+    sign_in_as(admin)
+
+    get document_search_admin_document_catalogs_path(format: :json), params: { project_id: project.id, q: "getting" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("documents")).to contain_exactly(
+      include(
+        "id" => document_a.id,
+        "title" => "導入ガイド",
+        "slug" => "getting-started",
+        "latest_version_label" => "v1.0.0",
+        "path" => project_document_path(project, document_a.slug)
+      )
+    )
+    expect(json_response.fetch("options").map { _1.fetch("id") }).not_to include(other_document.id)
+  end
+
+  it "lets the remote picker find an unrendered document and provides a submit row target" do
+    extra_documents = create_list(:document, Admin::DocumentCatalogsController::DOCUMENT_SEARCH_LIMIT + 1, project:)
+
+    sign_in_as(admin)
+
+    get edit_admin_document_catalog_path(existing_catalog)
+
+    expect(response).to have_http_status(:ok)
+    remote_document = extra_documents.find { |document| catalog_item_row_ids.exclude?(document.id.to_s) }
+    expect(remote_document).to be_present
+    expect(catalog_item_row_for(remote_document)).to be_nil
+    expect(parsed_html.at_css('tbody[data-document-set-document-filter-target~="tableBody"]')).to be_present
+
+    picker = parsed_html.at_css("#document-catalog-remote-document-picker")
+    expect(picker["data-action"]).to include("document-set-document-filter#pickRemoteDocument")
+
+    get document_search_admin_document_catalogs_path(format: :json), params: { project_id: project.id, q: remote_document.slug }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("documents")).to contain_exactly(
+      include(
+        "id" => remote_document.id,
+        "title" => remote_document.title,
+        "slug" => remote_document.slug,
+        "path" => project_document_path(project, remote_document.slug)
+      )
+    )
+  end
+
+  it "restores selected documents only when they belong to the selected project" do
+    sign_in_as(admin)
+
+    get selected_document_admin_document_catalogs_path(format: :json), params: { project_id: project.id, id: document_b.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("option")).to include(
+      "id" => document_b.id,
+      "title" => "運用手順",
+      "slug" => "operations"
+    )
+
+    get selected_document_admin_document_catalogs_path(format: :json), params: { project_id: project.id, id: other_document.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("option")).to be_nil
+  end
+
+  it "keeps existing catalog items visible when they are outside the bounded candidate window" do
+    extra_documents = create_list(:document, Admin::DocumentCatalogsController::DOCUMENT_SEARCH_LIMIT + 1, project:)
+    selected_document = extra_documents.last
+    create(:document_catalog_item, document_catalog: existing_catalog, document: selected_document, sort_order: 9, note: "selected outside first page")
+
+    sign_in_as(admin)
+
+    get edit_admin_document_catalog_path(existing_catalog)
+
+    expect(response).to have_http_status(:ok)
+    row = catalog_item_row_for(selected_document)
+    expect(row).to be_present
+    expect(row.at_css('input[type="checkbox"][checked]')).to be_present
+    expect(row.at_css('input[name$="[note]"]')["value"]).to eq("selected outside first page")
+  end
+
+  it "protects remote search endpoints with the admin-only boundary" do
+    sign_in_as(external_user)
+
+    get project_search_admin_document_catalogs_path(format: :json), params: { q: "cat" }
+    expect(response).to have_http_status(:forbidden)
+
+    get document_search_admin_document_catalogs_path(format: :json), params: { project_id: project.id, q: "getting" }
+    expect(response).to have_http_status(:forbidden)
   end
 
   it "creates a catalog with selected same-project items and ignores out-of-scope rows" do
