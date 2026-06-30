@@ -59,12 +59,12 @@ section.card
   - if @document_file_health.missing_files.any?
     p.actions
       = link_to "表示中の欠落候補をCSVで引き継ぐ", admin_missing_document_files_path(request.query_parameters.merge(format: :csv)), class: "button secondary"
-    p.muted = "CSV handoff は現在の条件と表示中の先頭#{@display_limit}件だけを read-only に引き継ぎます。自動修復、削除、再import、全件CSV export は行いません。"
+    p.muted = "CSV handoff は現在の条件と表示中の先頭#{@display_limit}件だけを read-only に引き継ぎます。自動修復、削除、再import、CSV export は行いません。"
 
   - if @document_file_health.missing_count.positive?
     .field
       h3 引き継ぎ用Markdown digest
-      p.muted = "現在の条件、件数、表示中の代表 missing file だけをまとめた read-only digest です。表示中は先頭#{@display_limit}件までで、自動修復、削除、再import、全件CSV export は行いません。"
+      p.muted = "現在の条件、件数、表示中の代表 missing file だけをまとめた read-only digest です。表示中は先頭#{@display_limit}件までで、自動修復、削除、再import、CSV export は行いません。"
       = text_area_tag :missing_document_file_handoff_digest,
         missing_document_file_handoff_digest(health: @document_file_health, filters: @missing_document_file_filters, selected_project: @selected_project, display_limit: @display_limit),
         readonly: true,
@@ -75,14 +75,14 @@ section.card
     p.muted 実体ファイルの欠落は検出されていません。
   - elsif @document_file_health.filtered? && @document_file_health.filtered_missing_count.zero?
     p.muted = "条件に一致する欠落ファイルはありません。全体では#{@document_file_health.missing_count}件の実体欠落があります。"
-    p.muted = "表示中は0件で、全体欠落が解消されたわけではありません。自動修復、削除、再import、全件CSV export は行いません。"
+    p.muted = "表示中は0件で、全体欠落が解消されたわけではありません。自動修復、削除、再import、CSV export は行いません。"
   - else
     - if @document_file_health.filtered?
-      p.muted = "この詳細一覧は条件一致欠落の先頭#{@display_limit}件までを表示します。表示中は全体欠落や条件一致全件ではありません。自動修復、削除、再import、全件CSV export は行いません。"
+      p.muted = "この詳細一覧は条件一致欠落の先頭#{@display_limit}件までを表示します。表示中は全体欠落や条件一致全件ではありません。自動修復、削除、再import、CSV export は行いません。"
       - if @document_file_health.filtered_missing_count > @document_file_health.missing_files.size
         p.muted = "条件一致欠落は#{@document_file_health.filtered_missing_count}件ありますが、表示中は先頭#{@document_file_health.missing_files.size}件までです。続きを確認する場合は storage 側または database 側の調査へ切り替えてください。"
     - else
-      p.muted = "この詳細一覧は全体の実体欠落の先頭#{@display_limit}件までを表示します。表示中は詳細一覧に出している件数です。自動修復、削除、再import、全件CSV export は行いません。"
+      p.muted = "この詳細一覧は全体の実体欠落の先頭#{@display_limit}件までを表示します。表示中は詳細一覧に出している件数です。自動修復、削除、再import、CSV export は行いません。"
       - if @document_file_health.missing_count > @document_file_health.missing_files.size
         p.muted = "全体の実体欠落は#{@document_file_health.missing_count}件ありますが、表示中は先頭#{@document_file_health.missing_files.size}件までです。続きを確認する場合は storage 側または database 側の調査へ切り替えてください。"
 
