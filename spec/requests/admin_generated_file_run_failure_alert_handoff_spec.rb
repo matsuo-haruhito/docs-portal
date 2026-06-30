@@ -33,7 +33,7 @@ RSpec.describe "Admin generated file run failure alert handoff", type: :request 
       expect(response).to have_http_status(:ok)
       expect(page_text).to include("生成ファイル継続失敗候補 handoff")
       expect(page_text).to include("read-only")
-      expect(page_text).to include("通知送信、ack、再通知抑制、自動 retry")
+      expect(page_text).to include("通知済み状態、ack、再通知抑制、自動 retry")
       expect(page_text).to include("候補 1")
       expect(page_text).to include("docs-build")
       expect(page_text).to include("job_id=docs-build / generator=docusaurus / output_writer=filesystem / event_source=schedule")
