@@ -1,6 +1,8 @@
 class Admin::UsersController < Admin::BaseController
+  COMPANY_SEARCH_QUERY_MAX_LENGTH = 100
+  COMPANY_SEARCH_LIMIT = 20
+
   before_action :set_user, only: %i[edit update destroy]
-  before_action :load_companies, only: %i[index create edit update]
   before_action :prepare_form_context, only: %i[index create edit update]
 
   helper_method :user_return_to_path
@@ -39,6 +41,16 @@ class Admin::UsersController < Admin::BaseController
     redirect_to user_return_to_path, alert: "関連データがあるため削除できません。"
   rescue ActiveRecord::InvalidForeignKey
     redirect_to user_return_to_path, alert: "関連データがあるため削除できません。"
+  end
+
+  def company_search
+    render json: { options: user_company_options(searchable_user_companies) }
+  end
+
+  def selected_company
+    company = selected_user_company
+
+    render json: { option: company ? user_company_option(company) : nil }
   end
 
   private
@@ -100,10 +112,6 @@ class Admin::UsersController < Admin::BaseController
     safe_return_to_path(admin_users_path)
   end
 
-  def load_companies
-    @companies = company_master_admin? ? Company.where(id: current_user.company_id) : Company.order(:domain)
-  end
-
   def prepare_form_context
     @company_admin_user_form = company_master_admin?
     @fixed_company_for_form = current_user.company if @company_admin_user_form
@@ -135,5 +143,41 @@ class Admin::UsersController < Admin::BaseController
 
   def default_user_type_for_form
     company_master_admin? ? :external : :internal
+  end
+
+  def searchable_user_companies
+    scope = user_company_scope.order(:domain, :id)
+    query = normalized_company_search_query(params[:q])
+    return scope.limit(COMPANY_SEARCH_LIMIT) if query.blank?
+
+    pattern = "%#{Company.sanitize_sql_like(query.downcase)}%"
+    scope.where(
+      "LOWER(companies.domain) LIKE :pattern OR LOWER(companies.name) LIKE :pattern",
+      pattern:
+    ).limit(COMPANY_SEARCH_LIMIT)
+  end
+
+  def selected_user_company
+    return if params[:id].blank?
+
+    user_company_scope.find_by(id: params[:id])
+  end
+
+  def user_company_scope
+    return Company.where(id: current_user.company_id) if company_master_admin?
+
+    Company.all
+  end
+
+  def normalized_company_search_query(value)
+    value.to_s.strip.first(COMPANY_SEARCH_QUERY_MAX_LENGTH)
+  end
+
+  def user_company_options(companies)
+    companies.map { user_company_option(_1) }
+  end
+
+  def user_company_option(company)
+    { value: company.id, text: helpers.admin_user_company_label(company) }
   end
 end
