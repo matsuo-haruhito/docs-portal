@@ -55,6 +55,8 @@ current 実装の前提:
 - show では model ごとに最近 20 件の record を、catalog が持つ `summary_fields` で表示する
 - show の `代表フィールド検索` は、各 model の `summary_fields` のうち実カラムの string / text field と、数字だけの検索語では `id` exact match を対象にする
 - association 表示用の `*_id` field は代表フィールド検索の対象外だが、`public_id` は識別用の代表 field として検索対象に残る
+- `*_id` field は、関連先 record から `display_name` / `name` / `title` / `code` / `public_id` / `email_address` の短い label を安全に取れる場合だけ、`表示名（ID: 123）` のように label と ID を併記する
+- 関連先 label が取れない、関連 record がない、または association reflection が取れない場合は、従来どおり ID 値または `-` の短い表示へ戻る。関連先検索、row action、record detail 導線をここで追加したものではない
 - 検索語は最大 100 文字に切り詰められ、検索結果も最大 20 件までの read-only sample として表示される
 - index の検索結果から詳細へ入った場合、detail の `モデル一覧へ戻る` と breadcrumb は index 側の検索語を保持したモデル一覧へ戻る。detail 内の `代表フィールド検索` を解除しても、元の index 検索文脈は残る
 - `既存画面へ` がある model は、そのまま管理画面の一覧へ戻れる
@@ -107,7 +109,7 @@ current 実装の前提:
 - `public_id`、状態、種別、関連先 ID、時刻など、最近の record を識別しやすい短い値を優先する
 - `secret`、token、authorization、raw payload、request / response body、長大 text、個人情報の本文相当は入れない
 - ファイル本文、Webhook request body、外部 API の raw response などは、model browser ではなく専用のマスク済み preview や詳細画面の方針に従う
-- association は `*_id` のような短い参照値に留め、名前や本文をたどる必要がある場合は既存画面や関連 runbook への導線で補う
+- association は `*_id` のような短い参照値に留める。model browser show では安全に取れる関連先 label と ID を短く併記する場合があるが、代表フィールド検索の対象や関連先詳細への操作導線にはしない
 - 代表フィールド検索は string / text の `summary_fields` と numeric `id` の補助検索に限られるため、検索させたい値を増やす目的だけで長大 text や secret 相当の field を `summary_fields` に追加しない
 
 `summary_fields` 追加時の guard の読み方:
@@ -281,7 +283,7 @@ current 実装の前提:
 - `Storage使用量` の `Docs site build` が増えている: `大きい内訳` で上位 direct child と最終更新を確認し、[notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) で build artifact と runtime 前提を確認する
 - `Storage使用量` の `Import staging` が増えている: `大きい内訳` で上位 direct child と最終更新を確認し、manual upload dry-run や ZIP import の既存入口で staging artifact の文脈を確認する
 - storage の保存先、配信、cleanup 境界を見直したい: [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md)
-- 個別のアクセス履歴や利用傾向を追いたい: [監査ログ運用runbook](./監査ログ運用runbook.md) や [文書利用状況運用runbook](./文書利用状況運用runbook.md) に戻る
+- 個別のアクセス履歴や利用傾向を追いたい: [監査ログ運用runbook](./監査ログ運用runbook.md) や [文書利用状況運用runbook.md](./文書利用状況運用runbook.md) に戻る
 
 ## 関連画面
 
