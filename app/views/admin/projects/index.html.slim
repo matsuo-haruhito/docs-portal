@@ -60,6 +60,8 @@ h1 案件マスタ
         th data-rails-table-preferences-column-key="actions"
     tbody
       - @projects.each do |project|
+        - project_delete_company_label = project.company&.display_name || "企業未設定"
+        - project_delete_confirm = "案件「#{project.name}」（コード: #{project.code} / 企業: #{project_delete_company_label}）を削除しますか？関連文書や所属設定に影響します。"
         tr
           td data-rails-table-preferences-column-key="code" = project.code
           td data-rails-table-preferences-column-key="name" = project.name
@@ -68,7 +70,7 @@ h1 案件マスタ
           td data-rails-table-preferences-column-key="status" = project.active? ? "有効" : "無効"
           td.actions data-rails-table-preferences-column-key="actions"
             = edit_link_to "編集", edit_admin_project_path(project)
-            = delete_link_to "削除", admin_project_path(project), confirm: "案件「#{project.name}」を削除しますか？関連文書や所属設定に影響します。"
+            = delete_link_to "削除", admin_project_path(project), confirm: project_delete_confirm
 - else
   .card
     - if @projects_total_count.to_i.zero?
