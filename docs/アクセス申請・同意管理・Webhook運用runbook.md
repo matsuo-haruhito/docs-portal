@@ -58,6 +58,19 @@
 - `申請はありません。` は、filter を掛けていない状態で申請レコード自体がまだ無いことを示す
 - その下の `利用者からアクセス申請が届くと、承認待ち・承認済み・却下の履歴がここに表示されます。` は、初回 0 件時に今後ここへ履歴が積まれることを示す補足 copy として読む。filtered 0 件時の条件解除導線や承認基準を追加するものではない
 
+#### pending handoff JSON の読み方
+
+`GET /admin/access_requests/pending_handoff.json` は、現在の一覧 filter から pending 申請候補だけを read-only JSON として引き継ぐための補助 endpoint。承認・却下、通知、担当者割当、SLA、自動 escalation は実行しない。
+
+- `current_filter` は、一覧と同じ `状態`、`要求権限`、`対象種別`、`申請者・対象` 検索のうち、採用された条件だけを示す
+- `status` は常に `pending` として読み、`status=approved` などを指定しても候補抽出は pending に閉じる
+- `total_count` は current filter に一致する pending 候補の総件数、`limit` は返す候補の上限で current 実装では 50 件
+- `truncated: true` のときは 50 件を超える候補がある。JSON だけで全件処理したものと扱わず、一覧 filter や検索語を絞って再確認する
+- `candidates` には `public_id`、申請者 preview、対象種別、対象 label / context、要求権限、理由 preview、状態、確認用 path が入る
+- `reason_preview` は短く丸めた確認用の断片で、申請理由全文や監査用 export として扱わない
+- `admin_review_path` は該当申請を一覧で探し直すための path。承認・却下の API 実行や一括処理対象ではない
+- `note` は、候補ありなら read-only handoff であること、0 件なら「現在条件で対象なし」であることを補足する。0 件 note は正常保証、通知正常、全期間 0 件を意味しない
+
 日常確認ポイント:
 
 - `承認待ち` で絞り、処理待ちが溜まっていないかを最初に確認する
