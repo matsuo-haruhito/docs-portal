@@ -90,7 +90,8 @@ module Admin::MissingDocumentFilesHelper
       "",
       "## 注意",
       "- 表示中は先頭#{display_limit}件までです。全体欠落や条件一致全件を保証する export ではありません。",
-      "- この digest は read-only の引き継ぎ用です。自動修復、削除、再import、全件CSV export は行いません。",
+      "- この digest は read-only の引き継ぎ用です。自動修復、削除、再import、CSV export は行いません。",
+      "- CSV handoff は表示中候補を引き継ぐための bounded read-only 出力です。",
       "- Expected path は画面と同じ safe preview です。raw absolute path や storage backend private path は含めません。"
     ])
 
