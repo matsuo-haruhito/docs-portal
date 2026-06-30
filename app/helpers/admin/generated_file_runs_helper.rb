@@ -4,6 +4,8 @@ module Admin::GeneratedFileRunsHelper
 
   GENERATED_FILE_RUN_SENSITIVE_KEY_PATTERN =
     /(authorization|token|secret|password|api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|client[_-]?state)/i
+  GENERATED_FILE_RUN_RAW_METADATA_KEY_PATTERN =
+    /\A(raw[_-]?(artifact|manifest|payload)|ci[_-]?log|import[_-]?api[_-]?request[_-]?payload|request[_-]?payload|manifest[_-]?body|artifact[_-]?body)\z/i
   GENERATED_FILE_RUN_SENSITIVE_ASSIGNMENT_PATTERN =
     /\b(authorization|token|secret|password|api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|client[_-]?state)\b\s*[:=]\s*["']?[^"'\s,;}]+/i
   GENERATED_FILE_RUN_BEARER_TOKEN_PATTERN = /\bBearer\s+[A-Za-z0-9._~+\/-]+=*/i
@@ -61,6 +63,29 @@ module Admin::GeneratedFileRunsHelper
     "ユーザーID #{user_id}（未検出）"
   end
 
+  def generated_file_run_site_build_artifact_summary(run)
+    metadata = run.metadata || {}
+    return unless generated_file_run_site_build_artifact?(run, metadata)
+
+    artifact = metadata["artifact"].is_a?(Hash) ? metadata["artifact"] : {}
+    fields = [
+      generated_file_run_filter_summary_item("workflow run", artifact["workflow_run_id"]),
+      generated_file_run_filter_summary_item("attempt", artifact["workflow_run_attempt"]),
+      generated_file_run_filter_summary_item("source repo", artifact["source_repo"]),
+      generated_file_run_filter_summary_item("source branch", artifact["source_branch"]),
+      generated_file_run_filter_summary_item("source commit", artifact["source_commit_hash"]),
+      generated_file_run_filter_summary_item("manifest path", artifact["manifest_path"]),
+      generated_file_run_filter_summary_item("artifact", artifact["name"]),
+      generated_file_run_filter_summary_item("status cue", generated_file_run_site_build_artifact_status_cue(run.status)),
+      generated_file_run_filter_summary_item("started", run.started_at&.iso8601),
+      generated_file_run_filter_summary_item("finished", run.finished_at&.iso8601),
+      generated_file_run_filter_summary_item("manifest documents", metadata["manifest_document_count"]),
+      generated_file_run_filter_summary_item("runbook", "docs/build-docs workflow確認runbook.md")
+    ].compact
+
+    { fields: fields }
+  end
+
   private
 
   def generated_file_run_filter_summary_item(label, value)
@@ -86,8 +111,29 @@ module Admin::GeneratedFileRunsHelper
     "#{from}〜#{to}"
   end
 
+  def generated_file_run_site_build_artifact?(run, metadata)
+    run.job_id == GeneratedFiles::SiteBuildArtifactRunRecorder::JOB_ID &&
+      run.event_source == GeneratedFiles::SiteBuildArtifactRunRecorder::EVENT_SOURCE &&
+      metadata["read_only_evidence"] == true
+  end
+
+  def generated_file_run_site_build_artifact_status_cue(status)
+    case status.to_s
+    when "completed"
+      "Rails側metadataで確認可能"
+    when "failed"
+      "rebuild優先候補"
+    when "running", "skipped"
+      "artifact再確認候補"
+    else
+      "artifact再確認候補"
+    end
+  end
+
   def mask_generated_file_run_metadata(value, key: nil)
-    if key.to_s.match?(GENERATED_FILE_RUN_SENSITIVE_KEY_PATTERN)
+    if key.to_s.match?(GENERATED_FILE_RUN_RAW_METADATA_KEY_PATTERN)
+      GENERATED_FILE_RUN_FILTERED_VALUE
+    elsif key.to_s.match?(GENERATED_FILE_RUN_SENSITIVE_KEY_PATTERN)
       GENERATED_FILE_RUN_FILTERED_VALUE
     elsif value.is_a?(Hash)
       value.each_with_object({}) do |(child_key, child_value), result|
