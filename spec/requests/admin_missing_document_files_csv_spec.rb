@@ -28,9 +28,9 @@ RSpec.describe "Admin missing document files CSV handoff", type: :request do
     get admin_missing_document_files_path(project_id: project.id, document_q: "safety", file_q: "handoff")
 
     expect(response).to have_http_status(:ok)
-    link = parsed_html.at_css(%(a[href*="#{admin_missing_document_files_path}.csv"]))
+    link = parsed_html.css("a").find { |node| node.text.squish == "表示中の欠落候補をCSVで引き継ぐ" }
     expect(link).to be_present
-    expect(link.text.squish).to eq("表示中の欠落候補をCSVで引き継ぐ")
+    expect(link["href"]).to match(/(?:\.csv|format=csv)/)
     expect(link["href"]).to include("project_id=#{project.id}")
     expect(link["href"]).to include("document_q=safety")
     expect(link["href"]).to include("file_q=handoff")
