@@ -10,12 +10,16 @@ RSpec.describe "Admin project consent setting delete confirmation", type: :reque
   it "identifies the project, consent term, version, and required timing in the delete confirm" do
     project = create(:project, code: "ALPHA", name: "Alpha Project")
     consent_term = create(:consent_term, title: "Portal Terms", version_label: "v1", consent_scope: :project)
-    setting = create(:project_consent_setting, project:, consent_term:, required_on: :first_access, enabled: true)
+    create(:project_consent_setting, project:, consent_term:, required_on: :first_access, enabled: true)
 
     get admin_project_consent_settings_path
 
     expect(response).to have_http_status(:ok)
-    delete_link = parsed_html.css(%(a[href="#{admin_project_consent_setting_path(setting)}"])).find { _1.text.squish == "削除" }
+    setting_row = parsed_html.css("tbody tr").find do |row|
+      row.text.squish.include?("Alpha Project") && row.text.squish.include?("Portal Terms")
+    end
+    expect(setting_row).to be_present
+    delete_link = setting_row.css("a, button").find { _1.text.squish == "削除" }
     expect(delete_link).to be_present
     expect(delete_confirm(delete_link)).to include(
       "案件「Alpha Project (ALPHA)」",
