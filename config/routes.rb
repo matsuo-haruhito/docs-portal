@@ -133,7 +133,12 @@ Rails.application.routes.draw do
       get :document_search, on: :collection
       get :document_version_search, on: :collection
     end
-    resources :document_catalogs, except: %i[show new], param: :public_id
+    resources :document_catalogs, except: %i[show new], param: :public_id do
+      get :project_search, on: :collection
+      get :selected_project, on: :collection
+      get :document_search, on: :collection
+      get :selected_document, on: :collection
+    end
     resources :document_permissions, except: %i[show new], param: :public_id do
       get :project_search, on: :collection
       get :selected_project, on: :collection
@@ -218,14 +223,5 @@ Rails.application.routes.draw do
   resources :document_files, only: [:show], param: :public_id do
     get "archive_entries/preview", to: "document_file_archive_entries#preview", as: :archive_entry_preview, on: :member
     get "archive_entries/download", to: "document_file_archive_entries#download", as: :archive_entry_download, on: :member
-    get "assets/*asset_path", to: "document_files#asset", as: :asset, on: :member, format: false
-  end
-
-  namespace :api do
-    namespace :internal do
-      resources :artifact_imports, only: [:create]
-      resources :file_uploads, only: [:create]
-      resources :zip_uploads, only: [:create]
-    end
   end
 end
