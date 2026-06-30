@@ -56,6 +56,9 @@ RSpec.describe "Admin document catalogs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("文書カタログ管理")
     expect(page_text).to include("文書カタログ")
+    expect(page_text).to include("登録済み文書カタログ")
+    expect(page_text).to include("現在1件の文書カタログを表示しています。")
+    expect(page_text).to include("公開側の文書カタログで使う対象、公開範囲、表示順、文書数を確認できます。")
     expect(form_select_names).to include(
       "document_catalog[project_id]",
       "document_catalog[audience_type]",
@@ -71,6 +74,20 @@ RSpec.describe "Admin document catalogs", type: :request do
     get admin_document_catalogs_path
 
     expect(response).to have_http_status(:forbidden)
+  end
+
+  it "keeps the empty state when no catalog is registered" do
+    DocumentCatalogItem.delete_all
+    DocumentCatalog.delete_all
+
+    sign_in_as(admin)
+
+    get admin_document_catalogs_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("まだ文書カタログは登録されていません。")
+    expect(page_text).to include("上の「新規登録」で案件と名称を設定して保存すると、公開側の文書カタログで使う項目を管理できます。")
+    expect(page_text).not_to include("登録済み文書カタログ")
   end
 
   it "searches and restores projects for the remote project picker" do
