@@ -18,7 +18,7 @@ RSpec.describe "admin/document_sets form source" do
   end
 
   it "updates visible rows, selected count, and empty state without remote search" do
-    expect(controller_source).to include("static targets = [\"query\", \"row\", \"status\", \"checkbox\", \"selectedOnly\", \"empty\"]")
+    expect(controller_source).to include("static targets = [\"query\", \"row\", \"status\", \"checkbox\", \"selectedOnly\", \"empty\", \"tableBody\"]")
     expect(controller_source).to include("const selectedOnly = this.hasSelectedOnlyTarget && this.selectedOnlyTarget.checked")
     expect(controller_source).to include("row.hidden = !visible")
     expect(controller_source).to include("row.classList.toggle(\"is-selected\", selected)")
