@@ -1,3 +1,5 @@
+require "csv"
+
 class Admin::DocumentPermissionsController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_document_permission, only: %i[edit update destroy]
@@ -10,10 +12,34 @@ class Admin::DocumentPermissionsController < Admin::BaseController
   COMPANY_SEARCH_LIMIT = 20
   USER_SEARCH_QUERY_MAX_LENGTH = 100
   USER_SEARCH_LIMIT = 20
+  DOCUMENT_PERMISSIONS_CSV_HEADERS = [
+    "案件コード",
+    "案件名",
+    "文書名",
+    "slug",
+    "公開範囲",
+    "付与先種別",
+    "会社名",
+    "会社domain",
+    "ユーザー名",
+    "ユーザーemail",
+    "権限",
+    "作成日時",
+    "更新日時"
+  ].freeze
 
   def index
     @document_permission = DocumentPermission.new(access_level: :view)
     load_index_resources
+
+    respond_to do |format|
+      format.html
+      format.csv do
+        send_data document_permissions_csv(@document_permissions),
+          filename: "document-permissions-#{Time.zone.today.iso8601}.csv",
+          type: "text/csv; charset=utf-8"
+      end
+    end
   end
 
   def create
@@ -100,8 +126,8 @@ class Admin::DocumentPermissionsController < Admin::BaseController
     @document_permissions = permission_scope
       .joins(:document)
       .where(document_id: document_scope.select(:id))
-      .includes(:document, :company, :user)
-      .order("documents.title")
+      .includes({ document: :project }, :company, :user)
+      .order("documents.title", "document_permissions.id")
     @permission_overview_rows = DocumentPermissionOverview.new(document_scope, permission_scope:).rows
   end
 
@@ -142,6 +168,45 @@ class Admin::DocumentPermissionsController < Admin::BaseController
     permitted[:access_level] = nil unless DocumentPermission.access_levels.key?(permitted[:access_level])
     permitted[:target_type] = nil unless %w[company user].include?(permitted[:target_type])
     permitted
+  end
+
+  def document_permissions_csv(permissions)
+    CSV.generate(headers: true) do |csv|
+      csv << DOCUMENT_PERMISSIONS_CSV_HEADERS
+      permissions.each do |permission|
+        csv << document_permission_csv_row(permission)
+      end
+    end
+  end
+
+  def document_permission_csv_row(permission)
+    document = permission.document
+    project = document.project
+    company = permission.company
+    user = permission.user
+
+    [
+      project.code,
+      project.name,
+      document.title,
+      document.slug,
+      helpers.document_visibility_policy_label(document),
+      document_permission_csv_target_type(permission),
+      company&.name,
+      company&.domain,
+      user&.name,
+      user&.email_address,
+      helpers.document_permission_access_level_label(permission),
+      permission.created_at.iso8601,
+      permission.updated_at.iso8601
+    ]
+  end
+
+  def document_permission_csv_target_type(permission)
+    return helpers.document_permission_target_type_label("company") if permission.company_id.present?
+    return helpers.document_permission_target_type_label("user") if permission.user_id.present?
+
+    ""
   end
 
   def document_permission_params
