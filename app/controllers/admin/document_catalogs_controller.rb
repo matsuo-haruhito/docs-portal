@@ -206,7 +206,8 @@ class Admin::DocumentCatalogsController < Admin::BaseController
       title: document.title,
       slug: document.slug,
       text: "#{document.title} (#{document.slug})",
-      latest_version_label: document.latest_version&.version_label
+      latest_version_label: document.latest_version&.version_label,
+      path: project_document_path(document.project, document.slug)
     }
   end
 
