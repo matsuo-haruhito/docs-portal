@@ -11,9 +11,12 @@ h1 外部フォルダ同期設定詳細
 - google_drive_source = @external_folder_sync_source.google_drive?
 - microsoft_graph_source = @external_folder_sync_source.microsoft_graph?
 - provider_metadata = @external_folder_sync_source.provider_metadata || {}
-- metadata_recheck_summary = (flash[:metadata_recheck_summary] || flash["metadata_recheck_summary"] || {}).with_indifferent_access
+- metadata_recheck_summary = (flash[:metadata_recheck_summary] || flash["metadata_recheck_summary"] || provider_metadata["last_metadata_recheck"] || {}).with_indifferent_access
 - metadata_recheck_changed_labels = Array(metadata_recheck_summary[:changed_labels])
 - metadata_recheck_matched_labels = Array(metadata_recheck_summary[:matched_labels])
+- metadata_recheck_error_message = metadata_recheck_summary[:error_message].presence
+- metadata_recheck_checked_at = metadata_recheck_summary[:checked_at].presence
+- metadata_recheck_actor_label = metadata_recheck_summary[:actor_label].presence || metadata_recheck_summary[:actor_id].presence
 - apply_confirm_message = "#{provider_label} からドキュメントポータルへ同期します。競合・重複警告がある場合は自動停止します。よろしいですか？"
 
 .card
@@ -29,7 +32,10 @@ h1 外部フォルダ同期設定詳細
     - if metadata_recheck_summary.present?
       .notice
         p.eyebrow 保存済み metadata 再確認結果
-        - if metadata_recheck_changed_labels.any?
+        - if metadata_recheck_error_message.present?
+          p.status-warning = "再確認エラー: #{metadata_recheck_error_message}"
+          p.muted Microsoft Graph の raw response、共有URL、権限 payload は保存・表示していません。
+        - elsif metadata_recheck_changed_labels.any?
           p.status-warning = "差分あり: #{metadata_recheck_changed_labels.join(' / ')}"
           - if metadata_recheck_matched_labels.any?
             p.muted = "一致: #{metadata_recheck_matched_labels.join(' / ')}"
@@ -37,6 +43,16 @@ h1 外部フォルダ同期設定詳細
         - else
           p.muted = "一致: #{metadata_recheck_matched_labels.join(' / ')}"
           p.muted 保存済み metadata は現在の Microsoft Graph 解決結果と一致しています。
+        - if metadata_recheck_checked_at.present? || metadata_recheck_actor_label.present?
+          p.muted
+            - if metadata_recheck_checked_at.present?
+              = "確認日時: #{metadata_recheck_checked_at}"
+            - if metadata_recheck_actor_label.present?
+              - if metadata_recheck_checked_at.present?
+                br
+              = "確認者: #{metadata_recheck_actor_label}"
+        - if metadata_recheck_summary[:source_public_id].present?
+          p.muted = "対象設定: #{metadata_recheck_summary[:source_public_id]}"
   - elsif @external_folder_sync_source.oauth_user? && !@external_folder_sync_source.oauth_connected?
     p.muted Google Drive OAuthが未接続です。まずGoogleアカウントで許可してから、同期プレビューで読み取れるファイルを確認してください。
     p.actions

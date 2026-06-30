@@ -81,7 +81,7 @@ RSpec.describe "Admin external folder sync source metadata recheck", type: :requ
   end
 
   describe "POST /admin/external_folder_sync_sources/:public_id/recheck_metadata" do
-    it "reports that saved Microsoft Graph metadata still matches" do
+    it "reports that saved Microsoft Graph metadata still matches and persists a bounded summary" do
       sign_in_as(admin_user)
       source = create_microsoft_graph_source
       stub_graph_resolution(
@@ -94,6 +94,16 @@ RSpec.describe "Admin external folder sync source metadata recheck", type: :requ
       post recheck_metadata_admin_external_folder_sync_source_path(source)
 
       expect(response).to redirect_to(admin_external_folder_sync_source_path(source, return_to: admin_external_folder_sync_sources_path))
+      summary = source.reload.provider_metadata.fetch("last_metadata_recheck")
+      expect(summary).to include(
+        "source_public_id" => source.public_id,
+        "status" => "matched",
+        "matched_labels" => ["Drive ID", "Folder item ID", "Folder path", "Site ID"],
+        "changed_labels" => [],
+        "actor_id" => admin_user.id
+      )
+      expect(summary["checked_at"]).to be_present
+      expect(summary.keys).not_to include("folder_url", "raw_graph_response", "permission_payload")
       follow_redirect!
       expect(response.body).to include("保存済み metadata を再確認しました")
       expect(response.body).to include("現在の Microsoft Graph 解決結果と一致しています")
@@ -123,6 +133,15 @@ RSpec.describe "Admin external folder sync source metadata recheck", type: :requ
         "folder_path" => "Shared Documents/Policies",
         "site_id" => "site-789"
       )
+      summary = source.provider_metadata.fetch("last_metadata_recheck")
+      expect(summary).to include(
+        "status" => "changed",
+        "matched_labels" => ["Site ID"],
+        "changed_labels" => ["Drive ID", "Folder item ID", "Folder path"]
+      )
+      expect(summary.to_json).not_to include("drive-999")
+      expect(summary.to_json).not_to include("item-999")
+      expect(summary.to_json).not_to include("Shared Documents/Renamed Policies")
 
       follow_redirect!
       expect(response.body).to include("差分があります: Drive ID / Folder item ID / Folder path")
@@ -158,17 +177,30 @@ RSpec.describe "Admin external folder sync source metadata recheck", type: :requ
       expect(response).to redirect_to(admin_external_folder_sync_source_path(source, return_to: admin_external_folder_sync_sources_path))
       expect(source.reload.external_folder_id).to eq(saved_external_folder_id)
       expect(source.external_folder_path).to eq(saved_external_folder_path)
-      expect(source.provider_metadata).to eq(saved_provider_metadata)
+      expect(source.provider_metadata.except("last_metadata_recheck")).to eq(saved_provider_metadata)
+      summary = source.provider_metadata.fetch("last_metadata_recheck")
+      expect(summary).to include(
+        "status" => "error",
+        "matched_labels" => [],
+        "changed_labels" => [],
+        "error_message" => "Microsoft Graph接続・共有URL・権限を確認してください。"
+      )
+      expect(summary.to_json).not_to include("Authorization: Bearer")
+      expect(summary.to_json).not_to include("secret-access-token")
+      expect(summary.to_json).not_to include("client_secret")
+      expect(summary.to_json).not_to include("super-secret-value")
+      expect(summary.to_json).not_to include("rawGraphPayload")
 
       follow_redirect!
       expect(response.body).to include("保存済み metadata を再確認できませんでした")
       expect(response.body).to include("Microsoft Graph接続・共有URL・権限を確認してください")
+      expect(response.body).to include("保存済み metadata 再確認結果")
+      expect(response.body).to include("再確認エラー")
       expect(response.body).not_to include("Authorization: Bearer")
       expect(response.body).not_to include("secret-access-token")
       expect(response.body).not_to include("client_secret")
       expect(response.body).not_to include("super-secret-value")
       expect(response.body).not_to include("rawGraphPayload")
-      expect(response.body).not_to include("保存済み metadata 再確認結果")
     end
 
     it "rejects recheck for Google Drive sources without enabling Microsoft Graph runtime operations" do
@@ -183,6 +215,7 @@ RSpec.describe "Admin external folder sync source metadata recheck", type: :requ
       expect(response.body).to include("同期プレビュー")
       expect(response.body).not_to include("SharePoint / OneDrive の差分同期と変更通知は後続 issue")
       expect(response.body).not_to include("保存済み metadata 再確認結果")
+      expect(source.reload.provider_metadata).to eq({})
     end
   end
 end

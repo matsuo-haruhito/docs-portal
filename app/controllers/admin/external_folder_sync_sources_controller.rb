@@ -5,6 +5,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     "folder_path" => "Folder path",
     "site_id" => "Site ID"
   }.freeze
+  METADATA_RECHECK_SUMMARY_KEY = "last_metadata_recheck".freeze
   EXTERNAL_FOLDER_SYNC_SOURCE_SEARCH_QUERY_MAX_LENGTH = 100
   EXTERNAL_FOLDER_SYNC_SOURCE_DEFAULT_PER_PAGE = 10
   EXTERNAL_FOLDER_SYNC_SOURCE_MAX_PER_PAGE = 50
@@ -146,11 +147,14 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
     resolved = ExternalFolderSync::MicrosoftGraphFolderResolver.new(source: @external_folder_sync_source).resolve
     summary = metadata_recheck_summary(metadata_recheck_comparisons(resolved))
+    persist_metadata_recheck_summary(summary)
     redirect_to sync_source_path_with_return_to,
                 notice: summary["notice"],
                 flash: { metadata_recheck_summary: summary }
   rescue ExternalFolderSync::MicrosoftGraphFolderResolver::Error
-    redirect_to sync_source_path_with_return_to, alert: "保存済み metadata を再確認できませんでした。Microsoft Graph接続・共有URL・権限を確認してください。"
+    summary = metadata_recheck_error_summary
+    persist_metadata_recheck_summary(summary) if @external_folder_sync_source&.microsoft_graph?
+    redirect_to sync_source_path_with_return_to, alert: summary["alert"]
   end
 
   def project_search
@@ -381,12 +385,46 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     changed_labels = comparisons.filter_map { |comparison| comparison[:label] unless comparison[:matched] }
     matched_labels = comparisons.filter_map { |comparison| comparison[:label] if comparison[:matched] }
 
-    {
+    metadata_recheck_base_summary.merge(
       "status" => changed_labels.empty? ? "matched" : "changed",
       "matched_labels" => matched_labels,
       "changed_labels" => changed_labels,
       "notice" => metadata_recheck_notice(changed_labels)
-    }
+    )
+  end
+
+  def metadata_recheck_error_summary
+    metadata_recheck_base_summary.merge(
+      "status" => "error",
+      "matched_labels" => [],
+      "changed_labels" => [],
+      "error_message" => "Microsoft Graph接続・共有URL・権限を確認してください。",
+      "alert" => "保存済み metadata を再確認できませんでした。Microsoft Graph接続・共有URL・権限を確認してください。"
+    )
+  end
+
+  def metadata_recheck_base_summary
+    {
+      "source_public_id" => @external_folder_sync_source.public_id,
+      "checked_at" => Time.current.iso8601,
+      "actor_id" => current_user&.id,
+      "actor_label" => metadata_recheck_actor_label
+    }.compact
+  end
+
+  def metadata_recheck_actor_label
+    return if current_user.blank?
+
+    current_user.try(:display_name).presence ||
+      current_user.try(:name).presence ||
+      current_user.try(:email_address).presence ||
+      current_user.id.to_s
+  end
+
+  def persist_metadata_recheck_summary(summary)
+    metadata = (@external_folder_sync_source.provider_metadata || {}).deep_dup
+    metadata[METADATA_RECHECK_SUMMARY_KEY] = summary.except("notice", "alert")
+    @external_folder_sync_source.update!(provider_metadata: metadata)
   end
 
   def metadata_recheck_notice(changed_labels)
