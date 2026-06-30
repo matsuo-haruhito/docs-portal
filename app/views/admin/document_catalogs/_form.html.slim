@@ -4,10 +4,19 @@
 
 = form_with model: [:admin, document_catalog] do |form|
   .form-grid
-    = form.rfk_select :project_id,
-      collection: document_catalog_project_options(@projects),
+    = form.rfk_combobox :project_id,
+      collection: [],
+      selected: document_catalog_project_selected_option(document_catalog.project),
+      url: project_search_admin_document_catalogs_path(format: :json),
+      selected_url: selected_project_admin_document_catalogs_path(format: :json),
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 1,
+      max_options: Admin::DocumentCatalogsController::PROJECT_SEARCH_LIMIT,
       wrapper: true,
-      label: "案件"
+      label: "案件",
+      placeholder: "案件コード・案件名で検索"
     = form.rfk_text_field :name, wrapper: true, label: "名称"
     = form.rfk_select :audience_type,
       collection: enum_options_for("document_catalogs.audience_type", DocumentCatalog.audience_types.keys),
@@ -26,29 +35,45 @@
   - if @project_documents.any?
     h2 カタログ項目
     p.muted チェックした文書だけカタログに含めます。登録できる文書は選択した案件内の文書だけです。
-    table
-      thead
-        tr
-          th 対象
-          th 文書名
-          th 並び順
-          th メモ
-      tbody
-        - @project_documents.each_with_index do |document, index|
-          - item = selected_items[document.id]
-          tr data-document-catalog-document-id=document.id
-            td
-              = hidden_field_tag "document_catalog_items[#{index}][document_id]", document.id
-              = check_box_tag "document_catalog_items[#{index}][selected]", "1", item.present?
-            td
-              strong = link_to document.title, project_document_path(document.project, document.slug)
-              br
-              span.muted = "URL識別子: #{document.slug}"
-              - if document.latest_version.present?
+    p.muted 候補は最大#{Admin::DocumentCatalogsController::DOCUMENT_SEARCH_LIMIT}件です。保存済みまたは入力中の選択済み文書は候補上限外でも表示します。
+    section.document-set-document-filter data-controller="document-set-document-filter"
+      .document-set-document-filter__bar
+        .document-set-document-filter__remote
+          = label_tag "document-catalog-remote-document-picker", "文書名 / URL識別子で探す", class: "document-set-document-filter__label"
+          = select_tag "document_catalog_remote_document_id", options_for_select([]), document_catalog_remote_document_picker_html_options(document_catalog.project_id)
+          p.document-set-document-filter__hint.muted
+            | 検索語は最大#{Admin::DocumentCatalogsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH}文字、候補は最大#{Admin::DocumentCatalogsController::DOCUMENT_SEARCH_LIMIT}件です。下の絞り込み欄は表示中の候補だけを絞ります。
+        label.document-set-document-filter__label for="document-catalog-document-filter-query" 表示中の候補を絞り込み
+        input#document-catalog-document-filter-query.document-set-document-filter__input type="search" placeholder="文書名またはURL識別子" autocomplete="off" data-document-set-document-filter-target="query" data-action="input->document-set-document-filter#filter"
+        label.document-set-document-filter__selected-only
+          input type="checkbox" data-document-set-document-filter-target="selectedOnly" data-action="change->document-set-document-filter#filter"
+          span 選択済みのみ表示
+        span.document-set-document-filter__status.muted role="status" aria-live="polite" aria-atomic="true" data-document-set-document-filter-target="status"
+      p.document-set-document-filter__empty.muted hidden=true aria-live="polite" aria-atomic="true" data-document-set-document-filter-target="empty"
+      table
+        thead
+          tr
+            th 対象
+            th 文書名
+            th 並び順
+            th メモ
+        tbody
+          - @project_documents.each_with_index do |document, index|
+            - item = selected_items[document.id]
+            - row_class = ["document-set-document-filter__row", ("is-selected" if item.present?)].compact.join(" ")
+            tr class=row_class data-document-set-document-filter-target="row" data-document-set-document-filter-document-id=document.id data-document-set-document-filter-slug=document.slug data-document-set-document-filter-search-text="#{document.title} #{document.slug}" data-document-catalog-document-id=document.id
+              td
+                = hidden_field_tag "document_catalog_items[#{index}][document_id]", document.id
+                = check_box_tag "document_catalog_items[#{index}][selected]", "1", item.present?, class: "document-set-document-filter__checkbox", data: { document_set_document_filter_target: "checkbox", action: "change->document-set-document-filter#filter" }
+              td
+                strong = link_to document.title, project_document_path(document.project, document.slug)
                 br
-                span.muted = "最新版: #{document_version_label(document.latest_version)}"
-            td = number_field_tag "document_catalog_items[#{index}][sort_order]", item&.sort_order || index, min: 0
-            td = text_field_tag "document_catalog_items[#{index}][note]", item&.note
+                span.muted = "URL識別子: #{document.slug}"
+                - if document.latest_version.present?
+                  br
+                  span.muted = "最新版: #{document_version_label(document.latest_version)}"
+              td = number_field_tag "document_catalog_items[#{index}][sort_order]", item&.sort_order || index, min: 0
+              td = text_field_tag "document_catalog_items[#{index}][note]", item&.note
   - elsif document_catalog.project_id.present?
     h2 カタログ項目
     p.muted この案件にはまだ文書がありません。文書を登録すると、ここでカタログ項目として選択できます。
