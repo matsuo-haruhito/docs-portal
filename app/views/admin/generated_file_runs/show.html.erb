@@ -36,6 +36,23 @@
     </dl>
   </div>
 
+  <% if (site_build_artifact_summary = generated_file_run_site_build_artifact_summary(@generated_file_run)) %>
+    <div class="rounded-lg border border-blue-200 bg-blue-50 p-4">
+      <h2 class="mb-3 text-lg font-semibold text-blue-800">Docusaurus site build artifact evidence</h2>
+      <p class="mb-3 text-sm text-blue-900">GitHub Actions artifact / workflow run と Rails 側 GeneratedFileRun evidence の役割差を、保存済み metadata だけで確認する read-only summary です。</p>
+      <dl class="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
+        <% site_build_artifact_summary.fetch(:fields).each do |item| %>
+          <% label, value = item.split(": ", 2) %>
+          <div>
+            <dt class="font-semibold"><%= label %></dt>
+            <dd class="font-mono"><%= value %></dd>
+          </div>
+        <% end %>
+      </dl>
+      <p class="mt-3 text-xs text-blue-900">この summary は replay / rebuild / artifact download / preview を実行しません。raw artifact、manifest 全文、CI log、import API request payload、secret-like value は表示対象にしません。</p>
+    </div>
+  <% end %>
+
   <% if @retry_evidence_visible %>
     <div class="rounded-lg border bg-white p-4">
       <h2 class="mb-3 text-lg font-semibold">再実行履歴</h2>
