@@ -34,6 +34,7 @@
 
 | 登録名 | 主な対象 | 初期化分類 | 次の判断 |
 | --- | --- | --- | --- |
+| `api-specification-codeblock-dry-run` | API仕様 viewer iframe の http codeblock | same-origin iframe 内 style injection、実行前 confirmation、dry-run endpoint fetch、結果表示 | admin_api_specification / http codeblock 限定で維持。apply / import / 外部 API 送信、generated HTML 永続変更、JSON/YAML validation は追加しない |
 | `archive-preview-tools` | archive preview | `setupArchivePreviewTools()` を専用 controller から refresh する | `preview-tools` bridge から分離済み。download candidate、safe/unsafe path、visible rows、filter chips、copy status、sort/count behavior は helper 側で維持 |
 | `auto-height-frame` | embedded iframe の高さ同期 | iframe load、postMessage、ResizeObserver / MutationObserver | iframe 補助として維持。Turbo 化候補ではない |
 | `bulk-edit-selection` | 文書一括編集候補の選択数・表示件数 | data-target 内の filter / count 更新 | app 側 Stimulus として維持 |
@@ -70,6 +71,7 @@
 
 次の listener は controller lifecycle 内に閉じているため、現時点では許容される app 側 Stimulus 初期化です。
 
+- `api-specification-codeblock-dry-run`: API仕様 iframe 内の http codeblock を表示時だけ装飾し、dry-run validation panel と結果表示を差し込む。
 - `archive-preview-tools`: archive preview helper を Turbo 再描画後にも再探索する。
 - `document-tree-navigation`: document click を拾って tree refresh 用 Turbo Stream を取得する。
 - `nav-dropdowns`: native `details` dropdown の同時 open / outside click close / Escape close を同期する。
@@ -102,6 +104,7 @@
 
 | controller | guard file | guard している境界 | guard していないこと |
 | --- | --- | --- | --- |
+| `api-specification-codeblock-dry-run` | `spec/requests/admin_api_specification_codeblock_dry_runs_spec.rb` | endpoint / admin-only / http codeblock hook / confirmation copy / no destructive send boundary | JSON/YAML validation、AccessLog enum expansion、generated HTML persistence、external API send |
 | `archive-preview-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、archive safety / candidate / visible row guard の維持 | archive preview UI redesign、ZIP / archive download safety、server-side route/controller contract の変更 |
 | `csv-preview-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration | CSV preview UI の redesign、table behavior / export contract の変更 |
 | `document-file-list-search` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、count / parent context row guard の維持 | document file list search UI の redesign、query / clear / count / match highlight / parent context row behavior の変更 |
@@ -154,6 +157,7 @@ current fallback support として提供していること:
 
 ## この inventory の境界
 
+- API仕様 codeblock dry-run は admin_api_specification / http codeblock / path-only internal API sample に限定し、apply / import / 外部 API 送信、generated HTML 永続変更、JSON / YAML validation は変更しない。
 - archive preview の download candidate、safe/unsafe path、visible rows、filter chips、copy status、sort/count behavior は変更しない。
 - site viewer iframe height sync の postMessage protocol、same-origin check、frame source check、minimum height は変更しない。
 - structured / text preview の search / filter / copy / line anchor highlight / `/` focus / `Escape` clear behavior は変更しない。
