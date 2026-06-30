@@ -25,7 +25,7 @@ RSpec.describe "Admin generated file event bulk retry confirmation", type: :requ
       expect(response).to have_http_status(:ok)
       form = bulk_retry_form(status: "failed")
       expect(form).to be_present
-      expect(form["data-turbo-confirm"]).to include("現在の条件に一致する失敗イベント 1 件")
+      expect(form["data-turbo-confirm"]).to include("現在の条件で今回再投入する失敗イベント 1 件")
       expect(form["data-turbo-confirm"]).to include("古い順に最大100件")
       expect(form["data-turbo-confirm"]).to include("現在の条件を確認してから実行してください")
       expect(bulk_retry_button(status: "failed")["disabled"]).to be_nil
@@ -42,7 +42,7 @@ RSpec.describe "Admin generated file event bulk retry confirmation", type: :requ
       expect(form).to be_present
       expect(form["data-turbo-confirm"]).to be_nil
       expect(bulk_retry_button["disabled"]).to eq("disabled")
-      expect(response.body).to include("現在の条件で再投入対象: 0 件")
+      expect(response.body).to include("今回の一括再投入対象: 0 件")
       expect(response.body).to include("対象がないため一括再投入できません。")
     end
   end
