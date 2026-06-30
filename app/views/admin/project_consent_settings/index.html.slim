@@ -93,6 +93,8 @@ h1 案件同意設定
             - else
               = empty_message
       - @project_consent_settings.each do |setting|
+        - required_on_label = project_consent_setting_required_on_label(setting.required_on)
+        - delete_confirm = "案件「#{setting.project.name} (#{setting.project.code})」の同意文面「#{setting.consent_term.title} / #{setting.consent_term.version_label}（#{required_on_label}）」設定を削除しますか？"
         tr
           td data-rails-table-preferences-column-key="project"
             = setting.project.name
@@ -105,11 +107,11 @@ h1 案件同意設定
               span.muted 同意文面: 無効化済み
           td data-rails-table-preferences-column-key="version_label"
             span.muted = setting.consent_term.version_label
-          td data-rails-table-preferences-column-key="required_on" = project_consent_setting_required_on_label(setting.required_on)
+          td data-rails-table-preferences-column-key="required_on" = required_on_label
           td data-rails-table-preferences-column-key="enabled" = setting.enabled? ? "有効" : "無効"
           td.actions data-rails-table-preferences-column-key="actions"
             = edit_link_to "編集", edit_admin_project_consent_setting_path(setting)
-            = delete_link_to "削除", admin_project_consent_setting_path(setting), confirm: "案件同意設定を削除しますか？"
+            = delete_link_to "削除", admin_project_consent_setting_path(setting), confirm: delete_confirm
 
   - if @project_consent_settings_pagination[:total_pages] > 1
     nav.pagination aria-label="案件同意設定一覧ページ"
