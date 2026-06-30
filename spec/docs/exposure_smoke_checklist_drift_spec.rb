@@ -86,6 +86,23 @@ RSpec.describe "exposure smoke checklist drift" do
     end
   end
 
+  it "keeps smoke markdown digests self-contained for reviewer handoff" do
+    external_smoke = REPO_ROOT.join("bin/external_user_exposure_smoke").read
+    operational_smoke = REPO_ROOT.join("bin/operational_metadata_exposure_smoke").read
+
+    expect(external_smoke).to include('NEXT_CHECKLIST = "docs/社外ユーザー向け情報露出点検チェックリスト.md"')
+    expect(external_smoke).to include("- next checklist: `#{NEXT_CHECKLIST}`")
+    expect(external_smoke).to include("- failure handoff: #{FAILURE_HANDOFF}")
+    expect(external_smoke).to include("HTML / JSON / ZIP payload、raw response、token-like value")
+    expect(external_smoke).to include("権限外文書名は貼らない")
+
+    expect(operational_smoke).to include('NEXT_CHECKLIST = "docs/運用metadata情報露出点検チェックリスト.md"')
+    expect(operational_smoke).to include("- next checklist: `#{NEXT_CHECKLIST}`")
+    expect(operational_smoke).to include("- failure handoff: #{FAILURE_HANDOFF}")
+    expect(operational_smoke).to include("raw path、raw payload、token-like value")
+    expect(operational_smoke).to include("provider payload は貼らない")
+  end
+
   def extract_smoke_spec_files(path)
     source = path.read
     spec_files_literal = source[/SPEC_FILES\s*=\s*\[(.*?)\]\.freeze/m, 1]
