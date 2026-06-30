@@ -33,6 +33,10 @@ RSpec.describe "Admin project consent setting delete confirmation", type: :reque
   end
 
   def delete_confirm(link)
-    link["data-turbo-confirm"].presence || link["data-confirm"].presence || link["onclick"].to_s
+    link["data-turbo-confirm"].presence ||
+      link["data-confirm"].presence ||
+      link["onclick"].presence ||
+      link.ancestors("form").first&.[](DataTurboConfirm) ||
+      ""
   end
 end
