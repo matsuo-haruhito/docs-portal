@@ -28,8 +28,16 @@ RSpec.describe "Admin document catalogs", type: :request do
     parsed_html.text.squish
   end
 
+  def json_response
+    JSON.parse(response.body)
+  end
+
   def form_select_names
     parsed_html.css('select[name^="document_catalog["]').map { |node| node["name"] }
+  end
+
+  def project_field
+    parsed_html.at_css('[name="document_catalog[project_id]"]')
   end
 
   def catalog_item_row_for(document)
@@ -53,12 +61,96 @@ RSpec.describe "Admin document catalogs", type: :request do
       "document_catalog[audience_type]",
       "document_catalog[visibility_policy]"
     )
+    expect(project_field["data-rails-fields-kit--tom-select-url-value"]).to eq(project_search_admin_document_catalogs_path(format: :json))
+    expect(project_field["data-rails-fields-kit--tom-select-selected-url-value"]).to eq(selected_project_admin_document_catalogs_path(format: :json))
+    expect(project_field["data-rails-fields-kit--tom-select-max-options-value"]).to eq(Admin::DocumentCatalogsController::PROJECT_SEARCH_LIMIT.to_s)
+    expect(page_text).to include("候補は最大#{Admin::DocumentCatalogsController::DOCUMENT_SEARCH_LIMIT}件")
     expect(listed_catalog_names).to include("既存カタログ")
 
     sign_in_as(external_user)
 
     get admin_document_catalogs_path
 
+    expect(response).to have_http_status(:forbidden)
+  end
+
+  it "searches and restores projects for the remote project picker" do
+    sign_in_as(admin)
+
+    get project_search_admin_document_catalogs_path(format: :json), params: { q: "cat" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("options")).to contain_exactly(
+      include("value" => project.id, "text" => "CAT / Catalog Project")
+    )
+
+    get selected_project_admin_document_catalogs_path(format: :json), params: { id: other_project.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("option")).to include(
+      "value" => other_project.id,
+      "text" => "OTHER / Other Project"
+    )
+  end
+
+  it "searches documents inside the selected project only" do
+    sign_in_as(admin)
+
+    get document_search_admin_document_catalogs_path(format: :json), params: { project_id: project.id, q: "getting" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("documents")).to contain_exactly(
+      include(
+        "id" => document_a.id,
+        "title" => "導入ガイド",
+        "slug" => "getting-started",
+        "latest_version_label" => "v1.0.0"
+      )
+    )
+    expect(json_response.fetch("options").map { _1.fetch("id") }).not_to include(other_document.id)
+  end
+
+  it "restores selected documents only when they belong to the selected project" do
+    sign_in_as(admin)
+
+    get selected_document_admin_document_catalogs_path(format: :json), params: { project_id: project.id, id: document_b.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("option")).to include(
+      "id" => document_b.id,
+      "title" => "運用手順",
+      "slug" => "operations"
+    )
+
+    get selected_document_admin_document_catalogs_path(format: :json), params: { project_id: project.id, id: other_document.id }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_response.fetch("option")).to be_nil
+  end
+
+  it "keeps existing catalog items visible when they are outside the bounded candidate window" do
+    extra_documents = create_list(:document, Admin::DocumentCatalogsController::DOCUMENT_SEARCH_LIMIT + 1, project:)
+    selected_document = extra_documents.last
+    create(:document_catalog_item, document_catalog: existing_catalog, document: selected_document, sort_order: 9, note: "selected outside first page")
+
+    sign_in_as(admin)
+
+    get edit_admin_document_catalog_path(existing_catalog)
+
+    expect(response).to have_http_status(:ok)
+    row = catalog_item_row_for(selected_document)
+    expect(row).to be_present
+    expect(row.at_css('input[type="checkbox"][checked]')).to be_present
+    expect(row.at_css('input[name$="[note]"]')["value"]).to eq("selected outside first page")
+  end
+
+  it "protects remote search endpoints with the admin-only boundary" do
+    sign_in_as(external_user)
+
+    get project_search_admin_document_catalogs_path(format: :json), params: { q: "cat" }
+    expect(response).to have_http_status(:forbidden)
+
+    get document_search_admin_document_catalogs_path(format: :json), params: { project_id: project.id, q: "getting" }
     expect(response).to have_http_status(:forbidden)
   end
 
