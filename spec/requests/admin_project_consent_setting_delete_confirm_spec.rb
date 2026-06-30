@@ -19,9 +19,9 @@ RSpec.describe "Admin project consent setting delete confirmation", type: :reque
       row.text.squish.include?("Alpha Project") && row.text.squish.include?("Portal Terms")
     end
     expect(setting_row).to be_present
-    delete_link = setting_row.css("a, button").find { _1.text.squish == "削除" }
-    expect(delete_link).to be_present
-    expect(delete_confirm(delete_link)).to include(
+    delete_control = setting_row.css("a, button, form").find { _1.text.squish == "削除" }
+    expect(delete_control).to be_present
+    expect(delete_confirm(delete_control)).to include(
       "案件「Alpha Project (ALPHA)」",
       "同意文面「Portal Terms / v1（閲覧前）」",
       "設定を削除しますか？"
@@ -32,11 +32,11 @@ RSpec.describe "Admin project consent setting delete confirmation", type: :reque
     Nokogiri::HTML(response.body)
   end
 
-  def delete_confirm(link)
-    link["data-turbo-confirm"].presence ||
-      link["data-confirm"].presence ||
-      link["onclick"].presence ||
-      link.ancestors("form").first&.[]("data-turbo-confirm") ||
-      ""
+  def delete_confirm(control)
+    ([control] + control.ancestors.to_a).filter_map do |node|
+      node["data-turbo-confirm"].presence ||
+        node["data-confirm"].presence ||
+        node["onclick"].presence
+    end.first || ""
   end
 end
