@@ -8,7 +8,7 @@
   has_active_filters = @filters.compact_blank.any?
   bulk_retry_target_count = @bulk_retry_target_count.to_i
   bulk_retry_available = bulk_retry_target_count.positive?
-  bulk_retry_confirm_message = "現在の条件に一致する失敗イベント #{bulk_retry_target_count} 件のうち、古い順に最大100件を一括再投入します。現在の条件を確認してから実行してください。実行しますか？"
+  bulk_retry_confirm_message = "現在の条件で今回再投入する失敗イベント #{bulk_retry_target_count} 件を、古い順に最大100件まで一括再投入します。現在の条件を確認してから実行してください。実行しますか？"
   bulk_retry_form_options = bulk_retry_available ? { data: { turbo_confirm: bulk_retry_confirm_message } } : {}
   table_key = :admin_generated_file_events
   table_columns = generated_file_event_table_columns
@@ -36,8 +36,8 @@
           <%= button_to "失敗分を一括再投入", retry_failed_admin_generated_file_events_path(@filters.compact_blank), method: :post, class: bulk_retry_class, disabled: !bulk_retry_available, form: bulk_retry_form_options %>
         </div>
         <p class="mt-2 text-xs text-gray-600">再投入は表示フィルタではなく、現在の条件に一致する失敗イベントを再投入する操作です。</p>
-        <p class="mt-1 text-xs text-gray-500">現在の条件で再投入対象: <%= @bulk_retry_target_count %> 件</p>
-        <p class="text-xs text-gray-500">一括再投入は古い失敗分から最大100件です。</p>
+        <p class="mt-1 text-xs text-gray-500">今回の一括再投入対象: <%= @bulk_retry_target_count %> 件</p>
+        <p class="text-xs text-gray-500">現在の条件で今回再投入する失敗イベントを、古い順に最大100件まで処理します。</p>
         <% unless bulk_retry_available %>
           <p class="text-xs text-gray-500">対象がないため一括再投入できません。</p>
         <% end %>
