@@ -23,6 +23,13 @@ class Admin::AccessRequestsController < Admin::BaseController
     @status_counts = access_request_status_counts(scope)
   end
 
+  def show
+    @access_request = AccessRequest.includes(:requester, :approver, :requestable).find_by!(public_id: params[:public_id])
+    @request_hash = AccessRequestHash.new(@access_request).call
+    @requestable = @request_hash[:requestable]
+    @return_to = safe_return_to_path || admin_access_requests_path
+  end
+
   def pending_handoff
     @filters = filter_params
     pending_scope = filtered_access_request_scope.pending
@@ -55,7 +62,7 @@ class Admin::AccessRequestsController < Admin::BaseController
       raise ApplicationError::BadRequest, "unsupported decision"
     end
 
-    redirect_to admin_access_requests_path(redirect_filter_params), notice:
+    redirect_to access_request_redirect_path, notice:
   end
 
   private
@@ -204,6 +211,20 @@ class Admin::AccessRequestsController < Admin::BaseController
     raise ApplicationError::BadRequest, "rejection_reason is required" if reason.blank?
 
     reason
+  end
+
+  def access_request_redirect_path
+    safe_return_to_path || admin_access_requests_path(redirect_filter_params)
+  end
+
+  def safe_return_to_path
+    return_to = params[:return_to].to_s.strip
+    return nil if return_to.blank?
+    return nil if return_to.match?(/[[:cntrl:]]/)
+    return nil unless return_to.start_with?("/")
+    return nil if return_to.start_with?("//") || return_to.include?("://")
+
+    return_to
   end
 
   def redirect_filter_params
