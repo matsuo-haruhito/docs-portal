@@ -283,7 +283,7 @@ current 実装の前提:
 - `Storage使用量` の `Docs site build` が増えている: `大きい内訳` で上位 direct child と最終更新を確認し、[notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) で build artifact と runtime 前提を確認する
 - `Storage使用量` の `Import staging` が増えている: `大きい内訳` で上位 direct child と最終更新を確認し、manual upload dry-run や ZIP import の既存入口で staging artifact の文脈を確認する
 - storage の保存先、配信、cleanup 境界を見直したい: [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md)
-- 個別のアクセス履歴や利用傾向を追いたい: [監査ログ運用runbook](./監査ログ運用runbook.md) や [文書利用状況運用runbook.md](./文書利用状況運用runbook.md) に戻る
+- 個別のアクセス履歴や利用傾向を追いたい: [監査ログ運用runbook](./監査ログ運用runbook.md) や [文書利用状況運用runbook](./文書利用状況運用runbook.md) に戻る
 
 ## 関連画面
 
