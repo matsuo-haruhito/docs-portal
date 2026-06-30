@@ -131,6 +131,8 @@ section.card
           td data-rails-table-preferences-column-key="reason" = access_request.reason
           td data-rails-table-preferences-column-key="approver" = access_request.approver&.email_address || "-"
           td.actions data-rails-table-preferences-column-key="actions"
+            p.actions
+              = link_to "詳細", admin_access_request_path(access_request, return_to: request.fullpath), class: "button secondary"
             - if access_request.pending?
               p.muted 判断前に対象・要求権限・理由を確認してください。
               p.muted 承認: 要求権限を付与します。現行の付与先に反映します。
