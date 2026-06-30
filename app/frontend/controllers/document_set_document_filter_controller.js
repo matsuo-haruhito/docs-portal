@@ -32,8 +32,8 @@ export default class extends Controller {
   }
 
   pickRemoteDocument(event) {
-    const document = this.remoteDocumentPayload(event)
-    const documentId = document.id
+    const remoteDocument = this.remoteDocumentPayload(event)
+    const documentId = remoteDocument.id
 
     if (documentId === "") {
       this.queryTarget.value = ""
@@ -41,7 +41,7 @@ export default class extends Controller {
       return
     }
 
-    const row = this.rowTargets.find((candidate) => candidate.dataset.documentSetDocumentFilterDocumentId === documentId) || this.createRemoteDocumentRow(document)
+    const row = this.rowTargets.find((candidate) => candidate.dataset.documentSetDocumentFilterDocumentId === documentId) || this.createRemoteDocumentRow(remoteDocument)
     if (!row) return
 
     const checkbox = row.querySelector("[data-document-set-document-filter-target~='checkbox']")
@@ -53,27 +53,27 @@ export default class extends Controller {
     row.scrollIntoView({ block: "nearest" })
   }
 
-  createRemoteDocumentRow(document) {
-    if (!this.hasTableBodyTarget || document.id === "") return null
+  createRemoteDocumentRow(remoteDocument) {
+    if (!this.hasTableBodyTarget || remoteDocument.id === "") return null
 
-    const existingRow = this.rowTargets.find((candidate) => candidate.dataset.documentSetDocumentFilterDocumentId === document.id)
+    const existingRow = this.rowTargets.find((candidate) => candidate.dataset.documentSetDocumentFilterDocumentId === remoteDocument.id)
     if (existingRow) return existingRow
 
     const row = document.createElement("tr")
-    const key = `remote_${document.id}`
-    const title = document.title || `文書ID: ${document.id}`
-    const slug = document.slug || ""
+    const key = `remote_${remoteDocument.id}`
+    const title = remoteDocument.title || `文書ID: ${remoteDocument.id}`
+    const slug = remoteDocument.slug || ""
     const searchText = [title, slug].filter(Boolean).join(" ")
 
     row.className = "document-set-document-filter__row is-selected"
     row.dataset.documentSetDocumentFilterTarget = "row"
-    row.dataset.documentSetDocumentFilterDocumentId = document.id
+    row.dataset.documentSetDocumentFilterDocumentId = remoteDocument.id
     row.dataset.documentSetDocumentFilterSlug = slug
     row.dataset.documentSetDocumentFilterSearchText = searchText
-    row.dataset.documentCatalogDocumentId = document.id
+    row.dataset.documentCatalogDocumentId = remoteDocument.id
 
-    row.appendChild(this.buildSelectionCell(key, document.id))
-    row.appendChild(this.buildDocumentCell({ title, slug, latestVersionLabel: document.latestVersionLabel, path: document.path }))
+    row.appendChild(this.buildSelectionCell(key, remoteDocument.id))
+    row.appendChild(this.buildDocumentCell({ title, slug, latestVersionLabel: remoteDocument.latestVersionLabel, path: remoteDocument.path }))
     row.appendChild(this.buildSortOrderCell(key))
     row.appendChild(this.buildNoteCell(key))
 
