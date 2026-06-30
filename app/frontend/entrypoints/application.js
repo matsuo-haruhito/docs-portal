@@ -6,11 +6,13 @@ import "./document_version_tabs.css"
 import "./document_set_document_filter.css"
 import "./bulk_edit_selection.css"
 import "./text_preview_cues.css"
+import "./api_specification_codeblock_dry_run.css"
 import "@hotwired/turbo-rails"
 import { Application } from "@hotwired/stimulus"
 import { RailsTablePreferencesController } from "rails_table_preferences"
 import { TomSelectController } from "rails_fields_kit"
 import "tom-select/dist/css/tom-select.css"
+import ApiSpecificationCodeblockDryRunController from "../controllers/api_specification_codeblock_dry_run_controller"
 import ArchivePreviewToolsController from "../controllers/archive_preview_tools_controller"
 import AutoHeightFrameController from "../controllers/auto_height_frame_controller"
 import BulkEditSelectionController from "../controllers/bulk_edit_selection_controller"
@@ -40,6 +42,7 @@ import TextPreviewToolsController from "../controllers/text_preview_tools_contro
 const application = Application.start()
 application.register("rails-table-preferences", RailsTablePreferencesController)
 application.register("rails-fields-kit--tom-select", TomSelectController)
+application.register("api-specification-codeblock-dry-run", ApiSpecificationCodeblockDryRunController)
 application.register("archive-preview-tools", ArchivePreviewToolsController)
 application.register("auto-height-frame", AutoHeightFrameController)
 application.register("bulk-edit-selection", BulkEditSelectionController)
