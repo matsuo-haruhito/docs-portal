@@ -113,7 +113,7 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def prepare_form_context
-    @company_admin_user_form = company_master_admin?
+    @company_admin_user_form = company_master_admin_user?
     @fixed_company_for_form = current_user.company if @company_admin_user_form
   end
 
@@ -121,7 +121,7 @@ class Admin::UsersController < Admin::BaseController
     permitted = params.require(:user).permit(
       :name, :email_address, :user_type, :company_id, :active, :password, :password_confirmation
     )
-    if company_master_admin?
+    if company_master_admin_user?
       permitted[:company_id] = current_user.company_id
       permitted[:user_type] = User.user_types.fetch("external")
     elsif permitted[:company_id].blank?
@@ -137,12 +137,16 @@ class Admin::UsersController < Admin::BaseController
     User.where(company_id: current_user.company_id)
   end
 
+  def company_master_admin_user?
+    !admin_user? && company_master_admin?
+  end
+
   def default_company_for_form
-    company_master_admin? ? current_user.company : nil
+    company_master_admin_user? ? current_user.company : nil
   end
 
   def default_user_type_for_form
-    company_master_admin? ? :external : :internal
+    company_master_admin_user? ? :external : :internal
   end
 
   def searchable_user_companies
@@ -164,7 +168,7 @@ class Admin::UsersController < Admin::BaseController
   end
 
   def user_company_scope
-    return Company.where(id: current_user.company_id) if company_master_admin?
+    return Company.where(id: current_user.company_id) if company_master_admin_user?
 
     Company.all
   end
