@@ -88,6 +88,7 @@ Rails.application.routes.draw do
       post :retry_failed, on: :collection
     end
     resources :generated_file_runs, only: %i[index show], param: :public_id do
+      get :failure_alert_handoff, on: :collection
       post :retry_run, on: :member
       post :retry_failed, on: :collection
     end
