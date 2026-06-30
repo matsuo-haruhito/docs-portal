@@ -111,7 +111,7 @@ RSpec.describe "API internal file uploads", type: :request do
       file.flush
 
       post "/api/internal/file_uploads",
-        params: params.merge(file: Rack::Test::UploadedFile.new(file.path, "text/markdown", false, "client-upload.md")),
+        params: params.merge(file: Rack::Test::UploadedFile.new(file.path, "text/markdown", false, original_filename: "client-upload.md")),
         headers: { "Authorization" => "Bearer #{token}" }
     end
   end
