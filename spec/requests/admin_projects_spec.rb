@@ -27,6 +27,10 @@ RSpec.describe "Admin projects", type: :request do
     parsed_html.at_css("input[name='q']")
   end
 
+  def delete_confirm_messages
+    parsed_html.css("form[data-turbo-confirm]").map { |form| form["data-turbo-confirm"] }
+  end
+
   it "uses project codes for admin member links and rejects numeric ids" do
     project = create(:project, code: "CODE-001", name: "Code Routed Project")
 
@@ -65,6 +69,22 @@ RSpec.describe "Admin projects", type: :request do
     delete admin_project_path(project.id)
     expect(response).to have_http_status(:not_found)
     expect(Project.exists?(project.id)).to be(true)
+  end
+
+  it "includes project code and company cue in delete confirmations" do
+    company = create(:company, name: "Confirm Company", domain: "confirm.example.com")
+    create(:project, code: "CONFIRM-001", name: "Confirm Project", company:)
+    create(:project, code: "NO-COMPANY", name: "No Company Project", company: nil)
+
+    sign_in_as(admin_user)
+
+    get admin_projects_path
+
+    expect(response).to have_http_status(:ok)
+    expect(delete_confirm_messages).to include(
+      "案件「Confirm Project」（コード: CONFIRM-001 / 企業: Confirm Company）を削除しますか？関連文書や所属設定に影響します。",
+      "案件「No Company Project」（コード: NO-COMPANY / 企業: 企業未設定）を削除しますか？関連文書や所属設定に影響します。"
+    )
   end
 
   it "filters projects by keyword across code, name, and description" do
