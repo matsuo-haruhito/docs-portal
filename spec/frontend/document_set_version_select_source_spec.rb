@@ -64,7 +64,7 @@ RSpec.describe "admin/document_sets fixed version selector source" do
       expect(application_entrypoint).to include('import "./document_set_document_filter.css"')
       expect(application_entrypoint).to include('import DocumentSetDocumentFilterController from "../controllers/document_set_document_filter_controller"')
       expect(application_entrypoint).to include('application.register("document-set-document-filter", DocumentSetDocumentFilterController)')
-      expect(document_filter_controller).to include('static targets = ["query", "row", "status", "checkbox", "selectedOnly", "empty"]')
+      expect(document_filter_controller).to include('static targets = ["query", "row", "status", "checkbox", "selectedOnly", "empty", "tableBody"]')
       expect(document_filter_controller).to include("row.hidden = !visible")
       expect(document_filter_controller).not_to include("fetch(")
     end
