@@ -9,15 +9,23 @@ RSpec.describe "admin company selectors source" do
     Rails.root.join("app/views/admin/users/_form.html.slim").read
   end
 
-  it "uses rails fields kit for the project company selector" do
+  it "uses a remote rails fields kit combobox for the project company selector" do
     aggregate_failures do
-      expect(project_form).to include("= form.rfk_select :company_id,")
-      expect(project_form).to include("collection: @companies")
-      expect(project_form).to include("collection_value_method: :id")
-      expect(project_form).to include("collection_label_method: :display_name")
+      expect(project_form).to include("= form.rfk_combobox :company_id,")
+      expect(project_form).to include("collection: []")
+      expect(project_form).to include("selected: admin_project_company_selected_option(project.company)")
+      expect(project_form).to include("url: company_search_admin_projects_path(format: :json)")
+      expect(project_form).to include("selected_url: selected_company_admin_projects_path(format: :json)")
+      expect(project_form).to include("value_field: \"value\"")
+      expect(project_form).to include("label_field: \"text\"")
+      expect(project_form).to include("search_field: \"text\"")
+      expect(project_form).to include("min_length: 1")
+      expect(project_form).to include("max_options: Admin::ProjectsController::COMPANY_SEARCH_LIMIT")
       expect(project_form).to include('label: "会社"')
       expect(project_form).to include("allow_clear: true")
-      expect(project_form).to include('placeholder: "会社を選択（未設定可）"')
+      expect(project_form).to include('placeholder: "会社名・ドメインで検索（未設定可）"')
+      expect(project_form).not_to include("= form.rfk_select :company_id,")
+      expect(project_form).not_to include("collection: @companies")
       expect(project_form).not_to include("collection_select :company_id")
     end
   end
