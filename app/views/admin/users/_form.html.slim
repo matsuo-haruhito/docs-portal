@@ -27,14 +27,20 @@
       label
         | ユーザー種別
         = form.select :user_type, enum_options_for("users.user_type", User.user_types.keys)
-      = form.rfk_select :company_id,
-        collection: @companies,
-        collection_value_method: :id,
-        collection_label_method: :display_name,
+      = form.rfk_combobox :company_id,
+        collection: [],
+        selected: admin_user_company_selected_option(user.company),
+        url: company_search_admin_users_path(format: :json),
+        selected_url: selected_company_admin_users_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: Admin::UsersController::COMPANY_SEARCH_LIMIT,
         wrapper: true,
         label: "会社",
         allow_clear: true,
-        placeholder: "会社を選択（未所属可）"
+        placeholder: "会社名・ドメインで検索（未所属可）"
       p.muted 会社を選択しない場合は未所属として保存されます。会社を外す場合は選択をクリアしてください。
     label
       | 有効
