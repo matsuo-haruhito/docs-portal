@@ -23,6 +23,8 @@ current route:
 - 公開側詳細: `projects/:project_code/document_catalogs/:public_id`
 - 管理側一覧 / 作成: `admin/document_catalogs`
 - 管理側編集: `admin/document_catalogs/:id/edit`
+- 管理側 project remote search: `admin/document_catalogs/project_search` / `admin/document_catalogs/selected_project`
+- 管理側 document remote search: `admin/document_catalogs/document_search` / `admin/document_catalogs/selected_document`
 
 current 実装の前提:
 
@@ -33,7 +35,11 @@ current 実装の前提:
 - 詳細の item は `visible_items_for(current_user)` を通り、catalog が見えても文書ごとの閲覧権限がない item は表示されない
 - 左側には既存の文書 tree が出るが、catalog の表示可否や item visibility は tree の展開状態とは別に判定される
 - 管理側では catalog の `案件`、`名称`、`説明`、`対象`、`公開範囲`、`表示順` を編集する
-- 管理側の item 管理は、選択した案件内の文書だけを対象にし、チェックした文書、並び順、メモだけを扱う
+- 管理側の `案件` は案件コード / 案件名の remote search で探し、保存済み・URL指定済み・validation error 後の selected project は `selected_project` で復元する
+- 管理側の item 管理は、選択した案件内の文書だけを対象にし、文書名 / URL 識別子の remote search と選択済み row の復元を使う
+- 文書候補は最大 20 件の bounded search だが、保存済みまたは入力中の選択済み文書は候補上限外でも表示・保存できる
+- 保存時と `selected_document` は選択案件内の文書に閉じ、案件外 document を catalog item に混ぜない
+- item 管理で扱う値はチェックした文書、並び順、メモだけであり、文書本文、版、公開状態、文書権限は変更しない
 
 ## 一覧で見るポイント
 
@@ -123,9 +129,11 @@ item の `文書` link は、同じ案件配下の文書詳細へ戻る。curren
 
 管理側一覧では、案件、名称、対象、公開範囲、文書数、表示順を確認し、新規登録、編集、削除へ進む。description がある場合は、名称の下に短い preview が出る。
 
-管理側フォームでは、catalog 基本項目として案件、名称、説明、対象、公開範囲、表示順を保存する。`カタログ項目` は、選択した案件内の文書だけを候補にし、チェックした文書だけを catalog に含める。各 item で扱う値は文書 ID、並び順、メモに限られる。
+管理側フォームでは、catalog 基本項目として案件、名称、説明、対象、公開範囲、表示順を保存する。`案件` は案件コード / 案件名で検索する remote combobox で、保存済み selected project は候補一覧に出ていなくても復元される。`カタログ項目` は、選択した案件内の文書だけを候補にし、文書名 / URL 識別子で remote search できる。
 
-管理側で item を登録しても、公開側で必ず見えるとは限らない。公開側では、catalog 自体の `visibility_policy` と、item 文書ごとの閲覧権限・公開状態を二段階で確認する。
+文書候補は最大 20 件で、下段の `表示中の候補を絞り込み` は画面に出ている候補だけを local に絞る。候補上限外の文書でも、保存済みまたは入力中に選択済みのものは row として復元される。remote search で見つけた未表示の文書は row として追加してからチェック、並び順、メモを保存する。
+
+各 item で扱う値は文書 ID、並び順、メモに限られる。保存時は選択中案件内の document だけを採用し、案件外 document は無視する。管理側で item を登録しても、公開側で必ず見えるとは限らない。公開側では、catalog 自体の `visibility_policy` と、item 文書ごとの閲覧権限・公開状態を二段階で確認する。
 
 この管理 UI は saved filter、drag/drop、一括編集、CSV import、公開範囲 policy の変更を提供するものではない。これらを current support として読まず、必要な場合は別 Issue / 別 runbook で扱う。
 
@@ -152,7 +160,7 @@ item の `文書` link は、同じ案件配下の文書詳細へ戻る。curren
 - `internal_only` catalog を外部ユーザー向けに表示する運用として読まない
 - 一覧の `名称・説明`、`対象`、`公開範囲` filter は current user に見える catalog の中だけを絞り込む
 - `条件に一致する文書カタログはありません。` と `利用可能な文書カタログはありません。` は別の状態として読む
-- 管理 UI は catalog の基本項目と item 選択・並び順・メモを扱う first slice として読む。公開範囲 policy の変更、保存済み filter、drag/drop による sort 変更、item 一括編集、CSV import は current support として先取りしない
+- 管理 UI は catalog の基本項目、案件 remote search、文書 remote search、item 選択・並び順・メモを扱う first slice として読む。公開範囲 policy の変更、保存済み filter、drag/drop による sort 変更、item 一括編集、CSV import は current support として先取りしない
 - 文書カタログから見えない文書を、tree や文書一覧で見えるべきとは自動判断しない。案件所属、文書権限、公開状態のどれが正かは既存仕様に戻して確認する
 
 ## 関連文書
