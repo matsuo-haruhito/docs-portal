@@ -1,0 +1,34 @@
+require "rails_helper"
+
+RSpec.describe "Admin project consent setting delete confirmation", type: :request do
+  let(:admin_user) { create(:user, :internal) }
+
+  before do
+    sign_in_as(admin_user)
+  end
+
+  it "identifies the project, consent term, version, and required timing in the delete confirm" do
+    project = create(:project, code: "ALPHA", name: "Alpha Project")
+    consent_term = create(:consent_term, title: "Portal Terms", version_label: "v1", consent_scope: :project)
+    setting = create(:project_consent_setting, project:, consent_term:, required_on: :first_access, enabled: true)
+
+    get admin_project_consent_settings_path
+
+    expect(response).to have_http_status(:ok)
+    delete_link = parsed_html.css(%(a[href="#{admin_project_consent_setting_path(setting)}"])).find { _1.text.squish == "削除" }
+    expect(delete_link).to be_present
+    expect(delete_confirm(delete_link)).to include(
+      "案件「Alpha Project (ALPHA)」",
+      "同意文面「Portal Terms / v1（閲覧前）」",
+      "設定を削除しますか？"
+    )
+  end
+
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def delete_confirm(link)
+    link["data-turbo-confirm"].presence || link["data-confirm"].presence || link["onclick"].to_s
+  end
+end
