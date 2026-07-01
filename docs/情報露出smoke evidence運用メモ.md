@@ -2,6 +2,8 @@
 
 このメモは `bin/external_user_exposure_smoke --format markdown` と `bin/operational_metadata_exposure_smoke --format markdown` を、PR / release evidence として安全に並べるための first slice です。CI 必須化、security policy、masking policy、代表 request spec の再編はここでは決めません。
 
+2026-06-30 時点の smoke digest は、`next checklist` と `failure handoff` を出力本文に含みます。このメモの template は、その digest 行を PR / release evidence へ写すときの最小形として扱います。
+
 ## 使い分け
 
 | 変更種別 | 使う smoke | 見る checklist | 主な確認対象 |
@@ -27,10 +29,12 @@
   - failure handoff: 対象 spec / surface / runbook へ戻って確認する。raw path、raw payload、token-like value、PII-like value、Webhook / Graph details、外部 ID、provider payload は貼らない。
 ```
 
+`next checklist` と `failure handoff` は smoke digest 自体が出す行です。PR / release evidence ではこの 2 行を要約せず、失敗時の詳細 payload や raw value を足して補強しないでください。digest 表の `next runbook` は、上記の `runbook` 戻り先として扱います。
+
 ## 失敗時の戻り先
 
-- smoke が失敗した場合は、Markdown digest の表にある `spec`、`surface`、`next runbook` を起点に確認します。
-- PR コメントや release note には、失敗した spec 名、対象 surface、次に見る runbook、再実行した command だけを残します。
+- smoke が失敗した場合は、Markdown digest の表にある `spec`、`surface`、`next runbook` と `next checklist` を起点に確認します。
+- PR コメントや release note には、失敗した spec 名、対象 surface、次に見る checklist / runbook、再実行した command だけを残します。
 - raw payload、raw response、document title、token、private-looking path、provider payload を evidence に転記しません。
 - docs だけで安全化できない raw value 表示を見つけた場合は、このメモで判断せず別 issue または `needs-human` に戻します。
 
