@@ -12,7 +12,7 @@ module Admin::ProjectsHelper
     ]
   end
 
-  def admin_project_filter_labels(filters, companies)
+  def admin_project_filter_labels(filters, selected_company = nil)
     filters = filters.to_h
     labels = []
     query = filters["q"].to_s.strip
@@ -28,11 +28,35 @@ module Admin::ProjectsHelper
     company_id = filters["company_id"].to_s
     if company_id == "none"
       labels << "企業: 企業未設定"
-    elsif company_id.match?(/\A\d+\z/)
-      company = companies.find { |candidate| candidate.id.to_s == company_id }
-      labels << "企業: #{company.display_name}" if company.present?
+    elsif company_id.match?(/\A\d+\z/) && selected_company.present?
+      labels << "企業: #{selected_company.display_name}"
     end
 
     labels
+  end
+
+  def admin_project_company_filter_collection(selected_company, selected_company_filter)
+    options = [["企業未設定", "none"]]
+    return options unless selected_company_filter.to_s.match?(/\A\d+\z/) && selected_company.present?
+
+    options + [[admin_project_company_option_label(selected_company), selected_company.id]]
+  end
+
+  def admin_project_company_filter_selected_option(selected_company, selected_company_filter)
+    return { value: "none", text: "企業未設定" } if selected_company_filter.to_s == "none"
+
+    admin_project_company_selected_option(selected_company)
+  end
+
+  def admin_project_company_selected_option(company)
+    return if company.blank?
+
+    { value: company.id, text: admin_project_company_option_label(company) }
+  end
+
+  def admin_project_company_option_label(company)
+    label = company.display_name
+    label = "#{label} / #{company.domain}" if company.domain.present?
+    label
   end
 end
