@@ -1,6 +1,7 @@
 class Admin::BulkEditDryRunsController < Admin::BaseController
   BULK_EDIT_CANDIDATE_LIMIT = 50
   BULK_EDIT_HANDOFF_RUNBOOK_PATH = "docs/文書マスタ運用runbook.md"
+  LIFECYCLE_PURPOSES = %w[archive restore].freeze
 
   before_action :require_admin_only!
   before_action :set_bulk_edit_dry_run, only: %i[show update]
@@ -67,6 +68,7 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
     @bulk_edit_candidate_limit = BULK_EDIT_CANDIDATE_LIMIT
     @bulk_edit_candidate_ids = permitted_candidate_document_ids
     @bulk_edit_candidate_filter_summaries = permitted_candidate_filter_summaries
+    @bulk_edit_lifecycle_purpose = permitted_lifecycle_purpose
     @bulk_edit_candidate_document_ids = []
   end
 
@@ -89,6 +91,11 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
     end.first(7)
   end
 
+  def permitted_lifecycle_purpose
+    purpose = params[:lifecycle_purpose].to_s
+    LIFECYCLE_PURPOSES.include?(purpose) ? purpose : nil
+  end
+
   def normalized_integer_ids(values, limit: nil)
     ids = Array(values).filter_map do |value|
       Integer(value)
@@ -107,6 +114,7 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
   def bulk_edit_handoff_payload(selected_ids:, bounded_ids:, documents:)
     {
       source: bulk_edit_handoff_source,
+      lifecycle_purpose: @bulk_edit_lifecycle_purpose,
       runbook_path: BULK_EDIT_HANDOFF_RUNBOOK_PATH,
       generated_at: Time.current.iso8601,
       limit: BULK_EDIT_CANDIDATE_LIMIT,
