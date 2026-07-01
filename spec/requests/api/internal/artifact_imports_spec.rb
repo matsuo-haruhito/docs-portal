@@ -42,6 +42,20 @@ RSpec.describe "API internal artifact imports", type: :request do
     end
   end
 
+  it "rejects manifest paths that escape the artifact root without leaking the raw path" do
+    escaped_manifest = import_root.join("escaped-manifest.json")
+    File.write(escaped_manifest, { source_repo: "repo", source_branch: "main", source_commit_hash: "abc", documents: [] }.to_json)
+
+    post endpoint, params: {
+      artifact_root: artifact_root.to_s,
+      manifest_path: escaped_manifest.to_s
+    }, headers: headers
+
+    expect(response).to have_http_status(:forbidden)
+    expect(response.parsed_body["error"]).to include("artifact root")
+    expect(response.parsed_body["error"]).not_to include(escaped_manifest.to_s)
+  end
+
   it "rejects invalid storage_key values" do
     project = create(:project, code: "PJIMPORT", name: "Import Project")
     File.write(
@@ -100,6 +114,11 @@ RSpec.describe "API internal artifact imports", type: :request do
 
     expect(response).to have_http_status(:created)
     expect(response.parsed_body["status"]).to eq("imported")
+    expect(response.parsed_body["import_dry_run_id"]).to be_nil
+
+    publish_job = PublishJob.find(response.parsed_body.fetch("publish_job_id"))
+    expect(publish_job.log_message).to include("Imported successfully")
+    expect(publish_job.log_message).to include("dry_run=not_provided direct_artifact_apply=true")
   end
 
   it "notifies generated file events after importing documents" do
@@ -235,6 +254,10 @@ RSpec.describe "API internal artifact imports", type: :request do
     expect(response).to have_http_status(:created)
     expect(response.parsed_body["status"]).to eq("imported")
     expect(response.parsed_body["import_dry_run_id"]).to eq(dry_run_id)
+
+    publish_job = PublishJob.find(response.parsed_body.fetch("publish_job_id"))
+    expect(publish_job.log_message).to include("dry_run=#{dry_run_id}")
+    expect(publish_job.log_message).not_to include("dry_run=not_provided")
 
     dry_run = ImportDryRun.find_by!(public_id: dry_run_id)
     expect(dry_run.confirmed?).to eq(true)
