@@ -35,7 +35,7 @@ BOUNDARY_CHECKS = [
       "read-only evidence",
       "公開承認 gate や正式レビュー承認 workflow の状態として読む必要が出た場合",
       "`pass` も承認済みや公開許可済みを意味せず",
-      "公開可否の自動 gate、ack、品質 policy、通知を足す場合は `needs-human` に戻します"
+      "品質チェックを公開承認 gate、通知、ack、差し戻し workflow として使いたい"
     ]
   },
   {
@@ -44,14 +44,14 @@ BOUNDARY_CHECKS = [
       "正式レビュー承認 workflow の採否、承認者 chain、通知、SLA、段階承認、公開承認 policy を定義するものではありません",
       "`OK済み` は依頼単位の確認が済んだことを示す status です",
       "顧客承認済み、法務承認済み、公開承認済み、正式 workflow 完了済みを自動的には意味しません",
-      "Cancel 理由、承認者 chain、SLA、段階承認を足す場合は `needs-human` に戻します"
+      "正式レビュー承認 workflow、公開承認、送付承認へ広げたい"
     ]
   },
   {
     path: "docs/外部送付履歴運用runbook.md",
     expected: [
       "送付状態の変更、通知 channel への送信、alert rule の発火、自動 retry を実行するものではありません",
-      "`送付済み` / `送付失敗` 済みの log では、detail に状態更新 action は出ず",
+      "`送付済み` または `送付失敗` になった履歴では、detail に状態更新 action は出ず",
       "候補 0 件や検索結果 0 件を、mail 全体正常、外部監視 green、通知済み、ack 済みと誤読していないか",
       "承認 workflow はここへ足しません"
     ]
