@@ -19,24 +19,26 @@ parser = OptionParser.new do |opts|
   opts.on("--endpoint=PATH", "override upload endpoint path") { |value| options[:endpoint] = value }
 end
 
-parser.parse!(ARGV)
+begin
+  parser.parse!(ARGV)
 
-env_config = LocalFolderSync::UploadClient.config_from_env
-config = LocalFolderSync::UploadClient::Config.new(
-  portal_url: options.fetch(:portal_url, env_config.portal_url),
-  token: options.fetch(:token, env_config.token),
-  project_code: options.fetch(:project_code, env_config.project_code),
-  sync_root: options.fetch(:sync_root, env_config.sync_root),
-  source_name: options.fetch(:source_name, env_config.source_name),
-  file_path: options.fetch(:file_path, env_config.file_path),
-  endpoint: options.fetch(:endpoint, env_config.endpoint)
-)
+  env_config = LocalFolderSync::UploadClient.config_from_env
+  config = LocalFolderSync::UploadClient::Config.new(
+    portal_url: options.fetch(:portal_url, env_config.portal_url),
+    token: options.fetch(:token, env_config.token),
+    project_code: options.fetch(:project_code, env_config.project_code),
+    sync_root: options.fetch(:sync_root, env_config.sync_root),
+    source_name: options.fetch(:source_name, env_config.source_name),
+    file_path: options.fetch(:file_path, env_config.file_path),
+    endpoint: options.fetch(:endpoint, env_config.endpoint)
+  )
 
-client = LocalFolderSync::UploadClient.new(config: config)
-payload = client.call
-puts JSON.pretty_generate(client.summary_for(payload))
-exit 0
+  client = LocalFolderSync::UploadClient.new(config: config)
+  payload = client.call
+  puts JSON.pretty_generate(client.summary_for(payload))
+  exit 0
 rescue LocalFolderSync::UploadClient::Error => e
   warn "local folder sync dry-run failed: #{e.message}"
   warn parser
   exit 1
+end
