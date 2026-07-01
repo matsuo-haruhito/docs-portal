@@ -148,7 +148,10 @@ module LocalFolderSync
     def ensure_file_inside_root!(file_path, sync_root)
       raise Error, "upload target must be a regular file" unless file_path.file?
 
-      file_path.relative_path_from(sync_root)
+      relative_path = file_path.relative_path_from(sync_root)
+      return unless relative_path.each_filename.any? { |segment| segment == ".." }
+
+      raise Error, "upload target must be inside sync root"
     rescue ArgumentError
       raise Error, "upload target must be inside sync root"
     end
