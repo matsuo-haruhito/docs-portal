@@ -6,7 +6,8 @@ RSpec.describe "preview tools source" do
   end
 
   def inventory_section(heading, next_heading)
-    inventory_source.match(/^#{Regexp.escape(heading)}\n\n(?<section>.*?)(?=^#{Regexp.escape(next_heading)}$)/m)&.fetch(:section)
+    match = inventory_source.match(/^#{Regexp.escape(heading)}\n\n(?<section>.*?)(?=^#{Regexp.escape(next_heading)}$)/m)
+    match && match[:section]
   end
 
   let(:markdown_table_controller_source) { read_source("app/frontend/controllers/markdown_preview_table_tools_controller.js") }
