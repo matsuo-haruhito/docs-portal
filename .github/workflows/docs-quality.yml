@@ -9,6 +9,8 @@ on:
       - Product Profile.md
       - doc/**/*.md
       - docs/**/*.md
+      - app/renderers/docusaurus_site_renderer.rb
+      - spec/renderers/docusaurus_site_renderer_spec.rb
       - docusaurus/docusaurus.config.ts
       - docusaurus/package.json
       - docusaurus/package-lock.json
@@ -21,6 +23,7 @@ on:
       - .github/scripts/check_docs_quality_permissions.rb
       - .github/scripts/check_kroki_runtime_docs.rb
       - .github/scripts/check_formal_review_workflow_boundary.rb
+      - .github/scripts/check_docusaurus_table_metadata_boundary.rb
       - .markdownlint-cli2.yaml
   pull_request:
     paths:
@@ -29,6 +32,8 @@ on:
       - Product Profile.md
       - doc/**/*.md
       - docs/**/*.md
+      - app/renderers/docusaurus_site_renderer.rb
+      - spec/renderers/docusaurus_site_renderer_spec.rb
       - docusaurus/docusaurus.config.ts
       - docusaurus/package.json
       - docusaurus/package-lock.json
@@ -41,6 +46,7 @@ on:
       - .github/scripts/check_docs_quality_permissions.rb
       - .github/scripts/check_kroki_runtime_docs.rb
       - .github/scripts/check_formal_review_workflow_boundary.rb
+      - .github/scripts/check_docusaurus_table_metadata_boundary.rb
       - .markdownlint-cli2.yaml
 
 permissions:
@@ -65,6 +71,9 @@ jobs:
 
       - name: Check formal review workflow boundary docs
         run: ruby .github/scripts/check_formal_review_workflow_boundary.rb
+
+      - name: Check Docusaurus table metadata boundary docs
+        run: ruby .github/scripts/check_docusaurus_table_metadata_boundary.rb
 
       - uses: actions/setup-node@v6
         with:
