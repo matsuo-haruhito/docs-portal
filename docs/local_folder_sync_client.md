@@ -114,7 +114,50 @@ source_name + relative_path + content_hash
 - `source_path` は監査用であり、サーバー側の保存先決定には使わない
 - `relative_path` はサーバー側でも traversal / absolute path / Windows full path を拒否する
 
-## まず作る最小クライアント
+## 最小 reference uploader
+
+`bin/local_folder_sync_upload` は first slice の単発 reference client。
+1 ファイルを読み、同期ルートからの `relative_path` と送信前 SHA-256 を作って `POST /api/internal/file_uploads` の dry-run を作る。
+常駐監視、debounce queue、retry、削除同期、publish apply はまだ行わない。
+
+環境変数で実行する例:
+
+```bash
+DOCS_PORTAL_URL=https://portal.example.test \
+DOC_IMPORT_TOKEN=... \
+DOCS_PORTAL_PROJECT_CODE=PROJECT1 \
+LOCAL_FOLDER_SYNC_ROOT=/path/to/sync-root \
+LOCAL_FOLDER_SYNC_SOURCE_NAME=customer-nas-sync \
+LOCAL_FOLDER_SYNC_FILE=/path/to/sync-root/docs/guide.md \
+bin/local_folder_sync_upload
+```
+
+同じ値は option でも渡せる。
+
+```bash
+bin/local_folder_sync_upload \
+  --portal-url=https://portal.example.test \
+  --token=... \
+  --project-code=PROJECT1 \
+  --sync-root=/path/to/sync-root \
+  --source-name=customer-nas-sync \
+  --file=/path/to/sync-root/docs/guide.md
+```
+
+標準出力には `dry_run_id`、`status`、`relative_path`、送信前 hash、サーバー計算 hash、hash 一致結果だけを出す。
+token と client 上の `source_path` は標準出力やエラーに出さない。
+PR / release evidence には、この summary と dry-run only の境界だけを貼り、token、ローカル絶対パス、NAS の private path、raw response payload は貼らない。
+
+client 側でも次の file path は送信前に拒否する。
+
+- sync root 外の path
+- absolute path を `relative_path` として扱う必要がある path
+- `..` を含む traversal path
+- 空の relative path
+
+## まず作る常駐クライアント
+
+reference uploader の後続として、常駐クライアントでは次を扱う。
 
 - 設定ファイル
   - portal URL
