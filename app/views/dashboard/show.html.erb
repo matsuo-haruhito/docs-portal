@@ -205,7 +205,7 @@
   <% if current_user.internal? %>
     <article class="card">
       <h2>受付中Q&amp;A候補</h2>
-      <p class="muted">公開Q&amp;Aのうち受付中の root thread を表示します。通知、SLA、回答期限、担当割当を示すものではありません。</p>
+      <p class="muted">公開Q&amp;Aのうち受付中の root thread を最大 5 件だけ表示します。全件一覧、通知、SLA、回答期限、担当割当を示すものではありません。確認はリンク先の各文書または版のQ&amp;A workspaceで行います。</p>
       <% if @open_question_handoff_threads.any? %>
         <ul class="resource-list">
           <% @open_question_handoff_threads.each do |thread| %>
