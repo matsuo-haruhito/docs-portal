@@ -8,6 +8,7 @@ require "uri"
 
 module ClosedActiveQueueLabels
   ACTIVE_QUEUE_LABEL_PREFIXES = %w[status: agent:].freeze
+  RECOMMENDED_ACTION = "review_item_then_remove_stale_status_agent_labels".freeze
 
   class Error < StandardError; end
 
@@ -85,6 +86,7 @@ module ClosedActiveQueueLabels
         state: item.fetch("state"),
         state_reason: item["state_reason"],
         labels: active_labels,
+        recommended_action: RECOMMENDED_ACTION,
         url: item["html_url"]
       }
     end
@@ -93,22 +95,80 @@ module ClosedActiveQueueLabels
   def format_report(entries)
     return "No closed Issue / PR active queue label drift found." if entries.empty?
 
-    lines = ["Closed Issue / PR active queue label drift found:"]
+    lines = ["Closed Issue / PR active queue label drift digest:"]
     entries.each do |entry|
       state_reason = entry[:state_reason] ? ", reason=#{entry[:state_reason]}" : ""
-      lines << "- ##{entry[:number]} #{entry[:kind]} state=#{entry[:state]}#{state_reason} labels=#{entry[:labels].join(', ')}"
+      lines << "- ##{entry[:number]} #{entry[:kind]} state=#{entry[:state]}#{state_reason} active_labels=#{entry[:labels].join(', ')} recommended_action=#{entry[:recommended_action]} url=#{entry[:url]}"
     end
     lines.join("\n")
   end
 
+  def self_test_items
+    [
+      {
+        "number" => 101,
+        "state" => "closed",
+        "state_reason" => "completed",
+        "labels" => [{ "name" => "status:ready-for-agent" }, { "name" => "agent:planned" }, { "name" => "track:quality" }],
+        "html_url" => "https://github.example.test/repo/issues/101"
+      },
+      {
+        "number" => 102,
+        "state" => "closed",
+        "state_reason" => nil,
+        "labels" => [{ "name" => "risk:low" }],
+        "html_url" => "https://github.example.test/repo/issues/102"
+      },
+      {
+        "number" => 103,
+        "state" => "open",
+        "labels" => [{ "name" => "status:ready-for-agent" }],
+        "html_url" => "https://github.example.test/repo/issues/103"
+      },
+      {
+        "number" => 104,
+        "state" => "closed",
+        "pull_request" => {},
+        "labels" => [{ "name" => "agent:needs-review" }],
+        "html_url" => "https://github.example.test/repo/pull/104"
+      }
+    ]
+  end
+
+  def run_self_test(out:, err:)
+    entries = drift_entries(self_test_items)
+    report = format_report(entries)
+
+    expected = [
+      "Closed Issue / PR active queue label drift digest:",
+      "#101 issue state=closed, reason=completed active_labels=status:ready-for-agent, agent:planned recommended_action=#{RECOMMENDED_ACTION}",
+      "#104 pull_request state=closed active_labels=agent:needs-review recommended_action=#{RECOMMENDED_ACTION}"
+    ]
+    missing = expected.reject { |text| report.include?(text) }
+    unwanted = ["#102", "#103", "track:quality"].select { |text| report.include?(text) }
+
+    if missing.any? || unwanted.any?
+      err.puts "closed active queue label digest self-test failed"
+      missing.each { |text| err.puts "missing expected self-test output: #{text.inspect}" }
+      unwanted.each { |text| err.puts "unexpected self-test output: #{text.inspect}" }
+      return 1
+    end
+
+    out.puts "closed active queue label digest self-test passed."
+    0
+  end
+
   def run(argv:, env:, out:, err:)
-    options = { api_url: "https://api.github.com" }
+    options = { api_url: "https://api.github.com", self_test: false }
     parser = OptionParser.new do |opts|
       opts.banner = "Usage: #{$PROGRAM_NAME} --repo OWNER/REPO"
       opts.on("--repo REPO", "GitHub repository in OWNER/REPO form") { |repo| options[:repo] = repo }
       opts.on("--api-url URL", "GitHub API URL") { |api_url| options[:api_url] = api_url }
+      opts.on("--self-test", "Run local digest formatting checks without GitHub API access") { options[:self_test] = true }
     end
     parser.parse!(argv)
+
+    return run_self_test(out: out, err: err) if options[:self_test]
 
     token = env["GITHUB_TOKEN"]
     raise Error, "GITHUB_TOKEN is required for read-only GitHub API access." if token.to_s.empty?
