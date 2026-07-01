@@ -22,14 +22,14 @@
 - external user exposure: `bin/external_user_exposure_smoke --format markdown`
   - result: passed / failed
   - next checklist: `docs/社外ユーザー向け情報露出点検チェックリスト.md`
-  - failure handoff: 対象 spec / surface / next runbook へ戻って確認する。HTML / JSON / ZIP payload、raw response、token-like value、文書タイトル、添付 metadata、権限外文書名は貼らない。
+  - failure handoff: 対象 spec / surface / runbook へ戻って確認する。HTML / JSON / ZIP payload、raw response、token-like value、文書タイトル、添付 metadata、権限外文書名は貼らない。
 - operational metadata exposure: `bin/operational_metadata_exposure_smoke --format markdown`
   - result: passed / failed
   - next checklist: `docs/運用metadata情報露出点検チェックリスト.md`
-  - failure handoff: 対象 spec / surface / next runbook へ戻って確認する。raw path、raw payload、token-like value、PII-like value、Webhook / Graph details、外部 ID、provider payload は貼らない。
+  - failure handoff: 対象 spec / surface / runbook へ戻って確認する。raw path、raw payload、token-like value、PII-like value、Webhook / Graph details、外部 ID、provider payload は貼らない。
 ```
 
-`next checklist` と `failure handoff` は smoke digest 自体が出す行です。PR / release evidence ではこの 2 行を要約せず、失敗時の詳細 payload や raw value を足して補強しないでください。
+`next checklist` と `failure handoff` は smoke digest 自体が出す行です。PR / release evidence ではこの 2 行を要約せず、失敗時の詳細 payload や raw value を足して補強しないでください。digest 表の `next runbook` は、上記の `runbook` 戻り先として扱います。
 
 ## 失敗時の戻り先
 
