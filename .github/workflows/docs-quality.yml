@@ -20,6 +20,7 @@ on:
       - .github/scripts/check_markdown_links.rb
       - .github/scripts/check_docs_quality_permissions.rb
       - .github/scripts/check_kroki_runtime_docs.rb
+      - .github/scripts/check_formal_review_workflow_boundary.rb
       - .markdownlint-cli2.yaml
   pull_request:
     paths:
@@ -39,6 +40,7 @@ on:
       - .github/scripts/check_markdown_links.rb
       - .github/scripts/check_docs_quality_permissions.rb
       - .github/scripts/check_kroki_runtime_docs.rb
+      - .github/scripts/check_formal_review_workflow_boundary.rb
       - .markdownlint-cli2.yaml
 
 permissions:
@@ -60,6 +62,9 @@ jobs:
 
       - name: Check Kroki optional runtime docs
         run: ruby .github/scripts/check_kroki_runtime_docs.rb
+
+      - name: Check formal review workflow boundary docs
+        run: ruby .github/scripts/check_formal_review_workflow_boundary.rb
 
       - uses: actions/setup-node@v6
         with:
