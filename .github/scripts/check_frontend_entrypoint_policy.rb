@@ -11,7 +11,7 @@ DOC_CHECKS = [
     expected: [
       "Turbo のみ",
       "Stimulus",
-      "application.js に直接 `querySelectorAll` とイベント登録を増やさない",
+      "`application.js` に直接 `querySelectorAll` とイベント登録を増やさない",
       "新しい UI では同じ形式を増やさない",
       "Tom Select 自体は避けない",
       "アプリ側で `new TomSelect(...)` を直接呼ぶ手書き初期化を増やすこと"
