@@ -139,6 +139,24 @@ RSpec.describe "Project sites", type: :request do
     expect(log.target_name).to eq(version_v1.html_view_site_path)
   end
 
+  it "redirects moved site paths to the canonical path without using a permanent redirect" do
+    sign_in_as(user)
+
+    get project_site_path(project, site_path: version_v1.html_view_site_path, version_id: version_v2.public_id, embedded: "1")
+
+    expect(response).to have_http_status(:found)
+    expect(response).not_to have_http_status(:moved_permanently)
+    expect(response).to redirect_to(
+      project_site_path(
+        project,
+        site_path: version_v2.html_view_site_path,
+        version_id: version_v2.public_id,
+        previous_site_path: version_v1.html_view_site_path,
+        embedded: "1"
+      )
+    )
+  end
+
   it "renders embedded project site html for the iframe body" do
     sign_in_as(user)
 
