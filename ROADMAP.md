@@ -24,6 +24,8 @@
 
 `docs-portal` 側 issue では、画面固有の view、helper、route、params、Stimulus wiring、request / system spec を扱う。gem の public API、import path、controller registration、Vite alias 前提、導入手順の不足が論点になる場合は、upstream gem 側の issue / docs と分けて確認する。
 
+この表の代表 issue / PR は、current support の証跡、historical evidence、次に見る未解決候補を同じ列で扱う。`PR #... は merged`、`current support`、`docs 同期` と明記されている番号は再実装や refresh 対象ではなく、現在地を説明する補助証跡として読む。open blocker として見る番号は、`候補`、`次に見る`、`proposal`、`release train gate` の文脈で残す。closed / merged PR 番号だけが current next action に見える場合は、番号を残すより該当画面、guard 名、current support 境界へ要約し直し、PR 番号は補助証跡へ下げる。
+
 `#607` は screen-by-screen adoption、`#858` と child issue は pinned ref / smoke / rollback note の release train として読む。`#1300`、`#1301`、`#789` は target SHA や `Gemfile` / `Gemfile.lock` 更新を含む release train gate であり、この ROADMAP の展開候補表では current support として先取りしない。
 
 新しい first slice が merge されたら、該当画面をこの表の「現在地」に反映し、open PR の番号だけが ROADMAP 上に残らないようにする。closed issue の網羅表にはせず、次に agent が見る判断材料だけを短く残す。
@@ -83,7 +85,7 @@ Tom Select 自体は積極的に使う。ただし、アプリ側で `new TomSel
 
 - `preview-tools` bridge は移行用の入口として退役済み。`archive-preview-tools`, `csv-preview-tools`, `document-file-list-search`, `markdown-preview-document-search`, `markdown-preview-codeblock-tools`, `markdown-preview-table-tools`, `image-preview-tools`, `pdf-preview-tools`, `structured-preview-tools`, `site-viewer-iframe-height` などの専用 controller がそれぞれ helper refresh を担当する。bridge 再導入や空 controller の維持は current support として扱わない。
 - `preview-table-resizer` は Markdown preview table の fallback path として維持する。Markdown table を `rails_table_preferences` へ寄せる判断は #475 の親論点に残す。
-- `DocusaurusSiteRenderer` の table rewrite は current support として、site viewer HTML の `<table>` に `portal-doc-table-preference-wrapper` / `portal-doc-preference-table` と document version / site path / table index / stable table key metadata を付ける。これは後続 design / feature が参照できる DOM 境界であり、column visibility / preset UI / preference schema の最終判断は #475 に残す。
+- `DocusaurusSiteRenderer` の table rewrite は current support として、site viewer HTML の `<table>` に `portal-doc-table-preference-wrapper` / `portal-doc-preference-table` と document version / site path / table index / stable table key metadata を付ける。これは後続 design / feature が参照できる DOM 境界であり、#4339 / PR #4343 の docs-quality guard では renderer、renderer spec、版詳細 runbook、ROADMAP の代表 signal として守る。column visibility / preset UI / preference schema の最終判断は #475 に残す。
 - `document-tree-navigation` は tree link click 後の Turbo Stream refresh を補助する app 側 controller として維持する。TreeView gem API、loading / error event 名、retry policy はこの ROADMAP で決めない。
 
 方針:
