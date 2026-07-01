@@ -45,9 +45,9 @@
 ## archived / 復元
 
 - Document 単位 archive / restore は admin 管理画面で実装済み
-- 保管期限 / 廃棄候補の current 文書マスタ filter・一覧列・手動 archive / restore 判断は [文書マスタ運用runbook](./文書マスタ運用runbook.md) を正本にする。#1054 の first slice は completed のため、ここには current support 外の後続判断だけを残す。分類: 正本 docs へ移動済み
+- 保管期限 / 廃棄候補の current 文書マスタ filter・一覧列・期限間近 filter・手動 archive / restore 判断は [文書マスタ運用runbook](./文書マスタ運用runbook.md) を正本にする。#1054 の first slice は completed のため、ここには current support 外の後続判断だけを残す。分類: 正本 docs へ移動済み
 - bulk archive / bulk restore 候補を実行ではなく read-only に引き継ぐ first slice は #3268 で扱う。ToDo 側には候補要件を重複して残さず、正本 docs と #3268 の判断論点だけを参照する。分類: 具体 Issue あり
-- discard candidate marking、自動通知、自動削除、非可逆 discard、期限間近の新閾値定義は後続判断として残す。分類: 人間判断待ち / 未起票のまま残すもの。未起票で残す理由: retention policy、通知先、復元期限、不可逆操作の承認要件を分けて判断する必要がある
+- discard candidate marking、自動通知、自動削除、非可逆 discard、期限間近 filter より先の alert / workflow 化は後続判断として残す。分類: 人間判断待ち / 未起票のまま残すもの。未起票で残す理由: retention policy、通知先、復元期限、不可逆操作の承認要件を分けて判断する必要がある
 
 ## Import / GitHub Actions
 
