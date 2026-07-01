@@ -51,6 +51,8 @@ Rails.application.routes.draw do
     resources :companies, except: %i[show new], param: :public_id
     resources :users, except: %i[show new], param: :public_id
     resources :projects, except: %i[show new], param: :code do
+      get :company_search, on: :collection
+      get :selected_company, on: :collection
       member do
         get "external_preview", to: "project_external_previews#show"
         get "external_preview/user_search", to: "project_external_previews#user_search", as: :external_preview_user_search
