@@ -160,9 +160,16 @@ class Admin::DocumentsController < Admin::BaseController
     @bulk_edit_candidate_limit = BULK_EDIT_CANDIDATE_LIMIT
     @bulk_edit_candidate_count = @documents_filtered_count
     @bulk_edit_candidate_ids = []
+    @bulk_archive_candidate_count = document_scope.active_only.count
+    @bulk_restore_candidate_count = document_scope.archived_only.count
+    @bulk_archive_candidate_ids = []
+    @bulk_restore_candidate_ids = []
     return if @bulk_edit_candidate_count.zero? || @bulk_edit_candidate_count > @bulk_edit_candidate_limit
 
-    @bulk_edit_candidate_ids = document_scope.includes(:project).order("projects.code", :title).to_a.map(&:id)
+    ordered_scope = document_scope.includes(:project).order("projects.code", :title)
+    @bulk_edit_candidate_ids = ordered_scope.to_a.map(&:id)
+    @bulk_archive_candidate_ids = ordered_scope.active_only.to_a.map(&:id) if @bulk_archive_candidate_count.positive?
+    @bulk_restore_candidate_ids = ordered_scope.archived_only.to_a.map(&:id) if @bulk_restore_candidate_count.positive?
   end
 
   def filtered_documents
