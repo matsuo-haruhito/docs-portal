@@ -36,6 +36,7 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
   end
 
   def handoff
+    @bulk_edit_lifecycle_purpose = permitted_lifecycle_purpose
     selected_ids = normalized_integer_ids(params.dig(:bulk_edit, :document_ids))
     bounded_ids = selected_ids.first(BULK_EDIT_CANDIDATE_LIMIT)
     documents = documents_for_handoff(bounded_ids)
