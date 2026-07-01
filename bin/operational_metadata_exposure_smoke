@@ -65,6 +65,9 @@ DIGEST_ROWS = [
   }
 ].freeze
 
+NEXT_CHECKLIST = "docs/運用metadata情報露出点検チェックリスト.md"
+FAILURE_HANDOFF = "対象 spec / surface / next runbook へ戻って確認する。raw path、raw payload、token-like value、PII-like value、Webhook / Graph details、外部 ID、provider payload は貼らない。"
+
 def consume_markdown_digest_format(argv)
   markdown_digest = false
   remaining = []
@@ -96,6 +99,8 @@ def write_markdown_digest(io, status:, rspec_args:)
   io.puts "- executed at: #{Time.now.utc.iso8601}"
   io.puts "- result: #{status}"
   io.puts "- rspec args: #{rspec_args.empty? ? 'none' : rspec_args.join(' ')}"
+  io.puts "- next checklist: `#{NEXT_CHECKLIST}`"
+  io.puts "- failure handoff: #{FAILURE_HANDOFF}"
   io.puts "- boundary: request-spec results only; do not paste raw paths, raw payloads, token-like values, PII-like values, Webhook / Graph details, external IDs, or provider payloads into this digest."
   io.puts "- external user exposure: use `bin/external_user_exposure_smoke` and `docs/社外ユーザー向け情報露出点検チェックリスト.md` instead."
   io.puts
