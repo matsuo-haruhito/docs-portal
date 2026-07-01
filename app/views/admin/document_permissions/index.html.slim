@@ -51,7 +51,10 @@ section.card
   p.muted
     | 表示中:
     strong = " #{@document_permissions.size}件"
-    |  / 条件に一致する文書権限を表示
+    - if filters_active
+      |  / 条件に一致する文書権限を表示
+    - else
+      |  / 登録済みの文書権限を表示
   - if filters_active
     p.muted
       | 有効な条件:
