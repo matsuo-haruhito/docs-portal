@@ -19,6 +19,10 @@ RSpec.describe "Admin document lifecycle dry-run candidates", type: :request do
     Rack::Utils.parse_nested_query(URI.parse(link_href(link_text)).query)
   end
 
+  def selected_archive_action_value
+    parsed_html.at_xpath('//select[@name="bulk_edit[archive_action]"]/option[@selected]')&.[]("value")
+  end
+
   it "links active filtered results to an archive dry-run without changing document state" do
     project = create(:project, code: "LIFE-A", name: "Lifecycle Active")
     active_document = create(:document, project:, title: "Archive Candidate", retention_until: 1.day.ago)
@@ -101,7 +105,7 @@ RSpec.describe "Admin document lifecycle dry-run candidates", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("目的: アーカイブ dry-run候補")
-    expect(parsed_html.at_css(%(select[name="bulk_edit[archive_action]"] option[selected][value="archive"))).to be_present
+    expect(selected_archive_action_value).to eq("archive")
     expect(parsed_html.at_css(%(input[type="hidden"][name="lifecycle_purpose"][value="archive"]))).to be_present
     expect(page_text).to include("文書状態はまだ変更されません")
 
@@ -114,7 +118,7 @@ RSpec.describe "Admin document lifecycle dry-run candidates", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("目的: 復元 dry-run候補")
-    expect(parsed_html.at_css(%(select[name="bulk_edit[archive_action]"] option[selected][value="restore"))).to be_present
+    expect(selected_archive_action_value).to eq("restore")
     expect(parsed_html.at_css(%(input[type="hidden"][name="lifecycle_purpose"][value="restore"]))).to be_present
   end
 end
