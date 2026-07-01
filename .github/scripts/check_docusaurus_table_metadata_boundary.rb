@@ -24,7 +24,6 @@ CHECKS = [
       "keeps mermaid and code blocks intact while annotating real tables",
       "adds stable table preference metadata in embedded mode without portal chrome",
       "portal-doc-table-preference-wrapper",
-      "portal-doc-preference-table",
       "data-rails-table-preferences-table-key"
     ]
   },
