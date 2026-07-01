@@ -5,6 +5,10 @@ RSpec.describe "preview tools source" do
     Rails.root.join(path).read
   end
 
+  def inventory_section(heading, next_heading)
+    inventory_source.match(/^#{Regexp.escape(heading)}\n\n(?<section>.*?)(?=^#{Regexp.escape(next_heading)}$)/m)&.fetch(:section)
+  end
+
   let(:markdown_table_controller_source) { read_source("app/frontend/controllers/markdown_preview_table_tools_controller.js") }
   let(:table_tools_source) { read_source("app/frontend/lib/markdown_preview_table_tools.js") }
   let(:document_search_source) { read_source("app/frontend/lib/markdown_preview_document_search.js") }
@@ -30,6 +34,14 @@ RSpec.describe "preview tools source" do
 
   let(:registered_controller_identifiers) do
     entrypoint_source.scan(/application\.register\("([^"]+)"/).flatten
+  end
+
+  let(:gem_controller_identifiers) do
+    ["rails-table-preferences", "rails-fields-kit--tom-select"]
+  end
+
+  let(:app_controller_identifiers) do
+    registered_controller_identifiers - gem_controller_identifiers
   end
 
   it "moves the markdown preview table helper to a dedicated controller with the existing Turbo lifecycle" do
@@ -95,6 +107,25 @@ RSpec.describe "preview tools source" do
       expect(inventory_source).to include("Source-level guard 済みの controller")
       expect(inventory_source).to include("`application.js` の直接 DOM setup は追加しない")
       expect(inventory_source).to include("app 側 `new TomSelect(...)` は追加しない")
+    end
+  end
+
+  it "keeps registered controllers grouped by source in the frontend initialization inventory" do
+    gem_section = inventory_section("### Gem 提供 controller", "### App 側 controller")
+    app_section = inventory_section("### App 側 controller", "## 素の JavaScript / listener の棚卸し")
+
+    aggregate_failures do
+      expect(gem_section).to be_present
+      expect(app_section).to be_present
+
+      gem_controller_identifiers.each do |identifier|
+        expect(gem_section).to include("`#{identifier}`"), "expected #{identifier} to stay in the Gem 提供 controller inventory section"
+        expect(app_section).not_to include("| `#{identifier}` |"), "expected #{identifier} not to drift into the App 側 controller inventory table"
+      end
+
+      app_controller_identifiers.each do |identifier|
+        expect(app_section).to include("`#{identifier}`"), "expected #{identifier} to stay represented in the App 側 controller inventory section"
+      end
     end
   end
 
