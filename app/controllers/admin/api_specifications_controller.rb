@@ -1,4 +1,7 @@
 class Admin::ApiSpecificationsController < Admin::BaseController
+  CODEBLOCK_DRY_RUN_MAX_BYTES = 12_000
+  HTTP_METHODS = %w[GET POST PUT PATCH DELETE HEAD OPTIONS].freeze
+
   before_action :require_admin_only!
   skip_after_action :verify_same_origin_request, only: :site
 
@@ -25,6 +28,15 @@ class Admin::ApiSpecificationsController < Admin::BaseController
     redirect_to admin_api_specification_path, notice: "API仕様ページの Docusaurus build を再実行します。完了後に再読み込みしてください。"
   end
 
+  def codeblock_dry_run
+    result = api_codeblock_dry_run_result(
+      codeblock: params[:codeblock].to_s,
+      codeblock_id: params[:codeblock_id].to_s
+    )
+
+    render json: result, status: result[:status] == "error" ? :unprocessable_entity : :ok
+  end
+
   def site
     page = Admin::ApiSpecificationPage.new(view_context:)
     page.enqueue_build_if_stale!
@@ -43,6 +55,99 @@ class Admin::ApiSpecificationsController < Admin::BaseController
   end
 
   private
+
+  def api_codeblock_dry_run_result(codeblock:, codeblock_id:)
+    if codeblock.bytesize > CODEBLOCK_DRY_RUN_MAX_BYTES
+      return api_codeblock_dry_run_payload(
+        status: "error",
+        message: "http codeblock が大きすぎるため dry-run validation を実行できません。",
+        target_api: "未判定",
+        details: ["codeblock を短い代表 request sample に分けてください。"],
+        codeblock_id:
+      )
+    end
+
+    request_line = first_http_request_line(codeblock)
+    if request_line.blank?
+      return api_codeblock_dry_run_payload(
+        status: "error",
+        message: "http request line を検出できませんでした。",
+        target_api: "未判定",
+        details: ["例: GET /api/internal/file_uploads HTTP/1.1 のような行を含めてください。"],
+        codeblock_id:
+      )
+    end
+
+    method, path = request_line.split(/\s+/, 3)
+    method = method.to_s.upcase
+
+    unless HTTP_METHODS.include?(method)
+      return api_codeblock_dry_run_payload(
+        status: "error",
+        message: "サポート対象外の HTTP method です。",
+        target_api: request_line,
+        details: ["dry-run validation は #{HTTP_METHODS.join(', ')} の request sample だけを対象にします。"],
+        codeblock_id:
+      )
+    end
+
+    if external_url_path?(path)
+      return api_codeblock_dry_run_payload(
+        status: "error",
+        message: "外部 URL への request sample は dry-run 対象外です。",
+        target_api: "#{method} #{path}",
+        details: ["外部 API 送信を避けるため、path-only の internal API sample に限定しています。"],
+        codeblock_id:
+      )
+    end
+
+    unless path.to_s.start_with?("/")
+      return api_codeblock_dry_run_payload(
+        status: "error",
+        message: "path-only の internal API sample ではありません。",
+        target_api: "#{method} #{path}".strip,
+        details: ["dry-run validation は /api/... のような同一アプリ内 path だけを対象にします。"],
+        codeblock_id:
+      )
+    end
+
+    api_codeblock_dry_run_payload(
+      status: "ok",
+      message: "dry-run validation は成功しました。apply / import / 外部送信は実行していません。",
+      target_api: "#{method} #{path}",
+      details: [
+        "対象 API: #{method} #{path}",
+        "実行ユーザー: #{current_user.display_name}",
+        "dry-run only: request sample の形式確認だけを行いました。"
+      ],
+      codeblock_id:
+    )
+  end
+
+  def api_codeblock_dry_run_payload(status:, message:, target_api:, details:, codeblock_id:)
+    {
+      status:,
+      dry_run: true,
+      destructive: false,
+      action_kind: "admin_api_spec.http_codeblock_dry_run",
+      target_viewer: "admin_api_specification",
+      target_api:,
+      codeblock_id: codeblock_id.presence || "unknown",
+      user: current_user.display_name,
+      message:,
+      details:
+    }
+  end
+
+  def first_http_request_line(codeblock)
+    codeblock.each_line.map(&:strip).find do |line|
+      line.present? && !line.start_with?("#", "//")
+    end
+  end
+
+  def external_url_path?(path)
+    path.to_s.start_with?("http://", "https://", "//")
+  end
 
   def asset_path?(site_path)
     site_path.to_s.start_with?("assets/")

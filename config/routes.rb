@@ -40,6 +40,7 @@ Rails.application.routes.draw do
     get "storage_usage/document_files", to: "storage_usage#document_files", as: :storage_usage_document_files
     resource :api_specification, only: [:show] do
       post "retry_build", to: "api_specifications#retry_build", as: :retry_build
+      post "codeblock_dry_run", to: "api_specifications#codeblock_dry_run", as: :codeblock_dry_run
       get "site(/*site_path)", to: "api_specifications#site", as: :site, format: false
     end
     get "model_browser", to: "model_browsers#index", as: :model_browser
