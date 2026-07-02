@@ -9,7 +9,7 @@ RSpec.describe "Admin generated file run search hints", type: :request do
 
   def search_hint_card
     heading = parsed_html.css("h2").find { _1.text.squish == "一覧 q 検索の手掛かり" }
-    heading&.ancestors("div")&.first
+    heading&.xpath("ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' rounded-lg ')][1]")&.first
   end
 
   def search_hint_hrefs
