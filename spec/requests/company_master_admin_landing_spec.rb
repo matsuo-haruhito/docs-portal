@@ -14,6 +14,10 @@ RSpec.describe "Company master admin landing", type: :request do
     parsed_html.css("a[href], form[action]").map { |node| node["href"] || node["action"] }
   end
 
+  def repo_file(path)
+    Rails.root.join(path).read
+  end
+
   def company_master_admin_seed_row
     CSV.read(Rails.root.join("db/seeds/data/users.csv"), headers: true).find do |row|
       row["email_address"] == "company-admin-a@client-a.example.com"
@@ -22,6 +26,23 @@ RSpec.describe "Company master admin landing", type: :request do
 
   def company_master_admin_readme_sample
     "| `company-admin-a@client-a.example.com` / `password123!` | A商事 会社管理者 / company_master_admin | `/admin` から自社会社・自社ユーザー管理の境界を確認する |"
+  end
+
+  it "keeps README, runbook, and nav memo aligned on the company master admin boundary" do
+    readme = repo_file("README.md")
+    runbook = repo_file("docs/company_master_admin会社・ユーザー管理runbook.md")
+    nav_memo = repo_file("docs/管理画面nav領域見出し運用メモ.md")
+
+    expect(readme).to include("`会社` / `ユーザー` 管理に閉じる role 境界を確認する")
+    expect(readme).to include(company_master_admin_readme_sample)
+
+    expect(runbook).to include("current `main` では、`/admin` へ入ると `会社・ユーザー管理` の landing が表示される")
+    expect(runbook).to include("左 nav: `会社・ユーザー管理` の領域見出しと、許可済みの `会社` / `ユーザー` link だけを表示する")
+    expect(runbook).to include("`案件` `文書` `文書権限` `監査ログ` `利用状況` などの admin surface には入れない")
+    expect(runbook).to include("landing 下部の `通常の案件一覧へ戻る` は、admin surface ではなく通常閲覧側の案件一覧へ戻る導線として読む")
+
+    expect(nav_memo).to include("company master admin 向け nav は、従来どおり `会社` と `ユーザー` だけを表示する")
+    expect(nav_memo).to include("role boundary や link 先を変えるものではない")
   end
 
   it "keeps the representative seed login aligned with the company master admin landing" do
@@ -36,7 +57,7 @@ RSpec.describe "Company master admin landing", type: :request do
       "password" => "password123!",
       "active" => "true"
     )
-    expect(Rails.root.join("README.md").read).to include(company_master_admin_readme_sample)
+    expect(repo_file("README.md")).to include(company_master_admin_readme_sample)
 
     company = create(:company, name: "A商事", domain: seed_row["company_domain"])
     sign_in_as(
