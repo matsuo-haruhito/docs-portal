@@ -48,10 +48,14 @@ section.card
       = link_to "CSV出力", admin_document_permissions_path(csv_filter_params), class: "button secondary"
       - if filters_active
         = link_to "条件をクリア", admin_document_permissions_path, class: "button secondary"
+    p.muted CSVは現在の検索条件で出力します。文書別の権限概要・権限一覧の列表示設定とは独立した固定項目です。
   p.muted
     | 表示中:
     strong = " #{@document_permissions.size}件"
-    |  / 条件に一致する文書権限を表示
+    - if filters_active
+      |  / 条件に一致する文書権限を表示
+    - else
+      |  / 登録済みの文書権限を表示
   - if filters_active
     p.muted
       | 有効な条件:
