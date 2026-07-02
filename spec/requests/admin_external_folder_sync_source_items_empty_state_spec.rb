@@ -41,7 +41,7 @@ RSpec.describe "Admin external folder sync source items empty state", type: :req
       text = sync_items_card_text
       expect(text).to include("同期アイテム")
       expect(text).to include("まだ同期アイテムはありません。")
-      expect(text).to include("同期プレビューまたは同期を実行すると、外部フォルダ内のファイルとポータル文書の対応がここに表示されます。")
+      expect(text).to include("同期内容の確認または同期を実行すると、外部フォルダ内のファイルとポータル文書の対応がここに表示されます。")
       expect(text).to include("詳細は上の同期履歴の「結果詳細」で確認してください。")
     end
 
