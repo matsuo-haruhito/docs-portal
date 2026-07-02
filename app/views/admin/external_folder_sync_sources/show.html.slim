@@ -217,28 +217,34 @@ h1 外部フォルダ同期設定詳細
           th エラー理由
           th 通知詳細
       tbody
-        - @webhook_events.each do |event|
+        - if @webhook_events.empty?
           tr
-            td = l(event.received_at)
-            td = external_folder_sync_webhook_event_status_label(event)
-            td
-              - if event.external_folder_sync_subscription.present?
-                code = event.external_folder_sync_subscription.provider_channel_id.presence || event.external_folder_sync_subscription.public_id
-              - else
-                | -
-            td = external_folder_sync_webhook_resource_state_label(event)
-            td = external_folder_sync_webhook_header(event, "X_GOOG_MESSAGE_NUMBER")
-            td = render "webhook_sync_run_cell", event: event
-            td
-              code = external_folder_sync_display_event_key(event)
-            td = event.error_message.presence || "-"
-            td
-              details
-                summary ヘッダー / ペイロード
-                h3 ヘッダー
-                pre = JSON.pretty_generate(event.headers_json || {})
-                h3 ペイロード
-                pre = JSON.pretty_generate(event.payload_json || {})
+            td colspan="9"
+              p.muted まだ変更通知イベントは受信していません。購読を開始すると、受信した通知と同期履歴への紐づきがここに表示されます。
+              p.muted 同期成功や購読済みを保証する表示ではありません。
+        - else
+          - @webhook_events.each do |event|
+            tr
+              td = l(event.received_at)
+              td = external_folder_sync_webhook_event_status_label(event)
+              td
+                - if event.external_folder_sync_subscription.present?
+                  code = event.external_folder_sync_subscription.provider_channel_id.presence || event.external_folder_sync_subscription.public_id
+                - else
+                  | -
+              td = external_folder_sync_webhook_resource_state_label(event)
+              td = external_folder_sync_webhook_header(event, "X_GOOG_MESSAGE_NUMBER")
+              td = render "webhook_sync_run_cell", event: event
+              td
+                code = external_folder_sync_display_event_key(event)
+              td = event.error_message.presence || "-"
+              td
+                details
+                  summary ヘッダー / ペイロード
+                  h3 ヘッダー
+                  pre = JSON.pretty_generate(event.headers_json || {})
+                  h3 ペイロード
+                  pre = JSON.pretty_generate(event.payload_json || {})
 - else
   .card
     h2 SharePoint / OneDrive 変更通知の受信イベント
@@ -257,27 +263,33 @@ h1 外部フォルダ同期設定詳細
           th エラー理由
           th 通知詳細
       tbody
-        - @webhook_events.each do |event|
+        - if @webhook_events.empty?
           tr
-            td = l(event.received_at)
-            td = external_folder_sync_webhook_event_status_label(event)
-            td
-              code = external_folder_sync_graph_notification_value(event, "subscriptionId")
-            td
-              code = external_folder_sync_graph_notification_value(event, "resource")
-            td = external_folder_sync_graph_notification_value(event, "changeType")
-            td = external_folder_sync_graph_notification_value(event, "sequenceNumber")
-            td = render "webhook_sync_run_cell", event: event
-            td
-              code = external_folder_sync_display_event_key(event)
-            td = event.error_message.presence || "-"
-            td
-              details
-                summary ヘッダー / ペイロード
-                h3 ヘッダー
-                pre = JSON.pretty_generate(event.headers_json || {})
-                h3 ペイロード
-                pre = JSON.pretty_generate(external_folder_sync_sanitized_webhook_payload(event))
+            td colspan="10"
+              p.muted まだ受信済み webhook event はありません。ここでは受信済み event の確認だけを行います。
+              p.muted 差分同期本体や購読作成・更新は後続 issue の範囲です。
+        - else
+          - @webhook_events.each do |event|
+            tr
+              td = l(event.received_at)
+              td = external_folder_sync_webhook_event_status_label(event)
+              td
+                code = external_folder_sync_graph_notification_value(event, "subscriptionId")
+              td
+                code = external_folder_sync_graph_notification_value(event, "resource")
+              td = external_folder_sync_graph_notification_value(event, "changeType")
+              td = external_folder_sync_graph_notification_value(event, "sequenceNumber")
+              td = render "webhook_sync_run_cell", event: event
+              td
+                code = external_folder_sync_display_event_key(event)
+              td = event.error_message.presence || "-"
+              td
+                details
+                  summary ヘッダー / ペイロード
+                  h3 ヘッダー
+                  pre = JSON.pretty_generate(event.headers_json || {})
+                  h3 ペイロード
+                  pre = JSON.pretty_generate(external_folder_sync_sanitized_webhook_payload(event))
 
 .card
   h2 同期履歴
