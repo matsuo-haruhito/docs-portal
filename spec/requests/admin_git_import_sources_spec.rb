@@ -48,6 +48,34 @@ RSpec.describe "Admin git import sources", type: :request do
     expect(page_text).to include("GitHub App picker は未実装のため、現在は値を直接入力します。")
   end
 
+  it "shows auth type and advanced setting cues on the new and edit forms" do
+    get admin_git_import_sources_path
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("通常運用は GitHub App。Fine-grained PAT は開発・検証用、認証なしは公開リポジトリ限定です。")
+    expect(page_text).to include("詳細設定は、GitHub App の installation ID や PAT の参照名・secret を確認するときだけ開きます。")
+    expect(page_text).to include("GitHub App では installation ID を確認します。")
+    expect(page_text).to include("Fine-grained PAT では credential ref と secret を使い、no_auth では secret は不要です。")
+    expect(page_text).to include("Fine-grained PAT を使う場合のみ入力します。")
+    expect(page_text).to include("GitHub App や公開リポジトリの認証なしでは空欄のまま保存できます。")
+
+    project = create(:project, code: "GITAUTH", name: "Auth Project")
+    source = create(
+      :git_import_source,
+      project:,
+      created_by: admin_user,
+      repository_full_name: "example/auth-docs",
+      auth_type: :github_app,
+      credential_secret: ""
+    )
+
+    get edit_admin_git_import_source_path(source)
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("保存済みシークレットは表示しません。Fine-grained PAT の値を変更するときだけ入力します。")
+    expect(page_text).to include("GitHub App や認証なしの設定では空欄のまま保存できます。")
+  end
+
   it "filters the source list by repository, branch, and source path fragments" do
     project = create(:project, code: "GIT001", name: "Main Docs")
     create(
