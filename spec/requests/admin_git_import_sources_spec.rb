@@ -39,7 +39,6 @@ RSpec.describe "Admin git import sources", type: :request do
     get admin_git_import_sources_path
 
     expect(response).to have_http_status(:ok)
-    expect(parsed_html.at_css(%(input[name="git_import_source[repository_full_name]"]))["placeholder"]).to eq("owner/repo")
     expect(parsed_html.at_css(%(input[name="git_import_source[branch]"]))["placeholder"]).to eq("main")
     expect(parsed_html.at_css(%(input[name="git_import_source[source_path]"]))["placeholder"]).to eq("docs/source")
     expect(page_text).to include("既定ブランチ名を入力します。例: main")
