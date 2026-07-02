@@ -55,8 +55,11 @@ current 実装の前提:
 - show では model ごとに最近 20 件の record を、catalog が持つ `summary_fields` で表示する
 - show の `代表フィールド検索` は、各 model の `summary_fields` のうち実カラムの string / text field と、数字だけの検索語では `id` exact match を対象にする
 - association 表示用の `*_id` field は代表フィールド検索の対象外だが、`public_id` は識別用の代表 field として検索対象に残る
+- `*_id` field は、関連先 record から `display_name` / `name` / `title` / `code` / `public_id` / `email_address` の短い label を安全に取れる場合だけ、`表示名（ID: 123）` のように label と ID を併記する
+- 関連先 label が取れない、関連 record がない、または association reflection が取れない場合は、従来どおり ID 値または `-` の短い表示へ戻る。関連先検索、row action、record detail 導線をここで追加したものではない
 - 検索語は最大 100 文字に切り詰められ、検索結果も最大 20 件までの read-only sample として表示される
 - index の検索結果から詳細へ入った場合、detail の `モデル一覧へ戻る` と breadcrumb は index 側の検索語を保持したモデル一覧へ戻る。detail 内の `代表フィールド検索` を解除しても、元の index 検索文脈は残る
+- show の検索結果 0 件 state に出る `検索を解除して最近のデータを見る` は、detail 内の `代表フィールド検索` だけを解除して最近のデータへ戻る導線として読む。`model_browser_q` がある場合は、index 側のモデル検索文脈を保持したまま同じ model の最近のデータへ戻る
 - `既存画面へ` がある model は、そのまま管理画面の一覧へ戻れる
 - show の `既存画面で詳しく確認` は、対象 model が query handoff allowlist に入っており、検索語が数値だけではない場合だけ、代表フィールド検索の語を既存画面の検索条件に引き継ぐ。それ以外は検索語をコピーして対象画面で再確認する
 - `DocumentVersion` `DocumentFile` など既存の専用 index がないものも、ここでは最新 record の代表値を見返せる
@@ -80,6 +83,7 @@ current 実装の前提:
 - index の検索結果から detail へ入ったあと元の model 一覧へ戻りたい: detail の `モデル一覧へ戻る` または breadcrumb から、検索済みの index へ戻る
 - 最近の record の shape や値を短く確認したい: `モデルブラウザ` show
 - 最近の record のうち public ID、名称、code など代表フィールドに心当たりがある値だけを探したい: `モデルブラウザ` show の `代表フィールド検索`
+- detail の代表フィールド検索が 0 件になる: 検索語を見直すか、結果エリアの `検索を解除して最近のデータを見る` で detail 内検索だけを解除し、最近のデータへ戻る。index 側のモデル検索文脈は戻り導線として残る
 - detail の代表フィールド検索から既存画面で続けたい: `既存画面で詳しく確認` が検索語を引き継ぐ場合はそのまま確認し、引き継がない場合や数値だけの検索語では公開ID・code など画面で確認できる値を使って既存画面で再確認する
 - 編集や登録をしたい: `モデルブラウザ` ではなく `既存画面へ` から元の管理画面へ戻る
 
@@ -107,7 +111,7 @@ current 実装の前提:
 - `public_id`、状態、種別、関連先 ID、時刻など、最近の record を識別しやすい短い値を優先する
 - `secret`、token、authorization、raw payload、request / response body、長大 text、個人情報の本文相当は入れない
 - ファイル本文、Webhook request body、外部 API の raw response などは、model browser ではなく専用のマスク済み preview や詳細画面の方針に従う
-- association は `*_id` のような短い参照値に留め、名前や本文をたどる必要がある場合は既存画面や関連 runbook への導線で補う
+- association は `*_id` のような短い参照値に留める。model browser show では安全に取れる関連先 label と ID を短く併記する場合があるが、代表フィールド検索の対象や関連先詳細への操作導線にはしない
 - 代表フィールド検索は string / text の `summary_fields` と numeric `id` の補助検索に限られるため、検索させたい値を増やす目的だけで長大 text や secret 相当の field を `summary_fields` に追加しない
 
 `summary_fields` 追加時の guard の読み方:
@@ -266,6 +270,7 @@ current 実装の前提:
 - model browser index で検索結果が 0 件になる: record 名や public_id ではなく、model 名、key、説明、group の表記を変えて探す
 - 検索済みの model 一覧から detail に入って戻りたい: detail の `モデル一覧へ戻る` または breadcrumb で元の検索済み index へ戻る
 - model 詳細内の最近の record sample から識別値を探したい: `モデルブラウザ` show の `代表フィールド検索`
+- detail の代表フィールド検索が 0 件になる: 検索語を見直すか、結果エリアの `検索を解除して最近のデータを見る` で detail 内検索だけを解除し、最近のデータへ戻る。index 側のモデル検索文脈は戻り導線として残る
 - detail から既存画面で続けて調べたい: `既存画面で詳しく確認` を使い、検索語引き継ぎの有無に応じて既存画面側で再確認する
 - `.env` や compose の設定不足を見たい: `アプリ設定診断`
 - `アプリ設定診断` で原因の種類や状態を絞って見たい: status / category filter を使い、全体 summary と表示中件数を分けて確認する

@@ -22,6 +22,7 @@ RSpec.describe "Admin generated file retry limit notices", type: :request do
     get admin_generated_file_events_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("一括再投入は古い失敗分から最大100件です。")
+    expect(response.body).to include("今回の一括再投入対象: 1 件")
+    expect(response.body).to include("現在の条件で今回再投入する失敗イベントを、古い順に最大100件まで処理します。")
   end
 end

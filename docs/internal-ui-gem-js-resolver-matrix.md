@@ -25,6 +25,18 @@ package verification、TypeScript declaration、public API manifest、CI package
 | `rails_table_preferences` | `import { RailsTablePreferencesController } from "rails_table_preferences"` し、`rails-table-preferences` として register する | `rails_table_preferences` と `rails_table_preferences/controller` の alias がある | `docs/javascript_entrypoints.md` が package root named export `RailsTablePreferencesController` を案内する | `rails_table_preferences/controller` も documented。copied-controller / migration note の fallback として扱う | screen issue では current `application.js` と同じ package-root import を基準にする。direct path は fallback / migration note に閉じる |
 | `rails_fields_kit` | `import { TomSelectController } from "rails_fields_kit"` し、`rails-fields-kit--tom-select` として register する | `rails_fields_kit` と `rails_fields_kit/tom_select_controller` の alias がある | `doc/public_api.md` が package root named export `TomSelectController` と rendered-field contract helpers を案内する | `rails_fields_kit/tom_select_controller` も documented | new helper / controller helper / JS helper を downstream docs に書く前に、README または `doc/public_api.md` で public export か確認する。未着地 upstream PR の export 名を current main の durable contract として書かない |
 
+## evidence family の読み分け
+
+3 gem はどれも package-root / direct entrypoint を持ちますが、source of truth は同じではありません。横断 issue では次のように記録し、別 repo の確認方式をそのまま移植しません。
+
+| gem | 先に見る evidence family | その evidence で分かること | 代替しないこと |
+| --- | --- | --- | --- |
+| `rails_table_preferences` | package verifier、`docs/javascript_entrypoints.md`、package-root import smoke | package-root named export / direct controller entrypoint が packaged artifact と docs family に残ること | Markdown preview table の full RTP 採用判断、host app の table key / column policy |
+| `tree_view` | public API manifest、package-root registration docs、release / mockup evidence | package-root registration surface と controller identifier / event name の durable entry を確認できること | docs-portal current main で JS controller を採用済みだと書くこと、sidebar / detail tree の host smoke |
+| `rails_fields_kit` | public API docs、package contents / package-root smoke、rendered-field helper docs | `TomSelectController` と rendered-field helper family が public surface として確認できること | host app endpoint policy、selected value retention、validation rerender の成功 |
+
+CI success はこの evidence family の guard が通ったことを示します。browser-capable visual evidence、source review、docs-portal representative smoke は別欄に分けて、同じ完了条件として扱いません。
+
 ## Issue / PR に残す 1 行メモ
 
 internal UI gem の JS import / resolver を触る issue では、update log に次のどちらを選んだかを 1 行で残します。

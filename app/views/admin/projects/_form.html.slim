@@ -8,14 +8,20 @@
     label
       | 案件名
       = form.text_field :name
-    = form.rfk_select :company_id,
-      collection: @companies,
-      collection_value_method: :id,
-      collection_label_method: :display_name,
+    = form.rfk_combobox :company_id,
+      collection: [],
+      selected: admin_project_company_selected_option(project.company),
+      url: company_search_admin_projects_path(format: :json),
+      selected_url: selected_company_admin_projects_path(format: :json),
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 1,
+      max_options: Admin::ProjectsController::COMPANY_SEARCH_LIMIT,
       wrapper: true,
       label: "会社",
       allow_clear: true,
-      placeholder: "会社を選択（未設定可）"
+      placeholder: "会社名・ドメインで検索（未設定可）"
     label
       | 有効
       = form.select :active, [["有効", true], ["無効", false]]

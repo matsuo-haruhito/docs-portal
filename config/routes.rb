@@ -49,8 +49,13 @@ Rails.application.routes.draw do
     end
 
     resources :companies, except: %i[show new], param: :public_id
-    resources :users, except: %i[show new], param: :public_id
+    resources :users, except: %i[show new], param: :public_id do
+      get :company_search, on: :collection
+      get :selected_company, on: :collection
+    end
     resources :projects, except: %i[show new], param: :code do
+      get :company_search, on: :collection
+      get :selected_company, on: :collection
       member do
         get "external_preview", to: "project_external_previews#show"
         get "external_preview/user_search", to: "project_external_previews#user_search", as: :external_preview_user_search
@@ -133,7 +138,12 @@ Rails.application.routes.draw do
       get :document_search, on: :collection
       get :document_version_search, on: :collection
     end
-    resources :document_catalogs, except: %i[show new], param: :public_id
+    resources :document_catalogs, except: %i[show new], param: :public_id do
+      get :project_search, on: :collection
+      get :selected_project, on: :collection
+      get :document_search, on: :collection
+      get :selected_document, on: :collection
+    end
     resources :document_permissions, except: %i[show new], param: :public_id do
       get :project_search, on: :collection
       get :selected_project, on: :collection

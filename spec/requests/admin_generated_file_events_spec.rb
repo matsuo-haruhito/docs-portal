@@ -29,8 +29,8 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include("イベントID / パス / エラー")
       expect(response.body).to include("再投入")
       expect(response.body).to include("失敗分を一括再投入")
-      expect(response.body).to include("現在の条件で再投入対象: 0 件")
-      expect(response.body).to include("一括再投入は古い失敗分から最大100件です。")
+      expect(response.body).to include("今回の一括再投入対象: 0 件")
+      expect(response.body).to include("現在の条件で今回再投入する失敗イベントを、古い順に最大100件まで処理します。")
     end
 
     it "shows error messages in the index" do
@@ -84,7 +84,7 @@ RSpec.describe "Admin generated file events", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(matched.public_id)
-      expect(response.body).to include("現在の条件で再投入対象: 1 件")
+      expect(response.body).to include("今回の一括再投入対象: 1 件")
       expect(bulk_retry_button(filters)).to be_present
       expect(bulk_retry_button(filters)["disabled"]).to be_nil
     end
@@ -106,7 +106,7 @@ RSpec.describe "Admin generated file events", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(matched.public_id)
-      expect(response.body).to include("現在の条件で再投入対象: 1 件")
+      expect(response.body).to include("今回の一括再投入対象: 1 件")
       expect(bulk_retry_button(normalized_filters)).to be_present
       expect(bulk_retry_button(normalized_filters)["disabled"]).to be_nil
     end
@@ -118,7 +118,7 @@ RSpec.describe "Admin generated file events", type: :request do
       get admin_generated_file_events_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("現在の条件で再投入対象: 0 件")
+      expect(response.body).to include("今回の一括再投入対象: 0 件")
       expect(response.body).to include("対象がないため一括再投入できません。")
       expect(bulk_retry_button).to be_present
       expect(bulk_retry_button["disabled"]).to eq("disabled")
@@ -153,7 +153,9 @@ RSpec.describe "Admin generated file events", type: :request do
       get admin_generated_file_events_path(status: "failed")
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("現在の条件で再投入対象: 100 件")
+      expect(response.body).to include("今回の一括再投入対象: 100 件")
+      expect(response.body).to include("現在の条件で今回再投入する失敗イベントを、古い順に最大100件まで処理します。")
+      expect(response.body).not_to include("現在の条件で再投入対象: 100 件")
       expect(bulk_retry_button(status: "failed")["disabled"]).to be_nil
     end
 
@@ -331,7 +333,7 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(response.body).to include(failed_event.public_id)
       expect(response.body).to include("実行予定日(開始)「invalid」は日時として解釈できないため、この条件は適用していません。")
       expect(response.body).to include("実行予定日(終了)「also-invalid」は日時として解釈できないため、この条件は適用していません。")
-      expect(response.body).to include("現在の条件で再投入対象: 1 件")
+      expect(response.body).to include("今回の一括再投入対象: 1 件")
     end
 
     it "forbids external users" do
