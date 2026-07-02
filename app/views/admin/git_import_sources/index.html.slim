@@ -88,8 +88,8 @@ h1 Git連携
         - sync_source_path = source.source_path.presence || "/"
         - sync_state_label = source.enabled? ? "有効" : "無効"
         - action_role_hint = "操作: 手動同期=今すぐ取り込み、編集=設定変更、削除=設定削除"
-        - sync_confirm = "Git連携設定の手動同期を今すぐ実行します。設定の編集や削除は行いません。案件: #{sync_project_label}、リポジトリ: #{source.repository_full_name}、ブランチ: #{source.branch}、取込元パス: #{sync_source_path}、状態: #{sync_state_label}"
-        - delete_confirm = "Git連携設定を削除します。手動同期ではなく、設定を削除する操作です。案件: #{sync_project_label}、リポジトリ: #{source.repository_full_name}、ブランチ: #{source.branch}、取込元パス: #{sync_source_path}、状態: #{sync_state_label}"
+        - sync_confirm = "Git連携設定を手動同期します。案件: #{sync_project_label}、リポジトリ: #{source.repository_full_name}、ブランチ: #{source.branch}、取込元パス: #{sync_source_path}、状態: #{sync_state_label}。今すぐ取り込みを実行し、設定の編集や削除は行いません。"
+        - delete_confirm = "Git連携設定を削除します。案件: #{sync_project_label}、リポジトリ: #{source.repository_full_name}、ブランチ: #{source.branch}、取込元パス: #{sync_source_path}、状態: #{sync_state_label}。手動同期ではなく、設定を削除する操作です。"
         tr
           td data-rails-table-preferences-column-key="project"
             = source.project.name
