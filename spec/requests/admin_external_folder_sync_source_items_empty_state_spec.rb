@@ -73,6 +73,14 @@ RSpec.describe "Admin external folder sync source empty states", type: :request 
     card_text(heading)
   end
 
+  def subscriptions_card_text
+    card_text("変更通知の購読")
+  end
+
+  def sync_history_card_text
+    card_text("同期履歴")
+  end
+
   describe "GET /admin/external_folder_sync_sources/:public_id" do
     it "shows a read-only sync item empty state when no sync items exist" do
       sign_in_as(admin_user)
@@ -156,6 +164,97 @@ RSpec.describe "Admin external folder sync source empty states", type: :request 
       expect(text).to include("drive-event-1")
       expect(text).to include("42")
       expect(text).not_to include("まだ変更通知イベントは受信していません。")
+    end
+
+    it "shows a Google Drive subscription empty state without implying an active subscription" do
+      sign_in_as(admin_user)
+      source = create_google_drive_source
+
+      get admin_external_folder_sync_source_path(source)
+
+      expect(response).to have_http_status(:ok)
+      text = subscriptions_card_text
+      expect(text).to include("まだ変更通知の購読はありません。")
+      expect(text).to include("継続運用で必要な場合は、上の「変更通知の購読を開始」から開始できます。")
+      expect(text).to include("0件は購読済みや正常同期済みを示すものではありません。")
+    end
+
+    it "keeps existing subscription rows and hides the subscription empty state" do
+      sign_in_as(admin_user)
+      source = create_google_drive_source
+      ExternalFolderSyncSubscription.create!(
+        external_folder_sync_source: source,
+        provider: :google_drive,
+        status: :active,
+        provider_channel_id: "channel-123",
+        provider_resource_id: "resource-123",
+        callback_url: "https://example.com/external_folder_sync/callback",
+        expires_at: Time.zone.parse("2026-01-20 09:00"),
+        last_renewed_at: Time.zone.parse("2026-01-17 09:00")
+      )
+
+      get admin_external_folder_sync_source_path(source)
+
+      expect(response).to have_http_status(:ok)
+      text = subscriptions_card_text
+      expect(text).to include("channel-123")
+      expect(text).to include("resource-123")
+      expect(text).not_to include("まだ変更通知の購読はありません。")
+    end
+
+    it "shows a Google Drive sync history empty state without implying sync success" do
+      sign_in_as(admin_user)
+      source = create_google_drive_source
+
+      get admin_external_folder_sync_source_path(source)
+
+      expect(response).to have_http_status(:ok)
+      text = sync_history_card_text
+      expect(text).to include("まだ同期履歴はありません。")
+      expect(text).to include("同期プレビューまたは同期を実行すると、ここに結果が表示されます。")
+      expect(text).to include("0件は同期済みや失敗なしを保証する表示ではありません。")
+    end
+
+    it "shows a metadata-only sync history empty state for Microsoft Graph sources" do
+      sign_in_as(admin_user)
+      source = create_microsoft_graph_source
+
+      get admin_external_folder_sync_source_path(source)
+
+      expect(response).to have_http_status(:ok)
+      text = sync_history_card_text
+      expect(text).to include("まだ同期履歴はありません。")
+      expect(text).to include("現時点では保存済み metadata と受信済み webhook event の確認が中心です。")
+      expect(text).to include("差分同期本体や購読作成・更新は後続 issue の範囲です。")
+      expect(text).not_to include("同期プレビューまたは同期を実行すると")
+    end
+
+    it "keeps existing sync history rows and hides the sync history empty state" do
+      sign_in_as(admin_user)
+      source = create_google_drive_source
+      run = ExternalFolderSyncRun.create!(
+        external_folder_sync_source: source,
+        mode: :dry_run,
+        status: :completed,
+        started_at: Time.zone.parse("2026-01-18 10:00"),
+        finished_at: Time.zone.parse("2026-01-18 10:01"),
+        items_created_count: 1,
+        items_updated_count: 2,
+        items_skipped_count: 3,
+        items_deleted_count: 0,
+        errors_count: 0,
+        summary_json: { "needs_attention_count" => 0, "conflict_warnings_count" => 0 },
+        result_json: []
+      )
+
+      get admin_external_folder_sync_source_path(source)
+
+      expect(response).to have_http_status(:ok)
+      text = sync_history_card_text
+      expect(text).to include(run.public_id)
+      expect(text).to include("1")
+      expect(text).to include("2")
+      expect(text).not_to include("まだ同期履歴はありません。")
     end
   end
 end
