@@ -313,7 +313,7 @@ section.card
       - @storage_usage_summary.areas.each do |area|
         - follow_up_links = case area.key
         - when :document_files
-          - [["欠落ファイル詳細", admin_missing_document_files_path], ["storage 運用方針", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/ファイル配信・storage運用方針.md"]]
+          - [["DocumentFile 実体 detail", admin_storage_usage_document_files_path], ["欠落ファイル詳細", admin_missing_document_files_path], ["storage 運用方針", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/ファイル配信・storage運用方針.md"]]
         - when :docs_sites
           - [["Docusaurus build runtime", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/notes/docusaurus-build-runtime.md"]]
         - when :imports
