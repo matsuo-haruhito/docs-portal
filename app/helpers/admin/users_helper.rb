@@ -12,4 +12,16 @@ module Admin::UsersHelper
       table_preferences_column(:actions, label: "操作", default_width: 180, pinned: true)
     ]
   end
+
+  def admin_user_company_selected_option(company)
+    return if company.blank?
+
+    { value: company.id, text: admin_user_company_label(company) }
+  end
+
+  def admin_user_company_label(company)
+    label = company.display_name
+    label = "#{label} / #{company.domain}" if company.domain.present?
+    label
+  end
 end

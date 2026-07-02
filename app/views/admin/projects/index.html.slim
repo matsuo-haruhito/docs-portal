@@ -4,8 +4,8 @@
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - selected_active_filter = @project_filter_params["active"]
 - selected_company_filter = @project_filter_params["company_id"]
-- company_filter_options = [["すべての企業", ""], ["企業未設定", "none"]] + @companies.map { |company| [company.display_name, company.id] }
-- active_filter_labels = admin_project_filter_labels(@project_filter_params, @companies)
+- company_filter_options = admin_project_company_filter_collection(@selected_project_company, selected_company_filter)
+- active_filter_labels = admin_project_filter_labels(@project_filter_params, @selected_project_company)
 
 h1 案件マスタ
 = render "admin/nav"
@@ -16,7 +16,7 @@ h1 案件マスタ
 
 .card
   h2 案件を探す
-  = form_with url: admin_projects_path, method: :get, local: true do
+  = form_with url: admin_projects_path, method: :get, local: true do |form|
     .form-grid
       label
         | キーワード
@@ -25,9 +25,21 @@ h1 案件マスタ
       label
         | 状態
         = select_tag :active, options_for_select([["すべて", ""], ["有効", "true"], ["無効", "false"]], selected_active_filter)
-      label
-        | 企業
-        = select_tag :company_id, options_for_select(company_filter_options, selected_company_filter)
+      = form.rfk_combobox :company_id,
+        collection: company_filter_options,
+        selected: admin_project_company_filter_selected_option(@selected_project_company, selected_company_filter),
+        url: company_search_admin_projects_path(format: :json),
+        selected_url: selected_company_admin_projects_path(format: :json),
+        value_field: "value",
+        label_field: "text",
+        search_field: "text",
+        min_length: 1,
+        max_options: Admin::ProjectsController::COMPANY_SEARCH_LIMIT,
+        wrapper: true,
+        label: "企業",
+        placeholder: "会社名・ドメインで検索",
+        allow_clear: true
+    p.muted = "企業は検索語最大#{Admin::ProjectsController::COMPANY_SEARCH_QUERY_MAX_LENGTH}文字、候補最大#{Admin::ProjectsController::COMPANY_SEARCH_LIMIT}件です。URLで指定済みの企業は候補上限外でも復元します。"
     p.actions
       = submit_tag "絞り込む", class: "button"
       - if active_filter_labels.any?
@@ -60,6 +72,8 @@ h1 案件マスタ
         th data-rails-table-preferences-column-key="actions"
     tbody
       - @projects.each do |project|
+        - project_delete_company_label = project.company&.display_name || "企業未設定"
+        - project_delete_confirm = "案件「#{project.name}」（コード: #{project.code} / 企業: #{project_delete_company_label}）を削除しますか？関連文書や所属設定に影響します。"
         tr
           td data-rails-table-preferences-column-key="code" = project.code
           td data-rails-table-preferences-column-key="name" = project.name
@@ -68,7 +82,7 @@ h1 案件マスタ
           td data-rails-table-preferences-column-key="status" = project.active? ? "有効" : "無効"
           td.actions data-rails-table-preferences-column-key="actions"
             = edit_link_to "編集", edit_admin_project_path(project)
-            = delete_link_to "削除", admin_project_path(project), confirm: "案件「#{project.name}」を削除しますか？関連文書や所属設定に影響します。"
+            = delete_link_to "削除", admin_project_path(project), confirm: project_delete_confirm
 - else
   .card
     - if @projects_total_count.to_i.zero?

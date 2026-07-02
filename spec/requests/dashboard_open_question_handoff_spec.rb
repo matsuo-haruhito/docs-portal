@@ -110,7 +110,9 @@ RSpec.describe "Dashboard open Q&A handoff", type: :request do
 
     aggregate_failures do
       expect(handoff_text).to include(
-        "公開Q&Aのうち受付中の root thread を表示します。",
+        "公開Q&Aのうち受付中の root thread を最大 5 件だけ表示します。",
+        "全件一覧、通知、SLA、回答期限、担当割当を示すものではありません。",
+        "確認はリンク先の各文書または版のQ&A workspaceで行います。",
         "Q&A Handbook",
         "Q&A Project（QA）",
         "版 v2.0.0",
