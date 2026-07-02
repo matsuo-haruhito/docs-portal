@@ -1,6 +1,8 @@
 module Admin::GeneratedFileRunsHelper
   GENERATED_FILE_RUN_DIAGNOSTIC_LIMIT = 4_000
   GENERATED_FILE_RUN_FILTERED_VALUE = "[FILTERED]"
+  GENERATED_FILE_RUN_SEARCH_HINT_LIMIT = 4
+  GENERATED_FILE_RUN_SEARCH_HINT_VALUE_LIMIT = 100
 
   GENERATED_FILE_RUN_SENSITIVE_KEY_PATTERN =
     /(authorization|token|secret|password|api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|client[_-]?state)/i
@@ -41,6 +43,25 @@ module Admin::GeneratedFileRunsHelper
 
   def generated_file_run_metadata_preview(metadata)
     JSON.pretty_generate(mask_generated_file_run_metadata(metadata || {}))
+  end
+
+  def generated_file_run_search_hints(run)
+    hints = []
+
+    append_generated_file_run_search_hint(hints, "実行ID", run.public_id)
+    append_generated_file_run_search_hint(hints, "ジョブID", run.job_id)
+
+    Array(run.metadata&.dig("generated_file_event_public_ids")).each do |public_id|
+      append_generated_file_run_search_hint(hints, "関連イベントID", public_id)
+    end
+
+    generated_file_run_path_hint_values(run).each do |path|
+      append_generated_file_run_search_hint(hints, "パス断片", path)
+    end
+
+    append_generated_file_run_search_hint(hints, "エラー断片", generated_file_run_error_search_fragment(run.error_message))
+
+    hints.first(GENERATED_FILE_RUN_SEARCH_HINT_LIMIT)
   end
 
   def generated_file_run_retry_kind_label(run)
@@ -87,6 +108,34 @@ module Admin::GeneratedFileRunsHelper
   end
 
   private
+
+  def append_generated_file_run_search_hint(hints, label, value)
+    safe_value = generated_file_run_safe_search_hint_value(value)
+    return if safe_value.blank? || hints.any? { |hint| hint[:value] == safe_value }
+
+    hints << {label:, value: safe_value}
+  end
+
+  def generated_file_run_path_hint_values(run)
+    (Array(run.source_paths) + Array(run.changed_files) + Array(run.generated_paths))
+      .map { |path| File.basename(path.to_s) }
+      .reject { |path| path.blank? || path == "." }
+      .uniq
+  end
+
+  def generated_file_run_error_search_fragment(error_message)
+    error_message.to_s.lines.first
+  end
+
+  def generated_file_run_safe_search_hint_value(value)
+    text = value.to_s.squish
+    return if text.blank? || text.match?(GENERATED_FILE_RUN_SENSITIVE_KEY_PATTERN)
+
+    masked_text = mask_generated_file_run_diagnostic_value(text).squish
+    return if masked_text.blank? || masked_text.include?(GENERATED_FILE_RUN_FILTERED_VALUE)
+
+    masked_text[0, GENERATED_FILE_RUN_SEARCH_HINT_VALUE_LIMIT]
+  end
 
   def generated_file_run_filter_summary_item(label, value)
     text = value.to_s.squish
