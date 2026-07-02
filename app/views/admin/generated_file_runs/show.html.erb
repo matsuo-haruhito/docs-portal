@@ -1,4 +1,5 @@
 <% return_to_path = @return_to_path || admin_generated_file_runs_path %>
+<% search_hints = generated_file_run_search_hints(@generated_file_run) %>
 
 <div class="space-y-6">
   <div class="flex items-start justify-between gap-4">
@@ -35,6 +36,23 @@
       <div><dt class="font-semibold">完了</dt><dd><%= l(@generated_file_run.finished_at, format: :long) if @generated_file_run.finished_at %></dd></div>
     </dl>
   </div>
+
+  <% if search_hints.any? %>
+    <div class="rounded-lg border bg-white p-4">
+      <h2 class="mb-3 text-lg font-semibold">一覧 q 検索の手掛かり</h2>
+      <p class="mb-3 text-xs text-gray-600">一覧の q 検索で使える短い候補だけを表示します。raw metadata、長い payload、token らしい値、private path は候補にしません。</p>
+      <ul class="flex flex-wrap gap-2 text-sm">
+        <% search_hints.each do |hint| %>
+          <li>
+            <%= link_to admin_generated_file_runs_path(q: hint[:value]), class: "inline-flex items-center gap-2 rounded border px-3 py-2 hover:bg-gray-50" do %>
+              <span class="font-semibold"><%= hint[:label] %></span>
+              <span class="font-mono"><%= hint[:value] %></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
 
   <% if @retry_evidence_visible %>
     <div class="rounded-lg border bg-white p-4">
