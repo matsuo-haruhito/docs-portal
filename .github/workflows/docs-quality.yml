@@ -27,6 +27,7 @@ on:
       - .github/scripts/check_todo_queue_boundary.rb
       - .github/scripts/check_docusaurus_table_metadata_boundary.rb
       - .github/scripts/check_csv_metadata_json_boundary.rb
+      - .github/scripts/check_access_log_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
       - .github/scripts/check_readme_docs_entrance_boundary.rb
       - .github/scripts/check_closed_active_queue_labels.rb
@@ -57,6 +58,7 @@ on:
       - .github/scripts/check_todo_queue_boundary.rb
       - .github/scripts/check_docusaurus_table_metadata_boundary.rb
       - .github/scripts/check_csv_metadata_json_boundary.rb
+      - .github/scripts/check_access_log_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
       - .github/scripts/check_readme_docs_entrance_boundary.rb
       - .github/scripts/check_closed_active_queue_labels.rb
@@ -94,6 +96,9 @@ jobs:
 
       - name: Check CSV metadata JSON boundary docs
         run: ruby .github/scripts/check_csv_metadata_json_boundary.rb
+
+      - name: Check AccessLog boundary docs
+        run: ruby .github/scripts/check_access_log_boundary.rb
 
       - name: Check Issue / PR number boundary docs
         run: ruby .github/scripts/check_issue_pr_number_boundary.rb
