@@ -35,7 +35,7 @@ RSpec.describe "Admin git import sources", type: :request do
     }
   end
 
-  it "shows manual source field cues on the form" do
+  it "shows repository picker cues while keeping manual source fields" do
     get admin_git_import_sources_path
 
     expect(response).to have_http_status(:ok)
@@ -44,8 +44,10 @@ RSpec.describe "Admin git import sources", type: :request do
     expect(parsed_html.at_css(%(input[name="git_import_source[source_path]"]))["placeholder"]).to eq("docs/source")
     expect(page_text).to include("既定ブランチ名を入力します。例: main")
     expect(page_text).to include("リポジトリルートからの相対パスです。例: docs / docs/source")
-    expect(page_text).to include("リポジトリ、ブランチ、取込元パスは同期対象を指定する手入力項目です。")
-    expect(page_text).to include("GitHub App picker は未実装のため、現在は値を直接入力します。")
+    expect(page_text).to include("GitHub App の installation context が使える場合はリポジトリ候補から選べます。")
+    expect(page_text).to include("installation ID 未設定・候補取得不可・候補0件の場合は、既存どおり owner/repo を直接入力します。")
+    expect(page_text).to include("ブランチと取込元パスは引き続き手入力です。")
+    expect(page_text).not_to include("GitHub App picker は未実装")
   end
 
   it "shows auth type and advanced setting cues on the new and edit forms" do
@@ -249,6 +251,61 @@ RSpec.describe "Admin git import sources", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(json_body.fetch("options")).to eq([])
+  end
+
+  it "returns GitHub App repository options through a bounded service" do
+    result = GitHubAppRepositoryOptions::Result.new(
+      repositories: ["example/alpha-docs", "example/beta-docs"],
+      fallback: false,
+      message: nil
+    )
+    service = instance_double(GitHubAppRepositoryOptions, call: result)
+    expect(GitHubAppRepositoryOptions).to receive(:new).with(
+      installation_id: "12345",
+      query: "alpha",
+      limit: Admin::GitImportSourcesController::REPOSITORY_SEARCH_LIMIT
+    ).and_return(service)
+
+    get repository_search_admin_git_import_sources_path(format: :json), params: { installation_id: "12345", q: "alpha" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("options")).to eq([
+      { "value" => "example/alpha-docs", "text" => "example/alpha-docs" },
+      { "value" => "example/beta-docs", "text" => "example/beta-docs" }
+    ])
+    expect(json_body.fetch("fallback")).to be(false)
+    expect(json_body.fetch("message")).to be_nil
+  end
+
+  it "falls back to manual repository input when GitHub App options are unavailable" do
+    result = GitHubAppRepositoryOptions::Result.new(
+      repositories: [],
+      fallback: true,
+      message: "GitHub App installation ID が未設定のため、リポジトリは手入力してください。"
+    )
+    allow(GitHubAppRepositoryOptions).to receive(:new).and_return(instance_double(GitHubAppRepositoryOptions, call: result))
+
+    get repository_search_admin_git_import_sources_path(format: :json), params: { q: "docs" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("options")).to eq([])
+    expect(json_body.fetch("fallback")).to be(true)
+    expect(json_body.fetch("message")).to include("手入力してください")
+  end
+
+  it "restores a selected repository even when it is outside the search result window" do
+    get selected_repository_admin_git_import_sources_path(format: :json), params: { id: "example/selected-docs" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("option")).to include(
+      "value" => "example/selected-docs",
+      "text" => "example/selected-docs"
+    )
+
+    get selected_repository_admin_git_import_sources_path(format: :json), params: { id: "invalid repository" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("option")).to be_nil
   end
 
   it "restores a selected project even when it is outside the search result window" do

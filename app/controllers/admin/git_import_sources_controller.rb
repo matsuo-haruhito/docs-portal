@@ -7,6 +7,7 @@ class Admin::GitImportSourcesController < Admin::BaseController
   GIT_IMPORT_SOURCE_MAX_PER_PAGE = 100
   PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
   PROJECT_SEARCH_LIMIT = 20
+  REPOSITORY_SEARCH_LIMIT = 20
 
   def index
     load_index_state
@@ -59,6 +60,26 @@ class Admin::GitImportSourcesController < Admin::BaseController
     project = Project.find_by(id: params[:id])
 
     render json: { option: project ? project_option(project) : nil }
+  end
+
+  def repository_search
+    result = GitHubAppRepositoryOptions.new(
+      installation_id: params[:installation_id],
+      query: params[:q],
+      limit: REPOSITORY_SEARCH_LIMIT
+    ).call
+
+    render json: {
+      options: repository_options(result.repositories),
+      fallback: result.fallback?,
+      message: result.message
+    }
+  end
+
+  def selected_repository
+    repository_full_name = normalize_repository_full_name(params[:id])
+
+    render json: { option: repository_full_name ? repository_option(repository_full_name) : nil }
   end
 
   private
@@ -179,12 +200,27 @@ class Admin::GitImportSourcesController < Admin::BaseController
     query.to_s.strip.first(PROJECT_SEARCH_QUERY_MAX_LENGTH)
   end
 
+  def normalize_repository_full_name(value)
+    repository_full_name = value.to_s.strip.first(GIT_IMPORT_SOURCE_QUERY_MAX_LENGTH)
+    return nil unless repository_full_name.match?(%r{\A[\w.-]+/[\w.-]+\z})
+
+    repository_full_name
+  end
+
   def project_options(projects)
     projects.map { |project| project_option(project) }
   end
 
   def project_option(project)
     { value: project.id, text: helpers.git_import_source_project_option_label(project) }
+  end
+
+  def repository_options(repositories)
+    repositories.map { |repository_full_name| repository_option(repository_full_name) }
+  end
+
+  def repository_option(repository_full_name)
+    { value: repository_full_name, text: repository_full_name }
   end
 
   def git_import_source_params
