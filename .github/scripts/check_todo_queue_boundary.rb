@@ -14,6 +14,7 @@ unless TODO_PATH.file?
 end
 
 content = TODO_PATH.read
+lines = content.lines
 
 REQUIRED_BOUNDARY_TEXT = [
   "具体 Issue があるものは、この文書に要件を重複して残さず、Issue 番号と正本 docs への導線だけを残す",
@@ -53,21 +54,22 @@ BROAD_UMBRELLA_CHECKS = [
 ].freeze
 
 BROAD_UMBRELLA_CHECKS.each do |check|
-  line = content.lines.find { |candidate| candidate.include?(check.fetch(:label)) }
+  index = lines.index { |candidate| candidate.include?(check.fetch(:label)) }
 
-  unless line
+  unless index
     errors << "docs/ToDo.md: missing representative broad umbrella item: #{check.fetch(:label).inspect}"
     next
   end
 
+  nearby_text = lines[index, 8].join
   check.fetch(:required).each do |expected_text|
-    next if line.include?(expected_text)
+    next if nearby_text.include?(expected_text)
 
     errors << "docs/ToDo.md: #{check.fetch(:label)} is missing nearby queue-boundary text: #{expected_text.inspect}"
   end
 end
 
-concrete_issue_lines = content.lines.select { |line| line.include?("分類: 具体 Issue") }
+concrete_issue_lines = lines.select { |line| line.include?("分類: 具体 Issue") }
 concrete_issue_lines.each do |line|
   next if line.match?(/#\d+/) || line.include?("正本 docs")
 
