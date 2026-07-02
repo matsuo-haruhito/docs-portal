@@ -120,7 +120,7 @@ class StorageUsageSummary
     end
 
     DocumentFileDetailResult.new(
-      entries: entries.sort_by { |entry| [-entry.bytes, entry.missing? ? 0 : 1, entry.project_code.to_s, entry.document_title.to_s, entry.relative_path.to_s] }.first(limit),
+      entries: entries.sort_by { |entry| [entry.missing? ? 0 : 1, -entry.bytes, entry.project_code.to_s, entry.document_title.to_s, entry.relative_path.to_s] }.first(limit),
       total_count: entries.size,
       missing_file_count: entries.count(&:missing?),
       limit:
