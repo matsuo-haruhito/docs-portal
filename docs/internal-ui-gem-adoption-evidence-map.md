@@ -61,6 +61,19 @@ release train、docs-only sync、review follow-up のどれでも、次の形式
 
 3 gem 共通で、open PR や proposal は `current support` として書きません。target SHA、`Gemfile` / `Gemfile.lock` 更新、3 gem 同時 bump、upstream PR の review / merge 判断は、この template ではなく各 child issue / PR の人間判断に戻します。
 
+## Cross-repo checklist for #4359 type reviews
+
+internal UI gem の package guard / docs signal / visual evidence を横断で見るときは、次の順で evidence を分けます。
+
+| 確認するもの | 記録する evidence | 注意する境界 |
+| --- | --- | --- |
+| package / import guard | package-root / direct entrypoint / manifest / verifier / docs source-of-truth family | 3 gem 共通の仕組みへ統一せず、RTP / TreeView / RFK それぞれの正本 docs を書く |
+| source review / CI | head SHA、workflow run、guard が守った source / docs signal | CI success を browser visual approval や downstream smoke success として読まない |
+| visual evidence | desktop / narrow viewport、長い label / table / field / tree state、実ブラウザで確認したかどうか | screenshot 未取得なら limits と follow-up を明記し、merge判断を自動化しない |
+| downstream smoke | docs-portal screen、from / to SHA、representative smoke、rollback target | upstream green だけで Gemfile bump 完了や host app adoption 完了にしない |
+
+この checklist は review / handoff comment に入れる最低限の形です。upstream PR の code review、Gemfile bump 実装、3 gem 一括更新、browser screenshot 取得は各 repo / issue の担当 lane に戻します。
+
 ## Representative smoke / evidence map
 
 | gem | docs-portal representative smoke | upstream evidence | update train での確認順 | rollback note に残す観点 |

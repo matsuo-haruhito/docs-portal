@@ -83,6 +83,7 @@ current `main` で確認できること:
 - 一覧は bounded pagination で表示され、通常は 1 ページ 25 件ずつ確認する。URL の `per_page` は最大 100 件までに丸められる
 - 一覧の上に出る `表示中: X-Y件 / N件` は、現在ページで表示している範囲と filter 後総件数を分けて読む
 - 複数ページある場合は `前へ` / `次へ` と `現在ページ / 総ページ` が出る。page 移動時も `q` / `active` / `per_page` は維持される
+- 一覧の `編集` link（internal admin では `削除` link も）は、現在の検索条件・page を `return_to` として持つ。更新 / 削除後は安全な内部 path だけへ戻り、外部 URL や unsafe path は会社一覧へ fallback する
 - 一覧には `会社一覧の表示設定` があり、列の表示状態を調整できる
 - 表示設定の列は `ドメイン`、`会社名（表示用）`、`表示名`、`状態`、`操作` に分かれている
 - 画面上部の form 見出しは `自社会社情報の更新` になり、会社を新規登録できる導線としては表示されない
@@ -101,6 +102,7 @@ current `main` で確認できること:
 - 対象会社をドメイン・会社名の断片や有効/無効状態で探す。キーワード入力欄は最大100文字で、表示名は検索対象ではなく一覧列として確認する
 - `適用中` と `検索結果` を見て、現在の絞り込み条件と filter 後総件数を確認する
 - `表示中` と `前へ` / `次へ` を見て、現在ページの範囲と次に確認するページを把握する
+- filter や page を使った状態で会社を編集すると、保存後は安全な `return_to` によって元の一覧条件へ戻る
 
 internal admin へ戻すもの:
 
@@ -124,6 +126,7 @@ current `main` で確認できること:
 - 一覧は bounded pagination で表示され、通常は 1 ページ 25 件ずつ確認する。URL の `per_page` は最大 100 件までに丸められる
 - 一覧の上に出る `表示中: X-Y件 / N件` は、現在ページで表示している範囲と filter 後総件数を分けて読む
 - 複数ページある場合は `前へ` / `次へ` と `現在ページ / 総ページ` が出る。page 移動時も `q` / `active` / `per_page` は維持される
+- 一覧の `編集` / `削除` link は、現在の検索条件・page を `return_to` として持つ。更新 / 削除後は安全な内部 path だけへ戻り、外部 URL や unsafe path はユーザー一覧へ fallback する
 - 表示中の範囲にユーザーが 0 件のときは、空 table ではなく `ユーザー一覧` の empty state が出る
 - 登録済みユーザーはいるが filter 条件に一致しないときは、`検索条件に一致するユーザーはありません。` と表示され、条件変更または `条件をクリア` を促す。filter 適用中は empty state の中にも `条件をクリア` link が出る
 - 0 件時は上の `新規登録` card から、メールアドレスと必要な項目を入れて最初の 1 件を作る
@@ -131,6 +134,10 @@ current `main` で確認できること:
 - 他社ユーザーの edit は `not_found` になる
 - 自社ユーザーの `name` や `active` は更新できる
 - `company_master_admin` が見る form では、`ユーザー種別` は `external` 固定、`会社` は自社固定の read-only 表示になる
+- internal admin が見る form では、`会社` は remote combobox になり、会社名 / domain の断片で最大 20 件の候補を検索する
+- internal admin の remote combobox は検索語を最大 100 文字まで使い、保存済み company や validation error 後の selected company は selected endpoint で復元する
+- internal admin は会社選択をクリアすると未所属ユーザーとして保存できる
+- `company_master_admin` が見る form では remote search は表示されず、会社は自社固定表示のままになる
 - form で `internal` や他社 `company_id` を送っても、保存時には `external` / 自社所属へ矯正される
 - 新規作成も自社所属の `external` user として保存される
 
@@ -140,9 +147,11 @@ current `main` で確認できること:
 - 自社ユーザーの有効化・無効化
 - 自社ユーザー名やメールアドレスの保守
 - 自社メンバーの追加
+- internal admin が全社ユーザーを登録・編集するときに、会社名・ドメインの断片で所属会社を探し、候補上限外の保存済み会社も selected company として復元する
 - 対象ユーザーを名前・メールアドレスの断片や有効/無効状態で探す。キーワード入力欄は最大100文字で、表示名は検索対象ではなく一覧列として確認する
 - `適用中` と `検索結果` を見て、現在の絞り込み条件と filter 後総件数を確認する
 - `表示中` と `前へ` / `次へ` を見て、現在ページの範囲と次に確認するページを把握する
+- filter や page を使った状態でユーザーを編集・無効化すると、保存後は安全な `return_to` によって元の一覧条件へ戻る
 
 internal admin へ戻すもの:
 
@@ -150,21 +159,31 @@ internal admin へ戻すもの:
 - 他社所属ユーザーの調整
 - 案件所属や文書権限まで含む広いアクセス設計
 
-## 3. company 管理者フォームの見え方
+## 3. ユーザーフォームの会社選択の見え方
 
 `company_master_admin` が `ユーザー` の新規登録や編集を開くと、current `main` では保存結果に沿った fixed 表示を先に見せる。
 
-見分け方:
+company_master_admin の見分け方:
 
 - `ユーザー種別` は選択肢ではなく、`external` 固定の表示として見える
 - `会社` も選択肢ではなく、自社名の固定表示として見える
 - `name` `email_address` `active` `password` `password_confirmation` は通常どおり入力・更新する
 - 固定会社欄の近くに「この会社で固定され、会社欄は変更できません。ユーザー種別も自動で固定されます。」という補足 copy が表示される
 
+internal admin が同じ form を開くと、会社欄は `会社名・ドメインで検索（未所属可）` の remote combobox として見える。
+
+internal admin の見分け方:
+
+- 会社名 / domain の断片を 1 文字以上入力すると候補が最大 20 件まで出る
+- 候補 label は display name に domain がある場合 `表示名 / domain` の形で出る
+- 編集時や validation error 後は、候補上限外でも保存済み company が selected endpoint で復元される
+- 選択をクリアすると未所属として保存できる
+
 意味合い:
 
 - 画面上で `internal` や他社所属を選べないように見せつつ、server-side の保存契約とも矛盾しないようにしている
 - role を広げたのではなく、もともとの保存矯正ルールを UI でも読み取りやすくした current state と考える
+- internal admin の remote search は会社選択の payload と操作性を改善するためのもので、company_master_admin の自社固定 scope や role / policy の境界は変更しない
 
 ## 4. 入れない管理画面
 
@@ -202,13 +221,16 @@ current request spec で `company_master_admin` が forbidden として固定さ
 - 自社会社を探したい: `会社を探す` でドメイン・会社名の断片や有効/無効状態を絞り込む。キーワード入力欄は最大100文字で、表示名は検索対象ではなく一覧列として確認する
 - 会社画面で `適用中: ...` と `検索結果: N件` が出ている: keyword または状態 filter がかかっている。検索結果件数は現在の filter 後総件数であり、列の表示設定では変わらない
 - 会社画面で `表示中: X-Y件 / N件` が出ている: 現在ページに表示されている範囲と filter 後総件数を分けて読む。複数ページある場合は `前へ` / `次へ` で同じ条件のまま移動する
+- 会社一覧から編集する: filter や page を使っている場合、`編集` は現在の一覧条件を戻り先として持つ。保存後に戻り先が外部 URL になることはない
 - `検索条件に一致する会社はありません。` が出る: 自社会社 scope 内に登録済み会社はあるが、現在の keyword / 状態 filter に一致していない。条件変更か `条件をクリア` を使う
 - 会社画面で `新規登録` や `削除` を探している: current role の範囲外なので internal admin へ引き継ぐ
 - 自社ユーザーを追加したいがまだ 0 件: `ユーザーを管理` から入り、`ユーザー` 画面上部の `新規登録`
 - 自社ユーザーを追加・無効化したい: `ユーザーを管理`
+- internal admin としてユーザーの会社を選ぶ: ユーザー form の `会社` で会社名・ドメインを検索し、未所属にする場合は選択をクリアする。company_master_admin ではこの欄は固定表示のまま
 - 自社ユーザーを探したい: `ユーザーを探す` で名前・メールアドレスの断片や有効/無効状態を絞り込む。キーワード入力欄は最大100文字で、表示名は検索対象ではなく一覧列として確認する
 - ユーザー画面で `適用中: ...` と `検索結果: N件` が出ている: keyword または状態 filter がかかっている。検索結果件数は現在の filter 後総件数であり、列の表示設定では変わらない
 - ユーザー画面で `表示中: X-Y件 / N件` が出ている: 現在ページに表示されている範囲と filter 後総件数を分けて読む。複数ページある場合は `前へ` / `次へ` で同じ条件のまま移動する
+- ユーザー一覧から編集・無効化する: filter や page を使っている場合、`編集` / `削除` は現在の一覧条件を戻り先として持つ。保存後に戻り先が外部 URL になることはない
 - `検索条件に一致するユーザーはありません。` が出る: 自社 scope 内に登録済みユーザーはあるが、現在の keyword / 状態 filter に一致していない。条件変更か `条件をクリア` を使う
 - `ユーザー種別` や `会社` を変えたいように見えるが固定表示になっている: current role の範囲外なので internal admin へ引き継ぐ
 - 案件所属や文書権限を見直したい: internal admin へ引き継ぐ
@@ -229,6 +251,7 @@ current request spec で `company_master_admin` が forbidden として固定さ
 - `app/controllers/admin/companies_controller.rb`
 - `app/controllers/admin/users_controller.rb`
 - `app/helpers/admin/companies_helper.rb`
+- `app/helpers/admin/users_helper.rb`
 - `app/views/admin/dashboard/company_master_admin.html.slim`
 - `app/views/admin/dashboard/index.html.slim`
 - `app/views/admin/_nav.html.slim`
@@ -242,5 +265,6 @@ current request spec で `company_master_admin` が forbidden として固定さ
 - `spec/requests/admin_company_master_filters_spec.rb`
 - `spec/requests/admin_company_master_visibility_spec.rb`
 - `spec/requests/admin_management_spec.rb`
+- `spec/requests/admin_user_company_picker_spec.rb`
 - `spec/requests/admin_users_filters_spec.rb`
 - `spec/requests/company_master_admin_landing_spec.rb`

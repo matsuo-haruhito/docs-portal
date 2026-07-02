@@ -9,6 +9,9 @@ on:
       - Product Profile.md
       - doc/**/*.md
       - docs/**/*.md
+      - app/frontend/entrypoints/application.js
+      - app/renderers/docusaurus_site_renderer.rb
+      - spec/renderers/docusaurus_site_renderer_spec.rb
       - docusaurus/docusaurus.config.ts
       - docusaurus/package.json
       - docusaurus/package-lock.json
@@ -20,6 +23,14 @@ on:
       - .github/scripts/check_markdown_links.rb
       - .github/scripts/check_docs_quality_permissions.rb
       - .github/scripts/check_kroki_runtime_docs.rb
+      - .github/scripts/check_formal_review_workflow_boundary.rb
+      - .github/scripts/check_todo_queue_boundary.rb
+      - .github/scripts/check_docusaurus_table_metadata_boundary.rb
+      - .github/scripts/check_csv_metadata_json_boundary.rb
+      - .github/scripts/check_issue_pr_number_boundary.rb
+      - .github/scripts/check_readme_docs_entrance_boundary.rb
+      - .github/scripts/check_closed_active_queue_labels.rb
+      - .github/scripts/check_frontend_entrypoint_policy.rb
       - .markdownlint-cli2.yaml
   pull_request:
     paths:
@@ -28,6 +39,9 @@ on:
       - Product Profile.md
       - doc/**/*.md
       - docs/**/*.md
+      - app/frontend/entrypoints/application.js
+      - app/renderers/docusaurus_site_renderer.rb
+      - spec/renderers/docusaurus_site_renderer_spec.rb
       - docusaurus/docusaurus.config.ts
       - docusaurus/package.json
       - docusaurus/package-lock.json
@@ -39,6 +53,14 @@ on:
       - .github/scripts/check_markdown_links.rb
       - .github/scripts/check_docs_quality_permissions.rb
       - .github/scripts/check_kroki_runtime_docs.rb
+      - .github/scripts/check_formal_review_workflow_boundary.rb
+      - .github/scripts/check_todo_queue_boundary.rb
+      - .github/scripts/check_docusaurus_table_metadata_boundary.rb
+      - .github/scripts/check_csv_metadata_json_boundary.rb
+      - .github/scripts/check_issue_pr_number_boundary.rb
+      - .github/scripts/check_readme_docs_entrance_boundary.rb
+      - .github/scripts/check_closed_active_queue_labels.rb
+      - .github/scripts/check_frontend_entrypoint_policy.rb
       - .markdownlint-cli2.yaml
 
 permissions:
@@ -60,6 +82,30 @@ jobs:
 
       - name: Check Kroki optional runtime docs
         run: ruby .github/scripts/check_kroki_runtime_docs.rb
+
+      - name: Check formal review workflow boundary docs
+        run: ruby .github/scripts/check_formal_review_workflow_boundary.rb
+
+      - name: Check ToDo queue boundary docs
+        run: ruby .github/scripts/check_todo_queue_boundary.rb
+
+      - name: Check Docusaurus table metadata boundary docs
+        run: ruby .github/scripts/check_docusaurus_table_metadata_boundary.rb
+
+      - name: Check CSV metadata JSON boundary docs
+        run: ruby .github/scripts/check_csv_metadata_json_boundary.rb
+
+      - name: Check Issue / PR number boundary docs
+        run: ruby .github/scripts/check_issue_pr_number_boundary.rb
+
+      - name: Check README/docs entrance boundary docs
+        run: ruby .github/scripts/check_readme_docs_entrance_boundary.rb
+
+      - name: Check closed active queue label digest
+        run: ruby .github/scripts/check_closed_active_queue_labels.rb --self-test
+
+      - name: Check frontend entrypoint policy
+        run: ruby .github/scripts/check_frontend_entrypoint_policy.rb
 
       - uses: actions/setup-node@v6
         with:

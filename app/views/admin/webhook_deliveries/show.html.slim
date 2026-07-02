@@ -4,12 +4,15 @@
 - delivery_return_path = @delivery_return_path
 - delivery_return_params = @delivery_return_params
 - delivery_return_label = @delivery_return_context == :deliveries_index ? "送信履歴検索へ戻る" : "Webhook一覧へ戻る"
+- delivery_return_help = @delivery_return_context == :deliveries_index ? "検索条件とページを保った送信履歴検索へ戻ります。" : nil
 
 h1 Webhook送信履歴詳細
 = render "admin/nav"
 
 p.actions
   = link_to delivery_return_label, delivery_return_path
+- if delivery_return_help.present?
+  p.muted = delivery_return_help
 
 .card
   h2 概要
