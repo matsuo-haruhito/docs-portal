@@ -190,17 +190,23 @@ h1 外部フォルダ同期設定詳細
           th 最終更新日時
           th エラー
       tbody
-        - @subscriptions.each do |subscription|
+        - if @subscriptions.empty?
           tr
-            td = external_folder_sync_subscription_status_label(subscription)
-            td
-              code = subscription.provider_channel_id.presence || subscription.public_id
-            td
-              code = subscription.provider_resource_id.presence || "-"
-            td = subscription.callback_url.presence || "-"
-            td = subscription.expires_at ? l(subscription.expires_at) : "-"
-            td = subscription.last_renewed_at ? l(subscription.last_renewed_at) : "-"
-            td = subscription.last_error_message.presence || "-"
+            td colspan="7"
+              p.muted まだ変更通知の購読はありません。継続運用で必要な場合は、上の「変更通知の購読を開始」から開始できます。
+              p.muted 0件は購読済みや正常同期済みを示すものではありません。
+        - else
+          - @subscriptions.each do |subscription|
+            tr
+              td = external_folder_sync_subscription_status_label(subscription)
+              td
+                code = subscription.provider_channel_id.presence || subscription.public_id
+              td
+                code = subscription.provider_resource_id.presence || "-"
+              td = subscription.callback_url.presence || "-"
+              td = subscription.expires_at ? l(subscription.expires_at) : "-"
+              td = subscription.last_renewed_at ? l(subscription.last_renewed_at) : "-"
+              td = subscription.last_error_message.presence || "-"
 
   .card
     h2 変更通知の受信イベント
@@ -310,73 +316,83 @@ h1 外部フォルダ同期設定詳細
         th 競合・重複警告
         th 警告承認
     tbody
-      - @runs.each do |run|
-        tr id=run.public_id
-          td = run.started_at ? l(run.started_at) : "-"
-          td
-            code = run.public_id
-          td = external_folder_sync_run_mode_label(run)
-          td = external_folder_sync_run_status_label(run)
-          td
-            span class=external_folder_sync_run_safety_class(run)
-              = external_folder_sync_run_safety_label(run)
-          td = run.items_created_count
-          td = run.items_updated_count
-          td = run.items_skipped_count
-          td = run.items_deleted_count
-          td = run.errors_count
-          td = run.summary_json&.fetch("needs_attention_count", nil) || "-"
-          td = run.summary_json&.fetch("conflict_warnings_count", nil) || "-"
-          td
-            - if external_folder_sync_approved?(run)
-              = external_folder_sync_approval_actor_label(run)
-              - if external_folder_sync_approval_approved_at(run).present?
-                br
-                span.muted = external_folder_sync_approval_approved_at(run)
+      - if @runs.empty?
+        tr
+          td colspan="13"
+            - if google_drive_source
+              p.muted まだ同期履歴はありません。同期プレビューまたは同期を実行すると、ここに結果が表示されます。
+              p.muted 0件は同期済みや失敗なしを保証する表示ではありません。
             - else
-              | -
-        - if run.result_json.present?
-          tr id="#{run.public_id}-result-details"
-            td colspan="13"
-              details
-                summary
-                  | 結果詳細
-                  - if run == latest_run && external_folder_sync_force_apply_visible?(latest_run)
-                    span.badge 承認対象の直近プレビュー
-                = table_tag do
-                  thead
-                    tr
-                      th 判定
-                      th 確認
-                      th パス
-                      th 変更理由・警告
-                      th メッセージ
-                  tbody
-                    - run.result_json.each do |plan|
-                      tr
-                        td = external_folder_sync_plan_action_label(plan)
-                        td class=external_folder_sync_plan_attention_class(plan)
-                          = external_folder_sync_plan_attention_label(plan)
-                        td
-                          - if plan["web_view_link"].present?
-                            = link_to plan["path"], plan["web_view_link"], target: "_blank", rel: "noopener"
-                          - else
-                            = plan["path"]
-                          - if plan["previous_path"].present? && plan["previous_path"] != plan["path"]
-                            br
-                            span.muted = "以前: #{plan["previous_path"]}"
-                        td
-                          - reasons = external_folder_sync_plan_reasons(plan)
-                          - if reasons.any?
-                            ul
-                              - reasons.each do |reason|
-                                li = reason
-                          - else
-                            | -
-                        td = plan["message"].presence || "-"
+              p.muted まだ同期履歴はありません。現時点では保存済み metadata と受信済み webhook event の確認が中心です。
+              p.muted 差分同期本体や購読作成・更新は後続 issue の範囲です。
+      - else
+        - @runs.each do |run|
+          tr id=run.public_id
+            td = run.started_at ? l(run.started_at) : "-"
+            td
+              code = run.public_id
+            td = external_folder_sync_run_mode_label(run)
+            td = external_folder_sync_run_status_label(run)
+            td
+              span class=external_folder_sync_run_safety_class(run)
+                = external_folder_sync_run_safety_label(run)
+            td = run.items_created_count
+            td = run.items_updated_count
+            td = run.items_skipped_count
+            td = run.items_deleted_count
+            td = run.errors_count
+            td = run.summary_json&.fetch("needs_attention_count", nil) || "-"
+            td = run.summary_json&.fetch("conflict_warnings_count", nil) || "-"
+            td
+              - if external_folder_sync_approved?(run)
+                = external_folder_sync_approval_actor_label(run)
+                - if external_folder_sync_approval_approved_at(run).present?
+                  br
+                  span.muted = external_folder_sync_approval_approved_at(run)
+              - else
+                | -
+          - if run.result_json.present?
+            tr id="#{run.public_id}-result-details"
+              td colspan="13"
                 details
-                  summary JSONを表示
-                  pre = JSON.pretty_generate(run.result_json)
+                  summary
+                    | 結果詳細
+                    - if run == latest_run && external_folder_sync_force_apply_visible?(latest_run)
+                      span.badge 承認対象の直近プレビュー
+                  = table_tag do
+                    thead
+                      tr
+                        th 判定
+                        th 確認
+                        th パス
+                        th 変更理由・警告
+                        th メッセージ
+                    tbody
+                      - run.result_json.each do |plan|
+                        tr
+                          td = external_folder_sync_plan_action_label(plan)
+                          td class=external_folder_sync_plan_attention_class(plan)
+                            = external_folder_sync_plan_attention_label(plan)
+                          td
+                            - if plan["web_view_link"].present?
+                              = link_to plan["path"], plan["web_view_link"], target: "_blank", rel: "noopener"
+                            - else
+                              = plan["path"]
+                            - if plan["previous_path"].present? && plan["previous_path"] != plan["path"]
+                              br
+                              span.muted = "以前: #{plan["previous_path"]}"
+                          td
+                            - reasons = external_folder_sync_plan_reasons(plan)
+                            - if reasons.any?
+                              ul
+                                - reasons.each do |reason|
+                                  li = reason
+                            - else
+                              | -
+                          td = plan["message"].presence || "-"
+                  details
+                    summary JSONを表示
+                    pre = JSON.pretty_generate(run.result_json)
 
 .card
   h2 同期アイテム
