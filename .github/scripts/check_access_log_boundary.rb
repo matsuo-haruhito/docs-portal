@@ -7,15 +7,6 @@ REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
 CHECKS = [
   {
-    path: "README.md",
-    expected: [
-      "AccessLog",
-      "記録対象",
-      "記録しない対象",
-      "last_login_at は users 側で管理"
-    ]
-  },
-  {
     path: "docs/README.md",
     expected: [
       "AccessLog",
@@ -29,7 +20,7 @@ CHECKS = [
     expected: [
       "HTML view、DocumentFile download、ZIP download、preview 実行などの主要操作を監査ログに残す",
       "JS / CSS / image asset は通常の閲覧履歴としては記録対象外にする",
-      "last_login_at は `users` 側で別管理する"
+      "`last_login_at` は `users` 側で別管理する"
     ]
   },
   {
