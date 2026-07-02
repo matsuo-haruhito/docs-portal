@@ -114,7 +114,7 @@ module Admin::GeneratedFileRunsHelper
   end
 
   def generated_file_run_path_hint_values(run)
-    Array(run.source_paths) + Array(run.changed_files) + Array(run.generated_paths)
+    (Array(run.source_paths) + Array(run.changed_files) + Array(run.generated_paths))
       .map { |path| File.basename(path.to_s) }
       .reject { |path| path.blank? || path == "." }
       .uniq
@@ -135,7 +135,7 @@ module Admin::GeneratedFileRunsHelper
     masked_text = mask_generated_file_run_diagnostic_value(text).squish
     return if masked_text.blank? || masked_text.include?(GENERATED_FILE_RUN_FILTERED_VALUE)
 
-    masked_text.first(GENERATED_FILE_RUN_SEARCH_HINT_VALUE_LIMIT)
+    masked_text[0, GENERATED_FILE_RUN_SEARCH_HINT_VALUE_LIMIT]
   end
 
   def mask_generated_file_run_metadata(value, key: nil)
