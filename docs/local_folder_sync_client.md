@@ -114,7 +114,75 @@ source_name + relative_path + content_hash
 - `source_path` は監査用であり、サーバー側の保存先決定には使わない
 - `relative_path` はサーバー側でも traversal / absolute path / Windows full path を拒否する
 
-## まず作る最小クライアント
+## 最小 reference uploader
+
+`bin/local_folder_sync_upload` は first slice の単発 reference client。
+1 ファイルを読み、同期ルートからの `relative_path` と送信前 SHA-256 を作って `POST /api/internal/file_uploads` の dry-run を作る。
+常駐監視、debounce queue、retry、削除同期、publish apply はまだ行わない。
+
+推奨コマンドは `ruby bin/local_folder_sync_upload` とする。
+checkout 環境で executable bit が付いている場合は `bin/local_folder_sync_upload` でも実行できるが、contents API 経由の追加や環境差で実行 bit が落ちる可能性があるため、PR / release evidence では `ruby` 経由の例を正本にする。
+
+環境変数で実行する例:
+
+```bash
+DOCS_PORTAL_URL=https://portal.example.test \
+DOC_IMPORT_TOKEN=... \
+DOCS_PORTAL_PROJECT_CODE=PROJECT1 \
+LOCAL_FOLDER_SYNC_ROOT=/path/to/sync-root \
+LOCAL_FOLDER_SYNC_SOURCE_NAME=customer-nas-sync \
+LOCAL_FOLDER_SYNC_FILE=/path/to/sync-root/docs/guide.md \
+ruby bin/local_folder_sync_upload
+```
+
+同じ値は option でも渡せる。
+
+```bash
+ruby bin/local_folder_sync_upload \
+  --portal-url=https://portal.example.test \
+  --token=... \
+  --project-code=PROJECT1 \
+  --sync-root=/path/to/sync-root \
+  --source-name=customer-nas-sync \
+  --file=/path/to/sync-root/docs/guide.md
+```
+
+標準出力には `dry_run_id`、`status`、`relative_path`、送信前 hash、サーバー計算 hash、hash 一致結果だけを出す。
+token と client 上の `source_path` は標準出力やエラーに出さない。
+PR / release evidence には、この summary と dry-run only の境界だけを貼り、token、ローカル絶対パス、NAS の private path、raw response payload は貼らない。
+
+PR / release evidence は次の粒度に留める。
+
+```text
+local_folder_sync_upload smoke
+command: ruby bin/local_folder_sync_upload
+status: created
+relative_path: docs/guide.md
+client_hash: sha256:<redacted>
+server_hash: sha256:<redacted>
+hash_match: true
+dry_run_only: true
+raw_token: not logged
+raw_source_path: not logged
+```
+
+`client_hash` と `server_hash` は一致確認のための証跡として使う。社外共有や長期保存が不要な PR comment では、hash 全体ではなく先頭数桁だけに丸めてもよい。`dry_run_id` は portal 内部の確認に必要な場合だけ貼り、token、local absolute path、NAS path、raw response JSON は貼らない。
+
+確認は次の 2 種類に分ける。
+
+- unit / source smoke: sync root 外 path の拒否、unsafe `relative_path` の拒否、token / raw `source_path` を summary に出さないことを確認する。実 portal への upload は不要。
+- staging / local portal manual smoke: 実 portal へ 1 ファイルを dry-run upload し、dry-run が作られること、hash が一致すること、summary が redacted であることだけを確認する。publish apply、削除同期、常駐監視、retry queue は同じ smoke に含めない。
+
+client 側でも次の file path は送信前に拒否する。
+
+- sync root 外の path
+- absolute path を `relative_path` として扱う必要がある path
+- `..` を含む traversal path
+- 空の relative path
+
+## まず作る常駐クライアント
+
+reference uploader の後続として、常駐クライアントでは次を扱う。
 
 - 設定ファイル
   - portal URL
