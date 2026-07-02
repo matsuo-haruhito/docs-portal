@@ -137,7 +137,7 @@
       <div class='logo'><div class='logo-mark'></div><div><div class='logo-title'>docs-portal</div><div class='logo-subtitle'>Viewer design reference</div></div></div>
       <div><div class='side-title'>Documents</div><nav class='doc-list' aria-label='documents'><a class='doc-item active' href='#'><span>MD</span><span>要件定義書.md</span><span class='doc-status changed'>M</span></a><a class='doc-item' href='#'><span>MD</span><span>機能一覧.md</span><span class='doc-status changed'>M</span></a><a class='doc-item' href='#'><span>MD</span><span>用語集.md</span><span class='doc-status changed'>M</span></a><a class='doc-item' href='#'><span>PDF</span><span>添付仕様.pdf</span><span class='doc-status'>添付</span></a></nav></div>
       <div><div class='side-title'>Current views</div><nav class='doc-list' aria-label='views'><a class='doc-item active' href='#'><span>1</span><span>HTML本文</span><span></span></a><a class='doc-item' href='#'><span>2</span><span>版差分</span><span></span></a><a class='doc-item' href='#'><span>3</span><span>添付・元ファイル</span><span></span></a><a class='doc-item' href='#'><span>4</span><span>品質チェック</span><span></span></a></nav></div>
-      <div class='sidebar-footer'><strong>Mock boundary</strong><br>HTML 単体の design reference です。runtime の current support と future proposal を同じ画面で比較するための資料で、操作ボタンは実装済み機能を意味しません。</div>
+      <div class='sidebar-footer'><strong>Mock boundary</strong><br>HTML 単体の design reference です。Current support の正本は版詳細・table toolbar・API仕様の runbook で確認し、この mock の操作ボタンだけを実装済み機能とは扱いません。</div>
     </aside>
     <main class='main'>
       <header class='topbar'><div><div class='breadcrumb'>案件A / 外部設計書 / 版詳細確認ハブ</div><div class='file-title'>要件定義書.md</div></div><div class='actions'><span class='pill current'><span class='dot'></span>Current: preview / diff</span><button class='btn'>HTML本文を開く</button><button class='btn soft'>前版との差分</button><button class='btn ghost'>Proposal: 編集保存</button></div></header>
@@ -145,7 +145,7 @@
         <section class='reference-note' aria-labelledby='reference-note-title'>
           <div>
             <h1 id='reference-note-title'>Markdown preview / diff viewer design reference</h1>
-            <p>この mock は実画面そのものではありません。版詳細画面の current support と、後続 issue で扱う proposal を読み分けるための静的資料です。</p>
+            <p>この mock は実画面そのものではありません。版詳細画面の current support は runbook を正本にし、この静的資料では後続 issue で扱う proposal と並べて境界を読み分けます。Current support が増えた場合は、この note と下の Current support / Proposal only の区分を同じ更新で見直します。</p>
           </div>
           <div class='boundary-grid'>
             <div class='boundary-box'>
@@ -154,6 +154,7 @@
                 <li>版詳細を read-only の確認ハブとして表示する</li>
                 <li>HTML本文、Markdown行差分、HTML差分、表セル差分へ移動する</li>
                 <li>添付・元ファイル、品質チェック、比較対象版を確認する</li>
+                <li>検索補助、codeblock copy / JSON検証、Markdown table toolbar は各 runbook の current support に従って読む</li>
                 <li>押せる導線は実在する viewer / 版詳細内の移動先として扱う</li>
               </ul>
             </div>
@@ -161,7 +162,7 @@
               <h2><span class='pill proposal'>Proposal only</span></h2>
               <ul>
                 <li>ブラウザ上での Markdown 編集保存</li>
-                <li>server-side dry-run や codeblock action の実行</li>
+                <li>server-side dry-run や codeblock action の実行・監査 workflow</li>
                 <li>Markdown table toolbar の full preference integration</li>
                 <li>保存やコメント追加の workflow 変更</li>
               </ul>
@@ -188,7 +189,7 @@
 | Diff | Markdown / HTML / table 差分 |
 | Edit | 後続 issue の proposal |</textarea></section><section class='pane'><div class='pane-header'><span>Current HTML Preview</span><span>sanitize 済み</span></div><article class='preview'><h1>要件定義書</h1><h2>概要</h2><p>この文書は docs-portal における Markdown 閲覧・差分確認の要件をまとめます。</p><h2>画面要件</h2><ul><li>HTML プレビューを確認できる</li><li>版同士の差分を確認できる</li><li>非エンジニアにも分かる表示にする</li></ul><h2>注意</h2><p><a class='broken-link' href='#'>古い仕様書</a> はリンク切れの可能性があります。</p><table><thead><tr><th>項目</th><th>Current support</th></tr></thead><tbody><tr><td>Preview</td><td>生成済み HTML を表示</td></tr><tr><td>Diff</td><td>Markdown / HTML / table 差分</td></tr><tr><td>Edit</td><td><code>Proposal only</code></td></tr></tbody></table></article></section></div></section>
         <section class='card'><div class='card-header'><div><div class='card-title'>Version Diff Viewer <span class='pill current'>Current</span></div><div class='tabs'><span class='tab active'>Markdown差分</span><span class='tab'>HTML差分</span><span class='tab'>表セル差分</span><span class='tab'>添付・元ファイル</span></div></div><div class='actions'><button class='btn'>左右確認</button><button class='btn ghost'>Proposal: コメント追加</button></div></div><div class='diff-layout'><aside class='file-list'><div class='file-row active'><span class='badge m'>M</span><span>要件定義書.md</span><span class='numstat'>+12 -4</span></div><div class='file-row'><span class='badge m'>M</span><span>機能一覧.md</span><span class='numstat'>+8 -2</span></div><div class='file-row'><span class='badge a'>A</span><span>添付仕様.pdf</span><span class='numstat'>+1</span></div><div class='file-row'><span class='badge d'>D</span><span>旧見積メモ.md</span><span class='numstat'>-41</span></div></aside><section><div class='diff-toolbar'><strong>要件定義書.md</strong><span class='numstat'>+12 -4</span></div><div class='diff-view' aria-label='unified diff'><div class='diff-line hunk'><span class='ln'>18</span><span class='ln'>18</span><span class='code'>@@ 画面要件 @@</span></div><div class='diff-line'><span class='ln'>19</span><span class='ln'>19</span><span class='code'> - HTML プレビューを確認できる</span></div><div class='diff-line del'><span class='ln'>20</span><span class='ln'></span><span class='code'>- - 保存後に変更内容を確認できる</span></div><div class='diff-line add'><span class='ln'></span><span class='ln'>20</span><span class='code'>+ - 版同士の差分を確認できる</span></div><div class='diff-line add'><span class='ln'></span><span class='ln'>21</span><span class='code'>+ - 非エンジニアにも分かる表示にする</span></div></div></section></div></section>
-        <div class='bottom-grid'><section class='card card-pad'><div class='card-title'>プレビュー品質チェック <span class='pill current'>Current</span></div><div class='check-list'><div class='check-item'><span>Markdown 構文</span><span class='status-ok'>OK</span></div><div class='check-item'><span>HTML sanitize</span><span class='status-ok'>OK</span></div><div class='check-item'><span>未解決リンク</span><span class='status-warn'>1件</span></div><div class='check-item'><span>画像欠落</span><span class='status-warn'>1件</span></div></div></section><section class='card card-pad'><div class='card-title'>Proposal backlog boundary</div><div class='cheatsheet'><code>#2734 table toolbar</code><code>#2736 codeblock dry-run</code><code>#2764 helper separation</code><code>editing save flow: future</code></div></section></div>
+        <div class='bottom-grid'><section class='card card-pad'><div class='card-title'>プレビュー品質チェック <span class='pill current'>Current</span></div><div class='check-list'><div class='check-item'><span>Markdown 構文</span><span class='status-ok'>OK</span></div><div class='check-item'><span>HTML sanitize</span><span class='status-ok'>OK</span></div><div class='check-item'><span>未解決リンク</span><span class='status-warn'>1件</span></div><div class='check-item'><span>画像欠落</span><span class='status-warn'>1件</span></div></div></section><section class='card card-pad'><div class='card-title'>Proposal backlog boundary</div><div class='cheatsheet'><code>#2734 table preference follow-up</code><code>#2736 codeblock dry-run</code><code>#2764 helper separation</code><code>editing save flow: future</code></div></section></div>
       </section>
     </main>
   </div>

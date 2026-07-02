@@ -14,6 +14,8 @@
 
 role 別に current support の入口だけを先に選びたい場合は、次の表から既存 runbook へ進みます。権限 model や導線の正本はリンク先と current code を優先してください。
 
+この入口で Issue / PR 番号に触れている場合は、current support の証跡、historical evidence、次に見る候補のいずれかとして読みます。番号だけで current action を判断せず、リンク先 runbook / ROADMAP の文脈と current code を確認してください。
+
 | role | 最初に見る入口 | 補足 |
 | --- | --- | --- |
 | external user | [ダッシュボードと文書ショートカット・確認依頼の使い分け](./docs/ダッシュボードと文書ショートカット・確認依頼の使い分け.md)、[利用者向けアクセス申請runbook](./docs/利用者向けアクセス申請runbook.md)、[利用者向け同意画面・同意履歴runbook](./docs/利用者向け同意画面・同意履歴runbook.md) | `/dashboard` 起点で閲覧可能文書、アクセス申請、同意画面を確認する |
