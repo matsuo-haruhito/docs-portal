@@ -12,6 +12,8 @@
 
 UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロントエンド操作の方針](../doc/frontend_interaction_policy.md) も先に確認してください。実画面への internal UI gem 展開候補は [ROADMAP](../ROADMAP.md) を入口にし、screen-by-screen adoption、release train、representative smoke の読み分けは [関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) で確認します。
 
+この index で Issue / PR 番号を含む補助 docs は、current support の証跡、historical evidence、次に見る候補、proposal のいずれかとして読み分けます。番号だけを current action とせず、各 docs の本文、ROADMAP の文脈、current code を合わせて確認してください。
+
 ## タスク別入口
 
 - 利用者画面 / viewer: [ダッシュボードと文書ショートカット・確認依頼の使い分け](./ダッシュボードと文書ショートカット・確認依頼の使い分け.md) から入り、文書詳細・版詳細・ZIP・アクセス申請は日常 UI / viewer の runbook を辿ります。
