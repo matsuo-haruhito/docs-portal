@@ -1,0 +1,62 @@
+- page_title "DocumentFile 実体 storage detail"
+- detail = @document_file_storage_usage_detail
+
+h1 DocumentFile 実体 storage detail
+p.muted storage/document_files に紐づく DocumentFile 実体だけを bounded に確認する read-only detail です。削除、archive、retention、billing、quota、GCS policy の判断や実行はここでは行いません。
+
+p.actions
+  = link_to "管理ダッシュボードへ戻る", admin_root_path, class: "button secondary"
+  = link_to "欠落ファイル詳細を開く", admin_missing_document_files_path, class: "button secondary"
+
+section.card
+  h2 DocumentFile 実体 detail
+  p
+    | 登録 DocumentFile: 
+    strong = detail.total_count
+    |  件 / 表示中: 
+    strong = detail.entries.size
+    |  件 / 実体欠落: 
+    strong = detail.missing_file_count
+    |  件
+  p.muted Project / Document / safe relative path / file count / 概算使用量 / 最終更新 / missing count を確認できます。raw absolute path、credential、private path、signed URL、GCS bucket identifier は表示しません。
+  - if detail.limited?
+    p.muted = "表示は先頭#{detail.limit}件に限定しています。全件確認や削除判断ではなく、容量増加時に次に見る Project / Document / path の手掛かりとして使ってください。"
+
+  - if detail.entries.any?
+    table
+      thead
+        tr
+          th 案件
+          th 文書
+          th ファイル名
+          th Safe path preview
+          th ファイル数
+          th 実体欠落
+          th 概算使用量
+          th 最終更新
+      tbody
+        - detail.entries.each do |entry|
+          tr
+            td
+              code = entry.project_code
+              br
+              span.muted = entry.project_name
+            td = link_to entry.document_title, project_document_path(entry.project_code, entry.document_slug)
+            td = entry.file_name
+            td
+              code = entry.relative_path
+            td = entry.file_count
+            td
+              - if entry.missing?
+                strong = entry.missing_file_count
+                span.muted  件（raw path は表示しません）
+              - else
+                span.muted 0 件
+            td = entry.human_size
+            td
+              - if entry.latest_updated_at
+                time datetime=entry.latest_updated_at.iso8601 = l(entry.latest_updated_at, format: :short)
+              - else
+                span.muted -
+  - else
+    p.muted DocumentFile 実体 detail はありません。対象が 0 件、または現在の storage/document_files に確認できる DocumentFile がありません。
