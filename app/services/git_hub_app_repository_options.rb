@@ -26,6 +26,7 @@ class GitHubAppRepositoryOptions
       .compact
       .uniq
       .first(@limit)
+    return fallback_result("条件に一致する GitHub App repository候補がないため、リポジトリは手入力してください。") if repositories.empty?
 
     Result.new(repositories:, fallback: false, message: nil)
   rescue => e
