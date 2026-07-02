@@ -13,6 +13,7 @@
 - `生成パス`
 - `メタデータ`
 - `エラー`
+- `Docusaurus site build artifact evidence`
 
 ## 読み方
 
@@ -22,12 +23,16 @@
 
 このカードは検索対象を広げる機能ではなく、既存の一覧 q 検索に入れる短い値を選びやすくする cue です。候補は最大 4 件で、token-like value、secret-like value、private path、mask 済み値、raw metadata や長い payload 由来の値は候補にしません。候補 link を開いたあとは、一覧側で status、job_id、generator、output_writer、event_source、created date filter を必要に応じて足し直して対象 run を絞ります。
 
+詳細画面の `Docusaurus site build artifact evidence` は、site build artifact run だけに出る read-only summary です。GitHub Actions 側の artifact / workflow run / manifest と、Rails 側に保存された `GeneratedFileRun` evidence の対応を、workflow run、attempt、source repo / branch / commit、manifest path、artifact 名、status cue、manifest document count、runbook path などの短い metadata で読み合わせるための補助として扱います。
+
+この summary は artifact 本体、manifest 全文、CI log、import API request payload、secret-like value を表示する場所ではありません。replay、rebuild、artifact download、preview、alert、長期保存 policy を実行または決定する導線でもありません。status cue は調査時の優先度を読むための補助であり、GitHub Actions 側の artifact / logs 確認や build-docs runbook の手順を置き換えるものではありません。
+
 詳細画面の診断ブロックは、生成ジョブを調査するための preview です。保存値やログの完全な raw dump ではありません。
 
 - `入力パス` / `変更ファイル` / `生成パス` は、ジョブ診断用の配列表示として読みます。生成入力、差分、出力先を再確認する手がかりであり、検索条件や retry 対象を直接変更するものではありません。
 - `メタデータ` は `generated_file_run_metadata_preview` を通した診断用 preview です。`token`、`secret`、`private path` などの secret-like value は表示前に伏せられます。
 - `エラー` は `generated_file_run_diagnostic_preview` を通した診断用 preview です。長い本文は省略され、token / secret / private path は伏せられます。
-- 長い metadata JSON、raw payload、error log 全文、token-like value、private path をそのまま検索欄へ貼るのではなく、`gfr...` の一部、入力パスや生成パスの特徴語、短い error 断片、metadata に残る event public ID など 100 文字以内の手掛かりで探します。
+- 長い metadata JSON、raw payload、error log 全文、token-like value、private path をそのまま検索欄へ貼るのではなく、`gfr...` の一部、入力パスや生成パスの特徴語、短い error 断片、metadata に残る event public ID、workflow run id、commit hash、manifest path など 100 文字以内の手掛かりで探します。
 
 ## current support ではないこと
 
@@ -40,11 +45,14 @@
 - retry 回数 policy や承認 workflow の追加
 - 生成ジョブの状態遷移や enqueue 条件の変更
 - full-text search / search index の追加
+- artifact download / preview / replay / rebuild の実行
+- GitHub Actions artifact の長期保存 policy 決定
 
 retry 判断は引き続き、実行履歴一覧の filter、detail の retry 親子関係、`現在の条件で再実行対象` の件数、確認ダイアログを合わせて確認します。
 
 ## 根拠
 
+- PR #4257: site build artifact run に限定した `Docusaurus site build artifact evidence` summary を `app/views/admin/generated_file_runs/show.html.erb` に追加し、raw artifact / manifest / CI log / import API request payload / secret-like metadata を表示しない request spec を追加
 - PR #4419: `app/views/admin/generated_file_runs/show.html.erb` に `一覧 q 検索の手掛かり` card を追加し、`app/helpers/admin/generated_file_runs_helper.rb` に候補生成の安全境界を追加
 - PR #3618: `app/views/admin/generated_file_runs/show.html.erb` に診断ブロックごとの preview cue を追加
 - `app/helpers/admin/generated_file_runs_helper.rb`: metadata / diagnostic preview の mask と truncate 境界
