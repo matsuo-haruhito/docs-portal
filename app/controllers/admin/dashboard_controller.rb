@@ -27,6 +27,7 @@ class Admin::DashboardController < Admin::BaseController
     @generated_file_run_failure_alert_digest_markdown = generated_file_run_failure_alert_digest_markdown
     @document_delivery_failure_alert_candidates = document_delivery_failure_alert_candidates
     @external_sync_failure_alert_candidates = external_sync_failure_alert_candidates
+    @external_sync_failure_alert_digest_markdown = external_sync_failure_alert_digest_markdown
     @operational_failure_summary = operational_failure_summary
   end
 
@@ -151,6 +152,14 @@ class Admin::DashboardController < Admin::BaseController
       limit: EXTERNAL_SYNC_ALERT_CANDIDATE_LIMIT,
       lookback_limit: EXTERNAL_SYNC_ALERT_CANDIDATE_LOOKBACK_LIMIT
     ).call
+  end
+
+  def external_sync_failure_alert_digest_markdown
+    entries = ExternalFolderSyncRuns::FailureAlertHandoff.new(
+      candidates: @external_sync_failure_alert_candidates
+    ).call
+
+    ExternalFolderSyncRuns::FailureAlertHandoff.markdown(entries)
   end
 
   def latest_operational_failure_at(*relations)
