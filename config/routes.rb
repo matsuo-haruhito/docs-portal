@@ -220,10 +220,24 @@ Rails.application.routes.draw do
     resource :rollback, only: [:create], controller: "document_version_rollbacks"
     resource :upload_review, only: [:create], controller: "document_version_upload_reviews"
     resources :document_review_comments, only: %i[create update], param: :public_id
+
+    member do
+      get :view, to: "document_views#show"
+      get "site(/*site_path)", to: "document_sites#show", as: :site, format: false
+    end
   end
 
   resources :document_files, only: [:show], param: :public_id do
-    resource :preview_status, only: [:show], controller: "document_file_preview_statuses"
-    get :external_view, on: :member
+    get "archive_entries/preview", to: "document_file_archive_entries#preview", as: :archive_entry_preview, on: :member
+    get "archive_entries/download", to: "document_file_archive_entries#download", as: :archive_entry_download, on: :member
+    get "assets/*asset_path", to: "document_files#asset", as: :asset, on: :member, format: false
+  end
+
+  namespace :api do
+    namespace :internal do
+      resources :artifact_imports, only: [:create]
+      resources :file_uploads, only: [:create]
+      resources :zip_uploads, only: [:create]
+    end
   end
 end
