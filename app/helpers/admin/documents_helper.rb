@@ -49,11 +49,11 @@ module Admin::DocumentsHelper
   end
 
   def admin_document_retention_filter_options
-    [["すべて", ""], ["保管期限あり", "set"], ["保管期限なし", "missing"], ["保管期限切れ", "due"]]
+    [["すべて", ""], ["保管期限あり", "set"], ["保管期限なし", "missing"], ["保管期限切れ", "due"], ["保管期限が30日以内", "due_soon"]]
   end
 
   def admin_document_discard_filter_options
-    [["すべて", ""], ["廃棄候補あり", "set"], ["廃棄候補なし", "missing"], ["廃棄候補期限切れ", "due"]]
+    [["すべて", ""], ["廃棄候補あり", "set"], ["廃棄候補なし", "missing"], ["廃棄候補期限切れ", "due"], ["廃棄候補が30日以内", "due_soon"]]
   end
 
   def admin_document_project_secondary_label(project)

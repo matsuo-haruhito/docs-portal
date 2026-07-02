@@ -26,6 +26,17 @@
 4. representative smoke は `docs-portal` 側で必ず実施し、上流 gate の成功だけで host app integration 成功とは扱わない
 5. packaging gate で守られていない画面固有の DOM、route、permission、table key、selected value は `docs-portal` 側の evidence として分けて記録する
 
+## cross-repo handoff checklist
+
+`#4359` 型の横断整理では、3 gem を同じ gate に押し込まず、次の順で確認してから downstream smoke issue へ渡します。
+
+1. package root / entrypoint が artifact に含まれるかを見る。RTP は package verifier と `docs/javascript_entrypoints.md`、TreeView は public API manifest と package-root registration docs、RFK は package contents / public API docs を主 evidence にする。
+2. TypeScript declaration、public manifest、direct helper subpath は gem ごとに扱いが違うため、別 gem の guard 名をそのまま required gate として移植しない。
+3. CI success は package / source guard の成功として記録し、browser visual approval や docs-portal host app smoke の代替にしない。
+4. downstream issue / PR には `from SHA`、`to SHA`、参照した upstream PR / workflow run、未取得の visual evidence gate、rollback target を分けて残す。
+
+この checklist は review / handoff の見落としを減らすためのものです。upstream PR の review、Gemfile bump、3 gem 一括更新、browser screenshot 取得はそれぞれの担当 issue / PR へ戻します。
+
 ## current pinned refs
 
 current `main` の `Gemfile.lock` では、次の revision が解決されています。

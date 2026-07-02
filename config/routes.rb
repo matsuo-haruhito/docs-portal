@@ -49,7 +49,10 @@ Rails.application.routes.draw do
     end
 
     resources :companies, except: %i[show new], param: :public_id
-    resources :users, except: %i[show new], param: :public_id
+    resources :users, except: %i[show new], param: :public_id do
+      get :company_search, on: :collection
+      get :selected_company, on: :collection
+    end
     resources :projects, except: %i[show new], param: :code do
       get :company_search, on: :collection
       get :selected_company, on: :collection
