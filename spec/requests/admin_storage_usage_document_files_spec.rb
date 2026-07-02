@@ -77,7 +77,7 @@ RSpec.describe "Admin document file storage usage detail", type: :request do
     expect(response.body).to include("storage/document_files/spec/storage-usage-detail/missing.pdf")
     expect(page_text).to include("表示は先頭#{StorageUsageSummary::DOCUMENT_FILE_DETAIL_LIMIT}件に限定しています。")
     expect(response.body).not_to include(Rails.root.to_s)
-    expect(response.body).not_to include("signed URL")
+    expect(response.body).not_to include("https://storage.googleapis.com")
     expect(parsed_html.css('a').map { |link| link.text.squish }).not_to include("削除")
     expect(parsed_html.css('a').map { |link| link.text.squish }).not_to include("archive")
     expect(parsed_html.css('a').map { |link| link.text.squish }).not_to include("retention")
