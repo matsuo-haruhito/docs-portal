@@ -1,5 +1,6 @@
 - page_title "#{document.title} / #{document_file.file_name}"
 - viewer_plan = local_assigns[:viewer_plan] || local_assigns[:document_file_viewer_plan] || @viewer_plan
+- has_open_action = local_assigns[:open_label].present? && local_assigns[:open_path].present?
 
 p.muted
   = link_to project.name, project_path(project)
@@ -22,7 +23,12 @@ p.muted
         - if viewer_plan.reason.present?
           |  
           span.muted = viewer_plan.reason
-  p.actions
-    - if local_assigns[:open_label].present? && local_assigns[:open_path].present?
-      = link_to open_label, open_path, class: "button secondary", target: "_blank", rel: "noopener"
-    = link_to "ダウンロード", document_file_path(document_file, disposition: "download"), class: "button secondary", data: { turbo: false }
+  div
+    p.actions
+      - if has_open_action
+        = link_to open_label, open_path, class: "button secondary", target: "_blank", rel: "noopener"
+      = link_to "ファイルを保存", document_file_path(document_file, disposition: "download"), class: "button secondary", data: { turbo: false }
+    - if has_open_action
+      p.muted 別タブで表示するリンクと、手元へ保存するリンクです。
+    - else
+      p.muted プレビュー中のファイルを手元へ保存します。
