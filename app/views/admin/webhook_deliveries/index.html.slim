@@ -7,6 +7,7 @@
 - delivery_page_start = @webhook_deliveries_total_count.zero? ? 0 : @webhook_deliveries_offset + 1
 - delivery_page_end = @webhook_deliveries_offset + @webhook_deliveries.size
 - delivery_pagination_params = @delivery_filters.merge(page: @webhook_deliveries_page)
+- delivery_detail_link_cue = "検索条件とページを保って詳細を開く"
 
 h1 Webhook送信履歴検索
 = render "admin/nav"
@@ -92,7 +93,7 @@ p.actions
             td data-rails-table-preferences-column-key="response_status" = delivery.response_status || "-"
             td data-rails-table-preferences-column-key="error_message" = WebhookDeliveryDiagnosticPreview.new(delivery.error_message).to_s
             td.actions data-rails-table-preferences-column-key="actions"
-              = link_to "詳細", admin_webhook_delivery_path(delivery.public_id, @delivery_return_params)
+              = link_to "詳細", admin_webhook_delivery_path(delivery.public_id, @delivery_return_params), title: delivery_detail_link_cue, aria: { label: delivery_detail_link_cue }
     - if @webhook_deliveries_total_pages > 1
       p.actions
         - if @webhook_deliveries_page > 1

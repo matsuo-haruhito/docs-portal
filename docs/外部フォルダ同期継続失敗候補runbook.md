@@ -10,9 +10,10 @@
 
 ## 候補に出る条件
 
-- identity は `external_folder_sync_source_id` と provider を基本にします。
-- latest run から見て `failed` / `partial` が閾値以上連続している場合だけ候補になります。
+- identity は `external_folder_sync_source_id` と provider を基本にします。別 source や別 provider の失敗 streak は混ぜません。
+- latest run から見て `failed` / `partial` が 3 件以上連続している場合だけ候補になります。
 - 後続に `completed` がある古い失敗 streak は候補になりません。
+- 管理ダッシュボードでは、最新 200 件の同期 run を見たうえで、候補を最大 5 件だけ表示します。表示外の source が正常、通知済み、ack 済み、自動復旧済みであることは保証しません。
 
 ## 画面で見る項目
 
@@ -24,7 +25,7 @@
 - 短い error preview
 - 同期設定詳細への link
 
-error preview は調査の入口だけに使います。token、Authorization header、private-looking path、signed URL 風の値は raw 表示しません。
+error preview は調査の入口だけに使います。token、Authorization header、private-looking path、signed URL 風の値は raw 表示せず、mask / truncate 済みの短い preview として読みます。raw provider error、credential、private path の確認場所ではありません。
 
 ## やらないこと
 
