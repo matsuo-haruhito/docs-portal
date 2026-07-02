@@ -7,6 +7,13 @@ REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
 BOUNDARY_CHECKS = [
   {
+    path: "docs/README.md",
+    expected: [
+      "正式レビュー承認 workflow 境界メモ",
+      "コメント、版品質チェック、確認依頼、公開制御、外部送付履歴を正式な多段承認 workflow と混同しないための棚卸し"
+    ]
+  },
+  {
     path: "docs/正式レビュー承認workflow境界メモ.md",
     expected: [
       "current support",
@@ -17,7 +24,8 @@ BOUNDARY_CHECKS = [
       "`解決`",
       "`OK済み`",
       "`送付済み`",
-      "正式 workflow と混同しない境界"
+      "正式 workflow と混同しない境界",
+      "OK / Cancel"
     ]
   },
   {
