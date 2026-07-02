@@ -22,6 +22,10 @@ h1
 section.card
   h2 検索・絞り込み
 
+  - active_text_filters = %i[q tag category document_kind visibility_policy].any? { |key| @filters[key].present? }
+  - active_practical_filters = %i[has_html has_files has_pdf has_diagram].any? { |key| ActiveModel::Type::Boolean.new.cast(@filters[key]) }
+  - has_active_document_filters = active_text_filters || active_practical_filters
+
   = form_with url: project_documents_path(@project), method: :get, local: true, class: "document-filter-form" do |form|
     .form-grid.form-grid--compact
       label.form-field
@@ -61,7 +65,8 @@ section.card
 
     p.actions.form-actions
       = form.submit "検索", class: "button"
-      = link_to "条件をクリア", project_documents_path(@project), class: "button secondary"
+      - if has_active_document_filters
+        = link_to "条件をクリア", project_documents_path(@project), class: "button secondary"
 
 - if current_user.internal?
   section.card.manual-document-upload-panel data-controller="manual-document-upload" data-manual-document-upload-dragging-class="is-dragging" data-manual-document-upload-url-value=project_document_uploads_path(@project) data-manual-document-upload-source-path-value=@selected_source_path
