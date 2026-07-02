@@ -37,6 +37,7 @@ Rails.application.routes.draw do
 
   namespace :admin do
     root "dashboard#index"
+    get "storage_usage/document_files", to: "storage_usage#document_files", as: :storage_usage_document_files
     resource :api_specification, only: [:show] do
       post "retry_build", to: "api_specifications#retry_build", as: :retry_build
       get "site(/*site_path)", to: "api_specifications#site", as: :site, format: false
@@ -49,8 +50,13 @@ Rails.application.routes.draw do
     end
 
     resources :companies, except: %i[show new], param: :public_id
-    resources :users, except: %i[show new], param: :public_id
+    resources :users, except: %i[show new], param: :public_id do
+      get :company_search, on: :collection
+      get :selected_company, on: :collection
+    end
     resources :projects, except: %i[show new], param: :code do
+      get :company_search, on: :collection
+      get :selected_company, on: :collection
       member do
         get "external_preview", to: "project_external_previews#show"
         get "external_preview/user_search", to: "project_external_previews#user_search", as: :external_preview_user_search
