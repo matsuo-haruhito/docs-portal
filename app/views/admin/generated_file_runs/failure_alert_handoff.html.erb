@@ -1,0 +1,68 @@
+<div class="space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold">生成ファイル継続失敗候補 handoff</h1>
+      <p class="text-sm text-gray-600">通知送信なしで運用引き継ぎ用 payload を read-only に確認します。</p>
+    </div>
+    <div class="flex flex-wrap justify-end gap-2">
+      <%= link_to "JSON", failure_alert_handoff_admin_generated_file_runs_path(format: :json), class: "rounded border px-3 py-2 text-sm" %>
+      <%= link_to "実行履歴へ戻る", admin_generated_file_runs_path(status: "failed"), class: "rounded border px-3 py-2 text-sm" %>
+    </div>
+  </div>
+
+  <div class="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950">
+    <p class="font-semibold">read-only export の範囲</p>
+    <p class="mt-1">dashboard と同じ bounded window で最新 run が連続 failed の候補だけを抽出します。通知済み状態、ack、再通知抑制、自動 retry、alert rule の本番確定はここでは扱いません。</p>
+    <p class="mt-1">候補 0 件は、生成ファイル全体の正常保証や通知済み、ack 済み、自動復旧済みを意味しません。</p>
+  </div>
+
+  <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+    <div class="rounded-lg border bg-white p-4">
+      <div class="text-xs font-semibold uppercase text-gray-500">候補</div>
+      <div class="mt-1 text-2xl font-bold"><%= @failure_alert_entries.size %></div>
+    </div>
+    <div class="rounded-lg border bg-white p-4">
+      <div class="text-xs font-semibold uppercase text-gray-500">抽出上限</div>
+      <div class="mt-1 text-2xl font-bold"><%= Admin::GeneratedFileRunsController::FAILURE_ALERT_HANDOFF_LIMIT %></div>
+      <p class="mt-1 text-xs text-gray-500">lookback <%= Admin::GeneratedFileRunsController::FAILURE_ALERT_HANDOFF_LOOKBACK_LIMIT %> 件</p>
+    </div>
+    <div class="rounded-lg border bg-white p-4">
+      <div class="text-xs font-semibold uppercase text-gray-500">runbook</div>
+      <div class="mt-1 font-mono text-sm"><%= GeneratedFiles::RunFailureAlertHandoff::RUNBOOK_PATH %></div>
+    </div>
+  </div>
+
+  <% if @failure_alert_entries.any? %>
+    <div class="space-y-3">
+      <% @failure_alert_entries.each do |entry| %>
+        <section class="rounded-lg border bg-white p-4">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-semibold"><%= entry.job_id.presence || "-" %></h2>
+              <p class="mt-1 text-sm text-gray-600"><%= GeneratedFiles::RunFailureAlertHandoff.identity_label(entry.identity) %></p>
+            </div>
+            <span class="rounded bg-red-100 px-2 py-1 text-sm text-red-800">連続失敗: <%= entry.failure_count %> 件</span>
+          </div>
+
+          <dl class="mt-4 grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
+            <div><dt class="font-semibold">last_failed_at</dt><dd><%= entry.last_failed_at ? l(entry.last_failed_at, format: :long) : "-" %></dd></div>
+            <div><dt class="font-semibold">failed_runs_path</dt><dd class="font-mono"><%= link_to entry.filtered_failed_runs_path, entry.filtered_failed_runs_path, class: "text-blue-600 underline" %></dd></div>
+            <div><dt class="font-semibold">runbook_path</dt><dd class="font-mono"><%= entry.runbook_path %></dd></div>
+            <div><dt class="font-semibold">event_source</dt><dd><%= generated_file_source_label(entry.event_source) %></dd></div>
+          </dl>
+
+          <div class="mt-4 rounded border border-gray-200 bg-gray-50 p-3">
+            <p class="text-xs font-semibold uppercase text-gray-500">latest_error_message preview</p>
+            <pre class="mt-1 whitespace-pre-wrap text-sm"><%= entry.latest_error_message.presence || "-" %></pre>
+          </div>
+        </section>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="rounded-lg border bg-white p-6 text-sm text-gray-700">
+      <p class="font-semibold">継続失敗候補はありません。</p>
+      <p class="mt-1">現在の bounded 抽出条件で handoff payload に載せる対象はありません。保存済み failed 件数が 0 件であること、生成ファイル処理が正常であること、通知済み・ack済み・自動 retry 済みであることは示しません。</p>
+      <p class="mt-3"><%= link_to "failed 実行履歴を確認", admin_generated_file_runs_path(status: "failed"), class: "text-blue-600 underline" %></p>
+    </div>
+  <% end %>
+</div>
