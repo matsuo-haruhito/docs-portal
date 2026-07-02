@@ -37,6 +37,7 @@ Rails.application.routes.draw do
 
   namespace :admin do
     root "dashboard#index"
+    get "storage_usage/document_files", to: "storage_usage#document_files", as: :storage_usage_document_files
     resource :api_specification, only: [:show] do
       post "retry_build", to: "api_specifications#retry_build", as: :retry_build
       post "codeblock_dry_run", to: "api_specifications#codeblock_dry_run", as: :codeblock_dry_run
