@@ -5,6 +5,7 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   DEFAULT_PER_PAGE = 50
   MAX_PER_PAGE = 100
   QUERY_MAX_LENGTH = 100
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
   FAILURE_ALERT_HANDOFF_LIMIT = Admin::DashboardController::GENERATED_FILE_ALERT_CANDIDATE_LIMIT
   FAILURE_ALERT_HANDOFF_LOOKBACK_LIMIT = Admin::DashboardController::GENERATED_FILE_ALERT_CANDIDATE_LOOKBACK_LIMIT
 
@@ -51,6 +52,11 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   def retry_run
+    if read_only_maintenance_mode?
+      redirect_to admin_generated_file_run_path(@generated_file_run.public_id, return_to: @return_to_path), alert: maintenance_retry_message
+      return
+    end
+
     enqueue_retry!(@generated_file_run)
 
     redirect_to admin_generated_file_run_path(@generated_file_run.public_id, return_to: @return_to_path), notice: "生成ジョブの再実行をキューに投入しました。"
@@ -59,6 +65,12 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   def retry_failed
     @filters = run_filter_params
     @filter_warnings = []
+
+    if read_only_maintenance_mode?
+      redirect_to admin_generated_file_runs_path(@filters), alert: maintenance_retry_message
+      return
+    end
+
     runs = apply_filters(GeneratedFileRun.failed.order(created_at: :asc, id: :asc)).limit(MAX_PER_PAGE)
     runs.each { enqueue_retry!(_1, bulk: true) }
 
@@ -81,6 +93,14 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
       event_source: bulk ? "generated_file_run_bulk_retry" : "generated_file_run_retry",
       metadata: retry_metadata_for(run, bulk:)
     )
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_retry_message
+    "メンテナンス中のため生成ファイルの再実行は停止しています。閲覧は継続できます。運用手順は本番運用・インフラ前提を確認してください。"
   end
 
   def bulk_retry_target_count
