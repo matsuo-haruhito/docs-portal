@@ -13,10 +13,9 @@ API_SPEC_DRY_RUN_CHECKS = [
       "API仕様ページ表示時の stale build enqueue",
       "`API仕様ページの build を再実行` からの手動 `retry_build`",
       "`site(/*site_path)` 表示時の stale build enqueue",
-      "HTTP codeblock dry-run validation",
-      "apply / import / 外部送信 / destructive action ではありません",
-      "path-only の internal API sample",
-      "外部 URL への request sample は dry-run 対象外"
+      "codeblock dry-run validation",
+      "Docusaurus build job 実装",
+      "generated HTML の配信条件"
     ]
   },
   {
@@ -29,8 +28,11 @@ API_SPEC_DRY_RUN_CHECKS = [
       "destructive: false",
       "action_kind: \"admin_api_spec.http_codeblock_dry_run\"",
       "apply / import / 外部送信は実行していません",
+      "dry-run only: request sample の形式確認だけを行いました。",
       "外部 URL への request sample は dry-run 対象外です。",
-      "path-only の internal API sample ではありません。"
+      "外部 API 送信を避けるため、path-only の internal API sample に限定しています。",
+      "path-only の internal API sample ではありません。",
+      "dry-run validation は /api/... のような同一アプリ内 path だけを対象にします。"
     ]
   }
 ].freeze
