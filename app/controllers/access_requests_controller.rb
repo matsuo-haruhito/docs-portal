@@ -1,6 +1,7 @@
 class AccessRequestsController < BaseController
   ACCESS_REQUEST_QUERY_MAX_LENGTH = 100
   ACCESS_REQUEST_LIST_LIMIT = 100
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   helper_method :access_request_query_max_length, :access_request_list_limit
 
@@ -29,6 +30,11 @@ class AccessRequestsController < BaseController
     requestable = find_requestable
     requested_access_level = requested_access_level_param
 
+    if read_only_maintenance_mode?
+      redirect_back fallback_location: access_requests_path, alert: access_request_maintenance_message
+      return
+    end
+
     access_request = AccessRequest.find_or_initialize_by(
       requester: current_user,
       requestable:,
@@ -43,6 +49,12 @@ class AccessRequestsController < BaseController
 
   def cancel
     access_request = AccessRequest.find_by!(public_id: params[:public_id], requester: current_user)
+
+    if read_only_maintenance_mode?
+      redirect_to access_requests_path(cancel_return_filter_params), alert: access_request_maintenance_message
+      return
+    end
+
     AccessRequestResolver.new(access_request:, approver: nil).cancel!
 
     redirect_to access_requests_path(cancel_return_filter_params), notice: "アクセス申請を取り消しました。"
@@ -213,5 +225,13 @@ class AccessRequestsController < BaseController
     else
       requested_access_level.to_s
     end
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def access_request_maintenance_message
+    "メンテナンス中のためアクセス申請の送信と取消は停止しています。申請一覧と状態確認は継続できます。"
   end
 end
