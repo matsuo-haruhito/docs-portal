@@ -6,6 +6,8 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   MAX_PER_PAGE = 100
   QUERY_MAX_LENGTH = 100
   READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
+  FAILURE_ALERT_HANDOFF_LIMIT = Admin::DashboardController::GENERATED_FILE_ALERT_CANDIDATE_LIMIT
+  FAILURE_ALERT_HANDOFF_LOOKBACK_LIMIT = Admin::DashboardController::GENERATED_FILE_ALERT_CANDIDATE_LOOKBACK_LIMIT
 
   def index
     @filters = run_filter_params
@@ -29,6 +31,24 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
     @retry_requested_by_user = User.find_by(id: @retry_requested_by_user_id) if @retry_requested_by_user_id
     @retry_evidence_visible = generated_file_run_retry_evidence_visible?
     @retry_child_runs = recent_runs_related_to(@generated_file_run.public_id)
+  end
+
+  def failure_alert_handoff
+    @failure_alert_entries = generated_file_run_failure_alert_handoff_entries
+
+    respond_to do |format|
+      format.html
+      format.json do
+        render json: {
+          count: @failure_alert_entries.size,
+          candidates: @failure_alert_entries.map(&:to_h),
+          failed_runs_path: GeneratedFiles::RunFailureAlertHandoff::FAILED_RUNS_PATH,
+          runbook_path: GeneratedFiles::RunFailureAlertHandoff::RUNBOOK_PATH,
+          read_only: true,
+          non_goals: %w[notification ack escalation retry]
+        }
+      end
+    end
   end
 
   def retry_run
@@ -58,6 +78,13 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   private
+
+  def generated_file_run_failure_alert_handoff_entries
+    GeneratedFiles::RunFailureAlertHandoff.new(
+      limit: FAILURE_ALERT_HANDOFF_LIMIT,
+      lookback_limit: FAILURE_ALERT_HANDOFF_LOOKBACK_LIMIT
+    ).call
+  end
 
   def enqueue_retry!(run, bulk: false)
     GeneratedFileJob.perform_later(
