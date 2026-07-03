@@ -2,10 +2,32 @@ require "find"
 
 class StorageUsageSummary
   TOP_BREAKDOWN_LIMIT = 5
+  DOCUMENT_FILE_DETAIL_LIMIT = 25
+  STORAGE_AREA_DETAIL_LIMIT = 25
 
   BreakdownEntry = Struct.new(:relative_path, :bytes, :file_count, :latest_updated_at, keyword_init: true) do
     def human_size
       ActiveSupport::NumberHelper.number_to_human_size(bytes)
+    end
+  end
+
+  StorageAreaDetailEntry = Struct.new(:relative_path, :bytes, :file_count, :latest_updated_at, :kind_hint, keyword_init: true) do
+    def human_size
+      ActiveSupport::NumberHelper.number_to_human_size(bytes)
+    end
+  end
+
+  StorageAreaDetailResult = Struct.new(:area_key, :area_label, :relative_path, :description, :entries, :total_count, :file_count, :bytes, :limit, keyword_init: true) do
+    def entries
+      self[:entries] || []
+    end
+
+    def human_size
+      ActiveSupport::NumberHelper.number_to_human_size(bytes)
+    end
+
+    def limited?
+      total_count.to_i > entries.size
     end
   end
 
@@ -22,6 +44,38 @@ class StorageUsageSummary
   ) do
     def human_size
       ActiveSupport::NumberHelper.number_to_human_size(bytes)
+    end
+  end
+
+  DocumentFileDetailEntry = Struct.new(
+    :project_code,
+    :project_name,
+    :document_title,
+    :document_slug,
+    :file_name,
+    :relative_path,
+    :bytes,
+    :file_count,
+    :missing_file_count,
+    :latest_updated_at,
+    keyword_init: true
+  ) do
+    def human_size
+      ActiveSupport::NumberHelper.number_to_human_size(bytes)
+    end
+
+    def missing?
+      missing_file_count.positive?
+    end
+  end
+
+  DocumentFileDetailResult = Struct.new(:entries, :total_count, :missing_file_count, :limit, keyword_init: true) do
+    def entries
+      self[:entries] || []
+    end
+
+    def limited?
+      total_count.to_i > entries.size
     end
   end
 
@@ -70,6 +124,8 @@ class StorageUsageSummary
     }
   ].freeze
 
+  AREA_DEFINITIONS_BY_KEY = AREA_DEFINITIONS.index_by { |definition| definition.fetch(:key) }.freeze
+
   def initialize(storage_root: Rails.root.join("storage"))
     @storage_root = Pathname(storage_root)
   end
@@ -81,9 +137,60 @@ class StorageUsageSummary
     )
   end
 
+  def docs_site_detail(limit: STORAGE_AREA_DETAIL_LIMIT)
+    storage_area_detail(:docs_sites, limit:)
+  end
+
+  def import_detail(limit: STORAGE_AREA_DETAIL_LIMIT)
+    storage_area_detail(:imports, limit:)
+  end
+
+  def document_file_detail(limit: DOCUMENT_FILE_DETAIL_LIMIT)
+    entries = DocumentFile.includes(document_version: { document: :project }).find_each.map do |file|
+      document_file_detail_entry(file)
+    end
+
+    DocumentFileDetailResult.new(
+      entries: entries.sort_by { |entry| [entry.missing? ? 0 : 1, -entry.bytes, entry.project_code.to_s, entry.document_title.to_s, entry.relative_path.to_s] }.first(limit),
+      total_count: entries.size,
+      missing_file_count: entries.count(&:missing?),
+      limit:
+    )
+  end
+
   private
 
   attr_reader :storage_root
+
+  def storage_area_detail(area_key, limit: STORAGE_AREA_DETAIL_LIMIT)
+    definition = AREA_DEFINITIONS_BY_KEY.fetch(area_key)
+    path = storage_root.join(definition.fetch(:directory)).cleanpath
+    entries = child_paths(path).filter_map do |child_path|
+      bytes, file_count, latest_updated_at = entry_stats(child_path)
+      next if file_count.zero?
+
+      StorageAreaDetailEntry.new(
+        relative_path: safe_storage_area_relative_path(definition, child_path),
+        bytes:,
+        file_count:,
+        latest_updated_at:,
+        kind_hint: storage_area_kind_hint(area_key, child_path)
+      )
+    end.sort_by { |entry| [-entry.bytes, -entry.file_count, entry.relative_path] }
+    bytes, file_count = directory_stats(path)
+
+    StorageAreaDetailResult.new(
+      area_key:,
+      area_label: definition.fetch(:label),
+      relative_path: Pathname("storage").join(definition.fetch(:directory)).to_s,
+      description: definition.fetch(:description),
+      entries: entries.first(limit),
+      total_count: entries.size,
+      file_count:,
+      bytes:,
+      limit:
+    )
+  end
 
   def area_for(definition)
     path = storage_root.join(definition.fetch(:directory)).cleanpath
@@ -106,7 +213,7 @@ class StorageUsageSummary
       next if file_count.zero?
 
       BreakdownEntry.new(
-        relative_path: Pathname("storage").join(definition.fetch(:directory), child_path.basename.to_s).to_s,
+        relative_path: safe_storage_area_relative_path(definition, child_path),
         bytes:,
         file_count:,
         latest_updated_at:
@@ -159,6 +266,77 @@ class StorageUsageSummary
         latest_updated_at: group.fetch(:latest_updated_at)
       )
     end.sort_by { |entry| [-entry.bytes, -entry.file_count, entry.project_code.to_s, entry.document_title.to_s] }.first(TOP_BREAKDOWN_LIMIT)
+  end
+
+  def document_file_detail_entry(file)
+    version = file.document_version
+    document = version.document
+    project = document.project
+    path = nil
+    bytes = 0
+    missing_file_count = 0
+    file_updated_at = nil
+
+    begin
+      path = file.absolute_path
+      if File.file?(path.to_s)
+        bytes = File.size(path.to_s)
+        file_updated_at = File.mtime(path.to_s)
+      else
+        missing_file_count = 1
+      end
+    rescue ActiveRecord::RecordNotFound, Errno::ENOENT, Errno::EACCES
+      missing_file_count = 1
+    end
+
+    DocumentFileDetailEntry.new(
+      project_code: project.code,
+      project_name: project.name,
+      document_title: document.title,
+      document_slug: document.slug,
+      file_name: file.file_name,
+      relative_path: safe_document_file_relative_path(file, path),
+      bytes:,
+      file_count: 1,
+      missing_file_count:,
+      latest_updated_at: [file_updated_at, file.updated_at, version.updated_at, document.updated_at].compact.max
+    )
+  end
+
+  def safe_storage_area_relative_path(definition, child_path)
+    Pathname("storage").join(definition.fetch(:directory), child_path.basename.to_s).to_s
+  end
+
+  def storage_area_kind_hint(area_key, path)
+    basename = path.basename.to_s
+
+    case area_key
+    when :docs_sites
+      File.directory?(path.to_s) ? "generated site directory" : "generated site artifact"
+    when :imports
+      return "ZIP staging" if basename.end_with?(".zip")
+      return "manual upload staging" if basename.include?("upload")
+      return "artifact staging" if basename.include?("artifact")
+
+      File.directory?(path.to_s) ? "import staging directory" : "import staging artifact"
+    end
+  end
+
+  def safe_document_file_relative_path(file, path)
+    if path
+      relative_path = path.expand_path.relative_path_from(storage_root.expand_path).to_s
+      return Pathname("storage").join(relative_path).to_s unless relative_path.start_with?("../")
+    end
+
+    storage_key = file.storage_key.to_s.tr("\\", "/")
+    return "storage/document_files/[invalid]" if storage_key.blank? || storage_key.start_with?("/")
+
+    normalized_key = Pathname.new(storage_key).cleanpath.to_s
+    return "storage/document_files/[invalid]" if normalized_key.blank? || normalized_key == "." || normalized_key == ".." || normalized_key.start_with?("../")
+
+    Pathname("storage").join("document_files", normalized_key).to_s
+  rescue ArgumentError
+    "storage/document_files/[invalid]"
   end
 
   def child_paths(path)

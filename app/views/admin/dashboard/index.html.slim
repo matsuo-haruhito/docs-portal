@@ -155,9 +155,14 @@ section.card
                     = link_to "この候補の同期設定", candidate.source_path
               p.actions
                 = link_to "外部フォルダ同期の error 一覧を見る", admin_external_folder_sync_sources_path(review: "errors"), class: "button secondary"
-                = link_to "外部フォルダ同期継続失敗候補 runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/外部フォルダ同期継続失敗候補runbook.md", class: "button secondary", target: "_blank", rel: "noopener"
+                = link_to "外部フォルダ同期継続失敗候補 runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/#{ExternalFolderSyncRuns::FailureAlertHandoff::RUNBOOK_PATH}", class: "button secondary", target: "_blank", rel: "noopener"
             - else
               p.muted current 条件で外部フォルダ同期の handoff 候補はありません。これは外部 provider 全体正常、通知正常、自動 retry 済みを意味しません。
+            - if @external_sync_failure_alert_digest_markdown.present?
+              details.operational-alert-digest
+                summary Markdown digest preview
+                p.muted admin 内で候補を引き継ぐための read-only preview です。通知済み、ack、SLA、自動 retry、provider 正常判定の状態としては扱いません。
+                = text_area_tag :external_sync_failure_digest_markdown, @external_sync_failure_alert_digest_markdown, readonly: true, rows: (external_sync_alert_candidates.any? ? 12 : 6)
         p.actions
           = link_to item[:primary_link].first, item[:primary_link].last, class: "button"
           - if item[:secondary_link]
@@ -313,11 +318,11 @@ section.card
       - @storage_usage_summary.areas.each do |area|
         - follow_up_links = case area.key
         - when :document_files
-          - [["欠落ファイル詳細", admin_missing_document_files_path], ["storage 運用方針", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/ファイル配信・storage運用方針.md"]]
+          - [["DocumentFile 実体 detail", admin_storage_usage_document_files_path], ["欠落ファイル詳細", admin_missing_document_files_path], ["storage 運用方針", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/ファイル配信・storage運用方針.md"]]
         - when :docs_sites
-          - [["Docusaurus build runtime", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/notes/docusaurus-build-runtime.md"]]
+          - [["Docs site build detail", admin_storage_usage_docs_sites_path], ["Docusaurus build runtime", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/notes/docusaurus-build-runtime.md"]]
         - when :imports
-          - [["manual upload dry-run", admin_file_upload_dry_runs_path], ["ZIP import", new_admin_zip_import_path]]
+          - [["Import staging detail", admin_storage_usage_imports_path], ["manual upload dry-run", admin_file_upload_dry_runs_path], ["ZIP import", new_admin_zip_import_path]]
         - else
           - []
         tr

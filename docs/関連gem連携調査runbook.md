@@ -123,7 +123,7 @@
 
 | gem | 主な責務 | current resolved revision | 最初の確認先 |
 | --- | --- | --- | --- |
-| `tree_view` | 文書ツリー / 詳細ツリー / persisted expand state | `9c538f9ee7946fa5af24f15c99402a0431677303` | `docs-portal` の helper / partial と `tree_view-rails` の `docs/ja/*` |
+| `tree_view` | 文書ツリー / 詳細ツリー / persisted expand state | `e129cb3ce2835a483e87fc71a50cc9fee07e3da5` | `docs-portal` の helper / partial と `tree_view-rails` の `docs/ja/*` |
 | `rails_table_preferences` | 一覧の列表示 / filter / sort / preset UI | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `config/initializers/rails_table_preferences.rb` と `rails_table_preferences` の README / `docs/*` |
 | `rails_fields_kit` | Tom Select 系 field helper / controller / metadata | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | `app/frontend/entrypoints/application.js` / `vite.config.ts` と `rails_fields_kit` の `doc/*` |
 
@@ -168,7 +168,7 @@
 | gem | child lane | current status | current resolved revision | target / gate | representative smoke | upstream review / blocker | rollback target |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `rails_fields_kit` | `#921` | `status:needs-human` | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | 次の target SHA は未確定。upstream helper-export lane の human review / merge 後に child 側で決める | `admin/document_sets` form の selected 値保持、preload or remote search 1 導線、validation rerender 後の redisplay | human-review-first lane は `rails_fields_kit#273` → `#195` / `#170`。この matrix では merge point を決めない | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` |
-| `tree_view` | `#903` | `status:ready-for-agent` | `9c538f9ee7946fa5af24f15c99402a0431677303` | 次の target SHA は `#903` の update log で child 単位に決める | sidebar tree の expand / collapse、detail tree の route context、persisted state | public hook / selection lane のレビューは upstream 側に残し、downstream では smoke と rollback note に閉じる | `9c538f9ee7946fa5af24f15c99402a0431677303` |
+| `tree_view` | `#903` | `status:ready-for-agent` | `e129cb3ce2835a483e87fc71a50cc9fee07e3da5` | 次の target SHA は `#903` の update log で child 単位に決める | sidebar tree の expand / collapse、detail tree の route context、persisted state | public hook / selection lane のレビューは upstream 側に残し、downstream では smoke と rollback note に閉じる | `e129cb3ce2835a483e87fc71a50cc9fee07e3da5` |
 | `rails_table_preferences` | `#904` | `status:ready-for-agent` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | 次の target SHA は child 単位で決める。known-good revision の human gate は `#789` に残す | `admin/document_sets` の editor / filter / preset、mounted engine save。embedded table を触るときだけ別途 note を足す | `#789` の known-good revision 判断と、preview table fallback (`#475` 系) の仕様論点はここへ混ぜない | `b3f1a9d6eb46aefe568c637396fab63151aef322` |
 
 - `#921` は matrix 追加によって再オープン扱いにしません。current status は `needs-human` のまま読みます。

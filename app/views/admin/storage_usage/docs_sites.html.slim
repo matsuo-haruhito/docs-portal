@@ -1,0 +1,11 @@
+- page_title "Docs site build storage detail"
+- detail = @storage_area_detail
+
+h1 Docs site build storage detail
+p.muted storage/docs_sites の generated site artifact を bounded に確認する read-only detail です。Project / build version との厳密な関連付けはここでは行わず、safe relative path preview を容量調査の入口として扱います。
+
+p.actions
+  = link_to "管理ダッシュボードへ戻る", admin_root_path, class: "button secondary"
+  = link_to "Docusaurus build runtime", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/notes/docusaurus-build-runtime.md", class: "button secondary", target: "_blank", rel: "noopener"
+
+= render "area_detail", detail:, cue: "Docusaurus などで生成された site directory / artifact の直下項目を read-only に表示します。cleanup、delete、retention、billing、quota、GCS policy の判断や実行はここでは行いません。", empty_message: "Docs site build detail はありません。対象 directory が空、または現在の storage/docs_sites に確認できる file がありません。"
