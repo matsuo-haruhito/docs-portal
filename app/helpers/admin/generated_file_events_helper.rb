@@ -23,11 +23,60 @@ module Admin::GeneratedFileEventsHelper
     truncate(text, length: DIAGNOSTIC_PREVIEW_LIMIT, omission: "...")
   end
 
+  def generated_file_event_filter_summary_items(filters)
+    normalized_filters = filters.compact_blank
+    return [] if normalized_filters.blank?
+
+    [
+      generated_file_event_filter_summary_item("状態", generated_file_event_status_summary_value(normalized_filters[:status])),
+      generated_file_event_filter_summary_item("操作種別", generated_file_event_operation_summary_value(normalized_filters[:operation])),
+      generated_file_event_filter_summary_item("イベント発生元", generated_file_event_source_summary_value(normalized_filters[:event_source])),
+      generated_file_event_filter_summary_item("パス", normalized_filters[:path]),
+      generated_file_event_filter_summary_item("実行予定日", generated_file_event_scheduled_filter_summary(normalized_filters)),
+      generated_file_event_filter_summary_item("検索語", normalized_filters[:q])
+    ].compact
+  end
+
   def generated_file_event_metadata_preview(metadata)
     JSON.pretty_generate(mask_generated_file_event_metadata(metadata || {}))
   end
 
   private
+
+  def generated_file_event_filter_summary_item(label, value)
+    text = value.to_s.squish
+    return if text.blank? || text == "-"
+
+    "#{label}: #{text}"
+  end
+
+  def generated_file_event_status_summary_value(status)
+    return if status.blank?
+
+    generated_file_event_status_label(status)
+  end
+
+  def generated_file_event_operation_summary_value(operation)
+    return if operation.blank?
+
+    generated_file_operation_label(operation)
+  end
+
+  def generated_file_event_source_summary_value(event_source)
+    return if event_source.blank?
+
+    generated_file_source_label(event_source)
+  end
+
+  def generated_file_event_scheduled_filter_summary(filters)
+    from = filters[:scheduled_from].presence
+    to = filters[:scheduled_to].presence
+    return if from.blank? && to.blank?
+    return "#{from}以降" if to.blank?
+    return "#{to}まで" if from.blank?
+
+    "#{from}〜#{to}"
+  end
 
   def mask_generated_file_event_metadata(value, key: nil)
     if key.to_s.match?(SENSITIVE_KEY_PATTERN)
