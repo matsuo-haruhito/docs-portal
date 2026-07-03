@@ -42,6 +42,7 @@ Rails.application.routes.draw do
     get "storage_usage/imports", to: "storage_usage#imports", as: :storage_usage_imports
     resource :api_specification, only: [:show] do
       post "retry_build", to: "api_specifications#retry_build", as: :retry_build
+      post "codeblock_dry_run", to: "api_specifications#codeblock_dry_run", as: :codeblock_dry_run
       get "site(/*site_path)", to: "api_specifications#site", as: :site, format: false
     end
     get "model_browser", to: "model_browsers#index", as: :model_browser
@@ -96,6 +97,7 @@ Rails.application.routes.draw do
       post :retry_failed, on: :collection
     end
     resources :generated_file_runs, only: %i[index show], param: :public_id do
+      get :failure_alert_handoff, on: :collection
       post :retry_run, on: :member
       post :retry_failed, on: :collection
     end
@@ -173,7 +175,7 @@ Rails.application.routes.draw do
       get :user_search, on: :collection
       get :selected_user, on: :collection
     end
-    resources :access_requests, only: %i[index update], param: :public_id do
+    resources :access_requests, only: %i[index show update], param: :public_id do
       get :pending_handoff, on: :collection
     end
     resources :document_usage_reports, only: [:index] do

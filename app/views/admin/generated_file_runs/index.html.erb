@@ -20,6 +20,11 @@
       <p class="text-sm text-gray-600">ファイルCRUDイベントから起動された生成Jobの履歴です。</p>
     </div>
     <div class="text-right">
+      <div class="mb-2 flex flex-wrap justify-end gap-2">
+        <%= link_to "継続失敗候補 handoff", failure_alert_handoff_admin_generated_file_runs_path, class: "rounded border px-3 py-2 text-sm" %>
+        <%= link_to "JSON", failure_alert_handoff_admin_generated_file_runs_path(format: :json), class: "rounded border px-3 py-2 text-sm" %>
+      </div>
+      <p class="mb-2 text-xs text-gray-500">read-only の運用引き継ぎ payload です。通知送信、ack、再通知抑制、自動 retry は行いません。</p>
       <%= button_to "失敗分を一括再実行", retry_failed_admin_generated_file_runs_path(@filters.compact_blank), method: :post, disabled: !bulk_retry_available, class: bulk_retry_button_classes, form: { data: { turbo_confirm: bulk_retry_confirm_message } } %>
       <p class="mt-1 text-xs text-gray-500">現在の条件で再実行対象: <strong><%= bulk_retry_target_count %> 件</strong></p>
       <div class="mt-2 rounded border border-blue-100 bg-blue-50 px-3 py-2 text-left text-xs text-blue-900">

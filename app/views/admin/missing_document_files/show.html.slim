@@ -56,6 +56,11 @@ section.card
       = missing_document_file_filter_summary_labels(@missing_document_file_filters, @selected_project).join(" / ")
     p.muted = "条件一致欠落は現在の絞り込みに合う全件数、表示中は詳細一覧に出している先頭#{@display_limit}件までの件数です。"
 
+  - if @document_file_health.missing_files.any?
+    p.actions
+      = link_to "表示中の欠落候補をCSVで引き継ぐ", admin_missing_document_files_path(request.query_parameters.merge(format: :csv)), class: "button secondary"
+    p.muted = "CSV handoff は現在の条件と表示中の先頭#{@display_limit}件だけを read-only に引き継ぎます。自動修復、削除、再import、CSV export は行いません。"
+
   - if @document_file_health.missing_count.positive?
     .field
       h3 引き継ぎ用Markdown digest
