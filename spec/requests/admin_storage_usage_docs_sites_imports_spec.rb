@@ -19,7 +19,11 @@ RSpec.describe "Admin storage area usage details", type: :request do
 
   after do
     FileUtils.rm_rf(Rails.root.join("storage/docs_sites/spec-storage-usage-detail"))
-    FileUtils.rm_rf(Rails.root.join("storage/imports/spec-storage-usage-detail"))
+    FileUtils.rm_rf(Rails.root.join("storage/imports/spec-storage-usage-detail-upload-preview"))
+    FileUtils.rm_rf(Rails.root.join("storage/imports/spec-storage-usage-detail-artifact-pack"))
+    FileUtils.rm_f(Rails.root.join("storage/imports/spec-storage-usage-detail-source.zip"))
+    FileUtils.mkdir_p(Rails.root.join("storage/docs_sites"))
+    FileUtils.mkdir_p(Rails.root.join("storage/imports"))
   end
 
   it "links the dashboard storage overview to docs site and import details" do
@@ -61,9 +65,9 @@ RSpec.describe "Admin storage area usage details", type: :request do
   end
 
   it "shows import staging detail cues without destructive actions" do
-    write_storage_file("imports/spec-storage-usage-detail/upload-preview/dry-run.json", "{}")
-    write_storage_file("imports/spec-storage-usage-detail/artifact-pack/manifest.json", "{}")
-    write_storage_file("imports/spec-storage-usage-detail/source.zip", "zip" * 256)
+    write_storage_file("imports/spec-storage-usage-detail-upload-preview/dry-run.json", "{}")
+    write_storage_file("imports/spec-storage-usage-detail-artifact-pack/manifest.json", "{}")
+    write_storage_file("imports/spec-storage-usage-detail-source.zip", "zip" * 256)
 
     sign_in_as(admin_user)
 
@@ -71,7 +75,9 @@ RSpec.describe "Admin storage area usage details", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Import staging storage detail")
-    expect(response.body).to include("storage/imports/spec-storage-usage-detail")
+    expect(response.body).to include("storage/imports/spec-storage-usage-detail-upload-preview")
+    expect(response.body).to include("storage/imports/spec-storage-usage-detail-artifact-pack")
+    expect(response.body).to include("storage/imports/spec-storage-usage-detail-source.zip")
     expect(page_text).to include("manual upload staging")
     expect(page_text).to include("artifact staging")
     expect(page_text).to include("ZIP staging")
