@@ -1,3 +1,5 @@
+require "csv"
+
 module Admin::MissingDocumentFilesHelper
   MISSING_DOCUMENT_FILE_HANDOFF_LIMIT = 5
 
@@ -20,6 +22,40 @@ module Admin::MissingDocumentFilesHelper
     return nil if project.blank?
 
     { value: project.id, text: missing_document_file_project_option_label(project) }
+  end
+
+  def missing_document_file_handoff_csv(health, display_limit:)
+    CSV.generate(headers: true) do |csv|
+      csv << [
+        "案件コード",
+        "案件名",
+        "文書名",
+        "document slug",
+        "版",
+        "ファイル名",
+        "Storage key",
+        "Expected path preview",
+        "handoff note"
+      ]
+
+      health.missing_files.each do |file|
+        version = file.document_version
+        document = version.document
+        project = document.project
+
+        csv << [
+          project.code,
+          project.name,
+          document.title,
+          document.slug,
+          version.version_label,
+          file.file_name,
+          file.storage_key,
+          missing_document_file_expected_path_preview(file),
+          missing_document_file_csv_handoff_note(display_limit)
+        ]
+      end
+    end
   end
 
   def missing_document_file_handoff_digest(health:, filters:, selected_project:, display_limit:)
@@ -55,6 +91,7 @@ module Admin::MissingDocumentFilesHelper
       "## 注意",
       "- 表示中は先頭#{display_limit}件までです。全体欠落や条件一致全件を保証する export ではありません。",
       "- この digest は read-only の引き継ぎ用です。自動修復、削除、再import、CSV export は行いません。",
+      "- CSV handoff は表示中候補を引き継ぐための bounded read-only 出力です。",
       "- Expected path は画面と同じ safe preview です。raw absolute path や storage backend private path は含めません。"
     ])
 
@@ -92,5 +129,9 @@ module Admin::MissingDocumentFilesHelper
 
   def missing_document_file_filter_label(value)
     value.to_s.presence || "未指定"
+  end
+
+  def missing_document_file_csv_handoff_note(display_limit)
+    "read-only handoff: 表示中の先頭#{display_limit}件まで。修復、削除、再import、retention policy 決定ではありません。"
   end
 end
