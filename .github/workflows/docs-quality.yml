@@ -29,6 +29,7 @@ on:
       - .github/scripts/check_csv_metadata_json_boundary.rb
       - .github/scripts/check_access_log_boundary.rb
       - .github/scripts/check_api_specification_dry_run_boundary.rb
+      - .github/scripts/check_maintenance_route_inventory_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
       - .github/scripts/check_readme_docs_entrance_boundary.rb
       - .github/scripts/check_closed_active_queue_labels.rb
@@ -61,6 +62,7 @@ on:
       - .github/scripts/check_csv_metadata_json_boundary.rb
       - .github/scripts/check_access_log_boundary.rb
       - .github/scripts/check_api_specification_dry_run_boundary.rb
+      - .github/scripts/check_maintenance_route_inventory_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
       - .github/scripts/check_readme_docs_entrance_boundary.rb
       - .github/scripts/check_closed_active_queue_labels.rb
@@ -104,6 +106,9 @@ jobs:
 
       - name: Check API specification dry-run boundary docs
         run: ruby .github/scripts/check_api_specification_dry_run_boundary.rb
+
+      - name: Check maintenance route inventory boundary docs
+        run: ruby .github/scripts/check_maintenance_route_inventory_boundary.rb
 
       - name: Check Issue / PR number boundary docs
         run: ruby .github/scripts/check_issue_pr_number_boundary.rb
