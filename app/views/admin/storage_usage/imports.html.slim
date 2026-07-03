@@ -1,0 +1,12 @@
+- page_title "Import staging storage detail"
+- detail = @storage_area_detail
+
+h1 Import staging storage detail
+p.muted storage/imports の ZIP / manual upload dry-run / artifact staging を bounded に確認する read-only detail です。import job との厳密な関連付けはここでは行わず、safe relative path preview と staging cue を容量調査の入口として扱います。
+
+p.actions
+  = link_to "管理ダッシュボードへ戻る", admin_root_path, class: "button secondary"
+  = link_to "manual upload dry-run", admin_file_upload_dry_runs_path, class: "button secondary"
+  = link_to "ZIP import", new_admin_zip_import_path, class: "button secondary"
+
+= render "area_detail", detail:, cue: "ZIP / manual upload / artifact staging の直下項目を read-only に表示します。cleanup、delete、archive、retention、billing、quota、GCS policy の判断や実行はここでは行いません。", empty_message: "Import staging detail はありません。対象 directory が空、または現在の storage/imports に確認できる file がありません。"
