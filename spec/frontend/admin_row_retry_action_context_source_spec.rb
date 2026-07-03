@@ -30,7 +30,7 @@ RSpec.describe "admin row retry action context source" do
       expect(row_retry_context_source).to include("Webhook設定")
       expect(row_retry_context_source).to include("webhook_event_type_label(delivery)")
       expect(row_retry_context_source).to include("webhook_delivery_response_status_context(delivery)")
-      expect(row_retry_context_source).to include("delivery #{delivery.public_id}")
+      expect(row_retry_context_source).to include('delivery #{delivery.public_id}')
       expect(webhook_endpoints_index_source).to include('retry_delivery_label = "#{retry_delivery_context} を再送"')
       expect(webhook_endpoints_index_source).not_to include('HTTP #{delivery.response_status || "-"}')
       expect(row_retry_button_source).to include("title: retry_delivery_label")
