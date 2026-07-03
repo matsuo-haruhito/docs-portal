@@ -8,6 +8,7 @@ class Api::Internal::ArtifactImportsController < Api::BaseController
 
     ensure_confirmed_dry_run_matches_manifest!
     result = importer.call
+    attach_direct_apply_note!(result) unless confirmed_dry_run
     attach_confirmed_dry_run!(result)
 
     render json: {
@@ -41,6 +42,10 @@ class Api::Internal::ArtifactImportsController < Api::BaseController
       status: dry_run.status,
       expires_at: dry_run.expires_at
     ), status: :created
+  end
+
+  def attach_direct_apply_note!(publish_job)
+    publish_job.update!(log_message: [publish_job.log_message, "dry_run=not_provided direct_artifact_apply=true"].compact.join("\n"))
   end
 
   def attach_confirmed_dry_run!(publish_job)
