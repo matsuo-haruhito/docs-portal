@@ -11,7 +11,7 @@ RSpec.describe "Admin project template maintenance mode", type: :request do
   describe "POST /admin/projects/:code/apply_template" do
     context "when READ_ONLY_MAINTENANCE is enabled" do
       around do |example|
-        ClimateControl.modify(READ_ONLY_MAINTENANCE: "true") { example.run }
+        with_read_only_maintenance("true") { example.run }
       end
 
       it "redirects without applying the standard template" do
@@ -32,7 +32,7 @@ RSpec.describe "Admin project template maintenance mode", type: :request do
 
     context "when READ_ONLY_MAINTENANCE is disabled" do
       around do |example|
-        ClimateControl.modify(READ_ONLY_MAINTENANCE: nil) { example.run }
+        with_read_only_maintenance(nil) { example.run }
       end
 
       it "keeps the existing template application behavior" do
@@ -53,7 +53,7 @@ RSpec.describe "Admin project template maintenance mode", type: :request do
 
   describe "read-only admin project surfaces" do
     around do |example|
-      ClimateControl.modify(READ_ONLY_MAINTENANCE: "true") { example.run }
+      with_read_only_maintenance("true") { example.run }
     end
 
     it "keeps index, edit, external preview, and permission preview available" do
@@ -72,5 +72,13 @@ RSpec.describe "Admin project template maintenance mode", type: :request do
       get permission_preview_admin_project_path(project.code)
       expect(response).to have_http_status(:ok)
     end
+  end
+
+  def with_read_only_maintenance(value)
+    original = ENV.fetch("READ_ONLY_MAINTENANCE", nil)
+    value.nil? ? ENV.delete("READ_ONLY_MAINTENANCE") : ENV["READ_ONLY_MAINTENANCE"] = value
+    yield
+  ensure
+    original.nil? ? ENV.delete("READ_ONLY_MAINTENANCE") : ENV["READ_ONLY_MAINTENANCE"] = original
   end
 end
