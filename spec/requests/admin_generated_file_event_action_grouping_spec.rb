@@ -24,7 +24,7 @@ RSpec.describe "Admin generated file event action grouping", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("実行操作")
     expect(response.body).to include("表示フィルタ")
-    expect(response.body).to include("再投入は表示フィルタではなく、現在の条件に一致する失敗イベントを再投入する操作です。")
+    expect(response.body).to include("再投入は表示件数や表示設定ではなく、現在の条件に一致する失敗イベントだけを対象にする操作です。")
     expect(response.body).to include("今回の一括再投入対象: 1 件")
     expect(response.body).to include("現在の条件で今回再投入する失敗イベントを、古い順に最大100件まで処理します。")
     expect(bulk_retry_button(status: "failed")).to be_present
