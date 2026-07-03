@@ -11,21 +11,13 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     parsed_html.text.squish
   end
 
+  def delivery_response_status_values
+    parsed_html.css("td[data-rails-table-preferences-column-key='response_status']").map { |node| node.text.squish }
+  end
+
   def action_targets
     parsed_html.css("a[href], form[action]").map do |node|
       node["href"] || node["action"]
-    end
-  end
-
-  def recent_delivery_rows
-    parsed_html.css("tbody tr").select do |row|
-      row.at_css(%(td[data-rails-table-preferences-column-key="response_status"]))
-    end
-  end
-
-  def recent_delivery_response_statuses
-    recent_delivery_rows.map do |row|
-      row.at_css(%(td[data-rails-table-preferences-column-key="response_status"])).text.squish
     end
   end
 
@@ -82,7 +74,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(page_text).to include("失敗のみ")
     expect(page_text).to include("Failed Hook")
     expect(page_text).to include("Success Hook")
-    expect(recent_delivery_response_statuses).to include("200")
+    expect(delivery_response_status_values).to include("200")
 
     get admin_webhook_endpoints_path(delivery_status: "failed")
 
@@ -90,7 +82,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     expect(page_text).to include("失敗のみ")
     expect(page_text).to include("Failed Hook")
     expect(page_text).to include("timeout")
-    expect(recent_delivery_response_statuses).not_to include("200")
+    expect(delivery_response_status_values).not_to include("200")
   end
 
   it "links recent deliveries to the detail page" do
@@ -330,7 +322,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     event = create(:notification_event, event_type: :document_updated)
     retryable_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :failed)
     succeeded_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :succeeded)
-    inactive_delivery = create(:webhook_delivery, webhook_endpoint: inactive_endpoint, notification_event: event, status: :failed)
+    inactive_delivery = create(:webhook_delivery, webhook_endpoint: inactive_endpoint, status: :failed)
 
     get admin_webhook_endpoints_path
 
@@ -566,7 +558,7 @@ RSpec.describe "Admin webhook endpoints", type: :request do
     event = create(:notification_event, event_type: :document_updated)
     retryable_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :failed)
     another_retryable_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :failed)
-    succeeded_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, notification_event: event, status: :succeeded)
+    succeeded_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, status: :succeeded)
     pending_delivery = create(:webhook_delivery, webhook_endpoint: active_endpoint, status: :pending)
     inactive_delivery = create(:webhook_delivery, webhook_endpoint: inactive_endpoint, status: :failed)
     dispatcher = instance_double(WebhookDeliveryDispatcher)
