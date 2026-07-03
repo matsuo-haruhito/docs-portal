@@ -145,8 +145,8 @@ section.card
 
 section.card
   - if @api_specification_page.available?
-    .site-viewer-shell
-      iframe.site-viewer-frame src=@api_specification_page.iframe_src title="API仕様"
+    .site-viewer-shell data-controller="api-specification-codeblock-dry-run" data-api-specification-codeblock-dry-run-url-value=codeblock_dry_run_admin_api_specification_path data-api-specification-codeblock-dry-run-user-value=current_user.display_name
+      iframe.site-viewer-frame src=@api_specification_page.iframe_src title="API仕様" data-api-specification-codeblock-dry-run-target="frame"
   - else
     h2 Docusaurus build が必要です
     p.muted = "API仕様のMarkdownは #{primary_source_paths.join('、')} にあります。Docusaurus build を開始している場合は、完了後に再読み込みするとHTMLレンダリング結果を表示します。"
