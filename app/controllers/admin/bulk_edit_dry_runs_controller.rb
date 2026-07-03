@@ -2,6 +2,7 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
   BULK_EDIT_CANDIDATE_LIMIT = 50
   BULK_EDIT_HANDOFF_RUNBOOK_PATH = "docs/文書マスタ運用runbook.md"
   LIFECYCLE_PURPOSES = %w[archive restore].freeze
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   before_action :require_admin_only!
   before_action :set_bulk_edit_dry_run, only: %i[show update]
@@ -13,6 +14,11 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
   end
 
   def create
+    if read_only_maintenance_mode?
+      redirect_to new_admin_bulk_edit_dry_run_path, alert: bulk_edit_maintenance_message
+      return
+    end
+
     documents = selected_documents
     result = DocumentBulkEditPreview.new(
       actor: current_user,
@@ -52,6 +58,11 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
   end
 
   def update
+    if read_only_maintenance_mode?
+      redirect_to admin_bulk_edit_dry_run_path(@bulk_edit_dry_run), alert: bulk_edit_maintenance_message
+      return
+    end
+
     DocumentBulkEditExecutor.new(dry_run: @bulk_edit_dry_run, actor: current_user).call
     redirect_to admin_bulk_edit_dry_run_path(@bulk_edit_dry_run), notice: "一括編集を実行しました。"
   rescue ApplicationError::BadRequest => e
@@ -62,6 +73,14 @@ class Admin::BulkEditDryRunsController < Admin::BaseController
 
   def set_bulk_edit_dry_run
     @bulk_edit_dry_run = BulkEditDryRun.find_by!(public_id: params[:public_id] || params[:id])
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def bulk_edit_maintenance_message
+    "メンテナンス中のため文書一括編集dry-runの作成と実行は停止しています。既存dry-runの確認と選択状態JSONは閲覧できます。"
   end
 
   def load_candidate_context
