@@ -12,6 +12,9 @@ p.muted
 - if @api_specification_build_enqueued
   .notice.ok
     | API仕様Markdownが更新されているため、Docusaurus build を開始しました。完了後に再読み込みすると最新のHTMLを確認できます。
+- elsif @api_specification_read_only_maintenance && @api_specification_page.stale?
+  .notice.alert
+    | メンテナンス中のため API仕様ページの Docusaurus build は開始しません。生成済み HTML と source / status の確認は継続できます。
 - elsif @api_specification_page.stale?
   .notice.alert
     | API仕様MarkdownがHTMLより新しい状態です。Docusaurus build の完了後に再読み込みしてください。
@@ -109,7 +112,10 @@ section.card
       h3 手動 build 再実行
       p.muted API仕様ページ専用の Docusaurus build だけを再実行します。実行中 marker がある場合は二重起動せず、完了後に再読み込みしてください。
       p.muted failure の場合は source、runtime、job / CI logs の順で確認し、画面には短いサニタイズ済み理由だけを表示します。
-      = button_to "API仕様ページの build を再実行", retry_build_admin_api_specification_path, method: :post
+      - if @api_specification_read_only_maintenance
+        p.muted メンテナンス中のため build 再要求は停止しています。API仕様 viewer と生成済み HTML の確認は継続できます。
+      - else
+        = button_to "API仕様ページの build を再実行", retry_build_admin_api_specification_path, method: :post
 
 section.card
   h2 主要ページとsource

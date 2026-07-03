@@ -18,6 +18,7 @@
 - 管理画面は、それらを Docusaurus build した HTML を iframe で表示します
 - entry HTML は `docusaurus/build/api-specification/index.html` です
 - source が HTML より新しい場合、画面表示時に build が enqueue されることがあります
+- `READ_ONLY_MAINTENANCE` が有効な場合、API仕様ページは read-only 確認を続けますが、表示時の stale build enqueue と手動 `retry_build` は開始しません
 - 直近 build 結果は API仕様ページ専用の status marker で表示されます。build queue 全体や Docusaurus build 履歴の一覧ではありません
 - `直近build履歴` は履歴が 0 件でも見出しと empty state が表示されます。履歴なしは build 成功、失敗なし、CI green を意味しないため、`表示状態`、`Build manifest`、`主要ページとsource` を順に確認します
 - `表示状態` は API仕様ページ全体の build 結果です。`主要ページとsource` の各行は、個別ページごとの編集元と HTML 確認先を見分けるための cue として読みます
@@ -33,6 +34,20 @@
 - `外部フォルダ同期 Webhook 受信仕様`: `docs-src/external-folder-sync-webhooks.md` -> `/external-folder-sync-webhooks`
 
 `Admin::ApiSpecificationPage::PRIMARY_SOURCE_PAGES` と `docs-src/*.md` の front matter `slug` は request spec で対応を固定しています。source rename や slug 変更を行う場合は、`source_path`、front matter `slug`、`site_path`、主要ページの表示 label を同じ変更として確認します。
+
+## maintenance mode 中の build 再要求
+
+`READ_ONLY_MAINTENANCE` が有効な間、API仕様ページは閲覧・状態確認・生成済み HTML の確認だけを続ける read-only 入口として扱います。
+
+この状態では次を開始しません。
+
+- API仕様ページ表示時の stale build enqueue
+- `API仕様ページの build を再実行` からの手動 `retry_build`
+- `site(/*site_path)` 表示時の stale build enqueue
+
+停止中も `表示状態`、`Build manifest`、`直近build履歴`、`主要ページとsource` は確認できます。生成済み HTML がある場合は iframe / generated site の確認を続けられます。生成済み HTML がない場合や source が stale の場合は、maintenance 解除後に build を再要求してください。
+
+この first slice は API仕様 build の開始を止めるだけです。docs-src 更新 flow、Docusaurus build job 実装、generated HTML の配信条件、codeblock dry-run validation、production infra 側 maintenance page は変更しません。
 
 ## PR evidence の残し方
 
@@ -59,13 +74,14 @@ PR body または evidence comment では、少なくとも次を短く分けま
 1. `docs-src/api-specification.md` または関連する `docs-src/*.md` を更新します。
 2. 管理画面の `API仕様` を開きます。
 3. 上部 notice と `表示状態` を見て、build が開始されたか、HTML が最新か、直近 build が失敗していないかを確認します。
-4. `直近build履歴` が空の場合は、履歴未記録の状態として扱います。成功・失敗なし・CI green の保証ではないため、`表示状態`、`Build manifest`、`主要ページとsource` を続けて確認します。
-5. `build 待ち/実行中` または `HTML未生成または stale` の場合は、少し待って再読み込みします。
-6. `最新 build 成功` になったら、`Build manifest` で `Profile` が `admin_api_spec`、`Validation` が `success`、`Source` が `docs-src/api-specification.md` になっているかを確認します。manifest 欠落や warning が出ていても、表示自体は継続するため、まず下の `Build manifest の見方` で原因を分けます。
-7. iframe で entry HTML を確認し、`主要ページとsource` の更新対象行で `編集元Markdown`、`HTML確認先（build後）`、`Freshness` を照合します。直した source file に対応する HTML確認先を開き、更新した説明が HTML 側にも反映されていることを確認します。
-8. 行別 `Freshness` が `Source更新あり`、`HTML未生成`、`Source missing` の場合は、全体の `表示状態` が成功でも対象行だけを見直します。build 後に HTML確認先を開くか、source path / slug / site path の対応を確認します。
-9. `build 失敗` の場合は、画面の短い失敗理由だけで断定せず、下の `build 失敗時の切り分け` へ進みます。
-10. PR body または evidence comment には、上の `PR evidence の残し方` に沿って、source 更新確認と generated HTML 確認を分けて残します。
+4. `READ_ONLY_MAINTENANCE` が有効な場合は build は開始されません。read-only の状態確認だけ行い、maintenance 解除後に build を再要求します。
+5. `直近build履歴` が空の場合は、履歴未記録の状態として扱います。成功・失敗なし・CI green の保証ではないため、`表示状態`、`Build manifest`、`主要ページとsource` を続けて確認します。
+6. `build 待ち/実行中` または `HTML未生成または stale` の場合は、少し待って再読み込みします。
+7. `最新 build 成功` になったら、`Build manifest` で `Profile` が `admin_api_spec`、`Validation` が `success`、`Source` が `docs-src/api-specification.md` になっているかを確認します。manifest 欠落や warning が出ていても、表示自体は継続するため、まず下の `Build manifest の見方` で原因を分けます。
+8. iframe で entry HTML を確認し、`主要ページとsource` の更新対象行で `編集元Markdown`、`HTML確認先（build後）`、`Freshness` を照合します。直した source file に対応する HTML確認先を開き、更新した説明が HTML 側にも反映されていることを確認します。
+9. 行別 `Freshness` が `Source更新あり`、`HTML未生成`、`Source missing` の場合は、全体の `表示状態` が成功でも対象行だけを見直します。build 後に HTML確認先を開くか、source path / slug / site path の対応を確認します。
+10. `build 失敗` の場合は、画面の短い失敗理由だけで断定せず、下の `build 失敗時の切り分け` へ進みます。
+11. PR body または evidence comment には、上の `PR evidence の残し方` に沿って、source 更新確認と generated HTML 確認を分けて残します。
 
 ## 表示状態の見方
 
