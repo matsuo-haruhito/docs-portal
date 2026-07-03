@@ -11,6 +11,10 @@ RSpec.describe "Admin webhook navigation", type: :request do
     parsed_html.css(%(a[href="#{path}"])).map { |node| node.text.squish }
   end
 
+  def active_dropdown_current_label
+    parsed_html.at_css(".nav-dropdown__summary.is-active .nav-dropdown__current-label")&.text&.squish
+  end
+
   it "links webhook settings and delivery history from the integration navigation" do
     sign_in_as(admin_user)
 
@@ -19,7 +23,7 @@ RSpec.describe "Admin webhook navigation", type: :request do
     expect(response).to have_http_status(:ok)
     expect(link_texts_for(admin_webhook_endpoints_path)).to include("Webhook設定")
     expect(link_texts_for(admin_webhook_deliveries_path)).to include("Webhook送信履歴")
-    expect(parsed_html.text.squish).to include("連携メニュー 現在 Webhook送信履歴")
+    expect(active_dropdown_current_label).to eq("Webhook送信履歴")
   end
 
   it "keeps webhook delivery history in the external integration admin section" do
