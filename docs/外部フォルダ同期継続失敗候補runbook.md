@@ -27,6 +27,17 @@
 
 error preview は調査の入口だけに使います。token、Authorization header、private-looking path、signed URL 風の値は raw 表示せず、mask / truncate 済みの短い preview として読みます。raw provider error、credential、private path の確認場所ではありません。
 
+## Markdown digest preview の読み方
+
+管理ダッシュボードに `Markdown digest preview` が表示される場合は、候補 list と同じ抽出結果を PR / release / incident handoff に貼りやすくした read-only の要約として扱います。
+
+- digest には source、provider、project、連続 failed / partial 件数、最終失敗時刻、safe error preview、同期設定詳細 path、runbook path が入ります。
+- digest の `All error sources` は error 一覧へ戻るための入口であり、全 provider 正常や通知済みを示す証跡ではありません。
+- digest の `Runbook` はこの文書の path です。runbook path があることは、ack、SLA 対応、自動 retry、provider 正常判定が完了したことを意味しません。
+- error preview は画面表示と同じく mask / truncate 済みです。PR や issue comment へ貼る場合も、raw provider payload、credential、private path、signed URL、full error log を別途追記しないでください。
+
+候補 0 件の digest も、現在の抽出条件で渡す対象がないことだけを示します。外部 provider 全体の正常性、通知済み、ack 済み、自動 retry 済みの代替証跡としては使いません。
+
 ## やらないこと
 
 この候補表示は次の機能ではありません。
