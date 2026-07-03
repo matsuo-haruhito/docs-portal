@@ -2,6 +2,7 @@ class Admin::AccessRequestsController < Admin::BaseController
   before_action :require_admin_only!
 
   ACCESS_REQUEST_QUERY_MAX_LENGTH = AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH
+  READ_ONLY_MAINTENANCE_ENV = AccessRequestsController::READ_ONLY_MAINTENANCE_ENV
   PENDING_HANDOFF_LIMIT = 50
   REASON_PREVIEW_LENGTH = 80
 
@@ -49,6 +50,11 @@ class Admin::AccessRequestsController < Admin::BaseController
 
   def update
     access_request = AccessRequest.find_by!(public_id: params[:public_id])
+    if read_only_maintenance_mode?
+      redirect_to access_request_redirect_path, alert: access_request_maintenance_message
+      return
+    end
+
     resolver = AccessRequestResolver.new(access_request:, approver: current_user)
 
     case params[:decision]
@@ -264,5 +270,13 @@ class Admin::AccessRequestsController < Admin::BaseController
 
   def admin_access_request_query_max_length
     ACCESS_REQUEST_QUERY_MAX_LENGTH
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def access_request_maintenance_message
+    "メンテナンス中のためアクセス申請の承認と却下は停止しています。一覧、詳細、pending handoff の確認は継続できます。"
   end
 end
