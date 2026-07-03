@@ -2,12 +2,20 @@ class Admin::ApiSpecificationsController < Admin::BaseController
   before_action :require_admin_only!
   skip_after_action :verify_same_origin_request, only: :site
 
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
+
   def show
     @api_specification_page = Admin::ApiSpecificationPage.new(view_context:)
-    @api_specification_build_enqueued = @api_specification_page.enqueue_build_if_stale!
+    @api_specification_read_only_maintenance = read_only_maintenance_mode?
+    @api_specification_build_enqueued = @api_specification_read_only_maintenance ? false : @api_specification_page.enqueue_build_if_stale!
   end
 
   def retry_build
+    if read_only_maintenance_mode?
+      redirect_to admin_api_specification_path, alert: maintenance_retry_build_message
+      return
+    end
+
     page = Admin::ApiSpecificationPage.new(view_context:)
 
     if page.build_requested?
@@ -27,7 +35,7 @@ class Admin::ApiSpecificationsController < Admin::BaseController
 
   def site
     page = Admin::ApiSpecificationPage.new(view_context:)
-    page.enqueue_build_if_stale!
+    page.enqueue_build_if_stale! unless read_only_maintenance_mode?
     raise ActiveRecord::RecordNotFound unless page.available?
 
     site_path = params[:site_path].presence || page.site_path
@@ -104,5 +112,13 @@ class Admin::ApiSpecificationsController < Admin::BaseController
   def site_asset_public_path
     placeholder = "__docs_portal_asset__"
     site_admin_api_specification_path(site_path: placeholder).delete_suffix(placeholder)
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_retry_build_message
+    "メンテナンス中のためAPI仕様ページの build 再要求は停止しています。API仕様 viewer と生成済み HTML の確認は継続できます。"
   end
 end
