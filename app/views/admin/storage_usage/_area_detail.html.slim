@@ -1,0 +1,46 @@
+- detail = local_assigns.fetch(:detail)
+- cue = local_assigns.fetch(:cue)
+- empty_message = local_assigns.fetch(:empty_message)
+
+section.card
+  h2 = "#{detail.area_label} detail"
+  p
+    | 対象: 
+    code = detail.relative_path
+    |  / 直下項目: 
+    strong = detail.total_count
+    |  件 / ファイル数: 
+    strong = detail.file_count
+    |  件 / 概算使用量: 
+    strong = detail.human_size
+  p.muted = detail.description
+  p.muted = cue
+  p.muted safe relative path / file count / 概算使用量 / 最終更新 / read-only cue を確認できます。raw absolute path、credential、private path、signed URL、GCS bucket identifier は表示しません。
+  - if detail.limited?
+    p.muted = "表示は直下項目の先頭#{detail.limit}件に限定しています。全件 export や cleanup 判断ではなく、容量増加時に次に見る path の手掛かりとして使ってください。"
+
+  - if detail.entries.any?
+    table
+      thead
+        tr
+          th Safe path preview
+          th 読み方
+          th ファイル数
+          th 概算使用量
+          th 最終更新
+      tbody
+        - detail.entries.each do |entry|
+          tr
+            td
+              code = entry.relative_path
+            td
+              span.muted = entry.kind_hint
+            td = entry.file_count
+            td = entry.human_size
+            td
+              - if entry.latest_updated_at
+                time datetime=entry.latest_updated_at.iso8601 = l(entry.latest_updated_at, format: :short)
+              - else
+                span.muted -
+  - else
+    p.muted = empty_message

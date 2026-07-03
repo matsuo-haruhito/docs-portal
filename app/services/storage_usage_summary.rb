@@ -3,10 +3,31 @@ require "find"
 class StorageUsageSummary
   TOP_BREAKDOWN_LIMIT = 5
   DOCUMENT_FILE_DETAIL_LIMIT = 25
+  STORAGE_AREA_DETAIL_LIMIT = 25
 
   BreakdownEntry = Struct.new(:relative_path, :bytes, :file_count, :latest_updated_at, keyword_init: true) do
     def human_size
       ActiveSupport::NumberHelper.number_to_human_size(bytes)
+    end
+  end
+
+  StorageAreaDetailEntry = Struct.new(:relative_path, :bytes, :file_count, :latest_updated_at, :kind_hint, keyword_init: true) do
+    def human_size
+      ActiveSupport::NumberHelper.number_to_human_size(bytes)
+    end
+  end
+
+  StorageAreaDetailResult = Struct.new(:area_key, :area_label, :relative_path, :description, :entries, :total_count, :file_count, :bytes, :limit, keyword_init: true) do
+    def entries
+      self[:entries] || []
+    end
+
+    def human_size
+      ActiveSupport::NumberHelper.number_to_human_size(bytes)
+    end
+
+    def limited?
+      total_count.to_i > entries.size
     end
   end
 
@@ -103,6 +124,8 @@ class StorageUsageSummary
     }
   ].freeze
 
+  AREA_DEFINITIONS_BY_KEY = AREA_DEFINITIONS.index_by { |definition| definition.fetch(:key) }.freeze
+
   def initialize(storage_root: Rails.root.join("storage"))
     @storage_root = Pathname(storage_root)
   end
@@ -112,6 +135,14 @@ class StorageUsageSummary
       areas: AREA_DEFINITIONS.map { |definition| area_for(definition) },
       document_file_breakdown_entries: document_file_breakdown_entries
     )
+  end
+
+  def docs_site_detail(limit: STORAGE_AREA_DETAIL_LIMIT)
+    storage_area_detail(:docs_sites, limit:)
+  end
+
+  def import_detail(limit: STORAGE_AREA_DETAIL_LIMIT)
+    storage_area_detail(:imports, limit:)
   end
 
   def document_file_detail(limit: DOCUMENT_FILE_DETAIL_LIMIT)
@@ -130,6 +161,36 @@ class StorageUsageSummary
   private
 
   attr_reader :storage_root
+
+  def storage_area_detail(area_key, limit: STORAGE_AREA_DETAIL_LIMIT)
+    definition = AREA_DEFINITIONS_BY_KEY.fetch(area_key)
+    path = storage_root.join(definition.fetch(:directory)).cleanpath
+    entries = child_paths(path).filter_map do |child_path|
+      bytes, file_count, latest_updated_at = entry_stats(child_path)
+      next if file_count.zero?
+
+      StorageAreaDetailEntry.new(
+        relative_path: safe_storage_area_relative_path(definition, child_path),
+        bytes:,
+        file_count:,
+        latest_updated_at:,
+        kind_hint: storage_area_kind_hint(area_key, child_path)
+      )
+    end.sort_by { |entry| [-entry.bytes, -entry.file_count, entry.relative_path] }
+    bytes, file_count = directory_stats(path)
+
+    StorageAreaDetailResult.new(
+      area_key:,
+      area_label: definition.fetch(:label),
+      relative_path: Pathname("storage").join(definition.fetch(:directory)).to_s,
+      description: definition.fetch(:description),
+      entries: entries.first(limit),
+      total_count: entries.size,
+      file_count:,
+      bytes:,
+      limit:
+    )
+  end
 
   def area_for(definition)
     path = storage_root.join(definition.fetch(:directory)).cleanpath
@@ -152,7 +213,7 @@ class StorageUsageSummary
       next if file_count.zero?
 
       BreakdownEntry.new(
-        relative_path: Pathname("storage").join(definition.fetch(:directory), child_path.basename.to_s).to_s,
+        relative_path: safe_storage_area_relative_path(definition, child_path),
         bytes:,
         file_count:,
         latest_updated_at:
@@ -240,6 +301,25 @@ class StorageUsageSummary
       missing_file_count:,
       latest_updated_at: [file_updated_at, file.updated_at, version.updated_at, document.updated_at].compact.max
     )
+  end
+
+  def safe_storage_area_relative_path(definition, child_path)
+    Pathname("storage").join(definition.fetch(:directory), child_path.basename.to_s).to_s
+  end
+
+  def storage_area_kind_hint(area_key, path)
+    basename = path.basename.to_s
+
+    case area_key
+    when :docs_sites
+      File.directory?(path.to_s) ? "generated site directory" : "generated site artifact"
+    when :imports
+      return "ZIP staging" if basename.end_with?(".zip")
+      return "manual upload staging" if basename.include?("upload")
+      return "artifact staging" if basename.include?("artifact")
+
+      File.directory?(path.to_s) ? "import staging directory" : "import staging artifact"
+    end
   end
 
   def safe_document_file_relative_path(file, path)
