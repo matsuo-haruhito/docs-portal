@@ -86,6 +86,8 @@ Rails.application.routes.draw do
     resources :git_import_sources, except: %i[show new], param: :public_id do
       get :project_search, on: :collection
       get :selected_project, on: :collection
+      get :repository_search, on: :collection
+      get :selected_repository, on: :collection
       post :sync, on: :member
     end
     resources :git_import_runs, only: [:index] do

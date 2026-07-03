@@ -12,7 +12,7 @@
   p.muted
     | Git連携の共通契約は「同期元設定、run履歴、manifest化、削除候補」です。repository / branch / path / commit は Git 専用の入力として扱い、Google Drive / SharePoint 本体や自動同期はこの画面では追加しません。
   p.muted
-    | 将来的にはGitHub Appのインストール済みリポジトリ一覧から選べるようにし、installation IDやPATの手入力をなくす想定です。
+    | GitHub App の installation context が使える場合はリポジトリ候補から選べます。候補を取得できない場合も、既存どおり owner/repo を手入力して保存できます。
 
 = form_with model: [:admin, git_import_source] do |form|
   .form-grid
@@ -29,9 +29,19 @@
       wrapper: true,
       label: "案件",
       placeholder: "案件コード・案件名で検索"
-    label
-      | リポジトリ
-      = form.text_field :repository_full_name, placeholder: "owner/repo"
+    = form.rfk_combobox :repository_full_name,
+      collection: [],
+      selected: git_import_source_repository_selected_option(git_import_source.repository_full_name),
+      url: repository_search_admin_git_import_sources_path(format: :json, installation_id: git_import_source.installation_id.presence),
+      selected_url: selected_repository_admin_git_import_sources_path(format: :json),
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 1,
+      max_options: Admin::GitImportSourcesController::REPOSITORY_SEARCH_LIMIT,
+      wrapper: true,
+      label: "リポジトリ",
+      placeholder: "owner/repo"
     label
       | ブランチ
       = form.text_field :branch, placeholder: "main"
@@ -40,7 +50,7 @@
       | 取込元パス
       = form.text_field :source_path, placeholder: "docs/source"
       span.muted リポジトリルートからの相対パスです。例: docs / docs/source
-    p.muted リポジトリ、ブランチ、取込元パスは同期対象を指定する手入力項目です。GitHub App picker は未実装のため、現在は値を直接入力します。
+    p.muted リポジトリは GitHub App の候補から選べます。installation ID 未設定・候補取得不可・候補0件の場合は、既存どおり owner/repo を直接入力します。ブランチと取込元パスは引き続き手入力です。
     label
       | 認証方式
       = form.select :auth_type, enum_options_for("git_import_sources.auth_type", GitImportSource.auth_types.keys)
@@ -73,7 +83,7 @@
           span.muted 保存済みシークレットは表示しません。Fine-grained PAT の値を変更するときだけ入力します。GitHub App や認証なしの設定では空欄のまま保存できます。
         - else
           span.muted Fine-grained PAT を使う場合のみ入力します。GitHub App や公開リポジトリの認証なしでは空欄のまま保存できます。
-    p.muted GitHub App を本命の認証方式として扱います。installation ID は GitHub App の確認用、credential ref / secret は Fine-grained PAT の検証用です。認証なしは公開リポジトリの clone に限定して使います。
+    p.muted GitHub App を本命の認証方式として扱います。installation ID は GitHub App の候補取得と確認用、credential ref / secret は Fine-grained PAT の検証用です。認証なしは公開リポジトリの clone に限定して使います。
 
   p.actions
     = form.submit "保存", class: "button"

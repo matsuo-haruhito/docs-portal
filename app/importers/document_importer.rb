@@ -11,6 +11,7 @@ class DocumentImporter
     @import_root = import_root_path
     @artifact_root = resolve_allowed_path!(artifact_root, type: :directory)
     @manifest_path = resolve_allowed_path!(manifest_path, type: :file)
+    ensure_manifest_under_artifact_root!
     @manifest = JSON.parse(File.read(@manifest_path))
     @actor = actor
     @change_event_notifier = change_event_notifier
@@ -270,6 +271,13 @@ class DocumentImporter
     return if resolved_path.to_s.start_with?(import_root_with_separator)
 
     raise ApplicationError::Forbidden, "Path is outside the allowed import root"
+  end
+
+  def ensure_manifest_under_artifact_root!
+    artifact_root_with_separator = "#{@artifact_root}#{File::SEPARATOR}"
+    return if @manifest_path.to_s.start_with?(artifact_root_with_separator)
+
+    raise ApplicationError::Forbidden, "Manifest path is outside the artifact root"
   end
 
   def normalize_storage_key!(storage_key)

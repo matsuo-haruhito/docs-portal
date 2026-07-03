@@ -90,7 +90,7 @@ class ProjectSitesController < BaseController
       version_id: path_history_resolution.canonical_version.public_id,
       previous_site_path: path_history_resolution.requested_path,
       embedded: embedded_request? ? "1" : nil
-    ), status: :moved_permanently
+    ), status: :found
   end
 
   def redirect_terminal_project_site_history_to_reader(path_history_resolution)

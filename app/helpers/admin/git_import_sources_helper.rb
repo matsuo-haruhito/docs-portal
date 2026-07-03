@@ -22,4 +22,10 @@ module Admin::GitImportSourcesHelper
 
     { value: project.id, text: git_import_source_project_option_label(project) }
   end
+
+  def git_import_source_repository_selected_option(repository_full_name)
+    return nil if repository_full_name.blank?
+
+    { value: repository_full_name, text: repository_full_name }
+  end
 end

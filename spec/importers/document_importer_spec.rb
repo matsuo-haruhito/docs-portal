@@ -5,7 +5,7 @@ RSpec.describe DocumentImporter do
     it "persists source path metadata from the manifest" do
       import_root = Rails.root.join("tmp", "spec_imports", SecureRandom.hex(8))
       artifact_root = import_root.join("artifact")
-      manifest_path = import_root.join("manifest.json")
+      manifest_path = artifact_root.join("manifest.json")
       actor = create(:user, :internal)
       project = create(:project, code: "SRC")
 
@@ -55,7 +55,7 @@ RSpec.describe DocumentImporter do
     it "imports non-semver version labels as opaque document version labels" do
       import_root = Rails.root.join("tmp", "spec_imports", SecureRandom.hex(8))
       artifact_root = import_root.join("artifact")
-      manifest_path = import_root.join("manifest.json")
+      manifest_path = artifact_root.join("manifest.json")
       actor = create(:user, :internal)
       project = create(:project, code: "SRCOPAQUE")
 
@@ -120,7 +120,7 @@ RSpec.describe DocumentImporter do
     it "overwrites the existing latest version when version_label is omitted" do
       import_root = Rails.root.join("tmp", "spec_imports", SecureRandom.hex(8))
       artifact_root = import_root.join("artifact")
-      manifest_path = import_root.join("manifest.json")
+      manifest_path = artifact_root.join("manifest.json")
       actor = create(:user, :internal)
       project = create(:project, code: "SRCOVERWRITE")
       notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: true)
@@ -242,7 +242,7 @@ RSpec.describe DocumentImporter do
     it "rejects duplicate opaque versioned imports for the same document" do
       import_root = Rails.root.join("tmp", "spec_imports", SecureRandom.hex(8))
       artifact_root = import_root.join("artifact")
-      manifest_path = import_root.join("manifest.json")
+      manifest_path = artifact_root.join("manifest.json")
       actor = create(:user, :internal)
       project = create(:project, code: "SRCDUP")
       document = create(:document, project: project, slug: "design-doc")

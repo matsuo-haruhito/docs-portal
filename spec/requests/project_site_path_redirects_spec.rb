@@ -25,7 +25,7 @@ RSpec.describe "Project site path redirects", type: :request do
     end
   end
 
-  it "redirects previous project site paths to the canonical site path" do
+  it "redirects previous project site paths to the canonical site path without using a permanent redirect" do
     create_site_version(label: "v0.9.0", entry_path: "docs/previous-site")
     current_version = create_site_version(label: "v1.0.0", entry_path: "docs/current-site")
     document.update!(latest_version: current_version)
@@ -34,13 +34,14 @@ RSpec.describe "Project site path redirects", type: :request do
 
     get project_site_path(project, version_id: current_version.public_id, site_path: "docs/previous-site")
 
-    expect(response).to have_http_status(:moved_permanently)
+    expect(response).to have_http_status(:found)
+    expect(response).not_to have_http_status(:moved_permanently)
     expect(response.location).to include("/projects/#{project.code}/site/docs/current-site")
     expect(response.location).to include("previous_site_path=docs%2Fprevious-site")
     expect(response.location).to include("version_id=#{current_version.public_id}")
   end
 
-  it "keeps embedded mode while redirecting previous project site paths" do
+  it "keeps embedded mode while redirecting previous project site paths without using a permanent redirect" do
     create_site_version(label: "v0.9.0", entry_path: "docs/previous-site")
     current_version = create_site_version(label: "v1.0.0", entry_path: "docs/current-site")
     document.update!(latest_version: current_version)
@@ -49,7 +50,8 @@ RSpec.describe "Project site path redirects", type: :request do
 
     get project_site_path(project, version_id: current_version.public_id, site_path: "docs/previous-site/appendix", embedded: "1")
 
-    expect(response).to have_http_status(:moved_permanently)
+    expect(response).to have_http_status(:found)
+    expect(response).not_to have_http_status(:moved_permanently)
     expect(response.location).to include("/projects/#{project.code}/site/docs/current-site/appendix")
     expect(response.location).to include("previous_site_path=docs%2Fprevious-site%2Fappendix")
     expect(response.location).to include("embedded=1")
