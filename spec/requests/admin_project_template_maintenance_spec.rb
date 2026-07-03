@@ -1,11 +1,11 @@
 require "rails_helper"
 
 RSpec.describe "Admin project template maintenance mode", type: :request do
-  let(:admin) { User.create!(email: "admin@example.com", password: "password", role: :admin) }
-  let(:project) { Project.create!(name: "Maintenance Project", code: "maintenance-project") }
+  let(:admin_user) { create(:user, :internal) }
+  let(:project) { create(:project, name: "Maintenance Project", code: "maintenance-project") }
 
   before do
-    sign_in admin
+    sign_in_as(admin_user)
   end
 
   describe "POST /admin/projects/:code/apply_template" do
