@@ -57,7 +57,7 @@ current `WebhookEndpoint::EVENT_TYPES` は次の 7 種類です。
 - `設定`: 対象の Webhook 設定名です。
 - `イベント`: delivery の `event_type` です。
 - `ステータス`: `送信待ち` / `成功` / `失敗` を表示します。
-- `HTTP`: 受信先から返った HTTP status です。通信例外など response がない失敗では空になります。
+- `HTTP`: 受信先から返った HTTP status です。通信例外など response がない失敗は `未取得` と表示され、再送確認文では `HTTP未取得` と出ます。
 - `エラー`: 失敗原因を短く読むための preview です。token-like value、authorization 断片、private-looking path などは一覧上で raw 表示せず、長い message も調査入口として読める範囲に短縮されます。HTTP non-2xx の場合は `HTTP` と detail の保存済み response body を手掛かりにします。
 - `操作`: `詳細` から delivery の response body / sent_at / target URL などを確認できます。failed かつ endpoint が有効な delivery には一覧行の `再送` ボタンも表示されます。詳細画面から 1 件だけ再送する場合は `この履歴を1件再送` と表示され、どちらも現在の Webhook 設定で対象 delivery を手動再送する操作です。それ以外は `再送不可` と表示されます。
 

@@ -16,6 +16,7 @@
 - Google Drive の channel id / resource id / message number
 - 生成ファイル実行履歴 index の q 検索対象になる metadata / path / error 断片
 - 生成ファイル実行履歴 detail の metadata / error preview
+- 生成ファイル継続失敗候補の Markdown digest preview
 - Git 連携設定 / Git同期履歴の repository、branch、source path、commit、summary_json、error preview、credential ref
 - import / dry-run / sync の raw JSON に含まれる path、外部 ID、token-like value
 
@@ -57,6 +58,7 @@ first slice で束ねる spec subset は次です。
 | --- | --- | --- | --- |
 | manual upload dry-run の `source_path` | [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)、`admin/file_upload_dry_runs/:public_id` | `source_name` / `relative_path` / `content_hash` は照合に使う。raw `source_path` の表示範囲は security-adjacent な UI 判断として扱い、保存値や apply 条件の変更と混ぜない。 | `#1613` |
 | 生成ファイル実行履歴 index の q 検索と detail の metadata / error preview | [生成ファイル再試行と定期ジョブ管理 runbook](./生成ファイル再試行と定期ジョブ管理runbook.md)、[生成ファイル実行履歴 preview 境界メモ](./生成ファイル実行履歴preview境界メモ.md)、`admin/generated_file_runs`、`admin/generated_file_runs/:public_id` | index の q 検索は実行ID、入力パス、変更ファイル、生成パス、短いエラー断片、metadata に残る event public ID などの短い診断用断片で候補を絞る入口として読む。検索対象に metadata text が含まれていても、一覧 HTML で raw metadata / raw payload / token-like value / private path を読む導線ではない。detail の `入力パス` / `変更ファイル` / `生成パス` はジョブ診断用の配列 preview として読み、`メタデータ` / `エラー` は `generated_file_run_metadata_preview` / `generated_file_run_diagnostic_preview` を通して token-like value、authorization 断片、private-looking path が raw 表示されていないかを点検する。 | `#3673` / `#3891` / `#3892` |
+| 生成ファイル継続失敗候補の Markdown digest preview | [生成ファイル継続失敗候補runbook](./生成ファイル継続失敗候補runbook.md)、`admin/dashboard` の `生成ファイル` card | dashboard の `Markdown digest preview` は候補 identity、連続失敗数、最終失敗時刻、短い error preview、failed run path、runbook path だけを運用引き継ぎ用に読む。raw payload、token-like value、authorization 断片、private path、長い error log を digest に貼らない。候補 0 件は通知済み、ack 済み、外部監視 green、自動 retry 済みを意味しない。 | `#3676` / `#3724` |
 | Git連携設定 / Git同期履歴の credential / summary / error preview | [Git連携設定と同期失敗確認 runbook](./Git連携設定と同期失敗確認runbook.md)、`admin/git_import_sources`、`admin/git_import_runs` | `Git連携` は repository、branch、取込元 path、installation ID、最終同期 commit を調査識別子として表示する。保存済み `credential_secret` や `credential_ref` は一覧 HTML に出さない。`Git同期履歴` は `summary_json` と `error_message` をマスク済み preview として表示し、token-like value、authorization 断片、secret、private-looking path を raw 表示しない。 | `#3830` |
 | 欠落文書ファイル詳細の `Expected path` | [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md)、[ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md)、`admin/missing_document_files` | current `main` は `Storage key` を識別子として残しつつ、`Expected path` を `storage/document_files/...` 形式の safe preview で表示する。raw absolute path や `Rails.root` を通常 UI で読む前提にせず、調査には storage key、文書・版リンク、storage / database 側の確認を組み合わせる。 | `#2227` / PR `#2238` |
 | Webhook 送信履歴 detail の request body | [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md)、`admin/webhook_deliveries/:public_id` | current `main` は `WebhookRequestBodyPreview` で request body をマスク済み preview として表示する。secret、token、authorization、個人情報らしい key の値、長大本文が raw 表示されていないかを点検する。 | `#1434` / PR `#1447` |
@@ -80,7 +82,7 @@ first slice で束ねる spec subset は次です。
 - admin / integration metadata の点検入口が、社外ユーザー向けの権限外情報露出 checklist と混線していない
 - raw path、raw payload、token-like value、PII-like value を current support として表示しているか、mask / truncation / safe preview 済みなのかが分かる
 - PR / release / 運用引き継ぎでは `--format markdown` の短い digest を使い、raw values や詳細 payload を貼らずに代表 spec の結果と次に見る runbook だけを残せる
-- `source_path`、欠落文書ファイルの `Expected path`、Webhook request body、Webhook error / response / target URL preview、Graph provider metadata、webhook headers、生成ファイル実行履歴 index の q 検索と detail の metadata / error preview、Git 連携設定 / Git同期履歴の credential / summary / error preview の代表観点をそれぞれ別に確認できる
+- `source_path`、欠落文書ファイルの `Expected path`、Webhook request body、Webhook error / response / target URL preview、Graph provider metadata、webhook headers、生成ファイル実行履歴 index の q 検索と detail の metadata / error preview、生成ファイル継続失敗候補の Markdown digest preview、Git 連携設定 / Git同期履歴の credential / summary / error preview の代表観点をそれぞれ別に確認できる
 - 実装済み current behavior と、issue 化済みの改善候補を同じ文として断定していない
 - runtime code、DB schema、認可、security policy の最終判断をこの checklist で新規に決めていない
 
@@ -102,6 +104,7 @@ first slice で束ねる spec subset は次です。
 - [Microsoft Graph接続管理runbook](./Microsoft%20Graph接続管理runbook.md)
 - [Git連携設定と同期失敗確認 runbook](./Git連携設定と同期失敗確認runbook.md)
 - [生成ファイル実行履歴 preview 境界メモ](./生成ファイル実行履歴preview境界メモ.md)
+- [生成ファイル継続失敗候補runbook](./生成ファイル継続失敗候補runbook.md)
 - [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)
 - [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md)
 - [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md)

@@ -86,6 +86,14 @@ module Admin::WebhookEndpointsHelper
     counts[status_key] || counts[WebhookDelivery.statuses.fetch(status_key)] || 0
   end
 
+  def webhook_delivery_response_status_label(delivery)
+    delivery.response_status.present? ? delivery.response_status.to_s : "未取得"
+  end
+
+  def webhook_delivery_response_status_context(delivery)
+    delivery.response_status.present? ? "HTTP #{delivery.response_status}" : "HTTP未取得"
+  end
+
   def webhook_event_type_label(event_or_value)
     value = event_or_value.respond_to?(:event_type) ? event_or_value.event_type : event_or_value
     localized_label("webhook_events.event_type", value)

@@ -23,11 +23,16 @@ RSpec.describe "admin row retry action context source" do
   end
 
   it "keeps webhook delivery row retry confirm bounded to visible identifiers" do
+    row_retry_context_source = webhook_endpoints_index_source.lines.find { |line| line.include?("retry_delivery_context =") }
     row_retry_button_source = webhook_endpoints_index_source.lines.find { |line| line.include?("retry_dispatch_admin_webhook_delivery_path") }
 
     aggregate_failures do
-      expect(webhook_endpoints_index_source).to include('retry_delivery_context = "Webhook設定「#{delivery.webhook_endpoint.name}」 / イベント「#{webhook_event_type_label(delivery)}」 / HTTP #{delivery.response_status || "-"} / delivery #{delivery.public_id}"')
+      expect(row_retry_context_source).to include("Webhook設定")
+      expect(row_retry_context_source).to include("webhook_event_type_label(delivery)")
+      expect(row_retry_context_source).to include("webhook_delivery_response_status_context(delivery)")
+      expect(row_retry_context_source).to include('delivery #{delivery.public_id}')
       expect(webhook_endpoints_index_source).to include('retry_delivery_label = "#{retry_delivery_context} を再送"')
+      expect(webhook_endpoints_index_source).not_to include('HTTP #{delivery.response_status || "-"}')
       expect(row_retry_button_source).to include("title: retry_delivery_label")
       expect(row_retry_button_source).to include("aria: { label: retry_delivery_label }")
       expect(row_retry_button_source).to include('turbo_confirm: "#{retry_delivery_context} を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。"')

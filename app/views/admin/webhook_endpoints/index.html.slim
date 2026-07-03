@@ -149,14 +149,14 @@ h1 Webhook
         th data-rails-table-preferences-column-key="actions"
     tbody
       - @recent_deliveries.each do |delivery|
-        - retry_delivery_context = "Webhook設定「#{delivery.webhook_endpoint.name}」 / イベント「#{webhook_event_type_label(delivery)}」 / HTTP #{delivery.response_status || "-"} / delivery #{delivery.public_id}"
+        - retry_delivery_context = "Webhook設定「#{delivery.webhook_endpoint.name}」 / イベント「#{webhook_event_type_label(delivery)}」 / #{webhook_delivery_response_status_context(delivery)} / delivery #{delivery.public_id}"
         tr
           td data-rails-table-preferences-column-key="created_at" = l(delivery.created_at, format: :short)
           td data-rails-table-preferences-column-key="endpoint" = delivery.webhook_endpoint.name
           td data-rails-table-preferences-column-key="event_type" = webhook_event_type_label(delivery)
           td data-rails-table-preferences-column-key="status"
             span.badge = webhook_delivery_status_label(delivery)
-          td data-rails-table-preferences-column-key="response_status" = delivery.response_status || "-"
+          td data-rails-table-preferences-column-key="response_status" = webhook_delivery_response_status_label(delivery)
           td data-rails-table-preferences-column-key="error_message" = WebhookDeliveryDiagnosticPreview.new(delivery.error_message).to_s
           td.actions data-rails-table-preferences-column-key="actions"
             = link_to "詳細", admin_webhook_delivery_path(delivery.public_id, delivery_return_params)

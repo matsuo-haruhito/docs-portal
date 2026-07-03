@@ -139,17 +139,21 @@ current support の対象:
 
 `DocumentFile 実体の Project / Document 上位` は、`storage/document_files` に紐づく `DocumentFile` metadata と実体 file size を照合し、Project / Document 単位の概算上位 5 件を read-only に表示します。表示項目は Project code/name、Document title/slug、file count、実体欠落件数、概算使用量、最終更新に閉じます。実体が欠落している file は欠落件数だけに入り、raw absolute path は表示しません。
 
-`大きい内訳` は local storage の直下ディレクトリや直下ファイルが容量の目立つ入口になっているかを見る補助表示です。`Docs site build detail` と `Import staging detail` は、その直下項目を少し詳しく読むための bounded preview です。`DocumentFile 実体の Project / Document 上位` は DocumentFile metadata と照合した所有者別 preview です。いずれも削除対象、archive 対象、cleanup 対象、retention policy 対象を確定する画面ではありません。
+`DocumentFile 実体 storage detail` は、上位 5 件だけではなく、登録済み `DocumentFile` 実体を bounded にたどる read-only detail です。表示するのは Project / Document / safe relative path / file count / 概算使用量 / 最終更新 / missing count までで、raw absolute path、credential、private path、signed URL、GCS bucket identifier は表示しません。表示上限に達した場合も、全件 export や削除判断ではなく、容量増加時に次に見る Project / Document / path の手掛かりとして扱います。
+
+`DocumentFile 実体 storage detail` の CSV handoff は、画面と同じ bounded entries を release / ops evidence として引き継ぐ read-only export です。CSV では total / displayed / limit / limited state / missing count / safe relative path / read-only note を確認できます。0 件の場合は summary row だけを返し、欠落ファイル詳細 CSV とは違い、容量・所有者・safe path の引き継ぎに閉じます。修復、削除、retention、billing、quota、GCS policy、欠落ファイル詳細 CSV の置き換えとして扱いません。
+
+`大きい内訳` は local storage の直下ディレクトリや直下ファイルが容量の目立つ入口になっているかを見る補助表示です。`Docs site build detail` と `Import staging detail` は、その直下項目を少し詳しく読むための bounded preview です。`DocumentFile 実体の Project / Document 上位` は DocumentFile metadata と照合した所有者別 preview で、`DocumentFile 実体 storage detail` は同じ DocumentFile 実体を bounded に掘り下げる調査入口です。いずれも削除対象、archive 対象、cleanup 対象、retention policy 対象を確定する画面ではありません。
 
 `内訳なし` や detail の 0 件表示は、現在の条件で表示できる直下項目または DocumentFile breakdown がない状態を表します。正常保証、cleanup 完了、retention 対象なし、外部 storage 側の容量 0 を意味しません。
 
-`文書ファイル健全性` / `欠落ファイル詳細` は、登録済み `DocumentFile` の実体が見えるかを確認する入口です。一方、`Storage使用量` は local storage 領域別の概算容量、直下内訳、docs_sites / imports detail、DocumentFile 実体の Project / Document 上位 preview を確認する入口です。欠落ファイルの修復対象や削除対象を決める画面ではありません。
+`文書ファイル健全性` / `欠落ファイル詳細` は、登録済み `DocumentFile` の実体が見えるかを確認する入口です。一方、`Storage使用量` は local storage 領域別の概算容量、直下内訳、docs_sites / imports detail、DocumentFile 実体の Project / Document 上位 preview、DocumentFile 実体 storage detail を確認する入口です。欠落ファイルの修復対象や削除対象を決める画面ではありません。
 
 current support 外:
 
 - `storage/docs_sites` / `storage/imports` の Project / Document / 顧客単位の容量内訳
 - 顧客単位の容量レポート
-- CSV export / 定期レポート
+- `DocumentFile 実体 storage detail` CSV handoff 以外の全件 export / 定期レポート
 - cleanup、archive、自動削除、retention policy 決定
 - GCS bucket、signed URL、public access policy、object storage API の確認
 
@@ -177,4 +181,6 @@ current repo では、storage 使用量は管理ダッシュボードの `Storag
 - `大きい内訳` は local storage の直下項目 top 5 の補助表示として読み、cleanup 候補一覧として扱わない
 - `Docs site build detail` と `Import staging detail` は、直下項目の bounded detail として読み、Project / build version / import job との厳密な対応付けや cleanup 判断として扱わない
 - `DocumentFile 実体の Project / Document 上位` は、DocumentFile 実体に閉じた所有者別 preview として読み、課金レポート、顧客別容量レポート、削除・retention 判断として扱わない
+- `DocumentFile 実体 storage detail` は、DocumentFile 実体を bounded に掘り下げる read-only detail として読み、欠落ファイルの修復、削除、archive、retention、billing、quota、GCS policy の判断や実行として扱わない
+- `DocumentFile 実体 storage detail` の CSV handoff は、同じ bounded entries を渡す read-only evidence として読み、全件 export、欠落ファイル詳細 CSV の置き換え、修復・削除・retention・billing・quota 判断として扱わない
 - cleanup 自動化は retention と restore 手順を先に決めてから導入する
