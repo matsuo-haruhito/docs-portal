@@ -7,6 +7,7 @@ p.muted storage/document_files に紐づく DocumentFile 実体だけを bounded
 p.actions
   = link_to "管理ダッシュボードへ戻る", admin_root_path, class: "button secondary"
   = link_to "欠落ファイル詳細を開く", admin_missing_document_files_path, class: "button secondary"
+  = link_to "CSV handoff", admin_storage_usage_document_files_path(format: :csv), class: "button secondary"
 
 section.card
   h2 DocumentFile 実体 detail
@@ -19,8 +20,9 @@ section.card
     strong = detail.missing_file_count
     |  件
   p.muted Project / Document / safe relative path / file count / 概算使用量 / 最終更新 / missing count を確認できます。raw absolute path、credential、private path、signed URL、GCS bucket identifier は表示しません。
+  p.muted CSV handoff はこの画面と同じ bounded entries を release / ops evidence として渡すための read-only export です。欠落ファイル詳細 CSV とは違い、容量・所有者・safe path の引き継ぎに閉じ、修復、削除、retention、billing、quota、GCS policy 判断には使いません。
   - if detail.limited?
-    p.muted = "表示は先頭#{detail.limit}件に限定しています。全件確認や削除判断ではなく、容量増加時に次に見る Project / Document / path の手掛かりとして使ってください。"
+    p.muted = "表示は先頭#{detail.limit}件に限定しています。CSV handoff も同じ先頭#{detail.limit}件までです。全件確認や削除判断ではなく、容量増加時に次に見る Project / Document / path の手掛かりとして使ってください。"
 
   - if detail.entries.any?
     table
@@ -59,4 +61,4 @@ section.card
               - else
                 span.muted -
   - else
-    p.muted DocumentFile 実体 detail はありません。対象が 0 件、または現在の storage/document_files に確認できる DocumentFile がありません。
+    p.muted DocumentFile 実体 detail はありません。対象が 0 件、または現在の storage/document_files に確認できる DocumentFile がありません。CSV handoff でも 0 件状態を示す summary row だけを返します。
