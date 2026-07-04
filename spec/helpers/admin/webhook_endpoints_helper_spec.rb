@@ -28,4 +28,26 @@ RSpec.describe Admin::WebhookEndpointsHelper, type: :helper do
       expect(display_url).not_to include("signature")
     end
   end
+
+  describe "#webhook_endpoint_delete_confirm_message" do
+    it "keeps endpoint details and clarifies delete scope" do
+      endpoint = double(
+        name: "停止中 Hook",
+        target_url: "https://hooks.example.test/docs?token=secret",
+        normalized_event_types: [],
+        active?: false
+      )
+
+      message = helper.webhook_endpoint_delete_confirm_message(endpoint)
+
+      expect(message).to include("Webhook設定を削除します。")
+      expect(message).to include("名称: 停止中 Hook")
+      expect(message).to include("送信先URL: https://hooks.example.test/docs?...")
+      expect(message).to include("イベント: -")
+      expect(message).to include("状態: 停止")
+      expect(message).to include("停止ではなく設定削除の操作です。")
+      expect(message).to include("この設定に紐づく送信履歴も削除対象になります。")
+      expect(message).to include("以後この通知先へWebhookは送信されません。削除しますか？")
+    end
+  end
 end
