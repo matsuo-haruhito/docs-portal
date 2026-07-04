@@ -15,7 +15,7 @@
 
 2026-06-24 の first slice では、既に正本 docs / Issue へ移動済みの項目と、人間判断待ち・未起票のまま残す項目が混在しやすい節だけを棚卸しした。ToDo 全体の方針や product strategy は変更せず、各項目の分類と再開条件だけを短く補足する。
 
-2026-07-04 の #4572 first slice では、UI / UX、Job / 運用自動化、品質・運用改善の 3 節だけを追加棚卸しした。ここでの「起票候補」は、そのまま実装着手する指示ではなく、Workflow Manager / Planner が次に concrete issue へ切れる粒度のメモとして扱う。法務、承認、通知、SLA、不可逆削除、外部合意が必要なものは human decision のまま残し、`status:ready-for-agent` に戻さない。
+2026-07-04 の Issue 4572 first slice では、UI / UX、Job / 運用自動化、品質・運用改善の 3 節だけを追加棚卸しした。ここでの「起票候補」は、そのまま実装着手する指示ではなく、Workflow Manager / Planner が次に concrete issue へ切れる粒度のメモとして扱う。法務、承認、通知、SLA、不可逆削除、外部合意が必要なものは human decision のまま残し、`status:ready-for-agent` に戻さない。
 
 ## 権限・管理画面
 
@@ -126,8 +126,8 @@
 | 分類 | 候補 issue title | 主 track | 対象画面または route | 根拠 docs / 起票しない理由 |
 | --- | --- | --- | --- | --- |
 | 起票候補 | failing / flaky spec を 1 spec file と再現ログに閉じて修正する | `track:quality` | 再現した spec file または CI job | [テスト方針](./テスト方針.md)、[開発・保守ガイド](./開発・保守ガイド.md)。spec 名、失敗ログ、期待挙動が揃った時点で切る |
-| 起票候補 | docs index / runbook 掲載漏れを docs-quality first slice として検出する | `track:docs` / `track:quality` | `README.md`、`docs/README.md`、`docs/**/*runbook*.md`、`docs/specs/*.md` | #2766 が既存候補。重複起票せず、対象集合と allowlist が固まったら #2766 に戻す |
-| 起票候補 | ApplicationConfigurationDiagnostic と本番 health check docs の drift を守る | `track:docs` / `track:quality` | `docs/本番運用・インフラ前提.md`、`docs/監視・アラート設計.md` | #4486 が既存候補。diagnostic 実装や alert rule 追加へ広げない |
+| 起票候補 | docs index / runbook 掲載漏れを docs-quality first slice として検出する | `track:docs` / `track:quality` | `README.md`、`docs/README.md`、`docs/**/*runbook*.md`、`docs/specs/*.md` | 分類: 具体 Issue あり。#2766 が既存候補。重複起票せず、対象集合と allowlist が固まったら #2766 に戻す |
+| 起票候補 | ApplicationConfigurationDiagnostic と本番 health check docs の drift を守る | `track:docs` / `track:quality` | `docs/本番運用・インフラ前提.md`、`docs/監視・アラート設計.md` | 分類: 具体 Issue あり。#4486 が既存候補。diagnostic 実装や alert rule 追加へ広げない |
 | human decision | observability / error reporting / alert rule / 通知 channel の採用判断 | `track:ops` / `track:quality` | 監視 / alert / external service 横断 | 外部監視サービス、通知先、SLA、運用責任分界の判断が必要。docs だけで current support として先取りしない |
 | 具体情報待ち | performance / DB integrity / migration safety の個別改善 | `track:quality` | slow query、constraint、migration path のいずれか 1 対象 | 観測指標、対象 model / query / migration、失敗時影響、受け入れ条件が揃った時点で concrete issue に切る |
 
