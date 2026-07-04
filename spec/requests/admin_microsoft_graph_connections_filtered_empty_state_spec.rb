@@ -26,7 +26,7 @@ RSpec.describe "Admin Microsoft Graph connections filtered empty state", type: :
       expect(response.body).to include("検索語「missing」で登録済み接続を絞り込んでいます。")
       expect(link_href("検索だけ解除")).to eq(admin_microsoft_graph_connections_path(preview_usage: "preview_selected"))
       expect(link_href("preview利用状態をすべてに戻す")).to eq(admin_microsoft_graph_connections_path(q: "missing"))
-      expect(link_href("すべて解除")).to eq(admin_microsoft_graph_connections_path)
+      expect(link_href("検索と絞り込みを解除")).to eq(admin_microsoft_graph_connections_path)
       expect(response.body).not_to include("まだMicrosoft Graph接続は登録されていません。")
     end
 
@@ -40,7 +40,7 @@ RSpec.describe "Admin Microsoft Graph connections filtered empty state", type: :
       expect(response.body).to include("現在の絞り込み: 要整理案件のみ")
       expect(response.body).to include("同一案件に複数の有効接続が残る案件がないか")
       expect(link_href("要整理案件のみを解除")).to eq(admin_microsoft_graph_connections_path)
-      expect(link_href("すべて解除")).to eq(admin_microsoft_graph_connections_path)
+      expect(link_href("検索と絞り込みを解除")).to eq(admin_microsoft_graph_connections_path)
       expect(response.body).not_to include("まだMicrosoft Graph接続は登録されていません。")
     end
   end
