@@ -40,13 +40,26 @@ function buildButton(kind) {
   }
 }
 
+function buildStatusTarget() {
+  return {
+    textContent: "",
+    attributes: {},
+    setAttribute(name, value) {
+      this.attributes[name] = value
+    },
+    removeAttribute(name) {
+      delete this.attributes[name]
+    }
+  }
+}
+
 function buildController(ControllerClass, { query = "", sections = [], buttons = [] } = {}) {
   const controller = new ControllerClass()
   controller.queryTarget = { value: query }
   controller.sectionTargets = sections
   controller.filterButtonTargets = buttons
   controller.hasFilterButtonTarget = buttons.length > 0
-  controller.statusTarget = { textContent: "" }
+  controller.statusTarget = buildStatusTarget()
   controller.hasStatusTarget = true
   controller.emptyTarget = { hidden: true, textContent: "" }
   controller.hasEmptyTarget = true
@@ -81,6 +94,7 @@ test("connect starts with the all kind, shows every item, and updates status and
   assert.equal(visible.hidden, false)
   assert.equal(debug.hidden, false)
   assert.equal(controller.statusTarget.textContent, "3件を表示中 / 分類: すべて")
+  assert.deepEqual(controller.statusTarget.attributes, {})
   assert.deepEqual(buttons.map((button) => button.attributes["aria-pressed"]), ["true", "false", "false"])
   assert.equal(controller.emptyTarget.hidden, true)
 })
@@ -128,6 +142,7 @@ test("section-level search matches every item in that section", async () => {
   assert.deepEqual(sectionItemVisibility(matchedSection), [true, true])
   assert.deepEqual(sectionItemVisibility(unmatchedSection), [true])
   assert.equal(controller.statusTarget.textContent, "3件を表示中 / 検索: alpha")
+  assert.deepEqual(controller.statusTarget.attributes, {})
   assert.equal(controller.emptyTarget.hidden, true)
 })
 
@@ -145,6 +160,27 @@ test("item-level search only shows matching items inside otherwise unmatched sec
   assert.deepEqual(sectionItemVisibility(section), [false, true, false])
   assert.equal(section.hidden, false)
   assert.equal(controller.statusTarget.textContent, "1件を表示中 / 検索: note")
+  assert.deepEqual(controller.statusTarget.attributes, {})
+  assert.equal(controller.emptyTarget.hidden, true)
+})
+
+test("long search status keeps a short visible summary and full accessible label", async () => {
+  const ControllerClass = await loadControllerClass()
+  const query = "attachments/specifications/deeply-nested/manual-preview.pdf"
+  const expectedSummary = `${query.slice(0, 25)}...`
+  const section = buildSection({
+    kind: "visible",
+    search: query,
+    items: [buildItem("manual-preview.pdf")]
+  })
+  const controller = buildController(ControllerClass, { query, sections: [section] })
+
+  controller.connect()
+
+  assert.deepEqual(sectionItemVisibility(section), [true])
+  assert.equal(controller.statusTarget.textContent, `1件を表示中 / 検索: ${expectedSummary}`)
+  assert.equal(controller.statusTarget.attributes.title, `1件を表示中 / 検索: ${query}`)
+  assert.equal(controller.statusTarget.attributes["aria-label"], `1件を表示中 / 検索: ${query}`)
   assert.equal(controller.emptyTarget.hidden, true)
 })
 
@@ -162,6 +198,7 @@ test("empty state explains when only search removes every item", async () => {
   assert.deepEqual(sectionItemVisibility(section), [false])
   assert.equal(section.hidden, true)
   assert.equal(controller.statusTarget.textContent, "0件を表示中 / 検索: missing")
+  assert.deepEqual(controller.statusTarget.attributes, {})
   assert.equal(controller.emptyTarget.hidden, false)
   assert.equal(controller.emptyTarget.textContent, "検索条件に一致するファイルはありません。")
 })
