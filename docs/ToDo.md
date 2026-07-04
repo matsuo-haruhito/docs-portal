@@ -15,6 +15,8 @@
 
 2026-06-24 の first slice では、既に正本 docs / Issue へ移動済みの項目と、人間判断待ち・未起票のまま残す項目が混在しやすい節だけを棚卸しした。ToDo 全体の方針や product strategy は変更せず、各項目の分類と再開条件だけを短く補足する。
 
+2026-07-04 の #4572 first slice では、UI / UX、Job / 運用自動化、品質・運用改善の 3 節だけを追加棚卸しした。ここでの「起票候補」は、そのまま実装着手する指示ではなく、Workflow Manager / Planner が次に concrete issue へ切れる粒度のメモとして扱う。法務、承認、通知、SLA、不可逆削除、外部合意が必要なものは human decision のまま残し、`status:ready-for-agent` に戻さない。
+
 ## 権限・管理画面
 
 - `company_master_admin` の current `/admin` redirect と `会社` / `ユーザー` 管理の制約は [company_master_admin会社・ユーザー管理runbook](./company_master_admin会社・ユーザー管理runbook.md) を正本とし、ここには未解決の導線改善だけを残す。分類: 正本 docs へ移動済み
@@ -30,6 +32,15 @@
 - 社内 / 社外 / 管理者ごとの導線差分は、必要になったタイミングで画面群ごとに個別 issue へ分けて扱う。分類: 未起票のまま残すもの。まだ起票しない理由: 対象画面、導線差分、受け入れ条件が画面群ごとに固まっていない
 - 総合 UI/UX 見直しは包括 issue として残さず、必要になった時点で viewer / dashboard / navigation / admin UX など具体 issue に分けて扱う。分類: 未起票のまま残すもの。まだ起票しない理由: broad umbrella では review / acceptance が大きすぎる
 - 本文表示の改善は viewer 単位の issue を優先し、全画面の大規模 redesign は後回しにする。分類: 未起票のまま残すもの。まだ起票しない理由: 具体 viewer surface と読みづらさの再現条件が必要
+
+### UI / UX 未起票候補の棚卸し
+
+| 分類 | 候補 issue title | 主 track | 対象画面または route | 根拠 docs / 起票しない理由 |
+| --- | --- | --- | --- | --- |
+| 起票候補 | viewer / dashboard / admin の role 別導線差分を画面群ごとに棚卸しする | `track:docs` / `track:design` | dashboard、文書詳細、admin landing のいずれか 1 画面群 | [ダッシュボードと文書ショートカット・確認依頼の使い分け](./ダッシュボードと文書ショートカット・確認依頼の使い分け.md)、[管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md)。起票時は 1 画面群に閉じる |
+| 起票候補 | viewer 本文表示の読みづらさを 1 surface で再現条件付きにする | `track:design` / `track:docs` | 文書詳細または版詳細 preview の 1 surface | [版詳細プレビュー・差分・添付確認runbook](./版詳細プレビュー・差分・添付確認runbook.md)、[閲覧画面とUI](./specs/閲覧画面とUI.md)。再現条件がない間は実装 queue に戻さない |
+| human decision | 全画面 UI/UX redesign、global navigation 再設計、role model 変更 | `track:design` | 全画面横断 | 仕様採否、role / 権限、導線優先順位の判断が必要。broad umbrella として ready 化しない |
+| 具体情報待ち | 社内 / 社外 / 管理者の導線差分全般 | `track:docs` | 画面未特定 | 対象画面、現在の迷い、期待する導線差、受け入れ条件が揃ったら concrete issue に切る |
 
 ## public_id / URL
 
@@ -83,6 +94,15 @@
 - mail / webhook の job 化は、送信機能本体と delivery 契約が先に固まってから再評価する。分類: dependency wait
 - 生成ファイル run の再実行履歴と retry metadata の current 読み方は #3269 と [生成ファイル再試行と定期ジョブ管理 runbook](./生成ファイル再試行と定期ジョブ管理runbook.md) を正本にする。Docusaurus site build、検索 index、import / build の統合履歴へ広げる場合は、代表対象と保存境界が具体化した時点で別 issue に切る。分類: 具体 Issue あり / 正本 docs へ移動済み
 
+### Job / 運用自動化 未起票候補の棚卸し
+
+| 分類 | 候補 issue title | 主 track | 対象画面または route | 根拠 docs / 起票しない理由 |
+| --- | --- | --- | --- | --- |
+| 起票候補 | import / build job 化の置き換え対象と履歴保存境界を 1 workflow で棚卸しする | `track:docs` / `track:quality` | `build-docs` workflow、Git連携 run、ZIP import dry-run のいずれか 1 つ | [build-docs workflow確認runbook](./build-docs%20workflow確認runbook.md)、[Git連携設定と同期失敗確認runbook](./Git連携設定と同期失敗確認runbook.md)、[ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)。置き換え対象を 1 workflow に固定してから起票する |
+| 起票候補 | 生成ファイル run 履歴を別 build / import 履歴へ広げる前提を棚卸しする | `track:docs` / `track:ops` | Docusaurus site build、検索 index、import run のいずれか 1 surface | [生成ファイル再試行と定期ジョブ管理 runbook](./生成ファイル再試行と定期ジョブ管理runbook.md)、[site build 実行履歴保存境界メモ](./site-build実行履歴保存境界メモ.md)。保存候補と保存しない raw payload を分ける |
+| human decision | 長時間処理の自動リトライ、通知、SLA、retry policy の採用判断 | `track:ops` / `track:quality` | import / build / mail / webhook 横断 | 冪等性、二重実行、再試行上限、通知先、SLA 判断が必要。実装 queue に戻さない |
+| 具体情報待ち | mail / webhook job 化 | `track:ops` | mail delivery / webhook delivery | 送信機能本体、delivery 契約、失敗時の再送 / 通知要件が固まった後に 1 surface で切る |
+
 ## 品質・運用改善の扱い
 
 - test / CI / import-build robustness / external dependency stability / performance / DB integrity / observability は、今後も必要に応じて継続改善する
@@ -100,6 +120,16 @@
   - trigram index による検索改善
   - classification / viewer / security / file-delivery 周辺の docs 整理
 - 残件は umbrella issue ではなく、再現した問題や具体的な改善対象ごとに起票する
+
+### 品質・運用改善 未起票候補の棚卸し
+
+| 分類 | 候補 issue title | 主 track | 対象画面または route | 根拠 docs / 起票しない理由 |
+| --- | --- | --- | --- | --- |
+| 起票候補 | failing / flaky spec を 1 spec file と再現ログに閉じて修正する | `track:quality` | 再現した spec file または CI job | [テスト方針](./テスト方針.md)、[開発・保守ガイド](./開発・保守ガイド.md)。spec 名、失敗ログ、期待挙動が揃った時点で切る |
+| 起票候補 | docs index / runbook 掲載漏れを docs-quality first slice として検出する | `track:docs` / `track:quality` | `README.md`、`docs/README.md`、`docs/**/*runbook*.md`、`docs/specs/*.md` | #2766 が既存候補。重複起票せず、対象集合と allowlist が固まったら #2766 に戻す |
+| 起票候補 | ApplicationConfigurationDiagnostic と本番 health check docs の drift を守る | `track:docs` / `track:quality` | `docs/本番運用・インフラ前提.md`、`docs/監視・アラート設計.md` | #4486 が既存候補。diagnostic 実装や alert rule 追加へ広げない |
+| human decision | observability / error reporting / alert rule / 通知 channel の採用判断 | `track:ops` / `track:quality` | 監視 / alert / external service 横断 | 外部監視サービス、通知先、SLA、運用責任分界の判断が必要。docs だけで current support として先取りしない |
+| 具体情報待ち | performance / DB integrity / migration safety の個別改善 | `track:quality` | slow query、constraint、migration path のいずれか 1 対象 | 観測指標、対象 model / query / migration、失敗時影響、受け入れ条件が揃った時点で concrete issue に切る |
 
 ## 依存 gem の導入方針
 
