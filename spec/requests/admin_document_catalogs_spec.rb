@@ -52,6 +52,18 @@ RSpec.describe "Admin document catalogs", type: :request do
     parsed_html.css("table tbody tr td:nth-child(2) div").map { |node| node.text.squish }
   end
 
+  def with_read_only_maintenance(value)
+    original_value = ENV[Admin::DocumentCatalogsController::READ_ONLY_MAINTENANCE_ENV]
+    ENV[Admin::DocumentCatalogsController::READ_ONLY_MAINTENANCE_ENV] = value
+    yield
+  ensure
+    if original_value.nil?
+      ENV.delete(Admin::DocumentCatalogsController::READ_ONLY_MAINTENANCE_ENV)
+    else
+      ENV[Admin::DocumentCatalogsController::READ_ONLY_MAINTENANCE_ENV] = original_value
+    end
+  end
+
   it "renders the admin catalog form and navigation for admins only" do
     sign_in_as(admin)
 
@@ -304,6 +316,102 @@ RSpec.describe "Admin document catalogs", type: :request do
     expect(items).to contain_exactly(
       have_attributes(document: document_b, sort_order: 5, note: "replacement")
     )
+  end
+
+  it "blocks catalog create, update, and destroy during read-only maintenance" do
+    create(:document_catalog_item, document_catalog: existing_catalog, document: document_a, sort_order: 1, note: "old")
+    sign_in_as(admin)
+
+    with_read_only_maintenance("1") do
+      expect do
+        post admin_document_catalogs_path, params: {
+          document_catalog: {
+            project_id: project.id,
+            name: "停止中カタログ",
+            description: "blocked",
+            audience_type: "customer",
+            visibility_policy: "restricted_external",
+            sort_order: 9
+          },
+          document_catalog_items: {
+            "0" => { selected: "1", document_id: document_b.id, sort_order: "1", note: "blocked" }
+          }
+        }
+      end.not_to change(DocumentCatalog, :count)
+      expect(response).to redirect_to(admin_document_catalogs_path)
+
+      follow_redirect!
+      expect(response.body).to include("メンテナンス中のため文書カタログの作成・更新・削除は停止しています")
+
+      expect do
+        patch admin_document_catalog_path(existing_catalog), params: {
+          document_catalog: {
+            project_id: project.id,
+            name: "更新されないカタログ",
+            description: existing_catalog.description,
+            audience_type: "operations",
+            visibility_policy: "internal_only",
+            sort_order: 8
+          },
+          document_catalog_items: {
+            "0" => { selected: "1", document_id: document_b.id, sort_order: "2", note: "blocked replacement" }
+          }
+        }
+      end.not_to change(DocumentCatalogItem, :count)
+      expect(response).to redirect_to(admin_document_catalogs_path)
+      expect(existing_catalog.reload).to have_attributes(
+        name: "既存カタログ",
+        audience_type: "customer",
+        visibility_policy: "restricted_external",
+        sort_order: 1
+      )
+      expect(existing_catalog.document_catalog_items.map(&:document_id)).to eq([document_a.id])
+
+      expect do
+        delete admin_document_catalog_path(existing_catalog)
+      end.not_to change(DocumentCatalog, :count)
+      expect(response).to redirect_to(admin_document_catalogs_path)
+      expect(existing_catalog.reload).to be_present
+    end
+  end
+
+  it "keeps admin search and public catalog viewing readable during read-only maintenance" do
+    create(:project_membership, project:, user: external_user)
+    create(:document_permission, document: document_a, company: external_user.company, access_level: :view)
+    catalog = create(:document_catalog, project:, name: "Customer Viewer", audience_type: :customer, visibility_policy: :restricted_external)
+    create(:document_catalog_item, document_catalog: catalog, document: document_a, sort_order: 1, note: "visible note")
+
+    with_read_only_maintenance("1") do
+      sign_in_as(admin)
+
+      get admin_document_catalogs_path
+
+      expect(response).to have_http_status(:ok)
+      expect(page_text).to include("文書カタログ管理")
+
+      get project_search_admin_document_catalogs_path(format: :json), params: { q: "cat" }
+
+      expect(response).to have_http_status(:ok)
+      expect(json_response.fetch("options")).to include(include("value" => project.id, "text" => "CAT / Catalog Project"))
+
+      get document_search_admin_document_catalogs_path(format: :json), params: { project_id: project.id, q: "getting" }
+
+      expect(response).to have_http_status(:ok)
+      expect(json_response.fetch("documents")).to include(include("id" => document_a.id, "title" => "導入ガイド"))
+
+      sign_in_as(external_user)
+
+      get project_document_catalogs_path(project)
+
+      expect(response).to have_http_status(:ok)
+      expect(page_text).to include("Customer Viewer")
+
+      get project_document_catalog_path(project, catalog)
+
+      expect(response).to have_http_status(:ok)
+      expect(page_text).to include("Customer Viewer")
+      expect(page_text).to include("visible note")
+    end
   end
 
   it "keeps the public catalog viewer behavior unchanged" do
