@@ -148,6 +148,9 @@ h1 Microsoft Graph接続
         - unless anchored_project_ids.include?(connection.project_id)
           - row_id = "microsoft-graph-project-#{connection.project_id}"
           - anchored_project_ids << connection.project_id
+        - connection_project_label = connection.project.code.present? ? "#{connection.project.code} / #{connection.project.name}" : connection.project.name
+        - connection_preview_usage_label = connection.enabled? && @preview_connection_ids_by_project[connection.project_id] == connection.id ? "previewで使用中" : (connection.enabled? ? "有効だが未使用" : "previewでは未使用")
+        - delete_confirm = "Microsoft Graph接続設定を削除します。案件: #{connection_project_label}、接続名: #{connection.name}、preview利用: #{connection_preview_usage_label}。Tenant / Client / Drive ID は一覧または編集画面で確認してください。"
         tr id=row_id
           td data-rails-table-preferences-column-key="project"
             = connection.project.name
@@ -198,7 +201,7 @@ h1 Microsoft Graph接続
             span.muted SharePoint / OneDrive metadata 設定へ移動
             br
             = edit_link_to "編集", edit_admin_microsoft_graph_connection_path(connection)
-            = delete_link_to "削除", admin_microsoft_graph_connection_path(connection), confirm: "Microsoft Graph接続設定を削除しますか？"
+            = delete_link_to "削除", admin_microsoft_graph_connection_path(connection), confirm: delete_confirm
 - elsif @preview_usage_counts[:all].positive?
   .card
     p.muted 現在の絞り込みに一致する Microsoft Graph接続はありません。
