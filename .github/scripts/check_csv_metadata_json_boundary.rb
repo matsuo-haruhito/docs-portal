@@ -65,7 +65,7 @@ CHECKS = [
       "export_scope: access_logs_export_scope",
       "metadata[:page] = page_param if current_page_csv_scope?",
       "current_page_csv_scope? ? \"current_filter_current_page_rows\" : \"current_filter_latest_rows\"",
-      "CSV export は表示中ページではなく、現在の絞り込み条件に一致する最新#{ACCESS_LOGS_PER_PAGE}件を出力します。"
+      "CSV export は表示中ページではなく、現在の絞り込み条件に一致する最新\#{ACCESS_LOGS_PER_PAGE}件を出力します。"
     ]
   },
   {
