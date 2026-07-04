@@ -7,7 +7,7 @@ ul.nav-list
     - basic_master_paths = [admin_companies_path, admin_users_path, admin_projects_path, admin_project_memberships_path, admin_consent_terms_path, admin_project_consent_settings_path]
     - document_permission_paths = [admin_documents_path, admin_document_sets_path, admin_document_catalogs_path, admin_document_permissions_path, admin_access_logs_path, admin_access_requests_path, admin_document_usage_reports_path, new_admin_bulk_edit_dry_run_path]
     - import_sync_paths = [new_admin_zip_import_path, admin_file_upload_dry_runs_path, admin_git_import_sources_path, admin_git_import_runs_path]
-    - external_integration_paths = [admin_microsoft_graph_connections_path, admin_external_folder_sync_sources_path, admin_webhook_endpoints_path]
+    - external_integration_paths = [admin_microsoft_graph_connections_path, admin_external_folder_sync_sources_path, admin_webhook_endpoints_path, admin_webhook_deliveries_path]
     - active_admin_nav_section = :operations if operations_paths.any? { |path| admin_nav_path_active.call(path) }
     - active_admin_nav_section ||= :basic_master if basic_master_paths.any? { |path| admin_nav_path_active.call(path) }
     - active_admin_nav_section ||= :document_permission if document_permission_paths.any? { |path| admin_nav_path_active.call(path) }
@@ -49,7 +49,8 @@ ul.nav-list
     li class=["nav-section mt-2 small fw-bold text-muted", ("border-start border-primary ps-2 text-primary" if external_integration_active)] aria-current=(external_integration_active ? "location" : nil) aria-label=(external_integration_active ? "現在の領域: 外部連携" : nil) 外部連携
     li = admin_nav_link.call("Microsoft Graph", admin_microsoft_graph_connections_path)
     li = admin_nav_link.call("外部フォルダ同期設定", admin_external_folder_sync_sources_path)
-    li = admin_nav_link.call("Webhook", admin_webhook_endpoints_path)
+    li = admin_nav_link.call("Webhook設定", admin_webhook_endpoints_path)
+    li = admin_nav_link.call("Webhook送信履歴", admin_webhook_deliveries_path)
   - elsif company_master_admin?
     - company_master_nav_current_path = request.path
     - company_master_nav_path_active = ->(path) { company_master_nav_current_path == path || company_master_nav_current_path.start_with?("#{path}/") }

@@ -46,14 +46,31 @@ RSpec.describe "document-file-browser controller source" do
     end
   end
 
+  it "keeps long query status summaries readable without dropping the full query" do
+    aggregate_failures do
+      expect(controller_source).to include("const querySummaryMaxLength = 28")
+      expect(controller_source).to include("function summarizeQuery(query) {")
+      expect(controller_source).to include("if (query.length <= querySummaryMaxLength) {")
+      expect(controller_source).to include("return `${query.slice(0, querySummaryMaxLength - 3)}...`")
+      expect(controller_source).to include("statusParts.push(`検索: ${summarizeQuery(rawQuery)}`)")
+      expect(controller_source).to include("statusLabelParts.push(`検索: ${rawQuery}`)")
+      expect(controller_source).to include('this.statusTarget.setAttribute("title", statusLabel)')
+      expect(controller_source).to include('this.statusTarget.setAttribute("aria-label", statusLabel)')
+      expect(controller_source).to include('this.statusTarget.removeAttribute("title")')
+      expect(controller_source).to include('this.statusTarget.removeAttribute("aria-label")')
+    end
+  end
+
   it "keeps status and empty-state text boundaries stable" do
     aggregate_failures do
       expect(controller_source).to include("const kindLabel = kindLabels[this.activeKind] || this.activeKind")
       expect(controller_source).to include("const statusParts = [`${visibleCount}件を表示中`]")
-      expect(controller_source).to include("statusParts.push(`検索: ${rawQuery}`)")
+      expect(controller_source).to include("const statusLabelParts = [`${visibleCount}件を表示中`]")
       expect(controller_source).to include("if (!hasQuery || hasKindFilter) {")
       expect(controller_source).to include("statusParts.push(`分類: ${kindLabel}`)")
-      expect(controller_source).to include('this.statusTarget.textContent = statusParts.join(" / ")')
+      expect(controller_source).to include('const statusText = statusParts.join(" / ")')
+      expect(controller_source).to include('const statusLabel = statusLabelParts.join(" / ")')
+      expect(controller_source).to include("this.statusTarget.textContent = statusText")
       expect(controller_source).to include("if (this.hasEmptyTarget) {")
       expect(controller_source).to include("this.emptyTarget.hidden = visibleCount > 0")
     end
