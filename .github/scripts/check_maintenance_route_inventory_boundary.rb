@@ -42,7 +42,9 @@ MAINTENANCE_ROUTE_INVENTORY_ALLOWLIST_SIGNALS = [
   "get :failure_alert_handoff, on: :collection",
   "get :pending_handoff, on: :collection",
   "get :lifecycle_handoff, on: :collection",
-  "post \"codeblock_dry_run\", to: \"api_specifications#codeblock_dry_run\", as: :codeblock_dry_run"
+  "post \"codeblock_dry_run\", to: \"api_specifications#codeblock_dry_run\", as: :codeblock_dry_run",
+  "post \"document_tree_all\", to: \"projects#document_tree_all\"",
+  "match \"document_detail_tree\", to: \"projects#document_detail_tree\""
 ].freeze
 
 MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
@@ -58,6 +60,7 @@ MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
   "| 外部フォルダ同期 | `admin/external_folder_sync_sources#dry_run` / `#apply` / `#force_apply` / `#enqueue` / `#subscribe` / `#unsubscribe` / `#recheck_metadata` | 要判断。",
   "| アクセス申請 | `access_requests#create` / `#cancel`, `admin/access_requests#update` | 要判断。",
   "| 既読確認 | `read_confirmations#create` / `#destroy` | 要判断。",
+  "| TreeView / 文書 detail tree | `projects#document_tree_all` / `#document_detail_tree` | read-only POST。",
   "| 手動アップロード / import | `document_uploads#create`, `document_version_upload_reviews#create`, `api/internal/*_uploads#create`, `api/internal/artifact_imports#create` | 候補。",
   "| 文書版 rollback / 文書状態変更 | `document_version_rollbacks#create`, `admin/documents#archive` / `#restore`, `admin/bulk_edit_dry_runs#handoff` / `#update` | 要判断。",
   "| 軽量な利用者操作 | `document_bookmarks#create` / `#destroy` / `#move_to_favorite`, `document_approval_requests#update` / `#cancel`, `document_review_comments#create` / `#update`, `document_delivery_logs#create` / `#update` | 要判断。",
