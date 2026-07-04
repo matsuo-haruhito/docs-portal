@@ -19,7 +19,7 @@ RSpec.describe "Admin git import source action cues", type: :request do
     sign_in_as(admin_user)
   end
 
-  it "separates manual sync, edit, and delete actions for enabled and disabled sources" do
+  it "shows one list-level action cue while keeping row actions and confirmations specific" do
     active_project = create(:project, code: "GIT001", name: "Main Docs")
     disabled_project = create(:project, code: "GIT002", name: "Archive Docs")
     active_source = create(
@@ -42,12 +42,15 @@ RSpec.describe "Admin git import source action cues", type: :request do
     get admin_git_import_sources_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("操作: 手動同期=今すぐ取り込み、編集=設定変更、削除=設定削除")
+    expect(page_text).to include("Git連携設定一覧の操作は、手動同期=今すぐ取り込み、編集=設定変更、削除=設定削除です。")
+    expect(page_text.scan("手動同期=今すぐ取り込み").size).to eq(1)
 
     active_row = row_for("example/active-docs")
     disabled_row = row_for("example/disabled-docs")
     expect(active_row.text.squish).to include("有効")
     expect(disabled_row.text.squish).to include("無効")
+    expect(active_row.text.squish).not_to include("手動同期=今すぐ取り込み")
+    expect(disabled_row.text.squish).not_to include("手動同期=今すぐ取り込み")
     expect(active_row.css(%(form[action="#{sync_admin_git_import_source_path(active_source)}"] button)).text.squish).to eq("手動同期")
     expect(disabled_row.css(%(form[action="#{sync_admin_git_import_source_path(disabled_source)}"] button)).text.squish).to eq("手動同期")
     expect(active_row.css(%(a[href="#{edit_admin_git_import_source_path(active_source)}"])).text.squish).to include("編集")
