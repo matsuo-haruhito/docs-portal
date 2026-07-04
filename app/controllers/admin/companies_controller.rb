@@ -2,6 +2,7 @@ class Admin::CompaniesController < Admin::BaseController
   before_action :set_company, only: %i[edit update destroy]
   before_action :require_company_master_admin_access!
   before_action :require_admin_only!, only: %i[create destroy]
+  before_action :ensure_admin_master_maintenance_writable!, only: %i[create update destroy]
 
   helper_method :company_return_to_path
 
@@ -102,6 +103,12 @@ class Admin::CompaniesController < Admin::BaseController
 
   def company_params
     params.require(:company).permit(:domain, :name, :active)
+  end
+
+  def ensure_admin_master_maintenance_writable!
+    return unless read_only_maintenance_mode?
+
+    redirect_to company_return_to_path, alert: admin_master_maintenance_message
   end
 
   def require_company_master_admin_access!
