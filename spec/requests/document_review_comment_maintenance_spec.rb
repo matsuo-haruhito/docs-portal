@@ -100,10 +100,11 @@ RSpec.describe "Document review comment maintenance mode", type: :request do
 
     get project_document_path(project, document.slug, comment_tab: "unresolved")
 
+    page_text = Nokogiri::HTML(response.body).text.squish
     aggregate_failures do
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Existing public Q&A stays visible.")
-      expect(response.body).to include("Existing internal review note stays visible.")
+      expect(page_text).to include("Existing public Q&A stays visible.")
+      expect(page_text).to include("Existing internal review note stays visible.")
     end
   end
 
