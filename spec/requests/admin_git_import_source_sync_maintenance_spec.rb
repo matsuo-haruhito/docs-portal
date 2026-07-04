@@ -76,7 +76,7 @@ RSpec.describe "Admin git import source sync maintenance mode", type: :request d
     let(:maintenance_env_value) { nil }
 
     it "keeps the existing manual sync behavior" do
-      run = build(:git_import_run, git_import_source:, status: :imported)
+      run = GitImportRun.new(status: :imported)
       syncer = instance_double(GitImportSourceSyncer, call: run)
       expect(GitImportSourceSyncer).to receive(:new).with(source: git_import_source, actor: admin_user).and_return(syncer)
 
