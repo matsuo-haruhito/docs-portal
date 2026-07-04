@@ -54,7 +54,7 @@ RSpec.describe "API internal upload apply maintenance", type: :request do
 
     it "keeps direct apply behavior when read-only maintenance is disabled" do
       ENV["READ_ONLY_MAINTENANCE"] = "false"
-      publish_job = PublishJob.create!(status: :imported)
+      publish_job = create_publish_job
       importer = instance_double(DocumentImporter, call: publish_job, manifest: { "source_commit_hash" => "commit-1" })
 
       expect(DocumentImporter).to receive(:new).and_return(importer)
@@ -93,7 +93,7 @@ RSpec.describe "API internal upload apply maintenance", type: :request do
     it "keeps ZIP dry-run apply behavior when read-only maintenance is disabled" do
       ENV["READ_ONLY_MAINTENANCE"] = "false"
       dry_run = create_import_dry_run(import_mode: :zip)
-      publish_job = PublishJob.create!(status: :imported)
+      publish_job = create_publish_job
       importer = instance_double(DocumentImporter, call: publish_job)
 
       expect(DocumentImporter).to receive(:new).and_return(importer)
@@ -173,7 +173,7 @@ RSpec.describe "API internal upload apply maintenance", type: :request do
     it "keeps manual file dry-run apply behavior when read-only maintenance is disabled" do
       ENV["READ_ONLY_MAINTENANCE"] = "false"
       dry_run = create_import_dry_run(import_mode: :manual_upload)
-      publish_job = PublishJob.create!(status: :imported)
+      publish_job = create_publish_job
       importer = instance_double(DocumentImporter, call: publish_job)
 
       expect(DocumentImporter).to receive(:new).and_return(importer)
@@ -218,6 +218,17 @@ RSpec.describe "API internal upload apply maintenance", type: :request do
       },
       warnings_json: [],
       errors_json: []
+    )
+  end
+
+  def create_publish_job
+    PublishJob.create!(
+      status: :imported,
+      source_repo: "internal-upload-maintenance-spec",
+      source_branch: "main",
+      source_commit_hash: "commit-1",
+      artifact_path: Rails.root.join("storage", "imports", "apply-smoke").to_s,
+      log_message: "import completed"
     )
   end
 
