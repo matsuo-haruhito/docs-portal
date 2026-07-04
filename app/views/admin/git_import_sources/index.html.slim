@@ -72,7 +72,7 @@ h1 Git連携
   .card
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "Git連携設定一覧の表示設定")
 
-  p.muted Git連携設定一覧の操作は、手動同期=今すぐ取り込み、編集=設定変更、削除=設定削除です。手動同期と削除は対象情報つきの確認を表示します。
+  p.muted = "Git連携設定一覧の操作は、手動同期=今すぐ取り込み、編集=設定変更、削除=設定削除です。手動同期と削除は対象情報つきの確認を表示します。"
 
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
