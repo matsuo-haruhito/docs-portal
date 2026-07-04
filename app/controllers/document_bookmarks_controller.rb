@@ -1,6 +1,7 @@
 class DocumentBookmarksController < BaseController
   BOOKMARK_QUERY_MAX_LENGTH = 100
   SAVED_BOOKMARKS_PER_PAGE = 20
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   SavedBookmarkPage = Struct.new(:items, :total_count, :page, :total_pages, :per_page, keyword_init: true) do
     def any?
@@ -60,6 +61,11 @@ class DocumentBookmarksController < BaseController
     document = Document.find_by!(public_id: bookmark_params[:document_id])
     require_document_access!(document)
 
+    if read_only_maintenance_mode?
+      redirect_to_back alert: maintenance_bookmark_message
+      return
+    end
+
     current_user.document_bookmarks.find_or_create_by!(
       document:,
       bookmark_type: bookmark_type
@@ -71,6 +77,11 @@ class DocumentBookmarksController < BaseController
   def move_to_favorite
     bookmark = current_user.document_bookmarks.read_later.find_by!(public_id: params[:public_id])
     require_document_access!(bookmark.document)
+
+    if read_only_maintenance_mode?
+      redirect_to_back fallback_location: bookmark_fallback_location, alert: maintenance_bookmark_message
+      return
+    end
 
     DocumentBookmark.transaction do
       current_user.document_bookmarks.find_or_create_by!(
@@ -85,6 +96,12 @@ class DocumentBookmarksController < BaseController
 
   def destroy
     bookmark = current_user.document_bookmarks.find_by!(public_id: params[:public_id])
+
+    if read_only_maintenance_mode?
+      redirect_to_back fallback_location: bookmark_fallback_location, alert: maintenance_bookmark_message
+      return
+    end
+
     bookmark.destroy!
 
     redirect_to_back fallback_location: bookmark_fallback_location, notice: "文書ショートカットを解除しました。"
@@ -197,5 +214,13 @@ class DocumentBookmarksController < BaseController
 
   def bookmark_created_message
     bookmark_type == "read_later" ? "後で読むに追加しました。" : "お気に入りに追加しました。"
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_bookmark_message
+    "メンテナンス中のため文書ショートカットの追加・移動・解除は停止しています。閲覧は継続できます。"
   end
 end
