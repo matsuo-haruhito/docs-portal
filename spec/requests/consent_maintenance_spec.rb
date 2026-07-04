@@ -23,6 +23,16 @@ RSpec.describe "Consent maintenance mode", type: :request do
     parsed_html.text.squish
   end
 
+  def form_value(name)
+    node = parsed_html.at_css(%(input[name="#{name}"])) ||
+      parsed_html.at_css(%(textarea[name="#{name}"])) ||
+      parsed_html.at_css(%(select[name="#{name}"]))
+
+    node&.[]("value").presence ||
+      node&.at_css("option[selected]")&.[]("value") ||
+      node&.text&.squish
+  end
+
   it "does not create user consents during maintenance mode" do
     term = create(:consent_term, title: "Maintenance Terms", consent_scope: :project, version_label: "v1")
     create(:project_consent_setting, project:, consent_term: term, required_on: :first_access)
@@ -188,7 +198,7 @@ RSpec.describe "Consent maintenance mode", type: :request do
 
     get edit_admin_consent_term_path(term)
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("Readable Admin Terms")
+    expect(form_value("consent_term[title]")).to eq("Readable Admin Terms")
 
     get admin_project_consent_settings_path(project_id: project.id, consent_term_id: term.id, enabled: "true")
     expect(response).to have_http_status(:ok)
@@ -197,7 +207,8 @@ RSpec.describe "Consent maintenance mode", type: :request do
 
     get edit_admin_project_consent_setting_path(ProjectConsentSetting.last)
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("Readable Project")
+    expect(form_value("project_consent_setting[project_id]")).to eq(project.id.to_s)
+    expect(form_value("project_consent_setting[consent_term_id]")).to eq(term.id.to_s)
 
     get project_search_admin_project_consent_settings_path(format: :json), params: { q: "READ" }
     expect(response).to have_http_status(:ok)
