@@ -32,6 +32,7 @@ on:
       - .github/scripts/check_maintenance_route_inventory_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
       - .github/scripts/check_readme_docs_entrance_boundary.rb
+      - .github/scripts/check_microsoft_graph_preview_boundary.rb
       - .github/scripts/check_closed_active_queue_labels.rb
       - .github/scripts/check_frontend_entrypoint_policy.rb
       - .markdownlint-cli2.yaml
@@ -65,6 +66,7 @@ on:
       - .github/scripts/check_maintenance_route_inventory_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
       - .github/scripts/check_readme_docs_entrance_boundary.rb
+      - .github/scripts/check_microsoft_graph_preview_boundary.rb
       - .github/scripts/check_closed_active_queue_labels.rb
       - .github/scripts/check_frontend_entrypoint_policy.rb
       - .markdownlint-cli2.yaml
@@ -115,6 +117,9 @@ jobs:
 
       - name: Check README/docs entrance boundary docs
         run: ruby .github/scripts/check_readme_docs_entrance_boundary.rb
+
+      - name: Check Microsoft Graph preview boundary docs
+        run: ruby .github/scripts/check_microsoft_graph_preview_boundary.rb
 
       - name: Check closed active queue label digest
         run: ruby .github/scripts/check_closed_active_queue_labels.rb --self-test
