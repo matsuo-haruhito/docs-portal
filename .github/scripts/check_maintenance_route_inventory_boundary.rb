@@ -63,7 +63,8 @@ MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
   "| TreeView / 文書 detail tree | `projects#document_tree_all` / `#document_detail_tree` | read-only POST。",
   "| 手動アップロード / import | `document_uploads#create`, `document_version_upload_reviews#create`, `api/internal/*_uploads#create`, `api/internal/artifact_imports#create` | 候補。",
   "| 文書版 rollback / 文書状態変更 | `document_version_rollbacks#create`, `admin/documents#archive` / `#restore`, `admin/bulk_edit_dry_runs#handoff` / `#update` | 要判断。",
-  "| 軽量な利用者操作 | `document_bookmarks#create` / `#destroy` / `#move_to_favorite`, `document_approval_requests#update` / `#cancel`, `document_review_comments#create` / `#update`, `document_delivery_logs#create` / `#update` | 要判断。",
+  "| 外部送付履歴 | `document_delivery_logs#create` / `#update` | current。",
+  "| 軽量な利用者操作 | `document_bookmarks#create` / `#destroy` / `#move_to_favorite`, `document_approval_requests#update` / `#cancel`, `document_review_comments#create` / `#update` | 要判断。",
   "`current` として扱うのは、controller guard、request spec、関連 runbook の current support が揃っている操作だけです。",
   "maintenance mode を完全停止や全変更系停止として読まないようにします。"
 ].freeze
