@@ -6,6 +6,7 @@
   status_quick_link_current_class = "#{status_quick_link_base_class} border-blue-600 bg-blue-50 font-semibold text-blue-700 ring-2 ring-blue-100"
   status_quick_link_default_class = "#{status_quick_link_base_class} text-gray-700 hover:bg-gray-50"
   has_active_filters = @filters.compact_blank.any?
+  filter_summary_items = generated_file_event_filter_summary_items(@filters)
   bulk_retry_target_count = @bulk_retry_target_count.to_i
   bulk_retry_available = bulk_retry_target_count.positive?
   bulk_retry_confirm_message = "現在の条件で今回再投入する失敗イベント #{bulk_retry_target_count} 件を、古い順に最大100件まで一括再投入します。現在の条件を確認してから実行してください。実行しますか？"
@@ -35,7 +36,7 @@
         <div class="mt-2 flex flex-wrap items-center gap-2">
           <%= button_to "失敗分を一括再投入", retry_failed_admin_generated_file_events_path(@filters.compact_blank), method: :post, class: bulk_retry_class, disabled: !bulk_retry_available, form: bulk_retry_form_options %>
         </div>
-        <p class="mt-2 text-xs text-gray-600">再投入は表示フィルタではなく、現在の条件に一致する失敗イベントを再投入する操作です。</p>
+        <p class="mt-2 text-xs text-gray-600">再投入は表示件数や表示設定ではなく、現在の条件に一致する失敗イベントだけを対象にする操作です。</p>
         <p class="mt-1 text-xs text-gray-500">今回の一括再投入対象: <%= @bulk_retry_target_count %> 件</p>
         <p class="text-xs text-gray-500">現在の条件で今回再投入する失敗イベントを、古い順に最大100件まで処理します。</p>
         <% unless bulk_retry_available %>
@@ -125,6 +126,23 @@
     page: @page,
     total_pages: @total_pages,
     path: ->(target_page) { admin_generated_file_events_path(request.query_parameters.merge(page: target_page, per_page: @per_page)) } %>
+
+  <% if @generated_file_events.any? && filter_summary_items.any? %>
+    <div class="generated-file-event-filter-summary rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950">
+      <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p class="font-semibold">現在の表示条件</p>
+          <ul class="mt-2 flex flex-wrap gap-2">
+            <% filter_summary_items.each do |item| %>
+              <li class="rounded border border-blue-200 bg-white px-2 py-1"><%= item %></li>
+            <% end %>
+          </ul>
+          <p class="mt-2 text-xs text-blue-900">これは表示フィルタの読み返しです。一括再投入は、この条件に一致する失敗イベントだけを古い順に最大100件まで対象にします。</p>
+        </div>
+        <%= link_to "絞り込みを解除", admin_generated_file_events_path, class: "shrink-0 rounded border border-blue-200 bg-white px-3 py-2 text-sm text-blue-700" %>
+      </div>
+    </div>
+  <% end %>
 
   <% if @generated_file_events.any? %>
     <div class="rounded-lg border bg-white p-4">

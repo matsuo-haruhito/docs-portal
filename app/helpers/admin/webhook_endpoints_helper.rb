@@ -51,6 +51,8 @@ module Admin::WebhookEndpointsHelper
       "送信先URL: #{webhook_endpoint_display_target_url(endpoint.target_url)}",
       "イベント: #{event_labels}",
       "状態: #{webhook_endpoint_status_label(endpoint)}",
+      "停止ではなく設定削除の操作です。",
+      "この設定に紐づく送信履歴も削除対象になります。",
       "以後この通知先へWebhookは送信されません。削除しますか？"
     ].join("\n")
   end

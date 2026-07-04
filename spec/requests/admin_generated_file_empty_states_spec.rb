@@ -59,7 +59,7 @@ RSpec.describe "Admin generated file empty states", type: :request do
     expect(retry_panel).to be_present
     retry_text = retry_panel.text.squish
     expect(retry_text).to include("失敗分を一括再投入")
-    expect(retry_text).to include("再投入は表示フィルタではなく")
+    expect(retry_text).to include("再投入は表示件数や表示設定ではなく、現在の条件に一致する失敗イベントだけを対象にする操作です。")
     expect(retry_text).to include("今回の一括再投入対象")
     expect(retry_text).to include("現在の条件で今回再投入する失敗イベントを、古い順に最大100件まで処理します。")
     expect(retry_text).to include("対象がないため一括再投入できません。")

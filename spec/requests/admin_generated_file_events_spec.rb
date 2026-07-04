@@ -64,6 +64,44 @@ RSpec.describe "Admin generated file events", type: :request do
       expect(bulk_retry_button(filters)).to be_present
     end
 
+    it "shows active filter summary near result rows without changing the bulk retry boundary" do
+      sign_in_as(admin_user)
+      create_event!(
+        path: "storage/document_files/source.yml",
+        status: :failed,
+        operation: "update",
+        event_source: "manual_document_upload",
+        error_message: "source failed",
+        scheduled_at: Time.zone.parse("2026-05-10 12:00:00")
+      )
+      filters = {
+        status: "failed",
+        operation: "update",
+        event_source: "manual_document_upload",
+        path: "document_files",
+        scheduled_from: "2026-05-10",
+        scheduled_to: "2026-05-10",
+        q: "source"
+      }
+
+      get admin_generated_file_events_path(filters)
+
+      expect(response).to have_http_status(:ok)
+      summary = parsed_html.at_css(".generated-file-event-filter-summary")
+      expect(summary).to be_present
+      expect(summary.text).to include("現在の表示条件")
+      expect(summary.text).to include("状態: 失敗")
+      expect(summary.text).to include("操作種別: 更新")
+      expect(summary.text).to include("イベント発生元:")
+      expect(summary.text).to include("パス: document_files")
+      expect(summary.text).to include("実行予定日: 2026-05-10〜2026-05-10")
+      expect(summary.text).to include("検索語: source")
+      expect(summary.text).to include("一括再投入は、この条件に一致する失敗イベントだけを古い順に最大100件まで対象にします。")
+      expect(summary.at_css(%(a[href="#{admin_generated_file_events_path}"]))).to be_present
+      expect(response.body).to include("再投入は表示件数や表示設定ではなく、現在の条件に一致する失敗イベントだけを対象にする操作です。")
+      expect(bulk_retry_button(filters)).to be_present
+    end
+
     it "shows a filtered bulk retry target count and keeps the action enabled" do
       sign_in_as(admin_user)
       matched = create_event!(path: "storage/document_files/source.yml", status: :failed, event_source: "manual_document_upload", error_message: "source failed", scheduled_at: Time.zone.parse("2026-05-10 12:00:00"))

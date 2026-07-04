@@ -21,8 +21,8 @@ RSpec.describe "Admin Microsoft Graph connection empty state actions", type: :re
     expect(response).to have_http_status(:ok)
     expect(filtered_empty_state_card).to be_present
 
-    reset_link = filtered_empty_state_card.at_css(".actions a.button.secondary")
-    expect(reset_link.text.squish).to eq("検索と絞り込みを解除")
+    reset_link = filtered_empty_state_card.css(".actions a.button.secondary").find { |link| link.text.squish == "検索と絞り込みを解除" }
+    expect(reset_link).to be_present
     expect(reset_link["href"]).to eq(admin_microsoft_graph_connections_path)
   end
 

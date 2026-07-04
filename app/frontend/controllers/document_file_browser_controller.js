@@ -1,5 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
+const querySummaryMaxLength = 28
+
 const kindLabels = {
   all: "すべて",
   visible: "通常",
@@ -14,6 +16,14 @@ const emptyMessages = {
   query: "検索条件に一致するファイルはありません。",
   kind: "選択した分類に一致するファイルはありません。",
   queryAndKind: "検索条件と分類の両方に一致するファイルはありません。"
+}
+
+function summarizeQuery(query) {
+  if (query.length <= querySummaryMaxLength) {
+    return query
+  }
+
+  return `${query.slice(0, querySummaryMaxLength - 3)}...`
 }
 
 export default class extends Controller {
@@ -70,13 +80,26 @@ export default class extends Controller {
     if (this.hasStatusTarget) {
       const kindLabel = kindLabels[this.activeKind] || this.activeKind
       const statusParts = [`${visibleCount}件を表示中`]
+      const statusLabelParts = [`${visibleCount}件を表示中`]
       if (hasQuery) {
-        statusParts.push(`検索: ${rawQuery}`)
+        statusParts.push(`検索: ${summarizeQuery(rawQuery)}`)
+        statusLabelParts.push(`検索: ${rawQuery}`)
       }
       if (!hasQuery || hasKindFilter) {
         statusParts.push(`分類: ${kindLabel}`)
+        statusLabelParts.push(`分類: ${kindLabel}`)
       }
-      this.statusTarget.textContent = statusParts.join(" / ")
+
+      const statusText = statusParts.join(" / ")
+      const statusLabel = statusLabelParts.join(" / ")
+      this.statusTarget.textContent = statusText
+      if (statusText === statusLabel) {
+        this.statusTarget.removeAttribute("title")
+        this.statusTarget.removeAttribute("aria-label")
+      } else {
+        this.statusTarget.setAttribute("title", statusLabel)
+        this.statusTarget.setAttribute("aria-label", statusLabel)
+      }
     }
 
     if (this.hasEmptyTarget) {

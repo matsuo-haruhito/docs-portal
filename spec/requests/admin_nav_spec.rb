@@ -66,7 +66,7 @@ RSpec.describe "Admin navigation", type: :request do
 
     get admin_webhook_endpoints_path
 
-    expect_active_nav(section_label: "外部連携", link_label: "Webhook")
+    expect_active_nav(section_label: "外部連携", link_label: "Webhook設定")
   end
 
   it "shows company master admin landing as a company and user management entrypoint" do
