@@ -21,11 +21,7 @@
 - filter_base_style = "display:inline-flex;align-items:center;gap:0.35rem;padding:0.35rem 0.7rem;border-radius:999px;border:1px solid #d8dee4;line-height:1.2;text-decoration:none;white-space:nowrap;"
 - filter_selected_style = "#{filter_base_style}background:#eaf3ff;border-color:#9ec5fe;color:#1f5aa6;font-weight:700;"
 - filter_link_style = "#{filter_base_style}background:#fff;color:#24292f;"
-- preview_usage_empty_messages = {
-  "preview_selected" => "previewで使用中の接続がないか、検索語で除外されています。Office preview の接続正常性や修復完了を示す表示ではありません。",
-  "enabled_unused" => "有効だが current preview では使われていない接続がないか、検索語で除外されています。",
-  "disabled" => "無効、または preview では未使用の接続がないか、検索語で除外されています。"
-}
+- preview_usage_empty_messages = { "preview_selected" => "previewで使用中の接続がないか、検索語で除外されています。Office preview の接続正常性や修復完了を示す表示ではありません。", "enabled_unused" => "有効だが current preview では使われていない接続がないか、検索語で除外されています。", "disabled" => "無効、または preview では未使用の接続がないか、検索語で除外されています。" }
 - if @selected_preview_usage == "preview_selected"
   - selected_filter_labels << "previewで使用中"
 - elsif @selected_preview_usage == "enabled_unused"
