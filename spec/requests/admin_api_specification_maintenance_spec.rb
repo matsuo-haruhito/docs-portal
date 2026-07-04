@@ -1,5 +1,6 @@
 require "rails_helper"
 require "fileutils"
+require "json"
 
 RSpec.describe "Admin API specification maintenance mode", type: :request do
   let(:admin_user) { create(:user, :internal) }
@@ -56,6 +57,59 @@ RSpec.describe "Admin API specification maintenance mode", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("メンテナンス中のためAPI仕様ページの build 再要求は停止しています")
+    end
+
+    it "keeps codeblock dry-run validation available without enqueueing a build" do
+      sign_in_as(admin_user)
+      allow(ApiSpecificationBuildJob).to receive(:perform_later)
+
+      post codeblock_dry_run_admin_api_specification_path,
+        params: {
+          codeblock_id: "internal-upload-sample",
+          codeblock: "POST /api/internal/file_uploads HTTP/1.1\nContent-Type: application/json"
+        }
+
+      expect(response).to have_http_status(:ok)
+      payload = JSON.parse(response.body)
+      expect(payload).to include(
+        "status" => "ok",
+        "dry_run" => true,
+        "destructive" => false,
+        "action_kind" => "admin_api_spec.http_codeblock_dry_run",
+        "target_viewer" => "admin_api_specification",
+        "target_api" => "POST /api/internal/file_uploads",
+        "codeblock_id" => "internal-upload-sample"
+      )
+      expect(payload.fetch("message")).to include("apply / import / 外部送信は実行していません")
+      expect(ApiSpecificationBuildJob).not_to have_received(:perform_later)
+      expect(build_request_marker_path).not_to exist
+    end
+
+    it "keeps codeblock dry-run errors non-destructive during maintenance" do
+      sign_in_as(admin_user)
+      allow(ApiSpecificationBuildJob).to receive(:perform_later)
+
+      post codeblock_dry_run_admin_api_specification_path,
+        params: {
+          codeblock_id: "external-url-sample",
+          codeblock: "GET https://api.example.com/v1/documents HTTP/1.1"
+        }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      payload = JSON.parse(response.body)
+      expect(payload).to include(
+        "status" => "error",
+        "dry_run" => true,
+        "destructive" => false,
+        "action_kind" => "admin_api_spec.http_codeblock_dry_run",
+        "target_viewer" => "admin_api_specification",
+        "target_api" => "GET https://api.example.com/v1/documents",
+        "codeblock_id" => "external-url-sample"
+      )
+      expect(payload.fetch("message")).to include("外部 URL への request sample は dry-run 対象外")
+      expect(payload.fetch("details").join).to include("外部 API 送信を避ける")
+      expect(ApiSpecificationBuildJob).not_to have_received(:perform_later)
+      expect(build_request_marker_path).not_to exist
     end
   end
 
