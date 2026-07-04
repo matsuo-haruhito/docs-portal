@@ -58,6 +58,18 @@
 - `申請はありません。` は、filter を掛けていない状態で申請レコード自体がまだ無いことを示す
 - その下の `利用者からアクセス申請が届くと、承認待ち・承認済み・却下の履歴がここに表示されます。` は、初回 0 件時に今後ここへ履歴が積まれることを示す補足 copy として読む。filtered 0 件時の条件解除導線や承認基準を追加するものではない
 
+#### 詳細画面と一覧 action の使い分け
+
+一覧の各行にある `詳細` は、申請 1 件の確認画面へ進むための read-only review 入口として読む。
+
+- detail では `申請ID`、`申請日時`、`申請者`、`対象`、`要求権限`、`状態`、`理由`、`処理日時`、`承認者`、`却下理由` を 1 件単位で確認できる
+- 一覧から detail へ進むときは、現在の filter / page を `return_to` として渡す。detail から戻ると、承認待ち filter、要求権限、対象種別、検索語、page の文脈を保った一覧へ戻る
+- `return_to` は path-only の内部 path だけを採用する。外部 URL や protocol-relative URL は一覧へ fallback するため、戻り先を外部 redirect として扱わない
+- pending の申請だけ、detail から既存の承認 / 却下処理を実行できる。処理すると一覧 action と同じ resolver / rejection reason flow を通る
+- approved / rejected / cancelled など処理済みの申請では、detail に承認 / 却下 form は出ない。処理済み detail は判断結果の読み返し用として扱う
+- 一覧上の inline `承認` / `却下` は、filter 結果を見ながら即時判断するための入口。detail は対象・理由・処理結果を 1 件ずつ確認してから判断または読み返すための入口として使い分ける
+- detail 画面は、承認段階、通知、SLA、担当者割当、bulk approve / reject を追加するものではない
+
 #### pending handoff JSON の読み方
 
 `GET /admin/access_requests/pending_handoff.json` は、現在の一覧 filter から pending 申請候補だけを read-only JSON として引き継ぐための補助 endpoint。承認・却下、通知、担当者割当、SLA、自動 escalation は実行しない。
@@ -78,6 +90,7 @@
 - `対象種別` で `Project` / `Document` / `DocumentFile` を分け、file 申請が親 Document の permission へ寄る current behavior と混同していないかを見る
 - `申請者・対象` 検索で、特定案件や文書に申請が集中していないかを見返す
 - 申請対象と `requested_access_level` が利用者の想定と合っているか
+- 詳細画面で対象、理由、処理日時、承認者、却下理由を 1 件ずつ読み返し、一覧上の要約だけで判断していないか確認する
 - すでに処理済みの申請で、承認者が想定どおり記録されているか
 - 条件に一致しないときは、`状態`、`要求権限`、`対象種別` の残り値や検索語の表記揺れを先に疑う
 

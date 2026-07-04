@@ -36,7 +36,8 @@ RSpec.describe "Admin navigation", type: :request do
       "ZIPインポート",
       "Git同期履歴",
       "Microsoft Graph",
-      "Webhook"
+      "Webhook設定",
+      "Webhook送信履歴"
     )
   end
 
@@ -48,6 +49,6 @@ RSpec.describe "Admin navigation", type: :request do
     expect(response).to have_http_status(:ok)
     expect(admin_nav_section_labels).to eq(["会社・ユーザー管理"])
     expect(admin_nav_link_texts).to contain_exactly("会社", "ユーザー")
-    expect(admin_nav_link_texts).not_to include("モデルブラウザ", "文書", "Webhook")
+    expect(admin_nav_link_texts).not_to include("モデルブラウザ", "文書", "Webhook設定")
   end
 end
