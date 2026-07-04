@@ -31,6 +31,7 @@ on:
       - .github/scripts/check_access_log_boundary.rb
       - .github/scripts/check_api_specification_dry_run_boundary.rb
       - .github/scripts/check_maintenance_route_inventory_boundary.rb
+      - .github/scripts/check_git_import_run_project_filter_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
       - .github/scripts/check_readme_docs_entrance_boundary.rb
       - .github/scripts/check_microsoft_graph_preview_boundary.rb
@@ -66,6 +67,7 @@ on:
       - .github/scripts/check_access_log_boundary.rb
       - .github/scripts/check_api_specification_dry_run_boundary.rb
       - .github/scripts/check_maintenance_route_inventory_boundary.rb
+      - .github/scripts/check_git_import_run_project_filter_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
       - .github/scripts/check_readme_docs_entrance_boundary.rb
       - .github/scripts/check_microsoft_graph_preview_boundary.rb
@@ -116,6 +118,9 @@ jobs:
 
       - name: Check maintenance route inventory boundary docs
         run: ruby .github/scripts/check_maintenance_route_inventory_boundary.rb
+
+      - name: Check Git import run project filter boundary docs
+        run: ruby .github/scripts/check_git_import_run_project_filter_boundary.rb
 
       - name: Check Issue / PR number boundary docs
         run: ruby .github/scripts/check_issue_pr_number_boundary.rb
