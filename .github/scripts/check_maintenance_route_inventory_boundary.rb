@@ -60,6 +60,7 @@ MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
   "| 外部フォルダ同期 | `admin/external_folder_sync_sources#dry_run` / `#apply` / `#force_apply` / `#enqueue` / `#subscribe` / `#unsubscribe` / `#recheck_metadata` | 要判断。",
   "| アクセス申請 | `access_requests#create` / `#cancel`, `admin/access_requests#update` | 要判断。",
   "| 既読確認 | `read_confirmations#create` / `#destroy` | current。",
+  "| 確認依頼 | `document_approval_requests#create` / `#update` / `#cancel` | current。確認依頼の新規作成と pending 依頼の OK / Cancel は `READ_ONLY_MAINTENANCE` 中に停止し、一覧・detail・requester / approver filter は read-only に残す。",
   "| TreeView / 文書 detail tree | `projects#document_tree_all` / `#document_detail_tree` | read-only POST。",
   "| 手動アップロード UI flow | `document_uploads#create`, `document_version_upload_reviews#create` | current。",
   "手動アップロード候補の作成と upload review の `OK` / `NG` は `READ_ONLY_MAINTENANCE` 中に停止し",
@@ -68,7 +69,7 @@ MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
   "| internal upload / import API | `api/internal/*_uploads#create`, `api/internal/artifact_imports#create` | 候補。",
   "手動アップロード UI flow の current support と混同しない。",
   "| 文書版 rollback / 文書状態変更 | `document_version_rollbacks#create`, `admin/documents#archive` / `#restore`, `admin/bulk_edit_dry_runs#handoff` / `#update` | 要判断。",
-  "| 軽量な利用者操作 | `document_bookmarks#create` / `#destroy` / `#move_to_favorite`, `document_approval_requests#update` / `#cancel`, `document_review_comments#create` / `#update`, `document_delivery_logs#create` / `#update` | 要判断。",
+  "| 軽量な利用者操作 | `document_bookmarks#create` / `#destroy` / `#move_to_favorite`, `document_review_comments#create` / `#update`, `document_delivery_logs#create` / `#update` | 要判断。",
   "`current` として扱うのは、controller guard、request spec、関連 runbook の current support が揃っている操作だけです。",
   "maintenance mode を完全停止や全変更系停止として読まないようにします。"
 ].freeze
