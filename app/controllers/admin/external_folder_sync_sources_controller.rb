@@ -6,6 +6,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     "site_id" => "Site ID"
   }.freeze
   METADATA_RECHECK_SUMMARY_KEY = "last_metadata_recheck".freeze
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
   EXTERNAL_FOLDER_SYNC_SOURCE_SEARCH_QUERY_MAX_LENGTH = 100
   EXTERNAL_FOLDER_SYNC_SOURCE_DEFAULT_PER_PAGE = 10
   EXTERNAL_FOLDER_SYNC_SOURCE_MAX_PER_PAGE = 50
@@ -14,6 +15,7 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
   before_action :require_admin_only!
   before_action :set_external_folder_sync_source, only: %i[show edit update destroy dry_run apply force_apply enqueue subscribe unsubscribe recheck_metadata]
+  before_action :block_external_folder_sync_source_changes_during_maintenance!, only: %i[create update destroy]
   before_action :ensure_google_drive_runtime_supported!, only: %i[dry_run apply force_apply enqueue subscribe unsubscribe]
 
   helper_method :safe_return_to
@@ -171,6 +173,28 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
 
   def set_external_folder_sync_source
     @external_folder_sync_source = ExternalFolderSyncSource.find_by!(public_id: params[:public_id])
+  end
+
+  def block_external_folder_sync_source_changes_during_maintenance!
+    return unless read_only_maintenance_mode?
+
+    redirect_to external_folder_sync_source_maintenance_redirect_path, alert: external_folder_sync_source_maintenance_message
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def external_folder_sync_source_maintenance_redirect_path
+    if action_name == "update" && @external_folder_sync_source.present?
+      edit_admin_external_folder_sync_source_path(@external_folder_sync_source, return_to: safe_return_to)
+    else
+      safe_return_to(admin_external_folder_sync_sources_path)
+    end
+  end
+
+  def external_folder_sync_source_maintenance_message
+    "メンテナンス中のため外部フォルダ同期設定の作成・更新・削除は停止しています。設定一覧、詳細、検索、直近run、保存済みmetadataは確認できます。"
   end
 
   def load_index_state
