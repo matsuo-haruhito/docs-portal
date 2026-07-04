@@ -58,7 +58,7 @@ MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
   "| 定期ジョブ操作 | `admin/recurring_job_schedules#sync_definitions` / `#request_run` | 要判断。",
   "| Git 手動同期 | `admin/git_import_sources#sync` | 候補。",
   "| 外部フォルダ同期 | `admin/external_folder_sync_sources#dry_run` / `#apply` / `#force_apply` / `#enqueue` / `#subscribe` / `#unsubscribe` / `#recheck_metadata` | 要判断。",
-  "| アクセス申請 | `access_requests#create` / `#cancel`, `admin/access_requests#update` | 要判断。",
+  "| アクセス申請 | `access_requests#create` / `#cancel`, `admin/access_requests#update` | current。",
   "| 既読確認 | `read_confirmations#create` / `#destroy` | 要判断。",
   "| TreeView / 文書 detail tree | `projects#document_tree_all` / `#document_detail_tree` | read-only POST。",
   "| 手動アップロード / import | `document_uploads#create`, `document_version_upload_reviews#create`, `api/internal/*_uploads#create`, `api/internal/artifact_imports#create` | 候補。",
