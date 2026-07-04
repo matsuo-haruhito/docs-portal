@@ -8,6 +8,7 @@ class Admin::GitImportSourcesController < Admin::BaseController
   PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
   PROJECT_SEARCH_LIMIT = 20
   REPOSITORY_SEARCH_LIMIT = 20
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   def index
     load_index_state
@@ -46,6 +47,11 @@ class Admin::GitImportSourcesController < Admin::BaseController
   end
 
   def sync
+    if read_only_maintenance_mode?
+      redirect_to edit_admin_git_import_source_path(@git_import_source), alert: maintenance_sync_message
+      return
+    end
+
     run = GitImportSourceSyncer.new(source: @git_import_source, actor: current_user).call
     redirect_to admin_git_import_runs_path, notice: "Git同期を実行しました。status=#{run.status}"
   rescue => e
@@ -221,6 +227,14 @@ class Admin::GitImportSourcesController < Admin::BaseController
 
   def repository_option(repository_full_name)
     { value: repository_full_name, text: repository_full_name }
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_sync_message
+    "メンテナンス中のためGit手動同期は停止しています。Git連携設定と同期履歴の閲覧は継続できます。運用手順は本番運用・インフラ前提を確認してください。"
   end
 
   def git_import_source_params
