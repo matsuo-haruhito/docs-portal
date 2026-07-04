@@ -5,8 +5,10 @@ class Admin::DocumentsController < Admin::BaseController
   DOCUMENT_SEARCH_QUERY_MAX_LENGTH = 100
   PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
   PROJECT_SEARCH_LIMIT = 20
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   before_action :require_admin_only!
+  before_action :block_document_mutation_during_maintenance, only: %i[create update destroy archive restore]
   before_action :set_document, only: %i[edit update destroy archive restore]
 
   helper_method :document_return_to_path
@@ -93,6 +95,20 @@ class Admin::DocumentsController < Admin::BaseController
   end
 
   private
+
+  def block_document_mutation_during_maintenance
+    return unless read_only_maintenance_mode?
+
+    redirect_to admin_documents_path, alert: maintenance_document_message
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_document_message
+    "メンテナンス中のため文書マスタの登録・編集・アーカイブ・復元・削除は停止しています。文書マスタ一覧、検索、lifecycle handoff、公開側文書の確認は継続できます。"
+  end
 
   def set_document
     @document = Document.find_by!(public_id: params[:public_id])
