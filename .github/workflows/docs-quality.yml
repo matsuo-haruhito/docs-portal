@@ -26,12 +26,15 @@ on:
       - .github/scripts/check_formal_review_workflow_boundary.rb
       - .github/scripts/check_todo_queue_boundary.rb
       - .github/scripts/check_docusaurus_table_metadata_boundary.rb
+      - .github/scripts/check_search_index_rebuild_history_boundary.rb
       - .github/scripts/check_csv_metadata_json_boundary.rb
       - .github/scripts/check_access_log_boundary.rb
       - .github/scripts/check_api_specification_dry_run_boundary.rb
       - .github/scripts/check_maintenance_route_inventory_boundary.rb
+      - .github/scripts/check_git_import_run_project_filter_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
       - .github/scripts/check_readme_docs_entrance_boundary.rb
+      - .github/scripts/check_microsoft_graph_preview_boundary.rb
       - .github/scripts/check_closed_active_queue_labels.rb
       - .github/scripts/check_frontend_entrypoint_policy.rb
       - .markdownlint-cli2.yaml
@@ -59,12 +62,15 @@ on:
       - .github/scripts/check_formal_review_workflow_boundary.rb
       - .github/scripts/check_todo_queue_boundary.rb
       - .github/scripts/check_docusaurus_table_metadata_boundary.rb
+      - .github/scripts/check_search_index_rebuild_history_boundary.rb
       - .github/scripts/check_csv_metadata_json_boundary.rb
       - .github/scripts/check_access_log_boundary.rb
       - .github/scripts/check_api_specification_dry_run_boundary.rb
       - .github/scripts/check_maintenance_route_inventory_boundary.rb
+      - .github/scripts/check_git_import_run_project_filter_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
       - .github/scripts/check_readme_docs_entrance_boundary.rb
+      - .github/scripts/check_microsoft_graph_preview_boundary.rb
       - .github/scripts/check_closed_active_queue_labels.rb
       - .github/scripts/check_frontend_entrypoint_policy.rb
       - .markdownlint-cli2.yaml
@@ -98,6 +104,9 @@ jobs:
       - name: Check Docusaurus table metadata boundary docs
         run: ruby .github/scripts/check_docusaurus_table_metadata_boundary.rb
 
+      - name: Check search index rebuild history boundary docs
+        run: ruby .github/scripts/check_search_index_rebuild_history_boundary.rb
+
       - name: Check CSV metadata JSON boundary docs
         run: ruby .github/scripts/check_csv_metadata_json_boundary.rb
 
@@ -110,11 +119,17 @@ jobs:
       - name: Check maintenance route inventory boundary docs
         run: ruby .github/scripts/check_maintenance_route_inventory_boundary.rb
 
+      - name: Check Git import run project filter boundary docs
+        run: ruby .github/scripts/check_git_import_run_project_filter_boundary.rb
+
       - name: Check Issue / PR number boundary docs
         run: ruby .github/scripts/check_issue_pr_number_boundary.rb
 
       - name: Check README/docs entrance boundary docs
         run: ruby .github/scripts/check_readme_docs_entrance_boundary.rb
+
+      - name: Check Microsoft Graph preview boundary docs
+        run: ruby .github/scripts/check_microsoft_graph_preview_boundary.rb
 
       - name: Check closed active queue label digest
         run: ruby .github/scripts/check_closed_active_queue_labels.rb --self-test
