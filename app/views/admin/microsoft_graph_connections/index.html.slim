@@ -217,7 +217,7 @@ h1 Microsoft Graph接続
         = link_to "preview利用状態をすべてに戻す", admin_microsoft_graph_connections_path(preview_usage_reset_params), class: "button secondary"
       - if @duplicate_only
         = link_to "要整理案件のみを解除", admin_microsoft_graph_connections_path(duplicate_filter_reset_params), class: "button secondary"
-      = link_to "すべて解除", admin_microsoft_graph_connections_path, class: "button secondary"
+      = link_to "検索と絞り込みを解除", admin_microsoft_graph_connections_path, class: "button secondary"
 - else
   .card
     p.muted まだMicrosoft Graph接続は登録されていません。
