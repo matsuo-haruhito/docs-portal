@@ -61,6 +61,60 @@ RSpec.describe "exposure smoke checklist drift" do
     expect(overlap).to be_empty
   end
 
+  it "keeps operational metadata evidence guidance discoverable without raw-value handoff" do
+    docs_by_path = {
+      "README.md" => REPO_ROOT.join("README.md").read,
+      "docs/README.md" => REPO_ROOT.join("docs/README.md").read,
+      "docs/運用metadata情報露出点検チェックリスト.md" => REPO_ROOT.join("docs/運用metadata情報露出点検チェックリスト.md").read,
+      EVIDENCE_GUIDE_PATH => REPO_ROOT.join(EVIDENCE_GUIDE_PATH).read
+    }
+
+    require_representative_text(
+      docs_by_path.fetch("README.md"),
+      "README.md",
+      [
+        "bin/external_user_exposure_smoke",
+        "bin/operational_metadata_exposure_smoke",
+        "PR / release evidence 用の短い digest",
+        "raw values や詳細 payload は貼らない"
+      ]
+    )
+
+    require_representative_text(
+      docs_by_path.fetch("docs/README.md"),
+      "docs/README.md",
+      [
+        "運用 metadata 情報露出点検チェックリスト",
+        "情報露出 smoke evidence 運用メモ",
+        "external user exposure smoke と operational metadata exposure smoke の PR / release evidence での使い分け",
+        "raw value 非転記境界"
+      ]
+    )
+
+    require_representative_text(
+      docs_by_path.fetch("docs/運用metadata情報露出点検チェックリスト.md"),
+      "docs/運用metadata情報露出点検チェックリスト.md",
+      [
+        "Markdown digest は smoke 名、実行時刻、RSpec 結果",
+        "raw path、raw payload、token-like value、PII-like value",
+        "provider payload は digest に貼らない",
+        "完全な失敗内容は対象 spec / 画面 / runbook へ戻って確認します"
+      ]
+    )
+
+    require_representative_text(
+      docs_by_path.fetch(EVIDENCE_GUIDE_PATH),
+      EVIDENCE_GUIDE_PATH,
+      [
+        "PR / release evidence template",
+        "digest 本文に出ない raw value を手で追記しません",
+        "失敗時の詳細 payload や raw value を足して補強しないでください",
+        "external_user_exposure_smoke は社外ユーザーの閲覧権限境界",
+        "operational_metadata_exposure_smoke は admin / integration metadata の表示境界"
+      ]
+    )
+  end
+
   it "keeps PR and release evidence guidance bounded to digest summaries" do
     guide = REPO_ROOT.join(EVIDENCE_GUIDE_PATH).read
     external_smoke = REPO_ROOT.join("bin/external_user_exposure_smoke").read
@@ -125,6 +179,15 @@ RSpec.describe "exposure smoke checklist drift" do
     raise "#{path.relative_path_from(REPO_ROOT)} is missing checklist section markers" unless checklist_section
 
     checklist_section.scan(/`(#{SPEC_PATH_PATTERN.source})`/).flatten
+  end
+
+  def require_representative_text(source, relative_path, expected_texts)
+    expected_texts.each do |expected_text|
+      next if source.include?(expected_text)
+
+      raise RSpec::Expectations::ExpectationNotMetError,
+            "#{relative_path}: missing operational metadata evidence boundary text: #{expected_text.inspect}"
+    end
   end
 
   def drift_message(guard, smoke_specs, checklist_specs)
