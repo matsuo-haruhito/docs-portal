@@ -46,10 +46,15 @@ RSpec.describe "document file browser source" do
       expect(controller_source).to include('button.setAttribute("aria-pressed", String(pressed))')
       expect(controller_source).to include('const hasQuery = query.length > 0')
       expect(controller_source).to include('const hasKindFilter = this.activeKind !== "all"')
-      expect(controller_source).to include('statusParts.push(`検索: ${rawQuery}`)')
+      expect(controller_source).to include('const querySummaryMaxLength = 28')
+      expect(controller_source).to include('function summarizeQuery(query)')
+      expect(controller_source).to include('statusParts.push(`検索: ${summarizeQuery(rawQuery)}`)')
+      expect(controller_source).to include('statusLabelParts.push(`検索: ${rawQuery}`)')
+      expect(controller_source).to include('this.statusTarget.setAttribute("title", statusLabel)')
+      expect(controller_source).to include('this.statusTarget.setAttribute("aria-label", statusLabel)')
       expect(controller_source).to include('if (!hasQuery || hasKindFilter)')
       expect(controller_source).to include('statusParts.push(`分類: ${kindLabel}`)')
-      expect(controller_source).to include('this.statusTarget.textContent = statusParts.join(" / ")')
+      expect(controller_source).to include('this.statusTarget.textContent = statusText')
       expect(controller_source).to include('this.emptyTarget.textContent = emptyMessages[emptyMessageKey]')
     end
   end
