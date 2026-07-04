@@ -167,6 +167,7 @@ test("item-level search only shows matching items inside otherwise unmatched sec
 test("long search status keeps a short visible summary and full accessible label", async () => {
   const ControllerClass = await loadControllerClass()
   const query = "attachments/specifications/deeply-nested/manual-preview.pdf"
+  const expectedSummary = `${query.slice(0, 25)}...`
   const section = buildSection({
     kind: "visible",
     search: query,
@@ -177,7 +178,7 @@ test("long search status keeps a short visible summary and full accessible label
   controller.connect()
 
   assert.deepEqual(sectionItemVisibility(section), [true])
-  assert.equal(controller.statusTarget.textContent, "1件を表示中 / 検索: attachments/specifications...")
+  assert.equal(controller.statusTarget.textContent, `1件を表示中 / 検索: ${expectedSummary}`)
   assert.equal(controller.statusTarget.attributes.title, `1件を表示中 / 検索: ${query}`)
   assert.equal(controller.statusTarget.attributes["aria-label"], `1件を表示中 / 検索: ${query}`)
   assert.equal(controller.emptyTarget.hidden, true)
