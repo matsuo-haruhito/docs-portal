@@ -3,6 +3,7 @@ class DocumentApprovalRequestsController < BaseController
   USER_FILTER_SEARCH_LIMIT = 20
   DEFAULT_PER_PAGE = 50
   MAX_PER_PAGE = 100
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   before_action :set_document_from_nested_route, only: %i[create]
   before_action :set_document_approval_request, only: %i[show update cancel]
@@ -70,6 +71,11 @@ class DocumentApprovalRequestsController < BaseController
   end
 
   def create
+    if read_only_maintenance_mode?
+      redirect_to project_document_path(@project, @document.slug), alert: document_approval_request_maintenance_message
+      return
+    end
+
     document_approval_request = @document.document_approval_requests.new(create_params)
     document_approval_request.requester = current_user
 
@@ -134,6 +140,14 @@ class DocumentApprovalRequestsController < BaseController
 
   def cancelable_request?
     @document_approval_request.pending? && (current_user.internal? || current_user == @document_approval_request.requester)
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def document_approval_request_maintenance_message
+    "メンテナンス中のため確認依頼の新規作成は停止しています。確認依頼の一覧や詳細の閲覧は継続できます。"
   end
 
   def normalized_status_filter
