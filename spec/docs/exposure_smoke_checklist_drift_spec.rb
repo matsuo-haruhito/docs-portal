@@ -109,8 +109,8 @@ RSpec.describe "exposure smoke checklist drift" do
         "PR / release evidence template",
         "digest 本文に出ない raw value を手で追記しません",
         "失敗時の詳細 payload や raw value を足して補強しないでください",
-        "external_user_exposure_smoke は社外ユーザーの閲覧権限境界",
-        "operational_metadata_exposure_smoke は admin / integration metadata の表示境界"
+        "社外ユーザーの閲覧権限境界を確認する入口",
+        "admin / integration metadata の表示境界を確認する入口"
       ]
     )
   end
