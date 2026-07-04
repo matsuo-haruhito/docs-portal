@@ -6,6 +6,17 @@ RSpec.describe "Document version rollbacks", type: :request do
   let(:project) { create(:project, code: "ROLLBACK", name: "Rollback Project") }
   let(:document) { create(:document, project:, title: "Rollback Document", slug: "rollback-document") }
 
+  around do |example|
+    original_read_only_maintenance = ENV.fetch("READ_ONLY_MAINTENANCE", nil)
+    example.run
+  ensure
+    if original_read_only_maintenance.nil?
+      ENV.delete("READ_ONLY_MAINTENANCE")
+    else
+      ENV["READ_ONLY_MAINTENANCE"] = original_read_only_maintenance
+    end
+  end
+
   def create_version(version_label:, source_commit_hash:, created_at:, status: :published)
     create(
       :document_version,
@@ -72,6 +83,44 @@ RSpec.describe "Document version rollbacks", type: :request do
 
     expect(response).to redirect_to(project_documents_path(project))
     expect(flash[:notice]).to eq("アップロードした文書を取り消し、文書をアーカイブしました。")
+  end
+
+  it "does not run rollback during read-only maintenance" do
+    previous_version = create_version(
+      version_label: "v1.0.0",
+      source_commit_hash: "git-import",
+      created_at: 2.days.ago
+    )
+    version = create_manual_upload_version(version_label: "v1.1.0", created_at: 1.day.ago)
+    document.update!(latest_version: version)
+    before_state = rollback_state(version)
+    allow(DocumentVersionRollback).to receive(:new).and_call_original
+    ENV["READ_ONLY_MAINTENANCE"] = "1"
+
+    sign_in_as(internal_user)
+    rollback(version)
+
+    aggregate_failures do
+      expect(rollback_state(version)).to eq(before_state)
+      expect(document.reload.latest_version).to eq(version)
+      expect(previous_version.reload).to be_published
+      expect(DocumentVersionRollback).not_to have_received(:new)
+      expect(response).to redirect_to(document_version_path(version))
+      expect(flash[:alert]).to eq("メンテナンス中のため文書版の取り消しは停止しています。版詳細、差分、添付確認は閲覧できます。")
+    end
+  end
+
+  it "keeps version detail readable during read-only maintenance" do
+    version = create_manual_upload_version(version_label: "v1.0.0", created_at: 1.day.ago)
+    document.update!(latest_version: version)
+    ENV["READ_ONLY_MAINTENANCE"] = "1"
+
+    sign_in_as(internal_user)
+    get document_version_path(version)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Rollback Document")
+    expect(response.body).to include("v1.0.0")
   end
 
   it "forbids an external user even when the version is visible" do
