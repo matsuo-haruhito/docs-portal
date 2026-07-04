@@ -149,12 +149,7 @@ h1 Microsoft Graph接続
           - row_id = "microsoft-graph-project-#{connection.project_id}"
           - anchored_project_ids << connection.project_id
         - connection_project_label = connection.project.code.present? ? "#{connection.project.code} / #{connection.project.name}" : connection.project.name
-        - connection_preview_usage_label = if connection.enabled? && @preview_connection_ids_by_project[connection.project_id] == connection.id
-          - "previewで使用中"
-        - elsif connection.enabled?
-          - "有効だが未使用"
-        - else
-          - "previewでは未使用"
+        - connection_preview_usage_label = connection.enabled? && @preview_connection_ids_by_project[connection.project_id] == connection.id ? "previewで使用中" : (connection.enabled? ? "有効だが未使用" : "previewでは未使用")
         - delete_confirm = "Microsoft Graph接続設定を削除します。案件: #{connection_project_label}、接続名: #{connection.name}、preview利用: #{connection_preview_usage_label}。Tenant / Client / Drive ID は一覧または編集画面で確認してください。"
         tr id=row_id
           td data-rails-table-preferences-column-key="project"
