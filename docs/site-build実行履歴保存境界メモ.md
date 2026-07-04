@@ -91,6 +91,8 @@ current first slice は read-only evidence 保存です。replay、rebuild、ale
 - long-term artifact storage
 - artifact 本体 download / preview
 
+search index rebuild の履歴は issue `#4586` の境界メモを正本にし、site build artifact 履歴とは別 surface として扱います。current repo に concrete 起動 surface が確認できるまで、`GeneratedFileRun` への保存実装や retry / replay / alert / scheduled rebuild には広げません。詳細は [search index rebuild 履歴境界メモ](./search-index-rebuild履歴境界メモ.md) を確認します。
+
 ## 確認観点
 
 - `docs-site` artifact 以外の代表対象を同時に増やさない
