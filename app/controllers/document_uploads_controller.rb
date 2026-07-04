@@ -1,8 +1,15 @@
 class DocumentUploadsController < BaseController
+  READ_ONLY_MAINTENANCE_MESSAGE = "メンテナンス中のため、手動アップロードは実行できません。文書一覧と既存版は閲覧できます。".freeze
+
   def create
     @project = Project.find_by!(code: params.require(:project_code))
     require_project_access!(@project)
     raise ApplicationError::Forbidden unless current_user.internal?
+
+    if read_only_maintenance?
+      redirect_to project_documents_path(@project), alert: READ_ONLY_MAINTENANCE_MESSAGE
+      return
+    end
 
     result = ManualDocumentUpload.new(
       project: @project,
@@ -18,6 +25,10 @@ class DocumentUploadsController < BaseController
   end
 
   private
+
+  def read_only_maintenance?
+    ActiveModel::Type::Boolean.new.cast(ENV["READ_ONLY_MAINTENANCE"])
+  end
 
   def document_upload_error_redirect_path
     return project_documents_path(@project) if @project.present?
