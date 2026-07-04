@@ -31,6 +31,7 @@ MAINTENANCE_ROUTE_INVENTORY_ROUTE_SIGNALS = [
   "resources :access_requests, only: %i[index create], param: :public_id",
   "post :cancel, on: :member",
   "resources :document_approval_requests, only: %i[index show update], param: :public_id",
+  "resources :document_review_comments, only: %i[create update], param: :public_id",
   "resource :document_zip, only: [:create], controller: \"project_document_zips\"",
   "resource :rollback, only: [:create], controller: \"document_version_rollbacks\""
 ].freeze
@@ -63,7 +64,8 @@ MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
   "| TreeView / 文書 detail tree | `projects#document_tree_all` / `#document_detail_tree` | read-only POST。",
   "| 手動アップロード / import | `document_uploads#create`, `document_version_upload_reviews#create`, `api/internal/*_uploads#create`, `api/internal/artifact_imports#create` | 候補。",
   "| 文書版 rollback / 文書状態変更 | `document_version_rollbacks#create`, `admin/documents#archive` / `#restore`, `admin/bulk_edit_dry_runs#handoff` / `#update` | 要判断。",
-  "| 軽量な利用者操作 | `document_bookmarks#create` / `#destroy` / `#move_to_favorite`, `document_approval_requests#update` / `#cancel`, `document_review_comments#create` / `#update`, `document_delivery_logs#create` / `#update` | 要判断。",
+  "| 文書コメント / Q&A | `document_review_comments#create` / `#update` | current。",
+  "| 軽量な利用者操作 | `document_bookmarks#create` / `#destroy` / `#move_to_favorite`, `document_approval_requests#update` / `#cancel`, `document_delivery_logs#create` / `#update` | 要判断。",
   "`current` として扱うのは、controller guard、request spec、関連 runbook の current support が揃っている操作だけです。",
   "maintenance mode を完全停止や全変更系停止として読まないようにします。"
 ].freeze
