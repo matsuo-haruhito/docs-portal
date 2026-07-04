@@ -3,8 +3,10 @@ class Admin::DocumentCatalogsController < Admin::BaseController
   PROJECT_SEARCH_LIMIT = 20
   DOCUMENT_SEARCH_QUERY_MAX_LENGTH = 100
   DOCUMENT_SEARCH_LIMIT = 20
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   before_action :require_admin_only!
+  before_action :block_document_catalog_mutation_during_maintenance, only: %i[create update destroy]
   before_action :set_document_catalog, only: %i[edit update destroy]
   before_action :load_document_catalogs, only: %i[index create]
   before_action :load_project_documents, only: %i[index create edit update]
@@ -69,6 +71,20 @@ class Admin::DocumentCatalogsController < Admin::BaseController
   end
 
   private
+
+  def block_document_catalog_mutation_during_maintenance
+    return unless read_only_maintenance_mode?
+
+    redirect_to admin_document_catalogs_path, alert: maintenance_document_catalog_message
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_document_catalog_message
+    "メンテナンス中のため文書カタログの作成・更新・削除は停止しています。公開側カタログと管理側一覧・検索は確認できます。"
+  end
 
   def set_document_catalog
     @document_catalog = DocumentCatalog.find_by!(public_id: params[:public_id])
