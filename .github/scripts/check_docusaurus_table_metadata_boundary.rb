@@ -30,7 +30,7 @@ CHECKS = [
       "keeps mermaid and code blocks intact while annotating real tables",
       "adds stable table preference metadata in embedded mode without portal chrome",
       "expected_site_path_key = Base64.urlsafe_encode64(expected_site_path, padding: false)",
-      "expected_table_key = \"document-version:#{version.public_id}:site-path:#{expected_site_path_key}:table:1\"",
+      'expected_table_key = "document-version:#{version.public_id}:site-path:#{expected_site_path_key}:table:1"',
       "portal-doc-table-preference-wrapper",
       "data-docs-portal-document-version",
       "data-docs-portal-site-path",
