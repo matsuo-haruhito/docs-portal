@@ -85,11 +85,16 @@ current first slice は read-only evidence 保存です。replay、rebuild、ale
 
 - search index rebuild の履歴
 - import build handoff の履歴
+- Git連携 run の job 化 / 履歴保存境界
 - replay / rebuild の実行導線
 - alert / notification / scheduled job
 - artifact retention policy の最終決定
 - long-term artifact storage
 - artifact 本体 download / preview
+
+search index rebuild の履歴は issue `#4586` の境界メモを正本にし、site build artifact 履歴とは別 surface として扱います。current repo に concrete 起動 surface が確認できるまで、`GeneratedFileRun` への保存実装や retry / replay / alert / scheduled rebuild には広げません。詳細は [search index rebuild 履歴境界メモ](./search-index-rebuild履歴境界メモ.md) を確認します。
+
+Git連携 run の job 化 / 履歴保存境界は issue `#4604` の境界メモを正本にし、site build artifact 履歴とは別 surface として扱います。Git連携 run では既存 `GitImportRun` と `Git同期履歴` が current source of truth であり、raw clone log、repository contents、credential、manifest 全文を保存しない境界を別に守ります。詳細は [Git連携 run 履歴保存境界メモ](./Git連携run履歴保存境界メモ.md) を確認します。
 
 ## 確認観点
 
