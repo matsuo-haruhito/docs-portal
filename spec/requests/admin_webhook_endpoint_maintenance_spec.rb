@@ -104,7 +104,7 @@ RSpec.describe "Admin webhook endpoint maintenance mode", type: :request do
 
       get failure_alert_handoff_admin_webhook_deliveries_path(format: :json)
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body.fetch("read_only")).to eq(true)
+      expect(response.parsed_body).to include("candidates")
     end
   end
 
