@@ -4,6 +4,9 @@
 - preview_usage_params = { preview_usage: @selected_preview_usage.presence }.compact
 - duplicate_filter_params = @duplicate_only ? { duplicate_only: "1" } : {}
 - current_filter_params = search_params.merge(preview_usage_params).merge(duplicate_filter_params)
+- search_reset_params = preview_usage_params.merge(duplicate_filter_params)
+- preview_usage_reset_params = search_params.merge(duplicate_filter_params)
+- duplicate_filter_reset_params = search_params.merge(preview_usage_params)
 - table_key = :admin_microsoft_graph_connections
 - table_columns = microsoft_graph_connection_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
@@ -18,6 +21,11 @@
 - filter_base_style = "display:inline-flex;align-items:center;gap:0.35rem;padding:0.35rem 0.7rem;border-radius:999px;border:1px solid #d8dee4;line-height:1.2;text-decoration:none;white-space:nowrap;"
 - filter_selected_style = "#{filter_base_style}background:#eaf3ff;border-color:#9ec5fe;color:#1f5aa6;font-weight:700;"
 - filter_link_style = "#{filter_base_style}background:#fff;color:#24292f;"
+- preview_usage_empty_messages = {
+  "preview_selected" => "previewで使用中の接続がないか、検索語で除外されています。Office preview の接続正常性や修復完了を示す表示ではありません。",
+  "enabled_unused" => "有効だが current preview では使われていない接続がないか、検索語で除外されています。",
+  "disabled" => "無効、または preview では未使用の接続がないか、検索語で除外されています。"
+}
 - if @selected_preview_usage == "preview_selected"
   - selected_filter_labels << "previewで使用中"
 - elsif @selected_preview_usage == "enabled_unused"
@@ -198,7 +206,22 @@ h1 Microsoft Graph接続
 - elsif @preview_usage_counts[:all].positive?
   .card
     p.muted 現在の絞り込みに一致する Microsoft Graph接続はありません。
-    p.actions = link_to "検索と絞り込みを解除", admin_microsoft_graph_connections_path, class: "button secondary"
+    - if selected_filter_labels.any?
+      p.muted = "現在の絞り込み: #{selected_filter_labels.join(' / ')}"
+    - if @selected_preview_usage.present?
+      p.muted = preview_usage_empty_messages[@selected_preview_usage]
+    - if @duplicate_only
+      p.muted 同一案件に複数の有効接続が残る案件がないか、検索語または preview利用状態 filter で除外されています。
+    - if @search_query.present?
+      p.muted = "検索語「#{@search_query}」で登録済み接続を絞り込んでいます。検索だけ外すと、preview利用状態や要整理案件 filter は残ります。"
+    p.actions style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.75rem 0 0;"
+      - if @search_query.present?
+        = link_to "検索だけ解除", admin_microsoft_graph_connections_path(search_reset_params), class: "button secondary"
+      - if @selected_preview_usage.present?
+        = link_to "preview利用状態をすべてに戻す", admin_microsoft_graph_connections_path(preview_usage_reset_params), class: "button secondary"
+      - if @duplicate_only
+        = link_to "要整理案件のみを解除", admin_microsoft_graph_connections_path(duplicate_filter_reset_params), class: "button secondary"
+      = link_to "すべて解除", admin_microsoft_graph_connections_path, class: "button secondary"
 - else
   .card
     p.muted まだMicrosoft Graph接続は登録されていません。
