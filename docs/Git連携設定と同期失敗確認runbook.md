@@ -166,6 +166,7 @@ current implementation では、同じ commit SHA が既に同期済みなら `s
 ## 8. 関連文書
 
 - [Git連携インポート](./Git連携インポート.md)
+- [Git手動同期 maintenance-mode 境界](./Git手動同期maintenance-mode境界.md)
 - [importと変更系dry-run](./specs/importと変更系dry-run.md)
 - [ローカル編集からポータル更新までの最小運用案](./ローカル編集からポータル更新までの最小運用案.md)
 - [README](../README.md)
