@@ -53,6 +53,25 @@ RSpec.describe "Document uploads", type: :request do
     expect(response).to redirect_to(document_version_path(version, upload_review: "1"))
   end
 
+  it "does not create a draft upload candidate during read-only maintenance" do
+    sign_in_as(user)
+
+    with_read_only_maintenance("true") do
+      expect do
+        post project_document_uploads_path(project), params: {
+          source_path: "docs/specs",
+          file: uploaded_file("overview.md", "# Overview")
+        }
+      end.not_to have_enqueued_job(DocusaurusPreviewBuildJob)
+    end
+
+    expect(Document.count).to eq(0)
+    expect(DocumentVersion.count).to eq(0)
+    expect(DocumentFile.count).to eq(0)
+    expect(response).to redirect_to(project_documents_path(project))
+    expect(flash[:alert]).to include("メンテナンス中")
+  end
+
   it "redirects missing project_code upload errors to the projects list" do
     sign_in_as(user)
 
@@ -149,6 +168,21 @@ RSpec.describe "Document uploads", type: :request do
     expect(response.body).to include("Docusaurusプレビュー生成中")
   end
 
+  it "keeps the upload review page readable during read-only maintenance" do
+    sign_in_as(user)
+    document = create(:document, project: project, title: "Guide", slug: "guide")
+    version = create(:document_version, document: document, status: :draft, source_commit_hash: "manual-upload")
+    version.assign_source_path_metadata!(source_path: "docs/guide.md", snapshot_kind: "received_markdown")
+    version.save!
+
+    with_read_only_maintenance("true") do
+      get document_version_path(version, upload_review: "1")
+    end
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("アップロード候補の確認")
+  end
+
   it "renders iframe upload wiring on the preview page for internal users" do
     sign_in_as(user)
     document = create(:document, project: project, title: "Guide", slug: "guide")
@@ -198,6 +232,30 @@ RSpec.describe "Document uploads", type: :request do
     expect(upload_version.reload).to be_published
     expect(upload_version.published_by_user).to eq(user)
     expect(document.reload.latest_version).to eq(upload_version)
+  end
+
+  %w[approve reject].each do |decision|
+    it "does not #{decision} a draft upload candidate during read-only maintenance" do
+      sign_in_as(user)
+      document = create(:document, project: project, title: "Guide", slug: "guide")
+      previous_version = create(:document_version, document: document)
+      previous_version.assign_source_path_metadata!(source_path: "docs/guide.md", snapshot_kind: "received_markdown")
+      previous_version.save!
+      document.update!(latest_version: previous_version)
+      upload_version = create(:document_version, document: document, status: :draft, source_commit_hash: "manual-upload")
+      upload_version.assign_source_path_metadata!(source_path: "docs/guide.md", snapshot_kind: "received_markdown")
+      upload_version.save!
+
+      with_read_only_maintenance("true") do
+        post document_version_upload_review_path(upload_version), params: { decision: decision }
+      end
+
+      expect(response).to redirect_to(document_version_path(upload_version))
+      expect(flash[:alert]).to include("メンテナンス中")
+      expect(upload_version.reload).to be_draft
+      expect(upload_version.published_by_user).to be_nil
+      expect(document.reload.latest_version).to eq(previous_version)
+    end
   end
 
   it "rejects a draft upload candidate without promoting it" do
@@ -304,6 +362,18 @@ RSpec.describe "Document uploads", type: :request do
   end
 
   private
+
+  def with_read_only_maintenance(value)
+    original = ENV["READ_ONLY_MAINTENANCE"]
+    ENV["READ_ONLY_MAINTENANCE"] = value
+    yield
+  ensure
+    if original.nil?
+      ENV.delete("READ_ONLY_MAINTENANCE")
+    else
+      ENV["READ_ONLY_MAINTENANCE"] = original
+    end
+  end
 
   def uploaded_file(filename, content)
     tempfile = Tempfile.new([File.basename(filename, ".*"), File.extname(filename)])
