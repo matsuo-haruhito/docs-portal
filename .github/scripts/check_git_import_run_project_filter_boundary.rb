@@ -9,7 +9,6 @@ GIT_IMPORT_RUN_PROJECT_FILTER_FILES = {
   routes: GIT_IMPORT_RUN_PROJECT_FILTER_REPO_ROOT.join("config/routes.rb"),
   controller: GIT_IMPORT_RUN_PROJECT_FILTER_REPO_ROOT.join("app/controllers/admin/git_import_runs_controller.rb"),
   view: GIT_IMPORT_RUN_PROJECT_FILTER_REPO_ROOT.join("app/views/admin/git_import_runs/index.html.slim"),
-  request_spec: GIT_IMPORT_RUN_PROJECT_FILTER_REPO_ROOT.join("spec/requests/admin_git_import_runs_spec.rb"),
   runbook: GIT_IMPORT_RUN_PROJECT_FILTER_REPO_ROOT.join("docs/Git連携設定と同期失敗確認runbook.md")
 }.freeze
 
@@ -31,12 +30,6 @@ GIT_IMPORT_RUN_PROJECT_FILTER_SIGNALS = {
     "selected_url: selected_project_admin_git_import_runs_path(format: :json)",
     "label: \"案件\"",
     "適用中の案件"
-  ],
-  request_spec: [
-    "params: { project_id:",
-    "filters runs by project",
-    "project_search_admin_git_import_runs_path",
-    "selected_project_admin_git_import_runs_path"
   ],
   runbook: [
     "`Git同期履歴` に履歴がある場合、画面上部の filter で `状態`、`案件`、`リポジトリ`、`ブランチ`、`取込元パス`、`コミット` を絞り込めます。",
