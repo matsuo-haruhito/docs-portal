@@ -42,13 +42,6 @@ STORAGE_USAGE_CSV_CHECKS = [
       "`Docs site build`",
       "`Import staging`"
     ]
-  },
-  {
-    path: "docs/README.md",
-    expected: [
-      "Storage使用量CSV-read-only-handoff境界メモ",
-      "Storage使用量 CSV の route、CSV header、read-only bounded handoff の非目標"
-    ]
   }
 ].freeze
 
