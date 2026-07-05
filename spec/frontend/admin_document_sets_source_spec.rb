@@ -32,4 +32,14 @@ RSpec.describe "admin/document_sets form source" do
     expect(css_source).to include(".document-set-document-filter__empty")
     expect(css_source).to include("tr.document-set-document-filter__row.is-selected")
   end
+
+  it "lets the filter status wrap within the toolbar on narrow viewports" do
+    status_rule = css_source[/\.document-set-document-filter__status \{.*?\n\}/m]
+
+    expect(status_rule).to include("flex: 1 1 16rem;")
+    expect(status_rule).to include("min-width: min(100%, 16rem);")
+    expect(status_rule).to include("overflow-wrap: anywhere;")
+    expect(status_rule).to include("white-space: normal;")
+    expect(status_rule).not_to include("white-space: nowrap;")
+  end
 end

@@ -36,6 +36,24 @@ CHECKS = [
       "監査ログ保存期間や retention policy は変えない",
       "`q` は `target_name` / `ip_address` の補助検索であり、user_agent 検索や全文検索 index ではない"
     ]
+  },
+  {
+    path: "app/views/admin/access_logs/index.html.slim",
+    expected: [
+      "- table_key = :admin_access_logs",
+      "table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: \"監査ログ一覧の表示設定\")",
+      "CSV export は現在の絞り込み条件に一致する最新200件を、監査用途の固定列で出力します。画面の表示列設定とは独立しています。",
+      "metadata JSON は監査ログ行データではなく、条件・scope・page・summary を確認する補助出力です。",
+      "th data-rails-table-preferences-column-key=\"accessed_at\" 日時",
+      "th data-rails-table-preferences-column-key=\"action_type\" 操作",
+      "th data-rails-table-preferences-column-key=\"target\" 対象",
+      "th data-rails-table-preferences-column-key=\"user\" ユーザー",
+      "th data-rails-table-preferences-column-key=\"company\" 会社",
+      "th data-rails-table-preferences-column-key=\"project\" 案件",
+      "th data-rails-table-preferences-column-key=\"document\" 文書",
+      "th data-rails-table-preferences-column-key=\"document_version\" 版",
+      "th data-rails-table-preferences-column-key=\"ip_address\" IPアドレス"
+    ]
   }
 ].freeze
 

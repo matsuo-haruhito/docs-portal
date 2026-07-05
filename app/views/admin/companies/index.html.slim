@@ -54,6 +54,7 @@ h1 会社マスタ
         th data-rails-table-preferences-column-key="actions"
     tbody
       - @companies.each do |company|
+        - company_delete_confirm = "会社「#{company.display_name}」を完全に削除しますか？無効化ではありません。所属ユーザーや文書権限への影響を確認してください。"
         tr
           td data-rails-table-preferences-column-key="domain" = company.domain
           td data-rails-table-preferences-column-key="name" = company.name.presence || "-"
@@ -62,7 +63,7 @@ h1 会社マスタ
           td.actions data-rails-table-preferences-column-key="actions"
             = edit_link_to "編集", edit_admin_company_path(company, return_to: company_return_to)
             - if admin_user?
-              = delete_link_to "削除", admin_company_path(company, return_to: company_return_to), confirm: "会社「#{company.display_name}」を削除しますか？所属ユーザーや文書権限への影響を確認してください。"
+              = delete_link_to "削除（影響確認）", admin_company_path(company, return_to: company_return_to), confirm: company_delete_confirm
 
   - if @companies_pagination[:total_pages] > 1
     nav.pagination aria-label="会社一覧ページ"
