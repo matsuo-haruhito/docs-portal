@@ -46,32 +46,30 @@ RSpec.describe "Admin webhook delivery detail link labels", type: :request do
       created_at: Time.zone.local(2026, 6, 10, 9, 0, 0)
     )
 
-    get admin_webhook_deliveries_path(status: "failed", response_status: "500")
+    get admin_webhook_deliveries_path(status: "failed")
 
     expect(response).to have_http_status(:ok)
 
     labels = detail_links.map { |link| link["aria-label"] }
     titles = detail_links.map { |link| link["title"] }
+    hrefs = detail_links.map { |link| link["href"] }
 
     expect(labels).to contain_exactly(
-      a_string_including("Alpha Hook", "検索条件とページを保って開く")
+      a_string_including("Alpha Hook", "失敗", "検索条件とページを保って開く"),
+      a_string_including("Beta Hook", "失敗", "検索条件とページを保って開く")
     )
-    expect(labels.first).to include("失敗")
+    expect(labels.uniq.size).to eq(2)
     expect(titles).to eq(labels)
     expect(labels.join).not_to include("hooks.example")
-    expect(detail_links.map { |link| link["href"] }).to include(
+    expect(hrefs).to include(
       admin_webhook_delivery_path(
         first_delivery.public_id,
         status: "failed",
-        response_status: "500",
         return_context: "deliveries_index"
-      )
-    )
-    expect(detail_links.map { |link| link["href"] }).not_to include(
+      ),
       admin_webhook_delivery_path(
         second_delivery.public_id,
         status: "failed",
-        response_status: "500",
         return_context: "deliveries_index"
       )
     )
