@@ -5,9 +5,11 @@ class Admin::WebhookEndpointsController < Admin::BaseController
   ENDPOINT_DEFAULT_PER_PAGE = 25
   ENDPOINT_MAX_PER_PAGE = 50
   RECENT_DELIVERY_DISPLAY_LIMIT = 50
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   before_action :require_admin_only!
   before_action :set_webhook_endpoint, only: %i[edit update destroy]
+  before_action :stop_webhook_endpoint_changes_during_read_only_maintenance, only: %i[create update destroy]
 
   def index
     @delivery_status_filter = delivery_status_filter
@@ -62,6 +64,26 @@ class Admin::WebhookEndpointsController < Admin::BaseController
 
   def set_webhook_endpoint
     @webhook_endpoint = WebhookEndpoint.find_by!(public_id: params[:public_id])
+  end
+
+  def stop_webhook_endpoint_changes_during_read_only_maintenance
+    return unless read_only_maintenance_mode?
+
+    redirect_to webhook_endpoint_maintenance_redirect_path, alert: webhook_endpoint_maintenance_message
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def webhook_endpoint_maintenance_redirect_path
+    return edit_admin_webhook_endpoint_path(@webhook_endpoint.public_id) if action_name == "update" && @webhook_endpoint.present?
+
+    admin_webhook_endpoints_path
+  end
+
+  def webhook_endpoint_maintenance_message
+    "メンテナンス中のためWebhook設定の作成・更新・削除は停止しています。Webhook設定一覧と送信履歴は閲覧できます。"
   end
 
   def webhook_endpoint_params
