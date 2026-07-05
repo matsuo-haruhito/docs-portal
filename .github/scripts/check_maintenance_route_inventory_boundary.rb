@@ -75,7 +75,8 @@ MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
   "rollback / bulk edit / retention・discard policy とは別 surface として扱う。",
   "| 文書版 rollback / 文書状態変更 | `document_version_rollbacks#create`, `admin/bulk_edit_dry_runs#handoff` / `#update` | 要判断。",
   "rollback、bulk edit 実行、retention / discard policy は文書マスタ mutation の current support とは別に扱う。",
-  "| 軽量な利用者操作 | `document_bookmarks#create` / `#destroy` / `#move_to_favorite`, `document_approval_requests#update` / `#cancel`, `document_review_comments#create` / `#update`, `document_delivery_logs#create` / `#update` | 要判断。",
+  "| 外部送付履歴 | `document_delivery_logs#create` / `#update` | current。",
+  "| 軽量な利用者操作 | `document_bookmarks#create` / `#destroy` / `#move_to_favorite`, `document_approval_requests#update` / `#cancel`, `document_review_comments#create` / `#update` | 要判断。",
   "`current` として扱うのは、controller guard、request spec、関連 runbook の current support が揃っている操作だけです。",
   "maintenance mode を完全停止や全変更系停止として読まないようにします。"
 ].freeze
