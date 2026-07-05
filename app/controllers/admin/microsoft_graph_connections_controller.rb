@@ -3,9 +3,11 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
   INDEX_RESULT_LIMIT = 50
   PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
   PROJECT_SEARCH_LIMIT = 20
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   before_action :require_admin_only!
   before_action :set_microsoft_graph_connection, only: %i[edit update destroy]
+  before_action :stop_microsoft_graph_connection_changes_during_read_only_maintenance, only: %i[create update destroy]
 
   def index
     load_index_state
@@ -71,6 +73,27 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
 
   def set_microsoft_graph_connection
     @microsoft_graph_connection = MicrosoftGraphConnection.find_by!(public_id: params[:public_id])
+  end
+
+  def stop_microsoft_graph_connection_changes_during_read_only_maintenance
+    return if resolve_share_url_request?
+    return unless read_only_maintenance_mode?
+
+    redirect_to microsoft_graph_connection_maintenance_redirect_path, alert: microsoft_graph_connection_maintenance_message
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def microsoft_graph_connection_maintenance_redirect_path
+    return edit_admin_microsoft_graph_connection_path(@microsoft_graph_connection.public_id) if action_name == "update" && @microsoft_graph_connection.present?
+
+    admin_microsoft_graph_connections_path
+  end
+
+  def microsoft_graph_connection_maintenance_message
+    "メンテナンス中のためMicrosoft Graph接続設定の作成・更新・削除は停止しています。接続一覧、検索、preview利用状態、共有URL候補取得は確認できます。"
   end
 
   def load_index_state
