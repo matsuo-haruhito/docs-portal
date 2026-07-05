@@ -20,7 +20,7 @@ RSpec.describe "Admin generated file run detail link accessibility", type: :requ
     )
     completed_run = create_run!(
       job_id: "fallback_job_identifier",
-      generator: "",
+      generator: "file_manifest_builder",
       output_writer: "filesystem",
       status: :completed,
       error_message: "metadata should stay out",
@@ -35,7 +35,7 @@ RSpec.describe "Admin generated file run detail link accessibility", type: :requ
 
     expect(labels).to contain_exactly(
       a_string_including(failed_run.public_id, "ai_usecase_decision_flow"),
-      a_string_including(completed_run.public_id, "filesystem")
+      a_string_including(completed_run.public_id, "file_manifest_builder")
     )
     expect(labels.uniq.size).to eq(labels.size)
     expect(labels).to all(include("の詳細を開く"))
