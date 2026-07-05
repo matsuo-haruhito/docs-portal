@@ -7,7 +7,6 @@
 - delivery_page_start = @webhook_deliveries_total_count.zero? ? 0 : @webhook_deliveries_offset + 1
 - delivery_page_end = @webhook_deliveries_offset + @webhook_deliveries.size
 - delivery_pagination_params = @delivery_filters.merge(page: @webhook_deliveries_page)
-- delivery_detail_link_cue = "検索条件とページを保って詳細を開く"
 
 h1 Webhook送信履歴検索
 = render "admin/nav"
@@ -84,6 +83,7 @@ p.actions
           th data-rails-table-preferences-column-key="actions"
       tbody
         - @webhook_deliveries.each do |delivery|
+          - delivery_detail_link_cue = webhook_delivery_detail_link_cue(delivery)
           tr
             td data-rails-table-preferences-column-key="created_at" = l(delivery.created_at, format: :short)
             td data-rails-table-preferences-column-key="endpoint" = delivery.webhook_endpoint.name
