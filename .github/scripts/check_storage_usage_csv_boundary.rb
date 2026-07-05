@@ -49,7 +49,7 @@ STORAGE_USAGE_CSV_CHECKS = [
       "`scope_status`、`display_limit`、`safe_relative_path`、`read_only_note` を含む bounded read-only handoff",
       "`document_files` CSV は `DocumentFile` 実体の Project / Document breakdown",
       "`docs_sites` / `imports` CSV は direct child preview",
-      "cleanup、delete、archive、retention、billing、quota、GCS policy、repair、full export の判断ではない"
+      "cleanup / delete / archive / retention / billing / quota / GCS policy / repair / full export の判断には使わない"
     ]
   }
 ].freeze
