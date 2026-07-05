@@ -26,6 +26,9 @@ current 実装の前提:
 - `Storage使用量` は `StorageUsageSummary` で local `storage/document_files` / `storage/docs_sites` / `storage/imports` の file count と概算使用量を read-only に出す
 - `Storage使用量` の `大きい内訳` は、各領域の直下項目を bytes / file count / 最終更新つきで上位 5 件まで表示する read-only preview として扱う。`storage/docs_sites` と `storage/imports` もここで増加元の当たりを付けられる
 - `Storage使用量` の `DocumentFile 実体の Project / Document 上位` は、`storage/document_files` に紐づく `DocumentFile` 実体だけを Project / Document 単位で概算集計し、上位 5 件を read-only preview として表示する
+- `Storage使用量` の detail CSV は、`scope_status`、`display_limit`、`safe_relative_path`、`read_only_note` を含む bounded read-only handoff として読む
+- `document_files` CSV は `DocumentFile` 実体の Project / Document breakdown を渡すためのもの、`docs_sites` / `imports` CSV は direct child preview を渡すためのものとして分ける
+- CSV の `read_only_note` は、cleanup、delete、archive、retention、billing、quota、GCS policy、repair、full export の判断ではないことを明示する
 - `Storage使用量` の `次の確認先` は、各領域から既存確認画面や既存 docs へ戻るための link cue であり、削除、cleanup、retention 対象を確定する操作ではない
 - `Storage使用量` の `次の確認先` に `この行は read-only 集計です` と出る行は、追加導線の未設定ではなく、その行の file count / 概算使用量を読むだけの領域として扱う
 - `運用失敗入口` は、生成ファイルや外部送付履歴などの保存済み failed 履歴と、同じ identity の最新 run が連続 failed かを見る `継続失敗候補` を分けて表示する
@@ -216,6 +219,9 @@ current 実装の前提:
 - `合計` はこの 3 領域の合算として読み、Project / Document 単位の内訳は別枠の `DocumentFile 実体の Project / Document 上位` で見る
 - `DocumentFile 実体の Project / Document 上位` は、`storage/document_files` に紐づく `DocumentFile` 実体だけを Project / Document 単位で概算集計する。表示は上位 5 件に限定され、Project code/name、Document title/slug、file count、実体欠落件数、概算使用量、最終更新を読むための read-only preview として扱う
 - 実体が存在しない file は `実体欠落` 件数に入り、raw absolute path は表示されない。欠落の詳細調査は `文書ファイル健全性` / `欠落ファイル詳細` へ戻す
+- Storage usage detail CSV は、`scope_status`、`display_limit`、`safe_relative_path`、`read_only_note` を含む bounded read-only handoff として読み、cleanup / delete / archive / retention / billing / quota / GCS policy / repair / full export の判断には使わない
+- `document_files` CSV は `DocumentFile` 実体の Project / Document breakdown、`docs_sites` / `imports` CSV は direct child preview として分けて読み、両者の粒度を混同しない
+- `safe_relative_path` は raw absolute path ではなく、PR や運用引き継ぎで共有しやすい確認用 path preview として扱う
 - `次の確認先` は、各領域の数値を見たあとに既存の詳細画面や運用 docs へ戻るための入口であり、dashboard 上で削除、archive、cleanup、retention policy 決定へ進める操作ではない
 - `次の確認先` が `この行は read-only 集計です` の行は、追加の詳細画面や docs へ移動せず、その領域の file count / 概算使用量だけを確認する行として扱う
 
