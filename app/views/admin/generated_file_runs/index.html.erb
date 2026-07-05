@@ -144,6 +144,8 @@
           <% @generated_file_runs.each do |run| %>
             <% row_retry_confirm_message = "#{run.public_id} 1件だけを再実行します。元の実行履歴は診断用に残り、再実行後は新しい実行IDで結果を確認します。実行しますか？" %>
             <% row_retry_action_label = "#{run.public_id} を1件だけ再実行キューに投入" %>
+            <% run_detail_context = run.generator.presence || run.output_writer.presence || run.job_id %>
+            <% run_detail_action_label = "#{run.public_id} / #{generated_file_run_status_label(run.status)} / #{run_detail_context} の詳細を開く" %>
             <tr>
               <td class="px-4 py-3 font-mono" data-rails-table-preferences-column-key="public_id">
                 <%= link_to run.public_id, admin_generated_file_run_path(run.public_id, detail_path_params), class: "text-blue-600 underline" %>
@@ -157,7 +159,7 @@
               <td class="px-4 py-3" data-rails-table-preferences-column-key="finished_at"><%= l(run.finished_at, format: :long) if run.finished_at %></td>
               <td class="px-4 py-3" data-rails-table-preferences-column-key="actions">
                 <div class="flex gap-2">
-                  <%= link_to "詳細", admin_generated_file_run_path(run.public_id, detail_path_params), class: "rounded border px-2 py-1 text-xs" %>
+                  <%= link_to "詳細", admin_generated_file_run_path(run.public_id, detail_path_params), class: "rounded border px-2 py-1 text-xs", title: run_detail_action_label, aria: { label: run_detail_action_label } %>
                   <%= button_to "この行を再実行", retry_run_admin_generated_file_run_path(run.public_id, detail_path_params), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white", title: row_retry_action_label, aria: { label: row_retry_action_label }, form: { data: { turbo_confirm: row_retry_confirm_message } } %>
                 </div>
               </td>
