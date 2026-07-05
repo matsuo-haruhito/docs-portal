@@ -169,6 +169,7 @@
       <tbody class="divide-y divide-gray-100">
         <% if @generated_file_events.any? %>
           <% @generated_file_events.each do |event| %>
+            <% event_detail_action_label = "#{event.public_id} / #{generated_file_event_status_label(event.status)} / #{generated_file_operation_label(event.operation)} の詳細を開く" %>
             <tr>
               <td class="px-4 py-3 font-mono" data-rails-table-preferences-column-key="public_id">
                 <%= link_to event.public_id, admin_generated_file_event_path(event.public_id, detail_path_params), class: "text-blue-600 underline" %>
@@ -183,7 +184,7 @@
               <td class="px-4 py-3" data-rails-table-preferences-column-key="processed_at"><%= l(event.processed_at, format: :long) if event.processed_at %></td>
               <td class="px-4 py-3" data-rails-table-preferences-column-key="actions">
                 <div class="flex gap-2">
-                  <%= link_to "詳細", admin_generated_file_event_path(event.public_id, detail_path_params), class: "rounded border px-2 py-1 text-xs" %>
+                  <%= link_to "詳細", admin_generated_file_event_path(event.public_id, detail_path_params), class: "rounded border px-2 py-1 text-xs", title: event_detail_action_label, aria: { label: event_detail_action_label } %>
                   <%= button_to "この1件を再投入", retry_dispatch_admin_generated_file_event_path(event.public_id), method: :post, class: "rounded bg-blue-600 px-2 py-1 text-xs text-white", title: "#{event.public_id} 1件を再投入キューに投入（一括再投入ではありません）", aria: {label: "#{event.public_id} 1件を再投入キューに投入（一括再投入ではありません）"} %>
                 </div>
               </td>
