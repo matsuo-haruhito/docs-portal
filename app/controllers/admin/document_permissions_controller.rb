@@ -1,7 +1,10 @@
 require "csv"
 
 class Admin::DocumentPermissionsController < Admin::BaseController
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
+
   before_action :require_admin_only!
+  before_action :block_document_permission_mutation_during_maintenance, only: %i[create update destroy]
   before_action :set_document_permission, only: %i[edit update destroy]
 
   PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
@@ -110,6 +113,20 @@ class Admin::DocumentPermissionsController < Admin::BaseController
   end
 
   private
+
+  def block_document_permission_mutation_during_maintenance
+    return unless read_only_maintenance_mode?
+
+    redirect_to admin_document_permissions_path, alert: maintenance_document_permission_message
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_document_permission_message
+    "メンテナンス中のため文書権限の作成・更新・削除は停止しています。概要、一覧、検索、CSV は確認できます。"
+  end
 
   def set_document_permission
     @document_permission = DocumentPermission.find_by!(public_id: params[:public_id])
