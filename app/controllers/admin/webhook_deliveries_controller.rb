@@ -7,6 +7,7 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
   ERROR_QUERY_MAX_LENGTH = 100
   WEBHOOK_ENDPOINT_SEARCH_QUERY_MAX_LENGTH = 100
   WEBHOOK_ENDPOINT_SEARCH_LIMIT = 20
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
   DELIVERY_STATUS_FILTERS = Admin::WebhookEndpointsController::DELIVERY_STATUS_FILTERS
   RETURN_DELIVERY_STATUS_FILTERS = (["all"] + DELIVERY_STATUS_FILTERS).freeze
   DATE_FILTER_LABELS = {
@@ -49,6 +50,11 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
       return
     end
 
+    if read_only_maintenance_mode?
+      redirect_to @delivery_return_path, alert: maintenance_retry_message
+      return
+    end
+
     WebhookDeliveryDispatcher.new.redeliver!(@webhook_delivery)
     redirect_to @delivery_return_path, notice: "Webhookを再送しました。結果は送信履歴で確認してください。"
   end
@@ -56,6 +62,11 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
   def retry_failed
     unless params[:delivery_status].to_s == "failed"
       redirect_to admin_webhook_endpoints_path, alert: "まとめて再送は失敗のみ表示から実行してください。"
+      return
+    end
+
+    if read_only_maintenance_mode?
+      redirect_to admin_webhook_endpoints_path(delivery_status: "failed"), alert: maintenance_retry_message
       return
     end
 
@@ -126,6 +137,14 @@ class Admin::WebhookDeliveriesController < Admin::BaseController
       @delivery_return_params = @return_delivery_status == "all" ? {} : { return_delivery_status: @return_delivery_status }
       @delivery_return_context = :webhook_endpoints
     end
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_retry_message
+    "メンテナンス中のためWebhook再送は停止しています。送信履歴とfailure handoffは閲覧できます。運用手順は本番運用・インフラ前提を確認してください。"
   end
 
   def set_return_delivery_status

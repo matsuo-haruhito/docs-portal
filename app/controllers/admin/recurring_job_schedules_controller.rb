@@ -4,6 +4,7 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
   SCHEDULE_QUERY_MAX_LENGTH = 100
   RUN_QUERY_MAX_LENGTH = SCHEDULE_QUERY_MAX_LENGTH
   GIT_IMPORT_OPERATIONS_LIMIT = 20
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   before_action :require_admin_only!
   before_action :set_schedule, only: %i[show request_run]
@@ -22,6 +23,11 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
   end
 
   def sync_definitions
+    if read_only_maintenance_mode?
+      redirect_to admin_recurring_job_schedules_path(schedule_filter_redirect_params), alert: maintenance_operation_message
+      return
+    end
+
     RecurringJobDispatcherJob.perform_now
     redirect_to admin_recurring_job_schedules_path(schedule_filter_redirect_params), notice: "定期ジョブ定義を同期しました。"
   end
@@ -56,6 +62,11 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
   end
 
   def request_run
+    if read_only_maintenance_mode?
+      redirect_to admin_recurring_job_schedule_path(@schedule, return_to: @return_to_path), alert: maintenance_operation_message
+      return
+    end
+
     @schedule.update!(run_requested_at: Time.current)
     RecurringJobDispatcherJob.perform_later
     redirect_to admin_recurring_job_schedule_path(@schedule, return_to: @return_to_path), notice: "定期ジョブの即時実行を要求しました。"
@@ -66,6 +77,14 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
   def set_schedule
     @schedule = RecurringJobSchedule.find_by!(public_id: params[:public_id])
     @return_to_path = safe_return_to_path(admin_recurring_job_schedules_path)
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_operation_message
+    "メンテナンス中のため定期ジョブの定義同期・即時実行要求は停止しています。一覧・詳細・実行履歴は閲覧できます。運用手順は本番運用・インフラ前提を確認してください。"
   end
 
   def git_import_schedule?
