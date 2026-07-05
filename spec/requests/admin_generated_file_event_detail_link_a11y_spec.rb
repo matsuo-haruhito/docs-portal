@@ -22,7 +22,7 @@ RSpec.describe "Admin generated file event detail link accessibility", type: :re
       error_message: "metadata should stay out"
     )
 
-    get admin_generated_file_events_path(status: "failed", page: 1)
+    get admin_generated_file_events_path(page: 1)
 
     expect(response).to have_http_status(:ok)
     detail_links = parsed_html.css('a[href]').select { |link| link.text.squish == "詳細" }
