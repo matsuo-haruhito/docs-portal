@@ -61,6 +61,8 @@ MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
   "| 定期ジョブ操作 | `admin/recurring_job_schedules#sync_definitions` / `#request_run` | 要判断。",
   "| Git 手動同期 | `admin/git_import_sources#sync` | 候補。",
   "| 外部フォルダ同期 | `admin/external_folder_sync_sources#dry_run` / `#apply` / `#force_apply` / `#enqueue` / `#subscribe` / `#unsubscribe` / `#recheck_metadata` | 要判断。",
+  "| 文書 ZIP 生成 | `projects/:project_code/document_zip#create` | current。",
+  "文書一覧・文書詳細・個別添付 preview / download は read-only に残す。",
   "| アクセス申請 | `access_requests#create` / `#cancel`, `admin/access_requests#update` | 要判断。",
   "| 既読確認 | `read_confirmations#create` / `#destroy` | current。",
   "| TreeView / 文書 detail tree | `projects#document_tree_all` / `#document_detail_tree` | read-only POST。",
