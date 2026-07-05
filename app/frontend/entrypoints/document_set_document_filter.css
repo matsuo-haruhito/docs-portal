@@ -24,7 +24,11 @@
 }
 
 .document-set-document-filter__status {
-  white-space: nowrap;
+  flex: 1 1 16rem;
+  min-width: min(100%, 16rem);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .document-set-document-filter__empty {
