@@ -26,6 +26,7 @@
 - Rails ポータル本体の画面、導線、認可、公開モデルを保守する
 - Docusaurus build を公開成果物として扱う current runtime と import 導線を保守する
 - Google Drive 外部フォルダ同期、internal import API、Webhook など app 本体の運用境界を保守する
+- `READ_ONLY_MAINTENANCE` 中に止める変更操作と read-only に残す確認導線を、current code、request spec、runbook で同期する
 - README、`docs/`、runbook を通じて current app behavior の正本を整える
 
 ## この repo の責務外
@@ -49,7 +50,8 @@
 2. [docs/README.md](./docs/README.md)
 3. [docs/アプリケーション仕様.md](./docs/アプリケーション仕様.md)
 4. [docs/開発・保守ガイド.md](./docs/開発・保守ガイド.md)
-5. タスクに対応する個別仕様 / runbook
+5. [docs/本番運用・インフラ前提.md](./docs/本番運用・インフラ前提.md) - `READ_ONLY_MAINTENANCE`、本番 health check、storage / import / build / 外部連携の運用境界を確認するときの入口
+6. タスクに対応する個別仕様 / runbook
 
 ## 関連 repo
 
