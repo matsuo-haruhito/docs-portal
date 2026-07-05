@@ -1,7 +1,10 @@
 require "csv"
 
 class Admin::DocumentSetsController < Admin::BaseController
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
+
   before_action :require_admin_only!
+  before_action :block_document_set_mutation_during_maintenance, only: %i[create update destroy]
   before_action :set_document_set, only: %i[edit update destroy]
   before_action :load_filters, only: %i[index create]
   before_action :load_document_sets, only: %i[index create]
@@ -117,6 +120,20 @@ class Admin::DocumentSetsController < Admin::BaseController
   end
 
   private
+
+  def block_document_set_mutation_during_maintenance
+    return unless read_only_maintenance_mode?
+
+    redirect_to admin_document_sets_path, alert: maintenance_document_set_message
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_document_set_message
+    "メンテナンス中のため文書セットの作成・更新・削除は停止しています。一覧、検索、CSV、公開側表示は確認できます。"
+  end
 
   def set_document_set
     @document_set = DocumentSet.find_by!(public_id: params[:public_id])
