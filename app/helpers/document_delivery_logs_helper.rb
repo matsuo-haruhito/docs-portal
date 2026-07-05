@@ -22,4 +22,30 @@ module DocumentDeliveryLogsHelper
       [label, addresses]
     end
   end
+
+  def document_delivery_log_detail_link_label(log)
+    [
+      "送付履歴詳細: #{document_delivery_log_status_label(log)}",
+      "案件: #{log.project.name}",
+      "対象: #{document_delivery_log_target_label(log)}",
+      document_delivery_log_primary_recipient_label(log)
+    ].join(" / ")
+  end
+
+  def document_delivery_log_target_label(log)
+    if log.document.present?
+      log.document.title
+    elsif log.document_set.present?
+      log.document_set.name
+    else
+      "対象未設定"
+    end
+  end
+
+  def document_delivery_log_primary_recipient_label(log)
+    label, addresses = document_delivery_log_recipient_groups(log).first
+    return "宛先: 未設定" if addresses.blank?
+
+    "#{label}: #{addresses}"
+  end
 end
