@@ -96,6 +96,19 @@ module Admin::WebhookEndpointsHelper
     delivery.response_status.present? ? "HTTP #{delivery.response_status}" : "HTTP未取得"
   end
 
+  def webhook_delivery_detail_link_cue(delivery)
+    [
+      delivery.webhook_endpoint.name,
+      webhook_event_type_label(delivery),
+      webhook_delivery_status_label(delivery),
+      webhook_delivery_response_status_context(delivery),
+      "作成日時 #{I18n.l(delivery.created_at, format: :short)}",
+      "履歴ID #{delivery.public_id.to_s.first(8)}"
+    ].compact_blank.join(" / ").then do |context|
+      "#{context} の詳細を、検索条件とページを保って開く"
+    end
+  end
+
   def webhook_event_type_label(event_or_value)
     value = event_or_value.respond_to?(:event_type) ? event_or_value.event_type : event_or_value
     localized_label("webhook_events.event_type", value)
