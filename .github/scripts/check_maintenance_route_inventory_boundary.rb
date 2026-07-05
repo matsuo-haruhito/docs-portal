@@ -23,6 +23,8 @@ MAINTENANCE_ROUTE_INVENTORY_ROUTE_SIGNALS = [
   "post :enqueue, on: :member",
   "post :subscribe, on: :member",
   "delete :unsubscribe, on: :member",
+  "post \"external_folder_sync_webhooks/google_drive\", to: \"external_folder_sync_webhooks#google_drive\"",
+  "post \"external_folder_sync_webhooks/sharepoint\", to: \"external_folder_sync_webhooks#sharepoint\"",
   "resources :documents, except: %i[show new], param: :public_id",
   "patch :archive, on: :member",
   "patch :restore, on: :member",
@@ -49,6 +51,7 @@ MAINTENANCE_ROUTE_INVENTORY_ALLOWLIST_SIGNALS = [
   "get :pending_handoff, on: :collection",
   "get :lifecycle_handoff, on: :collection",
   "post \"codeblock_dry_run\", to: \"api_specifications#codeblock_dry_run\", as: :codeblock_dry_run",
+  "get \"external_folder_sync_webhooks/sharepoint\", to: \"external_folder_sync_webhooks#sharepoint\"",
   "post \"document_tree_all\", to: \"projects#document_tree_all\"",
   "match \"document_detail_tree\", to: \"projects#document_detail_tree\""
 ].freeze
@@ -64,6 +67,8 @@ MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
   "| 定期ジョブ操作 | `admin/recurring_job_schedules#sync_definitions` / `#request_run` | 要判断。",
   "| Git 手動同期 | `admin/git_import_sources#sync` | 候補。",
   "| 外部フォルダ同期 | `admin/external_folder_sync_sources#dry_run` / `#apply` / `#force_apply` / `#enqueue` / `#subscribe` / `#unsubscribe` / `#recheck_metadata` | 要判断。",
+  "| 外部フォルダ同期 provider webhook | `external_folder_sync_webhooks#google_drive` / `#sharepoint` | current。",
+  "provider validation / acknowledgement と event 記録は維持し、`READ_ONLY_MAINTENANCE` 中は受信 event から同期 job を enqueue しない。",
   "| アクセス申請 | `access_requests#create` / `#cancel`, `admin/access_requests#update` | 要判断。",
   "| 既読確認 | `read_confirmations#create` / `#destroy` | current。",
   "| TreeView / 文書 detail tree | `projects#document_tree_all` / `#document_detail_tree` | read-only POST。",

@@ -3,6 +3,7 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
 
   FILTERED_SECRET_VALUE = "[FILTERED]".freeze
   SECRET_HEADER_KEYS = %w[X_GOOG_CHANNEL_TOKEN CLIENT_STATE].freeze
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE".freeze
 
   def google_drive
     event = record_event!(provider: :google_drive)
@@ -31,8 +32,13 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
   def enqueue_event_if_needed(event)
     return unless event.external_folder_sync_source.present?
     return unless event.received?
+    return if read_only_maintenance_mode?
 
     ExternalFolderSyncWebhookEventJob.perform_later(event.id)
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
   end
 
   def record_event!(provider:, payload: request_payload)
