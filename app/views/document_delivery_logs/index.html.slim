@@ -128,6 +128,7 @@ p.actions
     tbody
       - @delivery_logs.each do |log|
         - detail_params = { return_to: current_delivery_logs_path }.merge(current_date_filter_params)
+        - status_link_label = document_delivery_log_detail_link_label(log)
         tr
           td data={ rails_table_preferences_column_key: "created_at" } = l(log.created_at)
           td data={ rails_table_preferences_column_key: "project" } = log.project.name
@@ -145,7 +146,7 @@ p.actions
                 = " #{truncate(addresses, length: 72)}"
           td data={ rails_table_preferences_column_key: "delivery_type" } = document_delivery_log_delivery_type_label(log)
           td data={ rails_table_preferences_column_key: "status" }
-            = link_to document_delivery_log_status_label(log), document_delivery_log_path(log, detail_params)
+            = link_to document_delivery_log_status_label(log), document_delivery_log_path(log, detail_params), aria: { label: status_link_label }, title: status_link_label
           td data={ rails_table_preferences_column_key: "failure_reason" }
             - if log.failed?
               - failure_summary = log.error_message.presence || "詳細で失敗内容を確認してください。"
