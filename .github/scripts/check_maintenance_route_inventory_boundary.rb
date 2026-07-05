@@ -32,6 +32,8 @@ MAINTENANCE_ROUTE_INVENTORY_ROUTE_SIGNALS = [
   "post :cancel, on: :member",
   "resources :document_approval_requests, only: %i[index show update], param: :public_id",
   "resource :document_zip, only: [:create], controller: \"project_document_zips\"",
+  "resources :document_uploads, only: [:create]",
+  "resource :upload_review, only: [:create], controller: \"document_version_upload_reviews\"",
   "resource :rollback, only: [:create], controller: \"document_version_rollbacks\""
 ].freeze
 
