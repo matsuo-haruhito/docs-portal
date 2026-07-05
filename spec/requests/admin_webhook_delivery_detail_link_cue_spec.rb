@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "rails_helper"
 
 RSpec.describe "Admin webhook delivery detail link cue", type: :request do
@@ -59,7 +61,19 @@ RSpec.describe "Admin webhook delivery detail link cue", type: :request do
     detail_link = link_by_href(expected_href)
     expect(detail_link).to be_present
     expect(detail_link.text.squish).to eq("詳細")
-    expect(detail_link["title"]).to eq("Cue Hook / 文書更新 / 失敗 の詳細を、検索条件とページを保って開く")
-    expect(detail_link["aria-label"]).to eq("Cue Hook / 文書更新 / 失敗 の詳細を、検索条件とページを保って開く")
+
+    expected_cue_parts = [
+      "Cue Hook",
+      "文書更新",
+      "失敗",
+      "HTTP 500",
+      "作成日時 #{I18n.l(deliveries.last.created_at, format: :short)}",
+      "履歴ID #{deliveries.last.public_id.first(8)}",
+      "検索条件とページを保って開く"
+    ]
+    expected_cue_parts.each do |part|
+      expect(detail_link["title"]).to include(part)
+      expect(detail_link["aria-label"]).to include(part)
+    end
   end
 end

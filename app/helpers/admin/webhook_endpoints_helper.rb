@@ -100,7 +100,10 @@ module Admin::WebhookEndpointsHelper
     [
       delivery.webhook_endpoint.name,
       webhook_event_type_label(delivery),
-      webhook_delivery_status_label(delivery)
+      webhook_delivery_status_label(delivery),
+      webhook_delivery_response_status_context(delivery),
+      "作成日時 #{I18n.l(delivery.created_at, format: :short)}",
+      "履歴ID #{delivery.public_id.to_s.first(8)}"
     ].compact_blank.join(" / ").then do |context|
       "#{context} の詳細を、検索条件とページを保って開く"
     end

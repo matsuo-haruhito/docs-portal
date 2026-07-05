@@ -25,24 +25,23 @@ RSpec.describe "Admin webhook delivery detail link labels", type: :request do
     )
   end
 
-  it "uses row-specific accessible labels while preserving search return params" do
+  it "uses row-specific accessible labels for matching endpoint event and status rows" do
     sign_in_as(admin_user)
 
     event = create(:notification_event, event_type: :document_updated)
-    first_endpoint = create(:webhook_endpoint, name: "Alpha Hook")
-    second_endpoint = create(:webhook_endpoint, name: "Beta Hook")
+    endpoint = create(:webhook_endpoint, name: "Alpha Hook")
     first_delivery = create_delivery(
-      endpoint: first_endpoint,
+      endpoint: endpoint,
       event: event,
       status: :failed,
       response_status: 500,
       created_at: Time.zone.local(2026, 6, 10, 10, 0, 0)
     )
     second_delivery = create_delivery(
-      endpoint: second_endpoint,
+      endpoint: endpoint,
       event: event,
       status: :failed,
-      response_status: 503,
+      response_status: 500,
       created_at: Time.zone.local(2026, 6, 10, 9, 0, 0)
     )
 
@@ -55,9 +54,10 @@ RSpec.describe "Admin webhook delivery detail link labels", type: :request do
     hrefs = detail_links.map { |link| link["href"] }
 
     expect(labels).to contain_exactly(
-      a_string_including("Alpha Hook", "失敗", "検索条件とページを保って開く"),
-      a_string_including("Beta Hook", "失敗", "検索条件とページを保って開く")
+      a_string_including("Alpha Hook", "文書更新", "失敗", "HTTP 500", "履歴ID #{first_delivery.public_id.first(8)}", "検索条件とページを保って開く"),
+      a_string_including("Alpha Hook", "文書更新", "失敗", "HTTP 500", "履歴ID #{second_delivery.public_id.first(8)}", "検索条件とページを保って開く")
     )
+    expect(labels).to all(include("作成日時"))
     expect(labels.uniq.size).to eq(2)
     expect(titles).to eq(labels)
     expect(labels.join).not_to include("hooks.example")
