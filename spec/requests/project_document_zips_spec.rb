@@ -36,6 +36,40 @@ RSpec.describe "Project document zips", type: :request do
     FileUtils.rm_rf(Rails.root.join("storage", "document_files", "spec", "project-document-zips"))
   end
 
+  describe "when read-only maintenance is enabled" do
+    around do |example|
+      original_value = ENV[ProjectDocumentZipsController::READ_ONLY_MAINTENANCE_ENV]
+      ENV[ProjectDocumentZipsController::READ_ONLY_MAINTENANCE_ENV] = "1"
+      example.run
+    ensure
+      if original_value.nil?
+        ENV.delete(ProjectDocumentZipsController::READ_ONLY_MAINTENANCE_ENV)
+      else
+        ENV[ProjectDocumentZipsController::READ_ONLY_MAINTENANCE_ENV] = original_value
+      end
+    end
+
+    it "blocks zip generation while keeping the document list readable" do
+      document = create_document_with_file(title: "First", slug: "first", file_name: "README.md", content: "first")
+      allow(DocumentVersionsZipBuilder).to receive(:new).and_call_original
+
+      sign_in_as(user)
+
+      expect do
+        post project_document_zip_path(project), params: { document_ids: [document.id] }
+      end.not_to change(AccessLog.where(action_type: :download, target_type: "zip"), :count)
+
+      expect(response).to redirect_to(project_documents_path(project))
+      expect(DocumentVersionsZipBuilder).not_to have_received(:new)
+
+      follow_redirect!
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("メンテナンス中のため文書ZIP生成は停止しています")
+      expect(response.body).to include("選択した文書の最新版をZIPでダウンロード")
+    end
+  end
+
   it "downloads selected latest document versions as a zip archive and records logs" do
     first = create_document_with_file(title: "First", slug: "first", file_name: "README.md", content: "first")
     second = create_document_with_file(title: "Second", slug: "second", file_name: "guide.txt", content: "second")
