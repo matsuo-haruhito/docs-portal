@@ -59,7 +59,7 @@ RSpec.describe "Admin webhook delivery detail link cue", type: :request do
     detail_link = link_by_href(expected_href)
     expect(detail_link).to be_present
     expect(detail_link.text.squish).to eq("詳細")
-    expect(detail_link["title"]).to eq("検索条件とページを保って詳細を開く")
-    expect(detail_link["aria-label"]).to eq("検索条件とページを保って詳細を開く")
+    expect(detail_link["title"]).to eq("Cue Hook / 文書更新 / 失敗 の詳細を、検索条件とページを保って開く")
+    expect(detail_link["aria-label"]).to eq("Cue Hook / 文書更新 / 失敗 の詳細を、検索条件とページを保って開く")
   end
 end
