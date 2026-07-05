@@ -4,6 +4,7 @@ class Admin::UsersController < Admin::BaseController
 
   before_action :set_user, only: %i[edit update destroy]
   before_action :prepare_form_context, only: %i[index create edit update]
+  before_action :ensure_admin_master_maintenance_writable!, only: %i[create update destroy]
 
   helper_method :user_return_to_path
 
@@ -135,6 +136,12 @@ class Admin::UsersController < Admin::BaseController
     return User.all if admin_user?
 
     User.where(company_id: current_user.company_id)
+  end
+
+  def ensure_admin_master_maintenance_writable!
+    return unless read_only_maintenance_mode?
+
+    redirect_to user_return_to_path, alert: admin_master_maintenance_message
   end
 
   def company_master_admin_user?

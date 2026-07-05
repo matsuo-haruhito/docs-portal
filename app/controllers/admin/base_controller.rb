@@ -1,6 +1,7 @@
 class Admin::BaseController < BaseController
   DEFAULT_ADMIN_LIST_PER_PAGE = 25
   MAX_ADMIN_LIST_PER_PAGE = 100
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   before_action :require_admin_area_access!
 
@@ -12,6 +13,14 @@ class Admin::BaseController < BaseController
 
   def require_admin_only!
     raise ApplicationError::Forbidden unless admin_user?
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def admin_master_maintenance_message
+    "メンテナンス中のため会社・ユーザー・案件所属の変更操作は停止しています。一覧、検索、現在の所属確認は継続できます。"
   end
 
   def safe_return_to_path(fallback)
