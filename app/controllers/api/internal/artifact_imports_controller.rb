@@ -6,6 +6,8 @@ class Api::Internal::ArtifactImportsController < Api::BaseController
       render_validation_result and return
     end
 
+    render_read_only_maintenance_response and return if read_only_maintenance?
+
     ensure_confirmed_dry_run_matches_manifest!
     result = importer.call
     attach_direct_apply_note!(result) unless confirmed_dry_run
