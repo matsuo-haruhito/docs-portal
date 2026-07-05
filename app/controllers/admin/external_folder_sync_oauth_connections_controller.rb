@@ -9,6 +9,8 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
   GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth".freeze
   GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token".freeze
   DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file".freeze
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE".freeze
+  READ_ONLY_MAINTENANCE_MESSAGE = "メンテナンス中のためGoogle Drive OAuth接続の開始・完了・解除は停止しています。外部フォルダ同期設定と同期履歴は閲覧できます。".freeze
   GOOGLE_OAUTH_ENV_KEYS = %w[
     GOOGLE_DRIVE_OAUTH_CLIENT_ID
     GOOGLE_DRIVE_OAUTH_CLIENT_SECRET
@@ -17,6 +19,11 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
   def new
     unless @external_folder_sync_source.google_drive? && @external_folder_sync_source.oauth_user?
       redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: "OAuth接続はGoogle DriveのOAuthユーザー方式でのみ利用できます。"
+      return
+    end
+
+    if read_only_maintenance?
+      redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: READ_ONLY_MAINTENANCE_MESSAGE
       return
     end
 
@@ -35,6 +42,12 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
   def callback
     state = verified_state!
     source = ExternalFolderSyncSource.find_by!(public_id: state.fetch("source_public_id"))
+
+    if read_only_maintenance?
+      redirect_to admin_external_folder_sync_source_path(source), alert: READ_ONLY_MAINTENANCE_MESSAGE
+      return
+    end
+
     token = exchange_code!(params.require(:code))
     source.merge_auth_config!(
       refresh_token: token.fetch("refresh_token", source.auth_config_json["refresh_token"]),
@@ -50,6 +63,11 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
   end
 
   def destroy
+    if read_only_maintenance?
+      redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), alert: READ_ONLY_MAINTENANCE_MESSAGE
+      return
+    end
+
     @external_folder_sync_source.update!(auth_config: {}.to_json)
     redirect_to admin_external_folder_sync_source_path(@external_folder_sync_source), notice: "Google Drive OAuth接続を解除しました。"
   end
@@ -124,5 +142,9 @@ class Admin::ExternalFolderSyncOauthConnectionsController < Admin::BaseControlle
 
   def google_client_secret
     ENV.fetch("GOOGLE_DRIVE_OAUTH_CLIENT_SECRET")
+  end
+
+  def read_only_maintenance?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
   end
 end
