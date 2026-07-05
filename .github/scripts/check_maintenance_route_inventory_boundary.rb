@@ -23,6 +23,7 @@ MAINTENANCE_ROUTE_INVENTORY_ROUTE_SIGNALS = [
   "post :enqueue, on: :member",
   "post :subscribe, on: :member",
   "delete :unsubscribe, on: :member",
+  "resources :documents, except: %i[show new], param: :public_id",
   "patch :archive, on: :member",
   "patch :restore, on: :member",
   "post :handoff, on: :collection",
@@ -32,6 +33,8 @@ MAINTENANCE_ROUTE_INVENTORY_ROUTE_SIGNALS = [
   "post :cancel, on: :member",
   "resources :document_approval_requests, only: %i[index show update], param: :public_id",
   "resource :document_zip, only: [:create], controller: \"project_document_zips\"",
+  "resources :document_uploads, only: [:create]",
+  "resource :upload_review, only: [:create], controller: \"document_version_upload_reviews\"",
   "resource :rollback, only: [:create], controller: \"document_version_rollbacks\""
 ].freeze
 
@@ -53,7 +56,7 @@ MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
   "`current` は既存 runbook で確認できる読み方、`候補` は個別 Issue / PR で停止可否を決める対象、`要判断` は docs だけでは停止方針を確定しない対象です。",
   "| 生成ファイル再実行 | `admin/generated_file_runs#retry_run` / `#retry_failed` | current。",
   "| 生成ファイルイベント再送 | `admin/generated_file_events#retry_dispatch` / `#retry_failed` | 候補。",
-  "| API 仕様 build | `admin/api_specifications#retry_build` | 候補。",
+  "| API 仕様 build | `admin/api_specifications#retry_build` | current。`READ_ONLY_MAINTENANCE` 中は表示時の stale build enqueue、手動 `retry_build`、`site` 表示時の stale build enqueue を開始せず、生成済み HTML、表示状態、Build manifest、主要ページとsource、直近build履歴は read-only に確認できる。`codeblock_dry_run` は build 起動とは別 surface として扱う。",
   "| Webhook 再送 | `admin/webhook_deliveries#retry_dispatch` / `#retry_failed` | 候補。",
   "| 定期ジョブ操作 | `admin/recurring_job_schedules#sync_definitions` / `#request_run` | 要判断。",
   "| Git 手動同期 | `admin/git_import_sources#sync` | 候補。",
@@ -67,7 +70,11 @@ MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
   "| 手動アップロード / import | `document_uploads#create`, `document_version_upload_reviews#create`, `api/internal/*_uploads#create`, `api/internal/artifact_imports#create` | 候補。combined inventory signal として残し",
   "| internal upload / import API | `api/internal/*_uploads#create`, `api/internal/artifact_imports#create` | 候補。",
   "手動アップロード UI flow の current support と混同しない。",
-  "| 文書版 rollback / 文書状態変更 | `document_version_rollbacks#create`, `admin/documents#archive` / `#restore`, `admin/bulk_edit_dry_runs#handoff` / `#update` | 要判断。",
+  "| 文書マスタ mutation | `admin/documents#create/update/destroy/archive/restore` | current。",
+  "文書マスタ一覧、検索、lifecycle handoff JSON、公開側文書確認は read-only に残す。",
+  "rollback / bulk edit / retention・discard policy とは別 surface として扱う。",
+  "| 文書版 rollback / 文書状態変更 | `document_version_rollbacks#create`, `admin/bulk_edit_dry_runs#handoff` / `#update` | 要判断。",
+  "rollback、bulk edit 実行、retention / discard policy は文書マスタ mutation の current support とは別に扱う。",
   "| 外部送付履歴 | `document_delivery_logs#create` / `#update` | current。",
   "| 軽量な利用者操作 | `document_bookmarks#create` / `#destroy` / `#move_to_favorite`, `document_approval_requests#update` / `#cancel`, `document_review_comments#create` / `#update` | 要判断。",
   "`current` として扱うのは、controller guard、request spec、関連 runbook の current support が揃っている操作だけです。",
