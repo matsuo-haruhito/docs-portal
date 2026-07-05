@@ -26,6 +26,9 @@ current 実装の前提:
 - `Storage使用量` は `StorageUsageSummary` で local `storage/document_files` / `storage/docs_sites` / `storage/imports` の file count と概算使用量を read-only に出す
 - `Storage使用量` の `大きい内訳` は、各領域の直下項目を bytes / file count / 最終更新つきで上位 5 件まで表示する read-only preview として扱う。`storage/docs_sites` と `storage/imports` もここで増加元の当たりを付けられる
 - `Storage使用量` の `DocumentFile 実体の Project / Document 上位` は、`storage/document_files` に紐づく `DocumentFile` 実体だけを Project / Document 単位で概算集計し、上位 5 件を read-only preview として表示する
+- `Storage使用量` の detail CSV は、`scope_status`、`display_limit`、`safe_relative_path`、`read_only_note` を含む bounded read-only handoff として読む
+- `document_files` CSV は `DocumentFile` 実体の Project / Document breakdown を渡すためのもの、`docs_sites` / `imports` CSV は direct child preview を渡すためのものとして分ける
+- CSV の `read_only_note` は、cleanup、delete、archive、retention、billing、quota、GCS policy、repair、full export の判断ではないことを明示する
 - `Storage使用量` の `次の確認先` は、各領域から既存確認画面や既存 docs へ戻るための link cue であり、削除、cleanup、retention 対象を確定する操作ではない
 - `Storage使用量` の `次の確認先` に `この行は read-only 集計です` と出る行は、追加導線の未設定ではなく、その行の file count / 概算使用量を読むだけの領域として扱う
 - `運用失敗入口` は、生成ファイルや外部送付履歴などの保存済み failed 履歴と、同じ identity の最新 run が連続 failed かを見る `継続失敗候補` を分けて表示する
