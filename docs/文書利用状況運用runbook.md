@@ -102,6 +102,8 @@ current 実装の前提:
 
 `admin/read_confirmations` は、ReadConfirmation の内訳を案件単位で確認する internal admin 向けの画面である。文書利用状況の集計で `既読確認` が動いている文書を見つけたあと、確認日時や確認者を新しい順で見返す入口として使う。
 
+`READ_ONLY_MAINTENANCE` 中は、利用者の `既読にしました` 保存と `既読を解除` 削除は停止される。一方で、文書閲覧そのもの、管理側の文書利用状況、既読確認内訳での確認日時・確認者・会社・文書 slug の read-only 確認は継続する。停止境界の詳細は [既読確認 maintenance-mode 境界](./既読確認maintenance-mode境界.md) を参照する。
+
 current 実装の前提:
 
 - `project_id` で案件を選ばない限り、既読確認の一覧は表示しない
