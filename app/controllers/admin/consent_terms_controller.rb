@@ -1,9 +1,11 @@
 class Admin::ConsentTermsController < Admin::BaseController
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
   CONSENT_TERM_QUERY_MAX_LENGTH = 100
   CONSENT_TERMS_DEFAULT_PER_PAGE = 25
   CONSENT_TERMS_MAX_PER_PAGE = 100
 
   before_action :require_admin_only!
+  before_action :block_consent_term_mutation_during_maintenance, only: %i[create update destroy]
   before_action :set_consent_term, only: %i[edit update destroy]
 
   def index
@@ -41,6 +43,20 @@ class Admin::ConsentTermsController < Admin::BaseController
   end
 
   private
+
+  def block_consent_term_mutation_during_maintenance
+    return unless read_only_maintenance_mode?
+
+    redirect_to admin_consent_terms_path, alert: maintenance_consent_term_message
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_consent_term_message
+    "メンテナンス中のため同意文面の作成・更新・削除は停止しています。一覧と編集内容は確認できます。"
+  end
 
   def load_consent_terms
     @consent_term_filters = consent_term_filter_params
