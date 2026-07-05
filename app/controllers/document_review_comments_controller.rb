@@ -1,10 +1,16 @@
 class DocumentReviewCommentsController < BaseController
   COMMENT_CONTEXT_TABS = %w[all qa review unresolved].freeze
   EXTERNAL_COMMENT_CONTEXT_TABS = %w[all qa unresolved].freeze
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   before_action :set_targets
 
   def create
+    if read_only_maintenance_mode?
+      redirect_to redirect_path, alert: maintenance_document_review_comment_message
+      return
+    end
+
     comment = @document.document_review_comments.build(comment_params)
     comment.document_version ||= @version if params[:document_version_public_id].present?
     comment.document = @document
@@ -20,6 +26,11 @@ class DocumentReviewCommentsController < BaseController
 
   def update
     raise ApplicationError::Forbidden unless current_user&.admin?
+
+    if read_only_maintenance_mode?
+      redirect_to redirect_path, alert: maintenance_document_review_comment_message
+      return
+    end
 
     comment = @document.document_review_comments.find_by!(public_id: params[:public_id])
 
@@ -123,6 +134,14 @@ class DocumentReviewCommentsController < BaseController
     return "レビューコメントを解決済みにしました。" if decision == :resolve
 
     "レビューコメントを却下扱いにしました。"
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_document_review_comment_message
+    "メンテナンス中のため文書コメント・Q&Aの投稿や状態更新は停止しています。閲覧、検索、未解決handoffは継続できます。"
   end
 
   def comment_params
