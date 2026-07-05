@@ -5,6 +5,7 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
   DEFAULT_PER_PAGE = 50
   MAX_PER_PAGE = 100
   QUERY_MAX_LENGTH = 100
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   def index
     @filters = event_filter_params
@@ -25,6 +26,11 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
   end
 
   def retry_dispatch
+    if read_only_maintenance_mode?
+      redirect_to admin_generated_file_event_path(@generated_file_event.public_id, return_to: @return_to_path), alert: maintenance_retry_message
+      return
+    end
+
     reset_for_dispatch!(@generated_file_event)
     GeneratedFileEventDispatchJob.perform_later
 
@@ -34,6 +40,12 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
   def retry_failed
     @filters = event_filter_params
     @filter_warnings = []
+
+    if read_only_maintenance_mode?
+      redirect_to admin_generated_file_events_path(@filters), alert: maintenance_retry_message
+      return
+    end
+
     events = bulk_retry_target_scope.to_a
     events.each { reset_for_dispatch!(_1) }
     GeneratedFileEventDispatchJob.perform_later if events.any?
@@ -50,6 +62,14 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
       error_message: nil,
       processed_at: nil
     )
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_retry_message
+    "メンテナンス中のため生成ファイルイベントの再投入は停止しています。イベント一覧・詳細は閲覧できます。運用手順は本番運用・インフラ前提を確認してください。"
   end
 
   def recent_runs_related_to(public_id)

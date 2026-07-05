@@ -1,10 +1,12 @@
 class ConsentsController < BaseController
   helper_method :safe_return_to
 
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
   CONSENT_HISTORY_TARGET_TYPES = %w[global Project Document DocumentFile DocumentVersion].freeze
 
   before_action :set_target, only: %i[new create]
   before_action :set_timing, only: %i[new create]
+  before_action :block_consent_mutation_during_maintenance, only: :create
 
   def index
     @consent_history_q = params[:q].to_s.strip
@@ -46,6 +48,29 @@ class ConsentsController < BaseController
   end
 
   private
+
+  def block_consent_mutation_during_maintenance
+    return unless read_only_maintenance_mode?
+
+    redirect_to new_consent_path(maintenance_consent_redirect_params), alert: maintenance_consent_message
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_consent_message
+    "メンテナンス中のため同意記録の作成は停止しています。同意履歴と同意文面は確認できます。"
+  end
+
+  def maintenance_consent_redirect_params
+    {
+      target_type: params[:target_type],
+      target_public_id: params[:target_public_id],
+      timing: @timing,
+      return_to: safe_return_to
+    }
+  end
 
   def normalized_consent_scope
     scope = params[:consent_scope].to_s

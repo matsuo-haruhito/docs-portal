@@ -72,7 +72,7 @@ class DocumentApprovalRequestsController < BaseController
 
   def create
     if read_only_maintenance_mode?
-      redirect_to project_document_path(@project, @document.slug), alert: document_approval_request_maintenance_message
+      redirect_to project_document_path(@project, @document.slug), alert: document_approval_request_creation_maintenance_message
       return
     end
 
@@ -89,12 +89,22 @@ class DocumentApprovalRequestsController < BaseController
   def update
     raise ApplicationError::Forbidden unless approvable_request?
 
+    if read_only_maintenance_mode?
+      redirect_to document_approval_request_path(@document_approval_request, return_to: @return_to_path), alert: document_approval_request_status_maintenance_message
+      return
+    end
+
     @document_approval_request.approve!(actor: current_user)
     redirect_to document_approval_request_path(@document_approval_request, return_to: @return_to_path), notice: "確認依頼を OK にしました。"
   end
 
   def cancel
     raise ApplicationError::Forbidden unless cancelable_request?
+
+    if read_only_maintenance_mode?
+      redirect_to document_approval_request_path(@document_approval_request, return_to: @return_to_path), alert: document_approval_request_status_maintenance_message
+      return
+    end
 
     @document_approval_request.cancel!(actor: current_user)
     redirect_to document_approval_request_path(@document_approval_request, return_to: @return_to_path), notice: "確認依頼を Cancel にしました。"
@@ -146,8 +156,12 @@ class DocumentApprovalRequestsController < BaseController
     ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
   end
 
-  def document_approval_request_maintenance_message
+  def document_approval_request_creation_maintenance_message
     "メンテナンス中のため確認依頼の新規作成は停止しています。確認依頼の一覧や詳細の閲覧は継続できます。"
+  end
+
+  def document_approval_request_status_maintenance_message
+    "メンテナンス中のため確認依頼のOK / Cancelは停止しています。確認依頼の一覧や詳細の閲覧は継続できます。"
   end
 
   def normalized_status_filter

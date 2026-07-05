@@ -6,6 +6,8 @@ class Api::Internal::ZipUploadsController < Api::BaseController
       render_validation_result and return
     end
 
+    render_read_only_maintenance_response and return if read_only_maintenance?
+
     ensure_zip_dry_run!
     result = importer.call
     attach_confirmed_dry_run!(result)

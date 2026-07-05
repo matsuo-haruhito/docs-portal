@@ -1,10 +1,12 @@
 class Admin::ProjectConsentSettingsController < Admin::BaseController
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
   PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
   PROJECT_SEARCH_LIMIT = 20
   CONSENT_TERM_SEARCH_QUERY_MAX_LENGTH = 100
   CONSENT_TERM_SEARCH_LIMIT = 20
 
   before_action :require_admin_only!
+  before_action :block_project_consent_setting_mutation_during_maintenance, only: %i[create update destroy]
   before_action :set_project_consent_setting, only: %i[edit update destroy]
   before_action :load_form_collections, only: %i[index create edit update]
 
@@ -63,6 +65,20 @@ class Admin::ProjectConsentSettingsController < Admin::BaseController
   end
 
   private
+
+  def block_project_consent_setting_mutation_during_maintenance
+    return unless read_only_maintenance_mode?
+
+    redirect_to admin_project_consent_settings_path, alert: maintenance_project_consent_setting_message
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_project_consent_setting_message
+    "メンテナンス中のため案件同意設定の作成・更新・削除は停止しています。一覧、編集内容、検索は確認できます。"
+  end
 
   def filtered_project_consent_settings
     @selected_project_id = project_filter_param

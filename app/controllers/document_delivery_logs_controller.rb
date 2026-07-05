@@ -7,6 +7,7 @@ class DocumentDeliveryLogsController < BaseController
   DELIVERY_LOG_DISPLAY_LIMIT = 50
   DELIVERY_LOG_QUERY_MAX_LENGTH = 100
   DELIVERY_LOG_CSV_PREVIEW_MAX_LENGTH = 120
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
   DELIVERY_LOG_CSV_AUTHORIZATION_VALUE_PATTERN = /\b(Authorization)\s*:\s*(Bearer|Basic)\s+[^,\s;]+/i
   DELIVERY_LOG_CSV_AUTH_SCHEME_VALUE_PATTERN = /\b(Bearer|Basic)\s+[^,\s;]+/i
   DELIVERY_LOG_CSV_SECRET_LIKE_PATTERN = /\b(?:token|secret|password|api[_-]?key|access[_-]?token)\s*([=:])\s*[^\s,;]+/i
@@ -130,6 +131,11 @@ class DocumentDeliveryLogsController < BaseController
   def create
     @delivery_log = build_delivery_log(delivery_log_params)
 
+    if read_only_maintenance_mode?
+      redirect_to delivery_log_create_maintenance_redirect_path, alert: maintenance_delivery_log_message
+      return
+    end
+
     if @delivery_log.save
       redirect_to document_delivery_log_path(@delivery_log), notice: "送付下書きを作成しました。"
     else
@@ -143,10 +149,14 @@ class DocumentDeliveryLogsController < BaseController
     case params[:decision]
     when "mark_sent"
       require_draft_delivery_log!
+      return if stop_delivery_log_update_for_maintenance?
+
       @delivery_log.update!(status: :sent, sent_at: Time.current, error_message: nil)
       redirect_to delivery_log_redirect_path, notice: "送付済みにしました。"
     when "mark_failed"
       require_draft_delivery_log!
+      return if stop_delivery_log_update_for_maintenance?
+
       @delivery_log.update!(status: :failed, error_message: params[:error_message].to_s.presence || "manual mark")
       redirect_to delivery_log_redirect_path, notice: "送付失敗として記録しました。"
     else
@@ -228,6 +238,28 @@ class DocumentDeliveryLogsController < BaseController
 
   def require_draft_delivery_log!
     raise ApplicationError::BadRequest, "manual update is allowed only for draft delivery logs" unless @delivery_log.draft?
+  end
+
+  def stop_delivery_log_update_for_maintenance?
+    return false unless read_only_maintenance_mode?
+
+    redirect_to delivery_log_redirect_path, alert: maintenance_delivery_log_message
+    true
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_delivery_log_message
+    "メンテナンス中のため外部送付履歴の下書き作成・手動状態更新は停止しています。閲覧は継続できます。"
+  end
+
+  def delivery_log_create_maintenance_redirect_path
+    return project_document_path(@project, @document.slug) if @document.present?
+    return project_document_set_path(@project, @document_set) if @document_set.present?
+
+    project_path(@project)
   end
 
   def build_mailto_url(log)

@@ -1,6 +1,7 @@
 class Admin::GitImportSourcesController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_git_import_source, only: %i[edit update destroy sync]
+  before_action :block_git_import_source_mutation_during_maintenance!, only: %i[create update destroy]
 
   GIT_IMPORT_SOURCE_QUERY_MAX_LENGTH = 100
   GIT_IMPORT_SOURCE_PER_PAGE = 50
@@ -92,6 +93,12 @@ class Admin::GitImportSourcesController < Admin::BaseController
 
   def set_git_import_source
     @git_import_source = GitImportSource.find_by!(public_id: params[:public_id])
+  end
+
+  def block_git_import_source_mutation_during_maintenance!
+    return unless read_only_maintenance_mode?
+
+    redirect_to admin_git_import_sources_path, alert: git_import_source_maintenance_message
   end
 
   def load_index_state
@@ -231,6 +238,10 @@ class Admin::GitImportSourcesController < Admin::BaseController
 
   def read_only_maintenance_mode?
     ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def git_import_source_maintenance_message
+    "メンテナンス中のためGit連携設定の変更は停止しています。設定と同期履歴の閲覧は継続できます。"
   end
 
   def maintenance_sync_message

@@ -1,6 +1,7 @@
 class Admin::ProjectMembershipsController < Admin::BaseController
   before_action :require_admin_only!
   before_action :set_project_membership, only: %i[edit update destroy]
+  before_action :ensure_admin_master_maintenance_writable!, only: %i[create update destroy]
 
   DEFAULT_PAGE_SIZE = 25
   MAX_PAGE_SIZE = 100
@@ -138,5 +139,11 @@ class Admin::ProjectMembershipsController < Admin::BaseController
 
   def project_membership_params
     params.require(:project_membership).permit(:project_id, :user_id, :role)
+  end
+
+  def ensure_admin_master_maintenance_writable!
+    return unless read_only_maintenance_mode?
+
+    redirect_to admin_project_memberships_path, alert: admin_master_maintenance_message
   end
 end
