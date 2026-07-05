@@ -219,6 +219,9 @@ current 実装の前提:
 - `合計` はこの 3 領域の合算として読み、Project / Document 単位の内訳は別枠の `DocumentFile 実体の Project / Document 上位` で見る
 - `DocumentFile 実体の Project / Document 上位` は、`storage/document_files` に紐づく `DocumentFile` 実体だけを Project / Document 単位で概算集計する。表示は上位 5 件に限定され、Project code/name、Document title/slug、file count、実体欠落件数、概算使用量、最終更新を読むための read-only preview として扱う
 - 実体が存在しない file は `実体欠落` 件数に入り、raw absolute path は表示されない。欠落の詳細調査は `文書ファイル健全性` / `欠落ファイル詳細` へ戻す
+- Storage usage detail CSV は、`scope_status`、`display_limit`、`safe_relative_path`、`read_only_note` を含む bounded read-only handoff として読み、cleanup / delete / archive / retention / billing / quota / GCS policy / repair / full export の判断には使わない
+- `document_files` CSV は `DocumentFile` 実体の Project / Document breakdown、`docs_sites` / `imports` CSV は direct child preview として分けて読み、両者の粒度を混同しない
+- `safe_relative_path` は raw absolute path ではなく、PR や運用引き継ぎで共有しやすい確認用 path preview として扱う
 - `次の確認先` は、各領域の数値を見たあとに既存の詳細画面や運用 docs へ戻るための入口であり、dashboard 上で削除、archive、cleanup、retention policy 決定へ進める操作ではない
 - `次の確認先` が `この行は read-only 集計です` の行は、追加の詳細画面や docs へ移動せず、その領域の file count / 概算使用量だけを確認する行として扱う
 
