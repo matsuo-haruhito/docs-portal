@@ -57,8 +57,6 @@ IMPORT_DRY_RUN_HISTORY_CHECKS = [
     expected: [
       "`Git連携`: `admin/git_import_sources`",
       "`Git同期履歴`: `admin/git_import_runs`",
-      "summary_json safe preview",
-      "error_message safe preview",
       "`summary_json のマスク済み詳細`",
       "`error_message` の safe preview",
       "完全な raw log ではありません",
