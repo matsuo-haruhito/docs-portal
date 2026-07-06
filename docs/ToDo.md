@@ -90,7 +90,7 @@
 
 - import / build / mail / webhook の自動リトライ前の冪等性・二重実行リスクは [自動リトライ安全性棚卸し](./自動リトライ安全性棚卸し.md) を正本にする。分類: 正本 docs へ移動済み
 - 長時間処理の自動リトライは初期実装で入れない。必要になった場合も、対象処理ごとに separate issue を切り、手動再実行で十分かを先に判断する。分類: 人間判断待ち / 未起票のまま残すもの。まだ起票しない理由: 対象処理ごとの冪等性、二重実行、再試行上限が固まっていない
-- import / build の job 化は、同期 import/build 導線を本当に置き換える時点で再評価する。分類: 未起票のまま残すもの。まだ起票しない理由: 置き換える対象 workflow と履歴保存境界が未確定
+- import / build の job 化は、`build-docs` 1 workflow の import / build job 化棚卸しを #4738 / PR #4745 と [build-docs import job 化境界メモ](./build-docs-import-job化境界メモ.md) / [build-docs job 化置き換え境界メモ](./build-docs-job化置き換え境界メモ.md) へ移動済みとして扱う。ToDo には retry / replay / scheduler / notification / SLA / queue backend などの採否判断だけを残し、Git連携 run、ZIP import dry-run、internal upload API、search index rebuild は別 surface の concrete issue で扱う。分類: 正本 docs へ移動済み / 人間判断待ち
 - mail / webhook の job 化は、送信機能本体と delivery 契約が先に固まってから再評価する。分類: dependency wait
 - 生成ファイル run の再実行履歴と retry metadata の current 読み方は #3269 と [生成ファイル再試行と定期ジョブ管理 runbook](./生成ファイル再試行と定期ジョブ管理runbook.md) を正本にする。Docusaurus site build、検索 index、import / build の統合履歴へ広げる場合は、代表対象と保存境界が具体化した時点で別 issue に切る。分類: 具体 Issue あり / 正本 docs へ移動済み
 
@@ -98,7 +98,7 @@
 
 | 分類 | 候補 issue title | 主 track | 対象画面または route | 根拠 docs / 起票しない理由 |
 | --- | --- | --- | --- | --- |
-| 起票候補 | import / build job 化の置き換え対象と履歴保存境界を 1 workflow で棚卸しする | `track:docs` / `track:quality` | `build-docs` workflow、Git連携 run、ZIP import dry-run のいずれか 1 つ | [build-docs workflow確認runbook](./build-docs%20workflow確認runbook.md)、[Git連携設定と同期失敗確認runbook](./Git連携設定と同期失敗確認runbook.md)、[ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)。置き換え対象を 1 workflow に固定してから起票する |
+| 正本 docs へ移動済み | build-docs 1 workflow の import / build job 化棚卸しは #4738 / #4745 と正本 docs に移動済み | `track:docs` | `build-docs` workflow | [build-docs import job 化境界メモ](./build-docs-import-job化境界メモ.md)、[build-docs job 化置き換え境界メモ](./build-docs-job化置き換え境界メモ.md)。#4753 は duplicate close 済み。残る retry / replay / scheduler / notification / SLA / queue backend は human decision として扱い、Git連携 run、ZIP import dry-run、internal upload API、search index rebuild へ横展開しない |
 | 起票候補 | 生成ファイル run 履歴を別 build / import 履歴へ広げる前提を棚卸しする | `track:docs` / `track:ops` | Docusaurus site build、検索 index、import run のいずれか 1 surface | [生成ファイル再試行と定期ジョブ管理 runbook](./生成ファイル再試行と定期ジョブ管理runbook.md)、[site build 実行履歴保存境界メモ](./site-build実行履歴保存境界メモ.md)。保存候補と保存しない raw payload を分ける |
 | human decision | 長時間処理の自動リトライ、通知、SLA、retry policy の採用判断 | `track:ops` / `track:quality` | import / build / mail / webhook 横断 | 冪等性、二重実行、再試行上限、通知先、SLA 判断が必要。実装 queue に戻さない |
 | 具体情報待ち | mail / webhook job 化 | `track:ops` | mail delivery / webhook delivery | 送信機能本体、delivery 契約、失敗時の再送 / 通知要件が固まった後に 1 surface で切る |
