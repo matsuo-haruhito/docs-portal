@@ -69,10 +69,14 @@ h1 会社マスタ
     nav.pagination aria-label="会社一覧ページ"
       p.actions
         - if @companies_pagination[:prev_page]
-          = link_to "前へ", admin_companies_path(@company_page_params.merge(page: @companies_pagination[:prev_page])), class: "button secondary"
+          - previous_company_page = @companies_pagination[:prev_page]
+          - previous_company_page_label = "会社一覧の#{previous_company_page}ページ目へ（現在の検索条件を保持）"
+          = link_to "前へ", admin_companies_path(@company_page_params.merge(page: previous_company_page)), class: "button secondary", aria: { label: previous_company_page_label }, title: previous_company_page_label
         span.muted = "#{@companies_pagination[:page]} / #{@companies_pagination[:total_pages]}ページ"
         - if @companies_pagination[:next_page]
-          = link_to "次へ", admin_companies_path(@company_page_params.merge(page: @companies_pagination[:next_page])), class: "button secondary"
+          - next_company_page = @companies_pagination[:next_page]
+          - next_company_page_label = "会社一覧の#{next_company_page}ページ目へ（現在の検索条件を保持）"
+          = link_to "次へ", admin_companies_path(@company_page_params.merge(page: next_company_page)), class: "button secondary", aria: { label: next_company_page_label }, title: next_company_page_label
 - else
   section.card
     h2 会社一覧
