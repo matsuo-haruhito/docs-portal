@@ -7,6 +7,8 @@ REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
 README_PATH = REPO_ROOT.join("README.md")
 DOCS_README_PATH = REPO_ROOT.join("docs/README.md")
+LOCAL_SETUP_DOCS_PATH = REPO_ROOT.join("docs/ローカルセットアップと環境変数.md")
+ENV_EXAMPLE_PATH = REPO_ROOT.join(".env.example")
 
 errors = []
 
@@ -40,8 +42,36 @@ def require_line_with(content, relative_path, label, required_texts, errors)
   end
 end
 
+def require_section_with(content, relative_path, heading, required_texts, errors)
+  section_start = content.index(heading)
+
+  unless section_start
+    errors << "#{relative_path}: missing representative section: #{heading.inspect}"
+    return
+  end
+
+  section = content[section_start..]
+  next_heading = section.index(/^##\s+/, heading.length)
+  section = section[0...next_heading] if next_heading
+
+  required_texts.each do |expected_text|
+    next if section.include?(expected_text)
+
+    errors << "#{relative_path}: #{heading.inspect} section is missing boundary text: #{expected_text.inspect}"
+  end
+end
+
+def require_env_assignment(env_example, key, expected_value, errors)
+  expected_line = "#{key}=#{expected_value}"
+  return if env_example.lines.any? { |line| line.chomp == expected_line }
+
+  errors << ".env.example: missing representative local placeholder assignment: #{expected_line.inspect}"
+end
+
 readme = read_required_file(README_PATH, errors)
 docs_readme = read_required_file(DOCS_README_PATH, errors)
+local_setup_docs = read_required_file(LOCAL_SETUP_DOCS_PATH, errors)
+env_example = read_required_file(ENV_EXAMPLE_PATH, errors)
 
 unless readme.empty?
   require_text(readme, "README.md", "role 別に current support の入口だけを先に選びたい場合", errors)
@@ -94,6 +124,21 @@ unless readme.empty?
     ],
     errors
   )
+
+  require_section_with(
+    readme,
+    "README.md",
+    "## サンプルログイン情報",
+    [
+      "db/seeds/data/users.csv",
+      "ローカル開発 / demo 専用アカウント",
+      "共有環境や本番へ転用する credential ではなく",
+      "本番 credential や認証 policy の例でもありません",
+      "docs/ローカルセットアップと環境変数.md",
+      "admin@example.com` / `password123!"
+    ],
+    errors
+  )
 end
 
 unless docs_readme.empty?
@@ -128,6 +173,47 @@ unless docs_readme.empty?
   require_text(docs_readme, "docs/README.md", "利用者向けアクセス申請runbook", errors)
   require_text(docs_readme, "docs/README.md", "利用者向け同意画面・同意履歴runbook", errors)
   require_text(docs_readme, "docs/README.md", "外部送付履歴運用runbook", errors)
+end
+
+unless local_setup_docs.empty?
+  require_text(local_setup_docs, "docs/ローカルセットアップと環境変数.md", "README の [サンプルログイン情報](../README.md#サンプルログイン情報) を使います", errors)
+  require_text(local_setup_docs, "docs/ローカルセットアップと環境変数.md", "db/seeds/data/users.csv", errors)
+
+  require_section_with(
+    local_setup_docs,
+    "docs/ローカルセットアップと環境変数.md",
+    "## demo credential / placeholder secret の変更時チェック",
+    [
+      "ローカル開発 / demo 用の値と本番 credential の境界",
+      "共有環境や本番の credential、または認証 policy の例として説明しない",
+      "placeholder として読む",
+      "deploy-time secret や production credential の推奨値として扱わない",
+      "ローカル baseline をすぐ起動するための値として扱う",
+      "rotation policy の例へ広げない",
+      "demo credential、placeholder secret、production secret、認証 policy"
+    ],
+    errors
+  )
+
+  [
+    "RAILS_MASTER_KEY=replace_me",
+    "SECRET_KEY_BASE=secret",
+    "DOC_IMPORT_TOKEN=local-dev-import-token",
+    "DATABASE_PASSWORD=docs_portal"
+  ].each do |expected_text|
+    require_text(local_setup_docs, "docs/ローカルセットアップと環境変数.md", expected_text, errors)
+  end
+end
+
+unless env_example.empty?
+  require_env_assignment(env_example, "RAILS_MASTER_KEY", "replace_me", errors)
+  require_env_assignment(env_example, "SECRET_KEY_BASE", "secret", errors)
+  require_env_assignment(env_example, "ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY", "replace_me", errors)
+  require_env_assignment(env_example, "ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY", "replace_me", errors)
+  require_env_assignment(env_example, "ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT", "replace_me", errors)
+  require_env_assignment(env_example, "DOC_IMPORT_TOKEN", "local-dev-import-token", errors)
+  require_env_assignment(env_example, "DATABASE_PASSWORD", "docs_portal", errors)
+  require_text(env_example, ".env.example", "Keep production values secret and provide them via deploy-time environment variables.", errors)
 end
 
 if errors.any?
