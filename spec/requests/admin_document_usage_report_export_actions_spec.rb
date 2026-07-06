@@ -44,14 +44,7 @@ RSpec.describe "Admin document usage report export actions", type: :request do
     expect(page_text).to include("表示設定は一覧の列だけを変え、CSV / JSON metadata の対象条件は変えません。")
 
     expect(link_named("案件の監査ログへ")["href"]).to eq(admin_access_logs_path(project_id: project.id))
-
-    read_confirmation_params = query_params_for(link_named("案件の既読確認内訳へ"))
-    expect(read_confirmation_params).to include(
-      "project_id" => project.id.to_s,
-      "from" => "2026-05-01",
-      "to" => "2026-05-31"
-    )
-    expect(read_confirmation_params).not_to include("q", "usage_filter", "sort_order")
+    expect(link_named("案件の既読確認内訳へ")["href"]).to eq(admin_read_confirmations_path(project_id: project.id))
 
     csv_params = query_params_for(link_named("CSV出力"))
     metadata_link = link_named("JSON metadataを確認")
