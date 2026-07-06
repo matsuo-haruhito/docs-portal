@@ -30,6 +30,7 @@ on:
       - .github/scripts/check_csv_metadata_json_boundary.rb
       - .github/scripts/check_access_log_boundary.rb
       - .github/scripts/check_api_specification_dry_run_boundary.rb
+      - .github/scripts/check_markdown_codeblock_toolbar_boundary.rb
       - .github/scripts/check_storage_usage_csv_boundary.rb
       - .github/scripts/check_maintenance_route_inventory_boundary.rb
       - .github/scripts/check_git_import_run_project_filter_boundary.rb
@@ -68,6 +69,7 @@ on:
       - .github/scripts/check_csv_metadata_json_boundary.rb
       - .github/scripts/check_access_log_boundary.rb
       - .github/scripts/check_api_specification_dry_run_boundary.rb
+      - .github/scripts/check_markdown_codeblock_toolbar_boundary.rb
       - .github/scripts/check_storage_usage_csv_boundary.rb
       - .github/scripts/check_maintenance_route_inventory_boundary.rb
       - .github/scripts/check_git_import_run_project_filter_boundary.rb
@@ -119,6 +121,9 @@ jobs:
 
       - name: Check API specification dry-run boundary docs
         run: ruby .github/scripts/check_api_specification_dry_run_boundary.rb
+
+      - name: Check Markdown codeblock toolbar boundary docs
+        run: ruby .github/scripts/check_markdown_codeblock_toolbar_boundary.rb
 
       - name: Check storage usage CSV boundary docs
         run: ruby .github/scripts/check_storage_usage_csv_boundary.rb
