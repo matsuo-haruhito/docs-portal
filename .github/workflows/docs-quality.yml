@@ -28,6 +28,7 @@ on:
       - .github/scripts/check_docusaurus_table_metadata_boundary.rb
       - .github/scripts/check_search_index_rebuild_history_boundary.rb
       - .github/scripts/check_csv_metadata_json_boundary.rb
+      - .github/scripts/check_document_file_csv_tsv_viewer_boundary.rb
       - .github/scripts/check_access_log_boundary.rb
       - .github/scripts/check_api_specification_dry_run_boundary.rb
       - .github/scripts/check_storage_usage_csv_boundary.rb
@@ -66,6 +67,7 @@ on:
       - .github/scripts/check_docusaurus_table_metadata_boundary.rb
       - .github/scripts/check_search_index_rebuild_history_boundary.rb
       - .github/scripts/check_csv_metadata_json_boundary.rb
+      - .github/scripts/check_document_file_csv_tsv_viewer_boundary.rb
       - .github/scripts/check_access_log_boundary.rb
       - .github/scripts/check_api_specification_dry_run_boundary.rb
       - .github/scripts/check_storage_usage_csv_boundary.rb
@@ -113,6 +115,9 @@ jobs:
 
       - name: Check CSV metadata JSON boundary docs
         run: ruby .github/scripts/check_csv_metadata_json_boundary.rb
+
+      - name: Check CSV / TSV DocumentFile viewer boundary docs
+        run: ruby .github/scripts/check_document_file_csv_tsv_viewer_boundary.rb
 
       - name: Check AccessLog boundary docs
         run: ruby .github/scripts/check_access_log_boundary.rb
