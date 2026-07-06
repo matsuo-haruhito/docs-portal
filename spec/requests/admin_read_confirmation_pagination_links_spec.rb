@@ -32,7 +32,7 @@ RSpec.describe "Admin read confirmation pagination links", type: :request do
 
     get admin_read_confirmations_path(
       project_id: project.id,
-      document_slug: document.slug,
+      document_slug: "manual-page",
       company_id: company.id,
       user_id: viewer.id,
       from: "2026-05-01",
@@ -47,7 +47,7 @@ RSpec.describe "Admin read confirmation pagination links", type: :request do
     expect(next_link["title"]).to eq("既読確認内訳の2ページ目へ進む（2ページ中、1ページ200件）")
     expect(next_link["aria-label"]).to eq("既読確認内訳の2ページ目へ進む（2ページ中、1ページ200件）")
     expect(next_link["href"]).to include("project_id=#{project.id}")
-    expect(next_link["href"]).to include("document_slug=#{document.slug}")
+    expect(next_link["href"]).to include("document_slug=manual-page")
     expect(next_link["href"]).to include("company_id=#{company.id}")
     expect(next_link["href"]).to include("user_id=#{viewer.id}")
     expect(next_link["href"]).to include("from=2026-05-01")
@@ -56,7 +56,7 @@ RSpec.describe "Admin read confirmation pagination links", type: :request do
 
     get admin_read_confirmations_path(
       project_id: project.id,
-      document_slug: document.slug,
+      document_slug: "manual-page",
       company_id: company.id,
       user_id: viewer.id,
       from: "2026-05-01",
@@ -71,7 +71,7 @@ RSpec.describe "Admin read confirmation pagination links", type: :request do
     expect(previous_link["title"]).to eq("既読確認内訳の1ページ目へ戻る（2ページ中、1ページ200件）")
     expect(previous_link["aria-label"]).to eq("既読確認内訳の1ページ目へ戻る（2ページ中、1ページ200件）")
     expect(previous_link["href"]).to include("project_id=#{project.id}")
-    expect(previous_link["href"]).to include("document_slug=#{document.slug}")
+    expect(previous_link["href"]).to include("document_slug=manual-page")
     expect(previous_link["href"]).to include("company_id=#{company.id}")
     expect(previous_link["href"]).to include("user_id=#{viewer.id}")
     expect(previous_link["href"]).to include("from=2026-05-01")
