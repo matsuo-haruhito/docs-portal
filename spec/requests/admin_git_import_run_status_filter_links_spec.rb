@@ -35,7 +35,7 @@ RSpec.describe "Admin git import run status filter links", type: :request do
   end
 
   def query_params_for_link(label)
-    href = parsed_html.at_xpath("//a[normalize-space(.)='#{label}']").fetch("href")
+    href = parsed_html.at_xpath("//a[normalize-space(.)='#{label}']")["href"]
 
     Rack::Utils.parse_nested_query(href.split("?", 2).last)
   end
