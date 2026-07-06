@@ -67,6 +67,11 @@ section.card
     - csv_params["to"] = @to_date.iso8601
   - else
     - csv_params.delete("to")
+  - read_confirmation_period_params = {}
+  - if @from_date.present?
+    - read_confirmation_period_params[:from] = @from_date.iso8601
+  - if @to_date.present?
+    - read_confirmation_period_params[:to] = @to_date.iso8601
   - metadata_params = csv_params.merge("format" => :json)
   section.card
     h2 集計サマリ
@@ -100,7 +105,7 @@ section.card
       |  
       = link_to "案件の監査ログへ", admin_access_logs_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
       |  / 
-      = link_to "案件の既読確認内訳へ", admin_read_confirmations_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
+      = link_to "案件の既読確認内訳へ", admin_read_confirmations_path({ project_id: @selected_project.id }.merge(read_confirmation_period_params)), data: { turbo_frame: "_top" }
     div
       strong 出力:
       dl
@@ -185,7 +190,7 @@ section.card
               - if row[:read_confirmation_count].to_i.positive?
                 br
                 span.muted
-                  = link_to "内訳へ", admin_read_confirmations_path(project_id: @selected_project.id, document_slug: row[:slug]), data: { turbo_frame: "_top" }
+                  = link_to "内訳へ", admin_read_confirmations_path({ project_id: @selected_project.id, document_slug: row[:slug] }.merge(read_confirmation_period_params)), data: { turbo_frame: "_top" }
             td data-rails-table-preferences-column-key="last_accessed_at" = row[:last_accessed_at].presence || "-"
   - else
     section.card
