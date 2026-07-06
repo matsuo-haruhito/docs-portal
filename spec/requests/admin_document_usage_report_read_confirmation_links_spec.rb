@@ -17,7 +17,7 @@ RSpec.describe "Admin document usage report read confirmation links", type: :req
       href = link["href"].to_s
 
       link.text.squish == label && (href_includes.blank? || href.include?(href_includes))
-    end&.fetch("href")
+    end&.[]("href")
   end
 
   def query_params_for(href)
