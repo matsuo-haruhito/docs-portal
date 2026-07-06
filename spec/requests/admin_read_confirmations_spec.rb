@@ -501,6 +501,58 @@ RSpec.describe "Admin read confirmations", type: :request do
     expect(page_text).not_to include("Limited Manual 0")
   end
 
+  it "paginates selected project results and exports only the current page" do
+    base_time = Time.zone.local(2026, 5, 1, 9, 0, 0)
+
+    205.times do |index|
+      paged_document = create(:document, project:, title: "Paged Manual #{index}", slug: "paged-manual-#{index}")
+      create(:read_confirmation, document: paged_document, user: viewer, confirmed_at: base_time + index.minutes)
+    end
+
+    sign_in_as(admin_user)
+
+    get admin_read_confirmations_path(project_id: project.id, page: 2)
+
+    page_two_rows = read_confirmation_rows.join
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示中: 5件")
+    expect(page_text).to include("表示範囲: 201-205件目")
+    expect(page_text).to include("Page 2 / 2")
+    expect(read_confirmation_rows.size).to eq(5)
+    expect(page_two_rows).to include("Paged Manual 4")
+    expect(page_two_rows).to include("Paged Manual 0")
+    expect(page_two_rows).not_to include("Paged Manual 5")
+    expect(page_two_rows).not_to include("Paged Manual 204")
+
+    get admin_read_confirmations_path(project_id: project.id, page: 999)
+
+    oversized_page_rows = read_confirmation_rows.join
+
+    expect(response).to have_http_status(:ok)
+    expect(page_text).to include("表示範囲: 201-205件目")
+    expect(page_text).to include("Page 2 / 2")
+    expect(read_confirmation_rows.size).to eq(5)
+    expect(oversized_page_rows).to include("Paged Manual 4")
+    expect(oversized_page_rows).to include("Paged Manual 0")
+    expect(oversized_page_rows).not_to include("Paged Manual 5")
+    expect(oversized_page_rows).not_to include("Paged Manual 204")
+
+    get admin_read_confirmations_path(project_id: project.id, page: 2, format: :csv)
+
+    csv = CSV.parse(response.body, headers: true)
+    csv_titles = csv.map { _1["文書名"] }
+    csv_slugs = csv.map { _1["document slug"] }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.media_type).to eq("text/csv")
+    expect(csv.size).to eq(5)
+    expect(csv_titles).to eq((0..4).to_a.reverse.map { "Paged Manual #{_1}" })
+    expect(csv_slugs).to eq((0..4).to_a.reverse.map { "paged-manual-#{_1}" })
+    expect(csv_titles).not_to include("Paged Manual 5")
+    expect(csv_titles).not_to include("Paged Manual 204")
+  end
+
   it "applies the latest 200 confirmation limit after the confirmed_at date filter" do
     base_time = Time.zone.local(2026, 5, 1, 9, 0, 0)
     create(:read_confirmation, document: create(:document, project:, title: "Outside Period Latest", slug: "outside-period-latest"), user: viewer, confirmed_at: Time.zone.local(2026, 5, 2, 9, 0, 0))
