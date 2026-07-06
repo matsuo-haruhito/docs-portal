@@ -63,9 +63,20 @@ h1 Git同期履歴
   - if @git_import_runs.any?
     - status_summary_items = git_import_run_status_summary_items(@git_import_runs)
     - attention_cues = git_import_run_attention_cues(@git_import_runs)
+    - current_filter_params = { project_id: @selected_project_id, repository: @repository_filter, branch: @branch_filter, source_path: @source_path_filter, commit: @commit_filter }
+    - status_filter_links = git_import_run_status_filter_links(@git_import_runs, current_status: @status_filter, current_filters: current_filter_params)
     p.muted
       | 表示中の最新100件内の状態:
       strong = " #{status_summary_items.join(' / ')}"
+    - if status_filter_links.any?
+      p.muted 状態サマリから、現在の案件・リポジトリ・ブランチ・パス・コミット条件を保ったまま絞り込めます。
+      ul
+        - status_filter_links.each do |status_link|
+          li
+            - if status_link[:href].present?
+              = link_to status_link[:label], status_link[:href]
+            - else
+              span.muted = status_link[:label]
     - if attention_cues.any?
       ul
         - attention_cues.each do |cue|
