@@ -56,12 +56,16 @@ h1 Webhook
           | ページ:
           - if @webhook_endpoints_page > 1
             | 
-            = link_to "前へ", admin_webhook_endpoints_path(endpoint_filter_params.merge(endpoint_page: @webhook_endpoints_page - 1))
+            - previous_endpoint_page = @webhook_endpoints_page - 1
+            - previous_endpoint_page_label = "Webhook設定一覧の#{previous_endpoint_page}ページ目へ（現在の設定検索・イベント・状態条件を保持）"
+            = link_to "前へ", admin_webhook_endpoints_path(endpoint_filter_params.merge(endpoint_page: previous_endpoint_page)), title: previous_endpoint_page_label, aria: { label: previous_endpoint_page_label }
           | 
           span.badge = "#{@webhook_endpoints_page} / #{@webhook_endpoints_total_pages}"
           - if @webhook_endpoints_page < @webhook_endpoints_total_pages
             | 
-            = link_to "次へ", admin_webhook_endpoints_path(endpoint_filter_params.merge(endpoint_page: @webhook_endpoints_page + 1))
+            - next_endpoint_page = @webhook_endpoints_page + 1
+            - next_endpoint_page_label = "Webhook設定一覧の#{next_endpoint_page}ページ目へ（現在の設定検索・イベント・状態条件を保持）"
+            = link_to "次へ", admin_webhook_endpoints_path(endpoint_filter_params.merge(endpoint_page: next_endpoint_page)), title: next_endpoint_page_label, aria: { label: next_endpoint_page_label }
     - else
       p.muted 条件に一致するWebhook設定はありません。名称・送信先URL、イベント、状態の条件を見直してください。
       - if @webhook_endpoint_filters_active
