@@ -14,6 +14,10 @@
 - ai_context_filter_usage_note_id = "ai-context-filter-usage-note"
 - ai_context_filter_description = "#{ai_context_filter_state_id} #{ai_context_filter_usage_note_id}"
 - current_page_export_params = @pagination_params.merge(page: @page, csv_scope: Admin::AccessLogsController::CSV_SCOPE_CURRENT_PAGE)
+- previous_page = @page - 1
+- next_page = @page + 1
+- previous_page_label = "監査ログ一覧の#{previous_page}ページ目へ（現在の検索条件を保持）"
+- next_page_label = "監査ログ一覧の#{next_page}ページ目へ（現在の検索条件を保持）"
 
 h1 監査ログ
 = render "admin/nav"
@@ -165,9 +169,9 @@ section.card
   - if @has_previous_page || @has_next_page
     nav.pagination aria-label="監査ログページ移動"
       - if @has_previous_page
-        = link_to "前の200件", admin_access_logs_path(@pagination_params.merge(page: @page - 1)), class: "button secondary"
+        = link_to "前の200件", admin_access_logs_path(@pagination_params.merge(page: previous_page)), class: "button secondary", aria: { label: previous_page_label }, title: previous_page_label
       - if @has_next_page
-        = link_to "次の200件", admin_access_logs_path(@pagination_params.merge(page: @page + 1)), class: "button secondary"
+        = link_to "次の200件", admin_access_logs_path(@pagination_params.merge(page: next_page)), class: "button secondary", aria: { label: next_page_label }, title: next_page_label
 
   .card
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "監査ログ一覧の表示設定")
