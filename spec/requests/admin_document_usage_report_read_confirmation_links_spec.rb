@@ -14,7 +14,9 @@ RSpec.describe "Admin document usage report read confirmation links", type: :req
 
   def link_href(label, href_includes: nil)
     parsed_html.css("a").find do |link|
-      link.text.squish == label && (href_includes.blank? || link["href"].include?(href_includes))
+      href = link["href"].to_s
+
+      link.text.squish == label && (href_includes.blank? || href.include?(href_includes))
     end&.fetch("href")
   end
 
