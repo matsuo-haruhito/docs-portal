@@ -97,9 +97,21 @@ p.actions
     - if @webhook_deliveries_total_pages > 1
       p.actions
         - if @webhook_deliveries_page > 1
-          = link_to "前のページ", admin_webhook_deliveries_path(delivery_pagination_params.merge(page: @webhook_deliveries_page - 1)), class: "button secondary"
+          - previous_delivery_page = @webhook_deliveries_page - 1
+          - previous_delivery_page_cue = "Webhook送信履歴検索結果の#{previous_delivery_page}ページ目へ戻る（#{@webhook_deliveries_total_pages}ページ中）"
+          = link_to "前のページ",
+            admin_webhook_deliveries_path(delivery_pagination_params.merge(page: previous_delivery_page)),
+            class: "button secondary",
+            title: previous_delivery_page_cue,
+            aria: { label: previous_delivery_page_cue }
         - if @webhook_deliveries_page < @webhook_deliveries_total_pages
-          = link_to "次のページ", admin_webhook_deliveries_path(delivery_pagination_params.merge(page: @webhook_deliveries_page + 1)), class: "button secondary"
+          - next_delivery_page = @webhook_deliveries_page + 1
+          - next_delivery_page_cue = "Webhook送信履歴検索結果の#{next_delivery_page}ページ目へ進む（#{@webhook_deliveries_total_pages}ページ中）"
+          = link_to "次のページ",
+            admin_webhook_deliveries_path(delivery_pagination_params.merge(page: next_delivery_page)),
+            class: "button secondary",
+            title: next_delivery_page_cue,
+            aria: { label: next_delivery_page_cue }
   - elsif @delivery_filters_applied
     p.muted 条件に一致するWebhook送信履歴はありません。Webhook設定、イベント、ステータス、HTTP status、エラー断片、作成日の範囲を見直してください。
     p.actions
