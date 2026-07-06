@@ -149,12 +149,24 @@ section.card
     - if @read_confirmations_total_pages > 1
       p.actions
         - if @read_confirmations_previous_page_query
-          = link_to "前へ", admin_read_confirmations_path(@read_confirmations_previous_page_query), class: "button secondary"
+          - previous_read_confirmations_page = @read_confirmations_page - 1
+          - previous_read_confirmations_page_cue = "既読確認内訳の#{previous_read_confirmations_page}ページ目へ戻る（#{@read_confirmations_total_pages}ページ中、1ページ200件）"
+          = link_to "前へ",
+            admin_read_confirmations_path(@read_confirmations_previous_page_query),
+            class: "button secondary",
+            title: previous_read_confirmations_page_cue,
+            aria: { label: previous_read_confirmations_page_cue }
         - else
           span.button.secondary aria-disabled="true"
             | 前へ
         - if @read_confirmations_next_page_query
-          = link_to "次へ", admin_read_confirmations_path(@read_confirmations_next_page_query), class: "button secondary"
+          - next_read_confirmations_page = @read_confirmations_page + 1
+          - next_read_confirmations_page_cue = "既読確認内訳の#{next_read_confirmations_page}ページ目へ進む（#{@read_confirmations_total_pages}ページ中、1ページ200件）"
+          = link_to "次へ",
+            admin_read_confirmations_path(@read_confirmations_next_page_query),
+            class: "button secondary",
+            title: next_read_confirmations_page_cue,
+            aria: { label: next_read_confirmations_page_cue }
         - else
           span.button.secondary aria-disabled="true"
             | 次へ
