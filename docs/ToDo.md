@@ -99,7 +99,7 @@
 | 分類 | 候補 issue title | 主 track | 対象画面または route | 根拠 docs / 起票しない理由 |
 | --- | --- | --- | --- | --- |
 | 正本 docs へ移動済み | build-docs 1 workflow の import / build job 化棚卸しは #4738 / #4745 と正本 docs に移動済み | `track:docs` | `build-docs` workflow | [build-docs import job 化境界メモ](./build-docs-import-job化境界メモ.md)、[build-docs job 化置き換え境界メモ](./build-docs-job化置き換え境界メモ.md)。#4753 は duplicate close 済み。残る retry / replay / scheduler / notification / SLA / queue backend は human decision として扱い、Git連携 run、ZIP import dry-run、internal upload API、search index rebuild へ横展開しない |
-| 起票候補 | 生成ファイル run 履歴を別 build / import 履歴へ広げる前提を棚卸しする | `track:docs` / `track:ops` | Docusaurus site build、検索 index、import run のいずれか 1 surface | [生成ファイル再試行と定期ジョブ管理 runbook](./生成ファイル再試行と定期ジョブ管理runbook.md)、[site build 実行履歴保存境界メモ](./site-build実行履歴保存境界メモ.md)。保存候補と保存しない raw payload を分ける |
+| 具体 Issue あり / 正本 docs へ移動済み | search index rebuild 1 surface の履歴境界棚卸しは #4761 と正本メモに移動済み | `track:docs` / `track:quality` | search index rebuild | [search index rebuild 履歴境界メモ](./search-index-rebuild履歴境界メモ.md)。保存候補 metadata と保存しない raw payload は同メモを正本にし、`GeneratedFileRun` / site build artifact / GitImportRun との責務差、retry / replay / scheduler / notification / SLA / queue backend は human decision として扱う |
 | human decision | 長時間処理の自動リトライ、通知、SLA、retry policy の採用判断 | `track:ops` / `track:quality` | import / build / mail / webhook 横断 | 冪等性、二重実行、再試行上限、通知先、SLA 判断が必要。実装 queue に戻さない |
 | 具体情報待ち | mail / webhook job 化 | `track:ops` | mail delivery / webhook delivery | 送信機能本体、delivery 契約、失敗時の再送 / 通知要件が固まった後に 1 surface で切る |
 
