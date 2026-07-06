@@ -71,10 +71,14 @@ p.actions
 - if @total_pages > 1
   p.actions
     - if @page > 1
-      = link_to "前へ", access_requests_path(page_link_params.merge(page: @page - 1)), class: "button secondary"
+      - previous_access_request_page = @page - 1
+      - previous_access_request_page_label = "アクセス申請一覧の#{previous_access_request_page}ページ目へ（現在の検索条件を保持）"
+      = link_to "前へ", access_requests_path(page_link_params.merge(page: previous_access_request_page)), class: "button secondary", aria: { label: previous_access_request_page_label }, title: previous_access_request_page_label
     span.muted = "Page #{@page} / #{@total_pages}"
     - if @page < @total_pages
-      = link_to "次へ", access_requests_path(page_link_params.merge(page: @page + 1)), class: "button secondary"
+      - next_access_request_page = @page + 1
+      - next_access_request_page_label = "アクセス申請一覧の#{next_access_request_page}ページ目へ（現在の検索条件を保持）"
+      = link_to "次へ", access_requests_path(page_link_params.merge(page: next_access_request_page)), class: "button secondary", aria: { label: next_access_request_page_label }, title: next_access_request_page_label
 
 - if @access_requests.any?
   table
