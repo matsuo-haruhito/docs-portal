@@ -21,9 +21,11 @@ RSpec.describe "Admin read confirmation pagination links", type: :request do
 
   it "keeps visible pagination text while adding read confirmation context to link cues" do
     base_time = Time.zone.local(2026, 5, 1, 9, 0, 0)
+    document
 
     201.times do |index|
-      create(:read_confirmation, document:, user: viewer, confirmed_at: base_time + index.minutes)
+      paged_document = create(:document, project:, title: "Manual Page #{index}", slug: "manual-page-#{index}")
+      create(:read_confirmation, document: paged_document, user: viewer, confirmed_at: base_time + index.minutes)
     end
 
     sign_in_as(admin_user)
