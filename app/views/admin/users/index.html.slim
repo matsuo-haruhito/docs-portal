@@ -71,10 +71,14 @@ h1 ユーザーマスタ
     nav.pagination aria-label="ユーザー一覧ページ"
       p.actions
         - if @users_pagination[:prev_page]
-          = link_to "前へ", admin_users_path(@user_page_params.merge(page: @users_pagination[:prev_page])), class: "button secondary"
+          - previous_user_page = @users_pagination[:prev_page]
+          - previous_user_page_label = "ユーザー一覧の#{previous_user_page}ページ目へ（現在の検索条件を保持）"
+          = link_to "前へ", admin_users_path(@user_page_params.merge(page: previous_user_page)), class: "button secondary", aria: { label: previous_user_page_label }, title: previous_user_page_label
         span.muted = "#{@users_pagination[:page]} / #{@users_pagination[:total_pages]}ページ"
         - if @users_pagination[:next_page]
-          = link_to "次へ", admin_users_path(@user_page_params.merge(page: @users_pagination[:next_page])), class: "button secondary"
+          - next_user_page = @users_pagination[:next_page]
+          - next_user_page_label = "ユーザー一覧の#{next_user_page}ページ目へ（現在の検索条件を保持）"
+          = link_to "次へ", admin_users_path(@user_page_params.merge(page: next_user_page)), class: "button secondary", aria: { label: next_user_page_label }, title: next_user_page_label
 - else
   section.card
     h2 ユーザー一覧
