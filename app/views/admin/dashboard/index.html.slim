@@ -254,6 +254,9 @@ section.card
                 span.muted -
   - else
     p.muted 現在の絞り込み条件に一致する診断項目はありません。診断全体が正常という意味ではないため、条件を解除するか上の全体件数を確認してください。
+    - if @configuration_diagnostic_filters_active
+      p.actions
+        = link_to "絞り込み条件を解除して全診断項目を見る", admin_root_path, class: "button secondary"
 
 section.card
   h2 文書ファイル健全性
