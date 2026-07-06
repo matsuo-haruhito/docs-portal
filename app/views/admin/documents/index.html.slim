@@ -197,7 +197,11 @@ h1 文書マスタ
   nav.pagination aria-label="文書マスタ一覧ページ"
     p.actions
       - if @documents_pagination[:prev_page]
-        = link_to "前へ", admin_documents_path(@document_page_params.merge(page: @documents_pagination[:prev_page])), class: "button secondary"
+        - previous_document_page = @documents_pagination[:prev_page]
+        - previous_document_page_label = "文書マスタ一覧の#{previous_document_page}ページ目へ（現在の検索条件を保持）"
+        = link_to "前へ", admin_documents_path(@document_page_params.merge(page: previous_document_page)), class: "button secondary", aria: { label: previous_document_page_label }, title: previous_document_page_label
       span.muted = "#{@documents_pagination[:page]} / #{@documents_pagination[:total_pages]}ページ"
       - if @documents_pagination[:next_page]
-        = link_to "次へ", admin_documents_path(@document_page_params.merge(page: @documents_pagination[:next_page])), class: "button secondary"
+        - next_document_page = @documents_pagination[:next_page]
+        - next_document_page_label = "文書マスタ一覧の#{next_document_page}ページ目へ（現在の検索条件を保持）"
+        = link_to "次へ", admin_documents_path(@document_page_params.merge(page: next_document_page)), class: "button secondary", aria: { label: next_document_page_label }, title: next_document_page_label
