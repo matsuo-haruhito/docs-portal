@@ -76,7 +76,7 @@ RSpec.describe "Admin read confirmation pagination links", type: :request do
     expect(previous_link["href"]).to include("user_id=#{viewer.id}")
     expect(previous_link["href"]).to include("from=2026-05-01")
     expect(previous_link["href"]).to include("to=2026-05-01")
-    expect(previous_link["href"]).to include("page=1")
+    expect(previous_link["href"]).not_to include("page=")
     expect(disabled_pagination_control("次へ")).to be_present
   end
 end
