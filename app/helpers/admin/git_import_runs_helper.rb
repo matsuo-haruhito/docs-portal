@@ -2,6 +2,7 @@
 
 module Admin::GitImportRunsHelper
   STATUS_SUMMARY_ORDER = %w[failed skipped imported running pending].freeze
+  STATUS_FILTER_LINK_ORDER = %w[failed skipped].freeze
   DIAGNOSTIC_PREVIEW_MAX_LENGTH = 240
   SECRET_KEY_PATTERN = /(authorization|token|secret|password|client_secret|access_token|refresh_token|api_key|private_key)/i
   PRIVATE_PATH_PATTERN = %r{(?:[A-Za-z]:[\\/]|/Users/|/home/)[^\s"'<>]+}
@@ -53,6 +54,23 @@ module Admin::GitImportRunsHelper
     end
 
     cues
+  end
+
+  def git_import_run_status_filter_links(runs, current_status:, current_filters:)
+    status_counts = git_import_run_status_counts(runs)
+
+    STATUS_FILTER_LINK_ORDER.filter_map do |status|
+      count = status_counts[status]
+      next unless count.positive?
+
+      label = git_import_run_status_label(status)
+      if current_status == status
+        { label: "#{label} #{count}件を表示中", href: nil }
+      else
+        params = current_filters.merge(status: status).compact_blank
+        { label: "#{label} #{count}件に絞り込む", href: admin_git_import_runs_path(params) }
+      end
+    end
   end
 
   def git_import_run_summary_lines(run)
