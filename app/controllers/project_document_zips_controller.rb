@@ -1,8 +1,15 @@
 class ProjectDocumentZipsController < BaseController
+  READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
+
   def create
     project = Project.find_by!(code: params[:project_code])
     require_project_access!(project)
     return if require_consent!(target: project, timing: :download, return_to: project_documents_path(project))
+
+    if read_only_maintenance_mode?
+      redirect_to project_documents_path(project), alert: maintenance_document_zip_message
+      return
+    end
 
     versions = selected_versions(project)
     raise ApplicationError::BadRequest, "No documents selected" if versions.empty?
@@ -106,5 +113,13 @@ class ProjectDocumentZipsController < BaseController
     return default if params[key].nil?
 
     ActiveModel::Type::Boolean.new.cast(params[key])
+  end
+
+  def read_only_maintenance_mode?
+    ActiveModel::Type::Boolean.new.cast(ENV.fetch(READ_ONLY_MAINTENANCE_ENV, nil))
+  end
+
+  def maintenance_document_zip_message
+    "メンテナンス中のため文書ZIP生成は停止しています。文書閲覧と個別添付の確認は継続できます。"
   end
 end

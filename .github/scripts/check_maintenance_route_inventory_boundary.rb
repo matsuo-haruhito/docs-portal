@@ -69,6 +69,8 @@ MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
   "| 外部フォルダ同期 | `admin/external_folder_sync_sources#dry_run` / `#apply` / `#force_apply` / `#enqueue` / `#subscribe` / `#unsubscribe` / `#recheck_metadata` | 要判断。",
   "| 外部フォルダ同期 provider webhook | `external_folder_sync_webhooks#google_drive` / `#sharepoint` | current。",
   "provider validation / acknowledgement と event 記録は維持し、`READ_ONLY_MAINTENANCE` 中は受信 event から同期 job を enqueue しない。",
+  "| 文書 ZIP 生成 | `projects/:project_code/document_zip#create` | current。",
+  "文書一覧・文書詳細・個別添付 preview / download は read-only に残す。",
   "| アクセス申請 | `access_requests#create` / `#cancel`, `admin/access_requests#update` | 要判断。",
   "| 既読確認 | `read_confirmations#create` / `#destroy` | current。",
   "| TreeView / 文書 detail tree | `projects#document_tree_all` / `#document_detail_tree` | read-only POST。",
