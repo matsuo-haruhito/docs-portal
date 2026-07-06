@@ -44,9 +44,13 @@ h1 同意文面管理
     - if @consent_terms_has_previous_page || @consent_terms_has_next_page
       nav.pagination aria-label="同意文面一覧ページ移動"
         - if @consent_terms_has_previous_page
-          = link_to "前へ", admin_consent_terms_path(consent_term_pagination_params.merge(page: @consent_terms_page - 1)), class: "button secondary"
+          - previous_consent_term_page = @consent_terms_page - 1
+          - previous_consent_term_page_label = "同意文面一覧の#{previous_consent_term_page}ページ目へ（現在の検索条件を保持）"
+          = link_to "前へ", admin_consent_terms_path(consent_term_pagination_params.merge(page: previous_consent_term_page)), class: "button secondary", aria: { label: previous_consent_term_page_label }, title: previous_consent_term_page_label
         - if @consent_terms_has_next_page
-          = link_to "次へ", admin_consent_terms_path(consent_term_pagination_params.merge(page: @consent_terms_page + 1)), class: "button secondary"
+          - next_consent_term_page = @consent_terms_page + 1
+          - next_consent_term_page_label = "同意文面一覧の#{next_consent_term_page}ページ目へ（現在の検索条件を保持）"
+          = link_to "次へ", admin_consent_terms_path(consent_term_pagination_params.merge(page: next_consent_term_page)), class: "button secondary", aria: { label: next_consent_term_page_label }, title: next_consent_term_page_label
     p.muted 状態の「利用中」は同意要求の候補に残る文面、「無効化済み」は履歴確認用に残す文面です。
     p.muted 改訂時は既存版を上書きせず、新しい版ラベルの文面を追加します。
     p.muted 履歴がある文面は削除できないため、通常は編集で無効化して運用します。
