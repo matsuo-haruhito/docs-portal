@@ -1,6 +1,8 @@
 # search index rebuild 履歴境界メモ
 
-このメモは issue `#4586` の first slice として、Docusaurus site build 履歴とは別に search index rebuild 履歴を検討する前提を棚卸しするものです。
+このメモは issue `#4586` / `#4746` の first slice として、Docusaurus site build 履歴とは別に search index rebuild 履歴を検討する前提を棚卸しするものです。
+
+`docs/ToDo.md` の「生成ファイル run 履歴を別 build / import 履歴へ広げる前提」は、このメモでは search index rebuild だけに固定して読みます。Docusaurus site build は [site build 実行履歴保存境界メモ](./site-build実行履歴保存境界メモ.md)、Git連携 run は [Git連携 run 履歴保存境界メモ](./Git連携run履歴保存境界メモ.md) を正本にし、3 surface を同時に実装する候補として扱いません。
 
 current repo では、search index rebuild 専用の controller action、service、Rake task、GitHub Actions job はまだ current support として確認していません。確認した current surface は `.github/workflows/build-docs.yml` の Docusaurus build / manifest / artifact archive、`GeneratedFiles::SiteBuildArtifactRunRecorder`、および生成ファイル実行履歴 runbook の `docs-site` artifact evidence です。したがって、この first slice では search index rebuild 実装や `GeneratedFileRun` への保存実装を追加せず、後続で具体 surface が決まったときの保存境界だけを固定します。
 
@@ -36,6 +38,16 @@ search index rebuild 履歴を後続で扱う場合は、site build artifact の
 - query log / user input log 全文
 - external search provider response 全文
 
+## replay / rebuild / human decision の分岐
+
+search index rebuild 履歴を後続 issue に切る場合は、次のように分岐してから runtime 実装に進みます。
+
+- `replay`: 既に保存済みの metadata だけで同じ rebuild 入力を安全に再観測できる場合に限る。index payload、document body、CI log 全文を保存して再投入する形にはしない。
+- `rebuild`: source repo / branch / commit / manifest path などの allowlist metadata から、現在の rebuild entrypoint を再実行する形に閉じる。二重実行時の idempotency と重複 index 作成リスクを先に spec 化する。
+- `human decision`: 起動 surface、保存先、`GeneratedFileRun` への統合可否、外部検索 provider response の扱い、scheduled rebuild / alert / SLA は人間判断が必要な proposal として残す。
+
+この分岐は #4746 の proposal boundary であり、ここでは retry / replay UI、alert、scheduled rebuild policy を採用しません。
+
 ## 後続判断条件
 
 次のいずれかが確認できるまで、runtime 実装は追加しません。
@@ -45,6 +57,16 @@ search index rebuild 履歴を後続で扱う場合は、site build artifact の
 - `GeneratedFileRun` に載せる場合の `job_id` / `generator` / `output_writer` / `event_source` が site build と衝突しない
 - 別 evidence にする場合の一覧・詳細・検索入口が決まっている
 - metadata allowlist と raw payload 非保存の representative spec / docs-quality guard が小さく切れている
+
+## follow-up issue へ分ける条件
+
+実装へ進む場合は、次の論点を 1 PR に混ぜず、別 issue に分けます。
+
+- 履歴 model または `GeneratedFileRun` metadata へ載せるかの schema 判断
+- rebuild 起動 service / task / controller action の追加
+- request spec / job spec / docs-quality guard の追加
+- replay / rebuild UI、手動再実行、scheduled rebuild、alert / notification / SLA policy の採用判断
+- 外部 search provider response を扱う場合の保存境界と masking policy
 
 ## 非目標
 
