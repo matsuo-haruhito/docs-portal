@@ -28,6 +28,23 @@
 | `rails_table_preferences` | `rails_table_preferences` の README、`docs/javascript_entrypoints.md`、release checklist、package verification / manual QA docs、対象 PR / commit の CI を見る | package root `rails_table_preferences` の `RailsTablePreferencesController` を default とし、`rails_table_preferences/controller` は documented fallback / migration lane として扱う | visual overview、generated demo、editor / table mockup、manual QA artifact を見る。known-good revision の human gate 代替にしない | `admin/document_sets` の editor、stable column key、filter / preset、mounted engine save、必要時だけ embedded table seam。table key と rollback target を残す |
 | `rails_fields_kit` | `rails_fields_kit` の README、`doc/public_api.md`、`doc/setup.md`、final release checklist、対象 PR / commit の CI を見る | package root `rails_fields_kit` の `TomSelectController` と public API docs を優先する。direct path は documented fallback の場合だけ使う | visual reference family、focused field HTML、sample app evidence を見る。helper export proposal や host form redesign の採否はここで決めない | `admin/document_sets` form の selected value、placeholder、invalid rerender、Tom Select wiring。remote search を触る場合だけ endpoint と selected value retention を追加する |
 
+## RFK/RTP bridge pilot (`docs-portal#4626`)
+
+RFK/RTP bridge contract を docs-portal 側で読むときは、最初の downstream pilot を `admin/document_sets` に絞ります。この画面は `rails_fields_kit` の `rfk_select` と `rails_table_preferences` の editor / table composition を同じ host app surface で確認できるため、`#607` の広い screen-by-screen 展開へ進む前の代表 smoke として扱います。
+
+- `#607` は親候補です。この pilot では他の admin 画面へ横展開しません。
+- `#4582` は pinned SHA / release train gate です。この pilot では target SHA、Gemfile、Gemfile.lock、3 gem 同時更新を決めません。
+- upstream RFK / RTP の public API、runtime adapter、hard dependency はこの文書では追加しません。RFK rendering と RTP metadata の ownership は upstream docs を参照し、query execution / authorization / persistence は docs-portal 側責務として残します。
+
+| smoke | `admin/document_sets` で見ること | ここでやらないこと |
+| --- | --- | --- |
+| saved filter state | RTP editor / table が同じ `table_key` と stable column key を共有し、既存 preset / filter / mounted engine save の確認場所が分かる | 新しい preset 仕様、別画面の table adoption、known-good revision 判断を決めない |
+| RFK rendering | `app/views/admin/document_sets/_form.html.slim` の `rfk_select` が field params、placeholder、selected value、invalid rerender の既存 contract を壊さない | RFK helper option、remote search endpoint、public API を docs-portal 側で新設しない |
+| query / authorization / persistence ownership | form params、table filter、保存処理、認可は docs-portal 側の controller / request spec を正本にする | RFK/RTP bridge が query execution、authorization、persistence を所有する前提にしない |
+| desktop / narrow readability | filter/editor control と table UI が desktop / narrow viewport で重ならないことを visual evidence の対象にする | CI success や source inspection だけで visual acceptance としない |
+
+PR / Issue comment では、上の 4 smoke のうち確認したものと未確認のものを分けて記録します。docs-only handoff の場合は、この表と [関連gem連携調査runbook](./関連gem連携調査runbook.md)、[internal UI gem責務境界matrix](./internal-ui-gem責務境界matrix.md) の wording が矛盾していないことを確認します。
+
 ## PR / Issue comment template
 
 ```text
