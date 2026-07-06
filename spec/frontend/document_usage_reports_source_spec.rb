@@ -46,7 +46,9 @@ RSpec.describe "admin document usage reports source" do
       expect(view_source).to include("document_usage_report_usage_hint(row)")
       expect(view_source).to include("未利用は期間内の閲覧・ダウンロード・既読確認がない文書")
       expect(view_source).to include("既読のみは閲覧・ダウンロードなしで既読確認だけがある文書")
-      expect(view_source).to include("admin_access_logs_path(project_id: @selected_project.id, document_q: row[:slug])")
+      expect(view_source).to include("audit_log_period_params")
+      expect(view_source).to include("admin_access_logs_path({ project_id: @selected_project.id }.merge(audit_log_period_params))")
+      expect(view_source).to include("admin_access_logs_path({ project_id: @selected_project.id, document_q: row[:slug] }.merge(audit_log_period_params))")
       expect(view_source).to include("read_confirmation_period_params")
       expect(view_source).to include("admin_read_confirmations_path({ project_id: @selected_project.id, document_slug: row[:slug] }.merge(read_confirmation_period_params))")
     end
