@@ -105,7 +105,7 @@ section.card
       |  
       = link_to "案件の監査ログへ", admin_access_logs_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
       |  / 
-      = link_to "案件の既読確認内訳へ", admin_read_confirmations_path({ project_id: @selected_project.id }.merge(read_confirmation_period_params)), data: { turbo_frame: "_top" }
+      = link_to "案件の既読確認内訳へ", admin_read_confirmations_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
     div
       strong 出力:
       dl
