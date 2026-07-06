@@ -236,6 +236,7 @@ section.card
 - elsif has_active_filters
   .access-log-empty-state
     p.muted 条件に一致する監査ログはありません。
+    p.muted CSV / metadata はこの条件で0件だったことや条件・scopeの確認に使えます。監査ログ行データが存在することを示すものではありません。
     - if active_filter_summaries.any?
       p.muted
         | 有効な条件:
