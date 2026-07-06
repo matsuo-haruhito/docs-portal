@@ -29,7 +29,7 @@ RSpec.describe "Admin document usage report read confirmation links", type: :req
     sign_in_as(admin_user)
   end
 
-  it "carries valid period params to summary and row read confirmation links only" do
+  it "carries valid period params to row read confirmation links only" do
     get admin_document_usage_reports_path(
       project_id: project.id,
       q: "manual",
@@ -44,12 +44,7 @@ RSpec.describe "Admin document usage report read confirmation links", type: :req
     summary_params = query_params_for(link_href("案件の既読確認内訳へ"))
     row_params = query_params_for(link_href("内訳へ", href_includes: "document_slug=manual"))
 
-    expect(summary_params).to include(
-      "project_id" => project.id.to_s,
-      "from" => "2026-05-01",
-      "to" => "2026-05-02"
-    )
-    expect(summary_params).not_to include("q", "usage_filter", "sort_order", "document_slug")
+    expect(summary_params).to eq("project_id" => project.id.to_s)
 
     expect(row_params).to include(
       "project_id" => project.id.to_s,
@@ -87,11 +82,7 @@ RSpec.describe "Admin document usage report read confirmation links", type: :req
     summary_params = query_params_for(link_href("案件の既読確認内訳へ"))
     row_params = query_params_for(link_href("内訳へ", href_includes: "document_slug=manual"))
 
-    expect(summary_params).to include(
-      "project_id" => project.id.to_s,
-      "to" => "2026-05-02"
-    )
-    expect(summary_params).not_to include("from", "q", "usage_filter", "sort_order", "document_slug")
+    expect(summary_params).to eq("project_id" => project.id.to_s)
 
     expect(row_params).to include(
       "project_id" => project.id.to_s,
