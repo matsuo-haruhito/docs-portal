@@ -8,8 +8,8 @@ RSpec.describe "admin design filter cues source" do
     aggregate_failures do
       expect(webhook_view_source).to include('= link_to "前へ", admin_webhook_endpoints_path(endpoint_filter_params.merge(endpoint_page: previous_endpoint_page)), title: previous_endpoint_page_label, aria: { label: previous_endpoint_page_label }')
       expect(webhook_view_source).to include('= link_to "次へ", admin_webhook_endpoints_path(endpoint_filter_params.merge(endpoint_page: next_endpoint_page)), title: next_endpoint_page_label, aria: { label: next_endpoint_page_label }')
-      expect(webhook_view_source).to include("Webhook設定一覧の#{previous_endpoint_page}ページ目へ（現在の設定検索・イベント・状態条件を保持）")
-      expect(webhook_view_source).to include("Webhook設定一覧の#{next_endpoint_page}ページ目へ（現在の設定検索・イベント・状態条件を保持）")
+      expect(webhook_view_source).to include('Webhook設定一覧の#{previous_endpoint_page}ページ目へ（現在の設定検索・イベント・状態条件を保持）')
+      expect(webhook_view_source).to include('Webhook設定一覧の#{next_endpoint_page}ページ目へ（現在の設定検索・イベント・状態条件を保持）')
       expect(webhook_view_source).to include("endpoint_filter_params.merge(endpoint_page: previous_endpoint_page)")
       expect(webhook_view_source).to include("endpoint_filter_params.merge(endpoint_page: next_endpoint_page)")
     end
