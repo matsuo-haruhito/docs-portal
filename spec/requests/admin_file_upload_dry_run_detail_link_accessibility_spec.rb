@@ -36,13 +36,17 @@ RSpec.describe "Admin file upload dry-run detail link accessibility", type: :req
     get admin_file_upload_dry_runs_path
 
     labels_by_href = detail_links.to_h { [_1["href"], _1["aria-label"]] }
+    joined_labels = labels_by_href.values.join
 
     expect(response).to have_http_status(:ok)
     expect(detail_links.map { _1.text.squish }).to eq(["詳細", "詳細"])
     expect(labels_by_href.fetch(admin_file_upload_dry_run_path(first_dry_run))).to match(/\Adry-run #{Regexp.escape(first_dry_run.public_id)}（.+）の詳細を確認\z/)
     expect(labels_by_href.fetch(admin_file_upload_dry_run_path(second_dry_run))).to match(/\Adry-run #{Regexp.escape(second_dry_run.public_id)}（.+）の詳細を確認\z/)
     expect(labels_by_href.values).to contain_exactly(a_string_including(first_dry_run.public_id), a_string_including(second_dry_run.public_id))
-    expect(labels_by_href.values.join).not_to include("docs/README.md", "docs/SECOND.md", "abc123contenthash", "def456contenthash")
+    expect(joined_labels).not_to include("docs/README.md")
+    expect(joined_labels).not_to include("docs/SECOND.md")
+    expect(joined_labels).not_to include("abc123contenthash")
+    expect(joined_labels).not_to include("def456contenthash")
   end
 
   private
