@@ -70,13 +70,15 @@ p.muted file_uploads API から作成された単体ファイルアップロー�
                 = link_to "絞り込み解除", admin_file_upload_dry_runs_path, class: "button secondary"
       - @dry_runs.each do |dry_run|
         - preview = dry_run.result_json.dig("file_upload_preview") || {}
+        - status_label = import_dry_run_status_label(dry_run)
+        - detail_label = "dry-run #{dry_run.public_id}（#{status_label}）の詳細を確認"
         tr
           td = dry_run.created_at ? l(dry_run.created_at) : "-"
           td
             code = dry_run.public_id
           td = dry_run.project ? "#{dry_run.project.code} / #{dry_run.project.name}" : "-"
-          td = import_dry_run_status_label(dry_run)
+          td = status_label
           td = preview["source_name"].presence || "-"
           td = preview["relative_path"].presence || "-"
           td = preview["content_hash"].presence || "-"
-          td = link_to "詳細", admin_file_upload_dry_run_path(dry_run), class: "button secondary"
+          td = link_to "詳細", admin_file_upload_dry_run_path(dry_run), class: "button secondary", aria: { label: detail_label }

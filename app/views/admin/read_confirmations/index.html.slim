@@ -4,7 +4,7 @@
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - project_search_limit = Admin::ReadConfirmationsController::PROJECT_SEARCH_LIMIT
 - filter_search_limit = Admin::ReadConfirmationsController::FILTER_SEARCH_LIMIT
-- show_read_confirmations_clear_link = @selected_project.present? || @document_slug.present? || @confirmed_from.present? || @confirmed_to.present? || @invalid_confirmed_date_labels.present? || @selected_company_id.present? || @selected_user_id.present? || params[:page].present?
+- show_read_confirmations_clear_link = @selected_project.present? || @document_slug.present? || @confirmed_from.present? || @confirmed_to.present? || @invalid_confirmed_date_labels.present? || @selected_company_id.present? || @selected_user_id.present?
 
 h1 既読確認内訳
 = render "admin/nav"
