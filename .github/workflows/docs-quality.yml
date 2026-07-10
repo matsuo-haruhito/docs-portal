@@ -33,6 +33,7 @@ on:
       - .github/scripts/check_markdown_codeblock_toolbar_boundary.rb
       - .github/scripts/check_storage_usage_csv_boundary.rb
       - .github/scripts/check_maintenance_route_inventory_boundary.rb
+      - .github/scripts/check_recurring_job_maintenance_boundary.rb
       - .github/scripts/check_git_import_run_project_filter_boundary.rb
       - .github/scripts/check_import_dry_run_history_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
@@ -72,6 +73,7 @@ on:
       - .github/scripts/check_markdown_codeblock_toolbar_boundary.rb
       - .github/scripts/check_storage_usage_csv_boundary.rb
       - .github/scripts/check_maintenance_route_inventory_boundary.rb
+      - .github/scripts/check_recurring_job_maintenance_boundary.rb
       - .github/scripts/check_git_import_run_project_filter_boundary.rb
       - .github/scripts/check_import_dry_run_history_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
@@ -130,6 +132,9 @@ jobs:
 
       - name: Check maintenance route inventory boundary docs
         run: ruby .github/scripts/check_maintenance_route_inventory_boundary.rb
+
+      - name: Check recurring job maintenance boundary docs
+        run: ruby .github/scripts/check_recurring_job_maintenance_boundary.rb
 
       - name: Check Git import run project filter boundary docs
         run: ruby .github/scripts/check_git_import_run_project_filter_boundary.rb
