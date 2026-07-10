@@ -46,7 +46,7 @@ GENERATED_FILE_RETRY_MAINTENANCE_CHECKS = [
       "member の `retry_run`",
       "current filter に一致する failed event のうち、古い順で今回 pending に戻る最大 100 件",
       "current filter に一致する failed run のうち、古い順で今回 enqueue 対象になる最大 100 件",
-      "送信履歴とfailure handoffは閲覧できます",
+      "filter なしで 0 件の場合に表示される `生成ファイル実行履歴を確認する`",
       "一覧の `イベントID` と `詳細` は current の一覧 URL を `return_to` として detail へ渡します。",
       "一覧の `実行ID` と `詳細` は current の一覧 URL を `return_to` として detail へ渡します。"
     ]
