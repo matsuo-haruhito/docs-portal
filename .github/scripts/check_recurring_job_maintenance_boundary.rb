@@ -31,13 +31,6 @@ RECURRING_JOB_MAINTENANCE_CHECKS = [
       "`実行履歴` は 50 件ずつ表示され",
       "実行履歴の page 移動では、`run_status`、`q`、`scheduled_from`、`scheduled_to`、`return_to`、`per_page` が維持されます。"
     ]
-  },
-  {
-    path: "docs/本番運用・インフラ前提.md",
-    expected: [
-      "| 定期ジョブ操作 | `admin/recurring_job_schedules#sync_definitions` / `#request_run` | 要判断。",
-      "`current` として扱うのは、controller guard、request spec、関連 runbook の current support が揃っている操作だけです。"
-    ]
   }
 ].freeze
 
