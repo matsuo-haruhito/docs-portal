@@ -172,13 +172,14 @@ section.card
           th data-rails-table-preferences-column-key="last_accessed_at" 最終アクセス
       tbody
         - @report_hash[:documents].each do |row|
+          - document_usage_row_label = "#{row[:title]} (#{row[:slug]})"
           tr
             td data-rails-table-preferences-column-key="title"
               = link_to row[:title], project_document_path(@selected_project, row[:slug]), data: { turbo_frame: "_top" }
               - if row[:view_count].to_i.positive? || row[:download_count].to_i.positive?
                 br
                 span.muted
-                  = link_to "監査ログへ", admin_access_logs_path({ project_id: @selected_project.id, document_q: row[:slug] }.merge(audit_log_period_params)), data: { turbo_frame: "_top" }
+                  = link_to "監査ログへ", admin_access_logs_path({ project_id: @selected_project.id, document_q: row[:slug] }.merge(audit_log_period_params)), aria: { label: "#{document_usage_row_label} の監査ログへ" }, data: { turbo_frame: "_top" }
             td data-rails-table-preferences-column-key="category" = document_category_label(row[:category])
             td data-rails-table-preferences-column-key="document_kind" = document_kind_label(row[:document_kind])
             td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(row[:visibility_policy])
@@ -195,7 +196,7 @@ section.card
               - if row[:read_confirmation_count].to_i.positive?
                 br
                 span.muted
-                  = link_to "内訳へ", admin_read_confirmations_path({ project_id: @selected_project.id, document_slug: row[:slug] }.merge(read_confirmation_period_params)), data: { turbo_frame: "_top" }
+                  = link_to "内訳へ", admin_read_confirmations_path({ project_id: @selected_project.id, document_slug: row[:slug] }.merge(read_confirmation_period_params)), aria: { label: "#{document_usage_row_label} の既読確認内訳へ" }, data: { turbo_frame: "_top" }
             td data-rails-table-preferences-column-key="last_accessed_at" = row[:last_accessed_at].presence || "-"
   - else
     section.card
