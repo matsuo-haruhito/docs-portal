@@ -9,6 +9,7 @@ class DocumentFile < ApplicationRecord
     ".mdx" => "text/markdown",
     ".txt" => "text/plain",
     ".csv" => "text/csv",
+    ".tsv" => "text/tab-separated-values",
     ".json" => "application/json",
     ".yml" => "text/yaml",
     ".yaml" => "text/yaml",
