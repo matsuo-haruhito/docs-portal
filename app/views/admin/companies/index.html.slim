@@ -11,6 +11,10 @@
 - company_filter_summaries << "状態: #{company_active_filter_label}" if company_active_filter_label.present?
 - company_filters_applied = company_filter_summaries.any?
 - company_return_to = request.query_parameters.present? ? request.fullpath : nil
+- company_filter_result_note = if @companies.any?
+  - "検索結果: #{@companies_filtered_count}件（列の表示設定は下の「会社一覧の表示設定」で調整できます）"
+- else
+  - "検索結果: #{@companies_filtered_count}件（表示できる会社がないため、列の表示設定は表示していません）"
 
 h1 会社マスタ
 = render "admin/nav"
@@ -36,7 +40,7 @@ h1 会社マスタ
         = link_to "条件をクリア", admin_companies_path, class: "button secondary"
   - if company_filters_applied
     p.muted = "適用中: #{company_filter_summaries.join(' / ')}"
-    p.muted = "検索結果: #{@companies_filtered_count}件（列の表示設定は下の「会社一覧の表示設定」で調整できます）"
+    p.muted = company_filter_result_note
 
 - if @companies.any?
   .card
