@@ -77,6 +77,7 @@ RSpec.describe "Admin git import source branch options", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("release/outside-window")
     expect(page_text).to include("リポジトリとブランチは GitHub App の候補から選べます。")
-    expect(page_text).to include("候補取得不可・候補0件の場合は、既存どおり owner/repo とブランチ名を直接入力します。")
+    expect(page_text).to include("候補取得不可・候補0件の場合は、既存どおり owner/repo を直接入力します。")
+    expect(page_text).to include("ブランチ候補がない場合もブランチ名を直接入力できます。")
   end
 end
