@@ -10,7 +10,7 @@ RSpec.describe "Admin external folder sync source pagination cues", type: :reque
   end
 
   def query_params_for(link)
-    uri = URI.parse(link.fetch("href"))
+    uri = URI.parse(link["href"])
 
     expect(uri.path).to eq(admin_external_folder_sync_sources_path)
 
