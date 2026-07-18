@@ -29,8 +29,8 @@ RSpec.describe "admin documents empty state source" do
       expect(index_source).to include("aria: { label: restore_document_cue }")
       expect(index_source).to include("title: restore_document_cue")
       expect(index_source).to include('turbo_confirm: "#{restore_document_cue}よろしいですか？"')
-      expect(index_source).to include("文書「#{document.title}」をアーカイブしますか？通常一覧・社外導線から非表示になります。復元は管理画面から実行できます。")
-      expect(index_source).to include("文書「#{document.title}」を削除しますか？関連する版・添付・コメントも削除される可能性があります。")
+      expect(index_source).to include('文書「#{document.title}」をアーカイブしますか？通常一覧・社外導線から非表示になります。復元は管理画面から実行できます。')
+      expect(index_source).to include('文書「#{document.title}」を削除しますか？関連する版・添付・コメントも削除される可能性があります。')
     end
   end
 end
