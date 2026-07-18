@@ -188,7 +188,8 @@ h1 文書マスタ
         td.actions data-rails-table-preferences-column-key="actions"
           = edit_link_to "編集", edit_admin_document_path(document.public_id, return_to: current_return_to)
           - if document.archived?
-            = button_to "復元", restore_admin_document_path(document.public_id, return_to: current_return_to), method: :patch, class: "button secondary"
+            - restore_document_cue = "文書「#{document.title}」を復元します。通常一覧・社外導線で再び表示対象になる可能性があります。"
+            = button_to "復元", restore_admin_document_path(document.public_id, return_to: current_return_to), method: :patch, class: "button secondary", aria: { label: restore_document_cue }, title: restore_document_cue, form: { data: { turbo_confirm: "#{restore_document_cue}よろしいですか？" } }
           - else
             = button_to "アーカイブ", archive_admin_document_path(document.public_id, return_to: current_return_to), method: :patch, params: { retention_until: document.retention_until, discard_candidate_at: document.discard_candidate_at }, class: "button secondary", form: { data: { turbo_confirm: "文書「#{document.title}」をアーカイブしますか？通常一覧・社外導線から非表示になります。復元は管理画面から実行できます。" } }
           = delete_link_to "削除", admin_document_path(document.public_id, return_to: current_return_to), confirm: "文書「#{document.title}」を削除しますか？関連する版・添付・コメントも削除される可能性があります。"
