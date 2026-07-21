@@ -28,6 +28,7 @@
   - selected_filter_labels << "SharePoint / OneDrive"
 - if @search_query.present?
   - selected_filter_labels << "検索: #{@search_query}"
+- pagination_context_label = selected_filter_labels.any? ? "現在の絞り込み（#{selected_filter_labels.join(' / ')}）を維持" : "現在の一覧条件を維持"
 
 h1 外部フォルダ同期設定
 = render "admin/nav"
@@ -115,10 +116,14 @@ h1 外部フォルダ同期設定
     - if @external_folder_sync_sources_total_pages > 1
       nav.pagination aria-label="外部フォルダ同期設定一覧のページ移動" style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;margin-top:0.75rem;"
         - if @external_folder_sync_sources_page > 1
-          = link_to "前へ", admin_external_folder_sync_sources_path(pagination_link_params.merge(page: @external_folder_sync_sources_page - 1)), class: "button secondary", rel: "prev"
+          - previous_page = @external_folder_sync_sources_page - 1
+          - previous_page_label = "前のページへ移動（#{previous_page} / #{@external_folder_sync_sources_total_pages}ページ、#{pagination_context_label}）"
+          = link_to "前へ", admin_external_folder_sync_sources_path(pagination_link_params.merge(page: previous_page)), class: "button secondary", rel: "prev", aria: { label: previous_page_label }, title: previous_page_label
         span.muted = "#{@external_folder_sync_sources_page} / #{@external_folder_sync_sources_total_pages}ページ"
         - if @external_folder_sync_sources_page < @external_folder_sync_sources_total_pages
-          = link_to "次へ", admin_external_folder_sync_sources_path(pagination_link_params.merge(page: @external_folder_sync_sources_page + 1)), class: "button secondary", rel: "next"
+          - next_page = @external_folder_sync_sources_page + 1
+          - next_page_label = "次のページへ移動（#{next_page} / #{@external_folder_sync_sources_total_pages}ページ、#{pagination_context_label}）"
+          = link_to "次へ", admin_external_folder_sync_sources_path(pagination_link_params.merge(page: next_page)), class: "button secondary", rel: "next", aria: { label: next_page_label }, title: next_page_label
 
   .card
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "外部フォルダ同期設定一覧の表示設定")
