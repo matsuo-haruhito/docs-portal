@@ -15,7 +15,15 @@ class DocsIndexOrphanEntriesCheck
   ].freeze
 
   ALLOWLISTED_ORPHANS = {
-    "docs/specs/search.md" => "search responsibility spec is intentionally topic-specific and not a first-read index entry yet"
+    "docs/specs/README.md" => "nested specs index is not a first-read entry; docs/README.md links representative specs directly",
+    "docs/specs/archive-preview.md" => "topic-specific archive preview spec is intentionally kept outside the first-read index",
+    "docs/specs/docusaurus-build-manifest.md" => "build manifest spec is a focused implementation reference, not a primary index entry",
+    "docs/specs/path-history-redirect.md" => "path history redirect spec is a focused implementation reference, not a primary index entry",
+    "docs/specs/preview-target-metadata.md" => "preview target metadata spec is a focused implementation reference, not a primary index entry",
+    "docs/specs/search.md" => "search responsibility spec is intentionally topic-specific and not a first-read index entry yet",
+    "docs/specs/生成ファイルイベント.md" => "generated file event spec is a focused implementation reference, not a primary index entry",
+    "docs/グローバルナビ分類・開閉導線runbook.md" => "global nav classification runbook is a UI cue reference, not a primary operations entry",
+    "docs/外部送付履歴継続失敗候補runbook.md" => "delivery failure candidate runbook is a specialized failure handoff reference, not a primary operations entry"
   }.freeze
 
   INDEX_PATHS = [
