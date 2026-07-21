@@ -177,7 +177,7 @@ jobs:
       - name: Check frontend entrypoint policy
         run: ruby .github/scripts/check_frontend_entrypoint_policy.rb
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
 
