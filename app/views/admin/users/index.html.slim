@@ -10,6 +10,7 @@
 - user_filter_summaries << "状態: #{user_active_filter_label}" if user_active_filter_label.present?
 - user_filters_applied = user_filter_summaries.any?
 - user_return_to = request.query_parameters.present? ? request.fullpath : nil
+- user_filter_result_note = @users.any? ? "検索結果: #{@users_filtered_count}件（列の表示設定は下の「ユーザー一覧の表示設定」で調整できます）" : "検索結果: #{@users_filtered_count}件（表示できるユーザーがないため、列の表示設定は表示していません）"
 
 h1 ユーザーマスタ
 = render "admin/nav"
@@ -35,7 +36,7 @@ h1 ユーザーマスタ
         = link_to "条件をクリア", admin_users_path, class: "button secondary"
   - if user_filters_applied
     p.muted = "適用中: #{user_filter_summaries.join(' / ')}"
-    p.muted = "検索結果: #{@users_filtered_count}件（列の表示設定は下の「ユーザー一覧の表示設定」で調整できます）"
+    p.muted = user_filter_result_note
 
 - if @users.any?
   .card
