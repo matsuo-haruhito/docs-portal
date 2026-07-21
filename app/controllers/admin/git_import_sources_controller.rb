@@ -9,6 +9,7 @@ class Admin::GitImportSourcesController < Admin::BaseController
   PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
   PROJECT_SEARCH_LIMIT = 20
   REPOSITORY_SEARCH_LIMIT = 20
+  BRANCH_SEARCH_LIMIT = 20
   READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   def index
@@ -70,6 +71,11 @@ class Admin::GitImportSourcesController < Admin::BaseController
   end
 
   def repository_search
+    if params[:kind] == "branch"
+      render_branch_search
+      return
+    end
+
     result = GitHubAppRepositoryOptions.new(
       installation_id: params[:installation_id],
       query: params[:q],
@@ -213,6 +219,21 @@ class Admin::GitImportSourcesController < Admin::BaseController
     query.to_s.strip.first(PROJECT_SEARCH_QUERY_MAX_LENGTH)
   end
 
+  def render_branch_search
+    result = GitHubAppBranchOptions.new(
+      installation_id: params[:installation_id],
+      repository_full_name: params[:repository_full_name],
+      query: params[:q],
+      limit: BRANCH_SEARCH_LIMIT
+    ).call
+
+    render json: {
+      options: branch_options(result.branches),
+      fallback: result.fallback?,
+      message: result.message
+    }
+  end
+
   def normalize_repository_full_name(value)
     repository_full_name = value.to_s.strip.first(GIT_IMPORT_SOURCE_QUERY_MAX_LENGTH)
     return nil unless repository_full_name.match?(%r{\A[\w.-]+/[\w.-]+\z})
@@ -234,6 +255,14 @@ class Admin::GitImportSourcesController < Admin::BaseController
 
   def repository_option(repository_full_name)
     { value: repository_full_name, text: repository_full_name }
+  end
+
+  def branch_options(branches)
+    branches.map { |branch| branch_option(branch) }
+  end
+
+  def branch_option(branch)
+    { value: branch, text: branch }
   end
 
   def read_only_maintenance_mode?

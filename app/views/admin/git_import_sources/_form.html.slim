@@ -12,7 +12,7 @@
   p.muted
     | Git連携の共通契約は「同期元設定、run履歴、manifest化、削除候補」です。repository / branch / path / commit は Git 専用の入力として扱い、Google Drive / SharePoint 本体や自動同期はこの画面では追加しません。
   p.muted
-    | GitHub App の installation context が使える場合はリポジトリ候補から選べます。候補を取得できない場合も、既存どおり owner/repo を手入力して保存できます。
+    | GitHub App の installation context が使える場合はリポジトリ候補から選べます。リポジトリが決まっている場合はブランチ候補も取得できます。候補を取得できない場合も、既存どおり owner/repo とブランチ名を手入力して保存できます。
 
 = form_with model: [:admin, git_import_source] do |form|
   .form-grid
@@ -44,13 +44,19 @@
       placeholder: "owner/repo"
     label
       | ブランチ
-      = form.text_field :branch, placeholder: "main"
+      = form.text_field :branch,
+        placeholder: "main",
+        list: "git-import-source-branch-candidates",
+        data: { branch_candidates_url: repository_search_admin_git_import_sources_path(format: :json, kind: "branch", installation_id: git_import_source.installation_id.presence, repository_full_name: git_import_source.repository_full_name.presence) }
+      datalist#git-import-source-branch-candidates
+        - if git_import_source.branch.present?
+          option value=git_import_source.branch
       span.muted 既定ブランチ名を入力します。例: main
     label
       | 取込元パス
       = form.text_field :source_path, placeholder: "docs/source"
       span.muted リポジトリルートからの相対パスです。例: docs / docs/source
-    p.muted リポジトリは GitHub App の候補から選べます。installation ID 未設定・候補取得不可・候補0件の場合は、既存どおり owner/repo を直接入力します。ブランチと取込元パスは引き続き手入力です。
+    p.muted リポジトリとブランチは GitHub App の候補から選べます。installation ID 未設定・候補取得不可・候補0件の場合は、既存どおり owner/repo を直接入力します。ブランチ候補がない場合もブランチ名を直接入力できます。ブランチと取込元パスは引き続き手入力です。
     label
       | 認証方式
       = form.select :auth_type, enum_options_for("git_import_sources.auth_type", GitImportSource.auth_types.keys)
