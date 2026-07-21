@@ -35,6 +35,7 @@ on:
       - .github/scripts/check_maintenance_route_inventory_boundary.rb
       - .github/scripts/check_recurring_job_maintenance_boundary.rb
       - .github/scripts/check_generated_file_retry_maintenance_boundary.rb
+      - .github/scripts/check_backup_artifact_release_record_boundary.rb
       - .github/scripts/check_git_import_run_project_filter_boundary.rb
       - .github/scripts/check_import_dry_run_history_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
@@ -76,6 +77,7 @@ on:
       - .github/scripts/check_maintenance_route_inventory_boundary.rb
       - .github/scripts/check_recurring_job_maintenance_boundary.rb
       - .github/scripts/check_generated_file_retry_maintenance_boundary.rb
+      - .github/scripts/check_backup_artifact_release_record_boundary.rb
       - .github/scripts/check_git_import_run_project_filter_boundary.rb
       - .github/scripts/check_import_dry_run_history_boundary.rb
       - .github/scripts/check_issue_pr_number_boundary.rb
@@ -140,6 +142,9 @@ jobs:
 
       - name: Check generated file retry maintenance boundary docs
         run: ruby .github/scripts/check_generated_file_retry_maintenance_boundary.rb
+
+      - name: Check backup artifact release record boundary docs
+        run: ruby .github/scripts/check_backup_artifact_release_record_boundary.rb
 
       - name: Check Git import run project filter boundary docs
         run: ruby .github/scripts/check_git_import_run_project_filter_boundary.rb
