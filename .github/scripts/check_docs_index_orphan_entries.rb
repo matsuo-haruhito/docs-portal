@@ -39,17 +39,17 @@ class DocsIndexOrphanEntriesCheck
     end
   end
 
-  def self_test!
+  def self.self_test!
     Dir.mktmpdir do |dir|
       root = Pathname.new(dir)
       root.join("docs/specs").mkpath
 
-      write(root.join("README.md"), "- [normal](./docs/通常runbook.md)\n")
-      write(root.join("docs/README.md"), "- [encoded](./%E6%97%A5%E6%9C%AC%E8%AA%9Erunbook.md)\n")
-      write(root.join("docs/通常runbook.md"), "# normal\n")
-      write(root.join("docs/日本語runbook.md"), "# encoded\n")
-      write(root.join("docs/specs/search.md"), "# allowlisted\n")
-      write(root.join("docs/未掲載runbook.md"), "# orphan\n")
+      self.write(root.join("README.md"), "- [normal](./docs/通常runbook.md)\n")
+      self.write(root.join("docs/README.md"), "- [encoded](./%E6%97%A5%E6%9C%AC%E8%AA%9Erunbook.md)\n")
+      self.write(root.join("docs/通常runbook.md"), "# normal\n")
+      self.write(root.join("docs/日本語runbook.md"), "# encoded\n")
+      self.write(root.join("docs/specs/search.md"), "# allowlisted\n")
+      self.write(root.join("docs/未掲載runbook.md"), "# orphan\n")
 
       errors = new(root).run
       expected_error = "docs/未掲載runbook.md: missing from README.md/docs/README.md and not allowlisted"
