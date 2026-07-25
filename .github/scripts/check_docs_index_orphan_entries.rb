@@ -14,17 +14,35 @@ class DocsIndexOrphanEntriesCheck
     "docs/specs/*.md"
   ].freeze
 
-  ALLOWLISTED_ORPHANS = {
-    "docs/specs/README.md" => "nested specs index is not a first-read entry; docs/README.md links representative specs directly",
-    "docs/specs/archive-preview.md" => "topic-specific archive preview spec is intentionally kept outside the first-read index",
-    "docs/specs/docusaurus-build-manifest.md" => "build manifest spec is a focused implementation reference, not a primary index entry",
-    "docs/specs/path-history-redirect.md" => "path history redirect spec is a focused implementation reference, not a primary index entry",
-    "docs/specs/preview-target-metadata.md" => "preview target metadata spec is a focused implementation reference, not a primary index entry",
-    "docs/specs/search.md" => "search responsibility spec is intentionally topic-specific and not a first-read index entry yet",
-    "docs/specs/生成ファイルイベント.md" => "generated file event spec is a focused implementation reference, not a primary index entry",
-    "docs/グローバルナビ分類・開閉導線runbook.md" => "global nav classification runbook is a UI cue reference, not a primary operations entry",
-    "docs/外部送付履歴継続失敗候補runbook.md" => "delivery failure candidate runbook is a specialized failure handoff reference, not a primary operations entry"
+  # Keep this allowlist narrow. A target doc should be linked from README.md or docs/README.md
+  # when it is a first-read entry; otherwise keep it here with a category and a short reason
+  # for staying outside that first-read index. Link existence and anchor coverage belong to
+  # the separate markdown-link checks such as #2585.
+  ALLOWLIST_REASON_CATEGORIES = {
+    "nested-index" => "nested-index",
+    "topic-specific" => "topic-specific",
+    "focused-reference" => "focused-reference",
+    "ui-cue-reference" => "ui-cue-reference",
+    "failure-handoff-reference" => "failure-handoff-reference"
   }.freeze
+
+  def self.allowlist_reason(category, detail)
+    "#{ALLOWLIST_REASON_CATEGORIES.fetch(category)}: #{detail}"
+  end
+
+  ALLOWLISTED_ORPHANS = {
+    "docs/specs/README.md" => allowlist_reason("nested-index", "specs sub-index is kept behind representative specs links rather than the first-read index"),
+    "docs/specs/archive-preview.md" => allowlist_reason("topic-specific", "archive preview spec is intentionally outside the first-read index"),
+    "docs/specs/docusaurus-build-manifest.md" => allowlist_reason("focused-reference", "build manifest spec is an implementation reference, not a primary index entry"),
+    "docs/specs/path-history-redirect.md" => allowlist_reason("focused-reference", "path history redirect spec is an implementation reference, not a primary index entry"),
+    "docs/specs/preview-target-metadata.md" => allowlist_reason("focused-reference", "preview target metadata spec is an implementation reference, not a primary index entry"),
+    "docs/specs/search.md" => allowlist_reason("topic-specific", "search responsibility spec remains topic-specific until promoted to a first-read entry"),
+    "docs/specs/生成ファイルイベント.md" => allowlist_reason("focused-reference", "generated file event spec is an implementation reference, not a primary index entry"),
+    "docs/グローバルナビ分類・開閉導線runbook.md" => allowlist_reason("ui-cue-reference", "global nav classification runbook is a narrow UI cue reference"),
+    "docs/外部送付履歴継続失敗候補runbook.md" => allowlist_reason("failure-handoff-reference", "delivery failure candidate runbook is a specialized failure handoff reference")
+  }.freeze
+
+  ALLOWLIST_REASON_PREFIXES = ALLOWLIST_REASON_CATEGORIES.values.map { |category| "#{category}:" }.freeze
 
   INDEX_PATHS = [
     "README.md",
@@ -38,6 +56,8 @@ class DocsIndexOrphanEntriesCheck
   end
 
   def run
+    self.class.validate_allowlist_reasons!
+
     missing_index_entries = target_docs.reject do |relative_path|
       indexed_paths.include?(relative_path) || ALLOWLISTED_ORPHANS.key?(relative_path)
     end
@@ -45,6 +65,16 @@ class DocsIndexOrphanEntriesCheck
     missing_index_entries.map do |relative_path|
       "#{relative_path}: missing from README.md/docs/README.md and not allowlisted"
     end
+  end
+
+  def self.validate_allowlist_reasons!
+    invalid_entries = ALLOWLISTED_ORPHANS.reject do |_path, reason|
+      ALLOWLIST_REASON_PREFIXES.any? { |prefix| reason.start_with?(prefix) }
+    end
+    return if invalid_entries.empty?
+
+    invalid_paths = invalid_entries.keys.sort.join(", ")
+    raise ArgumentError, "Docs index orphan allowlist reasons need a known category: #{invalid_paths}"
   end
 
   def self.self_test!
