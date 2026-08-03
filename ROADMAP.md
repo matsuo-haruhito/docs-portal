@@ -1,111 +1,29 @@
 # ROADMAP
 
-## UI / UX 改善
+## 現在地サマリ
 
-### 導入済み基盤
+- tree_view: 文書ツリー sidebar / current cue / server-side 展開状態保存 / 文書詳細本文側 state cue（適用済み画面: 2）
+- rails_table_preferences: 一覧画面の列設定・ソート・フィルタ（適用済み画面: 9）
+- rails_fields_kit: remote search / combobox / picker（適用済み画面: 9）
+- Vite + Stimulus: gem JS entrypoint 読み込み基盤確立、Turbo > Stimulus > 素 JS の方針定着
+- DocusaurusSiteRenderer: table rewrite による DOM 境界 metadata 付与（current support）
 
-- `tree_view` を更新し、今後の table / state 連携を取り込みやすい状態にする。
-- `rails_table_preferences` を導入し、表示列、列幅、並び順、プリセットなどを保存できる基盤を用意する。
-- `rails_fields_kit` を導入し、検索可能な select、tag、autocomplete など Tom Select と相性のよい入力補助を Rails helper + Stimulus controller 経由で使える基盤を用意する。
-- Vite から gem 側 JavaScript entrypoint を読み込めるようにする。
-- フロントエンド操作の方針を `Turbo のみ > Stimulus > 素の JavaScript` に寄せ、gem 提供 controller を使える状態にする。
+## 次のアクション
 
-### 次フェーズ: 実画面への gem 展開
+- rtp 新規一覧展開: 既存9画面の column metadata / filter / preset 確認完了後、未展開候補を issue 上で固定して着手
+- rfk 横展開: 未対応画面の具体的な画面名・field 名を特定し issue を起票してから着手（代表画面は current support 済み）
+- tree + table state 連携: 詳細一覧の列幅・表示状態保存を proposal として切り出し、pinned ref bump とは分離して検討
+- ResourceTableRenderState viewer 反映: #4071 で docs-only 境界固定後、guard 方式を別 issue で決定
+- Stimulus 化継続: 既存素 JS を触るタイミングで controller 化。Markdown table の full RTP 統合は #475 に残す
 
-導入済み基盤を、実際の管理画面や文書閲覧画面へ段階的に展開する。
+## 候補（未確定）
 
-#### 展開候補の現在地
-
-| 領域 | 現在地 | 代表 issue / PR | 次に見る境界 |
-| --- | --- | --- | --- |
-| `rails_table_preferences` 一覧 | 実装済み代表画面あり | `admin/documents`, `admin/projects`, `admin/users`, `admin/external_folder_sync_sources`, `admin/document_sets`, `admin/consent_terms`, `admin/document_usage_reports`, `admin/read_confirmations`, `admin/access_logs`。代表 smoke 固定済みの証跡は #1986。`admin/access_logs` は監査ログ一覧の表示列設定として current support 済みで、filter、CSV export、metadata JSON、page 移動、監査ログ記録対象は変更しない | 新しい一覧へ広げる前に、既存画面の column metadata、filter / preset、empty state、保存済み設定 smoke を確認する。#1986 は完了済みの代表 smoke evidence として読み、pinned ref bump や新規一覧展開の blocker にはしない |
-| `rails_fields_kit` フォーム | `admin/document_sets` が host app 側の実装済み代表例。案件選択は案件コード / 案件名の RFK remote search、対象文書は title / slug の RFK remote picker、既存 table row への移動・絞り込み、固定版 selector を current support として持つ。`admin/external_folder_sync_sources` では外部フォルダ同期設定の対象案件を案件コード / 案件名の RFK remote combobox で選び、保存済み・validation error 後の selected project 復元も扱う。`admin/document_catalogs` では案件を案件コード / 案件名の RFK remote search で選び、カタログ項目の文書を title / slug の RFK remote picker で追加し、保存済み・入力中の selected document を候補上限外でも復元する。`admin/document_permissions` では文書名、会社、ユーザーを RFK remote combobox で選び、一覧の案件 filter でも案件コード / 案件名の RFK remote search と selected project 復元を current support として持つ。`admin/project_memberships` では案件とユーザーを RFK remote combobox で選び、edit / validation error 後の selected project / user 復元を扱う。`admin/projects` では会社 filter / form、`admin/users` では会社 form、`admin/read_confirmations` では会社 / 確認者 filter を RFK combobox の current support として読む。`admin/document_usage_reports` では案件選択の `rfk_select` を利用済み | #1348 / PR #1366 は document set の local filter / fixed version selector。#1985 の文書 remote picker first slice は PR #2079 で clean branch から merge 済み。#2514 は文書セット案件選択 remote search の docs 同期。#3670 は外部フォルダ同期設定の project remote search docs 同期。#4215 / PR #4254 は文書カタログ管理の project / document remote search と selected restore。#2485 / PR #4198 は文書権限 company / user remote search、#2918 / PR #4212 は文書権限一覧 project filter remote search の current support。#4346 は代表的な company / user selection が current main で実装済みであることを ROADMAP 上で再スコープする docs cleanup | 文書権限・案件所属・案件管理・ユーザー管理・既読確認で確認済みの company / user selection は再実装候補にしない。まだ候補として残す場合は、具体的な画面名・field 名・なぜ current support でないかを issue 上で固定する。外部フォルダ同期設定・文書カタログ管理・文書権限以外の project selection 横展開も、実装済み代表画面を除外してから別 issue に分ける。文書セットの案件 remote search、対象文書 remote picker、fixed version selector、外部フォルダ同期設定の対象案件 remote search、文書カタログ管理の案件 / 文書 remote search、文書権限の company / user remote search と project filter remote search は current support として扱うが、他画面の project / document / company / user remote search と混ぜない |
-| `tree_view` 連携 | 文書ツリー sidebar の current cue / 展開状態 first slice は実装済み。文書詳細本文側の state cue は #4144 で current support になり、本文側の「表示中」は現在開いている版 / 本文 context、左ペインの表示中 badge は現在文書として読み分ける。ツリー + table state 連携は候補整理段階。`ResourceTableRenderState` の文書閲覧 UX 反映は proposal/docs 境界整理段階 | #1984 / PR #2105 は merged。左ペインの current document ancestor 展開、表示中 badge、server-side 展開状態保存は current support。#4144 / #3783 は文書詳細本文側 state cue の current support。#4071 は `ResourceTableRenderState` 反映候補の surface / cue / evidence boundary 整理 | #1301 の pinned ref bump や upstream `tree_view` API 判断とは分ける。文書詳細本文側 state cue は current behavior として読むが、次のツリー + 詳細一覧の列幅 / 表示状態など table state 連携は proposal として切り分ける。#4071 では版詳細 / Docusaurus・Markdown viewer の table preference context cue を候補に置き、tree current cue、詳細一覧 filter / preset / column width、Markdown table full RTP integration とは混ぜない |
-
-`docs-portal` 側 issue では、画面固有の view、helper、route、params、Stimulus wiring、request / system spec を扱う。gem の public API、import path、controller registration、Vite alias 前提、導入手順の不足が論点になる場合は、upstream gem 側の issue / docs と分けて確認する。
-
-この表の代表 issue / PR は、current support の証跡、historical evidence、次に見る未解決候補を同じ列で扱う。`PR #... は merged`、`current support`、`docs 同期`、`完了済み` と明記されている番号は再実装や refresh 対象ではなく、現在地を説明する補助証跡として読む。#1333、#1986、PR #1366 のような完了済み番号は guard / smoke / current support evidence、#607 は screen-by-screen adoption の proposal parent、#858、#1300、#1301、#789 は release train / pinned ref の gate または needs-human context として読み分ける。open blocker として見る番号は、`候補`、`次に見る`、`proposal`、`release train gate`、`needs-human` の文脈で残す。closed / merged PR 番号だけが current next action に見える場合は、番号を残すより該当画面、guard 名、current support 境界へ要約し直し、PR 番号は補助証跡へ下げる。
-
-`#607` は screen-by-screen adoption、`#858` と child issue は pinned ref / smoke / rollback note の release train として読む。`#1300`、`#1301`、`#789` は target SHA や `Gemfile` / `Gemfile.lock` 更新を含む release train gate であり、この ROADMAP の展開候補表では current support として先取りしない。
-
-新しい first slice が merge されたら、該当画面をこの表の「現在地」に反映し、open PR の番号だけが ROADMAP 上に残らないようにする。closed issue の網羅表にはせず、次に agent が見る判断材料だけを短く残す。
-
-#### 一覧画面の `rails_table_preferences` 化
-
-列が多い、または利用頻度が高い一覧から優先して、表示列、列幅、順序、フィルタ状態を保存できるようにする。
-
-現時点で `rails_table_preferences` の editor / table / stable column key を持つ代表画面:
-
-- `admin/documents`
-- `admin/projects`
-- `admin/users`
-- `admin/external_folder_sync_sources`
-- `admin/document_sets`
-- `admin/consent_terms`
-- `admin/document_usage_reports`
-- `admin/read_confirmations`
-- `admin/access_logs`
-
-これらは新規展開候補ではなく、current main の実装済み代表画面として扱う。`admin/access_logs` の表示設定は監査ログ一覧で見たい列を切り替えるだけで、filter、CSV export の固定列、metadata JSON、page 移動、AccessLog の記録対象は変えない。次の作業では、新しい一覧へ広げる前に、#1986 の完了済み代表 smoke を正本にして既存画面の column metadata、filter / preset、empty state、保存済み設定を読み、必要な場合だけ未展開候補を issue 上で分ける。
-
-#### フォームの `rails_fields_kit` 化
-
-既存の select / text field / textarea を、必要に応じて `rails_fields_kit` helper へ置き換える。
-
-特に件数が増えやすい選択欄は、Tom Select と remote search を前提に UX を改善する。current main では `admin/document_sets` の案件選択で、案件コード / 案件名を使う remote search と保存済み・入力中の selected project 復元を使う。同じ画面の対象文書では、文書名 / URL 識別子を使う remote picker、既存 table row への移動・絞り込み、local filter、選択済みのみ表示、fixed version selector を組み合わせて使う。`admin/external_folder_sync_sources` では対象案件を案件コード / 案件名の remote combobox で検索し、編集画面や validation error 後も selected project を復元する。`admin/document_catalogs` では案件選択を案件コード / 案件名の remote combobox で検索し、カタログ項目の文書を文書名 / URL 識別子の remote picker で追加する。保存済みまたは入力中の selected document は候補上限外でも row として復元し、保存時は選択中案件内の document だけを採用する。`admin/document_permissions` では文書名、会社、ユーザーを remote combobox で検索し、会社 domain / 表示名、ユーザー email / 表示名、edit / validation error 後の selected 復元を扱う。一覧の `案件` filter でも、案件コード / 案件名を使う remote combobox、URL 指定済み project の selected 復元、概要 table と権限一覧の同一 `project_id` 絞り込みを扱う。`admin/project_memberships` では案件とユーザーを remote combobox で検索し、検索語 100 文字・候補 20 件の boundary と selected project / user 復元を扱う。`admin/projects` では会社 filter / form、`admin/users` では会社 form、`admin/read_confirmations` では会社 / 確認者 filter を RFK combobox の current support として扱う。`admin/document_usage_reports` では案件選択で `rfk_select` を使う。これらは current support だが、他フォームへの remote search 横展開、upstream RFK API 変更、pinned ref bump までは含めない。
-
-`文書権限以外の company / user remote search 横展開` は、current main の代表画面ではすでにかなり対応済みです。`admin/project_memberships`、`admin/projects`、`admin/users`、`admin/read_confirmations`、`admin/document_permissions` を再実装候補として読まないでください。未対応候補を残す場合は、`会社/ユーザー選択の全画面横展開` ではなく、具体的な画面名・field 名・なぜ current support ではないかを 1 行で固定した別 issue に分けます。具体的な未対応画面が見つからない場合は、代表画面は current support 済みとして扱い、次の feature 実装は画面名を固定してから起票します。
-
-候補:
-
-- 具体的な未対応画面・field 名が確認できた company / user remote search 横展開
-- 外部フォルダ同期設定・文書カタログ管理・文書権限以外の関連レコード選択
+- 具体的な未対応画面が確認できた company / user remote search 横展開
 - 文書セット・外部フォルダ同期設定・文書カタログ管理・文書権限一覧以外の project selection 横展開
+- ツリー + 詳細一覧 filter / preset / column width 連携の設計
+- Markdown table full RTP integration（#475 親論点）
+- viewer 内 table の preference context cue 追加
 
-Tom Select 自体は積極的に使う。ただし、アプリ側で `new TomSelect(...)` を直接増やすのではなく、`rails_fields_kit` helper と gem 提供 Stimulus controller に寄せる。
+---
 
-#### `tree_view` との連携強化
-
-`tree_view`、`rails_table_preferences`、`rails_fields_kit` の連携を活かし、ツリー表示とテーブル表示の状態管理を一貫させる。
-
-候補:
-
-- 実装済みの左ペイン文書ツリー展開状態 / current row cue と、文書詳細本文側の state cue の読み分けを前提にした、詳細一覧側の列幅や表示状態の保存
-- 文書ツリーの current cue、文書詳細本文側の context cue、詳細一覧 filter / preset の責務境界整理
-- `ResourceTableRenderState` 系の更新を docs-portal 側の文書閲覧 UX に反映する候補は、まず版詳細 / Docusaurus・Markdown viewer の table preference context cue に絞って確認する。viewer 内 table がどの文書版 / site path / table key / preference context を見ているかを読み返せる補助候補として扱い、tree current cue、詳細一覧 filter / preset / column width 連携、Markdown table full RTP integration とは分ける
-
-#1984 / PR #2105 は merged 済みの current support として読む。左ペインの文書ツリーでは、user ごとの server-side preference による展開 / 折りたたみ保存、current document ancestor の展開、表示中 badge / `aria-current` による現在位置 cue を扱う。#4144 / #3783 では、文書詳細本文側の `表示中` が現在開いている版 / 本文 context を示し、左ペインの表示中 badge や文書一覧の検索・表示設定とは別の cue として読ませる copy を current support にした。次の proposal は、これを前提にツリー + 詳細一覧の table state 連携を切り出し、#1301 の pinned ref bump や upstream `tree_view` public API 変更とは混ぜない。
-
-`ResourceTableRenderState` の viewer 反映候補は #4071 で docs-only に境界を固定する。runtime 実装へ進める場合は、request/source spec か browser evidence のどちらで viewer context cue を guard するかを別 issue で決める。Gemfile / pinned ref、upstream API、viewer shell redesign、保存 schema、table preference persistence contract はこの候補整理には含めない。
-
-#### Stimulus 化の継続
-
-既存の素の JavaScript 実装は、触るタイミングで Stimulus controller へ移す。
-
-現状確認と後続判断の入口は [フロントエンド初期化 inventory](./.kiro/skills/frontend-initialization-inventory.md) です。inventory で `current support` として整理済みの controller / fallback path は、実装済みの挙動として維持し、後続候補は proposal として別 issue に分けます。
-
-現在の読み分け:
-
-- `preview-tools` bridge は移行用の入口として退役済み。`archive-preview-tools`, `csv-preview-tools`, `document-file-list-search`, `markdown-preview-document-search`, `markdown-preview-codeblock-tools`, `markdown-preview-table-tools`, `image-preview-tools`, `pdf-preview-tools`, `structured-preview-tools`, `site-viewer-iframe-height` などの専用 controller がそれぞれ helper refresh を担当する。bridge 再導入や空 controller の維持は current support として扱わない。
-- `preview-table-resizer` は Markdown preview table の fallback path として維持する。Markdown table を `rails_table_preferences` へ寄せる判断は #475 の親論点に残す。
-- `DocusaurusSiteRenderer` の table rewrite は current support として、site viewer HTML の `<table>` に `portal-doc-table-preference-wrapper` / `portal-doc-preference-table` と document version / site path / table index / stable table key metadata を付ける。これは後続 design / feature が参照できる DOM 境界であり、#4339 / PR #4343 の docs-quality guard では renderer、renderer spec、版詳細 runbook、ROADMAP の代表 signal として守る。column visibility / preset UI / preference schema の最終判断は #475 に残す。
-- `document-tree-navigation` は tree link click 後の Turbo Stream refresh を補助する app 側 controller として維持する。TreeView gem API、loading / error event 名、retry policy はこの ROADMAP で決めない。
-
-方針:
-
-- Turbo で済むものは Turbo で実装する。
-- ブラウザ上の小さな振る舞いは Stimulus controller に閉じ込める。
-- `application.js` に `querySelectorAll` とイベント登録を直接増やさない。
-- iframe 内 preview UI のような特殊処理は、実装モジュールと lifecycle controller を分けて管理する。
-
-### 確認観点
-
-- `vite build` が通ること。
-- Rails system spec または手動確認で、主要導線の UX が維持されていること。
-- table preference 保存がユーザー単位で期待どおり動くこと。
-- Tom Select / remote search が大量データでも扱いやすいこと。
-- gem 側に不足がある場合は、それぞれの gem リポジトリへ issue を作成する。
-
-### 将来対応・保留事項
-
-UI/UX の将来対応、人間判断待ちの proposal、未起票候補 → [docs/ToDo.md](docs/ToDo.md) を参照
+将来対応・保留事項の詳細 → [docs/ToDo.md](docs/ToDo.md)
