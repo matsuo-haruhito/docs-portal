@@ -5,7 +5,7 @@ RSpec.describe "markdown preview table fallback boundary" do
     Rails.root.join(path).read
   end
 
-  let(:inventory_source) { read_source("doc/frontend_initialization_inventory.md") }
+  let(:inventory_source) { read_source(".kiro/skills/frontend-initialization-inventory.md") }
   let(:table_tools_source) { read_source("app/frontend/lib/markdown_preview_table_tools.js") }
   let(:table_resizer_source) { read_source("app/frontend/controllers/preview_table_resizer_controller.js") }
 

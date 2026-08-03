@@ -82,7 +82,7 @@ Tom Select 自体は積極的に使う。ただし、アプリ側で `new TomSel
 
 既存の素の JavaScript 実装は、触るタイミングで Stimulus controller へ移す。
 
-現状確認と後続判断の入口は [フロントエンド初期化 inventory](./doc/frontend_initialization_inventory.md) です。inventory で `current support` として整理済みの controller / fallback path は、実装済みの挙動として維持し、後続候補は proposal として別 issue に分けます。
+現状確認と後続判断の入口は [フロントエンド初期化 inventory](./.kiro/skills/frontend-initialization-inventory.md) です。inventory で `current support` として整理済みの controller / fallback path は、実装済みの挙動として維持し、後続候補は proposal として別 issue に分けます。
 
 現在の読み分け:
 

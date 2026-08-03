@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "document-file-browser controller source" do
   let(:controller_source) { Rails.root.join("app/frontend/controllers/document_file_browser_controller.js").read }
   let(:entrypoint_source) { Rails.root.join("app/frontend/entrypoints/application.js").read }
-  let(:inventory_source) { Rails.root.join("doc/frontend_initialization_inventory.md").read }
+  let(:inventory_source) { Rails.root.join(".kiro/skills/frontend-initialization-inventory.md").read }
 
   it "keeps the controller registered without adding direct entrypoint DOM setup" do
     aggregate_failures do

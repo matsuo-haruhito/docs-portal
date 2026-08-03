@@ -26,7 +26,7 @@ RSpec.describe "Frontend initialization inventory" do
   end
 
   let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.js") }
-  let(:inventory_source) { read_source("doc/frontend_initialization_inventory.md") }
+  let(:inventory_source) { read_source(".kiro/skills/frontend-initialization-inventory.md") }
   let(:registered_app_controllers) { registered_controller_names(entrypoint_source) - GEM_CONTROLLER_IDENTIFIERS }
   let(:inventory_app_controllers) { inventory_app_controller_names(inventory_source) }
 

@@ -15,7 +15,7 @@ RSpec.describe "preview tools source" do
   let(:document_search_source) { read_source("app/frontend/lib/markdown_preview_document_search.js") }
   let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.js") }
   let(:layout_source) { read_source("app/views/layouts/application.html.slim") }
-  let(:inventory_source) { read_source("doc/frontend_initialization_inventory.md") }
+  let(:inventory_source) { read_source(".kiro/skills/frontend-initialization-inventory.md") }
   let(:roadmap_source) { read_source("ROADMAP.md") }
 
   let(:dedicated_preview_controllers) do

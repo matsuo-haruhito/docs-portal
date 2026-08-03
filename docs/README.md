@@ -10,7 +10,7 @@
 4. [開発・保守ガイド](./開発・保守ガイド.md)
 5. タスクに関係する補助仕様や runbook
 
-UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロントエンド操作の方針](../doc/frontend_interaction_policy.md) も先に確認してください。実画面への internal UI gem 展開候補は [ROADMAP](../ROADMAP.md) を入口にし、screen-by-screen adoption、release train、representative smoke の読み分けは [関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) で確認します。
+UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロントエンド操作の方針](../.kiro/steering/frontend-interaction-policy.md) も先に確認してください。実画面への internal UI gem 展開候補は [ROADMAP](../ROADMAP.md) を入口にし、screen-by-screen adoption、release train、representative smoke の読み分けは [関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) で確認します。
 
 この index で Issue / PR 番号を含む補助 docs は、current support の証跡、historical evidence、次に見る候補、proposal のいずれかとして読み分けます。番号だけを current action とせず、各 docs の本文、ROADMAP の文脈、current code を合わせて確認してください。
 
@@ -46,8 +46,8 @@ UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロン�
 ## 開発・運用
 
 - [開発・保守ガイド](./開発・保守ガイド.md)
-- [フロントエンド操作の方針](../doc/frontend_interaction_policy.md)
-- [フロントエンド初期化 inventory](../doc/frontend_initialization_inventory.md): Vite entrypoint、gem controller、app 側 Stimulus controller、維持する fallback path を挙動変更なしで棚卸しする入口
+- [フロントエンド操作の方針](../.kiro/steering/frontend-interaction-policy.md)
+- [フロントエンド初期化 inventory](../.kiro/skills/frontend-initialization-inventory.md): Vite entrypoint、gem controller、app 側 Stimulus controller、維持する fallback path を挙動変更なしで棚卸しする入口
 - [ROADMAP](../ROADMAP.md): internal UI gem の実画面展開候補、一覧画面の `rails_table_preferences` 化、フォームの `rails_fields_kit` 化、`tree_view` 連携強化、Stimulus 化の次フェーズ
 - [internal UI gem adoption evidence map](./internal-ui-gem-adoption-evidence-map.md): `tree_view` / `rails_table_preferences` / `rails_fields_kit` の representative smoke、upstream evidence、更新順、rollback note を 1 箇所で見る入口
 - [internal UI gem table contract first slice](./internal-ui-gem-table-contract-first-slice.md): RFK / RTP / TreeView / docs-portal の representative screen と responsibility boundary を #4271 の first slice として確認する補助メモ
