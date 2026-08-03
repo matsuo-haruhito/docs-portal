@@ -7,7 +7,7 @@ RSpec.describe "frontend initialization inventory source" do
 
   let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.js") }
   let(:inventory_source) { read_source(".kiro/skills/frontend-initialization-inventory.md") }
-  let(:interaction_policy_source) { read_source("doc/frontend_interaction_policy.md") }
+  let(:interaction_policy_source) { read_source(".kiro/steering/frontend-interaction-policy.md") }
   let(:roadmap_source) { read_source("ROADMAP.md") }
 
   let(:direct_entrypoint_setup_patterns) do

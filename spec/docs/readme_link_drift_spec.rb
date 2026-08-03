@@ -33,7 +33,7 @@ RSpec.describe "README index link drift" do
     expect(destinations_by_source.fetch("docs/README.md")).to include(
       "../Product%20Profile.md",
       "./アプリケーション仕様.md",
-      "../doc/frontend_interaction_policy.md"
+      "../.kiro/steering/frontend-interaction-policy.md"
     )
   end
 

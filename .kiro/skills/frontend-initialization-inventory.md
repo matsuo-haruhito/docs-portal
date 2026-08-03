@@ -1,6 +1,6 @@
 # フロントエンド初期化 inventory
 
-この文書は、`doc/frontend_interaction_policy.md` の「Turbo -> Stimulus -> 素の JavaScript」の優先順位に沿って、current `main` の browser-side 初期化を棚卸しするための maintainer note です。
+この文書は、`.kiro/steering/frontend-interaction-policy.md` の「Turbo -> Stimulus -> 素の JavaScript」の優先順位に沿って、current `main` の browser-side 初期化を棚卸しするための maintainer note です。
 
 この slice では Markdown preview table helper を専用 Stimulus controller へ分離し、table search、copy、CSV / Markdown export、preference path、preview context key、localStorage 幅補助、sticky fallback の挙動は変更しません。`preview-tools` bridge は空 bridge を残さず退役させます。#475 の full `rails_table_preferences` 統合、column visibility / preset UI、Docusaurus renderer、Markdown table DOM rewrite、preference schema / key 再設計は引き続き別判断として残します。
 
@@ -17,7 +17,7 @@
 - `app/frontend/controllers/*`
   - DOM に密着した小さな振る舞いを app 側 Stimulus controller に閉じ込めている。
   - 一部 controller は iframe や preview 内 DOM の再初期化のため、controller 内で document / window listener を持つ。
-- `doc/frontend_interaction_policy.md`
+- `.kiro/steering/frontend-interaction-policy.md`
   - app 側で手書き `new TomSelect(...)` を増やさず、RFK helper が出す `rails-fields-kit--tom-select` と gem controller を優先する方針を持つ。
   - Markdown preview table は current fallback path として `preview_table_resizer_controller.js` と Markdown table helper を使うが、helper refresh は専用 controller に閉じる。
 
@@ -144,7 +144,7 @@ current fallback support として提供していること:
 
 維持する理由:
 
-- `doc/frontend_interaction_policy.md` が app 側 preview tool として明示している。
+- `.kiro/steering/frontend-interaction-policy.md` が app 側 preview tool として明示している。
 - `spec/frontend/preview_table_resizer_source_spec.rb` が stable key、preview context marker、軽量な横スクロール・列幅調整 cue を source-level に固定している。
 - #475 は Markdown table を今後どこまで `rails_table_preferences` に寄せるかの親論点で、current support として先取りしない。
 

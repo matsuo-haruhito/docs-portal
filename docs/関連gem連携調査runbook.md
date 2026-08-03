@@ -2,7 +2,7 @@
 
 この文書は、`docs-portal` で `tree_view` / `rails_table_preferences` / `rails_fields_kit` が関わる issue を調べるときの入口を 1 本にまとめた runbook です。
 
-`doc/frontend_interaction_policy.md` が方針の正本、この文書が「最初にどのローカルファイルと upstream docs を見るか」の運用導線です。
+`.kiro/steering/frontend-interaction-policy.md` が方針の正本、この文書が「最初にどのローカルファイルと upstream docs を見るか」の運用導線です。
 
 ## 先に確認する共通ファイル
 
@@ -12,7 +12,7 @@
   - Stimulus controller の登録状況を確認する
 - `vite.config.ts`
   - gem 同梱 JavaScript を Vite からどう解決しているかを確認する
-- `doc/frontend_interaction_policy.md`
+- `.kiro/steering/frontend-interaction-policy.md`
   - app 側責務と gem 側責務の切り分けを確認する
 - `docs/開発・保守ガイド.md`
   - repo 全体の読み進め方と依存 gem の採用理由を確認する
@@ -409,7 +409,7 @@
   - app 側の旧互換 shim が no-op か、まだ責務が残っていないかを確認する
 - `app/views/layouts/application.html.slim`
   - root controller 配置と Turbo 配下の DOM 構造を確認する
-- `doc/frontend_interaction_policy.md`
+- `.kiro/steering/frontend-interaction-policy.md`
   - Tom Select 初期化責務を gem 側 Stimulus へ寄せる方針を確認する
 
 ### 先に読む upstream docs

@@ -7,7 +7,7 @@ REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
 DOC_CHECKS = [
   {
-    path: "doc/frontend_interaction_policy.md",
+    path: ".kiro/steering/frontend-interaction-policy.md",
     expected: [
       "Turbo のみ",
       "Stimulus",
@@ -21,7 +21,7 @@ DOC_CHECKS = [
     path: "docs/README.md",
     expected: [
       "UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は",
-      "../doc/frontend_interaction_policy.md"
+      "../.kiro/steering/frontend-interaction-policy.md"
     ]
   }
 ].freeze
