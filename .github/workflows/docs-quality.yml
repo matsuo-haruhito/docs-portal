@@ -7,7 +7,6 @@ on:
       - README.md
       - ROADMAP.md
       - Product Profile.md
-      - doc/**/*.md
       - docs/**/*.md
       - app/frontend/entrypoints/application.js
       - app/renderers/docusaurus_site_renderer.rb
@@ -51,7 +50,6 @@ on:
       - README.md
       - ROADMAP.md
       - Product Profile.md
-      - doc/**/*.md
       - docs/**/*.md
       - app/frontend/entrypoints/application.js
       - app/renderers/docusaurus_site_renderer.rb
@@ -188,7 +186,6 @@ jobs:
             README.md
             ROADMAP.md
             Product Profile.md
-            doc/**/*.md
             docs/**/*.md
 
       - name: Check relative markdown links
