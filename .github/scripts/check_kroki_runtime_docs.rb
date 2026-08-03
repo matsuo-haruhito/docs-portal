@@ -17,8 +17,8 @@ CHECKS = [
   ["docs/notes/docusaurus-build-runtime.md", "The smoke keeps Kroki optional by passing a mocked fetch implementation."],
   ["docs/notes/docusaurus-build-runtime.md", "should pass without a running Kroki service"],
   ["docs/notes/docusaurus-build-runtime.md", "Do not commit the generated SVG."],
-  ["docs/ローカルセットアップと環境変数.md", "docker-compose.yml:docker-compose.kroki.yml:docker-compose.docusaurus.yml"],
-  ["docs/ローカルセットアップと環境変数.md", "KROKI_ENDPOINT=http://kroki:8000"]
+  ["docs/guides/ローカルセットアップと環境変数.md", "docker-compose.yml:docker-compose.kroki.yml:docker-compose.docusaurus.yml"],
+  ["docs/guides/ローカルセットアップと環境変数.md", "KROKI_ENDPOINT=http://kroki:8000"]
 ].freeze
 
 errors = []

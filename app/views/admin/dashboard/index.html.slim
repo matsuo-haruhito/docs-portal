@@ -38,7 +38,7 @@ section.card
         p.muted = item[:scope]
         - if item[:latest_at]
           p.muted
-            | 対象履歴の最終更新: 
+            | 対象履歴の最終更新:
             time datetime=item[:latest_at].iso8601 = l(item[:latest_at], format: :short)
             br
             span 発生時刻や alert 発火時刻ではありません。
@@ -55,7 +55,7 @@ section.card
             h4 継続失敗候補
             p.muted 保存済み履歴とは別に、同じ identity の最新 run が連続 failed かだけを確認します。通知・ack・自動復旧の状態ではありません。
             p.muted
-              | 継続失敗候補: 
+              | 継続失敗候補:
               strong = alert_candidates.size
               |  件
               br
@@ -72,7 +72,7 @@ section.card
                     br
                     | 連続失敗: #{candidate.failure_count} 件
                     - if candidate.last_failed_at
-                      |  / 最終失敗: 
+                      |  / 最終失敗:
                       time datetime=candidate.last_failed_at.iso8601 = l(candidate.last_failed_at, format: :short)
                     - if candidate.latest_error_message.present?
                       br
@@ -94,7 +94,7 @@ section.card
             h4 継続失敗候補
             p.muted 既存の外部送付履歴 handoff payload を使い、同じ宛先・件名・送付方式の最新履歴が連続 failed の候補だけを read-only に表示します。通知・ack・自動 retry の状態ではありません。
             p.muted
-              | 継続失敗候補: 
+              | 継続失敗候補:
               strong = delivery_alert_candidates.size
               |  件
               br
@@ -108,7 +108,7 @@ section.card
                     br
                     | 送付方式: #{candidate.delivery_type} / 連続失敗: #{candidate.failure_count} 件
                     - if candidate.last_failed_at
-                      |  / 最終失敗: 
+                      |  / 最終失敗:
                       time datetime=candidate.last_failed_at.iso8601 = l(candidate.last_failed_at, format: :short)
                     - if candidate.recipient_preview.present?
                       br
@@ -132,7 +132,7 @@ section.card
             h4 継続失敗候補
             p.muted 外部フォルダ同期 source ごとに、最新 run から failed / partial が連続しているものだけを read-only に表示します。通知・ack・自動 retry・provider 正常判定の状態ではありません。
             p.muted
-              | 継続失敗候補: 
+              | 継続失敗候補:
               strong = external_sync_alert_candidates.size
               |  件
               br
@@ -146,7 +146,7 @@ section.card
                     br
                     | 連続 failed / partial: #{candidate.failure_count} 件
                     - if candidate.last_failed_at
-                      |  / 最終失敗: 
+                      |  / 最終失敗:
                       time datetime=candidate.last_failed_at.iso8601 = l(candidate.last_failed_at, format: :short)
                     - if candidate.latest_error_message.present?
                       br
@@ -175,7 +175,7 @@ section.card
     p.muted 診断結果を確認した後は、原因別に既存 runbook へ戻って設定前提を確認できます。
     ul
       li
-        = link_to "環境変数・compose", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/ローカルセットアップと環境変数.md", target: "_blank", rel: "noopener"
+        = link_to "環境変数・compose", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/guides/ローカルセットアップと環境変数.md", target: "_blank", rel: "noopener"
         span.muted = " .env.example と compose の前提"
       li
         = link_to "Docusaurus / Kroki", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/notes/docusaurus-build-runtime.md", target: "_blank", rel: "noopener"
@@ -188,11 +188,11 @@ section.card
         span.muted = " 診断結果の読み方と戻り先"
 
   p
-    | OK: 
+    | OK:
     strong = @configuration_diagnostic.ok_count
-    |  / 警告: 
+    |  / 警告:
     strong = @configuration_diagnostic.warning_count
-    |  / エラー: 
+    |  / エラー:
     strong = @configuration_diagnostic.error_count
 
   - if @configuration_diagnostic.healthy?
@@ -262,9 +262,9 @@ section.card
   h2 文書ファイル健全性
 
   p
-    | 登録ファイル数: 
+    | 登録ファイル数:
     strong = @document_file_health.total_count
-    |  / 実体欠落: 
+    |  / 実体欠落:
     strong = @document_file_health.missing_count
 
   - if @document_file_health.healthy?
@@ -302,9 +302,9 @@ section.card
   p.muted local storage 配下の概算使用量を read-only で確認します。削除、archive、cleanup、retention policy 決定、GCS API 連携はここでは行いません。
   p.muted 大きい内訳は各領域の直下項目を上位5件までに閉じた read-only preview です。raw absolute path は表示しません。
   p
-    | 合計: 
+    | 合計:
     strong = @storage_usage_summary.human_total_size
-    |  / ファイル数: 
+    |  / ファイル数:
     strong = @storage_usage_summary.total_file_count
 
   table
@@ -345,7 +345,7 @@ section.card
                     - if entry.latest_updated_at
                       br
                       span.muted
-                        | 最終更新: 
+                        | 最終更新:
                         time datetime=entry.latest_updated_at.iso8601 = l(entry.latest_updated_at, format: :short)
             - else
               span.muted 内訳なし（現在の条件で表示できる直下項目はありません）

@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "standard seed sample documentation drift" do
   REPO_ROOT = Rails.root
   GENERATOR_PATH = REPO_ROOT.join("db/seeds/support/seed_sample_document_generator.rb")
-  SEED_DOCS_PATH = REPO_ROOT.join("docs/標準seedサンプルと確認用途.md")
+  SEED_DOCS_PATH = REPO_ROOT.join("docs/guides/標準seedサンプルと確認用途.md")
   ROOT_README_PATH = REPO_ROOT.join("README.md")
   DOCS_README_PATH = REPO_ROOT.join("docs/README.md")
 
@@ -89,8 +89,8 @@ RSpec.describe "standard seed sample documentation drift" do
   it "keeps README entrypoints pointing at the seed sample docs" do
     aggregate_failures do
       expect(root_readme).to include("標準 seed サンプルと確認用途")
-      expect(root_readme).to include("./docs/%E6%A8%99%E6%BA%96seed%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%E3%81%A8%E7%A2%BA%E8%AA%8D%E7%94%A8%E9%80%94.md")
-      expect(docs_readme).to include("[標準 seed サンプルと確認用途](./標準seedサンプルと確認用途.md)")
+      expect(root_readme).to include("./docs/guides/%E6%A8%99%E6%BA%96seed%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB%E3%81%A8%E7%A2%BA%E8%AA%8D%E7%94%A8%E9%80%94.md")
+      expect(docs_readme).to include("[標準 seed サンプルと確認用途](./guides/標準seedサンプルと確認用途.md)")
     end
   end
 end

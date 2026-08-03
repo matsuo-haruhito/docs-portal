@@ -175,7 +175,7 @@ RSpec.describe "Admin dashboard", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("アプリ設定診断")
     expect(response.body).to include("環境変数・compose")
-    expect(response.body).to include("ローカルセットアップと環境変数.md")
+    expect(response.body).to include("guides/ローカルセットアップと環境変数.md")
     expect(response.body).to include("Docusaurus / Kroki")
     expect(response.body).to include("docs/notes/docusaurus-build-runtime.md")
     expect(response.body).to include("storage 運用方針")

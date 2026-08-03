@@ -101,5 +101,5 @@ standard showcase smoke:
 - 標準 showcase サンプルは `db:seed` のたびに再生成されるため、直接編集しても次回 seed で上書きされます。
 - `sample-archive.zip` は ZIP preview の代表導線を確認するための小さい deterministic archive です。unsafe path、nested archive、巨大 ZIP、bulk download の境界確認には使いません。
 - 任意サンプルを追加したい場合は、README にある一般ルールどおり `storage/document_files/external_samples/<sample-set>/<site-dir>/...` 配下へ配置します。
-- PlantUML / D2 を含む Markdown を seed して描画確認したい場合は、Kroki 設定も必要です。runtime 前提と mock smoke の実行入口は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) を参照してください。
-- Office preview の接続条件を確認したい場合は [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md) を参照してください.
+- PlantUML / D2 を含む Markdown を seed して描画確認したい場合は、Kroki 設定も必要です。runtime 前提と mock smoke の実行入口は [notes/docusaurus-build-runtime](../notes/docusaurus-build-runtime.md) を参照してください。
+- Office preview の接続条件を確認したい場合は [Microsoft Graph接続とOffice preview](../specs/Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md) を参照してください.

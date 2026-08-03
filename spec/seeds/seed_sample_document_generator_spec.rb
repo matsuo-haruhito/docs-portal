@@ -33,7 +33,7 @@ RSpec.describe SeedSupport::SeedSampleDocumentGenerator do
 
     expect(generated_paths).to eq(expected_paths)
 
-    docs = Rails.root.join("docs", "標準seedサンプルと確認用途.md").read
+    docs = Rails.root.join("docs", "guides", "標準seedサンプルと確認用途.md").read
     expected_paths.each do |relative_path|
       expect(docs).to include("`#{relative_path}`")
     end

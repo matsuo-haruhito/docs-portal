@@ -5,7 +5,7 @@ require Rails.root.join("db/seeds/support/seed_sample_document_generator").to_s
 
 RSpec.describe "standard seed showcase documentation" do
   STANDARD_SEED_REPO_ROOT = Rails.root
-  STANDARD_SEED_DOC_PATH = STANDARD_SEED_REPO_ROOT.join("docs/標準seedサンプルと確認用途.md")
+  STANDARD_SEED_DOC_PATH = STANDARD_SEED_REPO_ROOT.join("docs/guides/標準seedサンプルと確認用途.md")
   STANDARD_SEED_ROOT_README_PATH = STANDARD_SEED_REPO_ROOT.join("README.md")
   STANDARD_SEED_SAMPLE_SET = SeedSupport::SeedSampleDocumentGenerator::SAMPLE_SET
   STANDARD_SEED_SITE = SeedSupport::SeedSampleDocumentGenerator::SITE
@@ -42,7 +42,7 @@ RSpec.describe "standard seed showcase documentation" do
   it "keeps the documented standard showcase file list aligned with the seed generator" do
     expect(documented_showcase_paths).to eq(generated_showcase_paths), <<~MESSAGE
       Standard seed showcase docs drifted from SeedSampleDocumentGenerator.
-      Compare docs/標準seedサンプルと確認用途.md with db/seeds/support/seed_sample_document_generator.rb.
+      Compare docs/guides/標準seedサンプルと確認用途.md with db/seeds/support/seed_sample_document_generator.rb.
       The guard covers only seed-showcase/docs-portal-demo paths, including 提出済/README.md.
       ai-usecases and arbitrary external_samples are intentionally outside this list.
     MESSAGE

@@ -7,7 +7,7 @@ REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
 README_PATH = REPO_ROOT.join("README.md")
 DOCS_README_PATH = REPO_ROOT.join("docs/README.md")
-LOCAL_SETUP_DOCS_PATH = REPO_ROOT.join("docs/ローカルセットアップと環境変数.md")
+LOCAL_SETUP_DOCS_PATH = REPO_ROOT.join("docs/guides/ローカルセットアップと環境変数.md")
 ENV_EXAMPLE_PATH = REPO_ROOT.join(".env.example")
 
 errors = []
@@ -134,7 +134,7 @@ unless readme.empty?
       "ローカル開発 / demo 専用アカウント",
       "共有環境や本番へ転用する credential ではなく",
       "本番 credential や認証 policy の例でもありません",
-      "docs/ローカルセットアップと環境変数.md",
+      "docs/guides/ローカルセットアップと環境変数.md",
       "admin@example.com` / `password123!"
     ],
     errors
@@ -176,12 +176,12 @@ unless docs_readme.empty?
 end
 
 unless local_setup_docs.empty?
-  require_text(local_setup_docs, "docs/ローカルセットアップと環境変数.md", "README の [サンプルログイン情報](../README.md#サンプルログイン情報) を使います", errors)
-  require_text(local_setup_docs, "docs/ローカルセットアップと環境変数.md", "db/seeds/data/users.csv", errors)
+  require_text(local_setup_docs, "docs/guides/ローカルセットアップと環境変数.md", "README の [サンプルログイン情報](../../README.md#サンプルログイン情報) を使います", errors)
+  require_text(local_setup_docs, "docs/guides/ローカルセットアップと環境変数.md", "db/seeds/data/users.csv", errors)
 
   require_section_with(
     local_setup_docs,
-    "docs/ローカルセットアップと環境変数.md",
+    "docs/guides/ローカルセットアップと環境変数.md",
     "## demo credential / placeholder secret の変更時チェック",
     [
       "ローカル開発 / demo 用の値と本番 credential の境界",

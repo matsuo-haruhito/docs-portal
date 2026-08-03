@@ -20,7 +20,7 @@ UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロン�
 - admin 運用: [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md) を入口にし、アクセス申請、文書マスタ、文書セット、監査ログ、文書利用状況は admin 運用の各 runbook を確認します。
 - import / build / sync: [build-docs workflow確認runbook](./build-docs%20workflow%E7%A2%BA%E8%AA%8Drunbook.md) と [手動アップロード差異確認runbook](./手動アップロード差異確認runbook.md) から、Git連携、ZIP、internal upload API、外部フォルダ同期へ進みます。maintenance mode 中に止める境界は [maintenance-mode 境界一覧](../.kiro/steering/maintenance-mode-boundaries.md) で確認し、build-docs job 化を検討するときは [build-docs job 化置き換え境界メモ](./build-docs-job%E5%8C%96%E7%BD%AE%E3%81%8D%E6%8F%9B%E3%81%88%E5%A2%83%E7%95%8C%E3%83%A1%E3%83%A2.md) で current metadata 保存境界と proposal を分けます。
 - 外部連携 / preview: [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md) と [Microsoft Graph接続管理runbook](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E7%AE%A1%E7%90%86runbook.md) を起点に、preview 接続や外部フォルダ同期の境界を確認します。
-- 監視 / インフラ: [監視・アラート設計](./監視・アラート設計.md)、[リリース・デプロイ・rollback手順](./リリース・デプロイ・rollback手順.md)、[バックアップ・リストア手順](./バックアップ・リストア手順.md) を先に見ます。
+- 監視 / インフラ: [監視・アラート設計](./specs/監視・アラート設計.md)、[リリース・デプロイ・rollback手順](./リリース・デプロイ・rollback手順.md)、[バックアップ・リストア手順](./バックアップ・リストア手順.md) を先に見ます。
 - internal UI gem: [internal UI gem adoption evidence map](./internal-ui-gem/adoption-evidence-map.md)、[関連 gem 採用マトリクス](./internal-ui-gem/関連gem採用マトリクス.md)、[関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) で upstream evidence、downstream smoke、release train、host app 採用画面の役割を切り分けます。
 
 ## 仕様
@@ -30,14 +30,14 @@ UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロン�
 - [閲覧画面とUI](./specs/閲覧画面とUI.md)
 - [文書ライフサイクルと公開](./specs/文書ライフサイクルと公開.md)
 - [importと変更系dry-run](./specs/importと変更系dry-run.md)
-- [publish.json 仕様と生成ルール](./publish.json%20仕様と生成ルール.md)
-- [Git連携インポート](./Git連携インポート.md)
-- [Google Drive外部フォルダ同期](./Google%20Drive外部フォルダ同期.md)
-- [利用規約・秘密保持の同意管理](./利用規約・秘密保持の同意管理.md)
-- [Webhook・外部API連携方針](./Webhook・外部API連携方針.md)
-- [Internal upload API naming](./internal_upload_api_naming.md)
-- [Client file upload API flow](./client_file_upload_api.md)
-- [Local folder sync client design](./local_folder_sync_client.md)
+- [publish.json 仕様と生成ルール](./specs/publish.json%20仕様と生成ルール.md)
+- [Git連携インポート](./specs/Git連携インポート.md)
+- [Google Drive外部フォルダ同期](./specs/Google%20Drive外部フォルダ同期.md)
+- [利用規約・秘密保持の同意管理](./specs/利用規約・秘密保持の同意管理.md)
+- [Webhook・外部API連携方針](./specs/Webhook・外部API連携方針.md)
+- [Internal upload API naming](./specs/internal_upload_api_naming.md)
+- [Client file upload API flow](./specs/client_file_upload_api.md)
+- [Local folder sync client design](./specs/local_folder_sync_client.md)
 
 ## UIモック
 
@@ -60,13 +60,13 @@ UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロン�
 - [internal UI gem bump PR checklist](../.kiro/skills/internal-ui-gem-workflow.md): library 別 pinned ref bump PR の host-app smoke、PR body evidence、rollback note、停止条件を実行直前に確認する入口
 - [コーディング規約](./コーディング規約.md)
 - [テスト方針](./テスト方針.md)
-- [ローカルセットアップと環境変数](./ローカルセットアップと環境変数.md): `.env.example` を基準にした最短起動手順と optional service の切り替え
-- [ローカル編集からポータル更新までの最小運用案](./ローカル編集からポータル更新までの最小運用案.md): ローカルで文書を編集して seed / import / portal 更新まで確認する最小フロー
-- [標準 seed サンプルと確認用途](./標準seedサンプルと確認用途.md): repo 標準 showcase、`ai-usecases`、任意 `external_samples` の違いと確認観点
-- [任意 external_samples 事前検証 dry-run](./任意external_samples事前検証dry-run.md): 任意サンプルを `db:seed` に渡す前に候補・warning・error を DB 変更なしで確認する入口
-- [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md)
-- [preview接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md): preview 接続、同期元設定、SharePoint / OneDrive の metadata 保存 first slice、`.env` の役割分担
-- [ファイル配信・storage運用方針](./ファイル配信・storage運用方針.md)
+- [ローカルセットアップと環境変数](./guides/ローカルセットアップと環境変数.md): `.env.example` を基準にした最短起動手順と optional service の切り替え
+- [ローカル編集からポータル更新までの最小運用案](./guides/ローカル編集からポータル更新までの最小運用案.md): ローカルで文書を編集して seed / import / portal 更新まで確認する最小フロー
+- [標準 seed サンプルと確認用途](./guides/標準seedサンプルと確認用途.md): repo 標準 showcase、`ai-usecases`、任意 `external_samples` の違いと確認観点
+- [任意 external_samples 事前検証 dry-run](./guides/任意external_samples事前検証dry-run.md): 任意サンプルを `db:seed` に渡す前に候補・warning・error を DB 変更なしで確認する入口
+- [Microsoft Graph接続とOffice preview](./specs/Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md)
+- [preview接続と外部フォルダ同期の設定責務](./specs/preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md): preview 接続、同期元設定、SharePoint / OneDrive の metadata 保存 first slice、`.env` の役割分担
+- [ファイル配信・storage運用方針](./specs/ファイル配信・storage運用方針.md)
 - [社外ユーザー向け情報露出点検チェックリスト](./社外ユーザー向け情報露出点検チェックリスト.md): external user の権限外文書・添付・export・配信 payload を点検する入口
 - [運用 metadata 情報露出点検チェックリスト](./運用metadata情報露出点検チェックリスト.md): admin / integration 運用画面の raw path、payload、外部サービス識別子、webhook header を社外ユーザー向け権限外露出とは別観点で点検する入口
 - [情報露出 smoke evidence 運用メモ](./情報露出smoke%20evidence運用メモ.md): external user exposure smoke と operational metadata exposure smoke の PR / release evidence での使い分けと raw value 非転記境界
@@ -143,7 +143,7 @@ UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロン�
 - [バックアップ・リストア手順](./バックアップ・リストア手順.md)
 - [本番運用・インフラ前提](./本番運用・インフラ前提.md)
 - [maintenance-mode 境界一覧](../.kiro/steering/maintenance-mode-boundaries.md): `READ_ONLY_MAINTENANCE` 中に止める変更操作と read-only に残す確認導線の境界を機能領域別に確認する
-- [監視・アラート設計](./監視・アラート設計.md): alert 後に最初に見る runbook guidance と監視方針の入口。通知 channel / alert rule / 監視サービス連携は current repo では未実装の境界として読む
+- [監視・アラート設計](./specs/監視・アラート設計.md): alert 後に最初に見る runbook guidance と監視方針の入口。通知 channel / alert rule / 監視サービス連携は current repo では未実装の境界として読む
 - [生成ファイル継続失敗候補runbook](./生成ファイル継続失敗候補runbook.md): dashboard の生成ファイル card に出る継続失敗候補を、通知や自動 retry ではなく read-only 調査入口として読む
 
 ## 未確定事項
