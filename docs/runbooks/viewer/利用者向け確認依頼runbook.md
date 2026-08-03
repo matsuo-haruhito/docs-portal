@@ -9,8 +9,8 @@
 ## 先に見るもの
 
 1. 確認依頼を含む日常導線の全体像は [ダッシュボードと文書ショートカット・確認依頼の使い分け](../../specs/ダッシュボードと文書ショートカット・確認依頼の使い分け.md)
-2. 文書詳細で依頼を作る前後の文書閲覧 flow は [閲覧画面とUI](./specs/閲覧画面とUI.md)
-3. internal user / requester / external user の権限前提は [基本モデルと権限](./specs/基本モデルと権限.md)
+2. 文書詳細で依頼を作る前後の文書閲覧 flow は [閲覧画面とUI](../../specs/閲覧画面とUI.md)
+3. internal user / requester / external user の権限前提は [基本モデルと権限](../../specs/基本モデルと権限.md)
 4. 確認依頼と正式レビュー承認 workflow の境界は [正式レビュー承認 workflow 境界メモ](../../specs/正式レビュー承認workflow境界メモ.md)
 
 ## 入口

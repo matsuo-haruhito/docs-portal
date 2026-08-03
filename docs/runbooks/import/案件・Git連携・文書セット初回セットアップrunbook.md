@@ -14,11 +14,11 @@
 
 ## 先に知っておくこと
 
-- 3 画面とも internal admin 向けの `/admin` 配下にある。`company_master_admin` が見られる画面境界は [company_master_admin会社・ユーザー管理runbook](./company_master_admin会社・ユーザー管理runbook.md) を正本にする。
+- 3 画面とも internal admin 向けの `/admin` 配下にある。`company_master_admin` が見られる画面境界は [company_master_admin会社・ユーザー管理runbook](../admin/company_master_admin会社・ユーザー管理runbook.md) を正本にする。
 - `文書セット` は、対象案件に文書が取り込まれてから初めて `対象文書` を選べる。最初の 1 件は `案件` と `Git連携` を先に整える方が迷いにくい。
 - `外部表示プレビュー` は、案件編集画面から開く公開前確認の導線。実ログイン切り替えではなく、既存の外部ユーザー / company_master_admin 権限判定で、文書と添付ファイルの見え方を確認する。
-- Git 以外の経路で文書を入れる場合は、[ローカル編集からポータル更新までの最小運用案](./guides/ローカル編集からポータル更新までの最小運用案.md)、[ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)、[internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md) を使い、文書が入ってから `文書セット` へ戻る。
-- `文書セット` 画面そのものの列の見方や、`固定版` と `最新版を使う` の使い分けを見直したいときは [文書セット運用runbook](./文書セット運用runbook.md) を併せて確認する。
+- Git 以外の経路で文書を入れる場合は、[ローカル編集からポータル更新までの最小運用案](../../guides/ローカル編集からポータル更新までの最小運用案.md)、[ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)、[internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md) を使い、文書が入ってから `文書セット` へ戻る。
+- `文書セット` 画面そのものの列の見方や、`固定版` と `最新版を使う` の使い分けを見直したいときは [文書セット運用runbook](../admin/文書セット運用runbook.md) を併せて確認する。
 
 ## まず見る順序
 
@@ -173,20 +173,20 @@ preview は既存の権限判定を使っているため、文書セットの作
 
 ### どの import 経路で文書を入れるかが Git 以外かもしれない
 
-この runbook は順序整理が目的で、import 方式の優劣は決めない。Git を使わない案件では、[ローカル編集からポータル更新までの最小運用案](./guides/ローカル編集からポータル更新までの最小運用案.md)、[ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)、[internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md) のどれが current flow に合うかを先に決める。
+この runbook は順序整理が目的で、import 方式の優劣は決めない。Git を使わない案件では、[ローカル編集からポータル更新までの最小運用案](../../guides/ローカル編集からポータル更新までの最小運用案.md)、[ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)、[internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md) のどれが current flow に合うかを先に決める。
 
 ### 会社やユーザーの整備も一緒に必要
 
-`案件` 作成時の `企業` 選択や、その後の user 整備まで含めたいときは [company_master_admin会社・ユーザー管理runbook](./company_master_admin会社・ユーザー管理runbook.md) へ戻る。案件への参加や公開範囲まで見直すなら [案件所属・文書権限運用runbook](./案件所属・文書権限運用runbook.md) を使う。
+`案件` 作成時の `企業` 選択や、その後の user 整備まで含めたいときは [company_master_admin会社・ユーザー管理runbook](../admin/company_master_admin会社・ユーザー管理runbook.md) へ戻る。案件への参加や公開範囲まで見直すなら [案件所属・文書権限運用runbook](../admin/案件所属・文書権限運用runbook.md) を使う。
 
 ## 関連文書
 
 - [Git連携設定と同期失敗確認runbook](./Git連携設定と同期失敗確認runbook.md)
-- [文書セット運用runbook](./文書セット運用runbook.md)
-- [ローカル編集からポータル更新までの最小運用案](./guides/ローカル編集からポータル更新までの最小運用案.md)
+- [文書セット運用runbook](../admin/文書セット運用runbook.md)
+- [ローカル編集からポータル更新までの最小運用案](../../guides/ローカル編集からポータル更新までの最小運用案.md)
 - [ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)
 - [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)
-- [company_master_admin会社・ユーザー管理runbook](./company_master_admin会社・ユーザー管理runbook.md)
-- [案件所属・文書権限運用runbook](./案件所属・文書権限運用runbook.md)
-- [README](../README.md)
-- [docs/README](./README.md)
+- [company_master_admin会社・ユーザー管理runbook](../admin/company_master_admin会社・ユーザー管理runbook.md)
+- [案件所属・文書権限運用runbook](../admin/案件所属・文書権限運用runbook.md)
+- [README](../../README.md)
+- [docs/README](../../README.md)

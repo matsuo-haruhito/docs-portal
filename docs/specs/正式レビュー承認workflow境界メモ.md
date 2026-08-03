@@ -6,12 +6,12 @@
 
 ## 先に見るもの
 
-- [ToDo](./ToDo.md): 正式なレビュー・承認 workflow は再評価待ちの proposal として扱う
-- [文書コメント・Q&A運用runbook](./runbooks/admin/文書コメント・Q&A運用runbook.md): public Q&A と internal-only 確認事項の使い分け
-- [版品質チェック runbook](./runbooks/admin/版品質チェックrunbook.md): 品質チェック結果の read-only evidence
-- [利用者向け確認依頼runbook](./runbooks/viewer/利用者向け確認依頼runbook.md): 確認依頼の一覧・detail・OK / Cancel の current flow
-- [文書ライフサイクルと公開](./specs/文書ライフサイクルと公開.md): draft / published / archived、公開 window、latest version の正本
-- [外部送付履歴運用runbook](./runbooks/external/外部送付履歴運用runbook.md): 外部送付の下書き、送付済み、送付失敗の記録確認
+- [ToDo](../ToDo.md): 正式なレビュー・承認 workflow は再評価待ちの proposal として扱う
+- [文書コメント・Q&A運用runbook](../runbooks/admin/文書コメント・Q&A運用runbook.md): public Q&A と internal-only 確認事項の使い分け
+- [版品質チェック runbook](../runbooks/admin/版品質チェックrunbook.md): 品質チェック結果の read-only evidence
+- [利用者向け確認依頼runbook](../runbooks/viewer/利用者向け確認依頼runbook.md): 確認依頼の一覧・detail・OK / Cancel の current flow
+- [文書ライフサイクルと公開](./文書ライフサイクルと公開.md): draft / published / archived、公開 window、latest version の正本
+- [外部送付履歴運用runbook](../runbooks/external/外部送付履歴運用runbook.md): 外部送付の下書き、送付済み、送付失敗の記録確認
 
 ## current support の棚卸し
 

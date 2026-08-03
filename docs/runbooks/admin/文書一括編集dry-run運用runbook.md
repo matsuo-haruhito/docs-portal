@@ -207,9 +207,9 @@ current code では dry-run の有効期限は既定で作成から 1 日です�
 
 ## 10. 関連文書
 
-- [docs/README](./README.md)
+- [docs/README](../../README.md)
 - [README](../README.md)
 - [文書マスタ運用runbook](./文書マスタ運用runbook.md)
-- [importと変更系dry-run](./specs/importと変更系dry-run.md)
+- [importと変更系dry-run](../../specs/importと変更系dry-run.md)
 - [監査ログ運用runbook](./監査ログ運用runbook.md)
-- [文書ライフサイクルと公開](./specs/文書ライフサイクルと公開.md)
+- [文書ライフサイクルと公開](../../specs/文書ライフサイクルと公開.md)

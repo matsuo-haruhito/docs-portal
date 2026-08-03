@@ -6,10 +6,10 @@
 
 ## 先に見るもの
 
-1. 案件内の文書を検索・ZIP 出力したいときは [文書一覧の検索・実用フィルタ・ZIP出力runbook](./文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
-2. 目的別の配布単位や固定版を管理したいときは [文書セット運用runbook](./文書セット運用runbook.md)
+1. 案件内の文書を検索・ZIP 出力したいときは [文書一覧の検索・実用フィルタ・ZIP出力runbook](../admin/文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
+2. 目的別の配布単位や固定版を管理したいときは [文書セット運用runbook](../admin/文書セット運用runbook.md)
 3. 個人導線としてよく見る文書を残したいときは [文書ショートカット運用runbook](./文書ショートカット運用runbook.md)
-4. 案件所属や文書権限を見直したいときは [案件所属・文書権限運用runbook](./案件所属・文書権限運用runbook.md)
+4. 案件所属や文書権限を見直したいときは [案件所属・文書権限運用runbook](../admin/案件所属・文書権限運用runbook.md)
 
 ## 画面の役割
 
@@ -165,11 +165,11 @@ item の `文書` link は、同じ案件配下の文書詳細へ戻る。curren
 
 ## 関連文書
 
-- [文書一覧の検索・実用フィルタ・ZIP出力runbook](./文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
-- [文書セット運用runbook](./文書セット運用runbook.md)
+- [文書一覧の検索・実用フィルタ・ZIP出力runbook](../admin/文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
+- [文書セット運用runbook](../admin/文書セット運用runbook.md)
 - [文書ショートカット運用runbook](./文書ショートカット運用runbook.md)
-- [案件所属・文書権限運用runbook](./案件所属・文書権限運用runbook.md)
-- [基本モデルと権限](./specs/基本モデルと権限.md)
-- [閲覧画面とUI](./specs/閲覧画面とUI.md)
-- [README](../README.md)
-- [docs/README](./README.md)
+- [案件所属・文書権限運用runbook](../admin/案件所属・文書権限運用runbook.md)
+- [基本モデルと権限](../../specs/基本モデルと権限.md)
+- [閲覧画面とUI](../../specs/閲覧画面とUI.md)
+- [README](../../README.md)
+- [docs/README](../../README.md)

@@ -12,7 +12,7 @@ preview 用の `MicrosoftGraphConnection` と、外部フォルダ同期元で�
 
 Office preview の表示フロー・provider 優先順位・fallback 条件・preview upload ライフサイクルの詳細は [docs-src/office-preview.md](../../docs-src/office-preview.md) を参照。Microsoft Graph の設定項目・権限・運用フロー全体は [docs-src/api-specification.md](../../docs-src/api-specification.md) の「Microsoft Graph / Office preview」セクションを参照。
 
-現在の viewer 側の正本は [docs/specs/閲覧画面とUI.md](./specs/閲覧画面とUI.md) です。この文書では、そこに書かれている動作を管理画面でどう成立させるかに絞って整理します。
+現在の viewer 側の正本は [docs/specs/閲覧画面とUI.md](./閲覧画面とUI.md) です。この文書では、そこに書かれている動作を管理画面でどう成立させるかに絞って整理します。
 
 ## 接続マスタの登録先
 
@@ -144,7 +144,7 @@ Google Drive 同期由来でなくても、次がそろっていれば upload pr
 
 - [README](../README.md)
 - [Microsoft Graph接続管理runbook](../runbooks/external/Microsoft Graph接続管理runbook.md)
-- [閲覧画面とUI](./specs/閲覧画面とUI.md)
+- [閲覧画面とUI](./閲覧画面とUI.md)
 - [preview接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md)
 - [Google Drive外部フォルダ同期](./Google%20Drive%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F.md)
-- [.env.example](../.env.example)
+- [.env.example](../../.env.example)

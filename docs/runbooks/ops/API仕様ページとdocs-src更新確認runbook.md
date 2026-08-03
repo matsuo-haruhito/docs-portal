@@ -197,7 +197,7 @@ API仕様ページ上部の `表示状態` は、notice よりも現在の確認
 3. `HTML確認先（build後）` は Docusaurus build 後の generated HTML を admin-only site route で開く入口です。raw source Markdown、`tmp/api_specification_build.*` marker、build root 外 file を読む入口として扱いません。
 4. `docs-src/client-file-upload-api.md`、`docs-src/office-preview.md`、`docs-src/external-folder-sync-webhooks.md` の更新対象が想定どおりか確認します。
 5. source rename や slug 変更をした場合は、`PRIMARY_SOURCE_PAGES` の `source_path` と `site_path`、Markdown front matter `slug` が同じ対応になっているか確認します。
-6. Docusaurus runtime の前提が崩れていないか、[docs/notes/docusaurus-build-runtime.md](./notes/docusaurus-build-runtime.md) を確認します。
+6. Docusaurus runtime の前提が崩れていないか、[docs/notes/docusaurus-build-runtime.md](../../notes/docusaurus-build-runtime.md) を確認します。
 7. build 完了後も古い HTML のままなら、対象ページを再読み込みして `主要ページとsource` から入り直します。
 
 API仕様ページは source を直接編集する画面ではありません。表示に違和感があるときは、まず `docs-src/` 側を正本として見直します。
@@ -209,9 +209,9 @@ API仕様ページは source を直接編集する画面ではありません。
 1. `表示状態` が `build 失敗` か、`build 待ち/実行中` のままかを確認します。待ち状態なら、まだ失敗とは断定しません。
 2. source file の有無を確認します。entry は `docs-src/api-specification.md` で、関連ページは `docs-src/client-file-upload-api.md`、`docs-src/office-preview.md`、`docs-src/external-folder-sync-webhooks.md` です。
 3. 各 Markdown の front matter と slug を確認します。主要ページのリンク先は `/api-specification`、`/client-file-upload-api`、`/office-preview`、`/external-folder-sync-webhooks` です。
-4. Docusaurus runtime 前提を確認します。`npm` や repo-local dependency の準備手順は [docs/notes/docusaurus-build-runtime.md](./notes/docusaurus-build-runtime.md) を正本にし、この runbook には重複して書きません。
+4. Docusaurus runtime 前提を確認します。`npm` や repo-local dependency の準備手順は [docs/notes/docusaurus-build-runtime.md](../../notes/docusaurus-build-runtime.md) を正本にし、この runbook には重複して書きません。
 5. job / CI logs を確認します。build command は `DOCUSAURUS_DOCS_PATH=docs-src` を渡して `docusaurus/` 配下で `npm run build` を実行します。stderr / stdout に source path、slug、link、package dependency のどれが出ているかを先に見ます。
-6. GitHub Actions 側で落ちている場合は [build-docs workflow確認runbook](./build-docs%20workflow%E7%A2%BA%E8%AA%8Drunbook.md) へ進み、`test` / `seed-smoke` / `build-docs` のどの段階の失敗かを分けます。
+6. GitHub Actions 側で落ちている場合は [build-docs workflow確認runbook](../import/build-docs workflow確認runbook.md) へ進み、`test` / `seed-smoke` / `build-docs` のどの段階の失敗かを分けます。
 
 API仕様ページの `build 失敗` 表示は、管理者が次に確認する場所を決めるための短い signal です。source、runtime、job / CI logs の順で根拠を揃えてから、docs-src の修正か runtime / workflow 側の対応かを判断します。
 
@@ -226,7 +226,7 @@ source 更新後は、API仕様ページの `主要ページとsource` で HTML 
 
 ## 関連ドキュメント
 
-- [README.md](../README.md)
-- [docs/README.md](./README.md)
-- [docs/notes/docusaurus-build-runtime.md](./notes/docusaurus-build-runtime.md)
-- [docs-src/api-specification.md](../docs-src/api-specification.md)
+- [README.md](../../../README.md)
+- [docs/README.md](../../README.md)
+- [docs/notes/docusaurus-build-runtime.md](../../notes/docusaurus-build-runtime.md)
+- [docs-src/api-specification.md](../../../docs-src/api-specification.md)

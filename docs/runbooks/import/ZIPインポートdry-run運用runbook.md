@@ -83,7 +83,7 @@ current ZIP dry-run 画面では、専用の warning / error 一覧より先に�
 - `ZIPインポートdry-run` が作成され、`警告` 件数だけ増えているとき: 実行前に TreeView プレビューと入力値を見直す
 - `analyzed` でなければ: warning より先に status を確認し、作り直すかどうかを判断する
 
-現時点では ZIP import の詳細仕様を [importと変更系dry-run](./specs/importと変更系dry-run.md) が正本として持っています。この runbook では、画面から見える warning count と実行前確認順だけに留めます。
+現時点では ZIP import の詳細仕様を [importと変更系dry-run](../../specs/importと変更系dry-run.md) が正本として持っています。この runbook では、画面から見える warning count と実行前確認順だけに留めます。
 
 ## 7. 実行前に戻る判断が必要なとき
 
@@ -98,8 +98,8 @@ current ZIP dry-run 画面では、専用の warning / error 一覧より先に�
 戻り先は次です。
 
 - 入力のやり直し: `別のZIPをアップロード`
-- import 仕様の確認: [importと変更系dry-run](./specs/importと変更系dry-run.md)
-- 文書公開モデルや version status の確認: [アプリケーション仕様](./アプリケーション仕様.md)
+- import 仕様の確認: [importと変更系dry-run](../../specs/importと変更系dry-run.md)
+- 文書公開モデルや version status の確認: [アプリケーション仕様](../../アプリケーション仕様.md)
 
 ## 8. current support の境界
 
@@ -110,10 +110,10 @@ current ZIP dry-run 画面では、専用の warning / error 一覧より先に�
 
 ## 9. 関連文書
 
-- [importと変更系dry-run](./specs/importと変更系dry-run.md)
+- [importと変更系dry-run](../../specs/importと変更系dry-run.md)
 - [ZIPインポートdry-run 履歴保存境界メモ](../../specs/ZIPインポートdry-run履歴保存境界メモ.md)
-- [アプリケーション仕様](./アプリケーション仕様.md)
+- [アプリケーション仕様](../../アプリケーション仕様.md)
 - [Git連携設定と同期失敗確認 runbook](./Git連携設定と同期失敗確認runbook.md)
-- [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md)
-- [README](../README.md)
-- [docs/README](./README.md)
+- [外部フォルダ同期dry-run・apply運用 runbook](../external/外部フォルダ同期dry-run・apply運用runbook.md)
+- [README](../../README.md)
+- [docs/README](../../README.md)

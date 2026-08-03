@@ -218,10 +218,10 @@ current first slice は、ここで期限到来済みまたは30日以内の期�
 
 ## 8. 関連文書
 
-- [docs/README](./README.md)
+- [docs/README](../../README.md)
 - [README](../README.md)
 - [文書一覧の検索・実用フィルタ・ZIP出力 runbook](./文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
-- [版詳細プレビュー・差分・添付確認runbook](./版詳細プレビュー・差分・添付確認runbook.md)
+- [版詳細プレビュー・差分・添付確認runbook](../viewer/版詳細プレビュー・差分・添付確認runbook.md)
 - [案件所属・文書権限運用runbook](./案件所属・文書権限運用runbook.md)
-- [アプリケーション仕様](./アプリケーション仕様.md)
-- [基本モデルと権限](./specs/基本モデルと権限.md)
+- [アプリケーション仕様](../../アプリケーション仕様.md)
+- [基本モデルと権限](../../specs/基本モデルと権限.md)

@@ -12,9 +12,9 @@
 
 関連する入口:
 
-- [版詳細プレビュー・差分・添付確認 runbook](./版詳細プレビュー・差分・添付確認runbook.md)
-- [閲覧画面とUI](./specs/閲覧画面とUI.md)
-- [Microsoft Graph接続とOffice preview](./specs/Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md)
+- [版詳細プレビュー・差分・添付確認 runbook](../viewer/版詳細プレビュー・差分・添付確認runbook.md)
+- [閲覧画面とUI](../../specs/閲覧画面とUI.md)
+- [Microsoft Graph接続とOffice preview](../../specs/Microsoft Graph接続とOffice preview.md)
 - [正式レビュー承認 workflow 境界メモ](../../specs/正式レビュー承認workflow境界メモ.md)
 
 ## HTML 画面の読み方

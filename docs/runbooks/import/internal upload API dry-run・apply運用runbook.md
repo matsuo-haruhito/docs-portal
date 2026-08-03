@@ -209,7 +209,7 @@ current code は `relative_path` の先頭 `/`、`../`、Windows drive path を�
 ## 8. current support の境界
 
 - この runbook は current controller behavior と request parameter の見分け方を扱います
-- importer 本体の仕様、preview JSON の詳細 schema、version 管理の設計は [importと変更系dry-run](./specs/import%E3%81%A8%E5%A4%89%E6%9B%B4%E7%B3%BBdry-run.md) と [Internal upload API naming](./specs/internal_upload_api_naming.md) を正本にします
+- importer 本体の仕様、preview JSON の詳細 schema、version 管理の設計は [importと変更系dry-run](../../specs/importと変更系dry-run.md) と [Internal upload API naming](../../specs/internal_upload_api_naming.md) を正本にします
 - admin UI で ZIP dry-run を確認する画面運用は [ZIPインポートdry-run運用 runbook](./ZIP%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88dry-run%E9%81%8B%E7%94%A8runbook.md) を正本にします
 - admin UI で manual upload dry-run を確認する場合、この runbook は `index` / `show` / `update` の current behavior と API response の照合順を扱います。`dry-run ID` の完全一致検索、`source_name` / `relative_path` / `content_hash` の safe metadata 検索、案件 remote search は一覧で使える current support です。raw `source_path` の表示・検索範囲、ZIP / artifact import dry-run との統合一覧、全 admin 画面共通 project search 抽象化は別 issue の判断に戻します
 - build artifact を生成する CI 側の確認順は [build-docs workflow確認runbook](./build-docs%20workflow%E7%A2%BA%E8%AA%8Drunbook.md) を正本にします
@@ -217,9 +217,9 @@ current code は `relative_path` の先頭 `/`、`../`、Windows drive path を�
 
 ## 9. 関連文書
 
-- [importと変更系dry-run](./specs/import%E3%81%A8%E5%A4%89%E6%9B%B4%E7%B3%BBdry-run.md)
-- [Internal upload API naming](./specs/internal_upload_api_naming.md)
+- [importと変更系dry-run](../../specs/importと変更系dry-run.md)
+- [Internal upload API naming](../../specs/internal_upload_api_naming.md)
 - [ZIPインポートdry-run運用 runbook](./ZIP%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88dry-run%E9%81%8B%E7%94%A8runbook.md)
 - [build-docs workflow確認runbook](./build-docs%20workflow%E7%A2%BA%E8%AA%8Drunbook.md)
-- [README](../README.md)
-- [docs/README](./README.md)
+- [README](../../README.md)
+- [docs/README](../../README.md)

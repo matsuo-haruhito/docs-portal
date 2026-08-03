@@ -24,7 +24,7 @@ README からこの runbook へ入ったときは、まず次の表で provider 
 
 | provider / 入口 | current support | 未対応・確認範囲 |
 | --- | --- | --- |
-| Git / GitHub import (`admin/git_import_sources`, `admin/git_import_runs`) | `github` provider の repository / branch / path を登録し、pull 型の手動同期と run 履歴を確認できます。詳しい操作は [Git連携設定と同期失敗確認runbook](./Git%E9%80%A3%E6%90%BA%E8%A8%AD%E5%AE%9A%E3%81%A8%E5%90%8C%E6%9C%9F%E5%A4%B1%E6%95%97%E7%A2%BA%E8%AA%8Drunbook.md) を正本にします。 | GitHub App / webhook / 定期同期の完成は `#1028`、Git 側削除の自動 archive / delete は未対応です。 |
+| Git / GitHub import (`admin/git_import_sources`, `admin/git_import_runs`) | `github` provider の repository / branch / path を登録し、pull 型の手動同期と run 履歴を確認できます。詳しい操作は [Git連携設定と同期失敗確認runbook](../import/Git連携設定と同期失敗確認runbook.md) を正本にします。 | GitHub App / webhook / 定期同期の完成は `#1028`、Git 側削除の自動 archive / delete は未対応です。 |
 | Google Drive (`google_drive` source) | `外部フォルダ同期設定` で folder URL を保存し、OAuth ユーザー方式またはサービスアカウント方式を使って `dry_run` / `apply` / `force_apply` / `enqueue` / 変更通知購読まで進められます。 | native Google Docs export、権限同期、削除 policy の拡張は未対応です。古い `#1029` は「Google Drive 追加」ではなく current support の再確認対象として扱います。 |
 | SharePoint / OneDrive (`microsoft_graph` source) | `Microsoft Graph接続` を前提に共有 URL を保存し、`drive_id` / `folder_item_id` / `folder_path` / `site_id` などの metadata を詳細画面で確認できます。SharePoint webhook route は validation token 応答と notification payload 記録の受け口として存在します。 | Graph -> Portal の pull 型同期本体、`dry_run` / `apply` / `enqueue` / 変更通知の購読運用はこの画面ではまだ実行できません。webhook route があるだけでは、SharePoint / OneDrive の変更通知を運用可能とは扱いません。 |
 
@@ -228,10 +228,10 @@ current code には `external_folder_sync_webhooks/sharepoint` の GET / POST ro
 
 ## 10. 関連文書
 
-- [preview 接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md)
-- [Google Drive外部フォルダ同期](./specs/Google%20Drive%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F.md)
-- [Microsoft Graph接続とOffice preview](./specs/Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md)
+- [preview 接続と外部フォルダ同期の設定責務](../../specs/preview接続と外部フォルダ同期の設定責務.md)
+- [Google Drive外部フォルダ同期](../../specs/Google Drive外部フォルダ同期.md)
+- [Microsoft Graph接続とOffice preview](../../specs/Microsoft Graph接続とOffice preview.md)
 - [Microsoft Graph接続管理runbook](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E7%AE%A1%E7%90%86runbook.md)
-- [ローカルセットアップと環境変数](./guides/ローカルセットアップと環境変数.md)
-- [README](../README.md)
-- [docs/README](./README.md)
+- [ローカルセットアップと環境変数](../../guides/ローカルセットアップと環境変数.md)
+- [README](../../README.md)
+- [docs/README](../../README.md)

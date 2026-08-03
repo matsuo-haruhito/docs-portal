@@ -6,8 +6,8 @@
 
 ## 先に見るもの
 
-1. role の正本は [基本モデルと権限](./specs/基本モデルと権限.md)
-2. internal admin 向けの広い管理 runbook は [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md) や [アクセス申請・同意管理・Webhook運用runbook](./アクセス申請・同意管理・Webhook運用runbook.md)
+1. role の正本は [基本モデルと権限](../../specs/基本モデルと権限.md)
+2. internal admin 向けの広い管理 runbook は [管理ダッシュボード・モデルブラウザ運用runbook](../ops/管理ダッシュボード・モデルブラウザ運用runbook.md) や [アクセス申請・同意管理・Webhook運用runbook](../external/アクセス申請・同意管理・Webhook運用runbook.md)
 
 ## role の要約
 

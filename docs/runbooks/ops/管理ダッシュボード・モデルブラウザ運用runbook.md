@@ -6,9 +6,9 @@
 
 ## 先に見るもの
 
-1. 環境変数や compose の前提を確認したいときは [ローカルセットアップと環境変数](./guides/ローカルセットアップと環境変数.md)
-2. Docusaurus build や Kroki の runtime 前提を確認したいときは [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md)
-3. `storage/document_files` や欠落ファイル時の扱いを確認したいときは [ファイル配信・storage運用方針](./specs/ファイル配信・storage運用方針.md)
+1. 環境変数や compose の前提を確認したいときは [ローカルセットアップと環境変数](../../guides/ローカルセットアップと環境変数.md)
+2. Docusaurus build や Kroki の runtime 前提を確認したいときは [notes/docusaurus-build-runtime](../../notes/docusaurus-build-runtime.md)
+3. `storage/document_files` や欠落ファイル時の扱いを確認したいときは [ファイル配信・storage運用方針](../../specs/ファイル配信・storage運用方針.md)
 4. 管理画面の位置関係は `app/views/admin/_nav.html.slim` の `ダッシュボード` と `モデルブラウザ` を起点に確認する
 
 ## 画面の役割
@@ -163,9 +163,9 @@ current 実装の前提:
 
 戻り先:
 
-- `.env.example` 基準の設定値や compose 切り替えを見直したいときは [ローカルセットアップと環境変数](./guides/ローカルセットアップと環境変数.md)
-- Docusaurus workspace や Kroki 前提を見直したいときは [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md)
-- `ACTIVE_STORAGE_SERVICE` や `storage/document_files` の扱いを見直したいときは [ファイル配信・storage運用方針](./specs/ファイル配信・storage運用方針.md)
+- `.env.example` 基準の設定値や compose 切り替えを見直したいときは [ローカルセットアップと環境変数](../../guides/ローカルセットアップと環境変数.md)
+- Docusaurus workspace や Kroki 前提を見直したいときは [notes/docusaurus-build-runtime](../../notes/docusaurus-build-runtime.md)
+- `ACTIVE_STORAGE_SERVICE` や `storage/document_files` の扱いを見直したいときは [ファイル配信・storage運用方針](../../specs/ファイル配信・storage運用方針.md)
 
 ## 3. 文書ファイル健全性
 
@@ -230,16 +230,16 @@ current 実装の前提:
 - 容量の増減をざっと見たいときは、まず `合計` と各領域の file count / 概算使用量を見る
 - 添付や原本が増えている疑いがある場合は `storage/document_files`、build artifact が増えている疑いがある場合は `storage/docs_sites`、dry-run や import staging が残っている疑いがある場合は `storage/imports` を見る
 - `大きい内訳` は上位 5 件だけの direct child preview として読み、行ごとの file count、概算使用量、最終更新から増加元の当たりを付ける。続きの全件一覧や削除判断を提供するものではない
-- `Docs site build` の内訳は project code / document slug / site directory 相当の直下項目を読むための入口で、Docusaurus build artifact の詳しい前提は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) に戻る
+- `Docs site build` の内訳は project code / document slug / site directory 相当の直下項目を読むための入口で、Docusaurus build artifact の詳しい前提は [notes/docusaurus-build-runtime](../../notes/docusaurus-build-runtime.md) に戻る
 - `Import staging` の内訳は import run / upload root / staging directory 相当の直下項目を読むための入口で、manual upload dry-run や ZIP import の文脈は既存画面へ戻って確認する
 - `DocumentFile 実体の Project / Document 上位` では、容量増加の当たりを付けたい Project / Document を上位 5 件だけ確認する。大きい行があっても、その場で削除対象や retention 対象とは断定しない
 - `実体欠落` が 0 でない行は、容量 breakdown だけで完結させず、`欠落ファイル詳細` で対象の `Storage key` / safe `Expected path` preview を確認する
-- `DocumentFile 実体` の `次の確認先` は、登録済み file の実体欠落を調べる `欠落ファイル詳細` と、保存先・配信・cleanup 境界を読み直す [ファイル配信・storage運用方針](./specs/ファイル配信・storage運用方針.md)
-- `Docs site build` の `次の確認先` は、Docusaurus build workspace や Kroki runtime、site artifact の前提を確認する [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md)
+- `DocumentFile 実体` の `次の確認先` は、登録済み file の実体欠落を調べる `欠落ファイル詳細` と、保存先・配信・cleanup 境界を読み直す [ファイル配信・storage運用方針](../../specs/ファイル配信・storage運用方針.md)
+- `Docs site build` の `次の確認先` は、Docusaurus build workspace や Kroki runtime、site artifact の前提を確認する [notes/docusaurus-build-runtime](../../notes/docusaurus-build-runtime.md)
 - `Import staging` の `次の確認先` は、manual upload dry-run の既存確認画面と ZIP import の既存入口。どちらも staging artifact の読み方に戻るための導線であり、古い artifact をその場で削除する操作ではない
 - `次の確認先` に `この行は read-only 集計です` と出る行は、確認先の設定漏れではなく、その行自体を read-only な概算確認で止める合図として読む
 - `文書ファイル健全性` は登録済み `DocumentFile` の実体欠落を確認する入口で、`Storage使用量` は local storage 領域別の容量と DocumentFile 実体の上位 preview を確認する入口として分ける
-- 欠落ファイルの実体調査は `欠落ファイル詳細`、容量や保存先方針の確認は [ファイル配信・storage運用方針](./specs/ファイル配信・storage運用方針.md) へ戻る
+- 欠落ファイルの実体調査は `欠落ファイル詳細`、容量や保存先方針の確認は [ファイル配信・storage運用方針](../../specs/ファイル配信・storage運用方針.md) へ戻る
 
 注意点:
 
@@ -247,7 +247,7 @@ current 実装の前提:
 - 大きい値が出ても、その画面だけで不要ファイルや削除対象を断定しない
 - Project / Document breakdown は `DocumentFile` 実体だけの上位 preview であり、`storage/docs_sites` / `storage/imports` は direct child preview に留める。外部 bucket、customer 単位の課金・容量レポート、Project / Document 別の build/import 容量集計を追加したものではない
 - 外部 object storage の bucket 使用量、signed URL、public access policy、Project / Document 単位の課金・容量レポートは current support 外として扱う
-- alert rule や通知 channel は current repo では具体実装ではない。監視観点は [監視・アラート設計](./specs/監視・アラート設計.md) に戻す
+- alert rule や通知 channel は current repo では具体実装ではない。監視観点は [監視・アラート設計](../../specs/監視・アラート設計.md) に戻す
 
 ## 日常確認ポイント
 
@@ -287,12 +287,12 @@ current 実装の前提:
 - 欠落ファイル詳細で特定案件だけを見たい: 案件コード / 案件名の remote search で案件を選び、文書名 / slug や Storage key / ファイル名の断片と組み合わせて先頭 100 件の read-only 一覧を絞る
 - 欠落ファイル詳細で `条件をクリア` が出ていない: 有効な filter はない状態として読み、空白だけの検索語が残っているとは扱わない
 - local storage の領域別使用量を read-only に確認したい: `Storage使用量`
-- `Storage使用量` の `DocumentFile 実体の Project / Document 上位` に大きい行がある: 容量増加の当たりを付ける preview として読み、対象文書や保存方針は [ファイル配信・storage運用方針](./specs/ファイル配信・storage運用方針.md) と対象文書の詳細で確認する
-- `Storage使用量` の `DocumentFile 実体` が増えている: `欠落ファイル詳細` と [ファイル配信・storage運用方針](./specs/ファイル配信・storage運用方針.md) で登録済み file と保存方針を確認する
-- `Storage使用量` の `Docs site build` が増えている: `大きい内訳` で上位 direct child と最終更新を確認し、[notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) で build artifact と runtime 前提を確認する
+- `Storage使用量` の `DocumentFile 実体の Project / Document 上位` に大きい行がある: 容量増加の当たりを付ける preview として読み、対象文書や保存方針は [ファイル配信・storage運用方針](../../specs/ファイル配信・storage運用方針.md) と対象文書の詳細で確認する
+- `Storage使用量` の `DocumentFile 実体` が増えている: `欠落ファイル詳細` と [ファイル配信・storage運用方針](../../specs/ファイル配信・storage運用方針.md) で登録済み file と保存方針を確認する
+- `Storage使用量` の `Docs site build` が増えている: `大きい内訳` で上位 direct child と最終更新を確認し、[notes/docusaurus-build-runtime](../../notes/docusaurus-build-runtime.md) で build artifact と runtime 前提を確認する
 - `Storage使用量` の `Import staging` が増えている: `大きい内訳` で上位 direct child と最終更新を確認し、manual upload dry-run や ZIP import の既存入口で staging artifact の文脈を確認する
-- storage の保存先、配信、cleanup 境界を見直したい: [ファイル配信・storage運用方針](./specs/ファイル配信・storage運用方針.md)
-- 個別のアクセス履歴や利用傾向を追いたい: [監査ログ運用runbook](./監査ログ運用runbook.md) や [文書利用状況運用runbook](./文書利用状況運用runbook.md) に戻る
+- storage の保存先、配信、cleanup 境界を見直したい: [ファイル配信・storage運用方針](../../specs/ファイル配信・storage運用方針.md)
+- 個別のアクセス履歴や利用傾向を追いたい: [監査ログ運用runbook](../admin/監査ログ運用runbook.md) や [文書利用状況運用runbook](../admin/文書利用状況運用runbook.md) に戻る
 
 ## 関連画面
 

@@ -6,9 +6,9 @@
 
 ## 1. 先に見るもの
 
-1. ZIP preview の責務と制約は [archive preview spec](./specs/archive-preview.md)
+1. ZIP preview の責務と制約は [archive preview spec](../../specs/archive-preview.md)
 2. 文書詳細画面全体の見方は [版詳細プレビュー・差分・添付確認 runbook](./版詳細プレビュー・差分・添付確認runbook.md)
-3. 公開モデルと権限境界は [アプリケーション仕様](./アプリケーション仕様.md)
+3. 公開モデルと権限境界は [アプリケーション仕様](../../アプリケーション仕様.md)
 
 ## 2. この runbook が扱う画面
 

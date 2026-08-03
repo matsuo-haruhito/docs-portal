@@ -72,11 +72,11 @@ external user はこの endpoint を使えません。candidate が 0 件の JSO
 
 ## 既存 runbook との接続
 
-- Dashboard で候補を見る場合は、[管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md) の `運用失敗入口` を入口にします。保存済み failed 件数と継続失敗候補を別物として読み、candidate 0 件を正常保証として扱いません。
-- 監視観点から見る場合は、[監視・アラート設計](./specs/監視・アラート設計.md) の `外部依存監視` と `Runbook との接続` を入口にします。この候補は `mail / webhook の継続失敗` のうち、外部送付履歴側を read-only payload として切り出すための内部補助です。
+- Dashboard で候補を見る場合は、[管理ダッシュボード・モデルブラウザ運用runbook](../ops/管理ダッシュボード・モデルブラウザ運用runbook.md) の `運用失敗入口` を入口にします。保存済み failed 件数と継続失敗候補を別物として読み、candidate 0 件を正常保証として扱いません。
+- 監視観点から見る場合は、[監視・アラート設計](../../specs/監視・アラート設計.md) の `外部依存監視` と `Runbook との接続` を入口にします。この候補は `mail / webhook の継続失敗` のうち、外部送付履歴側を read-only payload として切り出すための内部補助です。
 - 画面で実際に確認する場合は、[外部送付履歴運用runbook](./外部送付履歴運用runbook.md) の検索、状態 filter、方式 filter、詳細確認、手動状態更新の読み方に戻ります。
 - 候補 payload、Dashboard 表示、一覧検索、手動状態更新、通知 channel は別のものです。候補 payload と Dashboard 表示は調査入口であり、送付状態の変更や本番 alert 発火を意味しません。
-- generated file の継続失敗候補とは identity と確認 path が異なります。生成ファイル側の候補や dashboard 表示を読み返す場合は [生成ファイル継続失敗候補runbook](./生成ファイル継続失敗候補runbook.md) を参照します。
+- generated file の継続失敗候補とは identity と確認 path が異なります。生成ファイル側の候補や dashboard 表示を読み返す場合は [生成ファイル継続失敗候補runbook](../ops/生成ファイル継続失敗候補runbook.md) を参照します。
 
 ## 読み分け
 
@@ -111,6 +111,6 @@ external user はこの endpoint を使えません。candidate が 0 件の JSO
 - Refs #2991
 - Refs #3227
 - Refs #3732
-- [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md)
+- [管理ダッシュボード・モデルブラウザ運用runbook](../ops/管理ダッシュボード・モデルブラウザ運用runbook.md)
 - [外部送付履歴運用runbook](./外部送付履歴運用runbook.md)
-- [監視・アラート設計](./specs/監視・アラート設計.md)
+- [監視・アラート設計](../../specs/監視・アラート設計.md)

@@ -37,16 +37,16 @@ class DocsIndexOrphanEntriesCheck
     "docs/specs/path-history-redirect.md" => allowlist_reason("focused-reference", "path history redirect spec is an implementation reference, not a primary index entry"),
     "docs/specs/preview-target-metadata.md" => allowlist_reason("focused-reference", "preview target metadata spec is an implementation reference, not a primary index entry"),
     "docs/specs/search.md" => allowlist_reason("topic-specific", "search responsibility spec remains topic-specific until promoted to a first-read entry"),
-    "docs/specs/生成ファイルイベント.md" => allowlist_reason("focused-reference", "generated file event spec is an implementation reference, not a primary index entry"),
-    "docs/グローバルナビ分類・開閉導線runbook.md" => allowlist_reason("ui-cue-reference", "global nav classification runbook is a narrow UI cue reference"),
-    "docs/外部送付履歴継続失敗候補runbook.md" => allowlist_reason("failure-handoff-reference", "delivery failure candidate runbook is a specialized failure handoff reference")
+    "docs/specs/生成ファイルイベント.md" => allowlist_reason("focused-reference", "generated file event spec is an implementation reference, not a primary index entry")
   }.freeze
 
   ALLOWLIST_REASON_PREFIXES = ALLOWLIST_REASON_CATEGORIES.values.map { |category| "#{category}:" }.freeze
 
   INDEX_PATHS = [
     "README.md",
-    "docs/README.md"
+    "docs/README.md",
+    "docs/runbooks/README.md",
+    "docs/specs/README.md"
   ].freeze
 
   attr_reader :root
@@ -63,7 +63,7 @@ class DocsIndexOrphanEntriesCheck
     end
 
     missing_index_entries.map do |relative_path|
-      "#{relative_path}: missing from README.md/docs/README.md and not allowlisted"
+      "#{relative_path}: missing from index READMEs and not allowlisted"
     end
   end
 
@@ -90,7 +90,7 @@ class DocsIndexOrphanEntriesCheck
       self.write(root.join("docs/未掲載runbook.md"), "# orphan\n")
 
       errors = new(root).run
-      expected_error = "docs/未掲載runbook.md: missing from README.md/docs/README.md and not allowlisted"
+      expected_error = "docs/未掲載runbook.md: missing from index READMEs and not allowlisted"
 
       unless errors == [expected_error]
         abort <<~MESSAGE
@@ -181,7 +181,7 @@ errors = DocsIndexOrphanEntriesCheck.new(File.expand_path("../..", __dir__)).run
 if errors.any?
   warn "Docs index orphan entries detected:"
   errors.each { |error| warn "- #{error}" }
-  warn "Add the document to README.md or docs/README.md, or add a narrow allowlist reason in this script."
+  warn "Add the document to an index README, or add a narrow allowlist reason in this script."
   exit 1
 end
 

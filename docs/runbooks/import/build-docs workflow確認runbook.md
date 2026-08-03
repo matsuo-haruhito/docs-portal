@@ -8,9 +8,9 @@ current `main` の `.github/workflows/build-docs.yml` を正本として、`test
 
 ## 先に見る文書
 
-1. `build-docs` job が作る manifest の形式は [publish.json 仕様と生成ルール](./specs/publish.json%20仕様と生成ルール.md)
-2. 文書 repo 全体の最小運用は [ローカル編集からポータル更新までの最小運用案](./guides/ローカル編集からポータル更新までの最小運用案.md)
-3. Docusaurus / Kroki / manual preview renderer の runtime 前提は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md)
+1. `build-docs` job が作る manifest の形式は [publish.json 仕様と生成ルール](../../specs/publish.json 仕様と生成ルール.md)
+2. 文書 repo 全体の最小運用は [ローカル編集からポータル更新までの最小運用案](../../guides/ローカル編集からポータル更新までの最小運用案.md)
+3. Docusaurus / Kroki / manual preview renderer の runtime 前提は [notes/docusaurus-build-runtime](../../notes/docusaurus-build-runtime.md)
 4. app 側の import 受け口や `storage/imports/` の前提は [README](../README.md) の `運用メモ` を見る
 
 ## 1. この workflow が走る条件
@@ -84,7 +84,7 @@ current script の要点:
 - `source_repo` `source_branch` `source_commit_hash` を workflow 実行時の repository / branch / sha で埋める
 - `artifact.name` `artifact.workflow_run_id` `artifact.workflow_run_attempt` `artifact.manifest_path` を replay 判断用 metadata として埋める
 
-manifest 生成 step で止まったときは、まず [publish.json 仕様と生成ルール](./specs/publish.json%20仕様と生成ルール.md) と `publish/documents.json`、必要なら `scripts/generate_publish_manifest.mjs` を見比べます。
+manifest 生成 step で止まったときは、まず [publish.json 仕様と生成ルール](../../specs/publish.json 仕様と生成ルール.md) と `publish/documents.json`、必要なら `scripts/generate_publish_manifest.mjs` を見比べます。
 
 ## 5. `docs-site.tar.gz` artifact の役割
 
@@ -127,7 +127,7 @@ current workflow の `Call Rails import API` step は、次をすべて満たし
 
 step 自体は `curl -X POST` で `artifact_root=$(pwd)` と `manifest_path=$(pwd)/publish/manifest/publish.json` を送ります。
 
-import 側の前提を見直したいときは、[ローカル編集からポータル更新までの最小運用案](./guides/ローカル編集からポータル更新までの最小運用案.md) と [README](../README.md) の `運用メモ` を確認します。
+import 側の前提を見直したいときは、[ローカル編集からポータル更新までの最小運用案](../../guides/ローカル編集からポータル更新までの最小運用案.md) と [README](../README.md) の `運用メモ` を確認します。
 
 ## 7. failure 時の戻り先
 
@@ -139,7 +139,7 @@ import 側の前提を見直したいときは、[ローカル編集からポー
 ### `seed-smoke` で止まった
 
 - `bundle exec rails db:prepare` まで含めた seed 前提の崩れを疑います
-- `.env.example` や runtime service 前提は [ローカルセットアップと環境変数](./guides/ローカルセットアップと環境変数.md) と [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) に戻ります
+- `.env.example` や runtime service 前提は [ローカルセットアップと環境変数](../../guides/ローカルセットアップと環境変数.md) と [notes/docusaurus-build-runtime](../../notes/docusaurus-build-runtime.md) に戻ります
 
 ### `security-audit` で止まった
 
@@ -153,12 +153,12 @@ import 側の前提を見直したいときは、[ローカル編集からポー
 ### `Build Docusaurus site` で止まった
 
 - `docusaurus/` 側の依存や build 前提を確認します
-- Kroki や manual preview renderer まわりの runtime 前提は [notes/docusaurus-build-runtime](./notes/docusaurus-build-runtime.md) が入口です
+- Kroki や manual preview renderer まわりの runtime 前提は [notes/docusaurus-build-runtime](../../notes/docusaurus-build-runtime.md) が入口です
 
 ### `Create manifest` で止まった
 
 - `publish/documents.json` の対象、`attachments/` の実ファイル、`docusaurus/build/<site_build_path>/index.html` の存在を確認します
-- manifest 仕様は [publish.json 仕様と生成ルール](./specs/publish.json%20仕様と生成ルール.md) を正本にします
+- manifest 仕様は [publish.json 仕様と生成ルール](../../specs/publish.json 仕様と生成ルール.md) を正本にします
 
 ### `Archive build output` または artifact upload で止まった
 
@@ -170,7 +170,7 @@ import 側の前提を見直したいときは、[ローカル編集からポー
 - まず step が「呼ばれる条件を満たしていたか」を確認します
 - 条件を満たしていて失敗したなら、import URL / token、app 側の import 受け口、`storage/imports/` 前提を見直します
 - `docs-site` artifact を開ける場合は `publish/manifest/publish.json` の `artifact` metadata を見て、失敗した import がどの source commit / workflow run / manifest path 由来かを確認します
-- app 側の運用入口は [README](../README.md) の `運用メモ` と [ローカル編集からポータル更新までの最小運用案](./guides/ローカル編集からポータル更新までの最小運用案.md) です
+- app 側の運用入口は [README](../README.md) の `運用メモ` と [ローカル編集からポータル更新までの最小運用案](../../guides/ローカル編集からポータル更新までの最小運用案.md) です
 
 ## 8. import API failure 時の replay / rebuild 判断
 

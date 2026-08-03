@@ -55,7 +55,7 @@
 ## Import / GitHub Actions
 
 - `latest_version` の別ルール更新 — #1112。正本: [文書ライフサイクルと公開](./specs/文書ライフサイクルと公開.md)。判断論点: 現行 created_at 基準との差分。分類: 具体 Issue あり
-- manual upload dry-run 後続 — #1604 / #1613 / #1614 / #2224。正本: [internal upload API dry-run・apply運用runbook](./runbooks/ops/internal%20upload%20API%20dry-run・apply運用runbook.md)。判断論点: 各 slice の粒度と優先順位。分類: 具体 Issue あり
+- manual upload dry-run 後続 — #1604 / #1613 / #1614 / #2224。正本: [internal upload API dry-run・apply運用runbook](./runbooks/import/internal%20upload%20API%20dry-run・apply運用runbook.md)。判断論点: 各 slice の粒度と優先順位。分類: 具体 Issue あり
 
 ## Docusaurus / seed
 

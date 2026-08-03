@@ -6,9 +6,9 @@
 
 ## 先に見るもの
 
-1. project-scoped の一覧、TreeView、upload panel 自体の役割は [文書一覧の検索・実用フィルタ・ZIP出力 runbook](./文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
-2. 版詳細画面の本文・差分・添付・品質チェックの読み方は [版詳細プレビュー・差分・添付確認 runbook](./版詳細プレビュー・差分・添付確認runbook.md)
-3. 文書の公開モデルや `latest_version` の前提は [アプリケーション仕様](./アプリケーション仕様.md)
+1. project-scoped の一覧、TreeView、upload panel 自体の役割は [文書一覧の検索・実用フィルタ・ZIP出力 runbook](../admin/文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
+2. 版詳細画面の本文・差分・添付・品質チェックの読み方は [版詳細プレビュー・差分・添付確認 runbook](../viewer/版詳細プレビュー・差分・添付確認runbook.md)
+3. 文書の公開モデルや `latest_version` の前提は [アプリケーション仕様](../../アプリケーション仕様.md)
 
 ## どこから入るか
 
@@ -102,7 +102,7 @@ upload 後の版詳細画面では、まず `アップロード候補の確認` 
 4. `添付・元ファイル`
    - 新規文書候補や non-Markdown 候補では、ここで実ファイル名、分類、件数を優先して確認する
 
-版詳細画面自体の読み方は [版詳細プレビュー・差分・添付確認 runbook](./版詳細プレビュー・差分・添付確認runbook.md) を正本にし、この runbook は upload review の判断順だけを補う。
+版詳細画面自体の読み方は [版詳細プレビュー・差分・添付確認 runbook](../viewer/版詳細プレビュー・差分・添付確認runbook.md) を正本にし、この runbook は upload review の判断順だけを補う。
 
 ## `OK` を押すとどうなるか
 
@@ -162,8 +162,8 @@ current behavior:
 - upload panel の `アップロード先` に表示された末尾名と full path が合っているかを確認したい: 文書一覧へ戻り、左の TreeView で選択中のフォルダや文書を見直す
 - upload 直後に review 画面へ進まなかった: 案内の内容を読み、案件一覧へ戻った場合は案件を選び直し、案件の文書一覧へ戻った場合はファイル選択や upload 先 path を見直す。複数ファイル drop の inline preview なら、表示された件数と代表 file name を確認し、ZIP にまとめるか 1 ファイルずつ drop し直す
 - 後から単体ファイルアップロード dry-run の検索条件や安全な表示 metadata を確認したい: 管理画面の `単体ファイルアップロードの確認履歴` で dry-run ID、同期元名、取り込み先パス、内容ハッシュ、案件、状態を見直す
-- どのフォルダ直下へ drop した扱いかを見直したい: [文書一覧の検索・実用フィルタ・ZIP出力 runbook](./文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
-- 差分、HTML、添付、品質チェックのどこを読むか迷う: [版詳細プレビュー・差分・添付確認 runbook](./版詳細プレビュー・差分・添付確認runbook.md)
+- どのフォルダ直下へ drop した扱いかを見直したい: [文書一覧の検索・実用フィルタ・ZIP出力 runbook](../admin/文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
+- 差分、HTML、添付、品質チェックのどこを読むか迷う: [版詳細プレビュー・差分・添付確認 runbook](../viewer/版詳細プレビュー・差分・添付確認runbook.md)
 - 既存文書更新か新規文書候補かを見分けたい: `Document` が増えているか、`latest_version` がまだ空か、source file 名が一致していたかを見る
 - `OK` 済みだが誤りだった: approve 直後の文書詳細に `取り消し可能な版詳細を開く` が出ていればそこから版詳細へ戻る。通常訪問ではその handoff は出ないため、同じ版詳細の `アップロード後の確認` から rollback を使う。戻せる published 版がない場合は、rollback 後に文書一覧で archived 扱いになっていることを確認する
 - drag & drop 自体が動かない: この runbook では直さない。既知の実装課題は issue `#470` を参照する
@@ -182,8 +182,8 @@ current behavior:
 
 ## 関連文書
 
-- [文書一覧の検索・実用フィルタ・ZIP出力 runbook](./文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
-- [版詳細プレビュー・差分・添付確認 runbook](./版詳細プレビュー・差分・添付確認runbook.md)
-- [アプリケーション仕様](./アプリケーション仕様.md)
-- [README](../README.md)
-- [docs/README](./README.md)
+- [文書一覧の検索・実用フィルタ・ZIP出力 runbook](../admin/文書一覧の検索・実用フィルタ・ZIP出力runbook.md)
+- [版詳細プレビュー・差分・添付確認 runbook](../viewer/版詳細プレビュー・差分・添付確認runbook.md)
+- [アプリケーション仕様](../../アプリケーション仕様.md)
+- [README](../../README.md)
+- [docs/README](../../README.md)

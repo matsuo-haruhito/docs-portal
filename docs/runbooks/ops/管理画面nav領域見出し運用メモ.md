@@ -1,6 +1,6 @@
 # 管理画面 nav 領域見出し運用メモ
 
-このメモは、管理画面共通 nav の dropdown、領域見出し、active cue の読み方を短く残す。詳しい日常確認手順は [管理ダッシュボード・モデルブラウザ運用runbook](./runbooks/ops/管理ダッシュボード・モデルブラウザ運用runbook.md) や各 runbook を正本にする。
+このメモは、管理画面共通 nav の dropdown、領域見出し、active cue の読み方を短く残す。詳しい日常確認手順は [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md) や各 runbook を正本にする。
 
 ## current UI
 

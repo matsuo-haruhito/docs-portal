@@ -2,7 +2,7 @@
 
 ## 目的
 
-`Webhook` 管理画面で外部通知の送信先を登録し、送信履歴から失敗原因の切り分けと手動再送を始めるための runbook です。payload や署名ヘッダーの設計方針は [Webhook・外部API連携方針](./specs/Webhook・外部API連携方針.md) を正本にし、この runbook では日常運用で見る画面と確認順に絞ります。
+`Webhook` 管理画面で外部通知の送信先を登録し、送信履歴から失敗原因の切り分けと手動再送を始めるための runbook です。payload や署名ヘッダーの設計方針は [Webhook・外部API連携方針](../../specs/Webhook・外部API連携方針.md) を正本にし、この runbook では日常運用で見る画面と確認順に絞ります。
 
 ## 入口
 
@@ -125,7 +125,7 @@ candidate の `failed_deliveries_path` は `admin/webhook_deliveries` の検索�
 5. `HTTP` が 4xx の場合は、受信先の認証・署名検証・payload validation を先に見ます。
 6. `HTTP` が 5xx の場合は、受信先サービスの障害・timeout・一時的な処理失敗を先に見ます。
 7. `エラー` に timeout や接続例外が出ている場合は、一覧の preview で分類の手掛かりを読み、必要なら `詳細` で response body や送信先 URL と合わせてネットワーク疎通、DNS、TLS、受信先の稼働状態を確認します。
-8. `mail / webhook の継続失敗` として監視側で拾われている場合は、[監視・アラート設計](./specs/監視・アラート設計.md) の外部依存確認と合わせて見ます。
+8. `mail / webhook の継続失敗` として監視側で拾われている場合は、[監視・アラート設計](../../specs/監視・アラート設計.md) の外部依存確認と合わせて見ます。
 
 ## 手動再送の扱い
 
@@ -145,6 +145,6 @@ current 実装では、失敗した delivery だけを管理画面から 1 件�
 
 ## 関連 docs
 
-- [Webhook・外部API連携方針](./specs/Webhook・外部API連携方針.md)
+- [Webhook・外部API連携方針](../../specs/Webhook・外部API連携方針.md)
 - [アクセス申請・同意管理・Webhook運用runbook](./アクセス申請・同意管理・Webhook運用runbook.md)
-- [監視・アラート設計](./specs/監視・アラート設計.md)
+- [監視・アラート設計](../../specs/監視・アラート設計.md)

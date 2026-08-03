@@ -6,9 +6,9 @@
 
 ## 先に見るもの
 
-1. `文書セット` を 0 件から立ち上げる順序を確認したいときは [案件・Git連携・文書セット初回セットアップrunbook](./案件・Git連携・文書セット初回セットアップrunbook.md)
+1. `文書セット` を 0 件から立ち上げる順序を確認したいときは [案件・Git連携・文書セット初回セットアップrunbook](../import/案件・Git連携・文書セット初回セットアップrunbook.md)
 2. 案件の参加者や文書の公開範囲まで見直したいときは [案件所属・文書権限運用runbook](./案件所属・文書権限運用runbook.md)
-3. 文書の流入経路を確認したいときは [Git連携設定と同期失敗確認runbook](./Git連携設定と同期失敗確認runbook.md)、[ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)、[internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)
+3. 文書の流入経路を確認したいときは [Git連携設定と同期失敗確認runbook](../import/Git連携設定と同期失敗確認runbook.md)、[ZIPインポートdry-run運用runbook](../import/ZIPインポートdry-run運用runbook.md)、[internal upload API dry-run・apply運用runbook](../import/internal upload API dry-run・apply運用runbook.md)
 
 ## 画面の役割
 
@@ -162,9 +162,9 @@ CSV の固定列は current controller の `CSV_HEADERS` に従い、`案件コ�
 
 戻り先の目安:
 
-- GitHub repository から取り込む案件: [Git連携設定と同期失敗確認runbook](./Git連携設定と同期失敗確認runbook.md)
-- ZIP で持ち込む案件: [ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)
-- internal upload API を使う案件: [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)
+- GitHub repository から取り込む案件: [Git連携設定と同期失敗確認runbook](../import/Git連携設定と同期失敗確認runbook.md)
+- ZIP で持ち込む案件: [ZIPインポートdry-run運用runbook](../import/ZIPインポートdry-run運用runbook.md)
+- internal upload API を使う案件: [internal upload API dry-run・apply運用runbook](../import/internal upload API dry-run・apply運用runbook.md)
 
 ## 保存後に見るポイント
 
@@ -222,11 +222,11 @@ CSV の固定列は current controller の `CSV_HEADERS` に従い、`案件コ�
 
 ## 関連文書
 
-- [案件・Git連携・文書セット初回セットアップrunbook](./案件・Git連携・文書セット初回セットアップrunbook.md)
+- [案件・Git連携・文書セット初回セットアップrunbook](../import/案件・Git連携・文書セット初回セットアップrunbook.md)
 - [案件所属・文書権限運用runbook](./案件所属・文書権限運用runbook.md)
-- [Git連携設定と同期失敗確認runbook](./Git連携設定と同期失敗確認runbook.md)
-- [ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)
-- [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)
+- [Git連携設定と同期失敗確認runbook](../import/Git連携設定と同期失敗確認runbook.md)
+- [ZIPインポートdry-run運用runbook](../import/ZIPインポートdry-run運用runbook.md)
+- [internal upload API dry-run・apply運用runbook](../import/internal upload API dry-run・apply運用runbook.md)
 - [CSV条件metadata JSON 運用メモ](../../specs/CSV条件metadata_JSON運用メモ.md)
-- [README](../README.md)
-- [docs/README](./README.md)
+- [README](../../README.md)
+- [docs/README](../../README.md)

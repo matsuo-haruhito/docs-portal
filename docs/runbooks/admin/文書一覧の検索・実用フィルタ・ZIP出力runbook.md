@@ -15,8 +15,8 @@
 別の役割を持つ近い画面は次です。
 
 - 案件横断で文書を探したいとき: dashboard の `閲覧可能文書`
-- 新しい ZIP を portal へ取り込みたいとき: [ZIPインポートdry-run運用 runbook](./ZIPインポートdry-run運用runbook.md)
-- 手動アップロード後の `OK` / `NG` 判断をしたいとき: [手動アップロード差異確認runbook](./手動アップロード差異確認runbook.md)
+- 新しい ZIP を portal へ取り込みたいとき: [ZIPインポートdry-run運用 runbook](../import/ZIPインポートdry-run運用runbook.md)
+- 手動アップロード後の `OK` / `NG` 判断をしたいとき: [手動アップロード差異確認runbook](../import/手動アップロード差異確認runbook.md)
 
 案件横断の `閲覧可能文書` は `GET /documents` の画面です。案件配下の ZIP 出力画面とは違い、current user が閲覧できる文書を案件をまたいで 20 件ずつ探す入口として使います。
 
@@ -218,9 +218,9 @@ ZIP 化されるのは、案件配下で current user が閲覧可能かつダ�
 
 - 案件横断で文書を探したい: [ダッシュボードと文書ショートカット・確認依頼の使い分け](../../specs/ダッシュボードと文書ショートカット・確認依頼の使い分け.md)
 - 今いる案件の中で階層をたどりながら文書を探したい: この画面の左ペイン `文書ツリー` を使う
-- 文書の公開モデルや latest version の前提を確認したい: [アプリケーション仕様](./アプリケーション仕様.md)
-- ZIP を portal に取り込む運用を見たい: [ZIPインポートdry-run運用 runbook](./ZIPインポートdry-run運用runbook.md)
-- 手動アップロード後の候補版を `OK` / `NG` で判断したい: [手動アップロード差異確認runbook](./手動アップロード差異確認runbook.md)
+- 文書の公開モデルや latest version の前提を確認したい: [アプリケーション仕様](../../アプリケーション仕様.md)
+- ZIP を portal に取り込む運用を見たい: [ZIPインポートdry-run運用 runbook](../import/ZIPインポートdry-run運用runbook.md)
+- 手動アップロード後の候補版を `OK` / `NG` で判断したい: [手動アップロード差異確認runbook](../import/手動アップロード差異確認runbook.md)
 
 ## 8. current support の境界
 
@@ -233,13 +233,13 @@ ZIP 化されるのは、案件配下で current user が閲覧可能かつダ�
 - `PDFだけ出力` は PDF のみを優先する option です。Markdown 原本や添付を同時指定していても、PDF以外も必ず入るという意味ではありません
 - 検索ロジックの内部実装や ranking ルールそのものは再定義しません
 - ZIP import、Git 連携 import、外部フォルダ同期の取り込み運用は別 runbook を正本にします
-- upload panel の drag and drop 後に開く差異確認画面、`OK` / `NG`、反映後の rollback は [手動アップロード差異確認runbook](./手動アップロード差異確認runbook.md) を正本にします
+- upload panel の drag and drop 後に開く差異確認画面、`OK` / `NG`、反映後の rollback は [手動アップロード差異確認runbook](../import/手動アップロード差異確認runbook.md) を正本にします
 
 ## 9. 関連文書
 
-- [アプリケーション仕様](./アプリケーション仕様.md)
+- [アプリケーション仕様](../../アプリケーション仕様.md)
 - [ダッシュボードと文書ショートカット・確認依頼の使い分け](../../specs/ダッシュボードと文書ショートカット・確認依頼の使い分け.md)
-- [ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)
-- [手動アップロード差異確認runbook](./手動アップロード差異確認runbook.md)
-- [README](../README.md)
-- [docs/README](./README.md)
+- [ZIPインポートdry-run運用runbook](../import/ZIPインポートdry-run運用runbook.md)
+- [手動アップロード差異確認runbook](../import/手動アップロード差異確認runbook.md)
+- [README](../../README.md)
+- [docs/README](../../README.md)

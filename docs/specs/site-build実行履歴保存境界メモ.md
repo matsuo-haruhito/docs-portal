@@ -8,7 +8,7 @@
 
 current repo では `.github/workflows/build-docs.yml` の `build-docs` job が、Docusaurus build、manifest 生成、artifact archive、必要条件を満たす場合の Rails import API 呼び出しを担当します。
 
-運用時の確認順は [build-docs workflow確認runbook](./runbooks/import/build-docs%20workflow確認runbook.md) を正本にします。このメモは、その runbook に出てくる `docs-site` artifact と `publish/manifest/publish.json` の metadata のうち、`GeneratedFileRun` に残す current 境界だけに絞ります。
+運用時の確認順は [build-docs workflow確認runbook](../runbooks/import/build-docs workflow確認runbook.md) を正本にします。このメモは、その runbook に出てくる `docs-site` artifact と `publish/manifest/publish.json` の metadata のうち、`GeneratedFileRun` に残す current 境界だけに絞ります。
 
 ## 代表対象
 
@@ -101,4 +101,4 @@ Git連携 run の job 化 / 履歴保存境界は issue `#4604` の境界メモ�
 - `docs-site` artifact 以外の代表対象を同時に増やさない
 - secret-like value や private path を保存・表示対象として扱わない
 - artifact 本体、manifest 全文、CI log、import API request payload を `GeneratedFileRun.metadata` に保存しない
-- current workflow の metadata 名は [build-docs workflow確認runbook](./runbooks/import/build-docs%20workflow確認runbook.md) と [publish.json 仕様と生成ルール](./specs/publish.json%20仕様と生成ルール.md) に戻って確認する
+- current workflow の metadata 名は [build-docs workflow確認runbook](../runbooks/import/build-docs workflow確認runbook.md) と [publish.json 仕様と生成ルール](./publish.json%20仕様と生成ルール.md) に戻って確認する

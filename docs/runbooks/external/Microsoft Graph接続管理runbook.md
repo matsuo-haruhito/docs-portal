@@ -1,6 +1,6 @@
 # Microsoft Graph接続管理runbook
 
-この runbook は、管理画面 `admin/microsoft_graph_connections` で案件ごとの Office preview 接続を日常運用で見直すときの読み順をまとめたものです。接続前提や fallback の仕様そのものは [Microsoft Graph接続とOffice preview](./specs/Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md) を正本とし、この文書では current UI 上で何を確認するかに絞ります。
+この runbook は、管理画面 `admin/microsoft_graph_connections` で案件ごとの Office preview 接続を日常運用で見直すときの読み順をまとめたものです。接続前提や fallback の仕様そのものは [Microsoft Graph接続とOffice preview](../../specs/Microsoft Graph接続とOffice preview.md) を正本とし、この文書では current UI 上で何を確認するかに絞ります。
 
 ## まず見る画面
 
@@ -149,8 +149,8 @@ legacy duplicate が残っている案件では、current preview 正本は `pre
 2. `preview 利用中の接続を要整理の案件` card や `有効だが未使用` 行が出ていないか確認し、重複有効接続がある場合は `最小 DB id` の暫定選択に引きずられていないかを見る
 3. `主確認: Drive ID` と `主確認: プレビュー用フォルダ` が、実際に使いたい接続の値になっているか、切り替え前の値や typo のある値に戻っていないか確認する。接続数が多いときは検索欄で `drive_id` や folder 名を直接探す
 4. 入力値自体が妥当か、`編集` 画面で `Tenant ID` / `Client ID` / `Site ID` も含めて見直す。共有フォルダ URL が分かる場合は、保存前に `共有URLから候補を取得（保存しない）` で候補を取り直し、内容を確認してから `保存` する
-5. 接続前提や fallback 条件を確認したい場合は [Microsoft Graph接続とOffice preview](./specs/Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md) へ戻る
-6. 外部フォルダ同期や `.env` 側の責務分担を確認したい場合は [preview接続と外部フォルダ同期の設定責務](./specs/preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md) へ戻る
+5. 接続前提や fallback 条件を確認したい場合は [Microsoft Graph接続とOffice preview](../../specs/Microsoft Graph接続とOffice preview.md) へ戻る
+6. 外部フォルダ同期や `.env` 側の責務分担を確認したい場合は [preview接続と外部フォルダ同期の設定責務](../../specs/preview接続と外部フォルダ同期の設定責務.md) へ戻る
 
 ## この runbook で扱わないこと
 
@@ -162,7 +162,7 @@ legacy duplicate が残っている案件では、current preview 正本は `pre
 
 ## 関連ドキュメント
 
-- [README](../README.md)
-- [docs/README](./README.md)
-- [Microsoft Graph接続とOffice preview](./specs/Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md)
-- [preview接続と外部フォルダ同期の設定責務](./specs/preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md)
+- [README](../../README.md)
+- [docs/README](../../README.md)
+- [Microsoft Graph接続とOffice preview](../../specs/Microsoft Graph接続とOffice preview.md)
+- [preview接続と外部フォルダ同期の設定責務](../../specs/preview接続と外部フォルダ同期の設定責務.md)

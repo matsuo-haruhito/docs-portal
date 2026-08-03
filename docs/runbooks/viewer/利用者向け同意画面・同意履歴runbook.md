@@ -6,8 +6,8 @@
 
 ## 先に見るもの
 
-1. 文面の管理責務や `consent_scope` / `requirement_timing` の意味を確認したいときは [利用規約・秘密保持の同意管理](./specs/利用規約・秘密保持の同意管理.md)
-2. 管理者が `同意文面` や `案件同意設定` をどう確認するかは [アクセス申請・同意管理・Webhook運用runbook](./アクセス申請・同意管理・Webhook運用runbook.md)
+1. 文面の管理責務や `consent_scope` / `requirement_timing` の意味を確認したいときは [利用規約・秘密保持の同意管理](../../specs/利用規約・秘密保持の同意管理.md)
+2. 管理者が `同意文面` や `案件同意設定` をどう確認するかは [アクセス申請・同意管理・Webhook運用runbook](../external/アクセス申請・同意管理・Webhook運用runbook.md)
 3. current route と redirect 条件を確かめたいときは `config/routes.rb` と `app/controllers/consents_controller.rb`
 
 ## 画面ごとの役割
@@ -83,6 +83,6 @@ current `main` での戻り方:
 
 ## 迷ったときの切り分け
 
-- 文面の意味や再同意条件を確認したい: [利用規約・秘密保持の同意管理](./specs/利用規約・秘密保持の同意管理.md)
-- 管理者が文面や案件設定をどう更新するか確認したい: [アクセス申請・同意管理・Webhook運用runbook](./アクセス申請・同意管理・Webhook運用runbook.md)
+- 文面の意味や再同意条件を確認したい: [利用規約・秘密保持の同意管理](../../specs/利用規約・秘密保持の同意管理.md)
+- 管理者が文面や案件設定をどう更新するか確認したい: [アクセス申請・同意管理・Webhook運用runbook](../external/アクセス申請・同意管理・Webhook運用runbook.md)
 - dashboard やアクセス申請など、同意後に戻った先の使い方を確認したい: 関連する利用者向け runbook を開く

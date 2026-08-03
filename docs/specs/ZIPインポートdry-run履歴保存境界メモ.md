@@ -12,7 +12,7 @@ current repo では、ZIP import dry-run の運用確認は次の 3 つに分か
 - `ZIPインポートdry-run`: `admin/zip_imports/:public_id`。状態、dry-run ID、summary count、warning count、TreeView プレビューを見て、取り込み前の最終確認をする
 - `この内容で取り込む`: `analyzed` の dry-run だけを confirmed execution の入力として使う
 
-運用時の確認順は [ZIPインポートdry-run運用 runbook](./runbooks/import/ZIPインポートdry-run運用runbook.md) を正本にします。このメモは、その runbook に出てくる ZIP dry-run を将来履歴化・job 化するときの保存境界だけに絞ります。
+運用時の確認順は [ZIPインポートdry-run運用 runbook](../runbooks/import/ZIPインポートdry-run運用runbook.md) を正本にします。このメモは、その runbook に出てくる ZIP dry-run を将来履歴化・job 化するときの保存境界だけに絞ります。
 
 ## current support
 

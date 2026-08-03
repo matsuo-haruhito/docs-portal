@@ -79,7 +79,7 @@
 - apply成功後は Google Drive changes API 用の start page token を `ExternalFolderSyncSource.cursor` に保存する。ただし、現時点では厳密な差分同期には使わない
 - 管理画面から dry-run / 同期実行 / 同期ジョブ登録を行える
 - 定期実行は `ExternalFolderSyncJob` または `external_folder_sync:*` rake task を scheduler / queue adapter から呼び出す
-- 詳細仕様と運用手順は [Google Drive外部フォルダ同期](../Google%20Drive外部フォルダ同期.md) を参照する
+- 詳細仕様と運用手順は [Google Drive外部フォルダ同期](./Google%20Drive外部フォルダ同期.md) を参照する
 
 ## import
 

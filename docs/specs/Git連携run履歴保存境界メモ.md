@@ -12,7 +12,7 @@ current repo では、Git連携 run の運用確認は次の 3 つに分かれ�
 - `Git同期履歴`: `admin/git_import_runs`。run 単位の repository、branch、source path、commit、status、summary_json safe preview、error_message safe preview を確認する
 - `sync_git_import_sources` 定期ジョブ詳細: `Git pull同期の運用状態` として、有効な連携元数、Git import preview build 状態、直近 pull 履歴への read-only な入口を確認する
 
-運用時の確認順は [Git連携設定と同期失敗確認 runbook](./runbooks/import/Git連携設定と同期失敗確認runbook.md) を正本にします。このメモは、その runbook に出てくる Git連携 run を将来履歴化・job 化するときの保存境界だけに絞ります。
+運用時の確認順は [Git連携設定と同期失敗確認 runbook](../runbooks/import/Git連携設定と同期失敗確認runbook.md) を正本にします。このメモは、その runbook に出てくる Git連携 run を将来履歴化・job 化するときの保存境界だけに絞ります。
 
 ## current support
 
