@@ -1,6 +1,6 @@
 # Text Preview Line Anchor Target Cue
 
-This note supports `docs/版詳細プレビュー・差分・添付確認runbook.md` without redefining the preview workflow.
+This note supports `docs/runbooks/viewer/版詳細プレビュー・差分・添付確認runbook.md` without redefining the preview workflow.
 
 ## How To Read The Cue
 

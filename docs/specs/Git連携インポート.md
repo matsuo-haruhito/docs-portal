@@ -2,7 +2,7 @@
 
 この文書は issue `#120` に対応する、Gitリポジトリ連携インポートの初期実装範囲を記録する。
 
-管理画面での登録手順、手動同期、同期履歴の見返し方は [Git連携設定と同期失敗確認 runbook](./Git連携設定と同期失敗確認runbook.md) を参照してください。このページは current implementation が何を取り込むかの正本に留めます。
+管理画面での登録手順、手動同期、同期履歴の見返し方は [Git連携設定と同期失敗確認 runbook](../runbooks/import/Git連携設定と同期失敗確認runbook.md) を参照してください。このページは current implementation が何を取り込むかの正本に留めます。
 
 ## 目的
 

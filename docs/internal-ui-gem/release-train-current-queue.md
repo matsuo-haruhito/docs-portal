@@ -1,6 +1,6 @@
 # internal UI gem release train current queue
 
-この文書は、`docs/関連gem連携調査runbook.md` の release train 説明を読む前に確認する queue snapshot です。
+この文書は、`docs/runbooks/ops/関連gem連携調査runbook.md` の release train 説明を読む前に確認する queue snapshot です。
 
 `docs-portal` の internal UI gem 更新は `#858` を parent / hub として扱います。実際の dependency bump は、ここにある child issue と `.kiro/skills/internal-ui-gem-workflow.md` の代表 smoke / rollback note を合わせて確認します。
 
@@ -71,7 +71,7 @@ repo-local の棚卸しは `tree_view-rails#1401` や `rails_table_preferences#8
 - `#1845`: PR 種別別の evidence template を再利用できるようにする docs-sync issue。target SHA や bump 実行は決めない。
 - `#1509`: 完了済み。`.kiro/steering/internal-ui-gem-boundaries.md` の Public Surface / Package Verification セクションに統合された matrix issue として参照する。
 - `#1470`: state cue inventory の parallel design lane。dependency bump、target SHA、Gemfile / lockfile 更新とは混ぜない。
-- `#1552`: この current queue を `docs/関連gem連携調査runbook.md` から誤読しないための docs sync issue。
+- `#1552`: この current queue を `docs/runbooks/ops/関連gem連携調査runbook.md` から誤読しないための docs sync issue。
 - `#1616`: release train 前に見る upstream PR readiness snapshot。target SHA の最終決定ではなく、open / merged upstream PR を docs-only、public API / helper、UI behavior、stacked PR に分ける入口として読む。
 
 ## update log で分ける項目
@@ -110,7 +110,7 @@ connector-only で browser screenshot を取得できない場合は、代替 ev
 
 ## historical / old child numbers
 
-`docs/関連gem連携調査runbook.md` に残る `#921`、`#903`、`#904` は historical context として読みます。current active lane として扱う場合は、必ず上の `#1300`、`#1301`、`#789` と `.kiro/skills/internal-ui-gem-workflow.md` を再確認します。
+`docs/runbooks/ops/関連gem連携調査runbook.md` に残る `#921`、`#903`、`#904` は historical context として読みます。current active lane として扱う場合は、必ず上の `#1300`、`#1301`、`#789` と `.kiro/skills/internal-ui-gem-workflow.md` を再確認します。
 
 ## bump 実行前の停止条件
 
@@ -129,4 +129,4 @@ connector-only で browser screenshot を取得できない場合は、代替 ev
 - `.kiro/skills/internal-ui-gem-workflow.md`: human handoff、representative smoke、rollback target、update log template、public surface guard playbook
 - `docs/internal-ui-gem/adoption-evidence-map.md`: docs-portal 側 representative smoke、upstream evidence、確認順、rollback note
 - `.kiro/skills/internal-ui-gem-workflow.md`: public surface guard、docs drift guard、package evidence、downstream smoke の比較入口
-- `docs/関連gem連携調査runbook.md`: host app 採用パターン、screen-by-screen adoption、upstream docs 入口
+- `docs/runbooks/ops/関連gem連携調査runbook.md`: host app 採用パターン、screen-by-screen adoption、upstream docs 入口

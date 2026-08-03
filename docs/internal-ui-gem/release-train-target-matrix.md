@@ -1,6 +1,6 @@
 # Internal UI gem release train target matrix
 
-この文書は、`docs-portal` の internal UI gem 3本について、次の Gemfile bump / smoke Issue を切る前に見る current snapshot です。`docs/関連gem連携調査runbook.md` と `.kiro/skills/internal-ui-gem-workflow.md` は恒常的な運用正本、この文書は 2026-06-13 JST 時点の target ref / downstream smoke / rollback matrix と、2026-06-13 に完了した TreeView first tranche の反映状況として扱います。2026-06-25 JST の横断 refresh は下の `2026-06-25 cross-repo refresh` を優先して読み、古い PR 状態や green CI を current adoption evidence として使わないでください。未merge upstream PR の mergeability は変動するため、表内の値は確認時点付きの snapshot とし、bump PR を作る直前に必ず再測定します。
+この文書は、`docs-portal` の internal UI gem 3本について、次の Gemfile bump / smoke Issue を切る前に見る current snapshot です。`docs/runbooks/ops/関連gem連携調査runbook.md` と `.kiro/skills/internal-ui-gem-workflow.md` は恒常的な運用正本、この文書は 2026-06-13 JST 時点の target ref / downstream smoke / rollback matrix と、2026-06-13 に完了した TreeView first tranche の反映状況として扱います。2026-06-25 JST の横断 refresh は下の `2026-06-25 cross-repo refresh` を優先して読み、古い PR 状態や green CI を current adoption evidence として使わないでください。未merge upstream PR の mergeability は変動するため、表内の値は確認時点付きの snapshot とし、bump PR を作る直前に必ず再測定します。
 
 ## Scope
 

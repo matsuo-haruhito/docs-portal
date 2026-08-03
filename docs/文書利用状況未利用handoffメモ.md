@@ -2,7 +2,7 @@
 
 このメモは、管理画面の `文書利用状況` で `利用状況=未利用` を選んだときに表示される `未利用文書 handoff` の read-only digest を、次の確認者へ渡すときの読み方をまとめる。
 
-`文書利用状況運用runbook.md` の補助メモであり、新しい KPI、削除判断、archive 判断、retention policy、CSV 仕様、集計定義はここでは定義しない。
+`docs/runbooks/admin/文書利用状況運用runbook.md` の補助メモであり、新しい KPI、削除判断、archive 判断、retention policy、CSV 仕様、集計定義はここでは定義しない。
 
 ## いつ使うか
 
@@ -37,8 +37,8 @@
 
 ## 確認の戻り先
 
-- 個別の閲覧・ダウンロード履歴を追う: [監査ログ運用runbook](./監査ログ運用runbook.md)
-- 既読確認の確認者や確認時刻を見る: [文書利用状況運用runbook](./文書利用状況運用runbook.md) の `既読確認内訳` 節
+- 個別の閲覧・ダウンロード履歴を追う: [監査ログ運用runbook](./runbooks/admin/監査ログ運用runbook.md)
+- 既読確認の確認者や確認時刻を見る: [文書利用状況運用runbook](./runbooks/admin/文書利用状況運用runbook.md) の `既読確認内訳` 節
 - 文書の公開状態や版状態を見直す: [文書ライフサイクルと公開](./specs/文書ライフサイクルと公開.md)
 - 権限や閲覧可能範囲を見直す: [基本モデルと権限](./specs/基本モデルと権限.md)
 

@@ -1,6 +1,6 @@
 # 外部フォルダ同期 webhook ignored event の読み分け
 
-このメモは issue `#1355` の first slice として、Google Drive 変更通知の受信イベントが `ignored` になったときの読み分けを固定します。`docs/外部フォルダ同期dry-run・apply運用runbook.md` の「変更通知の受信イベント」と合わせて確認します。
+このメモは issue `#1355` の first slice として、Google Drive 変更通知の受信イベントが `ignored` になったときの読み分けを固定します。`docs/runbooks/external/外部フォルダ同期dry-run・apply運用runbook.md` の「変更通知の受信イベント」と合わせて確認します。
 
 ## 処理状態の見方
 

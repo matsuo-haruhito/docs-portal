@@ -10,18 +10,18 @@
 4. [開発・保守ガイド](./開発・保守ガイド.md)
 5. タスクに関係する補助仕様や runbook
 
-UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロントエンド操作の方針](../.kiro/steering/frontend-interaction-policy.md) も先に確認してください。実画面への internal UI gem 展開候補は [ROADMAP](../ROADMAP.md) を入口にし、screen-by-screen adoption、release train、representative smoke の読み分けは [関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) で確認します。
+UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロントエンド操作の方針](../.kiro/steering/frontend-interaction-policy.md) も先に確認してください。実画面への internal UI gem 展開候補は [ROADMAP](../ROADMAP.md) を入口にし、screen-by-screen adoption、release train、representative smoke の読み分けは [関連 gem 連携調査 runbook](./runbooks/ops/関連gem連携調査runbook.md) で確認します。
 
 この index で Issue / PR 番号を含む補助 docs は、current support の証跡、historical evidence、次に見る候補、proposal のいずれかとして読み分けます。番号だけを current action とせず、各 docs の本文、ROADMAP の文脈、current code を合わせて確認してください。
 
 ## タスク別入口
 
 - 利用者画面 / viewer: [ダッシュボードと文書ショートカット・確認依頼の使い分け](./ダッシュボードと文書ショートカット・確認依頼の使い分け.md) から入り、文書詳細・版詳細・ZIP・アクセス申請は日常 UI / viewer の runbook を辿ります。
-- admin 運用: [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md) を入口にし、アクセス申請、文書マスタ、文書セット、監査ログ、文書利用状況は admin 運用の各 runbook を確認します。
-- import / build / sync: [build-docs workflow確認runbook](./build-docs%20workflow%E7%A2%BA%E8%AA%8Drunbook.md) と [手動アップロード差異確認runbook](./手動アップロード差異確認runbook.md) から、Git連携、ZIP、internal upload API、外部フォルダ同期へ進みます。maintenance mode 中に止める境界は [maintenance-mode 境界一覧](../.kiro/steering/maintenance-mode-boundaries.md) で確認し、build-docs job 化を検討するときは [build-docs job 化置き換え境界メモ](./build-docs-job%E5%8C%96%E7%BD%AE%E3%81%8D%E6%8F%9B%E3%81%88%E5%A2%83%E7%95%8C%E3%83%A1%E3%83%A2.md) で current metadata 保存境界と proposal を分けます。
-- 外部連携 / preview: [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md) と [Microsoft Graph接続管理runbook](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E7%AE%A1%E7%90%86runbook.md) を起点に、preview 接続や外部フォルダ同期の境界を確認します。
+- admin 運用: [管理ダッシュボード・モデルブラウザ運用runbook](./runbooks/ops/管理ダッシュボード・モデルブラウザ運用runbook.md) を入口にし、アクセス申請、文書マスタ、文書セット、監査ログ、文書利用状況は admin 運用の各 runbook を確認します。
+- import / build / sync: [build-docs workflow確認runbook](./runbooks/import/build-docs%20workflow確認runbook.md) と [手動アップロード差異確認runbook](./runbooks/import/手動アップロード差異確認runbook.md) から、Git連携、ZIP、internal upload API、外部フォルダ同期へ進みます。maintenance mode 中に止める境界は [maintenance-mode 境界一覧](../.kiro/steering/maintenance-mode-boundaries.md) で確認し、build-docs job 化を検討するときは [build-docs job 化置き換え境界メモ](./build-docs-job%E5%8C%96%E7%BD%AE%E3%81%8D%E6%8F%9B%E3%81%88%E5%A2%83%E7%95%8C%E3%83%A1%E3%83%A2.md) で current metadata 保存境界と proposal を分けます。
+- 外部連携 / preview: [Webhook設定・送信失敗確認runbook](./runbooks/external/Webhook設定・送信失敗確認runbook.md) と [Microsoft Graph接続管理runbook](./runbooks/external/Microsoft%20Graph接続管理runbook.md) を起点に、preview 接続や外部フォルダ同期の境界を確認します。
 - 監視 / インフラ: [監視・アラート設計](./specs/監視・アラート設計.md)、[リリース・デプロイ・rollback手順](./リリース・デプロイ・rollback手順.md)、[バックアップ・リストア手順](./バックアップ・リストア手順.md) を先に見ます。
-- internal UI gem: [internal UI gem adoption evidence map](./internal-ui-gem/adoption-evidence-map.md)、[関連 gem 採用マトリクス](./internal-ui-gem/関連gem採用マトリクス.md)、[関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) で upstream evidence、downstream smoke、release train、host app 採用画面の役割を切り分けます。
+- internal UI gem: [internal UI gem adoption evidence map](./internal-ui-gem/adoption-evidence-map.md)、[関連 gem 採用マトリクス](./internal-ui-gem/関連gem採用マトリクス.md)、[関連 gem 連携調査 runbook](./runbooks/ops/関連gem連携調査runbook.md) で upstream evidence、downstream smoke、release train、host app 採用画面の役割を切り分けます。
 
 ## 仕様
 
@@ -78,64 +78,64 @@ UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロン�
 ### 日常 UI / viewer
 
 - [ダッシュボードと文書ショートカット・確認依頼の使い分け](./ダッシュボードと文書ショートカット・確認依頼の使い分け.md): dashboard 起点の個人導線と internal user 向け確認依頼の役割差
-- [文書ショートカット運用runbook](./文書ショートカット運用runbook.md): `お気に入り` `後で読む` `最近見た文書` の見分け方、`解除` 後の戻り方、`案件一覧へ戻る` の使いどころ
-- [文書カタログ閲覧runbook](./文書カタログ閲覧runbook.md): 案件内の文書グルーピング入口、catalog / item visibility、一覧 filter の読み方、文書一覧・文書セット・文書ショートカットとの使い分け
-- [文書コメント・Q&A運用runbook](./文書コメント・Q%26A運用runbook.md): 文書詳細 / 版詳細の `文書コメント` workspace で Q&A と internal-only の確認事項を使い分ける境界
+- [文書ショートカット運用runbook](./runbooks/viewer/文書ショートカット運用runbook.md): `お気に入り` `後で読む` `最近見た文書` の見分け方、`解除` 後の戻り方、`案件一覧へ戻る` の使いどころ
+- [文書カタログ閲覧runbook](./runbooks/viewer/文書カタログ閲覧runbook.md): 案件内の文書グルーピング入口、catalog / item visibility、一覧 filter の読み方、文書一覧・文書セット・文書ショートカットとの使い分け
+- [文書コメント・Q&A運用runbook](./runbooks/admin/文書コメント・Q%26A運用runbook.md): 文書詳細 / 版詳細の `文書コメント` workspace で Q&A と internal-only の確認事項を使い分ける境界
 - [正式レビュー承認 workflow 境界メモ](./正式レビュー承認workflow境界メモ.md): コメント、版品質チェック、確認依頼、公開制御、外部送付履歴を正式な多段承認 workflow と混同しないための棚卸し
-- [利用者向けアクセス申請runbook](./利用者向けアクセス申請runbook.md): dashboard の `保留中の申請` から入る一覧、`対象` `要求権限` `状態` `理由` `承認者`、pending の `取消` の見方
-- [外部送付履歴運用runbook](./外部送付履歴運用runbook.md): dashboard の `社内向け導線` から入る `送付履歴` 一覧、detail、`メーラーを開く` / `送付済みにする` / `送付失敗として記録` の見分け方
-- [文書一覧の検索・実用フィルタ・ZIP出力 runbook](./文書一覧の検索・実用フィルタ・ZIP出力runbook.md): 案件配下の検索条件、左の文書ツリー絞り込み、実用フィルタ、current-page 選択と検索結果全体選択を含む ZIP 出力の見分け方
-- [版詳細プレビュー・差分・添付確認 runbook](./版詳細プレビュー・差分・添付確認runbook.md): HTML本文、比較対象版、workspace ナビゲーション、添付・元ファイルの検索 / 分類絞り込み、Markdown table annotation first slice と未対応範囲、品質チェックの見分け方
+- [利用者向けアクセス申請runbook](./runbooks/viewer/利用者向けアクセス申請runbook.md): dashboard の `保留中の申請` から入る一覧、`対象` `要求権限` `状態` `理由` `承認者`、pending の `取消` の見方
+- [外部送付履歴運用runbook](./runbooks/external/外部送付履歴運用runbook.md): dashboard の `社内向け導線` から入る `送付履歴` 一覧、detail、`メーラーを開く` / `送付済みにする` / `送付失敗として記録` の見分け方
+- [文書一覧の検索・実用フィルタ・ZIP出力 runbook](./runbooks/admin/文書一覧の検索・実用フィルタ・ZIP出力runbook.md): 案件配下の検索条件、左の文書ツリー絞り込み、実用フィルタ、current-page 選択と検索結果全体選択を含む ZIP 出力の見分け方
+- [版詳細プレビュー・差分・添付確認 runbook](./runbooks/viewer/版詳細プレビュー・差分・添付確認runbook.md): HTML本文、比較対象版、workspace ナビゲーション、添付・元ファイルの検索 / 分類絞り込み、Markdown table annotation first slice と未対応範囲、品質チェックの見分け方
 - [Text Preview Line Anchor Target Cue](./text-preview-line-anchor-target-cue.md): text preview の blue line anchor target cue と yellow search match cue、`aria-current="location"` の読み分けを確認する補助メモ
-- [版品質チェック runbook](./版品質チェックrunbook.md): internal user 向けの判定サマリ、Preview warning/error、全 check table、JSON / Markdown read-only export の読み方
-- [Markdown table toolbar 運用 runbook](./Markdown%20table%20toolbar%E9%81%8B%E7%94%A8runbook.md): Markdown preview の表内検索、CSV / Markdown copy、表示リセット、`列表示` panel の current support と #475 境界の見分け方
-- [ZIPプレビューと個別ダウンロード確認 runbook](./ZIP%E3%83%97%E3%83%AC%E3%83%93%E3%83%A5%E3%83%BC%E3%81%A8%E5%80%8B%E5%88%A5%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89%E7%A2%BA%E8%AA%8Drunbook.md): ZIP内サマリー、ディレクトリサマリー、フィルタ、個別プレビュー、個別ダウンロードの見分け方
-- [AI向けコンテキストexport運用runbook](./AI向けコンテキストexport運用runbook.md): 案件詳細の `AI向けコンテキスト` で compact / full / JSON / Markdown、除外文書、AccessLog を確認する手順
-- [利用者向け同意画面・同意履歴runbook](./利用者向け同意画面・同意履歴runbook.md): `同意済み文面・注意事項` と `利用上の注意事項への同意` の見分け方、`確認して同意する` / `同意せず戻る` の current flow
+- [版品質チェック runbook](./runbooks/admin/版品質チェックrunbook.md): internal user 向けの判定サマリ、Preview warning/error、全 check table、JSON / Markdown read-only export の読み方
+- [Markdown table toolbar 運用 runbook](./runbooks/ops/Markdown%20table%20toolbar運用runbook.md): Markdown preview の表内検索、CSV / Markdown copy、表示リセット、`列表示` panel の current support と #475 境界の見分け方
+- [ZIPプレビューと個別ダウンロード確認 runbook](./runbooks/viewer/ZIPプレビューと個別ダウンロード確認runbook.md): ZIP内サマリー、ディレクトリサマリー、フィルタ、個別プレビュー、個別ダウンロードの見分け方
+- [AI向けコンテキストexport運用runbook](./runbooks/ops/AI向けコンテキストexport運用runbook.md): 案件詳細の `AI向けコンテキスト` で compact / full / JSON / Markdown、除外文書、AccessLog を確認する手順
+- [利用者向け同意画面・同意履歴runbook](./runbooks/viewer/利用者向け同意画面・同意履歴runbook.md): `同意済み文面・注意事項` と `利用上の注意事項への同意` の見分け方、`確認して同意する` / `同意せず戻る` の current flow
 
 ### admin 運用
 
-- [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md): `モデル観測` `アプリ設定診断` `文書ファイル健全性` の使い分けと戻り先
+- [管理ダッシュボード・モデルブラウザ運用runbook](./runbooks/ops/管理ダッシュボード・モデルブラウザ運用runbook.md): `モデル観測` `アプリ設定診断` `文書ファイル健全性` の使い分けと戻り先
 - [管理画面 nav 領域見出し運用メモ](./管理画面nav領域見出し運用メモ.md): internal admin 向け nav の `運用` / `基本マスタ` / `文書・権限` / `import / sync` / `外部連携` 見出しと company master admin 境界を確認する短いメモ
-- [生成ファイル継続失敗候補runbook](./生成ファイル継続失敗候補runbook.md): 管理ダッシュボードの `運用失敗入口` に出る生成ファイル継続失敗候補の identity、連続失敗数、read-only 調査境界の見分け方
-- [アクセス申請・同意管理・Webhook運用runbook](./アクセス申請・同意管理・Webhook運用runbook.md): `アクセス申請` `同意文面` `案件同意設定` `Webhook` の日常確認ポイントと戻り先
-- [company_master_admin会社・ユーザー管理runbook](./company_master_admin会社・ユーザー管理runbook.md): `company_master_admin` が使える `会社` / `ユーザー` 管理画面と、案件・文書管理 role ではない境界、`/admin` の `会社・ユーザー管理` landing で role 範囲を確認してから `会社` / `ユーザー` へ進む current flow、internal admin へ戻す判断
-- [文書マスタ運用runbook](./文書マスタ運用runbook.md): `admin/documents` の検索・状態確認、保管期限 / 廃棄候補、公開側文書への戻り方、`編集` / `アーカイブ` / `復元` / `削除` の見分け方
-- [rails_fields_kit 文書マスタ案件選択 runbook](./rails_fields_kit文書マスタ案件選択runbook.md): `admin/documents` form の `project_id` を RFK helper で確認するときの current support と upstream / host app 境界
-- [文書一括編集dry-run運用runbook](./文書一括編集dry-run運用runbook.md): `admin/bulk_edit_dry_runs` の対象選択、事前確認、警告 / エラー、変更前後、実行結果の読み方
-- [案件・Git連携・文書セット初回セットアップrunbook](./案件・Git連携・文書セット初回セットアップrunbook.md): `案件` 作成、`Git連携` の最小構成、初回取り込み後の `文書セット` 作成順
-- [文書セット運用runbook](./文書セット運用runbook.md): `文書セット` 一覧の `種別` / `公開範囲` filter、列の見方、`固定版` と `最新版を使う` の使い分け、文書 0 件案件の empty state の戻り先
-- [文書カタログ閲覧runbook](./文書カタログ閲覧runbook.md): `文書カタログ管理` の新規登録・編集・削除、catalog 基本項目、item 構成、公開側 visibility との責務差
-- [案件所属・文書権限運用runbook](./案件所属・文書権限運用runbook.md): `案件所属` の role 管理と、`文書権限` の 0 件開始時 empty state、件数確認、個別付与確認の見分け方
-- [監査ログ運用runbook](./監査ログ運用runbook.md): `監査ログ` の絞り込み項目、表示設定、最新 200 件の中でどの列を残して読むか
-- [文書利用状況運用runbook](./文書利用状況運用runbook.md): `文書利用状況` の案件単位集計、利用あり/なし、既読確認内訳の project 必須・document slug・行内 `内訳へ` からの有効期間引き継ぎ・1ページ200件の pagination、関連画面への戻り先
+- [生成ファイル継続失敗候補runbook](./runbooks/ops/生成ファイル継続失敗候補runbook.md): 管理ダッシュボードの `運用失敗入口` に出る生成ファイル継続失敗候補の identity、連続失敗数、read-only 調査境界の見分け方
+- [アクセス申請・同意管理・Webhook運用runbook](./runbooks/external/アクセス申請・同意管理・Webhook運用runbook.md): `アクセス申請` `同意文面` `案件同意設定` `Webhook` の日常確認ポイントと戻り先
+- [company_master_admin会社・ユーザー管理runbook](./runbooks/admin/company_master_admin会社・ユーザー管理runbook.md): `company_master_admin` が使える `会社` / `ユーザー` 管理画面と、案件・文書管理 role ではない境界、`/admin` の `会社・ユーザー管理` landing で role 範囲を確認してから `会社` / `ユーザー` へ進む current flow、internal admin へ戻す判断
+- [文書マスタ運用runbook](./runbooks/admin/文書マスタ運用runbook.md): `admin/documents` の検索・状態確認、保管期限 / 廃棄候補、公開側文書への戻り方、`編集` / `アーカイブ` / `復元` / `削除` の見分け方
+- [rails_fields_kit 文書マスタ案件選択 runbook](./runbooks/admin/rails_fields_kit文書マスタ案件選択runbook.md): `admin/documents` form の `project_id` を RFK helper で確認するときの current support と upstream / host app 境界
+- [文書一括編集dry-run運用runbook](./runbooks/admin/文書一括編集dry-run運用runbook.md): `admin/bulk_edit_dry_runs` の対象選択、事前確認、警告 / エラー、変更前後、実行結果の読み方
+- [案件・Git連携・文書セット初回セットアップrunbook](./runbooks/import/案件・Git連携・文書セット初回セットアップrunbook.md): `案件` 作成、`Git連携` の最小構成、初回取り込み後の `文書セット` 作成順
+- [文書セット運用runbook](./runbooks/admin/文書セット運用runbook.md): `文書セット` 一覧の `種別` / `公開範囲` filter、列の見方、`固定版` と `最新版を使う` の使い分け、文書 0 件案件の empty state の戻り先
+- [文書カタログ閲覧runbook](./runbooks/viewer/文書カタログ閲覧runbook.md): `文書カタログ管理` の新規登録・編集・削除、catalog 基本項目、item 構成、公開側 visibility との責務差
+- [案件所属・文書権限運用runbook](./runbooks/admin/案件所属・文書権限運用runbook.md): `案件所属` の role 管理と、`文書権限` の 0 件開始時 empty state、件数確認、個別付与確認の見分け方
+- [監査ログ運用runbook](./runbooks/admin/監査ログ運用runbook.md): `監査ログ` の絞り込み項目、表示設定、最新 200 件の中でどの列を残して読むか
+- [文書利用状況運用runbook](./runbooks/admin/文書利用状況運用runbook.md): `文書利用状況` の案件単位集計、利用あり/なし、既読確認内訳の project 必須・document slug・行内 `内訳へ` からの有効期間引き継ぎ・1ページ200件の pagination、関連画面への戻り先
 - [CSV条件metadata JSON 運用メモ](./CSV条件metadata_JSON運用メモ.md): 監査ログ / 文書利用状況 / 文書セットの CSV companion metadata JSON と CSV 本体・表示設定の役割差
 
 ### import / build / sync
 
-- [手動アップロード差異確認runbook](./手動アップロード差異確認runbook.md): `ファイルをアップロード` panel や TreeView / 文書行への drop 後に開く review flow、`OK` / `NG`、反映後の取り消し導線
-- [生成ファイル再試行と定期ジョブ管理 runbook](./生成ファイル再試行と定期ジョブ管理runbook.md): `定期ジョブ` / `生成ファイルイベント` / `生成ファイル実行履歴` の見分け方と再試行導線
+- [手動アップロード差異確認runbook](./runbooks/import/手動アップロード差異確認runbook.md): `ファイルをアップロード` panel や TreeView / 文書行への drop 後に開く review flow、`OK` / `NG`、反映後の取り消し導線
+- [生成ファイル再試行と定期ジョブ管理 runbook](./runbooks/ops/生成ファイル再試行と定期ジョブ管理runbook.md): `定期ジョブ` / `生成ファイルイベント` / `生成ファイル実行履歴` の見分け方と再試行導線
 - [生成ファイル実行履歴 preview 境界メモ](./生成ファイル実行履歴preview境界メモ.md): `生成ファイル実行履歴` detail の入力パス / 変更ファイル / 生成パス / メタデータ / エラー preview と mask / truncate 境界を読む補助メモ
 - [site build 実行履歴保存境界メモ](./site-build実行履歴保存境界メモ.md): `docs-site` artifact と workflow run / manifest metadata を将来履歴化する場合の保存候補と、保存しない raw payload の境界を読む補助メモ
 - [search index rebuild 履歴境界メモ](./search-index-rebuild履歴境界メモ.md): search index rebuild 履歴を後続で扱う前に、site build artifact 履歴との責務差、保存候補 metadata、保存しない raw payload、runtime 実装へ進む条件を確認する補助メモ
-- [build-docs workflow確認runbook](./build-docs%20workflow%E7%A2%BA%E8%AA%8Drunbook.md): `test` / `seed-smoke` / `build-docs` の見分け方、manifest 生成、artifact、import API の確認順
+- [build-docs workflow確認runbook](./runbooks/import/build-docs%20workflow確認runbook.md): `test` / `seed-smoke` / `build-docs` の見分け方、manifest 生成、artifact、import API の確認順
 - [build-docs job 化置き換え境界メモ](./build-docs-job%E5%8C%96%E7%BD%AE%E3%81%8D%E6%8F%9B%E3%81%88%E5%A2%83%E7%95%8C%E3%83%A1%E3%83%A2.md): current `docs-site` artifact metadata 保存境界と、将来 Rails app 側 job 化 proposal の読み分け
 - [build-docs import job 化境界メモ](./build-docs-import-job%E5%8C%96%E5%A2%83%E7%95%8C%E3%83%A1%E3%83%A2.md): build-docs workflow の Rails import API failure 後に replay / rebuild / human decision を分ける proposal boundary
-- [Git連携設定と同期失敗確認runbook](./Git連携設定と同期失敗確認runbook.md): `Git連携` / `Git同期履歴` で見る項目と手動同期の戻り先
+- [Git連携設定と同期失敗確認runbook](./runbooks/import/Git連携設定と同期失敗確認runbook.md): `Git連携` / `Git同期履歴` で見る項目と手動同期の戻り先
 - [maintenance-mode 境界一覧](../.kiro/steering/maintenance-mode-boundaries.md): `READ_ONLY_MAINTENANCE` 中に止める変更操作と read-only に残す確認導線の境界を機能領域別に確認する
 - [Git連携 run 履歴保存境界メモ](./Git連携run履歴保存境界メモ.md): Git連携 run を job 化や履歴保存拡張へ進める前に、current support、保存候補 metadata、保存しない raw payload、site build artifact 履歴との違いを確認する補助メモ
-- [ZIPインポートdry-run運用runbook](./ZIP%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88dry-run%E9%81%8B%E7%94%A8runbook.md): `ZIPインポート` の入力項目、status、TreeView プレビュー、取り込み前の見直し順
-- [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run%E3%83%BBapply%E9%81%8B%E7%94%A8runbook.md): `artifact_imports` / `zip_uploads` / `file_uploads` の dry-run 作成と apply の見分け方
-- [API仕様ページとdocs-src更新確認runbook](./API%E4%BB%95%E6%A7%98%E3%83%9A%E3%83%BC%E3%82%B8%E3%81%A8docs-src%E6%9B%B4%E6%96%B0%E7%A2%BA%E8%AA%8Drunbook.md): `API仕様` 管理画面で build 待ちと主要ページの HTML 確認を進めるときの入口
+- [ZIPインポートdry-run運用runbook](./runbooks/import/ZIPインポートdry-run運用runbook.md): `ZIPインポート` の入力項目、status、TreeView プレビュー、取り込み前の見直し順
+- [internal upload API dry-run・apply運用runbook](./runbooks/import/internal%20upload%20API%20dry-run・apply運用runbook.md): `artifact_imports` / `zip_uploads` / `file_uploads` の dry-run 作成と apply の見分け方
+- [API仕様ページとdocs-src更新確認runbook](./runbooks/ops/API仕様ページとdocs-src更新確認runbook.md): `API仕様` 管理画面で build 待ちと主要ページの HTML 確認を進めるときの入口
 
 ### 外部連携 / preview
 
-- [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md): `Webhook` 設定、通知対象イベント、送信履歴、失敗時の確認順、失敗 delivery の 1 件ずつ手動再送と自動 retry 未実装の境界
-- [Microsoft Graph接続管理runbook](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E7%AE%A1%E7%90%86runbook.md): `preview利用` 列、重複有効接続の整理、Drive ID、プレビュー用フォルダの見直し順
-- [外部フォルダ同期dry-run・apply運用runbook](./外部フォルダ同期dry-run・apply運用runbook.md): provider-aware な入口、`最新安全判定` / `競合・重複警告`、Google Drive の current support、SharePoint / OneDrive の metadata 保存 first slice と未対応の同期本体
+- [Webhook設定・送信失敗確認runbook](./runbooks/external/Webhook設定・送信失敗確認runbook.md): `Webhook` 設定、通知対象イベント、送信履歴、失敗時の確認順、失敗 delivery の 1 件ずつ手動再送と自動 retry 未実装の境界
+- [Microsoft Graph接続管理runbook](./runbooks/external/Microsoft%20Graph接続管理runbook.md): `preview利用` 列、重複有効接続の整理、Drive ID、プレビュー用フォルダの見直し順
+- [外部フォルダ同期dry-run・apply運用runbook](./runbooks/external/外部フォルダ同期dry-run・apply運用runbook.md): provider-aware な入口、`最新安全判定` / `競合・重複警告`、Google Drive の current support、SharePoint / OneDrive の metadata 保存 first slice と未対応の同期本体
 - [外部フォルダ同期 webhook ignored event の読み分け](./external-folder-sync-webhook-ignored-events.md): Google Drive 変更通知の `ignored` 理由と coalescing / source unavailable の運用上の読み分け
-- [外部フォルダ同期継続失敗候補runbook](./外部フォルダ同期継続失敗候補runbook.md): 管理ダッシュボードの `運用失敗入口` に出る外部フォルダ同期の継続失敗候補を、通知や自動 retry ではなく read-only handoff として読む入口
-- [関連 gem 連携調査 runbook](./関連gem連携調査runbook.md): `rails_fields_kit` / `rails_table_preferences` / `tree_view` の upstream 入口と、`admin/document_sets` を代表例にした host app cookbook。`ROADMAP` の実画面展開候補、`#607` の screen-by-screen adoption、`#858` 系の release train、`#1333` のような実装済み画面の smoke 固定を読み分ける
+- [外部フォルダ同期継続失敗候補runbook](./runbooks/external/外部フォルダ同期継続失敗候補runbook.md): 管理ダッシュボードの `運用失敗入口` に出る外部フォルダ同期の継続失敗候補を、通知や自動 retry ではなく read-only handoff として読む入口
+- [関連 gem 連携調査 runbook](./runbooks/ops/関連gem連携調査runbook.md): `rails_fields_kit` / `rails_table_preferences` / `tree_view` の upstream 入口と、`admin/document_sets` を代表例にした host app cookbook。`ROADMAP` の実画面展開候補、`#607` の screen-by-screen adoption、`#858` 系の release train、`#1333` のような実装済み画面の smoke 固定を読み分ける
 
 ### 運用・インフラ
 
@@ -144,7 +144,7 @@ UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロン�
 - [本番運用・インフラ前提](./本番運用・インフラ前提.md)
 - [maintenance-mode 境界一覧](../.kiro/steering/maintenance-mode-boundaries.md): `READ_ONLY_MAINTENANCE` 中に止める変更操作と read-only に残す確認導線の境界を機能領域別に確認する
 - [監視・アラート設計](./specs/監視・アラート設計.md): alert 後に最初に見る runbook guidance と監視方針の入口。通知 channel / alert rule / 監視サービス連携は current repo では未実装の境界として読む
-- [生成ファイル継続失敗候補runbook](./生成ファイル継続失敗候補runbook.md): dashboard の生成ファイル card に出る継続失敗候補を、通知や自動 retry ではなく read-only 調査入口として読む
+- [生成ファイル継続失敗候補runbook](./runbooks/ops/生成ファイル継続失敗候補runbook.md): dashboard の生成ファイル card に出る継続失敗候補を、通知や自動 retry ではなく read-only 調査入口として読む
 
 ## 未確定事項
 

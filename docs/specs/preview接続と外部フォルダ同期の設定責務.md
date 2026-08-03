@@ -4,7 +4,7 @@
 
 現時点の正本は各個別文書にあります。このページでは仕様を増やさず、既存 docs と current code の読み分けをしやすくすることだけを目的にします。
 
-外部フォルダ同期の一覧・詳細で何を見返すか、`dry_run` / `apply` / `force_apply` / `enqueue` / 購読操作の使い分けは [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md) を参照してください。このページは設定責務と current support の境界を整理する補助に留めます。
+外部フォルダ同期の一覧・詳細で何を見返すか、`dry_run` / `apply` / `force_apply` / `enqueue` / 購読操作の使い分けは [外部フォルダ同期dry-run・apply運用 runbook](../runbooks/external/外部フォルダ同期dry-run・apply運用runbook.md) を参照してください。このページは設定責務と current support の境界を整理する補助に留めます。
 
 ## 先に結論
 
@@ -13,8 +13,8 @@
 | Office ファイルの inline preview を Microsoft Graph で開く | 管理画面 `Microsoft Graph接続` | [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md) | 対応済み |
 | Google Drive フォルダを portal へ取り込む | 管理画面 `外部フォルダ同期` | [Google Drive外部フォルダ同期](./Google%20Drive外部フォルダ同期.md) | 対応済み |
 | Graph preview が失敗したときに Google Drive upload preview へ fallback する | 管理画面 `外部フォルダ同期` の OAuth 接続 + `.env` の `GOOGLE_DRIVE_*` | [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md) | 対応済み |
-| SharePoint / OneDrive の共有 URL から同期元 metadata を解決して保存する | 管理画面 `外部フォルダ同期` + 案件ごとの `Microsoft Graph接続` | [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md), [Microsoft Graph接続管理runbook](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E7%AE%A1%E7%90%86runbook.md) | 対応済み（metadata 保存まで） |
-| Microsoft Graph / SharePoint / OneDrive を同期元として dry-run / apply する | 管理画面 `外部フォルダ同期` | `#503`, [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md) | 未対応、後続 issue で検討中 |
+| SharePoint / OneDrive の共有 URL から同期元 metadata を解決して保存する | 管理画面 `外部フォルダ同期` + 案件ごとの `Microsoft Graph接続` | [外部フォルダ同期dry-run・apply運用 runbook](../runbooks/external/外部フォルダ同期dry-run・apply運用runbook.md), [Microsoft Graph接続管理runbook](.../runbooks/external/Microsoft%20Graph接続管理runbook.md) | 対応済み（metadata 保存まで） |
+| Microsoft Graph / SharePoint / OneDrive を同期元として dry-run / apply する | 管理画面 `外部フォルダ同期` | `#503`, [外部フォルダ同期dry-run・apply運用 runbook](../runbooks/external/外部フォルダ同期dry-run・apply運用runbook.md) | 未対応、後続 issue で検討中 |
 
 ## 何をどこに置くか
 
@@ -141,7 +141,7 @@ current `main` では、共有 URL から metadata を保存するところま�
 
 一覧で既存 source を見直すときは、`SharePoint / OneDrive` filter で metadata-only source に絞ります。`warning あり` / `error あり` / `無効` は保存済み metadata や設定状態の棚卸しに使う入口であり、Graph subscription 作成や同期本体が current support になったことを意味しません。
 
-ただし、`dry_run` / `apply` / `enqueue` / 変更通知はまだ未対応です。同期本体まで進めたい場合は `#503` などの後続 issue と [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md) を合わせて確認してください。
+ただし、`dry_run` / `apply` / `enqueue` / 変更通知はまだ未対応です。同期本体まで進めたい場合は `#503` などの後続 issue と [外部フォルダ同期dry-run・apply運用 runbook](../runbooks/external/外部フォルダ同期dry-run・apply運用runbook.md) を合わせて確認してください。
 
 ## 関連ドキュメント
 
@@ -149,5 +149,5 @@ current `main` では、共有 URL から metadata を保存するところま�
 - [docs/README](./README.md)
 - [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md)
 - [Google Drive外部フォルダ同期](./Google%20Drive外部フォルダ同期.md)
-- [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md)
+- [外部フォルダ同期dry-run・apply運用 runbook](../runbooks/external/外部フォルダ同期dry-run・apply運用runbook.md)
 - [ローカルセットアップと環境変数](../guides/ローカルセットアップと環境変数.md)

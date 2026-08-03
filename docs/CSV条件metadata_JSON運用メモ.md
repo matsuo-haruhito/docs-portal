@@ -95,7 +95,7 @@
 
 ## 関連
 
-- [監査ログ運用runbook](./監査ログ運用runbook.md)
-- [文書利用状況運用runbook](./文書利用状況運用runbook.md)
-- [文書セット運用runbook](./文書セット運用runbook.md)
-- [生成ファイル再試行と定期ジョブ管理 runbook](./生成ファイル再試行と定期ジョブ管理runbook.md)
+- [監査ログ運用runbook](./runbooks/admin/監査ログ運用runbook.md)
+- [文書利用状況運用runbook](./runbooks/admin/文書利用状況運用runbook.md)
+- [文書セット運用runbook](./runbooks/admin/文書セット運用runbook.md)
+- [生成ファイル再試行と定期ジョブ管理 runbook](./runbooks/ops/生成ファイル再試行と定期ジョブ管理runbook.md)

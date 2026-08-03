@@ -6,8 +6,8 @@
 
 ## 正本として見る文書
 
-- 現在の CI / artifact / Rails import API 呼び出し条件は [build-docs workflow確認runbook](./build-docs%20workflow確認runbook.md) を見る
-- `GeneratedFileRun` へ残る site build artifact evidence は [生成ファイル再試行と定期ジョブ管理 runbook](./生成ファイル再試行と定期ジョブ管理runbook.md) を見る
+- 現在の CI / artifact / Rails import API 呼び出し条件は [build-docs workflow確認runbook](./runbooks/import/build-docs%20workflow確認runbook.md) を見る
+- `GeneratedFileRun` へ残る site build artifact evidence は [生成ファイル再試行と定期ジョブ管理 runbook](./runbooks/ops/生成ファイル再試行と定期ジョブ管理runbook.md) を見る
 - 保存してよい metadata と保存しない raw payload は [site build 実行履歴保存境界メモ](./site-build実行履歴保存境界メモ.md) を見る
 - 将来候補の棚卸し入口は [ToDo](./ToDo.md) の `Job / 運用自動化` を見る
 

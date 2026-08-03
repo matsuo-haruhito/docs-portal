@@ -8,7 +8,7 @@ Google Driveフォルダを外部文書置き場として登録し、docs-portal
 
 一方で current `main` の管理画面と model では、`ExternalFolderSyncSource` に `microsoft_graph` provider を保存し、SharePoint / OneDrive の共有 URL から `drive_id` / `folder_item_id` / `folder_path` / `site_id` を metadata として保持する first slice も入っています。この文書では、その provider-aware な current state と矛盾しないように「Google Drive で今どこまで同期できるか」を中心に整理します。
 
-preview 用の `MicrosoftGraphConnection` との役割分担や、Google Drive OAuth / preview folder をどこで使うかは [preview接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md) を参照してください。日常運用で一覧・詳細のどこを見るかは [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run%E3%83%BBapply%E9%81%8B%E7%94%A8runbook.md) を参照してください。
+preview 用の `MicrosoftGraphConnection` との役割分担や、Google Drive OAuth / preview folder をどこで使うかは [preview接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md) を参照してください。日常運用で一覧・詳細のどこを見るかは [外部フォルダ同期dry-run・apply運用 runbook](../runbooks/external/外部フォルダ同期dry-run・apply運用runbook.md) を参照してください。
 
 ## この文書の範囲
 
@@ -25,7 +25,7 @@ preview 用の `MicrosoftGraphConnection` との役割分担や、Google Drive O
 - Webhook / push notification の一般化
 - Google Drive changes API を使った厳密な差分同期
 - SharePoint / OneDrive source の保存手順や metadata 確認の詳細説明
-  - これらは current `main` で一部対応済みですが、正本は [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run%E3%83%BBapply%E9%81%8B%E7%94%A8runbook.md) と [preview接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md) に置きます
+  - これらは current `main` で一部対応済みですが、正本は [外部フォルダ同期dry-run・apply運用 runbook](../runbooks/external/外部フォルダ同期dry-run・apply運用runbook.md) と [preview接続と外部フォルダ同期の設定責務](./preview%E6%8E%A5%E7%B6%9A%E3%81%A8%E5%A4%96%E9%83%A8%E3%83%95%E3%82%A9%E3%83%AB%E3%83%80%E5%90%8C%E6%9C%9F%E3%81%AE%E8%A8%AD%E5%AE%9A%E8%B2%AC%E5%8B%99.md) に置きます
 
 ## current support の読み方
 
@@ -183,7 +183,7 @@ bin/rails 'external_folder_sync:sync[efs_xxx]'
 - `MicrosoftGraphConnection` は Office preview 用の接続であり、外部フォルダ同期元そのものではありません
 - SharePoint / OneDrive source を保存するときは、案件ごとの有効な `MicrosoftGraphConnection` が前提です
 - SharePoint / OneDrive source では current `main` でも `drive_id` / `folder_item_id` / `folder_path` / `site_id` の保存確認までを扱い、同期本体は後続 issue の範囲に留めます
-- provider-aware な画面説明や初回登録導線は runbook 側で更新されることがあるため、日常運用の入口判断は [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run%E3%83%BBapply%E9%81%8B%E7%94%A8runbook.md) を優先してください
+- provider-aware な画面説明や初回登録導線は runbook 側で更新されることがあるため、日常運用の入口判断は [外部フォルダ同期dry-run・apply運用 runbook](../runbooks/external/外部フォルダ同期dry-run・apply運用runbook.md) を優先してください
 
 ## 今後の拡張候補
 
