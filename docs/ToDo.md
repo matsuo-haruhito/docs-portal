@@ -27,6 +27,7 @@
 ## UI / UX
 
 - dashboard / navbar / viewer shell / admin model browser の基礎導線は実装済み
+- 実画面への gem 展開計画（`rails_table_preferences` / `rails_fields_kit` / `tree_view` の画面別適用状況と次のアクション）→ [ROADMAP.md](../ROADMAP.md) を参照
 - dashboard の internal user 向け確認依頼導線は [ダッシュボードと文書ショートカット・確認依頼の使い分け](./specs/ダッシュボードと文書ショートカット・確認依頼の使い分け.md) を正本にする。#1072 の重複感整理は completed のため、ここには追加で必要になった dashboard UX 論点だけを残す。分類: 正本 docs へ移動済み
 - 文書利用状況の絞り込み 0 件時 empty state と表示設定 editor の優先度整理は #1077 で completed。current 運用は [文書利用状況運用runbook](./runbooks/admin/文書利用状況運用runbook.md) を正本にする。分類: 正本 docs へ移動済み
 - 社内 / 社外 / 管理者ごとの導線差分は、必要になったタイミングで画面群ごとに個別 issue へ分けて扱う。分類: 未起票のまま残すもの。まだ起票しない理由: 対象画面、導線差分、受け入れ条件が画面群ごとに固まっていない
@@ -141,6 +142,7 @@
   - admin SQL viewer
   - 型生成
 - internal UI gem の release train は [internal UI gem release train current queue](./internal-ui-gem/release-train-current-queue.md) を正本にし、`rails_fields_kit` pinned ref 更新は #1300、関連 follow-up は同 docs の queue に沿って扱う。ToDo には upstream API や representative smoke の要件を重複して残さない。分類: 正本 docs へ移動済み / 具体 Issue あり
+- 実画面への gem 展開計画（画面別の適用状況・候補・次のアクション）→ [ROADMAP.md](../ROADMAP.md) を参照
 - 新しい gem を入れる時は、Rails 標準や既存依存で代替できない理由、運用コスト、導入範囲を一緒に記録する。分類: 未起票のまま残すもの。まだ起票しない理由: concrete use-case と導入範囲が出るまで採否判断できない
 - 現時点で導入済みの `rparam` / `rtypes` 以外は、必要機能が出たタイミングで個別 issue から判断する
 

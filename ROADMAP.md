@@ -105,3 +105,7 @@ Tom Select 自体は積極的に使う。ただし、アプリ側で `new TomSel
 - table preference 保存がユーザー単位で期待どおり動くこと。
 - Tom Select / remote search が大量データでも扱いやすいこと。
 - gem 側に不足がある場合は、それぞれの gem リポジトリへ issue を作成する。
+
+### 将来対応・保留事項
+
+UI/UX の将来対応、人間判断待ちの proposal、未起票候補 → [docs/ToDo.md](docs/ToDo.md) を参照
