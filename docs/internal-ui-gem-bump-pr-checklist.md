@@ -70,5 +70,5 @@
 
 - [internal UI gem release train readiness matrix](./internal-ui-gem-release-train-readiness-matrix.md)
 - [internal gem release train smoke notes](./internal-gem-release-train-smoke.md)
-- [internal UI gem release train current queue](./internal-ui-gem-release-train-current-queue.md)
-- [internal UI gem adoption evidence map](./internal-ui-gem-adoption-evidence-map.md)
+- [internal UI gem release train current queue](./internal-ui-gem/release-train-current-queue.md)
+- [internal UI gem adoption evidence map](./internal-ui-gem/adoption-evidence-map.md)

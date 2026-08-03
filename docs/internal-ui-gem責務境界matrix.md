@@ -4,7 +4,7 @@
 
 正本の読み順は [関連gem連携調査runbook](./関連gem連携調査runbook.md) と [フロントエンド操作の方針](../.kiro/steering/frontend-interaction-policy.md) です。この文書では新しい public API や target SHA は定義せず、`#607` family の screen-by-screen adoption と `#858` family の pinned ref 更新 train が同じ確認観点を参照できるようにします。
 
-API / ownership の境界はこの matrix、admin UI 上で同じ状態表示 cue がどう見えるかの横断整理は [internal UI gem state cue inventory](./internal-ui-gem-state-cue-inventory.md) を参照してください。state cue inventory は見え方・再利用判断の補助であり、CSS token 名、runtime CSS、upstream public API は決めません。
+API / ownership の境界はこの matrix。state cue inventory は削除済み（git `d37de69c` で参照可能）。state cue は見え方・再利用判断の補助であり、CSS token 名、runtime CSS、upstream public API は決めません。
 
 ## 3 gem の責務境界
 
@@ -30,7 +30,7 @@ API / ownership の境界はこの matrix、admin UI 上で同じ状態表示 cu
 - visual evidence は artifact path、desktop 観点、narrow viewport 観点、evidence 種別、未取得の証跡、downstream 影響を 1 セットで残します。
 - pinned ref 更新は `gem / from / to / representative smoke / result / rollback target` を child issue または PR に残し、3 gem を同じ branch に混ぜません。
 - host app の field 名、column key、route、permission、業務 label、owner-scoped preference isolation は docs-portal 側の正本です。upstream docs には general API と packaging gate だけを求めます。
-- state cue を横断で読む場合は [internal UI gem state cue inventory](./internal-ui-gem-state-cue-inventory.md) で `current` / `selected` / `active filter` / `selected item` のような似た cue の意味を確認してから、各 screen issue に戻します。
+- state cue を横断で読む場合は `.kiro/steering/internal-ui-gem-boundaries.md` の「削除済み historical evidence」を参照し、git 履歴で `current` / `selected` / `active filter` / `selected item` のような似た cue の意味を確認してから、各 screen issue に戻します。
 
 ## 次に Planner / Fixer へ渡す候補
 

@@ -84,11 +84,10 @@ internal UI gem の package guard / docs signal / visual evidence を横断で�
 
 ## 既存 docs との読み分け
 
-- [関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) は、対象 gem の upstream docs と app 側確認ファイルを調べ始める入口です。
-- [internal UI gem public surface guard playbook](./internal-ui-gem-public-surface-guard-playbook.md) は、3 gem の public surface、docs drift guard、package evidence を同じ粒度で比較する入口です。
-- [internal UI gem visual evidence gallery](./internal-ui-gem-visual-evidence-gallery.md) は、代表画面別に upstream evidence と downstream evidence を探す入口です。
-- [internal UI gem packaging gate runbook](./internal-ui-gem-packaging-gates.md) は、上流 packaging gate と downstream smoke の境界を確認する入口です。
-- [internal UI gem release train current queue](./internal-ui-gem-release-train-current-queue.md) は、current queue、old child issue の historical 扱い、bump 実行前の停止条件を確認する入口です。
+- [関連 gem 連携調査 runbook](../関連gem連携調査runbook.md) は、対象 gem の upstream docs と app 側確認ファイルを調べ始める入口です。
+- [internal UI gem public surface guard playbook](../internal-ui-gem-public-surface-guard-playbook.md) は、3 gem の public surface、docs drift guard、package evidence を同じ粒度で比較する入口です。
+- [internal UI gem packaging gate runbook](../internal-ui-gem-packaging-gates.md) は、上流 packaging gate と downstream smoke の境界を確認する入口です。
+- [internal UI gem release train current queue](./release-train-current-queue.md) は、current queue、old child issue の historical 扱い、bump 実行前の停止条件を確認する入口です。
 
 ## 境界
 
@@ -97,3 +96,52 @@ internal UI gem の package guard / docs signal / visual evidence を横断で�
 - docs-portal 側で確認した mounted engine redirect、owner-scoped save isolation、画面別の認可境界は host app evidence として扱い、upstream gem の一般仕様として固定しません。
 - current code、Issue、既存 docs から判断できない visual behavior は `needs-human` として扱い、docs-portal 側で仕様を作りません。
 - `#858` の child issue では target SHA と CI / smoke 結果を PR body または issue comment に残し、この文書へ target SHA を固定値として追記しません。
+
+## Downstream adoption smoke — 4 区分 evidence
+
+> 統合元: `docs/internal-ui-gem-downstream-adoption-smoke-matrix.md`
+
+採用判断の PR / Issue comment に何を同じ粒度で残すかを、以下の 4 区分で整理します。
+
+| 区分 | 何を見るか | docs-portal 側で残す最小記録 | 完了扱いにしないもの |
+| --- | --- | --- | --- |
+| upstream known-good / fresh CI | upstream repo の対象 PR / commit / release docs が fresh か | upstream repo、PR / commit、CI または review 状態、merge 済みか pending か | upstream PR green だけで docs-portal 採用完了とはしない |
+| public package surface / import path | package-root export、documented direct entrypoint、public API docs、manifest / package contents guard | 参照した docs / manifest / verifier、package-root か direct entrypoint か、fallback の有無 | 未 merge の export 名や manifest schema を durable contract にしない |
+| visual evidence / static artifact readability | mockup、visual reference、generated demo、review gallery、manual QA artifact | 見た artifact、desktop / narrow viewport の有無、browser evidence か source inspection か、限界 | CI success や source spec だけで layout / readability acceptance を満たした扱いにしない |
+| docs-portal representative downstream smoke | host app の代表画面、request spec、manual smoke、rollback target | screen / spec、from SHA、to SHA、確認結果、rollback target、docs follow-up 要否 | upstream evidence を host app smoke の代替にしない |
+
+## Downstream smoke PR / Issue comment template
+
+```text
+internal UI gem downstream adoption smoke:
+- gem:
+- upstream known-good / fresh CI:
+  - source:
+  - status:
+- public package surface / import path:
+  - source of truth:
+  - import path:
+  - pending upstream:
+- visual evidence / static artifact readability:
+  - artifact:
+  - evidence:
+  - limits:
+- docs-portal representative downstream smoke:
+  - screen / spec:
+  - from:
+  - to:
+  - result:
+  - rollback target:
+  - docs follow-up:
+```
+
+## RFK/RTP bridge pilot (`docs-portal#4626`)
+
+RFK/RTP bridge contract を docs-portal 側で読むときは、最初の downstream pilot を `admin/document_sets` に絞ります。この画面は `rails_fields_kit` の `rfk_select` と `rails_table_preferences` の editor / table composition を同じ host app surface で確認できるため、`#607` の広い screen-by-screen 展開へ進む前の代表 smoke として扱います。
+
+| smoke | `admin/document_sets` で見ること | ここでやらないこと |
+| --- | --- | --- |
+| saved filter state | RTP editor / table が同じ `table_key` と stable column key を共有し、既存 preset / filter / mounted engine save の確認場所が分かる | 新しい preset 仕様、別画面の table adoption、known-good revision 判断を決めない |
+| RFK rendering | `app/views/admin/document_sets/_form.html.slim` の `rfk_select` が field params、placeholder、selected value、invalid rerender の既存 contract を壊さない | RFK helper option、remote search endpoint、public API を docs-portal 側で新設しない |
+| query / authorization / persistence ownership | form params、table filter、保存処理、認可は docs-portal 側の controller / request spec を正本にする | RFK/RTP bridge が query execution、authorization、persistence を所有する前提にしない |
+| desktop / narrow readability | filter/editor control と table UI が desktop / narrow viewport で重ならないことを visual evidence の対象にする | CI success や source inspection だけで visual acceptance としない |

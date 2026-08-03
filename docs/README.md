@@ -21,7 +21,7 @@ UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロン�
 - import / build / sync: [build-docs workflow確認runbook](./build-docs%20workflow%E7%A2%BA%E8%AA%8Drunbook.md) と [手動アップロード差異確認runbook](./手動アップロード差異確認runbook.md) から、Git連携、ZIP、internal upload API、外部フォルダ同期へ進みます。maintenance mode 中に止める境界は [maintenance-mode 境界一覧](../.kiro/steering/maintenance-mode-boundaries.md) で確認し、build-docs job 化を検討するときは [build-docs job 化置き換え境界メモ](./build-docs-job%E5%8C%96%E7%BD%AE%E3%81%8D%E6%8F%9B%E3%81%88%E5%A2%83%E7%95%8C%E3%83%A1%E3%83%A2.md) で current metadata 保存境界と proposal を分けます。
 - 外部連携 / preview: [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md) と [Microsoft Graph接続管理runbook](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E7%AE%A1%E7%90%86runbook.md) を起点に、preview 接続や外部フォルダ同期の境界を確認します。
 - 監視 / インフラ: [監視・アラート設計](./監視・アラート設計.md)、[リリース・デプロイ・rollback手順](./リリース・デプロイ・rollback手順.md)、[バックアップ・リストア手順](./バックアップ・リストア手順.md) を先に見ます。
-- internal UI gem: [internal UI gem adoption evidence map](./internal-ui-gem-adoption-evidence-map.md)、[関連 gem 採用マトリクス](./関連gem採用マトリクス.md)、[internal UI gem downstream adoption smoke matrix](./internal-ui-gem-downstream-adoption-smoke-matrix.md)、[関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) で upstream evidence、downstream smoke、release train、host app 採用画面の役割を切り分けます。
+- internal UI gem: [internal UI gem adoption evidence map](./internal-ui-gem/adoption-evidence-map.md)、[関連 gem 採用マトリクス](./internal-ui-gem/関連gem採用マトリクス.md)、[関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) で upstream evidence、downstream smoke、release train、host app 採用画面の役割を切り分けます。
 
 ## 仕様
 
@@ -49,25 +49,19 @@ UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロン�
 - [フロントエンド操作の方針](../.kiro/steering/frontend-interaction-policy.md)
 - [フロントエンド初期化 inventory](../.kiro/skills/frontend-initialization-inventory.md): Vite entrypoint、gem controller、app 側 Stimulus controller、維持する fallback path を挙動変更なしで棚卸しする入口
 - [ROADMAP](../ROADMAP.md): internal UI gem の実画面展開候補、一覧画面の `rails_table_preferences` 化、フォームの `rails_fields_kit` 化、`tree_view` 連携強化、Stimulus 化の次フェーズ
-- [internal UI gem adoption evidence map](./internal-ui-gem-adoption-evidence-map.md): `tree_view` / `rails_table_preferences` / `rails_fields_kit` の representative smoke、upstream evidence、更新順、rollback note を 1 箇所で見る入口
-- [internal UI gem table contract first slice](./internal-ui-gem-table-contract-first-slice.md): RFK / RTP / TreeView / docs-portal の representative screen と responsibility boundary を #4271 の first slice として確認する補助メモ
-- [internal UI gem downstream adoption smoke matrix](./internal-ui-gem-downstream-adoption-smoke-matrix.md): downstream 採用前に見る upstream known-good、public surface、visual evidence、docs-portal representative smoke を 3 gem 共通列で確認する入口
+- [internal UI gem adoption evidence map](./internal-ui-gem/adoption-evidence-map.md): `tree_view` / `rails_table_preferences` / `rails_fields_kit` の representative smoke、upstream evidence、更新順、rollback note を 1 箇所で見る入口
 - [internal UI gem release evidence comment template](./internal-ui-gem-release-evidence-comment-template.md): release train / review follow-up で CI、visual evidence、upstream signal、downstream smoke を分けて PR / Issue comment に残す入口
-- [internal UI gem cross-repo queue order](./internal-ui-gem-cross-repo-queue-order.md): `#858` / `#607` / `#789` と upstream open gate を読み分け、docs-only queue で先取りしない境界を確認する補助メモ
 - [internal UI gem 責務境界 matrix](./internal-ui-gem責務境界matrix.md): host app 側と upstream gem 側の API / ownership / representative smoke の境界を混ぜないための比較表
-- [関連 gem 採用マトリクス](./関連gem採用マトリクス.md): `tree_view` / `rails_table_preferences` / `rails_fields_kit` の host app 採用画面、gem 側責務、host app 側責務を横断で読む入口
+- [関連 gem 採用マトリクス](./internal-ui-gem/関連gem採用マトリクス.md): `tree_view` / `rails_table_preferences` / `rails_fields_kit` の host app 採用画面、gem 側責務、host app 側責務を横断で読む入口
 - [internal UI gem JS resolver matrix](./internal-ui-gem-js-resolver-matrix.md): package-root import、documented direct entrypoint、Vite resolver の current downstream 境界を確認する入口
 - [internal UI gem public surface / package verification matrix](./internal-ui-gem-public-surface-package-verification-matrix.md): public export、TypeScript declaration、manifest、package verification signal の責務分担を確認する入口
 - [internal UI gem public surface guard playbook](./internal-ui-gem-public-surface-guard-playbook.md): public surface、docs drift guard、package evidence、dependency / security observation を同じ粒度で比較する maintainer playbook
-- [internal UI gem state cue inventory](./internal-ui-gem-state-cue-inventory.md): admin UI 上の current / selected / filter などの状態表示 cue を gem 横断で読み合わせる入口
 - [internal UI gem visual evidence runbook](./internal-ui-gem-visual-evidence-runbook.md): `rails_fields_kit` / `tree_view-rails` / `rails_table_preferences` の static visual artifact 変更時に残す確認証跡
 - [host app visual evidence comment guide](./host-app-visual-evidence-comment.md): docs-portal 本体の小さな UI / copy PR で `実ブラウザ未確認` を残すときの PR / Issue comment 書式
 - [internal UI gem browser evidence batch checklist](./internal-ui-gem-browser-evidence-batch-checklist.md): upstream static visual artifact の desktop / narrow viewport evidence を同じ粒度で残す companion checklist
-- [internal UI gem visual evidence gallery](./internal-ui-gem-visual-evidence-gallery.md): 代表画面別に upstream evidence と docs-portal 側で残す downstream evidence を探す入口
 - [internal UI gem packaging gate runbook](./internal-ui-gem-packaging-gates.md): internal UI gem release train で上流 packaging gate と downstream smoke の境界を確認する入口
-- [internal UI gem release train current queue](./internal-ui-gem-release-train-current-queue.md): `#1300` -> `#1301` -> `#789` の current queue、old child issue の historical 扱い、bump 実行前の停止条件を確認する入口
-- [internal UI gem release train target matrix](./internal-ui-gem-release-train-target-matrix.md): `#2962` の current pin、first tranche 候補、除外 / 判断待ち PR、代表 downstream smoke、rollback target を確認する current snapshot
-- [internal UI gem release train readiness matrix](./internal-ui-gem-release-train-readiness-matrix.md): release train 前に package-root / direct entrypoint / Vite・importmap / public API guard / downstream smoke を同じ粒度で読む入口
+- [internal UI gem release train current queue](./internal-ui-gem/release-train-current-queue.md): `#1300` -> `#1301` -> `#789` の current queue、old child issue の historical 扱い、bump 実行前の停止条件を確認する入口
+- [internal UI gem release train target matrix](./internal-ui-gem/release-train-target-matrix.md): `#2962` の current pin、first tranche 候補、除外 / 判断待ち PR、代表 downstream smoke、rollback target を確認する current snapshot
 - [internal UI gem bump PR checklist](./internal-ui-gem-bump-pr-checklist.md): library 別 pinned ref bump PR の host-app smoke、PR body evidence、rollback note、停止条件を実行直前に確認する入口
 - [コーディング規約](./コーディング規約.md)
 - [テスト方針](./テスト方針.md)

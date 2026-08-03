@@ -100,3 +100,25 @@ public export、TypeScript declaration、manifest、verification signal の責�
 ```
 
 3 gem を同じ branch に混ぜない。upstream CI / packaging gate の成功だけで host app integration 成功とは扱わない。
+
+
+## 削除済み historical evidence
+
+以下のファイルは historical evidence のみで構成されていたため削除済み。内容は git 履歴で参照可能。
+
+| ファイル | 最終 commit |
+|---------|-------------|
+| docs/internal-ui-gem-release-evidence-matrix.md | 8f8ab6d3a83cba2d7e18573b24619d77f1f7d69d |
+| docs/internal-ui-gem-release-train-snapshot-2026-06-05.md | cccd6d61e7aec2988c5a6f134ae428e597a72a90 |
+| docs/internal-ui-gem-release-train-current-wave-2026-06-12.md | 31e45414d4d72c257537b315db1e68262a5378e4 |
+| docs/internal-ui-gem-release-train-adoption-gates.md | e7ff5481f52675d8c0f7e4d47fffb845772004af |
+| docs/internal-ui-gem-upstream-readiness-snapshot.md | f1b69319a00b8cccfbf46c5320ac57b4fcbeba01 |
+| docs/internal-ui-gem-cross-repo-queue-order.md | 3ae6c7081a3be3f371444e544b60f9c494666542 |
+| docs/internal-ui-gem-table-contract-first-slice.md | aa6b3a863e149c0fc0676fc0144483273edde21d |
+| docs/internal-ui-gem-treeview-rtp-bridge-decision.md | d1e2a54229ad24c6d0ea3c5d92e08b8b2b47192e |
+| docs/internal-ui-gem-rtp-rfk-document-sets-canary.md | 012edbaad8e1b4775d1cc821b08d02a9e1bd931a |
+| docs/internal-ui-gem-state-cue-inventory.md | d37de69c110861535f0e98cecf15a87148c346a3 |
+| docs/internal-ui-gem-visual-evidence-gallery.md | 53b2cfa4235a8a9b5f106857f68e8ef803ea5bf3 |
+| docs/bootstrap-internal-ui-gem-smoke.md | 212104dffc6c2bf82ffd4a8457ed0d0d2bb8079d |
+| docs/internal-gem-release-train-smoke.md | be861ce06e2b4a3064e10aa3cd08186884e61954 |
+| docs/internal-ui-gem-release-train-readiness-matrix.md | c68b817b520357a655801b3759c1e4d3d7bafd96 |

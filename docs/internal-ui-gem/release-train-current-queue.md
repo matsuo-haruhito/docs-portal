@@ -2,9 +2,9 @@
 
 この文書は、`docs/関連gem連携調査runbook.md` の release train 説明を読む前に確認する queue snapshot です。
 
-`docs-portal` の internal UI gem 更新は `#858` を parent / hub として扱います。実際の dependency bump は、ここにある child issue と `docs/internal-gem-release-train-smoke.md` の代表 smoke / rollback note を合わせて確認します。
+`docs-portal` の internal UI gem 更新は `#858` を parent / hub として扱います。実際の dependency bump は、ここにある child issue と `.kiro/skills/internal-ui-gem-workflow.md` の代表 smoke / rollback note を合わせて確認します。
 
-2026-06-25 JST 時点の採用順・review gate・known-good baseline は、[internal UI gem release train target matrix](./internal-ui-gem-release-train-target-matrix.md) の `2026-06-25 cross-repo refresh` を優先して確認します。この文書の `2026-06-03 JST` queue は historical snapshot であり、open PR、old child issue、古い green CI を current adoption evidence として固定するものではありません。
+2026-06-25 JST 時点の採用順・review gate・known-good baseline は、[internal UI gem release train target matrix](./release-train-target-matrix.md) の `2026-06-25 cross-repo refresh` を優先して確認します。この文書の `2026-06-03 JST` queue は historical snapshot であり、open PR、old child issue、古い green CI を current adoption evidence として固定するものではありません。
 
 ## historical queue (2026-06-03 JST)
 
@@ -36,7 +36,7 @@
 
 | 優先 | repo / lane | downstream への波及度 | public surface guard の成熟度 | docs / visual evidence の再利用性 | host app representative smoke | 残り gate / risk | 次に見るもの |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `docs-portal` release train docs / representative smoke | 高。3 gem の採用 hub で、以後の bump / smoke / rollback note の読み方を決める | 中。`docs/internal-ui-gem-adoption-evidence-map.md` とこの current queue が正本 | 高。ROADMAP、evidence map、current queue、smoke runbook を同じ粒度で参照できる | あり。`admin/document_sets`、sidebar tree / detail tree、RTP representative screens | 低。docs-only だが open PR を current support として書かない | `#1987` / PR `#1994`、`#1986` / PR `#1995`、この scorecard |
+| 1 | `docs-portal` release train docs / representative smoke | 高。3 gem の採用 hub で、以後の bump / smoke / rollback note の読み方を決める | 中。`docs/internal-ui-gem/adoption-evidence-map.md` とこの current queue が正本 | 高。ROADMAP、evidence map、current queue、smoke runbook を同じ粒度で参照できる | あり。`admin/document_sets`、sidebar tree / detail tree、RTP representative screens | 低。docs-only だが open PR を current support として書かない | `#1987` / PR `#1994`、`#1986` / PR `#1995`、この scorecard |
 | 2 | `rails_fields_kit` public API / field metadata helper family | 高。form helper / Tom Select wiring が host app の入力補助に直結する | 高。`doc/public_api.md`、package export smoke、visual reference、README docs map が揃いつつある | 高。setup docs、field/controller helper docs、visual reference を host app smoke に転用しやすい | あり。`admin/document_sets` form、invalid rerender、selected value | 中。open green / needs-human の helper PR は merge 後に再確認 | `#1300`、`#1985`、upstream public API / package contents guard |
 | 3 | `tree_view-rails` manifest-backed JS export / declaration follow-up | 高。docs-portal の文書ツリー UX に直接効く | 中-高。installation / package guard は merged、manifest-backed node-shape は open green / needs-human | 中。README / docs / mockup gallery は強いが manifest proposal は merge 前に先取りしない | あり。sidebar tree / detail tree / persisted state / window offset | 中。public manifest や selection contract の human gate を current support にしない | `#1301`、upstream installation / package guard、manifest-backed public surface PR |
 | 4 | `rails_table_preferences` public surface / representative smoke | 高。一覧・embedded table・saved state に広く波及する | 中。data-controller merge contract と Turbo reconnect docs は merged、renderer registry docs は ready lane | 中-高。manual QA docs / demo / matrix はあるが host app table key は downstream 責務 | あり。`admin/document_sets`、`admin/documents` など代表一覧 | 高。`#789` の known-good revision human gate と public surface 方針確認が残る | `#789`、`#1860`、`#1986`、upstream registry / accessibility evidence |
@@ -110,7 +110,7 @@ connector-only で browser screenshot を取得できない場合は、代替 ev
 
 ## historical / old child numbers
 
-`docs/関連gem連携調査runbook.md` に残る `#921`、`#903`、`#904` は historical context として読みます。current active lane として扱う場合は、必ず上の `#1300`、`#1301`、`#789` と `docs/internal-gem-release-train-smoke.md` を再確認します。
+`docs/関連gem連携調査runbook.md` に残る `#921`、`#903`、`#904` は historical context として読みます。current active lane として扱う場合は、必ず上の `#1300`、`#1301`、`#789` と `.kiro/skills/internal-ui-gem-workflow.md` を再確認します。
 
 ## bump 実行前の停止条件
 
@@ -125,9 +125,8 @@ connector-only で browser screenshot を取得できない場合は、代替 ev
 
 ## 先に見る docs
 
-- `docs/internal-ui-gem-upstream-readiness-snapshot.md`: release train 前に確認する upstream open / recently merged PR の時点 snapshot。target SHA 決定ではなく、再確認対象と human gate を分ける入口
-- `docs/internal-gem-release-train-smoke.md`: human handoff、representative smoke、rollback target、update log template
-- `docs/internal-ui-gem-public-surface-package-verification-matrix.md`: package-root export、direct entrypoint、manifest / package verification の境界
-- `docs/internal-ui-gem-adoption-evidence-map.md`: docs-portal 側 representative smoke、upstream evidence、確認順、rollback note
+- `.kiro/steering/internal-ui-gem-boundaries.md`: package-root export、direct entrypoint、manifest / package verification の境界（削除済み `docs/internal-ui-gem-upstream-readiness-snapshot.md` の内容含む）
+- `.kiro/skills/internal-ui-gem-workflow.md`: human handoff、representative smoke、rollback target、update log template
+- `docs/internal-ui-gem/adoption-evidence-map.md`: docs-portal 側 representative smoke、upstream evidence、確認順、rollback note
 - `docs/internal-ui-gem-public-surface-guard-playbook.md`: public surface、docs drift guard、package evidence、downstream smoke の比較入口
 - `docs/関連gem連携調査runbook.md`: host app 採用パターン、screen-by-screen adoption、upstream docs 入口
