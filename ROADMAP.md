@@ -24,6 +24,8 @@
 - Markdown table full RTP integration（#475 親論点）
 - viewer 内 table の preference context cue 追加
 
+展開時の確認観点・方針の詳細（vite build 通過、preference 保存確認、代表 smoke、gem 不足時の upstream issue 運用）は `.kiro/skills/gem-rollout-guide.md` に集約。
+
 ---
 
 将来対応・保留事項の詳細 → [docs/ToDo.md](docs/ToDo.md)
