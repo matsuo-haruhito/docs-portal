@@ -69,7 +69,7 @@ repo-local の棚卸しは `tree_view-rails#1401` や `rails_table_preferences#8
 - `#858`: release train の parent / hub。実装や docs 更新の最小単位ではない。
 - `#1801`: この current queue と横断 evidence docs の優先順位を、open proposal を current support にしない範囲で更新する docs-sync issue。
 - `#1845`: PR 種別別の evidence template を再利用できるようにする docs-sync issue。target SHA や bump 実行は決めない。
-- `#1509`: 完了済み。`docs/internal-ui-gem-public-surface-package-verification-matrix.md` を追加した matrix issue として参照する。
+- `#1509`: 完了済み。`.kiro/steering/internal-ui-gem-boundaries.md` の Public Surface / Package Verification セクションに統合された matrix issue として参照する。
 - `#1470`: state cue inventory の parallel design lane。dependency bump、target SHA、Gemfile / lockfile 更新とは混ぜない。
 - `#1552`: この current queue を `docs/関連gem連携調査runbook.md` から誤読しないための docs sync issue。
 - `#1616`: release train 前に見る upstream PR readiness snapshot。target SHA の最終決定ではなく、open / merged upstream PR を docs-only、public API / helper、UI behavior、stacked PR に分ける入口として読む。
@@ -125,8 +125,8 @@ connector-only で browser screenshot を取得できない場合は、代替 ev
 
 ## 先に見る docs
 
-- `.kiro/steering/internal-ui-gem-boundaries.md`: package-root export、direct entrypoint、manifest / package verification の境界（削除済み `docs/internal-ui-gem-upstream-readiness-snapshot.md` の内容含む）
-- `.kiro/skills/internal-ui-gem-workflow.md`: human handoff、representative smoke、rollback target、update log template
+- `.kiro/steering/internal-ui-gem-boundaries.md`: package-root export、direct entrypoint、packaging gate、manifest / package verification の境界
+- `.kiro/skills/internal-ui-gem-workflow.md`: human handoff、representative smoke、rollback target、update log template、public surface guard playbook
 - `docs/internal-ui-gem/adoption-evidence-map.md`: docs-portal 側 representative smoke、upstream evidence、確認順、rollback note
-- `docs/internal-ui-gem-public-surface-guard-playbook.md`: public surface、docs drift guard、package evidence、downstream smoke の比較入口
+- `.kiro/skills/internal-ui-gem-workflow.md`: public surface guard、docs drift guard、package evidence、downstream smoke の比較入口
 - `docs/関連gem連携調査runbook.md`: host app 採用パターン、screen-by-screen adoption、upstream docs 入口

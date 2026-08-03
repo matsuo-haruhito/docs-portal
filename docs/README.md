@@ -50,19 +50,14 @@ UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロン�
 - [フロントエンド初期化 inventory](../.kiro/skills/frontend-initialization-inventory.md): Vite entrypoint、gem controller、app 側 Stimulus controller、維持する fallback path を挙動変更なしで棚卸しする入口
 - [ROADMAP](../ROADMAP.md): internal UI gem の実画面展開候補、一覧画面の `rails_table_preferences` 化、フォームの `rails_fields_kit` 化、`tree_view` 連携強化、Stimulus 化の次フェーズ
 - [internal UI gem adoption evidence map](./internal-ui-gem/adoption-evidence-map.md): `tree_view` / `rails_table_preferences` / `rails_fields_kit` の representative smoke、upstream evidence、更新順、rollback note を 1 箇所で見る入口
-- [internal UI gem release evidence comment template](./internal-ui-gem-release-evidence-comment-template.md): release train / review follow-up で CI、visual evidence、upstream signal、downstream smoke を分けて PR / Issue comment に残す入口
-- [internal UI gem 責務境界 matrix](./internal-ui-gem責務境界matrix.md): host app 側と upstream gem 側の API / ownership / representative smoke の境界を混ぜないための比較表
+- [internal UI gem workflow skill](../.kiro/skills/internal-ui-gem-workflow.md): release train / review follow-up で CI、visual evidence、upstream signal、downstream smoke を分けて PR / Issue comment に残す入口
+- [internal UI gem 責務境界](../.kiro/steering/internal-ui-gem-boundaries.md): host app 側と upstream gem 側の API / ownership / representative smoke の境界を混ぜないための比較表
 - [関連 gem 採用マトリクス](./internal-ui-gem/関連gem採用マトリクス.md): `tree_view` / `rails_table_preferences` / `rails_fields_kit` の host app 採用画面、gem 側責務、host app 側責務を横断で読む入口
-- [internal UI gem JS resolver matrix](./internal-ui-gem-js-resolver-matrix.md): package-root import、documented direct entrypoint、Vite resolver の current downstream 境界を確認する入口
-- [internal UI gem public surface / package verification matrix](./internal-ui-gem-public-surface-package-verification-matrix.md): public export、TypeScript declaration、manifest、package verification signal の責務分担を確認する入口
-- [internal UI gem public surface guard playbook](./internal-ui-gem-public-surface-guard-playbook.md): public surface、docs drift guard、package evidence、dependency / security observation を同じ粒度で比較する maintainer playbook
-- [internal UI gem visual evidence runbook](./internal-ui-gem-visual-evidence-runbook.md): `rails_fields_kit` / `tree_view-rails` / `rails_table_preferences` の static visual artifact 変更時に残す確認証跡
-- [host app visual evidence comment guide](./host-app-visual-evidence-comment.md): docs-portal 本体の小さな UI / copy PR で `実ブラウザ未確認` を残すときの PR / Issue comment 書式
-- [internal UI gem browser evidence batch checklist](./internal-ui-gem-browser-evidence-batch-checklist.md): upstream static visual artifact の desktop / narrow viewport evidence を同じ粒度で残す companion checklist
-- [internal UI gem packaging gate runbook](./internal-ui-gem-packaging-gates.md): internal UI gem release train で上流 packaging gate と downstream smoke の境界を確認する入口
+- [internal UI gem 責務境界（JS resolver / public surface / packaging gates 含む）](../.kiro/steering/internal-ui-gem-boundaries.md): package-root import、packaging gate、public surface verification の境界を確認する入口
+- [internal UI gem workflow（evidence runbook / bump checklist / guard playbook 含む）](../.kiro/skills/internal-ui-gem-workflow.md): bump PR、visual evidence、public surface guard、browser evidence batch の手順を確認する入口
 - [internal UI gem release train current queue](./internal-ui-gem/release-train-current-queue.md): `#1300` -> `#1301` -> `#789` の current queue、old child issue の historical 扱い、bump 実行前の停止条件を確認する入口
 - [internal UI gem release train target matrix](./internal-ui-gem/release-train-target-matrix.md): `#2962` の current pin、first tranche 候補、除外 / 判断待ち PR、代表 downstream smoke、rollback target を確認する current snapshot
-- [internal UI gem bump PR checklist](./internal-ui-gem-bump-pr-checklist.md): library 別 pinned ref bump PR の host-app smoke、PR body evidence、rollback note、停止条件を実行直前に確認する入口
+- [internal UI gem bump PR checklist](../.kiro/skills/internal-ui-gem-workflow.md): library 別 pinned ref bump PR の host-app smoke、PR body evidence、rollback note、停止条件を実行直前に確認する入口
 - [コーディング規約](./コーディング規約.md)
 - [テスト方針](./テスト方針.md)
 - [ローカルセットアップと環境変数](./ローカルセットアップと環境変数.md): `.env.example` を基準にした最短起動手順と optional service の切り替え

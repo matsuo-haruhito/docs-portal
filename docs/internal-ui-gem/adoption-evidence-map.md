@@ -85,8 +85,8 @@ internal UI gem の package guard / docs signal / visual evidence を横断で�
 ## 既存 docs との読み分け
 
 - [関連 gem 連携調査 runbook](../関連gem連携調査runbook.md) は、対象 gem の upstream docs と app 側確認ファイルを調べ始める入口です。
-- [internal UI gem public surface guard playbook](../internal-ui-gem-public-surface-guard-playbook.md) は、3 gem の public surface、docs drift guard、package evidence を同じ粒度で比較する入口です。
-- [internal UI gem packaging gate runbook](../internal-ui-gem-packaging-gates.md) は、上流 packaging gate と downstream smoke の境界を確認する入口です。
+- [internal UI gem 責務境界](../../.kiro/steering/internal-ui-gem-boundaries.md) は、3 gem の public surface、packaging gate、package verification の境界を同じ粒度で確認する入口です。
+- [internal UI gem workflow](../../.kiro/skills/internal-ui-gem-workflow.md) は、bump PR checklist、visual evidence、browser evidence batch の手順を確認する入口です。
 - [internal UI gem release train current queue](./release-train-current-queue.md) は、current queue、old child issue の historical 扱い、bump 実行前の停止条件を確認する入口です。
 
 ## 境界

@@ -140,7 +140,7 @@
   - import 補助
   - admin SQL viewer
   - 型生成
-- internal UI gem の release train は [internal UI gem release train current queue](./internal-ui-gem-release-train-current-queue.md) を正本にし、`rails_fields_kit` pinned ref 更新は #1300、関連 follow-up は同 docs の queue に沿って扱う。ToDo には upstream API や representative smoke の要件を重複して残さない。分類: 正本 docs へ移動済み / 具体 Issue あり
+- internal UI gem の release train は [internal UI gem release train current queue](./internal-ui-gem/release-train-current-queue.md) を正本にし、`rails_fields_kit` pinned ref 更新は #1300、関連 follow-up は同 docs の queue に沿って扱う。ToDo には upstream API や representative smoke の要件を重複して残さない。分類: 正本 docs へ移動済み / 具体 Issue あり
 - 新しい gem を入れる時は、Rails 標準や既存依存で代替できない理由、運用コスト、導入範囲を一緒に記録する。分類: 未起票のまま残すもの。まだ起票しない理由: concrete use-case と導入範囲が出るまで採否判断できない
 - 現時点で導入済みの `rparam` / `rtypes` 以外は、必要機能が出たタイミングで個別 issue から判断する
 
