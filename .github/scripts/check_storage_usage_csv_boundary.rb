@@ -27,20 +27,10 @@ STORAGE_USAGE_CSV_CHECKS = [
     ]
   },
   {
-    path: "docs/Storage使用量CSV-read-only-handoff境界メモ.md",
+    path: ".kiro/steering/maintenance-mode-boundaries.md",
     expected: [
-      "`admin/storage_usage/document_files`",
-      "`admin/storage_usage/docs_sites`",
-      "`admin/storage_usage/imports`",
-      "`scope_status`",
-      "`display_limit`",
-      "`safe_relative_path`",
-      "`read_only_note`",
-      "read-only bounded handoff",
-      "cleanup / delete / archive / retention / billing / quota / GCS policy / repair / full export decision ではありません",
-      "`DocumentFile` 実体",
-      "`Docs site build`",
-      "`Import staging`"
+      "Storage 使用量 CSV",
+      "document_files / docs_sites / imports の CSV download"
     ]
   },
   {

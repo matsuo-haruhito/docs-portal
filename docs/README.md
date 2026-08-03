@@ -18,7 +18,7 @@ UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロン�
 
 - 利用者画面 / viewer: [ダッシュボードと文書ショートカット・確認依頼の使い分け](./ダッシュボードと文書ショートカット・確認依頼の使い分け.md) から入り、文書詳細・版詳細・ZIP・アクセス申請は日常 UI / viewer の runbook を辿ります。
 - admin 運用: [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md) を入口にし、アクセス申請、文書マスタ、文書セット、監査ログ、文書利用状況は admin 運用の各 runbook を確認します。
-- import / build / sync: [build-docs workflow確認runbook](./build-docs%20workflow%E7%A2%BA%E8%AA%8Drunbook.md) と [手動アップロード差異確認runbook](./手動アップロード差異確認runbook.md) から、Git連携、ZIP、internal upload API、外部フォルダ同期へ進みます。Git 手動同期を maintenance mode 中に止める境界は [Git手動同期 maintenance-mode 境界](./Git手動同期maintenance-mode境界.md) で確認し、build-docs job 化を検討するときは [build-docs job 化置き換え境界メモ](./build-docs-job%E5%8C%96%E7%BD%AE%E3%81%8D%E6%8F%9B%E3%81%88%E5%A2%83%E7%95%8C%E3%83%A1%E3%83%A2.md) で current metadata 保存境界と proposal を分けます。
+- import / build / sync: [build-docs workflow確認runbook](./build-docs%20workflow%E7%A2%BA%E8%AA%8Drunbook.md) と [手動アップロード差異確認runbook](./手動アップロード差異確認runbook.md) から、Git連携、ZIP、internal upload API、外部フォルダ同期へ進みます。maintenance mode 中に止める境界は [maintenance-mode 境界一覧](../.kiro/steering/maintenance-mode-boundaries.md) で確認し、build-docs job 化を検討するときは [build-docs job 化置き換え境界メモ](./build-docs-job%E5%8C%96%E7%BD%AE%E3%81%8D%E6%8F%9B%E3%81%88%E5%A2%83%E7%95%8C%E3%83%A1%E3%83%A2.md) で current metadata 保存境界と proposal を分けます。
 - 外部連携 / preview: [Webhook設定・送信失敗確認runbook](./Webhook設定・送信失敗確認runbook.md) と [Microsoft Graph接続管理runbook](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E7%AE%A1%E7%90%86runbook.md) を起点に、preview 接続や外部フォルダ同期の境界を確認します。
 - 監視 / インフラ: [監視・アラート設計](./監視・アラート設計.md)、[リリース・デプロイ・rollback手順](./リリース・デプロイ・rollback手順.md)、[バックアップ・リストア手順](./バックアップ・リストア手順.md) を先に見ます。
 - internal UI gem: [internal UI gem adoption evidence map](./internal-ui-gem-adoption-evidence-map.md)、[関連 gem 採用マトリクス](./関連gem採用マトリクス.md)、[internal UI gem downstream adoption smoke matrix](./internal-ui-gem-downstream-adoption-smoke-matrix.md)、[関連 gem 連携調査 runbook](./関連gem連携調査runbook.md) で upstream evidence、downstream smoke、release train、host app 採用画面の役割を切り分けます。
@@ -133,7 +133,7 @@ UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロン�
 - [build-docs job 化置き換え境界メモ](./build-docs-job%E5%8C%96%E7%BD%AE%E3%81%8D%E6%8F%9B%E3%81%88%E5%A2%83%E7%95%8C%E3%83%A1%E3%83%A2.md): current `docs-site` artifact metadata 保存境界と、将来 Rails app 側 job 化 proposal の読み分け
 - [build-docs import job 化境界メモ](./build-docs-import-job%E5%8C%96%E5%A2%83%E7%95%8C%E3%83%A1%E3%83%A2.md): build-docs workflow の Rails import API failure 後に replay / rebuild / human decision を分ける proposal boundary
 - [Git連携設定と同期失敗確認runbook](./Git連携設定と同期失敗確認runbook.md): `Git連携` / `Git同期履歴` で見る項目と手動同期の戻り先
-- [Git手動同期 maintenance-mode 境界](./Git手動同期maintenance-mode境界.md): maintenance mode 中に Git 手動同期起動だけを止め、Git連携設定とGit同期履歴の read-only 確認は残す境界
+- [maintenance-mode 境界一覧](../.kiro/steering/maintenance-mode-boundaries.md): `READ_ONLY_MAINTENANCE` 中に止める変更操作と read-only に残す確認導線の境界を機能領域別に確認する
 - [Git連携 run 履歴保存境界メモ](./Git連携run履歴保存境界メモ.md): Git連携 run を job 化や履歴保存拡張へ進める前に、current support、保存候補 metadata、保存しない raw payload、site build artifact 履歴との違いを確認する補助メモ
 - [ZIPインポートdry-run運用runbook](./ZIP%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88dry-run%E9%81%8B%E7%94%A8runbook.md): `ZIPインポート` の入力項目、status、TreeView プレビュー、取り込み前の見直し順
 - [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run%E3%83%BBapply%E9%81%8B%E7%94%A8runbook.md): `artifact_imports` / `zip_uploads` / `file_uploads` の dry-run 作成と apply の見分け方
@@ -153,7 +153,7 @@ UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は、[フロン�
 - [リリース・デプロイ・rollback手順](./リリース・デプロイ・rollback手順.md)
 - [バックアップ・リストア手順](./バックアップ・リストア手順.md)
 - [本番運用・インフラ前提](./本番運用・インフラ前提.md)
-- maintenance mode 境界メモ: [会社 / ユーザー / 案件所属](./会社ユーザー案件所属maintenance-mode境界.md)、[確認依頼](./確認依頼maintenance-mode境界.md)、[文書ショートカット](./文書ショートカットmaintenance-mode境界.md)、[文書コメント・Q&A](./文書コメントQ%26Amaintenance-mode境界.md)、[外部送付履歴](./外部送付履歴maintenance-mode境界.md)、[internal upload API](./internal%20upload%20API%20maintenance-mode境界.md)、[外部フォルダ同期 source 設定](./外部フォルダ同期source設定maintenance-mode境界.md)、[外部フォルダ同期 OAuth 接続](./外部フォルダ同期OAuth接続maintenance-mode境界.md)、[外部フォルダ同期 webhook](./外部フォルダ同期webhook-maintenance-mode境界.md) を、`READ_ONLY_MAINTENANCE` 中に止める変更操作と read-only に残す確認導線の個別境界として確認する
+- [maintenance-mode 境界一覧](../.kiro/steering/maintenance-mode-boundaries.md): `READ_ONLY_MAINTENANCE` 中に止める変更操作と read-only に残す確認導線の境界を機能領域別に確認する
 - [監視・アラート設計](./監視・アラート設計.md): alert 後に最初に見る runbook guidance と監視方針の入口。通知 channel / alert rule / 監視サービス連携は current repo では未実装の境界として読む
 - [生成ファイル継続失敗候補runbook](./生成ファイル継続失敗候補runbook.md): dashboard の生成ファイル card に出る継続失敗候補を、通知や自動 retry ではなく read-only 調査入口として読む
 
