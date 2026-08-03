@@ -4,178 +4,6 @@
 
 関連仕様の入口は [Specs index](../specs/README.md) を参照する。
 
-## 現在までに入った主な改善
-
-### Markdown / Docusaurus preview
-
-- Rails viewer shell + same-origin iframe による Docusaurus HTML 表示
-- iframe 内の Docusaurus navbar / footer / toc / sidebar 除去
-- viewer toolbar から版詳細、差分、添付・元ファイルへ移動
-- Docusaurus preview renderer client / artifact installer
-  - renderer artifact の空応答検出
-  - renderer error JSON の `error` / `message` / `errors` 読み取り
-  - renderer が `X-Docs-Site-Path` を返さない場合の entry path fallback
-  - `index.md` / `README.mdx` 由来の site path 正規化
-  - `site_path/index.html` と `site_path.html` artifact の受け入れ
-  - artifact path traversal / absolute path 防止
-- Markdown table toolbar
-  - 表幅調整
-  - 列幅調整
-  - 先頭行固定
-  - 先頭列固定
-  - CSV / Markdown コピー
-  - 表内検索
-  - 表示設定リセット
-
-### Version diff
-
-- 添付・元ファイルの追加 / 変更 / 削除サマリ
-- Markdown 行単位 diff
-- レンダリング後 HTML diff
-- HTML table cell diff
-- 差分ビューのタブ風ナビゲーション / 件数バッジ
-- 比較対象版 dropdown
-
-### 添付・元ファイル viewer
-
-- `DocumentFileViewerPlan` による viewer 種別判定
-- 添付一覧への viewer label / preview 不可理由表示
-- CSV / TSV preview
-  - sample table 表示
-  - 検索
-  - CSV コピー
-  - 先頭行固定
-  - 先頭列固定
-  - 列幅調整 / 保存 / リセット
-- JSON / YAML preview
-  - 整形表示
-  - コピー
-  - 内容検索
-  - 一致行のみ表示
-  - 検索ショートカット
-- text preview
-  - 先頭行表示制限
-  - 検索
-  - 一致行のみ表示
-  - コピー
-- image preview
-  - inline 表示
-  - fit / 原寸表示
-  - zoom
-  - rotate
-  - keyboard shortcuts
-- PDF preview
-  - wrapper 画面
-  - 表示高さ切り替え
-  - keyboard shortcut
-- ZIP preview
-  - entry 一覧
-  - entry 検索
-  - entry path 個別コピー
-  - 表示中 entry path 一括コピー
-  - directory filter
-  - file / folder filter
-  - safety filter
-  - candidate filter
-  - active filter summary / 個別解除 chip
-  - 件数サマリー
-  - ディレクトリサマリー
-  - ディレクトリパスコピー
-  - safe / unsafe path 表示
-  - entry action metadata / 操作候補表示
-  - archive entry lookup service
-  - archive entry text preview service
-  - archive entry preview route / controller / view
-  - archive entry preview request spec
-  - archive entry download design
-  - archive entry download service / spec
-  - archive entry download route / controller / request spec
-  - archive entry download UI link
-  - text preview candidate への preview link
-  - text preview / download 候補分類
-  - truncated 時の対象範囲 warning
-  - entry sort
-  - 条件リセット
-
-### Preview target metadata
-
-- `preview_targets` YAML / front matter parser
-- document version metadata source resolver
-- quality checker result integration
-- quality check hash / Markdown rendering spec
-- document file display classifier
-- document version page summary card / file role badges
-- document version page request spec
-- explicit metadata files
-  - `.docs-portal-preview.yml`
-  - `.docs-portal-preview.yaml`
-  - `.preview-targets.yml`
-  - `.preview-targets.yaml`
-  - `preview-targets.yml`
-  - `preview-targets.yaml`
-  - `preview_targets.yml`
-  - `preview_targets.yaml`
-- Markdown front matter fallback
-- supported keys
-  - `primary`
-  - `attachments`
-  - `hidden`
-  - `debug`
-  - `groups`
-- source file info check
-- unknown key warning
-- missing path warning
-- duplicate path warning
-- unsafe relative path normalization
-- primary / attachment / hidden / debug / grouped / normal classification
-
-### Controller / service structure
-
-- `DocumentFilesController#show` の preview / send / not found 分岐整理
-- Office preview rendering の helper 化
-- embedded HTML preview / asset rendering の helper 化
-- embedded asset path resolver service の切り出し
-- embedded HTML base path helper の service 化
-- inline preview の template dispatch / prepare dispatch 分離
-- text inline preview predicate の切り出し
-- preview service Result helper concern の追加
-- `Content-Disposition` header 設定 helper 化
-
-### Codeblock actions
-
-- コードブロックコピー
-- 言語ラベル表示
-- 機密注意ラベル
-- 行番号 / 行 anchor
-- JSON codeblock のローカル構文検証
-- JSON codeblock の整形コピー
-
-### Search
-
-- Docusaurus iframe 内の文書内検索
-- 文書内検索UIの初期折りたたみ
-- 文書内検索ショートカット
-  - `/` で検索欄展開 / focus
-  - `Enter` で次へ
-  - `Shift+Enter` で前へ
-  - `Esc` で解除 / 折りたたみ
-- 添付・元ファイル一覧検索
-- 添付・元ファイル検索で親フォルダ行を維持
-- 添付・元ファイル検索で一致行 / 文脈行を区別表示
-
-### Specs / research
-
-- [Specs index](../specs/README.md)
-- [検索責務仕様](../specs/search.md)
-- [閲覧画面とUI仕様](../specs/閲覧画面とUI.md)
-- [Archive preview仕様](../specs/archive-preview.md)
-- [Docusaurus 実例調査メモ](../research/docusaurus-examples.md)
-- DocumentFile viewer registry 仕様
-- Preview target metadata 仕様
-- Path history / redirect 仕様
-- Codeblock actions 仕様
-- Docusaurus build profiles 仕様
-
 ## 短期タスク
 
 ### 1. Preview target metadata display refinement
@@ -183,6 +11,10 @@
 目的:
 
 - 可視化済みの分類情報を、実際の添付・元ファイル閲覧体験に合わせて整える
+
+完了条件:
+
+- hidden 分類のファイルが通常一覧から分離（非表示 or 折りたたみ）され、debug 分類が専用セクションに表示され、group_name でフィルタまたはグルーピングが動作すること
 
 候補:
 
@@ -197,11 +29,17 @@
 
 - 実装済みの preview 改善と仕様書の差分を小さく保つ
 
+完了条件:
+
+- 仕様ファイル追加時に specs/README.md へリンクが追加され、実装済みタスクが roadmap から除去されていること
+
 候補:
 
 - 仕様ファイル追加時に `docs/specs/README.md` へリンクする
 - 実装済みタスクを roadmap から削除 / 移動する
 - research と仕様の参照関係を整理する
+
+※ 具体情報待ち — 対象・手段が未定のため着手不可
 
 ## 中期タスク
 
@@ -210,6 +48,10 @@
 目的:
 
 - portal embedded / admin API spec / preview check / diff metadata の用途を分ける
+
+完了条件:
+
+- build command が profile 引数を受け付け、manifest に profile / source commit / build time が記録され、stale build warning が viewer shell に表示されること
 
 候補:
 
@@ -223,6 +65,10 @@
 目的:
 
 - slug / site path / tree path 変更時に旧URL互換を保つ
+
+完了条件:
+
+- path history model が変更履歴を保持し、旧 URL アクセスで canonical path へリダイレクトされ、deleted/archived notice が表示されること
 
 候補:
 
@@ -238,6 +84,10 @@
 
 - code block の行 anchor と internal review comment を接続する
 
+完了条件:
+
+- codeblock line からコメント追加を開始でき、コメント一覧から該当行へジャンプできること
+
 候補:
 
 - comment form に codeblock anchor を入れられるようにする
@@ -245,3 +95,5 @@
 - コメント一覧から該当 codeblock line へ移動する
 
 ### 4. Portal 横断検索の第一歩
+
+※ 具体情報待ち — 対象・手段が未定のため着手不可
