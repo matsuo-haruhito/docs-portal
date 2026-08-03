@@ -9,7 +9,7 @@ current 実装の版詳細画面は、HTML本文、比較対象版との差分�
 1. 画面責務の正本は [閲覧画面とUI](./specs/閲覧画面とUI.md)
 2. 文書の公開モデルと版の前提は [アプリケーション仕様](./アプリケーション仕様.md)
 3. 文書ショートカットや確認依頼との役割差は [ダッシュボードと文書ショートカット・確認依頼の使い分け](./ダッシュボードと文書ショートカット・確認依頼の使い分け.md)
-4. Office preview や Microsoft Graph の前提を見直したいときは [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md)
+4. Office preview や Microsoft Graph の前提を見直したいときは [Microsoft Graph接続とOffice preview](./specs/Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md)
 
 ## 2. この画面で最初に見る場所
 
@@ -249,7 +249,7 @@ PDF / image の inline preview では、画面上の button 操作に加えて�
 
 - `embedded=1` の file preview は版詳細の閲覧権限と scan 状態を満たす file だけを対象にする
 - 直接 download 導線では `DocumentFile` の download 権限を見て、inline preview と同じ前提にしない
-- Office preview の接続や folder 設定を疑うときは [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md) と [Microsoft Graph接続管理runbook](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E7%AE%A1%E7%90%86runbook.md) を先に見る
+- Office preview の接続や folder 設定を疑うときは [Microsoft Graph接続とOffice preview](./specs/Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md) と [Microsoft Graph接続管理runbook](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E7%AE%A1%E7%90%86runbook.md) を先に見る
 - ZIP 内 entry の個別 preview / download は [ZIPプレビューと個別ダウンロード確認 runbook](./ZIP%E3%83%97%E3%83%AC%E3%83%93%E3%83%A5%E3%83%BC%E3%81%A8%E5%80%8B%E5%88%A5%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89%E7%A2%BA%E8%AA%8Drunbook.md) も合わせて確認する
 
 ## 10. `品質チェック` を見る場面

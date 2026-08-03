@@ -9,7 +9,7 @@
 - current workflow: `.github/workflows/build-docs.yml` の `build-docs` job
 - 運用確認順: [build-docs workflow確認runbook](./build-docs%20workflow確認runbook.md)
 - current metadata 保存境界: [site build 実行履歴保存境界メモ](./site-build実行履歴保存境界メモ.md)
-- manifest 仕様: [publish.json 仕様と生成ルール](./publish.json%20仕様と生成ルール.md)
+- manifest 仕様: [publish.json 仕様と生成ルール](./specs/publish.json%20仕様と生成ルール.md)
 
 ## 対象を 1 workflow に固定する
 

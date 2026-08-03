@@ -101,4 +101,4 @@ Git連携 run の job 化 / 履歴保存境界は issue `#4604` の境界メモ�
 - `docs-site` artifact 以外の代表対象を同時に増やさない
 - secret-like value や private path を保存・表示対象として扱わない
 - artifact 本体、manifest 全文、CI log、import API request payload を `GeneratedFileRun.metadata` に保存しない
-- current workflow の metadata 名は [build-docs workflow確認runbook](./build-docs%20workflow%E7%A2%BA%E8%AA%8Drunbook.md) と [publish.json 仕様と生成ルール](./publish.json%20仕様と生成ルール.md) に戻って確認する
+- current workflow の metadata 名は [build-docs workflow確認runbook](./build-docs%20workflow%E7%A2%BA%E8%AA%8Drunbook.md) と [publish.json 仕様と生成ルール](./specs/publish.json%20仕様と生成ルール.md) に戻って確認する

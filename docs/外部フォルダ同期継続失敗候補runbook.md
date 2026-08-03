@@ -54,4 +54,4 @@ error preview は調査の入口だけに使います。token、Authorization he
 ## 関連
 
 - [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md)
-- [監視・アラート設計](./監視・アラート設計.md)
+- [監視・アラート設計](./specs/監視・アラート設計.md)

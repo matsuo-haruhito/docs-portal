@@ -150,4 +150,4 @@ current `main` では、共有 URL から metadata を保存するところま�
 - [Microsoft Graph接続とOffice preview](./Microsoft%20Graph%E6%8E%A5%E7%B6%9A%E3%81%A8Office%20preview.md)
 - [Google Drive外部フォルダ同期](./Google%20Drive外部フォルダ同期.md)
 - [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md)
-- [ローカルセットアップと環境変数](./ローカルセットアップと環境変数.md)
+- [ローカルセットアップと環境変数](../guides/ローカルセットアップと環境変数.md)

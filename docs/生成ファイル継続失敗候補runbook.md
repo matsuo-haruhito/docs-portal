@@ -133,7 +133,7 @@ caller は `RunFailureAlertCandidates` と同じように relation、threshold�
 - Related digest preview: #3676
 - Related admin handoff preview: #2892 / PR #4302
 - Related docs sync: #4303
-- [監視・アラート設計](./監視・アラート設計.md)
+- [監視・アラート設計](./specs/監視・アラート設計.md)
 - [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md)
 - [生成ファイル再試行と定期ジョブ管理runbook](./生成ファイル再試行と定期ジョブ管理runbook.md)
 - [自動リトライ安全性棚卸し](./自動リトライ安全性棚卸し.md)
