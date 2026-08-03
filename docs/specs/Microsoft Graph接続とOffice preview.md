@@ -10,6 +10,8 @@ preview 用の `MicrosoftGraphConnection` と、外部フォルダ同期元で�
 - Office preview は、案件ごとの `MicrosoftGraphConnection` を優先して使います。
 - Graph preview が使えない場合は、Google Drive 由来 preview へ fallback します。
 
+Office preview の表示フロー・provider 優先順位・fallback 条件・preview upload ライフサイクルの詳細は [docs-src/office-preview.md](../../docs-src/office-preview.md) を参照。Microsoft Graph の設定項目・権限・運用フロー全体は [docs-src/api-specification.md](../../docs-src/api-specification.md) の「Microsoft Graph / Office preview」セクションを参照。
+
 現在の viewer 側の正本は [docs/specs/閲覧画面とUI.md](./specs/閲覧画面とUI.md) です。この文書では、そこに書かれている動作を管理画面でどう成立させるかに絞って整理します。
 
 ## 接続マスタの登録先

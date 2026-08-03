@@ -14,7 +14,7 @@ internal API は、用途が分かる名前に分ける。
   - 同期クライアントや手動アップロードから単体ファイルを受ける入口。
   - `file`、`project_code`、`relative_path` を受け取る。
 
-詳細な呼び出し例は [Client file upload API flow](./client_file_upload_api.md) と、管理者向けの `docs-src/api-specification.md` を参照する。
+詳細な呼び出し例・パラメータ仕様は [docs-src/api-specification.md](../../docs-src/api-specification.md) および [docs-src/client-file-upload-api.md](../../docs-src/client-file-upload-api.md) を参照する。
 
 `doc_imports` は、実態が document file upload ではなく artifact import だったため、新しい用途名では使わない。
 `zip_imports` は、internal API としてはファイル受信口であることが分かるよう `zip_uploads` に改名した。
@@ -23,26 +23,7 @@ internal API は、用途が分かる名前に分ける。
 
 `file_uploads` は、受信した単体ファイルを一時ZIPとして staging し、既存の ZIP upload dry-run / manifest / `DocumentImporter` の流れへ合流させる。
 
-`file` パラメータがあるリクエストは dry-run 作成として扱う。
-そのため、同期クライアントや簡易アップローダーは `validate_only=true` を省略できる。
-`validate_only=true` を付けても同じく dry-run 作成になる。
-本実行時は `file` を送らず、`import_dry_run_id` だけを送る。
-
-クライアントPC上のフルパスは `source_path` として参考情報に留め、取り込み上の安全な識別子には `relative_path` を使う。
-`relative_path` は先頭 `/`、Windows の `C:/...` 形式、`../` を拒否し、サーバー側の保存先決定には使わない。
-`relative_path` が未指定の場合は `original_filename`、それもなければ upload file の元ファイル名を fallback として使う。
-この fallback 値も `relative_path` と同じ安全チェックを通す。
-
-`content_hash` は同期クライアント向けの内容ハッシュ名として受け付ける。
-指定された `content_hash` は `sha256:<hash>` 形式でも `<hash>` 形式でも受け付け、アップロードされた元ファイル実体の SHA-256 と常に照合する。
-不一致の場合は dry-run を作らない。
-`source_commit_hash` は artifact import と揃えるための採用ハッシュ名で、`content_hash` と両方ある場合、採用値としてはこちらを優先する。
-どちらも指定されない場合、`file_uploads` は内部生成した一時ZIPではなく、アップロードされた元ファイル実体の SHA-256 を採用する。
-これにより、同期クライアントが同じファイルを再送した場合にも、内容単位で追跡しやすくする。
-`version_label` が指定されない場合は `file-YYYYMMDDHHMMSS-<hash8>` を使う。
-
-`file_upload_preview` には、採用された `source_name`、`relative_path`、参考情報の `source_path`、`file_size`、検証済みの `content_hash`、採用後の `source_commit_hash`、`version_label`、および内部ZIP化後の `zip_import_preview` を返す。
-レスポンスだけで dry-run の主要条件を確認できるようにする。
+パラメータ仕様・hash の扱い・path validation・レスポンス例の詳細は [docs-src/client-file-upload-api.md](../../docs-src/client-file-upload-api.md) を参照。
 
 ## dry-run の本実行
 
