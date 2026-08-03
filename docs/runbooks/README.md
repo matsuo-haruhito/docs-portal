@@ -16,6 +16,7 @@
 - [版詳細プレビュー・差分・添付確認runbook](./viewer/版詳細プレビュー・差分・添付確認runbook.md)
 - [ZIPプレビューと個別ダウンロード確認runbook](./viewer/ZIPプレビューと個別ダウンロード確認runbook.md)
 - [グローバルナビ分類・開閉導線runbook](./viewer/グローバルナビ分類・開閉導線runbook.md)
+- [text-preview-line-anchor-target-cue](./viewer/text-preview-line-anchor-target-cue.md)
 
 ## admin/
 
@@ -67,3 +68,11 @@
 - [API仕様ページとdocs-src更新確認runbook](./ops/API仕様ページとdocs-src更新確認runbook.md)
 - [Markdown table toolbar運用runbook](./ops/Markdown%20table%20toolbar運用runbook.md)
 - [関連gem連携調査runbook](./ops/関連gem連携調査runbook.md)
+- [バックアップ・リストア手順](./ops/バックアップ・リストア手順.md)
+- [リリース・デプロイ・rollback手順](./ops/リリース・デプロイ・rollback手順.md)
+- [情報露出smoke evidence運用メモ](./ops/情報露出smoke%20evidence運用メモ.md)
+- [文書利用状況未利用handoffメモ](./ops/文書利用状況未利用handoffメモ.md)
+- [生成ファイル再試行UI-cue補足](./ops/生成ファイル再試行UI-cue補足.md)
+- [社外ユーザー向け情報露出点検チェックリスト](./ops/社外ユーザー向け情報露出点検チェックリスト.md)
+- [管理画面nav領域見出し運用メモ](./ops/管理画面nav領域見出し運用メモ.md)
+- [運用metadata情報露出点検チェックリスト](./ops/運用metadata情報露出点検チェックリスト.md)
