@@ -20,7 +20,7 @@ DIGEST_ROWS = [
     spec: "spec/requests/external_document_access_spec.rb",
     surface: "document viewer access",
     purpose: "権限外文書の本文・詳細導線が見えないこと",
-    runbook: "docs/社外ユーザー向け情報露出点検チェックリスト.md"
+    runbook: "docs/runbooks/ops/社外ユーザー向け情報露出点検チェックリスト.md"
   },
   {
     spec: "spec/requests/document_search_spec.rb",
@@ -32,7 +32,7 @@ DIGEST_ROWS = [
     spec: "spec/requests/project_site_security_spec.rb",
     surface: "Docusaurus site delivery",
     purpose: "site 配信で権限外ページへの導線が増えないこと",
-    runbook: "docs/社外ユーザー向け情報露出点検チェックリスト.md"
+    runbook: "docs/runbooks/ops/社外ユーザー向け情報露出点検チェックリスト.md"
   },
   {
     spec: "spec/requests/document_files_spec.rb",
@@ -44,7 +44,7 @@ DIGEST_ROWS = [
     spec: "spec/requests/document_sites_spec.rb",
     surface: "document site assets",
     purpose: "HTML 表示と asset metadata が権限外情報を増やさないこと",
-    runbook: "docs/社外ユーザー向け情報露出点検チェックリスト.md"
+    runbook: "docs/runbooks/ops/社外ユーザー向け情報露出点検チェックリスト.md"
   },
   {
     spec: "spec/requests/document_review_comments_spec.rb",
@@ -72,7 +72,7 @@ DIGEST_ROWS = [
   }
 ].freeze
 
-NEXT_CHECKLIST = "docs/社外ユーザー向け情報露出点検チェックリスト.md"
+NEXT_CHECKLIST = "docs/runbooks/ops/社外ユーザー向け情報露出点検チェックリスト.md"
 FAILURE_HANDOFF = "対象 spec / surface / next runbook へ戻って確認する。HTML / JSON / ZIP payload、raw response、token-like value、文書タイトル、添付 metadata、権限外文書名は貼らない。"
 
 def consume_markdown_digest_format(argv)

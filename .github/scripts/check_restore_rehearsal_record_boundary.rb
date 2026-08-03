@@ -8,7 +8,7 @@ RESTORE_REHEARSAL_RECORD_REPO_ROOT = Pathname.new(File.expand_path("../..", __di
 RESTORE_REHEARSAL_RECORD_CHECKS = [
   {
     name: "backup restore procedure restore rehearsal template",
-    path: "docs/バックアップ・リストア手順.md",
+    path: "docs/runbooks/ops/バックアップ・リストア手順.md",
     expected: [
       "## 16. rehearsal 実施記録テンプレート",
       "restore rehearsal を実施したら、次回の復旧判断で追えるように 1 回分の結果を短く残します。",
@@ -33,7 +33,7 @@ RESTORE_REHEARSAL_RECORD_CHECKS = [
   },
   {
     name: "backup restore procedure NG return paths",
-    path: "docs/バックアップ・リストア手順.md",
+    path: "docs/runbooks/ops/バックアップ・リストア手順.md",
     expected: [
       "判定が `NG` または保留の場合は、restore を進めずに次のどこへ戻るかを記録します。",
       "artifact が読めない: 「保存先と命名」または artifact の再取得へ戻る",

@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe "External user exposure smoke checklist" do
-  CHECKLIST_PATH = "docs/社外ユーザー向け情報露出点検チェックリスト.md"
+  CHECKLIST_PATH = "docs/runbooks/ops/社外ユーザー向け情報露出点検チェックリスト.md"
   SCRIPT_PATH = "bin/external_user_exposure_smoke"
 
   def read_source(path)

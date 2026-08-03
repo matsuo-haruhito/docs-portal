@@ -94,7 +94,7 @@ RSpec.describe "bin/verify_backup_artifacts" do
       expect(status).not_to be_success
       expect(stdout).to include("Checking storage archive listing")
       expect(stderr).to include("storage archive is missing required paths: storage/document_files, storage/docs_sites")
-      expect(stderr).to include("docs/バックアップ・リストア手順.md")
+      expect(stderr).to include("docs/runbooks/ops/バックアップ・リストア手順.md")
     end
   end
 
@@ -128,7 +128,7 @@ RSpec.describe "bin/verify_backup_artifacts" do
       expect(stdout).to include("Checking storage archive listing")
       expect(stdout).to include("Storage archive includes storage/document_files and storage/docs_sites.")
       expect(stderr).to include("Backup artifact verification failed: metadata naming is missing environment name, timestamp, commit SHA or release identifier")
-      expect(stderr).to include("docs/バックアップ・リストア手順.md")
+      expect(stderr).to include("docs/runbooks/ops/バックアップ・リストア手順.md")
     end
   end
 end

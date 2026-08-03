@@ -95,7 +95,7 @@ RSpec.describe BackupArtifactVerifier do
     expect(result.ok).to be(false)
     expect(stdout.string).to include("Checking DB dump with pg_restore --list: #{db_dump}")
     expect(stderr.string).to include("pg_restore --list failed for #{db_dump}: pg_restore: error: input file does not appear to be a valid archive")
-    expect(stderr.string).to include("docs/バックアップ・リストア手順.md")
+    expect(stderr.string).to include("docs/runbooks/ops/バックアップ・リストア手順.md")
   end
 
   it "fails when pg_restore is not available" do
@@ -103,7 +103,7 @@ RSpec.describe BackupArtifactVerifier do
 
     expect(result.ok).to be(false)
     expect(stderr.string).to include("pg_restore executable not found; install PostgreSQL client tools or run on a host that has pg_restore")
-    expect(stderr.string).to include("docs/バックアップ・リストア手順.md")
+    expect(stderr.string).to include("docs/runbooks/ops/バックアップ・リストア手順.md")
   end
 
   it "passes when the storage archive contains the required prefixes and metadata" do

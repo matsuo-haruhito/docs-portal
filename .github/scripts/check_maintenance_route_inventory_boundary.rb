@@ -7,7 +7,7 @@ MAINTENANCE_ROUTE_INVENTORY_REPO_ROOT = Pathname.new(File.expand_path("../..", _
 
 MAINTENANCE_ROUTE_INVENTORY_FILES = {
   routes: MAINTENANCE_ROUTE_INVENTORY_REPO_ROOT.join("config/routes.rb"),
-  docs: MAINTENANCE_ROUTE_INVENTORY_REPO_ROOT.join("docs/本番運用・インフラ前提.md")
+  docs: MAINTENANCE_ROUTE_INVENTORY_REPO_ROOT.join("docs/specs/本番運用・インフラ前提.md")
 }.freeze
 
 MAINTENANCE_ROUTE_INVENTORY_ROUTE_SIGNALS = [
@@ -124,7 +124,7 @@ if maintenance_route_inventory_errors.empty?
   MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS.each do |expected_text|
     next if docs_content.include?(expected_text)
 
-    maintenance_route_inventory_errors << "docs/本番運用・インフラ前提.md: missing maintenance route inventory signal: #{expected_text.inspect}"
+    maintenance_route_inventory_errors << "docs/specs/本番運用・インフラ前提.md: missing maintenance route inventory signal: #{expected_text.inspect}"
   end
 end
 

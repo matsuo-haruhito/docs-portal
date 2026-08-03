@@ -73,7 +73,7 @@ filter が有効なときは、一覧上部の `適用中:` に `検索: ...`、
 
 CSV の固定列は current controller の `CSV_HEADERS` に従い、`案件コード`、`案件名`、`文書セット名`、`種別`、`公開範囲`、`文書数`、`public_id` を出す。表示設定で table の列を隠したり幅を変えたりしても、CSV header、CSV row、対象集合は変わらない。page 2 などを見ている状態で CSV 出力しても、出力対象はその page の行だけではなく、current filter に一致する全件である。
 
-同じ条件を JSON で見返したいときは、`GET /admin/document_sets.json?q=...&set_type=...&visibility_policy=...` を CSV の companion metadata として読む。metadata では `report_type: document_sets`、`export_scope: current_filters`、`filters`、`ignored_filters`、`row_count`、`csv_headers`、`summary` を確認できるが、CSV row や文書セットの `public_id` 一覧は返らない。詳しい項目の読み方は [CSV条件metadata JSON 運用メモ](./CSV条件metadata_JSON運用メモ.md) の文書セット section を参照する。
+同じ条件を JSON で見返したいときは、`GET /admin/document_sets.json?q=...&set_type=...&visibility_policy=...` を CSV の companion metadata として読む。metadata では `report_type: document_sets`、`export_scope: current_filters`、`filters`、`ignored_filters`、`row_count`、`csv_headers`、`summary` を確認できるが、CSV row や文書セットの `public_id` 一覧は返らない。詳しい項目の読み方は [CSV条件metadata JSON 運用メモ](../../specs/CSV条件metadata_JSON運用メモ.md) の文書セット section を参照する。
 
 `検索結果: 0件` かつ `条件に一致する文書セットはありません。` が出たときは、登録済み文書セットがないとは限らない。まず `検索` の入力ゆれ、次に `種別` / `公開範囲` の組み合わせを見直す。条件を外して全体を見直す場合は、form actions の `条件をクリア` か、0 件メッセージ近くの `条件をクリア` で一覧トップへ戻る。0 件のときは page link は出ない。
 
@@ -227,6 +227,6 @@ CSV の固定列は current controller の `CSV_HEADERS` に従い、`案件コ�
 - [Git連携設定と同期失敗確認runbook](./Git連携設定と同期失敗確認runbook.md)
 - [ZIPインポートdry-run運用runbook](./ZIPインポートdry-run運用runbook.md)
 - [internal upload API dry-run・apply運用runbook](./internal%20upload%20API%20dry-run・apply運用runbook.md)
-- [CSV条件metadata JSON 運用メモ](./CSV条件metadata_JSON運用メモ.md)
+- [CSV条件metadata JSON 運用メモ](../../specs/CSV条件metadata_JSON運用メモ.md)
 - [README](../README.md)
 - [docs/README](./README.md)

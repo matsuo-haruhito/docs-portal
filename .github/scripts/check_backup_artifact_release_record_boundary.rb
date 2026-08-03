@@ -8,7 +8,7 @@ BACKUP_ARTIFACT_RELEASE_RECORD_REPO_ROOT = Pathname.new(File.expand_path("../.."
 BACKUP_ARTIFACT_RELEASE_RECORD_CHECKS = [
   {
     name: "Release record backup verification template",
-    path: "docs/リリース・デプロイ・rollback手順.md",
+    path: "docs/runbooks/ops/リリース・デプロイ・rollback手順.md",
     expected: [
       "- デプロイ前バックアップ:",
       "- `bin/verify_backup_artifacts`:",
@@ -23,7 +23,7 @@ BACKUP_ARTIFACT_RELEASE_RECORD_CHECKS = [
   },
   {
     name: "Backup artifact read-only verifier docs",
-    path: "docs/バックアップ・リストア手順.md",
+    path: "docs/runbooks/ops/バックアップ・リストア手順.md",
     expected: [
       "read-only で最低限の健全性を確認する入口として `bin/verify_backup_artifacts` を使います。",
       "この command は restore を実行せず、`pg_restore --list` と archive listing だけを行います。",

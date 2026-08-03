@@ -43,7 +43,7 @@ DIGEST_ROWS = [
     spec: "spec/requests/admin_external_folder_sync_webhook_event_exposure_spec.rb",
     surface: "external folder sync webhook details",
     purpose: "webhook headers / payloadのtoken-like valueを保存時filterと表示時sanitizeでraw表示しないこと",
-    runbook: "docs/運用metadata情報露出点検チェックリスト.md"
+    runbook: "docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md"
   },
   {
     spec: "spec/requests/admin_microsoft_graph_connections_spec.rb",
@@ -65,7 +65,7 @@ DIGEST_ROWS = [
   }
 ].freeze
 
-NEXT_CHECKLIST = "docs/運用metadata情報露出点検チェックリスト.md"
+NEXT_CHECKLIST = "docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md"
 FAILURE_HANDOFF = "対象 spec / surface / next runbook へ戻って確認する。raw path、raw payload、token-like value、PII-like value、Webhook / Graph details、外部 ID、provider payload は貼らない。"
 
 def consume_markdown_digest_format(argv)

@@ -8,7 +8,7 @@ IMPORT_DRY_RUN_HISTORY_REPO_ROOT = Pathname.new(File.expand_path("../..", __dir_
 IMPORT_DRY_RUN_HISTORY_CHECKS = [
   {
     name: "ZIP import dry-run history boundary memo",
-    path: "docs/ZIPインポートdry-run履歴保存境界メモ.md",
+    path: "docs/specs/ZIPインポートdry-run履歴保存境界メモ.md",
     expected: [
       "保存してよい metadata 候補",
       "保存しない raw payload",
@@ -24,7 +24,7 @@ IMPORT_DRY_RUN_HISTORY_CHECKS = [
   },
   {
     name: "ZIP import dry-run operations runbook",
-    path: "docs/ZIPインポートdry-run運用runbook.md",
+    path: "docs/runbooks/import/ZIPインポートdry-run運用runbook.md",
     expected: [
       "`ZIPインポート`: `admin/zip_imports/new`",
       "`ZIPインポートdry-run`: `admin/zip_imports/:id`",
@@ -36,7 +36,7 @@ IMPORT_DRY_RUN_HISTORY_CHECKS = [
   },
   {
     name: "Git import run history boundary memo",
-    path: "docs/Git連携run履歴保存境界メモ.md",
+    path: "docs/specs/Git連携run履歴保存境界メモ.md",
     expected: [
       "保存してよい metadata 候補",
       "保存しない raw payload",

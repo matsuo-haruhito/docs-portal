@@ -21,11 +21,11 @@
 
 - external user exposure: `bin/external_user_exposure_smoke --format markdown`
   - result: passed / failed
-  - next checklist: `docs/社外ユーザー向け情報露出点検チェックリスト.md`
+  - next checklist: `docs/runbooks/ops/社外ユーザー向け情報露出点検チェックリスト.md`
   - failure handoff: 対象 spec / surface / runbook へ戻って確認する。HTML / JSON / ZIP payload、raw response、token-like value、文書タイトル、添付 metadata、権限外文書名は貼らない。
 - operational metadata exposure: `bin/operational_metadata_exposure_smoke --format markdown`
   - result: passed / failed
-  - next checklist: `docs/運用metadata情報露出点検チェックリスト.md`
+  - next checklist: `docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md`
   - failure handoff: 対象 spec / surface / runbook へ戻って確認する。raw path、raw payload、token-like value、PII-like value、Webhook / Graph details、外部 ID、provider payload は貼らない。
 ```
 

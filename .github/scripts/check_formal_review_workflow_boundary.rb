@@ -14,7 +14,7 @@ BOUNDARY_CHECKS = [
     ]
   },
   {
-    path: "docs/正式レビュー承認workflow境界メモ.md",
+    path: "docs/specs/正式レビュー承認workflow境界メモ.md",
     expected: [
       "current support",
       "human decision 待ち",

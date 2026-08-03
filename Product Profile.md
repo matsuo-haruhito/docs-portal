@@ -50,7 +50,7 @@
 2. [docs/README.md](./docs/README.md)
 3. [docs/アプリケーション仕様.md](./docs/アプリケーション仕様.md)
 4. [docs/開発・保守ガイド.md](./docs/開発・保守ガイド.md)
-5. [docs/本番運用・インフラ前提.md](./docs/本番運用・インフラ前提.md) - `READ_ONLY_MAINTENANCE`、本番 health check、storage / import / build / 外部連携の運用境界を確認するときの入口
+5. [docs/specs/本番運用・インフラ前提.md](./docs/specs/本番運用・インフラ前提.md) - `READ_ONLY_MAINTENANCE`、本番 health check、storage / import / build / 外部連携の運用境界を確認するときの入口
 6. タスクに対応する個別仕様 / runbook
 
 ## 関連 repo

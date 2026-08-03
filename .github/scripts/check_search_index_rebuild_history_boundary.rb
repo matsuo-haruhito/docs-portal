@@ -7,7 +7,7 @@ REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
 CHECKS = [
   {
-    path: "docs/search-index-rebuild履歴境界メモ.md",
+    path: "docs/specs/search-index-rebuild履歴境界メモ.md",
     expected: [
       "current repo では、search index rebuild 専用の controller action、service、Rake task、GitHub Actions job はまだ current support として確認していません。",
       "Docusaurus site build は [site build 実行履歴保存境界メモ](./site-build実行履歴保存境界メモ.md)、Git連携 run は [Git連携 run 履歴保存境界メモ](./Git連携run履歴保存境界メモ.md) を正本にし、3 surface を同時に実装する候補として扱いません。",
@@ -31,7 +31,7 @@ CHECKS = [
     ]
   },
   {
-    path: "docs/site-build実行履歴保存境界メモ.md",
+    path: "docs/specs/site-build実行履歴保存境界メモ.md",
     expected: [
       "search index rebuild の履歴は issue `#4586` の境界メモを正本にし、site build artifact 履歴とは別 surface として扱います。",
       "[search index rebuild 履歴境界メモ](./search-index-rebuild履歴境界メモ.md)"

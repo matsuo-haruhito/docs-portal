@@ -161,7 +161,7 @@ filter なしで 0 件の場合に表示される `生成ファイル実行履�
 
 `Docusaurus site build / docs-site artifact` の read-only evidence は `GeneratedFiles::SiteBuildArtifactRunRecorder` により `GeneratedFileRun` として保存されます。代表値は `job_id=docusaurus_site_build_artifact`、`generator=docusaurus_site_build`、`output_writer=docs_site_artifact`、`event_source=docusaurus_site_build`、`generated_paths` の `docs-site.tar.gz` と `publish/manifest/publish.json` です。metadata には artifact 名、source repo / branch / commit、workflow run id / attempt、manifest path、manifest document count だけを残します。
 
-この site build artifact run は、artifact 本体、manifest 全文、CI log、import API payload、secret-like env、private path を保存する画面ではありません。replay、rebuild、alert、scheduled job、artifact download / preview もこの runbook の current support ではありません。保存境界の詳細は [site build 実行履歴保存境界メモ](./site-build実行履歴保存境界メモ.md) を確認します。
+この site build artifact run は、artifact 本体、manifest 全文、CI log、import API payload、secret-like env、private path を保存する画面ではありません。replay、rebuild、alert、scheduled job、artifact download / preview もこの runbook の current support ではありません。保存境界の詳細は [site build 実行履歴保存境界メモ](../../specs/site-build実行履歴保存境界メモ.md) を確認します。
 
 長い metadata JSON や error log 全文をそのまま貼るのではなく、`gfr...` の一部、入力パスや生成パスの特徴語、エラー文の短い断片、metadata に残る event public ID、workflow run id、commit hash、manifest path など、100 文字以内の手掛かりで探します。検索対象を変えたい場合も、status / job_id / generator / output_writer / event_source / created date filter は残したまま、短い断片を差し替えて再検索します。
 
@@ -225,14 +225,14 @@ run 側の一覧では、bulk retry action の近くに `現在の条件で再�
 
 ## 8. 自動リトライを検討する前に
 
-手動の event 再投入 / run 再実行を超えて自動リトライを入れる場合は、[自動リトライ安全性棚卸し](./自動リトライ安全性棚卸し.md) で対象処理ごとの冪等性、二重実行リスク、必要な guard を確認します。
+手動の event 再投入 / run 再実行を超えて自動リトライを入れる場合は、[自動リトライ安全性棚卸し](../../specs/自動リトライ安全性棚卸し.md) で対象処理ごとの冪等性、二重実行リスク、必要な guard を確認します。
 
 この runbook の retry 導線は現時点では手動運用の説明です。自動化する場合も、import / build / mail / webhook をまとめた基盤 issue ではなく、対象処理 1 つ単位の issue に分けます。
 
 ## 9. 関連文書
 
 - [監視・アラート設計](./specs/監視・アラート設計.md)
-- [自動リトライ安全性棚卸し](./自動リトライ安全性棚卸し.md)
-- [site build 実行履歴保存境界メモ](./site-build実行履歴保存境界メモ.md)
-- [本番運用・インフラ前提](./本番運用・インフラ前提.md)
+- [自動リトライ安全性棚卸し](../../specs/自動リトライ安全性棚卸し.md)
+- [site build 実行履歴保存境界メモ](../../specs/site-build実行履歴保存境界メモ.md)
+- [本番運用・インフラ前提](../../specs/本番運用・インフラ前提.md)
 - [ファイル配信・storage運用方針](./specs/ファイル配信・storage運用方針.md)

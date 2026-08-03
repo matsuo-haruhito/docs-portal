@@ -7,21 +7,21 @@ RSpec.describe "exposure smoke checklist drift" do
     {
       name: "external user exposure",
       smoke_path: "bin/external_user_exposure_smoke",
-      checklist_path: "docs/社外ユーザー向け情報露出点検チェックリスト.md",
+      checklist_path: "docs/runbooks/ops/社外ユーザー向け情報露出点検チェックリスト.md",
       checklist_start: "## 5. 代表ケース",
       checklist_end: "日常 smoke として同じ集合をまとめて実行する場合は"
     },
     {
       name: "operational metadata exposure",
       smoke_path: "bin/operational_metadata_exposure_smoke",
-      checklist_path: "docs/運用metadata情報露出点検チェックリスト.md",
+      checklist_path: "docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md",
       checklist_start: "first slice で束ねる spec subset は次です。",
       checklist_end: "この subset は"
     }
   ].freeze
 
   SPEC_PATH_PATTERN = %r{spec/requests/[[:alnum:]_/]+_spec\.rb}
-  EVIDENCE_GUIDE_PATH = "docs/情報露出smoke evidence運用メモ.md"
+  EVIDENCE_GUIDE_PATH = "docs/runbooks/ops/情報露出smoke evidence運用メモ.md"
 
   GUARDS.each do |guard|
     it "keeps #{guard.fetch(:name)} smoke spec list aligned with its checklist" do
@@ -65,7 +65,7 @@ RSpec.describe "exposure smoke checklist drift" do
     docs_by_path = {
       "README.md" => REPO_ROOT.join("README.md").read,
       "docs/README.md" => REPO_ROOT.join("docs/README.md").read,
-      "docs/運用metadata情報露出点検チェックリスト.md" => REPO_ROOT.join("docs/運用metadata情報露出点検チェックリスト.md").read,
+      "docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md" => REPO_ROOT.join("docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md").read,
       EVIDENCE_GUIDE_PATH => REPO_ROOT.join(EVIDENCE_GUIDE_PATH).read
     }
 
@@ -92,8 +92,8 @@ RSpec.describe "exposure smoke checklist drift" do
     )
 
     require_representative_text(
-      docs_by_path.fetch("docs/運用metadata情報露出点検チェックリスト.md"),
-      "docs/運用metadata情報露出点検チェックリスト.md",
+      docs_by_path.fetch("docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md"),
+      "docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md",
       [
         "Markdown digest は smoke 名、実行時刻、RSpec 結果",
         "raw path、raw payload、token-like value、PII-like value",
@@ -126,8 +126,8 @@ RSpec.describe "exposure smoke checklist drift" do
     expect(guide).to include("bin/external_user_exposure_smoke --format markdown")
     expect(guide).to include("bin/operational_metadata_exposure_smoke --format markdown")
     expect(guide).to include("対象 spec / surface / runbook へ戻って確認する")
-    expect(guide).to include("docs/社外ユーザー向け情報露出点検チェックリスト.md")
-    expect(guide).to include("docs/運用metadata情報露出点検チェックリスト.md")
+    expect(guide).to include("docs/runbooks/ops/社外ユーザー向け情報露出点検チェックリスト.md")
+    expect(guide).to include("docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md")
 
     [
       "raw payload",
@@ -144,13 +144,13 @@ RSpec.describe "exposure smoke checklist drift" do
     external_smoke = REPO_ROOT.join("bin/external_user_exposure_smoke").read
     operational_smoke = REPO_ROOT.join("bin/operational_metadata_exposure_smoke").read
 
-    expect(external_smoke).to include('NEXT_CHECKLIST = "docs/社外ユーザー向け情報露出点検チェックリスト.md"')
+    expect(external_smoke).to include('NEXT_CHECKLIST = "docs/runbooks/ops/社外ユーザー向け情報露出点検チェックリスト.md"')
     expect(external_smoke).to include('- next checklist: `#{NEXT_CHECKLIST}`')
     expect(external_smoke).to include('- failure handoff: #{FAILURE_HANDOFF}')
     expect(external_smoke).to include("HTML / JSON / ZIP payload、raw response、token-like value")
     expect(external_smoke).to include("権限外文書名は貼らない")
 
-    expect(operational_smoke).to include('NEXT_CHECKLIST = "docs/運用metadata情報露出点検チェックリスト.md"')
+    expect(operational_smoke).to include('NEXT_CHECKLIST = "docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md"')
     expect(operational_smoke).to include('- next checklist: `#{NEXT_CHECKLIST}`')
     expect(operational_smoke).to include('- failure handoff: #{FAILURE_HANDOFF}')
     expect(operational_smoke).to include("raw path、raw payload、token-like value")

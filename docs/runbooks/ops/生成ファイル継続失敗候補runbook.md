@@ -113,7 +113,7 @@ caller は `RunFailureAlertCandidates` と同じように relation、threshold�
 4. identity、最終失敗時刻、error message 断片を手がかりに詳細を確認する
 5. 通知前の dry-run や admin 内の引き継ぎが必要な場合は `Markdown digest preview`、`継続失敗候補 handoff` 画面 / JSON、または `GeneratedFiles::RunFailureAlertHandoff` の payload を確認する
 6. retry や定期ジョブ側の確認が必要なら `docs/生成ファイル再試行と定期ジョブ管理runbook.md` に戻る
-7. 自動 retry の可否を検討する場合は `docs/自動リトライ安全性棚卸し.md` を先に確認する
+7. 自動 retry の可否を検討する場合は `docs/specs/自動リトライ安全性棚卸し.md` を先に確認する
 
 ## 将来の通知 channel で別途決めること
 
@@ -136,4 +136,4 @@ caller は `RunFailureAlertCandidates` と同じように relation、threshold�
 - [監視・アラート設計](./specs/監視・アラート設計.md)
 - [管理ダッシュボード・モデルブラウザ運用runbook](./管理ダッシュボード・モデルブラウザ運用runbook.md)
 - [生成ファイル再試行と定期ジョブ管理runbook](./生成ファイル再試行と定期ジョブ管理runbook.md)
-- [自動リトライ安全性棚卸し](./自動リトライ安全性棚卸し.md)
+- [自動リトライ安全性棚卸し](../../specs/自動リトライ安全性棚卸し.md)

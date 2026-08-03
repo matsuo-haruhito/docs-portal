@@ -111,7 +111,7 @@ current ZIP dry-run 画面では、専用の warning / error 一覧より先に�
 ## 9. 関連文書
 
 - [importと変更系dry-run](./specs/importと変更系dry-run.md)
-- [ZIPインポートdry-run 履歴保存境界メモ](./ZIPインポートdry-run履歴保存境界メモ.md)
+- [ZIPインポートdry-run 履歴保存境界メモ](../../specs/ZIPインポートdry-run履歴保存境界メモ.md)
 - [アプリケーション仕様](./アプリケーション仕様.md)
 - [Git連携設定と同期失敗確認 runbook](./Git連携設定と同期失敗確認runbook.md)
 - [外部フォルダ同期dry-run・apply運用 runbook](./外部フォルダ同期dry-run・apply運用runbook.md)

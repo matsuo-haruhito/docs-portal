@@ -7,14 +7,14 @@ RSpec.describe "exposure smoke checklist sync" do
     {
       name: "external user exposure",
       script_path: "bin/external_user_exposure_smoke",
-      checklist_path: "docs/社外ユーザー向け情報露出点検チェックリスト.md",
+      checklist_path: "docs/runbooks/ops/社外ユーザー向け情報露出点検チェックリスト.md",
       checklist_start: "## 5. 代表ケース",
       checklist_end: "日常 smoke として同じ集合をまとめて実行する場合"
     },
     {
       name: "operational metadata exposure",
       script_path: "bin/operational_metadata_exposure_smoke",
-      checklist_path: "docs/運用metadata情報露出点検チェックリスト.md",
+      checklist_path: "docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md",
       checklist_start: "first slice で束ねる spec subset は次です。",
       checklist_end: "この subset は"
     }
@@ -80,14 +80,14 @@ RSpec.describe "exposure smoke checklist sync" do
     message = drift_message(
       name: "external user exposure",
       script_path: "bin/external_user_exposure_smoke",
-      checklist_path: "docs/社外ユーザー向け情報露出点検チェックリスト.md",
+      checklist_path: "docs/runbooks/ops/社外ユーザー向け情報露出点検チェックリスト.md",
       smoke_files: ["spec/requests/external_document_access_spec.rb"],
       checklist_files: ["spec/requests/external_document_access_spec.rb", "spec/requests/document_search_spec.rb"]
     )
 
     expect(message).to include("external user exposure")
     expect(message).to include("bin/external_user_exposure_smoke")
-    expect(message).to include("docs/社外ユーザー向け情報露出点検チェックリスト.md")
+    expect(message).to include("docs/runbooks/ops/社外ユーザー向け情報露出点検チェックリスト.md")
     expect(message).to include("Missing from smoke script: spec/requests/document_search_spec.rb")
   end
 
@@ -95,14 +95,14 @@ RSpec.describe "exposure smoke checklist sync" do
     message = drift_message(
       name: "operational metadata exposure",
       script_path: "bin/operational_metadata_exposure_smoke",
-      checklist_path: "docs/運用metadata情報露出点検チェックリスト.md",
+      checklist_path: "docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md",
       smoke_files: ["spec/requests/admin_file_upload_dry_runs_spec.rb", "spec/requests/admin_webhook_deliveries_spec.rb"],
       checklist_files: ["spec/requests/admin_file_upload_dry_runs_spec.rb"]
     )
 
     expect(message).to include("operational metadata exposure")
     expect(message).to include("bin/operational_metadata_exposure_smoke")
-    expect(message).to include("docs/運用metadata情報露出点検チェックリスト.md")
+    expect(message).to include("docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md")
     expect(message).to include("Missing from checklist: spec/requests/admin_webhook_deliveries_spec.rb")
   end
 end

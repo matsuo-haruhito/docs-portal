@@ -5,7 +5,7 @@ require "pathname"
 
 REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
-CSV_METADATA_DOC = "docs/CSV条件metadata_JSON運用メモ.md"
+CSV_METADATA_DOC = "docs/specs/CSV条件metadata_JSON運用メモ.md"
 ACCESS_LOG_RUNBOOK = "docs/監査ログ運用runbook.md"
 DOCUMENT_SETS_RUNBOOK = "docs/文書セット運用runbook.md"
 ACCESS_LOG_CONTROLLER = "app/controllers/admin/access_logs_controller.rb"

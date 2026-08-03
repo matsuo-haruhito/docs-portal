@@ -6,7 +6,7 @@ RSpec.describe "structured preview anchor target cue source" do
   end
 
   let(:preview_source) { read_source("app/frontend/lib/structured_preview_tools.js") }
-  let(:target_cue_note) { read_source("docs/text-preview-line-anchor-target-cue.md") }
+  let(:target_cue_note) { read_source("docs/runbooks/viewer/text-preview-line-anchor-target-cue.md") }
 
   it "keeps text preview hash targets visually separate from search matches" do
     aggregate_failures do
