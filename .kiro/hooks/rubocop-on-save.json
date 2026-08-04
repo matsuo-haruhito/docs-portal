@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Rubocop静的チェック（保存時）",
+      "trigger": "PostFileSave",
+      "description": "Rubyファイル保存時にrubocopで静的チェックを実行し、違反があれば報告する",
+      "matcher": "\\\\.rb$",
+      "action": {
+        "type": "command",
+        "command": "cd /home/matsu/work/repos/docs-portal && bundle exec rubocop --force-exclusion --format simple $(echo $KIRO_FILE_PATH | sed 's|^/home/matsu/work/repos/docs-portal/||') 2>/dev/null || true",
+        "timeout": 30
+      }
+    }
+  ]
+}

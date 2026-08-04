@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "TypeScript型検査（保存時）",
+      "trigger": "PostFileSave",
+      "description": "TypeScriptファイル保存時に型検査を実行し、型エラーを即座に検出する",
+      "matcher": "\\.(ts|tsx)$",
+      "action": {
+        "type": "command",
+        "command": "cd /home/matsu/work/repos/docs-portal && npx tsc --noEmit --pretty 2>&1 | head -30 || true",
+        "timeout": 30
+      }
+    }
+  ]
+}

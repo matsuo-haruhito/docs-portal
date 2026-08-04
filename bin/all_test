@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+set -u
+APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RESULTS_DIR="$APP_ROOT/tmp/all_test.running"
+
+rm -rf "$RESULTS_DIR"
+mkdir -p "$RESULTS_DIR"
+
+rotate_results() {
+  rm -rf "$APP_ROOT/tmp/all_test.prev"
+  if [ -d "$APP_ROOT/tmp/all_test" ]; then
+    mv "$APP_ROOT/tmp/all_test" "$APP_ROOT/tmp/all_test.prev"
+  fi
+  mv "$RESULTS_DIR" "$APP_ROOT/tmp/all_test"
+}
+
+timestamp() {
+  date +"%H:%M:%S"
+}
+
+format_elapsed() {
+  local seconds="$1"
+  if [ "$seconds" -lt 0 ]; then seconds=0; fi
+  local minutes=$((seconds / 60))
+  local remainder=$((seconds % 60))
+  printf '%02d:%02d' "$minutes" "$remainder"
+}
+
+run_step() {
+  local name="$1"
+  local command="$2"
+  local log_name="$3"
+  local log_path="$RESULTS_DIR/$log_name"
+
+  printf '\n== %s ==\n' "$name"
+  printf '[%s] %s started\n' "$(timestamp)" "$name"
+
+  local start_epoch end_epoch elapsed exitstatus
+  start_epoch="$(date +%s)"
+
+  if (
+    set -o pipefail
+    bash -lc "$command" 2>&1 | tee "$log_path"
+  ); then
+    exitstatus=0
+  else
+    exitstatus=$?
+  fi
+
+  end_epoch="$(date +%s)"
+  elapsed=$((end_epoch - start_epoch))
+  printf '[%s] %s finished in %s (exit %s)\n' "$(timestamp)" "$name" "$(format_elapsed "$elapsed")" "$exitstatus"
+
+  return "$exitstatus"
+}
+
+step_is_prerequisite() {
+  local step_name="$1"
+  case "$step_name" in
+    "Docker services"|"Prepare test DB"|"Seed DB")
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+steps=(
+  "Docker services|docker compose up -d --build|docker-services.log"
+  "Prepare test DB|docker compose exec -T app bash -lc 'RAILS_ENV=test bundle exec rails db:prepare'|db-prepare.log"
+  "Seed DB|docker compose exec -T app bash -lc 'bundle exec rails db:prepare && bundle exec rails db:seed'|db-seed.log"
+  "RuboCop|docker compose exec -T app bash -lc 'bundle exec rubocop --parallel'|rubocop.log"
+  "Brakeman|docker compose exec -T app bash -lc 'bundle exec brakeman --quiet --no-pager'|brakeman.log"
+  "TypeScript|docker compose exec -T app bash -lc 'npx tsc --noEmit'|tsc.log"
+  "RSpec|docker compose exec -T app bash -lc 'bundle exec rspec'|rspec.log"
+  "Playwright smoke|npx playwright test|playwright.log"
+)
+
+failures=()
+for step in "${steps[@]}"; do
+  IFS='|' read -r name command log_name <<<"$step"
+  if ! run_step "$name" "$command" "$log_name"; then
+    failures+=("$name")
+    if step_is_prerequisite "$name"; then
+      printf '[%s] Stopping because prerequisite step failed: %s\n' "$(timestamp)" "$name" >&2
+      break
+    fi
+  fi
+done
+
+if [ "${#failures[@]}" -eq 0 ]; then
+  printf '\nAll tests passed.\n'
+  printf 'All tests passed.\n' >"$RESULTS_DIR/summary.txt"
+  rotate_results
+  exit 0
+fi
+
+printf '\nFailed steps:\n' >&2
+{
+  printf 'Failed steps:\n'
+  for name in "${failures[@]}"; do
+    printf ' - %s\n' "$name"
+    printf ' - %s\n' "$name" >&2
+  done
+} >"$RESULTS_DIR/summary.txt"
+rotate_results
+exit 1

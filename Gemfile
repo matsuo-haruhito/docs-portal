@@ -23,7 +23,17 @@ gem "diff-lcs", "~> 1.6"
 gem "vite_rails"
 
 gem "pundit"
+gem "view_component"               # UIコンポーネント化
 gem "slim", "~> 5.2", ">= 5.2.1"
+gem "pagy"                         # ページネーション
+gem "gretel"                       # パンくずリスト
+gem "enum_help"                    # enum値のI18n対応ヘルパー
+gem "strong_migrations"            # 危険なDDL（ロック長期化等）を事前検知
+gem "caxlsx"                       # xlsx エクスポート
+gem "chartkick"                    # グラフ表示（Chart.js ラッパー）
+gem "rack-attack"                  # APIレート制限・ブルートフォース防止
+gem "lograge"                      # 本番ログ整形（1リクエスト1行JSON寄り）
+gem "marginalia"                   # SQLコメント付与（controller/action追跡）
 gem "rparam", git: "https://github.com/kmdtmyk/rparam", ref: "3a4e94706999ff794b15aaebba0ee4eb25be38d3"
 gem "rtypes", git: "https://github.com/kmdtmyk/rtypes", ref: "b4a177a933261019825a3a5bfd727ad8e493ae45"
 gem "tree_view", git: "https://github.com/matsuo-haruhito/tree_view-rails.git", ref: "e129cb3ce2835a483e87fc71a50cc9fee07e3da5"
@@ -35,10 +45,15 @@ group :development, :test do
   gem "bundler-audit", require: false
   gem "brakeman", require: false
   gem "rubocop-rails-omakase", require: false
+  gem "shoulda-matchers"           # バリデーション・アソシエーションマッチャー
+  gem "database_consistency", require: false  # DB制約とvalidationの整合確認
+  gem "prosopite"                  # N+1 自動検知
+  gem "slim_lint", require: false  # Slimテンプレート構文チェック
 end
 
 group :development do
   gem "web-console"
+  gem "annotate", require: false   # モデルファイルにスキーマコメント自動付与
 end
 
 group :test do

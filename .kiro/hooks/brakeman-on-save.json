@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Brakemanセキュリティチェック（保存時）",
+      "trigger": "PostFileSave",
+      "description": "コントローラ・モデル保存時にBrakemanでセキュリティ脆弱性を差分チェックする",
+      "matcher": "app/(controllers|models)/.*\\\\.rb$",
+      "action": {
+        "type": "command",
+        "command": "cd /home/matsu/work/repos/docs-portal && bundle exec brakeman --quiet --no-pager --format text --only-files $(echo $KIRO_FILE_PATH | sed 's|^/home/matsu/work/repos/docs-portal/||') 2>/dev/null | grep -v \"^$\" | head -20 || true",
+        "timeout": 30
+      }
+    }
+  ]
+}

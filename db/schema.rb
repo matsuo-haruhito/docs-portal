@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_19_002000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -428,6 +428,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_002000) do
     t.string "markdown_entry_path", comment: "Markdownエントリーパス"
     t.text "notes", comment: "備考"
     t.string "pdf_snapshot_path", comment: "PDFスナップショットパス"
+    t.datetime "preview_build_attempted_at", comment: "プレビュービルド試行日時"
+    t.datetime "preview_build_completed_at", comment: "プレビュービルド完了日時"
+    t.text "preview_build_error_message", comment: "プレビュービルドエラーメッセージ"
+    t.integer "preview_build_status", default: 0, null: false, comment: "プレビュービルドステータス"
     t.string "public_id", null: false, comment: "公開ID"
     t.datetime "published_at", comment: "公開日時"
     t.bigint "published_by_user_id", comment: "公開者ID"
@@ -447,6 +451,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_002000) do
     t.string "version_label", null: false, comment: "バージョンラベル"
     t.index ["document_id", "version_label"], name: "index_document_versions_on_document_id_and_version_label", unique: true
     t.index ["document_id"], name: "index_document_versions_on_document_id"
+    t.index ["preview_build_attempted_at"], name: "index_document_versions_on_preview_build_attempted_at"
+    t.index ["preview_build_status"], name: "index_document_versions_on_preview_build_status"
     t.index ["public_id"], name: "index_document_versions_on_public_id", unique: true
     t.index ["published_by_user_id"], name: "index_document_versions_on_published_by_user_id"
     t.index ["published_from"], name: "index_document_versions_on_published_from"

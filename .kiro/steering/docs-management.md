@@ -18,7 +18,6 @@ inclusion: always
 - AIが主に参照するドキュメント → `.kiro/` に配置する
 - 両方が読む場合 → 比重が高い方に正本を置き、もう一方からリンクで参照する
 - **二重管理は避ける**。同じ内容を両方に書かない
-- `.kiro/steering/coding.md` は AI 向け要約。正本は `docs/コーディング規約.md`
 
 ---
 
@@ -26,8 +25,8 @@ inclusion: always
 
 | 情報 | 正本 |
 |------|------|
-| 業務仕様・要件 | `docs/アプリケーション仕様.md` + 個別仕様文書 |
-| コーディングルール | `docs/コーディング規約.md` |
+| 業務仕様・要件 | `.kiro/specs/{feature}/` + `docs/アプリケーション仕様.md`（インデックス） |
+| コーディングルール | `.kiro/steering/coding.md` |
 | テスト方針 | `docs/テスト方針.md` |
 | UI設計パターン | `.kiro/steering/ui-patterns.md` |
 | rfk/rtp/tree_view 利用方針 | `.kiro/steering/rfk-rtp-integration.md` |
@@ -51,7 +50,7 @@ inclusion: always
 コードを変更した場合、以下を確認し乖離があれば修正する:
 
 1. **docs/ の該当文書**: 実装した内容が仕様として記載されているか。記載がなければ追記する
-2. **docs/コーディング規約.md**: 新しいパターンを導入した場合、規約として明文化すべきか検討する
+2. **.kiro/steering/coding.md**: 新しいパターンを導入した場合、コーディングルールとして明文化すべきか検討する
 3. **.kiro/steering/**: AIが守るべきルールに影響する変更があれば、steering も更新する
 4. **.kiro/skills/**: rfk/rtp/tree_view の使い方を変えたら skill も同時更新する（`rfk-rtp-integration.md` の追従ルール）
 
@@ -72,6 +71,14 @@ inclusion: always
 
 **コードを先に変えてからドキュメントを追従させるのは原則禁止。**
 ただし、バグ修正や小さなリファクタなど設計判断を変えないコード変更はこの限りではない。
+
+---
+
+## spec 配置ルール
+
+- 新規 spec は `.kiro/specs/{feature}/` に作成する（requirements.md / design.md / tasks.md 形式）
+- 既存 `docs/specs/` のファイルは次に触る時に `.kiro/specs/` へ移行する（一括移行は行わない）
+- `docs/アプリケーション仕様.md` は機能名 + 概要のインデックスとして維持する
 
 ---
 

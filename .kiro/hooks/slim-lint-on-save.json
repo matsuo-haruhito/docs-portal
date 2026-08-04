@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Slim-lint（保存時）",
+      "trigger": "PostFileSave",
+      "description": "Slimテンプレート保存時にslim-lintで構文・スタイルチェックを実行する",
+      "matcher": "\\\\.slim$",
+      "action": {
+        "type": "command",
+        "command": "cd /home/matsu/work/repos/docs-portal && bundle exec slim-lint $(echo $KIRO_FILE_PATH | sed 's|^/home/matsu/work/repos/docs-portal/||') 2>/dev/null || true",
+        "timeout": 15
+      }
+    }
+  ]
+}

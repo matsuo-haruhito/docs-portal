@@ -1,11 +1,13 @@
-# AI ユースケース
+# AI ユースケース（生成物）
 
-AI 活用のユースケース検討で生成した成果物を保管するディレクトリです。
+`GeneratedFiles::Generators::AiUsecaseDecisionFlow` の出力先です。
 
-## 構成
+## ファイル一覧
 
-- [generated/](./generated/) — 自動生成された成果物
+- [generated/decision-flow.puml](./generated/decision-flow.puml) — AI ユースケース判断フロー図（PlantUML、自動生成）
 
-### generated/
+## 更新方法
 
-- [decision-flow.puml](./generated/decision-flow.puml) — AI ユースケースの判断フロー図（PlantUML）
+```bash
+bin/rails ai_usecases:generate_flow
+```

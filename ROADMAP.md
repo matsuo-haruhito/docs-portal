@@ -1,5 +1,12 @@
 # ROADMAP
 
+この文書は **gem 展開・Stimulus 化・UI基盤** の短期アクションと候補を扱う。
+
+- ここに書くもの: 次に着手する具体的な技術タスク、進行中の展開状況、未確定だが近いうちに判断する候補
+- ここに書かないもの: 将来の検討事項、人間判断待ち、未起票の要望 → [docs/ToDo.md](docs/ToDo.md)
+
+---
+
 ## 現在地サマリ
 
 - tree_view: 文書ツリー sidebar / current cue / server-side 展開状態保存 / 文書詳細本文側 state cue（適用済み画面: 2）

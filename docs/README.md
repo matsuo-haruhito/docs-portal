@@ -35,15 +35,11 @@ steering（ルール）と skills（手順）は .kiro/ 配下を参照
 
 ---
 
-## 既存サブディレクトリ
+## その他のサブディレクトリ
 
-- [ai/](./ai/) — AI prompt logs
-- [ai-usecases/](./ai-usecases/) — AI ユースケース
-- [notes/](./notes/) — 技術メモ
-- [qa/](./qa/) — QA 関連
-- [research/](./research/) — 調査
-- [roadmap/](./roadmap/) — ロードマップ詳細
-- [ui-mocks/](./ui-mocks/) — UI モック
+- [ai-usecases/](./ai-usecases/) — AI ユースケース生成物（PlantUML 等の自動生成出力先）
+- [notes/](./notes/) — 技術メモ（Docusaurus runtime、調査、preview ロードマップ）
+- [qa/](./qa/) — QA チェックリスト
 
 ---
 
