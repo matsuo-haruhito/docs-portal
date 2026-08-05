@@ -1,0 +1,25 @@
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+
+AllCops:
+  NewCops: disable
+  TargetRubyVersion: 3.4
+  SuggestExtensions: false
+  Exclude:
+    - "bin/**/*"
+    - "db/schema.rb"
+    - "db/seeds/**/*"
+    - "node_modules/**/*"
+    - "vendor/**/*"
+    - "tmp/**/*"
+    - "storage/**/*"
+    - "docusaurus/**/*"
+
+# プロジェクトは [a, b] スタイルで統一済み
+Layout/SpaceInsideArrayLiteralBrackets:
+  Enabled: true
+  EnforcedStyle: no_space
+
+# プロジェクトは { a: 1 } スタイル（omakase デフォルト）
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false

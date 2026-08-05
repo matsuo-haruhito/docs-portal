@@ -1,0 +1,4 @@
+nav.section-nav role="tablist" aria-label="文書詳細ナビゲーション" data-controller="section-nav"
+  - @sections.each do |section|
+    a.section-nav__tab href="##{section[:id]}" role="tab" aria-controls=section[:id] aria-selected=first_section?(section).to_s data-section-nav-target="tab" class=("is-active" if first_section?(section))
+      = section[:label]

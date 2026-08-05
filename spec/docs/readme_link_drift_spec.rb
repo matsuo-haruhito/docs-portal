@@ -28,7 +28,7 @@ RSpec.describe "README index link drift" do
     expect(destinations_by_source.fetch("README.md")).to include(
       "./Product%20Profile.md",
       "./docs/README.md",
-      "./docs/%E3%83%80%E3%83%83%E3%82%B7%E3%83%A5%E3%83%9C%E3%83%BC%E3%83%89%E3%81%A8%E6%96%87%E6%9B%B8%E3%82%B7%E3%83%A7%E3%83%BC%E3%83%88%E3%82%AB%E3%83%83%E3%83%88%E3%83%BB%E7%A2%BA%E8%AA%8D%E4%BE%9D%E9%A0%BC%E3%81%AE%E4%BD%BF%E3%81%84%E5%88%86%E3%81%91.md"
+      "./docs/specs/ダッシュボードと文書ショートカット・確認依頼の使い分け.md"
     )
     expect(destinations_by_source.fetch("docs/README.md")).to include(
       "../Product%20Profile.md",

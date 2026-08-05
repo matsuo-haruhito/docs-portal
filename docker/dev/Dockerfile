@@ -15,7 +15,8 @@ RUN apk update && \
     chromium \
     chromium-chromedriver \
     sudo \
-    shared-mime-info
+    shared-mime-info \
+    vips-dev
 
 ENV SE_CHROMEDRIVER=/usr/bin/chromedriver
 

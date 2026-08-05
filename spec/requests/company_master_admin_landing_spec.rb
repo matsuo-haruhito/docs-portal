@@ -30,7 +30,7 @@ RSpec.describe "Company master admin landing", type: :request do
 
   it "keeps README, runbook, and nav memo aligned on the company master admin boundary" do
     readme = repo_file("README.md")
-    runbook = repo_file("docs/company_master_admin会社・ユーザー管理runbook.md")
+    runbook = repo_file("docs/runbooks/admin/company_master_admin会社・ユーザー管理runbook.md")
     nav_memo = repo_file("docs/runbooks/ops/管理画面nav領域見出し運用メモ.md")
 
     expect(readme).to include("`会社` / `ユーザー` 管理に閉じる role 境界を確認する")

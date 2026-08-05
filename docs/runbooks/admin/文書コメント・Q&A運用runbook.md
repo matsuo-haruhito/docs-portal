@@ -162,8 +162,4 @@ admin は open Q&A thread に表示される `回答済みにする` / `クロ�
 - `app/views/documents/_comment_workspace_threads.html.slim`: thread 表示、返信欄、版ラベル、Q&A の `回答済みにする` / `クローズする`、確認事項の位置表示と `解決`、検索 0 件時の復帰 link、返信・状態更新時に渡す workspace 文脈
 - `spec/requests/dashboard_open_question_handoff_spec.rb`: dashboard の open public Q&A root 候補、resolved / rejected / internal-only / archived document 除外、external user 非表示、候補 0 件時の non-SLA copy
 - `spec/requests/document_comment_workspace_handoff_spec.rb`: internal user 向け handoff summary、external user 非表示、検索文脈、resolved / closed 除外、secret-like query 非表示
-- `spec/requests/document_comment_workspace_search_cue_spec.rb`: 検索中の件数・タブ cue、external user で internal-only 確認事項が露出しないこと
-- `spec/requests/document_comment_workspace_search_fields_spec.rb`: 作者名・版ラベル検索、投稿者 filter、external user の visible Q&A / visible reply に閉じた検索範囲
-- `spec/requests/document_comment_workspace_empty_search_spec.rb`: 検索 0 件時の `検索を解除してすべて表示` link、`comment_q` / `comment_author_id` 解除、`comment_tab` と既存 query context 維持、external user に internal-only 確認事項を示唆しない境界
-- `spec/requests/document_comment_workspace_visibility_cues_spec.rb`: Q&A / 確認事項の表示範囲 cue、Q&A 状態と確認事項状態の読み分け、external user に internal-only 文言や内容を出さない境界
 - `spec/requests/document_review_comment_redirect_context_spec.rb`: create / reply / status update 後の `comment_tab` / `comment_q` 復元境界と、無効 tab / 正規化済み検索語の扱い

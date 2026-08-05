@@ -114,7 +114,7 @@ module GeneratedFiles
       return safe_path(text) if key == "manifest_path"
       return safe_commit(text) if key == "source_commit_hash"
       return text if key.in?(%w[workflow_run_id workflow_run_attempt]) && text.match?(/\A\d+\z/)
-      return text if key.in?(%w[name source_repo source_branch]) && safe_scalar?(text)
+      text if key.in?(%w[name source_repo source_branch]) && safe_scalar?(text)
     end
 
     def safe_commit(value)

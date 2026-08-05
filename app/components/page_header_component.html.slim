@@ -1,0 +1,11 @@
+header.page-header
+  - if breadcrumbs?
+    .page-header__breadcrumbs
+      = breadcrumbs
+  h1.page-header__title = @title
+  - if @subtitle.present?
+    p.page-header__subtitle = @subtitle
+  - if actions.any?
+    .page-header__actions
+      - actions.each do |action|
+        = action

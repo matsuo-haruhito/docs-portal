@@ -52,7 +52,7 @@ RSpec.describe SeedSupport::ExternalSampleImporter do
         path = Pathname(logical_relative_path.to_s)
         source_path = Pathname(source_file)
 
-        Dir.glob(source_path.dirname.join("#{path.basename.sub_ext('').to_s}.*").to_s)
+        Dir.glob(source_path.dirname.join("#{path.basename.sub_ext('')}.*").to_s)
           .select { File.file?(_1) }
           .reject { Pathname(_1) == source_path }
           .sort

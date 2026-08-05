@@ -8,7 +8,7 @@ RSpec.describe "Public route identifier contract", type: :routing do
     document_set_public_id
     document_version_public_id
   ].freeze
-  WILDCARD_CONTENT_PATH_SEGMENTS = %i[asset_path site_path].freeze
+  WILDCARD_CONTENT_PATH_SEGMENTS = %i[asset_path site_path path].freeze
 
   EXPECTED_DYNAMIC_SEGMENTS_BY_ROLE = {
     project_code: PROJECT_CODE_SEGMENTS,
@@ -28,6 +28,7 @@ RSpec.describe "Public route identifier contract", type: :routing do
     document_files
     document_sites
     project_sites
+    view_components
   ].freeze
 
   def public_app_routes

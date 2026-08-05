@@ -152,13 +152,13 @@ module Admin::DocumentUsageReportsHelper
     base_class = "inline-flex rounded px-2 py-1 text-xs font-semibold"
 
     state_class = case document_usage_report_usage_state(row)
-                  when :unused
+    when :unused
                     "bg-gray-100 text-gray-700"
-                  when :read_confirmation_only
+    when :read_confirmation_only
                     "bg-amber-100 text-amber-800"
-                  else
+    else
                     "bg-green-100 text-green-800"
-                  end
+    end
 
     "#{base_class} #{state_class}"
   end

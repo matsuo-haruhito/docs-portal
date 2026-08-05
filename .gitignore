@@ -68,3 +68,7 @@
 .codex
 .tmp.*
 AGENTS.md
+
+# Screenshots (captured by bin/all_test)
+/tmp/screenshots/
+/docs/screenshots/

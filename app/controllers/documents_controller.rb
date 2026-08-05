@@ -95,6 +95,24 @@ class DocumentsController < BaseController
         DocumentApprovalRequest.none
       end
     @approval_approvers = User.where(user_type: :internal, active: true).order(:name, :email_address)
+    @hierarchy_breadcrumbs = [
+      { label: @project.name, url: project_documents_path(@project) }
+    ]
+    if params[:version_id].present? && @viewer_version
+      @hierarchy_breadcrumbs << { label: @document.title, url: project_document_path(@project, @document.slug) }
+      @hierarchy_breadcrumbs << { label: @viewer_version.version_label, url: nil }
+    else
+      @hierarchy_breadcrumbs << { label: @document.title, url: nil }
+    end
+
+    @section_nav_items = []
+    @section_nav_items << { id: "document-content", label: "本文" } if @viewer_iframe_src.present?
+    @section_nav_items << { id: "attributes", label: "属性" }
+    @section_nav_items << { id: "comments", label: "コメント" }
+    @section_nav_items << { id: "versions", label: "版一覧" }
+    @section_nav_items << { id: "related-documents", label: "関連文書" } if @related_document_groups.present?
+    @section_nav_items << { id: "approval-requests", label: "確認依頼" } if current_user.internal?
+
     @tree_projects = portal_tree_projects(include_project: @project)
   end
 

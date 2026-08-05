@@ -472,13 +472,13 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
     metadata = @external_folder_sync_source.provider_metadata || {}
 
     value = case key
-            when "folder_item_id"
+    when "folder_item_id"
               @external_folder_sync_source.external_folder_id.presence || metadata[key]
-            when "folder_path"
+    when "folder_path"
               @external_folder_sync_source.external_folder_path.presence || metadata[key]
-            else
+    else
               metadata[key]
-            end
+    end
 
     value.to_s
   end

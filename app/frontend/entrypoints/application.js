@@ -33,6 +33,7 @@ import MarkdownPreviewDocumentSearchController from "../controllers/markdown_pre
 import MarkdownPreviewTableToolsController from "../controllers/markdown_preview_table_tools_controller"
 import PdfPreviewToolsController from "../controllers/pdf_preview_tools_controller"
 import PreviewTableResizerController from "../controllers/preview_table_resizer_controller"
+import SectionNavController from "../controllers/section_nav_controller"
 import SidebarController from "../controllers/sidebar_controller"
 import SiteViewerIframeHeightController from "../controllers/site_viewer_iframe_height_controller"
 import StructuredPreviewToolsController from "../controllers/structured_preview_tools_controller"
@@ -63,6 +64,7 @@ application.register("markdown-preview-document-search", MarkdownPreviewDocument
 application.register("markdown-preview-table-tools", MarkdownPreviewTableToolsController)
 application.register("pdf-preview-tools", PdfPreviewToolsController)
 application.register("preview-table-resizer", PreviewTableResizerController)
+application.register("section-nav", SectionNavController)
 application.register("sidebar", SidebarController)
 application.register("site-viewer-iframe-height", SiteViewerIframeHeightController)
 application.register("structured-preview-tools", StructuredPreviewToolsController)

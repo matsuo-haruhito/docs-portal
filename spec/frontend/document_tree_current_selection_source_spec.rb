@@ -34,13 +34,12 @@ RSpec.describe "document tree current selection source" do
     end
   end
 
-  it "explains document detail state cues separately from tree current and list filters" do
+  it "uses card-based sections with anchored IDs for section navigation" do
     aggregate_failures do
-      expect(detail_sections_source).to include(".document-detail-state-cue")
-      expect(detail_sections_source).to include("本文側の「表示中」は現在開いている版や本文 context を示します。")
-      expect(detail_sections_source).to include("左の文書ツリーの表示中バッジは現在文書")
-      expect(detail_sections_source).to include("文書一覧の検索・表示設定は一覧画面だけの条件")
-      expect(detail_sections_source).to include("一覧画面だけの条件として読み分けてください。")
+      expect(detail_sections_source).to include("section.card#attributes")
+      expect(detail_sections_source).to include("section.card#versions")
+      expect(detail_sections_source).to include("section.card#related-documents")
+      expect(detail_sections_source).to include("section.card#approval-requests")
     end
   end
 

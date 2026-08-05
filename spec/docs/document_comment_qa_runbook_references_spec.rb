@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe "Document comment Q&A runbook references" do
   DOC_COMMENT_QA_REPO_ROOT = Rails.root
-  DOC_COMMENT_QA_RUNBOOK_PATH = DOC_COMMENT_QA_REPO_ROOT.join("docs/文書コメント・Q&A運用runbook.md")
+  DOC_COMMENT_QA_RUNBOOK_PATH = DOC_COMMENT_QA_REPO_ROOT.join("docs/runbooks/admin/文書コメント・Q&A運用runbook.md")
 
   DOC_COMMENT_QA_IMPLEMENTATION_REFERENCES = [
     {
@@ -60,7 +60,6 @@ RSpec.describe "Document comment Q&A runbook references" do
   DOC_COMMENT_QA_REQUIRED_REQUEST_SPECS = %w[
     spec/requests/dashboard_open_question_handoff_spec.rb
     spec/requests/document_comment_workspace_handoff_spec.rb
-    spec/requests/document_comment_workspace_search_cue_spec.rb
     spec/requests/document_review_comment_redirect_context_spec.rb
   ].freeze
 

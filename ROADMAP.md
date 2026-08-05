@@ -23,6 +23,25 @@
 - ResourceTableRenderState viewer 反映: #4071 で docs-only 境界固定後、guard 方式を別 issue で決定
 - Stimulus 化継続: 既存素 JS を触るタイミングで controller 化。Markdown table の full RTP 統合は #475 に残す
 
+## preview-tools bridge 退役
+
+`preview-tools` bridge は移行用の入口として退役済み。bridge 再導入や空 controller の維持は current support として扱わない。
+
+専用 controller がそれぞれ helper refresh を担当:
+
+- `markdown-preview-table-tools`
+- `pdf-preview-tools`
+- `image-preview-tools`
+- `structured-preview-tools`
+- `csv-preview-tools`
+- `archive-preview-tools`
+- `document-file-list-search`
+- `markdown-preview-document-search`
+- `markdown-preview-codeblock-tools`
+- `site-viewer-iframe-height`
+
+`application.js` に `querySelectorAll` とイベント登録を直接増やさない。
+
 ## 候補（未確定）
 
 - 具体的な未対応画面が確認できた company / user remote search 横展開

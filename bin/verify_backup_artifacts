@@ -50,14 +50,14 @@ class BackupArtifactVerifier
     summary[:overall_result] = warnings.empty? ? "ok" : "warning"
     stdout.puts "Backup artifact verification completed#{warnings.empty? ? '' : ' with warnings'}."
     warnings.each { |warning| stdout.puts "WARNING: #{warning}" }
-    stdout.puts "See docs/バックアップ・リストア手順.md for restore rehearsal smoke checks."
+    stdout.puts "See docs/runbooks/ops/バックアップ・リストア手順.md for restore rehearsal smoke checks."
     write_markdown_summary(stdout) if markdown_format?
     Result.new(ok: true, warnings:, summary:)
   rescue VerificationError => error
     summary[:overall_result] = "failed"
     summary[:failure] = error.message
     stderr.puts "Backup artifact verification failed: #{error.message}"
-    stderr.puts "See docs/バックアップ・リストア手順.md before attempting restore."
+    stderr.puts "See docs/runbooks/ops/バックアップ・リストア手順.md before attempting restore."
     write_markdown_summary(stdout) if markdown_format?
     Result.new(ok: false, warnings:, summary:)
   end

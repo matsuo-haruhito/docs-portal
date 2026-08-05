@@ -58,6 +58,7 @@
 | `structured-preview-tools` | structured / text preview | `setupStructuredPreviewTools()` を専用 controller から refresh し、再描画 / disconnect 時に input / button / document keydown / hashchange listener を cleanup する | `preview-tools` bridge から分離済み。検索、clear、一致行のみ表示、copy、line anchor highlight、`/` / `Escape` shortcut は変更しない |
 | `text-preview-tools` | text preview | hashchange と初期表示時の line anchor target cue を同期する | target row の `aria-current="location"` と blue cue を source-level に固定し、search match cue、copy、filter、toolbar、hashchange contract は変更しない |
 | `preview-table-resizer` | Markdown preview table | iframe 内 table wrapping、localStorage、column resize、`turbo:load` / `turbo:render` refresh | current fallback path として維持。`表ツール` summary の横スクロール・列幅調整 cue、横スクロール領域の `aria-label`、列幅、列幅の保存、ヘッダー固定、先頭列固定に閉じ、RTP 統合判断は #475 に残す |
+| `section-nav` | 文書詳細のセクションナビゲーション | IntersectionObserver によるスクロール追従とタブ切り替え | app 側 Stimulus として維持 |
 | `sidebar` | 文書ツリー sidebar width / collapsed state | localStorage、pointer / keyboard resize | app 側 Stimulus として維持 |
 | `site-viewer-iframe-height` | Docusaurus / site viewer iframe | `setupSiteViewerIframeHeightSync()` を専用 controller から refresh する | `preview-tools` bridge から分離済み。same-origin check、message type、frame source check、minimum height、`data-docs-portal-auto-height` marker は helper 側で維持 |
 

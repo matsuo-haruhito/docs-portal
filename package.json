@@ -1,8 +1,16 @@
 {
   "private": true,
   "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "screenshots:docs": "SCREENSHOT_DIR=docs/screenshots node script/capture_screenshots.cjs",
+    "screenshots": "node script/capture_screenshots.cjs",
+    "test:ui": "playwright test"
+  },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
+    "typescript": "~5.8",
     "vite": "^8.1.4",
     "vite-plugin-ruby": "^5.2.2"
   },

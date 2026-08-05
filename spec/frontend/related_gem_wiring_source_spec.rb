@@ -93,7 +93,7 @@ RSpec.describe "Related gem wiring source" do
 
   describe "tree_view app-side seam" do
     it "keeps tree rendering anchored in server-rendered helpers and partials" do
-      runbook_source = read_source("docs/関連gem連携調査runbook.md")
+      runbook_source = read_source("docs/runbooks/ops/関連gem連携調査runbook.md")
       sidebar_tree_source = read_source("app/views/documents/_tree.html.erb")
       detail_tree_source = read_source("app/views/projects/_document_detail_tree.html.erb")
       projects_helper_source = read_source("app/helpers/projects_helper.rb")

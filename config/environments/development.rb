@@ -28,6 +28,7 @@ Rails.application.configure do
   config.assets.quiet = true
   config.action_view.annotate_rendered_view_with_filenames = true
   config.action_controller.raise_on_missing_callback_actions = true
+  config.hosts << "web"
   config.web_console.allowed_ips = "0.0.0.0/0"
 
   logger = ActiveSupport::Logger.new("log/#{Rails.env}.log", ENV.fetch("RAILS_LOG_SHIFT_AGE", 5).to_i, 10.megabyte)

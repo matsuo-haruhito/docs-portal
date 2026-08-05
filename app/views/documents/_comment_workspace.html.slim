@@ -28,10 +28,13 @@
 - has_unresolved_questions = unresolved_question_count.positive?
 - has_unresolved_reviews = unresolved_review_count.positive?
 
-details class=wrapper_classes.join(" ") open=(!floating)
+details#comments class=wrapper_classes.join(" ") open=(!floating)
   summary.document-comment-workspace__fab title="文書コメント" aria-label="文書コメントを開く"
     span.document-comment-workspace__fab-icon aria-hidden="true" 📝
     span.document-comment-workspace__fab-label 文書コメント
+    - if unresolved_total_count > 0
+      span.document-comment-workspace__fab-badge aria-label="未解決 #{unresolved_total_count}件"
+        = unresolved_total_count > 99 ? "99+" : unresolved_total_count
   .document-comment-workspace__panel role="complementary" aria-label="文書コメント"
     .document-comment-workspace__header
       div
@@ -45,18 +48,18 @@ details class=wrapper_classes.join(" ") open=(!floating)
         = @question_threads.size
         | 件のQ&A
         - if current_user.internal?
-          |  / 
+          |  /
           = @review_comments.size
           | 件の確認事項
         br
         - if current_user.internal?
-          | 未解決: Q&A 
+          | 未解決: Q&A
           = unresolved_question_count
-          | 件 / 確認事項 
+          | 件 / 確認事項
           = unresolved_review_count
           | 件
         - else
-          | 未解決: Q&A 
+          | 未解決: Q&A
           = unresolved_question_count
           | 件
 
@@ -80,7 +83,9 @@ details class=wrapper_classes.join(" ") open=(!floating)
       = render "documents/comment_workspace_handoff_summary", question_threads: @question_threads, review_comments: @review_comments, comment_filter_active: comment_filter_active
 
     .document-comment-workspace__mode.card
-      h3 追加する内容
+      h3
+        | 追加する内容
+        = render HelpTooltipComponent.new(description: "「質問する」は外部ユーザーにも見えるQ&Aを作成します。「確認事項を残す」は内部限定の確認・指摘を作成します")
       .comment-mode-switch
         input#comment-mode-question.comment-mode-switch__input type="radio" name="comment_mode" checked=true
         label.comment-mode-switch__label for="comment-mode-question"
@@ -152,14 +157,14 @@ details class=wrapper_classes.join(" ") open=(!floating)
             = link_to "検索を解除", url_for(comment_search_params.merge(only_path: true)), class: "button secondary"
       - if comment_filter_active
         p.muted
-          | 絞り込み条件: 
+          | 絞り込み条件:
           - if comment_search_active
-            | キーワード 
+            | キーワード
             strong = comment_search_query
           - if comment_search_active && comment_author_active
-            |  / 
+            |  /
           - if comment_author_active
-            | 投稿者 
+            | 投稿者
             strong = comment_selected_author.display_name
           - if current_user.internal?
             | 。絞り込みは、すべて / Q&A / 確認事項 / 未解決の各タブに先に適用されます。
@@ -170,42 +175,58 @@ details class=wrapper_classes.join(" ") open=(!floating)
       input#document-comment-tab-all.document-comment-tabs__input type="radio" name="document_comment_tab" checked=(comment_workspace_tab == "all")
       label.document-comment-tabs__label for="document-comment-tab-all"
         = link_to "すべて", comment_tab_url.call("all"), class: "document-comment-tabs__tab-link"
+        = render InfoTooltipComponent.new(label: "すべて", description: "全種別のコメントを表示します")
       input#document-comment-tab-qa.document-comment-tabs__input type="radio" name="document_comment_tab" checked=(comment_workspace_tab == "qa")
       label.document-comment-tabs__label for="document-comment-tab-qa"
         = link_to "Q&A", comment_tab_url.call("qa"), class: "document-comment-tabs__tab-link"
+        = render InfoTooltipComponent.new(label: "Q&A", description: "外部/利用者にも見える質問スレッドを表示します")
         span.muted = " (未解決 #{unresolved_question_count})"
       - if current_user.internal?
         input#document-comment-tab-review.document-comment-tabs__input type="radio" name="document_comment_tab" checked=(comment_workspace_tab == "review")
         label.document-comment-tabs__label for="document-comment-tab-review"
           = link_to "確認事項", comment_tab_url.call("review"), class: "document-comment-tabs__tab-link"
+          = render InfoTooltipComponent.new(label: "確認事項", description: "内部限定の確認・指摘を表示します")
           span.muted = " (未解決 #{unresolved_review_count})"
       input#document-comment-tab-unresolved.document-comment-tabs__input type="radio" name="document_comment_tab" checked=(comment_workspace_tab == "unresolved")
       label.document-comment-tabs__label for="document-comment-tab-unresolved"
         - if current_user.internal?
           = link_to "未解決", comment_tab_url.call("unresolved"), class: "document-comment-tabs__tab-link"
+          = render InfoTooltipComponent.new(label: "未解決", description: "回答やクローズ・解決がされていないコメントを表示します")
           span.muted = " (Q&A #{unresolved_question_count} / 確認事項 #{unresolved_review_count})"
         - else
           = link_to "未解決Q&A", comment_tab_url.call("unresolved"), class: "document-comment-tabs__tab-link"
+          = render InfoTooltipComponent.new(label: "未解決", description: "回答やクローズ・解決がされていないコメントを表示します")
           span.muted = " (#{unresolved_question_count})"
 
       .document-comment-tabs__panel.document-comment-tabs__panel--all
-        = render "documents/comment_workspace_threads", show_questions: true, show_reviews: current_user.internal?, only_unresolved: false
+        - if has_question_threads || has_review_comments
+          = render "documents/comment_workspace_threads", show_questions: true, show_reviews: current_user.internal?, only_unresolved: false
+        - else
+          = render EmptyStateComponent.new(heading: "コメントはまだありません", description: "文書について確認したいことがあれば、上の入力フォームから投稿してください")
       .document-comment-tabs__panel.document-comment-tabs__panel--qa
-        = render "documents/comment_workspace_threads", show_questions: true, show_reviews: false, only_unresolved: false
+        - if has_question_threads
+          = render "documents/comment_workspace_threads", show_questions: true, show_reviews: false, only_unresolved: false
+        - else
+          = render EmptyStateComponent.new(heading: "Q&Aはまだありません", description: "文書について確認したいことがあれば、上の入力フォームから質問を投稿してください")
       - if current_user.internal?
         .document-comment-tabs__panel.document-comment-tabs__panel--review
-          = render "documents/comment_workspace_threads", show_questions: false, show_reviews: true, only_unresolved: false
+          - if has_review_comments
+            = render "documents/comment_workspace_threads", show_questions: false, show_reviews: true, only_unresolved: false
+          - else
+            = render EmptyStateComponent.new(heading: "確認事項はまだありません", description: "文書を見ながら気になった点を上の入力フォームから残してください")
       .document-comment-tabs__panel.document-comment-tabs__panel--unresolved
         - if has_unresolved_questions || has_unresolved_reviews
           = render "documents/comment_workspace_threads", show_questions: true, show_reviews: current_user.internal?, only_unresolved: true
-        - else
-          p.muted
-            - if comment_filter_active
-              | 絞り込み条件に一致する未解決のコメントはありません。
-            - elsif current_user.internal?
-              | 未解決のQ&Aと確認事項はありません。
-            - else
-              | 未解決のQ&Aはありません。
-          - if comment_filter_active
-            p.document-comment-empty-actions
+        - elsif comment_filter_active
+          = render EmptyStateComponent.new(heading: "絞り込み条件に一致する未解決のコメントはありません", description: "検索条件を変更するか、解除してすべてのコメントを確認してください") do |component|
+            - component.with_action do
               = link_to "検索を解除してすべて表示", url_for(comment_search_params.merge(only_path: true)), class: "button secondary"
+        - else
+          - if current_user.internal?
+            = render EmptyStateComponent.new(heading: "未解決のコメントはありません", description: "すべてのQ&Aと確認事項が解決済みです") do |component|
+              - component.with_action do
+                = link_to "すべてのコメントを見る", comment_tab_url.call("all"), class: "button secondary"
+          - else
+            = render EmptyStateComponent.new(heading: "未解決のQ&Aはありません", description: "すべてのQ&Aが回答済みまたはクローズされています") do |component|
+              - component.with_action do
+                = link_to "すべてのコメントを見る", comment_tab_url.call("all"), class: "button secondary"

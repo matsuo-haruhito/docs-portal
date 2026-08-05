@@ -24,7 +24,7 @@ services:
       - db
 
   db:
-    image: postgres:18.3
+    image: postgres:18
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
@@ -37,6 +37,28 @@ services:
       options:
         max-size: 10m
         max-file: '10'
+
+  screenshots:
+    build:
+      context: .
+      dockerfile: Dockerfile.screenshots
+    command: ["npm", "run", "screenshots"]
+    environment:
+      APP_HOST: web
+      APP_SERVER_PORT: "3000"
+      SCREENSHOT_DIR: /workspace/tmp/screenshots
+      SCREENSHOT_EMAIL: ${SCREENSHOT_EMAIL:-admin@example.com}
+      SCREENSHOT_WIDTH: ${SCREENSHOT_WIDTH:-1440}
+      SCREENSHOT_HEIGHT: ${SCREENSHOT_HEIGHT:-1600}
+      ROUTES_FILE: /workspace/config/routes.rb
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+    links:
+      - "app:web"
+    depends_on:
+      - app
+    profiles: ["tools"]
 
 volumes:
   db:

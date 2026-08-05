@@ -95,7 +95,7 @@ class ExternalFolderSyncWebhooksController < ActionController::Base
 
   def event_error_message(source:, verified:)
     return "Matching external folder sync source was not found" if source.blank?
-    return "Webhook verification token did not match" unless verified
+    "Webhook verification token did not match" unless verified
   end
 
   def event_key_for(provider:, payload:, subscription:)

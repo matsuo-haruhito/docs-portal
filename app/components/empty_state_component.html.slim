@@ -1,0 +1,7 @@
+.empty-state
+  h3.empty-state__heading = @heading
+  p.empty-state__description = @description
+  - if actions.any?
+    .empty-state__actions
+      - actions.each do |action|
+        = action

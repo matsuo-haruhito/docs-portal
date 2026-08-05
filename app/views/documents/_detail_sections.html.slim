@@ -1,17 +1,46 @@
 - return_to = safe_return_to
 
-section.document-detail-summary
-  p.muted
-    | 案件: 
-    = @project.name
-    |  / カテゴリ: 
-    = document_category_label(@document)
-    |  / ファイル種: 
-    = document_kind_label(@document)
-    |  / 重要度: 
-    = document_importance_level_label(@document)
-  p.muted.document-detail-state-cue
-    | 本文側の「表示中」は現在開いている版や本文 context を示します。左の文書ツリーの表示中バッジは現在文書、文書一覧の検索・表示設定は一覧画面だけの条件として読み分けてください。
+/ === 属性セクション ===
+section.card#attributes
+  h2 属性
+  dl.definition-list
+    div
+      dt 案件
+      dd = @project.name
+    div
+      dt
+        | カテゴリ
+        = render InfoTooltipComponent.new(label: "カテゴリ", description: "文書の分類を示します。検索やフィルタに利用されます")
+      dd = document_category_label(@document)
+    div
+      dt ファイル種
+      dd = document_kind_label(@document)
+    div
+      dt
+        | 重要度
+        = render InfoTooltipComponent.new(label: "重要度", description: "閲覧優先度や通知に影響します")
+      dd = document_importance_level_label(@document)
+    div
+      dt
+        | 公開範囲
+        = render InfoTooltipComponent.new(label: "公開範囲", description: "external user の閲覧可否を制御します")
+      dd = document_visibility_policy_label(@document)
+    - if @document.document_tags.any?
+      div
+        dt タグ
+        dd
+          - @document.document_tags.sort_by(&:normalized_name).each do |tag|
+            =< link_to tag.name, project_documents_path(@project, tag: tag.normalized_name), class: "badge"
+
+  - if @source_breadcrumbs.any?
+    nav.breadcrumbs aria-label="source path breadcrumb"
+      - @source_breadcrumbs.each_with_index do |crumb, index|
+        - if index.positive?
+          span.muted = " / "
+        - if crumb.url.present? && index < @source_breadcrumbs.size - 1
+          = link_to crumb.label, crumb.url
+        - else
+          span = crumb.label
 
   .document-action-groups
     .document-action-group
@@ -39,146 +68,140 @@ section.document-detail-summary
           = button_to "既読にする", read_confirmations_path, params: { read_confirmation: { document_id: @document.public_id } }, class: "button secondary"
         = link_to "文書ショートカット一覧", document_bookmarks_path, class: "button secondary"
 
-- if @source_breadcrumbs.any?
-  nav.breadcrumbs aria-label="source path breadcrumb"
-    - @source_breadcrumbs.each_with_index do |crumb, index|
-      - if index.positive?
-        span.muted = " / "
-      - if crumb.url.present? && index < @source_breadcrumbs.size - 1
-        = link_to crumb.label, crumb.url
-      - else
-        span = crumb.label
+/ === 出力時の扱い ===
+section.card
+  h2
+    | 出力時の扱い
+    = render InfoTooltipComponent.new(label: "出力時の扱い", description: "ダウンロードや外部送付時の出力形式に影響する設定です")
+  ul
+    li HTML 表示には透かしを入れません。
+    li ZIP 出力では元パス準拠、Markdown 原本の有無、添付有無、PDF のみ出力を選べます。
+    - if @export_watermark_text.present?
+      li PDF を含む持ち出し用出力では、利用者・案件・文書・出力時刻ベースの透かし情報を使う設計です。
+      li
+        | 例:
+        code = @export_watermark_text
+    - elsif @document.downloadable_by?(current_user)
+      li PDF 添付がある場合は、利用者・案件・文書・出力時刻ベースの透かし情報を使う設計です。
 
-- if @document.document_tags.any?
-  p
-    | タグ:
-    - @document.document_tags.sort_by(&:normalized_name).each do |tag|
-      =< link_to tag.name, project_documents_path(@project, tag: tag.normalized_name), class: "badge"
-
-h2 出力時の扱い
-ul
-  li HTML 表示には透かしを入れません。
-  li ZIP 出力では元パス準拠、Markdown 原本の有無、添付有無、PDF のみ出力を選べます。
-  - if @export_watermark_text.present?
-    li PDF を含む持ち出し用出力では、利用者・案件・文書・出力時刻ベースの透かし情報を使う設計です。
-    li
-      | 例:
-      code = @export_watermark_text
-  - elsif @document.downloadable_by?(current_user)
-    li PDF 添付がある場合は、利用者・案件・文書・出力時刻ベースの透かし情報を使う設計です。
-
-- if @latest_viewable_version
-  h2 最新版
-  p
-    strong = link_to document_version_label(@latest_viewable_version), document_version_path(@latest_viewable_version)
-    |  (
-    = document_version_status_label(@latest_viewable_version)
-    | )
-    - if @latest_viewable_version.embedded_view_available?
-      |  - 
-      - latest_reader_path = project_document_path(@project, @document.slug, version_id: @latest_viewable_version.public_id, site_path: @latest_viewable_version.html_view_site_path)
-      - if @viewer_version == @latest_viewable_version
-        span.badge 表示中
-      - else
-        = link_to "本文で開く", latest_reader_path
-
-- if current_user.internal?
-  h2 正式な確認依頼
-
-  .card
-    h3 確認依頼を作成
-    p.muted 文書コメントで軽く残すだけでなく、担当者を指定して正式に確認を依頼する場合に使います。
-    = form_with model: [@project, @document, DocumentApprovalRequest.new], local: true do |form|
-      .form-grid
-        div
-          = form.label :title, "タイトル"
-          = form.text_field :title
-        div
-          = form.label :approver_id, "確認相手"
-          = form.collection_select :approver_id, @approval_approvers, :id, :name, include_blank: "未指定"
-        div style="grid-column: 1 / -1;"
-          = form.label :body, "内容"
-          = form.text_area :body
-      p.actions
-        = form.submit "確認依頼を作成", class: "button"
-
-  - if @document_approval_requests.any?
-    table
-      thead
-        tr
-          th タイトル
-          th 依頼者
-          th 確認相手
-          th 状態
-      tbody
-        - @document_approval_requests.each do |request|
-          tr
-            td = link_to request.title, document_approval_request_path(request)
-            td = request.requester.name
-            td = request.approver&.name || "-"
-            td = document_approval_request_status_label(request)
-  - else
-    p.muted 確認依頼はありません。
-
-- explicit_related = @related_document_groups.fetch(:explicit, [])
-- inferred_related = @related_document_groups.fetch(:inferred, [])
-- if explicit_related.any? || inferred_related.any?
-  h2 関連文書
-
-  - if explicit_related.any?
-    h3 明示的な関連
-    ul
-      - explicit_related.each do |result|
-        li
-          = link_to result.document.title, project_document_path(@project, result.document.slug)
-          span.muted
-            |  (
-            = document_relation_type_label(result)
-            | )
-
-  - if inferred_related.any?
-    h3 フォルダ階層から見つかった関連候補
-    ul
-      - inferred_related.each do |result|
-        li
-          = link_to result.document.title, project_document_path(@project, result.document.slug)
-          span.muted
-            |  (
-            = document_relation_type_label(result)
-            | )
-
-h2 版一覧
-ul
-  - @versions.each do |version|
-    li
-      strong = link_to document_version_label(version), document_version_path(version)
-      |  (
-      = document_version_status_label(version)
-      | )
-
-      - if version.embedded_view_available?
-        |  - 
-        - reader_path = project_document_path(@project, @document.slug, version_id: version.public_id, site_path: version.html_view_site_path)
-        - if @viewer_version == version
+/ === 版一覧セクション ===
+section.card#versions
+  h2 版一覧
+  - if @latest_viewable_version
+    h3 最新版
+    p
+      strong = link_to document_version_label(@latest_viewable_version), document_version_path(@latest_viewable_version)
+      = render StatusBadgeComponent.new(status: @latest_viewable_version.status, label: document_version_status_label(@latest_viewable_version), tooltip: status_badge_tooltip(@latest_viewable_version))
+      - if @latest_viewable_version.embedded_view_available?
+        |  -
+        - latest_reader_path = project_document_path(@project, @document.slug, version_id: @latest_viewable_version.public_id, site_path: @latest_viewable_version.html_view_site_path)
+        - if @viewer_version == @latest_viewable_version
           span.badge 表示中
         - else
-          = link_to "本文で開く", reader_path
-      - else
-        |  - 
-        span.muted 表示可能な本文なし
+          = link_to "本文で開く", latest_reader_path
+  ul
+    - @versions.each do |version|
+      li
+        strong = link_to document_version_label(version), document_version_path(version)
+        = render StatusBadgeComponent.new(status: version.status, label: document_version_status_label(version), tooltip: status_badge_tooltip(version))
 
-      - files = version.document_files.order(:sort_order)
-      - if files.any?
-        details
-          summary 添付・元ファイル #{files.size}件
-          - render_state = document_file_tree_render_state(files:, row_partial: "documents/file_tree_columns", node_prefix: "document_files_#{version.id}")
-          table.tree-view-table
-            thead
-              tr
-                th ファイル名
-                th ファイル種
-                th 区分
-            tbody
-              = tree_view_rows(render_state)
+        - if version.embedded_view_available?
+          |  -
+          - reader_path = project_document_path(@project, @document.slug, version_id: version.public_id, site_path: version.html_view_site_path)
+          - if @viewer_version == version
+            span.badge 表示中
+          - else
+            = link_to "本文で開く", reader_path
+        - else
+          |  -
+          span.muted 表示可能な本文なし
+
+        - files = version.document_files.order(:sort_order)
+        - if files.any?
+          details
+            summary 添付・元ファイル #{files.size}件
+            - render_state = document_file_tree_render_state(files:, row_partial: "documents/file_tree_columns", node_prefix: "document_files_#{version.id}")
+            table.tree-view-table
+              thead
+                tr
+                  th ファイル名
+                  th ファイル種
+                  th 区分
+              tbody
+                = tree_view_rows(render_state)
+
+/ === 関連文書セクション ===
+- explicit_related = @related_document_groups.fetch(:explicit, [])
+- inferred_related = @related_document_groups.fetch(:inferred, [])
+section.card#related-documents
+  h2 関連文書
+  - if explicit_related.any? || inferred_related.any?
+    - if explicit_related.any?
+      h3 明示的な関連
+      ul
+        - explicit_related.each do |result|
+          li
+            = link_to result.document.title, project_document_path(@project, result.document.slug)
+            span.muted
+              |  (
+              = document_relation_type_label(result)
+              | )
+
+    - if inferred_related.any?
+      h3 フォルダ階層から見つかった関連候補
+      ul
+        - inferred_related.each do |result|
+          li
+            = link_to result.document.title, project_document_path(@project, result.document.slug)
+            span.muted
+              |  (
+              = document_relation_type_label(result)
+              | )
+  - else
+    = render EmptyStateComponent.new(heading: "関連文書はありません", description: "関連文書は、同一フォルダ階層や明示的なリンクから自動検出されます。") do |component|
+      - component.with_action do
+        = link_to "文書一覧へ", project_documents_path(@project), class: "button secondary"
+
+/ === 確認依頼セクション ===
+- if current_user.internal?
+  section.card#approval-requests
+    h2 正式な確認依頼
+
+    .card
+      h3 確認依頼を作成
+      p.muted 文書コメントで軽く残すだけでなく、担当者を指定して正式に確認を依頼する場合に使います。
+      = form_with model: [@project, @document, DocumentApprovalRequest.new], local: true do |form|
+        .form-grid
+          div
+            = form.label :title, "タイトル"
+            = form.text_field :title
+          div
+            = form.label :approver_id, "確認相手"
+            = form.collection_select :approver_id, @approval_approvers, :id, :name, include_blank: "未指定"
+          div style="grid-column: 1 / -1;"
+            = form.label :body, "内容"
+            = form.text_area :body
+        p.actions
+          = form.submit "確認依頼を作成", class: "button"
+
+    - if @document_approval_requests.any?
+      table
+        thead
+          tr
+            th タイトル
+            th 依頼者
+            th 確認相手
+            th 状態
+        tbody
+          - @document_approval_requests.each do |request|
+            tr
+              td = link_to request.title, document_approval_request_path(request)
+              td = request.requester.name
+              td = request.approver&.name || "-"
+              td = document_approval_request_status_label(request)
+    - else
+      = render EmptyStateComponent.new(heading: "確認依頼はありません", description: "担当者を指定して正式に確認を依頼できます。文書コメントよりフォーマルな確認フローに使います。") do |component|
+        - component.with_action do
+          = link_to "確認依頼を作成", "#", class: "button secondary", onclick: "document.querySelector('#approval-requests .card h3').scrollIntoView({behavior:'smooth'}); return false;"
 
 p = link_to "文書一覧へ戻る", return_to

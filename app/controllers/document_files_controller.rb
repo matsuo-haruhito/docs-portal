@@ -124,7 +124,7 @@ class DocumentFilesController < BaseController
     return :show_csv_preview if inline_preview_kind?(viewer_plan, disposition, :csv)
     return :show_structured_preview if inline_preview_kind?(viewer_plan, disposition, :json, :yaml)
     return :show_archive_preview if inline_preview_kind?(viewer_plan, disposition, :archive)
-    return :show_text_preview if text_preview_request?(file, disposition)
+    :show_text_preview if text_preview_request?(file, disposition)
   end
 
   def prepare_preview_for_template!(file, viewer_plan:, disposition:, template:)

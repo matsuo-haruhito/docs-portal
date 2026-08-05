@@ -30,7 +30,7 @@ RSpec.describe Admin::ApiSpecificationPage do
     end
 
     it "keeps the source list aligned with the runbook primary page guidance" do
-      runbook = Rails.root.join("docs", "API仕様ページとdocs-src更新確認runbook.md").read
+      runbook = Rails.root.join("docs", "runbooks", "ops", "API仕様ページとdocs-src更新確認runbook.md").read
 
       page.primary_source_pages.each do |source_page|
         expect(runbook).to include("- `#{source_page.label}`: `#{source_page.source_path}` -> `/#{source_page.site_path}`")

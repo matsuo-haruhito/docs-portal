@@ -1,0 +1,7 @@
+{
+  "ignored_warnings": [
+  ],
+  "updated": "2026-08-06",
+  "brakeman_version": "8.0.5",
+  "note": "Run 'docker compose run --rm app bundle exec brakeman -I' to interactively manage ignored warnings"
+}

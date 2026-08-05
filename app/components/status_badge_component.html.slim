@@ -1,0 +1,5 @@
+span class="status-badge #{status_class}" aria-label=label
+  = label
+  - if tooltip.present?
+    span.status-badge__tooltip tabindex="0" aria-describedby=tooltip_id
+      span.status-badge__tooltip-content id=tooltip_id role="tooltip" = tooltip

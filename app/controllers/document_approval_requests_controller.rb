@@ -293,7 +293,7 @@ class DocumentApprovalRequestsController < BaseController
 
   def safe_return_to_path(fallback)
     return_to = params[:return_to].to_s
-    return safe_internal_return_to_path?(return_to) ? return_to : fallback
+    safe_internal_return_to_path?(return_to) ? return_to : fallback
   end
 
   def safe_internal_return_to_path?(path)

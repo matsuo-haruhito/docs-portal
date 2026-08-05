@@ -55,15 +55,15 @@ module Admin::DashboardHelper
     base_class = "inline-flex rounded px-2 py-1 text-xs font-semibold"
 
     status_class = case status.to_sym
-                   when :ok
+    when :ok
                      "bg-green-100 text-green-800"
-                   when :warning
+    when :warning
                      "bg-yellow-100 text-yellow-800"
-                   when :error
+    when :error
                      "bg-red-100 text-red-800"
-                   else
+    else
                      "bg-gray-100 text-gray-700"
-                   end
+    end
 
     "#{base_class} #{status_class}"
   end

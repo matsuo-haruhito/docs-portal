@@ -364,6 +364,22 @@ module ApplicationHelper
     value ? "はい" : "いいえ"
   end
 
+  # StatusBadgeComponent 用のツールチップテキストを返す
+  def status_badge_tooltip(version)
+    return nil unless version
+
+    case version.status.to_s
+    when "draft"
+      "下書き — まだ公開されていません"
+    when "published"
+      "公開中 — 利用者が閲覧可能です"
+    when "archived"
+      "アーカイブ済み — 非公開になっています"
+    else
+      nil
+    end
+  end
+
   def bulk_edit_field_label(field)
     localized_label("bulk_edit_fields", field)
   end

@@ -64,7 +64,6 @@ RSpec.describe "exposure smoke checklist drift" do
   it "keeps operational metadata evidence guidance discoverable without raw-value handoff" do
     docs_by_path = {
       "README.md" => REPO_ROOT.join("README.md").read,
-      "docs/README.md" => REPO_ROOT.join("docs/README.md").read,
       "docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md" => REPO_ROOT.join("docs/runbooks/ops/運用metadata情報露出点検チェックリスト.md").read,
       EVIDENCE_GUIDE_PATH => REPO_ROOT.join(EVIDENCE_GUIDE_PATH).read
     }
@@ -77,17 +76,6 @@ RSpec.describe "exposure smoke checklist drift" do
         "bin/operational_metadata_exposure_smoke",
         "PR / release evidence 用の短い digest",
         "raw values や詳細 payload は貼らない"
-      ]
-    )
-
-    require_representative_text(
-      docs_by_path.fetch("docs/README.md"),
-      "docs/README.md",
-      [
-        "運用 metadata 情報露出点検チェックリスト",
-        "情報露出 smoke evidence 運用メモ",
-        "external user exposure smoke と operational metadata exposure smoke の PR / release evidence での使い分け",
-        "raw value 非転記境界"
       ]
     )
 

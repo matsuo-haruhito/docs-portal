@@ -1,0 +1,11 @@
+nav.breadcrumb-nav aria-label="パンくず"
+  ol.breadcrumb-nav__list
+    - @items.each do |item|
+      - if last_item?(item)
+        li.breadcrumb-nav__item aria-current="page"
+          span title=title_for(item[:label]) class=("breadcrumb-nav__label--truncated" if item[:label].length > 200)
+            = truncated_label(item[:label])
+      - else
+        li.breadcrumb-nav__item
+          a.breadcrumb-nav__link href=item[:url] title=title_for(item[:label]) class=("breadcrumb-nav__label--truncated" if item[:label].length > 200)
+            = truncated_label(item[:label])

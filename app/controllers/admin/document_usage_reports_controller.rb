@@ -143,13 +143,13 @@ class Admin::DocumentUsageReportsController < Admin::BaseController
 
   def filter_rows(rows)
     filtered_rows = case @usage_filter
-                    when "used"
+    when "used"
                       rows.select { _1[:used] }
-                    when "unused"
+    when "unused"
                       rows.reject { _1[:used] }
-                    else
+    else
                       rows
-                    end
+    end
 
     filter_rows_by_query(filtered_rows)
   end

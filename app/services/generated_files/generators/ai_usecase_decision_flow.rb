@@ -184,7 +184,7 @@ module GeneratedFiles
       end
 
       def escape_puml(value)
-        value.to_s.gsub("\n", "\\n").gsub(":" , "：")
+        value.to_s.gsub("\n", "\\n").gsub(":", "：")
       end
 
       def relative(path)

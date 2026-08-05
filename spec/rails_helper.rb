@@ -6,6 +6,8 @@ abort("The Rails environment is running in production mode!") if Rails.env.produ
 
 require "rspec/rails"
 require "factory_bot_rails"
+require "view_component/test_helpers"
+require "capybara/rspec"
 
 ActionController::Base.allow_forgery_protection = false
 
@@ -28,6 +30,9 @@ RSpec.configure do |config|
 
   config.include FactoryBot::Syntax::Methods
   config.include ActiveJob::TestHelper
+  config.include ViewComponent::TestHelpers, type: :component
+  config.include Capybara::RSpecMatchers, type: :component
+  config.include ActionView::Helpers::TagHelper, type: :component
 
   config.before do
     ActiveJob::Base.queue_adapter = :test
