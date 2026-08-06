@@ -59,6 +59,10 @@ class AccessRequestResolver
   attr_reader :access_request, :approver
 
   def grant_access!
+    if access_request.manage?
+      raise ApplicationError::BadRequest, "manage 要求の自動承認は現在サポートされていません。管理者が権限を直接設定してください。"
+    end
+
     case access_request.requestable
     when Project
       ProjectMembership.find_or_create_by!(project: access_request.requestable, user: access_request.requester) do |membership|
