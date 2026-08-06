@@ -66,7 +66,7 @@ MAINTENANCE_ROUTE_INVENTORY_DOC_SIGNALS = [
   "| Webhook 再送 | `admin/webhook_deliveries#retry_dispatch` / `#retry_failed` | 候補。",
   "| 定期ジョブ操作 | `admin/recurring_job_schedules#sync_definitions` / `#request_run` | current。",
   "`READ_ONLY_MAINTENANCE` 中は定義同期と即時実行要求を開始せず、一覧・詳細・実行履歴・filter・pagination・表示設定は read-only に確認できる。",
-  "| Git 手動同期 | `admin/git_import_sources#sync` | 候補。",
+  "| Git 手動同期 | `admin/git_import_sources#sync` | current。",
   "| 外部フォルダ同期 | `admin/external_folder_sync_sources#dry_run` / `#apply` / `#force_apply` / `#enqueue` / `#subscribe` / `#unsubscribe` / `#recheck_metadata` | 要判断。",
   "| 外部フォルダ同期 provider webhook | `external_folder_sync_webhooks#google_drive` / `#sharepoint` | current。",
   "provider validation / acknowledgement と event 記録は維持し、`READ_ONLY_MAINTENANCE` 中は受信 event から同期 job を enqueue しない。",
