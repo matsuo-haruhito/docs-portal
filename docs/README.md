@@ -48,6 +48,7 @@ steering（ルール）と skills（手順）は .kiro/ 配下を参照
 - [コーディング規約](./コーディング規約.md)
 - [テスト方針](./テスト方針.md)
 - [開発・保守ガイド](./開発・保守ガイド.md)
+- [internal UI gem state cue inventory](./internal-ui-gem-state-cue-inventory.md)
 
 ---
 
