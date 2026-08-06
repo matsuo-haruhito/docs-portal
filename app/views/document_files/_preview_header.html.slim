@@ -14,14 +14,19 @@ p.muted
     h1.document-viewer__title = document_file.file_name
     p.document-viewer__meta
       = document_file.effective_content_type
-      |  / 
+      |  /
       = number_to_human_size(document_file.file_size)
+    - if document.document_tags.any?
+      p.document-viewer__meta
+        span.muted 分類タグ:
+        - document.document_tags.each do |tag|
+          span.badge = tag.name
     - if viewer_plan.present?
       p.document-viewer__meta
-        span.muted 表示モード: 
+        span.muted 表示モード:
         span.badge = viewer_plan.label
         - if viewer_plan.reason.present?
-          |  
+          |
           span.muted = viewer_plan.reason
   div
     p.actions
