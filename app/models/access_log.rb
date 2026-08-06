@@ -3,7 +3,7 @@ class AccessLog < ApplicationRecord
 
   public_id_prefix "alog"
 
-  TARGET_TYPE_FILTERS = %w[page file zip ai_context].freeze
+  TARGET_TYPE_FILTERS = %w[page file zip ai_context dry_run].freeze
 
   belongs_to :user, optional: true
   belongs_to :company, optional: true
@@ -11,7 +11,7 @@ class AccessLog < ApplicationRecord
   belongs_to :document, optional: true
   belongs_to :document_version, optional: true
 
-  enum :action_type, { view: 0, download: 1, bulk_edit: 2 }
+  enum :action_type, { view: 0, download: 1, bulk_edit: 2, dry_run: 3, external_preview: 4 }
 
   validates :target_type, :accessed_at, presence: true
 end

@@ -42,6 +42,8 @@ class Admin::ApiSpecificationsController < Admin::BaseController
       codeblock_id: params[:codeblock_id].to_s
     )
 
+    record_codeblock_dry_run_access_log(result)
+
     render json: result, status: result[:status] == "error" ? :unprocessable_entity : :ok
   end
 
@@ -225,5 +227,19 @@ class Admin::ApiSpecificationsController < Admin::BaseController
 
   def maintenance_retry_build_message
     "メンテナンス中のためAPI仕様ページの build 再要求は停止しています。API仕様 viewer と生成済み HTML の確認は継続できます。"
+  end
+
+  def record_codeblock_dry_run_access_log(result)
+    AccessLog.create!(
+      user: current_user,
+      company: current_user.company,
+      action_type: :dry_run,
+      target_type: "api_codeblock",
+      target_name: result[:target_api].to_s.first(200),
+      accessed_at: Time.current,
+      ip_address: request.remote_ip
+    )
+  rescue => e
+    Rails.logger.warn("codeblock dry-run AccessLog failed: #{e.class}: #{e.message}")
   end
 end
