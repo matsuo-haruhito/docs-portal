@@ -46,6 +46,7 @@ on:
       - .github/scripts/check_frontend_entrypoint_policy.rb
       - .github/scripts/check_delivery_failure_handoff_boundary.rb
       - .github/scripts/check_sharepoint_webhook_boundary.rb
+      - .github/scripts/check_demo_credential_boundary.rb
       - .markdownlint-cli2.yaml
   pull_request:
     paths:
@@ -91,6 +92,7 @@ on:
       - .github/scripts/check_frontend_entrypoint_policy.rb
       - .github/scripts/check_delivery_failure_handoff_boundary.rb
       - .github/scripts/check_sharepoint_webhook_boundary.rb
+      - .github/scripts/check_demo_credential_boundary.rb
       - .markdownlint-cli2.yaml
 
 permissions:
@@ -184,6 +186,9 @@ jobs:
 
       - name: Check SharePoint webhook boundary
         run: ruby .github/scripts/check_sharepoint_webhook_boundary.rb
+
+      - name: Check demo credential boundary
+        run: ruby .github/scripts/check_demo_credential_boundary.rb
 
       - uses: actions/setup-node@v6
         with:
