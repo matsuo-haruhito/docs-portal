@@ -19,7 +19,7 @@ parser = OptionParser.new do |opts|
     options[:root] = Pathname(value)
   end
 
-  opts.on("--format=FORMAT", "output format: text or json") do |value|
+  opts.on("--format=FORMAT", "output format: text, json, or markdown") do |value|
     options[:format] = value
   end
 
@@ -30,7 +30,7 @@ end
 
 parser.parse!(ARGV)
 
-unless %w[text json].include?(options[:format])
+unless %w[text json markdown].include?(options[:format])
   warn "Unsupported format: #{options[:format]}"
   warn parser
   exit 2
@@ -43,6 +43,48 @@ result = SeedSupport::ExternalSampleValidator.new(
 
 if options[:format] == "json"
   puts JSON.pretty_generate(result.to_h)
+elsif options[:format] == "markdown"
+  payload = result.to_h
+  summary = payload.fetch(:summary)
+  status_emoji = payload.fetch(:valid) ? "\u2705" : "\u274c"
+
+  puts "## External Sample Validation"
+  puts
+  puts "| 項目 | 値 |"
+  puts "|------|-----|"
+  puts "| 結果 | #{status_emoji} #{payload.fetch(:valid) ? 'valid' : 'invalid'} |"
+  puts "| 案件数 | #{summary.fetch(:projects)} |"
+  puts "| 文書数 | #{summary.fetch(:documents)} |"
+  puts "| 版数 | #{summary.fetch(:document_versions)} |"
+  puts "| 添付数 | #{summary.fetch(:attachments)} |"
+  puts "| warnings | #{payload.fetch(:warnings).size} |"
+  puts "| errors | #{payload.fetch(:errors).size} |"
+  puts
+  puts "> **dry-run only**: #{payload.fetch(:note)}"
+
+  if payload.fetch(:warnings).any?
+    puts
+    puts "### Warnings (#{payload.fetch(:warnings).size})"
+    puts
+    payload.fetch(:warnings).first(5).each do |warning|
+      puts "- `#{warning.fetch(:code)}` #{warning.fetch(:message)}"
+    end
+    if payload.fetch(:warnings).size > 5
+      puts "- ... 他 #{payload.fetch(:warnings).size - 5} 件（詳細は `--format=json` で確認）"
+    end
+  end
+
+  if payload.fetch(:errors).any?
+    puts
+    puts "### Errors (#{payload.fetch(:errors).size})"
+    puts
+    payload.fetch(:errors).first(5).each do |error|
+      puts "- `#{error.fetch(:code)}` #{error.fetch(:message)}"
+    end
+    if payload.fetch(:errors).size > 5
+      puts "- ... 他 #{payload.fetch(:errors).size - 5} 件（詳細は `--format=json` で確認）"
+    end
+  end
 else
   payload = result.to_h
   summary = payload.fetch(:summary)
