@@ -138,6 +138,7 @@ Rails.application.routes.draw do
       patch :archive, on: :member
       patch :restore, on: :member
       patch :promote_latest_version, on: :member
+      patch :mark_discard_reviewed, on: :member
     end
     resources :bulk_edit_dry_runs, only: %i[new create show update], param: :public_id do
       post :handoff, on: :collection
