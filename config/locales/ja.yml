@@ -179,11 +179,14 @@ ja:
         view: "閲覧"
         download: "ダウンロード"
         bulk_edit: "一括編集"
+        dry_run: "dry-run"
+        external_preview: "外部表示プレビュー"
       target_type:
         page: "ページ"
         file: "ファイル"
         zip: "ZIP"
         ai_context: "AI context export"
+        dry_run: "dry-run"
     consent_terms:
       consent_scope:
         global: "全体"
