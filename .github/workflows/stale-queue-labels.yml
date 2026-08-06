@@ -1,0 +1,45 @@
+name: stale-queue-labels
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'  # 毎週月曜 03:00 UTC (12:00 JST)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  detect-stale-labels:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+
+      - name: Self-test
+        run: ruby .github/scripts/check_closed_active_queue_labels.rb --self-test
+
+      - name: Detect stale queue labels on closed items
+        id: detect
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          output=$(ruby .github/scripts/check_closed_active_queue_labels.rb --repo "$GITHUB_REPOSITORY" 2>&1)
+          exit_code=$?
+          echo "$output"
+          echo "$output" >> "$GITHUB_STEP_SUMMARY"
+          if [ $exit_code -eq 1 ]; then
+            echo "::warning::Stale queue labels detected on closed Issue / PR. Review the drift digest above."
+            echo "drift=true" >> "$GITHUB_OUTPUT"
+          elif [ $exit_code -eq 2 ]; then
+            echo "::error::API failure during stale queue label detection. Check GITHUB_TOKEN and repository access."
+            exit 1
+          else
+            echo "drift=false" >> "$GITHUB_OUTPUT"
+          fi
