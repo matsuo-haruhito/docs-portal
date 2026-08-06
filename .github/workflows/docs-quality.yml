@@ -57,6 +57,7 @@ on:
       - .github/scripts/check_audit_log_csv_scope_boundary.rb
       - .github/scripts/check_document_usage_page_scope_boundary.rb
       - .github/scripts/check_visual_evidence_comment_boundary.rb
+      - .github/scripts/check_role_entry_drift_boundary.rb
       - .markdownlint-cli2.yaml
   pull_request:
     paths:
@@ -113,6 +114,7 @@ on:
       - .github/scripts/check_audit_log_csv_scope_boundary.rb
       - .github/scripts/check_document_usage_page_scope_boundary.rb
       - .github/scripts/check_visual_evidence_comment_boundary.rb
+      - .github/scripts/check_role_entry_drift_boundary.rb
       - .markdownlint-cli2.yaml
 
 permissions:
@@ -238,7 +240,10 @@ jobs:
         run: ruby .github/scripts/check_document_usage_page_scope_boundary.rb
 
       - name: Check visual evidence comment boundary
+      - name: Check role entry drift boundary
+        run: ruby .github/scripts/check_role_entry_drift_boundary.rb
         run: ruby .github/scripts/check_visual_evidence_comment_boundary.rb
+      - .github/scripts/check_role_entry_drift_boundary.rb
 
       - uses: actions/setup-node@v6
         with:
