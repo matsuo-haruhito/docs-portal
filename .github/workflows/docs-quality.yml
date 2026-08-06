@@ -48,6 +48,14 @@ on:
       - .github/scripts/check_sharepoint_webhook_boundary.rb
       - .github/scripts/check_demo_credential_boundary.rb
       - .github/scripts/check_document_usage_csv_metadata_boundary.rb
+      - .github/scripts/check_external_preview_access_log_boundary.rb
+      - .github/scripts/check_formal_review_current_proposal_boundary.rb
+      - .github/scripts/check_app_config_diagnostic_boundary.rb
+      - .github/scripts/check_bulk_edit_dry_run_boundary.rb
+      - .github/scripts/check_consent_history_boundary.rb
+      - .github/scripts/check_dashboard_diagnostic_filter_boundary.rb
+      - .github/scripts/check_audit_log_csv_scope_boundary.rb
+      - .github/scripts/check_document_usage_page_scope_boundary.rb
       - .markdownlint-cli2.yaml
   pull_request:
     paths:
@@ -95,6 +103,14 @@ on:
       - .github/scripts/check_sharepoint_webhook_boundary.rb
       - .github/scripts/check_demo_credential_boundary.rb
       - .github/scripts/check_document_usage_csv_metadata_boundary.rb
+      - .github/scripts/check_external_preview_access_log_boundary.rb
+      - .github/scripts/check_formal_review_current_proposal_boundary.rb
+      - .github/scripts/check_app_config_diagnostic_boundary.rb
+      - .github/scripts/check_bulk_edit_dry_run_boundary.rb
+      - .github/scripts/check_consent_history_boundary.rb
+      - .github/scripts/check_dashboard_diagnostic_filter_boundary.rb
+      - .github/scripts/check_audit_log_csv_scope_boundary.rb
+      - .github/scripts/check_document_usage_page_scope_boundary.rb
       - .markdownlint-cli2.yaml
 
 permissions:
@@ -194,6 +210,30 @@ jobs:
 
       - name: Check document usage CSV metadata boundary
         run: ruby .github/scripts/check_document_usage_csv_metadata_boundary.rb
+
+      - name: Check external preview AccessLog boundary
+        run: ruby .github/scripts/check_external_preview_access_log_boundary.rb
+
+      - name: Check formal review current/proposal boundary
+        run: ruby .github/scripts/check_formal_review_current_proposal_boundary.rb
+
+      - name: Check ApplicationConfigurationDiagnostic boundary
+        run: ruby .github/scripts/check_app_config_diagnostic_boundary.rb
+
+      - name: Check bulk edit dry-run boundary
+        run: ruby .github/scripts/check_bulk_edit_dry_run_boundary.rb
+
+      - name: Check consent history boundary
+        run: ruby .github/scripts/check_consent_history_boundary.rb
+
+      - name: Check dashboard diagnostic filter boundary
+        run: ruby .github/scripts/check_dashboard_diagnostic_filter_boundary.rb
+
+      - name: Check audit log CSV scope boundary
+        run: ruby .github/scripts/check_audit_log_csv_scope_boundary.rb
+
+      - name: Check document usage page scope boundary
+        run: ruby .github/scripts/check_document_usage_page_scope_boundary.rb
 
       - uses: actions/setup-node@v6
         with:
