@@ -73,7 +73,12 @@ h1 外部表示プレビュー
 
 - if @preview_requested && @preview_hashes.empty?
   .card
-    p 対象条件に一致する有効な外部ユーザーがいません。
+    - if @selected_company.present?
+      p この会社（#{@selected_company.display_name}）に所属する有効な外部ユーザーがいません。
+      p.muted 会社の所属ユーザーや有効状態を確認するか、別の会社を選び直してください。
+    - else
+      p 対象条件に一致する有効な外部ユーザーがいません。
+      p.muted ユーザーの有効状態や案件所属を確認してください。
 
 - @preview_hashes.each do |preview|
   .card
