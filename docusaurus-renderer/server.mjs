@@ -26,7 +26,7 @@ const server = createServer(async (request, response) => {
 
   let workRoot;
   try {
-    const entryPath = safeRelativeHeader(request.headers['x-docs-entry-path'] || 'index.md');
+    const entryPath = safeRelativeHeader(decodeURIComponent(request.headers['x-docs-entry-path'] || 'index.md'));
     workRoot = await mkdtemp(path.join(os.tmpdir(), 'docusaurus-render-'));
     const sourceArchive = path.join(workRoot, 'source.tar.gz');
     const sourceDir = path.join(workRoot, 'docs-src');
@@ -52,14 +52,14 @@ const server = createServer(async (request, response) => {
       timeoutMs: BUILD_TIMEOUT_MS,
     });
 
-    const sitePath = normalizeSitePagePath(entryPath);
+    const sitePath = await detectSitePath(buildDir, entryPath);
     await createArchive(outputArchive, buildDir);
     await ensureMaxFileSize(outputArchive, MAX_OUTPUT_BYTES, 'build output');
     const archive = await readFile(outputArchive);
 
     response.writeHead(200, {
       'Content-Type': 'application/gzip',
-      'X-Docs-Site-Path': sitePath,
+      'X-Docs-Site-Path': encodeURIComponent(sitePath),
       'Content-Length': archive.length,
     });
     response.end(archive);
@@ -110,7 +110,8 @@ async function validateArchiveEntries(archivePath) {
     if (!['-', 'd'].includes(mode)) {
       throw new Error(`archive entry type is not allowed: ${line}`);
     }
-    safeArchiveEntryName(archiveEntryNameFromVerboseLine(line));
+    const name = safeArchiveEntryName(archiveEntryNameFromVerboseLine(line));
+    // null means skip (e.g. root directory entry)
   });
 }
 
@@ -138,10 +139,15 @@ async function runCommand(command, args, options = {}) {
     cwd: options.cwd,
     env: options.env || process.env,
     stdio: ['ignore', 'pipe', 'pipe'],
+    detached: true,
   });
 
   const timer = setTimeout(() => {
-    child.kill('SIGKILL');
+    try {
+      process.kill(-child.pid, 'SIGKILL');
+    } catch {
+      child.kill('SIGKILL');
+    }
   }, options.timeoutMs || BUILD_TIMEOUT_MS);
 
   child.stdout.on('data', (chunk) => {
@@ -185,6 +191,7 @@ function archiveEntryNameFromVerboseLine(line) {
 
 function safeArchiveEntryName(value) {
   const raw = normalizeSlashes(value);
+  if (raw === './' || raw === '.') return null; // skip root directory entry
   if (raw.startsWith('/') || hasDriveLetter(raw)) {
     throw new Error(`archive entry path is invalid: ${value}`);
   }
@@ -204,6 +211,82 @@ function normalizeSitePagePath(entryPath) {
   value = value.replace(/\/index\.html$/i, '');
   value = value.replace(/\.html$/i, '');
   return value || 'index';
+}
+
+async function detectSitePath(buildDir, entryPath) {
+  const {readdir} = await import('node:fs/promises');
+
+  // Collect all index.html paths relative to buildDir (non-recursive helper)
+  async function findIndexFiles(dir, prefix = '') {
+    const results = [];
+    let entries;
+    try {
+      entries = await readdir(dir, {withFileTypes: true});
+    } catch {
+      return results;
+    }
+    for (const entry of entries) {
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        const sub = await findIndexFiles(path.join(dir, entry.name), rel);
+        results.push(...sub);
+      } else if (entry.name === 'index.html') {
+        results.push(prefix || 'index');
+      }
+    }
+    return results;
+  }
+
+  const allPaths = await findIndexFiles(buildDir);
+
+  // Normalize Unicode for comparison (NFC)
+  const normalizedPaths = allPaths.map((p) => p.normalize('NFC'));
+
+  // Try exact normalized match first
+  const normalized = normalizeSitePagePath(entryPath).normalize('NFC');
+  if (normalizedPaths.includes(normalized)) {
+    return allPaths[normalizedPaths.indexOf(normalized)];
+  }
+
+  // README at any level maps to index in Docusaurus
+  const readmeAsIndex = normalized.replace(/(^|\/)README$/i, '$1index');
+  if (readmeAsIndex !== normalized && normalizedPaths.includes(readmeAsIndex)) {
+    return allPaths[normalizedPaths.indexOf(readmeAsIndex)];
+  }
+
+  // Build candidate: strip number prefixes (e.g. 00_, 01_) and top-level directory
+  const segments = normalized.split('/');
+  const strippedSegments = segments.map((s) => s.replace(/^\d+_/, ''));
+
+  // Try progressively removing leading segments
+  for (let start = 0; start < strippedSegments.length; start++) {
+    const candidate = strippedSegments.slice(start).join('/');
+    if (candidate && normalizedPaths.includes(candidate)) {
+      return allPaths[normalizedPaths.indexOf(candidate)];
+    }
+  }
+
+  // Also try the original segments with leading segments removed
+  for (let start = 1; start < segments.length; start++) {
+    const candidate = segments.slice(start).map((s) => s.replace(/^\d+_/, '')).join('/');
+    if (candidate && normalizedPaths.includes(candidate)) {
+      return allPaths[normalizedPaths.indexOf(candidate)];
+    }
+  }
+
+  // Fallback: find any path whose last segment matches
+  const entryBasename = path.posix.basename(normalized);
+  const strippedBasename = entryBasename.replace(/^\d+_/, '');
+  const baseIdx = normalizedPaths.findIndex((p) => {
+    const last = p.split('/').pop();
+    return last === entryBasename || last === strippedBasename;
+  });
+  if (baseIdx >= 0) {
+    return allPaths[baseIdx];
+  }
+
+  // Last resort
+  return normalized;
 }
 
 function normalizeSlashes(value) {

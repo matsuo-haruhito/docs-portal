@@ -11,6 +11,7 @@ services:
       TZ: Asia/Tokyo
       HISTFILE: tmp/.bash_history
       RAILS_ENV: development
+      SOLID_QUEUE_IN_PUMA: "1"
     working_dir: /app
     tty: true
     stdin_open: true

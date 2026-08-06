@@ -24,7 +24,7 @@ class DocumentVersion < ApplicationRecord
 
   before_validation :normalize_search_body_text
   after_commit :promote_as_latest_version, on: %i[create update]
-  after_commit :broadcast_document_tree_refresh_later
+  after_commit :broadcast_document_tree_refresh_later, unless: :preview_build_only_change?
 
   SOURCE_PATH_FIELDS = %i[
     source_relative_path
@@ -86,6 +86,8 @@ class DocumentVersion < ApplicationRecord
   end
 
   def html_view_site_path
+    return site_build_path if site_build_path.present? && site_entry_absolute_path&.exist?
+
     markdown_entry_path.presence || site_build_path
   end
 
@@ -117,6 +119,7 @@ class DocumentVersion < ApplicationRecord
       preview_build_error_message: nil,
       preview_build_completed_at: Time.current
     )
+    broadcast_preview_ready
   end
 
   def mark_preview_build_failed!(error)
@@ -205,6 +208,16 @@ class DocumentVersion < ApplicationRecord
   end
 
   private
+
+  PREVIEW_BUILD_FIELDS = %w[preview_build_status preview_build_error_message preview_build_attempted_at preview_build_completed_at site_build_path markdown_entry_path].freeze
+
+  def preview_build_only_change?
+    (previous_changes.keys - PREVIEW_BUILD_FIELDS - %w[updated_at]).empty?
+  end
+
+  def broadcast_preview_ready
+    broadcast_refresh_later_to self, :preview
+  end
 
   def normalize_search_body_text
     self.search_body_text = DocumentVersion.search_text_for(search_body_text)

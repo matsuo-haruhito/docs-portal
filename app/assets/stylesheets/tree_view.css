@@ -4,33 +4,24 @@
   padding-right: 0.15rem;
 }
 
-.tree-toggle{
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.15rem;
-  min-height: 1.65rem;
-  min-width: 0;
-}
-
 .tree-toggle__branches{
   display: inline-flex;
   align-items: stretch;
   flex: 0 0 auto;
-  min-height: 1.65rem;
+  min-height: 1.0rem;
 }
 
 .tree-toggle__branch-slot{
   position: relative;
-  width: 0.9rem;
-  min-width: 0.9rem;
+  width: 0.75rem;
+  min-width: 0.75rem;
 }
 
 .tree-toggle__branch-slot.has-line::before{
   content: "";
   position: absolute;
-  top: -0.35rem;
-  bottom: -0.35rem;
+  top: -0.2rem;
+  bottom: -0.2rem;
   left: 50%;
   width: 1px;
   transform: translateX(-50%);
@@ -47,12 +38,12 @@
 }
 
 .tree-toggle__branch-slot.is-current.is-middle::before{
-  top: -0.35rem;
-  bottom: -0.35rem;
+  top: -0.2rem;
+  bottom: -0.2rem;
 }
 
 .tree-toggle__branch-slot.is-current.is-last::before{
-  top: -0.35rem;
+  top: -0.2rem;
   bottom: 50%;
 }
 
@@ -82,13 +73,13 @@ a.tree-toggle__action{
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  width: 1.55rem !important;
-  min-width: 1.55rem !important;
-  max-width: 1.55rem !important;
-  height: 1.35rem !important;
-  min-height: 1.35rem !important;
+  width: 1.2rem !important;
+  min-width: 1.2rem !important;
+  max-width: 1.2rem !important;
+  height: 1.1rem !important;
+  min-height: 1.1rem !important;
   padding: 0 !important;
-  border-radius: 4px !important;
+  border-radius: 3px !important;
   border: 1px solid #bfdbfe !important;
   background: #eff6ff !important;
   color: #1d4ed8 !important;
@@ -218,6 +209,36 @@ a.tree-download-button--combined{
 .tree-view-table{
   min-width: 100%;
   table-layout: auto;
+  border-spacing: 0 !important;
+  border-collapse: collapse !important;
+}
+
+.tree-view-table td,
+#document_tree_panel .tree-view-table td{
+  padding: 1px 2px !important;
+  line-height: 1.0 !important;
+  font-size: 15px;
+  border: 0 !important;
+  margin: 0 !important;
+}
+
+#document_tree_panel .tree-view-table tr.tree-folder-node > td{
+  padding-top: 8px !important;
+  padding-bottom: 3px !important;
+}
+
+.tree-view-table tr:not(.tree-folder-node) td{
+  padding-top: 1px !important;
+  padding-bottom: 1px !important;
+}
+
+.tree-toggle{
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.1rem;
+  min-height: 1.0rem;
+  min-width: 0;
 }
 
 .site-viewer-hero{

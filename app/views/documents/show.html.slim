@@ -20,15 +20,12 @@
     - header.with_action do
       = render StatusBadgeComponent.new(status: @viewer_version.status, label: document_version_status_label(@viewer_version), tooltip: status_badge_tooltip(@viewer_version))
   - header.with_action do
-    = link_to "案件トップ", project_path(@project), class: "button secondary"
-    = render HelpTooltipComponent.new(description: "この文書が属する案件のトップ画面を開きます")
+    = link_to "案件トップ", project_path(@project), class: "button secondary", title: "この文書が属する案件のトップ画面を開きます"
   - header.with_action do
-    = link_to "文書一覧", project_documents_path(@project), class: "button secondary"
-    = render HelpTooltipComponent.new(description: "この案件の文書一覧画面へ戻ります")
+    = link_to "文書一覧", project_documents_path(@project), class: "button secondary", title: "この案件の文書一覧画面へ戻ります"
   - if @viewer_version
     - header.with_action do
-      = link_to "版詳細", document_version_path(@viewer_version), class: "button secondary"
-      = render HelpTooltipComponent.new(description: "表示中の版の詳細情報を確認できます")
+      = link_to "版詳細", document_version_path(@viewer_version), class: "button secondary", title: "表示中の版の詳細情報を確認できます"
   - if document_download_file
     - header.with_action do
       = link_to document_file_path(document_download_file, disposition: "download"), class: "button secondary", title: "このファイルをダウンロード", data: { turbo: false } do
@@ -67,6 +64,7 @@
 
 / ===== 本文あり/なし分岐 =====
 - if rendered_view_available
+  = turbo_stream_from dom_id(@viewer_version, :preview)
   section.document-reader
     - if current_user.internal?
       p.muted このプレビュー領域へ1ファイルずつドロップすると、この文書の更新候補としてアップロードできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
@@ -93,6 +91,7 @@
 
     = render "comment_workspace", floating: true
 - else
+  = turbo_stream_from dom_id(@viewer_version, :preview) if @viewer_version
   - if current_user.internal?
     .card.manual-document-upload-panel data-controller="manual-document-upload" data-manual-document-upload-dragging-class="is-dragging" data-manual-document-upload-url-value=project_document_uploads_path(@project) data-manual-document-upload-target-document-id=@document.public_id data-action=preview_drop_action
       h2 ファイルをアップロード

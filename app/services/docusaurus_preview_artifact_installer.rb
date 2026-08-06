@@ -45,6 +45,7 @@ class DocusaurusPreviewArtifactInstaller
   def extract_entry(entry, destination)
     relative_path = safe_artifact_path(entry.full_name)
     return if relative_path.blank?
+    return if entry.full_name.start_with?("././@")  # Skip GNU tar extended headers
 
     target = safe_destination(destination, relative_path)
 

@@ -1,23 +1,29 @@
 #!/usr/bin/env bash
+# スクリーンショット撮影中のアプリログから 500 エラーを検出する。
+# 引数: アプリログファイルのパス
 set -u
 
-log_file="${1:-log/development.log}"
+LOG_FILE="${1:-log/development.log}"
 
-if [ ! -s "$log_file" ]; then
-  printf '%s\n' 'screenshots-app-log-empty'
+if [ -z "$LOG_FILE" ] || [ ! -f "$LOG_FILE" ]; then
+  echo "No app log file found: $LOG_FILE"
   exit 0
 fi
 
-line_count="$(wc -l < "$log_file")"
-printf '%s\n' 'screenshots-app-log-collected-ok'
-printf 'screenshots-app-log-lines=%s\n' "$line_count"
-printf '%s\n' '--- filtered screenshots app log ---'
+error_count=$(grep -c "Completed 500" "$LOG_FILE" 2>/dev/null || echo "0")
 
-if ! grep -Eni 'Error|Exception|warning|Warning|Started |Processing by|Completed |Rendered ' "$log_file" | grep -v 'assets/'; then
-  printf '%s\n' 'screenshots-app-log-no-matches'
-fi
-
-if grep -Eq 'Completed 5[0-9]{2}' "$log_file"; then
-  printf '%s\n' 'screenshots-app-log-server-error' >&2
+if [ "$error_count" -gt 0 ]; then
+  echo "ERROR: ${error_count} pages returned 500 Internal Server Error during screenshots."
+  echo ""
+  echo "Affected requests:"
+  # 各 500 エラーの直前の Started 行を抽出する
+  awk '/Started (GET|POST|PATCH|PUT|DELETE)/{req=$0} /Completed 500/{print "  " req}' "$LOG_FILE" | sort -u
+  echo ""
+  echo "Error summary:"
+  # エラーの種類を抽出（Completed 500 の数行後にエラークラスが出力される）
+  grep -A5 "Completed 500" "$LOG_FILE" | grep -v "^--$\|Completed 500\|^$\|Caused by:" | grep -E "Error \(|Error$" | sed 's/ (.*//' | sort -u | sed 's/^/  /'
   exit 1
+else
+  echo "No 500 errors during screenshots."
+  exit 0
 fi

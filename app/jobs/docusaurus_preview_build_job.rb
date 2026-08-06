@@ -9,7 +9,7 @@ class DocusaurusPreviewBuildJob < ApplicationJob
 
   if respond_to?(:limits_concurrency)
     limits_concurrency to: 1,
-      key: ->(version_id) { "docusaurus-preview-build-#{version_id}" },
+      key: ->(_version_id) { "docusaurus-preview-build" },
       duration: 10.minutes
   end
 

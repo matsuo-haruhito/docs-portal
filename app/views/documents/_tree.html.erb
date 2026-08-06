@@ -2,16 +2,16 @@
   <%= turbo_stream_from "document_tree" %>
 
   <style>
-    .document-tree-toolbar { display: grid; gap: 8px; min-width: 0; width: 100%; }
+    .document-tree-toolbar { display: grid; gap: 4px; min-width: 0; width: 100%; }
     .document-tree-toolbar__title-row { display: flex; align-items: center; min-width: 0; }
-    .document-tree-toolbar h2 { margin: 0; line-height: 1.2; white-space: nowrap; }
+    .document-tree-toolbar h2 { margin: 0; font-size: 1rem; line-height: 1.2; white-space: nowrap; }
     .document-tree-toolbar__search-row { min-width: 0; }
-    .document-tree-toolbar__search-form { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
-    .document-tree-toolbar__search-input { flex: 1 1 220px; min-width: 0; border: 1px solid rgba(15, 23, 42, 0.16); border-radius: 999px; padding: 6px 10px; font: inherit; }
+    .document-tree-toolbar__search-form { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+    .document-tree-toolbar__search-input { flex: 1 1 220px; min-width: 0; border: 1px solid rgba(15, 23, 42, 0.16); border-radius: 999px; padding: 4px 8px; font-size: 12px; font: inherit; }
     .document-tree-toolbar__action-row { display: flex; justify-content: flex-end; min-width: 0; }
-    .document-tree-actions { display: inline-flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
+    .document-tree-actions { display: inline-flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px; min-width: 0; }
     .document-tree-actions form { margin: 0; }
-    .document-tree-action-link { display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(15, 98, 254, 0.32); border-radius: 999px; padding: 2px 8px; font-size: 12px; line-height: 1.5; background: #fff; color: #0f62fe; cursor: pointer; font: inherit; white-space: nowrap; }
+    .document-tree-action-link { display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(15, 98, 254, 0.32) !important; border-radius: 999px !important; padding: 2px 8px !important; font-size: 12px !important; line-height: 1.4 !important; background: #fff !important; color: #0f62fe !important; cursor: pointer; font: inherit; white-space: nowrap; min-height: 0 !important; height: auto !important; }
     .document-tree-action-link:hover, .document-tree-action-link:focus { background: #eff6ff; }
     @media (max-width: 520px) {
       .document-tree-toolbar__search-form { flex-direction: column; }
@@ -36,7 +36,7 @@
       line-height: 0;
     }
     .document-tree-filter-summary { margin-bottom: 8px; }
-    .document-tree-scope-cue { margin: 0; font-size: 12px; line-height: 1.5; }
+    .document-tree-scope-cue { margin: 0; font-size: 10px; line-height: 1.4; }
     .document-tree-refresh-cue { margin: 0 0 8px; padding: 6px 8px; border: 1px solid rgba(15, 98, 254, 0.24); border-radius: 8px; background: #eff6ff; color: #1e3a8a; }
     .document-tree-refresh-cue--error { border-color: rgba(185, 28, 28, 0.28); background: #fef2f2; color: #991b1b; }
     .document-tree-window-controls { display: grid; gap: 6px; margin-top: 8px; }
@@ -67,8 +67,6 @@
       expanded_source_path: local_assigns[:expanded_source_path],
       collapsed_source_path: local_assigns[:collapsed_source_path] %>
   <% end %>
-
-  <p class="muted">案件と文書の階層を表示します。</p>
 
   <% if tree_projects.empty? %>
     <p class="muted">表示できる案件はありません。</p>
