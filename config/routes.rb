@@ -88,6 +88,7 @@ Rails.application.routes.draw do
       get :selected_project, on: :collection
       get :repository_search, on: :collection
       get :selected_repository, on: :collection
+      get :branch_search, on: :collection
       get :directory_search, on: :collection
       post :sync, on: :member
     end

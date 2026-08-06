@@ -10,6 +10,7 @@ class Admin::GitImportSourcesController < Admin::BaseController
   PROJECT_SEARCH_LIMIT = 20
   REPOSITORY_SEARCH_LIMIT = 20
   DIRECTORY_SEARCH_LIMIT = 50
+  BRANCH_SEARCH_LIMIT = 30
   READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   def index
@@ -100,6 +101,20 @@ class Admin::GitImportSourcesController < Admin::BaseController
 
     render json: {
       options: directory_options(result.directories),
+      fallback: result.fallback?,
+      message: result.message
+    }
+  end
+
+  def branch_search
+    result = GitHubAppBranchOptions.new(
+      installation_id: params[:installation_id],
+      repository: params[:repository],
+      limit: BRANCH_SEARCH_LIMIT
+    ).call
+
+    render json: {
+      options: branch_options(result.branches),
       fallback: result.fallback?,
       message: result.message
     }
@@ -258,6 +273,14 @@ class Admin::GitImportSourcesController < Admin::BaseController
 
   def directory_option(path)
     { value: path, text: path }
+  end
+
+  def branch_options(branches)
+    branches.map { |name| branch_option(name) }
+  end
+
+  def branch_option(name)
+    { value: name, text: name }
   end
 
   def read_only_maintenance_mode?
