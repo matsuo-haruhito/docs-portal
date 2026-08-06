@@ -47,10 +47,10 @@ class AccessRequestResolver
     Result.new(access_request:, granted_record: nil)
   end
 
-  def cancel!
+  def cancel!(reason: nil)
     raise ApplicationError::BadRequest, "access request is not pending" unless access_request.pending?
 
-    access_request.update!(status: :cancelled, cancelled_at: Time.current)
+    access_request.update!(status: :cancelled, cancelled_at: Time.current, cancellation_reason: reason.presence)
     Result.new(access_request:, granted_record: nil)
   end
 
