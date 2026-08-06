@@ -8,8 +8,8 @@ class Admin::DocumentsController < Admin::BaseController
   READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   before_action :require_admin_only!
-  before_action :block_document_mutation_during_maintenance, only: %i[create update destroy archive restore]
-  before_action :set_document, only: %i[edit update destroy archive restore]
+  before_action :block_document_mutation_during_maintenance, only: %i[create update destroy archive restore promote_latest_version]
+  before_action :set_document, only: %i[edit update destroy archive restore promote_latest_version]
 
   helper_method :document_return_to_path
 
@@ -82,6 +82,12 @@ class Admin::DocumentsController < Admin::BaseController
   def restore
     @document.restore!(actor: current_user)
     redirect_to document_return_to_path, notice: "文書を復元しました。"
+  end
+
+  def promote_latest_version
+    version = @document.document_versions.published.find_by!(public_id: params[:version_id])
+    @document.update!(latest_version: version)
+    redirect_to document_return_to_path, notice: "「#{version.version_label}」を最新版に指定しました。"
   end
 
   def project_search
