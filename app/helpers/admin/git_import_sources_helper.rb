@@ -28,4 +28,10 @@ module Admin::GitImportSourcesHelper
 
     { value: repository_full_name, text: repository_full_name }
   end
+
+  def git_import_source_source_path_selected_option(source_path)
+    return nil if source_path.blank?
+
+    { value: source_path, text: source_path }
+  end
 end

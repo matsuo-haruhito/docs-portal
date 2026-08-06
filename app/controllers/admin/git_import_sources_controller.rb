@@ -9,6 +9,7 @@ class Admin::GitImportSourcesController < Admin::BaseController
   PROJECT_SEARCH_QUERY_MAX_LENGTH = 100
   PROJECT_SEARCH_LIMIT = 20
   REPOSITORY_SEARCH_LIMIT = 20
+  DIRECTORY_SEARCH_LIMIT = 50
   READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   def index
@@ -87,6 +88,21 @@ class Admin::GitImportSourcesController < Admin::BaseController
     repository_full_name = normalize_repository_full_name(params[:id])
 
     render json: { option: repository_full_name ? repository_option(repository_full_name) : nil }
+  end
+
+  def directory_search
+    result = GitHubAppDirectoryOptions.new(
+      installation_id: params[:installation_id],
+      repository: params[:repository],
+      branch: params[:branch],
+      limit: DIRECTORY_SEARCH_LIMIT
+    ).call
+
+    render json: {
+      options: directory_options(result.directories),
+      fallback: result.fallback?,
+      message: result.message
+    }
   end
 
   private
@@ -234,6 +250,14 @@ class Admin::GitImportSourcesController < Admin::BaseController
 
   def repository_option(repository_full_name)
     { value: repository_full_name, text: repository_full_name }
+  end
+
+  def directory_options(directories)
+    directories.map { |path| directory_option(path) }
+  end
+
+  def directory_option(path)
+    { value: path, text: path }
   end
 
   def read_only_maintenance_mode?

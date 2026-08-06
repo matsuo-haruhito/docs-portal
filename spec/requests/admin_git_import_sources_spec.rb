@@ -40,12 +40,10 @@ RSpec.describe "Admin git import sources", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(parsed_html.at_css(%(input[name="git_import_source[branch]"]))["placeholder"]).to eq("main")
-    expect(parsed_html.at_css(%(input[name="git_import_source[source_path]"]))["placeholder"]).to eq("docs/source")
     expect(page_text).to include("既定ブランチ名を入力します。例: main")
-    expect(page_text).to include("リポジトリルートからの相対パスです。例: docs / docs/source")
+    expect(page_text).to include("リポジトリとブランチが選ばれている場合はディレクトリ候補から選べます。")
     expect(page_text).to include("GitHub App の installation context が使える場合はリポジトリ候補から選べます。")
     expect(page_text).to include("installation ID 未設定・候補取得不可・候補0件の場合は、既存どおり owner/repo を直接入力します。")
-    expect(page_text).to include("ブランチと取込元パスは引き続き手入力です。")
     expect(page_text).not_to include("GitHub App picker は未実装")
   end
 

@@ -46,11 +46,11 @@ Git 連携で後続 provider に渡す基準契約は、同期元設定、run �
 
 リポジトリ欄は、GitHub App の installation token が使える場合に候補検索を行います。候補取得は bounded search で、候補が見つからない、installation ID が未設定、token が使えない、または GitHub API 側で取得に失敗した場合でも、既存どおり `owner/repo` を直接入力して保存できます。編集時に保存済み repository が候補上限外でも、保存値は selected option として復元されます。
 
-この first slice は repository picker までです。branch と取込元パスは引き続き手入力で、branch picker、path picker、存在確認、Git 同期本体、GitImportRun の保存 contract は変更していません。
+この first slice は repository picker と source path picker までです。branch は引き続き手入力で、branch picker、存在確認、Git 同期本体、GitImportRun の保存 contract は変更していません。取込元パスは、リポジトリとブランチが選ばれている場合に GitHub App API からディレクトリ候補を bounded に取得して選べます。候補取得不可の場合は既存どおり手入力 fallback です。
 
 詳細設定は current form の summary どおり、通常は開かない管理者・検証向けの領域です。`installation_id`、`credential_ref`、`credential_secret` は、GitHub App 導入前の検証や管理者の調整が必要な場合だけ確認します。通常運用は `GitHub App` 前提で、`fine_grained_pat` は開発・検証用の詳細設定、`no_auth` は公開 repository 用として扱います。
 
-current validation では、新規作成時に `fine_grained_pat` を選ぶ場合だけ `credential_secret` が必須です。編集時の保存済み secret は form に表示されず、空欄のまま保存すると既存値を維持し、新しい値を入力したときだけ更新します。GitHub App や公開 repository の `no_auth` では secret 欄は空欄のまま保存できます。GitHub App installation token 発行、branch / path picker は未実装なので、運用上は repository 候補または手入力値、branch、取込元パス、同期履歴で切り分けます。
+current validation では、新規作成時に `fine_grained_pat` を選ぶ場合だけ `credential_secret` が必須です。編集時の保存済み secret は form に表示されず、空欄のまま保存すると既存値を維持し、新しい値を入力したときだけ更新します。GitHub App や公開 repository の `no_auth` では secret 欄は空欄のまま保存できます。GitHub App installation token 発行、branch picker は未実装なので、運用上は repository 候補、取込元パス候補（ディレクトリ picker）、branch 手入力、同期履歴で切り分けます。
 
 ### 一覧の絞り込みと表示範囲
 
