@@ -14,7 +14,12 @@ class Admin::ModelBrowserCatalog
     "users" => :q,
     "projects" => :q,
     "documents" => :q,
-    "document_sets" => :q
+    "document_sets" => :q,
+    "project_memberships" => :q,
+    "document_permissions" => :q,
+    "access_logs" => :q,
+    "git_import_sources" => :q,
+    "git_import_runs" => :q
   }.freeze
 
   TEXT_SEARCH_COLUMN_TYPES = %i[string text].freeze
