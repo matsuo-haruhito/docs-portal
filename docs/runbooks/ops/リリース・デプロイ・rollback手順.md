@@ -84,9 +84,25 @@ migration を含む変更では、アプリ再起動前に `db:prepare` また�
 
 - backward compatible な migration を優先する
 - カラム削除・制約強化・一括データ変換は、必要なら段階リリースに分ける
+- schema追加、duplicate preflight、backfill、index / constraint追加を1 migrationで行う場合はtransactionalにし、途中失敗で半適用を残さない
+- concurrent indexが必要ならexpand / contractを別migration・別リリースへ分け、`disable_ddl_transaction!`の途中で検査エラーをraiseしない
 - migration 失敗時はアプリ再起動前に停止し、rollback 判断へ移る
 
 本番で queue / cable / cache DB を分離している場合は、それらを含む production DB 設定の整合も確認します。
+
+### job契約変更のconsumer-first rollout
+
+`JOB_RELIABILITY_V2_ENABLED`を使う同期信頼性変更は、一波で新payloadを出しません。
+
+1. gateを未設定または`false`のまま、旧payloadと新payloadの両方を読めるconsumerを全web / workerへ配置する
+2. current binaryのdispatcherを実行し、V2 scheduleの元の`enabled`が`enabled_before_reliability_v2_suspend`へ退避され、DB上の`enabled=false`が確定していることを確認する。`run_requested_at`、既存lock、run履歴は変更しない
+3. queue待機数だけで完了とせず、旧binaryのworker processとin-flight childが0であること、旧形式で予約済みのjobがdrainされたことを確認する
+4. external folder syncのpointerなしactive runやgroup IDなしの生成ファイル`processing` eventなど、旧worker由来で新lease ownerと証明できない行が0であることを確認する。残っている場合は旧worker不在と副作用を確認してから手動で収束し、runtimeの自動adopt / stale回収に任せない
+5. `JOB_RELIABILITY_V2_ENABLED=true`を全producer / workerへ同時に設定する
+6. 定期ジョブの`定義を同期`を実行し、V2 scheduleの`enabled`が退避値どおりに復元されて退避値がclearされたこと、protocol version付きV2 runner、新定義・4引数payload・stale recoveryが有効になったことを確認する
+7. external folder syncのactive run、reconciliation、失敗数を監視する
+
+問題がある場合は、旧binaryへ戻す前にcurrent binaryでgateを`false`へ戻してdispatcherを一度実行し、全V2 scheduleがDB上も`enabled=false`になったことを確認します。その後、queue済みV2 jobとin-flight childをdrainしてから旧binaryを起動します。gateをoffへ戻す前に既にchild内へ入った処理は取り消せず、DB上の無効化だけでrunning処理を停止できません。schemaは後方互換のまま残し、旧consumerへcode rollbackできる状態を維持します。再度gateをonにしたときは退避した有効・無効状態を復元し、停止中に保持した`run_requested_at`を通常dispatcherが処理します。`READ_ONLY_MAINTENANCE`は業務変更を止めるための別境界で、deploy互換性の切替には使いません。
 
 ## 7. seed / import / build の扱い
 

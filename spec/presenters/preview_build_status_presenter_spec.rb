@@ -13,7 +13,7 @@ RSpec.describe PreviewBuildStatusPresenter do
     expect(presenter.badge_class).to eq("warning")
     expect(presenter).to be_active
     expect(presenter).not_to be_failed
-    expect(presenter.detail_lines.join("\n")).to include("試行:")
+    expect(presenter.detail_lines).to be_empty
   end
 
   it "presents running preview build status" do

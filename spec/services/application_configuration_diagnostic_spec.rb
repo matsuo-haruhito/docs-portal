@@ -22,6 +22,8 @@ RSpec.describe ApplicationConfigurationDiagnostic do
       "SECRET_KEY_BASE" => "#{"x" * 40}",
       "RAILS_MASTER_KEY" => "#{"y" * 32}",
       "DOC_IMPORT_TOKEN" => "#{"z" * 32}",
+      "DOCS_PORTAL_SYNC_TOKEN" => "#{"s" * 32}",
+      "JOB_RELIABILITY_V2_ENABLED" => "false",
       "ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY" => "#{"a" * 32}",
       "ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY" => "#{"b" * 32}",
       "ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT" => "#{"c" * 32}",
@@ -85,11 +87,17 @@ RSpec.describe ApplicationConfigurationDiagnostic do
     env["SECRET_KEY_BASE"] = "secret"
     env["RAILS_MASTER_KEY"] = "replace_me"
     env["DOC_IMPORT_TOKEN"] = "local-dev-import-token"
+    env["DOCS_PORTAL_SYNC_TOKEN"] = "local-dev-sync-token"
 
     result = described_class.new(env:, root:, rails_env: FakeEnv.new("production")).call
 
-    expect(result.error_count).to eq(3)
-    expect(result.checks.select(&:error?).map(&:key)).to include("SECRET_KEY_BASE", "RAILS_MASTER_KEY", "DOC_IMPORT_TOKEN")
+    expect(result.error_count).to eq(4)
+    expect(result.checks.select(&:error?).map(&:key)).to include(
+      "SECRET_KEY_BASE",
+      "RAILS_MASTER_KEY",
+      "DOC_IMPORT_TOKEN",
+      "DOCS_PORTAL_SYNC_TOKEN"
+    )
   end
 
   it "reports undefined active storage services" do

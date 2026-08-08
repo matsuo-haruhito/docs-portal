@@ -19,6 +19,8 @@
 
 操作手順（viewer / admin / import / 外部連携 / 運用インフラ）
 
+- [sales-mgt同期運用runbook](./runbooks/external/sales-mgt同期運用runbook.md)
+
 ### 開発ガイド → [guides/](./guides/)
 
 セットアップ手順、開発フロー
@@ -48,6 +50,7 @@ steering（ルール）と skills（手順）は .kiro/ 配下を参照
 - [コーディング規約](./コーディング規約.md)
 - [テスト方針](./テスト方針.md)
 - [開発・保守ガイド](./開発・保守ガイド.md)
+- [internal UI gem state cue inventory](./internal-ui-gem-state-cue-inventory.md)
 
 ---
 

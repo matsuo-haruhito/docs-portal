@@ -55,7 +55,7 @@ class AccessRequestsController < BaseController
       return
     end
 
-    AccessRequestResolver.new(access_request:, approver: nil).cancel!
+    AccessRequestResolver.new(access_request:, approver: nil).cancel!(reason: params[:cancellation_reason])
 
     redirect_to access_requests_path(cancel_return_filter_params), notice: "アクセス申請を取り消しました。"
   end

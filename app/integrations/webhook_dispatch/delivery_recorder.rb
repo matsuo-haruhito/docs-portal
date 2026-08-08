@@ -21,13 +21,20 @@ module WebhookDispatch
         status: response.is_a?(Net::HTTPSuccess) ? :succeeded : :failed,
         response_status: response.code.to_i,
         response_body: response.body.to_s.truncate(10_000),
+        error_message: nil,
         sent_at: Time.current
       )
       delivery
     end
 
     def fail!(delivery:, error:)
-      delivery&.update!(status: :failed, error_message: error.message.truncate(10_000), sent_at: Time.current)
+      delivery&.update!(
+        status: :failed,
+        response_status: nil,
+        response_body: nil,
+        error_message: error.message.truncate(10_000),
+        sent_at: Time.current
+      )
       delivery || WebhookDelivery.create!(
         webhook_endpoint: endpoint,
         notification_event: event,

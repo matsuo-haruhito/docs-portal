@@ -251,6 +251,7 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
       :site_id,
       :drive_id,
       :preview_folder_path,
+      :preview_selected,
       :enabled,
       :shared_folder_url
     )

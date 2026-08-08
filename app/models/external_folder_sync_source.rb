@@ -5,6 +5,7 @@ class ExternalFolderSyncSource < ApplicationRecord
 
   belongs_to :project
   belongs_to :created_by, class_name: "User"
+  belongs_to :active_sync_run, class_name: "ExternalFolderSyncRun", optional: true
 
   has_many :external_folder_sync_runs, dependent: :destroy
   has_many :external_folder_sync_items, dependent: :destroy

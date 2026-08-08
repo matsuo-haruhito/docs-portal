@@ -22,6 +22,20 @@ JSON で確認したい場合は次のように実行します。
 ruby bin/validate_external_samples --format=json
 ```
 
+PR / release evidence に貼る短い digest が欲しい場合は markdown format を使います。
+
+```sh
+ruby bin/validate_external_samples --format=markdown
+```
+
+### format の使い分け
+
+| format | 用途 |
+|--------|------|
+| `text`（既定） | ローカル目視確認。候補全件と warning/error を表示 |
+| `json` | 詳細確認。CI や後続スクリプトへの入力 |
+| `markdown` | PR / release evidence 用の短い digest。件数と代表 warning/error のみ |
+
 別 root や添付サイズ warning の閾値を変えたい場合は、次の option を使います。
 
 ```sh

@@ -9,6 +9,46 @@ RSpec.describe GeneratedFiles::ChangeEventHandler do
     end
   end
 
+  it "runs claim-backed jobs inline and passes the opaque claim outside metadata" do
+    event = create(:generated_file_event, event_source: "manual", scheduled_at: 1.minute.ago)
+    claim = GeneratedFiles::EventDispatchLease.claim!([event])
+    registry = write_registry(
+      rules: [
+        {
+          "id" => "claimed",
+          "operations" => ["update"],
+          "path_patterns" => ["source.yml"],
+          "job_class" => "GeneratedFileJob",
+          "params" => {
+            "changed_files" => "$matched_files",
+            "job_ids" => ["generated_job"],
+            "metadata" => "$metadata"
+          }
+        }
+      ]
+    )
+    allow(GeneratedFileJob).to receive(:perform_now)
+    allow(GeneratedFileJob).to receive(:perform_later)
+
+    rule_ids = described_class.new(
+      file_events: [{"path" => "source.yml", "operation" => "update"}],
+      metadata: {"source_id" => 1},
+      dispatch_claim: claim,
+      registry_path: registry,
+      root: @root,
+      output: StringIO.new
+    ).call
+
+    expect(rule_ids).to eq(["claimed"])
+    expect(GeneratedFileJob).to have_received(:perform_now).with(
+      changed_files: ["source.yml"],
+      job_ids: ["generated_job"],
+      metadata: {"source_id" => 1},
+      dispatch_claim: claim
+    )
+    expect(GeneratedFileJob).not_to have_received(:perform_later)
+  end
+
   it "enqueues configured jobs with expanded params for matching CRUD events" do
     registry = write_registry(
       rules: [

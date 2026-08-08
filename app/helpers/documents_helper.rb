@@ -335,8 +335,8 @@ module DocumentsHelper
       tag.use(href: "#{asset_path(tree_icon_sprite_asset(icon_name))}#tree-icon-#{safe_icon_name}"),
       class: "tree-icon tree-icon--#{safe_icon_name}",
       viewBox: "0 0 24 24",
-      width: 18,
-      height: 18,
+      width: 14,
+      height: 14,
       title:,
       aria: { hidden: true },
       focusable: false

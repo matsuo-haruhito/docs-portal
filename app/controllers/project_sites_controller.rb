@@ -21,6 +21,10 @@ class ProjectSitesController < BaseController
 
     render_site_path = renderable_site_path(site_path, path_history_resolution)
     renderer = project_site_renderer(render_site_path, embedded: embedded_request?)
+
+    version_for_page = @current_document_version || @build_version
+    require_document_version_view_access!(version_for_page)
+
     file_path = renderer.file_response_path(render_site_path)
 
     if html_file?(file_path)
@@ -319,12 +323,14 @@ class ProjectSitesController < BaseController
     candidates = @project.documents.includes(:document_versions).flat_map(&:document_versions)
       .select { _1.version_label == @build_version.version_label && _1.rendered_site_available? }
 
-    candidates
-      .select do |version|
-        candidate_path = version.normalized_html_view_site_path
-        normalized_path == candidate_path || normalized_path.start_with?("#{candidate_path}/")
-      end
-      .max_by { _1.normalized_html_view_site_path.length }
+    candidates << @build_version unless candidates.include?(@build_version)
+
+    matching = candidates.select do |version|
+      candidate_path = version.normalized_html_view_site_path
+      normalized_path == candidate_path || normalized_path.start_with?("#{candidate_path}/")
+    end
+
+    matching.max_by { |v| [normalized_path == v.normalized_html_view_site_path ? 1 : 0, v.normalized_html_view_site_path.length] }
   end
 
   def html_file?(file_path)

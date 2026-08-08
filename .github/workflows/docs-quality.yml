@@ -44,6 +44,20 @@ on:
       - .github/scripts/check_microsoft_graph_preview_boundary.rb
       - .github/scripts/check_closed_active_queue_labels.rb
       - .github/scripts/check_frontend_entrypoint_policy.rb
+      - .github/scripts/check_delivery_failure_handoff_boundary.rb
+      - .github/scripts/check_sharepoint_webhook_boundary.rb
+      - .github/scripts/check_demo_credential_boundary.rb
+      - .github/scripts/check_document_usage_csv_metadata_boundary.rb
+      - .github/scripts/check_external_preview_access_log_boundary.rb
+      - .github/scripts/check_formal_review_current_proposal_boundary.rb
+      - .github/scripts/check_app_config_diagnostic_boundary.rb
+      - .github/scripts/check_bulk_edit_dry_run_boundary.rb
+      - .github/scripts/check_consent_history_boundary.rb
+      - .github/scripts/check_dashboard_diagnostic_filter_boundary.rb
+      - .github/scripts/check_audit_log_csv_scope_boundary.rb
+      - .github/scripts/check_document_usage_page_scope_boundary.rb
+      - .github/scripts/check_visual_evidence_comment_boundary.rb
+      - .github/scripts/check_role_entry_drift_boundary.rb
       - .markdownlint-cli2.yaml
   pull_request:
     paths:
@@ -87,6 +101,20 @@ on:
       - .github/scripts/check_microsoft_graph_preview_boundary.rb
       - .github/scripts/check_closed_active_queue_labels.rb
       - .github/scripts/check_frontend_entrypoint_policy.rb
+      - .github/scripts/check_delivery_failure_handoff_boundary.rb
+      - .github/scripts/check_sharepoint_webhook_boundary.rb
+      - .github/scripts/check_demo_credential_boundary.rb
+      - .github/scripts/check_document_usage_csv_metadata_boundary.rb
+      - .github/scripts/check_external_preview_access_log_boundary.rb
+      - .github/scripts/check_formal_review_current_proposal_boundary.rb
+      - .github/scripts/check_app_config_diagnostic_boundary.rb
+      - .github/scripts/check_bulk_edit_dry_run_boundary.rb
+      - .github/scripts/check_consent_history_boundary.rb
+      - .github/scripts/check_dashboard_diagnostic_filter_boundary.rb
+      - .github/scripts/check_audit_log_csv_scope_boundary.rb
+      - .github/scripts/check_document_usage_page_scope_boundary.rb
+      - .github/scripts/check_visual_evidence_comment_boundary.rb
+      - .github/scripts/check_role_entry_drift_boundary.rb
       - .markdownlint-cli2.yaml
 
 permissions:
@@ -174,6 +202,48 @@ jobs:
 
       - name: Check frontend entrypoint policy
         run: ruby .github/scripts/check_frontend_entrypoint_policy.rb
+
+      - name: Check delivery failure handoff boundary
+        run: ruby .github/scripts/check_delivery_failure_handoff_boundary.rb
+
+      - name: Check SharePoint webhook boundary
+        run: ruby .github/scripts/check_sharepoint_webhook_boundary.rb
+
+      - name: Check demo credential boundary
+        run: ruby .github/scripts/check_demo_credential_boundary.rb
+
+      - name: Check document usage CSV metadata boundary
+        run: ruby .github/scripts/check_document_usage_csv_metadata_boundary.rb
+
+      - name: Check external preview AccessLog boundary
+        run: ruby .github/scripts/check_external_preview_access_log_boundary.rb
+
+      - name: Check formal review current/proposal boundary
+        run: ruby .github/scripts/check_formal_review_current_proposal_boundary.rb
+
+      - name: Check ApplicationConfigurationDiagnostic boundary
+        run: ruby .github/scripts/check_app_config_diagnostic_boundary.rb
+
+      - name: Check bulk edit dry-run boundary
+        run: ruby .github/scripts/check_bulk_edit_dry_run_boundary.rb
+
+      - name: Check consent history boundary
+        run: ruby .github/scripts/check_consent_history_boundary.rb
+
+      - name: Check dashboard diagnostic filter boundary
+        run: ruby .github/scripts/check_dashboard_diagnostic_filter_boundary.rb
+
+      - name: Check audit log CSV scope boundary
+        run: ruby .github/scripts/check_audit_log_csv_scope_boundary.rb
+
+      - name: Check document usage page scope boundary
+        run: ruby .github/scripts/check_document_usage_page_scope_boundary.rb
+
+      - name: Check visual evidence comment boundary
+      - name: Check role entry drift boundary
+        run: ruby .github/scripts/check_role_entry_drift_boundary.rb
+        run: ruby .github/scripts/check_visual_evidence_comment_boundary.rb
+      - .github/scripts/check_role_entry_drift_boundary.rb
 
       - uses: actions/setup-node@v6
         with:

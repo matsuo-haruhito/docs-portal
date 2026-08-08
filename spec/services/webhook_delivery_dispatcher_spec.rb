@@ -68,6 +68,7 @@ RSpec.describe WebhookDeliveryDispatcher do
 
     request = http_client.requests.first.request
     expect(request["X-Docs-Portal-Event"]).to eq("document_updated")
+    expect(request["X-Docs-Portal-Delivery"]).to eq(delivery.public_id)
   end
 
   it "records failed delivery history when the request fails" do
@@ -164,5 +165,49 @@ RSpec.describe WebhookDeliveryDispatcher do
     expect(redelivery).not_to eq(failed_delivery)
     expect(redelivery.error_message).to include("network error")
     expect(redelivery.sent_at).to be_present
+  end
+
+  it "retries an eligible delivery in place with a durable claim and stable delivery header" do
+    endpoint = create(:webhook_endpoint, event_types: %w[document_updated])
+    delivery = create(:webhook_delivery,
+      webhook_endpoint: endpoint,
+      notification_event: event,
+      status: :failed,
+      response_status: 503,
+      error_message: "temporary failure")
+    http_client = StubWebhookHttp.new
+
+    result = described_class.new(http_client:).retry_in_place!(delivery)
+
+    expect(result).to eq(delivery)
+    expect(delivery.reload).to have_attributes(
+      status: "succeeded",
+      response_status: 200,
+      retry_count: 1,
+      retry_claim_token: nil,
+      retry_claimed_at: nil
+    )
+    expect(http_client.requests.one?).to be(true)
+    expect(http_client.requests.first.request["X-Docs-Portal-Delivery"]).to eq(delivery.public_id)
+  end
+
+  it "does not let custom endpoint headers replace delivery identity or signature headers" do
+    endpoint = create(:webhook_endpoint,
+      event_types: %w[document_updated],
+      secret_token: "real-secret",
+      headers_json: {
+        "X-Docs-Portal-Delivery" => "forged-delivery",
+        "X-Docs-Portal-Event" => "forged-event",
+        "X-Docs-Portal-Signature-256" => "forged-signature"
+      })
+    http_client = StubWebhookHttp.new
+
+    delivery = described_class.new(http_client:).dispatch!(event).first
+    request = http_client.requests.first.request
+
+    expect(request["X-Docs-Portal-Delivery"]).to eq(delivery.public_id)
+    expect(request["X-Docs-Portal-Event"]).to eq(event.event_type)
+    expect(request["X-Docs-Portal-Signature-256"]).to start_with("sha256=")
+    expect(request["X-Docs-Portal-Signature-256"]).not_to eq("forged-signature")
   end
 end

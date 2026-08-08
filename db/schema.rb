@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_184000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -48,6 +48,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
   create_table "access_requests", id: { comment: "ID" }, comment: "アクセス申請", force: :cascade do |t|
     t.datetime "approved_at", comment: "承認日時"
     t.bigint "approver_id", comment: "承認者ID"
+    t.text "cancellation_reason", comment: "取消理由"
     t.datetime "cancelled_at", comment: "キャンセル日時"
     t.datetime "created_at", null: false, comment: "作成日時"
     t.datetime "expires_at", comment: "有効期限日時"
@@ -428,9 +429,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.string "markdown_entry_path", comment: "Markdownエントリーパス"
     t.text "notes", comment: "備考"
     t.string "pdf_snapshot_path", comment: "PDFスナップショットパス"
+    t.integer "preview_build_attempt_count", default: 0, null: false, comment: "プレビュービルド試行回数"
     t.datetime "preview_build_attempted_at", comment: "プレビュービルド試行日時"
+    t.string "preview_build_claim_token", comment: "プレビュービルド実行権トークン"
     t.datetime "preview_build_completed_at", comment: "プレビュービルド完了日時"
+    t.datetime "preview_build_enqueued_at", comment: "プレビュービルドキュー登録日時"
     t.text "preview_build_error_message", comment: "プレビュービルドエラーメッセージ"
+    t.datetime "preview_build_reconciled_at", comment: "プレビュービルド整合性確認日時"
+    t.datetime "preview_build_retry_at", comment: "プレビュービルド次回再試行日時"
+    t.datetime "preview_build_started_at", comment: "プレビュービルド開始日時"
     t.integer "preview_build_status", default: 0, null: false, comment: "プレビュービルドステータス"
     t.string "public_id", null: false, comment: "公開ID"
     t.datetime "published_at", comment: "公開日時"
@@ -452,6 +459,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.index ["document_id", "version_label"], name: "index_document_versions_on_document_id_and_version_label", unique: true
     t.index ["document_id"], name: "index_document_versions_on_document_id"
     t.index ["preview_build_attempted_at"], name: "index_document_versions_on_preview_build_attempted_at"
+    t.index ["preview_build_reconciled_at"], name: "idx_document_versions_preview_reconciled"
+    t.index ["preview_build_status", "preview_build_enqueued_at"], name: "idx_document_versions_preview_enqueued"
+    t.index ["preview_build_status", "preview_build_retry_at"], name: "idx_document_versions_preview_retry"
+    t.index ["preview_build_status", "preview_build_started_at"], name: "idx_document_versions_preview_started"
     t.index ["preview_build_status"], name: "index_document_versions_on_preview_build_status"
     t.index ["public_id"], name: "index_document_versions_on_public_id", unique: true
     t.index ["published_by_user_id"], name: "index_document_versions_on_published_by_user_id"
@@ -468,6 +479,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.index ["source_relative_path"], name: "index_document_versions_on_source_relative_path"
     t.index ["source_relative_path"], name: "index_document_versions_on_source_relative_path_trigram", opclass: :gin_trgm_ops, using: :gin
     t.index ["version_label"], name: "index_document_versions_on_version_label_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.check_constraint "preview_build_attempt_count >= 0", name: "document_versions_preview_attempt_count_non_negative"
   end
 
   create_table "documents", id: { comment: "ID" }, comment: "文書", force: :cascade do |t|
@@ -476,6 +488,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.integer "category", default: 0, null: false, comment: "カテゴリ"
     t.datetime "created_at", null: false, comment: "作成日時"
     t.datetime "discard_candidate_at", comment: "廃棄候補日時"
+    t.datetime "discard_reviewed_at", comment: "廃棄候補確認日時"
+    t.bigint "discard_reviewed_by_id", comment: "廃棄候補確認者ID"
     t.integer "document_kind", default: 0, null: false, comment: "文書種別"
     t.integer "importance_level", default: 2, null: false, comment: "重要度"
     t.bigint "latest_version_id", comment: "最新バージョンID"
@@ -491,6 +505,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.index ["archived_at"], name: "index_documents_on_archived_at"
     t.index ["archived_by_user_id"], name: "index_documents_on_archived_by_user_id"
     t.index ["discard_candidate_at"], name: "index_documents_on_discard_candidate_at"
+    t.index ["discard_reviewed_at"], name: "index_documents_on_discard_reviewed_at"
     t.index ["importance_level"], name: "index_documents_on_importance_level"
     t.index ["latest_version_id"], name: "index_documents_on_latest_version_id"
     t.index ["project_id", "slug"], name: "index_documents_on_project_id_and_slug", unique: true
@@ -534,10 +549,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
 
   create_table "external_folder_sync_runs", id: { comment: "ID" }, comment: "外部フォルダ同期実行", force: :cascade do |t|
     t.datetime "created_at", null: false, comment: "作成日時"
+    t.datetime "enqueued_at", comment: "同期ジョブ登録日時"
     t.text "error_message", comment: "エラーメッセージ"
     t.integer "errors_count", default: 0, null: false, comment: "エラー数"
     t.bigint "external_folder_sync_source_id", null: false, comment: "外部フォルダ同期元ID"
     t.datetime "finished_at", comment: "終了日時"
+    t.datetime "heartbeat_at", comment: "同期実行最終ハートビート日時"
     t.integer "items_created_count", default: 0, null: false, comment: "作成項目数"
     t.integer "items_deleted_count", default: 0, null: false, comment: "削除項目数"
     t.integer "items_scanned_count", default: 0, null: false, comment: "走査項目数"
@@ -551,12 +568,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.json "summary_json", default: {}, null: false, comment: "サマリーJSON"
     t.datetime "updated_at", null: false, comment: "更新日時"
     t.index ["external_folder_sync_source_id"], name: "idx_ext_sync_runs_on_source"
+    t.index ["external_folder_sync_source_id"], name: "idx_ext_sync_runs_one_active_per_source", unique: true, where: "(status = ANY (ARRAY[0, 1]))"
     t.index ["mode", "started_at"], name: "idx_ext_sync_runs_on_mode_started_at"
     t.index ["public_id"], name: "index_external_folder_sync_runs_on_public_id", unique: true
+    t.index ["status", "enqueued_at"], name: "idx_ext_sync_runs_on_status_enqueued_at"
+    t.index ["status", "heartbeat_at"], name: "idx_ext_sync_runs_on_status_heartbeat_at"
     t.index ["status", "started_at"], name: "idx_ext_sync_runs_on_status_started_at"
   end
 
   create_table "external_folder_sync_sources", id: { comment: "ID" }, comment: "外部フォルダ同期元", force: :cascade do |t|
+    t.bigint "active_sync_run_id", comment: "実行権を保持する外部フォルダ同期実行ID"
     t.text "auth_config", null: false, comment: "認証設定"
     t.integer "auth_type", default: 0, null: false, comment: "認証種別"
     t.integer "conflict_policy", default: 0, null: false, comment: "競合方針"
@@ -575,7 +596,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.json "provider_metadata", default: {}, null: false, comment: "プロバイダーメタデータ"
     t.string "public_id", null: false, comment: "公開ID"
     t.integer "sync_direction", default: 0, null: false, comment: "同期方向"
+    t.datetime "sync_lease_expires_at", comment: "同期実行権有効期限"
     t.datetime "updated_at", null: false, comment: "更新日時"
+    t.index ["active_sync_run_id"], name: "idx_ext_sync_sources_unique_active_run", unique: true, where: "(active_sync_run_id IS NOT NULL)"
     t.index ["created_by_id"], name: "index_external_folder_sync_sources_on_created_by_id"
     t.index ["project_id", "enabled"], name: "idx_ext_sync_sources_on_project_enabled"
     t.index ["project_id", "provider", "name"], name: "idx_ext_sync_sources_unique_project_provider_name", unique: true
@@ -583,6 +606,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.index ["provider", "auth_type"], name: "idx_ext_sync_sources_on_provider_auth_type"
     t.index ["provider", "external_folder_id"], name: "idx_ext_sync_sources_on_provider_folder"
     t.index ["public_id"], name: "index_external_folder_sync_sources_on_public_id", unique: true
+    t.index ["sync_lease_expires_at"], name: "idx_ext_sync_sources_on_lease_expiry", where: "(active_sync_run_id IS NOT NULL)"
+    t.check_constraint "(active_sync_run_id IS NULL) = (sync_lease_expires_at IS NULL)", name: "external_folder_sync_sources_lease_presence"
   end
 
   create_table "external_folder_sync_subscriptions", id: { comment: "ID" }, comment: "外部フォルダ同期購読", force: :cascade do |t|
@@ -612,6 +637,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.datetime "created_at", null: false, comment: "作成日時"
     t.text "error_message", comment: "エラーメッセージ"
     t.string "event_key", comment: "イベントキー"
+    t.bigint "external_folder_sync_run_id", comment: "予約・実行に紐づく外部フォルダ同期実行ID"
     t.bigint "external_folder_sync_source_id", comment: "外部フォルダ同期元ID"
     t.bigint "external_folder_sync_subscription_id", comment: "外部フォルダ同期購読ID"
     t.json "headers_json", default: {}, null: false, comment: "ヘッダーJSON"
@@ -621,6 +647,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.datetime "received_at", null: false, comment: "受信日時"
     t.integer "status", default: 0, null: false, comment: "ステータス"
     t.datetime "updated_at", null: false, comment: "更新日時"
+    t.index ["external_folder_sync_run_id", "status"], name: "idx_ext_sync_events_on_run_status"
+    t.index ["external_folder_sync_source_id", "status", "received_at"], name: "idx_ext_sync_events_on_source_status_received"
     t.index ["external_folder_sync_source_id"], name: "idx_ext_sync_webhook_events_on_source"
     t.index ["external_folder_sync_subscription_id"], name: "idx_ext_sync_webhook_events_on_subscription"
     t.index ["provider", "event_key"], name: "idx_ext_sync_webhook_events_unique_provider_event", unique: true
@@ -628,8 +656,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.index ["status", "received_at"], name: "idx_ext_sync_webhook_events_on_status_received_at"
   end
 
+  create_table "external_master_sync_mappings", comment: "外部マスタ同期マッピング", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "external_id", null: false, comment: "同期元外部ID"
+    t.string "public_id", null: false, comment: "公開ID"
+    t.string "resource_type", null: false, comment: "同期リソース種別"
+    t.jsonb "source_attributes", default: {}, null: false, comment: "同期元属性スナップショット"
+    t.string "source_system", null: false, comment: "同期元システム"
+    t.datetime "source_updated_at", null: false, comment: "同期元更新日時"
+    t.bigint "sync_target_id", comment: "同期先ID"
+    t.string "sync_target_type", comment: "同期先種別"
+    t.datetime "updated_at", null: false
+    t.index ["public_id"], name: "index_external_master_sync_mappings_on_public_id", unique: true
+    t.index ["source_system", "resource_type", "external_id"], name: "idx_external_master_sync_mappings_identity", unique: true
+    t.index ["sync_target_type", "sync_target_id"], name: "idx_external_master_sync_mappings_target"
+    t.check_constraint "(sync_target_type IS NULL) = (sync_target_id IS NULL)", name: "external_master_sync_mappings_target_presence"
+    t.check_constraint "resource_type::text = ANY (ARRAY['company'::character varying::text, 'project'::character varying::text, 'document'::character varying::text])", name: "external_master_sync_mappings_resource_type"
+    t.check_constraint "sync_target_type IS NULL AND sync_target_id IS NULL OR resource_type::text = 'company'::text AND sync_target_type::text = 'Company'::text AND sync_target_id IS NOT NULL OR resource_type::text = 'project'::text AND sync_target_type::text = 'Project'::text AND sync_target_id IS NOT NULL OR resource_type::text = 'document'::text AND sync_target_type::text = 'Document'::text AND sync_target_id IS NOT NULL", name: "external_master_sync_mappings_resource_target_type"
+  end
+
   create_table "generated_file_events", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.string "dispatch_claim_token", comment: "生成イベントdispatch実行権トークン"
+    t.datetime "dispatch_claimed_at", comment: "生成イベントdispatch実行権取得日時"
+    t.string "dispatch_group_id", comment: "生成イベントdispatchグループID"
+    t.datetime "dispatch_heartbeat_at", comment: "生成イベントdispatch最終ハートビート日時"
     t.text "error_message"
     t.string "event_key", null: false
     t.string "event_source"
@@ -643,6 +694,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.datetime "scheduled_at", null: false
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
+    t.index ["dispatch_group_id", "dispatch_claim_token", "status"], name: "idx_generated_file_events_dispatch_owner"
     t.index ["event_key", "status"], name: "index_generated_file_events_on_event_key_and_status"
     t.index ["event_key"], name: "index_generated_file_events_on_event_key"
     t.index ["event_source"], name: "index_generated_file_events_on_event_source"
@@ -650,6 +702,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.index ["path"], name: "index_generated_file_events_on_path"
     t.index ["public_id"], name: "index_generated_file_events_on_public_id", unique: true
     t.index ["scheduled_at"], name: "index_generated_file_events_on_scheduled_at"
+    t.index ["status", "dispatch_heartbeat_at"], name: "idx_generated_file_events_dispatch_stale"
     t.index ["status", "scheduled_at"], name: "index_generated_file_events_on_status_and_scheduled_at"
     t.index ["status"], name: "index_generated_file_events_on_status"
   end
@@ -762,6 +815,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.index ["route_key", "setting_key"], name: "index_import_route_settings_global_unique", unique: true, where: "(project_id IS NULL)"
   end
 
+  create_table "master_sync_receipts", comment: "マスタ同期受領台帳", force: :cascade do |t|
+    t.datetime "completed_at", null: false, comment: "処理確定日時"
+    t.datetime "created_at", null: false
+    t.string "external_id", null: false, comment: "同期元外部ID"
+    t.string "idempotency_key", null: false, comment: "冪等性キー"
+    t.string "public_id", null: false, comment: "公開ID"
+    t.string "request_digest", null: false, comment: "リクエストダイジェスト"
+    t.string "resource_type", null: false, comment: "同期リソース種別"
+    t.jsonb "response_body", default: {}, null: false, comment: "確定レスポンス本文"
+    t.integer "response_status", null: false, comment: "確定レスポンスHTTPステータス"
+    t.string "source_system", null: false, comment: "同期元システム"
+    t.datetime "updated_at", null: false
+    t.index ["completed_at"], name: "index_master_sync_receipts_on_completed_at"
+    t.index ["idempotency_key"], name: "index_master_sync_receipts_on_idempotency_key", unique: true
+    t.index ["public_id"], name: "index_master_sync_receipts_on_public_id", unique: true
+    t.index ["source_system", "resource_type", "external_id"], name: "idx_master_sync_receipts_resource"
+    t.check_constraint "resource_type::text = ANY (ARRAY['company'::character varying::text, 'project'::character varying::text, 'document'::character varying::text])", name: "master_sync_receipts_resource_type"
+    t.check_constraint "response_status >= 100 AND response_status <= 599", name: "master_sync_receipts_response_status"
+  end
+
   create_table "microsoft_graph_connections", id: { comment: "ID" }, comment: "Microsoft Graph接続", force: :cascade do |t|
     t.integer "auth_type", default: 0, null: false, comment: "認証種別"
     t.string "client_id", null: false, comment: "クライアントID"
@@ -772,6 +845,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.boolean "enabled", default: true, null: false, comment: "有効フラグ"
     t.string "name", null: false, comment: "名称"
     t.string "preview_folder_path", default: "docs-portal-previews", null: false, comment: "プレビューフォルダパス"
+    t.boolean "preview_selected", default: false, null: false, comment: "プレビュー利用に明示選択された接続"
     t.bigint "project_id", null: false, comment: "案件ID"
     t.string "public_id", null: false, comment: "公開ID"
     t.string "site_id", comment: "サイトID"
@@ -922,6 +996,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.datetime "created_at", null: false
     t.text "description"
     t.boolean "enabled", default: true, null: false
+    t.boolean "enabled_before_reliability_v2_suspend", comment: "信頼性V2停止前の有効状態"
     t.integer "interval_seconds", default: 86400, null: false
     t.string "job_class", null: false
     t.string "job_key", null: false
@@ -951,6 +1026,127 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.index ["channel"], name: "index_solid_cable_messages_on_channel"
     t.index ["channel_hash"], name: "index_solid_cable_messages_on_channel_hash"
     t.index ["created_at"], name: "index_solid_cable_messages_on_created_at"
+  end
+
+  create_table "solid_queue_blocked_executions", force: :cascade do |t|
+    t.string "concurrency_key", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.bigint "job_id", null: false
+    t.integer "priority", default: 0, null: false
+    t.string "queue_name", null: false
+    t.index ["concurrency_key", "priority", "job_id"], name: "index_solid_queue_blocked_executions_for_release"
+    t.index ["expires_at", "concurrency_key"], name: "index_solid_queue_blocked_executions_for_maintenance"
+    t.index ["job_id"], name: "index_solid_queue_blocked_executions_on_job_id", unique: true
+  end
+
+  create_table "solid_queue_claimed_executions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "job_id", null: false
+    t.bigint "process_id"
+    t.index ["job_id"], name: "index_solid_queue_claimed_executions_on_job_id", unique: true
+    t.index ["process_id", "job_id"], name: "index_solid_queue_claimed_executions_on_process_id_and_job_id"
+  end
+
+  create_table "solid_queue_failed_executions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "error"
+    t.bigint "job_id", null: false
+    t.index ["job_id"], name: "index_solid_queue_failed_executions_on_job_id", unique: true
+  end
+
+  create_table "solid_queue_jobs", force: :cascade do |t|
+    t.string "active_job_id"
+    t.text "arguments"
+    t.string "class_name", null: false
+    t.string "concurrency_key"
+    t.datetime "created_at", null: false
+    t.datetime "finished_at"
+    t.integer "priority", default: 0, null: false
+    t.string "queue_name", null: false
+    t.datetime "scheduled_at"
+    t.datetime "updated_at", null: false
+    t.index ["active_job_id"], name: "index_solid_queue_jobs_on_active_job_id"
+    t.index ["class_name"], name: "index_solid_queue_jobs_on_class_name"
+    t.index ["finished_at"], name: "index_solid_queue_jobs_on_finished_at"
+    t.index ["queue_name", "finished_at"], name: "index_solid_queue_jobs_for_filtering"
+    t.index ["scheduled_at", "finished_at"], name: "index_solid_queue_jobs_for_alerting"
+  end
+
+  create_table "solid_queue_pauses", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "queue_name", null: false
+    t.index ["queue_name"], name: "index_solid_queue_pauses_on_queue_name", unique: true
+  end
+
+  create_table "solid_queue_processes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "hostname"
+    t.string "kind", null: false
+    t.datetime "last_heartbeat_at", null: false
+    t.text "metadata"
+    t.string "name", null: false
+    t.integer "pid", null: false
+    t.bigint "supervisor_id"
+    t.index ["last_heartbeat_at"], name: "index_solid_queue_processes_on_last_heartbeat_at"
+    t.index ["name", "supervisor_id"], name: "index_solid_queue_processes_on_name_and_supervisor_id", unique: true
+    t.index ["supervisor_id"], name: "index_solid_queue_processes_on_supervisor_id"
+  end
+
+  create_table "solid_queue_ready_executions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "job_id", null: false
+    t.integer "priority", default: 0, null: false
+    t.string "queue_name", null: false
+    t.index ["job_id"], name: "index_solid_queue_ready_executions_on_job_id", unique: true
+    t.index ["priority", "job_id"], name: "index_solid_queue_poll_all"
+    t.index ["queue_name", "priority", "job_id"], name: "index_solid_queue_poll_by_queue"
+  end
+
+  create_table "solid_queue_recurring_executions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "job_id", null: false
+    t.datetime "run_at", null: false
+    t.string "task_key", null: false
+    t.index ["job_id"], name: "index_solid_queue_recurring_executions_on_job_id", unique: true
+    t.index ["task_key", "run_at"], name: "index_solid_queue_recurring_executions_on_task_key_and_run_at", unique: true
+  end
+
+  create_table "solid_queue_recurring_tasks", force: :cascade do |t|
+    t.text "arguments"
+    t.string "class_name"
+    t.string "command", limit: 2048
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "key", null: false
+    t.integer "priority", default: 0
+    t.string "queue_name"
+    t.string "schedule", null: false
+    t.boolean "static", default: true, null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_solid_queue_recurring_tasks_on_key", unique: true
+    t.index ["static"], name: "index_solid_queue_recurring_tasks_on_static"
+  end
+
+  create_table "solid_queue_scheduled_executions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "job_id", null: false
+    t.integer "priority", default: 0, null: false
+    t.string "queue_name", null: false
+    t.datetime "scheduled_at", null: false
+    t.index ["job_id"], name: "index_solid_queue_scheduled_executions_on_job_id", unique: true
+    t.index ["scheduled_at", "priority", "job_id"], name: "index_solid_queue_dispatch_all"
+  end
+
+  create_table "solid_queue_semaphores", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.string "key", null: false
+    t.datetime "updated_at", null: false
+    t.integer "value", default: 1, null: false
+    t.index ["expires_at"], name: "index_solid_queue_semaphores_on_expires_at"
+    t.index ["key", "value"], name: "index_solid_queue_semaphores_on_key_and_value"
+    t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
   create_table "table_preferences", force: :cascade do |t|
@@ -1026,17 +1222,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
     t.text "request_body", null: false, comment: "リクエスト本文"
     t.text "response_body", comment: "レスポンス本文"
     t.integer "response_status", comment: "レスポンスステータス"
+    t.string "retry_claim_token", comment: "自動再送実行権トークン"
+    t.datetime "retry_claimed_at", comment: "自動再送実行権取得日時"
+    t.integer "retry_count", default: 0, null: false, comment: "自動リトライ回数"
     t.datetime "sent_at", comment: "送信日時"
-    t.integer "status", default: 0, null: false, comment: "ステータス"
+    t.integer "status", default: 0, null: false, comment: "ステータス（送信待ち/成功/失敗/自動再送中）"
     t.string "target_url", null: false, comment: "送信先URL"
     t.datetime "updated_at", null: false, comment: "更新日時"
     t.bigint "webhook_endpoint_id", null: false, comment: "WebhookエンドポイントID"
     t.index ["event_type"], name: "index_webhook_deliveries_on_event_type"
     t.index ["notification_event_id"], name: "index_webhook_deliveries_on_notification_event_id"
     t.index ["public_id"], name: "index_webhook_deliveries_on_public_id", unique: true
+    t.index ["retry_claim_token"], name: "idx_webhook_deliveries_unique_retry_claim", unique: true, where: "(retry_claim_token IS NOT NULL)"
     t.index ["sent_at"], name: "index_webhook_deliveries_on_sent_at"
+    t.index ["status", "retry_claimed_at"], name: "idx_webhook_deliveries_retry_claimed"
     t.index ["status"], name: "index_webhook_deliveries_on_status"
     t.index ["webhook_endpoint_id"], name: "index_webhook_deliveries_on_webhook_endpoint_id"
+    t.check_constraint "(status = 3) = (retry_claim_token IS NOT NULL AND retry_claimed_at IS NOT NULL)", name: "webhook_deliveries_retry_claim_presence"
+    t.check_constraint "retry_count >= 0", name: "webhook_deliveries_retry_count_non_negative"
   end
 
   create_table "webhook_endpoints", id: { comment: "ID" }, comment: "Webhookエンドポイント", force: :cascade do |t|
@@ -1108,9 +1311,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
   add_foreign_key "external_folder_sync_items", "documents"
   add_foreign_key "external_folder_sync_items", "external_folder_sync_sources"
   add_foreign_key "external_folder_sync_runs", "external_folder_sync_sources"
+  add_foreign_key "external_folder_sync_sources", "external_folder_sync_runs", column: "active_sync_run_id"
   add_foreign_key "external_folder_sync_sources", "projects"
   add_foreign_key "external_folder_sync_sources", "users", column: "created_by_id"
   add_foreign_key "external_folder_sync_subscriptions", "external_folder_sync_sources"
+  add_foreign_key "external_folder_sync_webhook_events", "external_folder_sync_runs"
   add_foreign_key "external_folder_sync_webhook_events", "external_folder_sync_sources"
   add_foreign_key "external_folder_sync_webhook_events", "external_folder_sync_subscriptions"
   add_foreign_key "git_import_runs", "git_import_sources"
@@ -1137,6 +1342,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_120000) do
   add_foreign_key "read_confirmations", "documents"
   add_foreign_key "read_confirmations", "users"
   add_foreign_key "recurring_job_runs", "recurring_job_schedules"
+  add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "solid_queue_failed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "table_preferences", "users"
   add_foreign_key "user_consents", "consent_terms"
   add_foreign_key "user_consents", "users"

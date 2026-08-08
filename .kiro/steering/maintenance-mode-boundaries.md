@@ -70,6 +70,7 @@ READ_ONLY_MAINTENANCE 中に止める変更操作と read-only に残す確認�
 | Git連携 source 設定 | GitImportSource の create / update / destroy（repository / branch / source path / 認証方式 / credential / enabled 状態） | Git連携設定一覧、repository / branch / source path / enabled 検索 / filter、project / repository remote picker、Git同期履歴一覧 |
 | 手動アップロード | DocumentUpload の create（candidate / Document / Version / File 作成 / preview job enqueue）、upload review の approve / reject | 案件の文書一覧、文書詳細、版詳細、既存 upload review 画面、既存版 / 添付 / 差分 / preview 確認 |
 | internal upload API | artifact_imports / zip_uploads / file_uploads の apply request（DocumentImporter / PublishJob / ImportDryRun confirmed 化） | dry-run 作成（validate_only=true）、既存 dry-run 一覧 / detail 確認 |
+| sales-mgt master sync API | 未確定の idempotency request による Company / Project / Document の upsert / archive、外部mapping・receiptの新規確定 | 同一key・同一digestで確定済みreceiptの応答、既存mappingと同期履歴の確認 |
 | 文書一括編集 dry-run | （文書一括編集セクションに含む） | （文書一括編集セクションに含む） |
 
 ## 外部連携
@@ -78,8 +79,9 @@ READ_ONLY_MAINTENANCE 中に止める変更操作と read-only に残す確認�
 |------|-----------|-------------------|
 | 外部フォルダ同期 source 設定 | ExternalFolderSyncSource の create / update / destroy（provider / folder URL / auth type / metadata / enabled 状態） | source 一覧 / 詳細、検索 / provider filter / warning・error filter、project search、直近 run / 同期履歴 / 同期 item / 受信 event 確認 |
 | 外部フォルダ同期 OAuth 接続 | OAuth authorization redirect / state 発行、callback による token exchange / 保存、OAuth token 削除 | 外部フォルダ同期設定一覧 / 詳細、同期履歴 / 同期アイテム、変更通知の購読状態 / 受信イベント表示、SharePoint metadata 確認 |
-| 外部フォルダ同期 webhook | webhook 受信後の ExternalFolderSyncWebhookEventJob enqueue | Google Drive webhook への 200 OK 応答、SharePoint validationToken / notification 応答、ExternalFolderSyncWebhookEvent 記録、既存検証境界 |
-| Webhook 設定 | WebhookEndpoint の create / update / destroy（URL / secret / active / event types） | Webhook endpoint 一覧、最近の送信履歴、送信履歴詳細、failure alert handoff |
+| 外部フォルダ同期 webhook | webhook 受信後の ExternalFolderSyncWebhookEventJob enqueue、source単位run予約・実行権交代、reconciliation による stale run / event 回収、enqueue 済み ExternalFolderSyncJob の同期開始 | Google Drive webhook への 200 OK 応答、SharePoint validationToken / notification 応答、ExternalFolderSyncWebhookEvent 記録、既存run・実行権・検証境界の確認 |
+| Docusaurus preview build | enqueue済み `DocusaurusPreviewBuildJob` のclaim・renderer実行・artifact作成/置換・preview状態/試行回数/時刻更新、reconciliationによる再enqueue・artifact修復 | queue済みintent、preview状態、試行回数、claim情報、既存artifact、版詳細・preview状態の確認 |
+| Webhook 設定・再送 | WebhookEndpoint の create / update / destroy（URL / secret / active / event types）、手動再送、自動再送のclaim・stale claim回収・HTTP POST | Webhook endpoint 一覧、最近の送信履歴、送信履歴詳細、自動再送状態・retry count・claim取得日時、failure alert handoff |
 | Microsoft Graph 接続 | MicrosoftGraphConnection の create / update / destroy（Tenant ID / Client ID / secret / Site ID / Drive ID / preview folder / enabled） | 接続一覧、preview 利用状態 / 重複有効接続 / 検索 / filter、案件 remote search、共有 URL 候補取得（保存なし） |
 | API 仕様 codeblock dry-run | retry_build / stale build enqueue（Docusaurus build 起動） | codeblock_dry_run（request sample の形式確認 — dry_run: true / destructive: false） |
 | Storage 使用量 CSV | — | document_files / docs_sites / imports の CSV download（bounded list としての read-only handoff） |

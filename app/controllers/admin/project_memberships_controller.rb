@@ -10,7 +10,12 @@ class Admin::ProjectMembershipsController < Admin::BaseController
   USER_SEARCH_QUERY_MAX_LENGTH = 100
   USER_SEARCH_LIMIT = 20
 
+  QUERY_MAX_LENGTH = 100
+
   def index
+    @query = normalize_membership_query(params[:q])
+    @role_filter = params[:role].to_s.presence_in(ProjectMembership.roles.keys.map(&:to_s))
+    @filters_applied = @query.present? || @role_filter.present?
     load_project_memberships_page
     @project_membership = ProjectMembership.new(role: :viewer)
   end
@@ -70,9 +75,9 @@ class Admin::ProjectMembershipsController < Admin::BaseController
 
   def load_project_memberships_page
     scope = project_memberships_scope
-    @project_memberships_total_count = scope.count
+    @project_memberships_filtered_count = scope.count
     @project_memberships_per_page = bounded_positive_integer_param(:per_page, default: DEFAULT_PAGE_SIZE, maximum: MAX_PAGE_SIZE)
-    @project_memberships_total_pages = [(@project_memberships_total_count.to_f / @project_memberships_per_page).ceil, 1].max
+    @project_memberships_total_pages = [(@project_memberships_filtered_count.to_f / @project_memberships_per_page).ceil, 1].max
     @project_memberships_page = bounded_positive_integer_param(:page, default: 1)
     @project_memberships_page = @project_memberships_total_pages if @project_memberships_page > @project_memberships_total_pages
     offset = (@project_memberships_page - 1) * @project_memberships_per_page
@@ -80,7 +85,27 @@ class Admin::ProjectMembershipsController < Admin::BaseController
   end
 
   def project_memberships_scope
-    ProjectMembership.joins(:project, :user).includes(:project, :user).order("projects.code", "users.email_address")
+    scope = ProjectMembership.joins(:project, :user).includes(:project, :user).order("projects.code", "users.email_address")
+    scope = apply_membership_query_filter(scope) if @query.present?
+    scope = scope.where(role: @role_filter) if @role_filter.present?
+    scope
+  end
+
+  def apply_membership_query_filter(scope)
+    pattern = "%#{ProjectMembership.sanitize_sql_like(@query.downcase)}%"
+    scope.where(
+      <<~SQL.squish,
+        LOWER(projects.code) LIKE :pattern OR
+        LOWER(projects.name) LIKE :pattern OR
+        LOWER(users.email_address) LIKE :pattern OR
+        LOWER(users.name) LIKE :pattern
+      SQL
+      pattern:
+    )
+  end
+
+  def normalize_membership_query(value)
+    value.to_s.squish.first(QUERY_MAX_LENGTH).presence
   end
 
   def searchable_projects

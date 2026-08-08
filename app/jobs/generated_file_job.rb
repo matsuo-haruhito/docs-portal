@@ -30,7 +30,7 @@ class GeneratedFileJob < ApplicationJob
     normalized
   end
 
-  def perform(changed_files: [], job_ids: [], event_source: nil, metadata: {})
+  def perform(changed_files: [], job_ids: [], event_source: nil, metadata: {}, dispatch_claim: nil)
     safe_metadata = metadata || {}
 
     Rails.logger.info(
@@ -39,11 +39,14 @@ class GeneratedFileJob < ApplicationJob
       "metadata=#{safe_metadata.to_h.inspect}"
     )
 
-    GeneratedFiles::Runner.new(
+    runner_options = {
       changed_files:,
       job_ids:,
       event_source:,
       metadata: safe_metadata
-    ).call
+    }
+    runner_options[:dispatch_claim] = dispatch_claim if dispatch_claim
+
+    GeneratedFiles::Runner.new(**runner_options).call
   end
 end

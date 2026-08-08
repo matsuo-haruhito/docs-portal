@@ -69,7 +69,8 @@ class DocumentVersionQualityChecker
     Result.new(document_version:, checks: [
       *DocumentVersionQuality::MetadataChecks.new(document_version:, check_class: Check).call,
       *DocumentVersionQuality::DocumentFileChecks.new(document_version:, check_class: Check).call,
-      *DocumentVersionQuality::MarkdownReferenceChecks.new(document_version:, check_class: Check).call
+      *DocumentVersionQuality::MarkdownReferenceChecks.new(document_version:, check_class: Check).call,
+      *DocumentVersionQuality::ClassificationTagChecks.new(document_version:, check_class: Check).call
     ].compact)
   end
 

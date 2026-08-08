@@ -12,7 +12,7 @@ class DocusaurusRendererClient
 
   DEFAULT_ENDPOINT = "http://docusaurus:3000"
   OPEN_TIMEOUT = 5
-  READ_TIMEOUT = 90
+  READ_TIMEOUT = 180
 
   def initialize(endpoint: ENV.fetch("DOCUSAURUS_RENDERER_ENDPOINT", DEFAULT_ENDPOINT))
     @endpoint = endpoint.to_s.delete_suffix("/")
@@ -22,7 +22,7 @@ class DocusaurusRendererClient
     uri = URI.join("#{endpoint}/", "build")
     request = Net::HTTP::Post.new(uri)
     request["Content-Type"] = "application/gzip"
-    request["X-Docs-Entry-Path"] = entry_path
+    request["X-Docs-Entry-Path"] = URI::RFC2396_PARSER.escape(entry_path)
     archive_file.rewind
     request.body_stream = archive_file
     request.content_length = archive_file.size
@@ -42,7 +42,7 @@ class DocusaurusRendererClient
 
     Result.new(
       archive_file: output,
-      site_path: safe_site_path(response["X-Docs-Site-Path"].presence || normalize_site_page_path(entry_path))
+      site_path: safe_site_path(decode_site_path_header(response["X-Docs-Site-Path"]) || normalize_site_page_path(entry_path))
     )
   rescue ApplicationError::BadRequest
     output&.close!
@@ -97,5 +97,13 @@ class DocusaurusRendererClient
     value = value.delete_suffix("/index.html")
     value = value.delete_suffix(".html")
     value.presence || "index"
+  end
+
+  def decode_site_path_header(raw)
+    return nil if raw.blank?
+
+    URI.decode_www_form_component(raw).presence
+  rescue ArgumentError
+    raw.presence
   end
 end

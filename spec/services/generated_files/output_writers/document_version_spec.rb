@@ -102,6 +102,64 @@ RSpec.describe GeneratedFiles::OutputWriters::DocumentVersion do
     end.to raise_error(ActiveRecord::RecordNotFound, /Generated output project not found/)
   end
 
+  it "reuses the generated document version for the same buffered event dispatch" do
+    project = Project.create!(code: "generated-output-idempotent", name: "Generated Output Idempotent")
+    artifact = GeneratedFiles::Artifact.new(
+      path: "generated/idempotent.md",
+      content: "first content",
+      content_type: "text/markdown"
+    )
+
+    first_result = described_class.new(
+      project_code: project.code,
+      document_slug: "idempotent-generated-flow",
+      document_title: "冪等生成結果",
+      source_identifier: "generated:idempotent",
+      idempotency_key: "event-dispatch-digest"
+    ).write([artifact])
+    second_result = described_class.new(
+      project_code: project.code,
+      document_slug: "idempotent-generated-flow",
+      document_title: "冪等生成結果",
+      source_identifier: "generated:idempotent",
+      idempotency_key: "event-dispatch-digest"
+    ).write([artifact])
+
+    document = project.documents.find_by!(slug: "idempotent-generated-flow")
+    expect(second_result).to eq(first_result)
+    expect(document.document_versions.count).to eq(1)
+    expect(document.latest_version.document_files.count).to eq(1)
+    expect(document.latest_version.source_commit_hash).to eq(
+      "generated:idempotent:event:event-dispatch-digest"
+    )
+  end
+
+  it "does not create a version or blob after the event claim is replaced" do
+    project = Project.create!(code: "generated-output-stale", name: "Generated Output Stale")
+    event = create(:generated_file_event, scheduled_at: 1.minute.ago)
+    old_claim = GeneratedFiles::EventDispatchLease.claim!([event], at: 20.minutes.ago)
+    replacement = GeneratedFiles::EventDispatchLease.recover_stale_groups!(limit: 1).sole
+    artifact = GeneratedFiles::Artifact.new(
+      path: "generated/stale.md",
+      content: "must not be committed",
+      content_type: "text/markdown"
+    )
+
+    expect do
+      described_class.new(
+        project_code: project.code,
+        document_slug: "stale-generated-flow",
+        document_title: "失効済み生成結果",
+        idempotency_key: "stale-claim",
+        dispatch_claim: old_claim
+      ).write([artifact])
+    end.to raise_error(GeneratedFiles::EventDispatchLease::StaleClaimError)
+
+    expect(event.reload.dispatch_claim_token).to eq(replacement.token)
+    expect(project.documents.find_by(slug: "stale-generated-flow")).to be_nil
+    expect(Dir.glob(DocumentFile.storage_root.join("generated_files", "**", "*").to_s)).to be_empty
+  end
+
   it "creates a new version on each write and keeps the same document" do
     project = Project.create!(code: "generated-output-repeat", name: "Generated Output Repeat")
     writer = described_class.new(

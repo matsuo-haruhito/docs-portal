@@ -8,7 +8,6 @@ RSpec.describe "Admin document archives", type: :request do
 
   before do
     document.update!(latest_version: version)
-    allow_any_instance_of(ApplicationController).to receive(:admin_user?).and_return(true)
   end
 
   it "archives and restores a document from the admin screen" do

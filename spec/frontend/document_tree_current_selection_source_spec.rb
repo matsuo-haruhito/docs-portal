@@ -27,9 +27,8 @@ RSpec.describe "document tree current selection source" do
   it "explains that current selection and tree filtering are separate from document list state" do
     aggregate_failures do
       expect(toolbar_source).to include("current_document.present?")
-      expect(toolbar_source).to include("表示中バッジは現在開いている文書です。")
-      expect(toolbar_source).to include("検索欄は左のツリーだけを絞り込み")
-      expect(toolbar_source).to include("文書一覧の条件や表示設定とは別に扱います。")
+      expect(toolbar_source).to include("検索は左のツリーだけを絞り込みます。")
+      expect(toolbar_source).to include("document-tree-scope-cue")
       expect(tree_source).to include(".document-tree-scope-cue")
     end
   end

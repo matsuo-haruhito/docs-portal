@@ -1,12 +1,8 @@
 require "pathname"
-require "rubygems/package"
-require "stringio"
 require "tempfile"
-require "zlib"
+require "fileutils"
 
 class DocusaurusPreviewArchiveBuilder
-  FILE_MODE = 0o644
-
   def initialize(version)
     @version = version
   end
@@ -15,15 +11,13 @@ class DocusaurusPreviewArchiveBuilder
     tempfile = Tempfile.new(["docusaurus-preview-#{version.id}", ".tar.gz"])
     tempfile.binmode
 
-    tar_buffer = StringIO.new.binmode
-    Gem::Package::TarWriter.new(tar_buffer) do |tar|
+    Dir.mktmpdir("docusaurus-archive-") do |staging|
       version.document_files.order(:sort_order, :id).each do |document_file|
-        add_file(tar, document_file)
+        stage_file(staging, document_file)
       end
-    end
 
-    Zlib::GzipWriter.open(tempfile.path) do |gzip|
-      gzip.write(tar_buffer.string)
+      entries = Dir.children(staging)
+      system("tar", "-czf", tempfile.path, "-C", staging, *entries, exception: true)
     end
 
     tempfile.rewind
@@ -37,19 +31,15 @@ class DocusaurusPreviewArchiveBuilder
 
   attr_reader :version
 
-  def add_file(tar, document_file)
+  def stage_file(staging, document_file)
     relative_path = safe_relative_path(document_file.file_name)
-    absolute_path = document_file.absolute_path
-
-    tar.add_file(relative_path, FILE_MODE) do |entry|
-      File.open(absolute_path, "rb") do |file|
-        IO.copy_stream(file, entry)
-      end
-    end
+    destination = File.join(staging, relative_path)
+    FileUtils.mkdir_p(File.dirname(destination))
+    FileUtils.cp(document_file.absolute_path, destination)
   end
 
   def safe_relative_path(value)
-    raw_path = value.to_s.tr("\\", "/")
+    raw_path = value.to_s.encode("UTF-8", invalid: :replace, undef: :replace, replace: "_").tr("\\", "/")
     invalid_absolute = raw_path.start_with?("/") || raw_path.match?(/\A[A-Za-z]:\//)
     path = raw_path.delete_prefix("./")
     normalized = Pathname.new(path).cleanpath.to_s

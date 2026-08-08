@@ -7,6 +7,7 @@ class Document < ApplicationRecord
   belongs_to :project
   belongs_to :latest_version, class_name: "DocumentVersion", optional: true
   belongs_to :archived_by_user, class_name: "User", optional: true
+  belongs_to :discard_reviewed_by, class_name: "User", optional: true
 
   has_many :document_versions, dependent: :destroy
   has_many :document_permissions, dependent: :destroy
@@ -130,5 +131,9 @@ class Document < ApplicationRecord
         occurred_at: Time.current
       )
     end
+  end
+
+  def mark_discard_reviewed!(actor:)
+    update!(discard_reviewed_at: Time.current, discard_reviewed_by: actor)
   end
 end

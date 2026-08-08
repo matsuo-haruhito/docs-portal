@@ -42,15 +42,35 @@
       wrapper: true,
       label: "リポジトリ",
       placeholder: "owner/repo"
-    label
-      | ブランチ
-      = form.text_field :branch, placeholder: "main"
-      span.muted 既定ブランチ名を入力します。例: main
-    label
-      | 取込元パス
-      = form.text_field :source_path, placeholder: "docs/source"
-      span.muted リポジトリルートからの相対パスです。例: docs / docs/source
-    p.muted リポジトリは GitHub App の候補から選べます。installation ID 未設定・候補取得不可・候補0件の場合は、既存どおり owner/repo を直接入力します。ブランチと取込元パスは引き続き手入力です。
+    = form.rfk_combobox :branch,
+      collection: [],
+      selected: git_import_source_branch_selected_option(git_import_source.branch),
+      url: branch_search_admin_git_import_sources_path(format: :json, installation_id: git_import_source.installation_id.presence, repository: git_import_source.repository_full_name.presence),
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 0,
+      max_options: Admin::GitImportSourcesController::BRANCH_SEARCH_LIMIT,
+      wrapper: true,
+      label: "ブランチ",
+      placeholder: "main",
+      allow_clear: true
+    span.muted リポジトリが選ばれている場合はブランチ候補から選べます。候補取得不可の場合は手入力で保存できます。
+    = form.rfk_combobox :source_path,
+      collection: [],
+      selected: git_import_source_source_path_selected_option(git_import_source.source_path),
+      url: directory_search_admin_git_import_sources_path(format: :json, installation_id: git_import_source.installation_id.presence, repository: git_import_source.repository_full_name.presence, branch: git_import_source.branch.presence),
+      value_field: "value",
+      label_field: "text",
+      search_field: "text",
+      min_length: 0,
+      max_options: Admin::GitImportSourcesController::DIRECTORY_SEARCH_LIMIT,
+      wrapper: true,
+      label: "取込元パス",
+      placeholder: "docs/source",
+      allow_clear: true
+    span.muted リポジトリとブランチが選ばれている場合はディレクトリ候補から選べます。候補取得不可の場合は手入力で保存できます。例: docs / docs/source
+    p.muted リポジトリは GitHub App の候補から選べます。installation ID 未設定・候補取得不可・候補0件の場合は、既存どおり owner/repo を直接入力します。ブランチと取込元パスもリポジトリ選択後に候補から選べます。候補取得不可の場合は手入力 fallback です。
     label
       | 認証方式
       = form.select :auth_type, enum_options_for("git_import_sources.auth_type", GitImportSource.auth_types.keys)

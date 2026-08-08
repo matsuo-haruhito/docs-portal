@@ -62,7 +62,7 @@ p.actions
     p.actions style="margin-top:16px;"
       = submit_tag "検索", class: "button"
       - if @delivery_filters_applied
-        = link_to "条件をリセット", admin_webhook_deliveries_path, class: "button secondary"
+        = link_to "条件をクリア", admin_webhook_deliveries_path, class: "button secondary"
 
 .card
   h2 検索結果
@@ -115,7 +115,7 @@ p.actions
   - elsif @delivery_filters_applied
     p.muted 条件に一致するWebhook送信履歴はありません。Webhook設定、イベント、ステータス、HTTP status、エラー断片、作成日の範囲を見直してください。
     p.actions
-      = link_to "すべてのWebhook送信履歴を見る", admin_webhook_deliveries_path, class: "button secondary"
+      = link_to "条件をクリア", admin_webhook_deliveries_path, class: "button secondary"
   - else
     p.muted まだWebhook送信履歴はありません。
     p.muted Webhook設定を登録し、通知対象イベントが発生すると送信履歴がここに表示されます。

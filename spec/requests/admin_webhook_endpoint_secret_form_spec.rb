@@ -13,7 +13,8 @@ RSpec.describe "Admin webhook endpoint secret form", type: :request do
 
   def signature_for(endpoint, body)
     event = create(:notification_event, event_type: :document_updated)
-    _uri, request = WebhookDispatch::RequestBuilder.new(endpoint: endpoint, event: event, body: body).call
+    delivery = create(:webhook_delivery, webhook_endpoint: endpoint, notification_event: event, request_body: body)
+    _uri, request = WebhookDispatch::RequestBuilder.new(endpoint:, event:, body:, delivery:).call
     request["X-Docs-Portal-Signature-256"]
   end
 

@@ -93,6 +93,33 @@ admin ナビゲーションでは、次の 3 画面が非同期処理の確認�
 
 `即時実行を要求` は `run_requested_at` を更新し、`RecurringJobDispatcherJob` を enqueue します。用途は「定期設定や関連データを待たずに、この定義を一度早めに走らせたいとき」です。定義そのものの修正や手作業での個別ジョブ再実行ではありません。`定義を同期` が dispatcher 定義を schedule 行へ登録・更新する入口であるのに対し、`即時実行を要求` は既に存在する schedule 1 件の実行要求です。
 
+### Docusaurus preview reconciliation
+
+`reconcile_docusaurus_preview_builds` は Markdown / MDX 版の preview 状態と実ファイルを収束させる定期定義です。通常は毎分の dispatcher が schedule を拾い、reconciliation 自体は bounded batch で次を回収します。
+
+1. `preview_not_requested` の Markdown 版
+2. 一定時間開始されない `preview_queued`
+3. stale になった `preview_running`
+4. backoff の次回試行時刻を過ぎた `preview_failed`
+5. artifact marker と entry HTML はあるが DB path / success 状態が未確定の版
+6. `preview_succeeded` だが marker、path、entry HTML の整合が失われた版
+
+確認時は schedule 詳細の enqueue / 開始 / 終了だけでなく、対象 DocumentVersion の build 状態、試行回数、次回試行、最終エラーを合わせて見ます。`preview_abandoned` は最大 5 回へ到達した終端状態で、自動再投入されません。rendererへ到達した失敗だけでなく、workerが開始しない stale queue の回収も試行回数を1回消費するため、queue障害だけで同じ版を無制限に積み続けません。原因を解消して明示的に再試行可能状態へ戻すまでは、定期定義の即時実行だけでは変化しません。
+
+build 成果物が存在するのに未紐付けの場合、版 directory の marker と entry HTML が対象版・source path に一致すれば reconciliation が DB を修復します。marker が不正、別版を指す、または entry HTML が欠ける場合は既存 directory を成功根拠にせず再 build します。storage directory の手作業での rename や marker 編集は行わず、状態・claim token・error を evidence として残してから原因を修正します。
+
+### recurring run の stale 判定
+
+重複禁止の schedule では `running` だけでなく `enqueued` run も active として扱います。runner が開始されず10分以上staleになった `enqueued` runはfailedとして記録してからschedule lockを解放し、古いActiveJobが後着しても業務jobを実行しません。一方、開始済みの `running` runは、run行をfailedにしてもchildの外部送信・文書更新・ファイル更新を止められないため、時間経過だけでは自動回収・lock解放しません。staleに見えるrunning runはworker processとchild固有の実行状態を確認し、durable tokenで全副作用をfenceできる定義だけを将来の自動回収対象として個別に追加します。
+
+`JOB_RELIABILITY_V2_ENABLED=false` 中は、V2定義の公開と新規dispatchだけでなく、既存V2 scheduleのstale enqueued回収・stale lock解放、queue済みV2 runner、Webhook自動再送、生成ファイルevent dispatch、Docusaurus preview reconciliation、外部フォルダ同期reconciliationも状態変更前に停止します。dispatcherはV2 schedule行をlockし、最初の停止時だけ`enabled`を`enabled_before_reliability_v2_suspend`へ退避してDB上の`enabled=false`を確定します。これによりgateを知らない旧binaryへrollbackしてもV2 scheduleはdue対象になりません。gateをonへ戻すと退避値どおりに元の有効・無効状態を復元して退避値をclearします。停止・復元では`run_requested_at`、既存lock、run履歴を変更せず、停止中または退避値が残るV2 scheduleの`即時実行を要求`は拒否します。
+
+V2 runner payloadにはprotocol versionを付け、旧1引数consumerが新V2 childを実行する前にfail closedさせます。gateをonにする前はqueueの待機件数だけで判断せず、旧binaryのworker processとin-flight childが0であること、旧payloadがdrain済みであること、group IDを持たないlegacy `processing` eventとlegacy active runを手動確認済みであることを確認します。gateをoffへ戻すときはcurrent binaryのdispatcherを一度実行してV2 scheduleがDB上も無効化されたことを確認し、queue済みV2 jobとin-flight childをdrainしてから旧binaryを起動します。gateをoffへ戻しても既にchild内へ入った処理は取消されないため、running処理のキャンセル用途には使いません。
+
+生成ファイルeventのgroup claimは、後続generator / writerが完了するまで保持されます。claim付き経路は別queueへ非同期childを残さずinline実行し、filesystemはstage後、DocumentVersionはDB transaction内で、current tokenのownershipを再確認してからcommitします。staged commitを持たないcommand実行はclaim付き経路ではfail closedです。ownershipを失った旧workerは出力をcommitせず、自動retryもenqueueしません。
+
+通常dispatcherは`dispatch_group_id`のないlegacy `processing` eventを自動採用しません。残存している場合は旧workerと旧queueがdrain済みであること、関連runとfilesystem / DocumentVersionの副作用を確認し、処理済みなら明示的にack、未実行と判断できる場合だけ管理画面から新groupとして再投入します。証拠がない行を時間経過だけで再実行しないでください。
+
 ## 4. 生成ファイルイベント
 
 `生成ファイルイベント` は、生成処理の入口になった event を確認する画面です。controller では status / operation / event_source / path / q / scheduled_at で絞り込みできます。
@@ -129,6 +156,12 @@ active filter がある状態で 0 件になった場合は、未登録状態で
 filter なしで 0 件の場合に表示される `生成ファイル実行履歴を確認する` は、event がまだない状態でも run 側に履歴が残っていないかを見直すための導線です。これは生成処理の成功、エラーなし、通知不要を保証するものではありません。event がない状態で生成ジョブの結果や site build artifact run を探す必要があるときは、`生成ファイル実行履歴` の status、generator、output writer、event source、作成日、`実行ID / パス / エラー / メタデータ` 検索へ切り替えて確認します。
 
 詳細画面では、その event に関連づいた直近の `GeneratedFileRun` を最大 10 件たどれます。探索対象は current implementation では生成ファイル実行履歴の最新 200 件です。関連 run が見えない場合は、対象 event の public ID を `GeneratedFileRun.metadata.generated_file_event_public_ids` に持つ run が最新 200 件の外に出ている可能性があります。
+
+buffer eventから起動するDocumentVersion出力では、job IDとcanonicalな `generated_file_idempotency_group_id` から安定した冪等キーを作り、同じdispatch groupの再実行時は既存版を再利用します。通常のevent dispatchでは `generated_file_idempotency_group_id` と `dispatch_group_id` に同じgroup IDを記録し、event public ID集合は関連付けとlease導入前payloadのfallbackに使います。`dispatch_claim_token`はowner fencing専用で、stale回収時にrotateするため冪等キーへ含めません。dispatch対象はevent ID集合、`dispatch_group_id`、`dispatch_claim_token`を持つ1 groupとしてclaimされ、downstream処理の前後でheartbeatが更新されます。成功・失敗の確定はgroup全行をlockし、event ID集合、group ID、token、`processing`状態が一致するときだけ1つのDB transactionで行います。
+
+確定途中でworkerが停止した場合は全件が同じgroupの `processing` のまま残ります。stale回収はeventを個別の `pending` に戻さず、同じevent ID集合・dispatch group・idempotency groupを維持してtokenだけをrotateし、新ownerへ引き継ぎます。旧workerが後着して成功または失敗を返してもtoken不一致なら状態を上書きせず、DocumentVersionも同じgroupの既存版を再利用します。管理画面からのevent再投入ではclaim情報をclearし、次回claimで新しいgroupを発行します。生成ファイルrunの明示再実行も元groupをprovenanceとして残しつつ新しいidempotency groupを発行するため、同じevent public IDを引き継いでも別の版として扱います。
+
+`READ_ONLY_MAINTENANCE` 中は、pending eventのdispatch、stale processing回収、queue済み `DocusaurusPreviewBuildJob` のclaim・renderer実行・artifact更新・DB更新、Docusaurus preview reconciliationによるartifact修復・再enqueue・確認時刻更新を行いません。queue済みpreview jobはversion lookupやclaimより前に終了し、`queued`状態、試行回数、時刻、claim情報を変更しません。現在のevent / preview状態を保持し、解除後の次回reconciliationで回収します。
 
 詳細画面の `エラー` と `メタデータ` は diagnostic preview として読みます。長い本文、raw payload、token / secret、private path 相当の値は表示前に伏せられます。metadata が空の場合は `{}` ではなく `このイベントに補助メタデータはありません。` と表示されます。これは補助情報なしの状態であり、再投入可否、保存済み metadata の有無、外部 provider の正常性を保証するものではありません。
 

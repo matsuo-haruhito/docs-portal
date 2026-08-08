@@ -20,7 +20,7 @@ RECURRING_JOB_MAINTENANCE_CHECKS = [
     ]
   },
   {
-    path: "docs/生成ファイル再試行と定期ジョブ管理runbook.md",
+    path: "docs/runbooks/ops/生成ファイル再試行と定期ジョブ管理runbook.md",
     expected: [
       "`定期ジョブ`: `admin/recurring_job_schedules`",
       "一覧には POST action の `定義を同期` があります。",

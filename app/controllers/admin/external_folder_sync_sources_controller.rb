@@ -117,8 +117,12 @@ class Admin::ExternalFolderSyncSourcesController < Admin::BaseController
       return
     end
 
-    ExternalFolderSyncJob.perform_later(@external_folder_sync_source.id, current_user.id)
-    redirect_to sync_source_path_with_return_to, notice: "バックグラウンド同期を登録しました。"
+    job = ExternalFolderSyncJob.enqueue_for(source: @external_folder_sync_source, actor: current_user)
+    if job
+      redirect_to sync_source_path_with_return_to, notice: "バックグラウンド同期を登録しました。"
+    else
+      redirect_to sync_source_path_with_return_to, alert: "同じ同期元の処理が登録済みまたは実行中です。完了後にもう一度実行してください。"
+    end
   end
 
   def subscribe

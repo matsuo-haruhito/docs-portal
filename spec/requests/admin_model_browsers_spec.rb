@@ -279,13 +279,13 @@ RSpec.describe "Admin model browsers", type: :request do
 
   it "keeps unsupported existing screen links without query handoff" do
     sign_in_as(admin_user)
-    get admin_model_browser_model_path("document_permissions"), params: { q: "download" }
+    get admin_model_browser_model_path("consent_terms"), params: { q: "利用規約" }
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("既存画面で詳しく確認")
-    expect(response.body).to include("既存画面で続けて確認する場合は、検索語「download」をコピーして")
-    expect(page_hrefs).to include(admin_document_permissions_path)
-    expect(page_hrefs).not_to include(admin_document_permissions_path(q: "download"))
+    expect(response.body).to include("既存画面で続けて確認する場合は、検索語「利用規約」をコピーして")
+    expect(page_hrefs).to include(admin_consent_terms_path)
+    expect(page_hrefs).not_to include(admin_consent_terms_path(q: "利用規約"))
   end
 
   it "matches numeric queries against id without adding write actions or query handoff" do

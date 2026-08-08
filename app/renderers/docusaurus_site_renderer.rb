@@ -214,6 +214,7 @@ class DocusaurusSiteRenderer
       ".theme-doc-toc-desktop",
       ".theme-doc-toc-mobile",
       ".table-of-contents",
+      "details[class*='collapsibleToc']",
       ".theme-doc-footer",
       ".theme-edit-this-page",
       ".pagination-nav",

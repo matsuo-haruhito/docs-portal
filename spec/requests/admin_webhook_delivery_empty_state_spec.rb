@@ -28,13 +28,13 @@ RSpec.describe "Admin webhook delivery empty state", type: :request do
     expect(page_text).to include("まだWebhook送信履歴はありません。")
     expect(page_text).to include("Webhook設定を登録し、通知対象イベントが発生すると送信履歴がここに表示されます。")
     expect(result_endpoint_links).to contain_exactly("Webhook設定へ戻る")
-    expect(page_text).not_to include("すべてのWebhook送信履歴を見る")
+    expect(page_text).not_to include("条件をクリア")
 
     get admin_webhook_deliveries_path(status: "failed")
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("条件に一致するWebhook送信履歴はありません。")
-    expect(page_text).to include("すべてのWebhook送信履歴を見る")
+    expect(page_text).to include("条件をクリア")
     expect(page_text).not_to include("Webhook設定を登録し、通知対象イベントが発生すると送信履歴がここに表示されます。")
     expect(result_endpoint_links).to be_empty
   end

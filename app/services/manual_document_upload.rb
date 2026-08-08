@@ -133,8 +133,7 @@ class ManualDocumentUpload
   end
 
   def enqueue_preview_build!(version)
-    version.mark_preview_build_queued!
-    DocusaurusPreviewBuildJob.perform_later(version.id)
+    DocusaurusPreviewBuildJob.enqueue_for(version)
   end
 
   def notify_generated_file_change!(result, operation)

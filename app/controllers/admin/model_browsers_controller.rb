@@ -122,7 +122,7 @@ class Admin::ModelBrowsersController < Admin::BaseController
   end
 
   def summary_field_label(entry, field)
-    association_summary_field_label(entry, field) || generic_summary_field_label(field)
+    association_summary_field_label(entry, field) || generic_summary_field_label(entry, field)
   end
 
   def record_summary_value(record, field)
@@ -139,8 +139,31 @@ class Admin::ModelBrowsersController < Admin::BaseController
     when Array
       value.join(", ")
     else
-      association_summary_value(record, field, value) || value.presence || "-"
+      localized_model_browser_value(record, field, value) ||
+        enum_summary_value(record, field, value) ||
+        association_summary_value(record, field, value) ||
+        value.presence || "-"
     end
+  end
+
+  def localized_model_browser_value(record, field, value)
+    return if value.blank?
+
+    model_key = record.class.model_name.i18n_key
+    normalized_value = value.to_s.underscore
+    localized_value = I18n.t(
+      "labels.model_browser_values.#{model_key}.#{field}.#{normalized_value}",
+      default: nil
+    )
+    localized_value if localized_value.is_a?(String)
+  end
+
+  def enum_summary_value(record, field, value)
+    return unless record.class.defined_enums.key?(field.to_s)
+
+    scope = "labels.#{record.class.model_name.i18n_key.to_s.pluralize}.#{field}.#{value}"
+    localized_value = I18n.t(scope, default: nil)
+    localized_value if localized_value.is_a?(String)
   end
 
   def association_summary_value(record, field, value)
@@ -151,11 +174,11 @@ class Admin::ModelBrowsersController < Admin::BaseController
 
     associated_record = record.public_send(reflection.name)
     label = association_summary_record_label(associated_record)
-    return if label.blank?
+    return "参照先なし（ID: #{value}）" if label.blank?
 
     "#{label}（ID: #{value}）"
-  rescue ActiveRecord::RecordNotFound
-    nil
+  rescue ActiveRecord::RecordNotFound, ActiveRecord::SubclassNotFound, NameError
+    "参照先なし（ID: #{value}）"
   end
 
   def association_summary_record_label(associated_record)
@@ -186,6 +209,7 @@ class Admin::ModelBrowsersController < Admin::BaseController
     association_name = reflection.name
     explicit_label = I18n.t("labels.model_browser_associations.#{association_name}", default: nil)
     return explicit_label if explicit_label.is_a?(String)
+    return if reflection.polymorphic?
 
     human_name = reflection.klass.model_name.human
     return if human_name == reflection.klass.model_name.name.humanize
@@ -193,10 +217,10 @@ class Admin::ModelBrowsersController < Admin::BaseController
     human_name
   end
 
-  def generic_summary_field_label(field)
+  def generic_summary_field_label(entry, field)
     explicit_label = I18n.t("labels.model_browser_fields.#{field}", default: nil)
     return explicit_label if explicit_label.is_a?(String)
 
-    field.to_s.humanize
+    entry.model_class.human_attribute_name(field, default: field.to_s.humanize)
   end
 end

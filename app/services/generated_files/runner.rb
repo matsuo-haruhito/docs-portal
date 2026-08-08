@@ -1,6 +1,7 @@
 require "active_support/core_ext/hash/keys"
 require "active_support/core_ext/object/blank"
 require "active_support/inflector"
+require "digest"
 require "open3"
 require "pathname"
 require "set"
@@ -12,6 +13,8 @@ require_relative "run_recorder"
 
 module GeneratedFiles
   class Runner
+    class ClaimBackedCommandError < StandardError; end
+
     Result = Data.define(:job_id, :command, :generator, :output_writer, :generated_paths, :stdout, :stderr, :status) do
       def success?
         status.respond_to?(:success?) ? status.success? : status == true
@@ -44,6 +47,7 @@ module GeneratedFiles
       job_ids: nil,
       event_source: nil,
       metadata: {},
+      dispatch_claim: nil,
       root: nil,
       output: $stdout,
       error_output: $stderr,
@@ -56,6 +60,7 @@ module GeneratedFiles
       @job_ids = Array(job_ids).compact.map(&:to_s).to_set
       @event_source = event_source
       @metadata = metadata || {}
+      @dispatch_claim = dispatch_claim
       @output = output
       @error_output = error_output
       @run_recorder = run_recorder
@@ -64,6 +69,7 @@ module GeneratedFiles
     end
 
     def call
+      heartbeat_dispatch_claim!
       selected_jobs = registry.select(changed_files: changed_files.to_a, job_ids: job_ids.to_a)
 
       if selected_jobs.empty?
@@ -72,12 +78,12 @@ module GeneratedFiles
         return []
       end
 
-      selected_jobs.map { execute_job_with_recording(_1) }
+      selected_jobs.map { execute_job_with_recording(_1) }.tap { heartbeat_dispatch_claim! }
     end
 
     private
 
-    attr_reader :root, :changed_files, :job_ids, :event_source, :metadata,
+    attr_reader :root, :changed_files, :job_ids, :event_source, :metadata, :dispatch_claim,
       :output, :error_output, :run_recorder, :auto_retry_policy, :registry
 
     def default_root
@@ -89,14 +95,16 @@ module GeneratedFiles
     end
 
     def execute_job_with_recording(job)
+      heartbeat_dispatch_claim!
       run = run_recorder.start(job: job, changed_files: changed_files.to_a.sort, event_source: event_source, metadata: metadata)
       result = execute_job(job)
+      heartbeat_dispatch_claim!
       run.finish!(status: :completed, generated_paths: result.generated_paths)
       result
     rescue StandardError => error
       if defined?(run) && run
         run.finish!(status: :failed, error_message: error.message)
-        auto_retry_policy.enqueue_for(run)
+        auto_retry_policy.enqueue_for(run) unless dispatch_claim
       end
       raise
     end
@@ -120,10 +128,18 @@ module GeneratedFiles
       output.puts "Generator: #{generator_key}"
       output.puts "Output writer: #{output_writer_key}"
 
+      heartbeat_dispatch_claim!
       artifacts = generator_class_for(generator_key).new(**options.deep_symbolize_keys.merge(root: root)).call
+      heartbeat_dispatch_claim!
+      writer_options = output_options.deep_symbolize_keys.merge(root: root)
+      writer_options[:dispatch_claim] = dispatch_claim if dispatch_claim
+      if output_writer_key == "document_version"
+        writer_options[:idempotency_key] = generated_event_idempotency_key(id)
+      end
       generated_paths = output_writer_class_for(output_writer_key)
-        .new(**output_options.deep_symbolize_keys.merge(root: root))
+        .new(**writer_options)
         .write(artifacts)
+      heartbeat_dispatch_claim!
 
       result = Result.new(
         job_id: id,
@@ -141,6 +157,11 @@ module GeneratedFiles
 
     def execute_command_job(job)
       id = job.fetch("id")
+      if dispatch_claim
+        raise ClaimBackedCommandError,
+          "claim付き生成ファイルeventではcommand jobを実行できません: #{id}"
+      end
+
       command = job.fetch("command")
       generated_paths = Array(job.fetch("generated_paths", []))
 
@@ -158,6 +179,14 @@ module GeneratedFiles
       result
     end
 
+    def heartbeat_dispatch_claim!
+      return true unless dispatch_claim
+      return true if GeneratedFiles::EventDispatchLease.heartbeat!(dispatch_claim)
+
+      raise GeneratedFiles::EventDispatchLease::StaleClaimError,
+        "生成ファイルイベントのdispatch実行権が失効しています。"
+    end
+
     def generator_class_for(generator_key)
       generator = GENERATORS.fetch(generator_key) do
         raise KeyError, "Unknown generated-file generator: #{generator_key}"
@@ -172,6 +201,27 @@ module GeneratedFiles
       end
       require_relative writer.fetch(:require_path)
       writer.fetch(:class_name).constantize
+    end
+
+    def generated_event_idempotency_key(job_id)
+      group_id = metadata["generated_file_idempotency_group_id"] ||
+        metadata[:generated_file_idempotency_group_id] ||
+        metadata["generated_file_event_dispatch_group_id"] ||
+        metadata[:generated_file_event_dispatch_group_id]
+      if group_id.present?
+        return Digest::SHA256.hexdigest(
+          ["generated-file-document-version", "v2", job_id, group_id.to_s].join("\0")
+        )
+      end
+
+      public_ids = Array(
+        metadata["generated_file_event_public_ids"] || metadata[:generated_file_event_public_ids]
+      ).compact_blank.map(&:to_s).uniq.sort
+      return if public_ids.empty?
+
+      Digest::SHA256.hexdigest(
+        (["generated-file-document-version", "v1", job_id] + public_ids).join("\0")
+      )
     end
 
     def output_generated_paths(id, generated_paths)
