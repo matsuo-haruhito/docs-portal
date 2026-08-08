@@ -4,7 +4,8 @@ class PreviewBuildStatusPresenter
     preview_queued: "待機中",
     preview_running: "生成中",
     preview_succeeded: "成功",
-    preview_failed: "失敗"
+    preview_failed: "失敗",
+    preview_abandoned: "再試行停止"
   }.freeze
 
   MESSAGES = {
@@ -12,7 +13,8 @@ class PreviewBuildStatusPresenter
     preview_queued: "Docusaurusプレビュー生成を待機しています。",
     preview_running: "Docusaurusプレビューを生成中です。",
     preview_succeeded: "Docusaurusプレビュー生成は完了しています。",
-    preview_failed: "Docusaurusプレビュー生成に失敗しました。"
+    preview_failed: "Docusaurusプレビュー生成に失敗しました。",
+    preview_abandoned: "Docusaurusプレビュー生成は最大試行回数に達したため停止しています。"
   }.freeze
 
   BADGE_CLASSES = {
@@ -20,7 +22,8 @@ class PreviewBuildStatusPresenter
     preview_queued: "warning",
     preview_running: "warning",
     preview_succeeded: "success",
-    preview_failed: "danger"
+    preview_failed: "danger",
+    preview_abandoned: "danger"
   }.freeze
 
   attr_reader :version
@@ -50,7 +53,7 @@ class PreviewBuildStatusPresenter
   end
 
   def failed?
-    status == :preview_failed
+    %i[preview_failed preview_abandoned].include?(status)
   end
 
   def succeeded?

@@ -37,9 +37,9 @@ RSpec.describe "admin webhook endpoints source" do
       expect(helper_source).to include("table_preferences_column(:error_message")
       expect(helper_source).to include("def webhook_endpoint_status_label(endpoint)")
       expect(helper_source).to include('endpoint.active? ? "有効" : "停止"')
-      expect(helper_source).to include("def webhook_delivery_status_label(delivery)")
-      expect(helper_source).to include('when "failed"')
-      expect(helper_source).to include('"送信待ち"')
+      expect(helper_source).to include("def webhook_delivery_status_label(delivery_or_value)")
+      expect(helper_source).to include('localized_label("webhook_deliveries.status", value)')
+      expect(helper_source).to include('["retrying", "自動再送中"]')
     end
   end
 end

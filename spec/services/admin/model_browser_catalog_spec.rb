@@ -45,6 +45,7 @@ RSpec.describe Admin::ModelBrowserCatalog do
         /(?:^|_)(?:request|response)(?:_|$)/i
       ]
       allowed_unsafe_looking_fields = {
+        "master_sync_receipts.response_status" => "HTTP status code only; it does not expose response body, headers, or payload data.",
         "webhook_deliveries.response_status" => "HTTP status code only; it does not expose response body, headers, or payload data."
       }
       exposed_fields = described_class.entries.flat_map do |entry|

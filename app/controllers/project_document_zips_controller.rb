@@ -1,5 +1,6 @@
 class ProjectDocumentZipsController < BaseController
   READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
+  MATCHING_SELECTION_MAX_DOCUMENTS = 200
 
   def create
     project = Project.find_by!(code: params[:project_code])
@@ -13,6 +14,11 @@ class ProjectDocumentZipsController < BaseController
 
     versions = selected_versions(project)
     raise ApplicationError::BadRequest, "No documents selected" if versions.empty?
+
+    if selecting_matching_documents? && versions.size > MATCHING_SELECTION_MAX_DOCUMENTS
+      redirect_to project_documents_path(project), alert: "検索結果全体のZIP出力は#{MATCHING_SELECTION_MAX_DOCUMENTS}件までです。条件を狭めるか、ページ単位で選択してください。"
+      return
+    end
 
     archive = DocumentVersionsZipBuilder.new(
       versions:,

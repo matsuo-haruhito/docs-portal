@@ -9,6 +9,13 @@ RSpec.describe "Admin generated file event retry limit", type: :request do
       create(:generated_file_event, path: "docs/failed-#{index}.yml", status: :failed, error_message: "boom", created_at: index.minutes.ago)
     end
     newest = failed_events.first
+    claimed = failed_events.last
+    claimed.update_columns(
+      dispatch_group_id: SecureRandom.uuid,
+      dispatch_claim_token: SecureRandom.uuid,
+      dispatch_claimed_at: 1.minute.ago,
+      dispatch_heartbeat_at: 1.minute.ago
+    )
     allow(GeneratedFileEventDispatchJob).to receive(:perform_later)
 
     post retry_failed_admin_generated_file_events_path
@@ -19,6 +26,12 @@ RSpec.describe "Admin generated file event retry limit", type: :request do
     expect(retried_count).to eq(100)
     expect(failed_count).to eq(1)
     expect(newest.reload).to be_failed
+    expect(claimed.reload.attributes.slice(
+      "dispatch_group_id",
+      "dispatch_claim_token",
+      "dispatch_claimed_at",
+      "dispatch_heartbeat_at"
+    ).values).to all(be_nil)
     expect(GeneratedFileEventDispatchJob).to have_received(:perform_later).once
   end
 end

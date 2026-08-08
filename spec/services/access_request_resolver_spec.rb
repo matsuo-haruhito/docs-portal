@@ -66,11 +66,13 @@ RSpec.describe AccessRequestResolver do
     context "when the requested access level is manage" do
       let(:access_request) { create(:access_request, requester:, requestable: document, requested_access_level: :manage) }
 
-      it "documents the current document permission fallback without deciding the product policy" do
-        described_class.new(access_request:, approver:).approve!
+      it "rejects manage requests with an error instead of auto-granting" do
+        expect do
+          described_class.new(access_request:, approver:).approve!
+        end.to raise_error(ApplicationError::BadRequest, /manage/)
 
-        permission = DocumentPermission.find_by!(document:, user: requester)
-        expect(permission).to be_view
+        expect(DocumentPermission.where(document:, user: requester)).to be_empty
+        expect(access_request.reload).to be_pending
       end
     end
 

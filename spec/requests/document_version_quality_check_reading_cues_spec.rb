@@ -31,6 +31,7 @@ RSpec.describe "Document version quality check reading cues", type: :request do
 
   it "explains that preview checks are a focused excerpt when preview warnings exist" do
     version.assign_source_path_metadata!(source_path: "docs/manual.md", snapshot_kind: "received_markdown")
+    version.save!
     version.mark_preview_build_queued!
 
     get document_version_quality_check_path(version)

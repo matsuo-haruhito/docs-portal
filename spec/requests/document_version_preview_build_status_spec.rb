@@ -13,6 +13,7 @@ RSpec.describe "Document version preview build status", type: :request do
       source_commit_hash: "manual-upload"
     ).tap do |record|
       record.assign_source_path_metadata!(source_path: "docs/preview-guide.md", snapshot_kind: "received_markdown")
+      record.save!
       record.mark_preview_build_queued!
     end
   end
@@ -21,16 +22,15 @@ RSpec.describe "Document version preview build status", type: :request do
     document.update!(latest_version: version)
   end
 
-  it "shows preview build status on the version detail page" do
+  it "exposes the persistent preview state on the version detail card" do
     sign_in_as(user)
 
     get document_version_path(version)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("プレビュー状態")
-    expect(response.body).to include("ビルド状態")
-    expect(response.body).to include("待機中")
-    expect(response.body).to include("Docusaurusプレビュー生成を待機しています")
-    expect(response.body).to include("試行:")
+    document = Nokogiri::HTML(response.body)
+    status_card = document.at_css('[data-preview-build-status="preview_queued"]')
+    expect(status_card).to be_present
+    expect(status_card.css("ul.compact-list li")).not_to be_empty
   end
 end

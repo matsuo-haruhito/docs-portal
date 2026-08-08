@@ -14,7 +14,12 @@ class Admin::ModelBrowserCatalog
     "users" => :q,
     "projects" => :q,
     "documents" => :q,
-    "document_sets" => :q
+    "document_sets" => :q,
+    "project_memberships" => :q,
+    "document_permissions" => :q,
+    "access_logs" => :q,
+    "git_import_sources" => :q,
+    "git_import_runs" => :q
   }.freeze
 
   TEXT_SEARCH_COLUMN_TYPES = %i[string text].freeze
@@ -38,6 +43,8 @@ class Admin::ModelBrowserCatalog
     Entry.new("document_approval_requests", :document_permission, "確認依頼", "文書確認フローの依頼記録です。", DocumentApprovalRequest, %i[public_id status requester_id approver_id updated_at], nil),
     Entry.new("git_import_sources", :import_sync, "Git連携", "同期元の定義です。", GitImportSource, %i[public_id repository_full_name branch enabled updated_at], :admin_git_import_sources_path),
     Entry.new("git_import_runs", :import_sync, "Git同期履歴", "Git取り込み実行の履歴です。", GitImportRun, %i[public_id status started_at finished_at updated_at], :admin_git_import_runs_path),
+    Entry.new("external_master_sync_mappings", :import_sync, "外部マスタ同期マッピング", "同期元IDとポータル側対象の対応関係です。", ExternalMasterSyncMapping, %i[public_id source_system resource_type external_id sync_target_type sync_target_id source_updated_at updated_at], nil),
+    Entry.new("master_sync_receipts", :import_sync, "マスタ同期受領台帳", "冪等リクエストの確定応答を確認します。", MasterSyncReceipt, %i[public_id idempotency_key source_system resource_type external_id response_status completed_at], nil),
     Entry.new("external_folder_sync_sources", :import_sync, "外部フォルダ同期", "Google Driveなどの外部フォルダ同期元です。", ExternalFolderSyncSource, %i[public_id provider name external_folder_id enabled last_synced_at updated_at], :admin_external_folder_sync_sources_path),
     Entry.new("external_folder_sync_runs", :import_sync, "外部フォルダ同期履歴", "外部フォルダ同期の実行履歴です。", ExternalFolderSyncRun, %i[public_id mode status started_at finished_at updated_at], nil),
     Entry.new("external_folder_sync_items", :import_sync, "外部フォルダ同期アイテム", "外部ファイルとポータル文書の対応関係です。", ExternalFolderSyncItem, %i[public_id external_item_id sync_status path updated_at], nil),
@@ -50,7 +57,7 @@ class Admin::ModelBrowserCatalog
     Entry.new("import_dry_runs", :import_sync, "インポート事前確認", "保存付きインポート確認の記録です。", ImportDryRun, %i[public_id import_mode status source_commit_hash updated_at], nil),
     Entry.new("bulk_edit_dry_runs", :import_sync, "一括編集事前確認", "文書一括変更の事前確認記録です。", BulkEditDryRun, %i[public_id operation_type status updated_at], nil),
     Entry.new("webhook_endpoints", :external_integration, "Webhook", "外部通知先の定義です。", WebhookEndpoint, %i[public_id name active event_types updated_at], :admin_webhook_endpoints_path),
-    Entry.new("webhook_deliveries", :external_integration, "Webhook配信", "Webhook送信履歴です。", WebhookDelivery, %i[public_id event_type status response_status sent_at updated_at], nil)
+    Entry.new("webhook_deliveries", :external_integration, "Webhook配信", "Webhook送信履歴です。", WebhookDelivery, %i[public_id event_type status response_status retry_count sent_at updated_at], nil)
   ].freeze
 
   class << self

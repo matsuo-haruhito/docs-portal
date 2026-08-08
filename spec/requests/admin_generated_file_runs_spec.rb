@@ -649,7 +649,10 @@ RSpec.describe "Admin generated file runs", type: :request do
         job_id: "ai_usecase_decision_flow",
         status: :failed,
         changed_files: ["source.yml"],
-        metadata: {"actor_id" => 123}
+        metadata: {
+          "actor_id" => 123,
+          "generated_file_idempotency_group_id" => "original-group"
+        }
       )
       allow(GeneratedFileJob).to receive(:perform_later)
       return_to_path = admin_generated_file_runs_path(status: "failed", page: 2, per_page: 25)
@@ -664,7 +667,9 @@ RSpec.describe "Admin generated file runs", type: :request do
         metadata: hash_including(
           "actor_id" => 123,
           "retry_of_generated_file_run_public_id" => run.public_id,
-          "retry_requested_by_user_id" => admin_user.id
+          "retry_requested_by_user_id" => admin_user.id,
+          "retry_of_generated_file_idempotency_group_id" => "original-group",
+          "generated_file_idempotency_group_id" => satisfy { _1.present? && _1 != "original-group" }
         )
       )
     end

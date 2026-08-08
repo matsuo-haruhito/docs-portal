@@ -74,6 +74,7 @@ module Admin::DocumentsHelper
     return "HTML未生成" if version.blank?
     return "HTML表示可" if version.rendered_site_available?
     return "プレビュー失敗" if version.preview_failed?
+    return "プレビュー再試行停止" if version.preview_abandoned?
     return "プレビュー生成中" if version.preview_queued? || version.preview_running?
     return "HTML未確認" if version.preview_succeeded?
 

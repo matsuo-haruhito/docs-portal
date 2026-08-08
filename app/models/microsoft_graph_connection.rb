@@ -24,13 +24,21 @@ class MicrosoftGraphConnection < ApplicationRecord
   def self.preview_selected_ids_by_project(project_ids = nil)
     scope = enabled_only
     scope = scope.where(project_id: project_ids) if project_ids.present?
-    scope.group(:project_id).minimum(:id)
+
+    # 明示的に preview_selected が true のものを優先、なければ最小 id fallback
+    explicit = scope.where(preview_selected: true).group(:project_id).minimum(:id)
+    implicit = scope.group(:project_id).minimum(:id)
+    implicit.merge(explicit)
   end
 
   def preview_selected?
     return false unless enabled?
 
-    self.class.preview_selected_ids_by_project([project_id])[project_id] == id
+    if self.class.where(project_id:, preview_selected: true, enabled: true).exists?
+      preview_selected && enabled?
+    else
+      self.class.preview_selected_ids_by_project([project_id])[project_id] == id
+    end
   end
 
   def to_param

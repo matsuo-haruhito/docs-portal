@@ -144,6 +144,42 @@ RSpec.describe GeneratedFiles::Runner do
     )
   end
 
+  it "fails closed before running a command for a claim-backed event and skips normal auto retry" do
+    event = create(:generated_file_event, scheduled_at: 1.minute.ago)
+    claim = GeneratedFiles::EventDispatchLease.claim!([event])
+    registry = write_registry(
+      jobs: [
+        {
+          "id" => "claimed-command",
+          "source_paths" => ["source.yml"],
+          "command" => ruby_write_command("claimed-command.txt", "unsafe"),
+          "generated_paths" => ["claimed-command.txt"]
+        }
+      ]
+    )
+    recorder = FakeRunRecorder.new
+    auto_retry_policy = instance_double(GeneratedFiles::AutoRetryPolicy, enqueue_for: false)
+
+    expect do
+      described_class.new(
+        registry_path: registry,
+        changed_files: ["source.yml"],
+        dispatch_claim: claim,
+        root: @root,
+        output: StringIO.new,
+        error_output: StringIO.new,
+        run_recorder: recorder,
+        auto_retry_policy:
+      ).call
+    end.to raise_error(GeneratedFiles::Runner::ClaimBackedCommandError)
+
+    expect(@root.join("claimed-command.txt")).not_to exist
+    expect(auto_retry_policy).not_to have_received(:enqueue_for)
+    expect(recorder.runs.first.finished_payloads).to contain_exactly(
+      hash_including(status: :failed)
+    )
+  end
+
   it "runs explicit job ids regardless of changed files" do
     registry = write_registry(
       jobs: [
@@ -167,6 +203,65 @@ RSpec.describe GeneratedFiles::Runner do
 
     expect(results.map(&:job_id)).to eq(["explicit"])
     expect(@root.join("explicit.txt").read).to eq("ok")
+  end
+
+  it "derives document-version identity from the canonical dispatch group" do
+    runner = described_class.new(
+      changed_files: [],
+      metadata: {
+        "generated_file_idempotency_group_id" => "group-a",
+        "generated_file_event_public_ids" => ["gfe-b", "gfe-a"]
+      },
+      root: @root,
+      output: StringIO.new,
+      error_output: StringIO.new
+    )
+
+    expected = Digest::SHA256.hexdigest(
+      ["generated-file-document-version", "v2", "document-version-job", "group-a"].join("\0")
+    )
+    expect(runner.send(:generated_event_idempotency_key, "document-version-job")).to eq(expected)
+  end
+
+  it "uses a different document-version identity for an explicit retry group" do
+    first = described_class.new(
+      changed_files: [],
+      metadata: {
+        "generated_file_idempotency_group_id" => "group-a",
+        "generated_file_event_public_ids" => ["gfe-a"]
+      },
+      root: @root,
+      output: StringIO.new,
+      error_output: StringIO.new
+    )
+    retry_run = described_class.new(
+      changed_files: [],
+      metadata: {
+        "generated_file_idempotency_group_id" => "group-b",
+        "generated_file_event_public_ids" => ["gfe-a"]
+      },
+      root: @root,
+      output: StringIO.new,
+      error_output: StringIO.new
+    )
+
+    expect(retry_run.send(:generated_event_idempotency_key, "document-version-job"))
+      .not_to eq(first.send(:generated_event_idempotency_key, "document-version-job"))
+  end
+
+  it "keeps a stable legacy identity for buffered payloads without a group" do
+    runner = described_class.new(
+      changed_files: [],
+      metadata: {"generated_file_event_public_ids" => ["gfe-b", "gfe-a", "gfe-a"]},
+      root: @root,
+      output: StringIO.new,
+      error_output: StringIO.new
+    )
+
+    expected = Digest::SHA256.hexdigest(
+      ["generated-file-document-version", "v1", "document-version-job", "gfe-a", "gfe-b"].join("\0")
+    )
+    expect(runner.send(:generated_event_idempotency_key, "document-version-job")).to eq(expected)
   end
 
   it "returns no results when no jobs match" do

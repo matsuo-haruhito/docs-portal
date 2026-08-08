@@ -34,4 +34,10 @@ module Admin::GitImportSourcesHelper
 
     { value: source_path, text: source_path }
   end
+
+  def git_import_source_branch_selected_option(branch)
+    return nil if branch.blank?
+
+    { value: branch, text: branch }
+  end
 end

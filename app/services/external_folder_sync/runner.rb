@@ -7,10 +7,11 @@ module ExternalFolderSync
 
     SyncBatch = Data.define(:entries, :removed_ids, :cursor, :incremental, :full_scan_fallback)
 
-    def initialize(source:, mode:, actor:, allow_conflict_warnings: false, change_event_notifier: GeneratedFiles::ChangeEventNotifier.new)
+    def initialize(source:, mode:, actor:, run: nil, allow_conflict_warnings: false, change_event_notifier: GeneratedFiles::ChangeEventNotifier.new)
       @source = source
       @mode = mode.to_s
       @actor = actor
+      @run = run
       @allow_conflict_warnings = allow_conflict_warnings
       @change_event_notifier = change_event_notifier
       @entries_by_id = {}
@@ -18,33 +19,67 @@ module ExternalFolderSync
     end
 
     def call
+      run = prepare_run! if @run
       ensure_supported!
-      run = source.external_folder_sync_runs.create!(
-        mode:,
-        status: :running,
-        started_at: Time.current
-      )
+      run ||= prepare_run!
 
-      batch = build_sync_batch
+      batch = build_sync_batch(run)
       @entries_by_id = batch.entries.index_by(&:id)
       result = batch.entries.map { plan_entry(_1) }
-      append_missing_items!(batch, result)
+      ExternalFolderSync::RunLease.heartbeat!(run)
+      append_missing_items!(run, batch, result)
       append_sync_strategy!(batch, result)
       return finish_unsafe_apply!(run, result, batch) if apply? && unsafe_apply?(result)
 
-      result.each { apply_entry(_1) } if apply?
-      finished_run = finish_success!(run, result, batch)
-      dispatch_generated_file_change_event!
-      finished_run
+      result.each { apply_entry(run, _1) } if apply?
+      dispatch_generated_file_change_event!(run)
+      finish_success!(run, result, batch)
+    rescue ExternalFolderSync::RunLease::StaleClaimError
+      raise
     rescue => e
-      finish_failure!(run, e) if defined?(run) && run
-      source.update!(last_error_message: e.message)
+      if defined?(run) && run
+        failed = ExternalFolderSync::RunLease.fail!(run, error: e)
+        unless failed
+          raise ExternalFolderSync::RunLease::StaleClaimError,
+            "外部フォルダ同期の失敗確定前に実行権が交代しました。"
+        end
+      end
       raise
     end
 
     private
 
     attr_reader :source, :mode, :actor, :entries_by_id, :generated_file_events, :change_event_notifier
+
+    def prepare_run!
+      if @run
+        raise Error, "同期実行が対象の同期元と一致しません。" unless @run.external_folder_sync_source_id == source.id
+        raise Error, "同期実行モードが一致しません。" unless @run.mode == mode
+
+        ExternalFolderSync::RunLease.heartbeat!(@run)
+        return @run
+      end
+
+      reserved_run = ExternalFolderSync::RunLease.reserve!(
+        source:,
+        mode:,
+        recover_stale: JobReliability::RolloutGate.enabled?
+      )
+      raise Error, "この同期元では別の同期が予約または実行されています。" unless reserved_run
+
+      return reserved_run if ExternalFolderSync::RunLease.claim!(reserved_run)
+
+      message = "外部フォルダ同期の実行権を取得できませんでした。"
+      ExternalFolderSync::RunLease.fail!(reserved_run, error: message)
+      raise Error, message
+    end
+
+    def with_lease_heartbeat(run)
+      ExternalFolderSync::RunLease.heartbeat!(run)
+      result = yield
+      ExternalFolderSync::RunLease.heartbeat!(run)
+      result
+    end
 
     def client
       @client ||= ExternalFolderSync::GoogleDriveClient.new(source:)
@@ -64,10 +99,10 @@ module ExternalFolderSync
       @allow_conflict_warnings == true
     end
 
-    def build_sync_batch
+    def build_sync_batch(run)
       if source.cursor.present?
-        changes = client.list_file_changes(source.cursor)
-        return build_full_scan_batch(full_scan_fallback: true) if changes.full_scan_required
+        changes = with_lease_heartbeat(run) { client.list_file_changes(source.cursor) }
+        return build_full_scan_batch(run, full_scan_fallback: true) if changes.full_scan_required
 
         return SyncBatch.new(
           entries: changes.entries,
@@ -78,15 +113,15 @@ module ExternalFolderSync
         )
       end
 
-      build_full_scan_batch(full_scan_fallback: false)
+      build_full_scan_batch(run, full_scan_fallback: false)
     end
 
-    def build_full_scan_batch(full_scan_fallback:)
-      entries = client.list_files
+    def build_full_scan_batch(run, full_scan_fallback:)
+      entries = with_lease_heartbeat(run) { client.list_files }
       SyncBatch.new(
         entries:,
         removed_ids: [],
-        cursor: safe_start_page_token,
+        cursor: with_lease_heartbeat(run) { safe_start_page_token },
         incremental: false,
         full_scan_fallback:
       )
@@ -209,23 +244,32 @@ module ExternalFolderSync
       "Unchanged"
     end
 
-    def apply_entry(plan)
+    def apply_entry(run, plan)
       return if plan.fetch("action") == "skip"
       return if plan.fetch("action") == "sync_metadata"
-      return record_error_item!(plan) if plan.fetch("action") == "error"
-
-      ActiveRecord::Base.transaction do
-        document = find_or_create_document!(plan)
-        version = create_document_version!(document, plan)
-        file = create_document_file!(version, plan)
-        record_generated_file_event!(plan.fetch("path"), plan.fetch("action"))
-        upsert_item!(plan, document, version, file)
+      if plan.fetch("action") == "error"
+        return ExternalFolderSync::RunLease.with_ownership!(run) { record_error_item!(plan) }
       end
+
+      entry = entries_by_id.fetch(plan.fetch("external_item_id"))
+      content = with_lease_heartbeat(run) { client.download_entry(entry) }
+
+      ExternalFolderSync::RunLease.with_ownership!(run) do
+        ActiveRecord::Base.transaction do
+          document = find_or_create_document!(plan)
+          version = create_document_version!(document, plan)
+          file = create_document_file!(version, plan, content:)
+          record_generated_file_event!(plan.fetch("path"), plan.fetch("action"))
+          upsert_item!(plan, document, version, file)
+        end
+      end
+    rescue ExternalFolderSync::RunLease::StaleClaimError
+      raise
     rescue => e
       plan["action"] = "error"
       plan["attention_level"] = "danger"
       plan["message"] = e.message
-      record_error_item!(plan)
+      ExternalFolderSync::RunLease.with_ownership!(run) { record_error_item!(plan) }
     end
 
     def find_or_create_document!(plan)
@@ -258,9 +302,7 @@ module ExternalFolderSync
       version
     end
 
-    def create_document_file!(version, plan)
-      entry = entries_by_id.fetch(plan.fetch("external_item_id"))
-      content = client.download_entry(entry)
+    def create_document_file!(version, plan, content:)
       storage_key = storage_key_for(version, plan.fetch("name"))
       path = DocumentFile.storage_root.join(storage_key)
       FileUtils.mkdir_p(path.dirname)
@@ -316,19 +358,25 @@ module ExternalFolderSync
       item.save!
     end
 
-    def append_missing_items!(batch, result)
+    def append_missing_items!(run, batch, result)
       if batch.incremental
-        append_removed_items!(batch.removed_ids, result)
+        append_removed_items!(run, batch.removed_ids, result)
       else
         seen_ids = batch.entries.map(&:id).to_set
-        append_removed_items!(source.external_folder_sync_items.where.not(external_item_id: seen_ids).pluck(:external_item_id), result)
+        missing_ids = source.external_folder_sync_items.where.not(external_item_id: seen_ids).pluck(:external_item_id)
+        append_removed_items!(run, missing_ids, result)
       end
     end
 
-    def append_removed_items!(external_item_ids, result)
+    def append_removed_items!(run, external_item_ids, result)
       source.external_folder_sync_items.where(external_item_id: external_item_ids).find_each do |item|
-        item.update!(sync_status: :delete_detected) if apply?
-        record_generated_file_event!(item.path, "delete") if apply?
+        if apply?
+          ExternalFolderSync::RunLease.with_ownership!(run) do
+            item.lock!
+            item.update!(sync_status: :delete_detected)
+            record_generated_file_event!(item.path, "delete")
+          end
+        end
         result << {
           "action" => "delete_detected",
           "attention_level" => "danger",
@@ -370,9 +418,10 @@ module ExternalFolderSync
       summary = base_summary(visible_result, batch).merge(
         "blocked_by_conflict_warnings" => false
       )
-      run.update!(
+      finished_at = Time.current
+      run_attributes = {
         status: summary.fetch("errors_count").positive? ? :partial : :completed,
-        finished_at: Time.current,
+        finished_at:,
         items_scanned_count: visible_result.size,
         items_created_count: summary.fetch("created_count"),
         items_updated_count: summary.fetch("updated_count"),
@@ -381,9 +430,14 @@ module ExternalFolderSync
         errors_count: summary.fetch("errors_count"),
         summary_json: summary,
         result_json: result
-      )
-      source.update!(last_synced_at: Time.current, last_error_message: nil, cursor: batch.cursor) if apply?
-      run
+      }
+      source_attributes = if apply?
+        {last_synced_at: finished_at, last_error_message: nil, cursor: batch.cursor}
+      else
+        {}
+      end
+
+      ExternalFolderSync::RunLease.complete!(run, run_attributes:, source_attributes:, at: finished_at)
     end
 
     def finish_unsafe_apply!(run, result, batch)
@@ -392,9 +446,10 @@ module ExternalFolderSync
         "blocked_by_conflict_warnings" => true
       )
       message = "競合・重複警告があるため同期実行を停止しました。dry-run結果を確認してください。"
-      run.update!(
+      finished_at = Time.current
+      run_attributes = {
         status: :failed,
-        finished_at: Time.current,
+        finished_at:,
         error_message: message,
         items_scanned_count: visible_result.size,
         items_created_count: summary.fetch("created_count"),
@@ -404,9 +459,14 @@ module ExternalFolderSync
         errors_count: summary.fetch("errors_count"),
         summary_json: summary,
         result_json: result
+      }
+
+      ExternalFolderSync::RunLease.complete!(
+        run,
+        run_attributes:,
+        source_attributes: {last_error_message: message},
+        at: finished_at
       )
-      source.update!(last_error_message: message)
-      run
     end
 
     def base_summary(result, batch)
@@ -440,14 +500,6 @@ module ExternalFolderSync
       client.start_page_token
     rescue ExternalFolderSync::GoogleDriveClient::Error
       source.cursor
-    end
-
-    def finish_failure!(run, error)
-      run.update!(
-        status: :failed,
-        finished_at: Time.current,
-        error_message: error.message
-      )
     end
 
     def sync_item_result(result)
@@ -523,19 +575,21 @@ module ExternalFolderSync
       generated_file_events << {"path" => path.to_s, "operation" => operation.to_s}
     end
 
-    def dispatch_generated_file_change_event!
+    def dispatch_generated_file_change_event!(run)
       return unless apply?
       return if generated_file_events.empty?
 
-      change_event_notifier.notify(
-        file_events: generated_file_events.uniq.sort_by { [_1.fetch("path"), _1.fetch("operation")] },
-        event_source: "external_folder_sync",
-        metadata: {
-          external_folder_sync_source_id: source.id,
-          project_id: source.project_id,
-          actor_id: actor&.id
-        }.compact
-      )
+      ExternalFolderSync::RunLease.with_ownership!(run) do
+        change_event_notifier.notify(
+          file_events: generated_file_events.uniq.sort_by { [_1.fetch("path"), _1.fetch("operation")] },
+          event_source: "external_folder_sync",
+          metadata: {
+            external_folder_sync_source_id: source.id,
+            project_id: source.project_id,
+            actor_id: actor&.id
+          }.compact
+        )
+      end
     end
   end
 end

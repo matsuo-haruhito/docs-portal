@@ -4,6 +4,7 @@ class ExternalFolderSyncRun < ApplicationRecord
   public_id_prefix "efr"
 
   belongs_to :external_folder_sync_source
+  has_many :external_folder_sync_webhook_events, dependent: :nullify
 
   enum :status, {
     pending: 0,

@@ -21,6 +21,28 @@ RSpec.describe GeneratedFileJob, type: :job do
     expect(runner).to have_received(:call)
   end
 
+  it "delegates an event dispatch claim to the generated files runner" do
+    event = create(:generated_file_event, scheduled_at: 1.minute.ago)
+    claim = GeneratedFiles::EventDispatchLease.claim!([event])
+    runner = instance_double(GeneratedFiles::Runner, call: [])
+    allow(GeneratedFiles::Runner).to receive(:new).and_return(runner)
+
+    described_class.perform_now(
+      changed_files: ["source.yml"],
+      metadata: {"source_id" => 1},
+      dispatch_claim: claim
+    )
+
+    expect(GeneratedFiles::Runner).to have_received(:new).with(
+      changed_files: ["source.yml"],
+      job_ids: [],
+      event_source: nil,
+      metadata: {"source_id" => 1},
+      dispatch_claim: claim
+    )
+    expect(runner).to have_received(:call)
+  end
+
   it "uses empty metadata when metadata is nil" do
     runner = instance_double(GeneratedFiles::Runner, call: [])
     allow(GeneratedFiles::Runner).to receive(:new).and_return(runner)

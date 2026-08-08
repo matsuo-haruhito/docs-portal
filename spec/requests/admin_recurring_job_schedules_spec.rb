@@ -335,6 +335,34 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(RecurringJobDispatcherJob).to have_received(:perform_later)
   end
 
+  it "rejects an immediate run request for a suspended reliability v2 schedule" do
+    sign_in_as(admin_user)
+    requested_at = 10.minutes.ago
+    schedule = create_schedule!(
+      job_key: "reconcile_docusaurus_preview_builds",
+      enabled: false,
+      enabled_before_reliability_v2_suspend: true,
+      run_requested_at: requested_at
+    )
+    allow(JobReliability::RolloutGate).to receive(:enabled?).and_return(false)
+    allow(RecurringJobDispatcherJob).to receive(:perform_later)
+
+    get admin_recurring_job_schedule_path(schedule)
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_html.at_css(%(a[href^="#{request_run_admin_recurring_job_schedule_path(schedule)}"]))).to be_nil
+
+    expect do
+      post request_run_admin_recurring_job_schedule_path(schedule)
+    end.not_to change { schedule.reload.run_requested_at }
+
+    expect(response).to redirect_to(
+      admin_recurring_job_schedule_path(schedule, return_to: admin_recurring_job_schedules_path)
+    )
+    expect(flash[:alert]).to include("信頼性V2の停止中")
+    expect(RecurringJobDispatcherJob).not_to have_received(:perform_later)
+  end
+
   it "filters run history by active job id, error fragments, and status together" do
     sign_in_as(admin_user)
     schedule = create_schedule!(job_key: "run_query_job", last_status: "failed")

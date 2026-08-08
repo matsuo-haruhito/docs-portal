@@ -11,7 +11,29 @@
   <%= render "form", project_membership: @project_membership %>
 </div>
 
-<% if @project_memberships_total_count.positive? %>
+<div class="card">
+  <h2>絞り込み</h2>
+  <%= form_with url: admin_project_memberships_path, method: :get, local: true do |form| %>
+    <div class="form-grid">
+      <label>
+        検索語
+        <%= search_field_tag :q, @query, placeholder: "案件コード・案件名・メールアドレス・ユーザー名", maxlength: Admin::ProjectMembershipsController::QUERY_MAX_LENGTH %>
+      </label>
+      <label>
+        権限
+        <%= select_tag :role, options_for_select([["すべて", ""]] + ProjectMembership.roles.keys.map { |r| [I18n.t("activerecord.access_requests.status.#{r}", default: r.humanize), r] }, @role_filter) %>
+      </label>
+    </div>
+    <p class="actions" style="margin-top:8px;">
+      <%= submit_tag "検索", class: "button" %>
+      <% if @filters_applied %>
+        <%= link_to "条件をクリア", admin_project_memberships_path, class: "button secondary" %>
+      <% end %>
+    </p>
+  <% end %>
+</div>
+
+<% if @project_memberships_filtered_count.positive? %>
   <div class="card">
     <%= table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件所属一覧の表示設定") %>
     <p class="muted">表示設定は列の表示切り替え用です。ページ移動と1ページあたりの件数は下のページ情報で確認できます。</p>
@@ -19,13 +41,16 @@
 
   <p class="muted">
     <% start_index = ((@project_memberships_page - 1) * @project_memberships_per_page) + 1 %>
-    <% end_index = [start_index + @project_memberships.size - 1, @project_memberships_total_count].min %>
-    表示中: <%= start_index %>-<%= end_index %>件 / 全<%= @project_memberships_total_count %>件（1ページ<%= @project_memberships_per_page %>件）
+    <% end_index = [start_index + @project_memberships.size - 1, @project_memberships_filtered_count].min %>
+    表示中: <%= start_index %>-<%= end_index %>件 / 全<%= @project_memberships_filtered_count %>件（1ページ<%= @project_memberships_per_page %>件）
+    <% if @filters_applied %>
+      <br><span class="muted">絞り込み中</span>
+    <% end %>
   </p>
 
   <p class="actions">
     <% if @project_memberships_page > 1 %>
-      <%= link_to "前へ", admin_project_memberships_path(page: @project_memberships_page - 1, per_page: @project_memberships_per_page), class: "button secondary" %>
+      <%= link_to "前へ", admin_project_memberships_path(page: @project_memberships_page - 1, per_page: @project_memberships_per_page, q: @query, role: @role_filter), class: "button secondary" %>
     <% else %>
       <span class="button secondary" aria-disabled="true">前へ（先頭）</span>
     <% end %>
@@ -38,7 +63,7 @@
       <span class="muted">最終ページ</span>
     <% end %>
     <% if @project_memberships_page < @project_memberships_total_pages %>
-      <%= link_to "次へ", admin_project_memberships_path(page: @project_memberships_page + 1, per_page: @project_memberships_per_page), class: "button secondary" %>
+      <%= link_to "次へ", admin_project_memberships_path(page: @project_memberships_page + 1, per_page: @project_memberships_per_page, q: @query, role: @role_filter), class: "button secondary" %>
     <% else %>
       <span class="button secondary" aria-disabled="true">次へ（最終）</span>
     <% end %>
@@ -75,8 +100,15 @@
   <% end %>
 <% else %>
   <div class="card">
-    <p class="muted">まだ案件所属はありません。</p>
-    <p class="muted">上の「新規登録」で案件、ユーザー、権限を選んで保存すると、ここに一覧が表示されます。</p>
-    <p class="muted">この画面では、案件アクセスの入口になる所属と権限を確認できます。</p>
+    <% if @filters_applied %>
+      <p class="muted">条件に一致する案件所属はありません。検索語や権限の条件を見直してください。</p>
+      <p class="actions">
+        <%= link_to "条件をクリア", admin_project_memberships_path, class: "button secondary" %>
+      </p>
+    <% else %>
+      <p class="muted">まだ案件所属はありません。</p>
+      <p class="muted">上の「新規登録」で案件、ユーザー、権限を選んで保存すると、ここに一覧が表示されます。</p>
+      <p class="muted">この画面では、案件アクセスの入口になる所属と権限を確認できます。</p>
+    <% end %>
   </div>
-<% end %>
+<% end %>>

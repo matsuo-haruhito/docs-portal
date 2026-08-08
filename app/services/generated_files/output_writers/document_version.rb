@@ -1,3 +1,4 @@
+require "digest"
 require "fileutils"
 require "pathname"
 require "securerandom"
@@ -18,6 +19,8 @@ module GeneratedFiles
         importance_level: "reference",
         version_label_prefix: "generated",
         source_identifier: nil,
+        idempotency_key: nil,
+        dispatch_claim: nil,
         snapshot_kind: "attachment",
         root: nil
       )
@@ -33,6 +36,8 @@ module GeneratedFiles
         @importance_level = importance_level
         @version_label_prefix = version_label_prefix
         @source_identifier = source_identifier
+        @idempotency_key = idempotency_key
+        @dispatch_claim = dispatch_claim
         @snapshot_kind = snapshot_kind
         @root = Pathname(root || default_root).expand_path
       end
@@ -41,21 +46,40 @@ module GeneratedFiles
         artifacts = Array(artifacts)
         raise ArgumentError, "artifacts are required" if artifacts.empty?
 
+        created_storage_paths = []
         ActiveRecord::Base.transaction do
-          document = find_or_create_document!
-          version = create_version!(document, artifacts)
-          artifacts.each_with_index do |artifact, index|
-            create_document_file!(version, artifact, index)
+          with_dispatch_ownership do
+            document = find_or_create_document!
+            document.lock!
+            version = idempotent_version(document)
+
+            unless version
+              version = create_version!(document, artifacts)
+              artifacts.each_with_index do |artifact, index|
+                create_document_file!(version, artifact, index, created_storage_paths:)
+              end
+            end
+
+            ["document_versions/#{version.public_id}"]
           end
-          ["document_versions/#{version.public_id}"]
         end
+      rescue StandardError
+        Array(created_storage_paths).each { FileUtils.rm_f(_1) }
+        raise
       end
 
       private
 
       attr_reader :project_code, :project_name, :project_description, :create_project_if_missing,
         :document_slug, :document_title, :document_category, :document_kind,
-        :visibility_policy, :importance_level, :version_label_prefix, :source_identifier, :snapshot_kind, :root
+        :visibility_policy, :importance_level, :version_label_prefix, :source_identifier,
+        :idempotency_key, :dispatch_claim, :snapshot_kind, :root
+
+      def with_dispatch_ownership(&block)
+        return yield unless dispatch_claim
+
+        GeneratedFiles::EventDispatchLease.with_ownership!(dispatch_claim, &block)
+      end
 
       def default_root
         if defined?(Rails)
@@ -92,10 +116,16 @@ module GeneratedFiles
         end
       end
 
+      def idempotent_version(document)
+        return if idempotency_key.blank?
+
+        document.document_versions.find_by(source_commit_hash: source_commit_hash)
+      end
+
       def create_version!(document, artifacts)
         version = document.document_versions.create!(
           version_label: unique_version_label(document),
-          source_commit_hash: source_identifier.presence || "generated:#{document_slug}:#{Time.current.to_i}",
+          source_commit_hash: source_commit_hash,
           status: :published,
           published_at: Time.current,
           snapshot_kind: snapshot_kind
@@ -110,9 +140,18 @@ module GeneratedFiles
         version
       end
 
-      def create_document_file!(version, artifact, index)
+      def source_commit_hash
+        @source_commit_hash ||= begin
+          base = source_identifier.presence
+          base ||= idempotency_key.present? ? "generated:#{document_slug}" : "generated:#{document_slug}:#{Time.current.to_i}"
+          idempotency_key.present? ? "#{base}:event:#{idempotency_key}" : base
+        end
+      end
+
+      def create_document_file!(version, artifact, index, created_storage_paths:)
         storage_key = storage_key_for(version, artifact)
         absolute_path = ::DocumentFile.storage_root.join(storage_key)
+        created_storage_paths << absolute_path
         FileUtils.mkdir_p(absolute_path.dirname)
         absolute_path.write(artifact.content, mode: "w", encoding: "UTF-8")
 

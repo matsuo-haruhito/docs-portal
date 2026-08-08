@@ -60,8 +60,18 @@ class GeneratedFileChangeEventJob < ApplicationJob
       path.split("/").include?("..")
   end
 
-  def perform(changed_files: nil, file_events: nil, operation: :update, event_source: nil, metadata: {}, debounce_seconds: nil)
+  def perform(
+    changed_files: nil,
+    file_events: nil,
+    operation: :update,
+    event_source: nil,
+    metadata: {},
+    debounce_seconds: nil,
+    dispatch_claim: nil
+  )
     if debounce_seconds.to_i.positive?
+      raise ArgumentError, "claim付きeventは再bufferできません。" if dispatch_claim
+
       GeneratedFiles::EventBuffer.new(debounce_seconds:).add(
         file_events: normalize_buffer_events(file_events:, changed_files:, operation:),
         event_source:,
@@ -70,13 +80,16 @@ class GeneratedFileChangeEventJob < ApplicationJob
       return
     end
 
-    GeneratedFiles::ChangeEventHandler.new(
+    handler_options = {
       changed_files:,
       file_events:,
       operation:,
       event_source:,
       metadata:
-    ).call
+    }
+    handler_options[:dispatch_claim] = dispatch_claim if dispatch_claim
+
+    GeneratedFiles::ChangeEventHandler.new(**handler_options).call
   end
 
   private

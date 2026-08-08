@@ -88,6 +88,7 @@ Rails.application.routes.draw do
       get :selected_project, on: :collection
       get :repository_search, on: :collection
       get :selected_repository, on: :collection
+      get :branch_search, on: :collection
       get :directory_search, on: :collection
       post :sync, on: :member
     end
@@ -136,6 +137,8 @@ Rails.application.routes.draw do
       get :selected_project, on: :collection
       patch :archive, on: :member
       patch :restore, on: :member
+      patch :promote_latest_version, on: :member
+      patch :mark_discard_reviewed, on: :member
     end
     resources :bulk_edit_dry_runs, only: %i[new create show update], param: :public_id do
       post :handoff, on: :collection
@@ -241,6 +244,7 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :internal do
+      put "master_syncs/:source_system/:resource_type/:external_id", to: "master_syncs#update"
       resources :artifact_imports, only: [:create]
       resources :file_uploads, only: [:create]
       resources :zip_uploads, only: [:create]

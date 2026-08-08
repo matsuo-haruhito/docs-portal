@@ -10,7 +10,8 @@ module ApplicationConfiguration
       [
         secret_key_base_check,
         master_key_check,
-        doc_import_token_check
+        doc_import_token_check,
+        docs_portal_sync_token_check
       ]
     end
 
@@ -60,6 +61,21 @@ module ApplicationConfiguration
         check_builder.warning(key, "DOC_IMPORT_TOKEN uses the development sample value", "開発環境以外へ流用しないでください。")
       else
         check_builder.ok(key, "DOC_IMPORT_TOKEN is set", "内部import API用トークンが設定されています。")
+      end
+    end
+
+    def docs_portal_sync_token_check
+      key = "DOCS_PORTAL_SYNC_TOKEN"
+      value = env[key]
+
+      return check_builder.error(key, "DOCS_PORTAL_SYNC_TOKEN is missing", "sales-mgtマスタ同期APIを使うため、専用トークンを設定してください。") if blank?(value)
+
+      if production? && value == "local-dev-sync-token"
+        check_builder.error(key, "DOCS_PORTAL_SYNC_TOKEN uses the development sample value", "本番では開発用サンプルトークンを使わないでください。")
+      elsif value == "local-dev-sync-token"
+        check_builder.warning(key, "DOCS_PORTAL_SYNC_TOKEN uses the development sample value", "開発環境以外へ流用しないでください。")
+      else
+        check_builder.ok(key, "DOCS_PORTAL_SYNC_TOKEN is set", "sales-mgtマスタ同期API用トークンが設定されています。")
       end
     end
 

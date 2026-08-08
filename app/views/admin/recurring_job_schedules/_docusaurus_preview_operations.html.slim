@@ -1,0 +1,57 @@
+- status_counts = @docusaurus_preview_status_counts.to_h.transform_keys(&:to_s)
+- status_order = DocumentVersion.preview_build_statuses.keys
+
+.card
+  .heading-with-help
+    h2 Docusaurusプレビュー整合状況
+    = render InfoTooltipComponent.new(label: "Docusaurusプレビュー整合状況", description: "Markdown版のDB状態、試行回数、成果物marker、entry HTMLの整合を確認します。")
+  dl.definition-list
+    - status_order.each do |status|
+      dt = PreviewBuildStatusPresenter::LABELS.fetch(status.to_sym)
+      dd = "#{status_counts.fetch(status, 0)}件"
+
+  - if @docusaurus_preview_versions.any?
+    .table-responsive
+      table
+        caption 要確認のDocusaurusプレビュー版
+        thead
+          tr
+            th 案件・文書
+            th 版
+            th ソースパス
+            th 状態
+            th 試行回数
+            th キュー・開始
+            th 次回再試行
+            th 整合確認
+            th 成果物
+            th エラー
+        tbody
+          - @docusaurus_preview_versions.each do |version|
+            - status = PreviewBuildStatusPresenter.new(version)
+            - artifact = @docusaurus_preview_artifacts_by_version_id[version.id]
+            tr
+              td
+                = version.document.project.name
+                br
+                = link_to version.document.title, edit_admin_document_path(version.document)
+              td = link_to version.version_label, document_version_path(version)
+              td
+                code = version.source_relative_path
+              td
+                span.badge class=status.badge_class = status.label
+              td = "#{version.preview_build_attempt_count} / #{DocumentVersion::PREVIEW_BUILD_MAX_ATTEMPTS}"
+              td
+                = version.preview_build_enqueued_at ? l(version.preview_build_enqueued_at) : "-"
+                br
+                = version.preview_build_started_at ? l(version.preview_build_started_at) : "-"
+              td = version.preview_build_retry_at ? l(version.preview_build_retry_at) : "-"
+              td = version.preview_build_reconciled_at ? l(version.preview_build_reconciled_at) : "-"
+              td
+                span.badge = artifact ? "marker・HTML整合" : "欠落または不整合"
+                - if artifact
+                  br
+                  code = artifact.site_path
+              td = recurring_job_diagnostic_preview(version.preview_build_error_message)
+  - else
+    p.muted 要確認のDocusaurusプレビュー版はありません。
