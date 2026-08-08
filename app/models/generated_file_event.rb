@@ -17,7 +17,15 @@ class GeneratedFileEvent < ApplicationRecord
   validates :event_key, :path, :operation, :scheduled_at, :last_seen_at, presence: true
   validate :path_must_be_safe_relative_path
 
+  PROCESSING_STALE_AFTER = 15.minutes
+
   scope :due, ->(at = Time.current) { pending.where(scheduled_at: ..at) }
+  scope :stale_processing, ->(at = Time.current) {
+    processing.where(
+      "COALESCE(dispatch_heartbeat_at, dispatch_claimed_at, updated_at) <= ?",
+      at - PROCESSING_STALE_AFTER
+    )
+  }
 
   def self.build_event_key(path:, operation:, event_source: nil)
     normalized_path = Pathname(path.to_s.strip.tr("\\", "/")).cleanpath.to_s.delete_prefix("./")
@@ -26,14 +34,33 @@ class GeneratedFileEvent < ApplicationRecord
   end
 
   def mark_processed!
-    update!(status: :processed, processed_at: Time.current, error_message: nil)
+    update!(
+      status: :processed,
+      processed_at: Time.current,
+      error_message: nil,
+      **cleared_dispatch_claim_attributes
+    )
   end
 
   def mark_failed!(error)
-    update!(status: :failed, error_message: error.to_s, processed_at: Time.current)
+    update!(
+      status: :failed,
+      error_message: error.to_s,
+      processed_at: Time.current,
+      **cleared_dispatch_claim_attributes
+    )
   end
 
   private
+
+  def cleared_dispatch_claim_attributes
+    {
+      dispatch_group_id: nil,
+      dispatch_claim_token: nil,
+      dispatch_claimed_at: nil,
+      dispatch_heartbeat_at: nil
+    }
+  end
 
   def normalize_path
     return if path.blank?

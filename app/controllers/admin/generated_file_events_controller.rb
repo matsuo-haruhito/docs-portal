@@ -60,7 +60,11 @@ class Admin::GeneratedFileEventsController < Admin::BaseController
       status: :pending,
       scheduled_at: Time.current,
       error_message: nil,
-      processed_at: nil
+      processed_at: nil,
+      dispatch_group_id: nil,
+      dispatch_claim_token: nil,
+      dispatch_claimed_at: nil,
+      dispatch_heartbeat_at: nil
     )
   end
 

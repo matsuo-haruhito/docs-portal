@@ -108,7 +108,7 @@ RSpec.describe ManualDocumentUpload do
     project = create(:project)
     actor = create(:user, :internal)
     notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
-    allow(DocusaurusPreviewBuildJob).to receive(:perform_later)
+    allow(DocusaurusPreviewBuildJob).to receive(:perform_later).and_return(true)
 
     original = described_class.new(
       project:,
@@ -145,7 +145,7 @@ RSpec.describe ManualDocumentUpload do
     project = create(:project)
     actor = create(:user, :internal)
     notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
-    allow(DocusaurusPreviewBuildJob).to receive(:perform_later)
+    allow(DocusaurusPreviewBuildJob).to receive(:perform_later).and_return(true)
 
     result = described_class.new(
       project:,
@@ -162,7 +162,7 @@ RSpec.describe ManualDocumentUpload do
     project = create(:project)
     actor = create(:user, :internal)
     notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
-    allow(DocusaurusPreviewBuildJob).to receive(:perform_later)
+    allow(DocusaurusPreviewBuildJob).to receive(:perform_later).and_return(true)
 
     result = described_class.new(
       project:,
@@ -180,7 +180,7 @@ RSpec.describe ManualDocumentUpload do
     project = create(:project)
     actor = create(:user, :internal)
     notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
-    allow(DocusaurusPreviewBuildJob).to receive(:perform_later)
+    allow(DocusaurusPreviewBuildJob).to receive(:perform_later).and_return(true)
 
     result = described_class.new(
       project:,
@@ -231,7 +231,7 @@ RSpec.describe ManualDocumentUpload do
     project = create(:project)
     actor = create(:user, :internal)
     notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
-    allow(DocusaurusPreviewBuildJob).to receive(:perform_later)
+    allow(DocusaurusPreviewBuildJob).to receive(:perform_later).and_return(true)
 
     result = described_class.new(
       project:,
@@ -250,7 +250,7 @@ RSpec.describe ManualDocumentUpload do
     project = create(:project)
     actor = create(:user, :internal)
     notifier = instance_double(GeneratedFiles::ChangeEventNotifier, notify: [])
-    allow(DocusaurusPreviewBuildJob).to receive(:perform_later)
+    allow(DocusaurusPreviewBuildJob).to receive(:perform_later).and_return(true)
 
     result = described_class.new(
       project:,

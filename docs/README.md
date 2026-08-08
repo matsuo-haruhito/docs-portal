@@ -19,6 +19,8 @@
 
 操作手順（viewer / admin / import / 外部連携 / 運用インフラ）
 
+- [sales-mgt同期運用runbook](./runbooks/external/sales-mgt同期運用runbook.md)
+
 ### 開発ガイド → [guides/](./guides/)
 
 セットアップ手順、開発フロー

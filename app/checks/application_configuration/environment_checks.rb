@@ -8,7 +8,8 @@ module ApplicationConfiguration
     def call
       [
         *required_env_checks,
-        *numeric_env_checks
+        *numeric_env_checks,
+        *boolean_env_checks
       ]
     end
 
@@ -34,6 +35,19 @@ module ApplicationConfiguration
           check_builder.ok(key, "#{key} is numeric", "数値として解釈できます。", env[key])
         else
           check_builder.error(key, "#{key} must be numeric", "ポート番号やスレッド数として扱うため、整数で設定してください。", env[key])
+        end
+      end
+    end
+
+    def boolean_env_checks
+      ApplicationConfigurationDiagnostic::BOOLEAN_ENV_KEYS.map do |key|
+        value = env[key]
+        if blank?(value)
+          check_builder.warning(key, "#{key} is not set", "未設定時はfalseとして扱います。consumer-first rolloutで有効化するまでfalseを明示してください。")
+        elsif %w[true false].include?(value.to_s.strip.downcase)
+          check_builder.ok(key, "#{key} is boolean", "trueまたはfalseとして解釈できます。", value.to_s.strip.downcase)
+        else
+          check_builder.error(key, "#{key} must be true or false", "rolling deployの切替に使うため、trueまたはfalseを設定してください。", value)
         end
       end
     end

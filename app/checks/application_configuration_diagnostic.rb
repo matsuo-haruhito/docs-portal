@@ -50,6 +50,10 @@ class ApplicationConfigurationDiagnostic
     RAILS_MAX_THREADS
   ].freeze
 
+  BOOLEAN_ENV_KEYS = %w[
+    JOB_RELIABILITY_V2_ENABLED
+  ].freeze
+
   def initialize(env: ENV, root: Rails.root, rails_env: Rails.env)
     @env = env
     @root = Pathname(root)

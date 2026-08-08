@@ -59,11 +59,18 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
     @runs = runs_scope.order(scheduled_at: :desc, id: :desc).offset(@run_offset).limit(@run_per_page)
 
     load_git_import_operations if git_import_schedule?
+    load_docusaurus_preview_operations if docusaurus_preview_schedule?
   end
 
   def request_run
     if read_only_maintenance_mode?
       redirect_to admin_recurring_job_schedule_path(@schedule, return_to: @return_to_path), alert: maintenance_operation_message
+      return
+    end
+
+    if @schedule.reliability_v2_suspended?
+      redirect_to admin_recurring_job_schedule_path(@schedule, return_to: @return_to_path),
+        alert: "信頼性V2の停止中は即時実行を要求できません。gateを有効化し、定期ジョブ定義の復元を確認してから再実行してください。"
       return
     end
 
@@ -108,6 +115,39 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
       .where(snapshot_kind: "git_import")
       .order(created_at: :desc, id: :desc)
       .limit(GIT_IMPORT_OPERATIONS_LIMIT)
+  end
+
+  def docusaurus_preview_schedule?
+    @schedule.job_key == "reconcile_docusaurus_preview_builds"
+  end
+
+  def load_docusaurus_preview_operations
+    scope = DocumentVersion.markdown_preview_builds.includes(document: :project)
+    @docusaurus_preview_status_counts = scope.group(:preview_build_status).count
+
+    unresolved = scope
+      .where.not(preview_build_status: DocumentVersion.preview_build_statuses[:preview_succeeded])
+      .order(updated_at: :desc, id: :desc)
+      .limit(100)
+      .to_a
+    succeeded_candidates = scope
+      .where(preview_build_status: DocumentVersion.preview_build_statuses[:preview_succeeded])
+      .order(Arel.sql("preview_build_reconciled_at ASC NULLS FIRST"), id: :desc)
+      .limit(100)
+      .to_a
+
+    @docusaurus_preview_artifacts_by_version_id = (unresolved + succeeded_candidates).uniq.each_with_object({}) do |version, artifacts|
+      artifacts[version.id] = DocusaurusPreviewArtifactInstaller.installed_artifact_for(version)
+    end
+    inconsistent_succeeded = succeeded_candidates.reject do |version|
+      artifact = @docusaurus_preview_artifacts_by_version_id[version.id]
+      artifact && version.preview_build_artifact_consistent?(artifact)
+    end
+    @docusaurus_preview_versions = (unresolved + inconsistent_succeeded)
+      .uniq
+      .sort_by { |version| [version.updated_at || Time.at(0), version.id] }
+      .reverse
+      .first(100)
   end
 
   def recurring_job_status_options

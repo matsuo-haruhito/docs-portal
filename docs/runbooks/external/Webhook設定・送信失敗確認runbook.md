@@ -94,11 +94,11 @@ Webhook 一覧トップの `最近の送信履歴` は、直近 50 件の中で�
 - 検索結果の `エラー` 列も、Webhook 一覧トップと同じく短い preview です。検索条件の `エラー断片` は保存済み `error_message` を絞り込むための入力であり、一覧に raw error 全文を展開する指定ではありません。
 - 検索結果から `詳細` に入った場合、`送信履歴検索へ戻る` と 1 件再送後の戻り先は元の検索条件と page です。
 - 送信履歴検索には bulk retry を置きません。まとめて再送は従来どおり `Webhook` 画面の `失敗` 表示中、最近 50 件のうち再送可能な delivery に限定します。
-- payload edit、payload replay、自動 retry、retention policy 判断は扱いません。
+- payload edit、payload replay、自動再送条件の変更、retention policy 判断は扱いません。
 
 ## 継続失敗 handoff JSON の読み方
 
-internal admin は `admin/webhook_deliveries/failure_alert_handoff.json` で、直近の送信履歴から継続失敗候補を read-only JSON として確認できます。これは通知、ack、自動 retry、再通知抑制、外部監視連携を実行する endpoint ではなく、送信履歴検索へ戻るための handoff です。
+internal admin は `admin/webhook_deliveries/failure_alert_handoff.json` で、直近の送信履歴から継続失敗候補を read-only JSON として確認できます。これは通知、ack、自動再送の実行、再通知抑制、外部監視連携を行う endpoint ではなく、送信履歴検索へ戻るための handoff です。
 
 handoff は最新 200 件の Webhook delivery を見て、同じ Webhook 設定、event type、表示用 target URL の組み合わせごとに、最新側から 3 件以上連続して failed の候補を最大 20 件返します。最新 delivery が success の古い failed streak は候補になりません。停止中 endpoint も read-only 調査候補としては残りますが、通常送信・手動再送の対象外であることは変わりません。
 
@@ -114,7 +114,7 @@ payload の読み方:
 
 candidate の `failed_deliveries_path` は `admin/webhook_deliveries` の検索条件付き URL です。候補を見た後は、その path から送信履歴検索を開き、同じ endpoint / event type / failed status / HTTP status の履歴を確認します。error preview は token-like value、Authorization / Bearer / Basic 断片、secret-like key、private-looking path を伏せた短い preview であり、raw provider payload、署名 header、request body、response body 全文、secret-like value を確認する場所ではありません。
 
-この handoff は失敗候補を人間が確認するための evidence です。通知 channel、alert rule、ack / escalation、自動 retry、provider raw payload 保存、再送実行、再通知抑制、外部監視の green / red 判定はこの runbook の current support として扱いません。
+この handoff は失敗候補を人間が確認するための evidence です。通知 channel、alert rule、ack / escalation、自動再送の実行や条件変更、provider raw payload 保存、手動再送、再通知抑制、外部監視の green / red 判定はこの endpoint の責務として扱いません。
 
 ## 失敗時の確認順
 
@@ -127,9 +127,19 @@ candidate の `failed_deliveries_path` は `admin/webhook_deliveries` の検索�
 7. `エラー` に timeout や接続例外が出ている場合は、一覧の preview で分類の手掛かりを読み、必要なら `詳細` で response body や送信先 URL と合わせてネットワーク疎通、DNS、TLS、受信先の稼働状態を確認します。
 8. `mail / webhook の継続失敗` として監視側で拾われている場合は、[監視・アラート設計](../../specs/監視・アラート設計.md) の外部依存確認と合わせて見ます。
 
+## 自動再送の扱い
+
+定期ジョブは、有効な endpoint に紐づく failed delivery のうち、HTTP 5xx または response 未取得の一時障害だけを対象にします。HTTP 4xx、停止中 endpoint、成功済み・送信待ち・自動再送中、`retry_count` が 3 回に達した delivery は対象外です。
+
+対象行は送信前に token 付きで `自動再送中` へ claim されます。同じ delivery を複数 worker が同時に claimして重複 POST することはありません。`retry_count` は claim 時ではなく、HTTP response または通信例外を現在の token で確定したときに増えます。送信前に worker が停止した stale claim は failed へ戻り、retry budget を消費しません。調査時は同じ delivery の status / HTTP / error / sent_at / retry_count / claim取得日時を確認し、claim token 自体は画面や運用記録へ貼りません。
+
+POST が受信側で処理された後、結果確定前に worker が停止した場合は再送が起こり得ます。自動再送では同じ `X-Docs-Portal-Delivery` を維持するため、受信側はこの値で処理済み結果を永続化し、重複副作用を防いでください。手動再送は別の delivery として新しい ID を使います。
+
+定期実行は recurring job の `retry_failed_webhook_deliveries` から行います。この定義が無効または scheduler が動いていない場合、自動再送も進みません。`READ_ONLY_MAINTENANCE` 中は claim、stale claim 回収、HTTP POST を行わず、現在状態を保持します。指数 backoff、HTTP 4xx の自動再送、上限超過後の通知、ack / escalation、sender単独のexactly-onceは current support に含めません。
+
 ## 手動再送の扱い
 
-current 実装では、失敗した delivery だけを管理画面から 1 件ずつ、または `失敗` 表示中の表示範囲のうち再送可能な delivery だけをまとめて手動再送できます。まとめて再送の対象は failed かつ endpoint が有効な delivery に限定され、停止中 endpoint、成功済み、送信待ちの delivery は対象外です。自動 retry queue、scheduled retry、指数 backoff、retry metadata、親子 delivery relation はまだありません。
+手動再送では、失敗した delivery だけを管理画面から 1 件ずつ、または `失敗` 表示中の表示範囲のうち再送可能な delivery だけをまとめて再送できます。まとめて再送の対象は failed かつ endpoint が有効な delivery に限定され、停止中 endpoint、成功済み、送信待ちの delivery は対象外です。手動再送は元 delivery を保持し、新しい `WebhookDelivery` を送信履歴として作成します。
 
 手動再送するときは次を確認します。
 

@@ -6,7 +6,12 @@ module ProjectAccess
       return none unless user&.active?
       return all if user.internal?
 
-      joins(:project_memberships).where(project_memberships: { user_id: user.id }).distinct
+      left_outer_joins(:company)
+        .where(projects: { active: true })
+        .where("companies.id IS NULL OR companies.active = ?", true)
+        .joins(:project_memberships)
+        .where(project_memberships: { user_id: user.id })
+        .distinct
     }
 
     scope :with_portal_visible_documents_for, lambda { |user|
@@ -27,6 +32,8 @@ module ProjectAccess
   def viewable_by?(user)
     return false unless user&.active?
     return true if user.internal?
+    return false unless active?
+    return false if company && !company.active?
 
     project_memberships.exists?(user_id: user.id)
   end

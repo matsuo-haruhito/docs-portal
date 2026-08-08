@@ -78,7 +78,7 @@ p.muted
       = link_to "添付・元ファイルへ移動", "#version-files", class: "button secondary"
     - unless @compare_version
       p.muted 公開済みの比較対象版がまだないため、この版では左右比較や差分表示は行わず、元ファイル確認が中心になります。
-  .card.preview-summary-card
+  .card.preview-summary-card data-preview-build-status=@version.preview_build_status
     h2 プレビュー状態
     ul.compact-list
       li

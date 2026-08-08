@@ -32,6 +32,8 @@ RSpec.describe ApplicationConfigurationDiagnostic do
       "SECRET_KEY_BASE" => "x" * 40,
       "RAILS_MASTER_KEY" => "master-key",
       "DOC_IMPORT_TOKEN" => "import-token",
+      "DOCS_PORTAL_SYNC_TOKEN" => "sync-token",
+      "JOB_RELIABILITY_V2_ENABLED" => "false",
       "KROKI_ENDPOINT" => "http://kroki:8000"
     }
   end
@@ -84,12 +86,22 @@ RSpec.describe ApplicationConfigurationDiagnostic do
     expect(result).not_to be_healthy
   end
 
+  it "rejects an ambiguous reliability rollout gate value" do
+    result = call_diagnostic(env: valid_env.merge("JOB_RELIABILITY_V2_ENABLED" => "enabled"))
+
+    check = check_for(result, "JOB_RELIABILITY_V2_ENABLED", status: :error)
+
+    expect(check.label).to eq("JOB_RELIABILITY_V2_ENABLED must be true or false")
+    expect(result).not_to be_healthy
+  end
+
   it "keeps development sample secrets at warning level without exposing secret values" do
     result = call_diagnostic(
       env: valid_env.merge(
         "SECRET_KEY_BASE" => "secret",
         "RAILS_MASTER_KEY" => "replace_me",
-        "DOC_IMPORT_TOKEN" => "local-dev-import-token"
+        "DOC_IMPORT_TOKEN" => "local-dev-import-token",
+        "DOCS_PORTAL_SYNC_TOKEN" => "local-dev-sync-token"
       ),
       rails_env: ActiveSupport::StringInquirer.new("development")
     )
@@ -97,13 +109,14 @@ RSpec.describe ApplicationConfigurationDiagnostic do
     sample_secret_checks = [
       check_for(result, "SECRET_KEY_BASE"),
       check_for(result, "RAILS_MASTER_KEY"),
-      check_for(result, "DOC_IMPORT_TOKEN")
+      check_for(result, "DOC_IMPORT_TOKEN"),
+      check_for(result, "DOCS_PORTAL_SYNC_TOKEN")
     ]
 
-    expect(sample_secret_checks.map(&:status)).to eq([:warning, :warning, :warning])
+    expect(sample_secret_checks.map(&:status)).to eq([:warning, :warning, :warning, :warning])
     expect(sample_secret_checks.map(&:detail)).to all(be_nil)
     expect(result.error_count).to eq(0)
-    expect(result.warning_count).to eq(3)
+    expect(result.warning_count).to eq(4)
     expect(result).to be_healthy
   end
 
@@ -112,7 +125,8 @@ RSpec.describe ApplicationConfigurationDiagnostic do
       env: valid_env.merge(
         "SECRET_KEY_BASE" => "secret",
         "RAILS_MASTER_KEY" => "replace_me",
-        "DOC_IMPORT_TOKEN" => "local-dev-import-token"
+        "DOC_IMPORT_TOKEN" => "local-dev-import-token",
+        "DOCS_PORTAL_SYNC_TOKEN" => "local-dev-sync-token"
       ),
       rails_env: ActiveSupport::StringInquirer.new("production")
     )
@@ -120,7 +134,8 @@ RSpec.describe ApplicationConfigurationDiagnostic do
     expect(check_for(result, "SECRET_KEY_BASE").status).to eq(:error)
     expect(check_for(result, "RAILS_MASTER_KEY").status).to eq(:error)
     expect(check_for(result, "DOC_IMPORT_TOKEN").status).to eq(:error)
-    expect(result.error_count).to eq(3)
+    expect(check_for(result, "DOCS_PORTAL_SYNC_TOKEN").status).to eq(:error)
+    expect(result.error_count).to eq(4)
     expect(result).not_to be_healthy
   end
 end

@@ -24,6 +24,20 @@ class RecurringJobSchedule < ApplicationRecord
     enabled? && (run_requested_at.present? || next_run_at <= Time.current)
   end
 
+  def reliability_v2?
+    RecurringJobDefinition.v2_job_key?(job_key)
+  end
+
+  def reliability_v2_suspended?
+    reliability_v2? && (
+      !JobReliability::RolloutGate.enabled? || enabled_before_reliability_v2_suspend.in?([true, false])
+    )
+  end
+
+  def active_run?
+    recurring_job_runs.where(status: RecurringJobRun.statuses.values_at(:enqueued, :running)).exists?
+  end
+
   def running_run?
     recurring_job_runs.where(status: RecurringJobRun.statuses[:running]).exists?
   end
