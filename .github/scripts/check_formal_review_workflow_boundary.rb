@@ -7,10 +7,10 @@ REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
 BOUNDARY_CHECKS = [
   {
-    path: "docs/README.md",
+    path: "docs/specs/README.md",
     expected: [
-      "正式レビュー承認 workflow 境界メモ",
-      "コメント、版品質チェック、確認依頼、公開制御、外部送付履歴を正式な多段承認 workflow と混同しないための棚卸し"
+      "正式レビュー承認workflow境界メモ",
+      "正式レビュー・承認 workflow 設計前の棚卸し"
     ]
   },
   {
@@ -29,7 +29,7 @@ BOUNDARY_CHECKS = [
     ]
   },
   {
-    path: "docs/文書コメント・Q&A運用runbook.md",
+    path: "docs/runbooks/admin/文書コメント・Q&A運用runbook.md",
     expected: [
       "未実装の workflow を前提にしないでください",
       "通知、担当割当、SLA、ack、自動エスカレーション、状態更新を行うものではありません",
@@ -38,7 +38,7 @@ BOUNDARY_CHECKS = [
     ]
   },
   {
-    path: "docs/版品質チェックrunbook.md",
+    path: "docs/runbooks/admin/版品質チェックrunbook.md",
     expected: [
       "read-only evidence",
       "公開承認 gate や正式レビュー承認 workflow の状態として読む必要が出た場合",
@@ -47,7 +47,7 @@ BOUNDARY_CHECKS = [
     ]
   },
   {
-    path: "docs/利用者向け確認依頼runbook.md",
+    path: "docs/runbooks/viewer/利用者向け確認依頼runbook.md",
     expected: [
       "正式レビュー承認 workflow の採否、承認者 chain、通知、SLA、段階承認、公開承認 policy を定義するものではありません",
       "`OK済み` は依頼単位の確認が済んだことを示す status です",
@@ -56,7 +56,7 @@ BOUNDARY_CHECKS = [
     ]
   },
   {
-    path: "docs/外部送付履歴運用runbook.md",
+    path: "docs/runbooks/external/外部送付履歴運用runbook.md",
     expected: [
       "送付状態の変更、通知 channel への送信、alert rule の発火、自動 retry を実行するものではありません",
       "`送付済み` または `送付失敗` になった履歴では、detail に状態更新 action は出ず",
@@ -67,10 +67,10 @@ BOUNDARY_CHECKS = [
   {
     path: "docs/ToDo.md",
     expected: [
-      "人間判断待ちのもの",
+      "**人間判断待ち**: 採否、顧客合意、法務・承認・権限・通知などの中核判断が必要",
+      "正式なレビュー・承認ワークフロー導入は、コメント・品質チェック・公開制御・送付運用が固まってから再評価する。分類: 人間判断待ち",
       "多段承認、通知、SLA、権限変更、公開承認 state machine の実装済み workflow として扱わない",
-      "分類: 人間判断待ち",
-      "状態名・通知・SLA・段階承認は current support として先取りしない"
+      "状態名・通知・SLA・段階承認は先取りしない範囲の画定"
     ]
   }
 ].freeze
