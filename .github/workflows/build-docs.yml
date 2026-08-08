@@ -53,6 +53,11 @@ jobs:
         run: |
           sudo sh -c 'echo "127.0.0.1 db" >> /etc/hosts'
 
+      - name: Install libvips runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvips
+
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: false
@@ -163,6 +168,11 @@ jobs:
         run: |
           sudo sh -c 'echo "127.0.0.1 db" >> /etc/hosts'
 
+      - name: Install libvips runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvips
+
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: false
@@ -232,6 +242,11 @@ jobs:
           echo "ruby=$ruby" >> "$GITHUB_OUTPUT"
           echo "root_js=$root_js" >> "$GITHUB_OUTPUT"
           echo "docusaurus=$docusaurus" >> "$GITHUB_OUTPUT"
+
+      - name: Install libvips runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvips
 
       - uses: ruby/setup-ruby@v1
         if: ${{ steps.audit-scope.outputs.ruby == 'true' }}
