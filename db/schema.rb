@@ -48,6 +48,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_184000) do
   create_table "access_requests", id: { comment: "ID" }, comment: "アクセス申請", force: :cascade do |t|
     t.datetime "approved_at", comment: "承認日時"
     t.bigint "approver_id", comment: "承認者ID"
+    t.text "cancellation_reason", comment: "取消理由"
     t.datetime "cancelled_at", comment: "キャンセル日時"
     t.datetime "created_at", null: false, comment: "作成日時"
     t.datetime "expires_at", comment: "有効期限日時"
@@ -487,6 +488,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_184000) do
     t.integer "category", default: 0, null: false, comment: "カテゴリ"
     t.datetime "created_at", null: false, comment: "作成日時"
     t.datetime "discard_candidate_at", comment: "廃棄候補日時"
+    t.datetime "discard_reviewed_at", comment: "廃棄候補確認日時"
+    t.bigint "discard_reviewed_by_id", comment: "廃棄候補確認者ID"
     t.integer "document_kind", default: 0, null: false, comment: "文書種別"
     t.integer "importance_level", default: 2, null: false, comment: "重要度"
     t.bigint "latest_version_id", comment: "最新バージョンID"
@@ -502,6 +505,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_184000) do
     t.index ["archived_at"], name: "index_documents_on_archived_at"
     t.index ["archived_by_user_id"], name: "index_documents_on_archived_by_user_id"
     t.index ["discard_candidate_at"], name: "index_documents_on_discard_candidate_at"
+    t.index ["discard_reviewed_at"], name: "index_documents_on_discard_reviewed_at"
     t.index ["importance_level"], name: "index_documents_on_importance_level"
     t.index ["latest_version_id"], name: "index_documents_on_latest_version_id"
     t.index ["project_id", "slug"], name: "index_documents_on_project_id_and_slug", unique: true
@@ -841,6 +845,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_184000) do
     t.boolean "enabled", default: true, null: false, comment: "有効フラグ"
     t.string "name", null: false, comment: "名称"
     t.string "preview_folder_path", default: "docs-portal-previews", null: false, comment: "プレビューフォルダパス"
+    t.boolean "preview_selected", default: false, null: false, comment: "プレビュー利用に明示選択された接続"
     t.bigint "project_id", null: false, comment: "案件ID"
     t.string "public_id", null: false, comment: "公開ID"
     t.string "site_id", comment: "サイトID"
