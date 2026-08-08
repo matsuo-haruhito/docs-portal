@@ -216,11 +216,17 @@ class Admin::GeneratedFileRunsController < Admin::BaseController
   end
 
   def retry_metadata_for(run, bulk: false)
-    (run.metadata || {}).merge(
+    source_metadata = run.metadata || {}
+    source_group_id = source_metadata["generated_file_idempotency_group_id"] ||
+      source_metadata["generated_file_event_dispatch_group_id"]
+
+    source_metadata.merge(
       "retry_of_generated_file_run_public_id" => run.public_id,
       "retry_requested_at" => Time.current.iso8601,
       "retry_requested_by_user_id" => current_user&.id,
-      "bulk_retry" => bulk
+      "bulk_retry" => bulk,
+      "retry_of_generated_file_idempotency_group_id" => source_group_id,
+      "generated_file_idempotency_group_id" => SecureRandom.uuid
     ).compact
   end
 end

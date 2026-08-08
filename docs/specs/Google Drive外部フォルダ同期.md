@@ -98,6 +98,8 @@ OAuth user 方式では、認可した Google ユーザーが閲覧できる Dri
 - `cursor`
 - `last_synced_at`
 - `last_error_message`
+- `active_sync_run`: 現在この同期元の実行権を持つ pending / running run
+- `sync_lease_expires_at`: 現在の実行権の期限
 
 current `main` では `provider` に `google_drive` と `microsoft_graph` があり、`auth_type` も Google Drive 用の `service_account` / `oauth_user` に加えて、Graph metadata 保存用の `microsoft_graph_connection` を持ちます。
 
@@ -110,12 +112,18 @@ current `main` では `provider` に `google_drive` と `microsoft_graph` があ
 同期実行の履歴です。
 
 - `source`
-- `status`
+- `status`: `pending` はsource単位の予約、`running` はworkerがclaim済み、`completed` / `partial` / `failed` は終端状態
 - `mode`: `dry_run` / `apply`
+- `enqueued_at`: 同期jobを登録した時刻
 - `started_at` / `finished_at`
+- `heartbeat_at`: running workerが実行権を保持していることを最後に更新した時刻
 - `scanned` / `created` / `updated` / `skipped` / `deleted` / `errors` の件数
 - `result_json`
 - `summary_json`
+
+同期開始はdirect / background / webhook / rakeの各入口で共通のsource予約を使います。DBは1 sourceにつき `pending` / `running` runを最大1件に制限し、sourceの `active_sync_run` とlease期限をrun IDに結び付けます。pending jobが開始しない場合は15分、running workerのheartbeatが止まった場合は1時間でreconciliation対象です。lease期限はreconciliationが回収を試せる時刻であり、それだけでcurrent ownerの実行権を失効させません。workerとreconciliationは同じsource row lockを取り、lock取得後もrun IDがcurrent ownerならworkerは期限後でもheartbeat・完了でleaseを更新でき、reconciliationが先にrun IDを交代させた場合だけ古いworkerをfenceします。stale回収後に復帰した古いjobやworkerは、文書・同期item・cursor・event結果を更新できません。
+
+webhookがrunを予約・claimした後にprovider、同期方向、有効状態のpreflightで失敗した場合も、current ownerは同じclaim tokenでrunを`failed`へ確定し、sourceのactive run / leaseを解除してからeventを`failed`へ収束させます。eventは関連runと`sync_run` summaryを保持します。予約前の同期元なし・無効eventを`ignored`にする境界とは分け、恒久設定エラーを自動再処理しません。失敗確定時にownershipを失っていれば旧ownerは何も更新せず、replacementの状態を維持します。
 
 current docs の範囲では、この run は Google Drive source に対して読むのが正本です。SharePoint / OneDrive source は metadata 保存 first slice のため、この run を前提にした運用へはまだ進めません。
 

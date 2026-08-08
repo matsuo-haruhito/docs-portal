@@ -36,7 +36,7 @@ GENERATED_FILE_RETRY_MAINTENANCE_CHECKS = [
     ]
   },
   {
-    path: "docs/生成ファイル再試行と定期ジョブ管理runbook.md",
+    path: "docs/runbooks/ops/生成ファイル再試行と定期ジョブ管理runbook.md",
     expected: [
       "`生成ファイルイベント`: `admin/generated_file_events`",
       "`生成ファイル実行履歴`: `admin/generated_file_runs`",

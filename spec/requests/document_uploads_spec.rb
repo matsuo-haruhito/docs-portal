@@ -42,7 +42,9 @@ RSpec.describe "Document uploads", type: :request do
     expect(document.latest_version).to be_nil
     expect(version).to be_draft
     expect(version).to be_preview_queued
-    expect(version.preview_build_attempted_at).to be_present
+    expect(version.preview_build_enqueued_at).to be_present
+    expect(version.preview_build_attempt_count).to eq(0)
+    expect(version.preview_build_attempted_at).to be_nil
     expect(version.preview_build_completed_at).to be_nil
     expect(version.source_relative_path).to eq("docs/specs/overview.md")
     expect(version.source_directory).to eq("docs/specs")

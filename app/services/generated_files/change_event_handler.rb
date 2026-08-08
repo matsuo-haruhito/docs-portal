@@ -18,6 +18,7 @@ module GeneratedFiles
       operation: :update,
       event_source: nil,
       metadata: {},
+      dispatch_claim: nil,
       registry_path: DEFAULT_REGISTRY_PATH,
       root: nil,
       output: $stdout,
@@ -28,6 +29,7 @@ module GeneratedFiles
       @file_events = normalize_events(file_events, changed_files, operation)
       @event_source = event_source
       @metadata = metadata || {}
+      @dispatch_claim = dispatch_claim
       @output = output
       @registry = registry || FileChangeEventRegistry.new(registry_path:, root: @root)
       @event_buffer_class = event_buffer_class
@@ -46,7 +48,8 @@ module GeneratedFiles
 
     private
 
-    attr_reader :root, :file_events, :event_source, :metadata, :output, :registry, :event_buffer_class
+    attr_reader :root, :file_events, :event_source, :metadata, :dispatch_claim, :output,
+      :registry, :event_buffer_class
 
     def default_root
       if defined?(Rails)
@@ -89,9 +92,13 @@ module GeneratedFiles
 
       job_class_name = rule.fetch("job_class")
       job_class = job_class_name.constantize
-
-      output.puts "Enqueue file change event job: rule=#{rule.fetch('id')} job_class=#{job_class_name}"
-      job_class.perform_later(**params)
+      if dispatch_claim
+        output.puts "Run claimed file change event job: rule=#{rule.fetch('id')} job_class=#{job_class_name}"
+        job_class.perform_now(**params, dispatch_claim:)
+      else
+        output.puts "Enqueue file change event job: rule=#{rule.fetch('id')} job_class=#{job_class_name}"
+        job_class.perform_later(**params)
+      end
       rule.fetch("id")
     end
 

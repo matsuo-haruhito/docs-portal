@@ -244,6 +244,7 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :internal do
+      put "master_syncs/:source_system/:resource_type/:external_id", to: "master_syncs#update"
       resources :artifact_imports, only: [:create]
       resources :file_uploads, only: [:create]
       resources :zip_uploads, only: [:create]

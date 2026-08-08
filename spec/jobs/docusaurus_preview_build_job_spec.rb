@@ -14,6 +14,10 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
     end
   end
 
+  before do |example|
+    version.mark_preview_build_queued! unless example.metadata[:without_preview_queue]
+  end
+
   after do
     FileUtils.rm_rf(DocumentFile.storage_root.join("spec/docusaurus-preview-build-job"))
     FileUtils.rm_rf(version.site_root_absolute_path) if version&.persisted?
@@ -142,7 +146,7 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
     )
   end
 
-  it "skips non-markdown versions" do
+  it "skips non-markdown versions", :without_preview_queue do
     version.assign_source_path_metadata!(source_path: "docs/guide.pdf", snapshot_kind: "pdf_generated")
     version.save!
 
@@ -151,6 +155,20 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
     described_class.perform_now(version.id)
 
     expect(version.reload).to be_preview_not_requested
+  end
+
+  it "does not claim or mutate a queued preview during read-only maintenance" do
+    original_attributes = version.reload.attributes
+    allow(ENV).to receive(:fetch).and_call_original
+    allow(ENV).to receive(:fetch).with("READ_ONLY_MAINTENANCE", nil).and_return("true")
+    allow(DocusaurusPreviewArchiveBuilder).to receive(:new)
+    allow(DocusaurusRendererClient).to receive(:new)
+
+    described_class.perform_now(version.id)
+
+    expect(DocusaurusPreviewArchiveBuilder).not_to have_received(:new)
+    expect(DocusaurusRendererClient).not_to have_received(:new)
+    expect(version.reload.attributes).to eq(original_attributes)
   end
 
   private

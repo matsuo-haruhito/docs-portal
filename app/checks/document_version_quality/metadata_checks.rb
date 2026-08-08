@@ -72,6 +72,8 @@ module DocumentVersionQuality
         info(:preview_build_status, "Preview build succeeded", preview_build_detail)
       when "preview_failed"
         error(:preview_build_status, "Preview build failed", preview_build_detail)
+      when "preview_abandoned"
+        error(:preview_build_status, "Preview build retry limit reached", preview_build_detail)
       when "preview_running"
         warning(:preview_build_status, "Preview build is running", preview_build_detail)
       when "preview_queued"

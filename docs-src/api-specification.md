@@ -20,6 +20,63 @@ GitHub Actions 専用APIではなく、Git push、artifact import、file upload�
 Authorization: Bearer ${DOC_IMPORT_TOKEN}
 ```
 
+## sales-mgt マスタ同期
+
+### `PUT /api/internal/master_syncs/:source_system/:resource_type/:external_id`
+
+会社・案件・文書メタデータの正本である `sales-mgt` から、現在の完全な snapshot を冪等 upsert します。この endpoint はファイル実体の取り込みには使いません。
+
+- 認証 token: `DOCS_PORTAL_SYNC_TOKEN`
+- `source_system`: 現行は `sales-mgt`
+- `resource_type`: `company` / `project` / `document`。これ以外はreceipt・mapping・portal resourceを作る前に`422 Unprocessable Content`で拒否する
+- `external_id`: 送信元で不変な公開識別子。DB の連番を URL として利用者へ露出する用途には使わない
+
+保存される外部mappingは`company -> Company`、`project -> Project`、`document -> Document`の対応だけを許可し、DB constraintでもこの組み合わせを検証します。target未作成の状態ではtarget type / IDをともにNULLとし、異なるresource種別のtargetを紐付けません。
+- 必須 header: `Idempotency-Key`
+- 必須 body: `operation`, `source_updated_at`, `attributes`
+
+```http
+Authorization: Bearer ${DOCS_PORTAL_SYNC_TOKEN}
+Content-Type: application/json
+Idempotency-Key: 018f6e08-...
+```
+
+```json
+{
+  "operation": "upsert",
+  "source_updated_at": "2026-08-06T12:00:00Z",
+  "attributes": {
+    "name": "サンプル会社",
+    "code": "C-001",
+    "domain": null,
+    "active": true
+  }
+}
+```
+
+同じ `Idempotency-Key` と同じ request body の再送は、最初に確定した response を返します。同じ key で body が異なる場合は `409 Conflict` です。保存済み `source_updated_at` より古い snapshot は `200 OK` の stale no-op とし、データを巻き戻しません。
+
+会社・案件の `attributes.active` はJSON literalの `true` または `false` だけを受け付けます。`"true"` / `"false"` などの文字列、数値、`null`、配列、objectは決定的な `422 Unprocessable Content` として受領台帳へ確定し、同じidempotency requestでは同じ422を再生します。属性を省略した新規作成時の既定値は `true` です。
+
+親会社・親案件の外部mappingがまだ到着していない場合は `422 Unprocessable Content` と `error_code=missing_dependency`, `retryable=true` を返します。この一時応答は受領台帳へ確定しないため、親snapshotの同期後に同じ `Idempotency-Key` とbodyを再送できます。必須属性欠落や型違反などの決定的な `422` は従来どおり確定responseとして再生します。
+
+`operation=archive` は物理削除ではなく、会社・案件を無効化し、文書を archive します。無効化された会社・案件は社外ユーザーの案件・文書認可から除外されます。文書 upsert の `attributes.project_external_id` は必須です。文書ファイルを送る場合は、この API に base64 を含めず、`file_uploads` の dry-run -> review -> apply を利用します。
+
+成功 response には外部 mapping の public ID、処理結果、対象 portal resource の public ID と URL を返します。
+
+```json
+{
+  "status": "applied",
+  "mapping_id": "xsync_xxxxx",
+  "resource_type": "project",
+  "external_id": "42",
+  "portal_public_id": "prj_xxxxx",
+  "portal_url": "/projects/P-001"
+}
+```
+
+`READ_ONLY_MAINTENANCE` 中は、すでに確定済みの同一 idempotency request の応答を除き、新しい upsert / archive を `503 Service Unavailable` で停止します。応答には `error_code=read_only_maintenance`, `retryable=true` を含め、producerは試行回数を消費せず解除後に再送します。
+
 ## Git push / build artifact 取り込み
 
 ### `POST /api/internal/artifact_imports`
@@ -330,7 +387,11 @@ X-Docs-Portal-Signature-256: sha256=<hmac_sha256_hex>
 通知対象イベント: import_failed, document_published
 ```
 
-2xx 応答は成功、それ以外または例外は失敗として配信履歴に記録します。初期実装では自動再送キューは持たないため、受信側は `X-Docs-Portal-Delivery` を冪等キーとして扱えるようにしておくと安全です。
+2xx 応答は成功、それ以外または例外は失敗として配信履歴に記録します。有効な endpoint の HTTP 5xx または response 未取得の失敗は、定期ジョブが同じ配信履歴を最大 3 回まで自動再送します。HTTP 4xx と停止中 endpoint は自動再送しません。
+
+自動再送では送信前にdeliveryをtoken付きの `自動再送中` へclaimし、確定したHTTP attemptだけ `retry_count` を増やします。送信前にworkerが停止したstale claimは回数を消費せずfailedへ戻します。POST後・結果確定前の停止では再送が起こり得るため、同じdeliveryの全自動再送で同じ `X-Docs-Portal-Delivery: whdel_...` を使います。受信側はこの値と処理結果を永続化して重複副作用を防いでください。これはat-least-once deliveryであり、sender単独のexactly-once保証ではありません。
+
+管理画面からの手動再送は新しい配信履歴と新しいdelivery IDを作ります。`READ_ONLY_MAINTENANCE` 中は自動再送のclaim、stale claim回収、HTTP POSTを行わず、送信履歴の確認だけを残します。
 
 ## Microsoft Graph / Office preview
 

@@ -57,23 +57,16 @@ module Admin::WebhookEndpointsHelper
     ].join("\n")
   end
 
-  def webhook_delivery_status_label(delivery)
-    case delivery.status.to_s
-    when "succeeded"
-      "成功"
-    when "failed"
-      "失敗"
-    when "pending"
-      "送信待ち"
-    else
-      delivery.status.to_s
-    end
+  def webhook_delivery_status_label(delivery_or_value)
+    value = delivery_or_value.respond_to?(:status) ? delivery_or_value.status : delivery_or_value
+    localized_label("webhook_deliveries.status", value)
   end
 
   def webhook_delivery_status_filter_options
     [
       ["all", "すべて"],
       ["failed", "失敗のみ"],
+      ["retrying", "自動再送中"],
       ["pending", "送信待ち"],
       ["succeeded", "成功"]
     ]

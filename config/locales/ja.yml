@@ -3,6 +3,46 @@ ja:
     errors:
       messages:
         record_invalid: "バリデーションに失敗しました: %{errors}"
+    models:
+      external_master_sync_mapping: "外部マスタ同期マッピング"
+      master_sync_receipt: "マスタ同期受領台帳"
+      recurring_job_schedule: "定期ジョブ設定"
+      webhook_delivery: "Webhook送信履歴"
+    attributes:
+      recurring_job_schedule:
+        enabled_before_reliability_v2_suspend: "信頼性V2停止前の有効状態"
+      external_master_sync_mapping:
+        public_id: "公開ID"
+        source_system: "同期元システム"
+        resource_type: "同期リソース種別"
+        external_id: "同期元外部ID"
+        sync_target: "同期先"
+        sync_target_type: "同期先種別"
+        sync_target_id: "同期先ID"
+        source_updated_at: "同期元更新日時"
+        source_attributes: "同期元属性スナップショット"
+      master_sync_receipt:
+        public_id: "公開ID"
+        idempotency_key: "冪等性キー"
+        request_digest: "リクエストダイジェスト"
+        source_system: "同期元システム"
+        resource_type: "同期リソース種別"
+        external_id: "同期元外部ID"
+        response_status: "確定レスポンスHTTPステータス"
+        response_body: "確定レスポンス本文"
+        completed_at: "処理確定日時"
+      webhook_delivery:
+        status: "ステータス"
+        retry_count: "自動再送回数"
+        retry_claimed_at: "自動再送実行権取得日時"
+        retry_claim_token: "自動再送実行権トークン"
+      document_version:
+        preview_build_attempt_count: "プレビュービルド試行回数"
+        preview_build_enqueued_at: "プレビュービルドキュー登録日時"
+        preview_build_started_at: "プレビュービルド開始日時"
+        preview_build_retry_at: "プレビュービルド次回再試行日時"
+        preview_build_claim_token: "プレビュービルド実行権トークン"
+        preview_build_reconciled_at: "プレビュービルド整合性確認日時"
   errors:
     format: "%{attribute}%{message}"
     messages:
@@ -44,6 +84,21 @@ ja:
   labels:
     table:
       empty: "（なし）"
+    model_browser_values:
+      external_master_sync_mapping:
+        resource_type:
+          company: "会社"
+          project: "案件"
+          document: "文書"
+        sync_target_type:
+          company: "会社"
+          project: "案件"
+          document: "文書"
+      master_sync_receipt:
+        resource_type:
+          company: "会社"
+          project: "案件"
+          document: "文書"
     users:
       user_type:
         internal: "社内ユーザー"
@@ -225,6 +280,12 @@ ja:
         review_approved: "レビュー承認"
         qa_posted: "Q&A投稿"
         qa_answered: "Q&A回答"
+    webhook_deliveries:
+      status:
+        pending: "送信待ち"
+        succeeded: "成功"
+        failed: "失敗"
+        retrying: "自動再送中"
     microsoft_graph_connections:
       auth_type:
         client_credentials: "Client credentials"

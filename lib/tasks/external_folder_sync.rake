@@ -12,8 +12,12 @@ namespace :external_folder_sync do
   desc "Enqueue all enabled external folder sync sources"
   task enqueue_all: :environment do
     ExternalFolderSyncSource.enabled_only.find_each do |source|
-      ExternalFolderSyncJob.perform_later(source.id, source.created_by_id)
-      puts "Enqueued #{source.provider}: #{source.name} (#{source.public_id})"
+      job = ExternalFolderSyncJob.enqueue_for(source:)
+      if job
+        puts "Enqueued #{source.provider}: #{source.name} (#{source.public_id})"
+      else
+        warn "Skipped active sync #{source.provider}: #{source.name} (#{source.public_id})"
+      end
     end
   end
 

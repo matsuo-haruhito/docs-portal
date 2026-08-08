@@ -70,10 +70,15 @@ h1 定期ジョブ詳細
     p.muted まだ即時実行要求はありません。要求するとこの schedule を dispatcher へ渡し、結果は下の実行履歴で確認できます。
     p.muted 実行履歴には dispatcher enqueue 後の結果が50件ずつ表示され、過去ページへ辿れます。
   p.actions
-    = link_to run_request_button_label, request_run_admin_recurring_job_schedule_path(@schedule, return_to: return_to_path), data: { turbo_method: :post }, class: "button"
+    - if @schedule.reliability_v2_suspended?
+      span.muted 信頼性V2の停止中は即時実行を要求できません。gate有効化後に定義の復元を確認してください。
+    - else
+      = link_to run_request_button_label, request_run_admin_recurring_job_schedule_path(@schedule, return_to: return_to_path), data: { turbo_method: :post }, class: "button"
 
 - if @schedule.job_key == "sync_git_import_sources"
   = render "git_import_operations"
+- if @schedule.job_key == "reconcile_docusaurus_preview_builds"
+  = render "docusaurus_preview_operations"
 
 p.actions
   = link_to "一覧へ戻る", return_to_path, class: "button secondary"

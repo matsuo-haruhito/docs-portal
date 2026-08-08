@@ -201,6 +201,16 @@ current code には `external_folder_sync_webhooks/sharepoint` の GET / POST ro
 
 受信イベント card では、受信時刻、処理状態、通知番号、関連 run、重複防止キー、エラー理由を見ます。Google Drive では、通知自体は届いているのに同期が進まない場合に、ここから related run をたどります。SharePoint / OneDrive では、受信イベントが記録されていても同期本体の運用対象とは扱わず、metadata-only source と current support 外の同期運用を切り分けます。
 
+Google Drive通知は `received -> enqueued -> processing -> completed / failed` と進みます。最初の通知を予約すると source 単位の pending run と実行権が作られ、pending / running の active run は 1 source につき最大 1 件です。後着通知は2分のcoalesce windowだけで排他判定せず、active runの実行権が解放されるまで `received` で待機し、次のfollow-up runへまとめます。
+
+runを予約・claimした後にprovider、同期方向、有効状態のpreflightで失敗した場合も、current ownerはrunを`failed`へ確定し、sourceのactive run / leaseを解除してから同じrunに紐づくwebhook eventを`failed`へ収束させます。eventには関連runと`sync_run` summaryを残します。予約前に同期元なし・無効と判定したeventを`ignored`にする境界とは区別し、予約後の恒久設定エラーを`received`へ戻して再処理loopにはしません。失敗確定前にclaim tokenが交代していた場合は`StaleClaimError`として旧ownerからrun / source / eventを更新せず、replacementの状態を保護します。
+
+queue投入後にworkerが開始しない pending runは15分、実行中にheartbeatが更新されない running runは1時間でstale回収の候補です。lease期限だけではcurrent ownerを失効させません。workerとreconciliationは同じsource lockを取り、workerが先にlockを取得してrun IDがcurrent ownerのままなら期限後でもheartbeat・完了でleaseを更新します。reconciliationが先に期限とrun IDを再確認してstale runをfailedにし、紐づくeventを `received` へ戻して実行権を交代させた場合だけ、古いjobやworkerをfenceします。古いworkerの`StaleClaimError`は業務失敗としてeventを`failed`にせず、replacementが作ったevent状態を維持します。run完了後にevent確定前で停止した場合は、terminal runの結果からevent rowをlockし、同じrunに紐づく`processing`状態のときだけeventを収束させ、同期本体を重複実行しません。
+
+`READ_ONLY_MAINTENANCE` 中は受信記録とprovider応答だけを残し、event dispatch、stale run / event回収、実行権の交代、同期本体の開始はmaintenance解除まで保留します。
+
+run lease対応をrolling deployするときは、`JOB_RELIABILITY_V2_ENABLED=false`のまま2 / 3 / 4引数を読めるconsumerを先に全workerへ配置します。gate offでは手動同期producerは旧2引数、webhook producerは旧3引数をenqueueし、新しいreconciliation定義、queue済み4引数job、leaseを使うstale recoveryを開始しません。新consumerが旧2 / 3引数payloadを読む場合も、pointerのないlegacy active runを自動adoptせず、期限切れownerを回収しません。queueの待機件数だけで完了とせず、旧binaryのworker processとin-flight childが0であること、旧予約payloadがdrain済みであること、legacy active runが残っていないことを確認してからgateをonへ切り替え、定期定義を同期して4引数payloadと新recoveryを有効化します。queue名の変更だけでは`queues: "*"`の旧workerを隔離できず、`READ_ONLY_MAINTENANCE`もrollout gateの代用にはしません。
+
 受信イベントが 0 件のときは、まだ通知を受け取っていない状態です。Google Drive では購読が未開始、購読直後で未受信、または変更がまだ来ていない可能性があり、同期本体の成功 / 失敗判断ではありません。SharePoint / OneDrive では webhook route が受信口として存在していても、0 件を「通知運用が正常」や「差分同期が成功」とは読まず、metadata-only source の境界に戻します。
 
 ### 同期アイテム

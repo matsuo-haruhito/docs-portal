@@ -24,8 +24,8 @@ class Api::BaseController < ActionController::API
     ActiveModel::Type::Boolean.new.cast(ENV["READ_ONLY_MAINTENANCE"])
   end
 
-  def render_read_only_maintenance_response
-    render json: { error: "READ_ONLY_MAINTENANCE is enabled; internal upload apply requests are paused." }, status: :service_unavailable
+  def render_read_only_maintenance_response(message = "READ_ONLY_MAINTENANCE is enabled; internal upload apply requests are paused.")
+    render json: { error: message }, status: :service_unavailable
   end
 
   def render_bad_request(error)

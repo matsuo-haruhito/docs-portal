@@ -13,6 +13,13 @@ class RecurringJobRun < ApplicationRecord
     skipped: 4
   }
 
+  STALE_ENQUEUED_ERROR_MESSAGE = "Runnerが期限内に開始されなかったため回収しました"
+
+  scope :active, -> { where(status: statuses.values_at(:enqueued, :running)) }
+  scope :stale_enqueued, ->(at = Time.current) {
+    enqueued.where("enqueued_at IS NULL OR enqueued_at <= ?", at - RecurringJobSchedule::STALE_LOCK_AFTER)
+  }
+
   validates :job_key, :job_class, :queue_name, :status, :scheduled_at, presence: true
 
   def to_param

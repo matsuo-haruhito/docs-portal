@@ -138,6 +138,7 @@ RSpec.describe "Document version quality checks", type: :request do
 
   it "highlights preview quality checks in html" do
     version.assign_source_path_metadata!(source_path: "docs/manual.md", snapshot_kind: "received_markdown")
+    version.save!
     version.mark_preview_build_queued!
     sign_in_as(internal_user)
 

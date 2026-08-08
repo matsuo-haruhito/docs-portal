@@ -1,5 +1,5 @@
 class Admin::WebhookEndpointsController < Admin::BaseController
-  DELIVERY_STATUS_FILTERS = %w[failed pending succeeded].freeze
+  DELIVERY_STATUS_FILTERS = %w[failed retrying pending succeeded].freeze
   ENDPOINT_ACTIVE_FILTERS = %w[active inactive].freeze
   ENDPOINT_Q_MAX_LENGTH = 100
   ENDPOINT_DEFAULT_PER_PAGE = 25
