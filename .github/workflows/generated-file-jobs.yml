@@ -43,6 +43,8 @@ jobs:
           bundler-cache: false
 
       - name: Install Ruby dependencies
+        env:
+          BUNDLE_GITHUB__COM: x-access-token:${{ secrets.BUNDLE_GITHUB_COM_TOKEN }}
         run: |
           bundle config set path vendor/bundle
           bundle lock --add-platform x86_64-linux

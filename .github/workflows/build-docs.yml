@@ -71,6 +71,8 @@ jobs:
             ${{ runner.os }}-ruby-
 
       - name: Install Ruby dependencies
+        env:
+          BUNDLE_GITHUB__COM: x-access-token:${{ secrets.BUNDLE_GITHUB_COM_TOKEN }}
         run: |
           bundle config set path vendor/bundle
           bundle lock --add-platform x86_64-linux
@@ -186,6 +188,8 @@ jobs:
             ${{ runner.os }}-ruby-
 
       - name: Install Ruby dependencies
+        env:
+          BUNDLE_GITHUB__COM: x-access-token:${{ secrets.BUNDLE_GITHUB_COM_TOKEN }}
         run: |
           bundle config set path vendor/bundle
           bundle lock --add-platform x86_64-linux
@@ -255,6 +259,8 @@ jobs:
 
       - name: Install Ruby dependencies
         if: ${{ steps.audit-scope.outputs.ruby == 'true' }}
+        env:
+          BUNDLE_GITHUB__COM: x-access-token:${{ secrets.BUNDLE_GITHUB_COM_TOKEN }}
         run: |
           bundle lock --add-platform x86_64-linux
           bundle install --jobs 4 --retry 3

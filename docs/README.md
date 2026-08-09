@@ -32,6 +32,8 @@ tree_view / rails_table_preferences / rails_fields_kit のリリース判断・e
 
 ### 未確定事項 → [ToDo.md](./ToDo.md)
 
+### 短期技術タスク → [ROADMAP](../ROADMAP.md)
+
 ### AI 向けルール・実装ガイド → [.kiro/](../.kiro/)
 
 steering（ルール）と skills（手順）は .kiro/ 配下を参照。
