@@ -53,7 +53,7 @@ IMPORT_DRY_RUN_HISTORY_CHECKS = [
   },
   {
     name: "Git import run operations runbook",
-    path: "docs/Git連携設定と同期失敗確認runbook.md",
+    path: "docs/runbooks/import/Git連携設定と同期失敗確認runbook.md",
     expected: [
       "`Git連携`: `admin/git_import_sources`",
       "`Git同期履歴`: `admin/git_import_runs`",

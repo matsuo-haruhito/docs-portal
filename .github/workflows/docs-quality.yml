@@ -8,6 +8,7 @@ on:
       - ROADMAP.md
       - Product Profile.md
       - docs/**/*.md
+      - .kiro/steering/frontend-interaction-policy.md
       - app/frontend/entrypoints/application.js
       - app/renderers/docusaurus_site_renderer.rb
       - spec/renderers/docusaurus_site_renderer_spec.rb
@@ -65,6 +66,7 @@ on:
       - ROADMAP.md
       - Product Profile.md
       - docs/**/*.md
+      - .kiro/steering/frontend-interaction-policy.md
       - app/frontend/entrypoints/application.js
       - app/renderers/docusaurus_site_renderer.rb
       - spec/renderers/docusaurus_site_renderer_spec.rb
@@ -240,10 +242,10 @@ jobs:
         run: ruby .github/scripts/check_document_usage_page_scope_boundary.rb
 
       - name: Check visual evidence comment boundary
+        run: ruby .github/scripts/check_visual_evidence_comment_boundary.rb
+
       - name: Check role entry drift boundary
         run: ruby .github/scripts/check_role_entry_drift_boundary.rb
-        run: ruby .github/scripts/check_visual_evidence_comment_boundary.rb
-      - .github/scripts/check_role_entry_drift_boundary.rb
 
       - uses: actions/setup-node@v7
         with:

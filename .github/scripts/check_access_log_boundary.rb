@@ -7,15 +7,6 @@ REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
 CHECKS = [
   {
-    path: "docs/README.md",
-    expected: [
-      "AccessLog",
-      "記録対象",
-      "記録しない対象",
-      "last_login_at は users 側で管理"
-    ]
-  },
-  {
     path: "docs/specs/文書ライフサイクルと公開.md",
     expected: [
       "HTML view、DocumentFile download、ZIP download、preview 実行などの主要操作を監査ログに残す",
@@ -24,7 +15,7 @@ CHECKS = [
     ]
   },
   {
-    path: "docs/監査ログ運用runbook.md",
+    path: "docs/runbooks/admin/監査ログ運用runbook.md",
     expected: [
       "`action_type` は `view` `download` などの代表操作を絞り込む",
       "`target_type` は current UI では `page` `file` `zip` `ai_context` を扱う",

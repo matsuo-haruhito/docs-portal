@@ -2,7 +2,7 @@
 
 この文書は、`.kiro/steering/frontend-interaction-policy.md` の「Turbo -> Stimulus -> 素の JavaScript」の優先順位に沿って、current `main` の browser-side 初期化を棚卸しするための maintainer note です。
 
-この slice では Markdown preview table helper を専用 Stimulus controller へ分離し、table search、copy、CSV / Markdown export、preference path、preview context key、localStorage 幅補助、sticky fallback の挙動は変更しません。`preview-tools` bridge は空 bridge を残さず退役させます。#475 の full `rails_table_preferences` 統合、column visibility / preset UI、Docusaurus renderer、Markdown table DOM rewrite、preference schema / key 再設計は引き続き別判断として残します。
+この slice では Markdown preview table helper を専用 Stimulus controller へ分離し、table search、copy、CSV / Markdown export、preference path、preview context key、localStorage 幅補助、sticky fallback の挙動は変更しません。`preview-tools` bridge は空 bridge を残さず退役させます。full `rails_table_preferences` 統合、column visibility / preset UI、Docusaurus renderer、Markdown table DOM rewrite、preference schema / key 再設計は active queue に置かず、current fallback の具体的な不足が再現した場合に新しい concrete Issue として切り出します。
 
 ## 確認した入口
 
@@ -57,7 +57,7 @@
 | `pdf-preview-tools` | PDF preview | `setupPdfPreviewTools()` を専用 controller から refresh し、再描画 / disconnect 時に button / keydown listener を cleanup する | `preview-tools` bridge から分離済み。height toggle / status / `aria-pressed` / localStorage / keyboard shortcut contract は変更しない |
 | `structured-preview-tools` | structured / text preview | `setupStructuredPreviewTools()` を専用 controller から refresh し、再描画 / disconnect 時に input / button / document keydown / hashchange listener を cleanup する | `preview-tools` bridge から分離済み。検索、clear、一致行のみ表示、copy、line anchor highlight、`/` / `Escape` shortcut は変更しない |
 | `text-preview-tools` | text preview | hashchange と初期表示時の line anchor target cue を同期する | target row の `aria-current="location"` と blue cue を source-level に固定し、search match cue、copy、filter、toolbar、hashchange contract は変更しない |
-| `preview-table-resizer` | Markdown preview table | iframe 内 table wrapping、localStorage、column resize、`turbo:load` / `turbo:render` refresh | current fallback path として維持。`表ツール` summary の横スクロール・列幅調整 cue、横スクロール領域の `aria-label`、列幅、列幅の保存、ヘッダー固定、先頭列固定に閉じ、RTP 統合判断は #475 に残す |
+| `preview-table-resizer` | Markdown preview table | iframe 内 table wrapping、localStorage、column resize、`turbo:load` / `turbo:render` refresh | current fallback path として維持。`表ツール` summary の横スクロール・列幅調整 cue、横スクロール領域の `aria-label`、列幅、列幅の保存、ヘッダー固定、先頭列固定に閉じ、full RTP 統合は具体的な不足が再現した場合だけ別 Issue にする |
 | `section-nav` | 文書詳細のセクションナビゲーション | IntersectionObserver によるスクロール追従とタブ切り替え | app 側 Stimulus として維持 |
 | `sidebar` | 文書ツリー sidebar width / collapsed state | localStorage、pointer / keyboard resize | app 側 Stimulus として維持 |
 | `site-viewer-iframe-height` | Docusaurus / site viewer iframe | `setupSiteViewerIframeHeightSync()` を専用 controller から refresh する | `preview-tools` bridge から分離済み。same-origin check、message type、frame source check、minimum height、`data-docs-portal-auto-height` marker は helper 側で維持 |
@@ -116,7 +116,7 @@
 | `text-preview-tools` | `spec/frontend/text_preview_tools_controller.test.mjs` | line anchor target row の `aria-current="location"`、target cue と search match cue の分離、entrypoint registration、view hook | text preview toolbar redesign、search / filter / copy behavior、line anchor id policy、hashchange contract の変更 |
 | `markdown-preview-codeblock-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、iframe style / toolbar / warning / line anchor guard の維持 | codeblock toolbar redesign、JSON / copy / warning / line anchor behavior の変更 |
 | `markdown-preview-document-search` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration | document search UI の redesign、検索 copy / keyboard / empty state の変更 |
-| `markdown-preview-table-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、旧 `preview-tools` bridge からの分離、preference path / table key guard の維持 | Markdown table helper の挙動変更、preview UI redesign、#475 の Markdown table 方針 |
+| `markdown-preview-table-tools` | `spec/frontend/preview_tools_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、旧 `preview-tools` bridge からの分離、preference path / table key guard の維持 | Markdown table helper の挙動変更、preview UI redesign、full RTP 統合の将来判断 |
 | `site-viewer-iframe-height` | `spec/frontend/preview_tools_source_spec.rb`, `spec/frontend/site_viewer_iframe_height_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、same-origin / message type / frame target guard の維持 | Docusaurus renderer、iframe rendering policy、postMessage protocol、auto height UI の redesign |
 | `nav-dropdowns` | `spec/frontend/nav_dropdowns_contract_spec.rb` | controller registration、`details` markup、document listener cleanup、同時 open 抑止 / outside-click / Escape close | controller 削除、navbar 情報設計、menu item / role 導線変更 |
 | `manual-document-upload` | `spec/frontend/manual_document_upload_controller_source_spec.rb` | window / iframe document listener lifecycle、missing / inaccessible iframe no-op、single-file hidden form submit、複数 file 未対応 | 複数 file upload、upload API 化、manual upload review / apply contract、iframe preview redesign |
@@ -136,22 +136,24 @@ current fallback support として提供していること:
 - 既存の `/rails_table_preferences/preferences` path と `railsTablePreferencesTableKey` を使う default preference 補助。
 - preview context key と table index に基づく localStorage の幅・sticky 表示補助。
 
-#475 に残すこと:
+## 将来変更として切り分けること
 
-- Markdown 由来 table を通常の `rails-table-preferences` controller に full 接続するかどうかの判断。
+current fallback で具体的な不足が再現した場合は、次を 1 つずつ concrete Issue に分けます。
+
+- Markdown 由来 table を通常の `rails-table-preferences` controller に full 接続するかどうか。
 - column visibility / preset UI の本格統合、host app policy と埋め込み preview policy の整理。
 - Docusaurus renderer や Markdown table DOM rewrite、preference schema / key の再設計。
 - gem pinned ref、upstream gem API、Rails helper 側の table contract 変更。
 
-維持する理由:
+current fallback を維持する理由:
 
 - `.kiro/steering/frontend-interaction-policy.md` が app 側 preview tool として明示している。
 - `spec/frontend/preview_table_resizer_source_spec.rb` が stable key、preview context marker、軽量な横スクロール・列幅調整 cue を source-level に固定している。
-- #475 は Markdown table を今後どこまで `rails_table_preferences` に寄せるかの親論点で、current support として先取りしない。
+- full `rails_table_preferences` 統合を追う active Issue はなく、current support として先取りしない。
 
 ## 後続 issue に分ける候補
 
-- Markdown preview table を `rails_table_preferences` へ寄せる判断は #475 に残し、この inventory では実装しない。
+- Markdown preview table を `rails_table_preferences` へ寄せる判断は、current fallback の不足を再現してから新しい concrete Issue にする。この inventory では実装しない。
 - `nav-dropdowns` は native `details` の開閉を活かしつつ、同時 open / outside click close / Escape close の current contract を app 側 controller で維持する。
 - `manual-document-upload` の複数 file upload、upload API 化、iframe preview UI redesign は、source guard 済みの single-file hidden form submit flow とは分けて扱う。
 - internal UI gem pinned ref bump は #858 child issue 群に残し、この inventory では実装しない。

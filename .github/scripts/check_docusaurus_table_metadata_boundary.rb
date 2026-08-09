@@ -46,27 +46,28 @@ CHECKS = [
       "通常表示と embedded 表示で同じ key を使います",
       "table caption / heading 由来の semantic key",
       "Markdown source position 由来の stable key",
-      "column visibility、preset UI、full `rails-table-preferences` controller 接続"
+      "column visibility、preset UI、full `rails-table-preferences` controller 接続",
+      "具体的な不足が再現した場合に 1 論点ずつ新しい concrete Issue"
     ]
   },
   {
-    path: "docs/版詳細プレビュー・差分・添付確認runbook.md",
+    path: "docs/runbooks/viewer/版詳細プレビュー・差分・添付確認runbook.md",
     expected: [
       "real HTML `<table>` ごとに stable key と wrapper metadata",
-      "後続の table UX 拡張へつなぐ seam",
-      "full `rails_table_preferences` UI",
-      "保存済み幅調整",
-      "issue `#475`",
+      "table UX 拡張に使える seam",
+      "full `rails_table_preferences` UI や preference schema の全面統合を意味しません",
+      "column visibility / preset UI / renderer 全体の変更は active queue に置かず",
+      "current fallback で具体的な不足が再現した場合に新しい concrete Issue",
       "column visibility、preset UI、full `rails_table_preferences` controller 接続"
     ]
   },
   {
-    path: "ROADMAP.md",
+    path: ".kiro/steering/frontend-interaction-policy.md",
     expected: [
-      "`DocusaurusSiteRenderer` の table rewrite は current support",
-      "portal-doc-table-preference-wrapper",
-      "portal-doc-preference-table",
-      "column visibility / preset UI / preference schema の最終判断は #475"
+      "Markdown preview table の列幅 / sticky fallback",
+      "Markdown preview table の full `rails_table_preferences` 統合を追う active Issue は現在ありません",
+      "current contract は app 側 fallback を維持することです",
+      "具体的な不足が再現した場合だけ、新しい concrete Issue"
     ]
   }
 ].freeze

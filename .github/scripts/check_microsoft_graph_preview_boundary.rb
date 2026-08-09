@@ -7,7 +7,7 @@ REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
 CHECKS = [
   {
-    path: "docs/Microsoft Graph接続管理runbook.md",
+    path: "docs/runbooks/external/Microsoft Graph接続管理runbook.md",
     expected: [
       "`previewで使用中`: current preview がこの接続を使います",
       "`有効だが未使用`: この行も有効ですが、別の有効接続が preview に使われています。legacy duplicate を整理するときの対象です",
@@ -20,7 +20,7 @@ CHECKS = [
     ]
   },
   {
-    path: "docs/preview接続と外部フォルダ同期の設定責務.md",
+    path: "docs/specs/preview接続と外部フォルダ同期の設定責務.md",
     expected: [
       "`MicrosoftGraphConnection` は preview 用接続",
       "`ExternalFolderSyncSource` は同期元設定",

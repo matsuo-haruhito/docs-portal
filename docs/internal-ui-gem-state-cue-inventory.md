@@ -50,14 +50,14 @@
 | expanded / collapsed（ツリー開閉） | active filter | **非連携** | ツリーのフォルダ開閉は navigation 補助。一覧の検索条件と独立 |
 | expanded / collapsed | sort | **非連携** | ツリー開閉で一覧のソート順を変える理由がない |
 | tree search（ツリー内検索） | active filter | **非連携** | ツリー内検索は左ペインだけを絞り込む。`spec/frontend/document_tree_current_selection_source_spec.rb` で「検索は左のツリーだけを絞り込みます。」と固定済み |
-| current row | viewer table preference context | **将来連携候補** | viewer 内で文書版・site path に紐づいた table preference を持つ場合、current document から context を引くことはあり得る。ただし #4071 / #475 の schema 判断待ち |
+| current row | viewer table preference context | **非連携** | Markdown preview table の context は文書版・site path・table index から決まり、ツリー選択で preference を自動変更しない。current fallback に具体的な不足が出た場合だけ別 issue にする |
 
 ### 判断基準
 
 - TreeView の state は「navigation 補助」— 今どこにいるか、階層のどこを開いているか
 - RTP の state は「一覧の表示 preference」— どの列を見せるか、どう並べるか、どう絞るか
 - 両者は **独立した責務** であり、一方の変更が他方を自動的に書き換える連携は current support として導入しない
-- 将来、viewer 内 table が文書版ごとの preference context を持つ場合に限り、current document → preference context の参照を検討する（#4071）
+- viewer 内 table の preference context は文書版・site path・table index を正本にし、current document のツリー選択から自動変更しない
 
 ### 連携しない理由の補足
 
@@ -78,14 +78,11 @@
 
 ---
 
-## 後続 issue との関係
+## 将来変更との関係
 
-| issue | この inventory での位置づけ |
-|-------|---------------------------|
-| #475 | Markdown table full RTP 化 — viewer table preference context の schema 判断待ち |
-| #607 | screen-by-screen adoption — どの state cue を画面ごとに確認するかの入口 |
-| #4071 | ResourceTableRenderState viewer 反映 — viewer 内 table preference context cue の proposal |
-| #3783 / #4144 | 文書詳細本文側 state cue — **完了済み current behavior** |
+- Markdown table full RTP 化は active queue に置かず、current fallback で具体的な不足が再現した場合に新しい issue にする
+- screen-by-screen adoption は対象画面と state cue を 1 画面単位で確認する
+- 文書詳細本文側 state cue は current behavior として維持する
 
 ---
 

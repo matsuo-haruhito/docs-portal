@@ -6,7 +6,7 @@ require "pathname"
 REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
 SPEC_PATH = "docs/specs/閲覧画面とUI.md"
-RUNBOOK_PATH = "docs/版詳細プレビュー・差分・添付確認runbook.md"
+RUNBOOK_PATH = "docs/runbooks/viewer/版詳細プレビュー・差分・添付確認runbook.md"
 
 CHECKS = [
   {

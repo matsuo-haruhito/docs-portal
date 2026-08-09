@@ -107,7 +107,7 @@
 
 - `#607` の host-app pattern は `admin/document_sets` の helper metadata + editor + table composition を baseline にします。column metadata、pinned decision、filter label、preset 導線を view 直下へ散らさず、helper と `table_key` でまとめます。
 - `#904` は release-train child です。representative admin list / embedded table seam / rollback note は child issue / PR へ残し、screen-by-screen migration の convenience patch と同じ PR に混ぜません。
-- preview iframe 内 table は current `main` では `app/frontend/controllers/preview_table_resizer_controller.js` の app-side fallback が正本です。通常一覧と同じつもりで data attribute を足し始めたり、embedded table contract を preview fallback へ混ぜたりせず、仕様判断が必要な場合は `#475` を `needs-human` として参照します。
+- preview iframe 内 table は current `main` では `app/frontend/controllers/preview_table_resizer_controller.js` の app-side fallback が正本です。通常一覧と同じつもりで data attribute を足し始めたり、embedded table contract を preview fallback へ混ぜたりしません。full 統合は active queue に置かず、current fallback の具体的な不足が再現した場合だけ新しい concrete Issue にします。
 - export payload、hidden column、saved order の smoke は representative admin list で 1 つずつ固定します。画面ごとに ad-hoc helper や one-off preset を増やす前に、既存 helper metadata へ寄せられないかを確認します。
 
 ### 新しい issue / PR を切る前の確認順
@@ -169,7 +169,7 @@
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `rails_fields_kit` | `#921` | `status:needs-human` | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | 次の target SHA は未確定。upstream helper-export lane の human review / merge 後に child 側で決める | `admin/document_sets` form の selected 値保持、preload or remote search 1 導線、validation rerender 後の redisplay | human-review-first lane は `rails_fields_kit#273` → `#195` / `#170`。この matrix では merge point を決めない | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` |
 | `tree_view` | `#903` | `status:ready-for-agent` | `e129cb3ce2835a483e87fc71a50cc9fee07e3da5` | 次の target SHA は `#903` の update log で child 単位に決める | sidebar tree の expand / collapse、detail tree の route context、persisted state | public hook / selection lane のレビューは upstream 側に残し、downstream では smoke と rollback note に閉じる | `e129cb3ce2835a483e87fc71a50cc9fee07e3da5` |
-| `rails_table_preferences` | `#904` | `status:ready-for-agent` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | 次の target SHA は child 単位で決める。known-good revision の human gate は `#789` に残す | `admin/document_sets` の editor / filter / preset、mounted engine save。embedded table を触るときだけ別途 note を足す | `#789` の known-good revision 判断と、preview table fallback (`#475` 系) の仕様論点はここへ混ぜない | `b3f1a9d6eb46aefe568c637396fab63151aef322` |
+| `rails_table_preferences` | `#904` | `status:ready-for-agent` | `b3f1a9d6eb46aefe568c637396fab63151aef322` | 次の target SHA は child 単位で決める。known-good revision の human gate は `#789` に残す | `admin/document_sets` の editor / filter / preset、mounted engine save。embedded table を触るときだけ別途 note を足す | `#789` の known-good revision 判断と、current fallback の将来変更判断はここへ混ぜない | `b3f1a9d6eb46aefe568c637396fab63151aef322` |
 
 - `#921` は matrix 追加によって再オープン扱いにしません。current status は `needs-human` のまま読みます。
 - `#903` と `#904` は executable child ですが、target SHA と詳細な smoke evidence は各 child issue / PR 本文で残します。
@@ -302,9 +302,9 @@
 
 - Docusaurus / preview iframe 内の Markdown table は、current `main` では `rails_table_preferences` 未適用です。
 - 代わりに `app/frontend/controllers/preview_table_resizer_controller.js` が app 側 fallback path として、表幅、列幅、ヘッダー固定、先頭列固定、localStorage ベースの永続状態を扱います。
-- `docs-portal#475` は「Markdown table にどこまで gem を適用するか」の親論点で、`needs-human` のままです。
-- `docs-portal#542` と PR `#550` は fallback path の stable key を `document_version:<public_id>:<normalized_site_path>:table:<index>` に寄せた first slice です。
-- `docs-portal#547` は、その fallback path が通常表示と embedded 表示で state を共有できることを守る quality queue です。
+- full `rails_table_preferences` 統合を追う active Issue はありません。current fallback の具体的な不足が再現した場合だけ、対象 contract を 1 つに絞った新しい Issue を作ります。
+- stable key は `document_version:<public_id>:<normalized_site_path>:table:<index>` を使い、通常表示と embedded 表示で同じ context を共有します。
+- source guard と代表 smoke は、fallback path の stable key、Turbo 再描画後 refresh、検索・copy・export・列幅補助を守ります。
 
 ### docs-portal 側の主な確認場所
 
@@ -324,8 +324,8 @@
   - `table_preferences_column(...)` を使う現行の table column 定義入口を確認する
 - `app/frontend/controllers/preview_table_resizer_controller.js`
   - Markdown preview table の current fallback path、stable key、localStorage state を確認する
-- `docs-portal#475`
-  - Markdown 由来 table への適用検討では、HTML rewrite で何を足すかの論点整理を先に読む
+- `docs/notes/docusaurus-table-preference-context-boundary.md`
+  - Markdown 由来 table の metadata、stable key、current fallback と将来変更の境界を確認する
 
 ### 先に読む upstream docs
 
@@ -369,7 +369,7 @@
   - Vite / Stimulus / metadata docs の曖昧さが原因なら upstream docs / issue を先に見る
   - mount path、table key、partial composition など `docs-portal` 固有の組み込み差分なら app 側 issue を優先する
   - preview table tool の state や embedded 共有の崩れは app 側 issue を優先する
-  - Markdown preview table へ `rails_table_preferences` をどこまで導入するかは `docs-portal#475` の仕様判断なので `needs-human` として扱う
+  - Markdown preview table の full `rails_table_preferences` 統合は active queue に置かず、current fallback の具体的な不足が再現した場合だけ新しい concrete Issue にする
 
 ### 代表 smoke contract
 
@@ -380,11 +380,11 @@
 - preset の保存または読み戻し
   - engine 経由の preset 保存が対象 issue の範囲なら保存から再読込まで確認し、保存を触らない slice でも既存 preset の読み戻しが壊れていないことを確認します。
 - Markdown preview table を触る issue の扱い
-  - preview iframe 内 table は app 側 fallback path が正本なので、この smoke だけで代替せず `docs-portal#475` `#542` `#547` の論点と分けて扱います。
+  - preview iframe 内 table は app 側 fallback path が正本なので、この smoke だけで通常一覧の rtp 採用成功とは扱いません。current fallback の具体的な不足と、通常一覧の gem smoke を分けます。
 
-### 関連 issue
+### 関連情報
 
-- `docs-portal#475` Markdown 由来の HTML table と table preferences
+- Markdown preview table の metadata / stable key: `docs/notes/docusaurus-table-preference-context-boundary.md`
 - `rails_table_preferences#11` Rails Fields Kit renderer 連携の end-to-end docs
 - `rails_table_preferences#12` 既存 Stimulus application への登録前提
 - `rails_table_preferences#13` Vite / `app/frontend` での import 解決前提

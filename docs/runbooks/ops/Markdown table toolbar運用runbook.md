@@ -1,6 +1,6 @@
 # Markdown table toolbar 運用 runbook
 
-この文書は、Markdown preview の HTML table に付く current toolbar の読み方をまとめる docs-sync メモです。`docs/版詳細プレビュー・差分・添付確認runbook.md` と `docs/specs/閲覧画面とUI.md` の補助として使い、ここでは新しい viewer 仕様や `rails_table_preferences` の全面統合方針は決めません。
+この文書は、Markdown preview の HTML table に付く current toolbar の読み方をまとめる docs-sync メモです。`docs/runbooks/viewer/版詳細プレビュー・差分・添付確認runbook.md` と `docs/specs/閲覧画面とUI.md` の補助として使い、ここでは新しい viewer 仕様や `rails_table_preferences` の全面統合方針は決めません。
 
 ## 判定分類
 
@@ -12,14 +12,14 @@
 
 - `app/frontend/lib/markdown_preview_table_tools.js`
 - `spec/frontend/markdown_preview_table_tools_source_spec.rb`
-- `docs/版詳細プレビュー・差分・添付確認runbook.md`
+- `docs/runbooks/viewer/版詳細プレビュー・差分・添付確認runbook.md`
 - `docs/specs/閲覧画面とUI.md`
 
 ## いつ見るか
 
 - `HTML本文を開く` から standalone viewer を開き、Markdown 由来の表を確認するとき
 - 表が横長または行数が多く、表内検索やコピーで確認したいとき
-- #475 の full `rails_table_preferences` 統合と、current toolbar の境界を読み分けたいとき
+- Markdown preview table を将来 full `rails_table_preferences` 統合する場合と、current toolbar の境界を読み分けたいとき
 
 ## Current support
 
@@ -45,20 +45,19 @@ current `main` では、same-origin の `iframe.site-viewer-frame` 内にある 
 
 ## Current support として書かないこと
 
-- #475 の full `rails_table_preferences` 統合が完了した、とは書かない
+- Markdown preview table の full `rails_table_preferences` 統合が完了した、とは書かない
 - Markdown 原文や生成済み HTML を toolbar 操作で書き換えられる、とは書かない
 - embedded body 側、Docusaurus renderer、Mermaid、Kroki、codeblock action まで同じ helper が扱う、とは書かない
 - server-side dry-run、外部 API 送信、正式 review workflow、監査ログ記録を table toolbar の current support として書かない
 
 ## 迷ったときの確認順
 
-1. 版詳細全体の見方は `docs/版詳細プレビュー・差分・添付確認runbook.md` を見る
+1. 版詳細全体の見方は `docs/runbooks/viewer/版詳細プレビュー・差分・添付確認runbook.md` を見る
 2. viewer / table UX の方針は `docs/specs/閲覧画面とUI.md` の `Markdown table viewer UX` を見る
 3. current toolbar の実装境界は `app/frontend/lib/markdown_preview_table_tools.js` と `spec/frontend/markdown_preview_table_tools_source_spec.rb` を見る
-4. full `rails_table_preferences` 統合や table preference key の広い判断は #475 を正本として扱う
+4. full `rails_table_preferences` 統合や table preference key の広い判断は active queue ではありません。current fallback で具体的な不足が再現した場合に、新しい concrete Issue として切り出します
 
 ## 関連
 
 - Refs #2734
 - Refs #2765
-- Refs #475
