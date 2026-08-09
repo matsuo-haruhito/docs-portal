@@ -172,9 +172,9 @@ RSpec.describe "preview tools source" do
 
   it "keeps ROADMAP aligned with the retired preview-tools bridge boundary" do
     aggregate_failures do
-      expect(roadmap_source).to include("`preview-tools` bridge は移行用の入口として退役済み")
-      expect(roadmap_source).to include("bridge 再導入や空 controller の維持は current support として扱わない")
-      expect(roadmap_source).to include("専用 controller がそれぞれ helper refresh を担当")
+      expect(roadmap_source).to include("`preview-tools` bridge: 退役済み")
+      expect(roadmap_source).to include("専用 Stimulus controller が各 preview helper を refresh")
+      expect(roadmap_source).to include("専用 controller がそれぞれ helper refresh または DOM 操作を担当する")
       expect(roadmap_source).to include("`markdown-preview-table-tools`")
       expect(roadmap_source).to include("`pdf-preview-tools`")
       expect(roadmap_source).to include("`application.js` に `querySelectorAll` とイベント登録を直接増やさない")
@@ -211,7 +211,8 @@ RSpec.describe "preview tools source" do
       expect(inventory_source).to include("`markdown-preview-table-tools`")
       expect(inventory_source).to include("`setupMarkdownPreviewTableTools()` を専用 controller から refresh")
       expect(inventory_source).to include("`preview-tools` bridge は空 bridge を残さず退役")
-      expect(inventory_source).to include("#475 の full `rails_table_preferences` 統合")
+      expect(inventory_source).to include("full `rails_table_preferences` 統合、column visibility / preset UI、Docusaurus renderer、Markdown table DOM rewrite、preference schema / key 再設計は active queue に置かず")
+      expect(inventory_source).to include("current fallback の具体的な不足が再現した場合に新しい concrete Issue として切り出します")
       expect(inventory_source).to include("Markdown preview table の full `rails_table_preferences` 統合、column visibility / preset UI、Docusaurus renderer、DOM rewrite、preference schema / key 再設計は変更しない")
     end
   end

@@ -18,37 +18,20 @@ CHECKS = [
     ]
   },
   {
-    path: "docs/README.md",
+    path: "ROADMAP.md",
     expected: [
-      "Issue / PR 番号",
-      "current support の証跡",
-      "historical evidence",
-      "次に見る候補",
-      "proposal",
-      "番号だけを current action とせず",
-      "各 docs の本文、ROADMAP の文脈、current code"
+      "ここに書かないもの: 完了済み・close 済み Issue",
+      "将来対応・保留事項は [ToDo](docs/ToDo.md) を正本にする",
+      "## 候補を追加する条件",
+      "active queue に置かない"
     ]
   },
   {
-    path: "ROADMAP.md",
+    path: "docs/ToDo.md",
     expected: [
-      "代表 issue / PR",
-      "current support の証跡",
-      "historical evidence",
-      "次に見る未解決候補",
-      "`PR #... は merged`",
-      "`current support`",
-      "`docs 同期`",
-      "`完了済み`",
-      "再実装や refresh 対象ではなく",
-      "#1333、#1986、PR #1366 のような完了済み番号",
-      "open blocker として見る番号",
-      "`候補`",
-      "`次に見る`",
-      "`proposal`",
-      "`release train gate`",
-      "`needs-human`",
-      "closed / merged PR 番号だけが current next action"
+      "具体 Issue があるものは、この文書に要件を重複して残さず",
+      "**具体 Issue あり**",
+      "close 済み Issue を進行中キューとして残さない"
     ]
   }
 ].freeze

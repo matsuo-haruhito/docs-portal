@@ -66,7 +66,7 @@ Rails helper / HTML 生成が中心。可能な限り Turbo による差し替�
 - Markdown preview table の列幅 / sticky fallback: `preview_table_resizer_controller.js` による app 側 preview tool
 - Markdown preview table の search / copy / export / preference helper: `markdown_preview_table_tools_controller.js` による app 側 preview tool
 
-`docs-portal#475` は Markdown table を今後どこまで `rails_table_preferences` に寄せるかの親論点で、まだ `needs-human` です。`docs-portal#542` と PR `#550` は fallback path の stable key を先に整えた slice、`docs-portal#547` はその挙動を回帰確認で守る quality queue として扱います。
+Markdown preview table の full `rails_table_preferences` 統合を追う active Issue は現在ありません。current contract は app 側 fallback を維持することです。通常一覧と preview table で共有すべき preference contract に具体的な不足が再現した場合だけ、新しい concrete Issue として切り出します。
 
 ### rails_fields_kit
 

@@ -40,4 +40,4 @@ Preference context に使える current metadata:
 
 ## Boundary
 
-この first slice は context key と renderer rewrite 境界の読み返しだけを扱います。Markdown table の column visibility、preset UI、full `rails-table-preferences` controller 接続、preference schema 変更、Docusaurus renderer 全体の再設計、pinned ref bump は #475 側に残します。
+この first slice は context key と renderer rewrite 境界の読み返しだけを扱います。Markdown table の column visibility、preset UI、full `rails-table-preferences` controller 接続、preference schema 変更、Docusaurus renderer 全体の再設計、pinned ref bump は current support に含めません。具体的な不足が再現した場合に 1 論点ずつ新しい concrete Issue にします。

@@ -20,7 +20,7 @@ DOC_CHECKS = [
   {
     path: "docs/README.md",
     expected: [
-      "UI / JavaScript / Vite / Stimulus / 関連 gem を触る場合は",
+      "フロントエンド操作の方針",
       "../.kiro/steering/frontend-interaction-policy.md"
     ]
   }

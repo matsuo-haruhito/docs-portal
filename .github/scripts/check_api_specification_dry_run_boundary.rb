@@ -7,7 +7,7 @@ API_SPEC_DRY_RUN_REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
 API_SPEC_DRY_RUN_CHECKS = [
   {
-    path: "docs/API仕様ページとdocs-src更新確認runbook.md",
+    path: "docs/runbooks/ops/API仕様ページとdocs-src更新確認runbook.md",
     expected: [
       "`READ_ONLY_MAINTENANCE` が有効な間、API仕様ページは閲覧・状態確認・生成済み HTML の確認だけを続ける read-only 入口として扱います。",
       "API仕様ページ表示時の stale build enqueue",

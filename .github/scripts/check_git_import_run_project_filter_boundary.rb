@@ -9,7 +9,7 @@ GIT_IMPORT_RUN_PROJECT_FILTER_FILES = {
   routes: GIT_IMPORT_RUN_PROJECT_FILTER_REPO_ROOT.join("config/routes.rb"),
   controller: GIT_IMPORT_RUN_PROJECT_FILTER_REPO_ROOT.join("app/controllers/admin/git_import_runs_controller.rb"),
   view: GIT_IMPORT_RUN_PROJECT_FILTER_REPO_ROOT.join("app/views/admin/git_import_runs/index.html.slim"),
-  runbook: GIT_IMPORT_RUN_PROJECT_FILTER_REPO_ROOT.join("docs/Git連携設定と同期失敗確認runbook.md")
+  runbook: GIT_IMPORT_RUN_PROJECT_FILTER_REPO_ROOT.join("docs/runbooks/import/Git連携設定と同期失敗確認runbook.md")
 }.freeze
 
 GIT_IMPORT_RUN_PROJECT_FILTER_SIGNALS = {

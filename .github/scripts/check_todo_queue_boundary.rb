@@ -16,39 +16,54 @@ end
 content = TODO_PATH.read
 lines = content.lines
 
-REQUIRED_BOUNDARY_TEXT = [
-  "具体 Issue があるものは、この文書に要件を重複して残さず、Issue 番号と正本 docs への導線だけを残す",
-  "未起票のまま残す項目は、まだ起票しない理由を短く添える",
-  "具体 Issue があるもの: ToDo 側では Issue 番号、正本 docs、残る判断論点だけを残し",
-  "未起票のまま残すもの: 具体画面、運用痛点、再現条件、または受け入れ条件が固まった時点で concrete issue に切り出す"
+REQUIRED_PATTERNS = [
+  /実装済み・close 済みの項目/,
+  /具体 Issue があるもの.*Issue 番号.*正本 docs.*判断論点/m,
+  /未起票のまま残す項目.*まだ起票しない理由/m,
+  /人間判断待ち/,
+  /未起票のまま残すもの/,
+  /close 済み Issue を進行中キューとして残さない/
 ].freeze
 
-REQUIRED_BOUNDARY_TEXT.each do |expected_text|
-  next if content.include?(expected_text)
+REQUIRED_PATTERNS.each do |pattern|
+  next if content.match?(pattern)
 
-  errors << "docs/ToDo.md: missing ToDo queue boundary text: #{expected_text.inspect}"
+  errors << "docs/ToDo.md: missing queue boundary: #{pattern.inspect}"
+end
+
+CLOSED_QUEUE_REFERENCES = %w[
+  #475 #758 #760 #1112 #1162 #1246 #1266 #1300 #1604 #1613 #1614
+  #2224 #2766 #3268 #3269 #3418 #3421 #4071 #4486 #4761
+].freeze
+
+CLOSED_QUEUE_REFERENCES.each do |reference|
+  bare_reference = /(?<![[:alnum:]_.-])#{Regexp.escape(reference)}(?!\d)/
+  qualified_reference = /docs-portal#{Regexp.escape(reference)}(?!\d)/
+  next unless content.match?(bare_reference) || content.match?(qualified_reference)
+
+  errors << "docs/ToDo.md: closed item remains in active future queue: #{reference}"
 end
 
 BROAD_UMBRELLA_CHECKS = [
   {
     label: "社内 / 社外 / 管理者ごとの導線差分",
     required: [
-      "分類: 未起票のまま残すもの",
-      "まだ起票しない理由: 対象画面、導線差分、受け入れ条件が画面群ごとに固まっていない"
+      "分類は未起票のまま残すもの",
+      "まだ起票しない理由は、対象画面、導線差分、受け入れ条件が画面群ごとに固まっていない"
     ]
   },
   {
     label: "総合 UI/UX 見直し",
     required: [
-      "分類: 未起票のまま残すもの",
-      "まだ起票しない理由: broad umbrella では review / acceptance が大きすぎる"
+      "分類は未起票のまま残すもの",
+      "まだ起票しない理由は、broad umbrella では review と acceptance が大きすぎる"
     ]
   },
   {
     label: "安定化を進める",
     required: [
       "broad umbrella issue は原則として維持しない",
-      "まだ起票しない理由: 再現した問題、対象 job/spec、観測指標、受け入れ条件が揃うまで umbrella では扱わない"
+      "まだ起票しない理由は、再現した問題、対象 job / spec、観測指標、受け入れ条件が揃うまで umbrella では扱えない"
     ]
   }
 ].freeze
@@ -69,11 +84,19 @@ BROAD_UMBRELLA_CHECKS.each do |check|
   end
 end
 
-concrete_issue_lines = lines.select { |line| line.include?("分類: 具体 Issue") }
-concrete_issue_lines.each do |line|
-  next if line.match?(/#\d+/) || line.include?("正本 docs")
+lines.grep(/^- .*分類(?:は|:).*具体 Issue あり/).each do |line|
+  next if line.match?(/#\d+/)
 
-  errors << "docs/ToDo.md: concrete Issue item lacks an Issue number or source-doc route: #{line.strip}"
+  errors << "docs/ToDo.md: concrete Issue item lacks an Issue number: #{line.strip}"
+end
+
+lines.each_with_index do |line, index|
+  next unless line.include?("分類は未起票のまま残すもの")
+
+  nearby_text = lines[index, 3].join
+  next if nearby_text.include?("まだ起票しない理由")
+
+  errors << "docs/ToDo.md: unfiled item lacks a reason near line #{index + 1}"
 end
 
 if errors.any?

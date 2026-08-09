@@ -142,37 +142,13 @@ unless readme.empty?
 end
 
 unless docs_readme.empty?
-  require_text(docs_readme, "docs/README.md", "Issue / PR 番号", errors)
-  require_text(docs_readme, "docs/README.md", "番号だけを current action とせず", errors)
-
-  require_line_with(
-    docs_readme,
-    "docs/README.md",
-    "- 利用者画面 / viewer:",
-    [
-      "ダッシュボードと文書ショートカット・確認依頼の使い分け",
-      "文書詳細・版詳細・ZIP・アクセス申請"
-    ],
-    errors
-  )
-  require_line_with(
-    docs_readme,
-    "docs/README.md",
-    "- admin 運用:",
-    [
-      "管理ダッシュボード・モデルブラウザ運用runbook",
-      "アクセス申請",
-      "文書マスタ",
-      "文書セット"
-    ],
-    errors
-  )
-  require_text(docs_readme, "docs/README.md", "company_master_admin会社・ユーザー管理runbook", errors)
-  require_text(docs_readme, "docs/README.md", "案件・文書管理 role ではない境界", errors)
-  require_text(docs_readme, "docs/README.md", "internal admin へ戻す判断", errors)
-  require_text(docs_readme, "docs/README.md", "利用者向けアクセス申請runbook", errors)
-  require_text(docs_readme, "docs/README.md", "利用者向け同意画面・同意履歴runbook", errors)
-  require_text(docs_readme, "docs/README.md", "外部送付履歴運用runbook", errors)
+  require_text(docs_readme, "docs/README.md", "## カテゴリ別入口", errors)
+  require_text(docs_readme, "docs/README.md", "仕様 → [specs/]", errors)
+  require_text(docs_readme, "docs/README.md", "Runbook → [runbooks/]", errors)
+  require_text(docs_readme, "docs/README.md", "未確定事項 → [ToDo.md]", errors)
+  require_text(docs_readme, "docs/README.md", "[ROADMAP]", errors)
+  require_text(docs_readme, "docs/README.md", "maintenance-mode 境界一覧", errors)
+  require_text(docs_readme, "docs/README.md", "フロントエンド操作の方針", errors)
 end
 
 unless local_setup_docs.empty?
