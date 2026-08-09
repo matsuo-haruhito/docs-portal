@@ -41,8 +41,10 @@ class ManualDocumentUpload
       Result.new(document:, version:, source_path: full_source_path)
     end
 
-    enqueue_preview_build!(result.version) if markdown_extension?(full_source_path)
-    notify_generated_file_change!(result, operation)
+    ActiveRecord.after_all_transactions_commit do
+      enqueue_preview_build!(result.version) if markdown_extension?(full_source_path)
+      notify_generated_file_change!(result, operation)
+    end
     result
   end
 
@@ -81,6 +83,7 @@ class ManualDocumentUpload
       category: :other,
       document_kind: document_kind_for(filename),
       visibility_policy: :internal_only,
+      source_authority: :docs_portal,
       importance_level: :normal,
       recommended_sort_order: 100
     )

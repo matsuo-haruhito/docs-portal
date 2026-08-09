@@ -46,8 +46,9 @@ current 実装の前提:
 
 ### 2. 対象種別
 
-- `target_type` は current UI では `page` `file` `zip` `ai_context` を扱う
-- HTML 本文の閲覧、添付ファイル配布、ZIP 配布、AI context export の利用証跡を切り分けたいときに使う
+- `target_type` は current UI では `page` `file` `zip` `ai_context` `dry_run` を扱う
+- HTML 本文の閲覧、添付ファイル配布、ZIP 配布、AI context export、API仕様 codeblock dry-run の利用証跡を切り分けたいときに使う
+- API仕様 codeblock dry-run は `action_type=dry_run` / `target_type=dry_run` で記録し、filter 対象外の独自種別には分けない
 - AI context export は HTML preview と JSON / Markdown download の証跡を `target_type: ai_context` として残す
 - 一覧の `対象` 列には対象種別に加えて `target_name` が出るので、同じ種別の中でもどのファイルやページ、または AI context export の mode だったかを見分けやすい
 

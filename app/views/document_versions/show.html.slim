@@ -22,7 +22,7 @@ p.muted
   p.eyebrow 版詳細プレビュー
   h1
     = @document.title
-    |  
+    |
     = document_version_label(@version)
   p.muted = hero_description
   p.actions
@@ -82,7 +82,7 @@ p.muted
     h2 プレビュー状態
     ul.compact-list
       li
-        strong HTML本文: 
+        strong HTML本文:
         - if @version.rendered_site_available?
           | 表示可能
         - elsif docusaurus_preview_pending
@@ -90,20 +90,20 @@ p.muted
         - else
           | 未生成
       li
-        strong ビルド状態: 
+        strong ビルド状態:
         = preview_build_status.label
       li
-        strong Markdown入口: 
+        strong Markdown入口:
         = @version.markdown_entry_path.presence || "未設定"
       li
-        strong 元ファイル: 
+        strong 元ファイル:
         = "#{@version.document_files.size}件"
       - if @version.site_build_path.present?
         li
-          strong ビルドマニフェスト: 
+          strong ビルドマニフェスト:
           = @docusaurus_build_manifest&.source_path.presence || "未検出"
         li
-          strong マニフェスト警告: 
+          strong マニフェスト警告:
           = "#{@docusaurus_build_manifest&.warnings&.size.to_i}件"
     p.muted = preview_build_status.message
     - if preview_build_status.detail_lines.any?

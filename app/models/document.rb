@@ -62,6 +62,13 @@ class Document < ApplicationRecord
     public_with_login: 2
   }
 
+  enum :source_authority, {
+    docs_portal: 0,
+    github: 1,
+    sales_mgt: 2,
+    external_folder: 3
+  }, prefix: true
+
   enum :importance_level, {
     critical: 0,
     important: 1,
@@ -134,6 +141,10 @@ class Document < ApplicationRecord
   end
 
   def mark_discard_reviewed!(actor:)
+    if discard_candidate_at.blank?
+      raise ApplicationError::BadRequest, "廃棄候補が設定されていない文書は確認済みにできません。"
+    end
+
     update!(discard_reviewed_at: Time.current, discard_reviewed_by: actor)
   end
 end

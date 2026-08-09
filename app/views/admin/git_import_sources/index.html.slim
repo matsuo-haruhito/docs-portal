@@ -73,8 +73,12 @@ h1 Git連携
     = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "Git連携設定一覧の表示設定")
 
   p.muted = "Git連携設定一覧の操作は、手動同期=今すぐ取り込み、編集=設定変更、削除=設定削除です。手動同期と削除は対象情報つきの確認を表示します。"
+  p.actions
+    = link_to "同期履歴", admin_git_import_runs_path, class: "button secondary"
+    = link_to "定期ジョブ", admin_recurring_job_schedules_path(q: "sync_git_import_sources"), class: "button secondary"
 
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+    caption.sr-only Git連携設定一覧
     thead
       tr
         th data-rails-table-preferences-column-key="project" 案件
@@ -82,6 +86,7 @@ h1 Git連携
         th data-rails-table-preferences-column-key="branch_path" ブランチ/パス
         th data-rails-table-preferences-column-key="auth_type" 認証方式
         th data-rails-table-preferences-column-key="last_synced" 最終同期
+        th data-rails-table-preferences-column-key="latest_run" 直近実行
         th data-rails-table-preferences-column-key="enabled" 状態
         th data-rails-table-preferences-column-key="actions" 操作
     tbody
@@ -91,6 +96,9 @@ h1 Git連携
         - sync_state_label = source.enabled? ? "有効" : "無効"
         - sync_confirm = "Git連携設定を手動同期します。案件: #{sync_project_label}、リポジトリ: #{source.repository_full_name}、ブランチ: #{source.branch}、取込元パス: #{sync_source_path}、状態: #{sync_state_label}。今すぐ取り込みを実行し、設定の編集や削除は行いません。"
         - delete_confirm = "Git連携設定を削除します。案件: #{sync_project_label}、リポジトリ: #{source.repository_full_name}、ブランチ: #{source.branch}、取込元パス: #{sync_source_path}、状態: #{sync_state_label}。手動同期ではなく、設定を削除する操作です。"
+        - latest_run = @latest_git_import_runs_by_source_id[source.id]
+        - latest_failed_run = @latest_failed_git_import_runs_by_source_id[source.id]
+        - run_history_params = { project_id: source.project_id, repository: source.repository_full_name, branch: source.branch, source_path: source.source_path }
         tr
           td data-rails-table-preferences-column-key="project"
             = source.project.name
@@ -114,10 +122,21 @@ h1 Git連携
               span.muted = l(source.last_synced_at) if source.last_synced_at
             - else
               span.muted 未同期
+          td data-rails-table-preferences-column-key="latest_run"
+            - if latest_run.present?
+              span.badge = git_import_run_status_label(latest_run)
+              br
+              time.muted datetime=latest_run.created_at.iso8601 = l(latest_run.created_at)
+            - else
+              span.muted 未実行
+            - if latest_failed_run.present?
+              br
+              = link_to "最終失敗: #{l(latest_failed_run.created_at)}", admin_git_import_runs_path(run_history_params.merge(status: "failed"))
           td data-rails-table-preferences-column-key="enabled"
             span.badge = sync_state_label
           td.actions data-rails-table-preferences-column-key="actions"
             = button_to "手動同期", sync_admin_git_import_source_path(source), method: :post, class: "button", form: { data: { turbo_confirm: sync_confirm } }
+            = link_to "履歴", admin_git_import_runs_path(run_history_params), class: "button secondary"
             = edit_link_to "編集", edit_admin_git_import_source_path(source)
             = delete_link_to "削除", admin_git_import_source_path(source), confirm: delete_confirm
 

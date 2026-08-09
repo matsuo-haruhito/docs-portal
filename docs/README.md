@@ -20,6 +20,7 @@
 操作手順（viewer / admin / import / 外部連携 / 運用インフラ）
 
 - [sales-mgt同期運用runbook](./runbooks/external/sales-mgt同期運用runbook.md)
+- [OAuth 2.0・MCP接続runbook](./runbooks/external/OAuth%202.0・MCP接続runbook.md)
 
 ### 開発ガイド → [guides/](./guides/)
 
@@ -33,7 +34,8 @@ tree_view / rails_table_preferences / rails_fields_kit のリリース判断・e
 
 ### AI 向けルール・実装ガイド → [.kiro/](../.kiro/)
 
-steering（ルール）と skills（手順）は .kiro/ 配下を参照
+steering（ルール）と skills（手順）は .kiro/ 配下を参照。
+実装中の機能計画（requirements / design / tasks）は `.kiro/specs/{feature}/` に置き、完了後に削除する。
 
 ---
 
@@ -50,13 +52,11 @@ steering（ルール）と skills（手順）は .kiro/ 配下を参照
 - [コーディング規約](./コーディング規約.md)
 - [テスト方針](./テスト方針.md)
 - [開発・保守ガイド](./開発・保守ガイド.md)
-- [internal UI gem state cue inventory](./internal-ui-gem-state-cue-inventory.md)
 
 ---
 
 ## 関連リンク
 
-- [ROADMAP](../ROADMAP.md) — gem 展開・Stimulus 化の次フェーズ
 - [maintenance-mode 境界一覧](../.kiro/steering/maintenance-mode-boundaries.md)
 - [internal UI gem 責務境界](../.kiro/steering/internal-ui-gem-boundaries.md)
 - [フロントエンド操作の方針](../.kiro/steering/frontend-interaction-policy.md)

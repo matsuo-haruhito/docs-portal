@@ -9,6 +9,8 @@ ja:
       recurring_job_schedule: "定期ジョブ設定"
       webhook_delivery: "Webhook送信履歴"
     attributes:
+      document:
+        source_authority: "正本区分"
       recurring_job_schedule:
         enabled_before_reliability_v2_suspend: "信頼性V2停止前の有効状態"
       external_master_sync_mapping:
@@ -138,6 +140,11 @@ ja:
         normal: "通常"
         reference: "参考"
         deprecated: "非推奨"
+      source_authority:
+        docs_portal: "docs-portal"
+        github: "GitHub"
+        sales_mgt: "sales-mgt"
+        external_folder: "外部フォルダ"
     document_catalogs:
       audience_type:
         customer: "顧客向け"

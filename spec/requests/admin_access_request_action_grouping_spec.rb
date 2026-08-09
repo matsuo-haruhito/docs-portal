@@ -28,15 +28,16 @@ RSpec.describe "Admin access request action grouping", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("判断前に対象・要求権限・理由を確認してください。")
-    expect(page_text).to include("承認: 要求権限を付与します。")
     expect(page_text).to include("却下: 理由を残して申請を閉じます。")
     expect(page_text).to include("却下理由の定型候補")
     expect(page_text).to include("補足（任意）")
 
     action_forms = parsed_html.css("form[action='#{admin_access_request_path(access_request)}']")
+    approve_form = action_forms.first
     reject_form = action_forms.last
 
     expect(action_forms.size).to eq(2)
+    expect(approve_form.at_css("input[name='decision'][value='approve']")).to be_present
     expect(reject_form.at_css("input[name='decision'][value='reject']")).to be_present
     expect(reject_form.at_css("select[name='rejection_reason_preset']")).to be_present
     expect(reject_form.at_css("textarea[name='rejection_reason_note']")).to be_present
@@ -55,6 +56,9 @@ RSpec.describe "Admin access request action grouping", type: :request do
     expect(row.text.squish).to include("管理権限申請")
     expect(row.text.squish).to include("現行の承認処理では管理者 role を付与しません")
     expect(row.text.squish).to include("判断前に対象・要求権限・理由を確認してください。")
-    expect(row.css("form[action='#{admin_access_request_path(access_request)}']").size).to eq(2)
+    action_forms = row.css("form[action='#{admin_access_request_path(access_request)}']")
+    expect(action_forms.size).to eq(1)
+    expect(action_forms.first.at_css("input[name='decision'][value='approve']")).to be_nil
+    expect(action_forms.first.at_css("input[name='decision'][value='reject']")).to be_present
   end
 end

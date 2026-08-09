@@ -265,6 +265,7 @@ RSpec.describe "API internal master syncs", type: :request do
     expect(response).to have_http_status(:ok)
     document = Document.last
     expect(document).to have_attributes(title: "同期文書.pdf", slug: "synced-document", project: project)
+    expect(document).to be_source_authority_sales_mgt
     expect(document.document_versions).to be_empty
     expect(DocumentFile.where(document_version_id: document.document_version_ids)).to be_empty
     expect(ExternalMasterSyncMapping.find_by!(resource_type: "document").source_attributes)

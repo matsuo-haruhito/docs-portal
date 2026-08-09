@@ -9,10 +9,11 @@ class SessionsController < ApplicationController
     user = User.find_by(email_address: session_params[:email_address]&.downcase)
 
     if user&.authenticate(session_params[:password]) && user.active?
+      oauth_return_to = session[:oauth_return_to]
       reset_session
       session[:user_id] = user.id
       user.update_column(:last_login_at, Time.current)
-      redirect_to root_path, notice: "ログインしました。"
+      redirect_to safe_oauth_return_to(oauth_return_to) || root_path, notice: "ログインしました。"
     else
       flash.now[:alert] = "メールアドレスまたはパスワードが正しくありません。"
       render :new, status: :unprocessable_entity
@@ -45,6 +46,17 @@ class SessionsController < ApplicationController
   def redirect_if_logged_in!
     reset_session_if_stale!
     redirect_to root_path if logged_in?
+  end
+
+  def safe_oauth_return_to(value)
+    return if value.blank?
+
+    uri = URI.parse(value)
+    return if uri.host.present? || uri.scheme.present? || !value.start_with?("/oauth/authorize")
+
+    value
+  rescue URI::InvalidURIError
+    nil
   end
 
   def capture_login_redirect_path

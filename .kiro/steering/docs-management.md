@@ -25,7 +25,8 @@ inclusion: always
 
 | 情報 | 正本 |
 |------|------|
-| 業務仕様・要件 | `.kiro/specs/{feature}/` + `docs/アプリケーション仕様.md`（インデックス） |
+| 業務仕様・要件（恒久） | `docs/specs/` + `docs/アプリケーション仕様.md`（インデックス） |
+| 実装計画（一時） | `.kiro/specs/{feature}/`（完了後削除） |
 | コーディングルール | `.kiro/steering/coding.md` |
 | テスト方針 | `docs/テスト方針.md` |
 | UI設計パターン | `.kiro/steering/ui-patterns.md` |
@@ -76,8 +77,16 @@ inclusion: always
 
 ## spec 配置ルール
 
-- 新規 spec は `.kiro/specs/{feature}/` に作成する（requirements.md / design.md / tasks.md 形式）
-- 既存 `docs/specs/` のファイルは次に触る時に `.kiro/specs/` へ移行する（一括移行は行わない）
+| 置き場 | 役割 | ライフサイクル |
+|--------|------|---------------|
+| `docs/specs/` | プロジェクト全体の恒久仕様・設計（人間が読む正本） | 永続。実装と乖離したら更新する |
+| `.kiro/specs/{feature}/` | Kiro spec セッション用の実装計画（requirements.md / design.md / tasks.md） | 実装完了後に削除する |
+
+### ルール
+
+- 恒久的な仕様・設計判断は `docs/specs/` に書く
+- Kiro の spec セッションで生成する実装計画は `.kiro/specs/{feature}/` に置く
+- `.kiro/specs/` の実装計画が完了したら、仕様として残すべき内容は `docs/specs/` に反映し、計画ファイル自体は削除する
 - `docs/アプリケーション仕様.md` は機能名 + 概要のインデックスとして維持する
 
 ---

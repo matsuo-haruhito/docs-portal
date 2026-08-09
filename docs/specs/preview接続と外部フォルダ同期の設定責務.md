@@ -32,6 +32,7 @@ Office preview 用の接続です。管理画面の `admin/microsoft_graph_conne
 - `drive_id`
 - `preview_folder_path`
 - `enabled`
+- `preview_selected`（案件ごとの Office preview 利用接続を明示する。無効接続では選択しない）
 - `site_id` は任意メモ
 
 この接続は、Office ファイルを preview するときに、一時 upload 先 Drive と preview URL 取得に使います。外部フォルダ同期元そのものではありません。

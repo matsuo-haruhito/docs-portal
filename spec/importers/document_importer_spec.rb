@@ -24,6 +24,7 @@ RSpec.describe DocumentImporter do
               category: "spec",
               document_kind: "markdown",
               visibility_policy: "restricted_external",
+              source_authority: "github",
               version_label: "v1",
               status: "published",
               source_relative_path: "作成資料\\編集正本\\設計書.md",
@@ -42,6 +43,7 @@ RSpec.describe DocumentImporter do
       ).call
 
       version = Document.find_by!(slug: "design-doc").latest_version
+      expect(version.document).to be_source_authority_github
       expect(version.source_relative_path).to eq("作成資料/編集正本/設計書.md")
       expect(version.source_directory).to eq("作成資料/編集正本")
       expect(version.source_file_name).to eq("設計書.md")

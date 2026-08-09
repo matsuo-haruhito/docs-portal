@@ -71,7 +71,7 @@ RSpec.describe "Admin documents index", type: :request do
       node["data-rails-table-preferences-column-key"]
     end
 
-    expect(header_keys).to eq(%w[project title slug category document_kind visibility_policy status latest_version legacy_versions retention_until discard_candidate_at actions])
+    expect(header_keys).to eq(%w[project title slug category document_kind visibility_policy source_authority status latest_version legacy_versions retention_until discard_candidate_at discard_review actions])
 
     active_row = parsed_html.css("tbody tr").find { |row| row.text.include?("運用手順") }
     archived_row = parsed_html.css("tbody tr").find { |row| row.text.include?("旧仕様") }

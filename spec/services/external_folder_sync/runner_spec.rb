@@ -28,6 +28,7 @@ RSpec.describe ExternalFolderSync::Runner do
     run = described_class.new(source:, mode: :apply, actor:, change_event_notifier: notifier).call
 
     expect(run).to be_completed
+    expect(source.external_folder_sync_items.last.document).to be_source_authority_external_folder
     expect(source.reload.cursor).to eq("cursor-1")
     expect(notifier).to have_received(:notify).with(
       file_events: [{"path" => "Google Drive Sync/decision_flow.yml", "operation" => "create"}],

@@ -10,14 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_184000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_09_180200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
 
   create_table "access_logs", id: { comment: "ID" }, comment: "アクセスログ", force: :cascade do |t|
     t.datetime "accessed_at", null: false, comment: "アクセス日時"
-    t.integer "action_type", null: false, comment: "操作種別"
+    t.integer "action_type", null: false, comment: "操作種別（view/download/bulk_edit/dry_run/external_preview）"
     t.bigint "company_id", comment: "会社ID"
     t.datetime "created_at", null: false, comment: "作成日時"
     t.bigint "document_id", comment: "文書ID"
@@ -499,6 +499,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_184000) do
     t.integer "recommended_sort_order", default: 0, null: false, comment: "推奨表示順"
     t.datetime "retention_until", comment: "保存期限日時"
     t.string "slug", null: false, comment: "スラッグ"
+    t.integer "source_authority", default: 0, null: false, comment: "正本区分（docs-portal/GitHub/sales-mgt/外部フォルダ）"
     t.string "title", null: false, comment: "タイトル"
     t.datetime "updated_at", null: false, comment: "更新日時"
     t.integer "visibility_policy", default: 0, null: false, comment: "公開方針"
@@ -514,6 +515,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_184000) do
     t.index ["recommended_sort_order"], name: "index_documents_on_recommended_sort_order"
     t.index ["retention_until"], name: "index_documents_on_retention_until"
     t.index ["slug"], name: "index_documents_on_slug_trigram", opclass: :gin_trgm_ops, using: :gin
+    t.index ["source_authority"], name: "index_documents_on_source_authority"
     t.index ["title"], name: "index_documents_on_title_trigram", opclass: :gin_trgm_ops, using: :gin
   end
 
@@ -671,7 +673,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_184000) do
     t.index ["source_system", "resource_type", "external_id"], name: "idx_external_master_sync_mappings_identity", unique: true
     t.index ["sync_target_type", "sync_target_id"], name: "idx_external_master_sync_mappings_target"
     t.check_constraint "(sync_target_type IS NULL) = (sync_target_id IS NULL)", name: "external_master_sync_mappings_target_presence"
-    t.check_constraint "resource_type::text = ANY (ARRAY['company'::character varying::text, 'project'::character varying::text, 'document'::character varying::text])", name: "external_master_sync_mappings_resource_type"
+    t.check_constraint "resource_type::text = ANY (ARRAY['company'::character varying, 'project'::character varying, 'document'::character varying]::text[])", name: "external_master_sync_mappings_resource_type"
     t.check_constraint "sync_target_type IS NULL AND sync_target_id IS NULL OR resource_type::text = 'company'::text AND sync_target_type::text = 'Company'::text AND sync_target_id IS NOT NULL OR resource_type::text = 'project'::text AND sync_target_type::text = 'Project'::text AND sync_target_id IS NOT NULL OR resource_type::text = 'document'::text AND sync_target_type::text = 'Document'::text AND sync_target_id IS NOT NULL", name: "external_master_sync_mappings_resource_target_type"
   end
 
@@ -831,8 +833,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_184000) do
     t.index ["idempotency_key"], name: "index_master_sync_receipts_on_idempotency_key", unique: true
     t.index ["public_id"], name: "index_master_sync_receipts_on_public_id", unique: true
     t.index ["source_system", "resource_type", "external_id"], name: "idx_master_sync_receipts_resource"
-    t.check_constraint "resource_type::text = ANY (ARRAY['company'::character varying::text, 'project'::character varying::text, 'document'::character varying::text])", name: "master_sync_receipts_resource_type"
+    t.check_constraint "resource_type::text = ANY (ARRAY['company'::character varying, 'project'::character varying, 'document'::character varying]::text[])", name: "master_sync_receipts_resource_type"
     t.check_constraint "response_status >= 100 AND response_status <= 599", name: "master_sync_receipts_response_status"
+  end
+
+  create_table "mcp_mutation_receipts", comment: "MCP更新受領台帳", force: :cascade do |t|
+    t.jsonb "after_json", default: {}, null: false, comment: "更新後情報"
+    t.jsonb "before_json", default: {}, null: false, comment: "更新前情報"
+    t.datetime "completed_at", null: false, comment: "処理確定日時"
+    t.datetime "created_at", null: false
+    t.bigint "document_id", comment: "対象文書ID"
+    t.bigint "document_version_id", comment: "対象文書版ID"
+    t.string "idempotency_key_digest", null: false, comment: "冪等キーのダイジェスト"
+    t.bigint "oauth_application_id", null: false, comment: "OAuthクライアントID"
+    t.string "operation", null: false, comment: "更新操作"
+    t.string "public_id", null: false, comment: "公開ID"
+    t.string "request_digest", null: false, comment: "リクエストダイジェスト"
+    t.jsonb "response_json", default: {}, null: false, comment: "確定レスポンス"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false, comment: "実行利用者ID"
+    t.index ["document_id"], name: "index_mcp_mutation_receipts_on_document_id"
+    t.index ["document_version_id"], name: "index_mcp_mutation_receipts_on_document_version_id"
+    t.index ["oauth_application_id", "user_id", "operation", "idempotency_key_digest"], name: "idx_mcp_receipts_idempotency", unique: true
+    t.index ["oauth_application_id"], name: "index_mcp_mutation_receipts_on_oauth_application_id"
+    t.index ["public_id"], name: "index_mcp_mutation_receipts_on_public_id", unique: true
+    t.index ["user_id"], name: "index_mcp_mutation_receipts_on_user_id"
   end
 
   create_table "microsoft_graph_connections", id: { comment: "ID" }, comment: "Microsoft Graph接続", force: :cascade do |t|
@@ -855,9 +880,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_184000) do
     t.index ["drive_id"], name: "index_microsoft_graph_connections_on_drive_id"
     t.index ["project_id", "enabled"], name: "index_microsoft_graph_connections_on_project_id_and_enabled"
     t.index ["project_id", "name"], name: "index_microsoft_graph_connections_on_project_id_and_name", unique: true
+    t.index ["project_id"], name: "index_microsoft_graph_connections_on_preview_project", unique: true, where: "(preview_selected = true)"
     t.index ["project_id"], name: "index_microsoft_graph_connections_on_project_id"
     t.index ["public_id"], name: "index_microsoft_graph_connections_on_public_id", unique: true
     t.index ["tenant_id"], name: "index_microsoft_graph_connections_on_tenant_id"
+    t.check_constraint "NOT preview_selected OR enabled", name: "microsoft_graph_preview_selection_requires_enabled"
   end
 
   create_table "notification_events", id: { comment: "ID" }, comment: "通知イベント", force: :cascade do |t|
@@ -893,6 +920,50 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_184000) do
     t.index ["public_id"], name: "index_notification_receipts_on_public_id", unique: true
     t.index ["user_id", "read_at"], name: "index_notification_receipts_on_user_id_and_read_at"
     t.index ["user_id"], name: "index_notification_receipts_on_user_id"
+  end
+
+  create_table "oauth_access_grants", comment: "OAuth認可コード", force: :cascade do |t|
+    t.bigint "application_id", null: false, comment: "OAuthクライアントID"
+    t.string "code_challenge", comment: "PKCEコードチャレンジ"
+    t.string "code_challenge_method", comment: "PKCE方式"
+    t.datetime "created_at", null: false, comment: "作成日時"
+    t.integer "expires_in", null: false, comment: "有効期間秒数"
+    t.text "redirect_uri", null: false, comment: "リダイレクトURI"
+    t.bigint "resource_owner_id", null: false, comment: "認可利用者ID"
+    t.datetime "revoked_at", comment: "失効日時"
+    t.string "scopes", default: "", null: false, comment: "認可スコープ"
+    t.string "token", null: false, comment: "認可コードダイジェスト"
+    t.index ["application_id"], name: "index_oauth_access_grants_on_application_id"
+    t.index ["resource_owner_id"], name: "index_oauth_access_grants_on_resource_owner_id"
+    t.index ["token"], name: "index_oauth_access_grants_on_token", unique: true
+  end
+
+  create_table "oauth_access_tokens", comment: "OAuthアクセストークン", force: :cascade do |t|
+    t.bigint "application_id", null: false, comment: "OAuthクライアントID"
+    t.datetime "created_at", null: false, comment: "作成日時"
+    t.integer "expires_in", comment: "有効期間秒数"
+    t.string "previous_refresh_token", default: "", null: false, comment: "前回リフレッシュトークンダイジェスト"
+    t.string "refresh_token", comment: "リフレッシュトークンダイジェスト"
+    t.bigint "resource_owner_id", null: false, comment: "トークン所有利用者ID"
+    t.datetime "revoked_at", comment: "失効日時"
+    t.string "scopes", default: "", null: false, comment: "認可スコープ"
+    t.string "token", null: false, comment: "アクセストークンダイジェスト"
+    t.index ["application_id", "resource_owner_id"], name: "idx_oauth_tokens_app_owner"
+    t.index ["refresh_token"], name: "index_oauth_access_tokens_on_refresh_token", unique: true
+    t.index ["resource_owner_id"], name: "index_oauth_access_tokens_on_resource_owner_id"
+    t.index ["token"], name: "index_oauth_access_tokens_on_token", unique: true
+  end
+
+  create_table "oauth_applications", comment: "OAuthクライアント", force: :cascade do |t|
+    t.boolean "confidential", default: true, null: false, comment: "機密クライアントフラグ"
+    t.datetime "created_at", null: false
+    t.string "name", null: false, comment: "クライアント名称"
+    t.text "redirect_uri", null: false, comment: "リダイレクトURI"
+    t.string "scopes", default: "documents:read", null: false, comment: "許可スコープ"
+    t.string "secret", null: false, comment: "クライアントシークレットダイジェスト"
+    t.string "uid", null: false, comment: "クライアントID"
+    t.datetime "updated_at", null: false
+    t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 
   create_table "project_consent_settings", id: { comment: "ID" }, comment: "案件同意設定", force: :cascade do |t|
@@ -1333,6 +1404,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_184000) do
   add_foreign_key "notification_events", "users", column: "actor_user_id"
   add_foreign_key "notification_receipts", "notification_events"
   add_foreign_key "notification_receipts", "users"
+  add_foreign_key "oauth_access_grants", "oauth_applications", column: "application_id", on_delete: :cascade
+  add_foreign_key "oauth_access_grants", "users", column: "resource_owner_id", on_delete: :cascade
+  add_foreign_key "oauth_access_tokens", "oauth_applications", column: "application_id", on_delete: :cascade
+  add_foreign_key "oauth_access_tokens", "users", column: "resource_owner_id", on_delete: :cascade
   add_foreign_key "project_consent_settings", "consent_terms"
   add_foreign_key "project_consent_settings", "projects"
   add_foreign_key "project_memberships", "projects"

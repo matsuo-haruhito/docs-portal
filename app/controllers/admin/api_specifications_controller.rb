@@ -234,7 +234,7 @@ class Admin::ApiSpecificationsController < Admin::BaseController
       user: current_user,
       company: current_user.company,
       action_type: :dry_run,
-      target_type: "api_codeblock",
+      target_type: "dry_run",
       target_name: result[:target_api].to_s.first(200),
       accessed_at: Time.current,
       ip_address: request.remote_ip

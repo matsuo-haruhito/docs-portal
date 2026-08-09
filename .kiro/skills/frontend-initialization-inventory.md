@@ -58,6 +58,7 @@
 | `structured-preview-tools` | structured / text preview | `setupStructuredPreviewTools()` を専用 controller から refresh し、再描画 / disconnect 時に input / button / document keydown / hashchange listener を cleanup する | `preview-tools` bridge から分離済み。検索、clear、一致行のみ表示、copy、line anchor highlight、`/` / `Escape` shortcut は変更しない |
 | `text-preview-tools` | text preview | hashchange と初期表示時の line anchor target cue を同期する | target row の `aria-current="location"` と blue cue を source-level に固定し、search match cue、copy、filter、toolbar、hashchange contract は変更しない |
 | `preview-table-resizer` | Markdown preview table | iframe 内 table wrapping、localStorage、column resize、`turbo:load` / `turbo:render` refresh | current fallback path として維持。`表ツール` summary の横スクロール・列幅調整 cue、横スクロール領域の `aria-label`、列幅、列幅の保存、ヘッダー固定、先頭列固定に閉じ、full RTP 統合は具体的な不足が再現した場合だけ別 Issue にする |
+| `rfk-dependent-filter` | Git連携設定の repository / branch / source path | 上位値変更時に下位フィールドを clear し、RFK remote search URL の依存パラメータを更新する | Tom Select 初期化は gem controller に任せ、host app 側は業務依存パラメータの同期だけを担当する |
 | `section-nav` | 文書詳細のセクションナビゲーション | IntersectionObserver によるスクロール追従とタブ切り替え | app 側 Stimulus として維持 |
 | `sidebar` | 文書ツリー sidebar width / collapsed state | localStorage、pointer / keyboard resize | app 側 Stimulus として維持 |
 | `site-viewer-iframe-height` | Docusaurus / site viewer iframe | `setupSiteViewerIframeHeightSync()` を専用 controller から refresh する | `preview-tools` bridge から分離済み。same-origin check、message type、frame source check、minimum height、`data-docs-portal-auto-height` marker は helper 側で維持 |

@@ -274,7 +274,10 @@ module ExternalFolderSync
 
     def find_or_create_document!(plan)
       existing = source.external_folder_sync_items.find_by(external_item_id: plan.fetch("external_item_id"))&.document
-      return existing if existing.present?
+      if existing.present?
+        existing.update!(source_authority: :external_folder) unless existing.source_authority_external_folder?
+        return existing
+      end
 
       title = File.basename(plan.fetch("name"), ".*").presence || plan.fetch("name")
       source.project.documents.create!(
@@ -283,6 +286,7 @@ module ExternalFolderSync
         category: :other,
         document_kind: document_kind_for(plan.fetch("mime_type")),
         visibility_policy: :internal_only,
+        source_authority: :external_folder,
         importance_level: :reference
       )
     end

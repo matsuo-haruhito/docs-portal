@@ -8,8 +8,9 @@ module Admin::GitImportSourcesHelper
       table_preferences_column(:branch_path, label: "ブランチ/パス", default_width: 220, overflow: :ellipsis),
       table_preferences_column(:auth_type, label: "認証方式", default_width: 180),
       table_preferences_column(:last_synced, label: "最終同期", default_width: 180, pinned: true),
+      table_preferences_column(:latest_run, label: "直近実行", default_width: 190, pinned: true),
       table_preferences_column(:enabled, label: "状態", default_width: 96, pinned: true),
-      table_preferences_column(:actions, label: "操作", default_width: 150, pinned: true)
+      table_preferences_column(:actions, label: "操作", default_width: 220, pinned: true)
     ]
   end
 

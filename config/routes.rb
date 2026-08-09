@@ -1,4 +1,14 @@
 Rails.application.routes.draw do
+  use_doorkeeper do
+    skip_controllers :applications, :authorized_applications
+  end
+
+  get ".well-known/oauth-authorization-server", to: "oauth_metadata#authorization_server"
+  get ".well-known/oauth-protected-resource", to: "oauth_metadata#protected_resource"
+  match "/oauth/token", to: "oauth_cors#preflight", via: :options
+  match "/oauth/revoke", to: "oauth_cors#preflight", via: :options
+  post "mcp", to: "mcp#create"
+
   root "projects#index"
 
   mount RailsTablePreferences::Engine, at: "/rails_table_preferences"

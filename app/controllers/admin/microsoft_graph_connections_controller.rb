@@ -11,7 +11,12 @@ class Admin::MicrosoftGraphConnectionsController < Admin::BaseController
 
   def index
     load_index_state
-    @microsoft_graph_connection = MicrosoftGraphConnection.new(auth_type: :client_credentials, preview_folder_path: "docs-portal-previews", enabled: true)
+    @microsoft_graph_connection = MicrosoftGraphConnection.new(
+      auth_type: :client_credentials,
+      preview_folder_path: "docs-portal-previews",
+      enabled: true,
+      preview_selected: true
+    )
   end
 
   def create

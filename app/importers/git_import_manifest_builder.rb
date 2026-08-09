@@ -65,6 +65,7 @@ class GitImportManifestBuilder
       category: classification.attributes[:category] || "spec",
       document_kind: classification.attributes[:document_kind] || candidate.document_kind,
       visibility_policy: classification.attributes[:visibility_policy] || "restricted_external",
+      source_authority: "github",
       version_label: version_label,
       status: "published",
       source_relative_path: source_relative_path,

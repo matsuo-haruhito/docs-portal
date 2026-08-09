@@ -158,6 +158,23 @@ class Admin::GitImportSourcesController < Admin::BaseController
     @git_import_sources = filtered_scope
       .offset(@git_import_sources_pagination[:offset])
       .limit(@git_import_sources_per_page)
+      .to_a
+    load_git_import_run_state
+  end
+
+  def load_git_import_run_state
+    source_ids = @git_import_sources.map(&:id)
+    @latest_git_import_runs_by_source_id = latest_git_import_runs_by_source_id(source_ids)
+    @latest_failed_git_import_runs_by_source_id = latest_git_import_runs_by_source_id(source_ids, status: :failed)
+  end
+
+  def latest_git_import_runs_by_source_id(source_ids, status: nil)
+    return {} if source_ids.empty?
+
+    scope = GitImportRun.where(git_import_source_id: source_ids)
+    scope = scope.where(status:) if status
+    latest_run_ids = scope.group(:git_import_source_id).select("MAX(git_import_runs.id)")
+    GitImportRun.where(id: latest_run_ids).index_by(&:git_import_source_id)
   end
 
   def git_import_sources_scope
