@@ -15,6 +15,14 @@ GIT
       rails (>= 7.0, < 9.0)
 
 GIT
+  remote: https://github.com/barnet-co-jp/tree_view-rails.git
+  revision: b1d09abec0b119fcdfe6333ee5cd4707bdc16183
+  tag: v1.0.0
+  specs:
+    tree_view (1.0.0)
+      railties (>= 7.0)
+
+GIT
   remote: https://github.com/kmdtmyk/rparam
   revision: 3a4e94706999ff794b15aaebba0ee4eb25be38d3
   ref: 3a4e94706999ff794b15aaebba0ee4eb25be38d3
@@ -30,14 +38,6 @@ GIT
     rtypes (0.1.0)
       listen
       rails
-
-GIT
-  remote: https://github.com/matsuo-haruhito/tree_view-rails.git
-  revision: e129cb3ce2835a483e87fc71a50cc9fee07e3da5
-  ref: e129cb3ce2835a483e87fc71a50cc9fee07e3da5
-  specs:
-    tree_view (0.1.0)
-      railties (>= 7.0)
 
 GEM
   remote: https://rubygems.org/

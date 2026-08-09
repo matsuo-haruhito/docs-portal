@@ -44,8 +44,8 @@ gem "rparam", git: "https://github.com/kmdtmyk/rparam", ref: "3a4e94706999ff794b
 gem "rtypes", git: "https://github.com/kmdtmyk/rtypes", ref: "b4a177a933261019825a3a5bfd727ad8e493ae45"
 gem "slim", "~> 5.2", ">= 5.2.1"
 gem "strong_migrations"            # 危険なDDL（ロック長期化等）を事前検知
-gem "tree_view", git: "https://github.com/matsuo-haruhito/tree_view-rails.git",
-                 ref: "e129cb3ce2835a483e87fc71a50cc9fee07e3da5"
+gem "tree_view", git: "https://github.com/barnet-co-jp/tree_view-rails.git",
+                 tag: "v1.0.0"
 gem "view_component"               # UIコンポーネント化
 
 group :development, :test do
