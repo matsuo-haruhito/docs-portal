@@ -38,6 +38,13 @@ h1 文書マスタ
         = form.select :visibility_policy, options_for_select(admin_document_visibility_filter_options, @filters[:visibility_policy])
 
       label.form-field
+        span 正本区分
+        = form.rfk_select :source_authority,
+          collection: admin_document_source_authority_filter_options,
+          selected: @filters[:source_authority],
+          wrapper: false
+
+      label.form-field
         span アーカイブ状態
         = form.select :archived, options_for_select(admin_document_archived_filter_options, @filters[:archived])
 
@@ -54,10 +61,7 @@ h1 文書マスタ
       - if filters_active
         = link_to "条件をクリア", admin_documents_path, class: "button secondary"
 
-  p.muted
-    | 検索結果: 
-    = @documents_filtered_count
-    | 件
+  p.muted = "検索結果: #{@documents_filtered_count}件"
   - if @documents_filtered_count.positive?
     p.muted = "表示中: #{@documents_pagination[:from]}-#{@documents_pagination[:to]}件 / #{@documents_filtered_count}件"
   - if active_filter_summaries.any?
@@ -123,11 +127,15 @@ h1 文書マスタ
       th data-rails-table-preferences-column-key="category" カテゴリ
       th data-rails-table-preferences-column-key="document_kind" 種別
       th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
+      th data-rails-table-preferences-column-key="source_authority"
+        | 正本区分
+        = render InfoTooltipComponent.new(label: "正本区分", description: "本文を更新する正本システムです。外部正本の場合は更新先へ引き継ぎます。")
       th data-rails-table-preferences-column-key="status" 状態
       th data-rails-table-preferences-column-key="latest_version" 最新版/HTML
       th data-rails-table-preferences-column-key="legacy_versions" 古い版候補
       th data-rails-table-preferences-column-key="retention_until" 保管期限
       th data-rails-table-preferences-column-key="discard_candidate_at" 廃棄候補
+      th data-rails-table-preferences-column-key="discard_review" 廃棄候補の確認
       th data-rails-table-preferences-column-key="actions"
   tbody
     - @documents.each do |document|
@@ -144,6 +152,8 @@ h1 文書マスタ
           span.badge = document_category_label(document)
         td data-rails-table-preferences-column-key="document_kind" = document_kind_label(document)
         td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(document)
+        td data-rails-table-preferences-column-key="source_authority"
+          span.badge = localized_label("documents.source_authority", document.source_authority)
         td data-rails-table-preferences-column-key="status"
           - if document.archived?
             span.badge アーカイブ済み
@@ -167,8 +177,6 @@ h1 文書マスタ
         td data-rails-table-preferences-column-key="legacy_versions"
           - if legacy_versions.any?
             span.badge = "#{legacy_versions.size}件"
-            br
-            span.muted latest以外のread-only候補です。削除・archive判断はしません。
             - legacy_versions.first(3).each do |version|
               div
                 span = document_version_label(version)
@@ -177,14 +185,25 @@ h1 文書マスタ
                 span.muted = admin_document_legacy_version_source_label(version)
                 br
                 span.muted = "更新: #{l(version.updated_at)}"
+                - if version.published?
+                  - promote_version_cue = "公開済みの#{document_version_label(version)}を最新版に指定します。"
+                  = button_to "最新版に指定", promote_latest_version_admin_document_path(document.public_id, version_id: version.public_id, return_to: current_return_to), method: :patch, class: "button secondary", aria: { label: promote_version_cue }, title: promote_version_cue, form: { data: { turbo_confirm: "#{promote_version_cue}よろしいですか？" } }
             - if legacy_versions.size > 3
               div.muted = "ほか#{legacy_versions.size - 3}件"
           - else
             span.muted 候補なし
-            br
-            span.muted latest以外の版はありません
         td data-rails-table-preferences-column-key="retention_until" = document.retention_until ? l(document.retention_until) : "-"
         td data-rails-table-preferences-column-key="discard_candidate_at" = document.discard_candidate_at ? l(document.discard_candidate_at) : "-"
+        td data-rails-table-preferences-column-key="discard_review"
+          - if document.discard_reviewed_at.present?
+            = l(document.discard_reviewed_at)
+            br
+            span.muted = document.discard_reviewed_by&.name || "-"
+          - else
+            span.muted -
+          - if document.discard_candidate_at.present?
+            - discard_review_cue = "廃棄候補日を変更せず、確認者と確認日時だけを記録します。"
+            = button_to "確認を記録", mark_discard_reviewed_admin_document_path(document.public_id, return_to: current_return_to), method: :patch, class: "button secondary", aria: { label: discard_review_cue }, title: discard_review_cue
         td.actions data-rails-table-preferences-column-key="actions"
           = edit_link_to "編集", edit_admin_document_path(document.public_id, return_to: current_return_to)
           - if document.archived?

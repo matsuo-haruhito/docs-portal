@@ -33,6 +33,23 @@
 
 送信側は transactional outbox を使い、業務 transaction 内では HTTP を呼ばない。timeout 時の再送、queue 投入欠落、定期 reconciliation により at-least-once delivery を許容し、上記の冪等契約で重複更新を吸収する。
 
+## MCPによる利用者委任アクセス
+
+AIエージェントによる横断参照・改訂は、固定machine tokenのinternal APIとは分離し、OAuth 2.0でログイン利用者の権限を委任するMCPとして扱う。
+
+- OAuthはAuthorization Code + PKCE S256を必須とし、scopeは参照用 `documents:read`、draft改訂用 `documents:write`、公開用 `documents:publish` に分離する
+- MCPは `Project.accessible_to`、`Document` / `DocumentVersion` の既存認可を再利用し、scopeだけで業務権限を昇格させない
+- external / company_master_adminの権限をOAuth接続によって昇格させず、改訂・公開toolはinternalだけに許可する
+- DB連番ID、storage path、token、secret、権限外resource名を外部契約へ出さない
+- `Document.source_authority` を更新境界とし、`docs_portal` / `github` / `sales_mgt` / `external_folder` の正本へ処理を振り分ける
+- docs-portal正本のMarkdownは、preview → 新しいdraft版のapply → 品質確認 → publish preview → publishの順で更新する。既存版本文は上書きしない
+- applyとpublishは、署名付き確認token、request digest、OAuth application・利用者・操作単位の冪等key受領台帳で再実行を吸収する
+- GitHub、sales-mgt、外部フォルダが正本の場合、docs-portalは直接変更せず `get_document_update_route` の相関情報を使って正本側MCP・同期経路へ引き継ぐ
+- docs-portalはGitHub tokenを保持せず、GitHub APIやsource codeのwriteを代理しない
+- archive、permission、添付upload/download、外部正本の直接更新は初期MCP write対象外とする
+
+接続・client登録・運用手順は [OAuth 2.0・MCP接続runbook](../runbooks/external/OAuth%202.0・MCP接続runbook.md) を参照する。
+
 ## API 仕様
 
 Webhook 設定項目、通知対象イベント一覧、署名方式、送信ヘッダー、payload 例の詳細は [docs-src/api-specification.md](../../docs-src/api-specification.md) の「Webhook 通知」セクションを参照。

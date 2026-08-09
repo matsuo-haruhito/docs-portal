@@ -7,26 +7,32 @@ REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
 CHECKS = [
   {
+    path: "docs/specs/Microsoft Graph接続とOffice preview.md",
+    patterns: [
+      /enabled.*preview_selected/m,
+      /preview_selected.*案件ごとに最大 1 件/m,
+      /無効化.*選択.*解除/m,
+      /明示選択がない旧データ.*最小 DB id.*互換 fallback/m
+    ]
+  },
+  {
     path: "docs/runbooks/external/Microsoft Graph接続管理runbook.md",
-    expected: [
-      "`previewで使用中`: current preview がこの接続を使います",
-      "`有効だが未使用`: この行も有効ですが、別の有効接続が preview に使われています。legacy duplicate を整理するときの対象です",
-      "`previewでは未使用`: 無効な接続、または preview の対象外の接続です",
-      "current preview 正本は `preview_selected_ids_by_project` の実装どおり `同一案件の有効接続のうち最小 DB id` で暫定的に決まります",
-      "`previewで使用中` は「もっとも妥当な設定を明示選択した結果」ではなく、旧データが残っている間だけの暫定表示です",
-      "`#760` が landed したら、この節の暫定説明も current runtime に合わせて見直します",
-      "preview の日常運用では、`previewで使用中` の行を 1 件だけ維持し、`有効だが未使用` を放置しない状態に戻します",
-      "`要整理案件のみ`"
+    patterns: [
+      /`previewで使用中`.*preview_selected/m,
+      /`有効だが未使用`.*legacy duplicate/m,
+      /`previewでは未使用`.*無効/m,
+      /preview_selected.*案件ごとに最大 1 件/m,
+      /明示選択がない旧データ.*最小 DB id.*互換 fallback/m,
+      /`要整理案件のみ`/
     ]
   },
   {
     path: "docs/specs/preview接続と外部フォルダ同期の設定責務.md",
-    expected: [
-      "`MicrosoftGraphConnection` は preview 用接続",
-      "`ExternalFolderSyncSource` は同期元設定",
-      "Office ファイルの inline preview 用",
-      "SharePoint / OneDrive の共有 URL から metadata を保存する first slice: 対応済み",
-      "Graph -> Portal の dry-run / apply: 未対応"
+    patterns: [
+      /`MicrosoftGraphConnection` は preview 用接続/,
+      /`ExternalFolderSyncSource` は同期元設定/,
+      /preview_selected.*案件ごと/m,
+      /Graph -> Portal の dry-run \/ apply: 未対応/
     ]
   }
 ].freeze
@@ -43,10 +49,10 @@ CHECKS.each do |check|
   end
 
   content = path.read
-  check.fetch(:expected).each do |expected_text|
-    next if content.include?(expected_text)
+  check.fetch(:patterns).each do |pattern|
+    next if content.match?(pattern)
 
-    errors << "#{relative_path}: missing expected Microsoft Graph preview boundary text: #{expected_text.inspect}"
+    errors << "#{relative_path}: missing Microsoft Graph preview contract: #{pattern.inspect}"
   end
 end
 

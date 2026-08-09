@@ -24,15 +24,24 @@
     label
       | URL識別子
       = form.text_field :slug
-    label
-      | カテゴリ
-      = form.select :category, enum_options_for("documents.category", Document.categories.keys)
-    label
-      | 文書種別
-      = form.select :document_kind, enum_options_for("documents.document_kind", Document.document_kinds.keys)
-    label
-      | 公開範囲
-      = form.select :visibility_policy, enum_options_for("documents.visibility_policy", Document.visibility_policies.keys)
+    = form.rfk_select :category,
+      collection: enum_options_for("documents.category", Document.categories.keys),
+      wrapper: true,
+      label: "カテゴリ"
+    = form.rfk_select :document_kind,
+      collection: enum_options_for("documents.document_kind", Document.document_kinds.keys),
+      wrapper: true,
+      label: "文書種別"
+    = form.rfk_select :visibility_policy,
+      collection: enum_options_for("documents.visibility_policy", Document.visibility_policies.keys),
+      wrapper: true,
+      label: "公開範囲"
+    .heading-with-help
+      = form.rfk_select :source_authority,
+        collection: enum_options_for("documents.source_authority", Document.source_authorities.keys),
+        wrapper: true,
+        label: "正本区分"
+      = render InfoTooltipComponent.new(label: "正本区分", description: "本文を更新するシステムを指定します。外部正本の文書はdocs-portalから直接更新しません。")
     label
       | 保管期限
       = form.datetime_field :retention_until

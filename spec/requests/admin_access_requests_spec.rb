@@ -72,9 +72,13 @@ RSpec.describe "Admin access requests", type: :request do
 
     expect(manage_row.text.squish).to include("管理権限申請")
     expect(manage_row.text.squish).to include("現行の承認処理では管理者 role を付与しません")
+    expect(manage_row.text.squish).to include("管理権限申請は自動承認できません")
     expect(download_row.text.squish).not_to include("管理権限申請")
     expect(download_row.text.squish).not_to include("現行の承認処理では管理者 role を付与しません")
-    expect(manage_row.css("form[action='#{admin_access_request_path(manage_request)}']").size).to eq(2)
+    manage_forms = manage_row.css("form[action='#{admin_access_request_path(manage_request)}']")
+    expect(manage_forms.size).to eq(1)
+    expect(manage_forms.first.at_css("input[name='decision'][value='approve']")).to be_nil
+    expect(manage_forms.first.at_css("input[name='decision'][value='reject']")).to be_present
   end
 
   it "filters requests by status and keeps pending actions visible" do

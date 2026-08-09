@@ -9,11 +9,13 @@ module Admin::DocumentsHelper
       table_preferences_column(:category, label: "カテゴリ", default_width: 140),
       table_preferences_column(:document_kind, label: "種別", default_width: 120),
       table_preferences_column(:visibility_policy, label: "公開範囲", default_width: 140),
+      table_preferences_column(:source_authority, label: "正本区分", default_width: 140),
       table_preferences_column(:status, label: "状態", default_width: 170),
       table_preferences_column(:latest_version, label: "最新版/HTML", default_width: 190),
       table_preferences_column(:legacy_versions, label: "古い版候補", default_width: 260),
       table_preferences_column(:retention_until, label: "保管期限", default_width: 120),
       table_preferences_column(:discard_candidate_at, label: "廃棄候補", default_width: 120),
+      table_preferences_column(:discard_review, label: "廃棄候補の確認", default_width: 190),
       table_preferences_column(:actions, label: "操作", default_width: 180, pinned: true)
     ]
   end
@@ -26,6 +28,7 @@ module Admin::DocumentsHelper
       admin_document_option_filter_summary("カテゴリ", filters[:category], admin_document_category_filter_options),
       admin_document_option_filter_summary("種別", filters[:document_kind], admin_document_kind_filter_options),
       admin_document_option_filter_summary("公開範囲", filters[:visibility_policy], admin_document_visibility_filter_options),
+      admin_document_option_filter_summary("正本区分", filters[:source_authority], admin_document_source_authority_filter_options),
       admin_document_option_filter_summary("アーカイブ状態", filters[:archived], admin_document_archived_filter_options),
       admin_document_option_filter_summary("保管期限", filters[:retention], admin_document_retention_filter_options),
       admin_document_option_filter_summary("廃棄候補", filters[:discard], admin_document_discard_filter_options)
@@ -42,6 +45,10 @@ module Admin::DocumentsHelper
 
   def admin_document_visibility_filter_options
     [["すべて", ""]] + Document.visibility_policies.keys.map { |key| [localized_label("documents.visibility_policy", key), key] }
+  end
+
+  def admin_document_source_authority_filter_options
+    [["すべて", ""]] + Document.source_authorities.keys.map { |key| [localized_label("documents.source_authority", key), key] }
   end
 
   def admin_document_archived_filter_options

@@ -55,13 +55,32 @@ class ProjectDocumentZipsController < BaseController
       documents = documents.where(id: ids)
     end
 
-    source_path = normalized_source_path
-    documents = documents.select { |document| document_in_source_path?(document, source_path) } if source_path.present?
+    collect_eligible_versions(documents)
+  end
 
-    documents
-      .select { _1.downloadable_by?(current_user) }
-      .filter_map(&:latest_version)
-      .select { _1.viewable_by?(current_user) }
+  def collect_eligible_versions(documents)
+    versions = []
+    documents_enumerator(documents).each do |document|
+      next unless eligible_document_version?(document)
+
+      versions << document.latest_version
+      break if selecting_matching_documents? && versions.size > MATCHING_SELECTION_MAX_DOCUMENTS
+    end
+    versions
+  end
+
+  def documents_enumerator(documents)
+    return documents.find_each(batch_size: 100) if selecting_matching_documents?
+
+    documents.each
+  end
+
+  def eligible_document_version?(document)
+    source_path = normalized_source_path
+    return false if source_path.present? && !document_in_source_path?(document, source_path)
+    return false unless document.downloadable_by?(current_user)
+
+    document.latest_version&.viewable_by?(current_user)
   end
 
   def filtered_documents(project)

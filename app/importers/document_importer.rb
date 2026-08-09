@@ -53,7 +53,8 @@ class DocumentImporter
         title: payload.fetch("title"),
         category: payload.fetch("category"),
         document_kind: payload.fetch("document_kind"),
-        visibility_policy: payload.fetch("visibility_policy")
+        visibility_policy: payload.fetch("visibility_policy"),
+        source_authority: payload.fetch("source_authority", document.source_authority || "docs_portal")
       )
       document.save!
 

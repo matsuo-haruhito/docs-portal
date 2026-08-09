@@ -50,7 +50,7 @@ pull 型同期の設定。
 - `credential_secret`: 検証用 fine-grained PAT。Active Record Encryption で暗号化保存する
 - `last_synced_commit_sha`, `last_synced_at`: 最終同期状態
 
-GitHub App を本命とし、fine-grained PAT は開発・検証用、`no_auth` は公開 repository 用として扱う。current implementation では fine-grained PAT のみ credential secret を必須にしている。GitHub App installation token 発行、repository 一覧取得、branch / path picker は未実装の境界に置く。
+GitHub App を本命とし、fine-grained PAT は開発・検証用、`no_auth` は公開 repository 用として扱う。current implementation では fine-grained PAT のみ credential secret を必須にしている。GitHub App の installation context が使える場合、repository、branch、source path は bounded な候補 API から選べる。repository を変更したら branch 候補と source path 候補、branch を変更したら source path 候補の取得先をフォーム内で更新する。候補取得不可時は既存の手入力 fallback を維持し、候補選択だけで同期や保存を実行しない。
 
 ### GitImportRun
 
@@ -95,9 +95,8 @@ Git 側で消えたファイルは即座に Document を削除しない。同期
 ## 初期実装で未対応のこと
 
 - Google Drive / SharePoint / OneDrive 同期本体
-- GitHub App installation token の発行と repository 一覧取得の完全実装
-- branch / path picker
+- GitHub App installation token の管理・rotation を含む完全な運用自動化
 - deploy key による clone
 - Webhook 自動同期
-- 定期同期
+- 高頻度の定期同期
 - Git 側削除の自動 archive / delete

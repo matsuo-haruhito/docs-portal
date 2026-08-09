@@ -140,11 +140,11 @@ class Admin::DocumentsController < Admin::BaseController
   end
 
   def document_params
-    params.require(:document).permit(:project_id, :title, :slug, :category, :document_kind, :visibility_policy, :retention_until, :discard_candidate_at)
+    params.require(:document).permit(:project_id, :title, :slug, :category, :document_kind, :visibility_policy, :source_authority, :retention_until, :discard_candidate_at)
   end
 
   def document_filter_params
-    params.to_unsafe_h.symbolize_keys.slice(:q, :category, :document_kind, :visibility_policy, :archived, :retention, :discard).tap do |filters|
+    params.to_unsafe_h.symbolize_keys.slice(:q, :category, :document_kind, :visibility_policy, :source_authority, :archived, :retention, :discard).tap do |filters|
       filters[:q] = normalize_document_search_query(filters[:q])
     end
   end
@@ -205,6 +205,7 @@ class Admin::DocumentsController < Admin::BaseController
     scope = apply_enum_filter(scope, :category, Document.categories)
     scope = apply_enum_filter(scope, :document_kind, Document.document_kinds)
     scope = apply_enum_filter(scope, :visibility_policy, Document.visibility_policies)
+    scope = apply_enum_filter(scope, :source_authority, Document.source_authorities)
     scope = apply_archived_filter(scope)
     scope = apply_retention_filter(scope)
     scope = apply_discard_filter(scope)

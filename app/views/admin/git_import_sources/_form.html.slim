@@ -15,7 +15,7 @@
     | GitHub App の installation context が使える場合はリポジトリ候補から選べます。候補を取得できない場合も、既存どおり owner/repo を手入力して保存できます。
 
 = form_with model: [:admin, git_import_source] do |form|
-  .form-grid
+  .form-grid data-controller="rfk-dependent-filter" data-rfk-dependent-filter-branch-url-value=branch_search_admin_git_import_sources_path(format: :json, installation_id: git_import_source.installation_id.presence) data-rfk-dependent-filter-path-url-value=directory_search_admin_git_import_sources_path(format: :json, installation_id: git_import_source.installation_id.presence)
     = form.rfk_combobox :project_id,
       collection: [],
       selected: git_import_source_project_selected_option(git_import_source.project),
@@ -41,7 +41,9 @@
       max_options: Admin::GitImportSourcesController::REPOSITORY_SEARCH_LIMIT,
       wrapper: true,
       label: "リポジトリ",
-      placeholder: "owner/repo"
+      placeholder: "owner/repo",
+      free_text: true,
+      html: { data: { rfk_dependent_filter_target: "repository", action: "rails-fields-kit--tom-select:change->rfk-dependent-filter#repositoryChanged" } }
     = form.rfk_combobox :branch,
       collection: [],
       selected: git_import_source_branch_selected_option(git_import_source.branch),
@@ -54,7 +56,9 @@
       wrapper: true,
       label: "ブランチ",
       placeholder: "main",
-      allow_clear: true
+      allow_clear: true,
+      free_text: true,
+      html: { data: { rfk_dependent_filter_target: "branch", action: "rails-fields-kit--tom-select:change->rfk-dependent-filter#branchChanged" } }
     span.muted リポジトリが選ばれている場合はブランチ候補から選べます。候補取得不可の場合は手入力で保存できます。
     = form.rfk_combobox :source_path,
       collection: [],
@@ -68,7 +72,9 @@
       wrapper: true,
       label: "取込元パス",
       placeholder: "docs/source",
-      allow_clear: true
+      allow_clear: true,
+      free_text: true,
+      html: { data: { rfk_dependent_filter_target: "path" } }
     span.muted リポジトリとブランチが選ばれている場合はディレクトリ候補から選べます。候補取得不可の場合は手入力で保存できます。例: docs / docs/source
     p.muted リポジトリは GitHub App の候補から選べます。installation ID 未設定・候補取得不可・候補0件の場合は、既存どおり owner/repo を直接入力します。ブランチと取込元パスもリポジトリ選択後に候補から選べます。候補取得不可の場合は手入力 fallback です。
     label

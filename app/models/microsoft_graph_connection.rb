@@ -14,9 +14,13 @@ class MicrosoftGraphConnection < ApplicationRecord
     client_credentials: 0
   }
 
+  before_validation :clear_preview_selection_when_disabled
+
   validates :name, :auth_type, :tenant_id, :client_id, :client_secret, :drive_id, :preview_folder_path, presence: true
   validates :name, uniqueness: { scope: :project_id }
+  validates :preview_selected, uniqueness: { scope: :project_id }, if: -> { preview_selected }
   validate :preview_folder_path_must_be_safe
+  validate :preview_selected_connection_must_be_enabled
   validate :enabled_connection_must_be_unique_within_project
 
   scope :enabled_only, -> { where(enabled: true) }
@@ -50,6 +54,16 @@ class MicrosoftGraphConnection < ApplicationRecord
   end
 
   private
+
+  def clear_preview_selection_when_disabled
+    self.preview_selected = false unless enabled?
+  end
+
+  def preview_selected_connection_must_be_enabled
+    return unless preview_selected && !enabled?
+
+    errors.add(:preview_selected, "は有効な接続だけ選択できます。")
+  end
 
   def preview_folder_path_must_be_safe
     value = preview_folder_path.to_s

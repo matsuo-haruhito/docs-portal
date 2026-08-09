@@ -384,7 +384,7 @@ RSpec.describe "Admin documents", type: :request do
     expect(row_column_text("Archived Document", "status")).to include("アーカイブ済み")
   end
 
-  it "shows only non-latest document versions as read-only legacy candidates" do
+  it "shows non-latest versions and allows only published candidates to be promoted" do
     document = create(:document, title: "Legacy Version Document", slug: "legacy-version")
     create(
       :document_version,
@@ -430,15 +430,14 @@ RSpec.describe "Admin documents", type: :request do
     legacy_text = legacy_cell.text.squish
 
     expect(legacy_text).to include("3件")
-    expect(legacy_text).to include("latest以外のread-only候補です。削除・archive判断はしません。")
     expect(legacy_text).to include("v1.0", "公開中", "source: docs/legacy.md")
     expect(legacy_text).to include("manual-draft", "下書き", "manual upload由来の可能性", "source: manual/uploads/draft.md")
     expect(legacy_text).to include("v0.8", "アーカイブ済み", "source未設定")
     expect(legacy_text).not_to include("v2.0", "source: docs/latest.md")
-    expect(legacy_cell.css("a[href], form[action]")).to be_empty
+    expect(legacy_cell.css("form").map { |form| form.text.squish }).to contain_exactly("最新版に指定")
 
     no_legacy_cell = row_column_cell("No Legacy Version Document", "legacy_versions")
-    expect(no_legacy_cell.text.squish).to include("候補なし", "latest以外の版はありません")
+    expect(no_legacy_cell.text.squish).to include("候補なし")
     expect(no_legacy_cell.css("a[href], form[action]")).to be_empty
   end
 

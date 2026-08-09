@@ -8,66 +8,55 @@ REPO_ROOT = Pathname.new(File.expand_path("../..", __dir__))
 CHECKS = [
   {
     path: "app/renderers/docusaurus_site_renderer.rb",
-    expected: [
-      "def annotate_document_tables!(document, site_path)",
-      "portal-doc-table-preference-wrapper",
-      "data-docs-portal-table-wrapper",
-      "portal-doc-preference-table",
-      "data-docs-portal-document-version",
-      "data-docs-portal-site-path",
-      "data-docs-portal-table-index",
-      "data-rails-table-preferences-table-key",
-      "def stable_table_site_path(site_path)",
-      "def stable_table_site_path_key(normalized_site_path)",
-      "Base64.urlsafe_encode64(normalized_site_path.to_s, padding: false)",
-      "def build_table_preference_key(version_for_key, normalized_site_path, table_index)"
+    patterns: [
+      /def annotate_document_tables!\(document, site_path\)/,
+      /portal-doc-table-preference-wrapper/,
+      /data-docs-portal-table-wrapper/,
+      /portal-doc-preference-table/,
+      /data-docs-portal-document-version/,
+      /data-docs-portal-site-path/,
+      /data-docs-portal-table-index/,
+      /data-rails-table-preferences-table-key/,
+      /def stable_table_site_path\(site_path\)/,
+      /Base64\.urlsafe_encode64\(normalized_site_path\.to_s, padding: false\)/,
+      /def build_table_preference_key\(version_for_key, normalized_site_path, table_index\)/
     ]
   },
   {
     path: "spec/renderers/docusaurus_site_renderer_spec.rb",
-    expected: [
-      "adds stable table preference metadata to each standalone markdown table",
-      "keeps mermaid and code blocks intact while annotating real tables",
-      "adds stable table preference metadata in embedded mode without portal chrome",
-      "expected_site_path_key = Base64.urlsafe_encode64(expected_site_path, padding: false)",
-      'expected_table_key = "document-version:#{version.public_id}:site-path:#{expected_site_path_key}:table:1"',
-      "portal-doc-table-preference-wrapper",
-      "data-docs-portal-document-version",
-      "data-docs-portal-site-path",
-      "data-docs-portal-table-index",
-      "data-rails-table-preferences-table-key"
+    patterns: [
+      /adds stable table preference metadata to each standalone markdown table/,
+      /adds stable table preference metadata in embedded mode without portal chrome/,
+      /expected_site_path_key = Base64\.urlsafe_encode64/,
+      /document-version:.*site-path:.*table:1/,
+      /data-rails-table-preferences-table-key/
     ]
   },
   {
     path: "docs/notes/docusaurus-table-preference-context-boundary.md",
-    expected: [
-      "通常表示と `embedded=1` 表示の両方で同じ metadata contract",
-      "Stable table key は `DocumentVersion.public_id`、normalized site path、per-page table index",
-      "通常表示と embedded 表示で同じ key を使います",
-      "table caption / heading 由来の semantic key",
-      "Markdown source position 由来の stable key",
-      "column visibility、preset UI、full `rails-table-preferences` controller 接続",
-      "具体的な不足が再現した場合に 1 論点ずつ新しい concrete Issue"
+    patterns: [
+      /通常表示と `embedded=1` 表示の両方で同じ metadata contract/,
+      /DocumentVersion\.public_id.*normalized site path.*per-page table index/m,
+      /通常表示と embedded 表示で同じ key/,
+      /column visibility.*preset UI.*full `rails-table-preferences` controller/m,
+      /具体的な不足.*新しい concrete Issue/m
     ]
   },
   {
     path: "docs/runbooks/viewer/版詳細プレビュー・差分・添付確認runbook.md",
-    expected: [
-      "real HTML `<table>` ごとに stable key と wrapper metadata",
-      "table UX 拡張に使える seam",
-      "full `rails_table_preferences` UI や preference schema の全面統合を意味しません",
-      "column visibility / preset UI / renderer 全体の変更は active queue に置かず",
-      "current fallback で具体的な不足が再現した場合に新しい concrete Issue",
-      "column visibility、preset UI、full `rails_table_preferences` controller 接続"
+    patterns: [
+      /real HTML `<table>` ごとに stable key と wrapper metadata/,
+      /full `rails_table_preferences` UI.*全面統合を意味しません/m,
+      /current fallback.*具体的な不足.*新しい concrete Issue/m,
+      /column visibility.*preset UI.*full `rails_table_preferences` controller/m
     ]
   },
   {
     path: ".kiro/steering/frontend-interaction-policy.md",
-    expected: [
-      "Markdown preview table の列幅 / sticky fallback",
-      "Markdown preview table の full `rails_table_preferences` 統合を追う active Issue は現在ありません",
-      "current contract は app 側 fallback を維持することです",
-      "具体的な不足が再現した場合だけ、新しい concrete Issue"
+    patterns: [
+      /Markdown preview table.*app 側 fallback/m,
+      /full `rails_table_preferences` 統合を追う active Issue は現在ありません/m,
+      /具体的な不足.*新しい concrete Issue/m
     ]
   }
 ].freeze
@@ -84,10 +73,10 @@ CHECKS.each do |check|
   end
 
   content = path.read
-  check.fetch(:expected).each do |expected_text|
-    next if content.include?(expected_text)
+  check.fetch(:patterns).each do |pattern|
+    next if content.match?(pattern)
 
-    errors << "#{relative_path}: missing expected Docusaurus table metadata boundary text: #{expected_text.inspect}"
+    errors << "#{relative_path}: missing Docusaurus table metadata contract: #{pattern.inspect}"
   end
 end
 

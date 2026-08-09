@@ -20,6 +20,9 @@ Office preview の表示フロー・provider 優先順位・fallback 条件・pr
 - route は `admin/microsoft_graph_connections` です。
 - 案件ごとに紐づく設定です。
 - current `main` では、同一案件で `enabled` にできる接続は新規保存時に 1 件だけです。
+- Office preview に使う接続は、`enabled` かつ `preview_selected` の行を案件ごとに明示選択します。
+- `preview_selected` は案件ごとに最大 1 件とし、無効化した接続は選択状態を解除します。
+- 明示選択がない旧データだけは、同一案件の有効接続のうち最小 DB id を互換 fallback として使います。新規運用では fallback に依存せず、フォームで利用接続を選択します。
 - 旧データ由来で複数の有効接続が残っている場合でも、一覧の `preview利用` 列から `previewで使用中` の 1 件を確認できます。不要な行は無効化または削除してください。
 
 ## 登録項目
@@ -35,7 +38,8 @@ Office preview の表示フロー・provider 優先順位・fallback 条件・pr
 | shared_folder_url | 任意 | 保存項目ではなく入力補助です。`共有URLからDrive情報を解決` で `drive_id`、`site_id`、`preview_folder_path` の候補をフォームへ戻します。 |
 | drive_id | 必須 | preview 用一時アップロード先 Drive を識別します。 |
 | preview_folder_path | 必須 | preview 用一時アップロード先の相対パスです。 |
-| enabled | 任意 | preview 対象として使うかどうかを切り替えます。 |
+| enabled | 任意 | preview 対象として使うかどうかを切り替えます。無効化すると `preview_selected` も解除されます。 |
+| preview_selected | 任意 | この案件の Office preview に使う接続を明示します。`enabled` な接続だけ選べ、案件ごとに最大 1 件です。 |
 | site_id | 任意 | 保存はできますが、現行の Office preview 必須項目ではありません。共有 URL 解決に成功した場合は候補が入ります。 |
 
 ### `preview_folder_path` の制約
@@ -70,9 +74,13 @@ SharePoint / OneDrive の共有フォルダ URL が分かる場合は、`共有�
 
 Office ファイルを embedded preview で開いたときは、次の順で URL を決めます。
 
-1. 案件に `previewで使用中` として扱われる Microsoft Graph 接続があり、ファイルサイズが 250MB 以下なら Graph preview を試す
-2. Graph preview が失敗したら、Google Drive 由来 preview を試す
-3. Google Drive 由来 preview も使えなければ、preview 不可として扱う
+1. 案件内の `enabled` かつ `preview_selected` な Microsoft Graph 接続を使う
+2. 明示選択がない旧データに限り、同一案件の有効接続のうち最小 DB id の 1 件を互換 fallback として使う
+3. 選ばれた接続があり、ファイルサイズが 250MB 以下なら Graph preview を試す
+4. Graph preview が失敗したら、Google Drive 由来 preview を試す
+5. Google Drive 由来 preview も使えなければ、preview 不可として扱う
+
+新規登録・編集では `previewで使用する` を明示し、一覧の `preview利用` 列で選択結果を確認します。案件単位の一意制約により複数の明示選択は保存できず、選択中の接続を無効化した場合は選択も解除されます。最小 DB id fallback は移行前データを読めるようにするためだけの互換境界であり、通常運用の選択方法ではありません。
 
 ### 250MB 制限
 

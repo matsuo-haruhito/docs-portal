@@ -172,17 +172,22 @@ filter_columns = [
 
 ## 依存フィルタ（rfk-dependent-filter）
 
-親フィールドの値に応じて子フィールドの選択肢をリフレッシュする:
+親フィールドの値に応じて子フィールドのURLと選択肢を更新する。rfk helperが生成する入力要素へdata属性を渡すときは、top-levelの`data:`ではなく`html: { data: ... }`を使う:
 
 ```slim
 div data-controller="rfk-dependent-filter"
   = f.rfk_combobox :project_id,
     url: search_options_path("projects"),
-    data: { rfk_dependent_filter_target: "source", action: "change->rfk-dependent-filter#refresh" }
+    html: { data: { rfk_dependent_filter_target: "source", action: "rails-fields-kit--tom-select:change->rfk-dependent-filter#refresh" } }
   = f.rfk_combobox :document_id,
     url: search_options_path("documents"),
-    data: { rfk_dependent_filter_target: "field" }
+    html: { data: { rfk_dependent_filter_target: "field" } }
 ```
+
+- rfkの`rails-fields-kit--tom-select:change`イベントを使い、アプリ側でTom Selectを再初期化しない。
+- URLは`data-rails-fields-kit--tom-select-url-value`を更新する。rfk controllerは候補取得時に現在値を読む。
+- 親値が変わった子フィールドは、`element.tomselect.clear(true)`と`clearOptions()`で選択値・旧候補を破棄する。
+- 候補取得不可でも入力を継続する必要があるフィールドには`free_text: true`を指定する。
 
 ---
 

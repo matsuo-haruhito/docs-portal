@@ -22,6 +22,7 @@ RSpec.describe ManualDocumentUpload do
     ).call
 
     expect(result.source_path).to eq("storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/data/decision_flow.yml")
+    expect(result.document).to be_source_authority_docs_portal
     expect(notifier).to have_received(:notify).with(
       file_events: [
         {

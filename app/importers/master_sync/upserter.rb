@@ -126,6 +126,7 @@ module MasterSync
       document.project = resolve_mapping_target("project", attributes["project_external_id"], required: true)
       document.title = required_attribute("title", fallback: "file_name")
       document.slug = required_attribute("slug")
+      document.source_authority = :sales_mgt
       document.archived_at = nil
       document.archived_by_user = nil
       document.save!

@@ -47,7 +47,9 @@
 
 ## external/
 
-外部連携（フォルダ同期・Webhook・送付履歴・Graph接続）の運用手順。
+外部連携（フォルダ同期・Webhook・送付履歴・Graph接続・MCP）の運用手順。
+
+- [OAuth 2.0・MCP接続runbook](./external/OAuth%202.0・MCP接続runbook.md)
 
 - [外部フォルダ同期dry-run・apply運用runbook](./external/外部フォルダ同期dry-run・apply運用runbook.md)
 - [外部フォルダ同期継続失敗候補runbook](./external/外部フォルダ同期継続失敗候補runbook.md)

@@ -1,115 +1,145 @@
 ---
 name: "PRライフサイクル"
-description: "PR作成 → CI確認 → マージ → テスト確認 → ブランチ削除までを一貫して進める"
+description: "ローカル検証、PR作成、GitHub CI確認、マージ、マージ後検証を安全に進める"
 ---
 # PRライフサイクル
 
-PR作成からマージ、後片付けまでを一貫して進める。
-issue解決スキルから自動的に連鎖して呼ばれるが、単独でも使える。
+PR作成からGitHub CI確認、マージ、後片付けまでを一貫して進める。issue解決スキルから呼ばれる場合も、単独で使う場合も同じgateを守る。
 
-## 制約
+## 必須境界
 
-- CI結果待ちのタイムアウト: **3分**。3分以内に結果が出ない場合は中断してユーザーに報告する。
+- PR作成前に変更範囲へ対応する targeted test / lint / docs guard を実行する
+- ローカルテスト成功をGitHub Actions成功の代替にしない
+- GitHub上のrequired checkがgreenになるまでmergeしない
+- failed / cancelled / timed out / pendingのcheckがある状態でmergeしない
+- CIの待機を打ち切った場合は、mergeせずに未確認checkとrun URLを報告する
+- merge後に不具合が見つかっても`main`へ直接修正commitしない。必ず新しいbranchとfollow-up PRを使う
+- hookを`--no-verify`で回避しない
 
-## ワークフロー
+## 1. PR前のローカル確認
 
-### 1. PR作成
+変更ファイルを確認する。
 
-- 現在のブランチの変更をpush:
-  ```
-  git push -u origin HEAD
-  ```
-- PRを作成:
-  ```
-  gh pr create --base main --fill
-  ```
-- issue解決から呼ばれた場合、PR本文に `Closes #<number>` が含まれていることを確認する
-
-### 2. PR時CI（関連箇所テスト）
-
-変更に関連するテストのみ実行する（3分タイムアウト）。
-
-- 変更されたファイルから影響範囲を特定:
-  ```
-  gh pr diff --name-only
-  ```
-- 影響するspecファイルを推定し、実行:
-  ```
-  bundle exec rspec <関連specファイル>
-  ```
-  Docker環境の場合:
-  ```
-  docker compose run --rm app bundle exec rspec <関連specファイル>
-  ```
-- 推定ルール:
-  - `app/models/xxx.rb` → `spec/models/xxx_spec.rb`
-  - `app/controllers/xxx_controller.rb` → `spec/requests/xxx_spec.rb`
-  - `app/controllers/admin/xxx_controller.rb` → `spec/requests/admin_xxx_spec.rb`
-  - `app/services/xxx.rb` → `spec/services/xxx_spec.rb`
-  - `app/importers/xxx.rb` → `spec/importers/xxx_spec.rb`
-  - `app/views/xxx/` → そのコントローラーのrequest spec
-  - マイグレーション → seed spec + schema系spec
-  - spec自体の変更 → その spec を実行
-
-### 3. CI結果確認と修正
-
-- テストが赤の場合:
-  - 失敗内容を分析し修正する
-  - 修正を同じブランチにコミット・push
-  - 再度テスト実行して確認
-  - 緑になるまで繰り返す（ただし3分タイムアウトは各テスト実行に適用）
-- テストが緑の場合:
-  - マージへ進む
-
-### 4. マージ
-
-```
-gh pr merge --squash --delete-branch
+```bash
+git status --short
+git diff --check
+git diff --name-only
 ```
 
-- `--squash` でコミットをまとめる
-- `--delete-branch` でリモートブランチを自動削除
+影響範囲に応じてtargeted testを実行する。
 
-### 5. マージ後確認
-
-- main に切り替え:
-  ```
-  git checkout main && git pull
-  ```
-- フルテスト実行:
-  ```
-  bin/all_test
-  ```
-- 結果確認:
-  - `tmp/all_test/summary.txt` を確認
-  - 全ステップが緑ならOK
-
-### 6. マージ後に赤の場合
-
-- main 上で直接修正コミットする（1ファイル以内の小修正の場合）
-- または新しいブランチを切って修正PR → 再度このスキルを回す（大きな修正の場合）
-
-### 7. 後片付け
-
-- ローカルブランチを削除:
-  ```
-  git branch -d <branch-name>
-  ```
-- docs/ の更新が必要であれば反映する
-
-## 使い方
-
-issue解決からの自動連鎖:
-```
-#42 のissue解決で進めて
-```
-→ 実装完了後にPRライフサイクルが自動実行される
-
-単独で使う場合:
-```
-今のブランチでPRライフサイクル回して
+```bash
+bundle exec rspec <関連specファイル>
 ```
 
+Docker環境の場合:
+
+```bash
+docker compose run --rm app bundle exec rspec <関連specファイル>
 ```
-この変更のPR作ってマージまでやって
+
+代表的な対応:
+
+- `app/models/xxx.rb` → `spec/models/xxx_spec.rb`
+- `app/controllers/xxx_controller.rb` → `spec/requests/xxx_spec.rb`
+- `app/controllers/admin/xxx_controller.rb` → `spec/requests/admin_xxx_spec.rb`
+- `app/jobs/xxx_job.rb` → `spec/jobs/xxx_job_spec.rb`
+- `app/services/xxx.rb` → `spec/services/xxx_spec.rb`
+- `app/importers/xxx.rb` → `spec/importers/xxx_spec.rb`
+- `app/views/xxx/` → 対応するrequest spec。文言固定ではなくDOM構造、form action、操作可否、link先を確認する
+- migration / schema → model・request・seed・schemaの影響対象
+- docs / workflow / guard → 対応するdocs-quality scriptとYAML parse
+
+ローカル確認が失敗している状態ではPR作成へ進まない。
+
+## 2. branchをpushしてPRを作成
+
+```bash
+git push -u origin HEAD
+gh pr create --base main --fill
 ```
+
+issue解決から呼ばれた場合は、PR本文に`Closes #<number>`が含まれることを確認する。PR本文には次を分けて記録する。
+
+- 実行したローカル検証
+- 未実施のbrowser visual evidence
+- migration / maintenance / rollback上の注意
+
+## 3. GitHub CIを実際に確認
+
+PR番号とcheck一覧を確認する。
+
+```bash
+gh pr view --json number,url,headRefName,statusCheckRollup
+gh pr checks <PR番号>
+```
+
+check完了を待つ場合:
+
+```bash
+gh pr checks <PR番号> --watch --interval 10
+```
+
+CIが失敗したら、該当runのfailed logを取得する。
+
+```bash
+gh run view <run-id> --log-failed
+```
+
+GitHub側障害、runner障害、action download障害も「green」とは扱わない。コード起因か外部障害かを分けて報告し、再実行結果がgreenになるまでmergeしない。
+
+## 4. CI失敗時の修正
+
+- 失敗内容と変更の因果を確認する
+- 同じfeature branchで修正する
+- targeted testを再実行する
+- 修正を新しいcommitとしてpushする
+- GitHub Actionsの新しいrunを再確認する
+
+pre-commit hook失敗後は修正して再stageし、新しいcommitを作る。`--amend`や`--no-verify`で隠さない。
+
+## 5. merge gate
+
+次をすべて満たした場合だけmergeする。
+
+- targeted local validationが成功
+- required GitHub checksがすべて成功
+- unresolved review commentやmerge conflictがない
+- migration、maintenance mode、rollbackの未解決事項がない
+- browser visual evidence未実施の場合、その事実とfollow-upが明記されている
+
+```bash
+gh pr merge <PR番号> --squash --delete-branch
+```
+
+## 6. merge後確認
+
+```bash
+git checkout main
+git pull --ff-only
+bin/all_test
+```
+
+`tmp/all_test/summary.txt`と失敗stepのlogを確認する。コマンドのexit codeだけでなく、RSpec examples / failures、lint、security、docs guardの実結果を読む。
+
+## 7. merge後に赤の場合
+
+`main`へ直接修正しない。
+
+1. 新しいfix branchを作る
+2. 再現testまたは既存の失敗testで原因を固定する
+3. 修正してtargeted testを通す
+4. follow-up PRを作る
+5. GitHub CI greenを確認してからmergeする
+
+production影響や不可逆migrationがある場合は、rollback可否と影響を説明し、人間確認を待つ。
+
+## 8. 後片付け
+
+remote branchが削除済みで、別worktreeから参照されていないことを確認してからlocal branchを削除する。
+
+```bash
+git branch -d <branch-name>
+```
+
+仕様や運用契約が変わった場合は、PR完了前に正本docs、関連steering / skill、guardを同期する。

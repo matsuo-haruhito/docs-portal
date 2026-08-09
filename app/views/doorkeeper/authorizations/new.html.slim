@@ -1,0 +1,35 @@
+- page_title "AIエージェント接続の認可"
+
+section
+  header
+    h1 AIエージェント接続の認可
+
+  p
+    strong = @pre_auth.client.name
+    |  がdocs-portalへのアクセスを要求しています。
+
+  dl
+    div
+      dt 接続先
+      dd = URI.parse(@pre_auth.redirect_uri).host
+    div
+      dt 許可する操作
+      dd = @pre_auth.scopes.to_a.map { |scope| { "documents:read" => "案件・文書の参照", "documents:write" => "docs-portal正本文書の下書き作成", "documents:publish" => "確認済み下書き版の公開" }.fetch(scope, scope) }.join("、")
+
+  = form_tag oauth_authorization_path, method: :post do
+    = hidden_field_tag :client_id, @pre_auth.client.uid
+    = hidden_field_tag :redirect_uri, @pre_auth.redirect_uri
+    = hidden_field_tag :state, @pre_auth.state
+    = hidden_field_tag :response_type, @pre_auth.response_type
+    = hidden_field_tag :scope, @pre_auth.scope
+    = hidden_field_tag :code_challenge, @pre_auth.code_challenge
+    = hidden_field_tag :code_challenge_method, @pre_auth.code_challenge_method
+    .actions
+      = submit_tag "許可する", class: "button"
+
+  = form_tag oauth_authorization_path, method: :delete do
+    = hidden_field_tag :client_id, @pre_auth.client.uid
+    = hidden_field_tag :redirect_uri, @pre_auth.redirect_uri
+    = hidden_field_tag :state, @pre_auth.state
+    .actions
+      = submit_tag "拒否する", class: "button secondary"

@@ -17,7 +17,7 @@
 `admin/access_requests` は、利用者から届いた閲覧・ダウンロード・管理権限の申請を internal 管理者が裁く画面。
 
 - 一覧には `日時 / 申請者 / 対象 / 要求権限 / 状態 / 理由 / 承認者` が出る
-- 対象は `Project` `Document` `DocumentFile` のいずれかで、承認前は `承認` / `却下` ボタンが出る
+- 対象は `Project` `Document` `DocumentFile` のいずれか。pending の `view` / `download` 申請には `承認` / `却下`、`manage` 申請には `却下` だけが表示される
 - 申請の状態は `pending / approved / rejected / cancelled`
 - 要求権限は `view / download / manage`
 - 一覧上部の `状態` では `すべて / 承認待ち / 承認済み / 却下 / 取消済み` を切り替えられる
@@ -36,9 +36,8 @@
 | `Document` | `DocumentPermission` | `download` 申請は `download`、それ以外は `view` |
 | `DocumentFile` | 親 `Document` の `DocumentPermission` | file 単位の permission は作らず、親 Document へ `download` または `view` を付与する |
 
-- `manage` は enum と一覧表示上の要求値として存在するが、current resolver は明示的な manage grant を持たない
-- `manage` 申請を承認しても、Project 管理者 role や Document 管理権限を付与したものとして扱わない
-- `manage` の扱いを変えるかどうかは `#1124` / `#1126` の design / feature lane、current mapping の regression guard は `#1127` の quality lane で扱う
+- `manage` は enum と一覧表示上の要求値として存在するが、current resolver は自動承認を明示的に拒否する
+- `manage` 申請の行・詳細には承認操作を表示しない。管理権限が必要な場合は権限設定画面で対象と影響範囲を確認して個別に設定し、申請自体は必要に応じて却下する
 - この runbook は current behavior の読み分けを補うだけで、承認基準や新しい権限仕様は定義しない
 
 #### 結果サマリと empty state の見方
@@ -65,9 +64,9 @@
 - detail では `申請ID`、`申請日時`、`申請者`、`対象`、`要求権限`、`状態`、`理由`、`処理日時`、`承認者`、`却下理由` を 1 件単位で確認できる
 - 一覧から detail へ進むときは、現在の filter / page を `return_to` として渡す。detail から戻ると、承認待ち filter、要求権限、対象種別、検索語、page の文脈を保った一覧へ戻る
 - `return_to` は path-only の内部 path だけを採用する。外部 URL や protocol-relative URL は一覧へ fallback するため、戻り先を外部 redirect として扱わない
-- pending の申請だけ、detail から既存の承認 / 却下処理を実行できる。処理すると一覧 action と同じ resolver / rejection reason flow を通る
+- pending の `view` / `download` 申請だけ、detail から承認 / 却下処理を実行できる。`manage` 申請には承認 form を表示せず、却下または権限設定画面での個別判断に分ける
 - approved / rejected / cancelled など処理済みの申請では、detail に承認 / 却下 form は出ない。処理済み detail は判断結果の読み返し用として扱う
-- 一覧上の inline `承認` / `却下` は、filter 結果を見ながら即時判断するための入口。detail は対象・理由・処理結果を 1 件ずつ確認してから判断または読み返すための入口として使い分ける
+- 一覧上の `承認` / `却下` は、filter 結果を見ながら `view` / `download` 申請を即時判断するための入口。`manage` 申請では `却下` だけを表示する。detail は対象・理由・処理結果を 1 件ずつ確認してから判断または読み返すための入口として使い分ける
 - detail 画面は、承認段階、通知、SLA、担当者割当、bulk approve / reject を追加するものではない
 
 #### pending handoff JSON の読み方

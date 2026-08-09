@@ -22,7 +22,7 @@ RSpec.describe "Admin document legacy versions", type: :request do
     cell&.xpath(".//text()")&.map { |node| node.text.squish }&.reject(&:empty?)&.join(" ")
   end
 
-  it "shows only non-latest document versions as read-only candidates" do
+  it "shows non-latest versions and allows only published candidates to be promoted" do
     latest_only_document = create(:document, title: "Latest Only Document", slug: "latest-only")
     latest_only_version = create(
       :document_version,
@@ -73,18 +73,17 @@ RSpec.describe "Admin document legacy versions", type: :request do
     get admin_documents_path
 
     expect(response).to have_http_status(:ok)
-    expect(row_column_text("Latest Only Document", "legacy_versions")).to include(
-      "候補なし",
-      "latest以外の版はありません"
-    )
+    expect(row_column_text("Latest Only Document", "legacy_versions")).to include("候補なし")
 
+    legacy_cell = document_row_for("Multi Version Document").at_css(
+      'td[data-rails-table-preferences-column-key="legacy_versions"]'
+    )
     legacy_text = row_column_text("Multi Version Document", "legacy_versions")
     latest_text = row_column_text("Multi Version Document", "latest_version")
     action_text = row_column_text("Multi Version Document", "actions")
 
     expect(legacy_text).to include(
       "3件",
-      "latest以外のread-only候補です。削除・archive判断はしません。",
       old_published_version.version_label,
       "source: imports/old.md",
       old_draft_version.version_label,
@@ -93,6 +92,7 @@ RSpec.describe "Admin document legacy versions", type: :request do
       "source: archive/v0.9.md"
     )
     expect(legacy_text).not_to include(latest_version.version_label)
+    expect(legacy_cell.css("form").map { |form| form.text.squish }).to contain_exactly("最新版に指定")
     expect(latest_text).to include(latest_version.version_label)
     expect(action_text).to include("編集", "アーカイブ", "削除")
   end

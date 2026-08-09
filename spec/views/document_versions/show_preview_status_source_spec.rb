@@ -5,9 +5,9 @@ RSpec.describe "document_versions/show preview status source" do
 
   it "uses Japanese labels in the preview status card" do
     aggregate_failures do
-      expect(source).to include("strong ビルド状態: ")
-      expect(source).to include("strong ビルドマニフェスト: ")
-      expect(source).to include("strong マニフェスト警告: ")
+      expect(source).to include("strong ビルド状態:")
+      expect(source).to include("strong ビルドマニフェスト:")
+      expect(source).to include("strong マニフェスト警告:")
       expect(source).to include("summary Docusaurusビルド警告の詳細")
     end
   end

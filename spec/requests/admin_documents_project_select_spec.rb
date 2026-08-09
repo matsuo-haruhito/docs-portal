@@ -17,7 +17,7 @@ RSpec.describe "Admin documents project select", type: :request do
     parsed_html.at_css('[name="document[project_id]"]')
   end
 
-  it "uses rails_fields_kit for only the document project selector" do
+  it "uses rails_fields_kit for document selection fields" do
     form_source = Rails.root.join("app/views/admin/documents/_form.html.slim").read
 
     aggregate_failures do
@@ -34,9 +34,11 @@ RSpec.describe "Admin documents project select", type: :request do
       expect(form_source).to include('placeholder: "案件コード・案件名で検索"')
       expect(form_source).not_to include("collection_select :project_id")
       expect(form_source).not_to include("= form.rfk_select :project_id")
-      expect(form_source).to include("= form.select :category")
-      expect(form_source).to include("= form.select :document_kind")
-      expect(form_source).to include("= form.select :visibility_policy")
+      expect(form_source).to include("= form.rfk_select :category")
+      expect(form_source).to include("= form.rfk_select :document_kind")
+      expect(form_source).to include("= form.rfk_select :visibility_policy")
+      expect(form_source).to include("= form.rfk_select :source_authority")
+      expect(form_source).not_to include("= form.select")
     end
   end
 

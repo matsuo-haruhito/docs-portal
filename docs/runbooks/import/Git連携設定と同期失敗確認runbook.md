@@ -46,11 +46,11 @@ Git 連携で後続 provider に渡す基準契約は、同期元設定、run �
 
 リポジトリ欄は、GitHub App の installation token が使える場合に候補検索を行います。候補取得は bounded search で、候補が見つからない、installation ID が未設定、token が使えない、または GitHub API 側で取得に失敗した場合でも、既存どおり `owner/repo` を直接入力して保存できます。編集時に保存済み repository が候補上限外でも、保存値は selected option として復元されます。
 
-この first slice は repository picker と source path picker までです。branch は引き続き手入力で、branch picker、存在確認、Git 同期本体、GitImportRun の保存 contract は変更していません。取込元パスは、リポジトリとブランチが選ばれている場合に GitHub App API からディレクトリ候補を bounded に取得して選べます。候補取得不可の場合は既存どおり手入力 fallback です。
+repository、branch、取込元パスは、GitHub App の installation context が使える場合に bounded な候補から選べます。repository を変更すると branch と path の候補取得先、branch を変更すると path の候補取得先がフォーム内で更新されます。候補選択は保存や同期を実行せず、候補取得不可、installation ID 未設定、token 発行失敗、GitHub API 失敗時は既存どおり手入力 fallback を使います。編集時の保存値は候補上限外でも selected option として復元されます。
 
 詳細設定は current form の summary どおり、通常は開かない管理者・検証向けの領域です。`installation_id`、`credential_ref`、`credential_secret` は、GitHub App 導入前の検証や管理者の調整が必要な場合だけ確認します。通常運用は `GitHub App` 前提で、`fine_grained_pat` は開発・検証用の詳細設定、`no_auth` は公開 repository 用として扱います。
 
-current validation では、新規作成時に `fine_grained_pat` を選ぶ場合だけ `credential_secret` が必須です。編集時の保存済み secret は form に表示されず、空欄のまま保存すると既存値を維持し、新しい値を入力したときだけ更新します。GitHub App や公開 repository の `no_auth` では secret 欄は空欄のまま保存できます。GitHub App installation token 発行、branch picker は未実装なので、運用上は repository 候補、取込元パス候補（ディレクトリ picker）、branch 手入力、同期履歴で切り分けます。
+current validation では、新規作成時に `fine_grained_pat` を選ぶ場合だけ `credential_secret` が必須です。編集時の保存済み secret は form に表示されず、空欄のまま保存すると既存値を維持し、新しい値を入力したときだけ更新します。GitHub App や公開 repository の `no_auth` では secret 欄は空欄のまま保存できます。候補 API は入力補助であり、保存時の repository / branch / source path contract や同期履歴の読み方は変えません。
 
 ### 一覧の絞り込みと表示範囲
 
@@ -158,7 +158,8 @@ current implementation では、同じ commit SHA が既に同期済みなら `s
 - `Git同期履歴` の filter は、状態、案件 remote search、repository 一部一致、branch 一部一致、source path 一部一致、commit SHA prefix match を AND 条件で扱い、絞り込み後も最新 100 件までを表示します。これは run 履歴の表示範囲だけを変え、Git連携設定一覧、同期 runner、手動同期、GitImportRun の保存内容は変更しません。pagination、CSV export は current support ではありません
 - `summary_json` と `error_message` の保存値や Git import pipeline は、この runbook の safe preview 説明では変更しません
 - `sync_git_import_sources` の定期ジョブ詳細に出る `Git pull同期の運用状態` は read-only な集約表示です。Git連携元が未登録なら `Git連携設定` で登録し、全件無効なら利用する同期元を有効化し、履歴 0 件なら同期実行後に `Git同期履歴` を確認します。同期設定の編集、履歴の全件検索、手動同期、再同期判断は `Git連携` / `Git同期履歴` の正本画面で扱います
-- Webhook 自動同期、定期同期、branch / path picker、Git 側削除の自動 archive / delete は、既存仕様でも未対応のままです
+- repository / branch / source path picker は bounded な入力補助で、repository または branch の変更に応じて依存候補の取得先を更新します。候補取得不可時の手入力 fallback、保存 contract、同期実行の明示操作は維持します
+- Webhook 自動同期、高頻度の定期同期、Git 側削除の自動 archive / delete は未対応のままです
 - Google Drive / SharePoint / OneDrive の同期本体は、この Git 連携 runbook では扱いません
 
 `Git連携インポート` の仕様文書は「何を取り込むか」の正本で、この runbook は「管理画面でどこを見返すか」の補助です。

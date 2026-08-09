@@ -31,7 +31,8 @@ class DocumentVersion < ApplicationRecord
   validate :published_until_after_published_from
 
   before_validation :normalize_search_body_text
-  after_commit :promote_as_latest_version, on: %i[create update]
+  after_create_commit -> { promote_as_latest_version }, if: :published?
+  after_update_commit -> { promote_as_latest_version }, if: :published_status_transition?
   after_commit :broadcast_document_tree_refresh_later, unless: :preview_build_only_change?
 
   scope :markdown_preview_builds, -> {
@@ -450,11 +451,13 @@ class DocumentVersion < ApplicationRecord
     errors.add(:published_until, "must be after published_from")
   end
 
+  def published_status_transition?
+    previous_changes.key?("status") && published?
+  end
+
   def promote_as_latest_version
     return unless published?
     return if document.blank?
-    latest = document.latest_version
-    return if latest.present? && latest != self && latest.created_at.to_i > created_at.to_i
 
     document.update_column(:latest_version_id, id) if document.latest_version_id != id
   end

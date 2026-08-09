@@ -48,7 +48,7 @@ READ_ONLY_MAINTENANCE 中に止める変更操作と read-only に残す確認�
 
 | 機能 | 止める操作 | read-only に残す操作 |
 |------|-----------|-------------------|
-| 文書マスタ編集 | Document の create / update / archive / restore / destroy | 文書マスタ一覧、検索 / filter / pagination、編集画面の現在値確認、案件 remote search、lifecycle handoff JSON、公開側文書への戻り導線、最新版 / HTML preview 状態確認 |
+| 文書マスタ編集 | Document の create / update / archive / restore / destroy、published 版の latest_version 明示切替、廃棄候補レビュー記録 | 文書マスタ一覧、検索 / filter / pagination、編集画面の現在値確認、案件 remote search、lifecycle handoff JSON、公開側文書への戻り導線、最新版 / HTML preview 状態、廃棄候補レビュー記録の確認 |
 | 文書権限付与 | DocumentPermission の create / update / destroy（会社・ユーザー単位の権限） | 文書別権限概要、権限一覧、案件 / 文書名 / 権限 / 付与先 filter、remote search と selected restore、CSV 出力 |
 | 文書セット編集 | DocumentSet / DocumentSetItem の create / update / destroy、固定版指定の変更 | 管理側一覧、filter、CSV 出力、CSV 条件 metadata JSON、remote search、edit 画面の現在値確認、公開側文書セット一覧 / 詳細 |
 | 文書一括編集 | 新規 dry-run 作成、既存 dry-run の確認実行、Document / DocumentVersion / tag / archive state の bulk 更新 | dry-run 対象選択画面、handoff JSON、既存 dry-run detail、preview summary / warning / error / diff 確認 |
@@ -85,6 +85,7 @@ READ_ONLY_MAINTENANCE 中に止める変更操作と read-only に残す確認�
 | Microsoft Graph 接続 | MicrosoftGraphConnection の create / update / destroy（Tenant ID / Client ID / secret / Site ID / Drive ID / preview folder / enabled） | 接続一覧、preview 利用状態 / 重複有効接続 / 検索 / filter、案件 remote search、共有 URL 候補取得（保存なし） |
 | API 仕様 codeblock dry-run | retry_build / stale build enqueue（Docusaurus build 起動） | codeblock_dry_run（request sample の形式確認 — dry_run: true / destructive: false） |
 | Storage 使用量 CSV | — | document_files / docs_sites / imports の CSV download（bounded list としての read-only handoff） |
+| OAuth 2.0 / MCP | `apply_document_revision` によるdraft版作成、`publish_document_revision` による公開、OAuth clientの作成・secret rotation・revoke | `documents:read` の案件・文書検索、文書詳細、案件AI context、正本更新先handoff、`documents:write` / `documents:publish` のpreview、既存draftの品質確認、OAuth/MCP metadata、確定済みreceiptの同一key・同一digest応答 |
 
 ## viewer操作
 
