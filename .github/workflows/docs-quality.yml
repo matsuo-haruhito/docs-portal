@@ -15,6 +15,8 @@ on:
       - docusaurus/docusaurus.config.ts
       - docusaurus/package.json
       - docusaurus/package-lock.json
+      - docusaurus-renderer/**
+      - docker-compose.docusaurus.yml
       - docusaurus/plugins/remark-kroki-diagrams.mjs
       - docusaurus/plugins/remark-kroki-diagrams.smoke.test.mjs
       - .env.example
@@ -73,6 +75,8 @@ on:
       - docusaurus/docusaurus.config.ts
       - docusaurus/package.json
       - docusaurus/package-lock.json
+      - docusaurus-renderer/**
+      - docker-compose.docusaurus.yml
       - docusaurus/plugins/remark-kroki-diagrams.mjs
       - docusaurus/plugins/remark-kroki-diagrams.smoke.test.mjs
       - .env.example
@@ -262,6 +266,10 @@ jobs:
 
       - name: Check relative markdown links
         run: ruby .github/scripts/check_markdown_links.rb
+
+      - name: Run Docusaurus renderer preflight tests
+        working-directory: ./docusaurus-renderer
+        run: npm test
 
       - name: Run Kroki diagram mock smoke
         working-directory: ./docusaurus

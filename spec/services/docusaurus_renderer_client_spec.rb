@@ -80,6 +80,27 @@ RSpec.describe DocusaurusRendererClient do
     result&.archive_file&.close!
   end
 
+  it "uses a configurable read timeout longer than the renderer build timeout" do
+    configured_client = described_class.new(endpoint: endpoint, read_timeout: "210")
+    allow(http).to receive(:request).and_return(success_response("build archive"))
+
+    result = configured_client.build(archive_file: archive, entry_path: "docs/guide.md")
+
+    expect(http).to have_received(:read_timeout=).with(210)
+  ensure
+    result&.archive_file&.close!
+  end
+
+  it "treats renderer busy responses as transient failures" do
+    allow(http).to receive(:request).and_return(
+      error_response({ error: "renderer is busy" }.to_json, Net::HTTPTooManyRequests)
+    )
+
+    expect do
+      client.build(archive_file: archive, entry_path: "docs/guide.md")
+    end.to raise_error(DocusaurusRendererClient::TransientError, /renderer is busy/)
+  end
+
   it "raises a readable error when the renderer returns json failure" do
     allow(http).to receive(:request).and_return(error_response({ error: "MDX parse failed" }.to_json))
 
@@ -145,8 +166,13 @@ RSpec.describe DocusaurusRendererClient do
     end
   end
 
-  def error_response(body)
-    Net::HTTPUnprocessableEntity.new("1.1", "422", "Unprocessable Entity").tap do |response|
+  def error_response(body, response_class = Net::HTTPUnprocessableEntity)
+    code, message = {
+      Net::HTTPUnprocessableEntity => ["422", "Unprocessable Entity"],
+      Net::HTTPTooManyRequests => ["429", "Too Many Requests"]
+    }.fetch(response_class)
+
+    response_class.new("1.1", code, message).tap do |response|
       set_response_body(response, body)
     end
   end

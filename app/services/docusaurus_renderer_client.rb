@@ -12,10 +12,15 @@ class DocusaurusRendererClient
 
   DEFAULT_ENDPOINT = "http://docusaurus:3000"
   OPEN_TIMEOUT = 5
-  READ_TIMEOUT = 180
+  DEFAULT_READ_TIMEOUT = 210
 
-  def initialize(endpoint: ENV.fetch("DOCUSAURUS_RENDERER_ENDPOINT", DEFAULT_ENDPOINT))
+  def initialize(
+    endpoint: ENV.fetch("DOCUSAURUS_RENDERER_ENDPOINT", DEFAULT_ENDPOINT),
+    read_timeout: ENV.fetch("DOCUSAURUS_RENDERER_READ_TIMEOUT_SECONDS", DEFAULT_READ_TIMEOUT)
+  )
     @endpoint = endpoint.to_s.delete_suffix("/")
+    @read_timeout = Integer(read_timeout.to_s, 10)
+    raise ArgumentError, "renderer read timeout must be positive" unless @read_timeout.positive?
   end
 
   def build(archive_file:, entry_path:)
@@ -28,6 +33,9 @@ class DocusaurusRendererClient
     request.content_length = archive_file.size
 
     response = http_for(uri).request(request)
+    if response.is_a?(Net::HTTPTooManyRequests)
+      raise TransientError, renderer_error_message(response)
+    end
     unless response.is_a?(Net::HTTPSuccess)
       raise ApplicationError::BadRequest, renderer_error_message(response)
     end
@@ -57,13 +65,13 @@ class DocusaurusRendererClient
 
   private
 
-  attr_reader :endpoint
+  attr_reader :endpoint, :read_timeout
 
   def http_for(uri)
     Net::HTTP.new(uri.host, uri.port).tap do |http|
       http.use_ssl = uri.scheme == "https"
       http.open_timeout = OPEN_TIMEOUT
-      http.read_timeout = READ_TIMEOUT
+      http.read_timeout = read_timeout
     end
   end
 

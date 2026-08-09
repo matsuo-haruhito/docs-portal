@@ -39,13 +39,29 @@ KROKI_ENDPOINT=http://kroki:8000
 
 The renderer container is built from local repository code rather than a generic public image because it depends on the repo-local Docusaurus config and `remark-kroki-diagrams` plugin.
 
-The renderer has bounded input, output, and execution time. Tune these only when preview builds need larger document bundles:
+The renderer has bounded archive input, expanded source, output, and execution time. Tune these only when preview builds need larger document bundles:
 
 ```bash
 DOCUSAURUS_RENDERER_MAX_UPLOAD_BYTES=20971520
+DOCUSAURUS_RENDERER_MAX_SOURCE_FILES=2000
+DOCUSAURUS_RENDERER_MAX_SOURCE_FILE_BYTES=20971520
+DOCUSAURUS_RENDERER_MAX_SOURCE_BYTES=209715200
 DOCUSAURUS_RENDERER_MAX_OUTPUT_BYTES=52428800
-DOCUSAURUS_RENDERER_BUILD_TIMEOUT_MS=60000
+DOCUSAURUS_RENDERER_MAX_CONCURRENT_BUILDS=1
+DOCUSAURUS_RENDERER_BUILD_TIMEOUT_MS=180000
+DOCUSAURUS_RENDERER_READ_TIMEOUT_SECONDS=210
+DOCUSAURUS_RENDERER_CPUS=2.0
+DOCUSAURUS_RENDERER_MEMORY_LIMIT=2g
+DOCUSAURUS_RENDERER_PIDS_LIMIT=128
 ```
+
+Before extraction, the renderer checks tar metadata and rejects archives whose declared regular-file count, individual size, or total expanded size exceeds the same source limits. After extraction and before `npm run build`, it scans the complete source tree again so actual filesystem contents must match those bounds. It checks file bytes rather than extensions and rejects ICNS, JPEG XL, JPEG 2000, and the HEIF family handled by the vulnerable parser, including HEIC and AVIF. For ISO BMFF files it examines the major brand and all compatible brands in a bounded `ftyp` box; an oversized, unbounded, or extended-size `ftyp` box is rejected rather than partially inspected. A rejected source returns HTTP 422 without starting Docusaurus.
+
+A source that passes preflight must then acquire a build permit. The renderer accepts one concurrent Docusaurus build by default and returns HTTP 429 immediately when all permits are in use; it does not queue requests in process. The permit covers only the `npm run build` subprocess and is released in `finally`, including timeout and build failure paths, so a later retry can proceed. Rails classifies HTTP 429 as a transient renderer failure; the persisted preview failure/backoff and reconciliation flow requeues it rather than using an immediate in-process retry.
+
+The Compose service also limits the renderer container to 2 CPUs, 2 GiB memory, and 128 PIDs by default. The build subprocess timeout is 180 seconds in the local Compose configuration. The Rails renderer client uses a configurable 210-second read timeout for the complete HTTP request, leaving 30 seconds for upload, archive validation/extraction, preflight, output compression, and response handling. The standalone Node server retains a 60-second fallback only when `BUILD_TIMEOUT_MS` is omitted outside Compose. Keep the client timeout longer than the renderer build timeout, including enough margin for bundle size and host performance, when overriding either value.
+
+These controls reduce the current `image-size` denial-of-service exposure and bound unknown parser or plugin failures; they do not remove that transitive package from the lockfile or make `npm audit` green.
 
 ## Viewer HTML rewrite and table annotation
 
