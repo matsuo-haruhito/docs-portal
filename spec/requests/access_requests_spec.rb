@@ -387,6 +387,7 @@ RSpec.describe "Access requests", type: :request do
   it "bounds query result rows while keeping filtered status counts readable" do
     sign_in_as(user)
 
+    base_time = Time.current
     101.times do |index|
       create(
         :access_request,
@@ -394,7 +395,8 @@ RSpec.describe "Access requests", type: :request do
         requestable: file,
         requested_access_level: :download,
         status: :cancelled,
-        cancelled_at: Time.current,
+        cancelled_at: base_time,
+        created_at: base_time + index.seconds,
         reason: format("bounded request %03d", index + 1)
       )
     end

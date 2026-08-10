@@ -1,14 +1,16 @@
 require "rails_helper"
 
 RSpec.describe "OAuth metadata", type: :request do
+  let(:base_url) { ENV.fetch("MCP_PUBLIC_BASE_URL", "http://localhost") }
+
   it "publishes the authorization server and protected resource metadata" do
     get "/.well-known/oauth-authorization-server"
 
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body).to include(
-      "issuer" => "http://localhost",
-      "authorization_endpoint" => "http://localhost/oauth/authorize",
-      "token_endpoint" => "http://localhost/oauth/token",
+      "issuer" => base_url,
+      "authorization_endpoint" => "#{base_url}/oauth/authorize",
+      "token_endpoint" => "#{base_url}/oauth/token",
       "code_challenge_methods_supported" => ["S256"],
       "scopes_supported" => %w[documents:read documents:write documents:publish]
     )
@@ -17,8 +19,8 @@ RSpec.describe "OAuth metadata", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body).to include(
-      "resource" => "http://localhost/mcp",
-      "authorization_servers" => ["http://localhost"],
+      "resource" => "#{base_url}/mcp",
+      "authorization_servers" => [base_url],
       "bearer_methods_supported" => ["header"]
     )
   end
