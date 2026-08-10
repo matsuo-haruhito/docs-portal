@@ -112,8 +112,6 @@ class DocumentVersion < ApplicationRecord
   end
 
   def html_view_site_path
-    return site_build_path if site_build_path.present? && site_entry_absolute_path&.exist?
-
     markdown_entry_path.presence || site_build_path
   end
 
@@ -269,7 +267,7 @@ class DocumentVersion < ApplicationRecord
       end
 
       update!(
-        markdown_entry_path: source_relative_path,
+        markdown_entry_path: site_path,
         site_build_path: site_path,
         preview_build_status: :preview_succeeded,
         preview_build_error_message: nil,
@@ -287,7 +285,7 @@ class DocumentVersion < ApplicationRecord
 
   def preview_build_artifact_consistent?(artifact)
     preview_succeeded? &&
-      markdown_entry_path == artifact.source_path &&
+      markdown_entry_path == artifact.site_path &&
       site_build_path == artifact.site_path
   end
 
@@ -393,6 +391,7 @@ class DocumentVersion < ApplicationRecord
 
   def self.normalize_site_page_path(path)
     value = path.to_s.delete_prefix("/").sub(%r{\A/+}, "")
+    value = value.sub(/\A(?:index|README)\.(?:md|markdown|mdx)\z/i, "index")
     value = value.sub(%r{/(?:index|README)\.(?:md|markdown|mdx)\z}i, "")
     value = value.sub(/\.(md|markdown|mdx)\z/i, "")
     value = value.delete_suffix("/index.html")

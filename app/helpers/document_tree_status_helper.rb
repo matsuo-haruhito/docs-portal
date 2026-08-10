@@ -3,7 +3,7 @@ module DocumentTreeStatusHelper
     return [] unless item.is_a?(Document)
 
     icons = []
-    unless tree_item_html_available?(item)
+    unless tree_item_preview_available?(item)
       icons << {
         text: "⚠️",
         class: "tree-item-status-icon--warning",

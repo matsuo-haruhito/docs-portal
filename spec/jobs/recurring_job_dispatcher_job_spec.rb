@@ -30,7 +30,7 @@ RSpec.describe RecurringJobDispatcherJob, type: :job do
     }.merge(attributes))
   end
 
-  it "durably suspends v2 schedules while the gate is off without consuming run intent or locks" do
+  it "suspends rollout-gated schedules and restores a legacy-suspended preview schedule while the gate is off" do
     requested_at = 5.minutes.ago
     locked_at = 2.minutes.ago
     schedule = create_schedule(
@@ -39,6 +39,11 @@ RSpec.describe RecurringJobDispatcherJob, type: :job do
       run_requested_at: requested_at,
       locked_at:,
       locked_by: "existing-owner"
+    )
+    preview_schedule = create_schedule(
+      job_key: "reconcile_docusaurus_preview_builds",
+      enabled: false,
+      enabled_before_reliability_v2_suspend: true
     )
     allow(JobReliability::RolloutGate).to receive(:enabled?).and_return(false)
     allow(RecurringJobRunnerJob).to receive(:set)
@@ -51,6 +56,10 @@ RSpec.describe RecurringJobDispatcherJob, type: :job do
       run_requested_at: be_within(1.second).of(requested_at),
       locked_at: be_within(1.second).of(locked_at),
       locked_by: "existing-owner"
+    )
+    expect(preview_schedule.reload).to have_attributes(
+      enabled: true,
+      enabled_before_reliability_v2_suspend: nil
     )
     expect(RecurringJobSchedule.due).not_to include(schedule)
     expect(RecurringJobRunnerJob).not_to have_received(:set)
@@ -96,25 +105,39 @@ RSpec.describe RecurringJobDispatcherJob, type: :job do
     expect(schedule.reload).to have_attributes(locked_at: nil, locked_by: nil, last_status: "failed")
   end
 
-  it "does not recover or unlock a running run based on elapsed time alone" do
-    schedule = create_schedule
-    started_at = 2.hours.ago
-    run = create_run(schedule, status: :running, started_at:)
-    schedule.update!(locked_at: started_at, locked_by: run.public_id, last_status: "running")
+  it "recovers only a stale running preview reconciliation whose run still owns the schedule lock" do
+    generic_schedule = create_schedule
+    generic_started_at = 2.hours.ago
+    generic_run = create_run(generic_schedule, status: :running, started_at: generic_started_at)
+    generic_schedule.update!(locked_at: generic_started_at, locked_by: generic_run.public_id, last_status: "running")
 
-    expect { described_class.perform_now }
-      .not_to change(RecurringJobRun, :count)
+    preview_schedule = create_schedule(job_key: "reconcile_docusaurus_preview_builds")
+    preview_started_at = 31.minutes.ago
+    preview_run = create_run(preview_schedule, status: :running, started_at: preview_started_at)
+    preview_schedule.update!(locked_at: preview_started_at, locked_by: preview_run.public_id, last_status: "running")
 
-    expect(run.reload).to have_attributes(
+    described_class.perform_now
+
+    expect(generic_run.reload).to have_attributes(
       status: "running",
-      started_at: be_within(1.second).of(started_at),
+      started_at: be_within(1.second).of(generic_started_at),
       finished_at: nil,
       error_message: nil
     )
-    expect(schedule.reload).to have_attributes(
-      locked_at: be_within(1.second).of(started_at),
-      locked_by: run.public_id,
+    expect(generic_schedule.reload).to have_attributes(
+      locked_at: be_within(1.second).of(generic_started_at),
+      locked_by: generic_run.public_id,
       last_status: "running"
+    )
+    expect(preview_run.reload).to have_attributes(
+      status: "failed",
+      error_message: RecurringJobRun::STALE_RUNNING_ERROR_MESSAGE
+    )
+    expect(preview_run.finished_at).to be_present
+    expect(preview_schedule.reload).to have_attributes(
+      locked_at: nil,
+      locked_by: nil,
+      last_status: "failed"
     )
   end
 
@@ -146,14 +169,14 @@ RSpec.describe RecurringJobDispatcherJob, type: :job do
     expect(schedule.reload).to have_attributes(locked_by: run.public_id, last_status: "enqueued")
   end
 
-  it "enqueues reliability v2 runs with a protocol marker" do
+  it "enqueues protocol-v2 preview runs while the rollout gate is off" do
     schedule = create_schedule(
       job_key: "reconcile_docusaurus_preview_builds",
       next_run_at: 1.minute.ago
     )
     configured_job = double("configured recurring job")
     active_job = double("active job", job_id: "v2-runner-job-id")
-    allow(JobReliability::RolloutGate).to receive(:enabled?).and_return(true)
+    allow(JobReliability::RolloutGate).to receive(:enabled?).and_return(false)
     allow(RecurringJobRunnerJob).to receive(:set).with(queue: "default").and_return(configured_job)
     allow(configured_job).to receive(:perform_later).and_return(active_job)
 
@@ -189,7 +212,7 @@ RSpec.describe RecurringJobDispatcherJob, type: :job do
     run = create_run(schedule, enqueued_at: 11.minutes.ago)
     schedule.update!(locked_at: 11.minutes.ago, locked_by: run.public_id)
     orphaned_lock = create_schedule(
-      job_key: "reconcile_docusaurus_preview_builds",
+      job_key: "recover_generated_file_events",
       locked_at: 11.minutes.ago,
       locked_by: "missing-run"
     )

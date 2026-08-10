@@ -339,7 +339,7 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     sign_in_as(admin_user)
     requested_at = 10.minutes.ago
     schedule = create_schedule!(
-      job_key: "reconcile_docusaurus_preview_builds",
+      job_key: "reconcile_external_folder_sync_webhook_events",
       enabled: false,
       enabled_before_reliability_v2_suspend: true,
       run_requested_at: requested_at
@@ -359,7 +359,7 @@ RSpec.describe "Admin recurring job schedules", type: :request do
     expect(response).to redirect_to(
       admin_recurring_job_schedule_path(schedule, return_to: admin_recurring_job_schedules_path)
     )
-    expect(flash[:alert]).to include("信頼性V2の停止中")
+    expect(flash[:alert]).to include("信頼性V2のrollout停止中")
     expect(RecurringJobDispatcherJob).not_to have_received(:perform_later)
   end
 

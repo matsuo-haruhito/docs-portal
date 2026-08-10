@@ -1,8 +1,10 @@
 class DocusaurusPreviewBuildJob < ApplicationJob
+  PREVIEW_BUILD_CONCURRENCY = 1
+
   queue_as :default
 
   if respond_to?(:limits_concurrency)
-    limits_concurrency to: 1,
+    limits_concurrency to: PREVIEW_BUILD_CONCURRENCY,
       key: ->(_version_id) { "docusaurus-preview-build" },
       duration: 10.minutes
   end

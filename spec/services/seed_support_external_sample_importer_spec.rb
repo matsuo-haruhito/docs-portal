@@ -22,7 +22,12 @@ RSpec.describe SeedSupport::MasterDataImporter do
       title: Portal Demo Home
       ---
       # Portal Demo Home
+
+      [Policy](policy.pdf)
+      [Matrix](matrix.xlsx)
     MARKDOWN
+    File.binwrite(site_root.join("policy.pdf"), "%PDF seed")
+    File.binwrite(site_root.join("matrix.xlsx"), "xlsx seed")
     File.write(site_root.join("guide.md"), <<~MARKDOWN)
       ---
       title: Current Guide
@@ -53,6 +58,11 @@ RSpec.describe SeedSupport::MasterDataImporter do
     project = Project.find_by!(name: "representative-set / product-handbook")
     home_document = project.documents.find_by!(title: "Portal Demo Home")
     guide_document = project.documents.find_by!(title: "Current Guide")
+    file_backed_documents = project.documents.includes(latest_version: :document_files).index_by do |document|
+      document.latest_version.source_relative_path
+    end
+    pdf_document = file_backed_documents.fetch("policy.pdf")
+    excel_document = file_backed_documents.fetch("matrix.xlsx")
 
     expect(project.description).to eq("external_samples/representative-set 配下のサンプル文書サイト")
     expect(project.code).to start_with("EXT_REPRESENTATI_")
@@ -71,8 +81,14 @@ RSpec.describe SeedSupport::MasterDataImporter do
     expect(current_home_version.document_files.pluck(:file_name)).to contain_exactly("README.md")
     expect(guide_version.document_files.order(:sort_order).pluck(:file_name)).to eq(["guide.md", "assets/guide.png"])
     expect(guide_version.document_files.find_by!(file_name: "assets/guide.png").content_type).to eq("image/png")
+    expect(pdf_document.latest_version.document_files.pluck(:file_name)).to contain_exactly("policy.pdf")
+    expect(pdf_document.latest_version.document_files.first.content_type).to eq("application/pdf")
+    expect(excel_document.latest_version.document_files.pluck(:file_name)).to contain_exactly("matrix.xlsx")
+    expect(excel_document.latest_version.document_files.first.content_type).to eq("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
     external_company_ids = Company.where(domain: ["client-a.example.com", "client-b.example.com"]).pluck(:id)
     expect(home_document.document_permissions.where(company_id: external_company_ids).pluck(:access_level)).to contain_exactly("download", "download")
+    expect(pdf_document.document_permissions.where(company_id: external_company_ids).pluck(:access_level)).to contain_exactly("download", "download")
+    expect(excel_document.document_permissions.where(company_id: external_company_ids).pluck(:access_level)).to contain_exactly("download", "download")
   end
 end

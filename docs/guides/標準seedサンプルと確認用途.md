@@ -8,7 +8,7 @@
 
 | 種類 | 配置 | 役割 |
 | --- | --- | --- |
-| 標準 showcase サンプル | `storage/document_files/external_samples/seed-showcase/docs-portal-demo/` | Markdown / Mermaid / PDF / Excel / CSV / ZIP / 複数版の代表導線を少ない文書数で確認する |
+| 標準 showcase サンプル | `storage/document_files/external_samples/seed-showcase/docs-portal-demo/` | Markdown / Mermaid / PDF / Excel / CSV / ZIPを独立した文書ツリー行として表示し、代表viewer・download・複数版の導線を少ない文書数で確認する |
 | 用途特化サンプル | `storage/document_files/external_samples/ai-usecases/AI活用手順ポータル/` | AI 活用手順や判断フローのような、手順書系コンテンツの seed 例として使う |
 | 任意の外部サンプル | `storage/document_files/external_samples/<sample-set>/<site-dir>/...` | 利用者や開発者が独自に持ち込む確認用コンテンツ |
 
@@ -76,7 +76,7 @@ standard showcase smoke:
 | Markdown viewer / 文書本文 | `README.md` の見出し、表、コードブロック、添付ファイルリンクが開けること | Docusaurus build や manual preview renderer を触る PR では HTML 表示も確認する |
 | Mermaid / diagram 表示 | `README.md` 内 Mermaid と `process.mmd` が補助ファイルとして辿れること | PlantUML / D2 / Kroki 変換を触る PR では Kroki mock smoke を確認し、実 Kroki service 疎通は runtime 設定変更時だけ見る |
 | CSV preview / download | `runbook.csv` の preview または download 導線が期待どおりであること | CSV parser や table 表示を触る PR では列見出しと行表示を合わせて見る |
-| PDF / Excel 添付 | `README.pdf` と `README.xlsx` の download 導線が壊れていないこと | Office preview 接続や Graph 連携を触る PR では preview 表示を条件付きで確認する |
+| PDF / Excel 文書 | `README.pdf` と `README.xlsx` が独立した文書ツリー行として表示され、download 導線が壊れていないこと | Office preview接続やGraph連携を触るPRではpreview表示を条件付きで確認する |
 | ZIP preview / 個別 download | `sample-archive.zip` の ZIP preview、entry preview、individual download を見ること | unsafe path、nested archive、巨大 ZIP、bulk download の境界はこの showcase ではなく専用 issue / test で扱う |
 | 複数版 / 版詳細 | current の `README.md` と旧版 `提出済/README.md` を切り替えられること | diff / comparison UI を触る PR では current / old の表示ラベルと戻り先も見る |
 
@@ -87,7 +87,7 @@ standard showcase smoke:
 任意サンプルは、標準 showcase とは別の `<sample-set>` 配下に置きます。`db:seed` 前に入力ファイルをそろえ、seed 後は portal 上の Project / Document / DocumentFile と生成 HTML を確認します。
 
 1. `bin/setup_external_sample_data_links` を実行し、`storage/document_files/external_samples` が存在する状態にします。この script は root directory を用意するだけで、サンプルの検証、cleanup、retention 判断は行いません。
-2. `storage/document_files/external_samples/<sample-set>/<site-dir>/...` にサンプルを配置します。`site-dir` ごとに 1 Project として取り込まれ、Markdown は 1 ファイルまたは 1 ディレクトリを 1 Document として扱います。
+2. `storage/document_files/external_samples/<sample-set>/<site-dir>/...` にサンプルを配置します。`site-dir` ごとに 1 Project として取り込まれ、Markdown / MDX / diagram / HTML と、PDF・Office・CSV / TSV・ZIPはファイルごとに1つの `Document` として扱います。画像やCSSなど本文付随assetは独立文書にしません。
 3. 旧版や提出済み snapshot を持たせたい場合は、`提出済`、`提出済み`、`編集正本` などの snapshot directory を `site-dir` 配下に置きます。snapshot directory 以外の current 側からは、これらの directory は除外して読み取られます。
 4. `rails db:seed` を実行し、対象 sample set の Project、Document、DocumentVersion、添付 DocumentFile が作られることを確認します。添付ファイルは seed 時に `external_sample_seed_files/...` の storage key へ materialize されます。
 5. Docusaurus build が必要な Markdown は、Document 詳細の HTML 表示と添付導線を確認します。PlantUML / D2 など Kroki 前提の記法を含む場合は、Kroki runtime 前提も別途確認してください。

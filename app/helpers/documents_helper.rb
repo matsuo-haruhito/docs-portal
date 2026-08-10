@@ -3,8 +3,9 @@ require "digest"
 module DocumentsHelper
   DocumentTreeFolderNode = Data.define(:project, :path, :label, :children)
   DOCUMENT_TREE_INSTANCE_KEY = "documents:sidebar"
-  DOCUMENT_TREE_RENDER_WINDOW_THRESHOLD = 80
-  DOCUMENT_TREE_RENDER_WINDOW_LIMIT = 50
+  DOCUMENT_TREE_RENDER_WINDOW_THRESHOLD = 100
+  DOCUMENT_TREE_RENDER_WINDOW_LIMIT = 100
+  DOCUMENT_TREE_SEARCH_SOURCE_ATTRIBUTE_KEY_PATTERN = /(?:\A|_)(?:name|kana|furigana|reading|code|number)(?:\z|_)|名称|フリガナ|カナ|コード/i
   DOCUMENT_TREE_ICON_NAMES = %w[
     7z ai company_lit company_unlit css csv doc document docx fig folder_closed folder_open gz htm html ini jpeg jpg json key log md mdx odp ods odt pages parquet pdf png ppt pptx psd rst rtf svg tar tex tif tiff toml tsv txt webp xls xlsm xlsx xml yaml yml zip
   ].freeze
@@ -16,6 +17,10 @@ module DocumentsHelper
   def document_tree_render_state(projects:, current_project: nil, current_document: nil, expanded_source_path: nil, collapsed_source_path: nil)
     projects = document_tree_projects_for_query(projects, current_project:, current_document:)
     prepare_document_tree_cache!(projects)
+    if document_tree_query.present?
+      matching_projects = projects.select { |project| document_tree_documents_for(project).any? }
+      projects = matching_projects if matching_projects.any?
+    end
 
     adapter = TreeView::GraphAdapter.new(
       roots: [*projects],
@@ -56,9 +61,9 @@ module DocumentsHelper
     if current_document.present? && Array(persisted_state&.expanded_keys).blank?
       expanded_keys |= document_tree_all_folder_keys_for(current_document.project)
     end
-    expanded_keys |= document_tree_query_expanded_keys(projects) if document_tree_query.present?
     collapsed_keys = expansion_state.fetch(:collapsed_keys, [])
     expanded_keys -= collapsed_keys
+    expanded_keys |= document_tree_query_expanded_keys(projects) if document_tree_query.present?
 
     render_state = TreeView::RenderState.new(
       tree:,
@@ -211,11 +216,26 @@ module DocumentsHelper
     item.is_a?(Document) && document_html_version(item).present?
   end
 
+  def tree_item_preview_available?(item)
+    return false unless item.is_a?(Document)
+
+    version = item.latest_version
+    return false unless version&.viewable_by?(current_user)
+    return true if version.rendered_site_available?
+
+    files = version.document_files
+    if files.loaded?
+      files.any?(&:embeddable_viewer_file?)
+    else
+      version.embedded_view_available?
+    end
+  end
+
   def tree_item_css_class(item, current_project: nil, current_document: nil)
     classes = []
     classes << "current-node" if current_tree_item?(item, current_project:, current_document:)
     classes << "tree-folder-node" if item.is_a?(DocumentTreeFolderNode)
-    classes << "html-unavailable" if item.is_a?(Document) && !tree_item_html_available?(item)
+    classes << "html-unavailable" if item.is_a?(Document) && !tree_item_preview_available?(item)
     classes
   end
 
@@ -239,7 +259,8 @@ module DocumentsHelper
         tree_item_type: item.class.name.underscore,
         tree_item_id: item.id,
         project_id: item.project_id,
-        html_available: tree_item_html_available?(item)
+        html_available: tree_item_html_available?(item),
+        preview_available: tree_item_preview_available?(item)
       }
     else
       {}
@@ -270,13 +291,7 @@ module DocumentsHelper
   private
 
   def document_tree_projects_for_query(projects, current_project:, current_document:)
-    projects = projects.to_a
-    return projects if document_tree_query.blank?
-
-    scoped_project = current_project || current_document&.project
-    return projects if scoped_project.blank?
-
-    [scoped_project]
+    projects.to_a
   end
 
   def current_tree_item?(item, current_project: nil, current_document: nil)
@@ -400,6 +415,8 @@ module DocumentsHelper
 
   def prepare_document_tree_cache!(projects)
     query = document_tree_query
+    prepare_document_tree_search_context_cache!(projects) if query.present?
+
     @document_tree_documents_by_project_id = projects.index_with do |project|
       documents = if project.association(:documents).loaded?
         project.documents.to_a
@@ -409,13 +426,36 @@ module DocumentsHelper
 
       documents = documents.reject { |document| document.archived_at.present? }
       documents = documents.select { |document| document.visible_in_portal_for?(current_user) } unless current_user.internal?
-      documents = documents.select { |document| document_tree_query_match?(document, query) } if query.present?
+      if query.present?
+        project_matches = document_tree_project_query_match?(project, query)
+        documents = documents.select { |document| project_matches || document_tree_query_match?(document, query) }
+      end
       documents.sort_by { |document| document_tree_document_label(document) }
     end.transform_keys(&:id)
     @document_tree_nodes_by_project_id = {}
     @document_tree_folder_nodes_by_project_and_path = {}
     @document_tree_html_version_by_document_id = {}
     @document_tree_default_site_version_by_project_id = {}
+  end
+
+  def prepare_document_tree_search_context_cache!(projects)
+    project_ids = projects.map(&:id)
+    company_ids = projects.filter_map(&:company_id).uniq
+    mappings = []
+    mappings.concat(ExternalMasterSyncMapping.where(sync_target_type: "Project", sync_target_id: project_ids)) if project_ids.any?
+    mappings.concat(ExternalMasterSyncMapping.where(sync_target_type: "Company", sync_target_id: company_ids)) if company_ids.any?
+
+    @document_tree_external_search_values_by_target = Hash.new { |hash, key| hash[key] = [] }
+    mappings.each do |mapping|
+      key = [mapping.sync_target_type, mapping.sync_target_id]
+      values = @document_tree_external_search_values_by_target[key]
+      values << mapping.external_id
+      mapping.source_attributes.each do |attribute_key, value|
+        next unless attribute_key.to_s.match?(DOCUMENT_TREE_SEARCH_SOURCE_ATTRIBUTE_KEY_PATTERN)
+
+        values.concat(Array(value).select { |item| item.is_a?(String) || item.is_a?(Numeric) })
+      end
+    end
   end
 
   def document_tree_documents_for(project)
@@ -582,19 +622,51 @@ module DocumentsHelper
     document_tree_source_file_name(document).presence || document.title
   end
 
+  def document_tree_project_query_match?(project, query)
+    company = project.company
+    values = [
+      project.name,
+      project.code,
+      project.public_id,
+      company&.name,
+      company&.domain,
+      company&.public_id,
+      *document_tree_external_search_values_for(project),
+      *document_tree_external_search_values_for(company)
+    ]
+
+    document_tree_query_values_match?(values, query)
+  end
+
+  def document_tree_external_search_values_for(target)
+    return [] unless target
+
+    @document_tree_external_search_values_by_target&.fetch([target.class.name, target.id], []) || []
+  end
+
   def document_tree_query_match?(document, query)
-    return true if query.blank?
-
-    normalized_query = query.to_s.downcase
-    return false if normalized_query.blank?
-
-    [
+    values = [
       document.title,
       document.slug,
       document_tree_source_file_name(document),
       document_tree_source_directory(document),
       document_tree_version_for(document)&.source_relative_path
-    ].compact_blank.any? { |value| value.to_s.downcase.include?(normalized_query) }
+    ]
+
+    document_tree_query_values_match?(values, query)
+  end
+
+  def document_tree_query_values_match?(values, query)
+    normalized_query = normalize_document_tree_search_value(query)
+    return false if normalized_query.blank?
+
+    values.compact_blank.any? do |value|
+      normalize_document_tree_search_value(value).include?(normalized_query)
+    end
+  end
+
+  def normalize_document_tree_search_value(value)
+    value.to_s.unicode_normalize(:nfkc).downcase.squish
   end
 
   def document_tree_source_directory(document)
@@ -711,17 +783,17 @@ module DocumentsHelper
   end
 
   def document_tree_render_window_offset(visible_rows:, current_document:, requested_offset:)
-    max_offset = [visible_rows.length - DOCUMENT_TREE_RENDER_WINDOW_LIMIT, 0].max
+    last_page_offset = ((visible_rows.length - 1) / DOCUMENT_TREE_RENDER_WINDOW_LIMIT) * DOCUMENT_TREE_RENDER_WINDOW_LIMIT
 
     if requested_offset.is_a?(Integer) && requested_offset >= 0
-      return [requested_offset, max_offset].min
+      requested_page_offset = (requested_offset / DOCUMENT_TREE_RENDER_WINDOW_LIMIT) * DOCUMENT_TREE_RENDER_WINDOW_LIMIT
+      return [requested_page_offset, last_page_offset].min
     end
 
     current_index = document_tree_visible_row_index_for(visible_rows, current_document)
     return 0 unless current_index
 
-    desired_offset = [current_index - (DOCUMENT_TREE_RENDER_WINDOW_LIMIT / 2), 0].max
-    [desired_offset, max_offset].min
+    (current_index / DOCUMENT_TREE_RENDER_WINDOW_LIMIT) * DOCUMENT_TREE_RENDER_WINDOW_LIMIT
   end
 
   def document_tree_visible_row_index_for(visible_rows, current_document)

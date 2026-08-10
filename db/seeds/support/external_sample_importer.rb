@@ -39,7 +39,7 @@ module SeedSupport
     attr_reader :context
 
     def documents_for_scope(sample_set_key:, project_name:, project_code:, site_dir:, version_name:, source_root:, excluded_roots:)
-      scanner = ZipImportDocumentScanner.new(root: source_root)
+      scanner = ZipImportDocumentScanner.new(root: source_root, candidate_policy: :file_backed_documents)
       scan_result = scanner.call
       version_label = version_label_for_name(version_name)
       site_build_path = File.join(

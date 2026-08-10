@@ -2,11 +2,13 @@ class RecurringJobDispatcherJob < ApplicationJob
   queue_as :default
 
   BATCH_SIZE = 50
+  PREVIEW_STALE_RUNNING_AFTER = 30.minutes
 
   def perform
     sync_reliability_v2_schedule_state!
     sync_missing_schedules!
     recover_stale_enqueued_runs!
+    recover_stale_preview_running_runs!
     release_stale_locks!
     dispatch_due_schedules!
   end
@@ -18,28 +20,44 @@ class RecurringJobDispatcherJob < ApplicationJob
 
     RecurringJobSchedule.transaction do
       schedules = RecurringJobSchedule
-        .where(job_key: RecurringJobDefinition.v2_job_keys)
+        .where(job_key: RecurringJobDefinition.runner_protocol_v2_job_keys)
         .order(:id)
         .lock
         .to_a
 
       schedules.each do |schedule|
-        if gate_enabled
-          next if schedule.enabled_before_reliability_v2_suspend.nil?
-
-          schedule.update!(
-            enabled: schedule.enabled_before_reliability_v2_suspend,
-            enabled_before_reliability_v2_suspend: nil
-          )
+        if RecurringJobDefinition.rollout_gated_job_key?(schedule.job_key)
+          sync_rollout_gated_schedule!(schedule, gate_enabled:)
         else
-          attributes = {enabled: false}
-          if schedule.enabled_before_reliability_v2_suspend.nil?
-            attributes[:enabled_before_reliability_v2_suspend] = schedule.enabled?
-          end
-          schedule.update!(attributes) if attributes.any? { |key, value| schedule.public_send(key) != value }
+          restore_rollout_independent_schedule!(schedule)
         end
       end
     end
+  end
+
+  def sync_rollout_gated_schedule!(schedule, gate_enabled:)
+    if gate_enabled
+      restore_suspended_schedule!(schedule)
+    else
+      attributes = {enabled: false}
+      if schedule.enabled_before_reliability_v2_suspend.nil?
+        attributes[:enabled_before_reliability_v2_suspend] = schedule.enabled?
+      end
+      schedule.update!(attributes) if attributes.any? { |key, value| schedule.public_send(key) != value }
+    end
+  end
+
+  def restore_rollout_independent_schedule!(schedule)
+    restore_suspended_schedule!(schedule)
+  end
+
+  def restore_suspended_schedule!(schedule)
+    return if schedule.enabled_before_reliability_v2_suspend.nil?
+
+    schedule.update!(
+      enabled: schedule.enabled_before_reliability_v2_suspend,
+      enabled_before_reliability_v2_suspend: nil
+    )
   end
 
   def sync_missing_schedules!
@@ -58,7 +76,7 @@ class RecurringJobDispatcherJob < ApplicationJob
   end
 
   def recover_stale_enqueued_runs!
-    rollout_eligible(RecurringJobRun.stale_enqueued).find_each do |run|
+    execution_eligible(RecurringJobRun.stale_enqueued).find_each do |run|
       RecurringJobRun.transaction do
         run.lock!
         next unless run.enqueued?
@@ -85,8 +103,46 @@ class RecurringJobDispatcherJob < ApplicationJob
     end
   end
 
+  def recover_stale_preview_running_runs!
+    return if read_only_maintenance?
+
+    RecurringJobRun
+      .running
+      .where(job_key: RecurringJobDefinition::DOCUSAURUS_PREVIEW_RECONCILIATION_JOB_KEY)
+      .where("started_at IS NULL OR started_at <= ?", PREVIEW_STALE_RUNNING_AFTER.ago)
+      .find_each do |run|
+        recover_stale_preview_running_run!(run)
+      end
+  end
+
+  def recover_stale_preview_running_run!(run)
+    RecurringJobRun.transaction do
+      run.lock!
+      next unless run.running?
+      next unless run.started_at.blank? || run.started_at <= PREVIEW_STALE_RUNNING_AFTER.ago
+
+      schedule = run.recurring_job_schedule
+      schedule.lock!
+      next unless schedule.locked_by == run.public_id
+
+      now = Time.current
+      run.update!(
+        status: :failed,
+        finished_at: now,
+        error_message: RecurringJobRun::STALE_RUNNING_ERROR_MESSAGE
+      )
+      schedule.update!(
+        locked_at: nil,
+        locked_by: nil,
+        last_finished_at: now,
+        last_status: "failed",
+        last_error_message: RecurringJobRun::STALE_RUNNING_ERROR_MESSAGE
+      )
+    end
+  end
+
   def release_stale_locks!
-    rollout_eligible(RecurringJobSchedule.locked_stale).find_each do |schedule|
+    execution_eligible(RecurringJobSchedule.locked_stale).find_each do |schedule|
       RecurringJobSchedule.transaction do
         schedule.lock!
         next unless schedule.locked_at && schedule.locked_at < RecurringJobSchedule::STALE_LOCK_AFTER.ago
@@ -105,7 +161,7 @@ class RecurringJobDispatcherJob < ApplicationJob
   end
 
   def due_schedule_ids
-    rollout_eligible(RecurringJobSchedule.due.where(locked_at: nil))
+    execution_eligible(RecurringJobSchedule.due.where(locked_at: nil))
       .order(Arel.sql("COALESCE(run_requested_at, next_run_at) ASC"), :id)
       .limit(BATCH_SIZE)
       .pluck(:id)
@@ -147,7 +203,7 @@ class RecurringJobDispatcherJob < ApplicationJob
 
   def enqueue_run(run)
     arguments = [run.id]
-    if RecurringJobDefinition.v2_job_key?(run.job_key)
+    if RecurringJobDefinition.runner_protocol_v2_job_key?(run.job_key)
       arguments << RecurringJobDefinition::V2_RUNNER_PROTOCOL_VERSION
     end
     job = RecurringJobRunnerJob.set(queue: run.queue_name).perform_later(*arguments)
@@ -180,9 +236,16 @@ class RecurringJobDispatcherJob < ApplicationJob
     end
   end
 
+  def execution_eligible(scope)
+    scope = rollout_eligible(scope)
+    return scope unless read_only_maintenance?
+
+    scope.where.not(job_key: RecurringJobDefinition::DOCUSAURUS_PREVIEW_RECONCILIATION_JOB_KEY)
+  end
+
   def rollout_eligible(scope)
     return scope if JobReliability::RolloutGate.enabled?
 
-    scope.where.not(job_key: RecurringJobDefinition.v2_job_keys)
+    scope.where.not(job_key: RecurringJobDefinition.rollout_gated_job_keys)
   end
 end

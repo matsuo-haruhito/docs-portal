@@ -95,7 +95,7 @@ admin ナビゲーションでは、次の 3 画面が非同期処理の確認�
 
 ### Docusaurus preview reconciliation
 
-`reconcile_docusaurus_preview_builds` は Markdown / MDX 版の preview 状態と実ファイルを収束させる定期定義です。通常は毎分の dispatcher が schedule を拾い、reconciliation 自体は bounded batch で次を回収します。
+`reconcile_docusaurus_preview_builds` は Markdown / MDX 版の preview 状態と実ファイルを収束させる定期定義です。文書閲覧の復旧に必要な固有処理なので、Webhook・生成ファイル・外部フォルダ同期を段階展開する `JOB_RELIABILITY_V2_ENABLED` からは独立して常時定義します。通常は毎分の dispatcher が schedule を拾い、reconciliation 自体は5分間隔の bounded batch で次を回収します。
 
 1. `preview_not_requested` の Markdown 版
 2. 一定時間開始されない `preview_queued`
@@ -108,13 +108,19 @@ admin ナビゲーションでは、次の 3 画面が非同期処理の確認�
 
 build 成果物が存在するのに未紐付けの場合、版 directory の marker と entry HTML が対象版・source path に一致すれば reconciliation が DB を修復します。marker が不正、別版を指す、または entry HTML が欠ける場合は既存 directory を成功根拠にせず再 build します。storage directory の手作業での rename や marker 編集は行わず、状態・claim token・error を evidence として残してから原因を修正します。
 
+広域 rollout gate が preview を停止していた旧構成から移行するときは、dispatcher が `enabled_before_reliability_v2_suspend` に退避された停止前の値を一度だけ復元します。停止前から無効だった schedule は無効のままとし、運用者の選択を上書きしません。
+
 ### recurring run の stale 判定
 
-重複禁止の schedule では `running` だけでなく `enqueued` run も active として扱います。runner が開始されず10分以上staleになった `enqueued` runはfailedとして記録してからschedule lockを解放し、古いActiveJobが後着しても業務jobを実行しません。一方、開始済みの `running` runは、run行をfailedにしてもchildの外部送信・文書更新・ファイル更新を止められないため、時間経過だけでは自動回収・lock解放しません。staleに見えるrunning runはworker processとchild固有の実行状態を確認し、durable tokenで全副作用をfenceできる定義だけを将来の自動回収対象として個別に追加します。
+重複禁止の schedule では `running` だけでなく `enqueued` run も active として扱います。runner が開始されず10分以上staleになった `enqueued` runはfailedとして記録してからschedule lockを解放し、古いActiveJobが後着しても業務jobを実行しません。
 
-`JOB_RELIABILITY_V2_ENABLED=false` 中は、V2定義の公開と新規dispatchだけでなく、既存V2 scheduleのstale enqueued回収・stale lock解放、queue済みV2 runner、Webhook自動再送、生成ファイルevent dispatch、Docusaurus preview reconciliation、外部フォルダ同期reconciliationも状態変更前に停止します。dispatcherはV2 schedule行をlockし、最初の停止時だけ`enabled`を`enabled_before_reliability_v2_suspend`へ退避してDB上の`enabled=false`を確定します。これによりgateを知らない旧binaryへrollbackしてもV2 scheduleはdue対象になりません。gateをonへ戻すと退避値どおりに元の有効・無効状態を復元して退避値をclearします。停止・復元では`run_requested_at`、既存lock、run履歴を変更せず、停止中または退避値が残るV2 scheduleの`即時実行を要求`は拒否します。
+開始済みの `running` runは原則として時間経過だけで回収しません。childの外部送信・文書更新・ファイル更新を止められず、二重副作用になるためです。例外は `reconcile_docusaurus_preview_builds` だけです。この定義は版ごとのDB lockとclaim tokenで成果物commitをfenceできるため、開始から30分を超え、かつrunが現在のschedule lock ownerである場合に限ってfailed化してlockを解放します。旧runnerが後着してもfailed化済みrunや後続ownerのlockを完了・解除できません。他のrunning runへこの回収を一般化しません。
 
-V2 runner payloadにはprotocol versionを付け、旧1引数consumerが新V2 childを実行する前にfail closedさせます。gateをonにする前はqueueの待機件数だけで判断せず、旧binaryのworker processとin-flight childが0であること、旧payloadがdrain済みであること、group IDを持たないlegacy `processing` eventとlegacy active runを手動確認済みであることを確認します。gateをoffへ戻すときはcurrent binaryのdispatcherを一度実行してV2 scheduleがDB上も無効化されたことを確認し、queue済みV2 jobとin-flight childをdrainしてから旧binaryを起動します。gateをoffへ戻しても既にchild内へ入った処理は取消されないため、running処理のキャンセル用途には使いません。
+`JOB_RELIABILITY_V2_ENABLED=false` 中は、Webhook自動再送、生成ファイルevent dispatch、外部フォルダ同期reconciliationに関する定義公開、新規dispatch、stale enqueued回収・lock解放、queue済みV2 runner、直接起動されたrecovery jobを停止します。preview reconciliationはこの広域gateの対象外です。dispatcherは対象V2 schedule行をlockし、最初の停止時だけ`enabled`を`enabled_before_reliability_v2_suspend`へ退避してDB上の`enabled=false`を確定します。gateを知らない旧binaryへrollbackしても対象V2 scheduleはdueになりません。gateをonへ戻すと退避値どおりに元の有効・無効状態を復元して退避値をclearします。停止・復元では`run_requested_at`、既存lock、run履歴を変更せず、停止中または退避値が残る対象V2 scheduleの`即時実行を要求`は拒否します。
+
+V2 runner payloadにはprotocol versionを付け、旧1引数consumerが新V2 childを実行する前にfail closedさせます。preview reconciliationも互換性確認のためprotocol markerは維持しますが、実行可否は広域gateに結合しません。gateをonにする前はqueueの待機件数だけで判断せず、旧binaryのworker processとin-flight childが0であること、旧payloadがdrain済みであること、group IDを持たないlegacy `processing` eventとlegacy active runを手動確認済みであることを確認します。gateをoffへ戻すときはcurrent binaryのdispatcherを一度実行して対象V2 scheduleがDB上も無効化されたことを確認し、queue済みV2 jobとin-flight childをdrainしてから旧binaryを起動します。gateをoffへ戻しても既にchild内へ入った処理は取消されないため、running処理のキャンセル用途には使いません。
+
+`READ_ONLY_MAINTENANCE` 中はpreview scheduleの新規dispatchとstale run回収を止めます。queue済みpreview runnerが実行された場合もreconciliationは成果物確認・DB修復・再enqueue・確認時刻更新を行わず、queue済みbuild jobも版のclaim前に終了します。現在のevent / preview状態を保持し、解除後のdispatcherとreconciliationで回収します。
 
 生成ファイルeventのgroup claimは、後続generator / writerが完了するまで保持されます。claim付き経路は別queueへ非同期childを残さずinline実行し、filesystemはstage後、DocumentVersionはDB transaction内で、current tokenのownershipを再確認してからcommitします。staged commitを持たないcommand実行はclaim付き経路ではfail closedです。ownershipを失った旧workerは出力をcommitせず、自動retryもenqueueしません。
 

@@ -1,23 +1,52 @@
+# Git
 .git
-.bundle
-coverage
-log
-node_modules
-tmp
-vendor/bundle
+.gitignore
+
+# Dev tooling
+.github
+.kiro
+.agents
+.codex
+.codex-screenshots
+.tmp.driveupload
+.tmp.codex_指示.md
+
+# CI & editor
+.rspec
+.rubocop.yml
+.markdownlint-cli2.yaml
+.editorconfig
+
+# Runtime artifacts
+log/*
+tmp/*
 storage/docs_sites
 storage/document_files
 storage/downloads
 storage/screenshots
 storage/tmp
 
-# Keep package manifests and renderer/Docusaurus source available for docker builds.
+# Dependencies (rebuilt in container)
+vendor/bundle
+node_modules
+
+# Test & docs
+spec
+test
+docs
+docs-src
+
+# OS files
+.DS_Store
+*.swp
+
+# Keep Docusaurus source available for docker builds.
 !docusaurus/package.json
 !docusaurus/package-lock.json
 !docusaurus/**
 !docusaurus-renderer/**
 
-# Never send installed or generated Docusaurus artifacts even when Docusaurus source is re-included above.
+# Never send installed or generated Docusaurus artifacts even when source is re-included above.
 docusaurus/node_modules
 docusaurus/.docusaurus
 docusaurus/build

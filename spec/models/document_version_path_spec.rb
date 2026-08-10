@@ -12,7 +12,8 @@ RSpec.describe DocumentVersion, type: :model do
     it "normalizes README and index markdown entries to their directory path" do
       expect(described_class.normalize_site_page_path("docs/README.md")).to eq("docs")
       expect(described_class.normalize_site_page_path("docs/index.mdx")).to eq("docs")
-      expect(described_class.normalize_site_page_path("README.mdx")).to eq("README")
+      expect(described_class.normalize_site_page_path("README.mdx")).to eq("index")
+      expect(described_class.normalize_site_page_path("index.md")).to eq("index")
     end
   end
 

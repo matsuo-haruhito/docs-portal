@@ -24,12 +24,12 @@ class RecurringJobSchedule < ApplicationRecord
     enabled? && (run_requested_at.present? || next_run_at <= Time.current)
   end
 
-  def reliability_v2?
-    RecurringJobDefinition.v2_job_key?(job_key)
+  def rollout_gated?
+    RecurringJobDefinition.rollout_gated_job_key?(job_key)
   end
 
-  def reliability_v2_suspended?
-    reliability_v2? && (
+  def rollout_suspended?
+    rollout_gated? && (
       !JobReliability::RolloutGate.enabled? || enabled_before_reliability_v2_suspend.in?([true, false])
     )
   end

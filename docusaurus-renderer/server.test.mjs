@@ -64,6 +64,23 @@ test('starts Docusaurus after a safe source passes preflight', async () => {
   });
 });
 
+test('rejects a generated entry that contains the Docusaurus not-found page', async () => {
+  await withArchive({'index.md': '# Preview'}, async (archive) => {
+    await withServer(async (command, args) => {
+      const outDir = args.at(-1);
+      await mkdir(outDir, {recursive: true});
+      await writeFile(
+        path.join(outDir, 'index.html'),
+        '<h1 class="hero__title">Page Not Found</h1><p>We could not find what you were looking for.</p>',
+      );
+    }, async (endpoint) => {
+      const response = await postArchive(endpoint, archive);
+      assert.equal(response.status, 422);
+      assert.match((await response.json()).error, /resolved entry to the not-found page: index/);
+    });
+  });
+});
+
 test('limits concurrent builds, returns 429 without queueing, and releases the permit', async () => {
   await withArchive({'index.md': '# Preview'}, async (archive) => {
     let buildCalls = 0;

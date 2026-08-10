@@ -64,7 +64,7 @@
 
 / ===== 本文あり/なし分岐 =====
 - if rendered_view_available
-  = turbo_stream_from dom_id(@viewer_version, :preview)
+  = turbo_stream_from @viewer_version, :preview
   section.document-reader
     - if current_user.internal?
       p.muted このプレビュー領域へ1ファイルずつドロップすると、この文書の更新候補としてアップロードできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
@@ -91,7 +91,7 @@
 
     = render "comment_workspace", floating: true
 - else
-  = turbo_stream_from dom_id(@viewer_version, :preview) if @viewer_version
+  = turbo_stream_from @viewer_version, :preview if @viewer_version
   - if current_user.internal?
     .card.manual-document-upload-panel data-controller="manual-document-upload" data-manual-document-upload-dragging-class="is-dragging" data-manual-document-upload-url-value=project_document_uploads_path(@project) data-manual-document-upload-target-document-id=@document.public_id data-action=preview_drop_action
       h2 ファイルをアップロード

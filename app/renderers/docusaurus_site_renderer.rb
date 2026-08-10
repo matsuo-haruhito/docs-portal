@@ -40,7 +40,9 @@ class DocusaurusSiteRenderer
     return @version.site_entry_absolute_path if site_path.blank?
 
     legacy_path = @version.legacy_html_absolute_path
-    candidate_site_paths(site_path).each do |relative_path|
+    relative_paths = candidate_site_paths(site_path)
+
+    relative_paths.each do |relative_path|
       if relative_path == @version.site_build_path && legacy_path.exist?
         return verified_file_path(legacy_path, @version.site_root_absolute_path)
       end
@@ -56,7 +58,9 @@ class DocusaurusSiteRenderer
       index_candidate = @version.site_root_absolute_path.join(relative_path, "index.html")
       verified_index_candidate = verified_file_path(index_candidate, @version.site_root_absolute_path)
       return verified_index_candidate if verified_index_candidate
+    end
 
+    relative_paths.each do |relative_path|
       shared_build_candidate = shared_build_path(relative_path)
       return shared_build_candidate if shared_build_candidate
     end
@@ -85,8 +89,9 @@ class DocusaurusSiteRenderer
       without_markdown_ext = cleaned.sub(/\.(#{MARKDOWN_EXTENSIONS_PATTERN})\z/i, "")
       variants << without_markdown_ext
 
-      if cleaned.match?(%r{/(?:index|README)\.(#{MARKDOWN_EXTENSIONS_PATTERN})\z}i)
-        variants << cleaned.sub(%r{/(?:index|README)\.(#{MARKDOWN_EXTENSIONS_PATTERN})\z}i, "")
+      if cleaned.match?(%r{(?:\A|/)(?:index|README)\.(#{MARKDOWN_EXTENSIONS_PATTERN})\z}i)
+        directory_path = cleaned.sub(%r{(?:\A|/)(?:index|README)\.(#{MARKDOWN_EXTENSIONS_PATTERN})\z}i, "")
+        variants << (directory_path.presence || "index")
       end
     end
 

@@ -18,11 +18,11 @@ RSpec.describe DocusaurusPreviewArtifactInstaller do
   end
 
   it "installs a safe Docusaurus build artifact and updates site metadata" do
-    archive = build_archive("docs/guide/index.html" => "<main>Guide</main>")
+    archive = build_archive("./" => nil, "docs/guide/index.html" => "<main>Guide</main>")
 
     described_class.new(version: version, archive_path: archive.path, site_path: "docs/guide").install!
 
-    expect(version.reload.markdown_entry_path).to eq("docs/guide.md")
+    expect(version.reload.markdown_entry_path).to eq("docs/guide")
     expect(version.site_build_path).to eq("docs/guide")
     expect(version.site_root_absolute_path.join("docs/guide/index.html").read).to include("Guide")
   ensure
@@ -49,7 +49,7 @@ RSpec.describe DocusaurusPreviewArtifactInstaller do
 
     described_class.new(version: version, archive_path: archive.path, site_path: "docs/guide").install!
 
-    expect(version.reload.markdown_entry_path).to eq("docs/guide.md")
+    expect(version.reload.markdown_entry_path).to eq("docs/guide")
     expect(version.site_build_path).to eq("docs/guide")
     expect(version.site_root_absolute_path.join("docs/guide.html").read).to include("Flat Guide")
   ensure
@@ -57,13 +57,13 @@ RSpec.describe DocusaurusPreviewArtifactInstaller do
   end
 
   it "installs a root index Docusaurus build artifact" do
-    version.assign_source_path_metadata!(source_path: "index.md", snapshot_kind: "received_markdown")
+    version.assign_source_path_metadata!(source_path: "README.md", snapshot_kind: "received_markdown")
     version.save!
     archive = build_archive("index.html" => "<main>Root</main>")
 
     described_class.new(version: version, archive_path: archive.path, site_path: "index").install!
 
-    expect(version.reload.markdown_entry_path).to eq("index.md")
+    expect(version.reload.markdown_entry_path).to eq("index")
     expect(version.site_build_path).to eq("index")
     expect(version.site_root_absolute_path.join("index.html").read).to include("Root")
   ensure
@@ -110,6 +110,21 @@ RSpec.describe DocusaurusPreviewArtifactInstaller do
     archive&.close!
   end
 
+  it "rejects artifacts whose expected entry is the Docusaurus not-found page" do
+    archive = build_archive(
+      "docs/guide/index.html" => <<~HTML
+        <h1 class="hero__title">Page Not Found</h1>
+        <p>We could not find what you were looking for.</p>
+      HTML
+    )
+
+    expect do
+      described_class.new(version: version, archive_path: archive.path, site_path: "docs/guide").install!
+    end.to raise_error(ApplicationError::BadRequest, /not-found page/)
+  ensure
+    archive&.close!
+  end
+
   it "keeps the existing site when a new artifact is invalid" do
     existing = version.site_root_absolute_path.join("docs/guide/index.html")
     FileUtils.mkdir_p(existing.dirname)
@@ -136,8 +151,12 @@ RSpec.describe DocusaurusPreviewArtifactInstaller do
     tar_buffer = StringIO.new.binmode
     Gem::Package::TarWriter.new(tar_buffer) do |tar|
       entries.each do |path, content|
-        tar.add_file(path, 0o644) do |entry|
-          entry.write(content)
+        if content.nil?
+          tar.mkdir(path, 0o755)
+        else
+          tar.add_file(path, 0o644) do |entry|
+            entry.write(content)
+          end
         end
       end
     end

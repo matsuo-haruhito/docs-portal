@@ -14,6 +14,7 @@ class RecurringJobRun < ApplicationRecord
   }
 
   STALE_ENQUEUED_ERROR_MESSAGE = "Runnerが期限内に開始されなかったため回収しました"
+  STALE_RUNNING_ERROR_MESSAGE = "Docusaurusプレビュー整合処理が期限内に完了しなかったため回収しました"
 
   scope :active, -> { where(status: statuses.values_at(:enqueued, :running)) }
   scope :stale_enqueued, ->(at = Time.current) {

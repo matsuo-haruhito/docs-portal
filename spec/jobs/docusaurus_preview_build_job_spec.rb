@@ -39,7 +39,7 @@ RSpec.describe DocusaurusPreviewBuildJob, type: :job do
       archive_file: an_instance_of(Tempfile),
       entry_path: "docs/guide.md"
     )
-    expect(version.reload.markdown_entry_path).to eq("docs/guide.md")
+    expect(version.reload.markdown_entry_path).to eq("docs/guide")
     expect(version.site_build_path).to eq("docs/guide")
     expect(version).to be_preview_succeeded
     expect(version.preview_build_error_message).to be_nil

@@ -3,6 +3,18 @@ module ZipImport
     MARKDOWN_EXTENSIONS = %w[.md .markdown .mdx].freeze
     DIAGRAM_EXTENSIONS = %w[.puml .plantuml .d2 .mmd .mermaid].freeze
     HTML_EXTENSIONS = %w[.html .htm].freeze
+    FILE_BACKED_DOCUMENT_EXTENSIONS = %w[
+      .pdf
+      .doc
+      .docx
+      .xls
+      .xlsx
+      .ppt
+      .pptx
+      .csv
+      .tsv
+      .zip
+    ].freeze
     IGNORED_BASENAMES = %w[.ds_store thumbs.db].freeze
 
     def initialize(root:)
@@ -31,6 +43,10 @@ module ZipImport
 
     def attachment_owner_candidate_file?(path)
       renderable_document_file?(path) || static_html_document_file?(path)
+    end
+
+    def file_backed_document_file?(path)
+      FILE_BACKED_DOCUMENT_EXTENSIONS.include?(Pathname(path).extname.downcase)
     end
 
     def document_candidate_file?(path)

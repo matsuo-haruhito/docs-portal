@@ -46,8 +46,10 @@ RSpec.describe "Document approval request section count cues", type: :request do
     expect(response).to have_http_status(:ok)
     aggregate_failures do
       expect(page_text).to include("状態ボタンの件数は一覧全体の件数です")
-      expect(page_html.at_css("h2")&.text&.squish).to eq("対応待ち")
-      expect(page_html.at_css("h2 + p.muted")&.text&.squish).to eq("1件（表示中条件内）")
+      # rtp editor の h2 は .card 内にあるため、直下セクション見出しは .card の外の h2
+      section_headings = page_html.css("h2").reject { |h2| h2.ancestors.any? { |a| a["class"]&.include?("card") } }
+      expect(section_headings.first&.text&.squish).to eq("対応待ち")
+      expect(section_headings.first&.next_element&.text&.squish).to eq("1件（表示中条件内）")
       expect(response.body).to include(matching_request.title)
       expect(response.body).not_to include(approved_request.title)
     end

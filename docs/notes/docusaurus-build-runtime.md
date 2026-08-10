@@ -48,18 +48,20 @@ DOCUSAURUS_RENDERER_MAX_SOURCE_FILE_BYTES=20971520
 DOCUSAURUS_RENDERER_MAX_SOURCE_BYTES=209715200
 DOCUSAURUS_RENDERER_MAX_OUTPUT_BYTES=52428800
 DOCUSAURUS_RENDERER_MAX_CONCURRENT_BUILDS=1
-DOCUSAURUS_RENDERER_BUILD_TIMEOUT_MS=180000
-DOCUSAURUS_RENDERER_READ_TIMEOUT_SECONDS=210
+DOCUSAURUS_RENDERER_BUILD_TIMEOUT_MS=600000
+DOCUSAURUS_RENDERER_READ_TIMEOUT_SECONDS=660
 DOCUSAURUS_RENDERER_CPUS=2.0
-DOCUSAURUS_RENDERER_MEMORY_LIMIT=2g
-DOCUSAURUS_RENDERER_PIDS_LIMIT=128
+DOCUSAURUS_RENDERER_MEMORY_LIMIT=9g
+DOCUSAURUS_RENDERER_PIDS_LIMIT=384
 ```
 
 Before extraction, the renderer checks tar metadata and rejects archives whose declared regular-file count, individual size, or total expanded size exceeds the same source limits. After extraction and before `npm run build`, it scans the complete source tree again so actual filesystem contents must match those bounds. It checks file bytes rather than extensions and rejects ICNS, JPEG XL, JPEG 2000, and the HEIF family handled by the vulnerable parser, including HEIC and AVIF. For ISO BMFF files it examines the major brand and all compatible brands in a bounded `ftyp` box; an oversized, unbounded, or extended-size `ftyp` box is rejected rather than partially inspected. A rejected source returns HTTP 422 without starting Docusaurus.
 
-A source that passes preflight must then acquire a build permit. The renderer accepts one concurrent Docusaurus build by default and returns HTTP 429 immediately when all permits are in use; it does not queue requests in process. The permit covers only the `npm run build` subprocess and is released in `finally`, including timeout and build failure paths, so a later retry can proceed. Rails classifies HTTP 429 as a transient renderer failure; the persisted preview failure/backoff and reconciliation flow requeues it rather than using an immediate in-process retry.
+A source that passes preflight must then acquire the single build permit. The renderer intentionally serializes Docusaurus builds because concurrent builds in the same repo-local workspace share `.docusaurus` and webpack caches and can produce route files containing the Docusaurus not-found page. The Rails `DocusaurusPreviewBuildJob` uses the same one-build limit. An overlapping request receives HTTP 429 immediately; it is not queued in process. The permit covers only the `npm run build` subprocess and is released in `finally`, including timeout and build failure paths, so a later retry can proceed. Rails classifies HTTP 429 as a transient renderer failure; the persisted preview failure/backoff and reconciliation flow requeues it rather than using an immediate in-process retry.
 
-The Compose service also limits the renderer container to 2 CPUs, 2 GiB memory, and 128 PIDs by default. The build subprocess timeout is 180 seconds in the local Compose configuration. The Rails renderer client uses a configurable 210-second read timeout for the complete HTTP request, leaving 30 seconds for upload, archive validation/extraction, preflight, output compression, and response handling. The standalone Node server retains a 60-second fallback only when `BUILD_TIMEOUT_MS` is omitted outside Compose. Keep the client timeout longer than the renderer build timeout, including enough margin for bundle size and host performance, when overriding either value.
+After detecting the requested site path, the renderer verifies that its generated entry HTML is not the Docusaurus not-found page before returning the archive. Rails repeats this check while staging the artifact. A missing or not-found entry is a failed build and must not replace the previously installed artifact or be marked `preview_succeeded`.
+
+The Compose service caps a single Docusaurus build at 2 CPUs so Node/webpack does not monopolize the host; Docker CPU usage should therefore stay near or below 200%. Memory and process ceilings remain conservative at 9 GiB and 384 PIDs for large document bundles. Lowering the CPU quota can extend build duration, so the build subprocess timeout remains 600 seconds in the local Compose configuration. The Rails renderer client uses a configurable 660-second read timeout for the complete HTTP request, leaving 60 seconds for upload, archive validation/extraction, preflight, output compression, and response handling. The standalone Node server retains a 60-second fallback only when `BUILD_TIMEOUT_MS` is omitted outside Compose. Keep the client timeout longer than the renderer build timeout, including enough margin for bundle size and host performance, when overriding either value.
 
 These controls reduce the current `image-size` denial-of-service exposure and bound unknown parser or plugin failures; they do not remove that transitive package from the lockfile or make `npm audit` green.
 
@@ -93,13 +95,15 @@ The Rails side applies this boundary in three places:
 
 - `DocusaurusPreviewArchiveBuilder` normalizes version file names before packing the source archive.
 - `DocusaurusRendererClient` validates the renderer's `X-Docs-Site-Path` response header before installing the returned artifact.
-- `DocusaurusPreviewArtifactInstaller` validates tar entries and checks that the expected entry HTML exists before replacing the current site directory.
+- `DocusaurusPreviewArtifactInstaller` validates tar entries and checks that the expected entry HTML exists and is not the Docusaurus not-found page before replacing the current site directory.
 
 The renderer service applies the same boundary before extracting the uploaded archive. It validates the `X-Docs-Entry-Path` header, rejects unsafe tar entries before extraction, and only returns a site path derived from the validated entry path.
 
 Successful artifact install replaces the version's existing site directory atomically via a staging directory, so stale files from a previous build are removed. If validation fails before replacement, the existing site directory and metadata are left intact.
 
-If the renderer request itself fails before an artifact is installed, `DocusaurusPreviewBuildJob` raises the error and leaves the existing `site_build_path` and site files unchanged. Transient renderer failures are retried by the job; validation failures surface for review without replacing the current preview.
+If the renderer request or validation fails before an artifact is installed, `DocusaurusPreviewBuildJob` records the version as `preview_failed` (or `preview_abandoned` after the fifth claimed attempt), raises the error for job history, and leaves the existing `site_build_path` and site files unchanged. ActiveJob does not immediately retry this job. The independent Docusaurus preview reconciliation schedule requeues retryable failures only after the persisted backoff, and also recovers never-requested, stale queued/running, and artifact/DB mismatch states. Validation failures follow the same bounded policy rather than replacing the current preview.
+
+The preview reconciliation schedule remains active independently of `JOB_RELIABILITY_V2_ENABLED`; that gate controls the separate Webhook, generated-file, and external-folder rollout. `READ_ONLY_MAINTENANCE` still stops preview schedule dispatch/recovery, reconciliation mutations, new build claims, renderer calls, and artifact installation.
 
 Temporary archives returned from the renderer are closed by `DocusaurusPreviewBuildJob` after installation, including success and error paths.
 

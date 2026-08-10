@@ -27,6 +27,7 @@ function rawFrameLocation(frame) {
 
 function normalizeSitePath(path) {
   let value = path.toString().replace(/^\/+/, "")
+  value = value.replace(/^(?:index|README)\.(?:md|markdown|mdx)$/i, "index")
   value = value.replace(/\/(?:index|README)\.(?:md|markdown|mdx)$/i, "")
   value = value.replace(/\.(md|markdown|mdx)$/i, "")
   value = value.replace(/\/index\.html$/i, "")

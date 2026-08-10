@@ -31,6 +31,18 @@ application.register("rails-fields-kit--tom-select", RailsFieldsKitTomSelectCont
 
 ## 典型パターン
 
+### rfk_search_field（フリーワード検索）
+
+```erb
+<%= form.rfk_search_field :query,
+  value: params[:query],
+  placeholder: "キーワードで検索",
+  wrapper: false,
+  html: { class: "search-input", aria: { label: "キーワードで検索" } } %>
+```
+
+既存のフォームレイアウト内で入力要素だけを描画する場合は `wrapper: false` を指定し、入力要素の class / data / aria 属性は `html:` に渡す。
+
 ### rfk_select（検索フィルタ用）
 
 ```slim

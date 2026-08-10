@@ -86,7 +86,7 @@
 
 ### site build
 
-Docusaurus site は `DocusaurusSiteRenderer` と `ProjectSitesController` / `DocumentSitesController` 側で path を検証し、対象 page が見つからなければ `RecordNotFound` として扱います。
+Docusaurus site は `DocusaurusSiteRenderer` と `ProjectSitesController` / `DocumentSitesController` 側で path を検証し、対象 page が見つからなければ `RecordNotFound` として扱います。`source_relative_path` は原本の識別にだけ使い、配信URLは生成成果物へ到達できる `markdown_entry_path` / `site_build_path` を正本にします。rootの `README.md` / `README.mdx` / `index.md` は既存URL互換としてroot `index.html`へ解決します。
 
 ### import
 

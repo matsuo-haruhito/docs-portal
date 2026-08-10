@@ -25,7 +25,7 @@ class DocusaurusPreviewArtifactInstaller
       return if marker["claim_token"].blank?
 
       site_path = normalize_relative_path(marker["site_path"], label: "Docusaurus site path")
-      return unless expected_entry_candidates(version.site_root_absolute_path, site_path).any?(&:file?)
+      return unless valid_entry_path(version.site_root_absolute_path, site_path)
 
       Artifact.new(
         site_path:,
@@ -42,6 +42,21 @@ class DocusaurusPreviewArtifactInstaller
       candidates << root.join("#{site_path}.html")
       candidates << root.join("index.html") if site_path == "index"
       candidates
+    end
+
+    def expected_entry_path(root, site_path)
+      expected_entry_candidates(root, site_path).find(&:file?)
+    end
+
+    def valid_entry_path(root, site_path)
+      entry_path = expected_entry_path(root, site_path)
+      entry_path unless entry_path && docusaurus_not_found_entry?(entry_path)
+    end
+
+    def docusaurus_not_found_entry?(entry_path)
+      html = entry_path.binread.force_encoding(Encoding::UTF_8).scrub
+      html.match?(%r{<h1\b[^>]*>\s*Page Not Found\s*</h1>}i) &&
+        html.include?("We could not find what you were looking for.")
     end
 
     def normalize_relative_path(value, label:)
@@ -72,7 +87,7 @@ class DocusaurusPreviewArtifactInstaller
       staging = Pathname.new(tmpdir).join("site")
       FileUtils.mkdir_p(staging)
       extract_archive!(staging)
-      raise ApplicationError::BadRequest, "Docusaurus build output missing entry path: #{site_path}" unless expected_entry_exists?(staging)
+      validate_expected_entry!(staging)
 
       write_marker!(staging)
       commit_install!(staging, destination)
@@ -114,14 +129,19 @@ class DocusaurusPreviewArtifactInstaller
     end
   end
 
-  def expected_entry_exists?(staging)
-    self.class.expected_entry_candidates(staging, site_path).any?(&:file?)
+  def validate_expected_entry!(staging)
+    entry_path = self.class.expected_entry_path(staging, site_path)
+    raise ApplicationError::BadRequest, "Docusaurus build output missing entry path: #{site_path}" unless entry_path
+    return unless self.class.docusaurus_not_found_entry?(entry_path)
+
+    raise ApplicationError::BadRequest, "Docusaurus build output entry is a not-found page: #{site_path}"
   end
 
   def safe_artifact_path(value)
-    return if value.to_s.blank? || value.to_s == "."
+    raw_path = value.to_s.tr("\\", "/")
+    return if raw_path.blank? || raw_path == "." || raw_path == "./"
 
-    self.class.normalize_relative_path(value, label: "Docusaurus build artifact path")
+    self.class.normalize_relative_path(raw_path, label: "Docusaurus build artifact path")
   end
 
   def safe_destination(root, relative_path)
@@ -158,7 +178,7 @@ class DocusaurusPreviewArtifactInstaller
       FileUtils.rm_rf(backup)
       FileUtils.mv(destination, backup) if destination.exist?
       FileUtils.mv(staging, destination)
-      version.update!(markdown_entry_path: version.source_relative_path, site_build_path: site_path)
+      version.update!(markdown_entry_path: site_path, site_build_path: site_path)
       FileUtils.rm_rf(backup)
     rescue StandardError
       restore_backup!(destination, backup)

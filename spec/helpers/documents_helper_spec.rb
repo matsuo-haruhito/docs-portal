@@ -55,15 +55,31 @@ RSpec.describe DocumentsHelper, type: :helper do
       )
       excel_doc.update!(latest_version: excel_version)
 
+      html_doc = create(:document, project:, title: "06. HTML reference", document_kind: :mixed)
+      html_version = create(:document_version, document: html_doc)
+      create(
+        :document_file,
+        document_version: html_version,
+        file_name: "docs/shared/reference.html",
+        content_type: "text/html",
+        storage_key: "spec/document-tree/reference.html"
+      )
+      html_doc.update!(latest_version: html_version)
+
       helper.document_tree_render_state(projects: [project], current_project: project)
       docs_folder = helper.send(:document_tree_nodes_for, project).find { _1.label == "docs" }
       shared_folder = docs_folder.children.find { _1.label == "shared" }
 
-      expect(shared_folder.children).to include(markdown_doc, pdf_doc, excel_doc)
+      expect(shared_folder.children).to include(markdown_doc, pdf_doc, excel_doc, html_doc)
       expect(helper.send(:document_tree_source_file_name, pdf_doc)).to eq("policy.pdf")
       expect(helper.send(:document_tree_source_file_name, excel_doc)).to eq("matrix.xlsx")
       expect(helper.send(:tree_item_html_available?, pdf_doc)).to eq(false)
       expect(helper.send(:tree_item_html_available?, excel_doc)).to eq(false)
+      expect(helper.send(:tree_item_html_available?, html_doc)).to eq(false)
+      expect(helper.send(:tree_item_preview_available?, pdf_doc)).to eq(true)
+      expect(helper.send(:tree_item_preview_available?, excel_doc)).to eq(true)
+      expect(helper.send(:tree_item_preview_available?, html_doc)).to eq(true)
+      expect(helper.tree_item_status_icons(html_doc).pluck(:title)).not_to include("プレビュー画面はまだ生成されていません")
     end
 
     it "preserves external visibility and archived filters for file-backed tree rows" do
@@ -143,7 +159,7 @@ RSpec.describe DocumentsHelper, type: :helper do
 
     it "windows large trees while keeping the current document visible" do
       project = create(:project, code: "LARGE", name: "Large Tree")
-      documents = Array.new(90) do |index|
+      documents = Array.new(120) do |index|
         document = create(:document, project:, title: format("Document %03d", index))
         version = create(
           :document_version,
@@ -153,21 +169,21 @@ RSpec.describe DocumentsHelper, type: :helper do
         document.update!(latest_version: version)
         document
       end
-      current_document = documents.fetch(75)
+      current_document = documents.fetch(105)
 
       render_state = helper.document_tree_render_state(projects: [project], current_project: project, current_document: current_document)
       window = helper.document_tree_render_window(render_state, current_document: current_document)
 
       expect(window).to be_a(TreeView::RenderWindow)
       expect(window.total_count).to be > DocumentsHelper::DOCUMENT_TREE_RENDER_WINDOW_THRESHOLD
-      expect(window.rows.length).to eq(DocumentsHelper::DOCUMENT_TREE_RENDER_WINDOW_LIMIT)
+      expect(window.rows.length).to be_between(1, DocumentsHelper::DOCUMENT_TREE_RENDER_WINDOW_LIMIT)
       expect(window.offset).to be > 0
       expect(window.rows.map(&:node_key)).to include(helper.send(:node_key, current_document))
     end
 
-    it "clamps explicit offsets to the last full window" do
+    it "clamps explicit offsets to the last page boundary" do
       project = create(:project, code: "CLAMP", name: "Clamp Tree")
-      documents = Array.new(90) do |index|
+      documents = Array.new(120) do |index|
         document = create(:document, project:, title: format("Node %03d", index))
         version = create(
           :document_version,
@@ -182,13 +198,13 @@ RSpec.describe DocumentsHelper, type: :helper do
       window = helper.document_tree_render_window(render_state, current_document: documents.last, requested_offset: 10_000)
 
       expect(window).to be_a(TreeView::RenderWindow)
-      expect(window.offset).to eq(window.total_count - DocumentsHelper::DOCUMENT_TREE_RENDER_WINDOW_LIMIT)
+      expect(window.offset).to eq(((window.total_count - 1) / DocumentsHelper::DOCUMENT_TREE_RENDER_WINDOW_LIMIT) * DocumentsHelper::DOCUMENT_TREE_RENDER_WINDOW_LIMIT)
       expect(window.rows.map(&:node_key)).to include(helper.send(:node_key, documents.last))
     end
 
     it "exposes previous and next offsets for intermediate windows" do
       project = create(:project, code: "MID", name: "Middle Window Tree")
-      documents = Array.new(140) do |index|
+      documents = Array.new(240) do |index|
         document = create(:document, project:, title: format("Window %03d", index))
         version = create(
           :document_version,
@@ -198,17 +214,17 @@ RSpec.describe DocumentsHelper, type: :helper do
         document.update!(latest_version: version)
         document
       end
-      current_document = documents.fetch(60)
+      current_document = documents.fetch(150)
 
       render_state = helper.document_tree_render_state(projects: [project], current_project: project, current_document: current_document)
-      window = helper.document_tree_render_window(render_state, current_document: current_document, requested_offset: 50)
+      window = helper.document_tree_render_window(render_state, current_document: current_document, requested_offset: 100)
 
       expect(window).to be_a(TreeView::RenderWindow)
-      expect(window.offset).to eq(50)
+      expect(window.offset).to eq(100)
       expect(window).to be_previous
       expect(window.previous_offset).to eq(0)
       expect(window).to be_next
-      expect(window.next_offset).to eq(100)
+      expect(window.next_offset).to eq(200)
     end
   end
 

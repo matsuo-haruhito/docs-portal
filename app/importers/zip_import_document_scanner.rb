@@ -11,7 +11,7 @@ class ZipImportDocumentScanner
   )
 
   ScanResult = Data.define(:documents, :orphan_files, :skipped_files, :warnings)
-  CANDIDATE_POLICIES = %i[all_files renderable_only].freeze
+  CANDIDATE_POLICIES = %i[all_files renderable_only file_backed_documents].freeze
 
   def initialize(root:, candidate_policy: :all_files)
     @root = Pathname(root)
@@ -30,7 +30,13 @@ class ZipImportDocumentScanner
     attachment_only_paths = attachment_owner_documents
       .flat_map(&:attachment_paths)
       .uniq - attachment_owner_paths
-    documents = raw_documents.reject { attachment_only_paths.include?(_1.absolute_path) }
+    file_backed_document_paths = raw_documents
+      .select { path_classifier.file_backed_document_file?(_1.absolute_path) }
+      .map(&:absolute_path)
+    documents = raw_documents.reject do |candidate|
+      attachment_only_paths.include?(candidate.absolute_path) && !file_backed_document_paths.include?(candidate.absolute_path)
+    end
+    documents = remove_file_backed_document_attachments(documents, file_backed_document_paths)
     attached_paths = documents.flat_map(&:attachment_paths).uniq
     remaining_files = all_files.reject { attached_paths.include?(_1) || documents.map(&:absolute_path).include?(_1) }
     orphan_files = remaining_files.reject { path_classifier.ignored_file?(_1) }.map { path_classifier.logical_path_for(_1) }
@@ -67,8 +73,21 @@ class ZipImportDocumentScanner
   def document_candidate_file?(path)
     return false if path_classifier.ignored_file?(path)
     return path_classifier.renderable_document_file?(path) if candidate_policy == :renderable_only
+    if candidate_policy == :file_backed_documents
+      return path_classifier.attachment_owner_candidate_file?(path) || path_classifier.file_backed_document_file?(path)
+    end
 
     path_classifier.attachment_owner_candidate_file?(path)
+  end
+
+  def remove_file_backed_document_attachments(documents, file_backed_document_paths)
+    return documents unless candidate_policy == :file_backed_documents
+
+    documents.map do |candidate|
+      next candidate if file_backed_document_paths.include?(candidate.absolute_path)
+
+      candidate.with(attachment_paths: candidate.attachment_paths - file_backed_document_paths)
+    end
   end
 
   def all_files

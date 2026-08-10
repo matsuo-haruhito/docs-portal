@@ -330,7 +330,13 @@ class ProjectSitesController < BaseController
       normalized_path == candidate_path || normalized_path.start_with?("#{candidate_path}/")
     end
 
-    matching.max_by { |v| [normalized_path == v.normalized_html_view_site_path ? 1 : 0, v.normalized_html_view_site_path.length] }
+    matching.max_by do |version|
+      [
+        normalized_path == version.normalized_html_view_site_path ? 1 : 0,
+        version.normalized_html_view_site_path.length,
+        version == @build_version ? 1 : 0
+      ]
+    end
   end
 
   def html_file?(file_path)

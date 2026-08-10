@@ -99,11 +99,7 @@ class DocusaurusRendererClient
   end
 
   def normalize_site_page_path(path)
-    value = path.to_s.delete_prefix("/").sub(%r{\A/+}, "")
-    value = value.sub(%r{/(?:index|README)\.(?:md|markdown|mdx)\z}i, "")
-    value = value.sub(/\.(md|markdown|mdx)\z/i, "")
-    value = value.delete_suffix("/index.html")
-    value = value.delete_suffix(".html")
+    value = DocumentVersion.normalize_site_page_path(path)
     value.presence || "index"
   end
 

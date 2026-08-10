@@ -210,6 +210,17 @@ RSpec.describe "Project sites", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Guide Index")
+
+    File.write(
+      version_v2.site_root_absolute_path.join("index.html"),
+      "<html><body><h1>見積対象・費用感整理 v2</h1></body></html>"
+    )
+    version_v2.update!(markdown_entry_path: "index", site_build_path: "index")
+
+    get project_site_path(project, site_path: "README.md", version_id: version_v2.public_id, embedded: "1")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("見積対象・費用感整理 v2")
   end
 
   it "shows a document reader link on the project detail page" do

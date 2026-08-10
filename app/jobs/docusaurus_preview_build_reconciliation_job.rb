@@ -7,7 +7,6 @@ class DocusaurusPreviewBuildReconciliationJob < ApplicationJob
 
   def perform(limit: DEFAULT_LIMIT)
     return if read_only_maintenance?
-    return unless JobReliability::RolloutGate.enabled?
 
     errors = []
 

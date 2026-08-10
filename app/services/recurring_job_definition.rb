@@ -2,11 +2,15 @@ class RecurringJobDefinition
   Definition = Data.define(:job_key, :job_class, :queue_name, :interval_seconds, :args_json, :description, :enabled, :allow_overlap)
 
   DEFAULT_INTERVAL_SECONDS = 24.hours.to_i
-  V2_JOB_KEYS = %w[
+  DOCUSAURUS_PREVIEW_RECONCILIATION_JOB_KEY = "reconcile_docusaurus_preview_builds"
+  ROLLOUT_GATED_JOB_KEYS = %w[
     retry_failed_webhook_deliveries
     recover_generated_file_events
     reconcile_external_folder_sync_webhook_events
-    reconcile_docusaurus_preview_builds
+  ].freeze
+  RUNNER_PROTOCOL_V2_JOB_KEYS = [
+    *ROLLOUT_GATED_JOB_KEYS,
+    DOCUSAURUS_PREVIEW_RECONCILIATION_JOB_KEY
   ].freeze
   V2_RUNNER_PROTOCOL_VERSION = 2
 
@@ -72,7 +76,7 @@ class RecurringJobDefinition
       allow_overlap: false
     ),
     Definition.new(
-      job_key: "reconcile_docusaurus_preview_builds",
+      job_key: DOCUSAURUS_PREVIEW_RECONCILIATION_JOB_KEY,
       job_class: "DocusaurusPreviewBuildReconciliationJob",
       queue_name: "default",
       interval_seconds: 5.minutes.to_i,
@@ -97,19 +101,31 @@ class RecurringJobDefinition
     def all
       return DEFINITIONS if JobReliability::RolloutGate.enabled?
 
-      DEFINITIONS.reject { _1.job_key.in?(V2_JOB_KEYS) }
+      DEFINITIONS.reject { rollout_gated_job_key?(_1.job_key) }
     end
 
     def find(job_key)
       all.find { _1.job_key == job_key.to_s }
     end
 
-    def v2_job_keys
-      V2_JOB_KEYS
+    def rollout_gated_job_keys
+      ROLLOUT_GATED_JOB_KEYS
     end
 
-    def v2_job_key?(job_key)
-      V2_JOB_KEYS.include?(job_key.to_s)
+    def rollout_gated_job_key?(job_key)
+      ROLLOUT_GATED_JOB_KEYS.include?(job_key.to_s)
+    end
+
+    def runner_protocol_v2_job_keys
+      RUNNER_PROTOCOL_V2_JOB_KEYS
+    end
+
+    def runner_protocol_v2_job_key?(job_key)
+      RUNNER_PROTOCOL_V2_JOB_KEYS.include?(job_key.to_s)
+    end
+
+    def docusaurus_preview_reconciliation_job_key?(job_key)
+      job_key.to_s == DOCUSAURUS_PREVIEW_RECONCILIATION_JOB_KEY
     end
   end
 end

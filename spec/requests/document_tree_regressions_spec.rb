@@ -231,7 +231,7 @@ RSpec.describe "Document tree regressions", type: :request do
   it "keeps the requested window offset in turbo tree refresh controls" do
     sign_in_as(user)
 
-    documents = Array.new(120) do |index|
+    documents = Array.new(220) do |index|
       document = create(
         :document,
         project:,
@@ -251,20 +251,20 @@ RSpec.describe "Document tree regressions", type: :request do
       document.update!(latest_version: version)
       document
     end
-    current_document = documents.fetch(70)
+    current_document = documents.fetch(170)
 
-    get project_document_tree_path(project, document_slug: current_document.slug, tree_window_offset: 50, format: :turbo_stream)
+    get project_document_tree_path(project, document_slug: current_document.slug, tree_window_offset: 100, format: :turbo_stream)
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
     expect(parsed_html.at_css(".document-tree-window-summary")).to be_present
-    expect(page_text).to include("前の50行")
-    expect(page_text).to include("次の50行")
+    expect(page_text).to include("戻る")
+    expect(page_text).to include("次へ")
 
     toolbar_actions = parsed_html.css("#document_tree_toolbar .document-tree-toolbar__action-row form[action]").map { _1["action"] }
 
     expect(toolbar_actions).not_to be_empty
-    expect(toolbar_actions).to all(include("tree_window_offset=50"))
+    expect(toolbar_actions).to all(include("tree_window_offset=100"))
     expect(toolbar_actions.any? { _1.include?("tree_action=show") }).to be(true)
     expect(toolbar_actions.any? { _1.include?("tree_action=hide") }).to be(true)
   end

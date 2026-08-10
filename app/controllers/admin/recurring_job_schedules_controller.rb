@@ -68,9 +68,9 @@ class Admin::RecurringJobSchedulesController < Admin::BaseController
       return
     end
 
-    if @schedule.reliability_v2_suspended?
+    if @schedule.rollout_suspended?
       redirect_to admin_recurring_job_schedule_path(@schedule, return_to: @return_to_path),
-        alert: "信頼性V2の停止中は即時実行を要求できません。gateを有効化し、定期ジョブ定義の復元を確認してから再実行してください。"
+        alert: "信頼性V2のrollout停止中は即時実行を要求できません。gateを有効化し、定期ジョブ定義の復元を確認してから再実行してください。"
       return
     end
 

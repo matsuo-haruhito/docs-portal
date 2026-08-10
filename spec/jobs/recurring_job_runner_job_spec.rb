@@ -55,25 +55,28 @@ RSpec.describe RecurringJobRunnerJob, type: :job do
     expect(run.reload).to be_failed
   end
 
-  it "keeps a queued v2 run untouched while the rollout gate is off" do
-    schedule = create_schedule(job_key: "reconcile_docusaurus_preview_builds")
+  it "keeps a queued rollout-gated run untouched while the rollout gate is off" do
+    schedule = create_schedule(
+      job_key: "reconcile_external_folder_sync_webhook_events",
+      job_class: "ExternalFolderSyncWebhookEventReconciliationJob"
+    )
     run = create_locked_run(schedule)
     original_run = run.attributes
     original_schedule = schedule.reload.attributes
     allow(JobReliability::RolloutGate).to receive(:enabled?).and_return(false)
-    allow(DocusaurusPreviewBuildReconciliationJob).to receive(:perform_now)
+    allow(ExternalFolderSyncWebhookEventReconciliationJob).to receive(:perform_now)
 
     described_class.perform_now(run.id, RecurringJobDefinition::V2_RUNNER_PROTOCOL_VERSION)
 
-    expect(DocusaurusPreviewBuildReconciliationJob).not_to have_received(:perform_now)
+    expect(ExternalFolderSyncWebhookEventReconciliationJob).not_to have_received(:perform_now)
     expect(run.reload.attributes).to eq(original_run)
     expect(schedule.reload.attributes).to eq(original_schedule)
   end
 
-  it "keeps an unversioned v2 payload untouched after the gate is enabled" do
+  it "keeps an unversioned protocol-v2 payload untouched" do
     schedule = create_schedule(job_key: "reconcile_docusaurus_preview_builds")
     run = create_locked_run(schedule)
-    allow(JobReliability::RolloutGate).to receive(:enabled?).and_return(true)
+    allow(JobReliability::RolloutGate).to receive(:enabled?).and_return(false)
     allow(DocusaurusPreviewBuildReconciliationJob).to receive(:perform_now)
 
     described_class.perform_now(run.id)
@@ -83,10 +86,10 @@ RSpec.describe RecurringJobRunnerJob, type: :job do
     expect(schedule.reload.locked_by).to eq(run.public_id)
   end
 
-  it "executes a protocol-versioned v2 payload after the gate is enabled" do
+  it "executes a protocol-versioned preview payload while the rollout gate is off" do
     schedule = create_schedule(job_key: "reconcile_docusaurus_preview_builds")
     run = create_locked_run(schedule)
-    allow(JobReliability::RolloutGate).to receive(:enabled?).and_return(true)
+    allow(JobReliability::RolloutGate).to receive(:enabled?).and_return(false)
     allow(DocusaurusPreviewBuildReconciliationJob).to receive(:perform_now)
 
     described_class.perform_now(run.id, RecurringJobDefinition::V2_RUNNER_PROTOCOL_VERSION)

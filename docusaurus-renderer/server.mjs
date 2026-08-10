@@ -76,6 +76,7 @@ export function createRendererServer({
       }
 
       const sitePath = await detectSitePath(buildDir, entryPath);
+      await validateSiteEntry(buildDir, sitePath);
       await createArchive(outputArchive, buildDir);
       await ensureMaxFileSize(outputArchive, MAX_OUTPUT_BYTES, 'build output');
       const archive = await readFile(outputArchive);
@@ -333,6 +334,25 @@ async function detectSitePath(buildDir, entryPath) {
 
   // Last resort
   return normalized;
+}
+
+async function validateSiteEntry(buildDir, sitePath) {
+  const entryPath = sitePath === 'index'
+    ? path.join(buildDir, 'index.html')
+    : path.join(buildDir, sitePath, 'index.html');
+
+  let html;
+  try {
+    html = await readFile(entryPath, 'utf8');
+  } catch {
+    throw new Error(`Docusaurus build output is missing entry path: ${sitePath}`);
+  }
+
+  const notFoundHeading = /<h1\b[^>]*>\s*Page Not Found\s*<\/h1>/i.test(html);
+  const notFoundMessage = html.includes('We could not find what you were looking for.');
+  if (notFoundHeading && notFoundMessage) {
+    throw new Error(`Docusaurus build output resolved entry to the not-found page: ${sitePath}`);
+  }
 }
 
 function normalizeSlashes(value) {

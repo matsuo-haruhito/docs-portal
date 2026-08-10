@@ -3,7 +3,7 @@ class RecurringJobRunnerJob < ApplicationJob
 
   def perform(recurring_job_run_id, protocol_version = nil)
     run = RecurringJobRun.find(recurring_job_run_id)
-    return if v2_run_blocked?(run, protocol_version)
+    return if protocol_v2_run_blocked?(run, protocol_version)
 
     schedule = run.recurring_job_schedule
     claimed = claim_run!(run, schedule)
@@ -23,11 +23,12 @@ class RecurringJobRunnerJob < ApplicationJob
 
   private
 
-  def v2_run_blocked?(run, protocol_version)
-    return false unless RecurringJobDefinition.v2_job_key?(run.job_key)
+  def protocol_v2_run_blocked?(run, protocol_version)
+    return false unless RecurringJobDefinition.runner_protocol_v2_job_key?(run.job_key)
+    return true unless protocol_version == RecurringJobDefinition::V2_RUNNER_PROTOCOL_VERSION
 
-    !JobReliability::RolloutGate.enabled? ||
-      protocol_version != RecurringJobDefinition::V2_RUNNER_PROTOCOL_VERSION
+    RecurringJobDefinition.rollout_gated_job_key?(run.job_key) &&
+      !JobReliability::RolloutGate.enabled?
   end
 
   def claim_run!(run, schedule)

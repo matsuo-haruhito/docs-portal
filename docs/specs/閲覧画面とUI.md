@@ -13,8 +13,13 @@
 - API仕様ページは `docs-src/api-specification.md` を Docusaurus build した HTML を same-origin iframe で表示する
 - API仕様ページは source Markdown が生成済み HTML より新しい場合に build job を enqueue し、生成HTMLの鮮度確認は `BuildFreshnessGuard` で共通化する
 - `company_master_admin` は自社の会社マスタ・自社ユーザー管理のみ利用できる
-- 文書詳細では `tree_view` gem を使って「案件 > 文書」の左ペインツリーを表示する
-- 文書一覧と文書詳細の左ペイン `文書ツリー` では、current project 内の文書名・slug・元パスを使って文書を絞り込める
+- 文書詳細では `tree_view` gem を使って「案件 > フォルダ > 文書」の左ペインツリーを表示する
+- 文書ツリーの行は `Document` を単位とし、Markdown / HTMLだけでなく、元ファイルを主要表示対象とするPDF、Office、CSV / TSV、ZIPのfile-backed文書も表示する。画像やCSSなど本文付随assetを独立行にはしない
+- 文書ツリーの注意表示はDocusaurus build状態だけでは判定せず、現在の利用者が最新版の生成HTMLまたは埋め込みviewerへ到達できない場合にだけ「プレビュー画面はまだ生成されていません」と表示する。HTML `DocumentFile`をsame-origin iframeで閲覧できる場合は注意表示を出さない
+- 文書一覧と文書詳細の左ペイン `文書ツリー` では、閲覧可能な全案件を対象に、文書名・slug・元パス、および案件・顧客の名称・コード類で文書を絞り込める
+- 案件・顧客の検索対象には、ポータル側の名称・案件コード・ドメイン・公開IDに加え、外部マスタ同期で保持している外部IDと名称・フリガナ・コード系の同期元属性を含める
+- 文書ツリーの検索中は、一致した文書までの案件・フォルダ階層を一時的に展開し、保存済みの全閉状態や検索中の閉操作より検索結果表示を優先する。検索解除後は保存済みの開閉状態へ戻す
+- 文書ツリーが100表示行を超える場合は100行単位で描画し、表示位置に応じて「戻る」と「次へ」を表示する。このページネーションはDB取得件数ではなくツリーの表示行を対象とする
 - 文書詳細と版詳細の「添付・元ファイル」は、保持している相対 path を使って `tree_view` でフォルダ階層表示する
 - Project 配下で文書カタログ一覧・詳細を表示できる
 - 管理画面には、主要 model の件数・最近の record・既存 CRUD への入口を横断表示する `model browser` を持つ
@@ -51,6 +56,8 @@
 
 ## Docusaurus viewer
 
+- `source_relative_path` はMarkdown原本の相対path、`markdown_entry_path` は生成成果物へ到達できるpage route、`site_build_path` は版専用成果物のentry pathとして区別する。preview installerとartifactからの復旧で`markdown_entry_path`へ原本pathを再保存しない
+- rootの `README.md` / `README.mdx` / `index.md` とその生成HTMLは `index` routeとして扱う。過去に生成されたroot Markdown名のsite URLも `index.html` への互換aliasとして解決する
 - `GET /projects/:project_code/site/*site_path` および `GET /document_versions/:public_id/site/*site_path` の HTML 応答は、初期表示では viewer shell を返す
 - viewer shell は Rails 側の header / breadcrumb / action を持ち、本文部分は same-origin iframe で読み込む
 - viewer shell は、本文 iframe の上に preview toolbar を持ち、版詳細、前版との差分、添付・元ファイルへ戻れるようにする

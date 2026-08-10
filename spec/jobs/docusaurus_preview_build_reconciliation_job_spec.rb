@@ -135,7 +135,7 @@ RSpec.describe DocusaurusPreviewBuildReconciliationJob, type: :job do
 
     expect(version.reload).to have_attributes(
       preview_build_status: "preview_succeeded",
-      markdown_entry_path: version.source_relative_path,
+      markdown_entry_path: "docs/guide",
       site_build_path: "docs/guide",
       preview_build_claim_token: nil
     )
@@ -152,26 +152,16 @@ RSpec.describe DocusaurusPreviewBuildReconciliationJob, type: :job do
     expect([first, second].count { _1.preview_build_reconciled_at.present? }).to eq(1)
   end
 
-  it "does not inspect, enqueue, or mutate versions while the reliability rollout gate is off" do
+  it "runs independently of the reliability rollout gate" do
     version = buildable_version
-    version.mark_preview_build_queued!(at: 11.minutes.ago)
-    original_attributes = version.attributes.slice(
-      "preview_build_status",
-      "preview_build_attempt_count",
-      "preview_build_enqueued_at",
-      "preview_build_started_at",
-      "preview_build_retry_at",
-      "preview_build_claim_token",
-      "preview_build_reconciled_at",
-      "updated_at"
-    )
     allow(JobReliability::RolloutGate).to receive(:enabled?).and_return(false)
 
     expect { described_class.perform_now }
-      .not_to have_enqueued_job(DocusaurusPreviewBuildJob)
+      .to have_enqueued_job(DocusaurusPreviewBuildJob).with(version.id)
 
-    expect(DocusaurusPreviewArtifactInstaller).not_to have_received(:installed_artifact_for)
-    expect(version.reload.attributes.slice(*original_attributes.keys)).to eq(original_attributes)
+    expect(DocusaurusPreviewArtifactInstaller).to have_received(:installed_artifact_for).with(version)
+    expect(version.reload).to be_preview_queued
+    expect(version.preview_build_reconciled_at).to be_present
   end
 
   it "does not inspect, enqueue, or mutate versions during read-only maintenance" do
