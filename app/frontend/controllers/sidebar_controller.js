@@ -25,6 +25,7 @@ export default class extends Controller {
   connect() {
     this.panel = this.element.querySelector("[data-docs-sidebar]")
     this.toggleButton = this.element.querySelector("[data-sidebar-toggle]")
+    this.toggleIcon = this.element.querySelector("[data-sidebar-toggle-icon]")
     this.resizer = this.element.querySelector("[data-sidebar-resizer]")
     if (!this.panel || !this.toggleButton || !this.resizer) return
 
@@ -115,6 +116,6 @@ export default class extends Controller {
     this.toggleButton.setAttribute("aria-expanded", String(!collapsed))
     this.toggleButton.setAttribute("aria-label", collapsed ? "文書ツリーを開く" : "文書ツリーを折りたたむ")
     this.toggleButton.setAttribute("title", collapsed ? "文書ツリーを開く" : "文書ツリーを折りたたむ")
-    this.toggleButton.textContent = collapsed ? "▶" : "◀"
+    this.toggleIcon?.classList.toggle("is-collapsed", collapsed)
   }
 }

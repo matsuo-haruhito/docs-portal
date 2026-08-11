@@ -124,6 +124,8 @@ class DocumentsController < BaseController
     if version.rendered_site_available?
       project_site_path(@project, site_path: @viewer_site_path, version_id: version.public_id, embedded: "1")
     elsif (file = version.embedded_view_file)
+      @viewer_raw_markdown_fallback = file.effective_content_type.start_with?("text/markdown")
+      @viewer_preview_build_status = PreviewBuildStatusPresenter.new(version) if @viewer_raw_markdown_fallback
       document_file_path(file, disposition: "inline", embedded: "1")
     end
   end

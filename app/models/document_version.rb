@@ -123,12 +123,30 @@ class DocumentVersion < ApplicationRecord
     File.extname(source_relative_path.to_s).downcase.in?(MARKDOWN_EXTENSIONS)
   end
 
-  def mark_preview_build_queued!(at: Time.current, recover_active: false, consume_stale_attempt: false)
+  enum :preview_build_reason, {
+    source_build: 0,
+    artifact_recovery: 1
+  }, prefix: true
+
+  def mark_preview_build_queued!(at: Time.current, recover_active: false, consume_stale_attempt: false, build_reason: nil)
     with_lock do
       reload
+      if build_reason.present?
+        requested_reason = build_reason.to_sym
+        starting_artifact_recovery =
+          requested_reason == :artifact_recovery &&
+          (preview_succeeded? || (preview_abandoned? && preview_build_reason_source_build? && site_build_path.present?))
+        return false unless starting_artifact_recovery
+
+        if preview_build_reason_source_build?
+          self.preview_build_reason = :artifact_recovery
+          self.preview_build_attempt_count = 0
+        end
+      end
+
       stale_queue_recovery = consume_stale_attempt && preview_build_queue_stale?(at:)
       return false if consume_stale_attempt && !stale_queue_recovery
-      return false if preview_abandoned?
+      return false if preview_abandoned? && build_reason.blank?
       return false if preview_queued? && !recover_active
       return false if preview_running? && !recover_active
 
@@ -407,6 +425,7 @@ class DocumentVersion < ApplicationRecord
 
   PREVIEW_BUILD_FIELDS = %w[
     preview_build_status
+    preview_build_reason
     preview_build_error_message
     preview_build_attempt_count
     preview_build_attempted_at

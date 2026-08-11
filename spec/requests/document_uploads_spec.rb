@@ -6,11 +6,10 @@ RSpec.describe "Document uploads", type: :request do
   let(:user) { create(:user, :internal) }
   let(:project) { create(:project, code: "UPLOAD", name: "Upload Project") }
   let(:document_file_root) { Rails.root.join("storage", "document_files") }
-  let(:site_root) { Rails.root.join("storage", "docs_sites") }
 
   after do
     FileUtils.rm_rf(document_file_root.join("manual_uploads"))
-    FileUtils.rm_rf(site_root)
+    Array(@created_site_roots).each { |root| FileUtils.rm_rf(root) }
   end
 
   def parsed_html
@@ -18,6 +17,7 @@ RSpec.describe "Document uploads", type: :request do
   end
 
   def write_site_file(version, relative_path, content)
+    (@created_site_roots ||= []) << version.site_root_absolute_path
     path = version.site_root_absolute_path.join(relative_path)
     FileUtils.mkdir_p(path.dirname)
     File.write(path, content)

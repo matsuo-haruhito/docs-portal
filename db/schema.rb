@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_09_180200) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -435,6 +435,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_09_180200) do
     t.datetime "preview_build_completed_at", comment: "プレビュービルド完了日時"
     t.datetime "preview_build_enqueued_at", comment: "プレビュービルドキュー登録日時"
     t.text "preview_build_error_message", comment: "プレビュービルドエラーメッセージ"
+    t.integer "preview_build_reason", default: 0, null: false, comment: "プレビュービルド理由（通常生成/成果物復旧）"
     t.datetime "preview_build_reconciled_at", comment: "プレビュービルド整合性確認日時"
     t.datetime "preview_build_retry_at", comment: "プレビュービルド次回再試行日時"
     t.datetime "preview_build_started_at", comment: "プレビュービルド開始日時"

@@ -10,10 +10,11 @@ class DocusaurusPreviewBuildJob < ApplicationJob
   end
 
   class << self
-    def enqueue_for(version, recover_active: false, consume_stale_attempt: false)
+    def enqueue_for(version, recover_active: false, consume_stale_attempt: false, build_reason: nil)
       queued = version.mark_preview_build_queued!(
         recover_active:,
-        consume_stale_attempt:
+        consume_stale_attempt:,
+        build_reason:
       )
       return false unless queued
 

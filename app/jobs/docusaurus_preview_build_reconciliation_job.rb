@@ -48,9 +48,11 @@ class DocusaurusPreviewBuildReconciliationJob < ApplicationJob
     when :preview_failed
       enqueue(version) if version.preview_build_retry_due?
     when :preview_succeeded
-      enqueue(version, recover_active: true)
+      enqueue(version, recover_active: true, build_reason: :artifact_recovery)
     when :preview_abandoned
-      nil
+      if version.preview_build_reason_source_build? && version.site_build_path.present?
+        enqueue(version, recover_active: true, build_reason: :artifact_recovery)
+      end
     end
   end
 
@@ -64,11 +66,12 @@ class DocusaurusPreviewBuildReconciliationJob < ApplicationJob
     )
   end
 
-  def enqueue(version, recover_active: false, consume_stale_attempt: false)
+  def enqueue(version, recover_active: false, consume_stale_attempt: false, build_reason: nil)
     DocusaurusPreviewBuildJob.enqueue_for(
       version,
       recover_active:,
-      consume_stale_attempt:
+      consume_stale_attempt:,
+      build_reason:
     )
   end
 end

@@ -40,6 +40,7 @@ ja:
         retry_claim_token: "自動再送実行権トークン"
       document_version:
         preview_build_attempt_count: "プレビュービルド試行回数"
+        preview_build_reason: "プレビュービルド理由"
         preview_build_enqueued_at: "プレビュービルドキュー登録日時"
         preview_build_started_at: "プレビュービルド開始日時"
         preview_build_retry_at: "プレビュービルド次回再試行日時"
