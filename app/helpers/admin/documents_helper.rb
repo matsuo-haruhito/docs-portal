@@ -3,20 +3,20 @@
 module Admin::DocumentsHelper
   def document_table_columns
     [
-      table_preferences_column(:project, label: "案件", default_width: 220, pinned: true, sortable: true),
-      table_preferences_column(:title, label: "文書名", default_width: 260, overflow: :ellipsis, sortable: true),
+      table_preferences_column(:project, label: "案件", default_width: 180, pinned: true, sortable: true),
+      table_preferences_column(:title, label: "文書名", default_width: 240, overflow: :ellipsis, sortable: true),
       table_preferences_column(:slug, label: "URL識別子", default_visible: false, default_width: 180, overflow: :ellipsis),
       table_preferences_column(:category, label: "カテゴリ", default_width: 85),
       table_preferences_column(:document_kind, label: "種別", default_visible: false, default_width: 80),
       table_preferences_column(:visibility_policy, label: "公開範囲", default_visible: false, default_width: 100),
       table_preferences_column(:source_authority, label: "正本区分", default_visible: false, default_width: 100),
-      table_preferences_column(:status, label: "状態", default_width: 100),
-      table_preferences_column(:latest_version, label: "最新版/HTML", default_width: 190),
+      table_preferences_column(:status, label: "状態", default_width: 80),
+      table_preferences_column(:latest_version, label: "最新版/HTML", default_width: 170),
       table_preferences_column(:legacy_versions, label: "古い版候補", default_visible: false, default_width: 260),
       table_preferences_column(:retention_until, label: "保管期限", default_width: 105),
       table_preferences_column(:discard_candidate_at, label: "廃棄候補", default_visible: false, default_width: 105),
       table_preferences_column(:discard_review, label: "廃棄候補の確認", default_visible: false, default_width: 190),
-      table_preferences_column(:actions, label: "操作", default_width: 180, pinned: true)
+      table_preferences_column(:actions, label: "操作", default_width: 160, pinned: true)
     ]
   end
 

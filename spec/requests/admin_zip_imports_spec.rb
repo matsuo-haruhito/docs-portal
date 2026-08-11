@@ -25,6 +25,11 @@ RSpec.describe "Admin zip imports", type: :request do
     expect(response.body).to include("dry-runで取り込み予定を確認してから実行")
     expect(response.body).to include("ZIPファイルをドラッグ")
     expect(response.body).to include("ZIPUI / ZIP UI Project")
+
+    html = Nokogiri::HTML(response.body)
+    expect(html.text).to include("下書き")
+    expect(html.text).not_to match(/\bdraft\b/)
+    expect(html.at_css('input[type="file"].file-dropzone__input')).to be_present
   end
 
   it "creates a saved dry-run from an uploaded ZIP" do

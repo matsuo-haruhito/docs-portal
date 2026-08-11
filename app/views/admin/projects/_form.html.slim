@@ -22,9 +22,11 @@
       label: "会社",
       allow_clear: true,
       placeholder: "会社名・ドメインで検索（未設定可）"
-    label
-      | 有効
-      = form.select :active, [["有効", true], ["無効", false]]
+    = form.rfk_select :active,
+      collection: [["有効", true], ["無効", false]],
+      selected: form.object.active,
+      wrapper: true,
+      label: "有効"
     label style="grid-column: 1 / -1;"
       | 説明
       = form.text_area :description

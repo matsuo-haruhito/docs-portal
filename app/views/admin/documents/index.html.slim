@@ -32,36 +32,68 @@ h1 文書マスタ
           wrapper: false,
           html: { maxlength: Admin::DocumentsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH }
 
-      label.form-field
-        span カテゴリ
-        = form.select :category, options_for_select(admin_document_category_filter_options, @filters[:category])
+      = form.rfk_select :category,
+        collection: admin_document_category_filter_options.drop(1),
+        include_blank: "すべて",
+        placeholder: "すべて",
+        selected: @filters[:category],
+        allow_clear: true,
+        wrapper: true,
+        label: "カテゴリ"
 
-      label.form-field
-        span 種別
-        = form.select :document_kind, options_for_select(admin_document_kind_filter_options, @filters[:document_kind])
+      = form.rfk_select :document_kind,
+        collection: admin_document_kind_filter_options.drop(1),
+        include_blank: "すべて",
+        placeholder: "すべて",
+        selected: @filters[:document_kind],
+        allow_clear: true,
+        wrapper: true,
+        label: "種別"
 
-      label.form-field
-        span 公開範囲
-        = form.select :visibility_policy, options_for_select(admin_document_visibility_filter_options, @filters[:visibility_policy])
+      = form.rfk_select :visibility_policy,
+        collection: admin_document_visibility_filter_options.drop(1),
+        include_blank: "すべて",
+        placeholder: "すべて",
+        selected: @filters[:visibility_policy],
+        allow_clear: true,
+        wrapper: true,
+        label: "公開範囲"
 
-      label.form-field
-        span 正本区分
-        = form.rfk_select :source_authority,
-          collection: admin_document_source_authority_filter_options,
-          selected: @filters[:source_authority],
-          wrapper: false
+      = form.rfk_select :source_authority,
+        collection: admin_document_source_authority_filter_options.drop(1),
+        include_blank: "すべて",
+        placeholder: "すべて",
+        selected: @filters[:source_authority],
+        allow_clear: true,
+        wrapper: true,
+        label: "正本区分"
 
-      label.form-field
-        span アーカイブ状態
-        = form.select :archived, options_for_select(admin_document_archived_filter_options, @filters[:archived])
+      = form.rfk_select :archived,
+        collection: admin_document_archived_filter_options.drop(1),
+        include_blank: "すべて",
+        placeholder: "すべて",
+        selected: @filters[:archived],
+        allow_clear: true,
+        wrapper: true,
+        label: "アーカイブ状態"
 
-      label.form-field
-        span 保管期限
-        = form.select :retention, options_for_select(admin_document_retention_filter_options, @filters[:retention])
+      = form.rfk_select :retention,
+        collection: admin_document_retention_filter_options.drop(1),
+        include_blank: "すべて",
+        placeholder: "すべて",
+        selected: @filters[:retention],
+        allow_clear: true,
+        wrapper: true,
+        label: "保管期限"
 
-      label.form-field
-        span 廃棄候補
-        = form.select :discard, options_for_select(admin_document_discard_filter_options, @filters[:discard])
+      = form.rfk_select :discard,
+        collection: admin_document_discard_filter_options.drop(1),
+        include_blank: "すべて",
+        placeholder: "すべて",
+        selected: @filters[:discard],
+        allow_clear: true,
+        wrapper: true,
+        label: "廃棄候補"
 
     p.actions.form-actions
       = form.submit "検索", class: "button"
@@ -140,7 +172,9 @@ h1 文書マスタ
         | 正本区分
         = render InfoTooltipComponent.new(label: "正本区分", description: "本文を更新する正本システムです。外部正本の場合は更新先へ引き継ぎます。")
       th data-rails-table-preferences-column-key="status" 状態
-      th data-rails-table-preferences-column-key="latest_version" 最新版/HTML
+      th data-rails-table-preferences-column-key="latest_version"
+        | 最新版/HTML
+        = render InfoTooltipComponent.new(label: "最新版とHTML", description: "最新版の版・公開状態・公開期間と、HTMLプレビューの生成状態をまとめて表示します。")
       th data-rails-table-preferences-column-key="legacy_versions" 古い版候補
       th data-rails-table-preferences-column-key="retention_until" 保管期限
       th data-rails-table-preferences-column-key="discard_candidate_at" 廃棄候補
@@ -173,16 +207,13 @@ h1 文書マスタ
         td data-rails-table-preferences-column-key="latest_version"
           - if latest_version
             span.badge = document_version_label(latest_version)
+            span.muted = " #{document_version_status_label(latest_version)}"
             br
-            span.muted = document_version_status_label(latest_version)
-            br
-            span.muted = admin_document_latest_version_publication_label(latest_version)
-            br
-            span.muted = admin_document_latest_version_preview_label(latest_version)
+            span.muted = "#{admin_document_latest_version_publication_label(latest_version)} / #{admin_document_latest_version_preview_label(latest_version)}"
           - else
             span.muted 最新版なし
             br
-            span.muted 公開版がまだ選択されていません
+            span.muted 公開版未選択
         td data-rails-table-preferences-column-key="legacy_versions"
           - if legacy_versions.any?
             span.badge = "#{legacy_versions.size}件"
@@ -213,14 +244,25 @@ h1 文書マスタ
           - if document.discard_candidate_at.present?
             - discard_review_cue = "廃棄候補日を変更せず、確認者と確認日時だけを記録します。"
             = button_to "確認を記録", mark_discard_reviewed_admin_document_path(document.public_id, return_to: current_return_to), method: :patch, class: "button secondary", aria: { label: discard_review_cue }, title: discard_review_cue
-        td.actions data-rails-table-preferences-column-key="actions"
-          = edit_link_to "編集", edit_admin_document_path(document.public_id, return_to: current_return_to)
+        td.actions.document-row-actions data-rails-table-preferences-column-key="actions"
+          - edit_document_cue = "文書「#{document.title}」を編集"
+          = link_to edit_admin_document_path(document.public_id, return_to: current_return_to), class: "button secondary", aria: { label: edit_document_cue }, title: edit_document_cue do
+            i.bi.bi-pencil aria-hidden="true"
+            span.visually-hidden 編集
           - if document.archived?
             - restore_document_cue = "文書「#{document.title}」を復元します。通常一覧・社外導線で再び表示対象になる可能性があります。"
-            = button_to "復元", restore_admin_document_path(document.public_id, return_to: current_return_to), method: :patch, class: "button secondary", aria: { label: restore_document_cue }, title: restore_document_cue, form: { data: { turbo_confirm: "#{restore_document_cue}よろしいですか？" } }
+            = button_to restore_admin_document_path(document.public_id, return_to: current_return_to), method: :patch, class: "button secondary", aria: { label: restore_document_cue }, title: restore_document_cue, form: { data: { turbo_confirm: "#{restore_document_cue}よろしいですか？" } } do
+              i.bi.bi-arrow-counterclockwise aria-hidden="true"
+              span.visually-hidden 復元
           - else
-            = button_to "アーカイブ", archive_admin_document_path(document.public_id, return_to: current_return_to), method: :patch, params: { retention_until: document.retention_until, discard_candidate_at: document.discard_candidate_at }, class: "button secondary", form: { data: { turbo_confirm: "文書「#{document.title}」をアーカイブしますか？通常一覧・社外導線から非表示になります。復元は管理画面から実行できます。" } }
-          = delete_link_to "削除", admin_document_path(document.public_id, return_to: current_return_to), confirm: "文書「#{document.title}」を削除しますか？関連する版・添付・コメントも削除される可能性があります。"
+            - archive_document_cue = "文書「#{document.title}」をアーカイブします。通常一覧・社外導線から非表示になります。復元は管理画面から実行できます。"
+            = button_to archive_admin_document_path(document.public_id, return_to: current_return_to), method: :patch, params: { retention_until: document.retention_until, discard_candidate_at: document.discard_candidate_at }, class: "button secondary", aria: { label: archive_document_cue }, title: archive_document_cue, form: { data: { turbo_confirm: "#{archive_document_cue}よろしいですか？" } } do
+              i.bi.bi-archive aria-hidden="true"
+              span.visually-hidden アーカイブ
+          - delete_document_cue = "文書「#{document.title}」を削除"
+          = button_to admin_document_path(document.public_id, return_to: current_return_to), method: :delete, class: "button danger", aria: { label: delete_document_cue }, title: delete_document_cue, form: { data: { turbo_confirm: "文書「#{document.title}」を削除しますか？関連する版・添付・コメントも削除される可能性があります。" } } do
+            i.bi.bi-trash aria-hidden="true"
+            span.visually-hidden 削除
 
 - if @documents_pagination[:total_pages] > 1
   nav.pagination aria-label="文書マスタ一覧ページ"

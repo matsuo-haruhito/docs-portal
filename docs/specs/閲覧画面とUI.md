@@ -23,6 +23,9 @@
 - 管理一覧を含む横長テーブルは、キーボードフォーカス可能な横スクロール領域とcaptionを持ち、主要5〜8列だけを初期表示する。定義済みの残りの列は列設定から再表示できるようにする
 - 状態・間隔・enumなどの業務値は日本語で表示し、`Translation missing` や内部コード値を利用者向け画面へ露出させない
 - 画面には業務上判断する値と実行可能な操作を優先して表示し、項目の意味・入力制約は `InfoTooltipComponent`、操作結果・前提は `HelpTooltipComponent`、read-only境界やrunbookなど複数文の補足は初期状態を閉じたDisclosureへ移す。ページ見出しやカード本文の直下へ同じ説明を常時重複表示しない
+- 管理診断は状態・カテゴリ・日本語の判定結果を通常表示し、環境変数名、内部check key、path、設定値などの技術詳細は行内の初期状態を閉じたDisclosureから確認できるようにする
+- import入力画面のenumは日本語表示し、ファイル選択はキーボード操作可能なdropzoneを主表示とする。ブラウザ標準のファイル入力文言は重複表示せず、選択ファイル名を日本語の状態表示で伝える
+- 管理一覧の複合検索はrfk入力へ統一し、短い状態列と操作列には内容に応じた初期幅を指定する。複数の状態を1セルへ表示する場合も主要値を2行以内にまとめ、詳細説明で行高を増やさない
 - tooltipの起動要素はBootstrap Iconsとアクセシブルな名前を持ち、hoverとkeyboard focusの両方で表示する。長文をtooltip内で切り捨てず、200文字を超える説明はDisclosureとして全文へ到達できるようにする
 - RTP一覧は `table_preferences_table_tag` の `scroll_wrapper: true` を使い、横スクロールをtable本体ではなくフォーカス可能なwrapperへ持たせる。table本体はnative table layoutを維持し、列表示・列順・列幅・固定列のStimulus反映を妨げない
 - RTP列設定は各行の日本語列名、表示、順序、幅を同じviewport内で確認できるnative `dialog` modalとする。desktopでは最大72rem、画面高80vh以内とし、列一覧をmodal内部でスクロールして操作ボタンを下部に維持する。Escape・背景クリック・閉じるボタンで閉じ、起動ボタンへfocusを戻す。table側で変更した列順・列幅は同じ`table_key`のeditorへ同期してから保存する
@@ -46,6 +49,8 @@
 - ログイン後に `GET /dashboard` で利用者向けダッシュボードを表示できる
 - dashboard には、自分が閲覧可能な案件、お気に入り、後で読む、最近見た文書、最近更新された文書を表示する
 - dashboard には、案件数・文書数・保存ショートカット数・保留中申請数などの workspace summary を表示する
+- dashboardの通常表示は件数、文書・案件名、次の操作を優先し、件数の定義や空状態の補足はTooltipまたは初期状態を閉じたDisclosureから確認できるようにする
+- dashboardの一覧カードは内容量の異なる同一行でも不要に同じ高さへ引き伸ばさず、短いカードの下に大きな空白を作らない
 - 権限外文書は bookmark や access log に存在しても表示しない
 
 ## Markdown preview / version diff

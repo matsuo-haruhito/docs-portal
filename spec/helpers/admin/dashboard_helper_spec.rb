@@ -16,9 +16,9 @@ RSpec.describe Admin::DashboardHelper do
       aggregate_failures do
         expect(helper.configuration_diagnostic_category_label(diagnostic_check("DATABASE_HOST"))).to eq("環境変数")
         expect(helper.configuration_diagnostic_category_label(diagnostic_check("SECRET_KEY_BASE"))).to eq("秘密値")
-        expect(helper.configuration_diagnostic_category_label(diagnostic_check("storage.document_files"))).to eq("Storage")
-        expect(helper.configuration_diagnostic_category_label(diagnostic_check("docusaurus.workspace"))).to eq("Workspace")
-        expect(helper.configuration_diagnostic_category_label(diagnostic_check("KROKI_ENDPOINT"))).to eq("Workspace")
+        expect(helper.configuration_diagnostic_category_label(diagnostic_check("storage.document_files"))).to eq("保存領域")
+        expect(helper.configuration_diagnostic_category_label(diagnostic_check("docusaurus.workspace"))).to eq("実行環境")
+        expect(helper.configuration_diagnostic_category_label(diagnostic_check("KROKI_ENDPOINT"))).to eq("実行環境")
       end
     end
   end

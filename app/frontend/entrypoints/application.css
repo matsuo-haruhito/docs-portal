@@ -19,6 +19,18 @@ body {
   color: var(--ink);
 }
 
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
 header {
   background: linear-gradient(135deg, #102a43 0%, #0f172a 70%, #113b55 100%);
   color: white;
@@ -344,6 +356,22 @@ form {
   flex-wrap: wrap;
 }
 
+.document-row-actions {
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.document-row-actions form {
+  margin: 0;
+}
+
+.document-row-actions .button,
+.document-row-actions button {
+  min-width: 2.25rem;
+  padding: 8px 10px;
+  text-align: center;
+}
+
 .button,
 button {
   display: inline-block;
@@ -487,6 +515,35 @@ ul {
   gap: 18px;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   margin-bottom: 24px;
+}
+
+.dashboard-grid--compact {
+  align-items: start;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-grid--compact .dashboard-card--project {
+  grid-column: 1;
+  order: 10;
+}
+
+.dashboard-grid--compact .dashboard-card--recent {
+  order: 11;
+}
+
+.dashboard-grid--compact .dashboard-card--updated {
+  order: 12;
+}
+
+@media (max-width: 960px) {
+  .dashboard-grid--compact {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-grid--compact .card {
+    grid-column: auto;
+    order: initial;
+  }
 }
 
 .metric-card {

@@ -36,14 +36,12 @@ RSpec.describe "Dashboard recent document cues", type: :request do
     expect(response).to have_http_status(:ok)
     aggregate_failures do
       expect(dashboard_section_text("最近見た文書")).to include(
-        "あなたの閲覧履歴から表示しています。",
-        "作業再開用の個人履歴",
+        "あなたの閲覧履歴から表示する作業再開用の一覧です。更新通知ではありません。",
         "あなたが最近閲覧",
         "Viewed Manual"
       )
       expect(dashboard_section_text("最近更新された文書")).to include(
-        "閲覧可能な文書を更新日時の新しい順に表示しています。",
-        "未読通知ではなく、更新候補を確認する入口",
+        "閲覧可能な文書を更新日時順に表示する確認入口です。未読通知ではありません。",
         "更新日時",
         "Updated Manual"
       )
@@ -57,12 +55,12 @@ RSpec.describe "Dashboard recent document cues", type: :request do
     expect(response).to have_http_status(:ok)
     aggregate_failures do
       expect(dashboard_section_text("最近見た文書")).to include(
-        "まだ閲覧履歴がない状態",
-        "権限不足やエラーではなく"
+        "最近見た文書はまだありません。",
+        "作業再開用の一覧です。更新通知ではありません。"
       )
       expect(dashboard_section_text("最近更新された文書")).to include(
-        "閲覧可能な範囲に更新候補がない状態",
-        "権限エラーではなく"
+        "最近更新された文書はありません。",
+        "更新日時順に表示する確認入口です。未読通知ではありません。"
       )
     end
   end

@@ -1,4 +1,4 @@
-- page_title "Webhook"
+- page_title "Webhook設定"
 - endpoint_table_key = :admin_webhook_endpoints
 - endpoint_table_columns = webhook_endpoint_table_columns
 - endpoint_table_settings = rails_table_preference_settings(table_key: endpoint_table_key)
@@ -15,7 +15,7 @@
 - endpoint_filter_params = @webhook_endpoint_filter_params || {}
 - endpoint_reset_params = @delivery_status_filter == "all" ? {} : { delivery_status: @delivery_status_filter }
 
-h1 Webhook
+h1 Webhook設定
 = render "admin/nav"
 
 .card
@@ -34,15 +34,27 @@ h1 Webhook
         = label_tag :endpoint_q, "設定検索"
         = render InfoTooltipComponent.new(label: "設定検索", description: "名称または送信先URLを部分一致で検索します。入力できるのは100文字までです。")
       = text_field_tag :endpoint_q, @webhook_endpoint_q, placeholder: "名称・送信先URL", maxlength: Admin::WebhookEndpointsController::ENDPOINT_Q_MAX_LENGTH
-    p
-      = label_tag :endpoint_event, "イベント"
-      = select_tag :endpoint_event, options_for_select([["すべてのイベント", "all"]] + WebhookEndpoint::EVENT_TYPES.map { |event_type| [webhook_event_type_label(event_type), event_type] }, @webhook_endpoint_event_filter)
-    p
-      = label_tag :endpoint_active, "状態"
-      = select_tag :endpoint_active, options_for_select([["すべて", "all"], ["有効", "active"], ["停止", "inactive"]], @webhook_endpoint_active_filter)
-    p
-      = label_tag :endpoint_per_page, "表示件数"
-      = select_tag :endpoint_per_page, options_for_select([["25件", 25], ["50件", 50]], @webhook_endpoints_per_page)
+    = form.rfk_select :endpoint_event,
+      collection: WebhookEndpoint::EVENT_TYPES.map { |event_type| [webhook_event_type_label(event_type), event_type] },
+      selected: @webhook_endpoint_event_filter == "all" ? nil : @webhook_endpoint_event_filter,
+      include_blank: "すべてのイベント",
+      wrapper: true,
+      label: "イベント",
+      allow_clear: true,
+      placeholder: "すべてのイベント"
+    = form.rfk_select :endpoint_active,
+      collection: [["有効", "active"], ["停止", "inactive"]],
+      selected: @webhook_endpoint_active_filter == "all" ? nil : @webhook_endpoint_active_filter,
+      include_blank: "すべて",
+      wrapper: true,
+      label: "状態",
+      allow_clear: true,
+      placeholder: "すべて"
+    = form.rfk_select :endpoint_per_page,
+      collection: [["25件", 25], ["50件", 50]],
+      selected: @webhook_endpoints_per_page,
+      wrapper: true,
+      label: "表示件数"
     p.actions
       = form.submit "設定一覧を絞り込む", class: "button secondary"
       - if @webhook_endpoint_filters_active

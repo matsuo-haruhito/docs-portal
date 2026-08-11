@@ -202,12 +202,22 @@ section.card
 
   = form_with url: admin_root_path, method: :get, local: true, class: "configuration-diagnostic-filter-form" do |form|
     .form-grid
-      .field
-        = form.label :configuration_status, "状態"
-        = form.select :configuration_status, [["すべて", ""]] + configuration_diagnostic_status_filter_options, selected: @configuration_status_filter
-      .field
-        = form.label :configuration_category, "カテゴリ"
-        = form.select :configuration_category, [["すべて", ""]] + configuration_diagnostic_category_filter_options, selected: @configuration_category_filter
+      = form.rfk_select :configuration_status,
+        collection: configuration_diagnostic_status_filter_options,
+        include_blank: "すべて",
+        placeholder: "すべて",
+        selected: @configuration_status_filter,
+        allow_clear: true,
+        wrapper: true,
+        label: "状態"
+      = form.rfk_select :configuration_category,
+        collection: configuration_diagnostic_category_filter_options,
+        include_blank: "すべて",
+        placeholder: "すべて",
+        selected: @configuration_category_filter,
+        allow_clear: true,
+        wrapper: true,
+        label: "カテゴリ"
     p.actions
       = form.submit "絞り込む", class: "button secondary"
       - if @configuration_diagnostic_filters_active
@@ -225,13 +235,12 @@ section.card
 
   - if @configuration_diagnostic_checks.any?
     table
+      caption.table-caption アプリ設定診断結果
       thead
         tr
           th 状態
           th カテゴリ
-          th 項目
-          th 内容
-          th 補足
+          th 判定内容
       tbody
         - @configuration_diagnostic_checks.each do |check|
           tr
@@ -242,16 +251,16 @@ section.card
               span class="text-sm font-semibold text-gray-700"
                 = configuration_diagnostic_category_label(check)
             td
-              code = check.key
-            td
-              strong = check.label
-              br
-              span.muted = check.message
-            td class="max-w-xl break-words"
-              - if check.detail.present?
-                code = check.detail
-              - else
-                span.muted -
+              = check.message
+              = render GuidanceDisclosureComponent.new(title: "技術詳細を確認") do
+                dl.definition-list
+                  dt 設定項目
+                  dd
+                    code = check.key
+                  - if check.detail.present?
+                    dt 診断値
+                    dd
+                      code = check.detail
   - else
     p.muted 現在の絞り込み条件に一致する診断項目はありません。診断全体が正常という意味ではないため、条件を解除するか上の全体件数を確認してください。
     - if @configuration_diagnostic_filters_active

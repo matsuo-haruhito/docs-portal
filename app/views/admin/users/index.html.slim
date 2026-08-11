@@ -21,15 +21,20 @@ h1 ユーザーマスタ
 
 .card
   h2 ユーザーを探す
-  = form_with url: admin_users_path, method: :get, local: true do
+  = form_with url: admin_users_path, method: :get, local: true do |f|
     .form-grid
       label
         | キーワード
         = text_field_tag :q, @user_filter_params["q"], placeholder: "ユーザー名・メールアドレス", maxlength: 100
         p.muted ユーザー名・メールアドレスの断片で検索できます。最大100文字。
-      label
-        | 状態
-        = select_tag :active, options_for_select([["すべて", ""], ["有効", "true"], ["無効", "false"]], selected_active_filter)
+      = f.rfk_select :active,
+        collection: [["有効", "true"], ["無効", "false"]],
+        selected: (%w[true false].include?(selected_active_filter) ? selected_active_filter : nil),
+        include_blank: "すべて",
+        wrapper: true,
+        label: "状態",
+        allow_clear: true,
+        placeholder: "すべて"
     p.actions
       = submit_tag "絞り込む", class: "button"
       - if user_filters_applied

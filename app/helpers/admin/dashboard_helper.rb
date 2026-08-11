@@ -1,8 +1,8 @@
 module Admin::DashboardHelper
   CONFIGURATION_DIAGNOSTIC_CATEGORY_LABELS = {
     secret: "秘密値",
-    storage: "Storage",
-    workspace: "Workspace",
+    storage: "保存領域",
+    workspace: "実行環境",
     environment: "環境変数"
   }.freeze
 

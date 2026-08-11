@@ -110,13 +110,15 @@ RSpec.describe "Dashboard", type: :request do
     expect(metric_card_for("保留中の申請")).to include("0", "申請一覧へ", "あなたが提出したアクセス申請の保留件数です。")
     expect(page_text).to include(
       "このダッシュボードは権限不足のエラーではありません。案件一覧・文書一覧から、現在閲覧できる範囲を確認できます。",
-      "保留中のアクセス申請はありません。過去の申請は申請一覧で確認できます。",
-      "参加中の案件は案件一覧で確認できます。",
-      "お気に入りはまだ保存されていません。これは閲覧権限がない状態ではなく、個人用ショートカットが未利用の状態です。",
-      "後で読む文書はまだ保存されていません。これは閲覧権限がない状態ではなく、個人用ショートカットが未利用の状態です。",
-      "このアカウントでは最近見た文書がまだありません。文書一覧から読み始めると、直近の閲覧履歴がここに表示されます。",
-      "閲覧可能な文書は文書一覧から確認できます。"
+      "保留中の申請はありません。",
+      "閲覧可能な案件はありません。",
+      "お気に入りはまだありません。",
+      "後で読む文書はまだありません。",
+      "最近見た文書はまだありません。",
+      "最近更新された文書はありません。"
     )
+    expect(parsed_html.at_css(".dashboard-grid--compact")).to be_present
+    expect(parsed_html.css(".dashboard-grid .heading-with-help .info-tooltip").size).to be >= 6
     expect(dashboard_section_links("保留中のアクセス申請").map { |link| [link.text.squish, link["href"]] }).to include(["申請一覧で詳しく見る", access_requests_path])
     expect(dashboard_section_links("案件").map { |link| [link.text.squish, link["href"]] }).to include(["案件一覧へ", projects_path])
 
@@ -171,7 +173,6 @@ RSpec.describe "Dashboard", type: :request do
     expect(metric_card_for("保留中の申請")).to include("2", "申請一覧へ")
     expect(page_text).to include(
       "保留中のアクセス申請",
-      "最近の申請を確認できます。",
       "Pending Project",
       "Older Pending Project",
       "ダウンロード",

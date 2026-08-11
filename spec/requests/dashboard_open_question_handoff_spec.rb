@@ -110,7 +110,7 @@ RSpec.describe "Dashboard open Q&A handoff", type: :request do
 
     aggregate_failures do
       expect(handoff_text).to include(
-        "公開Q&Aのうち受付中の root thread を最大 5 件だけ表示します。",
+        "公開Q&Aの受付中root threadを最大5件表示します。通知や期限の一覧ではありません。",
         "全件一覧、通知、SLA、回答期限、担当割当を示すものではありません。",
         "確認はリンク先の各文書または版のQ&A workspaceで行います。",
         "Q&A Handbook",
@@ -165,8 +165,9 @@ RSpec.describe "Dashboard open Q&A handoff", type: :request do
     expect(response).to have_http_status(:ok)
     expect(dashboard_section_text("受付中Q&A候補")).to include(
       "受付中Q&A候補はありません。",
-      "通知 green、SLA 達成、問い合わせが存在しない保証ではありません。",
-      "各文書のQ&A workspaceを確認してください。"
+      "通知や期限の一覧ではありません。",
+      "SLA、回答期限、担当割当を示すものではありません。",
+      "各文書または版のQ&A workspaceで行います。"
     )
   end
 end

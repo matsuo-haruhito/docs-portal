@@ -22,9 +22,14 @@ h1 案件マスタ
         | キーワード
         = text_field_tag :q, @project_filter_params["q"], placeholder: "コード・案件名・説明", maxlength: 100
         span.muted コード・案件名・説明の断片で検索できます。最大100文字。
-      label
-        | 状態
-        = select_tag :active, options_for_select([["すべて", ""], ["有効", "true"], ["無効", "false"]], selected_active_filter)
+      = form.rfk_select :active,
+        collection: [["有効", "true"], ["無効", "false"]],
+        selected: (%w[true false].include?(selected_active_filter) ? selected_active_filter : nil),
+        include_blank: "すべて",
+        wrapper: true,
+        label: "状態",
+        allow_clear: true,
+        placeholder: "すべて"
       = form.rfk_combobox :company_id,
         collection: company_filter_options,
         selected: admin_project_company_filter_selected_option(@selected_project_company, selected_company_filter),
