@@ -31,15 +31,30 @@ section.card
   h2 絞り込み
   = form_with url: admin_access_requests_path, method: :get, local: true do |form|
     .form-grid.access-request-filter-grid
-      div
-        = form.label :status, "状態"
-        = form.select :status, options_for_select(admin_access_request_status_filter_options, @filters[:status])
-      div
-        = form.label :requested_access_level, "要求権限"
-        = form.select :requested_access_level, options_for_select(admin_access_request_access_level_filter_options, @filters[:requested_access_level])
-      div
-        = form.label :requestable_type, "対象種別"
-        = form.select :requestable_type, options_for_select(admin_access_request_requestable_type_filter_options, @filters[:requestable_type])
+      = form.rfk_select :status,
+        collection: admin_access_request_status_filter_options,
+        selected: @filters[:status].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "状態",
+        allow_clear: true,
+        placeholder: "すべて"
+      = form.rfk_select :requested_access_level,
+        collection: admin_access_request_access_level_filter_options,
+        selected: @filters[:requested_access_level].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "要求権限",
+        allow_clear: true,
+        placeholder: "すべて"
+      = form.rfk_select :requestable_type,
+        collection: admin_access_request_requestable_type_filter_options,
+        selected: @filters[:requestable_type].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "対象種別",
+        allow_clear: true,
+        placeholder: "すべて"
       div.access-request-filter-grid__search
         .heading-with-help
           = form.label :q, "申請者・対象"

@@ -59,7 +59,7 @@ RSpec.describe "admin/project_consent_settings admin UI source" do
       expect(index_source).to include('class: "filters"')
       expect(index_source).to include("form.rfk_combobox :project_id")
       expect(index_source).to include("form.rfk_combobox :consent_term_id")
-      expect(index_source).to include("select_tag :enabled")
+      expect(index_source).to include("form.rfk_select :enabled")
       expect(index_source).to include("絞り込み解除")
       expect(index_source).to include("列の表示設定は下の table preferences")
     end

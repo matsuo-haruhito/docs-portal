@@ -28,13 +28,17 @@
       wrapper: true,
       label: "同意文面",
       placeholder: "同意文面名・版で検索"
-    label
-      | 必須タイミング
-      = form.select :required_on, project_consent_setting_required_on_options
-    label
-      | 状態
-      = form.select :enabled, [["有効", true], ["無効", false]]
-  p.muted first_access は閲覧前、download は ZIP・添付ファイルのダウンロード前に確認します。shared_link 系は共有リンク実装時の拡張用です。
+    = form.rfk_select :required_on,
+      collection: project_consent_setting_required_on_options,
+      selected: form.object.required_on,
+      wrapper: true,
+      label: "必須タイミング"
+    = form.rfk_select :enabled,
+      collection: [["有効", true], ["無効", false]],
+      selected: form.object.enabled,
+      wrapper: true,
+      label: "状態"
+  p.muted 閲覧前は案件の文書を開く前、ダウンロード前はZIP・添付ファイルの取得前に確認します。共有リンク系は将来の拡張用です。
   p.actions
     = form.submit "保存", class: "button"
     - if project_consent_setting.persisted?

@@ -21,13 +21,23 @@ h1 文書セット
         = form.search_field :q, value: @filters[:q], placeholder: "案件名・案件コード・文書セット名", autocomplete: "off", maxlength: Admin::DocumentSetsController::DOCUMENT_SET_QUERY_MAX_LENGTH
         span.muted = "案件名・案件コード・文書セット名の断片で検索できます。最大#{Admin::DocumentSetsController::DOCUMENT_SET_QUERY_MAX_LENGTH}文字。"
 
-      label.form-field
-        span 種別
-        = form.select :set_type, options_for_select(admin_document_set_type_filter_options, @filters[:set_type])
+      = form.rfk_select :set_type,
+        collection: admin_document_set_type_filter_options,
+        selected: @filters[:set_type].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "種別",
+        allow_clear: true,
+        placeholder: "すべて"
 
-      label.form-field
-        span 公開範囲
-        = form.select :visibility_policy, options_for_select(admin_document_set_visibility_filter_options, @filters[:visibility_policy])
+      = form.rfk_select :visibility_policy,
+        collection: admin_document_set_visibility_filter_options,
+        selected: @filters[:visibility_policy].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "公開範囲",
+        allow_clear: true,
+        placeholder: "すべて"
 
     p.actions.form-actions
       = form.submit "絞り込み", class: "button"
