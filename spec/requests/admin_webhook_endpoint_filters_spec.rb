@@ -53,7 +53,7 @@ RSpec.describe "Admin webhook endpoint filters", type: :request do
     expect(page_text).not_to include("Docs Import Hook")
     expect(page_text).not_to include("Docs Stopped Hook")
     expect(page_text).to include("表示範囲: Webhook設定 1件中1件を表示しています")
-    expect(page_text).to include("設定検索・イベント・状態 filter は Webhook 設定一覧だけに適用されます")
+    expect(page_text).to include("ここでの絞り込みは設定一覧だけに適用され、送信履歴や再送条件には影響しません。")
     expect(action_targets).to include(edit_admin_webhook_endpoint_path(matching_endpoint.public_id))
     expect(action_targets).not_to include(edit_admin_webhook_endpoint_path(other_event_endpoint.public_id))
     expect(action_targets).not_to include(edit_admin_webhook_endpoint_path(inactive_endpoint.public_id))

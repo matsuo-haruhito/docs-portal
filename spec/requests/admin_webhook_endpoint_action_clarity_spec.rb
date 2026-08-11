@@ -27,8 +27,7 @@ RSpec.describe "Admin webhook endpoint action clarity", type: :request do
     get admin_webhook_endpoints_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("Webhook設定そのものの編集・削除です。")
-    expect(page_text).to include("最近の送信履歴の詳細確認・再送とは別の操作です。")
+    expect(page_text).to include("名称・送信先・通知イベントを管理します。ここでの絞り込みは設定一覧だけに適用され、送信履歴や再送条件には影響しません。")
     expect(page_text).to include("設定操作")
     expect(response.body).to include("Webhook設定を削除します。")
     expect(response.body).to include("名称: Docs Hook")

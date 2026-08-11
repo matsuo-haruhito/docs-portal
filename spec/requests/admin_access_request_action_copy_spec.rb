@@ -45,7 +45,7 @@ RSpec.describe "Admin access request action copy", type: :request do
     }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("却下: 理由を残して申請を閉じます。権限は変更しません。")
+    expect(page_text).to include("対象・要求権限・理由を確認して判断します。却下は理由を残して申請を閉じますが、権限は変更しません。")
     expect(page_text).to include("定型候補は入力補助です。補足も却下理由の入力補助です。承認基準や権限付与仕様はここでは変更しません。")
     expect(page_text).not_to include("一括承認", "一括却下")
 
@@ -69,8 +69,7 @@ RSpec.describe "Admin access request action copy", type: :request do
 
     expect(response).to have_http_status(:ok)
     download_row = row_for("Need manual download")
-    expect(download_row.text.squish).to include("判断前に対象・要求権限・理由を確認してください。")
-    expect(download_row.text.squish).to include("却下: 理由を残して申請を閉じます。権限は変更しません。")
+    expect(download_row.text.squish).to include("対象・要求権限・理由を確認して判断します。却下は理由を残して申請を閉じますが、権限は変更しません。")
     expect(download_row.text.squish).not_to include("管理権限申請は自動承認できません")
     download_forms = download_row.css("form[action='#{admin_access_request_path(download_request)}']")
     expect(download_forms.size).to eq(2)

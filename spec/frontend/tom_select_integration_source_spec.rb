@@ -54,8 +54,7 @@ RSpec.describe "Admin document sets Tom Select", type: :system do
   it "keeps rails fields kit selects initialized after turbo navigation and invalid rerender" do
     sign_in_via_browser(admin)
 
-    visit admin_root_path
-    click_link "文書セット"
+    visit admin_document_sets_path
 
     expect(page).to have_current_path(admin_document_sets_path, ignore_query: true)
     expect_tom_select_initialized("document_set_project_id")

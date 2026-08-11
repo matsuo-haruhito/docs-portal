@@ -8,8 +8,10 @@ RSpec.describe "Related gem wiring source" do
   describe "Stimulus entrypoint wiring" do
     it "registers related gem controllers on the shared Stimulus application" do
       entrypoint_source = read_source("app/frontend/entrypoints/application.js")
+      table_preferences_controller_source = read_source("app/frontend/controllers/rails_table_preferences_controller.ts")
 
-      expect(entrypoint_source).to include('import { RailsTablePreferencesController } from "rails_table_preferences"')
+      expect(entrypoint_source).to include('import RailsTablePreferencesController from "../controllers/rails_table_preferences_controller"')
+      expect(table_preferences_controller_source).to include('import { RailsTablePreferencesController as BaseController } from "rails_table_preferences"')
       expect(entrypoint_source).to include('import { TomSelectController } from "rails_fields_kit"')
       expect(entrypoint_source).to include("const application = Application.start()")
       expect(entrypoint_source).to include('application.register("rails-table-preferences", RailsTablePreferencesController)')

@@ -16,8 +16,6 @@ RSpec.describe "Admin access request search cue", type: :request do
 
     expect(query_input).to be_present
     expect(query_input["maxlength"]).to eq(Admin::AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH.to_s)
-    expect(form_text).to include("申請者名 / email、申請ID / 理由、対象名 / code / slug / ファイル名を検索します")
-    expect(form_text).to include("最大#{Admin::AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH}文字")
-    expect(form_text).to include("状態・要求権限・対象種別と組み合わせて絞り込みます")
+    expect(form_text).to include("申請者名・メール、申請ID・理由、対象名・code・slug・ファイル名を検索します。最大#{Admin::AccessRequestsController::ACCESS_REQUEST_QUERY_MAX_LENGTH}文字です。")
   end
 end

@@ -27,8 +27,7 @@ RSpec.describe "Admin access request action grouping", type: :request do
     get admin_access_requests_path, params: { status: "pending" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("判断前に対象・要求権限・理由を確認してください。")
-    expect(page_text).to include("却下: 理由を残して申請を閉じます。")
+    expect(page_text).to include("対象・要求権限・理由を確認して判断します。却下は理由を残して申請を閉じますが、権限は変更しません。")
     expect(page_text).to include("却下理由の定型候補")
     expect(page_text).to include("補足（任意）")
 
@@ -55,7 +54,7 @@ RSpec.describe "Admin access request action grouping", type: :request do
     expect(response).to have_http_status(:ok)
     expect(row.text.squish).to include("管理権限申請")
     expect(row.text.squish).to include("現行の承認処理では管理者 role を付与しません")
-    expect(row.text.squish).to include("判断前に対象・要求権限・理由を確認してください。")
+    expect(row.text.squish).to include("対象・要求権限・理由を確認して判断します。却下は理由を残して申請を閉じますが、権限は変更しません。")
     action_forms = row.css("form[action='#{admin_access_request_path(access_request)}']")
     expect(action_forms.size).to eq(1)
     expect(action_forms.first.at_css("input[name='decision'][value='approve']")).to be_nil

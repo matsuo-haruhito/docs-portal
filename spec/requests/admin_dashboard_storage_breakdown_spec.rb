@@ -38,10 +38,8 @@ RSpec.describe "Admin dashboard storage breakdown", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("DocumentFile 実体の Project / Document 上位")
-    expect(response.body).to include("storage/document_files に紐づく DocumentFile 実体だけ")
-    expect(response.body).to include("上位5件")
-    expect(response.body).to include("削除・archive・cleanup・retention policy 決定には使いません")
-    expect(response.body).to include("raw absolute path や外部 storage metadata は表示しません")
+    expect(response.body).to include("storage/document_filesの実体を案件・文書単位で概算集計した上位5件です。")
+    expect(response.body).to include("削除判断には使用せず、絶対pathや外部storage metadataは表示しません。")
     expect(response.body).to include("DASH3248")
     expect(response.body).to include("Storage Project")
     expect(response.body).to include("Storage Heavy Document")
