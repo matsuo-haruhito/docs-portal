@@ -38,18 +38,16 @@
       wrapper_html: { style: "grid-column: 1 / -1;" }
 
   - if @project_documents.any?
-    h2 対象文書
-    p.muted チェックした文書だけセットに含めます。版固定しない場合は最新版を使います。
-    = render HelpTooltipComponent.new(description: "「固定版」を選択すると、その時点の版を固定します。未選択のままだと常に最新版がセットに含まれます。")
-    p.muted 固定版候補は文書ごとに検索して選びます。保存済みまたは入力中の固定版だけを初期表示します。
-    p.muted 検索中も選択済み文書を見失わないよう、件数と選択済みのみ表示を使えます。
+    .heading-with-help
+      h2 対象文書
+      = render HelpTooltipComponent.new(description: "チェックした文書だけをセットに含めます。「固定版」を選ぶとその版を使い、未選択の場合は常に最新版を使います。")
     section.document-set-document-filter data-controller="document-set-document-filter"
       .document-set-document-filter__bar
         .document-set-document-filter__remote
-          = label_tag "document-set-remote-document-picker", "文書名 / URL識別子で探す", class: "document-set-document-filter__label"
+          .heading-with-help
+            = label_tag "document-set-remote-document-picker", "文書名 / URL識別子で探す", class: "document-set-document-filter__label"
+            = render InfoTooltipComponent.new(label: "文書検索", description: "検索語は最大#{Admin::DocumentSetsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH}文字、候補は最大#{Admin::DocumentSetsController::DOCUMENT_SEARCH_LIMIT}件です。下の絞り込み欄は表示中の対象文書だけを絞ります。")
           = select_tag "document_set_remote_document_id", options_for_select([]), document_set_remote_document_picker_html_options(document_set.project_id)
-          p.document-set-document-filter__hint.muted
-            | 検索語は最大#{Admin::DocumentSetsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH}文字、候補は最大#{Admin::DocumentSetsController::DOCUMENT_SEARCH_LIMIT}件です。下の絞り込み欄は表示中の対象文書だけを絞ります。
         label.document-set-document-filter__label for="document-set-document-filter-query" 表示中の対象文書を絞り込み
         input#document-set-document-filter-query.document-set-document-filter__input type="search" placeholder="文書名またはURL識別子" autocomplete="off" data-document-set-document-filter-target="query" data-action="input->document-set-document-filter#filter"
         label.document-set-document-filter__selected-only

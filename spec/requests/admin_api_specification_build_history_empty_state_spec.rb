@@ -30,6 +30,6 @@ RSpec.describe "Admin API specification build history empty state", type: :reque
     expect(response.body).to include("直近build履歴はまだ記録されていません")
     expect(response.body).to include("これは build 成功、失敗なし、CI green を意味しません")
     expect(response.body).to include("表示状態、Build manifest、主要ページとsource を確認")
-    expect(response.body).not_to include("API仕様ページ専用 build の直近結果だけを read-only に表示します")
+    expect(response.body).to include("API仕様ページ専用 build の直近結果だけを read-only に表示します")
   end
 end

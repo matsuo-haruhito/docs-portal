@@ -86,9 +86,6 @@ h1
         = link_to "絞り込み解除", project_document_catalogs_path(@project), class: "button secondary"
   - else
     section.card.document-catalog-empty-state
-      h2 利用可能な文書カタログはありません
-      p.muted 利用可能な文書カタログはありません。
-      p.muted この案件で現在の利用者に表示できる文書カタログがありません。未作成、権限外、または非公開のカタログはここには表示されません。
-      p.muted 必要な場合は案件トップから関連文書や担当者の案内を確認してください。
+      = render EmptyStateComponent.new(heading: "利用可能な文書カタログはありません。", description: "この案件で現在の利用者に表示できる文書カタログがありません。未作成、権限外、または非公開のカタログはここには表示されません。必要な場合は案件トップから関連文書や担当者の案内を確認してください。")
 
 p = link_to "案件トップへ戻る", project_path(@project)

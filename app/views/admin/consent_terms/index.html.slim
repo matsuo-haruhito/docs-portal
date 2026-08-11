@@ -92,7 +92,4 @@ h1 同意文面管理
     p.actions
       = link_to "条件をリセット", admin_consent_terms_path, class: "button secondary"
 - else
-  .card
-    p.muted まだ同意文面はありません。
-    p.muted 上の「新規登録」でタイトル、版、種別、再同意方針を設定して最初の文面を保存してください。
-    p.muted この画面では、利用中の文面の版や状態をあとから見直せます。
+  = render EmptyStateComponent.new(heading: "まだ同意文面はありません。", description: "上の「新規登録」でタイトル、版、種別、再同意方針を設定して最初の文面を保存してください。この画面では、利用中の文面の版や状態をあとから見直せます。")

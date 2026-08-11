@@ -4,31 +4,54 @@
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - current_list_path = request.fullpath
 - sync_filter_params = { status: @selected_status, enabled: @selected_enabled, q: @selected_query }.compact
-- triage_counts = ["失敗: #{@triage_status_counts.fetch('failed', 0)}件", "実行中: #{@triage_status_counts.fetch('running', 0)}件", "キュー待ち: #{@triage_status_counts.fetch('enqueued', 0)}件"].join(" / ")
 - has_filters = @selected_status.present? || @selected_enabled.present? || @selected_query.present?
 - empty_message = has_filters ? "条件に一致する定期ジョブはありません。" : "登録済みの定期ジョブはありません。定義を同期すると、dispatcher 定義に基づいて登録されます。"
 
-h1 定期ジョブ
-p.muted recurring_job_schedules に登録された定期実行ジョブの状態を確認します。未登録の定義は dispatcher 実行時に自動登録されます。
+.heading-with-help
+  h1 定期ジョブ
+  = render InfoTooltipComponent.new(label: "定期ジョブ", description: "登録済み定期ジョブの定義状態、実行間隔、直近実行結果を確認します。未登録の定義はdispatcher実行時に自動登録されます。")
 = render "admin/nav"
 
 .card
-  = form_with url: admin_recurring_job_schedules_path, method: :get, local: true, class: "filters" do
-    = label_tag :status, "前回状態"
-    = select_tag :status, options_for_select(@schedule_status_options, @selected_status), onchange: "this.form.requestSubmit()"
-    = label_tag :enabled, "有効状態"
-    = select_tag :enabled, options_for_select(@schedule_enabled_options, @selected_enabled), onchange: "this.form.requestSubmit()"
-    = label_tag :q, "検索"
-    = search_field_tag :q, @selected_query, placeholder: "ジョブキー / class / queue / 前回エラー", maxlength: Admin::RecurringJobSchedulesController::SCHEDULE_QUERY_MAX_LENGTH
-    = submit_tag "検索", class: "button secondary"
-    - if has_filters
-      = link_to "絞り込み解除", admin_recurring_job_schedules_path, class: "button secondary"
-  p.actions
+  = form_with url: admin_recurring_job_schedules_path, method: :get, local: true, class: "filters" do |form|
+    .form-grid.form-grid--compact
+      .form-field
+        .heading-with-help
+          = form.label :status, "前回状態"
+          = render InfoTooltipComponent.new(label: "前回状態", description: "前回状態 filter は直近実行結果で絞り込みます。定義の有効/無効は「定義状態」列または有効状態 filter で確認してください。")
+        = form.rfk_select :status,
+          collection: @schedule_status_options,
+          selected: @selected_status,
+          allow_clear: true,
+          wrapper: false
+      label.form-field
+        span 有効状態
+        = form.rfk_select :enabled,
+          collection: @schedule_enabled_options,
+          selected: @selected_enabled,
+          allow_clear: true,
+          wrapper: false
+      .form-field
+        .heading-with-help
+          = form.label :q, "検索"
+          = render InfoTooltipComponent.new(label: "検索", description: "検索はジョブキー / class / queue / 前回エラーの断片を最大#{Admin::RecurringJobSchedulesController::SCHEDULE_QUERY_MAX_LENGTH}文字で指定できます。長い error log は全文ではなく特徴的な一部で探してください。")
+        = form.rfk_search_field :q,
+          value: @selected_query,
+          placeholder: "ジョブキー / class / queue / 前回エラー",
+          wrapper: false,
+          html: { maxlength: Admin::RecurringJobSchedulesController::SCHEDULE_QUERY_MAX_LENGTH }
+    p.actions.form-actions
+      = form.submit "検索", class: "button secondary"
+      - if has_filters
+        = link_to "絞り込み解除", admin_recurring_job_schedules_path, class: "button secondary"
+  .actions.form-actions
     = button_to "定義を同期", sync_definitions_admin_recurring_job_schedules_path, method: :post, params: sync_filter_params, class: "button secondary"
-  p.muted 前回状態 filter は直近実行結果で絞り込みます。定義の有効/無効は「定義状態」列または有効状態 filter で確認してください。
-  p.muted = "検索はジョブキー / class / queue / 前回エラーの断片を最大#{Admin::RecurringJobSchedulesController::SCHEDULE_QUERY_MAX_LENGTH}文字で指定できます。長い error log は全文ではなく特徴的な一部で探してください。"
-  p.muted = "Triage対象（前回状態ベース）: #{triage_counts}"
-  p.muted = "表示中: #{@schedules.size}件"
+    = render HelpTooltipComponent.new(description: "dispatcher定義を登録情報へ同期します。既存ジョブの実行を開始する操作ではありません。")
+  p = "Triage対象（前回状態ベース）: 失敗: #{@triage_status_counts.fetch('failed', 0)}件 / 実行中: #{@triage_status_counts.fetch('running', 0)}件 / キュー待ち: #{@triage_status_counts.fetch('enqueued', 0)}件"
+  p = "表示中: #{@schedules.size}件"
+  = render GuidanceDisclosureComponent.new(title: "検索条件とTriageの読み方") do
+    p 前回状態は直近実行結果、有効状態は定義の有効・無効を表します。
+    p 長いエラーログは全文ではなく、特徴的な一部で検索してください。Triage件数は前回状態を基準にした確認入口です。
 
   - if @schedules.empty? && !has_filters
     .notice
@@ -38,9 +61,10 @@ p.muted recurring_job_schedules に登録された定期実行ジョブの状態
       p.actions
         = button_to "定義を同期", sync_definitions_admin_recurring_job_schedules_path, method: :post, params: sync_filter_params, class: "button secondary"
   - else
-    = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "定期ジョブ一覧の表示設定")
+    = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "定期ジョブ一覧の表示設定", description: "表示列・列順・列幅は利用者ごとに保存されます。検索条件やジョブ定義は変更しません。")
 
-    = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+    = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns, scroll_wrapper: true, wrapper_options: { class: "table-scroll", role: "region", tabindex: 0, aria: { label: "定期ジョブ一覧" } }) do
+      caption.table-caption 定期ジョブ一覧
       thead
         tr
           th data-rails-table-preferences-column-key="job_key" ジョブキー
@@ -70,7 +94,7 @@ p.muted recurring_job_schedules に登録された定期実行ジョブの状態
               br
               code = schedule.job_class
             td data-rails-table-preferences-column-key="status" = schedule.enabled? ? "有効" : "無効"
-            td data-rails-table-preferences-column-key="interval" = distance_of_time_in_words(schedule.interval_seconds)
+            td data-rails-table-preferences-column-key="interval" = recurring_job_interval_label(schedule.interval_seconds)
             td data-rails-table-preferences-column-key="next_run_at" = schedule.next_run_at ? l(schedule.next_run_at) : "-"
             td data-rails-table-preferences-column-key="last_enqueued_at" = schedule.last_enqueued_at ? l(schedule.last_enqueued_at) : "-"
             td data-rails-table-preferences-column-key="last_started_at" = schedule.last_started_at ? l(schedule.last_started_at) : "-"

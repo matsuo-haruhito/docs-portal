@@ -23,15 +23,17 @@ h1 Webhook
   = render "form", webhook_endpoint: @webhook_endpoint
 
 .card
-  h2 Webhook設定
-  p.muted Webhook設定そのものの編集・削除です。最近の送信履歴の詳細確認・再送とは別の操作です。
+  .heading-with-help
+    h2 Webhook設定
+    = render InfoTooltipComponent.new(label: "Webhook設定", description: "名称・送信先・通知イベントを管理します。ここでの絞り込みは設定一覧だけに適用され、送信履歴や再送条件には影響しません。")
   = form_with url: admin_webhook_endpoints_path, method: :get, local: true do |form|
     - if @delivery_status_filter != "all"
       = hidden_field_tag :delivery_status, @delivery_status_filter
     p
-      = label_tag :endpoint_q, "設定検索"
+      span.heading-with-help
+        = label_tag :endpoint_q, "設定検索"
+        = render InfoTooltipComponent.new(label: "設定検索", description: "名称または送信先URLを部分一致で検索します。入力できるのは100文字までです。")
       = text_field_tag :endpoint_q, @webhook_endpoint_q, placeholder: "名称・送信先URL", maxlength: Admin::WebhookEndpointsController::ENDPOINT_Q_MAX_LENGTH
-    p.muted 名称・送信先URLを検索します。100文字まで。
     p
       = label_tag :endpoint_event, "イベント"
       = select_tag :endpoint_event, options_for_select([["すべてのイベント", "all"]] + WebhookEndpoint::EVENT_TYPES.map { |event_type| [webhook_event_type_label(event_type), event_type] }, @webhook_endpoint_event_filter)
@@ -47,8 +49,6 @@ h1 Webhook
         = link_to "条件をリセット", admin_webhook_endpoints_path(endpoint_reset_params), class: "button secondary"
   - if @webhook_endpoints_any
     p.muted = "表示範囲: Webhook設定 #{@webhook_endpoints_total_count}件中#{endpoint_display_count}件を表示しています。"
-    - if @webhook_endpoint_filters_active
-      p.muted 設定検索・イベント・状態 filter は Webhook 設定一覧だけに適用されます。最近の送信履歴検索や再送条件は変更しません。
     - if @webhook_endpoints.any?
       = render ColumnSettingsComponent.new(table_key: endpoint_table_key, settings: endpoint_table_settings, columns: endpoint_table_columns, title: "Webhook設定一覧の表示設定")
       - if @webhook_endpoints_total_pages > 1

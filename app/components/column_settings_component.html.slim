@@ -1,7 +1,16 @@
-.column-settings
-  details.column-settings__details
-    summary.column-settings__summary title="表示する列、表示順、列幅を設定します"
+.column-settings data-controller="column-settings-dialog"
+  .column-settings__toolbar
+    - if @description
+      = render HelpTooltipComponent.new(description: @description)
+    button.column-settings__summary type="button" data-column-settings-dialog-target="trigger" data-action="column-settings-dialog#open" aria-haspopup="dialog" aria-controls=@dialog_id
       i.bi.bi-gear.me-1 aria-hidden="true"
       span 列設定
-    .column-settings__panel role="region" aria-label=@title
-      = helpers.table_preferences_editor(table_key: @table_key, settings: @settings, columns: @columns, title: @title)
+  dialog.column-settings__dialog id=@dialog_id aria-labelledby=@title_id data-column-settings-dialog-target="dialog" data-action="click->column-settings-dialog#closeOnBackdrop close->column-settings-dialog#restoreFocus"
+    .column-settings__dialog-surface
+      .column-settings__dialog-header
+        h2 id=@title_id = @title
+        button.button.secondary type="button" data-action="column-settings-dialog#close"
+          i.bi.bi-x-lg.me-1 aria-hidden="true"
+          | 閉じる
+      .column-settings__panel
+        = helpers.table_preferences_editor(table_key: @table_key, settings: @settings, columns: @columns, title: @title)

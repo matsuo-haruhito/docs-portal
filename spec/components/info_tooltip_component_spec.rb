@@ -47,8 +47,8 @@ RSpec.describe InfoTooltipComponent, type: :component do
       expect(page).to have_css("span##{tooltip_id}[role='tooltip']")
     end
 
-    it "renders trigger icon with aria-hidden" do
-      expect(page).to have_css('span.info-tooltip__trigger[aria-hidden="true"]', text: "ℹ️")
+    it "renders a Bootstrap icon inside the aria-hidden trigger" do
+      expect(page).to have_css('span.info-tooltip__trigger[aria-hidden="true"] i.bi.bi-info-circle')
     end
 
     it "renders tooltip content with description" do

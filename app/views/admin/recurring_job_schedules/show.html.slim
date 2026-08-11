@@ -24,7 +24,7 @@ h1 定期ジョブ詳細
     dt 重複実行
     dd = @schedule.allow_overlap? ? "許可" : "禁止"
     dt 実行間隔
-    dd = distance_of_time_in_words(@schedule.interval_seconds)
+    dd = recurring_job_interval_label(@schedule.interval_seconds)
     dt 次回実行
     dd = @schedule.next_run_at ? l(@schedule.next_run_at) : "-"
     dt 即時実行要求

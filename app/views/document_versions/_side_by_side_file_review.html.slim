@@ -10,9 +10,9 @@
 
 .card.side-by-side-file-review#side-by-side-file-review
   .markdown-workspace__header
-    div
+    .heading-with-help
       h2 左右確認ビュー
-      p.muted PDFやOfficeなどテキストdiffが取りにくいファイルは、前版と今回版を左右に並べて見比べられます。ブラウザ内表示できない形式はダウンロードして確認してください。
+      = render InfoTooltipComponent.new(label: "左右確認ビュー", description: "PDFやOfficeなどテキストdiffが取りにくいファイルを前版と今回版で比較します。ブラウザ内表示できない形式はダウンロードして確認してください。")
     .actions
       - if @compare_version
         = link_to "比較対象版を開く", document_version_path(@compare_version), class: "button secondary"

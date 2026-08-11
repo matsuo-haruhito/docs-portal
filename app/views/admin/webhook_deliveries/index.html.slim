@@ -117,7 +117,6 @@ p.actions
     p.actions
       = link_to "条件をクリア", admin_webhook_deliveries_path, class: "button secondary"
   - else
-    p.muted まだWebhook送信履歴はありません。
-    p.muted Webhook設定を登録し、通知対象イベントが発生すると送信履歴がここに表示されます。
-    p.actions
-      = link_to "Webhook設定へ戻る", admin_webhook_endpoints_path, class: "button secondary"
+    = render EmptyStateComponent.new(heading: "まだWebhook送信履歴はありません。", description: "Webhook設定を登録し、通知対象イベントが発生すると送信履歴がここに表示されます。") do |component|
+      - component.with_action do
+        = link_to "Webhook設定へ戻る", admin_webhook_endpoints_path, class: "button secondary"

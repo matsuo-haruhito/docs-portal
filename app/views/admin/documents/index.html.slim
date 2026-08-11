@@ -22,10 +22,15 @@ h1 文書マスタ
 
   = form_with url: admin_documents_path, method: :get, local: true, class: "document-filter-form" do |form|
     .form-grid.form-grid--compact
-      label.form-field
-        span キーワード
-        = form.search_field :q, value: @filters[:q], placeholder: "案件名・案件コード・文書名・URL識別子", maxlength: Admin::DocumentsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH
-        span.muted = "案件名・案件コード・文書名・URL識別子の断片で検索できます。最大#{Admin::DocumentsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH}文字。"
+      .form-field
+        .heading-with-help
+          = form.label :q, "キーワード"
+          = render InfoTooltipComponent.new(label: "キーワード", description: "案件名・案件コード・文書名・URL識別子の断片を最大#{Admin::DocumentsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH}文字で検索します。")
+        = form.rfk_search_field :q,
+          value: @filters[:q],
+          placeholder: "案件名・案件コード・文書名・URL識別子",
+          wrapper: false,
+          html: { maxlength: Admin::DocumentsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH }
 
       label.form-field
         span カテゴリ
@@ -86,12 +91,14 @@ h1 文書マスタ
 
   .actions.form-actions
     - if @bulk_edit_candidate_count.zero?
-      span.muted 文書マスタの検索結果が0件のため、一括編集候補へは進めません。条件を見直してから再度検索してください。
+      span.muted 一括編集候補: 0件
+      = render HelpTooltipComponent.new(description: "検索条件を見直して対象文書を表示してから、一括編集候補へ進んでください。")
     - elsif @bulk_edit_candidate_count > @bulk_edit_candidate_limit
-      span.muted = "検索結果が#{@bulk_edit_candidate_count}件のため、一括編集候補へ進む前に#{@bulk_edit_candidate_limit}件以下まで絞り込んでください。"
+      span = "一括編集候補: #{@bulk_edit_candidate_count}件"
+      = render HelpTooltipComponent.new(description: "一括編集へ進むには、検索条件で#{@bulk_edit_candidate_limit}件以下まで絞り込んでください。")
     - else
       = link_to "一括編集候補として開く", new_admin_bulk_edit_dry_run_path(source: "admin_documents", candidate_document_ids: @bulk_edit_candidate_ids, source_filter_summaries: active_filter_summaries), class: "button secondary"
-      span.muted = "現在の検索結果#{@bulk_edit_candidate_count}件を、文書一括編集dry-runの候補として引き継ぎます。"
+      = render HelpTooltipComponent.new(description: "現在の検索結果#{@bulk_edit_candidate_count}件を文書一括編集dry-runへ引き継ぎます。この操作だけでは文書を変更しません。")
 
   - if @bulk_edit_candidate_count.positive? && @bulk_edit_candidate_count <= @bulk_edit_candidate_limit
     .actions.form-actions
@@ -117,10 +124,10 @@ h1 文書マスタ
     | table[data-rails-table-preferences-table-key-value="admin_documents"] { display: none; }
 
 .card hidden=(documents_empty ? true : nil)
-  = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定")
-  p.muted 文書マスタ一覧の表示設定と検索条件は、この一覧の列表示・列幅・表示件数にだけ適用されます。文書詳細の左ペインにある文書ツリーの「表示中」や展開状態とは別の文脈です。
+  = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定", description: "文書マスタ一覧の表示設定と検索条件は、この一覧の列表示・列幅・表示件数にだけ適用されます。文書詳細の左ペインにある文書ツリーの「表示中」や展開状態とは別の文脈です。")
 
-= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns, scroll_wrapper: true, wrapper_options: { class: "table-scroll", role: "region", tabindex: 0, aria: { label: "文書マスタ一覧" } }) do
+  caption.table-caption 文書マスタ一覧
   thead
     tr
       th data-rails-table-preferences-column-key="project" 案件
