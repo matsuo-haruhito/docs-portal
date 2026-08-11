@@ -50,19 +50,19 @@ h1 Webhook
     - if @webhook_endpoint_filters_active
       p.muted 設定検索・イベント・状態 filter は Webhook 設定一覧だけに適用されます。最近の送信履歴検索や再送条件は変更しません。
     - if @webhook_endpoints.any?
-      = table_preferences_editor(table_key: endpoint_table_key, settings: endpoint_table_settings, columns: endpoint_table_columns, title: "Webhook設定一覧の表示設定")
+      = render ColumnSettingsComponent.new(table_key: endpoint_table_key, settings: endpoint_table_settings, columns: endpoint_table_columns, title: "Webhook設定一覧の表示設定")
       - if @webhook_endpoints_total_pages > 1
         p.muted
           | ページ:
           - if @webhook_endpoints_page > 1
-            | 
+            |
             - previous_endpoint_page = @webhook_endpoints_page - 1
             - previous_endpoint_page_label = "Webhook設定一覧の#{previous_endpoint_page}ページ目へ（現在の設定検索・イベント・状態条件を保持）"
             = link_to "前へ", admin_webhook_endpoints_path(endpoint_filter_params.merge(endpoint_page: previous_endpoint_page)), title: previous_endpoint_page_label, aria: { label: previous_endpoint_page_label }
-          | 
+          |
           span.badge = "#{@webhook_endpoints_page} / #{@webhook_endpoints_total_pages}"
           - if @webhook_endpoints_page < @webhook_endpoints_total_pages
-            | 
+            |
             - next_endpoint_page = @webhook_endpoints_page + 1
             - next_endpoint_page_label = "Webhook設定一覧の#{next_endpoint_page}ページ目へ（現在の設定検索・イベント・状態条件を保持）"
             = link_to "次へ", admin_webhook_endpoints_path(endpoint_filter_params.merge(endpoint_page: next_endpoint_page)), title: next_endpoint_page_label, aria: { label: next_endpoint_page_label }
@@ -73,8 +73,7 @@ h1 Webhook
         p.actions
           = link_to "Webhook設定の条件をリセット", admin_webhook_endpoints_path(endpoint_reset_params), class: "button secondary"
   - else
-    p.muted まだWebhook設定は登録されていません。
-    p.muted 上の「新規登録」で名称、送信先URL、通知対象イベントを設定して最初のWebhookを保存してください。
+    = render EmptyStateComponent.new(heading: "Webhook設定が未登録です", description: "上の「新規登録」で名称、送信先URL、通知対象イベントを設定して最初のWebhookを保存してください。")
 
 - if @webhook_endpoints.any?
   = table_preferences_table_tag(table_key: endpoint_table_key, settings: endpoint_table_settings, columns: endpoint_table_columns) do
@@ -94,8 +93,10 @@ h1 Webhook
             - endpoint.normalized_event_types.each do |event_type|
               span.badge = webhook_event_type_label(event_type)
           td data-rails-table-preferences-column-key="active"
-            span.badge = webhook_endpoint_status_label(endpoint)
-            - unless endpoint.active?
+            - if endpoint.active?
+              = render StatusBadgeComponent.new(status: "active", label: "有効", tooltip: "このWebhook設定は有効です。対象イベント発生時に送信されます。")
+            - else
+              = render StatusBadgeComponent.new(status: "inactive", label: "停止", tooltip: "このWebhook設定は停止中です。通常送信・手動再送の対象外です。")
               br
               span.muted 通常送信・手動再送の対象外
           td.actions data-rails-table-preferences-column-key="actions"
@@ -115,7 +116,7 @@ h1 Webhook
     p.muted
       | 表示:
       - webhook_delivery_status_filter_options.each do |value, label|
-        | 
+        |
         - if @delivery_status_filter == value
           span.badge = label
         - else
@@ -128,7 +129,7 @@ h1 Webhook
         = button_to "表示中の失敗Webhookをまとめて再送", retry_failed_admin_webhook_deliveries_path(delivery_status: @delivery_status_filter), method: :post, class: "button secondary", form: { data: { turbo_confirm: "表示中の失敗Webhookのうち再送可能な#{bulk_retryable_deliveries.size}件をまとめて再送します。受信先側の重複処理に注意してください。" } }
       - elsif @recent_deliveries.any?
         p.muted 表示中の失敗履歴に、再送可能なWebhook送信履歴はありません。停止中のWebhook設定はまとめて再送の対象外です。
-    = table_preferences_editor(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns, title: "Webhook送信履歴の表示設定")
+    = render ColumnSettingsComponent.new(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns, title: "Webhook送信履歴の表示設定")
     - if @recent_deliveries.empty?
       p.muted = "#{webhook_delivery_status_filter_label(@delivery_status_filter)}の送信履歴はありません。表示を「すべて」に戻すと直近の送信履歴を確認できます。"
       - if @delivery_status_filter != "all"
@@ -137,8 +138,7 @@ h1 Webhook
     - else
       p.muted = "表示範囲: #{webhook_delivery_status_filter_label(@delivery_status_filter)} #{recent_deliveries_total_count}件中#{recent_deliveries_display_count}件を表示しています。#{recent_deliveries_total_count > recent_deliveries_limit ? "50件より前の履歴は、送信履歴検索でWebhook設定・イベント・ステータス・作成日を指定して確認できます。" : ""}"
   - else
-    p.muted まだ送信履歴はありません。
-    p.muted Webhookを保存して通知対象イベントが発生すると、成功/失敗やHTTPステータスをここで確認できます。
+    = render EmptyStateComponent.new(heading: "送信履歴がありません", description: "Webhookを保存して通知対象イベントが発生すると、成功/失敗やHTTPステータスをここで確認できます。")
 
 - if @recent_deliveries.any?
   = table_preferences_table_tag(table_key: delivery_table_key, settings: delivery_table_settings, columns: delivery_table_columns) do

@@ -35,9 +35,14 @@ header
 
 /--- 4. リスト部（Turbo Frame） ---
 = turbo_frame_tag "xxx-list", target: "_top" do
-  = table_preferences_editor(table_key: table_key, columns: columns)
+  = render ColumnSettingsComponent.new(
+    table_key: table_key,
+    columns: columns,
+    settings: table_settings,
+    title: "一覧の表示設定"
+  )
 
-  = table_preferences_table_tag(table_key: table_key, columns: columns, settings: ...) do
+  = table_preferences_table_tag(table_key: table_key, columns: columns, settings: table_settings) do
     thead
       tr
         - columns.each do |col|
@@ -53,6 +58,14 @@ header
     / pagy ページネーション
     = link_to "CSV", xxx_path(request.query_parameters.merge(format: :csv))
 ```
+
+### 列設定の開閉
+
+- `table_preferences_editor` 自体には `open` / `collapse` オプションはない
+- 一覧Viewからeditorを直接描画せず、host appの `ColumnSettingsComponent` を使う
+- Componentはnative `<details>`で初期closedにし、editorのDOMは内部に保持して保存対象から外さない
+- editorとtableには同じ `table_key`、`columns`、`settings` を渡す
+- Bootstrap JSや独自の手書き初期化は追加しない
 
 ---
 

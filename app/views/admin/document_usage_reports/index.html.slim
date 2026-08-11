@@ -48,10 +48,7 @@ section.card
       - if show_document_usage_clear_link
         = link_to "すべての条件をクリア", admin_document_usage_reports_path
     - if @ignored_date_filters.present?
-      p.muted
-        | 無効な日付条件は集計から除外しました: 
-        strong = document_usage_report_ignored_date_filter_label(@ignored_date_filters)
-        | 。有効な日付条件だけで集計しています。
+      p.muted = "無効な日付条件は集計から除外しました: #{document_usage_report_ignored_date_filter_label(@ignored_date_filters)}。有効な日付条件だけで集計しています。"
 
 - if @report_hash
   - csv_params = request.query_parameters.merge("format" => :csv)
@@ -107,9 +104,9 @@ section.card
       strong = " #{@report_hash.dig(:summary, :total_read_confirmations)}"
     p
       strong 調査導線:
-      |  
+      |
       = link_to "案件の監査ログへ", admin_access_logs_path({ project_id: @selected_project.id }.merge(audit_log_period_params)), data: { turbo_frame: "_top" }
-      |  / 
+      |  /
       = link_to "案件の既読確認内訳へ", admin_read_confirmations_path(project_id: @selected_project.id), data: { turbo_frame: "_top" }
     div
       strong 出力:
@@ -154,7 +151,7 @@ section.card
 
   - if @report_hash[:documents].any?
     section.card
-      = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書利用一覧の表示設定")
+      = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書利用一覧の表示設定")
       p.muted
         | 利用列のラベルは現在の集計期間に対する補助表示です。未利用は期間内の閲覧・ダウンロード・既読確認がない文書、既読のみは閲覧・ダウンロードなしで既読確認だけがある文書を示します。各行のリンクは、その文書で確認できる実績がある場合だけ表示されます。
 

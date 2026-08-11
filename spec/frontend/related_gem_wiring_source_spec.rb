@@ -40,7 +40,7 @@ RSpec.describe "Related gem wiring source" do
       aggregate_failures do
         expect(projects_index).to include("- table_key = :admin_projects")
         expect(projects_index).to include("project_table_columns")
-        expect(projects_index).to include("table_preferences_editor(")
+        expect(projects_index).to include("render ColumnSettingsComponent.new(")
         expect(projects_index).to include("table_preferences_table_tag(")
         expect(projects_index).to include('data-rails-table-preferences-column-key="code"')
         expect(projects_index).to include('data-rails-table-preferences-column-key="actions"')
@@ -51,7 +51,7 @@ RSpec.describe "Related gem wiring source" do
 
         expect(users_index).to include("- table_key = :admin_users")
         expect(users_index).to include("admin_user_table_columns")
-        expect(users_index).to include("table_preferences_editor(")
+        expect(users_index).to include("render ColumnSettingsComponent.new(")
         expect(users_index).to include("table_preferences_table_tag(")
         expect(users_index).to include('data-rails-table-preferences-column-key="email_address"')
         expect(users_index).to include('data-rails-table-preferences-column-key="actions"')

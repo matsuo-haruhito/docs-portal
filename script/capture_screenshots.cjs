@@ -19,6 +19,23 @@ const SCREENSHOT_HEIGHT = parseInt(process.env.SCREENSHOT_HEIGHT || "1600", 10);
 const ROUTES_FILE = process.env.ROUTES_FILE || "config/routes.rb";
 const TIMEOUT = 120000;
 
+// 親リソースのIDなしではアクセスできないトップレベル定義（ネストルート側で撮影する）
+// これらは公開側で projects/:code 配下にネストされているため、トップレベルでは 404 になる
+const SKIP_TOPLEVEL_RESOURCES = new Set([
+  "document_sets",
+  "document_catalogs",
+  "document_uploads",
+  "document_review_comments",
+  "document_versions",
+  "document_files",
+  "document_zips",
+]);
+
+// new アクションがパラメータ必須のため撮影対象外にするリソース
+const SKIP_NEW_ACTION_RESOURCES = new Set([
+  "consents",
+]);
+
 // ---------------------------------------------------------------------------
 // Route Discovery
 // ---------------------------------------------------------------------------
@@ -50,9 +67,12 @@ function discoverRoutes(routesFile) {
   const routes = [];
   const allActions = ["index", "show", "new", "edit", "create", "update", "destroy"];
 
-  // Use indentation to track namespace scope
+  // Use indentation to track namespace scope and resource nesting
   // namespaceStack entries: { name, indent }
+  // nestingDepth tracks how deep we are inside resource do...end blocks
   const namespaceStack = [];
+  let nestingDepth = 0;
+  const nestingIndents = [];
 
   for (let i = 0; i < lines.length; i++) {
     const raw = lines[i];
@@ -69,22 +89,44 @@ function discoverRoutes(routesFile) {
       continue;
     }
 
-    // Track namespace close via indentation-matched "end"
-    if (line === "end" && namespaceStack.length > 0) {
-      const top = namespaceStack[namespaceStack.length - 1];
-      if (indent === top.indent) {
-        namespaceStack.pop();
+    // Track "end" — close namespace or resource nesting
+    if (line === "end") {
+      if (namespaceStack.length > 0) {
+        const top = namespaceStack[namespaceStack.length - 1];
+        if (indent === top.indent) {
+          namespaceStack.pop();
+          continue;
+        }
+      }
+      if (nestingDepth > 0 && nestingIndents.length > 0) {
+        const topNest = nestingIndents[nestingIndents.length - 1];
+        if (indent === topNest) {
+          nestingDepth--;
+          nestingIndents.pop();
+        }
       }
       continue;
     }
 
     // Match resources / resource
     const resourceMatch = line.match(/^(resources?)\s+:(\w+)(?:,\s*(.+?))?(?:\s+do)?$/);
-    if (!resourceMatch) continue;
+    if (!resourceMatch) {
+      continue;
+    }
 
+    const hasDoBlock = line.endsWith(" do");
     const isSingular = resourceMatch[1] === "resource";
     const resourceName = resourceMatch[2];
     const options = resourceMatch[3] || "";
+
+    // Skip resources nested inside other resources (they need parent ID)
+    if (nestingDepth > 0) {
+      if (hasDoBlock) {
+        nestingDepth++;
+        nestingIndents.push(indent);
+      }
+      continue;
+    }
 
     // Parse actions
     let actions = isSingular
@@ -129,6 +171,12 @@ function discoverRoutes(routesFile) {
       namespace,
       singular: isSingular,
     });
+
+    // Track resource do...end block nesting
+    if (hasDoBlock) {
+      nestingDepth++;
+      nestingIndents.push(indent);
+    }
   }
 
   return routes;
@@ -162,21 +210,26 @@ function annotateRoutesWithViews(routes) {
  * @returns {Promise<boolean>}
  */
 async function navigateAndCapture(page, url, screenshotName) {
-  try {
-    const response = await page.goto(url, { waitUntil: "networkidle", timeout: TIMEOUT });
-    if (!response || response.status() >= 400) {
-      console.log(`  ⚠ Skipped ${screenshotName} (HTTP ${response ? response.status() : "no response"})`);
-      return false;
-    }
-    await page.waitForTimeout(500);
-    const filePath = path.join(SCREENSHOT_DIR, `${screenshotName}.png`);
-    await page.screenshot({ path: filePath, fullPage: true });
-    console.log(`  ✓ ${screenshotName}`);
-    return true;
-  } catch (err) {
-    console.log(`  ⚠ Skipped ${screenshotName} (${err.message.slice(0, 80)})`);
-    return false;
+  const response = await page.goto(url, { waitUntil: "networkidle", timeout: TIMEOUT });
+  if (!response) {
+    throw new Error(`${screenshotName}: no HTTP response from ${url}`);
   }
+  if (response.status() >= 400) {
+    throw new Error(`${screenshotName}: HTTP ${response.status()} from ${url}`);
+  }
+  await page.waitForTimeout(500);
+
+  // PNG スクリーンショット
+  const pngPath = path.join(SCREENSHOT_DIR, `${screenshotName}.png`);
+  await page.screenshot({ path: pngPath, fullPage: true });
+
+  // HTML スナップショット
+  const htmlPath = path.join(SCREENSHOT_DIR, `${screenshotName}.html`);
+  const htmlContent = await page.content();
+  fs.writeFileSync(htmlPath, htmlContent, "utf-8");
+
+  console.log(`  ✓ ${screenshotName} (.png + .html)`);
+  return true;
 }
 
 /**
@@ -212,6 +265,10 @@ async function captureIndex(page, route) {
  * @returns {Promise<boolean>}
  */
 async function captureNew(page, route) {
+  if (SKIP_NEW_ACTION_RESOURCES.has(route.name)) {
+    console.log(`  — ${route.name} new skipped (requires parameters)`);
+    return true;
+  }
   const url = `${BASE_URL}${route.path}/new`;
   const name = route.controller.replace(/\//g, "_") + "_new";
   return navigateAndCapture(page, url, name);
@@ -334,7 +391,7 @@ async function main() {
     }
 
     // Capture public routes
-    const publicRoutes = routesWithViews.filter((r) => !r.namespace);
+    const publicRoutes = routesWithViews.filter((r) => !r.namespace && !SKIP_TOPLEVEL_RESOURCES.has(r.name));
     if (publicRoutes.length > 0) {
       console.log(`Capturing public routes (${publicRoutes.length})...`);
 

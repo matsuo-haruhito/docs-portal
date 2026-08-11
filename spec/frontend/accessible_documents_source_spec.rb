@@ -8,8 +8,9 @@ RSpec.describe "accessible_documents/index source" do
     expect(view_source).to include("table_key = :accessible_documents")
     expect(view_source).to include("table_columns = accessible_document_table_columns")
     expect(view_source).to include("rails_table_preference_settings(table_key: table_key)")
-    expect(view_source).to include("table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: \"閲覧可能文書一覧の表示設定\")")
+    expect(view_source).to include("render ColumnSettingsComponent.new(")
     expect(view_source).to include("table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns)")
+    expect(view_source).not_to include("table_preferences_editor(")
   end
 
   it "keeps the keyword placeholder short and moves searchable targets into visible help" do
@@ -28,11 +29,11 @@ RSpec.describe "accessible_documents/index source" do
   end
 
   it "defines matching column metadata without changing filters or pagination" do
-    expect(helper_source).to include("table_preferences_column(:project, label: \"案件\", default_width: 180, pinned: true, overflow: :ellipsis)")
-    expect(helper_source).to include("table_preferences_column(:document, label: \"文書名\", default_width: 240, pinned: true, overflow: :ellipsis)")
-    expect(helper_source).to include("table_preferences_column(:match_reason, label: \"ヒット理由\", default_width: 240, overflow: :ellipsis)")
-    expect(helper_source).to include("table_preferences_column(:tags, label: \"タグ\", default_width: 220, overflow: :ellipsis)")
-    expect(helper_source).to include("table_preferences_column(:updated_at, label: \"最終更新\", default_width: 160, sortable: true)")
+    expect(helper_source).to include("table_preferences_column(:project, label: \"案件\", default_visible: true, pinned: true, overflow: :ellipsis)")
+    expect(helper_source).to include("table_preferences_column(:document, label: \"文書名\", default_visible: true, pinned: true, overflow: :ellipsis)")
+    expect(helper_source).to include("table_preferences_column(:match_reason, label: \"ヒット理由\", default_visible: true, overflow: :ellipsis)")
+    expect(helper_source).to include("table_preferences_column(:tags, label: \"タグ\", default_visible: true, overflow: :ellipsis)")
+    expect(helper_source).to include("table_preferences_column(:updated_at, label: \"最終更新\", default_visible: true, default_width: 130, sortable: true)")
     expect(view_source).to include("form_with url: documents_path, method: :get")
     expect(view_source).to include("pagination_params = @filters.to_h.symbolize_keys.except(:page).compact_blank")
     expect(view_source).to include("documents_path(pagination_params.merge(page: @current_page + 1))")

@@ -29,7 +29,7 @@ class Admin::WebhookEndpointsController < Admin::BaseController
     @webhook_endpoint = WebhookEndpoint.new(webhook_endpoint_params)
 
     if @webhook_endpoint.save
-      redirect_to admin_webhook_endpoints_path, notice: "Webhook設定を登録しました。"
+      redirect_to admin_webhook_endpoints_path, notice: "Webhook設定「#{@webhook_endpoint.name}」を登録しました。対象イベント発生時に送信が始まります。"
     else
       @delivery_status_filter = delivery_status_filter
       prepare_webhook_endpoint_list
@@ -49,7 +49,7 @@ class Admin::WebhookEndpointsController < Admin::BaseController
 
   def update
     if @webhook_endpoint.update(webhook_endpoint_params)
-      redirect_to admin_webhook_endpoints_path, notice: "Webhook設定を更新しました。"
+      redirect_to admin_webhook_endpoints_path, notice: "Webhook設定「#{@webhook_endpoint.name}」を更新しました。"
     else
       render :edit, status: :unprocessable_entity
     end
@@ -57,7 +57,7 @@ class Admin::WebhookEndpointsController < Admin::BaseController
 
   def destroy
     @webhook_endpoint.destroy!
-    redirect_to admin_webhook_endpoints_path, notice: "Webhook設定を削除しました。"
+    redirect_to admin_webhook_endpoints_path, notice: "Webhook設定「#{@webhook_endpoint.name}」を削除しました。今後このURLへの送信は行われません。"
   end
 
   private

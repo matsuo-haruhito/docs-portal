@@ -32,7 +32,10 @@ RSpec.describe "Admin company destructive cue", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("編集")
     expect(delete_button_labels).to include("削除（影響確認）")
-    expect(company_status_cells).to include("有効", "無効")
+    expect(company_status_cells).to include(
+      a_string_including("有効"),
+      a_string_including("無効")
+    )
     expect(delete_confirm_messages).to include(
       "会社「#{active_company.display_name}」を完全に削除しますか？無効化ではありません。所属ユーザーや文書権限への影響を確認してください。",
       "会社「#{inactive_company.display_name}」を完全に削除しますか？無効化ではありません。所属ユーザーや文書権限への影響を確認してください。"

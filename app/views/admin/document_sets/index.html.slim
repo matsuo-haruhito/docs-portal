@@ -39,7 +39,7 @@ h1 文書セット
 
   - if active_filter_labels.any?
     p.muted
-      | 適用中: 
+      | 適用中:
       - active_filter_labels.each do |label|
         span.badge = label
     p.muted 表示設定は列の表示・幅を調整し、絞り込みは一覧に出す文書セットを切り替えます。
@@ -47,7 +47,7 @@ h1 文書セット
     p.muted 案件名・案件コード・文書セット名、種別、公開範囲で一覧に出す文書セットを絞り込めます。表示設定は列の表示・幅を調整します。
 
   p.muted
-    | 検索結果: 
+    | 検索結果:
     = @document_sets_filtered_count
     | 件
   - if @document_sets_filtered_count.positive?
@@ -55,7 +55,7 @@ h1 文書セット
 
 - if @document_sets.any?
   .card
-    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書セット一覧の表示設定")
+    = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書セット一覧の表示設定")
 
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
@@ -92,11 +92,8 @@ h1 文書セット
 - else
   .card
     - if admin_document_set_filters_active?(@filters)
-      .document-set-filter-empty-state
-        p.muted 条件に一致する文書セットはありません。
-        p.muted CSV出力も現在の絞り込み条件に従います。このまま出力すると0件の結果になります。
-        p.actions.form-actions.muted
+      = render EmptyStateComponent.new(heading: "条件に一致する文書セットがありません", description: "CSV出力も現在の絞り込み条件に従います。このまま出力すると0件の結果になります。") do |component|
+        - component.with_action do
           = link_to "条件をクリア", admin_document_sets_path, class: "button secondary"
     - else
-      p.muted まだ文書セットは登録されていません。
-      p.muted 上の「新規登録」で案件と名称を設定して保存すると、対象文書を選べる文書セットを作成できます。
+      = render EmptyStateComponent.new(heading: "文書セットが未登録です", description: "上の「新規登録」で案件と名称を設定して保存すると、対象文書を選べる文書セットを作成できます。")

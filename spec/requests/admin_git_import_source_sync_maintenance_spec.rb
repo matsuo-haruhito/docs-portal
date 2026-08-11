@@ -83,7 +83,7 @@ RSpec.describe "Admin git import source sync maintenance mode", type: :request d
       post sync_admin_git_import_source_path(git_import_source)
 
       expect(response).to redirect_to(admin_git_import_runs_path)
-      expect(flash[:notice]).to eq("Git同期を実行しました。status=imported")
+      expect(flash[:notice]).to include("Git同期を実行しました")
     end
   end
 

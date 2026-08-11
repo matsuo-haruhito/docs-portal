@@ -128,7 +128,7 @@ h1 Microsoft Graph接続
           = link_to "次の#{connection_limit}件", admin_microsoft_graph_connections_path(current_filter_params.merge(page: connection_page + 1)), class: "button secondary"
 
   .card
-    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "Microsoft Graph接続一覧の表示設定")
+    = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "Microsoft Graph接続一覧の表示設定")
 
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead

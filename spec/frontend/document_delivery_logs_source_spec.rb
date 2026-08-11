@@ -8,7 +8,7 @@ RSpec.describe "document delivery logs source" do
     aggregate_failures do
       expect(index_source).to include("table_key = :document_delivery_logs")
       expect(index_source).to include("document_delivery_log_table_columns")
-      expect(index_source).to include("table_preferences_editor")
+      expect(index_source).to include("render ColumnSettingsComponent.new")
       expect(index_source).to include("table_preferences_table_tag")
       expect(index_source).to include('title: "送付履歴一覧の表示設定"')
       expect(index_source).to include("detail_params = { return_to: current_delivery_logs_path }.merge(current_date_filter_params)")

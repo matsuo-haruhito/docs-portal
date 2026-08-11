@@ -9,7 +9,7 @@ RSpec.describe "admin generated file runs source" do
     aggregate_failures do
       expect(index_source).to include("table_key = :admin_generated_file_runs")
       expect(index_source).to include("generated_file_run_table_columns")
-      expect(index_source).to include("table_preferences_editor")
+      expect(index_source).to include("render ColumnSettingsComponent.new")
       expect(index_source).to include("table_preferences_table_tag")
       expect(index_source).to include('title: "生成ファイル実行履歴一覧の表示設定"')
       expect(index_source).to include("retry_failed_admin_generated_file_runs_path")

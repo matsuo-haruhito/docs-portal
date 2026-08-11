@@ -125,6 +125,7 @@ class DocusaurusSiteRenderer
     rewrite_url_attributes(document, "link", "href", absolute_path:)
     rewrite_url_attributes(document, "script", "src", absolute_path:)
     rewrite_url_attributes(document, "img", "src", absolute_path:)
+    strip_docusaurus_toc!(document)
     strip_embedded_docusaurus_chrome!(document) if @embedded
     inject_embedded_route_path!(document, site_path) if @embedded
     annotate_document_tables!(document, site_path)
@@ -194,6 +195,10 @@ class DocusaurusSiteRenderer
     node["class"] = (classes << class_name).join(" ")
   end
 
+  def strip_docusaurus_toc!(document)
+    document.css(docusaurus_toc_selectors.join(", ")).each(&:remove)
+  end
+
   def strip_embedded_docusaurus_chrome!(document)
     document.css(embedded_chrome_selectors.join(", ")).each(&:remove)
 
@@ -206,6 +211,16 @@ class DocusaurusSiteRenderer
     end
   end
 
+  def docusaurus_toc_selectors
+    [
+      "aside.theme-doc-toc-desktop",
+      ".theme-doc-toc-desktop",
+      ".theme-doc-toc-mobile",
+      ".table-of-contents",
+      "details[class*='collapsibleToc']"
+    ]
+  end
+
   def embedded_chrome_selectors
     [
       "nav.navbar",
@@ -215,11 +230,6 @@ class DocusaurusSiteRenderer
       ".theme-doc-breadcrumbs",
       ".theme-doc-sidebar-container",
       "aside.theme-doc-sidebar-container",
-      "aside.theme-doc-toc-desktop",
-      ".theme-doc-toc-desktop",
-      ".theme-doc-toc-mobile",
-      ".table-of-contents",
-      "details[class*='collapsibleToc']",
       ".theme-doc-footer",
       ".theme-edit-this-page",
       ".pagination-nav",

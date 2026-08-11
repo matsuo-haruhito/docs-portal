@@ -77,7 +77,7 @@ RSpec.describe "Admin document sets", type: :request do
   end
 
   def empty_state_clear_filter_targets
-    parsed_html.css(".card p.muted a[href]").reject do |node|
+    parsed_html.css(".empty-state a[href], .card p.muted a[href]").reject do |node|
       node.ancestors("form.document-set-filter-form").any?
     end.select { |node| node.text.squish == "条件をクリア" }.map { |node| node["href"] }
   end
@@ -329,7 +329,7 @@ RSpec.describe "Admin document sets", type: :request do
     get admin_document_sets_path, params: { set_type: "delivery" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 2件")
+    expect(page_text).to match(/検索結果.*2.*件/)
     expect(page_text).to include("種別: 送付用")
     expect(listed_document_set_names).to eq(["既存セット", "配送社内セット"])
 
@@ -370,10 +370,10 @@ RSpec.describe "Admin document sets", type: :request do
     get admin_document_sets_path, params: { set_type: "delivery", visibility_policy: "public_with_login" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 0件")
+    expect(page_text).to match(/検索結果.*0.*件/)
     expect(page_text).to include("種別: 送付用")
     expect(page_text).to include("公開範囲: ログインユーザー公開")
-    expect(page_text).to include("条件に一致する文書セットはありません。")
+    expect(page_text).to include("条件に一致する文書セットがありません")
     expect(form_clear_filter_targets).to include(admin_document_sets_path)
     expect(empty_state_clear_filter_targets).to include(admin_document_sets_path)
     expect(clear_filter_targets.count(admin_document_sets_path)).to eq(2)

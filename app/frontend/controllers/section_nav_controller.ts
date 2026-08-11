@@ -8,12 +8,63 @@ export default class extends Controller {
 
   connect(): void {
     this.setupObserver()
-    this.bindClicks()
   }
 
   disconnect(): void {
     this.observer?.disconnect()
     this.observer = null
+  }
+
+  scrollToSection(event: MouseEvent): void {
+    event.preventDefault()
+
+    const tab = event.currentTarget as HTMLAnchorElement
+    const sectionId = tab.getAttribute("aria-controls")
+    if (!sectionId) return
+
+    const section = document.getElementById(sectionId)
+    if (!section) return
+
+    this.openContainingDetails(section)
+    this.activateTab(sectionId)
+
+    window.requestAnimationFrame(() => {
+      const navHeight = this.element.getBoundingClientRect().height
+      const top = section.getBoundingClientRect().top + window.scrollY - navHeight
+      window.scrollTo({ top, behavior: "smooth" })
+    })
+  }
+
+  navigateWithKeyboard(event: KeyboardEvent): void {
+    const currentTab = event.currentTarget as HTMLAnchorElement
+    const currentIndex = this.tabTargets.indexOf(currentTab)
+    if (currentIndex < 0) return
+
+    let nextIndex: number | null = null
+
+    switch (event.key) {
+      case "ArrowRight":
+      case "ArrowDown":
+        nextIndex = (currentIndex + 1) % this.tabTargets.length
+        break
+      case "ArrowLeft":
+      case "ArrowUp":
+        nextIndex = (currentIndex - 1 + this.tabTargets.length) % this.tabTargets.length
+        break
+      case "Home":
+        nextIndex = 0
+        break
+      case "End":
+        nextIndex = this.tabTargets.length - 1
+        break
+      default:
+        return
+    }
+
+    event.preventDefault()
+    const nextTab = this.tabTargets[nextIndex]
+    nextTab.focus()
+    nextTab.click()
   }
 
   private setupObserver(): void {
@@ -44,24 +95,12 @@ export default class extends Controller {
       const isActive = tab.getAttribute("aria-controls") === sectionId
       tab.classList.toggle("is-active", isActive)
       tab.setAttribute("aria-selected", String(isActive))
+      tab.tabIndex = isActive ? 0 : -1
     })
   }
 
-  private bindClicks(): void {
-    this.tabTargets.forEach((tab) => {
-      tab.addEventListener("click", (event: Event) => this.scrollToSection(event))
-    })
-  }
-
-  private scrollToSection(event: Event): void {
-    event.preventDefault()
-    const tab = event.currentTarget as HTMLAnchorElement
-    const sectionId = tab.getAttribute("aria-controls")
-    const section = sectionId ? document.getElementById(sectionId) : null
-    if (!section) return
-
-    const navHeight = this.element.getBoundingClientRect().height
-    const top = section.getBoundingClientRect().top + window.scrollY - navHeight
-    window.scrollTo({ top, behavior: "smooth" })
+  private openContainingDetails(section: HTMLElement): void {
+    const details = section.closest("details") as HTMLDetailsElement | null
+    if (details && !details.open) details.open = true
   }
 }

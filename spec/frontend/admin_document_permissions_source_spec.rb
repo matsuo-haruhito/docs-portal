@@ -63,8 +63,8 @@ RSpec.describe "admin document permissions source" do
     aggregate_failures do
       expect(index_source).to include("overview_table_key = :admin_document_permission_overview")
       expect(index_source).to include("permissions_table_key = :admin_document_permissions")
-      expect(index_source).to include('table_preferences_editor(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns, title: "権限概要の表示設定")')
-      expect(index_source).to include('table_preferences_editor(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns, title: "権限一覧の表示設定")')
+      expect(index_source).to include('render ColumnSettingsComponent.new(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns, title: "権限概要の表示設定")')
+      expect(index_source).to include('render ColumnSettingsComponent.new(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns, title: "権限一覧の表示設定")')
       expect(index_source).to include("table_preferences_table_tag(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns)")
       expect(index_source).to include("table_preferences_table_tag(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns)")
       expect(index_source).to include('data-rails-table-preferences-column-key="document"')

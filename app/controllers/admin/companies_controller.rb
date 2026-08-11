@@ -15,7 +15,7 @@ class Admin::CompaniesController < Admin::BaseController
     @company = Company.new(company_params)
 
     if @company.save
-      redirect_to admin_companies_path, notice: "会社を登録しました。"
+      redirect_to admin_companies_path, notice: "会社「#{@company.display_name}」を登録しました。続けてユーザーを登録してください。"
     else
       @companies = filtered_companies
       render :index, status: :unprocessable_entity
@@ -27,7 +27,7 @@ class Admin::CompaniesController < Admin::BaseController
 
   def update
     if @company.update(company_params)
-      redirect_to company_return_to_path, notice: "会社を更新しました。"
+      redirect_to company_return_to_path, notice: "会社「#{@company.display_name}」を更新しました。"
     else
       render :edit, status: :unprocessable_entity
     end
@@ -35,11 +35,11 @@ class Admin::CompaniesController < Admin::BaseController
 
   def destroy
     @company.destroy!
-    redirect_to company_return_to_path, notice: "会社を削除しました。"
+    redirect_to company_return_to_path, notice: "会社「#{@company.display_name}」を削除しました。"
   rescue ActiveRecord::DeleteRestrictionError
-    redirect_to company_return_to_path, alert: "関連データがあるため削除できません。"
+    redirect_to company_return_to_path, alert: "会社「#{@company.display_name}」は所属ユーザーや文書権限があるため削除できません。無効化を検討してください。"
   rescue ActiveRecord::InvalidForeignKey
-    redirect_to company_return_to_path, alert: "関連データがあるため削除できません。"
+    redirect_to company_return_to_path, alert: "会社「#{@company.display_name}」は関連データがあるため削除できません。無効化を検討してください。"
   end
 
   private

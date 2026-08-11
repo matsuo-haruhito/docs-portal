@@ -8,7 +8,9 @@
 - filters_active = @filters.values.any?(&:present?)
 - csv_filter_params = @filters.compact.merge(format: :csv)
 
-h1 文書権限
+h1
+  | 文書権限
+  = render InfoTooltipComponent.new(label: "文書権限", description: "文書ごとに会社・ユーザー単位でアクセスレベル（閲覧/ダウンロード/管理）を付与します。ここで設定しないと公開範囲ポリシーに従います。")
 = render "admin/nav"
 
 .card
@@ -78,7 +80,7 @@ section.card
 
   - if @permission_overview_rows.any?
     p.muted 件数は下段の「権限一覧」にある個別付与行を文書単位で集計したものです。
-    = table_preferences_editor(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns, title: "権限概要の表示設定")
+    = render ColumnSettingsComponent.new(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns, title: "権限概要の表示設定")
 
     = table_preferences_table_tag(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns) do
       thead
@@ -114,7 +116,7 @@ section.card
 
   - if @document_permissions.any?
     - anchored_document_ids = {}
-    = table_preferences_editor(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns, title: "権限一覧の表示設定")
+    = render ColumnSettingsComponent.new(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns, title: "権限一覧の表示設定")
 
     = table_preferences_table_tag(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns) do
       thead

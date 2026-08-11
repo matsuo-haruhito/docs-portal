@@ -65,6 +65,14 @@ The Compose service caps a single Docusaurus build at 2 CPUs so Node/webpack doe
 
 These controls reduce the current `image-size` denial-of-service exposure and bound unknown parser or plugin failures; they do not remove that transitive package from the lockfile or make `npm audit` green.
 
+## Table of contents suppression
+
+Generated document sites do not render Docusaurus' desktop or mobile table of contents. The portal viewer already provides its own heading navigation, and the Docusaurus TOC duplicates that navigation while its desktop column can fall below the article in the Rails viewer layout.
+
+Docusaurus only provides `hide_table_of_contents` as per-document front matter; the repo-wide rule is therefore enforced by the local `DocItem/Layout` theme override. Do not restore a custom `@theme/TOC` wrapper or add a visible `目次` summary to generated artifacts.
+
+`DocusaurusSiteRenderer` also removes standard and legacy Docusaurus TOC nodes from every HTML response so already-installed artifacts follow the same contract without a rebuild. `iframe_doc_theme.css` keeps a matching outer-wrapper selector as a hydration fallback, but CSS hiding is not the primary suppression mechanism.
+
 ## Viewer HTML rewrite and table annotation
 
 `DocusaurusSiteRenderer` rewrites internal links and asset URLs before returning HTML to Rails-side viewer routes. The same rewrite path also decides which chrome is removed for `embedded=1` responses and where portal-specific metadata can be added safely.

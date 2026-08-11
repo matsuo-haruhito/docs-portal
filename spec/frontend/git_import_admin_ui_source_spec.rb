@@ -31,7 +31,7 @@ RSpec.describe "admin git import admin UI source" do
 
   it "wires the source index to rails table preferences" do
     aggregate_failures do
-      expect(sources_index_source).to include("table_preferences_editor")
+      expect(sources_index_source).to include("render ColumnSettingsComponent.new")
       expect(sources_index_source).to include("table_preferences_table_tag")
       expect(sources_index_source).to include('data-rails-table-preferences-column-key="project"')
       expect(sources_index_source).to include('data-rails-table-preferences-column-key="repository"')
@@ -46,7 +46,7 @@ RSpec.describe "admin git import admin UI source" do
 
   it "wires the run index to rails table preferences with project visibility" do
     aggregate_failures do
-      expect(runs_index_source).to include("table_preferences_editor")
+      expect(runs_index_source).to include("render ColumnSettingsComponent.new")
       expect(runs_index_source).to include("table_preferences_table_tag")
       expect(runs_index_source).to include('data-rails-table-preferences-column-key="created_at"')
       expect(runs_index_source).to include('data-rails-table-preferences-column-key="project"')

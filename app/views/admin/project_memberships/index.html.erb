@@ -35,7 +35,7 @@
 
 <% if @project_memberships_filtered_count.positive? %>
   <div class="card">
-    <%= table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件所属一覧の表示設定") %>
+    <%= render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件所属一覧の表示設定") %>
     <p class="muted">表示設定は列の表示切り替え用です。ページ移動と1ページあたりの件数は下のページ情報で確認できます。</p>
   </div>
 

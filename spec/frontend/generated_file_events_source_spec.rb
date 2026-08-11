@@ -9,7 +9,7 @@ RSpec.describe "admin generated file events source" do
     aggregate_failures do
       expect(index_source).to include("table_key = :admin_generated_file_events")
       expect(index_source).to include("generated_file_event_table_columns")
-      expect(index_source).to include("table_preferences_editor")
+      expect(index_source).to include("render ColumnSettingsComponent.new")
       expect(index_source).to include("table_preferences_table_tag")
       expect(index_source).to include('title: "生成ファイルイベント一覧の表示設定"')
       expect(index_source).to include("retry_failed_admin_generated_file_events_path")

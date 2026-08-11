@@ -99,10 +99,10 @@ RSpec.describe "Admin company master filters", type: :request do
     get admin_companies_path, params: { q: "missing-company" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索条件に一致する会社はありません。")
+    expect(page_text).to include("条件に一致する会社がありません")
     expect(page_text).to include("キーワードや状態の条件を変更するか、条件をクリアしてください。")
     expect(parsed_html.css('section.card a[href="/admin/companies"]').map(&:text).join).to include("条件をクリア")
-    expect(page_text).not_to include("まだ会社は登録されていません。")
+    expect(page_text).not_to include("会社が未登録です")
     expect(input_value("q")).to eq("missing-company")
   end
 
@@ -113,7 +113,7 @@ RSpec.describe "Admin company master filters", type: :request do
     get admin_companies_path, params: { q: "omega" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索条件に一致する会社はありません。")
+    expect(page_text).to include("条件に一致する会社がありません")
     expect(page_text).not_to include("Omega Holdings")
     expect(page_text).not_to include("Dormant Partner")
 

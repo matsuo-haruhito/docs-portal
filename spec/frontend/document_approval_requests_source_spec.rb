@@ -9,7 +9,7 @@ RSpec.describe "document approval requests source" do
       expect(index_source).to include("table_key = :document_approval_requests")
       expect(index_source).to include("document_approval_request_table_columns")
       expect(index_source).to include("rails_table_preference_settings(table_key: table_key)")
-      expect(index_source).to include("table_preferences_editor")
+      expect(index_source).to include("render ColumnSettingsComponent.new")
       expect(index_source).to include("table_preferences_table_tag")
       expect(index_source).to include('title: "確認依頼一覧の表示設定"')
     end

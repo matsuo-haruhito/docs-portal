@@ -114,7 +114,7 @@ p.actions
       span.muted = "#{delivery_logs_page} / #{delivery_logs_total_pages}ページ"
       - if delivery_logs_page < delivery_logs_total_pages
         = link_to "次へ", document_delivery_logs_path(current_filter_params.merge(page: delivery_logs_page + 1)), class: "button secondary", rel: "next"
-  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "送付履歴一覧の表示設定")
+  = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "送付履歴一覧の表示設定")
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
       tr

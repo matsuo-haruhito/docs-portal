@@ -6,7 +6,7 @@ RSpec.describe "admin webhook endpoints source" do
 
   it "wires both admin tables to rails table preferences" do
     aggregate_failures do
-      expect(index_source).to include("table_preferences_editor")
+      expect(index_source).to include("render ColumnSettingsComponent.new")
       expect(index_source).to include("table_preferences_table_tag")
       expect(index_source).to include('data-rails-table-preferences-column-key="name"')
       expect(index_source).to include('data-rails-table-preferences-column-key="target_url"')
@@ -19,7 +19,7 @@ RSpec.describe "admin webhook endpoints source" do
       expect(index_source).to include('data-rails-table-preferences-column-key="status"')
       expect(index_source).to include('data-rails-table-preferences-column-key="response_status"')
       expect(index_source).to include('data-rails-table-preferences-column-key="error_message"')
-      expect(index_source).to include("webhook_endpoint_status_label(endpoint)")
+      expect(index_source).to include("StatusBadgeComponent")
       expect(index_source).to include("webhook_delivery_status_label(delivery)")
       expect(index_source).to include("endpoint.normalized_event_types.each do |event_type|")
     end

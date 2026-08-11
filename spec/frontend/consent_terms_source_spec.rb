@@ -6,7 +6,7 @@ RSpec.describe "admin consent terms source" do
 
   it "wires the index to rails table preferences columns" do
     aggregate_failures do
-      expect(index_source).to include("table_preferences_editor")
+      expect(index_source).to include("render ColumnSettingsComponent.new")
       expect(index_source).to include("table_preferences_table_tag")
       expect(index_source).to include('data-rails-table-preferences-column-key="title"')
       expect(index_source).to include('data-rails-table-preferences-column-key="version_label"')

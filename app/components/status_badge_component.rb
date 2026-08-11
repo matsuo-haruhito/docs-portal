@@ -17,8 +17,19 @@ class StatusBadgeComponent < ViewComponent::Base
   # status → CSS modifier class のマッピング
   STATUS_CLASSES = {
     "draft" => "status-badge--draft",
+    "pending" => "status-badge--draft",
     "published" => "status-badge--published",
-    "archived" => "status-badge--archived"
+    "active" => "status-badge--published",
+    "success" => "status-badge--published",
+    "completed" => "status-badge--published",
+    "archived" => "status-badge--archived",
+    "inactive" => "status-badge--inactive",
+    "disabled" => "status-badge--inactive",
+    "running" => "status-badge--running",
+    "syncing" => "status-badge--running",
+    "failed" => "status-badge--failed",
+    "error" => "status-badge--failed",
+    "warning" => "status-badge--warning"
   }.freeze
 
   def status_class

@@ -48,7 +48,7 @@ class Admin::DocumentSetsController < Admin::BaseController
     @document_set.created_by = current_user
 
     if save_document_set(@document_set)
-      redirect_to admin_document_sets_path, notice: "文書セットを登録しました。"
+      redirect_to admin_document_sets_path, notice: "文書セット「#{@document_set.name}」を登録しました。編集画面で対象文書を選択してください。"
     else
       render :index, status: :unprocessable_entity
     end
@@ -61,7 +61,7 @@ class Admin::DocumentSetsController < Admin::BaseController
     @document_set.assign_attributes(document_set_params)
 
     if save_document_set(@document_set)
-      redirect_to admin_document_sets_path, notice: "文書セットを更新しました。"
+      redirect_to admin_document_sets_path, notice: "文書セット「#{@document_set.name}」を更新しました。"
     else
       render :edit, status: :unprocessable_entity
     end
@@ -69,7 +69,7 @@ class Admin::DocumentSetsController < Admin::BaseController
 
   def destroy
     @document_set.destroy!
-    redirect_to admin_document_sets_path, notice: "文書セットを削除しました。"
+    redirect_to admin_document_sets_path, notice: "文書セット「#{@document_set.name}」を削除しました。"
   end
 
   def project_search

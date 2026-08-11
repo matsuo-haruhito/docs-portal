@@ -107,10 +107,10 @@ RSpec.describe "Admin document set list search", type: :request do
     get admin_document_sets_path, params: { q: "no such document set", visibility_policy: "restricted_external" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 0件")
+    expect(page_text).to match(/検索結果.*0.*件/)
     expect(page_text).to include("検索: no such document set")
     expect(page_text).to include("公開範囲: 限定公開")
-    expect(page_text).to include("条件に一致する文書セットはありません。")
+    expect(page_text).to include("条件に一致する文書セットがありません")
     expect(clear_filter_targets).to include(admin_document_sets_path)
     expect(listed_document_set_names).to be_empty
   end

@@ -48,7 +48,7 @@ RSpec.describe "Admin users table preferences", type: :request do
     helper_source = Rails.root.join("app/helpers/admin/users_helper.rb").read
 
     expect(view_source).to include("- table_key = :admin_users")
-    expect(view_source).to include("table_preferences_editor(table_key: table_key")
+    expect(view_source).to include("render ColumnSettingsComponent.new(table_key: table_key")
     expect(view_source).to include("table_preferences_table_tag(table_key: table_key")
 
     TABLE_COLUMN_KEYS.each do |column_key|
@@ -59,8 +59,8 @@ RSpec.describe "Admin users table preferences", type: :request do
 
     empty_state_source = view_source[view_source.index("- else")..]
     expect(empty_state_source).to include("section.card")
-    expect(empty_state_source).to include("まだ表示中の範囲にユーザーは登録されていません。")
-    expect(empty_state_source).not_to include("table_preferences_editor")
+    expect(empty_state_source).to include("ユーザーが未登録です")
+    expect(empty_state_source).not_to include("render ColumnSettingsComponent.new")
     expect(empty_state_source).not_to include("table_preferences_table_tag")
   end
 end

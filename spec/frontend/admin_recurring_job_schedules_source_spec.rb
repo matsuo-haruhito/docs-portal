@@ -9,7 +9,7 @@ RSpec.describe "admin recurring job schedules source" do
       expect(index_source).to include("table_key = :admin_recurring_job_schedules")
       expect(index_source).to include("admin_recurring_job_schedule_table_columns")
       expect(index_source).to include("rails_table_preference_settings(table_key: table_key)")
-      expect(index_source).to include("table_preferences_editor")
+      expect(index_source).to include("render ColumnSettingsComponent.new")
       expect(index_source).to include("table_preferences_table_tag")
       expect(index_source).to include('title: "定期ジョブ一覧の表示設定"')
     end

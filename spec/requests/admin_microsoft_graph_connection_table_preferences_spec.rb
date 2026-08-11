@@ -60,7 +60,7 @@ RSpec.describe "Admin Microsoft Graph connection table preferences", type: :requ
     expect(view_source).to include("microsoft_graph_connection_table_columns")
     expect(view_source).to include("rails_table_preference_settings(table_key: table_key)")
     expect(view_source).to include('title: "Microsoft Graph接続一覧の表示設定"')
-    expect(view_source).to include("table_preferences_editor(table_key: table_key")
+    expect(view_source).to include("render ColumnSettingsComponent.new(table_key: table_key")
     expect(view_source).to include("table_preferences_table_tag(table_key: table_key")
 
     MICROSOFT_GRAPH_CONNECTION_COLUMN_KEYS.each do |column_key|

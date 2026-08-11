@@ -8,7 +8,7 @@ RSpec.describe "admin/read_confirmations/index source" do
     expect(view_source).to include("table_key = :admin_read_confirmations")
     expect(view_source).to include("table_columns = read_confirmation_table_columns")
     expect(view_source).to include("rails_table_preference_settings(table_key: table_key)")
-    expect(view_source).to include("table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: \"既読確認内訳の表示設定\")")
+    expect(view_source).to include("render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: \"既読確認内訳の表示設定\")")
     expect(view_source).to include("table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns)")
   end
 

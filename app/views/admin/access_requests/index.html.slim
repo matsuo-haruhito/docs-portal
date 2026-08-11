@@ -80,7 +80,7 @@ section.card
       |  / 取消済み:
       strong = " #{@status_counts["cancelled"]}"
 
-  = table_preferences_editor(table_key: access_request_table_key, settings: access_request_table_settings, columns: access_request_table_columns, title: "アクセス申請一覧の表示設定")
+  = render ColumnSettingsComponent.new(table_key: access_request_table_key, settings: access_request_table_settings, columns: access_request_table_columns, title: "アクセス申請一覧の表示設定")
 
   = table_preferences_table_tag(table_key: access_request_table_key, settings: access_request_table_settings, columns: access_request_table_columns) do
     thead

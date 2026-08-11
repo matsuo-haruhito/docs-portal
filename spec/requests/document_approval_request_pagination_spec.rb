@@ -28,7 +28,8 @@ RSpec.describe "Document approval request pagination", type: :request do
         document:,
         requester:,
         approver:,
-        title: "ページ対象 #{format("%03d", index + 1)}"
+        title: "ページ対象 #{format("%03d", index + 1)}",
+        created_at: Time.current - (55 - index).minutes
       )
     end
 
@@ -79,13 +80,15 @@ RSpec.describe "Document approval request pagination", type: :request do
   end
 
   it "bounds per_page and keeps nested document pagination inside the document scope" do
+    base_time = Time.zone.local(2026, 8, 1, 9, 0, 0)
     requests = Array.new(105) do |index|
       create(
         :document_approval_request,
         document:,
         requester:,
         approver:,
-        title: "対象内ページ #{format("%03d", index + 1)}"
+        title: "対象内ページ #{format("%03d", index + 1)}",
+        created_at: base_time + index.minutes
       )
     end
     other_document = create(:document, project:, title: "対象外資料", slug: "approval-other-doc", visibility_policy: :restricted_external)

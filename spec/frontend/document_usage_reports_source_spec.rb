@@ -24,7 +24,7 @@ RSpec.describe "admin document usage reports source" do
 
   it "wires the report table to rails table preferences" do
     aggregate_failures do
-      expect(view_source).to include("table_preferences_editor")
+      expect(view_source).to include("render ColumnSettingsComponent.new")
       expect(view_source).to include("table_preferences_table_tag")
       expect(view_source).to include('data-rails-table-preferences-column-key="title"')
       expect(view_source).to include('data-rails-table-preferences-column-key="category"')

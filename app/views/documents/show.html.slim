@@ -37,7 +37,7 @@
   / 本文プレビュー有無の視覚インジケーター
   - if rendered_view_available
     - header.with_action do
-      span.badge title="本文プレビューが利用可能です" 📄 本文あり
+      span.badge title="本文プレビューが利用可能です" 本文あり
   - else
     - header.with_action do
       span.badge.muted title="この文書には本文プレビューがありません" 本文なし
@@ -69,14 +69,6 @@
     - if current_user.internal?
       p.muted このプレビュー領域へ1ファイルずつドロップすると、この文書の更新候補としてアップロードできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
 
-    details.document-context-drawer#document-detail-panels
-      summary
-        strong 文書情報・操作・版一覧を開く
-        span.muted 確認依頼、関連文書、添付・元ファイルを探すときもここを開きます
-      .document-context-drawer__body
-        .document-context-drawer__sections
-          = render "detail_sections"
-
     - if current_user.internal?
       .site-viewer-shell.document-reader-shell.manual-document-upload-target#document-content data-controller="manual-document-upload auto-height-frame" data-auto-height-frame-min-height-value="480" data-manual-document-upload-dragging-class="is-dragging" data-manual-document-upload-url-value=project_document_uploads_path(@project) data-manual-document-upload-target-document-id=@document.public_id data-action=preview_drop_action
         .document-preview-drop-overlay role="status" aria-live="polite" data-manual-document-upload-target="overlay"
@@ -88,6 +80,14 @@
     - else
       .site-viewer-shell.document-reader-shell.manual-document-upload-target#document-content data-controller="auto-height-frame" data-auto-height-frame-min-height-value="480"
         iframe.site-viewer-frame src=@viewer_iframe_src title="#{@document.title} #{@viewer_version.version_label}" loading="eager" data-auto-height-frame-target="frame"
+
+    details.document-context-drawer#document-detail-panels
+      summary
+        strong 文書情報・操作・版一覧を開く
+        span.muted 確認依頼、関連文書、添付・元ファイルを探すときもここを開きます
+      .document-context-drawer__body
+        .document-context-drawer__sections
+          = render "detail_sections"
 
     = render "comment_workspace", floating: true
 - else

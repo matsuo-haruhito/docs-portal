@@ -1,18 +1,15 @@
 #!/usr/bin/env bash
 set -u
+
 APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RESULTS_DIR="$APP_ROOT/tmp/all_test.running"
+RESULTS_DIR="$APP_ROOT/tmp/all_test"
+PREV_DIR="$APP_ROOT/tmp/all_test.prev"
 
-rm -rf "$RESULTS_DIR"
-mkdir -p "$RESULTS_DIR"
-
-rotate_results() {
-  rm -rf "$APP_ROOT/tmp/all_test.prev"
-  if [ -d "$APP_ROOT/tmp/all_test" ]; then
-    mv "$APP_ROOT/tmp/all_test" "$APP_ROOT/tmp/all_test.prev"
-  fi
-  mv "$RESULTS_DIR" "$APP_ROOT/tmp/all_test"
-}
+# 成功・失敗問わず最終実行結果を all_test に置く
+# 実行中は .running、完了後は current → prev → current へローテーション
+WORK_DIR="$APP_ROOT/tmp/all_test.running"
+rm -rf "$WORK_DIR"
+mkdir -p "$WORK_DIR"
 
 timestamp() {
   date +"%H:%M:%S"
@@ -30,7 +27,7 @@ run_step() {
   local name="$1"
   local command="$2"
   local log_name="$3"
-  local log_path="$RESULTS_DIR/$log_name"
+  local log_path="$WORK_DIR/$log_name"
 
   printf '\n== %s ==\n' "$name"
   printf '[%s] %s started\n' "$(timestamp)" "$name"
@@ -66,6 +63,21 @@ step_is_prerequisite() {
   esac
 }
 
+remove_results_directory() {
+  local directory="$1"
+  local container_path="/app/${directory#"$APP_ROOT"/}"
+
+  [ -e "$directory" ] || return 0
+  rm -rf "$directory" 2>/dev/null && return 0
+
+  printf '[%s] Retrying removal after ownership repair: %s\n' "$(timestamp)" "$directory" >&2
+  if ! docker compose exec -T --user root app chown -R "$(id -u):$(id -g)" "$container_path"; then
+    docker compose run --rm -T --user root app chown -R "$(id -u):$(id -g)" "$container_path" || return 1
+  fi
+
+  rm -rf "$directory"
+}
+
 steps=(
   "Docker services|docker compose up -d --build db kroki docusaurus|docker-services.log"
   "Prepare test DB|docker compose run --rm -T -e RAILS_ENV=test app bash -c 'bundle exec rails db:test:prepare'|db-prepare.log"
@@ -73,18 +85,24 @@ steps=(
   "RuboCop|docker compose run --rm -T app bash -c 'bundle exec rubocop --parallel'|rubocop.log"
   "Brakeman|docker compose run --rm -T app bash -c 'bundle exec brakeman --quiet --no-pager --no-exit-on-warn'|brakeman.log"
   "TypeScript|docker compose run --rm -T app bash -c 'npx tsc --noEmit'|tsc.log"
+  "Vite build|docker compose run --rm -T app bash -c 'npx vite build'|vite-build.log"
   "RSpec|docker compose run --rm -T -e RAILS_ENV=test app bash -c 'bundle exec rspec'|rspec.log"
   "Start app for screenshots|docker compose up -d app|start-app.log"
   "Build screenshots image|docker compose build screenshots|build-screenshots-image.log"
   "Reset screenshot app log|docker compose exec -T app bash -c ': > log/development.log; echo screenshots-app-log-reset-ok'|screenshots-app-reset.log"
-  "Screenshots|docker compose --profile tools run --rm screenshots npm run screenshots:docs|screenshots.log"
-  "Collect screenshot app log|docker compose exec -T app bash script/collect_screenshot_app_log.sh|screenshots-app.log"
-  "Playwright smoke|docker compose --profile tools run --rm -e APP_HOST=web -e APP_SERVER_PORT=3000 screenshots npx playwright test|playwright.log"
+  "Screenshots|docker compose --profile tools run --rm -e SCREENSHOT_DIR=/workspace/tmp/all_test.running/screenshots -e HOST_UID=$(id -u) -e HOST_GID=$(id -g) screenshots bash -c 'npm run screenshots; status=\$?; chown -R \"\$HOST_UID:\$HOST_GID\" \"\$SCREENSHOT_DIR\" || exit \$?; exit \"\$status\"'|screenshots.log"
+  "Screen guide|docker compose --profile tools run --rm -e SCREENSHOT_DIR=/workspace/tmp/all_test.running/screenshots -e SCREEN_GUIDE_OUTPUT=/workspace/tmp/all_test.running/screen_guide.md screenshots npx --no-install tsx script/generate_screen_docs.ts|screen-guide.log"
+  "Collect screenshot app log|docker compose exec -T app bash -c 'cat log/development.log'|screenshots-app.log"
+  "App log 500 check|$APP_ROOT/bin/check_screenshot_errors $APP_ROOT/tmp/all_test.running/screenshots-app.log|app-500-check.log"
+  "Playwright smoke|docker compose --profile tools run --rm -e APP_HOST=web -e APP_SERVER_PORT=3000 -e PLAYWRIGHT_OUTPUT_DIR=/workspace/tmp/all_test.running/playwright screenshots npx playwright test|playwright.log"
 )
 
 failures=()
 for step in "${steps[@]}"; do
-  IFS='|' read -r name command log_name <<<"$step"
+  name="${step%%|*}"
+  remainder="${step#*|}"
+  command="${remainder%|*}"
+  log_name="${remainder##*|}"
   if ! run_step "$name" "$command" "$log_name"; then
     failures+=("$name")
     if step_is_prerequisite "$name"; then
@@ -94,20 +112,50 @@ for step in "${steps[@]}"; do
   fi
 done
 
+# サマリー生成
 if [ "${#failures[@]}" -eq 0 ]; then
   printf '\nAll tests passed.\n'
-  printf 'All tests passed.\n' >"$RESULTS_DIR/summary.txt"
-  rotate_results
+  printf 'All tests passed.\n' >"$WORK_DIR/summary.txt"
+else
+  printf '\nFailed steps:\n' >&2
+  {
+    printf 'Failed steps:\n'
+    for name in "${failures[@]}"; do
+      printf ' - %s\n' "$name"
+      printf ' - %s\n' "$name" >&2
+    done
+  } >"$WORK_DIR/summary.txt"
+fi
+
+# 成功・失敗問わず running → current へローテーション（前回結果は prev に1世代保持）
+if ! remove_results_directory "$PREV_DIR"; then
+  printf '[%s] Failed to remove previous test results: %s\n' "$(timestamp)" "$PREV_DIR" >&2
+  exit 1
+fi
+if [ -d "$RESULTS_DIR" ] && ! mv "$RESULTS_DIR" "$PREV_DIR"; then
+  printf '[%s] Failed to rotate current test results: %s\n' "$(timestamp)" "$RESULTS_DIR" >&2
+  exit 1
+fi
+if ! mv "$WORK_DIR" "$RESULTS_DIR"; then
+  printf '[%s] Failed to publish test results: %s\n' "$(timestamp)" "$RESULTS_DIR" >&2
+  exit 1
+fi
+
+# docs への publish は成功時のみ
+if [ "${#failures[@]}" -eq 0 ]; then
+  if [ -d "$RESULTS_DIR/screenshots" ]; then
+    SCREENSHOTS_NEXT="$APP_ROOT/docs/screenshots.next"
+    rm -rf "$SCREENSHOTS_NEXT"
+    cp -r "$RESULTS_DIR/screenshots" "$SCREENSHOTS_NEXT"
+    rm -rf "$APP_ROOT/docs/screenshots"
+    mv "$SCREENSHOTS_NEXT" "$APP_ROOT/docs/screenshots"
+  fi
+  if [ -f "$RESULTS_DIR/screen_guide.md" ]; then
+    GUIDE_NEXT="$APP_ROOT/docs/screen_guide.md.next"
+    cp "$RESULTS_DIR/screen_guide.md" "$GUIDE_NEXT"
+    mv "$GUIDE_NEXT" "$APP_ROOT/docs/screen_guide.md"
+  fi
   exit 0
 fi
 
-printf '\nFailed steps:\n' >&2
-{
-  printf 'Failed steps:\n'
-  for name in "${failures[@]}"; do
-    printf ' - %s\n' "$name"
-    printf ' - %s\n' "$name" >&2
-  done
-} >"$RESULTS_DIR/summary.txt"
-rotate_results
 exit 1

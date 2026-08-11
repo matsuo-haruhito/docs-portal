@@ -83,7 +83,7 @@ h1 Git同期履歴
           li = cue
 
     .card
-      = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "Git同期履歴の表示設定")
+      = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "Git同期履歴の表示設定")
 
     = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
       thead

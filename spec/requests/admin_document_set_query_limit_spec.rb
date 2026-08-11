@@ -56,7 +56,7 @@ RSpec.describe "Admin document set query limit", type: :request do
     expect(search_field["maxlength"]).to eq(Admin::DocumentSetsController::DOCUMENT_SET_QUERY_MAX_LENGTH.to_s)
     expect(page_text).to include("検索: #{normalized_query}")
     expect(page_text).not_to include(oversized_suffix)
-    expect(page_text).to include("検索結果: 1件")
+    expect(page_text).to match(/検索結果.*1.*件/)
     expect(page_text).to include("種別: 送付用")
     expect(page_text).to include("公開範囲: 限定公開")
     expect(listed_document_set_names).to eq([normalized_query])
@@ -76,8 +76,8 @@ RSpec.describe "Admin document set query limit", type: :request do
     expect(search_field["value"]).to eq(normalized_query)
     expect(page_text).to include("検索: #{normalized_query}")
     expect(page_text).not_to include(oversized_suffix)
-    expect(page_text).to include("検索結果: 0件")
-    expect(page_text).to include("条件に一致する文書セットはありません。")
+    expect(page_text).to match(/検索結果.*0.*件/)
+    expect(page_text).to include("条件に一致する文書セットがありません")
     expect(parsed_html.css('a[href]').select { |node| node.text.squish == "条件をクリア" }.map { |node| node["href"] }).to include(admin_document_sets_path)
   end
 

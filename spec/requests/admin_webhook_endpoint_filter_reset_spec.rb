@@ -38,7 +38,7 @@ RSpec.describe "Admin webhook endpoint filter reset cue", type: :request do
     get admin_webhook_endpoints_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("まだWebhook設定は登録されていません。")
+    expect(page_text).to include("Webhook設定が未登録です")
     expect(page_text).not_to include("Webhook設定の条件をリセット")
   end
 end

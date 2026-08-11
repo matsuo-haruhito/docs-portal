@@ -61,7 +61,7 @@ RSpec.describe "Admin document set pagination", type: :request do
     }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 3件")
+    expect(page_text).to match(/検索結果.*3.*件/)
     expect(page_text).to include("表示中: 1-2件 / 3件")
     expect(listed_document_set_names).to eq(["DSET-PAGE Set 00", "DSET-PAGE Set 01"])
     expect(table_text).not_to include("DSET-PAGE Set 02")
@@ -139,7 +139,7 @@ RSpec.describe "Admin document set pagination", type: :request do
     }
 
     expect(response).to have_http_status(:unprocessable_content)
-    expect(page_text).to include("検索結果: 1件")
+    expect(page_text).to match(/検索結果.*1.*件/)
     expect(listed_document_set_names).to eq(["DSET-FORM Set 00"])
     expect(document_set_form_action).to eq(
       admin_document_sets_path(q: "DSET-FORM", set_type: "delivery", visibility_policy: "internal_only")

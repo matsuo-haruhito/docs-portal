@@ -11,7 +11,9 @@
 - active_filter_summary_items << "状態: #{enabled_filter_label.fetch(@selected_enabled)}" if @selected_enabled.present?
 - has_active_filters = active_filter_summary_items.any?
 
-h1 Git連携
+h1
+  | Git連携
+  = render InfoTooltipComponent.new(label: "Git連携", description: "Gitリポジトリからdocs-portalへ文書を取り込む設定です。「手動同期」を実行するとリポジトリの最新をfetchし、文書を更新します。")
 = render "admin/nav"
 
 .card
@@ -70,7 +72,7 @@ h1 Git連携
 
 - if @git_import_sources.any?
   .card
-    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "Git連携設定一覧の表示設定")
+    = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "Git連携設定一覧の表示設定")
 
   p.muted = "Git連携設定一覧の操作は、手動同期=今すぐ取り込み、編集=設定変更、削除=設定削除です。手動同期と削除は対象情報つきの確認を表示します。"
   p.actions
@@ -133,7 +135,10 @@ h1 Git連携
               br
               = link_to "最終失敗: #{l(latest_failed_run.created_at)}", admin_git_import_runs_path(run_history_params.merge(status: "failed"))
           td data-rails-table-preferences-column-key="enabled"
-            span.badge = sync_state_label
+            - if source.enabled?
+              = render StatusBadgeComponent.new(status: "active", label: "有効")
+            - else
+              = render StatusBadgeComponent.new(status: "inactive", label: "無効")
           td.actions data-rails-table-preferences-column-key="actions"
             = button_to "手動同期", sync_admin_git_import_source_path(source), method: :post, class: "button", form: { data: { turbo_confirm: sync_confirm } }
             = link_to "履歴", admin_git_import_runs_path(run_history_params), class: "button secondary"

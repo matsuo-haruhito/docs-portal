@@ -4,10 +4,7 @@
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - active_filter_labels = accessible_document_active_filter_labels(@filters, available_tags: @available_tags, selected_project: @selected_project)
 
-h1 閲覧可能文書
-
-p.muted
-  | 案件をまたいで、閲覧できる文書をそのまま検索できます。
+= render PageHeaderComponent.new(title: "閲覧可能文書", subtitle: "案件をまたいで、閲覧できる文書を検索できます。")
 
 section.card
   h2 検索・絞り込み
@@ -16,7 +13,11 @@ section.card
     .form-grid.form-grid--compact
       label.form-field
         span キーワード
-        = form.search_field :q, value: @filters[:q], placeholder: "文書名・案件名など"
+        = form.rfk_search_field :q,
+          value: @filters[:q],
+          placeholder: "文書名・案件名など",
+          wrapper: false,
+          html: { aria: { label: "文書名・案件名などで検索" } }
         span.muted
           | 文書名・案件名・本文・タグ・添付ファイル名・元パスの短い語句で検索できます。
 
@@ -32,23 +33,40 @@ section.card
         max_options: AccessibleDocumentsController::PROJECT_SEARCH_LIMIT,
         wrapper: true,
         label: "案件",
-        placeholder: "案件コード・案件名で検索"
+        placeholder: "案件コード・案件名で検索",
+        allow_clear: true
 
-      label.form-field
-        span タグ
-        = form.select :tag, options_for_select([["すべて", ""]] + @available_tags.map { [_1.name, _1.normalized_name] }, @filters[:tag])
+      = form.rfk_select :tag,
+        collection: @available_tags.map { [_1.name, _1.normalized_name] },
+        include_blank: "すべて",
+        selected: @filters[:tag],
+        allow_clear: true,
+        wrapper: true,
+        label: "タグ"
 
-      label.form-field
-        span カテゴリ
-        = form.select :category, options_for_select([["すべて", ""]] + Document.categories.keys.map { [localized_label("documents.category", _1), _1] }, @filters[:category])
+      = form.rfk_select :category,
+        collection: Document.categories.keys.map { [localized_label("documents.category", _1), _1] },
+        include_blank: "すべて",
+        selected: @filters[:category],
+        allow_clear: true,
+        wrapper: true,
+        label: "カテゴリ"
 
-      label.form-field
-        span ファイル種
-        = form.select :document_kind, options_for_select([["すべて", ""]] + Document.document_kinds.keys.map { [localized_label("documents.document_kind", _1), _1] }, @filters[:document_kind])
+      = form.rfk_select :document_kind,
+        collection: Document.document_kinds.keys.map { [localized_label("documents.document_kind", _1), _1] },
+        include_blank: "すべて",
+        selected: @filters[:document_kind],
+        allow_clear: true,
+        wrapper: true,
+        label: "ファイル種"
 
-      label.form-field
-        span 公開範囲
-        = form.select :visibility_policy, options_for_select([["すべて", ""]] + Document.visibility_policies.keys.map { [localized_label("documents.visibility_policy", _1), _1] }, @filters[:visibility_policy])
+      = form.rfk_select :visibility_policy,
+        collection: Document.visibility_policies.keys.map { [localized_label("documents.visibility_policy", _1), _1] },
+        include_blank: "すべて",
+        selected: @filters[:visibility_policy],
+        allow_clear: true,
+        wrapper: true,
+        label: "公開範囲"
 
     fieldset.filter-fieldset
       legend 実用フィルタ
@@ -91,9 +109,9 @@ p.muted
   p.muted
     | 現在の条件:
     - active_filter_labels.each do |filter_label|
-      |  
+      |
       span.badge = filter_label
-    |  
+    |
     = link_to "条件をクリア", documents_path
 
 - if @documents_count.zero?
@@ -138,62 +156,63 @@ p.muted
       span.button.secondary.disabled 次へ
 
 - if @documents_count.positive?
-  .card
-    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "閲覧可能文書一覧の表示設定")
+  = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "閲覧可能文書一覧の表示設定")
 
-  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
-    thead
-      tr
-        th data-rails-table-preferences-column-key="project" 案件
-        th data-rails-table-preferences-column-key="document" 文書名
-        th data-rails-table-preferences-column-key="match_reason" ヒット理由
-        th data-rails-table-preferences-column-key="tags" タグ
-        th data-rails-table-preferences-column-key="category" カテゴリ
-        th data-rails-table-preferences-column-key="document_kind" ファイル種
-        th data-rails-table-preferences-column-key="importance_level" 重要度
-        th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
-        th data-rails-table-preferences-column-key="latest_version" 最新版
-        th data-rails-table-preferences-column-key="html" HTML
-        th data-rails-table-preferences-column-key="files" 添付
-        th data-rails-table-preferences-column-key="updated_at" 最終更新
-    tbody
-      - @documents.each do |document|
-        - latest_version = document.latest_version
-        - files = document.document_versions.flat_map(&:document_files)
-        - match_summaries = document_search_match_summaries(document, @filters[:q])
+  .table-scroll tabindex="0" role="region" aria-label="閲覧可能文書の検索結果"
+    = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
+      caption.table-caption 閲覧可能文書の検索結果
+      thead
         tr
-          td data-rails-table-preferences-column-key="project"
-            = link_to document.project.name, project_path(document.project), data: { turbo_frame: "_top" }
-            - if document.project.code.present?
-              br
-              code = document.project.code
-          td data-rails-table-preferences-column-key="document" = link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" }
-          td data-rails-table-preferences-column-key="match_reason"
-            - if match_summaries.any?
-              ul.compact-list
-                - match_summaries.each do |summary|
-                  li
-                    span.badge = summary.label
-                    |  
-                    code = summary.value
-            - else
-              span.muted -
-          td data-rails-table-preferences-column-key="tags"
-            - if document.document_tags.any?
-              - document.document_tags.sort_by(&:normalized_name).each do |tag|
-                = link_to tag.name, documents_path(tag: tag.normalized_name), class: "badge"
-            - else
-              span.muted なし
-          td data-rails-table-preferences-column-key="category"
-            span.badge = document_category_label(document)
-          td data-rails-table-preferences-column-key="document_kind" = document_kind_label(document)
-          td data-rails-table-preferences-column-key="importance_level"
-            span.badge = document_importance_level_label(document)
-          td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(document)
-          td data-rails-table-preferences-column-key="latest_version" = latest_version ? document_version_label(latest_version) : "-"
-          td data-rails-table-preferences-column-key="html" = latest_version&.site_build_path.present? ? "あり" : "なし"
-          td data-rails-table-preferences-column-key="files" = files.any? ? "#{files.size}件" : "なし"
-          td data-rails-table-preferences-column-key="updated_at" = document.updated_at.strftime("%Y-%m-%d %H:%M")
+          th data-rails-table-preferences-column-key="project" 案件
+          th data-rails-table-preferences-column-key="document" 文書名
+          th data-rails-table-preferences-column-key="match_reason" ヒット理由
+          th data-rails-table-preferences-column-key="tags" タグ
+          th data-rails-table-preferences-column-key="category" カテゴリ
+          th data-rails-table-preferences-column-key="document_kind" ファイル種
+          th data-rails-table-preferences-column-key="importance_level" 重要度
+          th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
+          th data-rails-table-preferences-column-key="latest_version" 最新版
+          th data-rails-table-preferences-column-key="html" HTML
+          th data-rails-table-preferences-column-key="files" 添付
+          th data-rails-table-preferences-column-key="updated_at" 最終更新
+      tbody
+        - @documents.each do |document|
+          - latest_version = document.latest_version
+          - files = document.document_versions.flat_map(&:document_files)
+          - match_summaries = document_search_match_summaries(document, @filters[:q])
+          tr
+            td data-rails-table-preferences-column-key="project"
+              = link_to document.project.name, project_path(document.project), data: { turbo_frame: "_top" }
+              - if document.project.code.present?
+                br
+                code = document.project.code
+            td data-rails-table-preferences-column-key="document" = link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" }
+            td data-rails-table-preferences-column-key="match_reason"
+              - if match_summaries.any?
+                ul.compact-list
+                  - match_summaries.each do |summary|
+                    li
+                      span.badge = summary.label
+                      |
+                      code = summary.value
+              - else
+                span.muted -
+            td data-rails-table-preferences-column-key="tags"
+              - if document.document_tags.any?
+                - document.document_tags.sort_by(&:normalized_name).each do |tag|
+                  = link_to tag.name, documents_path(tag: tag.normalized_name), class: "badge"
+              - else
+                span.muted なし
+            td data-rails-table-preferences-column-key="category"
+              span.badge = document_category_label(document)
+            td data-rails-table-preferences-column-key="document_kind" = document_kind_label(document)
+            td data-rails-table-preferences-column-key="importance_level"
+              span.badge = document_importance_level_label(document)
+            td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(document)
+            td data-rails-table-preferences-column-key="latest_version" = latest_version ? document_version_label(latest_version) : "-"
+            td data-rails-table-preferences-column-key="html" = latest_version&.site_build_path.present? ? "あり" : "なし"
+            td data-rails-table-preferences-column-key="files" = files.any? ? "#{files.size}件" : "なし"
+            td data-rails-table-preferences-column-key="updated_at" = document.updated_at.strftime("%Y-%m-%d %H:%M")
 
 p.actions
   = link_to "ダッシュボードへ戻る", dashboard_path, class: "button secondary"

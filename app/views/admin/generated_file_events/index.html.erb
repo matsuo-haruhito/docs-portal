@@ -146,7 +146,7 @@
 
   <% if @generated_file_events.any? %>
     <div class="rounded-lg border bg-white p-4">
-      <%= table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "生成ファイルイベント一覧の表示設定") %>
+      <%= render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "生成ファイルイベント一覧の表示設定") %>
     </div>
   <% end %>
 

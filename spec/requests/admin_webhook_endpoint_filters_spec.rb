@@ -119,7 +119,7 @@ RSpec.describe "Admin webhook endpoint filters", type: :request do
     get admin_webhook_endpoints_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("まだWebhook設定は登録されていません")
+    expect(page_text).to include("Webhook設定が未登録です")
     expect(page_text).not_to include("条件に一致するWebhook設定はありません")
 
     create(:webhook_endpoint, name: "Existing Hook", target_url: "https://hooks.example.test/existing")
@@ -128,7 +128,7 @@ RSpec.describe "Admin webhook endpoint filters", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("条件に一致するWebhook設定はありません")
-    expect(page_text).not_to include("まだWebhook設定は登録されていません")
+    expect(page_text).not_to include("Webhook設定が未登録です")
     expect(page_text).not_to include("Existing Hook")
   end
 end

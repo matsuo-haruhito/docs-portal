@@ -49,17 +49,14 @@ h1 案件マスタ
   .card
     - if active_filter_labels.any?
       p.muted
-        | 適用中: 
+        | 適用中:
         - active_filter_labels.each do |label|
           span.badge = label
       p.muted 表示設定は列の表示・幅を調整し、絞り込みは一覧に出す案件を切り替えます。
     - else
       p.muted 表示設定は列の表示・幅を調整します。キーワード、状態、企業で一覧に出す案件を絞り込めます。
-    p.muted
-      | 検索結果: 
-      = @projects.size
-      | 件
-    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件一覧の表示設定")
+    p.muted = "検索結果: #{@projects.size}件"
+    = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件一覧の表示設定")
 
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead

@@ -16,7 +16,9 @@ h1 文書マスタ
   = render "form", document: @document
 
 .card
-  h2 検索・絞り込み
+  h2
+    | 検索・絞り込み
+    = render InfoTooltipComponent.new(label: "検索・絞り込み", description: "案件名・文書名・URL識別子のキーワード検索に加え、カテゴリ・種別・公開範囲・正本区分・アーカイブ状態・保管期限・廃棄候補でフィルタできます。")
 
   = form_with url: admin_documents_path, method: :get, local: true, class: "document-filter-form" do |form|
     .form-grid.form-grid--compact
@@ -115,7 +117,7 @@ h1 文書マスタ
     | table[data-rails-table-preferences-table-key-value="admin_documents"] { display: none; }
 
 .card hidden=(documents_empty ? true : nil)
-  = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定")
+  = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定")
   p.muted 文書マスタ一覧の表示設定と検索条件は、この一覧の列表示・列幅・表示件数にだけ適用されます。文書詳細の左ペインにある文書ツリーの「表示中」や展開状態とは別の文脈です。
 
 = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
@@ -156,11 +158,11 @@ h1 文書マスタ
           span.badge = localized_label("documents.source_authority", document.source_authority)
         td data-rails-table-preferences-column-key="status"
           - if document.archived?
-            span.badge アーカイブ済み
+            = render StatusBadgeComponent.new(status: "archived", label: "アーカイブ済み", tooltip: "この文書はアーカイブされています。公開側では表示されません。")
             br
             span.muted = "実行者: #{document.archived_by_user&.name || '-'}"
           - else
-            span.badge 有効
+            = render StatusBadgeComponent.new(status: "active", label: "有効", tooltip: "この文書は有効です。権限に応じて公開側に表示されます。")
         td data-rails-table-preferences-column-key="latest_version"
           - if latest_version
             span.badge = document_version_label(latest_version)

@@ -20,9 +20,11 @@
       placeholder: "案件コード・案件名で検索"
     label
       | 文書名
+      span.required-mark ※必須
       = form.text_field :title
     label
       | URL識別子
+      span.required-mark ※必須
       = form.text_field :slug
     = form.rfk_select :category,
       collection: enum_options_for("documents.category", Document.categories.keys),

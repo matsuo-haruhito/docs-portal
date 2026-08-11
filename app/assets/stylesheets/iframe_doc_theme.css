@@ -113,6 +113,7 @@ nav.navbar,
 .theme-doc-footer,
 .pagination-nav,
 .theme-edit-this-page,
+details[class*="collapsibleToc"],
 .theme-doc-toc-desktop,
 .theme-doc-toc-mobile,
 aside.theme-doc-sidebar-container {

@@ -43,7 +43,7 @@ class Admin::DocumentsController < Admin::BaseController
     @document = Document.new(document_params)
 
     if @document.save
-      redirect_to admin_documents_path, notice: "文書を登録しました。"
+      redirect_to admin_documents_path, notice: "文書「#{@document.title}」を登録しました。権限設定や版の取り込みを行ってください。"
     else
       load_document_index_state
       render :index, status: :unprocessable_entity
@@ -55,7 +55,7 @@ class Admin::DocumentsController < Admin::BaseController
 
   def update
     if @document.update(document_params)
-      redirect_to document_return_to_path, notice: "文書を更新しました。"
+      redirect_to document_return_to_path, notice: "文書「#{@document.title}」を更新しました。"
     else
       render :edit, status: :unprocessable_entity
     end
@@ -63,11 +63,11 @@ class Admin::DocumentsController < Admin::BaseController
 
   def destroy
     @document.destroy!
-    redirect_to document_return_to_path, notice: "文書を削除しました。"
+    redirect_to document_return_to_path, notice: "文書「#{@document.title}」を削除しました。"
   rescue ActiveRecord::DeleteRestrictionError
-    redirect_to document_return_to_path, alert: "関連データがあるため削除できません。"
+    redirect_to document_return_to_path, alert: "文書「#{@document.title}」は版・権限・セットとの関連があるため削除できません。アーカイブを検討してください。"
   rescue ActiveRecord::InvalidForeignKey
-    redirect_to document_return_to_path, alert: "関連データがあるため削除できません。"
+    redirect_to document_return_to_path, alert: "文書「#{@document.title}」は関連データがあるため削除できません。アーカイブを検討してください。"
   end
 
   def archive
@@ -76,7 +76,7 @@ class Admin::DocumentsController < Admin::BaseController
       retention_until: params[:retention_until],
       discard_candidate_at: params[:discard_candidate_at]
     )
-    redirect_to document_return_to_path, notice: "文書をアーカイブしました。"
+    redirect_to document_return_to_path, notice: "文書「#{@document.title}」をアーカイブしました。公開側では非表示になります。"
   end
 
   def restore

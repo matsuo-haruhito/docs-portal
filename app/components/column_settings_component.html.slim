@@ -1,0 +1,7 @@
+.column-settings
+  details.column-settings__details
+    summary.column-settings__summary title="表示する列、表示順、列幅を設定します"
+      i.bi.bi-gear.me-1 aria-hidden="true"
+      span 列設定
+    .column-settings__panel role="region" aria-label=@title
+      = helpers.table_preferences_editor(table_key: @table_key, settings: @settings, columns: @columns, title: @title)

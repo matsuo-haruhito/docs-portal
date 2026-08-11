@@ -99,7 +99,7 @@ RSpec.describe "Document delivery log filter contract", type: :request do
     sign_in_as(external_user)
 
     51.times do |index|
-      create_log!(to_addresses: format("limit-%02d@example.com", index), subject: "Limit contract")
+      create_log!(to_addresses: format("limit-%02d@example.com", index), subject: "Limit contract", created_at: Time.current - (51 - index).minutes)
     end
 
     get document_delivery_logs_path

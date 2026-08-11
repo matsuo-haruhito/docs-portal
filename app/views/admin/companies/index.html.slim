@@ -41,7 +41,7 @@ h1 会社マスタ
 
 - if @companies.any?
   .card
-    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "会社一覧の表示設定")
+    = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "会社一覧の表示設定")
 
   p.muted = "表示中: #{@companies_pagination[:from]}-#{@companies_pagination[:to]}件 / #{@companies_filtered_count}件"
 
@@ -60,7 +60,11 @@ h1 会社マスタ
           td data-rails-table-preferences-column-key="domain" = company.domain
           td data-rails-table-preferences-column-key="name" = company.name.presence || "-"
           td data-rails-table-preferences-column-key="display_name" = company.display_name
-          td data-rails-table-preferences-column-key="status" = company.active? ? "有効" : "無効"
+          td data-rails-table-preferences-column-key="status"
+            - if company.active?
+              = render StatusBadgeComponent.new(status: "active", label: "有効", tooltip: "この会社は有効です。所属ユーザーはログインできます。")
+            - else
+              = render StatusBadgeComponent.new(status: "inactive", label: "無効", tooltip: "この会社は無効化されています。所属ユーザーはログインできません。")
           td.actions data-rails-table-preferences-column-key="actions"
             = edit_link_to "編集", edit_admin_company_path(company, return_to: company_return_to)
             - if admin_user?
@@ -82,14 +86,12 @@ h1 会社マスタ
   section.card
     h2 会社一覧
     - if @companies_total_count.to_i.zero?
-      p.muted まだ会社は登録されていません。
       - if admin_user?
-        p.muted 上の「新規登録」でドメインと会社名を入力して、最初の会社を登録してください。
+        = render EmptyStateComponent.new(heading: "会社が未登録です", description: "上の「新規登録」でドメインと会社名を入力して、最初の会社を登録してください。")
       - else
-        p.muted 表示できる自社会社情報がありません。必要な場合は internal admin に確認してください。
+        = render EmptyStateComponent.new(heading: "会社情報がありません", description: "表示できる自社会社情報がありません。必要な場合は internal admin に確認してください。")
     - else
-      p.muted 検索条件に一致する会社はありません。
-      p.muted キーワードや状態の条件を変更するか、条件をクリアしてください。
-      - if company_filters_applied
-        p.actions
-          = link_to "条件をクリア", admin_companies_path, class: "button secondary"
+      = render EmptyStateComponent.new(heading: "条件に一致する会社がありません", description: "キーワードや状態の条件を変更するか、条件をクリアしてください。") do |component|
+        - if company_filters_applied
+          - component.with_action do
+            = link_to "条件をクリア", admin_companies_path, class: "button secondary"

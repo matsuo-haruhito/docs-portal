@@ -49,7 +49,7 @@ RSpec.describe "Admin webhook recent delivery empty states", type: :request do
     get admin_webhook_endpoints_path(delivery_status: "failed")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("まだ送信履歴はありません")
+    expect(page_text).to include("送信履歴がありません")
     expect(page_text).not_to include("すべての送信履歴へ戻す")
   end
 end

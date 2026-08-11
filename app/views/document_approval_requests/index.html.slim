@@ -126,7 +126,7 @@ p.muted = "表示 #{@document_approval_request_start}-#{@document_approval_reque
 - if @document_approval_requests.any?
   .card
     p.muted 表示設定は列の見せ方だけを変えます。検索条件や状態別件数を変える場合は、上の検索フォームと状態ボタンを使ってください。
-    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "確認依頼一覧の表示設定")
+    = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "確認依頼一覧の表示設定")
 
   - @document_approval_request_sections.each do |section_title, requests|
     - next if requests.empty?

@@ -23,7 +23,7 @@ class Admin::GitImportSourcesController < Admin::BaseController
     @git_import_source.created_by = current_user
 
     if @git_import_source.save
-      redirect_to admin_git_import_sources_path, notice: "Git連携設定を登録しました。"
+      redirect_to admin_git_import_sources_path, notice: "Git連携設定「#{@git_import_source.repository_full_name}」を登録しました。手動同期で取り込みを開始できます。"
     else
       load_index_state
       render :index, status: :unprocessable_entity
@@ -38,7 +38,7 @@ class Admin::GitImportSourcesController < Admin::BaseController
     attrs.delete(:credential_secret) if attrs[:credential_secret].blank?
 
     if @git_import_source.update(attrs)
-      redirect_to admin_git_import_sources_path, notice: "Git連携設定を更新しました。"
+      redirect_to admin_git_import_sources_path, notice: "Git連携設定「#{@git_import_source.repository_full_name}」を更新しました。"
     else
       render :edit, status: :unprocessable_entity
     end
@@ -46,7 +46,7 @@ class Admin::GitImportSourcesController < Admin::BaseController
 
   def destroy
     @git_import_source.destroy!
-    redirect_to admin_git_import_sources_path, notice: "Git連携設定を削除しました。"
+    redirect_to admin_git_import_sources_path, notice: "Git連携設定「#{@git_import_source.repository_full_name}」を削除しました。"
   end
 
   def sync
@@ -56,7 +56,7 @@ class Admin::GitImportSourcesController < Admin::BaseController
     end
 
     run = GitImportSourceSyncer.new(source: @git_import_source, actor: current_user).call
-    redirect_to admin_git_import_runs_path, notice: "Git同期を実行しました。status=#{run.status}"
+    redirect_to admin_git_import_runs_path, notice: "Git同期を実行しました（#{@git_import_source.repository_full_name}）。結果: #{run.status}。履歴で詳細を確認してください。"
   rescue => e
     redirect_to admin_git_import_sources_path, alert: "Git同期に失敗しました: #{e.message}"
   end

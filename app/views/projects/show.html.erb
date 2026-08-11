@@ -3,42 +3,63 @@
 <% end %>
 
 <% page_title @project.name %>
-<section class="page-hero">
-  <h1><%= @project.name %></h1>
-  <p class="muted">コード: <%= @project.code %></p>
-  <p class="muted"><%= @project.description %></p>
-  <p class="actions">
-    <% if (site_version = @project.default_site_version_for(current_user)) %>
+<% site_version = @project.default_site_version_for(current_user) %>
+<%= render PageHeaderComponent.new(
+  title: @project.name,
+  subtitle: ["コード: #{@project.code}", @project.description].compact_blank.join(" / ")
+) do |header| %>
+  <% header.with_action do %>
+    <% if site_version %>
       <%= link_to "文書を読む", project_document_path(@project, site_version.document.slug, version_id: site_version.public_id, site_path: site_version.html_view_site_path), class: "button" %>
+    <% else %>
+      <%= link_to "文書一覧", project_documents_path(@project), class: "button" %>
     <% end %>
-    <%= link_to "文書一覧", project_documents_path(@project), class: "button secondary" %>
-    <%= button_to "📦 ダウンロード", project_document_zip_path(@project), method: :post, params: { zip_path_mode: "source_path", include_markdown_sources: true, include_attachments: true }, class: "button secondary", title: "この案件内のすべてのファイルをZIPでダウンロード", form: { class: "inline-form" } %>
-    <%= link_to "AI向けコンテキスト", project_ai_context_path(@project), class: "button secondary" %>
-    <%= link_to "文書セット", project_document_sets_path(@project), class: "button secondary" %>
-    <%= link_to "文書カタログ", project_document_catalogs_path(@project), class: "button secondary" %>
-  </p>
-</section>
-
-<section class="dashboard-grid">
-  <% if @important_documents.any? %>
-    <article class="card">
-      <h2>優先して確認したい文書</h2>
-      <ul class="resource-list">
-        <% @important_documents.each do |document| %>
-          <li>
-            <strong><%= link_to document.title, project_document_path(@project, document.slug) %></strong>
-            <span class="badge"><%= document_importance_level_label(document) %></span>
-          </li>
-        <% end %>
-      </ul>
-    </article>
   <% end %>
+  <% if site_version %>
+    <% header.with_action do %>
+      <%= link_to "文書一覧", project_documents_path(@project), class: "button secondary" %>
+    <% end %>
+  <% end %>
+<% end %>
 
-  <article class="card project-document-detail-tree-card">
-    <h2>文書一覧</h2>
-    <p class="muted">文書タイトルを主表示し、添付・元ファイル名は補助情報として並べた案件内文書の階層一覧です。</p>
-    <%= render "projects/document_detail_tree", documents: @documents %>
+<details class="card action-disclosure">
+  <summary class="action-disclosure__summary">
+    <strong>その他の操作</strong>
+    <span class="muted">一括ダウンロード・文書セット・外部連携向け出力</span>
+  </summary>
+  <div class="action-disclosure__body">
+    <div class="actions">
+      <%= button_to project_document_zip_path(@project), method: :post, params: { zip_path_mode: "source_path", include_markdown_sources: true, include_attachments: true }, class: "button secondary", title: "この案件内のすべてのファイルをZIPでダウンロード", form: { class: "inline-form" } do %>
+        <i class="bi bi-download me-1" aria-hidden="true"></i>
+        ダウンロード
+      <% end %>
+      <%= link_to "AI向けコンテキスト", project_ai_context_path(@project), class: "button secondary" %>
+      <%= link_to "文書セット", project_document_sets_path(@project), class: "button secondary" %>
+      <%= link_to "文書カタログ", project_document_catalogs_path(@project), class: "button secondary" %>
+    </div>
+  </div>
+</details>
+
+<% if @important_documents.any? %>
+  <article class="card">
+    <h2>優先して確認したい文書</h2>
+    <ul class="resource-list">
+      <% @important_documents.each do |document| %>
+        <li>
+          <strong><%= link_to document.title, project_document_path(@project, document.slug) %></strong>
+          <span class="badge"><%= document_importance_level_label(document) %></span>
+        </li>
+      <% end %>
+    </ul>
   </article>
-</section>
+<% end %>
+
+<article class="card project-document-detail-tree-card">
+  <div class="heading-with-help">
+    <h2>文書一覧</h2>
+    <%= render InfoTooltipComponent.new(label: "文書一覧", description: "文書タイトルから詳細を開けます。添付・元ファイル名は各文書の補助情報として表示します。") %>
+  </div>
+  <%= render "projects/document_detail_tree", documents: @documents %>
+</article>
 
 <p><%= link_to "案件一覧へ戻る", projects_path, class: "button secondary" %></p>

@@ -1,11 +1,13 @@
 module LinkToHelper
   def edit_link_to(name, url = nil, **options)
     options = options.reverse_merge(class: "button secondary")
+    icon = tag.i(class: "bi bi-pencil me-1", aria: { hidden: true })
+    label = (icon + name).html_safe
 
     if block_given?
-      link_to(name, **options) { yield }
+      link_to(label, name, **options) { yield }
     else
-      link_to(name, url, **options)
+      link_to(label, url, **options)
     end
   end
 
@@ -41,6 +43,9 @@ module LinkToHelper
       class: "button danger"
     )
 
-    button_to(name, url, options.merge(method: :delete, form: form_options.merge(data: form_data)))
+    icon = tag.i(class: "bi bi-trash me-1", aria: { hidden: true })
+    label = (icon + name).html_safe
+
+    button_to(label, url, options.merge(method: :delete, form: form_options.merge(data: form_data)))
   end
 end

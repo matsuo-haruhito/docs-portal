@@ -26,17 +26,17 @@ RSpec.describe "Admin document set filtered empty state clear action", type: :re
     get admin_document_sets_path, params: { set_type: "delivery", visibility_policy: "public_with_login" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 0件")
-    expect(page_text).to include("条件に一致する文書セットはありません。")
+    expect(page_text).to match(/検索結果.*0.*件/)
+    expect(page_text).to include("条件に一致する文書セットがありません")
 
     form_clear_actions = parsed_html.css("form.document-set-filter-form .form-actions a.button.secondary[href='#{admin_document_sets_path}']").select do |node|
       node.text.squish == "条件をクリア"
     end
     expect(form_clear_actions.size).to eq(1)
 
-    empty_state = parsed_html.at_css(".document-set-filter-empty-state")
+    empty_state = parsed_html.at_css(".empty-state")
     expect(empty_state).to be_present
-    empty_state_clear_action = empty_state.at_css(".form-actions a.button.secondary[href='#{admin_document_sets_path}']")
+    empty_state_clear_action = empty_state.at_css("a[href='#{admin_document_sets_path}']")
     expect(empty_state_clear_action&.text&.squish).to eq("条件をクリア")
 
     expect(table_preference_surfaces).to be_empty

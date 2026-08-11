@@ -12,6 +12,7 @@
       = form.text_field :name
     label
       | メールアドレス
+      span.required-mark ※必須
       = form.email_field :email_address
     - if @company_admin_user_form
       label

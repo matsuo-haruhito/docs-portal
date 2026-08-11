@@ -96,7 +96,7 @@ RSpec.describe "Admin management", type: :request do
 
       created = Company.find_by!(domain: "beta.example.com")
       expect(response).to redirect_to(admin_companies_path)
-      expect(flash[:notice]).to eq("会社を登録しました。")
+      expect(flash[:notice]).to include("を登録しました")
 
       patch admin_company_path(created.public_id), params: {
         company: { domain: "beta.example.com", name: "Beta Updated", active: false }

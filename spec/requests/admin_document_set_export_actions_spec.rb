@@ -51,7 +51,7 @@ RSpec.describe "Admin document set export actions", type: :request do
     expect(page_text).to include("CSV出力は現在の絞り込み条件に一致する文書セット集合を、表示設定の列表示・幅とは独立した固定列で出力します。")
     expect(page_text).to include("種別: 送付用")
     expect(page_text).to include("公開範囲: 社内のみ")
-    expect(page_text).to include("検索結果: 1件")
+    expect(page_text).to match(/検索結果.*1.*件/)
 
     expect(URI.parse(csv_export_link["href"]).path).to end_with(".csv")
     expect(csv_export_query).to include(

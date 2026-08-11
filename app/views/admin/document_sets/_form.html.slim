@@ -19,14 +19,18 @@
       label: "案件",
       placeholder: "案件コード・案件名で検索"
     = form.rfk_text_field :name, wrapper: true, label: "名称"
-    = form.rfk_select :set_type,
-      collection: enum_options_for("document_sets.set_type", DocumentSet.set_types.keys),
-      wrapper: true,
-      label: "種別"
-    = form.rfk_select :visibility_policy,
-      collection: enum_options_for("document_sets.visibility_policy", DocumentSet.visibility_policies.keys),
-      wrapper: true,
-      label: "公開範囲"
+    .heading-with-help
+      = form.rfk_select :set_type,
+        collection: enum_options_for("document_sets.set_type", DocumentSet.set_types.keys),
+        wrapper: true,
+        label: "種別"
+      = render InfoTooltipComponent.new(label: "種別", description: "「配布」は外部ユーザーへの文書配布用、「参照」は内部参照用のグループです。種別により公開側での表示有無が変わります。")
+    .heading-with-help
+      = form.rfk_select :visibility_policy,
+        collection: enum_options_for("document_sets.visibility_policy", DocumentSet.visibility_policies.keys),
+        wrapper: true,
+        label: "公開範囲"
+      = render InfoTooltipComponent.new(label: "公開範囲", description: "「案件メンバー全員」は案件に所属する全員が閲覧可能。「権限付与済みのみ」は文書セット単位で権限を付与されたユーザーのみ閲覧できます。")
     = form.rfk_number_field :sort_order, min: 0, wrapper: true, label: "表示順"
     = form.rfk_text_area :description,
       wrapper: true,
@@ -36,6 +40,7 @@
   - if @project_documents.any?
     h2 対象文書
     p.muted チェックした文書だけセットに含めます。版固定しない場合は最新版を使います。
+    = render HelpTooltipComponent.new(description: "「固定版」を選択すると、その時点の版を固定します。未選択のままだと常に最新版がセットに含まれます。")
     p.muted 固定版候補は文書ごとに検索して選びます。保存済みまたは入力中の固定版だけを初期表示します。
     p.muted 検索中も選択済み文書を見失わないよう、件数と選択済みのみ表示を使えます。
     section.document-set-document-filter data-controller="document-set-document-filter"

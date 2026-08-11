@@ -17,7 +17,7 @@ RSpec.describe "admin documents empty state source" do
     aggregate_failures do
       expect(index_source).to include(".card hidden=(documents_empty ? true : nil)")
       expect(index_source).to include('table[data-rails-table-preferences-table-key-value="admin_documents"] { display: none; }')
-      expect(index_source).to include('table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定")')
+      expect(index_source).to include('render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定")')
       expect(index_source).to include("table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns)")
     end
   end

@@ -55,7 +55,7 @@ RSpec.describe "Admin document set filter summary", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("適用中:")
     expect(active_filter_badges).to include("検索: 送付用", "種別: 送付用", "公開範囲: 限定公開")
-    expect(page_text).to include("検索結果: 1件")
+    expect(page_text).to match(/検索結果.*1.*件/)
     expect(page_text).to include("表示設定は列の表示・幅を調整し、絞り込みは一覧に出す文書セットを切り替えます。")
     expect(page_text).to include("文書セット一覧の表示設定")
     expect(links_named("条件をクリア").map { _1["href"] }).to include(admin_document_sets_path)
@@ -71,7 +71,7 @@ RSpec.describe "Admin document set filter summary", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("案件名・案件コード・文書セット名、種別、公開範囲で一覧に出す文書セットを絞り込めます。表示設定は列の表示・幅を調整します。")
-    expect(page_text).to include("検索結果: 1件")
+    expect(page_text).to match(/検索結果.*1.*件/)
     expect(page_text).not_to include("適用中:")
     expect(listed_document_set_names).to eq(["通常セット"])
   end

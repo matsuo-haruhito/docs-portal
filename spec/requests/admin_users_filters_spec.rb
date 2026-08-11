@@ -106,10 +106,10 @@ RSpec.describe "Admin users filters", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("適用中: キーワード「missing-user」")
     expect(page_text).to include("検索結果: 0件")
-    expect(page_text).to include("検索条件に一致するユーザーはありません。")
+    expect(page_text).to include("条件に一致するユーザーがいません")
     expect(page_text).to include("キーワードや状態の条件を変更するか、条件をクリアしてください。")
     expect(parsed_html.css('section.card a[href="/admin/users"]').map(&:text).join).to include("条件をクリア")
-    expect(page_text).not_to include("まだ表示中の範囲にユーザーは登録されていません。")
+    expect(page_text).not_to include("ユーザーが未登録です")
   end
 
   it "keeps company_master_admin search and active filter inside the same company" do
@@ -131,7 +131,7 @@ RSpec.describe "Admin users filters", type: :request do
     get admin_users_path, params: { q: "other-active@example.com" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索条件に一致するユーザーはありません。")
+    expect(page_text).to include("条件に一致するユーザーがいません")
     expect(result_table_text).not_to include("other-active@example.com")
   end
 

@@ -315,7 +315,7 @@ a.tree-download-button--combined{
 }
 
 /* Global layout refinements. These override inline layout defaults in application.html.slim. */
-header{
+body > header{
   padding-left: 0 !important;
   padding-right: 0 !important;
 }

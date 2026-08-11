@@ -56,7 +56,7 @@ h1 同意文面管理
     p.muted 履歴がある文面は削除できないため、通常は編集で無効化して運用します。
 
   .card
-    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "同意文面一覧の表示設定")
+    = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "同意文面一覧の表示設定")
 
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead

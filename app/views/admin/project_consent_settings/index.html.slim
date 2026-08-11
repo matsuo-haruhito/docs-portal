@@ -70,7 +70,7 @@ h1 案件同意設定
       aria: { label: "案件同意設定 handoff summary" }
 
   .card
-    = table_preferences_editor(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件同意設定一覧の表示設定")
+    = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件同意設定一覧の表示設定")
 
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
