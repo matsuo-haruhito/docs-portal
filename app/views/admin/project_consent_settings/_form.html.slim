@@ -42,4 +42,4 @@
   p.actions
     = form.submit "保存", class: "button"
     - if project_consent_setting.persisted?
-      = link_to "一覧へ戻る", admin_project_consent_settings_path, class: "button secondary"
+      = back_link_to "一覧へ戻る", admin_project_consent_settings_path

@@ -45,4 +45,4 @@ p.actions
 - else
   = render EmptyStateComponent.new(heading: "表示できる文書はありません。", description: "このセットには現在の利用者に表示できる文書がありません。外部送付を準備する前に、文書の公開範囲や版の状態を確認してください。")
 
-p = link_to "文書セット一覧へ戻る", project_document_sets_path(@project)
+p = back_link_to "文書セット一覧へ戻る", project_document_sets_path(@project)

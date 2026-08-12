@@ -98,4 +98,4 @@
     - if external_folder_sync_source.persisted?
       = link_to "詳細へ戻る", admin_external_folder_sync_source_path(external_folder_sync_source, return_to: return_to), class: "button secondary"
     - else
-      = link_to "一覧へ戻る", return_to || admin_external_folder_sync_sources_path, class: "button secondary"
+      = back_link_to "一覧へ戻る", return_to || admin_external_folder_sync_sources_path

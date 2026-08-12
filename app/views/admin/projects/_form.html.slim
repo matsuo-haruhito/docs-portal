@@ -33,4 +33,4 @@
   p.actions style="margin-top:16px;"
     = form.submit "保存", class: "button"
     - if project.persisted?
-      = link_to "一覧へ戻る", admin_projects_path, class: "button secondary"
+      = back_link_to "一覧へ戻る", admin_projects_path

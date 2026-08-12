@@ -33,4 +33,4 @@
   p.actions
     = form.submit "保存", class: "button"
     - if webhook_endpoint.persisted?
-      = link_to "一覧へ戻る", admin_webhook_endpoints_path, class: "button secondary"
+      = back_link_to "一覧へ戻る", admin_webhook_endpoints_path

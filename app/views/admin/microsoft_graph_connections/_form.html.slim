@@ -42,4 +42,4 @@
     = form.submit "保存", class: "button"
     = form.button "共有URLから候補を取得（保存しない）", name: "resolve_share_url", value: "1", class: "button secondary"
     - if microsoft_graph_connection.persisted?
-      = link_to "一覧へ戻る", admin_microsoft_graph_connections_path, class: "button secondary"
+      = back_link_to "一覧へ戻る", admin_microsoft_graph_connections_path

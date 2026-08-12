@@ -63,4 +63,4 @@
   p.actions
     = form.submit "保存", class: "button"
     - if user.persisted?
-      = link_to "一覧へ戻る", return_to || admin_users_path, class: "button secondary"
+      = back_link_to "一覧へ戻る", return_to || admin_users_path

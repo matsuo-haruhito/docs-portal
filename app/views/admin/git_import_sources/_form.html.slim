@@ -120,4 +120,4 @@
   p.actions
     = form.submit "保存", class: "button"
     - if git_import_source.persisted?
-      = link_to "一覧へ戻る", admin_git_import_sources_path, class: "button secondary"
+      = back_link_to "一覧へ戻る", admin_git_import_sources_path

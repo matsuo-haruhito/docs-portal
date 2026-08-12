@@ -35,4 +35,4 @@
   p.actions style="margin-top:16px;"
     = form.submit "保存", class: "button"
     - if consent_term.persisted?
-      = link_to "一覧へ戻る", admin_consent_terms_path, class: "button secondary"
+      = back_link_to "一覧へ戻る", admin_consent_terms_path
