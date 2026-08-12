@@ -186,3 +186,120 @@
     padding: 1rem;
   }
 }
+
+/* Admin List Common */
+.admin-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-list-header h1 {
+  margin: 0;
+}
+
+.admin-create-panel {
+  margin-bottom: 1rem;
+}
+
+.admin-create-panel > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-create-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-create-panel__body {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: #fff;
+}
+
+/* Filter Toolbar */
+.admin-filter-toolbar {
+  margin-bottom: 0.75rem;
+}
+
+.admin-filter-toolbar__form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-filter-toolbar__fields {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-filter-toolbar__search {
+  flex: 1;
+  min-width: 180px;
+  max-width: 320px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+}
+
+.admin-filter-toolbar__search:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
+}
+
+.admin-filter-toolbar__actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Filter Chips */
+.admin-filter-chips {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.admin-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  background: #e3f2fd;
+  color: #1565c0;
+  border-radius: 12px;
+}
+
+/* List Meta */
+.admin-list-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.admin-list-meta__count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Pagination */
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
