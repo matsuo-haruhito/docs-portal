@@ -160,6 +160,5 @@ admin は open Q&A thread に表示される `回答済みにする` / `クロ�
 - `app/views/documents/_comment_workspace.html.slim`: `質問する` と `確認事項を残す` の入力欄、コメント検索、投稿者 select、絞り込み中の件数 cue、検索 0 件時の復帰 link、Q&A / 確認事項 / 未解決タブ、投稿時に渡す workspace 文脈
 - `app/views/documents/_comment_workspace_handoff_summary.html.slim`: internal user 向け `未解決handoff` summary、`comment_q` / `comment_author_id` の allowlist URL、Q&A と内部限定確認事項のコピー用見出し、0 件 message、通知・担当割当・SLA 非対象 copy
 - `app/views/documents/_comment_workspace_threads.html.slim`: thread 表示、返信欄、版ラベル、Q&A の `回答済みにする` / `クローズする`、確認事項の位置表示と `解決`、検索 0 件時の復帰 link、返信・状態更新時に渡す workspace 文脈
-- `spec/requests/dashboard_open_question_handoff_spec.rb`: dashboard の open public Q&A root 候補、resolved / rejected / internal-only / archived document 除外、external user 非表示、候補 0 件時の non-SLA copy
 - `spec/requests/document_comment_workspace_handoff_spec.rb`: internal user 向け handoff summary、external user 非表示、検索文脈、resolved / closed 除外、secret-like query 非表示
 - `spec/requests/document_review_comment_redirect_context_spec.rb`: create / reply / status update 後の `comment_tab` / `comment_q` 復元境界と、無効 tab / 正規化済み検索語の扱い
