@@ -31,7 +31,7 @@ CHECKS = [
     path: "app/views/admin/access_logs/index.html.slim",
     patterns: [
       /table_key = :admin_access_logs/,
-      /table_preferences_editor\(table_key: table_key/,
+      /ColumnSettingsComponent\.new\(table_key: table_key/,
       /data-rails-table-preferences-column-key="accessed_at"/,
       /data-rails-table-preferences-column-key="action_type"/,
       /data-rails-table-preferences-column-key="target"/,
