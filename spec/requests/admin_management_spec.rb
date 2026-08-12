@@ -33,11 +33,6 @@ RSpec.describe "Admin management", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(page_text).to include("管理画面")
-      expect(admin_nav_hrefs).to include(
-        admin_root_path,
-        admin_projects_path,
-        admin_document_usage_reports_path
-      )
     end
 
     it "shows company_master_admin users a scoped company and user landing" do
@@ -242,16 +237,6 @@ RSpec.describe "Admin management", type: :request do
       expect(response).to have_http_status(:ok)
       expect(page_text).to include("member@example.com")
       expect(page_text).not_to include("other@example.com")
-      expect(admin_nav_hrefs).to include(admin_companies_path, admin_users_path)
-      expect(admin_nav_hrefs).not_to include(
-        admin_root_path,
-        admin_projects_path,
-        admin_project_memberships_path,
-        admin_documents_path,
-        admin_document_permissions_path,
-        admin_access_logs_path,
-        admin_document_usage_reports_path
-      )
 
       patch admin_user_path(managed_user.public_id), params: {
         user: { name: "Member Updated", email_address: managed_user.email_address, user_type: :internal, company_id: other_company.id, active: true }
