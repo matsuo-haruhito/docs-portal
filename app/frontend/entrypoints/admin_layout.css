@@ -341,3 +341,19 @@
   padding: 0.1rem 0.4rem;
   border-radius: 8px;
 }
+
+/* Filter Details (collapsible) */
+.filter-details {
+  margin-top: 0.75rem;
+}
+
+.filter-details > summary {
+  font-size: 0.82rem;
+  color: #1565c0;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.filter-details[open] > summary {
+  margin-bottom: 0.5rem;
+}

@@ -17,14 +17,22 @@ h1
         = link_to "OK", project_documents_path(@project, q: @selected_source_path), class: "button secondary"
 
 section.card
-  h2 検索・絞り込み
-
   - active_text_filters = %i[q tag category document_kind visibility_policy].any? { |key| @filters[key].present? }
   - active_practical_filters = %i[has_html has_files has_pdf has_diagram].any? { |key| ActiveModel::Type::Boolean.new.cast(@filters[key]) }
   - has_active_document_filters = active_text_filters || active_practical_filters
 
   = form_with url: project_documents_path(@project), method: :get, local: true, class: "document-filter-form" do |form|
-    .form-grid.form-grid--compact
+    .admin-filter-toolbar__form
+      .admin-filter-toolbar__fields
+        = form.search_field :q, value: @filters[:q], placeholder: "文書名・本文・添付ファイル名で検索", class: "admin-filter-toolbar__search"
+      .admin-filter-toolbar__actions
+        = form.submit "検索", class: "button"
+        - if has_active_document_filters
+          = link_to "クリア", project_documents_path(@project), class: "button secondary"
+
+    details.filter-details open=(active_text_filters || active_practical_filters ? true : nil)
+      summary 詳細条件
+      .form-grid.form-grid--compact
       label.form-field
         span キーワード
         = form.search_field :q, value: @filters[:q], placeholder: "文書名・URL識別子・元パス・版・本文・キーワード・添付ファイル名/パス"
