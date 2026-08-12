@@ -41,11 +41,6 @@ RSpec.describe "Document comment Q&A runbook references" do
       source_signals: ["未解決handoff", "comment_q", "comment_author_id"]
     },
     {
-      label: "dashboard open Q&A handoff spec",
-      path: "spec/requests/dashboard_open_question_handoff_spec.rb",
-      source_signals: ["Dashboard open Q&A handoff", "open public root Q&A"]
-    },
-    {
       label: "workspace handoff spec",
       path: "spec/requests/document_comment_workspace_handoff_spec.rb",
       source_signals: ["Document comment workspace handoff summary", "excludes arbitrary request query values"]
@@ -58,7 +53,6 @@ RSpec.describe "Document comment Q&A runbook references" do
   ].freeze
 
   DOC_COMMENT_QA_REQUIRED_REQUEST_SPECS = %w[
-    spec/requests/dashboard_open_question_handoff_spec.rb
     spec/requests/document_comment_workspace_handoff_spec.rb
     spec/requests/document_review_comment_redirect_context_spec.rb
   ].freeze
