@@ -10,7 +10,6 @@
 .heading-with-help
   h1 定期ジョブ
   = render InfoTooltipComponent.new(label: "定期ジョブ", description: "登録済み定期ジョブの定義状態、実行間隔、直近実行結果を確認します。未登録の定義はdispatcher実行時に自動登録されます。")
-= render "admin/nav"
 
 .card
   = form_with url: admin_recurring_job_schedules_path, method: :get, local: true, class: "filters" do |form|

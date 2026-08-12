@@ -1,0 +1,34 @@
+doctype html
+html lang="ja"
+  head
+    title = ["管理コンソール", content_for(:title), "文書ポータル"].compact_blank.join(" | ")
+    meta name="viewport" content="width=device-width,initial-scale=1"
+    = csrf_meta_tags
+    = csp_meta_tag
+    = stylesheet_link_tag "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css", integrity: "sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB", crossorigin: "anonymous", media: "all"
+    = stylesheet_link_tag "tree_view", media: "all"
+    = stylesheet_link_tag "document_comment_workspace", media: "all"
+    = stylesheet_link_tag "rails_table_preferences", media: "all"
+    = stylesheet_link_tag "zip_imports", media: "all"
+    = vite_client_tag
+    = vite_javascript_tag "application"
+  body.admin-shell data-controller="admin-sidebar"
+    = link_to "メインコンテンツへ", "#main-content", class: "skip-link"
+    header.admin-header
+      .admin-header__brand
+        = link_to root_path, class: "admin-header__logo" do
+          | 文書ポータル
+        span.admin-header__label 管理コンソール
+      .admin-header__actions
+        = link_to dashboard_path, class: "admin-header__back-link" do
+          i.bi.bi-box-arrow-left.me-1 aria-hidden="true"
+          | 利用者画面へ
+        span.admin-header__user = current_user.display_name
+        = button_to session_path, method: :delete, class: "button secondary" do
+          | ログアウト
+    .admin-layout
+      = render "admin/sidebar"
+      main#main-content.admin-main tabindex="-1"
+        = render "shared/flash_messages"
+        = turbo_frame_tag "main_panel", target: "_top" do
+          = yield

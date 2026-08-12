@@ -5,8 +5,19 @@
 <% recent_clear_params = saved_bookmark_params.except(:recent_q).merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.page).compact %>
 <% current_bookmark_params = saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.page).compact %>
 
-<h1>文書ショートカット</h1>
-<p class="muted">お気に入り、後で読む、最近見た文書を最低限の一覧で表示します。</p>
+<h1>保存済み</h1>
+
+<nav class="admin-tabs" aria-label="保存済みの表示切替">
+  <%= link_to document_bookmarks_path(view: "favorite"), class: "admin-tab#{' is-active' if @view == 'favorite'}", aria: (@view == "favorite" ? { current: "page" } : {}) do %>
+    お気に入り <%= tag.span(@favorite_bookmarks_page.total_count, class: "admin-tab__count") %>
+  <% end %>
+  <%= link_to document_bookmarks_path(view: "read_later"), class: "admin-tab#{' is-active' if @view == 'read_later'}", aria: (@view == "read_later" ? { current: "page" } : {}) do %>
+    後で読む <%= tag.span(@read_later_bookmarks_page.total_count, class: "admin-tab__count") %>
+  <% end %>
+  <%= link_to document_bookmarks_path(view: "recent"), class: "admin-tab#{' is-active' if @view == 'recent'}", aria: (@view == "recent" ? { current: "page" } : {}) do %>
+    最近見た <%= tag.span(@recent_documents.size, class: "admin-tab__count") %>
+  <% end %>
+</nav>
 
 <section class="card">
   <h2>保存済みショートカットの絞り込み</h2>

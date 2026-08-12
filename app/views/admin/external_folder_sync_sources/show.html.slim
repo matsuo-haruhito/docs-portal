@@ -3,7 +3,6 @@
 - detail_return_to = admin_external_folder_sync_source_path(@external_folder_sync_source, return_to: return_to)
 
 h1 外部フォルダ同期設定詳細
-= render "admin/nav"
 
 - latest_run = @runs.first
 - latest_run_detail_anchor = latest_run&.public_id ? "#{latest_run.public_id}-result-details" : nil

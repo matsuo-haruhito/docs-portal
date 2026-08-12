@@ -4,7 +4,6 @@
 h1 モデルブラウザ
 p.muted 主要な管理対象の件数と最近のデータを横断確認できます。既存の管理画面への入口と、実データ確認用の参照画面をまとめています。
 
-= render "admin/nav"
 
 .card
   = form_with url: admin_model_browser_path, method: :get, local: true, class: "filters" do

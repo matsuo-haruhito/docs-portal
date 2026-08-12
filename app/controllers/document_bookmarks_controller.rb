@@ -36,6 +36,7 @@ class DocumentBookmarksController < BaseController
   end
 
   def index
+    @view = params[:view].presence || "favorite"
     @bookmark_project_code = params[:project_code].to_s.strip.presence
     @bookmark_query = bookmark_query
     @bookmark_project_options = bookmark_project_options

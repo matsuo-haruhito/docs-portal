@@ -1,0 +1,149 @@
+/* Home (Dashboard) */
+.home-workspace-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+}
+
+.home-workspace-summary__sep {
+  opacity: 0.5;
+}
+
+/* Priority section */
+.home-section--priority {
+  background: #fff3e0;
+  border: 1px solid #ffe0b2;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.home-section__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.home-pending-list {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.home-pending-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.home-pending-item:hover {
+  border-color: #1976d2;
+  box-shadow: 0 1px 4px rgba(25, 118, 210, 0.1);
+}
+
+.home-pending-item__label {
+  font-size: 0.85rem;
+  color: #495057;
+}
+
+.home-pending-item__count {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e65100;
+}
+
+.home-no-pending {
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+}
+
+/* Document list */
+.home-document-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.home-document-list__item {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.home-document-list__item:last-child {
+  border-bottom: none;
+}
+
+.home-document-list__link {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.home-document-list__link:hover {
+  background: #f8f9fa;
+}
+
+.home-document-list__title {
+  font-weight: 500;
+  color: #1565c0;
+}
+
+.home-document-list__meta {
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.home-document-list--compact .home-document-list__link {
+  padding: 0.4rem 0;
+}
+
+.home-document-list--compact .home-document-list__title {
+  font-size: 0.88rem;
+}
+
+/* Section */
+.home-section {
+  margin-bottom: 2rem;
+}
+
+.home-section__more {
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.home-subsection-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0.75rem 0 0.25rem;
+}
+
+/* Grid */
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+}

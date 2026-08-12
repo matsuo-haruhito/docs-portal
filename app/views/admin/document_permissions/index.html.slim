@@ -11,11 +11,20 @@
 h1
   | 文書権限
   = render InfoTooltipComponent.new(label: "文書権限", description: "文書ごとに会社・ユーザー単位でアクセスレベル（閲覧/ダウンロード/管理）を付与します。ここで設定しないと公開範囲ポリシーに従います。")
-= render "admin/nav"
 
-.card
-  h2 新規登録
-  = render "form", document_permission: @document_permission
+.admin-list-header
+  nav.admin-tabs aria-label="文書権限の表示切替"
+    = link_to admin_document_permissions_path(@filters.compact.merge(view: "assignments")), class: "admin-tab#{' is-active' if @view == 'assignments'}", aria: (@view == "assignments" ? { current: "page" } : {}) do
+      | 権限一覧
+      span.admin-tab__count = @permission_total_count
+    = link_to admin_document_permissions_path(@filters.compact.merge(view: "overview")), class: "admin-tab#{' is-active' if @view == 'overview'}", aria: (@view == "overview" ? { current: "page" } : {}) do
+      | 文書別概要
+  details.admin-create-panel open=(@document_permission.errors.any?)
+    summary.button.secondary
+      i.bi.bi-plus-lg.me-1 aria-hidden="true"
+      | 新規登録
+    .admin-create-panel__body
+      = render "form", document_permission: @document_permission
 
 section.card
   h2 検索・絞り込み

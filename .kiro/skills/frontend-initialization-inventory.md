@@ -34,6 +34,7 @@
 
 | 登録名 | 主な対象 | 初期化分類 | 次の判断 |
 | --- | --- | --- | --- |
+| `admin-sidebar` | 管理コンソールSidebar | mobile drawer 開閉 | admin layout 専用。利用者画面には影響しない |
 | `api-specification-codeblock-dry-run` | API仕様 viewer iframe の http codeblock | same-origin iframe 内 style injection、実行前 confirmation、dry-run endpoint fetch、結果表示 | admin_api_specification / http codeblock 限定で維持。apply / import / 外部 API 送信、generated HTML 永続変更、JSON/YAML validation は追加しない |
 | `archive-preview-tools` | archive preview | `setupArchivePreviewTools()` を専用 controller から refresh する | `preview-tools` bridge から分離済み。download candidate、safe/unsafe path、visible rows、filter chips、copy status、sort/count behavior は helper 側で維持 |
 | `auto-height-frame` | embedded iframe の高さ同期 | iframe load、postMessage、ResizeObserver / MutationObserver | iframe 補助として維持。Turbo 化候補ではない |

@@ -9,7 +9,7 @@ Rails.application.routes.draw do
   match "/oauth/revoke", to: "oauth_cors#preflight", via: :options
   post "mcp", to: "mcp#create"
 
-  root "projects#index"
+  root "dashboard#show"
 
   mount RailsTablePreferences::Engine, at: "/rails_table_preferences"
 
@@ -47,6 +47,7 @@ Rails.application.routes.draw do
 
   namespace :admin do
     root "dashboard#index"
+    get "diagnostics", to: "diagnostics#index", as: :diagnostics
     get "storage_usage/document_files", to: "storage_usage#document_files", as: :storage_usage_document_files
     get "storage_usage/docs_sites", to: "storage_usage#docs_sites", as: :storage_usage_docs_sites
     get "storage_usage/imports", to: "storage_usage#imports", as: :storage_usage_imports

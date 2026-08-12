@@ -1,0 +1,128 @@
+/* User Navbar */
+.user-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1.5rem;
+  background: #fff;
+  border-bottom: 1px solid #e9ecef;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.user-nav__start {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.user-nav__brand {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--ink, #1a1a2e);
+  text-decoration: none;
+}
+
+.user-nav__brand:hover {
+  color: var(--brand, #e67e22);
+}
+
+.user-nav__links {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.user-nav__link {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  color: #495057;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.user-nav__link:hover {
+  background: #f0f0f0;
+  color: #212529;
+}
+
+.user-nav__link.is-active {
+  background: #e3f2fd;
+  color: #1565c0;
+  font-weight: 600;
+}
+
+.user-nav__end {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nav-dropdown__user-info {
+  padding: 0.5rem 1rem;
+  margin: 0;
+}
+
+.nav-dropdown__item--danger {
+  color: #c42b3a;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nav-dropdown__item--danger:hover {
+  background: #fbe9e7;
+}
+
+@media (max-width: 768px) {
+  .user-nav {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .user-nav__links {
+    gap: 0;
+  }
+
+  .user-nav__link {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Global Search */
+.user-nav__search {
+  display: flex;
+  align-items: center;
+}
+
+.user-nav__search-input {
+  width: 280px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: #f8f9fa;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.user-nav__search-input:focus {
+  outline: none;
+  border-color: #1976d2;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
+}
+
+@media (max-width: 768px) {
+  .user-nav__search-input {
+    width: 160px;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-nav__search {
+    display: none;
+  }
+}

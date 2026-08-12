@@ -11,45 +11,48 @@
 - company_filter_summaries << "状態: #{company_active_filter_label}" if company_active_filter_label.present?
 - company_filters_applied = company_filter_summaries.any?
 - company_return_to = request.query_parameters.present? ? request.fullpath : nil
-- company_filter_result_note = @companies.any? ? "検索結果: #{@companies_filtered_count}件（列の表示設定は下の「会社一覧の表示設定」で調整できます）" : "検索結果: #{@companies_filtered_count}件（表示できる会社がないため、列の表示設定は表示していません）"
 
-h1 会社マスタ
-= render "admin/nav"
+.admin-list-header
+  h1 会社マスタ
+  - if admin_user?
+    details.admin-create-panel open=(@company.errors.any?)
+      summary.button.secondary
+        i.bi.bi-plus-lg.me-1 aria-hidden="true"
+        | 新規登録
+      .admin-create-panel__body
+        = render "form", company: @company
+  - else
+    .card
+      h2 = company_form_title
+      = render "form", company: @company
 
-.card
-  h2 = company_form_title
-  = render "form", company: @company
-
-.card
-  h2 会社を探す
-  = form_with url: admin_companies_path, method: :get, local: true do |f|
-    .form-grid
-      label
-        | キーワード
-        = text_field_tag :q, @company_filter_params["q"], placeholder: "ドメイン・会社名", maxlength: 100
-        p.muted ドメイン・会社名の断片で検索できます。最大100文字。
+.admin-filter-toolbar
+  = form_with url: admin_companies_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |f|
+    .admin-filter-toolbar__fields
+      = text_field_tag :q, @company_filter_params["q"], placeholder: "ドメイン・会社名", maxlength: 100, class: "admin-filter-toolbar__search"
       = f.rfk_select :active,
         collection: [["有効", "true"], ["無効", "false"]],
         selected: (%w[true false].include?(selected_active_filter) ? selected_active_filter : nil),
         include_blank: "すべて",
-        wrapper: true,
-        label: "状態",
+        wrapper: false,
         allow_clear: true,
-        placeholder: "すべて"
-    p.actions
-      = submit_tag "絞り込む", class: "button"
+        placeholder: "状態"
+    .admin-filter-toolbar__actions
+      = submit_tag "検索", class: "button"
       - if company_filters_applied
-        = link_to "条件をクリア", admin_companies_path, class: "button secondary"
-  - if company_filters_applied
-    p.muted = "適用中: #{company_filter_summaries.join(' / ')}"
-    p.muted = company_filter_result_note
+        = link_to "クリア", admin_companies_path, class: "button secondary"
 
-- if @companies.any?
-  .card
+- if company_filters_applied
+  .admin-filter-chips
+    - company_filter_summaries.each do |summary|
+      span.admin-filter-chip = summary
+
+.admin-list-meta
+  span.admin-list-meta__count = "#{@companies_filtered_count}件"
+  - if @companies.any?
     = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "会社一覧の表示設定")
 
-  p.muted = "表示中: #{@companies_pagination[:from]}-#{@companies_pagination[:to]}件 / #{@companies_filtered_count}件"
-
+- if @companies.any?
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
       tr
@@ -67,36 +70,30 @@ h1 会社マスタ
           td data-rails-table-preferences-column-key="display_name" = company.display_name
           td data-rails-table-preferences-column-key="status"
             - if company.active?
-              = render StatusBadgeComponent.new(status: "active", label: "有効", tooltip: "この会社は有効です。所属ユーザーはログインできます。")
+              = render StatusBadgeComponent.new(status: "active", label: "有効")
             - else
-              = render StatusBadgeComponent.new(status: "inactive", label: "無効", tooltip: "この会社は無効化されています。所属ユーザーはログインできません。")
+              = render StatusBadgeComponent.new(status: "inactive", label: "無効")
           td.actions data-rails-table-preferences-column-key="actions"
             = edit_link_to "編集", edit_admin_company_path(company, return_to: company_return_to)
             - if admin_user?
-              = delete_link_to "削除（影響確認）", admin_company_path(company, return_to: company_return_to), confirm: company_delete_confirm
+              = delete_link_to "削除", admin_company_path(company, return_to: company_return_to), confirm: company_delete_confirm
 
   - if @companies_pagination[:total_pages] > 1
     nav.pagination aria-label="会社一覧ページ"
-      p.actions
+      .admin-pagination
         - if @companies_pagination[:prev_page]
-          - previous_company_page = @companies_pagination[:prev_page]
-          - previous_company_page_label = "会社一覧の#{previous_company_page}ページ目へ（現在の検索条件を保持）"
-          = link_to "前へ", admin_companies_path(@company_page_params.merge(page: previous_company_page)), class: "button secondary", aria: { label: previous_company_page_label }, title: previous_company_page_label
-        span.muted = "#{@companies_pagination[:page]} / #{@companies_pagination[:total_pages]}ページ"
+          = link_to "前へ", admin_companies_path(@company_page_params.merge(page: @companies_pagination[:prev_page])), class: "button secondary"
+        span.muted = "#{@companies_pagination[:page]} / #{@companies_pagination[:total_pages]}"
         - if @companies_pagination[:next_page]
-          - next_company_page = @companies_pagination[:next_page]
-          - next_company_page_label = "会社一覧の#{next_company_page}ページ目へ（現在の検索条件を保持）"
-          = link_to "次へ", admin_companies_path(@company_page_params.merge(page: next_company_page)), class: "button secondary", aria: { label: next_company_page_label }, title: next_company_page_label
+          = link_to "次へ", admin_companies_path(@company_page_params.merge(page: @companies_pagination[:next_page])), class: "button secondary"
 - else
-  section.card
-    h2 会社一覧
-    - if @companies_total_count.to_i.zero?
-      - if admin_user?
-        = render EmptyStateComponent.new(heading: "会社が未登録です", description: "上の「新規登録」でドメインと会社名を入力して、最初の会社を登録してください。")
-      - else
-        = render EmptyStateComponent.new(heading: "会社情報がありません", description: "表示できる自社会社情報がありません。必要な場合は internal admin に確認してください。")
+  - if @companies_total_count.to_i.zero?
+    - if admin_user?
+      = render EmptyStateComponent.new(heading: "会社が未登録です", description: "「新規登録」でドメインと会社名を入力して、最初の会社を登録してください。")
     - else
-      = render EmptyStateComponent.new(heading: "条件に一致する会社がありません", description: "キーワードや状態の条件を変更するか、条件をクリアしてください。") do |component|
-        - if company_filters_applied
-          - component.with_action do
-            = link_to "条件をクリア", admin_companies_path, class: "button secondary"
+      = render EmptyStateComponent.new(heading: "会社情報がありません", description: "表示できる自社会社情報がありません。必要な場合は internal admin に確認してください。")
+  - else
+    = render EmptyStateComponent.new(heading: "条件に一致する会社がありません", description: "キーワードや状態の条件を変更するか、条件をクリアしてください。") do |component|
+      - if company_filters_applied
+        - component.with_action do
+          = link_to "条件をクリア", admin_companies_path, class: "button secondary"

@@ -3,7 +3,17 @@
 - lifecycle_purpose_label = { "archive" => "アーカイブ", "restore" => "復元" }[@bulk_edit_lifecycle_purpose]
 
 h1 文書一括編集
-= render "admin/nav"
+
+nav.admin-steps aria-label="一括編集の手順"
+  span.admin-step.is-active
+    span.admin-step__number 1
+    span.admin-step__label 対象と変更内容
+  span.admin-step
+    span.admin-step__number 2
+    span.admin-step__label dry-run確認
+  span.admin-step
+    span.admin-step__number 3
+    span.admin-step__label 実行
 
 .card
   h2 事前確認の作成

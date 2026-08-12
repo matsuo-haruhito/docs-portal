@@ -1,7 +1,6 @@
 - page_title "文書一括編集 事前確認"
 
 h1 文書一括編集 事前確認
-= render "admin/nav"
 
 - warning_count = @bulk_edit_dry_run.warnings_json.size
 - error_count = @bulk_edit_dry_run.errors_json.size

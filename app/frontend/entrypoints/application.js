@@ -1,5 +1,9 @@
 import "./application.css"
+import "./admin_layout.css"
+import "./user_navbar.css"
+import "./home.css"
 import "./bootstrap_overrides.css"
+import "bootstrap-icons/font/bootstrap-icons.css"
 import "./nav_current_label.css"
 import "./document_version_diff_display_mode.css"
 import "./document_version_tabs.css"
@@ -11,6 +15,7 @@ import { Application } from "@hotwired/stimulus"
 import { TomSelectController } from "rails_fields_kit"
 import "tom-select/dist/css/tom-select.css"
 import "./tom_select_overrides.css"
+import AdminSidebarController from "../controllers/admin_sidebar_controller"
 import ApiSpecificationCodeblockDryRunController from "../controllers/api_specification_codeblock_dry_run_controller"
 import ArchivePreviewToolsController from "../controllers/archive_preview_tools_controller"
 import AutoHeightFrameController from "../controllers/auto_height_frame_controller"
@@ -43,6 +48,7 @@ import StructuredPreviewToolsController from "../controllers/structured_preview_
 import TextPreviewToolsController from "../controllers/text_preview_tools_controller"
 
 const application = Application.start()
+application.register("admin-sidebar", AdminSidebarController)
 application.register("rails-table-preferences", RailsTablePreferencesController)
 application.register("rails-fields-kit--tom-select", TomSelectController)
 application.register("api-specification-codeblock-dry-run", ApiSpecificationCodeblockDryRunController)
