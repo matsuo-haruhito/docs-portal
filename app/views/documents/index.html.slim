@@ -11,10 +11,7 @@ h1
   .upload-complete-dialog role="dialog" aria-modal="false" aria-label="アップロード完了"
     .upload-complete-dialog__panel
       h2 アップロードを完了しました
-      p.muted
-        = @uploaded_version.document.title
-        |  / 
-        = document_version_label(@uploaded_version)
+      p.muted = "#{@uploaded_version.document.title} / #{document_version_label(@uploaded_version)}"
       p.actions
         = link_to "差異を確認", document_version_path(@uploaded_version), class: "button"
         = link_to "OK", project_documents_path(@project, q: @selected_source_path), class: "button secondary"
@@ -32,21 +29,41 @@ section.card
         span キーワード
         = form.search_field :q, value: @filters[:q], placeholder: "文書名・URL識別子・元パス・版・本文・キーワード・添付ファイル名/パス"
 
-      label.form-field
-        span タグ
-        = form.select :tag, options_for_select([["すべて", ""]] + @available_tags.map { [_1.name, _1.normalized_name] }, @filters[:tag])
+      = form.rfk_select :tag,
+        collection: @available_tags.map { [_1.name, _1.normalized_name] },
+        selected: @filters[:tag].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "タグ",
+        allow_clear: true,
+        placeholder: "すべて"
 
-      label.form-field
-        span カテゴリ
-        = form.select :category, options_for_select([["すべて", ""]] + Document.categories.keys.map { [localized_label("documents.category", _1), _1] }, @filters[:category])
+      = form.rfk_select :category,
+        collection: Document.categories.keys.map { [localized_label("documents.category", _1), _1] },
+        selected: @filters[:category].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "カテゴリ",
+        allow_clear: true,
+        placeholder: "すべて"
 
-      label.form-field
-        span ファイル種
-        = form.select :document_kind, options_for_select([["すべて", ""]] + Document.document_kinds.keys.map { [localized_label("documents.document_kind", _1), _1] }, @filters[:document_kind])
+      = form.rfk_select :document_kind,
+        collection: Document.document_kinds.keys.map { [localized_label("documents.document_kind", _1), _1] },
+        selected: @filters[:document_kind].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "ファイル種",
+        allow_clear: true,
+        placeholder: "すべて"
 
-      label.form-field
-        span 公開範囲
-        = form.select :visibility_policy, options_for_select([["すべて", ""]] + Document.visibility_policies.keys.map { [localized_label("documents.visibility_policy", _1), _1] }, @filters[:visibility_policy])
+      = form.rfk_select :visibility_policy,
+        collection: Document.visibility_policies.keys.map { [localized_label("documents.visibility_policy", _1), _1] },
+        selected: @filters[:visibility_policy].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "公開範囲",
+        allow_clear: true,
+        placeholder: "すべて"
 
     fieldset.filter-fieldset
       legend 実用フィルタ
@@ -93,19 +110,9 @@ section.card
 - page_start = @documents_count.zero? ? 0 : ((@current_page - 1) * @per_page) + 1
 - page_end = [@current_page * @per_page, @documents_count].min
 p.muted
-  | 検索結果: 
-  = @documents_count
-  | 件
+  | 検索結果: #{@documents_count}件
   - if @documents_count.positive?
-    |  （
-    = page_start
-    | -
-    = page_end
-    | 件目 / 
-    = @current_page
-    | /
-    = @total_pages
-    | ページ）
+    |  （#{page_start}-#{page_end}件目 / #{@current_page}/#{@total_pages}ページ）
 
 - if @documents_count.zero?
   section.card.empty-state
@@ -136,10 +143,7 @@ p.muted
       span.button.secondary.disabled 前へ
 
     span.muted
-      | ページ 
-      = @current_page
-      |  / 
-      = @total_pages
+      | ページ #{@current_page} / #{@total_pages}
 
     - if @current_page < @total_pages
       = link_to "次へ", project_documents_path(@project, pagination_params.merge(page: @current_page + 1)), class: "button secondary"
@@ -175,11 +179,7 @@ p.muted
       p.muted
         | PDFだけ出力を選ぶと、Markdown原本や添付ファイルの追加指定よりもPDFのみの出力を優先します。ZIP内パスの選択はPDFの配置にも適用されます。
     p.muted
-      | ZIP対象: 検索結果全体 
-      = @selectable_documents_count
-      | 件 / このページ 
-      = page_selectable_documents_count
-      | 件。最新版がない文書はZIP対象にできないため、チェックできません。
+      | ZIP対象: 検索結果全体 #{@selectable_documents_count}件 / このページ #{page_selectable_documents_count}件。最新版がない文書はZIP対象にできないため、チェックできません。
     p.actions
       button.button.secondary type="button" data-action="document-zip-selection#selectPage"
         = "このページ内の選択可能#{page_selectable_documents_count}件を全選択"
@@ -218,7 +218,7 @@ p.muted
                   - match_summaries.each do |summary|
                     li
                       span.badge = summary.label
-                      |  
+                      |
                       code = summary.value
               - else
                 span.muted -

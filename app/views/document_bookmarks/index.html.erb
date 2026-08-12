@@ -17,10 +17,14 @@
     <% end %>
     <div class="form-grid">
       <div class="field">
-        <%= form.label :project_code, "案件" %>
-        <%= form.select :project_code,
-              options_for_select(@bookmark_project_options.map { |project| [project.code.present? ? "#{project.name}（#{project.code}）" : project.name, project.code] }, @bookmark_project_code),
-              { include_blank: "すべての案件" } %>
+        <%= form.rfk_select :project_code,
+              collection: @bookmark_project_options.map { |project| [project.code.present? ? "#{project.name}（#{project.code}）" : project.name, project.code] },
+              selected: @bookmark_project_code.presence,
+              include_blank: "すべての案件",
+              wrapper: false,
+              label: "案件",
+              allow_clear: true,
+              placeholder: "すべての案件" %>
       </div>
       <div class="field">
         <%= form.label :bookmark_q, "保存済みショートカットを検索" %>

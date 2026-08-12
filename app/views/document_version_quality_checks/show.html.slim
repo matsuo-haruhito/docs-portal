@@ -55,15 +55,25 @@ p
 
 .card
   .heading-with-help
-    h2 Check table filter
-    = render InfoTooltipComponent.new(label: "Check table filter", description: "この filter は下の check table だけに適用されます。Preview と JSON / Markdown export は全件の read-only evidence のままです。")
-  = form_with url: document_version_quality_check_path(@version), method: :get, local: true do
-    .field
-      = label_tag :severity, "severity"
-      = select_tag :severity, options_for_select(severity_options, @quality_check_severity_filter)
-    .field
-      = label_tag :key, "key"
-      = select_tag :key, options_for_select(key_options, @quality_check_key_filter)
+    h2 品質チェック絞り込み
+    = render InfoTooltipComponent.new(label: "品質チェック絞り込み", description: "この絞り込みは下のチェック結果テーブルだけに適用されます。プレビューとJSON/Markdownエクスポートは全件のread-onlyのままです。")
+  = form_with url: document_version_quality_check_path(@version), method: :get, local: true do |form|
+    = form.rfk_select :severity,
+      collection: severity_options.reject { |(_, v)| v.blank? },
+      selected: @quality_check_severity_filter.presence,
+      include_blank: "すべて",
+      wrapper: true,
+      label: "重要度",
+      allow_clear: true,
+      placeholder: "すべて"
+    = form.rfk_select :key,
+      collection: key_options.reject { |(_, v)| v.blank? },
+      selected: @quality_check_key_filter.presence,
+      include_blank: "すべて",
+      wrapper: true,
+      label: "チェック項目",
+      allow_clear: true,
+      placeholder: "すべて"
     p.actions
       = button_tag "絞り込む", type: :submit
       = link_to "解除", document_version_quality_check_path(@version), class: "button secondary"

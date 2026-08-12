@@ -75,7 +75,13 @@
       </div>
       <div>
         <%= form.label :status, "状態", class: "block text-sm font-semibold" %>
-        <%= form.select :status, options_for_select([["すべて", ""]] + GeneratedFileRun.statuses.keys.map { [generated_file_run_status_label(_1), _1] }, @filters[:status]), {}, class: "mt-1 w-full rounded border px-2 py-1" %>
+        <%= form.rfk_select :status,
+          collection: GeneratedFileRun.statuses.keys.map { [generated_file_run_status_label(_1), _1] },
+          selected: @filters[:status].presence,
+          include_blank: "すべて",
+          wrapper: false,
+          allow_clear: true,
+          placeholder: "すべて" %>
       </div>
       <div>
         <%= form.label :job_id, "ジョブID", class: "block text-sm font-semibold" %>

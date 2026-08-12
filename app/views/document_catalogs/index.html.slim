@@ -19,17 +19,27 @@ h1
   = @project.name
   |  / 文書カタログ
 
-= form_with url: project_document_catalogs_path(@project), method: :get, local: true do
+= form_with url: project_document_catalogs_path(@project), method: :get, local: true do |form|
   .field
     = label_tag :q, "名称・説明"
     = search_field_tag :q, @catalog_query, placeholder: "カタログ名または説明", maxlength: catalog_query_max_length
     p.muted カタログ名・説明が対象です。文書本文・item文書名・添付ファイル名は対象外です。100文字まで入力できます。
-  .field
-    = label_tag :audience_type, "対象"
-    = select_tag :audience_type, options_for_select(audience_options, @audience_type_filter)
-  .field
-    = label_tag :visibility_policy, "公開範囲"
-    = select_tag :visibility_policy, options_for_select(visibility_options, @visibility_policy_filter)
+  = form.rfk_select :audience_type,
+    collection: audience_options.reject { |(_, v)| v.blank? },
+    selected: @audience_type_filter.presence,
+    include_blank: "すべて",
+    wrapper: true,
+    label: "対象",
+    allow_clear: true,
+    placeholder: "すべて"
+  = form.rfk_select :visibility_policy,
+    collection: visibility_options.reject { |(_, v)| v.blank? },
+    selected: @visibility_policy_filter.presence,
+    include_blank: "すべて",
+    wrapper: true,
+    label: "公開範囲",
+    allow_clear: true,
+    placeholder: "すべて"
   p.actions
     = submit_tag "絞り込み", class: "button"
     - if has_filters

@@ -86,11 +86,23 @@
       </div>
       <div>
         <%= form.label :status, "状態", class: "block text-sm font-semibold" %>
-        <%= form.select :status, options_for_select([["すべて", ""]] + GeneratedFileEvent.statuses.keys.map { [generated_file_event_status_label(_1), _1] }, @filters[:status]), {}, class: "mt-1 w-full rounded border px-2 py-1" %>
+        <%= form.rfk_select :status,
+          collection: GeneratedFileEvent.statuses.keys.map { [generated_file_event_status_label(_1), _1] },
+          selected: @filters[:status].presence,
+          include_blank: "すべて",
+          wrapper: false,
+          allow_clear: true,
+          placeholder: "すべて" %>
       </div>
       <div>
         <%= form.label :operation, "操作種別", class: "block text-sm font-semibold" %>
-        <%= form.select :operation, options_for_select([["すべて", ""]] + %w[create update delete].map { [generated_file_operation_label(_1), _1] }, @filters[:operation]), {}, class: "mt-1 w-full rounded border px-2 py-1" %>
+        <%= form.rfk_select :operation,
+          collection: %w[create update delete].map { [generated_file_operation_label(_1), _1] },
+          selected: @filters[:operation].presence,
+          include_blank: "すべて",
+          wrapper: false,
+          allow_clear: true,
+          placeholder: "すべて" %>
       </div>
       <div>
         <%= form.label :event_source, "イベント発生元", class: "block text-sm font-semibold" %>
