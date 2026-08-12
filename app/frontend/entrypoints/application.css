@@ -1409,6 +1409,13 @@ ul {
   color: var(--muted);
 }
 
+.empty-state > .bi {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
 .empty-state__heading {
   font-size: 1.1rem;
   font-weight: 700;

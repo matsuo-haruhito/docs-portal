@@ -84,4 +84,4 @@
           td = preview["source_name"].presence || "-"
           td = preview["relative_path"].presence || "-"
           td = preview["content_hash"].presence || "-"
-          td = link_to "詳細", admin_file_upload_dry_run_path(dry_run), class: "button secondary", aria: { label: detail_label }
+          td = detail_link_to "詳細", admin_file_upload_dry_run_path(dry_run), aria: { label: detail_label }

@@ -145,7 +145,7 @@ section.card
           td data-rails-table-preferences-column-key="approver" = access_request.approver&.email_address || "-"
           td.actions data-rails-table-preferences-column-key="actions"
             p.actions
-              = link_to "詳細", admin_access_request_path(access_request, return_to: request.fullpath), class: "button secondary"
+              = detail_link_to "詳細", admin_access_request_path(access_request, return_to: request.fullpath)
             - if access_request.pending?
               .heading-with-help
                 span 申請操作

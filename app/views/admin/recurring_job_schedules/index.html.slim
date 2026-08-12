@@ -100,4 +100,4 @@
             td data-rails-table-preferences-column-key="last_started_at" = schedule.last_started_at ? l(schedule.last_started_at) : "-"
             td data-rails-table-preferences-column-key="last_finished_at" = schedule.last_finished_at ? l(schedule.last_finished_at) : "-"
             td data-rails-table-preferences-column-key="last_status" = recurring_job_status_badge(schedule.last_status)
-            td data-rails-table-preferences-column-key="actions" = link_to "詳細", admin_recurring_job_schedule_path(schedule, return_to: current_list_path), class: "button secondary"
+            td data-rails-table-preferences-column-key="actions" = detail_link_to "詳細", admin_recurring_job_schedule_path(schedule, return_to: current_list_path)

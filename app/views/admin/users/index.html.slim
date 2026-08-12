@@ -70,9 +70,9 @@ h1 ユーザーマスタ
           td data-rails-table-preferences-column-key="company" = user.company&.display_name || "-"
           td data-rails-table-preferences-column-key="status"
             - if user.active?
-              = render StatusBadgeComponent.new(status: "active", label: "有効")
+              = render StatusBadgeComponent.new(status: "active", label: "有効", tooltip: "このユーザーはログインと操作が可能です。")
             - else
-              = render StatusBadgeComponent.new(status: "inactive", label: "無効")
+              = render StatusBadgeComponent.new(status: "inactive", label: "無効", tooltip: "このユーザーは無効化されており、ログインできません。")
           td.actions data-rails-table-preferences-column-key="actions"
             = edit_link_to "編集", edit_admin_user_path(user, return_to: user_return_to)
             = delete_link_to "削除", admin_user_path(user, return_to: user_return_to), confirm: "ユーザー「#{user.display_name}」を削除しますか？アクセス履歴や所属情報との関係を確認してください。"

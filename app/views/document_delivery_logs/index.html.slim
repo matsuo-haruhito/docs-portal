@@ -40,7 +40,9 @@
 - table_columns = document_delivery_log_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 
-h1 送付履歴
+h1
+  | 送付履歴
+  = render InfoTooltipComponent.new(label: "送付履歴", description: "社外への文書送付を記録する画面です。下書き→送付済みの順で管理し、送付失敗の場合は理由を記録します。")
 
 p.muted
   | #{status_labels.fetch("draft")} #{summary_status_counts.fetch("draft", 0)}件 / #{status_labels.fetch("sent")} #{summary_status_counts.fetch("sent", 0)}件 / #{status_labels.fetch("failed")} #{summary_status_counts.fetch("failed", 0)}件

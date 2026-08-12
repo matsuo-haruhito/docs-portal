@@ -4,7 +4,9 @@
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - active_filter_labels = admin_document_set_filter_labels(@filters)
 
-h1 文書セット
+h1
+  | 文書セット
+  = render InfoTooltipComponent.new(label: "文書セット", description: "案件内の文書をグループ化して外部ユーザーへ配布する単位です。「固定版」を指定すると特定の版を配布し、未指定なら常に最新版を参照します。")
 = render "admin/nav"
 
 .card

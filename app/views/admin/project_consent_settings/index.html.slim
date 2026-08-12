@@ -6,7 +6,9 @@
 - has_filters = @selected_project_id.present? || @selected_consent_term_id.present? || @selected_enabled.present?
 - empty_message = has_filters ? "条件に一致する案件同意設定はありません。" : "まだ案件同意設定はありません。"
 
-h1 案件同意設定
+h1
+  | 案件同意設定
+  = render InfoTooltipComponent.new(label: "案件同意設定", description: "案件ごとに、どの同意文面をいつ（閲覧前・ダウンロード前）必須にするかを設定します。ここで有効にした設定は、対象案件の利用者に同意画面として表示されます。")
 = render "admin/nav"
 
 .card

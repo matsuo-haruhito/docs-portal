@@ -175,7 +175,7 @@ h1 Webhook設定
           td data-rails-table-preferences-column-key="response_status" = webhook_delivery_response_status_label(delivery)
           td data-rails-table-preferences-column-key="error_message" = WebhookDeliveryDiagnosticPreview.new(delivery.error_message).to_s
           td.actions data-rails-table-preferences-column-key="actions"
-            = link_to "詳細", admin_webhook_delivery_path(delivery.public_id, delivery_return_params)
+            = detail_link_to "詳細", admin_webhook_delivery_path(delivery.public_id, delivery_return_params)
             - if delivery.retryable?
               - retry_delivery_label = "#{retry_delivery_context} を再送"
               = button_to "再送", retry_dispatch_admin_webhook_delivery_path(delivery.public_id, delivery_return_params), method: :post, class: "button secondary", title: retry_delivery_label, aria: { label: retry_delivery_label }, form: { data: { turbo_confirm: "#{retry_delivery_context} を現在のWebhook設定で再送します。受信先側の重複処理に注意してください。" } }

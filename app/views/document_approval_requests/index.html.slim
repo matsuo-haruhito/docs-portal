@@ -35,7 +35,9 @@
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - user_filter_search_limit = DocumentApprovalRequestsController::USER_FILTER_SEARCH_LIMIT
 
-h1 確認依頼
+h1
+  | 確認依頼
+  = render InfoTooltipComponent.new(label: "確認依頼", description: "社内担当者による文書の確認・承認フローです。「対応待ち」は確認相手のアクションを待っている依頼、「OK済み」は承認完了、「Cancel済み」は依頼者が取り消した依頼です。")
 
 - if @document.present?
   p.muted

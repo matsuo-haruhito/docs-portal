@@ -82,7 +82,7 @@ h1
             = "#{visible_items_count}件"
             br
             small.muted 現在の利用者に表示
-          td = link_to "詳細", project_document_catalog_path(@project, catalog)
+          td = detail_link_to "詳細", project_document_catalog_path(@project, catalog)
 - else
   - if has_filters
     section.card.document-catalog-empty-state
