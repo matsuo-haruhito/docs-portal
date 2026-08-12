@@ -153,7 +153,7 @@ main {
   margin: 28px auto;
   background: var(--panel);
   padding: 28px;
-  border-radius: 22px;
+  border-radius: 10px;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
   border: 1px solid rgba(255, 80, 0, 0.12);
 }
@@ -243,7 +243,7 @@ body.is-sidebar-resizing {
   bottom: 12px;
   width: 10px;
   cursor: col-resize;
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
   z-index: 3;
 }
@@ -255,7 +255,7 @@ body.is-sidebar-resizing {
   bottom: 0;
   left: 4px;
   width: 2px;
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
 }
 
@@ -292,7 +292,7 @@ body.is-sidebar-resizing .sidebar-resizer::after {
 .main-panel {
   background: var(--panel);
   padding: 28px;
-  border-radius: 22px;
+  border-radius: 10px;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
   border: 1px solid rgba(255, 80, 0, 0.12);
   min-width: 0;
@@ -378,7 +378,7 @@ button {
   border: 1px solid var(--accent-2);
   background: var(--accent-2);
   color: white;
-  border-radius: 999px;
+  border-radius: 6px;
   padding: 8px 14px;
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(15, 98, 254, 0.15);
@@ -402,7 +402,7 @@ header .button.secondary {
 
 .card {
   border: 1px solid rgba(255, 80, 0, 0.14);
-  border-radius: 18px;
+  border-radius: 10px;
   padding: 18px;
   margin-bottom: 24px;
   background: linear-gradient(180deg, #ffffff 0%, #fffaf7 100%);
@@ -463,7 +463,7 @@ header .button.secondary {
 .nav-list a {
   display: inline-block;
   padding: 8px 12px;
-  border-radius: 999px;
+  border-radius: 6px;
   background: #eff6ff;
 }
 
@@ -492,7 +492,7 @@ ul {
 .page-hero {
   margin-bottom: 24px;
   padding: 24px;
-  border-radius: 22px;
+  border-radius: 10px;
   background: radial-gradient(circle at top left, rgba(255, 80, 0, 0.15), transparent 32%), radial-gradient(circle at right, rgba(255, 80, 0, 0.10), transparent 28%), linear-gradient(135deg, #fff7f2 0%, #f8fbff 55%, #fefefe 100%);
   border: 1px solid rgba(255, 80, 0, 0.16);
 }
@@ -790,7 +790,7 @@ ul {
 
 .site-viewer-shell {
   border: 1px solid rgba(255, 80, 0, 0.14);
-  border-radius: 22px;
+  border-radius: 10px;
   overflow: hidden;
   background: linear-gradient(180deg, #ffffff 0%, #fff8f4 100%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -826,7 +826,7 @@ ul {
 .site-viewer-outline__item {
   max-width: min(100%, 28rem);
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 6px;
   border-color: #cbd5e1;
   background: white;
   color: #1f2933;
@@ -892,7 +892,7 @@ ul {
   gap: 8px;
   max-width: 520px;
   padding: 24px 28px;
-  border-radius: 22px;
+  border-radius: 10px;
   border: 2px dashed var(--accent);
   background: rgba(255, 255, 255, 0.94);
   color: var(--ink);
@@ -1084,7 +1084,7 @@ ul {
     position: static;
     max-height: none;
     border-left: 1px solid rgba(255, 80, 0, 0.18);
-    border-radius: 22px;
+    border-radius: 10px;
   }
 
   .sidebar-resizer {
@@ -1289,7 +1289,7 @@ ul {
   display: inline-flex;
   align-items: center;
   padding: 6px 14px;
-  border-radius: 999px;
+  border-radius: 6px;
   background: #f1f5f9;
   color: var(--ink);
   font-size: 0.85rem;
@@ -1317,7 +1317,7 @@ ul {
   align-items: center;
   gap: 4px;
   padding: 2px 10px;
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 0.78rem;
   font-weight: 600;
   line-height: 1.6;
@@ -1498,7 +1498,7 @@ ul {
   align-items: center;
   padding: 6px 12px;
   border: 1px solid var(--accent-2);
-  border-radius: 999px;
+  border-radius: 6px;
   background: #fff;
   color: var(--accent-2);
   font-size: 0.9rem;
@@ -1714,7 +1714,7 @@ table[data-rails-table-preferences-table-key-value] caption {
 
 .info-tooltip:focus-visible,
 .help-tooltip:focus-visible {
-  border-radius: 999px;
+  border-radius: 6px;
   outline: 3px solid rgba(15, 98, 254, 0.25);
   outline-offset: 2px;
 }
