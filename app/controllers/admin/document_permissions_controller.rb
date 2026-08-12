@@ -136,16 +136,28 @@ class Admin::DocumentPermissionsController < Admin::BaseController
     @filters = filter_params
     @selected_project = Project.find_by(id: @filters[:project_id]) if @filters[:project_id].present?
     @document_permissions_exist = DocumentPermission.exists?
+    @view = params[:view].presence || "assignments"
 
     document_scope = filtered_document_scope
     permission_scope = filtered_permission_scope
 
-    @document_permissions = permission_scope
-      .joins(:document)
-      .where(document_id: document_scope.select(:id))
-      .includes({ document: :project }, :company, :user)
-      .order("documents.title", "document_permissions.id")
-    @permission_overview_rows = DocumentPermissionOverview.new(document_scope, permission_scope:).rows
+    @permission_total_count = permission_scope.joins(:document).where(document_id: document_scope.select(:id)).count
+
+    if @view == "overview"
+      @permission_overview_rows = DocumentPermissionOverview.new(document_scope, permission_scope:).rows
+    else
+      per_page = DEFAULT_ADMIN_LIST_PER_PAGE
+      page = [params[:page].to_i, 1].max
+      all_permissions = permission_scope
+        .joins(:document)
+        .where(document_id: document_scope.select(:id))
+        .includes({ document: :project }, :company, :user)
+        .order("documents.title", "document_permissions.id")
+      @document_permissions = all_permissions.offset((page - 1) * per_page).limit(per_page)
+      @permissions_page = page
+      @permissions_total_pages = [(@permission_total_count.to_f / per_page).ceil, 1].max
+      @permission_overview_rows = []
+    end
   end
 
   def filtered_document_scope
