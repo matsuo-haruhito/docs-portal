@@ -1,0 +1,52 @@
+- document_nav_active = nav_dropdown_active?(dashboard_path, projects_path, document_bookmarks_path)
+- action_nav_active = nav_dropdown_active?(access_requests_path, document_approval_requests_path)
+- history_nav_active = nav_dropdown_active?(document_delivery_logs_path, consents_path)
+
+nav.user-nav aria-label="主要ナビゲーション"
+  .user-nav__start
+    = link_to root_path, class: "user-nav__brand" do
+      | 文書ポータル
+    - if logged_in?
+      .user-nav__links
+        = link_to "ホーム", dashboard_path, class: "user-nav__link#{' is-active' if current_page?(dashboard_path)}", aria: (current_page?(dashboard_path) ? { current: "page" } : {})
+        details.nav-dropdown data-nav-dropdown="true"
+          summary.nav-dropdown__summary class=("is-active" if document_nav_active && !current_page?(dashboard_path))
+            | 文書
+          .nav-dropdown__menu
+            = active_nav_link_to "すべての文書", documents_path
+            = active_nav_link_to "案件から探す", projects_path
+            = active_nav_link_to "保存済み", document_bookmarks_path
+        details.nav-dropdown data-nav-dropdown="true"
+          summary.nav-dropdown__summary class=("is-active" if action_nav_active)
+            | 要対応
+          .nav-dropdown__menu
+            = active_nav_link_to "アクセス申請", access_requests_path
+            - if current_user&.internal?
+              = active_nav_link_to "確認依頼", document_approval_requests_path
+        details.nav-dropdown data-nav-dropdown="true"
+          summary.nav-dropdown__summary class=("is-active" if history_nav_active)
+            | 履歴
+          .nav-dropdown__menu
+            = active_nav_link_to "送付履歴", document_delivery_logs_path
+            = active_nav_link_to "注意事項・同意履歴", consents_path
+
+  .user-nav__end
+    - if logged_in?
+      details.nav-dropdown data-nav-dropdown="true"
+        summary.nav-dropdown__summary
+          i.bi.bi-person-circle.me-1 aria-hidden="true"
+          = current_user.display_name
+        .nav-dropdown__menu
+          p.nav-dropdown__user-info
+            strong = current_user.display_name
+            br
+            small.muted = current_user.email_address
+          .nav-dropdown__divider aria-hidden="true"
+          - if admin_user? || company_master_admin?
+            = link_to admin_root_path, class: "nav-dropdown__item" do
+              i.bi.bi-gear.me-1 aria-hidden="true"
+              | 管理コンソールへ
+            .nav-dropdown__divider aria-hidden="true"
+          = button_to session_path, method: :delete, class: "nav-dropdown__item nav-dropdown__item--danger" do
+            i.bi.bi-box-arrow-right.me-1 aria-hidden="true"
+            | ログアウト

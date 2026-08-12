@@ -1,4 +1,6 @@
 class Admin::BaseController < BaseController
+  layout "admin"
+
   DEFAULT_ADMIN_LIST_PER_PAGE = 25
   MAX_ADMIN_LIST_PER_PAGE = 100
   READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"

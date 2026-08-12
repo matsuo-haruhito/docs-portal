@@ -1,0 +1,58 @@
+aside.admin-sidebar aria-label="管理ナビゲーション" data-admin-sidebar-target="sidebar"
+  button.admin-sidebar__toggle type="button" data-action="admin-sidebar#toggle" aria-label="メニューを開閉"
+    i.bi.bi-list aria-hidden="true"
+
+  nav.admin-sidebar__nav
+    .admin-sidebar__section
+      h3.admin-sidebar__heading 概要
+      = admin_sidebar_link "管理概要", admin_root_path, icon: "bi-house"
+
+    - if admin_user?
+      .admin-sidebar__section
+        h3.admin-sidebar__heading 組織・利用者
+        = admin_sidebar_link "会社", admin_companies_path, icon: "bi-building"
+        = admin_sidebar_link "ユーザー", admin_users_path, icon: "bi-people"
+        = admin_sidebar_link "案件", admin_projects_path, icon: "bi-briefcase"
+        = admin_sidebar_link "案件所属", admin_project_memberships_path, icon: "bi-person-badge"
+        = admin_sidebar_link "同意文言", admin_consent_terms_path, icon: "bi-file-earmark-check"
+        = admin_sidebar_link "案件同意設定", admin_project_consent_settings_path, icon: "bi-shield-check"
+
+    - if company_master_admin? && !admin_user?
+      .admin-sidebar__section
+        h3.admin-sidebar__heading 組織・利用者
+        = admin_sidebar_link "会社", admin_companies_path, icon: "bi-building"
+        = admin_sidebar_link "ユーザー", admin_users_path, icon: "bi-people"
+
+    - if admin_user?
+      .admin-sidebar__section
+        h3.admin-sidebar__heading 文書・権限
+        = admin_sidebar_link "文書", admin_documents_path, icon: "bi-file-earmark-text"
+        = admin_sidebar_link "文書セット", admin_document_sets_path, icon: "bi-collection"
+        = admin_sidebar_link "文書カタログ", admin_document_catalogs_path, icon: "bi-journal-text"
+        = admin_sidebar_link "文書権限", admin_document_permissions_path, icon: "bi-lock"
+        = admin_sidebar_link "アクセス申請", admin_access_requests_path, icon: "bi-person-raised-hand"
+        = admin_sidebar_link "文書利用状況", admin_document_usage_reports_path, icon: "bi-bar-chart"
+        = admin_sidebar_link "文書一括編集", new_admin_bulk_edit_dry_run_path, icon: "bi-pencil-square"
+
+      .admin-sidebar__section
+        h3.admin-sidebar__heading 取込・同期
+        = admin_sidebar_link "ZIPインポート", new_admin_zip_import_path, icon: "bi-file-earmark-zip"
+        = admin_sidebar_link "単体ファイルdry-run", admin_file_upload_dry_runs_path, icon: "bi-upload"
+        = admin_sidebar_link "Git連携", admin_git_import_sources_path, icon: "bi-git"
+        = admin_sidebar_link "Git同期履歴", admin_git_import_runs_path, icon: "bi-clock-history"
+        = admin_sidebar_link "Microsoft Graph", admin_microsoft_graph_connections_path, icon: "bi-microsoft"
+        = admin_sidebar_link "外部フォルダ同期", admin_external_folder_sync_sources_path, icon: "bi-cloud-arrow-down"
+
+      .admin-sidebar__section
+        h3.admin-sidebar__heading 通知・自動化
+        = admin_sidebar_link "Webhook設定", admin_webhook_endpoints_path, icon: "bi-broadcast"
+        = admin_sidebar_link "Webhook送信履歴", admin_webhook_deliveries_path, icon: "bi-send-check"
+        = admin_sidebar_link "定期ジョブ", admin_recurring_job_schedules_path, icon: "bi-arrow-repeat"
+        = admin_sidebar_link "生成ファイルイベント", admin_generated_file_events_path, icon: "bi-file-earmark-arrow-up"
+        = admin_sidebar_link "生成ファイル実行履歴", admin_generated_file_runs_path, icon: "bi-list-check"
+
+      .admin-sidebar__section
+        h3.admin-sidebar__heading 監査・診断
+        = admin_sidebar_link "監査ログ", admin_access_logs_path, icon: "bi-journal-text"
+        = admin_sidebar_link "API仕様", admin_api_specification_path, icon: "bi-code-square"
+        = admin_sidebar_link "モデルブラウザ", admin_model_browser_path, icon: "bi-diagram-3"

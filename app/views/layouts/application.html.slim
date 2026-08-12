@@ -15,7 +15,7 @@ html lang="ja"
   body data-controller="nav-dropdowns document-tree-navigation manual-document-upload document-file-list-search markdown-preview-document-search markdown-preview-codeblock-tools markdown-preview-table-tools csv-preview-tools image-preview-tools pdf-preview-tools structured-preview-tools preview-table-resizer archive-preview-tools site-viewer-iframe-height"
     = link_to "メインコンテンツへ", "#main-content", class: "skip-link"
     header
-      = render "shared/navbar"
+      = render "shared/user_navbar"
     - if content_for?(:left_content)
       - sidebar_content = capture do
         = yield :left_content

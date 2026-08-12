@@ -8,7 +8,6 @@
 .heading-with-help
   h1 単体ファイルアップロードの確認履歴
   = render InfoTooltipComponent.new(label: "単体ファイルアップロードの確認履歴", description: "file_uploads API から作成された単体ファイルアップロード dry-run を後から確認するための一覧です。ZIP / Git連携の dry-run は表示しません。")
-= render "admin/nav"
 
 .card
   = form_with url: admin_file_upload_dry_runs_path, method: :get, local: true, class: "filters" do |form|

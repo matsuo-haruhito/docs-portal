@@ -9,7 +9,6 @@
 - run_pagination_params = { return_to: return_to_path, run_status: @selected_run_status, q: @selected_run_query, scheduled_from: @selected_scheduled_from, scheduled_to: @selected_scheduled_to, per_page: @run_per_page }.compact
 
 h1 定期ジョブ詳細
-= render "admin/nav"
 
 .card
   h2 = @schedule.job_key
