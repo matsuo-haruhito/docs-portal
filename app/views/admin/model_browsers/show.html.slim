@@ -12,7 +12,7 @@ h1 = @entry.label
 p.muted = @entry.description
 
 p.actions
-  = link_to "モデル一覧へ戻る", model_browser_index_return_path, class: "button secondary"
+  = back_link_to "モデル一覧へ戻る", model_browser_index_return_path
   - if index_path
     = link_to "既存画面で詳しく確認", index_path, class: "button"
 - if index_path

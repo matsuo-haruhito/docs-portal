@@ -172,7 +172,13 @@ h1
             - if source.external_folder_path.present?
               br
               span.muted = source.external_folder_path
-          td data-rails-table-preferences-column-key="status" = source.enabled? ? "有効" : "無効"
+          td data-rails-table-preferences-column-key="status"
+            - if source.enabled?
+              i.bi.bi-cloud-check.me-1 aria-hidden="true"
+              = render StatusBadgeComponent.new(status: "active", label: "有効", tooltip: "この同期設定は有効です。同期実行の対象になります。")
+            - else
+              i.bi.bi-cloud-slash.me-1 aria-hidden="true"
+              = render StatusBadgeComponent.new(status: "inactive", label: "無効", tooltip: "この同期設定は無効です。同期実行の対象外です。")
           td data-rails-table-preferences-column-key="last_synced_at" = source.last_synced_at ? l(source.last_synced_at) : "-"
           td data-rails-table-preferences-column-key="latest_safety"
             span class=external_folder_sync_run_safety_class(latest_run)

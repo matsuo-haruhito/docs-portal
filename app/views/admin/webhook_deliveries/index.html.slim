@@ -129,4 +129,4 @@ p.actions
   - else
     = render EmptyStateComponent.new(heading: "まだWebhook送信履歴はありません。", description: "Webhook設定を登録し、通知対象イベントが発生すると送信履歴がここに表示されます。") do |component|
       - component.with_action do
-        = link_to "Webhook設定へ戻る", admin_webhook_endpoints_path, class: "button secondary"
+        = back_link_to "Webhook設定へ戻る", admin_webhook_endpoints_path

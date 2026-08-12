@@ -5,10 +5,10 @@ h1 送付履歴
 p.muted
   = link_to @delivery_log.project.name, project_path(@delivery_log.project)
   - if @delivery_log.document.present?
-    |  / 
+    |  /
     = link_to @delivery_log.document.title, project_document_path(@delivery_log.project, @delivery_log.document.slug)
   - elsif @delivery_log.document_set.present?
-    |  / 
+    |  /
     = link_to @delivery_log.document_set.name, project_document_set_path(@delivery_log.project, @delivery_log.document_set)
 
 table
@@ -68,10 +68,10 @@ section.delivery-log-actions
     p.muted 送付対象の文書・文書セット・案件を確認します。
     p.actions
       - if @delivery_log.document.present?
-        = link_to "対象の文書へ戻る", project_document_path(@delivery_log.project, @delivery_log.document.slug), class: "button secondary"
+        = back_link_to "対象の文書へ戻る", project_document_path(@delivery_log.project, @delivery_log.document.slug)
       - elsif @delivery_log.document_set.present?
-        = link_to "対象の文書セットへ戻る", project_document_set_path(@delivery_log.project, @delivery_log.document_set), class: "button secondary"
+        = back_link_to "対象の文書セットへ戻る", project_document_set_path(@delivery_log.project, @delivery_log.document_set)
       - else
-        = link_to "対象の案件へ戻る", project_path(@delivery_log.project), class: "button secondary"
+        = back_link_to "対象の案件へ戻る", project_path(@delivery_log.project)
 
 p = link_to "送付履歴一覧へ戻る", @return_to_path

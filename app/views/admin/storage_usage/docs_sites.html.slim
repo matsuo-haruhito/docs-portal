@@ -5,7 +5,7 @@ h1 Docs site build storage detail
 p.muted storage/docs_sites の generated site artifact を bounded に確認する read-only detail です。Project / build version との厳密な関連付けはここでは行わず、safe relative path preview を容量調査の入口として扱います。
 
 p.actions
-  = link_to "管理ダッシュボードへ戻る", admin_root_path, class: "button secondary"
+  = back_link_to "管理ダッシュボードへ戻る", admin_root_path
   = link_to "Docusaurus build runtime", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/notes/docusaurus-build-runtime.md", class: "button secondary", target: "_blank", rel: "noopener"
   = link_to admin_storage_usage_docs_sites_path(format: :csv), class: "button secondary" do
     i.bi.bi-filetype-csv.me-1 aria-hidden="true"

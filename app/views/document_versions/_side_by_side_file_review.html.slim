@@ -52,7 +52,9 @@
                 p.muted = "#{previous_file.effective_content_type} / #{number_to_human_size(previous_file.file_size)}"
                 p.actions
                   = link_to "前版を開く", document_file_path(previous_file), class: "button secondary", target: "_blank", rel: "noopener", data: { turbo: false }
-                  = link_to "前版をダウンロード", document_file_path(previous_file, disposition: "download"), class: "button secondary", data: { turbo: false }
+                  = link_to document_file_path(previous_file, disposition: "download"), class: "button secondary", data: { turbo: false } do
+                    i.bi.bi-download.me-1 aria-hidden="true"
+                    | 前版をダウンロード
                 - if previous_file.embeddable_viewer_file?
                   iframe.side-by-side-file-review__frame src=document_file_path(previous_file, disposition: "inline", embedded: "1") title="#{path} previous"
                 - else
@@ -65,7 +67,9 @@
                 p.muted = "#{current_file.effective_content_type} / #{number_to_human_size(current_file.file_size)}"
                 p.actions
                   = link_to "今回版を開く", document_file_path(current_file), class: "button secondary", target: "_blank", rel: "noopener", data: { turbo: false }
-                  = link_to "今回版をダウンロード", document_file_path(current_file, disposition: "download"), class: "button secondary", data: { turbo: false }
+                  = link_to document_file_path(current_file, disposition: "download"), class: "button secondary", data: { turbo: false } do
+                    i.bi.bi-download.me-1 aria-hidden="true"
+                    | 今回版をダウンロード
                 - if current_file.embeddable_viewer_file?
                   iframe.side-by-side-file-review__frame src=document_file_path(current_file, disposition: "inline", embedded: "1") title="#{path} current"
                 - else

@@ -5,7 +5,7 @@ h1 DocumentFile 実体 storage detail
 p.muted storage/document_files に紐づく DocumentFile 実体だけを bounded に確認する read-only detail です。削除、archive、retention、billing、quota、GCS policy の判断や実行はここでは行いません。
 
 p.actions
-  = link_to "管理ダッシュボードへ戻る", admin_root_path, class: "button secondary"
+  = back_link_to "管理ダッシュボードへ戻る", admin_root_path
   = link_to "欠落ファイル詳細を開く", admin_missing_document_files_path, class: "button secondary"
   = link_to admin_storage_usage_document_files_path(format: :csv), class: "button secondary" do
     i.bi.bi-filetype-csv.me-1 aria-hidden="true"

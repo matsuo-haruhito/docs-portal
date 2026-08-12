@@ -186,7 +186,9 @@
                       - archive_entry_preview_params[:q] = @archive_preview_path_query if @archive_preview_path_query.present?
                       = link_to "プレビュー", archive_entry_preview_document_file_path(@document_file, archive_entry_preview_params), class: "button secondary"
                     - if entry.download_candidate?
-                      = link_to "個別ダウンロード", archive_entry_download_document_file_path(@document_file, entry_path: entry.name), class: "button secondary"
+                      = link_to archive_entry_download_document_file_path(@document_file, entry_path: entry.name), class: "button secondary" do
+                        i.bi.bi-download.me-1 aria-hidden="true"
+                        | 個別ダウンロード
                     button.button.secondary type="button" data-archive-preview-copy-entry="true" パスをコピー
     - elsif archive_path_search
       = render "preview_empty_card", title: "一致するZIP項目がありません", message: "ZIP全体path検索に一致する項目がありません。条件を見直すか、ZIP全体をダウンロードして確認してください。"
