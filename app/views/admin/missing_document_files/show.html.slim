@@ -38,27 +38,21 @@ section.card
 
 section.card
   h2 欠落状況
-  p
-    | 登録ファイル数: 
-    strong = @document_file_health.total_count
-    |  / 全体の実体欠落: 
-    strong = @document_file_health.missing_count
-    - if @document_file_health.filtered?
-      |  / 条件一致欠落: 
-      strong = @document_file_health.filtered_missing_count
-    |  / 表示中: 
-    strong = @document_file_health.missing_files.size
+  - health_summary_parts = ["登録ファイル数: #{@document_file_health.total_count}", "全体の実体欠落: #{@document_file_health.missing_count}"]
+  - health_summary_parts << "条件一致欠落: #{@document_file_health.filtered_missing_count}" if @document_file_health.filtered?
+  - health_summary_parts << "表示中: #{@document_file_health.missing_files.size}"
+  p = health_summary_parts.join(" / ")
     |  （詳細一覧）
 
   - if @document_file_health.filtered?
-    p.muted
-      | 条件: 
-      = missing_document_file_filter_summary_labels(@missing_document_file_filters, @selected_project).join(" / ")
+    p.muted = "条件: #{missing_document_file_filter_summary_labels(@missing_document_file_filters, @selected_project).join(' / ')}"
     p.muted = "条件一致欠落は現在の絞り込みに合う全件数、表示中は詳細一覧に出している先頭#{@display_limit}件までの件数です。"
 
   - if @document_file_health.missing_files.any?
     p.actions
-      = link_to "表示中の欠落候補をCSVで引き継ぐ", admin_missing_document_files_path(request.query_parameters.merge(format: :csv)), class: "button secondary"
+      = link_to admin_missing_document_files_path(request.query_parameters.merge(format: :csv)), class: "button secondary" do
+        i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+        | 表示中の欠落候補をCSVで引き継ぐ
     p.muted = "CSV handoff は現在の条件と表示中の先頭#{@display_limit}件だけを read-only に引き継ぎます。自動修復、削除、再import、CSV export は行いません。"
 
   - if @document_file_health.missing_count.positive?

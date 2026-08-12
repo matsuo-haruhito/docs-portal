@@ -117,7 +117,9 @@ section.card
       dl
         dt CSV本体
         dd
-          = link_to "CSV出力", admin_document_usage_reports_path(csv_params), data: { turbo_frame: "_top" }
+          = link_to admin_document_usage_reports_path(csv_params), data: { turbo_frame: "_top" } do
+            i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+            | CSV出力
           br
           span.muted 棚卸し用ファイル。表示中の条件で文書利用一覧を出力します。
         dt 条件確認用 metadata

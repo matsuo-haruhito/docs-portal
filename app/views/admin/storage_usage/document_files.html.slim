@@ -7,16 +7,18 @@ p.muted storage/document_files に紐づく DocumentFile 実体だけを bounded
 p.actions
   = link_to "管理ダッシュボードへ戻る", admin_root_path, class: "button secondary"
   = link_to "欠落ファイル詳細を開く", admin_missing_document_files_path, class: "button secondary"
-  = link_to "CSV handoff", admin_storage_usage_document_files_path(format: :csv), class: "button secondary"
+  = link_to admin_storage_usage_document_files_path(format: :csv), class: "button secondary" do
+    i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+    | CSV handoff
 
 section.card
   h2 DocumentFile 実体 detail
   p
-    | 登録 DocumentFile: 
+    | 登録 DocumentFile:
     strong = detail.total_count
-    |  件 / 表示中: 
+    |  件 / 表示中:
     strong = detail.entries.size
-    |  件 / 実体欠落: 
+    |  件 / 実体欠落:
     strong = detail.missing_file_count
     |  件
   p.muted Project / Document / safe relative path / file count / 概算使用量 / 最終更新 / missing count を確認できます。raw absolute path、credential、private path、signed URL、GCS bucket identifier は表示しません。

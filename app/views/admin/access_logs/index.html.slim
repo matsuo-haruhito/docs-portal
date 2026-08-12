@@ -136,8 +136,12 @@ section.card
       h3 id="access-log-csv-export-title" CSV export
       p.muted CSV は監査ログ行データを固定列で出力します。条件一致の最新200件と、いま開いている表示中ページを使い分けてください。
       p.actions
-        = link_to "現在の条件でCSV export（最新200件）", admin_access_logs_path(@pagination_params.merge(format: :csv)), class: "button secondary"
-        = link_to "表示中ページをCSV export（最大200件）", admin_access_logs_path(current_page_export_params.merge(format: :csv)), class: "button secondary"
+        = link_to admin_access_logs_path(@pagination_params.merge(format: :csv)), class: "button secondary" do
+          i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+          | 現在の条件でCSV export（最新200件）
+        = link_to admin_access_logs_path(current_page_export_params.merge(format: :csv)), class: "button secondary" do
+          i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+          | 表示中ページをCSV export（最大200件）
       p.muted CSV export は現在の絞り込み条件に一致する最新200件を、監査用途の固定列で出力します。画面の表示列設定とは独立しています。
       p.muted 表示中ページCSV export は、同じ絞り込み条件とページ番号で表示中の最大200件だけを出力します。
     section.access-log-export-action-group aria-labelledby="access-log-metadata-title"

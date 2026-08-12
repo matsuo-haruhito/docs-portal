@@ -78,7 +78,9 @@ p.muted 送信日時を指定すると、送信日時が未記録の下書きは
   p.muted 送信日時は YYYY-MM-DD 形式で指定してください。無効な日付は絞り込みに使いません。
 
 p.actions
-  = link_to "CSV出力", current_delivery_logs_csv_path, class: "button secondary"
+  = link_to current_delivery_logs_csv_path, class: "button secondary" do
+    i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+    | CSV出力
   span.muted = "現在の絞り込み条件に一致する最新#{delivery_logs_limit}件を固定列で出力します。表示設定はCSV列に影響しません。"
 
 p.actions
