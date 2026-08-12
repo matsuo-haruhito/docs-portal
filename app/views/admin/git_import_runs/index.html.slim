@@ -23,9 +23,14 @@ h1 Git同期履歴
   .card
     = form_with url: admin_git_import_runs_path, method: :get, local: true do |form|
       .form-grid
-        .field
-          = label_tag :status, "状態"
-          = select_tag :status, options_for_select(status_filter_options, @status_filter)
+        = form.rfk_select :status,
+          collection: status_filter_options.reject { |(_, v)| v.blank? },
+          selected: @status_filter.presence,
+          include_blank: "すべて",
+          wrapper: true,
+          label: "状態",
+          allow_clear: true,
+          placeholder: "すべて"
         = form.rfk_combobox :project_id,
           collection: [],
           selected: git_import_run_project_selected_option(@selected_project),

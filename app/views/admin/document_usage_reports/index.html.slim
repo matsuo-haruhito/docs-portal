@@ -31,12 +31,16 @@ section.card
         = search_field_tag :q, @query, placeholder: "文書名またはslugで検索", maxlength: Admin::DocumentUsageReportsController::DOCUMENT_USAGE_QUERY_MAX_LENGTH
         br
         span.muted = "検索語は最大#{Admin::DocumentUsageReportsController::DOCUMENT_USAGE_QUERY_MAX_LENGTH}文字です。文書名や slug の特徴的な断片で探してください。"
-      = label_tag :usage_filter do
-        | 利用状況
-        = select_tag :usage_filter, options_for_select(document_usage_report_filter_options, @usage_filter)
-      = label_tag :sort_order do
-        | 並び順
-        = select_tag :sort_order, options_for_select(document_usage_report_sort_options, @sort_order)
+      = form.rfk_select :usage_filter,
+        collection: document_usage_report_filter_options,
+        selected: @usage_filter,
+        wrapper: true,
+        label: "利用状況"
+      = form.rfk_select :sort_order,
+        collection: document_usage_report_sort_options,
+        selected: @sort_order,
+        wrapper: true,
+        label: "並び順"
       = label_tag :from do
         | 開始日
         = date_field_tag :from, @from_date&.iso8601

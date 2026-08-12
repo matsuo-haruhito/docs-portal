@@ -58,8 +58,20 @@ p.muted
     = render InfoTooltipComponent.new(label: "申請検索", description: "案件コード・対象ID・ファイル名・理由で検索できます。")
   p.actions
     = form.search_field :q, value: @query, placeholder: "対象名・案件コード・ID・ファイル名・理由で検索", maxlength: access_request_query_max_length
-    = form.select :requested_access_level, options_for_select(requested_access_level_options, @requested_access_level_filter)
-    = form.select :requestable_type, options_for_select(requestable_type_options, @requestable_type_filter)
+    = form.rfk_select :requested_access_level,
+      collection: requested_access_level_options.reject { |(_, v)| v.blank? },
+      selected: @requested_access_level_filter.presence,
+      include_blank: "すべて",
+      wrapper: false,
+      allow_clear: true,
+      placeholder: "要求権限"
+    = form.rfk_select :requestable_type,
+      collection: requestable_type_options.reject { |(_, v)| v.blank? },
+      selected: @requestable_type_filter.presence,
+      include_blank: "すべて",
+      wrapper: false,
+      allow_clear: true,
+      placeholder: "対象種別"
     = form.submit "検索", class: "button"
     - if has_filter
       = link_to "条件をクリア", access_requests_path, class: "button secondary"

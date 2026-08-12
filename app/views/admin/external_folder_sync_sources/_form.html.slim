@@ -49,24 +49,30 @@
     label
       | 同期設定名
       = form.text_field :name, placeholder: "外部フォルダ同期"
-    label
-      | 同期元プロバイダ
-      = form.select :provider, enum_options_for("external_folder_sync_sources.provider", ExternalFolderSyncSource.providers.keys)
-      span.muted Google Drive は同期実行まで、SharePoint / OneDrive は metadata 保存までこの画面で扱います。
+    = form.rfk_select :provider,
+      collection: enum_options_for("external_folder_sync_sources.provider", ExternalFolderSyncSource.providers.keys),
+      selected: form.object.provider,
+      wrapper: true,
+      label: "同期元プロバイダ"
+    span.muted Google Drive は同期実行まで、SharePoint / OneDrive は metadata 保存までこの画面で扱います。
     label
       | 外部フォルダURL
       = form.text_field :folder_url, placeholder: "https://drive.google.com/drive/folders/... または SharePoint / OneDrive の共有URL"
       span.muted Google Drive はフォルダID、SharePoint / OneDrive は共有URLから Microsoft Graph metadata を解決します。
-    label
-      | 接続方式
-      = form.select :auth_type, enum_options_for("external_folder_sync_sources.auth_type", ExternalFolderSyncSource.auth_types.keys)
-      span.muted Google Drive は「OAuthユーザー方式」または「サービスアカウント方式」、SharePoint / OneDrive は「Microsoft Graph接続」を選んでください。
+    = form.rfk_select :auth_type,
+      collection: enum_options_for("external_folder_sync_sources.auth_type", ExternalFolderSyncSource.auth_types.keys),
+      selected: form.object.auth_type,
+      wrapper: true,
+      label: "接続方式"
+    span.muted Google Drive は「OAuthユーザー方式」または「サービスアカウント方式」、SharePoint / OneDrive は「Microsoft Graph接続」を選んでください。
     label
       | 表示用フォルダパス
       = form.text_field :external_folder_path, placeholder: "Google Drive は任意。SharePoint / OneDrive は保存時に自動入力されます。"
-    label
-      | 同期状態
-      = form.select :enabled, [["有効", true], ["無効", false]]
+    = form.rfk_select :enabled,
+      collection: [["有効", true], ["無効", false]],
+      selected: form.object.enabled,
+      wrapper: true,
+      label: "同期状態"
 
   details.card
     summary 詳細設定（管理者向け）
