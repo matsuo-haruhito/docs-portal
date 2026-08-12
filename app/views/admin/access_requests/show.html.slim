@@ -59,20 +59,21 @@ section.card
 
 - if @access_request.pending?
   section.card
-    h2 判断
-    p.muted 判断前に対象・要求権限・理由を確認してください。一覧の inline action と同じ処理を使います。
+    .heading-with-help
+      h2 判断
+      = render HelpTooltipComponent.new(description: "対象・要求権限・理由を確認して判断します。却下は理由を残して申請を閉じますが、権限は変更しません。")
     - unless @access_request.manage?
       p.actions
         = button_to "承認", admin_access_request_path(@access_request), method: :patch, params: { decision: "approve", return_to: @return_to }, class: "button"
     - else
       p.status-warning 管理権限申請は自動承認できません。権限設定を別途確認してください。
-    p.muted 却下: 理由を残して申請を閉じます。権限は変更しません。
     = form_with url: admin_access_request_path(@access_request), method: :patch, local: true do
       = hidden_field_tag :decision, "reject"
       = hidden_field_tag :return_to, @return_to
-      = label_tag "rejection_reason_preset_#{@access_request.public_id}", "却下理由の定型候補"
+      .heading-with-help
+        = label_tag "rejection_reason_preset_#{@access_request.public_id}", "却下理由の定型候補"
+        = render InfoTooltipComponent.new(label: "却下理由の定型候補", description: "定型候補は入力補助です。補足も却下理由の入力補助です。承認基準や権限付与仕様はここでは変更しません。")
       = select_tag :rejection_reason_preset, options_for_select(admin_access_request_rejection_reason_preset_options, admin_access_request_default_rejection_reason_preset), id: "rejection_reason_preset_#{@access_request.public_id}"
-      p.muted 定型候補は入力補助です。補足も却下理由の入力補助です。承認基準や権限付与仕様はここでは変更しません。
       = label_tag "rejection_reason_note_#{@access_request.public_id}", "補足（任意）"
       = text_area_tag :rejection_reason_note, nil, id: "rejection_reason_note_#{@access_request.public_id}", rows: 3, placeholder: "必要に応じて申請者へ伝える補足を入力"
       p.actions

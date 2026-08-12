@@ -11,6 +11,20 @@ module LinkToHelper
     end
   end
 
+  def detail_link_to(name, url, **options)
+    options = options.reverse_merge(class: "button secondary")
+    icon = tag.i(class: "bi bi-eye me-1", aria: { hidden: true })
+    label = (icon + name).html_safe
+    link_to(label, url, **options)
+  end
+
+  def back_link_to(name, url, **options)
+    options = options.reverse_merge(class: "button secondary")
+    icon = tag.i(class: "bi bi-arrow-left me-1", aria: { hidden: true })
+    label = (icon + name).html_safe
+    link_to(label, url, **options)
+  end
+
   def sort_link_to(name, label = nil, **options)
     label ||= name.to_s.humanize
     current_sort = params[:sort].to_s

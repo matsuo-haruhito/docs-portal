@@ -8,19 +8,31 @@
     label
       | 版ラベル
       = form.text_field :version_label
-    label
-      | 種別
-      = form.select :consent_scope, enum_options_for("consent_terms.consent_scope", ConsentTerm.consent_scopes.keys)
-    label
-      | 再同意方針
-      = form.select :requirement_timing, enum_options_for("consent_terms.requirement_timing", ConsentTerm.requirement_timings.keys)
-    label
-      | 状態
-      = form.select :active, [["有効", true], ["無効", false]]
+    .form-field
+      .heading-with-help
+        = form.label :consent_scope, "種別"
+        = render InfoTooltipComponent.new(label: "種別", description: "全体＝ログイン直後に全員へ表示、案件＝案件参加時、文書＝文書閲覧時、ダウンロード＝ファイル取得時、共有リンク＝リンク開封時にそれぞれ同意を求めます。")
+      = form.rfk_select :consent_scope,
+        collection: enum_options_for("consent_terms.consent_scope", ConsentTerm.consent_scopes.keys),
+        selected: form.object.consent_scope,
+        wrapper: false
+    .form-field
+      .heading-with-help
+        = form.label :requirement_timing, "再同意方針"
+        = render InfoTooltipComponent.new(label: "再同意方針", description: "初回表示時＝一度同意すれば以降は表示しません。版変更ごと＝文面を改訂した時に再同意を求めます。ダウンロードごと＝毎回の操作で同意を求めます。")
+      = form.rfk_select :requirement_timing,
+        collection: enum_options_for("consent_terms.requirement_timing", ConsentTerm.requirement_timings.keys),
+        selected: form.object.requirement_timing,
+        wrapper: false
+    = form.rfk_select :active,
+      collection: [["有効", true], ["無効", false]],
+      selected: form.object.active,
+      wrapper: true,
+      label: "状態"
     label style="grid-column: 1 / -1;"
       | 本文
       = form.text_area :body
   p.actions style="margin-top:16px;"
     = form.submit "保存", class: "button"
     - if consent_term.persisted?
-      = link_to "一覧へ戻る", admin_consent_terms_path, class: "button secondary"
+      = back_link_to "一覧へ戻る", admin_consent_terms_path

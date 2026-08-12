@@ -19,17 +19,27 @@ h1
   = @project.name
   |  / 文書カタログ
 
-= form_with url: project_document_catalogs_path(@project), method: :get, local: true do
+= form_with url: project_document_catalogs_path(@project), method: :get, local: true do |form|
   .field
     = label_tag :q, "名称・説明"
     = search_field_tag :q, @catalog_query, placeholder: "カタログ名または説明", maxlength: catalog_query_max_length
     p.muted カタログ名・説明が対象です。文書本文・item文書名・添付ファイル名は対象外です。100文字まで入力できます。
-  .field
-    = label_tag :audience_type, "対象"
-    = select_tag :audience_type, options_for_select(audience_options, @audience_type_filter)
-  .field
-    = label_tag :visibility_policy, "公開範囲"
-    = select_tag :visibility_policy, options_for_select(visibility_options, @visibility_policy_filter)
+  = form.rfk_select :audience_type,
+    collection: audience_options.reject { |(_, v)| v.blank? },
+    selected: @audience_type_filter.presence,
+    include_blank: "すべて",
+    wrapper: true,
+    label: "対象",
+    allow_clear: true,
+    placeholder: "すべて"
+  = form.rfk_select :visibility_policy,
+    collection: visibility_options.reject { |(_, v)| v.blank? },
+    selected: @visibility_policy_filter.presence,
+    include_blank: "すべて",
+    wrapper: true,
+    label: "公開範囲",
+    allow_clear: true,
+    placeholder: "すべて"
   p.actions
     = submit_tag "絞り込み", class: "button"
     - if has_filters
@@ -72,7 +82,7 @@ h1
             = "#{visible_items_count}件"
             br
             small.muted 現在の利用者に表示
-          td = link_to "詳細", project_document_catalog_path(@project, catalog)
+          td = detail_link_to "詳細", project_document_catalog_path(@project, catalog)
 - else
   - if has_filters
     section.card.document-catalog-empty-state
@@ -86,9 +96,6 @@ h1
         = link_to "絞り込み解除", project_document_catalogs_path(@project), class: "button secondary"
   - else
     section.card.document-catalog-empty-state
-      h2 利用可能な文書カタログはありません
-      p.muted 利用可能な文書カタログはありません。
-      p.muted この案件で現在の利用者に表示できる文書カタログがありません。未作成、権限外、または非公開のカタログはここには表示されません。
-      p.muted 必要な場合は案件トップから関連文書や担当者の案内を確認してください。
+      = render EmptyStateComponent.new(heading: "利用可能な文書カタログはありません。", description: "この案件で現在の利用者に表示できる文書カタログがありません。未作成、権限外、または非公開のカタログはここには表示されません。必要な場合は案件トップから関連文書や担当者の案内を確認してください。")
 
 p = link_to "案件トップへ戻る", project_path(@project)

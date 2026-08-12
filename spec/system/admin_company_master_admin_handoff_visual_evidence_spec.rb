@@ -63,6 +63,7 @@ RSpec.describe "Company master admin handoff visual evidence", type: :system do
       expect(page).to have_text("依頼内容")
       expect(page).to have_text("確認項目")
       expect(page).to have_text("依頼テンプレートをコピー")
+      find("summary", text: "コピー前に確認").click
       expect(page).to have_text("連絡先や forbidden admin surface への direct link はここでは固定しません")
 
       choose "管理者判断", allow_label_click: true

@@ -18,9 +18,9 @@ section.card
         li.consent-term-item
           h3 = term.title
           p.muted
-            | 種別: 
+            | 種別:
             strong = consent_scope_label(term)
-            |  / 版: 
+            |  / 版:
             strong = term.version_label
           p.muted この文面の本文
           .consent-term-body
@@ -39,11 +39,23 @@ section.card
         = form.label :q, "文面・版・対象"
         = form.search_field :q, value: @consent_history_q, placeholder: "文面名、版、対象で検索"
       .filter-field
-        = form.label :consent_scope, "種別"
-        = form.select :consent_scope, options_for_select([["すべて", ""]] + @valid_consent_scopes.map { |scope| [t("labels.consent_terms.consent_scope.#{scope}", default: scope), scope] }, @consent_history_scope)
+        = form.rfk_select :consent_scope,
+          collection: @valid_consent_scopes.map { |scope| [t("labels.consent_terms.consent_scope.#{scope}", default: scope), scope] },
+          selected: @consent_history_scope.presence,
+          include_blank: "すべて",
+          wrapper: false,
+          label: "種別",
+          allow_clear: true,
+          placeholder: "すべて"
       .filter-field
-        = form.label :target_type, "対象種別"
-        = form.select :target_type, options_for_select([["すべて", ""]] + @valid_consent_history_target_types.map { |target_type| [consent_history_target_type_label(target_type), target_type] }, @consent_history_target_type)
+        = form.rfk_select :target_type,
+          collection: @valid_consent_history_target_types.map { |target_type| [consent_history_target_type_label(target_type), target_type] },
+          selected: @consent_history_target_type.presence,
+          include_blank: "すべて",
+          wrapper: false,
+          label: "対象種別",
+          allow_clear: true,
+          placeholder: "すべて"
       .filter-actions
         = form.submit "絞り込む"
         - if @consent_history_filter_active

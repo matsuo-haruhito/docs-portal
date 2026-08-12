@@ -56,7 +56,7 @@ RSpec.describe "Admin document set fixed version candidates", type: :request do
     }
 
     expect(response).to have_http_status(:unprocessable_content)
-    expect(response.body).to include("固定版候補は文書ごとに検索して選びます。")
+    expect(response.body).to include("チェックした文書だけをセットに含めます。「固定版」を選ぶとその版を使い、未選択の場合は常に最新版を使います。")
 
     select = fixed_version_select_for(document)
     expect(option_values(select)).to eq(["", selected_version.id.to_s])

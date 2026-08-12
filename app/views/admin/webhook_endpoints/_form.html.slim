@@ -10,15 +10,13 @@
       | 送信先URL
       span.required-mark ※必須
       = form.url_field :target_url, required: true, placeholder: "https://example.com/webhooks/docs-portal"
-    label
-      | 署名シークレット
+    .form-field
+      .heading-with-help
+        = form.label :secret_token, "署名シークレット"
+        = render InfoTooltipComponent.new(label: "署名シークレット", description: "設定すると送信時にHMAC-SHA256署名を付けます。編集時に空欄で保存すると既存値を維持し、入力した場合だけ更新します。")
       - if webhook_endpoint.persisted?
         span.muted = webhook_endpoint.secret_token.present? ? "設定済み（変更する場合だけ入力）" : "未設定"
       = form.password_field :secret_token, autocomplete: "new-password", placeholder: (webhook_endpoint.persisted? ? "変更する場合だけ入力" : nil)
-      - if webhook_endpoint.persisted?
-        span.muted 空欄のまま保存すると既存の署名シークレットを維持します。値を入力した場合だけ、今後の送信署名に使うシークレットを更新します。
-      - else
-        span.muted 任意で設定できます。設定すると、今後の送信に署名ヘッダーを付けて受信側で送信元を確認できます。
     label
       | 有効
       = form.check_box :active
@@ -32,8 +30,7 @@
         = check_box_tag "webhook_endpoint[event_types][]", event_type, webhook_endpoint.normalized_event_types.include?(event_type), id: "webhook_endpoint_event_types_#{event_type}"
         = webhook_event_type_label(event_type)
 
-  p.muted 署名シークレットを設定すると、送信時に X-Docs-Portal-Signature-256 ヘッダーへ HMAC-SHA256 署名を付与します。
   p.actions
     = form.submit "保存", class: "button"
     - if webhook_endpoint.persisted?
-      = link_to "一覧へ戻る", admin_webhook_endpoints_path, class: "button secondary"
+      = back_link_to "一覧へ戻る", admin_webhook_endpoints_path

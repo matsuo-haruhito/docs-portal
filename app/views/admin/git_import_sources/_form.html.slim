@@ -77,22 +77,28 @@
       html: { data: { rfk_dependent_filter_target: "path" } }
     span.muted リポジトリとブランチが選ばれている場合はディレクトリ候補から選べます。候補取得不可の場合は手入力で保存できます。例: docs / docs/source
     p.muted リポジトリは GitHub App の候補から選べます。installation ID 未設定・候補取得不可・候補0件の場合は、既存どおり owner/repo を直接入力します。ブランチと取込元パスもリポジトリ選択後に候補から選べます。候補取得不可の場合は手入力 fallback です。
-    label
-      | 認証方式
-      = form.select :auth_type, enum_options_for("git_import_sources.auth_type", GitImportSource.auth_types.keys)
-      span.muted 通常運用は GitHub App。Fine-grained PAT は開発・検証用、認証なしは公開リポジトリ限定です。詳細設定は、GitHub App の installation ID や PAT の参照名・secret を確認するときだけ開きます。
-    label
-      | 状態
-      = form.select :enabled, [["有効", true], ["無効", false]]
+    = form.rfk_select :auth_type,
+      collection: enum_options_for("git_import_sources.auth_type", GitImportSource.auth_types.keys),
+      selected: form.object.auth_type,
+      wrapper: true,
+      label: "認証方式"
+    span.muted 通常運用は GitHub App。Fine-grained PAT は開発・検証用、認証なしは公開リポジトリ限定です。詳細設定は、GitHub App の installation ID や PAT の参照名・secret を確認するときだけ開きます。
+    = form.rfk_select :enabled,
+      collection: [["有効", true], ["無効", false]],
+      selected: form.object.enabled,
+      wrapper: true,
+      label: "状態"
 
   details.card
     summary 詳細設定（通常は開かない管理者・検証向け）
     p.muted
       | GitHub App では installation ID を確認します。Fine-grained PAT では credential ref と secret を使い、no_auth では secret は不要です。通常運用で迷う場合は GitHub App のまま、詳細設定は管理者の調整時だけ開きます。
     .form-grid
-      label
-        | 連携先
-        = form.select :provider, enum_options_for("git_import_sources.provider", GitImportSource.providers.keys)
+      = form.rfk_select :provider,
+        collection: enum_options_for("git_import_sources.provider", GitImportSource.providers.keys),
+        selected: form.object.provider,
+        wrapper: true,
+        label: "連携先"
       label
         | Organization
         = form.text_field :organization_name, placeholder: "example-org"
@@ -101,10 +107,10 @@
         = form.text_field :installation_id
       label
         | 認証情報の参照名
-        = form.text_field :credential_ref, placeholder: "secret store key etc."
+        = form.text_field :credential_ref, placeholder: "シークレット参照キー名"
       label
         | 認証シークレット
-        = form.password_field :credential_secret, value: nil, autocomplete: "new-password", placeholder: git_import_source.persisted? ? "変更時のみ入力" : "fine-grained PAT"
+        = form.password_field :credential_secret, value: nil, autocomplete: "new-password", placeholder: git_import_source.persisted? ? "変更時のみ入力" : "Fine-grained PATを入力"
         - if git_import_source.persisted?
           span.muted 保存済みシークレットは表示しません。Fine-grained PAT の値を変更するときだけ入力します。GitHub App や認証なしの設定では空欄のまま保存できます。
         - else
@@ -114,4 +120,4 @@
   p.actions
     = form.submit "保存", class: "button"
     - if git_import_source.persisted?
-      = link_to "一覧へ戻る", admin_git_import_sources_path, class: "button secondary"
+      = back_link_to "一覧へ戻る", admin_git_import_sources_path

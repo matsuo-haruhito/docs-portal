@@ -129,7 +129,9 @@ section.card
     p
       = link_to "文書利用状況へ戻る", admin_document_usage_reports_path(usage_report_params), data: { turbo_frame: "_top" }
       |  /
-      = link_to "CSV出力", admin_read_confirmations_path(@read_confirmations_csv_query), data: { turbo_frame: "_top" }
+      = link_to admin_read_confirmations_path(@read_confirmations_csv_query), data: { turbo_frame: "_top" } do
+        i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+        | CSV出力
     p.muted
       | 表示中:
       strong = " #{@read_confirmations.size}件"

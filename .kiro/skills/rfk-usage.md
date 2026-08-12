@@ -214,6 +214,26 @@ div data-controller="rfk-dependent-filter"
 
 ---
 
+## CSS: Tom Select の改行防止
+
+Tom Select のデフォルト CSS では `.ts-control` が `flex-wrap: wrap` のため、combobox で値を選択すると input が次の行に折り返される。
+
+`app/frontend/entrypoints/tom_select_overrides.css` で以下を上書きしている:
+
+- `.ts-wrapper.single .ts-control` — `flex-wrap: nowrap` + `overflow: hidden`
+- `.ts-wrapper .ts-control > .item` — `white-space: nowrap` + `text-overflow: ellipsis`
+- `.ts-wrapper.has-items .ts-control > input` — `min-width: 1px` で折り返し防止
+- `.ts-wrapper.single.has-items .ts-control > input` — `width: 0` + `flex: 0 0 0px` で完全に縮小
+
+このファイルは `application.js` で `tom-select.css` の直後に import される。新しい rfk フィールドを追加する際、追加の CSS は不要（自動で適用される）。
+
+### カスタマイズが必要な場合
+
+- テーブルセル内などコンパクト表示が必要な場合は `.ts-control` の `min-height` / `padding` / `font-size` をスコープ付きで調整する
+- モーダルやフローティングパネル内で使う場合は `body > .ts-dropdown` の `z-index` を上げる
+
+---
+
 ## NGパターン
 
 - `f.select` / `f.collection_select` を使う → rfk ヘルパーに置き換える

@@ -22,13 +22,15 @@
       label: "会社",
       allow_clear: true,
       placeholder: "会社名・ドメインで検索（未設定可）"
-    label
-      | 有効
-      = form.select :active, [["有効", true], ["無効", false]]
+    = form.rfk_select :active,
+      collection: [["有効", true], ["無効", false]],
+      selected: form.object.active,
+      wrapper: true,
+      label: "有効"
     label style="grid-column: 1 / -1;"
       | 説明
       = form.text_area :description
   p.actions style="margin-top:16px;"
     = form.submit "保存", class: "button"
     - if project.persisted?
-      = link_to "一覧へ戻る", admin_projects_path, class: "button secondary"
+      = back_link_to "一覧へ戻る", admin_projects_path

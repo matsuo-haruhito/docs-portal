@@ -27,7 +27,7 @@ RSpec.describe "Admin document search cue", type: :request do
     expect(keyword_input).to be_present
     expect(keyword_input["maxlength"]).to eq(Admin::DocumentsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH.to_s)
     expect(keyword_input["placeholder"]).to eq("案件名・案件コード・文書名・URL識別子")
-    expect(page_text).to include("案件名・案件コード・文書名・URL識別子の断片で検索できます。最大100文字。")
+    expect(page_text).to include("案件名・案件コード・文書名・URL識別子の断片を最大100文字で検索します。")
     expect(page_text).to include("検索結果: 1件", "有効な条件:", "キーワード: CUE-001")
     expect(page_text).to include("一括編集候補として開く", "文書マスタ一覧の表示設定")
   end

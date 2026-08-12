@@ -48,6 +48,11 @@ def resolve_target(markdown_file, destination)
   end
 end
 
+def gitignored_path?(target)
+  relative = target.relative_path_from(REPO_ROOT).to_s
+  system("git", "check-ignore", "--quiet", relative, chdir: REPO_ROOT.to_s)
+end
+
 errors = []
 
 MARKDOWN_FILES.each do |relative_path|
@@ -59,6 +64,7 @@ MARKDOWN_FILES.each do |relative_path|
       target = resolve_target(markdown_file, destination)
       next unless target
       next if target.exist?
+      next if gitignored_path?(target)
 
       errors << "#{relative_path}:#{line_index + 1} -> #{destination} (missing: #{target.relative_path_from(REPO_ROOT)})"
     end

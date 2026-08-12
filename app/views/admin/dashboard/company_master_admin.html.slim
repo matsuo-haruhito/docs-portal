@@ -13,9 +13,9 @@
 - handoff_template_lines << "【user type 変更相談】#{selected_handoff_category[:user_type_hint]}"
 - handoff_template_lines << "【期限・背景】理由と希望時期"
 
-h1 会社・ユーザー管理
-p.muted この画面は company_master_admin が /admin から最初に確認する、会社・ユーザー管理専用の入口です。
-p.muted 自社の会社情報とユーザーだけを管理できます。案件、文書、文書権限、監査ログ、利用状況は internal admin へ引き継いでください。
+.heading-with-help
+  h1 会社・ユーザー管理
+  = render InfoTooltipComponent.new(label: "会社・ユーザー管理", description: "この画面は company_master_admin が /admin から最初に確認する、会社・ユーザー管理専用の入口です。自社の会社情報とユーザーだけを管理できます。案件、文書、文書権限、監査ログ、利用状況は internal admin へ引き継いでください。")
 
 = render "admin/nav"
 
@@ -36,31 +36,34 @@ section.card
 
 section.card
   h2 internal admin へ戻す範囲
-  p.muted 次の項目は依頼前の確認リストです。この画面からは移動できず、必要な場合は internal admin に引き継いでください。
-  ul
-    li
-      strong 案件・案件所属
-      |  - 案件の作成、所属追加、担当者の付け替え
-    li
-      strong 文書・文書権限
-      |  - 文書管理、閲覧範囲、文書公開権限の調整
-    li
-      strong 運用確認
-      |  - 監査ログ、利用状況、アクセス申請の確認
-    li
-      strong 管理者判断
-      |  - ユーザー種別の internal 化、他社ユーザーや他社会社の調整
+  = render GuidanceDisclosureComponent.new(title: "引継ぎ対象を確認") do
+    p 次の項目は依頼前の確認リストです。この画面からは移動できず、必要な場合は internal admin に引き継いでください。
+    ul
+      li
+        strong 案件・案件所属
+        |  - 案件の作成、所属追加、担当者の付け替え
+      li
+        strong 文書・文書権限
+        |  - 文書管理、閲覧範囲、文書公開権限の調整
+      li
+        strong 運用確認
+        |  - 監査ログ、利用状況、アクセス申請の確認
+      li
+        strong 管理者判断
+        |  - ユーザー種別の internal 化、他社ユーザーや他社会社の調整
 
 section.card data-controller="company-master-admin-handoff" data-company-master-admin-handoff-company-name-value=handoff_company_name data-company-master-admin-handoff-requester-value=handoff_requester
   h2 internal admin へ依頼するときの確認項目
-  p.muted 依頼先や連絡手段は組織の運用に従い、次の情報を添えて引き継いでください。
-  ul
-    li 自社会社名と、依頼の対象になるユーザー名・メールアドレス
-    li 必要な案件所属、文書権限、アクセス申請などの目的
-    li ユーザー種別の変更や他社会社・他社ユーザーの調整が必要か
-    li 期限や背景がある場合は、その理由と希望時期
-  h3 依頼テンプレート
-  p.muted 分類を選ぶと必要な確認項目が切り替わります。分類選択、入力欄、コピー対象 textarea の順で内容を整えてから ticket や chat に貼り付けてください。
+  = render GuidanceDisclosureComponent.new(title: "依頼に含める情報を確認") do
+    p 依頼先や連絡手段は組織の運用に従い、次の情報を添えて引き継いでください。
+    ul
+      li 自社会社名と、依頼の対象になるユーザー名・メールアドレス
+      li 必要な案件所属、文書権限、アクセス申請などの目的
+      li ユーザー種別の変更や他社会社・他社ユーザーの調整が必要か
+      li 期限や背景がある場合は、その理由と希望時期
+  .heading-with-help
+    h3 依頼テンプレート
+    = render InfoTooltipComponent.new(label: "依頼テンプレート", description: "分類を選ぶと必要な確認項目が切り替わります。分類選択、入力欄、コピー対象 textarea の順で内容を整えてから ticket や chat に貼り付けてください。")
   fieldset
     legend 依頼分類
     .form-grid
@@ -72,11 +75,9 @@ section.card data-controller="company-master-admin-handoff" data-company-master-
           span.muted = category[:request_hint]
           br
           span.muted = "選ぶ目安: #{category[:decision_hint]}"
-  .company-master-admin-handoff-current-summary
-    p.muted
-      strong 選んだ分類の読み方
-      |  - radio の選択に合わせて入力欄の初期値が切り替わり、下のコピー対象 textarea に反映されます。
-    p.muted user type 変更相談が「あり」の分類は、会社管理者だけで権限や所属会社を判断せず、internal admin / human 判断待ちとして引き継いでください。
+  = render GuidanceDisclosureComponent.new(title: "選んだ分類の読み方") do
+    p radio の選択に合わせて入力欄の初期値が切り替わり、下のコピー対象 textarea に反映されます。
+    p user type 変更相談が「あり」の分類は、会社管理者だけで権限や所属会社を判断せず、internal admin / human 判断待ちとして引き継いでください。
   .form-grid
     label
       | 対象ユーザー
@@ -93,13 +94,14 @@ section.card data-controller="company-master-admin-handoff" data-company-master-
     label
       | 期限・背景
       input type="text" value="理由と希望時期" data-company-master-admin-handoff-target="timeline" data-action="input->company-master-admin-handoff#updateTemplate"
-  p.muted 連絡先や forbidden admin surface への direct link はここでは固定しません。
+  = render GuidanceDisclosureComponent.new(title: "コピー前に確認") do
+    p 連絡先や forbidden admin surface への direct link はここでは固定しません。
+    p コピー対象 textarea は、選択中の分類と上の入力欄から生成されます。貼り付け前に会社名、対象ユーザー、期限・背景を確認してください。
+    p この確認項目は依頼内容を整理するためのものであり、会社管理者の権限や文書閲覧範囲を広げるものではありません。
   p.actions
     button.button.secondary type="button" data-action="company-master-admin-handoff#copy" aria-describedby="company-master-admin-handoff-status"
       | 依頼テンプレートをコピー
     span#company-master-admin-handoff-status.muted role="status" aria-live="polite" hidden=true data-company-master-admin-handoff-target="status"
-  p.muted コピー対象 textarea は、選択中の分類と上の入力欄から生成されます。貼り付け前に会社名、対象ユーザー、期限・背景を確認してください。
   textarea.company-master-admin-handoff-template rows="8" data-company-master-admin-handoff-target="template" tabindex="0" = handoff_template_lines.join("\n")
-  p.muted この確認項目は依頼内容を整理するためのものであり、会社管理者の権限や文書閲覧範囲を広げるものではありません。
 
 p = link_to "通常の案件一覧へ戻る", projects_path

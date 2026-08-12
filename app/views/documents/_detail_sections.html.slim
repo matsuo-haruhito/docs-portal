@@ -168,8 +168,9 @@ section.card#related-documents
     h2 正式な確認依頼
 
     .card
-      h3 確認依頼を作成
-      p.muted 文書コメントで軽く残すだけでなく、担当者を指定して正式に確認を依頼する場合に使います。
+      .heading-with-help
+        h3 確認依頼を作成
+        = render HelpTooltipComponent.new(description: "文書コメントで軽く残すのではなく、担当者を指定して正式に確認を依頼する場合に使います。")
       = form_with model: [@project, @document, DocumentApprovalRequest.new], local: true do |form|
         .form-grid
           div

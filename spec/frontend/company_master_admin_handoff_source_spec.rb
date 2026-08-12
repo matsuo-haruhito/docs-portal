@@ -29,12 +29,13 @@ RSpec.describe "Company master admin handoff source" do
 
   it "keeps the company master admin navigation cues scoped to company and user management" do
     aggregate_failures do
-      expect(nav_source).to include('li.nav-section.mt-2.small.fw-bold.text-muted.border-start.border-primary.ps-2.text-primary aria-current="location" aria-label="現在の領域: 会社・ユーザー管理" 会社・ユーザー管理')
-      expect(nav_source).to include('company_master_nav_link.call("会社", admin_companies_path)')
-      expect(nav_source).to include('company_master_nav_link.call("ユーザー", admin_users_path)')
+      expect(nav_source).to include('nav.admin-context-nav aria-label="会社・ユーザー管理"')
+      expect(nav_source).to include('link_to "会社", admin_companies_path')
+      expect(nav_source).to include('link_to "ユーザー", admin_users_path')
+      expect(nav_source).to include('aria: ({ current: "page" } if path_active.call(admin_companies_path))')
       expect(view_source).to include('p = link_to "通常の案件一覧へ戻る", projects_path')
-      expect(nav_source).not_to include('company_master_nav_link.call("案件"')
-      expect(nav_source).not_to include('company_master_nav_link.call("監査ログ"')
+      expect(nav_source).not_to include('link_to "案件"')
+      expect(nav_source).not_to include('link_to "監査ログ"')
     end
   end
 

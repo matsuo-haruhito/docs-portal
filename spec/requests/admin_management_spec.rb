@@ -10,7 +10,7 @@ RSpec.describe "Admin management", type: :request do
   end
 
   def admin_nav_hrefs
-    parsed_html.css("ul.nav-list a").map { |link| link["href"] }
+    parsed_html.css("header .nav-dropdown__menu a, nav.admin-context-nav a").map { |link| link["href"] }
   end
 
   def action_targets

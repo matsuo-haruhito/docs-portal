@@ -19,10 +19,14 @@
         検索語
         <%= search_field_tag :q, @query, placeholder: "案件コード・案件名・メールアドレス・ユーザー名", maxlength: Admin::ProjectMembershipsController::QUERY_MAX_LENGTH %>
       </label>
-      <label>
-        権限
-        <%= select_tag :role, options_for_select([["すべて", ""]] + ProjectMembership.roles.keys.map { |r| [I18n.t("activerecord.access_requests.status.#{r}", default: r.humanize), r] }, @role_filter) %>
-      </label>
+      <%= form.rfk_select :role,
+        collection: ProjectMembership.roles.keys.map { |r| [I18n.t("activerecord.access_requests.status.#{r}", default: r.humanize), r] },
+        selected: @role_filter.presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "権限",
+        allow_clear: true,
+        placeholder: "すべて" %>
     </div>
     <p class="actions" style="margin-top:8px;">
       <%= submit_tag "検索", class: "button" %>

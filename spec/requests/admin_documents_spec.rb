@@ -191,7 +191,7 @@ RSpec.describe "Admin documents", type: :request do
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索結果: 2件")
     expect(page_text).to include("表示中: 1-2件 / 2件")
-    expect(page_text).to include("現在の検索結果2件を、文書一括編集dry-runの候補として引き継ぎます")
+    expect(page_text).to include("現在の検索結果2件を文書一括編集dry-runへ引き継ぎます。この操作だけでは文書を変更しません。")
 
     link = bulk_edit_candidate_link
     query = Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)
@@ -245,7 +245,8 @@ RSpec.describe "Admin documents", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("検索結果: 0件")
-    expect(page_text).to include("文書マスタの検索結果が0件のため、一括編集候補へは進めません")
+    expect(page_text).to include("一括編集候補: 0件")
+    expect(page_text).to include("検索条件を見直して対象文書を表示してから、一括編集候補へ進んでください。")
     expect(bulk_edit_candidate_link).to be_nil
 
     project = create(:project, code: "BULK-LIMIT", name: "Bulk Limit")
@@ -380,7 +381,7 @@ RSpec.describe "Admin documents", type: :request do
     expect(response).to have_http_status(:ok)
     expect(row_column_text("Failed Preview Document", "status")).to include("有効")
     expect(row_column_text("Failed Preview Document", "latest_version")).to include("v2.0", "公開期間中", "プレビュー失敗")
-    expect(row_column_text("No Latest Document", "latest_version")).to include("最新版なし", "公開版がまだ選択されていません")
+    expect(row_column_text("No Latest Document", "latest_version")).to include("最新版なし", "公開版未選択")
     expect(row_column_text("Archived Document", "status")).to include("アーカイブ済み")
   end
 

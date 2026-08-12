@@ -5,7 +5,7 @@
   h1 = @site_viewer_document.title
   p.muted = site_viewer_meta_lines(project: @site_viewer_project, document: @site_viewer_document, version: @site_viewer_version).join(" / ")
   p.actions
-    = link_to "文書詳細へ戻る", @site_viewer_back_path, class: "button secondary"
+    = back_link_to "文書詳細へ戻る", @site_viewer_back_path
     = link_to "案件トップ", project_path(@site_viewer_project), class: "button secondary"
     = link_to "版詳細", document_version_path(@site_viewer_version), class: "button secondary"
 

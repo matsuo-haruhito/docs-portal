@@ -1,5 +1,5 @@
 doctype html
-html
+html lang="ja"
   head
     title = [content_for(:title), "文書ポータル"].compact_blank.join(" | ")
     meta name="viewport" content="width=device-width,initial-scale=1"
@@ -13,6 +13,7 @@ html
     = vite_client_tag
     = vite_javascript_tag "application"
   body data-controller="nav-dropdowns document-tree-navigation manual-document-upload document-file-list-search markdown-preview-document-search markdown-preview-codeblock-tools markdown-preview-table-tools csv-preview-tools image-preview-tools pdf-preview-tools structured-preview-tools preview-table-resizer archive-preview-tools site-viewer-iframe-height"
+    = link_to "メインコンテンツへ", "#main-content", class: "skip-link"
     header
       = render "shared/navbar"
     - if content_for?(:left_content)
@@ -25,16 +26,16 @@ html
               .sidebar-toolbar-content
                 = yield :sidebar_toolbar
               button.sidebar-toggle type="button" data-sidebar-toggle="true" aria-label="文書ツリーを折りたたむ" aria-expanded="true" title="文書ツリーを折りたたむ"
-                | ◀
+                i.bi.bi-chevron-left data-sidebar-toggle-icon="true" aria-hidden="true"
             .sidebar-content data-sidebar-content="true"
               = sidebar_content
             .sidebar-resizer data-sidebar-resizer="true" role="separator" aria-orientation="vertical" aria-label="文書ツリーの幅を調整" tabindex="0"
-        main.main-panel
+        main#main-content.main-panel tabindex="-1"
           = render "shared/flash_messages"
           = turbo_frame_tag "main_panel", target: "_top" do
             = yield
     - else
-      main
+      main#main-content tabindex="-1"
         = render "shared/flash_messages"
         = turbo_frame_tag "main_panel", target: "_top" do
           = yield

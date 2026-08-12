@@ -21,6 +21,6 @@ p.muted
           td = document_set_visibility_policy_label(document_set)
           td = document_set.visible_items_for(current_user).size
 - else
-  p.muted 表示できる文書セットはありません。
+  = render EmptyStateComponent.new(heading: "表示できる文書セットはありません", description: "案件に公開済みの文書セットが追加されると、ここから確認できます。")
 
 p = link_to "案件詳細へ戻る", project_path(@project)

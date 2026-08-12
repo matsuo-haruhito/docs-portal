@@ -17,19 +17,21 @@ RSpec.describe "admin documents empty state source" do
     aggregate_failures do
       expect(index_source).to include(".card hidden=(documents_empty ? true : nil)")
       expect(index_source).to include('table[data-rails-table-preferences-table-key-value="admin_documents"] { display: none; }')
-      expect(index_source).to include('render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定")')
-      expect(index_source).to include("table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns)")
+      expect(index_source).to include('render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定", description:')
+      expect(index_source).to include("table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns, scroll_wrapper: true")
     end
   end
 
-  it "keeps archived document restore action context visible without changing the row action label" do
+  it "keeps archived document restore action context on the icon-only row action" do
     aggregate_failures do
-      expect(index_source).to include('= button_to "復元", restore_admin_document_path(document.public_id, return_to: current_return_to)')
+      expect(index_source).to include("= button_to restore_admin_document_path(document.public_id, return_to: current_return_to)")
+      expect(index_source).to include("i.bi.bi-arrow-counterclockwise")
+      expect(index_source).to include("span.visually-hidden 復元")
       expect(index_source).to include('restore_document_cue = "文書「#{document.title}」を復元します。通常一覧・社外導線で再び表示対象になる可能性があります。"')
       expect(index_source).to include("aria: { label: restore_document_cue }")
       expect(index_source).to include("title: restore_document_cue")
       expect(index_source).to include('turbo_confirm: "#{restore_document_cue}よろしいですか？"')
-      expect(index_source).to include('文書「#{document.title}」をアーカイブしますか？通常一覧・社外導線から非表示になります。復元は管理画面から実行できます。')
+      expect(index_source).to include('archive_document_cue = "文書「#{document.title}」をアーカイブします。通常一覧・社外導線から非表示になります。復元は管理画面から実行できます。"')
       expect(index_source).to include('文書「#{document.title}」を削除しますか？関連する版・添付・コメントも削除される可能性があります。')
     end
   end

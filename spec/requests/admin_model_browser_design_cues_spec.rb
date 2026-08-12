@@ -29,8 +29,7 @@ RSpec.describe "Admin model browser design cues", type: :request do
     get admin_root_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("主要 model 8件を抜粋")
-    expect(response.body).to include("catalog 全体 #{total_count}件")
+    expect(response.body).to include("主要モデルの件数と最終更新を抜粋表示します。全#{total_count}モデルはモデルブラウザで確認できます。")
 
     model_browser_link = parsed_html.css("a[href='#{admin_model_browser_path}']").find do |link|
       link.text.squish.include?("全#{total_count}件")

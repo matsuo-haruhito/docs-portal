@@ -26,12 +26,22 @@ section.card
   h2 絞り込み
   = form_with url: admin_access_logs_path, method: :get, local: true do |form|
     .form-grid
-      div
-        = form.label :action_type, "操作"
-        = form.select :action_type, options_for_select([["すべて", ""]] + enum_options_for("access_logs.action_type", AccessLog.action_types.keys), @filters[:action_type])
-      div
-        = form.label :target_type, "対象種別"
-        = form.select :target_type, options_for_select([["すべて", ""]] + access_log_target_type_filter_options, @filters[:target_type])
+      = form.rfk_select :action_type,
+        collection: enum_options_for("access_logs.action_type", AccessLog.action_types.keys),
+        selected: @filters[:action_type].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "操作",
+        allow_clear: true,
+        placeholder: "すべて"
+      = form.rfk_select :target_type,
+        collection: access_log_target_type_filter_options,
+        selected: @filters[:target_type].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "対象種別",
+        allow_clear: true,
+        placeholder: "すべて"
       div.ai-context-filter-guidance role="group" aria-labelledby="ai-context-filter-guidance-title" data-testid="ai-context-filter-guidance"
         p.muted id="ai-context-filter-guidance-title"
           strong AI context export 用の追加条件
@@ -117,7 +127,7 @@ section.card
         = link_to "条件をクリア", admin_access_logs_path
     - if @ignored_date_filters.present?
       p.muted
-        | 無効な日付条件は検索から除外しました: 
+        | 無効な日付条件は検索から除外しました:
         strong = access_log_ignored_date_filter_label(@ignored_date_filters)
         | 。有効な日付条件だけで監査ログを絞り込んでいます。
 
@@ -126,8 +136,12 @@ section.card
       h3 id="access-log-csv-export-title" CSV export
       p.muted CSV は監査ログ行データを固定列で出力します。条件一致の最新200件と、いま開いている表示中ページを使い分けてください。
       p.actions
-        = link_to "現在の条件でCSV export（最新200件）", admin_access_logs_path(@pagination_params.merge(format: :csv)), class: "button secondary"
-        = link_to "表示中ページをCSV export（最大200件）", admin_access_logs_path(current_page_export_params.merge(format: :csv)), class: "button secondary"
+        = link_to admin_access_logs_path(@pagination_params.merge(format: :csv)), class: "button secondary" do
+          i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+          | 現在の条件でCSV export（最新200件）
+        = link_to admin_access_logs_path(current_page_export_params.merge(format: :csv)), class: "button secondary" do
+          i.bi.bi-filetype-csv.me-1 aria-hidden="true"
+          | 表示中ページをCSV export（最大200件）
       p.muted CSV export は現在の絞り込み条件に一致する最新200件を、監査用途の固定列で出力します。画面の表示列設定とは独立しています。
       p.muted 表示中ページCSV export は、同じ絞り込み条件とページ番号で表示中の最大200件だけを出力します。
     section.access-log-export-action-group aria-labelledby="access-log-metadata-title"

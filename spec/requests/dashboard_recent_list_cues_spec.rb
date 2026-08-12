@@ -56,13 +56,13 @@ RSpec.describe "Dashboard recent list cues", type: :request do
     updated_section_text = dashboard_section("最近更新された文書").text.squish
 
     expect(viewed_section_text).to include(
-      "あなたの閲覧履歴から表示しています。",
+      "あなたの閲覧履歴から表示する作業再開用の一覧です。更新通知ではありません。",
       "Viewed Guide",
       "Visible Project / あなたが最近閲覧"
     )
     expect(viewed_section_text).not_to include("更新日時")
     expect(updated_section_text).to include(
-      "閲覧可能な文書を更新日時の新しい順に表示しています。",
+      "閲覧可能な文書を更新日時順に表示する確認入口です。未読通知ではありません。",
       "Updated Guide",
       "Visible Project / 更新日時 #{I18n.l(updated_document.updated_at, format: :short)}"
     )

@@ -14,6 +14,7 @@ RSpec.describe "preview tools source" do
   let(:table_tools_source) { read_source("app/frontend/lib/markdown_preview_table_tools.js") }
   let(:document_search_source) { read_source("app/frontend/lib/markdown_preview_document_search.js") }
   let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.js") }
+  let(:table_preferences_controller_source) { read_source("app/frontend/controllers/rails_table_preferences_controller.ts") }
   let(:layout_source) { read_source("app/views/layouts/application.html.slim") }
   let(:inventory_source) { read_source(".kiro/skills/frontend-initialization-inventory.md") }
   let(:roadmap_source) { read_source("ROADMAP.md") }
@@ -73,7 +74,8 @@ RSpec.describe "preview tools source" do
       expect(entrypoint_source).to include('import "@hotwired/turbo-rails"')
       expect(entrypoint_source).to include("import { Application } from \"@hotwired/stimulus\"")
       expect(entrypoint_source).to include("const application = Application.start()")
-      expect(entrypoint_source).to include("import { RailsTablePreferencesController } from \"rails_table_preferences\"")
+      expect(entrypoint_source).to include('import RailsTablePreferencesController from "../controllers/rails_table_preferences_controller"')
+      expect(table_preferences_controller_source).to include('import { RailsTablePreferencesController as BaseController } from "rails_table_preferences"')
       expect(entrypoint_source).to include("import { TomSelectController } from \"rails_fields_kit\"")
       expect(entrypoint_source).to include('application.register("rails-table-preferences", RailsTablePreferencesController)')
       expect(entrypoint_source).to include('application.register("rails-fields-kit--tom-select", TomSelectController)')

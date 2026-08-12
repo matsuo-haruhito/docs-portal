@@ -34,8 +34,9 @@
 - if current_requestable_type.present?
   - empty_filter_reset_links << ["対象種別をすべてに戻す", access_requests_path(current_filter_params.except(:requestable_type).merge(status: @status_filter.presence).compact)]
 
-h1 アクセス申請
-p.muted 自分が送信した申請の状態を確認できます。
+.heading-with-help
+  h1 アクセス申請
+  = render InfoTooltipComponent.new(label: "アクセス申請", description: "自分が送信した申請の状態を確認できます。")
 
 p.muted
   | 申請中 #{pending_count}件 / 承認済み #{approved_count}件 / 却下 #{rejected_count}件 / 取消済み #{cancelled_count}件
@@ -52,14 +53,28 @@ p.muted
 = form_with url: access_requests_path, method: :get, local: true do |form|
   - if @status_filter.present?
     = hidden_field_tag :status, @status_filter
+  .heading-with-help
+    span 申請を検索
+    = render InfoTooltipComponent.new(label: "申請検索", description: "案件コード・対象ID・ファイル名・理由で検索できます。")
   p.actions
     = form.search_field :q, value: @query, placeholder: "対象名・案件コード・ID・ファイル名・理由で検索", maxlength: access_request_query_max_length
-    = form.select :requested_access_level, options_for_select(requested_access_level_options, @requested_access_level_filter)
-    = form.select :requestable_type, options_for_select(requestable_type_options, @requestable_type_filter)
+    = form.rfk_select :requested_access_level,
+      collection: requested_access_level_options.reject { |(_, v)| v.blank? },
+      selected: @requested_access_level_filter.presence,
+      include_blank: "すべて",
+      wrapper: false,
+      allow_clear: true,
+      placeholder: "要求権限"
+    = form.rfk_select :requestable_type,
+      collection: requestable_type_options.reject { |(_, v)| v.blank? },
+      selected: @requestable_type_filter.presence,
+      include_blank: "すべて",
+      wrapper: false,
+      allow_clear: true,
+      placeholder: "対象種別"
     = form.submit "検索", class: "button"
     - if has_filter
       = link_to "条件をクリア", access_requests_path, class: "button secondary"
-  p.muted 案件コード・対象ID・ファイル名・理由で検索できます。
 
 p.actions
   = link_to "すべて (#{total_count})", access_requests_path(current_filter_params), class: @status_filter.blank? ? "button" : "button secondary"
@@ -127,9 +142,10 @@ p.actions
           td = request_hash.dig(:approver, :email_address) || "-"
           td
             - if access_request.pending?
-              p.muted この行の対象・要求権限・理由を確認してから取消してください。
+              .heading-with-help
+                span 申請操作
+                = render HelpTooltipComponent.new(description: "この行の対象・要求権限・理由を確認してから取消してください。取消後は現在の条件のままアクセス申請一覧へ戻ります。")
               = button_to "取消", cancel_access_request_path(access_request), method: :post, params: current_cancel_filter_params, class: "button secondary", data: { turbo_confirm: "このアクセス申請を取り消します。対象・要求権限・理由を確認しましたか？" }
-              p.muted 取消後は現在の条件のままアクセス申請一覧へ戻ります。
             - else
               span.muted -
 - else
@@ -141,4 +157,4 @@ p.actions
         = link_to label, path, class: "button secondary"
       = link_to "すべての申請を見る", access_requests_path, class: "button secondary"
   - else
-    p.muted 送信済みのアクセス申請はありません。
+    = render EmptyStateComponent.new(heading: "送信済みのアクセス申請はありません。", description: "案件または文書からアクセス申請を送信すると、状態をここで確認できます。")

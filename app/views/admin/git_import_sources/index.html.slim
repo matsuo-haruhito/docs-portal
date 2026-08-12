@@ -45,13 +45,20 @@ h1
           placeholder: "案件コード・案件名で検索",
           allow_clear: true
 
-        label.form-field
-          span 状態
-          = form.select :enabled, options_for_select(enabled_filter_options, @selected_enabled)
+        = form.rfk_select :enabled,
+          collection: enabled_filter_options.reject { |(_, v)| v.blank? },
+          selected: @selected_enabled.presence,
+          include_blank: "すべて",
+          wrapper: true,
+          label: "状態",
+          allow_clear: true,
+          placeholder: "すべて"
 
-        label.form-field
-          span 表示件数
-          = form.select :per_page, options_for_select(per_page_options, @git_import_sources_per_page)
+        = form.rfk_select :per_page,
+          collection: per_page_options,
+          selected: @git_import_sources_per_page,
+          wrapper: true,
+          label: "表示件数"
 
       p.actions.form-actions
         = form.submit "絞り込み", class: "button"
@@ -136,9 +143,9 @@ h1
               = link_to "最終失敗: #{l(latest_failed_run.created_at)}", admin_git_import_runs_path(run_history_params.merge(status: "failed"))
           td data-rails-table-preferences-column-key="enabled"
             - if source.enabled?
-              = render StatusBadgeComponent.new(status: "active", label: "有効")
+              = render StatusBadgeComponent.new(status: "active", label: "有効", tooltip: "このGit連携設定は有効です。手動同期を実行するとリポジトリから文書を取り込みます。")
             - else
-              = render StatusBadgeComponent.new(status: "inactive", label: "無効")
+              = render StatusBadgeComponent.new(status: "inactive", label: "無効", tooltip: "このGit連携設定は無効です。手動同期の対象から外れます。")
           td.actions data-rails-table-preferences-column-key="actions"
             = button_to "手動同期", sync_admin_git_import_source_path(source), method: :post, class: "button", form: { data: { turbo_confirm: sync_confirm } }
             = link_to "履歴", admin_git_import_runs_path(run_history_params), class: "button secondary"

@@ -234,10 +234,7 @@ RSpec.describe "Document site table preferences", type: :system do
     end
 
     visit site_document_version_path(version, site_path: site_build_path)
-    install_preference_request_probe
     wait_for_viewer_preference_panels
-    wait_for_preference_load_request(table_keys.first)
-    wait_for_preference_load_request(table_keys.second)
     wait_for_reloaded_hidden_columns
 
     loaded_infos = viewer_table_infos

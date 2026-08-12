@@ -31,22 +31,35 @@ section.card
   h2 絞り込み
   = form_with url: admin_access_requests_path, method: :get, local: true do |form|
     .form-grid.access-request-filter-grid
-      div
-        = form.label :status, "状態"
-        = form.select :status, options_for_select(admin_access_request_status_filter_options, @filters[:status])
-      div
-        = form.label :requested_access_level, "要求権限"
-        = form.select :requested_access_level, options_for_select(admin_access_request_access_level_filter_options, @filters[:requested_access_level])
-      div
-        = form.label :requestable_type, "対象種別"
-        = form.select :requestable_type, options_for_select(admin_access_request_requestable_type_filter_options, @filters[:requestable_type])
+      = form.rfk_select :status,
+        collection: admin_access_request_status_filter_options,
+        selected: @filters[:status].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "状態",
+        allow_clear: true,
+        placeholder: "すべて"
+      = form.rfk_select :requested_access_level,
+        collection: admin_access_request_access_level_filter_options,
+        selected: @filters[:requested_access_level].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "要求権限",
+        allow_clear: true,
+        placeholder: "すべて"
+      = form.rfk_select :requestable_type,
+        collection: admin_access_request_requestable_type_filter_options,
+        selected: @filters[:requestable_type].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "対象種別",
+        allow_clear: true,
+        placeholder: "すべて"
       div.access-request-filter-grid__search
-        = form.label :q, "申請者・対象"
+        .heading-with-help
+          = form.label :q, "申請者・対象"
+          = render InfoTooltipComponent.new(label: "申請者・対象", description: "申請者名・メール、申請ID・理由、対象名・code・slug・ファイル名を検索します。最大#{admin_access_request_query_max_length}文字です。")
         = form.search_field :q, value: @filters[:q], maxlength: admin_access_request_query_max_length, placeholder: "名前、メール、対象名で検索"
-        p.muted
-          | 申請者名 / email、申請ID / 理由、対象名 / code / slug / ファイル名を検索します（最大
-          = admin_access_request_query_max_length
-          | 文字）。状態・要求権限・対象種別と組み合わせて絞り込みます。
 
     p.actions
       = form.submit "検索"
@@ -132,21 +145,23 @@ section.card
           td data-rails-table-preferences-column-key="approver" = access_request.approver&.email_address || "-"
           td.actions data-rails-table-preferences-column-key="actions"
             p.actions
-              = link_to "詳細", admin_access_request_path(access_request, return_to: request.fullpath), class: "button secondary"
+              = detail_link_to "詳細", admin_access_request_path(access_request, return_to: request.fullpath)
             - if access_request.pending?
-              p.muted 判断前に対象・要求権限・理由を確認してください。
+              .heading-with-help
+                span 申請操作
+                = render HelpTooltipComponent.new(description: "対象・要求権限・理由を確認して判断します。却下は理由を残して申請を閉じますが、権限は変更しません。")
               - unless access_request.manage?
                 = button_to "承認", admin_access_request_path(access_request), method: :patch, params: action_filter_params.merge(decision: "approve"), class: "button"
               - else
                 p.status-warning 管理権限申請は自動承認できません。権限設定を別途確認してください。
-              p.muted 却下: 理由を残して申請を閉じます。権限は変更しません。
               = form_with url: admin_access_request_path(access_request), method: :patch, local: true do
                 - action_filter_params.each do |key, value|
                   = hidden_field_tag key, value
                 = hidden_field_tag :decision, "reject"
-                = label_tag "rejection_reason_preset_#{access_request.public_id}", "却下理由の定型候補"
+                .heading-with-help
+                  = label_tag "rejection_reason_preset_#{access_request.public_id}", "却下理由の定型候補"
+                  = render InfoTooltipComponent.new(label: "却下理由の定型候補", description: "定型候補は入力補助です。補足も却下理由の入力補助です。承認基準や権限付与仕様はここでは変更しません。")
                 = select_tag :rejection_reason_preset, options_for_select(admin_access_request_rejection_reason_preset_options, admin_access_request_default_rejection_reason_preset), id: "rejection_reason_preset_#{access_request.public_id}"
-                p.muted 定型候補は入力補助です。補足も却下理由の入力補助です。承認基準や権限付与仕様はここでは変更しません。
                 = label_tag "rejection_reason_note_#{access_request.public_id}", "補足（任意）"
                 = text_area_tag :rejection_reason_note, nil, id: "rejection_reason_note_#{access_request.public_id}", rows: 2, placeholder: "必要に応じて申請者へ伝える補足を入力"
                 = submit_tag "却下", class: "button secondary"
@@ -189,5 +204,4 @@ section.card
     p.actions
       = link_to "すべての申請を見る", admin_access_requests_path, class: "button secondary"
   - else
-    p.muted 申請はありません。
-    p.muted 利用者からアクセス申請が届くと、承認待ち・承認済み・却下の履歴がここに表示されます。
+    = render EmptyStateComponent.new(heading: "申請はありません。", description: "利用者からアクセス申請が届くと、承認待ち・承認済み・却下の履歴がここに表示されます。")

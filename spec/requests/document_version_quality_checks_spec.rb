@@ -35,9 +35,9 @@ RSpec.describe "Document version quality checks", type: :request do
     expect(response.body).to include("自動 fail や通知済み状態ではありません")
     expect(response.body).to include("JSON / Markdown は handoff や evidence 用の read-only export")
     expect(response.body).to include("この画面から品質チェック結果、版、公開状態は変更されません")
-    expect(response.body).to include("Check table filter")
-    expect(response.body).to include("この filter は下の check table だけに適用されます")
-    expect(response.body).to include("Preview と JSON / Markdown export は全件の read-only evidence のままです")
+    expect(response.body).to include("品質チェック絞り込み")
+    expect(response.body).to include("この絞り込みは下のチェック結果テーブルだけに適用されます")
+    expect(response.body).to include("プレビューとJSON/Markdownエクスポートは全件のread-onlyのままです")
     expect(response.body).to include("internal_only_text")
 
     get document_version_quality_check_path(version, format: :json)
@@ -102,7 +102,7 @@ RSpec.describe "Document version quality checks", type: :request do
     expect(response.body).to include("Document contains internal-only wording")
     expect(response.body).to include("severity")
     expect(response.body).to include("warning")
-    expect(response.body).to include("Preview と JSON / Markdown export は全件の read-only evidence のままです")
+    expect(response.body).to include("プレビューとJSON/Markdownエクスポートは全件のread-onlyのままです")
 
     get document_version_quality_check_path(version, key: "internal_only_text")
     expect(response).to have_http_status(:ok)

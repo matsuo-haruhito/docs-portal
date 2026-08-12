@@ -3,9 +3,7 @@
 .card
   h1 = @error_title
   p = @error_message
-  p.muted
-    | status:
-    = @error_status
+  p.muted = "status: #{@error_status}"
   p.actions
-    = link_to "ダッシュボードへ戻る", dashboard_path, class: "button secondary"
-    = link_to "案件一覧へ戻る", projects_path, class: "button secondary"
+    = back_link_to "ダッシュボードへ戻る", dashboard_path
+    = back_link_to "案件一覧へ戻る", projects_path

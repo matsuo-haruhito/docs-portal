@@ -17,8 +17,8 @@
 }
 
 .file-dropzone.is-dragging .file-dropzone__surface,
-.file-dropzone__surface:hover,
-.file-dropzone__surface:focus-within {
+.file-dropzone:focus-within .file-dropzone__surface,
+.file-dropzone__surface:hover {
   border-color: var(--accent-2);
   background: #eff6ff;
   box-shadow: 0 12px 28px rgba(15, 98, 254, 0.12);
@@ -48,7 +48,15 @@
 }
 
 .file-dropzone__input {
-  margin-top: 10px;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .flash-message-actions {

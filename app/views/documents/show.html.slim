@@ -66,6 +66,20 @@
 - if rendered_view_available
   = turbo_stream_from @viewer_version, :preview
   section.document-reader
+    - if @viewer_raw_markdown_fallback
+      .notice.notice--warning.preview-fallback-notice role="status" aria-live="polite"
+        .heading-with-help
+          strong
+            i.bi.bi-exclamation-triangle-fill.me-1 aria-hidden="true"
+            | 元のMarkdownを表示中
+          = render StatusBadgeComponent.new(status: @viewer_preview_build_status.fallback_status_badge_status, label: @viewer_preview_build_status.fallback_label, tooltip: @viewer_preview_build_status.message)
+        p.muted = @viewer_preview_build_status.fallback_message
+        - fallback_details = [@viewer_preview_build_status.recovery_attempt_line, @viewer_preview_build_status.retry_line].compact
+        - if fallback_details.any?
+          ul.compact-list
+            - fallback_details.each do |line|
+              li = line
+
     - if current_user.internal?
       p.muted このプレビュー領域へ1ファイルずつドロップすると、この文書の更新候補としてアップロードできます。同名なら版更新、別名なら同じフォルダ直下に追加します。
 

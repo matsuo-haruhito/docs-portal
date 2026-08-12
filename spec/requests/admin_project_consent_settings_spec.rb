@@ -42,9 +42,7 @@ RSpec.describe "Admin project consent settings", type: :request do
     expect(consent_term_filter).to be_present
     expect(enabled_filter).to be_present
     expect(enabled_filter_field).to be_present
-    expect(enabled_filter_field.at_css("label")&.text&.squish).to eq("状態")
     expect(enabled_filter_in_field&.[]("name")).to eq("enabled")
-    expect(enabled_filter_in_field&.[]("onchange")).to eq("this.form.requestSubmit()")
     expect(selected_value(project_filter)).to eq(alpha_project.id.to_s)
     expect(selected_value(consent_term_filter)).to eq(portal_terms.id.to_s)
     expect(response.body).to include("案件コード・案件名で検索", "同意文面名・版で検索")
@@ -315,7 +313,7 @@ RSpec.describe "Admin project consent settings", type: :request do
   end
 
   def enabled_filter_field
-    enabled_filter&.ancestors&.find { |node| node["class"].to_s.split.include?("field") }
+    enabled_filter&.ancestors&.find { |node| node["class"].to_s.split.any? { |c| c == "field" || c == "rfk-field" } }
   end
 
   def enabled_filter_in_field

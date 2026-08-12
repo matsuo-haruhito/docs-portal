@@ -39,11 +39,12 @@ details#comments class=wrapper_classes.join(" ") open=(!floating)
     .document-comment-workspace__header
       div
         p.document-comment-workspace__eyebrow 文書を見ながら書く
-        h2 文書コメント
-        - if current_user.internal?
-          p.muted 外部/利用者にも見えるQ&Aと、内部だけで扱う確認事項をここにまとめます。
-        - else
-          p.muted 文書に関するQ&Aをここにまとめます。
+        .heading-with-help
+          h2 文書コメント
+          - if current_user.internal?
+            = render InfoTooltipComponent.new(label: "文書コメント", description: "外部・利用者にも見えるQ&Aと、内部だけで扱う確認事項をここにまとめます。")
+          - else
+            = render InfoTooltipComponent.new(label: "文書コメント", description: "文書に関するQ&Aをここにまとめます。")
       span.document-comment-workspace__status
         = @question_threads.size
         | 件のQ&A
@@ -73,11 +74,13 @@ details#comments class=wrapper_classes.join(" ") open=(!floating)
           span.document-comment-workspace__summary-label 確認事項
           strong.document-comment-workspace__summary-value = @review_comments.size
           span.document-comment-workspace__summary-note = "未解決 #{unresolved_review_count}件"
-        p.document-comment-workspace__summary-help.muted 未解決タブには、未解決のQ&Aと内部向け確認事項をまとめて表示します。Q&Aの受付・回答状態と確認事項の解決状態は別の管理です。通知・期限・SLAを示すものではありません。
-      - else
-        p.document-comment-workspace__summary-help.muted 未解決タブには、まだ回答やクローズがされていないQ&Aを表示します。
-      - if comment_filter_active
-        p.document-comment-workspace__summary-help.muted 表示中の件数とタブの未解決件数は、絞り込み条件に一致したコメントだけを基準にしています。
+      = render GuidanceDisclosureComponent.new(title: "未解決件数の読み方") do
+        - if current_user.internal?
+          p 未解決タブには、未解決のQ&Aと内部向け確認事項をまとめて表示します。Q&Aの受付・回答状態と確認事項の解決状態は別の管理です。通知・期限・SLAを示すものではありません。
+        - else
+          p 未解決タブには、まだ回答やクローズがされていないQ&Aを表示します。
+        - if comment_filter_active
+          p 表示中の件数とタブの未解決件数は、絞り込み条件に一致したコメントだけを基準にしています。
 
     - if current_user.internal?
       = render "documents/comment_workspace_handoff_summary", question_threads: @question_threads, review_comments: @review_comments, comment_filter_active: comment_filter_active

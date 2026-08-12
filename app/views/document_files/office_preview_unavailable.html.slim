@@ -13,6 +13,8 @@
 
   - if @download_available
     p.actions
-      = link_to "ダウンロード", document_file_path(@document_file, disposition: "download"), class: "button", target: "_blank", rel: "noopener"
+      = link_to document_file_path(@document_file, disposition: "download"), class: "button", target: "_blank", rel: "noopener" do
+        i.bi.bi-download.me-1 aria-hidden="true"
+        | ダウンロード
   - else
     p.muted このファイルのダウンロード権限がないため、管理者に確認してください。

@@ -34,7 +34,7 @@ RSpec.describe "Admin webhook delivery search", type: :request do
     response_status_input = parsed_html.at_css("input[name='response_status']")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("HTTP statusは100〜599の整数で絞り込みます。範囲外や数字以外は条件に使われません。")
+    expect(page_text).to include("HTTPステータスは100〜599の整数で絞り込みます。範囲外や数字以外は条件に使われません。")
     expect(response_status_input["min"]).to eq("100")
     expect(response_status_input["max"]).to eq("599")
   end

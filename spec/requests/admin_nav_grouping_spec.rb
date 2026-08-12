@@ -5,50 +5,62 @@ RSpec.describe "Admin navigation", type: :request do
     Nokogiri::HTML(response.body)
   end
 
-  def admin_nav_section_labels
-    parsed_html.css("ul.nav-list li.nav-section").map { |node| node.text.squish }
+  def navbar_section_labels
+    parsed_html.css("header .nav-dropdown__section-label").map { |node| node.text.squish }
   end
 
-  def admin_nav_link_texts
-    parsed_html.css("ul.nav-list a").map { |node| node.text.squish }
+  def navbar_link_texts
+    parsed_html.css("header .nav-dropdown__menu a").map { |node| node.text.squish }
   end
 
-  it "groups internal admin links with lightweight area cues" do
+  def context_nav_link_texts
+    parsed_html.css("nav.admin-context-nav a").map { |node| node.text.squish }
+  end
+
+  it "groups internal admin links in the shared navbar" do
     sign_in_as(create(:user, :internal))
 
     get admin_root_path
 
     expect(response).to have_http_status(:ok)
-    expect(admin_nav_section_labels).to include(
+    expect(navbar_section_labels).to include(
+      "管理ホーム",
+      "マスタ管理",
+      "文書管理",
       "運用",
-      "基本マスタ",
-      "文書・権限",
-      "import / sync",
-      "外部連携"
+      "診断",
+      "仕様確認",
+      "取込・同期",
+      "通知連携"
     )
-    expect(admin_nav_link_texts).to include(
-      "ダッシュボード",
+    expect(navbar_link_texts).to include(
+      "管理画面 現在",
       "モデルブラウザ",
       "会社",
       "ユーザー",
       "文書",
+      "文書カタログ",
       "文書権限",
       "ZIPインポート",
-      "Git同期履歴",
+      "単体ファイルdry-run",
+      "定期ジョブ",
+      "生成ファイルイベント",
+      "生成ファイル実行履歴",
+      "Git取込履歴",
       "Microsoft Graph",
       "Webhook設定",
       "Webhook送信履歴"
     )
   end
 
-  it "keeps company master admin navigation limited to company and user management" do
+  it "keeps company master admin context navigation limited to company and user management" do
     sign_in_as(create(:user, :company_master_admin))
 
     get admin_root_path
 
     expect(response).to have_http_status(:ok)
-    expect(admin_nav_section_labels).to eq(["会社・ユーザー管理"])
-    expect(admin_nav_link_texts).to contain_exactly("会社", "ユーザー")
-    expect(admin_nav_link_texts).not_to include("モデルブラウザ", "文書", "Webhook設定")
+    expect(context_nav_link_texts).to contain_exactly("会社", "ユーザー")
+    expect(parsed_html.at_css("nav.admin-context-nav")["aria-label"]).to eq("会社・ユーザー管理")
+    expect(navbar_section_labels).not_to include("管理ホーム", "マスタ管理", "文書管理", "運用", "通知連携")
   end
 end

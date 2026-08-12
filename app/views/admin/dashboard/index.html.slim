@@ -1,20 +1,23 @@
 - page_title "管理ダッシュボード"
 - model_browser_total_count = Admin::ModelBrowserCatalog.entries.size
 
-h1 管理画面
-p.muted 内部ユーザーのみが各種マスタを管理できます。
+.heading-with-help
+  h1 管理画面
+  = render InfoTooltipComponent.new(label: "管理画面", description: "内部管理者向けのマスタ、運用履歴、診断情報をまとめて確認できます。")
 
 = render "admin/nav"
 
 section.card
-  h2 モデル観測
-  p.muted = "主要 model #{@model_browser_entries.size}件を抜粋して、件数と最近の record を横断確認できます。catalog 全体 #{model_browser_total_count}件はモデルブラウザで group 別に確認できます。"
+  .heading-with-help
+    h2 モデル観測
+    = render InfoTooltipComponent.new(label: "モデル観測", description: "主要モデルの件数と最終更新を抜粋表示します。全#{model_browser_total_count}モデルはモデルブラウザで確認できます。")
   .dashboard-grid
     - @model_browser_entries.each do |entry|
       - summary = @model_browser_entry_summaries.fetch(entry)
       article.card.metric-card
-        h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
-        p.muted = entry.description
+        .heading-with-help
+          h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
+          = render InfoTooltipComponent.new(label: entry.label, description: entry.description)
         dl.definition-list.model-browser-card-metrics
           dt 件数
           dd = summary[:total_count]
@@ -24,42 +27,42 @@ section.card
     = link_to "モデルブラウザを開く（全#{model_browser_total_count}件）", admin_model_browser_path, class: "button"
 
 section.card
-  h2 運用失敗入口
-  p.muted 保存済み履歴の failed / skipped / partial 件数と、生成ファイルの継続失敗候補を分けて確認できます。外部送付履歴・外部フォルダ同期の継続失敗候補も read-only 調査入口として確認できます。各候補は通知・ack・自動 retry ではなく、read-only 調査入口として扱います。
+  .heading-with-help
+    h2 運用失敗入口
+    = render InfoTooltipComponent.new(label: "運用失敗入口", description: "保存済み失敗履歴と継続失敗候補をread-onlyで確認します。候補件数は通知・確認済み・自動復旧の状態を示しません。")
   .dashboard-grid
     - @operational_failure_summary.each do |item|
       article.card.metric-card
         h3 = item[:label]
-        h4 保存済み履歴
+        .heading-with-help
+          h4 保存済み履歴
+          = render InfoTooltipComponent.new(label: "保存済み履歴", description: "保存済み履歴の件数です。継続失敗候補や通知状態とは別に確認します。")
         p
           strong = item[:count]
           |  件
-        p.muted 保存済み履歴の件数です。継続失敗候補や通知状態とは別に確認します。
-        p.muted = item[:scope]
-        - if item[:latest_at]
-          p.muted
-            | 対象履歴の最終更新:
-            time datetime=item[:latest_at].iso8601 = l(item[:latest_at], format: :short)
-            br
-            span 発生時刻や alert 発火時刻ではありません。
+        = render GuidanceDisclosureComponent.new(title: "集計条件を確認") do
+          p = item[:scope]
+          - if item[:latest_at]
+            p
+              | 対象履歴の最終更新:
+              time datetime=item[:latest_at].iso8601 = l(item[:latest_at], format: :short)
+              |  （発生時刻や通知時刻ではありません）
             - if item[:stale]
-              br
-              strong 古い失敗のみ
-              span  （7日より古い対象履歴だけが残っています。緊急度、通知状態、ack 状態を示す表示ではありません）
-        ul
-          - item[:details].each do |detail|
-            li = detail
+              p
+                strong 古い失敗のみ
+                |  （7日より古い履歴だけが残っています）
+          ul
+            - item[:details].each do |detail|
+              li = detail
         - if item[:alert_candidates]
           - alert_candidates = item[:alert_candidates]
           .operational-alert-candidates
-            h4 継続失敗候補
-            p.muted 保存済み履歴とは別に、同じ identity の最新 run が連続 failed かだけを確認します。通知・ack・自動復旧の状態ではありません。
-            p.muted
-              | 継続失敗候補:
+            .heading-with-help
+              h4 継続失敗候補
+              = render InfoTooltipComponent.new(label: "継続失敗候補", description: "同じidentityの最新runが連続して失敗している候補です。通知・確認済み・自動復旧・正常保証の状態ではありません。")
+            p
               strong = alert_candidates.size
               |  件
-              br
-              span 保存済み failed 件数とは別の read-only 調査入口です。最新 run が同じ identity で連続 failed のものだけを表示します。候補 0 件は正常保証ではありません。
             - if alert_candidates.any?
               ul
                 - alert_candidates.each do |candidate|
@@ -82,7 +85,7 @@ section.card
               p.actions
                 = link_to "継続失敗候補の failed 実行履歴をすべて見る", admin_generated_file_runs_path(status: "failed"), class: "button secondary"
             - else
-              p.muted 最新 run が連続失敗している候補はありません。同じ identity で連続 failed の候補がない状態です。保存済み failed 件数が 0 件であることや正常状態を保証する表示ではありません。
+              p.muted 継続失敗中の候補はありません。
             - if @generated_file_run_failure_alert_digest_markdown.present?
               details.operational-alert-digest
                 summary Markdown digest preview
@@ -91,14 +94,12 @@ section.card
         - if item[:document_delivery_alert_candidates]
           - delivery_alert_candidates = item[:document_delivery_alert_candidates]
           .operational-alert-candidates
-            h4 継続失敗候補
-            p.muted 既存の外部送付履歴 handoff payload を使い、同じ宛先・件名・送付方式の最新履歴が連続 failed の候補だけを read-only に表示します。通知・ack・自動 retry の状態ではありません。
-            p.muted
-              | 継続失敗候補:
+            .heading-with-help
+              h4 継続失敗候補
+              = render InfoTooltipComponent.new(label: "外部送付の継続失敗候補", description: "同じ宛先・件名・送付方式の最新履歴が連続して失敗している候補です。メール全体や外部監視の正常性は示しません。")
+            p
               strong = delivery_alert_candidates.size
               |  件
-              br
-              span current 条件での handoff 候補です。候補 0 件は mail 全体正常、外部監視 green、通知済みを意味しません。
             - if delivery_alert_candidates.any?
               ul
                 - delivery_alert_candidates.each do |candidate|
@@ -125,18 +126,16 @@ section.card
                 = link_to "外部送付履歴の failed 一覧をすべて見る", document_delivery_logs_path(status: "failed"), class: "button secondary"
                 = link_to "継続失敗候補 runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/#{DocumentDeliveryLogs::FailureAlertHandoff::RUNBOOK_PATH}", class: "button secondary", target: "_blank", rel: "noopener"
             - else
-              p.muted current 条件で外部送付履歴の handoff 候補はありません。これは mail 全体正常、外部監視 green、通知正常を意味しません。
+              p.muted 継続失敗中の外部送付候補はありません。
         - if item[:external_sync_alert_candidates]
           - external_sync_alert_candidates = item[:external_sync_alert_candidates]
           .operational-alert-candidates
-            h4 継続失敗候補
-            p.muted 外部フォルダ同期 source ごとに、最新 run から failed / partial が連続しているものだけを read-only に表示します。通知・ack・自動 retry・provider 正常判定の状態ではありません。
-            p.muted
-              | 継続失敗候補:
+            .heading-with-help
+              h4 継続失敗候補
+              = render InfoTooltipComponent.new(label: "外部フォルダ同期の継続失敗候補", description: "sourceごとに最新runの失敗・部分成功が連続している候補です。provider全体や通知・自動復旧の正常性は示しません。")
+            p
               strong = external_sync_alert_candidates.size
               |  件
-              br
-              span current 条件での handoff 候補です。候補 0 件は外部 provider 全体正常、通知済み、自動復旧済みを意味しません。
             - if external_sync_alert_candidates.any?
               ul
                 - external_sync_alert_candidates.each do |candidate|
@@ -157,7 +156,7 @@ section.card
                 = link_to "外部フォルダ同期の error 一覧を見る", admin_external_folder_sync_sources_path(review: "errors"), class: "button secondary"
                 = link_to "外部フォルダ同期継続失敗候補 runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/#{ExternalFolderSyncRuns::FailureAlertHandoff::RUNBOOK_PATH}", class: "button secondary", target: "_blank", rel: "noopener"
             - else
-              p.muted current 条件で外部フォルダ同期の handoff 候補はありません。これは外部 provider 全体正常、通知正常、自動 retry 済みを意味しません。
+              p.muted 継続失敗中の外部フォルダ同期候補はありません。
             - if @external_sync_failure_alert_digest_markdown.present?
               details.operational-alert-digest
                 summary Markdown digest preview
@@ -169,10 +168,11 @@ section.card
             = link_to item[:secondary_link].first, item[:secondary_link].last, class: "button secondary"
 
 section.card
-  h2 アプリ設定診断
+  .heading-with-help
+    h2 アプリ設定診断
+    = render InfoTooltipComponent.new(label: "アプリ設定診断", description: "環境変数、保存領域、外部runtimeなどの設定状態をread-onlyで確認します。")
 
-  .configuration-runbook-links
-    p.muted 診断結果を確認した後は、原因別に既存 runbook へ戻って設定前提を確認できます。
+  = render GuidanceDisclosureComponent.new(title: "原因別runbookを確認") do
     ul
       li
         = link_to "環境変数・compose", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/guides/ローカルセットアップと環境変数.md", target: "_blank", rel: "noopener"
@@ -202,12 +202,22 @@ section.card
 
   = form_with url: admin_root_path, method: :get, local: true, class: "configuration-diagnostic-filter-form" do |form|
     .form-grid
-      .field
-        = form.label :configuration_status, "状態"
-        = form.select :configuration_status, [["すべて", ""]] + configuration_diagnostic_status_filter_options, selected: @configuration_status_filter
-      .field
-        = form.label :configuration_category, "カテゴリ"
-        = form.select :configuration_category, [["すべて", ""]] + configuration_diagnostic_category_filter_options, selected: @configuration_category_filter
+      = form.rfk_select :configuration_status,
+        collection: configuration_diagnostic_status_filter_options,
+        include_blank: "すべて",
+        placeholder: "すべて",
+        selected: @configuration_status_filter,
+        allow_clear: true,
+        wrapper: true,
+        label: "状態"
+      = form.rfk_select :configuration_category,
+        collection: configuration_diagnostic_category_filter_options,
+        include_blank: "すべて",
+        placeholder: "すべて",
+        selected: @configuration_category_filter,
+        allow_clear: true,
+        wrapper: true,
+        label: "カテゴリ"
     p.actions
       = form.submit "絞り込む", class: "button secondary"
       - if @configuration_diagnostic_filters_active
@@ -225,13 +235,12 @@ section.card
 
   - if @configuration_diagnostic_checks.any?
     table
+      caption.table-caption アプリ設定診断結果
       thead
         tr
           th 状態
           th カテゴリ
-          th 項目
-          th 内容
-          th 補足
+          th 判定内容
       tbody
         - @configuration_diagnostic_checks.each do |check|
           tr
@@ -242,16 +251,16 @@ section.card
               span class="text-sm font-semibold text-gray-700"
                 = configuration_diagnostic_category_label(check)
             td
-              code = check.key
-            td
-              strong = check.label
-              br
-              span.muted = check.message
-            td class="max-w-xl break-words"
-              - if check.detail.present?
-                code = check.detail
-              - else
-                span.muted -
+              = check.message
+              = render GuidanceDisclosureComponent.new(title: "技術詳細を確認") do
+                dl.definition-list
+                  dt 設定項目
+                  dd
+                    code = check.key
+                  - if check.detail.present?
+                    dt 診断値
+                    dd
+                      code = check.detail
   - else
     p.muted 現在の絞り込み条件に一致する診断項目はありません。診断全体が正常という意味ではないため、条件を解除するか上の全体件数を確認してください。
     - if @configuration_diagnostic_filters_active
@@ -298,9 +307,9 @@ section.card
               code = file.storage_key
 
 section.card
-  h2 Storage使用量
-  p.muted local storage 配下の概算使用量を read-only で確認します。削除、archive、cleanup、retention policy 決定、GCS API 連携はここでは行いません。
-  p.muted 大きい内訳は各領域の直下項目を上位5件までに閉じた read-only preview です。raw absolute path は表示しません。
+  .heading-with-help
+    h2 Storage使用量
+    = render InfoTooltipComponent.new(label: "Storage使用量", description: "local storage配下の概算値です。削除・archive・cleanup・retention policy決定や外部storage API操作は行いません。内訳は各領域の上位5件です。")
   p
     | 合計:
     strong = @storage_usage_summary.human_total_size
@@ -359,8 +368,9 @@ section.card
             - else
               span.muted この行は read-only 集計です
 
-  h3 DocumentFile 実体の Project / Document 上位
-  p.muted storage/document_files に紐づく DocumentFile 実体だけを Project / Document 単位で概算集計します。上位5件の read-only preview で、削除・archive・cleanup・retention policy 決定には使いません。raw absolute path や外部 storage metadata は表示しません。
+  .heading-with-help
+    h3 DocumentFile 実体の Project / Document 上位
+    = render InfoTooltipComponent.new(label: "DocumentFile実体の上位", description: "storage/document_filesの実体を案件・文書単位で概算集計した上位5件です。削除判断には使用せず、絶対pathや外部storage metadataは表示しません。")
   - document_file_breakdown_entries = @storage_usage_summary.document_file_breakdown_entries
   - if document_file_breakdown_entries.any?
     table

@@ -12,7 +12,7 @@ h1 Webhook送信履歴検索
 = render "admin/nav"
 
 p.actions
-  = link_to "Webhook一覧へ戻る", admin_webhook_endpoints_path, class: "button secondary"
+  = back_link_to "Webhook一覧へ戻る", admin_webhook_endpoints_path
 
 .card
   h2 検索条件
@@ -33,16 +33,26 @@ p.actions
         placeholder: "設定名・送信先URLで検索",
         allow_clear: true
       span.muted = "設定名または送信先URLの一部で検索できます。候補は最大#{Admin::WebhookDeliveriesController::WEBHOOK_ENDPOINT_SEARCH_LIMIT}件まで表示され、選択済みの設定は候補上限外でも復元されます。"
+      = form.rfk_select :event_type,
+        collection: event_type_options,
+        selected: @delivery_filters[:event_type].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "イベント",
+        allow_clear: true,
+        placeholder: "すべて"
+      = form.rfk_select :status,
+        collection: delivery_status_options.reject { |(_label, value)| value == "all" },
+        selected: @delivery_filters[:status].presence,
+        include_blank: "すべて",
+        wrapper: true,
+        label: "ステータス",
+        allow_clear: true,
+        placeholder: "すべて"
       label
-        | イベント
-        = select_tag :event_type, options_for_select([["すべて", ""]] + event_type_options, @delivery_filters[:event_type])
-      label
-        | ステータス
-        = select_tag :status, options_for_select([["すべて", ""]] + delivery_status_options.reject { |(_label, value)| value == "all" }, @delivery_filters[:status])
-      label
-        | HTTP status
+        | HTTPステータス
         = number_field_tag :response_status, @delivery_filters[:response_status], min: 100, max: 599, placeholder: "例: 500"
-        span.muted HTTP statusは100〜599の整数で絞り込みます。範囲外や数字以外は条件に使われません。
+        span.muted HTTPステータスは100〜599の整数で絞り込みます。範囲外や数字以外は条件に使われません。
       label
         | エラー断片
         = search_field_tag :error_q, @delivery_filters[:error_q], maxlength: Admin::WebhookDeliveriesController::ERROR_QUERY_MAX_LENGTH, placeholder: "例: timeout"
@@ -93,7 +103,7 @@ p.actions
             td data-rails-table-preferences-column-key="response_status" = delivery.response_status || "-"
             td data-rails-table-preferences-column-key="error_message" = WebhookDeliveryDiagnosticPreview.new(delivery.error_message).to_s
             td.actions data-rails-table-preferences-column-key="actions"
-              = link_to "詳細", admin_webhook_delivery_path(delivery.public_id, @delivery_return_params), title: delivery_detail_link_cue, aria: { label: delivery_detail_link_cue }
+              = detail_link_to "詳細", admin_webhook_delivery_path(delivery.public_id, @delivery_return_params), title: delivery_detail_link_cue, aria: { label: delivery_detail_link_cue }
     - if @webhook_deliveries_total_pages > 1
       p.actions
         - if @webhook_deliveries_page > 1
@@ -113,11 +123,10 @@ p.actions
             title: next_delivery_page_cue,
             aria: { label: next_delivery_page_cue }
   - elsif @delivery_filters_applied
-    p.muted 条件に一致するWebhook送信履歴はありません。Webhook設定、イベント、ステータス、HTTP status、エラー断片、作成日の範囲を見直してください。
+    p.muted 条件に一致するWebhook送信履歴はありません。Webhook設定、イベント、ステータス、HTTPステータス、エラー断片、作成日の範囲を見直してください。
     p.actions
       = link_to "条件をクリア", admin_webhook_deliveries_path, class: "button secondary"
   - else
-    p.muted まだWebhook送信履歴はありません。
-    p.muted Webhook設定を登録し、通知対象イベントが発生すると送信履歴がここに表示されます。
-    p.actions
-      = link_to "Webhook設定へ戻る", admin_webhook_endpoints_path, class: "button secondary"
+    = render EmptyStateComponent.new(heading: "まだWebhook送信履歴はありません。", description: "Webhook設定を登録し、通知対象イベントが発生すると送信履歴がここに表示されます。") do |component|
+      - component.with_action do
+        = back_link_to "Webhook設定へ戻る", admin_webhook_endpoints_path

@@ -68,9 +68,10 @@ section.card
   - if build_manifest.state != :available
     .notice.alert
       = build_manifest.message
-  h3 直近build履歴
+  .heading-with-help
+    h3 直近build履歴
+    = render InfoTooltipComponent.new(label: "直近build履歴", description: "API仕様ページ専用 build の直近結果だけを read-only に表示します。raw stdout / stderr は表示しません。")
   - if build_history.any?
-    p.muted API仕様ページ専用 build の直近結果だけを read-only に表示します。raw stdout / stderr は表示しません。
     table
       thead
         tr
@@ -110,8 +111,9 @@ section.card
   - if %i[failed stale].include?(build_status.state)
     .notice
       h3 手動 build 再実行
-      p.muted API仕様ページ専用の Docusaurus build だけを再実行します。実行中 marker がある場合は二重起動せず、完了後に再読み込みしてください。
-      p.muted failure の場合は source、runtime、job / CI logs の順で確認し、画面には短いサニタイズ済み理由だけを表示します。
+      = render GuidanceDisclosureComponent.new(title: "再実行前に確認") do
+        p API仕様ページ専用の Docusaurus build だけを再実行します。実行中 marker がある場合は二重起動せず、完了後に再読み込みしてください。
+        p failure の場合は source、runtime、job / CI logs の順で確認し、画面には短いサニタイズ済み理由だけを表示します。
       - if @api_specification_read_only_maintenance
         p.muted メンテナンス中のため build 再要求は停止しています。API仕様 viewer と生成済み HTML の確認は継続できます。
       - else
@@ -119,26 +121,29 @@ section.card
 
 section.card
   h2 主要ページとsource
-  p.muted 表示状態はAPI仕様ページ全体のbuild結果です。個別ページは、編集元Markdownを直してからDocusaurus build後の確認HTMLを開いて確認してください。
-  p.muted Source path はリポジトリ内の編集元Markdownです。確認HTMLは build 後に生成される admin-only の表示先です。
-  p.muted 行別Freshness cueはSourceと生成HTMLの更新時刻だけを比べ、build queueやiframe配信条件は変更しません。
+  = render GuidanceDisclosureComponent.new(title: "SourceとFreshnessの読み方") do
+    p 表示状態はAPI仕様ページ全体のbuild結果です。個別ページは、編集元Markdownを直してからDocusaurus build後の確認HTMLを開いて確認してください。
+    p Source path はリポジトリ内の編集元Markdownです。確認HTMLは build 後に生成される admin-only の表示先です。
+    p 行別Freshness cueはSourceと生成HTMLの更新時刻だけを比べ、build queueやiframe配信条件は変更しません。
   ul
     - @api_specification_page.primary_source_pages.each do |source_page|
       - freshness = @api_specification_page.primary_source_page_freshness(source_page)
       li
         strong = source_page.label
         br
-        span.muted 編集元Markdown: 
+        span.muted 編集元Markdown:
+        = " "
         code = source_page.source_path
         br
-        span.muted HTML確認先（build後）: 
+        span.muted HTML確認先（build後）:
+        = " "
         = link_to source_page.site_path, site_admin_api_specification_path(site_path: source_page.site_path)
         br
-        span.muted Freshness: 
+        span.muted Freshness:
         strong = freshness.label
         span.muted = " - #{freshness.message}"
         br
-        span.muted Source更新: 
+        span.muted Source更新:
         - if freshness.source_mtime
           = l(freshness.source_mtime, format: :long)
         - else

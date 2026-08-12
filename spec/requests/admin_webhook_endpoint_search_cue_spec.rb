@@ -25,8 +25,7 @@ RSpec.describe "Admin webhook endpoint search cue", type: :request do
 
     expect(endpoint_q_input["value"]).to eq(normalized_query)
     expect(endpoint_q_input["maxlength"]).to eq(Admin::WebhookEndpointsController::ENDPOINT_Q_MAX_LENGTH.to_s)
-    expect(page_text).to include("名称・送信先URLを検索します。100文字まで。")
-    expect(page_text).to include("設定検索・イベント・状態 filter は Webhook 設定一覧だけに適用されます")
-    expect(page_text).to include("最近の送信履歴検索や再送条件は変更しません")
+    expect(page_text).to include("名称または送信先URLを部分一致で検索します。入力できるのは100文字までです。")
+    expect(page_text).to include("ここでの絞り込みは設定一覧だけに適用され、送信履歴や再送条件には影響しません。")
   end
 end

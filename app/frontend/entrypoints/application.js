@@ -8,13 +8,14 @@ import "./bulk_edit_selection.css"
 import "./text_preview_cues.css"
 import "@hotwired/turbo-rails"
 import { Application } from "@hotwired/stimulus"
-import { RailsTablePreferencesController } from "rails_table_preferences"
 import { TomSelectController } from "rails_fields_kit"
 import "tom-select/dist/css/tom-select.css"
+import "./tom_select_overrides.css"
 import ApiSpecificationCodeblockDryRunController from "../controllers/api_specification_codeblock_dry_run_controller"
 import ArchivePreviewToolsController from "../controllers/archive_preview_tools_controller"
 import AutoHeightFrameController from "../controllers/auto_height_frame_controller"
 import BulkEditSelectionController from "../controllers/bulk_edit_selection_controller"
+import ColumnSettingsDialogController from "../controllers/column_settings_dialog_controller"
 import CompanyMasterAdminHandoffController from "../controllers/company_master_admin_handoff_controller"
 import CsvPreviewToolsController from "../controllers/csv_preview_tools_controller"
 import DocumentFileBrowserController from "../controllers/document_file_browser_controller"
@@ -33,6 +34,7 @@ import MarkdownPreviewDocumentSearchController from "../controllers/markdown_pre
 import MarkdownPreviewTableToolsController from "../controllers/markdown_preview_table_tools_controller"
 import PdfPreviewToolsController from "../controllers/pdf_preview_tools_controller"
 import PreviewTableResizerController from "../controllers/preview_table_resizer_controller"
+import RailsTablePreferencesController from "../controllers/rails_table_preferences_controller"
 import RfkDependentFilterController from "../controllers/rfk_dependent_filter_controller"
 import SectionNavController from "../controllers/section_nav_controller"
 import SidebarController from "../controllers/sidebar_controller"
@@ -47,6 +49,7 @@ application.register("api-specification-codeblock-dry-run", ApiSpecificationCode
 application.register("archive-preview-tools", ArchivePreviewToolsController)
 application.register("auto-height-frame", AutoHeightFrameController)
 application.register("bulk-edit-selection", BulkEditSelectionController)
+application.register("column-settings-dialog", ColumnSettingsDialogController)
 application.register("company-master-admin-handoff", CompanyMasterAdminHandoffController)
 application.register("csv-preview-tools", CsvPreviewToolsController)
 application.register("document-file-browser", DocumentFileBrowserController)

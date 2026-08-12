@@ -1,8 +1,9 @@
 - return unless summary&.present?
 
 .card
-  h2 添付分類サマリ
-  p.muted 添付・元ファイルをどのように見せるかの設定に基づく分類です。補助ファイルやデバッグ用ファイルは通常表示と分けて確認できます。
+  .heading-with-help
+    h2 添付分類サマリ
+    = render InfoTooltipComponent.new(label: "添付分類サマリ", description: "添付・元ファイルの表示設定に基づく分類です。補助ファイルやデバッグ用ファイルは通常表示と分けて確認できます。")
   .stats-grid
     .stat-card
       span.stat-card__label 主要ファイル

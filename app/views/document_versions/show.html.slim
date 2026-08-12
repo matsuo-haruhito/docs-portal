@@ -20,11 +20,12 @@ p.muted
 
 .page-hero.markdown-preview-hero
   p.eyebrow 版詳細プレビュー
-  h1
-    = @document.title
-    |
-    = document_version_label(@version)
-  p.muted = hero_description
+  .heading-with-help
+    h1
+      = @document.title
+      |
+      = document_version_label(@version)
+    = render InfoTooltipComponent.new(label: "版詳細プレビュー", description: hero_description)
   p.actions
     - if @version.rendered_site_available?
       = link_to "HTML本文を開く", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path), class: "button"
@@ -127,9 +128,9 @@ p.muted
 
 .card.markdown-workspace
   .markdown-workspace__header
-    div
+    .heading-with-help
       h2 版詳細ワークスペース
-      p.muted = workspace_description
+      = render InfoTooltipComponent.new(label: "版詳細ワークスペース", description: workspace_description)
     .actions
       - if @version.rendered_site_available?
         = link_to "プレビュー", project_document_path(@project, @document.slug, version_id: @version.public_id, site_path: @version.html_view_site_path), class: "button"
@@ -151,9 +152,9 @@ p.muted
 
 .card.version-diff-viewer#version-diff
   .markdown-workspace__header
-    div
+    .heading-with-help
       h2 版差分ビュー
-      p.muted 比較対象版と表示中の版について、添付・元ファイルの追加、変更、削除と、Markdown本文・HTML本文の差分を確認できます。
+      = render InfoTooltipComponent.new(label: "版差分ビュー", description: "比較対象版と表示中の版について、添付・元ファイルの追加・変更・削除と、Markdown本文・HTML本文の差分を確認できます。")
     - if @compare_version
       = link_to "比較対象版を開く", document_version_path(@compare_version), class: "button secondary"
   - diff_files = @version_file_diff_summary.fetch(:files)

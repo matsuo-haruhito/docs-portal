@@ -25,9 +25,14 @@
         = text_field_tag :company_display, fixed_company_name, readonly: true, disabled: true
         span.muted この会社で固定され、会社欄は変更できません。ユーザー種別も自動で固定されます。
     - else
-      label
-        | ユーザー種別
-        = form.select :user_type, enum_options_for("users.user_type", User.user_types.keys)
+      .form-field
+        .heading-with-help
+          = form.label :user_type, "ユーザー種別"
+          = render InfoTooltipComponent.new(label: "ユーザー種別", description: "社内ユーザーは管理画面を含む全機能、社外ユーザーは許可された文書の閲覧のみ、会社マスタ管理者は自社のユーザー・会社管理だけにアクセスできます。")
+        = form.rfk_select :user_type,
+          collection: enum_options_for("users.user_type", User.user_types.keys),
+          selected: form.object.user_type,
+          wrapper: false
       = form.rfk_combobox :company_id,
         collection: [],
         selected: admin_user_company_selected_option(user.company),
@@ -43,9 +48,11 @@
         allow_clear: true,
         placeholder: "会社名・ドメインで検索（未所属可）"
       p.muted 会社を選択しない場合は未所属として保存されます。会社を外す場合は選択をクリアしてください。
-    label
-      | 有効
-      = form.select :active, [["有効", true], ["無効", false]]
+    = form.rfk_select :active,
+      collection: [["有効", true], ["無効", false]],
+      selected: form.object.active,
+      wrapper: true,
+      label: "有効"
     label
       | パスワード
       = form.password_field :password
@@ -56,4 +63,4 @@
   p.actions
     = form.submit "保存", class: "button"
     - if user.persisted?
-      = link_to "一覧へ戻る", return_to || admin_users_path, class: "button secondary"
+      = back_link_to "一覧へ戻る", return_to || admin_users_path
