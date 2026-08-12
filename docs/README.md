@@ -13,7 +13,9 @@
 
 ### 仕様 → [specs/](./specs/)
 
-機能仕様、API仕様、データモデル設計
+機能仕様、API仕様、データモデル設計、UI再構成
+
+- [UI再構成実装指示書](./specs/UI再構成実装指示書.md)
 
 ### Runbook → [runbooks/](./runbooks/)
 
