@@ -1,5 +1,5 @@
 - flash.each do |type, message|
-  .notice class=(type == "alert" ? "alert" : "ok")
+  .notice class=(type == "alert" ? "alert" : "ok") role="alert"
     = message
     - if type.to_s == "notice" && flash[:upload_review_version_public_id].present?
       .actions.flash-message-actions

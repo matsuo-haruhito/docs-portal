@@ -5,14 +5,12 @@
 h1 = @document_set.name
 
 p.muted
-  = link_to @project.name, project_path(@project)
-  |  /
-  = document_set_type_label(@document_set)
-  |  /
-  = document_set_visibility_policy_label(@document_set)
+  = "#{link_to(@project.name, project_path(@project))} / #{document_set_type_label(@document_set)} / #{document_set_visibility_policy_label(@document_set)}".html_safe
 
 p.actions
-  = link_to "外部送付を準備", new_project_document_set_document_delivery_log_path(@project, @document_set), class: "button secondary"
+  = link_to new_project_document_set_document_delivery_log_path(@project, @document_set), class: "button secondary" do
+    i.bi.bi-send.me-1 aria-hidden="true"
+    | 外部送付を準備
   = render HelpTooltipComponent.new(description: "現在の利用者に表示できる文書を対象に、外部送付の下書きを準備します。")
 
 - if @document_set.description.present?
@@ -21,6 +19,7 @@ p.actions
 - if @items.any?
   p.muted 文書ごとの使用版を確認してください。「利用可能な版なし」の行は、送付前に文書の版を確認してください。
   table
+    caption.table-caption 文書セット内の文書一覧
     thead
       tr
         th 順番
