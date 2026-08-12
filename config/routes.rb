@@ -9,7 +9,7 @@ Rails.application.routes.draw do
   match "/oauth/revoke", to: "oauth_cors#preflight", via: :options
   post "mcp", to: "mcp#create"
 
-  root "projects#index"
+  root "dashboard#show"
 
   mount RailsTablePreferences::Engine, at: "/rails_table_preferences"
 

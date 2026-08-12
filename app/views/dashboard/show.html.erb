@@ -1,281 +1,135 @@
-<% page_title "ダッシュボード" %>
+<% page_title "ホーム" %>
 
 <%
-  summary_cards = [
-    {
-      label: "閲覧可能案件",
-      count: @dashboard_stats[:project_count],
-      path: projects_path,
-      cta: "案件一覧へ"
-    },
-    {
-      label: "閲覧可能文書",
-      count: @dashboard_stats[:document_count],
-      path: documents_path,
-      cta: "文書一覧へ"
-    },
-    {
-      label: "保存ショートカット",
-      count: @dashboard_stats[:bookmark_count],
-      path: document_bookmarks_path,
-      cta: "ショートカット一覧へ"
-    },
-    {
-      label: "保留中の申請",
-      count: @dashboard_stats[:pending_access_request_count],
-      path: access_requests_path,
-      cta: "申請一覧へ",
-      description: "あなたが提出したアクセス申請の保留件数です。"
-    }
-  ]
-
-  if current_user.internal?
-    summary_cards << {
-      label: "保留中の確認依頼",
-      count: @dashboard_stats[:pending_approval_count],
-      path: document_approval_requests_path,
-      cta: "未処理の確認依頼を見る",
-      description: "社内担当者として処理する確認依頼の保留件数です。"
-    }
-  end
+  pending_items = []
+  pending_items << { label: "アクセス申請", count: @dashboard_stats[:pending_access_request_count], path: access_requests_path } if @dashboard_stats[:pending_access_request_count].to_i > 0
+  pending_items << { label: "確認依頼", count: @dashboard_stats[:pending_approval_count], path: document_approval_requests_path } if current_user.internal? && @dashboard_stats[:pending_approval_count].to_i > 0
+  pending_items << { label: "Q&A", count: @open_question_handoff_threads&.size || 0, path: document_approval_requests_path } if current_user.internal? && @open_question_handoff_threads&.any?
+  has_pending = pending_items.any?
 %>
 
-<section class="page-hero">
-  <h1>ダッシュボード</h1>
-  <p class="muted">利用中の案件、最近触った文書、保留タスクをひとまとめにして次の操作へつなげます。</p>
-  <% if !current_user.internal? && @projects.empty? && @pending_access_requests.empty? && @favorite_bookmarks.empty? && @read_later_bookmarks.empty? && @recent_documents.empty? && @recently_updated_documents.empty? %>
-    <%= render GuidanceDisclosureComponent.new(title: "表示件数が0件のとき") do %>
-      <p>このダッシュボードは権限不足のエラーではありません。案件一覧・文書一覧から、現在閲覧できる範囲を確認できます。</p>
-    <% end %>
-  <% elsif current_user.internal? && @pending_access_requests.empty? && @dashboard_stats[:pending_approval_count].to_i.zero? %>
-    <%= render GuidanceDisclosureComponent.new(title: "保留タスクがないとき") do %>
-      <p>保留タスクがない場合も、案件や文書の一覧から現在の担当範囲を確認できます。管理画面への移動は、管理権限がある場合だけ表示されます。</p>
-    <% end %>
-  <% end %>
-  <p class="actions">
-    <%= link_to "案件一覧へ", projects_path, class: "button", data: { turbo_frame: "_top" } %>
-    <%= link_to "文書ショートカット一覧", document_bookmarks_path, class: "button secondary" %>
-  </p>
+<section class="home-workspace-summary">
+  <span class="home-workspace-summary__item"><%= @dashboard_stats[:project_count] %>案件</span>
+  <span class="home-workspace-summary__sep">&middot;</span>
+  <span class="home-workspace-summary__item"><%= @dashboard_stats[:document_count] %>文書</span>
+  <span class="home-workspace-summary__sep">&middot;</span>
+  <span class="home-workspace-summary__item">保存済み<%= @dashboard_stats[:bookmark_count] %>件</span>
 </section>
 
-<section class="stats-grid">
-  <% summary_cards.each do |card| %>
-    <article class="card metric-card">
-      <div class="heading-with-help">
-        <p class="eyebrow"><%= card[:label] %></p>
-        <% if card[:description].present? %>
-          <%= render InfoTooltipComponent.new(label: card[:label], description: card[:description]) %>
+<% if has_pending %>
+  <section class="home-section home-section--priority">
+    <h2 class="home-section__title">
+      <i class="bi bi-bell" aria-hidden="true"></i>
+      要対応
+    </h2>
+    <div class="home-pending-list">
+      <% pending_items.each do |item| %>
+        <%= link_to item[:path], class: "home-pending-item", data: { turbo_frame: "_top" } do %>
+          <span class="home-pending-item__label"><%= item[:label] %></span>
+          <span class="home-pending-item__count"><%= item[:count] %></span>
         <% end %>
-      </div>
-      <p class="metric-number"><%= card[:count] %></p>
-      <%= link_to card[:cta], card[:path], class: "metric-card__cta", data: { turbo_frame: "_top" } %>
-    </article>
-  <% end %>
-</section>
-
-<section class="dashboard-grid dashboard-grid--compact">
-  <article class="card">
-    <div class="heading-with-help">
-      <h2>保留中のアクセス申請</h2>
-      <%= render InfoTooltipComponent.new(label: "保留中のアクセス申請", description: "あなたが提出した申請のうち保留中のものです。取消や過去申請の確認は申請一覧で行います。") %>
-    </div>
-    <% if @pending_access_requests.any? %>
-      <ul class="resource-list">
-        <% @pending_access_requests.each do |access_request| %>
-          <% request_hash = AccessRequestHash.new(access_request).call %>
-          <% requestable = request_hash[:requestable] %>
-          <% requestable_name = requestable[:name] || requestable[:title] || requestable[:file_name] || requestable[:public_id] %>
-          <li class="resource-list__item">
-            <div class="resource-list__content">
-              <strong><%= requestable_name %></strong>
-              <span class="muted resource-list__meta"><%= requestable[:type_label] %> / <%= request_hash[:requested_access_level_label] %> / <%= request_hash[:status_label] %> / <%= l(access_request.created_at, format: :short) %></span>
-            </div>
-          </li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p class="muted">保留中の申請はありません。</p>
-    <% end %>
-    <p class="actions">
-      <%= link_to "申請一覧で詳しく見る", access_requests_path, class: "button secondary", data: { turbo_frame: "_top" } %>
-    </p>
-  </article>
-
-  <article class="card dashboard-card--project">
-    <div class="heading-with-help">
-      <h2>案件</h2>
-      <%= render InfoTooltipComponent.new(label: "案件", description: "現在参加していて閲覧できる案件を表示します。全件は案件一覧から確認できます。") %>
-    </div>
-    <% if @projects.any? %>
-      <ul class="resource-list">
-        <% @projects.each do |project| %>
-          <li class="resource-list__item">
-            <div class="resource-list__content">
-              <strong><%= link_to project.name, project_path(project), data: { turbo_frame: "_top" } %></strong>
-              <span class="muted resource-list__meta"><%= project.code %></span>
-            </div>
-          </li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p class="muted">閲覧可能な案件はありません。</p>
-      <p><%= link_to "案件一覧へ", projects_path, class: "metric-card__cta", data: { turbo_frame: "_top" } %></p>
-    <% end %>
-  </article>
-
-  <article class="card">
-    <div class="heading-with-help">
-      <h2>お気に入り</h2>
-      <%= render InfoTooltipComponent.new(label: "お気に入り", description: "個人用ショートカットとして保存した文書です。未登録でも閲覧権限の不足を意味しません。") %>
-    </div>
-    <% if @favorite_bookmarks.any? %>
-      <ul class="resource-list">
-        <% @favorite_bookmarks.each do |bookmark| %>
-          <li class="resource-list__item">
-            <div class="resource-list__content">
-              <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug), data: { turbo_frame: "_top" } %></strong>
-              <span class="muted resource-list__meta"><%= bookmark.document.project.name %></span>
-            </div>
-          </li>
-        <% end %>
-      </ul>
-      <p class="actions">
-        <%= link_to "ショートカット一覧でさらに見る", document_bookmarks_path, class: "button secondary", data: { turbo_frame: "_top" } %>
-      </p>
-    <% else %>
-      <p class="muted">お気に入りはまだありません。</p>
-      <p><%= link_to "文書一覧へ", documents_path, class: "metric-card__cta", data: { turbo_frame: "_top" } %></p>
-    <% end %>
-  </article>
-
-  <article class="card">
-    <div class="heading-with-help">
-      <h2>後で読む</h2>
-      <%= render InfoTooltipComponent.new(label: "後で読む", description: "あとで確認するために保存した個人用ショートカットです。未登録でも閲覧権限の不足を意味しません。") %>
-    </div>
-    <% if @read_later_bookmarks.any? %>
-      <ul class="resource-list">
-        <% @read_later_bookmarks.each do |bookmark| %>
-          <li class="resource-list__item">
-            <div class="resource-list__content">
-              <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug), data: { turbo_frame: "_top" } %></strong>
-              <span class="muted resource-list__meta"><%= bookmark.document.project.name %></span>
-            </div>
-          </li>
-        <% end %>
-      </ul>
-      <p class="actions">
-        <%= link_to "ショートカット一覧でさらに見る", document_bookmarks_path, class: "button secondary", data: { turbo_frame: "_top" } %>
-      </p>
-    <% else %>
-      <p class="muted">後で読む文書はまだありません。</p>
-      <p><%= link_to "文書一覧へ", documents_path, class: "metric-card__cta", data: { turbo_frame: "_top" } %></p>
-    <% end %>
-  </article>
-
-  <article class="card dashboard-card--recent">
-    <div class="heading-with-help">
-      <h2>最近見た文書</h2>
-      <%= render InfoTooltipComponent.new(label: "最近見た文書", description: "あなたの閲覧履歴から表示する作業再開用の一覧です。更新通知ではありません。") %>
-    </div>
-    <% if @recent_documents.any? %>
-      <ul class="resource-list">
-        <% @recent_documents.each do |document| %>
-          <li class="resource-list__item">
-            <div class="resource-list__content">
-              <strong><%= link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" } %></strong>
-              <span class="muted resource-list__meta"><%= document.project.name %> / あなたが最近閲覧</span>
-            </div>
-          </li>
-        <% end %>
-      </ul>
-      <p class="actions">
-        <%= link_to "文書一覧でさらに探す", documents_path, class: "button secondary", data: { turbo_frame: "_top" } %>
-      </p>
-    <% else %>
-      <p class="muted">最近見た文書はまだありません。</p>
-      <p><%= link_to "文書一覧へ", documents_path, class: "metric-card__cta", data: { turbo_frame: "_top" } %></p>
-    <% end %>
-  </article>
-
-  <article class="card dashboard-card--updated">
-    <div class="heading-with-help">
-      <h2>最近更新された文書</h2>
-      <%= render InfoTooltipComponent.new(label: "最近更新された文書", description: "閲覧可能な文書を更新日時順に表示する確認入口です。未読通知ではありません。") %>
-    </div>
-    <% if @recently_updated_documents.any? %>
-      <ul class="resource-list">
-        <% @recently_updated_documents.each do |document| %>
-          <li class="resource-list__item">
-            <div class="resource-list__content">
-              <strong><%= link_to document.title, project_document_path(document.project, document.slug), data: { turbo_frame: "_top" } %></strong>
-              <span class="muted resource-list__meta"><%= document.project.name %> / 更新日時 <%= l(document.updated_at, format: :short) %></span>
-            </div>
-          </li>
-        <% end %>
-      </ul>
-      <p class="actions">
-        <%= link_to "文書一覧でさらに探す", documents_path, class: "button secondary", data: { turbo_frame: "_top" } %>
-      </p>
-    <% else %>
-      <p class="muted">最近更新された文書はありません。</p>
-      <p><%= link_to "文書一覧へ", documents_path, class: "metric-card__cta", data: { turbo_frame: "_top" } %></p>
-    <% end %>
-  </article>
-
-  <% if current_user.internal? %>
-    <article class="card">
-      <div class="heading-with-help">
-        <h2>受付中Q&amp;A候補</h2>
-        <%= render InfoTooltipComponent.new(label: "受付中Q&A候補", description: "公開Q&Aの受付中root threadを最大5件表示します。通知や期限の一覧ではありません。") %>
-      </div>
-      <%= render GuidanceDisclosureComponent.new(title: "候補の読み方") do %>
-        <p>全件一覧、通知、SLA、回答期限、担当割当を示すものではありません。確認はリンク先の各文書または版のQ&amp;A workspaceで行います。</p>
       <% end %>
-      <% if @open_question_handoff_threads.any? %>
-        <ul class="resource-list">
-          <% @open_question_handoff_threads.each do |thread| %>
-            <% document = thread.document %>
-            <% latest_activity_at = ([thread.updated_at] + thread.replies.map(&:updated_at)).compact.max %>
-            <% confirmation_path = thread.document_version.present? ? document_version_path(thread.document_version, comment_tab: "qa") : project_document_path(document.project, document.slug, comment_tab: "qa") %>
-            <li class="resource-list__item">
-              <div class="resource-list__content">
-                <strong><%= link_to document.title, confirmation_path, data: { turbo_frame: "_top" } %></strong>
-                <span class="muted resource-list__meta">
-                  <%= document.project.name %>（<%= document.project.code %>）
-                  <% if thread.document_version.present? %>
-                    / 版 <%= thread.document_version.version_label %>
-                  <% end %>
-                  / 投稿者 <%= thread.author.display_name %>
-                  / <%= thread.replies.any? ? "返信あり" : "返信なし" %>
-                  / 最終活動 <%= l(latest_activity_at, format: :short) %>
-                </span>
-                <span class="muted resource-list__meta"><%= truncate(strip_tags(thread.body).squish, length: 120) %></span>
-              </div>
+    </div>
+  </section>
+<% else %>
+  <p class="home-no-pending muted">現在、対応が必要な項目はありません。</p>
+<% end %>
+
+<section class="home-section">
+  <h2 class="home-section__title">最近見た文書</h2>
+  <% if @recent_documents.any? %>
+    <ul class="home-document-list">
+      <% @recent_documents.each do |document| %>
+        <li class="home-document-list__item">
+          <%= link_to project_document_path(document.project, document.slug), class: "home-document-list__link", data: { turbo_frame: "_top" } do %>
+            <span class="home-document-list__title"><%= document.title %></span>
+            <span class="home-document-list__meta muted"><%= document.project.name %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+    <p class="home-section__more">
+      <%= link_to "すべて見る", documents_path, data: { turbo_frame: "_top" } %>
+    </p>
+  <% else %>
+    <p class="muted">最近見た文書はまだありません。<%= link_to "文書を探す", documents_path %></p>
+  <% end %>
+</section>
+
+<div class="home-grid">
+  <section class="home-section">
+    <h2 class="home-section__title">保存済み</h2>
+    <% if @favorite_bookmarks.any? || @read_later_bookmarks.any? %>
+      <% if @favorite_bookmarks.any? %>
+        <h3 class="home-subsection-title">お気に入り</h3>
+        <ul class="home-document-list home-document-list--compact">
+          <% @favorite_bookmarks.each do |bookmark| %>
+            <li class="home-document-list__item">
+              <%= link_to project_document_path(bookmark.document.project, bookmark.document.slug), class: "home-document-list__link", data: { turbo_frame: "_top" } do %>
+                <span class="home-document-list__title"><%= bookmark.document.title %></span>
+                <span class="home-document-list__meta muted"><%= bookmark.document.project.name %></span>
+              <% end %>
             </li>
           <% end %>
         </ul>
-      <% else %>
-        <p class="muted">受付中Q&amp;A候補はありません。</p>
       <% end %>
-    </article>
+      <% if @read_later_bookmarks.any? %>
+        <h3 class="home-subsection-title">後で読む</h3>
+        <ul class="home-document-list home-document-list--compact">
+          <% @read_later_bookmarks.each do |bookmark| %>
+            <li class="home-document-list__item">
+              <%= link_to project_document_path(bookmark.document.project, bookmark.document.slug), class: "home-document-list__link", data: { turbo_frame: "_top" } do %>
+                <span class="home-document-list__title"><%= bookmark.document.title %></span>
+                <span class="home-document-list__meta muted"><%= bookmark.document.project.name %></span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+      <p class="home-section__more">
+        <%= link_to "ショートカット一覧", document_bookmarks_path, data: { turbo_frame: "_top" } %>
+      </p>
+    <% else %>
+      <p class="muted">保存済みの文書はまだありません。</p>
+    <% end %>
+  </section>
 
-    <article class="card">
-      <h2>社内向け導線</h2>
-      <p class="muted">確認依頼、外部送付履歴、管理画面などの社内運用画面への入口です。</p>
-      <ul class="resource-list">
-        <li class="resource-list__item">
-          <div class="resource-list__content"><%= link_to "確認依頼一覧", document_approval_requests_path %></div>
-        </li>
-        <li class="resource-list__item">
-          <div class="resource-list__content"><%= link_to "外部送付履歴", document_delivery_logs_path %></div>
-        </li>
-        <% if admin_user? %>
-          <li class="resource-list__item">
-            <div class="resource-list__content"><%= link_to "管理ダッシュボード", admin_root_path %></div>
+  <section class="home-section">
+    <h2 class="home-section__title">最近更新された文書</h2>
+    <% if @recently_updated_documents.any? %>
+      <ul class="home-document-list home-document-list--compact">
+        <% @recently_updated_documents.each do |document| %>
+          <li class="home-document-list__item">
+            <%= link_to project_document_path(document.project, document.slug), class: "home-document-list__link", data: { turbo_frame: "_top" } do %>
+              <span class="home-document-list__title"><%= document.title %></span>
+              <span class="home-document-list__meta muted"><%= document.project.name %> / <%= l(document.updated_at, format: :short) %></span>
+            <% end %>
           </li>
         <% end %>
       </ul>
-    </article>
-  <% end %>
-</section>
+    <% else %>
+      <p class="muted">最近更新された文書はありません。</p>
+    <% end %>
+  </section>
+
+  <section class="home-section">
+    <h2 class="home-section__title">案件</h2>
+    <% if @projects.any? %>
+      <ul class="home-document-list home-document-list--compact">
+        <% @projects.each do |project| %>
+          <li class="home-document-list__item">
+            <%= link_to project_path(project), class: "home-document-list__link", data: { turbo_frame: "_top" } do %>
+              <span class="home-document-list__title"><%= project.name %></span>
+              <span class="home-document-list__meta muted"><%= project.code %></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+      <p class="home-section__more">
+        <%= link_to "案件一覧", projects_path, data: { turbo_frame: "_top" } %>
+      </p>
+    <% else %>
+      <p class="muted">閲覧可能な案件はありません。</p>
+    <% end %>
+  </section>
+</div>

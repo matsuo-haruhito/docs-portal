@@ -1,6 +1,7 @@
 import "./application.css"
 import "./admin_layout.css"
 import "./user_navbar.css"
+import "./home.css"
 import "./bootstrap_overrides.css"
 import "./nav_current_label.css"
 import "./document_version_diff_display_mode.css"

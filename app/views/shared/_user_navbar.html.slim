@@ -7,6 +7,9 @@ nav.user-nav aria-label="主要ナビゲーション"
     = link_to root_path, class: "user-nav__brand" do
       | 文書ポータル
     - if logged_in?
+      = form_with url: documents_path, method: :get, local: true, class: "user-nav__search" do |f|
+        = f.search_field :q, placeholder: "文書・案件を検索", class: "user-nav__search-input", autocomplete: "off"
+    - if logged_in?
       .user-nav__links
         = link_to "ホーム", dashboard_path, class: "user-nav__link#{' is-active' if current_page?(dashboard_path)}", aria: (current_page?(dashboard_path) ? { current: "page" } : {})
         details.nav-dropdown data-nav-dropdown="true"

@@ -91,3 +91,38 @@
     font-size: 0.8rem;
   }
 }
+
+/* Global Search */
+.user-nav__search {
+  display: flex;
+  align-items: center;
+}
+
+.user-nav__search-input {
+  width: 280px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: #f8f9fa;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.user-nav__search-input:focus {
+  outline: none;
+  border-color: #1976d2;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
+}
+
+@media (max-width: 768px) {
+  .user-nav__search-input {
+    width: 160px;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-nav__search {
+    display: none;
+  }
+}
