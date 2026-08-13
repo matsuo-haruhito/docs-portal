@@ -7,17 +7,21 @@
 - permissions_table_settings = rails_table_preference_settings(table_key: permissions_table_key)
 - filters_active = @filters.values.any?(&:present?)
 - csv_filter_params = @filters.compact.merge(format: :csv)
+- clear_filter_params = @view == "overview" ? { view: "overview" } : {}
+- pagination = @document_permission_pagination
+- displayed_range = pagination[:total_count].zero? ? "0件" : "#{pagination[:from]}〜#{pagination[:to]}件"
+- active_panel_id = @view == "overview" ? "document-permissions-overview-panel" : "document-permissions-assignments-panel"
 
 h1
   | 文書権限
   = render InfoTooltipComponent.new(label: "文書権限", description: "文書ごとに会社・ユーザー単位でアクセスレベル（閲覧/ダウンロード/管理）を付与します。ここで設定しないと公開範囲ポリシーに従います。")
 
 .admin-list-header
-  nav.admin-tabs aria-label="文書権限の表示切替"
-    = link_to admin_document_permissions_path(@filters.compact.merge(view: "assignments")), class: "admin-tab#{' is-active' if @view == 'assignments'}", aria: (@view == "assignments" ? { current: "page" } : {}) do
+  nav.admin-tabs role="tablist" aria-label="文書権限の表示切替" data-controller="server-rendered-tabs"
+    = link_to admin_document_permissions_path(@filters.compact.merge(view: "assignments")), id: "document-permissions-assignments-tab", class: "admin-tab#{' is-active' if @view == 'assignments'}", role: "tab", tabindex: (@view == "assignments" ? 0 : -1), aria: { selected: (@view == "assignments").to_s, controls: active_panel_id }, data: { server_rendered_tabs_target: "tab", action: "keydown->server-rendered-tabs#keydown" } do
       | 権限一覧
       span.admin-tab__count = @permission_total_count
-    = link_to admin_document_permissions_path(@filters.compact.merge(view: "overview")), class: "admin-tab#{' is-active' if @view == 'overview'}", aria: (@view == "overview" ? { current: "page" } : {}) do
+    = link_to admin_document_permissions_path(@filters.compact.merge(view: "overview")), id: "document-permissions-overview-tab", class: "admin-tab#{' is-active' if @view == 'overview'}", role: "tab", tabindex: (@view == "overview" ? 0 : -1), aria: { selected: (@view == "overview").to_s, controls: active_panel_id }, data: { server_rendered_tabs_target: "tab", action: "keydown->server-rendered-tabs#keydown" } do
       | 文書別概要
   details.admin-create-panel open=(@document_permission.errors.any?)
     summary.button.secondary
@@ -29,6 +33,7 @@ h1
 section.card
   h2 検索・絞り込み
   = form_with url: admin_document_permissions_path, method: :get, local: true, class: "document-filter-form" do |form|
+    = form.hidden_field :view, value: @view
     .form-grid.form-grid--compact
       = form.rfk_combobox :project_id,
         collection: [],
@@ -63,126 +68,116 @@ section.card
         label: "付与先",
         allow_clear: true,
         placeholder: "すべて"
-    p.muted = "案件は検索語最大#{Admin::DocumentPermissionsController::PROJECT_SEARCH_QUERY_MAX_LENGTH}文字、候補最大#{Admin::DocumentPermissionsController::PROJECT_SEARCH_LIMIT}件です。URLで指定済みの案件は候補上限外でも復元します。"
     p.actions.form-actions
       = form.submit "検索", class: "button"
       = link_to admin_document_permissions_path(csv_filter_params), class: "button secondary" do
         i.bi.bi-filetype-csv.me-1 aria-hidden="true"
         | CSV出力
       - if filters_active
-        = link_to "条件をクリア", admin_document_permissions_path, class: "button secondary"
-    p.muted CSVは現在の検索条件で出力します。文書別の権限概要・権限一覧の列表示設定とは独立した固定項目です。
-  p.muted
-    | 表示中:
-    strong = " #{@document_permissions.size}件"
-    - if filters_active
-      |  / 条件に一致する文書権限を表示
-    - else
-      |  / 登録済みの文書権限を表示
+        = link_to admin_document_permissions_path(clear_filter_params), class: "button secondary" do
+          i.bi.bi-x-lg.me-1 aria-hidden="true"
+          | 条件をクリア
+  p.admin-list-meta
+    strong = displayed_range
+    = " / 全#{pagination[:total_count]}件"
   - if filters_active
-    p.muted
-      | 有効な条件:
+    p.admin-filter-chips
       - if @selected_project.present?
-        = " "
         span.badge = "案件: #{document_permission_filter_project_label(@selected_project)}"
       - if @filters[:q].present?
-        = " "
         span.badge = "文書: #{@filters[:q]}"
       - if @filters[:access_level].present?
-        = " "
         span.badge = "権限: #{document_permission_access_level_label(@filters[:access_level])}"
       - if @filters[:target_type].present?
-        = " "
         span.badge = "付与先: #{document_permission_target_type_label(@filters[:target_type])}"
 
-section.card
-  h2 文書別の権限概要
-  p.muted 文書ごとの会社単位・ユーザー単位の権限数と、閲覧/ダウンロードの内訳を確認できます。
+- if @view == "overview"
+  section#document-permissions-overview-panel.card role="tabpanel" aria-labelledby="document-permissions-overview-tab"
+    h2 文書別の権限概要
 
-  - if @permission_overview_rows.any?
-    p.muted 件数は下段の「権限一覧」にある個別付与行を文書単位で集計したものです。
-    = render ColumnSettingsComponent.new(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns, title: "権限概要の表示設定")
+    - if @permission_overview_rows.any?
+      = render ColumnSettingsComponent.new(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns, title: "権限概要の表示設定")
 
-    = table_preferences_table_tag(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns) do
-      thead
-        tr
-          th data-rails-table-preferences-column-key="document" 文書名
-          th data-rails-table-preferences-column-key="project" 案件
-          th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
-          th data-rails-table-preferences-column-key="company_permissions" 会社権限
-          th data-rails-table-preferences-column-key="user_permissions" ユーザー権限
-          th data-rails-table-preferences-column-key="view_allowed" 閲覧
-          th data-rails-table-preferences-column-key="download_allowed" ダウンロード
-      tbody
-        - @permission_overview_rows.each do |row|
+      = table_preferences_table_tag(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns) do
+        thead
           tr
-            td data-rails-table-preferences-column-key="document"
-              div = link_to row.document.title, project_document_path(row.document.project, row.document.slug), data: { turbo_frame: "_top" }
-              div = link_to "下段の個別権限を見る", "#document-permissions-for-#{row.document.id}", class: "muted"
-            td data-rails-table-preferences-column-key="project" = row.document.project.name
-            td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(row.document)
-            td data-rails-table-preferences-column-key="company_permissions" = row.company_permissions.size
-            td data-rails-table-preferences-column-key="user_permissions" = row.user_permissions.size
-            td data-rails-table-preferences-column-key="view_allowed" = row.view_allowed_count
-            td data-rails-table-preferences-column-key="download_allowed" = row.download_allowed_count
-  - elsif filters_active
-    p.muted 条件に一致する文書権限概要はありません。案件、文書名・slug、権限、付与先の条件を見直してください。
-    p.actions.form-actions
-      = link_to "条件をクリア", admin_document_permissions_path, class: "button secondary"
-  - else
-    p.muted まだ権限は登録されていません。登録後は、文書ごとの権限数と閲覧/ダウンロード内訳をここで確認できます。
+            th data-rails-table-preferences-column-key="document" 文書名
+            th data-rails-table-preferences-column-key="project" 案件
+            th data-rails-table-preferences-column-key="visibility_policy" 公開範囲
+            th data-rails-table-preferences-column-key="company_permissions" 会社権限
+            th data-rails-table-preferences-column-key="user_permissions" ユーザー権限
+            th data-rails-table-preferences-column-key="view_allowed" 閲覧
+            th data-rails-table-preferences-column-key="download_allowed" ダウンロード
+        tbody
+          - @permission_overview_rows.each do |row|
+            tr
+              td data-rails-table-preferences-column-key="document" = link_to row.document.title, project_document_path(row.document.project, row.document.slug), data: { turbo_frame: "_top" }
+              td data-rails-table-preferences-column-key="project" = row.document.project.name
+              td data-rails-table-preferences-column-key="visibility_policy" = document_visibility_policy_label(row.document)
+              td data-rails-table-preferences-column-key="company_permissions" = row.company_permissions.size
+              td data-rails-table-preferences-column-key="user_permissions" = row.user_permissions.size
+              td data-rails-table-preferences-column-key="view_allowed" = row.view_allowed_count
+              td data-rails-table-preferences-column-key="download_allowed" = row.download_allowed_count
+    - elsif filters_active
+      = render EmptyStateComponent.new(heading: "条件に一致する文書権限概要がありません", description: "案件、文書名・slug、権限、付与先の条件を見直してください。") do |component|
+        - component.with_action do
+          = link_to "条件をクリア", admin_document_permissions_path(clear_filter_params), class: "button secondary"
+    - else
+      = render EmptyStateComponent.new(heading: "文書権限概要がありません", description: "権限を登録すると、文書ごとの会社・ユーザー権限数と内訳を確認できます。")
+- else
+  section#document-permissions-assignments-panel.card role="tabpanel" aria-labelledby="document-permissions-assignments-tab"
+    h2 権限一覧
 
-section.card
-  h2 権限一覧
+    - if @document_permissions.any?
+      = render ColumnSettingsComponent.new(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns, title: "権限一覧の表示設定")
 
-  - if @document_permissions.any?
-    - anchored_document_ids = {}
-    = render ColumnSettingsComponent.new(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns, title: "権限一覧の表示設定")
+      = table_preferences_table_tag(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns) do
+        thead
+          tr
+            th data-rails-table-preferences-column-key="document" 文書名
+            th data-rails-table-preferences-column-key="company" 会社
+            th data-rails-table-preferences-column-key="user" ユーザー
+            th data-rails-table-preferences-column-key="access_level" 権限
+            th data-rails-table-preferences-column-key="actions" 操作
+        tbody
+          - @document_permissions.each do |permission|
+            - company_primary_label = document_permission_company_primary_label(permission.company)
+            - company_secondary_label = document_permission_company_secondary_label(permission.company)
+            - user_primary_label = document_permission_user_primary_label(permission.user)
+            - user_secondary_label = document_permission_user_secondary_label(permission.user)
+            tr
+              td data-rails-table-preferences-column-key="document" = link_to permission.document.title, project_document_path(permission.document.project, permission.document.slug), data: { turbo_frame: "_top" }
+              td data-rails-table-preferences-column-key="company"
+                - if company_primary_label.present?
+                  div = company_primary_label
+                  - if company_secondary_label.present?
+                    div.muted = company_secondary_label
+                - else
+                  = "-"
+              td data-rails-table-preferences-column-key="user"
+                - if user_primary_label.present?
+                  div = user_primary_label
+                  - if user_secondary_label.present?
+                    div.muted = user_secondary_label
+                - else
+                  = "-"
+              td data-rails-table-preferences-column-key="access_level"
+                span.badge = document_permission_access_level_label(permission)
+              td.actions data-rails-table-preferences-column-key="actions"
+                = edit_link_to "編集", edit_admin_document_permission_path(permission)
+                = delete_link_to "削除", admin_document_permission_path(permission), confirm: document_permission_delete_confirm(permission)
+    - elsif filters_active
+      = render EmptyStateComponent.new(heading: "条件に一致する文書権限がありません", description: "案件、文書名・slug、権限、付与先の条件を見直してください。") do |component|
+        - component.with_action do
+          = link_to "条件をクリア", admin_document_permissions_path(clear_filter_params), class: "button secondary"
+    - else
+      = render EmptyStateComponent.new(heading: "文書権限が未登録です", description: "上の「新規登録」で文書と会社またはユーザーを指定して登録してください。")
 
-    = table_preferences_table_tag(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns) do
-      thead
-        tr
-          th data-rails-table-preferences-column-key="document" 文書名
-          th data-rails-table-preferences-column-key="company" 会社
-          th data-rails-table-preferences-column-key="user" ユーザー
-          th data-rails-table-preferences-column-key="access_level" 権限
-          th data-rails-table-preferences-column-key="actions"
-      tbody
-        - @document_permissions.each do |permission|
-          - company_primary_label = document_permission_company_primary_label(permission.company)
-          - company_secondary_label = document_permission_company_secondary_label(permission.company)
-          - user_primary_label = document_permission_user_primary_label(permission.user)
-          - user_secondary_label = document_permission_user_secondary_label(permission.user)
-          - row_anchor_id = anchored_document_ids[permission.document_id] ? nil : "document-permissions-for-#{permission.document_id}"
-          - anchored_document_ids[permission.document_id] = true
-          tr id=row_anchor_id
-            td data-rails-table-preferences-column-key="document"
-              div = link_to permission.document.title, project_document_path(permission.document.project, permission.document.slug), data: { turbo_frame: "_top" }
-              - if row_anchor_id.present?
-                div.muted この文書の個別付与行（会社単位・ユーザー単位）
-            td data-rails-table-preferences-column-key="company"
-              - if company_primary_label.present?
-                div = company_primary_label
-                - if company_secondary_label.present?
-                  div.muted = company_secondary_label
-              - else
-                = "-"
-            td data-rails-table-preferences-column-key="user"
-              - if user_primary_label.present?
-                div = user_primary_label
-                - if user_secondary_label.present?
-                  div.muted = user_secondary_label
-              - else
-                = "-"
-            td data-rails-table-preferences-column-key="access_level"
-              span.badge = document_permission_access_level_label(permission)
-            td.actions data-rails-table-preferences-column-key="actions"
-              = edit_link_to "編集", edit_admin_document_permission_path(permission)
-              = delete_link_to "削除", admin_document_permission_path(permission), confirm: document_permission_delete_confirm(permission)
-  - elsif filters_active
-    p.muted 条件に一致する文書権限はありません。案件、文書名・slug、権限、付与先の条件を見直してください。
-    p.actions.form-actions
-      = link_to "条件をクリア", admin_document_permissions_path, class: "button secondary"
-  - else
-    p.muted 個別付与行は登録後に表示されます。まずは上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して 1 件登録してください。
-    p.muted 登録後は、会社別・ユーザー別の対象主体や権限内容をこの一覧で確認、編集できます。
+- if pagination[:total_pages] > 1
+  nav.pagination aria-label="#{@view == 'overview' ? '文書別権限概要' : '文書権限一覧'}ページ"
+    p.actions
+      - if pagination[:prev_page]
+        = link_to "前へ", admin_document_permissions_path(@document_permission_page_params.merge(page: pagination[:prev_page])), class: "button secondary"
+      span.muted = "#{pagination[:page]} / #{pagination[:total_pages]}ページ"
+      - if pagination[:next_page]
+        = link_to "次へ", admin_document_permissions_path(@document_permission_page_params.merge(page: pagination[:next_page])), class: "button secondary"

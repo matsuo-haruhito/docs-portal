@@ -7,36 +7,33 @@ RSpec.describe "Admin document permission empty state clear links", type: :reque
     Nokogiri::HTML(response.body)
   end
 
-  def section_for(heading)
-    parsed_html.css("section.card").find do |section|
-      section.at_css("h2")&.text&.squish == heading
-    end
-  end
-
-  def section_clear_links(heading)
-    section_for(heading).css("a[href]").select { |link| link.text.squish == "条件をクリア" }
-  end
-
-  it "shows clear links near both filtered empty states" do
+  it "clears filters inside the active assignments view" do
     document = create(:document, title: "Existing Permission Guide")
     create(:document_permission, document:, company: create(:company, name: "Existing Company"))
-
     sign_in_as(admin_user)
 
-    get admin_document_permissions_path(q: "missing")
+    get admin_document_permissions_path(q: "missing", view: "assignments")
 
     expect(response).to have_http_status(:ok)
-    expect(section_clear_links("文書別の権限概要").map { _1["href"] }).to eq([admin_document_permissions_path])
-    expect(section_clear_links("権限一覧").map { _1["href"] }).to eq([admin_document_permissions_path])
+    panel = parsed_html.at_css("#document-permissions-assignments-panel")
+    expect(panel).to be_present
+    expect(parsed_html.at_css("#document-permissions-overview-panel")).to be_nil
+    expect(panel.css("a[href]").map { _1["href"] }).to include(admin_document_permissions_path)
   end
 
-  it "keeps initial empty states focused on registration guidance" do
+  it "clears filters without leaving the overview view" do
+    document = create(:document, title: "Existing Permission Guide")
+    create(:document_permission, document:, company: create(:company, name: "Existing Company"))
     sign_in_as(admin_user)
 
-    get admin_document_permissions_path
+    get admin_document_permissions_path(q: "missing", view: "overview")
 
     expect(response).to have_http_status(:ok)
-    expect(section_clear_links("文書別の権限概要")).to be_empty
-    expect(section_clear_links("権限一覧")).to be_empty
+    panel = parsed_html.at_css("#document-permissions-overview-panel")
+    expect(panel).to be_present
+    expect(parsed_html.at_css("#document-permissions-assignments-panel")).to be_nil
+    expect(panel.css("a[href]").map { _1["href"] }).to include(
+      admin_document_permissions_path(view: "overview")
+    )
   end
 end

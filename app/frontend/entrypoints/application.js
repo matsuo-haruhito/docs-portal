@@ -42,6 +42,7 @@ import PreviewTableResizerController from "../controllers/preview_table_resizer_
 import RailsTablePreferencesController from "../controllers/rails_table_preferences_controller"
 import RfkDependentFilterController from "../controllers/rfk_dependent_filter_controller"
 import SectionNavController from "../controllers/section_nav_controller"
+import ServerRenderedTabsController from "../controllers/server_rendered_tabs_controller"
 import SidebarController from "../controllers/sidebar_controller"
 import SiteViewerIframeHeightController from "../controllers/site_viewer_iframe_height_controller"
 import StructuredPreviewToolsController from "../controllers/structured_preview_tools_controller"
@@ -76,6 +77,7 @@ application.register("pdf-preview-tools", PdfPreviewToolsController)
 application.register("preview-table-resizer", PreviewTableResizerController)
 application.register("rfk-dependent-filter", RfkDependentFilterController)
 application.register("section-nav", SectionNavController)
+application.register("server-rendered-tabs", ServerRenderedTabsController)
 application.register("sidebar", SidebarController)
 application.register("site-viewer-iframe-height", SiteViewerIframeHeightController)
 application.register("structured-preview-tools", StructuredPreviewToolsController)

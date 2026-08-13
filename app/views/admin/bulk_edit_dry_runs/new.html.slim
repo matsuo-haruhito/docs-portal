@@ -69,30 +69,31 @@ nav.admin-steps aria-label="一括編集の手順"
         = check_box_tag :bulk_edit_selected_only, "1", false, data: { bulk_edit_selection_target: "selectedOnly", action: "bulk-edit-selection#refresh" }
         | 選択済みだけ表示
 
-    table.bulk-edit-selection__table
-      thead
-        tr
-          th 選択
-          th 案件
-          th 文書名
-          th カテゴリ
-          th 種別
-          th 公開範囲
-          th 状態
-      tbody
-        - @documents.each do |document|
-          - status_label = document.archived? ? "アーカイブ済み" : "有効"
-          - search_text = [document.project.name, document.title, document_category_label(document), document_kind_label(document), document_visibility_policy_label(document), status_label].join(" ")
-          tr data-bulk-edit-selection-target="row" data-bulk-edit-selection-search-text=search_text
-            td = check_box_tag "bulk_edit[document_ids][]", document.id, candidate_document_ids.include?(document.id), id: "bulk_edit_document_#{document.id}", data: { bulk_edit_selection_target: "checkbox", action: "bulk-edit-selection#refresh" }
-            td = document.project.name
-            td
-              label for="bulk_edit_document_#{document.id}"
-                = link_to document.title, project_document_path(document.project, document.slug)
-            td = document_category_label(document)
-            td = document_kind_label(document)
-            td = document_visibility_policy_label(document)
-            td = status_label
+    .table-scroll.bulk-edit-selection__table-scroll tabindex="0" role="region" aria-label="一括編集の対象文書"
+      table.bulk-edit-selection__table
+        thead
+          tr
+            th 選択
+            th 案件
+            th 文書名
+            th カテゴリ
+            th 種別
+            th 公開範囲
+            th 状態
+        tbody
+          - @documents.each do |document|
+            - status_label = document.archived? ? "アーカイブ済み" : "有効"
+            - search_text = [document.project.name, document.title, document_category_label(document), document_kind_label(document), document_visibility_policy_label(document), status_label].join(" ")
+            tr data-bulk-edit-selection-target="row" data-bulk-edit-selection-search-text=search_text
+              td = check_box_tag "bulk_edit[document_ids][]", document.id, candidate_document_ids.include?(document.id), id: "bulk_edit_document_#{document.id}", data: { bulk_edit_selection_target: "checkbox", action: "bulk-edit-selection#refresh" }
+              td = document.project.name
+              td
+                label for="bulk_edit_document_#{document.id}"
+                  = link_to document.title, project_document_path(document.project, document.slug)
+              td = document_category_label(document)
+              td = document_kind_label(document)
+              td = document_visibility_policy_label(document)
+              td = status_label
 
     h3 変更内容
     p.muted 空欄の項目は変更しません。タグはカンマ・読点・改行区切りで入力できます。
@@ -142,7 +143,11 @@ nav.admin-steps aria-label="一括編集の手順"
         - if lifecycle_purpose_label
           span.muted = "文書マスタからの#{lifecycle_purpose_label}候補に合わせて初期選択しています。"
 
+    = render GuidanceDisclosureComponent.new(title: "技術JSONを確認", icon: "bi-braces") do
+      p.muted 現在の選択状態をread-only JSONで確認します。dry-runの作成や文書の変更は行いません。
+      p.actions
+        = button_tag "選択状態JSONを確認", type: "submit", class: "button secondary", formaction: handoff_admin_bulk_edit_dry_runs_path, formmethod: "post"
+
     p.actions style="margin-top:16px;"
       = form.submit "事前確認を作成", class: "button"
-      = button_tag "選択状態JSONを確認", type: "submit", class: "button secondary", formaction: handoff_admin_bulk_edit_dry_runs_path, formmethod: "post"
       = link_to "文書一覧へ戻る", admin_documents_path, class: "button secondary"

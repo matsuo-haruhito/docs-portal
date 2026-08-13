@@ -193,11 +193,11 @@ RSpec.describe "Admin access log target search", type: :request do
     get admin_access_logs_path(q: "archive-match")
 
     expect(response).to have_http_status(:ok)
-    expect(log_target_names.size).to eq(200)
+    expect(log_target_names.size).to eq(50)
     expect(log_target_names.first).to eq("archive-match-200")
-    expect(log_target_names.last).to eq("archive-match-1")
-    expect(log_target_names).not_to include("archive-match-0", "outside-filter.html")
-    expect(pagination_query("次の200件")).to include(
+    expect(log_target_names.last).to eq("archive-match-151")
+    expect(log_target_names).not_to include("archive-match-150", "archive-match-0", "outside-filter.html")
+    expect(pagination_query("次の50件")).to include(
       "q" => "archive-match",
       "page" => "2"
     )

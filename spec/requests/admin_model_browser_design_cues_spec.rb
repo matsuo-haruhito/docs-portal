@@ -21,21 +21,15 @@ RSpec.describe "Admin model browser design cues", type: :request do
     expect(response.body).to include("検索語は最大#{Admin::ModelBrowsersController::MODEL_BROWSER_QUERY_MAX_LENGTH}文字です。")
   end
 
-  it "explains that the dashboard model observation is an excerpt with a full catalog link" do
+  it "shows every catalog entry in diagnostics with a model browser link" do
     total_count = Admin::ModelBrowserCatalog.entries.size
 
     sign_in_as(admin_user)
 
-    get admin_root_path
+    get admin_diagnostics_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("主要モデルの件数と最終更新を抜粋表示します。全#{total_count}モデルはモデルブラウザで確認できます。")
-
-    model_browser_link = parsed_html.css("a[href='#{admin_model_browser_path}']").find do |link|
-      link.text.squish.include?("全#{total_count}件")
-    end
-
-    expect(model_browser_link).to be_present
-    expect(model_browser_link.text.squish).to eq("モデルブラウザを開く（全#{total_count}件）")
+    expect(parsed_html.css(".model-browser-card-metrics").size).to eq(total_count)
+    expect(parsed_html.at_css("a[href='#{admin_model_browser_path}']")).to be_present
   end
 end

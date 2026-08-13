@@ -32,7 +32,7 @@ RSpec.describe "Admin management", type: :request do
       get admin_root_path
 
       expect(response).to have_http_status(:ok)
-      expect(page_text).to include("管理画面")
+      expect(parsed_html.at_css("h1")&.text&.squish).to eq("管理概要")
     end
 
     it "shows company_master_admin users a scoped company and user landing" do

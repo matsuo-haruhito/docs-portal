@@ -45,7 +45,14 @@ RSpec.describe "Admin document permission maintenance mode", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include(maintenance_message)
-    expect(page_text).to include("文書別の権限概要")
+    expect(parsed_html.at_css("#document-permissions-assignments-panel[role='tabpanel']")).to be_present
+    expect(parsed_html.at_css("#document-permissions-overview-tab[href*='view=overview']")).to be_present
+
+    get admin_document_permissions_path(view: "overview")
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_html.at_css("#document-permissions-overview-panel[role='tabpanel']")).to be_present
+    expect(parsed_html.at_css("#document-permissions-assignments-panel")).to be_nil
   end
 
   it "does not update document permissions during maintenance mode" do

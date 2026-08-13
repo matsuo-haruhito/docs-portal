@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe "admin design filter cues source" do
   let(:webhook_view_source) { Rails.root.join("app/views/admin/webhook_endpoints/index.html.slim").read }
-  let(:dashboard_view_source) { Rails.root.join("app/views/admin/dashboard/index.html.slim").read }
+  let(:diagnostics_view_source) { Rails.root.join("app/views/admin/diagnostics/index.html.slim").read }
 
   it "keeps Webhook endpoint pagination links contextual without changing the visible labels" do
     aggregate_failures do
@@ -17,9 +17,9 @@ RSpec.describe "admin design filter cues source" do
 
   it "keeps the filtered configuration diagnostic empty state reset cue near the warning copy" do
     aggregate_failures do
-      expect(dashboard_view_source).to include("現在の絞り込み条件に一致する診断項目はありません。診断全体が正常という意味ではないため、条件を解除するか上の全体件数を確認してください。")
-      expect(dashboard_view_source).to include("- if @configuration_diagnostic_filters_active\n      p.actions\n        = link_to \"絞り込み条件を解除して全診断項目を見る\", admin_root_path, class: \"button secondary\"")
-      expect(dashboard_view_source).to include('= link_to "絞り込み解除", admin_root_path, class: "button secondary"')
+      expect(diagnostics_view_source).to include("現在の絞り込み条件に一致する診断項目はありません。診断全体が正常という意味ではないため、条件を解除するか上の全体件数を確認してください。")
+      expect(diagnostics_view_source).to include("- if @configuration_diagnostic_filters_active\n      p.actions\n        = link_to \"絞り込み条件を解除して全診断項目を見る\", admin_diagnostics_path, class: \"button secondary\"")
+      expect(diagnostics_view_source).to include('= link_to "絞り込み解除", admin_diagnostics_path, class: "button secondary"')
     end
   end
 end

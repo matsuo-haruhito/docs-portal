@@ -56,8 +56,8 @@ RSpec.describe "Admin access log CSV export", type: :request do
       "q" => "audit.zip",
       "from" => "2026-06-01"
     )
-    expect(parsed_html.text.squish).to include("CSV export は現在の絞り込み条件に一致する最新200件を、監査用途の固定列で出力します。")
-    expect(parsed_html.text.squish).to include("画面の表示列設定とは独立しています。")
+    expect(export_link.text.squish).to eq("現在の条件でCSV export（最新200件）")
+    expect(export_link.ancestors("details")).to be_empty
   end
 
   it "exports the latest filtered access logs as fixed audit CSV columns" do

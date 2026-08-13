@@ -28,6 +28,22 @@ RSpec.describe "accessible_documents/index source" do
     end
   end
 
+  it "keeps frequent and advanced filters in one native disclosure form" do
+    expect(view_source).to include("details.filter-details open=advanced_filters_active")
+    expect(view_source).to include("| 追加条件")
+    expect(view_source).to include("advanced_enum_filters_active =")
+    expect(view_source).to include("advanced_boolean_filters_active =")
+
+    frequent_filter_position = view_source.index("form.rfk_select :tag")
+    disclosure_position = view_source.index("details.filter-details")
+    advanced_filter_position = view_source.index("form.rfk_select :category")
+
+    expect(frequent_filter_position).to be < disclosure_position
+    expect(advanced_filter_position).to be > disclosure_position
+    expect(view_source.index("form.rfk_combobox :project_id")).to be < disclosure_position
+    expect(view_source.index("check_box_tag :has_diagram")).to be > disclosure_position
+  end
+
   it "defines matching column metadata without changing filters or pagination" do
     expect(helper_source).to include("table_preferences_column(:project, label: \"案件\", default_visible: true, pinned: true, overflow: :ellipsis)")
     expect(helper_source).to include("table_preferences_column(:document, label: \"文書名\", default_visible: true, pinned: true, overflow: :ellipsis)")

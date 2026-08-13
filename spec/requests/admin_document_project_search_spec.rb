@@ -99,6 +99,7 @@ RSpec.describe "Admin document project search", type: :request do
     }
 
     expect(response).to have_http_status(:unprocessable_content)
+    expect(parsed_html.at_css(%(details.admin-create-panel[open] form[action="#{admin_documents_path}"]))).to be_present
     expect(page_text).to include("SEL-001 / Selected Project")
   end
 

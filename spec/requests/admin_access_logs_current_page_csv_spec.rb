@@ -41,7 +41,7 @@ RSpec.describe "Admin access log current page CSV export", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("text/csv")
-    expect(csv_target_names.size).to eq(Admin::AccessLogsController::ACCESS_LOGS_PER_PAGE)
+    expect(csv_target_names.size).to eq(Admin::AccessLogsController::ACCESS_LOGS_EXPORT_LIMIT)
     expect(csv_target_names.first).to eq("default-scope-entry-200")
     expect(csv_target_names.last).to eq("default-scope-entry-1")
     expect(csv_target_names).not_to include("default-scope-entry-0")
@@ -71,7 +71,7 @@ RSpec.describe "Admin access log current page CSV export", type: :request do
       csv_scope: Admin::AccessLogsController::CSV_SCOPE_CURRENT_PAGE,
       project_id: project.id,
       document_q: "CSV Page Evidence",
-      page: 2
+      page: 5
     )
 
     expect(response).to have_http_status(:ok)
@@ -99,8 +99,8 @@ RSpec.describe "Admin access log current page CSV export", type: :request do
     expect(response).to have_http_status(:ok)
     expect(csv_target_names.size).to eq(Admin::AccessLogsController::ACCESS_LOGS_PER_PAGE)
     expect(csv_target_names.first).to eq("bounded-current-page-entry-204")
-    expect(csv_target_names.last).to eq("bounded-current-page-entry-5")
-    expect(csv_target_names).not_to include("bounded-current-page-entry-4", "bounded-current-page-entry-0")
+    expect(csv_target_names.last).to eq("bounded-current-page-entry-155")
+    expect(csv_target_names).not_to include("bounded-current-page-entry-154", "bounded-current-page-entry-0")
   end
 
   it "describes latest rows and current page rows as separate metadata scopes" do
@@ -112,11 +112,11 @@ RSpec.describe "Admin access log current page CSV export", type: :request do
     latest_metadata = JSON.parse(response.body)
     expect(latest_metadata).to include(
       "export_scope" => "current_filter_latest_rows",
-      "row_limit" => Admin::AccessLogsController::ACCESS_LOGS_PER_PAGE
+      "row_limit" => Admin::AccessLogsController::ACCESS_LOGS_EXPORT_LIMIT
     )
     expect(latest_metadata).not_to include("page")
     expect(latest_metadata.fetch("description")).to include("表示中ページではなく")
-    expect(latest_metadata.fetch("summary")).to include("最新#{Admin::AccessLogsController::ACCESS_LOGS_PER_PAGE}件")
+    expect(latest_metadata.fetch("summary")).to include("最新#{Admin::AccessLogsController::ACCESS_LOGS_EXPORT_LIMIT}件")
 
     get admin_access_logs_path(
       format: :json,

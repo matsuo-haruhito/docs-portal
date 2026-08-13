@@ -13,6 +13,14 @@ RSpec.describe "Admin users table preferences", type: :request do
     actions
   ].freeze
 
+  def parsed_html
+    Nokogiri::HTML(response.body)
+  end
+
+  def table_root
+    parsed_html.at_css('table[data-rails-table-preferences-table-key-value="admin_users"]')
+  end
+
   it "renders the table preferences editor and stable user table columns" do
     admin = create(:user, :internal, name: "Admin User", email_address: "admin-users-smoke@example.com", company: nil)
     company = create(:company, name: "Smoke Company")
@@ -30,20 +38,17 @@ RSpec.describe "Admin users table preferences", type: :request do
     get admin_users_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("ユーザー一覧の表示設定")
-    expect(response.body).to include("ユーザー名（表示用）", "メールアドレス", "表示名", "種別", "会社", "状態")
-    expect(response.body).to include("Smoke External User")
-    expect(response.body).to include("external-users-smoke@example.com")
-    expect(response.body).to include("Smoke Company")
-    expect(response.body).to include("無効")
-    expect(response.body).to include("編集", "削除")
+    expect(table_root).to be_present
+    expect(parsed_html.text.squish).to include("Smoke External User", "external-users-smoke@example.com", "Smoke Company")
 
     TABLE_COLUMN_KEYS.each do |column_key|
-      expect(response.body).to include(%(data-rails-table-preferences-column-key="#{column_key}"))
+      expect(table_root.css(%([data-rails-table-preferences-column-key="#{column_key}"]))).to be_present,
+        "missing RTP column key: #{column_key}"
     end
   end
 
-  it "keeps the source contract for the table key, columns, and empty state" do
+  it "keeps the table key and column source contract while omitting RTP surfaces for empty filtered results" do
+    admin = create(:user, :internal, email_address: "admin-users-empty@example.com")
     view_source = Rails.root.join("app/views/admin/users/index.html.slim").read
     helper_source = Rails.root.join("app/helpers/admin/users_helper.rb").read
 
@@ -57,10 +62,11 @@ RSpec.describe "Admin users table preferences", type: :request do
     end
     expect(helper_source).to include("table_preferences_column(:actions, label: \"操作\", default_width: 180, pinned: true)")
 
-    empty_state_source = view_source[view_source.index("- else")..]
-    expect(empty_state_source).to include("section.card")
-    expect(empty_state_source).to include("ユーザーが未登録です")
-    expect(empty_state_source).not_to include("render ColumnSettingsComponent.new")
-    expect(empty_state_source).not_to include("table_preferences_table_tag")
+    sign_in_as(admin)
+    get admin_users_path, params: { q: "no-matching-user" }
+
+    expect(response).to have_http_status(:ok)
+    expect(parsed_html.at_css(".empty-state")).to be_present
+    expect(table_root).to be_nil
   end
 end

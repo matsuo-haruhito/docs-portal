@@ -49,7 +49,7 @@
       <% end %>
     </ul>
     <p class="home-section__more">
-      <%= link_to "すべて見る", documents_path, data: { turbo_frame: "_top" } %>
+      <%= link_to "すべて見る", document_bookmarks_path(view: "recent"), data: { turbo_frame: "_top" } %>
     </p>
   <% else %>
     <p class="muted">最近見た文書はまだありません。<%= link_to "文書を探す", documents_path %></p>

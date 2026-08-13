@@ -54,6 +54,19 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(response.body).to include("data-controller=\"bulk-edit-selection\"")
     expect(response.body).to include("data-bulk-edit-selection-search-text")
 
+    selection_region = parsed_html.at_css('.bulk-edit-selection__table-scroll[tabindex="0"][role="region"][aria-label="一括編集の対象文書"]')
+    expect(selection_region).to be_present
+    expect(selection_region.at_css("table.bulk-edit-selection__table")).to be_present
+
+    json_disclosure = parsed_html.css("details.guidance-disclosure").find do |details|
+      details.at_css("summary")&.text&.squish == "技術JSONを確認"
+    end
+    expect(json_disclosure).to be_present
+    expect(json_disclosure.at_css(%(button[formaction="#{handoff_admin_bulk_edit_dry_runs_path}"]))).to be_present
+    expect(json_disclosure.at_css('button[formmethod="post"]')).to be_present
+    expect(parsed_html.at_css(%(input[type="submit"][value="事前確認を作成"]))).to be_present
+    expect(parsed_html.at_css(%(a[href="#{admin_documents_path}"]))).to be_present
+
     expect do
       post admin_bulk_edit_dry_runs_path, params: {
         bulk_edit: {

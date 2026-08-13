@@ -66,7 +66,7 @@ RSpec.describe "Admin access log export boundaries", type: :request do
 
     expect(metadata).to include(
       "report_type" => "access_logs",
-      "row_limit" => Admin::AccessLogsController::ACCESS_LOGS_PER_PAGE,
+      "row_limit" => Admin::AccessLogsController::ACCESS_LOGS_EXPORT_LIMIT,
       "export_scope" => "current_filter_latest_rows",
       "ignored_filters" => ["from"]
     )

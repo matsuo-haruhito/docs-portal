@@ -43,6 +43,11 @@ const ACTION_LABELS: Record<string, string> = {
   edit: "編集画面",
   show: "詳細画面",
   dashboard: "ダッシュボード",
+  assignments: "権限一覧",
+  overview: "文書別概要",
+  favorite: "お気に入り",
+  read_later: "後で読む",
+  recent: "最近見た文書",
 }
 
 // --- 画面グループ定義 ---
@@ -52,6 +57,13 @@ const ADMIN_GROUP_DEFS: GroupDef[] = [
     key: "admin_dashboard", label: "管理ダッシュボード",
     story: "管理者がシステム全体の状況を俯瞰するトップ画面",
     screenOperations: { dashboard: ["文書数・案件数・ユーザー数の確認", "最近の同期状態やジョブ状態の確認"] },
+  },
+  {
+    key: "admin_diagnostics", label: "運用・診断",
+    story: "管理者が設定・保存ファイル・運用ジョブの詳細な診断情報を確認する",
+    screenOperations: {
+      index: ["設定診断・文書ファイル健全性・Storage内訳の確認", "継続失敗候補とrunbook導線の確認"],
+    },
   },
   {
     key: "admin_companies", label: "会社マスタ",
@@ -116,7 +128,8 @@ const ADMIN_GROUP_DEFS: GroupDef[] = [
     key: "admin_document_permissions", label: "文書権限",
     story: "管理者が文書ごとのアクセス権限（会社・ユーザー単位）を付与する",
     screenOperations: {
-      index: ["権限の検索・フィルタ（案件・文書名・アクセスレベル・付与先種別）", "CSV出力"],
+      assignments: ["権限の検索・フィルタ（案件・文書名・アクセスレベル・付与先種別）", "CSV出力"],
+      overview: ["文書別の権限付与状況と付与先の要約確認", "案件・文書名による絞り込み"],
       edit: ["権限設定（文書・付与先・アクセスレベル）の編集"],
     },
   },
@@ -276,6 +289,13 @@ const PUBLIC_GROUP_DEFS: GroupDef[] = [
     },
   },
   {
+    key: "accessible_documents", label: "閲覧可能文書一覧",
+    story: "ユーザーが権限のある文書を案件横断で検索する",
+    screenOperations: {
+      index: ["キーワード・案件・タグによる文書検索", "追加条件によるカテゴリ・ファイル種・公開範囲等の絞り込み"],
+    },
+  },
+  {
     key: "documents", label: "文書閲覧",
     story: "ユーザーが文書の内容を閲覧し、添付ファイルをダウンロードする",
     screenOperations: {
@@ -299,9 +319,11 @@ const PUBLIC_GROUP_DEFS: GroupDef[] = [
   },
   {
     key: "document_bookmarks", label: "ショートカット",
-    story: "ユーザーがお気に入り・後で読む文書を管理する",
+    story: "ユーザーがお気に入り・後で読む文書と最近見た文書を確認する",
     screenOperations: {
-      index: ["お気に入り・後で読むリストの確認", "ショートカットの追加・削除"],
+      favorite: ["お気に入り文書の検索・確認", "お気に入りの解除"],
+      read_later: ["後で読む文書の検索・確認", "お気に入りへの移動・登録解除"],
+      recent: ["最近見た文書の検索・確認", "文書詳細への移動"],
     },
   },
   {

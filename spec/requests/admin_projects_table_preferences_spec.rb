@@ -12,10 +12,14 @@ RSpec.describe "Admin projects table preferences", type: :request do
   end
 
   def project_column_keys
-    parsed_html.css('[data-rails-table-preferences-column-key]').map { |node| node["data-rails-table-preferences-column-key"] }.uniq
+    parsed_html.css("[data-rails-table-preferences-column-key]").map { |node| node["data-rails-table-preferences-column-key"] }.uniq
   end
 
-  it "renders the admin_projects editor and stable project column keys when projects exist" do
+  def project_table
+    parsed_html.at_css('[data-rails-table-preferences-table-key-value="admin_projects"]')
+  end
+
+  it "renders the admin_projects editor, filters, and stable project column keys when projects exist" do
     company = create(:company, name: "Example Corp", domain: "example.test")
     create(:project, code: "ALPHA", name: "Alpha Project", company:, description: "First project", active: true)
     create(:project, code: "OMEGA", name: "Omega Project", description: "Archived project", active: false)
@@ -24,18 +28,12 @@ RSpec.describe "Admin projects table preferences", type: :request do
     get admin_projects_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("案件一覧の表示設定")
-    expect(response.body).to include("admin_projects")
+    expect(project_table).to be_present
     expect(project_column_keys).to contain_exactly("code", "name", "company", "description", "status", "actions")
-    expect(page_text).to include("案件を探す")
-    expect(page_text).to include("キーワード")
-    expect(page_text).to include("状態")
-    expect(page_text).to include("企業")
-    expect(page_text).to include("ALPHA")
-    expect(page_text).to include("Example Corp")
-    expect(page_text).to include("未設定")
-    expect(page_text).to include("有効")
-    expect(page_text).to include("無効")
+    expect(parsed_html.at_css('.admin-filter-toolbar input[name="q"]')).to be_present
+    expect(parsed_html.at_css('.admin-filter-toolbar select[name="active"]')).to be_present
+    expect(parsed_html.at_css('.admin-filter-toolbar select[name="company_id"]')).to be_present
+    expect(page_text).to include("ALPHA", "Example Corp", "未設定", "有効", "無効")
   end
 
   it "filters projects by keyword, active state, and company without changing the table contract" do
@@ -50,10 +48,14 @@ RSpec.describe "Admin projects table preferences", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(project_column_keys).to contain_exactly("code", "name", "company", "description", "status", "actions")
-    expect(page_text).to include("ALPHA")
-    expect(page_text).to include("Alpha Portal")
-    expect(page_text).not_to include("BETA")
-    expect(page_text).not_to include("OMEGA")
+    expect(page_text).to include("ALPHA", "Alpha Portal")
+    expect(page_text).not_to include("BETA", "OMEGA")
+    expect(parsed_html.css(".admin-filter-chip").map { |node| node.text.squish }).to contain_exactly(
+      "検索: git",
+      "状態: 有効",
+      "企業: Example Corp"
+    )
+    expect(parsed_html.at_css(".admin-list-meta__count")&.text&.squish).to eq("1件")
   end
 
   it "can filter projects without a company" do
@@ -65,8 +67,7 @@ RSpec.describe "Admin projects table preferences", type: :request do
     get admin_projects_path, params: { company_id: "none" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("NOCO")
-    expect(page_text).to include("未設定")
+    expect(page_text).to include("NOCO", "未設定")
     expect(page_text).not_to include("WITH")
   end
 
@@ -77,10 +78,10 @@ RSpec.describe "Admin projects table preferences", type: :request do
     get admin_projects_path, params: { q: "missing-project" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索条件に一致する案件はありません。")
-    expect(page_text).to include("キーワード、状態、企業の条件を変更するか、条件をクリアしてください。")
-    expect(page_text).not_to include("まだ案件は登録されていません。")
-    expect(response.body).not_to include("案件一覧の表示設定")
+    expect(parsed_html.at_css(".empty-state")).to be_present
+    expect(parsed_html.at_css(".admin-list-meta__count")&.text&.squish).to eq("0件")
+    expect(parsed_html.css('a[href="/admin/projects"]').map { |link| link.text.squish }).to include("クリア", "条件をクリア")
+    expect(project_table).to be_nil
     expect(project_column_keys).to be_empty
   end
 
@@ -90,8 +91,9 @@ RSpec.describe "Admin projects table preferences", type: :request do
     get admin_projects_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("まだ案件は登録されていません。")
-    expect(response.body).not_to include("案件一覧の表示設定")
+    expect(parsed_html.at_css(".empty-state")).to be_present
+    expect(parsed_html.at_css(".admin-list-meta__count")&.text&.squish).to eq("0件")
+    expect(project_table).to be_nil
     expect(project_column_keys).to be_empty
   end
 end

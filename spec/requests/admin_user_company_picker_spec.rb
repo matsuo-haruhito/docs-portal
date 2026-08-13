@@ -112,6 +112,7 @@ RSpec.describe "Admin user company picker", type: :request do
     }
 
     expect(response).to have_http_status(:unprocessable_entity)
+    expect(parsed_html.at_css(%(details.admin-create-panel[open] form[action="#{admin_users_path}"]))).to be_present
     expect(company_picker.at_css(%(option[value="#{company.id}"][selected]))&.text&.squish).to eq("Form Company / form.example.com")
 
     get edit_admin_user_path(user.public_id)

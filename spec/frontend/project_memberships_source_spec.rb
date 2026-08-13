@@ -29,15 +29,23 @@ RSpec.describe "admin project memberships source" do
     end
   end
 
-  it "wires the index to rails table preferences columns" do
+  it "wires the compact filters and list table to rails fields kit and table preferences" do
     aggregate_failures do
+      expect(index_source).to include("form.rfk_search_field :q,")
+      expect(index_source).to include("form.rfk_select :role,")
+      expect(index_source).not_to include("search_field_tag :q")
       expect(index_source).to include("render ColumnSettingsComponent.new")
       expect(index_source).to include("table_preferences_table_tag")
+      expect(index_source).to include("scroll_wrapper: true")
+      expect(index_source).to include('role: "region"')
+      expect(index_source).to include('tabindex: 0')
+      expect(index_source).to include('<caption class="table-caption">案件所属一覧</caption>')
       expect(index_source).to include('data-rails-table-preferences-column-key="project"')
       expect(index_source).to include('data-rails-table-preferences-column-key="user"')
       expect(index_source).to include('data-rails-table-preferences-column-key="role"')
       expect(index_source).to include('data-rails-table-preferences-column-key="actions"')
       expect(index_source).to include("project_membership_user_option_label(membership.user)")
+      expect(index_source.rstrip).to end_with("<% end %>")
     end
   end
 

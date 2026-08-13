@@ -26,7 +26,7 @@ RSpec.describe "Admin access log empty state", type: :request do
     expect(page_text).to include("条件に一致する監査ログはありません。")
     expect(page_text).to include("CSV / metadata はこの条件で0件だったことや条件・scopeの確認に使えます。")
     expect(page_text).to include("監査ログ行データが存在することを示すものではありません。")
-    expect(page_text).to include("絞り込み条件を見直すか、「条件をクリア」で最新200件を確認してください。")
+    expect(page_text).to include("最新50件を確認してください")
     expect(page_text).to include("CSV条件metadata JSON")
     expect(page_text).to include("条件をクリア")
     expect(page_text).not_to include("監査ログ一覧の表示設定")

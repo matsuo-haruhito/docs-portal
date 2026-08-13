@@ -26,11 +26,17 @@
 - 管理診断は状態・カテゴリ・日本語の判定結果を通常表示し、環境変数名、内部check key、path、設定値などの技術詳細は行内の初期状態を閉じたDisclosureから確認できるようにする
 - import入力画面のenumは日本語表示し、ファイル選択はキーボード操作可能なdropzoneを主表示とする。ブラウザ標準のファイル入力文言は重複表示せず、選択ファイル名を日本語の状態表示で伝える
 - 管理一覧の複合検索はrfk入力へ統一し、短い状態列と操作列には内容に応じた初期幅を指定する。複数の状態を1セルへ表示する場合も主要値を2行以内にまとめ、詳細説明で行高を増やさない
+- 管理マスタ一覧は `header + 閉じた新規登録Disclosure + filter toolbar + filter chips + 件数/列設定 + RTP table + pagination` のlist-first順序へ統一し、validation error時だけ新規登録Disclosureを開く
+- 案件所属一覧はlist-first順序へ統一し、案件・ユーザーのremote search、role、25件単位のpagination、最大100件の境界を維持する。RTP tableはcaptionとフォーカス可能な横スクロール領域を持ち、paginationはtableの後に配置する
+- 文書マスタ一覧はキーワードとアーカイブ状態だけを常時表示し、カテゴリ、種別、公開範囲、正本区分、保管期限、廃棄候補を `詳細条件` Disclosureへ格納する。一括編集・lifecycle補助導線も初期状態を閉じたDisclosureに分離する
 - tooltipの起動要素はBootstrap Iconsとアクセシブルな名前を持ち、hoverとkeyboard focusの両方で表示する。長文をtooltip内で切り捨てず、200文字を超える説明はDisclosureとして全文へ到達できるようにする
 - RTP一覧は `table_preferences_table_tag` の `scroll_wrapper: true` を使い、横スクロールをtable本体ではなくフォーカス可能なwrapperへ持たせる。table本体はnative table layoutを維持し、列表示・列順・列幅・固定列のStimulus反映を妨げない
 - RTP列設定は各行の日本語列名、表示、順序、幅を同じviewport内で確認できるnative `dialog` modalとする。desktopでは最大72rem、画面高80vh以内とし、列一覧をmodal内部でスクロールして操作ボタンを下部に維持する。Escape・背景クリック・閉じるボタンで閉じ、起動ボタンへfocusを戻す。table側で変更した列順・列幅は同じ`table_key`のeditorへ同期してから保存する
 - RTPのtable rootにはpreset用targetが存在しないため、host controllerはtable rootでpreset取得を開始せず、busy状態によりheader DnD・resize handleが無効化されないようにする。editor rootのpreset保存機能は維持する
 - 案件横断の閲覧可能文書一覧では、主要5〜8列だけを初期表示し、横長のテーブルは横スクロールで閲覧できるようにする
+- 案件横断の閲覧可能文書一覧では、`キーワード`、`案件`、`タグ`を常時表示し、`カテゴリ`、`ファイル種`、`公開範囲`、`HTML生成済み`、`添付あり`、`PDFあり`、`図あり`は同じ検索form内の`追加条件` Disclosureへ格納する。追加条件が適用中の場合だけ初期表示を開く
+- 文書ショートカット一覧は`お気に入り`、`後で読む`、`最近見た文書`の3タブとし、1回の応答ではactive tabのpanelだけを描画する。検索、条件クリア、ページ移動、行操作では`view`を保持し、不正な`view`は`お気に入り`へ正規化する
+- dashboardの`最近見た文書`に候補がある場合の一覧導線は`GET /document_bookmarks?view=recent`へ直接つなぎ、候補がない場合の`文書を探す`は`GET /documents`を維持する
 - 文書ツリーの行は `Document` を単位とし、Markdown / HTMLだけでなく、元ファイルを主要表示対象とするPDF、Office、CSV / TSV、ZIPのfile-backed文書も表示する。画像やCSSなど本文付随assetを独立行にはしない
 - 文書ツリーの注意表示はDocusaurus build状態だけでは判定せず、現在の利用者が最新版の生成HTMLまたは埋め込みviewerへ到達できない場合にだけ「プレビュー画面はまだ生成されていません」と表示する。HTML `DocumentFile`をsame-origin iframeで閲覧できる場合は注意表示を出さない
 - Markdown文書で生成HTMLを利用できず元のMarkdownファイルをiframe表示している場合は、本文が閲覧できても正常な生成HTML表示とは扱わない。iframe直前に「元のMarkdownを表示中」を常時表示し、生成待機中・生成中・再試行予定・成果物復旧中・自動再試行停止の状態と次の動作を日本語で示す
@@ -43,6 +49,50 @@
 - Project 配下で文書カタログ一覧・詳細を表示できる
 - 管理画面には、主要 model の件数・最近の record・既存 CRUD への入口を横断表示する `model browser` を持つ
 - 403 / 404 / 400 は利用者向けエラー画面で表示し、平文レスポンスにはしない
+
+## 管理画面の文書一括編集
+
+- 対象文書tableは同じform内のフォーカス可能な領域に置き、desktopでは`max-height: 450px`、`overflow-y: auto`としてページ全体の長大化を抑える
+- 対象領域を縦スクロールしても列見出しを確認できるよう、table headerをsticky表示する
+- 画面内検索、選択済みだけ表示、checkbox state、`bulk_edit[document_ids][]`のsubmit payload、handoff上限50件は変更しない
+- `選択状態JSONを確認`は業務上の主操作から分離し、同じform内の初期状態を閉じた技術JSON Disclosureへ格納する
+- `事前確認を作成`と`文書一覧へ戻る`は通常のactionとして常時表示する
+
+## 管理画面の監査ログ
+
+- HTML一覧は`accessed_at desc, id desc`の順で1ページ50件とし、page移動後もfilter条件を維持する
+- HTMLの50件化後も従来の最大到達10,000行を維持し、任意の`limit` paramでは取得範囲を広げない
+- `操作`、`対象種別`、`案件`を常時表示し、AI context条件、会社、ユーザー、対象名/IP、文書名/slug、開始日/終了日は同じGET form内の`高度条件` Disclosureへ格納する。高度条件が有効な場合だけ再表示時に開く
+- `現在の条件でCSV export（最新200件）`は主導線として常時表示し、表示中ページCSV（最大50件）と2種のmetadata JSON・scope説明は初期状態を閉じたexport補助Disclosureへ格納する
+- latest CSV/metadataの`row_limit`は200、current page CSV/metadataの`row_limit`は50として分離する
+- RTPの`table_key = :admin_access_logs`、列定義、認可、filter param、CSV固定列は変更しない
+
+## 管理画面の文書権限一覧
+
+- 文書権限一覧は `assignments`（権限一覧）と `overview`（文書別概要）の2つのtabを持ち、初期表示は `assignments` とする
+- 1回の応答ではactive tabの一覧だけを描画し、非active tabのtable・empty stateは描画しない
+- 検索送信、条件クリア、ページ移動ではactive tabを維持し、tab切替時は1ページ目へ戻す
+- 両tabとも25件単位でページ分割する。`assignments` は個別付与行数、`overview` は集計対象文書数をページ件数の基準とする
+- `assignments` のCSVはpage、active tab、RTPの列表示設定に依存せず、現在の検索条件に一致する個別付与行を全件出力する
+- RTPの `table_key` は権限一覧を `admin_document_permissions`、文書別概要を `admin_document_permission_overview` とし、既存の保存設定との互換性を維持する
+- tabはserver-rendered navigationとして扱い、各応答では全tabの`aria-controls`を現在存在する単一のtabpanelへ関連付ける
+- 選択中tabだけを`tabindex="0"`、他を`tabindex="-1"`とし、左右矢印・Home・Endはfocusだけを移動する。EnterまたはSpaceでfocus中のlinkを実行し、遷移後の選択状態はserver responseを正本にする
+
+## 管理概要と運用・診断
+
+- `/admin` は日常の一次確認画面とし、設定警告・実体欠落・継続失敗候補の件数、会社・ユーザー・案件・文書の主要件数、保存済み失敗履歴のうち直近最大5カテゴリだけを表示する
+- `/admin` では設定診断の全check、Storage内訳、欠落ファイル行、model catalog全体、継続失敗候補のidentity・error preview・Markdown digestを表示しない
+- `/admin/diagnostics` はinternal admin専用のread-only画面とし、設定診断全項目、文書ファイル健全性、Storage内訳、model observation、保存済み失敗履歴、継続失敗候補詳細とrunbook導線を表示する
+- `READ_ONLY_MAINTENANCE` 中も管理概要と運用・診断の確認導線は維持し、再試行、再送、同期、削除、cleanupなどの変更操作を運用・診断画面へ追加しない
+- `company_master_admin` は従来どおり自社管理用landingだけを利用し、`/admin/diagnostics` へはアクセスできない
+
+## 画面状態のスクリーンショット検証
+
+- `bin/all_test`のdesktop撮影では、`/documents`と`/admin/diagnostics`をcustom routeとして個別に撮影する
+- 文書権限は`assignments`と`overview`、文書ショートカットは`favorite`、`read_later`、`recent`をquery parameter付きURLから個別に撮影する
+- 文書権限と文書ショートカットのdefault index captureは、状態名付きcaptureとの重複を避ける
+- 各状態は同じbasenameのPNG / HTMLを生成し、画面操作ガイドで日本語captionと操作説明へ対応付ける
+- mobile captureはこの検証対象に含めない
 
 ## 利用者ダッシュボード
 

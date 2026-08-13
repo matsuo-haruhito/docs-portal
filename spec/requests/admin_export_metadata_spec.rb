@@ -80,7 +80,7 @@ RSpec.describe "Admin export metadata", type: :request do
       expect(response.media_type).to eq("application/json")
       expect(metadata).to include(
         "report_type" => "access_logs",
-        "row_limit" => Admin::AccessLogsController::ACCESS_LOGS_PER_PAGE,
+        "row_limit" => Admin::AccessLogsController::ACCESS_LOGS_EXPORT_LIMIT,
         "export_scope" => "current_filter_latest_rows"
       )
       expect(metadata["description"]).to include("表示中ページではなく")

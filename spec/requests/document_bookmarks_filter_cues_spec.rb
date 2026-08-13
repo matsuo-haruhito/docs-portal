@@ -15,82 +15,41 @@ RSpec.describe "Document bookmark filter cues", type: :request do
     Nokogiri::HTML(response.body)
   end
 
-  it "labels saved shortcut filters and keeps recent search params on that form" do
-    sign_in_as(user)
-
-    get document_bookmarks_path, params: { recent_q: "guide" }
-
-    expect(response).to have_http_status(:ok)
-    expect(response.body).to include("対象: お気に入り・後で読む")
-    expect(response.body).to include("最近見た文書は下の検索で絞り込みます。")
-    expect(response.body).to include("最近見た文書検索「guide」は、表示中の最大 20 件だけを絞り込んでいます。保存済みショートカットの条件は維持されます。お気に入り・後で読むには効きません。")
-
-    saved_filter_form = page.css("section form").first
-    recent_query_input = saved_filter_form.at_css('input[type="hidden"][name="recent_q"]')
-
-    expect(recent_query_input).to be_present
-    expect(recent_query_input["value"]).to eq("guide")
-  end
-
-  it "labels recent document search and keeps saved shortcut filters on that form" do
+  it "shows only the saved filter on saved tabs and carries view" do
     create(:document_bookmark, user:, document:, bookmark_type: :favorite)
     sign_in_as(user)
 
-    get document_bookmarks_path, params: { project_code: project.code, bookmark_q: "manual" }
+    get document_bookmarks_path, params: { view: "favorite", bookmark_q: "manual", recent_q: "guide" }
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("対象: 最近見た文書（表示中最大 20 件）")
-    expect(response.body).to include("保存済みショートカットの条件はそのまま維持されます。")
-    expect(response.body.scan("保存済み条件が適用中").size).to eq(2)
-    expect(response.body).to include("この一覧は上の案件・検索語で絞り込んだお気に入りです。最近見た条件はここには効きません。")
-    expect(response.body).to include("この一覧は上の案件・検索語で絞り込んだ後で読む文書です。最近見た条件はここには効きません。")
-    expect(response.body).to include("保存済み条件は維持のみ")
-    expect(response.body).to include("上の案件・保存済み検索は最近見た文書を絞り込みません。")
-
-    recent_search_form = page.css("section form").last
-    project_code_input = recent_search_form.at_css('input[type="hidden"][name="project_code"]')
-    bookmark_query_input = recent_search_form.at_css('input[type="hidden"][name="bookmark_q"]')
-
-    expect(project_code_input).to be_present
-    expect(project_code_input["value"]).to eq(project.code)
-    expect(bookmark_query_input).to be_present
-    expect(bookmark_query_input["value"]).to eq("manual")
+    expect(page.at_css("#favorite-bookmarks")).to be_present
+    expect(page.at_css("#recent-documents")).to be_nil
+    expect(page.at_css("form input[type='hidden'][name='view'][value='favorite']")).to be_present
+    expect(page.at_css("form input[type='hidden'][name='recent_q'][value='guide']")).to be_present
   end
 
-  it "shows section-local reset links for empty saved shortcut sections while preserving recent search" do
-    create(:document_bookmark, user:, document:, bookmark_type: :favorite)
+  it "shows only the recent filter on the recent tab and carries saved filters" do
+    sign_in_as(user)
+
+    get document_bookmarks_path, params: { view: "recent", project_code: project.code, bookmark_q: "manual" }
+
+    expect(response).to have_http_status(:ok)
+    recent_form = page.at_css("#recent-documents form")
+    expect(recent_form.at_css("input[type='hidden'][name='view'][value='recent']")).to be_present
+    expect(recent_form.at_css("input[type='hidden'][name='project_code'][value='#{project.code}']")).to be_present
+    expect(recent_form.at_css("input[type='hidden'][name='bookmark_q'][value='manual']")).to be_present
+    expect(page.at_css("#favorite-bookmarks, #read-later-bookmarks")).to be_nil
+  end
+
+  it "keeps view on section-local reset links" do
     create(:document_bookmark, user:, document:, bookmark_type: :read_later)
     sign_in_as(user)
 
-    get document_bookmarks_path, params: { project_code: "missing", bookmark_q: "manual", recent_q: "guide", favorite_page: 2, read_later_page: 3 }
+    get document_bookmarks_path, params: { view: "read_later", project_code: "missing", bookmark_q: "manual", recent_q: "guide" }
 
-    expect(response).to have_http_status(:ok)
-
-    favorite_reset_link = page.at_css('section#favorite-bookmarks a[href$="#favorite-bookmarks"]')
-    read_later_reset_link = page.at_css('section#read-later-bookmarks a[href$="#read-later-bookmarks"]')
-
-    expect(favorite_reset_link).to be_present
-    expect(favorite_reset_link.text).to eq("保存済み条件を解除")
-    expect(read_later_reset_link).to be_present
-    expect(read_later_reset_link.text).to eq("保存済み条件を解除")
-
-    [favorite_reset_link["href"], read_later_reset_link["href"]].each do |href|
-      expect(href).to include("recent_q=guide")
-      expect(href).not_to include("project_code")
-      expect(href).not_to include("bookmark_q")
-      expect(href).not_to include("favorite_page")
-      expect(href).not_to include("read_later_page")
-    end
-  end
-
-  it "does not show section-local reset links when empty saved shortcut sections have no active filter" do
-    sign_in_as(user)
-
-    get document_bookmarks_path
-
-    expect(response).to have_http_status(:ok)
-    expect(page.css('section#favorite-bookmarks a[href$="#favorite-bookmarks"]')).to be_empty
-    expect(page.css('section#read-later-bookmarks a[href$="#read-later-bookmarks"]')).to be_empty
-    expect(response.body).not_to include("保存済み条件を解除")
+    reset_link = page.css("#read-later-bookmarks a").find { _1.text.squish == "保存済み条件を解除" }
+    expect(reset_link).to be_present
+    expect(reset_link["href"]).to include("view=read_later", "recent_q=guide")
+    expect(reset_link["href"]).not_to include("project_code", "bookmark_q")
   end
 end

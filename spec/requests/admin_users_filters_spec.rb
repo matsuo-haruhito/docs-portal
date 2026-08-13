@@ -5,10 +5,6 @@ RSpec.describe "Admin users filters", type: :request do
     Nokogiri::HTML(response.body)
   end
 
-  def page_text
-    parsed_html.text.squish
-  end
-
   def result_table_text
     parsed_html.css("tbody").text.squish
   end
@@ -21,39 +17,51 @@ RSpec.describe "Admin users filters", type: :request do
     parsed_html.at_css('input[name="q"]')
   end
 
-  def link_href(text)
-    parsed_html.css("a").find { |link| link.text.squish == text }&.[]("href")
+  def filter_chip_texts
+    parsed_html.css(".admin-filter-chip").map { |node| node.text.squish }
   end
 
-  def form_link_texts(action_path)
-    parsed_html.css(%(form[action="#{action_path}"] a)).map { |link| link.text.squish }
+  def list_count
+    parsed_html.at_css(".admin-list-meta__count")&.text&.squish
+  end
+
+  def toolbar_clear_link
+    parsed_html.css(".admin-filter-toolbar__actions a").find { |link| link.text.squish == "クリア" }
+  end
+
+  def empty_state_clear_link
+    parsed_html.css("a").find { |link| link.text.squish == "条件をクリア" }
+  end
+
+  def link_href(text)
+    parsed_html.css("a").find { |link| link.text.squish == text }&.[]("href")
   end
 
   let(:internal_user) { create(:user, :internal) }
   let!(:company) { create(:company, domain: "tenant.example.com", name: "Tenant") }
   let!(:other_company) { create(:company, domain: "other.example.com", name: "Other") }
 
-  it "hides the form clear action until user filters are active" do
+  it "shows filter actions only while user filters are active" do
     create(:user, :external, company:, name: "Clear Target", email_address: "clear-target@example.com")
     sign_in_as(internal_user)
 
     get admin_users_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("ユーザーを探す")
+    expect(parsed_html.at_css(".admin-filter-toolbar")).to be_present
     expect(keyword_input).to be_present
     expect(keyword_input["placeholder"]).to eq("ユーザー名・メールアドレス")
     expect(keyword_input["maxlength"]).to eq("100")
-    expect(page_text).to include("ユーザー名・メールアドレスの断片で検索できます。最大100文字。")
-    expect(response.body).not_to include("ユーザー名・表示名・メールアドレス")
-    expect(form_link_texts(admin_users_path)).not_to include("条件をクリア")
+    expect(parsed_html.at_css('select[name="active"]')).to be_present
+    expect(filter_chip_texts).to be_empty
+    expect(toolbar_clear_link).to be_nil
 
     get admin_users_path, params: { q: "clear target" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("適用中: キーワード「clear target」")
-    expect(form_link_texts(admin_users_path)).to include("条件をクリア")
-    expect(link_href("条件をクリア")).to eq(admin_users_path)
+    expect(filter_chip_texts).to eq(["キーワード「clear target」"])
+    expect(list_count).to eq("1件")
+    expect(toolbar_clear_link&.[]("href")).to eq(admin_users_path)
   end
 
   it "allows internal admins to search users across companies without changing table preferences" do
@@ -65,11 +73,10 @@ RSpec.describe "Admin users filters", type: :request do
     get admin_users_path, params: { q: "alpha" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("alpha-member@example.com")
-    expect(page_text).not_to include("omega-member@example.com")
-    expect(page_text).to include("適用中: キーワード「alpha」")
-    expect(page_text).to include("検索結果: 1件")
-    expect(page_text).to include("列の表示設定は下の「ユーザー一覧の表示設定」で調整できます")
+    expect(result_table_text).to include("alpha-member@example.com")
+    expect(result_table_text).not_to include("omega-member@example.com")
+    expect(filter_chip_texts).to eq(["キーワード「alpha」"])
+    expect(list_count).to eq("1件")
     expect(table_column_keys).to include(
       "name",
       "email_address",
@@ -83,8 +90,8 @@ RSpec.describe "Admin users filters", type: :request do
     get admin_users_path, params: { q: "omega-member@example.com" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("omega-member@example.com")
-    expect(page_text).not_to include("alpha-member@example.com")
+    expect(result_table_text).to include("omega-member@example.com")
+    expect(result_table_text).not_to include("alpha-member@example.com")
   end
 
   it "filters users by active status and distinguishes filtered empty results" do
@@ -96,20 +103,19 @@ RSpec.describe "Admin users filters", type: :request do
     get admin_users_path, params: { q: "match target", active: "false" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include(inactive_user.email_address)
-    expect(page_text).not_to include(active_user.email_address)
-    expect(page_text).to include("適用中: キーワード「match target」 / 状態: 無効")
-    expect(page_text).to include("検索結果: 1件")
+    expect(result_table_text).to include(inactive_user.email_address)
+    expect(result_table_text).not_to include(active_user.email_address)
+    expect(filter_chip_texts).to contain_exactly("キーワード「match target」", "状態: 無効")
+    expect(list_count).to eq("1件")
 
     get admin_users_path, params: { q: "missing-user" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("適用中: キーワード「missing-user」")
-    expect(page_text).to include("検索結果: 0件")
-    expect(page_text).to include("条件に一致するユーザーがいません")
-    expect(page_text).to include("キーワードや状態の条件を変更するか、条件をクリアしてください。")
-    expect(parsed_html.css('section.card a[href="/admin/users"]').map(&:text).join).to include("条件をクリア")
-    expect(page_text).not_to include("ユーザーが未登録です")
+    expect(filter_chip_texts).to eq(["キーワード「missing-user」"])
+    expect(list_count).to eq("0件")
+    expect(parsed_html.at_css(".empty-state")).to be_present
+    expect(empty_state_clear_link&.[]("href")).to eq(admin_users_path)
+    expect(parsed_html.at_css('[data-rails-table-preferences-table-key-value="admin_users"]')).to be_nil
   end
 
   it "keeps company_master_admin search and active filter inside the same company" do
@@ -123,15 +129,14 @@ RSpec.describe "Admin users filters", type: :request do
     get admin_users_path, params: { q: "shared", active: "true" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include(active_same_company_user.email_address)
-    expect(result_table_text).not_to include("same-inactive@example.com")
-    expect(result_table_text).not_to include("other-active@example.com")
-    expect(page_text).to include("適用中: キーワード「shared」 / 状態: 有効")
+    expect(result_table_text).to include(active_same_company_user.email_address)
+    expect(result_table_text).not_to include("same-inactive@example.com", "other-active@example.com")
+    expect(filter_chip_texts).to contain_exactly("キーワード「shared」", "状態: 有効")
 
     get admin_users_path, params: { q: "other-active@example.com" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("条件に一致するユーザーがいません")
+    expect(list_count).to eq("0件")
     expect(result_table_text).not_to include("other-active@example.com")
   end
 
@@ -154,26 +159,23 @@ RSpec.describe "Admin users filters", type: :request do
     get admin_users_path, params: { q: "shared page", active: "true", per_page: 2 }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 3件")
-    expect(page_text).to include("表示中: 1-2件 / 3件")
-    expect(result_table_text).to include(same_company_users.first.email_address)
-    expect(result_table_text).to include(same_company_users.second.email_address)
-    expect(result_table_text).not_to include(same_company_users.third.email_address)
-    expect(result_table_text).not_to include("shared-page-other@example.com")
+    expect(list_count).to eq("3件")
+    expect(parsed_html.at_css('nav[aria-label="ユーザー一覧ページ"]')).to be_present
+    expect(result_table_text).to include(same_company_users.first.email_address, same_company_users.second.email_address)
+    expect(result_table_text).not_to include(same_company_users.third.email_address, "shared-page-other@example.com")
     expect(link_href("次へ")).to include("q=shared+page", "active=true", "per_page=2", "page=2")
 
     get admin_users_path, params: { q: "shared page", active: "true", per_page: 2, page: 2 }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示中: 3-3件 / 3件")
+    expect(list_count).to eq("3件")
     expect(result_table_text).to include(same_company_users.third.email_address)
-    expect(result_table_text).not_to include(same_company_users.first.email_address)
-    expect(result_table_text).not_to include("shared-page-other@example.com")
+    expect(result_table_text).not_to include(same_company_users.first.email_address, "shared-page-other@example.com")
+    expect(link_href("前へ")).to include("q=shared+page", "active=true", "per_page=2", "page=1")
 
     get admin_users_path, params: { q: "shared page", active: "true", per_page: 2, page: 0 }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示中: 1-2件 / 3件")
     expect(result_table_text).to include(same_company_users.first.email_address)
   end
 end

@@ -11,12 +11,15 @@ RSpec.describe "Admin document lifecycle dry-run candidates", type: :request do
     parsed_html.text.squish
   end
 
-  def link_href(text)
-    parsed_html.css("a[href]").find { |link| link.text.squish == text }&.[]("href")
+  def lifecycle_link(purpose)
+    parsed_html.css("details.filter-details a[href]").find do |link|
+      query = Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)
+      query["lifecycle_purpose"] == purpose
+    end
   end
 
-  def query_for(link_text)
-    Rack::Utils.parse_nested_query(URI.parse(link_href(link_text)).query)
+  def query_for_lifecycle(purpose)
+    Rack::Utils.parse_nested_query(URI.parse(lifecycle_link(purpose)["href"]).query)
   end
 
   def selected_archive_action_value
@@ -36,11 +39,10 @@ RSpec.describe "Admin document lifecycle dry-run candidates", type: :request do
     end.not_to change { active_document.reload.archived? }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("アーカイブdry-run候補として開く")
-    expect(page_text).to include("有効な文書1件だけを候補にします")
-    expect(page_text).not_to include("復元dry-run候補として開く")
+    expect(lifecycle_link("archive")).to be_present
+    expect(lifecycle_link("restore")).to be_nil
 
-    query = query_for("アーカイブdry-run候補として開く")
+    query = query_for_lifecycle("archive")
     expect(query.fetch("source")).to eq("admin_documents")
     expect(query.fetch("lifecycle_purpose")).to eq("archive")
     expect(query.fetch("candidate_document_ids").map(&:to_i)).to eq([active_document.id])
@@ -61,11 +63,10 @@ RSpec.describe "Admin document lifecycle dry-run candidates", type: :request do
     end.not_to change { archived_document.reload.archived? }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("復元dry-run候補として開く")
-    expect(page_text).to include("アーカイブ済み文書1件だけを候補にします")
-    expect(page_text).not_to include("アーカイブdry-run候補として開く")
+    expect(lifecycle_link("restore")).to be_present
+    expect(lifecycle_link("archive")).to be_nil
 
-    query = query_for("復元dry-run候補として開く")
+    query = query_for_lifecycle("restore")
     expect(query.fetch("source")).to eq("admin_documents")
     expect(query.fetch("lifecycle_purpose")).to eq("restore")
     expect(query.fetch("candidate_document_ids").map(&:to_i)).to eq([archived_document.id])
@@ -84,9 +85,10 @@ RSpec.describe "Admin document lifecycle dry-run candidates", type: :request do
     get admin_documents_path, params: { q: "LIFE-M" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("混在した検索結果は、アーカイブ候補と復元候補を分けて一括編集dry-runへ渡します。")
-    expect(query_for("アーカイブdry-run候補として開く").fetch("candidate_document_ids").map(&:to_i)).to eq([active_document.id])
-    expect(query_for("復元dry-run候補として開く").fetch("candidate_document_ids").map(&:to_i)).to eq([archived_document.id])
+    expect(lifecycle_link("archive")).to be_present
+    expect(lifecycle_link("restore")).to be_present
+    expect(query_for_lifecycle("archive").fetch("candidate_document_ids").map(&:to_i)).to eq([active_document.id])
+    expect(query_for_lifecycle("restore").fetch("candidate_document_ids").map(&:to_i)).to eq([archived_document.id])
   end
 
   it "preselects archive and restore actions on the bulk edit dry-run screen" do

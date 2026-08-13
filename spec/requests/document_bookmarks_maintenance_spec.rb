@@ -31,12 +31,12 @@ RSpec.describe "Document bookmarks maintenance mode", type: :request do
       create(:access_log, user:, company:, project:, document:, action_type: :view, target_type: "document", accessed_at: Time.current)
       sign_in_as(user)
 
-      get document_bookmarks_path, params: { bookmark_q: "manual", recent_q: "manual" }
+      get document_bookmarks_path, params: { view: "favorite", bookmark_q: "manual", recent_q: "manual" }
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("文書ショートカット")
       expect(response.body).to include("Manual")
-      expect(response.body).to include("最近見た文書")
+      expect(Nokogiri::HTML(response.body).at_css("#favorite-bookmarks[role='tabpanel']")).to be_present
     end
 
     it "blocks favorite and read-later creation" do
@@ -81,6 +81,7 @@ RSpec.describe "Document bookmarks maintenance mode", type: :request do
     it "blocks destroying a bookmark while preserving list navigation fallback" do
       bookmark = create(:document_bookmark, user:, document:, bookmark_type: :favorite)
       navigation_params = {
+        view: "favorite",
         project_code: project.code,
         bookmark_q: "manual",
         recent_q: "manual",

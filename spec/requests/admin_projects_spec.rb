@@ -24,8 +24,24 @@ RSpec.describe "Admin projects", type: :request do
     parsed_html.css("a[href], form[action]").filter_map { |node| node["href"] || node["action"] }
   end
 
-  def clear_filter_links
-    parsed_html.css("a[href]").select { |node| node.text.squish == "条件をクリア" }
+  def toolbar_clear_link
+    parsed_html.css(".admin-filter-toolbar__actions a").find { |node| node.text.squish == "クリア" }
+  end
+
+  def empty_state_clear_link
+    parsed_html.css(".empty-state a").find { |node| node.text.squish == "条件をクリア" }
+  end
+
+  def filter_chip_texts
+    parsed_html.css(".admin-filter-chip").map { |node| node.text.squish }
+  end
+
+  def list_count
+    parsed_html.at_css(".admin-list-meta__count")&.text&.squish
+  end
+
+  def link_href(text)
+    parsed_html.css("a").find { |link| link.text.squish == text }&.[]("href")
   end
 
   def keyword_search_input
@@ -112,9 +128,8 @@ RSpec.describe "Admin projects", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(project_names).to contain_exactly("Code Match", "Needle Name", "Description Match")
-    expect(page_text).to include("適用中:")
-    expect(page_text).to include("検索: needle")
-    expect(page_text).to include("検索結果: 3件")
+    expect(filter_chip_texts).to eq(["検索: needle"])
+    expect(list_count).to eq("3件")
   end
 
   it "shows the keyword search target and form-level length guard" do
@@ -125,9 +140,10 @@ RSpec.describe "Admin projects", type: :request do
     get admin_projects_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("コード・案件名・説明の断片で検索できます。最大100文字。")
+    expect(parsed_html.at_css(".admin-filter-toolbar")).to be_present
     expect(keyword_search_input["placeholder"]).to eq("コード・案件名・説明")
     expect(keyword_search_input["maxlength"]).to eq("100")
+    expect(keyword_search_input["class"]).to include("admin-filter-toolbar__search")
   end
 
   it "returns bounded company search results by name and domain" do
@@ -222,6 +238,7 @@ RSpec.describe "Admin projects", type: :request do
       }
     }
     expect(response).to have_http_status(:unprocessable_entity)
+    expect(parsed_html.at_css(%(details.admin-create-panel[open] form[action="#{admin_projects_path}"]))).to be_present
     expect(project_form_company_picker.at_css(%(option[value="#{company.id}"][selected]))&.text&.squish).to eq("Form Company / form.example.com")
 
     get edit_admin_project_path(project.code)
@@ -243,10 +260,8 @@ RSpec.describe "Admin projects", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(project_names).to eq(["Inactive Same Company"])
-    expect(page_text).to include("状態: 無効")
-    expect(page_text).to include("企業: Filter Company")
-    expect(page_text).to include("検索結果: 1件")
-    expect(page_text).to include("表示設定は列の表示・幅を調整し、絞り込みは一覧に出す案件を切り替えます。")
+    expect(filter_chip_texts).to contain_exactly("状態: 無効", "企業: Filter Company")
+    expect(list_count).to eq("1件")
   end
 
   it "filters projects without a company separately from company projects" do
@@ -273,7 +288,7 @@ RSpec.describe "Admin projects", type: :request do
 
     get admin_projects_path
     expect(response).to have_http_status(:ok)
-    expect(clear_filter_links).to be_empty
+    expect(toolbar_clear_link).to be_nil
 
     [
       { q: "Clear" },
@@ -284,7 +299,7 @@ RSpec.describe "Admin projects", type: :request do
       get admin_projects_path(params)
 
       expect(response).to have_http_status(:ok)
-      expect(clear_filter_links.map { |link| link["href"] }).to include(admin_projects_path)
+      expect(toolbar_clear_link&.[]("href")).to eq(admin_projects_path)
     end
   end
 
@@ -298,7 +313,37 @@ RSpec.describe "Admin projects", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(project_names).to contain_exactly("Active Project", "Inactive Project")
-    expect(clear_filter_links).to be_empty
+    expect(filter_chip_texts).to be_empty
+    expect(toolbar_clear_link).to be_nil
+  end
+
+  it "paginates filtered projects while preserving filter parameters" do
+    company = create(:company, name: "Paged Company", domain: "paged.example.com")
+    matching_projects = Array.new(3) do |index|
+      create(:project, code: format("PAGE-%03d", index), name: "Paged Project #{index}", company:, active: true)
+    end
+    create(:project, code: "PAGE-OTHER", name: "Other Company Project", company: create(:company), active: true)
+
+    sign_in_as(admin_user)
+
+    get admin_projects_path, params: { q: "PAGE", active: "true", company_id: company.id, per_page: 2 }
+
+    expect(response).to have_http_status(:ok)
+    expect(list_count).to eq("3件")
+    expect(project_names).to eq(matching_projects.first(2).map(&:name))
+    expect(parsed_html.at_css('nav[aria-label="案件一覧ページ"]')).to be_present
+    expect(link_href("次へ")).to include("q=PAGE", "active=true", "company_id=#{company.id}", "per_page=2", "page=2")
+
+    get admin_projects_path, params: { q: "PAGE", active: "true", company_id: company.id, per_page: 2, page: 2 }
+
+    expect(response).to have_http_status(:ok)
+    expect(project_names).to eq([matching_projects.third.name])
+    expect(link_href("前へ")).to include("q=PAGE", "active=true", "company_id=#{company.id}", "per_page=2", "page=1")
+
+    get admin_projects_path, params: { q: "PAGE", active: "true", company_id: company.id, per_page: 2, page: 999 }
+
+    expect(response).to have_http_status(:ok)
+    expect(project_names).to eq([matching_projects.third.name])
   end
 
   it "forbids external users from company picker JSON endpoints" do
@@ -319,17 +364,21 @@ RSpec.describe "Admin projects", type: :request do
     get admin_projects_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("まだ案件は登録されていません。")
-    expect(page_text).not_to include("検索条件に一致する案件はありません。")
-    expect(clear_filter_links).to be_empty
+    expect(parsed_html.at_css(".empty-state")).to be_present
+    expect(list_count).to eq("0件")
+    expect(toolbar_clear_link).to be_nil
+    expect(empty_state_clear_link).to be_nil
+    expect(parsed_html.at_css('[data-rails-table-preferences-table-key-value="admin_projects"]')).to be_nil
 
     create(:project, code: "EXISTING", name: "Existing Project")
 
     get admin_projects_path(q: "missing")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索条件に一致する案件はありません。")
-    expect(page_text).not_to include("まだ案件は登録されていません。")
-    expect(clear_filter_links.map { |link| link["href"] }).to eq([admin_projects_path, admin_projects_path])
+    expect(parsed_html.at_css(".empty-state")).to be_present
+    expect(list_count).to eq("0件")
+    expect(toolbar_clear_link&.[]("href")).to eq(admin_projects_path)
+    expect(empty_state_clear_link&.[]("href")).to eq(admin_projects_path)
+    expect(parsed_html.at_css('[data-rails-table-preferences-table-key-value="admin_projects"]')).to be_nil
   end
 end

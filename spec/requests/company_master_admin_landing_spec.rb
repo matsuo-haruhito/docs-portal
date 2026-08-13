@@ -171,12 +171,14 @@ RSpec.describe "Company master admin landing", type: :request do
     get admin_root_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include(
-      "管理画面",
-      "モデル観測",
-      "運用失敗入口",
-      "基本マスタ",
-      "関連設定"
+    expect(parsed_html.at_css("h1")&.text&.squish).to eq("管理概要")
+    expect(parsed_html.at_css("#admin-attention-heading")).to be_present
+    expect(parsed_html.at_css("#admin-primary-data-heading")).to be_present
+    expect(parsed_html.at_css("#admin-recent-issues-heading")).to be_present
+    expect(page_text).not_to include(
+      "アプリ設定診断結果",
+      "DocumentFile 実体の Project / Document 上位",
+      "Markdown digest preview"
     )
     expect(page_text).not_to include(
       "company_master_admin が /admin から最初に確認する、会社・ユーザー管理専用の入口です",
@@ -186,6 +188,7 @@ RSpec.describe "Company master admin landing", type: :request do
 
     expect(action_targets).to include(
       admin_root_path,
+      admin_diagnostics_path,
       admin_projects_path,
       admin_project_memberships_path,
       admin_documents_path,

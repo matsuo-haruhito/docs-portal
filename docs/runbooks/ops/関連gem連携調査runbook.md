@@ -35,7 +35,7 @@
 
 - `app/views/admin/document_sets/index.html.slim` のように、ページ先頭で `table_key`、`table_columns`、`table_settings` を定義してから view を組みます。
 - 列 metadata は `app/helpers/admin/document_sets_helper.rb` のような helper に寄せ、view 側へ column 幅、pinned、filter、label の判断を散らさないようにします。
-- host form と一覧が同居する画面では、`新規登録` card と `表示設定` editor、その下の table を役割ごとに分け、editor と table は同じ `table_key` を共有します。
+- host form と一覧が同居するlist-first画面では、初期状態を閉じた `新規登録` Disclosure、filter toolbar、`表示設定` editor、tableを役割ごとに分けます。validation error時だけDisclosureを開き、editorとtableは同じ `table_key` を共有します。
 - 一覧本体は `table_preferences_table_tag(...)` を使い、`thead` と `tbody` の各 cell に stable な `data-rails-table-preferences-column-key` を置きます。
 - `project` や `actions` のように一覧の文脈維持に効く列は helper 側で pinned を決め、host app の運用都合を upstream gem へ押し戻しません。
 

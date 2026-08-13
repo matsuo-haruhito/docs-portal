@@ -1,48 +1,45 @@
 # 管理ダッシュボード・モデルブラウザ運用runbook
 
-この runbook は、管理画面の `ダッシュボード` と `モデルブラウザ` を日常運用で見返すときの入口をまとめる。
-
-新しい診断ルールや監視基準はここでは定義しない。current 実装を前提に、`モデル観測` `アプリ設定診断` `文書ファイル健全性` `Storage使用量` をどう使い分け、必要に応じてどこへ戻るかを整理する。
+この runbook は、管理画面の `管理概要`、`運用・診断`、`モデルブラウザ` を日常運用で使い分けるための入口です。新しい診断ルールや監視基準はここでは定義しません。
 
 ## 先に見るもの
 
-1. 環境変数や compose の前提を確認したいときは [ローカルセットアップと環境変数](../../guides/ローカルセットアップと環境変数.md)
-2. Docusaurus build や Kroki の runtime 前提を確認したいときは [notes/docusaurus-build-runtime](../../notes/docusaurus-build-runtime.md)
-3. `storage/document_files` や欠落ファイル時の扱いを確認したいときは [ファイル配信・storage運用方針](../../specs/ファイル配信・storage運用方針.md)
-4. 管理画面の位置関係は `app/views/admin/_nav.html.slim` の `ダッシュボード` と `モデルブラウザ` を起点に確認する
+1. 日常の一次確認は `/admin` の `管理概要` を開き、要対応件数と最近の問題だけを見る
+2. 原因や内訳を確認するときは `/admin/diagnostics` の `運用・診断` へ進む
+3. model横断の件数・最近のrecordは `/admin/model_browser` で確認する
+4. storageやbuildの前提は [ファイル配信・storage運用方針](../../specs/ファイル配信・storage運用方針.md) と [docusaurus-build-runtime](../../notes/docusaurus-build-runtime.md) に戻る
 
 ## 画面の役割
 
-`admin/dashboard` は internal admin だけが使える運用確認の入口で、`モデル観測` `アプリ設定診断` `文書ファイル健全性` `Storage使用量` を 1 画面で見比べる。
+### 管理概要
 
-current 実装の前提:
+`/admin` はinternal adminの日常的なfirst triageに限定します。
 
-- `モデル観測` は `Admin::ModelBrowserCatalog.entries.first(8)` を並べ、主要な model だけを最初に見せる
-- `アプリ設定診断` は `ApplicationConfigurationDiagnostic` の check を `OK / 警告 / エラー` 件数つきで出す
-- `文書ファイル健全性` は `DocumentFileHealthCheck` で総件数と実体欠落件数を出し、欠落ファイルは最大 20 件まで一覧表示する
-- 欠落ファイルがある場合、`欠落ファイル詳細` で案件、文書名 / slug、Storage key / ファイル名の断片から絞り込みながら、先頭 100 件まで read-only に確認できる
-- 欠落ファイル詳細の案件 filter は、案件コード / 案件名で検索する remote search として表示され、候補は最大 20 件まで返る。選択済み案件は候補上限外でも form / summary に復元される
-- 欠落ファイル詳細の `Expected path` は raw absolute path ではなく、`storage/document_files/...` 形式の safe preview として表示される
-- `Storage使用量` は `StorageUsageSummary` で local `storage/document_files` / `storage/docs_sites` / `storage/imports` の file count と概算使用量を read-only に出す
-- `Storage使用量` の `大きい内訳` は、各領域の直下項目を bytes / file count / 最終更新つきで上位 5 件まで表示する read-only preview として扱う。`storage/docs_sites` と `storage/imports` もここで増加元の当たりを付けられる
-- `Storage使用量` の `DocumentFile 実体の Project / Document 上位` は、`storage/document_files` に紐づく `DocumentFile` 実体だけを Project / Document 単位で概算集計し、上位 5 件を read-only preview として表示する
-- `Storage使用量` の detail CSV は、`scope_status`、`display_limit`、`safe_relative_path`、`read_only_note` を含む bounded read-only handoff として読む
-- `document_files` CSV は `DocumentFile` 実体の Project / Document breakdown を渡すためのもの、`docs_sites` / `imports` CSV は direct child preview を渡すためのものとして分ける
-- CSV の `read_only_note` は、cleanup、delete、archive、retention、billing、quota、GCS policy、repair、full export の判断ではないことを明示する
-- `Storage使用量` の `次の確認先` は、各領域から既存確認画面や既存 docs へ戻るための link cue であり、削除、cleanup、retention 対象を確定する操作ではない
-- `Storage使用量` の `次の確認先` に `この行は read-only 集計です` と出る行は、追加導線の未設定ではなく、その行の file count / 概算使用量を読むだけの領域として扱う
-- `運用失敗入口` は、生成ファイルや外部送付履歴などの保存済み failed 履歴と、同じ identity の最新 run が連続 failed かを見る `継続失敗候補` を分けて表示する
-- `保存済み履歴` の件数は保存済み failed 履歴の件数であり、継続失敗候補、通知状態、ack 状態、自動復旧状態とは別に読む
-- `古い失敗のみ` は 7 日より古い対象履歴だけが残っている cue であり、緊急度、通知状態、ack 状態を示す表示ではない
-- 画面下部の `基本マスタ` `関連設定` は、日常確認後に既存の管理画面へ戻る近道として置かれている
+- 要対応: 設定警告・エラー、文書ファイル実体欠落、継続失敗候補の件数
+- 主要データ: 会社、ユーザー、案件、文書の件数
+- 最近の問題: 保存済み失敗履歴があるカテゴリを最終更新順に最大5件
+- 詳細なcheck、Storage内訳、候補identity、error preview、Markdown digestは表示せず、`運用・診断` へ進む
+
+### 運用・診断
+
+`/admin/diagnostics` はinternal admin専用のread-only詳細画面です。
+
+- `ApplicationConfigurationDiagnostic` の全checkと状態・カテゴリfilter
+- `DocumentFileHealthCheck` の件数と欠落ファイル確認導線
+- `StorageUsageSummary` の領域別内訳とbounded detail導線
+- model catalogの観測とモデルブラウザ導線
+- Git同期、生成ファイル、外部送付、Webhook、外部フォルダ同期の保存済み失敗履歴
+- 生成ファイル、外部送付、外部フォルダ同期の継続失敗候補、マスク済みpreview、runbook導線
+
+`READ_ONLY_MAINTENANCE` 中も両画面の確認は継続します。運用・診断画面から再試行、再送、同期、削除、cleanupは実行しません。`company_master_admin` は自社管理用landingだけを使い、運用・診断にはアクセスしません。
 
 ## 1. モデル観測とモデルブラウザ
 
-### ダッシュボード側で見ること
+### 運用・診断側で見ること
 
-- `モデル観測` カードは、会社・ユーザー・案件・案件所属・文書などの主要 model について、件数と最終更新をざっと確認するために使う
-- ここで「件数が急に増減していないか」「直近でどの領域が更新されたか」を把握してから、必要なら詳細へ進む
-- dashboard から見えるのは catalog の先頭 8 件だけなので、周辺 model まで横断したいときは `モデルブラウザを開く` へ進む
+- `モデル観測` はcatalog登録済みmodelの件数と最終更新を横断確認する
+- 会社・ユーザー・案件・文書の件数だけを見たい場合は管理概要の `主要データ` を使う
+- 最近のrecordや代表フィールド検索が必要なら `モデルブラウザを開く` へ進む
 
 ### モデルブラウザ側で見ること
 
@@ -131,11 +128,11 @@ current 実装の前提:
 - `DocumentVersion`、`DocumentFile`、履歴・購読・preview upload など専用 index がない model は、model browser show で read-only に最近の record を確認する入口として扱う
 - `index_path_helper` がないことは欠落とは限らない。操作画面を新設する判断は、この runbook ではなく対象機能の Issue / PR で扱う
 
-Dashboard との関係:
+運用・診断との関係:
 
-- dashboard の `モデル観測` は `entries.first(8)` の主要 model だけを見せる概要であり、catalog 全体の網羅表ではない
-- index の領域別 group は model browser で横断しやすくするための見出しであり、dashboard の先頭 8 件表示順を置き換えるものではない
-- 先頭 8 件の順序を変えると dashboard の見え方も変わるため、catalog の並び替えは dashboard で最初に見せたい model の優先度も含めて確認する
+- 管理概要は会社・ユーザー・案件・文書の4件だけを表示する
+- 運用・診断の `モデル観測` はcatalog全件の件数と最終更新を表示する
+- 最近のrecordや代表フィールド検索はモデルブラウザを正本とし、管理概要や運用・診断へ複製しない
 
 ## 2. アプリ設定診断
 
@@ -175,17 +172,17 @@ current 実装の前提:
 
 - `登録ファイル数` は `DocumentFile` 総数
 - `実体欠落` は `DocumentFile#absolute_path` に実ファイルが存在しなかった件数
-- dashboard の欠落一覧は最大 20 件までで、`案件` `文書` `版` `ファイル名` `Storage key` を表示する
+- 運用・診断の欠落一覧は最大 20 件までで、`案件` `文書` `版` `ファイル名` `Storage key` を表示する
 - 欠落ファイルがある場合は `欠落ファイル詳細` へ進むと、先頭 100 件まで `Expected path` preview を含めて確認できる
 - 欠落ファイル詳細では `案件`、`文書名 / slug`、`Storage key / ファイル名` で絞り込める。案件は案件コード / 案件名の remote search で候補を探し、候補は最大 20 件まで表示される。これらは欠落ファイルだけを対象にした read-only filter であり、修復対象や削除対象を確定する操作ではない
 - 欠落ファイル詳細の `条件をクリア` は、`案件`、`文書名 / slug`、`Storage key / ファイル名` のいずれかが有効なときだけ表示される。空白だけの検索語は条件なしに正規化され、解除導線や `条件一致欠落` の対象にはならない
 - 欠落状況では `登録ファイル数`、`全体の実体欠落`、filter 中の `条件一致欠落`、`表示中` を分けて読む
 - 一覧の `文書` は公開側の project/document detail、`版` は document version detail へ戻れる
-- dashboard 表示時点の current 実装は `DocumentFile` を `find_each` で走査する。cache / async 化はこの runbook ではなく、ファイル数がさらに増えたときの別 Issue で判断する
+- 運用・診断表示時点の current 実装は `DocumentFile` を `find_each` で走査する。cache / async 化はこの runbook ではなく、ファイル数がさらに増えたときの別 Issue で判断する
 
 読み方:
 
-- `実体欠落` が 0 でないときは、まず dashboard の先頭 20 件で欠落が特定案件だけか、複数案件へ広がっているかを見る
+- `実体欠落` が 0 でないときは、まず運用・診断の先頭 20 件で欠落が特定案件だけか、複数案件へ広がっているかを見る
 - 欠落が 20 件を超える、または path preview まで含めて確認したい場合は `欠落ファイル詳細` へ進む
 - 特定案件だけを確認したい場合は `案件` filter を使う。案件 filter は案件コード / 案件名の断片で候補を探し、候補は最大 20 件まで表示されるため、候補に出ない場合は検索語を具体化する。URL や戻り導線で選択済み案件が指定されている場合は、候補上限外でも selected project として復元される
 - 文書名や slug の心当たりがある場合は `文書名 / slug`、storage key や file name の断片がある場合は `Storage key / ファイル名` を使う
@@ -222,7 +219,7 @@ current 実装の前提:
 - Storage usage detail CSV は、`scope_status`、`display_limit`、`safe_relative_path`、`read_only_note` を含む bounded read-only handoff として読み、cleanup / delete / archive / retention / billing / quota / GCS policy / repair / full export の判断には使わない
 - `document_files` CSV は `DocumentFile` 実体の Project / Document breakdown、`docs_sites` / `imports` CSV は direct child preview として分けて読み、両者の粒度を混同しない
 - `safe_relative_path` は raw absolute path ではなく、PR や運用引き継ぎで共有しやすい確認用 path preview として扱う
-- `次の確認先` は、各領域の数値を見たあとに既存の詳細画面や運用 docs へ戻るための入口であり、dashboard 上で削除、archive、cleanup、retention policy 決定へ進める操作ではない
+- `次の確認先` は、各領域の数値を見たあとに既存の詳細画面や運用 docs へ戻るための入口であり、運用・診断上で削除、archive、cleanup、retention policy 決定へ進める操作ではない
 - `次の確認先` が `この行は read-only 集計です` の行は、追加の詳細画面や docs へ移動せず、その領域の file count / 概算使用量だけを確認する行として扱う
 
 読み方:

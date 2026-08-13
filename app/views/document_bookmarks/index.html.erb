@@ -1,239 +1,227 @@
 <% page_title "文書ショートカット" %>
 <% bookmark_project_filter_label = @selected_bookmark_project&.name || @bookmark_project_code %>
-<% saved_bookmark_params = { project_code: @bookmark_project_code, bookmark_q: @bookmark_query.presence, recent_q: @recent_documents_query.presence }.compact %>
-<% saved_bookmark_reset_params = { recent_q: @recent_documents_query.presence }.compact %>
+<% saved_bookmark_params = { view: @view, project_code: @bookmark_project_code, bookmark_q: @bookmark_query.presence, recent_q: @recent_documents_query.presence }.compact %>
+<% saved_bookmark_reset_params = { view: @view, recent_q: @recent_documents_query.presence }.compact %>
 <% recent_clear_params = saved_bookmark_params.except(:recent_q).merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.page).compact %>
 <% current_bookmark_params = saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.page).compact %>
+<% tab_navigation_params = current_bookmark_params.except(:view) %>
+<% active_panel_id = {
+  "favorite" => "favorite-bookmarks",
+  "read_later" => "read-later-bookmarks",
+  "recent" => "recent-documents"
+}.fetch(@view) %>
 
 <h1>保存済み</h1>
 
-<nav class="admin-tabs" aria-label="保存済みの表示切替">
-  <%= link_to document_bookmarks_path(view: "favorite"), class: "admin-tab#{' is-active' if @view == 'favorite'}", aria: (@view == "favorite" ? { current: "page" } : {}) do %>
-    お気に入り <%= tag.span(@favorite_bookmarks_page.total_count, class: "admin-tab__count") %>
-  <% end %>
-  <%= link_to document_bookmarks_path(view: "read_later"), class: "admin-tab#{' is-active' if @view == 'read_later'}", aria: (@view == "read_later" ? { current: "page" } : {}) do %>
-    後で読む <%= tag.span(@read_later_bookmarks_page.total_count, class: "admin-tab__count") %>
-  <% end %>
-  <%= link_to document_bookmarks_path(view: "recent"), class: "admin-tab#{' is-active' if @view == 'recent'}", aria: (@view == "recent" ? { current: "page" } : {}) do %>
-    最近見た <%= tag.span(@recent_documents.size, class: "admin-tab__count") %>
+<nav class="admin-tabs" aria-label="保存済みの表示切替" role="tablist" data-controller="server-rendered-tabs">
+  <% [
+    ["favorite", "お気に入り", @favorite_bookmarks_page.total_count],
+    ["read_later", "後で読む", @read_later_bookmarks_page.total_count],
+    ["recent", "最近見た", @recent_documents.size]
+  ].each do |view, label, count| %>
+    <%= link_to document_bookmarks_path(tab_navigation_params.merge(view: view)),
+          id: "#{view.tr('_', '-')}-tab",
+          class: "admin-tab#{' is-active' if @view == view}",
+          role: "tab",
+          tabindex: @view == view ? 0 : -1,
+          aria: { selected: (@view == view).to_s, controls: active_panel_id },
+          data: { server_rendered_tabs_target: "tab", action: "keydown->server-rendered-tabs#keydown" } do %>
+      <%= label %> <%= tag.span(count, class: "admin-tab__count") %>
+    <% end %>
   <% end %>
 </nav>
 
-<section class="card">
-  <h2>保存済みショートカットの絞り込み</h2>
-  <p class="muted"><span class="badge">対象: お気に入り・後で読む</span> 最近見た文書は下の検索で絞り込みます。</p>
-  <%= form_with url: document_bookmarks_path, method: :get, local: true do |form| %>
-    <% if @recent_documents_query.present? %>
-      <%= form.hidden_field :recent_q, value: @recent_documents_query %>
-    <% end %>
-    <div class="form-grid">
-      <div class="field">
-        <%= form.rfk_select :project_code,
-              collection: @bookmark_project_options.map { |project| [project.code.present? ? "#{project.name}（#{project.code}）" : project.name, project.code] },
-              selected: @bookmark_project_code.presence,
-              include_blank: "すべての案件",
-              wrapper: false,
-              label: "案件",
-              allow_clear: true,
-              placeholder: "すべての案件" %>
+<% if %w[favorite read_later].include?(@view) %>
+  <section class="card">
+    <h2>保存済みショートカットの絞り込み</h2>
+    <p class="muted"><span class="badge">対象: <%= @view == "favorite" ? "お気に入り" : "後で読む" %></span></p>
+    <%= form_with url: document_bookmarks_path, method: :get, local: true do |form| %>
+      <%= form.hidden_field :view, value: @view %>
+      <% if @recent_documents_query.present? %>
+        <%= form.hidden_field :recent_q, value: @recent_documents_query %>
+      <% end %>
+      <div class="form-grid">
+        <div class="field">
+          <%= form.rfk_select :project_code,
+                collection: @bookmark_project_options.map { |project| [project.code.present? ? "#{project.name}（#{project.code}）" : project.name, project.code] },
+                selected: @bookmark_project_code.presence,
+                include_blank: "すべての案件",
+                wrapper: false,
+                label: "案件",
+                allow_clear: true,
+                placeholder: "すべての案件" %>
+        </div>
+        <div class="field">
+          <%= form.label :bookmark_q, "保存済みショートカットを検索" %>
+          <%= form.rfk_search_field :bookmark_q,
+                value: @bookmark_query,
+                placeholder: "文書名・案件名・案件コード",
+                wrapper: false,
+                html: { maxlength: DocumentBookmarksController::BOOKMARK_QUERY_MAX_LENGTH, autocomplete: "off" } %>
+        </div>
+        <div class="form-actions">
+          <%= form.submit "絞り込む", class: "button" %>
+          <% if @saved_bookmark_filter_active %>
+            <%= link_to "保存済み条件を解除", document_bookmarks_path(saved_bookmark_reset_params), class: "button secondary" %>
+          <% end %>
+        </div>
       </div>
-      <div class="field">
-        <%= form.label :bookmark_q, "保存済みショートカットを検索" %>
-        <%= form.search_field :bookmark_q, value: @bookmark_query, maxlength: DocumentBookmarksController::BOOKMARK_QUERY_MAX_LENGTH, placeholder: "文書名・案件名・案件コード", autocomplete: "off" %>
+    <% end %>
+  </section>
+<% end %>
+
+<% if @view == "favorite" %>
+  <section class="card" id="favorite-bookmarks" role="tabpanel" aria-labelledby="favorite-tab">
+    <h2>お気に入り <span class="muted"><%= @favorite_bookmarks_page.summary_label %></span></h2>
+    <% if @favorite_bookmarks_page.range_label %>
+      <p class="muted"><span class="badge"><%= @favorite_bookmarks_page.range_label %></span> 条件一致 <%= @favorite_bookmarks_page.total_count %>件のうち、最大 <%= @favorite_bookmarks_page.per_page %>件ずつ表示します。</p>
+    <% end %>
+    <% if @favorite_bookmarks_page.any? %>
+      <ul class="resource-list">
+        <% @favorite_bookmarks.each do |bookmark| %>
+          <li class="resource-list__item">
+            <div class="resource-list__content">
+              <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %></strong>
+              <div class="resource-list__meta">
+                <span class="muted"><%= bookmark.document.project.name %></span>
+                <span class="badge">よく開く文書</span>
+              </div>
+            </div>
+            <div class="resource-list__actions">
+              <%= button_to "解除", document_bookmark_path(bookmark, current_bookmark_params), method: :delete, class: "button secondary" %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+      <% if @favorite_bookmarks_page.multiple_pages? %>
+        <nav class="pagination" aria-label="お気に入りのページ移動">
+          <% if @favorite_bookmarks_page.previous_page %>
+            <%= link_to "前へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.previous_page, read_later_page: @read_later_bookmarks_page.page, anchor: "favorite-bookmarks")), class: "button secondary" %>
+          <% end %>
+          <span class="muted">お気に入り <%= @favorite_bookmarks_page.page %> / <%= @favorite_bookmarks_page.total_pages %> ページ</span>
+          <% if @favorite_bookmarks_page.next_page %>
+            <%= link_to "次へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.next_page, read_later_page: @read_later_bookmarks_page.page, anchor: "favorite-bookmarks")), class: "button secondary" %>
+          <% end %>
+        </nav>
+      <% end %>
+    <% else %>
+      <% if @bookmark_search_active %>
+        <p class="muted">保存済みショートカット検索「<%= @bookmark_query %>」に一致するお気に入りはありません。</p>
+      <% elsif @bookmark_project_filter_active %>
+        <p class="muted">案件「<%= bookmark_project_filter_label %>」ではお気に入りが見つかりません。</p>
+      <% else %>
+        <p class="muted">文書画面でお気に入りに追加すると、ここに表示されます。</p>
+      <% end %>
+      <% if @saved_bookmark_filter_active %>
+        <p class="actions"><%= link_to "保存済み条件を解除", document_bookmarks_path(saved_bookmark_reset_params.merge(anchor: "favorite-bookmarks")), class: "button secondary" %></p>
+      <% end %>
+    <% end %>
+  </section>
+<% elsif @view == "read_later" %>
+  <section class="card" id="read-later-bookmarks" role="tabpanel" aria-labelledby="read-later-tab">
+    <h2>後で読む <span class="muted"><%= @read_later_bookmarks_page.summary_label %></span></h2>
+    <% if @read_later_bookmarks_page.range_label %>
+      <p class="muted"><span class="badge"><%= @read_later_bookmarks_page.range_label %></span> 条件一致 <%= @read_later_bookmarks_page.total_count %>件のうち、最大 <%= @read_later_bookmarks_page.per_page %>件ずつ表示します。</p>
+    <% end %>
+    <% if @read_later_bookmarks_page.any? %>
+      <ul class="resource-list">
+        <% @read_later_bookmarks.each do |bookmark| %>
+          <% also_favorite = @favorite_bookmark_document_ids.include?(bookmark.document_id) %>
+          <li class="resource-list__item">
+            <div class="resource-list__content">
+              <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %></strong>
+              <div class="resource-list__meta">
+                <span class="muted"><%= bookmark.document.project.name %></span>
+                <span class="badge">あとで確認</span>
+                <% if also_favorite %>
+                  <span class="badge">お気に入りにも保存中</span>
+                <% end %>
+              </div>
+            </div>
+            <div class="resource-list__actions">
+              <%= button_to "お気に入りへ移す", move_to_favorite_document_bookmark_path(bookmark, current_bookmark_params), method: :post, class: "button" %>
+              <%= button_to "解除", document_bookmark_path(bookmark, current_bookmark_params), method: :delete, class: "button secondary" %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+      <% if @read_later_bookmarks_page.multiple_pages? %>
+        <nav class="pagination" aria-label="後で読むのページ移動">
+          <% if @read_later_bookmarks_page.previous_page %>
+            <%= link_to "前へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.previous_page, anchor: "read-later-bookmarks")), class: "button secondary" %>
+          <% end %>
+          <span class="muted">後で読む <%= @read_later_bookmarks_page.page %> / <%= @read_later_bookmarks_page.total_pages %> ページ</span>
+          <% if @read_later_bookmarks_page.next_page %>
+            <%= link_to "次へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.next_page, anchor: "read-later-bookmarks")), class: "button secondary" %>
+          <% end %>
+        </nav>
+      <% end %>
+    <% else %>
+      <% if @bookmark_search_active %>
+        <p class="muted">保存済みショートカット検索「<%= @bookmark_query %>」に一致する後で読む文書はありません。</p>
+      <% elsif @bookmark_project_filter_active %>
+        <p class="muted">案件「<%= bookmark_project_filter_label %>」では後で読む文書が見つかりません。</p>
+      <% else %>
+        <p class="muted">文書画面で後で読むに追加すると、ここに表示されます。</p>
+      <% end %>
+      <% if @saved_bookmark_filter_active %>
+        <p class="actions"><%= link_to "保存済み条件を解除", document_bookmarks_path(saved_bookmark_reset_params.merge(anchor: "read-later-bookmarks")), class: "button secondary" %></p>
+      <% end %>
+    <% end %>
+  </section>
+<% else %>
+  <section class="card" id="recent-documents" role="tabpanel" aria-labelledby="recent-tab">
+    <h2>最近見た文書 <span class="muted"><%= @recent_documents.size %>件</span></h2>
+    <p class="muted"><span class="badge">対象: 最近見た文書（表示中最大20件）</span></p>
+    <%= form_with url: document_bookmarks_path, method: :get, local: true, class: "filter-form" do |form| %>
+      <%= form.hidden_field :view, value: @view %>
+      <% if @bookmark_project_code.present? %>
+        <%= form.hidden_field :project_code, value: @bookmark_project_code %>
+      <% end %>
+      <% if @bookmark_query.present? %>
+        <%= form.hidden_field :bookmark_q, value: @bookmark_query %>
+      <% end %>
+      <div class="form-field">
+        <%= form.label :recent_q, "最近見た文書を検索" %>
+        <%= form.rfk_search_field :recent_q,
+              value: @recent_documents_query,
+              placeholder: "文書名・案件名・案件コード",
+              wrapper: false,
+              html: { maxlength: DocumentBookmarksController::BOOKMARK_QUERY_MAX_LENGTH, autocomplete: "off" } %>
       </div>
       <div class="form-actions">
         <%= form.submit "絞り込む", class: "button" %>
-        <% if @saved_bookmark_filter_active %>
-          <%= link_to "保存済み条件を解除", document_bookmarks_path(recent_q: @recent_documents_query.presence), class: "button secondary" %>
+        <% if @recent_documents_query.present? %>
+          <%= link_to "最近見た条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary" %>
         <% end %>
       </div>
-    </div>
-  <% end %>
-  <% if @saved_bookmark_filter_active %>
-    <% if @bookmark_project_filter_active && @selected_bookmark_project && @bookmark_search_active %>
-      <p class="muted">案件「<%= @selected_bookmark_project.name %>」と検索語「<%= @bookmark_query %>」でお気に入りと後で読むを絞り込んでいます。最近見た文書は絞り込み対象外です。</p>
-    <% elsif @bookmark_project_filter_active && @selected_bookmark_project %>
-      <p class="muted">案件「<%= @selected_bookmark_project.name %>」でお気に入りと後で読むを絞り込んでいます。最近見た文書は絞り込み対象外です。</p>
-    <% elsif @bookmark_project_filter_active %>
-      <p class="muted">指定した案件では保存済みショートカットが見つかりません。最近見た文書は絞り込み対象外です。</p>
-    <% elsif @bookmark_search_active %>
-      <p class="muted">検索語「<%= @bookmark_query %>」でお気に入りと後で読むを絞り込んでいます。最近見た文書は絞り込み対象外です。</p>
     <% end %>
-  <% else %>
-    <p class="muted">明示的に保存したお気に入りと後で読むだけを、案件や文書名・案件名で絞り込めます。</p>
-  <% end %>
-</section>
 
-<section class="card" id="favorite-bookmarks">
-  <h2>お気に入り <span class="muted"><%= @favorite_bookmarks_page.summary_label %></span></h2>
-  <p class="muted">よく開く文書をここからすぐ確認できます。後で読むにも同じ文書を残して、一時保留と継続参照を分けられます。</p>
-  <% if @favorite_bookmarks_page.range_label %>
-    <p class="muted"><span class="badge"><%= @favorite_bookmarks_page.range_label %></span> 条件一致 <%= @favorite_bookmarks_page.total_count %>件のうち、最大 <%= @favorite_bookmarks_page.per_page %>件ずつ表示します。</p>
-  <% end %>
-  <% if @saved_bookmark_filter_active %>
-    <p class="muted"><span class="badge">保存済み条件が適用中</span> この一覧は上の案件・検索語で絞り込んだお気に入りです。最近見た条件はここには効きません。</p>
-  <% end %>
-  <% if @favorite_bookmarks_page.any? %>
-    <ul class="resource-list">
-      <% @favorite_bookmarks.each do |bookmark| %>
-        <li class="resource-list__item">
-          <div class="resource-list__content">
-            <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %></strong>
-            <div class="resource-list__meta">
-              <span class="muted"><%= bookmark.document.project.name %></span>
-              <span class="badge">よく開く文書</span>
+    <% if @recent_documents.any? %>
+      <ul class="resource-list">
+        <% @recent_documents.each do |document| %>
+          <li class="resource-list__item">
+            <div class="resource-list__content">
+              <strong><%= link_to document.title, project_document_path(document.project, document.slug) %></strong>
+              <div class="resource-list__meta">
+                <span class="muted"><%= document.project.name %></span>
+                <span class="badge">最近見た文書</span>
+              </div>
             </div>
-          </div>
-          <div class="resource-list__actions">
-            <%= button_to "解除", document_bookmark_path(bookmark, current_bookmark_params), method: :delete, class: "button secondary" %>
-          </div>
-        </li>
-      <% end %>
-    </ul>
-    <% if @favorite_bookmarks_page.multiple_pages? %>
-      <nav class="pagination" aria-label="お気に入りのページ移動">
-        <% if @favorite_bookmarks_page.previous_page %>
-          <%= link_to "前へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.previous_page, read_later_page: @read_later_bookmarks_page.page, anchor: "favorite-bookmarks")), class: "button secondary" %>
+          </li>
         <% end %>
-        <span class="muted">お気に入り <%= @favorite_bookmarks_page.page %> / <%= @favorite_bookmarks_page.total_pages %> ページ</span>
-        <% if @favorite_bookmarks_page.next_page %>
-          <%= link_to "次へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.next_page, read_later_page: @read_later_bookmarks_page.page, anchor: "favorite-bookmarks")), class: "button secondary" %>
-        <% end %>
-      </nav>
-    <% end %>
-  <% else %>
-    <% if @bookmark_search_active %>
-      <p class="muted">保存済みショートカット検索「<%= @bookmark_query %>」に一致するお気に入りはありません。</p>
-    <% elsif @bookmark_project_filter_active %>
-      <p class="muted">案件「<%= bookmark_project_filter_label %>」ではお気に入りが見つかりません。</p>
-    <% else %>
-      <p class="muted">文書画面でお気に入りに追加すると、ここに表示されます。</p>
-    <% end %>
-    <% if @saved_bookmark_filter_active %>
-      <p class="actions"><%= link_to "保存済み条件を解除", document_bookmarks_path(saved_bookmark_reset_params.merge(anchor: "favorite-bookmarks")), class: "button secondary" %></p>
-    <% end %>
-  <% end %>
-</section>
-
-<section class="card" id="read-later-bookmarks">
-  <h2>後で読む <span class="muted"><%= @read_later_bookmarks_page.summary_label %></span></h2>
-  <p class="muted">あとで確認したい文書を一時的に集めておけます。お気に入りに移動すると、この一覧からは外れます。</p>
-  <% if @read_later_bookmarks_page.range_label %>
-    <p class="muted"><span class="badge"><%= @read_later_bookmarks_page.range_label %></span> 条件一致 <%= @read_later_bookmarks_page.total_count %>件のうち、最大 <%= @read_later_bookmarks_page.per_page %>件ずつ表示します。</p>
-  <% end %>
-  <% if @saved_bookmark_filter_active %>
-    <p class="muted"><span class="badge">保存済み条件が適用中</span> この一覧は上の案件・検索語で絞り込んだ後で読む文書です。最近見た条件はここには効きません。</p>
-  <% end %>
-  <% if @read_later_bookmarks_page.any? %>
-    <ul class="resource-list">
-      <% @read_later_bookmarks.each do |bookmark| %>
-        <% also_favorite = @favorite_bookmark_document_ids.include?(bookmark.document_id) %>
-        <li class="resource-list__item">
-          <div class="resource-list__content">
-            <strong><%= link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug) %></strong>
-            <div class="resource-list__meta">
-              <span class="muted"><%= bookmark.document.project.name %></span>
-              <span class="badge">あとで確認</span>
-              <% if also_favorite %>
-                <span class="badge">お気に入りにも保存中</span>
-                <span class="muted">継続参照はお気に入りに残し、後で読むだけ整理できます。</span>
-              <% end %>
-            </div>
-          </div>
-          <div class="resource-list__actions">
-            <% if also_favorite %>
-              <p class="muted">移すと後で読むから外れ、お気に入りだけに残ります。</p>
-            <% end %>
-            <%= button_to "お気に入りへ移す", move_to_favorite_document_bookmark_path(bookmark, current_bookmark_params), method: :post, class: "button" %>
-            <%= button_to "解除", document_bookmark_path(bookmark, current_bookmark_params), method: :delete, class: "button secondary" %>
-          </div>
-        </li>
-      <% end %>
-    </ul>
-    <% if @read_later_bookmarks_page.multiple_pages? %>
-      <nav class="pagination" aria-label="後で読むのページ移動">
-        <% if @read_later_bookmarks_page.previous_page %>
-          <%= link_to "前へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.previous_page, anchor: "read-later-bookmarks")), class: "button secondary" %>
-        <% end %>
-        <span class="muted">後で読む <%= @read_later_bookmarks_page.page %> / <%= @read_later_bookmarks_page.total_pages %> ページ</span>
-        <% if @read_later_bookmarks_page.next_page %>
-          <%= link_to "次へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.next_page, anchor: "read-later-bookmarks")), class: "button secondary" %>
-        <% end %>
-      </nav>
-    <% end %>
-  <% else %>
-    <% if @bookmark_search_active %>
-      <p class="muted">保存済みショートカット検索「<%= @bookmark_query %>」に一致する後で読む文書はありません。</p>
-    <% elsif @bookmark_project_filter_active %>
-      <p class="muted">案件「<%= bookmark_project_filter_label %>」では後で読む文書が見つかりません。</p>
-    <% else %>
-      <p class="muted">文書画面で後で読むに追加すると、ここに表示されます。</p>
-    <% end %>
-    <% if @saved_bookmark_filter_active %>
-      <p class="actions"><%= link_to "保存済み条件を解除", document_bookmarks_path(saved_bookmark_reset_params.merge(anchor: "read-later-bookmarks")), class: "button secondary" %></p>
-    <% end %>
-  <% end %>
-</section>
-
-<section class="card">
-  <h2>最近見た文書 <span class="muted"><%= @recent_documents.size %>件</span></h2>
-  <p class="muted"><span class="badge">対象: 最近見た文書（表示中最大 20 件）</span> 保存済みショートカットの条件はそのまま維持されます。</p>
-  <% if @saved_bookmark_filter_active %>
-    <p class="muted"><span class="badge">保存済み条件は維持のみ</span> 上の案件・保存済み検索は最近見た文書を絞り込みません。</p>
-  <% end %>
-  <p class="muted">閲覧履歴から最大 20 件を自動で表示します。この検索は表示中の最近見た文書だけを文書名・案件名で絞り込みます。お気に入りや後で読むとは別の一覧です。案件コードにも一致します。</p>
-
-  <%= form_with url: document_bookmarks_path, method: :get, local: true, class: "filter-form" do |form| %>
-    <% if @bookmark_project_code.present? %>
-      <%= form.hidden_field :project_code, value: @bookmark_project_code %>
-    <% end %>
-    <% if @bookmark_query.present? %>
-      <%= form.hidden_field :bookmark_q, value: @bookmark_query %>
-    <% end %>
-    <div class="form-field">
-      <%= form.label :recent_q, "最近見た文書を検索" %>
-      <%= form.search_field :recent_q, value: @recent_documents_query, maxlength: DocumentBookmarksController::BOOKMARK_QUERY_MAX_LENGTH, placeholder: "文書名・案件名で検索・案件コードも可", autocomplete: "off" %>
-    </div>
-    <div class="form-actions">
-      <%= form.submit "絞り込む", class: "button" %>
-      <% if @recent_documents_query.present? %>
-        <%= link_to "最近見た条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary" %>
-      <% end %>
-    </div>
-  <% end %>
-
-  <% if @recent_documents_query.present? %>
-    <p class="muted">最近見た文書検索「<%= @recent_documents_query %>」は、表示中の最大 20 件だけを絞り込んでいます。保存済みショートカットの条件は維持されます。お気に入り・後で読むには効きません。文書名・案件名・案件コードに一致します。</p>
-  <% end %>
-
-  <% if @recent_documents.any? %>
-    <ul class="resource-list">
-      <% @recent_documents.each do |document| %>
-        <li class="resource-list__item">
-          <div class="resource-list__content">
-            <strong><%= link_to document.title, project_document_path(document.project, document.slug) %></strong>
-            <div class="resource-list__meta">
-              <span class="muted"><%= document.project.name %></span>
-              <span class="badge">最近見た文書</span>
-            </div>
-          </div>
-        </li>
-      <% end %>
-    </ul>
-  <% elsif @all_recent_documents.any? %>
-    <% if @recent_documents_query.present? %>
-      <p class="muted">最近見た文書検索「<%= @recent_documents_query %>」に一致する文書は、最近表示された最大 20 件内にありません。検索語を変えるか、案件一覧から文書を探してください。最近見た条件をクリアして表示中の履歴を確認することもできます。</p>
+      </ul>
+    <% elsif @all_recent_documents.any? && @recent_documents_query.present? %>
+      <p class="muted">最近見た文書検索「<%= @recent_documents_query %>」に一致する文書は、最近表示された最大20件内にありません。</p>
       <p class="actions">
         <%= link_to "最近見た条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary" %>
         <%= link_to "案件一覧から探す", projects_path, class: "button secondary" %>
         <%= link_to "文書一覧から探す", documents_path, class: "button secondary" %>
       </p>
     <% else %>
-      <p class="muted">最近表示された最大 20 件内に条件と一致する文書はありません。検索語を変えるか、案件一覧から文書を探してください。</p>
+      <p class="muted">文書を開くと、最近見た文書としてここに表示されます。</p>
     <% end %>
-  <% else %>
-    <p class="muted">文書を開くと、最近見た文書としてここに表示されます。</p>
-  <% end %>
-</section>
+  </section>
+<% end %>
 
 <p><%= link_to "案件一覧へ戻る", projects_path %></p>

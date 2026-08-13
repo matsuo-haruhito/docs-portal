@@ -10,44 +10,47 @@
 - user_filter_summaries << "状態: #{user_active_filter_label}" if user_active_filter_label.present?
 - user_filters_applied = user_filter_summaries.any?
 - user_return_to = request.query_parameters.present? ? request.fullpath : nil
-- user_filter_result_note = @users.any? ? "検索結果: #{@users_filtered_count}件（列の表示設定は下の「ユーザー一覧の表示設定」で調整できます）" : "検索結果: #{@users_filtered_count}件（表示できるユーザーがないため、列の表示設定は表示していません）"
 
-h1 ユーザーマスタ
+.admin-list-header
+  h1 ユーザーマスタ
+  details.admin-create-panel open=(@user.errors.any?)
+    summary.button.secondary
+      i.bi.bi-plus-lg.me-1 aria-hidden="true"
+      | 新規登録
+    .admin-create-panel__body
+      = render "form", user: @user
 
-.card
-  h2 新規登録
-  = render "form", user: @user
-
-.card
-  h2 ユーザーを探す
-  = form_with url: admin_users_path, method: :get, local: true do |f|
-    .form-grid
-      label
-        | キーワード
-        = text_field_tag :q, @user_filter_params["q"], placeholder: "ユーザー名・メールアドレス", maxlength: 100
-        p.muted ユーザー名・メールアドレスの断片で検索できます。最大100文字。
-      = f.rfk_select :active,
+.admin-filter-toolbar
+  = form_with url: admin_users_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |form|
+    .admin-filter-toolbar__fields
+      = form.rfk_search_field :q,
+        value: @user_filter_params["q"],
+        placeholder: "ユーザー名・メールアドレス",
+        wrapper: false,
+        html: { maxlength: 100, class: "admin-filter-toolbar__search" }
+      = form.rfk_select :active,
         collection: [["有効", "true"], ["無効", "false"]],
         selected: (%w[true false].include?(selected_active_filter) ? selected_active_filter : nil),
         include_blank: "すべて",
-        wrapper: true,
-        label: "状態",
+        wrapper: false,
         allow_clear: true,
-        placeholder: "すべて"
-    p.actions
-      = submit_tag "絞り込む", class: "button"
+        placeholder: "状態"
+    .admin-filter-toolbar__actions
+      = form.submit "検索", class: "button"
       - if user_filters_applied
-        = link_to "条件をクリア", admin_users_path, class: "button secondary"
-  - if user_filters_applied
-    p.muted = "適用中: #{user_filter_summaries.join(' / ')}"
-    p.muted = user_filter_result_note
+        = link_to "クリア", admin_users_path, class: "button secondary"
 
-- if @users.any?
-  .card
+- if user_filters_applied
+  .admin-filter-chips
+    - user_filter_summaries.each do |summary|
+      span.admin-filter-chip = summary
+
+.admin-list-meta
+  span.admin-list-meta__count = "#{@users_filtered_count}件"
+  - if @users.any?
     = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "ユーザー一覧の表示設定")
 
-  p.muted = "表示中: #{@users_pagination[:from]}-#{@users_pagination[:to]}件 / #{@users_filtered_count}件"
-
+- if @users.any?
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
       tr
@@ -57,7 +60,7 @@ h1 ユーザーマスタ
         th data-rails-table-preferences-column-key="user_type" 種別
         th data-rails-table-preferences-column-key="company" 会社
         th data-rails-table-preferences-column-key="status" 状態
-        th data-rails-table-preferences-column-key="actions"
+        th data-rails-table-preferences-column-key="actions" 操作
     tbody
       - @users.each do |user|
         tr
@@ -78,23 +81,16 @@ h1 ユーザーマスタ
 
   - if @users_pagination[:total_pages] > 1
     nav.pagination aria-label="ユーザー一覧ページ"
-      p.actions
+      .admin-pagination
         - if @users_pagination[:prev_page]
-          - previous_user_page = @users_pagination[:prev_page]
-          - previous_user_page_label = "ユーザー一覧の#{previous_user_page}ページ目へ（現在の検索条件を保持）"
-          = link_to "前へ", admin_users_path(@user_page_params.merge(page: previous_user_page)), class: "button secondary", aria: { label: previous_user_page_label }, title: previous_user_page_label
-        span.muted = "#{@users_pagination[:page]} / #{@users_pagination[:total_pages]}ページ"
+          = link_to "前へ", admin_users_path(@user_page_params.merge(page: @users_pagination[:prev_page])), class: "button secondary"
+        span.muted = "#{@users_pagination[:page]} / #{@users_pagination[:total_pages]}"
         - if @users_pagination[:next_page]
-          - next_user_page = @users_pagination[:next_page]
-          - next_user_page_label = "ユーザー一覧の#{next_user_page}ページ目へ（現在の検索条件を保持）"
-          = link_to "次へ", admin_users_path(@user_page_params.merge(page: next_user_page)), class: "button secondary", aria: { label: next_user_page_label }, title: next_user_page_label
+          = link_to "次へ", admin_users_path(@user_page_params.merge(page: @users_pagination[:next_page])), class: "button secondary"
+- elsif @users_total_count.to_i.zero?
+  = render EmptyStateComponent.new(heading: "ユーザーが未登録です", description: "「新規登録」でメールアドレスと必要な項目を入力してください。")
 - else
-  section.card
-    h2 ユーザー一覧
-    - if @users_total_count.to_i.zero?
-      = render EmptyStateComponent.new(heading: "ユーザーが未登録です", description: "上の「新規登録」でメールアドレスと必要な項目を入力して、最初のユーザーを登録してください。")
-    - else
-      = render EmptyStateComponent.new(heading: "条件に一致するユーザーがいません", description: "キーワードや状態の条件を変更するか、条件をクリアしてください。") do |component|
-        - if user_filters_applied
-          - component.with_action do
-            = link_to "条件をクリア", admin_users_path, class: "button secondary"
+  = render EmptyStateComponent.new(heading: "条件に一致するユーザーがいません", description: "キーワードや状態を変更するか、条件をクリアしてください。") do |component|
+    - if user_filters_applied
+      - component.with_action do
+        = link_to "条件をクリア", admin_users_path, class: "button secondary"

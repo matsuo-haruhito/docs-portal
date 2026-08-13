@@ -4,6 +4,11 @@
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - active_filter_labels = accessible_document_active_filter_labels(@filters, available_tags: @available_tags, selected_project: @selected_project)
 
+- boolean_filter_type = ActiveModel::Type::Boolean.new
+- advanced_enum_filters_active = Document.categories.key?(@filters[:category].to_s) || Document.document_kinds.key?(@filters[:document_kind].to_s) || Document.visibility_policies.key?(@filters[:visibility_policy].to_s)
+- advanced_boolean_filters_active = %i[has_html has_files has_pdf has_diagram].any? { |key| boolean_filter_type.cast(@filters[key]) }
+- advanced_filters_active = advanced_enum_filters_active || advanced_boolean_filters_active
+
 = render PageHeaderComponent.new(title: "閲覧可能文書", subtitle: "案件をまたいで、閲覧できる文書を検索できます。")
 
 section.card
@@ -44,44 +49,50 @@ section.card
         wrapper: true,
         label: "タグ"
 
-      = form.rfk_select :category,
-        collection: Document.categories.keys.map { [localized_label("documents.category", _1), _1] },
-        include_blank: "すべて",
-        selected: @filters[:category],
-        allow_clear: true,
-        wrapper: true,
-        label: "カテゴリ"
+    details.filter-details open=advanced_filters_active
+      summary
+        i.bi.bi-sliders.me-1 aria-hidden="true"
+        | 追加条件
 
-      = form.rfk_select :document_kind,
-        collection: Document.document_kinds.keys.map { [localized_label("documents.document_kind", _1), _1] },
-        include_blank: "すべて",
-        selected: @filters[:document_kind],
-        allow_clear: true,
-        wrapper: true,
-        label: "ファイル種"
+      .form-grid.form-grid--compact
+        = form.rfk_select :category,
+          collection: Document.categories.keys.map { [localized_label("documents.category", _1), _1] },
+          include_blank: "すべて",
+          selected: @filters[:category],
+          allow_clear: true,
+          wrapper: true,
+          label: "カテゴリ"
 
-      = form.rfk_select :visibility_policy,
-        collection: Document.visibility_policies.keys.map { [localized_label("documents.visibility_policy", _1), _1] },
-        include_blank: "すべて",
-        selected: @filters[:visibility_policy],
-        allow_clear: true,
-        wrapper: true,
-        label: "公開範囲"
+        = form.rfk_select :document_kind,
+          collection: Document.document_kinds.keys.map { [localized_label("documents.document_kind", _1), _1] },
+          include_blank: "すべて",
+          selected: @filters[:document_kind],
+          allow_clear: true,
+          wrapper: true,
+          label: "ファイル種"
 
-    fieldset.filter-fieldset
-      legend 実用フィルタ
-      label.check-field
-        = check_box_tag :has_html, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_html])
-        span HTML生成済み
-      label.check-field
-        = check_box_tag :has_files, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_files])
-        span 添付あり
-      label.check-field
-        = check_box_tag :has_pdf, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_pdf])
-        span PDFあり
-      label.check-field
-        = check_box_tag :has_diagram, "1", ActiveModel::Type::Boolean.new.cast(@filters[:has_diagram])
-        span 図あり
+        = form.rfk_select :visibility_policy,
+          collection: Document.visibility_policies.keys.map { [localized_label("documents.visibility_policy", _1), _1] },
+          include_blank: "すべて",
+          selected: @filters[:visibility_policy],
+          allow_clear: true,
+          wrapper: true,
+          label: "公開範囲"
+
+      fieldset.filter-fieldset
+        legend 実用フィルタ
+        label.check-field
+          = check_box_tag :has_html, "1", boolean_filter_type.cast(@filters[:has_html])
+          span HTML生成済み
+        label.check-field
+          = check_box_tag :has_files, "1", boolean_filter_type.cast(@filters[:has_files])
+          span 添付あり
+        label.check-field
+          = check_box_tag :has_pdf, "1", boolean_filter_type.cast(@filters[:has_pdf])
+          span PDFあり
+        label.check-field
+          = check_box_tag :has_diagram, "1", boolean_filter_type.cast(@filters[:has_diagram])
+          span 図あり
 
     p.actions.form-actions
       = form.submit "検索", class: "button"

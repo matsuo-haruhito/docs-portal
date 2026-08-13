@@ -38,6 +38,22 @@ RSpec.describe "admin access logs source" do
       expect(view_source).to include("span.badge 対象外")
       expect(view_source).to include("AI出力モード・範囲は今回の検索条件として有効です")
       expect(view_source).to include("対象種別が AI context export ではないため、AI出力モード・範囲は今回の有効な条件から外れます")
+      expect(view_source).to include("= form.rfk_select :ai_context_mode,")
+      expect(view_source).to include("= form.rfk_select :ai_context_scope,")
+      expect(view_source).not_to include("= form.select :ai_context_mode")
+      expect(view_source).not_to include("= form.select :ai_context_scope")
+    end
+  end
+
+  it "keeps advanced filters in the same form and secondary exports in closed disclosures" do
+    aggregate_failures do
+      expect(view_source).to include("details.filter-details open=(advanced_filters_active ? true : nil)")
+      expect(view_source).to include("summary 高度条件")
+      expect(view_source).to include("= form.rfk_search_field :q,")
+      expect(view_source).to include("= form.rfk_search_field :document_q,")
+      expect(view_source).to include('GuidanceDisclosureComponent.new(title: "export補助"')
+      expect(view_source).to include('= "表示中ページをCSV export（最大#{page_size}件）"')
+      expect(view_source).to include("table_key = :admin_access_logs")
     end
   end
 

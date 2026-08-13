@@ -38,7 +38,7 @@ RSpec.describe "Admin project memberships", type: :request do
     create(:project_membership, project:, user:, role: :viewer)
   end
 
-  it "renders the project membership select fields on initial load and invalid rerender" do
+  it "keeps the create form in a closed disclosure and opens it after invalid submission" do
     sign_in_as(admin_user)
 
     get admin_project_memberships_path
@@ -49,6 +49,9 @@ RSpec.describe "Admin project memberships", type: :request do
       "project_membership[user_id]",
       "project_membership[role]"
     )
+    expect(parsed_html.at_css("details.admin-create-panel").key?("open")).to be(false)
+    expect(parsed_html.at_css("details.admin-create-panel > summary .bi-plus-lg")).to be_present
+    expect(parsed_html.at_css('form.admin-filter-toolbar__form input[name="q"]')).to be_present
 
     post admin_project_memberships_path, params: {
       project_membership: {
@@ -64,6 +67,24 @@ RSpec.describe "Admin project memberships", type: :request do
       "project_membership[user_id]",
       "project_membership[role]"
     )
+    expect(parsed_html.at_css("details.admin-create-panel").key?("open")).to be(true)
+  end
+
+  it "filters memberships by keyword and role while exposing active filter chips" do
+    matching_membership = create_membership(1)
+    nonmatching_membership = create_membership(2)
+    nonmatching_membership.update!(role: :owner)
+
+    sign_in_as(admin_user)
+
+    get admin_project_memberships_path, params: { q: "PM-001", role: "viewer" }
+
+    expect(response).to have_http_status(:ok)
+    expect(membership_row_texts).to contain_exactly(a_string_including(matching_membership.project.code))
+    expect(membership_row_texts).not_to include(a_string_including(nonmatching_membership.project.code))
+    expect(parsed_html.css(".admin-filter-chip").size).to eq(2)
+    expect(parsed_html.at_css('input[name="q"]')["value"]).to eq("PM-001")
+    expect(parsed_html.at_css(%(a[href="#{admin_project_memberships_path}"]))).to be_present
   end
 
   it "shows the first bounded page while preserving table preferences metadata" do
@@ -78,16 +99,18 @@ RSpec.describe "Admin project memberships", type: :request do
     expect(page_text).to include(
       "表示中: 1-25件 / 全26件",
       "1ページ25件",
-      "Page 1 / 2",
-      "先頭ページ",
-      "案件所属一覧の表示設定",
-      "表示設定は列の表示切り替え用です"
+      "1 / 2ページ"
     )
     expect(disabled_pagination_labels).to include("前へ（先頭）")
     expect(membership_row_texts).to include(a_string_including("Membership Project 1", "PM-001", "member001@example.com"))
     expect(membership_row_texts).to include(a_string_including("Membership Project 25", "PM-025", "member025@example.com"))
     expect(membership_row_texts).not_to include(a_string_including("PM-026"))
     expect(column_keys).to include("project", "user", "role", "actions")
+    expect(parsed_html.at_css('[data-rails-table-preferences-table-key-value="admin_project_memberships"]')).to be_present
+    expect(parsed_html.at_css('.table-scroll[role="region"][tabindex="0"][aria-label="案件所属一覧"]')).to be_present
+    expect(parsed_html.at_css("table caption").text.squish).to eq("案件所属一覧")
+    expect(parsed_html.css("table, nav.pagination").map { _1.name }).to eq(%w[table nav])
+    expect(parsed_html.at_css("body").text.strip).not_to end_with(">")
     expect(parsed_html.at_css(%(a[href="#{admin_project_memberships_path(page: 2, per_page: 25)}"]))).to be_present
   end
 
@@ -100,7 +123,7 @@ RSpec.describe "Admin project memberships", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(membership_rows.size).to eq(5)
-    expect(page_text).to include("表示中: 1-5件 / 全5件", "1ページ25件", "Page 1 / 1", "1ページのみ")
+    expect(page_text).to include("表示中: 1-5件 / 全5件", "1ページ25件", "1 / 1ページ", "1ページのみ")
     expect(disabled_pagination_labels).to include("前へ（先頭）", "次へ（最終）")
   end
 
@@ -113,7 +136,7 @@ RSpec.describe "Admin project memberships", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(membership_rows.size).to eq(1)
-    expect(page_text).to include("表示中: 26-26件 / 全26件", "1ページ25件", "Page 2 / 2", "最終ページ")
+    expect(page_text).to include("表示中: 26-26件 / 全26件", "1ページ25件", "2 / 2ページ", "最終ページ")
     expect(disabled_pagination_labels).to include("次へ（最終）")
     expect(membership_row_texts).to contain_exactly(a_string_including("Membership Project 26", "PM-026", "member026@example.com"))
     expect(parsed_html.at_css(%(a[href="#{admin_project_memberships_path(page: 1, per_page: 25)}"]))).to be_present
@@ -128,14 +151,14 @@ RSpec.describe "Admin project memberships", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(membership_rows.size).to eq(Admin::ProjectMembershipsController::MAX_PAGE_SIZE)
-    expect(page_text).to include("表示中: 1-100件 / 全105件", "1ページ100件", "Page 1 / 2")
+    expect(page_text).to include("表示中: 1-100件 / 全105件", "1ページ100件", "1 / 2ページ")
     expect(membership_row_texts).not_to include(a_string_including("PM-101"))
 
     get admin_project_memberships_path, params: { per_page: "invalid", page: -3 }
 
     expect(response).to have_http_status(:ok)
     expect(membership_rows.size).to eq(Admin::ProjectMembershipsController::DEFAULT_PAGE_SIZE)
-    expect(page_text).to include("表示中: 1-25件 / 全105件", "1ページ25件", "Page 1 / 5")
+    expect(page_text).to include("表示中: 1-25件 / 全105件", "1ページ25件", "1 / 5ページ")
   end
 
   it "keeps invalid create rerenders bounded with validation errors" do

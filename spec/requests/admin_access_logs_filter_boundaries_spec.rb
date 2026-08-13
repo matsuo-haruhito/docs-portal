@@ -54,10 +54,10 @@ RSpec.describe "Admin access log filter boundaries", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(log_target_names).to eq(["kept-by-invalid-date.html"])
-    expect(page_text).to include("表示中: 1件 / 最新200件までを表示 / 絞り込み中")
+    expect(page_text).to include("表示中: 1件 / 1ページ50件 / 絞り込み中")
     expect(page_text).to include("開始日: 日付を確認")
     expect(page_text).to include("終了日: 日付を確認")
-    expect(page_text).to include("期間指定後も、条件に一致する監査ログを新しい順に最新200件まで表示します。")
+    expect(page_text).to include("条件に一致する監査ログを新しい順に1ページ50件まで表示します。")
   end
 
   it "handles missing project, company, and user ids as empty filters instead of failing" do

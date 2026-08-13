@@ -1,6 +1,7 @@
 class DocumentBookmarksController < BaseController
   BOOKMARK_QUERY_MAX_LENGTH = 100
   SAVED_BOOKMARKS_PER_PAGE = 20
+  VIEWS = %w[favorite read_later recent].freeze
   READ_ONLY_MAINTENANCE_ENV = "READ_ONLY_MAINTENANCE"
 
   SavedBookmarkPage = Struct.new(:items, :total_count, :page, :total_pages, :per_page, keyword_init: true) do
@@ -36,7 +37,7 @@ class DocumentBookmarksController < BaseController
   end
 
   def index
-    @view = params[:view].presence || "favorite"
+    @view = normalized_view
     @bookmark_project_code = params[:project_code].to_s.strip.presence
     @bookmark_query = bookmark_query
     @bookmark_project_options = bookmark_project_options
@@ -158,7 +159,15 @@ class DocumentBookmarksController < BaseController
   end
 
   def bookmark_navigation_params
-    params.permit(:project_code, :bookmark_q, :recent_q, :favorite_page, :read_later_page).to_h.compact_blank
+    navigation_params = params.permit(:view, :project_code, :bookmark_q, :recent_q, :favorite_page, :read_later_page).to_h.compact_blank
+    return navigation_params unless navigation_params.key?("view")
+
+    navigation_params.merge("view" => normalized_view)
+  end
+
+  def normalized_view
+    view = params[:view].to_s
+    VIEWS.include?(view) ? view : "favorite"
   end
 
   def filter_bookmarks_by_query(bookmarks)

@@ -3,8 +3,10 @@ require "csv"
 class Admin::AccessLogsController < Admin::BaseController
   AI_CONTEXT_MODE_FILTERS = %w[compact full].freeze
   AI_CONTEXT_SCOPE_FILTERS = %w[all selected].freeze
-  ACCESS_LOGS_PER_PAGE = 200
-  ACCESS_LOGS_MAX_PAGE = 50
+  ACCESS_LOGS_PER_PAGE = 50
+  ACCESS_LOGS_EXPORT_LIMIT = 200
+  ACCESS_LOGS_MAX_ROWS = 10_000
+  ACCESS_LOGS_MAX_PAGE = ACCESS_LOGS_MAX_ROWS / ACCESS_LOGS_PER_PAGE
   ACCESS_LOG_QUERY_MAX_LENGTH = 100
   FILTER_CANDIDATE_LIMIT = 50
   FILTER_SEARCH_LIMIT = 20
@@ -46,7 +48,7 @@ class Admin::AccessLogsController < Admin::BaseController
         @selected_user = access_log_selected_record(@users, @filters[:user_id])
         @access_logs = paginated_access_logs
         @has_previous_page = @page > 1
-        @has_next_page = @access_logs.size > ACCESS_LOGS_PER_PAGE
+        @has_next_page = @page < ACCESS_LOGS_MAX_PAGE && @access_logs.size > ACCESS_LOGS_PER_PAGE
         @access_logs = @access_logs.first(ACCESS_LOGS_PER_PAGE)
         @reached_display_limit = @access_logs.size >= ACCESS_LOGS_PER_PAGE
         @pagination_params = pagination_params
@@ -110,7 +112,7 @@ class Admin::AccessLogsController < Admin::BaseController
     if current_page_csv_scope?
       scope.offset((page_param - 1) * ACCESS_LOGS_PER_PAGE).limit(ACCESS_LOGS_PER_PAGE)
     else
-      scope.limit(ACCESS_LOGS_PER_PAGE)
+      scope.limit(ACCESS_LOGS_EXPORT_LIMIT)
     end
   end
 
@@ -237,7 +239,7 @@ class Admin::AccessLogsController < Admin::BaseController
     metadata = {
       exported_at: Time.current.iso8601,
       report_type: "access_logs",
-      row_limit: ACCESS_LOGS_PER_PAGE,
+      row_limit: access_logs_export_row_limit,
       export_scope: access_logs_export_scope,
       description: access_logs_export_description,
       filters:,
@@ -253,11 +255,15 @@ class Admin::AccessLogsController < Admin::BaseController
     current_page_csv_scope? ? "current_filter_current_page_rows" : "current_filter_latest_rows"
   end
 
+  def access_logs_export_row_limit
+    current_page_csv_scope? ? ACCESS_LOGS_PER_PAGE : ACCESS_LOGS_EXPORT_LIMIT
+  end
+
   def access_logs_export_description
     if current_page_csv_scope?
       "表示中ページCSV export は、現在の絞り込み条件とページに一致する最大#{ACCESS_LOGS_PER_PAGE}件を出力します。"
     else
-      "CSV export は表示中ページではなく、現在の絞り込み条件に一致する最新#{ACCESS_LOGS_PER_PAGE}件を出力します。"
+      "CSV export は表示中ページではなく、現在の絞り込み条件に一致する最新#{ACCESS_LOGS_EXPORT_LIMIT}件を出力します。"
     end
   end
 
@@ -316,7 +322,7 @@ class Admin::AccessLogsController < Admin::BaseController
     if current_page_csv_scope?
       "#{page_param}ページ目の最大#{ACCESS_LOGS_PER_PAGE}件"
     else
-      "最新#{ACCESS_LOGS_PER_PAGE}件"
+      "最新#{ACCESS_LOGS_EXPORT_LIMIT}件"
     end
   end
 

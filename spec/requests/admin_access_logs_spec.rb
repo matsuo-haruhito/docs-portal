@@ -95,7 +95,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(heading_texts).to include("監査ログ")
     expect(page_text).to include("Audit Project")
     expect(page_text).to include("Audit Document")
-    expect(page_text).to include("表示中: 1件 / 最新200件までを表示")
+    expect(page_text).to include("表示中: 1件 / 1ページ50件")
     expect(page_text).to include("監査ログ一覧の表示設定")
     expect(log_target_names).to eq(["audit.zip"])
     expect(row_column_texts("company")).to eq(["Audit Company audit.example.com"])
@@ -110,7 +110,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(heading_texts).to include("監査ログ")
     expect(page_text).to include("まだ監査ログはありません。")
-    expect(page_text).to include("操作が記録されると、最新200件をここで確認できます。")
+    expect(page_text).to include("操作が記録されると、最新50件をここで確認できます。")
     expect(page_text).not_to include("監査ログ一覧の表示設定")
     expect(table_preference_column_keys).to be_empty
   end
@@ -123,7 +123,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(heading_texts).to include("監査ログ")
     expect(page_text).to include("条件に一致する監査ログはありません。")
-    expect(page_text).to include("絞り込み条件を見直すか、「条件をクリア」で最新200件を確認してください。")
+    expect(page_text).to include("最新50件を確認してください")
     expect(page_text).not_to include("監査ログ一覧の表示設定")
     expect(table_preference_column_keys).to be_empty
   end
@@ -152,7 +152,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(response).to have_http_status(:ok)
     expect(log_target_names).to eq(["index.html", "audit.zip"])
     expect(parsed_html.at_css('select[name="target_type"] option[value="unknown"][selected]')).to be_nil
-    expect(page_text).to include("表示中: 2件 / 最新200件までを表示")
+    expect(page_text).to include("表示中: 2件 / 1ページ50件")
     expect(page_text).not_to include("絞り込み中")
   end
 
@@ -402,8 +402,8 @@ RSpec.describe "Admin access logs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(log_target_names).to eq(["range-match.html"])
-    expect(page_text).to include("表示中: 1件 / 最新200件までを表示 / 絞り込み中")
-    expect(page_text).to include("期間指定後も、条件に一致する監査ログを新しい順に最新200件まで表示します。")
+    expect(page_text).to include("表示中: 1件 / 1ページ50件 / 絞り込み中")
+    expect(page_text).to include("期間指定後も、条件に一致する監査ログを新しい順に1ページ50件まで表示します。")
   end
 
   it "ignores invalid accessed date filters without failing" do
@@ -415,7 +415,7 @@ RSpec.describe "Admin access logs", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(log_target_names).to eq(["audit.zip"])
-    expect(page_text).to include("表示中: 1件 / 最新200件までを表示 / 絞り込み中")
+    expect(page_text).to include("表示中: 1件 / 1ページ50件 / 絞り込み中")
   end
 
   it "renders only non-duplicated secondary identifiers in company and project rows" do
@@ -489,7 +489,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(log_target_names).not_to include("outside-query")
     expect(page_text).to include("対象名・IPアドレス: #{normalized_query}")
     expect(page_text).not_to include("ignored-suffix")
-    expect(pagination_query("次の200件")).to include("q" => normalized_query, "page" => "2")
+    expect(pagination_query("次の50件")).to include("q" => normalized_query, "page" => "2")
     expect(csv_export_query).to include("q" => normalized_query)
   end
 
@@ -611,7 +611,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(log_target_names).to eq(["slug-match.html"])
   end
 
-  it "shows only the latest 200 access logs in recent order" do
+  it "shows the latest 50 access logs on the first page in recent order" do
     base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
 
     205.times do |index|
@@ -628,15 +628,15 @@ RSpec.describe "Admin access logs", type: :request do
     get admin_access_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(log_target_names.size).to eq(200)
+    expect(log_target_names.size).to eq(50)
     expect(log_target_names.first).to eq("entry-204")
-    expect(log_target_names.last).to eq("entry-5")
-    expect(log_target_names).not_to include("entry-4", "entry-3", "entry-2", "entry-1", "entry-0")
-    expect(pagination_link("前の200件")).to be_nil
-    expect(pagination_query("次の200件")).to include("page" => "2")
+    expect(log_target_names.last).to eq("entry-155")
+    expect(log_target_names).not_to include("entry-154", "entry-0")
+    expect(pagination_link("前の50件")).to be_nil
+    expect(pagination_query("次の50件")).to include("page" => "2")
   end
 
-  it "shows older access logs on the second page" do
+  it "shows the next 50 access logs on the second page" do
     base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
 
     205.times do |index|
@@ -653,10 +653,12 @@ RSpec.describe "Admin access logs", type: :request do
     get admin_access_logs_path(page: 2)
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示中: 5件 / 最新200件までを表示 / 2ページ目")
-    expect(log_target_names).to eq(["entry-4", "entry-3", "entry-2", "entry-1", "entry-0"])
-    expect(pagination_query("前の200件")).to include("page" => "1")
-    expect(pagination_link("次の200件")).to be_nil
+    expect(page_text).to include("表示中: 50件 / 1ページ50件 / 2ページ目")
+    expect(log_target_names.size).to eq(50)
+    expect(log_target_names.first).to eq("entry-154")
+    expect(log_target_names.last).to eq("entry-105")
+    expect(pagination_query("前の50件")).to include("page" => "1")
+    expect(pagination_query("次の50件")).to include("page" => "3")
   end
 
   it "keeps active filters in pagination links" do
@@ -693,11 +695,11 @@ RSpec.describe "Admin access logs", type: :request do
     )
 
     expect(response).to have_http_status(:ok)
-    expect(log_target_names.size).to eq(200)
+    expect(log_target_names.size).to eq(50)
     expect(log_target_names.first).to eq("filtered-entry-200")
-    expect(log_target_names.last).to eq("filtered-entry-1")
-    expect(log_target_names).not_to include("filtered-entry-0", "outside-filter.html")
-    expect(pagination_query("次の200件")).to include(
+    expect(log_target_names.last).to eq("filtered-entry-151")
+    expect(log_target_names).not_to include("filtered-entry-150", "filtered-entry-0", "outside-filter.html")
+    expect(pagination_query("次の50件")).to include(
       "project_id" => pagination_project.id.to_s,
       "document_q" => "Pagination Evidence",
       "from" => "2026-05-01",
@@ -742,7 +744,7 @@ RSpec.describe "Admin access logs", type: :request do
     target_names = rows.map { _1["対象名"] }
 
     expect(rows.headers).to eq(Admin::AccessLogsController::CSV_HEADERS)
-    expect(rows.size).to eq(200)
+    expect(rows.size).to eq(Admin::AccessLogsController::ACCESS_LOGS_EXPORT_LIMIT)
     expect(target_names.first).to eq("csv-entry-200")
     expect(target_names.last).to eq("csv-entry-1")
     expect(target_names).not_to include("csv-entry-0", "csv-outside-filter.html")
@@ -887,7 +889,7 @@ RSpec.describe "Admin access logs", type: :request do
     expect(metadata).not_to include("rows", "access_logs", "csv")
     expect(metadata).to include(
       "report_type" => "access_logs",
-      "row_limit" => Admin::AccessLogsController::ACCESS_LOGS_PER_PAGE,
+      "row_limit" => Admin::AccessLogsController::ACCESS_LOGS_EXPORT_LIMIT,
       "export_scope" => "current_filter_latest_rows",
       "ignored_filters" => []
     )
@@ -946,11 +948,11 @@ RSpec.describe "Admin access logs", type: :request do
 
     sign_in_as(admin_user)
 
-    ["0", "51", "not-a-number"].each do |page|
+    ["0", "201", "not-a-number"].each do |page|
       get admin_access_logs_path(page:)
 
       expect(response).to have_http_status(:ok)
-      expect(page_text).to include("表示中: 2件 / 最新200件までを表示")
+      expect(page_text).to include("表示中: 2件 / 1ページ50件")
       expect(log_target_names).to eq(["entry-new", "entry-old"])
       expect(page_text).not_to include("2ページ目")
     end

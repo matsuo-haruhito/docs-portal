@@ -38,9 +38,11 @@
 
 対象選択画面には、選択済み件数と現在表示中の件数が表示されます。検索欄は案件名、文書名、カテゴリ、種別、公開範囲、状態の表示テキストを対象にした画面内の表示補助です。検索しても backend query や submit 対象は変わらず、checkbox で選んだ `bulk_edit[document_ids][]` だけが dry-run 作成対象になります。
 
+対象選択tableは、ページ全体を長くしすぎないよう最大高450pxのフォーカス可能な領域に入ります。領域内を縦スクロールしても列見出しは上部に固定されます。これは表示補助であり、server-side paginationや対象件数の切り捨てではありません。画面内検索、`選択済みだけ表示`、checkbox state、submit対象は従来どおり維持されます。
+
 `選択済みだけ表示` は、すでに選んだ行を見直すための表示切り替えです。行が検索条件で一時的に見えなくても、checkbox の選択状態そのものを解除する操作ではありません。`事前確認を作成` の前に、選択済み件数と表示中の行を見比べて、意図しない案件や公開範囲の文書が混ざっていないか確認します。
 
-`選択状態JSONを確認` は、現在の checkbox state を `POST /admin/bulk_edit_dry_runs/handoff` に送り、dry-run を作らず JSON だけを返します。文書マスタ一覧から入った場合は `source=admin_documents`、`candidate_document_ids[]`、`source_filter_summaries[]` も同じ form state から読みます。文書マスタの検索条件を backend で再実行する導線ではありません。
+`選択状態JSONを確認` は通常の主操作から分離された `技術JSONを確認` Disclosure内にあります。必要な場合だけDisclosureを開き、現在の checkbox state を `POST /admin/bulk_edit_dry_runs/handoff` に送ってdry-runを作らずJSONだけを確認します。文書マスタ一覧から入った場合は `source=admin_documents`、`candidate_document_ids[]`、`source_filter_summaries[]` も同じ form state から読みます。文書マスタの検索条件を backend で再実行する導線ではありません。
 
 handoff JSON には、source、runbook path、生成時刻、上限 50 件、候補件数、選択件数、未解決選択件数、truncated、代表条件、選択文書の bounded summary が含まれます。文書 summary は document id / public_id、案件 code / name、文書名、active / archived status に閉じます。変更内容の入力値、本文、添付 metadata、raw path、secret-like value、invalid id の raw value は handoff 対象にしません。
 

@@ -3,10 +3,10 @@
 module Admin::ProjectMembershipsHelper
   def project_membership_table_columns
     [
-      table_preferences_column(:project, label: "案件", default_width: 220, pinned: true, sortable: true),
-      table_preferences_column(:user, label: "ユーザー", default_width: 260, overflow: :ellipsis, sortable: true),
-      table_preferences_column(:role, label: "権限", default_width: 120),
-      table_preferences_column(:actions, label: "操作", default_width: 150, pinned: true)
+      table_preferences_column(:project, label: "案件", pinned: true, sortable: true),
+      table_preferences_column(:user, label: "ユーザー", overflow: :ellipsis, sortable: true),
+      table_preferences_column(:role, label: "権限", default_width: 80),
+      table_preferences_column(:actions, label: "操作", default_width: 110, pinned: true)
     ]
   end
 

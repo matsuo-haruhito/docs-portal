@@ -36,6 +36,38 @@ const SKIP_NEW_ACTION_RESOURCES = new Set([
   "consents",
 ]);
 
+// query parameter付きの状態名captureを正本にし、default indexの重複撮影を避ける
+const SKIP_GENERIC_INDEX_CONTROLLERS = new Set([
+  "admin/document_permissions",
+  "document_bookmarks",
+]);
+
+// resources/resourceの簡易探索では検出できないcustom route・状態別画面
+const CUSTOM_SCREENSHOT_TARGETS = [
+  { path: "/documents", name: "accessible_documents_index" },
+  { path: "/admin/diagnostics", name: "admin_diagnostics_index" },
+  {
+    path: "/admin/document_permissions?view=assignments",
+    name: "admin_document_permissions_assignments",
+  },
+  {
+    path: "/admin/document_permissions?view=overview",
+    name: "admin_document_permissions_overview",
+  },
+  {
+    path: "/document_bookmarks?view=favorite",
+    name: "document_bookmarks_favorite",
+  },
+  {
+    path: "/document_bookmarks?view=read_later",
+    name: "document_bookmarks_read_later",
+  },
+  {
+    path: "/document_bookmarks?view=recent",
+    name: "document_bookmarks_recent",
+  },
+];
+
 // ---------------------------------------------------------------------------
 // Route Discovery
 // ---------------------------------------------------------------------------
@@ -259,6 +291,19 @@ async function captureIndex(page, route) {
 }
 
 /**
+ * Capture custom routes and query-parameter variants that resource discovery cannot represent.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<void>}
+ */
+async function captureCustomTargets(page) {
+  console.log(`Capturing custom routes (${CUSTOM_SCREENSHOT_TARGETS.length})...`);
+  for (const target of CUSTOM_SCREENSHOT_TARGETS) {
+    await navigateAndCapture(page, `${BASE_URL}${target.path}`, target.name);
+  }
+  console.log("");
+}
+
+/**
  * Capture new page.
  * @param {import('playwright').Page} page
  * @param {Route} route
@@ -371,6 +416,9 @@ async function main() {
     await navigateAndCapture(page, `${BASE_URL}/admin`, "admin_dashboard");
     console.log("");
 
+    // Capture custom routes and tab states
+    await captureCustomTargets(page);
+
     // Capture admin routes
     const adminRoutes = routesWithViews.filter((r) => r.namespace === "admin");
     if (adminRoutes.length > 0) {
@@ -378,7 +426,11 @@ async function main() {
       for (const route of adminRoutes) {
         console.log(`  [${route.name}]`);
         if (route.actions.includes("index")) {
-          await captureIndex(page, route);
+          if (SKIP_GENERIC_INDEX_CONTROLLERS.has(route.controller)) {
+            console.log(`  — ${route.controller} index skipped (covered by named variants)`);
+          } else {
+            await captureIndex(page, route);
+          }
         }
         if (route.actions.includes("new")) {
           await captureNew(page, route);
@@ -401,7 +453,11 @@ async function main() {
       for (const route of publicRoutes) {
         console.log(`  [${route.name}]`);
         if (route.actions.includes("index")) {
-          await captureIndex(page, route);
+          if (SKIP_GENERIC_INDEX_CONTROLLERS.has(route.controller)) {
+            console.log(`  — ${route.controller} index skipped (covered by named variants)`);
+          } else {
+            await captureIndex(page, route);
+          }
         }
         if (route.actions.includes("new")) {
           await captureNew(page, route);

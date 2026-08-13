@@ -432,6 +432,32 @@ RSpec.describe "AccessibleDocuments", type: :request do
     expect(response.body).to match(/ページ\s*2\s*\/\s*2/)
   end
 
+  it "keeps frequent filters outside the advanced disclosure and opens it only for valid advanced conditions" do
+    create_viewable_document(project: project_a, title: "Contract Manual", slug: "contract-manual", category: :contract)
+    sign_in_as(user)
+
+    get documents_path
+
+    form = parsed_html.at_css("form.document-filter-form")
+    details = form.at_css("details.filter-details")
+    expect(details).to be_present
+    expect(details["open"]).to be_nil
+    expect(details.at_css("[name='category']")).to be_present
+    expect(details.at_css("[name='document_kind']")).to be_present
+    expect(details.at_css("[name='visibility_policy']")).to be_present
+    expect(details.at_css("[name='has_html']")).to be_present
+    expect(form.at_css("details [name='q']")).to be_nil
+    expect(form.at_css("details [name='project_id']")).to be_nil
+    expect(form.at_css("details [name='tag']")).to be_nil
+
+    get documents_path, params: { category: "contract", has_files: "1" }
+
+    details = parsed_html.at_css("form.document-filter-form details.filter-details[open]")
+    expect(details).to be_present
+    expect(details.at_css("[name='category'] option[selected][value='contract']")).to be_present
+    expect(details.at_css("[name='has_files'][checked]")).to be_present
+  end
+
   it "keeps internal-only documents available to internal users" do
     internal_user = create(:user, :internal)
     internal_project = create(:project, name: "Internal Project")

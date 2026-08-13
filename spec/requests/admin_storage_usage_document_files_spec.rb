@@ -29,10 +29,10 @@ RSpec.describe "Admin document file storage usage detail", type: :request do
     FileUtils.rm_rf(DocumentFile.storage_root.join("spec/storage-usage-detail"))
   end
 
-  it "links the dashboard storage overview to the document file detail" do
+  it "links the diagnostics storage overview to the document file detail" do
     sign_in_as(admin_user)
 
-    get admin_root_path
+    get admin_diagnostics_path
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Storage使用量")

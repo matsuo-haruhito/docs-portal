@@ -108,10 +108,10 @@ button.secondary {
 }
 
 .button.danger,
-button.danger {
+button.danger:not(.nav-link):not(.dropdown-item) {
   --bs-btn-color: #fff;
-  --bs-btn-bg: var(--bs-danger);
-  --bs-btn-border-color: var(--bs-danger);
+  --bs-btn-bg: var(--bs-danger, #dc3545);
+  --bs-btn-border-color: var(--bs-danger, #dc3545);
   --bs-btn-hover-color: #fff;
   --bs-btn-hover-bg: #bb2d3b;
   --bs-btn-hover-border-color: #b02a37;

@@ -38,7 +38,7 @@ class Admin::DocumentPermissionsController < Admin::BaseController
     respond_to do |format|
       format.html
       format.csv do
-        send_data document_permissions_csv(@document_permissions),
+        send_data document_permissions_csv(filtered_document_permissions),
           filename: "document-permissions-#{Time.zone.today.iso8601}.csv",
           type: "text/csv; charset=utf-8"
       end
@@ -136,28 +136,33 @@ class Admin::DocumentPermissionsController < Admin::BaseController
     @filters = filter_params
     @selected_project = Project.find_by(id: @filters[:project_id]) if @filters[:project_id].present?
     @document_permissions_exist = DocumentPermission.exists?
-    @view = params[:view].presence || "assignments"
+    @view = %w[assignments overview].include?(params[:view]) ? params[:view] : "assignments"
 
     document_scope = filtered_document_scope
     permission_scope = filtered_permission_scope
+    all_permissions = filtered_document_permissions(document_scope:, permission_scope:)
 
-    @permission_total_count = permission_scope.joins(:document).where(document_id: document_scope.select(:id)).count
+    @permission_total_count = permission_scope
+      .joins(:document)
+      .where(document_id: document_scope.select(:id))
+      .count
+    @document_permission_page_params = @filters.compact.merge(view: @view)
 
     if @view == "overview"
-      @permission_overview_rows = DocumentPermissionOverview.new(document_scope, permission_scope:).rows
+      overview_total_count = document_scope.count
+      paginated_documents, @document_permission_pagination = paginate_admin_list(document_scope, overview_total_count)
+      @permission_overview_rows = DocumentPermissionOverview.new(paginated_documents, permission_scope:).rows
     else
-      per_page = DEFAULT_ADMIN_LIST_PER_PAGE
-      page = [params[:page].to_i, 1].max
-      all_permissions = permission_scope
-        .joins(:document)
-        .where(document_id: document_scope.select(:id))
-        .includes({ document: :project }, :company, :user)
-        .order("documents.title", "document_permissions.id")
-      @document_permissions = all_permissions.offset((page - 1) * per_page).limit(per_page)
-      @permissions_page = page
-      @permissions_total_pages = [(@permission_total_count.to_f / per_page).ceil, 1].max
-      @permission_overview_rows = []
+      @document_permissions, @document_permission_pagination = paginate_admin_list(all_permissions, @permission_total_count)
     end
+  end
+
+  def filtered_document_permissions(document_scope: filtered_document_scope, permission_scope: filtered_permission_scope)
+    permission_scope
+      .joins(:document)
+      .where(document_id: document_scope.select(:id))
+      .includes({ document: :project }, :company, :user)
+      .order("documents.title", "document_permissions.id")
   end
 
   def filtered_document_scope

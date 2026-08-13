@@ -3,159 +3,139 @@
 - table_columns = document_table_columns
 - table_settings = rails_table_preference_settings(table_key: table_key)
 - has_lifecycle_filter = @filters.values_at(:retention, :discard).any?(&:present?)
+- detailed_filters_active = @filters.values_at(:category, :document_kind, :visibility_policy, :source_authority, :retention, :discard).any?(&:present?)
 - active_filter_summaries = admin_document_active_filter_summaries(@filters)
 - filters_active = active_filter_summaries.any?
 - documents_empty = @documents_filtered_count.zero?
 - current_return_to = request.query_string.present? ? request.fullpath : nil
 
-h1 文書マスタ
+.admin-list-header
+  h1 文書マスタ
+  details.admin-create-panel open=(@document.errors.any?)
+    summary.button.secondary
+      i.bi.bi-plus-lg.me-1 aria-hidden="true"
+      | 新規登録
+    .admin-create-panel__body
+      = render "form", document: @document
 
-.card
-  h2 新規登録
-  = render "form", document: @document
-
-.card
-  h2
-    | 検索・絞り込み
-    = render InfoTooltipComponent.new(label: "検索・絞り込み", description: "案件名・文書名・URL識別子のキーワード検索に加え、カテゴリ・種別・公開範囲・正本区分・アーカイブ状態・保管期限・廃棄候補でフィルタできます。")
-
-  = form_with url: admin_documents_path, method: :get, local: true, class: "document-filter-form" do |form|
-    .form-grid.form-grid--compact
-      .form-field
-        .heading-with-help
-          = form.label :q, "キーワード"
-          = render InfoTooltipComponent.new(label: "キーワード", description: "案件名・案件コード・文書名・URL識別子の断片を最大#{Admin::DocumentsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH}文字で検索します。")
+.admin-filter-toolbar
+  = form_with url: admin_documents_path, method: :get, local: true do |form|
+    .admin-filter-toolbar__form
+      .admin-filter-toolbar__fields
         = form.rfk_search_field :q,
           value: @filters[:q],
           placeholder: "案件名・案件コード・文書名・URL識別子",
           wrapper: false,
-          html: { maxlength: Admin::DocumentsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH }
+          html: { maxlength: Admin::DocumentsController::DOCUMENT_SEARCH_QUERY_MAX_LENGTH, class: "admin-filter-toolbar__search" }
+        = form.rfk_select :archived,
+          collection: admin_document_archived_filter_options.drop(1),
+          include_blank: "すべて",
+          placeholder: "アーカイブ状態",
+          selected: @filters[:archived],
+          allow_clear: true,
+          wrapper: false
+      .admin-filter-toolbar__actions
+        = form.submit "検索", class: "button"
+        - if filters_active
+          = link_to "クリア", admin_documents_path, class: "button secondary"
 
-      = form.rfk_select :category,
-        collection: admin_document_category_filter_options.drop(1),
-        include_blank: "すべて",
-        placeholder: "すべて",
-        selected: @filters[:category],
-        allow_clear: true,
-        wrapper: true,
-        label: "カテゴリ"
+    details.filter-details open=(detailed_filters_active ? true : nil)
+      summary 詳細条件
+      .form-grid.form-grid--compact
+        = form.rfk_select :category,
+          collection: admin_document_category_filter_options.drop(1),
+          include_blank: "すべて",
+          placeholder: "すべて",
+          selected: @filters[:category],
+          allow_clear: true,
+          wrapper: true,
+          label: "カテゴリ"
+        = form.rfk_select :document_kind,
+          collection: admin_document_kind_filter_options.drop(1),
+          include_blank: "すべて",
+          placeholder: "すべて",
+          selected: @filters[:document_kind],
+          allow_clear: true,
+          wrapper: true,
+          label: "種別"
+        = form.rfk_select :visibility_policy,
+          collection: admin_document_visibility_filter_options.drop(1),
+          include_blank: "すべて",
+          placeholder: "すべて",
+          selected: @filters[:visibility_policy],
+          allow_clear: true,
+          wrapper: true,
+          label: "公開範囲"
+        = form.rfk_select :source_authority,
+          collection: admin_document_source_authority_filter_options.drop(1),
+          include_blank: "すべて",
+          placeholder: "すべて",
+          selected: @filters[:source_authority],
+          allow_clear: true,
+          wrapper: true,
+          label: "正本区分"
+        = form.rfk_select :retention,
+          collection: admin_document_retention_filter_options.drop(1),
+          include_blank: "すべて",
+          placeholder: "すべて",
+          selected: @filters[:retention],
+          allow_clear: true,
+          wrapper: true,
+          label: "保管期限"
+        = form.rfk_select :discard,
+          collection: admin_document_discard_filter_options.drop(1),
+          include_blank: "すべて",
+          placeholder: "すべて",
+          selected: @filters[:discard],
+          allow_clear: true,
+          wrapper: true,
+          label: "廃棄候補"
 
-      = form.rfk_select :document_kind,
-        collection: admin_document_kind_filter_options.drop(1),
-        include_blank: "すべて",
-        placeholder: "すべて",
-        selected: @filters[:document_kind],
-        allow_clear: true,
-        wrapper: true,
-        label: "種別"
+- if filters_active
+  .admin-filter-chips
+    - active_filter_summaries.each do |summary|
+      span.admin-filter-chip = summary
 
-      = form.rfk_select :visibility_policy,
-        collection: admin_document_visibility_filter_options.drop(1),
-        include_blank: "すべて",
-        placeholder: "すべて",
-        selected: @filters[:visibility_policy],
-        allow_clear: true,
-        wrapper: true,
-        label: "公開範囲"
+.admin-list-meta
+  span.admin-list-meta__count = "#{@documents_filtered_count}件"
+  div hidden=(documents_empty ? true : nil)
+    = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定", description: "文書マスタ一覧の表示設定と検索条件は、この一覧の列表示・列幅・表示件数にだけ適用されます。文書詳細の左ペインにある文書ツリーの表示状態とは別です。")
 
-      = form.rfk_select :source_authority,
-        collection: admin_document_source_authority_filter_options.drop(1),
-        include_blank: "すべて",
-        placeholder: "すべて",
-        selected: @filters[:source_authority],
-        allow_clear: true,
-        wrapper: true,
-        label: "正本区分"
+- if has_lifecycle_filter
+  details.filter-details
+    summary lifecycle確認
+    p.muted 保管期限・廃棄候補の絞り込み結果をread-onlyで引き継ぎます。archive、restore、discard、deleteは実行しません。
+    p.actions
+      = link_to "handoff JSONを確認", lifecycle_handoff_admin_documents_path(@document_page_params.merge(format: :json)), class: "button secondary"
 
-      = form.rfk_select :archived,
-        collection: admin_document_archived_filter_options.drop(1),
-        include_blank: "すべて",
-        placeholder: "すべて",
-        selected: @filters[:archived],
-        allow_clear: true,
-        wrapper: true,
-        label: "アーカイブ状態"
-
-      = form.rfk_select :retention,
-        collection: admin_document_retention_filter_options.drop(1),
-        include_blank: "すべて",
-        placeholder: "すべて",
-        selected: @filters[:retention],
-        allow_clear: true,
-        wrapper: true,
-        label: "保管期限"
-
-      = form.rfk_select :discard,
-        collection: admin_document_discard_filter_options.drop(1),
-        include_blank: "すべて",
-        placeholder: "すべて",
-        selected: @filters[:discard],
-        allow_clear: true,
-        wrapper: true,
-        label: "廃棄候補"
-
-    p.actions.form-actions
-      = form.submit "検索", class: "button"
-      - if filters_active
-        = link_to "条件をクリア", admin_documents_path, class: "button secondary"
-
-  p.muted = "検索結果: #{@documents_filtered_count}件"
-  - if @documents_filtered_count.positive?
-    p.muted = "表示中: #{@documents_pagination[:from]}-#{@documents_pagination[:to]}件 / #{@documents_filtered_count}件"
-  - if active_filter_summaries.any?
-    p.muted
-      | 有効な条件:
-      - active_filter_summaries.each do |summary|
-        = " "
-        span.badge = summary
-  - if filters_active && documents_empty
-    p.muted.document-filter-empty-state
-      | 条件に一致する文書はありません。
-      = link_to "条件をクリア", admin_documents_path
-      | すると文書マスタ全体に戻れます。
-  - if has_lifecycle_filter
-    p.muted
-      | 保管期限・廃棄候補の絞り込み中です。状態、保管期限、廃棄候補、公開側文書を確認し、必要な場合だけ行単位で編集・アーカイブ・復元してください。0件の場合は現在の条件に合う対象がない状態です。
-    p.actions.form-actions
-      = link_to "read-only handoff JSONを確認", lifecycle_handoff_admin_documents_path(@document_page_params.merge(format: :json)), class: "button secondary"
-      span.muted = "現在の条件に一致する候補を最大#{Admin::DocumentsController::LIFECYCLE_HANDOFF_LIMIT}件まで引き継ぎます。archive / restore / discard / delete は実行しません。"
-
+details.filter-details
+  summary 一括操作
   .actions.form-actions
     - if @bulk_edit_candidate_count.zero?
       span.muted 一括編集候補: 0件
-      = render HelpTooltipComponent.new(description: "検索条件を見直して対象文書を表示してから、一括編集候補へ進んでください。")
     - elsif @bulk_edit_candidate_count > @bulk_edit_candidate_limit
       span = "一括編集候補: #{@bulk_edit_candidate_count}件"
       = render HelpTooltipComponent.new(description: "一括編集へ進むには、検索条件で#{@bulk_edit_candidate_limit}件以下まで絞り込んでください。")
     - else
       = link_to "一括編集候補として開く", new_admin_bulk_edit_dry_run_path(source: "admin_documents", candidate_document_ids: @bulk_edit_candidate_ids, source_filter_summaries: active_filter_summaries), class: "button secondary"
-      = render HelpTooltipComponent.new(description: "現在の検索結果#{@bulk_edit_candidate_count}件を文書一括編集dry-runへ引き継ぎます。この操作だけでは文書を変更しません。")
-
+      = render HelpTooltipComponent.new(description: "現在の検索結果#{@bulk_edit_candidate_count}件をdry-runへ引き継ぎます。この操作だけでは文書を変更しません。")
   - if @bulk_edit_candidate_count.positive? && @bulk_edit_candidate_count <= @bulk_edit_candidate_limit
     .actions.form-actions
       - if @bulk_archive_candidate_count.positive?
-        = link_to "アーカイブdry-run候補として開く", new_admin_bulk_edit_dry_run_path(source: "admin_documents", lifecycle_purpose: "archive", candidate_document_ids: @bulk_archive_candidate_ids, source_filter_summaries: active_filter_summaries + ["目的: archive dry-run", "対象状態: 有効"]), class: "button secondary"
-        span.muted = "有効な文書#{@bulk_archive_candidate_count}件だけを候補にします。dry-run作成では文書状態を変更しません。"
+        = link_to "アーカイブdry-run候補", new_admin_bulk_edit_dry_run_path(source: "admin_documents", lifecycle_purpose: "archive", candidate_document_ids: @bulk_archive_candidate_ids, source_filter_summaries: active_filter_summaries + ["目的: archive dry-run", "対象状態: 有効"]), class: "button secondary"
       - if @bulk_restore_candidate_count.positive?
-        = link_to "復元dry-run候補として開く", new_admin_bulk_edit_dry_run_path(source: "admin_documents", lifecycle_purpose: "restore", candidate_document_ids: @bulk_restore_candidate_ids, source_filter_summaries: active_filter_summaries + ["目的: restore dry-run", "対象状態: アーカイブ済み"]), class: "button secondary"
-        span.muted = "アーカイブ済み文書#{@bulk_restore_candidate_count}件だけを候補にします。dry-run作成では文書状態を変更しません。"
-      - if @bulk_archive_candidate_count.positive? && @bulk_restore_candidate_count.positive?
-        span.muted 混在した検索結果は、アーカイブ候補と復元候補を分けて一括編集dry-runへ渡します。
+        = link_to "復元dry-run候補", new_admin_bulk_edit_dry_run_path(source: "admin_documents", lifecycle_purpose: "restore", candidate_document_ids: @bulk_restore_candidate_ids, source_filter_summaries: active_filter_summaries + ["目的: restore dry-run", "対象状態: アーカイブ済み"]), class: "button secondary"
 
 - if documents_empty
   .card.document-list-empty-guidance
-    h2 文書マスタ一覧
     - if filters_active
-      p.muted 条件に一致する文書がないため、一覧の列設定と空テーブルは畳んでいます。条件を見直すか、文書マスタ全体へ戻って対象を確認してください。
-      p.actions.form-actions
-        = link_to "条件をクリア", admin_documents_path, class: "button secondary"
+      = render EmptyStateComponent.new(heading: "条件に一致する文書がありません", description: "条件を見直すか、文書マスタ全体へ戻ってください。") do |component|
+        - component.with_action do
+          = link_to "条件をクリア", admin_documents_path, class: "button secondary"
     - else
-      p.muted 登録済みの文書がまだありません。上部の新規登録フォームから最初の文書を追加すると、一覧の表示設定と文書テーブルを確認できます。
+      = render EmptyStateComponent.new(heading: "文書が未登録です", description: "「新規登録」で最初の文書を追加してください。")
   style
     | table[data-rails-table-preferences-table-key-value="admin_documents"] { display: none; }
-
-.card hidden=(documents_empty ? true : nil)
-  = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "文書マスタ一覧の表示設定", description: "文書マスタ一覧の表示設定と検索条件は、この一覧の列表示・列幅・表示件数にだけ適用されます。文書詳細の左ペインにある文書ツリーの「表示中」や展開状態とは別の文脈です。")
 
 = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns, scroll_wrapper: true, wrapper_options: { class: "table-scroll", role: "region", tabindex: 0, aria: { label: "文書マスタ一覧" } }) do
   caption.table-caption 文書マスタ一覧

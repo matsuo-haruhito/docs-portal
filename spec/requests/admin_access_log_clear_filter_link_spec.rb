@@ -47,7 +47,7 @@ RSpec.describe "Admin access log clear filter link", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("条件に一致する監査ログはありません。")
-    expect(page_text).to include("絞り込み条件を見直すか、「条件をクリア」で最新200件を確認してください。")
+    expect(page_text).to include("最新50件を確認してください")
     expect(filter_clear_links.size).to eq(1)
     expect(empty_state_clear_links.size).to eq(1)
     expect(clear_link_queries(empty_state_clear_links)).to eq([nil])

@@ -85,9 +85,18 @@ RSpec.describe "Admin document permission project filter search", type: :request
       expect(project_filter_field["data-rails-fields-kit--tom-select-max-options-value"]).to eq(Admin::DocumentPermissionsController::PROJECT_SEARCH_LIMIT.to_s)
       expect(selected_project_option["value"]).to eq(selected_project.id.to_s)
       expect(selected_project_option.text).to eq("SELECTED / Selected Project")
-      expect(page_text).to include("案件: SELECTED / Selected Project")
       expect(page_text).to include("Selected Permission Document")
       expect(page_text).not_to include("Other Permission Document")
+      expect(parsed_html.at_css("#document-permissions-overview-panel")).to be_nil
+    end
+
+    get admin_document_permissions_path(project_id: selected_project.id, view: "overview")
+
+    expect(response).to have_http_status(:ok)
+    aggregate_failures do
+      expect(page_text).to include("Selected Permission Document")
+      expect(page_text).not_to include("Other Permission Document")
+      expect(parsed_html.at_css("#document-permissions-assignments-panel")).to be_nil
     end
   end
 

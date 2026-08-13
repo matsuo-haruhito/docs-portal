@@ -7,28 +7,30 @@
 - company_filter_options = admin_project_company_filter_collection(@selected_project_company, selected_company_filter)
 - active_filter_labels = admin_project_filter_labels(@project_filter_params, @selected_project_company)
 
-h1 案件マスタ
+.admin-list-header
+  h1 案件マスタ
+  details.admin-create-panel open=(@project.errors.any?)
+    summary.button.secondary
+      i.bi.bi-plus-lg.me-1 aria-hidden="true"
+      | 新規登録
+    .admin-create-panel__body
+      = render "form", project: @project
 
-.card
-  h2 新規登録
-  = render "form", project: @project
-
-.card
-  h2 案件を探す
-  = form_with url: admin_projects_path, method: :get, local: true do |form|
-    .form-grid
-      label
-        | キーワード
-        = text_field_tag :q, @project_filter_params["q"], placeholder: "コード・案件名・説明", maxlength: 100
-        span.muted コード・案件名・説明の断片で検索できます。最大100文字。
+.admin-filter-toolbar
+  = form_with url: admin_projects_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |form|
+    .admin-filter-toolbar__fields
+      = form.rfk_search_field :q,
+        value: @project_filter_params["q"],
+        placeholder: "コード・案件名・説明",
+        wrapper: false,
+        html: { maxlength: 100, class: "admin-filter-toolbar__search" }
       = form.rfk_select :active,
         collection: [["有効", "true"], ["無効", "false"]],
         selected: (%w[true false].include?(selected_active_filter) ? selected_active_filter : nil),
         include_blank: "すべて",
-        wrapper: true,
-        label: "状態",
+        wrapper: false,
         allow_clear: true,
-        placeholder: "すべて"
+        placeholder: "状態"
       = form.rfk_combobox :company_id,
         collection: company_filter_options,
         selected: admin_project_company_filter_selected_option(@selected_project_company, selected_company_filter),
@@ -39,29 +41,25 @@ h1 案件マスタ
         search_field: "text",
         min_length: 1,
         max_options: Admin::ProjectsController::COMPANY_SEARCH_LIMIT,
-        wrapper: true,
-        label: "企業",
+        wrapper: false,
         placeholder: "会社名・ドメインで検索",
         allow_clear: true
-    p.muted = "企業は検索語最大#{Admin::ProjectsController::COMPANY_SEARCH_QUERY_MAX_LENGTH}文字、候補最大#{Admin::ProjectsController::COMPANY_SEARCH_LIMIT}件です。URLで指定済みの企業は候補上限外でも復元します。"
-    p.actions
-      = submit_tag "絞り込む", class: "button"
+    .admin-filter-toolbar__actions
+      = form.submit "検索", class: "button"
       - if active_filter_labels.any?
-        = link_to "条件をクリア", admin_projects_path, class: "button secondary"
+        = link_to "クリア", admin_projects_path, class: "button secondary"
 
-- if @projects.any?
-  .card
-    - if active_filter_labels.any?
-      p.muted
-        | 適用中:
-        - active_filter_labels.each do |label|
-          span.badge = label
-      p.muted 表示設定は列の表示・幅を調整し、絞り込みは一覧に出す案件を切り替えます。
-    - else
-      p.muted 表示設定は列の表示・幅を調整します。キーワード、状態、企業で一覧に出す案件を絞り込めます。
-    p.muted = "検索結果: #{@projects.size}件"
+- if active_filter_labels.any?
+  .admin-filter-chips
+    - active_filter_labels.each do |label|
+      span.admin-filter-chip = label
+
+.admin-list-meta
+  span.admin-list-meta__count = "#{@projects_filtered_count}件"
+  - if @projects.any?
     = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件一覧の表示設定")
 
+- if @projects.any?
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
       tr
@@ -70,7 +68,7 @@ h1 案件マスタ
         th data-rails-table-preferences-column-key="company" 企業
         th data-rails-table-preferences-column-key="description" 説明
         th data-rails-table-preferences-column-key="status" 状態
-        th data-rails-table-preferences-column-key="actions"
+        th data-rails-table-preferences-column-key="actions" 操作
     tbody
       - @projects.each do |project|
         - project_delete_company_label = project.company&.display_name || "企業未設定"
@@ -80,20 +78,27 @@ h1 案件マスタ
           td data-rails-table-preferences-column-key="name" = project.name
           td data-rails-table-preferences-column-key="company" = project.company&.display_name || "未設定"
           td data-rails-table-preferences-column-key="description" = project.description
-          td data-rails-table-preferences-column-key="status" = project.active? ? "有効" : "無効"
+          td data-rails-table-preferences-column-key="status"
+            - if project.active?
+              = render StatusBadgeComponent.new(status: "active", label: "有効")
+            - else
+              = render StatusBadgeComponent.new(status: "inactive", label: "無効")
           td.actions data-rails-table-preferences-column-key="actions"
             = edit_link_to "編集", edit_admin_project_path(project)
             = delete_link_to "削除", admin_project_path(project), confirm: project_delete_confirm
+
+  - if @projects_pagination[:total_pages] > 1
+    nav.pagination aria-label="案件一覧ページ"
+      .admin-pagination
+        - if @projects_pagination[:prev_page]
+          = link_to "前へ", admin_projects_path(@project_page_params.merge(page: @projects_pagination[:prev_page])), class: "button secondary"
+        span.muted = "#{@projects_pagination[:page]} / #{@projects_pagination[:total_pages]}"
+        - if @projects_pagination[:next_page]
+          = link_to "次へ", admin_projects_path(@project_page_params.merge(page: @projects_pagination[:next_page])), class: "button secondary"
+- elsif @projects_total_count.to_i.zero?
+  = render EmptyStateComponent.new(heading: "案件が未登録です", description: "「新規登録」でコードと案件名を入力してください。")
 - else
-  .card
-    - if @projects_total_count.to_i.zero?
-      p.muted まだ案件は登録されていません。
-      p.muted 上の「新規登録」でコードと案件名を入力し、必要に応じて企業を選ぶと最初の案件を登録できます。
-    - else
-      p.muted 検索条件に一致する案件はありません。
-      - if active_filter_labels.any?
-        p.muted キーワード、状態、企業の条件を変更するか、条件をクリアしてください。
-        p.actions.form-actions
-          = link_to "条件をクリア", admin_projects_path, class: "button secondary"
-      - else
-        p.muted キーワード、状態、企業の条件を変更してください。
+  = render EmptyStateComponent.new(heading: "条件に一致する案件がありません", description: "キーワード、状態、企業の条件を変更するか、条件をクリアしてください。") do |component|
+    - if active_filter_labels.any?
+      - component.with_action do
+        = link_to "条件をクリア", admin_projects_path, class: "button secondary"

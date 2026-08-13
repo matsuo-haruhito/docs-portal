@@ -61,6 +61,20 @@ RSpec.describe "Admin documents", type: :request do
     parsed_html.at_css(%(input[name="#{name}"]))&.[]("value")
   end
 
+  def filter_chip_texts
+    parsed_html.css(".admin-filter-chip").map { |node| node.text.squish }
+  end
+
+  def list_count
+    parsed_html.at_css(".admin-list-meta__count")&.text&.squish
+  end
+
+  def disclosure(label)
+    parsed_html.css("details.filter-details").find do |details|
+      details.at_css("summary")&.text&.squish == label
+    end
+  end
+
   def row_column_texts(column_key)
     document_rows.map do |row|
       cell = row.at_css(%(td[data-rails-table-preferences-column-key="#{column_key}"]))
@@ -164,13 +178,12 @@ RSpec.describe "Admin documents", type: :request do
     get admin_documents_path, params: { q: long_query, retention: "missing" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 1件")
-    expect(page_text).to include("表示中: 1-1件 / 1件")
+    expect(list_count).to eq("1件")
     expect(filter_input_value("q")).to eq(search_term)
     expect(title_targets).to contain_exactly(project_document_path(matching_project, matching_document.slug))
     expect(title_targets).not_to include(project_document_path(excluded_project, excluded_document.slug))
-    expect(page_text).to include("キーワード: #{search_term}", "保管期限: 保管期限なし")
-    expect(page_text).not_to include("ignored-suffix")
+    expect(filter_chip_texts).to include("キーワード: #{search_term}", "保管期限: 保管期限なし")
+    expect(filter_chip_texts.join).not_to include("ignored-suffix")
 
     query = Rack::Utils.parse_nested_query(URI.parse(bulk_edit_candidate_link["href"]).query)
     expect(query.fetch("source_filter_summaries")).to include("キーワード: #{search_term}")
@@ -189,9 +202,9 @@ RSpec.describe "Admin documents", type: :request do
     get admin_documents_path, params: { q: "BULK-001" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 2件")
-    expect(page_text).to include("表示中: 1-2件 / 2件")
-    expect(page_text).to include("現在の検索結果2件を文書一括編集dry-runへ引き継ぎます。この操作だけでは文書を変更しません。")
+    expect(list_count).to eq("2件")
+    expect(disclosure("一括操作")).to be_present
+    expect(disclosure("一括操作")["open"]).to be_nil
 
     link = bulk_edit_candidate_link
     query = Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)
@@ -215,8 +228,7 @@ RSpec.describe "Admin documents", type: :request do
     get admin_documents_path, params: { q: "PAGE-DOC", per_page: 2 }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 3件")
-    expect(page_text).to include("表示中: 1-2件 / 3件")
+    expect(list_count).to eq("3件")
     expect(table_text).to include("Paged Document 0", "Paged Document 1")
     expect(table_text).not_to include("Paged Document 2", "Other Paged Document")
     expect(link_href("次へ")).to include("q=PAGE-DOC", "per_page=2", "page=2")
@@ -226,7 +238,7 @@ RSpec.describe "Admin documents", type: :request do
     get admin_documents_path, params: { q: "PAGE-DOC", per_page: 2, page: 2 }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示中: 3-3件 / 3件")
+    expect(list_count).to eq("3件")
     expect(table_text).to include("Paged Document 2")
     expect(table_text).not_to include("Paged Document 0")
     expect(link_href("前へ")).to include("q=PAGE-DOC", "per_page=2", "page=1")
@@ -235,7 +247,7 @@ RSpec.describe "Admin documents", type: :request do
     get admin_documents_path, params: { q: "PAGE-DOC", per_page: 0, page: -1 }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示中: 1-3件 / 3件")
+    expect(document_rows.size).to eq(3)
   end
 
   it "does not link zero or oversized document results to bulk edit candidates" do
@@ -244,9 +256,8 @@ RSpec.describe "Admin documents", type: :request do
     get admin_documents_path, params: { q: "no-such-document" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 0件")
-    expect(page_text).to include("一括編集候補: 0件")
-    expect(page_text).to include("検索条件を見直して対象文書を表示してから、一括編集候補へ進んでください。")
+    expect(list_count).to eq("0件")
+    expect(disclosure("一括操作")).to be_present
     expect(bulk_edit_candidate_link).to be_nil
 
     project = create(:project, code: "BULK-LIMIT", name: "Bulk Limit")
@@ -257,10 +268,9 @@ RSpec.describe "Admin documents", type: :request do
     get admin_documents_path, params: { q: "BULK-LIMIT" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 51件")
-    expect(page_text).to include("表示中: 1-25件 / 51件")
-    expect(page_text).to include("50件以下まで絞り込んでください")
+    expect(list_count).to eq("51件")
     expect(document_rows.size).to eq(25)
+    expect(disclosure("一括操作")).to be_present
     expect(bulk_edit_candidate_link).to be_nil
   end
 
@@ -294,9 +304,8 @@ RSpec.describe "Admin documents", type: :request do
     get admin_documents_path, params: { q: "DOCS-TP", retention: "missing" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 1件")
-    expect(page_text).to include("表示中: 1-1件 / 1件")
-    expect(page_text).to include("キーワード: DOCS-TP", "保管期限: 保管期限なし")
+    expect(list_count).to eq("1件")
+    expect(filter_chip_texts).to include("キーワード: DOCS-TP", "保管期限: 保管期限なし")
     expect(title_targets).to contain_exactly(project_document_path(project, document.slug))
 
     settings = table_preference_surfaces.map { |surface| table_preference_settings_for(surface) }
@@ -318,8 +327,7 @@ RSpec.describe "Admin documents", type: :request do
     get admin_documents_path, params: { q: "No matching document" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 0件")
-    expect(page_text).to include("文書マスタ一覧の表示設定")
+    expect(list_count).to eq("0件")
     expect(table_preference_surfaces.size).to eq(2)
     expect(table_preference_table).to be_present
     expect(document_rows).to be_empty
@@ -328,7 +336,7 @@ RSpec.describe "Admin documents", type: :request do
     expect(columns.map { |column| column["key"] }).to include("project", "title", "actions")
   end
 
-  it "shows lifecycle filter guidance only when retention or discard filters are active" do
+  it "shows a closed lifecycle handoff only when retention or discard filters are active" do
     create(:document, title: "Regular Document")
 
     sign_in_as(admin_user)
@@ -336,18 +344,17 @@ RSpec.describe "Admin documents", type: :request do
     get admin_documents_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).not_to include("保管期限・廃棄候補の絞り込み中です")
-    expect(page_text).not_to include("行単位で編集・アーカイブ・復元")
+    expect(disclosure("lifecycle確認")).to be_nil
 
     get admin_documents_path, params: { retention: "due" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("保管期限・廃棄候補の絞り込み中です")
-    expect(page_text).to include("状態、保管期限、廃棄候補、公開側文書を確認")
-    expect(page_text).to include("必要な場合だけ行単位で編集・アーカイブ・復元")
+    expect(disclosure("lifecycle確認")).to be_present
+    expect(disclosure("lifecycle確認")["open"]).to be_nil
+    expect(disclosure("lifecycle確認").at_css('a[href*="lifecycle_handoff"]')).to be_present
   end
 
-  it "keeps the lifecycle empty result copy as target-none guidance" do
+  it "keeps the lifecycle handoff available for an empty filtered result" do
     create(:document, title: "Future Retention", retention_until: 1.month.from_now)
 
     sign_in_as(admin_user)
@@ -355,10 +362,10 @@ RSpec.describe "Admin documents", type: :request do
     get admin_documents_path, params: { discard: "due" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 0件")
-    expect(page_text).to include("0件の場合は現在の条件に合う対象がない状態です")
-    expect(page_text).not_to include("自動削除")
-    expect(page_text).not_to include("非可逆")
+    expect(list_count).to eq("0件")
+    expect(disclosure("lifecycle確認")).to be_present
+    expect(table_preference_table).to be_present
+    expect(document_rows).to be_empty
   end
 
   it "shows latest version and preview state without mixing them with archive status" do

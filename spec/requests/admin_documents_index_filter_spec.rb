@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "Admin documents index filters", type: :request do
   let(:admin_user) { create(:user, :internal) }
 
-  it "filters documents by keyword and enum params" do
+  it "keeps frequent filters visible and opens detailed filters when they are active" do
     target_project = create(:project, code: "ALPHA", name: "Alpha Project")
     other_project = create(:project, code: "BETA", name: "Beta Project")
     matching_document = create(
@@ -27,6 +27,14 @@ RSpec.describe "Admin documents index filters", type: :request do
 
     sign_in_as(admin_user)
 
+    get admin_documents_path
+
+    expect(response).to have_http_status(:ok)
+    initial_html = Nokogiri::HTML(response.body)
+    expect(initial_html.at_css('.admin-filter-toolbar__fields input[name="q"]')).to be_present
+    expect(initial_html.at_css('.admin-filter-toolbar__fields select[name="archived"]')).to be_present
+    expect(initial_html.at_css('details.filter-details[open] select[name="category"]')).to be_nil
+
     get admin_documents_path, params: {
       q: "ALPHA",
       category: "manual",
@@ -35,11 +43,20 @@ RSpec.describe "Admin documents index filters", type: :request do
     }
 
     expect(response).to have_http_status(:ok)
-    aggregate_failures do
-      expect(response.body).to include("検索・絞り込み")
-      expect(response.body).to include(matching_document.title)
-      expect(response.body).not_to include("Meeting Note")
-    end
+    filtered_html = Nokogiri::HTML(response.body)
+    detail = filtered_html.at_css("details.filter-details[open]")
+
+    expect(detail).to be_present
+    expect(detail.css("select").map { |select| select["name"] }).to contain_exactly(
+      "category",
+      "document_kind",
+      "visibility_policy",
+      "source_authority",
+      "retention",
+      "discard"
+    )
+    expect(response.body).to include(matching_document.title)
+    expect(response.body).not_to include("Meeting Note")
   end
 
   it "filters archived documents by due retention and discard state" do

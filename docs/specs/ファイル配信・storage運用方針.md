@@ -29,7 +29,7 @@
 - `Rails.root/storage/...` を直接参照する
 - `send_file` で配信する
 - file existence を同期的に確認できる
-- 管理ダッシュボードの `Storage使用量` で local storage 配下の概算使用量、file count、直下項目ごとの大きい内訳、`DocumentFile` 実体の Project / Document 上位 breakdown、`storage/docs_sites` / `storage/imports` の bounded detail を read-only に確認できる
+- 運用・診断の `Storage使用量` で local storage 配下の概算使用量、file count、直下項目ごとの大きい内訳、`DocumentFile` 実体の Project / Document 上位 breakdown、`storage/docs_sites` / `storage/imports` の bounded detail を read-only に確認できる
 
 ### GCS 等のオブジェクトストレージ
 
@@ -125,7 +125,7 @@ Docusaurus site は `DocusaurusSiteRenderer` と `ProjectSitesController` / `Doc
 
 ## 9. storage 使用量の考え方
 
-管理ダッシュボードの `Storage使用量` は、local `Rails.root/storage` 配下の概算使用量を read-only に確認する入口です。
+運用・診断の `Storage使用量` は、local `Rails.root/storage` 配下の概算使用量を read-only に確認する入口です。
 
 current support の対象:
 
@@ -169,7 +169,7 @@ current support 外:
 - import attachment copy 失敗
 - site build 欠落
 
-current repo では、storage 使用量は管理ダッシュボードの `Storage使用量` で read-only に確認できます。通知 channel、alert rule、外部監視サービス連携はまだ具体実装ではないため、画面で見える概算使用量と監視 alert 実装を混同しないでください。
+current repo では、storage 使用量は運用・診断の `Storage使用量` で read-only に確認できます。通知 channel、alert rule、外部監視サービス連携はまだ具体実装ではないため、画面で見える概算使用量と監視 alert 実装を混同しないでください。
 
 詳細は [監視・アラート設計](./監視・アラート設計.md) を参照します。
 
@@ -179,7 +179,7 @@ current repo では、storage 使用量は管理ダッシュボードの `Storag
 - object storage 利用時も public access は許可しない
 - missing file は 404 に統一し、原因は運用ログで追う
 - MIME type / charset は `DocumentFile#effective_content_type` を正本として扱う
-- 管理ダッシュボードの `Storage使用量` は read-only な容量確認入口として扱い、削除・archive・cleanup・retention policy 判断の実行入口にしない
+- 運用・診断の `Storage使用量` は read-only な容量確認入口として扱い、削除・archive・cleanup・retention policy 判断の実行入口にしない
 - `大きい内訳` は local storage の直下項目 top 5 の補助表示として読み、cleanup 候補一覧として扱わない
 - `Docs site build detail` と `Import staging detail` は、直下項目の bounded detail として読み、Project / build version / import job との厳密な対応付けや cleanup 判断として扱わない
 - `Docs site build detail` と `Import staging detail` の CSV handoff は、同じ bounded entries を渡す read-only evidence として読み、全件 export、DocumentFile 実体 export の置き換え、cleanup・delete・archive・retention・billing・quota・GCS policy・repair 判断として扱わない

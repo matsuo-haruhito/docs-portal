@@ -34,20 +34,24 @@ RSpec.describe "Admin documents index", type: :request do
     Nokogiri::HTML(response.body)
   end
 
-  def page_text
-    parsed_html.text.squish
-  end
-
-  def form_clear_filter_targets
-    parsed_html.css("form.document-filter-form .form-actions a[href]").select do |node|
-      node.text.squish == "条件をクリア"
+  def toolbar_clear_filter_targets
+    parsed_html.css(".admin-filter-toolbar__actions a[href]").select do |node|
+      node.text.squish == "クリア"
     end.map { |node| node["href"] }
   end
 
   def empty_state_clear_filter_targets
-    parsed_html.css(".document-filter-empty-state a[href]").select do |node|
+    parsed_html.css(".document-list-empty-guidance .empty-state a[href]").select do |node|
       node.text.squish == "条件をクリア"
     end.map { |node| node["href"] }
+  end
+
+  def filter_chip_texts
+    parsed_html.css(".admin-filter-chip").map { |node| node.text.squish }
+  end
+
+  def list_count
+    parsed_html.at_css(".admin-list-meta__count")&.text&.squish
   end
 
   it "renders the table preferences editor, stable column keys, and existing actions" do
@@ -56,10 +60,6 @@ RSpec.describe "Admin documents index", type: :request do
     get admin_documents_path
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("文書マスタ一覧の表示設定")
-    expect(page_text).to include("文書マスタ一覧の表示設定と検索条件は、この一覧の列表示・列幅・表示件数にだけ適用されます")
-    expect(page_text).to include("文書詳細の左ペインにある文書ツリーの「表示中」や展開状態とは別の文脈です")
-
     editor = parsed_html.at_css(".rails-table-preferences-editor[data-controller='rails-table-preferences']")
 
     expect(editor).to be_present
@@ -95,39 +95,39 @@ RSpec.describe "Admin documents index", type: :request do
     archived_status = archived_row.at_css('td[data-rails-table-preferences-column-key="status"]')
     archived_actions = archived_row.at_css('td[data-rails-table-preferences-column-key="actions"]')
 
-    expect(archived_status.text).to include("アーカイブ済み")
-    expect(archived_status.text).to include("実行者: 管理者")
+    expect(archived_status.text).to include("アーカイブ済み", "実行者: 管理者")
     expect(archived_actions.to_html).to include(edit_admin_document_path(archived_document.public_id))
     expect(archived_actions.to_html).to include(restore_admin_document_path(archived_document.public_id))
     expect(archived_actions.to_html).to include(admin_document_path(archived_document.public_id))
   end
 
-  it "shows the document clear filter action only when filters are active" do
+  it "shows the toolbar clear action only when filters are active" do
     sign_in_as(admin)
 
     get admin_documents_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).not_to include("条件をクリア")
-    expect(form_clear_filter_targets).to be_empty
+    expect(toolbar_clear_filter_targets).to be_empty
+    expect(filter_chip_texts).to be_empty
 
     get admin_documents_path, params: { q: "ALPHA" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("有効な条件:", "キーワード: ALPHA")
-    expect(form_clear_filter_targets).to eq([admin_documents_path])
+    expect(filter_chip_texts).to eq(["キーワード: ALPHA"])
+    expect(toolbar_clear_filter_targets).to eq([admin_documents_path])
   end
 
-  it "keeps a clear filter path near empty filtered document results" do
+  it "keeps clear paths and the RTP table DOM near empty filtered results" do
     sign_in_as(admin)
 
     get admin_documents_path, params: { q: "no matching document" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 0件")
-    expect(page_text).to include("条件に一致する文書はありません")
-    expect(page_text).to include("文書マスタ全体に戻れます")
-    expect(form_clear_filter_targets).to eq([admin_documents_path])
+    expect(list_count).to eq("0件")
+    expect(parsed_html.at_css(".document-list-empty-guidance .empty-state")).to be_present
+    expect(toolbar_clear_filter_targets).to eq([admin_documents_path])
     expect(empty_state_clear_filter_targets).to eq([admin_documents_path])
+    expect(parsed_html.at_css('table[data-rails-table-preferences-table-key-value="admin_documents"]')).to be_present
+    expect(parsed_html.css("table tbody tr")).to be_empty
   end
 end

@@ -62,6 +62,7 @@
 | `preview-table-resizer` | Markdown preview table | iframe 内 table wrapping、localStorage、column resize、`turbo:load` / `turbo:render` refresh | current fallback path として維持。`表ツール` summary の横スクロール・列幅調整 cue、横スクロール領域の `aria-label`、列幅、列幅の保存、ヘッダー固定、先頭列固定に閉じ、full RTP 統合は具体的な不足が再現した場合だけ別 Issue にする |
 | `rfk-dependent-filter` | Git連携設定の repository / branch / source path | 上位値変更時に下位フィールドを clear し、RFK remote search URL の依存パラメータを更新する | Tom Select 初期化は gem controller に任せ、host app 側は業務依存パラメータの同期だけを担当する |
 | `section-nav` | 文書詳細のセクションナビゲーション | IntersectionObserver によるスクロール追従とタブ切り替え | app 側 Stimulus として維持 |
+| `server-rendered-tabs` | 文書権限・文書ショートカットのserver-rendered tab | roving tabindex、左右矢印・Home・Endによるfocus移動、Space activation | panel内容と選択状態はserver responseを正本とし、client側で切り替えない |
 | `sidebar` | 文書ツリー sidebar width / collapsed state | localStorage、pointer / keyboard resize | app 側 Stimulus として維持 |
 | `site-viewer-iframe-height` | Docusaurus / site viewer iframe | `setupSiteViewerIframeHeightSync()` を専用 controller から refresh する | `preview-tools` bridge から分離済み。same-origin check、message type、frame source check、minimum height、`data-docs-portal-auto-height` marker は helper 側で維持 |
 
@@ -123,6 +124,7 @@
 | `site-viewer-iframe-height` | `spec/frontend/preview_tools_source_spec.rb`, `spec/frontend/site_viewer_iframe_height_source_spec.rb` | helper import、Turbo 再描画後の再実行、entrypoint registration、same-origin / message type / frame target guard の維持 | Docusaurus renderer、iframe rendering policy、postMessage protocol、auto height UI の redesign |
 | `nav-dropdowns` | `spec/frontend/nav_dropdowns_contract_spec.rb` | controller registration、`details` markup、document listener cleanup、同時 open 抑止 / outside-click / Escape close | controller 削除、navbar 情報設計、menu item / role 導線変更 |
 | `manual-document-upload` | `spec/frontend/manual_document_upload_controller_source_spec.rb` | window / iframe document listener lifecycle、missing / inaccessible iframe no-op、single-file hidden form submit、複数 file 未対応 | 複数 file upload、upload API 化、manual upload review / apply contract、iframe preview redesign |
+| `server-rendered-tabs` | `spec/frontend/server_rendered_tabs_controller_spec.rb`, `spec/frontend/server_rendered_tabs_controller.test.ts` | entrypoint registration、roving tabindex、左右矢印の循環、Home / End、Space activation | server responseが決めるactive panel・query parameter・業務filterの変更 |
 | `preview-table-resizer` | `spec/frontend/preview_table_resizer_source_spec.rb` | preview context key、URL fallback、`表ツール` summary の横スクロール・列幅調整 cue、横スクロール領域の `aria-label`、embedded site response の context marker | Markdown table full RTP integration、column visibility / preset UI、Docusaurus renderer、preference schema / key 再設計 |
 
 ## 維持する fallback path

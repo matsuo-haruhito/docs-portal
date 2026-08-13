@@ -47,7 +47,7 @@ RSpec.describe "Admin missing document files", type: :request do
 
     sign_in_as(admin_user)
 
-    get admin_root_path
+    get admin_diagnostics_path
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("欠落ファイル詳細を開く")

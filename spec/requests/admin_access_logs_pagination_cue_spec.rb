@@ -64,8 +64,8 @@ RSpec.describe "Admin access log pagination cues", type: :request do
 
     expect(response).to have_http_status(:ok)
 
-    previous_link = pagination_link("前の200件")
-    next_link = pagination_link("次の200件")
+    previous_link = pagination_link("前の50件")
+    next_link = pagination_link("次の50件")
 
     expect(previous_link).to be_present
     expect(next_link).to be_present
@@ -73,8 +73,8 @@ RSpec.describe "Admin access log pagination cues", type: :request do
     expect(previous_link["title"]).to eq("監査ログ一覧の1ページ目へ（現在の検索条件を保持）")
     expect(next_link["aria-label"]).to eq("監査ログ一覧の3ページ目へ（現在の検索条件を保持）")
     expect(next_link["title"]).to eq("監査ログ一覧の3ページ目へ（現在の検索条件を保持）")
-    expect(previous_link.text.squish).to eq("前の200件")
-    expect(next_link.text.squish).to eq("次の200件")
+    expect(previous_link.text.squish).to eq("前の50件")
+    expect(next_link.text.squish).to eq("次の50件")
 
     common_filter_params = {
       "project_id" => pagination_project.id.to_s,
@@ -82,7 +82,7 @@ RSpec.describe "Admin access log pagination cues", type: :request do
       "from" => "2026-05-01",
       "to" => "2026-05-02"
     }
-    expect(pagination_query("前の200件")).to include(common_filter_params.merge("page" => "1"))
-    expect(pagination_query("次の200件")).to include(common_filter_params.merge("page" => "3"))
+    expect(pagination_query("前の50件")).to include(common_filter_params.merge("page" => "1"))
+    expect(pagination_query("次の50件")).to include(common_filter_params.merge("page" => "3"))
   end
 end

@@ -59,7 +59,12 @@ class Admin::ProjectsController < Admin::BaseController
     @selected_project_company = selected_project_company(@project_filter_params["company_id"])
     @projects_total_count = Project.count
 
-    Project.includes(:company).then { |scope| apply_project_filters(scope) }.order(:code)
+    filtered_scope = Project.includes(:company).then { |scope| apply_project_filters(scope) }
+    @projects_filtered_count = filtered_scope.count
+    projects, @projects_pagination = paginate_admin_list(filtered_scope.order(:code), @projects_filtered_count)
+    @project_page_params = project_page_params
+
+    projects
   end
 
   def apply_project_filters(scope)
@@ -104,6 +109,12 @@ class Admin::ProjectsController < Admin::BaseController
 
   def project_filter_params
     params.permit(:q, :active, :company_id).to_h
+  end
+
+  def project_page_params
+    page_params = @project_filter_params.dup
+    page_params["per_page"] = @projects_pagination[:per_page] if params[:per_page].present?
+    page_params.reject { |_key, value| value.blank? }
   end
 
   def set_project

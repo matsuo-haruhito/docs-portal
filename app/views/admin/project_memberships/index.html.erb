@@ -2,77 +2,77 @@
 <% table_key = :admin_project_memberships %>
 <% table_columns = project_membership_table_columns %>
 <% table_settings = rails_table_preference_settings(table_key: table_key) %>
+<% membership_filter_summaries = [] %>
+<% membership_filter_summaries << "キーワード「#{@query}」" if @query.present? %>
+<% membership_filter_summaries << "権限: #{project_membership_role_label(@role_filter)}" if @role_filter.present? %>
 
-<h1>案件所属</h1>
-
-<div class="card">
-  <h2>新規登録</h2>
-  <%= render "form", project_membership: @project_membership %>
+<div class="admin-list-header">
+  <h1>案件所属</h1>
+  <details class="admin-create-panel"<%= " open" if @project_membership.errors.any? %>>
+    <summary class="button secondary">
+      <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
+      新規登録
+    </summary>
+    <div class="admin-create-panel__body">
+      <%= render "form", project_membership: @project_membership %>
+    </div>
+  </details>
 </div>
 
-<div class="card">
-  <h2>絞り込み</h2>
-  <%= form_with url: admin_project_memberships_path, method: :get, local: true do |form| %>
-    <div class="form-grid">
-      <label>
-        検索語
-        <%= search_field_tag :q, @query, placeholder: "案件コード・案件名・メールアドレス・ユーザー名", maxlength: Admin::ProjectMembershipsController::QUERY_MAX_LENGTH %>
-      </label>
+<div class="admin-filter-toolbar">
+  <%= form_with url: admin_project_memberships_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |form| %>
+    <div class="admin-filter-toolbar__fields">
+      <%= form.rfk_search_field :q,
+        value: @query,
+        placeholder: "案件コード・案件名・メールアドレス・ユーザー名",
+        wrapper: false,
+        html: { maxlength: Admin::ProjectMembershipsController::QUERY_MAX_LENGTH, class: "admin-filter-toolbar__search" } %>
       <%= form.rfk_select :role,
-        collection: ProjectMembership.roles.keys.map { |r| [I18n.t("activerecord.access_requests.status.#{r}", default: r.humanize), r] },
+        collection: ProjectMembership.roles.keys.map { |role| [project_membership_role_label(role), role] },
         selected: @role_filter.presence,
         include_blank: "すべて",
-        wrapper: true,
-        label: "権限",
+        wrapper: false,
         allow_clear: true,
-        placeholder: "すべて" %>
+        placeholder: "権限" %>
     </div>
-    <p class="actions" style="margin-top:8px;">
-      <%= submit_tag "検索", class: "button" %>
+    <div class="admin-filter-toolbar__actions">
+      <%= form.submit "検索", class: "button" %>
       <% if @filters_applied %>
-        <%= link_to "条件をクリア", admin_project_memberships_path, class: "button secondary" %>
+        <%= link_to "クリア", admin_project_memberships_path, class: "button secondary" %>
       <% end %>
-    </p>
+    </div>
   <% end %>
 </div>
 
-<% if @project_memberships_filtered_count.positive? %>
-  <div class="card">
-    <%= render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件所属一覧の表示設定") %>
-    <p class="muted">表示設定は列の表示切り替え用です。ページ移動と1ページあたりの件数は下のページ情報で確認できます。</p>
+<% if membership_filter_summaries.any? %>
+  <div class="admin-filter-chips">
+    <% membership_filter_summaries.each do |summary| %>
+      <span class="admin-filter-chip"><%= summary %></span>
+    <% end %>
   </div>
+<% end %>
 
-  <p class="muted">
-    <% start_index = ((@project_memberships_page - 1) * @project_memberships_per_page) + 1 %>
-    <% end_index = [start_index + @project_memberships.size - 1, @project_memberships_filtered_count].min %>
-    表示中: <%= start_index %>-<%= end_index %>件 / 全<%= @project_memberships_filtered_count %>件（1ページ<%= @project_memberships_per_page %>件）
-    <% if @filters_applied %>
-      <br><span class="muted">絞り込み中</span>
-    <% end %>
-  </p>
+<div class="admin-list-meta">
+  <span class="admin-list-meta__count"><%= @project_memberships_filtered_count %>件</span>
+  <% if @project_memberships.any? %>
+    <%= render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件所属一覧の表示設定") %>
+  <% end %>
+</div>
 
-  <p class="actions">
-    <% if @project_memberships_page > 1 %>
-      <%= link_to "前へ", admin_project_memberships_path(page: @project_memberships_page - 1, per_page: @project_memberships_per_page, q: @query, role: @role_filter), class: "button secondary" %>
-    <% else %>
-      <span class="button secondary" aria-disabled="true">前へ（先頭）</span>
-    <% end %>
-    <span class="muted">Page <%= @project_memberships_page %> / <%= @project_memberships_total_pages %></span>
-    <% if @project_memberships_total_pages == 1 %>
-      <span class="muted">1ページのみ</span>
-    <% elsif @project_memberships_page == 1 %>
-      <span class="muted">先頭ページ</span>
-    <% elsif @project_memberships_page == @project_memberships_total_pages %>
-      <span class="muted">最終ページ</span>
-    <% end %>
-    <% if @project_memberships_page < @project_memberships_total_pages %>
-      <%= link_to "次へ", admin_project_memberships_path(page: @project_memberships_page + 1, per_page: @project_memberships_per_page, q: @query, role: @role_filter), class: "button secondary" %>
-    <% else %>
-      <span class="button secondary" aria-disabled="true">次へ（最終）</span>
-    <% end %>
-  </p>
-
-  <%= table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do %>
+<% if @project_memberships.any? %>
+  <%= table_preferences_table_tag(
+    table_key: table_key,
+    settings: table_settings,
+    columns: table_columns,
+    scroll_wrapper: true,
+    wrapper_options: {
+      class: "table-scroll",
+      role: "region",
+      tabindex: 0,
+      aria: { label: "案件所属一覧" }
+    }
+  ) do %>
+    <caption class="table-caption">案件所属一覧</caption>
     <thead>
       <tr>
         <th data-rails-table-preferences-column-key="project">案件</th>
@@ -94,24 +94,52 @@
           <td data-rails-table-preferences-column-key="user"><%= project_membership_user_option_label(membership.user) %></td>
           <td data-rails-table-preferences-column-key="role"><span class="badge"><%= project_membership_role_label(membership) %></span></td>
           <td class="actions" data-rails-table-preferences-column-key="actions">
-            <%= edit_link_to "編集", edit_admin_project_membership_path(membership) %>
-            <%= delete_link_to "削除", admin_project_membership_path(membership), confirm: "案件所属を削除しますか？このユーザーは案件へアクセスできなくなります。" %>
+            <% membership_label = "#{membership.project.name} / #{membership.user.display_name}" %>
+            <%= link_to edit_admin_project_membership_path(membership), class: "button secondary", aria: { label: "#{membership_label}の案件所属を編集" }, title: "案件所属を編集" do %>
+              <i class="bi bi-pencil" aria-hidden="true"></i>
+              <span class="visually-hidden">編集</span>
+            <% end %>
+            <%= button_to admin_project_membership_path(membership), method: :delete, class: "button danger", aria: { label: "#{membership_label}の案件所属を削除" }, title: "案件所属を削除", form: { data: { turbo_confirm: "案件所属を削除しますか？このユーザーは案件へアクセスできなくなります。" } } do %>
+              <i class="bi bi-trash" aria-hidden="true"></i>
+              <span class="visually-hidden">削除</span>
+            <% end %>
           </td>
         </tr>
       <% end %>
     </tbody>
   <% end %>
-<% else %>
-  <div class="card">
-    <% if @filters_applied %>
-      <p class="muted">条件に一致する案件所属はありません。検索語や権限の条件を見直してください。</p>
-      <p class="actions">
-        <%= link_to "条件をクリア", admin_project_memberships_path, class: "button secondary" %>
-      </p>
-    <% else %>
-      <p class="muted">まだ案件所属はありません。</p>
-      <p class="muted">上の「新規登録」で案件、ユーザー、権限を選んで保存すると、ここに一覧が表示されます。</p>
-      <p class="muted">この画面では、案件アクセスの入口になる所属と権限を確認できます。</p>
+
+  <nav class="pagination" aria-label="案件所属一覧ページ">
+    <div class="admin-pagination">
+      <% if @project_memberships_page > 1 %>
+        <%= link_to "前へ", admin_project_memberships_path(page: @project_memberships_page - 1, per_page: @project_memberships_per_page, q: @query, role: @role_filter), class: "button secondary" %>
+      <% else %>
+        <span class="button secondary" aria-disabled="true">前へ（先頭）</span>
+      <% end %>
+      <span class="muted"><%= @project_memberships_page %> / <%= @project_memberships_total_pages %>ページ</span>
+      <% if @project_memberships_total_pages == 1 %>
+        <span class="muted">1ページのみ</span>
+      <% elsif @project_memberships_page == 1 %>
+        <span class="muted">先頭ページ</span>
+      <% elsif @project_memberships_page == @project_memberships_total_pages %>
+        <span class="muted">最終ページ</span>
+      <% end %>
+      <% if @project_memberships_page < @project_memberships_total_pages %>
+        <%= link_to "次へ", admin_project_memberships_path(page: @project_memberships_page + 1, per_page: @project_memberships_per_page, q: @query, role: @role_filter), class: "button secondary" %>
+      <% else %>
+        <span class="button secondary" aria-disabled="true">次へ（最終）</span>
+      <% end %>
+    </div>
+    <% start_index = ((@project_memberships_page - 1) * @project_memberships_per_page) + 1 %>
+    <% end_index = [start_index + @project_memberships.size - 1, @project_memberships_filtered_count].min %>
+    <span class="muted">表示中: <%= start_index %>-<%= end_index %>件 / 全<%= @project_memberships_filtered_count %>件（1ページ<%= @project_memberships_per_page %>件）</span>
+  </nav>
+<% elsif @filters_applied %>
+  <%= render EmptyStateComponent.new(heading: "条件に一致する案件所属がありません", description: "キーワードや権限を変更するか、条件をクリアしてください。") do |component| %>
+    <% component.with_action do %>
+      <%= link_to "条件をクリア", admin_project_memberships_path, class: "button secondary" %>
     <% end %>
-  </div>
-<% end %>>
+  <% end %>
+<% else %>
+  <%= render EmptyStateComponent.new(heading: "案件所属が未登録です", description: "「新規登録」で案件、ユーザー、権限を選んでください。") %>
+<% end %>

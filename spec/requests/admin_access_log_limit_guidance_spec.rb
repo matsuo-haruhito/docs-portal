@@ -26,7 +26,7 @@ RSpec.describe "Admin access log display limit guidance", type: :request do
     )
   end
 
-  it "does not show display limit guidance below 200 rows" do
+  it "does not show display limit guidance below 50 rows" do
     create_access_log!(action_type: :download, target_type: "zip", target_name: "audit.zip")
 
     sign_in_as(admin_user)
@@ -34,11 +34,11 @@ RSpec.describe "Admin access log display limit guidance", type: :request do
     get admin_access_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示中: 1件 / 最新200件までを表示")
-    expect(page_text).not_to include("表示上限の200件に達しています。")
+    expect(page_text).to include("表示中: 1件 / 1ページ50件")
+    expect(page_text).not_to include("1ページの表示上限50件に達しています。")
   end
 
-  it "shows guidance when the latest 200 row display limit is reached" do
+  it "shows guidance when the 50 row page limit is reached" do
     base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
 
     205.times do |index|
@@ -55,14 +55,14 @@ RSpec.describe "Admin access log display limit guidance", type: :request do
     get admin_access_logs_path
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示上限の200件に達しています。")
-    expect(page_text).to include("古い証跡を探す場合は、案件・会社・ユーザー・対象名・文書名などの条件を追加してください。")
+    expect(page_text).to include("1ページの表示上限50件に達しています。")
+    expect(page_text).to include("古い証跡は次ページで確認できます。")
   end
 
   it "shows filtered guidance when the display limit is reached with filters" do
     base_time = Time.zone.parse("2026-05-01 00:00:00 UTC")
 
-    200.times do |index|
+    50.times do |index|
       create_access_log!(
         action_type: :view,
         target_type: "page",
@@ -76,7 +76,7 @@ RSpec.describe "Admin access log display limit guidance", type: :request do
     get admin_access_logs_path(action_type: "view")
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("表示上限の200件に達しています。")
-    expect(page_text).to include("目的の証跡が見つからない場合は、期間・案件・会社・ユーザー・対象名・文書名などの条件を追加してさらに絞り込んでください。")
+    expect(page_text).to include("1ページの表示上限50件に達しています。")
+    expect(page_text).to include("高度条件を追加してさらに絞り込んでください。")
   end
 end

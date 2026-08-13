@@ -59,19 +59,24 @@ RSpec.describe "Admin access log export actions", type: :request do
     )
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("CSV export")
+    expect(page_text).to include("表示中ページCSV")
     expect(page_text).to include("metadata確認")
-    expect(page_text).to include("CSV は監査ログ行データを固定列で出力します。条件一致の最新200件と、いま開いている表示中ページを使い分けてください。")
-    expect(page_text).to include("CSV export は現在の絞り込み条件に一致する最新200件を、監査用途の固定列で出力します。")
+    expect(page_text).to include("表示中の最大50件だけを固定列で出力します。")
     expect(page_text).to include("metadata JSON は監査ログ行データではなく、条件・scope・page・summary を確認する補助出力です。")
-    expect(page_text).to include("ページ移動中でも、CSV export は表示中ページではなく条件一致の最新200件が対象です。")
+    expect(page_text).to include("条件一致の最新200件が対象です。")
+
+    export_disclosure = parsed_html.css("details.guidance-disclosure").find do |details|
+      details.at_css("summary")&.text&.squish == "export補助"
+    end
+    expect(export_disclosure).to be_present
+    expect(export_disclosure["open"]).to be_nil
 
     csv_link = export_link("現在の条件でCSV export（最新200件）")
-    current_page_csv_link = export_link("表示中ページをCSV export（最大200件）")
+    current_page_csv_link = export_link("表示中ページをCSV export（最大50件）")
     metadata_link = export_link("CSV条件metadata JSON")
     current_page_metadata_link = export_link("表示中ページmetadata JSON")
     csv_query = export_link_query("現在の条件でCSV export（最新200件）")
-    current_page_csv_query = export_link_query("表示中ページをCSV export（最大200件）")
+    current_page_csv_query = export_link_query("表示中ページをCSV export（最大50件）")
     metadata_query = export_link_query("CSV条件metadata JSON")
     current_page_metadata_query = export_link_query("表示中ページmetadata JSON")
 
@@ -84,6 +89,10 @@ RSpec.describe "Admin access log export actions", type: :request do
       "to" => "2026-05-10"
     }
 
+    expect(csv_link.ancestors("details")).to be_empty
+    expect(current_page_csv_link.ancestors("details.guidance-disclosure")).to be_present
+    expect(metadata_link.ancestors("details.guidance-disclosure")).to be_present
+    expect(current_page_metadata_link.ancestors("details.guidance-disclosure")).to be_present
     expect(URI.parse(csv_link["href"]).path).to end_with(".csv")
     expect(URI.parse(current_page_csv_link["href"]).path).to end_with(".csv")
     expect(URI.parse(metadata_link["href"]).path).to end_with(".json")
@@ -137,7 +146,7 @@ RSpec.describe "Admin access log export actions", type: :request do
 
     [
       export_link_query("現在の条件でCSV export（最新200件）"),
-      export_link_query("表示中ページをCSV export（最大200件）"),
+      export_link_query("表示中ページをCSV export（最大50件）"),
       export_link_query("CSV条件metadata JSON"),
       export_link_query("表示中ページmetadata JSON")
     ].each do |query|

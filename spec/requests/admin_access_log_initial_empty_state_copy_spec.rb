@@ -24,7 +24,7 @@ RSpec.describe "Admin access log initial empty state copy", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("まだ監査ログはありません。")
-    expect(page_text).to include("操作が記録されると、最新200件をここで確認できます。")
+    expect(page_text).to include("操作が記録されると、最新50件をここで確認できます。")
     expect(page_text).to include("監査ログが記録された後は、CSV export・metadata確認・表示設定で出力条件と一覧列を確認できます。")
     expect(page_text).not_to include("条件に一致する監査ログはありません。")
     expect(page_text).not_to include("条件をクリア")
@@ -38,7 +38,7 @@ RSpec.describe "Admin access log initial empty state copy", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(page_text).to include("条件に一致する監査ログはありません。")
-    expect(page_text).to include("絞り込み条件を見直すか、「条件をクリア」で最新200件を確認してください。")
+    expect(page_text).to include("最新50件を確認してください")
     expect(page_text).to include("条件をクリア")
     expect(page_text).not_to include("まだ監査ログはありません。")
     expect(page_text).not_to include("監査ログが記録された後は、CSV export・metadata確認・表示設定で出力条件と一覧列を確認できます。")

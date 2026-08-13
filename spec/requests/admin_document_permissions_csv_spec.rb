@@ -138,6 +138,31 @@ RSpec.describe "Admin document permissions CSV", type: :request do
     expect(csv_rows.first["会社名"]).to eq("Fallback Company")
   end
 
+  it "exports every filtered row regardless of HTML pagination" do
+    document = create(:document, title: "全件出力確認文書", slug: "all-permissions-export")
+    26.times do |index|
+      create(
+        :document_permission,
+        document:,
+        company: create(:company, name: format("全件出力会社 %02d", index))
+      )
+    end
+
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path(format: :csv), params: {
+      q: "全件出力確認",
+      view: "assignments",
+      page: 2
+    }
+
+    expect(response).to have_http_status(:ok)
+    expect(csv_rows.size).to eq(26)
+    expect(csv_rows.map { _1["会社名"] }).to contain_exactly(
+      *26.times.map { |index| format("全件出力会社 %02d", index) }
+    )
+  end
+
   it "keeps CSV export admin-only" do
     create(:document_permission)
     sign_in_as(create(:user, :external))

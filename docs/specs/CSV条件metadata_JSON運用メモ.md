@@ -12,9 +12,9 @@
 
 ## 監査ログ
 
-`admin/access_logs` では、`現在の条件でCSV export（最新200件）` の隣に `CSV条件metadata JSON` が出ます。
+`admin/access_logs` では、`現在の条件でCSV export（最新200件）` を主導線として常時表示し、`export補助` Disclosure内で `CSV条件metadata JSON` と表示中ページCSV / metadataを確認できます。
 
-監査ログの metadata JSON は、現在の filter 条件に一致する最新 200 件 CSV の companion として読みます。page 移動中でも、CSV と metadata は表示中 page ではなく current filter の最新 200 件を対象にします。
+監査ログの latest metadata JSON は、現在の filter 条件に一致する最新 200 件 CSV の companion として読みます。page 移動中でも、latest CSV と metadata は表示中 page ではなく current filter の最新 200 件を対象にします。表示中ページCSV / metadataはHTML一覧と同じ最大50件を対象にし、`row_limit: 50`と`page`を持ちます。
 
 主に確認する項目:
 

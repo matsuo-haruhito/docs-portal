@@ -7,6 +7,23 @@ RSpec.describe "Admin document permissions", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  def expect_server_rendered_tab_contract(active_tab_id:, active_panel_id:)
+    tablist = parsed_html.at_css("nav[role='tablist']")
+    tabs = tablist.css("[role='tab']")
+    active_tab = parsed_html.at_css("##{active_tab_id}")
+
+    expect(tablist["data-controller"].to_s.split).to include("server-rendered-tabs")
+    expect(tabs.size).to eq(2)
+    expect(tabs.map { _1["aria-controls"] }.uniq).to eq([active_panel_id])
+    expect(tabs).to all(satisfy { parsed_html.at_css("##{_1['aria-controls']}").present? })
+    expect(tabs).to all(satisfy { _1["data-server-rendered-tabs-target"] == "tab" })
+    expect(tabs).to all(satisfy { _1["data-action"].to_s.split.include?("keydown->server-rendered-tabs#keydown") })
+    expect(active_tab["aria-selected"]).to eq("true")
+    expect(active_tab["tabindex"]).to eq("0")
+    expect(tabs.reject { _1["id"] == active_tab_id }.map { _1["tabindex"] }.uniq).to eq(["-1"])
+    expect(parsed_html.at_css("##{active_panel_id}[role='tabpanel'][aria-labelledby='#{active_tab_id}']")).to be_present
+  end
+
   def parsed_json
     JSON.parse(response.body)
   end
@@ -75,32 +92,39 @@ RSpec.describe "Admin document permissions", type: :request do
     section_text("権限一覧")
   end
 
-  it "shows empty-state guidance when no document permissions exist" do
+  it "renders only the assignments table for the default view" do
+    create(:document_permission)
     sign_in_as(admin_user)
 
     get admin_document_permissions_path
 
     expect(response).to have_http_status(:ok)
-    expect(heading_texts).to include("文書別の権限概要", "適用対象", "権限一覧")
-    expect(page_text.scan("まだ権限は登録されていません。").size).to eq(1)
-    expect(page_text).to include("まだ権限は登録されていません。登録後は、文書ごとの権限数と閲覧/ダウンロード内訳をここで確認できます。")
-    expect(page_text).to include("個別付与行は登録後に表示されます。まずは上の「新規登録」で文書名と、会社またはユーザーのどちらかを指定して 1 件登録してください。")
-    expect(page_text).to include("登録後は、会社別・ユーザー別の対象主体や権限内容をこの一覧で確認、編集できます。")
-    expect(page_text).to include("会社全体に付与するか、特定ユーザー1名に付与するかを選びます。")
-    expect(page_text).to include("会社全体に同じ権限を付与する場合だけ選択します。")
-    expect(page_text).to include("特定の1名にだけ権限を付与する場合だけ選択します。")
-    expect(page_text).to include("表示中: 0件 / 登録済みの文書権限を表示")
-    expect(select_placeholder("document_permission[company_id]")).to eq("会社向けに付与する場合に選択")
-    expect(select_placeholder("document_permission[user_id]")).to eq("ユーザー向けに付与する場合に選択")
-    expect(link_texts).not_to include("条件をクリア")
-    expect(page_text).not_to include("表示中: 0件 / 条件に一致する文書権限を表示")
-    expect(page_text).not_to include("会社単位かユーザー単位のどちらか一方を指定してください。")
-    expect(page_text).not_to include("下段の「権限一覧」にある個別付与行")
-    expect(page_text).not_to include("下段の個別権限を見る")
-    expect(page_text).not_to include("この文書の個別付与行")
-    expect(page_text).not_to include("権限概要の表示設定")
-    expect(page_text).not_to include("権限一覧の表示設定")
-    expect(table_preference_column_keys).to be_empty
+    expect_server_rendered_tab_contract(
+      active_tab_id: "document-permissions-assignments-tab",
+      active_panel_id: "document-permissions-assignments-panel"
+    )
+    expect(parsed_html.at_css("#document-permissions-assignments-panel")).to be_present
+    expect(parsed_html.at_css("#document-permissions-overview-panel")).to be_nil
+    expect(parsed_html.at_css('table[data-rails-table-preferences-table-key-value="admin_document_permissions"]')).to be_present
+    expect(parsed_html.at_css('table[data-rails-table-preferences-table-key-value="admin_document_permission_overview"]')).to be_nil
+  end
+
+  it "renders only the overview table for the overview view" do
+    create(:document_permission)
+    sign_in_as(admin_user)
+
+    get admin_document_permissions_path(view: "overview")
+
+    expect(response).to have_http_status(:ok)
+    expect_server_rendered_tab_contract(
+      active_tab_id: "document-permissions-overview-tab",
+      active_panel_id: "document-permissions-overview-panel"
+    )
+    expect(parsed_html.at_css("#document-permissions-overview-panel")).to be_present
+    expect(parsed_html.at_css("#document-permissions-assignments-panel")).to be_nil
+    expect(parsed_html.at_css('table[data-rails-table-preferences-table-key-value="admin_document_permission_overview"]')).to be_present
+    expect(parsed_html.at_css('table[data-rails-table-preferences-table-key-value="admin_document_permissions"]')).to be_nil
+    expect(parsed_html.at_css('input[name="view"]')["value"]).to eq("overview")
   end
 
   it "renders the document field as the rails_fields_kit error-surface canary" do

@@ -7,13 +7,19 @@ RSpec.describe "Admin document due soon filters", type: :request do
     Nokogiri::HTML(response.body)
   end
 
-  def page_text
-    parsed_html.text.squish
-  end
-
   def title_targets
     parsed_html.css("table tbody tr").filter_map do |row|
       row.at_css(%(td[data-rails-table-preferences-column-key="title"] a))&.[]("href")
+    end
+  end
+
+  def filter_chip_texts
+    parsed_html.css(".admin-filter-chip").map { |node| node.text.squish }
+  end
+
+  def lifecycle_disclosure
+    parsed_html.css("details.filter-details").find do |details|
+      details.at_css("summary")&.text&.squish == "lifecycle確認"
     end
   end
 
@@ -29,10 +35,11 @@ RSpec.describe "Admin document due soon filters", type: :request do
     get admin_documents_path, params: { q: "DUE-SOON", retention: "due_soon" }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 1件")
-    expect(page_text).to include("保管期限: 保管期限が30日以内")
-    expect(page_text).to include("保管期限・廃棄候補の絞り込み中です")
-    expect(page_text).not_to include("自動削除", "非可逆")
+    expect(parsed_html.at_css(".admin-list-meta__count")&.text&.squish).to eq("1件")
+    expect(filter_chip_texts).to include("保管期限: 保管期限が30日以内")
+    expect(lifecycle_disclosure).to be_present
+    expect(lifecycle_disclosure["open"]).to be_nil
+    expect(lifecycle_disclosure.at_css('a[href*="lifecycle_handoff"]')).to be_present
     expect(title_targets).to contain_exactly(project_document_path(project, due_soon_document.slug))
     expect(title_targets).not_to include(
       project_document_path(project, overdue_document.slug),
@@ -55,10 +62,10 @@ RSpec.describe "Admin document due soon filters", type: :request do
     end.not_to change { Document.order(:id).pluck(:id, :archived_at, :discard_candidate_at) }
 
     expect(response).to have_http_status(:ok)
-    expect(page_text).to include("検索結果: 1件")
-    expect(page_text).to include("廃棄候補: 廃棄候補が30日以内")
-    expect(page_text).to include("必要な場合だけ行単位で編集・アーカイブ・復元")
-    expect(page_text).not_to include("自動通知", "自動削除")
+    expect(parsed_html.at_css(".admin-list-meta__count")&.text&.squish).to eq("1件")
+    expect(filter_chip_texts).to include("廃棄候補: 廃棄候補が30日以内")
+    expect(lifecycle_disclosure).to be_present
+    expect(lifecycle_disclosure["open"]).to be_nil
     expect(title_targets).to contain_exactly(project_document_path(project, due_soon_document.slug))
     expect(title_targets).not_to include(
       project_document_path(project, overdue_document.slug),

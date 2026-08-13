@@ -30,7 +30,7 @@ RSpec.describe "admin users source" do
     end
   end
 
-  it "keeps user actions and the empty state in the same view" do
+  it "keeps user actions and both empty states in the same view" do
     aggregate_failures do
       expect(index_source).to include("edit_link_to \"編集\"")
       expect(index_source).to include("delete_link_to \"削除\"")
@@ -41,16 +41,15 @@ RSpec.describe "admin users source" do
     end
   end
 
-  it "summarizes applied filters without changing table preference wiring" do
+  it "uses the list-first disclosure, filter, chip, and count structure" do
     aggregate_failures do
-      expect(index_source).to include("user_filter_summaries")
-      expect(index_source).to include("user_filter_result_note")
-      expect(index_source).to include("適用中:")
-      expect(index_source).to include("検索結果:")
-      expect(index_source).to include("列の表示設定は下の「ユーザー一覧の表示設定」で調整できます")
-      expect(index_source).to include("表示できるユーザーがないため、列の表示設定は表示していません")
-      expect(index_source).to include("render ColumnSettingsComponent.new")
-      expect(index_source).to include("table_preferences_table_tag")
+      expect(index_source).to include("details.admin-create-panel open=(@user.errors.any?)")
+      expect(index_source).to include("form.rfk_search_field :q")
+      expect(index_source).to include("form.rfk_select :active")
+      expect(index_source).to include(".admin-filter-toolbar")
+      expect(index_source).to include(".admin-filter-chips")
+      expect(index_source).to include(".admin-list-meta__count")
+      expect(index_source).not_to include("user_filter_result_note")
     end
   end
 end
