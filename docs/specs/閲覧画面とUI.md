@@ -2,6 +2,116 @@
 
 この文書は、利用者画面、管理画面、viewer 導線の正本です。
 
+## Visual design system
+
+### 基本原則
+
+- 画面を豪華にするのではなく、重要なものだけを強くし、それ以外を静かにする
+- 通常情報はNeutral、操作はAction Blue、ブランドは限定的にOrange、警告・危険はsemantic colorで表す
+- UI構造、認可、業務scope、RTP `table_key`、rfk入力、dry-run境界はvisual改善のために変更しない
+- 管理画面は1440pxを基準にPC優先で検証する。今回のvisual改善ではモバイル固有の再設計・撮影を行わないが、既存レスポンシブ表示を意図的に壊さない
+
+### CSS責務境界
+
+- `:root`のtoken定義と最小resetを除き、`header`、`main`、`button`、`input`等のbare element selectorへプロダクト固有の見た目を持たせない
+- Shellとcomponentの見た目は`.app-header`、`.user-nav`、`.admin-header`、`.admin-main`、`.page-header`、`.button`、`.form-control`等のclassへscopeする
+- component専用CSSをgeneric Bootstrap overrideより優先し、`bootstrap_overrides.css`からSidebar toggle、Column Settings、RTP editor等を意図せず上書きしない
+- global `header`のdark background / shadowをUser NavbarやAdmin Dashboard headerへ漏らさない
+- global `main`のsurfaceを`.admin-main`へ漏らさず、Admin workspace全体を巨大な白いCardにしない
+- bare `button` ruleでSidebar toggleやutility buttonをPrimary化しない
+- `input { width: 100% }`を使わず、text系input、select、textareaだけをfull width対象にする。submit buttonはPCでcontent widthとする
+
+### Design tokens
+
+```css
+:root {
+  --ui-bg: #f6f8fb;
+  --ui-surface: #ffffff;
+  --ui-surface-subtle: #f8fafc;
+  --ui-surface-muted: #f1f5f9;
+  --ui-surface-hover: #fafcff;
+  --ui-text: #1f2937;
+  --ui-text-subtle: #475569;
+  --ui-muted: #64748b;
+  --ui-on-action: #ffffff;
+  --ui-border: #e2e8f0;
+  --ui-border-strong: #cbd5e1;
+  --ui-action: #0f62fe;
+  --ui-action-hover: #0b57d0;
+  --ui-action-soft: #eff6ff;
+  --ui-brand: #ff5000;
+  --ui-success: #15803d;
+  --ui-warning: #b45309;
+  --ui-danger: #dc2626;
+  --ui-danger-text: #b91c1c;
+  --ui-danger-border: #fecaca;
+  --ui-page-header: #102a43;
+  --ui-page-header-subtitle: rgba(255, 255, 255, 0.72);
+  --ui-radius-sm: 4px;
+  --ui-radius-md: 6px;
+  --ui-radius-lg: 8px;
+  --ui-shadow-floating: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+```
+
+- Orangeはブランド用途に限定し、通常Card、検索領域、generic badge、ID / codeへ使わない
+- 通常Cardはwhite surface、neutral border、8px radius、shadowなしを基本とする
+- ShadowはDropdown、Dialog、Popover、Floating panel等の浮いているUIだけに使う
+- radiusは小要素4px、Button / Input / Badge 6px、Card / Panel 8px、Dialog / Dropdown 10〜12px、件数pill 999pxを基準とする
+
+### Typographyと密度
+
+- H1は26〜28px / 700、H2は20px / 700、H3は16px / 700を基準とし、Admin H1で32px以上を常用しない
+- Public Bodyは15px、Admin Bodyは14px、tableは13.5〜14px、table headerは13px / 600、help / captionは12〜13pxを基準とする
+- 管理一覧のrowは36〜44px程度とし、Header rowをneutral grayでbodyから区別する
+
+### SurfaceとShell
+
+- Adminはneutral page backgroundの上にScreen title、Filter toolbar、List meta、Table / 必要なCardを置く
+- `.admin-main`はtransparent、borderなし、radiusなし、shadowなしとし、画面全体を1枚のCardで囲わない
+- 利用者Navbarはwhiteを維持し、Dropdown summaryはneutral text、hover / activeだけAction Blueとする
+- Dark PageHeaderは`.page-header`へscopeし、subtitleを`rgba(255, 255, 255, 0.72)`程度で明瞭にする
+- desktopではAdmin Sidebarのhamburgerを表示しない。headingは11.5px程度、link行高は30〜32px程度とする
+
+### Button / Badge / Code
+
+- Primaryは登録、保存、検索、dry-run作成、実行に限定し、Solid Action Blueとする
+- Secondaryは戻る、CSV、新規登録Disclosure、補助操作に使い、white / outlineとする
+- Utilityは列設定、技術詳細、metadata、表示設定に使い、neutral outline / ghostとする
+- Dangerは通常white + danger text / borderとし、hover時だけsolid dangerにする。一覧でsolid red buttonを反復しない
+- generic `.badge`、role、カテゴリ、Filter chipはNeutralを基本とし、semanticな状態だけStatusBadge modifierを使う
+- Badge / Status / Filter chipのradiusは6px、件数だけpillとする
+- `table code`と`.identifier-code`はmuted neutralで表示し、警告色に見せない
+
+### Table / Row action / Pagination
+
+- table headerは`var(--ui-surface-subtle)`、13px / 600、bodyは14pxを基準にする。hoverは薄いneutral blueだけを使う
+- 主識別子を第一導線にし、操作列には現在許可された補助操作だけを表示する
+- 編集はneutral / secondary、削除はoutline dangerとし、低頻度操作はoverflow menuへまとめることを検討する
+- icon-only操作にはBootstrap Icons、対象を特定できる`aria-label`、`title`を付ける。操作列幅は実際のボタン数に合わせ、110pxへ一律固定しない
+- `total_pages == 1`ではpager navを表示しない。総件数は表示し、CSV等のexportはpagerと独立させる
+- 1ページ時に`前へ（先頭）`、`1ページのみ`、`次へ（最終）`を表示しない
+
+### Server-rendered tab
+
+- 文書権限と保存済みはview queryによるserver-rendered tab構造を維持し、active viewだけを描画する
+- 各tabの`aria-controls`は対応する固定panel IDを指定し、inactive tabがactive panel IDを参照しない
+- 文書権限は`document-permissions-assignments-panel`と`document-permissions-overview-panel`を使う
+- view param、filter、pager、行操作後の戻り先を維持する
+
+### 表示用語
+
+| 内部・旧表記 | 画面表示 |
+| --- | --- |
+| 企業 | 会社 |
+| ショートカット | 保存済み |
+| ダッシュボード（利用者側） | ホーム |
+| 管理ダッシュボード | 管理概要 |
+| Diagnostics / 運用診断 | 運用・診断 |
+| アクセスログ | 監査ログ |
+
+route、controller、model、DB field等の内部識別子はこの表示用語統一だけを理由に変更しない。
+
 ## 画面
 
 - ブランド名クリックで TOP に戻る
@@ -26,17 +136,21 @@
 - 管理診断は状態・カテゴリ・日本語の判定結果を通常表示し、環境変数名、内部check key、path、設定値などの技術詳細は行内の初期状態を閉じたDisclosureから確認できるようにする
 - import入力画面のenumは日本語表示し、ファイル選択はキーボード操作可能なdropzoneを主表示とする。ブラウザ標準のファイル入力文言は重複表示せず、選択ファイル名を日本語の状態表示で伝える
 - 管理一覧の複合検索はrfk入力へ統一し、短い状態列と操作列には内容に応じた初期幅を指定する。複数の状態を1セルへ表示する場合も主要値を2行以内にまとめ、詳細説明で行高を増やさない
-- 管理マスタ一覧は `header + 閉じた新規登録Disclosure + filter toolbar + filter chips + 件数/列設定 + RTP table + pagination` のlist-first順序へ統一し、validation error時だけ新規登録Disclosureを開く
-- 案件所属一覧はlist-first順序へ統一し、案件・ユーザーのremote search、role、25件単位のpagination、最大100件の境界を維持する。RTP tableはcaptionとフォーカス可能な横スクロール領域を持ち、paginationはtableの後に配置する
+- 管理マスタ一覧は `header + 閉じた新規登録Disclosure + filter toolbar + filter chips + 件数/列設定 + RTP table + 条件付きpagination` のlist-first順序へ統一し、validation error時だけ新規登録Disclosureを開く。pagerは2ページ以上の場合だけ表示する
+- 案件所属一覧はlist-first順序へ統一し、案件・ユーザーのremote search、role、25件単位のpagination、最大100件の境界を維持する。RTP tableはcaptionとフォーカス可能な横スクロール領域を持ち、2ページ以上の場合だけtableの後にpaginationを配置する
 - 文書マスタ一覧はキーワードとアーカイブ状態だけを常時表示し、カテゴリ、種別、公開範囲、正本区分、保管期限、廃棄候補を `詳細条件` Disclosureへ格納する。一括編集・lifecycle補助導線も初期状態を閉じたDisclosureに分離する
 - tooltipの起動要素はBootstrap Iconsとアクセシブルな名前を持ち、hoverとkeyboard focusの両方で表示する。長文をtooltip内で切り捨てず、200文字を超える説明はDisclosureとして全文へ到達できるようにする
 - RTP一覧は `table_preferences_table_tag` の `scroll_wrapper: true` を使い、横スクロールをtable本体ではなくフォーカス可能なwrapperへ持たせる。table本体はnative table layoutを維持し、列表示・列順・列幅・固定列のStimulus反映を妨げない
 - RTP列設定は各行の日本語列名、表示、順序、幅を同じviewport内で確認できるnative `dialog` modalとする。desktopでは最大72rem、画面高80vh以内とし、列一覧をmodal内部でスクロールして操作ボタンを下部に維持する。Escape・背景クリック・閉じるボタンで閉じ、起動ボタンへfocusを戻す。table側で変更した列順・列幅は同じ`table_key`のeditorへ同期してから保存する
 - RTPのtable rootにはpreset用targetが存在しないため、host controllerはtable rootでpreset取得を開始せず、busy状態によりheader DnD・resize handleが無効化されないようにする。editor rootのpreset保存機能は維持する
+- 管理ユーザー一覧は、1440pxで操作列まで確認できるよう、デフォルト幅を`表示名 180 / メール 240 / 種別 110 / 会社 180 / 状態 80 / 操作 100`程度に収める。「ユーザー名（表示用）」と「表示名」は両方を初期表示せず、用途を区別できる日本語名に整理したうえで片方をdefault hiddenにする
+- 管理案件一覧は、案件codeを180px前後・ellipsis表示とし、長いcodeが案件名へ重ならないようにする。完全値は`title`またはTooltipから確認できるようにし、会社を「企業」と表示しない
 - 案件横断の閲覧可能文書一覧では、主要5〜8列だけを初期表示し、横長のテーブルは横スクロールで閲覧できるようにする
 - 案件横断の閲覧可能文書一覧では、`キーワード`、`案件`、`タグ`を常時表示し、`カテゴリ`、`ファイル種`、`公開範囲`、`HTML生成済み`、`添付あり`、`PDFあり`、`図あり`は同じ検索form内の`追加条件` Disclosureへ格納する。追加条件が適用中の場合だけ初期表示を開く
-- 文書ショートカット一覧は`お気に入り`、`後で読む`、`最近見た文書`の3タブとし、1回の応答ではactive tabのpanelだけを描画する。検索、条件クリア、ページ移動、行操作では`view`を保持し、不正な`view`は`お気に入り`へ正規化する
-- dashboardの`最近見た文書`に候補がある場合の一覧導線は`GET /document_bookmarks?view=recent`へ直接つなぎ、候補がない場合の`文書を探す`は`GET /documents`を維持する
+- 案件横断の閲覧可能文書一覧では件数、条件付きpagination、列設定を近接配置する。`ヒット理由`はキーワード検索時だけ表示し、`q.blank?`ではdefault hiddenとする。`最終更新`は2行へ折り返さず、必要なら`08/13 23:09`程度へ短縮する
+- 保存済み一覧は`お気に入り`、`後で読む`、`最近見た文書`の3タブとし、1回の応答ではactive tabのpanelだけを描画する。検索、条件クリア、ページ移動、行操作では`view`を保持し、不正な`view`は`お気に入り`へ正規化する
+- 保存済み一覧は、active tabですでに用途が明示されている場合、`対象: お気に入り`や行ごとの`最近見た文書`等を重複表示しない。Badgeは行ごとに異なる状態を示す場合だけ使う
+- ホームの`最近見た文書`に候補がある場合の一覧導線は`GET /document_bookmarks?view=recent`へ直接つなぎ、候補がない場合の`文書を探す`は`GET /documents`を維持する
 - 文書ツリーの行は `Document` を単位とし、Markdown / HTMLだけでなく、元ファイルを主要表示対象とするPDF、Office、CSV / TSV、ZIPのfile-backed文書も表示する。画像やCSSなど本文付随assetを独立行にはしない
 - 文書ツリーの注意表示はDocusaurus build状態だけでは判定せず、現在の利用者が最新版の生成HTMLまたは埋め込みviewerへ到達できない場合にだけ「プレビュー画面はまだ生成されていません」と表示する。HTML `DocumentFile`をsame-origin iframeで閲覧できる場合は注意表示を出さない
 - Markdown文書で生成HTMLを利用できず元のMarkdownファイルをiframe表示している場合は、本文が閲覧できても正常な生成HTML表示とは扱わない。iframe直前に「元のMarkdownを表示中」を常時表示し、生成待機中・生成中・再試行予定・成果物復旧中・自動再試行停止の状態と次の動作を日本語で示す
@@ -56,7 +170,10 @@
 - 対象領域を縦スクロールしても列見出しを確認できるよう、table headerをsticky表示する
 - 画面内検索、選択済みだけ表示、checkbox state、`bulk_edit[document_ids][]`のsubmit payload、handoff上限50件は変更しない
 - `選択状態JSONを確認`は業務上の主操作から分離し、同じform内の初期状態を閉じた技術JSON Disclosureへ格納する
-- `事前確認を作成`と`文書一覧へ戻る`は通常のactionとして常時表示する
+- `事前確認を作成`と`文書一覧へ戻る`は通常のactionとして常時表示し、Primary CTAを横100%にしない
+- `事前確認を作成`は「対象文書が1件以上」かつ「変更項目が1つ以上」の場合だけ有効にする
+- 対象0件では`対象文書を1件以上選択してください。`、変更なしでは`変更する項目を1つ以上指定してください。`と日本語で理由を表示する
+- Stepperのinactive stepは判別可能なneutral grayとする
 
 ## 管理画面の監査ログ
 
@@ -75,33 +192,41 @@
 - 両tabとも25件単位でページ分割する。`assignments` は個別付与行数、`overview` は集計対象文書数をページ件数の基準とする
 - `assignments` のCSVはpage、active tab、RTPの列表示設定に依存せず、現在の検索条件に一致する個別付与行を全件出力する
 - RTPの `table_key` は権限一覧を `admin_document_permissions`、文書別概要を `admin_document_permission_overview` とし、既存の保存設定との互換性を維持する
-- tabはserver-rendered navigationとして扱い、各応答では全tabの`aria-controls`を現在存在する単一のtabpanelへ関連付ける
+- tabはserver-rendered navigationとして扱い、active tabに対応するpanelだけを描画する
+- 各tabの`aria-controls`は対応する固定panel IDを参照し、inactive tabがactive panel IDを参照しない。権限一覧は`document-permissions-assignments-panel`、文書別概要は`document-permissions-overview-panel`とする
 - 選択中tabだけを`tabindex="0"`、他を`tabindex="-1"`とし、左右矢印・Home・Endはfocusだけを移動する。EnterまたはSpaceでfocus中のlinkを実行し、遷移後の選択状態はserver responseを正本にする
 
 ## 管理概要と運用・診断
 
 - `/admin` は日常の一次確認画面とし、設定警告・実体欠落・継続失敗候補の件数、会社・ユーザー・案件・文書の主要件数、保存済み失敗履歴のうち直近最大5カテゴリだけを表示する
+- `/admin` の見出しは他のAdmin画面と同じneutralな`管理概要`とし、HTMLの`header` tagだけを理由にdark PageHeaderを適用しない
+- 管理概要のmetricは数字を最重要情報として表示し、0件を弱く、異常ありだけをwarning / dangerで強調する
+- 設定診断は`/admin/diagnostics#configuration`、文書実体欠落は`#document-files`、継続失敗候補は`#failures`へ直接移動できるようにする
+- 設定警告と運用失敗を混同しないよう、保存済み失敗履歴は`最近の運用失敗`等の名称で表示する
 - `/admin` では設定診断の全check、Storage内訳、欠落ファイル行、model catalog全体、継続失敗候補のidentity・error preview・Markdown digestを表示しない
-- `/admin/diagnostics` はinternal admin専用のread-only画面とし、設定診断全項目、文書ファイル健全性、Storage内訳、model observation、保存済み失敗履歴、継続失敗候補詳細とrunbook導線を表示する
+- `/admin/diagnostics` はinternal admin専用のread-only画面とし、要対応、運用失敗、設定診断、文書ファイル健全性、Storage、モデル観測の順に確認できるようにする
+- Diagnostics最上部には各sectionへの短いnavを置き、モデル観測は最後に配置する。正常モデル全件を大量Card表示せず、件数・最終更新・Model Browser導線へ要約し、必要な正常項目だけDisclosureで確認する
 - `READ_ONLY_MAINTENANCE` 中も管理概要と運用・診断の確認導線は維持し、再試行、再送、同期、削除、cleanupなどの変更操作を運用・診断画面へ追加しない
 - `company_master_admin` は従来どおり自社管理用landingだけを利用し、`/admin/diagnostics` へはアクセスできない
 
 ## 画面状態のスクリーンショット検証
 
 - `bin/all_test`のdesktop撮影では、`/documents`と`/admin/diagnostics`をcustom routeとして個別に撮影する
-- 文書権限は`assignments`と`overview`、文書ショートカットは`favorite`、`read_later`、`recent`をquery parameter付きURLから個別に撮影する
-- 文書権限と文書ショートカットのdefault index captureは、状態名付きcaptureとの重複を避ける
-- 各状態は同じbasenameのPNG / HTMLを生成し、画面操作ガイドで日本語captionと操作説明へ対応付ける
+- 文書権限は`assignments`と`overview`、保存済みは`favorite`、`read_later`、`recent`をquery parameter付きURLから個別に撮影する
+- 文書権限と保存済みのdefault index captureは、状態名付きcaptureとの重複を避ける
+- 各状態は同じbasenameのPNG / HTMLを生成し、画面操作ガイドでcanonicalな日本語captionと操作説明へ対応付ける
+- Screen Guideは生成物を直接編集せず、`script/generate_screen_docs.ts`のmetadataを変更して`bin/all_test`で再生成する
+- `root`と`dashboard`が同じホームを表示する場合は、別Screenとして重複掲載しない
 - mobile captureはこの検証対象に含めない
 
-## 利用者ダッシュボード
+## 利用者ホーム
 
-- ログイン後に `GET /dashboard` で利用者向けダッシュボードを表示できる
-- dashboard には、自分が閲覧可能な案件、お気に入り、後で読む、最近見た文書、最近更新された文書を表示する
-- dashboard には、案件数・文書数・保存ショートカット数・保留中申請数などの workspace summary を表示する
-- dashboardの通常表示は件数、文書・案件名、次の操作を優先し、件数の定義や空状態の補足はTooltipまたは初期状態を閉じたDisclosureから確認できるようにする
-- dashboardの一覧カードは内容量の異なる同一行でも不要に同じ高さへ引き伸ばさず、短いカードの下に大きな空白を作らない
-- 権限外文書は bookmark や access log に存在しても表示しない
+- ログイン後に `GET /dashboard` で利用者向けホームを表示できる
+- ホームには、自分が閲覧可能な案件、お気に入り、後で読む、最近見た文書、最近更新された文書を表示する
+- ホームには、案件数・文書数・保存済み件数・保留中申請数などのworkspace summaryを表示する
+- workspace summaryは数字を`font-weight: 700`、`var(--ui-text)`程度で強調し、件数の定義や空状態の補足はTooltipまたは初期状態を閉じたDisclosureから確認できるようにする
+- 一覧カードは内容量の異なる同一行でも不要に同じ高さへ引き伸ばさず、短いカードの下に大きな空白を作らない。Cardを増やさず、文書一覧のhover領域は行全体へ広げる
+- 権限外文書はbookmarkや監査ログに存在しても表示しない
 
 ## Markdown preview / version diff
 

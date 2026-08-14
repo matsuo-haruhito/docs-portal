@@ -22,6 +22,7 @@ description: "docs-portalでrails_table_preferences (rtp) を使うための標�
 ### 標準UIの構成
 
 - 一覧上には歯車アイコン付きの「列設定」ボタンだけを置き、クリックでmodalを開く
+- 列設定ボタンはPrimary CTAではなくneutral outline / ghostのUtilityとして表示し、件数と同じList meta領域へ置く
 - modal上部には一覧固有の日本語タイトルと「閉じる」ボタンを表示する
 - modal本体にはgemのeditorを置き、保存済み設定、設定名、標準設定、列検索、列一覧を表示する
 - 各列rowには日本語列名を必ず表示し、DnD handle、上下移動、表示checkbox、表示順、列幅、省略文字数を同じ行に配置する
@@ -76,12 +77,14 @@ header
 
 /--- 4. リスト部（Turbo Frame） ---
 = turbo_frame_tag "xxx-list", target: "_top" do
-  = render ColumnSettingsComponent.new(
-    table_key: table_key,
-    columns: columns,
-    settings: table_settings,
-    title: "一覧の表示設定"
-  )
+  .list-meta
+    p = "全#{@pagy.count}件"
+    = render ColumnSettingsComponent.new(
+      table_key: table_key,
+      columns: columns,
+      settings: table_settings,
+      title: "一覧の表示設定"
+    )
 
   = table_preferences_table_tag(
     table_key: table_key,
@@ -105,9 +108,13 @@ header
           - columns.each do |col|
             td data-rails-table-preferences-column-key=col[:key]
 
-  / フッター
-  nav
-    / pagy ページネーション
+  / 2ページ以上の場合だけページネーション
+  - if @pagy.pages > 1
+    nav aria-label="一覧ページ"
+      / pagy ページネーション
+
+  / エクスポートはページャーと独立
+  .actions
     = link_to "CSV", xxx_path(request.query_parameters.merge(format: :csv))
 ```
 
@@ -161,6 +168,9 @@ header
 6. 「保存」後にreloadしても列表示・列順・列幅が復元される
 7. Escape、背景クリック、閉じるボタンでdialogが閉じ、列設定ボタンへfocusが戻る
 8. browser consoleにStimulus errorがなく、table/editorの操作中以外は `aria-busy="false"` または属性なしである
+9. 1440pxで主要列と右端の操作列を確認でき、操作buttonがscroll wrapperやviewport端で切れない
+10. 1ページだけの場合はpager nav、disabledな前後操作、「1ページのみ」を表示せず、2ページ以上ではtable後方にpagerを表示する
+11. CSV / Excel等のexportはpagerの有無にかかわらず、検索・ソート条件を保持して利用できる
 
 ### 横スクロールとtable layout
 
@@ -168,6 +178,9 @@ header
 - `wrapper_options` には `class: "table-scroll"`, `role: "region"`, `tabindex: 0`, 一覧を特定できる `aria-label` を指定する
 - `<table>` 本体へ `display: block` や `overflow-x: auto` を指定しない。native table layoutを壊すと列幅、固定列、resizeの計算が不安定になる
 - `table-layout: fixed` はtable本体へ適用し、overflowはwrapperが担当する
+- table headerはneutral gray、bodyはwhite、hoverは薄いneutral blueを基本とし、Orange borderや強いshadowを一覧tableへ使わない
+- 操作列は110pxへ一律固定せず、実際の許可済み操作数とラベルに合わせる。icon-only操作にはBootstrap Icons、対象を特定できる`aria-label`と`title`を付ける
+- 保存済み列幅を尊重しつつ、1440pxで右端の操作列まで到達でき、buttonが切れないことをbrowser smokeで確認する
 
 ---
 
@@ -308,10 +321,12 @@ end
 5. `table_preferences_table_tag` で描画し、横長一覧は `scroll_wrapper: true` とフォーカス可能なwrapperを指定
 6. th / td に `data-rails-table-preferences-column-key` を付与
 7. th にはラベルのみ。実データの並び替えまで公開contractへ接続済みの場合だけ `sortable: true` を付ける
-8. `ColumnSettingsComponent` をtable上に配置し、直接editorや画面固有dialogを描画しない
+8. `ColumnSettingsComponent` を件数と同じList meta領域へUtilityとして配置し、直接editorや画面固有dialogを描画しない
 9. editor rowに日本語列名が表示され、table/editorの幅・順序が双方向同期することをbrowserで操作確認
-10. フッターでページネーション + CSV
-11. コントローラーで `respond_to` + ソート + エクスポート
+10. 操作列は実操作数に合わせ、icon-only buttonへBootstrap Icons、`aria-label`、`title`を付ける
+11. 2ページ以上の場合だけtable後方にページネーションを表示し、CSV等のエクスポートは独立して配置する
+12. 1440pxで主要列と操作列が切れず、横スクロールwrapperへkeyboard focusできることを確認する
+13. コントローラーで `respond_to` + ソート + エクスポート
 
 ---
 
@@ -326,4 +341,6 @@ end
 - rtp を使わず手書きで `<table>` を描画する
 - `th` / `td` に `data-rails-table-preferences-column-key` を付け忘れる
 - フィルタフォームに sort/direction の hidden field を手動で書く（`render_table_filters` が自動出力）
+- 1ページだけの一覧にdisabledな前後buttonや「1ページのみ」を表示する
+- 操作列を全画面一律110pxに固定し、右端の操作を切れたままにする
 - ソート対応カラムの key とコントローラーの allowed 名が不一致

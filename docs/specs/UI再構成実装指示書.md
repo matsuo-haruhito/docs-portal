@@ -1,307 +1,517 @@
 # docs-portal UI/UX改善 実装指示書
 
-## ― 業務システムと文書管理SaaSの中間を狙うUI再構成 ―
+## 1. 目的
 
-## PR分割と優先度
+現在のUI構造をベースとして、業務システムとしての操作効率・安全性を維持しつつ、Box系SaaSに近い整理された視覚品質まで引き上げる。
 
-| PR | 内容 | 優先度 | 状態 |
-|----|------|:------:|------|
-| 1 | User/Admin Shell分離・Global Navigation | P0 | 実装済み |
-| 2 | TOPをHome化・Dashboard再構成・Global Search | P0 | 実装済み |
-| 3 | Admin一覧共通layout・新規登録折りたたみ・Filter Toolbar | P0 | 一部実装（会社・ユーザー・案件・文書・案件所属） |
-| 4 | 文書権限のtab化・pagination | P0 | 実装済み |
-| 5 | Admin Dashboardと運用診断の分離 | P0 | 実装済み |
-| 6 | `/documents` 検索UI簡素化・Project workspace調整 | P1 | 一部実装（`/documents`検索UI） |
-| 7 | 保存済み画面のtab化 | P1 | 実装済み |
-| 8 | 監査ログFilter/Export/Page size整理 | P1 | 実装済み |
-| 9 | 一括編集・長大画面のstep化 | P1 | 実装済み |
-| 10 | Radius/Shadow/Button/Card等のvisual polish | P1 | 未着手 |
+今回、大規模な画面再設計は行わない。次の実装済み構造は維持する。
+
+- 利用者画面 / 管理画面のShell分離
+- 管理画面のSidebar構成
+- 管理一覧のlist-first化（会社・ユーザー・案件・文書・案件所属等の実装済み画面）
+- 案件詳細の「左文書ツリー + 右Workspace」
+- 文書権限のAssignments / Overview tab
+- 保存済みのFavorite / Read later / Recent tab
+- `/documents`の基本条件 + 追加条件Disclosure
+- 一括編集のStepper + 対象一覧scroll
+- Admin Dashboard / Diagnosticsの分離
+- 監査ログの50件pagination / CSV分離
+
+この文書は後続実装の指示書である。未実装項目をcurrent behaviorとしてrunbookへ記載しない。
+
+モバイル対応は今回の対象外とし、1440pxを基準とするPC表示を優先して最適化する。既存のレスポンシブ表示を意図的に壊してよいという意味ではない。
 
 ---
 
-## PR 1: User/Admin Shell分離
+## 2. 最重要方針
 
-### 目的
-利用者画面と管理コンソールを別レイアウト（Shell）に分離する。
+現在の主な問題は画面構造ではなく、CSSの責務境界、色体系、情報密度、操作優先度の視覚表現にある。特にCSS基盤整理をP0として先に行う。
 
-### 対象ファイル（候補）
-- `app/controllers/admin/base_controller.rb` — `layout "admin"` 指定
-- `app/views/layouts/application.html.slim` — 利用者用（user shell）
-- `app/views/layouts/admin.html.slim` — 管理用（admin shell）新規作成
-- `app/views/shared/_navbar.html.slim` → 分割:
-  - `app/views/shared/_user_navbar.html.slim`
-  - `app/views/shared/_admin_navbar.html.slim`（headerのみ）
-- `app/views/admin/_sidebar.html.slim` — 管理Sidebar新規作成
-- `app/frontend/entrypoints/application.css` — admin layout / sidebar CSS
+### Global selectorを見た目の責務から外す
 
-### 利用者Shell header構造
-```
-文書ポータル    [ 文書・案件を検索________________ ]
-ホーム    文書 ▼    要対応 ▼    履歴 ▼
-                                      ユーザー ▼
+プロダクト固有の見た目を次のようなglobal tag selectorへ持たせない。
+
+```css
+header { /* ... */ }
+main { /* ... */ }
+button { /* ... */ }
+input { /* ... */ }
 ```
 
-- ホーム: `/dashboard`
-- 文書: すべての文書 / 案件から探す / 保存済み
-- 要対応: アクセス申請 / 確認依頼(internalのみ)
-- 履歴: 送付履歴 / 注意事項・同意履歴
-- ユーザー: 名前 / メール / 管理コンソールへ(admin/company_master_adminのみ) / ログアウト
+原則としてclass selectorへscopeする。
 
-### 管理Shell構造
-```
-┌─────────────────────────────────────────────────┐
-│ 文書ポータル   管理コンソール      利用者画面へ   user │
-├──────────────┬──────────────────────────────────┤
-│ Sidebar       │          Main workspace          │
-└──────────────┴──────────────────────────────────┘
+```css
+.app-header {}
+.user-nav {}
+.admin-header {}
+.app-main {}
+.page-header {}
+.button {}
+.form-control {}
 ```
 
-### Sidebar分類
-- **概要**: 管理概要
-- **組織・利用者**: 会社 / ユーザー / 案件 / 案件所属 / 同意文面 / 案件同意設定
-- **文書・権限**: 文書 / 文書セット / 文書カタログ / 文書権限 / アクセス申請 / 文書利用状況 / 文書一括編集
-- **取込・同期**: ZIPインポート / 単体ファイルdry-run / Git連携 / Git同期履歴 / Microsoft Graph / 外部フォルダ同期
-- **通知・自動化**: Webhook設定 / Webhook送信履歴 / 定期ジョブ / 生成ファイルイベント / 生成ファイル実行履歴
-- **監査・診断**: 監査ログ / API仕様 / モデルブラウザ / Storage / 運用診断
+最低限、次の副作用を解消する。
 
-### 完了条件
-- 利用者画面headerに「管理メニュー」「連携メニュー」が表示されない
-- adminはユーザーメニューから「管理コンソールへ」移動できる
-- admin画面には管理専用Sidebarが存在する
-- admin画面から「利用者画面へ戻る」が常に確認できる
-- active項目がaria-current + 視覚で判別できる
-- mobileではSidebarをdrawer/折りたたみ式にする
-- 既存権限制御は変更しない
-- 各admin view内の `= render "admin/nav"` を整理
+- `header`のstyleが`.page-header`、user navbar wrapper、Admin Dashboard headerへ漏れない
+- `main`の白背景・border・shadow・radiusが`.admin-main`へ漏れない
+- bare `button` ruleがAdmin Sidebar toggleやColumn Settingsへ漏れない
+- `input { width: 100% }`がsubmit buttonまで横100%にしない
+- `bootstrap_overrides.css`がcomponent専用CSSを意図せず上書きしない
+
+専用componentのstyleをgeneric Bootstrap overrideより優先する。`:root`のtoken定義と最小限のresetだけをglobal selectorの例外とする。
 
 ---
 
-## PR 2: TOPをHome化・Dashboard再構成・Global Search
+## 3. デザイントークン
 
-### 目的
-rootを `/dashboard` に変更し、利用者ホームを再構成する。
-headerにGlobal Searchを追加する。
+デザイントークンの名称・値は [閲覧画面とUI](./閲覧画面とUI.md#design-tokens) の「Design tokens」を唯一の正本とする。この実装指示書では値を再定義せず、色・radius・shadowを正本のtokenから参照する。実装中に追加の階調が必要になった場合も、先に恒久仕様へtokenを追加してから使用する。
 
-### route変更
-```ruby
-root "dashboard#show"
+Action Blueは1系統に統一する。Orangeはブランド用途に限定し、Card border、generic badge、検索領域、通常情報へ使わない。通常情報はNeutral、操作はAction Blue、Brandは限定的にOrange、Warning / Dangerはsemantic colorとする。
+
+---
+
+## 4. Surface / Card / Admin Main
+
+基本Surfaceから淡いOrange borderとPeach gradientを外す。
+
+```css
+.card {
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+}
 ```
 
-### Dashboard再構成
-優先順位:
-1. **要対応** — 保留中の処理がある場合のみ強調。0件なら小さく「対応項目なし」
-2. **最近見た文書** — ホームの主役。5〜8件表示
-3. **保存済み** — お気に入り/後で読むを小さく
-4. **最近更新された文書** — 更新日時明示
-5. **案件** — 下部または右rail
+通常Cardにはshadowを付けない。ShadowはDropdown、Dialog、Popover、Floating panelなど、本当に浮いているUIだけに使う。
 
-workspace summary: `5案件 ・ 184文書 ・ 保存済み0件` 程度に縮小
+`.admin-main`へglobal `main`のSurface designを適用しない。
 
-削除: 「社内向け導線」card
-
-### Global Search
-利用者headerに `[ 文書・案件を検索 ]` を追加 → `GET /documents?q=...` へ送る
-
-### Homeから一覧への導線
-- `最近見た文書`に候補がある場合の`すべて見る`は`GET /document_bookmarks?view=recent`へ直接つなぐ
-- `最近見た文書`が0件の場合の`文書を探す`は`GET /documents`を維持する
-- `最近更新された文書`とGlobal Searchは案件横断の`GET /documents`を入口にする
-
----
-
-## PR 3: Admin一覧共通layout
-
-### 目的
-管理一覧の「新規登録フォーム→検索→一覧」構造を整理する。
-
-### 変更後構造
-```
-タイトル                             [+ 新規登録]
-[検索________________] [状態▼] [検索] [詳細条件▼]
-184件   [filter chip]                 [列設定 ⚙] [一括操作▼]
-──────────────────────────────────────────────
-一覧
+```css
+.admin-main {
+  margin: 0;
+  max-width: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
 ```
 
-### 新規登録
-- `<details>` で閉じた状態
-- validation error時は自動open
-- company_master_adminの自社情報は例外的に常時表示
+Admin画面は次の階層とし、画面全体を1枚の巨大Cardで囲わない。
 
-### Search
-常時: キーワード + 頻出条件1〜2個
-詳細: Disclosureで追加条件
-
-### Full-width action button廃止
-Desktop: content-width button
-Mobile: full-width許可
+```text
+Neutral page background
+ ├ Screen title
+ ├ Filter toolbar
+ ├ List meta
+ └ Table / 必要なCard
+```
 
 ---
 
-## PR 4: 文書権限のtab化・pagination
+## 5. Radius / Shadow / Typography
 
-### 目的
-39,597pxの巨大ページを解消する。
+### Radius
 
-### 変更
-- tab: `?view=assignments`（権限一覧）/ `?view=overview`（文書別概要）
-- デフォルト: assignments
-- 25件/page
-- 新規登録: 閉じたDisclosure
-- CSV: 現在の全件出力維持
-- active tabだけをserver-renderし、全tabの`aria-controls`は応答内に存在する単一tabpanelを参照する
-- 選択中tabだけをTab順に置き、左右矢印・Home・Endでfocusを移動するmanual activationとする。Enter/Spaceで遷移し、選択状態は遷移後のserver responseで確定する
+| 用途 | Radius |
+| --- | ---: |
+| 小要素 | 4px |
+| Button / Input / Badge | 6px |
+| Card / Panel | 8px |
+| Dialog / Dropdown | 10〜12px |
+| Count pill | 999px |
 
----
+案件文書ツリーSidebarの22px radiusは`0 8px 8px 0`程度へ縮小する。通常Surfaceの`0 18px 45px`級shadowは廃止する。
 
-## PR 5: Admin Dashboard分離
+### Typography
 
-### 目的
-6,136pxの管理Dashboardから詳細診断を分離する。
+| 要素 | サイズ |
+| --- | ---: |
+| H1 | 26〜28px / 700 |
+| H2 | 20px / 700 |
+| H3 | 16px / 700 |
+| Public Body | 15px |
+| Admin Body | 14px |
+| Table | 13.5〜14px |
+| Table header | 13px / 600 |
+| Help / Caption | 12〜13px |
 
-### `/admin` に残すもの
-- 要対応（異常件数のみ強調）
-- 主要件数（会社/ユーザー/案件/文書）
-- 最近の運用状態（最大数件）
-
-### 新設: `/admin/diagnostics`（運用・診断）
-- Configuration diagnostic全項目
-- storage詳細
-- model observation詳細
-- 継続失敗候補詳細
-- runbook導線
+Admin H1で32px以上を常用しない。
 
 ---
 
-## PR 6: `/documents`検索UI簡素化・Project workspace調整
+## 6. Badge / Code / Chip
 
-### 目的
-案件横断の閲覧可能文書一覧で、初回表示の検索フォームを短くし、文書へ到達するまでの導線を単純化する。
+Generic `.badge`はNeutralとする。
 
-### `/documents`の検索構造
-- 常時表示: `キーワード`、`案件`、`タグ`
-- `追加条件` Disclosure: `カテゴリ`、`ファイル種`、`公開範囲`、`HTML生成済み`、`添付あり`、`PDFあり`、`図あり`
-- 追加条件が1つでも有効な場合はDisclosureをopenで再描画する
-- 追加条件は常時条件と同じGET form内に残し、送信・rparam・paginationのparam契約を変えない
-- 検索scope、認可、RTPの`table_key = :accessible_documents`は変更しない
+```css
+.badge {
+  background: var(--ui-surface-muted);
+  color: var(--ui-text-subtle);
+  border-radius: var(--ui-radius-md);
+}
+```
 
-### Project workspace
-今回の`/documents`修正とは分離し、既存の案件詳細・文書ツリー・ZIP導線を壊さない。追加調整は別の実装単位で行う。
+状態に意味がある場合だけ`badge--info`、`badge--success`、`badge--warning`、`badge--danger`等のmodifierを使う。「仕様」「管理者」「閲覧者」「最近見た文書」などをOrangeで表示しない。
 
----
+案件コード等が警告色に見えないよう、ID / codeは補助情報としてNeutral表示する。
 
-## PR 7: 保存済み画面のtab化
+```css
+.identifier-code,
+table code {
+  color: var(--ui-muted);
+  background: transparent;
+  font-size: 0.85em;
+}
+```
 
-### 目的
-`お気に入り`、`後で読む`、`最近見た文書`の3section同時描画をやめ、選択中の用途だけを短く確認できるようにする。
-
-### 変更
-- tab: `?view=favorite` / `?view=read_later` / `?view=recent`
-- デフォルトと不正値のfallback: `favorite`
-- 1回の応答ではactive tabに対応する`tabpanel`だけを描画する
-- favorite / read_laterでは保存済みfilter、recentではrecent専用検索だけを表示する
-- タブ切替、検索、条件クリア、pager、`解除`、`お気に入りへ移す`で`view`を保持する
-- Refererがない行操作でも、許可済みnavigation paramから同じtabのfallback URLを組み立てる
-- favorite / read_laterの20件pagination、readable scope、bookmarkの保存仕様は変更しない
-- Dashboardの`最近見た文書`にある`すべて見る`は`view=recent`へ直接つなぐ
-- active tabだけをserver-renderし、全tabの`aria-controls`は応答内に存在する単一tabpanelを参照する
-- 選択中tabだけをTab順に置き、左右矢印・Home・Endでfocusを移動するmanual activationとする。Enter/Spaceで遷移し、選択状態は遷移後のserver responseで確定する
+Badge / Status / Filter chipのradiusは6px、件数だけpillとする。generic UIをすべてpillにしない。
 
 ---
 
-## PR 8: 監査ログFilter/Export/Page size整理
+## 7. Button hierarchy / Row Action
 
-### 目的
-監査ログの初期表示を短くし、日常確認用のHTML一覧と持ち出し用CSVの件数境界を分離する。
+### Primary
 
-### 変更
-- HTML一覧は`accessed_at desc, id desc`のまま1ページ50件にする
-- page linkは`前の50件` / `次の50件`とし、既存filterを保持する
-- 1ページ50件化後も最大到達10,000行を維持し、任意の`limit` paramでは範囲を広げない
-- 常時表示するfilterは`操作`、`対象種別`、`案件`に絞る
-- AI context条件、会社、ユーザー、対象名/IP、文書名/URL識別子、開始日、終了日は同じGET form内の`高度条件` Disclosureへ移す
-- 高度条件が1つでも有効な場合はDisclosureをopenで再描画する
-- `現在の条件でCSV export（最新200件）`は主導線として常時表示する
-- 表示中ページCSV（最大50件）、latest/current pageのmetadata JSON、scope説明は初期状態を閉じた`export補助` Disclosureへ移す
-- latest CSV / metadataの`row_limit`は200、current page CSV / metadataの`row_limit`は50とする
-- RTPの`table_key = :admin_access_logs`、列定義、認可、filter param、CSV固定列は変更しない
+登録、保存、検索、dry-run作成、実行。Solid Action Blueとする。
 
----
+### Secondary
 
-## PR 9: 一括編集・長大画面のstep化
+戻る、CSV、新規登録Disclosure、補助操作。White / Outlineとする。
 
-### 目的
-文書一括編集の対象選択tableによるページ全体の長大化を抑え、業務上の主操作と技術確認導線を分離する。
+### Utility
 
-### 変更
-- 対象文書tableは同じform内のフォーカス可能なスクロール領域へ入れる
-- desktopでは対象領域を`max-height: 450px`、`overflow-y: auto`とし、table headerをsticky表示する
-- server-side paginationは追加せず、画面内検索、選択済みだけ表示、checkbox stateを維持する
-- `bulk_edit[document_ids][]`のsubmit payload、handoff上限50件、read-only JSON schemaは変更しない
-- `選択状態JSONを確認`は同じform内の初期状態を閉じた`技術JSONを確認` Disclosureへ移す
-- `事前確認を作成`と`文書一覧へ戻る`は常時表示する
-- 対象選択tableはindex一覧ではないためRTPを導入しない
+列設定、技術詳細、metadata、表示設定。Neutral outline / Ghostとする。
 
----
+### Danger
 
-## スクリーンショット検証条件
+通常状態ではsolid redを使わない。
 
-`bin/all_test`のdesktop撮影では、標準resource routeに加えて、UI再構成で追加・分離した主要custom routeとtab状態を個別に残す。
+```css
+.button.danger {
+  background: var(--ui-surface);
+  color: var(--ui-danger-text);
+  border-color: var(--ui-danger-border);
+}
 
-- `accessible_documents_index`: `/documents`
-- `admin_diagnostics_index`: `/admin/diagnostics`
-- `admin_document_permissions_assignments`: `/admin/document_permissions?view=assignments`
-- `admin_document_permissions_overview`: `/admin/document_permissions?view=overview`
-- `document_bookmarks_favorite`: `/document_bookmarks?view=favorite`
-- `document_bookmarks_read_later`: `/document_bookmarks?view=read_later`
-- `document_bookmarks_recent`: `/document_bookmarks?view=recent`
+.button.danger:hover {
+  background: var(--ui-danger);
+  color: var(--ui-on-action);
+}
+```
 
-文書権限と文書ショートカットは状態名付きcaptureを正本とし、default indexと同じ画面を重複生成しない。各targetは同じbasenameのPNG / HTMLを生成し、画面操作ガイドでは日本語の状態名と操作説明へ対応付ける。mobile captureはこの検証単位に含めない。
+一覧にsolid red buttonを反復表示しない。行操作は共通化し、最低でも編集をneutral / secondary、削除をoutline dangerとする。低頻度操作はoverflow menuへまとめることを検討する。icon-onlyの場合はBootstrap Icons、対象を特定できる`aria-label`、`title`を必須とする。操作列幅は実際のボタン数とラベルに合わせ、110pxを全画面固定値にしない。
 
 ---
 
-## Visual Polish方針（PR 10）
+## 8. Form / Search / Column Settings
 
-### Card
-- radius: 8〜12px（現在の18〜22pxから縮小）
-- shadow: なし or 非常に弱い
-- border: neutralに（orange限定はbrand/active/accentのみ）
+PC画面の検索・submit buttonを横100%にしない。`input { width: 100% }`を廃止し、text系inputだけを対象にする。
 
-### Button
-- radius: 6〜8px（pill廃止）
-- pill許可: status badge / filter chipのみ
+```css
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="date"],
+input[type="datetime-local"],
+select,
+textarea {
+  width: 100%;
+}
+```
 
-### Background
-- neutral薄色基本
-- body gradient廃止
+基本配置は次とし、検索buttonは80〜120px程度のcontent widthとする。
 
-### 密度ルール
-- 利用者: row 44〜52px, padding 12〜20px
-- 管理一覧: row 36〜44px, compact form
-- Confirmation: 低密度（余白多め）
+```text
+[キーワード________] [状態▼] [会社▼] [検索]
+```
+
+検索領域は通常Cardと同じNeutral borderを使う。Orange borderは使わない。Filterが有効な場合だけ`border-left: 3px solid var(--ui-action)`等の状態表示を検討する。
+
+列設定はPrimary操作に見せない。
+
+```css
+.column-settings__summary {
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border-strong);
+  color: var(--ui-text-subtle);
+}
+```
 
 ---
 
-## Tooltip使用ルール（追加）
+## 9. Table / Pagination
 
-### 付けるもの
-- 正本区分、最新版/HTML、継続失敗候補、lifecycle関連の特殊状態
-- 操作の前提条件・影響範囲
+一覧は比較しやすい高密度UIとする。
 
-### 付けないもの（意味が自明）
-- 案件、お気に入り、後で読む、最近見た文書、最近更新された文書
-- ユーザー、会社
+```css
+th {
+  padding: 8px 10px;
+  background: var(--ui-surface-subtle);
+  color: var(--ui-text-subtle);
+  font-size: 13px;
+  font-weight: 600;
+}
 
-### 禁止
-- 重要情報をTooltipだけに隠す（validation error、warning、destructive影響は常時表示）
+td {
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+tbody tr:hover td {
+  background: var(--ui-surface-hover);
+}
+```
+
+Header rowとbodyを薄いGrayで区別する。RTPの列表示、列順、列幅、固定列、`table_key`、scroll wrapper契約は変更しない。
+
+`total_pages == 1`の場合はpagerを表示しない。総件数は表示するが、`前へ（先頭） / 1 / 1ページ / 1ページのみ / 次へ（最終）`は出さない。CSV等のexportはpagerと独立して表示する。
 
 ---
 
-## 禁止事項
-- 認可ロジック変更
-- domain model / DB schema変更
-- 関連gem修正
-- RTP table_key一括変更
-- SPA化
-- 巨大CSS全面置換
-- Tooltip全面削除
+## 10. Admin Sidebar / 利用者Navbar / PageHeader
+
+### Admin Sidebar
+
+構造は維持する。section headingを11.5px程度、通常linkの行高を30〜32px程度とする。PCでhamburgerを表示しない。`.admin-sidebar__toggle { display: none; }`がgeneric button ruleに負けないselector設計にする。
+
+### 利用者Navbar
+
+White Navbarを維持する。Dark Header用colorをDropdown summaryへ流用しない。
+
+```css
+.user-nav .nav-dropdown__summary {
+  color: var(--ui-text-subtle);
+}
+
+.user-nav .nav-dropdown__summary:hover,
+.user-nav .nav-dropdown__summary.is-active {
+  color: var(--ui-action);
+}
+```
+
+Global `header`のbackground / shadowをUser Navbar wrapperへ漏らさない。
+
+### PageHeader
+
+案件詳細や閲覧可能文書のDark PageHeaderは維持できるが、global `header`ではなく`.page-header`へscopeする。
+
+```css
+.page-header {
+  padding: 18px 20px;
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-page-header);
+  color: var(--ui-on-action);
+  box-shadow: none;
+}
+
+.page-header__subtitle {
+  color: var(--ui-page-header-subtitle);
+}
+```
+
+---
+
+## 11. 画面別改善
+
+### 管理概要
+
+現在の構造は維持する。Dashboardだけ紺色Headerにならないようtag selector依存をなくし、他のAdmin画面と同じ`管理概要 [運用・診断]`の見出しにする。
+
+Metricは数字を最重要情報にする。0件は弱く、異常ありだけAmber / Redのsemantic accentを使う。各Metricは次のDiagnostics該当箇所へ直接つなぐ。
+
+- 設定診断: `/admin/diagnostics#configuration`
+- 文書実体欠落: `/admin/diagnostics#document-files`
+- 継続失敗候補: `/admin/diagnostics#failures`
+
+「最近の問題」は「最近の運用失敗」等へ変更し、設定警告とは別概念であることを明確にする。
+
+### 運用・診断
+
+最上部から正常モデルを大量表示しない。次の順序を基準にする。
+
+```text
+運用・診断
+[要対応] [失敗] [設定] [ファイル] [Storage] [モデル]
+要対応
+運用失敗
+設定診断
+文書ファイル健全性
+Storage
+モデル観測
+```
+
+モデル観測は最後に置き、正常項目はDisclosureへ格納する。Model Browserで確認できる正常モデルは`32モデル / 最終更新 / モデルブラウザを開く`程度へ要約できる。read-only境界を維持し、再試行・削除・cleanup等を追加しない。
+
+### Users一覧
+
+デフォルト列幅の合計を見直し、1440pxで操作列まで確認できるようにする。
+
+```text
+表示名 180 / メール 240 / 種別 110 / 会社 180 / 状態 80 / 操作 100
+```
+
+「ユーザー名（表示用）」と「表示名」のどちらかをdefault hiddenにし、利用者が意味を区別できる日本語名へ整理する。
+
+### Projects一覧
+
+長い案件codeが案件名へ重ならないよう、code幅は180px前後、overflowはellipsisとする。完全値へtitle / tooltip等から到達できるようにする。表示用語は「企業」ではなく「会社」へ統一する。
+
+### `/documents`
+
+基本条件 + 追加条件Disclosureを維持する。件数、pagination、列設定を近い位置へ集約する。ヒット理由は`q.blank?`時にdefault hiddenとし、キーワード検索時だけ表示する。最終更新は2行へ折り返さない幅を確保し、必要なら`08/13 23:09`程度へ短縮する。
+
+### 保存済み
+
+3状態のserver-rendered構造を維持する。Tabで状態が明示されている場合、`対象: お気に入り`や各行の`最近見た文書`等を重複表示しない。Badgeは各行で異なる状態を示す場合だけ使う。Filter見出しは16px程度とする。
+
+### Home
+
+現在の構造を維持する。冒頭の`5案件・184文書・保存済み0件`では数字を`font-weight: 700`、`var(--ui-text)`程度に強調する。Cardを増やさず、Document listのhover領域を行全体へ広げる。
+
+### 一括編集
+
+scroll table + Stepperを維持する。Primary buttonは次を両方満たすまでdisabledにする。
+
+```text
+対象文書 >= 1件
+AND
+変更内容 >= 1項目
+```
+
+0件時は`対象文書を1件以上選択してください。`、変更なしは`変更する項目を1つ以上指定してください。`と表示する。`事前確認を作成`を横100%にせず、戻るを左、Primary CTAを右に置く。Inactive Stepは現在より少し濃いGrayとする。
+
+### 文書権限
+
+tab / pagination / CSV構造を維持する。全幅Search、Orange badge、solid red delete、Primary相当の列設定を共通ルールへ合わせる。
+
+各tabの`aria-controls`は対応する固定panel IDを指定し、inactive tabがactive panel IDを参照しない。
+
+```text
+権限一覧 → document-permissions-assignments-panel
+文書別概要 → document-permissions-overview-panel
+```
+
+active viewだけをserver-renderする契約、view param、filter、CSV、RTP `table_key`は変更しない。
+
+---
+
+## 12. 用語統一
+
+画面表示とScreen Guideは最低限、次へ統一する。route / controller / internal keyは変更しない。
+
+| 旧表記 | 表示用語 |
+| --- | --- |
+| 企業 | 会社 |
+| ショートカット | 保存済み |
+| ダッシュボード（利用者側） | ホーム |
+| 管理ダッシュボード | 管理概要 |
+| Diagnostics / 運用診断 | 運用・診断 |
+| アクセスログ | 監査ログ |
+
+「ユーザー名（表示用）」と「表示名」はDB field名を露出するのではなく、利用者が用途を区別できる名称へ整理する。
+
+Screen Guideは生成物を直接編集せず、`script/generate_screen_docs.ts`のmetadataを修正後に`bin/all_test`で再生成する。`root`と`dashboard`が同一画面なら別Screenとして重複掲載しない。次の状態別captureは維持する。
+
+- document permissions assignments
+- document permissions overview
+- bookmarks favorite
+- bookmarks read_later
+- bookmarks recent
+- accessible documents
+- admin diagnostics
+
+---
+
+## 13. Empty State
+
+通常のデータ0件と「正常」を分ける。管理概要の`問題なし`等は大きなEmpty Stateにせず、`✓ 最近の運用失敗はありません`程度のcompact表示を使える。
+
+---
+
+## 14. 実装順序
+
+### Phase 1 — CSS foundation
+
+1. Global `header/main/button/input` selector整理
+2. Bootstrap overrideの責務整理
+3. Action colorを1系統へ統一
+4. Admin main Surface解除
+5. Card border / background neutral化
+6. Badge / code color neutral化
+7. Radius / shadow token統一
+
+### Phase 2 — 共通Component
+
+8. Button variants
+9. Table
+10. Column Settings
+11. PageHeader
+12. Admin Sidebar
+13. Filter Toolbar / Chip
+14. Empty State
+
+### Phase 3 — 画面別
+
+15. Admin Dashboard
+16. Diagnostics
+17. Users
+18. Projects
+19. Document Permissions
+20. `/documents`
+21. Bookmarks
+22. Bulk Edit
+23. Home
+
+### Phase 4 — Polish
+
+24. 用語統一
+25. Screen Guide整理
+26. Screenshot比較
+27. UI regression spec追加
+
+PhaseごとにPC screenshot / HTML snapshotを残し、global selectorやtoken逸脱を検査する。モバイル固有変更を混ぜない。
+
+---
+
+## 15. 禁止事項・不変条件
+
+- 認可ロジックを変更しない
+- domain model / DB schemaを変更しない
+- 関連gemのpublic APIを変更しない
+- RTP `table_key`を変更しない
+- search / export / pagination / dry-run payloadの業務契約を変更しない
+- SPA化しない
+- 巨大CSS全面置換を1回で行わない
+- Tooltipを全面削除しない
+- currentのlist-first / tab / Disclosure / Shell構造を崩さない
+- モバイル固有変更を今回のPhaseへ混ぜない
+
+---
+
+## 16. 完了条件
+
+- PC Adminで不要なhamburgerが表示されない
+- Admin main全体が巨大な白Cardにならない
+- Public NavbarにDark Header用color / shadowが漏れない
+- PageHeader subtitleがDark background上で明瞭に読める
+- Search / Submit buttonが意図せず横100%にならない
+- Primary / Secondary / Utility / Dangerが視覚的に区別できる
+- Column SettingsがPrimary buttonに見えない
+- Generic badgeがOrange warning風に見えない
+- ID / codeが赤・ピンクに見えない
+- Table headerとbodyが視覚的に区別できる
+- 1440pxで主要Admin一覧の操作列まで無理なく確認できる
+- 1ページだけの一覧に不要なpagerが表示されない
+- Diagnosticsで異常情報へすぐ到達できる
+- Dashboardから異常詳細へ直接遷移できる
+- Bulk Editで対象0件・変更0件のdry-runを開始できない
+- 同一概念の用語が画面間とScreen Guideで統一される
+- 既存のlist-first / tab / Disclosure / Shell構造を崩していない
+- モバイル固有変更が混ざっていない
+
+## 最終判断基準
+
+画面を豪華にするのではなく、重要なものだけを強くし、それ以外を静かにする。
+
+通常情報はNeutral、操作はBlue、Brandは限定的にOrange、Warning / DangerはSemantic colorとし、余白・色・影・borderのすべてに意味を持たせる。

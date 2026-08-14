@@ -11,6 +11,20 @@ inclusion: always
 - 状態変更は許可された操作のみ表示する（任意選択ドロップダウンにしない）
 - 管理画面は情報密度高め — テーブル+フィルタ+エクスポートのフル装備
 - 公開側は最小限の導線で目的の文書に辿り着ける
+- 画面を豪華にするのではなく、重要なものだけを強くし、それ以外を静かにする
+
+## Visual designとCSS責務
+
+- 通常情報はNeutral、操作はAction Blue、ブランドは限定的にOrange、警告・危険はsemantic colorで表す
+- tokenの正本は `docs/specs/閲覧画面とUI.md` の「Visual design system」とし、`--ui-bg`、`--ui-surface`、`--ui-text`、`--ui-muted`、`--ui-border`、`--ui-action`、`--ui-brand`、semantic color、radius、floating shadowを共通利用する
+- Orangeを通常Card、検索領域、generic badge、ID / codeへ使わない。generic badge、role、カテゴリ、filter chipはNeutralとし、意味のある状態だけsemantic modifierを使う
+- 通常Cardはwhite surface、neutral border、8px radius、shadowなしを基本とする。shadowはDialog、Dropdown、Popover、Floating panel等だけに使う
+- `.admin-main`を巨大な白いCardにせず、neutral page background上へScreen title、Filter toolbar、List meta、Table / 必要なCardを配置する
+- `:root`のtokenと最小resetを除き、`header`、`main`、`button`、`input`等のbare element selectorへプロダクト固有の見た目を持たせない
+- Shellとcomponentの見た目は`.app-header`、`.user-nav`、`.admin-header`、`.admin-main`、`.page-header`、`.button`、`.form-control`等へscopeする
+- component専用CSSをgeneric Bootstrap overrideより優先し、Sidebar toggle、Column Settings、RTP editorを意図せず上書きしない
+- bare `input { width: 100% }`を使わず、text系input、select、textareaだけをfull widthにする。PCのsubmit buttonはcontent widthとする
+- 管理画面は1440pxを基準にPC表示を検証する。個別の改善指示でモバイル対象外とされた作業へモバイル固有変更を混ぜない
 
 ---
 
@@ -53,22 +67,25 @@ section
             td data-rails-table-preferences-column-key=col[:key]
               / セル描画
 
-  / フッター（ページネーション + エクスポート）
-  nav
-    / ページネーション
-    .actions
-      = link_to "CSV出力", xxx_path(format: :csv)
+  / フッター（2ページ以上の場合だけページネーション。エクスポートは独立）
+  - if pagy.pages > 1
+    nav aria-label="一覧ページ"
+      / ページネーション
+  .actions
+    = link_to "CSV出力", xxx_path(format: :csv)
 ```
 
 ### ルール
 
 - 全一覧画面に rtp（rails_table_preferences）を適用する
 - 列設定は `ColumnSettingsComponent` で描画し、初期状態は閉じる。画面へ `table_preferences_editor` を直接常時展開しない
+- 列設定ボタンはPrimaryではなくneutral outline / ghostのUtilityとして表示し、件数と同じList meta領域へ置く
 - テーブルのカラム定義はモデルの全項目を網羅する（ユーザーが列設定で任意に表示ON/OFF）
 - 初期表示は `default_visible: true` で主要5〜8列に絞る
 - 検索パラメータは rparam でセッション記憶する
 - CSV エクスポートは検索・ソート結果を反映する
-- ページネーションは pagy で統一する
+- ページネーションは pagy で統一し、2ページ以上の場合だけtableの後に表示する。1ページ時はdisabledな前後操作や「1ページのみ」を表示しない
+- CSV / Excel等のエクスポートはページャーと独立して表示する
 - ソートはヘッダークリックで rtp Stimulus controller が処理する（手動ソートリンク不要）
 
 ### 列定義の方針
@@ -104,12 +121,14 @@ default_width = 25 + 15 × 文字数
 | 状態/種別（バッジ） | 80 | 下書き, 公開中 |
 | カテゴリ（バッジ短文） | 85 | 仕様書, 手順書 |
 | 日付（YYYY-MM-DD） | 105 | 2026-08-01 |
-| 操作（アイコンボタン群） | 110 | 👁✏️📋 |
+| 操作（Bootstrap Icons） | 実操作数に応じる | `bi-eye`, `bi-pencil`, `bi-trash` |
 | 日時（短縮表示） | 130 | 08/01 15:30 |
 
 #### ルール
 
 - 中身が短い（数字1〜2桁、バッジ1語、日付10文字）カラムは必ず `default_width` を指定する
+- 操作列は110pxへ一律固定せず、表示する許可済み操作の数、ラベル、保存済みRTP幅に合わせる。1440pxで右端の操作が切れないことを確認する
+- 操作列のicon-only buttonにはBootstrap Iconsを使い、対象を特定できる`aria-label`と`title`を付ける
 - 長いテキストを表示するカラム（タイトル、文書名、案件名、備考等）には指定しない
 - ユーザーが列設定エディターで幅を保存済みの場合はそちらが優先される
 - ヘッダー文字列が長いカラムは計算式に従い幅を広げる
@@ -496,6 +515,8 @@ dry-run（検証） → レビュー（確認） → 実行（適用）
 ### 共通ルール
 
 - タブは `role=tablist/tab/tabpanel`、矢印キー操作、フォーカス移動を含めて実装する
+- view queryでactive panelだけをSSRするtabは、各tabの`aria-controls`を対応する固定panel IDへ向ける。inactive tabがactive panel IDを参照してはならない
+- 文書権限は`document-permissions-assignments-panel`と`document-permissions-overview-panel`を固定IDとして使う
 - アコーディオンは `aria-expanded` で開閉状態を通知する
 - モーダル表示中はフォーカスを内部に閉じ、閉じた後は起動元へ戻す
 - 状態、エラー、成功は色だけで表現せず、テキストと支援技術向け通知を付ける
