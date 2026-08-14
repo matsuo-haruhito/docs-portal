@@ -611,4 +611,3 @@
 - 有効な同意文面の確認
 
 ![同意管理 一覧画面](screenshots/consents_index.png)
-

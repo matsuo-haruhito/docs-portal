@@ -478,7 +478,7 @@ function main(): void {
     lines.push("")
   }
 
-  const content = lines.join("\n") + "\n"
+  const content = lines.join("\n").trimEnd() + "\n"
   fs.writeFileSync(OUTPUT_FILE, content, "utf-8")
   console.log(`Generated: ${path.relative(process.cwd(), OUTPUT_FILE)}`)
   console.log(`  ${allFiles.length} screenshots, ${groups.length} groups, ${unclaimed.length} unclaimed`)
