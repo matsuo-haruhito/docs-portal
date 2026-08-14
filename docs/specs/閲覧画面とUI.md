@@ -214,9 +214,9 @@ route、controller、model、DB field等の内部識別子はこの表示用語�
 - `bin/all_test`のdesktop撮影では、`/documents`と`/admin/diagnostics`をcustom routeとして個別に撮影する
 - 文書権限は`assignments`と`overview`、保存済みは`favorite`、`read_later`、`recent`をquery parameter付きURLから個別に撮影する
 - 文書権限と保存済みのdefault index captureは、状態名付きcaptureとの重複を避ける
-- 各状態は同じbasenameのPNG / HTMLを生成し、画面操作ガイドでcanonicalな日本語captionと操作説明へ対応付ける
+- 各状態は同じbasenameのPNG / MHTMLを生成し、画面操作ガイドでcanonicalな日本語captionと操作説明へ対応付ける
 - Screen Guideは生成物を直接編集せず、`script/generate_screen_docs.ts`のmetadataを変更して`bin/all_test`で再生成する
-- `root`と`dashboard`が同じホームを表示する場合は、別Screenとして重複掲載しない
+- `/`と`/dashboard`が同じホームを表示する場合は、`/dashboard`をcanonical capture（basename: `dashboard`）とし、`/`を別Screenとして撮影・掲載しない
 - mobile captureはこの検証対象に含めない
 
 ## 利用者ホーム

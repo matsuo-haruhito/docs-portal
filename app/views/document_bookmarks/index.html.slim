@@ -1,0 +1,170 @@
+- page_title "保存済み"
+- bookmark_project_filter_label = @selected_bookmark_project&.name || @bookmark_project_code
+- saved_bookmark_params = { view: @view, project_code: @bookmark_project_code, bookmark_q: @bookmark_query.presence, recent_q: @recent_documents_query.presence }.compact
+- saved_bookmark_reset_params = { view: @view, recent_q: @recent_documents_query.presence }.compact
+- recent_clear_params = saved_bookmark_params.except(:recent_q).merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.page).compact
+- current_bookmark_params = saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.page).compact
+- tab_navigation_params = current_bookmark_params.except(:view)
+- panel_ids = { "favorite" => "favorite-bookmarks", "read_later" => "read-later-bookmarks", "recent" => "recent-documents" }
+
+h1 保存済み
+
+nav.admin-tabs aria-label="保存済みの表示切替" role="tablist" data-controller="server-rendered-tabs"
+  - [["favorite", "お気に入り", @favorite_bookmarks_page.total_count], ["read_later", "後で読む", @read_later_bookmarks_page.total_count], ["recent", "最近見た", @recent_documents.size]].each do |view, label, count|
+    = link_to document_bookmarks_path(tab_navigation_params.merge(view: view)),
+      id: "#{view.tr('_', '-')}-tab",
+      class: "admin-tab#{' is-active' if @view == view}",
+      role: "tab",
+      tabindex: @view == view ? 0 : -1,
+      aria: { selected: (@view == view).to_s, controls: panel_ids.fetch(view) },
+      data: { server_rendered_tabs_target: "tab", action: "keydown->server-rendered-tabs#keydown" } do
+      = "#{label} "
+      = tag.span(count, class: "admin-tab__count")
+
+- if %w[favorite read_later].include?(@view)
+  section.card.bookmark-filter
+    h2.bookmark-filter__heading 絞り込み
+    = form_with url: document_bookmarks_path, method: :get, local: true do |form|
+      = form.hidden_field :view, value: @view
+      - if @recent_documents_query.present?
+        = form.hidden_field :recent_q, value: @recent_documents_query
+      .form-grid
+        .field
+          = form.rfk_select :project_code,
+            collection: @bookmark_project_options.map { |project| [project.code.present? ? "#{project.name}（#{project.code}）" : project.name, project.code] },
+            selected: @bookmark_project_code.presence,
+            include_blank: "すべての案件",
+            wrapper: false,
+            label: "案件",
+            allow_clear: true,
+            placeholder: "すべての案件"
+        .field
+          = form.label :bookmark_q, "保存済みを検索"
+          = form.rfk_search_field :bookmark_q,
+            value: @bookmark_query,
+            placeholder: "文書名・案件名・案件コード",
+            wrapper: false,
+            html: { maxlength: DocumentBookmarksController::BOOKMARK_QUERY_MAX_LENGTH, autocomplete: "off" }
+        .form-actions
+          = form.submit "絞り込む", class: "button"
+          - if @saved_bookmark_filter_active
+            = link_to "保存済み条件を解除", document_bookmarks_path(saved_bookmark_reset_params), class: "button secondary"
+
+- if @view == "favorite"
+  section.card id="favorite-bookmarks" role="tabpanel" aria-labelledby="favorite-tab"
+    h2
+      = "お気に入り "
+      span.muted = @favorite_bookmarks_page.summary_label
+    - if @favorite_bookmarks_page.range_label
+      p.muted
+        span.badge = @favorite_bookmarks_page.range_label
+        = " 条件一致 #{@favorite_bookmarks_page.total_count}件のうち、最大 #{@favorite_bookmarks_page.per_page}件ずつ表示します。"
+    - if @favorite_bookmarks_page.any?
+      ul.resource-list
+        - @favorite_bookmarks.each do |bookmark|
+          li.resource-list__item
+            .resource-list__content
+              strong = link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug)
+              .resource-list__meta
+                span.muted = bookmark.document.project.name
+            .resource-list__actions
+              = button_to "解除", document_bookmark_path(bookmark, current_bookmark_params), method: :delete, class: "button secondary"
+      - if @favorite_bookmarks_page.multiple_pages?
+        nav.pagination aria-label="お気に入りのページ移動"
+          - if @favorite_bookmarks_page.previous_page
+            = link_to "前へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.previous_page, read_later_page: @read_later_bookmarks_page.page, anchor: "favorite-bookmarks")), class: "button secondary"
+          span.muted = "お気に入り #{@favorite_bookmarks_page.page} / #{@favorite_bookmarks_page.total_pages} ページ"
+          - if @favorite_bookmarks_page.next_page
+            = link_to "次へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.next_page, read_later_page: @read_later_bookmarks_page.page, anchor: "favorite-bookmarks")), class: "button secondary"
+    - else
+      - if @bookmark_search_active
+        p.muted = "保存済み検索「#{@bookmark_query}」に一致するお気に入りはありません。"
+      - elsif @bookmark_project_filter_active
+        p.muted = "案件「#{bookmark_project_filter_label}」ではお気に入りが見つかりません。"
+      - else
+        p.muted 文書画面でお気に入りに追加すると、ここに表示されます。
+      - if @saved_bookmark_filter_active
+        p.actions = link_to "保存済み条件を解除", document_bookmarks_path(saved_bookmark_reset_params.merge(anchor: "favorite-bookmarks")), class: "button secondary"
+- elsif @view == "read_later"
+  section.card id="read-later-bookmarks" role="tabpanel" aria-labelledby="read-later-tab"
+    h2
+      = "後で読む "
+      span.muted = @read_later_bookmarks_page.summary_label
+    - if @read_later_bookmarks_page.range_label
+      p.muted
+        span.badge = @read_later_bookmarks_page.range_label
+        = " 条件一致 #{@read_later_bookmarks_page.total_count}件のうち、最大 #{@read_later_bookmarks_page.per_page}件ずつ表示します。"
+    - if @read_later_bookmarks_page.any?
+      ul.resource-list
+        - @read_later_bookmarks.each do |bookmark|
+          - also_favorite = @favorite_bookmark_document_ids.include?(bookmark.document_id)
+          li.resource-list__item
+            .resource-list__content
+              strong = link_to bookmark.document.title, project_document_path(bookmark.document.project, bookmark.document.slug)
+              .resource-list__meta
+                span.muted = bookmark.document.project.name
+                - if also_favorite
+                  span.badge お気に入りにも保存中
+            .resource-list__actions
+              = button_to "お気に入りへ移す", move_to_favorite_document_bookmark_path(bookmark, current_bookmark_params), method: :post, class: "button"
+              = button_to "解除", document_bookmark_path(bookmark, current_bookmark_params), method: :delete, class: "button secondary"
+      - if @read_later_bookmarks_page.multiple_pages?
+        nav.pagination aria-label="後で読むのページ移動"
+          - if @read_later_bookmarks_page.previous_page
+            = link_to "前へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.previous_page, anchor: "read-later-bookmarks")), class: "button secondary"
+          span.muted = "後で読む #{@read_later_bookmarks_page.page} / #{@read_later_bookmarks_page.total_pages} ページ"
+          - if @read_later_bookmarks_page.next_page
+            = link_to "次へ", document_bookmarks_path(saved_bookmark_params.merge(favorite_page: @favorite_bookmarks_page.page, read_later_page: @read_later_bookmarks_page.next_page, anchor: "read-later-bookmarks")), class: "button secondary"
+    - else
+      - if @bookmark_search_active
+        p.muted = "保存済み検索「#{@bookmark_query}」に一致する後で読む文書はありません。"
+      - elsif @bookmark_project_filter_active
+        p.muted = "案件「#{bookmark_project_filter_label}」では後で読む文書が見つかりません。"
+      - else
+        p.muted 文書画面で後で読むに追加すると、ここに表示されます。
+      - if @saved_bookmark_filter_active
+        p.actions = link_to "保存済み条件を解除", document_bookmarks_path(saved_bookmark_reset_params.merge(anchor: "read-later-bookmarks")), class: "button secondary"
+- else
+  section.card id="recent-documents" role="tabpanel" aria-labelledby="recent-tab"
+    .heading-with-help
+      h2
+        = "最近見た文書 "
+        span.muted = "#{@recent_documents.size}件"
+      = render InfoTooltipComponent.new(label: "最近見た文書", description: "最近表示された文書を最大20件表示します。")
+    h3.bookmark-filter__heading 絞り込み
+    = form_with url: document_bookmarks_path, method: :get, local: true, class: "filter-form" do |form|
+      = form.hidden_field :view, value: @view
+      - if @bookmark_project_code.present?
+        = form.hidden_field :project_code, value: @bookmark_project_code
+      - if @bookmark_query.present?
+        = form.hidden_field :bookmark_q, value: @bookmark_query
+      .form-field
+        = form.label :recent_q, "最近見た文書を検索"
+        = form.rfk_search_field :recent_q,
+          value: @recent_documents_query,
+          placeholder: "文書名・案件名・案件コード",
+          wrapper: false,
+          html: { maxlength: DocumentBookmarksController::BOOKMARK_QUERY_MAX_LENGTH, autocomplete: "off" }
+      .form-actions
+        = form.submit "絞り込む", class: "button"
+        - if @recent_documents_query.present?
+          = link_to "最近見た条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary"
+
+    - if @recent_documents.any?
+      ul.resource-list
+        - @recent_documents.each do |document|
+          li.resource-list__item
+            .resource-list__content
+              strong = link_to document.title, project_document_path(document.project, document.slug)
+              .resource-list__meta
+                span.muted = document.project.name
+    - elsif @all_recent_documents.any? && @recent_documents_query.present?
+      p.muted = "最近見た文書検索「#{@recent_documents_query}」に一致する文書は、最近表示された最大20件内にありません。"
+      p.actions
+        = link_to "最近見た条件をクリア", document_bookmarks_path(recent_clear_params), class: "button secondary"
+        = link_to "案件一覧から探す", projects_path, class: "button secondary"
+        = link_to "文書一覧から探す", documents_path, class: "button secondary"
+    - else
+      p.muted 文書を開くと、最近見た文書としてここに表示されます。
+
+p = link_to "案件一覧へ戻る", projects_path

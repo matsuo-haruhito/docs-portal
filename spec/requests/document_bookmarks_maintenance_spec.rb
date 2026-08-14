@@ -34,7 +34,7 @@ RSpec.describe "Document bookmarks maintenance mode", type: :request do
       get document_bookmarks_path, params: { view: "favorite", bookmark_q: "manual", recent_q: "manual" }
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("文書ショートカット")
+      expect(response.body).to include("保存済み")
       expect(response.body).to include("Manual")
       expect(Nokogiri::HTML(response.body).at_css("#favorite-bookmarks[role='tabpanel']")).to be_present
     end
@@ -52,7 +52,7 @@ RSpec.describe "Document bookmarks maintenance mode", type: :request do
       end.not_to change(DocumentBookmark.favorite, :count)
 
       expect(response).to redirect_to(root_path)
-      expect(flash[:alert]).to include("文書ショートカットの追加・移動・解除は停止しています")
+      expect(flash[:alert]).to include("保存済みへの追加・移動・解除は停止しています")
 
       expect do
         post document_bookmarks_path, params: {
@@ -73,7 +73,7 @@ RSpec.describe "Document bookmarks maintenance mode", type: :request do
       end.not_to change(DocumentBookmark, :count)
 
       expect(response).to redirect_to(root_path)
-      expect(flash[:alert]).to include("文書ショートカットの追加・移動・解除は停止しています")
+      expect(flash[:alert]).to include("保存済みへの追加・移動・解除は停止しています")
       expect(bookmark.reload).to be_read_later
       expect(user.document_bookmarks.find_by(document:, bookmark_type: :favorite)).to be_nil
     end
@@ -95,7 +95,7 @@ RSpec.describe "Document bookmarks maintenance mode", type: :request do
       end.not_to change(DocumentBookmark, :count)
 
       expect(response).to redirect_to(document_bookmarks_path(navigation_params))
-      expect(flash[:alert]).to include("文書ショートカットの追加・移動・解除は停止しています")
+      expect(flash[:alert]).to include("保存済みへの追加・移動・解除は停止しています")
       expect(bookmark.reload).to be_present
     end
   end

@@ -1,5 +1,8 @@
 - page_title "管理概要"
 - configuration_issue_count = @configuration_diagnostic.warning_count + @configuration_diagnostic.error_count
+- configuration_metric_status = @configuration_diagnostic.error_count.positive? ? "danger" : (configuration_issue_count.positive? ? "warning" : "zero")
+- missing_metric_status = @document_file_health.missing_count.positive? ? "danger" : "zero"
+- failure_metric_status = @continuing_failure_count.positive? ? "warning" : "zero"
 
 header.admin-list-header
   div
@@ -12,21 +15,24 @@ header.admin-list-header
 section.card aria-labelledby="admin-attention-heading"
   h2#admin-attention-heading 要対応
   .dashboard-grid
-    article.card.metric-card
-      h3 設定診断
-      p
-        strong = configuration_issue_count
-        |  件
-    article.card.metric-card
-      h3 文書実体欠落
-      p
-        strong = @document_file_health.missing_count
-        |  件
-    article.card.metric-card
-      h3 継続失敗候補
-      p
-        strong = @continuing_failure_count
-        |  件
+    article class="card metric-card admin-dashboard-metric admin-dashboard-metric--#{configuration_metric_status}"
+      = link_to admin_diagnostics_path(anchor: "configuration"), class: "admin-dashboard-metric__link", aria: { label: "設定診断 #{configuration_issue_count}件の詳細を確認" } do
+        h3 設定診断
+        p.metric-number
+          = configuration_issue_count
+          span.metric-number__unit 件
+    article class="card metric-card admin-dashboard-metric admin-dashboard-metric--#{missing_metric_status}"
+      = link_to admin_diagnostics_path(anchor: "document-files"), class: "admin-dashboard-metric__link", aria: { label: "文書実体欠落 #{@document_file_health.missing_count}件の詳細を確認" } do
+        h3 文書実体欠落
+        p.metric-number
+          = @document_file_health.missing_count
+          span.metric-number__unit 件
+    article class="card metric-card admin-dashboard-metric admin-dashboard-metric--#{failure_metric_status}"
+      = link_to admin_diagnostics_path(anchor: "failures"), class: "admin-dashboard-metric__link", aria: { label: "継続失敗候補 #{@continuing_failure_count}件の詳細を確認" } do
+        h3 継続失敗候補
+        p.metric-number
+          = @continuing_failure_count
+          span.metric-number__unit 件
 
 section.card aria-labelledby="admin-primary-data-heading"
   h2#admin-primary-data-heading 主要データ
@@ -41,8 +47,8 @@ section.card aria-labelledby="admin-primary-data-heading"
 
 section.card aria-labelledby="admin-recent-issues-heading"
   .admin-list-header
-    h2#admin-recent-issues-heading 最近の問題
-    = link_to "すべて確認", admin_diagnostics_path, class: "button secondary"
+    h2#admin-recent-issues-heading 最近の運用失敗
+    = link_to "すべて確認", admin_diagnostics_path(anchor: "failures"), class: "button secondary"
 
   - if @recent_operational_issues.any?
     table
@@ -67,4 +73,6 @@ section.card aria-labelledby="admin-recent-issues-heading"
             td.actions
               = link_to item[:primary_link].first, item[:primary_link].last, class: "button secondary"
   - else
-    = render EmptyStateComponent.new(heading: "最近の問題はありません", description: "保存済みの失敗・部分成功履歴はありません。")
+    p.admin-dashboard-compact-state
+      i.bi.bi-check-circle.me-1 aria-hidden="true"
+      span 最近の運用失敗はありません

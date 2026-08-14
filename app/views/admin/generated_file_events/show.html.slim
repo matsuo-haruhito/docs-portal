@@ -1,0 +1,77 @@
+- return_to_path = @return_to_path || admin_generated_file_events_path
+- related_run_return_to_path = admin_generated_file_event_path(@generated_file_event.public_id, return_to: return_to_path)
+
+.space-y-6
+  .flex.items-start.justify-between.gap-4
+    div
+      h1.text-2xl.font-bold 生成ファイルイベント
+      p.font-mono.text-sm.text-gray-600 = @generated_file_event.public_id
+    .flex.max-w-md.flex-col.items-end.gap-2.text-right
+      .flex.gap-2
+        = link_to "一覧へ戻る", return_to_path, class: "rounded border px-3 py-2 text-sm"
+        = button_to "このイベントを再投入", retry_dispatch_admin_generated_file_event_path(@generated_file_event.public_id, return_to: return_to_path), method: :post, class: "rounded bg-blue-600 px-3 py-2 text-sm text-white", title: "#{@generated_file_event.public_id} を再投入キューに投入", aria: { label: "#{@generated_file_event.public_id} を再投入キューに投入" }
+      p.text-xs.text-gray-500 このイベント1件だけを再投入キューへ戻します。状態は未処理に戻り、エラーと処理日時は再投入向けにクリアされます。
+
+  .rounded-lg.border.bg-white.p-4
+    h2.mb-3.text-lg.font-semibold 概要
+    dl class="grid grid-cols-1 gap-3 text-sm md:grid-cols-2"
+      div
+        dt.font-semibold 状態
+        dd = generated_file_event_status_label(@generated_file_event.status)
+      div
+        dt.font-semibold イベントキー
+        dd.font-mono = @generated_file_event.event_key
+      div
+        dt.font-semibold 対象パス
+        dd.font-mono = @generated_file_event.path
+        dd.text-xs.text-gray-500
+          | / 区切りで保存されます。
+      div
+        dt.font-semibold 操作
+        dd = generated_file_operation_label(@generated_file_event.operation)
+      div
+        dt.font-semibold 発生元
+        dd.flex.flex-wrap.items-center.gap-2
+          span = generated_file_source_label(@generated_file_event.event_source)
+          - if (badge_label = generated_file_source_badge_label(@generated_file_event.event_source))
+            span.badge = badge_label
+      div
+        dt.font-semibold 発生回数
+        dd = @generated_file_event.occurrences_count
+      div
+        dt.font-semibold 予定時刻
+        dd = l(@generated_file_event.scheduled_at, format: :long) if @generated_file_event.scheduled_at
+      div
+        dt.font-semibold 最終検知
+        dd = l(@generated_file_event.last_seen_at, format: :long) if @generated_file_event.last_seen_at
+      div
+        dt.font-semibold 処理日時
+        dd = l(@generated_file_event.processed_at, format: :long) if @generated_file_event.processed_at
+
+  - if @related_generated_file_runs.any?
+    .rounded-lg.border.bg-white.p-4
+      h2.mb-1.text-lg.font-semibold 関連実行
+      p.mb-3.text-xs.text-gray-500 このイベントを参照する実行履歴から、関連する最大10件を新しい順に表示します。
+      ul.space-y-1.text-sm
+        - @related_generated_file_runs.each do |run|
+          li
+            = link_to run.public_id, admin_generated_file_run_path(run.public_id, return_to: related_run_return_to_path), class: "font-mono text-blue-600 underline"
+            span.muted = generated_file_run_status_label(run.status)
+            - if run.event_source == "generated_file_run_retry"
+              span.badge 再実行
+            - elsif run.event_source == "generated_file_run_bulk_retry"
+              span.badge 一括再実行
+
+  - if @generated_file_event.error_message.present?
+    .rounded-lg.border.border-red-200.bg-red-50.p-4
+      h2.mb-2.text-lg.font-semibold.text-red-700 エラー
+      p.mb-2.text-xs.text-gray-600 エラーは再投入前の状態確認に使う診断用プレビューです。長い本文や raw payload を運用判断の正本にせず、token / secret / private path 相当の値は表示前に伏せています。
+      pre.whitespace-pre-wrap.text-sm = generated_file_event_diagnostic_preview(@generated_file_event.error_message)
+
+  .rounded-lg.border.bg-white.p-4
+    h2.mb-2.text-lg.font-semibold メタデータ
+    p.mb-2.text-xs.text-gray-600 メタデータはイベント補助情報の診断用プレビューです。raw payload 調査画面ではなく、token / secret / private path 相当の値は表示前に伏せています。
+    - if @generated_file_event.metadata.present?
+      pre.whitespace-pre-wrap.text-sm = generated_file_event_metadata_preview(@generated_file_event.metadata)
+    - else
+      p.text-sm.text-gray-500 このイベントに補助メタデータはありません。

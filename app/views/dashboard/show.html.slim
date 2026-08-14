@@ -1,0 +1,101 @@
+- page_title "ホーム"
+
+- pending_items = []
+- pending_items << { label: "アクセス申請", count: @dashboard_stats[:pending_access_request_count], path: access_requests_path } if @dashboard_stats[:pending_access_request_count].to_i > 0
+- pending_items << { label: "確認依頼", count: @dashboard_stats[:pending_approval_count], path: document_approval_requests_path } if current_user.internal? && @dashboard_stats[:pending_approval_count].to_i > 0
+- pending_items << { label: "Q&A", count: @open_question_handoff_threads&.size || 0, path: document_approval_requests_path } if current_user.internal? && @open_question_handoff_threads&.any?
+- has_pending = pending_items.any?
+
+section.home-workspace-summary aria-label="利用状況"
+  span.home-workspace-summary__item
+    span.home-workspace-summary__value = @dashboard_stats[:project_count]
+    | 案件
+  span.home-workspace-summary__sep aria-hidden="true" &middot;
+  span.home-workspace-summary__item
+    span.home-workspace-summary__value = @dashboard_stats[:document_count]
+    | 文書
+  span.home-workspace-summary__sep aria-hidden="true" &middot;
+  span.home-workspace-summary__item
+    | 保存済み
+    span.home-workspace-summary__value = @dashboard_stats[:bookmark_count]
+    | 件
+
+- if has_pending
+  section.home-section.home-section--priority
+    h2.home-section__title
+      i.bi.bi-bell aria-hidden="true"
+      | 要対応
+    .home-pending-list
+      - pending_items.each do |item|
+        = link_to item[:path], class: "home-pending-item", data: { turbo_frame: "_top" } do
+          span.home-pending-item__label = item[:label]
+          span.home-pending-item__count = item[:count]
+- else
+  p.home-no-pending.muted 現在、対応が必要な項目はありません。
+
+section.home-section
+  h2.home-section__title 最近見た文書
+  - if @recent_documents.any?
+    ul.home-document-list
+      - @recent_documents.each do |document|
+        li.home-document-list__item
+          = link_to project_document_path(document.project, document.slug), class: "home-document-list__link", data: { turbo_frame: "_top" } do
+            span.home-document-list__title = document.title
+            span.home-document-list__meta.muted = document.project.name
+    p.home-section__more
+      = link_to "すべて見る", document_bookmarks_path(view: "recent"), data: { turbo_frame: "_top" }
+  - else
+    p.muted
+      | 最近見た文書はまだありません。
+      = link_to "文書を探す", documents_path
+
+.home-grid
+  section.home-section
+    h2.home-section__title 保存済み
+    - if @favorite_bookmarks.any? || @read_later_bookmarks.any?
+      - if @favorite_bookmarks.any?
+        h3.home-subsection-title お気に入り
+        ul.home-document-list.home-document-list--compact
+          - @favorite_bookmarks.each do |bookmark|
+            li.home-document-list__item
+              = link_to project_document_path(bookmark.document.project, bookmark.document.slug), class: "home-document-list__link", data: { turbo_frame: "_top" } do
+                span.home-document-list__title = bookmark.document.title
+                span.home-document-list__meta.muted = bookmark.document.project.name
+      - if @read_later_bookmarks.any?
+        h3.home-subsection-title 後で読む
+        ul.home-document-list.home-document-list--compact
+          - @read_later_bookmarks.each do |bookmark|
+            li.home-document-list__item
+              = link_to project_document_path(bookmark.document.project, bookmark.document.slug), class: "home-document-list__link", data: { turbo_frame: "_top" } do
+                span.home-document-list__title = bookmark.document.title
+                span.home-document-list__meta.muted = bookmark.document.project.name
+      p.home-section__more
+        = link_to "保存済み一覧", document_bookmarks_path, data: { turbo_frame: "_top" }
+    - else
+      p.muted 保存済みの文書はまだありません。
+
+  section.home-section
+    h2.home-section__title 最近更新された文書
+    - if @recently_updated_documents.any?
+      ul.home-document-list.home-document-list--compact
+        - @recently_updated_documents.each do |document|
+          li.home-document-list__item
+            = link_to project_document_path(document.project, document.slug), class: "home-document-list__link", data: { turbo_frame: "_top" } do
+              span.home-document-list__title = document.title
+              span.home-document-list__meta.muted = "#{document.project.name} / #{l(document.updated_at, format: :short)}"
+    - else
+      p.muted 最近更新された文書はありません。
+
+  section.home-section
+    h2.home-section__title 案件
+    - if @projects.any?
+      ul.home-document-list.home-document-list--compact
+        - @projects.each do |project|
+          li.home-document-list__item
+            = link_to project_path(project), class: "home-document-list__link", data: { turbo_frame: "_top" } do
+              span.home-document-list__title = project.name
+              span.home-document-list__meta.muted = project.code
+      p.home-section__more
+        = link_to "案件一覧", projects_path, data: { turbo_frame: "_top" }
+    - else
+      p.muted 閲覧可能な案件はありません。

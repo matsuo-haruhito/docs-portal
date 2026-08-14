@@ -39,7 +39,7 @@ class Admin::ModelBrowserCatalog
     Entry.new("project_consent_settings", :document_permission, "案件同意設定", "案件ごとの同意要件を管理します。", ProjectConsentSetting, %i[public_id project_id consent_term_id required_on enabled updated_at], :admin_project_consent_settings_path),
     Entry.new("access_requests", :document_permission, "アクセス申請", "閲覧・ダウンロード申請の状態を追います。", AccessRequest, %i[public_id requestable_type requested_access_level status updated_at], :admin_access_requests_path),
     Entry.new("access_logs", :document_permission, "監査ログ", "表示・ダウンロードの操作記録です。", AccessLog, %i[public_id action_type target_type accessed_at updated_at], :admin_access_logs_path),
-    Entry.new("document_bookmarks", :document_permission, "文書ショートカット", "お気に入りと後で読むの保存です。", DocumentBookmark, %i[public_id bookmark_type user_id document_id updated_at], nil),
+    Entry.new("document_bookmarks", :document_permission, "保存済み", "お気に入りと後で読むの保存です。", DocumentBookmark, %i[public_id bookmark_type user_id document_id updated_at], nil),
     Entry.new("document_approval_requests", :document_permission, "確認依頼", "文書確認フローの依頼記録です。", DocumentApprovalRequest, %i[public_id status requester_id approver_id updated_at], nil),
     Entry.new("git_import_sources", :import_sync, "Git連携", "同期元の定義です。", GitImportSource, %i[public_id repository_full_name branch enabled updated_at], :admin_git_import_sources_path),
     Entry.new("git_import_runs", :import_sync, "Git同期履歴", "Git取り込み実行の履歴です。", GitImportRun, %i[public_id status started_at finished_at updated_at], :admin_git_import_runs_path),

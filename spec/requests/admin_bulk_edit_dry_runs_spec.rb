@@ -64,8 +64,20 @@ RSpec.describe "Admin bulk edit dry-runs", type: :request do
     expect(json_disclosure).to be_present
     expect(json_disclosure.at_css(%(button[formaction="#{handoff_admin_bulk_edit_dry_runs_path}"]))).to be_present
     expect(json_disclosure.at_css('button[formmethod="post"]')).to be_present
-    expect(parsed_html.at_css(%(input[type="submit"][value="事前確認を作成"]))).to be_present
-    expect(parsed_html.at_css(%(a[href="#{admin_documents_path}"]))).to be_present
+
+    submit = parsed_html.at_css(%(input[type="submit"][value="事前確認を作成"][data-bulk-edit-selection-target="submit"][disabled]))
+    expect(submit).to be_present
+    expect(submit["aria-describedby"]).to eq("bulk-edit-selection-selection-requirement bulk-edit-selection-change-requirement")
+    expect(parsed_html.css('[data-bulk-edit-selection-target="changeRegion"]').size).to eq(2)
+    expect(parsed_html.at_css('#bulk-edit-selection-selection-requirement[data-bulk-edit-selection-target="selectionRequirement"]')).to be_present
+    expect(parsed_html.at_css('#bulk-edit-selection-change-requirement[data-bulk-edit-selection-target="changeRequirement"]')).to be_present
+    expect(page_text).to include("対象文書を1件以上選択してください。")
+    expect(page_text).to include("変更する項目を1つ以上指定してください。")
+
+    actions = parsed_html.at_css(".bulk-edit-selection__actions")
+    expect(actions).to be_present
+    expect(actions.css("a, input").map { |element| element["value"] || element.text.squish }).to eq(["文書一覧へ戻る", "事前確認を作成"])
+    expect(actions.at_css(%(a[href="#{admin_documents_path}"]))).to be_present
 
     expect do
       post admin_bulk_edit_dry_runs_path, params: {

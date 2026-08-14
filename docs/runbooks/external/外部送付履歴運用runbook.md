@@ -212,7 +212,7 @@ summary の下にある表示件数の説明は、現在の filter 条件に一�
 
 ## 関連画面
 
-- `app/views/dashboard/show.html.erb`
+- `app/views/dashboard/show.html.slim`
 - `app/controllers/document_delivery_logs_controller.rb`
 - `app/views/document_delivery_logs/index.html.slim`
 - `app/views/document_delivery_logs/show.html.slim`

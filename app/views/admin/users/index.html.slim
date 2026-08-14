@@ -54,9 +54,9 @@
   = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns) do
     thead
       tr
-        th data-rails-table-preferences-column-key="name" ユーザー名（表示用）
+        th data-rails-table-preferences-column-key="name" 登録氏名
         th data-rails-table-preferences-column-key="email_address" メールアドレス
-        th data-rails-table-preferences-column-key="display_name" 表示名
+        th data-rails-table-preferences-column-key="display_name" 画面表示名
         th data-rails-table-preferences-column-key="user_type" 種別
         th data-rails-table-preferences-column-key="company" 会社
         th data-rails-table-preferences-column-key="status" 状態
@@ -75,9 +75,15 @@
               = render StatusBadgeComponent.new(status: "active", label: "有効", tooltip: "このユーザーはログインと操作が可能です。")
             - else
               = render StatusBadgeComponent.new(status: "inactive", label: "無効", tooltip: "このユーザーは無効化されており、ログインできません。")
-          td.actions data-rails-table-preferences-column-key="actions"
-            = edit_link_to "編集", edit_admin_user_path(user, return_to: user_return_to)
-            = delete_link_to "削除", admin_user_path(user, return_to: user_return_to), confirm: "ユーザー「#{user.display_name}」を削除しますか？アクセス履歴や所属情報との関係を確認してください。"
+          td.actions.table-row-actions data-rails-table-preferences-column-key="actions"
+            - edit_user_cue = "ユーザー「#{user.display_name}」を編集"
+            = link_to edit_admin_user_path(user, return_to: user_return_to), class: "button secondary", aria: { label: edit_user_cue }, title: edit_user_cue do
+              i.bi.bi-pencil aria-hidden="true"
+              span.visually-hidden 編集
+            - delete_user_cue = "ユーザー「#{user.display_name}」を削除"
+            = button_to admin_user_path(user, return_to: user_return_to), method: :delete, class: "button danger", aria: { label: delete_user_cue }, title: delete_user_cue, form: { data: { turbo_confirm: "ユーザー「#{user.display_name}」を削除しますか？アクセス履歴や所属情報との関係を確認してください。" } } do
+              i.bi.bi-trash aria-hidden="true"
+              span.visually-hidden 削除
 
   - if @users_pagination[:total_pages] > 1
     nav.pagination aria-label="ユーザー一覧ページ"

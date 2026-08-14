@@ -30,10 +30,15 @@ RSpec.describe "admin users source" do
     end
   end
 
-  it "keeps user actions and both empty states in the same view" do
+  it "keeps accessible user actions and both empty states in the same view" do
     aggregate_failures do
-      expect(index_source).to include("edit_link_to \"編集\"")
-      expect(index_source).to include("delete_link_to \"削除\"")
+      expect(index_source).to include("edit_admin_user_path(user, return_to: user_return_to)")
+      expect(index_source).to include("button_to admin_user_path(user, return_to: user_return_to), method: :delete")
+      expect(index_source).to include("aria: { label: edit_user_cue }, title: edit_user_cue")
+      expect(index_source).to include("aria: { label: delete_user_cue }, title: delete_user_cue")
+      expect(index_source).to include("i.bi.bi-pencil")
+      expect(index_source).to include("i.bi.bi-trash")
+      expect(index_source).to include("turbo_confirm:")
       expect(index_source).to include("ユーザーが未登録です")
       expect(index_source).to include("条件に一致するユーザーがいません")
       expect(index_source).to include("link_to \"条件をクリア\", admin_users_path")

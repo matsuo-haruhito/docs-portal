@@ -11,17 +11,22 @@ RSpec.describe "Admin document permissions", type: :request do
     tablist = parsed_html.at_css("nav[role='tablist']")
     tabs = tablist.css("[role='tab']")
     active_tab = parsed_html.at_css("##{active_tab_id}")
+    expected_controls = {
+      "document-permissions-assignments-tab" => "document-permissions-assignments-panel",
+      "document-permissions-overview-tab" => "document-permissions-overview-panel"
+    }
+    inactive_panel_id = (expected_controls.values - [active_panel_id]).sole
 
     expect(tablist["data-controller"].to_s.split).to include("server-rendered-tabs")
     expect(tabs.size).to eq(2)
-    expect(tabs.map { _1["aria-controls"] }.uniq).to eq([active_panel_id])
-    expect(tabs).to all(satisfy { parsed_html.at_css("##{_1['aria-controls']}").present? })
+    expect(tabs.to_h { [_1["id"], _1["aria-controls"]] }).to eq(expected_controls)
     expect(tabs).to all(satisfy { _1["data-server-rendered-tabs-target"] == "tab" })
     expect(tabs).to all(satisfy { _1["data-action"].to_s.split.include?("keydown->server-rendered-tabs#keydown") })
     expect(active_tab["aria-selected"]).to eq("true")
     expect(active_tab["tabindex"]).to eq("0")
     expect(tabs.reject { _1["id"] == active_tab_id }.map { _1["tabindex"] }.uniq).to eq(["-1"])
     expect(parsed_html.at_css("##{active_panel_id}[role='tabpanel'][aria-labelledby='#{active_tab_id}']")).to be_present
+    expect(parsed_html.at_css("##{inactive_panel_id}")).to be_nil
   end
 
   def parsed_json

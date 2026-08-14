@@ -33,7 +33,7 @@ RSpec.describe "Related gem wiring source" do
   end
 
   describe "admin master table preferences seams" do
-    it "routes project and user indexes through table preference helpers without changing action links" do
+    it "routes project and user indexes through table preference helpers while preserving accessible action routes" do
       projects_index = read_source("app/views/admin/projects/index.html.slim")
       users_index = read_source("app/views/admin/users/index.html.slim")
       projects_helper = read_source("app/helpers/admin/projects_helper.rb")
@@ -46,10 +46,15 @@ RSpec.describe "Related gem wiring source" do
         expect(projects_index).to include("table_preferences_table_tag(")
         expect(projects_index).to include('data-rails-table-preferences-column-key="code"')
         expect(projects_index).to include('data-rails-table-preferences-column-key="actions"')
-        expect(projects_index).to include('edit_link_to "編集"')
-        expect(projects_index).to include('delete_link_to "削除"')
-        expect(projects_helper).to include('table_preferences_column(:code')
-        expect(projects_helper).to include('table_preferences_column(:actions')
+        expect(projects_index).to include("link_to edit_admin_project_path(project)")
+        expect(projects_index).to include("button_to admin_project_path(project), method: :delete")
+        expect(projects_index).to include("i.bi.bi-pencil")
+        expect(projects_index).to include("i.bi.bi-trash")
+        expect(projects_index).to include("aria: { label: edit_project_cue }, title: edit_project_cue")
+        expect(projects_index).to include("aria: { label: delete_project_cue }, title: delete_project_cue")
+        expect(projects_helper).to include('table_preferences_column(:code, label: "案件コード", default_width: 180, overflow: :ellipsis, pinned: true)')
+        expect(projects_helper).to include('table_preferences_column(:description, label: "説明", default_visible: false, overflow: :ellipsis)')
+        expect(projects_helper).to include('table_preferences_column(:actions, label: "操作", default_width: 100, pinned: true)')
 
         expect(users_index).to include("- table_key = :admin_users")
         expect(users_index).to include("admin_user_table_columns")
@@ -57,8 +62,10 @@ RSpec.describe "Related gem wiring source" do
         expect(users_index).to include("table_preferences_table_tag(")
         expect(users_index).to include('data-rails-table-preferences-column-key="email_address"')
         expect(users_index).to include('data-rails-table-preferences-column-key="actions"')
-        expect(users_index).to include('edit_link_to "編集"')
-        expect(users_index).to include('delete_link_to "削除"')
+        expect(users_index).to include("link_to edit_admin_user_path(user, return_to: user_return_to)")
+        expect(users_index).to include("button_to admin_user_path(user, return_to: user_return_to), method: :delete")
+        expect(users_index).to include("i.bi.bi-pencil")
+        expect(users_index).to include("i.bi.bi-trash")
         expect(users_helper).to include('table_preferences_column(:email_address')
         expect(users_helper).to include('table_preferences_column(:actions')
       end
@@ -96,16 +103,16 @@ RSpec.describe "Related gem wiring source" do
   describe "tree_view app-side seam" do
     it "keeps tree rendering anchored in server-rendered helpers and partials" do
       runbook_source = read_source("docs/runbooks/ops/関連gem連携調査runbook.md")
-      sidebar_tree_source = read_source("app/views/documents/_tree.html.erb")
-      detail_tree_source = read_source("app/views/projects/_document_detail_tree.html.erb")
+      sidebar_tree_source = read_source("app/views/documents/_tree.html.slim")
+      detail_tree_source = read_source("app/views/projects/_document_detail_tree.html.slim")
       projects_helper_source = read_source("app/helpers/projects_helper.rb")
 
       expect(runbook_source).to include("`tree_view` | 文書ツリー / 詳細ツリー / persisted expand state")
       expect(runbook_source).to include("`app/helpers/documents_helper.rb`")
-      expect(runbook_source).to include("`app/views/documents/_tree.html.erb`")
-      expect(runbook_source).to include("`app/views/projects/_document_detail_tree.html.erb`")
+      expect(runbook_source).to include("`app/views/documents/_tree.html.slim`")
+      expect(runbook_source).to include("`app/views/projects/_document_detail_tree.html.slim`")
       expect(sidebar_tree_source).to include("tree_view_rows(render_state")
-      expect(detail_tree_source).to include("<%= tree_view_rows(render_state) %>")
+      expect(detail_tree_source).to include("= tree_view_rows(render_state)")
       expect(sidebar_tree_source).to include("document_tree_render_state(")
       expect(sidebar_tree_source).to match(/tree_view_rows\(render_state/)
       expect(detail_tree_source).to include("project_document_detail_tree_render_state(")

@@ -156,7 +156,7 @@ admin は open Q&A thread に表示される `回答済みにする` / `クロ�
 - `DocumentReviewCommentsController`: create / update 後の `comment_tab` / `comment_q` / `comment_author_id` 復元、create 時の visibility 補正、external user の Q&A 制約、admin の `resolve` / `reject` 操作と notice
 - `DocumentCommentWorkspaceSearch`: `comment_q` の 100 文字上限、`comment_author_id` の visible author 候補、投稿者候補最大 50 件、Q&A / 確認事項の検索対象、投稿者名・版ラベル・位置メモの current search fields、current user の可視範囲内に閉じた filtering
 - `DocumentCommentWorkspaceTab`: 許可済み `comment_tab` と、無効な tab を既定表示へ戻す境界
-- `app/views/dashboard/show.html.erb`: internal user 向け `受付中Q&A候補`、文書 / 案件 / 版 / 投稿者 / 返信有無 / 最終活動 / 本文 preview、候補 0 件時の non-SLA copy、external user 非表示境界
+- `app/views/dashboard/show.html.slim`: internal user 向け `受付中Q&A候補`、文書 / 案件 / 版 / 投稿者 / 返信有無 / 最終活動 / 本文 preview、候補 0 件時の non-SLA copy、external user 非表示境界
 - `app/views/documents/_comment_workspace.html.slim`: `質問する` と `確認事項を残す` の入力欄、コメント検索、投稿者 select、絞り込み中の件数 cue、検索 0 件時の復帰 link、Q&A / 確認事項 / 未解決タブ、投稿時に渡す workspace 文脈
 - `app/views/documents/_comment_workspace_handoff_summary.html.slim`: internal user 向け `未解決handoff` summary、`comment_q` / `comment_author_id` の allowlist URL、Q&A と内部限定確認事項のコピー用見出し、0 件 message、通知・担当割当・SLA 非対象 copy
 - `app/views/documents/_comment_workspace_threads.html.slim`: thread 表示、返信欄、版ラベル、Q&A の `回答済みにする` / `クローズする`、確認事項の位置表示と `解決`、検索 0 件時の復帰 link、返信・状態更新時に渡す workspace 文脈

@@ -13,23 +13,23 @@ module Admin::DocumentPermissionsHelper
 
   def document_permission_overview_table_columns
     [
-      table_preferences_column(:document, label: "文書名", default_width: 260, pinned: true, overflow: :ellipsis, sortable: true),
+      table_preferences_column(:document, label: "文書名", pinned: true, overflow: :ellipsis, sortable: true),
       table_preferences_column(:project, label: "案件", default_width: 180, overflow: :ellipsis),
-      table_preferences_column(:visibility_policy, label: "公開範囲", default_width: 140),
+      table_preferences_column(:visibility_policy, label: "公開範囲", default_width: 100),
       table_preferences_column(:company_permissions, label: "会社権限", default_width: 100),
       table_preferences_column(:user_permissions, label: "ユーザー権限", default_width: 110),
-      table_preferences_column(:view_allowed, label: "閲覧", default_width: 90),
+      table_preferences_column(:view_allowed, label: "閲覧", default_width: 80),
       table_preferences_column(:download_allowed, label: "ダウンロード", default_width: 110)
     ]
   end
 
   def document_permissions_table_columns
     [
-      table_preferences_column(:document, label: "文書名", default_width: 260, pinned: true, overflow: :ellipsis, sortable: true),
-      table_preferences_column(:company, label: "会社", default_width: 220, overflow: :ellipsis),
-      table_preferences_column(:user, label: "ユーザー", default_width: 240, overflow: :ellipsis),
-      table_preferences_column(:access_level, label: "権限", default_width: 110),
-      table_preferences_column(:actions, label: "操作", default_width: 140, pinned: true)
+      table_preferences_column(:document, label: "文書名", pinned: true, overflow: :ellipsis, sortable: true),
+      table_preferences_column(:company, label: "会社", default_width: 200, overflow: :ellipsis),
+      table_preferences_column(:user, label: "ユーザー", default_width: 220, overflow: :ellipsis),
+      table_preferences_column(:access_level, label: "権限", default_width: 80),
+      table_preferences_column(:actions, label: "操作", default_width: 100, pinned: true)
     ]
   end
 

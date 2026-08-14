@@ -15,8 +15,8 @@
 - `app/services/generated_files/run_failure_alert_candidates.rb`
 - `app/services/generated_files/run_failure_alert_handoff.rb`
 - `app/views/admin/dashboard/index.html.slim`
-- `app/views/admin/generated_file_runs/failure_alert_handoff.html.erb`
-- `app/views/admin/generated_file_runs/index.html.erb`
+- `app/views/admin/generated_file_runs/failure_alert_handoff.html.slim`
+- `app/views/admin/generated_file_runs/index.html.slim`
 - `spec/requests/admin_dashboard_spec.rb`
 - `spec/requests/admin_dashboard_failure_candidate_links_spec.rb`
 - `spec/requests/admin_dashboard_generated_file_failure_digest_spec.rb`

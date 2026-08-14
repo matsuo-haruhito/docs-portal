@@ -21,7 +21,7 @@ host app（docs-portal）と upstream gem 側の API / ownership / representativ
 
 | gem | host app 側（docs-portal が担当） | gem 側（upstream が担当） |
 |-----|----------------------------------|--------------------------|
-| `tree_view` | 文書ツリー / 詳細ツリーの render state・行描画・開閉・persisted state の組み込み確認。`documents_helper`・`projects_helper`・`_tree.html.erb`・`_document_detail_tree.html.erb`・`tree_view_state_owner` concern が正本 | 文書 query、権限制御、route、icon、業務ラベル、current node 判定を gem 側責務にしない。render helper / toolbar / event 名 / controller identifier の設計変更は upstream issue で扱う |
+| `tree_view` | 文書ツリー / 詳細ツリーの render state・行描画・開閉・persisted state の組み込み確認。`documents_helper`・`projects_helper`・`_tree.html.slim`・`_document_detail_tree.html.slim`・`tree_view_state_owner` concern が正本 | 文書 query、権限制御、route、icon、業務ラベル、current node 判定を gem 側責務にしない。render helper / toolbar / event 名 / controller identifier の設計変更は upstream issue で扱う |
 | `rails_table_preferences` | 一覧の column metadata、表示設定 editor、stable column key、filter / preset、mounted engine 保存、未ログイン redirect、owner-scoped preference isolation の host 側組み込み確認。`admin/document_sets` が代表画面 | 案件・文書固有の pinned 判断、filter label、業務列の意味、認可境界を gem 側へ押し戻さない。engine contract / helper option の設計変更は upstream で扱う |
 | `rails_fields_kit` | form helper、Tom Select wiring、selected value、preload / remote search、validation rerender 後の再表示確認。`admin/document_sets` form・`admin/documents` の `project_id` canary が代表 | field 名、collection、業務 validation、保存時の params contract を gem 側で定義しない。helper export / rendered-field contract の設計変更は upstream で扱う |
 

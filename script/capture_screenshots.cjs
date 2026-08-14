@@ -255,12 +255,14 @@ async function navigateAndCapture(page, url, screenshotName) {
   const pngPath = path.join(SCREENSHOT_DIR, `${screenshotName}.png`);
   await page.screenshot({ path: pngPath, fullPage: true });
 
-  // HTML スナップショット
-  const htmlPath = path.join(SCREENSHOT_DIR, `${screenshotName}.html`);
-  const htmlContent = await page.content();
-  fs.writeFileSync(htmlPath, htmlContent, "utf-8");
+  // MHTML スナップショット（CSS・画像・フォント封入）
+  const mhtmlPath = path.join(SCREENSHOT_DIR, `${screenshotName}.mhtml`);
+  const cdpSession = await page.context().newCDPSession(page);
+  const { data } = await cdpSession.send("Page.captureSnapshot", { format: "mhtml" });
+  await cdpSession.detach();
+  fs.writeFileSync(mhtmlPath, data, "utf-8");
 
-  console.log(`  ✓ ${screenshotName} (.png + .html)`);
+  console.log(`  ✓ ${screenshotName} (.png + .mhtml)`);
   return true;
 }
 
@@ -469,10 +471,8 @@ async function main() {
       console.log("");
     }
 
-    // Root page
-    console.log("Capturing root page...");
-    await navigateAndCapture(page, `${BASE_URL}/`, "root");
-
+    // `/` と `/dashboard` は同じ dashboard#show を表示するため、
+    // Screen Guide の証跡は上記 `dashboard` capture に一本化する。
     console.log("");
     console.log("=== Screenshot capture complete ===");
   } finally {

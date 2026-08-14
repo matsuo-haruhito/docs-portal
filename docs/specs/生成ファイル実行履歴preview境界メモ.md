@@ -52,7 +52,7 @@ retry 判断は引き続き、実行履歴一覧の filter、detail の retry �
 
 ## 根拠
 
-- PR #4257: site build artifact run に限定した `Docusaurus site build artifact evidence` summary を `app/views/admin/generated_file_runs/show.html.erb` に追加し、raw artifact / manifest / CI log / import API request payload / secret-like metadata を表示しない request spec を追加
-- PR #4419: `app/views/admin/generated_file_runs/show.html.erb` に `一覧 q 検索の手掛かり` card を追加し、`app/helpers/admin/generated_file_runs_helper.rb` に候補生成の安全境界を追加
-- PR #3618: `app/views/admin/generated_file_runs/show.html.erb` に診断ブロックごとの preview cue を追加
+- PR #4257: site build artifact run に限定した `Docusaurus site build artifact evidence` summary を `app/views/admin/generated_file_runs/show.html.slim` に追加し、raw artifact / manifest / CI log / import API request payload / secret-like metadata を表示しない request spec を追加
+- PR #4419: `app/views/admin/generated_file_runs/show.html.slim` に `一覧 q 検索の手掛かり` card を追加し、`app/helpers/admin/generated_file_runs_helper.rb` に候補生成の安全境界を追加
+- PR #3618: `app/views/admin/generated_file_runs/show.html.slim` に診断ブロックごとの preview cue を追加
 - `app/helpers/admin/generated_file_runs_helper.rb`: metadata / diagnostic preview の mask と truncate 境界

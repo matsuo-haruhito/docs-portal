@@ -139,9 +139,9 @@ recent最大20件内に目的の文書がない場合は、案件一覧または
 
 ## 関連画面
 
-- `app/views/dashboard/show.html.erb`
+- `app/views/dashboard/show.html.slim`
 - `app/controllers/document_bookmarks_controller.rb`
-- `app/views/document_bookmarks/index.html.erb`
+- `app/views/document_bookmarks/index.html.slim`
 - `app/views/documents/_detail_sections.html.slim`
 - `config/routes.rb`
 - `spec/requests/document_bookmarks_spec.rb`

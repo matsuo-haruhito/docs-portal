@@ -4,15 +4,16 @@ require "rails_helper"
 
 RSpec.describe SectionNavComponent, type: :component do
   describe "rendering" do
-    it "renders nav with role=tablist and aria-label" do
+    it "renders named navigation with aria-label" do
       sections = [{ id: "attributes", label: "属性" }]
 
       render_inline(described_class.new(sections: sections))
 
-      expect(page).to have_css("nav.section-nav[role='tablist'][aria-label='文書詳細ナビゲーション']")
+      expect(page).to have_css("nav.section-nav[aria-label='文書詳細ナビゲーション']")
+      expect(page).not_to have_css("nav.section-nav[role='tablist']")
     end
 
-    it "renders tabs with role=tab and aria-controls" do
+    it "renders section links with href and aria-controls" do
       sections = [
         { id: "attributes", label: "属性" },
         { id: "versions", label: "版一覧" }
@@ -20,11 +21,12 @@ RSpec.describe SectionNavComponent, type: :component do
 
       render_inline(described_class.new(sections: sections))
 
-      expect(page).to have_css("a.section-nav__tab[role='tab'][aria-controls='attributes']", text: "属性")
-      expect(page).to have_css("a.section-nav__tab[role='tab'][aria-controls='versions']", text: "版一覧")
+      expect(page).to have_css("a.section-nav__tab[href='#attributes'][aria-controls='attributes']", text: "属性")
+      expect(page).to have_css("a.section-nav__tab[href='#versions'][aria-controls='versions']", text: "版一覧")
+      expect(page).not_to have_css("a.section-nav__tab[role='tab']")
     end
 
-    it "marks first tab as aria-selected=true and is-active" do
+    it "marks first link as aria-current=location and is-active" do
       sections = [
         { id: "attributes", label: "属性" },
         { id: "versions", label: "版一覧" }
@@ -32,13 +34,13 @@ RSpec.describe SectionNavComponent, type: :component do
 
       render_inline(described_class.new(sections: sections))
 
-      first_tab = page.find("a.section-nav__tab[aria-controls='attributes']")
-      expect(first_tab[:"aria-selected"]).to eq("true")
-      expect(first_tab[:class]).to include("is-active")
+      first_link = page.find("a.section-nav__tab[aria-controls='attributes']")
+      expect(first_link[:"aria-current"]).to eq("location")
+      expect(first_link[:class]).to include("is-active")
 
-      second_tab = page.find("a.section-nav__tab[aria-controls='versions']")
-      expect(second_tab[:"aria-selected"]).to eq("false")
-      expect(second_tab[:class]).not_to include("is-active")
+      second_link = page.find("a.section-nav__tab[aria-controls='versions']")
+      expect(second_link[:"aria-current"]).to be_nil
+      expect(second_link[:class]).not_to include("is-active")
     end
 
     it "limits tabs to 10 when more than 10 sections provided" do

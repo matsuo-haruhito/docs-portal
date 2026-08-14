@@ -1,9 +1,9 @@
 require "rails_helper"
 
 RSpec.describe "document tree current selection source" do
-  let(:tree_source) { Rails.root.join("app/views/documents/_tree.html.erb").read }
-  let(:toolbar_source) { Rails.root.join("app/views/documents/_tree_toolbar.html.erb").read }
-  let(:columns_source) { Rails.root.join("app/views/documents/_tree_columns.html.erb").read }
+  let(:tree_source) { Rails.root.join("app/views/documents/_tree.html.slim").read }
+  let(:toolbar_source) { Rails.root.join("app/views/documents/_tree_toolbar.html.slim").read }
+  let(:columns_source) { Rails.root.join("app/views/documents/_tree_columns.html.slim").read }
   let(:detail_sections_source) { Rails.root.join("app/views/documents/_detail_sections.html.slim").read }
   let(:controller_source) { Rails.root.join("app/frontend/controllers/document_tree_navigation_controller.js").read }
 

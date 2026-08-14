@@ -53,7 +53,7 @@ RSpec.describe "Admin projects table preferences", type: :request do
     expect(parsed_html.css(".admin-filter-chip").map { |node| node.text.squish }).to contain_exactly(
       "検索: git",
       "状態: 有効",
-      "企業: Example Corp"
+      "会社: Example Corp"
     )
     expect(parsed_html.at_css(".admin-list-meta__count")&.text&.squish).to eq("1件")
   end

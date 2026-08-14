@@ -1,7 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["count", "query", "row", "selectedOnly", "visibleCount"]
+  static targets = [
+    "changeRegion",
+    "changeRequirement",
+    "count",
+    "query",
+    "row",
+    "selectedOnly",
+    "selectionRequirement",
+    "submit",
+    "visibleCount"
+  ]
 
   connect() {
     this.refresh()
@@ -30,6 +40,34 @@ export default class extends Controller {
     })
     this.visibleCountTargets.forEach((target) => {
       target.textContent = `${visibleCount}件表示中`
+    })
+
+    this.refreshSubmissionState(selectedCount > 0, this.hasChanges())
+  }
+
+  hasChanges() {
+    return this.changeRegionTargets.some((region) => {
+      return Array.from(region.querySelectorAll("input, select, textarea")).some((input) => {
+        if (input.disabled) return false
+        if (input.type === "checkbox" || input.type === "radio") return input.checked
+
+        return input.value.trim().length > 0
+      })
+    })
+  }
+
+  refreshSubmissionState(hasSelection, hasChanges) {
+    const disabled = !(hasSelection && hasChanges)
+
+    this.submitTargets.forEach((target) => {
+      target.disabled = disabled
+      target.setAttribute("aria-disabled", disabled.toString())
+    })
+    this.selectionRequirementTargets.forEach((target) => {
+      target.hidden = hasSelection
+    })
+    this.changeRequirementTargets.forEach((target) => {
+      target.hidden = hasChanges
     })
   }
 

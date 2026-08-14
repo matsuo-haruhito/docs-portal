@@ -134,7 +134,7 @@ status 件数は、検索語、要求権限、対象種別を適用した後、s
 
 ## 関連画面
 
-- `app/views/dashboard/show.html.erb`
+- `app/views/dashboard/show.html.slim`
 - `app/views/access_requests/index.html.slim`
 - `app/controllers/access_requests_controller.rb`
 - `config/routes.rb`

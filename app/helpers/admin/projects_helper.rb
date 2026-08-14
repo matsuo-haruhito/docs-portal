@@ -3,12 +3,12 @@
 module Admin::ProjectsHelper
   def project_table_columns
     [
-      table_preferences_column(:code, label: "コード", default_width: 140, pinned: true),
-      table_preferences_column(:name, label: "案件名", default_width: 220, sortable: true),
-      table_preferences_column(:company, label: "企業", default_width: 220, overflow: :ellipsis),
-      table_preferences_column(:description, label: "説明", default_width: 320, overflow: :ellipsis),
-      table_preferences_column(:status, label: "状態", default_width: 120),
-      table_preferences_column(:actions, label: "操作", default_width: 180, pinned: true)
+      table_preferences_column(:code, label: "案件コード", default_width: 180, overflow: :ellipsis, pinned: true),
+      table_preferences_column(:name, label: "案件名", sortable: true),
+      table_preferences_column(:company, label: "会社", default_width: 180, overflow: :ellipsis),
+      table_preferences_column(:description, label: "説明", default_visible: false, overflow: :ellipsis),
+      table_preferences_column(:status, label: "状態", default_width: 80),
+      table_preferences_column(:actions, label: "操作", default_width: 100, pinned: true)
     ]
   end
 
@@ -27,23 +27,23 @@ module Admin::ProjectsHelper
 
     company_id = filters["company_id"].to_s
     if company_id == "none"
-      labels << "企業: 企業未設定"
+      labels << "会社: 会社未設定"
     elsif company_id.match?(/\A\d+\z/) && selected_company.present?
-      labels << "企業: #{selected_company.display_name}"
+      labels << "会社: #{selected_company.display_name}"
     end
 
     labels
   end
 
   def admin_project_company_filter_collection(selected_company, selected_company_filter)
-    options = [["企業未設定", "none"]]
+    options = [["会社未設定", "none"]]
     return options unless selected_company_filter.to_s.match?(/\A\d+\z/) && selected_company.present?
 
     options + [[admin_project_company_option_label(selected_company), selected_company.id]]
   end
 
   def admin_project_company_filter_selected_option(selected_company, selected_company_filter)
-    return { value: "none", text: "企業未設定" } if selected_company_filter.to_s == "none"
+    return { value: "none", text: "会社未設定" } if selected_company_filter.to_s == "none"
 
     admin_project_company_selected_option(selected_company)
   end

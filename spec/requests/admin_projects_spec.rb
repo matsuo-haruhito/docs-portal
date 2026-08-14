@@ -111,8 +111,8 @@ RSpec.describe "Admin projects", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(delete_confirm_messages).to include(
-      "案件「Confirm Project」（コード: CONFIRM-001 / 企業: Confirm Company）を削除しますか？関連文書や所属設定に影響します。",
-      "案件「No Company Project」（コード: NO-COMPANY / 企業: 企業未設定）を削除しますか？関連文書や所属設定に影響します。"
+      "案件「Confirm Project」（コード: CONFIRM-001 / 会社: Confirm Company）を削除しますか？関連文書や所属設定に影響します。",
+      "案件「No Company Project」（コード: NO-COMPANY / 会社: 会社未設定）を削除しますか？関連文書や所属設定に影響します。"
     )
   end
 
@@ -226,7 +226,7 @@ RSpec.describe "Admin projects", type: :request do
     expect(filter_picker["data-rails-fields-kit--tom-select-min-length-value"]).to eq("1")
     expect(filter_picker["data-rails-fields-kit--tom-select-max-options-value"]).to eq("20")
     expect(filter_picker.at_css(%(option[value="#{company.id}"][selected]))&.text&.squish).to eq("Form Company / form.example.com")
-    expect(page_text).to include("企業: Form Company")
+    expect(page_text).to include("会社: Form Company")
 
     post admin_projects_path, params: {
       project: {
@@ -260,7 +260,7 @@ RSpec.describe "Admin projects", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(project_names).to eq(["Inactive Same Company"])
-    expect(filter_chip_texts).to contain_exactly("状態: 無効", "企業: Filter Company")
+    expect(filter_chip_texts).to contain_exactly("状態: 無効", "会社: Filter Company")
     expect(list_count).to eq("1件")
   end
 
@@ -276,8 +276,8 @@ RSpec.describe "Admin projects", type: :request do
     expect(response).to have_http_status(:ok)
     expect(project_names).to eq(["Unset Company Project"])
     expect(page_text).to include("未設定")
-    expect(page_text).to include("企業: 企業未設定")
-    expect(company_filter_picker.at_css('option[value="none"][selected]')&.text&.squish).to eq("企業未設定")
+    expect(page_text).to include("会社: 会社未設定")
+    expect(company_filter_picker.at_css('option[value="none"][selected]')&.text&.squish).to eq("会社未設定")
   end
 
   it "shows the clear action only when project filters are active" do

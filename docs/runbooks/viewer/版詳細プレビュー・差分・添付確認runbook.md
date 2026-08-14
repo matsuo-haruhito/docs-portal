@@ -305,5 +305,5 @@ PDF / image の inline preview では、画面上の button 操作に加えて�
 - `app/views/document_files/show_text_preview.html.slim`
 - `app/views/document_files/office_preview_unavailable.html.slim`
 - `app/views/documents/_detail_sections.html.slim`
-- `app/views/documents/_tree.html.erb`
+- `app/views/documents/_tree.html.slim`
 - `app/views/documents/_comment_workspace.html.slim`

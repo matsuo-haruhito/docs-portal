@@ -1,0 +1,102 @@
+- page_title "案件所属"
+- table_key = :admin_project_memberships
+- table_columns = project_membership_table_columns
+- table_settings = rails_table_preference_settings(table_key: table_key)
+- membership_filter_summaries = []
+- membership_filter_summaries << "キーワード「#{@query}」" if @query.present?
+- membership_filter_summaries << "権限: #{project_membership_role_label(@role_filter)}" if @role_filter.present?
+
+.admin-list-header
+  h1 案件所属
+  details.admin-create-panel open=(@project_membership.errors.any?)
+    summary.button.secondary
+      i.bi.bi-plus-lg.me-1 aria-hidden="true"
+      | 新規登録
+    .admin-create-panel__body
+      = render "form", project_membership: @project_membership
+
+.admin-filter-toolbar
+  = form_with url: admin_project_memberships_path, method: :get, local: true, class: "admin-filter-toolbar__form" do |form|
+    .admin-filter-toolbar__fields
+      = form.rfk_search_field :q,
+        value: @query,
+        placeholder: "案件コード・案件名・メールアドレス・ユーザー名",
+        wrapper: false,
+        html: { maxlength: Admin::ProjectMembershipsController::QUERY_MAX_LENGTH, class: "admin-filter-toolbar__search" }
+      = form.rfk_select :role,
+        collection: ProjectMembership.roles.keys.map { |role| [project_membership_role_label(role), role] },
+        selected: @role_filter.presence,
+        include_blank: "すべて",
+        wrapper: false,
+        allow_clear: true,
+        placeholder: "権限"
+    .admin-filter-toolbar__actions
+      = form.submit "検索", class: "button"
+      - if @filters_applied
+        = link_to "クリア", admin_project_memberships_path, class: "button secondary"
+
+- if membership_filter_summaries.any?
+  .admin-filter-chips
+    - membership_filter_summaries.each do |summary|
+      span.admin-filter-chip = summary
+
+.admin-list-meta
+  span.admin-list-meta__count = "#{@project_memberships_filtered_count}件"
+  - if @project_memberships.any?
+    = render ColumnSettingsComponent.new(table_key: table_key, settings: table_settings, columns: table_columns, title: "案件所属一覧の表示設定")
+
+- if @project_memberships.any?
+  = table_preferences_table_tag(table_key: table_key, settings: table_settings, columns: table_columns, scroll_wrapper: true, wrapper_options: { class: "table-scroll", role: "region", tabindex: 0, aria: { label: "案件所属一覧" } }) do
+    caption.table-caption 案件所属一覧
+    thead
+      tr
+        th data-rails-table-preferences-column-key="project" 案件
+        th data-rails-table-preferences-column-key="user" ユーザー
+        th data-rails-table-preferences-column-key="role" 権限
+        th data-rails-table-preferences-column-key="actions" 操作
+    tbody
+      - @project_memberships.each do |membership|
+        tr
+          td data-rails-table-preferences-column-key="project"
+            = membership.project.name
+            - if membership.project.code.present?
+              br
+              code = membership.project.code
+          td data-rails-table-preferences-column-key="user" = project_membership_user_option_label(membership.user)
+          td data-rails-table-preferences-column-key="role"
+            span.badge = project_membership_role_label(membership)
+          td.actions data-rails-table-preferences-column-key="actions"
+            - membership_label = "#{membership.project.name} / #{membership.user.display_name}"
+            = link_to edit_admin_project_membership_path(membership), class: "button secondary", aria: { label: "#{membership_label}の案件所属を編集" }, title: "案件所属を編集" do
+              i.bi.bi-pencil aria-hidden="true"
+              span.visually-hidden 編集
+            = button_to admin_project_membership_path(membership), method: :delete, class: "button danger", aria: { label: "#{membership_label}の案件所属を削除" }, title: "案件所属を削除", form: { data: { turbo_confirm: "案件所属を削除しますか？このユーザーは案件へアクセスできなくなります。" } } do
+              i.bi.bi-trash aria-hidden="true"
+              span.visually-hidden 削除
+
+  nav.pagination aria-label="案件所属一覧ページ"
+    .admin-pagination
+      - if @project_memberships_page > 1
+        = link_to "前へ", admin_project_memberships_path(page: @project_memberships_page - 1, per_page: @project_memberships_per_page, q: @query, role: @role_filter), class: "button secondary"
+      - else
+        span.button.secondary aria-disabled="true" 前へ（先頭）
+      span.muted = "#{@project_memberships_page} / #{@project_memberships_total_pages}ページ"
+      - if @project_memberships_total_pages == 1
+        span.muted 1ページのみ
+      - elsif @project_memberships_page == 1
+        span.muted 先頭ページ
+      - elsif @project_memberships_page == @project_memberships_total_pages
+        span.muted 最終ページ
+      - if @project_memberships_page < @project_memberships_total_pages
+        = link_to "次へ", admin_project_memberships_path(page: @project_memberships_page + 1, per_page: @project_memberships_per_page, q: @query, role: @role_filter), class: "button secondary"
+      - else
+        span.button.secondary aria-disabled="true" 次へ（最終）
+    - start_index = ((@project_memberships_page - 1) * @project_memberships_per_page) + 1
+    - end_index = [start_index + @project_memberships.size - 1, @project_memberships_filtered_count].min
+    span.muted = "表示中: #{start_index}-#{end_index}件 / 全#{@project_memberships_filtered_count}件（1ページ#{@project_memberships_per_page}件）"
+- elsif @filters_applied
+  = render EmptyStateComponent.new(heading: "条件に一致する案件所属がありません", description: "キーワードや権限を変更するか、条件をクリアしてください。") do |component|
+    - component.with_action do
+      = link_to "条件をクリア", admin_project_memberships_path, class: "button secondary"
+- else
+  = render EmptyStateComponent.new(heading: "案件所属が未登録です", description: "「新規登録」で案件、ユーザー、権限を選んでください。")

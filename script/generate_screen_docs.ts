@@ -42,7 +42,6 @@ const ACTION_LABELS: Record<string, string> = {
   new: "新規作成画面",
   edit: "編集画面",
   show: "詳細画面",
-  dashboard: "ダッシュボード",
   assignments: "権限一覧",
   overview: "文書別概要",
   favorite: "お気に入り",
@@ -54,7 +53,7 @@ const ACTION_LABELS: Record<string, string> = {
 
 const ADMIN_GROUP_DEFS: GroupDef[] = [
   {
-    key: "admin_dashboard", label: "管理ダッシュボード",
+    key: "admin_dashboard", label: "管理概要",
     story: "管理者がシステム全体の状況を俯瞰するトップ画面",
     screenOperations: { dashboard: ["文書数・案件数・ユーザー数の確認", "最近の同期状態やジョブ状態の確認"] },
   },
@@ -243,10 +242,10 @@ const ADMIN_GROUP_DEFS: GroupDef[] = [
     },
   },
   {
-    key: "admin_access_logs", label: "アクセスログ",
+    key: "admin_access_logs", label: "監査ログ",
     story: "管理者がユーザーの操作履歴を確認する（監査用）",
     screenOperations: {
-      index: ["アクセスログの検索・フィルタ（ユーザー・操作種別・対象・日時）"],
+      index: ["監査ログの検索・フィルタ（ユーザー・操作種別・対象・日時）"],
     },
   },
   {
@@ -274,7 +273,7 @@ const ADMIN_GROUP_DEFS: GroupDef[] = [
 
 const PUBLIC_GROUP_DEFS: GroupDef[] = [
   {
-    key: "dashboard", label: "ダッシュボード",
+    key: "dashboard", label: "ホーム",
     story: "ログインユーザーが自分に関連する文書・案件の状況を確認するトップ画面",
     screenOperations: {
       dashboard: ["アクセス可能な案件と文書の一覧確認", "最近閲覧した文書へのクイックアクセス"],
@@ -318,7 +317,7 @@ const PUBLIC_GROUP_DEFS: GroupDef[] = [
     },
   },
   {
-    key: "document_bookmarks", label: "ショートカット",
+    key: "document_bookmarks", label: "保存済み",
     story: "ユーザーがお気に入り・後で読む文書と最近見た文書を確認する",
     screenOperations: {
       favorite: ["お気に入り文書の検索・確認", "お気に入りの解除"],
@@ -340,18 +339,12 @@ const PUBLIC_GROUP_DEFS: GroupDef[] = [
       index: ["同意履歴の確認", "有効な同意文面の確認"],
     },
   },
-  {
-    key: "root", label: "トップページ",
-    story: "ログイン後の初期表示ページ",
-    screenOperations: {
-      index: ["案件一覧へのリダイレクト"],
-    },
-  },
 ]
 
 // --- ユーティリティ関数 ---
 
 function actionCaption(action: string, groupLabel: string): string {
+  if (action === "dashboard") return groupLabel
   if (ACTION_LABELS[action]) return `${groupLabel} ${ACTION_LABELS[action]}`
   return `${groupLabel} — ${action.replace(/_/g, " ")}`
 }

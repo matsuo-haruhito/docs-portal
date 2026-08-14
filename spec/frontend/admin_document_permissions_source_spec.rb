@@ -63,10 +63,17 @@ RSpec.describe "admin document permissions source" do
     aggregate_failures do
       expect(index_source).to include("overview_table_key = :admin_document_permission_overview")
       expect(index_source).to include("permissions_table_key = :admin_document_permissions")
+      expect(index_source).to include('controls: "document-permissions-assignments-panel"')
+      expect(index_source).to include('controls: "document-permissions-overview-panel"')
       expect(index_source).to include('render ColumnSettingsComponent.new(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns, title: "権限概要の表示設定")')
       expect(index_source).to include('render ColumnSettingsComponent.new(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns, title: "権限一覧の表示設定")')
-      expect(index_source).to include("table_preferences_table_tag(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns)")
-      expect(index_source).to include("table_preferences_table_tag(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns)")
+      expect(index_source).to include("table_preferences_table_tag(table_key: overview_table_key, settings: overview_table_settings, columns: overview_table_columns, scroll_wrapper: true")
+      expect(index_source).to include("table_preferences_table_tag(table_key: permissions_table_key, settings: permissions_table_settings, columns: permissions_table_columns, scroll_wrapper: true")
+      expect(index_source).to include("caption.table-caption.visually-hidden 文書別の権限概要")
+      expect(index_source).to include("caption.table-caption.visually-hidden 文書権限一覧")
+      expect(index_source).to include("form.rfk_search_field :q")
+      expect(index_source).to include(".admin-filter-toolbar")
+      expect(index_source).to include(".admin-list-meta")
       expect(index_source).to include('data-rails-table-preferences-column-key="document"')
       expect(index_source).to include('data-rails-table-preferences-column-key="visibility_policy"')
       expect(index_source).to include('data-rails-table-preferences-column-key="company"')
@@ -78,7 +85,12 @@ RSpec.describe "admin document permissions source" do
 
   it "keeps document permission delete confirmation tied to row context" do
     aggregate_failures do
-      expect(index_source).to include("confirm: document_permission_delete_confirm(permission)")
+      expect(index_source).to include("button_to admin_document_permission_path(permission), method: :delete")
+      expect(index_source).to include("turbo_confirm: document_permission_delete_confirm(permission)")
+      expect(index_source).to include("aria: { label: edit_permission_cue }, title: edit_permission_cue")
+      expect(index_source).to include("aria: { label: delete_permission_cue }, title: delete_permission_cue")
+      expect(index_source).to include("i.bi.bi-pencil")
+      expect(index_source).to include("i.bi.bi-trash")
       expect(helper_source).to include("def document_permission_delete_confirm(permission)")
       expect(helper_source).to include('文書「#{permission.document.title}」')
       expect(helper_source).to include("document_permission_delete_target_label(permission)")
