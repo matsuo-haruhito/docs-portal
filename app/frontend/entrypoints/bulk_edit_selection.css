@@ -57,3 +57,24 @@
 .bulk-edit-selection__table tbody tr.bulk-edit-selection__row--selected {
   background: var(--accent-soft);
 }
+
+.bulk-edit-selection__requirements {
+  margin-top: 1rem;
+}
+
+.bulk-edit-selection__requirement {
+  margin: 0.25rem 0;
+  color: var(--ui-danger);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.bulk-edit-selection__actions {
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.bulk-edit-selection__primary-action {
+  width: auto;
+  flex: 0 0 auto;
+}

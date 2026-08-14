@@ -1,34 +1,49 @@
 - page_title "運用・診断"
 - model_browser_total_count = Admin::ModelBrowserCatalog.entries.size
+- model_browser_latest_updated_at = @model_browser_entry_summaries.values.filter_map { _1[:latest_updated_at] }.max
+- configuration_issue_count = @configuration_diagnostic.warning_count + @configuration_diagnostic.error_count
+- continuing_failure_count = [@generated_file_run_failure_alert_candidates, @document_delivery_failure_alert_candidates, @external_sync_failure_alert_candidates].sum(&:size)
+- attention_total_count = configuration_issue_count + @document_file_health.missing_count + continuing_failure_count
+- configuration_attention_status = @configuration_diagnostic.error_count.positive? ? "danger" : (configuration_issue_count.positive? ? "warning" : "zero")
+- document_file_attention_status = @document_file_health.missing_count.positive? ? "danger" : "zero"
+- failure_attention_status = continuing_failure_count.positive? ? "warning" : "zero"
+- diagnostic_sections = [{ id: "attention", label: "要対応" }, { id: "failures", label: "運用失敗" }, { id: "configuration", label: "設定" }, { id: "document-files", label: "ファイル" }, { id: "storage", label: "Storage" }, { id: "models", label: "モデル" }]
 
 .heading-with-help
   h1 運用・診断
   = render InfoTooltipComponent.new(label: "運用・診断", description: "設定、保存領域、モデル、継続失敗候補をread-onlyで詳しく確認します。")
 
+= render SectionNavComponent.new(sections: diagnostic_sections, aria_label: "運用・診断セクション")
 
-section.card
-  .heading-with-help
-    h2 モデル観測
-    = render InfoTooltipComponent.new(label: "モデル観測", description: "catalog登録済みモデルの件数と最終更新を確認します。recordの詳細はモデルブラウザで確認できます。")
-  .dashboard-grid
-    - @model_browser_entries.each do |entry|
-      - summary = @model_browser_entry_summaries.fetch(entry)
-      article.card.metric-card
-        .heading-with-help
-          h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
-          = render InfoTooltipComponent.new(label: entry.label, description: entry.description)
-        dl.definition-list.model-browser-card-metrics
-          dt 件数
-          dd = summary[:total_count]
-          dt 最終更新
-          dd = summary[:latest_updated_at] ? l(summary[:latest_updated_at], format: :short) : "-"
-  p.actions
-    = link_to "モデルブラウザを開く（全#{model_browser_total_count}件）", admin_model_browser_path, class: "button"
+section#attention.card.diagnostic-section aria-labelledby="diagnostics-attention-heading"
+  h2#diagnostics-attention-heading 要対応
+  - if attention_total_count.zero?
+    p.admin-dashboard-compact-state
+      i.bi.bi-check-circle.me-1 aria-hidden="true"
+      span 現在確認が必要な項目はありません
+  - else
+    p.muted = "確認候補が合計#{attention_total_count}件あります。項目を選ぶと該当セクションへ移動します。"
+  .diagnostics-attention-summary
+    = link_to "#configuration", class: "diagnostics-attention-item diagnostics-attention-item--#{configuration_attention_status}", aria: { label: "設定診断 #{configuration_issue_count}件へ移動" } do
+      span 設定診断
+      span.diagnostics-attention-item__count
+        strong = configuration_issue_count
+        |  件
+    = link_to "#document-files", class: "diagnostics-attention-item diagnostics-attention-item--#{document_file_attention_status}", aria: { label: "文書実体欠落 #{@document_file_health.missing_count}件へ移動" } do
+      span 文書実体欠落
+      span.diagnostics-attention-item__count
+        strong = @document_file_health.missing_count
+        |  件
+    = link_to "#failures", class: "diagnostics-attention-item diagnostics-attention-item--#{failure_attention_status}", aria: { label: "継続失敗候補 #{continuing_failure_count}件へ移動" } do
+      span 継続失敗候補
+      span.diagnostics-attention-item__count
+        strong = continuing_failure_count
+        |  件
 
-section.card
+section#failures.card.diagnostic-section
   .heading-with-help
-    h2 運用失敗入口
-    = render InfoTooltipComponent.new(label: "運用失敗入口", description: "保存済み失敗履歴と継続失敗候補をread-onlyで確認します。候補件数は通知・確認済み・自動復旧の状態を示しません。")
+    h2 運用失敗
+    = render InfoTooltipComponent.new(label: "運用失敗", description: "保存済み失敗履歴と継続失敗候補をread-onlyで確認します。候補件数は通知・確認済み・自動復旧の状態を示しません。")
   .dashboard-grid
     - @operational_failure_summary.each do |item|
       article.card.metric-card
@@ -166,10 +181,10 @@ section.card
           - if item[:secondary_link]
             = link_to item[:secondary_link].first, item[:secondary_link].last, class: "button secondary"
 
-section.card
+section#configuration.card.diagnostic-section
   .heading-with-help
-    h2 アプリ設定診断
-    = render InfoTooltipComponent.new(label: "アプリ設定診断", description: "環境変数、保存領域、外部runtimeなどの設定状態をread-onlyで確認します。")
+    h2 設定診断
+    = render InfoTooltipComponent.new(label: "設定診断", description: "環境変数、保存領域、外部runtimeなどの設定状態をread-onlyで確認します。")
 
   = render GuidanceDisclosureComponent.new(title: "原因別runbookを確認") do
     ul
@@ -183,7 +198,7 @@ section.card
         = link_to "storage 運用方針", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/ファイル配信・storage運用方針.md", target: "_blank", rel: "noopener"
         span.muted = " ACTIVE_STORAGE_SERVICE と storage/document_files"
       li
-        = link_to "管理ダッシュボード runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/管理ダッシュボード・モデルブラウザ運用runbook.md", target: "_blank", rel: "noopener"
+        = link_to "管理概要 runbook", "https://github.com/matsuo-haruhito/docs-portal/blob/main/docs/管理ダッシュボード・モデルブラウザ運用runbook.md", target: "_blank", rel: "noopener"
         span.muted = " 診断結果の読み方と戻り先"
 
   p
@@ -266,7 +281,7 @@ section.card
       p.actions
         = link_to "絞り込み条件を解除して全診断項目を見る", admin_diagnostics_path, class: "button secondary"
 
-section.card
+section#document-files.card.diagnostic-section
   h2 文書ファイル健全性
 
   p
@@ -305,7 +320,7 @@ section.card
             td
               code = file.storage_key
 
-section.card
+section#storage.card.diagnostic-section
   .heading-with-help
     h2 Storage使用量
     = render InfoTooltipComponent.new(label: "Storage使用量", description: "local storage配下の概算値です。削除・archive・cleanup・retention policy決定や外部storage API操作は行いません。内訳は各領域の上位5件です。")
@@ -420,5 +435,34 @@ section.card
       li = link_to "案件所属", admin_project_memberships_path
       li = link_to "文書マスタ", admin_documents_path
       li = link_to "文書公開権限", admin_document_permissions_path
+
+section#models.card.diagnostic-section
+  .heading-with-help
+    h2 モデル観測
+    = render InfoTooltipComponent.new(label: "モデル観測", description: "catalog登録済みモデルの件数と最終更新を確認します。recordの詳細はモデルブラウザで確認できます。")
+  .diagnostics-model-overview
+    p
+      strong = model_browser_total_count
+      |  モデル
+    p.muted
+      | 最終更新:
+      - if model_browser_latest_updated_at
+        time datetime=model_browser_latest_updated_at.iso8601 = l(model_browser_latest_updated_at, format: :short)
+      - else
+        |  -
+    = link_to "モデルブラウザを開く", admin_model_browser_path, class: "button secondary"
+  = render GuidanceDisclosureComponent.new(title: "モデル別の件数と最終更新を確認", icon: "bi-database") do
+    .dashboard-grid.diagnostics-model-grid
+      - @model_browser_entries.each do |entry|
+        - summary = @model_browser_entry_summaries.fetch(entry)
+        article.card.metric-card
+          .heading-with-help
+            h3 = link_to entry.label, admin_model_browser_model_path(entry.key)
+            = render InfoTooltipComponent.new(label: entry.label, description: entry.description)
+          dl.definition-list.model-browser-card-metrics
+            dt 件数
+            dd = summary[:total_count]
+            dt 最終更新
+            dd = summary[:latest_updated_at] ? l(summary[:latest_updated_at], format: :short) : "-"
 
 p = link_to "管理概要へ戻る", admin_root_path

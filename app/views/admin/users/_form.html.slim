@@ -8,7 +8,7 @@
   = hidden_field_tag :return_to, return_to if return_to.present?
   .form-grid
     label
-      | ユーザー名（表示用）
+      | 登録氏名
       = form.text_field :name
     label
       | メールアドレス
@@ -59,7 +59,7 @@
     label
       | パスワード確認
       = form.password_field :password_confirmation
-  p.muted ユーザー名が空の場合はメールアドレスを表示名として使用します。編集時にパスワードを変えない場合は空欄のまま保存できます。
+  p.muted 登録氏名が空の場合はメールアドレスを画面表示名として使用します。編集時にパスワードを変えない場合は空欄のまま保存できます。
   p.actions
     = form.submit "保存", class: "button"
     - if user.persisted?

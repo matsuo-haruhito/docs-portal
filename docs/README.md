@@ -28,6 +28,14 @@
 
 セットアップ手順、開発フロー
 
+- [ローカルセットアップと環境変数](./guides/ローカルセットアップと環境変数.md)
+
+### 生成ドキュメント
+
+- [画面操作ガイド](./screen_guide.md) — `bin/all_test`成功時に公開される画面一覧・操作説明
+
+生成手順とmetadataの正本は[ローカルセットアップと環境変数](./guides/ローカルセットアップと環境変数.md#画面スクリーンショットと操作ガイドの生成)を参照し、`screen_guide.md`を直接編集しない。
+
 ### gem 連携 → [internal-ui-gem/](./internal-ui-gem/)
 
 tree_view / rails_table_preferences / rails_fields_kit のリリース判断・evidence

@@ -1,0 +1,44 @@
+- content_for :left_content do
+  = render "documents/tree", projects: @tree_projects, current_project: @project, current_document: nil
+
+- page_title @project.name
+- site_version = @project.default_site_version_for(current_user)
+= render PageHeaderComponent.new(title: @project.name, subtitle: ["コード: #{@project.code}", @project.description].compact_blank.join(" / ")) do |header|
+  - header.with_action do
+    - if site_version
+      = link_to "文書を読む", project_document_path(@project, site_version.document.slug, version_id: site_version.public_id, site_path: site_version.html_view_site_path), class: "button"
+    - else
+      = link_to "文書一覧", project_documents_path(@project), class: "button"
+  - if site_version
+    - header.with_action do
+      = link_to "文書一覧", project_documents_path(@project), class: "button secondary"
+
+details.card.action-disclosure
+  summary.action-disclosure__summary
+    strong その他の操作
+    span.muted 一括ダウンロード・文書セット・外部連携向け出力
+  .action-disclosure__body
+    .actions
+      = button_to project_document_zip_path(@project), method: :post, params: { zip_path_mode: "source_path", include_markdown_sources: true, include_attachments: true }, class: "button secondary", title: "この案件内のすべてのファイルをZIPでダウンロード", form: { class: "inline-form" } do
+        i.bi.bi-download.me-1 aria-hidden="true"
+        | ダウンロード
+      = link_to "AI向けコンテキスト", project_ai_context_path(@project), class: "button secondary"
+      = link_to "文書セット", project_document_sets_path(@project), class: "button secondary"
+      = link_to "文書カタログ", project_document_catalogs_path(@project), class: "button secondary"
+
+- if @important_documents.any?
+  article.card
+    h2 優先して確認したい文書
+    ul.resource-list
+      - @important_documents.each do |document|
+        li
+          strong = link_to document.title, project_document_path(@project, document.slug)
+          span.badge = document_importance_level_label(document)
+
+article.card.project-document-detail-tree-card
+  .heading-with-help
+    h2 文書一覧
+    = render InfoTooltipComponent.new(label: "文書一覧", description: "文書タイトルから詳細を開けます。添付・元ファイル名は各文書の補助情報として表示します。")
+  = render "projects/document_detail_tree", documents: @documents
+
+p = back_link_to "案件一覧へ戻る", projects_path

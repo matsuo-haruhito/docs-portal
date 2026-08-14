@@ -4,8 +4,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 1.5rem;
-  background: #fff;
-  border-bottom: 1px solid #e9ecef;
+  background: var(--ui-surface);
+  border-bottom: 1px solid var(--ui-border);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -20,12 +20,12 @@
 .user-nav__brand {
   font-weight: 700;
   font-size: 1rem;
-  color: var(--ink, #1a1a2e);
+  color: var(--ui-text);
   text-decoration: none;
 }
 
 .user-nav__brand:hover {
-  color: var(--brand, #e67e22);
+  color: var(--ui-brand);
 }
 
 .user-nav__links {
@@ -37,20 +37,30 @@
 .user-nav__link {
   padding: 0.35rem 0.75rem;
   font-size: 0.85rem;
-  color: #495057;
+  color: var(--ui-text-subtle);
   text-decoration: none;
-  border-radius: 6px;
+  border-radius: var(--ui-radius-md);
 }
 
 .user-nav__link:hover {
-  background: #f0f0f0;
-  color: #212529;
+  background: var(--ui-surface-muted);
+  color: var(--ui-text);
 }
 
 .user-nav__link.is-active {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: var(--ui-action-soft);
+  color: var(--ui-action-hover);
   font-weight: 600;
+}
+
+.user-nav .nav-dropdown__summary {
+  color: var(--ui-text-subtle);
+}
+
+.user-nav .nav-dropdown__summary:hover,
+.user-nav .nav-dropdown__summary:focus-visible,
+.user-nav .nav-dropdown__summary.is-active {
+  color: var(--ui-action-hover);
 }
 
 .user-nav__end {
@@ -65,7 +75,7 @@
 }
 
 .nav-dropdown__item--danger {
-  color: #c42b3a;
+  color: var(--ui-danger-text);
   border: none;
   background: none;
   width: 100%;
@@ -74,7 +84,7 @@
 }
 
 .nav-dropdown__item--danger:hover {
-  background: #fbe9e7;
+  background: #fef2f2;
 }
 
 @media (max-width: 768px) {
@@ -102,17 +112,17 @@
   width: 280px;
   padding: 0.35rem 0.75rem;
   font-size: 0.85rem;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  background: #f8f9fa;
+  border: 1px solid var(--ui-border-strong);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-surface-subtle);
   transition: border-color 0.15s, background 0.15s;
 }
 
 .user-nav__search-input:focus {
   outline: none;
-  border-color: #1976d2;
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
+  border-color: var(--ui-action);
+  background: var(--ui-surface);
+  box-shadow: 0 0 0 2px rgba(15, 98, 254, 0.15);
 }
 
 @media (max-width: 768px) {

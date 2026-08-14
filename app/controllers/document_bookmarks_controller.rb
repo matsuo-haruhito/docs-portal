@@ -106,7 +106,7 @@ class DocumentBookmarksController < BaseController
 
     bookmark.destroy!
 
-    redirect_to_back fallback_location: bookmark_fallback_location, notice: "文書ショートカットを解除しました。"
+    redirect_to_back fallback_location: bookmark_fallback_location, notice: "保存済みから解除しました。"
   end
 
   private
@@ -231,6 +231,6 @@ class DocumentBookmarksController < BaseController
   end
 
   def maintenance_bookmark_message
-    "メンテナンス中のため文書ショートカットの追加・移動・解除は停止しています。閲覧は継続できます。"
+    "メンテナンス中のため保存済みへの追加・移動・解除は停止しています。閲覧は継続できます。"
   end
 end

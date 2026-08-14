@@ -30,7 +30,13 @@ export default class extends Controller {
 
     window.requestAnimationFrame(() => {
       const navHeight = this.element.getBoundingClientRect().height
-      const top = section.getBoundingClientRect().top + window.scrollY - navHeight
+      const stickyTop = Number.parseFloat(window.getComputedStyle(this.element).top) || 0
+      const top = section.getBoundingClientRect().top + window.scrollY - navHeight - stickyTop - 8
+
+      if (window.location.hash !== tab.hash) {
+        window.history.pushState(null, "", tab.hash)
+      }
+
       window.scrollTo({ top, behavior: "smooth" })
     })
   }
@@ -94,8 +100,12 @@ export default class extends Controller {
     this.tabTargets.forEach((tab) => {
       const isActive = tab.getAttribute("aria-controls") === sectionId
       tab.classList.toggle("is-active", isActive)
-      tab.setAttribute("aria-selected", String(isActive))
-      tab.tabIndex = isActive ? 0 : -1
+
+      if (isActive) {
+        tab.setAttribute("aria-current", "location")
+      } else {
+        tab.removeAttribute("aria-current")
+      }
     })
   }
 

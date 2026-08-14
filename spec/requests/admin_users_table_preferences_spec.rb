@@ -60,7 +60,9 @@ RSpec.describe "Admin users table preferences", type: :request do
       expect(helper_source).to include("table_preferences_column(:#{column_key}")
       expect(view_source).to include(%(data-rails-table-preferences-column-key="#{column_key}"))
     end
-    expect(helper_source).to include("table_preferences_column(:actions, label: \"操作\", default_width: 180, pinned: true)")
+    expect(helper_source).to include('table_preferences_column(:name, label: "登録氏名", default_visible: false, default_width: 180')
+    expect(helper_source).to include('table_preferences_column(:display_name, label: "画面表示名", default_visible: true, default_width: 180')
+    expect(helper_source).to include('table_preferences_column(:actions, label: "操作", default_width: 100, pinned: true)')
 
     sign_in_as(admin)
     get admin_users_path, params: { q: "no-matching-user" }

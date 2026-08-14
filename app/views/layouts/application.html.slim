@@ -14,7 +14,7 @@ html lang="ja"
     = vite_javascript_tag "application"
   body data-controller="nav-dropdowns document-tree-navigation manual-document-upload document-file-list-search markdown-preview-document-search markdown-preview-codeblock-tools markdown-preview-table-tools csv-preview-tools image-preview-tools pdf-preview-tools structured-preview-tools preview-table-resizer archive-preview-tools site-viewer-iframe-height"
     = link_to "メインコンテンツへ", "#main-content", class: "skip-link"
-    header
+    header.app-header
       = render "shared/user_navbar"
     - if content_for?(:left_content)
       - sidebar_content = capture do
@@ -35,7 +35,7 @@ html lang="ja"
           = turbo_frame_tag "main_panel", target: "_top" do
             = yield
     - else
-      main#main-content tabindex="-1"
+      main#main-content.app-main tabindex="-1"
         = render "shared/flash_messages"
         = turbo_frame_tag "main_panel", target: "_top" do
           = yield

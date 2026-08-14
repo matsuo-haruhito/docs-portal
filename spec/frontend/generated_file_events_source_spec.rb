@@ -1,8 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "admin generated file events source" do
-  let(:index_source) { Rails.root.join("app/views/admin/generated_file_events/index.html.erb").read }
-  let(:show_source) { Rails.root.join("app/views/admin/generated_file_events/show.html.erb").read }
+  let(:index_source) { Rails.root.join("app/views/admin/generated_file_events/index.html.slim").read }
+  let(:show_source) { Rails.root.join("app/views/admin/generated_file_events/show.html.slim").read }
   let(:helper_source) { Rails.root.join("app/helpers/admin/generated_file_labels_helper.rb").read }
 
   it "wires the index to rails table preferences columns" do
@@ -21,13 +21,13 @@ RSpec.describe "admin generated file events source" do
     aggregate_failures do
       expect(index_source).to include('button_to "この1件を再投入", retry_dispatch_admin_generated_file_event_path')
       expect(index_source).to include('title: "#{event.public_id} 1件を再投入キューに投入（一括再投入ではありません）"')
-      expect(index_source).to include('aria: {label: "#{event.public_id} 1件を再投入キューに投入（一括再投入ではありません）"}')
+      expect(index_source).to include('aria: { label: "#{event.public_id} 1件を再投入キューに投入（一括再投入ではありません）" }')
       expect(index_source).not_to include('button_to "このイベントを再投入", retry_dispatch_admin_generated_file_event_path')
       expect(index_source).not_to include("このイベントを再dispatch")
       expect(index_source).not_to include("再dispatchキュー")
       expect(show_source).to include('button_to "このイベントを再投入", retry_dispatch_admin_generated_file_event_path')
       expect(show_source).to include('title: "#{@generated_file_event.public_id} を再投入キューに投入"')
-      expect(show_source).to include('aria: {label: "#{@generated_file_event.public_id} を再投入キューに投入"}')
+      expect(show_source).to include('aria: { label: "#{@generated_file_event.public_id} を再投入キューに投入" }')
       expect(show_source).not_to include("このイベントを再dispatch")
       expect(show_source).not_to include("再dispatchキュー")
     end

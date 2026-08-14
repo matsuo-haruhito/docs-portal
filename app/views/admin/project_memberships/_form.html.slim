@@ -1,8 +1,8 @@
-<%= render "shared/error_messages", record: project_membership %>
+= render "shared/error_messages", record: project_membership
 
-<%= form_with model: [:admin, project_membership] do |form| %>
-  <div class="form-grid">
-    <%= form.rfk_combobox :project_id,
+= form_with model: [:admin, project_membership] do |form|
+  .form-grid
+    = form.rfk_combobox :project_id,
       collection: [],
       selected: project_membership_project_selected_option(project_membership.project),
       url: project_search_admin_project_memberships_path(format: :json),
@@ -14,8 +14,8 @@
       max_options: Admin::ProjectMembershipsController::PROJECT_SEARCH_LIMIT,
       wrapper: true,
       label: "案件",
-      placeholder: "案件コード・案件名で検索" %>
-    <%= form.rfk_combobox :user_id,
+      placeholder: "案件コード・案件名で検索"
+    = form.rfk_combobox :user_id,
       collection: [],
       selected: project_membership_user_selected_option(project_membership.user),
       url: user_search_admin_project_memberships_path(format: :json),
@@ -27,16 +27,12 @@
       max_options: Admin::ProjectMembershipsController::USER_SEARCH_LIMIT,
       wrapper: true,
       label: "ユーザー",
-      placeholder: "ユーザー名・メールアドレスで検索" %>
-    <%= form.rfk_select :role,
+      placeholder: "ユーザー名・メールアドレスで検索"
+    = form.rfk_select :role,
       collection: enum_options_for("project_memberships.role", ProjectMembership.roles.keys),
       wrapper: true,
-      label: "権限" %>
-  </div>
-  <p class="actions" style="margin-top:16px;">
-    <%= form.submit "保存", class: "button" %>
-    <% if project_membership.persisted? %>
-      <%= back_link_to "一覧へ戻る", admin_project_memberships_path %>
-    <% end %>
-  </p>
-<% end %>
+      label: "権限"
+  p.actions style="margin-top:16px;"
+    = form.submit "保存", class: "button"
+    - if project_membership.persisted?
+      = back_link_to "一覧へ戻る", admin_project_memberships_path

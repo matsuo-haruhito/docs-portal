@@ -2,8 +2,8 @@
 - history_nav_active = nav_dropdown_active?(document_delivery_logs_path, consents_path, admin_access_logs_path, admin_document_usage_reports_path, admin_git_import_runs_path)
 - admin_nav_active = nav_dropdown_active?(admin_root_path, admin_companies_path, admin_users_path, admin_projects_path, admin_project_memberships_path, admin_consent_terms_path, admin_project_consent_settings_path, admin_documents_path, admin_document_sets_path, admin_document_catalogs_path, admin_document_permissions_path, admin_access_requests_path, new_admin_bulk_edit_dry_run_path, admin_model_browser_path, admin_generated_file_runs_path, admin_generated_file_events_path, admin_recurring_job_schedules_path)
 - integration_nav_active = nav_dropdown_active?(admin_api_specification_path, new_admin_zip_import_path, admin_git_import_sources_path, admin_microsoft_graph_connections_path, admin_external_folder_sync_sources_path, admin_webhook_endpoints_path, admin_webhook_deliveries_path, admin_file_upload_dry_runs_path)
-- document_nav_label = nav_current_child_label(["ダッシュボード", dashboard_path], ["案件一覧", projects_path], ["ショートカット", document_bookmarks_path], ["アクセス申請", access_requests_path], ["確認依頼", document_approval_requests_path]) if document_nav_active
-- history_nav_label = nav_current_child_label(["送付履歴", document_delivery_logs_path], ["同意履歴", consents_path], ["アクセスログ", admin_access_logs_path], ["文書利用レポート", admin_document_usage_reports_path], ["Git取込履歴", admin_git_import_runs_path]) if history_nav_active
+- document_nav_label = nav_current_child_label(["ホーム", dashboard_path], ["案件一覧", projects_path], ["保存済み", document_bookmarks_path], ["アクセス申請", access_requests_path], ["確認依頼", document_approval_requests_path]) if document_nav_active
+- history_nav_label = nav_current_child_label(["送付履歴", document_delivery_logs_path], ["同意履歴", consents_path], ["監査ログ", admin_access_logs_path], ["文書利用レポート", admin_document_usage_reports_path], ["Git取込履歴", admin_git_import_runs_path]) if history_nav_active
 - admin_nav_label = nav_current_child_label(["管理画面", admin_root_path], ["会社", admin_companies_path], ["ユーザー", admin_users_path], ["案件", admin_projects_path], ["案件メンバー", admin_project_memberships_path], ["同意文言", admin_consent_terms_path], ["案件同意設定", admin_project_consent_settings_path], ["文書", admin_documents_path], ["文書セット", admin_document_sets_path], ["文書カタログ", admin_document_catalogs_path], ["文書権限", admin_document_permissions_path], ["アクセス申請", admin_access_requests_path], ["文書一括編集", new_admin_bulk_edit_dry_run_path], ["モデルブラウザ", admin_model_browser_path], ["生成ファイル実行履歴", admin_generated_file_runs_path], ["生成ファイルイベント", admin_generated_file_events_path], ["定期ジョブ", admin_recurring_job_schedules_path]) if admin_nav_active
 - integration_nav_label = nav_current_child_label(["API仕様", admin_api_specification_path], ["ZIPインポート", new_admin_zip_import_path], ["Git取込元", admin_git_import_sources_path], ["Microsoft Graph", admin_microsoft_graph_connections_path], ["外部フォルダ同期", admin_external_folder_sync_sources_path], ["Webhook設定", admin_webhook_endpoints_path], ["Webhook送信履歴", admin_webhook_deliveries_path], ["単体ファイルdry-run", admin_file_upload_dry_runs_path]) if integration_nav_active
 
@@ -22,9 +22,9 @@ nav aria-label="主要ナビゲーション"
         .nav-dropdown__menu
           small.nav-dropdown__section-label.muted
             | 日常利用
-          = active_nav_link_to "ダッシュボード", dashboard_path
+          = active_nav_link_to "ホーム", dashboard_path
           = active_nav_link_to "案件一覧", projects_path
-          = active_nav_link_to "ショートカット", document_bookmarks_path
+          = active_nav_link_to "保存済み", document_bookmarks_path
           = active_nav_link_to "アクセス申請", access_requests_path
           - if current_user.internal?
             .nav-dropdown__divider aria-hidden="true"
@@ -48,7 +48,7 @@ nav aria-label="主要ナビゲーション"
             .nav-dropdown__divider aria-hidden="true"
             small.nav-dropdown__section-label.muted
               | 監査・管理履歴
-            = active_nav_link_to "アクセスログ", admin_access_logs_path
+            = active_nav_link_to "監査ログ", admin_access_logs_path
             = active_nav_link_to "文書利用レポート", admin_document_usage_reports_path
             = active_nav_link_to "Git取込履歴", admin_git_import_runs_path
       - if admin_user?

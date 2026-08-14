@@ -5,20 +5,20 @@ RSpec.describe "admin row retry action context source" do
     Rails.root.join(path).read
   end
 
-  let(:generated_file_runs_index_source) { read_source("app/views/admin/generated_file_runs/index.html.erb") }
+  let(:generated_file_runs_index_source) { read_source("app/views/admin/generated_file_runs/index.html.slim") }
   let(:webhook_endpoints_index_source) { read_source("app/views/admin/webhook_endpoints/index.html.slim") }
 
   it "keeps generated file run row retry scoped to one run with follow-up context" do
-    row_retry_button_source = generated_file_runs_index_source.lines.find { |line| line.include?('button_to "この行を再実行"') }
+    normalized_source = generated_file_runs_index_source.gsub(/\s+/, " ")
 
     aggregate_failures do
-      expect(generated_file_runs_index_source).to include('row_retry_confirm_message = "#{run.public_id} 1件だけを再実行します。')
-      expect(generated_file_runs_index_source).to include("元の実行履歴は診断用に残り、再実行後は新しい実行IDで結果を確認します。")
-      expect(generated_file_runs_index_source).to include('row_retry_action_label = "#{run.public_id} を1件だけ再実行キューに投入"')
-      expect(row_retry_button_source).to include("title: row_retry_action_label")
-      expect(row_retry_button_source).to include("aria: { label: row_retry_action_label }")
-      expect(row_retry_button_source).to include("turbo_confirm: row_retry_confirm_message")
-      expect(generated_file_runs_index_source).to include('現在の条件に一致する失敗履歴 #{bulk_retry_target_count} 件')
+      expect(normalized_source).to include('- row_retry_confirm_message = "#{run.public_id} 1件だけを再実行します。')
+      expect(normalized_source).to include("元の実行履歴は診断用に残り、再実行後は新しい実行IDで結果を確認します。")
+      expect(normalized_source).to include('- row_retry_action_label = "#{run.public_id} を1件だけ再実行キューに投入"')
+      expect(normalized_source).to include('= button_to "この行を再実行", retry_run_admin_generated_file_run_path(run.public_id, detail_path_params), method: :post')
+      expect(normalized_source).to include("title: row_retry_action_label, aria: { label: row_retry_action_label }")
+      expect(normalized_source).to include("form: { data: { turbo_confirm: row_retry_confirm_message } }")
+      expect(normalized_source).to include('現在の条件に一致する失敗履歴 #{bulk_retry_target_count} 件')
     end
   end
 

@@ -38,10 +38,10 @@ CHECKS = [
   {
     path: ACCESS_LOG_RUNBOOK,
     expected: [
-      "`CSV条件metadata JSON` は最新 200 件 scope、`表示中ページmetadata JSON` は current page scope の条件・除外日付・上限・summary を確認する補助出力で、監査ログ行データそのものではない",
+      "`CSV条件metadata JSON` は最新 200 件 scopeで`row_limit: 200`、`表示中ページmetadata JSON` は current page scopeで`row_limit: 50`として、条件・除外日付・上限・summary を確認する補助出力である。どちらも監査ログ行データそのものではない",
       "CSV は表示中 page ではなく current filter の最新 200 件から作られる",
-      "`CSV条件metadata JSON`: `export_scope: current_filter_latest_rows` として、最新 200 件 export の条件、除外日付、row limit、summary を確認する",
-      "`表示中ページmetadata JSON`: `export_scope: current_filter_current_page_rows` として、表示中 page export の条件、除外日付、row limit、`page`、summary を確認する",
+      "`CSV条件metadata JSON`: `export_scope: current_filter_latest_rows`、`row_limit: 200` として、最新 200 件 export の条件、除外日付、summary を確認する",
+      "`表示中ページmetadata JSON`: `export_scope: current_filter_current_page_rows`、`row_limit: 50` として、表示中 page export の条件、除外日付、`page`、summary を確認する",
       "metadata JSON は監査ログ行データそのものではありません。CSV を出す前に、どの条件・scope・page で出力するかを確認する補助出力として読みます。",
       "`監査ログ一覧の表示設定` は HTML 一覧で見たい列を切り替えるだけ",
       "CSV columns は監査用途の固定列で、表示設定で非表示にした列も CSV では固定列として出る"
@@ -61,11 +61,12 @@ CHECKS = [
   {
     path: ACCESS_LOG_CONTROLLER,
     expected: [
-      "row_limit: ACCESS_LOGS_PER_PAGE",
+      "row_limit: access_logs_export_row_limit",
       "export_scope: access_logs_export_scope",
       "metadata[:page] = page_param if current_page_csv_scope?",
       "current_page_csv_scope? ? \"current_filter_current_page_rows\" : \"current_filter_latest_rows\"",
-      "CSV export は表示中ページではなく、現在の絞り込み条件に一致する最新\#{ACCESS_LOGS_PER_PAGE}件を出力します。"
+      "current_page_csv_scope? ? ACCESS_LOGS_PER_PAGE : ACCESS_LOGS_EXPORT_LIMIT",
+      "CSV export は表示中ページではなく、現在の絞り込み条件に一致する最新\#{ACCESS_LOGS_EXPORT_LIMIT}件を出力します。"
     ]
   },
   {

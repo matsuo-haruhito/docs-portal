@@ -10,7 +10,7 @@ CHECKS = [
     path: "docs/runbooks/ops/管理ダッシュボード・モデルブラウザ運用runbook.md",
     expected: [
       "アプリ設定診断",
-      "運用確認の入口",
+      "日常運用で使い分けるための入口",
       "status filter",
       "category filter",
       "新しい診断 rule を足すものではない"

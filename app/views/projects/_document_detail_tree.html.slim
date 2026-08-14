@@ -1,7 +1,7 @@
-<% expansion_mode ||= nil %>
-<% expanded_keys ||= nil %>
+- expansion_mode ||= nil
+- expanded_keys ||= nil
 
-<style>
+css:
   .project-document-detail-tree-card { background: #fff !important; }
   .project-document-detail-tree-card.card { background: #fff !important; }
   .project-document-detail-tree__header { display: flex; justify-content: flex-end; gap: 6px; margin: 0 0 10px; }
@@ -23,32 +23,20 @@
   .project-document-detail-tree__document-title:hover, .project-document-detail-tree__document-title:focus { color: #0043ce; }
   .project-document-detail-tree__file-name { display: inline-block; margin-left: 6px; font-size: 0.86rem; overflow-wrap: anywhere; }
   .project-document-detail-tree__status { display: inline-flex; align-items: center; justify-content: center; margin-left: 4px; font-size: 0.9em; line-height: 1; vertical-align: middle; }
-</style>
 
-<div id="project_document_detail_tree">
-  <% if documents.empty? %>
-    <p class="muted">表示できる文書はありません。</p>
-  <% else %>
-    <% render_state = project_document_detail_tree_render_state(project: @project, documents:, expansion_mode:, expanded_keys:) %>
-    <div class="project-document-detail-tree__header" aria-label="文書一覧ツリー操作">
-      <%= tree_view_toolbar(
-        render_state,
-        labels: { expand_all: "全て開く", collapse_all: "全て閉じる" },
-        button_class_name: "project-document-detail-tree__action"
-      ) %>
-    </div>
-    <table class="project-document-detail-tree tree-view-table" data-project-detail-tree>
-      <thead>
-        <tr>
-          <th colspan="2">文書</th>
-          <th>最終更新日時</th>
-          <th>最終更新者</th>
-          <th>版</th>
-        </tr>
-      </thead>
-      <tbody>
-        <%= tree_view_rows(render_state) %>
-      </tbody>
-    </table>
-  <% end %>
-</div>
+#project_document_detail_tree
+  - if documents.empty?
+    p.muted 表示できる文書はありません。
+  - else
+    - render_state = project_document_detail_tree_render_state(project: @project, documents:, expansion_mode:, expanded_keys:)
+    .project-document-detail-tree__header aria-label="文書一覧ツリー操作"
+      = tree_view_toolbar(render_state, labels: { expand_all: "全て開く", collapse_all: "全て閉じる" }, button_class_name: "project-document-detail-tree__action")
+    table.project-document-detail-tree.tree-view-table data-project-detail-tree=""
+      thead
+        tr
+          th colspan="2" 文書
+          th 最終更新日時
+          th 最終更新者
+          th 版
+      tbody
+        = tree_view_rows(render_state)

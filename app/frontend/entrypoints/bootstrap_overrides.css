@@ -4,24 +4,26 @@
  * application.css, gem stylesheets, and dedicated document/tree styles.
  */
 :root {
-  --bs-primary: var(--accent-2);
+  --bs-primary: var(--ui-action);
   --bs-primary-rgb: 15, 98, 254;
-  --bs-link-color: var(--accent-2);
-  --bs-link-hover-color: #0b5ed7;
-  --bs-border-radius: 0.375rem;
-  --bs-border-radius-sm: 0.25rem;
-  --bs-border-radius-lg: 0.5rem;
-  --bs-focus-ring-color: rgba(13, 110, 253, 0.25);
+  --bs-link-color: var(--ui-action);
+  --bs-link-hover-color: var(--ui-action-hover);
+  --bs-border-radius: var(--ui-radius-md);
+  --bs-border-radius-sm: var(--ui-radius-sm);
+  --bs-border-radius-lg: var(--ui-radius-lg);
+  --bs-focus-ring-color: rgba(15, 98, 254, 0.25);
   --bs-body-font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --bs-body-color: var(--ink);
+  --bs-body-color: var(--ui-text);
 }
 
 body {
-  color: var(--ink);
-  background: var(--bg);
+  color: var(--ui-text);
+  background: var(--ui-bg);
 }
 
-header a,
+.app-header a,
+.page-header a,
+.admin-header a,
 .nav-list a,
 .button,
 button {
@@ -29,7 +31,7 @@ button {
 }
 
 .button,
-button:not(.nav-link):not(.dropdown-item) {
+button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-settings__summary, .nav-dropdown__item)) {
   --bs-btn-color: #fff;
   --bs-btn-bg: var(--bs-primary);
   --bs-btn-border-color: var(--bs-primary);
@@ -65,29 +67,29 @@ button:not(.nav-link):not(.dropdown-item) {
 }
 
 .button:hover,
-button:not(.nav-link):not(.dropdown-item):hover,
+button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-settings__summary, .nav-dropdown__item)):hover,
 .button:focus-visible,
-button:not(.nav-link):not(.dropdown-item):focus-visible {
+button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-settings__summary, .nav-dropdown__item)):focus-visible {
   border-color: var(--bs-btn-hover-border-color);
   background: var(--bs-btn-hover-bg);
   color: var(--bs-btn-hover-color);
 }
 
 .button:focus-visible,
-button:not(.nav-link):not(.dropdown-item):focus-visible {
+button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-settings__summary, .nav-dropdown__item)):focus-visible {
   outline: 0;
   box-shadow: 0 0 0 0.25rem rgba(var(--bs-btn-focus-shadow-rgb), 0.5);
 }
 
 .button:active,
-button:not(.nav-link):not(.dropdown-item):active {
+button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-settings__summary, .nav-dropdown__item)):active {
   border-color: var(--bs-btn-active-border-color);
   background: var(--bs-btn-active-bg);
   color: var(--bs-btn-active-color);
 }
 
 .button:disabled,
-button:not(.nav-link):not(.dropdown-item):disabled,
+button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-settings__summary, .nav-dropdown__item)):disabled,
 .button[aria-disabled="true"] {
   pointer-events: none;
   opacity: 0.65;
@@ -108,21 +110,23 @@ button.secondary {
 }
 
 .button.danger,
-button.danger:not(.nav-link):not(.dropdown-item) {
-  --bs-btn-color: #fff;
-  --bs-btn-bg: var(--bs-danger, #dc3545);
-  --bs-btn-border-color: var(--bs-danger, #dc3545);
-  --bs-btn-hover-color: #fff;
-  --bs-btn-hover-bg: #bb2d3b;
-  --bs-btn-hover-border-color: #b02a37;
-  --bs-btn-focus-shadow-rgb: 225, 83, 97;
-  --bs-btn-active-color: #fff;
-  --bs-btn-active-bg: #b02a37;
-  --bs-btn-active-border-color: #a52834;
+button.danger:not(:where(.nav-link, .dropdown-item)) {
+  --bs-btn-color: var(--ui-danger-text);
+  --bs-btn-bg: var(--ui-surface);
+  --bs-btn-border-color: var(--ui-danger-border);
+  --bs-btn-hover-color: var(--ui-on-action);
+  --bs-btn-hover-bg: var(--ui-danger);
+  --bs-btn-hover-border-color: var(--ui-danger);
+  --bs-btn-focus-shadow-rgb: 220, 38, 38;
+  --bs-btn-active-color: var(--ui-on-action);
+  --bs-btn-active-bg: var(--ui-danger-text);
+  --bs-btn-active-border-color: var(--ui-danger-text);
 }
 
-header .button.secondary,
-header button.secondary {
+.page-header .button.secondary,
+.page-header button.secondary,
+.admin-header .button.secondary,
+.admin-header button.secondary {
   --bs-btn-color: #bfdbfe;
   --bs-btn-bg: transparent;
   --bs-btn-border-color: #bfdbfe;
@@ -174,7 +178,7 @@ header button.secondary {
 
 @media (prefers-reduced-motion: reduce) {
   .button,
-  button:not(.nav-link):not(.dropdown-item) {
+  button:not(:where(.nav-link, .dropdown-item, .admin-sidebar__toggle, .column-settings__summary, .nav-dropdown__item)) {
     transition: none;
   }
 }

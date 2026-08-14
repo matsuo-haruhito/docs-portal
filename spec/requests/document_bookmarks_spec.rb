@@ -25,17 +25,23 @@ RSpec.describe "Document bookmarks", type: :request do
     tablist = parsed_html.at_css("nav[role='tablist']")
     tabs = tablist.css("[role='tab']")
     active_tab = parsed_html.at_css("##{active_tab_id}")
+    expected_controls = {
+      "favorite-tab" => "favorite-bookmarks",
+      "read-later-tab" => "read-later-bookmarks",
+      "recent-tab" => "recent-documents"
+    }
+    inactive_panel_ids = expected_controls.values - [active_panel_id]
 
     expect(tablist["data-controller"].to_s.split).to include("server-rendered-tabs")
     expect(tabs.size).to eq(3)
-    expect(tabs.map { _1["aria-controls"] }.uniq).to eq([active_panel_id])
-    expect(tabs).to all(satisfy { parsed_html.at_css("##{_1['aria-controls']}").present? })
+    expect(tabs.to_h { |tab| [tab["id"], tab["aria-controls"]] }).to eq(expected_controls)
     expect(tabs).to all(satisfy { _1["data-server-rendered-tabs-target"] == "tab" })
     expect(tabs).to all(satisfy { _1["data-action"].to_s.split.include?("keydown->server-rendered-tabs#keydown") })
     expect(active_tab["aria-selected"]).to eq("true")
     expect(active_tab["tabindex"]).to eq("0")
     expect(tabs.reject { _1["id"] == active_tab_id }.map { _1["tabindex"] }.uniq).to eq(["-1"])
     expect(parsed_html.at_css("##{active_panel_id}[role='tabpanel'][aria-labelledby='#{active_tab_id}']")).to be_present
+    inactive_panel_ids.each { |panel_id| expect(parsed_html.at_css("##{panel_id}")).to be_nil }
   end
 
   it "renders only the favorite panel by default with accessible tab relationships" do
@@ -52,8 +58,10 @@ RSpec.describe "Document bookmarks", type: :request do
     expect_server_rendered_tab_contract(active_tab_id: "favorite-tab", active_panel_id: "favorite-bookmarks")
     expect(parsed_html.at_css("#read-later-bookmarks")).to be_nil
     expect(parsed_html.at_css("#recent-documents")).to be_nil
+    expect(parsed_html.at_css("section.bookmark-filter h2.bookmark-filter__heading").text.squish).to eq("絞り込み")
+    expect(parsed_html.css("#favorite-bookmarks .resource-list__item .badge")).to be_empty
     expect(response.body).to include("Manual")
-    expect(response.body).not_to include("Checklist", "Guide")
+    expect(response.body).not_to include("Checklist", "Guide", "対象: お気に入り", "よく開く文書")
   end
 
   it "renders only the panel selected by an allowed view" do
@@ -68,15 +76,21 @@ RSpec.describe "Document bookmarks", type: :request do
     expect_server_rendered_tab_contract(active_tab_id: "read-later-tab", active_panel_id: "read-later-bookmarks")
     expect(parsed_html.at_css("#read-later-bookmarks[role='tabpanel']")).to be_present
     expect(parsed_html.at_css("#favorite-bookmarks, #recent-documents")).to be_nil
+    expect(parsed_html.css("#read-later-bookmarks .resource-list__item .badge")).to be_empty
     expect(response.body).to include("Checklist")
-    expect(response.body).not_to include("Manual", "Guide")
+    expect(response.body).not_to include("Manual", "Guide", "対象: 後で読む", "あとで確認")
 
     get document_bookmarks_path, params: { view: "recent" }
     expect_server_rendered_tab_contract(active_tab_id: "recent-tab", active_panel_id: "recent-documents")
     expect(parsed_html.at_css("#recent-documents[role='tabpanel']")).to be_present
     expect(parsed_html.at_css("#favorite-bookmarks, #read-later-bookmarks")).to be_nil
+    expect(parsed_html.at_css("#recent-documents h3.bookmark-filter__heading").text.squish).to eq("絞り込み")
+    recent_limit_tooltip = parsed_html.at_css("#recent-documents .info-tooltip[role]") || parsed_html.at_css("#recent-documents .info-tooltip")
+    expect(recent_limit_tooltip).to be_present
+    expect(recent_limit_tooltip["aria-label"]).to eq("最近表示された文書を最大20件表示します。")
+    expect(parsed_html.css("#recent-documents .resource-list__item .badge")).to be_empty
     expect(response.body).to include("Guide")
-    expect(response.body).not_to include("Manual", "Checklist")
+    expect(response.body).not_to include("Manual", "Checklist", "対象: 最近見た文書")
   end
 
   it "normalizes an unsupported view to favorite" do

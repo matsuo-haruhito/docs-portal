@@ -228,6 +228,9 @@ end
 
 ## View
 
+- アプリケーションが所有する HTML テンプレートは Slim（`.html.slim`）で作成する。新規の `.html.erb` は追加しない
+- 外部 gem の partial override など、handler 互換性のため ERB が必要な場合だけ `.html.erb` を許可し、理由をコードまたは関連文書で明示する
+- テンプレートの拡張子を変更するときは、現行パスを参照する source spec・runbook・代表 smoke の記述も同時に更新する
 - 一覧テーブルは原則 `table_tag` を使う
 - 編集・削除ボタンは `edit_link_to` `delete_link_to` を優先して使う
 - 画面タイトルは `page_title` で設定する

@@ -5,7 +5,8 @@ RSpec.describe "Admin diagnostics operational failure source" do
 
   it "keeps saved history and consecutive failure candidates visually separated" do
     aggregate_failures do
-      expect(view_source).to include("h2 運用失敗入口")
+      expect(view_source).to include("section#failures.card.diagnostic-section")
+      expect(view_source).to include("h2 運用失敗")
       expect(view_source).to include("h4 保存済み履歴")
       expect(view_source).to include("保存済み履歴の件数です。継続失敗候補や通知状態とは別に確認します。")
       expect(view_source).to include("h4 継続失敗候補")

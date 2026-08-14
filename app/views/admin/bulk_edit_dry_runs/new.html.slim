@@ -98,7 +98,7 @@ nav.admin-steps aria-label="一括編集の手順"
     h3 変更内容
     p.muted 空欄の項目は変更しません。タグはカンマ・読点・改行区切りで入力できます。
 
-    .form-grid
+    .form-grid data-bulk-edit-selection-target="changeRegion" data-action="input->bulk-edit-selection#refresh change->bulk-edit-selection#refresh"
       label
         | カテゴリ
         = select_tag "bulk_edit[document_attributes][category]", options_for_select([["変更しない", ""]] + enum_options_for("documents.category", Document.categories.keys)), id: "bulk_edit_category"
@@ -130,7 +130,7 @@ nav.admin-steps aria-label="一括編集の手順"
         | 公開終了日時
         = datetime_field_tag "bulk_edit[latest_version_attributes][published_until]"
 
-    .form-grid
+    .form-grid data-bulk-edit-selection-target="changeRegion" data-action="input->bulk-edit-selection#refresh change->bulk-edit-selection#refresh"
       label
         | 追加するタグ
         = text_area_tag "bulk_edit[tag_changes][add_tag_names]", nil, rows: 3
@@ -148,6 +148,14 @@ nav.admin-steps aria-label="一括編集の手順"
       p.actions
         = button_tag "選択状態JSONを確認", type: "submit", class: "button secondary", formaction: handoff_admin_bulk_edit_dry_runs_path, formmethod: "post"
 
-    p.actions style="margin-top:16px;"
-      = form.submit "事前確認を作成", class: "button"
+    .bulk-edit-selection__requirements role="status" aria-live="polite" aria-atomic="true"
+      p#bulk-edit-selection-selection-requirement.bulk-edit-selection__requirement hidden=candidate_document_ids.any? data-bulk-edit-selection-target="selectionRequirement"
+        i.bi.bi-exclamation-circle.me-1 aria-hidden="true"
+        | 対象文書を1件以上選択してください。
+      p#bulk-edit-selection-change-requirement.bulk-edit-selection__requirement hidden=@bulk_edit_lifecycle_purpose.present? data-bulk-edit-selection-target="changeRequirement"
+        i.bi.bi-exclamation-circle.me-1 aria-hidden="true"
+        | 変更する項目を1つ以上指定してください。
+
+    .actions.bulk-edit-selection__actions
       = link_to "文書一覧へ戻る", admin_documents_path, class: "button secondary"
+      = form.submit "事前確認を作成", class: "button bulk-edit-selection__primary-action", disabled: !(candidate_document_ids.any? && @bulk_edit_lifecycle_purpose.present?), data: { bulk_edit_selection_target: "submit" }, aria: { describedby: "bulk-edit-selection-selection-requirement bulk-edit-selection-change-requirement" }

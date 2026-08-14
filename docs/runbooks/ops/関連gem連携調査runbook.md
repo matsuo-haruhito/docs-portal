@@ -179,7 +179,7 @@
 
 | gem | current canary surface | 最小の spec / evidence | update log に残す観点 |
 | --- | --- | --- | --- |
-| `tree_view` | `app/views/documents/_tree.html.erb` と `app/views/projects/_document_detail_tree.html.erb` | `spec/requests/document_tree_regressions_spec.rb` の tree visibility / persisted state / window offset | sidebar tree、detail tree、persisted state のどこを確認したか |
+| `tree_view` | `app/views/documents/_tree.html.slim` と `app/views/projects/_document_detail_tree.html.slim` | `spec/requests/document_tree_regressions_spec.rb` の tree visibility / persisted state / window offset | sidebar tree、detail tree、persisted state のどこを確認したか |
 | `rails_table_preferences` | `app/views/admin/document_sets/index.html.slim` の editor + table | `spec/requests/admin_document_sets_index_spec.rb` と `spec/requests/admin_document_sets_spec.rb` の editor / mounted engine 保存 | stable column key、filter/preset、engine save のどこを確認したか |
 | `rails_fields_kit` | `app/views/admin/document_sets/_form.html.slim` の `rfk_select` 群 | `spec/requests/admin_document_sets_spec.rb` の initial load / invalid rerender | selected value 保持、placeholder、Turbo 再訪で何を確認したか |
 
@@ -228,9 +228,9 @@
   - サイドバーの文書ツリー生成、folder node、icon 判定、HTML 表示可否、toggle path を確認する
 - `app/helpers/projects_helper.rb`
   - 文書詳細ページ側の tree render state と folder node 構築を確認する
-- `app/views/documents/_tree.html.erb`
+- `app/views/documents/_tree.html.slim`
   - サイドバー側の table / spacer / toolbar / `tree_view_rows` 呼び出しを確認する
-- `app/views/projects/_document_detail_tree.html.erb`
+- `app/views/projects/_document_detail_tree.html.slim`
   - 文書詳細側の table / toolbar / `tree_view_rows` 呼び出しを確認する
 - `app/views/layouts/application.html.slim`
   - sidebar layout と `data-controller="sidebar"` まわりを確認する
@@ -263,7 +263,7 @@
 
 - `app/helpers/documents_helper.rb` と `app/helpers/projects_helper.rb`
   - folder node、icon、current node、toggle path が現行の tree row 描画と噛み合っているか確認する
-- `app/views/documents/_tree.html.erb` と `app/views/projects/_document_detail_tree.html.erb`
+- `app/views/documents/_tree.html.slim` と `app/views/projects/_document_detail_tree.html.slim`
   - `tree_view_rows`、toolbar、spacer が desktop / mobile 幅で崩れていないか確認する
 - `app/controllers/projects_controller.rb` と `app/models/concerns/tree_view_state_owner.rb`
   - expand / collapse と persisted state が今の render state に追従しているか確認する
@@ -275,9 +275,9 @@
 
 ### 代表 smoke contract
 
-- サイドバーの文書ツリー (`app/views/documents/_tree.html.erb`)
+- サイドバーの文書ツリー (`app/views/documents/_tree.html.slim`)
   - 代表フォルダ 1 つを開閉し、current document link が消えたり別階層へ飛んだりしないことを確認します。
-- 文書詳細のツリー (`app/views/projects/_document_detail_tree.html.erb`)
+- 文書詳細のツリー (`app/views/projects/_document_detail_tree.html.slim`)
   - 同じ文書 / フォルダ階層が detail 側でも見え、toolbar から expand / collapse を実行できることを確認します。
 - persisted state (`app/models/concerns/tree_view_state_owner.rb`)
   - 開いた状態を保存したあと、同じ利用者の再訪や再描画で expand state が戻ることを確認します。

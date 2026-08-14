@@ -12,7 +12,7 @@ CHECKS = [
       "事前確認",
       "dry-run 作成、bulk edit 実行、archive / restore / delete には進まず",
       "選択状態JSONを確認",
-      "dry-run を作らず JSON だけを返します"
+      "dry-runを作らずJSONだけを確認します"
     ]
   }
 ].freeze

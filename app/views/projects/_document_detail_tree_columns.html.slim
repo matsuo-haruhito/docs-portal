@@ -1,0 +1,27 @@
+- download_icon = capture do
+  svg.download-icon viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"
+    path d="M12 3a1.25 1.25 0 0 1 1.25 1.25v9.18l3.13-3.13a1.25 1.25 0 1 1 1.77 1.77l-5.26 5.25a1.25 1.25 0 0 1-1.78 0l-5.26-5.25a1.25 1.25 0 0 1 1.77-1.77l3.13 3.13V4.25A1.25 1.25 0 0 1 12 3Z"
+    path d="M4.25 15.5a1.25 1.25 0 0 1 1.25 1.25v1.75h13v-1.75a1.25 1.25 0 1 1 2.5 0v3A1.25 1.25 0 0 1 19.75 21H4.25A1.25 1.25 0 0 1 3 19.75v-3a1.25 1.25 0 0 1 1.25-1.25Z"
+
+- if item.is_a?(ProjectsHelper::ProjectDocumentDetailTreeFolderNode)
+  td.project-document-detail-tree__name-cell
+    strong = item.label
+    = button_to project_document_zip_path(item.project), method: :post, params: { source_path: item.path, zip_path_mode: "source_path", include_markdown_sources: true, include_attachments: true }, class: "tree-download-button tree-download-button--combined", title: "このフォルダ内のすべてのファイルをZIPでダウンロード", form: { class: "tree-download-form", data: { turbo: false } }, data: { turbo: false }, aria: { label: "このフォルダ内のすべてのファイルをZIPでダウンロード" } do
+      = tree_icon("zip", title: nil)
+      = download_icon
+  td colspan="3"
+- else
+  - version = document_tree_version_for(item)
+  - download_file = document_version_download_file(version)
+  td.project-document-detail-tree__name-cell
+    = link_to item.title, tree_item_path(item), class: "project-document-detail-tree__document-title"
+    - if download_file
+      span.project-document-detail-tree__file-name.muted title=download_file.file_name = "（#{download_file.file_name}）"
+      = link_to document_file_path(download_file, disposition: "download"), class: "tree-download-button tree-download-button--combined", title: "#{download_file.file_name} をダウンロード", data: { turbo: false }, aria: { label: "#{download_file.file_name} をダウンロード" } do
+        = document_file_icon(download_file, title: nil)
+        = download_icon
+    - tree_item_status_icons(item).each do |status_icon|
+      span id=status_icon[:id] class="project-document-detail-tree__status #{status_icon[:class]}" title=status_icon[:title] aria-label=status_icon[:title] = status_icon[:text]
+  td = item.updated_at&.strftime("%Y-%m-%d %H:%M") || "-"
+  td = version&.published_by_user&.name.presence || version&.published_by_user&.email_address.presence || "-"
+  td = version&.version_label.presence || "-"
