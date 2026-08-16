@@ -11,7 +11,7 @@ DOC_CHECKS = [
     expected: [
       "Turbo のみ",
       "Stimulus",
-      "`application.js` に直接 `querySelectorAll` とイベント登録を増やさない",
+      "`application.ts` に直接 `querySelectorAll` とイベント登録を増やさない",
       "新しい UI では同じ形式を増やさない",
       "Tom Select 自体は避けない",
       "アプリ側で `new TomSelect(...)` を直接呼ぶ手書き初期化を増やすこと"
@@ -28,7 +28,7 @@ DOC_CHECKS = [
 
 ENTRYPOINT_CHECKS = [
   {
-    path: "app/frontend/entrypoints/application.js",
+    path: "app/frontend/entrypoints/application.ts",
     expected: [
       "Application.start()",
       "application.register(\"rails-table-preferences\", RailsTablePreferencesController)",
