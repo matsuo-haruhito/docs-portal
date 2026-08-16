@@ -56,13 +56,13 @@ package-root import、documented direct entrypoint、Vite resolver の downstrea
 
 | gem | docs-portal current import | Vite resolver | upstream package-root public surface | documented direct entrypoint | 境界 |
 |-----|---------------------------|---------------|-------------------------------------|-----------------------------|----- |
-| `tree_view` | current `application.js` では controller を直接 import / register していない。helper / partial integration 先行 | current `vite.config.ts` には alias なし。JS hook 必要時に追加判断 | `config/public_api_manifest.yml` の `javascript_package_root.named_exports`（`registerTreeViewControllers` 等） | package-root を入口に扱う。gem 内部 path は durable import にしない | current downstream 採用を先取りせず、raw event 名 / controller identifier の写経を避ける |
+| `tree_view` | `import { registerTreeViewControllers } from "tree_view"` → application.ts で `registerTreeViewControllers(application)` として呼び出し | `tree_view` alias あり（`vite.config.ts`） | `config/public_api_manifest.yml` の `javascript_package_root.named_exports`（`registerTreeViewControllers` 等） | package-root を入口に扱う。gem 内部 path は durable import にしない | package-root import を採用済み。raw event 名 / controller identifier の写経を避ける |
 | `rails_table_preferences` | `import { RailsTablePreferencesController } from "rails_table_preferences"` → `rails-table-preferences` として register | `rails_table_preferences` と `rails_table_preferences/controller` の alias あり | `docs/javascript_entrypoints.md` が package root named export を案内 | `rails_table_preferences/controller` は documented fallback / migration lane | screen issue では package-root import を基準にする。direct path は fallback に閉じる |
-| `rails_fields_kit` | `import { TomSelectController } from "rails_fields_kit"` → `rails-fields-kit--tom-select` として register | `rails_fields_kit` と `rails_fields_kit/tom_select_controller` の alias あり | `doc/public_api.md` が package root named export `TomSelectController` を案内 | `rails_fields_kit/tom_select_controller` は documented | new helper を downstream docs に書く前に upstream public export か確認する。未着地 upstream PR の export 名を durable contract にしない |
+| `rails_fields_kit` | `import { TomSelectController as RailsFieldsKitTomSelectController } from "rails_fields_kit"` → ExtendedRfkTomSelectController として拡張・register | `rails_fields_kit` と `rails_fields_kit/tom_select_controller` の alias あり | `doc/public_api.md` が package root named export `TomSelectController` を案内 | `rails_fields_kit/tom_select_controller` は documented | new helper を downstream docs に書く前に upstream public export か確認する。未着地 upstream PR の export 名を durable contract にしない |
 
 ### Import 方式の判断基準
 
-- package-root import を採用する場合: current `application.js` と upstream public API docs が根拠
+- package-root import を採用する場合: current `application.ts` と upstream public API docs が根拠
 - documented direct entrypoint を fallback として参照する場合: upstream Vite / app/frontend docs と migration lane が根拠
 - Issue / PR には選んだ方式を 1 行で残す
 
@@ -80,7 +80,7 @@ public export、TypeScript declaration、manifest、verification signal の責�
 
 | 判断対象 | docs-portal で参照してよいもの | docs-portal で決めないもの |
 |---------|------------------------------|--------------------------|
-| package-root import 採用 | current `application.js`、`vite.config.ts`、upstream README / public API docs | upstream package-root export の命名変更や互換 policy |
+| package-root import 採用 | current `application.ts`、`vite.config.ts`、upstream README / public API docs | upstream package-root export の命名変更や互換 policy |
 | direct entrypoint 文書化 | upstream が documented fallback として案内している path | gem 内部 path を durable public path として勝手に昇格すること |
 | TypeScript declaration gate | merge 済み upstream docs / package contents / CI result | 未 merge の declaration PR を必須条件にすること |
 | manifest 採用判断 | upstream が adopter-visible artifact として扱うと決めた manifest | manifest schema や配布境界の再設計 |

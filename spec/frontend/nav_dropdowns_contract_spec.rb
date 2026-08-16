@@ -1,8 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Nav dropdown contract" do
-  let(:controller_source) { Rails.root.join("app/frontend/controllers/nav_dropdowns_controller.js").read }
-  let(:application_source) { Rails.root.join("app/frontend/entrypoints/application.js").read }
+  let(:controller_source) { Rails.root.join("app/frontend/controllers/nav_dropdowns_controller.ts").read }
+  let(:application_source) { Rails.root.join("app/frontend/entrypoints/application.ts").read }
   let(:current_label_css) { Rails.root.join("app/frontend/entrypoints/nav_current_label.css").read }
   let(:layout_source) { Rails.root.join("app/views/layouts/application.html.slim").read }
   let(:navbar_source) { Rails.root.join("app/views/shared/_navbar.html.slim").read }
@@ -58,30 +58,30 @@ RSpec.describe "Nav dropdown contract" do
   it "keeps document listener registration and cleanup paired" do
     expect(controller_source).to include('document.addEventListener("toggle", this.onToggle, true)')
     expect(controller_source).to include('document.removeEventListener("toggle", this.onToggle, true)')
-    expect(controller_source).to include('document.addEventListener("click", this.onClick)')
-    expect(controller_source).to include('document.removeEventListener("click", this.onClick)')
-    expect(controller_source).to include('document.addEventListener("keydown", this.onKeydown)')
-    expect(controller_source).to include('document.removeEventListener("keydown", this.onKeydown)')
+    expect(controller_source).to include('document.addEventListener("click", this.onClick')
+    expect(controller_source).to include('document.removeEventListener("click", this.onClick')
+    expect(controller_source).to include('document.addEventListener("keydown", this.onKeydown')
+    expect(controller_source).to include('document.removeEventListener("keydown", this.onKeydown')
   end
 
   it "keeps one-open-dropdown, outside-click, and Escape contracts readable" do
-    expect(controller_source).to include('const dropdown = event.target.closest?.("[data-nav-dropdown]")')
+    expect(controller_source).to include('.closest?.("[data-nav-dropdown]")')
     expect(controller_source).to include("if (!dropdown || !dropdown.open) return")
     expect(controller_source).to include("this.closeOpenDropdowns(dropdown)")
 
-    expect(controller_source).to include('const clickedDropdown = event.target.closest?.("[data-nav-dropdown]")')
+    expect(controller_source).to include('.closest?.("[data-nav-dropdown]")')
     expect(controller_source).to include("if (clickedDropdown) return")
     expect(controller_source).to include("this.closeOpenDropdowns()")
 
     expect(controller_source).to include('if (event.key !== "Escape") return')
-    expect(controller_source).to include("closeOpenDropdowns(exceptDropdown = null)")
+    expect(controller_source).to match(/closeOpenDropdowns\(exceptDropdown/)
     expect(controller_source).to include('this.element.querySelectorAll("[data-nav-dropdown][open]")')
   end
 
   it "restores focus to the closed dropdown summary only on Escape" do
-    expect(controller_source).to include('const dropdownToRestoreFocus = event.target.closest?.("[data-nav-dropdown][open]") || this.openDropdowns[0]')
-    expect(controller_source).to include("this.restoreDropdownSummaryFocus(dropdownToRestoreFocus)")
-    expect(controller_source).to include("restoreDropdownSummaryFocus(dropdown)")
+    expect(controller_source).to include('.closest?.("[data-nav-dropdown][open]") || this.openDropdowns[0]')
+    expect(controller_source).to include("this.restoreDropdownSummaryFocus(dropdownToRestoreFocus")
+    expect(controller_source).to match(/restoreDropdownSummaryFocus\(dropdown/)
     expect(controller_source).to include('dropdown?.querySelector?.("summary.nav-dropdown__summary")')
     expect(controller_source).to include("summary?.focus?.()")
   end

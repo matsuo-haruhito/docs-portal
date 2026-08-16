@@ -19,7 +19,7 @@
 3. `app/controllers/admin/documents_controller.rb`
 4. `spec/requests/admin_documents_project_select_spec.rb`
 5. `spec/requests/admin_document_project_search_spec.rb`
-6. `app/frontend/entrypoints/application.js`
+6. `app/frontend/entrypoints/application.ts`
 7. `vite.config.ts`
 8. `config/initializers/rails_fields_kit.rb`
 9. [関連 gem 連携調査 runbook](../ops/関連gem連携調査runbook.md)

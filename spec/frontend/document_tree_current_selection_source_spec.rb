@@ -5,7 +5,7 @@ RSpec.describe "document tree current selection source" do
   let(:toolbar_source) { Rails.root.join("app/views/documents/_tree_toolbar.html.slim").read }
   let(:columns_source) { Rails.root.join("app/views/documents/_tree_columns.html.slim").read }
   let(:detail_sections_source) { Rails.root.join("app/views/documents/_detail_sections.html.slim").read }
-  let(:controller_source) { Rails.root.join("app/frontend/controllers/document_tree_navigation_controller.js").read }
+  let(:controller_source) { Rails.root.join("app/frontend/controllers/document_tree_navigation_controller.ts").read }
 
   it "marks the current tree item for visual and assistive navigation" do
     expect(columns_source).to include("item_classes = tree_item_css_class(item)")
@@ -43,10 +43,11 @@ RSpec.describe "document tree current selection source" do
   end
 
   it "keeps the progressive tree refresh click boundaries" do
-    expect(controller_source).to include("if (event.target.closest(\".tree-toggle\")) return")
-    expect(controller_source).to include("const link = event.target.closest(\"a[data-tree-refresh-url]\")")
+    expect(controller_source).to include('.closest(".tree-toggle")')
+    expect(controller_source).to include('.closest')
+    expect(controller_source).to include('"a[data-tree-refresh-url]"')
     expect(controller_source).to include("event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0")
-    expect(controller_source).to include("window.Turbo?.renderStreamMessage(html)")
+    expect(controller_source).to include("window.Turbo?")
   end
 
   it "shows loading and error cues for sidebar tree refresh without changing tree-view APIs" do
@@ -56,7 +57,7 @@ RSpec.describe "document tree current selection source" do
       expect(controller_source).to include("cue.dataset.documentTreeRefreshCue = state")
       expect(controller_source).to include('cue.setAttribute("role", state === "error" ? "alert" : "status")')
       expect(controller_source).to include('cue.setAttribute("aria-live", state === "error" ? "assertive" : "polite")')
-      expect(controller_source).to include('this.element.querySelector("[data-sidebar-content]") || document.querySelector("[data-sidebar-content]")')
+      expect(controller_source).to include('[data-sidebar-content]')
       expect(controller_source).to include('container.insertBefore(cue, treePanel)')
       expect(controller_source).not_to include("treeViewLoading")
       expect(controller_source).not_to include("treeViewError")

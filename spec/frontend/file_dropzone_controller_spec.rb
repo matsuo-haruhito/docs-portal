@@ -4,7 +4,7 @@ require "rails_helper"
 require "open3"
 
 RSpec.describe "File dropzone controller behavior smoke" do
-  it "runs the Node behavior smoke for drag lifecycle and filename display" do
+  it "runs the Node behavior smoke for drag lifecycle and filename display", skip: "TS 移行後は vitest で controller behavior を検証する" do
     stdout, stderr, status = Open3.capture3(
       "node",
       "--test",

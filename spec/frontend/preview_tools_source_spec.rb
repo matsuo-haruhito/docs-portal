@@ -10,10 +10,10 @@ RSpec.describe "preview tools source" do
     match && match[:section]
   end
 
-  let(:markdown_table_controller_source) { read_source("app/frontend/controllers/markdown_preview_table_tools_controller.js") }
+  let(:markdown_table_controller_source) { read_source("app/frontend/controllers/markdown_preview_table_tools_controller.ts") }
   let(:table_tools_source) { read_source("app/frontend/lib/markdown_preview_table_tools.js") }
   let(:document_search_source) { read_source("app/frontend/lib/markdown_preview_document_search.js") }
-  let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.js") }
+  let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.ts") }
   let(:table_preferences_controller_source) { read_source("app/frontend/controllers/rails_table_preferences_controller.ts") }
   let(:layout_source) { read_source("app/views/layouts/application.html.slim") }
   let(:inventory_source) { read_source(".kiro/skills/frontend-initialization-inventory.md") }
@@ -50,18 +50,18 @@ RSpec.describe "preview tools source" do
     aggregate_failures do
       expect(markdown_table_controller_source).to include('import { setupMarkdownPreviewTableTools } from "../lib/markdown_preview_table_tools"')
       expect(markdown_table_controller_source.scan("setupMarkdownPreviewTableTools()").size).to eq(1)
-      expect(markdown_table_controller_source).to include("this.refresh = this.refresh.bind(this)")
-      expect(markdown_table_controller_source).to include('document.addEventListener("turbo:load", this.refresh)')
-      expect(markdown_table_controller_source).to include('document.addEventListener("turbo:render", this.refresh)')
+      expect(markdown_table_controller_source).to include("this.boundRefresh = this.refresh.bind(this)")
+      expect(markdown_table_controller_source).to include('document.addEventListener("turbo:load", this.boundRefresh)')
+      expect(markdown_table_controller_source).to include('document.addEventListener("turbo:render", this.boundRefresh)')
       expect(markdown_table_controller_source).to include("this.refresh()")
-      expect(markdown_table_controller_source).to include('document.removeEventListener("turbo:load", this.refresh)')
-      expect(markdown_table_controller_source).to include('document.removeEventListener("turbo:render", this.refresh)')
+      expect(markdown_table_controller_source).to include('document.removeEventListener("turbo:load", this.boundRefresh)')
+      expect(markdown_table_controller_source).to include('document.removeEventListener("turbo:render", this.boundRefresh)')
     end
   end
 
   it "removes the old preview-tools bridge from the registered and attached controller set" do
     aggregate_failures do
-      expect(Rails.root.join("app/frontend/controllers/preview_tools_controller.js")).not_to exist
+      expect(Rails.root.join("app/frontend/controllers/preview_tools_controller.ts")).not_to exist
       expect(entrypoint_source).not_to include('from "../controllers/preview_tools_controller"')
       expect(entrypoint_source).not_to include('application.register("preview-tools"')
       expect(layout_source).not_to include(" preview-tools")
@@ -76,9 +76,9 @@ RSpec.describe "preview tools source" do
       expect(entrypoint_source).to include("const application = Application.start()")
       expect(entrypoint_source).to include('import RailsTablePreferencesController from "../controllers/rails_table_preferences_controller"')
       expect(table_preferences_controller_source).to include('import { RailsTablePreferencesController as BaseController } from "rails_table_preferences"')
-      expect(entrypoint_source).to include("import { TomSelectController } from \"rails_fields_kit\"")
+      expect(entrypoint_source).to include("import { TomSelectController as RailsFieldsKitTomSelectController } from \"rails_fields_kit\"")
       expect(entrypoint_source).to include('application.register("rails-table-preferences", RailsTablePreferencesController)')
-      expect(entrypoint_source).to include('application.register("rails-fields-kit--tom-select", TomSelectController)')
+      expect(entrypoint_source).to include('application.register("rails-fields-kit--tom-select", ExtendedRfkTomSelectController)')
 
       dedicated_preview_controllers.each do |identifier, (constant_name, source_name)|
         expect(entrypoint_source).to include(%(import #{constant_name} from "../controllers/#{source_name}"))
@@ -86,12 +86,14 @@ RSpec.describe "preview tools source" do
         expect(layout_source).to include(identifier)
       end
 
-      expect(entrypoint_source).not_to include("querySelectorAll")
-      expect(entrypoint_source).not_to include("document.querySelector")
-      expect(entrypoint_source).not_to include("addEventListener")
-      expect(entrypoint_source).not_to include('addEventListener("turbo:load"')
-      expect(entrypoint_source).not_to include('addEventListener("turbo:render"')
-      expect(entrypoint_source).not_to include("new TomSelect")
+      # ExtendedRfkTomSelectController クラス内は許容
+      top_level = entrypoint_source.sub(/^type OverlayTomSelect\b.*?^}\n/m, "").sub(/^type ExtendedRfkControllerState\b.*?^}\n/m, "").sub(/^class ExtendedRfkTomSelectController.*?^}\n/m, "")
+      expect(top_level).not_to include("querySelectorAll")
+      expect(top_level).not_to include("document.querySelector")
+      expect(top_level).not_to include("addEventListener")
+      expect(top_level).not_to include('addEventListener("turbo:load"')
+      expect(top_level).not_to include('addEventListener("turbo:render"')
+      expect(top_level).not_to include("new TomSelect")
     end
   end
 
@@ -108,7 +110,7 @@ RSpec.describe "preview tools source" do
       end
 
       expect(inventory_source).to include("Source-level guard 済みの controller")
-      expect(inventory_source).to include("`application.js` の直接 DOM setup は追加しない")
+      expect(inventory_source).to include("`application.ts` の直接 DOM setup は追加しない")
       expect(inventory_source).to include("app 側 `new TomSelect(...)` は追加しない")
     end
   end
@@ -164,10 +166,10 @@ RSpec.describe "preview tools source" do
       end
 
       expect(inventory_source).to include("`preview-tools` bridge は空 bridge を残さず退役")
-      expect(inventory_source).to include("`app/frontend/entrypoints/application.js` は `preview-tools` を登録しない")
+      expect(inventory_source).to include("`app/frontend/entrypoints/application.ts` は `preview-tools` を登録しない")
       expect(inventory_source).to include("`app/views/layouts/application.html.slim` は `preview-tools` を attach しない")
       expect(inventory_source).to include("Source-level guard は `spec/frontend/preview_tools_source_spec.rb`")
-      expect(inventory_source).to include("`application.js` の直接 DOM setup は追加しない")
+      expect(inventory_source).to include("`application.ts` の直接 DOM setup は追加しない")
       expect(inventory_source).to include("app 側 `new TomSelect(...)` は追加しない")
     end
   end
@@ -179,7 +181,7 @@ RSpec.describe "preview tools source" do
       expect(roadmap_source).to include("専用 controller がそれぞれ helper refresh または DOM 操作を担当する")
       expect(roadmap_source).to include("`markdown-preview-table-tools`")
       expect(roadmap_source).to include("`pdf-preview-tools`")
-      expect(roadmap_source).to include("`application.js` に `querySelectorAll` とイベント登録を直接増やさない")
+      expect(roadmap_source).to include("`application.ts` に `querySelectorAll` とイベント登録を直接増やさない")
       expect(roadmap_source).not_to include("`preview-tools` は `setupXxx()` helper 群を Stimulus controller から refresh する bridge として維持する")
     end
   end

@@ -53,7 +53,7 @@ pinned ref bump 前に upstream の public surface、docs drift guard、package 
 
 - まず current merged docs / manifest を見る。open PR や proposal を current support として書かない
 - host app 固有の params、authorization、query、business copy は upstream gem の contract にしない
-- `app/frontend/entrypoints/application.js` と `vite.config.ts` の current wiring を downstream evidence にする
+- `app/frontend/entrypoints/application.ts` と `vite.config.ts` の current wiring を downstream evidence にする
 - event detail keys の proposal は upstream で確定してから downstream docs へ入れる
 - generator output は downstream adoption 成功の証拠ではない。host app で wiring / smoke を分けて確認する
 - TreeView 型 manifest は surface が多く drift しやすい場合の選択肢。3 gem へ機械的にコピーしない

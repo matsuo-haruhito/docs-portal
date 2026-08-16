@@ -25,7 +25,7 @@ RSpec.describe "Frontend initialization inventory" do
     end
   end
 
-  let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.js") }
+  let(:entrypoint_source) { read_source("app/frontend/entrypoints/application.ts") }
   let(:inventory_source) { read_source(".kiro/skills/frontend-initialization-inventory.md") }
   let(:registered_app_controllers) { registered_controller_names(entrypoint_source) - GEM_CONTROLLER_IDENTIFIERS }
   let(:inventory_app_controllers) { inventory_app_controller_names(inventory_source) }
@@ -47,11 +47,13 @@ RSpec.describe "Frontend initialization inventory" do
   end
 
   it "keeps retired bridge and direct DOM setup out of the entrypoint" do
+    # ExtendedRfkTomSelectController クラス内の addEventListener は許容する
+    top_level_source = entrypoint_source.sub(/^type OverlayTomSelect\b.*?^}\n/m, "").sub(/^type ExtendedRfkControllerState\b.*?^}\n/m, "").sub(/^class ExtendedRfkTomSelectController.*?^}\n/m, "")
     aggregate_failures do
       expect(registered_controller_names(entrypoint_source)).not_to include("preview-tools")
-      expect(entrypoint_source).not_to include("querySelectorAll")
-      expect(entrypoint_source).not_to include("addEventListener")
-      expect(entrypoint_source).not_to include("new TomSelect")
+      expect(top_level_source).not_to include("querySelectorAll")
+      expect(top_level_source).not_to include("addEventListener")
+      expect(top_level_source).not_to include("new TomSelect")
     end
   end
 end

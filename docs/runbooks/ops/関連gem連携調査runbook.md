@@ -8,7 +8,7 @@
 
 - `Gemfile`
   - 3 gem の取り込み元を確認する
-- `app/frontend/entrypoints/application.js`
+- `app/frontend/entrypoints/application.ts`
   - Stimulus controller の登録状況を確認する
 - `vite.config.ts`
   - gem 同梱 JavaScript を Vite からどう解決しているかを確認する
@@ -29,7 +29,7 @@
 - blank を許容する項目では `allow_clear: true` と `placeholder` をセットにし、`project_id` のような既存 params 名は変えません。
 - wrapper や label は helper 側ではなく呼び出し側 view で揃え、この repo の form grid に沿わせます。
 - Turbo 再訪や validation error 後も同じ field 名で再描画されることを優先し、画面ごとの独自 JavaScript を先に足しません。
-- まず `app/frontend/entrypoints/application.js`、`vite.config.ts`、`config/initializers/rails_fields_kit.rb` の wiring が current main で有効かを確認し、そのうえで個別画面へ広げます。
+- まず `app/frontend/entrypoints/application.ts`、`vite.config.ts`、`config/initializers/rails_fields_kit.rb` の wiring が current main で有効かを確認し、そのうえで個別画面へ広げます。
 
 ### 2. `rails_table_preferences` を使う一覧の組み方
 
@@ -54,7 +54,7 @@
 3. `app/helpers/admin/document_sets_helper.rb`
 4. `spec/requests/admin_document_sets_spec.rb`
 5. `spec/requests/admin_document_sets_index_spec.rb`
-6. `app/frontend/entrypoints/application.js`
+6. `app/frontend/entrypoints/application.ts`
 7. `vite.config.ts`
 8. `config/initializers/rails_fields_kit.rb`
 9. `config/initializers/rails_table_preferences.rb`
@@ -63,16 +63,16 @@
 
 ### 5. package-root import / direct entrypoint の使い分け
 
-- `docs-portal` の current `app/frontend/entrypoints/application.js` は `import { RailsTablePreferencesController } from "rails_table_preferences"` と `import { TomSelectController } from "rails_fields_kit"` を使っています。current main の host-app default は、このように upstream README / public API が stable export として案内している package root を先に使う形です。
+- `docs-portal` の current `app/frontend/entrypoints/application.ts` は `import { RailsTablePreferencesController } from "rails_table_preferences"` と `import { TomSelectController } from "rails_fields_kit"` を使っています。current main の host-app default は、このように upstream README / public API が stable export として案内している package root を先に使う形です。
 - `vite.config.ts` では package root (`rails_table_preferences`, `rails_fields_kit`) と documented direct entrypoint (`rails_table_preferences/controller`, `rails_fields_kit/tom_select_controller`) の両方を alias しています。これは current app が direct entrypoint を常用しているという意味ではなく、upstream docs の Vite 例や copied-controller migration をそのまま検証できるようにするための compatibility lane として残しています。
 - direct entrypoint は「package root で欲しい export がまだ公開されていない」「upstream docs がその path を正規の integration path として案内している」「copied controller / custom boot path からの移行途中で current issue scope がそこに閉じている」といった場合だけ選びます。host app 固有の convenience のために undocumented path や gem 内部ファイルへ飛び込むのは避けます。
-- `tree_view` は current `docs-portal` では helper / partial integration が先で、`app/frontend/entrypoints/application.js` から直接 controller import をしていません。JavaScript hook が必要になったら、`tree_view/index.js` を public entrypoint として扱い、`TreeViewEventNames`、`TreeViewControllerIdentifiers`、`registerTreeViewControllers(application)` のような documented package-root export から読み始めます。event 名や controller identifier を raw string で写経したり、`app/javascript/tree_view/*` 配下の内部 file path に依存したりしません。
+- `tree_view` は current `docs-portal` では helper / partial integration が先で、`app/frontend/entrypoints/application.ts` から直接 controller import をしていません。JavaScript hook が必要になったら、`tree_view/index.js` を public entrypoint として扱い、`TreeViewEventNames`、`TreeViewControllerIdentifiers`、`registerTreeViewControllers(application)` のような documented package-root export から読み始めます。event 名や controller identifier を raw string で写経したり、`app/javascript/tree_view/*` 配下の内部 file path に依存したりしません。
 - `rails_table_preferences` は upstream `docs/javascript_entrypoints.md` が `rails_table_preferences/controller` も `rails_table_preferences` package root も両方案内していますが、current `docs-portal` の representative import は package-root named export です。screen issue で controller 登録の説明を書くときは、まず current `application.js` と同じ package-root import を基準にし、direct path は fallback / migration note としてだけ扱います。
 - `rails_fields_kit` も upstream README / `doc/public_api.md` が `TomSelectController` の package-root export と direct import の両方を documented surface としています。current `docs-portal` の representative import は package-root named export なので、新しい helper / controller helper / JS helper を downstream docs に出す前に、README か `doc/public_api.md` で public export になっているかを確認します。未着地の upstream PR で提案されている export 名を current main の durable import として先走って書きません。
 
 ### 6. representative smoke で確認する最小観点
 
-- `app/frontend/entrypoints/application.js`
+- `app/frontend/entrypoints/application.ts`
   - package-root import が current host app の default として解決しているかを確認する
 - `vite.config.ts`
   - package root と documented direct entrypoint の alias が、upstream docs にある import path と矛盾していないかを確認する
@@ -107,7 +107,7 @@
 
 - `#607` の host-app pattern は `admin/document_sets` の helper metadata + editor + table composition を baseline にします。column metadata、pinned decision、filter label、preset 導線を view 直下へ散らさず、helper と `table_key` でまとめます。
 - `#904` は release-train child です。representative admin list / embedded table seam / rollback note は child issue / PR へ残し、screen-by-screen migration の convenience patch と同じ PR に混ぜません。
-- preview iframe 内 table は current `main` では `app/frontend/controllers/preview_table_resizer_controller.js` の app-side fallback が正本です。通常一覧と同じつもりで data attribute を足し始めたり、embedded table contract を preview fallback へ混ぜたりしません。full 統合は active queue に置かず、current fallback の具体的な不足が再現した場合だけ新しい concrete Issue にします。
+- preview iframe 内 table は current `main` では `app/frontend/controllers/preview_table_resizer_controller.ts` の app-side fallback が正本です。通常一覧と同じつもりで data attribute を足し始めたり、embedded table contract を preview fallback へ混ぜたりしません。full 統合は active queue に置かず、current fallback の具体的な不足が再現した場合だけ新しい concrete Issue にします。
 - export payload、hidden column、saved order の smoke は representative admin list で 1 つずつ固定します。画面ごとに ad-hoc helper や one-off preset を増やす前に、既存 helper metadata へ寄せられないかを確認します。
 
 ### 新しい issue / PR を切る前の確認順
@@ -125,7 +125,7 @@
 | --- | --- | --- | --- |
 | `tree_view` | 文書ツリー / 詳細ツリー / persisted expand state | `e129cb3ce2835a483e87fc71a50cc9fee07e3da5` | `docs-portal` の helper / partial と `tree_view-rails` の `docs/ja/*` |
 | `rails_table_preferences` | 一覧の列表示 / filter / sort / preset UI | `b3f1a9d6eb46aefe568c637396fab63151aef322` | `config/initializers/rails_table_preferences.rb` と `rails_table_preferences` の README / `docs/*` |
-| `rails_fields_kit` | Tom Select 系 field helper / controller / metadata | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | `app/frontend/entrypoints/application.js` / `vite.config.ts` と `rails_fields_kit` の `doc/*` |
+| `rails_fields_kit` | Tom Select 系 field helper / controller / metadata | `0c29bb935a1df3e61add860a966a2fc7ea586b1a` | `app/frontend/entrypoints/application.ts` / `vite.config.ts` と `rails_fields_kit` の `doc/*` |
 
 ### current release-train queue の補足
 
@@ -301,7 +301,7 @@
 ### Markdown preview table の current main contract
 
 - Docusaurus / preview iframe 内の Markdown table は、current `main` では `rails_table_preferences` 未適用です。
-- 代わりに `app/frontend/controllers/preview_table_resizer_controller.js` が app 側 fallback path として、表幅、列幅、ヘッダー固定、先頭列固定、localStorage ベースの永続状態を扱います。
+- 代わりに `app/frontend/controllers/preview_table_resizer_controller.ts` が app 側 fallback path として、表幅、列幅、ヘッダー固定、先頭列固定、localStorage ベースの永続状態を扱います。
 - full `rails_table_preferences` 統合を追う active Issue はありません。current fallback の具体的な不足が再現した場合だけ、対象 contract を 1 つに絞った新しい Issue を作ります。
 - stable key は `document_version:<public_id>:<normalized_site_path>:table:<index>` を使い、通常表示と embedded 表示で同じ context を共有します。
 - source guard と代表 smoke は、fallback path の stable key、Turbo 再描画後 refresh、検索・copy・export・列幅補助を守ります。
@@ -314,7 +314,7 @@
   - `RailsTablePreferences::Engine` の mount を確認する
 - `config/initializers/rails_table_preferences.rb`
   - table 名、label 解決順、mount path、editor partial などを確認する
-- `app/frontend/entrypoints/application.js`
+- `app/frontend/entrypoints/application.ts`
   - `rails-table-preferences` controller の登録を確認する
 - `vite.config.ts`
   - `rails_table_preferences` / `rails_table_preferences/controller` の alias を確認する
@@ -322,7 +322,7 @@
   - `stylesheet_link_tag "rails_table_preferences"` を確認する
 - `app/helpers/admin/document_sets_helper.rb`
   - `table_preferences_column(...)` を使う現行の table column 定義入口を確認する
-- `app/frontend/controllers/preview_table_resizer_controller.js`
+- `app/frontend/controllers/preview_table_resizer_controller.ts`
   - Markdown preview table の current fallback path、stable key、localStorage state を確認する
 - `docs/notes/docusaurus-table-preference-context-boundary.md`
   - Markdown 由来 table の metadata、stable key、current fallback と将来変更の境界を確認する
@@ -354,13 +354,13 @@
 
 - `config/routes.rb`、`app/controllers/application_controller.rb`、`config/initializers/rails_table_preferences.rb`
   - engine mount、helper 公開、table key、label resolution、mount path がずれていないか確認する
-- `app/frontend/entrypoints/application.js`、`vite.config.ts`、`app/views/layouts/application.html.slim`
+- `app/frontend/entrypoints/application.ts`、`vite.config.ts`、`app/views/layouts/application.html.slim`
   - Stimulus controller 登録、gem JS alias、stylesheet 読み込みが current main の前提どおりか確認する
 - `app/helpers/admin/document_sets_helper.rb`
   - `table_preferences_column(...)` の metadata が対象一覧画面の列構成と合っているか確認する
 - `app/views/admin/document_sets/_form.html.slim` と table preference editor を出す一覧画面
   - host form と table preference UI が同居しても操作導線が壊れていないか確認する
-- `app/frontend/controllers/preview_table_resizer_controller.js`
+- `app/frontend/controllers/preview_table_resizer_controller.ts`
   - Markdown preview table に触る issue では、fallback path の key / state / embedded 共有が current main と矛盾していないか確認する
 - request / system spec の確認方針
   - 既存の管理画面 request spec や対象画面に近い system spec を見て、一覧表示、保存導線、主要 path を固定する
@@ -399,7 +399,7 @@
 
 ### docs-portal 側の主な確認場所
 
-- `app/frontend/entrypoints/application.js`
+- `app/frontend/entrypoints/application.ts`
   - `TomSelectController` の登録を確認する
 - `vite.config.ts`
   - `rails_fields_kit` / `rails_fields_kit/tom_select_controller` の alias を確認する
@@ -437,7 +437,7 @@
 
 ### gem 更新後の app-side verification checklist
 
-- `app/frontend/entrypoints/application.js`、`vite.config.ts`、`config/initializers/rails_fields_kit.rb`
+- `app/frontend/entrypoints/application.ts`、`vite.config.ts`、`config/initializers/rails_fields_kit.rb`
   - controller 名、alias、default config が current main と食い違っていないか確認する
 - `app/frontend/lib/tom_select_fields.js`
   - no-op shim のままか確認し、app 側に再初期化責務が戻っていたら app-side regression として扱う
@@ -457,7 +457,7 @@
 - selected value の保持
   - validation error 後または Turbo 再訪後も同じ field 名と selected value が残ることを確認します。
 - wiring の健全性
-  - `app/frontend/entrypoints/application.js`、`vite.config.ts`、`config/initializers/rails_fields_kit.rb`、`app/frontend/lib/tom_select_fields.js` をまとめて見て、controller registration と no-op shim の責務が戻っていないことを確認します。
+  - `app/frontend/entrypoints/application.ts`、`vite.config.ts`、`config/initializers/rails_fields_kit.rb`、`app/frontend/lib/tom_select_fields.js` をまとめて見て、controller registration と no-op shim の責務が戻っていないことを確認します。
 - remote search を触る issue の扱い
   - current main の代表 smoke は preload / collection path で足りますが、remote search を変える issue では対象 endpoint と selected value の両方を追加確認します。
 

@@ -75,8 +75,8 @@ RSpec.describe "Admin API specification codeblock dry-runs", type: :request do
 
   it "keeps the viewer hook scoped to the admin API specification iframe" do
     view_source = Rails.root.join("app/views/admin/api_specifications/show.html.slim").read
-    controller_source = Rails.root.join("app/frontend/controllers/api_specification_codeblock_dry_run_controller.js").read
-    entrypoint_source = Rails.root.join("app/frontend/entrypoints/application.js").read
+    controller_source = Rails.root.join("app/frontend/controllers/api_specification_codeblock_dry_run_controller.ts").read
+    entrypoint_source = Rails.root.join("app/frontend/entrypoints/application.ts").read
 
     expect(view_source).to include("data-controller=\"api-specification-codeblock-dry-run\"")
     expect(view_source).to include("data-api-specification-codeblock-dry-run-url-value=codeblock_dry_run_admin_api_specification_path")

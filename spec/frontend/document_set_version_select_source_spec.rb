@@ -10,11 +10,11 @@ RSpec.describe "admin/document_sets fixed version selector source" do
   end
 
   let(:application_entrypoint) do
-    Rails.root.join("app/frontend/entrypoints/application.js").read
+    Rails.root.join("app/frontend/entrypoints/application.ts").read
   end
 
   let(:document_filter_controller) do
-    Rails.root.join("app/frontend/controllers/document_set_document_filter_controller.js").read
+    Rails.root.join("app/frontend/controllers/document_set_document_filter_controller.ts").read
   end
 
   it "keeps the fixed version selector param shape and delegates option and rails fields kit wiring to helpers" do

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
@@ -10,8 +10,25 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": []
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    "noUncheckedSideEffectImports": false,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@hotwired/stimulus": ["./node_modules/@hotwired/stimulus"],
+      "rails_fields_kit": ["./app/frontend/types/rails_fields_kit.d.ts"],
+      "rails_table_preferences": ["./app/frontend/types/rails_table_preferences.d.ts"],
+      "tree_view": ["./app/frontend/types/tree_view.d.ts"]
+    },
+    "typeRoots": ["./node_modules/@types", "./app/frontend/types"],
+    "types": ["node"]
   },
-  "include": ["app/frontend/**/*.ts"],
+  "include": [
+    "app/frontend/**/*.ts",
+    "app/frontend/**/*.js",
+    "script/**/*.ts",
+    "spec/frontend/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

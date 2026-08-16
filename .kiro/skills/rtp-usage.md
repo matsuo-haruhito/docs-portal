@@ -15,7 +15,7 @@ description: "docs-portalでrails_table_preferences (rtp) を使うための標�
 | 列設定ボタン・dialog・editor描画 | `app/components/column_settings_component.rb` / `.html.slim` |
 | dialogの開閉・focus復元 | `app/frontend/controllers/column_settings_dialog_controller.ts` |
 | gem controllerのhost補完・table/editor同期 | `app/frontend/controllers/rails_table_preferences_controller.ts` |
-| controller登録 | `app/frontend/entrypoints/application.js` |
+| controller登録 | `app/frontend/entrypoints/application.ts` |
 | modal・editor・tableの見た目 | `app/frontend/entrypoints/application.css` |
 | package-root exportの型補完 | `app/frontend/types/rails_table_preferences.d.ts` |
 
@@ -43,7 +43,7 @@ export default class extends BaseController {
   // resize/DnD完了後は同じtable_keyのeditorへwidth/orderを同期する
 }
 
-// app/frontend/entrypoints/application.js
+// app/frontend/entrypoints/application.ts
 import RailsTablePreferencesController from "../controllers/rails_table_preferences_controller"
 application.register("rails-table-preferences", RailsTablePreferencesController)
 ```

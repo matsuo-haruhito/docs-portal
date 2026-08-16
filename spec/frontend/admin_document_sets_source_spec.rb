@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe "admin/document_sets form source" do
   let(:view_source) { Rails.root.join("app/views/admin/document_sets/_form.html.slim").read }
-  let(:controller_source) { Rails.root.join("app/frontend/controllers/document_set_document_filter_controller.js").read }
+  let(:controller_source) { Rails.root.join("app/frontend/controllers/document_set_document_filter_controller.ts").read }
   let(:css_source) { Rails.root.join("app/frontend/entrypoints/document_set_document_filter.css").read }
 
   it "keeps document set item field names while adding selection filter hooks" do

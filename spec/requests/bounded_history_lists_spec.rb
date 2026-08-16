@@ -24,7 +24,8 @@ RSpec.describe "Bounded history lists", type: :request do
         sender: external_user,
         status: :sent,
         delivery_type: :portal_link,
-        to_addresses: "bounded-#{index.to_s.rjust(2, "0")}@example.com"
+        to_addresses: "bounded-#{index.to_s.rjust(2, "0")}@example.com",
+        created_at: (51 - index).minutes.ago
       )
     end
     create(:document_delivery_log, project:, document:, sender: external_user, status: :draft, delivery_type: :portal_link, to_addresses: "draft-visible@example.com")

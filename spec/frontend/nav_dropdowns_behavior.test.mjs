@@ -4,10 +4,19 @@ import { resolve } from "node:path"
 import test from "node:test"
 
 async function loadControllerClass() {
-  const source = readFileSync(resolve("app/frontend/controllers/nav_dropdowns_controller.js"), "utf8")
+  const source = readFileSync(resolve("app/frontend/controllers/nav_dropdowns_controller.ts"), "utf8")
   const transformed = source
     .replace('import { Controller } from "@hotwired/stimulus"\n\n', "")
     .replace("export default class extends Controller", "class NavDropdownsController")
+    // TypeScript → JavaScript の簡易変換
+    .replace(/^\s*private\s+\w+!:\s*\([^)]*\)\s*=>\s*void\s*$/gm, "")
+    .replace(/\bprivate\s+/g, "")
+    .replace(/:\s*(?:void|string|number|boolean|Element\s*\|\s*null|NodeListOf<Element>)\s*(?=[{;,=)])/g, "")
+    .replace(/\(event:\s*\w+\)\s*=>\s*\{/g, "(event) => {")
+    .replace(/\(exceptDropdown:\s*Element\s*\|\s*null\s*=\s*null\)/g, "(exceptDropdown = null)")
+    .replace(/\(dropdown:\s*HTMLElement\s*\|\s*undefined\)/g, "(dropdown)")
+    .replace(/\s+as\s+\w+(?:\s*\|\s*\w+)*(?:\s*\[\s*\])?/g, "")
+    .replace(/\s+as\s+(?:HTMLDetailsElement|HTMLElement|EventListener)(?:\s*\|\s*(?:null|undefined))?/g, "")
     .concat("\nexport { NavDropdownsController }\n")
   const moduleUrl = `data:text/javascript;base64,${Buffer.from(transformed).toString("base64")}`
   const { NavDropdownsController } = await import(moduleUrl)
@@ -74,9 +83,15 @@ function buildDropdown({ open = false } = {}) {
   return dropdown
 }
 
+// connect() 内で document.addEventListener が呼ばれるため、Node 環境用のスタブを用意
+if (typeof globalThis.document === "undefined") {
+  globalThis.document = { addEventListener() {}, removeEventListener() {} }
+}
+
 function buildController(ControllerClass) {
   const controller = new ControllerClass()
   controller.element = new FakeElement()
+  controller.connect()
   return controller
 }
 

@@ -3,8 +3,8 @@ require "rails_helper"
 RSpec.describe "document file browser source" do
   let(:view_source) { Rails.root.join("app/views/document_versions/show.html.slim").read }
   let(:partial_source) { Rails.root.join("app/views/document_versions/_document_file_list_item.html.slim").read }
-  let(:entrypoint_source) { Rails.root.join("app/frontend/entrypoints/application.js").read }
-  let(:controller_source) { Rails.root.join("app/frontend/controllers/document_file_browser_controller.js").read }
+  let(:entrypoint_source) { Rails.root.join("app/frontend/entrypoints/application.ts").read }
+  let(:controller_source) { Rails.root.join("app/frontend/controllers/document_file_browser_controller.ts").read }
 
   it "wires the version file list to a dedicated stimulus controller" do
     aggregate_failures do
@@ -38,7 +38,7 @@ RSpec.describe "document file browser source" do
     aggregate_failures do
       expect(controller_source).to include('static targets = ["query", "section", "filterButton", "status", "empty"]')
       expect(controller_source).to include('this.activeKind = "all"')
-      expect(controller_source).to include('event.params.kind || "all"')
+      expect(controller_source).to include('.params?.kind || "all"')
       expect(controller_source).to include('section.dataset.sectionSearch')
       expect(controller_source).to include('item.dataset.itemSearch')
       expect(controller_source).to include('item.hidden = !visible')
@@ -47,7 +47,7 @@ RSpec.describe "document file browser source" do
       expect(controller_source).to include('const hasQuery = query.length > 0')
       expect(controller_source).to include('const hasKindFilter = this.activeKind !== "all"')
       expect(controller_source).to include('const querySummaryMaxLength = 28')
-      expect(controller_source).to include('function summarizeQuery(query)')
+      expect(controller_source).to match(/function summarizeQuery\(query/)
       expect(controller_source).to include('statusParts.push(`検索: ${summarizeQuery(rawQuery)}`)')
       expect(controller_source).to include('statusLabelParts.push(`検索: ${rawQuery}`)')
       expect(controller_source).to include('this.statusTarget.setAttribute("title", statusLabel)')

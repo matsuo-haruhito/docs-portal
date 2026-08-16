@@ -2,8 +2,8 @@ require "rails_helper"
 
 RSpec.describe "document zip selection source" do
   let(:view_source) { Rails.root.join("app/views/documents/index.html.slim").read }
-  let(:entrypoint_source) { Rails.root.join("app/frontend/entrypoints/application.js").read }
-  let(:controller_source) { Rails.root.join("app/frontend/controllers/document_zip_selection_controller.js").read }
+  let(:entrypoint_source) { Rails.root.join("app/frontend/entrypoints/application.ts").read }
+  let(:controller_source) { Rails.root.join("app/frontend/controllers/document_zip_selection_controller.ts").read }
 
   it "wires the project documents zip form to a dedicated stimulus controller" do
     aggregate_failures do

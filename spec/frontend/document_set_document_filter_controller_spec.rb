@@ -1,7 +1,7 @@
 require "rails_helper"
 
-RSpec.describe "document_set_document_filter_controller.js" do
-  let(:source) { Rails.root.join("app/frontend/controllers/document_set_document_filter_controller.js").read }
+RSpec.describe "document_set_document_filter_controller.ts" do
+  let(:source) { Rails.root.join("app/frontend/controllers/document_set_document_filter_controller.ts").read }
 
   it "adds remote search-only documents as checked catalog item rows" do
     expect(source).to include("createRemoteDocumentRow(remoteDocument)")
