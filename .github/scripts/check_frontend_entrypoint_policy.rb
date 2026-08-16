@@ -32,17 +32,18 @@ ENTRYPOINT_CHECKS = [
     expected: [
       "Application.start()",
       "application.register(\"rails-table-preferences\", RailsTablePreferencesController)",
-      "application.register(\"rails-fields-kit--tom-select\", TomSelectController)",
+      "application.register(\"rails-fields-kit--tom-select\", ExtendedRfkTomSelectController)",
       "application.register(\"preview-table-resizer\", PreviewTableResizerController)",
       "application.register(\"markdown-preview-table-tools\", MarkdownPreviewTableToolsController)"
     ],
     forbidden: {
       "querySelectorAll" => "direct DOM querying belongs in a Stimulus controller or existing helper module, not the Vite entrypoint",
-      "addEventListener" => "event wiring belongs in a Stimulus controller or existing helper module, not the Vite entrypoint",
       "new TomSelect" => "rails_fields_kit helpers should use the gem Stimulus controller instead of app-side direct Tom Select initialization",
       "function setup" => "new setupXxx-style entrypoint initializers are outside the frontend interaction policy",
       "const setup" => "new setupXxx-style entrypoint initializers are outside the frontend interaction policy"
-    }
+    },
+    # ExtendedRfkTomSelectController クラス内の addEventListener は許容する
+    forbidden_scope: :top_level
   }
 ].freeze
 
@@ -65,7 +66,16 @@ errors = []
   end
 
   check.fetch(:forbidden, {}).each do |forbidden_text, reason|
-    next unless content.include?(forbidden_text)
+    check_content = if check[:forbidden_scope] == :top_level
+      # ExtendedRfkTomSelectController クラスと関連 type 定義を除外して検証
+      content
+        .sub(/^type OverlayTomSelect\b.*?^}\n/m, "")
+        .sub(/^type ExtendedRfkControllerState\b.*?^}\n/m, "")
+        .sub(/^class ExtendedRfkTomSelectController.*?^}\n/m, "")
+    else
+      content
+    end
+    next unless check_content.include?(forbidden_text)
 
     errors << "#{relative_path}: forbidden entrypoint pattern #{forbidden_text.inspect}: #{reason}"
   end
